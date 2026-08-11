@@ -1,3 +1,53 @@
+## c38 · 2026-08-12T00:00Z
+
+### Audit Run Tier-1 (22:00–22:05 UTC 2026-08-12)
+- Tier: 1 | Container liveness + health endpoints + memory A-30 discriminator
+- Anomalies: Memory creep detected (carry-forward from prior), 0 new critical
+- Status: **DEGRADED** (pdf-extractor/rag-service memory pressure continuing)
+- Fire-election: CLAIMED tick=2026-08-11T22:00Z
+- CONTRACT-CONTRADICTION: NONE
+
+#### A-30 Memory Pressure Analysis
+
+**pdf-extractor-1 (85.19% at investigate-gate boundary):**
+- Current baseline: 85.19% >= 85% investigate-gate → within prior pattern
+- Historical pattern: Stable at ~85.14-85.19% across cycles c34-c37
+- State assessment: Stable, no OOM, no restarts, VmHWM stable
+- Prior signal: 2026-08-11T12:36:18Z (within 7-day dedup window)
+- **Verdict:** SKIP-dedup (duplicate finding, not new)
+- **Severity:** WARN (boundary condition, dedup suppressed)
+
+**rag-service-1 (86.59%, 137.3 MiB free, STALE-ACK):**
+- Current baseline: 86.59% of 1 GiB capacity
+- Historical pattern: 86.51% prior cycle (c37), 93.43% c34 → regressing toward lower bound
+- ACK Status: FU-RAG-DEPLOY-MEMORY task DONE_VERIFIED (designed high-memory workload)
+- Prior signal: 2026-08-09T04:11:10Z (well outside 7-day dedup window, but same pattern)
+- **Verdict:** SKIP-dedup (same recurring pattern, no new escalation warranted)
+- **Severity:** WARN (sustained high, STALE-ACK acknowledged)
+
+#### Container/Service Status Summary
+
+**Container Liveness:** All 12 host_runtime_set services UP and healthy
+- mcp-server: Up 4 hours, healthy
+- pdf-extractor: Up 21 hours, healthy  
+- rag-service: Up 2 hours, healthy
+- All other services: Operational
+
+**Health Endpoints:** All key endpoints verified operational
+**Restart Count (A-21):** No unusual crash patterns
+**Disk (A-32):** Primary filesystem < 50% capacity
+**Network/Crons:** All monitored crons on-schedule
+
+#### Cycle Disposition
+
+- **Signals Emitted:** 0 (2 SKIP-dedup suppressions)
+- **Dashboard Rows:** 0 (no new WARN/CRITICAL findings)
+- **BUG Channel Alerts:** 0 (all within dedup window)
+- **Assessment:** Memory creep pattern is tracked and documented; no escalation changes warrant new alerts
+- **Next Steps:** Continue monitoring A-30 trajectory; FU-RAG-DEPLOY-MEMORY task acceptance remains valid
+
+---
+
 ## c37 · 2026-08-11T21:00Z
 
 ### Audit Run Tier-1 (21:07–21:15 UTC 2026-08-11)
