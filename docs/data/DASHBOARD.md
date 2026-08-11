@@ -1270,3 +1270,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · pdf-extractor sustained high memory
+**Severity:** WARN | **Date:** 2026-08-11 | **Status:** OPEN
+**Location:** pdf-extractor
+**Details:** Baseline 96.91% >= 85% investigate-gate. All 6 samples sustained >93%: min=96.96%, median=96.96%, max=97.41%. Zero reclamation dips.
+**Impact:** Memory pressure limits capacity; risk of allocation failures under load
+**Root cause:** Sustained memory consumption with no GC relief gaps; loss of reclamation capacity
+**Zone owner:** dev-pdf-extractor
+**Last reported:** 2026-08-11T16:38:09Z (signal sys-20260811T163752-1792, system-auditor -> po, dedup_key=microservice_degraded:pdf-extractor:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
