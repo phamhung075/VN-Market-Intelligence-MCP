@@ -55,33 +55,6 @@
   Escalation 2 (semble-search guide-taxonomy) severity LOW; the 3 CRITICAL tool-boundary findings
   are carried-forward (already PO-known from the prior two `team-tool-recheck` runs, not new).
 
-## Keep (maintenance) 2026-08-11 12:53 UTC — cron-fired, no explicit intent → defaulted to keep.md
-- Trigger: scheduled (39min after the 12:14Z cycle same day). Pre-Check gated Steps 1-2 off again
-  (3rd consecutive cycle, zero `.claude/agents/*.md`/flow diff in HEAD~3..HEAD).
-- Checks 1/3/4/5: unchanged — 41/42 PASS, `semble-search` known exception. Version-staleness
-  90d-boundary cluster (ops-vps-fetch/ops-mainserver-fetch/dev-vps-crawls/dev-mainserver-crawls)
-  still exactly 90d, not >90 — no auto-fix.
-- **Check 2 self-caught methodology bug:** first automated one-hop-pointer pass grepped ANY
-  `/flow/` path in 7 agents' `main.md` (alert-commander, bctc-analyst, digest-predict,
-  market-watcher, news-scout, qa-responder, unified-agent) and grabbed incidental in-body
-  references instead of the actual `## Dispatch` / "Always →" line — false-positived all 7 FAIL.
-  Re-ran targeting the real dispatch pointer: all 7 PASS. Zero new Check-2 gaps (confirms 08-07's
-  finding held). Not auto-fixed (no bug existed) — logged so the next automated pass targets
-  `## Dispatch` explicitly, not a bare `/flow/` regex.
-- Stale notebooks: same set as 12:14Z run, except cowork-refactory-expert/ops-mainserver-fetch
-  now read 30d not 31d — same commit (`2026-07-11`), pure midnight-vs-wallclock rounding artifact
-  between two same-day runs, not a real repo change.
-- Step 5b: wrote `team-tool-recheck-2026-08-11-1253.md` — all 3 CRITICAL findings + positive
-  control unchanged from 12:14Z (39min gap, no fix landed).
-- Side-observation escalated: 46 notebook files vs 42 registered agents gap now spans 3
-  consecutive keep cycles (08-07, 08-11×2) all Pre-Check-gated off Steps 1-2. Per 12:14Z cycle's
-  own carried note, recommending PO-directed explicit scan-orphans run now rather than waiting
-  further on incidental gate-opens.
-- No `mcp__gateway__call_tool` binding this session (recurring) — gateway-less direct-pathspec
-  commit fallback used.
-- Step 7 PO handoff: Escalation 2 (semble-search, LOW) carries forward; NEW — recommend explicit
-  scan-orphans run to resolve 3-cycle-persistent 46-vs-42 notebook-file gap.
-
 ## SPIKE 2026-08-11T18:20:00Z — task SPIKE-NEWSSCOUT-KLFL-FALSE-ENOENT-ON-PRESENT-TRACKED-SKILL-FILE
 - Findings-only. news-scout is the ONLY {haiku model + 2-hop path chain (`cycle.md`→
   `./stage-bootstrap.md`→`.claude/skills/step-0-cowork/SKILL.md`)} agent among the 6 live
@@ -110,23 +83,42 @@
   by PO triage step po-6 — this live occurrence shows it is NOT informational-only, it deleted a
   just-written cycle record).
 
-## EDIT 2026-08-11T17:35:00Z — task TE-T03
-- Split cowork-team/flow/main.md's fallback/WORK-continuation body (~2/3 of file) into two new
-  sub-flows: `work-tick.md` (118L — Step 0a signal_queue drain + Step 0b.3 one-shot routing,
-  shared by both main.md's own § WORK continuation direct calls AND the ERROR-path re-entry) and
-  `preflight-error-fallback.md` (136L — full original Steps 0a-6 chain, ERROR-verdict only).
-  main.md 322L→106L (kept: team boundary, Step 0 preflight, verdict JUMP-TO, WORK continuation,
-  new ERROR Fallback pointer section). Content relocated verbatim — zero logic change, same class
-  as TE-T16/TE-T26. Also fixed the line-1 size-justification marker's stale "~195L" (real was
-  307L pre-edit, a TE-T13 follow-up flag — closed as a side effect).
-- Repointed the LIVE `.claude/skills/cron-cowork-team/SKILL.md` CronCreate prompt's ERROR clause
-  (was reading main.md Step 0a, now removed) to `preflight-error-fallback.md` — the already-armed
-  cron would otherwise misdirect on the next ERROR verdict. Recommending router re-arm via
-  `/cron-cowork-team` after DONE_VERIFIED.
-- Verified TE-T01 (dependency) is DONE_VERIFIED in `docs/data/orch/archive/2026-07.json` before
-  starting, per task instruction — not just trusted the board note's assertion.
-- Board row lane-moved `backlog`→`review` (status=REVIEW, next_agent=qa) via `orch-apply.sh`
-  (agent-father commit_zone excludes orch-state.json — router/po commits that file; wrote a
-  `task-complete` signal to router flagging the pending commit, id
-  `agent-father-20260811T173215-te-t03-orchstate-commit-needed`).
-  DJ: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md` STEP agent-father-S37.
+## EDIT 2026-08-11T19:40:17Z — task FIX-PM-HEAD-RESET-SHAPE
+- Fixed `docs/agents/pm/flow/main.md`'s `.head` write contract for mid-sprint decomposition
+  (mints child task(s) into `ready[]`/`backlog[]`/`in_progress[]`, NOT a full sprint closeout).
+  2 confirmed occurrences this session (`feedback_pm_midsprint_decomposition_leaves_head_stale_
+  not_closeout`): UC-RDL-P4 — pm left `.head` fully untouched (contract had no non-closeout
+  case); FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE, commit `95540b50d` — pm
+  flipped ONLY `.head.status` to idle, left `active_task_id`/`next_agent` dangling at stale
+  pre-decomposition values, forcing a router repair pass (commit `82ec1f018`).
+- Chose fix (a) — pm owns its own `.head` write (pm already owns the closeout-time `.head` write
+  via `scripts/pm-closeout-head-idle.jq`; pm is also the only actor with direct, in-cycle
+  knowledge of "my phase on this row is done, the sprint isn't"). Rejected (b) — a dev-team-side
+  WF-1d gate-table addition would need a reliable "this ready[]/in_progress[] child belongs to
+  head.active_task_id's decomposition" signal that the schema doesn't carry (no `parent_task_id`
+  field), so it would either misfire on unrelated rows or need new schema — pm-side fix is the
+  smaller, more precise, more durable surface.
+- New Step 4c (`docs/agents/pm/flow/main.md`, inserted after 4b, before Signal Queue Write
+  Guard): full `.head =` null-out (`{status:idle, active_task_id:null, next_agent:null,
+  updated_at, updated_by:"pm"}`) — matches `docs/agents/dev-team/flow/main.md`'s WF-1c
+  ready-lane convention byte-for-byte (verified: same jq shape, sanity-tested with a synthetic
+  fixture). Guarded: only fires if `.head.active_task_id` still names the row this pm invocation
+  was dispatched for (freshly re-read, never cached) — no-op otherwise, safe to run
+  unconditionally. Inlined directly in the flow file, no new `scripts/*.jq` file — agent-father's
+  `commit_zone.allowed` excludes `scripts/` (TE-T02 precedent).
+- Verified diff against both real occurrences (re-derived the exact jq transform pm should have
+  run in each case, confirms it would have produced the correct full null-out both times).
+  `docs/agents/dev-team/flow/main.md` and `docs/data/orch/orch-state.json` left byte-unchanged
+  (task scope explicitly excluded orch-state.json — already repaired, not part of this fix).
+- **Session was gateway-less** (no `mcp__gateway__call_tool` binding — confirmed live, matches
+  `docs/agents/agent-father/flow/edit-apply.md`'s own documented "Gateway-less exception").
+  Released the router's PRE-CLAIM lock (`intent:agent-father:fix-pm-head-reset-shape`) via the
+  documented fallback: live-verified the held row first (`owner_client_session` matched this
+  session), then replicated `releaseTask()`'s exact Rung-A SQL verbatim via `docker exec
+  vn-market-intelligence-mcp-mcp-server-1 bun -e "..."` against `COORDINATION_DB_PATH`
+  (`/app/data/coordination.db`, `task_locks` table) — `{ok:true, released:1}`, confirmed the row
+  is gone. Not a business-logic bypass, same statements the MCP tool runs.
+- Commit `cfb37ec2a` (`fix(pm/head-reset): ...`), pathspec-scoped, pushed to `origin/main`.
+  Solo-operation exception applied (`.head.wip` null / `.head.status=idle` — no concurrent
+  dev-team task), per `commit-boundary/SKILL.md`'s agent-father carve-out — mutex physically
+  unreachable, same gateway-less root cause as the release above.
