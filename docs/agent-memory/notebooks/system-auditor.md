@@ -2,6 +2,75 @@
 
 Session memory for real-time audit cycles and findings.
 
+## c26 · 2026-08-11T14:36:00Z
+
+### Audit Run Tier-1 (14:33–14:36 UTC 2026-08-11)
+- Tier: 1 | Container liveness + health endpoints + memory pressure (A-01 through A-33)
+- Anomalies: 0 critical, 1 warn (A-30 pdf-extractor loss-of-reclamation), 0 info | dedup: 1 skipped
+- Status: **DEGRADED**
+
+#### Container & Health Status (A-01 through A-20)
+- [RAW-PROBE L3-17] docker ps: all host_runtime_set services UP and healthy ✓
+- [RAW-PROBE L20-24] health endpoints: all 200 OK ✓
+- [RAW-PROBE L98-100] A-20 pdf-extractor multi-probe: 2/3 pass (probes 1,2 OK, probe 3 pending) ✓
+
+#### Restart Count (A-21)
+- [RAW-PROBE L27] mcp-server RestartCount=1 ✓
+
+#### Memory Pressure Deep-Probe (A-30)
+
+**A-30 pdf-extractor — ESCALATE VERDICT (WARN):**
+- Baseline: 98.76% >= 85% investigate-gate → ENGAGE deep-probe
+- Samples over 65s window: 6 probes at 13s intervals
+  - min=96.06%, median=96.78%, max=98.71%
+- Reclamation dips: 3 detected (97.33→96.21, 98.71→96.06, 98.43→96.24)
+- Discontinuities: 0
+- VmHWM state: pinned_at_cap=true, advancing_in_window=false
+- State changes: false (no OOMKilled, no restarts during window)
+- Reason: "all samples >93% sustained high — loss of reclamation"
+- **Severity: WARN** — sustained high memory with loss-of-reclamation pattern
+- **Dedup status: SKIP-dedup** (last reported 2026-08-11T12:36:18Z, ~2h ago, same dedup_key: `microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30`)
+- **Finding:** Continuation of A-30 WARN from prior cycle, not a new escalation. Dedup entry advanced but no new BUG-channel alert needed within 7-day window.
+
+**A-30 rag-service-1 — FOLD VERDICT (PASS):**
+- Baseline: 90.67% >= 85% investigate-gate → ENGAGE deep-probe  
+- Samples over 65s window: 6 probes at 13s intervals
+  - min=90.67%, median=90.68%, max=90.70% (extremely stable)
+- Reclamation dips: 0
+- Discontinuities: 0
+- VmHWM state: pinned_at_cap=true, advancing_in_window=false
+- State changes: false (no OOMKilled, no restarts during window)
+- Reason: "benign GC sawtooth or below tripwire"
+- **Severity: PASS** — benign garbage collection pattern, no escalation
+- **No signal emission** (FOLD verdict does not emit)
+- **Finding:** rag-service memory is stable and healthy despite high utilization; aligns with FU-RAG-DEPLOY-MEMORY STALE-ACK status (acknowledged as expected under current load profile)
+
+**All other containers PASS** (< 85% investigate-gate)
+
+#### Disk Usage (A-32)
+- [RAW-PROBE L94-96] /dev/disk1s4s1: 46% capacity → PASS ✓
+
+#### Heartbeat File Status
+- Last healthy: 2026-08-09T01:33:22Z (cycle c10)
+- Current cycle verdict: DEGRADED (pdf-extractor A-30 ESCALATE)
+- **Action:** Heartbeat file will NOT advance (only advances on ALL_GREEN verdict per spec)
+- **Note:** Heartbeat file staleness is a known, documented defect; Tier-1 cycles with non-green verdicts legitimately skip heartbeat writes
+
+#### Dispatch Context Verification
+- **pdf-extractor 96.08% (dispatch):** Confirmed at 98.76% baseline with A-30 ESCALATE verdict (sustained high, loss-of-reclamation). Fresh finding meets WARN threshold but within dedup window (SKIP-dedup from 2h ago).
+- **rag-service 90.37% (dispatch):** Confirmed at 90.67% baseline with A-30 FOLD verdict (benign, no escalation). Aligns with STALE-ACK status (FU-RAG-DEPLOY-MEMORY = DONE_VERIFIED).
+- **Heartbeat >2 days stale:** Confirmed at 2026-08-09T01:33:22Z; will NOT advance this cycle (non-ALL_GREEN verdict is correct per spec).
+
+#### Summary
+- All containers UP, all health endpoints responsive
+- pdf-extractor sustained high memory (96–99%) with loss-of-reclamation pattern → **WARN, SKIP-dedup (2h prior)**
+- rag-service stable at ~90.7% memory (benign GC pattern) → **PASS, no escalation**
+- Disk utilization healthy (46%)
+- Heartbeat correctly not advancing on non-ALL_GREEN cycle (documented defect, no action needed)
+- **Overall verdict: DEGRADED** due to pdf-extractor A-30 WARN (dedup-skipped, no new signal)
+
+---
+
 ## c25 · 2026-08-11T14:28:57Z
 
 ### Audit Run Tier-2 (14:28–14:30 UTC 2026-08-11)
@@ -116,57 +185,3 @@ Session memory for real-time audit cycles and findings.
 - rag-service baseline dropped to 75.96% (below investigate-gate) — healthy idle condition
 - Status: HEALTHY — no anomalies
 - **Note:** CORRECTIVE RE-DISPATCH cycle — prior dispatch ran full A-30 probe but failed to persist findings; this fresh measurement confirms pdf-extractor stable (88%), rag-service healthy idle (75.96%)
-
-
-## c23 · 2026-08-11T13:03:04Z
-
-### Audit Run Tier-1 (13:03–13:05 UTC 2026-08-11)
-- Tier: 1 | Container liveness + health endpoints + memory pressure (A-01 through A-33)
-- Anomalies: 0 warn, 0 critical, 0 info | dedup: 0 skipped
-- Status: **HEALTHY**
-- No emit signals — all checks PASS
-
-#### Container & Health Status (A-01 through A-20)
-- [RAW-PROBE L3-17] docker ps: all host_runtime_set services UP and healthy ✓
-- [RAW-PROBE L20-24] health endpoints: all 200 OK ✓
-- [RAW-PROBE L98-102] A-20 pdf-extractor multi-probe: 3/3 pass ✓
-
-#### Restart Count (A-21)
-- [RAW-PROBE L27] mcp-server RestartCount=0 ✓
-
-#### Memory Pressure Deep-Probe (A-30)
-
-**A-30 pdf-extractor — FOLD VERDICT:**
-- Baseline: 91.44% >= 85% investigate-gate → ENGAGE deep-probe
-- All 6 samples sustained: min=91.44%, median=91.44%, max=91.49%
-- Reclamation dips: 0 (no GC relief observed)
-- Discontinuities: 0
-- State changes: false (no restarts during window)
-- OOMKilled: false
-- VmHWM: pinned at cgroup cap (2587.6 MiB / 2621.4 MiB limit), NOT advancing in window
-- Reason: "benign GC sawtooth or below tripwire"
-- **Verdict: FOLD — NO EMIT** — benign sustained memory, no escalation tripwires met
-- Context: prior probes showed 92.52%-94.07% range; this cycle returned to 91.44% floor
-- Analysis: sustained high memory with NO reclamation dips and NO VmHWM advancement indicates stable GC pattern, not escalating pressure
-
-**A-30 rag-service — FOLD VERDICT:**
-- Baseline: 92.30% >= 85% investigate-gate → ENGAGE deep-probe
-- All 6 samples: min=92.32%, median=92.32%, max=92.32%
-- Reclamation dips: 0
-- Discontinuities: 0
-- State changes: false
-- OOMKilled: false
-- VmHWM: pinned at cap (1038.0 MiB / 1048.6 MiB limit), NOT advancing in window
-- Reason: "benign GC sawtooth or below tripwire"
-- **Verdict: FOLD — NO EMIT** — benign pattern, no escalation tripwires met
-- Prior STALE-ACK (FU-RAG-DEPLOY-MEMORY, DONE_VERIFIED) disposition remains valid
-
-#### Disk Usage (A-32)
-- [RAW-PROBE L95] root filesystem: 46% capacity < 85% threshold ✓
-
-#### Summary
-- All Tier-1 checks PASS
-- A-30 deep-probe discriminator applied to both flagged containers (pdf-extractor, rag-service)
-- Both resolve to FOLD verdicts (benign GC patterns, no escalation signals)
-- Prior higher readings (92.52%-94.07% pdf-extractor, 88.46%-96.78% rag-service across prior cycles) are consistent with stable sustained high-water baseline; no trend toward OOM or crash-cliff signatures
-- Status: HEALTHY — no anomalies
