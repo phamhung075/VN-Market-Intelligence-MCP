@@ -94,7 +94,7 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-08-11T17:07:33Z",
+    "updated_at": "2026-08-11T17:36:01Z",
     "updated_by": "qa",
     "active_task_id": null,
     "next_agent": null
@@ -133,8 +133,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-11T17:06:19Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-08-11T17:32:15Z",
+    "_updated_by": "agent-father",
     "archive": [],
     "rows": [
       {
@@ -538,6 +538,19 @@
         "triaged_at": "2026-08-11T17:09:47Z",
         "triaged_by": "po",
         "disposition": "FOLD -> FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD. Arrived mid-tick (17:05:54Z, auditor-t1 17:00Z cycle) — 4th A-30 pdf-extractor fire in ~60min, same dedup_key as sys-20260811T160638-24f0. PO RAW re-verify at 17:0xZ: pdf-extractor 95.31% (was 94.90% eight minutes earlier) — genuinely sustained and drifting UP, not a probe artifact. WARN severity + covered row already open => FOLD, no mint."
+      },
+      {
+        "id": "agent-father-20260811T173215-te-t03-orchstate-commit-needed",
+        "ts": "2026-08-11T17:32:15Z",
+        "from": "agent-father",
+        "to": "router",
+        "type": "task-complete",
+        "summary": "TE-T03 done: main.md split -> work-tick.md + preflight-error-fallback.md (cowork-team). Row->review/qa; needs commit.",
+        "severity": "INFO",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "agent-father",
+        "detail": "Pure relocation, zero logic changed (mirrors TE-T16/TE-T26 precedent). Also updated the LIVE .claude/skills/cron-cowork-team/SKILL.md ERROR clause to point at preflight-error-fallback.md (was pointing at main.md Step 0a, now removed) -- recommend router run /cron-cowork-team re-arm after DONE_VERIFIED. agent-father commit_zone excludes docs/data/orch/orch-state.json (FU-AGENT-FATHER-ORCH-SCOPE) -- router/po must commit this file; agent-father commits only its own zone (docs/agents/, .claude/skills/, docs/agent-memory/). Board row already applied via orch-apply.sh (status=REVIEW, next_agent=qa, task_board.review[])."
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -3504,31 +3517,6 @@
         "depends_on": [
           "TE-T12"
         ]
-      },
-      {
-        "id": "TE-T03",
-        "title": "T-03 cowork-team main.md: extract fallback/WORK-continuation body (2/3 of file) to sub-flows [~200k gross; ~40-60k marginal after T-01]",
-        "owner": "agent-father",
-        "status": "BACKLOG",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P1",
-        "wave": 3,
-        "est_saving": "~200k gross / ~40-60k marginal after TE-T01",
-        "zone": "docs/agents/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-03",
-        "note": "SEQUENCING: depends on TE-T01 (prompt gating lands first; this thins only the residual WORK/ERROR ticks — do NOT double-count the SILENT-tick savings already captured by T-01). QA-GATED. Split L97-307 into work-tick.md (Step 0a drain + 0b.3 routing) + preflight-error-fallback.md (full ERROR chain). main.md -> ~95L.",
-        "depends_on": [
-          "TE-T01"
-        ],
-        "next_agent": "agent-father",
-        "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
-        "updated_at": "2026-08-11T17:06:14Z",
-        "po_manual_dispatch_flagged_at": "2026-08-11T17:06:13Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) re-admitted stale-flagged DRS-STRANDED-OFF-ALLOWLIST candidate (prior stamp 2026-08-07T05:04:44Z, ~4d stale, well past the 4h window) — folding into this tick's BATCH. Top of 82 eligible candidates by [priority_rank, idx]. Dependency TE-T01 verified DONE_VERIFIED in docs/data/orch/archive/2026-07.json before selection."
       },
       {
         "id": "TE-T06",
@@ -12559,6 +12547,121 @@
             "observed_at": "2026-08-11T13:55:55Z"
           }
         }
+      },
+      {
+        "title": "Replace string-interpolated SQL with bound placeholders in agentSignalStore reads",
+        "priority": "P2",
+        "zone": "mcp-server-infra",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-INFRA-agentSignal-sql-binding",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-agentSignal-sql-binding",
+        "promoted_at": "2026-07-24T05:14:29Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-11T17:34:38Z",
+        "claimed_at": "2026-08-11T17:28:33Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T05:44:13Z",
+        "review_note": "dev-mcp-server self-closeout: SQLi hardening in agentSignalStore.ts READ paths. Converted 5 caller-supplied-value interpolation sites to bound placeholders -- getSignals() hoursBack/signalType/mark-as-read UPDATE...IN(ids); getSignalEffectiveness() days/fromAgent/signalType -- matching existing codebase idiom (cronJobRunStore.ts/agentWorkLogStore.ts datetime offset pattern; coordinationStore.ts/seedWatchlist.ts generated-placeholder IN-list pattern). No structural dynamic column/table interpolation existed. Empirically verified via git-stash A/B probe which sites were genuinely exploitable pre-fix: fromAgent/signalType already had correct manual quote-escaping (not broken); hoursBack arithmetic coercion neutralized non-numeric input. getSignalEffectiveness's days field was the one live footprint -- unescaped, corrupted the WHERE clause under a crafted stacked-statement payload pre-fix (silent malformed null-row result); post-fix bound and returns a clean empty result, table intact both ways. Evidence: tsc clean. New test file FACTORY-INFRA-agentSignal-sql-binding.test.ts (9 tests incl. the days-field differential proof): 9/9 pass. Full 26-file agentSignalStore-dependent regression: 277/277 pass, identical to baseline. Full bun test: 14733 pass/44 fail/2 errors -- grep-confirmed zero (fail) lines mention agentSignalStore/agentSignal (all pre-existing VPS-push/insider-transactions/market-cap/foreign-flow 5000ms-timeout flake, count fluctuated 42-44 across 2 runs confirming flaky not deterministic). Commit a881b2489. Journal: docs/agent-memory/decisions/sprint-FACTORY-INFRA-agentSignal-sql-binding-dev-mcp-server.md | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commit a881b2489 on main ancestry -- git show --stat matches all 4 claimed files exactly (new test file, agentSignalStore.ts, decision journal, dev-mcp-server notebook). Read the actual diff, not trusted from review_note prose: confirmed all 5 caller-supplied-value sites converted to bound ? placeholders -- getSignals hoursBack + signalType, mark-as-read UPDATE...IN(ids) (generated-placeholder-count pattern), getSignalEffectiveness days + fromAgent + signalType. Spot-checked the days-field differential claim specifically: new test's malicious days payload uses an `as unknown as number` TS-bypass cast (a real risk vector -- GetEffectivenessOptions.days has no runtime validation inside the store fn itself); the MCP tool boundary (get_signal_effectiveness) DOES already z.coerce.number().int().positive() days, so the pre-fix exploit path required bypassing that layer (direct fn call / future unvalidated caller) -- claim is accurate as stated (function-level A/B probe, not an MCP-reachable prod CVE) and not overstated. Independently re-ran: new FACTORY-INFRA-agentSignal-sql-binding.test.ts 9/9 pass live; bun tsc --noEmit 0 errors; mock-guard.sh PASS on agentSignalStore.ts; full 32-file agentSignalStore-dependent regression (wider net than review's claimed 26) 335/335 pass, 0 fail, no regressions. DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-16.md STEP qa-S48.",
+        "qa_verified_at": "2026-08-11T17:34:38Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun test (new FACTORY-INFRA-agentSignal-sql-binding.test.ts + 32-file agentSignalStore-dependent regression) + bun tsc --noEmit + mock-guard.sh + git merge-base --is-ancestor + git show --stat",
+            "args": "src/__tests__/FACTORY-INFRA-agentSignal-sql-binding.test.ts (9 tests) + 32 grep-matched agentSignalStore-dependent test files (335 tests total); mock-guard.sh --files apps/mcp-server/src/infrastructure/db/agentSignalStore.ts; commit a881b2489",
+            "live_value_observed": "new test file 9/9 pass; full 32-file dependent regression 335/335 pass 0 fail (wider than review's claimed 26-file/277-test scope, same 0-fail result); tsc --noEmit 0 errors; mock-guard PASS; git show --stat matches all 4 claimed files; git merge-base --is-ancestor confirms a881b2489 on main",
+            "observed_at": "2026-08-11T17:34:38Z"
+          }
+        }
+      },
+      {
+        "title": "Move source-health tracker singleton from interface down to infrastructure",
+        "priority": "P2",
+        "zone": "mcp-server-application",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-APP-pollNews-layering-fix",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-pollNews-layering-fix",
+        "promoted_at": "2026-07-24T04:44:30Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-11T17:36:01Z",
+        "claimed_at": "2026-08-11T17:28:33Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T05:02:48Z",
+        "review_note": "dev-mcp-server self-closeout: pure DDD move, behavior-preserving. Moved globalSourceTracker singleton (+ _resetGlobalSourceTracker) from interface/mcp/tools/news-analysis/sourceHealthTools.ts to new infrastructure/observability/sourceHealthRegistry.ts -- resolves the Fence-B violation eslint.config.mjs already documented by name (pollNews.ts importing interface-layer state, annotated FENCE-LEGACY). Mirrors existing stateful-tracker precedent in infrastructure/observability/ (jobMetrics.ts, circuitBreakerLogger.ts). Left formatSourceHealthTable/registerSourceHealthTools (pure rendering, no state) in the interface file. Rewired 3 production consumers (pollNews.ts -- the violation itself; systemTools.ts; tradingEconomicsChromium.ts 2 dynamic imports, which was also wrongly reaching into interface/) + 6 test files. Removed the now-obsolete eslint-disable comment; updated the stale eslint.config.mjs Fence-B comment + a stale precedent citation in getMoneyRadarComposite.ts. Evidence: byte-diffed singleton block old-vs-new -- identical. tsc clean, zero dangling imports to old path (grep-confirmed). npx eslint clean on all 5 touched files (Fence-B no longer needs the disable). Targeted 10-file source-health/pollNews suite: 239-240 pass/4 skip, one known singleton-state cross-file flake (passes standalone, fails intermittently only under batch order) reproduced identically before AND after the move -- same signature, proving singleton semantics genuinely preserved. Server boot probe (PORT=3099, port 3000 held by live docker): health 200 toolCount=184=baseline. gen-project-stats: toolCount 184/cronJobCount 88 unaffected. Commit a2a386d24. Journal: docs/agent-memory/decisions/sprint-FACTORY-APP-pollNews-layering-fix-dev-mcp-server.md | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commit a2a386d24 on main ancestry (git merge-base --is-ancestor) -- git show --stat matches all 12 claimed files exactly (eslint.config.mjs, new infrastructure/observability/sourceHealthRegistry.ts, 3 rewired consumers [pollNews.ts, systemTools.ts, tradingEconomicsChromium.ts], 6 test files, getMoneyRadarComposite.ts doc-only precedent citation). Byte-compared the singleton block itself old-file vs new-file (seed list, recordDisabled calls, globalThis stash key, _resetGlobalSourceTracker) -- genuinely identical, pure relocation not a lossy rewrite. Confirmed the Fence-B violation is actually resolved at the exact documented site: pollNews.ts's \"eslint-disable-next-line boundaries/dependencies -- FENCE-LEGACY\" comment is gone and its import now points to infrastructure/; grep for \"from.*interface\" across pollNews.ts/getMoneyRadarComposite.ts returns zero live imports (comment-only matches); repo-wide grep confirms zero dangling imports to the old interface-layer path. Independently re-ran (not trusted from review_note prose): bun tsc --noEmit 0 errors; eslint clean (0 errors/warnings) on all 6 touched production files; targeted 7-file pollNews/source-health suite 42/42 pass 0 fail; mock-guard.sh PASS on all 6 files; security grep (process.env/password/secret/token) on every added diff line clean. DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-16.md STEP qa-S49.",
+        "qa_verified_at": "2026-08-11T17:36:00Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun tsc --noEmit + eslint (6 files) + bun test (7-file targeted suite) + mock-guard.sh",
+            "args": {
+              "commit": "a2a386d24258ecc80b599a55e2b17a6530c6fe28",
+              "files_verified": [
+                "apps/mcp-server/eslint.config.mjs",
+                "apps/mcp-server/src/infrastructure/observability/sourceHealthRegistry.ts",
+                "apps/mcp-server/src/interface/mcp/tools/news-analysis/sourceHealthTools.ts",
+                "apps/mcp-server/src/application/usecases/pollNews.ts",
+                "apps/mcp-server/src/interface/mcp/tools/system/systemTools.ts",
+                "apps/mcp-server/src/infrastructure/fetchers/tradingEconomicsChromium.ts",
+                "apps/mcp-server/src/application/usecases/getMoneyRadarComposite.ts"
+              ]
+            },
+            "live_value_observed": "git merge-base --is-ancestor confirms a2a386d24 on main; git show --stat matches all 12 claimed files; tsc --noEmit 0 errors; eslint 0 errors/warnings on 6 touched production files; targeted 7-file pollNews/source-health suite 42/42 pass 0 fail; mock-guard.sh PASS on all 6 production files; zero dangling imports to old interface-layer path repo-wide",
+            "observed_at": "2026-08-11T17:36:00Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK",
+        "type": "FIX",
+        "mode": "fix",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "M",
+        "zone": "multi",
+        "owner": "ops",
+        "co_owner": "dev-pdf-extractor",
+        "title": "FIX (P0): BCTC PEK-layout extraction stalled — OCR gateway child process deadlock + network push failure prevents result recovery",
+        "question": "Why did PEK-layout extraction go dormant again on 2026-07-28 (55+ hours stale) despite weights being present?",
+        "detail": "Production probe 2026-07-30T17:47Z found bctc_layout_units stalled at 2026-07-28 11:06:59Z. Weights present. Root cause: OCR gateway child-process bookkeeping defect + LayoutFirstPushClient network failure.",
+        "ac": "Debug OCR gateway semaphore. Verify mcp-server reachability. Check port/firewall config.",
+        "related": [
+          "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD"
+        ],
+        "created_at": "2026-07-30T17:47:00Z",
+        "created_by": "ops-dispatch-supervised-lane-sweep",
+        "updated_at": "2026-08-11T17:36:34Z",
+        "po_zone_correction_20260730": "zone was \"data\" — not one of the three legal values (apps/<service>/ | multi | cross-service/) per docs/agents/po/flow/main.md. Corrected to multi: root cause per docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md spans pdf-extractor (missing /app/PDF-Extract-Kit/models/Layout/YOLO/doclayout_yolo_ft.pt -> _PekLayoutModel load FAILED on every /pek-extract) AND mcp-server (bctcExtractReconcileJob rows_written=0 in 166/167 runs).",
+        "po_dispatch_note_20260730": "NO PICKER EXISTS FOR THIS ROW — PO-dispatched via BATCH instead. RAW-verified against scripts/lib/devteam-eligibility.jq: BOUNDED-1 gated (is_non_dev_next_agent_unrouted, next_agent=ops is not ^dev(-|$)|^developer$); SLS gated (requires effective_supervised AND effective_plan_only BOTH true, this row has both null); DRS gated (is_design_router_allowed — ops is EXPLICITLY off the ratified 2026-07-30 default allowlist [architect,ba,pm,po,agents-architect], see devteam-eligibility.jq:436-440); RLC is ready[]-only; QA-Drain is review[]-only. Zero of five pickers. Structural class tracked by FIX-DEVTEAM-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-DESTINATION.",
+        "ops_diagnostic_20260730": "ops investigated 2026-07-30T21:50Z (journal: docs/agent-memory/decisions/sprint-OPS-FIX-BCTC-LAYOUT-DEADLOCK-2026-07-30.md, commit bdc0c7e62). OCR gateway deadlock hypothesis TRANSIENT/cleared by 07-28T18:04Z restart (healthy now). Network push failure INCONCLUSIVE (connectivity verified OK, zero push-bctc-layout calls seen). PRIMARY DEFECT: no caller of POST /extract-layout-first found anywhere in mcp-server codebase -- the extraction trigger mechanism itself is missing/undiscovered. No infra/network code change needed. dev-pdf-extractor must locate what is (or should be) invoking /extract-layout-first (cron/scheduler registration, webhook, or manual-only path) and restore it.",
+        "updated_by": "po",
+        "dev_pdf_extractor_diagnostic_20260730": "opsprior finding (no caller of POST /extract-layout-first) is a RED HERRING: ExtractLayoutFirstUseCase/LF-EXTRACT is genuinely dead/unwired code, never the bctc_layout_units producer. The REAL live trigger is POST /pek-extract (PekEngineAdapter), fired by bctcPdfPullJob.ts + re-fired by bctcExtractReconcileJob.ts (5,35 * * * *) -- both correctly registered in schedulerJobTable.ts and RAW-confirmed firing on schedule via cron_job_runs (2026-07-28 through present, zero gaps). Dormancy cause: bctc_vps_queue held 0 pending rows (no new filings) AND 0 pek_triggered rows -- all 128 rows already exhausted MAX_RECONCILE_ATTEMPTS=8 into terminal enrich_failed by 2026-07-28 21:35Z (last_attempt range 07-26 20:15 - 07-28 21:35), during/after the OCR-concurrency stall that FIX-PDFX-TESSERACT-CONCURRENCY (commit 4bac2b85d) already root-caused and fixed -- that fix was already baked into the running pdf-extractor image BEFORE the 07-28T18:04:41Z restart. No code change landed under THIS task. LIVE END-TO-END VERIFICATION (2026-07-30 ~19:56-20:05Z): manually re-fired POST /pek-extract for DPM 2025-Q4 (a terminal enrich_failed row, valid pdf_path) directly against the running containers -- 202 Accepted, PekEngineAdapter processed 52/52 pages in 368s (OCR gateway semaphore/os_children matched throughout, zero deadlock), LayoutFirstPushClient push succeeded, and RAW DB COUNT confirms bctc_layout_units grew 1193->1245 rows (all DPM report_id, timestamp 2026-07-30 20:05:13). Pipe conclusively unclogged on the currently-deployed code. RESIDUAL/OPEN, flagged not resolved: (1) exact mechanism behind the errno-111/semaphore-mismatch symptoms during the 07-28 11:06-18:04 window could not be independently re-confirmed -- both containers logs from that exact window are gone (pdf-extractor access log for 18:00-22:00 shows zero /pek-extract traffic at all; mcp-server docker logs only retain back to 07-30T08:28 due to rotation) -- soft inference only, consistent with but not re-proven against the concurrency fix. (2) 128 bctc_vps_queue rows remain terminal enrich_failed and will NOT auto-recover from the pipe being unclogged -- each needs an explicit re-fire; bulk backlog recovery explicitly out of this tasks AC per handoff, my one test row (DPM) is now internally inconsistent (bctc_vps_queue.status=enrich_failed but bctc_layout_units has 52 fresh rows) as a direct side-effect of the verification call -- left as-is, mcp-server DB write is outside apps/pdf-extractor/ zone. PO ACTION NEEDED: (a) decide whether this evidence-only (no-diff) finding closes DONE_VERIFIED directly or routes through qa verify-live; (b) SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (REVIEW, blocked on this row) can likely now progress -- recovery confirmed for the pipe, but its own close_predicate Part B (terminal-row recovery) is still unmet for the other 127 rows, PO to decide on bulk re-fire ownership (ops or dev-mcp-server) separate from this row. Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-pdf-extractor.md.",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun:sqlite readonly query executed inside running container vn-market-intelligence-mcp-mcp-server-1 against /app/data/market.db (PRAGMA busy_timeout=20000; live named-volume DB, not a host copy)",
+            "args": "1) SELECT COUNT(*) n, MIN(extracted_at), MAX(extracted_at) FROM bctc_layout_units; 2) SELECT substr(extracted_at,1,10) d, COUNT(*) FROM bctc_layout_units GROUP BY d ORDER BY d DESC LIMIT 10; 3) SELECT status, COUNT(*), MAX(last_attempt) FROM bctc_vps_queue GROUP BY status; 4) SELECT COUNT(DISTINCT report_id) FROM bctc_layout_units WHERE report_id LIKE 'fallback-%'; 5) SELECT COUNT(DISTINCT report_id) FROM bctc_layout_units WHERE report_id NOT LIKE 'fallback-%' AND extracted_at >= '2026-08-01'; 6) SELECT COUNT(*) FROM bctc_vps_queue WHERE reconcile_attempts > 8",
+            "live_value_observed": {
+              "bctc_layout_units_total_rows": 5855,
+              "bctc_layout_units_extracted_at_min": "2026-05-27 21:38:47",
+              "bctc_layout_units_extracted_at_max": "2026-08-11 11:52:30",
+              "bctc_layout_units_rows_per_day_desc": "2026-08-11:247, 2026-08-10:334, 2026-08-08:140, 2026-08-04:463, 2026-08-03:1865, 2026-08-02:430, 2026-08-01:1430, 2026-07-28:159, 2026-07-21:597, 2026-06-10:19",
+              "growth_since_dev_pdf_extractor_20260730_verification": "1245 -> 5855 rows (+4610) across 7 distinct production days, unattended",
+              "bctc_table_rows": "4545 rows, MAX(extracted_at)=2026-08-08 09:09:36",
+              "bctc_vps_queue_by_status": "deferred_infra:328, done:185 (last_attempt 2026-08-11 12:05:02), enrich_failed:56 (last_attempt 2026-08-11 16:35:00), url_not_found:43, pek_triggered:2 (last_attempt 2026-08-11 17:05:42)",
+              "distinct_fallback_report_ids_ever_producing_a_layout_unit": 0,
+              "distinct_non_fallback_report_ids_producing_layout_units_since_20260801": 99,
+              "bctc_vps_queue_rows_above_reconcile_cap_8": 14
+            },
+            "observed_at": "2026-08-11T17:30:00Z",
+            "probed_by": "po (first-hand at close time — NOT a relay of dev-pdf-extractor's 2026-07-30 report)",
+            "verdict": "PASS on all three ACs. AC 'Debug OCR gateway semaphore': no deadlock — 4610 layout units completed across 7 days post-fix, most recent 5.6h before close. AC 'Verify mcp-server reachability' + AC 'Check port/firewall config': both proven by outcome — pdf-extractor's LayoutFirstPushClient has been writing into mcp-server's DB continuously for 12 days; an unreachable host or blocked port cannot produce 4610 landed rows. Trigger mechanism confirmed live: 2 bctc_vps_queue rows in pek_triggered at 2026-08-11 17:05:42, minutes before this probe."
+          }
+        },
+        "po_signoff_20260811T1733Z": "PO SIGN-OFF — DONE_VERIFIED 2026-08-11T17:33Z, closed on a FIRST-HAND live probe run at close time, not on the relayed 2026-07-30 evidence. Answers dev-pdf-extractor open question (a): this evidence-only (no-diff) row closes DONE_VERIFIED directly and does NOT route through qa verify-live. Reasoning: a qa verify-live pass would re-execute the identical query against the identical DB with zero diff to regress — pure churn. But closing on the 12-day-old relayed report alone WOULD have been a false-green, because a peer PO ruling 99 minutes earlier (po_proof_refuted_20260811T1554 on the sibling SPIKE) declared this same pipeline a live systemic incident. So the close is grounded in my own probe: see .verification.raw_probe. Decisive numbers — bctc_layout_units 1245 -> 5855 rows across 7 distinct production days since 07-30, MAX(extracted_at) 2026-08-11 11:52:30 (5.6h pre-close), and 2 bctc_vps_queue rows sitting in pek_triggered at 17:05:42Z. That is 12 days of UNATTENDED production, strictly stronger than the single hand-fired DPM row this close was originally offered on. All three ACs retired by observation; no OCR-gateway deadlock, no unreachable mcp-server, no port/firewall defect — an unreachable host cannot produce 4610 landed rows. Residual (1) from the dev-pdf-extractor handoff (07-28 11:06-18:04 errno-111/semaphore window unre-provable, container logs rotated away) is accepted as permanently unfalsifiable and explicitly NOT a blocker: 12 days of clean production is the superseding evidence. Residual (2) (128 terminal rows need manual re-fire) is REFUTED — see the ownership call recorded on SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD. Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-po-8.md STEP po-S82."
       }
     ],
     "head": {
@@ -14818,60 +14921,6 @@
         "agent_father_disposition_20260805T1658": "agent-father-triage 2026-08-05T16:58Z (relayed by router -- agent-father has no gateway tool grant, could not write this itself). DISPOSITION: DO NOT sign off DONE yet; do not rework code. T6 code verified correct at source (docs/agents/market-watcher/flow/main.md Step 2: slot=market-watcher-eod -> eod.md always, slot=market-watcher-offhours -> cycle.md mode=offhours always, empty/unrecognized -> unchanged wall-clock fallback), matches design brief docs/architecture-briefs/2026-07-21-cowork-fanout-producer-consumer-ordering.md section 5 verbatim, landed commit bdf22186d 2026-07-22. BLOCKER IS REAL BUT NARROWER THAN IT LOOKS: DESIGN-COWORK-FANOUT-T8-QA-TEST-STRATEGY depends on T1-T6 ALL SIX, not T6 alone -- T1/T2/T3/T4/T5 are all still TODO/unimplemented in ready[], three of the five (T1/T2/T4) owned by agent-father itself and untouched. Per brief section 9 (T6 has no dependency on T1-T5, can ship separately) the two test cases that actually validate T6 (brief section 7, T-7/T-8 flow-fixture walkthroughs on slot-routing only) need zero input from T1-T5. RECOMMENDATION: route a narrow qa execution of just brief-section-7 T-7/T-8 to qa now, decoupled from the 6-way T8 board row, rather than leave this row in limbo behind 5 unstarted siblings owned partly by the same triager. CROSS-REFERENCE (confirmed mechanically independent, correctly filed separately): FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (eod.md:78 stale caveat, 'what happens once inside eod.md') is NOT caused by and does NOT require touching T6/main.md ('which sub-flow file gets entered'). One genuine connective thread for whoever fixes that row's AC-2 (same-agent multi-slot notebook clobber): it is the direct fallout of THIS brief's own section 5/6 decision to WARN-not-BLOCK legitimate same-tick EOD+offhours collisions on DDD grounds -- the brief solved the collision at the signal/routing layer and never addressed the notebook-storage-layer side effect; the AC-2 fix belongs purely in the notebook-write layer, do not re-litigate the already-rejected block-at-dispatch-layer option."
       },
       {
-        "title": "Move source-health tracker singleton from interface down to infrastructure",
-        "priority": "P2",
-        "zone": "mcp-server-application",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-APP-pollNews-layering-fix",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-pollNews-layering-fix",
-        "promoted_at": "2026-07-24T04:44:30Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T05:03:01Z",
-        "claimed_at": "2026-07-24T04:44:30Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T05:02:48Z",
-        "review_note": "dev-mcp-server self-closeout: pure DDD move, behavior-preserving. Moved globalSourceTracker singleton (+ _resetGlobalSourceTracker) from interface/mcp/tools/news-analysis/sourceHealthTools.ts to new infrastructure/observability/sourceHealthRegistry.ts -- resolves the Fence-B violation eslint.config.mjs already documented by name (pollNews.ts importing interface-layer state, annotated FENCE-LEGACY). Mirrors existing stateful-tracker precedent in infrastructure/observability/ (jobMetrics.ts, circuitBreakerLogger.ts). Left formatSourceHealthTable/registerSourceHealthTools (pure rendering, no state) in the interface file. Rewired 3 production consumers (pollNews.ts -- the violation itself; systemTools.ts; tradingEconomicsChromium.ts 2 dynamic imports, which was also wrongly reaching into interface/) + 6 test files. Removed the now-obsolete eslint-disable comment; updated the stale eslint.config.mjs Fence-B comment + a stale precedent citation in getMoneyRadarComposite.ts. Evidence: byte-diffed singleton block old-vs-new -- identical. tsc clean, zero dangling imports to old path (grep-confirmed). npx eslint clean on all 5 touched files (Fence-B no longer needs the disable). Targeted 10-file source-health/pollNews suite: 239-240 pass/4 skip, one known singleton-state cross-file flake (passes standalone, fails intermittently only under batch order) reproduced identically before AND after the move -- same signature, proving singleton semantics genuinely preserved. Server boot probe (PORT=3099, port 3000 held by live docker): health 200 toolCount=184=baseline. gen-project-stats: toolCount 184/cronJobCount 88 unaffected. Commit a2a386d24. Journal: docs/agent-memory/decisions/sprint-FACTORY-APP-pollNews-layering-fix-dev-mcp-server.md"
-      },
-      {
-        "title": "Replace string-interpolated SQL with bound placeholders in agentSignalStore reads",
-        "priority": "P2",
-        "zone": "mcp-server-infra",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-INFRA-agentSignal-sql-binding",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-agentSignal-sql-binding",
-        "promoted_at": "2026-07-24T05:14:29Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T05:44:14Z",
-        "claimed_at": "2026-07-24T05:14:29Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T05:44:13Z",
-        "review_note": "dev-mcp-server self-closeout: SQLi hardening in agentSignalStore.ts READ paths. Converted 5 caller-supplied-value interpolation sites to bound placeholders -- getSignals() hoursBack/signalType/mark-as-read UPDATE...IN(ids); getSignalEffectiveness() days/fromAgent/signalType -- matching existing codebase idiom (cronJobRunStore.ts/agentWorkLogStore.ts datetime offset pattern; coordinationStore.ts/seedWatchlist.ts generated-placeholder IN-list pattern). No structural dynamic column/table interpolation existed. Empirically verified via git-stash A/B probe which sites were genuinely exploitable pre-fix: fromAgent/signalType already had correct manual quote-escaping (not broken); hoursBack arithmetic coercion neutralized non-numeric input. getSignalEffectiveness's days field was the one live footprint -- unescaped, corrupted the WHERE clause under a crafted stacked-statement payload pre-fix (silent malformed null-row result); post-fix bound and returns a clean empty result, table intact both ways. Evidence: tsc clean. New test file FACTORY-INFRA-agentSignal-sql-binding.test.ts (9 tests incl. the days-field differential proof): 9/9 pass. Full 26-file agentSignalStore-dependent regression: 277/277 pass, identical to baseline. Full bun test: 14733 pass/44 fail/2 errors -- grep-confirmed zero (fail) lines mention agentSignalStore/agentSignal (all pre-existing VPS-push/insider-transactions/market-cap/foreign-flow 5000ms-timeout flake, count fluctuated 42-44 across 2 runs confirming flaky not deterministic). Commit a881b2489. Journal: docs/agent-memory/decisions/sprint-FACTORY-INFRA-agentSignal-sql-binding-dev-mcp-server.md"
-      },
-      {
-        "title": "Split ssc.ts into per-portal disclosure fetchers (no dedup-delete yet)",
-        "priority": "P2",
-        "zone": "mcp-server-infra",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-INFRA-split-ssc-fetchers",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-ssc-fetchers",
-        "promoted_at": "2026-07-24T05:46:19Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T06:12:34Z",
-        "claimed_at": "2026-07-24T05:46:19Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T06:12:21Z",
-        "review_note": "dev-mcp-server self-closeout: pure structural split, behavior-preserving, no dedup-delete (deferred to a follow-up task per explicit scope note). Split ssc.ts (1029L, bundled SSC+HOSE+HNX+UPCOM disclosure fetchers) into sscCommon.ts (SscDocument/HttpClient types, makeDefaultHttpClient, titleMatchesReportType), sscPortal.ts (SSC congbothongtin.ssc.gov.vn: buildSscSearchUrl/parseSscHtml/withBrowserLock/_runSscPath), hoseDisclosure.ts, hnxDisclosure.ts, upcomDisclosure.ts (named *Disclosure.ts, not hose.ts/hnx.ts, to avoid colliding with existing unrelated market-price fetchers of those names). ssc.ts (1029L->186L) kept to listSscDocuments/listSscDocumentsWithFlag orchestration, re-exporting the pre-split public surface so all 7 production + 16 test call sites are unaffected -- mirrors this session's newsNormalizer split precedent. Note: canonical backlog ticket specifies a disclosures/ subfolder + <=120L cap; followed the dispatcher's explicit newsNormalizer-precedent instruction instead (flagged in journal for QA). Code-only diff confirms zero logic drift (only delta: 3 fns gain export + 5 re-export barrel lines). bun tsc --noEmit clean. Targeted 9-file ssc/disclosure suite 85/85 pass identical before/after. Full bun test: 14734 pass/40 skip/43 fail -- grep-confirmed zero overlap with touched files, all 43 match documented pre-existing flaky classes. gen-project-stats unaffected (toolCount=184, cronJobCount=88). Server boot probe (port 3099): health 200, both dashboards 200. Commit 315bc0728 (code) + 64d014937 (memory). Journal: docs/agent-memory/decisions/sprint-FACTORY-INFRA-split-ssc-fetchers-dev-mcp-server.md"
-      },
-      {
         "title": "Split vnstockStore per entity + make schema-financial migrations declarative",
         "priority": "P2",
         "zone": "mcp-server-infra",
@@ -16426,7 +16475,7 @@
         "size": "M",
         "zone": "multi",
         "owner": "ops",
-        "next_agent": "ops",
+        "next_agent": "dev-mcp-server",
         "timebox": 180,
         "title": "SPIKE (plan-only): BCTC structured-extraction pipeline DORMANT since mid-June (RAW: bctc_layout_units frozen 2026-06-10, bctc_table_rows frozen 2026-06-30) despite FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION DONE_VERIFIED 07-10 — bctcExtractReconcileJob then mass-terminalized the ENTIRE multi-quarter watchlist backlog (Q4/Q3/Q2/Q1-2025) as enrich_failed overnight 07-15 20:05Z->07-16 07:15Z, emitting 76 fail-loud RECONCILE-EXHAUSTED reports (report-storm). Determine WHY extraction is dormant + add an emission circuit-breaker.",
         "question": "Why is the BCTC structured-extraction layer producing nothing since mid-June despite the DONE_VERIFIED 07-10 wiring fix, and why did bctcExtractReconcileJob mass-terminalize the whole watchlist backlog in one overnight sweep? Did an infra event (DB restore / VM-rebuild / named-volume swap) between 07-12 and 07-16 revert the fix's effects and reset queue rows to pending?",
@@ -16567,9 +16616,9 @@
         },
         "supervised": true,
         "po_wip_unblock_20260721T1845": "PO RULING — MOVED in_progress -> ready/TODO to unblock the board. Grounds: (1) IN_PROGRESS since 2026-07-16T21:00:34Z, five days, with NO updated_at field ever written and no evidence of work in that window. (2) It was the BINDING CONSTRAINT on the entire board: WIP was 2/2 (this + DESIGN-COWORK-FANOUT-PRODUCER-CONSUMER-ORDERING), so nothing could enter in_progress, AND the stale-crash reset that would normally clear it is STRUCTURALLY UNREACHABLE for this row — docs/agents/dev-team/flow/main.md:491 keys on head.updated_at >= 24h, an AGE comparison, and a row carrying no timestamp at all can never satisfy an age predicate. So the one mechanism designed to free this slot could not fire, by construction. (3) Chose MOVE-OUT over unblock-in-place or reassign: unblocking would assert progress that is not evidenced, and reassigning would hand a five-day-cold SPIKE to a new owner without re-triage. Moving it to ready preserves the row and its history, frees the WIP slot immediately, and forces a deliberate re-dispatch decision rather than a silent resumption. Owner stays ops. supervised:true added so BOUNDED-1 cannot idle-auto-claim a stale SPIKE straight back into the slot it was just freed from. NOTE: passing through orch-apply.sh stamps updated_at on this row for the first time, which also makes the age-based stale-reset reachable for it in future — the missing-timestamp defect is fixed for this row as a side effect, but the CLASS defect (rows created without updated_at are permanently immune to every age-based gate) is NOT fixed here and is recorded as instance 6 on SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP.",
-        "updated_at": "2026-08-11T16:03:21Z",
+        "updated_at": "2026-08-11T17:36:34Z",
         "plan_only": true,
-        "updated_by": "po/triage-20260811T1554Z",
+        "updated_by": "po",
         "po_unstrand_20260730": "UNSTRANDED by po 2026-07-30 — one-field fix, plan_only null -> true. THIS ROW'S OWN TITLE SAYS 'SPIKE (plan-only)' WHILE THE plan_only FIELD WAS null, and that single null made a P0 invisible to EVERY automated dispatch lane: Supervised-Lane Sweep requires supervised AND plan_only both true (devteam-backlog-promote-supervised-lane-sweep.jq:108-109) so plan_only=null skipped it; BOUNDED-1 requires effective_supervised != true (devteam-eligibility.jq:338) so supervised=true skipped it too. Exactly the failure mode feedback_po_notebook_mint_never_reaches_orchstate_board records: on-board is NOT pickable without the plan_only+supervised PAIR. WHY THIS IS URGENT AND NOT COSMETIC — PO RAW-probed the live named-volume DB 2026-07-30T08:5xZ (docker exec mcp-server, market.db readonly): bctc_layout_units MAX(extracted_at)=2026-07-28 11:06:59, i.e. 45.8h stale against the reconcile breaker's 2d (2880min) dormancy threshold. The breaker's last fire was telegram id 3996 at 2026-07-28T11:11Z — five minutes AFTER that last producer write, which is what silenced it. So this did NOT self-resolve: the producer emitted once on 07-28, the alarm went quiet, and the pipeline is now ~2h from re-tripping the identical breaker. That oscillation IS the defect (no durable producer trigger), and the quiet window is why a 3-day-old unclaimed telegram flood looked stale rather than live. Corroborating state: financial_reports refine_status = 203 PENDING vs 8 DONE; bctc_md_tables has exactly 1 row. Related-but-distinct leg: FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP (agentic-refine -> bctc_table_rows) carries the IDENTICAL stranding shape (supervised=true, plan_only=null, next_agent=null) and is deliberately left stranded this tick — PO is not hand-stamping 41 rows one at a time; that class gets a lane, see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE.",
         "po_unstrand2_20260730": "LANE CORRECTION by po 2026-07-30T09:18Z — moved ready[] -> backlog[]. WHY THE 2026-07-30 ONE-FIELD 'UNSTRAND' DID NOT LAND: the prior PO cycle read the SLS predicate (promote :108-109, the supervised AND plan_only pair) but not the LANE that predicate is applied to. SLS-promote iterates `.task_board.backlog[]` (:105; its own header :29 states 'candidate lane: .task_board.backlog[]'). This row is in `ready[]`, so setting plan_only=true could not make it visible to SLS. Full picker audit at that moment: BOUNDED-1 backlog-only -> blind; SLS-promote backlog-only -> blind; SLS-claim requires promoted_by == 'dev-team (supervised-lane sweep)' and this row's promoted_by is null -> blind; RLC rejects supervised/plan_only -> blind. Four pickers, zero coverage, priority P0. Known-failure-shape matched without reading which collection the predicate walks. Now in backlog[] with status TODO, no children, no depends_on, no backlog-detail entry, so SLS-promote can legitimately resolve its lane and stamp it. Flags left `true` — the point is to reach the supervised lane, not to bypass it. Class fix: FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER.",
         "promoted_at": "2026-07-30T17:46:41Z",
@@ -16580,34 +16629,8 @@
         "claimed_by": "dev-team (supervised-lane sweep)",
         "disposition_note": "Recurring dormancy diagnosed; new root cause identified. FIX minted. Close_predicate unverified. Flip REVIEW->DONE_VERIFIED once FIX resolves dormancy.",
         "po_fold_20260811T1237Z": "FOLD + NEW SUB-FINDING (po triage 2026-08-11T12:37Z): 16 further [bctcExtractReconcile] RECONCILE EXHAUSTED terminal rows, 2026-08-10T15:05Z .. 2026-08-11T12:35Z (MSN 2025-Q3/Q2, KDH 2025-Q3/Q1, KDC 2025-Q1, VJC 2024-Q2, DGC 2024-Q4/Q3/Q1, FRT 2024-Q4, VIX 2024-Q4/Q2, GEX 2024-Q3, DIG 2024-Q2/Q1, HUT 2025-Q3, BSR 2024-Q1). All report '0 rows across bctc_layout_units/bctc_table_rows/bctc_md_tables' — same dormancy signature this SPIKE was opened for; consolidated here, no per-ticker mint. NEW SUB-FINDING for the spike to answer: the reconciliation CAP IS NOT ENFORCED. Three of the 16 report passes ABOVE their own stated cap — MSN 2025-Q3 'after 9 reconciliation passes (cap 8)', MSN 2025-Q2 'after 9 (cap 8)', HUT 2025-Q3 'after 11 (cap 8)'. A cap that is exceeded by up to 3 passes is either an off-by-N in the counter or a genuine unbounded-retry hole; either way it burns pdf-extractor capacity on already-terminal rows while that same service is at 94.07% memory (see FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM). Also note 14 of 16 report_ids are 'fallback-<TICKER>-<YEAR>-<Q>' shells — see FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE (ready[]), which asserts those shells are structurally unreachable by the extractor; if that is right, these 14 can NEVER succeed and retrying them at all is the waste to eliminate.",
-        "po_proof_refuted_20260811T1554": "REVIEW-LANE PROOF CONDITION REFUTED — this row should not verify as-is. The standing benign-class guard (memory feedback_bctc_reconcile_exhausted_benign_during_market_hours_503_guard) says RECONCILE EXHAUSTED reports inside the VN market-hours window 02:00-08:00Z are EXPECTED (the /pek-extract 503 market-open guard blocks the layout producer), and states ONE explicit escalation criterion: escalate ONLY if the flood persists PAST the ~09:05Z post-market proof point. THAT CRITERION IS MET TODAY 2026-08-11. Reports read live from the BUG channel this tick, all AFTER 09:05Z: HUT 2025-Q3 09:05:03, GEX 2024-Q3 10:05:03, DIG 2024-Q2 10:35:03, DGC 2024-Q1 12:05:03, DIG 2024-Q1 12:05:03, VIX 2024-Q2 12:35:05, BSR 2024-Q1 12:35:05, FRT 2024-Q1 13:05:08, KDC 2024-Q1 13:05:08, DXG 2024-Q1 14:05:05 — then at 15:05:04Z bctcExtractReconcile TRIPPED ITS CIRCUIT BREAKER: 3 rows exhausted this run (VIX 2024-Q1, HUT 2024-Q2, HUT 2024-Q1) >= threshold 3, emitting investigate the shared pdf-extractor/PEK pipeline — this is a systemic incident, do NOT triage these rows one-by-one. Every one reports the same shape: 0 rows across bctc_layout_units/bctc_table_rows/bctc_md_tables after cap 8 passes. SECOND, INDEPENDENT PLANE (this is the new part, and the reason this is not more FP churn): system-auditor A-30 on pdf-extractor fired 94.07% sustained ESCALATE at 12:36:20Z, 96.83% (all 6 probes >=93%) at 15:05:58Z, and 97.81% median at 15:37:55Z — sustained high memory with loss of reclamation. Memory exhaustion in pdf-extractor and fleet-wide zero-row layout extraction are consistent with ONE root cause, and neither plane depends on the other's instrumentation. NOT REFUTED BY: get_system_status DATA FRESHNESS showing BCTC 1.7h Binh thuong — that tracks the BCTC reports table, NOT the three layout-plane tables the reconcile job counts; a healthy top-level BCTC age cannot clear a layout-plane dormancy (same trap class as feedback_composite_score_masks_dead_detector_pruned_table). ACTION: next_agent=ops stands and the row needs re-work, not sign-off; QA must not pass it on the pre-existing remediation. Related open rows for the same pipeline: FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (P1, review), FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD (P1, backlog)."
-      },
-      {
-        "id": "FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK",
-        "type": "FIX",
-        "mode": "fix",
-        "status": "REVIEW",
-        "priority": "P0",
-        "size": "M",
-        "zone": "multi",
-        "owner": "ops",
-        "next_agent": "po",
-        "co_owner": "dev-pdf-extractor",
-        "title": "FIX (P0): BCTC PEK-layout extraction stalled — OCR gateway child process deadlock + network push failure prevents result recovery",
-        "question": "Why did PEK-layout extraction go dormant again on 2026-07-28 (55+ hours stale) despite weights being present?",
-        "detail": "Production probe 2026-07-30T17:47Z found bctc_layout_units stalled at 2026-07-28 11:06:59Z. Weights present. Root cause: OCR gateway child-process bookkeeping defect + LayoutFirstPushClient network failure.",
-        "ac": "Debug OCR gateway semaphore. Verify mcp-server reachability. Check port/firewall config.",
-        "related": [
-          "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD"
-        ],
-        "created_at": "2026-07-30T17:47:00Z",
-        "created_by": "ops-dispatch-supervised-lane-sweep",
-        "updated_at": "2026-07-30T20:11:35Z",
-        "po_zone_correction_20260730": "zone was \"data\" — not one of the three legal values (apps/<service>/ | multi | cross-service/) per docs/agents/po/flow/main.md. Corrected to multi: root cause per docs/spikes/SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD.md spans pdf-extractor (missing /app/PDF-Extract-Kit/models/Layout/YOLO/doclayout_yolo_ft.pt -> _PekLayoutModel load FAILED on every /pek-extract) AND mcp-server (bctcExtractReconcileJob rows_written=0 in 166/167 runs).",
-        "po_dispatch_note_20260730": "NO PICKER EXISTS FOR THIS ROW — PO-dispatched via BATCH instead. RAW-verified against scripts/lib/devteam-eligibility.jq: BOUNDED-1 gated (is_non_dev_next_agent_unrouted, next_agent=ops is not ^dev(-|$)|^developer$); SLS gated (requires effective_supervised AND effective_plan_only BOTH true, this row has both null); DRS gated (is_design_router_allowed — ops is EXPLICITLY off the ratified 2026-07-30 default allowlist [architect,ba,pm,po,agents-architect], see devteam-eligibility.jq:436-440); RLC is ready[]-only; QA-Drain is review[]-only. Zero of five pickers. Structural class tracked by FIX-DEVTEAM-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-DESTINATION.",
-        "ops_diagnostic_20260730": "ops investigated 2026-07-30T21:50Z (journal: docs/agent-memory/decisions/sprint-OPS-FIX-BCTC-LAYOUT-DEADLOCK-2026-07-30.md, commit bdc0c7e62). OCR gateway deadlock hypothesis TRANSIENT/cleared by 07-28T18:04Z restart (healthy now). Network push failure INCONCLUSIVE (connectivity verified OK, zero push-bctc-layout calls seen). PRIMARY DEFECT: no caller of POST /extract-layout-first found anywhere in mcp-server codebase -- the extraction trigger mechanism itself is missing/undiscovered. No infra/network code change needed. dev-pdf-extractor must locate what is (or should be) invoking /extract-layout-first (cron/scheduler registration, webhook, or manual-only path) and restore it.",
-        "updated_by": "dev-pdf-extractor",
-        "dev_pdf_extractor_diagnostic_20260730": "opsprior finding (no caller of POST /extract-layout-first) is a RED HERRING: ExtractLayoutFirstUseCase/LF-EXTRACT is genuinely dead/unwired code, never the bctc_layout_units producer. The REAL live trigger is POST /pek-extract (PekEngineAdapter), fired by bctcPdfPullJob.ts + re-fired by bctcExtractReconcileJob.ts (5,35 * * * *) -- both correctly registered in schedulerJobTable.ts and RAW-confirmed firing on schedule via cron_job_runs (2026-07-28 through present, zero gaps). Dormancy cause: bctc_vps_queue held 0 pending rows (no new filings) AND 0 pek_triggered rows -- all 128 rows already exhausted MAX_RECONCILE_ATTEMPTS=8 into terminal enrich_failed by 2026-07-28 21:35Z (last_attempt range 07-26 20:15 - 07-28 21:35), during/after the OCR-concurrency stall that FIX-PDFX-TESSERACT-CONCURRENCY (commit 4bac2b85d) already root-caused and fixed -- that fix was already baked into the running pdf-extractor image BEFORE the 07-28T18:04:41Z restart. No code change landed under THIS task. LIVE END-TO-END VERIFICATION (2026-07-30 ~19:56-20:05Z): manually re-fired POST /pek-extract for DPM 2025-Q4 (a terminal enrich_failed row, valid pdf_path) directly against the running containers -- 202 Accepted, PekEngineAdapter processed 52/52 pages in 368s (OCR gateway semaphore/os_children matched throughout, zero deadlock), LayoutFirstPushClient push succeeded, and RAW DB COUNT confirms bctc_layout_units grew 1193->1245 rows (all DPM report_id, timestamp 2026-07-30 20:05:13). Pipe conclusively unclogged on the currently-deployed code. RESIDUAL/OPEN, flagged not resolved: (1) exact mechanism behind the errno-111/semaphore-mismatch symptoms during the 07-28 11:06-18:04 window could not be independently re-confirmed -- both containers logs from that exact window are gone (pdf-extractor access log for 18:00-22:00 shows zero /pek-extract traffic at all; mcp-server docker logs only retain back to 07-30T08:28 due to rotation) -- soft inference only, consistent with but not re-proven against the concurrency fix. (2) 128 bctc_vps_queue rows remain terminal enrich_failed and will NOT auto-recover from the pipe being unclogged -- each needs an explicit re-fire; bulk backlog recovery explicitly out of this tasks AC per handoff, my one test row (DPM) is now internally inconsistent (bctc_vps_queue.status=enrich_failed but bctc_layout_units has 52 fresh rows) as a direct side-effect of the verification call -- left as-is, mcp-server DB write is outside apps/pdf-extractor/ zone. PO ACTION NEEDED: (a) decide whether this evidence-only (no-diff) finding closes DONE_VERIFIED directly or routes through qa verify-live; (b) SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (REVIEW, blocked on this row) can likely now progress -- recovery confirmed for the pipe, but its own close_predicate Part B (terminal-row recovery) is still unmet for the other 127 rows, PO to decide on bulk re-fire ownership (ops or dev-mcp-server) separate from this row. Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-pdf-extractor.md."
+        "po_proof_refuted_20260811T1554": "REVIEW-LANE PROOF CONDITION REFUTED — this row should not verify as-is. The standing benign-class guard (memory feedback_bctc_reconcile_exhausted_benign_during_market_hours_503_guard) says RECONCILE EXHAUSTED reports inside the VN market-hours window 02:00-08:00Z are EXPECTED (the /pek-extract 503 market-open guard blocks the layout producer), and states ONE explicit escalation criterion: escalate ONLY if the flood persists PAST the ~09:05Z post-market proof point. THAT CRITERION IS MET TODAY 2026-08-11. Reports read live from the BUG channel this tick, all AFTER 09:05Z: HUT 2025-Q3 09:05:03, GEX 2024-Q3 10:05:03, DIG 2024-Q2 10:35:03, DGC 2024-Q1 12:05:03, DIG 2024-Q1 12:05:03, VIX 2024-Q2 12:35:05, BSR 2024-Q1 12:35:05, FRT 2024-Q1 13:05:08, KDC 2024-Q1 13:05:08, DXG 2024-Q1 14:05:05 — then at 15:05:04Z bctcExtractReconcile TRIPPED ITS CIRCUIT BREAKER: 3 rows exhausted this run (VIX 2024-Q1, HUT 2024-Q2, HUT 2024-Q1) >= threshold 3, emitting investigate the shared pdf-extractor/PEK pipeline — this is a systemic incident, do NOT triage these rows one-by-one. Every one reports the same shape: 0 rows across bctc_layout_units/bctc_table_rows/bctc_md_tables after cap 8 passes. SECOND, INDEPENDENT PLANE (this is the new part, and the reason this is not more FP churn): system-auditor A-30 on pdf-extractor fired 94.07% sustained ESCALATE at 12:36:20Z, 96.83% (all 6 probes >=93%) at 15:05:58Z, and 97.81% median at 15:37:55Z — sustained high memory with loss of reclamation. Memory exhaustion in pdf-extractor and fleet-wide zero-row layout extraction are consistent with ONE root cause, and neither plane depends on the other's instrumentation. NOT REFUTED BY: get_system_status DATA FRESHNESS showing BCTC 1.7h Binh thuong — that tracks the BCTC reports table, NOT the three layout-plane tables the reconcile job counts; a healthy top-level BCTC age cannot clear a layout-plane dormancy (same trap class as feedback_composite_score_masks_dead_detector_pruned_table). ACTION: next_agent=ops stands and the row needs re-work, not sign-off; QA must not pass it on the pre-existing remediation. Related open rows for the same pipeline: FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (P1, review), FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD (P1, backlog).",
+        "po_ownership_call_20260811T1733Z": "PO OWNERSHIP CALL 2026-08-11T17:33Z (answers dev-pdf-extractor open question (b), raised on FIX-BCTC-LAYOUT-PUSH-FAILURE-NETWORK-DEADLOCK, now DONE_VERIFIED). RULING: NEITHER ops NOR dev-mcp-server gets a bulk re-fire task — the premise of that question is dead. Live probe 2026-08-11T17:30Z (full raw_probe recorded on the FIX row): bctc_vps_queue enrich_failed has fallen 128 -> 56 with no manual intervention, and 2 rows sat in pek_triggered at 17:05:42Z. Terminal rows therefore DO auto-recover via bctcExtractReconcileJob. This factually REFUTES both the 2026-07-17 close_caveat (\"terminal rows may NOT auto-retry after PEK resumes post-market\") and dev-pdf-extractor residual (2) (\"128 rows will NOT auto-recover, each needs an explicit re-fire\"). close_predicate Part B needs no bulk-recovery owner; it is self-satisfying and must be re-scored against the live count, not the 07-17 snapshot. SECOND RULING — po_proof_refuted_20260811T1554 is PARTLY REFUTED. Its escalation trigger (flood persisting past the ~09:05Z post-market proof point) is real and I do not disturb it, but its stated mechanism (\"fleet-wide zero-row layout extraction\", \"systemic incident on the shared pdf-extractor/PEK pipeline\") is contradicted by the discriminating query: ZERO fallback-* report_ids have EVER produced a layout unit (0 across all history), while 99 distinct NON-fallback report_ids produced units since 2026-08-01, 11 of them within the 34h before this probe. The producer is healthy. The flood is confined to structurally-unextractable shell report_ids — exactly what FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE (ready[]) asserts and what this row's own po_fold_20260811T1237Z already suspected (14 of 16 were fallback-* shells). A healthy layout plane cannot be inferred dead from per-report_id zero-counts — the same trap class the 15:54Z note itself invoked about composite scores masking a dead detector. THE REAL RESIDUAL, independently confirmed live: 14 bctc_vps_queue rows sit ABOVE their own cap of 8 (max observed reconcile_attempts=11, HUT 2024-Q2), corroborating the 12:37Z cap-not-enforced sub-finding from a second, independent plane. That is unbounded retry burning pdf-extractor capacity on rows that can never succeed. It is a code defect in bctcExtractReconcileJob.ts = mcp-server zone, NOT infra. next_agent moved ops -> dev-mcp-server on that basis; ops has no remaining actionable item on this row. Scope split preserved: the pdf-extractor 94-97.8% memory plane cited at 15:54Z stays with FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (P1, review) and is NOT folded here. Status deliberately left REVIEW — this is not a sign-off; the cap-enforcement defect is a genuine unmet residual. NO po_goahead stamped: this row is supervised:true and its remediation plan does not exist yet; docs/agents/po/flow/supervised-goahead.md Step 1-2 forbid pre-emptively ratifying an absent deliverable. Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-po-8.md STEP po-S82."
       },
       {
         "id": "FIX-SIGNALQUALITYAUDIT-WRITE-GATE-UNREACHABLE-BY-EMITTER-CONTRACT",
@@ -19190,6 +19213,32 @@
         "origin_signal_id": "bug-escalation:bctc-analyst:signals-absent-4th-cycle",
         "updated_by": "developer",
         "dev_note": "Fixed: added read-first SIGNAL-FILE WRITE VERIFICATION guard to docs/agents/bctc-analyst/flow/main.md — Write tool's own return is now the ONLY write-verification signal (per-cycle), agent must never Read a docs/signals/*.json path it wrote in a prior cycle to re-confirm presence. AC-2: no Bash/Glob grant added, tool grant stays narrow. AC-3 regression traced (not replayed) in decision journal. Commit c23d19da4 (pushed to origin/main). Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md STEP developer-S91."
+      },
+      {
+        "id": "TE-T03",
+        "title": "T-03 cowork-team main.md: extract fallback/WORK-continuation body (2/3 of file) to sub-flows [~200k gross; ~40-60k marginal after T-01]",
+        "owner": "agent-father",
+        "status": "REVIEW",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P1",
+        "wave": 3,
+        "est_saving": "~200k gross / ~40-60k marginal after TE-T01",
+        "zone": "docs/agents/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-03",
+        "note": "SEQUENCING: depends on TE-T01 (prompt gating lands first; this thins only the residual WORK/ERROR ticks — do NOT double-count the SILENT-tick savings already captured by T-01). QA-GATED. Split L97-307 into work-tick.md (Step 0a drain + 0b.3 routing) + preflight-error-fallback.md (full ERROR chain). main.md -> ~95L. DONE by agent-father 2026-08-11: extracted fallback/WORK-continuation body from main.md (322L pre-edit) into work-tick.md (118L, Step 0a drain + Step 0b.3 one-shot routing, shared by WORK-continuation direct calls AND the ERROR-path re-entry) and preflight-error-fallback.md (136L, full original Steps 0a-6 ERROR-verdict chain, unchanged, never deleted). main.md -> 106L (team boundary, Step 0 preflight, verdict JUMP-TO, WORK continuation, ERROR Fallback pointer). Pure relocation, zero logic changed -- mirrors TE-T16/TE-T26 precedent. Line-1 size-justification marker rewritten to match real size (was stale ~195L vs actual 307L pre-edit, flagged as a TE-T13 follow-up -- closed as a side effect). Also updated the LIVE CronCreate prompt (.claude/skills/cron-cowork-team/SKILL.md ERROR clause) to point at preflight-error-fallback.md instead of the now-removed inline main.md Step 0a -- required, else the already-armed cron misdirects on the next ERROR verdict; router should run /cron-cowork-team re-arm after DONE_VERIFIED. Awaiting QA.",
+        "depends_on": [
+          "TE-T01"
+        ],
+        "next_agent": "qa",
+        "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
+        "updated_at": "2026-08-11T17:32:31Z",
+        "po_manual_dispatch_flagged_at": "2026-08-11T17:06:13Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) re-admitted stale-flagged DRS-STRANDED-OFF-ALLOWLIST candidate (prior stamp 2026-08-07T05:04:44Z, ~4d stale, well past the 4h window) — folding into this tick's BATCH. Top of 82 eligible candidates by [priority_rank, idx]. Dependency TE-T01 verified DONE_VERIFIED in docs/data/orch/archive/2026-07.json before selection.",
+        "agent_father_completed_at": "2026-08-11T17:32:15Z"
       }
     ],
     "qa": [
@@ -19461,6 +19510,24 @@
         "claimed_at": "2026-08-11T15:25:14Z",
         "claimed_by": "dev-team (review-lane qa-drain)",
         "redispatch_count": 1
+      },
+      {
+        "title": "Split ssc.ts into per-portal disclosure fetchers (no dedup-delete yet)",
+        "priority": "P2",
+        "zone": "mcp-server-infra",
+        "type": "FACTORY",
+        "status": "QA",
+        "id": "FACTORY-INFRA-split-ssc-fetchers",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-ssc-fetchers",
+        "promoted_at": "2026-07-24T05:46:19Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-11T17:28:34Z",
+        "claimed_at": "2026-08-11T17:28:33Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T06:12:21Z",
+        "review_note": "dev-mcp-server self-closeout: pure structural split, behavior-preserving, no dedup-delete (deferred to a follow-up task per explicit scope note). Split ssc.ts (1029L, bundled SSC+HOSE+HNX+UPCOM disclosure fetchers) into sscCommon.ts (SscDocument/HttpClient types, makeDefaultHttpClient, titleMatchesReportType), sscPortal.ts (SSC congbothongtin.ssc.gov.vn: buildSscSearchUrl/parseSscHtml/withBrowserLock/_runSscPath), hoseDisclosure.ts, hnxDisclosure.ts, upcomDisclosure.ts (named *Disclosure.ts, not hose.ts/hnx.ts, to avoid colliding with existing unrelated market-price fetchers of those names). ssc.ts (1029L->186L) kept to listSscDocuments/listSscDocumentsWithFlag orchestration, re-exporting the pre-split public surface so all 7 production + 16 test call sites are unaffected -- mirrors this session's newsNormalizer split precedent. Note: canonical backlog ticket specifies a disclosures/ subfolder + <=120L cap; followed the dispatcher's explicit newsNormalizer-precedent instruction instead (flagged in journal for QA). Code-only diff confirms zero logic drift (only delta: 3 fns gain export + 5 re-export barrel lines). bun tsc --noEmit clean. Targeted 9-file ssc/disclosure suite 85/85 pass identical before/after. Full bun test: 14734 pass/40 skip/43 fail -- grep-confirmed zero overlap with touched files, all 43 match documented pre-existing flaky classes. gen-project-stats unaffected (toolCount=184, cronJobCount=88). Server boot probe (port 3099): health 200, both dashboards 200. Commit 315bc0728 (code) + 64d014937 (memory). Journal: docs/agent-memory/decisions/sprint-FACTORY-INFRA-split-ssc-fetchers-dev-mcp-server.md"
       }
     ],
     "_closed_signals_20260614": {
