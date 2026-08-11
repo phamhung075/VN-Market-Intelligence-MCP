@@ -1318,3 +1318,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory BELOW-FLOOR 99.58% — resource exhaustion
+**Severity:** CRITICAL | **Date:** 2026-08-11 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** rag-service baseline 99.58%, all 6 probes flat at 99.58%. Zero reclamation dips. Host-side floor gate (MEM_FLOOR=40MiB) triggered during probe. VmHWM UNAVAILABLE due to host headroom < 40MiB.
+**Impact:** Container at absolute maximum capacity with zero flexibility for operational variance. Risk of OOM kill or service instability. Critical resource exhaustion.
+**Root cause:** Host memory constrained. Container allocation or workload requires larger memory pool.
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-11T18:16:30Z (signal sys-20260811T181604-0404, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
