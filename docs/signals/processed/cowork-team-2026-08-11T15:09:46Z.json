@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-11T15:09:46Z",
+    "matched_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-1": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-1": null
+    },
+    "last_fired_timestamp": "2026-08-11T15:09:36Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "15:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 26,
+    "note": "1 slot fired (bctc-analyst-slot-1, cron 0 15 * * *), background spawn dispatched; 3 NEW cowork-addressed signals drained (2x to=po auditor_cycle_loss, 1x to=po A-30 pdf-extractor signal_feedback) — all marked READ, dispatch-only convention"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-11T15:09:46Z",
+  "_processed": {
+    "fingerprint": "1538a88a0c77a437d54021b66bde2ba266dbfcd64bd624559b130d813faef8d9",
+    "processedAt": "2026-08-11T15:21:27Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

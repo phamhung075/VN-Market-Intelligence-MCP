@@ -1,0 +1,67 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
+  "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers, FPT Edu students",
+  "ops": "Q1-2026 gross margin 34.0%, operating margin 22.0%; software-export/JV income (+36% YoY affiliate profit) offsetting FTEL deconsolidation-driven headline revenue drop (-22.3% reported; +8.7% YoY on restated like-for-like basis)",
+  "mgmt": "ROE 6.2% standalone-quarter (sector-annualized 28.3%, top of sector); no insider signals; 30d sentiment trend negative (11/13 bullish articles but slope -0.80, cooling)",
+  "valuation": {
+    "pe": 13.8,
+    "sector_median_pe": 17.3,
+    "earning_yield_pct": 7.25,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pp": 2.25,
+    "verdict": "FAIR"
+  },
+  "kinh_dich": {
+    "que": "Kien(39)",
+    "trend": "BAT LOI",
+    "confidence_pct": 25,
+    "signal": "GIU"
+  },
+  "esc_gate": {
+    "esc1": "unevaluable_no_bash",
+    "esc2": {
+      "result": false,
+      "imbalance_pct": 0
+    },
+    "esc3": {
+      "result": "DATA-COVERAGE-LIMITED",
+      "quarters_returned": 3,
+      "coverage_guard_held": true,
+      "guard_key": "esc-datacov:FPT:Q1-2026:ESC-3"
+    },
+    "esc4": {
+      "result": false,
+      "non_operating_share_pct": 2
+    },
+    "esc5": {
+      "result": true,
+      "min_confidence": 0.45,
+      "low_confidence_unit_ids": [
+        "unit-0008",
+        "unit-0009",
+        "unit-0010",
+        "unit-0011",
+        "unit-0012",
+        "unit-0013",
+        "unit-0014"
+      ],
+      "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d"
+    },
+    "escalation_status": "PENDING",
+    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+    "trigger_id": "ESC-5"
+  },
+  "insider_sentiment_context": "market_wide NEUTRAL, null_reason=INSUFFICIENT_DATA (90d window)",
+  "fetchedAt": "2026-08-11T15:10:18Z",
+  "_processed": {
+    "fingerprint": "757876ce3432e4acb4ecd5f002671e03b8e80dee171a69997338901e533cac3f",
+    "processedAt": "2026-08-11T15:21:27Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

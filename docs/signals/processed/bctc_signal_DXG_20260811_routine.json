@@ -1,0 +1,41 @@
+{
+  "ticker": "DXG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Real-estate developer — residential projects, land-bank development",
+  "customer": "Retail homebuyers and investors in HCMC / Southern Vietnam residential projects",
+  "ops": "No BCTC data extracted this cycle (\"Chua co du lieu BCTC\" — persistent gap across recent cycles, Q2-2026 filing overdue since 30/07/2026); valuation drawn from cached sector-comparison: PE 66.5x vs sector median 16.1x (+312% premium), PB in-line, ROE 1.9% vs sector median 7.3% (below median)",
+  "mgmt": "No insider signals; KD hexagram Kien(39) persistent BAT LOI (unfavorable) read; AVOID valuation verdict — bullish signal withheld per gate rule",
+  "valuation": {
+    "pe": 66.5,
+    "sector_median_pe": 16.1,
+    "earning_yield_pct": 1.5,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pp": -3.5,
+    "verdict": "AVOID"
+  },
+  "kinh_dich": {
+    "que": "Kien(39)",
+    "trend": "BAT LOI",
+    "confidence_pct": 25,
+    "signal": "GIU"
+  },
+  "esc_gate": {
+    "esc1": "unevaluable_no_bctc_data",
+    "esc2": "unevaluable_no_bctc_data",
+    "esc3": "unevaluable — OCF corrupt (~4.2e18, OCR extraction garbage), discarded",
+    "esc4": "unevaluable_no_bctc_data",
+    "esc5": "unevaluable_no_bctc_data",
+    "escalation_status": "NONE"
+  },
+  "insider_sentiment_context": "market_wide NEUTRAL, null_reason=INSUFFICIENT_DATA (90d window)",
+  "fetchedAt": "2026-08-11T15:10:18Z",
+  "_processed": {
+    "fingerprint": "f66b8279b31cd99b454592a40bac8f8ce86d5362fab84183591fc9f635388ff1",
+    "processedAt": "2026-08-11T15:21:27Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
