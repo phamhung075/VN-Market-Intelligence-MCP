@@ -1,5 +1,29 @@
 # System Audit Dashboard
 
+## Anomaly: A-30 · pdf-extractor-1 memory at 85.11% (boundary condition)
+**Severity:** WARN | **Date:** 2026-08-11 | **Status:** OPEN
+**Location:** mcp-server pod — pdf-extractor-1 container (PDF text extraction service)
+**Details:** pdf-extractor-1 at 85.11% of allocated memory, exactly at the A-30 investigate-gate boundary (≥85% threshold). State stable with no OOM events, no recent restarts, no crash signals.
+**Impact:** Container approaching saturation point. Sustained operation at this threshold risks memory pressure events during burst workloads.
+**Root cause:** PDF extraction workload inherent memory profile; coincident with rag-service memory regression.
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-11T20:00:00Z (signal 10692, system-auditor -> po, dedup_key=microservice_degraded:pdf-extractor-1:A-30)
+**Mitigation:** Monitor via next Tier-1 cycle. If sustained ≥85%, escalate to ops for container resource review (memory cap adjustment or workload distribution).
+
+---
+
+## Anomaly: A-30 · rag-service-1 memory at 90.37% (sustained high, STALE-ACK)
+**Severity:** WARN | **Date:** 2026-08-11 | **Status:** OPEN
+**Location:** mcp-server pod — rag-service-1 container (RAG embedding model service)
+**Details:** rag-service-1 at 90.37% of allocated memory (98.6 MiB free), baseline 93.43% from c34 cycle at 2026-08-11T18:40Z. Pattern: sustained high memory (>93%) with zero reclamation dips. ACK entry tracked_by=FU-RAG-DEPLOY-MEMORY has status DONE_VERIFIED (completed 2026-08-08T10:59:52Z), so STALE-ACK correctly expired. VmHWM pinned at 1 GiB cgroup limit, NOT advancing.
+**Impact:** Elevated memory persistence aligns with known embedder model design decision (task FU-RAG-DEPLOY-MEMORY approved resident-set ~700MiB for singleton embedder model). Process stable, no OOM, no crash signatures.
+**Root cause:** Design outcome — task FU-RAG-DEPLOY-MEMORY made explicit trade-off accepting high baseline memory for embedder model performance.
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-11T20:00:00Z (signal 10693, system-auditor -> po, dedup_key=microservice_degraded:rag-service-1:A-30)
+**Mitigation:** No action required — aligns with task acceptance. STALE-ACK status correctly reflects that task completion removed suppression validity.
+
+---
+
 ## Anomaly: B-06 · vn-bctc-fetch VPS proxy route stale
 **Severity:** CRITICAL | **Date:** 2026-07-29 | **Status:** OPEN
 **Location:** VPS vinahost (125.212.251.27) — vn-bctc-fetch service (BCTC PDF fetcher)

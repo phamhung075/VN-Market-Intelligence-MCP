@@ -50,6 +50,33 @@
 
 ---
 
+## c35 · 2026-08-11T20:00Z
+
+### Audit Run Tier-1 (20:00–20:05 UTC 2026-08-11)
+- Tier: 1 | Container liveness + health endpoints + memory A-30 discriminator
+- Anomalies: 2 warn (A-30: pdf-extractor boundary + rag-service regression), 0 critical
+- Status: **DEGRADED** (memory creep on 2 containers)
+
+#### A-30 Memory Pressure Findings
+
+**pdf-extractor-1 (85.11%):**
+- Baseline at investigate-gate boundary (≥85%)
+- State: stable, no OOM, no restarts
+- Verdict: WARN (boundary condition)
+- [emit-signal] OK id=audit-20260811-t1-pdf check_id=A-30
+
+**rag-service-1 (90.37%, STALE-ACK):**
+- Memory: 90.37% of capacity, 98.6 MiB free
+- Baseline: 93.43% observed (from prior c34 measurement)
+- Pattern: sustained high, loss of reclamation
+- ACK status: DONE_VERIFIED (FU-RAG-DEPLOY-MEMORY task completed)
+- Verdict: WARN (elevated, ACK expired)
+- [emit-signal] OK id=audit-20260811-t1-rag check_id=A-30
+
+**Summary:** Two memory pressure events detected. rag-service behavior aligns with known embedder model design. pdf-extractor at critical boundary.
+
+---
+
 ## c34 · 2026-08-11T18:22Z
 
 ### Audit Run Tier-2 (18:20–18:23 UTC 2026-08-11)
