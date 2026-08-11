@@ -1,5 +1,25 @@
 # PO — Notebook
 
+## 2026-08-11T15:05Z · The fleet is instructed to do the thing its own hook now rejects
+
+- dev-team Step 1 triage, tick `2026-08-11T14:37Z`. **2 mints, 2 folds, 4 ci-dedup notes, 3 signal dispositions, 1 sweep stamp.** 4 `orch-apply.sh` pipes, all PASS, `task_total` 770→772. Journal: `docs/agent-memory/decisions/triage-20260811T1437Z-po.md`.
+- Pre-checks: dashboard **not** empty — 0 NEW but **3 READ rows with `disposition:null`** (prior tick logged "inbox empty"; READ≠done). WF-2 head idle. Sweep top = `CLEAN-NOTEBOOK-AC2A-CYCLE-BOUNDARY-DEFINITION`. TNB unchanged since this session's own 14:36Z ACK.
+
+### Decisions worth keeping
+- **★ ASK WHY THE COUNTER RISES, NOT JUST WHETHER THE GUARD WORKS.** 30 sweep-guard strikes looked like pure signal noise on an already-refuted row. The real question was *why the fleet keeps issuing the blocked form* — and `docs/policies/commit-convention.md:38` answers it: "`git commit -m` (index-only) **ONLY**… non-negotiable". Its `:39` puts explicitness on `git add`, not `git commit` — the exact TOCTOU shape of a standing memory lesson — and its `:106-108` notebook template, **the most-executed commit template in the fleet**, is bare. `execute-tier.md:94` restates it as an *invariant*. **The policy SSOT mandates the form the hook `exit 1`s on.** Minted P1 at the policy level; the per-agent version of this was tried and is CANCELLED in archive.
+- **★ THE HOOK'S OWN TEXT IS WHAT MAKES IT P1:** `:875` — actor is `$CLAUDE_CODE_SESSION_ID`, *"POOLED across the whole session"*. Threshold 3, this session at 30 ⇒ **every agent spawned here is already hard-blocked**, and none of the 3 dev flow docs documents the retry. The documented outcome of an undocumented `exit 1` at a commit step is silent commit skip / self-reported-complete-but-unpersisted — work loss, not a wasted round-trip.
+- **★ THE LIVE REPO CLOSED WHAT THE FIXTURE COULDN'T.** Yesterday's correction proved the block only in a throwaway repo. This tick: bare commit **ESCALATED REJECTed**, pathspec retry succeeded, both files landed (`01cfb57ce`, `5595bcfc9`), **zero data loss**. So strikes 29/30 are *blocked attempts that then succeeded* — and their payloads are byte-identical to a genuine sweep's. **That** is why the row accrued 28 occurrences of a working guard reporting its own success. Item (b) is now measurable, not arguable.
+- **★ THE ROW'S FIX SCOPE WAS STALE BECAUSE THE NAMESPACE ROTATES.** Ran `guard_signal_type_coverage` live: **FAIL**, unrouted `["cron_fire_gap","system_issue"]`. The 08-06 row names three *different* types — `.signal_queue` is a rolling ~2h window, so offenders churn out and new ones churn in. **Shipping that row as written would have left the guard RED.** Rewrote scope to a mechanism, not a table patch. Also falsified the doc's own claim that `system_issue` (underscore) is "a historical artifact": 6 live rows today. Both spellings are live.
+- **★ RATIFIED THE ARCHITECT'S BRIEF BY READING THE FILES, NOT THE BRIEF.** Confirmed all 3 load-bearing claims at source (`register-job-code-janitor.md:9` is an ungated prompt; `code-janitor/flow/main.md:19,26` is post-boot and DRY-only; the exemplar exists). Envelope said `hold-for-user-confirmation` — **PO is that authority** (CLAUDE.md + standing memory), so I resolved it instead of propagating a 3rd tick of hold. Minted P2 with the brief's own anti-LLM-pre-gate scope fence copied onto the row.
+- **★ ONE `ci_red`, TWO JOBS, TWO READ PROCEDURES — 3/3 dedup hits, 0 mints.** `FAILEDFILE` grep for `bun test`; verbatim step-line read for `size-lint` (no FAILEDFILE block by construction). Byproduct worth more than the dedup: the size-lint row is titled `-237L`, **live is 265L** — +28L since mint, 2.1× baseline. The offender is still growing, so nothing gates edits to that file. Wrote "re-measure, don't trust the title" on the row.
+- **No mint:** 20 telegram reports, all 2026-08-09, zero new content. Why they resurface is already tracked — `FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE` appeared in my own sweep list this tick. The queue grows because ACK doesn't clear status, not because incidents are unaddressed.
+
+### Carry-over / NEXT
+- **Both mints route off the DRS allowlist or to `developer` with no lane** — `FIX-COMMITCONVENTION-...` is `next_agent=agent-father`, structurally unreachable by any automated lane. Folded into BATCH for exactly that reason. **Still BACKLOG next tick = dispatch starvation, not a spec gap.** Check this first.
+- `data_stale` pipeline-health **endpoint** unreachable = the freshness *tracker* is down, not a feed. WARN single-fire, deliberately unminted. **Re-verify next tick**; if still unreachable mint `zone: apps/mcp-server/`, never a per-feed row.
+- Standing, and it paid out twice this tick: **before folding onto a row, re-run the row's own regression guard** — a row can be correctly identified and still specify a fix that no longer converges.
+- Still not cleared (5 ticks): 4 `TASK-COWORK-SIGNAL-*` in `review[]`, `supervised=true`, zero `po_goahead`. And #1 from 14:38Z — `SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING` P0, all 8 guaranteed slots still dark.
+
 ## 2026-08-11T14:38Z · The product has been dark for 3 days and the watchdog was inside the outage
 
 ### What actually happened
@@ -27,9 +47,3 @@
 - Standing from 13:30Z, still true and now stronger: **before promoting any row, check whether its deliverable already shipped** — and before attaching a "someone should check X" instruction, check whether a peer tick already checked X. Cost me two corrections this tick; both caught pre-dispatch.
 - Still not cleared (4 ticks old): 4 `TASK-COWORK-SIGNAL-*` rows in `review[]`, `supervised=true`, zero `po_goahead`.
 
-## 2026-08-11T13:30Z · Zero mints. Five dispatches. Re-folding onto rows nobody picks up is a detection loop.
-- **★ ZERO MINTS IS NOT ZERO WORK.** All 4 folds landed on rows minted days ago and never dispatched; one row's own `status_note` says *"PROMOTED INTO PO BATCH 2026-08-08T20:54Z"* and it is still `backlog[]`. Returning `NOTHING` would have been the 4th consecutive tick converting evidence into notes instead of dispatches.
-- **★ ONE SIGNAL, TWO JOBS, TWO READ PROCEDURES.** The `FAILEDFILE:` grep returns empty for `size-lint` **by construction**. If a `ci_red` names N jobs, you owe N reads, not one grep.
-- **★ I WAS WRONG AND CAUGHT IT BEFORE DISPATCH.** Claimed `triage-signals.md` was false about the hook already blocking; **neither tick had read the hook.** `pre-commit:850-878` — `escalated=true` overrides mode and `exit 1`s, landed 8 days *before* the P0 was minted. The doc was right; I was the defect. Also: the runaway counter counts **blocks, not sweeps** (log at :866, `exit 1` at :877), so "28 vs threshold 3" is equally consistent with 28 attempts / 28 blocks / 0 sweeps.
-- **★ A SIGNAL'S `mode=` FIELD IS CONFIGURATION, NOT OUTCOME.** The outcome lives in the code path and nowhere else.
-- Journal: `docs/agent-memory/decisions/triage-20260811T1322Z-po.md`. Earlier ticks today: `…T1237Z-po.md` (UC-RDL-P4 ratified at source, `po_goahead_20260811T130245`), `…T1300Z-po.md`.
