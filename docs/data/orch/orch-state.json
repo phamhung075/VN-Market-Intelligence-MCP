@@ -773,7 +773,7 @@
         "summary": "tnb-audit c126: NEEDS_ATTENTION/DEGRADING. Headline: F-CHEF-BIZCTX-JOIN-MISS 3rd instance confirmed (RAW-verified vs unified-agent-synthesis-2026-08-11-evening.json) — VCB/FPT conviction_calls cite zero business-context facts + known_gaps claims unavailability, yet bctc_signal_{VCB,FPT}_20260811_routine.json were fully populated 1h32m before dish fired. Crosses PO's own 3rd-instance->P0 threshold for FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING (currently BACKLOG/P1/occurrence_count=2, request bump to P0/3). Also corroborates existing quota-outage P0 (no new mint) + minor EIB magnitude mismatch (LOW-MED, not escalated). Full findings: docs/handoffs/tnb-audit-latest.md. Companion file was written directly by the agent (no Bash grant to run orch-apply.sh itself) and had zero signal_queue row until this dispatcher bridge write.",
         "severity": "WARN",
         "status": "READ",
-        "payload_ref": "docs/signals/tnb-20260811T2030Z.json",
+        "payload_ref": "docs/signals/processed/tnb-20260811T2030Z.json",
         "provenance": "cowork-team-bridge-write-agent-no-bash"
       },
       {
@@ -19758,8 +19758,8 @@
         "last_served_tick": "2026-08-11T16:54:36Z"
       }
     },
-    "_updated_at": "2026-08-11T20:46:47Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-08-11T20:50:53Z",
+    "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
         "envelope_id": "fffdede98d374c05be07c33bd7b9fab50704cd867be6ce3c9a5989b418bc91b5",
@@ -20633,6 +20633,118 @@
         "createdAt": "2026-08-11T20:36:29Z",
         "drained_at": "2026-08-11T20:46:47Z",
         "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5e7ae9b2d64b8499a51c5ae0e4823acb29471196e2903573c142e06a3f2e3c53",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-a2fd4b00",
+          "head_sha": "a2fd4b00489e1dd76e725036dd49891f4c3169e9",
+          "run_id": 31531356419,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31531356419",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 93911892396
+            },
+            {
+              "name": "size-lint",
+              "conclusion": "failure",
+              "jobId": 93911892457
+            }
+          ],
+          "fingerprint": "66eb057174d70e400694fc0f5786b4559d2021422baf7f32756128944d065283",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD a2fd4b00489e1dd76e725036dd49891f4c3169e9: bun test,size-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-11T20:23:24Z",
+        "drained_at": "2026-08-11T20:50:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c0d65cf11c7c08cb9e321688832eb678d25978a0446f57d1899c4d8a3329f233",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=36 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-11T20:37:15Z",
+        "drained_at": "2026-08-11T20:50:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ae80aa3879b114a7160a4a263c518ff8828d8ad402a51f9513d510c7333baabf",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-11T20:24:10Z",
+          "matched_slots": [
+            "tnb-audit"
+          ],
+          "won_slots": [
+            "tnb-audit"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/tran-ngoc-bau/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "tnb-audit": "cron"
+          },
+          "cadence_minutes": {
+            "tnb-audit": null
+          },
+          "last_fired_timestamp": "2026-08-11T20:23:56Z",
+          "last_fired_slots": [
+            "tnb-audit"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "20:15",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 26,
+          "note": "single-slot tick (tnb-audit); tick-snapshot Step 4.7 skipped (hand-transcription truncation risk), agent falls back to direct get_cycle_bootstrap"
+        },
+        "createdAt": "2026-08-11T20:24:10Z",
+        "drained_at": "2026-08-11T20:50:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4c60e24a7a3d22b5443318f7d603434550bed586152c85b19d9cba3611971251",
+        "source": "file",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "priority": "high",
+        "payload": "docs/handoffs/tnb-audit-latest.md",
+        "createdAt": "2026-08-11T20:30:00Z",
+        "drained_at": "2026-08-11T20:50:52Z",
+        "routed_to": "PO Step 0-TNB"
       }
     ],
     "last_po_triage_at": "2026-08-11T17:09:47Z",
