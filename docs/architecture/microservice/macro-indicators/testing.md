@@ -1,10 +1,12 @@
 # macro-indicators — Testing
 
 **Runtime:** Go `testing` package + `net/http/httptest`. No external mocking framework.
-**Total:** 33 `_test.go` files across 11 packages (6 primitive + domain + application +
-infrastructure + interface/http + module) — 288 top-level tests, 543 total test cases
-(incl. table-driven subtests) — all pass, 0 fail (2026-07-08 baseline, `go test ./...`;
-QA re-verified 2026-07-08, corrected package count from an initial miscount of 8).
+**Total:** 35 `_test.go` files across 12 packages (6 primitive + domain + application +
+infrastructure + interface/http + module + `cmd/sandbox`) — 301 top-level tests, 562 total
+test cases (incl. table-driven subtests) — all pass, 0 fail (2026-08-11 baseline,
+`go test ./... -v -count=1 | grep -c '\-\-\- (PASS|FAIL)'`; re-verified during
+FIX-MACRO-LIQUIDITY-STATE-HANDLER-EXCEEDS-CRON-15S-DEADLINE, which added 5 tests:
+3 to `fetch_deadline_test.go`, 2 new to `parsers_vmt_sbv_liquidity_fetch_timeout_test.go`).
 
 > History note: this service originally shipped a parallel TypeScript/Bun test suite
 > (`src/__tests__/`, `__tests__/`) covering scraper adapters and a `_deprecated` domain
@@ -41,11 +43,11 @@ liquidity, general macro, open-market-operations, and trade indicators.
 |---|---|
 | Use-case DTO mapping | Snapshot/response shape correctness |
 | Fail-close behavior | Source failure → safe default, no crash |
-| Per-source deadline | Timeout budget respected, slow source doesn't block others |
+| Per-source deadline | Timeout budget respected, slow source doesn't block others (`fetch_deadline_test.go` — BOP, NSO-chain, and liquidity-state `policy_rates`/`omo` hanging-provider regression tests, incl. `TestFetchDeadline_LiquidityState_BothHanging_SharedBudget` which asserts the two liquidity upstream fetches share ONE `FetchBudgetSec` window, not two stacked) |
 
 ## Infrastructure Tests (VMT parsers, cache, VPS fetch)
 
-**Files (11):** `parsers_vmt_{bop,cpi,gso_indicators,sbv_interbank_omo,sbv_interbank_omo_p03,trade}_test.go`,
+**Files (12):** `parsers_vmt_{bop,cpi,gso_indicators,sbv_interbank_omo,sbv_interbank_omo_p03,sbv_liquidity_fetch_timeout,trade}_test.go`,
 `cache_vmt_nso_{deadline,selector}_test.go`, `repositories_test.go`, `repository_vmt_omo_daily_test.go`, `vpsFetch_test.go`
 
 | Test area | What it verifies |
@@ -54,6 +56,7 @@ liquidity, general macro, open-market-operations, and trade indicators.
 | NSO cache (deadline + selector) | Cache freshness/selection logic under time pressure |
 | `vpsFetch` | VPS-proxied fetch for VN-geo-blocked sources (project_bctc_vps_proxy pattern) |
 | SQLite readonly repositories | `market.db` readonly access, no owned tables |
+| `parsers_vmt_sbv_liquidity_fetch_timeout_test.go` | Guards `omoFetchTimeout` / `sbvPolicyRatesFetchTimeout` client-level timeouts against regressing above `domain.FetchBudgetSec` (no live HTTP — pure constant assertions) |
 
 ## Interface / HTTP Tests
 
@@ -78,7 +81,7 @@ liquidity, general macro, open-market-operations, and trade indicators.
 ## Run Commands
 
 ```bash
-cd apps/macro-indicators && go test ./... -count=1        # all 33 files, 288 tests
+cd apps/macro-indicators && go test ./... -count=1        # all 35 files, 301 top-level tests
 cd apps/macro-indicators && go vet ./...                  # static analysis
 cd apps/macro-indicators && go build ./cmd/...            # compile check
 cd apps/macro-indicators && golangci-lint run             # depguard Fence-A/B/C (CI-enforced, .github/workflows/ci.yml)

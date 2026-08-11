@@ -175,8 +175,21 @@ func (uc *LiquidityStateUseCase) Execute(
 
 	fetchedAt := time.Now().UTC().Format(time.RFC3339)
 
+	// Belt-and-suspenders (F-MACRO-FETCH-DEADLINE): bound BOTH upstream SBV HTML
+	// fetches (policy_rates + omo) to a SINGLE shared FetchBudgetSec window so their
+	// combined latency cannot stack past the caller's deadline. Mirrors the BOP/NSO-chain
+	// "whole chain, one budget" pattern (see fetchRecord in usecases_vmt_bop.go and
+	// discoverAndFetch in cache_vmt_nso.go) — this endpoint was the one gap: two
+	// independent upstream fetches ran sequentially against the raw (60s handler) ctx
+	// with only their own generous http.Client.Timeout as a backstop (30s / 45s), so a
+	// slow-but-not-hanging SBV origin (18.4s observed live) blew the mcp-server cron's
+	// 15s deadline even though each individual fetch eventually returned.
+	// FIX-MACRO-LIQUIDITY-STATE-HANDLER-EXCEEDS-CRON-15S-DEADLINE.
+	fetchCtx, fetchCancel := context.WithTimeout(ctx, time.Duration(domain.FetchBudgetSec)*time.Second)
+	defer fetchCancel()
+
 	// --- bloc 1: policy_rates ---
-	policyRates, policyErr := uc.policyRatesProvider.FetchPolicyRates(ctx)
+	policyRates, policyErr := uc.policyRatesProvider.FetchPolicyRates(fetchCtx)
 	if policyErr != nil {
 		// Non-fatal: policy rates error doesn't abort the whole response.
 		// Use zero-value PolicyRates (is_estimate=true from domain safe-degrade).
@@ -215,7 +228,8 @@ func (uc *LiquidityStateUseCase) Execute(
 	irs := domain.BuildIRSField()
 
 	// --- bloc 5: omo — SBV nghiep-vu-thi-truong-mo Liferay HTML (direct, no VPS proxy) ---
-	omoInputs, omoErr := uc.omoProvider.FetchOMO(ctx)
+	// Shares fetchCtx with bloc 1 (single FetchBudgetSec window — see comment above).
+	omoInputs, omoErr := uc.omoProvider.FetchOMO(fetchCtx)
 	var omoDomain domain.OMOOutstanding
 	if omoErr != nil || !omoInputs.ParseOK {
 		blockedReason := ""

@@ -42,6 +42,8 @@ import (
 	"time"
 
 	"golang.org/x/net/html"
+
+	"github.com/vn-market-intelligence/macro-indicators/pkg/domain"
 )
 
 // ---------------------------------------------------------------------------
@@ -52,6 +54,15 @@ import (
 // Same domain as BOP (www.sbv.gov.vn) — direct fetch, no VPS proxy needed.
 // The page includes the refinancing rate, discount rate, and Lombard rate tables.
 const sbvPolicyRatesURL = "https://www.sbv.gov.vn/webcenter/portal/vi/menu/trangchu/tk/ls"
+
+// sbvPolicyRatesFetchTimeout is the HTTP client timeout for the SBV policy-rates page fetch.
+// Belt-and-suspenders (F-MACRO-FETCH-DEADLINE): bound to the shared domain.FetchBudgetSec
+// SSOT (8s) — the application layer (usecases_vmt_liquidity.go) already wraps this call's
+// ctx in a FetchBudgetSec window; this client-level Timeout is a redundant backstop for
+// callers that pass a ctx without a deadline. Previously 30s — well over the mcp-server
+// cron's 15s deadline, part of the FIX-MACRO-LIQUIDITY-STATE-HANDLER-EXCEEDS-CRON-15S-
+// DEADLINE root cause.
+const sbvPolicyRatesFetchTimeout = time.Duration(domain.FetchBudgetSec) * time.Second
 
 // SBVPolicyRatesResult holds the parsed values from the SBV HTML page.
 type SBVPolicyRatesResult struct {
@@ -81,7 +92,7 @@ func FetchSBVPolicyRatesFromHTML(ctx context.Context) (SBVPolicyRatesResult, err
 
 	client := &http.Client{
 		Transport: &http.Transport{TLSClientConfig: tlsCfg},
-		Timeout:   30 * time.Second,
+		Timeout:   sbvPolicyRatesFetchTimeout,
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sbvPolicyRatesURL, nil)

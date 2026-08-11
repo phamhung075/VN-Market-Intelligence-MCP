@@ -51,6 +51,8 @@ import (
 	"unicode"
 
 	"golang.org/x/net/html"
+
+	"github.com/vn-market-intelligence/macro-indicators/pkg/domain"
 )
 
 // sbvOMOURL is the SBV Liferay portal page for Open Market Operations (nghiệp vụ thị trường mở).
@@ -59,9 +61,14 @@ import (
 // Confirmed reachable (June-12-2026 probe: HTTP 200, 408KB HTML, OMO table present).
 const sbvOMOURL = "https://www.sbv.gov.vn/vi/web/sbv_portal/nghi%E1%BB%87p-v%E1%BB%A5-th%E1%BB%8B-tr%C6%B0%E1%BB%9Dng-m%E1%BB%9F"
 
-// omoFetchTimeout is the HTTP timeout for the SBV OMO page fetch.
-// 408KB page + Liferay overhead — 45s is conservative but safe.
-const omoFetchTimeout = 45 * time.Second
+// omoFetchTimeout is the HTTP client timeout for the SBV OMO page fetch.
+// Belt-and-suspenders (F-MACRO-FETCH-DEADLINE): bound to the shared domain.FetchBudgetSec
+// SSOT (8s) — the application layer (usecases_vmt_liquidity.go) already wraps this call's
+// ctx in a FetchBudgetSec window; this client-level Timeout is a redundant backstop for
+// callers that pass an ctx without a deadline (e.g. context.Background()). Previously
+// 45s — well over the mcp-server cron's 15s deadline, the FIX-MACRO-LIQUIDITY-STATE-
+// HANDLER-EXCEEDS-CRON-15S-DEADLINE root cause.
+const omoFetchTimeout = time.Duration(domain.FetchBudgetSec) * time.Second
 
 // OMOTenorRow holds per-row data from one OMO auction result table row.
 // Extended by P0-3-OMO-CURVE to capture winning rate and member participation

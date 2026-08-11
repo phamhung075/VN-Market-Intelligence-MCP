@@ -14,10 +14,15 @@
 //  - NSO-chain path:  TradeBalanceUseCase / MacroIndicatorsGSOUseCase / CPIComponentsUseCase
 //    (all share NSOExcelProvider; the chain context is bounded in discoverAndFetch)
 //  - BOP path:        BOPUseCase.fetchAndParseQuarter wraps its own context.WithTimeout
+//  - Liquidity-state path: LiquidityStateUseCase.Execute wraps policy_rates + omo (TWO
+//    independent upstream SBV HTML fetches) in a SINGLE shared FetchBudgetSec window.
+//    Unlike the other paths, a hang here is non-fatal (partial-success design — Status
+//    stays "ok" with the affected bloc's IsEstimate=true) rather than a whole-response
+//    "degraded" status; see FIX-MACRO-LIQUIDITY-STATE-HANDLER-EXCEEDS-CRON-15S-DEADLINE.
 //
 // Fence-B: only pkg/domain and pkg/application imports allowed.
 // Stubs from other test files in this package are reused (stubBOPParser, stubBOPURLBuilder,
-// stubTradeParser, stubIIPParser, stubCPIParser).
+// stubTradeParser, stubIIPParser, stubCPIParser, stubSJCFXProvider, goodOMOProvider).
 package application
 
 import (
@@ -47,6 +52,26 @@ func (h *hangingVpsFetcher) Fetch(ctx context.Context, _ string, _ domain.VpsFet
 	// Block until the caller's context fires (deadline from context.WithTimeout in use-case).
 	<-ctx.Done()
 	return nil, ctx.Err()
+}
+
+// hangingPolicyRatesProvider is a PolicyRatesProvider that blocks until its ctx is
+// cancelled. Simulates a hanging SBV policy-rates HTML origin for the liquidity-state
+// fetch path (www.sbv.gov.vn/webcenter/portal/vi/menu/trangchu/tk/ls).
+type hangingPolicyRatesProvider struct{}
+
+func (h *hangingPolicyRatesProvider) FetchPolicyRates(ctx context.Context) (domain.PolicyRates, error) {
+	<-ctx.Done()
+	return domain.PolicyRates{}, ctx.Err()
+}
+
+// hangingOMOProvider is an OMOProvider that blocks until its ctx is cancelled.
+// Simulates a hanging SBV OMO HTML origin for the liquidity-state fetch path
+// (www.sbv.gov.vn nghiep-vu-thi-truong-mo).
+type hangingOMOProvider struct{}
+
+func (h *hangingOMOProvider) FetchOMO(ctx context.Context) (OMOInputs, error) {
+	<-ctx.Done()
+	return OMOInputs{}, ctx.Err()
 }
 
 // ---------------------------------------------------------------------------
@@ -236,4 +261,101 @@ func TestFetchDeadline_BOP_AlreadyExpiredCtx(t *testing.T) {
 		t.Errorf("already-expired ctx: Status=%q, want 'degraded'", resp.Status)
 	}
 	_ = errors.New("") // keep errors import alive
+}
+
+// ---------------------------------------------------------------------------
+// Liquidity-state path — LiquidityStateUseCase with hanging policy_rates / omo providers
+//
+// FIX-MACRO-LIQUIDITY-STATE-HANDLER-EXCEEDS-CRON-15S-DEADLINE: this endpoint has TWO
+// independent sequential upstream SBV HTML fetches (policy_rates, omo) that previously
+// ran against the raw caller ctx with NO shared FetchBudgetSec window — each upstream's
+// OWN http.Client.Timeout (30s / 45s) was the only bound, so the handler could take
+// well over the mcp-server cron's 15s deadline (18.4s observed live) while never
+// technically "hanging forever". Unlike BOP/NSO-chain, a hang here is non-fatal by
+// design (Status stays "ok"; only the affected bloc's IsEstimate flips to true) —
+// see Execute()'s "Partial success is returned" contract.
+// ---------------------------------------------------------------------------
+
+// TestFetchDeadline_LiquidityState_HangingPolicyProvider verifies a hanging SBV
+// policy-rates origin is bounded by domain.FetchBudgetSec and degrades ONLY the
+// policy_rates bloc (fail-closed IsEstimate=true), not the whole response.
+func TestFetchDeadline_LiquidityState_HangingPolicyProvider(t *testing.T) {
+	uc := NewLiquidityStateUseCase(&hangingPolicyRatesProvider{}, &stubSJCFXProvider{}, goodOMOProvider(), nil)
+
+	ctx, cancel := context.WithTimeout(context.Background(),
+		time.Duration(domain.FetchBudgetSec*3)*time.Second)
+	defer cancel()
+
+	start := time.Now()
+	resp, err := uc.Execute(ctx, LiquidityStateRequest{})
+	assertWithinBudget(t, start)
+
+	if err != nil {
+		t.Errorf("hanging policy provider must not propagate error (non-fatal degrade), got: %v", err)
+	}
+	if resp.Status != "ok" {
+		t.Errorf("Status=%q, want 'ok' (policy_rates hang is non-fatal, partial-success design)", resp.Status)
+	}
+	if !resp.PolicyRates.IsEstimate {
+		t.Error("PolicyRates.IsEstimate must be true when the fetch is bounded-out by the deadline")
+	}
+	// IRS is permanently is_estimate=true regardless (DD-6) — sanity check it still holds.
+	if !resp.IRS.IsEstimate {
+		t.Error("IRS.IsEstimate must be true ALWAYS (DD-6 permanent) even on hang path")
+	}
+}
+
+// TestFetchDeadline_LiquidityState_HangingOMOProvider mirrors the above for the OMO fetch.
+func TestFetchDeadline_LiquidityState_HangingOMOProvider(t *testing.T) {
+	uc := NewLiquidityStateUseCase(
+		&stubPolicyRatesProvider{rates: domain.PolicyRates{RefiRatePct: 4.5}},
+		&stubSJCFXProvider{inputs: SJCFXInputs{SBVCenterRate: 25155}},
+		&hangingOMOProvider{},
+		nil,
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(),
+		time.Duration(domain.FetchBudgetSec*3)*time.Second)
+	defer cancel()
+
+	start := time.Now()
+	resp, err := uc.Execute(ctx, LiquidityStateRequest{})
+	assertWithinBudget(t, start)
+
+	if err != nil {
+		t.Errorf("hanging OMO provider must not propagate error, got: %v", err)
+	}
+	if resp.Status != "ok" {
+		t.Errorf("Status=%q, want 'ok' (omo hang is non-fatal, partial-success design)", resp.Status)
+	}
+	if !resp.OMO.IsEstimate {
+		t.Error("OMO.IsEstimate must be true when the fetch is bounded-out by the deadline (fail-closed)")
+	}
+}
+
+// TestFetchDeadline_LiquidityState_BothHanging_SharedBudget is the key regression test:
+// policy_rates and omo MUST share a SINGLE FetchBudgetSec window, not 2×FetchBudgetSec
+// stacked sequentially (8s + 8s = 16s would still blow the 15s cron deadline). Asserts
+// the COMBINED elapsed time for both hanging upstream sources fits inside
+// FetchBudgetSec + slack, not 2×FetchBudgetSec + slack.
+func TestFetchDeadline_LiquidityState_BothHanging_SharedBudget(t *testing.T) {
+	uc := NewLiquidityStateUseCase(&hangingPolicyRatesProvider{}, &stubSJCFXProvider{}, &hangingOMOProvider{}, nil)
+
+	ctx, cancel := context.WithTimeout(context.Background(),
+		time.Duration(domain.FetchBudgetSec*3)*time.Second)
+	defer cancel()
+
+	start := time.Now()
+	resp, err := uc.Execute(ctx, LiquidityStateRequest{})
+	assertWithinBudget(t, start)
+
+	if err != nil {
+		t.Errorf("both hanging: must not propagate error, got: %v", err)
+	}
+	if !resp.PolicyRates.IsEstimate {
+		t.Error("both hanging: PolicyRates.IsEstimate must be true (fail-closed)")
+	}
+	if !resp.OMO.IsEstimate {
+		t.Error("both hanging: OMO.IsEstimate must be true (fail-closed)")
+	}
 }

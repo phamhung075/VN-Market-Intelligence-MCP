@@ -117,3 +117,8 @@ PORT         → 5004
 DB_PATH      → ./data/market.db (readonly)
 FRED_API_KEY → 32-char FRED API key (optional — adapter activates automatically when set)
 ```
+
+## Go pilot — SBV HTML fetchers (liquidity-state, direct fetch, no VPS proxy)
+- **Files:** `pkg/infrastructure/parsers_vmt_sbv_policy_rates.go` (`FetchSBVPolicyRatesFromHTML`), `pkg/infrastructure/parsers_vmt_sbv_interbank_omo.go` (`FetchSBVOMOFromHTML`)
+- Both fetch `www.sbv.gov.vn` HTML directly via `http.NewRequestWithContext(ctx, ...)` — TLS hardened (`buildDirectTLSConfig`, `VPS_CACERT_PATH`, `InsecureSkipVerify` always `false`).
+- **Client-level `Timeout` (belt-and-suspenders backstop):** bound to the shared `domain.FetchBudgetSec` SSOT (8s, `pkg/domain/ports.go:24`) — `sbvPolicyRatesFetchTimeout` const and `omoFetchTimeout` const. Previously hardcoded 30s and 45s respectively (FIX-MACRO-LIQUIDITY-STATE-HANDLER-EXCEEDS-CRON-15S-DEADLINE, 2026-08-11) — well over the mcp-server cron's 15s deadline. The operative bound in production is the application-layer `context.WithTimeout` wrap around both calls (see `usecases.md` § LiquidityStateUseCase); this client `Timeout` only matters for a caller that passes a ctx without its own deadline (e.g. `context.Background()`). Guarded by `pkg/infrastructure/parsers_vmt_sbv_liquidity_fetch_timeout_test.go`.
