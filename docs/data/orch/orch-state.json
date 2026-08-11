@@ -12544,6 +12544,45 @@
             "observed_at": "2026-08-11T13:55:55Z"
           }
         }
+      },
+      {
+        "id": "SPIKE-COWORK-GUARANTEED-SLOT-DIAGNOSTIC-FIRER",
+        "type": "SPRINT-M",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "zone": "cross-service/ops",
+        "size": "S",
+        "mode": "spike",
+        "title": "DIAGNOSTIC: Cowork guaranteed-slot firer invocation status check",
+        "owner": "developer",
+        "created_at": "2026-08-11T15:54:00Z",
+        "created_by": "pm/dispatch-20260811T1554Z",
+        "depends": [],
+        "blocks": [
+          "SPIKE-COWORK-GUARANTEED-SLOT-DIAGNOSTIC-WIRING"
+        ],
+        "note": "Task 1 of 2-task diagnostic spike. Answer: is firer being INVOKED or not? Check launchd state + firer logs for entries after 2026-08-08T20:23Z. If no logs → invocation stopped (ops/launchd issue). If logs but no fires → go to Task 2. || DIAGNOSIS: INVOKED BUT NO FIRES since 2026-08-08T20:31:19Z — launchd loaded/firing on schedule (runs=2457, log entries continuous through 2026-08-11T09:21:47Z), every guaranteed-slot invocation since fails with claude CLI message \"You've hit your weekly limit · resets 2pm (Europe/Paris)\" (exit_code=1), corroborated by 3 stalled downstream notebooks. This is NOT a launchd/plist invocation-stopped issue. Handed off to SPIKE-COWORK-GUARANTEED-SLOT-DIAGNOSTIC-WIRING (next_agent=architect) per this SPIKE's own decision tree, with the weekly-limit root cause pre-loaded as the primary lead (recommend Task 2 check for shared-account quota exhaustion / dual-plane double-fire before assuming a code wiring bug).\n\n[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Row carried no .commit/.files[] fields (docs-only diagnostic spike moved backlog[]->review[] directly by developer this tick) -- derived commits 43111707f392958e6c6a66be71482dbac5dccb23 (findings doc + board lane-move) and f08a5a95d88bbdf6cbf95bea223a3f2e2777ca40 (notebook+journal) via `git log --all -- docs/data/cowork-guaranteed-slot-findings-firer-status-20260811.md`; both confirmed main ancestors via `git merge-base --is-ancestor`. `git show --stat` on 43111707f touches zero apps/ source (findings doc + orch-state.json only) -- bun test/tsc/mock-guard N/A per Smart-Skip, docs-only. Independently re-verified findings doc conclusion against LIVE evidence, not trusted from prose: firer log lines 2026-08-08T20:31:19Z (last exit_code=0) and 2026-08-11T08:51:46Z/09:21:57Z (exit_code=1, weekly-limit message) byte-match live docs/agent-memory/sessions/cowork-guaranteed-slot-firer.log; live `launchctl print` shows runs=2458 (incrementing from doc's 2457, not stalled); 3 cited downstream-notebook mtimes (unified-agent, fb-market-poster, digest-predict) all confirmed live at exactly 08-08 20:27/21:57. One non-blocking Evidence-Summary imprecision found: \"8 guaranteed-slot last_fired all read 08-07/08\" is wrong for digest-sunday (reads 07-19) -- live log shows digest-sunday actually fired-and-failed with the SAME weekly-limit signature on 07-26/08-02/08-09 (last_fired only updates on success), which corroborates rather than undermines the core diagnosis. Verdict: findings doc genuinely supports its claimed conclusion (Anthropic weekly-quota exhaustion, not a launchd/wiring bug). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-15.md STEP qa-S46.",
+        "next_agent": "qa",
+        "updated_at": "2026-08-11T16:45:33Z",
+        "claimed_by": "developer",
+        "claimed_at": "2026-08-11T16:37:02Z",
+        "finding": "docs/data/cowork-guaranteed-slot-findings-firer-status-20260811.md",
+        "updated_by": "qa",
+        "qa_verified_at": "2026-08-11T16:45:33Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + grep firer log + launchctl print + notebook mtime cross-check",
+            "args": {
+              "commits_verified": [
+                "43111707f392958e6c6a66be71482dbac5dccb23",
+                "f08a5a95d88bbdf6cbf95bea223a3f2e2777ca40"
+              ]
+            },
+            "live_value_observed": "firer log lines byte-match doc citations; launchctl runs=2458 (still incrementing); 3 notebook mtimes match; digest-sunday last_fired discrepancy found (07-19 vs claimed 07-08) but same-signature failure, non-blocking",
+            "observed_at": "2026-08-11T16:45:33Z"
+          }
+        }
       }
     ],
     "head": {
@@ -14364,6 +14403,31 @@
         ],
         "note": "Architect design complete (UC-RDL-P4-BA-spec.md FR-1..FR-6/FR-8/FR-9). Pure compositor over existing coordination-store functions, no new DB logic. Follow design decisions D-1..D-10. Do NOT edit coordinationStore.ts or coordination/index.ts. FR-7 doc cutover forbidden this wave (split to UC-RDL-P4B-DOC-CUTOVER).",
         "updated_at": "2026-08-11T13:31:41Z"
+      },
+      {
+        "id": "TASK_2007",
+        "type": "FEATURE",
+        "status": "READY",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-11T16:45:00Z",
+        "created_by": "pm (UC-ASL-P5 decompose)",
+        "title": "Tier-1 Signal Type Canonicalization + Dedup-Skip RESOLVED-Closure (UC-ASL-P5 FR-1/FR-2)",
+        "acceptance": [
+          "FR-1: tier1-probe.md category-type differentiation per check class (microservice_degraded for A-01–A-11/A-20/A-21/A-30, signal_feedback for A-12–A-19/A-32/A-33)",
+          "FR-2: triage-signals.md dedup-skip branches now flip originating signal row READ→RESOLVED via orch-apply.sh",
+          "Verify test fixtures: static regression + negative-control"
+        ],
+        "files_hint": "docs/agents/system-auditor/flow/tier1-probe.md (FR-1), docs/agents/po/flow/triage-signals.md (FR-2)",
+        "note": "Decomposed from UC-ASL-P5 per architect brownfield findings. Flow-doc only, reuses task-archive.md orch-apply.sh pattern.",
+        "updated_at": "2026-08-11T16:45:49Z",
+        "updated_by": "pm"
       }
     ],
     "review": [
@@ -19125,29 +19189,6 @@
         "origin_signal_id": "bug-escalation:bctc-analyst:signals-absent-4th-cycle",
         "updated_by": "developer",
         "dev_note": "Fixed: added read-first SIGNAL-FILE WRITE VERIFICATION guard to docs/agents/bctc-analyst/flow/main.md — Write tool's own return is now the ONLY write-verification signal (per-cycle), agent must never Read a docs/signals/*.json path it wrote in a prior cycle to re-confirm presence. AC-2: no Bash/Glob grant added, tool grant stays narrow. AC-3 regression traced (not replayed) in decision journal. Commit c23d19da4 (pushed to origin/main). Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md STEP developer-S91."
-      },
-      {
-        "id": "SPIKE-COWORK-GUARANTEED-SLOT-DIAGNOSTIC-FIRER",
-        "type": "SPRINT-M",
-        "status": "REVIEW",
-        "priority": "P0",
-        "zone": "cross-service/ops",
-        "size": "S",
-        "mode": "spike",
-        "title": "DIAGNOSTIC: Cowork guaranteed-slot firer invocation status check",
-        "owner": "developer",
-        "created_at": "2026-08-11T15:54:00Z",
-        "created_by": "pm/dispatch-20260811T1554Z",
-        "depends": [],
-        "blocks": [
-          "SPIKE-COWORK-GUARANTEED-SLOT-DIAGNOSTIC-WIRING"
-        ],
-        "note": "Task 1 of 2-task diagnostic spike. Answer: is firer being INVOKED or not? Check launchd state + firer logs for entries after 2026-08-08T20:23Z. If no logs → invocation stopped (ops/launchd issue). If logs but no fires → go to Task 2. || DIAGNOSIS: INVOKED BUT NO FIRES since 2026-08-08T20:31:19Z — launchd loaded/firing on schedule (runs=2457, log entries continuous through 2026-08-11T09:21:47Z), every guaranteed-slot invocation since fails with claude CLI message \"You've hit your weekly limit · resets 2pm (Europe/Paris)\" (exit_code=1), corroborated by 3 stalled downstream notebooks. This is NOT a launchd/plist invocation-stopped issue. Handed off to SPIKE-COWORK-GUARANTEED-SLOT-DIAGNOSTIC-WIRING (next_agent=architect) per this SPIKE's own decision tree, with the weekly-limit root cause pre-loaded as the primary lead (recommend Task 2 check for shared-account quota exhaustion / dual-plane double-fire before assuming a code wiring bug).",
-        "next_agent": "qa",
-        "updated_at": "2026-08-11T16:37:03Z",
-        "claimed_by": "developer",
-        "claimed_at": "2026-08-11T16:37:02Z",
-        "finding": "docs/data/cowork-guaranteed-slot-findings-firer-status-20260811.md"
       }
     ],
     "qa": [
