@@ -133,8 +133,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-11T17:32:15Z",
-    "_updated_by": "agent-father",
+    "_updated_at": "2026-08-11T17:56:09Z",
+    "_updated_by": "router",
     "archive": [],
     "rows": [
       {
@@ -565,6 +565,17 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-11T14:30Z",
         "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30"
+      },
+      {
+        "id": "dev-20260811T175609",
+        "ts": "2026-08-11T17:56:09Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "Out-of-zone defect: sbvOmoLiquidityCronJob.ts:70 error string conflates deadline-timeout w/ unreachable — mint FIX row, zone dev-mcp-server",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
