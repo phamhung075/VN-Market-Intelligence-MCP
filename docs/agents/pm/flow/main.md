@@ -1,4 +1,4 @@
-<!-- size-justification: 210L — single PM orchestration flow; TASKS.md gate, handoff template, multi-zone handling, DASHBOARD CAS guard, heartbeat lock protocol, commit convention, pre-commit mutex gate, mandatory decision-journal step, and HSC-3 terminal-lane bloat gate + HSC-6 done_verified eviction hook are all non-separable PM responsibilities executed in sequence. UC-DTL-P9 2026-07-23: Sprint closeout step — atomic sprint-terminal-flip + guarded head-idle via scripts/pm-closeout-head-idle.jq, replaces the old two-write flip+idle sequence (+11L). -->
+<!-- size-justification: 210L — single PM orchestration flow; TASKS.md gate, handoff template, multi-zone handling, DASHBOARD CAS guard, heartbeat lock protocol, commit convention, pre-commit mutex gate, mandatory decision-journal step, and HSC-3 terminal-lane bloat gate + HSC-6 done_verified eviction hook are all non-separable PM responsibilities executed in sequence. UC-DTL-P9 2026-07-23: Sprint closeout step — atomic sprint-terminal-flip + guarded head-idle via scripts/pm-closeout-head-idle.jq, replaces the old two-write flip+idle sequence (+11L). FIX-PM-HEAD-RESET-SHAPE 2026-08-11: +18L (229→247, live line-count at edit time; the "210L" figure above was already stale pre-edit, not corrected here — out of this task's scope) — new Step 4c (Non-closeout head release), inserted after Step 4b, before the Signal Queue Write Guard section: full `.head =` null-out (status/active_task_id/next_agent/updated_at/updated_by) whenever a mid-sprint decomposition mints child task(s) without triggering §5's Sprint closeout, matching `docs/agents/dev-team/flow/main.md`'s WF-1c ready-lane convention byte-for-byte instead of the previous undocumented partial status-only flip (2 confirmed occurrences, `feedback_pm_midsprint_decomposition_leaves_head_stale_not_closeout`: UC-RDL-P4 — head left fully untouched; FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE commit `95540b50d` — status flipped, active_task_id/next_agent left dangling, router repair `82ec1f018`). Inlined directly in this file (no new scripts/ file — agent-father's commit_zone excludes scripts/, TE-T02 precedent). -->
 # Project Manager — Main Flow
 
 **Tools:** `docs/agents/tools/package/pm.md`
@@ -140,6 +140,24 @@ call_tool(server="vn-market", tool="task_heartbeat", arguments={
 })
 // silent on ok=false — developer will (re)claim on entry
 ```
+
+**4c. Non-closeout head release (FIX-PM-HEAD-RESET-SHAPE — mid-sprint decomposition, NOT sprint closeout):**
+
+If Steps 2/3/3c above minted child task(s) into `ready[]`/`backlog[]`/`in_progress[]` this cycle WITHOUT triggering §5 Monitor's Sprint closeout write (i.e., this row's sprint/tasks did NOT all reach terminal status — the sprint legitimately stays `IN_PROGRESS`), pm's own phase on the row it was dispatched for (`$SPRINT_ID`) is done, but `.head` may still name that row with `next_agent:"pm"`. Leaving it stale risks a later dispatcher-wrap re-spawning pm on an already-decomposed row — 2 confirmed occurrences (`feedback_pm_midsprint_decomposition_leaves_head_stale_not_closeout`): UC-RDL-P4 2026-08-11 — pm left `.head` fully untouched (contract had no non-closeout case at all); FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE 2026-08-11T19:27Z, commit `95540b50d` — pm flipped ONLY `.head.status` to `idle`, left `active_task_id`/`next_agent` dangling at the stale pre-decomposition values, forcing a router repair pass (commit `82ec1f018`).
+
+Guard — only fires if `.head` (freshly re-read, never cached) still names the row this pm invocation was dispatched for, and only if §5's Sprint closeout did NOT already write `.head` this same cycle (never write `.head` twice in one cycle):
+```bash
+NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+head_active=$(jq -r '.head.active_task_id' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
+if [ "$head_active" = "$SPRINT_ID" ]; then
+  jq --arg s "idle" --arg t "$NOW" --arg u "pm" \
+    '.head = {status:$s, active_task_id:null, next_agent:null, updated_at:$t, updated_by:$u}' \
+    "$PROJECT_ROOT/docs/data/orch/orch-state.json" \
+    | bash "$PROJECT_ROOT/scripts/orch-apply.sh" \
+    || echo "[pm] non-closeout head release ABORTED — orch-apply.sh failed, live SSOT untouched"
+fi
+```
+FULL null-out ONLY (whole-object `.head =` replace) — matches `docs/agents/dev-team/flow/main.md`'s WF-1c ready-lane convention byte-for-byte (`.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}`), never a partial field-wise status-only flip. Do NOT reuse `scripts/pm-closeout-head-idle.jq` here — that script ALSO flips the sprint's own `.status` to `"DONE"`, which would be wrong mid-decomposition (the sprint/task legitimately stays `IN_PROGRESS` — only children moved). No-op by construction if `.head.active_task_id` no longer matches `$SPRINT_ID` (a concurrent write already moved it on) — safe to run unconditionally at the end of every planning cycle.
 
 ## Signal Queue Write Guard — CAS on orch-state.json (TASK_1967-03 fix)
 
