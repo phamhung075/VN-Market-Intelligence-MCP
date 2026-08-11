@@ -1,0 +1,32 @@
+[
+  {
+    "ts": "2026-08-08T06:36:34Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-08T06:30Z",
+    "from": "system-auditor",
+    "detail": "V1 signal_queue_rows_written mismatch narrated=1 independent=0"
+  },
+  {
+    "ts": "2026-08-08T06:36:34Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-08T06:30Z",
+    "from": "system-auditor",
+    "detail": "V4 RETURN headline anomalies=0 but signals_posted=1"
+  },
+  {
+    "ts": "2026-08-08T06:36:35Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-08T06:30Z",
+    "from": "system-auditor",
+    "detail": "V5 RETURN NEXT=clean but signals_posted=1"
+  },
+  {
+    "ts": "2026-08-11T12:13:19Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-11T12:00Z",
+    "from": "system-auditor",
+    "detail": "V3 signals emitted but no dashboard rows written (signals_posted=1)"
+  },
+  {
+    "ts": "2026-08-11T12:18:24Z",
+    "cycle_tag": "cron:auditor-t2:2026-08-11T12:00Z",
+    "from": "system-auditor",
+    "detail": "V3 signals emitted but no dashboard rows written (signals_posted=2)"
+  }
+]

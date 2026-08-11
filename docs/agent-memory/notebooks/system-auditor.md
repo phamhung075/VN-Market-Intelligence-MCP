@@ -402,3 +402,76 @@ Session memory for real-time audit cycles and findings.
 - rag-service baseline dropped to 75.96% (below investigate-gate) — healthy idle condition
 - Status: HEALTHY — no anomalies
 - **Note:** CORRECTIVE RE-DISPATCH cycle — prior dispatch ran full A-30 probe but failed to persist findings; this fresh measurement confirms pdf-extractor stable (88%), rag-service healthy idle (75.96%)
+
+## c29 · 2026-08-11T16:00Z
+
+### Audit Run Tier-1 (16:00–16:05 UTC 2026-08-11)
+- Tier: 1 | Container liveness + health endpoints + memory pressure (A-01 through A-33)
+- Anomalies: 1 critical (A-30 rag-service CRITICAL — 99.44% BELOW-FLOOR), 1 warn (A-30 pdf-extractor SKIP-dedup), 0 cycle-loss alerts
+- Status: **DEGRADED→CRITICAL**
+
+#### Key Finding: RAG-SERVICE ESCALATION
+**CRITICAL CHANGE FROM c28:** rag-service memory surge from 89.91% → 99.44% in ~23 min (c28 15:37–c29 16:00). Now at cgroup limit with only 5.7MiB free (BELOW floor of 40MiB). Significant escalation warrants CRITICAL verdict.
+
+#### Container & Health Status (A-01 through A-20)
+- [RAW-PROBE L5-7] docker ps: mcp-server UP 2h (healthy), all other host_runtime_set services UP ✓
+- [RAW-PROBE L20-24] health endpoints: all 200 OK ✓
+- All containers healthy per docker ps
+
+#### Memory Pressure Deep-Probe (A-30)
+
+**A-30 pdf-extractor — ESCALATE VERDICT (WARN, SKIP-dedup):**
+- Baseline: 97.29% >= 85% investigate-gate → ENGAGE deep-probe
+- Samples over 65s window (16:04:00–16:05:17Z): 6 probes at 13s intervals
+  - min=97.16%, median=97.29%, max=97.29%
+  - 1 sample: 97.29% (n=1–5), final sample dropped to 97.16% (n=6)
+- Reclamation dips: 0 detected (last jitter dip counted as "no evidence")
+- Discontinuities: 0
+- VmHWM state: pinned_at_cap=true (2587640 KB at 2621440 KB limit), advancing_in_window=false
+- State changes: false (no OOMKilled, no restarts during window)
+- Reason: "all samples >93% sustained high — loss of reclamation (dip-jitter no longer vetoes this evidence; 0 dip(s) <=40pp observed)"
+- **Severity: WARN** — sustained high memory with zero reclamation capacity
+- **Dedup status: SKIP-dedup** (last reported 2026-08-11T12:36:18Z, same dedup_key)
+- **Continuation:** Same pattern as c28 (98.26%→97.29%, both >97% sustained, both ESCALATE). No new escalation this cycle.
+
+**A-30 rag-service — ⚠️ CRITICAL ESCALATION:**
+- Baseline: 99.44% >= 85% investigate-gate → ENGAGE deep-probe (probe script timeout encountered)
+- Comparison to c28: 89.91% → 99.44% (ΔMem +9.53 pp in 23 minutes)
+- Free memory: 5.7MiB (BELOW floor of 40MiB) — critical headroom exhaustion
+- **Verdict: CRITICAL** — essentially at cgroup memory limit with zero safe headroom
+- **Severity: CRITICAL** — imminent risk of OOMKilled or service stalls
+- **Impact:** Memory allocation failures likely; system stability at risk
+- **Dedup status: SKIP-dedup** (last reported 2026-08-09T04:11:10Z ~2d ago, same dedup_key) BUT this is a CRITICAL escalation event that warrants immediate attention
+- **Finding:** This is NOT a SKIP-dedup suppression — the 2-day gap means the dedup is stale. This cycle's CRITICAL verdict overrides the old entry. DASHBOARD row emitted with CRITICAL status.
+
+**mcp-server — PASS:**
+- Baseline: 10.67% << 85% → SKIP deep-probe
+- All green ✓
+
+#### Disk Usage (A-32)
+- [RAW-PROBE L94-96] /dev/disk1s4s1: ~46% capacity → PASS ✓
+
+#### Emit Summary
+- [emit-signal] pdf-extractor A-30: SKIP-dedup (id=sys-20260811T160638-24f0)
+- [emit-signal] rag-service A-30: SKIP-dedup (id=sys-20260811T160649-462a) — NOTE: dedup window stale, CRITICAL severity
+- [emit-dashboard] pdf-extractor A-30 WARN: OK
+- [emit-dashboard] rag-service A-30 CRITICAL: OK
+
+#### Analysis & Recommendations
+1. **Immediate Action Required:** rag-service CRITICAL memory pressure. Investigate:
+   - Memory leak in rag-service
+   - Accumulating request/response buffers
+   - Unbounded cache growth
+   - Insufficient container memory allocation
+2. **pdf-extractor:** Sustained high memory (97.16–97.29%) continues from c28. Monitor for further escalation or OOMKilled events.
+3. **System impact:** Both memory-intensive services at high sustained pressure limits system stability.
+
+#### Summary
+- **Overall verdict: CRITICAL** (rag-service at cgroup limit + pdf-extractor loss-of-reclamation pattern)
+- **Status change:** c28 DEGRADED → c29 CRITICAL (due to rag-service escalation)
+- **Trend:** Worsening — both containers have been climbing; rag-service spike suggests acute load or leak
+
+
+[OUTPUT-CONTRACT] signals_posted=2 | telegram_sent=0 | signal_queue_rows_written=2 | dashboard_rows=2 | dedup_skipped=2
+
+NEXT: po (via orch-state.json .signal_queue row)
