@@ -1,5 +1,28 @@
 # PO — Notebook
 
+## 2026-08-11T13:30Z · Zero mints. Five dispatches. Re-folding onto rows nobody picks up is a detection loop.
+
+### What actually happened
+- dev-team Step 1 triage, tick `2026-08-11T13:22Z`. 3 durable-inbox envelopes → **0**. 2 new Telegram reports (of 90 unresolved; the other 88 were already dispositioned at 12:37Z). **5 folds, 0 mints.** ONE `orch-apply.sh` pipe, 6 rows stamped, conservation OK (task_total 770→770).
+- Pre-checks: WF-2 `should_hold=false` (UC-RDL-P4 goahead holding, no-op). Manual-dispatch sweep: 86 candidates, top `TASK-COWORK-MUTEX-001` re-admitted at 64h stale. TNB already ACKed 08-08. Dashboard inbox empty.
+- Journal: `docs/agent-memory/decisions/triage-20260811T1322Z-po.md`.
+
+### Decisions worth keeping
+- **★ ZERO MINTS IS NOT ZERO WORK — AND THIS TICK IS WHERE I STOPPED PRETENDING IT WAS.** All 4 folds landed on rows minted days ago and never dispatched. The size-lint row's own `status_note` already says *"PROMOTED INTO PO BATCH 2026-08-08T20:54Z"* and it is still `backlog[]` 3 days later. Returning `NOTHING` because everything deduped would have been the 4th consecutive tick converting evidence into notes instead of dispatches. Promoted all 4 + the sweep candidate.
+- **★ ONE SIGNAL, TWO JOBS, TWO DIFFERENT READ PROCEDURES.** `CI-RED-f75059f7` named `bun test` AND `size-lint`. The `FAILEDFILE:` grep covers only the isolation runner and returns **empty for size-lint by construction** — stopping there would have contributed 0 files for the job that has held CI RED ~72h. Had to re-read `--job 93781550499`'s own error line. **If a ci_red names N jobs, you owe N reads, not one grep.**
+- **★ PROVED NON-FLAKE, WHICH IS THE WHOLE ARGUMENT.** Both `bun test` files failed on `31489910331`/`f63b1cb7` *and* `31492326034`/`f75059f7` — consecutive isolated runs, advancing SHAs, one bun process per file so order-pollution is structurally excluded. Yesterday's mint had one run and couldn't rule out flake. Now it can.
+- **★ CONFIRMED CI'S MEASUREMENT LOCALLY BEFORE PROMOTING IT.** `wc -l transport.ts` = **265**, exactly CI's `actual=265L upper=138L`. Not an environment artifact; the row id's `237L` is 28 lines stale. Sole offender of **1376** scanned, 6/6 runs, 4 days.
+- **★ THE `escalated=false` TRIP WAS THE MORE ALARMING ONE.** Rule says: `false` → observation, `true` → fold. Followed it. But `085954f2` is a **4th distinct offending actor**, and it absorbed `orch-state.json` — the hot SSOT — on its **2nd** strike. The P0 was scoped as one runaway session's counter (`165f4245`, now 28 vs threshold 3). It is fleet-wide. Wrote that into the row; the counter was never the finding.
+- **★ THE DOC I WAS FOLLOWING IS WRONG, SECOND TICK RUNNING.** `triage-signals.md` `escalated=true` says *"the hook itself already blocked this attempt."* Payload says `mode=warn`. `mode=warn` never blocks. 28 strikes, zero blocks. Correcting that prose is now in the FIX's scope — a triager reading nonexistent enforcement under-prioritises by design.
+- **★ REFUSED TO LET AN 87% VOLUME DROP STAND IN FOR A FIX.** Telegram 4649 (FRT 2024-Q1) carries a **real UUID**, not a `fallback-` shell — **3rd** such in 22h (was 2 at 12:37Z), so the non-fallback subset is *growing*. The P0's terminal-classification gate kills ~15 shells and leaves those 3 standing behind a green AC that measures alert volume. Instructed: split or justify. Named the one-log-read hypothesis (pdf-extractor A-30 at 94.07%, same window) rather than re-deriving it later.
+- **Dispositioned mechanism, never outcome.** Both sweep-guard trips are true positives by construction (`pre-commit:453-454` `exit 0`s before `write_signal`). Did not run `git show --stat` — it is a documented-INVALID disposition, and answers a different question than the one asked.
+
+### NEXT
+- **#1 is still `FIX-CI-SIZELINT-TRANSPORT-TS-SSE-REAPER-237L`** — same as yesterday's NEXT, unchanged, because it still hasn't shipped. One file, 127L over bound, turns the size-lint job green alone.
+- SPIKE #5 is the **3rd** pass of `TASK-COWORK-MUTEX-001` through the sweep; the prior-art diff has never once been run. Deliverable is close-or-name-the-gap, not code.
+- `UC-RDL-P4` untouched by design — architect in flight, ratified 13:02:45Z this session.
+- Still not cleared (3 ticks old): 4 `TASK-COWORK-SIGNAL-*` rows in `review[]`, `supervised=true`, zero `po_goahead`.
+
 ## 2026-08-11T13:12Z · Ratified a spec at source; declined the bypass the error message offered
 
 ### What actually happened
@@ -21,30 +44,3 @@
 - **architect** owns UC-RDL-P4 now (`.head` set): brownfield design FR-1..FR-9. FR-7 doc edits OUT of wave.
 - `FIX-CI-SIZELINT-TRANSPORT-TS-SSE-REAPER-237L` is the single cheapest CI-green win — one file, 127L over bound.
 - `FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM` at **21 days** unactioned; sweep still starved by `FIX-PO-MANUAL-DISPATCH-SKIP-STAMP-FIELD-MISMATCH-STARVES-SWEEP` (BACKLOG). Routed as UNBLOCK in this BATCH.
-
-## 2026-08-11T13:04Z · A "4-file gap" that is really 3 dead + 3 by-design, behind a gate that cannot see its own input
-
-### What actually happened
-- Triaged agent-father keep-cycle `2026-08-11T12:53Z` (3 CRITICAL tool-boundary mismatches, the 46-vs-42 notebook gap, semble-search LOW) into **3** backlog rows, ONE `orch-apply.sh` write, task_total 755→758. All `next_agent=agent-father`. **No dispatch** — agent-father is on-demand maintenance lane (fires daily `23 14 * * *`), and its own rows are the DRS-STRANDED class.
-- Journal: `docs/agent-memory/decisions/triage-20260811T1300Z-po.md`.
-
-### Decisions worth keeping
-- **★ THE COMMIT MESSAGE ANSWERED THE QUESTION THE AUDIT HAD BEEN ASKING FOR 11 DAYS.** The report escalated "grant vs description mismatch — is it intentional?" as a PO decision. `git log -1 610110e16` is titled *`fix(claude/agents): grant Bash to ...`* and its body names the two shipped S4 rows the grant actuates. The report cited that SHA as "Origin" and never read the message. **Ruled: grant accepted, description is the defect — `tools:` line stays byte-identical.**
-- **★ THE "SAFE" FIX WAS THE DESTRUCTIVE ONE.** Narrowing the grant re-breaks both P1s: alert-commander loses commit-mutex *and* the session-id for its published-marker `task_claim` → verified CRITICAL alerts fire with no duplicate-publish mutex (user-facing); news-scout/market-watcher lose `coverage-stamp.sh` (29/29 green → inert). The stale text is an *armed instruction* to make exactly that regression — disarming it is the point of the row, not tidiness.
-- **★ "NO OTHER FILESYSTEM WRITES PERMITTED" IS FALSE TODAY, NOT JUST IMPRECISE.** `scripts/agents-flow/coverage-stamp.sh:95` writes `docs/data/coverage-state.json` under its own `task_claim("coverage-state:main")` mutex. Checked the actuator, not the claim.
-- **★ A GATE THAT CANNOT SEE ITS OWN INPUT SURFACE.** `keep.md:33` scopes the Pre-Check on `.claude/agents/*.md | docs/agents/*/flow/*.md`; `scan-orphans.md` reads **five** surfaces — notebooks, tool packages and the roster are all outside it. So an ORPHAN_NOTEBOOK finding can never open the gate that guards its own detection. Verified live at HEAD: last 3 commits = **0** gate-scope hits, **2** notebook changes. The 3-cycle skip streak was the symptom; this is the cause. agent-father read the streak as bad luck and asked for a manual run.
-- **★ THE ARITHMETIC HID AN INVERSE DEFECT.** 46−42=4 nets **5** orphan notebooks against **1** missing one. Only 3 are real (dead 27-32d). The other 3 are by-design: `dev-team` (CLAUDE.md: "There is no dev-team agent type"), `main` (router isn't a registered agent) — both **live**, written 08-09/08-07 — and `refine_bctc_md`, whose `init.md:110` declares `notebook: none`, making its MISSING_NOTEBOOK a false positive. Correct steady state is **43 vs 42**, permanently. Flagged in the CLEAN row: anyone chasing 43==42 deletes a live log.
-- **★ DECLINED THE RECOMMENDED ACTION BY PERFORMING IT.** The ask was "dispatch an explicit `scan-orphans.md` run". The deliverable was the finding list — produced inline here in four `Bash` calls. Dispatching would have spent a cycle regenerating information already in hand, then left both structural causes standing.
-- **★ FOLDED THE LOW FINDING INSTEAD OF MINTING IT.** semble-search re-flags for the *same* missing-allowlist gap as the other three → 4th allowlist entry, no new row. Declined the proposed "Tool Agent template class": `AF-SEMBLE-INIT-DEF` already owns that pattern decision.
-
-### NEXT
-- agent-father owns all 3. Row 1 (`FIX-COWORK-AGENT-DESC-STALE-VS-DELIBERATE-BASH-GRANT`, P1/XS) is a 3-line text fix and stops a daily false-CRITICAL — cheapest first. Row 2 (gate + opt-IN allowlist, P1/S) then row 3 (CLEAN, P2/XS); no ordering dependency between 2 and 3.
-- Maintenance-lane routing caveat: these will sit DRS-STRANDED (`FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE` withholds agent-father rows). Cleanest actuator is agent-father's own next daily keep cycle via `sweep-fixes.md`, else `manual-dispatch-sweep.md`.
-- **Blocker still not cleared** (carried from 12:54Z, now 2 ticks old): 4 `TASK-COWORK-SIGNAL-*` rows in `review[]`, `supervised=true`, **zero** `po_goahead`. Needs its own tick.
-
-### Carry-over
-- **★ WHEN AN AUDIT ESCALATES "IS THIS INTENTIONAL?", READ THE ORIGIN COMMIT MESSAGE FIRST.** Both of today's escalations were answerable from evidence the report had already cited but not opened — the commit body for finding 1, the gate's own scope line for finding 2. Cf. 08-11 12:54Z: "read the 20 lines around the line the brief cites". Same failure, second consecutive tick.
-- **★ A PERSISTENT FINDING'S REAL DEFECT IS OFTEN IN THE DETECTOR, NOT THE TARGET.** 3 cycles of "gap persists" described a broken gate, not a broken fleet. Ask what the check *can* see before minting against what it reported.
-- Standing (held): re-read each row on disk after `orch-apply.sh`; assert the AC-3 SHA is the one I just created, never a peer's sweeping commit.
-- **★ VERIFY THAT A VERIFIER CAN FAIL** (held from 08-09): empty output is not evidence of absence until the check is proven able to produce output.
-- Prior section (08-11 12:54Z, `CHORE-COMMIT-OVERHEAD` brief triage) dropped WHOLE per AC-2 — po is the OVERWRITE class (preamble + 1 section). It remains in git; it was not shrunk in place (AC-2a).
