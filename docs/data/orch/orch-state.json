@@ -731,6 +731,24 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-11T16:00Z",
         "dedup_key": "auditor-a29-fire-gap:bctcReparseJob"
+      },
+      {
+        "id": "sys-20260811T184040-rag30",
+        "from": "system-auditor",
+        "ts": "2026-08-11T18:41:33Z",
+        "status": "OPEN",
+        "severity": "WARN",
+        "zone_owner": "ops/infra",
+        "summary": "A-30 rag-service memory regression: 89.55% → 93.43%",
+        "title": "A-30 rag-service memory regression: 89.55% → 93.43% (loss-of-reclamation)",
+        "payload": {
+          "check_id": "A-30",
+          "severity": "WARN",
+          "container": "vn-market-intelligence-mcp-rag-service-1",
+          "title": "A-30 rag-service memory regression: 89.55% → 93.43%, loss-of-reclamation pattern",
+          "detail": "rag-service memory regressed from prior c10 baseline of 89.55% to current 93.43% (sustained across 6 probes, 65s window). Loss-of-reclamation pattern indicates memory held at floor with zero dips. VmHWM pinned at 1040MiB/1024MiB cap, not advancing. No OOM kills, no restarts, process stable. FU-RAG-DEPLOY-MEMORY (DONE_VERIFIED 2026-08-08) means this is deployed-as-designed steady-state, not a fresh defect. ACK correctly expired per code-enforced staleness check.",
+          "dedup_key": "auditor-a30-rag-service-regression:2026-08-11"
+        }
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
