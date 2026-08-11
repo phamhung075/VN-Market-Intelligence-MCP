@@ -50,3 +50,12 @@
 - Fold the FR-3-sibling board-state guard (orch-state.json read, precedent exists server-side) into this tool vs keep it client-side → kept client-side (EC-8): would double effort, re-open a just-RAW-verified section, blur the coordination-lock/board-semantics module boundary the store's own header disclaims.
 **why-decision:** Both live-code re-reads (post-split `coordinationTools.ts`, live `taskHeartbeatTool.ts` Zod schema) overturned my own initial hypothesis that this tool needs FIX-ORPHAN-FR2-FR6-FR7's new heartbeat params — confirmed false, recorded as EC-7 so architect doesn't re-derive it.
 **why-change:** No change from dispatch scope. Added Q2 (rebuild-batch sequencing) as a genuine new PO blocker not named in the dispatch note — same sequencing-call pattern PO already used twice on this exact row (UC-RDL-P1 coordination, 07-15 cowork-scope adjudication).
+
+### STEP ba-S6 · ba · 2026-08-11T16:25:52Z
+**task-id:** UC-ASL-P5
+**what-done:** Independently re-verified all 4 original brief parts live (not the note, not PO's 08-11 restatement). 2 survive rescoped (FR-1 type-diff, FR-2 dedup-skip RESOLVED-closure), 2 declined (part 2 already consciously declined by its own doc header; part 5 would wedge 18/22 live rows). Zero PO blockers.
+**what-considered:**
+- Trust PO's ATB-bridging rationale for part 1 vs re-derive it → re-derived: found ATB-0 categorically skips ALL Tier-1 rows regardless of type (pre-dates the brief, commit 4fb46f684) — PO's note never checked this, only I did; kept part 1 but on a corrected rationale (taxonomy/routing precision, not ATB).
+- Blanket swap tier1-probe.md's 3 call sites to microservice_degraded (brief's literal instruction) vs per-check-class map → per-check-class: A-32 disk/A-33 hook-liveness are not service-degradation findings, brief's citations were pre-UC-ASL-P2-refactor stale anyway.
+**why-decision:** Live-measuring signal_queue (18/22 rows status=triaged lowercase) proved the brief's own "CORRECTED" part-5 enum would immediately wedge orch-state writes if shipped — decisive reason to decline outright, not just defer.
+**why-change:** No change from dispatch scope (explicitly asked to independently re-verify, not trust). Added §3 gate-flag flag (supervised/deploy_gate no longer justified once part 5 drops) as BA's own recommendation, not unilaterally actioned.
