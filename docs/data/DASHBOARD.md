@@ -1210,3 +1210,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-01 · pipeline-health endpoint unreachable
+**Severity:** WARN | **Date:** 2026-08-11 | **Status:** OPEN
+**Location:** mcp-server HTTP API
+**Details:** GET /api/pipeline-health returned connection refused or timeout
+**Impact:** Cannot assess per-source data fetch freshness; data pipeline observability lost
+**Root cause:** mcp-server service health issue or network connectivity problem
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-11T14:30:03Z (signal sys-20260811T142949-41ca, system-auditor -> po, dedup_key=endpoint_unreachable:pipeline-health:B-01, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
