@@ -1,0 +1,59 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "Ngân hàng bán lẻ và doanh nghiệp: tín dụng, thanh toán, bancassurance, ngoại hối",
+  "customer": "Khách hàng cá nhân đô thị, doanh nghiệp lớn/FDI, SME — mạng lưới quốc doanh lớn nhất theo vốn hoá",
+  "ops": "Biên lợi nhuận hoạt động 80.9%; ROE quý chưa annualized 4.2%, ROE annualized (sector-comparison) 16.7% — DƯỚI trung vị ngành ngân hàng 17.6%; PE 14.1 PREMIUM +57% vs ngành, PB 2.2 PREMIUM +45%; OCF/NI ratio 1.368 (lành mạnh, quarters_returned=4/4)",
+  "mgmt": "Q1-2026 nộp báo cáo ngày 19/07/2026 — trễ so với hạn gốc 15/05/2026 nhưng đã ĐÃ NỘP, không còn overdue hiện tại; dòng tiền nước ngoài 5 phiên MẠNH HƠN ngành (-42K cp vs ngành -211K cp); sentiment 30 ngày TIÊU CỰC (slope -0.30, 0/7 tin bullish)",
+  "valuation": {
+    "pe": 14.1,
+    "sector_median_pe": 9.0,
+    "roe_annualized_pct": 16.7,
+    "ey_pct": 7.09,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pp": 2.09,
+    "verdict": "FAIR"
+  },
+  "kinh_dich": {
+    "que": "Tuy (45)",
+    "xu_huong": "THUAN LOI",
+    "tin_hieu": "GIU",
+    "do_tin_cay_pct": 62
+  },
+  "insider": "khong co tin hieu dang ke",
+  "legal_risk": "khong co",
+  "esc_gate": {
+    "esc1_accounting_manipulation": "unevaluable_no_bash_glob",
+    "esc2_balance_sheet": {
+      "result": false,
+      "imbalance_pct": 0.37,
+      "assets_total": 2550963342,
+      "liabilities_total": 2316932013,
+      "equity_total": 224558726
+    },
+    "esc3_ocf_ni_divergence": {
+      "result": false,
+      "ocf_total": 12944932,
+      "net_profit_total": 9462095,
+      "divergence_ratio": 0.368,
+      "quarters_returned": 4
+    },
+    "esc4_nonop_share": {
+      "result": "na",
+      "reason": "bank — pretax/operating profit line items not directly comparable to non-bank ESC-4 formula"
+    },
+    "esc5_refine_confidence": {
+      "result": false,
+      "reason": "existing_refine_status=PARTIAL, report_id=null — refine not finished, skipping"
+    },
+    "escalation_status": "no_escalation"
+  },
+  "evidence_fragment_ids": [1118],
+  "cycle_id": "20260811-2100",
+  "slot": "bctc-analyst-slot-3",
+  "generated_at": "2026-08-11T21:03:14Z"
+}
