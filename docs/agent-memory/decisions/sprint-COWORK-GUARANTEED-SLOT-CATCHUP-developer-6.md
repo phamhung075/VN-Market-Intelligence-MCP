@@ -19,3 +19,16 @@
 **verify:** RED confirmed (conservation-ext Case A failed pre-fix, 45/46) → GREEN (46/46) after 1-function fix. Regression: `drain-signals.test.js` 51/51, `orch-apply-wrapper-tests.sh` 75/75, `orch-state-hook.test.mjs` 21/21, `bun tsc --noEmit` 0 errors (no `.ts` touched). Repo-wide `bun test` times out >2min locally (pre-existing, unrelated to this change) — targeted/merge-gate suites above satisfy `dev-standards.md`'s own pinned reading (zero `.ts` files touched this task).
 
 ---
+
+### STEP developer-S95 · developer · 2026-08-11T12:20:00Z
+**task-id:** FIX-ORPHAN-FR7-VERIFY-TOOL-REGISTRY
+**what-done:** Verified `docs/data/tool-registry.json`'s `task_heartbeat`/`task_release` entries against the FR-1/FR-2 params landed by sibling Tasks 1/2 — confirmed no edit needed, documented finding, no code change.
+**what-considered:**
+- Read the file itself first: both entries are bare name strings inside the `system` group's `tools[]` array — no per-tool object, no params/schema field anywhere in the file's shape (only `_maintained_by`/`lastUpdated`/`totalCount`/`groups[{name,count,tools[]}]`).
+- Read `scripts/gen-tool-registry.ts` (the file's own header: `_maintained_by: "generator (do not hand-edit)"`) — its regex (`server\.tool\(\s*["']([^"']+)["']`) extracts ONLY the tool-name string literal, never the Zod schema/params block that follows — structurally cannot duplicate a param payload per-tool.
+- Live-verified freshness rather than trusting the static file: `bun scripts/gen-tool-registry.ts --dry-run` → totalCount=183/groups=12/system=41, byte-identical to the committed file; ran `bun test tool-registry-parity.test.ts` (dedicated CI drift guard) → 17/17 pass.
+**why-decision:** the subtask's own acceptance line permits "confirm no edit needed" as a valid outcome — verified via the generator's source (not assumption) that this file is structurally incapable of holding per-tool param duplication, so FR-1/FR-2's new `ttl_seconds`/`payload_patch`/`owner_agent`/`original_owner_client_session` fields (now split into `system/coordination/taskHeartbeatTool.ts`+`taskReleaseTool.ts` since Task 2 landed) cannot have caused drift here.
+**why-change:** no change from plan — subtask 1 is the entire scope (single-subtask row), no edit required.
+**verify:** `jq` inspection (both tools present once each, name-only, `system` group); generator dry-run matches committed file exactly; `tool-registry-parity.test.ts` 17/17 pass (dedicated drift guard already exists and is green).
+
+---
