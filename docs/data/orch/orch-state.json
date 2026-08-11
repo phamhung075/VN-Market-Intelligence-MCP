@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-ORPHAN-FR7-VERIFY-TOOL-REGISTRY",
-    "next_agent": "developer",
-    "next_action": "Ready-Lane Consumer claim of FIX-ORPHAN-FR7-VERIFY-TOOL-REGISTRY — spawn developer DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
-    "updated_at": "2026-08-11T12:09:46Z",
-    "updated_by": "dev-team (ready-lane consumer)"
+    "status": "idle",
+    "updated_at": "2026-08-11T12:17:59Z",
+    "updated_by": "developer",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -256,6 +255,34 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-11T12:00Z",
         "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+      },
+      {
+        "id": "sys-20260811T121737-2a33",
+        "ts": "2026-08-11T12:17:37Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "bctc_vps_queue: 4 stale pending items >72 hours",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-11T12:00Z",
+        "dedup_key": "data_stale:bctc_vps_queue:B-13"
+      },
+      {
+        "id": "sys-20260811T121748-5da0",
+        "ts": "2026-08-11T12:17:48Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "summary": "Cron fire-gap: 8 stale, 1 missed of 90 total crons (72 on-time)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-11T12:00Z",
+        "dedup_key": "auditor-a29-fire-gap:tier2-stale"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -18438,6 +18465,36 @@
         "origin_signal_id": "bug-escalation:bctc-analyst:signals-absent-4th-cycle",
         "updated_by": "developer",
         "dev_note": "Fixed: added read-first SIGNAL-FILE WRITE VERIFICATION guard to docs/agents/bctc-analyst/flow/main.md — Write tool's own return is now the ONLY write-verification signal (per-cycle), agent must never Read a docs/signals/*.json path it wrote in a prior cycle to re-confirm presence. AC-2: no Bash/Glob grant added, tool grant stays narrow. AC-3 regression traced (not replayed) in decision journal. Commit c23d19da4 (pushed to origin/main). Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md STEP developer-S91."
+      },
+      {
+        "id": "FIX-ORPHAN-FR7-VERIFY-TOOL-REGISTRY",
+        "type": "FEATURE",
+        "title": "Verify docs/data/tool-registry.json references for FR-1/FR-2 params per FR-7 SSOT sync",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "M",
+        "zone": "docs/",
+        "owner": "pm",
+        "next_agent": "qa",
+        "depends": [],
+        "supervised": false,
+        "created_at": "2026-07-22T01:15:30Z",
+        "created_by": "pm/decomposition-20260722T0115",
+        "updated_at": "2026-08-11T12:17:59Z",
+        "updated_by": "developer",
+        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
+        "subtasks": [
+          {
+            "seq": 1,
+            "title": "Check tool-registry.json task_heartbeat/task_release entries; verify no per-tool schema payload duplication needed",
+            "acceptance": "Confirm no edit needed or document required changes"
+          }
+        ],
+        "claimed_at": "2026-08-11T12:09:46Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "developer",
+        "dev_note": "FR-7 verification-only subtask: docs/data/tool-registry.json task_heartbeat/task_release entries are name-only strings under the system group (41 tools) -- no per-tool schema payload anywhere in the file, so param-schema duplication is structurally impossible. Generator (scripts/gen-tool-registry.ts) regex extracts only the tool-name literal, never Zod params. Live-verified freshness: gen-tool-registry.ts --dry-run matches committed file exactly (totalCount=183, system=41) even after task_heartbeat/task_release were further split into standalone taskHeartbeatTool.ts/taskReleaseTool.ts files post-Task-2. CI drift guard tool-registry-parity.test.ts 17/17 pass. No edit made -- correctly no-op. Full detail: Implementation Record under Task 6, docs/handoffs/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-PM-decomposition-20260722.md. Commits: 618654d96 (handoff+WORK.md), 557653c59 (notebook+journal)."
       }
     ],
     "qa": [
@@ -18760,35 +18817,6 @@
           "TASK-COWORK-SIGNAL-NAMING-CONTRACT"
         ],
         "decomposition_note": "Phase 1 decomposed into 4 atomic tasks per PO amendments (3 binding, 1 correction to FR-1 WINDOWKEY logic per Amendment 3). All inherit plan_only/supervised flags. No developer dispatch until PO adjudication."
-      },
-      {
-        "id": "FIX-ORPHAN-FR7-VERIFY-TOOL-REGISTRY",
-        "type": "FEATURE",
-        "title": "Verify docs/data/tool-registry.json references for FR-1/FR-2 params per FR-7 SSOT sync",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "M",
-        "zone": "docs/",
-        "owner": "pm",
-        "next_agent": "developer",
-        "depends": [],
-        "supervised": false,
-        "created_at": "2026-07-22T01:15:30Z",
-        "created_by": "pm/decomposition-20260722T0115",
-        "updated_at": "2026-08-11T12:09:46Z",
-        "updated_by": "pm/decomposition-20260722T0115",
-        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
-        "subtasks": [
-          {
-            "seq": 1,
-            "title": "Check tool-registry.json task_heartbeat/task_release entries; verify no per-tool schema payload duplication needed",
-            "acceptance": "Confirm no edit needed or document required changes"
-          }
-        ],
-        "claimed_at": "2026-08-11T12:09:46Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "developer"
       }
     ]
   },
