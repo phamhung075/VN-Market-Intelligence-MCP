@@ -19425,7 +19425,7 @@
         "last_served_tick": "2026-08-09T04:53:51Z"
       }
     },
-    "_updated_at": "2026-08-11T14:23:09Z",
+    "_updated_at": "2026-08-11T14:51:50Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19450,6 +19450,30 @@
         },
         "createdAt": "2026-08-11T13:59:53Z",
         "drained_at": "2026-08-11T14:23:09Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "aea5bf941be6210cba4fbd8c972a16a1b0c945d7de89ed89b8767248f9ef244a",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=29 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-11T14:41:06Z",
+        "drained_at": "2026-08-11T14:51:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6f799ee0221db39691ffef3cf8c8ef977d3e74042d7baba3e30213df7d19c06d",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/data/auditor-dedup-ledger.json. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=30 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-11T14:43:46Z",
+        "drained_at": "2026-08-11T14:51:50Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
