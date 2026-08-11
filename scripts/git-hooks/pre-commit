@@ -850,6 +850,18 @@ fi
 escalate_effective="$mode_effective"
 [ "$escalated" = true ] && escalate_effective="reject"
 
+# FIX-SWEEPGUARD-ESCALATION-HAS-NO-ACTUATOR-REPEAT-OFFENDER-13-STRIKES (de-noise,
+# po_correction_20260811T1340Z): the actuator above already blocks (exit=1 when
+# escalate_effective=reject — verified live, see the board row's FACT 3/po_fold_
+# 20260811T1437Z). What triage COULD NOT tell from the docs/signals/ payload alone
+# was whether a given escalated=true fire was a commit that actually landed
+# (mechanism failed) or one this hook itself rejected a few lines below (mechanism
+# worked, actor's own retry-with-pathspec is what actually lands). Computed from
+# escalate_effective (already resolved above), not re-derived, so it can never
+# drift from the real exit-code branch taken further down.
+outcome="proceeded"
+[ "$escalate_effective" = "reject" ] && outcome="blocked"
+
 {
   echo "=============================================================================="
   echo "[sweep-guard] WARNING: this commit has NO pathspec — it will absorb ALL"
@@ -865,7 +877,7 @@ escalate_effective="$mode_effective"
 log_line="$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || true) mode=${mode_effective} actor=${actor} n=${n} staged=[${staged_oneline}]"
 printf '%s\n' "$log_line" >> "$LOG_FILE" 2>/dev/null || true
 
-signal_msg="[sweep-guard] BARE commit about to absorb ${n} staged file(s) not necessarily this actor's own: ${staged_oneline}. actor=${actor} mode=${mode_effective} escalated=${escalated} prior_warns=${prior_warns} threshold=${escalate_threshold}. Fix: git commit -m \"<msg>\" -- <own-files-only>."
+signal_msg="[sweep-guard] BARE commit about to absorb ${n} staged file(s) not necessarily this actor's own: ${staged_oneline}. actor=${actor} mode=${mode_effective} escalated=${escalated} prior_warns=${prior_warns} threshold=${escalate_threshold} outcome=${outcome}. Fix: git commit -m \"<msg>\" -- <own-files-only>."
 write_signal "$signal_msg"
 
 if [ "$escalate_effective" = "reject" ]; then

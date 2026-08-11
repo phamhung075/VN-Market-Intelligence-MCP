@@ -91,6 +91,18 @@
 #       the SAME command with a `-- <path>` limiter re-appended (the pre-fix
 #       shape) exits non-zero with empty stdout — pins the exact regression this
 #       row fixed so a future edit re-adding a pathspec here is caught.
+#   T15 FIX-SWEEPGUARD-ESCALATION-HAS-NO-ACTUATOR-REPEAT-OFFENDER-13-STRIKES —
+#       the escalated=true bug-escalation signal is DE-NOISED with an
+#       `outcome=` field so triage can tell "mechanism worked, actor retried
+#       correctly" from "mechanism failed, peer content absorbed" (po's own
+#       po_correction_20260811T1340Z on the board row: the actuator already
+#       blocks — exit=1 on the 4th BARE commit, confirmed by T7 — the residual
+#       gap was that the docs/signals/ payload could not distinguish a BLOCKED
+#       attempt from one that PROCEEDED, so 30 blocked-attempt signals were
+#       mis-triaged as 30 unblocked sweeps). Same actor/threshold shape as T7:
+#       commits 1-3 (prior_warns 0,1,2, exit=0) must each emit a signal payload
+#       containing `outcome=proceeded`; commit 4 (prior_warns=3, exit=1) must
+#       emit a signal payload containing `outcome=blocked`.
 #
 # Run:
 #   bash scripts/git-hooks/pre-commit.test.sh
@@ -555,6 +567,47 @@ else
   FAIL=$((FAIL + 1))
 fi
 rm -rf "$D14"
+
+# ── T15: escalated=true signal payload de-noised with outcome=blocked/proceeded ──
+# FIX-SWEEPGUARD-ESCALATION-HAS-NO-ACTUATOR-REPEAT-OFFENDER-13-STRIKES. The
+# actuator itself already blocks (T7) — this pins the residual gap po's own
+# po_correction_20260811T1340Z identified: the docs/signals/ payload could not
+# tell a BLOCKED attempt (mechanism worked) from one that PROCEEDED (mechanism's
+# only disposition before this fix), so every blocked retry kept re-triaging as
+# if it were a fresh unblocked sweep. Same actor/threshold shape as T7: 3
+# warm-up BARE commits (exit=0) must each emit a signal payload containing
+# `outcome=proceeded`; the 4th (escalated, exit=1) must emit `outcome=blocked`.
+D15="$(new_repo)"
+actor15="test-actor-T15-$$"
+mkdir -p "$D15/docs/signals"
+(
+  cd "$D15" || exit 1
+  export CLAUDE_CODE_SESSION_ID="$actor15"
+  echo p1 > p1.txt; git add p1.txt; git commit -qm "proceeded 1" 2>/dev/null
+  echo p2 > p2.txt; git add p2.txt; git commit -qm "proceeded 2" 2>/dev/null
+  echo p3 > p3.txt; git add p3.txt; git commit -qm "proceeded 3" 2>/dev/null
+  echo p4 > p4.txt; git add p4.txt; git commit -qm "blocked 4" 2>/dev/null
+)
+proceeded15=0
+blocked15=0
+other15=0
+for f in "$D15"/docs/signals/commit-sweep-guard-*.json; do
+  [ -f "$f" ] || continue
+  payload15="$(jq -r '.payload' "$f" 2>/dev/null)"
+  case "$payload15" in
+    *"outcome=proceeded"*) proceeded15=$((proceeded15 + 1)) ;;
+    *"outcome=blocked"*) blocked15=$((blocked15 + 1)) ;;
+    *) other15=$((other15 + 1)) ;;
+  esac
+done
+if [[ "$proceeded15" -eq 3 && "$blocked15" -eq 1 && "$other15" -eq 0 ]]; then
+  echo "PASS T15: escalated=true signal payload de-noised — 3x outcome=proceeded (warm-up, exit=0) + 1x outcome=blocked (escalated, exit=1), 0 unlabeled"
+  PASS=$((PASS + 1))
+else
+  echo "FAIL T15: proceeded=$proceeded15 blocked=$blocked15 other=$other15 files=[$(ls "$D15/docs/signals/" 2>/dev/null | tr '\n' ' ')]"
+  FAIL=$((FAIL + 1))
+fi
+rm -rf "$D15"
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
