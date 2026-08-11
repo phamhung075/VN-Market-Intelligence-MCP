@@ -135,5 +135,26 @@ PIPELINE: continue (P0, decomposition-only, no code changes in this cycle)
 
 **why-change:** No change from architect's brief — only PM's routine decomposition and lane routing per policy.
 
+### STEP pm-S8 · SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING Closeout + FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION Decomposition · pm · 2026-08-11T17:15:00Z
+**task-id:** SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING (parent closeout) + FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION (child decomposition)
+
+**what-done:**
+1. **Closed parent SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING** — Original question ("is the root cause the guaranteed-slot backstop/supersede-trigger wiring itself?") is ANSWERED by two DONE_VERIFIED diagnostic children: (a) SPIKE-COWORK-GUARANTEED-SLOT-DIAGNOSTIC-FIRER confirmed firer is invoked correctly on schedule; failures are external (Anthropic weekly-quota exhaustion, exit_code=1 weekly-limit message, 100% since 2026-08-08T20:31:19Z); (b) SPIKE-COWORK-GUARANTEED-SLOT-DIAGNOSTIC-WIRING refuted original hypothesis (no internal self-latching last_fired gate exists in call chain — re-verified cowork-guaranteed-slot-firer.sh lines 141-171 directly). Updated parent row's status_note with completion explanation + added completed_at timestamp. Row remains BACKLOG status per lane rules (status=BACKLOG only allowed in backlog lane per orch-state schema).
+
+2. **Decomposed FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION** — Byproduct finding from diagnostic trace: script has zero failure-escalation path. run_firer() correctly returns overall_rc!=0 on failure but nothing consumes it; launchd silently retries on 900s tick. Result: 67h of guaranteed-slot failures with zero BUG-channel alerts ("silent false promise"). Decomposed into 1 atomic task (not 2-3) because implementation and tests are tightly coupled (test seams already exist in script via ENV overrides). Created TASK-FIX-COWORK-FIRER-ESCALATION (Size S, ~2h, zone cross-service/): reuse curl-to-Telegram pattern from scripts/maybe-deploy-vps.sh (lines 35-41), add 6h TTL cooldown to prevent spam, update test suite. AC-4 acceptance criteria documented in handoff file. Next_agent set to developer.
+
+**what-considered:**
+- Parent SPIKE closure: architect's explicit recommendation (orch-state.json field architect_diagnostic_spike_closeout_note_20260811): "close this parent row citing both children + route the new FIX row; no further wiring-trace value remains here." Both diagnostic children are DONE_VERIFIED as of 2026-08-11T17:07:23Z (wiring task) and 2026-08-11T16:45:33Z (firer task). Original question has a definitive answer (no code wiring defect). Only downstream actionable item is the separate FIX row.
+
+- Task decomposition granularity: Considered 1 task vs 2 tasks (implementation + tests) vs 3 tasks (design + impl + tests). Chose 1 task because: (a) scope is small and well-scoped by architect (~2h total); (b) implementation and test harness are tightly coupled (cowork-guaranteed-slot-firer.test.sh already has CLAUDE_BIN stub pattern via ENV overrides, same pattern can be reused for TELEGRAM_BOT_TOKEN/TELEGRAM_BUG_CHAT_ID stubs); (c) no parallel dependencies that would benefit from task split. Architect design note §Test Strategy explicitly follows this pattern.
+
+- Cooldown strategy: Architect recommended "marker file with 6h TTL, or only re-alert when the printed error message text changes" to bound spam (one alert per distinct failure episode). This follows existing fail-loud convention (docs/policies/alert-policy.md verdictResolutionJob precedent: one BUG Telegram alert per job run). Implemented as marker-file approach (simpler, more robust than parsing error message deltas).
+
+- Build standard exemption: Task is bash-only bug-fix/maintenance, no apps/<svc> touched, so BUILD-STANDARD: not-applicable per architect review note. Skipped from pre-commit gate scope.
+
+**why-decision:** Architect provided explicit closure recommendation for parent (cite both children + route FIX). Both children are DONE_VERIFIED with QA directly-committed verification (not relayed). Original SPIKE question has definitive answer (no wiring gate, root cause is external). Byproduct finding (escalation gap) is real, in-scope, well-designed by architect, and benefits from separate task (independent from catch-up epic, can land ahead). Single-task decomposition is appropriate for a small, well-scoped, tightly-coupled implementation. All evidence points to clean decomposition and ready handoff.
+
+**why-change:** No change from architect's guidance. Architect recommended closeout + FIX routing; PM executed exactly that decomposition.
+
 ---
 
