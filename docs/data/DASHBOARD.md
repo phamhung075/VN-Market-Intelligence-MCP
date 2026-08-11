@@ -1390,3 +1390,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · vnIndexRefresh stale 9.4h
+**Severity:** CRITICAL | **Date:** 2026-08-11 | **Status:** OPEN
+**Location:** cron/indexing
+**Details:** vnIndexRefresh last fired 2026-08-11 08:55:00, 9.4h overdue (threshold 0.1h)
+**Impact:** VN index not being refreshed — data stale by 9+ hours
+**Root cause:** Cron scheduler issue or job infrastructure failure
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-11T18:24:04Z (signal sys-20260811T182231-76d5, system-auditor -> po, dedup_key=auditor-a29-fire-gap:vnIndexRefresh, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
