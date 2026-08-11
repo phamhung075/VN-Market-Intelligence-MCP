@@ -88,11 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-11T18:33:26Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE",
+    "next_agent": "pm",
+    "next_action": "Ready-Lane Consumer claim of FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE — spawn pm DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
+    "updated_at": "2026-08-11T19:23:19Z",
+    "updated_by": "dev-team (ready-lane consumer)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -944,8 +945,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-11T18:22:00Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-08-11T19:26:00Z",
+    "_updated_by": "pm",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11026,6 +11027,30 @@
         "supervised": false,
         "updated_at": "2026-08-11T19:05:57Z",
         "status_note": "Root evidence: SPIKE-NEWSSCOUT-KLFL-FALSE-ENOENT-ON-PRESENT-TRACKED-SKILL-FILE (done[], resolved 2026-08-11). One confirmed occurrence, raw-transcript verified: a news-scout spawn constructed Read file_path=/Users/<home>/.claude/skills/step-0-cowork/SKILL.md instead of <project-root>/.claude/skills/step-0-cowork/SKILL.md -- a stochastic LLM path-anchor slip, not a doc/code bug (a sibling market-watcher spawn resolved the byte-identical always_load entry correctly in the same batch/session/cwd, so the source text is not at fault). 37 agents currently reference .claude/skills/ paths in their own init.md always_load (grep -rl '\\''\\.claude/skills/'\\'' docs/agents/*/init.md). Scope: for each, add a short parenthetical/note clarifying the path is PROJECT-ROOT-relative, never ~/.claude/ -- same pattern already applied to docs/agents/news-scout/init.md + flow/cycle.md + flow/stage-bootstrap.md by the SPIKE that minted this row. Low urgency (N=1 occurrence across the whole fleet's history as of mint time, per PO's own dedup check when the SPIKE was minted) -- this is a prophylactic grounding-note sweep, not a live incident. Mechanical/low-risk edit (one-line note addition per file), safe to batch.\n"
+      },
+      {
+        "id": "SPIKE-BCTC-RECONCILE-EXHAUSTED-REAL-UUID-SUBSET",
+        "type": "SPIKE",
+        "title": "Investigate REAL-UUID RECONCILE EXHAUSTED alerts (HUT 2025-Q3, BSR 2024-Q1, FRT 2024-Q1) — 0 rows after 8 extraction passes, NOT explained by fallback-shell fix",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "unassigned",
+        "next_agent": "architect",
+        "created_at": "2026-08-11T19:26:00Z",
+        "created_by": "pm",
+        "depends": [],
+        "blocks": [],
+        "note": "PO flagged (folds 2026-08-11T13:22Z): this subset of RECONCILE EXHAUSTED alerts carries real UUID report_ids (not fallback-% shells) and is growing, NOT explained by FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE premise. Concurrent hypothesis: system-auditor A-30 pdf-extractor sustained-high memory (telegram 4648, 2026-08-11T12:36:20Z, 94.07% loss of reclamation) could cause zero-row extraction on genuinely-extractable PDFs. Root cause distinct from fallback-shell structural issue. Requires investigation and separate root-cause mitigation.",
+        "related": [
+          "FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE",
+          "telegram-report:4648",
+          "telegram-report:4649",
+          "telegram-report:4650"
+        ],
+        "updated_at": "2026-08-11T19:26:00Z",
+        "updated_by": "pm"
       }
     ],
     "closed_sprints": [
@@ -13745,61 +13770,6 @@
         "architect_completed_at": "2026-07-31T02:40:51Z",
         "architect_brief": "docs/architecture-briefs/2026-07-31-fix-subagent-branch-checkout-hijacks-shared-working-dir.md",
         "architect_review_note": "[architect 2026-07-31T02:40:37Z DESIGN COMPLETE — plan-only, no code shipped this cycle] Verified git has NO pre-checkout hook (git help githooks, git 2.49.0 — only post-checkout exists, contractually cannot block the checkout itself, only revert-after + force the calling command exit code). CHOSE AC-1(a): new scripts/git-hooks/post-checkout hard-reverts any non-main checkout in the PRIMARY working dir back to main (MODE=enforce default, diverges deliberately from the sweep-guard hooks WARN default — justified in brief SS3: zero legitimate off-main state exists live today per UC-RDL-P7s own 2026-07-17 ground truth, and revert is self-healing not blocking). Exempts LINKED worktrees by construction (git-dir vs git-common-dir, live-tested) so it does not foreclose SPIKE-C44 if that is ever adopted later — SPIKE-C44 is therefore NOT a dependency of this row (would only become one if fix (b) worktree-isolation were chosen as primary, which it was not). REJECTED (b) worktree-isolation-for-everyone as primary: blast radius is the WHOLE fleet (8 agent types share HEAD) vs SPIKE-C44s own 2-developer-disjoint-zone scope, and SPIKE-C44 itself is still unstarted. REJECTED (c) schema-level ban as this rows OWN primary layer: the branch: field lives in free-form markdown handoffs, not a Zod-validated shape (grepped orchStateSchema.ts — no branch field exists to ban) — a schema-ban has nothing to bind to there.\nCRITICAL COORDINATION FINDING (not in the original triage): grep-confirmed 5 flow docs still ACTIVELY author/verify/honor a task/NNN-* branch-checkout convention TODAY, post-dating UC-RDL-P7 STEP1s ruling by 2 weeks — pm/flow/main.md:75 (branch: template, fired literally hours before this brief on docs/handoffs/FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE-dev.md, one of this rows own 4 cited incidents), developer/flow/main.md:51-54+158 (VERIFY: git branch --show-current must equal task/NNN-kebab-description — a HARD precondition before touching any file), developer/flow/microservice-main.md:53-57+161 (identical), qa/flow/main.md:37,42,114-124,219-224 (pipeline JUMP-TOs first line is git checkout task/NNN-*), fixer/flow/*.md:34,36,60,110. This means shipping the hook with ZERO coordination will make developer/microservice-main.mds own VERIFY line fail for every M/L task (the hook will have already reverted HEAD to main before that line runs) — this is UC-RDL-P7s own cited \"wedges QA merge if only one half edited\" hazard, reproduced via a different mechanism (a hook, not mixed doc state), same remedy needed either way. UC-RDL-P7 STEP2 (BACKLOG, next_agent=ba, unstarted) already owns rewriting exactly these 5 files — this row does NOT duplicate or implement that edit; the 5-file/line-number target list above is handed to whoever eventually works STEP2 (agent-father commit_zone per its own init.md — docs/agents/ is explicitly in its allowed list), found live via grep, not assumed.\nAC-4 LIVE PROOF: 5 scenarios reproduced in a disposable scratch repo (never the live repo) — control (reproduces the hijack exactly as reported), guarded (hijack prevented, peer commit lands on main, not reachable only from the checked-out branch), non-destructive-conflict edge case (git refuses the revert rather than discard uncommitted work, fails loud), linked-worktree exemption (fleet-worktree-push-style worktrees unaffected), re-entrancy (single pass, 0.39s, no recursion). Full design + transcripts: docs/architecture-briefs/2026-07-31-fix-subagent-branch-checkout-hijacks-shared-working-dir.md.\nROUTING: next_agent=pm (not developer directly) — deliverable is scripts/git-hooks/ (developer zone per this dispatchs own instruction not to assume agent-father there) but the coordination-timing call (accelerate/scope-down UC-RDL-P7 STEP2 to land same-wave, vs stage this hook via MODE=warn first) is a task-breakdown/prioritization judgment, which is PMs job per architects own not_my_job boundary, not architects to decide unilaterally."
-      },
-      {
-        "id": "FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE",
-        "type": "FIX",
-        "title": "66 fallback-<TICKER>-<YEAR>-<Q> financial_reports shells are structurally unreachable by the extraction pipeline (0/66 ever produced a layout_unit or table_row, DB-wide) — each re-exhausts forever and emits one fail-loud RECONCILE-EXHAUSTED Telegram BUG per pass",
-        "status": "READY",
-        "priority": "P0",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "architect",
-        "next_agent": "pm",
-        "created_at": "2026-08-05T09:06:56Z",
-        "created_by": "po (dev-team triage tick 2026-08-05T08:37Z)",
-        "verdict": "ROOT-CAUSE-RAW-VERIFIED-AT-SOURCE-BY-PO",
-        "occurrence_count": 47,
-        "source": "telegram-reports 4313-4316,4340-4380,4404-4405 (45 [bctcExtractReconcile] RECONCILE EXHAUSTED / CIRCUIT BREAKER, 2026-08-03T06:05Z-2026-08-04T18:05Z)",
-        "verification_gate": "raw_probe_layout_units_or_table_rows_nonzero_for_a_fallback_report_id",
-        "status_note": "DECOMPOSED INTO: FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write (TODO, no deps) + FIX-BCTC-FALLBACK-SHELL-REPORTS-READ-SIDE-FAST-FOLLOW (BACKLOG, depends on write task). Parent task kept for traceability (architect design record).",
-        "note": "RAW-VERIFIED readonly on the live named-volume DB (docker exec vn-market-intelligence-mcp-mcp-server-1 bun, /app/data/market.db) at 2026-08-05T09:0xZ.\n\nTHE PREMISE OF EVERY PRIOR ROW IN THIS FAMILY IS NOW STALE — READ THIS FIRST.\nSPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (P0, review, ops) asserts the structured-extraction pipeline is DORMANT (layout_units frozen 2026-06-10, table_rows frozen 2026-06-30). That was true on 2026-07-16. IT IS FALSE TODAY. Live: bctc_layout_units n=5134, MAX(extracted_at)=2026-08-04 22:12:12, with per-day writes 07-28:159, 08-01:1430, 08-02:430, 08-03:1865, 08-04:463 — i.e. the pipeline wrote 1865 layout units on the very day 4 reports claimed 0 rows. bctc_vps_queue status=done n=171 spanning 2023-Q4..2026-Q2. FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (closed 2026-07-10, commit 760892790) DID ship and DID work. Do NOT re-open the dormancy hypothesis.\n\nTHE ACTUAL DISCRIMINATOR (structural, not statistical):\nfinancial_reports holds 257 rows in exactly two disjoint families with ZERO cross-over:\n  - 191 rows with a real UUID id AND data_env = NULL\n  - 66 rows with id LIKE fallback-% AND data_env = production\n(cross-tab is 191/191 and 66/66 — a perfect 1:1 partition, so data_env is a reliable secondary marker of which minting path created the row.)\nCount of rows in bctc_layout_units whose report_id LIKE fallback-% : 0.\nCount of rows in bctc_table_rows   whose report_id LIKE fallback-% : 0.\nMeanwhile UUID-keyed reports hold all 5134 layout units and all 4358 table rows.\n63 of the 66 fallback shells have pdf_path SET (a real PDF is on disk); only 3 are NULL.\n\nWHY THIS MATTERS: for the fallback- cohort, the reconcile job report text `0 rows across bctc_layout_units/bctc_table_rows/bctc_md_tables after 8 reconciliation passes` is a TAUTOLOGY, not a finding. The extraction path writes keyed on the UUID report id and can never populate a fallback- id, so the reconcile predicate is guaranteed to read 0 no matter how healthy extraction is. It then marks the row enrich_failed (terminal) and fires one fail-loud Telegram BUG. This is a permanent, self-renewing false-positive report generator: 45 BUG reports in 36h, and it will not stop at source until the shells are either made extractable or terminalised quietly.\n\nSCOPE FOR ARCHITECT — decide between (a) make fallback shells extractable (assign/repair a real report id, or teach the extraction trigger to accept them) and (b) never mint them in the first place + backfill-repair the existing 66. (a) recovers 63 PDFs of real financial data that are currently stranded on disk; (b) is cheaper but permanently abandons them. Also required either way: the reconcile job must not emit a fail-loud BUG for a report it is structurally incapable of resolving — that is the emission circuit-breaker the 2026-07-16 SPIKE already asked for and only half-shipped (run-summary suppression exists and fires at >=3 rows/run, per reports 4313/4356/4363/4373, but single-row runs still emit per-row).\n\nCOHORT EVIDENCE (answers the standing question on OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE): re-probed all 12 tickers of the 2025-Q4 cohort per report_id this tick. 11/12 still EXACTLY layout=0 AND table_rows=0; GAS still has NO financial_reports row at all — unchanged in the 26 days since the ops PEK trigger of 2026-07-10T09:52Z. 6 of the 11 (ACB, BID, EIB, HCM, HSG, POW) carry fallback- ids and are explained by this row. The other 5 (GVR b1cd4d07, MBB 48619ee7, D2D ef326a09, NKG eaf4f3bb, SSI a75da3da) carry REAL UUIDs and are still 0 — so the fallback-id mechanism is NECESSARY BUT NOT SUFFICIENT and a second cause exists for the UUID subset. D2D additionally has pdf_path NULL, which is its own already-documented blocker (trigger-pek-extract skips NULL pdf_path). Do not close this row on the fallback fix alone without re-probing those 5.",
-        "related": [
-          "OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE",
-          "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
-          "FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION",
-          "telegram-report:4313",
-          "telegram-report:4356",
-          "telegram-report:4363",
-          "telegram-report:4373"
-        ],
-        "updated_at": "2026-08-11T13:30:23Z",
-        "updated_by": "pm",
-        "architect_completed_at": "2026-08-05T09:34:06Z",
-        "architect_brief": "docs/architecture-briefs/2026-08-05-fix-bctc-fallback-shell-reports-structurally-unextractable.md",
-        "architect_review_note": "[architect 2026-08-05T09:35Z DESIGN COMPLETE — root cause confirmed live, plan-only, no code shipped this cycle] ROOT CAUSE (RAW-verified, not inferred): the 3 write-back endpoints the async PEK pipeline calls into — pushBctcLayoutHandler.ts (bctc_layout_units/bctc_page_zones), pushBctcTableHandler.ts (bctc_table_rows/bctc_balance_checks), pushBctcMdTablesHandler.ts (bctc_md_tables) — each gate report_id through the shared isValidUuid() REGEX-FORMAT check (bctcInspectHandler.ts:45-50) before accepting any write. This shipped in the LF-OVERLAY/BT-3i sprints, weeks before fallback- ids existed, and was never revisited when (1) SPRINT-1330's DA_NOP fallback (bctcReparseJob.ts::insertFallbackRecord, mirrored in composition-root.ts:199-220) started minting financial_reports shells with id=\"fallback-<TICKER>-<YEAR>-<Q>\", and (2) FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION wired bctcExtractReconcileJob.ts to re-derive report_id via a FORMAT-AGNOSTIC (action_code,sort_key) lookup that resolves to a fallback- id exactly as readily as a UUID one, then re-fires PEK against it every ~30min for 8 passes. PEK genuinely OCRs the PDFs (real compute, real output) but the callback push is unconditionally HTTP-400-rejected, so the reconcile job's own 3-table success-check is a mathematical certainty of 0 for this cohort — a tautology, now pinned to a 5-line if-block in 3 files, not a diagnosis.\nLIVE CONFIRMATION (docker logs vn-market-intelligence-mcp-pdf-extractor-1, 96h window): LayoutFirstPushClient.push_layout HTTP 400 body={\"error\":\"invalid_report_id: must be UUID\",\"report_id\":\"fallback-VND-2023-Q4\"} — real 67/67 pages already extracted, rejected anyway. 20 distinct fallback- ids rejected, 50 total 400s in 96h (PDR-2023-Q4 x8, DXG-2025-Q2 x6, ...). mcp-server's own container logs show ZERO trace (the 400 branch has no server-side log call) — a secondary observability gap worth a 1-line logger.warn.\nFIX CHOSEN: option (a) — make fallback shells extractable (recovers the 63 real PDFs; option (b) backfill-repair throws that data away and leaves the id-shape assumption live for the next non-UUID scheme). Replace the isValidUuid() FORMAT gate in all 3 push handlers with an EXISTENCE gate against financial_reports.id (db already DI'd into all 3 signatures, zero new plumbing): `SELECT 1 FROM financial_reports WHERE id = ?`. This is a CORRECTION not a relaxation — strictly TIGHTER than today (closes an orphan-write gap: today any syntactically-valid-but-unknown UUID is accepted) and zero injection-risk regression (every write already fully parameterized; the UUID check was never load-bearing for injection safety). isValidUuid() itself stays untouched — still correctly used by its ~14 OTHER call sites.\nTEST GAP FOUND: all 3 existing suites' (1272-push-bctc-layout, pushBctcTableHandler, 1270-push-bctc-md-tables) happy-path fixtures never INSERT a financial_reports row for their own golden UUID before pushing — today's happy path only passes because the old gate is format-only. Under the corrected gate this is a REQUIRED fixture fix (seed row per suite), plus 2 new required cases per handler: (i) fallback-XXX-2025-Q4 seeded row -> push -> 200 + row lands (the actual regression-proof), (ii) syntactically-valid-but-unknown UUID -> 400 (proves tightened not just relaxed). Full detail + exact line numbers: docs/architecture-briefs/2026-08-05-fix-bctc-fallback-shell-reports-structurally-unextractable.md §3.\nAC-3: no new reconcile-job code needed — the existing enrich_failed+circuit-breaker terminal path is legitimate for genuine failures and only ever misfired here because the write was structurally guaranteed to fail. Recommend re-probing empirically at the AC-2 72h mark rather than pre-building new suppression logic. The 3 pdf_path=NULL shells are a distinct PDF-sourcing gap, correctly out of scope.\nOUT OF SCOPE (flagged, NOT closed by this fix): ~14 more isValidUuid call sites (bctcInspectHandler.ts x6 — the actual get_bctc_page_text/get_bctc_page_image MCP tool surface — plus bctcCorrectHandler/bctcConfirmHandler x2/bctcEvalPushStageHandler/bctcInspectMdHandler/bctcFlagsHandler/bctcEvalDetailHandler/bctcEvalRecomputeHandler/bctcEvalPageHandler/bctcBatchTableBackfillJob.ts's own copy/bctcCorrectionService.ts's own copy) gate the SAME assumption on the READ/correction/eval side. Not touched here (AC-1/2/3 don't require read-path reachability; touching 14 more files pushes M to L) but means the newly-written data stays functionally unreadable by every human/agent BCTC consumption tool until a same-pattern fast-follow lands. Recommend PO mint a P1/M fast-follow FIX row, sequenced AFTER this row is verified live. Confirmed (grep, no gate present) the agent-facing LF-OVERLAY refine toolchain (pushBctcRefinedUnitTool/finalizeBctcRefineTool/backfillBctcScalarsTool) carries NO isValidUuid gate — already format-agnostic, will work on fallback- ids once §2 lands, no further change needed there.\nROUTING: next_agent=pm (task-breakdown into dev-mcp-server implementation + the fast-follow-row minting decision is PM's job per architect's own not_my_job boundary, not architect's to decide unilaterally).\n",
-        "po_fold_20260811T1237Z": "CORROBORATION (po triage 2026-08-11T12:37Z): 14 of the 16 RECONCILE EXHAUSTED alerts in the 2026-08-10T15:05Z..2026-08-11T12:35Z window carry report_id of exactly the form 'fallback-<TICKER>-<YEAR>-<Q>' (fallback-MSN-2025-Q3, fallback-KDH-2025-Q3, fallback-KDC-2025-Q1, fallback-VJC-2024-Q2, fallback-DGC-2024-Q4/Q3/Q1, fallback-FRT-2024-Q4, fallback-VIX-2024-Q4/Q2, fallback-GEX-2024-Q3, fallback-DIG-2024-Q2/Q1, fallback-KDH-2025-Q1); the other 2 carry real UUIDs (HUT 2025-Q3, BSR 2024-Q1). If this row's claim holds, those 14 are burning up to 8-11 reconciliation passes each on rows that are unextractable BY CONSTRUCTION — a terminal-classification gate in front of the reconcile loop would eliminate ~87% of this alert volume at zero extraction cost. Raises the value of this row above cosmetic.",
-        "po_fold_20260811T1322Z": "FOLD (po triage 2026-08-11T13:22Z): 2 further RECONCILE EXHAUSTED Telegram reports since the 12:37Z fold — telegram 4650 KDC 2024-Q1 (report_id fallback-KDC-2024-Q1) and telegram 4649 FRT 2024-Q1 (report_id 268f4544-d66b-42cd-b37e-18ff7b17d55f). occurrence_count 45 -> 47. Both at 2026-08-11T13:05:08Z, both '0 rows across bctc_layout_units/bctc_table_rows/bctc_md_tables after 8 passes (cap 8)'.\n\nDISCRIMINATOR UPDATE — THE NON-FALLBACK SUBSET IS GROWING, NOT STATIC. The 12:37Z fold recorded 14 fallback-shell vs 2 real-UUID (HUT 2025-Q3 dab264ae, BSR 2024-Q1 d332bf35). FRT 2024-Q1 makes a THIRD real-UUID EXHAUSTED report in ~22h. This matters for THIS row's scope: the row's own premise is that fallback-<TICKER>-<PERIOD> shells are unextractable BY CONSTRUCTION, which does NOT explain a report carrying a real report_id. WHOEVER IMPLEMENTS: the terminal-classification gate proposed here will correctly suppress the ~15 fallback shells, but it will NOT cover the real-UUID subset, and folding those 3 into this row's completion would amnesty a second, distinct extraction defect behind a green AC. Split them out or state explicitly why they share a root cause — do not let the ~87% volume reduction stand in for a fix. Concurrent corroboration held open: system-auditor A-30 reports pdf-extractor at 94.07% sustained-high (loss of reclamation, telegram 4648, 2026-08-11T12:36:20Z) in the same window; a memory-exhausted extractor producing zero rows on genuinely-extractable PDFs is a live hypothesis for the real-UUID subset that costs one log read to check and has not been checked."
-      },
-      {
-        "id": "FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write",
-        "type": "FIX",
-        "title": "Swap isValidUuid format gate for DB existence check in 3 async PEK extraction callback handlers (pushBctcLayoutHandler, pushBctcTableHandler, pushBctcMdTablesHandler)",
-        "status": "TODO",
-        "priority": "P0",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "unassigned",
-        "next_agent": "dev-mcp-server",
-        "created_at": "2026-08-05T09:40:15Z",
-        "created_by": "pm",
-        "depends": [],
-        "blocks": [
-          "FIX-BCTC-FALLBACK-SHELL-REPORTS-READ-SIDE-FAST-FOLLOW"
-        ],
-        "parent": "FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE",
-        "handoff": "docs/handoffs/FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write.md",
-        "updated_at": "2026-08-05T09:40:16Z"
       },
       {
         "id": "FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST",
@@ -19680,6 +19650,65 @@
         "architect_linked_followup": "UC-RDL-P4B-DOC-CUTOVER",
         "pm_decomposition_complete": true,
         "pm_completed_at": "2026-08-11T14:00:00Z"
+      },
+      {
+        "id": "FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE",
+        "type": "FIX",
+        "title": "66 fallback-<TICKER>-<YEAR>-<Q> financial_reports shells are structurally unreachable by the extraction pipeline (0/66 ever produced a layout_unit or table_row, DB-wide) — each re-exhausts forever and emits one fail-loud RECONCILE-EXHAUSTED Telegram BUG per pass",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "architect",
+        "next_agent": "pm",
+        "created_at": "2026-08-05T09:06:56Z",
+        "created_by": "po (dev-team triage tick 2026-08-05T08:37Z)",
+        "verdict": "ROOT-CAUSE-RAW-VERIFIED-AT-SOURCE-BY-PO",
+        "occurrence_count": 47,
+        "source": "telegram-reports 4313-4316,4340-4380,4404-4405 (45 [bctcExtractReconcile] RECONCILE EXHAUSTED / CIRCUIT BREAKER, 2026-08-03T06:05Z-2026-08-04T18:05Z)",
+        "verification_gate": "raw_probe_layout_units_or_table_rows_nonzero_for_a_fallback_report_id",
+        "status_note": "DECOMPOSED INTO: FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write (TODO, no deps) + FIX-BCTC-FALLBACK-SHELL-REPORTS-READ-SIDE-FAST-FOLLOW (BACKLOG, depends on write task). Parent task kept for traceability (architect design record).",
+        "note": "RAW-VERIFIED readonly on the live named-volume DB (docker exec vn-market-intelligence-mcp-mcp-server-1 bun, /app/data/market.db) at 2026-08-05T09:0xZ.\n\nTHE PREMISE OF EVERY PRIOR ROW IN THIS FAMILY IS NOW STALE — READ THIS FIRST.\nSPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (P0, review, ops) asserts the structured-extraction pipeline is DORMANT (layout_units frozen 2026-06-10, table_rows frozen 2026-06-30). That was true on 2026-07-16. IT IS FALSE TODAY. Live: bctc_layout_units n=5134, MAX(extracted_at)=2026-08-04 22:12:12, with per-day writes 07-28:159, 08-01:1430, 08-02:430, 08-03:1865, 08-04:463 — i.e. the pipeline wrote 1865 layout units on the very day 4 reports claimed 0 rows. bctc_vps_queue status=done n=171 spanning 2023-Q4..2026-Q2. FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION (closed 2026-07-10, commit 760892790) DID ship and DID work. Do NOT re-open the dormancy hypothesis.\n\nTHE ACTUAL DISCRIMINATOR (structural, not statistical):\nfinancial_reports holds 257 rows in exactly two disjoint families with ZERO cross-over:\n  - 191 rows with a real UUID id AND data_env = NULL\n  - 66 rows with id LIKE fallback-% AND data_env = production\n(cross-tab is 191/191 and 66/66 — a perfect 1:1 partition, so data_env is a reliable secondary marker of which minting path created the row.)\nCount of rows in bctc_layout_units whose report_id LIKE fallback-% : 0.\nCount of rows in bctc_table_rows   whose report_id LIKE fallback-% : 0.\nMeanwhile UUID-keyed reports hold all 5134 layout units and all 4358 table rows.\n63 of the 66 fallback shells have pdf_path SET (a real PDF is on disk); only 3 are NULL.\n\nWHY THIS MATTERS: for the fallback- cohort, the reconcile job report text `0 rows across bctc_layout_units/bctc_table_rows/bctc_md_tables after 8 reconciliation passes` is a TAUTOLOGY, not a finding. The extraction path writes keyed on the UUID report id and can never populate a fallback- id, so the reconcile predicate is guaranteed to read 0 no matter how healthy extraction is. It then marks the row enrich_failed (terminal) and fires one fail-loud Telegram BUG. This is a permanent, self-renewing false-positive report generator: 45 BUG reports in 36h, and it will not stop at source until the shells are either made extractable or terminalised quietly.\n\nSCOPE FOR ARCHITECT — decide between (a) make fallback shells extractable (assign/repair a real report id, or teach the extraction trigger to accept them) and (b) never mint them in the first place + backfill-repair the existing 66. (a) recovers 63 PDFs of real financial data that are currently stranded on disk; (b) is cheaper but permanently abandons them. Also required either way: the reconcile job must not emit a fail-loud BUG for a report it is structurally incapable of resolving — that is the emission circuit-breaker the 2026-07-16 SPIKE already asked for and only half-shipped (run-summary suppression exists and fires at >=3 rows/run, per reports 4313/4356/4363/4373, but single-row runs still emit per-row).\n\nCOHORT EVIDENCE (answers the standing question on OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE): re-probed all 12 tickers of the 2025-Q4 cohort per report_id this tick. 11/12 still EXACTLY layout=0 AND table_rows=0; GAS still has NO financial_reports row at all — unchanged in the 26 days since the ops PEK trigger of 2026-07-10T09:52Z. 6 of the 11 (ACB, BID, EIB, HCM, HSG, POW) carry fallback- ids and are explained by this row. The other 5 (GVR b1cd4d07, MBB 48619ee7, D2D ef326a09, NKG eaf4f3bb, SSI a75da3da) carry REAL UUIDs and are still 0 — so the fallback-id mechanism is NECESSARY BUT NOT SUFFICIENT and a second cause exists for the UUID subset. D2D additionally has pdf_path NULL, which is its own already-documented blocker (trigger-pek-extract skips NULL pdf_path). Do not close this row on the fallback fix alone without re-probing those 5.",
+        "related": [
+          "OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE",
+          "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
+          "FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION",
+          "telegram-report:4313",
+          "telegram-report:4356",
+          "telegram-report:4363",
+          "telegram-report:4373"
+        ],
+        "updated_at": "2026-08-11T19:23:19Z",
+        "updated_by": "pm",
+        "architect_completed_at": "2026-08-05T09:34:06Z",
+        "architect_brief": "docs/architecture-briefs/2026-08-05-fix-bctc-fallback-shell-reports-structurally-unextractable.md",
+        "architect_review_note": "[architect 2026-08-05T09:35Z DESIGN COMPLETE — root cause confirmed live, plan-only, no code shipped this cycle] ROOT CAUSE (RAW-verified, not inferred): the 3 write-back endpoints the async PEK pipeline calls into — pushBctcLayoutHandler.ts (bctc_layout_units/bctc_page_zones), pushBctcTableHandler.ts (bctc_table_rows/bctc_balance_checks), pushBctcMdTablesHandler.ts (bctc_md_tables) — each gate report_id through the shared isValidUuid() REGEX-FORMAT check (bctcInspectHandler.ts:45-50) before accepting any write. This shipped in the LF-OVERLAY/BT-3i sprints, weeks before fallback- ids existed, and was never revisited when (1) SPRINT-1330's DA_NOP fallback (bctcReparseJob.ts::insertFallbackRecord, mirrored in composition-root.ts:199-220) started minting financial_reports shells with id=\"fallback-<TICKER>-<YEAR>-<Q>\", and (2) FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION wired bctcExtractReconcileJob.ts to re-derive report_id via a FORMAT-AGNOSTIC (action_code,sort_key) lookup that resolves to a fallback- id exactly as readily as a UUID one, then re-fires PEK against it every ~30min for 8 passes. PEK genuinely OCRs the PDFs (real compute, real output) but the callback push is unconditionally HTTP-400-rejected, so the reconcile job's own 3-table success-check is a mathematical certainty of 0 for this cohort — a tautology, now pinned to a 5-line if-block in 3 files, not a diagnosis.\nLIVE CONFIRMATION (docker logs vn-market-intelligence-mcp-pdf-extractor-1, 96h window): LayoutFirstPushClient.push_layout HTTP 400 body={\"error\":\"invalid_report_id: must be UUID\",\"report_id\":\"fallback-VND-2023-Q4\"} — real 67/67 pages already extracted, rejected anyway. 20 distinct fallback- ids rejected, 50 total 400s in 96h (PDR-2023-Q4 x8, DXG-2025-Q2 x6, ...). mcp-server's own container logs show ZERO trace (the 400 branch has no server-side log call) — a secondary observability gap worth a 1-line logger.warn.\nFIX CHOSEN: option (a) — make fallback shells extractable (recovers the 63 real PDFs; option (b) backfill-repair throws that data away and leaves the id-shape assumption live for the next non-UUID scheme). Replace the isValidUuid() FORMAT gate in all 3 push handlers with an EXISTENCE gate against financial_reports.id (db already DI'd into all 3 signatures, zero new plumbing): `SELECT 1 FROM financial_reports WHERE id = ?`. This is a CORRECTION not a relaxation — strictly TIGHTER than today (closes an orphan-write gap: today any syntactically-valid-but-unknown UUID is accepted) and zero injection-risk regression (every write already fully parameterized; the UUID check was never load-bearing for injection safety). isValidUuid() itself stays untouched — still correctly used by its ~14 OTHER call sites.\nTEST GAP FOUND: all 3 existing suites' (1272-push-bctc-layout, pushBctcTableHandler, 1270-push-bctc-md-tables) happy-path fixtures never INSERT a financial_reports row for their own golden UUID before pushing — today's happy path only passes because the old gate is format-only. Under the corrected gate this is a REQUIRED fixture fix (seed row per suite), plus 2 new required cases per handler: (i) fallback-XXX-2025-Q4 seeded row -> push -> 200 + row lands (the actual regression-proof), (ii) syntactically-valid-but-unknown UUID -> 400 (proves tightened not just relaxed). Full detail + exact line numbers: docs/architecture-briefs/2026-08-05-fix-bctc-fallback-shell-reports-structurally-unextractable.md §3.\nAC-3: no new reconcile-job code needed — the existing enrich_failed+circuit-breaker terminal path is legitimate for genuine failures and only ever misfired here because the write was structurally guaranteed to fail. Recommend re-probing empirically at the AC-2 72h mark rather than pre-building new suppression logic. The 3 pdf_path=NULL shells are a distinct PDF-sourcing gap, correctly out of scope.\nOUT OF SCOPE (flagged, NOT closed by this fix): ~14 more isValidUuid call sites (bctcInspectHandler.ts x6 — the actual get_bctc_page_text/get_bctc_page_image MCP tool surface — plus bctcCorrectHandler/bctcConfirmHandler x2/bctcEvalPushStageHandler/bctcInspectMdHandler/bctcFlagsHandler/bctcEvalDetailHandler/bctcEvalRecomputeHandler/bctcEvalPageHandler/bctcBatchTableBackfillJob.ts's own copy/bctcCorrectionService.ts's own copy) gate the SAME assumption on the READ/correction/eval side. Not touched here (AC-1/2/3 don't require read-path reachability; touching 14 more files pushes M to L) but means the newly-written data stays functionally unreadable by every human/agent BCTC consumption tool until a same-pattern fast-follow lands. Recommend PO mint a P1/M fast-follow FIX row, sequenced AFTER this row is verified live. Confirmed (grep, no gate present) the agent-facing LF-OVERLAY refine toolchain (pushBctcRefinedUnitTool/finalizeBctcRefineTool/backfillBctcScalarsTool) carries NO isValidUuid gate — already format-agnostic, will work on fallback- ids once §2 lands, no further change needed there.\nROUTING: next_agent=pm (task-breakdown into dev-mcp-server implementation + the fast-follow-row minting decision is PM's job per architect's own not_my_job boundary, not architect's to decide unilaterally).\n",
+        "po_fold_20260811T1237Z": "CORROBORATION (po triage 2026-08-11T12:37Z): 14 of the 16 RECONCILE EXHAUSTED alerts in the 2026-08-10T15:05Z..2026-08-11T12:35Z window carry report_id of exactly the form 'fallback-<TICKER>-<YEAR>-<Q>' (fallback-MSN-2025-Q3, fallback-KDH-2025-Q3, fallback-KDC-2025-Q1, fallback-VJC-2024-Q2, fallback-DGC-2024-Q4/Q3/Q1, fallback-FRT-2024-Q4, fallback-VIX-2024-Q4/Q2, fallback-GEX-2024-Q3, fallback-DIG-2024-Q2/Q1, fallback-KDH-2025-Q1); the other 2 carry real UUIDs (HUT 2025-Q3, BSR 2024-Q1). If this row's claim holds, those 14 are burning up to 8-11 reconciliation passes each on rows that are unextractable BY CONSTRUCTION — a terminal-classification gate in front of the reconcile loop would eliminate ~87% of this alert volume at zero extraction cost. Raises the value of this row above cosmetic.",
+        "po_fold_20260811T1322Z": "FOLD (po triage 2026-08-11T13:22Z): 2 further RECONCILE EXHAUSTED Telegram reports since the 12:37Z fold — telegram 4650 KDC 2024-Q1 (report_id fallback-KDC-2024-Q1) and telegram 4649 FRT 2024-Q1 (report_id 268f4544-d66b-42cd-b37e-18ff7b17d55f). occurrence_count 45 -> 47. Both at 2026-08-11T13:05:08Z, both '0 rows across bctc_layout_units/bctc_table_rows/bctc_md_tables after 8 passes (cap 8)'.\n\nDISCRIMINATOR UPDATE — THE NON-FALLBACK SUBSET IS GROWING, NOT STATIC. The 12:37Z fold recorded 14 fallback-shell vs 2 real-UUID (HUT 2025-Q3 dab264ae, BSR 2024-Q1 d332bf35). FRT 2024-Q1 makes a THIRD real-UUID EXHAUSTED report in ~22h. This matters for THIS row's scope: the row's own premise is that fallback-<TICKER>-<PERIOD> shells are unextractable BY CONSTRUCTION, which does NOT explain a report carrying a real report_id. WHOEVER IMPLEMENTS: the terminal-classification gate proposed here will correctly suppress the ~15 fallback shells, but it will NOT cover the real-UUID subset, and folding those 3 into this row's completion would amnesty a second, distinct extraction defect behind a green AC. Split them out or state explicitly why they share a root cause — do not let the ~87% volume reduction stand in for a fix. Concurrent corroboration held open: system-auditor A-30 reports pdf-extractor at 94.07% sustained-high (loss of reclamation, telegram 4648, 2026-08-11T12:36:20Z) in the same window; a memory-exhausted extractor producing zero rows on genuinely-extractable PDFs is a live hypothesis for the real-UUID subset that costs one log read to check and has not been checked.",
+        "claimed_at": "2026-08-11T19:23:18Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "pm"
+      },
+      {
+        "id": "FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write",
+        "type": "FIX",
+        "title": "Swap isValidUuid format gate for DB existence check in 3 async PEK extraction callback handlers (pushBctcLayoutHandler, pushBctcTableHandler, pushBctcMdTablesHandler)",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "unassigned",
+        "next_agent": "dev-mcp-server",
+        "created_at": "2026-08-05T09:40:15Z",
+        "created_by": "pm",
+        "depends": [],
+        "blocks": [
+          "FIX-BCTC-FALLBACK-SHELL-REPORTS-READ-SIDE-FAST-FOLLOW"
+        ],
+        "parent": "FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE",
+        "handoff": "docs/handoffs/FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write.md",
+        "updated_at": "2026-08-11T19:26:00Z",
+        "updated_by": "pm"
       }
     ]
   },
@@ -19701,7 +19730,7 @@
         "last_served_tick": "2026-08-11T18:22:13Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-11T12:09:31Z"
+        "last_served_tick": "2026-08-11T19:22:59Z"
       },
       "drs": {
         "last_served_tick": "2026-08-11T12:26:09Z"
@@ -19713,7 +19742,7 @@
         "last_served_tick": "2026-08-11T16:54:36Z"
       }
     },
-    "_updated_at": "2026-08-11T18:52:05Z",
+    "_updated_at": "2026-08-11T19:22:59Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
