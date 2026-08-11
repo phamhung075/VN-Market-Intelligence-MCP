@@ -98,3 +98,13 @@
 - Full-suite 42-fail baseline claim cross-corroborated: sibling journals dated 2026-07-23 (`FIX-PREDICTION-SIGNALS-EMPTY`, `ds-obs-01-fix`, `bct-obs-02-fix`) independently record the same 42-fail count same day, pre-dating this commit — consistent pre-existing baseline, not fabricated.
 **why-decision:** APPROVED, DONE_VERIFIED — DoD met (one shared guard, all 5 inline copies replaced, header precedence/401 body byte-identical, auth tests green, no auth-semantics change) via independent re-run, not accepted from the row's `review_note` alone.
 **why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S40 · qa · 2026-08-11T13:59:04Z
+**task-id:** FACTORY-INTERFACE-move-kinhdich-ta-scoring-down
+**what-done:** Direct-commit verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`) of commit `b6b659ea0` (move 9 Kinh Dich score-computation functions from `interface/mcp/tools/kinhdich/kinhDichTools.ts` to new `application/services/kinhDich/kinhDichScoring.ts`), confirmed `main` ancestor via `git merge-base --is-ancestor`.
+**what-considered:**
+- `git show --stat` matches: new 415L `kinhDichScoring.ts`, `kinhDichTools.ts` (-414L, now imports+calls), `defaultComputeHexagrams.ts` scheduler dynamic-import repointed, `docs/microservice/mcp-server/kinhdich.md` updated, 7 test import-path updates (review_note said "6 test files" — actual diff shows 7, harmless prose undercount, non-blocking). Independently byte-diffed the full 9-function block (old-file-parent vs new-file): identical bar one comment-line edit — confirms the claim myself, not trusted from prose.
+- Layer placement (application not domain, per journal S1): cross-checked against existing convention `application/usecases/getForeignRoom.ts` (own header: "orchestrates domain + infrastructure") — matches, not a DDD violation. TA-scoring non-move (journal S2, G5/P2-B2) cross-checked against `docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md`'s independent G5/`_deprecated/` corroboration — legitimate documented exception.
+- Re-ran fresh: `bun tsc --noEmit` (mcp-server) 0 errors; targeted kinhdich/hexagram/hao/macro/sector/foreign-flow/diacritics regression (21 files, superset of claimed 19) 480 pass/4 skip/0 fail (484 tests); `mock-guard.sh --files <3 touched prod>` PASS; process.env/secret greps clean.
+**why-decision:** APPROVED, DONE_VERIFIED — DoD met (scoring math relocated, tests green, interface imports new home, numeric outputs unchanged) via independent re-run, not accepted from `review_note` alone.
+**why-change:** none — verified exactly what the row scoped; layering deviation (application vs domain) and TA non-move are the dev's own documented, evidence-based decisions, not something QA is overriding.
