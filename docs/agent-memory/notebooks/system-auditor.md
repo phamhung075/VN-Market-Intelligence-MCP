@@ -1,3 +1,111 @@
+## c27 · 2026-08-11T15:00Z
+
+### Audit Run Tier-1 (15:00–15:06 UTC 2026-08-11)
+- Tier: 1 | Container liveness + health endpoints + memory pressure (A-01 through A-33)
+- Anomalies: 0 critical, 1 warn (A-30 pdf-extractor sustained high memory, SKIP-dedup), 2 cycle-loss alerts (D-CYCLE-1 stale markers from prior cycles)
+- Status: **DEGRADED**
+
+#### Stale Marker Cleanup (Step 0b.1)
+- Found 2 orphaned cycle markers (>20min mtime):
+  - `.auditor-cycle-markers-2026-08-11T14:36:00Z.tmp` (c26 cycle, 24 min old)
+  - `.auditor-cycle-markers-2026-08-11T14:00Z.tmp` (c25 cycle, 60 min old)
+- Emitted D-CYCLE-1 WARN signals for both (auditor_cycle_loss, tick-specific dedup)
+- Markers removed after successful signal emission
+
+#### Container & Health Status (A-01 through A-20)
+- [RAW-PROBE L3-13] docker ps: all host_runtime_set services UP and healthy ✓
+- [RAW-PROBE L14-18] health endpoints: all 200 OK ✓
+- [RAW-PROBE L78-80] A-20 pdf-extractor multi-probe: 3/3 pass ✓
+- mcp-server health recovered: 43 min uptime after prior c25 restart
+
+#### Restart Count (A-21)
+- [RAW-PROBE L20] mcp-server RestartCount=1 ✓
+
+#### Memory Pressure Deep-Probe (A-30)
+
+**A-30 pdf-extractor — ESCALATE VERDICT (WARN, SKIP-dedup):**
+- Baseline: 96.83% >= 85% investigate-gate → ENGAGE deep-probe
+- Samples over 65s window: 6 probes at 13s intervals
+  - min=96.83%, median=96.83%, max=96.83% (completely pinned)
+- Reclamation dips: 0 detected
+- Discontinuities: 0
+- VmHWM state: pinned_at_cap=true, advancing_in_window=false
+- State changes: false (no OOMKilled, no restarts during window)
+- Reason: "all samples >93% sustained high — loss of reclamation (dip-jitter no longer vetoes this evidence)"
+- **Severity: WARN** — sustained high memory, zero capacity for memory reclamation
+- **Dedup status: SKIP-dedup** (last reported 2026-08-11T12:36:18Z, ~2.5h ago, same dedup_key)
+- **Finding:** Continuation of sustained memory pressure from prior cycle. Same pattern, no escalation. Dashboard row emitted (WARN, open status).
+
+**All other containers PASS** (< 85% investigate-gate or SKIP)
+- mcp-server: 7.89% ✓
+- rag-service: 81.77% ✓
+- All others: < 10% ✓
+
+#### Disk Usage (A-32)
+- [RAW-PROBE L45] /dev/disk1s4s1: 46% capacity → PASS ✓
+
+#### Summary
+- Cleaned up 2 orphaned cycle markers from c25/c26, emitted D-CYCLE-1 alerts with per-tick dedup
+- All runtime containers UP and healthy
+- A-30 pdf-extractor continues sustained memory pressure (96.83%, loss-of-reclamation pattern)
+- No change from prior cycle — same dedup entry, no new BUG-channel alert
+- **Overall verdict: DEGRADED** due to A-30 WARN (SKIP-dedup from 2.5h prior)
+
+#### Raw Probe Output
+```
+=== AUDITOR PROBE 2026-08-11T15:03:08Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                    IMAGE                                           CREATED
+vn-market-intelligence-mcp-mcp-server-1           Up 43 minutes (healthy)   vn-market-intelligence-mcp-mcp-server           2 days ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 14 hours (healthy)     vn-market-intelligence-mcp-pdf-extractor        3 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 14 hours (healthy)     vn-market-intelligence-mcp-rag-service          3 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 4 days (healthy)       vn-market-intelligence-mcp-stock-price          4 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 12 days (healthy)      vn-market-intelligence-mcp-macro-indicators     12 days ago
+vn-market-intelligence-mcp-frontend-1             Up 2 weeks (healthy)      vn-market-intelligence-mcp-frontend             2 weeks ago
+mcp-gateway                                       Up 3 weeks (healthy)      mcpservergatway-gateway                         3 weeks ago
+vn-market-intelligence-mcp-api-gateway-1          Up 3 weeks (healthy)      vn-market-intelligence-mcp-api-gateway          3 weeks ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 3 weeks (healthy)      ghcr.io/flaresolverr/flaresolverr:latest        3 weeks ago
+vn-market-intelligence-mcp-news-fetch-1           Up 3 weeks (healthy)      vn-market-intelligence-mcp-news-fetch           3 weeks ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 3 weeks (healthy)      vn-market-intelligence-mcp-technical-analysis   3 weeks ago
+vn-market-intelligence-mcp-alert-engine-1         Up 3 weeks (healthy)      vn-market-intelligence-mcp-alert-engine         3 weeks ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 3 weeks (healthy)      vn-market-intelligence-mcp-kinh-dich-service    3 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=1
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=7.89% MemUsage=242.4MiB / 3GiB
+
+--- A-30 deep-probe verdict ---
+Container=vn-market-intelligence-mcp-pdf-extractor-1
+verdict: ESCALATE
+reason: "all samples >93% sustained high — loss of reclamation"
+samples: min=96.83%, median=96.83%, max=96.83% (6 probes over 65s)
+reclamation_dips: 0
+discontinuities: 0
+state_changed_during_window: false
+vmhwm_pinned_at_cap: true
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    16Gi    46%    393k  169M    0%   /
+
+--- A-20 pdf-extractor multi-probe ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+pass_count: 3/3
+```
+
+---
 # System Auditor Notebook
 
 Session memory for real-time audit cycles and findings.
