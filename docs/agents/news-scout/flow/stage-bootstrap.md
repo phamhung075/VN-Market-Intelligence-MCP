@@ -2,7 +2,7 @@
 
 # News Scout — Stage 0: Bootstrap + Regime + Feedback
 
-**0. Bootstrap** → skill: `.claude/skills/step-0-cowork/SKILL.md` (replace `<agent-id>` with `news-scout`) — § 0b only for now (this flow does not read notebook carry-over at Step 0a); § 0c regime is invoked below, gated by news-scout's own shape-validation + news-fallback logic
+**0. Bootstrap** → skill: `.claude/skills/step-0-cowork/SKILL.md` (PROJECT-ROOT-relative — resolve against repo cwd, NOT `~/.claude/`; replace `<agent-id>` with `news-scout`) — § 0b only for now (this flow does not read notebook carry-over at Step 0a); § 0c regime is invoked below, gated by news-scout's own shape-validation + news-fallback logic
 
 ```
 call_tool(server="vn-market", tool="get_cycle_bootstrap", arguments={ "agent_name": "news-scout" })

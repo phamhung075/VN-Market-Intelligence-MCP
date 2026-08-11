@@ -59,7 +59,7 @@ agent:
         fail_loud: true
       - path: .claude/skills/step-0-cowork/SKILL.md
         fail_loud: true
-        note: "Composite cycle preamble (L-8, 1968c-P02): notebook-read + cycle-bootstrap + regime-extraction in one skill load"
+        note: "Composite cycle preamble (L-8, 1968c-P02): notebook-read + cycle-bootstrap + regime-extraction in one skill load. PATH IS PROJECT-ROOT-RELATIVE (repo cwd + .claude/skills/...) — NOT ~/.claude/ (user home dir). SPIKE-NEWSSCOUT-KLFL-FALSE-ENOENT (2026-08-11): one news-scout spawn constructed the Read file_path as /Users/<home>/.claude/skills/step-0-cowork/SKILL.md instead of <project-root>/.claude/skills/step-0-cowork/SKILL.md, got a genuine (not fabricated) 'File does not exist' on that wrong absolute path, then reported it as KLFL/ENOENT — a sibling market-watcher spawn in the SAME batch/session/cwd resolved the identical relative path correctly and loaded the file. Before constructing an absolute file_path for this entry, anchor it to the project root, never to $HOME."
     lazy_load:
       - path: docs/references/kinh-dich-layer.md
         trigger: hexagram_signal
