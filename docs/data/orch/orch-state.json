@@ -19919,7 +19919,7 @@
         "last_served_tick": "2026-08-11T21:52:52Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-11T19:22:59Z"
+        "last_served_tick": "2026-08-11T22:24:40Z"
       },
       "drs": {
         "last_served_tick": "2026-08-11T19:57:53Z"
@@ -19931,7 +19931,7 @@
         "last_served_tick": "2026-08-11T20:51:52Z"
       }
     },
-    "_updated_at": "2026-08-11T22:21:52Z",
+    "_updated_at": "2026-08-11T22:50:41Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20371,6 +20371,78 @@
         "payload": "bctcReparseJob late 32.3h (threshold 36h)",
         "createdAt": "2026-08-11T22:20:39Z",
         "drained_at": "2026-08-11T22:21:52Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8f05bb61fb7d9694627deeadcf4dcbdca44ab132bae443c1f5824d0cfb3ff029",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c38 · 2026-08-12T00:00Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c37 · 2026-08-11T21:00Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-11T22:22:27Z",
+        "drained_at": "2026-08-11T22:50:41Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "551302ca0fe03504b83fd6a494790a0e07ba8573aa0e5b62dc9afd8c844bc8a5",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-11T22:30:17Z",
+        "drained_at": "2026-08-11T22:50:41Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "768259bff799cfe253569b5b6572ceb9f9156653a6039e586fab7f6edb015c94",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 41,
+          "cap": 200,
+          "byte_count": 23477,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-11T22:30:17Z",
+        "drained_at": "2026-08-11T22:50:41Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4658f2a2161f79004fc1ae64c608870e6981291b763f4c7100e0ad77bf42bc42",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 41,
+          "cap": 200,
+          "byte_count": 23477,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-11T22:32:54Z",
+        "drained_at": "2026-08-11T22:50:41Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
