@@ -10565,6 +10565,27 @@
         "created_by": "po/triage-20260811T1237Z",
         "status_note": "REPRODUCED LIVE 2026-08-11T13:07Z. signal_total counts signal_queue.rows[] + dev_team_idle_chain.pending_triage_inbox[] together (live=42 = 13 rows + 29 envelopes). PO's documented clear step (drain-signals.md / triage-signals.md: consume envelopes, then subtract the consumed envelope_ids) therefore drops signal_total 42 -> 13 = 0.31, under the 0.5 floor, and orch-apply ABORTS. The abort message offers ORCH_APPLY_ALLOW_SHRINK, but scripts/orch-apply.sh:60-66 states that bypass is 'Wired ONLY into scripts/orch-cold-evict.sh and docs/agents/pm/flow/task-archive.md ... NEVER set this from any other caller' — so PO has NO sanctioned path and the only ways through are (a) violate the named-caller rule, or (b) split the clear into N artificial sub-batches purely to stay above a ratio. This tick took (b) — 4 sequential writes (42->28->21->14->13), every one a targeted enumerated envelope_id subtraction, never a full-doc replace — which is correct but is a workaround, not a design. CONSEQUENCE IF UNFIXED: the larger the inbox grows the harder it is to clear, so the failure mode is self-reinforcing; a PO tick under time pressure will be tempted into the forbidden bypass (exact class of feedback_ops_silently_switched_to_destructive_fallback_without_reauth). AC-1: a fully-consumed pending_triage_inbox can be cleared in ONE targeted write without setting ORCH_APPLY_ALLOW_SHRINK. Suggested shape (architect to ratify): exclude pending_triage_inbox from the signal_total magnitude ratio and give it its own row-identity guard instead — an inbox is a QUEUE whose whole purpose is to drain to zero, so a magnitude-conservation invariant is the wrong invariant for it; signal_queue.rows[] (an accumulating log) keeps the existing floor unchanged. AC-2: the abort message stops recommending a bypass the caller is forbidden to use, and instead names the correct path. AC-3: regression test drains a 29-envelope fixture inbox to 0 in one write and asserts orch-apply exits 0 with no bypass env var set.",
         "updated_at": "2026-08-11T13:08:47Z"
+      },
+      {
+        "id": "FIX-DURABLE-INBOX-INLINES-FULL-SIGNAL-PAYLOAD-INTO-HOT-ORCHSTATE",
+        "type": "FIX",
+        "title": "pending_triage_inbox inlines full signal payloads into the hot orch-state.json — 2 duplicate db_integrity_breach envelopes alone were 1.2MB / 63% of the file",
+        "owner": "po",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "S",
+        "sprint": "BACKLOG",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "files": [
+          "scripts/agents-flow/drain-signals.js",
+          "docs/agents/dev-team/flow/drain-signals.md",
+          "apps/mcp-server/src/infrastructure/orchStateSchema.ts"
+        ],
+        "created_at": "2026-08-11T13:13:26Z",
+        "created_by": "po/triage-20260811T1237Z",
+        "status_note": "MEASURED EXACTLY (git-verified, not estimated). At commit HEAD~1 of 4103452e8 the 29-envelope .dev_team_idle_chain.pending_triage_inbox serialised to 1,221,114 bytes / 33,595 lines. TWO envelopes accounted for 1,198,546 of those bytes (98.2%): both db_integrity_breach from system-auditor, payload length 599,273 bytes EACH, and BYTE-IDENTICAL to one another (createdAt 2026-08-11T12:10:51Z priority=CRITICAL and 2026-08-11T12:10:53Z priority=WARN — same scan, emitted twice 2s apart at two severities). PROOF OF IMPACT: draining the inbox this tick shrank docs/data/orch/orch-state.json from 52,759 to 19,282 lines and 5,233,925 to 3,472,674 bytes — i.e. 63 percent of the hot SSOT that EVERY agent reads on EVERY tick was one duplicated audit payload. Untouched sections verified byte-identical across the drain (jq -S normalised diff, clean), so this is pure payload, not a reformat. THREE DISTINCT DEFECTS, all in one row because they share a fix site: (1) NO PAYLOAD-SIZE CAP — drain-signals.js inlines .payload verbatim with no ceiling; the signal-file convention already has payload_ref for exactly this (signal_queue.rows[].payload_ref points at docs/signals/processed/*.json when a finding is too large to inline), so the mechanism exists and simply is not applied to the durable-inbox path. (2) NO CONTENT DEDUP — two byte-identical payloads were both stored; the drain fingerprints against signals.db for cross-CYCLE dedup but evidently not within a batch. (3) SEVERITY FAN-OUT — system-auditor emitted the same scan twice at CRITICAL and WARN, which is an emitter defect worth its own look (see FIX-AUDITOR-EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS-NEVER-FIRES, adjacent). AC-1: any envelope whose payload exceeds a documented cap (suggest 8KB) is stored as payload_ref to a file, never inlined. AC-2: within one drain batch, envelopes with identical payload fingerprints collapse to one with an occurrence count. AC-3: a regression asserts orch-state.json total bytes attributable to pending_triage_inbox stays under a stated ceiling. CONNECTED: this is also a contributing cause of FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR (a 29-envelope inbox against 13 signal rows is what pushed the drain ratio to 0.31) and it inflates every agents context read of the hot file.",
+        "updated_at": "2026-08-11T13:13:27Z"
       }
     ],
     "closed_sprints": [
