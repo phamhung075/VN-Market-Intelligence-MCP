@@ -1366,3 +1366,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · taAlertNotifier stale 9.6h
+**Severity:** CRITICAL | **Date:** 2026-08-11 | **Status:** OPEN
+**Location:** cron/notifications
+**Details:** taAlertNotifier last fired 2026-08-11 08:45:01, 9.6h overdue (threshold 0.4h)
+**Impact:** TA alert notifications not being sent
+**Root cause:** Cron scheduler issue or job infrastructure failure
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-11T18:23:59Z (signal sys-20260811T182226-798c, system-auditor -> po, dedup_key=auditor-a29-fire-gap:taAlertNotifier, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
