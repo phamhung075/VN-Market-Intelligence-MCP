@@ -1246,3 +1246,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · pdf-extractor: sustained 97.29% memory, loss of reclamation
+**Severity:** WARN | **Date:** 2026-08-11 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-pdf-extractor-1
+**Details:** MemPerc sustained at 97.29% (min 97.16%, median 97.29%) over 65s observation window. Zero reclamation dips, VmHWM pinned at cgroup limit (2587640/2621440 KB), no discontinuities or state changes. Unable to free memory despite high pressure.
+**Impact:** Container cannot reclaim memory; sustained high pressure may lead to OOMKilled or performance degradation.
+**Root cause:** Possible memory leak or accumulating buffers in pdf-extractor service; workload exceeds available container memory.
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-11T16:06:59Z (signal sys-20260811T160638-24f0, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
