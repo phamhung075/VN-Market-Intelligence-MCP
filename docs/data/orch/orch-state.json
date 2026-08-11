@@ -95,10 +95,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "UC-RDL-P4",
-    "next_agent": "architect",
-    "next_action": "PO ratified BA spec + ruled Q1 (split cutover: tool+integration-test only, doc cutover = linked follow-up UC-RDL-P4B-DOC-CUTOVER) and Q2 (build now, batch the container rebuild with FIX-ORPHAN-FR2-FR6-FR7). po_goahead stamped — WF-2 hold released. Spawn architect for brownfield design of FR-1..FR-9; FR-7 file-6 doc edits are OUT of this wave.",
-    "updated_at": "2026-08-11T13:02:46Z",
-    "updated_by": "po (dev-team Step 1 triage)"
+    "next_agent": "pm",
+    "next_action": "Architect completed brownfield design for UC-RDL-P4 (FR-1..FR-6/FR-8/FR-9; FR-7 forbidden this wave per PO Q1). Findings appended to docs/handoffs/UC-RDL-P4-BA-spec.md section [Architect] Brownfield Findings. Linked follow-up UC-RDL-P4B-DOC-CUTOVER minted to backlog (depends_on UC-RDL-P4, supervised:true). Spawn pm to decompose FR-1..FR-6/FR-8/FR-9 into developer task(s).",
+    "updated_at": "2026-08-11T13:26:58Z",
+    "updated_by": "architect"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10586,6 +10586,32 @@
         "created_by": "po/triage-20260811T1237Z",
         "status_note": "MEASURED EXACTLY (git-verified, not estimated). At commit HEAD~1 of 4103452e8 the 29-envelope .dev_team_idle_chain.pending_triage_inbox serialised to 1,221,114 bytes / 33,595 lines. TWO envelopes accounted for 1,198,546 of those bytes (98.2%): both db_integrity_breach from system-auditor, payload length 599,273 bytes EACH, and BYTE-IDENTICAL to one another (createdAt 2026-08-11T12:10:51Z priority=CRITICAL and 2026-08-11T12:10:53Z priority=WARN — same scan, emitted twice 2s apart at two severities). PROOF OF IMPACT: draining the inbox this tick shrank docs/data/orch/orch-state.json from 52,759 to 19,282 lines and 5,233,925 to 3,472,674 bytes — i.e. 63 percent of the hot SSOT that EVERY agent reads on EVERY tick was one duplicated audit payload. Untouched sections verified byte-identical across the drain (jq -S normalised diff, clean), so this is pure payload, not a reformat. THREE DISTINCT DEFECTS, all in one row because they share a fix site: (1) NO PAYLOAD-SIZE CAP — drain-signals.js inlines .payload verbatim with no ceiling; the signal-file convention already has payload_ref for exactly this (signal_queue.rows[].payload_ref points at docs/signals/processed/*.json when a finding is too large to inline), so the mechanism exists and simply is not applied to the durable-inbox path. (2) NO CONTENT DEDUP — two byte-identical payloads were both stored; the drain fingerprints against signals.db for cross-CYCLE dedup but evidently not within a batch. (3) SEVERITY FAN-OUT — system-auditor emitted the same scan twice at CRITICAL and WARN, which is an emitter defect worth its own look (see FIX-AUDITOR-EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS-NEVER-FIRES, adjacent). AC-1: any envelope whose payload exceeds a documented cap (suggest 8KB) is stored as payload_ref to a file, never inlined. AC-2: within one drain batch, envelopes with identical payload fingerprints collapse to one with an occurrence count. AC-3: a regression asserts orch-state.json total bytes attributable to pending_triage_inbox stays under a stated ceiling. CONNECTED: this is also a contributing cause of FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR (a 29-envelope inbox against 13 signal rows is what pushed the drain ratio to 0.31) and it inflates every agents context read of the hot file.",
         "updated_at": "2026-08-11T13:13:27Z"
+      },
+      {
+        "id": "UC-RDL-P4B-DOC-CUTOVER",
+        "type": "FIX",
+        "title": "CLAUDE.md + dispatch-claim/{CARD.md,SKILL.md} cutover to dispatch_preflight (FR-7, split from UC-RDL-P4 per PO Q1 ruling)",
+        "owner": "developer",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "zone": "apps/mcp-server/",
+        "next_agent": "developer",
+        "files": [
+          "CLAUDE.md",
+          ".claude/skills/dispatch-claim/CARD.md",
+          ".claude/skills/dispatch-claim/SKILL.md"
+        ],
+        "depends_on": [
+          "UC-RDL-P4"
+        ],
+        "created_at": "2026-08-11T13:26:34Z",
+        "created_by": "architect (UC-RDL-P4 brownfield design)",
+        "detail_ref": "docs/handoffs/UC-RDL-P4-BA-spec.md",
+        "supervised": true,
+        "note": "FR-7 spec (already fully written in UC-RDL-P4-BA-spec.md FR-7 + section 6 row 6): collapse CLAUDE.md step 2.5 + dispatch-claim CARD.md's 4 phase blocks (0a/A/A.5/B) to 1 call + 1 branch table; SKILL.md's Pattern/Step-0a/Phase-A.5 sections become 'superseded by dispatch_preflight' pointers (historical pseudocode deleted or marked legacy-fallback). GATE (PO po_ruling_q1_cutover_dod, verbatim): do NOT start this row until UC-RDL-P4's own live integration round-trip (claimed:true / re-entrant self-held / peer-collision, all 3 branches against the RUNNING, rebuilt container) has passed. CLAUDE.md is always-loaded fleet-wide context -- a premature flip breaks every agent's every spawn, not a risk but a certainty per PO's own reasoning. FIELD-SHAPE WARNING (architect D-6, UC-RDL-P4-BA-spec.md): dispatch_preflight's orphans/roster fields are raw LockRow[] (owner_agent/claimed_at/epoch expires_at), NOT the aliased shape (owner/created_at/ISO expires_at) today's task_list_held tool returns -- do not assume drop-in compatibility when rewriting the branch logic.",
+        "updated_at": "2026-08-11T13:26:58Z"
       }
     ],
     "closed_sprints": [
@@ -19240,7 +19266,7 @@
         "note": "Collapse the multi-call router preflight (Phase A/A.5/B) into one server-side dispatch_preflight tool to cut round-trips and race windows. Coordinate with UC-RDL-P1 (lock-prefix) landing first.",
         "created_at": "2026-07-13T19:31:11Z",
         "created_by": "po",
-        "next_agent": "architect",
+        "next_agent": "pm",
         "withhold_note": "BOUNDED-1 auto-pickup withheld (SPRINT-M + overlaps NEW signal cow-20260715T184053 preflight presence-claim gap); routed to PO for adjudication",
         "withheld_at": "2026-07-15T18:55:57Z",
         "withheld_by": "dev-team (router withhold-gate)",
@@ -19251,7 +19277,7 @@
         "promoted_by": "dev-team (design-router sweep)",
         "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
         "dispatch_lane": "ba",
-        "updated_at": "2026-08-11T13:02:46Z",
+        "updated_at": "2026-08-11T13:26:58Z",
         "claimed_at": "2026-08-11T12:26:35Z",
         "claimed_by": "dev-team (design-router sweep)",
         "ba_spec_complete": true,
@@ -19260,7 +19286,12 @@
         "po_goahead_20260811T130245": "RATIFIED: BA spec docs/handoffs/UC-RDL-P4-BA-spec.md verified AT SOURCE by PO (not on relay) — coordination/ per-tool split (6 files + index.ts sub-barrel) confirmed live; getCycleBootstrap.ts precedent exists (5744B); tool-registry totalCount=183 confirmed; ORPHAN_EMIT_ALLOW_LIST at coordinationStore.ts:460-465 confirmed to exclude \"intent\" (EC-5 correct). Q1+Q2 ruled below.",
         "po_ruling_q1_cutover_dod": "SPLIT — NO same-wave doc cutover. UC-RDL-P4 DONE bar = dispatch_preflight tool ships + tool-registry synced (183->184) + live integration round-trip reproduced against the RUNNING container (claimed:true / re-entrant self-held / peer-collision, all 3 branches). CLAUDE.md + .claude/skills/dispatch-claim/{CARD.md,SKILL.md} cutover is an explicit LINKED FOLLOW-UP row (UC-RDL-P4B-DOC-CUTOVER), gated on that integration test passing. Rationale: (a) CLAUDE.md is always-loaded fleet-wide context — every agent, every spawn — so a premature flip breaks ALL dispatch, not one lane; (b) EC-10 makes the tool inert until an ops-gated rebuild, so a same-wave doc flip would point CLAUDE.md at a tool absent from the running container — guaranteed router breakage, not a risk but a certainty; (c) precedent: UC-RDL-P5 Risk note. FR-7 file-6 edits are FORBIDDEN in this wave.",
         "po_ruling_q2_rebuild_sequencing": "APPROVE BA recommendation — coordinate the REBUILD, not the implementation. Design/build UC-RDL-P4 NOW in parallel (EC-7 proves zero functional dependency on FIX-ORPHAN-FR2-FR6-FR7 taskHeartbeatTool params). Hold the apps/mcp-server container rebuild until FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS reaches DONE_VERIFIED, then ONE combined ops-gated rebuild covers both coordination-tool changes. Blocking implementation behind a review[]-lane row (next_agent: developer, own latency) would idle a P1 for no benefit.",
-        "po_correction_to_spec": "One correction to §0/§6 before architect consumes this: coordination/index.ts is a P1-C SUB-BARREL that re-exports registerCoordinationTools from ../coordinationTools.js — it does NOT export per-tool registrars. Adding dispatchPreflightTool.ts therefore requires NO index.ts change; register it ONLY from coordinationTools.ts (verified live). §6 rows 2-3 are otherwise accurate (coordinationTools.ts:4 does read \"6 MCP tools\" -> 7)."
+        "po_correction_to_spec": "One correction to §0/§6 before architect consumes this: coordination/index.ts is a P1-C SUB-BARREL that re-exports registerCoordinationTools from ../coordinationTools.js — it does NOT export per-tool registrars. Adding dispatchPreflightTool.ts therefore requires NO index.ts change; register it ONLY from coordinationTools.ts (verified live). §6 rows 2-3 are otherwise accurate (coordinationTools.ts:4 does read \"6 MCP tools\" -> 7).",
+        "architect_design_complete": true,
+        "architect_handoff": "docs/handoffs/UC-RDL-P4-BA-spec.md",
+        "architect_completed_at": "2026-08-11T13:26:34Z",
+        "architect_build_standard": "lean",
+        "architect_linked_followup": "UC-RDL-P4B-DOC-CUTOVER"
       }
     ]
   },
