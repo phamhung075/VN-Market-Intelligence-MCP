@@ -36,3 +36,13 @@
 - 2 of 9 (trade_balance, current_account) DO have a live alt source already in my own zone (VMT-6/7 Go endpoints, NSO/GSO-sourced) never wired into macro_indicators — flagged as dev-mcp-server's concrete path. manufacturing_pmi excluded per task's own note (tracked under macro-fetch-cluster FRED_API_KEY item).
 **why-decision:** zone_restricted + read-only DB grant make this structurally undoable here regardless of finding quality; corrected board zone/owner with full trace so dev-mcp-server doesn't re-derive it.
 **why-change:** board zone label was wrong — 3rd occurrence of this class (see S1 SBV precedent); re-flagging PO since the 2 prior audit recommendations went unactioned.
+
+### STEP dev-macro-indicators-S4 · dev-macro-indicators · 2026-08-11T19:35:00+02:00
+**task-id:** FIX-MACRO-LIQUIDITY-STATE-HANDLER-EXCEEDS-CRON-15S-DEADLINE
+**what-done:** Bounded both liquidity-state upstream SBV HTML fetches (policy_rates + omo, previously raw-ctx/30s/45s) to ONE shared `domain.FetchBudgetSec` (8s) window in `usecases_vmt_liquidity.go` Execute — mirrors the existing BOP/NSO-chain "whole chain, one budget" idiom this endpoint was the sole gap in. Also tightened the redundant infra-level client Timeouts to the same const. Did NOT touch the mcp-server error-string defect (out of zone).
+**what-considered:**
+- Raise cron's deadlineMs — REJECTED (PO explicitly forbade: masks the real unbounded-fetch defect).
+- Bound each fetch independently to FetchBudgetSec (8s+8s=16s worst case) vs ONE shared window covering both — chose shared: 16s still exceeds the 15s deadline; proved the distinction with `TestFetchDeadline_LiquidityState_BothHanging_SharedBudget` (RED at 24s pre-fix outer-ctx bound, GREEN at 8s post-fix).
+- 2nd defect (sbvOmoLiquidityCronJob.ts:70 "unreachable" wording) lives entirely in apps/mcp-server/ — zone_restricted forbids touching it; flagged in orch-state + notebook for dev-mcp-server, not silently dropped.
+**why-decision:** FetchBudgetSec is the codebase's own established SSOT (`pkg/domain/ports.go:24`, already used by BOP/CPI/Trade/MacroGSO) for exactly this hang class — reusing it is the root-cause fix, not a new mechanism.
+**why-change:** none — matches PO's explicit fix direction (bound the handler's own fetch, don't touch deadlineMs).

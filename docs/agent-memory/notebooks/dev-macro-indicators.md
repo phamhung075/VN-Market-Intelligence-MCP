@@ -6,34 +6,6 @@ Zone: `apps/macro-indicators/` | Stack: Go 1.22 | DB: reads market.db (read-only
 
 ---
 
-## Session 2026-07-28 (FIX-SBV-FETCHER-ZERO-VALUE-EMIT — BOUNDED-1 pickup, DECLINED: wrong zone)
-
-**Task:** BOUNDED-1 idle-capacity auto-pickup, labeled zone `apps/macro-indicators/`. Live investigation found the label was wrong.
-
-**Finding:** `apps/macro-indicators/` (Go pilot) only READS `sbv_rates` (`SBVRateSQLiteAdapter.GetRate`, safe-degrade, no writes anywhere in the Go tree). All 3 `storeSbvSnapshot` call sites are in `apps/mcp-server/`: `pushSbvRatesHandler.ts` (VPS-push handler — BUGGY, defaults 6 optional rate fields to 0 when the VPS payload omits them, tripping `storeSbvSnapshot`'s own zero-overwrite guard and rejecting the whole snapshot incl. the valid FX rate; also ignores the `{skipped}` return), `sbvRatesJob.ts` (4h cron — already correctly fail-closed), `intelligenceCycleJob.ts` step A2 (best-effort, missing the same pre-flight guard). No code touched — implementing would violate `zone_restricted: apps/macro-indicators/` + `not_my_job`.
-
-**Action:** No code change (either zone). Corrected `docs/data/orch/orch-state.json` task_board: moved row out of `in_progress` back to `backlog` with `zone: apps/mcp-server/`, `owner_agent: dev-mcp-server`, full trace embedded; `.head` reset to idle/router. Corrected `docs/data/orch/archive/backlog-detail.json`'s stale `apps/macro-indicators/` zone label. Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-macro-indicators.md` STEP dev-macro-indicators-S1.
-
-Zone health: HEALTHY (no code changed) | FIX-SBV-FETCHER-ZERO-VALUE-EMIT → returned to BACKLOG, re-zoned apps/mcp-server/ (not a dev-macro-indicators task)
-
----
-
-## Session 2026-07-30 (FU-SBV-EFFECTIVE-DATE-COLUMN — BOUNDED-1 pickup, DECLINED: wrong zone, 2nd occurrence of same class)
-
-**Task:** BOUNDED-1 idle-capacity auto-pickup, labeled zone `apps/macro-indicators`. Same SBV-zone-mislabel class as 2026-07-28's FIX-SBV-FETCHER-ZERO-VALUE-EMIT (see above) — origin brief `docs/architecture-briefs/2026-06-04-data-serve-integrity.md` L86 explicitly named this as a follow-up but the backlog mint carried the same wrong zone forward.
-
-**Finding:** `sbv_rates` CREATE TABLE + all ALTER-column migrations (incl. the exact try/catch pattern this task needs to reuse) live in `apps/mcp-server/src/infrastructure/db/schema-macro.ts` L141-176. The sole writer `storeSbvSnapshot()`/`fetchSbvRates()` is `apps/mcp-server/src/infrastructure/fetchers/sbv.ts`; 4h cron wiring `apps/mcp-server/src/scheduler/macro/sbvRatesJob.ts`; VPS push script `vps-scripts/fetch-sbv.sh` (repo-root) → `pushSbvRatesHandler.ts`. `apps/macro-indicators/` (`pkg/infrastructure/repositories_sbv_rate.go` `SBVRateSQLiteAdapter.GetRate`) is read-only SELECT, zero write path. No code touched — implementing would violate `zone_restricted: apps/macro-indicators/` + `not_my_job`.
-
-**Action:** No code change. Corrected `docs/data/orch/orch-state.json` via `scripts/orch-apply.sh` (exit 0, conservation 727/727): moved row `in_progress`→`backlog` with `zone: apps/mcp-server/`, `owner_agent: dev-mcp-server`, full root_cause/generic_mandate trace embedded; `.head` reset to idle/router. Corrected `docs/data/orch/archive/backlog-detail.json`'s stale `apps/macro-indicators` zone label (direct atomic write, item-count-preserved 442/442). Decision journal: `sprint-DATA-SERVE-INTEGRITY-dev-macro-indicators.md` STEP dev-macro-indicators-S1 (path per dispatcher instruction).
-
-**Recurrence flag for PO:** this is the SECOND SBV-titled backlog row mislabeled `zone: apps/macro-indicators` for the same reason (macro-indicators is a CONSUMER of sbv_rates, not the write-path OWNER — both trace to the 2026-06-04 data-serve-integrity brief). Recommend a one-time audit of remaining SBV-titled rows in `backlog-detail.json` for the same mislabel before a 3rd BOUNDED-1 misroute burns another cycle.
-
-**Task lock:** `task:FU-SBV-EFFECTIVE-DATE-COLUMN` NOT released by this agent — INV-GATEWAY-1 reserves task_claim/task_release to the dev-team dispatcher session (owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae) that holds it on my behalf. Flagging here for that session to release.
-
-Zone health: HEALTHY (no code changed, Go service unaffected) | FU-SBV-EFFECTIVE-DATE-COLUMN → returned to BACKLOG, re-zoned apps/mcp-server/ (not a dev-macro-indicators task)
-
----
-
 ## Session 2026-07-31 (FIX-CI-SIZELINT-MACRO-VMT-LIQUIDITY-RESOLVERS-NEW-OFFENDER — S3 hand-dispatch, size-lint sole remaining CI offender)
 
 **Task:** `usecases_vmt_liquidity_resolvers.go` (224L, cap 120L) had a real package doc comment but not the literal `size-justification:` token, no baseline entry → `--check` new-offender, this was the SOLE remaining size-lint CI offender (confirmed via `gh run view 30608987675 --log-failed`).
@@ -63,3 +35,19 @@ Zone health: HEALTHY (comment-only change, build/vet/test green, CI size-lint jo
 **Task lock:** `task:FIX-MACRO-INDICATORS-EMPTY-COLUMNS` NOT released by this agent — INV-GATEWAY-1 reserves task_claim/task_release to the dev-team dispatcher session (owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae) that holds it on my behalf.
 
 Zone health: HEALTHY (no code changed, Go service unaffected) | FIX-MACRO-INDICATORS-EMPTY-COLUMNS → returned to BACKLOG, re-zoned apps/mcp-server/ (not a dev-macro-indicators task)
+
+---
+
+## Session 2026-08-11 (FIX-MACRO-LIQUIDITY-STATE-HANDLER-EXCEEDS-CRON-15S-DEADLINE — PO-minted, split-zone task)
+
+**Task:** POST `/liquidity-state` hung 18.4s vs mcp-server cron's 15s deadline (PO's live probe falsified the alert's own "unreachable" causes — container/health/route all fine). PO forbade raising `deadlineMs`; wanted the handler's own upstream fetch bounded, plus a 2nd defect (alert wording conflates deadline-exceeded/unreachable) fixed "in the same pass."
+
+**Finding:** `LiquidityStateUseCase.Execute` calls TWO sequential upstream SBV HTML fetches — `policyRatesProvider.FetchPolicyRates` + `omoProvider.FetchOMO` — against the raw 60s handler ctx, each bounded only by its OWN `http.Client.Timeout` (30s/45s). This endpoint was the sole gap versus BOP/CPI/Trade/MacroGSO, which all already share `domain.FetchBudgetSec` (8s SSOT, `ports.go:24`). The 2nd defect (`sbvOmoLiquidityCronJob.ts:70`) is 100% in `apps/mcp-server/` — out of zone, not touched.
+
+**Action:** Wrapped both fetches in ONE shared `context.WithTimeout(ctx, FetchBudgetSec)` (not 8s+8s=16s — proved with `TestFetchDeadline_LiquidityState_BothHanging_SharedBudget`, RED@24s→GREEN@8s). Tightened redundant infra client Timeouts to the same const. 5 new tests, docs updated (`usecases.md`/`infrastructure.md`/`testing.md`). Moved task_board row `backlog→review` (`scripts/orch-apply.sh`, conservation 774/774) with residual mcp-server defect flagged in `status_note` for a PO follow-up mint, not dropped. Worktree gap: `orch-apply.sh`'s bun validator needed `apps/mcp-server` node_modules (absent in fresh worktree) — symlinked from main checkout (gitignored, non-destructive) rather than a full `pnpm install`.
+
+**Verification:** `go build`/`go vet`/`go test ./...` all green (35 files/301 top-level/562 total cases). G12 sandbox both tiers GREEN. Fences A/B/C clean. Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-macro-indicators.md` STEP dev-macro-indicators-S4.
+
+**Commits:** `eb6524da9` (code+tests+docs), `19be31ef1` (task_board move).
+
+Zone health: HEALTHY (build/vet/test/G12/Fences all green) | FIX-MACRO-LIQUIDITY-STATE-HANDLER-EXCEEDS-CRON-15S-DEADLINE → REVIEW (next_agent: qa); residual mcp-server error-string defect needs a separate follow-up FIX row for dev-mcp-server
