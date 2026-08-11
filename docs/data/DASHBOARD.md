@@ -1174,3 +1174,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · Cron fire-gap: 8 stale, 1 missed of 90 total
+**Severity:** WARN | **Date:** 2026-08-11 | **Status:** OPEN
+**Location:** scheduler/cron
+**Details:** 8 stale and 1 missed scheduled jobs detected in cron status endpoint
+**Impact:** Service degradation or scheduler lag; affected: vpsProxyWatchdog, taAlertScan, bbAlertScan, taAlertNotifier, priceUpdateWatchdog, vnIndexRefresh, monthlySignalQualityAudit, brokerSanctionsSweep, ragFtsRebuildCron
+**Root cause:** Cron jobs falling behind cadence thresholds
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-11T12:18:35Z (signal sys-20260811T121748-5da0, system-auditor -> po, dedup_key=auditor-a29-fire-gap:tier2-stale, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
