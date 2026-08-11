@@ -4,26 +4,30 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Steel manufacturing — construction steel, HRC/CRC coil, steel pipe",
-  "customer": "Domestic construction contractors, real-estate developers, regional export steel buyers",
-  "ops": "Q1-2026 gross margin 15.8%; reported Operating Profit=0 / EBITDA=0 (data-integrity flag — extraction defect, unresolved across multiple recent cycles, reconfirmed live again this cycle); validation warning: Net Profit (9,055.9 ty) exceeds Gross Profit (8,365.1 ty), possible non-operating income or extraction error",
-  "mgmt": "ROE sector-annualized 12.7% (above sector median 2.9%); no insider signals; 30d sentiment mildly positive (slope +0.07)",
+  "product": "Steel manufacturing (construction steel, HRC/hot-rolled coil), agriculture (feed/livestock), real estate (industrial parks)",
+  "customer": "Domestic construction contractors/distributors, export steel buyers, agri-feed distributors",
+  "ops": "Q1-2026 net revenue 52,901 tỷ VND, gross margin 15.8%; operating_profit line reported as 0 (persistent extraction/OCR defect, unresolved 10+ cycles — net profit 9,056 tỷ VND exceeds gross profit, flagged possible non-operating income by validation)",
+  "mgmt": "ROE (sector-comp, annualized) 12.7% vs sector median 2.9% — well above steel-sector peers; PE 14.2 at 57% discount to sector median 32.6; refine_status=PARTIAL (footnote confidence data unavailable)",
   "valuation": {
     "pe": 14.2,
-    "sector_median_pe": 32.6,
-    "earning_yield_pct": 7.04,
-    "max_deposit_rate_pct": 5,
+    "roe_pct": 12.7,
     "ey_spread_pp": 2.04,
     "verdict": "FAIR"
   },
-  "kinh_dich": {
+  "kinhdich": {
     "que": "Du(16)",
-    "trend": "THUAN LOI",
-    "confidence_pct": 50,
-    "signal": "THAN TRONG"
+    "xu_huong": "THUAN LOI",
+    "tin_hieu": "THAN TRONG",
+    "confidence_pct": 50
+  },
+  "regime": {
+    "regime": "NEUTRAL_fallback",
+    "carry_regime": "NEUTRAL",
+    "carry_spread_pp": 1.37,
+    "max_deposit_rate_pct": 5
   },
   "esc_gate": {
-    "esc1": "unevaluable_no_bash",
+    "esc1": "unevaluable_no_bash_glob",
     "esc2": {
       "result": false,
       "imbalance_pct": 0
@@ -31,21 +35,27 @@
     "esc3": {
       "result": "DATA-COVERAGE-LIMITED",
       "quarters_returned": 3,
+      "quarters_required": 4,
       "coverage_guard_held": true,
       "guard_key": "esc-datacov:HPG:Q1-2026:ESC-3"
     },
-    "esc4": "discarded — operating_profit=0 corrupt, persistent extraction defect",
+    "esc4": {
+      "result": "discarded",
+      "reason": "operating_profit=0 corrupt (persistent extraction defect)"
+    },
     "esc5": {
       "result": false,
-      "reason": "refine_status=PARTIAL, report_id=null"
-    },
-    "escalation_status": "NONE"
+      "reason": "refine_status=PARTIAL, report_id=null — refine not run"
+    }
   },
-  "insider_sentiment_context": "market_wide NEUTRAL, null_reason=INSUFFICIENT_DATA (90d window)",
-  "fetchedAt": "2026-08-11T15:10:18Z",
+  "data_quality_flag": "operating_profit=0 in get_bctc_full — 10th+ consecutive cycle unresolved, likely BCTC-HIST-VPS-BACKFILL / extraction-pipeline defect, not a genuine zero",
+  "earnings_calendar_status": "Q2-2026 QUA HAN (overdue, due 2026-07-30, not yet filed)",
+  "ts": "2026-08-11T18:08:03Z",
+  "cycle_id": "20260811-1800",
+  "slot": "bctc-analyst-slot-2",
   "_processed": {
-    "fingerprint": "e11202f72722e396f767f471661d0540176a6168ee87c62c08011426a598414a",
-    "processedAt": "2026-08-11T15:21:27Z",
+    "fingerprint": "d9a37d6096a6169f7fd83c6f0cf70263105c66af19368804732c32bb49ed2f3f",
+    "processedAt": "2026-08-11T18:20:54Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

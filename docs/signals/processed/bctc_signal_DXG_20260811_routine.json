@@ -4,37 +4,43 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Real-estate developer — residential projects, land-bank development",
-  "customer": "Retail homebuyers and investors in HCMC / Southern Vietnam residential projects",
-  "ops": "No BCTC data extracted this cycle (\"Chua co du lieu BCTC\" — persistent gap across recent cycles, Q2-2026 filing overdue since 30/07/2026); valuation drawn from cached sector-comparison: PE 66.5x vs sector median 16.1x (+312% premium), PB in-line, ROE 1.9% vs sector median 7.3% (below median)",
-  "mgmt": "No insider signals; KD hexagram Kien(39) persistent BAT LOI (unfavorable) read; AVOID valuation verdict — bullish signal withheld per gate rule",
+  "product": "Real estate developer — residential projects (HOSE-listed), land-bank development",
+  "customer": "Retail homebuyers, institutional co-investment partners in project JVs",
+  "ops": "No BCTC data available (get_bctc_full returns 'Chưa có dữ liệu BCTC') — 14th+ consecutive cycle with no extracted period; sector-comparison figures below are last-known / peer-derived only, not confirmed by a filed statement this cycle",
+  "mgmt": "ROE (sector-comp, annualized) 1.9% vs sector median 7.3% — well below real-estate peers; PE 66.5 at 312% premium to sector median 16.1 — expensive relative to weak profitability; no fresh BCTC to assess capital-allocation track record this cycle",
   "valuation": {
     "pe": 66.5,
-    "sector_median_pe": 16.1,
-    "earning_yield_pct": 1.5,
-    "max_deposit_rate_pct": 5,
+    "roe_pct": 1.9,
     "ey_spread_pp": -3.5,
     "verdict": "AVOID"
   },
-  "kinh_dich": {
+  "kinhdich": {
     "que": "Kien(39)",
-    "trend": "BAT LOI",
-    "confidence_pct": 25,
-    "signal": "GIU"
+    "xu_huong": "BAT LOI",
+    "tin_hieu": "GIU",
+    "confidence_pct": 25
+  },
+  "regime": {
+    "regime": "NEUTRAL_fallback",
+    "carry_regime": "NEUTRAL",
+    "carry_spread_pp": 1.37,
+    "max_deposit_rate_pct": 5
   },
   "esc_gate": {
-    "esc1": "unevaluable_no_bctc_data",
+    "esc1": "unevaluable_no_bash_glob",
     "esc2": "unevaluable_no_bctc_data",
-    "esc3": "unevaluable — OCF corrupt (~4.2e18, OCR extraction garbage), discarded",
+    "esc3": "unevaluable_no_bctc_data",
     "esc4": "unevaluable_no_bctc_data",
-    "esc5": "unevaluable_no_bctc_data",
-    "escalation_status": "NONE"
+    "esc5": "unevaluable_no_bctc_data"
   },
-  "insider_sentiment_context": "market_wide NEUTRAL, null_reason=INSUFFICIENT_DATA (90d window)",
-  "fetchedAt": "2026-08-11T15:10:18Z",
+  "data_quality_flag": "DXG BCTC extraction persistently absent — 14th+ consecutive routine cycle, no dev-team fix observed yet",
+  "earnings_calendar_status": "Q2-2026 QUA HAN (overdue, due 2026-07-30, not yet filed)",
+  "ts": "2026-08-11T18:08:03Z",
+  "cycle_id": "20260811-1800",
+  "slot": "bctc-analyst-slot-2",
   "_processed": {
-    "fingerprint": "f66b8279b31cd99b454592a40bac8f8ce86d5362fab84183591fc9f635388ff1",
-    "processedAt": "2026-08-11T15:21:27Z",
+    "fingerprint": "79b9f35b577508e531c4541e2fafad7640bfc6f975dbd5a74b86543c740abe5c",
+    "processedAt": "2026-08-11T18:20:54Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

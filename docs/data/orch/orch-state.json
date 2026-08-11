@@ -19599,7 +19599,7 @@
         "last_served_tick": "2026-08-11T16:54:36Z"
       }
     },
-    "_updated_at": "2026-08-11T18:00:17Z",
+    "_updated_at": "2026-08-11T18:20:54Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19882,6 +19882,310 @@
         "payload": "Out-of-zone defect: sbvOmoLiquidityCronJob.ts:70 error string conflates deadline-timeout w/ unreachable — mint FIX row, zone dev-mcp-server",
         "createdAt": "2026-08-11T17:56:09Z",
         "drained_at": "2026-08-11T17:58:22Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "79b9f35b577508e531c4541e2fafad7640bfc6f975dbd5a74b86543c740abe5c",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Real estate developer — residential projects (HOSE-listed), land-bank development",
+          "customer": "Retail homebuyers, institutional co-investment partners in project JVs",
+          "ops": "No BCTC data available (get_bctc_full returns 'Chưa có dữ liệu BCTC') — 14th+ consecutive cycle with no extracted period; sector-comparison figures below are last-known / peer-derived only, not confirmed by a filed statement this cycle",
+          "mgmt": "ROE (sector-comp, annualized) 1.9% vs sector median 7.3% — well below real-estate peers; PE 66.5 at 312% premium to sector median 16.1 — expensive relative to weak profitability; no fresh BCTC to assess capital-allocation track record this cycle",
+          "valuation": {
+            "pe": 66.5,
+            "roe_pct": 1.9,
+            "ey_spread_pp": -3.5,
+            "verdict": "AVOID"
+          },
+          "kinhdich": {
+            "que": "Kien(39)",
+            "xu_huong": "BAT LOI",
+            "tin_hieu": "GIU",
+            "confidence_pct": 25
+          },
+          "regime": {
+            "regime": "NEUTRAL_fallback",
+            "carry_regime": "NEUTRAL",
+            "carry_spread_pp": 1.37,
+            "max_deposit_rate_pct": 5
+          },
+          "esc_gate": {
+            "esc1": "unevaluable_no_bash_glob",
+            "esc2": "unevaluable_no_bctc_data",
+            "esc3": "unevaluable_no_bctc_data",
+            "esc4": "unevaluable_no_bctc_data",
+            "esc5": "unevaluable_no_bctc_data"
+          },
+          "data_quality_flag": "DXG BCTC extraction persistently absent — 14th+ consecutive routine cycle, no dev-team fix observed yet",
+          "earnings_calendar_status": "Q2-2026 QUA HAN (overdue, due 2026-07-30, not yet filed)",
+          "ts": "2026-08-11T18:08:03Z",
+          "cycle_id": "20260811-1800",
+          "slot": "bctc-analyst-slot-2"
+        },
+        "createdAt": "2026-08-11T18:08:03Z",
+        "drained_at": "2026-08-11T18:20:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c4317b6b9696300dfaf6939f6236fca38389175b290a725b6d3ade56bcc66f4b",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "IT services, software exports (offshore dev), system integration, telecom (FPT Telecom), education (FPT Edu)",
+          "customer": "Enterprise IT buyers in VN + offshore (Japan/APAC/US), SME telecom subscribers, students across FPT Edu network",
+          "ops": "Q1-2026 net revenue 12,480 tỷ VND, gross margin 34.0%, operating margin 22.0%; software-export margin structurally higher than blended telecom margin; FTEL deconsolidation (equity-method since 2026-01-01) distorts YoY revenue comparability (-22.3% reported vs +8.7% on restated basis)",
+          "mgmt": "ROE (sector-comp, annualized) 28.3% vs sector median 10.6% — well above peers; PE 13.8 at 20% discount to sector median 17.3 despite PB premium +136%; refine confidence low (7 of 15 footnote units <0.50) on complex related-party/subsidiary-listing pages, not core statements",
+          "valuation": {
+            "pe": 13.8,
+            "roe_pct": 28.3,
+            "ey_spread_pp": 2.25,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Kien(39)",
+            "xu_huong": "BAT LOI",
+            "tin_hieu": "GIU",
+            "confidence_pct": 25
+          },
+          "regime": {
+            "regime": "NEUTRAL_fallback",
+            "carry_regime": "NEUTRAL",
+            "carry_spread_pp": 1.37,
+            "max_deposit_rate_pct": 5
+          },
+          "esc_gate": {
+            "esc1": "unevaluable_no_bash_glob",
+            "esc2": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "esc3": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_held": true,
+              "guard_key": "esc-datacov:FPT:Q1-2026:ESC-3"
+            },
+            "esc4": {
+              "result": false,
+              "non_operating_share_pct": 2
+            },
+            "esc5": {
+              "result": true,
+              "min_confidence": 0.45,
+              "low_confidence_unit_ids": [
+                "unit-0008",
+                "unit-0009",
+                "unit-0010",
+                "unit-0011",
+                "unit-0012",
+                "unit-0013",
+                "unit-0014"
+              ],
+              "escalation_status": "GUARD-HELD",
+              "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+              "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d"
+            }
+          },
+          "earnings_calendar_status": "Q2-2026 QUA HAN (overdue, due 2026-07-30, not yet filed)",
+          "ts": "2026-08-11T18:08:03Z",
+          "cycle_id": "20260811-1800",
+          "slot": "bctc-analyst-slot-2"
+        },
+        "createdAt": "2026-08-11T18:08:03Z",
+        "drained_at": "2026-08-11T18:20:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d9a37d6096a6169f7fd83c6f0cf70263105c66af19368804732c32bb49ed2f3f",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Steel manufacturing (construction steel, HRC/hot-rolled coil), agriculture (feed/livestock), real estate (industrial parks)",
+          "customer": "Domestic construction contractors/distributors, export steel buyers, agri-feed distributors",
+          "ops": "Q1-2026 net revenue 52,901 tỷ VND, gross margin 15.8%; operating_profit line reported as 0 (persistent extraction/OCR defect, unresolved 10+ cycles — net profit 9,056 tỷ VND exceeds gross profit, flagged possible non-operating income by validation)",
+          "mgmt": "ROE (sector-comp, annualized) 12.7% vs sector median 2.9% — well above steel-sector peers; PE 14.2 at 57% discount to sector median 32.6; refine_status=PARTIAL (footnote confidence data unavailable)",
+          "valuation": {
+            "pe": 14.2,
+            "roe_pct": 12.7,
+            "ey_spread_pp": 2.04,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Du(16)",
+            "xu_huong": "THUAN LOI",
+            "tin_hieu": "THAN TRONG",
+            "confidence_pct": 50
+          },
+          "regime": {
+            "regime": "NEUTRAL_fallback",
+            "carry_regime": "NEUTRAL",
+            "carry_spread_pp": 1.37,
+            "max_deposit_rate_pct": 5
+          },
+          "esc_gate": {
+            "esc1": "unevaluable_no_bash_glob",
+            "esc2": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "esc3": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_held": true,
+              "guard_key": "esc-datacov:HPG:Q1-2026:ESC-3"
+            },
+            "esc4": {
+              "result": "discarded",
+              "reason": "operating_profit=0 corrupt (persistent extraction defect)"
+            },
+            "esc5": {
+              "result": false,
+              "reason": "refine_status=PARTIAL, report_id=null — refine not run"
+            }
+          },
+          "data_quality_flag": "operating_profit=0 in get_bctc_full — 10th+ consecutive cycle unresolved, likely BCTC-HIST-VPS-BACKFILL / extraction-pipeline defect, not a genuine zero",
+          "earnings_calendar_status": "Q2-2026 QUA HAN (overdue, due 2026-07-30, not yet filed)",
+          "ts": "2026-08-11T18:08:03Z",
+          "cycle_id": "20260811-1800",
+          "slot": "bctc-analyst-slot-2"
+        },
+        "createdAt": "2026-08-11T18:08:03Z",
+        "drained_at": "2026-08-11T18:20:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1ec34bcd67b78e08ee32554630ec00699d48866348cf16ed537dc705f9f44a97",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "State-owned commercial bank — corporate/retail lending, trade finance, deposit-taking, bancassurance",
+          "customer": "Corporate borrowers, retail/mass-affluent depositors, SOE/government banking relationships",
+          "ops": "Q1-2026 net interest income 17,421 tỷ VND, operating profit margin 80.9%, net profit margin 54.3%; OCF/NI ratio 1.37x (healthy — cash generation exceeds accounting profit)",
+          "mgmt": "ROE (sector-comp, annualized) 16.7% vs sector median 17.6% — slightly below bank peers; PE 14.1 trades at 57% premium to sector median 9.0 (market pays up for VCB's SOE-flagship/asset-quality reputation); Q1-2026 filed on time (ĐÃ NỘP 2026-07-19), not overdue",
+          "valuation": {
+            "pe": 14.1,
+            "roe_pct": 16.7,
+            "ey_spread_pp": 2.09,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Tuy(45)",
+            "xu_huong": "THUAN LOI",
+            "tin_hieu": "GIU",
+            "confidence_pct": 63
+          },
+          "regime": {
+            "regime": "NEUTRAL_fallback",
+            "carry_regime": "NEUTRAL",
+            "carry_spread_pp": 1.37,
+            "max_deposit_rate_pct": 5
+          },
+          "esc_gate": {
+            "esc1": "unevaluable_no_bash_glob",
+            "esc2": {
+              "result": false,
+              "imbalance_pct": 0.37
+            },
+            "esc3": {
+              "result": false,
+              "quarters_returned": 4,
+              "divergence_ratio": 0.368,
+              "ocf_total": 12944932,
+              "net_profit_total": 9462095
+            },
+            "esc4": {
+              "result": "N/A",
+              "reason": "bank — non_operating_share formula not applicable to credit institution P&L structure"
+            },
+            "esc5": {
+              "result": false,
+              "reason": "refine_status=PARTIAL, report_id=null — refine not run"
+            }
+          },
+          "earnings_calendar_status": "Q1-2026 DA NOP 2026-07-19 — not overdue",
+          "ts": "2026-08-11T18:08:03Z",
+          "cycle_id": "20260811-1800",
+          "slot": "bctc-analyst-slot-2"
+        },
+        "createdAt": "2026-08-11T18:08:03Z",
+        "drained_at": "2026-08-11T18:20:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "55eefd5036c70d6002842d8aa9566d16a2cf55326f38dee1f3156b96e1335a29",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "matched_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-2": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-2": null
+          },
+          "last_fired_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "last_fired_timestamp": "2026-08-11T18:07:12Z",
+          "note": "single-slot tick (bctc-analyst-slot-2, bctc-offmarket policy, cron_fallback on calendar_status=unknown); 0 new signals this tick"
+        },
+        "createdAt": "2026-08-11T18:07:20Z",
+        "drained_at": "2026-08-11T18:20:54Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
