@@ -75,6 +75,21 @@ Never prune if the file already has ≤ 3 sections. Preamble (before first
 
 ### IMMUTABILITY INVARIANT (AC-2a) — the data-loss fix
 
+**Cycle boundary, defined (CLEAN-NOTEBOOK-AC2A-CYCLE-BOUNDARY-DEFINITION):**
+a "cycle" for AC-2a purposes IS the git-commit boundary — "before" is a
+notebook file's content at `HEAD` (the parent commit), "after" is its
+staged content about to be committed. This is not a new choice; it is
+prose now matching the enforcement that already exists: the mechanical
+gate below (`_check_notebook_immutability`) compares `git show HEAD:$f`
+against `git show :$f` per dated heading, so the commit boundary was
+always the operative definition — it was simply never written down here.
+Consequence: if an agent continues the SAME logical work tick across TWO
+separate commits (e.g. a retry, or a split write), that is TWO cycles for
+AC-2a — the first commit's section is already a retained prior section by
+the time the second commit stages, and must not be rewritten; open a NEW
+dated `## ` section for the second commit instead (never destroy the
+first to "continue" it — see the hook's WARN remediation text below).
+
 Any `## ` section that survives a cycle (i.e. is neither the brand-new
 current-cycle section nor a section dropped whole under AC-2) MUST be
 byte-identical, heading through the line before the next `## ` or EOF, before

@@ -2907,37 +2907,6 @@
         "updated_at": "2026-08-08T22:30:21Z"
       },
       {
-        "id": "CLEAN-NOTEBOOK-AC2A-CYCLE-BOUNDARY-DEFINITION",
-        "type": "CLEAN",
-        "title": "AC-2a never defines 'cycle'; its only enforcement defines it as the git-commit boundary -- 5 WARNs today across 3 notebooks",
-        "status": "BACKLOG",
-        "priority": "high",
-        "size": "XS",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "agent-father",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-07-30T22:37:30Z",
-        "created_by": "dev-team/po-batch-20260730T2227Z",
-        "updated_at": "2026-08-11T15:03:12Z",
-        "source": "po triage 2026-07-30T22:27Z tick (5th pass today) -- po's direct answer to dev-team's question, verified at source on both planes",
-        "desc": "SPEC: .claude/skills/notebook-write/SKILL.md:64-78 authorizes 'trimming the CURRENT cycle's OWN new section' and speaks of 'the brand-new current-cycle section' -- the word 'cycle' is never defined anywhere in the file. ACTUATOR: scripts/git-hooks/pre-commit:329-421 compares `git show HEAD:$f` against `git show :$f` per dated heading, so the operative boundary IS the commit boundary. Agents are not misreading a clear rule; they are reading an undefined term the enforcement silently resolves the other way. SECOND DEFECT: the WARN payload's own remediation ('DROP the whole section ... add a NEW marker section instead') is correct for cap-pressure but WRONG for today's dominant case -- it instructs an agent continuing one tick across two commits to destroy its own live section; correct advice there is 'open a NEW dated section for the second commit'. EVIDENCE it is fleet-wide: 5 fires on 2026-07-30 across 3 notebooks -- system-auditor.md sec-c006 at 02:34Z and 07:12Z, developer.md at 03:33Z, main.md at 11:39Z (2 headings) and 22:10Z. Filed P2 deliberately: warn-only, non-blocking, zero data loss, no fix to this wording has ever been attempted (does not clear the recurring-bug/failed-fix bar).",
-        "files": [
-          ".claude/skills/notebook-write/SKILL.md",
-          "scripts/git-hooks/pre-commit"
-        ],
-        "deliverable": "AC: (1) one sentence in AC-2a defining cycle boundary = git-commit boundary, matching the hook; (2) hook WARN text gains the continue-the-tick remedy branch (open a NEW dated section for a second same-tick commit, do not destroy the first).",
-        "not_duplicate_of": "FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS (review[], P1) -- that row owns 'compose rewrites OLDER sections to pay for an over-cap new section', a different failure.",
-        "baseline_pass": "9408",
-        "status_note": "\n\n[po/triage-20260808T1737Z] EVIDENCE UPGRADE — THIS ROW IS NO LONGER JUST A DEFINITION-AMBIGUITY ROW; A CONFIRMED REPEAT AC-2a VIOLATION IS NOW ATTACHED. docs/agents/po/flow/triage-signals.md sets the mint bar for the [notebook-immutability-guard] payload class at \"the SAME agent+section pair fires on >=2 separate cycles\" (below that, interleaved-cycle false positives are expected and the base rate is high). THAT BAR IS MET AND EXCEEDED: docs/agent-memory/notebooks/system-auditor.md, retained section \"## c50 - 2026-08-08T13:30Z\", fired on THREE separate cycles — 2026-08-08T14:23:23Z, 14:34:58Z and 15:14:43Z — identical agent, identical section, staged content differing from HEAD each time. That is real notebook data loss, which is precisely what AC-2a exists to prevent, and it is the concrete harm this rows abstract \"AC-2a never defines cycle\" finding predicts. No new row minted: this row already owns AC-2a semantics and is the correct home (next_agent=agent-father, zone cross-service/); splitting the evidence off would fragment one defect across two rows.\\n\\nBELOW-BAR, LOGGED FOR VOLUME ONLY, NOT MINTED: docs/agent-memory/notebooks/qa.md section \"## cycle-582 - 2026-08-08\" fired ONCE (16:36:55Z) — single occurrence, under the >=2-cycle bar, consistent with the expected interleaved-cycle FP base rate. Corroborates feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806 but does not on its own justify a mint.\\n\\nALSO LOGGED, SEPARATE PAYLOAD CLASS, NOT MINTED: 2 \"[sweep-guard] SAME-FILE DIVERGENCE\" fires this tick (13:39:45Z docs/data/orch/orch-state.json, 17:34:43Z docs/agent-memory/notebooks/qa.md). Its tracked FP root-cause row (FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE) is absent from every hot lane AND from the cold backlog-detail, i.e. already shipped/terminal — so per the flows own branch these are now candidate GENUINE divergences rather than known FPs. Both named files are high-contention shared artifacts written by many agents concurrently, which is the expected benign cause; the detector is permanently NON-GOAL/informational by design and must never hard-block. Volume-tracked here, no escalation.",
-        "updated_by": "po/triage-20260808T1737Z",
-        "po_manual_dispatch_flagged_at": "2026-08-11T15:03:11Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick BATCH"
-      },
-      {
         "id": "FU-CNYVND-DEAD-FIELD-REMOVE",
         "priority": "P3",
         "size": "S",
@@ -11667,6 +11636,39 @@
         "architect_brief_ref": "docs/architecture-briefs/2026-08-09-agent-father-board-drain-and-ops-batch-widen.md",
         "routing_correction_note": "DRS re-picked this row from backlog[] because status was never flipped forward after architect completed design (commit baff41b46, brief committed). Corrected router-side: dispatching pm per the row's own next_agent field instead of re-running architect on already-done design work.",
         "pm_completion_note": "Decomposed into 8 atomic tasks (FIX-DRS-SWEEP-001..008) per architecture brief docs/architecture-briefs/2026-08-09-agent-father-board-drain-and-ops-batch-widen.md — commit 063e5c5f6. Tier-structured dependency chain, task 001 ready immediately. This coordination row closes; downstream work tracked on the 8 child tasks in task_board.backlog."
+      },
+      {
+        "id": "CLEAN-NOTEBOOK-AC2A-CYCLE-BOUNDARY-DEFINITION",
+        "type": "CLEAN",
+        "title": "AC-2a never defines 'cycle'; its only enforcement defines it as the git-commit boundary -- 5 WARNs today across 3 notebooks",
+        "status": "DONE",
+        "priority": "high",
+        "size": "XS",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "agent-father",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-07-30T22:37:30Z",
+        "created_by": "dev-team/po-batch-20260730T2227Z",
+        "updated_at": "2026-08-11T15:18:22Z",
+        "source": "po triage 2026-07-30T22:27Z tick (5th pass today) -- po's direct answer to dev-team's question, verified at source on both planes",
+        "desc": "SPEC: .claude/skills/notebook-write/SKILL.md:64-78 authorizes 'trimming the CURRENT cycle's OWN new section' and speaks of 'the brand-new current-cycle section' -- the word 'cycle' is never defined anywhere in the file. ACTUATOR: scripts/git-hooks/pre-commit:329-421 compares `git show HEAD:$f` against `git show :$f` per dated heading, so the operative boundary IS the commit boundary. Agents are not misreading a clear rule; they are reading an undefined term the enforcement silently resolves the other way. SECOND DEFECT: the WARN payload's own remediation ('DROP the whole section ... add a NEW marker section instead') is correct for cap-pressure but WRONG for today's dominant case -- it instructs an agent continuing one tick across two commits to destroy its own live section; correct advice there is 'open a NEW dated section for the second commit'. EVIDENCE it is fleet-wide: 5 fires on 2026-07-30 across 3 notebooks -- system-auditor.md sec-c006 at 02:34Z and 07:12Z, developer.md at 03:33Z, main.md at 11:39Z (2 headings) and 22:10Z. Filed P2 deliberately: warn-only, non-blocking, zero data loss, no fix to this wording has ever been attempted (does not clear the recurring-bug/failed-fix bar).",
+        "files": [
+          ".claude/skills/notebook-write/SKILL.md",
+          "scripts/git-hooks/pre-commit"
+        ],
+        "deliverable": "AC: (1) one sentence in AC-2a defining cycle boundary = git-commit boundary, matching the hook; (2) hook WARN text gains the continue-the-tick remedy branch (open a NEW dated section for a second same-tick commit, do not destroy the first).",
+        "not_duplicate_of": "FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS (review[], P1) -- that row owns 'compose rewrites OLDER sections to pay for an over-cap new section', a different failure.",
+        "baseline_pass": "9408",
+        "status_note": "\n\n[po/triage-20260808T1737Z] EVIDENCE UPGRADE — THIS ROW IS NO LONGER JUST A DEFINITION-AMBIGUITY ROW; A CONFIRMED REPEAT AC-2a VIOLATION IS NOW ATTACHED. docs/agents/po/flow/triage-signals.md sets the mint bar for the [notebook-immutability-guard] payload class at \"the SAME agent+section pair fires on >=2 separate cycles\" (below that, interleaved-cycle false positives are expected and the base rate is high). THAT BAR IS MET AND EXCEEDED: docs/agent-memory/notebooks/system-auditor.md, retained section \"## c50 - 2026-08-08T13:30Z\", fired on THREE separate cycles — 2026-08-08T14:23:23Z, 14:34:58Z and 15:14:43Z — identical agent, identical section, staged content differing from HEAD each time. That is real notebook data loss, which is precisely what AC-2a exists to prevent, and it is the concrete harm this rows abstract \"AC-2a never defines cycle\" finding predicts. No new row minted: this row already owns AC-2a semantics and is the correct home (next_agent=agent-father, zone cross-service/); splitting the evidence off would fragment one defect across two rows.\\n\\nBELOW-BAR, LOGGED FOR VOLUME ONLY, NOT MINTED: docs/agent-memory/notebooks/qa.md section \"## cycle-582 - 2026-08-08\" fired ONCE (16:36:55Z) — single occurrence, under the >=2-cycle bar, consistent with the expected interleaved-cycle FP base rate. Corroborates feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806 but does not on its own justify a mint.\\n\\nALSO LOGGED, SEPARATE PAYLOAD CLASS, NOT MINTED: 2 \"[sweep-guard] SAME-FILE DIVERGENCE\" fires this tick (13:39:45Z docs/data/orch/orch-state.json, 17:34:43Z docs/agent-memory/notebooks/qa.md). Its tracked FP root-cause row (FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE) is absent from every hot lane AND from the cold backlog-detail, i.e. already shipped/terminal — so per the flows own branch these are now candidate GENUINE divergences rather than known FPs. Both named files are high-contention shared artifacts written by many agents concurrently, which is the expected benign cause; the detector is permanently NON-GOAL/informational by design and must never hard-block. Volume-tracked here, no escalation.\n\n[qa/2026-08-11T15:18:21Z] DONE — both deliverable ACs shipped: (1) .claude/skills/notebook-write/SKILL.md AC-2a now explicitly defines cycle boundary = git-commit boundary (HEAD vs staged), matching scripts/git-hooks/pre-commit _check_notebook_immutability's actual comparison; (2) hook WARN message gains the continue-the-tick remedy branch (open a NEW dated section for a second same-tick commit, do not rewrite the first). Hook detection/reject logic untouched — confirmed via scripts/audits/verify-notebook-immutability-gate.sh replay (28 dated-heading rejects/11 files, unchanged from documented baseline). Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-15.md STEP qa-S41.",
+        "updated_by": "qa",
+        "po_manual_dispatch_flagged_at": "2026-08-11T15:03:11Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick BATCH",
+        "qa_verified_at": "2026-08-11T15:18:21Z",
+        "qa_verified_by": "qa"
       }
     ],
     "done_verified": [

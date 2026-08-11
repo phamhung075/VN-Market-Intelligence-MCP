@@ -108,3 +108,13 @@
 - Re-ran fresh: `bun tsc --noEmit` (mcp-server) 0 errors; targeted kinhdich/hexagram/hao/macro/sector/foreign-flow/diacritics regression (21 files, superset of claimed 19) 480 pass/4 skip/0 fail (484 tests); `mock-guard.sh --files <3 touched prod>` PASS; process.env/secret greps clean.
 **why-decision:** APPROVED, DONE_VERIFIED — DoD met (scoring math relocated, tests green, interface imports new home, numeric outputs unchanged) via independent re-run, not accepted from `review_note` alone.
 **why-change:** none — verified exactly what the row scoped; layering deviation (application vs domain) and TA non-move are the dev's own documented, evidence-based decisions, not something QA is overriding.
+
+### STEP qa-S41 · qa · 2026-08-11T15:17:20Z
+**task-id:** CLEAN-NOTEBOOK-AC2A-CYCLE-BOUNDARY-DEFINITION
+**what-done:** Defined "cycle" for AC-2a in `.claude/skills/notebook-write/SKILL.md` as the git-commit boundary (HEAD vs staged), matching the pre-commit hook's actual enforcement; added the matching "open a NEW dated section, don't rewrite" remedy branch to the hook's WARN message for the confirmed live-recurrence case (system-auditor.md `## c50 · 2026-08-08T13:30Z`, 3 fires same section).
+**what-considered:**
+- Read `_check_notebook_immutability`/`_notebook_section_hashes` in `scripts/git-hooks/pre-commit` first (task instruction) — confirmed it already compares `git show HEAD:$f` vs `git show :$f`, i.e. the commit boundary was always the de facto definition, just never written down; no hook detection logic/behavior change made.
+- Ran `scripts/audits/verify-notebook-immutability-gate.sh` (SKILL's own mandated pre-trust replay) — 28 dated-heading rejects/11 files, matches the documented DISARMED-BY-DEFAULT baseline exactly, confirming the WARN-text-only edit did not alter detection/reject behavior.
+- Sourced deliverable scope from the task board row itself, not the routed summary alone: 2 ACs — (1) cycle-boundary sentence in AC-2a, (2) hook WARN gains the continue-the-tick remedy branch — both shipped, nothing else touched.
+**why-decision:** Grounded the definition in the hook's ACTUAL comparison rather than inventing a new rule — a prose-only definition that itself drifted from enforcement would repeat the exact "prose alone already tried, did not hold" failure AC-2a's own header warns about.
+**why-change:** none — matches the task board row's own deliverable field verbatim; no hook logic/behavior touched, per the task's explicit non-presumption that the hook itself is wrong.
