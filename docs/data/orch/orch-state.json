@@ -133,10 +133,28 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-11T16:22:05Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-08-11T16:41:18Z",
+    "_updated_by": "push_bctc_refined_unit",
     "archive": [],
     "rows": [
+      {
+        "id": "bctc-imgdeg-a3a41225-20260811T164118Z",
+        "ts": "2026-08-11T16:41:18Z",
+        "from": "mcp-server",
+        "to": "po",
+        "type": "bctc_image_fetch_degraded",
+        "summary": "BCTC report a3a41225: 2 refined units capped <=0.6 confidence (image_unavailable) — investigate get_bctc_page_image/p...",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "report_id": "a3a41225-3491-4b4f-b4d0-3b80a989b76a",
+          "affected_unit_ids": [
+            "unit-0004",
+            "unit-0015"
+          ]
+        }
+      },
       {
         "id": "sau-d4-bctc-dataquality-dxg-persistent-absence-not_found-20260811",
         "ts": "2026-08-11T03:00Z",
@@ -3146,20 +3164,25 @@
         "priority_bumped_from": "P2",
         "priority_bumped_at": "2026-07-17T04:54:03Z",
         "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "supervised": true,
-        "deploy_gate": "user-approved-off-market",
+        "supervised": false,
+        "deploy_gate": null,
         "po_triage_20260721_orch_sentinel": "URGENCY + RESCOPE REC (orch-sentinel closeout, refreshed post po-s148 2026-07-21T15:36:18Z). LIVE: signal_queue 154 rows — 73 still non-canonical 'triaged' (47%); 71 were just relieved triaged->RESOLVED by peer po-s148 (5b6c459b5) in this same window. 'triaged' is NOT cold-evictable (prune accepts only READ/RESOLVED/SUPERSEDED; po-s137/po-s138 confirm RESOLVED is the terminal, NOT TRIAGED) so the residual 73 keep growing until the EMITTER is fixed. The po-s148 relief is a REACTIVE bulk-canonicalize pass = proof the ROOT CAUSE (PO triage scripts writing 'triaged') is unfixed and forces periodic manual relief. REC: this row bundles a DEPLOY-FREE half (note parts 1-3: stop scripts emitting non-canonical status / triage-signals 'mark DONE'->RESOLVED-with-no-row-guard) + a DEPLOY-GATED half (part 5: Zod enum-tighten needs mcp-server rebuild). SPLIT the deploy-free half out and land it ahead of the deploy window so the emitter stops writing 'triaged' and no future po-s148-style bulk relief is needed. Kept HELD/supervised — NOT promoted (would strand blocked). No duplicate — single owner of enum canonicalization.",
         "po_manual_dispatch_flagged_at": "2026-08-11T16:03:45Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "BACKLOG-XOR-GAP",
         "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced BACKLOG-XOR-GAP candidate — folding into this tick BATCH. Top of 83 candidates by [priority_rank, idx] (44 DRS-stranded, 38 backlog-XOR-gap, 1 ready-XOR, 4 re-admitted stale-flagged).",
         "po_rescope_required_20260811T1554": "DISPATCH WITH RESCOPE — DO NOT IMPLEMENT THIS ROW AS WRITTEN. Its own po_triage_20260721_orch_sentinel field rests on two premises that live re-verification this tick REFUTES. PREMISE 1, quote: triaged is NOT cold-evictable (prune accepts only READ/RESOLVED/SUPERSEDED). FALSE as of 2026-08-08 — scripts/orch-cold-evict.sh:150 now reads TERMINAL_SIGNAL_STATUSES=READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED,triaged,TRIAGED,RETRACTED (landed by FIX-COLDEVICT-TERMINAL-SIGNAL-STATUSES-OMITS-TRIAGED-RETRACTED). PREMISE 2, quote: the residual 73 keep growing until the EMITTER is fixed. EMPIRICALLY REFUTED — .signal_queue.rows[] measured 154 rows at that 2026-07-21 note and 20 rows this tick; the queue shrank ~87%, it did not grow. Both halves of the RESCUE argument for note-part (3) and part (5) are therefore gone: triaged is now BOTH doc-backed (.claude/skills/signal-dashboard/SKILL.md admits triaged/RETRACTED as extended PO-only statuses, decided 2026-08-01) AND mechanically evictable, so no future po-s148-style bulk-canonicalize relief pass is needed and the SPLIT-the-deploy-free-half-out recommendation no longer has a live problem to solve. LIKELY CORRECT OUTCOME: part (5) enum-tighten must NOT drop triaged/TRIAGED/RETRACTED (doing so would now wedge orch writes AND blind cold-evict — strictly worse than today), and part (2) signal-dashboard SKILL add live types was consciously declined in that file's own size-justification header (table deliberately left as a non-exhaustive quick-reference under the 120L cap). That leaves part (1) tier1-probe row type signal_feedback->microservice_degraded and part (3) mark DONE->RESOLVED no-row guard as the plausibly-still-valid scope. FIRST ACT FOR WHOEVER PICKS THIS UP: re-verify all 4 parts against live before writing any code — this row has drifted ~4 weeks behind the subsystem it describes. Not closed here: PO is dispatching the re-scoping, not deciding it, because part (1) needs a live read of the Tier-1 probe emitter that is outside this triage tick.",
-        "updated_at": "2026-08-11T16:26:13Z",
+        "updated_at": "2026-08-11T16:41:14Z",
         "ba_spec_complete": true,
         "ba_handoff": "docs/handoffs/UC-ASL-P5-BA-spec.md",
         "ba_completed_at": "2026-08-11T16:25:52Z",
-        "next_agent": "architect",
-        "ba_rescope_verified_20260811T1625Z": "BA independently re-verified all 4 parts against live code (not the note text, not the 08-11T1554 restatement). SURVIVE (rescoped): (1) type-differentiation — original ATB-bridging rationale REFUTED (anomaly-task-bridge SKILL.md ATB-0 excludes ALL Tier-1 rows regardless of type, pre-dates the brief, commit 4fb46f684 2026-06-02); corrected rationale = taxonomy consistency + PO Pipeline-B routing-rule precision (emit-audit-signal.sh own header names this I3 as deliberately deferred). File:line citations were stale (UC-ASL-P2 refactor moved emits to 3 shared --category-type call sites, tier1-probe.md:91/310/337) — blanket swap now wrong, needs per-check-class mapping. (3+4) triage-signals.md mark-DONE/mark-processed are dead prose on dedup-skip branches; verified the ONLY systematic RESOLVED-flip mechanism (pm/task-archive.md, done_verified-only) structurally cannot cover a dedup-skip disposition — real unclosed-loop gap, worse than the brief described. DECLINED: (2) signal-dashboard SKILL types table — confirmed already consciously left non-exhaustive by its own 2026-08-01 header, no live gap. (5) enum tighten — DECLINED not deferred: live-measured 18/22 (82%) signal_queue rows carry status=triaged (lowercase) this tick; the briefs own CORRECTED enum omits lowercase triaged + RETRACTED and would hard-wedge every orch-state write if shipped as specified — no live malfunction exists to justify the risk/rebuild. Full spec: docs/handoffs/UC-ASL-P5-BA-spec.md. supervised/deploy_gate flag recommended for clearing by architect/po — its sole justification (part 5 schema rebuild) is now out of scope; BA did not flip it unilaterally."
+        "next_agent": "pm",
+        "ba_rescope_verified_20260811T1625Z": "BA independently re-verified all 4 parts against live code (not the note text, not the 08-11T1554 restatement). SURVIVE (rescoped): (1) type-differentiation — original ATB-bridging rationale REFUTED (anomaly-task-bridge SKILL.md ATB-0 excludes ALL Tier-1 rows regardless of type, pre-dates the brief, commit 4fb46f684 2026-06-02); corrected rationale = taxonomy consistency + PO Pipeline-B routing-rule precision (emit-audit-signal.sh own header names this I3 as deliberately deferred). File:line citations were stale (UC-ASL-P2 refactor moved emits to 3 shared --category-type call sites, tier1-probe.md:91/310/337) — blanket swap now wrong, needs per-check-class mapping. (3+4) triage-signals.md mark-DONE/mark-processed are dead prose on dedup-skip branches; verified the ONLY systematic RESOLVED-flip mechanism (pm/task-archive.md, done_verified-only) structurally cannot cover a dedup-skip disposition — real unclosed-loop gap, worse than the brief described. DECLINED: (2) signal-dashboard SKILL types table — confirmed already consciously left non-exhaustive by its own 2026-08-01 header, no live gap. (5) enum tighten — DECLINED not deferred: live-measured 18/22 (82%) signal_queue rows carry status=triaged (lowercase) this tick; the briefs own CORRECTED enum omits lowercase triaged + RETRACTED and would hard-wedge every orch-state write if shipped as specified — no live malfunction exists to justify the risk/rebuild. Full spec: docs/handoffs/UC-ASL-P5-BA-spec.md. supervised/deploy_gate flag recommended for clearing by architect/po — its sole justification (part 5 schema rebuild) is now out of scope; BA did not flip it unilaterally.",
+        "architect_design_complete": true,
+        "architect_completed_at": "2026-08-11T16:41:13Z",
+        "architect_build_standard": "not-applicable",
+        "architect_handoff": "docs/handoffs/UC-ASL-P5-BA-spec.md",
+        "architect_gate_clear_note": "supervised/deploy_gate cleared 2026-08-11T16:41:13Z — sole justification (part-5 enum-tighten requiring apps/mcp-server rebuild) was declined by BA re-verification before this row reached architect; surviving FR-1+FR-2 scope is flow-doc/prose-only (docs/agents/system-auditor/flow/tier1-probe.md, docs/agents/po/flow/triage-signals.md), zero schema change, zero rebuild, zero deploy window needed. Prior supervised_note/po_triage_20260721_orch_sentinel/po_rescope_required_20260811T1554 left intact as historical audit trail. See docs/handoffs/UC-ASL-P5-BA-spec.md § [Architect] Brownfield Findings Design Decision 4."
       },
       {
         "id": "UC-MDH-P2",
