@@ -144,3 +144,49 @@ The original mcp-server container process died/crashed at exactly 2026-08-07 08:
 
 Session: 165f4245-6173-4054-87fd-c55bb626265f
 
+
+## Cycle 2026-08-11T16:17Z — CRITICAL: rag-service Memory Pressure Escalation
+
+**Issue**: System-auditor A-30 alert: vn-market-intelligence-mcp-rag-service-1 at 99.53% memory (1019MiB/1GiB, 5MiB free) — below 40MiB safety floor. Surge from 89.91% → 99.44% in 23 minutes with zero reclamation across 65s probe window. Imminent OOMKilled risk.
+
+**Investigation Summary**:
+- Container status: Up 15 hours (Started 2026-08-11T01:00:43Z UTC)
+- RestartCount: 9 (indicating 9 prior OOM restarts)
+- Health status: Healthy (responding to /health checks)
+- Process: python3 main.py consuming 961MB RSS
+- Loaded model: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 (embedding service)
+- Database: PRAGMA integrity_check = "ok"
+- Disk: 92% usage (near 95% threshold)
+
+**Chronic Pattern Analysis**:
+- First occurrence: 2026-08-05T16:34:14Z (dedup: mem_pressure:rag-service:A-30)
+- Recurring variants: floor-breach, loss-of-reclamation, post-fix-monitoring, recurring-ceiling, BELOW-FLOOR
+- Latest entry: 2026-08-09T04:11:10Z (microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30, sev=3)
+- Pattern: Sustained high memory state with no GC reclamation → eventual restart
+
+**Root Cause Hypothesis**:
+1. Embedding model (multilingual MiniLM-L12-v2) locked in memory at startup (~400MB+ per logs)
+2. Additional runtime load (FTS indices, cached embeddings, session state) pushing towards 1GB limit
+3. Python/Uvicorn GC not reclaiming space fast enough under sustained load
+4. 1GB memory limit is insufficient for RAG workload with embedding model
+
+**Backlog Context**:
+- FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD (earlier PO triage)
+- FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (related pdf-extractor issue, also at 97.02%)
+
+**Actions Taken**:
+1. Diagnosed via docker stats, container inspection, logs
+2. Attempted proactive restart: `docker compose up -d --no-deps rag-service` → no-op (container already healthy)
+3. Sent BUG channel telegrams (msg_id 5089, 5090) with investigation summary and escalation
+4. Per ops flow: "Escalate Immediately" on "Multiple Docker services in restart loop" criterion
+
+**Escalation Reasoning**:
+- This is a known chronic issue with historical backlog, not an acute one-time incident
+- Container is currently healthy but at the edge of OOMKill
+- Requires root-cause investigation (memory tuning, model optimization, heap size limits) — beyond standard restart recovery
+- PO triage needed to decide: increase container memory limit vs. optimize application vs. split RAG service
+
+**Status**: ESCALATED to PO. Awaiting deeper investigation from dev-team or architect.
+
+Session: 165f4245-6173-4054-87fd-c55bb626265f
+
