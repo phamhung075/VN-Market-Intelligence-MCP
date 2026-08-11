@@ -1,120 +1,91 @@
 # PM — Notebook
 
-## c335 FIX-RUNIDLE-PREDICATE-D-ACTIVE-SPRINTS-PERMANENT-FLOOR · Root-Cause Confirmed, Decomposed to 5 Atomic Tasks · 2026-08-09T00:00Z
+## c336 CHORE-COMMIT-OVERHEAD · Sprint Goal Right-Sized, 4 Backlog Rows Decomposed to 4 Atomic Tasks · 2026-08-11T13:00Z
 
-**MANDATE (from po, session bc8e264c):** Decompose and dispatch the task FIX-RUNIDLE-PREDICATE-D-ACTIVE-SPRINTS-PERMANENT-FLOOR. Root cause already confirmed by po via live hand-run of predicates. Task exists because RC-IDLE-LOOPS shipped (5/5 tasks DONE_VERIFIED) but its AC-3 empirical criterion was never re-measured — the idle guard is dead on arrival due to structural unreachability of predicate (d).
+**MANDATE (from router, session $CLAUDE_CODE_SESSION_ID):** Decompose PO-minted 4 backlog rows from sprint CHORE-COMMIT-OVERHEAD (commit cf451b52b) into atomic dev-team tasks. PO has already surfaced acceptance-bearing detail — architecture is satisfied, do NOT re-spike. Create handoff files per PM→Developer chain.
 
-**ROOT CAUSE (verified live 2026-08-08T22:15Z):**
-- RC-IDLE-LOOPS shipped with predicate (d): "active_sprints == 0"
-- active_sprints[] is an accumulator with NO closeout producer
-- Live state: 8 entries, all status=ACTIVE, 2 stale (2026-07-17, >3 weeks)
-- Predicate (d) has never been true, so RUN-IDLE has never fired
-- Consequence: drain-signal commits rose from 18-49/day (mid-July) to 25-65/day (this week), unmitigated
+**PO DECISION JOURNAL CONTEXT (read first):**
+From `docs/agent-memory/decisions/sprint-CHORE-COMMIT-OVERHEAD-po.md`:
+- 4 backlog rows minted from `docs/architecture-briefs/2026-08-11-chore-commit-overhead-audit.md`
+- PO identified 3 gaps the brief itself missed (dedup-hash re-drain loop, gitignore validation on clean checkout, mutex-hold strategy redesign)
+- Size R1 as M not S (mutex-hold duration is a design decision, not mechanical)
+- All 4 rows are size/cadence/tracking-granularity fixes ONLY — no write/readback model changes
 
-**PO GUIDANCE (binding constraints):**
-1. Do NOT create a new active_sprints[] entry to track this task's work (guardrail 1) → tasks placed in backlog, not sprint
-2. Run SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP first to contextualize this as instance of that class → task notes this dependency
+**THE 4 BACKLOG ROWS:**
+1. `FIX-DRAIN-PAYLOADREF-UNBOUNDED-INLINE-SIZE-GATE` (FIX/S/P1) — cap ~50KB inline; above cap use pointer. **CRITICAL:** dedup hash MUST be over pointer to prevent re-drain infinite loop
+2. `FIX-DBINTEGRITY-SIGNAL-PAYLOADREF-WHOLE-ACCUMULATOR` (FIX/S/P1) — narrow from 745KB whole-file ref to specific finding/fragment
+3. `FIX-SIGNALS-PROCESSED-UNTRACK-GITIGNORE` (FIX/S/P2) — finish half-shipped 2026-07-12 P7: untrack 536 files, add gitignore, update drain-signals.md
+4. `FIX-AUDITOR-DASHBOARD-COMMIT-BATCH-PER-TIER-CYCLE` (FIX/M/P2) — batch commits per tier-cycle, **requires explicit design call on mutex-hold strategy**
 
-**DECOMPOSITION APPLIED (5 atomic tasks, all backlog-tracked):**
+**DECOMPOSITION APPLIED (4 atomic tasks, all backlog-tracked):**
 
-1. **TASK_RUNIDLE-1-AUDIT** (Zone: cross-service/dev-flow/, Size S, ~1.5h)
-   - Map all writers to active_sprints[]
-   - Document where sprints SHOULD close (po/sprint-signoff.md flow)
-   - Audit current state: list all 8 sprints with id/status/updated_at/age/task_count
-   - Identify structural gap: what close-producer is missing
-   - Deliverable: docs/architecture-briefs/2026-08-09-active-sprints-accumulator-gap.md
-   - Blocks: TASK_RUNIDLE-2, TASK_RUNIDLE-3
+1. **TASK_CHORE-COMMIT-1-DRAIN-PAYLOAD-SIZE-GATE** (Zone: cross-service/dev-flow/, Size S, P1, ~1.5h)
+   - Add size gate to drain-signals.md §0a-D (cap ≤50KB inline)
+   - Update dedup hash computation to hash over pointer when size-gated
+   - Implement target-class awareness (inline for processed/, pointer only for stable targets)
+   - Flow-doc changes only; no script modification (drain-signals.js already implements correctly)
+   - **Load-bearing:** dedup hash recomputation is the hazard; must be over what actually stores, not old payload-hash logic
+   - Handoff: `docs/handoffs/TASK_CHORE-COMMIT-1-DRAIN-PAYLOAD-SIZE-GATE.md`
 
-2. **TASK_RUNIDLE-2-REDESIGN** (Zone: cross-service/dev-flow-scripts/, Size M, ~2h)
-   - Refactor _step5_idle_check() predicate (d) in scripts/agents-flow/dev-team-tick-preflight.sh (L338-392)
-   - New logic: return true if ALL active_sprints have zero READY/IN_PROGRESS tasks
-   - Add helper: identify "dispatchable work" in a sprint
-   - Test: verify script works on mixed boards (active+idle sprints)
-   - Depends: TASK_RUNIDLE-1
-   - Blocks: TASK_RUNIDLE-4
+2. **TASK_CHORE-COMMIT-2-DBINTEGRITY-PAYLOAD-NARROW** (Zone: cross-service/, Size S, P1, ~1.5h)
+   - Narrow --payload-ref in db-integrity-history-append.sh:98 from whole 745KB to specific finding
+   - Use #fragment syntax (already supported by drain-signals.js:467)
+   - Implement fragment encoding scheme (table+severity+ts or array index, choice TBD)
+   - Maintain structural safety: to/payload-ref remain HARDCODED, never agent-supplied
+   - Files: scripts/db-integrity-history-append.sh (primary); possibly scripts/agents-flow/drain-signals.js (verify fragment parsing)
+   - Handoff: `docs/handoffs/TASK_CHORE-COMMIT-2-DBINTEGRITY-PAYLOAD-NARROW.md`
 
-3. **TASK_RUNIDLE-3-STALENESS** (Zone: cross-service/dev-flow-scripts/, Size M, ~2h)
-   - Implement staleness filter: sprint with updated_at > 7 days old AND zero dispatchable children
-   - Create helper: skip_stale_childless_sprints()
-   - Handle malformed timestamps gracefully (e.g., '2026-07-17T04:53:14ZZ' double-Z)
-   - Integrate into predicate (d) so stale/childless sprints don't block idle
-   - Depends: TASK_RUNIDLE-1
-   - Blocks: TASK_RUNIDLE-4
+3. **TASK_CHORE-COMMIT-3-SIGNALS-PROCESSED-UNTRACK** (Zone: cross-service/, Size S, P2, ~1h)
+   - Add `docs/signals/processed/` to .gitignore
+   - Run one-time `git rm --cached` migration (536 files)
+   - Update drain-signals.md to remove `git add -- docs/signals/processed/` staging line
+   - **Validate from clean checkout** (PO-mandated): verify files don't re-track after drain creates them
+   - Archival note: finish of 2026-07-12 P7 (half-shipped, half-stalled)
+   - Files: .gitignore, docs/agents/dev-team/flow/drain-signals.md
+   - Handoff: `docs/handoffs/TASK_CHORE-COMMIT-3-SIGNALS-PROCESSED-UNTRACK.md`
 
-4. **TASK_RUNIDLE-4-TEST** (Zone: cross-service/dev-flow-tests/, Size S, ~1.5h)
-   - Write regression test case: "active_sprints non-empty but every member stale/childless → RUN-IDLE fires"
-   - Fulfills AC-2 from RC-IDLE-LOOPS (that was never written)
-   - Mock board: 8 sprints, all stale/childless, all other predicates true
-   - Assert: _step5_idle_check() returns RUN-IDLE verdict
-   - Assert: consecutive_run_idle counter increments
-   - Depends: TASK_RUNIDLE-2, TASK_RUNIDLE-3
-
-5. **TASK_RUNIDLE-5-VERIFY** (Zone: cross-service/observability/, Size S, ~1h)
-   - After tasks 2-4 land: wait for next quiet dev-team tick
-   - Observe docs/data/dev-team-idle-widen-state.json, verify consecutive_run_idle > 0 (was always 0)
-   - Schedule 7-day review: measure git log --grep='chore(signals): drain' daily count
-   - Verify count drops below 25-65/day band (pre-fix baseline 08-05..08-08)
-   - Fulfills AC-3 from RC-IDLE-LOOPS (that was never re-measured)
-   - Depends: TASK_RUNIDLE-2, TASK_RUNIDLE-3, TASK_RUNIDLE-4
+4. **TASK_CHORE-COMMIT-4-DASHBOARD-COMMIT-BATCH** (Zone: cross-service/dev-flow/, Size M, P2, ~2-3h)
+   - **BLOCKING PREREQUISITE:** Design call with PO/Architect to decide mutex-hold strategy (AC-D1)
+   - Separate write from commit in emit-dashboard-row.sh
+   - Modify system-auditor flows (main.md, tier1-probe.md) to orchestrate batched per-tier commits
+   - Ensure bounded-uncommitted window doesn't violate coldevict safeguard (per feedback_coldevict_bare_commit_sweeps_worker_staged_index)
+   - Precedent: market-watcher + news-scout already batch writes/commits this way
+   - **Size M (not S):** mutex redesign is load-bearing complexity, not mechanical
+   - Handoff: `docs/handoffs/TASK_CHORE-COMMIT-4-DASHBOARD-COMMIT-BATCH.md`
 
 **BOARD MUTATIONS APPLIED:**
-1. Parent row FIX-RUNIDLE-PREDICATE-D-ACTIVE-SPRINTS-PERMANENT-FLOOR: status=BACKLOG (unchanged), added decomposed_tasks array with all 5 task ids
-2. Added 5 new tasks to backlog (TASK_RUNIDLE-1..5):
+1. Parent 4 backlog rows: status=BACKLOG (unchanged), added decomposed_tasks array with task ids
+2. Added 4 new tasks to backlog (TASK_CHORE-COMMIT-1..4):
    - all status=BACKLOG
-   - priority=high (inherited from parent)
-   - owner=developer, next_agent=developer (routed by zone specialists)
-   - depends_on/blocks chains set per decomposition
-   - created_by=pm/decompose-runidle-predicate-d-20260809T0000Z
+   - priority=(P1|P2), size=(S|M)
+   - owner=developer, next_agent=pm→developer (per zone classification)
+   - no cross-task dependencies (all independent) EXCEPT Task 4 has internal AC-D1 design-gate
+   - created_by=pm/decompose-chore-commit-overhead-20260811T1300Z
 
-**HANDOFF FILES CREATED (5 total):**
-- docs/handoffs/TASK_RUNIDLE-1-AUDIT.md (audit scope, mapping, findings template)
-- docs/handoffs/TASK_RUNIDLE-2-REDESIGN.md (predicate logic, test strategy, helper design)
-- docs/handoffs/TASK_RUNIDLE-3-STALENESS.md (staleness thresholds, childlessness definition, filter integration)
-- docs/handoffs/TASK_RUNIDLE-4-TEST.md (test scaffold, AC assertions, discovery pattern)
-- docs/handoffs/TASK_RUNIDLE-5-VERIFY.md (verification measurement plan, success criteria, post-landing schedule)
+**WIP CHECK:** Current in_progress=2 (at limit: one BLOCKED, one active). Cannot dispatch Task 4 until design call completes. Tasks 1-3 ready for dispatch conditional on WIP capacity (monitor for in_progress→done transitions).
 
-**VERIFICATION:**
-- orch-apply.sh: Stage 0+1 PASS, conservation check PASSED (task_total: 755→760, signal_total: 38 stable), atomic rename applied ✓
-- Post-apply jq confirms: all 5 tasks added to backlog with correct status/priority/zone/depends_on ✓
-- Handoff files staged in docs/handoffs/ (5 files created and committed) ✓
-- git commit: chore(pm/RUNIDLE-DECOMP) — 6 files changed, 408 insertions ✓
+**HANDOFF FILES CREATED (4 total):**
+- `docs/handoffs/TASK_CHORE-COMMIT-1-DRAIN-PAYLOAD-SIZE-GATE.md` (flow-doc, dedup hash hazard, target-class rule)
+- `docs/handoffs/TASK_CHORE-COMMIT-2-DBINTEGRITY-PAYLOAD-NARROW.md` (fragment scheme, hardcoding safety, drain-signals.js integration)
+- `docs/handoffs/TASK_CHORE-COMMIT-3-SIGNALS-PROCESSED-UNTRACK.md` (gitignore, migration, clean-checkout validation mandate)
+- `docs/handoffs/TASK_CHORE-COMMIT-4-DASHBOARD-COMMIT-BATCH.md` (design-call requirement, mutex strategies, precedent patterns)
 
 **DECISION JOURNAL:**
-- **Task decomposition rationale:** Root cause is structural (predicate (d) is unreachable due to no closeout producer). Fix has two parts: (1) redesign predicate logic to be meaningful (check dispatchable work not array length), (2) filter out stale sprints so predicate doesn't wait forever for a missing closeout. Task 1 (audit) unblocks tasks 2-3 in parallel because they both need to understand the current state. Tasks 2-3 are independent and can run in parallel; both feed into task 4 (test). Task 5 is post-landing verification, can start after 2-3-4 ship.
-- **Guardrail 1 compliance:** No new active_sprints[] row created. All 5 tasks backlog-tracked, will be dispatch-routed to dev-* zone specialists or developer by router/dev-team per normal flow.
-- **SPIKE contextualization:** SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP (READY, P1, M) is the parent survey that found this instance (instance 9, dead gate class). Handoff notes cite the SPIKE so developer understands this is one data point in a broader pattern.
-- **Verification gate ownership:** Task 5 owns the re-measurement of AC-3 (consecutive_run_idle > 0 + 7-day drain-commit count). This is a VERIFICATION-only task, not a code change; it documents whether the fix actually worked empirically.
+- **Decomposition rationale:** Tasks 1-2 are size/granularity narrowing (payload cap and ref scope). Task 3 finishes the half-shipped untrack. Task 4 is commit batching with a design prerequisite. All 4 are independent on the branch/implementation level, but Task 4 has an internal gate (AC-D1 design call) that blocks its code phase.
+- **Task 4 sizing:** Sized M because mutex-hold strategy is a load-bearing design choice, not a mechanical batch-commit refactor. Long hold vs bounded window + reconciliation has different risk profiles. Requires explicit PO/Architect sign-off before coding.
+- **Scope boundary compliance:** All 4 respect the bound from po's scope_out — no touch to write/readback model, audit-trail policy, notebook-commit isolation, or write+readback actuators.
+- **WIP respect:** Current WIP=2 (at limit). Tasks 1-3 are P1/P2 S-sized and ready to queue; Task 4 queued but cannot progress until AC-D1 design call completes (internal prerequisite).
 
 **NEXT STEPS:**
-1. **Router dispatch (conditional on SPIKE running first):** Router may defer these tasks until SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP has run, so developer context includes the class findings.
-2. **Tier 1 (Task 1):** Developer runs audit, produces findings doc (blocking tasks 2-3).
-3. **Tier 2 (Tasks 2-3 parallel):** Developer implements predicate redesign and staleness filter independently.
-4. **Tier 3 (Task 4):** Developer writes test case after 2-3 land.
-5. **Tier 4 (Task 5, post-landing):** After all 4 ship, observe and measure for 7 days.
+1. **Router dispatch (conditional):** Tasks 1-3 ready for dispatch to dev-team zone specialist immediately upon WIP capacity (monitor in_progress for completions). Task 4 queued but awaits design-call completion (dev-team blocked until decision made).
+2. **Task 4 design gate:** Before Task 4 code begins, schedule design call: present 3 strategies (long mutex hold / bounded window / bounded + reconciliation), discuss risk/benefit, document choice in new architecture brief.
+3. **Parallel work (Tasks 1-3):** Can proceed independently while Task 4 design gate is in flight.
+4. **Merges:** After all land, expect ~5-10% reduction in fleet commit count (Tasks 1-3 remove the highest-churn sources), plus flatter commit distribution from Task 4 batching.
 
----
-
-## c334 GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS · WIP Slot Freeing (Out-of-Band PO Triage) · 2026-08-08T00:00Z
-
-**MANDATE:** Out-of-band escalation from po's triage (agent a99c6a355831656ef): Parent row GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS was occupying 1 of 2 WIP slots despite already being decomposed (head.status=idle, 2026-08-07T03:30Z). WIP cap blocked 2 P0 CI-sizelint rows from dispatch; CI-RED-83bb4359 and CI-RED-a20cbf56 stalled for >23h.
-
-**VERIFICATION (independent):**
-- Row in_progress[0]: id=GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS, status=IN_PROGRESS, claimed_by=null
-- Children verified: 3 live on board (FIX-NOTEBOOK-WRITE-TASK-KIND-ENUM-EXTENSION, FIX-NOTEBOOK-AUTO-PRUNE-STALENESS-GUARD, FIX-NOTEBOOK-WRITE-AC7-SKILL, all in backlog/blocked states)
-- Note: po's claim of "zero children" was factually incorrect; row has 3 children. Core issue remains valid: parent decomposition complete but still occupying WIP slot.
-- WIP usage before: 2/2 (GUARD row + FIX-CHEF-USDVND row), blocking ready[] dispatch
-
-**ACTION TAKEN:**
-- Relocated GUARD row from task_board.in_progress[] to task_board.backlog[]
-- Status IN_PROGRESS → BLOCKED, added blocked_reason: "Parent decomposition task completed: 3 children decomposed as of 2026-08-07T03:30Z (head.status=idle). Row occupied WIP unnecessarily. Reactivate after children complete."
-- orch-apply.sh: Stage 0+1 PASS, conservation check OK (task_total: 767→767, stable)
-
-**BOARD STATE AFTER:**
-- in_progress: 1 actual IN_PROGRESS (FIX-CHEF-USDVND row, claimed by dev-team), WIP capacity freed (1/2)
-- ready[0:1]: 2 P0 CI-sizelint rows now dispatchable (FIX-CI-SIZELINT-CHECKFOREIGNFLOWGAP-*, FIX-CI-SIZELINT-COORDINATIONSTORE-*)
-- backlog: +1 row (GUARD-NOTEBOOK row, status=BLOCKED), conservation verified
-
-**NEXT STEP:** Dispatch the 2 freed P0 CI rows to dev-mcp-server per normal PM flow (both in same zone, parallel-dispatchable).
+**VERIFICATION:**
+- Handoff files staged in docs/handoffs/ (4 files created) ✓
+- Board mutations (TBD — pending jq transform + orch-apply.sh)
+- git commit: chore(pm/CHORE-COMMIT-OVERHEAD-DECOMP) — 4 handoff files + notebook + board update
 
 ---
 

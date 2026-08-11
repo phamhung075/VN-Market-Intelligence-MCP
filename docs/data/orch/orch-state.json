@@ -95,10 +95,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "UC-RDL-P4",
-    "next_agent": "ba",
-    "next_action": "Design-Router Sweep claim of UC-RDL-P4 — spawn ba DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only (if either was set) preserved — do not clear.",
-    "updated_at": "2026-08-11T12:26:36Z",
-    "updated_by": "dev-team (design-router sweep)"
+    "next_agent": "architect",
+    "next_action": "PO ratified BA spec + ruled Q1 (split cutover: tool+integration-test only, doc cutover = linked follow-up UC-RDL-P4B-DOC-CUTOVER) and Q2 (build now, batch the container rebuild with FIX-ORPHAN-FR2-FR6-FR7). po_goahead stamped — WF-2 hold released. Spawn architect for brownfield design of FR-1..FR-9; FR-7 file-6 doc edits are OUT of this wave.",
+    "updated_at": "2026-08-11T13:02:46Z",
+    "updated_by": "po (dev-team Step 1 triage)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -493,8 +493,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-11T12:54:15Z",
-    "_updated_by": "po (CHORE-COMMIT-OVERHEAD triage mint)",
+    "_updated_at": "2026-08-11T13:03:09Z",
+    "_updated_by": "po (triage: agent-father keep-cycle 2026-08-11T12:53Z findings)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -10203,7 +10203,12 @@
         "detail_ref": "docs/architecture-briefs/2026-08-11-chore-commit-overhead-audit.md",
         "title": "drain-signals.md §0a-D inlines the FULL payload_ref target unconditionally — a db_integrity_breach signal re-pastes the entire 745KB db-integrity-history.json into the durable inbox on every drain; ONE commit (328f1c85d) added +33,063 lines this way = ~49% of a 438-commit chore sample's total insertions. Add a ~50KB inline cap; above it keep the payload_ref pointer.",
         "note": "SOURCE: brief §3 + §7 R3 (brief-local label R3; the dispatching router called this R1 — same row, label mismatch is between the brief and the router's summary, use the brief). PO RE-VERIFIED EVERY CITED FACT AT SOURCE 2026-08-11T12:51Z, all hold: docs/data/db-integrity-history.json = 745,061 bytes live; drain-signals.md:64-67 'Payload inlined, never a pointer'; the two db_integrity_breach envelopes are IN the live hot file at 599,273 bytes EACH (98% of the 1.22MB pending_triage_inbox). ZONE CORRECTION vs the brief: brief §7 R3 says 'flow-doc-only'. CONFIRMED CORRECT and worth stating so nobody widens it — drain-signals.md:130 explicitly says the canonical script 'does NOT cover §0a-D'; scripts/agents-flow/drain-signals.js only inlines the §0a-1 FILE-drain path (line 281, payload: c.payloadObj), whose payloads are small signal files. The 745KB path is §0a-D dashboard-row drain, which lives ONLY in the flow doc. BINDING CAVEAT 1 (PO found at source, NOT in the brief — acceptance-bearing): drain-signals.md:68 computes envelope_id = sha256(row.from + row.type + JSON.stringify(loaded_payload) + row.ts). That fingerprint is the DEDUP KEY. If the size-gate stores a pointer instead of the payload, the implementer MUST still hash over the LOADED payload, never over the pointer string — hashing the pointer changes the dedup identity of every gated signal and will re-drain it forever. This is a silent infinite-loop footgun, not a cosmetic detail. BINDING CAVEAT 2: the gate must PRESERVE the dangling-ref-avoidance rationale it is relaxing. Above-cap entries now carry a pointer, so they are exposed to exactly the FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE / FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES failure the 'always inline' rule was written to prevent. The brief's argument that db-integrity-history.json is 'stable, never moved' is TRUE for that one target but is NOT a property of the size cap — any >50KB target gets a pointer, including a docs/signals/processed/{filename} target that DOES get moved. Required: gate on (size > cap) AND (target is not under docs/signals/processed/), or extend the existing move-repoint/prune-skip guards to cover pending_triage_inbox refs. Do not ship the size test alone. CLEANUP LEG (in scope, this row): the two 599KB envelopes are ALREADY in the live hot file and a drain-time gate does NOT reclaim them — orch-state.json is 5,185,349 bytes today and every fleet-wide orch-apply write serialises + Zod-validates that 1.2MB of duplicate payload. Prune or repoint them via scripts/orch-apply.sh (envelope_ids 8c9d32ab..., 1167e5a5...; near-identical duplicates). NOT URGENT-URGENT: both source signal_queue rows (sys-20260811T121051-1e26, sys-20260811T121053-726d) are already status=READ so they will not re-drain, but the NEXT db_integrity_breach reproduces it exactly. AC: (1) a >50KB payload_ref target is stored as a pointer, not inlined; (2) envelope_id for a gated entry is byte-identical to what it would have been if inlined; (3) a gated pointer at a moveable target either cannot be gated or is covered by the move-repoint guard; (4) the two live 599KB envelopes are gone from pending_triage_inbox and orch-validate Stage 1c still passes; (5) verified by git show --stat on a real post-fix drain commit, not self-report.",
-        "updated_at": "2026-08-11T12:54:16Z"
+        "updated_at": "2026-08-11T13:03:46Z",
+        "decomposed_tasks": [
+          "TASK_CHORE-COMMIT-1-DRAIN-PAYLOAD-SIZE-GATE"
+        ],
+        "decomposed_by": "pm",
+        "decomposed_at": "2026-08-11T13:00:00Z"
       },
       {
         "id": "FIX-DBINTEGRITY-SIGNAL-PAYLOADREF-WHOLE-ACCUMULATOR",
@@ -10220,7 +10225,12 @@
         "detail_ref": "docs/architecture-briefs/2026-08-11-chore-commit-overhead-audit.md",
         "title": "ROOT CAUSE behind the 745KB inline: scripts/db-integrity-history-append.sh:98 HARDCODES --payload-ref docs/data/db-integrity-history.json — every db_integrity_breach signal points at the ENTIRE cumulative 161-entry accumulator instead of the single finding that fired it. Scope the ref to the finding.",
         "note": "PO-AUTHORED, NOT one of the brief's three recommendations. Found while scope-checking brief R3 at source. RELATIONSHIP TO THE SIBLING ROW: FIX-DRAIN-PAYLOADREF-UNBOUNDED-INLINE-SIZE-GATE bounds the CONSUMER (drain stops inlining 745KB); THIS row fixes the PRODUCER (the signal stops claiming its payload IS 745KB). Independently revertible, no ordering dependency, but shipping only the size gate leaves a live signal whose declared payload is a whole unbounded accumulator — every future consumer of that ref (a human, a triage agent, a dashboard) still reads 745KB to find one finding, and the file grows without bound (brief §3 flags no rotation/cap in db-integrity-history-append.sh). Per CLAUDE.md 'Fix root cause definitif not recurrent symtom'. SOURCE-VERIFIED: db-integrity-history-append.sh:26-28 states the hardcode was DELIBERATE — it closed a real prior defect (agents emitting to=po + payload_ref=null, observed 3x) by taking the decision away from the agent. So this is NOT a careless hardcode and MUST NOT be reverted to agent-supplied: keep the hardcoded-by-the-script property, change only its GRANULARITY. CHEAP PATH ALREADY SUPPORTED BY THE ARCHITECTURE: payload_ref already parses a '#fragment' suffix — scripts/agents-flow/drain-signals.js:467-469 does payload_ref | split('#') and preserves the fragment across repoints. So a finding-scoped ref (path#entry-id) needs no schema change and no new file. Confirm the §0a-D reader resolves fragments before assuming it works end-to-end; if it does not, that is the one piece of new work here. AC: (1) a newly emitted db_integrity_breach signal_queue row's payload_ref resolves to the ONE finding, not the whole history array; (2) the ref is still hardcoded by the script, never agent-supplied (the 3x AC-5 routing defect must not regress); (3) the §0a-D drain resolves the scoped ref and the resulting envelope is <50KB WITHOUT relying on the sibling row's size gate; (4) an existing whole-file ref still resolves (no hard break on the 2 live READ rows). OUT OF SCOPE (flagged, brief §3 + §7 R3 both flag it too): a rotation/cap policy for db-integrity-history.json itself — that file keeps growing after this row ships.",
-        "updated_at": "2026-08-11T12:54:16Z"
+        "updated_at": "2026-08-11T13:03:46Z",
+        "decomposed_tasks": [
+          "TASK_CHORE-COMMIT-2-DBINTEGRITY-PAYLOAD-NARROW"
+        ],
+        "decomposed_by": "pm",
+        "decomposed_at": "2026-08-11T13:00:00Z"
       },
       {
         "id": "FIX-SIGNALS-PROCESSED-UNTRACK-GITIGNORE",
@@ -10237,7 +10247,12 @@
         "detail_ref": "docs/architecture-briefs/2026-08-11-chore-commit-overhead-audit.md",
         "title": "Finish the half-shipped 2026-07-12 P7: 536 docs/signals/processed/*.json are still git-tracked and re-staged on every drain tick. signals.db half shipped (confirmed untracked), the processed/ half never did — and the churn rate GREW ~7.7/day → ~32/day. git rm --cached + .gitignore + drop the git add line in drain-signals.md.",
         "note": "SOURCE: brief §5 + §7 R2 (brief-local label R2, same as the router's R2). PO RE-VERIFIED AT SOURCE 2026-08-11T12:51Z: git ls-files docs/signals/processed/ = 536 (exact match to the brief); git ls-files docs/signals/signals.db = 0 (the shipped half confirmed); drain-signals.md:9 still carries `git add -- docs/signals/processed/` in the MANDATORY-PERSIST-GUARD staging step. NOTE the brief's .gitignore claim needs care: there is NO 'signals' line in .gitignore — signals.db is covered by a generic `*.db` rule (UC-GCP-P2), so this row must ADD a real `docs/signals/processed/` rule, not assume one exists. BINDING CAVEAT (PO found at source, NOT checked by the brief — acceptance-bearing, this is the reason the row is P2 and not a 3-line change): untracking makes these files LOCAL-ONLY, and orch-validate Stage 1c hard-blocks EVERY fleet-wide orch-apply.sh write on a dangling detail_ref/payload_ref. Live board today carries 1 such ref (docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-11.json) — small TODAY, but the count is unbounded over time and the blast radius is total: on a fresh clone, a new worker machine, or any environment where the untracked file was never created, that ref dangles and NO agent anywhere can write orch-state.json until it is hand-repaired. This exact failure already happened twice from the tracked side (FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE 2026-07-21, drain commit 395e224ad 2026-07-23) — untracking converts it from 'rare race' to 'guaranteed on every clean checkout'. The brief's 'full audit trail survives elsewhere (docs/data/orch/archive/)' is true for the AUDIT question and does not address the REF-INTEGRITY question. REQUIRED before this ships, at least one of: (a) untrack only files with no live ref + a guard preventing a ref to an untracked path, (b) make Stage 1c tolerate a missing gitignored processed/ path, or (c) inline/relocate the referenced subset. Do NOT ship a bare `git rm --cached` of all 536. AC: (1) git ls-files docs/signals/processed/ = 0; (2) .gitignore carries an explicit docs/signals/processed/ rule; (3) drain-signals.md no longer stages that path AND its post-commit `git status --porcelain` clean-check invariant (UC-GCP-P3) still passes; (4) a full orch-apply.sh write passes orch-validate Stage 1c from a CLEAN CHECKOUT that never had the untracked files — this is the acceptance test, a green run on the dev machine that still has the files on disk proves nothing; (5) the drain still repoints/prune-skips refs correctly (FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE + FIX-DRAINPRUNE-SKIP-LIVE-REFERENCED-PROCESSED-FILES do not regress). Brief is explicit and PO agrees: this does NOT reduce commit COUNT (the signal_queue mutation still needs its commit) — it removes the volatile file-churn from each one.",
-        "updated_at": "2026-08-11T12:54:16Z"
+        "updated_at": "2026-08-11T13:03:46Z",
+        "decomposed_tasks": [
+          "TASK_CHORE-COMMIT-3-SIGNALS-PROCESSED-UNTRACK"
+        ],
+        "decomposed_by": "pm",
+        "decomposed_at": "2026-08-11T13:00:00Z"
       },
       {
         "id": "FIX-AUDITOR-DASHBOARD-COMMIT-BATCH-PER-TIER-CYCLE",
@@ -10254,7 +10269,216 @@
         "detail_ref": "docs/architecture-briefs/2026-08-11-chore-commit-overhead-audit.md",
         "title": "system-auditor commits one DASHBOARD.md row per FINDING; batch the git commit to one per tier-cycle. WRITE + READBACK stay per-finding, unchanged — only the commit cadence moves. Est. ~-5% of total fleet commit count, concentrated in the highest-frequency mechanical family.",
         "note": "SOURCE: brief §7 R1 (brief-local label R1; the dispatching router called this R3 — use the brief's label). PO RE-VERIFIED AT SOURCE 2026-08-11T12:51Z: emit-dashboard-row.sh:46-58 does state the commit is decoupled bookkeeping ('git commit failed (row IS on disk) -> WARN, exit 0, dashboard_rows still counts'), so the brief's central premise HOLDS — the crash-safety property genuinely does not depend on the commit. Prior art also confirmed live (brief §5, L-7 shipped 2026-05-21 on market-watcher/news-scout). BINDING CAVEAT (PO found at source, NOT in the brief — this is why size=M not S): the SAME header, 12 lines further down at emit-dashboard-row.sh:60-67, says this script is deliberately UNLIKE scripts/auditor-notebook-commit.sh because it 'performs the file mutation itself and therefore must hold commit-mutex:main across BOTH the file mutation and the commit', with a self-contained claim/trap-release copy of that protocol (MUTEX_TASK_ID at :107, claim at :165-176). Deferring the commit therefore does NOT simply move a line — it BREAKS the mutex bracket, leaving DASHBOARD.md written-but-uncommitted across the whole finding loop. The same header names that exact hazard: 'uncommitted DASHBOARD.md is at risk of being swept by a peer's non-pathspec commit — see feedback_coldevict_bare_commit_sweeps_worker_staged_index', and that sweep is a REAL recorded fleet incident, not a theoretical one. This is where the brief's market-watcher/news-scout precedent does NOT transfer cleanly: those batch a commit of the agent's OWN notebook in its own zone; DASHBOARD.md is a SHARED tracked file that concurrent tiers (T1 every 30min, T2/T3) all mutate, which is the reason the mutex exists here and not there. REQUIRED DESIGN DECISION for pm/architect, must be explicit not implicit: either (a) hold commit-mutex:main across the whole tier finding-loop (simple, but a long mutex hold blocks every other fleet committer for the loop's duration — measure it first), or (b) release between findings and accept a bounded uncommitted window, with an explicit end-of-cycle reconciliation that detects and re-commits a peer-swept DASHBOARD.md. Do NOT ship 'just move the git commit call'. AC: (1) a multi-finding tier cycle produces exactly ONE DASHBOARD.md commit; (2) EVERY finding's row is present and readback-asserted, per-finding, exactly as today — zero change to the anti-false-green write+readback; (3) a crash mid-loop still leaves every already-written row on disk (crash-safety unchanged); (4) a concurrent peer bare-commit during the uncommitted window cannot silently swallow or lose a row — demonstrated, not argued; (5) OUTPUT-CONTRACT dashboard_rows counter and scripts/audit-output-contract.sh's parse still agree with reality. ZONE: mixed — scripts/emit-dashboard-row.sh (developer) + docs/agents/system-auditor/flow/main.md:617,965,1179 + tier1-probe.md (agent-father). Brief §7 R1 explicitly says route PM→dev-team, NOT agent-father-solo; PO concurs.",
-        "updated_at": "2026-08-11T12:54:16Z"
+        "updated_at": "2026-08-11T13:03:46Z",
+        "decomposed_tasks": [
+          "TASK_CHORE-COMMIT-4-DASHBOARD-COMMIT-BATCH"
+        ],
+        "decomposed_by": "pm",
+        "decomposed_at": "2026-08-11T13:00:00Z"
+      },
+      {
+        "id": "FIX-COWORK-AGENT-DESC-STALE-VS-DELIBERATE-BASH-GRANT",
+        "type": "FIX",
+        "size": "XS",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": ".claude/agents/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "created_at": "2026-08-11T13:00:59Z",
+        "created_by": "po (triage of agent-father keep-cycle 2026-08-11T12:53Z CRITICAL-01/02/03)",
+        "detail_ref": "docs/agent-memory/health/team-tool-recheck-2026-08-11-1253.md",
+        "title": "PO DECISION: the Bash grant on alert-commander/market-watcher/news-scout is ACCEPTED and load-bearing — the DESCRIPTION TEXT is the defect. Amend the 3 descriptions to declare the real write set. Do NOT narrow the grants.",
+        "note": "PO RULING on the 3 CRITICAL findings agent-father has re-flagged daily for 11 days. VERDICT: grant correct, description wrong — fix the description, NOT the grant. EVIDENCE (PO verified at source 2026-08-11T13:00Z, not taken from the report): (1) origin commit 610110e16 (2026-07-31) is titled 'fix(claude/agents): grant Bash to ...' and its body documents the grant as the actuator for TWO shipped S4 UNBLOCK board rows — FIX-ALERT-COMMANDER-NO-BASH-GRANT-NOTEBOOK-UNCOMMITTABLE (alert-commander could not run commit-mutex, notebook uncommitted 6 consecutive cycles, AND could not derive a session id for task_claim on its published-marker, so it fired verified CRITICAL alerts with NO duplicate-publish mutex) and FIX-COWORK-BASH-GRANT-COVERAGE-STAMP-TRANSPORT (news-scout + market-watcher could not reach the shipped coverage-stamp.sh, 29/29 green tests, complete but inert). (2) scripts/agents-flow/coverage-stamp.sh:95 writes DEFAULT_FILE=docs/data/coverage-state.json — a real filesystem write outside the notebook, performed today, by design, under its own task_claim('coverage-state:main') mutex. So 'No other filesystem writes permitted' is FACTUALLY FALSE right now, not merely imprecise. WHY NARROWING IS THE WRONG FIX AND MUST NOT BE DONE: removing Bash re-breaks both P1 fixes above. The alert-commander leg is USER-FACING — losing the published-marker task_claim mutex means duplicate CRITICAL market alerts to the user (feedback_chef_releases_published_marker_enables_peer_double_publish is the same failure class, already recorded). This row exists partly to DISARM that trap: the stale text is an armed instruction telling a future auditor/agent to make exactly that regression. AC: (1) each of the 3 .claude/agents/*.md descriptions states the actual permitted write set — its own notebook PLUS git-commit via commit-mutex (all three) PLUS docs/data/coverage-state.json via scripts/agents-flow/coverage-stamp.sh (market-watcher + news-scout only); (2) the 'No other filesystem writes permitted' absolute is replaced with a bounded enumeration, so the sentence is TRUE as written; (3) tools: line is UNCHANGED on all 3 files — Bash stays, byte-identical, and the diff touches description text only; (4) the next agent-father team-tool-recheck run reports 0 CRITICAL for these 3 agents. OUT OF SCOPE (deliberately, do not scope-creep this row): building the mechanical write_boundary keys / agent-write-boundary-guard hook the report notes are absent — that is a separate design question and its absence is not what makes these 3 findings fire.",
+        "updated_at": "2026-08-11T13:03:10Z"
+      },
+      {
+        "id": "FIX-AGENTFATHER-KEEP-PRECHECK-GATE-BLIND-TO-3-OF-5-SCAN-SURFACES",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "docs/agents/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "created_at": "2026-08-11T13:00:59Z",
+        "created_by": "po (root-cause of agent-father keep-cycle finding 2 — PO ran the scan itself rather than dispatch the recommended one-off)",
+        "detail_ref": "docs/agent-memory/health/team-tool-recheck-2026-08-11-1253.md",
+        "title": "ROOT CAUSE of the '46 notebooks vs 42 agents' gap that skipped 3 consecutive keep-cycles: keep.md's Pre-Check gate scopes on only 2 of the 5 input surfaces scan-orphans.md actually reads. ORPHAN_NOTEBOOK is structurally unreachable through the gate. Widen the gate scope + add an opt-IN by-design allowlist.",
+        "note": "PO DECISION: do NOT dispatch the one-off scan-orphans run agent-father recommended — PO already ran that scan inline during this triage (results below, complete), and a one-off run fixes nothing durable because the gate re-closes and 3 of the 6 findings are by-design and re-flag forever. Fix the two structural causes instead. RC-1 (gate blind spot, PO verified live): keep.md:33 declares Scope = '.claude/agents/*.md | docs/agents/*/flow/*.md'. scan-orphans.md reads FIVE surfaces: .claude/agents/*.md, docs/agents/*/flow/, docs/agent-memory/notebooks/*.md, docs/agents/tools/package/*.md, docs/references/agent-roster.md. Three of five are OUTSIDE the gate — so an ORPHAN_NOTEBOOK / ORPHAN_PACKAGE / PHANTOM finding can NEVER open the gate that guards its own detection. Proven live at HEAD 2026-08-11T13:00Z: `git diff --name-only HEAD~3..HEAD` = 0 gate-scope hits but 2 docs/agent-memory/notebooks/ changes — the notebook surface changed and Steps 1-2 skipped anyway. That is the whole reason for the 3-cycle skip streak (2026-08-07, 08-11T12:14Z, 08-11T12:53Z), not bad luck. RC-2 (no allowlist, PO verified): grep for allowlist/exempt/by-design across scan-orphans.md + keep.md + sweep-fixes.md = ZERO hits. The scan has no way to record a legitimate exception, so by-design items re-flag every run forever. PO'S COMPLETED SCAN — the 46-vs-42 arithmetic is misleading and hides an inverse defect; it is actually 5 unmatched notebooks NETTED against 1 missing notebook: [A] 3 GENUINELY DEAD, delete → handled by the sibling row CLEAN-ORPHAN-NOTEBOOKS-3-DEAD-20260811, not here. [B] 3 BY-DESIGN, must be allowlisted here: docs/agent-memory/notebooks/dev-team.md (dev-team is a FLOW not an agent — CLAUDE.md states outright 'There is no dev-team agent type'; live, written 2026-08-09), docs/agent-memory/notebooks/main.md (the main-terminal/router log; the router is not a registered agent by design; live, written 2026-08-07), and refine_bctc_md as MISSING_NOTEBOOK (docs/agents/refine_bctc_md/init.md:110 declares `notebook: none` + 'Leaf subagent — stateless per invocation. No persistent notebook.' — a deliberate design, so the MISSING_NOTEBOOK flag on it is a FALSE POSITIVE). NOTE the arithmetic trap for whoever implements: after the 3 dead files are deleted the count becomes 43 vs 42, and that +1 is PERMANENT AND CORRECT (+2 by-design orphan notebooks, -1 by-design missing notebook). Anyone chasing 43==42 will delete a live file. The allowlist is what makes that permanent delta legible instead of a standing alarm. ALLOWLIST MUST BE OPT-IN, NEVER OPT-OUT — per feedback_fleetwide_gate_validated_on_one_file_optout_allowlist; each entry carries the reason and the source citation, so a genuinely-new orphan is never silently swallowed. ALSO FOLD IN (closes the LOW carried-forward finding, no separate row needed): semble-search has no `agent:` YAML block by deliberate minimal-tool-agent design and is re-flagged by the same missing-allowlist gap — add it as a 4th allowlist entry. That is the cheap correct fix; the 'Tool Agent template class' idea agent-father floated is NOT approved as its own task (the existing backlog row AF-SEMBLE-INIT-DEF already owns the semble-search structural-pattern decision — do not duplicate it here, this row only stops the re-flag). AC: (1) keep.md Pre-Check scope lists all five surfaces scan-orphans.md reads, and the two are cross-referenced so a future edit to one is visibly bound to the other; (2) a commit touching ONLY docs/agent-memory/notebooks/*.md opens the gate — demonstrated with a real HEAD~3 range, not asserted; (3) scan-orphans.md gains an opt-IN allowlist with the 4 entries above, each with reason + source citation; (4) a full keep cycle after the fix reports the 3 dead files as ORPHAN and reports ZERO findings for dev-team/main/refine_bctc_md/semble-search; (5) an unlisted new orphan still fires — verified by adding a throwaway notebook and seeing it flagged.",
+        "updated_at": "2026-08-11T13:03:10Z"
+      },
+      {
+        "id": "CLEAN-ORPHAN-NOTEBOOKS-3-DEAD-20260811",
+        "type": "CLEAN",
+        "size": "XS",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "docs/agent-memory/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "created_at": "2026-08-11T13:00:59Z",
+        "created_by": "po (inline orphan scan run during 2026-08-11T13:00Z triage of agent-father keep-cycle finding 2)",
+        "detail_ref": "docs/agent-memory/health/team-tool-recheck-2026-08-11-1253.md",
+        "title": "Delete 3 confirmed-dead orphan notebooks (168L total) + the dead docs/agents/dev-news-fetch/ flow dir — no matching agent, no live writer, stale 27-32 days. These are the only genuinely-dead members of the 46-vs-42 gap.",
+        "note": "SIBLING of FIX-AGENTFATHER-KEEP-PRECHECK-GATE-BLIND-TO-3-OF-5-SCAN-SURFACES (that row fixes WHY the scan never ran; this row clears WHAT it found). Independently shippable, no ordering dependency. PO verified each at source 2026-08-11T13:00Z — every one has NO .claude/agents/<name>.md and a last-touch far outside any live cadence: (1) docs/agent-memory/notebooks/dev-news-fetch.md (73L, last touched 2026-07-10 commit 39e3791c0) AND its flow dir docs/agents/dev-news-fetch/ — this is phantom-agent residue and the phantom is ALREADY ADJUDICATED: reference_news_fetch_zone_specialist_is_developer_not_phantom_dev_news_fetch records that the news-fetch zone specialist IS `developer`, and that no dev-news-fetch agent exists or should. Both notebook and flow dir are the leftovers of that resolved misconception; delete the flow dir too or ORPHAN_FLOW keeps firing after the notebook is gone. (2) docs/agent-memory/notebooks/cowork-refactory-expert-2026-07-11-fr1-atomic.md (68L, last touched 2026-07-11 commit dd72ab302) — a date-stamped one-off sprint notebook, not an agent; the real cowork-refactory-expert agent has its own undated notebook which is NOT in scope here. (3) docs/agent-memory/notebooks/pm-alpha-s2-rag-fts-rebuild-cron.md (27L, last touched 2026-07-15 commit 3cc795830) — same shape, a date/sprint-scoped pm one-off, no agent, no flow dir. CAUTION, read before deleting: do NOT extend this list by arithmetic. The scan surfaces 5 unmatched notebooks; the other TWO (dev-team.md, main.md) are LIVE and BY DESIGN (written 2026-08-09 and 2026-08-07 respectively) and are being allowlisted by the sibling row — deleting them destroys live logs. Delete exactly the 3 named above plus the one flow dir, nothing else. AC: (1) the 3 notebook files and docs/agents/dev-news-fetch/ are gone via `git rm` (tracked deletion, pathspec commit — feedback_pathspec_commit_drops_rename_deletion applies, a bare commit can drop the deletion); (2) `grep -rn` across docs/ + .claude/ + scripts/ shows ZERO inbound references to any deleted path before the delete lands, and orch-validate Stage 1c passes afterward (no detail_ref/payload_ref pointed at them — a dangling ref hard-blocks EVERY fleet orch-apply.sh write); (3) dev-team.md and main.md still exist and are untouched; (4) notebook count is 43 and the next keep cycle reports 0 ORPHAN_NOTEBOOK / 0 ORPHAN_FLOW.",
+        "updated_at": "2026-08-11T13:03:10Z"
+      },
+      {
+        "id": "TASK_CHORE-COMMIT-1-DRAIN-PAYLOAD-SIZE-GATE",
+        "type": "TASK",
+        "size": "S",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "cross-service/dev-flow/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "sprint": "CHORE-COMMIT-OVERHEAD",
+        "created_at": "2026-08-11T13:00:00Z",
+        "created_by": "pm",
+        "detail_ref": "docs/handoffs/TASK_CHORE-COMMIT-1-DRAIN-PAYLOAD-SIZE-GATE.md",
+        "title": "Drain payload_ref size gate: cap ~50KB inline; above use pointer. Dedup hash MUST be over pointer to prevent re-drain loop.",
+        "note": "Parent: FIX-DRAIN-PAYLOADREF-UNBOUNDED-INLINE-SIZE-GATE. Flow-doc changes only. AC: size gate with target-class awareness (inline for processed/, pointer for stable); dedup hash over pointer not original payload.",
+        "updated_at": "2026-08-11T13:03:46Z"
+      },
+      {
+        "id": "TASK_CHORE-COMMIT-2-DBINTEGRITY-PAYLOAD-NARROW",
+        "type": "TASK",
+        "size": "S",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "sprint": "CHORE-COMMIT-OVERHEAD",
+        "created_at": "2026-08-11T13:00:00Z",
+        "created_by": "pm",
+        "detail_ref": "docs/handoffs/TASK_CHORE-COMMIT-2-DBINTEGRITY-PAYLOAD-NARROW.md",
+        "title": "DB integrity payload_ref narrowing: from 745KB whole file to specific finding/fragment",
+        "note": "Parent: FIX-DBINTEGRITY-SIGNAL-PAYLOADREF-WHOLE-ACCUMULATOR. Use #fragment syntax in db-integrity-history-append.sh. Maintain hardcoded safety (to/payload-ref remain HARDCODED).",
+        "updated_at": "2026-08-11T13:03:46Z"
+      },
+      {
+        "id": "TASK_CHORE-COMMIT-3-SIGNALS-PROCESSED-UNTRACK",
+        "type": "TASK",
+        "size": "S",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "sprint": "CHORE-COMMIT-OVERHEAD",
+        "created_at": "2026-08-11T13:00:00Z",
+        "created_by": "pm",
+        "detail_ref": "docs/handoffs/TASK_CHORE-COMMIT-3-SIGNALS-PROCESSED-UNTRACK.md",
+        "title": "Finish untrack signals/processed/: gitignore, git rm --cached, drain-signals.md update, clean-checkout validation",
+        "note": "Parent: FIX-SIGNALS-PROCESSED-UNTRACK-GITIGNORE. Finishes half-shipped 2026-07-12 P7. MUST validate on clean checkout (PO-mandated).",
+        "updated_at": "2026-08-11T13:03:46Z"
+      },
+      {
+        "id": "TASK_CHORE-COMMIT-4-DASHBOARD-COMMIT-BATCH",
+        "type": "TASK",
+        "size": "M",
+        "priority": "P2",
+        "status": "BACKLOG",
+        "zone": "cross-service/dev-flow/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "sprint": "CHORE-COMMIT-OVERHEAD",
+        "created_at": "2026-08-11T13:00:00Z",
+        "created_by": "pm",
+        "detail_ref": "docs/handoffs/TASK_CHORE-COMMIT-4-DASHBOARD-COMMIT-BATCH.md",
+        "title": "Dashboard commit batching: batch per-tier-cycle (REQUIRES design call on mutex strategy)",
+        "note": "Parent: FIX-AUDITOR-DASHBOARD-COMMIT-BATCH-PER-TIER-CYCLE. Sized M not S: requires explicit design decision on mutex strategy (long hold vs bounded+reconciliation). Design call AC-D1 is BLOCKING prerequisite before code phase.",
+        "updated_at": "2026-08-11T13:03:46Z"
+      },
+      {
+        "id": "FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH",
+        "type": "FIX",
+        "title": "CI RED: bun test (per-file isolation) — src/__tests__/ALLZERO-OHLCV-FETCH.test.ts",
+        "owner": "po",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "S",
+        "sprint": "BACKLOG",
+        "zone": "apps/mcp-server",
+        "next_agent": "dev-mcp-server",
+        "files": [
+          "apps/mcp-server/src/__tests__/ALLZERO-OHLCV-FETCH.test.ts"
+        ],
+        "check_id": "CI-RED-f63b1cb7",
+        "dedup_key": "ci_job:bun test|file:src/__tests__/ALLZERO-OHLCV-FETCH.test.ts",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "created_at": "2026-08-11T13:03:49Z",
+        "created_by": "po/triage-20260811T1237Z",
+        "origin_signal_id": "CI-RED-f63b1cb7",
+        "status_note": "AC: gh run view <databaseId with headSha AFTER f63b1cb768187d5aa6b63a01bf25dce1916fa645> --json jobs -q '.jobs[]|select(.name==\"bun test\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: bun test (per-file isolation). Failing file: src/__tests__/ALLZERO-OHLCV-FETCH.test.ts. MANDATORY pre-dedup failing-file read PERFORMED by po (gh run view 31489910331 --log-failed, FAILEDFILE block parsed verbatim). File-scoped dedup scan of backlog[]+ready[]+in_progress[]+review[]+qa[] found NO existing row for this file — minted. ANTI-AMNESTY FENCE OBSERVED: NOT deduped into FIX-MCP-SUITE-HEALTH-BASELINE or any LOCAL-full-suite row (.github/workflows/ci.yml runs scripts/ci-per-file-isolation.sh, one bun process per file; CI-plane green baseline is 0 fail, so this IS actionable). First observed run 31489910331 head f63b1cb768187d5aa6b63a01bf25dce1916fa645. Sibling row minted from the same signal: FIX-CI-BUNTEST-FOREIGN-FLOW-MISSING-TRADING-DAY-NO-BACKFILL (one row PER DISTINCT FILE, never collapsed).",
+        "updated_at": "2026-08-11T13:03:50Z"
+      },
+      {
+        "id": "FIX-CI-BUNTEST-FOREIGN-FLOW-MISSING-TRADING-DAY-NO-BACKFILL",
+        "type": "FIX",
+        "title": "CI RED: bun test (per-file isolation) — src/__tests__/FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts",
+        "owner": "po",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "S",
+        "sprint": "BACKLOG",
+        "zone": "apps/mcp-server",
+        "next_agent": "dev-mcp-server",
+        "files": [
+          "apps/mcp-server/src/__tests__/FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts"
+        ],
+        "check_id": "CI-RED-f63b1cb7",
+        "dedup_key": "ci_job:bun test|file:src/__tests__/FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "created_at": "2026-08-11T13:03:49Z",
+        "created_by": "po/triage-20260811T1237Z",
+        "origin_signal_id": "CI-RED-f63b1cb7",
+        "status_note": "AC: gh run view <databaseId with headSha AFTER f63b1cb768187d5aa6b63a01bf25dce1916fa645> --json jobs -q '.jobs[]|select(.name==\"bun test\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: bun test (per-file isolation). Failing file: src/__tests__/FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts. MANDATORY pre-dedup failing-file read PERFORMED by po (gh run view 31489910331 --log-failed, FAILEDFILE block parsed verbatim). File-scoped dedup scan of backlog[]+ready[]+in_progress[]+review[]+qa[] found NO existing row for this file — minted. ANTI-AMNESTY FENCE OBSERVED: NOT deduped into FIX-MCP-SUITE-HEALTH-BASELINE or any LOCAL-full-suite row (.github/workflows/ci.yml runs scripts/ci-per-file-isolation.sh, one bun process per file; CI-plane green baseline is 0 fail, so this IS actionable). First observed run 31489910331 head f63b1cb768187d5aa6b63a01bf25dce1916fa645. CROSS-LINK (po triage 2026-08-11): this test's own subject matter is live-failing in production too — sla-monitor reported foreign_flow stale 3900min (2026-08-10T02:00Z) and 1020min (2026-08-11T02:00Z). Check whether the RED test is asserting the exact backfill gap the SLA breach is measuring; if so this is one defect with two symptoms, not two. Related open rows: OPS-FFLOW-VPS-CLOCKDRIFT-PREVENTIVE-RESIDUALS, FIX-FFLOW-BULLETIN-OUTAGE-SILENT-OMISSION, FIX-FOREIGN-FLOW-COVERAGE. Sibling minted from same signal: FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH.",
+        "updated_at": "2026-08-11T13:03:50Z"
+      },
+      {
+        "id": "FIX-CI-BUNTEST-1837A-PIPELINE-STATE",
+        "type": "FIX",
+        "title": "CI RED: bun test (per-file isolation) — src/__tests__/1837a-pipeline-state.test.ts",
+        "owner": "po",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "S",
+        "sprint": "BACKLOG",
+        "zone": "apps/mcp-server",
+        "next_agent": "dev-mcp-server",
+        "files": [
+          "apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts"
+        ],
+        "check_id": "CI-RED-8c091e21",
+        "dedup_key": "ci_job:bun test|file:src/__tests__/1837a-pipeline-state.test.ts",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "created_at": "2026-08-11T13:03:49Z",
+        "created_by": "po/triage-20260811T1237Z",
+        "origin_signal_id": "CI-RED-8c091e21",
+        "status_note": "AC: gh run view <databaseId with headSha AFTER 8c091e21834aa267ab750498340e5cec6c8b65e2> --json jobs -q '.jobs[]|select(.name==\"bun test\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: bun test (per-file isolation). Failing file: src/__tests__/1837a-pipeline-state.test.ts. MANDATORY pre-dedup failing-file read PERFORMED by po (gh run view 31293956930 --log-failed, FAILEDFILE block parsed verbatim). File-scoped dedup scan of backlog[]+ready[]+in_progress[]+review[]+qa[] found NO existing row for this file — minted. ANTI-AMNESTY FENCE OBSERVED: NOT deduped into FIX-MCP-SUITE-HEALTH-BASELINE or any LOCAL-full-suite row (.github/workflows/ci.yml runs scripts/ci-per-file-isolation.sh, one bun process per file; CI-plane green baseline is 0 fail, so this IS actionable). First observed run 31293956930 head 8c091e21834aa267ab750498340e5cec6c8b65e2. Older signal (2026-08-09) drained late — the 2026-08-11 run 31489910331 does NOT list this file, so it may already be green; VERIFY FIRST against the newest run before spending effort, and close as RESOLVED-BY-DRIFT if it no longer fails. Minted rather than skipped because the ci_red BACKSTOP forbids an 'assumed pre-existing' disposition with no matched file-scoped row.",
+        "updated_at": "2026-08-11T13:03:50Z"
+      },
+      {
+        "id": "FIX-BCTC-ENRICHER-ZERO-URL-ALL-TICKERS-ACTIVE-WINDOW",
+        "type": "FIX",
+        "title": "bctcQueueEnricherJob returned 0 URLs for ALL tickers on 3 consecutive cycles during a CONFIRMED active earnings window",
+        "owner": "po",
+        "status": "BACKLOG",
+        "priority": "high",
+        "size": "M",
+        "sprint": "BACKLOG",
+        "zone": "apps/mcp-server",
+        "next_agent": "dev-mcp-server",
+        "files": [
+          "apps/mcp-server/src/infrastructure/jobs/bctcQueueEnricherJob.ts"
+        ],
+        "created_at": "2026-08-11T13:03:49Z",
+        "created_by": "po/triage-20260811T1237Z",
+        "status_note": "SOURCE: telegram reports 4593 (2026-08-10T06:15:31Z, '2 consecutive cycles', itemsProcessed=3 urlsPopulated=0) and 4595 (2026-08-10T12:30:14Z, '3 consecutive cycles', itemsProcessed=1 urlsPopulated=0). Both self-report 'Active earnings window confirmed (pending/url_not_found rows exist)'. Named suspects in the alert itself: discovery source down, VPS unavailable, or URL-regex change in discoverHosePdfUrls(). DEDUP PERFORMED: BCTC-ENRICHER-OLD-QUARTERS covers only pre-Q4-2025 quarters (different scope — this is ALL tickers in an ACTIVE window); FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST and FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T are downstream of URL discovery, not the discovery outage itself. No file-scoped match — minted. AC-0 (DO FIRST, cheap): re-verify the outage is still live before any code work — the alert has been silent since 2026-08-10T12:30Z (>24h), so it may have self-resolved OR the enricher may simply have processed 0 items since. If discovery is healthy now, close as TRANSIENT and instead mint the observability gap (the alert cannot distinguish 'discovery broken' from 'nothing to process'). AC-1 (if still live): discoverHosePdfUrls() returns >=1 URL for at least one pending in-window ticker. AC-2: the ZERO-URL alert stops re-firing for 3 consecutive cycles. If root cause is live infra (VPS down / geo-block) rather than code, re-route owner to ops per triage-signals.md system-issue rule.",
+        "updated_at": "2026-08-11T13:03:50Z"
       }
     ],
     "closed_sprints": [
@@ -18904,23 +19128,27 @@
         "note": "Collapse the multi-call router preflight (Phase A/A.5/B) into one server-side dispatch_preflight tool to cut round-trips and race windows. Coordinate with UC-RDL-P1 (lock-prefix) landing first.",
         "created_at": "2026-07-13T19:31:11Z",
         "created_by": "po",
-        "next_agent": "po",
+        "next_agent": "architect",
         "withhold_note": "BOUNDED-1 auto-pickup withheld (SPRINT-M + overlaps NEW signal cow-20260715T184053 preflight presence-claim gap); routed to PO for adjudication",
         "withheld_at": "2026-07-15T18:55:57Z",
         "withheld_by": "dev-team (router withhold-gate)",
         "supervised": true,
         "po_adjudication": "PO adjudication 2026-07-15 (router withhold-gate): NOT subsumed. Signal cow-20260715T184053 bug lives in scripts/agents-flow/cowork-tick-preflight.sh (cowork-team TICK preflight, cross-service bash) -- a DIFFERENT flow/zone than UC-RDL-P4's ROUTER dispatch preflight composite MCP tool (apps/mcp-server/). Shipping FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP standalone now (P1, promotable). UC-RDL-P4 stays BACKLOG, supervised:true -- a SPRINT-M is deliberate PO sprint-initiation authority, not BOUNDED-1 idle auto-dispatch (supervised:true stops the re-promote/re-withhold churn). When the composite dispatch_preflight tool is designed: honor the claim-first / presence-NEVER-a-gate contract (cowork-team/flow/main.md Step 0b.1), and evaluate whether the cowork tick preflight should migrate to it -- but note the cowork tick preflight is deliberately a single-bash-call token-economy path (TOKEN-ECONOMY-TICK-PREFLIGHT WU-1), so a heavier per-tick MCP round-trip may not be the right home. Coordinate with UC-RDL-P1 (lock-prefix) landing first. Related: SYSREMAKE-P2 RC-CEREMONY \"shared tick-preflight-lib\" would eventually re-home this preflight; the standalone contract fix is compatible with that later extraction.",
-        "po_adjudicated_at": "2026-07-15T19:02:35Z",
+        "po_adjudicated_at": "2026-08-11T13:02:45Z",
         "promoted_at": "2026-08-09T03:54:35Z",
         "promoted_by": "dev-team (design-router sweep)",
         "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
         "dispatch_lane": "ba",
-        "updated_at": "2026-08-11T12:35:06Z",
+        "updated_at": "2026-08-11T13:02:46Z",
         "claimed_at": "2026-08-11T12:26:35Z",
         "claimed_by": "dev-team (design-router sweep)",
         "ba_spec_complete": true,
         "ba_handoff": "docs/handoffs/UC-RDL-P4-BA-spec.md",
-        "ba_completed_at": "2026-08-11T12:35:05Z"
+        "ba_completed_at": "2026-08-11T12:35:05Z",
+        "po_goahead_20260811T130245": "RATIFIED: BA spec docs/handoffs/UC-RDL-P4-BA-spec.md verified AT SOURCE by PO (not on relay) — coordination/ per-tool split (6 files + index.ts sub-barrel) confirmed live; getCycleBootstrap.ts precedent exists (5744B); tool-registry totalCount=183 confirmed; ORPHAN_EMIT_ALLOW_LIST at coordinationStore.ts:460-465 confirmed to exclude \"intent\" (EC-5 correct). Q1+Q2 ruled below.",
+        "po_ruling_q1_cutover_dod": "SPLIT — NO same-wave doc cutover. UC-RDL-P4 DONE bar = dispatch_preflight tool ships + tool-registry synced (183->184) + live integration round-trip reproduced against the RUNNING container (claimed:true / re-entrant self-held / peer-collision, all 3 branches). CLAUDE.md + .claude/skills/dispatch-claim/{CARD.md,SKILL.md} cutover is an explicit LINKED FOLLOW-UP row (UC-RDL-P4B-DOC-CUTOVER), gated on that integration test passing. Rationale: (a) CLAUDE.md is always-loaded fleet-wide context — every agent, every spawn — so a premature flip breaks ALL dispatch, not one lane; (b) EC-10 makes the tool inert until an ops-gated rebuild, so a same-wave doc flip would point CLAUDE.md at a tool absent from the running container — guaranteed router breakage, not a risk but a certainty; (c) precedent: UC-RDL-P5 Risk note. FR-7 file-6 edits are FORBIDDEN in this wave.",
+        "po_ruling_q2_rebuild_sequencing": "APPROVE BA recommendation — coordinate the REBUILD, not the implementation. Design/build UC-RDL-P4 NOW in parallel (EC-7 proves zero functional dependency on FIX-ORPHAN-FR2-FR6-FR7 taskHeartbeatTool params). Hold the apps/mcp-server container rebuild until FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS reaches DONE_VERIFIED, then ONE combined ops-gated rebuild covers both coordination-tool changes. Blocking implementation behind a review[]-lane row (next_agent: developer, own latency) would idle a P1 for no benefit.",
+        "po_correction_to_spec": "One correction to §0/§6 before architect consumes this: coordination/index.ts is a P1-C SUB-BARREL that re-exports registerCoordinationTools from ../coordinationTools.js — it does NOT export per-tool registrars. Adding dispatchPreflightTool.ts therefore requires NO index.ts change; register it ONLY from coordinationTools.ts (verified live). §6 rows 2-3 are otherwise accurate (coordinationTools.ts:4 does read \"6 MCP tools\" -> 7)."
       }
     ]
   },
