@@ -134,7 +134,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-11T15:51:30Z",
+    "_updated_at": "2026-08-11T16:22:05Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
@@ -459,7 +459,7 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor A-30 ESCALATE — sustained >93% memory (loss of reclamation)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-11T16:00Z",
@@ -473,7 +473,7 @@
         "type": "microservice_degraded",
         "summary": "rag-service A-30 CRITICAL — 99.44% memory, BELOW-FLOOR (5.7MiB free)",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-11T16:00Z",
@@ -10811,6 +10811,46 @@
         "created_by": "po/triage-20260811T1431Z",
         "updated_at": "2026-08-11T14:33:37Z",
         "updated_by": "po/triage-20260811T1431Z"
+      },
+      {
+        "id": "SPIKE-COWORK-GUARANTEED-SLOT-DIAGNOSTIC-FIRER",
+        "type": "SPRINT-M",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "zone": "cross-service/ops",
+        "size": "S",
+        "mode": "spike",
+        "title": "DIAGNOSTIC: Cowork guaranteed-slot firer invocation status check",
+        "owner": "developer",
+        "created_at": "2026-08-11T15:54:00Z",
+        "created_by": "pm/dispatch-20260811T1554Z",
+        "depends": [],
+        "blocks": [
+          "SPIKE-COWORK-GUARANTEED-SLOT-DIAGNOSTIC-WIRING"
+        ],
+        "note": "Task 1 of 2-task diagnostic spike. Answer: is firer being INVOKED or not? Check launchd state + firer logs for entries after 2026-08-08T20:23Z. If no logs → invocation stopped (ops/launchd issue). If logs but no fires → go to Task 2.",
+        "next_agent": "developer",
+        "updated_at": "2026-08-11T16:23:21Z"
+      },
+      {
+        "id": "SPIKE-COWORK-GUARANTEED-SLOT-DIAGNOSTIC-WIRING",
+        "type": "SPRINT-M",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "zone": "cross-service/",
+        "size": "S",
+        "mode": "spike",
+        "title": "DIAGNOSTIC: Cowork guaranteed-slot wiring trace (if Task 1 finds invoked-but-no-fires)",
+        "owner": "developer",
+        "created_at": "2026-08-11T15:54:00Z",
+        "created_by": "pm/dispatch-20260811T1554Z",
+        "depends": [
+          "SPIKE-COWORK-GUARANTEED-SLOT-DIAGNOSTIC-FIRER"
+        ],
+        "blocks": [],
+        "note": "Task 2 of 2-task diagnostic spike. Conditional on Task 1 finding 'invoked but no fires'. Trace call chain from cowork-dispatcher through guaranteed-slot backstop to cowork-match-slots.js. Identify exact gate that blocks all 8 slots simultaneously (leading hypothesis: last_fired recency predicate self-latches). Output: findings doc pinpointing blocking point for architect.",
+        "next_agent": "architect",
+        "updated_at": "2026-08-11T16:23:21Z"
       }
     ],
     "closed_sprints": [
@@ -12481,49 +12521,6 @@
             },
             "live_value_observed": "gen-tool-registry --dry-run totalCount=183/system=41 matches committed file; tool-registry-parity.test.ts 17/17 pass; tsc --noEmit 0 errors; no production source touched",
             "observed_at": "2026-08-11T13:55:55Z"
-          }
-        }
-      },
-      {
-        "id": "FIX-CRON-CODEJANITOR-NO-PRESPAWN-GATE-BOOTS-FULL-SESSION-4X-DAILY",
-        "type": "FIX",
-        "title": "code-janitor cron has NO pre-spawn gate — its CronCreate prompt boots a full subagent session 4x/day unconditionally while its only git-diff gate lives post-boot and covers just the DRY scan (10/10 last cycles suppressed)",
-        "owner": "po",
-        "status": "DONE_VERIFIED",
-        "priority": "P2",
-        "size": "S",
-        "sprint": "BACKLOG",
-        "zone": "cross-service/",
-        "next_agent": "qa",
-        "files": [
-          ".claude/skills/cron-standalone-team/register-job-code-janitor.md",
-          ".claude/commands/crons/cron-code-janitor.md",
-          "scripts/agents-flow/code-janitor-tick-preflight.sh"
-        ],
-        "baseline_pass": "9408",
-        "dedup_key": "cron:code-janitor-no-prespawn-gate",
-        "created_at": "2026-08-11T15:06:00Z",
-        "created_by": "po/triage-20260811T1437Z",
-        "origin_signal_id": "03e7d0af51adf4b52400e6627069ecfd79bd355698e11f196e32f94301f4a098",
-        "status_note": "AC-1: the code-janitor CronCreate prompt runs the SAME `git diff --name-only HEAD~3..HEAD` check (scope src/** , apps/*/src/**) BEFORE spawning any subagent, mirroring register-job-market-db-journal-guard.md's existing pattern. AC-2: diff non-empty -> spawn as today, main.md flow unchanged; diff empty -> run the 3 deterministic sweeps directly from the prompt, spawn ONLY if a sweep emits a SIGNAL-WRITTEN line / safe-fail needing review / non-trivial Cold-Archive monthly result. AC-3 (AUDITABILITY, do NOT drop): the pre-gate writes a structured one-line verdict {\"verdict\":\"SKIP-SPAWN\"|\"SPAWN\",\"sweeps\":{...},\"checked_at\":...} to a durable state file via atomic tmp+mv, same shape as db-integrity-probe.sh / auditor-tier1-probe.sh, so a SKIP-SPAWN tick stays inspectable even though no notebook entry exists for it. AC-4: .claude/skills/cron-standalone-team/register-job-code-janitor.md and .claude/commands/crons/cron-code-janitor.md stay in sync per that skill's own divergence-discipline note.\\n\\nORIGIN: architecture brief docs/architecture-briefs/2026-08-11-cron-heartbeat-prespawn-gating.md (agents-architect, 2026-08-11T13:59:53Z, 20132 bytes). Brief §6 routes explicitly to po for task-board entry, NOT to agents-architect or agent-father, because the change is mixed-zone (scripts/ + .claude/skills/ + .claude/commands/) and is an improve-an-existing-mechanism implementation, not an agent-file lifecycle change.\\n\\nPO RATIFICATION AT SOURCE (per supervised-goahead.md Step 2 discipline — verified by reading the code, NOT by accepting the brief's prose):\\n  CLAIM 1 'code-janitor's CronCreate prompt has no pre-boot gate' -> CONFIRMED. .claude/skills/cron-standalone-team/register-job-code-janitor.md:9 is verbatim: prompt : \"Launch subagent (subagent_type=code-janitor). Read and execute docs/agents/code-janitor/flow/main.md\\\\nMCP: https://zenmidi.com/vn-market/mcp\". No shell, no gate, unconditional spawn.\\n  CLAIM 2 'the git-diff gate is post-boot and covers only the DRY scan' -> CONFIRMED. docs/agents/code-janitor/flow/main.md:19 heading is verbatim '## Pre-Check (gates ONLY the Decision-Tree DRY scan below — CADRAT-3)', and :26 states verbatim 'The 3 every-scan sweeps (Memory Prune / Notebook Line-Cap / Cold Archive) stay UNCONDITIONAL on this gate'.\\n  CLAIM 3 'market-db-journal-guard is the existing exemplar' -> CONFIRMED, .claude/skills/cron-standalone-team/register-job-market-db-journal-guard.md exists.\\n\\nUSER-CONFIRMATION HOLD RESOLVED BY PO, NOT ESCALATED. The signal envelope carried pipeline=hold-for-user-confirmation and the brief says 'once the user confirms'. Per CLAUDE.md ('Never ask user — spawn po for decisions, continue') and feedback_po_deploy_rebuild_full_autonomy_no_user_gate, PO is the decision authority for this class. RATIFIED. Reasoning: the change is additive, reversible, mirrors a pattern already live on 8/11 outer heartbeats, and its explicit auditability AC prevents the one real risk (losing the per-tick trace).\\n\\nSCOPE FENCE — DO NOT WIDEN. The brief assessed and explicitly REJECTED introducing any LLM/local-model pre-gate anywhere in these 3 cron families (no fuzzy pre-spawn judgment case exists; every gate examined reduces to a binary/countable predicate already well served by shell+jq; 3 documented live instances of safe-looking gates silently disabling their own mechanism). Rows 1-8 are already gated and rows 9-10 (agent-father, claude-manager-helper) need no change on the evidence — explicitly out of scope, not silently omitted. Implement row 11 ONLY.\\n\\nPRIORITY BASIS: P2, not higher. This is a host-load/token-efficiency win (4x/day full session boots where 10/10 last recorded cycles had the DRY branch suppressed, ~4.3 days of evidence), not a correctness or data-loss defect. Nothing is currently broken by the missing gate.\\n\\nDEDUP: non-terminal lanes scanned on JANITOR|PRE-?SPAWN|PRESPAWN|HEARTBEAT-GATE. Open janitor rows are FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (sweep-script premise bug), FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR (idempotency guard), CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (notebook split). None touches cron registration or pre-spawn gating. Genuinely new.\n\n[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified against the row's own commit_sha 1d5e55d75 (board row's own `files` field lists 3 of the 4 files the commit actually touched -- the new .test.sh is omitted from board metadata, minor bookkeeping gap, non-blocking). Confirmed `main` ancestry via `git merge-base --is-ancestor`. `git show --stat` confirms exactly 4 files changed (2 cron docs + 2 new scripts), matches commit message claim. Re-ran `bash scripts/agents-flow/code-janitor-tick-preflight.test.sh` fresh (not trusted from commit prose): 27/27 pass. `shellcheck` on the new .sh: clean (exit 0, zero findings). `shellcheck` on the .test.sh: only the same pre-existing SC1091 info-level \"source not followed\" nit that the 2 sibling precedent test scripts (db-integrity-probe.test.sh, dev-team-tick-preflight.test.sh) also carry verbatim -- confirmed live on both precedents; upholds the commit's \"shellcheck clean\" claim under this fleet's established convention. AC-1 (pre-spawn gate mirrors market-db-journal-guard's pattern, runs BEFORE spawn): confirmed -- `_git_diff_src_files` runs `git diff --name-only HEAD~3..HEAD` scoped `^(src/|apps/[^/]+/src/)`, byte-verified against docs/agents/code-janitor/flow/main.md's own CADRAT-3 Pre-Check text (same command, Scope: src/**|apps/*/src/**) -- exact scope-lockstep match, the class FIX-AGENTFATHER-KEEP-PRECHECK-GATE-BLIND-TO-3-OF-5-SCAN-SURFACES got wrong. AC-2 (diff non-empty spawns unchanged, main.md untouched; diff empty runs sweeps directly, spawns only on judgment signal): confirmed -- Branch A does zero mutation (script text + test Case1); Branch B shells out to memory-prune-sweep.sh/notebook-linecap-sweep.sh/cold-archive-sweep.sh via full absolute paths and greps for the EXACT stdout marker strings those 3 scripts actually emit (SIGNAL-WRITTEN, reason=safe-fail, [cold-archive-sweep] SUMMARY) -- cross-checked against each sweep script's real source, not assumed; main.md byte-unchanged in this commit. AC-3 (structured one-line verdict, atomic tmp+mv, durable state file): confirmed -- `_write_verdict` uses mktemp+mv, same pattern as db-integrity-probe.sh's own snapshot writer; verdict path docs/data/code-janitor-tick-preflight-last-verdict.json does not yet exist (never run live), no naming collision. AC-4 (register-job-code-janitor.md and cron-code-janitor.md byte-identical/in-sync): confirmed via direct diff of both files' CronCreate prompt bodies after normalizing the markdown-fence indent -- IDENTICAL; cron/recurring/durable fields also confirmed unchanged from the pre-fix version. Verified the developer's own additional correctness-gap claim specifically (per reviewer instruction, not waved through on prose): main.md:114-115 does say \"Skip this row entirely if the script logged SIGNAL-SKIP\" -- the double-run risk (pre-gate runs the sweep once itself; a later-spawned subagent's own main.md pass re-runs the same idempotent script and sees SIGNAL-SKIP, silently dropping a genuinely-new payload's signal_queue row) is REAL, correctly root-caused, and IS closed by the PRE-GATE CONTEXT block threaded into the CronCreate prompt text -- but it is a prose instruction to an LLM narrator at TWO junctures (thin outer tick pasting the block verbatim; subagent LLM reading and acting on it against main.md's own contradicting text), not code-enforced. Residual compliance risk exists, though it is the same class of risk this entire gate family already carries by construction (CronCreate is always LLM-narrated, per the owning brief's own framing) -- not a new risk class introduced here. FINDING (not blocking, escalate to PO): docs/signals/processed/ already contains 6 dated janitor-health-recheck-writer-retired-*.json payloads (2026-08-05 through 2026-08-11), live-confirming the separately-tracked, still-BACKLOG bug FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (memory-prune-sweep.sh's idempotency check only greps docs/signals/ root, not docs/signals/processed/) is actively firing -- meaning `signal_written` will most likely fire on most/all future Branch-B ticks until that sibling bug ships, forcing verdict=SPAWN nearly every tick and largely negating this fix's stated economy win in practice. Not a defect in THIS commit -- recommend PO bump that row's priority given this new dependency. FINDING (not blocking, recorded): commit 1d5e55d75 is `feat` type delivering a board task but carries no Task:/AC: trailer per docs/policies/commit-convention.md's explicit requirement for feat/fix commits -- already merged to main, not retroactively fixable without a destructive amend (forbidden by standing policy); noted for fleet awareness, not grounds to loop this back (matches this review lane's own precedent tolerance for commit-message-only defects with zero functional impact). NOT DONE (explicitly out of QA's authority per router constraint, not self-authorized): live cron re-arm via CronCreate so the ARMED cron actually runs this new prompt -- the file-level change is complete and correct but a stale-registration gap (armed cron still narrating the OLD unconditional prompt until re-armed) is a known failure class in this fleet (feedback_cron_armed_but_wrong_prompt_variant) and remains unverified from this session; flagging for router/PO to re-arm via /cron-standalone-team. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-15.md STEP qa-S45.",
-        "updated_at": "2026-08-11T16:13:06Z",
-        "updated_by": "qa",
-        "commit_sha": "1d5e55d75",
-        "note": "AC-1/AC-2/AC-3 implemented: scripts/agents-flow/code-janitor-tick-preflight.sh (new, 27/27 tests, shellcheck clean) mirrors db-integrity-probe.sh SKIP-SPAWN/SPAWN verdict shape. Branch A (src diff non-empty, same scope as main.md CADRAT-3 Pre-Check) spawns unchanged. Branch B (diff empty) runs the 3 deterministic sweeps directly, commits DELTA-scoped moved paths (explicit pathspec, never bare/broad add), spawns only on SIGNAL-WRITTEN/safe-fail/non-trivial Cold Archive (verdict JSON atomic tmp+mv to docs/data/code-janitor-tick-preflight-last-verdict.json). AC-4: cron-code-janitor.md + register-job-code-janitor.md kept in sync (prompt ported verbatim). Correctness gap beyond the brief literal text found+closed: gate consuming the sweep first-run would make a later subagent re-run see SIGNAL-SKIP and silently drop a genuinely-new payload signal row per main.md existing text -- closed via a PRE-GATE CONTEXT instruction in the CronCreate prompt itself, not a main.md edit (out of this task file list). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-6.md STEP developer-S97.",
-        "qa_verified_at": "2026-08-11T16:12:42Z",
-        "qa_verified_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "bash scripts/agents-flow/code-janitor-tick-preflight.test.sh; shellcheck scripts/agents-flow/code-janitor-tick-preflight.sh scripts/agents-flow/code-janitor-tick-preflight.test.sh",
-            "args": {
-              "commit_verified": "1d5e55d75",
-              "files_diffed": [
-                ".claude/commands/crons/cron-code-janitor.md",
-                ".claude/skills/cron-standalone-team/register-job-code-janitor.md"
-              ]
-            },
-            "live_value_observed": "27/27 test pass; main .sh shellcheck exit 0 clean; .test.sh shellcheck only pre-existing SC1091 info-nit shared with 2 sibling precedent test scripts; CronCreate prompt bodies byte-identical between cron-code-janitor.md and register-job-code-janitor.md; gate diff-scope byte-matches main.md CADRAT-3 Pre-Check",
-            "observed_at": "2026-08-11T16:12:42Z"
           }
         }
       }
