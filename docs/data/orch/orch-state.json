@@ -284,6 +284,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-11T12:00Z",
         "dedup_key": "auditor-a29-fire-gap:tier2-stale"
+      },
+      {
+        "id": "sys-20260811T123620-4a36",
+        "ts": "2026-08-11T12:36:20Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-30 deep-probe ESCALATE: 94.07% sustained high, loss of reclamation",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-11T12:30Z",
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -18811,7 +18825,7 @@
         "note": "Collapse the multi-call router preflight (Phase A/A.5/B) into one server-side dispatch_preflight tool to cut round-trips and race windows. Coordinate with UC-RDL-P1 (lock-prefix) landing first.",
         "created_at": "2026-07-13T19:31:11Z",
         "created_by": "po",
-        "next_agent": "ba",
+        "next_agent": "po",
         "withhold_note": "BOUNDED-1 auto-pickup withheld (SPRINT-M + overlaps NEW signal cow-20260715T184053 preflight presence-claim gap); routed to PO for adjudication",
         "withheld_at": "2026-07-15T18:55:57Z",
         "withheld_by": "dev-team (router withhold-gate)",
@@ -18822,9 +18836,12 @@
         "promoted_by": "dev-team (design-router sweep)",
         "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
         "dispatch_lane": "ba",
-        "updated_at": "2026-08-11T12:26:36Z",
+        "updated_at": "2026-08-11T12:35:06Z",
         "claimed_at": "2026-08-11T12:26:35Z",
-        "claimed_by": "dev-team (design-router sweep)"
+        "claimed_by": "dev-team (design-router sweep)",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/UC-RDL-P4-BA-spec.md",
+        "ba_completed_at": "2026-08-11T12:35:05Z"
       }
     ]
   },

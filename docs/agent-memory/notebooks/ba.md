@@ -1,6 +1,14 @@
 # BA — Notebook
 
-**Last updated:** 2026-08-08 | **Sprint:** COWORK-RELIABILITY
+**Last updated:** 2026-08-11 | **Sprint:** ULTRACODE-AUDIT-FIXALL
+
+## UC-RDL-P4 · 2026-08-11
+
+Wrote 9-FR/10-EC compositor spec (`docs/handoffs/UC-RDL-P4-BA-spec.md`) for the router-scope `dispatch_preflight` MCP tool (collapse Step0a/Phase-A/A.5/B into ONE gateway call). Dependency UC-RDL-P1 (lock-prefix) confirmed DONE_VERIFIED (fix commit `18885ff50`) — no blocker. Sibling `router-dispatch-locking-P3` already folded+shipped into `FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD` (its `SKILL.md` half live, commit `234902038`; its server half `FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS` code-complete but in `review[]`, not rebuilt); `-P5` DONE_VERIFIED+archived. Zero live file-collision risk across the 4 sibling UC-RDL rows re-checked this cycle.
+
+**Corrected my own hypothesis mid-cycle:** initially assumed the composite tool needs FIX-ORPHAN-FR2-FR6-FR7's new `task_heartbeat` params (`ttl_seconds`/`payload_patch`/`owner_agent`) — live-read the post-split `taskHeartbeatTool.ts` Zod schema and confirmed those params ARE already exposed (contradicts the `dispatch-claim/SKILL.md` header note claiming that interface task was "open, unclaimed" — stale as of 2026-08-09) but confirmed this composite tool's V1 scope never calls them (escalation stays client-side) — recorded as EC-7 so no one re-derives it. Server code also reshaped since the brief: `coordinationTools.ts` (457L monolith when the brief was written) is now a thin entry point over 6 per-tool files under `.../coordination/` (`FIX-CI-SIZELINT-COORDINATIONTOOLS-TS-457L`, 2026-08-09) — new tool must follow that split-file convention, not append to a monolith. Found a directly-reusable layering precedent live: `getCycleBootstrap.ts` (application usecase, `Promise.allSettled`-style partial-failure envelope + per-call timing) — same shape needed here, EXCEPT this tool composes writes (presence claim, intent claim) not just reads, so the partial-failure model can't apply uniformly (FR-6/EC-4).
+
+`next_agent`→po; 2 blockers (cutover DoD sequencing; rebuild-batch sequencing with the FIX-ORPHAN-FR2-FR6-FR7 sibling touching the same directory) — both governance/sequencing calls matching PO's own established pattern on this exact row (UC-RDL-P1 coordination, 2026-07-15 cowork-scope adjudication).
 
 ## UC-CCA-P3 · 2026-08-08
 

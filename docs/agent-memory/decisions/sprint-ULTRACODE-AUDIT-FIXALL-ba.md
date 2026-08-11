@@ -41,3 +41,12 @@
 - Scope FR-2 discriminator to only the outer settings.local.json wrapper vs also flag internal script guards → found swallowing happens at BOTH layers (outer 2>/dev/null||true AND some scripts' own early exit-0 guards conflate "nothing to check" with "prerequisite crashed") — flagged both, outer wrapper is the actual gap since inner validator-call capture is already partially correct.
 **why-decision:** Live-reading the scripts (not just the audit brief's summary) surfaced that orch-state-hook-bash-backstop.sh already captures ITS OWN validator's exit code correctly — the brief's "6/6 swallow" framing is about the outer settings.json wrapper, not proof the scripts are all equally naive inside.
 **why-change:** No change from PO's ratified scope. Added FR-6 risk-tiering as BA's own recommendation (not requested by dispatch) since uniform treatment of 7 invocations with wildly different blast radii would waste architect/dev cycles on cosmetic tmux/graphify hooks.
+
+### STEP ba-S5 · ba · 2026-08-11T12:35:05Z
+**task-id:** UC-RDL-P4
+**what-done:** Confirmed dependency UC-RDL-P1 DONE_VERIFIED (no blocker); found P3/P5 already shipped too, zero live file collision. Wrote 9-FR/10-EC compositor spec for `dispatch_preflight` layered per the live `getCycleBootstrap.ts` precedent; 2 PO blockers (cutover DoD, rebuild-batch sequencing).
+**what-considered:**
+- Hardcode `intent_task_id` per the brief's literal signature vs generalize to `claim_task_id`/`claim_task_kind` → generalized: `claimTask()` already takes `task_kind`, zero marginal server cost, keeps V1's doc-cutover scope router-only while not foreclosing a later dev-team widening.
+- Fold the FR-3-sibling board-state guard (orch-state.json read, precedent exists server-side) into this tool vs keep it client-side → kept client-side (EC-8): would double effort, re-open a just-RAW-verified section, blur the coordination-lock/board-semantics module boundary the store's own header disclaims.
+**why-decision:** Both live-code re-reads (post-split `coordinationTools.ts`, live `taskHeartbeatTool.ts` Zod schema) overturned my own initial hypothesis that this tool needs FIX-ORPHAN-FR2-FR6-FR7's new heartbeat params — confirmed false, recorded as EC-7 so architect doesn't re-derive it.
+**why-change:** No change from dispatch scope. Added Q2 (rebuild-batch sequencing) as a genuine new PO blocker not named in the dispatch note — same sequencing-call pattern PO already used twice on this exact row (UC-RDL-P1 coordination, 07-15 cowork-scope adjudication).
