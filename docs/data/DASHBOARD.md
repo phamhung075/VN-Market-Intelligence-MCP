@@ -1162,3 +1162,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-13 · bctc_vps_queue: 4 stale pending items >72h
+**Severity:** WARN | **Date:** 2026-08-11 | **Status:** OPEN
+**Location:** market.db/bctc_vps_queue
+**Details:** 4 BCTC queue items stuck in pending status for >72 hours
+**Impact:** Queue backlog may grow; stalled rows may never be processed
+**Root cause:** Potential extraction pipeline stall or zombie rows
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-11T12:18:34Z (signal sys-20260811T121737-2a33, system-auditor -> po, dedup_key=data_stale:bctc_vps_queue:B-13, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
