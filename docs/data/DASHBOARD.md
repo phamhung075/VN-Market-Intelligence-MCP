@@ -1150,3 +1150,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory sustained high >93%
+**Severity:** WARN | **Date:** 2026-08-11 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-rag-service-1
+**Details:** rag-service memory floor sustained at 96.78% across all 6 deep-probe samples (no reclamation dips, no discontinuities)
+**Impact:** Sustained high memory may indicate memory leak or insufficient headroom for garbage collection cycles
+**Root cause:** rag-service memory consumption pattern shows sustained floor without expected reclamation; prior STALE-ACK FU-RAG-DEPLOY-MEMORY now reopened
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-11T12:13:35Z (signal sys-20260811T121235-33fd, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
