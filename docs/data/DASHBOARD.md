@@ -1258,3 +1258,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service: 99.44% memory CRITICAL, BELOW-FLOOR
+**Severity:** CRITICAL | **Date:** 2026-08-11 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-rag-service-1
+**Details:** MemPerc at 99.44% with only 5.7MiB free (BELOW floor threshold of 40MiB). Essentially at cgroup memory limit with zero headroom for allocation spikes.
+**Impact:** Imminent risk of OOMKilled event or service stalls. Memory allocations may fail. System stability at risk.
+**Root cause:** Rag-service memory usage exceeds container allocation; possible uncontrolled memory growth or insufficient container memory limit.
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-11T16:07:06Z (signal sys-20260811T160649-462a, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
