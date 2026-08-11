@@ -93,12 +93,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 5 row(s), highest-ranked FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 5 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-09T05:58:07Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "idle — reset after outage recovery: prior active_task_id (FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE) was already DONE_VERIFIED, agent died mid-closeout (weekly API limit) before resetting head",
+    "updated_at": "2026-08-11T12:06:25Z",
+    "updated_by": "dev-team (router outage-recovery)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -134,10 +134,76 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-09T05:51:15Z",
+    "_updated_at": "2026-08-11T12:06:34Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
+      {
+        "id": "sau-d4-bctc-dataquality-dxg-persistent-absence-not_found-20260811",
+        "ts": "2026-08-11T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock bctc-dataquality:DXG:persistent-absence has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-bctc-dataquality-hpg-operating-profit-zero-not_found-20260811",
+        "ts": "2026-08-11T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock bctc-dataquality:HPG:operating-profit-zero has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-bctc-dataquality-vnindex-crosstool-mismatch-not_found-20260811",
+        "ts": "2026-08-11T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock bctc-dataquality:vnindex-crosstool-mismatch has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-bctc-dataquality-dxg-persistent-absence-pipeline_mismatch-20260811",
+        "ts": "2026-08-11T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE held=bctc-dataquality:DXG:persistent-absence",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-bctc-dataquality-hpg-operating-profit-zero-pipeline_mismatch-20260811",
+        "ts": "2026-08-11T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE held=bctc-dataquality:HPG:operating-profit-zero",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-bctc-dataquality-vnindex-crosstool-mismatch-pipeline_mismatch-20260811",
+        "ts": "2026-08-11T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE held=bctc-dataquality:vnindex-crosstool-mismatch",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
       {
         "id": "sys-20260808T060541-213e",
         "ts": "2026-08-08T06:05:41Z",
