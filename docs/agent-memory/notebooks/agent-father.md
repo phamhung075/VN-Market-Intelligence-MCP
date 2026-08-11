@@ -55,40 +55,6 @@
   Escalation 2 (semble-search guide-taxonomy) severity LOW; the 3 CRITICAL tool-boundary findings
   are carried-forward (already PO-known from the prior two `team-tool-recheck` runs, not new).
 
-## Keep (maintenance) 2026-08-11 12:14 UTC — router-spawned, no explicit intent → defaulted to keep.md
-- Trigger: manual (router spawn gave no `trigger`/`intent` → main.md default → keep.md). Pre-Check:
-  `git diff --name-only HEAD~3..HEAD` touched zero `.claude/agents/*.md` /
-  `docs/agents/*/flow/*.md` → Steps 1-2 (scan-orphans) SKIPPED, straight to Steps 3-5.
-- Checks 1/3 (fail-loud-protocol / boundary_rules in `init.md`, correct target per 08-07 fix): all
-  41 registered agents PASS; `semble-search` FAIL (known deliberate minimal tool-agent, no
-  `agent:` YAML — carried-forward Escalation 2, unchanged).
-- **Check 5 (version staleness, >90d) — auto-fix applied (1):** `agents-architect/init.md`
-  `version: "2026-05-11"` → 92 days stale → bumped to `"2026-08-11"`. Next-closest cluster sits at
-  exactly 90d (ops-vps-fetch, ops-mainserver-fetch, dev-vps-crawls, dev-mainserver-crawls,
-  dev-alert-engine @89d) — not >90, left untouched; will trip next cycle if untouched.
-- **Check 2 (Error Boundary) — Escalation 1 from 08-07 cycle CONFIRMED RESOLVED:** shared
-  `docs/agents/developer/flow/microservice-main.md` (169L, was 165L) now carries an Error Boundary
-  block at `:16` pointing to `fail-loud-protocol.md` (task `FIX-DEVFLOW-MICROSERVICE-MAIN-NO-
-  ERROR-BOUNDARY`, landed 2026-08-07). Re-ran one-hop resolution for all 9 dev-* zone agents
-  pointing there — all PASS now. No new Check-2 gaps found elsewhere.
-- **Check 4 (flow path resolves):** all 41 registered agents' `flow.default` path exists on disk —
-  0 broken. `semble-search` has no `flow.default` key (deliberate, same Escalation 2).
-- Step 5 stale notebooks (>30d, informational): idea-forge/market-analyst/semble-search (101d),
-  qa-responder (76d), dev-kinh-dich (33d), dev-news-fetch (32d), cowork-refactory-expert (31d),
-  ops-mainserver-fetch (31d) — 8 total, verified via `git log -1 --date=short`, not raw mtime.
-- Side-observation (NOT scored — Steps 1-2 gated off again this cycle, 2nd cycle running): 46
-  notebook files vs 42 registered agents — same 4-file gap flagged 08-07, still unresolved. Two
-  consecutive keep cycles have now landed on a diff with zero `.claude/agents/*.md`/flow changes;
-  if a 3rd cycle also gates off, recommend an explicit PO-requested scan-orphans run instead of
-  waiting on the Pre-Check gate to open incidentally.
-- Bash-tool anomaly this cycle (environmental, not a repo finding): `awk`/`sed`/`basename`/`wc`
-  intermittently returned "command not found" mid-for-loop despite `command -v` confirming they
-  exist in PATH — worked around with pure-bash string ops (`${var#pattern}`, `read -r x <<< "$s"`)
-  and `grep`-only loops. Not investigated further (tool/sandbox layer, outside this agent's scope).
-- Step 7 PO handoff: none needed this cycle — Escalation 1 (prior HIGH/MEDIUM) is now RESOLVED;
-  Escalation 2 (semble-search guide-taxonomy, LOW) carries forward unchanged, already PO-visible
-  from 08-07.
-
 ## Keep (maintenance) 2026-08-11 12:53 UTC — cron-fired, no explicit intent → defaulted to keep.md
 - Trigger: scheduled (39min after the 12:14Z cycle same day). Pre-Check gated Steps 1-2 off again
   (3rd consecutive cycle, zero `.claude/agents/*.md`/flow diff in HEAD~3..HEAD).
@@ -136,3 +102,31 @@
   DJ: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md` STEP agent-father-S35.
 - Own commit uses explicit trailing pathspec (session sweep-guard warn-budget already exhausted,
   per this same row's prior 15:14Z EXECUTED note).
+
+## SPIKE 2026-08-11T18:20:00Z — task SPIKE-NEWSSCOUT-KLFL-FALSE-ENOENT-ON-PRESENT-TRACKED-SKILL-FILE
+- Findings-only. news-scout is the ONLY {haiku model + 2-hop path chain (`cycle.md`→
+  `./stage-bootstrap.md`→`.claude/skills/step-0-cowork/SKILL.md`)} agent among the 6 live
+  consumers of that skill; market-watcher (haiku, 1-hop, direct in `cycle.md`) and
+  alert-commander (sonnet, 2-hop, same batch) both succeeded. Best-supported mechanism (not
+  live-reproduced): mixed root-anchored vs same-dir path notation across that 2-hop chain is
+  exactly what a smaller model can misresolve into a wrong absolute `Read` path — genuinely
+  ENOENT there, reported back using the doc's correct literal filename. Corrected PO's
+  hypothesis-3 framing ("only haiku agent in batch" — false, market-watcher is haiku too).
+  No fix applied (not a one-line change; spans 6 agents' flow trees) — row stays BACKLOG for a
+  scoped FIX mint. DJ: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md` STEP S36.
+- **Side-finding (self-encountered, live-reproduced):** writing this very entry triggered
+  `notebook-auto-prune.sh`'s byte-cap prune, which silently DELETED this section on the first
+  write (diff came back empty — full revert to pre-edit HEAD) — signal
+  `docs/signals/notebook-direction-defaulted-...-agent-father-md-2026-08-11T173023Z.json` shows
+  4 same-day sections tied at date-only precision (this notebook's heading convention
+  "YYYY-MM-DD HH:MM UTC" lacks the literal T/Z the regex requires, so time-of-day is dropped),
+  defaulted to `newest_first` and dropped the physically-LAST tied section — this file is
+  actually APPEND/oldest_first (new content at bottom, confirmed by its own physical history),
+  so the default direction is backwards for it and destroys the NEWEST entry, not the oldest.
+  `docs/data/notebook-section-order.json` could override this per-file but is explicitly
+  `_maintained_by: developer or architect` only — not mine to edit. Re-added this entry with a
+  full ISO8601 heading timestamp (this line) to escape the tie going forward; recommending PO
+  route the underlying default-direction-vs-real-convention mismatch to developer/architect as
+  its own FIX (previously the same signal type was dispositioned `informational_no_action_needed`
+  by PO triage step po-6 — this live occurrence shows it is NOT informational-only, it deleted a
+  just-written cycle record).

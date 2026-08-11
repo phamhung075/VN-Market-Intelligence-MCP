@@ -218,3 +218,50 @@ claims to have proven clean would not actually close the row.
 with this fix + fix inventory (2 files, AC-3 proof persisted), `next_agent=qa`. Own commit uses
 explicit trailing pathspec (session sweep-guard warn-budget already exhausted, per row's own
 prior EXECUTED note).
+
+### STEP agent-father-S36 · agent-father · 2026-08-11T18:20:00Z
+**task-id:** SPIKE-NEWSSCOUT-KLFL-FALSE-ENOENT-ON-PRESENT-TRACKED-SKILL-FILE
+**what-done:** Findings-only spike. Mapped all 6 `step-0-cowork/SKILL.md` consumers by
+(model × hop-depth): news-scout (haiku, 2-hop: cycle.md→`./stage-bootstrap.md`→skill) is the
+ONLY {haiku + 2-hop} combo; market-watcher (haiku, 1-hop, direct in cycle.md) and alert-commander
+(sonnet, 2-hop, same batch) both succeeded. No repo-wide rule anchors flow-doc path refs to git
+root — `./stage-bootstrap.md` (same-dir notation) immediately precedes `.claude/skills/...`
+(root-anchored) in news-scout's own reasoning chain, exactly the ambiguity a smaller model can
+misresolve into a wrong absolute Read path, genuinely ENOENT at that wrong path, then reported
+back using the flow doc's correct literal filename (KLFL template fills `<filename>` from doc
+text, not the actual attempted path) — indistinguishable from a real missing-file report.
+**what-considered:**
+- Re-verified PO's hypothesis-3 framing ("news-scout is the only haiku agent in the batch") —
+  FALSE: `.claude/agents/market-watcher.md` is also `model: haiku` (since 508ae0efa, May 21,
+  unrelated to this incident) — corrected in findings, since it changes hypothesis-3's shape.
+- Checked for a KLFL step-2 signal-drop file (`docs/signals/news-scout-*-gateway-blind.json`)
+  mandated by the protocol news-scout's own report claims to have run — none exists anywhere
+  (live or `processed/`), only the telegram (step 1) fired — secondary evidence of partial KLFL
+  execution, noted but not treated as the ENOENT mechanism itself.
+- Considered hypothesis-2 (transient read w/ wrong errno) — weakened: PO's own `git log -3` shows
+  no write/rename near 08-11 on the file, and a pure random FS blip would not explain why it hit
+  exactly the one haiku+2-hop agent among 6 consumers.
+**why-decision:** Structural correlation is clean and complete across the full consumer set
+(n=6, not cherry-picked) with a mechanistic explanation grounded in the Read tool's own
+absolute-path requirement — strongest of the three hypotheses, though not a live-reproduced
+proof (stochastic LLM misresolution, not deterministic code).
+**why-change:** No fix applied — not a trivial one-line flow-doc fix; the ambiguity spans 6
+agents' flow trees and needs a considered root-anchoring convention, not an agent-father
+unilateral edit. Returning findings to PO/router per task instructions; row stays BACKLOG for a
+scoped FIX mint, not self-closed to DONE.
+
+### STEP agent-father-S37 · agent-father · 2026-08-11T17:35:00Z
+**task-id:** TE-T03
+**what-done:** Split cowork-team/flow/main.md's fallback/WORK-continuation body (~2/3 of file)
+into work-tick.md (Step 0a + 0b.3, shared WORK+ERROR) and preflight-error-fallback.md (full ERROR
+chain); main.md 322L->106L. Board row lane-moved backlog->review (status=REVIEW, next_agent=qa).
+**what-considered:**
+- Verified TE-T01 DONE_VERIFIED in archive/2026-07.json first, per task instruction — not just
+  trusting the board note's assertion.
+- Followed the board note + brief's exact 2-file split shape rather than inventing a different
+  boundary; content relocated verbatim (no logic rewrite), same class as TE-T16/TE-T26.
+**why-decision:** Board note and architecture-brief T-03 both specify the identical split — an
+already-vetted design, not mine to re-derive.
+**why-change:** Also repointed the LIVE `.claude/skills/cron-cowork-team/SKILL.md` CronCreate
+ERROR clause (was targeting main.md Step 0a, now removed) — not in the note, but required or the
+armed cron misdirects on the next ERROR verdict.
