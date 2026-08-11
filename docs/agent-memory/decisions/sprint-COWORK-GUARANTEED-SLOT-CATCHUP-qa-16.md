@@ -78,3 +78,13 @@
 - Concurrency note: `docs/data/orch/orch-state.json` was modified by a peer QA session mid-verify (2 sibling batch rows drained between my initial read and write) — rebuilt the jq transform against the live file immediately before writing to avoid clobbering the peer's concurrent rows; both landed intact.
 **why-decision:** APPROVED, DONE_VERIFIED. Code-equivalence claims independently reproduced; DB-persistence claim's cited action-id was unverifiable via git but the underlying assertion (split code live + DB healthy) was independently re-proven via a live container+DB probe rather than left as an unresolved prose claim.
 **why-change:** none — same verdict as the row's own self-report, but the rebuild-verify evidence chain is now a live re-probe instead of an unverifiable action-id.
+
+### STEP qa-S53 · qa · 2026-08-11T20:27:11Z
+**task-id:** FACTORY-ALERT-shared-vocab-package
+**what-done:** Direct-Commit Verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`, no `commit`/`files[]`/`owner`/`status_note` fields at all — only `reviewed_at`/`reviewed_by`). Derived commit via `git log --all -- <detail_ref files[]>`: `9d91af5bb`, dated 13:20:08Z, 1m52s before `reviewed_at` (13:22:00Z) — high-confidence match, confirmed on `main` ancestry.
+**what-considered:**
+- `git show --stat 9d91af5bb` touches only `cooldown-gate/gate.go` (1 of 3 detail_ref files). DoD is disjunctive (Fence-A shared package OR literal collapsed); dev chose the low-risk fallback, so `models.go`/`classifier.go` untouched is expected, not a gap. Verified `.golangci.yml` fence-a deny-list live (not trusted from commit prose) — confirms `pkg/domain` import is genuinely permitted for primitives (only application/infrastructure/interface/mattn-sqlite3 denied).
+- Read `gate.go` directly: L92 now references `domain.SeverityCritical` (was hand-copied literal); string value "critical" byte-identical across domain/classifier/gate. `git diff 9d91af5bb..HEAD -- gate.go` empty — no later commit reverted it.
+- Ran live: `go build ./...`/`go vet ./...` clean; `go test -count=1 ./...` 8/8 packages pass (targeted cooldown-gate 10/10 incl. CriticalBypass/CriticalMacroNoBypass); `golangci-lint run` (Fence-A/B/C) 0 issues; `mock-guard.sh --files gate.go` PASS; security greps clean.
+**why-decision:** APPROVED, DONE_VERIFIED. DoD fallback branch fully met: literal collapsed via Fence-A-permitted import, string value unchanged, build+test+lint green, behavior unchanged (test suite proves it).
+**why-change:** none — verified exactly what the row scoped.
