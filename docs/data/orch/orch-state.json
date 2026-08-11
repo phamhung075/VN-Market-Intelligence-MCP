@@ -19707,7 +19707,7 @@
         "last_served_tick": "2026-08-09T04:53:51Z"
       }
     },
-    "_updated_at": "2026-08-09T05:56:45Z",
+    "_updated_at": "2026-08-11T12:07:44Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20102,6 +20102,83 @@
         },
         "createdAt": "2026-08-09T05:24:11Z",
         "drained_at": "2026-08-09T05:55:28Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "29c65ea46bc817eb555f9c11bf91d7a7c745e56b0a034dc0ae52db152777b0ef",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-po-8.md docs/agent-memory/notebooks/qa.md docs/data/orch/orch-state.json. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=27 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-11T12:06:39Z",
+        "drained_at": "2026-08-11T12:07:44Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "95e9e8781fc6c3d66c35361c34cfd2107c7f56510bb01eba15b1c0fb285923be",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-11T12:06:43Z",
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "news-scout-offhours": 240,
+            "market-watcher-offhours": 240,
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-11T12:06:43Z",
+          "last_fired_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "12:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 25,
+          "note": "offhours full-fanout tick — 3 slots (news-scout, market-watcher, alert-commander), all spawned run_in_background=true"
+        },
+        "createdAt": "2026-08-11T12:06:43Z",
+        "drained_at": "2026-08-11T12:07:44Z",
         "routed_to": "PO Step 0-SIG"
       }
     ]
