@@ -1282,3 +1282,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · pdf-extractor memory sustained high >93%
+**Severity:** WARN | **Date:** 2026-08-11 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-pdf-extractor-1
+**Details:** Memory pressure sustained at >93% across 6 probes (min=94.90%, median=94.90%, max=95.25%)
+**Impact:** PDF extraction operations may be rate-limited or degraded due to memory pressure
+**Root cause:** pdf-extractor workload memory footprint at cgroup limit, loss of reclamation headroom
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-11T17:06:02Z (signal sys-20260811T170554-3b8d, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
