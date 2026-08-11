@@ -1330,3 +1330,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · vpsProxyWatchdog stale 9.5h
+**Severity:** CRITICAL | **Date:** 2026-08-11 | **Status:** OPEN
+**Location:** cron/watchdog
+**Details:** vpsProxyWatchdog last fired 2026-08-11 08:50:00, 9.5h overdue (threshold 0.3h)
+**Impact:** Watchdog not monitoring VPS proxy health — anomalies may go undetected
+**Root cause:** Cron scheduler issue or job infrastructure failure
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-11T18:23:42Z (signal sys-20260811T182200-3071, system-auditor -> po, dedup_key=auditor-a29-fire-gap:vpsProxyWatchdog, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
