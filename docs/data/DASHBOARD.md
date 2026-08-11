@@ -1354,3 +1354,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · bbAlertScan MISSED 2625.6h
+**Severity:** CRITICAL | **Date:** 2026-08-11 | **Status:** OPEN
+**Location:** cron/alerts
+**Details:** bbAlertScan last fired 2026-04-24 08:45:00 (104+ days overdue)
+**Impact:** Bulletin board alert scanning completely stalled
+**Root cause:** Job infrastructure failure or disabled cron
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-11T18:23:48Z (signal sys-20260811T182214-22a0, system-auditor -> po, dedup_key=auditor-a29-fire-gap:bbAlertScan, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
