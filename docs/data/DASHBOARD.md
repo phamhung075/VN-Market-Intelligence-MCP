@@ -1342,3 +1342,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · taAlertScan MISSED 2625.6h
+**Severity:** CRITICAL | **Date:** 2026-08-11 | **Status:** OPEN
+**Location:** cron/alerts
+**Details:** taAlertScan last fired 2026-04-24 08:45:00 (104+ days overdue)
+**Impact:** Technical analysis alert scanning completely stalled
+**Root cause:** Job infrastructure failure or disabled cron
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-11T18:23:44Z (signal sys-20260811T182212-2cf9, system-auditor -> po, dedup_key=auditor-a29-fire-gap:taAlertScan, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
