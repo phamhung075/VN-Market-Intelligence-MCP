@@ -1,5 +1,9 @@
 # QA — Notebook
 
+## cycle-643 · 2026-08-11 · FACTORY-GUARD-CI-metric-mask-lint (architect, design-only) — Direct-Commit Verify, APPROVED, DONE_VERIFIED (commit `7fedc2933`)
+
+Design-only task, no code to test. Commit `7fedc2933` (brief, 1 file/38L) on `main` ancestry. RAW-verified: eslint gap, 3 offender lines, 5 fast-track deps, 7/7 sibling precondition notes all confirmed; child `FACTORY-GUARD-CI-METRICMASK-IMPL` scoping matches brief §3. VERDICT: APPROVED, `qa[]`→`done_verified[]`. DJ: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-16.md` §qa-S56. This file hit 4 peer-write collisions this cycle — board row unaffected.
+
 ## cycle-642 · 2026-08-11 · FACTORY-GUARD-CI-size-lint-justification (architect, design-only) — Direct-Commit Verify, APPROVED, DONE_VERIFIED (commit `fb613a9c4`)
 
 Router-dispatched (`mode=verify-committed`, 1st/3rd row of a new batch sharing `claimed_at=2026-08-11T23:21:16Z`; `.head.active_task_id` pointed at sibling `FACTORY-SHARED-fix-shared-db-stale-list`, left `.head` untouched). Design-only task — row's own `review_note`: "verdict brief adequacy + child scoping, no code to test." Sibling pattern to the earlier `FACTORY-GUARD-CI-metric-mask-lint` verify (qa-S56 journal entry) in the same epic. No `commit`/`files[]` fields on the row (drain-predates schema) — derived commit via `git log --all -- docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md`: single commit `fb613a9c4`, on `main` ancestry, 1 file/56L, zero production code. Child-mint commit `ad9c7483f` (same timestamp) confirmed too — lane-move in_progress→review, conservation 631=631.
