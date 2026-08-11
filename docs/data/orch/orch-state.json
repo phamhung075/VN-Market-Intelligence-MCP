@@ -88,11 +88,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-11T19:29:56Z",
-    "updated_by": "dev-team (router head-reset repair)",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FACTORY-FRONTEND-split-market-summaries",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 3 row(s), highest-ranked FACTORY-FRONTEND-split-market-summaries — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 3 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-11T20:24:02Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -15063,42 +15064,6 @@
         "agent_father_disposition_20260805T1658": "agent-father-triage 2026-08-05T16:58Z (relayed by router -- agent-father has no gateway tool grant, could not write this itself). DISPOSITION: DO NOT sign off DONE yet; do not rework code. T6 code verified correct at source (docs/agents/market-watcher/flow/main.md Step 2: slot=market-watcher-eod -> eod.md always, slot=market-watcher-offhours -> cycle.md mode=offhours always, empty/unrecognized -> unchanged wall-clock fallback), matches design brief docs/architecture-briefs/2026-07-21-cowork-fanout-producer-consumer-ordering.md section 5 verbatim, landed commit bdf22186d 2026-07-22. BLOCKER IS REAL BUT NARROWER THAN IT LOOKS: DESIGN-COWORK-FANOUT-T8-QA-TEST-STRATEGY depends on T1-T6 ALL SIX, not T6 alone -- T1/T2/T3/T4/T5 are all still TODO/unimplemented in ready[], three of the five (T1/T2/T4) owned by agent-father itself and untouched. Per brief section 9 (T6 has no dependency on T1-T5, can ship separately) the two test cases that actually validate T6 (brief section 7, T-7/T-8 flow-fixture walkthroughs on slot-routing only) need zero input from T1-T5. RECOMMENDATION: route a narrow qa execution of just brief-section-7 T-7/T-8 to qa now, decoupled from the 6-way T8 board row, rather than leave this row in limbo behind 5 unstarted siblings owned partly by the same triager. CROSS-REFERENCE (confirmed mechanically independent, correctly filed separately): FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (eod.md:78 stale caveat, 'what happens once inside eod.md') is NOT caused by and does NOT require touching T6/main.md ('which sub-flow file gets entered'). One genuine connective thread for whoever fixes that row's AC-2 (same-agent multi-slot notebook clobber): it is the direct fallout of THIS brief's own section 5/6 decision to WARN-not-BLOCK legitimate same-tick EOD+offhours collisions on DDD grounds -- the brief solved the collision at the signal/routing layer and never addressed the notebook-storage-layer side effect; the AC-2 fix belongs purely in the notebook-write layer, do not re-litigate the already-rejected block-at-dispatch-layer option."
       },
       {
-        "title": "Move market-summaries pure helpers to domain; split list/detail JSX",
-        "priority": "P2",
-        "zone": "frontend",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-FRONTEND-split-market-summaries",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-split-market-summaries",
-        "promoted_at": "2026-07-24T09:44:29Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T09:58:54Z",
-        "claimed_at": "2026-07-24T09:44:29Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T09:58:54Z",
-        "review_note": "dev-frontend DONE-CODE: 955L route split into app/domain/market-summaries/format.ts (9 pure helpers, verbatim) + app/components/market-summaries/*.tsx (12 files, all <=120L). Route 955L->324L. tsc clean, vitest 2047/2049 (2 pre-existing unrelated fail, confirmed baseline via git-stash A/B). Equivalence proven via reference-identity + golden-value tests. Live Playwright G12 render-gate DEFERRED (rebuild is USER-GATED, out of scope this task) — QA should verify code-level evidence only; render-gate batches onto next rebuild. Commits: e2f18a897 (code), 67e7be472 (memory)."
-      },
-      {
-        "title": "Split dashboard.orchestration: DTOs to shared, sections to components",
-        "priority": "P2",
-        "zone": "frontend",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-FRONTEND-split-orchestration",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-split-orchestration",
-        "promoted_at": "2026-07-24T10:14:31Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T10:35:21Z",
-        "claimed_at": "2026-07-24T10:14:31Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T10:35:20Z",
-        "review_note": "dev-frontend DONE-CODE (rebuild-verify deferred, USER-GATED): DTOs (StepDto/DecisionsDto/TaskStatus/TaskRow/TaskBoardCounts/TaskBoard/SignalRow/SignalQueue/SprintGoal/Narrative/Head/OrchState) moved verbatim to app/domain/orchestration/types.ts (re-exported from route). STALE_THRESHOLD_MS + staleness predicate moved to app/domain/orchestration/staleness.ts as isStale(tsField, now) — 9 unit tests. taskStatusClasses moved to app/domain/formatters/task-status-classes.ts (shared by 2 components, avoids circular import) — 8 unit tests. 11 render components split into app/components/orchestration/*.tsx, all <=120L (HeadPanel 52L, TaskGroup 57L, StepCard 61L, DecisionAccordion 66L, DoneTaskRow 88L, DoneTaskGroup 104L, TaskBoard 74L, SignalQueue 88L, SprintGoal 49L, Narrative 69L, doneTaskGrid.ts 16L) — a render smoke test was written and confirmed RED (module not found) BEFORE each component file was created, then GREEN immediately after (test-first, per ticket DoD). TASK-DASH-CRON-2 Cron Recheck Table left untouched (out of scope; a pre-existing test imports its exports directly from the route). POLL_MS=5000 + loader unchanged (grep-confirmed). tsc --noEmit clean. Full Vitest suite: 95 files/2112 tests, 2110 pass, same 2 pre-existing unrelated QUE_DESCRIPTIONS failures — confirmed IDENTICAL to baseline via git stash push -u -- apps/frontend A/B re-run (baseline 81/83 files, 2047/2049 tests, same 2 failures), then git stash pop. vite.config.ts test.include gained one entry (app/domain/orchestration/**) so the new staleness test is discoverable by Vitest — root-cause fix, mirrors the existing domain/formatters entry. Docs updated: docs/architecture/microservice/frontend/domain-model.md new split section. Decision journal: docs/agent-memory/decisions/sprint-FACTORY-FRONTEND-split-orchestration-dev-frontend.md (7 STEP entries). Live rebuild + Playwright G12 render-gate DEFERRED — task scope bound explicit \"CODE-ONLY, NO REBUILD... rebuilds are USER-GATED\"; batches onto a future rebuild."
-      },
-      {
         "title": "Split capability_prober.go into manifest/probe/prober files",
         "priority": "P2",
         "zone": "api-gateway",
@@ -15125,24 +15090,6 @@
         "rebuild_required": true,
         "status_note": "PO triage 2026-08-06: code work ACCEPTED — independently re-verified, not taken on self-report: commit 9fad8d4ad IS an ancestor of HEAD; capability_manifest.go 104L / capability_probe.go 130L / capability_prober.go 191L match claimed sizes; `go build ./...` + `go vet ./...` in apps/api-gateway exit 0 at current HEAD; decision journal present. NOT signed DONE_VERIFIED: docker-deployment-runbook.md § Microservice Code-Change Close Gate Step 6 forbids PO marking DONE until Steps 1-5 pass, and they have not — running image vn-market-intelligence-mcp-api-gateway:latest was built 2026-07-15 17:05 CEST, the commit is 2026-07-24 14:24 CEST, so the split code is NOT in the live container. Root cause of the 13-day strand: next_agent was null, so no lane owned the row. ACTION FOR OPS: single-service rebuild only — `docker compose build --build-arg GIT_SHA=\"$(git rev-parse HEAD)\" api-gateway && docker compose up -d --no-deps api-gateway && bash scripts/verify-deploy-sha.sh api-gateway` (MUST exit 0). NEVER down/stop/kill/rm/--force-recreate — peer-killing. Then hand to qa via `scripts/ops-closegate-handoff.jq` with from_lane=review. NOTE: this one rebuild also ships 3 peer api-gateway commits undeployed since 2026-07-15 (251cda70e, 868bf8d1d, b184dde9f) — see zone-wide finding on FACTORY-APIGW-dedup-default-urls and FACTORY-APIGW-split-sandbox.",
         "deploy_gate_discriminator": "REAL gate, NOT the phantom class. Do not over-generalise the FACTORY-APIGW-split-sandbox finding (PO 2026-08-06T20:33Z: rebuild_required was phantom there because apps/api-gateway/Dockerfile:12 builds `-o gateway ./cmd/server/` only and cmd/sandbox never enters the image). Discriminator run RAW here: `go list -deps ./cmd/server/` DOES return pkg/infrastructure, which is the package holding capability_manifest.go/capability_probe.go/capability_prober.go. This code therefore IS compiled into the shipped gateway binary, and the strings.HasPrefix SSE content-type hardening is a real behaviour change that is NOT running in the live container. Rebuild is required for real."
-      },
-      {
-        "title": "Collapse triple-declared severity/channel constants (Fence-aware)",
-        "priority": "P2",
-        "zone": "alert-engine",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-ALERT-shared-vocab-package",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-shared-vocab-package",
-        "promoted_at": "2026-07-24T13:14:40Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T13:20:58Z",
-        "claimed_at": "2026-07-24T13:14:40Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "reviewed_at": "2026-07-24T13:22:00Z",
-        "reviewed_by": "dev-alert-engine"
       },
       {
         "title": "Fix composeNewsIngest logging both sources per call",
@@ -19536,6 +19483,60 @@
         "claimed_at": "2026-08-11T15:25:14Z",
         "claimed_by": "dev-team (review-lane qa-drain)",
         "redispatch_count": 1
+      },
+      {
+        "title": "Move market-summaries pure helpers to domain; split list/detail JSX",
+        "priority": "P2",
+        "zone": "frontend",
+        "type": "FACTORY",
+        "status": "QA",
+        "id": "FACTORY-FRONTEND-split-market-summaries",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-split-market-summaries",
+        "promoted_at": "2026-07-24T09:44:29Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-11T20:24:02Z",
+        "claimed_at": "2026-08-11T20:24:02Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T09:58:54Z",
+        "review_note": "dev-frontend DONE-CODE: 955L route split into app/domain/market-summaries/format.ts (9 pure helpers, verbatim) + app/components/market-summaries/*.tsx (12 files, all <=120L). Route 955L->324L. tsc clean, vitest 2047/2049 (2 pre-existing unrelated fail, confirmed baseline via git-stash A/B). Equivalence proven via reference-identity + golden-value tests. Live Playwright G12 render-gate DEFERRED (rebuild is USER-GATED, out of scope this task) — QA should verify code-level evidence only; render-gate batches onto next rebuild. Commits: e2f18a897 (code), 67e7be472 (memory)."
+      },
+      {
+        "title": "Split dashboard.orchestration: DTOs to shared, sections to components",
+        "priority": "P2",
+        "zone": "frontend",
+        "type": "FACTORY",
+        "status": "QA",
+        "id": "FACTORY-FRONTEND-split-orchestration",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-split-orchestration",
+        "promoted_at": "2026-07-24T10:14:31Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-11T20:24:02Z",
+        "claimed_at": "2026-08-11T20:24:02Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T10:35:20Z",
+        "review_note": "dev-frontend DONE-CODE (rebuild-verify deferred, USER-GATED): DTOs (StepDto/DecisionsDto/TaskStatus/TaskRow/TaskBoardCounts/TaskBoard/SignalRow/SignalQueue/SprintGoal/Narrative/Head/OrchState) moved verbatim to app/domain/orchestration/types.ts (re-exported from route). STALE_THRESHOLD_MS + staleness predicate moved to app/domain/orchestration/staleness.ts as isStale(tsField, now) — 9 unit tests. taskStatusClasses moved to app/domain/formatters/task-status-classes.ts (shared by 2 components, avoids circular import) — 8 unit tests. 11 render components split into app/components/orchestration/*.tsx, all <=120L (HeadPanel 52L, TaskGroup 57L, StepCard 61L, DecisionAccordion 66L, DoneTaskRow 88L, DoneTaskGroup 104L, TaskBoard 74L, SignalQueue 88L, SprintGoal 49L, Narrative 69L, doneTaskGrid.ts 16L) — a render smoke test was written and confirmed RED (module not found) BEFORE each component file was created, then GREEN immediately after (test-first, per ticket DoD). TASK-DASH-CRON-2 Cron Recheck Table left untouched (out of scope; a pre-existing test imports its exports directly from the route). POLL_MS=5000 + loader unchanged (grep-confirmed). tsc --noEmit clean. Full Vitest suite: 95 files/2112 tests, 2110 pass, same 2 pre-existing unrelated QUE_DESCRIPTIONS failures — confirmed IDENTICAL to baseline via git stash push -u -- apps/frontend A/B re-run (baseline 81/83 files, 2047/2049 tests, same 2 failures), then git stash pop. vite.config.ts test.include gained one entry (app/domain/orchestration/**) so the new staleness test is discoverable by Vitest — root-cause fix, mirrors the existing domain/formatters entry. Docs updated: docs/architecture/microservice/frontend/domain-model.md new split section. Decision journal: docs/agent-memory/decisions/sprint-FACTORY-FRONTEND-split-orchestration-dev-frontend.md (7 STEP entries). Live rebuild + Playwright G12 render-gate DEFERRED — task scope bound explicit \"CODE-ONLY, NO REBUILD... rebuilds are USER-GATED\"; batches onto a future rebuild."
+      },
+      {
+        "title": "Collapse triple-declared severity/channel constants (Fence-aware)",
+        "priority": "P2",
+        "zone": "alert-engine",
+        "type": "FACTORY",
+        "status": "QA",
+        "id": "FACTORY-ALERT-shared-vocab-package",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-shared-vocab-package",
+        "promoted_at": "2026-07-24T13:14:40Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-11T20:24:02Z",
+        "claimed_at": "2026-08-11T20:24:02Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "reviewed_at": "2026-07-24T13:22:00Z",
+        "reviewed_by": "dev-alert-engine"
       }
     ],
     "_closed_signals_20260614": {
@@ -19749,13 +19750,13 @@
         "last_served_tick": "2026-08-11T19:57:53Z"
       },
       "qa_drain": {
-        "last_served_tick": "2026-08-11T15:27:02Z"
+        "last_served_tick": "2026-08-11T20:23:38Z"
       },
       "step1_triage": {
         "last_served_tick": "2026-08-11T16:54:36Z"
       }
     },
-    "_updated_at": "2026-08-11T20:22:32Z",
+    "_updated_at": "2026-08-11T20:23:38Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
