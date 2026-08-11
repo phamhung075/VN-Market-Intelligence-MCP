@@ -19621,9 +19621,92 @@
         "last_served_tick": "2026-08-11T16:54:36Z"
       }
     },
-    "_updated_at": "2026-08-11T17:09:47Z",
-    "_updated_by": "po",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-11T17:24:39Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "fffdede98d374c05be07c33bd7b9fab50704cd867be6ce3c9a5989b418bc91b5",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-23320b68",
+          "head_sha": "23320b6869acf18473c9b94b3087ae8f32d91a49",
+          "run_id": 31513826899,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31513826899",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 93853915306
+            },
+            {
+              "name": "size-lint",
+              "conclusion": "failure",
+              "jobId": 93853915391
+            }
+          ],
+          "fingerprint": "1ca3b77b2cbff13d3a1f669c32a69a1401431e00c9af5566c8dbd407182d73ff",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 23320b6869acf18473c9b94b3087ae8f32d91a49: bun test,size-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-11T16:54:09Z",
+        "drained_at": "2026-08-11T17:24:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8d33ccbc575c0af60655820b6e59999c0f96ad67e7302ac5ec86f96acdae1648",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c28 · 2026-08-11T15:37Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-11T17:07:21Z",
+        "drained_at": "2026-08-11T17:24:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "aac7f54554617b4f3bb96e4de569ddecf62efd056a123aa90e2ce379abc83249",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/data/orch/orch-state.json' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/data/orch/orch-state.json' (b58f09cfe0c80dfc80b1726e0dc5ef40c15339b5) differs from what is about to land in this commit (d3a8aa285e310660aadf8f34f329832244c6cb79) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope (two-blob form takes NO pathspec — do not append '-- docs/data/orch/orch-state.json', that is a git usage error): git diff b58f09cfe0c80dfc80b1726e0dc5ef40c15339b5 d3a8aa285e310660aadf8f34f329832244c6cb79",
+        "createdAt": "2026-08-11T17:12:36Z",
+        "drained_at": "2026-08-11T17:24:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a4ea8f019b92981e39c51697d9f0405e1cfd5955b1bc7131eed6df889a22a1a8",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-15.md",
+          "line_count": 193,
+          "cap": 600,
+          "byte_count": 37067,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 1067,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-11T17:07:58Z",
+        "drained_at": "2026-08-11T17:24:39Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-11T17:09:47Z",
     "last_po_triage_note": "po/triage-20260811T1656Z (dev-team Step 1, step1_triage rotation). INPUTS: 18 pendingSignals (drained by router into prompt; live inbox confirmed [] and the ONLY uncommitted orch-state delta vs HEAD bba662b96 was that drain — structurally diffed, no peer interference), 5 Pipeline-B signal_queue to=po rows, 93 unresolved telegram reports (ids 4591-4683). OUTPUT: BATCH of 4. TELEGRAM PLANE FULLY CLEARED 93 -> 0 (list_unresolved_reports() == [] verified post-run): 87 duplicate (folded onto already-open rows), 4 monitoring, 1 fixed, 1 monitoring-preresolved. DEDUP RATIO 91/93 = 97.8% — the BUG channel was ~42% ONE defect (39 period-mismatch reports -> FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST, now proven to replay byte-identically for a THIRD consecutive day) and ~25% a second (RECONCILE EXHAUSTED, whose own circuit breaker id 4674 explicitly forbids per-row triage). ONLY 2 GENUINELY UNTRACKED FINDINGS in 93 reports + 23 signals, both minted after live source-probing: (1) FIX-MACRO-LIQUIDITY-STATE-HANDLER-EXCEEDS-CRON-15S-DEADLINE — the daily sbv-omo `unreachable` alert has a FALSE premise; macro-indicators is Up 12 days healthy, /health 200 in 2.6ms, GET /liquidity-state 405 (route registered), but POST hangs >18.4s against the cron`s 15s deadline, so sbv_omo_daily has silently accrued nothing for >=2 days; (2) SPIKE-NEWSSCOUT-KLFL-FALSE-ENOENT-ON-PRESENT-TRACKED-SKILL-FILE — news-scout KLFL-aborted its 16:09Z cycle (no c250 notebook entry) on ENOENT for a file that is present/tracked/unignored and was loaded fine by market-watcher in the SAME dispatch batch. ci_red x2 (CI-RED-1765317d, CI-RED-61b5b6f8) collapsed to ZERO new rows: both runs read at source via `gh run view --log-failed`, FAILED FILES byte-identical, all 3 files already carry exact dedup_key rows; recorded size-lint drift 237L->265L on transport.ts. 4 bug-escalation folded onto FIX-SWEEPGUARD-... (occ 28->32, worst prior_warns now 31 vs threshold 3, two concurrent repeat offenders). rag-service CRITICAL RAW-refuted as recovered (76.9%, no restart since 01:00:43Z); pdf-extractor CONFIRMED sustained and rising (94.90% -> 95.31%). 5/5 Pipeline-B rows closed to triaged with dispositions."
   }
