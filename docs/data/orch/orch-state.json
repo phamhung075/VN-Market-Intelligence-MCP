@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-11T12:17:59Z",
-    "updated_by": "developer",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "UC-RDL-P4",
+    "next_agent": "ba",
+    "next_action": "Design-Router Sweep claim of UC-RDL-P4 — spawn ba DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only (if either was set) preserved — do not clear.",
+    "updated_at": "2026-08-11T12:26:36Z",
+    "updated_by": "dev-team (design-router sweep)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2814,30 +2815,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
         "updated_at": "2026-07-29T03:22:34Z",
         "blocked_reason": "ZONE-MISMATCH: task was assigned to apps/stock-price/ but market_prices_history table and writer (24h rolling cutoff at pushPricesHandler.ts:224-236) are in apps/mcp-server/. Re-route to dev-mcp-server required."
-      },
-      {
-        "id": "UC-RDL-P7",
-        "type": "SPRINT-M",
-        "title": "Reconcile branch policy across the FULL branch lifecycle with the main-only invariant (po-gated)",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "multi",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P7",
-        "note": "STEP1 po ruling RECORDED 2026-07-17 (po_decision_ref): DROP the worktree/task-branch exception — the main-only invariant wins (repo verified 100% main-only live; the task/NNN-* + .claude/worktrees/ lifecycle in dev-standards.md is dead doc contradicting the standing user 'NO branches' rule). STEP2 (now unblocked, na=ba): ONE sprint reconciles developer+qa+microservice+fixer+pm+dev-team flows to main-only, puts the canonical commit/branch policy text in ONE place (commit-convention.md), and edits BOTH the branch-creation half AND the QA-merge half together (branch-creation-only edit wedges QA merge).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "ba",
-        "supervised": false,
-        "supervised_note": "STEP1 po-gate RESOLVED 2026-07-17 (see po_decision_ref) — no longer supervised; STEP2 flow-edits route via ba->architect->pm",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "po_gate_resolved": "2026-07-17",
-        "po_decision_ref": "docs/agent-memory/decisions/2026-07-17-UC-RDL-P7-branch-policy-main-only.md"
       },
       {
         "id": "UC-CDC-P7",
@@ -13575,32 +13552,33 @@
         "updated_by": "pm/manual-dispatch-runidle-unblock"
       },
       {
-        "id": "UC-RDL-P4",
+        "id": "UC-RDL-P7",
         "type": "SPRINT-M",
-        "title": "Composite dispatch_preflight MCP tool: presence + orphan probe + roster + intent claim in ONE gateway call",
+        "title": "Reconcile branch policy across the FULL branch lifecycle with the main-only invariant (po-gated)",
         "status": "READY",
         "priority": "P1",
-        "size": "L",
-        "zone": "apps/mcp-server/",
+        "size": "M",
+        "zone": "multi",
         "sprint": "ULTRACODE-AUDIT-FIXALL",
         "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P4",
-        "note": "Collapse the multi-call router preflight (Phase A/A.5/B) into one server-side dispatch_preflight tool to cut round-trips and race windows. Coordinate with UC-RDL-P1 (lock-prefix) landing first.",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P7",
+        "note": "STEP1 po ruling RECORDED 2026-07-17 (po_decision_ref): DROP the worktree/task-branch exception — the main-only invariant wins (repo verified 100% main-only live; the task/NNN-* + .claude/worktrees/ lifecycle in dev-standards.md is dead doc contradicting the standing user 'NO branches' rule). STEP2 (now unblocked, na=ba): ONE sprint reconciles developer+qa+microservice+fixer+pm+dev-team flows to main-only, puts the canonical commit/branch policy text in ONE place (commit-convention.md), and edits BOTH the branch-creation half AND the QA-merge half together (branch-creation-only edit wedges QA merge).",
         "created_at": "2026-07-13T19:31:11Z",
         "created_by": "po",
         "next_agent": "ba",
-        "withhold_note": "BOUNDED-1 auto-pickup withheld (SPRINT-M + overlaps NEW signal cow-20260715T184053 preflight presence-claim gap); routed to PO for adjudication",
-        "withheld_at": "2026-07-15T18:55:57Z",
-        "withheld_by": "dev-team (router withhold-gate)",
-        "supervised": true,
-        "po_adjudication": "PO adjudication 2026-07-15 (router withhold-gate): NOT subsumed. Signal cow-20260715T184053 bug lives in scripts/agents-flow/cowork-tick-preflight.sh (cowork-team TICK preflight, cross-service bash) -- a DIFFERENT flow/zone than UC-RDL-P4's ROUTER dispatch preflight composite MCP tool (apps/mcp-server/). Shipping FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP standalone now (P1, promotable). UC-RDL-P4 stays BACKLOG, supervised:true -- a SPRINT-M is deliberate PO sprint-initiation authority, not BOUNDED-1 idle auto-dispatch (supervised:true stops the re-promote/re-withhold churn). When the composite dispatch_preflight tool is designed: honor the claim-first / presence-NEVER-a-gate contract (cowork-team/flow/main.md Step 0b.1), and evaluate whether the cowork tick preflight should migrate to it -- but note the cowork tick preflight is deliberately a single-bash-call token-economy path (TOKEN-ECONOMY-TICK-PREFLIGHT WU-1), so a heavier per-tick MCP round-trip may not be the right home. Coordinate with UC-RDL-P1 (lock-prefix) landing first. Related: SYSREMAKE-P2 RC-CEREMONY \"shared tick-preflight-lib\" would eventually re-home this preflight; the standalone contract fix is compatible with that later extraction.",
-        "po_adjudicated_at": "2026-07-15T19:02:35Z",
-        "promoted_at": "2026-08-09T03:54:35Z",
+        "supervised": false,
+        "supervised_note": "STEP1 po-gate RESOLVED 2026-07-17 (see po_decision_ref) — no longer supervised; STEP2 flow-edits route via ba->architect->pm",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "po_gate_resolved": "2026-07-17",
+        "po_decision_ref": "docs/agent-memory/decisions/2026-07-17-UC-RDL-P7-branch-policy-main-only.md",
+        "promoted_at": "2026-08-11T12:26:29Z",
         "promoted_by": "dev-team (design-router sweep)",
         "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
         "dispatch_lane": "ba",
-        "updated_at": "2026-08-09T03:54:36Z"
+        "updated_at": "2026-08-11T12:26:30Z"
       }
     ],
     "review": [
@@ -18752,8 +18730,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-09T05:25:01Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-08-11T12:26:29Z",
+    "last_triaged_by": "dev-team (design-router sweep)",
     "in_progress": [
       {
         "id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
@@ -18817,6 +18795,36 @@
           "TASK-COWORK-SIGNAL-NAMING-CONTRACT"
         ],
         "decomposition_note": "Phase 1 decomposed into 4 atomic tasks per PO amendments (3 binding, 1 correction to FR-1 WINDOWKEY logic per Amendment 3). All inherit plan_only/supervised flags. No developer dispatch until PO adjudication."
+      },
+      {
+        "id": "UC-RDL-P4",
+        "type": "SPRINT-M",
+        "title": "Composite dispatch_preflight MCP tool: presence + orphan probe + roster + intent claim in ONE gateway call",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "L",
+        "zone": "apps/mcp-server/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P4",
+        "note": "Collapse the multi-call router preflight (Phase A/A.5/B) into one server-side dispatch_preflight tool to cut round-trips and race windows. Coordinate with UC-RDL-P1 (lock-prefix) landing first.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "ba",
+        "withhold_note": "BOUNDED-1 auto-pickup withheld (SPRINT-M + overlaps NEW signal cow-20260715T184053 preflight presence-claim gap); routed to PO for adjudication",
+        "withheld_at": "2026-07-15T18:55:57Z",
+        "withheld_by": "dev-team (router withhold-gate)",
+        "supervised": true,
+        "po_adjudication": "PO adjudication 2026-07-15 (router withhold-gate): NOT subsumed. Signal cow-20260715T184053 bug lives in scripts/agents-flow/cowork-tick-preflight.sh (cowork-team TICK preflight, cross-service bash) -- a DIFFERENT flow/zone than UC-RDL-P4's ROUTER dispatch preflight composite MCP tool (apps/mcp-server/). Shipping FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP standalone now (P1, promotable). UC-RDL-P4 stays BACKLOG, supervised:true -- a SPRINT-M is deliberate PO sprint-initiation authority, not BOUNDED-1 idle auto-dispatch (supervised:true stops the re-promote/re-withhold churn). When the composite dispatch_preflight tool is designed: honor the claim-first / presence-NEVER-a-gate contract (cowork-team/flow/main.md Step 0b.1), and evaluate whether the cowork tick preflight should migrate to it -- but note the cowork tick preflight is deliberately a single-bash-call token-economy path (TOKEN-ECONOMY-TICK-PREFLIGHT WU-1), so a heavier per-tick MCP round-trip may not be the right home. Coordinate with UC-RDL-P1 (lock-prefix) landing first. Related: SYSREMAKE-P2 RC-CEREMONY \"shared tick-preflight-lib\" would eventually re-home this preflight; the standalone contract fix is compatible with that later extraction.",
+        "po_adjudicated_at": "2026-07-15T19:02:35Z",
+        "promoted_at": "2026-08-09T03:54:35Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "ba",
+        "updated_at": "2026-08-11T12:26:36Z",
+        "claimed_at": "2026-08-11T12:26:35Z",
+        "claimed_by": "dev-team (design-router sweep)"
       }
     ]
   },
@@ -18841,7 +18849,7 @@
         "last_served_tick": "2026-08-11T12:09:31Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-09T03:54:21Z"
+        "last_served_tick": "2026-08-11T12:26:09Z"
       },
       "qa_drain": {
         "last_served_tick": "2026-08-09T04:22:58Z"
@@ -18850,7 +18858,7 @@
         "last_served_tick": "2026-08-09T04:53:51Z"
       }
     },
-    "_updated_at": "2026-08-11T12:24:37Z",
+    "_updated_at": "2026-08-11T12:26:09Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
