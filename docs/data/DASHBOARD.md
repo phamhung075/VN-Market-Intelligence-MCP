@@ -1306,3 +1306,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · pdf-extractor memory pressure — sustained 95%+ loss of reclamation
+**Severity:** WARN | **Date:** 2026-08-11 | **Status:** OPEN
+**Location:** pdf-extractor container
+**Details:** pdf-extractor baseline 95.91%, all 6 probes >93%. Loss of reclamation pattern (small dips 97.74→95.20, 97.78→95.19 insufficient to recover headroom). VmHWM pinned at 2587/2620 MB.
+**Impact:** Container unable to free memory despite GC activity. Indicates memory leak or workload requiring larger allocation.
+**Root cause:** Possible memory leak in pdf-extractor service or workload allocation underestimated.
+**Zone owner:** dev-pdf-extractor
+**Last reported:** 2026-08-11T18:16:29Z (signal sys-20260811T181602-0de9, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
