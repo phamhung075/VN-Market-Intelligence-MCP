@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "UC-RDL-P4",
-    "next_agent": "pm",
-    "next_action": "Architect completed brownfield design for UC-RDL-P4 (FR-1..FR-6/FR-8/FR-9; FR-7 forbidden this wave per PO Q1). Findings appended to docs/handoffs/UC-RDL-P4-BA-spec.md section [Architect] Brownfield Findings. Linked follow-up UC-RDL-P4B-DOC-CUTOVER minted to backlog (depends_on UC-RDL-P4, supervised:true). Spawn pm to decompose FR-1..FR-6/FR-8/FR-9 into developer task(s).",
-    "updated_at": "2026-08-11T13:26:58Z",
-    "updated_by": "architect"
+    "status": "idle",
+    "updated_at": "2026-08-11T13:36:03Z",
+    "updated_by": "dev-team",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
