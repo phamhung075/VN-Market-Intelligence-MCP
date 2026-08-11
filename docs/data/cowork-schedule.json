@@ -162,7 +162,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": null,
-      "last_fired": "2026-08-08T20:23:36Z",
+      "last_fired": "2026-08-11T20:23:56Z",
       "trigger_id": "trig_01QgnBwnEyzLj5as55i53tea",
       "_superseded_by": "cowork-dispatcher",
       "trigger_status": "superseded",
@@ -222,7 +222,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": "bctc-offmarket",
-      "last_fired": "2026-08-08T21:07:29Z",
+      "last_fired": "2026-08-11T21:02:51Z",
       "trigger_id": null,
       "_note": "Slot 3 of 4. Off-market confirmed (21:00 UTC = 04:00 ICT — before 09:00 ICT open)."
     },
