@@ -12855,69 +12855,6 @@
         }
       },
       {
-        "title": "Collapse triple-declared severity/channel constants (Fence-aware)",
-        "priority": "P2",
-        "zone": "alert-engine",
-        "type": "FACTORY",
-        "status": "DONE_VERIFIED",
-        "id": "FACTORY-ALERT-shared-vocab-package",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-shared-vocab-package",
-        "promoted_at": "2026-07-24T13:14:40Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-11T20:28:00Z",
-        "claimed_at": "2026-08-11T20:24:02Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "reviewed_at": "2026-07-24T13:22:00Z",
-        "reviewed_by": "dev-alert-engine",
-        "qa_verified_at": "2026-08-11T20:27:58Z",
-        "qa_verified_by": "qa",
-        "status_note": "[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Row carried no .commit/.files[]/.owner/.status_note (predates drain fields) -- derived commit 9d91af5bb5153a180454dc095dc9d5658f192502 via `git log --all -- <detail_ref files[]>`; commit date 2026-07-24T15:20:08+02:00 (UTC 2026-07-24T13:20:08Z) is 1m52s before reviewed_at (2026-07-24T13:22:00Z) -- high-confidence match, confirmed `git merge-base --is-ancestor` on main. `git show --stat` touches only cooldown-gate/gate.go (1 of the 3 detail_ref files[]) -- DoD is disjunctive (Fence-A-approved shared vocab package OR cooldown-gate literal collapsed); dev chose the low-risk fallback, so models.go/signal-classifier/classifier.go untouched is expected, not a gap. Verified .golangci.yml fence-a deny-list live (not trusted from commit prose): pkg/domain import is genuinely permitted for pkg/primitive/* (only application/infrastructure/interface/mattn-sqlite3 denied), corroborating the commit's Fence-A-permitted claim. Read gate.go directly: L92 now references domain.SeverityCritical (was a hand-copied literal); string value \"critical\" byte-identical across domain/classifier/gate. `git diff 9d91af5bb..HEAD -- gate.go` empty -- no later commit reverted it. Re-ran REAL verification, not trusted from prose: go build ./... and go vet ./... clean; go test -count=1 ./... 8/8 packages pass (targeted cooldown-gate suite 10/10 incl. TestCheck_CriticalBypass/TestCheck_CriticalMacroNoBypass, the two paths exercising the collapsed literal); golangci-lint run (Fence-A/B/C) 0 issues; mock-guard.sh --files gate.go PASS; security greps (process.env/password/secret/token) clean on gate.go. DoD fully met via fallback branch: literal collapsed, string value unchanged, build+test+lint green, behavior unchanged (test suite proves it). DJ-GATE-1: sprint-FACTORY-ALERT-shared-vocab-package-dev-alert-engine.md (task-id stamped) pre-satisfied; own QA DJ sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-16.md STEP qa-S53.",
-        "verification": {
-          "raw_probe": {
-            "tool": "go build ./... && go vet ./... && go test -count=1 ./... && golangci-lint run ./... && mock-guard.sh --files gate.go",
-            "args": {
-              "cwd": "apps/alert-engine",
-              "commit_verified": "9d91af5bb5153a180454dc095dc9d5658f192502"
-            },
-            "live_value_observed": "go build/vet clean; go test -count=1 ./... 8/8 packages pass fresh (targeted cooldown-gate 10/10 incl CriticalBypass/CriticalMacroNoBypass); golangci-lint (Fence-A/B/C) 0 issues; mock-guard.sh PASS; security greps clean; gate.go L92 confirmed referencing domain.SeverityCritical, no later revert",
-            "observed_at": "2026-08-11T20:27:58Z"
-          }
-        }
-      },
-      {
-        "title": "Split dashboard.orchestration: DTOs to shared, sections to components",
-        "priority": "P2",
-        "zone": "frontend",
-        "type": "FACTORY",
-        "status": "DONE_VERIFIED",
-        "id": "FACTORY-FRONTEND-split-orchestration",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-split-orchestration",
-        "promoted_at": "2026-07-24T10:14:31Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-11T20:38:07Z",
-        "claimed_at": "2026-08-11T20:24:02Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T10:35:20Z",
-        "review_note": "dev-frontend DONE-CODE (rebuild-verify deferred, USER-GATED): DTOs (StepDto/DecisionsDto/TaskStatus/TaskRow/TaskBoardCounts/TaskBoard/SignalRow/SignalQueue/SprintGoal/Narrative/Head/OrchState) moved verbatim to app/domain/orchestration/types.ts (re-exported from route). STALE_THRESHOLD_MS + staleness predicate moved to app/domain/orchestration/staleness.ts as isStale(tsField, now) — 9 unit tests. taskStatusClasses moved to app/domain/formatters/task-status-classes.ts (shared by 2 components, avoids circular import) — 8 unit tests. 11 render components split into app/components/orchestration/*.tsx, all <=120L (HeadPanel 52L, TaskGroup 57L, StepCard 61L, DecisionAccordion 66L, DoneTaskRow 88L, DoneTaskGroup 104L, TaskBoard 74L, SignalQueue 88L, SprintGoal 49L, Narrative 69L, doneTaskGrid.ts 16L) — a render smoke test was written and confirmed RED (module not found) BEFORE each component file was created, then GREEN immediately after (test-first, per ticket DoD). TASK-DASH-CRON-2 Cron Recheck Table left untouched (out of scope; a pre-existing test imports its exports directly from the route). POLL_MS=5000 + loader unchanged (grep-confirmed). tsc --noEmit clean. Full Vitest suite: 95 files/2112 tests, 2110 pass, same 2 pre-existing unrelated QUE_DESCRIPTIONS failures — confirmed IDENTICAL to baseline via git stash push -u -- apps/frontend A/B re-run (baseline 81/83 files, 2047/2049 tests, same 2 failures), then git stash pop. vite.config.ts test.include gained one entry (app/domain/orchestration/**) so the new staleness test is discoverable by Vitest — root-cause fix, mirrors the existing domain/formatters entry. Docs updated: docs/architecture/microservice/frontend/domain-model.md new split section. Decision journal: docs/agent-memory/decisions/sprint-FACTORY-FRONTEND-split-orchestration-dev-frontend.md (7 STEP entries). Live rebuild + Playwright G12 render-gate DEFERRED — task scope bound explicit \"CODE-ONLY, NO REBUILD... rebuilds are USER-GATED\"; batches onto a future rebuild.\n\n[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Row carried no .commit/.files[]/.owner (predates drain fields); derived commit c73a494ee9267452e6efc00cd14bcf9b3b38be86 via `git log --all -- app/domain/orchestration/* app/components/orchestration/*` — dated 2026-07-24T12:38:01+02:00, confirmed on main ancestry via `git merge-base --is-ancestor`; `git show --stat` matches all 29 claimed files exactly (types.ts/staleness.ts/task-status-classes.ts/11 components/doneTaskGrid.ts/10 new test files/vite.config.ts/domain-model.md). RAW-verified, not trusted from prose: byte-diffed the DTO block (StepDto..OrchState), the isStale predicate, and taskStatusClasses against the pre-split route (c73a494ee^) — verbatim moves, only new docstrings added, no shape/logic drift. All 11 component files confirmed at claimed line counts (HeadPanel52/TaskGroup57/StepCard61/DecisionAccordion66/DoneTaskRow88/DoneTaskGroup104/TaskBoard74/SignalQueue88/SprintGoal49/Narrative69/doneTaskGrid16), all <=120L. POLL_MS=5000 + polling loader byte-identical. TASK-DASH-CRON-2 types/components correctly left untouched in the route. No circular imports (components do not import back from the route). tsc --noEmit clean; eslint lint:fence (DDD Fence-A/B/C boundaries) 0 violations on all touched files. DDD greps (infrastructure/application imports) clean. Security greps: process.env hits in route/vite.config.ts pre-exist this commit (grep-confirmed on parent c73a494ee^), not introduced; no password/secret/token hits. mock-guard.sh --files (16 production files) PASS. Targeted 13-file/104-test orchestration suite (incl. the 9 new staleness + 8 new taskStatusClasses unit tests) — 100% pass; vitest was blocked repo-wide by a pre-existing pnpm-hoist esbuild-binary-version mismatch (reproduced independently on an unrelated pre-existing test file, confirming it predates and is unrelated to this commit) — worked around via ESBUILD_BINARY_PATH env override, no file changes. Full-suite equivalence claim (row claimed 2110/2112 pass, 2 pre-existing fails) has drifted since 2026-07-24 to 32 fails/11 files today under current node_modules — did not accept either number blind: A/B via detached git worktrees pinned exactly at c73a494ee vs its parent c73a494ee^, both against the SAME shared node_modules — byte-identical 32-failure set (11 files: FE-HEADER-SSOT-top-nav/QUE-REFERENCE-PAGE-detail/QUE-TOOLTIP-DRY-1a-codegen-pipeline/ind-p1-indicator-gauges-nav/ind-p1-momentum-nav/task17-page14..19-nav — none touching orchestration) in BOTH, proving zero regressions from this refactor; today's drift is unrelated later-commit fallout, not this task's fault. rebuild_required:true in backlog-detail correctly DEFERRED — task scope explicitly bound CODE-ONLY/NO-REBUILD (rebuild is USER-GATED), consistent with dev's own claim. DJ-GATE-1: sprint-FACTORY-FRONTEND-split-orchestration-dev-frontend.md (task-id stamped x7) pre-satisfied; own QA DJ sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-16.md STEP qa-S54.",
-        "qa_verified_at": "2026-08-11T20:38:06Z",
-        "qa_verified_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "tsc --noEmit && eslint (lint:fence) && mock-guard.sh && vitest (ESBUILD_BINARY_PATH override) + worktree A/B pinned at c73a494ee vs c73a494ee^",
-            "args": {
-              "cwd": "apps/frontend",
-              "commit_verified": "c73a494ee9267452e6efc00cd14bcf9b3b38be86"
-            },
-            "live_value_observed": "tsc --noEmit clean; eslint lint:fence 0 boundary violations; mock-guard.sh PASS (16 files); DDD/security greps clean (process.env pre-existing); targeted orchestration suite 13 files/104 tests 100% pass; full-suite worktree A/B at c73a494ee vs c73a494ee^ (same shared node_modules) produced byte-identical 32-failure/11-file set in BOTH — proves zero regressions from this refactor, drift is unrelated/pre-existing",
-            "observed_at": "2026-08-11T20:36:40Z"
-          }
-        }
-      },
-      {
         "title": "Move market-summaries pure helpers to domain; split list/detail JSX",
         "priority": "P2",
         "zone": "frontend",
