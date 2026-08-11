@@ -186,3 +186,35 @@ guard-only, test-covered, additive change.
 self-certify on a `supervised:true` row with a 4x-recurrence history). `orch-state.json` left
 **UNCOMMITTED** — same `FU-AGENT-FATHER-ORCH-SCOPE` precedent as S28/S33; router/PO owns the
 board-write commit.
+
+### STEP agent-father-S35 · agent-father · 2026-08-11T16:34:52Z
+**task-id:** FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK
+**what-done:** Closed QA's CHANGES_REQUESTED (AC-3 gap). Added trailing `-- <paths>` pathspec
+to `docs/protocols/docker-deployment-runbook.md:148` (ops Close-Gate step 2, the exact site QA
+flagged). While authoring the AC-3 fleet-wide grep proof myself found a 2nd unresolved bare site
+QA's manual pass missed: `docs/policies/dev-standards.md:1468`'s "Commit Format § Shell
+mechanism" heredoc closed `)"` with NO trailing pathspec at all — fixed the same way. Persisted
+the regression proof as `scripts/verify-fleet-commit-pathspec.sh` (bash-3.2-safe, no
+`declare -A` — host `/bin/bash` is 3.2.57) scanning `docs/agents/ docs/policies/ docs/protocols/
+.claude/skills/`, opt-IN allowlist of 7 justified file:line entries (prose warnings +
+`commit-boundary/SKILL.md:71` FORBIDDEN block), inline + bounded-lookahead pathspec detection.
+Negative-controlled it (reverted the runbook fix in a scratch copy, confirmed FAIL+exit 1;
+restored, confirmed PASS) before trusting the green result. Final run: 64 sites scanned, 0 FAIL.
+**what-considered:**
+- Whether to fix `dev-standards.md:1468` in this row vs. mint a new task: it is squarely inside
+  AC-3's own corpus-wide definition ("no fleet doc instructs a bare `git commit -m`"), not a new
+  bug class, and leaving it would make my own persisted verifier report FAIL on this same row's
+  corpus — chose to fix it here, documented as an ADDITIONAL finding beyond the QA-flagged site.
+- LOOKAHEAD window size for the verifier: first pass (10 lines) false-flagged my own new prose
+  sentence on `dev-standards.md:1465` (mentions `git commit -m` inside a warning clause) because
+  the real fenced code-block pathspec sat outside the window from THAT line — rather than
+  widening the window (risk: cross-contamination between two nearby real commit sites), added
+  the prose line as an explicit opt-IN allowlist entry, consistent with the other 3 prose-warning
+  entries already required for the AC-2 files.
+**why-decision:** Root-cause-fix directive (CLAUDE.md) plus the row's own AC-3 wording is
+corpus-wide, not file-list-scoped — a verifier that still fails on the same corpus this row
+claims to have proven clean would not actually close the row.
+**why-change:** Row moved `review`→`qa` via `jq | scripts/orch-apply.sh`, `status_note` updated
+with this fix + fix inventory (2 files, AC-3 proof persisted), `next_agent=qa`. Own commit uses
+explicit trailing pathspec (session sweep-guard warn-budget already exhausted, per row's own
+prior EXECUTED note).

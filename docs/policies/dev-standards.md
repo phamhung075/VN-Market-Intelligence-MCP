@@ -1462,7 +1462,7 @@ Full reference → `.claude/WORKFLOW.md#branch-hygiene-checklist`
 
 Full spec → `docs/policies/commit-convention.md` (type vocabulary, scope, task-id, trailers, worked example, no-sprint rule).
 
-Shell mechanism — always use the heredoc pattern:
+Shell mechanism — always use the heredoc pattern, pathspec-scoped (never bare — a bare `git commit -m "..."` with no trailing pathspec is hard-rejected by the live `scripts/git-hooks/pre-commit` sweep guard once this session's pooled bare-commit warn count passes threshold):
 
 ```bash
 git commit -m "$(cat <<'EOF'
@@ -1474,7 +1474,7 @@ Sprint: <sprint>
 Task: <task-id>
 AC: <terse criterion 1> / <terse criterion 2>
 EOF
-)"
+)" -- <explicit paths>
 ```
 
 ## Push Policy — Autonomous Push Gate

@@ -115,3 +115,24 @@
   commit fallback used.
 - Step 7 PO handoff: Escalation 2 (semble-search, LOW) carries forward; NEW — recommend explicit
   scan-orphans run to resolve 3-cycle-persistent 46-vs-42 notebook-file gap.
+
+## QA-resubmit 2026-08-11 16:34 UTC — task FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK
+- CHANGES_REQUESTED from QA on the row I EXECUTED earlier this session (15:14Z): AC-3 fleet-wide
+  grep regression proof was flagged NOT-run by me, QA ran it and found one missed site,
+  `docs/protocols/docker-deployment-runbook.md:148` (ops Close-Gate bare `git commit -m`).
+- Fixed: added trailing `-- <paths>` pathspec there (mirrors the 3 AC-2 files). While authoring
+  the AC-3 proof myself found a 2nd site QA's own manual pass missed:
+  `docs/policies/dev-standards.md:1468` ("Commit Format § Shell mechanism" heredoc — closed `)"`
+  with zero pathspec, not even a placeholder). Fixed the same way.
+- Persisted the regression proof as `scripts/verify-fleet-commit-pathspec.sh` — bash-3.2-safe (no
+  `declare -A`; discovered host `/bin/bash` is 3.2.57, associative arrays unsupported, first
+  script version crash-looped on that). Opt-IN allowlist (7 justified file:line entries: prose
+  warnings about the rejected form + 1 labelled `# FORBIDDEN` illustrative block in
+  `commit-boundary/SKILL.md`), corpus = `docs/agents/ docs/policies/ docs/protocols/
+  .claude/skills/`. Negative-controlled before trusting green (reverted the runbook fix in-place,
+  confirmed FAIL+exit1, restored, confirmed PASS) — final: 64 sites scanned, 0 FAIL.
+- Row moved `review`→`qa` via `orch-apply.sh`; `status_note` updated with the fix inventory + the
+  additional dev-standards.md finding, explicit for QA re-verification (not silently folded in).
+  DJ: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md` STEP agent-father-S35.
+- Own commit uses explicit trailing pathspec (session sweep-guard warn-budget already exhausted,
+  per this same row's prior 15:14Z EXECUTED note).

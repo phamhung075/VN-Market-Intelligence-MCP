@@ -145,8 +145,12 @@ NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ); jq --arg task_id "$TASK_ID" --arg from_lane 
    ```
 2. **Commit:**
    ```bash
-   git commit -m "chore(ops): close-gate <task_id> — board+head forward to qa"
+   git commit -m "chore(ops): close-gate <task_id> — board+head forward to qa" \
+     -- docs/agent-memory/notebooks/ops.md \
+        docs/agent-memory/decisions/sprint-<sprint_id>-ops.md \
+        docs/data/orch/orch-state.json
    ```
+   A bare `git commit -m "..."` with no trailing pathspec is hard-rejected by the live `scripts/git-hooks/pre-commit` sweep guard once this session's pooled bare-commit warn count passes threshold — the pathspec MUST be repeated on the `git commit` command itself, mirroring the 3 paths staged above. Convention: `docs/policies/commit-convention.md`.
 3. **Raw self-verify (commit-boundary RULE 3):**
    ```bash
    git show --name-only HEAD
