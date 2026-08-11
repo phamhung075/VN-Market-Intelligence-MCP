@@ -160,3 +160,14 @@
 - Working tree clean on all 4 touched files (`git status --porcelain`) — no undocumented drift since the commit.
 **why-decision:** APPROVED, DONE_VERIFIED — pure behavior-preserving structural split, re-run tests/tsc/mock-guard/DDD/security all green, size-lint concern resolved as already-baselined (not a live gate fail).
 **why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S45 · qa · 2026-08-11T16:11:03Z
+**task-id:** FIX-CRON-CODEJANITOR-NO-PRESPAWN-GATE-BOOTS-FULL-SESSION-4X-DAILY
+**what-done:** Direct-commit verify (`review[]` row, `commit_sha` 1d5e55d75, no branch/handoff, dev-team spawn outside this session). Re-ran `code-janitor-tick-preflight.test.sh` fresh: 27/27 pass; `shellcheck` clean on both new files (only the same pre-existing SC1091 info-nit the 2 sibling precedent test scripts also carry).
+**what-considered:**
+- AC-1/AC-2/AC-4 byte-verified against source: gate's diff-scope matches main.md's CADRAT-3 exactly, verdict shape matches db-integrity-probe.sh's atomic tmp+mv, cron-code-janitor.md/register-job prompt bodies IDENTICAL (diffed).
+- SIGNAL-SKIP correctness-gap claim CONFIRMED real (main.md:114-115 "skip row on SIGNAL-SKIP"); fix is prose PRE-GATE CONTEXT in the CronCreate prompt only, not code-enforced — residual LLM-narration-compliance risk, same class as rest of this gate family, not a new one.
+- OPERATIONAL FINDING: docs/signals/processed/ already holds 6 dated janitor-health-recheck-writer-retired-*.json (08-05..08-11) — confirms sibling bug FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (BACKLOG) is live, so signal_written will likely fire on most/all Branch-B ticks until that ships, largely negating this fix's economy win meanwhile — not this commit's defect, flagged for PO priority.
+- Commit 1d5e55d75 is `feat` delivering a board task but carries NO `Task:`/`AC:` trailer (commit-convention.md requires both) — already on main, unfixable without a destructive amend; recorded non-blocking.
+**why-decision:** APPROVED — all 4 ACs verified against source (not commit-message prose), tests re-run green, no functional/security/DDD defect; both findings above are real but neither is a functional regression nor practically remediable via a redo-cycle on an already-merged direct commit.
+**why-change:** none — verified exactly what the row scoped; also confirmed live cron re-arm (CronCreate) is a separate step outside QA/this session's authority, not yet verified — flagged for router/PO in RETURN.
