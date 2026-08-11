@@ -1,0 +1,47 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-11T16:39:05Z",
+    "matched_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-4": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-4": null
+    },
+    "last_fired_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "last_fired_timestamp": "2026-08-11T16:38:54Z",
+    "note": "single-slot tick (refine-bctc-slot-4, bctc-offmarket cron fallback); 0 new signals this tick"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-11T16:39:05Z",
+  "_processed": {
+    "fingerprint": "6fbc10d7174dd2391c6946beb4ce659e30d84de70daaf23d13bccdbaa26bd10d",
+    "processedAt": "2026-08-11T16:51:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
