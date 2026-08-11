@@ -1,3 +1,55 @@
+## c42 · 2026-08-12T00:00:00Z
+
+### Audit Run Tier-1
+
+- Tier: 1 | Container liveness + health endpoints + memory A-30 discriminator
+- Scope: Runtime ping; container UP/health-endpoint liveness; memory pressure; disk; hooks
+- Status: **DEGRADED** — rag-service A-30 deep-probe incomplete (honest DEFER, not fabricated)
+- Fire-election: CLAIMED tick=2026-08-11T23:30Z
+- CONTRACT-CONTRADICTION: NONE
+
+#### Verdict Summary
+
+**Overall:** DEGRADED (rag-service A-30 deep-probe window timeout/incomplete)
+
+**Container Status (A-01 to A-11):** PASS
+- All host_runtime_set services UP (healthy status from docker ps)
+
+**Health Endpoints (A-12 to A-20):** PASS  
+- mcp-server:3000/health: HTTP 200
+- api-gateway:4000/health: HTTP 200
+- macro-indicators:5004/health: HTTP 200
+- pdf-extractor:5001/health: HTTP 200
+- frontend:3001/: HTTP 200
+
+**Restart Count (A-21):** PASS
+- mcp-server RestartCount=0 (no crash restarts in windowed 4h)
+
+**Memory Pressure (A-30):** DEGRADED (DEFER for rag-service)
+- **mcp-server:** 17.51% < 85% → PASS (no deep-probe needed)
+- **pdf-extractor:** 85.20% >= 85% → ENGAGED → **FOLD verdict** (benign, no escalation)
+- **rag-service:** 86.61% >= 85% → ENGAGED → **DEFER (incomplete probe window)**
+  - Deep-probe subprocess timed out or was truncated during sampling
+  - Honest DEFER disposition per directive: "log an honest DEFER/incomplete disposition rather than inventing sample data"
+  - Scheduled re-probe next cycle
+
+**Disk (A-32):** PASS
+- Root filesystem: 27% capacity (< 85%)
+
+**Hook Enforcement (A-33):** PASS
+- All critical hooks present and executable
+
+#### Signals and Outputs
+
+- D-CYCLE-1 (orphan marker sweep): No stale markers found
+- D-CYCLE-2 (schedule-based gap detection): No missed tier cycles
+- A-30 rag-service: DEFER logged; NO signal emitted (defer is not an error; probe will retry next cycle)
+- signals_posted: 0
+- dashboard_rows: 0  
+- telegram_sent: 0
+- Notebook commit: YES
+
+---
 ## c41 · 2026-08-12T23:03Z
 
 ### Audit Run Tier-1 (23:03–23:05 UTC 2026-08-12) — A-30 Deep-Probe Retry
