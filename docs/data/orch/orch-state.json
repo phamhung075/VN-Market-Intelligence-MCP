@@ -551,6 +551,20 @@
         "payload_ref": null,
         "provenance": "agent-father",
         "detail": "Pure relocation, zero logic changed (mirrors TE-T16/TE-T26 precedent). Also updated the LIVE .claude/skills/cron-cowork-team/SKILL.md ERROR clause to point at preflight-error-fallback.md (was pointing at main.md Step 0a, now removed) -- recommend router run /cron-cowork-team re-arm after DONE_VERIFIED. agent-father commit_zone excludes docs/data/orch/orch-state.json (FU-AGENT-FATHER-ORCH-SCOPE) -- router/po must commit this file; agent-father commits only its own zone (docs/agents/, .claude/skills/, docs/agent-memory/). Board row already applied via orch-apply.sh (status=REVIEW, next_agent=qa, task_board.review[])."
+      },
+      {
+        "id": "sys-20260811T174020-7025",
+        "ts": "2026-08-11T17:40:20Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "memory_pressure",
+        "summary": "pdf-extractor A-30 ESCALATE: sustained high memory >93% — loss of reclamation",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-11T14:30Z",
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -12662,6 +12676,35 @@
           }
         },
         "po_signoff_20260811T1733Z": "PO SIGN-OFF — DONE_VERIFIED 2026-08-11T17:33Z, closed on a FIRST-HAND live probe run at close time, not on the relayed 2026-07-30 evidence. Answers dev-pdf-extractor open question (a): this evidence-only (no-diff) row closes DONE_VERIFIED directly and does NOT route through qa verify-live. Reasoning: a qa verify-live pass would re-execute the identical query against the identical DB with zero diff to regress — pure churn. But closing on the 12-day-old relayed report alone WOULD have been a false-green, because a peer PO ruling 99 minutes earlier (po_proof_refuted_20260811T1554 on the sibling SPIKE) declared this same pipeline a live systemic incident. So the close is grounded in my own probe: see .verification.raw_probe. Decisive numbers — bctc_layout_units 1245 -> 5855 rows across 7 distinct production days since 07-30, MAX(extracted_at) 2026-08-11 11:52:30 (5.6h pre-close), and 2 bctc_vps_queue rows sitting in pek_triggered at 17:05:42Z. That is 12 days of UNATTENDED production, strictly stronger than the single hand-fired DPM row this close was originally offered on. All three ACs retired by observation; no OCR-gateway deadlock, no unreachable mcp-server, no port/firewall defect — an unreachable host cannot produce 4610 landed rows. Residual (1) from the dev-pdf-extractor handoff (07-28 11:06-18:04 errno-111/semaphore window unre-provable, container logs rotated away) is accepted as permanently unfalsifiable and explicitly NOT a blocker: 12 days of clean production is the superseding evidence. Residual (2) (128 terminal rows need manual re-fire) is REFUTED — see the ownership call recorded on SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD. Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-po-8.md STEP po-S82."
+      },
+      {
+        "title": "Split ssc.ts into per-portal disclosure fetchers (no dedup-delete yet)",
+        "priority": "P2",
+        "zone": "mcp-server-infra",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-INFRA-split-ssc-fetchers",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-ssc-fetchers",
+        "promoted_at": "2026-07-24T05:46:19Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-11T17:38:32Z",
+        "claimed_at": "2026-08-11T17:28:33Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T06:12:21Z",
+        "review_note": "dev-mcp-server self-closeout: pure structural split, behavior-preserving, no dedup-delete (deferred to a follow-up task per explicit scope note). Split ssc.ts (1029L, bundled SSC+HOSE+HNX+UPCOM disclosure fetchers) into sscCommon.ts (SscDocument/HttpClient types, makeDefaultHttpClient, titleMatchesReportType), sscPortal.ts (SSC congbothongtin.ssc.gov.vn: buildSscSearchUrl/parseSscHtml/withBrowserLock/_runSscPath), hoseDisclosure.ts, hnxDisclosure.ts, upcomDisclosure.ts (named *Disclosure.ts, not hose.ts/hnx.ts, to avoid colliding with existing unrelated market-price fetchers of those names). ssc.ts (1029L->186L) kept to listSscDocuments/listSscDocumentsWithFlag orchestration, re-exporting the pre-split public surface so all 7 production + 16 test call sites are unaffected -- mirrors this session's newsNormalizer split precedent. Note: canonical backlog ticket specifies a disclosures/ subfolder + <=120L cap; followed the dispatcher's explicit newsNormalizer-precedent instruction instead (flagged in journal for QA). Code-only diff confirms zero logic drift (only delta: 3 fns gain export + 5 re-export barrel lines). bun tsc --noEmit clean. Targeted 9-file ssc/disclosure suite 85/85 pass identical before/after. Full bun test: 14734 pass/40 skip/43 fail -- grep-confirmed zero overlap with touched files, all 43 match documented pre-existing flaky classes. gen-project-stats unaffected (toolCount=184, cronJobCount=88). Server boot probe (port 3099): health 200, both dashboards 200. Commit 315bc0728 (code) + 64d014937 (memory). Journal: docs/agent-memory/decisions/sprint-FACTORY-INFRA-split-ssc-fetchers-dev-mcp-server.md | [QA] Review Record (direct-commit verify): Verified commits 315bc0728 (code) + 64d014937 (memory) on main ancestry (git merge-base --is-ancestor both PASS). git show --stat 315bc0728 matches all 6 claimed files exactly (ssc.ts 897- lines + 5 new siblings: sscCommon.ts 141L, sscPortal.ts 388L, hoseDisclosure.ts 174L, hnxDisclosure.ts 145L, upcomDisclosure.ts 133L). ZERO-DRIFT independently re-proven (not trusted from prose): comment/blank-stripped, import/export-normalized, multiset-sorted diff of old ssc.ts vs. concatenated new files shows the ONLY delta is the 5 new cross-module import lines -- every statement byte-identical; confirmed the 3 claimed export-only flips (_runSscPath/makeDefaultHttpClient/titleMatchesReportType) at source. Re-ran a BROADER regression than the review's cited 9-file/85-test claim: grepped repo-wide for real imports of the 6 touched modules -- 17 files, 204 tests, 201 pass/3 skip/0 fail. bun tsc --noEmit clean. mock-guard.sh PASS on all 6 files. DDD (domain/application import) + process.env + secret/password/token greps clean on all 6 files. Confirmed hose.ts/hnx.ts (unrelated pre-existing market-price fetchers) untouched -- no name collision, dedup-delete correctly deferred as scoped. SCOPE DEVIATION (self-flagged by dev, independently judged): canonical ticket specifies a disclosures/ subfolder + <=120L-per-file cap; actual split is flat sibling files in infrastructure/fetchers/, and ALL 6 files exceed 120L (worst: sscPortal.ts 388L, >3x cap) -- worse than the review_note's own framing (which cited only ssc.ts's 186L). size-lint-justification.sh --check passes today only because size-lint-baseline.json's last regen (2026-08-09) postdates this split (2026-07-24) and swept these sizes in as grandfathered debt -- none of the 6 files carry an in-file size-justification header, so this is a baseline-timing artifact, not genuine contemporaneous justification. Weighed against the identically-shaped, already-QA-APPROVED/DONE_VERIFIED FACTORY-DOMAIN-split-newsNormalizer precedent this row cites (also BOUNDED-1 unsupervised auto-pickup, same flat-sibling-file + oversized-file pattern, up to 503L) -- rejecting this row for the same shape of deviation the fleet already accepted once would be an inconsistent gate, given functional risk here is independently proven nil. VERDICT: ACCEPTED AS-IS, non-blocking. Findings for PO/architect (not blocking this task): (1) add size-justification headers to the 6 ssc files to close the DoD gap on paper; (2) size-lint baseline-grandfather mechanism silently absorbs post-gate-creation files as pre-existing debt when a regen lands after their creation -- a gate-timing gap worth a dedicated FIX row. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-15.md STEP qa-S48.",
+        "qa_verified_by": "qa",
+        "qa_verified_at": "2026-08-11T17:38:31Z",
+        "updated_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun test (repo-wide import-scoped regression, 17 files) + bun tsc --noEmit + mock-guard.sh + independent normalized/sorted-diff equivalence script + git merge-base --is-ancestor + git show --stat",
+            "args": "commit 315bc0728; files apps/mcp-server/src/infrastructure/fetchers/{ssc,sscCommon,sscPortal,hoseDisclosure,hnxDisclosure,upcomDisclosure}.ts; 17 test files matching grep -rl \"fetchers/ssc\" apps/mcp-server/src/__tests__ --include=*.test.ts",
+            "live_value_observed": "201 pass/3 skip/0 fail/204 tests (broader than review's cited 85); tsc 0 errors; mock-guard PASS; DDD/process.env/secret greps clean; sorted-diff shows zero content delta besides 5 new cross-module import lines",
+            "observed_at": "2026-08-11T17:38:31Z"
+          }
+        }
       }
     ],
     "head": {
@@ -19510,24 +19553,6 @@
         "claimed_at": "2026-08-11T15:25:14Z",
         "claimed_by": "dev-team (review-lane qa-drain)",
         "redispatch_count": 1
-      },
-      {
-        "title": "Split ssc.ts into per-portal disclosure fetchers (no dedup-delete yet)",
-        "priority": "P2",
-        "zone": "mcp-server-infra",
-        "type": "FACTORY",
-        "status": "QA",
-        "id": "FACTORY-INFRA-split-ssc-fetchers",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-ssc-fetchers",
-        "promoted_at": "2026-07-24T05:46:19Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-11T17:28:34Z",
-        "claimed_at": "2026-08-11T17:28:33Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T06:12:21Z",
-        "review_note": "dev-mcp-server self-closeout: pure structural split, behavior-preserving, no dedup-delete (deferred to a follow-up task per explicit scope note). Split ssc.ts (1029L, bundled SSC+HOSE+HNX+UPCOM disclosure fetchers) into sscCommon.ts (SscDocument/HttpClient types, makeDefaultHttpClient, titleMatchesReportType), sscPortal.ts (SSC congbothongtin.ssc.gov.vn: buildSscSearchUrl/parseSscHtml/withBrowserLock/_runSscPath), hoseDisclosure.ts, hnxDisclosure.ts, upcomDisclosure.ts (named *Disclosure.ts, not hose.ts/hnx.ts, to avoid colliding with existing unrelated market-price fetchers of those names). ssc.ts (1029L->186L) kept to listSscDocuments/listSscDocumentsWithFlag orchestration, re-exporting the pre-split public surface so all 7 production + 16 test call sites are unaffected -- mirrors this session's newsNormalizer split precedent. Note: canonical backlog ticket specifies a disclosures/ subfolder + <=120L cap; followed the dispatcher's explicit newsNormalizer-precedent instruction instead (flagged in journal for QA). Code-only diff confirms zero logic drift (only delta: 3 fns gain export + 5 re-export barrel lines). bun tsc --noEmit clean. Targeted 9-file ssc/disclosure suite 85/85 pass identical before/after. Full bun test: 14734 pass/40 skip/43 fail -- grep-confirmed zero overlap with touched files, all 43 match documented pre-existing flaky classes. gen-project-stats unaffected (toolCount=184, cronJobCount=88). Server boot probe (port 3099): health 200, both dashboards 200. Commit 315bc0728 (code) + 64d014937 (memory). Journal: docs/agent-memory/decisions/sprint-FACTORY-INFRA-split-ssc-fetchers-dev-mcp-server.md"
       }
     ],
     "_closed_signals_20260614": {
