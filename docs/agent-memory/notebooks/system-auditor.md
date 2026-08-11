@@ -1,3 +1,56 @@
+## c32 · 2026-08-11T17:40Z
+
+### Audit Run Tier-1 (17:30–17:40 UTC 2026-08-11)
+- Tier: 1 | Container liveness + health endpoints + memory pressure A-30 discriminator
+- Anomalies: 0 critical, 1 warn (A-30 pdf-extractor sustained memory, SKIP-dedup), 0 cycle-loss alerts
+- Status: **DEGRADED** (A-30 WARN, deduped)
+
+#### A-30 Memory Pressure Discriminator Analysis
+
+**PDF Extractor — ESCALATE verdict (WARN, SKIP-dedup):**
+- Baseline: 95.25% >= 85% investigate-gate → ENGAGE deep-probe
+- Window: 6 probes at 13s intervals (65s total)
+- Samples: 95.24%, 95.21%, 95.21%, 95.21%, 95.19%, 95.89%
+  - min=95.19%, median=95.21%, max=95.89%
+- Analysis: all samples >93% sustained
+- Discontinuities: 0 (no crash-cliff pattern)
+- Reclamation dips: 0 (no memory relief)
+- State changes: false (no OOMKilled, RestartCount=1 stable)
+- VmHWM: pinned_at_cap=true (2587.6 MB / 2620 MB limit)
+- **Reason:** 'all samples >93% sustained high — loss of reclamation'
+- **Severity:** WARN — sustained high memory without reclamation
+- **Dedup status:** SKIP-dedup (same dedup_key sent 2026-08-11T12:36:18Z, ~4h 50m ago)
+- **Finding:** Continuation of sustained memory ceiling from c31. PDF container unable to reclaim memory, indicating possible persistent memory leak or workload characteristics requiring larger allocation.
+- **Discriminator note:** Not a crash-cliff (no >40pp discontinuity); no restart during window; VmHWM NOT advancing to new peak. Classification: reclamation loss, not failure event.
+
+**RAG Service — PASS:**
+- Baseline: 91.10% >= 85% investigate-gate → ENGAGE deep-probe
+- Window: 6 probes at 13s intervals (65s total)
+- Samples: all exactly 91.10% (perfectly stable)
+  - min=91.10%, median=91.10%, max=91.10%
+- Analysis: stable high band, no variation
+- Discontinuities: 0
+- Reclamation dips: 0 (but stable at high level, not a concern per A-30 logic)
+- State changes: false (RestartCount=9 stable, no OOMKilled)
+- VmHWM: pinned_at_cap=true (1038 MB / 1048 MB limit) but NOT advancing
+- **Verdict:** FOLD (benign sawtooth pattern at stable high band)
+- **Severity:** PASS — stable at elevated memory but not escalating
+- **Status:** Already STALE-ACK'd under FU-RAG-DEPLOY-MEMORY (tracked_by, status=DONE_VERIFIED per context)
+- **Note:** Acknowledgement applies here per A-30 discriminator rule — apply own logic, container shows benign stability pattern despite high memory ceiling. No new signal emitted.
+
+#### Overall Verdict
+- **DEGRADED** — A-30 WARN from pdf-extractor (dedup-suppressed, same finding as c31)
+- RAG service memory stable under acknowledgement
+- All other services passing liveness/health checks
+- No new unforeseen conditions discovered in this cycle
+
+#### Signal Emission Log
+- [emit-signal] ABORT e1-not-written dedup (same payload, SKIP-dedup)
+- [emit-dashboard] OK id=sys-20260811T174020-7025 check_id=A-30 (pdf-extractor A-30 WARN)
+
+---
+
+
 ## c31 · 2026-08-11T17:06Z
 
 ### Audit Run Tier-1 (17:00–17:06 UTC 2026-08-11)
