@@ -2,6 +2,62 @@
 
 Session memory for real-time audit cycles and findings.
 
+## c22 · 2026-08-11T12:32:35Z
+
+### Audit Run Tier-1 (12:32–12:35 UTC 2026-08-11)
+- Tier: 1 | Container liveness + health endpoints + memory pressure (A-01 through A-33)
+- Anomalies: 1 warn (A-30 pdf-extractor ESCALATE), 0 critical, 0 info | dedup: 0 skipped
+- Status: **DEGRADED**
+- [emit-signal] OK dedup_key=microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30 id=sys-20260811T123620-4a36
+- [emit-dashboard] OK id=sys-20260811T123620-4a36 check_id=A-30
+
+#### Container & Health Status (A-01 through A-20)
+- [RAW-PROBE L3-17] docker ps: all host_runtime_set services UP and healthy ✓
+- [RAW-PROBE L20-24] health endpoints: all 200 OK ✓
+- All services operational and responding normally
+
+#### Restart Count (A-21)
+- [RAW-PROBE L27] mcp-server RestartCount=0 ✓
+
+#### Memory Pressure Deep-Probe (A-30)
+
+**A-30 pdf-extractor — ESCALATE VERDICT:**
+- Baseline: 94.07% >= 85% investigate-gate → ENGAGE deep-probe
+- All 6 samples sustained: min=94.07%, median=94.07%, max=94.07%
+- Reclamation dips: 0 (no GC relief observed)
+- Discontinuities: 0
+- State changes: false (no restarts during window)
+- OOMKilled: false
+- VmHWM: pinned at cgroup cap (2587.6 MiB / 2621.4 MiB limit)
+- Reason: "all samples >93% sustained high — loss of reclamation"
+- **Severity: WARN** — genuine sustained high memory with confirmed loss of reclamation
+- Prior context: baseline was 92.52% → escalated to 94.07%
+
+**A-30 rag-service — FOLD VERDICT:**
+- Baseline: 88.46% >= 85% investigate-gate → ENGAGE deep-probe
+- All 6 samples: min=88.47%, median=88.47%, max=88.48%
+- Reclamation dips: 0
+- Discontinuities: 0
+- State changes: false
+- OOMKilled: false
+- VmHWM: pinned at cap (1038.0 MiB / 1048.6 MiB limit)
+- Reason: "benign GC sawtooth or below tripwire"
+- **Verdict: NO EMIT** — benign pattern, no escalation tripwires met
+- Prior context: was at 94.80% → improved to 88.46% (6.34pp descent)
+
+#### Disk Usage (A-32)
+- [RAW-PROBE] root filesystem: 46% capacity < 85% threshold ✓
+
+#### Summary
+- **A-30 pdf-extractor** escalates to WARN (sustained at 94.07%, zero reclamation dips, VmHWM at cap)
+- **A-30 rag-service** remains benign, improved (descended to 88.46%, no escalation tripwires)
+- All container/health checks PASS
+- One WARN signal emitted per A-30 discriminator; DASHBOARD row appended
+
+#### Analysis of Prior Context Breaches
+- **pdf-extractor** (92.52% → 94.07%): A-30 deep-probe confirms sustained high with zero reclamation dips — genuine escalation warrants WARN
+- **rag-service** (94.80% → 88.46%): A-30 verdict FOLD (benign) — prior STALE-ACK (FU-RAG-DEPLOY-MEMORY, DONE_VERIFIED) disposition holds; condition improved significantly
+
 ## c21 · 2026-08-11T12:17:54Z
 ### Audit Run Tier-3 (12:16–12:18 UTC 2026-08-11)
 - Tier: 3 | DB integrity: full C-01 through C-16 | Service connectivity: A-25–A-28 | WAL health verified
