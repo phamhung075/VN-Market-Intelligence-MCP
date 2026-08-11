@@ -94,7 +94,7 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-08-11T20:38:20Z",
+    "updated_at": "2026-08-11T23:27:28Z",
     "updated_by": "qa",
     "active_task_id": null,
     "next_agent": null
@@ -13055,6 +13055,36 @@
             "observed_at": "2026-08-11T20:37:58Z"
           }
         }
+      },
+      {
+        "title": "Add missing schema-backtesting to DB_SCHEMA_MODULES + sync guard",
+        "priority": "P2",
+        "zone": "packages-shared",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-SHARED-fix-shared-db-stale-list",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SHARED-fix-shared-db-stale-list",
+        "promoted_at": "2026-07-24T16:17:17Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-11T23:27:28Z",
+        "claimed_at": "2026-08-11T23:21:16Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T16:30:44Z",
+        "review_note": "dev-mcp-server: added schema-backtesting to DB_SCHEMA_MODULES (packages/shared-db/index.ts), alphabetical position, sync comment added. Array now matches all 9 on-disk apps/mcp-server/src/infrastructure/db/schema-*.ts files exactly. Zero importers of DB_SCHEMA_MODULES/shared-db anywhere in the repo (grep-confirmed) — constant-only, zero-runtime-effect change. No test harness in packages/shared-db (no test script) so per DoD the sync comment alone satisfies it. Gates: tsc clean, gen-project-stats toolCount=184/cronJobCount=88 unaffected, full bun test 14751 pass/40 skip/49 fail (fail set is the same pre-existing flaky class documented earlier today, mathematically unrelated given zero import edges). Commits: ef62d2921 (code), 5c20d7b88 (journal), 160c0b410 (notebook). Journal: docs/agent-memory/decisions/sprint-FACTORY-SHARED-fix-shared-db-stale-list-dev-mcp-server.md || [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commit ef62d2921 on main ancestry -- git show --stat matches the sole real diff exactly (packages/shared-db/index.ts, 7 insertions, 1 file); journal commit 5c20d7b88 + notebook commit 160c0b410 also on main. Re-ran REAL verification, not trusted from prose: bun -e import-eval of the file confirms DB_SCHEMA_MODULES evaluates to the claimed 9-entry array (alerts/backtesting/briefings/financial-reports/macro/market-data/news/portfolio/system); cross-checked against schema.ts's own internal categorization (its 9 init*Tables imports, distinct from its separate migration-helper import block) -- the array matches every real schema-slice module exactly, not just a naive on-disk file count. Zero-importer claim re-verified 2 independent ways: repo-wide grep for shared-db/DB_SCHEMA_MODULES (no hits outside the package itself) AND scripts/audits/shared-package-import-check.sh --check PASS (shared-db baseline-listed orphan, unchanged). DDD greps (infrastructure/application imports) clean, security greps (process.env/password/secret/token) clean, mock-guard.sh --files packages/shared-db/index.ts PASS. bun tsc --noEmit (apps/mcp-server) 0 errors -- no regression. No test harness exists in packages/shared-db (confirmed, no test script in package.json) so per DoD the bun-import-eval smoke check stands in for a targeted test. DJ-GATE-1: sprint-FACTORY-SHARED-fix-shared-db-stale-list-dev-mcp-server.md task-id stamped, pre-satisfied; own QA DJ sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-16.md STEP qa-S58. FLAGGED, not actioned (out of this task's scope): a later unrelated commit 6ca2a0c65 (2026-08-07, FIX-CI-SIZELINT-SCHEMA-TS-DEFLAKE-REGRESSION-372L) extracted 2 new files -- schema-foreign-flow-migrations.ts + schema-post-init-migrations.ts -- into the same db/ dir under the same schema- prefix, but these are migration-helper files (no init*Tables export), not schema-slice modules; a literal re-run of this commit's own added comment instruction (ls apps/mcp-server/src/infrastructure/db/ | grep '^schema-') now surfaces 11 files, not 9, making the manual sync-check textually stale again -- the array itself is still semantically correct (matches every real schema slice), the drift is in the comment's literal glob-based verification instruction, caused entirely by later, unrelated work, not a defect in this commit. This task's own commit and DoD were fully accurate at landing time (2026-07-24, 9 on-disk/9 listed). Recommend PM/PO consider a follow-up backlog row to either scope the sync-comment's glob more precisely (e.g. match only files exporting init*Tables) or rename the 2 migration-helper files off the schema- prefix.",
+        "qa_verified_at": "2026-08-11T23:27:00Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun -e import-eval && bun tsc --noEmit && shared-package-import-check.sh --check && mock-guard.sh --files packages/shared-db/index.ts && DDD/security greps",
+            "args": {
+              "commit_verified": "ef62d2921f680bd58ba0932e39f0261e630ff30f"
+            },
+            "live_value_observed": "DB_SCHEMA_MODULES 9-entry array evaluates correctly; matches schema.ts init*Tables categorization; zero importers (2 methods); tsc/DDD/security/mock-guard all clean; sync-comment glob drift flagged non-blocking (later unrelated commit)",
+            "observed_at": "2026-08-11T23:27:00Z"
+          }
+        }
       }
     ],
     "head": {
@@ -15368,60 +15398,6 @@
           "OPS-NEWS-FETCH-REBUILD-STALE-IMAGE-3-COMMITS-BEHIND"
         ],
         "review_note": "PO RAW-verify 2026-08-07T00:05Z (session f298ccf7). SOURCE PLANE 6/6 PASS, measured not self-reported: DEFAULT_MAX_ITEMS present models.ts:19-22 (15/10 unchanged); resolveMaxItems models.ts:32-40; makeHeadlinesHandler->{post,get} handlers.ts:31-62 with all 4 routes registering the factory (handlers.ts:104-112), zero leftover inline bodies; handlers.ts 118L <=120L (was 170L); response envelope + 500 branch diffed by PO against d4f905a66^ = identical for all 4 originals; `bun test` 241 pass / 6 skip / 0 FAIL across 26 files. Landed d4f905a66 (2026-07-24T15:34:05Z), apps/news-fetch/ tree clean. ACCEPTED DIVERGENCE (out-of-contract, non-blocking, logged so it is not later rediscovered as a regression): POST body {maxItems:\"7\"} as a numeric STRING (contrary to the declared `maxItems?: number`) used to fall back to the default under the legacy `typeof === 'number'` guard and now parses to 7 — strictly more lenient, no in-contract caller affected. RUNTIME PLANE NOT DEPLOYED — this is why the row stays in review[]: container vn-market-intelligence-mcp-news-fetch-1 runs image sha256:e3263a24b38a Created=2026-07-15T15:05:14Z, 9 days BEFORE the commit; `docker exec ... grep -rl 'makeHeadlinesHandler|DEFAULT_MAX_ITEMS|resolveMaxItems' /app` returns EMPTY against a PASSING positive control (same grep for 'bloomberg/headlines' hits /app/src/interface/handlers.ts), and the container's handlers.ts is still 170L with bare literals at :74/:98/:120/:144. detail_ref carries rebuild_required=true; that obligation is UNMET. DISPOSITION: NO rework — dev work complete and correct. Deploy debt owned by OPS-NEWS-FETCH-REBUILD-STALE-IMAGE-3-COMMITS-BEHIND, which names d4f905a66 explicitly and whose AC-8 mandates reporting back. ROUTING FIX: next_agent was null, which resolves to po and is swept by NO automated lane — that alone is why this row sat 14 days untouched; set to ops to match sibling FACTORY-NEWS-fix-source-logging and ride the same rebuild. Flip to done_verified ONLY after that rebuild lands AC-3/AC-4 green."
-      },
-      {
-        "title": "Add missing schema-backtesting to DB_SCHEMA_MODULES + sync guard",
-        "priority": "P2",
-        "zone": "packages-shared",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-SHARED-fix-shared-db-stale-list",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SHARED-fix-shared-db-stale-list",
-        "promoted_at": "2026-07-24T16:17:17Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T16:30:48Z",
-        "claimed_at": "2026-07-24T16:17:17Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T16:30:44Z",
-        "review_note": "dev-mcp-server: added schema-backtesting to DB_SCHEMA_MODULES (packages/shared-db/index.ts), alphabetical position, sync comment added. Array now matches all 9 on-disk apps/mcp-server/src/infrastructure/db/schema-*.ts files exactly. Zero importers of DB_SCHEMA_MODULES/shared-db anywhere in the repo (grep-confirmed) — constant-only, zero-runtime-effect change. No test harness in packages/shared-db (no test script) so per DoD the sync comment alone satisfies it. Gates: tsc clean, gen-project-stats toolCount=184/cronJobCount=88 unaffected, full bun test 14751 pass/40 skip/49 fail (fail set is the same pre-existing flaky class documented earlier today, mathematically unrelated given zero import edges). Commits: ef62d2921 (code), 5c20d7b88 (journal), 160c0b410 (notebook). Journal: docs/agent-memory/decisions/sprint-FACTORY-SHARED-fix-shared-db-stale-list-dev-mcp-server.md"
-      },
-      {
-        "title": "CI-size-lint-justification",
-        "priority": "P2",
-        "type": "CI-GUARDRAIL",
-        "zone": "cross-service/",
-        "status": "REVIEW",
-        "id": "FACTORY-GUARD-CI-size-lint-justification",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-size-lint-justification",
-        "promoted_at": "2026-07-24T16:45:42Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T17:00:32Z",
-        "claimed_at": "2026-07-24T16:45:42Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "review_note": "Design task complete (BGFAN-1). Architect produced brief docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md + minted child impl FACTORY-GUARD-CI-SIZELINT-IMPL (developer, backlog). Verify-live corrected stale ticket prose: no existing CI size gate anywhere; 733 unjustified >120L files (real, ticket said 600+); baseline/ratchet design grandfathers debt. QA: verdict brief adequacy + child scoping (no code to test).",
-        "updated_by": "dev-team (BGFAN-1 closeout: architect design complete -> review)"
-      },
-      {
-        "title": "CI-metric-mask-lint",
-        "priority": "P2",
-        "type": "CI-GUARDRAIL",
-        "zone": "cross-service/",
-        "status": "REVIEW",
-        "id": "FACTORY-GUARD-CI-metric-mask-lint",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-metric-mask-lint",
-        "promoted_at": "2026-07-24T17:17:59Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T17:31:08Z",
-        "claimed_at": "2026-07-24T17:17:59Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "updated_by": "dev-team (BGFAN-1 closeout: architect design complete -> review)",
-        "review_note": "Design task complete (BGFAN-1). Architect produced brief docs/architecture-briefs/2026-07-24-factory-guard-ci-metric-mask-lint.md + minted child impl FACTORY-GUARD-CI-METRICMASK-IMPL (developer, backlog). Verify-live corrected TWO stale dispatch premises: (1) row is NOT a stub — detail_ref carries a full confidence_score=50-bug-class spec traced to 2026-06-15-maintainability-factory-audit.md; (2) real intent is banning non-zero numeric-literal fallbacks on confidence*/score*/impact*/magnitude*/probability* fields, NOT composite-metric-masks-dead-detector. Live debt only 4 lines/2 files (cascadeEngine.ts:356/375/394 seedEntry.confidence ?? 0.6; marketSentimentCalculator.ts:174 impact_score ?? 1.0) + 1 legit-excluded config default (watchlist.ts:198) -> zero-tolerance gate, no baseline (unlike 733-file size sibling). All 5 fast-track confidence fixes DONE_VERIFIED (allowlist honest). QA: verdict brief adequacy + child scoping — no code to test."
       },
       {
         "title": "CI-depguard-tier-boundaries",
@@ -19922,16 +19898,16 @@
         "last_served_tick": "2026-08-11T22:24:40Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-11T19:57:53Z"
+        "last_served_tick": "2026-08-11T22:51:22Z"
       },
       "qa_drain": {
-        "last_served_tick": "2026-08-11T20:23:38Z"
+        "last_served_tick": "2026-08-11T23:21:05Z"
       },
       "step1_triage": {
         "last_served_tick": "2026-08-11T20:51:52Z"
       }
     },
-    "_updated_at": "2026-08-11T22:50:41Z",
+    "_updated_at": "2026-08-11T23:21:05Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {

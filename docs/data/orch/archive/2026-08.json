@@ -7787,6 +7787,71 @@
           "observed_at": "2026-08-11T20:36:40Z"
         }
       }
+    },
+    {
+      "title": "CI-metric-mask-lint",
+      "priority": "P2",
+      "type": "CI-GUARDRAIL",
+      "zone": "cross-service/",
+      "status": "DONE_VERIFIED",
+      "id": "FACTORY-GUARD-CI-metric-mask-lint",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-metric-mask-lint",
+      "promoted_at": "2026-07-24T17:17:59Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+      "updated_at": "2026-08-11T23:25:23Z",
+      "claimed_at": "2026-08-11T23:21:16Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "next_agent": "qa",
+      "updated_by": "dev-team (BGFAN-1 closeout: architect design complete -> review)",
+      "review_note": "Design task complete (BGFAN-1). Architect produced brief docs/architecture-briefs/2026-07-24-factory-guard-ci-metric-mask-lint.md + minted child impl FACTORY-GUARD-CI-METRICMASK-IMPL (developer, backlog). Verify-live corrected TWO stale dispatch premises: (1) row is NOT a stub — detail_ref carries a full confidence_score=50-bug-class spec traced to 2026-06-15-maintainability-factory-audit.md; (2) real intent is banning non-zero numeric-literal fallbacks on confidence*/score*/impact*/magnitude*/probability* fields, NOT composite-metric-masks-dead-detector. Live debt only 4 lines/2 files (cascadeEngine.ts:356/375/394 seedEntry.confidence ?? 0.6; marketSentimentCalculator.ts:174 impact_score ?? 1.0) + 1 legit-excluded config default (watchlist.ts:198) -> zero-tolerance gate, no baseline (unlike 733-file size sibling). All 5 fast-track confidence fixes DONE_VERIFIED (allowlist honest). QA: verdict brief adequacy + child scoping — no code to test. || [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Design-only task, no code to test (confirmed: brief commit 7fedc2933 touches only 1 doc file, 38L, zero production code). Independently re-verified every checkable factual claim against live repo state rather than trusting prose: (1) zero existing-mechanism coverage confirmed -- all 3 eslint.config.mjs (mcp-server/news-fetch/frontend) carry only eslint-plugin-boundaries Fence-A/B/C rules, no numeric-literal rule, at commit 7fedc2933; (2) exact live-offender lines byte-match -- cascadeEngine.ts:356,375,394 (seedEntry.confidence ?? 0.6), marketSentimentCalculator.ts:174 (row.impact_score ?? 1.0), watchlist.ts:198 (thresholds?.impactScore ?? 7, correctly excluded as legit user-config default); (3) all 5 named fast-track dependency fixes confirmed DONE_VERIFIED in archive/2026-07.json; (4) spike-precondition note confirmed present on exactly 7/7 non-spike ci-regression-prevention sibling rows, spike itself confirmed still BACKLOG. Child scoping verified: diffed brief section 3 minted-child spec (files/approach/dod/routing) against the live FACTORY-GUARD-CI-METRICMASK-IMPL row (task_board.review[]) -- matches verbatim. Zero-tolerance (not baseline/ratchet) design choice justified: live debt independently confirmed at exactly 4 lines/2 files, small enough to fix inline before gate goes live, unlike the 733-file size-lint sibling. Child task (FACTORY-GUARD-CI-METRICMASK-IMPL) already implemented, sitting in task_board.review[] (status:REVIEW, next_agent:qa) -- flagged not actioned, separate task_id, needs its own future QA-drain dispatch.",
+      "qa_verified_at": "2026-08-11T23:25:23Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "docs-diff (design-brief adequacy) + git show/log + jq board-diff — no bun test/tsc applicable (0 production files touched)",
+          "args": {
+            "commit_verified": "7fedc2933670bfb9dd9215775ebeab58f8d02a03",
+            "brief_path": "docs/architecture-briefs/2026-07-24-factory-guard-ci-metric-mask-lint.md",
+            "child_task_id": "FACTORY-GUARD-CI-METRICMASK-IMPL"
+          },
+          "live_value_observed": "brief commit on main ancestry, 1 file/38L, zero production code; all verify-live claims (eslint gap, 3 offender lines, 5 fast-track deps DONE_VERIFIED, 7/7 sibling precondition note) byte/status-matched against live repo+board; child row files/dod/routing match brief section 3 verbatim",
+          "observed_at": "2026-08-11T23:25:23Z"
+        }
+      }
+    },
+    {
+      "title": "CI-size-lint-justification",
+      "priority": "P2",
+      "type": "CI-GUARDRAIL",
+      "zone": "cross-service/",
+      "status": "DONE_VERIFIED",
+      "id": "FACTORY-GUARD-CI-size-lint-justification",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-GUARD-CI-size-lint-justification",
+      "promoted_at": "2026-07-24T16:45:42Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+      "updated_at": "2026-08-11T23:26:35Z",
+      "claimed_at": "2026-08-11T23:21:16Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "next_agent": "qa",
+      "review_note": "Design task complete (BGFAN-1). Architect produced brief docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md + minted child impl FACTORY-GUARD-CI-SIZELINT-IMPL (developer, backlog). Verify-live corrected stale ticket prose: no existing CI size gate anywhere; 733 unjustified >120L files (real, ticket said 600+); baseline/ratchet design grandfathers debt. QA: verdict brief adequacy + child scoping (no code to test). || [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Design-only task, no code to test (confirmed: brief commit fb613a9c4 touches only 1 doc file, 56L, zero production code; child-mint commit ad9c7483f same timestamp, orch-state.json only, conservation 631=631). Independently re-verified every checkable factual claim against live repo state rather than trusting prose: (1) zero existing-mechanism coverage confirmed -- context-bloat-backstop.sh's own SSOT explicitly excludes code/data-JSON, and no size-lint step exists in any of 7 .golangci.yml, 3 eslint.config.mjs, pyproject.toml, or ci.yml at commit fb613a9c4; (2) the child task is fully implemented and LIVE in CI -- confirmed scripts/audits/size-lint-justification.sh + size-lint-justification.test.sh + docs/data/size-lint-baseline.json all present in the working tree, the size-lint job wired in .github/workflows/ci.yml, and the dev-standards.md CANONICAL pointer present and matching the brief's design verbatim (baseline/ratchet, +/-10%/min-5L tolerance, exclusions, exit contract); (3) live-ran size-lint-justification.sh --check: exit 1, flags exactly one offender (apps/mcp-server/src/interface/mcp/transport.ts, baseline=126L actual=265L upper=138L) -- mechanism demonstrably working as designed, and this exact regression is already independently tracked as its own separate backlog row (FIX-CI-SIZELINT-TRANSPORT-TS-SSE-REAPER-237L, extensively po-triaged since 2026-08-08), so the open regression is a downstream dispatch-priority matter, not a defect of this brief or its child scoping; (4) the brief's two verify-live corrections (stale ticket \"600+\" -> real 733-file count; invalid HTML-comment-in-.ts marker syntax -> //) are both independently reproducible at commit time; (5) the routing correction (developer, not agent-father) matches the live child row's dev_agent/next_agent fields exactly. Child scoping verified: diffed brief section 3 minted-child spec (files/approach/dod/routing) against the live FACTORY-GUARD-CI-SIZELINT-IMPL row -- files/approach/dod match verbatim (child now status:REVIEW, already implemented+shipped well past this parent design task's own scope -- flagged not actioned, separate task_id, needs its own future QA-drain dispatch).",
+      "updated_by": "qa",
+      "qa_verified_at": "2026-08-11T23:26:24Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "docs-diff (design-brief adequacy) + git show/log + live size-lint-justification.sh --check + jq board-diff — no bun test/tsc applicable (0 production files touched by parent commit)",
+          "args": {
+            "commit_verified": "fb613a9c4730806d1e3664046f1fb710e2a81ac",
+            "brief_path": "docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md",
+            "child_task_id": "FACTORY-GUARD-CI-SIZELINT-IMPL",
+            "mint_commit": "ad9c7483f1e594a38867a0651ee5a5db3a7986ab"
+          },
+          "live_value_observed": "brief commit on main ancestry, 1 file/56L, zero production code; child fully implemented+wired into CI (size-lint job in ci.yml, dev-standards.md CANONICAL pointer verbatim match); live --check run exit=1, sole offender transport.ts already tracked as separate backlog row FIX-CI-SIZELINT-TRANSPORT-TS-SSE-REAPER-237L (not this task defect); brief §3 child spec matches live board row verbatim",
+          "observed_at": "2026-08-11T23:26:24Z"
+        }
+      }
     }
   ],
   "closed_sprints": [],
