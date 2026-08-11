@@ -1,13 +1,8 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1786451097,
-    "last_linecount": 12,
-    "po": {
-      "section_name": "po",
-      "last_mtime": 1786231342,
-      "last_linecount": 41
-    }
+    "last_mtime": 1786471121,
+    "last_linecount": 28
   },
   "decision_journal": [
     {
@@ -133,8 +128,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-11T17:56:09Z",
-    "_updated_by": "router",
+    "_updated_at": "2026-08-11T17:58:22Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -574,7 +569,7 @@
         "type": "system-issue",
         "summary": "Out-of-zone defect: sbvOmoLiquidityCronJob.ts:70 error string conflates deadline-timeout w/ unreachable — mint FIX row, zone dev-mcp-server",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       }
     ],
@@ -19651,7 +19646,7 @@
         "last_served_tick": "2026-08-11T16:54:36Z"
       }
     },
-    "_updated_at": "2026-08-11T17:24:39Z",
+    "_updated_at": "2026-08-11T17:58:22Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19734,6 +19729,206 @@
         },
         "createdAt": "2026-08-11T17:07:58Z",
         "drained_at": "2026-08-11T17:24:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "bf10c02a68d72060acda797c04985b81479b99c40fbaa1be21502bb6eb29a458",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": ".claude/skills/cron-cowork-team/SKILL.md",
+          "line_count": 242,
+          "cap": 200,
+          "byte_count": 14279,
+          "byte_cap": 12000,
+          "class": "skill-file",
+          "reason": "line-cap,byte-cap",
+          "overage": 42,
+          "byte_overage": 2279,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-11T17:27:31Z",
+        "drained_at": "2026-08-11T17:57:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7862e05ef528a9d920ad36282206b4c966e0e69f9a449f6fdb10a353accfd384",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-15.md",
+          "line_count": 195,
+          "cap": 600,
+          "byte_count": 37108,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 1108,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-11T17:32:16Z",
+        "drained_at": "2026-08-11T17:57:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4c241bd30f97508fd908495743bfdd550493b8b930bb73977d42deac32a23841",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 40,
+          "cap": 200,
+          "byte_count": 21134,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 9134,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-11T17:42:57Z",
+        "drained_at": "2026-08-11T17:57:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "599f4b9bd8347f6acdfe0a30af1579b6c6dd6c6152a7e08cc90277f1d94c507a",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "matched_slots": [
+            "digest-daily"
+          ],
+          "won_slots": [
+            "digest-daily"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/digest-predict/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "digest-daily": "cron"
+          },
+          "cadence_minutes": {
+            "digest-daily": null
+          },
+          "last_fired_slots": [
+            "digest-daily"
+          ],
+          "last_fired_timestamp": "2026-08-11T17:37:17Z",
+          "note": "single-slot tick (digest-daily, guaranteed daily cron 30 17 * * *); 0 new signals this tick"
+        },
+        "createdAt": "2026-08-11T17:37:30Z",
+        "drained_at": "2026-08-11T17:57:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8719f6464cb8596b3d3e8d3df766dfcbb60afa83a9993c2ec523d8fecd38a787",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/agent-father.md",
+          "tied_sections": "58:20260811000000000:## Keep (maintenance) 2026-08-11 12:14 UTC — router-spawned, no explicit intent → defaulted to keep.md\n92:20260811000000000:## Keep (maintenance) 2026-08-11 12:53 UTC — cron-fired, no explicit intent → defaulted to keep.md\n119:20260811000000000:## QA-resubmit 2026-08-11 16:34 UTC — task FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK\n140:20260811000000000:## SPIKE 2026-08-11 18:20 UTC — task SPIKE-NEWSSCOUT-KLFL-FALSE-ENOENT-ON-PRESENT-TRACKED-SKILL-FILE",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-11T17:30:23Z",
+        "drained_at": "2026-08-11T17:57:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2f0fc2bb787c7ee2bf89deaf950736f272d5a0e91d9bdbf9638a071c72a2e55f",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/agent-father.md",
+          "tied_sections": "58:20260811000000000:## Keep (maintenance) 2026-08-11 12:53 UTC — cron-fired, no explicit intent → defaulted to keep.md\n85:20260811000000000:## QA-resubmit 2026-08-11 16:34 UTC — task FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-11T17:35:32Z",
+        "drained_at": "2026-08-11T17:57:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "27bb038803249e592bc5727739a80d0088e2f95f46096811e16146c40fdf9fa3",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 40,
+          "cap": 200,
+          "byte_count": 21134,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-11T17:42:55Z",
+        "drained_at": "2026-08-11T17:57:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6f4f390b2cbe0657bfd868961f4ba4359a5b547ff9d27053e62ea99fda5c4ae6",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 41,
+          "cap": 200,
+          "byte_count": 23477,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-11T17:43:32Z",
+        "drained_at": "2026-08-11T17:57:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d2e712700b190a6a587684b903f8456fb9e52b073d5ddb22bad378c9830bb8cd",
+        "source": "dashboard",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "LOW",
+        "payload": "Out-of-zone defect: sbvOmoLiquidityCronJob.ts:70 error string conflates deadline-timeout w/ unreachable — mint FIX row, zone dev-mcp-server",
+        "createdAt": "2026-08-11T17:56:09Z",
+        "drained_at": "2026-08-11T17:58:22Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
