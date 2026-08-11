@@ -57,5 +57,11 @@
     "note": "3 offhours/critical slots, single batch MAX_PARALLEL=4, no CHEF slots this tick"
   },
   "priority": "low",
-  "createdAt": "2026-08-11T20:05:59Z"
+  "createdAt": "2026-08-11T20:05:59Z",
+  "_processed": {
+    "fingerprint": "a01963f03ec83f1dbe56cf8a59dceb5c70f47a4bc03d5205192028a9b9f47e7c",
+    "processedAt": "2026-08-11T20:22:32Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
