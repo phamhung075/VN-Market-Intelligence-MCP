@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-11T13:36:03Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-ORPHAN-FR7-VERIFY-TOOL-REGISTRY",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 4 row(s), highest-ranked FIX-ORPHAN-FR7-VERIFY-TOOL-REGISTRY — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 4 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-11T13:52:03Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12245,6 +12246,53 @@
             "observed_at": "2026-08-09T06:03:00Z"
           }
         }
+      },
+      {
+        "id": "FIX-ORPHAN-FR7-VERIFY-TOOL-REGISTRY",
+        "type": "FEATURE",
+        "title": "Verify docs/data/tool-registry.json references for FR-1/FR-2 params per FR-7 SSOT sync",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "M",
+        "zone": "docs/",
+        "owner": "pm",
+        "next_agent": "qa",
+        "depends": [],
+        "supervised": false,
+        "created_at": "2026-07-22T01:15:30Z",
+        "created_by": "pm/decomposition-20260722T0115",
+        "updated_at": "2026-08-11T13:55:56Z",
+        "updated_by": "qa",
+        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
+        "subtasks": [
+          {
+            "seq": 1,
+            "title": "Check tool-registry.json task_heartbeat/task_release entries; verify no per-tool schema payload duplication needed",
+            "acceptance": "Confirm no edit needed or document required changes"
+          }
+        ],
+        "claimed_at": "2026-08-11T13:52:02Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "dispatch_lane": "developer",
+        "dev_note": "FR-7 verification-only subtask: docs/data/tool-registry.json task_heartbeat/task_release entries are name-only strings under the system group (41 tools) -- no per-tool schema payload anywhere in the file, so param-schema duplication is structurally impossible. Generator (scripts/gen-tool-registry.ts) regex extracts only the tool-name literal, never Zod params. Live-verified freshness: gen-tool-registry.ts --dry-run matches committed file exactly (totalCount=183, system=41) even after task_heartbeat/task_release were further split into standalone taskHeartbeatTool.ts/taskReleaseTool.ts files post-Task-2. CI drift guard tool-registry-parity.test.ts 17/17 pass. No edit made -- correctly no-op. Full detail: Implementation Record under Task 6, docs/handoffs/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-PM-decomposition-20260722.md. Commits: 618654d96 (handoff+WORK.md), 557653c59 (notebook+journal).",
+        "status_note": "[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Row carried no .commit/.files[] fields -- derived commits 618654d960548b6e2f87fe673066327bcc3898c4 (handoff+WORK.md) and 557653c59f17d5114f030164289b8f76d5174302 (notebook+journal) from the row's own dev_note; both confirmed main ancestors via `git merge-base --is-ancestor`. Claim is \"no-op, verification-only\" -- independently confirmed, not trusted from prose: docs/data/tool-registry.json's system group task_heartbeat/task_release entries are bare name strings inside tools[], no per-tool object anywhere in the file, so a per-tool param-schema payload cannot structurally be duplicated there. Read scripts/gen-tool-registry.ts myself: its regex (server\\.tool\\(\\s*\\n?\\s*[\"']([^\"']+)[\"']) captures only the string-literal tool name, never the trailing Zod schema object -- structurally incapable of drifting on a param-schema change. Re-ran `bun scripts/gen-tool-registry.ts --dry-run` live: totalCount=183, system: 41 tools -- byte-identical to the committed file's own totalCount:183/system:41. Re-ran `bun test src/__tests__/tool-registry-parity.test.ts` (apps/mcp-server) fresh: 17/17 pass, 39 expect() calls -- matches claim exactly. `bun tsc --noEmit` (apps/mcp-server) 0 errors. `git show --stat` on both commits confirms no production source touched (handoff.md + WORK.md + notebook + journal only) -- mock-guard N/A, consistent with the row's own no-edit claim. Confirmed the cited taskHeartbeatTool.ts/taskReleaseTool.ts split (from a sibling size-lint task cited as freshness cross-check) actually exists on disk. DoD met: verification-only subtask explicitly permits \"confirm no edit needed\" as its terminal outcome per its own acceptance line; finding documented in handoff Implementation Record + WORK.md. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-15.md STEP qa-S37.",
+        "qa_verified_at": "2026-08-11T13:55:55Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun scripts/gen-tool-registry.ts --dry-run && bun test src/__tests__/tool-registry-parity.test.ts && bun tsc --noEmit",
+            "args": {
+              "cwd": "apps/mcp-server (tsc+test) / repo-root (gen-tool-registry)",
+              "commits_verified": [
+                "618654d960548b6e2f87fe673066327bcc3898c4",
+                "557653c59f17d5114f030164289b8f76d5174302"
+              ]
+            },
+            "live_value_observed": "gen-tool-registry --dry-run totalCount=183/system=41 matches committed file; tool-registry-parity.test.ts 17/17 pass; tsc --noEmit 0 errors; no production source touched",
+            "observed_at": "2026-08-11T13:55:55Z"
+          }
+        }
       }
     ],
     "head": {
@@ -14452,60 +14500,6 @@
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "agent-father",
         "agent_father_disposition_20260805T1658": "agent-father-triage 2026-08-05T16:58Z (relayed by router -- agent-father has no gateway tool grant, could not write this itself). DISPOSITION: DO NOT sign off DONE yet; do not rework code. T6 code verified correct at source (docs/agents/market-watcher/flow/main.md Step 2: slot=market-watcher-eod -> eod.md always, slot=market-watcher-offhours -> cycle.md mode=offhours always, empty/unrecognized -> unchanged wall-clock fallback), matches design brief docs/architecture-briefs/2026-07-21-cowork-fanout-producer-consumer-ordering.md section 5 verbatim, landed commit bdf22186d 2026-07-22. BLOCKER IS REAL BUT NARROWER THAN IT LOOKS: DESIGN-COWORK-FANOUT-T8-QA-TEST-STRATEGY depends on T1-T6 ALL SIX, not T6 alone -- T1/T2/T3/T4/T5 are all still TODO/unimplemented in ready[], three of the five (T1/T2/T4) owned by agent-father itself and untouched. Per brief section 9 (T6 has no dependency on T1-T5, can ship separately) the two test cases that actually validate T6 (brief section 7, T-7/T-8 flow-fixture walkthroughs on slot-routing only) need zero input from T1-T5. RECOMMENDATION: route a narrow qa execution of just brief-section-7 T-7/T-8 to qa now, decoupled from the 6-way T8 board row, rather than leave this row in limbo behind 5 unstarted siblings owned partly by the same triager. CROSS-REFERENCE (confirmed mechanically independent, correctly filed separately): FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (eod.md:78 stale caveat, 'what happens once inside eod.md') is NOT caused by and does NOT require touching T6/main.md ('which sub-flow file gets entered'). One genuine connective thread for whoever fixes that row's AC-2 (same-agent multi-slot notebook clobber): it is the direct fallout of THIS brief's own section 5/6 decision to WARN-not-BLOCK legitimate same-tick EOD+offhours collisions on DDD grounds -- the brief solved the collision at the signal/routing layer and never addressed the notebook-storage-layer side effect; the AC-2 fix belongs purely in the notebook-write layer, do not re-litigate the already-rejected block-at-dispatch-layer option."
-      },
-      {
-        "title": "Delete dead _deprecated domain package (298L duplicate of primitives)",
-        "priority": "P2",
-        "zone": "alert-engine",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-ALERT-delete-deprecated-domain",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-delete-deprecated-domain",
-        "promoted_at": "2026-07-24T01:14:30Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T01:22:40Z",
-        "claimed_at": "2026-07-24T01:14:30Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "reviewed_at": "2026-07-24T01:22:19Z",
-        "reviewed_by": "dev-alert-engine"
-      },
-      {
-        "title": "Extract one requireVpsApiKey guard; replace 15+ copy-paste auth blocks",
-        "priority": "P2",
-        "zone": "mcp-server-interface",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-INTERFACE-vps-auth-guard-dedup",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-vps-auth-guard-dedup",
-        "promoted_at": "2026-07-24T01:44:28Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T02:05:25Z",
-        "claimed_at": "2026-07-24T01:44:28Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T02:05:06Z",
-        "review_note": "dev-mcp-server self-closeout: migrated last 5 copy-paste VPS-auth blocks (pushPricesHandler/pushSbvRatesHandler/pushNewsHandler/pushForeignFlowHandler/server.ts GET /api/watchlist) onto the existing shared requireVpsApiKey guard (15 other call sites already used it, per FACTORY-INTERFACE-split-server-ts Stage 1 bce8be44b). Byte-compared before migrating; foreignFlowStatusHandler.ts's buildForeignFlowStatusResponse deliberately left unmigrated (same predicate, returns {status,body} not res-write, own dedicated HTTP-free test suite). New FACTORY-INTERFACE-vps-auth-guard-dedup.test.ts: 6 guard unit tests + 5 live-HTTP e2e tests, 11/11 pass. tsc clean. git-stash A/B on the 5 touched files: 38/38 pass pre, 71/71 pass post, zero regressions. Full bun test: 14726 pass/40 skip/42 fail/1 error — 42-fail matches todays already-documented pre-existing baseline (vps_push_log schema-drift + 5000ms MCP-client-timeout classes), zero Unauthorized-string failures anywhere, zero fails in any of the 6 auth-relevant test files. Live boot probe: /health 200, unauthenticated GET /api/watchlist 401, toolCount=184/cronJobCount=88 unchanged. Commit cf28a32e8. Journal: docs/agent-memory/decisions/sprint-FACTORY-INTERFACE-vps-auth-guard-dedup-dev-mcp-server.md"
-      },
-      {
-        "title": "Move Kinh Dich + TA scoring math out of interface tools into domain",
-        "priority": "P2",
-        "zone": "mcp-server-interface",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-INTERFACE-move-kinhdich-ta-scoring-down",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-move-kinhdich-ta-scoring-down",
-        "promoted_at": "2026-07-24T02:14:29Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T02:46:08Z",
-        "claimed_at": "2026-07-24T02:14:29Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T02:45:33Z",
-        "review_note": "dev-mcp-server self-closeout: pure DDD move, byte-identical. Moved 9 Kinh Dich score-computation functions (computeSentimentScore/computeFundamentalsScore/computePriceScore/computeForeignFlowScore/computeSectorScore/computeMacroScore/tickerJitter/computeHaoScores/computeMacroIndicatorScore) from interface/mcp/tools/kinhdich/kinhDichTools.ts to new application/services/kinhDich/kinhDichScoring.ts (application not domain -- these do real DB I/O via getDb()/IKinhDichScoreRepository, domain/services convention is pure-no-I/O). All 9 function bodies byte-diff-verified identical old vs new. Updated 1 scheduler dynamic-import consumer + 6 test files import paths. TA scoring math in technicalIndicatorTools.ts investigated but NOT moved -- already-shipped deliberate G5/P2-B2 architecture (real domain TA service intentionally quarantined to _deprecated/, Go microservice port 5003 is the permanent home); moving it would resurrect retired code, documented in journal as PARTIAL-by-design. Evidence: tsc clean. Targeted kinhdich/macro/diacritics regression 19 files/457 tests: 453 pass/4 skip/0 fail identical pre vs post. Full bun test: 14727 pass/41 fail then 14725 pass/43 fail on repeat run (count flux 41-43 proves flaky/timeout class not deterministic); grepped every (fail) line -- zero kinhdich/hexagram/macro-score/sector-score/foreign-flow-score mentions, all match today pre-existing classes (vps_push_log schema-drift, 5000ms MCP-client-timeout, pre-quarantined _deprecated/1302-technical-indicators.test.ts flake). Local isolated server boot probe (port 3999): health 200 toolCount=184, both dashboards 200. Tool count 184/cronJobCount 88 unaffected. Commit b6b659ea0. Journal: docs/agent-memory/decisions/sprint-FACTORY-INTERFACE-move-kinhdich-ta-scoring-down-dev-mcp-server.md"
       },
       {
         "title": "Extract sentiment lexicon + negation tables from sentimentClassifier",
@@ -18932,36 +18926,6 @@
         "origin_signal_id": "bug-escalation:bctc-analyst:signals-absent-4th-cycle",
         "updated_by": "developer",
         "dev_note": "Fixed: added read-first SIGNAL-FILE WRITE VERIFICATION guard to docs/agents/bctc-analyst/flow/main.md — Write tool's own return is now the ONLY write-verification signal (per-cycle), agent must never Read a docs/signals/*.json path it wrote in a prior cycle to re-confirm presence. AC-2: no Bash/Glob grant added, tool grant stays narrow. AC-3 regression traced (not replayed) in decision journal. Commit c23d19da4 (pushed to origin/main). Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md STEP developer-S91."
-      },
-      {
-        "id": "FIX-ORPHAN-FR7-VERIFY-TOOL-REGISTRY",
-        "type": "FEATURE",
-        "title": "Verify docs/data/tool-registry.json references for FR-1/FR-2 params per FR-7 SSOT sync",
-        "status": "REVIEW",
-        "priority": "P0",
-        "size": "M",
-        "zone": "docs/",
-        "owner": "pm",
-        "next_agent": "qa",
-        "depends": [],
-        "supervised": false,
-        "created_at": "2026-07-22T01:15:30Z",
-        "created_by": "pm/decomposition-20260722T0115",
-        "updated_at": "2026-08-11T12:17:59Z",
-        "updated_by": "developer",
-        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
-        "subtasks": [
-          {
-            "seq": 1,
-            "title": "Check tool-registry.json task_heartbeat/task_release entries; verify no per-tool schema payload duplication needed",
-            "acceptance": "Confirm no edit needed or document required changes"
-          }
-        ],
-        "claimed_at": "2026-08-11T12:09:46Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "developer",
-        "dev_note": "FR-7 verification-only subtask: docs/data/tool-registry.json task_heartbeat/task_release entries are name-only strings under the system group (41 tools) -- no per-tool schema payload anywhere in the file, so param-schema duplication is structurally impossible. Generator (scripts/gen-tool-registry.ts) regex extracts only the tool-name literal, never Zod params. Live-verified freshness: gen-tool-registry.ts --dry-run matches committed file exactly (totalCount=183, system=41) even after task_heartbeat/task_release were further split into standalone taskHeartbeatTool.ts/taskReleaseTool.ts files post-Task-2. CI drift guard tool-registry-parity.test.ts 17/17 pass. No edit made -- correctly no-op. Full detail: Implementation Record under Task 6, docs/handoffs/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-PM-decomposition-20260722.md. Commits: 618654d96 (handoff+WORK.md), 557653c59 (notebook+journal)."
       }
     ],
     "qa": [

@@ -7015,6 +7015,95 @@
           "observed_at": "2026-08-09T06:03:19Z"
         }
       }
+    },
+    {
+      "title": "Delete dead _deprecated domain package (298L duplicate of primitives)",
+      "priority": "P2",
+      "zone": "alert-engine",
+      "type": "FACTORY",
+      "status": "DONE_VERIFIED",
+      "id": "FACTORY-ALERT-delete-deprecated-domain",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-ALERT-delete-deprecated-domain",
+      "promoted_at": "2026-07-24T01:14:30Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+      "updated_at": "2026-08-11T13:55:14Z",
+      "claimed_at": "2026-08-11T13:52:02Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "next_agent": "qa",
+      "reviewed_at": "2026-07-24T01:22:19Z",
+      "reviewed_by": "dev-alert-engine",
+      "qa_verified_at": "2026-08-11T13:55:14Z",
+      "qa_verified_by": "qa",
+      "status_note": "[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Row carried no .commit/.files[]/.owner (predates drain fields) -- derived commit 314461cbdd43580d38b0be30951ab2ea1ab364fa via `git log --all -- <detail_ref files[]>` (apps/alert-engine/pkg/domain/_deprecated/services_v1.go + services_v1_test.go); commit date 2026-07-24T03:21:22+02:00 (UTC 2026-07-24T01:21:22Z) is 57s before reviewed_at (2026-07-24T01:22:19Z) -- high-confidence match, confirmed `git merge-base --is-ancestor` on main. `git show --stat` matches both detail_ref files[] exactly (services_v1.go, services_v1_test.go), plus updated docs/architecture/microservice/alert-engine/domain-model.md and a decision-journal file the commit itself created. Diff read line-by-line (not trusted from commit prose): both _deprecated/*.go files (298L: 150+148) fully deleted, no partial/wire-it. Re-verified against live main HEAD myself, not the commit's own claims: dir `apps/alert-engine/pkg/domain/_deprecated/` confirmed absent from working tree; `grep -rn \"_deprecated\" --include=\"*.go\" apps/alert-engine` = 0 matches repo-wide; `go build ./...` clean; `go vet ./...` clean; `go test ./... -count=1` fresh (uncached) all 6 testable packages pass (application, domain, infrastructure, interface/http, module/alert_pipeline, primitive/cooldown-gate, primitive/dedup-key-builder, primitive/signal-classifier -- 8 ok, 2 no-test-files cmd dirs). mock-guard.sh not applicable -- sole production files touched were deletions, nothing remains to scan. DoD fully met: directory deleted, grep confirms no live importer, go build + tests green, generic/no runtime change (main.go already rewired off domain.* in prior task FACTORY-ALERT-consolidate-dual-engines per commit prose, unaffected by this delete). Decision journal docs/agent-memory/decisions/sprint-FACTORY-ALERT-delete-deprecated-domain-dev-alert-engine.md carries task-id trailer matching. DJ: sprint-FACTORY-ALERT-delete-deprecated-domain-qa.md.",
+      "verification": {
+        "raw_probe": {
+          "tool": "go build ./... && go vet ./... && go test ./... -count=1 && grep -rn _deprecated --include=*.go apps/alert-engine",
+          "args": {
+            "cwd": "apps/alert-engine",
+            "commit_verified": "314461cbdd43580d38b0be30951ab2ea1ab364fa"
+          },
+          "live_value_observed": "dir absent from working tree; grep 0 matches repo-wide; go build clean; go vet clean; go test ./... -count=1 fresh 8/8 testable packages pass",
+          "observed_at": "2026-08-11T13:55:14Z"
+        }
+      }
+    },
+    {
+      "title": "Extract one requireVpsApiKey guard; replace 15+ copy-paste auth blocks",
+      "priority": "P2",
+      "zone": "mcp-server-interface",
+      "type": "FACTORY",
+      "status": "DONE_VERIFIED",
+      "id": "FACTORY-INTERFACE-vps-auth-guard-dedup",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-vps-auth-guard-dedup",
+      "promoted_at": "2026-07-24T01:44:28Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+      "updated_at": "2026-08-11T13:57:56Z",
+      "claimed_at": "2026-08-11T13:52:02Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "next_agent": "qa",
+      "entered_review_at": "2026-07-24T02:05:06Z",
+      "review_note": "dev-mcp-server self-closeout: migrated last 5 copy-paste VPS-auth blocks (pushPricesHandler/pushSbvRatesHandler/pushNewsHandler/pushForeignFlowHandler/server.ts GET /api/watchlist) onto the existing shared requireVpsApiKey guard (15 other call sites already used it, per FACTORY-INTERFACE-split-server-ts Stage 1 bce8be44b). Byte-compared before migrating; foreignFlowStatusHandler.ts's buildForeignFlowStatusResponse deliberately left unmigrated (same predicate, returns {status,body} not res-write, own dedicated HTTP-free test suite). New FACTORY-INTERFACE-vps-auth-guard-dedup.test.ts: 6 guard unit tests + 5 live-HTTP e2e tests, 11/11 pass. tsc clean. git-stash A/B on the 5 touched files: 38/38 pass pre, 71/71 pass post, zero regressions. Full bun test: 14726 pass/40 skip/42 fail/1 error — 42-fail matches todays already-documented pre-existing baseline (vps_push_log schema-drift + 5000ms MCP-client-timeout classes), zero Unauthorized-string failures anywhere, zero fails in any of the 6 auth-relevant test files. Live boot probe: /health 200, unauthenticated GET /api/watchlist 401, toolCount=184/cronJobCount=88 unchanged. Commit cf28a32e8. Journal: docs/agent-memory/decisions/sprint-FACTORY-INTERFACE-vps-auth-guard-dedup-dev-mcp-server.md\n\n[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commit cf28a32e8 on main ancestry (git merge-base --is-ancestor: yes); git show --stat matches all 5 claimed files exactly (server.ts, pushPricesHandler.ts, pushSbvRatesHandler.ts, pushForeignFlowHandler.ts, pushNewsHandler.ts). Read every hunk line-by-line, not trusted from prose: each swaps the inline 401 block for if (!requireVpsApiKey(req,res)) return; the shared guard body is byte-identical to the removed inline blocks (same x-api-key-then-Bearer precedence, same !== compare, same 401 {error:Unauthorized} body). foreignFlowStatusHandler.ts deliberately left unmigrated confirmed genuinely different contract (returns {status,body}, caller-supplied requestApiKey) -- legitimate, not scope-dodge. Repo-wide grep for the old inline pattern returns zero hits outside the guard's own definition -- dedup exhaustive. Re-ran independently: new FACTORY-INTERFACE-vps-auth-guard-dedup.test.ts 11/11 pass; broader targeted batch (1406a/1406b/1892a/FIX-SBV-PUSH-TYPE-COERCE/debug-trigger-smoke+new file) 56/56 pass; bun tsc --noEmit 0 errors; mock-guard.sh PASS on all 6 touched files; DDD/secret/process.env greps clean (pre-existing interface-layer infra imports only, no new violation). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-15.md STEP qa-S39.",
+      "qa_verified_by": "qa",
+      "updated_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "bun test + bun tsc --noEmit + mock-guard.sh + git show --stat + git merge-base --is-ancestor (direct-commit verify)",
+          "args": "commit=cf28a32e8; claimed files[]=5 (server.ts,pushPricesHandler.ts,pushSbvRatesHandler.ts,pushForeignFlowHandler.ts,pushNewsHandler.ts); targeted re-run batch=6 test files (new guard test + 5 auth-relevant suites)",
+          "live_value_observed": "git merge-base --is-ancestor cf28a32e8 main = true; git show --stat matches all 5 claimed files; new test 11/11 pass; targeted batch 56/56 pass; tsc 0 errors; mock-guard PASS; zero remaining inline copy-paste auth blocks repo-wide",
+          "observed_at": "2026-08-11T13:57:55Z"
+        }
+      }
+    },
+    {
+      "title": "Move Kinh Dich + TA scoring math out of interface tools into domain",
+      "priority": "P2",
+      "zone": "mcp-server-interface",
+      "type": "FACTORY",
+      "status": "DONE_VERIFIED",
+      "id": "FACTORY-INTERFACE-move-kinhdich-ta-scoring-down",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INTERFACE-move-kinhdich-ta-scoring-down",
+      "promoted_at": "2026-07-24T02:14:29Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+      "updated_at": "2026-08-11T13:59:05Z",
+      "claimed_at": "2026-08-11T13:52:02Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "next_agent": "qa",
+      "entered_review_at": "2026-07-24T02:45:33Z",
+      "review_note": "dev-mcp-server self-closeout: pure DDD move, byte-identical. Moved 9 Kinh Dich score-computation functions (computeSentimentScore/computeFundamentalsScore/computePriceScore/computeForeignFlowScore/computeSectorScore/computeMacroScore/tickerJitter/computeHaoScores/computeMacroIndicatorScore) from interface/mcp/tools/kinhdich/kinhDichTools.ts to new application/services/kinhDich/kinhDichScoring.ts (application not domain -- these do real DB I/O via getDb()/IKinhDichScoreRepository, domain/services convention is pure-no-I/O). All 9 function bodies byte-diff-verified identical old vs new. Updated 1 scheduler dynamic-import consumer + 6 test files import paths. TA scoring math in technicalIndicatorTools.ts investigated but NOT moved -- already-shipped deliberate G5/P2-B2 architecture (real domain TA service intentionally quarantined to _deprecated/, Go microservice port 5003 is the permanent home); moving it would resurrect retired code, documented in journal as PARTIAL-by-design. Evidence: tsc clean. Targeted kinhdich/macro/diacritics regression 19 files/457 tests: 453 pass/4 skip/0 fail identical pre vs post. Full bun test: 14727 pass/41 fail then 14725 pass/43 fail on repeat run (count flux 41-43 proves flaky/timeout class not deterministic); grepped every (fail) line -- zero kinhdich/hexagram/macro-score/sector-score/foreign-flow-score mentions, all match today pre-existing classes (vps_push_log schema-drift, 5000ms MCP-client-timeout, pre-quarantined _deprecated/1302-technical-indicators.test.ts flake). Local isolated server boot probe (port 3999): health 200 toolCount=184, both dashboards 200. Tool count 184/cronJobCount 88 unaffected. Commit b6b659ea0. Journal: docs/agent-memory/decisions/sprint-FACTORY-INTERFACE-move-kinhdich-ta-scoring-down-dev-mcp-server.md | [QA] Review Record (direct-commit verify) 2026-08-11T13:59:04Z -- APPROVED, DONE_VERIFIED. Verified commit b6b659ea066911c9406c67a19856630cc2a083af on main ancestry (git merge-base --is-ancestor OK). git show --stat matches: new apps/mcp-server/src/application/services/kinhDich/kinhDichScoring.ts (415L, 9 functions), apps/mcp-server/src/interface/mcp/tools/kinhdich/kinhDichTools.ts (414 lines removed, now imports+calls), defaultComputeHexagrams.ts scheduler dynamic-import repointed, docs/microservice/mcp-server/kinhdich.md updated, 7 test files' import paths updated (review_note said 6 -- actual diff shows 7, harmless prose undercount, non-blocking). Independently byte-diffed the full 9-function block (computeSentimentScore/computeFundamentalsScore/computePriceScore/computeForeignFlowScore/computeSectorScore/computeMacroScore/tickerJitter/computeHaoScores/computeMacroIndicatorScore) old-file-parent vs new-file: identical except one comment-line edit (no logic/formula change) -- confirms byte-diff claim independently, not trusted from prose. Re-ran myself: bun tsc --noEmit 0 errors; targeted kinhdich/hexagram/hao/macro-score/sector-score/foreign-flow/diacritics regression (21 files, superset of the claimed 19) 480 pass/4 skip/0 fail across 484 tests; mock-guard.sh --files (kinhDichScoring.ts, kinhDichTools.ts, defaultComputeHexagrams.ts) PASS; process.env/secret greps clean; DDD: application-layer file importing infrastructure/ directly matches this codebase's own established convention (application/usecases/getForeignRoom.ts header: 'orchestrates domain + infrastructure' -- same pattern), not a layering violation; domain/ services untouched by this commit. TA-scoring-in-technicalIndicatorTools.ts non-move confirmed deliberate: commit diff shows zero touch to that file; decision journal STEP dev-mcp-server-S2 documents G5/P2-B2 rationale (TA domain service quarantined to _deprecated/, permanent home is Go microservice port 5003) citing docs/handoffs/TASK_P2-B2.md + p2-b-caller-inventory.md, cross-checked against docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md's independent G5/_deprecated/ corroboration -- legitimate documented exception, not scope-cut. DJ-GATE-1: journal carries task-id: trailer x2 (S1 domain-vs-application placement rationale, S2 TA non-move rationale). DoD (detail_ref): scoring math relocated with tests green, interface imports from new home, numeric outputs unchanged (byte-diff-verified), RAW-verified -- MET (application not domain, justified layering deviation per established convention).",
+      "qa_verified_by": "qa",
+      "qa_verified_at": "2026-08-11T13:59:04Z",
+      "updated_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "bun tsc --noEmit + bun test (21 targeted files) + mock-guard.sh + git merge-base/show + independent byte-diff",
+          "args": "kinhDichScoring.ts/kinhDichTools.ts/defaultComputeHexagrams.ts + 21 kinhdich/hexagram/hao/macro/sector/foreign-flow/diacritics test files",
+          "live_value_observed": "tsc 0 errors; 480 pass/4 skip/0 fail (484 tests, 21 files); mock-guard PASS; commit b6b659ea0 confirmed main ancestor; 9-function block byte-diff identical bar 1 comment line",
+          "observed_at": "2026-08-11T13:59:04Z"
+        }
+      }
     }
   ],
   "closed_sprints": [],
