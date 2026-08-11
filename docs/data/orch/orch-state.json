@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-11T14:54:22Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 4 row(s), highest-ranked FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 4 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-11T15:25:14Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -10769,7 +10770,7 @@
         "created_by": "po/triage-20260811T1437Z",
         "origin_signal_id": "03e7d0af51adf4b52400e6627069ecfd79bd355698e11f196e32f94301f4a098",
         "status_note": "AC-1: the code-janitor CronCreate prompt runs the SAME `git diff --name-only HEAD~3..HEAD` check (scope src/** , apps/*/src/**) BEFORE spawning any subagent, mirroring register-job-market-db-journal-guard.md's existing pattern. AC-2: diff non-empty -> spawn as today, main.md flow unchanged; diff empty -> run the 3 deterministic sweeps directly from the prompt, spawn ONLY if a sweep emits a SIGNAL-WRITTEN line / safe-fail needing review / non-trivial Cold-Archive monthly result. AC-3 (AUDITABILITY, do NOT drop): the pre-gate writes a structured one-line verdict {\"verdict\":\"SKIP-SPAWN\"|\"SPAWN\",\"sweeps\":{...},\"checked_at\":...} to a durable state file via atomic tmp+mv, same shape as db-integrity-probe.sh / auditor-tier1-probe.sh, so a SKIP-SPAWN tick stays inspectable even though no notebook entry exists for it. AC-4: .claude/skills/cron-standalone-team/register-job-code-janitor.md and .claude/commands/crons/cron-code-janitor.md stay in sync per that skill's own divergence-discipline note.\\n\\nORIGIN: architecture brief docs/architecture-briefs/2026-08-11-cron-heartbeat-prespawn-gating.md (agents-architect, 2026-08-11T13:59:53Z, 20132 bytes). Brief §6 routes explicitly to po for task-board entry, NOT to agents-architect or agent-father, because the change is mixed-zone (scripts/ + .claude/skills/ + .claude/commands/) and is an improve-an-existing-mechanism implementation, not an agent-file lifecycle change.\\n\\nPO RATIFICATION AT SOURCE (per supervised-goahead.md Step 2 discipline — verified by reading the code, NOT by accepting the brief's prose):\\n  CLAIM 1 'code-janitor's CronCreate prompt has no pre-boot gate' -> CONFIRMED. .claude/skills/cron-standalone-team/register-job-code-janitor.md:9 is verbatim: prompt : \"Launch subagent (subagent_type=code-janitor). Read and execute docs/agents/code-janitor/flow/main.md\\\\nMCP: https://zenmidi.com/vn-market/mcp\". No shell, no gate, unconditional spawn.\\n  CLAIM 2 'the git-diff gate is post-boot and covers only the DRY scan' -> CONFIRMED. docs/agents/code-janitor/flow/main.md:19 heading is verbatim '## Pre-Check (gates ONLY the Decision-Tree DRY scan below — CADRAT-3)', and :26 states verbatim 'The 3 every-scan sweeps (Memory Prune / Notebook Line-Cap / Cold Archive) stay UNCONDITIONAL on this gate'.\\n  CLAIM 3 'market-db-journal-guard is the existing exemplar' -> CONFIRMED, .claude/skills/cron-standalone-team/register-job-market-db-journal-guard.md exists.\\n\\nUSER-CONFIRMATION HOLD RESOLVED BY PO, NOT ESCALATED. The signal envelope carried pipeline=hold-for-user-confirmation and the brief says 'once the user confirms'. Per CLAUDE.md ('Never ask user — spawn po for decisions, continue') and feedback_po_deploy_rebuild_full_autonomy_no_user_gate, PO is the decision authority for this class. RATIFIED. Reasoning: the change is additive, reversible, mirrors a pattern already live on 8/11 outer heartbeats, and its explicit auditability AC prevents the one real risk (losing the per-tick trace).\\n\\nSCOPE FENCE — DO NOT WIDEN. The brief assessed and explicitly REJECTED introducing any LLM/local-model pre-gate anywhere in these 3 cron families (no fuzzy pre-spawn judgment case exists; every gate examined reduces to a binary/countable predicate already well served by shell+jq; 3 documented live instances of safe-looking gates silently disabling their own mechanism). Rows 1-8 are already gated and rows 9-10 (agent-father, claude-manager-helper) need no change on the evidence — explicitly out of scope, not silently omitted. Implement row 11 ONLY.\\n\\nPRIORITY BASIS: P2, not higher. This is a host-load/token-efficiency win (4x/day full session boots where 10/10 last recorded cycles had the DRY branch suppressed, ~4.3 days of evidence), not a correctness or data-loss defect. Nothing is currently broken by the missing gate.\\n\\nDEDUP: non-terminal lanes scanned on JANITOR|PRE-?SPAWN|PRESPAWN|HEARTBEAT-GATE. Open janitor rows are FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (sweep-script premise bug), FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR (idempotency guard), CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (notebook split). None touches cron registration or pre-spawn gating. Genuinely new.",
-        "updated_at": "2026-08-11T15:04:16Z"
+        "updated_at": "2026-08-11T15:31:14Z"
       }
     ],
     "closed_sprints": [
@@ -12440,6 +12441,63 @@
             },
             "live_value_observed": "gen-tool-registry --dry-run totalCount=183/system=41 matches committed file; tool-registry-parity.test.ts 17/17 pass; tsc --noEmit 0 errors; no production source touched",
             "observed_at": "2026-08-11T13:55:55Z"
+          }
+        }
+      },
+      {
+        "title": "Extract sentiment lexicon + negation tables from sentimentClassifier",
+        "priority": "P2",
+        "zone": "mcp-server-domain",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-DOMAIN-extract-sentiment-lexicons",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-extract-sentiment-lexicons",
+        "promoted_at": "2026-07-24T03:15:14Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-11T15:29:56Z",
+        "claimed_at": "2026-08-11T15:25:14Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T03:25:09Z",
+        "review_note": "dev-mcp-server self-closeout: pure data/logic separation, byte-identical. Moved VN_BULLISH/VN_BEARISH/EN_BULLISH/EN_BEARISH keyword-weight tables + derived ALL_BULLISH/ALL_BEARISH (longest-first sorted merge), FLIP_NEGATION_TOKENS/SOFT_NEGATION_TOKENS/NEGATION_WINDOW negation scope tables, and SentimentKeyword interface verbatim from domain/services/sentimentClassifier.ts into new sibling domain/services/sentimentLexicons.ts (mirrors existing vnHolidayData.ts/stockAliases/catalog.ts convention -- no domain/data/ dir exists in repo). Classifier keeps 100% of the algorithm (tokenize/findOccurrences/currentSentenceBefore/detectNegation/classifySentiment), now imports the tables. Byte-diffed every table literal old vs new (Python regex compare) before wiring the import -- zero drift. Evidence: bun test on all 17 test files that exercise sentimentClassifier (180 tests, 372 expect calls) -- 180 pass/0 fail both pre- and post-refactor, byte-identical result. tsc clean. Tool/scheduler probe unaffected: toolCount=184, cronJobCount=88. Full-server-boot probe intentionally skipped per task scope (pure data-move, unit tests are the right proof; keeps zone clear of concurrent mcp-server memory audit). Commit fcf1a60ec. Journal: docs/agent-memory/decisions/sprint-FACTORY-DOMAIN-extract-sentiment-lexicons-dev-mcp-server.md | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commit fcf1a60ec on main ancestry -- git show --numstat matches the row's claimed file (sentimentClassifier.ts -348/+10) plus the new sentimentLexicons.ts (+367); commit date 2026-07-24T05:24:43+02:00 consistent with entered_review_at. Independently re-ran (not trusted from review_note prose): all 17 test files importing sentimentClassifier/sentimentLexicons -- 181 pass/0 fail/373 expect (review_note claimed 180/372, off-by-one benign drift, non-blocking); bun tsc --noEmit 0 errors; mock-guard.sh --files sentimentClassifier.ts sentimentLexicons.ts PASS; DDD (no infrastructure/application imports), process.env, secret greps all clean. Backlog DoD's soft target 'algorithm file <=120L or justified': classifier now 251L -- judged justified (5 documented functions + types + design-notes header retained, not dead weight), not a blocking item under the verify-committed checklist. DJ-GATE-1: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-15.md STEP qa-S42.",
+        "qa_verified_at": "2026-08-11T15:29:56Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun test (17 files) + bun tsc --noEmit + mock-guard.sh + git show --numstat/merge-base --is-ancestor",
+            "args": "bun test src/__tests__/{1195-ha-nhiet-disambiguation,1197-sentiment-dedup,1200-dau-tu-cong-polarity,1212-rate-cooling,1241-geopolitical-bearish-keywords,1255-vnindex-forecast-sentiment,1272-ceo-sentiment-fix,1278a-insider-dump-cascade-red,1279a-msci-inclusion-cascade-red,1308a-sentiment-patterns,1315-cascade-cost-push-integration,1321-sentiment-negation-loss,1332a-insider-governance,134-sentiment-classifier,FIX-1279-msci-bullish,FIX-1284-imf-bearish,FIX-1297-sentiment-bearish-batch}.test.ts (apps/mcp-server); tsc --noEmit; mock-guard.sh --files sentimentClassifier.ts sentimentLexicons.ts; git merge-base --is-ancestor fcf1a60ec main; git show --numstat fcf1a60ec",
+            "live_value_observed": "181 pass/0 fail/373 expect across 17 files; tsc 0 errors; mock-guard PASS (no fabricated-data patterns); fcf1a60ec confirmed ancestor of main; numstat sentimentClassifier.ts -348/+10, sentimentLexicons.ts +367 (matches row's claimed file)",
+            "observed_at": "2026-08-11T15:29:56Z"
+          }
+        }
+      },
+      {
+        "title": "Name VAS row-code guards + cascade broadcast-floor magic numbers",
+        "priority": "P2",
+        "zone": "mcp-server-domain",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-DOMAIN-name-bctc-cascade-magic-numbers",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-name-bctc-cascade-magic-numbers",
+        "promoted_at": "2026-07-24T04:14:32Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-11T15:31:14Z",
+        "claimed_at": "2026-08-11T15:25:14Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T04:40:33Z",
+        "review_note": "dev-mcp-server self-closeout: pure readability refactor, values byte-identical. VAS row-code guard (lineScan.ts): inline val>=10 && val<=990 && val%10===0 repeated 3x (findValue isGuarded + findValueByCode Form A/B) named VAS_ROW_CODE_MIN=10/VAS_ROW_CODE_MAX=990/VAS_ROW_CODE_STEP=10 (MIN and STEP separate consts despite sharing value 10 -- distinct domain facts). Cascade broadcast-floor (Task 162): inline default 6 duplicated 5x across cascadeEngine.ts + runImpactChain.ts + pollNews.ts config-load fallbacks, consolidated into 1 exported SSOT DEFAULT_BROADCAST_MIN_IMPACT=6 in cascadeEngine.ts, imported at both application-layer sites. Evidence: tsc clean. Targeted regression 16 files/193 tests (9 BCTC-extractor + 7 cascade/broadcast): pass counts identical pre/post (105+88). Full bun test: 14727 pass/41 fail -- grep-verified zero overlap with touched files/concepts (lineScan/cascadeEngine/runImpactChain/pollNews/broadcast/VAS/rowCode/bctcOverdue absent from fail list); all 41 match documented pre-existing classes (vps_push_log schema-drift, 5000ms MCP-client-timeout, deprecated 1302-technical-indicators flake). Server boot probe (port 3999): health 200 toolCount=184, both dashboards 200. Tool 184/cron 88 unaffected. Commit 6b0141a5a. Journal: docs/agent-memory/decisions/sprint-FACTORY-DOMAIN-name-bctc-cascade-magic-numbers-dev-mcp-server.md | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commit 6b0141a5a on main ancestry (git merge-base --is-ancestor); git show --stat confirms all 4 touched files (lineScan.ts, cascadeEngine.ts, runImpactChain.ts, pollNews.ts) -- detail_ref's original approach note named balanceSheetExtractor.ts but the guard logic actually lives in lineScan.ts (legitimate, not scope-dodge). Full diff read line-by-line: VAS_ROW_CODE_MIN=10/MAX=990/STEP=10 replace 3 inline guard sites in lineScan.ts, DEFAULT_BROADCAST_MIN_IMPACT=6 consolidates 5 duplicated inline 6-literal sites across cascadeEngine/runImpactChain/pollNews into 1 SSOT -- all values byte-identical to originals. Independently re-ran (not trusted from review_note prose): targeted BCTC/lineScan regression (7 files) 85 pass/3 skip/0 fail/289 expect; targeted cascade/broadcast regression (7 files) 74 pass/0 fail/172 expect; bun tsc --noEmit 0 errors; mock-guard.sh --files <4 touched> PASS; DDD grep clean (only comment-text 'infrastructure'/'application' hits, zero real imports); process.env/secret greps clean; RAW_VND_THRESHOLD=1e11 (bctcScalarAggregator.ts) confirmed untouched (file absent from diff). Minor non-blocking note: commit's own AC trailer says 'broadcast-floor named (5 sites, 1 SSOT + 4 references)' but actual reference count is 5, not 4 -- commit-message count typo only, zero functional impact. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-15.md STEP qa-S43.",
+        "updated_by": "qa",
+        "qa_verified_at": "2026-08-11T15:31:03Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun test (14 targeted files) + bun tsc --noEmit + mock-guard.sh + git show --stat/merge-base --is-ancestor",
+            "args": "bun test src/__tests__/{121-bctc-edge-cases,1303h-extractor-guards,042-bctc-balance-sheet,291-bctc-smoke-vnm,FIX-DE-4-balance-sheet-extractor-debt-codes,FIX-DE-2-debt-block1-wire,hotfix-vcb-parser,162-market-wide-broadcast,062-cascade-engine,1345d-vnindex-cascade-broadcast,1256-gold-broadcast-exclusion,1268-govt-support-cascade-fix,1004-vn-policy-cascade-rules,1334b-ceo-broadcast}.test.ts (apps/mcp-server); tsc --noEmit; mock-guard.sh --files lineScan.ts cascadeEngine.ts runImpactChain.ts pollNews.ts; git merge-base --is-ancestor 6b0141a5a main; git show --stat 6b0141a5a",
+            "live_value_observed": "85 pass/3 skip/0 fail (BCTC/lineScan, 7 files, 289 expect) + 74 pass/0 fail (cascade/broadcast, 7 files, 172 expect); tsc 0 errors; mock-guard PASS; 6b0141a5a confirmed ancestor of main; diff matches all 4 claimed files, values byte-identical (10/990/10/6)",
+            "observed_at": "2026-08-11T15:31:03Z"
           }
         }
       }
@@ -14650,60 +14708,6 @@
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "agent-father",
         "agent_father_disposition_20260805T1658": "agent-father-triage 2026-08-05T16:58Z (relayed by router -- agent-father has no gateway tool grant, could not write this itself). DISPOSITION: DO NOT sign off DONE yet; do not rework code. T6 code verified correct at source (docs/agents/market-watcher/flow/main.md Step 2: slot=market-watcher-eod -> eod.md always, slot=market-watcher-offhours -> cycle.md mode=offhours always, empty/unrecognized -> unchanged wall-clock fallback), matches design brief docs/architecture-briefs/2026-07-21-cowork-fanout-producer-consumer-ordering.md section 5 verbatim, landed commit bdf22186d 2026-07-22. BLOCKER IS REAL BUT NARROWER THAN IT LOOKS: DESIGN-COWORK-FANOUT-T8-QA-TEST-STRATEGY depends on T1-T6 ALL SIX, not T6 alone -- T1/T2/T3/T4/T5 are all still TODO/unimplemented in ready[], three of the five (T1/T2/T4) owned by agent-father itself and untouched. Per brief section 9 (T6 has no dependency on T1-T5, can ship separately) the two test cases that actually validate T6 (brief section 7, T-7/T-8 flow-fixture walkthroughs on slot-routing only) need zero input from T1-T5. RECOMMENDATION: route a narrow qa execution of just brief-section-7 T-7/T-8 to qa now, decoupled from the 6-way T8 board row, rather than leave this row in limbo behind 5 unstarted siblings owned partly by the same triager. CROSS-REFERENCE (confirmed mechanically independent, correctly filed separately): FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (eod.md:78 stale caveat, 'what happens once inside eod.md') is NOT caused by and does NOT require touching T6/main.md ('which sub-flow file gets entered'). One genuine connective thread for whoever fixes that row's AC-2 (same-agent multi-slot notebook clobber): it is the direct fallout of THIS brief's own section 5/6 decision to WARN-not-BLOCK legitimate same-tick EOD+offhours collisions on DDD grounds -- the brief solved the collision at the signal/routing layer and never addressed the notebook-storage-layer side effect; the AC-2 fix belongs purely in the notebook-write layer, do not re-litigate the already-rejected block-at-dispatch-layer option."
-      },
-      {
-        "title": "Extract sentiment lexicon + negation tables from sentimentClassifier",
-        "priority": "P2",
-        "zone": "mcp-server-domain",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-DOMAIN-extract-sentiment-lexicons",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-extract-sentiment-lexicons",
-        "promoted_at": "2026-07-24T03:15:14Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T03:25:26Z",
-        "claimed_at": "2026-07-24T03:15:14Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T03:25:09Z",
-        "review_note": "dev-mcp-server self-closeout: pure data/logic separation, byte-identical. Moved VN_BULLISH/VN_BEARISH/EN_BULLISH/EN_BEARISH keyword-weight tables + derived ALL_BULLISH/ALL_BEARISH (longest-first sorted merge), FLIP_NEGATION_TOKENS/SOFT_NEGATION_TOKENS/NEGATION_WINDOW negation scope tables, and SentimentKeyword interface verbatim from domain/services/sentimentClassifier.ts into new sibling domain/services/sentimentLexicons.ts (mirrors existing vnHolidayData.ts/stockAliases/catalog.ts convention -- no domain/data/ dir exists in repo). Classifier keeps 100% of the algorithm (tokenize/findOccurrences/currentSentenceBefore/detectNegation/classifySentiment), now imports the tables. Byte-diffed every table literal old vs new (Python regex compare) before wiring the import -- zero drift. Evidence: bun test on all 17 test files that exercise sentimentClassifier (180 tests, 372 expect calls) -- 180 pass/0 fail both pre- and post-refactor, byte-identical result. tsc clean. Tool/scheduler probe unaffected: toolCount=184, cronJobCount=88. Full-server-boot probe intentionally skipped per task scope (pure data-move, unit tests are the right proof; keeps zone clear of concurrent mcp-server memory audit). Commit fcf1a60ec. Journal: docs/agent-memory/decisions/sprint-FACTORY-DOMAIN-extract-sentiment-lexicons-dev-mcp-server.md"
-      },
-      {
-        "title": "Split newsNormalizer types/helpers/tables out of the 979L file",
-        "priority": "P2",
-        "zone": "mcp-server-domain",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-DOMAIN-split-newsNormalizer",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-split-newsNormalizer",
-        "promoted_at": "2026-07-24T03:45:16Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T03:58:53Z",
-        "claimed_at": "2026-07-24T03:45:16Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T03:58:41Z",
-        "review_note": "dev-mcp-server self-closeout: pure structural split, behavior-preserving. Split newsNormalizer.ts (1086L) into sibling newsNormalizerTypes.ts (4 type aliases + AnalysisEntry), newsNormalizerTables.ts (8 keyword/lookup data tables), newsNormalizerHelpers.ts (14 pure helper functions + derived ALL_CATALOG_CODES cache) -- mirrors the FACTORY-DOMAIN-extract-sentiment-lexicons sibling-file convention (domain/services/*.ts, not a data/ subfolder). Main file (1086L->236L) keeps ONLY normalizeNews() orchestration, re-exporting the pre-split public surface (types + decodeHtmlEntities/truncateAt120/buildDecisionResume/DOMAIN_VN_LABEL) so all ~50 existing import call sites are unaffected. Byte-diffed every moved unit old-vs-new (8 tables, AnalysisEntry + 4 type aliases, all 14 helper function bodies, normalizeNews() itself): zero drift. bun tsc --noEmit clean. Ran the 50-file newsNormalizer-touching test set before AND after the split: identical 575 pass / 0 fail / 1166 expect() calls both times. gen-project-stats.ts --dry-run unaffected (toolCount 184, cronJobCount 88). No full-server-boot probe per task brief (pure code split; host resource conservation given concurrent mcp-server memory pressure this session). Commit 9cfeefc16 (code) + 25cc5d7d6 (memory). Journal: docs/agent-memory/decisions/sprint-FACTORY-DOMAIN-split-newsNormalizer-dev-mcp-server.md"
-      },
-      {
-        "title": "Name VAS row-code guards + cascade broadcast-floor magic numbers",
-        "priority": "P2",
-        "zone": "mcp-server-domain",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-DOMAIN-name-bctc-cascade-magic-numbers",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-name-bctc-cascade-magic-numbers",
-        "promoted_at": "2026-07-24T04:14:32Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T04:40:48Z",
-        "claimed_at": "2026-07-24T04:14:32Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T04:40:33Z",
-        "review_note": "dev-mcp-server self-closeout: pure readability refactor, values byte-identical. VAS row-code guard (lineScan.ts): inline val>=10 && val<=990 && val%10===0 repeated 3x (findValue isGuarded + findValueByCode Form A/B) named VAS_ROW_CODE_MIN=10/VAS_ROW_CODE_MAX=990/VAS_ROW_CODE_STEP=10 (MIN and STEP separate consts despite sharing value 10 -- distinct domain facts). Cascade broadcast-floor (Task 162): inline default 6 duplicated 5x across cascadeEngine.ts + runImpactChain.ts + pollNews.ts config-load fallbacks, consolidated into 1 exported SSOT DEFAULT_BROADCAST_MIN_IMPACT=6 in cascadeEngine.ts, imported at both application-layer sites. Evidence: tsc clean. Targeted regression 16 files/193 tests (9 BCTC-extractor + 7 cascade/broadcast): pass counts identical pre/post (105+88). Full bun test: 14727 pass/41 fail -- grep-verified zero overlap with touched files/concepts (lineScan/cascadeEngine/runImpactChain/pollNews/broadcast/VAS/rowCode/bctcOverdue absent from fail list); all 41 match documented pre-existing classes (vps_push_log schema-drift, 5000ms MCP-client-timeout, deprecated 1302-technical-indicators flake). Server boot probe (port 3999): health 200 toolCount=184, both dashboards 200. Tool 184/cron 88 unaffected. Commit 6b0141a5a. Journal: docs/agent-memory/decisions/sprint-FACTORY-DOMAIN-name-bctc-cascade-magic-numbers-dev-mcp-server.md"
       },
       {
         "title": "Move source-health tracker singleton from interface down to infrastructure",
@@ -19087,7 +19091,7 @@
         "size": "S",
         "sprint": "BACKLOG",
         "zone": "cross-service/",
-        "next_agent": "qa",
+        "next_agent": "agent-father",
         "files": [
           "docs/policies/commit-convention.md",
           "docs/agents/dev-team/flow/execute-tier.md",
@@ -19103,8 +19107,12 @@
           "FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT",
           "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2"
         ],
-        "status_note": "AC-1: docs/policies/commit-convention.md:38 no longer reads as forbidding a trailing pathspec on the `git commit` line, and its own Notebook-Commits template (:106-108) carries `-- <path>` like every other template in the same file. AC-2: execute-tier.md:94, developer/flow/main.md:102, dev-frontend/flow/main.md:99 all instruct the pathspec-scoped form. AC-3 (regression proof, opt-IN allowlist only per feedback_fleetwide_gate_validated_on_one_file_optout_allowlist): a grep-based verifier asserts no fleet doc instructs a `git commit -m` with neither a trailing `-- <paths>` nor a line-continuation to one.\\n\\nROOT CAUSE (read at source this tick, not inferred): docs/policies/commit-convention.md is internally contradictory.\\n  :27-35  canonical Shell Pattern — CORRECT, ends `)\" -- <explicit paths>`.\\n  :38     'MANDATORY RULE - carried forward verbatim, non-negotiable: `git commit -m` (index-only) ONLY.' The words 'index-only' + 'ONLY' read as FORBIDDING the pathspec form.\\n  :39     places the explicitness requirement on `git add` ('Always stage EXPLICIT pathspecs (`git add <exact paths>`)'), NOT on `git commit`. That is precisely the `git add` + bare `git commit` TOCTOU shape of memory lesson feedback_git_add_then_bare_commit_is_toctou_race_use_pathspec_commit.\\n  :106-108 §Notebook Commits worked template is `git add <path>` then BARE `git commit -m \"...\"` with NO `--`. This is the single most-executed commit template in the fleet (every agent, every cycle).\\n\\nWHY IT IS NOW BREAKING AND NOT MERELY UNTIDY: scripts/git-hooks/pre-commit:850-877 (landed eac71308e 2026-07-31T02:11:14Z) sets escalate_effective=reject when escalated=true and `exit 1`s, INDEPENDENT of GIT_SWEEP_GUARD_MODE. The hook's own message at :875 states: \"'actor' is $CLAUDE_CODE_SESSION_ID, a per-COORDINATION-SESSION id shared by every agent spawned inside it - this budget is POOLED across the whole session\". Threshold is 3. Session 165f4245-6173-4054-87fd-c55bb626265f is at prior_warns=30. Therefore EVERY agent spawned in this session is already hard-blocked on the exact commit form its own policy SSOT calls non-negotiable.\\n\\nLIVE CONFIRMATION THIS TICK (first direct observation of the block in the real repo, not a fixture): a bare `git commit -m` was ESCALATED REJECTed; retrying with an explicit trailing pathspec on the commit line succeeded. Both affected files landed correctly seconds later (01cfb57ce notebook-only, 5595bcfc9 dedup-ledger).\\n\\nDOWNSTREAM INHERITORS of the bare form (all three cite commit-convention.md by name):\\n  docs/agents/dev-team/flow/execute-tier.md:94 - states it as an INVARIANT: 'All developer agents MUST use `git commit -m \"...\"` (index-only).'\\n  docs/agents/developer/flow/main.md:102 - '`git add <exact own paths>` (NEVER `-A`/`.`) then `git commit -m \"...\"`'\\n  docs/agents/dev-frontend/flow/main.md:99 - identical text.\\nNone of the three mentions the escalated-reject or the retry-with-pathspec recovery. Note the same two files are internally inconsistent: their OWN notebook-commit lines (developer:147, dev-frontend:185) DO carry `-- <path>`.\\n\\nFAILURE MODE IF UNFIXED: a developer/dev-frontend agent spawned into a saturated session hits exit 1 at its commit step with no documented recovery. The documented outcomes of that are silent commit skip (feedback_auditor_notebook_commit_step_silent_noop_c49, feedback_auditor_c11_cycle_completed_but_self_commit_skipped) and self-reported-complete-but-unpersisted work (feedback_auditor_tier2_self_report_no_persisted_writes) - i.e. real work loss, not just a wasted round-trip.\\n\\nDEDUP (non-terminal lanes backlog+ready+in_progress+review+qa, scanned on BARE|TOCTOU|PATHSPEC|COMMIT-CONVENTION and the FIX-COMMIT-SWEEP-*/FIX-SWEEPGUARD-* family): FIX-SWEEPGUARD-ESCALATION-HAS-NO-ACTUATOR-REPEAT-OFFENDER-13-STRIKES is the HOOK side (signal de-noising, refuted premise); FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT is the VICTIM side; FIX-COLDEVICT-WITHIN-FILE-PEER-CONTENT-CAPTURE is within-file capture. NONE owns the SUPPLY side - i.e. that the fleet's own docs instruct the blocked form. Genuinely new. Archived FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC is CANCELLED and was per-agent scoped; this row is deliberately at the policy-SSOT level instead (CLAUDE.md: fix root cause definitif, not recurrent symptom).\\n\\nDISPATCH-STRANDING WARNING FOR THE ROUTER: next_agent=agent-father is OFF the DRS ratified allowlist [architect,ba,pm,po,agents-architect], so this row is NOT reachable by any automated dispatch lane and will only ever be picked up via PO's manual-dispatch sweep or a direct BATCH fold. PO folded it into the 2026-08-11T14:37Z BATCH for exactly this reason. If it is still BACKLOG next tick, that is dispatch starvation, not a spec gap.\n\nEXECUTED 2026-08-11T15:14Z (agent-father, session 165f4245): AC-1 done — line 38 MANDATORY RULE + Notebook-Commits template (:106-108) both now mandate `git commit -m \"...\" -- <paths>` as the only canonical form; line 7 hook description also corrected (was stale \"only installed hook is pre-push\"). AC-2 done — execute-tier.md:94, developer/flow/main.md:102, dev-frontend/flow/main.md:99 all now instruct the trailing-pathspec form. AC-3 (regression grep) NOT run by this agent (no allowlisted-verifier script authored — flagging for QA to add/confirm per the row's own AC-3 wording, opt-IN allowlist). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-6.md STEP developer-S96. Own commit for this fix used explicit trailing pathspec (session sweep-guard warn-budget already exhausted).",
-        "updated_at": "2026-08-11T15:15:31Z"
+        "status_note": "AC-1: docs/policies/commit-convention.md:38 no longer reads as forbidding a trailing pathspec on the `git commit` line, and its own Notebook-Commits template (:106-108) carries `-- <path>` like every other template in the same file. AC-2: execute-tier.md:94, developer/flow/main.md:102, dev-frontend/flow/main.md:99 all instruct the pathspec-scoped form. AC-3 (regression proof, opt-IN allowlist only per feedback_fleetwide_gate_validated_on_one_file_optout_allowlist): a grep-based verifier asserts no fleet doc instructs a `git commit -m` with neither a trailing `-- <paths>` nor a line-continuation to one.\\n\\nROOT CAUSE (read at source this tick, not inferred): docs/policies/commit-convention.md is internally contradictory.\\n  :27-35  canonical Shell Pattern — CORRECT, ends `)\" -- <explicit paths>`.\\n  :38     'MANDATORY RULE - carried forward verbatim, non-negotiable: `git commit -m` (index-only) ONLY.' The words 'index-only' + 'ONLY' read as FORBIDDING the pathspec form.\\n  :39     places the explicitness requirement on `git add` ('Always stage EXPLICIT pathspecs (`git add <exact paths>`)'), NOT on `git commit`. That is precisely the `git add` + bare `git commit` TOCTOU shape of memory lesson feedback_git_add_then_bare_commit_is_toctou_race_use_pathspec_commit.\\n  :106-108 §Notebook Commits worked template is `git add <path>` then BARE `git commit -m \"...\"` with NO `--`. This is the single most-executed commit template in the fleet (every agent, every cycle).\\n\\nWHY IT IS NOW BREAKING AND NOT MERELY UNTIDY: scripts/git-hooks/pre-commit:850-877 (landed eac71308e 2026-07-31T02:11:14Z) sets escalate_effective=reject when escalated=true and `exit 1`s, INDEPENDENT of GIT_SWEEP_GUARD_MODE. The hook's own message at :875 states: \"'actor' is $CLAUDE_CODE_SESSION_ID, a per-COORDINATION-SESSION id shared by every agent spawned inside it - this budget is POOLED across the whole session\". Threshold is 3. Session 165f4245-6173-4054-87fd-c55bb626265f is at prior_warns=30. Therefore EVERY agent spawned in this session is already hard-blocked on the exact commit form its own policy SSOT calls non-negotiable.\\n\\nLIVE CONFIRMATION THIS TICK (first direct observation of the block in the real repo, not a fixture): a bare `git commit -m` was ESCALATED REJECTed; retrying with an explicit trailing pathspec on the commit line succeeded. Both affected files landed correctly seconds later (01cfb57ce notebook-only, 5595bcfc9 dedup-ledger).\\n\\nDOWNSTREAM INHERITORS of the bare form (all three cite commit-convention.md by name):\\n  docs/agents/dev-team/flow/execute-tier.md:94 - states it as an INVARIANT: 'All developer agents MUST use `git commit -m \"...\"` (index-only).'\\n  docs/agents/developer/flow/main.md:102 - '`git add <exact own paths>` (NEVER `-A`/`.`) then `git commit -m \"...\"`'\\n  docs/agents/dev-frontend/flow/main.md:99 - identical text.\\nNone of the three mentions the escalated-reject or the retry-with-pathspec recovery. Note the same two files are internally inconsistent: their OWN notebook-commit lines (developer:147, dev-frontend:185) DO carry `-- <path>`.\\n\\nFAILURE MODE IF UNFIXED: a developer/dev-frontend agent spawned into a saturated session hits exit 1 at its commit step with no documented recovery. The documented outcomes of that are silent commit skip (feedback_auditor_notebook_commit_step_silent_noop_c49, feedback_auditor_c11_cycle_completed_but_self_commit_skipped) and self-reported-complete-but-unpersisted work (feedback_auditor_tier2_self_report_no_persisted_writes) - i.e. real work loss, not just a wasted round-trip.\\n\\nDEDUP (non-terminal lanes backlog+ready+in_progress+review+qa, scanned on BARE|TOCTOU|PATHSPEC|COMMIT-CONVENTION and the FIX-COMMIT-SWEEP-*/FIX-SWEEPGUARD-* family): FIX-SWEEPGUARD-ESCALATION-HAS-NO-ACTUATOR-REPEAT-OFFENDER-13-STRIKES is the HOOK side (signal de-noising, refuted premise); FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT is the VICTIM side; FIX-COLDEVICT-WITHIN-FILE-PEER-CONTENT-CAPTURE is within-file capture. NONE owns the SUPPLY side - i.e. that the fleet's own docs instruct the blocked form. Genuinely new. Archived FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC is CANCELLED and was per-agent scoped; this row is deliberately at the policy-SSOT level instead (CLAUDE.md: fix root cause definitif, not recurrent symptom).\\n\\nDISPATCH-STRANDING WARNING FOR THE ROUTER: next_agent=agent-father is OFF the DRS ratified allowlist [architect,ba,pm,po,agents-architect], so this row is NOT reachable by any automated dispatch lane and will only ever be picked up via PO's manual-dispatch sweep or a direct BATCH fold. PO folded it into the 2026-08-11T14:37Z BATCH for exactly this reason. If it is still BACKLOG next tick, that is dispatch starvation, not a spec gap.\n\nEXECUTED 2026-08-11T15:14Z (agent-father, session 165f4245): AC-1 done — line 38 MANDATORY RULE + Notebook-Commits template (:106-108) both now mandate `git commit -m \"...\" -- <paths>` as the only canonical form; line 7 hook description also corrected (was stale \"only installed hook is pre-push\"). AC-2 done — execute-tier.md:94, developer/flow/main.md:102, dev-frontend/flow/main.md:99 all now instruct the trailing-pathspec form. AC-3 (regression grep) NOT run by this agent (no allowlisted-verifier script authored — flagging for QA to add/confirm per the row's own AC-3 wording, opt-IN allowlist). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-6.md STEP developer-S96. Own commit for this fix used explicit trailing pathspec (session sweep-guard warn-budget already exhausted).\n\n[QA] Review Record (direct-commit verify) 2026-08-11T15:30:54Z -- CHANGES_REQUESTED. Commit e57c4b669d5f50229781a725631b42a817c78b5d confirmed on main ancestry; all 4 claimed files (commit-convention.md, execute-tier.md, developer/flow/main.md, dev-frontend/flow/main.md) confirmed touched via git show --stat, diff content read in full -- correct pathspec-mandate wording on all 4. No apps/ source touched (docs-only) -- bun test/tsc/mock-guard N/A per Smart-Skip.\n\nBLOCKING ISSUE (AC-3 not met): the row own status_note flagged AC-3 (fleet-wide grep-based regression proof, opt-IN allowlist per feedback_fleetwide_gate_validated_on_one_file_optout_allowlist) as NOT run -- explicitly asked QA to add/confirm. Ran it: grepped every git commit -m site across docs/agents/, docs/policies/, docs/protocols/, .claude/skills/ (fleet corpus, not just the 4 claimed files). Found docs/protocols/docker-deployment-runbook.md:148 -- ops Close-Gate step 2 instructs a bare `git commit -m \"chore(ops): close-gate <task_id> -- board+head forward to qa\"` with NO trailing pathspec and NO line-continuation to one -- the exact contradiction this task exists to fix, missed by the claimed 3-downstream-flow-docs scope. Confirmed LIVE, not orphaned: .claude/skills/commit-boundary/SKILL.md own RULE table cites this doc by name as ops Close-Gate scope authority; also referenced from ops/flow/docker.md, po/flow/sprint-signoff.md, developer/flow/microservice-main.md. ops agents following this doc verbatim will still hit the sweep-guard hard-reject this task was created to close. All ~40 other git commit -m fleet sites checked line-by-line -- all resolve to an explicit trailing pathspec (inline or via line-continuation); .claude/skills/commit-boundary/SKILL.md:71-73 is a labelled # FORBIDDEN illustrative block, correctly excluded, not a live instruction.\n\nFIX NEEDED: add a trailing `-- <paths>` pathspec to docs/protocols/docker-deployment-runbook.md:148 own commit line (mirrors the fix already applied to the 3 other flow docs in this same commit), and re-run (or persist, opt-IN allowlist) the AC-3 fleet grep before next QA pass.\n\nDJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-15.md STEP qa-S43.",
+        "updated_at": "2026-08-11T15:30:55Z",
+        "claimed_at": "2026-08-11T15:25:14Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "redispatch_count": 1,
+        "resume_note": "QA CHANGES_REQUESTED 2026-08-11T15:30:54Z -- AC-3 fleet-wide grep (never actually run by agent-father) found docs/protocols/docker-deployment-runbook.md:148 still instructs a bare git commit -m with no trailing pathspec, same contradiction this task exists to fix. Owner must add -- <paths> there + provide the AC-3 regression proof."
       }
     ],
     "qa": [
@@ -19344,6 +19352,24 @@
         "next_agent": "qa",
         "entered_review_at": "2026-07-24T00:22:37Z",
         "review_note": "dev-rag-service: confirmed dead at source (SQLiteAnalysisRepository constructed only in test_rag_integration.py fixture, never by app_factory.build_real_adapters or main.py; AnalysisRepositoryPort had no live implementer/consumer beyond it) — deleted class + _row_to_entry helper + sqlite3 import (infrastructure/repositories.py), AnalysisRepositoryPort ABC (domain/repositories.py), the test that exercised only them, fixed phantom analysis_repo docstring (usecases.py), trimmed matching arch-doc sections. pytest 165->161 (exactly the 4 deleted tests), mypy 259->253 (strict decrease, no new), sandbox 16/16+2/2 GREEN, env audit empty. Journal: docs/agent-memory/decisions/sprint-FACTORY-RAG-delete-dead-sqlite-repo-dev-rag-service.md. Commit 768bee954."
+      },
+      {
+        "title": "Split newsNormalizer types/helpers/tables out of the 979L file",
+        "priority": "P2",
+        "zone": "mcp-server-domain",
+        "type": "FACTORY",
+        "status": "QA",
+        "id": "FACTORY-DOMAIN-split-newsNormalizer",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-split-newsNormalizer",
+        "promoted_at": "2026-07-24T03:45:16Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-11T15:25:14Z",
+        "claimed_at": "2026-08-11T15:25:14Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T03:58:41Z",
+        "review_note": "dev-mcp-server self-closeout: pure structural split, behavior-preserving. Split newsNormalizer.ts (1086L) into sibling newsNormalizerTypes.ts (4 type aliases + AnalysisEntry), newsNormalizerTables.ts (8 keyword/lookup data tables), newsNormalizerHelpers.ts (14 pure helper functions + derived ALL_CATALOG_CODES cache) -- mirrors the FACTORY-DOMAIN-extract-sentiment-lexicons sibling-file convention (domain/services/*.ts, not a data/ subfolder). Main file (1086L->236L) keeps ONLY normalizeNews() orchestration, re-exporting the pre-split public surface (types + decodeHtmlEntities/truncateAt120/buildDecisionResume/DOMAIN_VN_LABEL) so all ~50 existing import call sites are unaffected. Byte-diffed every moved unit old-vs-new (8 tables, AnalysisEntry + 4 type aliases, all 14 helper function bodies, normalizeNews() itself): zero drift. bun tsc --noEmit clean. Ran the 50-file newsNormalizer-touching test set before AND after the split: identical 575 pass / 0 fail / 1166 expect() calls both times. gen-project-stats.ts --dry-run unaffected (toolCount 184, cronJobCount 88). No full-server-boot probe per task brief (pure code split; host resource conservation given concurrent mcp-server memory pressure this session). Commit 9cfeefc16 (code) + 25cc5d7d6 (memory). Journal: docs/agent-memory/decisions/sprint-FACTORY-DOMAIN-split-newsNormalizer-dev-mcp-server.md"
       }
     ],
     "_closed_signals_20260614": {
@@ -19498,13 +19524,13 @@
         "last_served_tick": "2026-08-11T12:26:09Z"
       },
       "qa_drain": {
-        "last_served_tick": "2026-08-09T04:22:58Z"
+        "last_served_tick": "2026-08-11T15:27:02Z"
       },
       "step1_triage": {
         "last_served_tick": "2026-08-09T04:53:51Z"
       }
     },
-    "_updated_at": "2026-08-11T15:21:27Z",
+    "_updated_at": "2026-08-11T15:27:02Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
