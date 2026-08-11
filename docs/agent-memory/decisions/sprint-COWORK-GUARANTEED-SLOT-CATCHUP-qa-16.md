@@ -108,3 +108,33 @@
 - Targeted `task17-market-summaries-loader.test.ts`: 62/62 pass. Full suite: 2153/2185 (32 fail) — the exact same 32 TopNav/QUE_DESCRIPTIONS failures qa-S54 already worktree-A/B-proved pre-existing/unrelated minutes earlier in this same session; zero overlap between this diff's 16 files and those failing test subjects (grep-confirmed). `tsc --noEmit` clean. DDD greps clean (no infra/application import in domain/components). Security greps clean; the one `process.env["FRONTEND_ORIGIN"]` hit is pre-existing loader code, untouched by this diff (confirmed present verbatim in `e2f18a897^`). `mock-guard.sh` PASS on all 14 touched production files.
 **why-decision:** APPROVED, DONE_VERIFIED. Independent byte-level + live-test re-verification matches the row's own claim; the only blocked check (repo-wide vitest env defect) was worked around, not skipped, and corroborated by qa-S54's near-simultaneous independent worktree A/B on the identical failure set.
 **why-change:** none — same verdict as the row's own self-report.
+
+### STEP qa-S56 · qa · 2026-08-11T23:24:23Z
+**task-id:** FACTORY-GUARD-CI-metric-mask-lint
+**what-done:** Direct-Commit Verify (design-only task, per row's own review_note: "verdict brief adequacy + child scoping — no code to test").
+**what-considered:**
+- Verified brief commit `7fedc2933` on `main` ancestry, touches only 1 doc file (38L architecture brief) — zero production code, confirming "no code to test" is accurate, not a dodge.
+- Spot-checked every verify-live claim against real repo state at that commit: all 3 `eslint.config.mjs` carry only `boundaries`/Fence rules (no numeric-literal rule); exact offender lines `cascadeEngine.ts:356,375,394` (`?? 0.6`) + `marketSentimentCalculator.ts:174` (`?? 1.0`) + `watchlist.ts:198` (`?? 7`, legit config default) byte-match; all 5 fast-track dependency fixes confirmed `DONE_VERIFIED`; the "spike precondition note" confirmed present on exactly 7/7 non-spike sibling `ci-regression-prevention` rows, spike itself confirmed `BACKLOG`.
+- Diffed brief §3 child-mint spec (files/approach/dod/routing) against the live `FACTORY-GUARD-CI-METRICMASK-IMPL` row (`task_board.review[]`) — matches verbatim.
+**why-decision:** APPROVED, DONE_VERIFIED. Every checkable factual claim independently reproduced exact; child task correctly minted/scoped per brief; zero-tolerance-not-baseline design justified by the independently-confirmed small live-debt count.
+**why-change:** none — same verdict as the row's own self-report.
+
+### STEP qa-S57 · qa · 2026-08-11T23:24:50Z
+**task-id:** FACTORY-GUARD-CI-size-lint-justification
+**what-done:** Direct-Commit Verify (design-only task, per row's own review_note: "verdict brief adequacy + child scoping — no code to test"). Sibling pattern to qa-S56 (FACTORY-GUARD-CI-metric-mask-lint).
+**what-considered:**
+- Verified brief commit `fb613a9c4` on `main` ancestry, touches only 1 doc file (56L architecture brief) — zero production code. Confirmed the child-mint commit `ad9c7483f` (same timestamp) also on main, lane-move in_progress->review, conservation 631=631.
+- Went beyond the sibling precedent: the child `FACTORY-GUARD-CI-SIZELINT-IMPL` has since fully shipped (script/baseline/ci.yml/dev-standards.md CANONICAL pointer/test all present in live repo) and is LIVE in CI — confirmed the mechanism actually works by re-running `size-lint-justification.sh --check` live (exit 1, flags `transport.ts` baseline-tolerance-exceeded) and cross-checking against the dev-standards.md CANONICAL block, which matches the brief's baseline/ratchet design verbatim (±10%/min-5L tolerance, exclusions, exit contract).
+- Confirmed the ONE live offender (`transport.ts`, 126L baseline -> 265L) is already tracked as its own separate backlog row (`FIX-CI-SIZELINT-TRANSPORT-TS-SSE-REAPER-237L`, extensively po-triaged) — the guardrail correctly caught a real regression from an unrelated commit and is not silently swallowing it; the open regression is a downstream dispatch-priority matter, not a defect in this brief or its child scoping. Routing correction in brief §3 (developer, not agent-father) matches the live child row's `dev_agent`/`next_agent` fields.
+**why-decision:** APPROVED, DONE_VERIFIED. Brief is adequate (live-verified mechanism audit, corrected ticket's stale "600+" to real 733, corrected `.ts` marker syntax, corrected routing) and the child task was scoped and later delivered exactly as specified — production evidence (weeks of live CI enforcement, one genuine regression caught) is the strongest possible validation available for a design-only verdict.
+**why-change:** none — same verdict as the row's own self-report.
+
+### STEP qa-S58 · qa · 2026-08-11T23:26:39Z
+**task-id:** FACTORY-SHARED-fix-shared-db-stale-list
+**what-done:** Direct-Commit Verify — added `schema-backtesting` to `DB_SCHEMA_MODULES` (`packages/shared-db/index.ts`, 7-line diff, commit `ef62d2921`).
+**what-considered:**
+- Commit on main ancestry; `git show --stat` matches sole real diff (7 ins, 1 file). `bun -e` import-eval confirms 9-entry array evaluates correctly. DDD/security greps + mock-guard PASS. `tsc --noEmit` clean. Zero-importer claim re-verified 2 ways (grep + `shared-package-import-check.sh --check` PASS, baseline-listed).
+- Cross-checked against `schema.ts`'s own categorization (9 `init*Tables` imports) rather than a naive on-disk glob — the array matches every real schema-slice module exactly.
+- FLAG (non-blocking, not this commit's fault): later unrelated commit `6ca2a0c65` (2026-08-07) added 2 new `schema-*.ts` files (migration helpers, no `init*Tables` export) — a literal re-run of this comment's own `ls | grep '^schema-'` instruction now surfaces 11, not 9. Accurate at landing time (2026-07-24); drift is emergent, caused by later work, not a regression here.
+**why-decision:** APPROVED, DONE_VERIFIED. All checks green, zero regression, claims hold for the commit's own scope.
+**why-change:** none — flagged the resurfaced sync-gap for PM/PO follow-up, did not block on it (out of scope to fix here).
