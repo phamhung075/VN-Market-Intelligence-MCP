@@ -55,35 +55,6 @@
   Escalation 2 (semble-search guide-taxonomy) severity LOW; the 3 CRITICAL tool-boundary findings
   are carried-forward (already PO-known from the prior two `team-tool-recheck` runs, not new).
 
-## GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT 2026-08-09T03:15Z (cont'd) — AC(2)-(5) DONE → review/qa
-- Resumed from S33's corrected citation. AC2: dual-plane contract table added
-  `docs/standards/mcp-tools.md` § "price_anomaly — DUAL-PLANE CONTRACT" (DB plane cycle.md
-  ~L183 vs FILE plane eod.md:29→chef.md:130/:153, by path, never drained). AC3: DO-NOT-ENVELOPE
-  marker `eod.md:31-45`. AC4: named allowlist `BY_PATH_CONSUMER_FAMILIES` (prefix
-  `price_anomaly_`) in `drain-signals.js`, checked BEFORE parse/`isDrainableShape()` — survives
-  future shape changes. AC5: new `drain-signals.test.js` scenario (real orch-ref drain harness)
-  proves `price_anomaly_*.json` survives top-level while an unrelated genuine signal in the same
-  tick IS drained. Suite 51/51 PASS. Self-caught citation drift: my own AC3 marker pushed eod.md
-  schema field `:33`→`:49` — fixed the one downstream cite (mcp-tools.md) with a
-  re-verify-AT-SOURCE caveat. Zone: `mcp-tools.md`/`drain-signals.js` outside declared
-  commit_zone — edited as narrow PO-directed exception (task names exact files, `supervised:true`,
-  same precedent as A-30 `6ff38d27e`), additive/guard-only, test-covered. Row `backlog`→`review`,
-  `status=REVIEW`, `next_agent=qa` via `jq | orch-apply.sh` (PASS); `orch-state.json` left
-  UNCOMMITTED (FU-AGENT-FATHER-ORCH-SCOPE). Decision journal: `sprint-COWORK-GUARANTEED-SLOT-
-  CATCHUP-agent-father-2.md` STEP agent-father-S34.
-- **Notebook-prune incident (self-caught):** this Edit's first attempt appended a longer
-  dateless-suffix `2026-08-09` heading — `notebook-auto-prune.sh`'s PostToolUse hook fired
-  (file went over the 200L/12000B cap), dropped the oldest real-ISO section
-  (`FIX-AUDITOR-TIER1-A30-MEM...` 2026-08-08T15:12Z, 41L — already fully preserved in its own
-  commit `6ff38d27e`, not re-restored here to control size) AND then, on a same-day tie between
-  two `2026-08-09`-dated headings, dropped MY entire new section as "oldest" under a
-  `newest_first` direction vote that misjudges THIS file's true oldest-first/append convention
-  (matches the known class in commit `f5baf3acf`'s message — same-day-tie direction voting, not
-  the earlier ISO-vs-sentinel bug that commit fixed). Workaround (same as `f5baf3acf`): this
-  entry's heading now carries a real HH:MM timestamp so it no longer ties with the STOPPED
-  section's date-only heading. Not investigating/fixing `notebook-auto-prune.sh` itself — outside
-  this task's scope; flagged here for whoever next touches that script's tie-break voting.
-
 ## Keep (maintenance) 2026-08-11 12:14 UTC — router-spawned, no explicit intent → defaulted to keep.md
 - Trigger: manual (router spawn gave no `trigger`/`intent` → main.md default → keep.md). Pre-Check:
   `git diff --name-only HEAD~3..HEAD` touched zero `.claude/agents/*.md` /
@@ -117,3 +88,30 @@
 - Step 7 PO handoff: none needed this cycle — Escalation 1 (prior HIGH/MEDIUM) is now RESOLVED;
   Escalation 2 (semble-search guide-taxonomy, LOW) carries forward unchanged, already PO-visible
   from 08-07.
+
+## Keep (maintenance) 2026-08-11 12:53 UTC — cron-fired, no explicit intent → defaulted to keep.md
+- Trigger: scheduled (39min after the 12:14Z cycle same day). Pre-Check gated Steps 1-2 off again
+  (3rd consecutive cycle, zero `.claude/agents/*.md`/flow diff in HEAD~3..HEAD).
+- Checks 1/3/4/5: unchanged — 41/42 PASS, `semble-search` known exception. Version-staleness
+  90d-boundary cluster (ops-vps-fetch/ops-mainserver-fetch/dev-vps-crawls/dev-mainserver-crawls)
+  still exactly 90d, not >90 — no auto-fix.
+- **Check 2 self-caught methodology bug:** first automated one-hop-pointer pass grepped ANY
+  `/flow/` path in 7 agents' `main.md` (alert-commander, bctc-analyst, digest-predict,
+  market-watcher, news-scout, qa-responder, unified-agent) and grabbed incidental in-body
+  references instead of the actual `## Dispatch` / "Always →" line — false-positived all 7 FAIL.
+  Re-ran targeting the real dispatch pointer: all 7 PASS. Zero new Check-2 gaps (confirms 08-07's
+  finding held). Not auto-fixed (no bug existed) — logged so the next automated pass targets
+  `## Dispatch` explicitly, not a bare `/flow/` regex.
+- Stale notebooks: same set as 12:14Z run, except cowork-refactory-expert/ops-mainserver-fetch
+  now read 30d not 31d — same commit (`2026-07-11`), pure midnight-vs-wallclock rounding artifact
+  between two same-day runs, not a real repo change.
+- Step 5b: wrote `team-tool-recheck-2026-08-11-1253.md` — all 3 CRITICAL findings + positive
+  control unchanged from 12:14Z (39min gap, no fix landed).
+- Side-observation escalated: 46 notebook files vs 42 registered agents gap now spans 3
+  consecutive keep cycles (08-07, 08-11×2) all Pre-Check-gated off Steps 1-2. Per 12:14Z cycle's
+  own carried note, recommending PO-directed explicit scan-orphans run now rather than waiting
+  further on incidental gate-opens.
+- No `mcp__gateway__call_tool` binding this session (recurring) — gateway-less direct-pathspec
+  commit fallback used.
+- Step 7 PO handoff: Escalation 2 (semble-search, LOW) carries forward; NEW — recommend explicit
+  scan-orphans run to resolve 3-cycle-persistent 46-vs-42 notebook-file gap.
