@@ -4,43 +4,48 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Real estate developer — residential projects (HOSE-listed), land-bank development",
-  "customer": "Retail homebuyers, institutional co-investment partners in project JVs",
-  "ops": "No BCTC data available (get_bctc_full returns 'Chưa có dữ liệu BCTC') — 14th+ consecutive cycle with no extracted period; sector-comparison figures below are last-known / peer-derived only, not confirmed by a filed statement this cycle",
-  "mgmt": "ROE (sector-comp, annualized) 1.9% vs sector median 7.3% — well below real-estate peers; PE 66.5 at 312% premium to sector median 16.1 — expensive relative to weak profitability; no fresh BCTC to assess capital-allocation track record this cycle",
+  "net_profit_delta_pct": null,
+  "product": "Phát triển bất động sản nhà ở và khu đô thị (Đất Xanh Group)",
+  "customer": "Người mua nhà ở trung-cao cấp, chủ yếu khu vực phía Nam",
+  "ops": "ROE annualized (sector-comparison) 1.9% — DƯỚI trung vị ngành BĐS 7.3%; PE 66.5 PREMIUM +312% vs ngành — định giá cao bất tương xứng với lợi nhuận thực tế; PB 1.2 ngang bằng ngành",
+  "mgmt": "get_bctc_full trả về 'Chưa có dữ liệu BCTC' — 15+ chu kỳ liên tiếp không trích xuất được báo cáo tài chính; không thể đánh giá năng lực quản trị/thực thi kế hoạch kỳ này; báo cáo Q2-2026 QUÁ HẠN nộp (hạn 30/07/2026)",
   "valuation": {
     "pe": 66.5,
-    "roe_pct": 1.9,
+    "sector_median_pe": 16.1,
+    "roe_annualized_pct": 1.9,
+    "ey_pct": 1.5,
+    "max_deposit_rate_pct": 5,
     "ey_spread_pp": -3.5,
     "verdict": "AVOID"
   },
-  "kinhdich": {
-    "que": "Kien(39)",
+  "kinh_dich": {
+    "que": "Kien (39)",
     "xu_huong": "BAT LOI",
     "tin_hieu": "GIU",
-    "confidence_pct": 25
+    "do_tin_cay_pct": 25
   },
-  "regime": {
-    "regime": "NEUTRAL_fallback",
-    "carry_regime": "NEUTRAL",
-    "carry_spread_pp": 1.37,
-    "max_deposit_rate_pct": 5
-  },
+  "insider": "khong co tin hieu dang ke",
+  "legal_risk": "khong co",
   "esc_gate": {
-    "esc1": "unevaluable_no_bash_glob",
-    "esc2": "unevaluable_no_bctc_data",
-    "esc3": "unevaluable_no_bctc_data",
-    "esc4": "unevaluable_no_bctc_data",
-    "esc5": "unevaluable_no_bctc_data"
+    "esc1_accounting_manipulation": "unevaluable_no_bash_glob",
+    "esc2_balance_sheet": "unevaluable — no BCTC data (Chưa có dữ liệu)",
+    "esc3_ocf_ni_divergence": "unevaluable — no BCTC data (Chưa có dữ liệu)",
+    "esc4_nonop_share": "unevaluable — no BCTC data (Chưa có dữ liệu)",
+    "esc5_refine_confidence": "unevaluable — no BCTC data (Chưa có dữ liệu)",
+    "escalation_status": "no_escalation",
+    "data_quality_note": "get_bctc_full(DXG) = 'Chưa có dữ liệu BCTC' — standing gap, unresolved for 15+ consecutive cycles"
   },
-  "data_quality_flag": "DXG BCTC extraction persistently absent — 14th+ consecutive routine cycle, no dev-team fix observed yet",
-  "earnings_calendar_status": "Q2-2026 QUA HAN (overdue, due 2026-07-30, not yet filed)",
-  "ts": "2026-08-11T18:08:03Z",
-  "cycle_id": "20260811-1800",
-  "slot": "bctc-analyst-slot-2",
+  "evidence_fragment_ids": [
+    1119,
+    1120,
+    1121
+  ],
+  "cycle_id": "20260811-2100",
+  "slot": "bctc-analyst-slot-3",
+  "generated_at": "2026-08-11T21:03:14Z",
   "_processed": {
-    "fingerprint": "79b9f35b577508e531c4541e2fafad7640bfc6f975dbd5a74b86543c740abe5c",
-    "processedAt": "2026-08-11T18:20:54Z",
+    "fingerprint": "1c4f6c797ec432c5016115d2bb1153aa07cccdaf2812f23fc85704e91435af00",
+    "processedAt": "2026-08-11T21:29:14Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

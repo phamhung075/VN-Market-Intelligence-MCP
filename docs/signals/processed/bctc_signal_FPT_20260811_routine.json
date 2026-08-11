@@ -4,48 +4,54 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "IT services, software exports (offshore dev), system integration, telecom (FPT Telecom), education (FPT Edu)",
-  "customer": "Enterprise IT buyers in VN + offshore (Japan/APAC/US), SME telecom subscribers, students across FPT Edu network",
-  "ops": "Q1-2026 net revenue 12,480 tỷ VND, gross margin 34.0%, operating margin 22.0%; software-export margin structurally higher than blended telecom margin; FTEL deconsolidation (equity-method since 2026-01-01) distorts YoY revenue comparability (-22.3% reported vs +8.7% on restated basis)",
-  "mgmt": "ROE (sector-comp, annualized) 28.3% vs sector median 10.6% — well above peers; PE 13.8 at 20% discount to sector median 17.3 despite PB premium +136%; refine confidence low (7 of 15 footnote units <0.50) on complex related-party/subsidiary-listing pages, not core statements",
+  "net_profit_delta_pct": null,
+  "product": "CNTT xuất khẩu phần mềm, tích hợp hệ thống, dịch vụ viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+  "customer": "Doanh nghiệp CNTT trong/ngoài nước (Nhật Bản, Mỹ, Châu Âu), thuê bao viễn thông nội địa, học sinh/sinh viên hệ thống giáo dục FPT",
+  "ops": "Biên lợi nhuận gộp 34.0%, biên hoạt động 22.0%; ROE annualized (sector-comparison) 28.3% vs trung vị ngành 10.6% (TREN MEDIAN); PE 13.8 DISCOUNT -20% vs ngành nhưng PB 3.6 PREMIUM +136%; D/E 0.40x; Net Debt/EBITDA 2.57x",
+  "mgmt": "Lợi nhuận sau thuế tăng 13.8% YoY (theo phương pháp hợp nhất điều chỉnh do đổi PP hợp nhất FTEL); OCF quý 1 âm (-2.848 tỷ) do biến động vốn lưu động, dòng tiền đầu tư dương ròng từ thu hồi cho vay; sentiment 30 ngày TIÊU CỰC (slope -0.80)",
   "valuation": {
     "pe": 13.8,
-    "roe_pct": 28.3,
+    "sector_median_pe": 17.3,
+    "roe_annualized_pct": 28.3,
+    "ey_pct": 7.25,
+    "max_deposit_rate_pct": 5,
     "ey_spread_pp": 2.25,
     "verdict": "FAIR"
   },
-  "kinhdich": {
-    "que": "Kien(39)",
+  "kinh_dich": {
+    "que": "Kien (39)",
     "xu_huong": "BAT LOI",
     "tin_hieu": "GIU",
-    "confidence_pct": 25
+    "do_tin_cay_pct": 25
   },
-  "regime": {
-    "regime": "NEUTRAL_fallback",
-    "carry_regime": "NEUTRAL",
-    "carry_spread_pp": 1.37,
-    "max_deposit_rate_pct": 5
-  },
+  "insider": "khong co tin hieu dang ke",
+  "legal_risk": "khong co",
   "esc_gate": {
-    "esc1": "unevaluable_no_bash_glob",
-    "esc2": {
+    "esc1_accounting_manipulation": "unevaluable_no_bash_glob",
+    "esc2_balance_sheet": {
       "result": false,
-      "imbalance_pct": 0
+      "imbalance_pct": 0,
+      "assets_total": 68586094.785217,
+      "liabilities_total": 28464058.214856,
+      "equity_total": 40122036.570361
     },
-    "esc3": {
+    "esc3_ocf_ni_divergence": {
       "result": "DATA-COVERAGE-LIMITED",
       "quarters_returned": 3,
       "quarters_required": 4,
-      "coverage_guard_held": true,
-      "guard_key": "esc-datacov:FPT:Q1-2026:ESC-3"
+      "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+      "coverage_guard_held": true
     },
-    "esc4": {
+    "esc4_nonop_share": {
       "result": false,
-      "non_operating_share_pct": 2
+      "non_operating_share_pct": 2,
+      "pretax_profit": 2803844.281676,
+      "operating_profit": 2747763.82705
     },
-    "esc5": {
+    "esc5_refine_confidence": {
       "result": true,
-      "min_confidence": 0.45,
+      "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+      "total_units": 15,
       "low_confidence_unit_ids": [
         "unit-0008",
         "unit-0009",
@@ -55,18 +61,23 @@
         "unit-0013",
         "unit-0014"
       ],
-      "escalation_status": "GUARD-HELD",
-      "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
-      "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d"
-    }
+      "min_confidence": 0.45
+    },
+    "escalation_status": "GUARD-HELD",
+    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+    "trigger_id": "ESC-5",
+    "note": "Guard armed by prior bctc-analyst session (24h TTL, expires ~2026-08-12T15:13Z) — no re-emit this cycle."
   },
-  "earnings_calendar_status": "Q2-2026 QUA HAN (overdue, due 2026-07-30, not yet filed)",
-  "ts": "2026-08-11T18:08:03Z",
-  "cycle_id": "20260811-1800",
-  "slot": "bctc-analyst-slot-2",
+  "evidence_fragment_ids": [
+    1114,
+    1115
+  ],
+  "cycle_id": "20260811-2100",
+  "slot": "bctc-analyst-slot-3",
+  "generated_at": "2026-08-11T21:03:14Z",
   "_processed": {
-    "fingerprint": "c4317b6b9696300dfaf6939f6236fca38389175b290a725b6d3ade56bcc66f4b",
-    "processedAt": "2026-08-11T18:20:54Z",
+    "fingerprint": "fdb4c82644512ab4f5ed3a83050a01a1c5ef2f41346cbd446760df3271664af4",
+    "processedAt": "2026-08-11T21:29:14Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

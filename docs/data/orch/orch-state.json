@@ -19856,9 +19856,366 @@
         "last_served_tick": "2026-08-11T20:51:52Z"
       }
     },
-    "_updated_at": "2026-08-11T21:10:47Z",
+    "_updated_at": "2026-08-11T21:29:14Z",
     "_updated_by": "dev-team",
-    "pending_triage_inbox": [],
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "1c4f6c797ec432c5016115d2bb1153aa07cccdaf2812f23fc85704e91435af00",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "net_profit_delta_pct": null,
+          "product": "Phát triển bất động sản nhà ở và khu đô thị (Đất Xanh Group)",
+          "customer": "Người mua nhà ở trung-cao cấp, chủ yếu khu vực phía Nam",
+          "ops": "ROE annualized (sector-comparison) 1.9% — DƯỚI trung vị ngành BĐS 7.3%; PE 66.5 PREMIUM +312% vs ngành — định giá cao bất tương xứng với lợi nhuận thực tế; PB 1.2 ngang bằng ngành",
+          "mgmt": "get_bctc_full trả về 'Chưa có dữ liệu BCTC' — 15+ chu kỳ liên tiếp không trích xuất được báo cáo tài chính; không thể đánh giá năng lực quản trị/thực thi kế hoạch kỳ này; báo cáo Q2-2026 QUÁ HẠN nộp (hạn 30/07/2026)",
+          "valuation": {
+            "pe": 66.5,
+            "sector_median_pe": 16.1,
+            "roe_annualized_pct": 1.9,
+            "ey_pct": 1.5,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": -3.5,
+            "verdict": "AVOID"
+          },
+          "kinh_dich": {
+            "que": "Kien (39)",
+            "xu_huong": "BAT LOI",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 25
+          },
+          "insider": "khong co tin hieu dang ke",
+          "legal_risk": "khong co",
+          "esc_gate": {
+            "esc1_accounting_manipulation": "unevaluable_no_bash_glob",
+            "esc2_balance_sheet": "unevaluable — no BCTC data (Chưa có dữ liệu)",
+            "esc3_ocf_ni_divergence": "unevaluable — no BCTC data (Chưa có dữ liệu)",
+            "esc4_nonop_share": "unevaluable — no BCTC data (Chưa có dữ liệu)",
+            "esc5_refine_confidence": "unevaluable — no BCTC data (Chưa có dữ liệu)",
+            "escalation_status": "no_escalation",
+            "data_quality_note": "get_bctc_full(DXG) = 'Chưa có dữ liệu BCTC' — standing gap, unresolved for 15+ consecutive cycles"
+          },
+          "evidence_fragment_ids": [
+            1119,
+            1120,
+            1121
+          ],
+          "cycle_id": "20260811-2100",
+          "slot": "bctc-analyst-slot-3",
+          "generated_at": "2026-08-11T21:03:14Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-11T21:29:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fdb4c82644512ab4f5ed3a83050a01a1c5ef2f41346cbd446760df3271664af4",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "net_profit_delta_pct": null,
+          "product": "CNTT xuất khẩu phần mềm, tích hợp hệ thống, dịch vụ viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+          "customer": "Doanh nghiệp CNTT trong/ngoài nước (Nhật Bản, Mỹ, Châu Âu), thuê bao viễn thông nội địa, học sinh/sinh viên hệ thống giáo dục FPT",
+          "ops": "Biên lợi nhuận gộp 34.0%, biên hoạt động 22.0%; ROE annualized (sector-comparison) 28.3% vs trung vị ngành 10.6% (TREN MEDIAN); PE 13.8 DISCOUNT -20% vs ngành nhưng PB 3.6 PREMIUM +136%; D/E 0.40x; Net Debt/EBITDA 2.57x",
+          "mgmt": "Lợi nhuận sau thuế tăng 13.8% YoY (theo phương pháp hợp nhất điều chỉnh do đổi PP hợp nhất FTEL); OCF quý 1 âm (-2.848 tỷ) do biến động vốn lưu động, dòng tiền đầu tư dương ròng từ thu hồi cho vay; sentiment 30 ngày TIÊU CỰC (slope -0.80)",
+          "valuation": {
+            "pe": 13.8,
+            "sector_median_pe": 17.3,
+            "roe_annualized_pct": 28.3,
+            "ey_pct": 7.25,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": 2.25,
+            "verdict": "FAIR"
+          },
+          "kinh_dich": {
+            "que": "Kien (39)",
+            "xu_huong": "BAT LOI",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 25
+          },
+          "insider": "khong co tin hieu dang ke",
+          "legal_risk": "khong co",
+          "esc_gate": {
+            "esc1_accounting_manipulation": "unevaluable_no_bash_glob",
+            "esc2_balance_sheet": {
+              "result": false,
+              "imbalance_pct": 0,
+              "assets_total": 68586094.785217,
+              "liabilities_total": 28464058.214856,
+              "equity_total": 40122036.570361
+            },
+            "esc3_ocf_ni_divergence": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+              "coverage_guard_held": true
+            },
+            "esc4_nonop_share": {
+              "result": false,
+              "non_operating_share_pct": 2,
+              "pretax_profit": 2803844.281676,
+              "operating_profit": 2747763.82705
+            },
+            "esc5_refine_confidence": {
+              "result": true,
+              "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+              "total_units": 15,
+              "low_confidence_unit_ids": [
+                "unit-0008",
+                "unit-0009",
+                "unit-0010",
+                "unit-0011",
+                "unit-0012",
+                "unit-0013",
+                "unit-0014"
+              ],
+              "min_confidence": 0.45
+            },
+            "escalation_status": "GUARD-HELD",
+            "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+            "trigger_id": "ESC-5",
+            "note": "Guard armed by prior bctc-analyst session (24h TTL, expires ~2026-08-12T15:13Z) — no re-emit this cycle."
+          },
+          "evidence_fragment_ids": [
+            1114,
+            1115
+          ],
+          "cycle_id": "20260811-2100",
+          "slot": "bctc-analyst-slot-3",
+          "generated_at": "2026-08-11T21:03:14Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-11T21:29:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b0962951823c9d606bf82a05f11f9be03286d48f9db622b85e9c865e840b459d",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "net_profit_delta_pct": null,
+          "product": "Sản xuất thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ",
+          "customer": "Ngành xây dựng dân dụng/hạ tầng, cơ khí chế tạo, xuất khẩu thép sang khu vực ASEAN/EU",
+          "ops": "Biên lợi nhuận gộp 15.8%; Operating Profit ghi nhận 0 tỷ VND — dữ liệu OCR lỗi/thiếu (validation warning: net profit vượt gross profit, khả năng thu nhập ngoài hoạt động chưa phân loại đúng); ROE annualized (sector-comparison) 12.7% vs trung vị ngành thép 2.9% (TREN MEDIAN); PE 14.2 DISCOUNT -57% vs ngành",
+          "mgmt": "Dữ liệu OCF/operating_profit corrupt kéo dài 11+ chu kỳ liên tiếp — chưa thể xác nhận chất lượng dòng tiền hoạt động hay biên lợi nhuận thực; báo cáo Q2-2026 QUÁ HẠN nộp (hạn 30/07/2026); sentiment 30 ngày TÍCH CỰC nhẹ (slope +0.07)",
+          "valuation": {
+            "pe": 14.2,
+            "sector_median_pe": 32.6,
+            "roe_annualized_pct": 12.7,
+            "ey_pct": 7.04,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": 2.04,
+            "verdict": "FAIR"
+          },
+          "kinh_dich": {
+            "que": "Du (16)",
+            "xu_huong": "THUAN LOI",
+            "tin_hieu": "THAN TRONG",
+            "do_tin_cay_pct": 50
+          },
+          "insider": "khong co tin hieu dang ke",
+          "legal_risk": "khong co",
+          "esc_gate": {
+            "esc1_accounting_manipulation": "unevaluable_no_bash_glob",
+            "esc2_balance_sheet": {
+              "result": false,
+              "imbalance_pct": 0,
+              "assets_total": 259327500.205228,
+              "liabilities_total": 119545707.998756,
+              "equity_total": 139781792.206472
+            },
+            "esc3_ocf_ni_divergence": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+              "coverage_guard_held": true
+            },
+            "esc4_nonop_share": {
+              "result": "discarded",
+              "reason": "operating_profit=0 corrupt (validation warning: net_profit exceeds gross_profit) — non_operating_share undefined, persistent since prior cycles"
+            },
+            "esc5_refine_confidence": {
+              "result": false,
+              "reason": "existing_refine_status=PARTIAL, report_id=null — refine not finished, skipping"
+            },
+            "escalation_status": "no_escalation"
+          },
+          "evidence_fragment_ids": [
+            1116,
+            1117
+          ],
+          "cycle_id": "20260811-2100",
+          "slot": "bctc-analyst-slot-3",
+          "generated_at": "2026-08-11T21:03:14Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-11T21:29:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0ffacf78ec7ea46d95a63de12929b729bf378be6e2b7375c06b9d10a872742ed",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "net_profit_delta_pct": null,
+          "product": "Ngân hàng bán lẻ và doanh nghiệp: tín dụng, thanh toán, bancassurance, ngoại hối",
+          "customer": "Khách hàng cá nhân đô thị, doanh nghiệp lớn/FDI, SME — mạng lưới quốc doanh lớn nhất theo vốn hoá",
+          "ops": "Biên lợi nhuận hoạt động 80.9%; ROE quý chưa annualized 4.2%, ROE annualized (sector-comparison) 16.7% — DƯỚI trung vị ngành ngân hàng 17.6%; PE 14.1 PREMIUM +57% vs ngành, PB 2.2 PREMIUM +45%; OCF/NI ratio 1.368 (lành mạnh, quarters_returned=4/4)",
+          "mgmt": "Q1-2026 nộp báo cáo ngày 19/07/2026 — trễ so với hạn gốc 15/05/2026 nhưng đã ĐÃ NỘP, không còn overdue hiện tại; dòng tiền nước ngoài 5 phiên MẠNH HƠN ngành (-42K cp vs ngành -211K cp); sentiment 30 ngày TIÊU CỰC (slope -0.30, 0/7 tin bullish)",
+          "valuation": {
+            "pe": 14.1,
+            "sector_median_pe": 9,
+            "roe_annualized_pct": 16.7,
+            "ey_pct": 7.09,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": 2.09,
+            "verdict": "FAIR"
+          },
+          "kinh_dich": {
+            "que": "Tuy (45)",
+            "xu_huong": "THUAN LOI",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 62
+          },
+          "insider": "khong co tin hieu dang ke",
+          "legal_risk": "khong co",
+          "esc_gate": {
+            "esc1_accounting_manipulation": "unevaluable_no_bash_glob",
+            "esc2_balance_sheet": {
+              "result": false,
+              "imbalance_pct": 0.37,
+              "assets_total": 2550963342,
+              "liabilities_total": 2316932013,
+              "equity_total": 224558726
+            },
+            "esc3_ocf_ni_divergence": {
+              "result": false,
+              "ocf_total": 12944932,
+              "net_profit_total": 9462095,
+              "divergence_ratio": 0.368,
+              "quarters_returned": 4
+            },
+            "esc4_nonop_share": {
+              "result": "na",
+              "reason": "bank — pretax/operating profit line items not directly comparable to non-bank ESC-4 formula"
+            },
+            "esc5_refine_confidence": {
+              "result": false,
+              "reason": "existing_refine_status=PARTIAL, report_id=null — refine not finished, skipping"
+            },
+            "escalation_status": "no_escalation"
+          },
+          "evidence_fragment_ids": [
+            1118
+          ],
+          "cycle_id": "20260811-2100",
+          "slot": "bctc-analyst-slot-3",
+          "generated_at": "2026-08-11T21:03:14Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-11T21:29:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6d74a96fd2b2b0b74ebd7571c9c28843575442883919cf0d5854324a853b1f9f",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=37 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-11T21:17:29Z",
+        "drained_at": "2026-08-11T21:29:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "11839586ea2d80d1cb23d6fa8067805c70a34c2054b1d0fc8586694c2920e5e3",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-11T21:03:00Z",
+          "matched_slots": [
+            "bctc-analyst-slot-3"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-3"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-3": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-3": null
+          },
+          "last_fired_timestamp": "2026-08-11T21:02:51Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-3"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "21:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 0,
+          "signal_backlog": 0,
+          "note": "preflight-script WORK path; single bctc-offmarket slot, cron-due"
+        },
+        "createdAt": "2026-08-11T21:03:00Z",
+        "drained_at": "2026-08-11T21:29:14Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-11T17:09:47Z",
     "last_po_triage_note": "po/triage-20260811T1656Z (dev-team Step 1, step1_triage rotation). INPUTS: 18 pendingSignals (drained by router into prompt; live inbox confirmed [] and the ONLY uncommitted orch-state delta vs HEAD bba662b96 was that drain — structurally diffed, no peer interference), 5 Pipeline-B signal_queue to=po rows, 93 unresolved telegram reports (ids 4591-4683). OUTPUT: BATCH of 4. TELEGRAM PLANE FULLY CLEARED 93 -> 0 (list_unresolved_reports() == [] verified post-run): 87 duplicate (folded onto already-open rows), 4 monitoring, 1 fixed, 1 monitoring-preresolved. DEDUP RATIO 91/93 = 97.8% — the BUG channel was ~42% ONE defect (39 period-mismatch reports -> FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST, now proven to replay byte-identically for a THIRD consecutive day) and ~25% a second (RECONCILE EXHAUSTED, whose own circuit breaker id 4674 explicitly forbids per-row triage). ONLY 2 GENUINELY UNTRACKED FINDINGS in 93 reports + 23 signals, both minted after live source-probing: (1) FIX-MACRO-LIQUIDITY-STATE-HANDLER-EXCEEDS-CRON-15S-DEADLINE — the daily sbv-omo `unreachable` alert has a FALSE premise; macro-indicators is Up 12 days healthy, /health 200 in 2.6ms, GET /liquidity-state 405 (route registered), but POST hangs >18.4s against the cron`s 15s deadline, so sbv_omo_daily has silently accrued nothing for >=2 days; (2) SPIKE-NEWSSCOUT-KLFL-FALSE-ENOENT-ON-PRESENT-TRACKED-SKILL-FILE — news-scout KLFL-aborted its 16:09Z cycle (no c250 notebook entry) on ENOENT for a file that is present/tracked/unignored and was loaded fine by market-watcher in the SAME dispatch batch. ci_red x2 (CI-RED-1765317d, CI-RED-61b5b6f8) collapsed to ZERO new rows: both runs read at source via `gh run view --log-failed`, FAILED FILES byte-identical, all 3 files already carry exact dedup_key rows; recorded size-lint drift 237L->265L on transport.ts. 4 bug-escalation folded onto FIX-SWEEPGUARD-... (occ 28->32, worst prior_warns now 31 vs threshold 3, two concurrent repeat offenders). rag-service CRITICAL RAW-refuted as recovered (76.9%, no restart since 01:00:43Z); pdf-extractor CONFIRMED sustained and rising (94.90% -> 95.31%). 5/5 Pipeline-B rows closed to triaged with dispositions."
   }
