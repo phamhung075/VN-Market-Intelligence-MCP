@@ -96,9 +96,9 @@ Loaders call `app/lib/api/` — never call api-gateway `fetch` directly inside a
 1. `cd apps/frontend && npx vitest run` — all tests pass (0 failures)
 2. `cd apps/frontend && npx tsc --noEmit` — 0 errors
 3. **Commit directly** (INV-GATEWAY-1 — no mutex skill invocation from this specialist)
-   `git add <exact own paths>` (NEVER `-A`/`.`) then `git commit -m "..."` — format per `docs/policies/commit-convention.md`
+   `git add <exact own paths>` (NEVER `-A`/`.`) then `git commit -m "..." -- <same exact paths>` — the pathspec MUST be repeated on the `git commit` command itself, not just the prior `git add`; format per `docs/policies/commit-convention.md`
    Mandatory trailers for task commits: `Sprint:`, `Task:`, `AC:` (slash-separated, terse).
-   **NEVER use `git commit -am` or `git commit -a`**
+   **NEVER use `git commit -am` or `git commit -a`** — a bare `git commit -m "..."` with no trailing pathspec is ALSO rejected by the live `scripts/git-hooks/pre-commit` sweep guard once this session's pooled bare-commit warn count passes threshold.
    # INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
    # responsibility; this specialist commits directly (explicit paths) — no commit-mutex skill call here.
 

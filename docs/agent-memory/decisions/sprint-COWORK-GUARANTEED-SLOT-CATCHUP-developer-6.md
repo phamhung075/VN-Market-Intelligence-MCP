@@ -32,3 +32,15 @@
 **verify:** `jq` inspection (both tools present once each, name-only, `system` group); generator dry-run matches committed file exactly; `tool-registry-parity.test.ts` 17/17 pass (dedicated drift guard already exists and is green).
 
 ---
+
+### STEP developer-S96 · developer · 2026-08-11T15:14:14Z
+**task-id:** FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK
+**what-done:** Rewrote `docs/policies/commit-convention.md` line 38 MANDATORY RULE + § Notebook Commits template (was lines 106-108) to mandate pathspec-ON-the-commit-command (`git commit -m "..." -- <paths>`) as the only canonical form, consistent with the already-correct § Shell Pattern example; reconciled "index-only" to mean WHAT is committed (not `-a`'s sweep), not "bare commit is fine." Also fixed line 7's stale "no blocking commit-msg hook" claim to name the live `scripts/git-hooks/pre-commit` sweep guard. Updated the 3 downstream invariant restatements: `execute-tier.md` § Developer Spawn Constraint, `developer/flow/main.md` § After code step 4, `dev-frontend/flow/main.md` § After code step 3 — all now require the repeated trailing pathspec, not just a prior `git add`.
+**what-considered:**
+- Touch only lines 38+106-108 per the task's literal scope vs. also fix line 7's "only installed hook is pre-push" claim — chose to also fix line 7: verified live (`.git/hooks/pre-commit` symlinked to `scripts/git-hooks/pre-commit`, confirmed installed) that leaving it would preserve the exact doc/reality contradiction this row exists to close, in the same file, one section up.
+- Did not touch `scripts/git-hooks/pre-commit` itself — task explicit: hook is correct, doc was wrong.
+**why-decision:** the hook's own stderr text (`git commit -m "<msg>" -- <only-your-own-files>`) is the ground truth this policy doc must mirror; grepped all 4 files post-edit to confirm zero remaining bare-commit mandates.
+**why-change:** no change from task scope — line-7 fix is a strict subset of "reconcile the index-only framing," not new scope.
+**verify:** grep across all 4 touched files confirms every `git commit -m` invariant/template now carries a trailing `-- <paths>` pathspec (existing notebook-commit lines in `developer/flow/main.md:147` and `dev-frontend/flow/main.md:185` were already correct and untouched). No `apps/` TS/Go touched (pure docs) — `bun test`/`tsc` N/A. Committing this change itself with an explicit pathspec on the commit line (session sweep-guard warn-budget exhausted, bare commit would hard-block).
+
+---

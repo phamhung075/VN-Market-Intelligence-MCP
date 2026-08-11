@@ -133,7 +133,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-11T14:36:33Z",
+    "_updated_at": "2026-08-11T15:10:03Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
@@ -390,7 +390,7 @@
         "type": "auditor_cycle_loss",
         "summary": "auditor cycle lost tick=2026-08-11T14:36:00Z — orphaned marker, mid-run death",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-11T15:00Z",
@@ -404,7 +404,7 @@
         "type": "auditor_cycle_loss",
         "summary": "auditor cycle lost tick=2026-08-11T14:00Z — orphaned marker, mid-run death",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-11T15:00Z",
@@ -418,7 +418,7 @@
         "type": "signal_feedback",
         "summary": "A-30 pdf-extractor memory reclamation loss (96.83% sustained, all 6 probes at ≥93%)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-11T15:00Z",
@@ -10779,35 +10779,6 @@
         "updated_by": "po/triage-20260811T1431Z"
       },
       {
-        "id": "FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK",
-        "type": "FIX",
-        "title": "commit-convention.md mandates the exact bare `git commit -m` form the sweep-guard hook now HARD-REJECTS (exit 1) once a session passes threshold=3 — policy SSOT and live enforcement are in direct contradiction; 3 dev flow docs inherit it",
-        "owner": "po",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "sprint": "BACKLOG",
-        "zone": "cross-service/",
-        "next_agent": "agent-father",
-        "files": [
-          "docs/policies/commit-convention.md",
-          "docs/agents/dev-team/flow/execute-tier.md",
-          "docs/agents/developer/flow/main.md",
-          "docs/agents/dev-frontend/flow/main.md"
-        ],
-        "baseline_pass": "9408",
-        "dedup_key": "commitconvention:bare-commit-mandate-vs-sweepguard-hardblock",
-        "created_at": "2026-08-11T15:05:00Z",
-        "created_by": "po/triage-20260811T1437Z",
-        "related": [
-          "FIX-SWEEPGUARD-ESCALATION-HAS-NO-ACTUATOR-REPEAT-OFFENDER-13-STRIKES",
-          "FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT",
-          "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2"
-        ],
-        "status_note": "AC-1: docs/policies/commit-convention.md:38 no longer reads as forbidding a trailing pathspec on the `git commit` line, and its own Notebook-Commits template (:106-108) carries `-- <path>` like every other template in the same file. AC-2: execute-tier.md:94, developer/flow/main.md:102, dev-frontend/flow/main.md:99 all instruct the pathspec-scoped form. AC-3 (regression proof, opt-IN allowlist only per feedback_fleetwide_gate_validated_on_one_file_optout_allowlist): a grep-based verifier asserts no fleet doc instructs a `git commit -m` with neither a trailing `-- <paths>` nor a line-continuation to one.\\n\\nROOT CAUSE (read at source this tick, not inferred): docs/policies/commit-convention.md is internally contradictory.\\n  :27-35  canonical Shell Pattern — CORRECT, ends `)\" -- <explicit paths>`.\\n  :38     'MANDATORY RULE - carried forward verbatim, non-negotiable: `git commit -m` (index-only) ONLY.' The words 'index-only' + 'ONLY' read as FORBIDDING the pathspec form.\\n  :39     places the explicitness requirement on `git add` ('Always stage EXPLICIT pathspecs (`git add <exact paths>`)'), NOT on `git commit`. That is precisely the `git add` + bare `git commit` TOCTOU shape of memory lesson feedback_git_add_then_bare_commit_is_toctou_race_use_pathspec_commit.\\n  :106-108 §Notebook Commits worked template is `git add <path>` then BARE `git commit -m \"...\"` with NO `--`. This is the single most-executed commit template in the fleet (every agent, every cycle).\\n\\nWHY IT IS NOW BREAKING AND NOT MERELY UNTIDY: scripts/git-hooks/pre-commit:850-877 (landed eac71308e 2026-07-31T02:11:14Z) sets escalate_effective=reject when escalated=true and `exit 1`s, INDEPENDENT of GIT_SWEEP_GUARD_MODE. The hook's own message at :875 states: \"'actor' is $CLAUDE_CODE_SESSION_ID, a per-COORDINATION-SESSION id shared by every agent spawned inside it - this budget is POOLED across the whole session\". Threshold is 3. Session 165f4245-6173-4054-87fd-c55bb626265f is at prior_warns=30. Therefore EVERY agent spawned in this session is already hard-blocked on the exact commit form its own policy SSOT calls non-negotiable.\\n\\nLIVE CONFIRMATION THIS TICK (first direct observation of the block in the real repo, not a fixture): a bare `git commit -m` was ESCALATED REJECTed; retrying with an explicit trailing pathspec on the commit line succeeded. Both affected files landed correctly seconds later (01cfb57ce notebook-only, 5595bcfc9 dedup-ledger).\\n\\nDOWNSTREAM INHERITORS of the bare form (all three cite commit-convention.md by name):\\n  docs/agents/dev-team/flow/execute-tier.md:94 - states it as an INVARIANT: 'All developer agents MUST use `git commit -m \"...\"` (index-only).'\\n  docs/agents/developer/flow/main.md:102 - '`git add <exact own paths>` (NEVER `-A`/`.`) then `git commit -m \"...\"`'\\n  docs/agents/dev-frontend/flow/main.md:99 - identical text.\\nNone of the three mentions the escalated-reject or the retry-with-pathspec recovery. Note the same two files are internally inconsistent: their OWN notebook-commit lines (developer:147, dev-frontend:185) DO carry `-- <path>`.\\n\\nFAILURE MODE IF UNFIXED: a developer/dev-frontend agent spawned into a saturated session hits exit 1 at its commit step with no documented recovery. The documented outcomes of that are silent commit skip (feedback_auditor_notebook_commit_step_silent_noop_c49, feedback_auditor_c11_cycle_completed_but_self_commit_skipped) and self-reported-complete-but-unpersisted work (feedback_auditor_tier2_self_report_no_persisted_writes) - i.e. real work loss, not just a wasted round-trip.\\n\\nDEDUP (non-terminal lanes backlog+ready+in_progress+review+qa, scanned on BARE|TOCTOU|PATHSPEC|COMMIT-CONVENTION and the FIX-COMMIT-SWEEP-*/FIX-SWEEPGUARD-* family): FIX-SWEEPGUARD-ESCALATION-HAS-NO-ACTUATOR-REPEAT-OFFENDER-13-STRIKES is the HOOK side (signal de-noising, refuted premise); FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT is the VICTIM side; FIX-COLDEVICT-WITHIN-FILE-PEER-CONTENT-CAPTURE is within-file capture. NONE owns the SUPPLY side - i.e. that the fleet's own docs instruct the blocked form. Genuinely new. Archived FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC is CANCELLED and was per-agent scoped; this row is deliberately at the policy-SSOT level instead (CLAUDE.md: fix root cause definitif, not recurrent symptom).\\n\\nDISPATCH-STRANDING WARNING FOR THE ROUTER: next_agent=agent-father is OFF the DRS ratified allowlist [architect,ba,pm,po,agents-architect], so this row is NOT reachable by any automated dispatch lane and will only ever be picked up via PO's manual-dispatch sweep or a direct BATCH fold. PO folded it into the 2026-08-11T14:37Z BATCH for exactly this reason. If it is still BACKLOG next tick, that is dispatch starvation, not a spec gap.",
-        "updated_at": "2026-08-11T15:01:55Z"
-      },
-      {
         "id": "FIX-CRON-CODEJANITOR-NO-PRESPAWN-GATE-BOOTS-FULL-SESSION-4X-DAILY",
         "type": "FIX",
         "title": "code-janitor cron has NO pre-spawn gate — its CronCreate prompt boots a full subagent session 4x/day unconditionally while its only git-diff gate lives post-boot and covers just the DRY scan (10/10 last cycles suppressed)",
@@ -19138,6 +19109,35 @@
         "origin_signal_id": "bug-escalation:bctc-analyst:signals-absent-4th-cycle",
         "updated_by": "developer",
         "dev_note": "Fixed: added read-first SIGNAL-FILE WRITE VERIFICATION guard to docs/agents/bctc-analyst/flow/main.md — Write tool's own return is now the ONLY write-verification signal (per-cycle), agent must never Read a docs/signals/*.json path it wrote in a prior cycle to re-confirm presence. AC-2: no Bash/Glob grant added, tool grant stays narrow. AC-3 regression traced (not replayed) in decision journal. Commit c23d19da4 (pushed to origin/main). Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md STEP developer-S91."
+      },
+      {
+        "id": "FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK",
+        "type": "FIX",
+        "title": "commit-convention.md mandates the exact bare `git commit -m` form the sweep-guard hook now HARD-REJECTS (exit 1) once a session passes threshold=3 — policy SSOT and live enforcement are in direct contradiction; 3 dev flow docs inherit it",
+        "owner": "agent-father",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "sprint": "BACKLOG",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "files": [
+          "docs/policies/commit-convention.md",
+          "docs/agents/dev-team/flow/execute-tier.md",
+          "docs/agents/developer/flow/main.md",
+          "docs/agents/dev-frontend/flow/main.md"
+        ],
+        "baseline_pass": "9408",
+        "dedup_key": "commitconvention:bare-commit-mandate-vs-sweepguard-hardblock",
+        "created_at": "2026-08-11T15:05:00Z",
+        "created_by": "po/triage-20260811T1437Z",
+        "related": [
+          "FIX-SWEEPGUARD-ESCALATION-HAS-NO-ACTUATOR-REPEAT-OFFENDER-13-STRIKES",
+          "FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT",
+          "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2"
+        ],
+        "status_note": "AC-1: docs/policies/commit-convention.md:38 no longer reads as forbidding a trailing pathspec on the `git commit` line, and its own Notebook-Commits template (:106-108) carries `-- <path>` like every other template in the same file. AC-2: execute-tier.md:94, developer/flow/main.md:102, dev-frontend/flow/main.md:99 all instruct the pathspec-scoped form. AC-3 (regression proof, opt-IN allowlist only per feedback_fleetwide_gate_validated_on_one_file_optout_allowlist): a grep-based verifier asserts no fleet doc instructs a `git commit -m` with neither a trailing `-- <paths>` nor a line-continuation to one.\\n\\nROOT CAUSE (read at source this tick, not inferred): docs/policies/commit-convention.md is internally contradictory.\\n  :27-35  canonical Shell Pattern — CORRECT, ends `)\" -- <explicit paths>`.\\n  :38     'MANDATORY RULE - carried forward verbatim, non-negotiable: `git commit -m` (index-only) ONLY.' The words 'index-only' + 'ONLY' read as FORBIDDING the pathspec form.\\n  :39     places the explicitness requirement on `git add` ('Always stage EXPLICIT pathspecs (`git add <exact paths>`)'), NOT on `git commit`. That is precisely the `git add` + bare `git commit` TOCTOU shape of memory lesson feedback_git_add_then_bare_commit_is_toctou_race_use_pathspec_commit.\\n  :106-108 §Notebook Commits worked template is `git add <path>` then BARE `git commit -m \"...\"` with NO `--`. This is the single most-executed commit template in the fleet (every agent, every cycle).\\n\\nWHY IT IS NOW BREAKING AND NOT MERELY UNTIDY: scripts/git-hooks/pre-commit:850-877 (landed eac71308e 2026-07-31T02:11:14Z) sets escalate_effective=reject when escalated=true and `exit 1`s, INDEPENDENT of GIT_SWEEP_GUARD_MODE. The hook's own message at :875 states: \"'actor' is $CLAUDE_CODE_SESSION_ID, a per-COORDINATION-SESSION id shared by every agent spawned inside it - this budget is POOLED across the whole session\". Threshold is 3. Session 165f4245-6173-4054-87fd-c55bb626265f is at prior_warns=30. Therefore EVERY agent spawned in this session is already hard-blocked on the exact commit form its own policy SSOT calls non-negotiable.\\n\\nLIVE CONFIRMATION THIS TICK (first direct observation of the block in the real repo, not a fixture): a bare `git commit -m` was ESCALATED REJECTed; retrying with an explicit trailing pathspec on the commit line succeeded. Both affected files landed correctly seconds later (01cfb57ce notebook-only, 5595bcfc9 dedup-ledger).\\n\\nDOWNSTREAM INHERITORS of the bare form (all three cite commit-convention.md by name):\\n  docs/agents/dev-team/flow/execute-tier.md:94 - states it as an INVARIANT: 'All developer agents MUST use `git commit -m \"...\"` (index-only).'\\n  docs/agents/developer/flow/main.md:102 - '`git add <exact own paths>` (NEVER `-A`/`.`) then `git commit -m \"...\"`'\\n  docs/agents/dev-frontend/flow/main.md:99 - identical text.\\nNone of the three mentions the escalated-reject or the retry-with-pathspec recovery. Note the same two files are internally inconsistent: their OWN notebook-commit lines (developer:147, dev-frontend:185) DO carry `-- <path>`.\\n\\nFAILURE MODE IF UNFIXED: a developer/dev-frontend agent spawned into a saturated session hits exit 1 at its commit step with no documented recovery. The documented outcomes of that are silent commit skip (feedback_auditor_notebook_commit_step_silent_noop_c49, feedback_auditor_c11_cycle_completed_but_self_commit_skipped) and self-reported-complete-but-unpersisted work (feedback_auditor_tier2_self_report_no_persisted_writes) - i.e. real work loss, not just a wasted round-trip.\\n\\nDEDUP (non-terminal lanes backlog+ready+in_progress+review+qa, scanned on BARE|TOCTOU|PATHSPEC|COMMIT-CONVENTION and the FIX-COMMIT-SWEEP-*/FIX-SWEEPGUARD-* family): FIX-SWEEPGUARD-ESCALATION-HAS-NO-ACTUATOR-REPEAT-OFFENDER-13-STRIKES is the HOOK side (signal de-noising, refuted premise); FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT is the VICTIM side; FIX-COLDEVICT-WITHIN-FILE-PEER-CONTENT-CAPTURE is within-file capture. NONE owns the SUPPLY side - i.e. that the fleet's own docs instruct the blocked form. Genuinely new. Archived FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC is CANCELLED and was per-agent scoped; this row is deliberately at the policy-SSOT level instead (CLAUDE.md: fix root cause definitif, not recurrent symptom).\\n\\nDISPATCH-STRANDING WARNING FOR THE ROUTER: next_agent=agent-father is OFF the DRS ratified allowlist [architect,ba,pm,po,agents-architect], so this row is NOT reachable by any automated dispatch lane and will only ever be picked up via PO's manual-dispatch sweep or a direct BATCH fold. PO folded it into the 2026-08-11T14:37Z BATCH for exactly this reason. If it is still BACKLOG next tick, that is dispatch starvation, not a spec gap.\n\nEXECUTED 2026-08-11T15:14Z (agent-father, session 165f4245): AC-1 done — line 38 MANDATORY RULE + Notebook-Commits template (:106-108) both now mandate `git commit -m \"...\" -- <paths>` as the only canonical form; line 7 hook description also corrected (was stale \"only installed hook is pre-push\"). AC-2 done — execute-tier.md:94, developer/flow/main.md:102, dev-frontend/flow/main.md:99 all now instruct the trailing-pathspec form. AC-3 (regression grep) NOT run by this agent (no allowlisted-verifier script authored — flagging for QA to add/confirm per the row's own AC-3 wording, opt-IN allowlist). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-6.md STEP developer-S96. Own commit for this fix used explicit trailing pathspec (session sweep-guard warn-budget already exhausted).",
+        "updated_at": "2026-08-11T15:15:31Z"
       }
     ],
     "qa": [
@@ -19537,58 +19537,9 @@
         "last_served_tick": "2026-08-09T04:53:51Z"
       }
     },
-    "_updated_at": "2026-08-11T14:51:50Z",
+    "_updated_at": "2026-08-11T15:08:54Z",
     "_updated_by": "dev-team",
-    "pending_triage_inbox": [
-      {
-        "envelope_id": "03e7d0af51adf4b52400e6627069ecfd79bd355698e11f196e32f94301f4a098",
-        "source": "file",
-        "from": "agents-architect",
-        "to": "po",
-        "type": "architecture_brief",
-        "priority": "normal",
-        "payload": {
-          "from": "agents-architect",
-          "to": "po",
-          "type": "architecture_brief",
-          "summary": "Cron heartbeat pre-spawn gating: 8/11 outer heartbeats across cron-cowork-team/cron-detect-loop/cron-standalone-team already gate the full subagent boot behind a deterministic shell pre-gate; code-janitor is the one concrete gap (post-boot in-flow gate skips only the DRY scan, 3 fully-deterministic sweeps still boot a full session unconditionally 4x/day, 10/10 last recorded cycles show the DRY-scan branch suppressed). Recommends mirroring the existing WU-1/2/3+CADRAT-2+market-db-journal-guard pre-spawn-shell-gate pattern for code-janitor only. Explicitly rejects introducing any LLM/local-model pre-gate anywhere in the 3 families (no fuzzy pre-spawn judgment case found; 3 documented live instances of safe-looking gates silently disabling their own mechanism, including one discovered this same session).",
-          "priority": "normal",
-          "createdAt": "2026-08-11T13:59:53Z",
-          "payload_ref": "docs/architecture-briefs/2026-08-11-cron-heartbeat-prespawn-gating.md",
-          "cc": [
-            "agent-father"
-          ],
-          "pipeline": "hold-for-user-confirmation"
-        },
-        "createdAt": "2026-08-11T13:59:53Z",
-        "drained_at": "2026-08-11T14:23:09Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "aea5bf941be6210cba4fbd8c972a16a1b0c945d7de89ed89b8767248f9ef244a",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=29 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-11T14:41:06Z",
-        "drained_at": "2026-08-11T14:51:50Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "6f799ee0221db39691ffef3cf8c8ef977d3e74042d7baba3e30213df7d19c06d",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/data/auditor-dedup-ledger.json. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=30 threshold=3. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-11T14:43:46Z",
-        "drained_at": "2026-08-11T14:51:50Z",
-        "routed_to": "PO Step 0-SIG"
-      }
-    ],
+    "pending_triage_inbox": [],
     "last_po_triage_at": "2026-08-11T13:08:45Z",
     "last_po_triage_note": "po/triage-20260811T1237Z consumed and dispositioned all 29 durable-inbox envelopes (17 to=po routed per triage-signals.md; 12 addressed to claude-manager-helper/agent-father/dev-team but carrying routed_to='PO Step 0-SIG' -> logged + skipped per the unknown-type rule, targets retain their own independent discovery paths: docs/architecture-briefs/ for agent-father, hook-emitted notebook/context-bloat state for claude-manager-helper, dev-team's own Step 0a for cowork-fire/db_integrity_breach). Dispositions recorded on the folded/minted task_board rows and in docs/agent-memory/notebooks/po.md."
   }

@@ -91,7 +91,7 @@ for stage_calls in [devs, qa, fixer_if_needed]:        # e.g. devs = [(dev-stock
 
 ### Developer Spawn Constraint (Invariant)
 
-All developer agents MUST use `git commit -m "..."` (index-only). NEVER use `git commit -am` or `git commit -a` — the `-a` flag greedily stages untracked index content from other sources and violates C2 atomicity (root cause of c47 incident).
+All developer agents MUST commit with an explicit pathspec ON the `git commit` command itself: `git commit -m "..." -- <exact paths>` — a bare `git commit -m "..."` relying only on a prior `git add` is NOT sufficient. NEVER use `git commit -am` or `git commit -a` — the `-a` flag greedily stages untracked index content from other sources and violates C2 atomicity (root cause of c47 incident). Live-enforced by `scripts/git-hooks/pre-commit` (commit-path peer-index sweep guard) — a pathspec-less commit hard-rejects once a session's pooled bare-commit warn count passes threshold, regardless of `GIT_SWEEP_GUARD_MODE`. Convention: `docs/policies/commit-convention.md`.
 
 ## Merge Gate (After Each Tier — Sequential)
 

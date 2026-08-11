@@ -99,9 +99,9 @@ if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit parti
 2. `bun test` — no regressions
 3. `bun tsc --noEmit` — 0 errors
 4. **Commit directly** (INV-GATEWAY-1 — no mutex skill invocation from this specialist)
-   `git add <exact own paths>` (NEVER `-A`/`.`) then `git commit -m "..."` — format per `docs/policies/commit-convention.md`
+   `git add <exact own paths>` (NEVER `-A`/`.`) then `git commit -m "..." -- <same exact paths>` — the pathspec MUST be repeated on the `git commit` command itself, not just the prior `git add`; format per `docs/policies/commit-convention.md`
    Mandatory trailers for task commits: `Sprint:`, `Task:`, `AC:` (slash-separated, terse). Omit all three only for no-sprint commits (§ No-Sprint Rule).
-   **NEVER use `git commit -am` or `git commit -a`** — `-a` greedily absorbs staged index content from other sources, violating C2 atomicity (root cause: c47 incident, SHA `8bec73d3`).
+   **NEVER use `git commit -am` or `git commit -a`** — `-a` greedily absorbs staged index content from other sources, violating C2 atomicity (root cause: c47 incident, SHA `8bec73d3`). A bare `git commit -m "..."` with no trailing pathspec is ALSO rejected — `scripts/git-hooks/pre-commit` hard-blocks it once this session's pooled bare-commit warn count passes threshold.
    # INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
    # responsibility; this specialist commits directly (explicit paths) — no commit-mutex skill call here.
 

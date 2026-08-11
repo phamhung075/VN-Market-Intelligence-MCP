@@ -4,7 +4,7 @@
 
 **Load when:** writing a commit, reviewing PRs, automated validation.
 
-**Enforced by:** every commit-authoring agent (`developer`, `fixer`, `qa`, `po`, etc.) at commit time. No blocking commit-msg hook exists — the only installed hook is pre-push (`tsc` only, via `scripts/audits/c2-alert.sh` Control 4 for the `-a`/`-am` rule). `scripts/audits/commit-convention-audit.sh` is DEPRECATED (§ below) — do not treat it as enforcement.
+**Enforced by:** every commit-authoring agent (`developer`, `fixer`, `qa`, `po`, etc.) at commit time — every commit MUST carry an explicit pathspec ON the `git commit` command itself (§ Shell Pattern below), not just on a prior `git add`. Live-enforced by the installed `pre-commit` hook (`scripts/git-hooks/pre-commit`, commit-path peer-index sweep guard): it hard-rejects (`exit 1`) a pathspec-less commit once a session's pooled bare-commit warn count passes threshold (default 3), independent of `GIT_SWEEP_GUARD_MODE` — see the hook for exact mechanics, this doc does not duplicate its logic. Pre-push hook separately checks `tsc` (via `scripts/audits/c2-alert.sh` Control 4 for the `-a`/`-am` rule). `scripts/audits/commit-convention-audit.sh` is DEPRECATED (§ below) — do not treat it as enforcement.
 
 ---
 
@@ -35,8 +35,8 @@ EOF
 )" -- <explicit paths>
 ```
 
-**MANDATORY RULE — carried forward verbatim, non-negotiable:** `git commit -m` (index-only) ONLY.
-**NEVER use `git commit -am` or `git commit -a`** — the `-a` flag greedily stages untracked/concurrent-agent index content, violating commit atomicity. Root cause of the c47 incident (SHA `8bec73d3`). Enforced by merge-gate Control 4 (`scripts/audits/c2-alert.sh`). Always stage EXPLICIT pathspecs (`git add <exact paths>`) — never `-A` or `.`.
+**MANDATORY RULE — non-negotiable:** every commit MUST carry an explicit pathspec ON THE `git commit` COMMAND ITSELF — `git commit -m "..." -- <exact paths>`. Staging explicit paths first (`git add <exact paths>`) is necessary but NOT sufficient on its own: a bare `git commit -m "..."` with no trailing `-- <paths>` commits WHATEVER is currently in the shared index — including a concurrent peer's `git add`'d WIP that landed after your own last check (TOCTOU). This is the exact form live-enforced by `scripts/git-hooks/pre-commit` (commit-path peer-index sweep guard), which hard-rejects a pathspec-less commit once a session's pooled bare-commit warn count passes threshold. "Index-only" describes WHAT gets committed (only staged content, never `-a`'s working-tree sweep) — it does NOT mean the commit command itself may omit the pathspec.
+**NEVER use `git commit -am` or `git commit -a`** — the `-a` flag greedily stages untracked/concurrent-agent index content, violating commit atomicity. Root cause of the c47 incident (SHA `8bec73d3`). Enforced by merge-gate Control 4 (`scripts/audits/c2-alert.sh`). Always stage EXPLICIT pathspecs (`git add <exact paths>`) — never `-A` or `.` — AND repeat those exact same paths as a trailing pathspec on the `git commit` command itself.
 
 ---
 
@@ -105,7 +105,7 @@ Format: `chore(memory/<agent-id>): notebook YYYY-MM-DD`
 
 ```bash
 git add docs/agent-memory/notebooks/<agent-id>.md
-git commit -m "chore(memory/<agent-id>): notebook YYYY-MM-DD"
+git commit -m "chore(memory/<agent-id>): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/<agent-id>.md
 ```
 
 Rules: scope is always `memory/<agent-id>` matching the notebook filename; date is session date, not commit timestamp; one commit per agent per cycle — do not batch multiple agents into one commit.
