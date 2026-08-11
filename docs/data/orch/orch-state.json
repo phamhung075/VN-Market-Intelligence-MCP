@@ -88,12 +88,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-FRONTEND-split-market-summaries",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 3 row(s), highest-ranked FACTORY-FRONTEND-split-market-summaries — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 3 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-11T20:24:02Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "updated_at": "2026-08-11T20:38:20Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -129,7 +128,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-11T20:21:49Z",
+    "_updated_at": "2026-08-11T20:35:33Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
@@ -764,6 +763,32 @@
         "provenance": "router-corroboration",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-11T20:00Z",
         "dedup_key": "auditor-analysis-only-exit-corroboration:c35:2026-08-11T20:00Z"
+      },
+      {
+        "id": "tnb-20260811T203000Z-audit-c126",
+        "ts": "2026-08-11T20:30:00Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "tnb-audit c126: NEEDS_ATTENTION/DEGRADING. Headline: F-CHEF-BIZCTX-JOIN-MISS 3rd instance confirmed (RAW-verified vs unified-agent-synthesis-2026-08-11-evening.json) — VCB/FPT conviction_calls cite zero business-context facts + known_gaps claims unavailability, yet bctc_signal_{VCB,FPT}_20260811_routine.json were fully populated 1h32m before dish fired. Crosses PO's own 3rd-instance->P0 threshold for FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING (currently BACKLOG/P1/occurrence_count=2, request bump to P0/3). Also corroborates existing quota-outage P0 (no new mint) + minor EIB magnitude mismatch (LOW-MED, not escalated). Full findings: docs/handoffs/tnb-audit-latest.md. Companion file was written directly by the agent (no Bash grant to run orch-apply.sh itself) and had zero signal_queue row until this dispatcher bridge write.",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": "docs/signals/tnb-20260811T2030Z.json",
+        "provenance": "cowork-team-bridge-write-agent-no-bash"
+      },
+      {
+        "id": "sys-20260811T203629-78e8",
+        "ts": "2026-08-11T20:36:29Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 FAIL: vn-market-intelligence-mcp-pdf-extractor-1 memory pressure 85.12% at investigate-gate boundary",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-11T20:30Z",
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -12860,6 +12885,68 @@
             "observed_at": "2026-08-11T20:27:58Z"
           }
         }
+      },
+      {
+        "title": "Split dashboard.orchestration: DTOs to shared, sections to components",
+        "priority": "P2",
+        "zone": "frontend",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-FRONTEND-split-orchestration",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-split-orchestration",
+        "promoted_at": "2026-07-24T10:14:31Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-11T20:38:07Z",
+        "claimed_at": "2026-08-11T20:24:02Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T10:35:20Z",
+        "review_note": "dev-frontend DONE-CODE (rebuild-verify deferred, USER-GATED): DTOs (StepDto/DecisionsDto/TaskStatus/TaskRow/TaskBoardCounts/TaskBoard/SignalRow/SignalQueue/SprintGoal/Narrative/Head/OrchState) moved verbatim to app/domain/orchestration/types.ts (re-exported from route). STALE_THRESHOLD_MS + staleness predicate moved to app/domain/orchestration/staleness.ts as isStale(tsField, now) — 9 unit tests. taskStatusClasses moved to app/domain/formatters/task-status-classes.ts (shared by 2 components, avoids circular import) — 8 unit tests. 11 render components split into app/components/orchestration/*.tsx, all <=120L (HeadPanel 52L, TaskGroup 57L, StepCard 61L, DecisionAccordion 66L, DoneTaskRow 88L, DoneTaskGroup 104L, TaskBoard 74L, SignalQueue 88L, SprintGoal 49L, Narrative 69L, doneTaskGrid.ts 16L) — a render smoke test was written and confirmed RED (module not found) BEFORE each component file was created, then GREEN immediately after (test-first, per ticket DoD). TASK-DASH-CRON-2 Cron Recheck Table left untouched (out of scope; a pre-existing test imports its exports directly from the route). POLL_MS=5000 + loader unchanged (grep-confirmed). tsc --noEmit clean. Full Vitest suite: 95 files/2112 tests, 2110 pass, same 2 pre-existing unrelated QUE_DESCRIPTIONS failures — confirmed IDENTICAL to baseline via git stash push -u -- apps/frontend A/B re-run (baseline 81/83 files, 2047/2049 tests, same 2 failures), then git stash pop. vite.config.ts test.include gained one entry (app/domain/orchestration/**) so the new staleness test is discoverable by Vitest — root-cause fix, mirrors the existing domain/formatters entry. Docs updated: docs/architecture/microservice/frontend/domain-model.md new split section. Decision journal: docs/agent-memory/decisions/sprint-FACTORY-FRONTEND-split-orchestration-dev-frontend.md (7 STEP entries). Live rebuild + Playwright G12 render-gate DEFERRED — task scope bound explicit \"CODE-ONLY, NO REBUILD... rebuilds are USER-GATED\"; batches onto a future rebuild.\n\n[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Row carried no .commit/.files[]/.owner (predates drain fields); derived commit c73a494ee9267452e6efc00cd14bcf9b3b38be86 via `git log --all -- app/domain/orchestration/* app/components/orchestration/*` — dated 2026-07-24T12:38:01+02:00, confirmed on main ancestry via `git merge-base --is-ancestor`; `git show --stat` matches all 29 claimed files exactly (types.ts/staleness.ts/task-status-classes.ts/11 components/doneTaskGrid.ts/10 new test files/vite.config.ts/domain-model.md). RAW-verified, not trusted from prose: byte-diffed the DTO block (StepDto..OrchState), the isStale predicate, and taskStatusClasses against the pre-split route (c73a494ee^) — verbatim moves, only new docstrings added, no shape/logic drift. All 11 component files confirmed at claimed line counts (HeadPanel52/TaskGroup57/StepCard61/DecisionAccordion66/DoneTaskRow88/DoneTaskGroup104/TaskBoard74/SignalQueue88/SprintGoal49/Narrative69/doneTaskGrid16), all <=120L. POLL_MS=5000 + polling loader byte-identical. TASK-DASH-CRON-2 types/components correctly left untouched in the route. No circular imports (components do not import back from the route). tsc --noEmit clean; eslint lint:fence (DDD Fence-A/B/C boundaries) 0 violations on all touched files. DDD greps (infrastructure/application imports) clean. Security greps: process.env hits in route/vite.config.ts pre-exist this commit (grep-confirmed on parent c73a494ee^), not introduced; no password/secret/token hits. mock-guard.sh --files (16 production files) PASS. Targeted 13-file/104-test orchestration suite (incl. the 9 new staleness + 8 new taskStatusClasses unit tests) — 100% pass; vitest was blocked repo-wide by a pre-existing pnpm-hoist esbuild-binary-version mismatch (reproduced independently on an unrelated pre-existing test file, confirming it predates and is unrelated to this commit) — worked around via ESBUILD_BINARY_PATH env override, no file changes. Full-suite equivalence claim (row claimed 2110/2112 pass, 2 pre-existing fails) has drifted since 2026-07-24 to 32 fails/11 files today under current node_modules — did not accept either number blind: A/B via detached git worktrees pinned exactly at c73a494ee vs its parent c73a494ee^, both against the SAME shared node_modules — byte-identical 32-failure set (11 files: FE-HEADER-SSOT-top-nav/QUE-REFERENCE-PAGE-detail/QUE-TOOLTIP-DRY-1a-codegen-pipeline/ind-p1-indicator-gauges-nav/ind-p1-momentum-nav/task17-page14..19-nav — none touching orchestration) in BOTH, proving zero regressions from this refactor; today's drift is unrelated later-commit fallout, not this task's fault. rebuild_required:true in backlog-detail correctly DEFERRED — task scope explicitly bound CODE-ONLY/NO-REBUILD (rebuild is USER-GATED), consistent with dev's own claim. DJ-GATE-1: sprint-FACTORY-FRONTEND-split-orchestration-dev-frontend.md (task-id stamped x7) pre-satisfied; own QA DJ sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-16.md STEP qa-S54.",
+        "qa_verified_at": "2026-08-11T20:38:06Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "tsc --noEmit && eslint (lint:fence) && mock-guard.sh && vitest (ESBUILD_BINARY_PATH override) + worktree A/B pinned at c73a494ee vs c73a494ee^",
+            "args": {
+              "cwd": "apps/frontend",
+              "commit_verified": "c73a494ee9267452e6efc00cd14bcf9b3b38be86"
+            },
+            "live_value_observed": "tsc --noEmit clean; eslint lint:fence 0 boundary violations; mock-guard.sh PASS (16 files); DDD/security greps clean (process.env pre-existing); targeted orchestration suite 13 files/104 tests 100% pass; full-suite worktree A/B at c73a494ee vs c73a494ee^ (same shared node_modules) produced byte-identical 32-failure/11-file set in BOTH — proves zero regressions from this refactor, drift is unrelated/pre-existing",
+            "observed_at": "2026-08-11T20:36:40Z"
+          }
+        }
+      },
+      {
+        "title": "Move market-summaries pure helpers to domain; split list/detail JSX",
+        "priority": "P2",
+        "zone": "frontend",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-FRONTEND-split-market-summaries",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-split-market-summaries",
+        "promoted_at": "2026-07-24T09:44:29Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-11T20:38:20Z",
+        "claimed_at": "2026-08-11T20:24:02Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-24T09:58:54Z",
+        "review_note": "dev-frontend DONE-CODE: 955L route split into app/domain/market-summaries/format.ts (9 pure helpers, verbatim) + app/components/market-summaries/*.tsx (12 files, all <=120L). Route 955L->324L. tsc clean, vitest 2047/2049 (2 pre-existing unrelated fail, confirmed baseline via git-stash A/B). Equivalence proven via reference-identity + golden-value tests. Live Playwright G12 render-gate DEFERRED (rebuild is USER-GATED, out of scope this task) — QA should verify code-level evidence only; render-gate batches onto next rebuild. Commits: e2f18a897 (code), 67e7be472 (memory). || [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Commits e2f18a897 (code) + 67e7be472 (memory) confirmed on main ancestry; git show --stat matches all 16 claimed files exactly (route 955L->324L verified via e2f18a897^ extraction). Byte-diffed all 9 domain helpers against e2f18a897^s inline route body -- verbatim, zero drift. All 12 component files <=120L (max 75L, SectionHeader 9L). Confirmed backward-compat re-export block (route re-exports the 9 helpers from app/domain/market-summaries/format.ts) + loader-test import re-point via diff. Spot-diffed ListView/DetailView JSX against parent -- byte-identical. Hit the same pre-existing repo-wide @esbuild/darwin-x64 pnpm-hoist defect already root-caused this session (wrong version symlinked into .pnpm/node_modules, reproduced on an isolated unrelated require() call) -- worked around via ESBUILD_BINARY_PATH env override (no file writes). Targeted task17-market-summaries-loader.test.ts: 62/62 pass. Full suite: 2153/2185 (32 fail) -- exact same 32 TopNav/QUE_DESCRIPTIONS failures independently worktree-A/B-proved pre-existing/unrelated minutes earlier this session (qa-S54); zero overlap between this diffs 16 files and those failing test subjects. tsc --noEmit clean. DDD greps clean. Security greps clean (the one process.env[FRONTEND_ORIGIN] hit is pre-existing loader code, confirmed present verbatim in e2f18a897^, untouched by this diff). mock-guard.sh PASS on all 14 touched production files. DJ-GATE-1: sprint-FACTORY-FRONTEND-split-market-summaries-dev-frontend.md (task-id stamped x6) pre-satisfied; own QA DJ sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-16.md STEP qa-S55.",
+        "qa_verified_at": "2026-08-11T20:37:58Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun tsc --noEmit && vitest run (ESBUILD_BINARY_PATH override) && mock-guard.sh --files <14 touched> && DDD/security greps",
+            "args": {
+              "cwd": "apps/frontend",
+              "commit_verified": "e2f18a897807c5d64d945d4eb0aca43838ca5e73"
+            },
+            "live_value_observed": "tsc clean; targeted loader test 62/62 pass; full suite 2153/2185 (32 fail, identical pre-existing TopNav/QUE_DESCRIPTIONS set, zero overlap with touched files); mock-guard PASS; DDD/security greps clean; all 9 helpers + route line counts byte/line-verified against parent commit",
+            "observed_at": "2026-08-11T20:37:58Z"
+          }
+        }
       }
     ],
     "head": {
@@ -19515,42 +19602,6 @@
         "claimed_at": "2026-08-11T15:25:14Z",
         "claimed_by": "dev-team (review-lane qa-drain)",
         "redispatch_count": 1
-      },
-      {
-        "title": "Move market-summaries pure helpers to domain; split list/detail JSX",
-        "priority": "P2",
-        "zone": "frontend",
-        "type": "FACTORY",
-        "status": "QA",
-        "id": "FACTORY-FRONTEND-split-market-summaries",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-split-market-summaries",
-        "promoted_at": "2026-07-24T09:44:29Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-11T20:24:02Z",
-        "claimed_at": "2026-08-11T20:24:02Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T09:58:54Z",
-        "review_note": "dev-frontend DONE-CODE: 955L route split into app/domain/market-summaries/format.ts (9 pure helpers, verbatim) + app/components/market-summaries/*.tsx (12 files, all <=120L). Route 955L->324L. tsc clean, vitest 2047/2049 (2 pre-existing unrelated fail, confirmed baseline via git-stash A/B). Equivalence proven via reference-identity + golden-value tests. Live Playwright G12 render-gate DEFERRED (rebuild is USER-GATED, out of scope this task) — QA should verify code-level evidence only; render-gate batches onto next rebuild. Commits: e2f18a897 (code), 67e7be472 (memory)."
-      },
-      {
-        "title": "Split dashboard.orchestration: DTOs to shared, sections to components",
-        "priority": "P2",
-        "zone": "frontend",
-        "type": "FACTORY",
-        "status": "QA",
-        "id": "FACTORY-FRONTEND-split-orchestration",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-FRONTEND-split-orchestration",
-        "promoted_at": "2026-07-24T10:14:31Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-11T20:24:02Z",
-        "claimed_at": "2026-08-11T20:24:02Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T10:35:20Z",
-        "review_note": "dev-frontend DONE-CODE (rebuild-verify deferred, USER-GATED): DTOs (StepDto/DecisionsDto/TaskStatus/TaskRow/TaskBoardCounts/TaskBoard/SignalRow/SignalQueue/SprintGoal/Narrative/Head/OrchState) moved verbatim to app/domain/orchestration/types.ts (re-exported from route). STALE_THRESHOLD_MS + staleness predicate moved to app/domain/orchestration/staleness.ts as isStale(tsField, now) — 9 unit tests. taskStatusClasses moved to app/domain/formatters/task-status-classes.ts (shared by 2 components, avoids circular import) — 8 unit tests. 11 render components split into app/components/orchestration/*.tsx, all <=120L (HeadPanel 52L, TaskGroup 57L, StepCard 61L, DecisionAccordion 66L, DoneTaskRow 88L, DoneTaskGroup 104L, TaskBoard 74L, SignalQueue 88L, SprintGoal 49L, Narrative 69L, doneTaskGrid.ts 16L) — a render smoke test was written and confirmed RED (module not found) BEFORE each component file was created, then GREEN immediately after (test-first, per ticket DoD). TASK-DASH-CRON-2 Cron Recheck Table left untouched (out of scope; a pre-existing test imports its exports directly from the route). POLL_MS=5000 + loader unchanged (grep-confirmed). tsc --noEmit clean. Full Vitest suite: 95 files/2112 tests, 2110 pass, same 2 pre-existing unrelated QUE_DESCRIPTIONS failures — confirmed IDENTICAL to baseline via git stash push -u -- apps/frontend A/B re-run (baseline 81/83 files, 2047/2049 tests, same 2 failures), then git stash pop. vite.config.ts test.include gained one entry (app/domain/orchestration/**) so the new staleness test is discoverable by Vitest — root-cause fix, mirrors the existing domain/formatters entry. Docs updated: docs/architecture/microservice/frontend/domain-model.md new split section. Decision journal: docs/agent-memory/decisions/sprint-FACTORY-FRONTEND-split-orchestration-dev-frontend.md (7 STEP entries). Live rebuild + Playwright G12 render-gate DEFERRED — task scope bound explicit \"CODE-ONLY, NO REBUILD... rebuilds are USER-GATED\"; batches onto a future rebuild."
       }
     ],
     "_closed_signals_20260614": {
