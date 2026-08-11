@@ -50,6 +50,41 @@
 
 ---
 
+## c36 · 2026-08-11T20:30Z
+
+### Audit Run Tier-1 (20:34–20:37 UTC 2026-08-11)
+- Tier: 1 | Container liveness + health endpoints + memory pressure A-30 discriminator
+- Anomalies: 1 warn (A-30: pdf-extractor at gate boundary), 0 critical, 0 cycle-loss alerts
+- Status: **DEGRADED** (memory creep, pdf-extractor at investigate-gate threshold)
+- Fire-election: CLAIMED tick=2026-08-11T20:30Z
+- CONTRACT-CONTRADICTION: NONE
+
+#### A-30 Memory Pressure Findings
+
+**pdf-extractor-1 (85.12% — AT INVESTIGATE-GATE BOUNDARY):**
+- Baseline: 85.12% >= 85% investigate-gate → ENGAGE deep-probe
+- State: stable, no OOM, no restart, no state change during window
+- VmHWM: 2587640 KB (2.47 GiB), pinned at 2621440 KB (2.5 GiB) cgroup limit
+- VmHWM advancing in window: false
+- Discontinuities: 0 (no crash-cliff)
+- Verdict: WARN (memory at critical threshold)
+- [emit-signal] SKIP-dedup dedup_key=microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30 last_sent=2026-08-11T12:36:18Z id=sys-20260811T203629-78e8
+
+**mcp-server-1 (12.60%):**
+- Baseline: 12.60% < 85% investigate-gate → SKIP deep-probe
+- Status: GREEN (well below threshold)
+
+#### Summary
+- **Container Status:** All host_runtime_set services UP and healthy (10 services checked)
+- **Health Endpoints:** 5 endpoints verified healthy (mcp-server, api-gateway, macro-indicators, pdf-extractor, frontend)
+- **Restart Count (A-21):** mcp-server RestartCount=0, no recent crashes detected
+- **Disk (A-32):** Primary filesystem < 85% capacity (not at alert threshold)
+- **Memory Summary:** pdf-extractor at critical boundary requiring attention but stable; mcp-server and other services nominal
+- **Signal Emission:** 1 signal emitted (SKIP-dedup on prior finding, not a new alert)
+- **Cycle Status:** DEGRADED due to memory creep on pdf-extractor, previously reported 2026-08-11T12:36Z
+
+---
+
 ## c35 · 2026-08-11T20:00Z
 
 ### Audit Run Tier-1 (20:00–20:05 UTC 2026-08-11)
