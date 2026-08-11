@@ -2,7 +2,7 @@
 agent:
   id: agents-architect
   name: Agents Architect
-  version: "2026-05-11"
+  version: "2026-08-11"
   description: Meta-architect for the agent system. Designs inter-agent communication patterns, system context improvements, and multi-agent architecture changes. Outputs signed architecture briefs. Never implements — signals agent-father for all file changes.
 
   capabilities:

@@ -55,39 +55,6 @@
   Escalation 2 (semble-search guide-taxonomy) severity LOW; the 3 CRITICAL tool-boundary findings
   are carried-forward (already PO-known from the prior two `team-tool-recheck` runs, not new).
 
-## GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT 2026-08-09 — STOPPED at AC-1 gate, citation drift confirmed
-- Dispatched via dev-team S4-UNBLOCK (PO manual-dispatch-sweep, triage-20260809T0135Z-po.md §po-S6).
-  AC-1 mandates re-confirming writer/consumer file:line citations AT SOURCE before writing the
-  dual-plane contract, with an explicit "if either has moved, record the new location and STOP for
-  re-triage before changing anything" gate — restated verbatim in the dispatch prompt.
-- **Writer** `docs/agents/market-watcher/flow/eod.md` — `:13`/`:29`/`:33` all exact match, unchanged
-  since PO's 2026-07-21 verify.
-- **Consumer** `docs/agents/unified-agent/flow/chef.md:116` — DRIFTED. `git show
-  47c703fca:docs/agents/unified-agent/flow/chef.md` (the exact commit live at the 07-21 PO-verify
-  timestamp) confirms `:116` was `- \`price_anomaly_*\` — from market-watcher` at that time — the
-  citation was correct when minted. Current HEAD: same line now at `:153`. `git diff 47c703fca HEAD
-  -- chef.md` shows the entire `Read all docs/signals/*.json...` / `Collect file groups:` block
-  BYTE-IDENTICAL — the 37-line shift is entirely unrelated growth (TE-T16 split 2026-08-06 +7L
-  header, plus Step 0.5's FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE/FIX-CHEF-INTRADAY-MARKER-
-  CADENCE comment blocks added 07-29→08-06, both physically ABOVE Step 0 in the file). The by-path
-  consumer mechanism itself (unenveloped top-level glob, `price_anomaly_*` named explicitly) is
-  confirmed unchanged and still resident in `chef.md` (TE-T16's own header states it relocated ONLY
-  Steps 1.5-8 to `chef-dish.md`, explicitly keeping Step 0.5/Step 0/Step 1 in this file).
-- **Judgment: honored the literal STOP gate rather than self-correct-and-proceed.** The drift IS
-  real (citation moved, condition literally met) even though the underlying fact-pattern verified
-  true. Chose not to exercise judgment to override an explicit, twice-stated instruction on a
-  `supervised:true` row whose whole premise is "four prior mis-diagnoses came from someone not
-  checking this" — deciding "this particular drift is benign" is exactly that same interpretive
-  leap, just made by me instead of a predecessor. Zero edits made to `eod.md`, `mcp-tools.md`, or
-  `drain-signals.js` — AC(2)-(5) untouched.
-- Row flipped `BACKLOG`→`BLOCKED` (lane-coherent per `LANE_ALLOWED_STATUSES.backlog`) via `jq |
-  scripts/orch-apply.sh` (Stage0+1 PASS, conservation OK, `updated_at` stamped) — `status_note`
-  carries the full corrected citation (consumer = chef.md Step 0 GATHER, glob-read `:130`,
-  `price_anomaly_*` family bullet `:153`) so a re-dispatch can skip re-deriving this verification.
-  Left `orch-state.json` **UNCOMMITTED** — same `FU-AGENT-FATHER-ORCH-SCOPE` precedent as prior
-  entries; router/PO owns the board-write commit. Decision journal: `sprint-COWORK-GUARANTEED-
-  SLOT-CATCHUP-agent-father-2.md` STEP agent-father-S33.
-
 ## GUARD-PRICE-ANOMALY-BYPATH-DISH-CONTRACT 2026-08-09T03:15Z (cont'd) — AC(2)-(5) DONE → review/qa
 - Resumed from S33's corrected citation. AC2: dual-plane contract table added
   `docs/standards/mcp-tools.md` § "price_anomaly — DUAL-PLANE CONTRACT" (DB plane cycle.md
@@ -116,3 +83,37 @@
   entry's heading now carries a real HH:MM timestamp so it no longer ties with the STOPPED
   section's date-only heading. Not investigating/fixing `notebook-auto-prune.sh` itself — outside
   this task's scope; flagged here for whoever next touches that script's tie-break voting.
+
+## Keep (maintenance) 2026-08-11 12:14 UTC — router-spawned, no explicit intent → defaulted to keep.md
+- Trigger: manual (router spawn gave no `trigger`/`intent` → main.md default → keep.md). Pre-Check:
+  `git diff --name-only HEAD~3..HEAD` touched zero `.claude/agents/*.md` /
+  `docs/agents/*/flow/*.md` → Steps 1-2 (scan-orphans) SKIPPED, straight to Steps 3-5.
+- Checks 1/3 (fail-loud-protocol / boundary_rules in `init.md`, correct target per 08-07 fix): all
+  41 registered agents PASS; `semble-search` FAIL (known deliberate minimal tool-agent, no
+  `agent:` YAML — carried-forward Escalation 2, unchanged).
+- **Check 5 (version staleness, >90d) — auto-fix applied (1):** `agents-architect/init.md`
+  `version: "2026-05-11"` → 92 days stale → bumped to `"2026-08-11"`. Next-closest cluster sits at
+  exactly 90d (ops-vps-fetch, ops-mainserver-fetch, dev-vps-crawls, dev-mainserver-crawls,
+  dev-alert-engine @89d) — not >90, left untouched; will trip next cycle if untouched.
+- **Check 2 (Error Boundary) — Escalation 1 from 08-07 cycle CONFIRMED RESOLVED:** shared
+  `docs/agents/developer/flow/microservice-main.md` (169L, was 165L) now carries an Error Boundary
+  block at `:16` pointing to `fail-loud-protocol.md` (task `FIX-DEVFLOW-MICROSERVICE-MAIN-NO-
+  ERROR-BOUNDARY`, landed 2026-08-07). Re-ran one-hop resolution for all 9 dev-* zone agents
+  pointing there — all PASS now. No new Check-2 gaps found elsewhere.
+- **Check 4 (flow path resolves):** all 41 registered agents' `flow.default` path exists on disk —
+  0 broken. `semble-search` has no `flow.default` key (deliberate, same Escalation 2).
+- Step 5 stale notebooks (>30d, informational): idea-forge/market-analyst/semble-search (101d),
+  qa-responder (76d), dev-kinh-dich (33d), dev-news-fetch (32d), cowork-refactory-expert (31d),
+  ops-mainserver-fetch (31d) — 8 total, verified via `git log -1 --date=short`, not raw mtime.
+- Side-observation (NOT scored — Steps 1-2 gated off again this cycle, 2nd cycle running): 46
+  notebook files vs 42 registered agents — same 4-file gap flagged 08-07, still unresolved. Two
+  consecutive keep cycles have now landed on a diff with zero `.claude/agents/*.md`/flow changes;
+  if a 3rd cycle also gates off, recommend an explicit PO-requested scan-orphans run instead of
+  waiting on the Pre-Check gate to open incidentally.
+- Bash-tool anomaly this cycle (environmental, not a repo finding): `awk`/`sed`/`basename`/`wc`
+  intermittently returned "command not found" mid-for-loop despite `command -v` confirming they
+  exist in PATH — worked around with pure-bash string ops (`${var#pattern}`, `read -r x <<< "$s"`)
+  and `grep`-only loops. Not investigated further (tool/sandbox layer, outside this agent's scope).
+- Step 7 PO handoff: none needed this cycle — Escalation 1 (prior HIGH/MEDIUM) is now RESOLVED;
+  Escalation 2 (semble-search guide-taxonomy, LOW) carries forward unchanged, already PO-visible
+  from 08-07.
