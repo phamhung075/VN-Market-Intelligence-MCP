@@ -267,17 +267,30 @@ describe("Task 1108 — agent_work_log DDL + store", () => {
     expect(deleted).toBe(0);
   });
 
-  it("purgeOldAgentWorkLogs keeps rows exactly at the boundary", () => {
-    // Row at exactly retentionDays old — boundary depends on < vs <= in SQL
-    // The implementation uses < (strictly older than boundary), so a row at
-    // exactly 30 days is kept.
+  it("purgeOldAgentWorkLogs keeps rows just inside the retention boundary", () => {
+    // Boundary depends on < vs <= in SQL — the implementation uses strict <
+    // (only strictly-older-than-boundary rows are purged), so a row just
+    // inside the retention window must be kept.
+    //
+    // NOTE: a row inserted at EXACTLY `now - retentionDays` is a real-clock
+    // race, not a deterministic boundary test — this fixture's INSERT
+    // computes `datetime('now', '-30 days')` independently from
+    // purgeOldAgentWorkLogs's own `datetime('now', '-30 days')` call a few
+    // microseconds later. If the wall clock ticks over a second boundary in
+    // that gap (rare, but real — reproduced under artificial scheduler
+    // delay; matches FIX-CI-BUNTEST-1108-AGENT-WORK-LOG-STORE), the row
+    // flips from "kept" to "deleted" even though no code changed, causing a
+    // flaky CI RED. A few seconds of margin (still nowhere near the -40-day
+    // "purged" fixture above) keeps the assertion deterministic against any
+    // realistic scheduler jitter between the two back-to-back statements
+    // while still exercising the same "just inside the window → kept" path.
     db.run(
-      `INSERT INTO agent_work_log (agent_name, started_at, status) VALUES (?, datetime('now', '-30 days'), 'completed')`,
+      `INSERT INTO agent_work_log (agent_name, started_at, status) VALUES (?, datetime('now', '-30 days', '+5 seconds'), 'completed')`,
       ["boundary-agent"],
     );
 
     const deleted = purgeOldAgentWorkLogs(db, 30);
-    // Boundary row should be kept (not deleted)
+    // Row just inside the retention window should be kept (not deleted)
     expect(deleted).toBe(0);
   });
 });
