@@ -1786,3 +1786,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · pdf-extractor-1 sustained 94.49% memory
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** pdf-extractor-1 container
+**Details:** Memory at 94.49% sustained, VmHWM pinned at cgroup limit (2587.6/2621.4 MB)
+**Impact:** Service at risk of OOM eviction
+**Root cause:** High memory consumption from PDF processing operations
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-12T17:37:45Z (signal sys-20260812T173729-22bd, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
