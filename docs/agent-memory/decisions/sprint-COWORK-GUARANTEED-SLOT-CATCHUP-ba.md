@@ -77,3 +77,12 @@
 - Set `next_agent`=po (flow default, blockers exist) vs `next_agent`=architect (router's explicit instruction, PO already delegated HOW).
 **why-decision:** `git log -S"owner_client_session"` on chef.md showed commit `be3545412` (2026-08-06, AFTER the row's note was written) already added it — the item was stale, would have wasted architect cycles re-fixing a closed defect. Kept `next_agent`=architect per router instruction + row's own "architect/ba own the HOW" framing; the one genuine PO-only item (B1: does the FR-5 code-gate have to land same-wave to close DONE) doesn't block design start, only close-scope, so it's flagged not gating.
 **why-change:** Also caught a design-overlap risk not named in the source row: FR-5's proposed unconditional code-refuse vs `FIX-CHEF-PUBLISHED-MARKER-RELEASE`'s already-brief'd Component B (conditional delivery-evidence procedural release gate) — flagged as Q-gate-overlap so architect reconciles rather than ships two contradictory release policies. Row moved fields updated in-place `in_progress[]` (status unchanged), `next_agent`=architect, via `orch-apply.sh` (conservation 762↔762).
+
+### STEP ba-S9 · ba · 2026-08-12T09:06:49Z
+**task-id:** UC-RDL-P7
+**what-done:** Wrote STEP2 spec (`docs/handoffs/UC-RDL-P7-BA-spec.md`) reconciling 21 flow/policy docs to the PO's 2026-07-17 main-only ruling — 13 FRs + 2 NFRs, DDD-mapped (100% interface layer).
+**what-considered:**
+- Reuse the 07-12 audit's original 5-file P7 target list as-is vs re-verify live (only `developer/main.md` had moved, partial self-heal 2026-08-05; found 2 more copy-paste sites — `dev-frontend/main.md`, `docs/references/bundles/bundle-{developer,qa}.md` — and a 4th competing SSOT, `.claude/WORKFLOW.md`).
+- Treat the sibling `FIX-SUBAGENT-BRANCH-CHECKOUT-HIJACKS-SHARED-WORKING-DIR` row (READY, architect brief 07-31) as a duplicate vs a mandatory coordination read.
+**why-decision:** The sibling brief's own §5 explicitly asked PM to "flag to po/ba" that this row should be accelerated to land same-wave as its `post-checkout` hook (else the hook breaks developer's own VERIFY line) — folded that request directly into this spec's §4 rather than leaving it for PM to re-discover.
+**why-change:** No PO blocker (STEP1 already ruled). Row moved `in_progress[]`→`ready[]`, `next_agent`=architect, via `orch-apply.sh` (conservation 754↔754).
