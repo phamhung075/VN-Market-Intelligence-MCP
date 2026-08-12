@@ -221,3 +221,52 @@ RestartCount remained: 0 (normal scheduled stop, not crash)
 
 **Session:** 165f4245-6173-4054-87fd-c55bb626265f
 **Incident ID:** sys-20260812T050436-rag-repeat (echo of sys-20260812T040810-6125)
+
+---
+
+## Cycle 2026-08-12T07:34Z — RAG-Service BELOW-FLOOR Memory Pressure Mitigation #3
+
+**Condition Detected**: rag-service confirmed BELOW-FLOOR at 96.59% memory (989.1MiB/1GiB) during pre-mitigation verification. Container had been running for ~2.5 hours since prior mitigation at 2026-08-12T05:04:33Z.
+
+**Pre-Mitigation Diagnostics**:
+```
+docker stats output (pre-restart):   989.1MiB / 1GiB = 96.59%
+Container status:                     Up 29 minutes (healthy, from earlier uptime status)
+StartedAt:                            2026-08-12T05:04:33Z (prior mitigation restart)
+RestartCount:                          0 (no crash loop)
+Free memory margin:                    10.9MiB (below 40MiB floor) — BELOW-FLOOR confirmed
+```
+
+**Recurrence Pattern Confirmed**:
+- 1st mitigation (2026-08-12T04:12:36Z): 99.75% → 4.14% (95.84% recovery)
+- 2nd mitigation (2026-08-12T05:04:33Z): 99.61% → 3.65% (96.34% recovery)
+- 3rd mitigation (2026-08-12T07:34:54Z): 96.59% → 3.38% (93.21% recovery)
+- Interval: ~50-51 minutes between each mitigation
+
+**Root Cause Unchanged**: LanceDB vector_search() brute-force full-column scan on unindexed rag_entries.vector table, confirmed in architect brief 2026-08-12-fix-rag-embedder-idle-unload-second-growth-source.md § 3b: every vector search adds ~340-444MiB across ~200-600 calls in isolated repro, with no eviction until container restart.
+
+**Mitigation Executed** (ops-flow compliant scoped restart):
+```bash
+docker compose stop rag-service && docker compose up -d --no-deps --no-build rag-service
+Timestamp: 2026-08-12T07:34:50Z UTC (dispatch)
+Container restarted: 2026-08-12T05:34:54.579751702Z (verified via docker inspect)
+```
+
+**Post-Mitigation Health Verification**:
+- Memory: 34.62MiB (3.38%) — **93.21% recovery**
+- Container status: Up 3 seconds (healthy)
+- Gateway port 3000: Still bound ✓
+- Service /health endpoint: ✓ http://localhost:5002/health returns `{"status":"ok","service":"rag-service"}`
+- RestartCount: 0 (normal scheduled stop, not crash-loop)
+
+**Expected Next BELOW-FLOOR**: ~2026-08-12T08:25Z (51 minutes from current mitigation). This is unsustainable without permanent fix.
+
+**Permanent Fix Status**: Board row FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (priority=P0, owner=dev-rag-service) requires LanceDB IvfPq vector index implementation per architect design brief § 6. No status update received since prior escalations; dev-team WIP remains at capacity.
+
+**Critical Note**: This is the THIRD identical stopgap restart in ~3.5 hours on a single root cause. The permanent fix (vector index build, estimated 2-4 hours dev time per architect brief) is the only viable long-term solution. Continued restarts will lead to service churn and eventual unavoidable OOMKill if deployment is further delayed.
+
+**Escalation Required**: If BELOW-FLOOR recurs again before permanent fix deployment, recommend emergency priority override to unblock dev-rag-service dispatch.
+
+**Session:** 165f4245-6173-4054-87fd-c55bb626265f
+**Incident ID:** sys-20260812T073450-rag-repeat-3 (echo of sys-20260812T040810-6125)
+
