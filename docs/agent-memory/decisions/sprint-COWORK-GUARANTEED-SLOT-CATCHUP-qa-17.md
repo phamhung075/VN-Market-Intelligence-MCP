@@ -105,3 +105,24 @@
 - Same "48 vs actual-41-at-commit-time" prose discrepancy as sibling Check-I (qa-S71, same session) — copy-pasted boilerplate phrase, not re-counted; non-blocking per that established precedent, substance (0 false-fires) independently reconfirmed with a larger live sample. `bash -n` clean, mock-guard PASS (no prod TS touched, Smart-Skip bun test/tsc N/A — pure bash+python script).
 **why-decision:** APPROVED, DONE_VERIFIED. Every functional claim (letter enumeration, extraction logic, BLOCK/PASS fixtures incl. exact delta math, RED baseline, regression substance beyond the claimed sample) independently reproduced from source/live-run, not trusted from prose.
 **why-change:** none — verification matched the plan; one minor prose-accuracy flag on regression file-count logged above (same class as qa-S71), not gating.
+
+### STEP qa-S73 · qa · 2026-08-12T06:05:00Z
+**task-id:** FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE
+**what-done:** Direct-Commit Verify — repoint `get_macro_calendar` at local `getMacroCalendar()` domain service, drop HTTP hop to FDA-4 stub. No status_note existed (drain row predates that field); reconstructed context from code commit `6cca18746`+journal `64c9475db`+closeout `ddb8080bc`, all confirmed main-ancestry. Read diff on disk: HTTP fetch/try-catch genuinely removed, `getMacroCalendar` import + payload `{source_tier:3,is_estimate:true,status:"ok",events,...}` genuinely wired.
+**what-considered:**
+- Re-ran new suite myself: 7/7 pass. Precedent suites (1423c/1423c-carry-signal/1423e-macro-calendar/1881a-source-tier)+new: 88/88 pass, 0 fail. `bun tsc --noEmit` clean. DDD grep flagged interface→infrastructure import, but 53 other `src/interface/mcp/tools/**` files already import `domain/services` directly — established codebase precedent, not a new violation. `mock-guard.sh` PASS.
+- rebuild_required=true resolution (the row's core open question): live container `vn-market-intelligence-mcp-mcp-server-1` created 2026-08-11T18:25Z (18d after the 2026-07-25 fix commit) — timing alone insufficient, so verified content: `docker exec grep` on the running container's `/app/src/.../carryTools.ts` shows the `getMacroCalendar` import + no `withDeadline`/fetch — genuinely the post-fix code, not stale.
+- Went further than code-presence: ran the ACTUAL registered `get_macro_calendar` tool handler live inside the container (`bun -e`, same McpServer+`_registeredTools[name].handler()` harness as the test file) → real output `{status:"ok", source_tier:3, is_estimate:true, eventsLen:6}`, non-empty real 2026 events (PMI/CPI/FOMC sample dates 2026-09). Confirms genuinely non-empty events[] in the live running service, not just unit-test-only.
+**why-decision:** APPROVED, DONE_VERIFIED. rebuild_required resolved TRUE (rebuilt + content-verified + live-output-verified) — the exact gap the row flagged as unclaimed pre-rebuild. All checks green, no regression, no fabrication.
+**why-change:** none — verification matched the plan; DDD interface→domain-service import flagged then cleared as pre-existing 53-file codebase-wide pattern, not gating.
+
+### STEP qa-S74 · qa · 2026-08-12T05:59:12Z
+**task-id:** FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE
+**what-done:** Direct-Commit Verify of dev's STALE-BACKLOG-ROW DUPLICATE claim (no code shipped — sibling `93e9dbeb8` already fixed this 78min pre-mint). Independently re-derived, not rubber-stamped.
+**what-considered:**
+- Sibling chain real+ordered on main: `93e9dbeb8`(fix)→`a73bf035d`(QA-approved)→`f0ac29998`(rebuild-confirmed)→`423d77bd1`(DONE), all pre-date this row's mint — 78min math checks out.
+- HEAD source: `hnx.ts:354`/`:436` both branch on `isVnTradingWindow(options?.now)` exactly as claimed, untouched since `93e9dbeb8` (git log confirms).
+- All 3 named call sites (sectorRotationTools.ts:181/188, portfolioTools.ts:160/163, marketTools.ts forceOpts:244/253) confirmed: `.catch()` wrappers log `warn` not `error`, only fire on thrown rejections — fetchers never throw. No bypass found.
+- Re-ran myself: sibling test 6/6 pass, sector/portfolio/market suites 91/91 pass, tsc 0 errors, mock-guard PASS. Journal `c2c413def` real+main-ancestry.
+**why-decision:** APPROVED, DONE_VERIFIED. Duplicate-closure claim fully corroborated by independent re-derivation from source, not prose trust.
+**why-change:** none — verification matched the plan.

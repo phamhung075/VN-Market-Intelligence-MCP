@@ -13716,6 +13716,63 @@
             "observed_at": "2026-08-12T12:55:00Z"
           }
         }
+      },
+      {
+        "id": "FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
+        "type": "FIX",
+        "title": "get_macro_calendar serves empty events[] — MCP tool proxies the FDA-4 honest-unavailable Go stub while a complete unwired static-calendar domain service exists in mcp-server",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
+        "promoted_at": "2026-07-25T04:15:55Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-12T05:58:59Z",
+        "claimed_at": "2026-08-12T05:53:04Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "rebuild_required": true,
+        "branch": null,
+        "status_note": "[QA] Review Record (direct-commit verify) 2026-08-12T05:57:59Z -- APPROVED, DONE_VERIFIED. No status_note/review_note existed on this row (drain-picked stale REVIEW row, predates the drain's own field convention) -- reconstructed context from git log/show: code commit 6cca18746 (fix+test), journal 64c9475db, board closeout ddb8080bc, all confirmed on main ancestry via git merge-base --is-ancestor. Read the diff on disk, did not trust prose: carryTools.ts get_macro_calendar genuinely drops the HTTP GET to the macro-indicators FDA-4 stub (withDeadline/fetch/try-catch fully removed) and repoints at the existing unwired domain/services/macro/macroCalendar.ts#getMacroCalendar() pure function, returning {source_tier:3, is_estimate:true, status:\"ok\", daysRequested, events, currentMonthIsPivotWindow, nextPivotWindow, pivotWindowWarning}. Ran tests myself: new FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE.test.ts 7/7 pass; precedent+affected suites (1423c, 1423c-carry-signal, 1423e-macro-calendar, 1881a-source-tier) + new: 88/88 pass, 0 fail. bun tsc --noEmit clean. DDD grep flagged an interface-layer import of infrastructure/ and of domain/services/ in carryTools.ts -- checked: 53 other files under src/interface/mcp/tools/** already import domain/services/ directly, this is established codebase-wide precedent (interface calling domain services directly), not a new violation introduced by this fix -- not blocking. process.env/secret greps clean. mock-guard.sh --files carryTools.ts PASS (no fabricated-data patterns). rebuild_required=true resolution (the row's open question, not just code-review): container vn-market-intelligence-mcp-mcp-server-1 image created 2026-08-11T18:25:16Z, 18 days after the fix commit -- timing alone is not proof, so verified CONTENT: docker exec grep on the live container's /app/src/interface/mcp/tools/macro/carryTools.ts confirms the getMacroCalendar import present and no withDeadline/fetch call -- genuinely the post-fix source, not stale. Went one step further than a code-presence check: executed the ACTUAL registered get_macro_calendar MCP tool handler live inside the running container (bun -e, same McpServer + _registeredTools[name].handler() harness pattern as the test file) -- real live output {status:\"ok\", source_tier:3, is_estimate:true, eventsLen:6}, non-empty real 2026 FOMC/CPI/PMI events (e.g. 2026-09-02 Vietnam PMI, 2026-09-04 GSO CPI, 2026-09-17 FOMC). This directly confirms get_macro_calendar genuinely returns non-empty events[] in the live running service today, not merely in unit tests. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-17.md STEP qa-S73.",
+        "verification": {
+          "raw_probe": {
+            "tool": "git show/git merge-base --is-ancestor + bun test + bun tsc --noEmit + mock-guard.sh + docker inspect (image build date) + docker exec grep (fix-code-present check) + docker exec bun -e (live tool-handler invocation)",
+            "args": "git merge-base --is-ancestor 6cca18746/64c9475db/ddb8080bc main; git show 6cca18746 -- carryTools.ts FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE.test.ts; bun test src/__tests__/FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE.test.ts + 4 precedent suites; bun tsc --noEmit; mock-guard.sh --files carryTools.ts; docker inspect --format '{{.Created}}' mcp-server-1; docker exec mcp-server-1 grep getMacroCalendar/withDeadline src/interface/mcp/tools/macro/carryTools.ts; docker exec mcp-server-1 bun -e '...McpServer+registerCarryTools()+_registeredTools[\"get_macro_calendar\"].handler({days:60})...'",
+            "live_value_observed": "container image created 2026-08-11T18:25:16Z (post-commit); running source confirmed post-fix via grep; live tool-handler invocation returned {status:\"ok\", source_tier:3, is_estimate:true, eventsLen:6} with real 2026-09 FOMC/CPI/PMI events -- non-empty events[] confirmed genuinely live, not just unit-tested; 88/88 tests pass, tsc 0 errors, mock-guard PASS",
+            "observed_at": "2026-08-12T05:58:58Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE",
+        "title": "HNX/UPCOM force:true fetches log ERROR-level spam off-hours — sectorRotationTools:181/188, portfolioTools:160/163, marketTools:225+. After-hours HNX/UPCOM endpoints reject/302 (FIX-HNX-SESSION-COOKIE context) but the force:true bypass still fires + logs at ERROR every off-hours tool call, polluting logs + false-alarming monitors. Distinct from FIX-HNX-SESSION-COOKIE (that=cookie correctness for IN-hours). This=log-noise/severity: off-hours expected-rejection must downgrade ERROR->INFO/DEBUG (or skip the HNX/UPCOM force-fetch when now_VN is outside session), not spam.",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "DONE_VERIFIED",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE",
+        "promoted_at": "2026-07-25T03:16:18Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-12T06:00:20Z",
+        "claimed_at": "2026-08-12T05:53:04Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "pm",
+        "branch": null,
+        "updated_by": "qa",
+        "review_note": "STALE-BACKLOG-ROW CLOSURE, not a new fix: the identical off-hours ERROR-log-severity fix for fetchHnxPrices/fetchUpcomPrices was already shipped under sibling ticket FIX-HNX-OFFHOURS-ERROR-DOWNGRADE (commit 93e9dbeb8, 2026-06-21T01:56:45Z), QA-APPROVED (a73bf035d), and rebuild CONFIRMED live (f0ac29998, RAW marker hit both sites, rebuild_required=false) — all BEFORE THIS row was minted (minted_at 2026-06-21T03:14:47Z, 78 min after the fix landed). The row own note admits gateway-blind file-grep triage, live log-severity never probed. Confirmed at HEAD: infrastructure/fetchers/hnx.ts fetchHnxPrices (L354) and fetchUpcomPrices (L436) already branch on isVnTradingWindow(options?.now) (SSOT domain/services/tradingWindow.ts, the shared session helper reused across server-startup/pushPricesHandler/foreignFlowFetcherJob) — in-hours keeps logger.error, off-hours downgrades to logger.debug. All 3 named call sites (sectorRotationTools.ts:181/188, portfolioTools.ts:160/163, marketTools.ts forceOpts:244/253) route through this shared fetcher with no additional error-log wrapper of their own (their catch-paths log warn not error, and only fire on thrown rejections these fetchers never produce). Repo-wide grep sweep found no missed force:true HNX/UPCOM site. Pre-existing FIX-HNX-OFFHOURS-ERROR-DOWNGRADE.test.ts (6 tests) already satisfies the ticket baseline_pass (off-hours expected-rejection -> non-ERROR; in-hours genuine failure -> ERROR, clock-injected) — no duplicate test file added. Evidence: bunx tsc --noEmit exit 0; bun test on pre-existing fix+regression files 50 pass/0 fail/6 skip; sector/portfolio/market tool suites 91 pass/0 fail, zero regression. No code/test commit shipped — only the decision journal (docs/agent-memory/decisions/sprint-FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE-dev-mcp-server.md, commit c2c413def). Nothing to rebuild — fix has been live in production since 2026-06-21.",
+        "status_note": "\n\n[QA] Review Record (direct-commit verify, 2026-08-12): Independently re-verified the dev's STALE-BACKLOG-ROW DUPLICATE claim — not rubber-stamped. Confirmed real+main-ancestry+correctly-ordered: 93e9dbeb8 (sibling fix, isVnTradingWindow branch in fetchHnxPrices/fetchUpcomPrices) -> a73bf035d (QA APPROVED) -> f0ac29998 (rebuild CONFIRMED live) -> 423d77bd1 (DONE), all before this row minted (03:14:47Z, 78min after fix landed — arithmetic checks). HEAD source confirmed: hnx.ts:354 + :436 branch on isVnTradingWindow(options?.now) exactly as claimed, file untouched since 93e9dbeb8 (git log). Spot-checked all 3 named call sites (sectorRotationTools.ts:181/188, portfolioTools.ts:160/163, marketTools.ts forceOpts:244/253) — their .catch() wrappers log logger.warn not error and only fire on thrown rejections; these fetchers never throw, so no independent error-log bypass exists. Re-ran verification myself (not trusted from prose): sibling test file 6/6 pass, sector+portfolio+market tool suites 91/91 pass, tsc --noEmit 0 errors, mock-guard PASS. Decision journal c2c413def confirmed real+main-ancestry. Verdict: DONE_VERIFIED — duplicate-closure claim upheld, nothing to ship.",
+        "verified_at": "2026-08-12T06:00:18Z",
+        "verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git cat-file/show/merge-base + bun test + bun tsc --noEmit + mock-guard.sh + Read (source line inspection)",
+            "args": "git cat-file -t / git show --stat on 93e9dbeb8, a73bf035d, f0ac29998, c2c413def; git merge-base --is-ancestor <each> main; git log --oneline -- hnx.ts (confirm no post-93e9dbeb8 touch); Read hnx.ts:330-443; grep force:true HNX/UPCOM sites + Read sectorRotationTools.ts/portfolioTools.ts/marketTools.ts call-site wrappers; bun test src/__tests__/FIX-HNX-OFFHOURS-ERROR-DOWNGRADE.test.ts + 186/1059/283/084/TASK17-PAGE9/182 suites; bun tsc --noEmit; mock-guard.sh --files hnx.ts sectorRotationTools.ts portfolioTools.ts marketTools.ts",
+            "live_value_observed": "all 4 commits real+on main ancestry, chronologically ordered as claimed; hnx.ts:354/:436 isVnTradingWindow(options?.now) branch confirmed verbatim at HEAD; 3 named call sites' .catch() wrappers log warn not error, only fire on thrown rejections (fetchers never throw) -- no bypass; sibling test 6/6 pass; sector/portfolio/market suites 91/91 pass; tsc 0 errors; mock-guard PASS; repo-wide grep found only the 2 literal force:true HNX/UPCOM sites (sectorRotationTools/portfolioTools) plus marketTools' forceOpts={force:true} variable-wired site, no missed site",
+            "observed_at": "2026-08-12T06:00:18Z"
+          }
+        }
       }
     ],
     "head": {
@@ -19998,43 +20055,6 @@
         "claimed_by": "dev-team (review-lane qa-drain)",
         "next_agent": "qa",
         "rebuild_required": false,
-        "branch": null
-      },
-      {
-        "id": "FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE",
-        "title": "HNX/UPCOM force:true fetches log ERROR-level spam off-hours — sectorRotationTools:181/188, portfolioTools:160/163, marketTools:225+. After-hours HNX/UPCOM endpoints reject/302 (FIX-HNX-SESSION-COOKIE context) but the force:true bypass still fires + logs at ERROR every off-hours tool call, polluting logs + false-alarming monitors. Distinct from FIX-HNX-SESSION-COOKIE (that=cookie correctness for IN-hours). This=log-noise/severity: off-hours expected-rejection must downgrade ERROR->INFO/DEBUG (or skip the HNX/UPCOM force-fetch when now_VN is outside session), not spam.",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "QA",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE",
-        "promoted_at": "2026-07-25T03:16:18Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-12T05:53:05Z",
-        "claimed_at": "2026-08-12T05:53:04Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "branch": null,
-        "updated_by": "dev-mcp-server",
-        "review_note": "STALE-BACKLOG-ROW CLOSURE, not a new fix: the identical off-hours ERROR-log-severity fix for fetchHnxPrices/fetchUpcomPrices was already shipped under sibling ticket FIX-HNX-OFFHOURS-ERROR-DOWNGRADE (commit 93e9dbeb8, 2026-06-21T01:56:45Z), QA-APPROVED (a73bf035d), and rebuild CONFIRMED live (f0ac29998, RAW marker hit both sites, rebuild_required=false) — all BEFORE THIS row was minted (minted_at 2026-06-21T03:14:47Z, 78 min after the fix landed). The row own note admits gateway-blind file-grep triage, live log-severity never probed. Confirmed at HEAD: infrastructure/fetchers/hnx.ts fetchHnxPrices (L354) and fetchUpcomPrices (L436) already branch on isVnTradingWindow(options?.now) (SSOT domain/services/tradingWindow.ts, the shared session helper reused across server-startup/pushPricesHandler/foreignFlowFetcherJob) — in-hours keeps logger.error, off-hours downgrades to logger.debug. All 3 named call sites (sectorRotationTools.ts:181/188, portfolioTools.ts:160/163, marketTools.ts forceOpts:244/253) route through this shared fetcher with no additional error-log wrapper of their own (their catch-paths log warn not error, and only fire on thrown rejections these fetchers never produce). Repo-wide grep sweep found no missed force:true HNX/UPCOM site. Pre-existing FIX-HNX-OFFHOURS-ERROR-DOWNGRADE.test.ts (6 tests) already satisfies the ticket baseline_pass (off-hours expected-rejection -> non-ERROR; in-hours genuine failure -> ERROR, clock-injected) — no duplicate test file added. Evidence: bunx tsc --noEmit exit 0; bun test on pre-existing fix+regression files 50 pass/0 fail/6 skip; sector/portfolio/market tool suites 91 pass/0 fail, zero regression. No code/test commit shipped — only the decision journal (docs/agent-memory/decisions/sprint-FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE-dev-mcp-server.md, commit c2c413def). Nothing to rebuild — fix has been live in production since 2026-06-21."
-      },
-      {
-        "id": "FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
-        "type": "FIX",
-        "title": "get_macro_calendar serves empty events[] — MCP tool proxies the FDA-4 honest-unavailable Go stub while a complete unwired static-calendar domain service exists in mcp-server",
-        "status": "QA",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
-        "promoted_at": "2026-07-25T04:15:55Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-12T05:53:05Z",
-        "claimed_at": "2026-08-12T05:53:04Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "rebuild_required": true,
         "branch": null
       }
     ],
