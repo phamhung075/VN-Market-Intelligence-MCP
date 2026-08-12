@@ -1,18 +1,10 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-08-12 04:19 UTC | **Sprint:** idle
+**Last updated:** 2026-08-12 04:34 UTC | **Sprint:** idle
 
 **Role:** Event-only alert dispatch (position-danger / watchlist-opportunity / CRITICAL-always) | **Cadence:** `*/15min` market hours (02:00–08:30 UTC) + 4h critical sweep | **Contract:** APPEND class, one `## c<NNN>` section per cycle per `.claude/skills/notebook-write/SKILL.md` AC-6.
 
 > **Structural reset (FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, 2026-07-29):** prior history archived → `docs/agent-memory/notebooks/archive/alert-commander-archive-20260729.md`. One top-level `## c<NNN> · <ISO-timestamp>` section per cycle now.
-
-## c109 · 2026-08-12T04:04:07Z (slot=alert-commander-critical, tick=04:02)
-- Signals: bus 4 total (hours_back=2) — 0 chain_catalyst, 0 urgent_news, 4 verified_decision (alert-engine news_mention: FPT tech-tax conf40, VHM/VIC FTSE GEIS inflow conf60, HPG conf40 — not a consumed signal_type, informational only). No `CYCLE_SNAPSHOT` (exact tick 04:02 file absent; nearest 04:00 not tick-exact per protocol) — direct `get_cycle_bootstrap`+`get_macro_snapshot` calls.
-- ChainCatalyst: none in bus this cycle — third consecutive cycle without the id10705/id10706 repeat.
-- Position-danger: `get_alerts(type=price)` clean (no active alerts), no stopLossHit, no ticker singleDayDrop>5% (max move VHM +2.08%, VIC +2.06%) — gate fails.
-- Watchlist-opp: no bullish chain_catalyst/urgent_news candidate ticker this cycle — gate fails (nothing to test).
-- CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, `get_crisis_early_warning` clean (no crisis indicator; WARNING x10 corp-reputation: BID/BSR/DPM/FPT/FRT/HUT/PLX/SSI/VHM/VNM, no DANGER-tier), no verified_chain in bus.
-- Regime: NEUTRAL (fallback — macro_snapshot text has no Global-Liquidity line; carry.regime=NEUTRAL) | Carry: NEUTRAL (carrySpread=1.37pp) | vol NORMAL (rv_20d_pctile=0.72, gk_vol_20d_pct=18.65) | foreign_room market_saturation=5.94% (10-ticker subset, outflow_z_5d=0.70, not exhausted) | `get_vn_liquidity_state` error "macro-indicators service unavailable" | Pivot window: false (pivotWindowWarning=null, next Sept 2026). Market OPEN (02:00–08:59 UTC). Silent exit — no MARKET/WORK send. `log_agent_work` id=1895.
 
 ## c110 · 2026-08-12T04:05:45Z (slot=alert-commander-market, tick=04:02)
 - Peer collision note: `alert-commander-critical` slot landed c109 for the same ~04:02 tick moments before this write (same silent-exit verdict, independently confirmed) — logged as own section per AC-2a immutability, no overwrite.
@@ -30,3 +22,11 @@
 - Watchlist-opp: no bullish per-ticker candidate clears kinhDichConfidence≥70+BUY+newsSentiment≥0.3+agentsMajority=BUY — gate fails (nothing qualifies).
 - CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, `get_crisis_early_warning` clean (no crisis indicator; WARNING x10 corp-reputation: BID/BSR/DPM/FPT/FRT/HUT/PLX/SSI/VHM/VNM, no DANGER-tier), no verified_chain in bus.
 - Regime: NEUTRAL (fallback — macro_snapshot text has no Global-Liquidity line; carry.regime=NEUTRAL) | Carry: NEUTRAL (carrySpread=1.37pp) | vol NORMAL (rv_20d_pctile=0.74, gk_vol_20d_pct=18.63) | foreign_room market_saturation=7.91% (10-ticker subset, outflow_z_5d=0.71, not exhausted) | `get_vn_liquidity_state` OMO blocked (HTML parse no rows) + interbank blocked (VPS unreachable) | Pivot window: false (pivotWindowWarning=null, next Sept 2026). Market OPEN (02:00–08:59 UTC). Silent exit — no MARKET/WORK send. `log_agent_work` id=1898.
+
+## c112 · 2026-08-12T04:34:18Z (slot=alert-commander-market, tick=04:25)
+- Signals: bus 8 total (hours_back=2) — 3 chain_catalyst (10722/10723/10724, unchanged from c111, same no-ticker/below-threshold suppression rationale — no material update, no re-`record_signal_outcome` call to avoid duplicate bookkeeping), 0 urgent_news, 5 verified_decision (FPT/VHM/VIC/HPG ids10718-10721 unchanged + NEW VCB id10726 "50.000 tỷ tín dụng" credit-growth news_mention conf60 — not a consumed signal_type, informational only). No exact-tick `CYCLE_SNAPSHOT` (file for 04:32 absent) — direct `get_cycle_bootstrap`+`get_macro_snapshot`+`get_agent_signals` calls.
+- ChainCatalyst: 0 fired | 3 unchanged-suppressed (see c111 rationale — 10722 gold safe-haven no-ticker, 10723 Q2-earnings multi-sector no-ticker, 10724 SGI Capital below-threshold).
+- Position-danger: `get_alerts(type=price)` clean (no active alerts), no stopLossHit, no ticker singleDayDrop>5% (max VHM/VIC +2.64%, BSR +2.50%) — gate fails.
+- Watchlist-opp: VCB (only new candidate this cycle) checked directly via `get_kinhdich_reading(code="VCB")` — Quẻ Lữ (56), tín hiệu GIU (not BUY), độ tin cậy 38% — fails kinhDichConfidence≥70+BUY gate. No other bullish candidate ticker.
+- CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, `get_crisis_early_warning` clean (no crisis indicator; WARNING x10 corp-reputation unchanged: BID/BSR/DPM/FPT/FRT/HUT/PLX/SSI/VHM/VNM, no DANGER-tier), no verified_chain in bus.
+- Regime: NEUTRAL (fallback — macro_snapshot text has no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp) | vol NORMAL (rv_20d_pctile=0.74, gk_vol_20d_pct=18.62) | foreign_room market_saturation=5.94% (10-ticker subset, outflow_z_5d=0.72, not exhausted) | `get_vn_liquidity_state` OMO blocked (HTML parse no rows) + interbank blocked (VPS unreachable) | Pivot window: false (pivotWindowWarning=null, next Sept 2026). Market OPEN (02:00–08:59 UTC). Silent exit — no MARKET/WORK send. `log_agent_work` id=1899.
