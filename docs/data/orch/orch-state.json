@@ -13318,6 +13318,44 @@
             "observed_at": "2026-08-12T04:26:57Z"
           }
         }
+      },
+      {
+        "id": "FIX-OHLCV-CORP-ACTION-CONTINUITY",
+        "title": "Detect adjusted-vs-unadjusted price discontinuity at a corp-action boundary (|move| beyond board limit) -> reconcile/flag, never serve a false bar",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-OHLCV-CORP-ACTION-CONTINUITY",
+        "promoted_at": "2026-07-24T20:56:18Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-12T04:47:28Z",
+        "claimed_at": "2026-08-12T04:22:18Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "dev_agent": "dev-mcp-server",
+        "entered_review_at": "2026-07-24T21:38:54Z",
+        "commits": [
+          "90434daad (code: domain guard + application usecase + wiring + real-VJC test + arch doc)",
+          "3f2acbdda (memory: notebook + decision journal)"
+        ],
+        "review_note": "dev-mcp-server BOUNDED-1 pickup, direct-commit (branch:null). New domain service ohlcvContinuityGuard.ts (per-exchange board-limit resolution HOSE7/HNX10/UPCOM15 + adjacent-bar discontinuity detector + reconcile-or-flag) + application usecase getContinuityCheckedOhlcvSeries.ts, wired into get_technical_indicators (both daily_ohlcv read sites) so a corp-action-discontinuous bar can never poison RSI/MACD/BB downstream. Tests use REAL live-fetched VJC (HOSE) 2026-06-08..19 daily_ohlcv rows (the real 2026-06-15->06-16 -24.87% corp-action move), no fabricated bars. Evidence: tsc clean; new suite 13/13 pass; touched-file consumers 282 pass/2 fail (both the SAME already-documented pre-existing flaky class in _deprecated/1302-technical-indicators.test.ts, confirmed unrelated via git-stash A/B against unmodified baseline — identical failures before/after); full bun test run twice (14760p/53f/1e, 14764p/49f) with zero failure referencing the touched/new files, all failures in unrelated pre-existing-flaky files (logVpsPush, telegram routing, push-news, vnstock stores, insider_transactions, market_cap, MCP SSE, get_foreign_flow — 5000ms-timeout class already documented earlier in this session's notebook cycles). tool/cron counts unaffected (184/88). Simplicity gate PASS. DJ-GATE-1 satisfied. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md\n\n[QA] Review Record (direct-commit verify) — commits 90434daad+3f2acbdda confirmed real: ancestor of main AND on origin/main; git show --stat matches claimed scope exactly (new domain/services/market-data/ohlcvContinuityGuard.ts + application/usecases/getContinuityCheckedOhlcvSeries.ts + technicalIndicatorTools.ts wiring + arch-doc +1L + new 249L test file). Read both new files on disk directly (not review_note prose): real per-exchange board limits HOSE7/HNX10/UPCOM15 via a generic resolve fn (never hardcoded); pure detector + reconcile-or-flag. Grepped technicalIndicatorTools.ts post-fix for daily_ohlcv — zero raw SQL reads remain, both logical read sites (Go-service prefetch + local-DB fallback) route through the guard; no new tool/cron registration added (grep-confirmed, backs the 184/88-unaffected claim). Independently re-fetched live VJC daily_ohlcv 2026-06-08..19 via the SAME documented docker exec command against the running container — all 10 rows byte-identical to the test fixture, confirming the no-fabricated-data claim. Own bun test src/__tests__/FIX-OHLCV-CORP-ACTION-CONTINUITY.test.ts: 13/13 pass. bun tsc --noEmit: clean. mock-guard.sh --files (3 touched production files): PASS. DDD grep (domain->infrastructure/application imports): clean. process.env/secret/password/token grep on touched files: clean. The \"pre-existing flaky, unrelated\" 2-failure claim got an independent A/B, not a trust-the-prose pass: the cited _deprecated/1302-technical-indicators.test.ts no longer exists on disk (deleted 2026-07-30 by an unrelated dead-code-gate cleanup commit) but WAS real at the FIX commit's own tree (git ls-tree 90434daad confirms). Reconstructed it untracked in-place (git show <sha>:<path> for the test + its co-located technicalIndicators.ts dependency), ran it at HEAD: 32 pass/2 fail (matches the claimed 32/34 exactly), then git-swapped technicalIndicatorTools.ts to its pre-fix blob and re-ran the SAME test file — IDENTICAL 2 failures, byte-identical error text, same 2 test names, before AND after the fix — independently confirms these 2 failures are genuinely pre-existing (JSON-envelope-format mismatch + a Date.now()-relative MACD-trend assertion in the legacy test), not caused by this change. Restored technicalIndicatorTools.ts to post-fix content and deleted the reconstructed _deprecated/ scratch files after; git status confirmed clean on apps/mcp-server/ (no residue from the A/B). Own full bun test run: 15229 pass/55 fail/40 skip across 1269 files — zero failures reference ohlcvContinuityGuard/getContinuityCheckedOhlcvSeries/technicalIndicatorTools/the new test file; all 55 failures match named pre-existing flaky classes (logVpsPush, insider_transactions, market_cap, MCP SSE, get_foreign_flow, telegram routing, backtest_runs, task_heartbeat/task_release Zod schema, VPS Proxy Health, push-news, etc.) — consistent with review_note's own claim (raw pass/fail count drift vs review_note is 19-day suite growth since the 2026-07-24 commit, not a regression). VERDICT: APPROVED.",
+        "qa_verified_by": "qa",
+        "qa_verified_at": "2026-08-12T04:47:06Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun test/tsc/mock-guard + docker exec live-DB re-fetch + git-swap A/B on technicalIndicatorTools.ts",
+            "args": {
+              "commits_verified": [
+                "90434daad6a131f517127540dd6420a92110c0a5",
+                "3f2acbdda06fd92a1863fb04a4c7245e935dac04"
+              ]
+            },
+            "live_value_observed": "both ancestor-of-main + on origin/main; git show --stat matches 5-file claimed scope exactly; live VJC 2026-06-08..19 re-fetch byte-identical to test fixture (10/10 rows); new suite 13/13 pass; tsc clean; mock-guard PASS; DDD/security grep clean; deprecated-1302 A/B via git-swap: IDENTICAL 32p/2f before+after fix (pre-existing, unrelated); full suite 15229p/55f/40skip, 0 failures referencing touched/new files",
+            "observed_at": "2026-08-12T04:47:06Z"
+          }
+        }
       }
     ],
     "head": {
@@ -19810,29 +19848,6 @@
         "claimed_by": "dev-team (review-lane qa-drain)",
         "redispatch_count": 1,
         "occurrence_count": 12
-      },
-      {
-        "id": "FIX-OHLCV-CORP-ACTION-CONTINUITY",
-        "title": "Detect adjusted-vs-unadjusted price discontinuity at a corp-action boundary (|move| beyond board limit) -> reconcile/flag, never serve a false bar",
-        "type": "FIX",
-        "status": "QA",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-OHLCV-CORP-ACTION-CONTINUITY",
-        "promoted_at": "2026-07-24T20:56:18Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-12T04:22:18Z",
-        "claimed_at": "2026-08-12T04:22:18Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "dev_agent": "dev-mcp-server",
-        "entered_review_at": "2026-07-24T21:38:54Z",
-        "commits": [
-          "90434daad (code: domain guard + application usecase + wiring + real-VJC test + arch doc)",
-          "3f2acbdda (memory: notebook + decision journal)"
-        ],
-        "review_note": "dev-mcp-server BOUNDED-1 pickup, direct-commit (branch:null). New domain service ohlcvContinuityGuard.ts (per-exchange board-limit resolution HOSE7/HNX10/UPCOM15 + adjacent-bar discontinuity detector + reconcile-or-flag) + application usecase getContinuityCheckedOhlcvSeries.ts, wired into get_technical_indicators (both daily_ohlcv read sites) so a corp-action-discontinuous bar can never poison RSI/MACD/BB downstream. Tests use REAL live-fetched VJC (HOSE) 2026-06-08..19 daily_ohlcv rows (the real 2026-06-15->06-16 -24.87% corp-action move), no fabricated bars. Evidence: tsc clean; new suite 13/13 pass; touched-file consumers 282 pass/2 fail (both the SAME already-documented pre-existing flaky class in _deprecated/1302-technical-indicators.test.ts, confirmed unrelated via git-stash A/B against unmodified baseline — identical failures before/after); full bun test run twice (14760p/53f/1e, 14764p/49f) with zero failure referencing the touched/new files, all failures in unrelated pre-existing-flaky files (logVpsPush, telegram routing, push-news, vnstock stores, insider_transactions, market_cap, MCP SSE, get_foreign_flow — 5000ms-timeout class already documented earlier in this session's notebook cycles). tool/cron counts unaffected (184/88). Simplicity gate PASS. DJ-GATE-1 satisfied. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md"
       }
     ],
     "_closed_signals_20260614": {
