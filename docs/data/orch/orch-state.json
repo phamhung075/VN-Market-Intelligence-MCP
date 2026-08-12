@@ -132,7 +132,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-12T15:52:20Z",
+    "_updated_at": "2026-08-12T17:24:51Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -1144,7 +1144,7 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor A-30 sustained memory 94.97% (loss of reclamation)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-12T17:00Z",
@@ -20074,9 +20074,22 @@
         "last_served_tick": "2026-08-12T16:53:15Z"
       }
     },
-    "_updated_at": "2026-08-12T17:09:15Z",
+    "_updated_at": "2026-08-12T17:24:51Z",
     "_updated_by": "dev-team",
-    "pending_triage_inbox": [],
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "8b5027d5fc0c5f78a2805a37786f457c31665afc87b3713b2a6faaf6452f4ea6",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "priority": "WARN",
+        "payload": "pdf-extractor A-30 sustained memory 94.97% (loss of reclamation)",
+        "createdAt": "2026-08-12T17:05:18Z",
+        "drained_at": "2026-08-12T17:24:51Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-12T08:40:43Z",
     "last_po_triage_note": "po/triage-20260811T1656Z (dev-team Step 1, step1_triage rotation). INPUTS: 18 pendingSignals (drained by router into prompt; live inbox confirmed [] and the ONLY uncommitted orch-state delta vs HEAD bba662b96 was that drain — structurally diffed, no peer interference), 5 Pipeline-B signal_queue to=po rows, 93 unresolved telegram reports (ids 4591-4683). OUTPUT: BATCH of 4. TELEGRAM PLANE FULLY CLEARED 93 -> 0 (list_unresolved_reports() == [] verified post-run): 87 duplicate (folded onto already-open rows), 4 monitoring, 1 fixed, 1 monitoring-preresolved. DEDUP RATIO 91/93 = 97.8% — the BUG channel was ~42% ONE defect (39 period-mismatch reports -> FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST, now proven to replay byte-identically for a THIRD consecutive day) and ~25% a second (RECONCILE EXHAUSTED, whose own circuit breaker id 4674 explicitly forbids per-row triage). ONLY 2 GENUINELY UNTRACKED FINDINGS in 93 reports + 23 signals, both minted after live source-probing: (1) FIX-MACRO-LIQUIDITY-STATE-HANDLER-EXCEEDS-CRON-15S-DEADLINE — the daily sbv-omo `unreachable` alert has a FALSE premise; macro-indicators is Up 12 days healthy, /health 200 in 2.6ms, GET /liquidity-state 405 (route registered), but POST hangs >18.4s against the cron`s 15s deadline, so sbv_omo_daily has silently accrued nothing for >=2 days; (2) SPIKE-NEWSSCOUT-KLFL-FALSE-ENOENT-ON-PRESENT-TRACKED-SKILL-FILE — news-scout KLFL-aborted its 16:09Z cycle (no c250 notebook entry) on ENOENT for a file that is present/tracked/unignored and was loaded fine by market-watcher in the SAME dispatch batch. ci_red x2 (CI-RED-1765317d, CI-RED-61b5b6f8) collapsed to ZERO new rows: both runs read at source via `gh run view --log-failed`, FAILED FILES byte-identical, all 3 files already carry exact dedup_key rows; recorded size-lint drift 237L->265L on transport.ts. 4 bug-escalation folded onto FIX-SWEEPGUARD-... (occ 28->32, worst prior_warns now 31 vs threshold 3, two concurrent repeat offenders). rag-service CRITICAL RAW-refuted as recovered (76.9%, no restart since 01:00:43Z); pdf-extractor CONFIRMED sustained and rising (94.90% -> 95.31%). 5/5 Pipeline-B rows closed to triaged with dispositions.",
     "last_po_triage_consumed": 54,
