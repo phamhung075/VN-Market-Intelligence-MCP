@@ -1486,3 +1486,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service critical memory escalation (99.33% sustained)
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-rag-service-1
+**Details:** A-30 deep-probe: ESCALATE verdict — all 6 samples sustained 99.33-99.34% with zero reclamation dips. Container at critical capacity with host headroom below 40MiB floor (26.6MiB free, BELOW-FLOOR).
+**Impact:** Container operating at memory ceiling with no safety buffer. Risk of OOMKilled state if load increases. Previous cycle had incomplete probe (deferred); this cycle shows complete data with sustained high memory.
+**Root cause:** rag-service memory design sustained at >99% utilization; escalation from 86.59% in prior cycle (c41). Dedup-skipped prior alert still applies; this represents NEW escalation crossing floor threshold.
+**Zone owner:** devops
+**Last reported:** 2026-08-12T00:10:39Z (signal sys-20260812T000945-5619, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
