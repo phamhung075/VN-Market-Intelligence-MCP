@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-08-12T04:16:47Z",
-    "matched_slots": ["alert-commander-market"],
-    "won_slots": ["alert-commander-market"],
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/alert-commander/flow/main.md"],
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 0,
     "errors": [],
@@ -18,10 +24,16 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "alert-commander-market": "cron" },
-    "cadence_minutes": { "alert-commander-market": null },
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
     "last_fired_timestamp": "2026-08-12T04:16:47Z",
-    "last_fired_slots": ["alert-commander-market"],
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +45,11 @@
     "note": "single-slot tick, 1 signal_queue row (sys-20260812T040810-6125, rag-service A-30, already actioned) drained NEW->READ, no cowork slot match for to=po"
   },
   "priority": "low",
-  "createdAt": "2026-08-12T04:16:47Z"
+  "createdAt": "2026-08-12T04:16:47Z",
+  "_processed": {
+    "fingerprint": "424f426fe9bb194d34ef56608aa6a1e83497314a7532f6546cb5a2fb4aa13986",
+    "processedAt": "2026-08-12T04:20:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

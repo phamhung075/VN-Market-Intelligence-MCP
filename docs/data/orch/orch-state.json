@@ -19967,7 +19967,7 @@
         "last_served_tick": "2026-08-12T02:51:32Z"
       }
     },
-    "_updated_at": "2026-08-12T03:51:55Z",
+    "_updated_at": "2026-08-12T04:20:47Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20251,6 +20251,201 @@
         },
         "createdAt": "2026-08-12T03:46:44Z",
         "drained_at": "2026-08-12T03:50:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d8b8fbbdb69ca4eeb7dc16b8e97d5081d21544a172463beb82d0d4b7f0d9f63d",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/qa.md — retained section '## cycle-647 · 2026-08-12 · FACTORY-GUARD-CI-dead-code-gate (architect, design-only) — Direct-Commit Verify, APPROVED, DONE_VERIFIED (commit `3b4d5a0d3`)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-12T04:03:47Z",
+        "drained_at": "2026-08-12T04:20:47Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "18175c33205d3d82eca74485e2c34320f79dd10ae406ec46281966a9ecee7b5f",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/qa.md — retained section '## cycle-647 · 2026-08-12 · FACTORY-GUARD-CI-dead-code-gate (architect, design-only) — Direct-Commit Verify, APPROVED, DONE_VERIFIED (commit `3b4d5a0d3`)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-12T04:05:12Z",
+        "drained_at": "2026-08-12T04:20:47Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2a4cf0ad7694a9bc66cdfd3fc688cea753f991eb54b9ae8fe76ac74b15d45d62",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/market-watcher.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=46 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T04:05:53Z",
+        "drained_at": "2026-08-12T04:20:47Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9f5eff7a5ca199f28a1860f50d54fdd2db8d25a3ed48b67052465a4e440671af",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/ops.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=47 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T04:13:33Z",
+        "drained_at": "2026-08-12T04:20:47Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c3db1a785c38f5215fae9031cc9f1c9fcbb8bedb5f7c3e7e46a56ae522667f52",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-16.md",
+          "line_count": 201,
+          "cap": 600,
+          "byte_count": 40950,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 4950,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-12T03:58:31Z",
+        "drained_at": "2026-08-12T04:20:47Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4d4c13ebabbc1054a0c8b4025c1b612582006302e6eb91e051f2cf398dbc92be",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T04:02:27Z",
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-market",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-market",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-market": "cron",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "news-scout-offhours": 240,
+            "market-watcher-offhours": 240,
+            "alert-commander-market": null,
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-12T04:02:27Z",
+          "last_fired_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-market",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "04:00",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 470,
+          "signal_backlog": 26,
+          "note": "4-slot tick, agent_id=alert-commander matched 2 slots (market+critical) - WARN sent, both spawned per R3, no calendar/cadence suppression, freshness-downgrade gate failed (last_regime=CORE_VN)"
+        },
+        "createdAt": "2026-08-12T04:02:27Z",
+        "drained_at": "2026-08-12T04:20:47Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "424f426fe9bb194d34ef56608aa6a1e83497314a7532f6546cb5a2fb4aa13986",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T04:16:47Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-12T04:16:47Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "04:15",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 470,
+          "signal_backlog": 30,
+          "note": "single-slot tick, 1 signal_queue row (sys-20260812T040810-6125, rag-service A-30, already actioned) drained NEW->READ, no cowork slot match for to=po"
+        },
+        "createdAt": "2026-08-12T04:16:47Z",
+        "drained_at": "2026-08-12T04:20:47Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
