@@ -5,7 +5,6 @@
   "overrides": {
     "developer.md": "newest_first",
     "dev-frontend.md": "oldest_first",
-    "dev-mcp-server.md": "oldest_first",
-    "qa.md": "oldest_first"
+    "dev-mcp-server.md": "oldest_first"
   }
 }
