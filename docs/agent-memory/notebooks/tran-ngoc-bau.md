@@ -6,44 +6,79 @@
 
 ---
 
-## c123 · ~2026-08-06T20:29Z (live MCP `get_system_status`/`get_market_snapshot` fetchedAt; slot=tnb-audit; router_session=9acb0d9d-5fd5-4413-b6fc-2954ab72893f)
+## c125 · ~2026-08-08T20:28Z (live MCP `get_system_status`/`get_macro_snapshot` fetchedAt; slot=tnb-audit; router_session=b6da7257-d9fd-4d08-a378-25045f1238c2)
 
-**Gate:** `claimed:true` on `published:tnb-audit:2026-08-07` (VN-date derived live from `get_system_status` RECENT ERRORS timestamps, 2026-08-07 03:0x = UTC 2026-08-06 20:2x+7h). Infra: gateway live, 0 open/half-open circuits, 10 unresolved WARN (pre-existing, not new: te-chromium-news browser-missing, fetch_and_analyze timeouts).
+**Gate:** `claimed:true` on `published:tnb-audit:2026-08-09` (VN-date derived live from `get_system_status` Generated 2026-08-08T20:21:42Z UTC vs RECENT ERRORS block == 2026-08-09 03:2x VN-local). Infra: gateway live, 0 open/half-open circuits, 10 unresolved WARN (3 pre-existing classes + kinhdich 503 at 20:11-12Z, after today's dish fired — no impact).
 
-### Step 0b2 — Previous handoff NOT actually updated (self-audit, 2nd confirmed instance)
-`tnb-audit-latest.md` read at bootstrap still carried **Cycle 121** (07-31) content w/ c121's own PO-ACK+addendum intact, despite c122's notebook (08-04T20:29Z) explicitly claiming an overwrite+read-back per c121's self-cure. `docs/signals/tnb-20260804T2029Z.json` (c122's claimed signal drop) also absent (Glob-confirmed, both `docs/signals/` and `processed/`). Same class as c120's failure (PO-diagnosed 08-01 as Write-without-persistence, NOT Bash-grant) — recurred despite the adopted self-cure. BUG sent (4867). Mechanism not adjudicated (confabulated read-back vs uncommitted-write-lost-pre-commit) — flagged for PO.
+### Step 0b2 — ACK present
+c124's handoff carried PO's full 7-item disposition (all ACKNOWLEDGED/CONCUR, none corrected). Confirms c124's writes persisted (answers c124's own priority #5).
 
-### Phase 0.5 — chef-morning MISSING today (business day, Thu 08-06)
-3-way confirmed: `cowork-schedule.json` chef-morning `last_fired` stuck 2026-08-05T05:21:11Z; `unified-agent.md` has no 08-06 morning entry; `unified-agent-synthesis-2026-08-06-morning.json` absent. chef-eod (08:49:29Z) + chef-evening (19:51:07Z) + optional chef-intraday (07:23:12Z) all fired/closed normally. starts=2 closes=2 stuck=0 (expected≥3) → `guaranteed_ok=false`, `pipeline_degraded=true`. **Corroborating (not chef-specific):** news-scout-sentiment (01:30 UTC cron) + bctc-analyst-slot-4 (00:00 UTC cron) also stuck at 08-05 last_fired — likely systemic dispatcher gap 00:00-05:15 UTC today, self-recovered by chef-intraday's 07:23Z fire. BUG sent (4865).
+### Phase 0.5 — weekend, guaranteed_ok=true
+Today (Sat 08-08 UTC) is a weekend — chef-morning/eod (Mon-Fri only cron) correctly absent, only chef-evening fired. Confirmed via 3 sources incl. a NEW one this cycle: `cowork-guaranteed-slot-firer.log` shows exactly 1 chef-evening invocation (19:45:49Z→19:50:18Z exit_code=0, clean). starts=1 closes=1 stuck=0 → guaranteed_ok=true.
 
-### Phase 1-2 — 2 available dishes (eod 08:50:20Z, evening 19:52:09Z; morning absent)
-EOD: L1=present L2=GAP(silent, no explicit PMI/EFFR-IORB token) L3=GAP(explicit) L4=GAP(explicit, 0/4 tickers≥3/4: VRE1/VCB2/KDH2/DGC2) L5=PASS(hexagram+conf per ticker) L6=PASS(regime-drift gold>4300 + single-pillar VRE tokened). Business context=ABSENT(explicit token) — **but see HEADLINE finding below, token is factually wrong**.
-Evening (0-cluster regime-floor dish): L1=present L2/L3/L4/L5=GAP(all explicit) L6=**MISSING** (not tokened at all — mixed gold-risk-off vs yield-attractive tension went unformalized, unlike EOD same-day; light note only, not escalated). Business context=ABSENT(explicit).
-**Self-report integrity: HONEST 2nd consecutive cycle** — both `quality_verdict:"degraded"` match my independent re-score exactly, no false-full-verdict recurrence.
+### Phase 1-2 — only 1 new dish since c124
+Evening (19:55:23Z, 0 clusters, 0 tickers): L1 partial (USD/VND+gold thresholds flagged, no PMI) L2✗(gap-tokened, EFFR-IORB now mentioned qualitatively but no numeric value — floor satisfied via gap-token disjunct) L3✗(gap-tokened, CPI/VIRA absent) L4 n/a(0 tickers, gap-tokened) L5✓(hexagram Khiêm/15, NEGATIVE, 64%, from get_market_hexagram — fired before kinhdich went unreachable) L6✓(3 tokens: gold regime-drift, bizctx-absent, single-pillar). 9-step: A✗ B✓ C✓ D✗ E✓ F=n/a G=n/a H=n/a I✓ → 4/6 → NEEDS_ATTENTION. Same score/shape as every recent evening cycle, no new degradation.
 
-### HEADLINE — NEW F-CHEF-BIZCTX-JOIN-MISS (HIGH, N=1, well-evidenced)
-EOD's VCB conviction call (2/4 pillars) tokened `[gap:business_context_unavailable]`, but `docs/signals/processed/bctc_signal_VCB_20260805_routine.json` (ts 08-05T18:06Z, well within chef's own 24h Step-0 window per its FIX-CHEF-STEP0-BCTC-PROCESSED-DIR-BLINDSPOT auto-cure) has fully populated product/customer/ops/mgmt for VCB (retail/corporate banking, ROE16.7%, PE premium+57%, etc.) — none of it reached the rationale or overrode the gap token. Confirmed same rich structure holds for FPT/HPG/DXG signals generated same day too (bctc-analyst c144 notebook: "4 bctc_signal_*_20260806_routine.json emitted... with business-context fields" — verified live, real content not placeholder). **Reframes the multi-week "business context absent, upstream gap" narrative**: bctc-analyst IS delivering on schedule; the miss is downstream in chef's Step0→Step4 ticker join. Not auto-cured (N=1, below 3-cycle threshold) — BUG sent (4866), recommend architect confirm recurrence.
+### HEADLINE — F-CHEF-BIZCTX-JOIN-MISS: DORMANT this cycle, not resolved
+0 conviction_calls published (0 clusters) → no ticker thesis exists to misfire the GATHER→conviction join. Cannot confirm 3rd-instance or resolution without a ticker-thesis dish. occurrence_count stays 2, no new mint. Standing PO rule (3rd instance → raise to P0) not yet testable.
 
-### T-45 adversarial gate: PASS
-2 genuine instances (EOD): VRE "Sư positive 83% conf contradicts -4.35% price" → MEDIUM SELL (down-weighted, single-pillar). DGC "Kiển Ban negative despite +6.91% surge" → HOLD (caution flagged).
+### T-45: PASS (carried over)
+No ticker thesis today. Within-7-day evidence still valid: 08-07 Morning PLX downgrade + EOD VIC contradiction.
 
 ### Cross-validation
-Live `get_market_snapshot([KDH,VCB,VRE,DGC])` 20:28:20Z MATCHES eod dish exactly (VRE-4.35%, KDH-1.93%, DGC+6.91% exact; VCB-0.51% directionally consistent). 0 mismatches. No claim-truth-gate script (no Bash) — manual substitute, PASS.
+Live `get_macro_snapshot()` 20:21:44Z: USD/VND 26,030 EXACT match, Gold 4,399.70 EXACT match to dish's cited figures. 0 ticker claims to check (0 clusters). No Bash → claim-truth-gate script not run, manual macro exact-match substitute used.
+
+### Backlog cross-refs (no new mints)
+FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING unchanged (BACKLOG, occurrence_count=2). FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE now BLOCKED — PO's 08-08T1220Z deep review revised the diagnosis: 25,000 confirmed CODE-SOURCED from live Go `macro_usdvnd_direction_classifier.go` (not LLM drift), blocked on 2 SSOT prereqs. FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM still READY/unactioned, 18 days. **NEW:** cross-referenced `cowork-guaranteed-slot-firer.log` for the first time — chef-eod hit the firer's 1800s bound and SIGTERM'd (exit_code=143) on 2 consecutive business days (08-06 09:19:43Z, 08-07 09:22:09Z); content still published both days (not a Rule1/2 coverage miss). Matches already-tracked FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION (BACKLOG, high, subsumed under BA-COWORK-GUARANTEED-SLOT-CATCHUP epic) — corroborating evidence only, no new mint. chef-morning shows same pattern historically (6 occurrences, long-standing).
+
+### Notebook hygiene observation (unified-agent, LOW)
+unified-agent.md's 08-08 evening block has a stray duplicate header (19:47:27Z, no body) before the full 19:55:23Z entry. Cross-checked firer log: only 1 invocation fired — NOT a double-publish, internal timestamp artifact only. No BUG sent.
 
 ### Phase 3 — Signal quality
-`get_agent_signals(tran-ngoc-bau,all)` → 2 (both CHAIN_CATALYST/news-scout, full pillar+phase+tier tagging, no default-conf, no dedup). `get_signal_effectiveness()` → no data 7d. `get_alert_accuracy(7d)` → 108/20hit/0miss/88unk, 100% accuracy, **insufficientSample=false for the first time** (N=20 crosses threshold) — positive milestone. `get_recent_fixes(20)` checked before all 3 BUGs — no dedup match.
+`get_agent_signals` → 3 (all CHAIN_CATALYST, full tagging, no default-confidence). `get_signal_effectiveness` → no data 7d. `get_alert_accuracy(7d)` → 140tot/3hit/0miss/137unk, insufficientSample=true — 2nd consecutive cycle stuck (c124 was N=3 too, was N=20 at c123). Per c124's PO-endorsed watch (escalate at 2+ MORE cycles stuck), this is 1-of-2 — not escalating yet. `get_recent_fixes(20)` — no dedup match. Dashboard inbox empty.
 
 ### Positive
-Self-report honesty 2nd consecutive cycle ✓. Cross-validation clean ✓. T-45 fresh ✓. Infra healthy ✓. Alert-accuracy sample finally sufficient, 100% hit ✓. Biz-context root cause narrowed from vague-upstream to concrete-downstream-join ✓.
-
-### Persisting, not re-escalated
-F/D-gap (pillar coverage, PMI/EFFR-IORB) unchanged for weeks — data-plumbing not chef-logic per established read. USD/VND threshold doc(26,500)/tool(25,000) numeric mismatch, 3rd+ occurrence, non-blocking. FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM not re-verified this cycle.
+Weekend coverage correctly recognized, 3-source confirmed ✓. L5 present, clean timing vs kinhdich outage ✓. L6 consistent ✓. All gaps honestly tokened on genuine zero-signal cycle ✓. Cross-val exact match both figures ✓. USD/VND row materially advanced (diagnosis corrected) ✓. Infra healthy ✓. Signal quality clean ✓.
 
 ### Routing this cycle
-3 BUG sent (4865 coverage, 4866 bizctx-join, 4867 self-audit) — confirmed via tool return each. WORK quality report sent — confirmed via tool return. `docs/handoffs/tnb-audit-latest.md` overwritten (Write tool, harness-confirmed current, NOT independently re-read this session — durability only verifiable at next session's Step 0b2, per this cycle's own self-audit finding). `docs/signals/tnb-20260806T2029Z.json` dropped (Write tool). Dashboard write (`orch-state.json`) SKIPPED — no Bash/orch-apply.sh this session, file-drop used instead, same as every prior cycle this class. `log_agent_work` id=1773 running→completed this cycle.
+0 BUG sent (nothing new/critical this cycle). WORK quality report sent — confirmed via tool return. `docs/handoffs/tnb-audit-latest.md` overwritten (Write tool). `docs/signals/tnb-20260808T2028Z.json` dropped (Write tool). Dashboard write (`orch-state.json`) SKIPPED — no Bash/orch-apply.sh this session, file-drop used instead, same as every prior cycle this class. `log_agent_work` id=1856 running→completed this cycle.
 
-**Phase 4/commit:** No Bash/git tool this session — notebook appended via Edit, not overwritten. Remains uncommitted, deferred to next git-capable sweep (now 3rd+ consecutive cycle without commit access — same structural class as digest-predict/bctc-analyst, `FIX-AGENT-BASH-GRANT-COVERAGE-GATE-FLOW-DEMANDS-VS-FRONTMATTER`).
+**Phase 4/commit:** No Bash/git tool this session — notebook appended via Edit, not overwritten. Remains uncommitted, deferred to next git-capable sweep (structural, same class as digest-predict/bctc-analyst).
 
-**Next Cycle Priorities (c124):** 1) Confirm chef-morning fired normally next business day — 2nd miss would cross from "one-off dispatcher gap" to recurring. 2) Check for a 2nd F-CHEF-BIZCTX-JOIN-MISS instance (different ticker/dish) before recommending architect fix. 3) **Direct test**: did THIS cycle's handoff/signal Writes actually survive to next session's Step 0b2 read? This is the decisive check for the self-audit finding's mechanism. 4) Re-verify channel-param ticket status (untouched this cycle). 5) Watch whether evening-dish L6 skip recurs.
+**Next Cycle Priorities (c126):** 1) First dish with ≥1 conviction call — test F-CHEF-BIZCTX-JOIN-MISS 3rd-instance/resolution (standing rule: 3rd instance → raise to P0 in handoff). 2) Confirm chef-morning fires cleanly Monday 08-10 (first Mon-Fri slot since Fri 08-07). 3) `get_alert_accuracy(7d)` — this is stuck-cycle 1-of-2; escalate if c126 still stuck. 4) Re-verify channel-param ticket. 5) Confirm this cycle's Writes persist to next session's Step 0b2.
+
+---
+
+## c126 · ~2026-08-11T20:30Z (live MCP `get_system_status`/`get_market_snapshot` fetchedAt; slot=tnb-audit; router_session=0454e9d8-b475-4230-95c9-8b7d943aa8b3)
+
+**Gate:** `claimed:true` on `published:tnb-audit:2026-08-12` (first attempt wrongly used UTC date 2026-08-11 — released, re-claimed on correct VN-local date derived live from `get_system_status`). Infra: gateway live, 0 open/half-open circuits, 10 unresolved pre-existing WARN.
+
+### Step 0b2 — ACK present (2nd ACK explains the 2-cycle gap)
+Bootstrap read found handoff carrying TWO PO ACKs. The 2nd (2026-08-11T14:36:06Z) diagnosed why: tnb-audit `.last_fired` stuck at 2026-08-08T20:23:36Z, missed 08-09/08-10, escalated to P0 (`SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING`) same tick. PO's carry-forward: do not score c125's untested items as pass — this cycle answers the biggest one (see Headline).
+
+### Phase 0.5 — chef coverage: starts=1 closes=1 stuck=0, guaranteed_ok=false (business day)
+Only chef-evening published (19:51:30Z→19:57:35Z exit_code=0). chef-morning (05:21:06Z) + chef-eod (08:51:29Z) both hit `exit_code=1 "You've hit your weekly limit · resets 2pm Europe/Paris"` at the CLI layer, pre-flow — not a stuck cycle (no orphaned cycle_id). Root cause: Anthropic weekly quota exhausted 08-09T13:17Z→08-11T12:00Z, ALL 8 guaranteed slots hit, 0/8 recovery. Already independently diagnosed + P0-ticketed by PO at 18:35Z today (`FIX-COWORK-CATCHUP-FRESHNESS-WINDOW-EXPIRES-DURING-EXECUTION-OUTAGE`), explicit no-backfill ruling. Corroborating Rule-1 BUG sent (5106) per flow mandate, not a new mint.
+
+### HEADLINE — F-CHEF-BIZCTX-JOIN-MISS: 3RD INSTANCE CONFIRMED, RAW-verified
+2026-08-11 evening dish (first ≥1-conviction-call dish since c125): `unified-agent-synthesis-2026-08-11-evening.json` known_gaps[] still carries `[gap:business_context_unavailable_signal_drain_archive]`, and VCB/FPT conviction_calls rationale cite zero product/customer/ops/mgmt facts — YET `bctc_signal_{VCB,FPT}_20260811_routine.json` both processedAt 18:20:54Z (1h32m in-window, fully populated). VCB = 3rd occurrence (c123, c124, c126 — every instance). FPT = new ticker. occurrence_count 2→3, crosses PO's own standing 3rd-instance→P0 threshold. Escalation BUG sent (5107), requesting P1→P0 bump on `FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING` (TNB cannot write orch-state.json directly, no Bash this session).
+
+### Layer-walk / Methodology
+Evening dish: L1 partial (USD/VND+gold thresholds, no PMI) L2✗(EFFR-IORB non-numeric, persisting) L3✗(CPI/VIRA gap-tokened, new foreign-room-saturation detail) L4 0/4 tickers ≥3/4 pillars L5✓(per-ticker hexagrams correctly subordinate to pillar conflict — VHM bullish hexagram overridden, T-45 fresh pass) L6✓(2 tokens). 9-step: A✗ B✓ C✓ D✗ E✓ F=0/4 G=n/a H✓ I✓ → 5/8 → NEEDS_ATTENTION.
+
+### Cross-validation
+Live `get_market_snapshot([VCB,BID,VHM,FPT,EIB])` 20:28:34Z (market CLOSED, stable EOD closes): BID -1.01% EXACT, VCB -0.83% EXACT, VHM +0.70% EXACT, **EIB -0.28% actual vs dish's "-0.8 to -1.0%" band claim → MISMATCH** (same direction, magnitude/grouping overstated, LOW-MED not escalated). No Bash → claim-truth-gate script not run, manual table substitute used.
+
+### Phase 3 — Signal quality
+`get_agent_signals` → 2 (CHAIN_CATALYST, full tagging). `get_signal_effectiveness` → no data 7d. `get_alert_accuracy(7d)` → 146tot/5hit/0miss/141unk, insufficientSample=true (N=5, up from N=3 at c125) — prior "1-of-2 stuck" watch RESET (2-day audit gap breaks the consecutive-cycle comparison; underlying count moved, not frozen). `get_recent_fixes(20)` — no dedup match. Dashboard inbox empty (Grep-verified, no cache). Spot-checked alert-commander (c97-c99)/market-watcher notebooks for REGIME — both intact.
+
+### Positive
+Kinh Dịch correctly subordinate to pillar conflict, not sole determinant ✓. 3/4 cross-val exact match ✓. New foreign-room-saturation granularity in L3 ✓. REGIME intact both gatherers ✓. Signal quality clean ✓. Infra healthy ✓. c125's own open question (3rd-instance test) finally answered this cycle ✓.
+
+### Routing this cycle
+2 BUG sent (5106 coverage-low corroboration, 5107 bizctx 3rd-instance escalation) — confirmed via tool return. WORK quality report sent — confirmed via tool return. `docs/handoffs/tnb-audit-latest.md` overwritten (Write tool). `docs/signals/tnb-20260811T2030Z.json` dropped (Write tool). Dashboard write (`orch-state.json`) SKIPPED — no Bash/orch-apply.sh this session, file-drop used instead, same as every prior cycle this class.
+
+**Phase 4/commit:** No Bash/git tool this session — notebook appended via Edit, not overwritten. Remains uncommitted, deferred to next git-capable sweep (structural, same class as digest-predict/bctc-analyst).
+
+**Next Cycle Priorities (c127):** 1) Confirm PO's disposition on the bizctx P0 escalation request; watch for the actual wiring fix landing. 2) Confirm chef-morning/eod fire cleanly on the next business day post-quota-recovery. 3) Watch `get_alert_accuracy(7d)` — freshly reset this cycle at N=5, observe next N. 4) Re-verify channel-param ticket (unactioned 21 days). 5) Re-verify USD/VND threshold row (not touched this cycle). 6) Commit notebook backlog when a git-capable session is available.
 
 ---
