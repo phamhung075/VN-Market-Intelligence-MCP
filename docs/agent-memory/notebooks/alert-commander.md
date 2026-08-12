@@ -1,18 +1,10 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-08-12 08:25 UTC | **Sprint:** FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST
+**Last updated:** 2026-08-12 08:39 UTC | **Sprint:** idle
 
 **Role:** Event-only alert dispatch (position-danger / watchlist-opportunity / CRITICAL-always) | **Cadence:** `*/15min` market hours (02:00–08:30 UTC) + 4h critical sweep | **Contract:** APPEND class, one `## c<NNN>` section per cycle per `.claude/skills/notebook-write/SKILL.md` AC-6.
 
 > **Structural reset (FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, 2026-07-29):** prior history archived → `docs/agent-memory/notebooks/archive/alert-commander-archive-20260729.md`. One top-level `## c<NNN> · <ISO-timestamp>` section per cycle now.
-
-## c126 · 2026-08-12T08:10:12Z (slot=alert-commander-critical, tick=08:10)
-- Signals: bus 3 total (hours_back=2) — 3 verified_decision, 1 new: VIC id10738 (Vingroup market-cap +54.000ty/logo-change news_mention) | VNM id10734 dup unchanged since c122; FRT id10736 already-suppressed c124 | Fired: 0 | Suppressed: 1 new (VIC) | MARKET: none. No fresh `CYCLE_SNAPSHOT` (tick-specific 08:xx.json absent/tmp-only) — direct MCP calls (`get_cycle_bootstrap` sighted, gateway healthy).
-- Watchlist-opp: VIC checked directly via `get_kinhdich_reading(code=VIC)`: signal=GIU (HOLD), not BUY, 38% confidence — condition 2/4 fails regardless of newsSentiment (RECENT ANALYSIS score:10.0 up) → suppressed. VNM already fired c114, FRT already suppressed c124 — no re-check needed.
-- ChainCatalyst: 0 in bus — no re-`record_signal_outcome`.
-- Position-danger: `get_alerts(type=price)` clean (no active alerts), no stopLossHit — gate fails.
-- CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, `get_crisis_early_warning` clean (WARNING x10 corp-reputation unchanged: BID/BSR/DPM/FPT/FRT/HUT/PLX/SSI/VHM/VNM, no DANGER-tier), no verified_chain in bus.
-- Regime: NEUTRAL (fallback — macro_snapshot text has no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp) | vol NORMAL (rv_20d_pctile=0.75, gk_vol_20d_pct=18.61) | foreign_room market_saturation=5.94% (outflow_z_5d=0.81) | `get_vn_liquidity_state` error (macro-indicators service unavailable) — logged [SKIP], standard thresholds used | Pivot window: false (pivotWindowWarning=null). Market OPEN, VN-Index 1793.18 +19.77 up. Silent exit — no MARKET/WORK send. `log_agent_work` id=1913.
 
 ## c127 · 2026-08-12T08:12:02Z (slot=alert-commander-market, tick=08:10)
 - Peer collision note: `alert-commander-critical` landed as `## c126` for the same tick window (near-simultaneous 15min/4h-sweep overlap) before this section composed — renumbered to c127 rather than duplicate the `## c126` heading; peer's section left byte-identical/untouched (AC-2a).
@@ -30,3 +22,10 @@
 - Position-danger: `get_alerts(type=price)` clean (no active alerts), no stopLossHit — gate fails.
 - CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, `get_crisis_early_warning` clean (WARNING x10 corp-reputation unchanged: BID/BSR/DPM/FPT/FRT/HUT/PLX/SSI/VHM/VNM, no DANGER-tier), no verified_chain in bus.
 - Regime: NEUTRAL (fallback — macro_snapshot text has no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp) | vol NORMAL (rv_20d_pctile=0.746, gk_vol_20d_pct=18.61) | foreign_room market_saturation=17.38% (outflow_z_5d=0.81) | `get_vn_liquidity_state` error ("macro-indicators service unavailable") — logged [SKIP], standard thresholds used | Pivot window: false (pivotWindowWarning=null, next Sept 2026). Market OPEN, VN-Index 1793.18 +1.11% up. Silent exit — no MARKET/WORK send. `log_agent_work` id=1916.
+
+## c129 · 2026-08-12T08:39:41Z (slot=alert-commander-market, tick=08:40)
+- Signals: bus 22 (hours_back=2) — 3 verified_decision dup/unchanged (VNM10734/FRT10736/VIC10738), urgent_news VIC10740/FPT10741/MSN10742 unchanged, chain_catalyst 10743/10744 unchanged (already suppressed+recorded c128), 2 new verified_decision (FPT10754 price_drop -0.56%, HUT10755 volume_spike 3.8x — both informational, not consumed type) + 9 foreign_flow dup (informational) | Fired: 0 | Suppressed: 0 new | MARKET: none.
+- Watchlist-opp: fresh `get_kinhdich_reading` re-check VIC/FPT/MSN/SAB/VCB/HUT — all GIU (HOLD) not BUY (VIC 38%, FPT 100%, MSN 100%, SAB 0%, VCB 38%, HUT 62%) — cond 2/4 fails all despite bullish RECENT ANALYSIS (score:10.0 up, SOE-capital-increase story). VNM already fired c114, FRT already suppressed c124 — neither re-checked.
+- Position-danger: `get_alerts(type=price)` clean (no active alerts), no stopLossHit — gate fails.
+- CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, `get_crisis_early_warning` clean (WARNING x6 corp-reputation: BSR/FRT/HUT/PLX/SSI/VCB, all <50 no DANGER-tier), no verified_chain in bus.
+- Regime: NEUTRAL (fallback — macro_snapshot text has no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp) | vol NORMAL (rv_20d_pctile=0.746) | foreign_room market_saturation=5.94% (outflow_z_5d=0.81) | `get_vn_liquidity_state` omo/interbank blocked (HTML parse fail / VPS unreachable) — [SKIP], standard thresholds used | Pivot window: false (pivotWindowWarning=null, next Sept 2026). Market OPEN, VN-Index 1793.18 +1.11%. Silent exit — no MARKET/WORK send. `log_agent_work` id=1917.
