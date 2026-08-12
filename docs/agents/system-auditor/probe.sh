@@ -98,30 +98,137 @@ _a30_resolve_capped_containers() {
   done <<< "$inspect_out"
 }
 
-# Invokes the deep-probe subprocess for one container. A30_DEEP_PROBE_CMD is
-# a TEST-ONLY override seam (default: real subprocess call) — production
-# callers never set it. probe.test.sh sets it to a stub function so a
-# fixture can assert WHICH containers engaged without spawning a real
-# docker/bash subprocess (verify-a30-mcp-memory-reclamation.sh has its own,
-# separately-verified test suite — this loop's job is only the per-container
-# ENGAGE/SKIP decision, not re-testing that script's own verdict logic).
+# ── A-30 deep-probe deadline + parallel dispatch (FIX-AUDITOR-A30-DEEPPROBE-
+# TRUNCATES-ON-SECOND-CONTAINER-RAG-SERVICE, 2026-08-12) ────────────────────
+# ROOT CAUSE (RAW-verified: notebook c41 RAW-PROBE block + this task's own
+# live reversed-order test, see decision journal): the OLD
+# `_a30_run_investigate_gate` invoked every ENGAGEd container's deep-probe
+# SEQUENTIALLY and SYNCHRONOUSLY inside this one probe.sh process. Each
+# deep-probe's own sample loop takes (PROBES-1)*INTERVAL seconds PLUS docker
+# inspect/exec overhead — measured live at 77-81s total for the 6-probe/
+# 13s-interval shape below (65s span + ~12-16s overhead). With 2 ENGAGEd
+# containers this SUMS to ~150-160s; tier1-probe.md names a <120s wall-time
+# target for the WHOLE probe, so whichever container is probed SECOND is
+# always the one still mid-sample-loop when the caller's own budget elapses
+# and gets killed with ZERO buffered JSON — this IS the "raw JSON verdict
+# block not present" DEFER from c41/c42. REFUTED premise: c41 showed
+# pdf-extractor (1st) complete / rag-service (2nd) truncate; this task's own
+# reversed-order test (rag-service 1st, completed @81s elapsed; pdf-extractor
+# 2nd, would still be running at the 120s mark, finishing @~158s cumulative)
+# reproduced the SAME position-dependent failure with the containers
+# SWAPPED — container identity is not the variable, sequential position is.
+# FIX: launch every ENGAGEd container's deep-probe CONCURRENTLY (background)
+# so total wall time is max(per-container time) instead of sum(...) — AND
+# bound each one with its own watchdog deadline (AC-3) so a genuinely wedged
+# docker call can never again vanish with no structured output, independent
+# of the caller's own external timeout. Deterministic PRINT order is
+# preserved (output is emitted in the SAME order `_a30_resolve_capped_
+# containers()` returned them) — only EXECUTION is parallel.
+A30_DEEP_PROBE_PROBES="${A30_DEEP_PROBE_PROBES:-6}"
+A30_DEEP_PROBE_INTERVAL="${A30_DEEP_PROBE_INTERVAL:-13}"
+# Margin covers docker inspect/exec overhead beyond the raw sample-loop span
+# — live-measured 12-16s for the 6x13 shape above (this task's own timing
+# run, 2026-08-12T00:1xZ); 30s leaves headroom for daemon jitter without
+# letting a truly wedged probe run away unbounded.
+A30_DEEP_PROBE_DEADLINE_MARGIN_SEC="${A30_DEEP_PROBE_DEADLINE_MARGIN_SEC:-30}"
+
+_a30_deep_probe_deadline_sec() {
+  echo $(( (A30_DEEP_PROBE_PROBES - 1) * A30_DEEP_PROBE_INTERVAL + A30_DEEP_PROBE_DEADLINE_MARGIN_SEC ))
+}
+
+# AC-3: structured, machine-readable stand-in for a container whose deep-
+# probe blew its own deadline — same top-level shape (probe/container/
+# window/verdict/reason) as verify-a30-mcp-memory-reclamation.sh's own JSON,
+# so tier1-probe.md's existing "parse however many JSON blocks appear"
+# consumer needs no new branch, just a new verdict value to recognize.
+# Replaces the old unstructured prose DEFER this task was minted to remove.
+_a30_truncation_marker() {
+  local ctr="$1" deadline="$2"
+  cat <<JSON
+{"probe":"A-30 mcp-server memory reclamation discriminator","container":"$ctr","window":{"probes":$A30_DEEP_PROBE_PROBES,"interval_sec":$A30_DEEP_PROBE_INTERVAL,"deadline_sec":$deadline},"verdict":"INCONCLUSIVE","truncated":true,"reason":"deep-probe subprocess exceeded its own ${deadline}s per-container watchdog deadline (probes=${A30_DEEP_PROBE_PROBES} interval=${A30_DEEP_PROBE_INTERVAL}s) before producing a verdict -- watchdog-terminated so this container never silently vanishes from probe.sh output; re-probe next Tier-1 cycle","tripwire_ref":"FIX-AUDITOR-A30-DEEPPROBE-TRUNCATES-ON-SECOND-CONTAINER-RAG-SERVICE"}
+JSON
+}
+
+# Invokes the deep-probe subprocess for one container and BLOCKS until it
+# exits. A30_DEEP_PROBE_CMD is a TEST-ONLY override seam (default: real
+# subprocess call) — production callers never set it. probe.test.sh sets it
+# to a stub function so a fixture can assert WHICH containers engaged
+# without spawning a real docker/bash subprocess (verify-a30-mcp-memory-
+# reclamation.sh has its own, separately-verified test suite — this loop's
+# job is only the per-container ENGAGE/SKIP decision, not re-testing that
+# script's own verdict logic). Used directly only as the tmpdir-creation-
+# failure fallback inside _a30_run_investigate_gate() below (mktemp
+# practically never fails, but a container must never be silently dropped
+# from output if it does) — the normal, parallel path uses
+# _a30_launch_deep_probe_bg() instead.
 _a30_invoke_deep_probe() {
   local ctr="$1"
   if [ -n "${A30_DEEP_PROBE_CMD:-}" ]; then
     "$A30_DEEP_PROBE_CMD" "$ctr"
     return $?
   fi
-  CONTAINER="$ctr" bash "$REPO_ROOT/scripts/audits/verify-a30-mcp-memory-reclamation.sh" 6 13
+  CONTAINER="$ctr" bash "$REPO_ROOT/scripts/audits/verify-a30-mcp-memory-reclamation.sh" \
+    "$A30_DEEP_PROBE_PROBES" "$A30_DEEP_PROBE_INTERVAL"
+}
+
+# Launches one container's deep-probe in the BACKGROUND, stdout+stderr
+# redirected to $2. Sets $_A30_LAST_BG_PID to the PID of the process that
+# actually does the docker sampling (never a wrapper shell) via `exec` in
+# the real (non-test) path — verified empirically (this task's decision
+# journal) that killing a non-exec'd wrapper subshell leaves the wrapped
+# subprocess running as an orphan; `exec` replaces the subshell's own
+# process image so the backgrounded PID IS the sampling-loop process and a
+# later TERM/KILL (_a30_wait_with_deadline) reaches it directly. The
+# A30_DEEP_PROBE_CMD test-stub path (probe.test.sh T11-T13) returns
+# instantly and needs no `exec` for correctness — kept as a plain call so
+# that seam is unaffected.
+_a30_launch_deep_probe_bg() {
+  local ctr="$1" outfile="$2"
+  if [ -n "${A30_DEEP_PROBE_CMD:-}" ]; then
+    ( "$A30_DEEP_PROBE_CMD" "$ctr" ) > "$outfile" 2>&1 &
+  else
+    ( exec env CONTAINER="$ctr" bash "$REPO_ROOT/scripts/audits/verify-a30-mcp-memory-reclamation.sh" \
+        "$A30_DEEP_PROBE_PROBES" "$A30_DEEP_PROBE_INTERVAL" ) > "$outfile" 2>&1 &
+  fi
+  _A30_LAST_BG_PID=$!
+}
+
+# Portable watchdog — no GNU `timeout`/`gtimeout` on this fleet's macOS host
+# (checked 2026-08-12: neither on PATH). Polls once/sec instead of a single
+# blocking `wait`, so a hung job is force-killed at $deadline sec rather than
+# blocking this function (and therefore the whole probe.sh run) forever.
+# Returns 0 if the job exited on its own before the deadline, 1 if it had to
+# be watchdog-killed.
+_a30_wait_with_deadline() {
+  local pid="$1" deadline="$2" waited=0
+  while kill -0 "$pid" 2>/dev/null; do
+    if [ "$waited" -ge "$deadline" ]; then
+      kill -TERM "$pid" 2>/dev/null
+      sleep 1
+      kill -KILL "$pid" 2>/dev/null
+      wait "$pid" 2>/dev/null
+      return 1
+    fi
+    sleep 1
+    waited=$((waited + 1))
+  done
+  wait "$pid" 2>/dev/null
+  return 0
 }
 
 # Full gate: every capped, running container samples its OWN baseline and is
 # ENGAGE/SKIP'd independently. Prints one line per SKIPped container, or the
-# deep-probe subprocess's own JSON block per ENGAGEd one — tier1-probe.md's
-# A-30 section parses however many JSON blocks appear (zero, one, or many),
-# never assuming exactly zero or one the way the old single-container gate
-# implicitly did.
+# deep-probe subprocess's own JSON block (or the AC-3 truncation marker) per
+# ENGAGEd one — tier1-probe.md's A-30 section parses however many JSON
+# blocks appear (zero, one, or many), never assuming exactly zero or one the
+# way the old single-container gate implicitly did. ENGAGEd containers' deep-
+# probes now run CONCURRENTLY: this loop's first pass only launches them,
+# the second pass (below) collects results in the same order they engaged.
 _a30_run_investigate_gate() {
-  local ctr pct decision
+  local ctr pct decision tmproot outfile
+  local -a engaged_ctrs=() engaged_pids=() engaged_files=() engaged_deadlines=()
+  tmproot="$(mktemp -d "${TMPDIR:-/tmp}/a30-deep-probe.XXXXXX" 2>/dev/null)" || tmproot=""
+
   while IFS= read -r ctr; do
     [ -z "$ctr" ] && continue
     pct=$(docker stats --no-stream --format '{{.Name}}\t{{.MemPerc}}' 2>/dev/null \
@@ -133,11 +240,39 @@ _a30_run_investigate_gate() {
     decision=$(_a30_gate_decision "$pct")
     if [ "$decision" = "ENGAGE" ]; then
       echo "[A-30] ${ctr}: baseline ${pct}% >= 85% investigate-gate — ENGAGE deep-probe"
-      _a30_invoke_deep_probe "$ctr" || echo "[A-30] ${ctr}: deep-probe subprocess FAILED: $?"
+      if [ -n "$tmproot" ]; then
+        outfile="$tmproot/$(printf '%s' "$ctr" | tr -c 'A-Za-z0-9_.-' '_').out"
+        _a30_launch_deep_probe_bg "$ctr" "$outfile"
+        engaged_ctrs+=("$ctr")
+        engaged_pids+=("$_A30_LAST_BG_PID")
+        engaged_files+=("$outfile")
+        engaged_deadlines+=("$(_a30_deep_probe_deadline_sec)")
+      else
+        # tmpdir creation failed — never silently drop this container from
+        # output; fall back to the old blocking call for this one only.
+        _a30_invoke_deep_probe "$ctr" || echo "[A-30] ${ctr}: deep-probe subprocess FAILED: $?"
+      fi
     else
       echo "[A-30] SKIP deep-probe — ${ctr} baseline ${pct}% < 85% investigate-gate"
     fi
   done < <(_a30_resolve_capped_containers)
+
+  # Collect: wait for each backgrounded deep-probe IN ORDER. Jobs keep
+  # running concurrently regardless of the order we wait() on their PIDs —
+  # this only serializes the ORDER their output is printed, never execution.
+  local idx=0 n=${#engaged_ctrs[@]}
+  while [ "$idx" -lt "$n" ]; do
+    ctr="${engaged_ctrs[$idx]}"
+    if _a30_wait_with_deadline "${engaged_pids[$idx]}" "${engaged_deadlines[$idx]}"; then
+      cat "${engaged_files[$idx]}" 2>/dev/null
+    else
+      echo "[A-30] ${ctr}: deep-probe watchdog-terminated after ${engaged_deadlines[$idx]}s — emitting INCONCLUSIVE marker"
+      _a30_truncation_marker "$ctr" "${engaged_deadlines[$idx]}"
+    fi
+    idx=$((idx + 1))
+  done
+  [ -n "$tmproot" ] && rm -rf "$tmproot" 2>/dev/null
+  return 0
 }
 
 # ── Standalone execution guard ────────────────────────────────────────────────

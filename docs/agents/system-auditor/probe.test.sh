@@ -173,6 +173,110 @@ check "T12 c51/c53 replay: rag-service (92.81%% >= 85%%) -> ENGAGE line present,
 check "T13 c51/c53 replay: deep-probe subprocess actually invoked for rag-service, NOT mcp-server" "true" \
   "$([[ "$GATE_OUT" == *"ENGAGED:vn-market-intelligence-mcp-rag-service-1"* ]] && [[ "$GATE_OUT" != *"ENGAGED:vn-market-intelligence-mcp-mcp-server-1"* ]] && echo true || echo false)"
 
+# ── T14-T17 (FIX-AUDITOR-A30-DEEPPROBE-TRUNCATES-ON-SECOND-CONTAINER-RAG-
+# SERVICE, 2026-08-12): parallel dispatch + per-container watchdog deadline.
+# ROOT CAUSE this closes: the OLD _a30_run_investigate_gate invoked every
+# ENGAGEd container's deep-probe SEQUENTIALLY and SYNCHRONOUSLY, so total
+# wall time was sum(per-container time) — with 2+ ENGAGEd containers this
+# exceeded tier1-probe.md's <120s wall-time target and whichever container
+# was probed SECOND got killed by the caller's own external timeout with
+# ZERO buffered output (notebook c41 RAW-PROBE: pdf-extractor 1st completed,
+# rag-service 2nd truncated after only its ENGAGE line). T14 proves 2
+# ENGAGEd containers' deep-probes now run CONCURRENTLY (wall time <<
+# sum-of-durations). T15 proves a stub that never returns is watchdog-killed
+# at its own deadline and emits the AC-3 structured INCONCLUSIVE/truncated
+# marker instead of vanishing. T16 proves PRINT order stays deterministic
+# (engage order) even when the SLOWER container finishes LAST. T17 is the
+# pure deadline-arithmetic unit check. Same c51/c53-shaped docker() stub
+# (mcp-server + rag-service, both capped) reused from T10-T13 above,
+# redeclared per block below (same pattern already used at each T-block
+# boundary in this file — `stats` %-percentages here are deliberately both
+# >=85% so BOTH containers ENGAGE, unlike T11-T13's single-engage replay).
+docker() {
+  local sub="$1"; shift
+  case "$sub" in
+    ps)
+      [ "${1:-}" = "-q" ] && { printf 'id-mcp\nid-rag\n'; return 0; }
+      return 0
+      ;;
+    inspect)
+      printf '/vn-market-intelligence-mcp-mcp-server-1 3221225472\n'
+      printf '/vn-market-intelligence-mcp-rag-service-1 1073741824\n'
+      return 0
+      ;;
+    stats)
+      printf 'vn-market-intelligence-mcp-mcp-server-1\t90.00%%\n'
+      printf 'vn-market-intelligence-mcp-rag-service-1\t90.00%%\n'
+      return 0
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+# T14: both containers' stub sleeps 3s each. Sequential (the pre-fix shape)
+# would take >=6s; concurrent must take well under that.
+_stub_3s() { sleep 3; echo "ENGAGED:$1"; }
+A30_DEEP_PROBE_CMD="_stub_3s"
+T14_START=$(date +%s)
+T14_OUT="$(_a30_run_investigate_gate)"
+T14_END=$(date +%s)
+T14_ELAPSED=$((T14_END - T14_START))
+check "T14 parallel dispatch: 2x3s deep-probes complete in <5s wall (sequential would need >=6s; got ${T14_ELAPSED}s)" "true" \
+  "$([ "$T14_ELAPSED" -lt 5 ] && echo true || echo false)"
+check "T14b both containers' output present after concurrent run" "true" \
+  "$([[ "$T14_OUT" == *"ENGAGED:vn-market-intelligence-mcp-mcp-server-1"* ]] && [[ "$T14_OUT" == *"ENGAGED:vn-market-intelligence-mcp-rag-service-1"* ]] && echo true || echo false)"
+
+# T15: force a SHORT deadline (probes=1,interval=1,margin=1 -> deadline=1s)
+# and a stub that sleeps far longer than that -> must be watchdog-killed and
+# emit the AC-3 structured marker, never silently vanish (this is the exact
+# defect this task exists to close: a truncated container with no output).
+A30_DEEP_PROBE_PROBES=1
+A30_DEEP_PROBE_INTERVAL=1
+A30_DEEP_PROBE_DEADLINE_MARGIN_SEC=1
+_stub_hang() { sleep 10; echo "SHOULD_NOT_APPEAR:$1"; }
+A30_DEEP_PROBE_CMD="_stub_hang"
+T15_START=$(date +%s)
+T15_OUT="$(_a30_run_investigate_gate)"
+T15_END=$(date +%s)
+T15_ELAPSED=$((T15_END - T15_START))
+check "T15 watchdog kills hung deep-probe well before its 10s sleep completes (elapsed ${T15_ELAPSED}s)" "true" \
+  "$([ "$T15_ELAPSED" -lt 8 ] && echo true || echo false)"
+check "T15b AC-3 structured marker present (verdict INCONCLUSIVE)" "true" \
+  "$([[ "$T15_OUT" == *'"verdict":"INCONCLUSIVE"'* ]] && echo true || echo false)"
+check "T15c AC-3 marker carries truncated:true" "true" \
+  "$([[ "$T15_OUT" == *'"truncated":true'* ]] && echo true || echo false)"
+check "T15d hung stub's own echo never reached stdout (proves the process was actually killed, not just abandoned)" "true" \
+  "$([[ "$T15_OUT" != *"SHOULD_NOT_APPEAR"* ]] && echo true || echo false)"
+# restore defaults for subsequent tests
+A30_DEEP_PROBE_PROBES=6
+A30_DEEP_PROBE_INTERVAL=13
+A30_DEEP_PROBE_DEADLINE_MARGIN_SEC=30
+
+# T16: deterministic print order — rag-service's stub is SLOWER than
+# mcp-server's (2s vs 0.2s), so it finishes LAST, but engage-order
+# (mcp-server first, per the docker stats stub order above) must still be
+# the PRINT order — proves "parallel EXECUTION" did not also make output
+# ORDER nondeterministic for downstream parsers (tier1-probe.md).
+_stub_order() {
+  case "$1" in
+    *rag-service*) sleep 2 ;;
+    *) sleep 0.2 ;;
+  esac
+  echo "ORDERMARK:$1"
+}
+A30_DEEP_PROBE_CMD="_stub_order"
+T16_OUT="$(_a30_run_investigate_gate)"
+MCP_POS=$(printf '%s\n' "$T16_OUT" | grep -n "ORDERMARK:vn-market-intelligence-mcp-mcp-server-1" | cut -d: -f1 | head -1)
+RAG_POS=$(printf '%s\n' "$T16_OUT" | grep -n "ORDERMARK:vn-market-intelligence-mcp-rag-service-1" | cut -d: -f1 | head -1)
+check "T16 print order stays engage-order (mcp-server before rag-service) even though rag-service (slower) finishes last" "true" \
+  "$([ -n "$MCP_POS" ] && [ -n "$RAG_POS" ] && [ "$MCP_POS" -lt "$RAG_POS" ] && echo true || echo false)"
+
+# T17: pure deadline arithmetic — no docker/subprocess involved.
+A30_DEEP_PROBE_PROBES=6
+A30_DEEP_PROBE_INTERVAL=13
+A30_DEEP_PROBE_DEADLINE_MARGIN_SEC=30
+check "T17 deadline_sec(probes=6,interval=13,margin=30) == 95 ((6-1)*13+30)" "95" "$(_a30_deep_probe_deadline_sec)"
+
 echo ""
 echo "probe.test.sh: ${PASS} pass / ${FAIL} fail"
 [ "$FAIL" -eq 0 ]
