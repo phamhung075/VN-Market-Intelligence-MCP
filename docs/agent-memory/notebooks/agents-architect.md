@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-08-09T02:43:33Z
-
-**Brief:** `docs/architecture-briefs/2026-08-09-fix-system-auditor-cycle-closeout-actuator-and-signal-path.md`
-
-Root-caused the 7-incident system-auditor notebook/signal defect cluster to 2 gaps: (1) `scripts/notebook-compose.sh` — the byte-identity compose actuator built+tested 2026-08-06 specifically to prevent this class — was never wired into `flow/main.md` despite an explicit developer→agent-father handoff 3 days ago; verified live that commit `07dd8d24f` destroyed 2 previously-committed sections (`## c10`, `## c9`) while its own commit message falsely claimed preservation. (2) the tool-grant reference documents `post_agent_signal` as the general signal path with zero mention of the mandatory `emit-audit-signal.sh` wrapper, plausibly causing a CRITICAL cron-fire-gap finding to land on the wrong (rolling-2h `agent_signals`) bus instead of the durable `signal_queue.rows[]`.
-
-**Signal dropped:** `docs/signals/fix-system-auditor-cycle-closeout-actuator-and-signal-path-20260809T0243Z.json` → agent-father
-
----
-
 ## 2026-08-11T12:38:53Z
 
 **Brief:** `docs/architecture-briefs/2026-08-11-chore-commit-overhead-audit.md`
@@ -27,3 +17,13 @@ Router-dispatched skeptical audit of chore-commit volume (85%+ of last 500 commi
 New angle vs. the 2026-08-06 cadence brief (interval tuning): does every outer cron heartbeat need to boot a full subagent regardless of real work. Surveyed all 11 outer-heartbeat CronCreate entries across cron-cowork-team/cron-detect-loop/cron-standalone-team — 8/11 already pre-gated by a deterministic shell script embedded in the CronCreate prompt (cowork-team master, all 4 detect-loop crons, db-integrity ×2, market-db-journal-guard); cron-detect-loop has zero gaps. Of the remaining 3, agent-father and claude-manager-helper need no change (real judgment work every observed tick / cadence already right-sized). code-janitor is the one real gap: CADRAT-3's git-diff Pre-Check lives post-boot inside main.md, gating only the DRY scan, while 3 fully-deterministic sweeps boot a full subagent unconditionally 4x/day — last 10 recorded cycles show the DRY-scan branch suppressed 10/10. Recommended mirroring the existing pre-spawn shell-gate pattern. Explicitly rejected any LLM/local-model pre-gate anywhere in the 3 families — no fuzzy pre-spawn judgment case found; cited 3 live instances of safe-looking gates silently disabling their own mechanism, including `FIX-AGENTFATHER-KEEP-PRECHECK-GATE-BLIND-TO-3-OF-5-SCAN-SURFACES` discovered this same session.
 
 **Signal dropped:** `docs/signals/2026-08-11-cron-heartbeat-prespawn-gating.json` → po (cc agent-father)
+
+---
+
+## 2026-08-12T13:22:49Z
+
+**Brief:** `docs/architecture-briefs/2026-08-12-fix-auditor-dedup-ledger-cas-atomicity.md`
+
+Root-caused the auditor-dedup-ledger.json key-loss (2-instance escalation threshold met) to a bare tmp+mv ledger writer in emit-audit-signal.sh with zero CAS-guard doing 2 independent read-modify-write cycles per invocation — a lost-update race between concurrent system-auditor sessions/tiers. The pretty/compact format flip is a separate same-script bug (inconsistent jq -c usage between the two write sites), not a second-writer signal. Fix: collapse to 1 CAS-guarded write per invocation, reusing this file's own existing E-3/orch-state CAS-retry idiom at a right-sized scope. Did not hand-patch the ledger file itself.
+
+**Signal dropped:** `docs/signals/2026-08-12-fix-auditor-dedup-ledger-cas-atomicity.json` → agent-father
