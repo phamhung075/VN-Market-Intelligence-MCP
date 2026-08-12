@@ -20072,7 +20072,7 @@
         "last_served_tick": "2026-08-11T23:51:40Z"
       }
     },
-    "_updated_at": "2026-08-12T02:22:00Z",
+    "_updated_at": "2026-08-12T02:50:53Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20673,6 +20673,124 @@
         },
         "createdAt": "2026-08-12T02:17:38Z",
         "drained_at": "2026-08-12T02:21:01Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "387c46ecabbb5b43f0eaf39ec3da8c0e3590994796aced0814373ad52ab05677",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/data/orch/orch-state.json' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/data/orch/orch-state.json' (907e9ed99f88f8f113e45ed8046f82e09cfbce11) differs from what is about to land in this commit (826f242ccd5902a9d571cea52c5816bb45420dd1) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope (two-blob form takes NO pathspec — do not append '-- docs/data/orch/orch-state.json', that is a git usage error): git diff 907e9ed99f88f8f113e45ed8046f82e09cfbce11 826f242ccd5902a9d571cea52c5816bb45420dd1",
+        "createdAt": "2026-08-12T02:21:25Z",
+        "drained_at": "2026-08-12T02:50:53Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5d478e94d9a1590ff42a6670bbd47d42b99888036a22f8b359a11f7075029367",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T02:34:53Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 3,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-12T02:34:51Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "02:30",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 0,
+          "signal_backlog": 26,
+          "note": "single-slot fire, alert-commander-market (VN market hours)"
+        },
+        "createdAt": "2026-08-12T02:34:53Z",
+        "drained_at": "2026-08-12T02:50:53Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0115013a9923db64b209c0dfcd9694d81d7b5d74e5c168c1bb32e029335dc96b",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T02:46:50Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-12T02:46:48Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "02:45",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 0,
+          "signal_backlog": 26,
+          "note": "single-slot fire, alert-commander-market (VN market hours); macro_snapshot degraded to tier=4 fixture-estimate this call"
+        },
+        "createdAt": "2026-08-12T02:46:50Z",
+        "drained_at": "2026-08-12T02:50:53Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
