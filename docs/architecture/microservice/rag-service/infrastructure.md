@@ -56,6 +56,20 @@ file after each compaction cycle (~100 inserts).
 5. Parse tags from JSON string
 6. Return `list[SearchResult]` with L2 distance
 
+**No vector index exists on the `vector` column** (only `title`/`summary` get FTS indexes — see below) —
+every `vector_search()` call is LanceDB's brute-force exact-kNN scan over the full column.
+`FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS`'s 2026-08-12 architect brief
+(`docs/architecture-briefs/2026-08-12-fix-rag-embedder-idle-unload-second-growth-source.md`) isolated-
+repro'd this against a 26,730-row corpus snapshot: opening the table handle alone costs ~130 MiB resident,
+and repeated `search()` calls against the same open handle ramp resident memory by ~340-444 MiB within
+the first ~20-60 distinct queries before plateauing — the dominant driver of that row's "monotonic growth
+from a cold restart" symptom (confirmed ~65-80x larger than the embedder's own per-call footprint, which
+was isolated-repro'd and ruled out as the dominant mechanism in the same cycle). `malloc_trim(0)` recovers
+only ~8-15% of this — most of the floor is a live, referenced working set, not glibc-arena slack.
+Recommended fix (design only, not landed as of that brief): build a `lancedb.index.IvfPq` vector index,
+same `create_index()` call shape as the FTS indexes below. See that brief for the full investigation,
+fix design, and open considerations (staleness/refresh cadence, build-time memory cost, recall trade-off).
+
 ### count()
 Returns `table.count_rows()`, 0 on exception.
 
@@ -79,10 +93,21 @@ Neither knob is exposed by lancedb's Python `FTS()` config dataclass or
 `AsyncTable.create_index()` — they are process-global Rust `LazyLock` statics read from
 the OS environment on first use (and cached for the process lifetime). Default
 worst-case in-flight memory on a multi-core host is `(num_cpus/2) * 2048 MiB` — many GB,
-roughly 10x the rag-service `768m` container ceiling (`docker-compose.yml`
-`rag-service.deploy.resources.limits.memory`) — independent of `rag_entries` row count.
-This is why the build pinned 90-99.9% of the ceiling for 250s+ then OOM-restarted the
-container at ~56k rows (RestartCount 258→260).
+independent of `rag_entries` row count. This is why the build pinned 90-99.9% of the
+ceiling for 250s+ then OOM-restarted the container at ~56k rows (RestartCount 258→260),
+**against the container's ceiling at the time this row's investigation was written
+(`768m`)**. **CORRECTION (2026-08-12, architect):** the rag-service `deploy.resources.
+limits.memory` ceiling is now `1g` (raised by commit `2f835ec63`, 2026-08-06 —
+`docs/architecture-briefs/2026-08-06-rag-service-memory-sizing-remediation.md`) — this
+row's own board text and `repositories.py:67`'s comment still say `768m`, a known,
+already-flagged staleness (see that 2026-08-06 brief's own cross-reference, and
+`docs/architecture-briefs/2026-08-12-fix-rag-embedder-idle-unload-second-growth-source.md`
+§2), not corrected in either of those two locations as of this note. Does not change the
+fix's own bound (`LANCE_FTS_PARTITION_SIZE=32` MiB is small relative to either ceiling).
+The nightly rebuild cron that would exercise this path (`ragFtsRebuildCronJob`) is
+gated OFF by default (`CRON_RAG_FTS_REBUILD_ENABLED`, unset in this deployment) and has
+never fired here — see the 2026-08-12 brief §3c for the live confirmation this is not a
+live/active concern today.
 
 **Investigated + rejected:** the legacy Tantivy-backed builder
 (`LanceTable.create_fts_index(use_tantivy=True, writer_heap_size=...)`) DOES expose a
