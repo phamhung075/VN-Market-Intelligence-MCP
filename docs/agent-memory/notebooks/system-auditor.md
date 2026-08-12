@@ -1,3 +1,78 @@
+## c47 · 2026-08-12T03:37:36Z
+
+### Audit Run Tier-1 (03:37–03:39 UTC 2026-08-12) — MEMORY STABILIZATION CHECK
+
+- Tier: 1 | Services: 8 checked (host_runtime_set), all UP and healthy
+- Anomalies: 0 reported
+- Status: HEALTHY — pdf-extractor and rag-service memory stable
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-08-12T03:37:36Z ===
+
+--- docker ps -a (summary) ---
+All 8 host_runtime_set services: UP (healthy)
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=11.66% MemUsage=358.2MiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] vn-market-intelligence-mcp-pdf-extractor-1: baseline 86.75% ENGAGED, 6-sample deep-probe
+[A-30] vn-market-intelligence-mcp-rag-service-1: baseline 91.75% ENGAGED, 6-sample deep-probe
+```
+
+### A-30 Deep-Probe Analysis
+
+**pdf-extractor (86.75% baseline):**
+- Verdict: FOLD (benign GC sawtooth)
+- Samples: 86.75%/86.75%/86.75%/86.75%/86.75%/86.75% (stable, no variation)
+- State: no OOMKilled, no restarts, no state change during 65s window
+- VM: VmHWM pinned at 2587640KB (98.7% of 2621440KB cap) but NOT advancing
+- Reclamation: 0 dips, 0 discontinuities
+- Tripwire: below escalation thresholds
+- Result: PASS, no emit
+
+**rag-service (91.75% baseline):**
+- Verdict: FOLD (benign GC sawtooth)
+- Samples: 91.81%/91.81%/91.81%/91.81%/91.81%/91.81% (stable, no variation)
+- State: no OOMKilled, restart_count=0, no state change during 65s window
+- VM: VmHWM pinned at cap but NOT advancing in window
+- Reclamation: 0 dips, 0 discontinuities
+- Tripwire: below escalation thresholds (median 91.81% < 93% sustained floor)
+- Result: PASS, no emit
+
+### Check Summary
+
+| Check | Service/Item | Result | Notes |
+|-------|--------|--------|-------|
+| A-01–A-11 | Container status | PASS | All 8 host_runtime_set services UP |
+| A-12–A-19 | Health endpoints | PASS | All 5 monitored endpoints HTTP 200 |
+| A-20 | pdf-extractor multi-probe | PASS | 3/3 in-container probes OK |
+| A-21 | Restart count (A-21) | PASS | mcp-server: RestartCount=0, no crash history |
+| A-30 | Memory (pdf-extractor) | PASS | FOLD verdict, no escalation |
+| A-30 | Memory (rag-service) | PASS | FOLD verdict, no escalation |
+| A-32 | Disk capacity | PASS | 45% < 85% threshold |
+
+### Audit Summary
+- fire-election: CLAIMED (tick 2026-08-12T03:30Z)
+- signals_posted: 0 (all checks PASS)
+- dashboard_rows: 0
+- status: ALL_GREEN
+- dedup: 0 skipped
+
+---
+
+
 
 ## d4-auto · 2026-08-12T03:00:02.024Z
 D4 candidates: R3-no-board-row:bctc-dataquality:vnindex-crosstool-mismatch,R3-no-board-row:bctc-dataquality:HPG:operating-profit-zero,R3-no-board-row:bctc-dataquality:DXG:persistent-absence
@@ -253,3 +328,21 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 ---
 
 [OUTPUT-CONTRACT] signals_posted=0 telegram_sent=0 signal_queue_rows_written=0 dashboard_rows=0 — ALL_GREEN cycle, no anomalies detected
+
+### OUTPUT-CONTRACT
+[OUTPUT-CONTRACT] FIRE_TICK=2026-08-12T03:30Z tier=1 signals_posted=0 dashboard_rows=0 dedup_skipped=0 final_status=ALL_GREEN
+
+### RETURN
+```
+AUDIT_TIER=1
+FIRE_TICK=2026-08-12T03:30Z
+CYCLE=c47
+VERDICT=PASS
+STATUS=ALL_GREEN
+TIMESTAMP=2026-08-12T03:39Z
+HEARTBEAT=unchanged (tier-1 subagent never writes auditor-tier1-last-healthy.json)
+CONTRACT-CONTRADICTION: NONE
+```
+
+NEXT: cron-detect-loop (passive-health gate passes; no subagent spawn next Tier-1 tick if no new breach occurs)
+
