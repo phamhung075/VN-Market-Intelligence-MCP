@@ -94,10 +94,10 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "FIX-DOWJONES-STALE-WRONG-VALUE",
+    "active_task_id": "FIX-FB-GATE-POINT-PCT-MATH",
     "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 3 row(s), highest-ranked FIX-DOWJONES-STALE-WRONG-VALUE — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 3 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-12T04:52:28Z",
+    "next_action": "Review-Lane QA-Drain claim of 3 row(s), highest-ranked FIX-FB-GATE-POINT-PCT-MATH — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 3 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-12T05:22:28Z",
     "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
@@ -13335,6 +13335,66 @@
             "observed_at": "2026-08-12T05:00:52Z"
           }
         }
+      },
+      {
+        "id": "FIX-FB-GATE-POINT-PCT-MATH",
+        "title": "fb-gate Check-F: point-change vs percent math consistency",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "size": "S",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-POINT-PCT-MATH",
+        "promoted_at": "2026-07-25T01:18:13Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-12T05:28:47Z",
+        "claimed_at": "2026-08-12T05:22:27Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "updated_by": "developer",
+        "next_agent": "qa",
+        "rebuild_required": false,
+        "branch": null,
+        "review_note": "developer: Added Check-H to scripts/fb-data-integrity-gate.sh — BLOCKs when |stated index point-change - implied point-change (pct x prev_close)| exceeds POINT_PCT_MATH_TOLERANCE (new header const, 1.0 pt). prev_close derived from live snapshot only: close/(1+changePct/100), never hardcoded. Generic via INDEX_ALIASES (VN-Index/VN30/HNX-Index/UPCOM), not one ticker. NOTE: ticket minted \"Check-F\" 2026-06-20 before letters F (currency-unit) and G (structural) were claimed by other shipped checks -- implemented as Check-H, next unclaimed letter, documented inline in the script header. RAW fence (both fixtures, live-snapshot-injected, no network dependency): fixture prev_close=1800, \"giam 0,32 diem (-0,32%)\" -> [BLOCK] Check-H point-pct-math: VN-Index stated \"giam 0.32 diem (-0.32%)\" -- implied point change from % at prev_close~1800.00 is -5.76 diem, delta=5.44 > 1.0pt tolerance; exit 1. Same prev_close, \"giam 5,90 diem (-0,32%)\" -> [PASS] fb-data-integrity-gate: 0 violations; exit 0. RED baseline confirmed via git stash: pre-fix script falsely PASSed the inconsistent fixture. Regression: real docs/social/fb-post-2026-07-24.md (VN-Index -13 diem/-0,78%) + matching live snapshot -> 0 violations (no false positive); same file with live API unreachable -> graceful skip, 0 violations. bash -n + shellcheck clean (1 pre-existing unrelated SC2034 on untouched POST_DATE). Simplicity gate Q1-Q4 all NO. Commits 4e1b07937 (fix) + d7a7c624c (decision journal), pushed origin/main.",
+        "status_note": "[QA] Review Record (direct-commit verify) 2026-08-12T05:28:12Z -- APPROVED, DONE_VERIFIED. Read git show 4e1b07937 -- scripts/fb-data-integrity-gate.sh on disk, not trusted from review_note prose: Check-H heredoc genuinely exists, computes prev_close=live_close/(1+live_pct/100) from live-snapshot-only quotes (never hardcoded), generic via INDEX_ALIASES (VN-Index/VN30/HNX-Index/UPCOM), BLOCKs when |stated_point_change-implied_point_change|>POINT_PCT_MATH_TOLERANCE (new header const, 1.0pt). Letter-collision note (minted Check-F 2026-06-20, shipped as Check-H since F/G claimed by later checks) verified accurate via grep -oE Check-[A-Z] against the header comment block. Re-ran both claimed fixtures myself via SNAPSHOT_FILE env-var injection (no network dependency): inconsistent pair prev_close=1800, VN-Index giam 0,32 diem (-0,32%) -> Check-H BLOCK, delta=5.44 diem > 1.0pt tolerance -- message text matches review_note verbatim; consistent pair giam 5,90 diem (-0,32%) same prev_close -> [PASS] fb-data-integrity-gate: 0 violations, exit 0 -- exact match. RED-baseline independently reproduced (not trusted): checked out 4e1b07937~1 (immediate parent, pre-fix) via git show, ran the SAME inconsistent-pair fixture (isolated from the pre-existing unrelated Check-D1 level-collision by stating a matching dong cua level) -> pre-fix script falsely [PASS] 0 violations exit 0; identical fixture on post-fix HEAD -> Check-H BLOCK exit 1 -- confirms the RED-baseline claim directly, not via git stash but equivalent git-show-of-parent-commit method. Regression: real docs/social/fb-post-2026-07-24.md with a matching live snapshot -> 0 violations (no false positive, matches VN-Index giam 13 diem/-0,78% math within tolerance); same file with MCP_BASE pointed at an unreachable host -> graceful [WARN] skip, 0 violations, exit 0 -- matches claimed live-API-unreachable posture. bash -n clean; shellcheck clean except 1 pre-existing SC2034 on POST_DATE:195, confirmed outside this diffs hunks (untouched line). Both commits (4e1b07937 code, d7a7c624c journal) confirmed real and on main ancestry via git merge-base --is-ancestor. Journal entry present: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S8, task-id stamped, content matches review_note. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-17.md STEP qa-S70.",
+        "verification": {
+          "raw_probe": {
+            "tool": "git show/git merge-base --is-ancestor + bash scripts/fb-data-integrity-gate.sh (own SNAPSHOT_FILE-injected fixtures, no network) + bash -n + shellcheck",
+            "args": "git show 4e1b07937 -- scripts/fb-data-integrity-gate.sh; git show 4e1b07937~1:scripts/fb-data-integrity-gate.sh > prefix.sh (RED baseline); bash scripts/fb-data-integrity-gate.sh <fixture.md> '' <snapshot.json> for BLOCK/PASS fixtures + real docs/social/fb-post-2026-07-24.md w/ matching + unreachable MCP_BASE; bash -n scripts/fb-data-integrity-gate.sh; shellcheck scripts/fb-data-integrity-gate.sh",
+            "live_value_observed": "Check-H BLOCK on inconsistent pair (delta=5.44>1.0pt, exact message match); [PASS] 0 violations exit 0 on consistent pair; pre-fix (4e1b07937~1) falsely [PASS] 0 violations on the SAME inconsistent pair -- RED baseline confirmed; real fb-post regression 0 violations w/ matching snapshot + graceful skip 0 violations w/ unreachable API; bash -n OK; shellcheck clean except 1 pre-existing unrelated SC2034 on untouched POST_DATE:195",
+            "observed_at": "2026-08-12T05:28:12Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-FB-GATE-STALE-MACRO-GUARD",
+        "title": "fb-gate Check-G: reject stale macro/FX presented as current + unverified comparison levels",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "size": "M",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-STALE-MACRO-GUARD",
+        "promoted_at": "2026-07-25T01:51:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-12T05:31:55Z",
+        "claimed_at": "2026-08-12T05:22:27Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "rebuild_required": false,
+        "branch": null,
+        "updated_by": "qa",
+        "review_note": "developer: Added Check-I to scripts/fb-data-integrity-gate.sh (macro/FX stale-as-current + unverified-comparison-level guard, generic across usdVnd/gold/brent/fedRate/bondYield). Paired flow change: docs/agents/fb-market-poster/flow/main.md STEP 1b builds $macro_provenance (per-class fetched_this_cycle marker reusing the existing is_estimate discipline) after get_macro_snapshot; STEP 4b writes it to a temp file and passes it as the gate new $4 arg. Absent provenance file = graceful skip (same posture as Check-B/D no-live-data). NOTE: ticket named this \"Check-G\" but A-H were already claimed by execution time (same pattern as prior Check-F->Check-H mint) -- implemented as Check-I, next unclaimed letter, documented inline. RAW fence (real fixtures, no network dependency): unprovenanced USD/VND 26.150 (prov entry fetched_this_cycle:false) -> [BLOCK] Check-I1 stale-as-current, exit 1. Honest-gap phrasing -> [PASS] 0 violations, exit 0. 26.150 with prov entry fetched_this_cycle:true value:26150 -> [PASS] 0 violations, exit 0. \"van o muc 25.500\" vs live prov 26150 -> [BLOCK] Check-I2 unverified-comparison-level delta=650.00 > 60.0 tolerance, exit 1. RED baseline: pre-fix script (git show HEAD) run against both BLOCK fixtures -> false PASS both times (proves the gap existed). Real-corpus multi-figure sentence (2026-06-08 post text \"26.127 ... vuot nguong 25.500\") with prov matching only 26.127 -> correctly PASSes the live figure and BLOCKs only the comparison figure. Regression: all 48 real docs/social/fb-post-*.md, no provenance file -> 0/48 Check-I false-fires (graceful skip); real fb-post-2026-06-03.md with a MATCHING provenance file -> 0 violations end-to-end. bash -n clean. Simplicity gate Q1-Q4 all NO. Commits 41975d433 (fix, both files) + c08a42f2d (decision journal), pushed origin/main.",
+        "status_note": "[QA] Review Record (direct-commit verify) 2026-08-12T05:32:00Z -- APPROVED, DONE_VERIFIED. Read git show 41975d433 -- scripts/fb-data-integrity-gate.sh + docs/agents/fb-market-poster/flow/main.md on disk, not trusted from review_note prose: Check-I genuinely exists (I1 stale-as-current / I2 unverified-comparison-level), generic across usdVnd/gold/brent/fedRate/bondYield via MACRO_CLASSES table, reads $4 macro-provenance-file, graceful-skip if absent (mirrors Check-B/D posture). Paired flow-doc change confirmed: STEP 1b builds $macro_provenance (per-class fetched_this_cycle, reusing is_estimate discipline) after get_macro_snapshot; STEP 4b writes it to a temp file and passes as gate's 4th arg. Letter-collision note (ticket said Check-G, shipped Check-I since A-H claimed) verified accurate via header comment block. Re-ran all 4 claimed fixtures myself (own hand-built posts + own $4 provenance JSON, no network dependency): unprovenanced figure (prov entry fetched_this_cycle:false) -> Check-I1 BLOCK exit 1; honest-gap phrasing -> PASS exit 0; matching-provenance figure -> PASS exit 0; unverified comparison level (mismatched vs live) -> Check-I2 BLOCK exit 1 -- all 4 exact match incl. BLOCK message text. Also verified an ABSENT $4 file (not a false-entry file) correctly graceful-skips per code intent -- a distinct, also-correct path from \"unprovenanced\". RED-baseline independently reproduced: checked out 41975d433^ (immediate parent, pre-fix, zero Check-I code confirmed via grep) via git show, ran the SAME two BLOCK fixtures on it -> both falsely [PASS] 0 violations exit 0 -- confirms the RED-baseline claim directly. Regression re-run myself against ALL 57 CURRENT docs/social/fb-post-*.md (superset of claimed 48) with no provenance file -> 0 Check-I false-fires, graceful skip -- matches claim substance. NOTE (non-blocking, logged not gating): git-ancestry + timestamp analysis shows only 41 fb-post-*.md files existed at the actual commit timestamp (2026-07-25T04:05:33+02:00); the other 7 landed in a later same-day batch-backfill commit (09:48, different session, data(social) commit). The literal \"48\" is not reproducible from commit-time repo state -- plausibly reflects the dev's live shared-container working-tree at test-time, not fabrication, but flagged for prose-accuracy awareness. Real-corpus checks: fb-post-2026-06-08.md's exact \"26.127 ... vuot nguong 25.500\" sentence isolated + re-tested -> PASSes 26.127, BLOCKs only 25.500 (I2) -- exact match to commit msg. fb-post-2026-06-03.md w/ matching macro provenance AND a matching price snapshot (needed to silence unrelated live Check-B/D noise from testing a June post against today's live prices) -> 0 violations end-to-end -- confirms claim. bash -n clean. mock-guard PASS (no production TS source touched -- script + doc only; Smart-Skip bun test/tsc N/A). Both commits (41975d433 code+doc, c08a42f2d journal) confirmed real and on main ancestry via git merge-base --is-ancestor. Journal entry present: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-17.md STEP qa-S71.",
+        "verification": {
+          "raw_probe": {
+            "tool": "git show/git merge-base --is-ancestor + bash scripts/fb-data-integrity-gate.sh (own hand-built fixtures + own $4 provenance JSON, no network dependency) + bash -n",
+            "args": "git show 41975d433 -- scripts/fb-data-integrity-gate.sh docs/agents/fb-market-poster/flow/main.md; git show 41975d433^:scripts/fb-data-integrity-gate.sh > prefix.sh (RED baseline); bash scripts/fb-data-integrity-gate.sh <fixture.md> \"\" \"\" <prov.json> for 4 BLOCK/PASS scenarios; loop over all 57 current docs/social/fb-post-*.md with no prov file; isolated real-corpus fb-post-2026-06-08.md macro line + fb-post-2026-06-03.md w/ matching snapshot+provenance; bash -n scripts/fb-data-integrity-gate.sh",
+            "live_value_observed": "4/4 fixtures exact match (I1 BLOCK/PASS/PASS/I2 BLOCK); RED baseline both false-PASS on pre-fix script; 0/57 Check-I false-fires (graceful skip, no prov file) -- superset of claimed 48, note logged that only 41 files existed at actual commit timestamp (7 landed in a later same-day batch-backfill commit); real-corpus 06-08 multi-figure sentence PASSes live figure + BLOCKs only comparison figure; real-corpus 06-03 w/ matching snapshot+provenance = 0 violations end-to-end",
+            "observed_at": "2026-08-12T05:31:54Z"
+          }
+        }
       }
     ],
     "head": {
@@ -15707,69 +15767,6 @@
           "OPS-NEWS-FETCH-REBUILD-STALE-IMAGE-3-COMMITS-BEHIND"
         ],
         "review_note": "PO RAW-verify 2026-08-07T00:05Z (session f298ccf7). SOURCE PLANE 6/6 PASS, measured not self-reported: DEFAULT_MAX_ITEMS present models.ts:19-22 (15/10 unchanged); resolveMaxItems models.ts:32-40; makeHeadlinesHandler->{post,get} handlers.ts:31-62 with all 4 routes registering the factory (handlers.ts:104-112), zero leftover inline bodies; handlers.ts 118L <=120L (was 170L); response envelope + 500 branch diffed by PO against d4f905a66^ = identical for all 4 originals; `bun test` 241 pass / 6 skip / 0 FAIL across 26 files. Landed d4f905a66 (2026-07-24T15:34:05Z), apps/news-fetch/ tree clean. ACCEPTED DIVERGENCE (out-of-contract, non-blocking, logged so it is not later rediscovered as a regression): POST body {maxItems:\"7\"} as a numeric STRING (contrary to the declared `maxItems?: number`) used to fall back to the default under the legacy `typeof === 'number'` guard and now parses to 7 — strictly more lenient, no in-contract caller affected. RUNTIME PLANE NOT DEPLOYED — this is why the row stays in review[]: container vn-market-intelligence-mcp-news-fetch-1 runs image sha256:e3263a24b38a Created=2026-07-15T15:05:14Z, 9 days BEFORE the commit; `docker exec ... grep -rl 'makeHeadlinesHandler|DEFAULT_MAX_ITEMS|resolveMaxItems' /app` returns EMPTY against a PASSING positive control (same grep for 'bloomberg/headlines' hits /app/src/interface/handlers.ts), and the container's handlers.ts is still 170L with bare literals at :74/:98/:120/:144. detail_ref carries rebuild_required=true; that obligation is UNMET. DISPOSITION: NO rework — dev work complete and correct. Deploy debt owned by OPS-NEWS-FETCH-REBUILD-STALE-IMAGE-3-COMMITS-BEHIND, which names d4f905a66 explicitly and whose AC-8 mandates reporting back. ROUTING FIX: next_agent was null, which resolves to po and is swept by NO automated lane — that alone is why this row sat 14 days untouched; set to ops to match sibling FACTORY-NEWS-fix-source-logging and ride the same rebuild. Flip to done_verified ONLY after that rebuild lands AC-3/AC-4 green."
-      },
-      {
-        "id": "FIX-FB-GATE-POINT-PCT-MATH",
-        "title": "fb-gate Check-F: point-change vs percent math consistency",
-        "type": "FIX",
-        "status": "REVIEW",
-        "priority": "P2",
-        "zone": "cross-service/",
-        "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-POINT-PCT-MATH",
-        "promoted_at": "2026-07-25T01:18:13Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-25T01:27:28Z",
-        "claimed_at": "2026-07-25T01:18:13Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "updated_by": "developer",
-        "next_agent": "qa",
-        "rebuild_required": false,
-        "branch": null,
-        "review_note": "developer: Added Check-H to scripts/fb-data-integrity-gate.sh — BLOCKs when |stated index point-change - implied point-change (pct x prev_close)| exceeds POINT_PCT_MATH_TOLERANCE (new header const, 1.0 pt). prev_close derived from live snapshot only: close/(1+changePct/100), never hardcoded. Generic via INDEX_ALIASES (VN-Index/VN30/HNX-Index/UPCOM), not one ticker. NOTE: ticket minted \"Check-F\" 2026-06-20 before letters F (currency-unit) and G (structural) were claimed by other shipped checks -- implemented as Check-H, next unclaimed letter, documented inline in the script header. RAW fence (both fixtures, live-snapshot-injected, no network dependency): fixture prev_close=1800, \"giam 0,32 diem (-0,32%)\" -> [BLOCK] Check-H point-pct-math: VN-Index stated \"giam 0.32 diem (-0.32%)\" -- implied point change from % at prev_close~1800.00 is -5.76 diem, delta=5.44 > 1.0pt tolerance; exit 1. Same prev_close, \"giam 5,90 diem (-0,32%)\" -> [PASS] fb-data-integrity-gate: 0 violations; exit 0. RED baseline confirmed via git stash: pre-fix script falsely PASSed the inconsistent fixture. Regression: real docs/social/fb-post-2026-07-24.md (VN-Index -13 diem/-0,78%) + matching live snapshot -> 0 violations (no false positive); same file with live API unreachable -> graceful skip, 0 violations. bash -n + shellcheck clean (1 pre-existing unrelated SC2034 on untouched POST_DATE). Simplicity gate Q1-Q4 all NO. Commits 4e1b07937 (fix) + d7a7c624c (decision journal), pushed origin/main."
-      },
-      {
-        "id": "FIX-FB-GATE-STALE-MACRO-GUARD",
-        "title": "fb-gate Check-G: reject stale macro/FX presented as current + unverified comparison levels",
-        "type": "FIX",
-        "status": "REVIEW",
-        "priority": "P2",
-        "zone": "cross-service/",
-        "size": "M",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-STALE-MACRO-GUARD",
-        "promoted_at": "2026-07-25T01:51:59Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-25T02:07:52Z",
-        "claimed_at": "2026-07-25T01:51:59Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "rebuild_required": false,
-        "branch": null,
-        "updated_by": "developer",
-        "review_note": "developer: Added Check-I to scripts/fb-data-integrity-gate.sh (macro/FX stale-as-current + unverified-comparison-level guard, generic across usdVnd/gold/brent/fedRate/bondYield). Paired flow change: docs/agents/fb-market-poster/flow/main.md STEP 1b builds $macro_provenance (per-class fetched_this_cycle marker reusing the existing is_estimate discipline) after get_macro_snapshot; STEP 4b writes it to a temp file and passes it as the gate new $4 arg. Absent provenance file = graceful skip (same posture as Check-B/D no-live-data). NOTE: ticket named this \"Check-G\" but A-H were already claimed by execution time (same pattern as prior Check-F->Check-H mint) -- implemented as Check-I, next unclaimed letter, documented inline. RAW fence (real fixtures, no network dependency): unprovenanced USD/VND 26.150 (prov entry fetched_this_cycle:false) -> [BLOCK] Check-I1 stale-as-current, exit 1. Honest-gap phrasing -> [PASS] 0 violations, exit 0. 26.150 with prov entry fetched_this_cycle:true value:26150 -> [PASS] 0 violations, exit 0. \"van o muc 25.500\" vs live prov 26150 -> [BLOCK] Check-I2 unverified-comparison-level delta=650.00 > 60.0 tolerance, exit 1. RED baseline: pre-fix script (git show HEAD) run against both BLOCK fixtures -> false PASS both times (proves the gap existed). Real-corpus multi-figure sentence (2026-06-08 post text \"26.127 ... vuot nguong 25.500\") with prov matching only 26.127 -> correctly PASSes the live figure and BLOCKs only the comparison figure. Regression: all 48 real docs/social/fb-post-*.md, no provenance file -> 0/48 Check-I false-fires (graceful skip); real fb-post-2026-06-03.md with a MATCHING provenance file -> 0 violations end-to-end. bash -n clean. Simplicity gate Q1-Q4 all NO. Commits 41975d433 (fix, both files) + c08a42f2d (decision journal), pushed origin/main."
-      },
-      {
-        "id": "FIX-FB-GATE-BREADTH-PCT-INTERNAL",
-        "title": "fb-gate Check-H: internal breadth-% vs cited-counts consistency",
-        "type": "FIX",
-        "status": "REVIEW",
-        "priority": "P2",
-        "zone": "cross-service/",
-        "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-BREADTH-PCT-INTERNAL",
-        "promoted_at": "2026-07-25T02:15:17Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-25T02:27:40Z",
-        "claimed_at": "2026-07-25T02:15:17Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "rebuild_required": false,
-        "branch": null,
-        "updated_by": "developer",
-        "review_note": "developer: Added Check-J to scripts/fb-data-integrity-gate.sh -- stated advancer/decliner breadth % must match counts cited elsewhere in the same post within BREADTH_PCT_TOLERANCE (new header const, 6.0pp). Stated-% extraction: (1) headline -- first N% within a tight 30-char window AFTER the \"do rong\"/\"breadth\" keyword, same sentence only (prevents grabbing an unrelated later % in the same sentence -- thanh khoan/ticker move); (2) labelled -- N% ma tang/giam either word order. Cited-counts extraction, label-agnostic (covers advancer/decliner/floor/ceiling generically without one regex per label): (a) explicit fraction \"N (label)? cua/tren/trong (tong)? (khoang|~)? M\" e.g. \"81 cua ~350\"; (b) co-occurring \"N ma tang ... M ma giam [... K ma dung gia]\" in one sentence. BLOCKs when stated % is farther than tolerance from every direction-matching candidate. NOTE: ticket title said \"Check-H\" but that letter is STALE -- A-I already claimed (Check-H=point-pct-math, Check-I=stale-macro, both this same day) -- enumerated live via grep before minting, implemented as Check-J, next unclaimed letter, documented inline. RAW fence (real fixtures, no network dependency): full-structure fixture \"Do rong thi truong ~40%. ... 81 cua ~350 ma ...\" with a snapshot file matching the fixture own VN-Index level (isolates from unrelated Check-D noise) -> [BLOCK] Check-J breadth-pct-internal: stated do rong...40% = 40.0% does not match cited counts (81 cua ~350 = 23.14%), delta=16.86pp > 6.0pp tolerance, exit 1. Matching fixture (do rong ~23% + same 81 cua ~350) -> [PASS] fb-data-integrity-gate: 0 violations, exit 0. RED baseline: git show HEAD (pre-fix, commit 41975d433) run against the same BLOCK fixture + matched snapshot -> [PASS] 0 violations (proves the gap existed). Regression: all 48 real docs/social/fb-post-*.md (no snapshot arg, live-independent check) -> 0/48 Check-J false-fires, incl. the closest real near-miss 2026-06-19 (\"chi 25% ma tang trong khi 63% ma giam\" vs cited 81/203/66=350 -> implied 23.14%/58.0%, deltas 1.86pp/5.00pp, both <=6.0pp tolerance). bash -n clean. Simplicity gate Q1-Q4 all NO. Commits ce04d512a (fix) + ce34c588f (decision journal), pushed origin/main."
       },
       {
         "id": "FIX-FB-GATE-WEEKLY-FRAME-MODE",
@@ -19761,6 +19758,27 @@
         "claimed_by": "dev-team (review-lane qa-drain)",
         "redispatch_count": 1,
         "occurrence_count": 12
+      },
+      {
+        "id": "FIX-FB-GATE-BREADTH-PCT-INTERNAL",
+        "title": "fb-gate Check-H: internal breadth-% vs cited-counts consistency",
+        "type": "FIX",
+        "status": "QA",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "size": "S",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-BREADTH-PCT-INTERNAL",
+        "promoted_at": "2026-07-25T02:15:17Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-12T05:22:28Z",
+        "claimed_at": "2026-08-12T05:22:27Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "rebuild_required": false,
+        "branch": null,
+        "updated_by": "developer",
+        "review_note": "developer: Added Check-J to scripts/fb-data-integrity-gate.sh -- stated advancer/decliner breadth % must match counts cited elsewhere in the same post within BREADTH_PCT_TOLERANCE (new header const, 6.0pp). Stated-% extraction: (1) headline -- first N% within a tight 30-char window AFTER the \"do rong\"/\"breadth\" keyword, same sentence only (prevents grabbing an unrelated later % in the same sentence -- thanh khoan/ticker move); (2) labelled -- N% ma tang/giam either word order. Cited-counts extraction, label-agnostic (covers advancer/decliner/floor/ceiling generically without one regex per label): (a) explicit fraction \"N (label)? cua/tren/trong (tong)? (khoang|~)? M\" e.g. \"81 cua ~350\"; (b) co-occurring \"N ma tang ... M ma giam [... K ma dung gia]\" in one sentence. BLOCKs when stated % is farther than tolerance from every direction-matching candidate. NOTE: ticket title said \"Check-H\" but that letter is STALE -- A-I already claimed (Check-H=point-pct-math, Check-I=stale-macro, both this same day) -- enumerated live via grep before minting, implemented as Check-J, next unclaimed letter, documented inline. RAW fence (real fixtures, no network dependency): full-structure fixture \"Do rong thi truong ~40%. ... 81 cua ~350 ma ...\" with a snapshot file matching the fixture own VN-Index level (isolates from unrelated Check-D noise) -> [BLOCK] Check-J breadth-pct-internal: stated do rong...40% = 40.0% does not match cited counts (81 cua ~350 = 23.14%), delta=16.86pp > 6.0pp tolerance, exit 1. Matching fixture (do rong ~23% + same 81 cua ~350) -> [PASS] fb-data-integrity-gate: 0 violations, exit 0. RED baseline: git show HEAD (pre-fix, commit 41975d433) run against the same BLOCK fixture + matched snapshot -> [PASS] 0 violations (proves the gap existed). Regression: all 48 real docs/social/fb-post-*.md (no snapshot arg, live-independent check) -> 0/48 Check-J false-fires, incl. the closest real near-miss 2026-06-19 (\"chi 25% ma tang trong khi 63% ma giam\" vs cited 81/203/66=350 -> implied 23.14%/58.0%, deltas 1.86pp/5.00pp, both <=6.0pp tolerance). bash -n clean. Simplicity gate Q1-Q4 all NO. Commits ce04d512a (fix) + ce34c588f (decision journal), pushed origin/main."
       }
     ],
     "_closed_signals_20260614": {
@@ -19974,13 +19992,13 @@
         "last_served_tick": "2026-08-12T04:51:35Z"
       },
       "qa_drain": {
-        "last_served_tick": "2026-08-12T02:22:00Z"
+        "last_served_tick": "2026-08-12T05:22:11Z"
       },
       "step1_triage": {
         "last_served_tick": "2026-08-12T02:51:32Z"
       }
     },
-    "_updated_at": "2026-08-12T04:51:35Z",
+    "_updated_at": "2026-08-12T05:22:11Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20681,6 +20699,169 @@
         },
         "createdAt": "2026-08-12T04:30:49Z",
         "drained_at": "2026-08-12T04:50:48Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3adc0b442b52f010b632e4248f4a4190b899679df5e5f356b9952cb1354c3b32",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=48 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T05:07:41Z",
+        "drained_at": "2026-08-12T05:20:55Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "833d7eeed0232752ed82cf398b6c1e9c784c222ef77e7a8c423fd5e7aff84a9b",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T05:01:35Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-12T05:01:35Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "05:00",
+          "leader_lock": "acquired",
+          "dev_head": "in_progress",
+          "devq": 471,
+          "signal_backlog": 26,
+          "note": "single-slot tick, no collisions, no calendar/cadence suppression"
+        },
+        "createdAt": "2026-08-12T05:01:35Z",
+        "drained_at": "2026-08-12T05:20:55Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "69ae913688e0bbf6893c0e0edcb34553bfab3418e46c523aebaeb6cce6e6b5e1",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T05:17:26Z",
+          "matched_slots": [
+            "chef-morning",
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "chef-morning",
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/unified-agent/flow/chef.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": true,
+          "due_reasons": {
+            "chef-morning": "cron",
+            "chef-intraday": "cadence",
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "chef-morning": null,
+            "chef-intraday": 120,
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-12T05:17:26Z",
+          "last_fired_slots": [
+            "chef-morning",
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "05:15",
+          "leader_lock": "acquired",
+          "dev_head": "in_progress",
+          "devq": 471,
+          "signal_backlog": 28,
+          "note": "agent_id=unified-agent matched 2 slots (chef-morning/chef-intraday) - WARN sent, CHEF mutex dropped chef-intraday (non-guaranteed), kept chef-morning (guaranteed). 1 signal_queue row (rag-service A-30 CRITICAL, already actioned) drained NEW->READ."
+        },
+        "createdAt": "2026-08-12T05:17:26Z",
+        "drained_at": "2026-08-12T05:20:55Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "dfc60d8cbf6c7376704b46e2373692b6b6faf450a0a2efaaffbc08699ae4124e",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/qa.md",
+          "tied_sections": "3:20260812000000000:## cycle-652 · 2026-08-12 · FIX-DOWJONES-STALE-WRONG-VALUE (dev-team review-lane, real code) — Direct-Commit Verify, APPROVED, DONE_VERIFIED (commit `57b916509`+`734c7bd28`)\n15:20260812000000000:## cycle-651 · 2026-08-12 · FIX-OHLCV-CORP-ACTION-CONTINUITY (dev-mcp-server, real code) — Direct-Commit Verify, APPROVED, DONE_VERIFIED (commit `90434daad`+`3f2acbdda`)\n25:20260812000000000:## cycle-650 · 2026-08-12 · FACTORY-GUARD-CI-rebuild-raw-verify-hook (architect, design-only) — Direct-Commit Verify, APPROVED, DONE_VERIFIED (commit `265451cc6`)\n35:20260812000000000:## cycle-649 · 2026-08-12 · FACTORY-GUARD-CI-shared-package-import-check (architect, design-only) — Direct-Commit Verify, APPROVED, DONE_VERIFIED (commit `d220c8e1b`)",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-12T04:58:30Z",
+        "drained_at": "2026-08-12T05:20:55Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ab1d8242230cda298380e2fc7c41864e537d9050ed5e7a23bae12baa2e5a034c",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/qa.md",
+          "tied_sections": "3:20260812000000000:## cycle-654 · 2026-08-12 · FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW (dev-mcp-server, real code) — Direct-Commit Verify, CHANGES_REQUESTED (commit `51f162829`+`e0ed0369e`, redispatch_count=1)\n27:20260812000000000:## cycle-652 · 2026-08-12 · FIX-DOWJONES-STALE-WRONG-VALUE (dev-team review-lane, real code) — Direct-Commit Verify, APPROVED, DONE_VERIFIED (commit `57b916509`+`734c7bd28`)",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-12T05:02:36Z",
+        "drained_at": "2026-08-12T05:20:55Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
