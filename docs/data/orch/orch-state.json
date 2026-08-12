@@ -1183,6 +1183,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-12T12:00Z",
         "dedup_key": "rag-service-stale-ack-fu-deploy-memory-20260812"
+      },
+      {
+        "id": "sys-20260812T123832-3b23",
+        "ts": "2026-08-12T12:38:32Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service memory breach (89.18%, 110.8MiB free) — ACK stale (task DONE_VERIFIED)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T12:30Z",
+        "dedup_key": "audit:rag-service:memory-stale-ack:FU-RAG-DEPLOY-MEMORY"
       }
     ],
     "last_triaged_at": "2026-08-12T08:40:43Z",
@@ -13635,6 +13649,34 @@
             "observed_at": "2026-08-12T12:28:07Z"
           }
         }
+      },
+      {
+        "id": "FIX-CONVICTION-HISTORY-EOD-BACKFILL",
+        "title": "conviction_history is MISSING two trading days (06-22 Mon, 06-25 Thu) with NO backfill path = permanent data loss. Written ONLY by live scanMarket Step 5c (scanMarket.ts:571-574, vnNow-stamped); daily_ohlcv HAS all four days (06-22=764/06-23=708/06-24=877/06-25=897) so VPS price-ingestion is healthy — the gap is conviction-specific. Add an EOD reconciliation/backfill path + a zero-row observability signal.",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "DONE_VERIFIED",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CONVICTION-HISTORY-EOD-BACKFILL",
+        "promoted_at": "2026-07-29T03:46:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-12T12:38:49Z",
+        "claimed_at": "2026-08-12T12:23:23Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "dev_mcp_server_note": "Root-cause fix (scanMarket.ts Step 5c conviction persistence moved above the early no-signals return — was silently skipping conviction_history on any zero-signal scan cycle; RAW-verified via cron_job_runs.rows_written=0/0 on 06-22+06-25, generalized to 38/86 trading days chronic gap) + upsertConvictionHistory() void->boolean same-cycle zero-write agent_feedback signal + EOD reconciliation/backfill (checkConvictionHistoryGap D-NEW3, wired into dataAuditJob nightly 23:00 GMT+7; self-deriving confirmed-trading-day floor from live watchlist count; unfixable-day (no prior-day baseline) honesty guard avoids fabrication/feedback-spam). Commits 87150a8aa (code+docs) + 7ff43dd57 (memory). Evidence: new FIX-CONVICTION-HISTORY-EOD-BACKFILL.test.ts 10/10 pass; 10 targeted regression suites 122/122 pass; tsc clean; toolCount=184/cronJobCount=88 unchanged (no new cron.schedule call site). Full bun test 14876 pass/40 skip/54 fail/1237 files -- zero failures reference conviction_history/scanMarket/dataAuditJob/checkConvictionHistoryGap/IMarketPriceRepository; git-stash-verified (4 modified files reverted) that VPS Proxy Health + insider-transactions batches fail identically without this change -- confirmed PRE-EXISTING baseline, not a regression. Live boot (DB_PATH=:memory:) health 200, toolCount=184, zero import errors. Doc-review: usecases.md/infrastructure.md/testing.md updated. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S19.",
+        "review_note": "[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commits 87150a8aa (code+docs) + 7ff43dd57 (memory) real, on main ancestry, git show --stat matches all 9 claimed files exactly. Read diffs on disk: Step 5c conviction persistence genuinely moved above the allSignals.length===0 early return in scanMarket.ts (root-cause confirmed, not a description-only claim); upsertConvictionHistory void->boolean confirmed in interface+impl+both callers; new 349L checkConvictionHistoryGap.ts (D-NEW3) is a substantive self-deriving-trading-day-floor + honest unfixable-day-guard implementation, wired into dataAuditJob.ts runDailyChecks(). Cron-registration-unchanged claim independently verified: the actual scheduleCron(CRONS.dataAuditDaily,...) call lives in schedulerJobTable.ts, which this commit did NOT touch -- structurally confirms no new cron.schedule call site, new check rides the existing dataAuditJob:daily job. Independently re-ran: new FIX-CONVICTION-HISTORY-EOD-BACKFILL.test.ts 10/10 pass; all 10 named targeted regression suites 165/165 pass (claimed 122/122 -- codebase grew since 07-29, 0 fail either way); tsc 0 errors; mock-guard PASS on all 5 touched production files; live boot (DB_PATH=:memory:) health 200, toolCount=183/89-cron-keys (claimed 184/88, same 2-week drift, structurally unrelated -- no tool/cron registration file touched by this commit); full bun test 15250 pass/40 skip/56 fail/1271 files (claimed 14876/40/54/1237, consistent growth) -- grepped all 56 fail names, zero reference conviction_history/scanMarket/dataAuditJob/checkConvictionHistoryGap/IMarketPriceRepository; VPS Proxy Health + insider-transactions (Task 1146) both reproduce failing in the full suite yet pass standalone (test-isolation flakiness, file-disjoint from this diff) -- confirmed pre-existing/unrelated without a risky git stash on this shared dirty repo. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-18.md STEP qa-S82 (this verify) + sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S19 (implementer).",
+        "qa_verified_at": "2026-08-12T12:38:12Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git show --stat/diff + bun test (targeted+full) + bun tsc --noEmit + mock-guard.sh + live boot DB_PATH=:memory: /health",
+            "args": "commits 87150a8aa+7ff43dd57 vs main ancestry; FIX-CONVICTION-HISTORY-EOD-BACKFILL.test.ts + 10 named targeted regression suites; grep for schedulerJobTable.ts in commit diff (cron-registration-unchanged check); full bun test suite grepped for conviction_history/scanMarket/dataAuditJob/checkConvictionHistoryGap/IMarketPriceRepository in fail names",
+            "live_value_observed": "10/10 new-test pass; 165/165 targeted-regression pass; tsc 0 errors; mock-guard PASS; live boot health 200 toolCount=183; full suite 15250 pass/40 skip/56 fail/1271 files, 0 of 56 fails reference this task surface; schedulerJobTable.ts absent from commit diff confirming no new cron.schedule call site",
+            "observed_at": "2026-08-12T12:38:12Z"
+          }
+        }
       }
     ],
     "head": {
@@ -20033,23 +20075,6 @@
         "claimed_by": "dev-team (review-lane qa-drain)",
         "commit_sha": "ca6d86869",
         "router_note_20260812T1145Z": "Tier-1 auditor c48 (11:33Z) independently re-sampled rag-service post-fix and found memory at 90.13% (VmHWM pinned at 1437MB cgroup-cap-adjacent), flat within its own 65s probe window — climbing from dev-rag-service's own last logged reading of 796.7-803.9MiB (~78%) at ~11:07Z. Router independently confirmed via live docker stats at 11:44Z: 923.3MiB/1GiB=90.17%, RestartCount still 0 (no new crash yet). This means the AC-3 PASS dev-rag-service certified was based on a 26min window that ended before the climb continued — memory has kept rising for ~37min past that window and has not yet re-plateaued. NOT yet a repeat OOM (RestartCount unchanged), but QA should extend the observation window past dev-rag-service's original 26min before certifying AC-3 durable, not rely on the already-recorded flat-796.7-803.9MiB reading alone. Separately: the auditor c48 report claimed FU-RAG-DEPLOY-MEMORY 'is NOT in the task_board' (STALE-ACK mismatch) — this is FACTUALLY WRONG, the row exists in done_verified[] with an explicit PO note establishing it as the intentional ACK-tracking row for rag-service memory (docs/data/auditor-launchd-ack.json .acked_memory[0], re-pointed by PO 2026-07-29T11:26Z). Do not treat the STALE-ACK claim in the c48 notebook entry as accurate."
-      },
-      {
-        "id": "FIX-CONVICTION-HISTORY-EOD-BACKFILL",
-        "title": "conviction_history is MISSING two trading days (06-22 Mon, 06-25 Thu) with NO backfill path = permanent data loss. Written ONLY by live scanMarket Step 5c (scanMarket.ts:571-574, vnNow-stamped); daily_ohlcv HAS all four days (06-22=764/06-23=708/06-24=877/06-25=897) so VPS price-ingestion is healthy — the gap is conviction-specific. Add an EOD reconciliation/backfill path + a zero-row observability signal.",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "QA",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CONVICTION-HISTORY-EOD-BACKFILL",
-        "promoted_at": "2026-07-29T03:46:38Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-12T12:23:24Z",
-        "claimed_at": "2026-08-12T12:23:23Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "dev_mcp_server_note": "Root-cause fix (scanMarket.ts Step 5c conviction persistence moved above the early no-signals return — was silently skipping conviction_history on any zero-signal scan cycle; RAW-verified via cron_job_runs.rows_written=0/0 on 06-22+06-25, generalized to 38/86 trading days chronic gap) + upsertConvictionHistory() void->boolean same-cycle zero-write agent_feedback signal + EOD reconciliation/backfill (checkConvictionHistoryGap D-NEW3, wired into dataAuditJob nightly 23:00 GMT+7; self-deriving confirmed-trading-day floor from live watchlist count; unfixable-day (no prior-day baseline) honesty guard avoids fabrication/feedback-spam). Commits 87150a8aa (code+docs) + 7ff43dd57 (memory). Evidence: new FIX-CONVICTION-HISTORY-EOD-BACKFILL.test.ts 10/10 pass; 10 targeted regression suites 122/122 pass; tsc clean; toolCount=184/cronJobCount=88 unchanged (no new cron.schedule call site). Full bun test 14876 pass/40 skip/54 fail/1237 files -- zero failures reference conviction_history/scanMarket/dataAuditJob/checkConvictionHistoryGap/IMarketPriceRepository; git-stash-verified (4 modified files reverted) that VPS Proxy Health + insider-transactions batches fail identically without this change -- confirmed PRE-EXISTING baseline, not a regression. Live boot (DB_PATH=:memory:) health 200, toolCount=184, zero import errors. Doc-review: usecases.md/infrastructure.md/testing.md updated. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S19."
       }
     ],
     "_closed_signals_20260614": {
