@@ -1510,3 +1510,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service sustained memory pressure
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** rag-service
+**Details:** 6-sample deep-probe shows all 6 samples at 98.73% memory utilization (sustained high). Container has 12 restarts and was restarted 50 minutes ago. No OOMKilled event detected. VmHWM data unavailable due to host headroom below 40MiB threshold.
+**Impact:** Sustained high memory utilization without reclamation dips indicates memory pressure. Container is approaching cgroup limit. Risk of OOM if pattern continues.
+**Root cause:** Memory-intensive operations or memory leak in rag-service. Possible accumulation during retrieval operations.
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-12T01:07:49Z (signal sys-20260812T010727-7f75, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
