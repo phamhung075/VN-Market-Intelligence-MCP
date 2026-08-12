@@ -1,0 +1,2 @@
+[emit-signal] SKIP-dedup dedup_key=microservice_degraded:pdf-extractor:A-30 last_sent=2026-08-05T14:34:48Z id=sys-20260811T163752-1792
+[emit-dashboard] OK id=sys-20260811T163752-1792 check_id=A-30

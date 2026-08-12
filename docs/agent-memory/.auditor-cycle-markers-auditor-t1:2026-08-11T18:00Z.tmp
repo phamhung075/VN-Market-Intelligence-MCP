@@ -1,0 +1,5 @@
+[emit-signal] SKIP-dedup dedup_key=microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30 last_sent=2026-08-11T12:36:18Z id=sys-20260811T181602-0de9
+[emit-signal] SKIP-dedup dedup_key=microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30 last_sent=2026-08-09T04:11:10Z id=sys-20260811T181604-0404
+[emit-dashboard] ABORT unknown-arg --zone
+[emit-dashboard] OK id=sys-20260811T181602-0de9 check_id=A-30
+[emit-dashboard] OK id=sys-20260811T181604-0404 check_id=A-30
