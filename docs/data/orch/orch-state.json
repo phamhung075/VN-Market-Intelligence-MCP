@@ -13293,6 +13293,34 @@
             "observed_at": "2026-08-12T04:57:16Z"
           }
         }
+      },
+      {
+        "id": "FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED",
+        "type": "FIX",
+        "title": "signal_outcomes resolution job stalled: 65/72 rows pending >5d, checked_at never advances; calibration frozen since 2026-06-14",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED",
+        "promoted_at": "2026-07-25T00:17:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-12T05:00:52Z",
+        "claimed_at": "2026-08-12T04:52:27Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "rebuild_required": true,
+        "branch": null,
+        "review_note": "dev-mcp-server: root cause = 2 compounding bugs in signalOutcomeStore.ts (Option-B /price/history envelope-shape parse bug — flat array vs real {code,history}, same class as 1945a — + hardcoded days=3 unusable for old dates; baseline price_at_signal had NO Option-B fallback at all against market_prices_history's rolling ~24h purge). Live-verified 102/105 rows stuck pending despite hourly cron reporting success. Fixed via canonical getPriceHistory client + dynamic days + injectable fetchHistoryFn. Live-copy-DB proof (real stock-price service, not the live container): 102 pending -> 7 (98/105 checked_at populated), remaining 7 legit (2 non-ticker MACRO/MULTI signals, 5 too-recent for 48h window) -- self-heals via the SAME already-scheduled hourly cron once deployed, no backfill script needed. Also fixed folded_scope_orphan_fk durably: cleanExpired()/checkStaleAgentSignals() bulk DELETEs were throwing FOREIGN KEY constraint failed (rolled back, 0 rows) whenever any matched row was still referenced by signal_outcomes -- live-verified 104/5983 expired rows blocked -- guarded both with NOT IN subquery; getAccuracyStats INNER->LEFT JOIN so orphans are not silently dropped from stats; the 1 existing orphan (id=66) resolves normally via the fixed generic resolver, no special-case script. Added checkStalledResolutionLiveness() self-alert guard (>=1 BUG alert/day if rows sit unresolved >72h). SCOPE NOTE: verification_gate (b) get_calibration_report is a DIFFERENT subsystem (prediction_claims/calibrationReportJob.ts) -- live DB already shows computed_at=2026-07-19/resolved=6 (independently self-recovered) -- gate already passes, did not touch that code. Evidence: tsc clean, new suite 9/9 pass, affected+precedent suites 147/147 pass, toolCount=184/cronJobCount=88 unaffected, local server boot clean. Commits 1f4b491b1 (code+test) + 537911454 (memory), pushed origin/main. QA: verify LIVE named-vol DB post-rebuild per verification_gate (a)/(b)/(c).",
+        "status_note": "[QA] Review Record (direct-commit verify) 2026-08-12T05:00:52Z -- APPROVED, DONE_VERIFIED. Independently re-verified both compounding bug fixes on disk (git show 1f4b491b1, main ancestry confirmed): (1) envelope-parse fix -- signalOutcomeStore.ts now uses canonical getPriceHistory({code,days}) client reading envelope.history (was flat-array Array.isArray-always-false dead code), days dynamically derived from targetDate gap (was hardcoded 3), baseline price_at_signal gained the same Option-B fallback via new injectable fetchHistoryFn dep. (2) FK-guard fix -- cleanExpired() + checkStaleAgentSignals() both gained AND id NOT IN (SELECT signal_id FROM signal_outcomes) with a no-such-table fallback; getAccuracyStats INNER->LEFT JOIN confirmed; checkStalledResolutionLiveness() self-alert guard wired into runSignalOutcomeResolutionJob -- all matches review_note claims exactly, not trusted from prose. LIVE named-vol DB (data/live/market.db, container image built 2026-08-11 -- confirmed fix code present inside running container via docker exec grep): queried myself. Gate (a) CONFIRMED: 105 total, 103 checked_at populated, only 2 pending (stock_code MACRO/MULTI, non-ticker, exactly matching claim) -- live state better than the deploy-time 98/105 snapshot, self-heal continuing 18d later via hourly cron (cron_job_runs: all-success, no FK errors). Gate (b) CONFIRMED: calibration_snapshots is a genuinely separate subsystem (grep-confirmed calibrationReportJob.ts/calibrationTools.ts, never touched by this diff) -- computed_at advances weekly past 2026-06-14, latest 2026-08-09 resolved=17(>4) -- SCOPE NOTE in review_note verified accurate, not deflection. Gate (c): no genuinely NEW signal_outcomes row exists post-fix to test literally-fresh end-to-end (max id=105 predates the fix) -- traced to a SEPARATE upstream recording-starvation issue already PO-ruled CANCELLED 2026-07-31 (FIX-ALERT-CASCADE-OUTCOME-DEAD, \"recorder is starved, not broken\", 3 successor tasks minted) -- out of this task scope; accepted via equivalent evidence (full pre-existing backlog resolved correctly, hourly cron all-success, orphan id=66 resolved normally). Ran tests myself: new suite 11/11 pass, 6 affected/precedent suites 76/76 pass, tsc clean, mock-guard PASS, DDD/secret greps clean. Checked 4 subsequent commits touching these files (314e70718, f5698cb76 + 2 unrelated) for drift -- none, both independently corroborate the same live counts. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-17.md STEP qa-S68.",
+        "verification": {
+          "raw_probe": {
+            "tool": "sqlite3 (readonly probe against live named-vol-bound market.db) + docker exec grep (fix-code-present check) + docker inspect (image build date) + git show/bun test/tsc/mock-guard",
+            "args": "sqlite3 data/live/market.db \"SELECT COUNT(*), SUM(checked_at IS NOT NULL) FROM signal_outcomes\" and \"...WHERE checked_at IS NULL AND created_at<datetime(now,-48 hours)\"; docker exec mcp-server-1 grep getPriceHistory/NOT IN.../checkStalledResolutionLiveness src/...; docker inspect mcp-server-1 image Created; git show 1f4b491b1 -- signalOutcomeStore.ts agentSignalStore.ts checkStaleAgentSignals.ts signalOutcomeResolutionJob.ts; bun test src/__tests__/FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED.test.ts + 6 precedent suites; bun tsc --noEmit; mock-guard.sh --files",
+            "live_value_observed": "105 signal_outcomes rows, 103 checked_at populated, 2 pending (both non-ticker MACRO/MULTI, gate-a legit-unresolvable) -- container image built 2026-08-11 (post-commit) with fix code confirmed present live; 11/11 new + 76/76 precedent tests pass, tsc 0 errors, mock-guard PASS; calibration_snapshots (separate subsystem) computed_at=2026-08-09 resolved=17 (gate-b independently healthy)",
+            "observed_at": "2026-08-12T05:00:52Z"
+          }
+        }
       }
     ],
     "head": {
@@ -19423,6 +19451,29 @@
         "origin_signal_id": "bug-escalation:bctc-analyst:signals-absent-4th-cycle",
         "updated_by": "developer",
         "dev_note": "Fixed: added read-first SIGNAL-FILE WRITE VERIFICATION guard to docs/agents/bctc-analyst/flow/main.md — Write tool's own return is now the ONLY write-verification signal (per-cycle), agent must never Read a docs/signals/*.json path it wrote in a prior cycle to re-confirm presence. AC-2: no Bash/Glob grant added, tool grant stays narrow. AC-3 regression traced (not replayed) in decision journal. Commit c23d19da4 (pushed to origin/main). Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md STEP developer-S91."
+      },
+      {
+        "id": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
+        "type": "FIX",
+        "title": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW — get_bctc_pending_refine returns 235K chars exceeding MCP inline limit → callers get a file path not data",
+        "zone": "apps/mcp-server/",
+        "status": "REVIEW",
+        "priority": "medium",
+        "size": "S",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
+        "promoted_at": "2026-07-24T23:25:06Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-12T05:01:49Z",
+        "claimed_at": "2026-08-12T04:52:27Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "dev-mcp-server",
+        "rebuild_required": true,
+        "branch": null,
+        "updated_by": "qa (RAW-verify vc-changes — pagination/offset-walk confirmed correct, but AC bounded-inline-payload-no-file-path-fallback falsified live: MAX_LIMIT=100 reproduces/worsens the original overflow on real windows-heavy data)",
+        "review_note": "get_bctc_pending_refine now bounds/paginates: limit defaults to 20 (max 100, zod .optional().default() order fixed), new offset param pairs with the existing SQL LIMIT (native LIMIT/OFFSET on Branch2 ticker + Branch3 default queries) so all pending-refine rows remain reachable by paging offset+=limit; no rows lost vs the old unbounded dump. Served-path test (real McpServer + registerGetBctcPendingRefineTool): 45-row set -> bounded first page (20 rows, well under MCP inline limit, no file-path fallback), 3-page offset walk (20/20/5) recovers all 45 ids exactly once, default page size applies whenever limit is omitted (incl. with explicit offset). bun tsc --noEmit clean; new test file 5/5 pass; pre-existing FIX-REFINE-PENDING-SCHEMA.test.ts (same tool) 13/13 pass unchanged; gen-project-stats toolCount=184/cronJobCount=88 unchanged (no tool added/removed). Commits 51f162829 (code+test+doc) + e0ed0369e (decision journal), pushed. rebuild_required:true — LIVE inline-payload-size verify needs the container rebuild; leaving to QA/ops cascade per dispatch instruction. | [QA] Direct-Commit Verify RAW-verify (2026-08-12): commits 51f162829+e0ed0369e real, pushed, on main; pagination/offset-walk code matches claim exactly (git show + own test run: new suite 5/5, pre-existing FIX-REFINE-PENDING-SCHEMA 13/13, tsc clean, mock-guard PASS). rebuild_required RESOLVED — running mcp-server image built 2026-08-11 (post-commit), docker exec grep confirms fixed source live in container. BUT live-called the real handler in-container against REAL production data (not the test synthetic pdf_path=NULL fixture, which short-circuits windows[] to near-zero weight): default (limit=20,offset=0)=125,211 chars; limit=50=301,654; limit=100 (the tool own documented max)=565,285 chars — over 2x the originally-reported 235K overflow trigger that this fix exists to close. Deep-offset sample (offset=180) confirms ~5-6KB/row is the systemic average, not a front-of-queue outlier. AC bounded-inline-payload-no-file-path-fallback is only satisfied at the DEFAULT page size (20); any limit >=~40 (well inside the schema own allowed 1-100 range) reproduces/worsens the exact bug. CHANGES_REQUESTED: recalibrate MAX_LIMIT (or add a response-size guard) against real windows-partitioned per-row weight, re-test live at limit=100, not just the synthetic near-zero-weight fixture. Data-loss/offset-walk correctness is NOT in question — only the size-bound claim.",
+        "owner": "dev-mcp-server",
+        "redispatch_count": 1
       }
     ],
     "qa": [
@@ -19696,46 +19747,6 @@
         "claimed_by": "dev-team (review-lane qa-drain)",
         "redispatch_count": 1,
         "occurrence_count": 12
-      },
-      {
-        "id": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
-        "type": "FIX",
-        "title": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW — get_bctc_pending_refine returns 235K chars exceeding MCP inline limit → callers get a file path not data",
-        "zone": "apps/mcp-server/",
-        "status": "QA",
-        "priority": "medium",
-        "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
-        "promoted_at": "2026-07-24T23:25:06Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-12T04:52:28Z",
-        "claimed_at": "2026-08-12T04:52:27Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "rebuild_required": true,
-        "branch": null,
-        "updated_by": "dev-mcp-server",
-        "review_note": "get_bctc_pending_refine now bounds/paginates: limit defaults to 20 (max 100, zod .optional().default() order fixed), new offset param pairs with the existing SQL LIMIT (native LIMIT/OFFSET on Branch2 ticker + Branch3 default queries) so all pending-refine rows remain reachable by paging offset+=limit; no rows lost vs the old unbounded dump. Served-path test (real McpServer + registerGetBctcPendingRefineTool): 45-row set -> bounded first page (20 rows, well under MCP inline limit, no file-path fallback), 3-page offset walk (20/20/5) recovers all 45 ids exactly once, default page size applies whenever limit is omitted (incl. with explicit offset). bun tsc --noEmit clean; new test file 5/5 pass; pre-existing FIX-REFINE-PENDING-SCHEMA.test.ts (same tool) 13/13 pass unchanged; gen-project-stats toolCount=184/cronJobCount=88 unchanged (no tool added/removed). Commits 51f162829 (code+test+doc) + e0ed0369e (decision journal), pushed. rebuild_required:true — LIVE inline-payload-size verify needs the container rebuild; leaving to QA/ops cascade per dispatch instruction."
-      },
-      {
-        "id": "FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED",
-        "type": "FIX",
-        "title": "signal_outcomes resolution job stalled: 65/72 rows pending >5d, checked_at never advances; calibration frozen since 2026-06-14",
-        "status": "QA",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED",
-        "promoted_at": "2026-07-25T00:17:59Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-12T04:52:28Z",
-        "claimed_at": "2026-08-12T04:52:27Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "rebuild_required": true,
-        "branch": null,
-        "review_note": "dev-mcp-server: root cause = 2 compounding bugs in signalOutcomeStore.ts (Option-B /price/history envelope-shape parse bug — flat array vs real {code,history}, same class as 1945a — + hardcoded days=3 unusable for old dates; baseline price_at_signal had NO Option-B fallback at all against market_prices_history's rolling ~24h purge). Live-verified 102/105 rows stuck pending despite hourly cron reporting success. Fixed via canonical getPriceHistory client + dynamic days + injectable fetchHistoryFn. Live-copy-DB proof (real stock-price service, not the live container): 102 pending -> 7 (98/105 checked_at populated), remaining 7 legit (2 non-ticker MACRO/MULTI signals, 5 too-recent for 48h window) -- self-heals via the SAME already-scheduled hourly cron once deployed, no backfill script needed. Also fixed folded_scope_orphan_fk durably: cleanExpired()/checkStaleAgentSignals() bulk DELETEs were throwing FOREIGN KEY constraint failed (rolled back, 0 rows) whenever any matched row was still referenced by signal_outcomes -- live-verified 104/5983 expired rows blocked -- guarded both with NOT IN subquery; getAccuracyStats INNER->LEFT JOIN so orphans are not silently dropped from stats; the 1 existing orphan (id=66) resolves normally via the fixed generic resolver, no special-case script. Added checkStalledResolutionLiveness() self-alert guard (>=1 BUG alert/day if rows sit unresolved >72h). SCOPE NOTE: verification_gate (b) get_calibration_report is a DIFFERENT subsystem (prediction_claims/calibrationReportJob.ts) -- live DB already shows computed_at=2026-07-19/resolved=6 (independently self-recovered) -- gate already passes, did not touch that code. Evidence: tsc clean, new suite 9/9 pass, affected+precedent suites 147/147 pass, toolCount=184/cronJobCount=88 unaffected, local server boot clean. Commits 1f4b491b1 (code+test) + 537911454 (memory), pushed origin/main. QA: verify LIVE named-vol DB post-rebuild per verification_gate (a)/(b)/(c)."
       }
     ],
     "_closed_signals_20260614": {
