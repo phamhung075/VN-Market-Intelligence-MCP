@@ -1,42 +1,46 @@
 {
   "ticker": "DXG",
   "signal_type": "bctc_signal",
-  "quarter": "unknown — get_bctc_full returns \"Chưa có dữ liệu BCTC\" (17th+ consecutive cycle, unresolved extraction gap)",
+  "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Bất động sản dân dụng — phát triển dự án nhà ở, phân phối/môi giới BĐS (theo hồ sơ ngành, chưa xác nhận qua BCTC do thiếu dữ liệu)",
-  "customer": "Người mua nhà ở cá nhân, nhà đầu tư thứ cấp BĐS (theo hồ sơ ngành, chưa xác nhận qua BCTC do thiếu dữ liệu)",
-  "ops": "get_bctc_full(DXG) trả về \"Chưa có dữ liệu BCTC\" — không có income statement/balance sheet cấu trúc dù có PDF lưu trữ (DXG_2026_Q1.pdf, DXG_2025_Q1..Q4.pdf tồn tại trong list_stored_pdfs) — pipeline trích xuất chưa xử lý hoặc lỗi silent. Chỉ số định giá lấy từ get_sector_comparison (nguồn khác, không phải get_bctc_full): PE 66.5 vs trung vị ngành 16.1 (PREMIUM +312%), PB 1.2 vs 1.3 (NGANG BANG), ROE 1.9% vs trung vị 7.3% (DUOI MEDIAN).",
-  "mgmt": "Không đánh giá được track record quản trị do thiếu dữ liệu BCTC cấu trúc. BCTC Q2-2026 quá hạn nộp (hạn 30/07/2026).",
+  "product": "Bất động sản dân dụng — phát triển dự án nhà ở, môi giới (Đất Xanh Services) tại TP.HCM và các tỉnh vệ tinh.",
+  "customer": "Người mua nhà/nhà đầu tư cá nhân khu vực HCMC mở rộng và các tỉnh lân cận.",
+  "ops": "Chưa có dữ liệu BCTC chi tiết (get_bctc_full trả 'Chưa có dữ liệu BCTC', chu kỳ thứ 18+ liên tiếp) — chỉ số định giá tính từ sector-comparison: PE 66,5x so median ngành BĐS 16,1x (PREMIUM +312%), ROE 1,9% so median 7,3% (DƯỚI MEDIAN). Định giá rất đắt so với hiệu quả sinh lời thực tế.",
+  "mgmt": "BCTC Q2-2026 QUÁ HẠN (hạn 30/07/2026, đã trễ 13 ngày). Khoảng trống trích xuất dữ liệu kéo dài (18+ chu kỳ) đã được báo cáo tới ops (root_task BCTC-HIST-VPS-BACKFILL) — không tự suy diễn số liệu.",
   "ey_spread": {
-    "classify": "AVOID",
-    "value_pp": -3.5,
     "pe": 66.5,
-    "roe_sector_pct": 1.9,
-    "max_deposit_rate_pct": 5
+    "sector_median_pe": 16.1,
+    "roe_pct_sector_comp": 1.9,
+    "earning_yield_pct": 1.5,
+    "max_deposit_rate_pct": 5,
+    "spread_pp": -3.5,
+    "verdict": "AVOID",
+    "note": "valuation_verdict=AVOID — do NOT post bullish signal per stage-analyze.md Step 2 rule"
   },
   "kinhdich": {
-    "hexagram": "Kien(39)",
-    "trend": "BAT LOI",
-    "signal": "GIU",
-    "confidence_pct": 25
+    "que": "Vị Tế (64)",
+    "xu_huong": "TRUNG TÍNH",
+    "tin_hieu": "GIỮ",
+    "do_tin_cay_pct": 38
   },
   "esc_gate": {
-    "esc1_trick_detection": "unevaluable — no source BCTC data",
-    "esc2_balance_sheet": "unevaluable — no source BCTC data",
-    "esc3_ocf_ni_divergence": "unevaluable — no source BCTC data",
-    "esc4_nonop_share": "unevaluable — no source BCTC data",
-    "esc5_refine_confidence": "unevaluable — no source BCTC data"
+    "esc1": "unevaluable — no source data (Chưa có dữ liệu BCTC) and no Bash/Glob grant",
+    "esc2": "unevaluable — no balance sheet data returned",
+    "esc3": "unevaluable — no cash-flow data returned",
+    "esc4": "unevaluable — no P&L data returned",
+    "esc5": "unevaluable — no source data to resolve report_id against"
   },
-  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
-  "legal_risk": "Không có rủi ro pháp lý trong khoảng thời gian này",
-  "bctc_confidence_pct": null,
-  "data_gap": "DXG get_bctc_full returns 'Chưa có dữ liệu BCTC' — 17th+ consecutive cycle. valuation_verdict AVOID computed from sector-comparison PE/ROE only, NOT corroborated by get_bctc_full financials.",
-  "cycle_tick": "2026-08-12T00:00Z",
-  "generated_at": "2026-08-12T00:03:30Z",
+  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể.",
+  "legal_risk": "Không có tín hiệu rủi ro pháp lý.",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": [],
+  "data_notes": "get_bctc_full(DXG) = 'Chưa có dữ liệu BCTC' — 18th+ consecutive cycle unresolved. All figures above sourced from get_sector_comparison peer-median context only, not from a company-specific extracted BCTC.",
+  "fetchedAt": "2026-08-12T15:07:12.936152763Z",
   "_processed": {
-    "fingerprint": "daf0e5474b9cfed2b7b87edd65a2c5ea7a95cbb27925a1a6fa7d31ab76fec668",
-    "processedAt": "2026-08-12T00:20:47Z",
+    "fingerprint": "218ce662cefbccfcf8a365898756eba5deae5b38c8a22c2db0e06dd0c635e5dd",
+    "processedAt": "2026-08-12T15:21:41Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

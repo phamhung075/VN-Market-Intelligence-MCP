@@ -4,53 +4,60 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Ngân hàng thương mại quốc doanh — huy động/cho vay, thanh toán quốc tế, ngoại hối, bancassurance",
-  "customer": "Doanh nghiệp lớn/FDI, khách hàng bán lẻ đô thị, đối tác thanh toán quốc tế",
-  "ops": "Thu nhập lãi thuần 17.421 tỷ VND, lợi nhuận HĐKD 14.088,6 tỷ (80.9%), LNST 9.462,1 tỷ (54.3%). ROE 4.2% (Q1 thô) / 16.7% (so sánh ngành, DUOI MEDIAN trung vị 17.6%). PE 14.1 vs trung vị ngành 9.0 (PREMIUM +57%), PB 2.2 vs 1.5 (PREMIUM +45%). OCF/NI ratio Q1 = 1.37x (12.944.932/9.462.095) — không có dấu hiệu accrual bất thường. Dòng tiền nước ngoài 5 phiên: -42K cp net (MẠNH HƠN ngành, ngành -211K).",
-  "mgmt": "Sentiment 30 ngày GIẢM (slope -0.30, 0/7 bullish, 3 bearish). BCTC Q1-2026 ĐÃ NỘP đúng hạn (nộp 2026-07-19, hạn 15/05/2026 — lưu ý ngày nộp sau hạn công bố nhưng đã ghi nhận ĐÃ NỘP trong lịch, không tính là quá hạn theo watchlist tracking).",
+  "product": "Ngân hàng thương mại quốc doanh — tín dụng doanh nghiệp/bán lẻ, thanh toán quốc tế, kinh doanh ngoại hối, một trong các NHTM lớn nhất Việt Nam.",
+  "customer": "Khách hàng doanh nghiệp lớn, doanh nghiệp FDI (thanh toán quốc tế/L/C), khách hàng bán lẻ đô thị.",
+  "ops": "Thu nhập lãi thuần Q1-2026 17.421 tỷ VND, LN thuần HĐKD 14.088,6 tỷ (biên 80,9%), LN sau thuế 9.462,1 tỷ (54,3%). ROE 16,7% (annualized, sector-comp) dưới median ngành 17,6% (DƯỚI MEDIAN). Dòng tiền nước ngoài 5 phiên MẠNH HƠN ngành dù ròng bán.",
+  "mgmt": "BCTC Q1-2026 ĐÃ NỘP đúng hạn (nộp 2026-07-19, hạn 15/05/2026 — nộp muộn so hạn gốc nhưng đã ghi nhận ĐÃ NỘP, không còn QUÁ HẠN). PE 14,1x premium +57% so median ngành nhưng ROE dưới median — định giá kém hấp dẫn tương đối so với nhóm NHTM quốc doanh/tư nhân lớn khác.",
   "ey_spread": {
-    "classify": "FAIR",
-    "value_pp": 2.09,
     "pe": 14.1,
-    "roe_sector_pct": 16.7,
-    "max_deposit_rate_pct": 5
+    "sector_median_pe": 9,
+    "roe_pct_annualized_sector_comp": 16.7,
+    "earning_yield_pct": 7.09,
+    "max_deposit_rate_pct": 5,
+    "spread_pp": 2.09,
+    "verdict": "FAIR",
+    "rate_sensitive_headwind": false
   },
   "kinhdich": {
-    "hexagram": "Tuy(45)",
-    "trend": "THUAN LOI",
-    "signal": "GIU",
-    "confidence_pct": 63
+    "que": "Tiểu Quá (62)",
+    "xu_huong": "TRUNG TÍNH",
+    "tin_hieu": "GIỮ",
+    "do_tin_cay_pct": 38
   },
   "esc_gate": {
-    "esc1_trick_detection": "unevaluable — no Bash/Glob grant, cannot enumerate data/bctc-analysis-cache/",
-    "esc2_balance_sheet": {
+    "esc1": "unevaluable — no Bash/Glob grant, E1 6-pass cache-dependent trick detection scope-reduced",
+    "esc2": {
       "result": false,
+      "assets_total": 2550963342,
+      "liabilities_total": 2316932013,
+      "equity_total": 224558726,
       "imbalance_pct": 0.37
     },
-    "esc3_ocf_ni_divergence": {
+    "esc3": {
       "result": false,
-      "ocf_total": 12944932,
-      "net_profit_total": 9462095,
+      "quarters_returned": 4,
       "divergence_ratio": 0.368,
-      "quarters_returned": 4
+      "ocf_ni_ratio_q1_2026": 1.368
     },
-    "esc4_nonop_share": {
+    "esc4": {
       "result": "N/A",
-      "reason": "bank — non-operating-share heuristic not applicable to credit institution P&L structure"
+      "reason": "bank — non_operating_share heuristic not applicable to credit-institution P&L structure"
     },
-    "esc5_refine_confidence": {
+    "esc5": {
       "result": false,
-      "reason": "refine_status=PARTIAL, report_id=null — refine not finished, skipping"
+      "reason": "existing_refine_status=PARTIAL, report_id=null — refine not finished, skip per graceful-null rule"
     }
   },
-  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
-  "legal_risk": "Không có rủi ro pháp lý trong khoảng thời gian này",
-  "bctc_confidence_pct": 75,
-  "cycle_tick": "2026-08-12T00:00Z",
-  "generated_at": "2026-08-12T00:03:30Z",
+  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể.",
+  "legal_risk": "Không có tín hiệu rủi ro pháp lý.",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": [],
+  "data_notes": "Kỳ mới nhất (2026-Q2) chưa được trích xuất — hiển thị Q1-2026. get_bctc_full confidence 75%, validation passed.",
+  "fetchedAt": "2026-08-12T15:07:12.936152763Z",
   "_processed": {
-    "fingerprint": "7d9102e6b5a2ab67a48937667938b34226174d509d3baa53a38e6b5f9855b075",
-    "processedAt": "2026-08-12T00:20:47Z",
+    "fingerprint": "3de8f6320ce675ab34c2930c07110023155cbbdeb650f83bc52a205538469d84",
+    "processedAt": "2026-08-12T15:21:41Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

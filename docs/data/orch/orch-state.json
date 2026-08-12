@@ -20073,9 +20073,372 @@
         "last_served_tick": "2026-08-12T12:55:29Z"
       }
     },
-    "_updated_at": "2026-08-12T14:52:34Z",
+    "_updated_at": "2026-08-12T15:21:41Z",
     "_updated_by": "dev-team",
-    "pending_triage_inbox": [],
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "218ce662cefbccfcf8a365898756eba5deae5b38c8a22c2db0e06dd0c635e5dd",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Bất động sản dân dụng — phát triển dự án nhà ở, môi giới (Đất Xanh Services) tại TP.HCM và các tỉnh vệ tinh.",
+          "customer": "Người mua nhà/nhà đầu tư cá nhân khu vực HCMC mở rộng và các tỉnh lân cận.",
+          "ops": "Chưa có dữ liệu BCTC chi tiết (get_bctc_full trả 'Chưa có dữ liệu BCTC', chu kỳ thứ 18+ liên tiếp) — chỉ số định giá tính từ sector-comparison: PE 66,5x so median ngành BĐS 16,1x (PREMIUM +312%), ROE 1,9% so median 7,3% (DƯỚI MEDIAN). Định giá rất đắt so với hiệu quả sinh lời thực tế.",
+          "mgmt": "BCTC Q2-2026 QUÁ HẠN (hạn 30/07/2026, đã trễ 13 ngày). Khoảng trống trích xuất dữ liệu kéo dài (18+ chu kỳ) đã được báo cáo tới ops (root_task BCTC-HIST-VPS-BACKFILL) — không tự suy diễn số liệu.",
+          "ey_spread": {
+            "pe": 66.5,
+            "sector_median_pe": 16.1,
+            "roe_pct_sector_comp": 1.9,
+            "earning_yield_pct": 1.5,
+            "max_deposit_rate_pct": 5,
+            "spread_pp": -3.5,
+            "verdict": "AVOID",
+            "note": "valuation_verdict=AVOID — do NOT post bullish signal per stage-analyze.md Step 2 rule"
+          },
+          "kinhdich": {
+            "que": "Vị Tế (64)",
+            "xu_huong": "TRUNG TÍNH",
+            "tin_hieu": "GIỮ",
+            "do_tin_cay_pct": 38
+          },
+          "esc_gate": {
+            "esc1": "unevaluable — no source data (Chưa có dữ liệu BCTC) and no Bash/Glob grant",
+            "esc2": "unevaluable — no balance sheet data returned",
+            "esc3": "unevaluable — no cash-flow data returned",
+            "esc4": "unevaluable — no P&L data returned",
+            "esc5": "unevaluable — no source data to resolve report_id against"
+          },
+          "insider": "Không có tín hiệu giao dịch nội bộ đáng kể.",
+          "legal_risk": "Không có tín hiệu rủi ro pháp lý.",
+          "trick_summary": null,
+          "trick_confidence": "none",
+          "trick_pass_versions": [],
+          "data_notes": "get_bctc_full(DXG) = 'Chưa có dữ liệu BCTC' — 18th+ consecutive cycle unresolved. All figures above sourced from get_sector_comparison peer-median context only, not from a company-specific extracted BCTC.",
+          "fetchedAt": "2026-08-12T15:07:12.936152763Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-12T15:21:41Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c26d2441a7d0309c9f4e28fa4e1af4ce61f9a48374b881a1b0915eddb8b14437",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "CNTT xuất khẩu phần mềm/tích hợp hệ thống, dịch vụ viễn thông (FPT Telecom, nay hạch toán theo phương pháp vốn chủ sở hữu), giáo dục (Đại học FPT, hệ thống phổ thông FPT).",
+          "customer": "Doanh nghiệp CNTT tại Nhật/Mỹ/Châu Âu (xuất khẩu phần mềm), thuê bao viễn thông bán lẻ trong nước, học sinh-sinh viên hệ thống giáo dục FPT.",
+          "ops": "Doanh thu Q1-2026 12.480 tỷ VND, biên gộp 34,0%, LN thuần HĐKD 2.747,8 tỷ (22,0%); doanh thu -22,3% theo số báo cáo (do đổi phương pháp hợp nhất FTEL) nhưng +8,7% theo số điều chỉnh cùng phương pháp; LN sau thuế +13,8% YoY (điều chỉnh). Dòng tiền HĐKD âm -2.847,8 tỷ (vốn lưu động tăng phải thu/hàng tồn).",
+          "mgmt": "Đổi phương pháp hợp nhất FTEL (hợp nhất toàn bộ → vốn chủ sở hữu) thực hiện minh bạch, có đối chiếu số liệu điều chỉnh. BCTC Q2-2026 QUÁ HẠN (hạn 30/07/2026, đã trễ 13 ngày) dù PDF đã có trên hệ thống từ 2026-08-01 — chưa được trích xuất.",
+          "ey_spread": {
+            "pe": 13.8,
+            "sector_median_pe": 17.3,
+            "roe_pct_annualized_sector_comp": 28.3,
+            "earning_yield_pct": 7.25,
+            "max_deposit_rate_pct": 5,
+            "spread_pp": 2.25,
+            "verdict": "FAIR",
+            "rate_sensitive_headwind": false
+          },
+          "kinhdich": {
+            "que": "Giải (40)",
+            "xu_huong": "THUẬN LỢI",
+            "tin_hieu": "GIỮ",
+            "do_tin_cay_pct": 100
+          },
+          "esc_gate": {
+            "esc1": "unevaluable — no Bash/Glob grant, E1 6-pass cache-dependent trick detection scope-reduced",
+            "esc2": {
+              "result": false,
+              "assets_total": 68586094.785217,
+              "liabilities_total": 28464058.214856,
+              "equity_total": 40122036.570361,
+              "imbalance_pct": 0
+            },
+            "esc3": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+              "coverage_guard_held": true
+            },
+            "esc4": {
+              "result": false,
+              "non_operating_share_pct": 2,
+              "pretax_profit": 2803844.281676,
+              "operating_profit": 2747763.82705
+            },
+            "esc5": {
+              "result": true,
+              "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+              "total_units": 15,
+              "low_confidence_units": 7,
+              "min_confidence": 0.45,
+              "escalation_status": "GUARD-HELD",
+              "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+              "note": "PENDING dev-team pickup — guard armed since c155 (2026-08-11T15:10Z), TTL 24h re-armed"
+            }
+          },
+          "insider": "Không có tín hiệu giao dịch nội bộ đáng kể.",
+          "legal_risk": "Không có tín hiệu rủi ro pháp lý.",
+          "trick_summary": null,
+          "trick_confidence": "none",
+          "trick_pass_versions": [],
+          "data_notes": "Kỳ mới nhất (2026-Q2) chưa được trích xuất — hiển thị Q1-2026. get_bctc_full confidence 81%, validation passed.",
+          "fetchedAt": "2026-08-12T15:07:12.936152763Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-12T15:21:41Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ea62cea2eb3ba34c64f63a51f857291e8f4b94631202425e873570d0af2359f8",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ — Tập đoàn Hòa Phát, nhà sản xuất thép lớn nhất Việt Nam.",
+          "customer": "Nhà thầu xây dựng, hạ tầng trong nước; khách hàng xuất khẩu thép cuộn/tôn mạ khu vực ASEAN, Mỹ, EU.",
+          "ops": "Doanh thu Q1-2026 52.900,8 tỷ VND, biên gộp 15,8%. Dòng LN thuần HĐKD báo cáo = 0 tỷ (bất thường dữ liệu, chu kỳ thứ 14+ chưa xử lý — validation flag: LN sau thuế 9.055,9 tỷ VƯỢT LN gộp 8.365,1 tỷ, khả năng có thu nhập ngoài HĐKD lớn chưa tách bạch). ROE 12,7% so median ngành 2,9% (TRÊN MEDIAN).",
+          "mgmt": "BCTC Q2-2026 QUÁ HẠN (hạn 30/07/2026, đã trễ 13 ngày) dù PDF đã có trên hệ thống từ 2026-08-01 — chưa được trích xuất. Dữ liệu Operating Profit=0 cho thấy lỗi trích xuất kéo dài cần khắc phục ở nguồn (không phải rủi ro solvency).",
+          "ey_spread": {
+            "pe": 14.2,
+            "sector_median_pe": 32.6,
+            "roe_pct_annualized_sector_comp": 12.7,
+            "earning_yield_pct": 7.04,
+            "max_deposit_rate_pct": 5,
+            "spread_pp": 2.04,
+            "verdict": "FAIR",
+            "rate_sensitive_headwind": false
+          },
+          "kinhdich": {
+            "que": "Khiêm (15)",
+            "xu_huong": "THUẬN LỢI",
+            "tin_hieu": "GIỮ",
+            "do_tin_cay_pct": 100
+          },
+          "esc_gate": {
+            "esc1": "unevaluable — no Bash/Glob grant, E1 6-pass cache-dependent trick detection scope-reduced",
+            "esc2": {
+              "result": false,
+              "assets_total": 259327500.205228,
+              "liabilities_total": 119545707.998756,
+              "equity_total": 139781792.206472,
+              "imbalance_pct": 0
+            },
+            "esc3": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+              "coverage_guard_held": true
+            },
+            "esc4": {
+              "result": "discarded",
+              "reason": "operating_profit=0 corrupt (14th+ cycle) — non_operating_share formula undefined on corrupt denominator basis"
+            },
+            "esc5": {
+              "result": false,
+              "reason": "existing_refine_status=PARTIAL, report_id=null — refine not finished, skip per graceful-null rule"
+            }
+          },
+          "insider": "Không có tín hiệu giao dịch nội bộ đáng kể.",
+          "legal_risk": "Không có tín hiệu rủi ro pháp lý.",
+          "trick_summary": null,
+          "trick_confidence": "none",
+          "trick_pass_versions": [],
+          "data_notes": "Kỳ mới nhất (2026-Q2) chưa được trích xuất — hiển thị Q1-2026. get_bctc_full confidence 80%, validation passed_with_warnings.",
+          "fetchedAt": "2026-08-12T15:07:12.936152763Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-12T15:21:41Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3de8f6320ce675ab34c2930c07110023155cbbdeb650f83bc52a205538469d84",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Ngân hàng thương mại quốc doanh — tín dụng doanh nghiệp/bán lẻ, thanh toán quốc tế, kinh doanh ngoại hối, một trong các NHTM lớn nhất Việt Nam.",
+          "customer": "Khách hàng doanh nghiệp lớn, doanh nghiệp FDI (thanh toán quốc tế/L/C), khách hàng bán lẻ đô thị.",
+          "ops": "Thu nhập lãi thuần Q1-2026 17.421 tỷ VND, LN thuần HĐKD 14.088,6 tỷ (biên 80,9%), LN sau thuế 9.462,1 tỷ (54,3%). ROE 16,7% (annualized, sector-comp) dưới median ngành 17,6% (DƯỚI MEDIAN). Dòng tiền nước ngoài 5 phiên MẠNH HƠN ngành dù ròng bán.",
+          "mgmt": "BCTC Q1-2026 ĐÃ NỘP đúng hạn (nộp 2026-07-19, hạn 15/05/2026 — nộp muộn so hạn gốc nhưng đã ghi nhận ĐÃ NỘP, không còn QUÁ HẠN). PE 14,1x premium +57% so median ngành nhưng ROE dưới median — định giá kém hấp dẫn tương đối so với nhóm NHTM quốc doanh/tư nhân lớn khác.",
+          "ey_spread": {
+            "pe": 14.1,
+            "sector_median_pe": 9,
+            "roe_pct_annualized_sector_comp": 16.7,
+            "earning_yield_pct": 7.09,
+            "max_deposit_rate_pct": 5,
+            "spread_pp": 2.09,
+            "verdict": "FAIR",
+            "rate_sensitive_headwind": false
+          },
+          "kinhdich": {
+            "que": "Tiểu Quá (62)",
+            "xu_huong": "TRUNG TÍNH",
+            "tin_hieu": "GIỮ",
+            "do_tin_cay_pct": 38
+          },
+          "esc_gate": {
+            "esc1": "unevaluable — no Bash/Glob grant, E1 6-pass cache-dependent trick detection scope-reduced",
+            "esc2": {
+              "result": false,
+              "assets_total": 2550963342,
+              "liabilities_total": 2316932013,
+              "equity_total": 224558726,
+              "imbalance_pct": 0.37
+            },
+            "esc3": {
+              "result": false,
+              "quarters_returned": 4,
+              "divergence_ratio": 0.368,
+              "ocf_ni_ratio_q1_2026": 1.368
+            },
+            "esc4": {
+              "result": "N/A",
+              "reason": "bank — non_operating_share heuristic not applicable to credit-institution P&L structure"
+            },
+            "esc5": {
+              "result": false,
+              "reason": "existing_refine_status=PARTIAL, report_id=null — refine not finished, skip per graceful-null rule"
+            }
+          },
+          "insider": "Không có tín hiệu giao dịch nội bộ đáng kể.",
+          "legal_risk": "Không có tín hiệu rủi ro pháp lý.",
+          "trick_summary": null,
+          "trick_confidence": "none",
+          "trick_pass_versions": [],
+          "data_notes": "Kỳ mới nhất (2026-Q2) chưa được trích xuất — hiển thị Q1-2026. get_bctc_full confidence 75%, validation passed.",
+          "fetchedAt": "2026-08-12T15:07:12.936152763Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-12T15:21:41Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6893dbbbdba2efcce360e2917c01d32b9c1cbdfacd51c6bb64f7bf9cd55b8875",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-b701e913",
+          "head_sha": "b701e913258e7504184f5fdb31e994eb3ceee7ee",
+          "run_id": 31606982292,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31606982292",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 94148355224
+            },
+            {
+              "name": "task-claim-owner-session-lint",
+              "conclusion": "failure",
+              "jobId": 94148355711
+            }
+          ],
+          "fingerprint": "0d2bf5829a3f1d682120e11e056d4f4f03a707aaffd45271b14e3f6b141b5b52",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD b701e913258e7504184f5fdb31e994eb3ceee7ee: bun test,task-claim-owner-session-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-12T14:53:41Z",
+        "drained_at": "2026-08-12T15:21:41Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1a5d6b4e007e6241ec01304edae1d83c2e2c3660742eda501ef598e833e09aed",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-uuid-provenance-guard] WARN: docs/agent-memory/notebooks/developer.md — added heading line embeds a full session/coordination UUID: '## Session 2026-08-12T15:01:39Z — UC-CCA-P3-FR5-CODE-GATE dispatch attempt (cross-service/, developer, sprint COWORK-GUARANTEED-SLOT-CATCHUP, session 165f4245-6173-4054-87fd-c55bb626265f)'. Per .claude/skills/notebook-write/SKILL.md AC-1 and feedback_agent_commits_session_uuid_into_notebook, a session id is a per-invocation coordination PARAMETER ONLY, never authored into a committed file — use a c<NNN> counter or a fixed source label instead. mode=warn (default warn; set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh). Escape hatch: add 'notebook-uuid-lint-allow: <reason>' on this line if intentional.\n",
+        "createdAt": "2026-08-12T15:03:12Z",
+        "drained_at": "2026-08-12T15:21:41Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "467a49e645897d147308fc6829afbfb69ad11cdff9da758c7ead3ad604df9f9e",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=59 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T15:06:51Z",
+        "drained_at": "2026-08-12T15:21:41Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6bca990ac62857fa134de57fe581e7ee732622e43b3ec85e95a7e249b4109c7d",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_telemetry",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-12T15:00Z",
+          "drift_min": 6,
+          "matched_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "spawned": [
+            "bctc-analyst-slot-1"
+          ],
+          "silent": false,
+          "classification": "FIRE",
+          "new_signals": 0,
+          "due_reasons": {
+            "bctc-analyst-slot-1": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-1": null
+          },
+          "note": "1 slot due (cron 0 15 * * *, bctc-offmarket policy). Step 4.5/4.5c inapplicable (single non-CHEF slot, calendar_status=unknown). vn-bctc-fetch WARN from prior ticks no longer NEW."
+        },
+        "createdAt": "2026-08-12T15:06:00Z",
+        "drained_at": "2026-08-12T15:21:41Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-12T08:40:43Z",
     "last_po_triage_note": "po/triage-20260811T1656Z (dev-team Step 1, step1_triage rotation). INPUTS: 18 pendingSignals (drained by router into prompt; live inbox confirmed [] and the ONLY uncommitted orch-state delta vs HEAD bba662b96 was that drain — structurally diffed, no peer interference), 5 Pipeline-B signal_queue to=po rows, 93 unresolved telegram reports (ids 4591-4683). OUTPUT: BATCH of 4. TELEGRAM PLANE FULLY CLEARED 93 -> 0 (list_unresolved_reports() == [] verified post-run): 87 duplicate (folded onto already-open rows), 4 monitoring, 1 fixed, 1 monitoring-preresolved. DEDUP RATIO 91/93 = 97.8% — the BUG channel was ~42% ONE defect (39 period-mismatch reports -> FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST, now proven to replay byte-identically for a THIRD consecutive day) and ~25% a second (RECONCILE EXHAUSTED, whose own circuit breaker id 4674 explicitly forbids per-row triage). ONLY 2 GENUINELY UNTRACKED FINDINGS in 93 reports + 23 signals, both minted after live source-probing: (1) FIX-MACRO-LIQUIDITY-STATE-HANDLER-EXCEEDS-CRON-15S-DEADLINE — the daily sbv-omo `unreachable` alert has a FALSE premise; macro-indicators is Up 12 days healthy, /health 200 in 2.6ms, GET /liquidity-state 405 (route registered), but POST hangs >18.4s against the cron`s 15s deadline, so sbv_omo_daily has silently accrued nothing for >=2 days; (2) SPIKE-NEWSSCOUT-KLFL-FALSE-ENOENT-ON-PRESENT-TRACKED-SKILL-FILE — news-scout KLFL-aborted its 16:09Z cycle (no c250 notebook entry) on ENOENT for a file that is present/tracked/unignored and was loaded fine by market-watcher in the SAME dispatch batch. ci_red x2 (CI-RED-1765317d, CI-RED-61b5b6f8) collapsed to ZERO new rows: both runs read at source via `gh run view --log-failed`, FAILED FILES byte-identical, all 3 files already carry exact dedup_key rows; recorded size-lint drift 237L->265L on transport.ts. 4 bug-escalation folded onto FIX-SWEEPGUARD-... (occ 28->32, worst prior_warns now 31 vs threshold 3, two concurrent repeat offenders). rag-service CRITICAL RAW-refuted as recovered (76.9%, no restart since 01:00:43Z); pdf-extractor CONFIRMED sustained and rising (94.90% -> 95.31%). 5/5 Pipeline-B rows closed to triaged with dispositions.",
     "last_po_triage_consumed": 54,
