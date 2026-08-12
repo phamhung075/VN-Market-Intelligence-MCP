@@ -1236,6 +1236,17 @@
         "provenance": "detector",
         "audit_cycle_tag": null,
         "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+      },
+      {
+        "id": "cj-20260812T103004Z",
+        "ts": "2026-08-12T10:30:04Z",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-12.json"
       }
     ],
     "last_triaged_at": "2026-08-12T08:40:43Z",
@@ -20165,9 +20176,237 @@
         "last_served_tick": "2026-08-12T09:54:54Z"
       }
     },
-    "_updated_at": "2026-08-12T09:54:54Z",
+    "_updated_at": "2026-08-12T10:31:35Z",
     "_updated_by": "dev-team",
-    "pending_triage_inbox": [],
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "a583ab45352530c6bcae9cd1f3313497162fa90615abc36c5ccec5a15a12681f",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-4424dd41",
+          "head_sha": "4424dd41053580a5d68e9cabc0c0a7b4cc0fb530",
+          "run_id": 31583395162,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31583395162",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "size-lint",
+              "conclusion": "failure",
+              "jobId": 94071490101
+            },
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 94071490210
+            }
+          ],
+          "fingerprint": "628f75b9b6e7a4132c7ece60d6889bf7fe199710d4badd7c2b2475d921f7ea9b",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 4424dd41053580a5d68e9cabc0c0a7b4cc0fb530: bun test,size-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-12T09:53:04Z",
+        "drained_at": "2026-08-12T10:31:35Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "30651be7fcc2c2e34ace0163fb4ebbc4a7ee06d42698e0dbea86dbf0af793d35",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=52 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T10:11:28Z",
+        "drained_at": "2026-08-12T10:31:35Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3b285cc5b8fe3ad9fe83cc9aabb45c702d259a39994312cfa9a78896677a6c45",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "tick-summary",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-12T09:45Z",
+          "drift_min": 6,
+          "matched_slots": [],
+          "won_slots": [],
+          "spawned": [],
+          "collision_warning": null,
+          "pressure_mode": "adaptive",
+          "due_reasons": {},
+          "cadence_minutes": {},
+          "last_fired_timestamp": null,
+          "classification": "FIRE",
+          "reason": "signal-only tick, no slots/one-shots due",
+          "note": "0 slots matched, 0 one-shots. Same NEW row persists (sys-20260812T093525-1b2b, dedup_key=microservice_degraded:rag-service:A-30, CRITICAL) -- no re-escalation this tick, so no repeat telegram (already flagged bug channel message_id=5150 last tick). Now ~90min since first occurrence (08:15Z), ~15min since CRITICAL. Left at NEW per established rule. Step 4.7 tick-snapshot skipped (established pattern)."
+        },
+        "createdAt": "2026-08-12T09:51:24Z",
+        "drained_at": "2026-08-12T10:31:35Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e908ace31183c8ab02c0155c080114c38df38f0c704b307b9150fb28b03c087a",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "tick-summary",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-12T10:00Z",
+          "drift_min": 6,
+          "matched_slots": [],
+          "won_slots": [],
+          "spawned": [],
+          "collision_warning": null,
+          "pressure_mode": "adaptive",
+          "due_reasons": {},
+          "cadence_minutes": {},
+          "last_fired_timestamp": null,
+          "classification": "FIRE",
+          "reason": "signal-only tick, no slots/one-shots due",
+          "note": "0 slots matched, 0 one-shots. New NEW row this tick (sys-20260812T100604-517d, severity=WARN, 95.32% sustained) -- memory pressure eased vs prior CRITICAL 99.76% (sys-20260812T093525-1b2b, now presumably superseded/dropped off since it no longer appears in the NEW set). No repeat telegram (severity decreased). OBSERVATION for po/system-auditor triage: this row's dedup_key='microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30' (full container name) differs in format from the prior 4 rows' dedup_key='microservice_degraded:rag-service:A-30' (short form) -- same underlying container/check but inconsistent key format means dedup logic won't collapse them across the naming variance. Also audit_cycle_tag=null this row vs populated on priors. Left at NEW per established rule. Step 4.7 tick-snapshot skipped (established pattern)."
+        },
+        "createdAt": "2026-08-12T10:06:31Z",
+        "drained_at": "2026-08-12T10:31:35Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "dfcc52ec527ec89a255faa573eda3e8f4c8b8a4032f4c3bf5beb2166ab0a812b",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "tick-summary",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-12T10:15Z",
+          "drift_min": 6,
+          "matched_slots": [],
+          "won_slots": [],
+          "spawned": [],
+          "collision_warning": null,
+          "pressure_mode": "adaptive",
+          "due_reasons": {},
+          "cadence_minutes": {},
+          "last_fired_timestamp": null,
+          "classification": "FIRE",
+          "reason": "signal-only tick, no slots/one-shots due",
+          "note": "0 slots matched, 0 one-shots. Same NEW row persists (sys-20260812T100604-517d, WARN, 95.32%) -- no change since 10:00Z tick, no re-notify. Left at NEW per established rule. Step 4.7 tick-snapshot skipped (established pattern)."
+        },
+        "createdAt": "2026-08-12T10:21:21Z",
+        "drained_at": "2026-08-12T10:31:35Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e87dfcd6066bb312397738de89cccacb5888b51ef6981ac457544f0df24c489c",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-12T10:30:04Z",
+        "drained_at": "2026-08-12T10:31:35Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "83ef0d0b5b14e01e0a5b6eb4a17ab268dafeeeccd66a64141fa12df88846baa1",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/code-janitor.md",
+          "line_count": 213,
+          "cap": 200,
+          "byte_count": 12820,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-12T10:30:04Z",
+        "drained_at": "2026-08-12T10:31:35Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4afa344f740a126e0a7e34d91a40f6a1b5ea5534250590b72db37f234bf201e0",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/code-janitor.md",
+          "line_count": 213,
+          "cap": 200,
+          "byte_count": 12820,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-12T10:30:46Z",
+        "drained_at": "2026-08-12T10:31:35Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c7a329773492be472f54de7c99cec566306f6d9a06d2263bea60f69d7fe2f5a9",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 41,
+          "cap": 200,
+          "byte_count": 23477,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-12T10:30:04Z",
+        "drained_at": "2026-08-12T10:31:35Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3c9c6c371ea61881340771e130fb8d11df8cd2480a940ab6783a0a499f819a5c",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 41,
+          "cap": 200,
+          "byte_count": 23477,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-12T10:30:46Z",
+        "drained_at": "2026-08-12T10:31:35Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-12T08:40:43Z",
     "last_po_triage_note": "po/triage-20260811T1656Z (dev-team Step 1, step1_triage rotation). INPUTS: 18 pendingSignals (drained by router into prompt; live inbox confirmed [] and the ONLY uncommitted orch-state delta vs HEAD bba662b96 was that drain — structurally diffed, no peer interference), 5 Pipeline-B signal_queue to=po rows, 93 unresolved telegram reports (ids 4591-4683). OUTPUT: BATCH of 4. TELEGRAM PLANE FULLY CLEARED 93 -> 0 (list_unresolved_reports() == [] verified post-run): 87 duplicate (folded onto already-open rows), 4 monitoring, 1 fixed, 1 monitoring-preresolved. DEDUP RATIO 91/93 = 97.8% — the BUG channel was ~42% ONE defect (39 period-mismatch reports -> FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST, now proven to replay byte-identically for a THIRD consecutive day) and ~25% a second (RECONCILE EXHAUSTED, whose own circuit breaker id 4674 explicitly forbids per-row triage). ONLY 2 GENUINELY UNTRACKED FINDINGS in 93 reports + 23 signals, both minted after live source-probing: (1) FIX-MACRO-LIQUIDITY-STATE-HANDLER-EXCEEDS-CRON-15S-DEADLINE — the daily sbv-omo `unreachable` alert has a FALSE premise; macro-indicators is Up 12 days healthy, /health 200 in 2.6ms, GET /liquidity-state 405 (route registered), but POST hangs >18.4s against the cron`s 15s deadline, so sbv_omo_daily has silently accrued nothing for >=2 days; (2) SPIKE-NEWSSCOUT-KLFL-FALSE-ENOENT-ON-PRESENT-TRACKED-SKILL-FILE — news-scout KLFL-aborted its 16:09Z cycle (no c250 notebook entry) on ENOENT for a file that is present/tracked/unignored and was loaded fine by market-watcher in the SAME dispatch batch. ci_red x2 (CI-RED-1765317d, CI-RED-61b5b6f8) collapsed to ZERO new rows: both runs read at source via `gh run view --log-failed`, FAILED FILES byte-identical, all 3 files already carry exact dedup_key rows; recorded size-lint drift 237L->265L on transport.ts. 4 bug-escalation folded onto FIX-SWEEPGUARD-... (occ 28->32, worst prior_warns now 31 vs threshold 3, two concurrent repeat offenders). rag-service CRITICAL RAW-refuted as recovered (76.9%, no restart since 01:00:43Z); pdf-extractor CONFIRMED sustained and rising (94.90% -> 95.31%). 5/5 Pipeline-B rows closed to triaged with dispositions.",
     "last_po_triage_consumed": 54
