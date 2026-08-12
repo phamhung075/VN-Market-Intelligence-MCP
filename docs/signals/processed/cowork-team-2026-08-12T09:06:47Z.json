@@ -1,0 +1,38 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-summary",
+  "payload": {
+    "tick": "2026-08-12T09:00Z",
+    "drift_min": 6,
+    "matched_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "spawned": [
+      "refine-bctc-slot-1"
+    ],
+    "collision_warning": null,
+    "pressure_mode": "adaptive",
+    "due_reasons": {
+      "refine-bctc-slot-1": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-1": null
+    },
+    "last_fired_timestamp": "2026-08-12T09:06:37Z",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "note": "1-slot tick, single agent (refine_bctc_md) — no collision possible. 1 NEW signal_queue row this tick (to:po, sys-20260812T090535-7dc5, rag-service A-30 memory WARN, dedup_key=microservice_degraded:rag-service:A-30) — left at NEW per established rule. FLAG: this is the 3rd consecutive WORK tick (08:15Z, 08:45Z, 09:00Z) carrying the same dedup_key unresolved — recommend po prioritize triage on next read. Step 4.7 tick-snapshot skipped (established pattern)."
+  },
+  "priority": "normal",
+  "createdAt": "2026-08-12T09:06:47Z",
+  "_processed": {
+    "fingerprint": "b570d9ce95ba7bd80407ee8ff02dadb2280e7ade9d9e5d268242457d5bd58675",
+    "processedAt": "2026-08-12T09:21:08Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,8 +1,8 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1786524762,
-    "last_linecount": 63,
+    "last_mtime": 1786526514,
+    "last_linecount": 64,
     "po": {
       "section_name": "po",
       "last_mtime": 1786522916,
@@ -134,7 +134,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-12T08:52:28Z",
+    "_updated_at": "2026-08-12T09:21:43Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -1195,7 +1195,7 @@
         "type": "signal_feedback",
         "summary": "A-30 FAIL: rag-service memory pressure sustained >93% — loss of reclamation",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-12T09:00Z",
@@ -20137,7 +20137,7 @@
         "last_served_tick": "2026-08-12T05:52:24Z"
       }
     },
-    "_updated_at": "2026-08-12T08:57:25Z",
+    "_updated_at": "2026-08-12T09:21:43Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20339,6 +20339,101 @@
         "createdAt": "2026-08-12T08:42:01Z",
         "drained_at": "2026-08-12T08:52:28Z",
         "routed_to": "po"
+      },
+      {
+        "envelope_id": "c598499724087afa8306f8c7e490bf9ad7a314449fb41826bc4a8296e9ccb01b",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-34f2a31e",
+          "head_sha": "34f2a31e68bf44eff34f8327a5a7861836d5c1dc",
+          "run_id": 31579446631,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31579446631",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 94058950124
+            },
+            {
+              "name": "size-lint",
+              "conclusion": "failure",
+              "jobId": 94058950146
+            }
+          ],
+          "fingerprint": "364e8d358ee90cbf46f3e6a2117e3f096bc4f9e826a2844149581d3539c8e997",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 34f2a31e68bf44eff34f8327a5a7861836d5c1dc: bun test,size-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-12T08:56:47Z",
+        "drained_at": "2026-08-12T09:21:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2c93841d9e82f5455f43fc9455e4dcd27b46740de208086b6c2d2866a9bd45fa",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=51 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T09:06:35Z",
+        "drained_at": "2026-08-12T09:21:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b570d9ce95ba7bd80407ee8ff02dadb2280e7ade9d9e5d268242457d5bd58675",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "tick-summary",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-12T09:00Z",
+          "drift_min": 6,
+          "matched_slots": [
+            "refine-bctc-slot-1"
+          ],
+          "won_slots": [
+            "refine-bctc-slot-1"
+          ],
+          "spawned": [
+            "refine-bctc-slot-1"
+          ],
+          "collision_warning": null,
+          "pressure_mode": "adaptive",
+          "due_reasons": {
+            "refine-bctc-slot-1": "cron"
+          },
+          "cadence_minutes": {
+            "refine-bctc-slot-1": null
+          },
+          "last_fired_timestamp": "2026-08-12T09:06:37Z",
+          "classification": "FIRE",
+          "reason": "spawned",
+          "note": "1-slot tick, single agent (refine_bctc_md) — no collision possible. 1 NEW signal_queue row this tick (to:po, sys-20260812T090535-7dc5, rag-service A-30 memory WARN, dedup_key=microservice_degraded:rag-service:A-30) — left at NEW per established rule. FLAG: this is the 3rd consecutive WORK tick (08:15Z, 08:45Z, 09:00Z) carrying the same dedup_key unresolved — recommend po prioritize triage on next read. Step 4.7 tick-snapshot skipped (established pattern)."
+        },
+        "createdAt": "2026-08-12T09:06:47Z",
+        "drained_at": "2026-08-12T09:21:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4501631e64d45e696fbd68245cbcfcd98f46a5a4ce7e528fdfb31f9f283090b0",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "WARN",
+        "payload": "A-30 FAIL: rag-service memory pressure sustained >93% — loss of reclamation",
+        "createdAt": "2026-08-12T09:05:35Z",
+        "drained_at": "2026-08-12T09:21:43Z",
+        "routed_to": "PO Step 0-SIG"
       }
     ],
     "last_po_triage_at": "2026-08-12T08:40:43Z",
