@@ -83,6 +83,20 @@ Index a document for semantic search.
 }
 ```
 
+## POST /admin/rebuild-vector-index
+Force rebuild the LanceDB IVF_PQ ANN vector index on the `vector` column.
+Internal only — port 5002 is not exposed externally. On-demand only, no cron wired
+(deliberately separate from `/admin/rebuild-fts` — see
+`docs/architecture-briefs/2026-08-12-fix-rag-embedder-idle-unload-second-growth-source.md` §6).
+FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS, 2026-08-12.
+
+**Response (200):**
+```json
+{ "status": "ok", "message": "Vector index rebuilt" }
+```
+
+**503:** vector store not wired into router. **500:** rebuild raised (see `error` detail).
+
 ## Data Flow
 ```
 POST /search → SearchUseCase

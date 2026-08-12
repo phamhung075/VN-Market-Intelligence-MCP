@@ -56,19 +56,34 @@ file after each compaction cycle (~100 inserts).
 5. Parse tags from JSON string
 6. Return `list[SearchResult]` with L2 distance
 
-**No vector index exists on the `vector` column** (only `title`/`summary` get FTS indexes — see below) —
-every `vector_search()` call is LanceDB's brute-force exact-kNN scan over the full column.
-`FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS`'s 2026-08-12 architect brief
+**FIXED (2026-08-12, dev-rag-service, `FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS`):**
+until this fix, no vector index existed on the `vector` column (only `title`/`summary` had FTS indexes —
+see below), so every `vector_search()`/`.nearest_to()` call was LanceDB's brute-force exact-kNN scan over
+the full column. The architect's 2026-08-12 brief
 (`docs/architecture-briefs/2026-08-12-fix-rag-embedder-idle-unload-second-growth-source.md`) isolated-
-repro'd this against a 26,730-row corpus snapshot: opening the table handle alone costs ~130 MiB resident,
-and repeated `search()` calls against the same open handle ramp resident memory by ~340-444 MiB within
+repro'd this against a 26,730-row corpus snapshot: opening the table handle alone cost ~130 MiB resident,
+and repeated `search()` calls against the same open handle ramped resident memory by ~340-444 MiB within
 the first ~20-60 distinct queries before plateauing — the dominant driver of that row's "monotonic growth
 from a cold restart" symptom (confirmed ~65-80x larger than the embedder's own per-call footprint, which
-was isolated-repro'd and ruled out as the dominant mechanism in the same cycle). `malloc_trim(0)` recovers
-only ~8-15% of this — most of the floor is a live, referenced working set, not glibc-arena slack.
-Recommended fix (design only, not landed as of that brief): build a `lancedb.index.IvfPq` vector index,
-same `create_index()` call shape as the FTS indexes below. See that brief for the full investigation,
-fix design, and open considerations (staleness/refresh cadence, build-time memory cost, recall trade-off).
+was isolated-repro'd and ruled out as the dominant mechanism in the same cycle). `malloc_trim(0)` recovered
+only ~8-15% of this — most of the floor was a live, referenced working set, not glibc-arena slack (the
+periodic trim sweep landed anyway as a secondary/complementary fix — see the idle-unload section below).
+
+**Fix landed:** `_build_vector_index()` / `_maybe_build_vector_index()` (`infrastructure/repositories.py`,
+same section as `_build_fts_index()` below) build a `lancedb.index.IvfPq(distance_type="l2")` ANN index on
+`vector`, lazily, the first time `search()` or `hybrid_search()` sees a corpus of at least
+`_VECTOR_INDEX_MIN_ROWS = 256` rows — LanceDB's own IVF_PQ trainer floor (empirically confirmed on
+lancedb 0.25.3: `RuntimeError("Not enough rows to train PQ. Requires 256 rows but only N available")`
+below it). Below the floor, the check is a cheap `count_rows()` no-op, re-checked on the next call — small/
+test corpora keep using the pre-existing brute-force path unchanged (zero regression). Guarded by
+`_vector_index_built` (never rebuilds once True), same lifecycle contract as `_fts_index_built`. On-demand
+refresh: `POST /admin/rebuild-vector-index` (see `api-reference.md`) — a SEPARATE endpoint from
+`/admin/rebuild-fts`, deliberately NOT wired onto `RAG-FTS-BUILD-MEMORY-BOUND`'s disabled nightly cron
+(cross-row decision the architect brief explicitly left unmade). **Open, not resolved by this fix:**
+build-time memory cost of the first production IVF_PQ training pass (26,730+ rows) was not live-measured
+before landing — flagged for the ops-supervised ≥2h live cold-start verification this row's own AC requires
+(brief §5); the corpus keeps growing (~100 rows/h) so the index's own resident size grows slowly over time
+too — expected and bounded, not a regression path.
 
 ### count()
 Returns `table.count_rows()`, 0 on exception.
@@ -190,6 +205,19 @@ service can now return to, not only start in.
 Duck-typed for the service-tier sandbox: fake embedders injected via `create_app()` do not
 implement `_maybe_unload_idle()`, so the background loop is a permanent no-op for them —
 zero sandbox/determinism impact.
+
+**`malloc_trim(0)` sweep (2026-08-12, `FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-
+RETURNED-TO-OS` §6 secondary fix):** `app_factory._idle_unload_loop()`'s same 60s poll cycle
+also calls `_malloc_trim_or_noop()` (`app_factory.py`) every iteration, independent of
+whether `_maybe_unload_idle()` actually unloaded anything that cycle. Guarded
+`ctypes.CDLL("libc.so.6").malloc_trim(0)` — same shape as the
+`FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM` precedent; on any non-glibc platform (macOS
+dev/test host, musl/Alpine) `ctypes.CDLL` raises `OSError`/`AttributeError`, caught and
+treated as a silent no-op. Isolated repro measured this recovers only ~8-15% of the LanceDB
+vector-search read path's resident growth — real but minor next to the primary vector-index
+fix above; landed anyway as cheap, low-risk insurance per the architect brief's explicit
+recommendation. This is also the original allocator-retention mechanism this row's own
+(now-superseded) title referred to — it was real, just not the dominant contributor.
 
 ### Configuration
 ```python

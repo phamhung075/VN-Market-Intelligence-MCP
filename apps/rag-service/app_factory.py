@@ -1,4 +1,7 @@
-# size-justification: 177L — composition-root app-factory: build_lifespan()
+# size-justification: 212L (+35L, 2026-08-12 FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-
+# PAGES-NOT-RETURNED-TO-OS: added _malloc_trim_or_noop() + its call site inside
+# _idle_unload_loop() — same background-loop/process-hygiene scope the loop already
+# owns, not a new concern) — composition-root app-factory: build_lifespan()
 # (FastAPI lifespan wiring + FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH background loop),
 # add_cors_middleware(), and build_real_adapters() (service-tier fake injection
 # vs production SentenceTransformers/LanceDB adapter construction) are all the
@@ -46,6 +49,30 @@ logger = logging.getLogger(__name__)
 _IDLE_UNLOAD_CHECK_INTERVAL_S = 60.0
 
 
+def _malloc_trim_or_noop() -> None:
+    """
+    Best-effort glibc malloc_trim(0) — returns freed native-allocator arena pages
+    back to the OS. FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS
+    §6 secondary/complementary fix: isolated repro measured this recovers only
+    ~8-15% of the LanceDB vector-search read path's resident growth (real but
+    minor next to the primary vector-index fix in infrastructure/repositories.py's
+    _build_vector_index()). Same ctypes.CDLL("libc.so.6") shape as the
+    FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM precedent.
+
+    Guarded: "libc.so.6" only resolves on glibc-based Linux (this service's actual
+    container runtime). Any other platform (macOS dev/test host, musl/Alpine,
+    etc.) raises OSError/AttributeError here, caught and treated as a silent
+    no-op — never crashes the idle-unload loop or import-time test collection.
+    """
+    try:
+        import ctypes
+
+        libc = ctypes.CDLL("libc.so.6")
+        libc.malloc_trim(0)
+    except (OSError, AttributeError):
+        pass  # non-glibc platform (e.g. macOS dev/test host) — nothing to trim
+
+
 async def _idle_unload_loop(embedder: Any, idle_threshold_s: float) -> None:
     """
     Background loop (FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH): every
@@ -69,6 +96,14 @@ async def _idle_unload_loop(embedder: Any, idle_threshold_s: float) -> None:
             await maybe_unload(idle_threshold_s)
         except Exception:
             logger.exception("idle-unload check failed (embedder stays as-is)")
+        # FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (§6
+        # secondary): unconditional trim sweep, independent of whether unload
+        # fired this cycle — same cadence, cheap insurance under the primary
+        # vector-index fix, never lets a trim failure take the loop down.
+        try:
+            await asyncio.to_thread(_malloc_trim_or_noop)
+        except Exception:
+            logger.exception("malloc_trim sweep failed (non-fatal)")
 
 
 def build_lifespan(

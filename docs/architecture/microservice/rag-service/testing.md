@@ -59,6 +59,39 @@ Mocks: `VectorStorePort`, `EmbedderPort` (AsyncMock)
 - `_build_fts_index()` still performs exactly 2 `create_index()` calls (title, then summary)
 - `hybrid_search()` still returns real results after a bounded-config FTS build
 
+## Unit Tests — FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (vector index)
+**File:** `apps/rag-service/__tests__/unit/test_rag_vector_index_build.py`
+
+- `_build_vector_index()` calls `table.create_index('vector', config=IvfPq(...), replace=True)`
+  exactly once — pure call-shape check, does NOT call through to the real LanceDB trainer
+  (IVF_PQ has a real 256-row training floor; see the end-to-end tests below for real-trainer
+  coverage)
+- `_maybe_build_vector_index()` below `_VECTOR_INDEX_MIN_ROWS` (256) is a no-op — flag stays
+  `False`, no exception (regression guard for every OTHER test file's tiny fixtures)
+- Boundary: `row_count == _VECTOR_INDEX_MIN_ROWS - 1` no-ops; `row_count == _VECTOR_INDEX_MIN_ROWS`
+  builds exactly once
+- `_vector_index_built` flag prevents rebuild on subsequent calls (mirrors `_fts_index_built`)
+- **End-to-end, real LanceDB, no mocks:** a 300-row corpus (bulk-seeded via `table.add()`,
+  bypassing `store.insert()`'s per-row loop for speed) triggers a REAL IVF_PQ build on the
+  first `search()` call; `search()` still returns `list[SearchResult]` afterwards; a second
+  `search()` call does not rebuild
+- `hybrid_search()` also triggers the same lazy vector-index build (both read `vector`)
+- `POST /admin/rebuild-vector-index`: route registered, returns `{"status":"ok"}`, calls
+  `vector_store._build_vector_index()`, 503 when `vector_store` not wired — mirrors the
+  existing `/admin/rebuild-fts` admin-endpoint test triad exactly
+
+## Unit Tests — malloc_trim sweep (FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS §6 secondary)
+**File:** `apps/rag-service/__tests__/unit/test_embedder_idle_unload.py` (extended)
+
+- `_malloc_trim_or_noop()` calls `ctypes.CDLL("libc.so.6").malloc_trim(0)` (mocked `ctypes.CDLL`)
+- Gracefully swallows `OSError` (non-glibc platform, e.g. this repo's macOS dev/test host) —
+  never raises
+- Unmocked real call never raises on this host either (exercises the actual guard)
+- `_idle_unload_loop()` calls the trim sweep every cycle, independent of whether
+  `_maybe_unload_idle()` actually unloaded anything that cycle
+- A trim-sweep exception is non-fatal — the loop survives and keeps polling (mirrors the
+  existing `maybe_unload()` exception-swallow behaviour)
+
 ## Run Commands
 ```bash
 cd apps/rag-service && python -m pytest

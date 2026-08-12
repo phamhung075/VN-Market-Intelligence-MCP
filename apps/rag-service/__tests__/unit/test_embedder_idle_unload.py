@@ -21,6 +21,11 @@ Test coverage:
       embedders that do not implement _maybe_unload_idle() (duck-typing gate)
   (i) Config.from_env() reads EMBEDDER_IDLE_UNLOAD_MINUTES (env, never hardcoded)
       and defaults to 15 when unset
+  (j) FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS §6 secondary
+      fix: app_factory._malloc_trim_or_noop() calls ctypes.CDLL("libc.so.6")
+      .malloc_trim(0), guarded (OSError/AttributeError -> silent no-op on
+      non-glibc platforms e.g. this macOS dev/test host); _idle_unload_loop()
+      calls it every cycle, independent of whether unload fired
 """
 
 import asyncio
@@ -334,3 +339,93 @@ def test_config_reads_idle_unload_minutes_from_env(monkeypatch):
     cfg = Config.from_env()
 
     assert cfg.embedder_idle_unload_minutes == 42
+
+
+# ── (j) FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS §6 ──
+# secondary fix: periodic malloc_trim(0) sweep on the idle-unload loop's cadence
+
+
+def test_malloc_trim_or_noop_calls_libc_malloc_trim():
+    """Guarded ctypes.CDLL("libc.so.6").malloc_trim(0) — same shape as the
+    FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM precedent."""
+    from app_factory import _malloc_trim_or_noop
+
+    fake_libc = MagicMock()
+    with patch("ctypes.CDLL", return_value=fake_libc) as mock_cdll:
+        _malloc_trim_or_noop()
+
+    mock_cdll.assert_called_once_with("libc.so.6")
+    fake_libc.malloc_trim.assert_called_once_with(0)
+
+
+def test_malloc_trim_or_noop_swallows_oserror_on_non_glibc_platform():
+    """On a platform without libc.so.6 (e.g. macOS dev/test host), ctypes.CDLL
+    raises OSError — must be caught, never raised out of this helper."""
+    from app_factory import _malloc_trim_or_noop
+
+    with patch("ctypes.CDLL", side_effect=OSError("dlopen failed")):
+        _malloc_trim_or_noop()  # must not raise
+
+
+def test_malloc_trim_or_noop_real_call_never_raises():
+    """Unmocked real call (exercises the actual guard on this host) — must never
+    raise regardless of platform."""
+    from app_factory import _malloc_trim_or_noop
+
+    _malloc_trim_or_noop()  # must not raise on macOS/Linux/anywhere
+
+
+@pytest.mark.asyncio
+async def test_idle_unload_loop_calls_malloc_trim_every_cycle_independent_of_unload():
+    """The trim sweep must fire every cycle even when maybe_unload() does NOT
+    unload anything this iteration (e.g. not yet idle) — independent trigger."""
+    from app_factory import _idle_unload_loop
+
+    emb = make_embedder()
+    trim_calls = []
+
+    async def spy_maybe_unload(idle_threshold_s):
+        return False  # nothing unloaded this cycle
+
+    emb._maybe_unload_idle = spy_maybe_unload
+
+    def spy_trim():
+        trim_calls.append(1)
+        raise asyncio.CancelledError()  # stop the loop after one trim call
+
+    with patch("app_factory.asyncio.sleep", new=AsyncMock(return_value=None)):
+        with patch("app_factory._malloc_trim_or_noop", side_effect=spy_trim):
+            with pytest.raises(asyncio.CancelledError):
+                await _idle_unload_loop(emb, idle_threshold_s=123.0)
+
+    assert trim_calls == [1]
+
+
+@pytest.mark.asyncio
+async def test_idle_unload_loop_trim_failure_is_non_fatal():
+    """A trim sweep exception must not crash the loop or propagate — mirrors
+    the existing maybe_unload() exception-swallow behaviour."""
+    from app_factory import _idle_unload_loop
+
+    emb = make_embedder()
+
+    async def ok_maybe_unload(idle_threshold_s):
+        return False
+
+    emb._maybe_unload_idle = ok_maybe_unload
+
+    call_count = 0
+
+    def failing_then_stopping_trim():
+        nonlocal call_count
+        call_count += 1
+        if call_count >= 2:
+            raise asyncio.CancelledError()  # stop the loop on the 2nd cycle
+        raise RuntimeError("trim boom")  # 1st cycle: real failure, must be swallowed
+
+    with patch("app_factory.asyncio.sleep", new=AsyncMock(return_value=None)):
+        with patch("app_factory._malloc_trim_or_noop", side_effect=failing_then_stopping_trim):
+            with pytest.raises(asyncio.CancelledError):
+                await _idle_unload_loop(emb, idle_threshold_s=123.0)
+
+    assert call_count == 2, "loop must survive a trim failure and keep polling"

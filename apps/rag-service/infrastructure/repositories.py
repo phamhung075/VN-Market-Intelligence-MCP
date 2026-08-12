@@ -1,3 +1,13 @@
+# size-justification: 642L — single infrastructure adapter (LanceDBVectorStore)
+# implementing VectorStorePort: table lifecycle (_get_table/FR-1 migration),
+# insert+compaction, filter/dedup helpers, vector ANN index management
+# (FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS,
+# 2026-08-12: _build_vector_index/_maybe_build_vector_index, +38L), FTS index
+# management (DFR-P3), and search()/hybrid_search(). One class's full state —
+# same cohesion argument already accepted for this file's prior 517L baseline
+# (RAG-FTS-BUILD-MEMORY-BOUND env-pin block + compaction guard); splitting the
+# vector-index methods into a second file would duplicate _get_table()/table
+# access or force tight cross-file coupling to it, for zero token benefit.
 """
 Infrastructure — LanceDBVectorStore.
 
@@ -101,6 +111,34 @@ _COMPACT_RETENTION = timedelta(days=2)
 os.environ.setdefault("LANCE_FTS_NUM_SHARDS", "1")
 os.environ.setdefault("LANCE_FTS_PARTITION_SIZE", "32")
 
+# ── FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS: vector ANN index ──
+# ROOT CAUSE (architect isolated repro, docs/architecture-briefs/2026-08-12-fix-rag-
+# embedder-idle-unload-second-growth-source.md §3b): rag_entries carries ZERO index on
+# the 'vector' column (only FTS on title/summary, above) -- every vector_search() /
+# .nearest_to() call is LanceDB's brute-force exact-kNN scan over the FULL vector
+# column, with no eviction. Isolated repro measured +340-444 MiB resident growth over
+# ~20-600 real search() calls against a 26,730-row corpus snapshot -- ~65-80x the
+# embedder's own per-call footprint (candidate 1, ruled out as dominant in the same
+# cycle) -- confirmed the dominant driver of the row's "monotonic climb from a cold
+# restart" symptom. malloc_trim(0) recovers only ~8-15% of this (see the periodic
+# trim sweep in app_factory._idle_unload_loop for that secondary, complementary fix)
+# -- allocator hygiene alone does not fix a missing index.
+#
+# FIX: build a lancedb.index.IvfPq ANN index on 'vector', lazily, the first time a
+# search()/hybrid_search() call sees a corpus large enough to train it (mirrors the
+# _fts_index_built lazy-build pattern below exactly). LanceDB's own IVF_PQ trainer has
+# a hard minimum-row floor -- empirically confirmed on lancedb 0.25.3 (this repo's
+# local/test pin): "Not enough rows to train PQ. Requires 256 rows but only N
+# available" below that floor. _VECTOR_INDEX_MIN_ROWS gates the lazy build below that
+# floor so small/test corpora legitimately keep using the existing brute-force
+# vector_search() path -- zero behaviour change for them.
+#
+# On-demand refresh: POST /admin/rebuild-vector-index (interface/handlers.py), a
+# SEPARATE endpoint from /admin/rebuild-fts -- deliberately NOT wired onto
+# RAG-FTS-BUILD-MEMORY-BOUND's disabled nightly cron (that is a distinct, cross-row
+# decision the architect brief explicitly left unmade -- §6).
+_VECTOR_INDEX_MIN_ROWS = 256
+
 
 def _validate_level(value: str) -> bool:
     return value in _VALID_LEVELS
@@ -140,6 +178,11 @@ class LanceDBVectorStore(VectorStorePort):
         # Set to True after first successful _build_fts_index() call.
         # Never reset to False in normal operation (index persists in LanceDB).
         self._fts_index_built: bool = False
+        # FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS: per-process
+        # flag for lazy vector ANN index build. Same lifecycle contract as
+        # _fts_index_built above -- set True after first successful build, never
+        # reset to False in normal operation (index persists in LanceDB).
+        self._vector_index_built: bool = False
 
     async def _get_table(self):
         """Lazy-initialize LanceDB connection and table.
@@ -422,6 +465,43 @@ class LanceDBVectorStore(VectorStorePort):
 
         return results
 
+    # ── Vector ANN index management (FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS) ──
+
+    async def _build_vector_index(self) -> None:
+        """Build an IVF_PQ ANN index on the 'vector' column.
+
+        Root cause + design: docs/architecture-briefs/2026-08-12-fix-rag-embedder-
+        idle-unload-second-growth-source.md §6. Same create_index(field, config=...)
+        call shape _build_fts_index() below already uses -- no new index-management
+        abstraction. distance_type="l2" matches vector_search()'s own default
+        metric (unchanged ranking behaviour once the index is live). replace=True
+        makes this idempotent -- safe to call again from
+        POST /admin/rebuild-vector-index for an on-demand refresh.
+        """
+        from lancedb.index import IvfPq
+
+        table = await self._get_table()
+        await table.create_index("vector", config=IvfPq(distance_type="l2"), replace=True)
+        logger.info("[LanceDBVectorStore] Vector index (IvfPq) built successfully on 'vector' column.")
+
+    async def _maybe_build_vector_index(self) -> None:
+        """Lazily build the vector ANN index once the corpus can train it.
+
+        Called from both search() and hybrid_search() (both read the 'vector'
+        column). Guarded by _vector_index_built (never rebuilds once True) and by
+        _VECTOR_INDEX_MIN_ROWS (LanceDB's own IVF_PQ training floor -- below it
+        this is a cheap count_rows() no-op, re-checked on the next call; it never
+        raises for a too-small corpus, unlike an unguarded create_index() call).
+        """
+        if self._vector_index_built:
+            return
+        table = await self._get_table()
+        row_count = await table.count_rows()
+        if row_count < _VECTOR_INDEX_MIN_ROWS:
+            return
+        await self._build_vector_index()
+        self._vector_index_built = True
+
     # ── DFR-P3: FTS index management ──────────────────────────────────────
 
     async def _build_fts_index(self) -> None:
@@ -466,6 +546,9 @@ class LanceDBVectorStore(VectorStorePort):
         doc_type_filter: Optional[str] = None,
     ) -> list[SearchResult]:
         table = await self._get_table()
+        # FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS: lazy vector
+        # ANN index build (no-op below _VECTOR_INDEX_MIN_ROWS or once already built).
+        await self._maybe_build_vector_index()
 
         clauses = self._build_filter_clauses(
             level_filter=level_filter,
@@ -508,6 +591,10 @@ class LanceDBVectorStore(VectorStorePort):
         query_type='hybrid' raises an error. Explicit .vector().text() chaining is required.
         """
         table = await self._get_table()
+        # FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS: lazy vector
+        # ANN index build -- hybrid_search() also reads 'vector' via .nearest_to(),
+        # same underlying brute-force-without-an-index cost search() has.
+        await self._maybe_build_vector_index()
 
         # DFR-P3: Lazy FTS index build on first hybrid request.
         # Per-process flag (_fts_index_built) prevents repeated builds within a container lifetime.

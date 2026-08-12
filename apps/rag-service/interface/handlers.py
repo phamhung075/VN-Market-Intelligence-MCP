@@ -1,3 +1,10 @@
+# size-justification: 233L — one thin HTTP-layer file, register_routes() is this
+# service's single FastAPI router composition point: /health, /embed/health,
+# /search, /index, and the two admin index-rebuild endpoints (/admin/rebuild-fts,
+# /admin/rebuild-vector-index — FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-
+# RETURNED-TO-OS, 2026-08-12, +32L — deliberately mirrors the existing rebuild-fts
+# handler's exact shape rather than a new abstraction). Splitting handlers into
+# per-route files would fragment one small, cohesive router for zero benefit.
 """
 Interface — FastAPI route handlers (thin HTTP layer).
 
@@ -188,6 +195,38 @@ def register_routes(
             return {"status": "ok", "message": "FTS indexes rebuilt"}
         except Exception as exc:
             logger.exception("FTS rebuild failed")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={"status": "error", "error": str(exc)},
+            ) from exc
+
+    @router.post("/admin/rebuild-vector-index")
+    async def rebuild_vector_index() -> dict:
+        """
+        POST /admin/rebuild-vector-index
+
+        FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS: force rebuild
+        the IVF_PQ ANN vector index on the 'vector' column. On-demand only —
+        deliberately a SEPARATE endpoint from /admin/rebuild-fts, not wired onto any
+        cron (see infrastructure/repositories.py's _VECTOR_INDEX_MIN_ROWS comment for
+        why this stays decoupled from RAG-FTS-BUILD-MEMORY-BOUND's disabled nightly
+        cron). Internal only — port 5002 is not exposed externally.
+
+        Returns: {"status": "ok", "message": "Vector index rebuilt"}
+        """
+        if vector_store is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={"status": "error", "error": "vector_store not wired into router"},
+            )
+        try:
+            await vector_store._build_vector_index()
+            # Reset the lazy-init flag so the store knows the index is fresh.
+            vector_store._vector_index_built = True
+            logger.info("[admin/rebuild-vector-index] Vector index rebuilt successfully.")
+            return {"status": "ok", "message": "Vector index rebuilt"}
+        except Exception as exc:
+            logger.exception("Vector index rebuild failed")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail={"status": "error", "error": str(exc)},
