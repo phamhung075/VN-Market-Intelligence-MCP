@@ -1,0 +1,84 @@
+{
+  "metadata": {
+    "cycle_id": "eod-2026-08-07T08:45Z",
+    "dish_type": "eod",
+    "date_vn": "2026-08-07",
+    "timestamp_utc": "2026-08-07T08:45:00Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:CPI_unavailable] [gap:VIRA_unavailable] [gap:L5_kinhdich_unavailable] [gap:business_context_unavailable]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "carry-unwind",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Geopolitical event: Strait of Hormuz oil supply concern (impact=8, conf=75%) driving commodity bullish. Fed environment: 10% VN benchmark rate, liquidity tightening via SBV deposit parking (fiscal trap). Global sentiment risk-off equities.",
+    "vn_macro_layer": "USD/VND 26,030 above 25,500 threshold signals carry unwind. CPI trend unavailable. FX reserves/VIRA scraper down. Foreign-room utilization 6% (normal); NVL depleting fast (-306925 5d velocity). Banking sector twin headwinds: NPL rising, new accounts declining.",
+    "valuation_layer": "Real estate: transition phase (M2 tight, COC high, EPS mixed, valuation near 52w-lows = 2/4 pillars). Banking: slowdown phase (profitability masked by liquidity constraint = fiscal trap narrative). Overall conviction capped MEDIUM due to macro degradation and missing L5/business-context data."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "SELL",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Real estate sector under carry-unwind pressure despite strong 52-week momentum (decile=10); valuation near 52w-low supports recovery thesis but FII net-selling dominates near-term."
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Real estate leader with +92% roc (decile=10) contradicts sector bearish bias; news coverage neutral-to-negative (Vingroup cash-flow strain). Requires business-context confirmation (unavailable)."
+    },
+    {
+      "ticker": "DXG",
+      "conviction_level": "MEDIUM",
+      "direction": "SELL",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Real estate distribution confirmed by high-severity price_drop alert (80% conf). Sector consensus short-term negative; recovery only on carry reversal or domestic rate cuts."
+    },
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Banking sector NPL headwind constrains near-term despite modest +1.19% price move. COC elevated (10%), M2 tight. Thesis neutral until SBV liquidity relief confirmed."
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "bat_dong_san",
+      "investment_phase": "transition",
+      "pyramid_tier": "defensive",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "ngan_hang",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "dau_khi",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    }
+  ],
+  "known_gaps": [
+    "[gap:CPI_unavailable]",
+    "[gap:VIRA_unavailable]",
+    "[gap:L5_kinhdich_unavailable: tool_error]",
+    "[gap:business_context_unavailable: bctc-analyst 14/16 blocked]",
+    "[L6-gap: single-pillar thesis — real estate tickers 2-3/4 pillars aligned; add missing pillars or state 'insufficient data']",
+    "[L6-gap: business context risk — no product/customer/ops/management facts available for any watchlist ticker this cycle]"
+  ],
+  "causal_chains": [
+    "Geopolitical risk (Strait of Hormuz) + domestic NPL headwind (banking) + carry-unwind signal (USD/VND 26,030) -> FII net-sell pressure on real estate + banking -> coordinated sector decline 2.68% (real estate) / 0.76% (banking) despite strong momentum leaders (VIC/VHM decile=10)."
+  ],
+  "clusters_summary": {
+    "qualified": 2,
+    "tickers_covered": ["VHM", "DXG", "VIC", "KBC", "KDH", "NVL", "VRE", "DIG", "PDR", "VCB", "BID", "EIB", "SHB"],
+    "sectors_covered": ["real_estate", "banking", "oil_gas"]
+  }
+}

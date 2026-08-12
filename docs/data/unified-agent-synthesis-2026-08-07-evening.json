@@ -1,0 +1,55 @@
+{
+  "metadata": {
+    "cycle_id": "evening_preview-2026-08-07T19:53:30Z",
+    "dish_type": "evening_preview",
+    "date_vn": "2026-08-07",
+    "timestamp_utc": "2026-08-07T19:53:30Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L2_US_macro_absent_no_gap_token] [gap:L3_VN_macro_incomplete] [gap:business_context_absent] [gap:L5_kinhdich_unavailable: market_hexagram service unavailable]"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "mixed_neutral_bullish_with_gold_warning",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Gold $4407/oz signals risk-off pressure. Oil neutral $82.49. No PMI/EFFR data this cycle.",
+    "vn_macro_layer": "USD/VND 26,030 (VND depreciation). Carry 1.37pp neutral. CPI data unavailable.",
+    "valuation_layer": "Investment clock CORE_VN, equities fairly valued vs deposits (+1.70pp EY premium)"
+  },
+
+  "conviction_calls": [],
+
+  "sector_phases": [
+    {
+      "sector_vn": "dau khi",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "bat dong san",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    }
+  ],
+
+  "known_gaps": [
+    "[gap:L2_US_macro_absent_no_gap_token]",
+    "[gap:L3_VN_macro_incomplete]",
+    "[gap:business_context_absent]",
+    "[gap:L5_kinhdich_unavailable: market_hexagram service unavailable]",
+    "[L6-gap: gold >$4,300 active — regime-drift risk: gold-driven safe-haven signal may lag actual risk-off reversal; flag as regime-drift until gold retraces below $4,300]",
+    "[L6-gap: zero convergence clusters — no ticker-level thesis this cycle]"
+  ],
+
+  "causal_chains": [
+    "Gold $4407 risk-off signal → [gap: VN macro propagation incomplete] → banking sector mixed (BID +3.03% but foreign room uncertain) → evening regime remains NEUTRAL despite gold warning"
+  ],
+
+  "clusters_summary": {
+    "qualified": 0,
+    "tickers_covered": [],
+    "sectors_covered": ["dau khi", "bat dong san"]
+  }
+}

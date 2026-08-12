@@ -1,0 +1,50 @@
+{
+  "metadata": {
+    "cycle_id": "intraday-2026-08-12T15:13Z",
+    "dish_type": "intraday",
+    "date_vn": "2026-08-12",
+    "timestamp_utc": "2026-08-12T15:13:00Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:sentiment_z_unavailable_13d_minimum_21d] [gap:L3_vn_macro_incomplete_cpi_trend] [gap:L4_partial_pillar_coverage_multiple_tickers] [gap:business_context_partial_3of9_tickers]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "mixed_carry_neutral_gold_safe_haven",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Fed funds 3.63%, EFFR spread present. Geopolitical risk signal open: US-Iran tensions creating energy sector pressure and risk-off sentiment elevation.",
+    "vn_macro_layer": "USD/VND 25,930 (bearish, >25K threshold). Carry spread 1.37pp NEUTRAL. VN Index +19.77 points intraday. CPI trend unavailable (gap). FX reserves data incomplete (VIRA gap).",
+    "valuation_layer": "Mixed 2-3 pillar alignment across cluster tickers. State capital wave signals (VNM, SAB, FPT, VIC) vs. foreign exit pressures (FPT, HPG, VHM, VRE, VCB). Investment clock = recovery / equity tier, pending macro confirmation."
+  },
+  "conviction_calls": [
+    {"ticker": "VNM", "conviction_level": "MEDIUM", "direction": "BUY", "pillars_aligned_count": 3, "rationale_one_liner": "State capital injection + foreign smart-money accumulation; sectoral tailwind. Carry regime neutral caps upside."},
+    {"ticker": "BID", "conviction_level": "MEDIUM", "direction": "BUY", "pillars_aligned_count": 2, "rationale_one_liner": "Foreign accumulation signal + SOE capital narrative; liquidity tailwind. Pillar alignment weak on COC/EPS."},
+    {"ticker": "VCB", "conviction_level": "MEDIUM", "direction": "NEUTRAL", "pillars_aligned_count": 2, "rationale_one_liner": "Contradictory signals: state capital positive vs. foreign exit; carry flat. Mixed conviction warrants hold."},
+    {"ticker": "FPT", "conviction_level": "LOW", "direction": "SELL", "pillars_aligned_count": 1, "rationale_one_liner": "Foreign smart-money exit (-313k shares); tech sector underperformance. News mentions (capital wave) insufficient to offset FII reversal."},
+    {"ticker": "VHM", "conviction_level": "MEDIUM", "direction": "NEUTRAL", "pillars_aligned_count": 2, "rationale_one_liner": "Real estate sector convergence vs. foreign exit pressure. Portfolio conviction 0.55 (highest in suite) but contradictory flows degrade thesis clarity."}
+  ],
+  "sector_phases": [
+    {"sector_vn": "ngan_hang", "investment_phase": "transition", "pyramid_tier": "equity", "direction_this_cycle": "mixed"},
+    {"sector_vn": "bat_dong_san", "investment_phase": "recovery", "pyramid_tier": "equity", "direction_this_cycle": "positive"},
+    {"sector_vn": "nong_nghiep", "investment_phase": "expansion", "pyramid_tier": "equity", "direction_this_cycle": "positive"},
+    {"sector_vn": "cong_nghe", "investment_phase": "contraction", "pyramid_tier": "fixed_income", "direction_this_cycle": "negative"},
+    {"sector_vn": "dau_khi", "investment_phase": "expansion", "pyramid_tier": "equity", "direction_this_cycle": "neutral"}
+  ],
+  "known_gaps": [
+    "[L6-gap: gold >$4,300 active (4468.30) — regime-drift risk: safe-haven premium may lag actual risk-off reversal; flag until gold retraces below $4,300]",
+    "[gap:sentiment_z_unavailable_13d_minimum_21d — only 13 days of valid sentiment data, minimum 21 required for z-score baseline]",
+    "[gap:L3_vn_macro_incomplete_cpi_trend — CPI trend data unavailable, cannot confirm inflation posture]",
+    "[gap:business_context_partial_3of9_tickers — only VNM, BID, VHM tickers have bctc_signal or fundamental data cited; 6 tickers lack product/customer/ops context]",
+    "[gap:L4_partial_pillar_coverage_multiple_tickers — VCB 2/4, BID 2/4, FPT 1/4 pillars aligned; below 3-pillar threshold]"
+  ],
+  "causal_chains": [
+    "State capital wave SOE injection → VNM/SAB/FPT sectoral tailwind → foreign smart-money accumulation on agriculture/SOE beneficiaries → BID/NVL/VNM up despite carry regime flat.",
+    "US-Iran geopolitical tension → crude oil pressure +0.58% intraday → energy sector positioning shift (BSR +1.73%) → energy thesis decouples from USD/VND carry dynamics.",
+    "USD/VND tightening 25,930 (>25K) + carry spread 1.37pp neutral → foreign exit pressure on banking (VCB -0.17%, BID +0.38% muted) → implies repatriation hesitation despite carry attractive.",
+    "Tech sector underperformance (FPT -0.56%, ngành công nghệ -0.59%) + foreign smart-money exit (-313k FPT shares) → tech thesis contradicts SOE capital wave narrative → FPT LOW conviction."
+  ],
+  "clusters_summary": {
+    "qualified": 4,
+    "tickers_covered": ["VNM", "BID", "VCB", "FPT", "VHM", "NVL", "VRE", "HPG", "MSN"],
+    "sectors_covered": ["banking", "real_estate", "agriculture", "tech", "oil_gas", "geopolitical"]
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "metadata": {
+    "cycle_id": "morning-2026-08-12T05:18:41Z",
+    "dish_type": "morning",
+    "date_vn": "2026-08-12",
+    "timestamp_utc": "2026-08-12T05:18:41Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L4_partial_pillar_coverage] [gap:business_context_unavailable]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "expansion",
+    "regime_state": "macro-micro-contradiction",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Gold bullish safe-haven signal ($4461.60, exceeds $4300 threshold). Carry spread neutral (1.37pp). Oil neutral (89.48 in $60-100 band).",
+    "vn_macro_layer": "USD/VND bearish at 25,950 (exceeds 25,000 resistance, VND depreciation pressure). Equity yields fairly valued (6.70% earnings yield > 5.00% deposit rate, 1.70pp premium).",
+    "valuation_layer": "Real estate sector (VHM, VIC) 3/4 pillars aligned on M2 credit expansion + earnings support. Banking sector (VCB) 2/4 pillars on lending expansion. Macro-micro contradiction: TIGHTENING stress-test signal vs. watchlist positive accumulation news creates divergence."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "FTSE GEIS fund accumulation + positive news despite gold/USD/VND macro headwinds; Kinh Dịch Tỉnh (48) MUA confirms price strength but gold>$4300 triggers regime-drift flag."
+    },
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Same FTSE fund story + real estate sector tailwind; Kinh Dịch Kiển (39) MUA but negative context. Macro-micro contradiction limits upside."
+    },
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "50T VND credit expansion supports earnings but only 2/4 pillars aligned. Kinh Dịch Thăng (46) THAN TRONG cautious. Single-pillar thesis requires additional data."
+    },
+    {
+      "ticker": "HPG",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Steel sector news convergence (FTSE fund + export potential) but macro headwinds. Kinh Dịch Kiển (39) GIU negative context. Insufficient pillar coverage."
+    },
+    {
+      "ticker": "FPT",
+      "conviction_level": "MEDIUM",
+      "direction": "REDUCE",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Tech sector downside momentum (portfolio loss -11.08%), recommendation GIẢM BỚT. Single-pillar thesis insufficient; Kinh Dịch Tỷ (8) THAN TRONG confirms caution."
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "mixed"
+    },
+    {
+      "sector_vn": "thép",
+      "investment_phase": "transition",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "mixed"
+    }
+  ],
+  "known_gaps": [
+    "[L6-gap: gold >$4,300 active — regime-drift risk: gold-driven phase override may lag actual risk-off reversal; flag as regime-drift until gold retraces below $4,300]",
+    "[L6-gap: single-pillar thesis — VCB 2/4 pillars aligned; add missing pillars or state insufficient data]",
+    "[L6-gap: single-pillar thesis — HPG 2/4 pillars aligned; add missing pillars or state insufficient data]",
+    "[L6-gap: single-pillar thesis — FPT 1/4 pillars aligned; add missing pillars or state insufficient data]",
+    "[gap:business_context_unavailable — no bctc_signal_* or fundamental_* data available this cycle for watchlist tickers]"
+  ],
+  "causal_chains": [
+    "FTSE GEIS fund announcement (34 stocks, $34B expected allocation) → real estate sector accumulation thesis confirmed → VHM +2.64%, VIC +2.64% price response contradicts concurrent macro stress-test signal (TIGHTENING regime, gold safe-haven rally to $4461.60) → divergence flag: short-term accumulation vs. medium-term macro risk."
+  ],
+  "clusters_summary": {
+    "qualified": 2,
+    "tickers_covered": ["VHM", "VIC", "HPG", "VCB", "FPT"],
+    "sectors_covered": ["real_estate", "banking", "steel", "tech"],
+    "convergence_types": ["ticker_convergence_VHM_news_ta", "macro_micro_contradiction_expansion_vs_tightening"]
+  }
+}

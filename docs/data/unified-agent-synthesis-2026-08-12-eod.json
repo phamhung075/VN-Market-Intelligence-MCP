@@ -1,0 +1,88 @@
+{
+  "metadata": {
+    "cycle_id": "eod-2026-08-12T08:50:17Z",
+    "dish_type": "eod",
+    "date_vn": "2026-08-12",
+    "timestamp_utc": "2026-08-12T08:50:17Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "1-6 with gaps — business_context, CPI, VIRA unavailable"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "expansion",
+    "regime_state": "geopolitical-risk-offset-by-policy-support",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Fed 3.63%, geopolitical Iran tension creating safe-haven pressure (gold +0.80%), oil stable $89.34. Contradiction between morning risk-on and afternoon geopolitical escalation.",
+    "vn_macro_layer": "USD/VND 25,930 depreciation active, carry spread 1.37pp NEUTRAL but dwindling relative to risk. Foreign room 11.9% normal, no exhaustion. CPI trend and VIRA data unavailable this cycle.",
+    "valuation_layer": "Real_estate: 2-3 pillars (M2+, COC stable, policy support) aligned. Banking: divergent foreign flows (BID accumulation vs VCB exit) suggest selection within sector. Tech: FPT foreign exit signals weakness."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "SOE capital support + kinh dich BUY (Kian 39) + price strength +3.36% despite macro headwinds"
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Real_estate sector support, kinh dich BUY (Tinh 48), but foreign exits (-694k) caution strength"
+    },
+    {
+      "ticker": "BID",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Foreign smart accumulation +108k, kinh dich HOLD (Su 7), banking sector +0.31%"
+    },
+    {
+      "ticker": "FPT",
+      "conviction_level": "MEDIUM",
+      "direction": "SELL",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Foreign smart exit -313k, tech sector decline -1.07%, kinh dich caution (Khon 2)"
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive",
+      "drivers": "SOE capital wave, geopolitical risk creating flight-to-quality, kinh dich confirmation"
+    },
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "transition",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "mixed",
+      "drivers": "Policy easing (carry 1.37pp) vs geopolitical headwinds, foreign divergence"
+    },
+    {
+      "sector_vn": "công nghệ",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative",
+      "drivers": "Foreign professional exit, sector weakness -1.07%, geopolitical risk-off"
+    }
+  ],
+  "known_gaps": [
+    "[L6-gap: gold >$4,300 active — regime-drift risk: gold-driven safe-haven premium may lag actual risk-off reversal]",
+    "[gap: business_context_unavailable — no fresh bctc_signal/fundamental data this cycle]",
+    "[gap: L3_CPI_unavailable — only macro snapshot prices, no trend data]",
+    "[gap: VIRA_unavailable — FX reserves data not fetched]",
+    "[gap: market_sentiment_z_insufficient — 13 days available, need 21+]",
+    "[L6-gap: single-pillar thesis — FPT 1/4 pillars aligned]"
+  ],
+  "causal_chains": [
+    "Geopolitical Iran tension → safe-haven demand (gold +0.80%) → selective SOE-backed accumulation in real_estate → VIC +3.36%, VHM +2.36%, FRT +1.02% despite degraded macro fundamentals",
+    "USD/VND depreciation 25,930 → FII carry unwind pressure → foreign selective exit cyclicals (FPT -313k, HPG -138k, VHM -694k despite +2.36% price) + accumulation defensives (BID +108k, NVL +184k, VNM +229k) = flight-to-quality within FII cohort"
+  ],
+  "clusters_summary": {
+    "qualified": 3,
+    "tickers_covered": ["VIC", "VHM", "NVL", "DXG", "BID", "VCB", "FPT"],
+    "sectors_covered": ["real_estate", "banking", "tech"]
+  }
+}

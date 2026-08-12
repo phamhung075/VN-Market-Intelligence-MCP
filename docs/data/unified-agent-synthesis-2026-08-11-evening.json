@@ -1,72 +1,96 @@
 {
   "metadata": {
-    "cycle_id": "evening-2026-08-11T19:45:00Z",
-    "dish_type": "evening",
+    "cycle_id": "evening-2026-08-11T19:53Z",
+    "dish_type": "evening_preview",
     "date_vn": "2026-08-11",
-    "timestamp_utc": "2026-08-11T19:45:00Z",
+    "timestamp_utc": "2026-08-11T19:53:18Z",
     "quality_verdict": "degraded",
-    "layers_walked_summary": "partial — [gap:L2_US_macro_incomplete] [gap:L3_VN_macro_incomplete] [gap:L4_partial_pillar_coverage] [gap:L5_kinhdich_unavailable]"
+    "layers_walked_summary": "partial — [gap:L2_US_macro_incomplete_no_PMI_detail] [gap:L3_VN_macro_incomplete_CPI_VIRA] [gap:L4_partial_pillar_coverage_earnings] [gap:business_context_unavailable] [gap:L5_kinhdich_available_per_ticker_hexagrams]"
   },
+
   "tnb_synthesis": {
     "clock_phase": "slowdown",
-    "regime_state": "carry-pressure",
+    "regime_state": "carry-unwind-pressure",
     "regime_confidence": "MEDIUM",
-    "us_macro_layer": "Fed carry spread neutral at 1.37pp (is_estimate=false). Investment clock CORE_VN phase stable. [gap:US_PMI_unavailable]. [gap:geopolitical_event_absent].",
-    "vn_macro_layer": "USD/VND 25,940 crossing carry-pressure band (threshold 26,500 flagged). [gap:CPI_trend_unavailable]. [gap:VIRA_FX_reserves_unavailable]. Foreign room normal at 24.76% market saturation. Sentiment weak (insufficient history — 12 days < 21 baseline).",
-    "valuation_layer": "Banking sector: Pillar 1-2 (money/cost) stable at neutral carry. [gap:pillar_3_earnings_bctc_serve_blocked_14_16_tickers]. Pillar 4 (valuation) fairly valued (yield spread 1.70pp). Phase: slowdown. Pyramid tier: fixed_income/defensive."
+    "us_macro_layer": "Fed Funds 3.63% stable; EFFR-IORB data pending; carry spread 1.37pp NEUTRAL per SBV 5%, offering no buffer for FII flow reversal. Global sentiment mixed (gold $4,430.60 signals safe-haven demand; oil $89.21 NEUTRAL band).",
+    "vn_macro_layer": "USD/VND 25,940 (BEARISH, crossing carry-pressure band 25,500-26,500). Carry regime NEUTRAL but vulnerable to reversal. CPI trend: [gap:unavailable]. FX reserves/VIRA: [gap:unavailable]. Foreign-room saturation: Banking 58%, Tech 56%, Retail 67% — FII outflow risk concentrated in cyclical/defensive sectors.",
+    "valuation_layer": "Banking sector: Yield-spread 1.70pp FAIRLY_VALUED (earnings yield 6.70% vs SBV deposit 5%); MEDIUM conviction limited by carry-unwind pressure + FII selling. Real estate: VHM +0.70% price resilience contradicted by Kinh Dịch Tỉnh (48, 56% confidence) mixed signal. No earnings context available (bctc_signal archive block 14/16 watchlist tickers)."
   },
+
   "conviction_calls": [
     {
       "ticker": "VCB",
       "conviction_level": "MEDIUM",
       "direction": "HOLD",
       "pillars_aligned_count": 2,
-      "rationale_one_liner": "Banking sector under FII carry-pressure; USD/VND rise constrains rally despite fair valuations"
+      "rationale_one_liner": "Fair valuation (yield +1.70pp) undermined by USD/VND carry reversal pressure + FII outflow on banking sector; Kinh Dịch Sư (7) HOLD posture confirms caution"
     },
     {
       "ticker": "BID",
       "conviction_level": "MEDIUM",
       "direction": "HOLD",
       "pillars_aligned_count": 2,
-      "rationale_one_liner": "Valuation neutral; macro headwinds from carry unwind outweigh earnings support"
+      "rationale_one_liner": "Sector-wide carry pressure (-1.01% session) despite fair fundamentals; FII headwind structural until USD/VND stabilizes below 26,500"
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Momentum leader (ROC +57.2%, decile 10) contradicted by sector headwinds + Kinh Dịch Tỉnh mixed signal (56% confidence); insufficient pillars for conviction"
+    },
+    {
+      "ticker": "FPT",
+      "conviction_level": "MEDIUM",
+      "direction": "REDUCE",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Position underwater -11.33%; Khôn hexagram patience signal; insufficient tech-sector earnings data; Kinh Dịch recommendation REDUCE"
     }
   ],
+
   "sector_phases": [
     {
-      "sector_vn": "ngan_hang",
+      "sector_vn": "ngân hàng",
       "investment_phase": "slowdown",
       "pyramid_tier": "fixed_income",
       "direction_this_cycle": "negative"
     },
     {
-      "sector_vn": "nong_nghiep",
+      "sector_vn": "bất động sản",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "mixed"
+    },
+    {
+      "sector_vn": "công nghệ",
       "investment_phase": "slowdown",
       "pyramid_tier": "defensive",
       "direction_this_cycle": "negative"
     },
     {
-      "sector_vn": "chung_khoan",
+      "sector_vn": "dầu khí",
       "investment_phase": "slowdown",
-      "pyramid_tier": "cash",
+      "pyramid_tier": "fixed_income",
       "direction_this_cycle": "negative"
     }
   ],
+
   "known_gaps": [
-    "[gap:L2_US_macro_incomplete — US_PMI_unavailable]",
-    "[gap:L2_geopolitical_event_absent]",
-    "[gap:L3_CPI_trend_unavailable]",
-    "[gap:L3_VIRA_FX_reserves_unavailable]",
-    "[gap:L4_partial_pillar_coverage — earnings_bctc_signal_unavailable]",
-    "[gap:L5_kinhdich_unavailable — get_portfolio_conviction_calls_not_executed]",
-    "[L6-gap:gold>$4300_regime_drift_risk — safe_haven_signal_may_lag_actual_risk_off_reversal]",
-    "[L6-gap:single_pillar_thesis — banking_pillars_2_4_insufficient_data_cannot_confirm]"
+    "[L6-gap: gold >$4,300 active (4,430.60 USD/oz) — regime-drift risk: safe-haven signal may lag actual risk-off reversal; flag as regime-drift until gold retraces below $4,300 or EFFR-IORB confirms liquidity tightening]",
+    "[L6-gap: banking single-pillar thesis — VCB 2/4 pillars aligned (carry-regime + fair-valuation only); missing: capital cost detail (EFFR-IORB numerics), earnings context (bctc-analyst serve-blocked 14/16), macro-driven stress test]",
+    "[gap:L2_US_macro_incomplete_no_PMI_detail]",
+    "[gap:L3_VN_macro_incomplete_no_CPI_VIRA]",
+    "[gap:L4_partial_pillar_coverage_earnings_blocked_bctc_analyst]",
+    "[gap:business_context_unavailable_signal_drain_archive]"
   ],
+
   "causal_chains": [
-    "Fed neutral carry spread (1.37pp) → VND carry attractiveness stagnant → USD/VND rises to 25,940 → FII flow reversal on banking sector → VCB/BID/EIB price pressure despite fair valuations."
+    "Fed neutral carry (3.63% vs SBV 5%, spread +1.37pp) → VND carry-attractiveness stagnant → USD/VND breach 25,940 (crossing carry-pressure band 25,500-26,500) → Banking sector vulnerable to FII outflow reversal → VCB/BID/EIB price pressure (-0.83 to -1.01%) despite fair valuations (yield +1.70pp); gold $4,430 (safe-haven spike) confirms risk-off sentiment."
   ],
+
   "clusters_summary": {
     "qualified": 3,
     "tickers_covered": ["VCB", "BID", "EIB", "VPB", "CTG", "TCB", "MBB", "ACB", "MSN", "VNM", "DBC", "KDC", "DPM", "SAB", "VCI", "VND", "VIX", "SSI"],
-    "sectors_covered": ["banking", "agriculture", "securities"]
+    "sectors_covered": ["banking", "agriculture", "securities", "real_estate", "tech"]
   }
 }
