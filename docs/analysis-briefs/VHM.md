@@ -1,57 +1,11 @@
 # VHM — Analysis Ledger 2026
-
 **Exchange**: HOSE
-
----
 
 ## [Report Analyzer] Fundamentals & Valuation
 
-(Quarterly reports pending)
-
----
-
 ## [News Scout] Headlines & Sentiment
-2026-07-01 | Q2 earnings forecast bullish (9/10) + capital investment news — VinSpeed high-speed rail partnership 147T VND commitment (6/10 action) | YoY: N/A
-2026-07-02 | Q2 earnings + macro expansion cycle — real estate sector earnings momentum sustained | YoY: N/A
-
----
 
 ## [Market Watcher] Price, Volume, Technicals
-2026-05-12 16:00 | Close: 160,200 VND | RSI: N/A | Vol: 6.47M (193% avg) | YoY: N/A
-
-
-### 2026-04-27 16:00
-Close: 141,200 VND (-5.23%) | Vol: standard | Sentiment: Sector weakness
-Real estate major decline. Strong bearish pressure across sector. VHM leading downside momentum.
-
-### 2026-05-01 16:00
-Close: 146,000 VND (-3.31%) | Vol: avg | Sentiment: Bearish
-Real estate continued weakness. VHM holding losses from 4/27. Seasonal "Sell in May" pressuring sector. Insider: no activity
-Action: Reduce / Monitor support levels
-
----
-
-## [Insider Tracker] Management Activity
-
-(No activity detected 2026-04-27)
-
----
+2026-08-12 16:00 | Close: 73.8 VND | RSI: 57 | Vol: 3100000 (97% avg) | YoY: 6.8%
 
 ## [Unified Agent] Quarterly Syntheses
-
-(Quarterly entries will be added here: Q1, Q2, Q3, Q4)
-2026-05-14 16:00 | Close: 157,000 VND | RSI: N/A(16c) | Vol: 554.3K (N/A% avg) | YoY: N/A
-
-## [Market Watcher] EOD Updates
-2026-07-02 16:00 | Close: 150,400 VND | RSI: 55 | Vol: 2.22M (-12.3% avg) | YoY: +0.8% | Sentiment: Neutral | Brief action: Hold (modest daily gain, real estate sector stable) | Regime: NEUTRAL
-2026-07-16 16:08 | Close: 142.800 VND | Change: +5.00% daily | RSI: N/A | Volume: High FII buying | YoY: N/A | Regime: NEUTRAL | Brief action: Watch — real estate sector recovery led by FII accumulation on Vingroup group
-
-2026-07-22 16:10 | Close: 126.900 VND | RSI: 31.7 (Oversold) | Vol: 8,235,300 (210% avg) | YoY: +32.88% | Daily: -6.96%
-Sector sell-off — Real estate broad decline (8 stocks avg -4.55%). Oversold signals warrant Watch. Bollinger Band: -10.0% below upper band indicates extreme weakness. MACD histogram negative and declining.
-Brief action: Watch — Extreme oversold conditions, test support at MA20=146,225
-
-2026-07-23 16:00 | Close: 132,000 VND (+4.02%) | Vol: 4.57M | Daily: +4.02%
-Real estate recovery bounce — FII re-entry evident. VHM leading sector rebound. Watch key resistancelevels post-oversold bounce.
-
-2026-07-29 16:00 | Close: 140,000 VND | RSI: N/A | Vol: 6.57M (246% avg) | YoY: N/A | Daily: +6.14% | Sentiment: Bullish | Brief action: Hold | Regime: NEUTRAL
-2026-07-30 16:00 | Close: 147.900 VND | RSI: 56.0 | Vol: N/A | YoY: +28.5% | Daily: +5.64% | Sentiment: Bullish | Brief action: Buy on dip | Regime: NEUTRAL | Earnings catalyst: Q2 2026 results announced, MACD momentum positive, real estate sector rotation underway

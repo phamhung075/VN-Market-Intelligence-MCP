@@ -11,6 +11,7 @@
 ## [Market Watcher] Price, Volume, Technicals
 2026-06-02 16:00 | Close: 14.200 VND | RSI: N/A | Vol: (spike 3.4x avg, HIGH anomaly) | YoY: N/A | Action: Watch — sector distress, real_estate alert
 2026-06-03 16:00 | Close: 13.600 VND | RSI: N/A | Vol: N/A | YoY: -38.2% | Action: Reduce — real estate sector crisis deepening, -4.23% on news_mention alert
+2026-08-11 16:10 | Close: 13.550 VND | RSI: N/A | Vol: N/A | YoY: N/A | Daily: -2.52% | Anomaly: YES — Real estate sector weakness continues; cumulative housing policy concerns persist. Brief action: Reduce. Regime: NEUTRAL. Sentiment: Bearish
 
 ## [Unified Agent] Quarterly Syntheses
 2026-05-14 16:00 | Close: 16,650 VND | RSI: N/A(16c) | Vol: 967.6K (N/A% avg) | YoY: N/A

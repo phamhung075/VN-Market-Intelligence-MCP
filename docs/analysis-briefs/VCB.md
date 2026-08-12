@@ -47,6 +47,7 @@ Signal: fundamental_validation #7942 | Confidence: 0.75 | Critic: 0.8
 2026-05-18 16:00 | Close: 63,200 VND | RSI: N/A | Vol: 18.88M (1018% avg) | YoY: N/A | Anomaly: Volume spike amid SOE rotation
 2026-06-01 08:59 | Close: 62,200 VND (+0.32%) | RSI: N/A | Vol: N/A | YoY: N/A | Note: Banking sector selloff (-0.97% avg)
 2026-07-01 16:00 | Close: 63,000 VND (+1.29%) | RSI: 61.6 | Vol: 423.3K | YoY: N/A | Regime: Neutral, overbought on BB (120% of band)
+2026-08-11 16:10 | Close: 59.800 VND | RSI: N/A | Vol: N/A | YoY: N/A | Daily: -0.83% | Banking sector pressure (-1.11% avg) amid higher interest rate environment. News mentions ongoing in financial channels. Regime: NEUTRAL. Sentiment: Bearish. Brief action: Hold
 
 ## [Unified Agent] Quarterly Syntheses
 2026-05-14 16:00 | Close: 61,000 VND | RSI: N/A(16c) | Vol: 561.2K (N/A% avg) | YoY: N/A

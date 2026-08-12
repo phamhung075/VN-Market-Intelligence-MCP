@@ -71,3 +71,4 @@ Summary: Day closed strong on sector momentum. Fair value target approaching.
 2026-07-23 16:00 | Close: 57,800 VND (-2.20%) | RSI: N/A | Vol: 4.83M | Sector: Neutral headwinds; defensive staple positioning continues
 
 2026-08-05 16:00 | Close: 58.600 VND | RSI: 50.5 | Vol: 5288700 (117.6% avg) | YoY: -2.5%
+2026-08-07 16:10 | Close: 62,000 VND | RSI: 63.9 (Overbought) | Vol: 13.24M (114% avg) | YoY: +2.82% | Daily: +5.08% | Sentiment: Bullish | Brief action: Hold monitor overbought | Regime: NEUTRAL | Anomaly: YES (volume surge 13.2M, 97.1% BB upper, RSI overbought zone, agriculture rotation)
