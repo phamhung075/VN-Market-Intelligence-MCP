@@ -1570,3 +1570,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · A-30: rag-service 99.68% memory, loss of reclamation, LanceDB root cause confirmed
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-rag-service-1
+**Details:** Memory sustained at 99.68% across 6-sample probe window with zero reclamation dips. VmHWM probe skipped due to host-side headroom <40MiB (Amendment B). Container BELOW-FLOOR with 3.3MiB free. Imminent-OOM risk.
+**Impact:** rag-service may OOM and restart, impacting knowledge-retrieval-augmented-generation features. Risk increases with continued low request latency filling the working set.
+**Root cause:** LanceDB vector_search() brute-force full-column scan without vector index on rag_entries table. Confirmed in architecture-brief 2026-08-12-fix-rag-embedder-idle-unload-second-growth-source.md.
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-12T04:08:40Z (signal sys-20260812T040810-6125, system-auditor -> po, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
