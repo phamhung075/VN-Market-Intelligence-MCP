@@ -421,3 +421,192 @@ Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=11.75% MemUsage=360.8M
 - Assessment: Tier-2 healthy; recurring cron issues tracked
 
 ---
+## c44 · 2026-08-12T00:30:00Z
+
+### Audit Run Tier-1 (00:33-00:36 UTC 2026-08-12)
+
+- Tier: 1 | Container liveness + health endpoints + memory A-30 discriminator + disk + hooks
+- Scope: Runtime ping; Tier-1 only checks
+- Fire-election: CLAIMED tick=2026-08-12T00:30Z
+- CONTRACT-CONTRADICTION: NONE
+
+#### Verdict Summary
+
+**Overall Status: DEGRADED (A-30 rag-service sustained high memory)**
+
+All containers UP + all health endpoints OK. A-30 deep-probe discriminator reveals:
+- mcp-server: 13.15% < 85% → SKIP/PASS
+- pdf-extractor: 86.42% sustained → deep-probe FOLD (benign, no escalation)
+- rag-service: 94.25% sustained → deep-probe ESCALATE (loss of reclamation) → **WARN**
+
+#### Container Status (A-01 to A-11): PASS
+- All host_runtime_set services UP with healthy status
+- mcp-server: Up 6 hours (healthy) [RAW-PROBE L3]
+- pdf-extractor: Up 23 hours (healthy) [RAW-PROBE L4]
+- rag-service: Up 18 minutes (healthy) [RAW-PROBE L5]
+- All others: UP and healthy
+
+#### Health Endpoints (A-12 to A-20): PASS
+- [health] mcp-server:3000/health OK (HTTP 200) [RAW-PROBE L24]
+- [health] api-gateway:4000/health OK (HTTP 200) [RAW-PROBE L25]
+- [health] macro-indicators:5004/health OK (HTTP 200) [RAW-PROBE L26]
+- [health] pdf-extractor:5001/health OK (HTTP 200) [RAW-PROBE L27]
+- [health] frontend:3001/ OK (HTTP 200) [RAW-PROBE L28]
+
+**A-20 pdf-extractor multi-probe:** PASS (3/3 probes passed, line 104-106 RAW-PROBE)
+
+#### Restart Count (A-21): PASS
+- mcp-server: RestartCount=0, no crash restarts in 4h window [RAW-PROBE L30]
+
+#### Memory Pressure (A-30) — Per-Container Gate & Deep-Probe
+
+1. **mcp-server:** 13.15% < 85% → SKIP/PASS [RAW-PROBE L33]
+
+2. **pdf-extractor:** 86.42% >= 85% → ENGAGE deep-probe [RAW-PROBE L34]
+   - Samples: 6-probe at 13s intervals, all at 86.42% [RAW-PROBE L45-50]
+   - State: No OOMKilled, RestartCount=1 stable, no state change [RAW-PROBE L38-43]
+   - VmHWM: 2587640 kB pinned at 98.7% of limit (2621440), NOT advancing
+   - Analysis: min=86.42%, max=86.42%, median=86.42%, 0 dips, 0 discontinuities
+   - **Verdict: FOLD** (benign GC sawtooth) [RAW-PROBE L55]
+   - Signal: PASS (no WARN/CRITICAL)
+
+3. **rag-service:** 94.25% >= 85% → ENGAGE deep-probe [RAW-PROBE L36]
+   - Baseline: 94.25% (significantly elevated)
+   - Samples: 6-probe at 13s intervals, all at 94.25% sustained [RAW-PROBE L64-69]
+   - State: RestartCount=12 stable, no OOMKilled, no state change [RAW-PROBE L54-62]
+   - VmHWM: 1039588 kB pinned at 99.0% of limit (1048576)
+   - Analysis: min=94.25%, max=94.25%, median=94.25%, 0 dips, 0 discontinuities
+   - **Verdict: ESCALATE** reason: "all samples >93% sustained high — loss of reclamation"
+   - Signal: **WARN** (sustained high memory without reclamation)
+   - **Dedup Status:** SKIP-dedup (id=sys-20260812T003601-7b74, last reported 2026-08-09T04:11:10Z)
+
+4. **All other containers:** <85% baseline → SKIP/PASS [RAW-PROBE L37-43]
+
+#### Disk (A-32): PASS
+- Root filesystem: 45% capacity [RAW-PROBE L97]
+- Verdict: PASS
+
+#### Hook Enforcement (A-33): PASS
+- All 4 load-bearing hooks: file exists, executable, registered
+- All 3 LOW-tier hooks: registered
+- Verdict: PASS
+
+#### Signals and Outputs
+- A-30 rag-service WARN: emitted (SKIP-dedup within 7d window)
+- Dashboard row emitted: OK (sys-20260812T003601-7b74)
+- [OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
+
+#### Emit Details
+[emit-signal] SKIP-dedup dedup_key=microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30 id=sys-20260812T003601-7b74
+[emit-dashboard] OK id=sys-20260812T003601-7b74 check_id=A-30
+
+---
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-08-12T00:33:42Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                    IMAGE                                           CREATED
+vn-market-intelligence-mcp-mcp-server-1           Up 6 hours (healthy)      vn-market-intelligence-mcp-mcp-server           6 hours ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 23 hours (healthy)     vn-market-intelligence-mcp-pdf-extractor        3 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 18 minutes (healthy)   vn-market-intelligence-mcp-rag-service          3 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 5 days (healthy)       vn-market-intelligence-mcp-stock-price          5 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 13 days (healthy)      vn-market-intelligence-mcp-macro-indicators     13 days ago
+vn-market-intelligence-mcp-frontend-1             Up 2 weeks (healthy)      vn-market-intelligence-mcp-frontend             2 weeks ago
+mcp-gateway                                       Up 3 weeks (healthy)      mcpservergatway-gateway                         3 weeks ago
+vn-market-intelligence-mcp-api-gateway-1          Up 3 weeks (healthy)      vn-market-intelligence-mcp-api-gateway          3 weeks ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 3 weeks (healthy)      ghcr.io/flaresolverr/flaresolverr:latest        3 weeks ago
+vn-market-intelligence-mcp-news-fetch-1           Up 3 weeks (healthy)      vn-market-intelligence-mcp-news-fetch           3 weeks ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 3 weeks (healthy)      vn-market-intelligence-mcp-technical-analysis   3 days ago
+vn-market-intelligence-mcp-alert-engine-1         Up 3 weeks (healthy)      vn-market-intelligence-mcp-alert-engine         3 weeks ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 3 weeks (healthy)      vn-market-intelligence-mcp-kinh-dich-service    3 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=13.15% MemUsage=403.9MiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-mcp-server-1 baseline 13.14% < 85% investigate-gate
+[A-30] vn-market-intelligence-mcp-pdf-extractor-1: baseline 86.42% >= 85% investigate-gate — ENGAGE deep-probe
+[A-30] vn-market-intelligence-mcp-rag-service-1: baseline 94.25% >= 85% investigate-gate — ENGAGE deep-probe
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-stock-price-1 baseline 2.16% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-macro-indicators-1 baseline 2.12% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-frontend-1 baseline 9.20% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-api-gateway-1 baseline 2.95% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-flaresolverr-1 baseline 3.69% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-news-fetch-1 baseline 8.98% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-technical-analysis-1 baseline 3.48% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-alert-engine-1 baseline 2.06% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-kinh-dich-service-1 baseline 3.17% < 85% investigate-gate
+
+--- A-30 pdf-extractor details ---
+{
+  "probe": "A-30 mcp-server memory reclamation discriminator",
+  "container": "vn-market-intelligence-mcp-pdf-extractor-1",
+  "window": {"probes": 6, "interval_sec": 13, "span_sec": 65},
+  "state": {
+    "oom_killed_before": "false", "oom_killed_after": "false",
+    "restart_count_before": "1", "restart_count_after": "1",
+    "started_at_before": "2026-08-11T01:19:14.0528435Z", "started_at_after": "2026-08-11T01:19:14.0528435Z",
+    "exit_code_before": "0", "exit_code_after": "0",
+    "finished_at_before": "2026-08-11T01:19:13.534021637Z", "finished_at_after": "2026-08-11T01:19:13.534021637Z",
+    "state_changed_during_window": false
+  },
+  "vm": {"vmhwm_kb_before": "2587640", "vmhwm_kb_after": "2587640",
+         "mem_limit_kb": "2621440",
+         "vmhwm_advancing_in_window": false, "vmhwm_pinned_at_cap": true},
+  "samples": [{"n":1,"t":"00:33:51Z","pct":86.42},{"n":2,"t":"00:34:06Z","pct":86.42},{"n":3,"t":"00:34:21Z","pct":86.42},{"n":4,"t":"00:34:36Z","pct":86.42},{"n":5,"t":"00:34:52Z","pct":86.42},{"n":6,"t":"00:35:07Z","pct":86.42}],
+  "analysis": {"min_pct": 86.42, "max_pct": 86.42, "median_pct": 86.42,
+               "reclamation_dips": 0, "dip_detail": "none",
+               "discontinuities": 0, "discontinuity_detail": "none"},
+  "verdict": "FOLD",
+  "reason": "benign GC sawtooth or below tripwire"
+}
+
+--- A-30 rag-service details ---
+{
+  "probe": "A-30 mcp-server memory reclamation discriminator",
+  "container": "vn-market-intelligence-mcp-rag-service-1",
+  "window": {"probes": 6, "interval_sec": 13, "span_sec": 65},
+  "state": {
+    "oom_killed_before": "false", "oom_killed_after": "false",
+    "restart_count_before": "12", "restart_count_after": "12",
+    "started_at_before": "2026-08-12T00:15:13.736170433Z", "started_at_after": "2026-08-12T00:15:13.736170433Z",
+    "exit_code_before": "0", "exit_code_after": "0",
+    "finished_at_before": "2026-08-12T00:15:13.379164149Z", "finished_at_after": "2026-08-12T00:15:13.379164149Z",
+    "state_changed_during_window": false
+  },
+  "vm": {"vmhwm_kb_before": "1039588", "vmhwm_kb_after": "1039588",
+         "mem_limit_kb": "1048576",
+         "vmhwm_advancing_in_window": false, "vmhwm_pinned_at_cap": true},
+  "samples": [{"n":1,"t":"00:33:54Z","pct":94.25},{"n":2,"t":"00:34:08Z","pct":94.25},{"n":3,"t":"00:34:23Z","pct":94.25},{"n":4,"t":"00:34:38Z","pct":94.25},{"n":5,"t":"00:34:53Z","pct":94.25},{"n":6,"t":"00:35:08Z","pct":94.25}],
+  "analysis": {"min_pct": 94.25, "max_pct": 94.25, "median_pct": 94.25,
+               "reclamation_dips": 0, "dip_detail": "none",
+               "discontinuities": 0, "discontinuity_detail": "none"},
+  "verdict": "ESCALATE",
+  "reason": "all samples >93% sustained high — loss of reclamation (dip-jitter no longer vetoes this evidence; 0 dip(s) <=40pp observed, 0 discontinuity(ies) observed)"
+}
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    17Gi    45%    393k  175M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+
+=== PROBE DONE ===
+```
+
