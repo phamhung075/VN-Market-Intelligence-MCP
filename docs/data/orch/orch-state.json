@@ -160,57 +160,6 @@
         "disposition": "FOLD -> FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE (READY, P0) + FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT (REVIEW). 2 refined units (unit-0004, unit-0015) capped <=0.6 confidence on image_unavailable for report a3a41225 is the confidence-cap SYMPTOM of the same pdf-extractor/PEK image-fetch pipeline the RECONCILE CIRCUIT BREAKER (telegram id 4674) names as one systemic incident. Per that breaker's own explicit instruction, do NOT mint per-report rows. No new mint."
       },
       {
-        "id": "sys-20260811T142947-1be1",
-        "ts": "2026-08-11T14:29:47Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "cron_fire_gap",
-        "summary": "bctcReparseJob cron status LATE — requires manual intervention",
-        "severity": "WARN",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t2:2026-08-11T12:00Z",
-        "dedup_key": "auditor-a29-fire-gap:bctcReparseJob",
-        "triaged_at": "2026-08-11T15:03:11Z",
-        "triaged_by": "po/triage-20260811T1437Z",
-        "disposition": "UNROUTED TYPE (cron_fire_gap has no row in either PO routing table — grep count 0) — hand-dispositioned. Routing gap folded onto FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED. CONTENT: FOLD — bctcReparseJob LATE is already owned across FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD (review), FACTORY-SCHEDULER-split-bctcReparseJob (review), and the known Layer-A false-MISSED classifier FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL (backlog). Single WARN, no new mint."
-      },
-      {
-        "id": "sys-20260811T142949-41ca",
-        "ts": "2026-08-11T14:29:49Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "data_stale",
-        "summary": "pipeline-health endpoint unreachable — source freshness tracking blocked",
-        "severity": "WARN",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t2:2026-08-11T12:00Z",
-        "dedup_key": "endpoint_unreachable:pipeline-health:B-01",
-        "triaged_at": "2026-08-11T15:03:11Z",
-        "triaged_by": "po/triage-20260811T1437Z",
-        "disposition": "data_stale, WARN, single fire — per triage-signals.md data_stale rule WARN goes to pendingObservations and re-verifies next tick before minting. No feed-specific freshness row to fold onto: this names the pipeline-health ENDPOINT itself as unreachable, i.e. the freshness TRACKER is down, not a tracked feed. Re-verify next tick; if still unreachable, mint zone apps/mcp-server/ (endpoint owner), not a per-feed row."
-      },
-      {
-        "id": "sys-20260811T142951-6460",
-        "ts": "2026-08-11T14:29:51Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "microservice_degraded",
-        "summary": "rag-service memory at 98.11% BELOW-FLOOR (19.4MiB free) — discriminator completion recommended",
-        "severity": "WARN",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t2:2026-08-11T12:00Z",
-        "dedup_key": "microservice_degraded:rag-service:A-30",
-        "triaged_at": "2026-08-11T15:03:11Z",
-        "triaged_by": "po/triage-20260811T1437Z",
-        "disposition": "FOLD — microservice_degraded rag-service 98.11% BELOW-FLOOR. Owner rows already open: FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (backlog, the actual allocator root cause) and FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD (backlog, the detector-window defect the summary discriminator-completion-recommended is asking for). Also corroborated by telegram report 4562 (2026-08-09, 97.50%). WARN not CRITICAL, no new mint."
-      },
-      {
         "id": "sys-20260811T150543-4ada",
         "ts": "2026-08-11T15:05:43Z",
         "from": "system-auditor",
@@ -3462,7 +3411,7 @@
             "title": "Wire auditor-tier1-probe.sh at trailer case discriminator with double-log negative assertions (WU-3, own design review)",
             "owner": "developer",
             "size": "L",
-            "status": "TODO",
+            "status": "REVIEW",
             "zone": "cross-service/",
             "depends": [
               "TICK-WU-0-TELEMETRY-LIB",
@@ -3471,7 +3420,8 @@
             ],
             "type": "SPRINT-L",
             "note": "HIGH-RISK OWN-DESIGN task (not mechanical port of WU-1/2). Wraps Tier-1 run_probe and Tier-2/3 run_tiered_probe at their case-statement discriminator to prevent double-log corruption (Q3 architectural risk). Zero touches to internal run_probe/run_tiered_probe code. Existing 1323-line suite stays green (R4). CRITICAL test: assert that Tier-2/3 invocation of run_tiered_probe produces EXACTLY ONE log line (the outer) + ZERO from inner run_probe call — this negative assertion proves the double-log corruption class does NOT occur (R1, the single most important assertion in sprint). Depends on WU-0+1+2 all green (architect gate). R2: auditor test suite has no PREFLIGHT_ROOT seam, must use TICK_TELEMETRY_LOG_PATH override.",
-            "updated_at": "2026-08-12T14:35:23Z"
+            "updated_at": "2026-08-12T14:46:26Z",
+            "next_agent": "qa"
           }
         ]
       }
@@ -13792,109 +13742,6 @@
             "observed_at": "2026-08-11T23:27:00Z"
           }
         }
-      },
-      {
-        "id": "FIX-VPS-SSC-INSIDER-502",
-        "title": "FIX-VPS-SSC-INSIDER-502 — VPS proxy HTTP 502 on ssc-insider upstream (decoupled from BA-PREDICTION-EVIDENCE-REVIVAL)",
-        "type": "FIX",
-        "zone": "vps-scripts/",
-        "status": "DONE_VERIFIED",
-        "priority": "medium",
-        "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VPS-SSC-INSIDER-502",
-        "verify_note": "prior_status=TODO",
-        "promoted_at": "2026-07-29T08:16:13Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-12T14:05:17Z",
-        "claimed_at": "2026-08-12T13:58:18Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "branch": null,
-        "next_agent": "qa",
-        "status_note": "CLOSED-NO-FIX (confirmed external outage): live-diagnosed WITHOUT VPS SSH (scope guardance allowed handoff to ops-vps-fetch only if SSH was required; it was not). VPS proxy /proxy/ssc-insider -> 502 \"Upstream HTTP 503 from congbothongtin.ssc.gov.vn/...jspx\" (3x consistent). Direct sandbox curl to the SAME upstream URL -> 503 \"No server is available to handle this request\" on every path incl. domain root, identical from non-VN egress AND VN egress (VPS) -- rules out geo-block + VPS/proxy misconfig. Parent ssc.gov.vn healthy (302 nginx) but its WebCenter app tier (/webcenter/portal/ubck) times out entirely -- same app tier congbothongtin.ssc.gov.vn runs on. Confirmed genuine external SSC WebCenter outage/degradation, not code-fixable. Deliberately did NOT add retry/backoff to vps-proxy-server.js fetchUpstream() for this route -- git-verified precedent B-05-FU-SSC-503-RETRY (commit a817b5139) already tried and reverted an identical retry fix for this exact SSC domain on the sibling BCTC discovery path because it blew the mcp-server callers timeout budget and caused a 17-day queue freeze; same caller-budget mismatch applies here vs sscInsider.ts withDeadline(30_000). Added in-code comment at vps-proxy-server.js SSC_INSIDER_UPSTREAM documenting both findings so a future agent does not re-discover and re-revert the same retry. Updated docs/architecture-briefs/2026-07-01-BA-PREDICTION-EVIDENCE-REVIVAL.md + docs/WORK.md with the closure. No functional code change; FR-2.2 watchdog (vpsProxyWatchdogJob.ts, already shipped TASK-EVIDENCE-HOP1-MCP) remains the correct operator-facing signal for a prolonged outage. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S24. Committed directly to main (no task branch), matching CLOSED-NO-FIX precedent 9e69d12bb.\n\n[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Row had no .commit/.files[] fields; derived commit 8c72462d9 via `git log --oneline --all -- <files>` on the 3 files named in status_note prose (vps-scripts/vps-proxy-server.js, docs/architecture-briefs/2026-07-01-BA-PREDICTION-EVIDENCE-REVIVAL.md, docs/WORK.md) -- commit date 2026-07-29T10:31:51+02:00 falls inside the promoted_at window, confirmed on main ancestry (git merge-base --is-ancestor). git show --stat matches exactly: all 3 claimed files plus the row's own decision-journal entry + backlog-detail.json + orch-state.json (self-referential board flip). Read the diff on disk, not trusted from prose: vps-proxy-server.js change is a PURE 29-line comment block at SSC_INSIDER_UPSTREAM -- zero functional/logic change confirmed (fetchUpstream()/route-handler lines untouched). node --check syntax-valid. mock-guard.sh --files vps-proxy-server.js PASS. Zero TS files touched (plain JS VPS script sits outside tsconfig.json include scope; other 2 files are markdown) -- bun test/tsc structurally N/A to the diff itself; ran apps/mcp-server bun tsc --noEmit anyway as the never-skip baseline -- 0 errors, main unaffected. docs/WORK.md + architecture-brief diffs read verbatim against the claimed closure text -- both landed exactly as described, no drift. Precedent commit a817b5139 (B-05-FU-SSC-503-RETRY) independently confirmed real, on main ancestry, its own message matches the cited 17-day-queue-freeze rationale for NOT adding retry -- anti-retry precedent genuine, not fabricated. Decision journal STEP developer-S24 confirmed present verbatim in sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md.\n\nLIVE RE-CHECK (2026-08-12, ~2wk after the 07-29 diagnosis): congbothongtin.ssc.gov.vn has RECOVERED from the uniform-503 state seen at diagnosis time -- root now 200, ssc.gov.vn/webcenter/portal/ubck now 302 (both healthy, real WebLogic responses incl. x-oracle-dms-ecid header). BUT the exact scraped deep-link (SSC_INSIDER_UPSTREAM jspx path) now returns a genuine upstream 404 \"A requested resource was not found\" (verified -v, tried both cold and session-cookie-warmed -- same 404 either way) -- meaning /proxy/ssc-insider is STILL broken today, just via a different upstream failure mode than the one diagnosed 07-29. This does NOT contradict the commit's own claim (scoped to the 07-29 symptom, independently confirmed accurate for that date) but the feature has not self-healed -- likely needs fresh live-diagnosis, exactly the trigger the developer's own in-code comment anticipates (\"if this route is 502ing... live-diagnose the upstream first\"). Flagging for router/PO as a new backlog candidate -- NOT a defect in this row's own claim, this row's scope (diagnose 07-29 state + document + no-unverified-fix) is fully met.\n\nVERDICT: DONE_VERIFIED. No branch/merge -- already on main.",
-        "commit": "8c72462d910454caae93e5b7a965b92f4f58e4d9",
-        "qa_verified_at": "2026-08-12T14:04:19Z",
-        "qa_verified_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "git show --stat / git merge-base --is-ancestor / node --check / mock-guard.sh / bun tsc --noEmit / curl -v (live SSC re-check)",
-            "args": "commit 8c72462d910454caae93e5b7a965b92f4f58e4d9 vs claimed files vps-scripts/vps-proxy-server.js, docs/architecture-briefs/2026-07-01-BA-PREDICTION-EVIDENCE-REVIVAL.md, docs/WORK.md; precedent commit a817b5139; live curl to congbothongtin.ssc.gov.vn root + SSC_INSIDER_UPSTREAM jspx path + ssc.gov.vn/webcenter/portal/ubck",
-            "live_value_observed": "commit ancestor-confirmed, diff = pure 29-line comment (no logic change); docs match claim verbatim; node --check + mock-guard PASS; apps/mcp-server bun tsc --noEmit 0 errors; LIVE 2026-08-12: root 200 (recovered from 503), deep-link jspx path now 404 (still broken, new failure mode) vs the 07-29-diagnosed uniform 503",
-            "observed_at": "2026-08-12T14:04:19Z"
-          }
-        }
-      },
-      {
-        "id": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK",
-        "priority": "medium",
-        "size": "S",
-        "status": "DONE_VERIFIED",
-        "title": "test_low_text_density_ocr_rasterize.py unconditionally stomps sys.modules[PIL/PIL.Image/fitz/pdfplumber/paddleocr] at import time, no restore — breaks OCR+rasterizer tests in full-suite runs (order-dependent, 7 confirmed failures)",
-        "type": "FIX",
-        "zone": "pdf-extractor",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK",
-        "promoted_at": "2026-07-29T09:16:48Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-12T14:07:38Z",
-        "claimed_at": "2026-08-12T13:58:18Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "branch": null,
-        "next_agent": "pm",
-        "completed_at": "2026-07-29T09:29:54Z",
-        "completed_by": "dev-pdf-extractor",
-        "status_note": "Root cause: _ensure_stub() conditional-check pattern already present in the file, but 4 raw unconditional sys.modules[name]=stub assignments (pdfplumber/fitz/paddleocr/PIL+PIL.Image, lines 91/102/110/123-124) bypassed it with no restore -- order-dependent leak into every test file collected afterward. Fix (AC option c): wrapped all 4 in if-name-not-in-sys.modules guards + added missing try:import PIL/PIL.Image real-import-first attempts. Verified via docker cp into vn-market-intelligence-mcp-pdf-extractor-1 (no bind mount -- baked image, docker exec alone was testing stale code until discovered). BEFORE matches recorded evidence exactly: file+ocr_backends 1 failed/46 passed; file+page_rasterizer 4 failed/28 passed. AFTER (docker-exec, BOTH orderings): file+ocr_backends 47 passed; file+page_rasterizer 32 passed; file+tesseract_retry 26 passed -- all order-independent. Full non-slow suite (docker-exec): 1033 passed/5 skipped/7 deselected/0 failed. mypy: 0 new errors vs baseline (git-stash A/B). Commits: 1d8b1374f (fix), 8ac350161 (notebook+journal). Rebuild deferred to ops per standard REBUILD_REQUIRED gate -- docker cp was verification-only, does not persist past container restart/rebuild. | [QA] Review Record (direct-commit verify) — RAW re-verified 1d8b1374f+8ac350161 on main ancestry; diff read on disk confirms all 4 guard sites; REBUILD_REQUIRED gate checked directly (image Created 2026-08-08T11:34:24Z postdates fix+last zone commit, docker exec grep confirms live file byte-matches fix), NOT merely docker-cp hot-patched. Re-ran tests myself inside the already-rebuilt container: 47/32/26 passed matching claimed evidence exactly, both orderings order-independent; full non-slow suite 1047 passed/5 skipped/7 deselected/0 failed (14-test growth vs claimed 1033 is unrelated 2-week repo drift, not a regression). mypy unrunnable in runtime image + pre-existing host env block ('pdf-extractor' invalid package name) — independently re-derived 0-new-errors via isolated before/after mypy run on both file versions (identical 23-error baseline set). DJ-GATE-1 satisfied (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-18.md STEP qa-S88). VERDICT: APPROVED, DONE_VERIFIED.",
-        "qa_verdict": "APPROVED",
-        "qa_verified_at": "2026-08-12T14:07:38Z",
-        "qa_verified_by": "qa",
-        "updated_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "git merge-base --is-ancestor + git show --stat + docker inspect/exec (live pdf-extractor container) + pytest (in-container, 4 file-order permutations + full non-slow suite) + mypy (isolated before/after A/B)",
-            "args": {
-              "commits_verified": [
-                "1d8b1374f",
-                "8ac350161"
-              ],
-              "files_verified": [
-                "apps/pdf-extractor/__tests__/unit/test_low_text_density_ocr_rasterize.py"
-              ],
-              "container": "vn-market-intelligence-mcp-pdf-extractor-1",
-              "image_created": "2026-08-08T11:34:24Z"
-            },
-            "live_value_observed": "ancestor=yes both commits; git show --stat matches the single claimed file; live container image Created=2026-08-08T11:34:24Z (postdates fix commit 07-29 and zone's last code commit 07-31) — docker exec grep confirms all 4 if-not-in-sys.modules guard sites present verbatim in the running container's file, fix durably baked into deployed image not just docker-cp; in-container pytest re-run (not trusted from prose): ocr_backends+rasterizer both orderings 47 passed each, +page_rasterizer 32 passed, +tesseract_retry 26 passed (exact match to claimed evidence, order-independent); full non-slow suite 1047 passed/5 skipped/7 deselected/0 failed (claimed 1033 passed, 14-test delta = 2wk unrelated repo growth, skip/deselect/fail identical); mypy unrunnable in runtime image (tool not shipped) + host-side blocked by pre-existing env-only 'pdf-extractor invalid package name' error — independently re-derived 0-new-errors via isolated before/after mypy run on both file versions, identical 23-error baseline set (5 pre-existing ocr_adapter.py + 4 stub-attr test-file errors, only line numbers shift)",
-            "observed_at": "2026-08-12T14:07:38Z"
-          }
-        }
-      },
-      {
-        "id": "FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET",
-        "type": "FIX",
-        "priority": "normal",
-        "size": "S",
-        "status": "DONE_VERIFIED",
-        "title": "get_foreign_room tool output exceeds tool-result token budget -> alert-commander cannot consume (recurring 3x)",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-GET-FOREIGN-ROOM-TOOL-RESULT-TOKEN-BUDGET",
-        "promoted_at": "2026-07-29T08:45:57Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-12T14:08:00Z",
-        "claimed_at": "2026-08-12T13:58:18Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-29T09:09:15Z",
-        "review_note": "dev-mcp-server: root-cause confirmed LIVE (mcp-call.sh probe: 74,245 chars/106 tickers pre-fix — getAllTickersHistory reads the FULL vnstock_trading_stats universe, not the watchlist). Fix: new domain summarizeForeignRoomTickers() (foreignRoomAnalyzer.ts) trims tickers[] to top_n (default 10, effective=min(top_n,actual count), never hardcoded) ranked ROOM_LOCKED/FULL_ROOM_SELL-flagged first then |depletion_velocity_5d| desc; tickers_rollup counts over FULL universe; fetch_more.omitted_codes for individual re-fetch. getForeignRoom usecase itself UNCHANGED (money-radar composite + indicator-gauges REST projection both verified non-regressed). Evidence: P0-2-foreign-room-suite.test.ts 43/43 pass (24 new AC-12/AC-12b tests), tsc clean, toolCount=184/cronJobCount=88 unchanged, neighbor-consumer suite 108/108 pass, live boot health 200. Full bun test 14903 pass/55 fail/1239 files — 55 fails keyword-scanned zero overlap with foreign_room/ForeignRoom/money-radar/indicator-gauges (standing FIX-MCP-SUITE-HEALTH-BASELINE red per dev-standards.md pinned ruling). CAVEAT for qa: ACs 3-consecutive-live-cycle clause is NOT closable solo — needs post-deploy live alert-commander cycle confirmation (this fix reduces payload from ~18.5k-token-equivalent unbounded to a few-KB bounded response; the mechanical size/behavior gate is what I verified, the live 3-cycle recurrence-free confirmation is a QA/post-deploy follow-up). | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED (mechanical fix + code-level ACs); AC \"3-consecutive-live-cycle recurrence-free\" clause left OPEN as a post-deploy follow-up (see caveat below), not a blocker for this flip. Verified commit 3e8c5db91 on main ancestry (git merge-base --is-ancestor); git show --stat matches all 3 source files (new P0-2-foreign-room-suite.test.ts, new foreignRoomAnalyzer.ts, modified foreignRoomTools.ts) + 3 docs (get_foreign_room.md, market-data.md, testing.md). Independently re-ran, not trusted from prose: P0-2-foreign-room-suite.test.ts 43/43 pass (exact match); bun tsc --noEmit 0 errors; mock-guard.sh --files on both production files PASS; DDD clean -- foreignRoomAnalyzer.ts (domain) has ZERO import statements (fully pure), foreignRoomTools.ts's infra/application imports are expected interface-layer wiring, not a violation; security clean (no process.env, no secrets -- only prose \"token budget\" hits). Neighbor-consumer suite independently reproduced: MONEY-RADAR-P0-T2-COMPOSITE.test.ts + money-radar-api.test.ts + IND-P1-MCP-REST-GAUGES-ENDPOINT.test.ts = 65/65 pass, + P0-2-foreign-room-suite 43/43 = 108/108 total -- exact match to claim. LIVE-verified against the actually-deployed container (mcp-server image built 2026-08-11T18:25Z, healthy) via scripts/agents-flow/mcp-call.sh: get_foreign_room() with no code -> 9,909 chars / 10 tickers returned (top_n default), tickers_rollup.total_tickers=106 (full universe, matches pre-fix 106-ticker baseline), more_available=true, fetch_more.omitted_codes length=96 (106-10, arithmetic checks out) -- down from the claimed pre-fix 74,245 chars, reproduced live not just asserted; code=VCB single-ticker path untrimmed as designed; /api/indicator-gauges .foreign_room block confirmed to carry NO tickers[] field (3rd consumer unaffected, as claimed). toolCount discrepancy noted and resolved: dev's 07-29 ephemeral-boot claim was 184, live production now reads 183 -- this commit's own diff adds/removes zero tool registrations (read the full diff), so the drift is unrelated later-commit churn between 07-29 and the 08-11 image build, not a regression from this fix. Full-suite baseline claim (14903 pass/55 fail on 07-29) not re-run wholesale -- standing FIX-MCP-SUITE-HEALTH-BASELINE red, dev-standards.md pinned CANONICAL reading: targeted+neighbor suite is the authoritative DoD, not the repo-wide run. Instead independently checked TODAY's live CI post-fix (run 31602576573, 2026-08-12): 15111 pass/40 skip/7 fail, only 4 failing files, none foreign-room-named; spot-checked the one FOREIGN-*-named failure (FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts) directly -- confirmed unrelated (checkForeignFlowGap trading-day-gap logic tripping on a stale hardcoded 2026-08-06 date, not foreign-room/token-budget code) -- zero overlap corroborated independently, not just keyword-scanned. DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md line 213 (task-id stamped, 108/108 neighbor claim pre-recorded there matching my own re-run). CAVEAT (dispatcher-flagged, verified correct): the backlog row's literal \"3 consecutive live cycles recurrence-free\" AC cannot be satisfied inside a single review pass -- it requires observing multiple real alert-commander cron cycles post-deploy, which this fix has not yet run through in production traffic. The mechanical/behavioral gate that AC exists to enforce (bounded tool-result size, correct flagged-first-then-|net| ranking, full-universe rollup, fetch_more re-fetch handle) IS closed and live-verified working (74,245 -> 9,909 chars, well under budget). Recommending PM/PO spawn a lightweight follow-up monitoring task (confirm 3 consecutive alert-commander get_foreign_room cycles complete with no token-budget error) to formally close the original backlog AC's recurrence clause -- a live-observation task, not a code-fix task.",
-        "qa_verified_at": "2026-08-12T14:07:59Z",
-        "qa_verified_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "bun test P0-2-foreign-room-suite.test.ts + neighbor-consumer suite + bun tsc --noEmit + mock-guard.sh + git merge-base --is-ancestor + git show --stat + live mcp-call.sh get_foreign_room probe",
-            "args": "src/__tests__/P0-2-foreign-room-suite.test.ts (43 tests) + MONEY-RADAR-P0-T2-COMPOSITE.test.ts + money-radar-api.test.ts + IND-P1-MCP-REST-GAUGES-ENDPOINT.test.ts (65 tests, 108 total); mock-guard.sh --files foreignRoomAnalyzer.ts foreignRoomTools.ts; commit 3e8c5db91; live get_foreign_room() no-code + code=VCB + /api/indicator-gauges",
-            "live_value_observed": "43/43 + 108/108 neighbor-consumer pass; tsc 0 errors; mock-guard PASS; git show --stat matches all 3 source + 3 docs files; live get_foreign_room() no-code returns 9909 chars/10 tickers, tickers_rollup.total_tickers=106, fetch_more.omitted_codes len=96 (down from pre-fix 74245 chars/106 tickers); /api/indicator-gauges foreign_room block carries no tickers[]",
-            "observed_at": "2026-08-12T14:07:59Z"
-          }
-        }
       }
     ],
     "head": {
@@ -15158,20 +15005,6 @@
         "po_promotion_20260808T1220Z": "PROMOTED BACKLOG->READY by po 2026-08-08 review of FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE, which is now BLOCKED on this row. NEW EVIDENCE strengthening this row's own premise (found during that review, not previously recorded here): the Go plane does not merely HOLD a different constant — it EMITS it into narrative text. macro_usdvnd_direction_classifier.go:91 interpolates the threshold into \"USDVND at %.0f exceeds %.0f threshold — VND depreciation creates import cost pressure (BEARISH)\", rendering literally as \"exceeds 25000 threshold\", and is live-wired via macro_signals.go:144 uvnd.Classify() + usecases.go:194/295. This supplies the missing MECHANISM link for the recurring \"25,000\" citations in published CHEF dishes: they are plausibly faithful relays of this upstream string, NOT the LLM round-number drift previously assumed. Consequence: this row is no longer merely a tidy-up — it gates a supervised, user-facing MARKET-output fix; priority raised medium->high. SEMANTIC CAUTION for whoever takes it: Go 25000 is a DIRECTION-band bound (BEARISH/NEUTRAL/BULLISH, band 23000-25000) while TS 25500 is a CASCADE-IMPACT trigger and TS also carries a 24500 lower band; these may be legitimately distinct concepts rather than one drifted constant. Answer \"same concept or not?\" BEFORE unifying — a blind collapse would be a real regression. 26500 remains sourceless in both planes (0 hits *.ts and *.go)."
       },
       {
-        "id": "UC-CCA-P3-FR1-FR2-SKILL",
-        "title": "Create published-marker-gate skill",
-        "priority": "P0",
-        "zone": "cross-service/",
-        "next_agent": "dev-team",
-        "status": "READY",
-        "depends_on": null,
-        "blocked_by": null,
-        "created_at": "2026-08-08T00:00:00Z",
-        "created_by": "pm",
-        "note": "FR-1/FR-2: Create .claude/skills/published-marker-gate/SKILL.md (two-phase gate). Blocking dependency for 7 follow-on FR-3 wiring tasks.",
-        "updated_at": "2026-08-08T15:05:42Z"
-      },
-      {
         "id": "UC-CCA-P3-FR3-CHEF",
         "title": "Wire published-marker-gate into chef flow (cross-file, R1 risk)",
         "priority": "P0",
@@ -15285,7 +15118,8 @@
         "created_by": "po (B1 Path-A ruling)",
         "note": "FR-5 (AC-CODE-GATE) code track, split from UC-CCA-P3 per PO's B1 Path-A ruling 2026-08-08. Create apps/mcp-server/src/domain/services/publishedMarkerImmunity.ts (pure predicate isPublishedMarkerTaskId, prefix 'published:'); modify apps/mcp-server/src/infrastructure/db/coordinationStore.ts to add an UNCONDITIONAL release-refusal guard as the FIRST statement of releaseTask() (:888) and releaseOrphanTask() (:1000), plus the additive optional reason field on ReleaseResult (:391-393) — OrphanReleaseResult.reason already exists, zero type change there. coordinationTools.ts call sites (:208/:320) need ZERO changes; the guard sits inside the store functions they wrap, so it cannot be routed around. Tests per brief §6: (1) published:* release -> {ok:true,released:0,reason:'published_marker_immune'} NOT released:1; (2) orphan-sweep on a genuinely stale published:* -> still refused (proves guard fires BEFORE the staleness check); (3) negative control — cron:*/sprint-task with identical staleness still releases normally. HARD SEQUENCING (PO B1 ruling): do NOT start until FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L is terminal — that row shrinks/splits this exact file (currently 1388L vs size-lint upper 1365L, the sole live CI-RED offender on origin/main), which both unblocks the ci_green verification gate and relocates every line anchor above. Re-read the anchors after it lands; do not trust the numbers in this note if the file was split. UC-CCA-P3 does NOT close DONE until this child is DONE.",
         "verification_gate": "ci_green_on_subsequent_push",
-        "updated_at": "2026-08-08T15:10:20Z"
+        "updated_at": "2026-08-12T14:39:11Z",
+        "dep_status_note_20260812": "[developer 2026-08-12T14:35Z, dev-team lead cycle] Blocking dependency FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L is DONE_VERIFIED (2026-08-09, commit 763ef682252) — dependency SATISFIED, this row is fully eligible now. Line anchors re-verified LIVE against the post-split coordinationStore.ts (now 1173L): releaseTask() still at :888, releaseOrphanTask() still at :1000, ReleaseResult still at :391-393, OrphanReleaseResult still at :395-400 — UNCHANGED, this row's own note's anchor-drift warning does NOT apply, safe to implement against the numbers already in this row's note. NOT dispatched this cycle: this session (Task-tool-spawned, Read/Edit/Write/Bash only, no Agent tool) cannot nest-spawn dev-mcp-server — flagged for the outer dev-team session (which holds the Agent-tool binding) to dispatch next tick."
       },
       {
         "id": "FIX-ORCHAPPLY-SELECTOR-MISS-SILENT-NOOP",
@@ -19843,6 +19677,24 @@
         "depends_on": [
           "FIX-ANALYSIS-ONLY-EXIT-DETECTOR-INVERSE-PARTIAL-MISSED-NOTEBOOK-WRITE-PASSES"
         ]
+      },
+      {
+        "id": "UC-CCA-P3-FR1-FR2-SKILL",
+        "title": "Create published-marker-gate skill",
+        "priority": "P0",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "status": "REVIEW",
+        "depends_on": null,
+        "blocked_by": null,
+        "created_at": "2026-08-08T00:00:00Z",
+        "created_by": "pm",
+        "note": "FR-1/FR-2: Create .claude/skills/published-marker-gate/SKILL.md (two-phase gate). Blocking dependency for 7 follow-on FR-3 wiring tasks. || [developer 2026-08-12T14:35Z] Implemented directly (this flow's own known-drift precedent: zone cross-service/ unmapped in system-map.json, next_agent was non-specialist placeholder 'dev-team'; this session also has no Agent-tool binding to nest-spawn anyway). Created .claude/skills/published-marker-gate/SKILL.md (86L, commit 6d63b9cac) verbatim from architect brief §3 / this task's own handoff AC-1 (frontmatter name+description, Inputs MARKER_KEY/MARKER_TTL/OWNER_AGENT/OWNER_CLIENT_SESSION, Phase-1 probe pseudocode incl. task_list_held no-task_id-filter caveat, Phase-2 claim pseudocode incl. never-release+TTL-sole-expiry language, Design note on Phase-1-optional). AC-2 (valid markdown, YAML frontmatter parses) verified. AC-3 (no other files touched) held. Unblocks the 7 FR-3 wiring children once QA approves.",
+        "updated_at": "2026-08-12T14:39:11Z",
+        "updated_by": "developer",
+        "claimed_at": "2026-08-12T14:39:11Z",
+        "claimed_by": "developer (dev-team lead, no-zone fallback, session 165f4245-6173-4054-87fd-c55bb626265f)",
+        "commit_sha": "6d63b9cac"
       }
     ],
     "qa": [
@@ -20200,14 +20052,14 @@
         "blocked_by": null,
         "created_at": "2026-08-08T00:00:00Z",
         "created_by": "architect",
-        "note": "Umbrella task: flow-doc track (FR-1/FR-2/FR-3) decomposed into UC-CCA-P3-FR1-FR2-SKILL + 7 FR-3 wiring tasks. B1 (FR-5 code-gate sequencing) is PO-only, pending decision (pm spawning po). All sub-tasks created in READY.",
-        "updated_at": "2026-08-12T14:27:36Z",
+        "note": "Umbrella task: flow-doc track (FR-1/FR-2/FR-3) decomposed into UC-CCA-P3-FR1-FR2-SKILL + 7 FR-3 wiring tasks. B1 (FR-5 code-gate sequencing) ruled by po 2026-08-08 (Path A, hard sequencing dependency). [developer 2026-08-12T14:35Z dev-team-lead cycle] Checked all 9 children — all 9 were untouched in ready[] since 2026-08-08 mint. REAL PROGRESS THIS CYCLE: UC-CCA-P3-FR1-FR2-SKILL implemented directly (no zone owner, non-specialist next_agent) and moved ready[]→review[] (next_agent=qa, commit 6d63b9cac) — this is the blocking dependency for the 7 FR-3 children, still correctly held blocked pending QA sign-off. UC-CCA-P3-FR5-CODE-GATE's depends_on (FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L) is CONFIRMED machine-readable (real array, not prose) AND that blocker is now DONE_VERIFIED (2026-08-09) — FR5-CODE-GATE is dependency-satisfied and fully eligible, anchors re-verified unchanged post-split, but NOT dispatched: this session has no Agent-tool binding (Task-spawned, Read/Edit/Write/Bash only) so it cannot nest-spawn dev-mcp-server (documented structural gap, feedback_devteam_flow_needs_nested_agent_spawn_subagent_cannot.md). ACTION NEEDED next tick: outer dev-team session (has Agent tool) dispatch dev-mcp-server on UC-CCA-P3-FR5-CODE-GATE now that its dependency is clear, and dispatch the 7 FR-3 specialists once FR1-FR2-SKILL clears QA. Row stays IN_PROGRESS — real child work is in flight, umbrella not yet closeable.",
+        "updated_at": "2026-08-12T14:39:11Z",
         "po_goahead_20260808T151020": "po ratified the UC-CCA-P3 architect brief INDEPENDENTLY AT SOURCE (never on a relayed verdict): brief docs/architecture-briefs/2026-08-08-uc-cca-p3-published-marker-gate-skill.md present (34702 bytes, 508L, commit e834b8209 real). Load-bearing FR-5 implementability claims RE-DERIVED FROM SOURCE, not from brief prose: releaseTask() at coordinationStore.ts:888 CONFIRMED; releaseOrphanTask() at :1000 CONFIRMED; ReleaseResult at :391-393 CONFIRMED (does need the additive reason? field, as the brief states); OrphanReleaseResult.reason ALREADY EXISTS at :395-400 so the brief's 'zero type change needed here' is CORRECT; coordinationTools.ts call sites at :208/:320 match EXACTLY, so 'zero interface changes' holds. NOTE: WF-2's hold on this row was released by pm's 15:05:42Z lane move (in_progress->ready, supervised dropped), not by this stamp; the stamp is retained as the durable ratification record.",
         "b1_ruling_20260808": "[po 2026-08-08T15:10:20Z B1 RULING — PATH A (single wave), WITH A HARD INTRA-WAVE SEQUENCING CONSTRAINT] DECISION: FR-5 stays IN SCOPE; UC-CCA-P3 does NOT close DONE without it. Path B REJECTED: this row is P0 precisely because prose/procedural gates have oscillated 3x across 4 incident classes since 2026-07-02, and the worst (07-15, MARKET ids 932+933) published a FALSE ~29% VN-Index move to real users; deferring the only HARD control for that direction into a 353-row backlog is, at this board's measured throughput, indefinite. NEW DECISIVE FACT neither BA nor architect surfaced (PO verified live this tick): FR-5's landing site apps/mcp-server/src/infrastructure/db/coordinationStore.ts is 1388L against size-lint baseline=1241L/upper=1365L and is RIGHT NOW the SOLE offender failing CI size-lint on origin/main — verified by RUNNING scripts/audits/size-lint-justification.sh --check ('FAIL - 1 offending file(s) (scanned 1369)'), not inferred from a report. CONSTRAINT: the FR-5 code child MUST be sequenced AFTER FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L (already READY, P0, next_agent=dev-mcp-server, same specialist; RLC gate measured OPEN this tick at wip_in_progress=1<2). THREE REASONS: (1) adding the guard first pushes the file further past the bound, deepening the ONE failure that currently makes verification_gate=ci_green_on_subsequent_push UNSATISFIABLE for 6 sibling FIX-CI-SIZELINT-* rows parked in review[] AND for UC-CCA-P3's own Verification-Gate item 4; (2) the size-lint remediation needs -23L minimum and will realistically EXTRACT/split coordinationStore.ts, invalidating every exact line anchor brief §6 depends on (releaseTask :888, releaseOrphanTask :1000, ReleaseResult :391) — implementing FR-5 first GUARANTEES rework; (3) same file + same specialist concurrently = avoidable rebase churn on a hot file. COST OF THE CONSTRAINT IS ~ZERO: the flow-doc track (PM's 8 children) has NO dependency on coordinationStore.ts and proceeds IMMEDIATELY in parallel; only the single FR-5 child waits. Architect's non-binding Path-A observation (brief §9) ACCEPTED as correct on the risk axis; this ruling adds only the sequencing it could not have known. PO MINTED the 9th child UC-CCA-P3-FR5-CODE-GATE this tick — pm does NOT need to re-decompose.",
         "b1_ruling_path": "A-single-wave-with-fr5-sequencing-dependency",
         "b1_ruling_decided_by": "po",
         "b1_ruling_decided_at": "2026-08-08T15:10:20Z",
-        "updated_by": "po (B1 ruling + WF-2 ratification)",
+        "updated_by": "developer (dev-team lead cycle)",
         "claimed_at": "2026-08-12T14:27:36Z",
         "claimed_by": "dev-team (ready-lane consumer)",
         "dispatch_lane": "developer"
