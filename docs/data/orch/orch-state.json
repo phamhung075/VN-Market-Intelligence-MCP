@@ -3396,28 +3396,28 @@
             "title": "Wire cowork-tick-preflight.sh at trailer with tt_capture_and_log wrapper + test cases (WU-1)",
             "owner": "developer",
             "size": "S",
-            "status": "BACKLOG",
+            "status": "TODO",
             "zone": "cross-service/",
             "depends": [
               "TICK-WU-0-TELEMETRY-LIB"
             ],
             "type": "SPRINT-S",
             "note": "Mechanical 2-line trailer change (source lib + wrap run_preflight). Zero changes inside _emit_verdict or any return site. Existing test suite (which sources+calls functions directly, never reaches trailer) stays green by construction (R4). New logging test cases additive only. AC-3 (zero semantic change) critical. Depends on WU-0 green.",
-            "updated_at": "2026-08-12T13:41:48Z"
+            "updated_at": "2026-08-12T14:11:17Z"
           },
           {
             "id": "TICK-WU-2-DEVTEAM-WIRING",
             "title": "Wire dev-team-tick-preflight.sh at trailer with tt_capture_and_log wrapper + test cases (WU-2)",
             "owner": "developer",
             "size": "S",
-            "status": "BACKLOG",
+            "status": "TODO",
             "zone": "cross-service/",
             "depends": [
               "TICK-WU-0-TELEMETRY-LIB"
             ],
             "type": "SPRINT-S",
             "note": "Mechanical 2-3 line trailer change. Same pattern as WU-1. Existing suite stays green (R4). Note R6: pre-existing step55_board_hygiene stdout-leak risk (low-frequency, out-of-scope to fix) may incidentally surface as verdict:UNKNOWN rows — defensive, not regression. Depends on WU-0 green.",
-            "updated_at": "2026-08-12T13:41:48Z"
+            "updated_at": "2026-08-12T14:11:17Z"
           },
           {
             "id": "TICK-WU-3-AUDITOR-WIRING",
