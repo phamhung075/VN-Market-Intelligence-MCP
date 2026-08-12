@@ -1558,3 +1558,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service sustained high memory 97.38%
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** rag-service
+**Details:** rag-service memory sustained at 97.38% across 6-sample deep-probe window — loss of reclamation (0 dips, 0 discontinuities observed)
+**Impact:** Container under persistent memory pressure; sustained high utilization may impact performance and increase OOM risk
+**Root cause:** Potential memory leak or suboptimal garbage collection; restart-resistant pattern observed across multiple cycles
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-12T02:37:49Z (signal sys-20260812T023740-3e00, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
