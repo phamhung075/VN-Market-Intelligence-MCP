@@ -64,6 +64,48 @@
 #       as "non-notebook path" (see `.claude/settings.local.json`'s
 #       invocation, which no longer swallows this exit code behind
 #       `2>/dev/null || true`).
+#
+# SELECTION-VS-SENTINEL CARDINALITY GUARD (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-
+# BYTE-COUNTED-BUT-UNDROPPABLE AC-5/AC-6/AC-7, occurrence 5, 2026-08-12): the
+# drop-oldest selection below (MIN_KEY = sort of nso_sections_with_ts's column 2)
+# is correct when 2+ sections carry DISTINCT, comparable real timestamps — but a
+# file mixing dated and undated ("## Keep ...", no YYYY-MM-DD token) headings,
+# where only ONE section has a parseable timestamp, makes that lone section
+# MIN_KEY by construction (it is the only non-sentinel value present, and every
+# sentinel sorts to $NSO_SENTINEL_KEY, always larger) — even when it is the
+# chronologically NEWEST content in the file. Reproduced live on
+# docs/agent-memory/notebooks/agent-father.md 2026-08-12 (decision journal
+# triage-20260812T1310Z-po.md): a single "## EDIT <full-ISO>" heading was picked
+# as "oldest" against two undated "## Keep (maintenance) HH:MM" headings and its
+# 53 lines were dropped — the newest section in the file, deleted, zero signal.
+#   AC-5 (guard placed BEFORE MIN_KEY is trusted as evidence, in the loop below):
+#   when exactly ONE section in the current candidate set carries a non-sentinel
+#   key and >=1 sentinel section also exists, that lone dated section is NOT a
+#   valid "oldest" determination — a sample size of one is not a chronological
+#   ordering. Safe-fail exactly like the SECTION_COUNT<=1 path above (honest
+#   signal, no truncation): the sentinel section(s) are ALSO structurally exempt
+#   from selection by design (see nso_ts_key's own header comment), so no section
+#   in that shape is a safe, evidence-backed drop candidate.
+#   AC-6 (guard placed once OLDEST_LINE is finalized, any path, in the loop
+#   below): independent defense-in-depth — fires regardless of whether AC-5's
+#   guard above caught this file's shape. If the section about to be dropped
+#   carries the file's own MAXIMUM non-sentinel key (every dated section present
+#   — one, or several tied at an identical key — shares that same value, so
+#   there is zero within-file evidence this pick is the oldest rather than the
+#   newest), emit a signal BEFORE the atomic write. Non-blocking — the prune
+#   still proceeds; this is the "never silent" backstop occurrences 1/3/5 all
+#   lacked (zero signal, exit 0 — recovery only because an agent happened to
+#   notice and run `git show HEAD:` before committing).
+#   AC-7: nso_ts_key / $NSO_SENTINEL_KEY semantics in
+#   lib/notebook-section-direction.sh are UNCHANGED by this fix (only new
+#   caller-side guards added in THIS file) — re-verified against
+#   scripts/notebook-compose.sh, the lib's other caller: its retention drop-loop
+#   and AC-2b sub-block drop-loop both select the drop target by PHYSICAL
+#   POSITION (head/tail) after resolving an aggregate newest_first/oldest_first
+#   DIRECTION — neither ever sorts individual sections by ts_key to pick a
+#   per-section "oldest", so the MIN-key-beats-sentinels inversion this AC-5/AC-6
+#   pair closes does not exist in that caller. scripts/notebook-compose.test.sh
+#   (its own regression suite) re-run clean, unmodified by this fix.
 set -u
 
 # FR-2 (UC-CRITIC-HOOKS-ENFORCEMENT): shared crash-vs-clean-pass discriminator.
@@ -265,6 +307,84 @@ emit_direction_defaulted_signal() {
 EOF
 }
 
+# --- No-valid-drop-candidate signal (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-
+# BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5) — same honest-signal CONTRACT as the
+# SECTION_COUNT<=1 safe-fail below (no truncation, always exit 0), but a distinct
+# TYPE, because the reason differs: here the file can have 2+ sections total, but
+# EVERY one of them is structurally ineligible to be the drop victim (sentinels by
+# design, the lone dated section by this AC) — conflating it with the literal
+# "only 1 section left" signal would mislead a downstream consumer keyed on that
+# type's SECTION_COUNT<=1 semantics.
+emit_no_valid_drop_candidate_signal() {
+  local ts
+  ts="$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || true)"
+  [ -z "$ts" ] && return 0
+  local sig_file
+  sig_file="$SIGNALS_DIR/notebook-no-valid-drop-candidate-$(echo "$REL_PATH" | tr '/.' '-')-$(echo "$ts" | tr -d ':').json"
+  cat > "$sig_file" <<EOF 2>/dev/null || true
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_no_valid_drop_candidate_breach",
+  "priority": "high",
+  "createdAt": "$ts",
+  "payload": {
+    "file": "$REL_PATH",
+    "line_count": $LINE_COUNT,
+    "cap": $LINE_CAP,
+    "byte_count": $BYTE_COUNT,
+    "byte_cap": $BYTE_CAP,
+    "section_count": $SECTION_COUNT,
+    "non_sentinel_section_count": $NON_SENTINEL_SECTION_COUNT,
+    "sentinel_section_count": $SENTINEL_SECTION_COUNT,
+    "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+    "action_required": "manual_split_to_archive"
+  }
+}
+EOF
+}
+
+# --- Dropped-newest-dated-section signal (AC-6, same ticket) — fires whenever the
+# section this hook is ABOUT to drop carries the file's own MAXIMUM non-sentinel
+# key, i.e. every non-sentinel section in the file (whether that is one section,
+# per AC-5 above, or several tied at an identical key) shares the same value, so
+# there is zero within-file timestamp evidence that this pick is actually the
+# oldest rather than the newest. Independent of AC-5: still fires even if a
+# future edit reintroduces the selection bug AC-5 closes, or any other path
+# reaches this exact shape. Non-blocking -- the prune proceeds; this signal only
+# exists so the drop is NEVER silent (occurrences 1/3/5 all had zero signal, exit
+# 0, and were caught only because an agent happened to notice and recover via
+# `git show HEAD:` before committing).
+emit_dropped_newest_dated_section_signal() {
+  local drop_line="$1" drop_heading="$2"
+  local ts
+  ts="$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || true)"
+  [ -z "$ts" ] && return 0
+  local sig_file
+  sig_file="$SIGNALS_DIR/notebook-prune-dropped-newest-$(echo "$REL_PATH" | tr '/.' '-')-$(echo "$ts" | tr -d ':').json"
+  local heading_json
+  heading_json="$(printf '%s' "$drop_heading" | jq -Rs . 2>/dev/null || printf '"%s"' "$drop_heading")"
+  cat > "$sig_file" <<EOF 2>/dev/null || true
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_prune_dropped_newest_dated_section",
+  "priority": "high",
+  "createdAt": "$ts",
+  "payload": {
+    "file": "$REL_PATH",
+    "line": $drop_line,
+    "heading": $heading_json,
+    "section_count": $SECTION_COUNT,
+    "non_sentinel_section_count": $NON_SENTINEL_SECTION_COUNT,
+    "sentinel_section_count": $SENTINEL_SECTION_COUNT,
+    "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+    "action_required": "review_dropped_section"
+  }
+}
+EOF
+}
+
 # --- Parse file path from PostToolUse JSON on STDIN ---
 if ! STDIN_JSON=$(hg_run "cat:stdin" cat); then
   exit 1   # cat itself crashed reading the hook payload — real prerequisite failure
@@ -445,6 +565,26 @@ EOF
   # header for why this is no longer an inline block).
   SECTIONS_WITH_TS="$(echo "$FILE_CONTENT" | nso_sections_with_ts)"
 
+  # AC-5 (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE,
+  # occurrence 5): guard BEFORE MIN_KEY (below) is trusted as chronological
+  # evidence — see the SELECTION-VS-SENTINEL CARDINALITY GUARD header comment
+  # above this script's `set -u` line for the full rationale. Also computes
+  # MAX_NON_SENTINEL_KEY, consumed by the AC-6 guard further down this loop.
+  NON_SENTINEL_KEYS_COL="$(echo "$SECTIONS_WITH_TS" | cut -d: -f2 | grep -v "^${NSO_SENTINEL_KEY}\$" 2>/dev/null || true)"
+  NON_SENTINEL_SECTION_COUNT="$(echo "$NON_SENTINEL_KEYS_COL" | grep -c '^[0-9]' 2>/dev/null || echo 0)"
+  SENTINEL_SECTION_COUNT="$(echo "$SECTIONS_WITH_TS" | cut -d: -f2 | grep -c "^${NSO_SENTINEL_KEY}\$" 2>/dev/null || echo 0)"
+  MAX_NON_SENTINEL_KEY="$(echo "$NON_SENTINEL_KEYS_COL" | grep '^[0-9]' 2>/dev/null | sort | tail -1)"
+
+  if [ "$NON_SENTINEL_SECTION_COUNT" -eq 1 ] && [ "$SENTINEL_SECTION_COUNT" -ge 1 ]; then
+    # Exactly one section in the current candidate set has a real timestamp; the
+    # rest are permanently-undroppable sentinels. One real timestamp is a sample
+    # size of one, not a chronological ordering -- neither it (AC-5) nor the
+    # sentinel section(s) (structural exemption, unchanged) is a valid drop
+    # candidate. Safe-fail: same honest-signal contract as SECTION_COUNT<=1 above.
+    emit_no_valid_drop_candidate_signal
+    exit 0
+  fi
+
   # Find the oldest timestamp (minimum key), then resolve WHICH physical section that is.
   #
   # FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST: the 17-char normalized key above
@@ -511,6 +651,19 @@ EOF
   if [ -z "$OLDEST_LINE" ]; then
     # Fallback: if timestamp parsing failed, drop first section (legacy behavior)
     OLDEST_LINE="$(echo "$FILE_CONTENT" | grep -n "^## " | head -1 | cut -d: -f1)"
+  fi
+
+  # AC-6 (same ticket, occurrence 5): independent defense-in-depth signal, fires
+  # regardless of whether AC-5 above caught this file's shape. OLDEST_LINE always
+  # carries key==MIN_KEY on every path above (TIE_GROUP is derived FROM MIN_KEY),
+  # so MIN_KEY==MAX_NON_SENTINEL_KEY means the section about to be dropped shares
+  # the file's own maximum non-sentinel key with every other dated section
+  # present (one, or several tied) -- zero within-file evidence this pick is the
+  # oldest rather than the newest. Non-blocking: emits BEFORE the atomic write
+  # below and still lets the prune proceed (see function header for rationale).
+  if [ -n "$MAX_NON_SENTINEL_KEY" ] && [ "$MIN_KEY" = "$MAX_NON_SENTINEL_KEY" ]; then
+    OLDEST_HEADING="$(echo "$FILE_CONTENT" | awk -v n="$OLDEST_LINE" 'NR==n{print; exit}')"
+    emit_dropped_newest_dated_section_signal "$OLDEST_LINE" "$OLDEST_HEADING"
   fi
 
   # Find the next section line after OLDEST_LINE (if any)

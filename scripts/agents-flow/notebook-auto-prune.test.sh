@@ -64,6 +64,32 @@
 # here (unlike context-bloat-backstop.test.sh's T5, a different call site with no
 # equivalent safe fallback).
 #
+# T9/T10 (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE AC-5/AC-6,
+# occurrence 5, 2026-08-12): a mixed-heading notebook (some "## " sections carry a real
+# YYYY-MM-DD token, some don't) makes nso_ts_key assign the undated ones $NSO_SENTINEL_KEY
+# (MAX, correctly never "oldest") — but when only ONE section has a real timestamp, that
+# lone section becomes MIN_KEY by DEFAULT (it is the only non-sentinel value present), so
+# the old code selected it as "oldest" even when it was the file's NEWEST content. Live
+# occurrence: docs/agent-memory/notebooks/agent-father.md 2026-08-12 (decision journal
+# triage-20260812T1310Z-po.md) — a single "## EDIT <full-ISO>" heading was dropped against
+# two undated "## Keep (maintenance) HH:MM" headings, deleting 53 lines of the newest work,
+# with zero signal.
+#   T9  (AC-5, must FAIL before/PASS after): 2 undated "## Keep ..." sections + 1 dated
+#       "## EDIT <ISO>" section (newest, placed last), over the BYTE cap only. Pre-fix,
+#       the dated EDIT section is dropped (verified live against `git show HEAD:` of this
+#       script, see task decision journal). Fixed code must retain ALL THREE sections
+#       (no valid drop candidate exists: sentinels are exempt by design, the lone dated
+#       section is exempt by AC-5) and emit `notebook_no_valid_drop_candidate_breach`
+#       instead of truncating.
+#   T10 (AC-6, independent of AC-5): 1 undated sentinel + 3 same-day-tied dated sections
+#       (identical date-only key — zero within-file evidence distinguishing them, same
+#       shape as T5-T7 but with a sentinel also present), over the LINE cap only, sized so
+#       exactly ONE drop converges. The dropped section necessarily carries the file's own
+#       MAXIMUM non-sentinel key (all three tie) — asserts `notebook_prune_dropped_newest_
+#       dated_section` fires and the prune still completes (non-blocking: unlike AC-5, a
+#       write DOES land here since 2 dated sections + the sentinel remain afterward, so
+#       cardinality never drops to the AC-5 trap).
+#
 # Run:
 #   bash scripts/agents-flow/notebook-auto-prune.test.sh
 #
@@ -73,6 +99,8 @@
 #               FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS (T7 updated
 #               2026-07-31 — old assertion encoded the exact "refuse forever" anti-pattern
 #               this task closes; see docs/data/notebook-section-order.json for AC-2 context),
+#               FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (T9-T10,
+#               AC-5/AC-6, occurrence 5, 2026-08-12),
 #               UC-CRITIC-HOOKS-ENFORCEMENT (T8)
 set -uo pipefail
 
@@ -443,6 +471,116 @@ else
     PASS=$((PASS + 1))
   else
     echo "FAIL T7: sections_after=$T7_SECTIONS_AFTER has_P=$T7_HAS_P has_Q=$T7_HAS_Q has_R=$T7_HAS_R lines_after=$T7_LINES_AFTER sig_before=$T7_SIG_BEFORE sig_after=$T7_SIG_AFTER sig_type_ok=$T7_SIG_TYPE_OK (expected 2 sections, TASK-R dropped, TASK-P+TASK-Q retained, informational signal emitted)"
+    FAIL=$((FAIL + 1))
+  fi
+fi
+
+# ── T9 (FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE AC-5,
+#      occurrence 5): mixed-convention inversion — lone dated section among sentinels ─
+# 2 undated "## Keep (maintenance) HH:MM" sections (no YYYY-MM-DD token -> sentinel
+# key) + 1 dated "## EDIT <full-ISO>" section (newest, physically last), over the BYTE
+# cap only (well under the 200L line cap) — mirrors the live agent-father.md occurrence
+# 5 shape exactly (decision journal triage-20260812T1310Z-po.md).
+T9_FILE="$TMPDIR_TEST/docs/agent-memory/notebooks/mixed-heading-ac5.md"
+{
+  echo "# Mixed Heading Notebook"
+  echo ""
+  echo "Preamble text."
+  echo ""
+  dense_section "Keep (maintenance) 08:15 - old rolling note A" 40 250
+  dense_section "Keep (maintenance) 12:58 - old rolling note B" 40 250
+  dense_section "EDIT 2026-08-12T03:23:52Z - newest real content, must survive" 40 250
+} > "$T9_FILE"
+
+T9_LINES_BEFORE=$(wc -l < "$T9_FILE" | tr -d ' ')
+T9_BYTES_BEFORE=$(wc -c < "$T9_FILE" | tr -d ' ')
+
+if [ "$T9_LINES_BEFORE" -gt 200 ] || [ "$T9_BYTES_BEFORE" -le 12000 ]; then
+  echo "FAIL T9 (fixture invalid): lines=$T9_LINES_BEFORE bytes=$T9_BYTES_BEFORE — expected lines<=200 (byte-ONLY breach) AND bytes>12000 pre-run"
+  FAIL=$((FAIL + 1))
+else
+  T9_HASH_BEFORE="$(shasum -a 256 "$T9_FILE" | cut -d' ' -f1)"
+  T9_SIG_BEFORE=$(signal_count "notebook-no-valid-drop-candidate-*.json")
+
+  run_prune "$T9_FILE"
+
+  T9_HASH_AFTER="$(shasum -a 256 "$T9_FILE" | cut -d' ' -f1)"
+  T9_SIG_AFTER=$(signal_count "notebook-no-valid-drop-candidate-*.json")
+  T9_HAS_EDIT=$(grep -c "EDIT 2026-08-12T03:23:52Z" "$T9_FILE" 2>/dev/null)
+  T9_HAS_KEEP_A=$(grep -c "Keep (maintenance) 08:15" "$T9_FILE" 2>/dev/null)
+  T9_HAS_KEEP_B=$(grep -c "Keep (maintenance) 12:58" "$T9_FILE" 2>/dev/null)
+  T9_SIG_FILE=$(find "$TMPDIR_TEST/docs/signals" -maxdepth 1 -name "notebook-no-valid-drop-candidate-*.json" 2>/dev/null | head -1 || true)
+  T9_SIG_TYPE_OK=0
+  if [ -n "$T9_SIG_FILE" ]; then
+    T9_SIG_TYPE="$(jq -r '.type // empty' "$T9_SIG_FILE" 2>/dev/null || true)"
+    [ "$T9_SIG_TYPE" = "notebook_no_valid_drop_candidate_breach" ] && T9_SIG_TYPE_OK=1
+  fi
+
+  if [ "$T9_HASH_BEFORE" = "$T9_HASH_AFTER" ] && [ "$T9_HAS_EDIT" -eq 1 ] && [ "$T9_HAS_KEEP_A" -eq 1 ] && \
+     [ "$T9_HAS_KEEP_B" -eq 1 ] && [ "$T9_SIG_AFTER" -gt "$T9_SIG_BEFORE" ] && [ "$T9_SIG_TYPE_OK" -eq 1 ]; then
+    echo "PASS T9: AC-5 mixed-convention inversion — lone dated EDIT section among 2 undated sentinels retained (NOT selected as drop victim), notebook_no_valid_drop_candidate_breach emitted, content byte-identical (no truncation)"
+    PASS=$((PASS + 1))
+  else
+    echo "FAIL T9: hash_match=$([ "$T9_HASH_BEFORE" = "$T9_HASH_AFTER" ] && echo yes || echo no) has_edit=$T9_HAS_EDIT has_keepA=$T9_HAS_KEEP_A has_keepB=$T9_HAS_KEEP_B sig_before=$T9_SIG_BEFORE sig_after=$T9_SIG_AFTER sig_type_ok=$T9_SIG_TYPE_OK (expected EDIT section retained, hash unchanged, notebook_no_valid_drop_candidate_breach emitted)"
+    FAIL=$((FAIL + 1))
+  fi
+fi
+
+# ── T10 (same ticket, AC-6): no-silent-drop — victim carries the file's own MAX
+#      non-sentinel key ──────────────────────────────────────────────────────────
+# 1 undated sentinel + 3 same-day-tied dated sections (identical date-only key, zero
+# within-file evidence distinguishing them — same tie shape as T5-T7 but with a
+# sentinel also present), sized so exactly ONE drop converges the LINE cap. The
+# dropped section necessarily ties the file's own maximum non-sentinel key -> AC-6
+# must signal before the (still-permitted, non-blocking) write lands.
+T10_FILE="$TMPDIR_TEST/docs/agent-memory/notebooks/tie-plus-sentinel-ac6.md"
+{
+  echo "# Tie Plus Sentinel Notebook"
+  echo ""
+  echo "Preamble text."
+  echo ""
+  dense_section "Known patterns / preferences" 8 20
+  dense_section "2026-07-30 — TASK-A (tied, physically first)" 70 20
+  dense_section "2026-07-30 — TASK-B (tied, physically middle)" 70 20
+  dense_section "2026-07-30 — TASK-C (tied, physically last)" 70 20
+} > "$T10_FILE"
+
+T10_LINES_BEFORE=$(wc -l < "$T10_FILE" | tr -d ' ')
+
+if [ "$T10_LINES_BEFORE" -le 200 ]; then
+  echo "FAIL T10 (fixture invalid): lines=$T10_LINES_BEFORE — expected >200 pre-run"
+  FAIL=$((FAIL + 1))
+else
+  # NOTE: T5/T6/T7 (all-sentinel-free same-day ties) ALSO legitimately fire this
+  # exact signal type (AC-6 has no sentinel-presence gate — see script header) —
+  # scope the glob to THIS test's own REL_PATH (same "tr '/.' '-'" transform the
+  # emit function itself uses) so a shared-TMPDIR cross-test file never collides
+  # via a bare `find | head -1` on the un-scoped type-only glob.
+  T10_REL="docs/agent-memory/notebooks/tie-plus-sentinel-ac6.md"
+  T10_SIG_GLOB="notebook-prune-dropped-newest-$(echo "$T10_REL" | tr '/.' '-')-*.json"
+  T10_SIG_BEFORE=$(signal_count "$T10_SIG_GLOB")
+
+  run_prune "$T10_FILE"
+
+  T10_SIG_AFTER=$(signal_count "$T10_SIG_GLOB")
+  T10_SECTIONS_AFTER=$(grep -c "^## " "$T10_FILE" 2>/dev/null || echo 0)
+  T10_HAS_A=$(grep -c "TASK-A" "$T10_FILE" 2>/dev/null)
+  T10_HAS_B=$(grep -c "TASK-B" "$T10_FILE" 2>/dev/null)
+  T10_HAS_C=$(grep -c "TASK-C" "$T10_FILE" 2>/dev/null)
+  T10_LINES_AFTER=$(wc -l < "$T10_FILE" | tr -d ' ')
+  T10_SIG_FILE=$(find "$TMPDIR_TEST/docs/signals" -maxdepth 1 -name "$T10_SIG_GLOB" 2>/dev/null | head -1 || true)
+  T10_SIG_TYPE_OK=0
+  if [ -n "$T10_SIG_FILE" ]; then
+    T10_SIG_TYPE="$(jq -r '.type // empty' "$T10_SIG_FILE" 2>/dev/null || true)"
+    [ "$T10_SIG_TYPE" = "notebook_prune_dropped_newest_dated_section" ] && T10_SIG_TYPE_OK=1
+  fi
+
+  if [ "$T10_SECTIONS_AFTER" -eq 3 ] && [ "$T10_HAS_C" -eq 0 ] && [ "$T10_HAS_A" -ge 1 ] && [ "$T10_HAS_B" -ge 1 ] && \
+     [ "$T10_LINES_AFTER" -le 200 ] && [ "$T10_SIG_AFTER" -gt "$T10_SIG_BEFORE" ] && [ "$T10_SIG_TYPE_OK" -eq 1 ]; then
+    echo "PASS T10: AC-6 no-silent-drop — dropped tied section (TASK-C) carried the file's own MAX non-sentinel key, notebook_prune_dropped_newest_dated_section emitted BEFORE the (still-permitted) write, sentinel+TASK-A+TASK-B retained"
+    PASS=$((PASS + 1))
+  else
+    echo "FAIL T10: sections_after=$T10_SECTIONS_AFTER has_A=$T10_HAS_A has_B=$T10_HAS_B has_C=$T10_HAS_C lines_after=$T10_LINES_AFTER sig_before=$T10_SIG_BEFORE sig_after=$T10_SIG_AFTER sig_type_ok=$T10_SIG_TYPE_OK (expected 3 sections, TASK-C dropped, sentinel+TASK-A+TASK-B retained, AC-6 signal emitted)"
     FAIL=$((FAIL + 1))
   fi
 fi

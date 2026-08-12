@@ -25,6 +25,13 @@ Any `## ` level-2 heading is a valid section boundary:
 Detect sections: `grep -c "^## " notebook.md`
 New sections SHOULD use `## c<NNN> · <ISO-timestamp>` format.
 
+**Mixed dated/undated heading hazard:** every `## ` heading SHOULD carry a real
+`YYYY-MM-DD`/ISO token — a date-less maintenance heading mixed into an
+otherwise-dated file can leave `scripts/agents-flow/notebook-auto-prune.sh`
+with no safe drop candidate (`notebook_no_valid_drop_candidate_breach`, no
+truncation — FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-
+UNDROPPABLE AC-5/AC-6, 2026-08-12; live incident: `agent-father.md`).
+
 **`c<NNN>` generation rule (FIX-AGENT-NOTEBOOK-UUID-PROVENANCE) — MANDATORY.**
 `NNN` MUST be one of:
 (a) a literal incrementing decimal counter, continuing from the highest existing
