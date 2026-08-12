@@ -1,0 +1,38 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-summary",
+  "payload": {
+    "tick": "2026-08-12T08:30Z",
+    "drift_min": 6,
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "spawned": [
+      "alert-commander-market"
+    ],
+    "collision_warning": null,
+    "pressure_mode": "adaptive",
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-12T08:36:32Z",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "note": "1-slot tick, single agent (alert-commander) — no collision possible. 0 NEW signal_queue rows this tick. Step 4.7 tick-snapshot skipped (established pattern)."
+  },
+  "priority": "normal",
+  "createdAt": "2026-08-12T08:36:41Z",
+  "_processed": {
+    "fingerprint": "52915e4643a3408149397d9c94102402298a34f0663f462462d4f11d24357460",
+    "processedAt": "2026-08-12T08:51:57Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

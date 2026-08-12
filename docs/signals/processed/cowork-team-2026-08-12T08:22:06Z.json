@@ -1,0 +1,43 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-summary",
+  "payload": {
+    "tick": "2026-08-12T08:15Z",
+    "drift_min": 6,
+    "matched_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "spawned": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "collision_warning": null,
+    "pressure_mode": "adaptive",
+    "due_reasons": {
+      "chef-intraday": "cadence",
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 120,
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-12T08:21:54Z",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "note": "2-slot batch, no agent collision (unified-agent vs alert-commander, distinct). 1 NEW signal_queue row this tick (to:po, sys-20260812T081016-3443, rag-service A-30 memory WARN) — left at NEW per established rule (not consumed/routed to a cowork slot, ACK belongs to po). Step 4.7 tick-snapshot skipped (established pattern)."
+  },
+  "priority": "normal",
+  "createdAt": "2026-08-12T08:22:06Z",
+  "_processed": {
+    "fingerprint": "0bfee3fbd7c3fb4deba87c3697c265126214f32e4c3d8283d74216e19b15be2d",
+    "processedAt": "2026-08-12T08:51:57Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
