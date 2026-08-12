@@ -1774,3 +1774,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service-1 sustained 96.52% memory
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** rag-service-1 container
+**Details:** Memory at 96.52% sustained, no reclamation dips observed
+**Impact:** Service at risk of OOM eviction
+**Root cause:** High memory consumption from LanceDB operations
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-12T17:37:39Z (signal sys-20260812T173720-69e0, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
