@@ -1,8 +1,8 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1786546355,
-    "last_linecount": 63,
+    "last_mtime": 1786549940,
+    "last_linecount": 62,
     "po": {
       "section_name": "po",
       "last_mtime": 1786546355,
@@ -134,7 +134,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-12T14:52:24Z",
+    "_updated_at": "2026-08-12T15:52:20Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -1153,7 +1153,7 @@
         "type": "microservice_degraded",
         "summary": "A-30 WARN: rag-service — sustained memory 95.57% (loss of reclamation)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-12T15:30Z",
@@ -1167,7 +1167,7 @@
         "type": "microservice_degraded",
         "summary": "A-30 WARN: pdf-extractor — sustained memory 95.36% (loss of reclamation)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-12T15:30Z",
@@ -20089,7 +20089,7 @@
         "last_served_tick": "2026-08-12T12:55:29Z"
       }
     },
-    "_updated_at": "2026-08-12T15:21:41Z",
+    "_updated_at": "2026-08-12T15:52:20Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20452,6 +20452,72 @@
         },
         "createdAt": "2026-08-12T15:06:00Z",
         "drained_at": "2026-08-12T15:21:41Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4c1650a7d33e684ff0f527f0bbab1d47ad0599bf6b7ca6e56c30aad5abaa1695",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_report",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-12T15:30Z",
+          "classification": "SIGNAL_ONLY",
+          "matched_slots": [],
+          "won_slots": [],
+          "spawned": [],
+          "silent": false,
+          "new_signals": 2,
+          "note": "0 slots due. 2 NEW signal_queue rows (to:po, both WARN, left untouched per drain scope): rag-service A-30 memory 95.57% (worsening from 88.54% at 13:30Z tick — same dedup_key microservice_degraded:rag-service:A-30, 8th observed instance this session) and NEW pdf-extractor A-30 memory 95.36% (2nd distinct service now showing sustained memory pressure — widening pattern, both from cron:auditor-t1:2026-08-12T15:30Z). No CRITICAL crossing, no telegram escalation."
+        },
+        "createdAt": "2026-08-12T15:36:00Z",
+        "drained_at": "2026-08-12T15:51:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b5e369ea21b676ccf175205c714cda1cc03dbddc04a751ca179fbeb8c3c400bd",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_report",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-12T15:45Z",
+          "classification": "SIGNAL_ONLY",
+          "matched_slots": [],
+          "won_slots": [],
+          "spawned": [],
+          "silent": false,
+          "new_signals": 2,
+          "note": "0 slots due. Same 2 rows as 15:30Z tick, unchanged: rag-service A-30 memory 95.57%, pdf-extractor A-30 memory 95.36%. Still WARN, no escalation."
+        },
+        "createdAt": "2026-08-12T15:51:00Z",
+        "drained_at": "2026-08-12T15:51:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2c9df8b1a9b3472b4b673f426a9e25dce90d0f88658a322a865cc9eaef95cdeb",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "priority": "WARN",
+        "payload": "A-30 WARN: rag-service — sustained memory 95.57% (loss of reclamation)",
+        "createdAt": "2026-08-12T15:35:34Z",
+        "drained_at": "2026-08-12T15:52:09Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b1d26226cb48cf5b275598f131b86d89fd28aaba2c95d2808f54d6391b516138",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "priority": "WARN",
+        "payload": "A-30 WARN: pdf-extractor — sustained memory 95.36% (loss of reclamation)",
+        "createdAt": "2026-08-12T15:35:38Z",
+        "drained_at": "2026-08-12T15:52:09Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

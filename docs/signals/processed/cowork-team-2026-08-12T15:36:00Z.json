@@ -1,0 +1,23 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork_tick_report",
+  "payload": {
+    "tick": "2026-08-12T15:30Z",
+    "classification": "SIGNAL_ONLY",
+    "matched_slots": [],
+    "won_slots": [],
+    "spawned": [],
+    "silent": false,
+    "new_signals": 2,
+    "note": "0 slots due. 2 NEW signal_queue rows (to:po, both WARN, left untouched per drain scope): rag-service A-30 memory 95.57% (worsening from 88.54% at 13:30Z tick — same dedup_key microservice_degraded:rag-service:A-30, 8th observed instance this session) and NEW pdf-extractor A-30 memory 95.36% (2nd distinct service now showing sustained memory pressure — widening pattern, both from cron:auditor-t1:2026-08-12T15:30Z). No CRITICAL crossing, no telegram escalation."
+  },
+  "priority": "normal",
+  "createdAt": "2026-08-12T15:36:00Z",
+  "_processed": {
+    "fingerprint": "4c1650a7d33e684ff0f527f0bbab1d47ad0599bf6b7ca6e56c30aad5abaa1695",
+    "processedAt": "2026-08-12T15:51:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
