@@ -1,10 +1,27 @@
 # Code Janitor Notebook
 
-**Last updated:** 2026-08-12 (scan-42 Memory+State sweep cycle — scheduled sweep)
+**Last updated:** 2026-08-12 (scan-44 Memory+State sweep cycle — scheduled sweep)
 
 > Archive: docs/archive/notebooks/code-janitor-2026-05-21.md (pre-trim history)
 
 ## 2026-08 Sessions
+
+### Session 44 (2026-08-12 10:31Z — 6-hourly scheduled sweep cycle, post-pre-gate)
+
+**Scope:** Scheduled 6-hourly maintenance sweep (post-pre-gate cycle). No source code changes in last 3 commits (pre-check gate active).
+
+**Checks:** DRY scan skipped (zero `src/` or `apps/*/src/` changes). Three unconditional sweeps executed:
+- Memory Prune Sweep: SIGNAL-SKIP (pre-gate cycle this tick wrote signal on 2026-08-12; this cycle's re-run detects prior payload, no new signal)
+- Notebook Line-Cap Sweep: 46 notebooks checked; 2 over-cap (code-janitor.md 213L, digest-predict.md 41L bytes=23477), 0 pruned (safe-fail: no prune-safe sections)
+- Cold Archive Sweep: Skipped (not 1st of month)
+
+**Escalations:** Signal row appended to queue per pre-gate guidance (cj-20260812T103004Z for team-tool-recheck writer dead signal, payload from pre-gate cycle, status=NEW). Signal successfully written via orch-apply.sh.
+
+**Backlog:** Unchanged at 9 items (JANITOR-034, JANITOR-028 to JANITOR-032, JANITOR-011, -013, -017, -020, -027).
+
+**Quality:** Full. All sweeps executed nominally (idempotent re-run of pre-gate operations). Signal queue successfully updated via orch-apply.sh. No knowledge load failures.
+
+---
 
 ### Session 43 (2026-08-12 04:31Z — 6-hourly scheduled sweep cycle, post-pre-gate)
 
