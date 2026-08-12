@@ -11335,19 +11335,6 @@
         "origin": "PO triage 2026-08-11T21:00Z — second A-29 false-positive storm in 3 days"
       },
       {
-        "id": "FIX-CRON-ALERTSCAN-CONFIG-KEYS-ORPHANED-BY-PARALLEL-WRAPPER",
-        "title": "cronConfig taAlertScan/bbAlertScan keys orphaned by the alertScanParallelJob refactor — two permanent unfalsifiable CRITICAL cron_fire_gap signals every auditor cycle (last_fire frozen 2026-04-24, now 2630h)",
-        "owner": "po",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "priority": "high",
-        "created_at": "2026-08-12T00:00:14Z",
-        "type": "FIX",
-        "status_note": "[po/triage-20260812T0000Z] RAW SOURCE PROOF: schedulerJobTable.ts:447-458 registers ONE job `alertScanParallelJob` with `cron: CRONS.taAlertScan`; there is NO registration for CRONS.bbAlertScan anywhere in apps/mcp-server/src (grep-verified). cronConfig.ts:89-92 still exports taAlertScan + bbAlertScan as separate keys, and /api/cron-status Layer-A enumerates the CRONS config table (see FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL), so both children report last_fire=2026-04-24 08:45:00 forever — the last pre-refactor run. LIVE 2026-08-11T23:5xZ: taAlertScan status=STALE reason 'quá hạn 2631.2h', bbAlertScan same. DISCRIMINATED FROM the Layer-A ladder FP: vpsProxyWatchdog's last_fire (2026-08-11 08:50:00) EQUALS its own expected_last_fire and is still labelled STALE = ladder bug; taAlertScan's last_fire is 109 days BEFORE its expected_last_fire = genuine name-plane drift, a different defect. AC-1: taAlertScan/bbAlertScan no longer surface as independent MISSED/STALE rows in /api/cron-status (either collapse the two CRONS keys into one alertScanParallel key, or make Layer-A enumerate the registered scheduler table). AC-2: alertScanParallelJob's own cron_job_runs rows are the liveness source of record for both scans. AC-3: two consecutive system-auditor Tier-1 cycles emit zero cron_fire_gap for taAlertScan/bbAlertScan. NOTE: this row is about OBSERVABILITY only — whether the parallel wrapper itself is firing is separately covered by FIX-ALERT-OPEN-ZERO-PRICE-RACE (BLOCKED) and FIX-SCHEDULER-DOUBLE-REGISTRATION (QA).",
-        "origin_signal_id": "sys-20260811T222037-4363",
-        "updated_at": "2026-08-12T00:00:27Z"
-      },
-      {
         "id": "FIX-AUDITOR-A30-DEEPPROBE-TRUNCATES-ON-SECOND-CONTAINER-RAG-SERVICE",
         "title": "A-30 deep-probe completes for the FIRST engaged container and truncates for the SECOND (rag-service) — 3 consecutive Tier-1 cycles c40/c41/c42 logged DEFER; 12 probes x 25s = 300s per container exceeds the caller's per-call budget on the 2nd run",
         "owner": "po",
@@ -19513,6 +19500,26 @@
         "origin_signal_id": "bug-escalation:bctc-analyst:signals-absent-4th-cycle",
         "updated_by": "developer",
         "dev_note": "Fixed: added read-first SIGNAL-FILE WRITE VERIFICATION guard to docs/agents/bctc-analyst/flow/main.md — Write tool's own return is now the ONLY write-verification signal (per-cycle), agent must never Read a docs/signals/*.json path it wrote in a prior cycle to re-confirm presence. AC-2: no Bash/Glob grant added, tool grant stays narrow. AC-3 regression traced (not replayed) in decision journal. Commit c23d19da4 (pushed to origin/main). Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md STEP developer-S91."
+      },
+      {
+        "id": "FIX-CRON-ALERTSCAN-CONFIG-KEYS-ORPHANED-BY-PARALLEL-WRAPPER",
+        "title": "cronConfig taAlertScan/bbAlertScan keys orphaned by the alertScanParallelJob refactor — two permanent unfalsifiable CRITICAL cron_fire_gap signals every auditor cycle (last_fire frozen 2026-04-24, now 2630h)",
+        "owner": "po",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "created_at": "2026-08-12T00:00:14Z",
+        "type": "FIX",
+        "status_note": "[po/triage-20260812T0000Z] RAW SOURCE PROOF: schedulerJobTable.ts:447-458 registers ONE job `alertScanParallelJob` with `cron: CRONS.taAlertScan`; there is NO registration for CRONS.bbAlertScan anywhere in apps/mcp-server/src (grep-verified). cronConfig.ts:89-92 still exports taAlertScan + bbAlertScan as separate keys, and /api/cron-status Layer-A enumerates the CRONS config table (see FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL), so both children report last_fire=2026-04-24 08:45:00 forever — the last pre-refactor run. LIVE 2026-08-11T23:5xZ: taAlertScan status=STALE reason 'quá hạn 2631.2h', bbAlertScan same. DISCRIMINATED FROM the Layer-A ladder FP: vpsProxyWatchdog's last_fire (2026-08-11 08:50:00) EQUALS its own expected_last_fire and is still labelled STALE = ladder bug; taAlertScan's last_fire is 109 days BEFORE its expected_last_fire = genuine name-plane drift, a different defect. AC-1: taAlertScan/bbAlertScan no longer surface as independent MISSED/STALE rows in /api/cron-status (either collapse the two CRONS keys into one alertScanParallel key, or make Layer-A enumerate the registered scheduler table). AC-2: alertScanParallelJob's own cron_job_runs rows are the liveness source of record for both scans. AC-3: two consecutive system-auditor Tier-1 cycles emit zero cron_fire_gap for taAlertScan/bbAlertScan. NOTE: this row is about OBSERVABILITY only — whether the parallel wrapper itself is firing is separately covered by FIX-ALERT-OPEN-ZERO-PRICE-RACE (BLOCKED) and FIX-SCHEDULER-DOUBLE-REGISTRATION (QA).",
+        "origin_signal_id": "sys-20260811T222037-4363",
+        "updated_at": "2026-08-12T00:26:25Z",
+        "next_agent": "qa",
+        "updated_by": "dev-mcp-server",
+        "claimed_at": "2026-08-12T00:26:24Z",
+        "claimed_by": "dev-mcp-server",
+        "dispatch_lane": "dev-mcp-server",
+        "commit_sha": "93c920f63",
+        "dev_note": "Collapsed taAlertScan/bbAlertScan CRONS keys into one alertScanParallel key (cronConfig.ts) and repointed schedulerJobTable.ts alertScanParallelJob entry cron: field to it (AC-1). tier-2 normalized fallback in resolveJobNameDb self-resolves the new key to the real alertScanParallelJob cron_job_runs rows both scans write (AC-2), verified via a controlled unit probe + live local server /api/cron-status boot (layer_a_count down by 1, zero taAlertScan/bbAlertScan rows). Targeted 146/146 pass, tsc clean, toolCount=183/cronJobCount=88 unchanged (rename only). Full bun test 15224 pass/40 skip/60 fail/2 errors/48030 expect across 1269 files, 504s -- none of the 60 fail/2 error names touch cronConfig/schedulerJobTable/cronStatus/alertScan/CRONS (grep-confirmed), consistent with this repo pre-existing flaky-churn baseline. AC-3 (two consecutive system-auditor Tier-1 cycles emit zero cron_fire_gap for taAlertScan/bbAlertScan) is a post-deploy live-observation AC -- needs a container rebuild+restart to pick up this code change, then two auditor Tier-1 cycles observed clean; that verification is QAs job. NOT pushed to origin (local main was already 8 commits ahead of origin/main from unrelated peer work before this commit -- pushing here would sweep those in too; leaving push to whichever role owns that cadence)."
       }
     ],
     "qa": [
@@ -19987,7 +19994,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-11T21:30:42Z"
+        "last_served_tick": "2026-08-12T00:21:28Z"
       },
       "sls": {
         "last_served_tick": "2026-08-11T21:52:52Z"
@@ -20005,7 +20012,7 @@
         "last_served_tick": "2026-08-11T23:51:40Z"
       }
     },
-    "_updated_at": "2026-08-12T00:20:47Z",
+    "_updated_at": "2026-08-12T00:21:28Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
