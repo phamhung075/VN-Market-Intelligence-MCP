@@ -21,45 +21,6 @@ Module split is fully operational in running container. Rebuild confirms correct
 
 Session: 165f4245-6173-4054-87fd-c55bb626265f
 
-## 2026-08-08 FIX-SCHEDULER-DOUBLE-REGISTRATION Rebuild+Swap
-
-**Status:** COMPLETE
-
-**Task:** Docker microservice code-change close gate for mcp-server (dev-team session 165f4245 → ops via SECONDARY-DRAIN review-lane).
-
-**What:** Rebuild + swap single-service mcp-server after dev-mcp-server fixed scheduler double-registration bug via new dedupeCronTick() wrapper in apps/mcp-server/src/scheduler/startupHelpers.ts (whole-second last-fired guard, blocks same-second re-fire defect caused by node-cron Scheduler.matchTime() millisecond-vs-whole-second granularity bug under recoverMissedExecutions:true).
-
-**Build evidence:**
-- Build timestamp: 2026-08-08T16:59:58Z UTC
-- New image hash: sha256:630fa5d262755bf94caadfa28859a392546f7b06ac3594a8cccc51ee36a1a551
-- Build output confirmed via `docker compose build mcp-server` → manifest sha256:630fa5d262755bf94caadfa28859a392546f7b06ac3594a8cccc51ee36a1a551
-
-**Deploy evidence:**
-- Container started at 2026-08-08T16:59:50.792500837Z (after dispatch timestamp)
-- RestartCount reset to 0 (fresh container, image swap confirmed)
-- Image verified via `docker image inspect` — hash exists on host
-- /health returns 200 ✓
-- Port 3000 bound ✓
-- All 6 host_runtime_set services Up/healthy post-rebuild ✓
-
-**Side effects:**
-- mcp-server memory pressure reset from 99% → fresh state (~27.3s uptime fresh)
-- Did NOT chase separate FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER (that agent's uncommitted work left untouched)
-- Builder cache pruned: 13.89GB reclaimed
-
-**Board update:**
-- Moved FIX-SCHEDULER-DOUBLE-REGISTRATION from review[] → qa[]
-- Status: QA, next_agent: qa
-- Added ops_review_note with full deploy evidence capture
-- Committed via pathspec: fix(orch-state): ...
-
-**Handoff to QA:**
-QA verification gate per dev-mcp-server review note: cron_job_runs LIVE query (named-volume market.db) must show exactly one success row per job per scheduled minute across 2 full fetch cycles for vnIndexRefreshJob AND vpsServiceHealthJob post-rebuild. pollNewsJob's 2x/30min pattern is EXPECTED/by-design (distinct source content, deduped by pollNews() URL+title guard).
-
-**Chain:** ops (DONE) → qa (verification) → po (sign-off)
-
----
-
 ## Cycle 2026-08-09T04:35Z — CRITICAL: Cron Scheduler Partial Failure Investigation
 
 **Issue**: System-auditor Tier-2 reported 23/90 cron jobs (26%) stopped firing at 2026-08-07 08:50 UTC, now 41.6h overdue.
@@ -222,4 +183,3 @@ Session: 165f4245-6173-4054-87fd-c55bb626265f
 
 **Session:** 165f4245-6173-4054-87fd-c55bb626265f
 **Incident ID:** sys-20260812T040810-6125 (from auditor signal)
-
