@@ -158,3 +158,27 @@
 **why-decision:** All checks pass, zero ISSUE — every literal number in the row's status_note independently reproduced exactly. vc-approved, DONE_VERIFIED.
 **why-change:** none — verdict matches developer's own claim.
 
+### STEP qa-S93 · qa · 2026-08-12T17:35:00Z
+**task-id:** FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE
+**what-done:** Direct-Commit Verify (row predates the drain — no `.commit`/`status_note` field; derived commit via `git log -- <claimed files>` per the fallback path). Found commit `861d2672e` (2026-07-29, trailer `Task: FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE`), on main ancestry, `git show --stat` matches all 4 claimed files exactly.
+**what-considered:**
+- Re-ran real test suite, not trusted from prose: `scripts/test/orch-cold-evict-tests.sh` 59/59 (suite has grown since dev's 41/41 claim — T8-T11 added by later unrelated commits — 0 regressions on any test incl. the fix's own).
+- Confirmed T1/T3a/T3b are the actual regression proof: fixture's `BL-EXCLUDE-1` carries terminal `status:"DONE"` while excluded (kept in non-terminal `backlog[]` lane) — exactly the coherence conflict the row describes; `orch-cold-evict.sh` invokes the real SHG-3 `orch-validate.mjs` gate internally, and these tests assert exit 0 (pre-fix this exact shape would hard-fail exit 2).
+- `EXCLUDE_RELABEL_STATUS` map + relabel-before-gate logic read directly in `scripts/orch-cold-evict.sh` (not just grepped) — present, matches commit message description.
+- `docs/policies/dev-standards.md` CANONICAL block content verified present at current HEAD (not just in the diff) — no drift since commit.
+- `shellcheck -x scripts/orch-cold-evict.sh` clean; `mock-guard.sh --files` PASS (no production TS/JS in diff — bash-only zone, `bun tsc`/DDD-import-grep N/A); `process.env`/password/secret/token greps on the file: zero hits.
+**why-decision:** vc-approved, DONE_VERIFIED. Zero ISSUE — commit real, files match, real re-run test suite green (grown, not shrunk), fix behavior independently traced through the actual fixture+gate mechanics, not trusted from the developer's own note alone.
+**why-change:** none — verdict matches developer's own claim.
+
+### STEP qa-S94 · qa · 2026-08-12T17:32:00Z
+**task-id:** TASK_2006
+**what-done:** Direct-Commit Verify (row predates the drain — no `.commit`/`status_note` field; derived commit via handoff `docs/handoffs/TASK_2006-daily-ff-deprecation-comment.md` + `git log -- <2 claimed files>`). Found commit `7436f5256` (2026-07-29, matches handoff mtime), on main ancestry, `git show --stat` matches both claimed files exactly (`schema-market-data.ts`, `ohlcvForeignFlowStore.ts`).
+**what-considered:**
+- Read the diff directly, not trusted from prose: every `+` line in both files is a comment (`//`/`--`/`*`) — verified with a grep-diff (zero non-comment additions). Both annotations still present verbatim on current main HEAD, unaltered since the commit.
+- Text matches AC literally: schema comment carries the exact required sentence ("Frozen historical-only columns as of 2026-07-10 (ARCH-DAILY-FOREIGN-FLOW-TABLE)... do NOT write new data here"); `ohlcvForeignFlowStore.ts` JSDoc explicitly states `foreign_*` columns DEPRECATED in favor of `daily_foreign_flow`, cross-references the schema comment.
+- Re-ran real checks, not trusted from claim: `bun tsc --noEmit` clean. Handoff claims targeted "daily-foreign-flow-* (backfill/integration/schema, 3 files) 33/33" — running exactly those 3 named files gives 26/26 (not 33); running the full 4-file glob (incl. an unnamed 4th file `-table.test.ts`) gives 33/33 exact match — minor prose miscount (glob vs named subset), non-blocking since diff is comment-only. `mock-guard.sh --files` PASS. DDD import greps + `process.env`/secret greps on both files: zero hits from THIS diff (one pre-existing unrelated `process.env` line in `ohlcvForeignFlowStore.ts:75` confirmed present before this commit via `7436f5256~1`, not introduced here).
+**why-decision:** vc-approved, DONE_VERIFIED. Zero blocking ISSUE — commit real, both files match, annotations verbatim-correct and still live on HEAD, tsc/mock-guard/DDD/security all clean. Test-count file-enumeration discrepancy (3 named vs actual 4-file glob) noted non-blocking — zero production logic changed, tests are unaffected by comment-only diff.
+**why-change:** none — verdict matches developer's own claim modulo the noted non-blocking file-count nit.
+
+
+### CAP-REACHED · 2026-08-12T17:31:52Z
