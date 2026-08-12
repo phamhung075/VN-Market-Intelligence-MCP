@@ -3410,37 +3410,59 @@
             "title": "Wire cowork-tick-preflight.sh at trailer with tt_capture_and_log wrapper + test cases (WU-1)",
             "owner": "developer",
             "size": "S",
-            "status": "REVIEW",
+            "status": "DONE_VERIFIED",
             "zone": "cross-service/",
             "depends": [
               "TICK-WU-0-TELEMETRY-LIB"
             ],
             "type": "SPRINT-S",
             "note": "Mechanical 2-line trailer change (source lib + wrap run_preflight). Zero changes inside _emit_verdict or any return site. Existing test suite (which sources+calls functions directly, never reaches trailer) stays green by construction (R4). New logging test cases additive only. AC-3 (zero semantic change) critical. Depends on WU-0 green.",
-            "updated_at": "2026-08-12T14:22:36Z",
-            "next_agent": "qa"
+            "updated_at": "2026-08-12T14:30:09Z",
+            "next_agent": "pm",
+            "qa_verified_by": "qa",
+            "qa_verified_at": "2026-08-12T14:30:08Z",
+            "commit_sha": "976e7c5b7",
+            "verification": {
+              "raw_probe": {
+                "tool": "bash",
+                "args": "git show --stat 976e7c5b7 (diff-shape confirm) + cowork-tick-preflight.test.sh re-run + AC-10 pre-edit baseline re-run in a disposable git worktree at 976e7c5b7^ + shellcheck -S warning on cowork-tick-preflight.sh/.test.sh + live standalone smoke-run of the wired trailer (PREFLIGHT_ROOT scratch tree, CLAUDE_CODE_SESSION_ID exported) + grep for CLAUDE_CODE_SESSION_ID/python3 across touched files + docs/agents/cowork-team/flow/main.md invocation-line check",
+                "live_value_observed": "cowork-tick-preflight.test.sh 58/58 PASS (matches claim); pre-edit baseline re-verified independently in worktree at 976e7c5b7^: 40/40 PASS (matches claim, not just trusted from journal); shellcheck -S warning clean exit 0 on both touched files; git show --stat 976e7c5b7 touches only the 3 claimed files, 2 hunks in the .sh (source line + trailer swap), zero touch to run_preflight()/_emit_verdict()/orch-state.json; live standalone run: stdout exactly one valid JSON doc (jq -e . parses), exit code 1 matched ERROR verdict, telemetry line written with correct 7-key shape, zero CLAUDE_CODE_SESSION_ID value found in the log file via grep; zero python3 hits; cowork-team/flow/main.md:58 still single bash-call invocation, unchanged",
+                "observed_at": "2026-08-12T14:30:08Z"
+              }
+            }
           },
           {
             "id": "TICK-WU-2-DEVTEAM-WIRING",
             "title": "Wire dev-team-tick-preflight.sh at trailer with tt_capture_and_log wrapper + test cases (WU-2)",
             "owner": "developer",
             "size": "S",
-            "status": "REVIEW",
+            "status": "DONE_VERIFIED",
             "zone": "cross-service/",
             "depends": [
               "TICK-WU-0-TELEMETRY-LIB"
             ],
             "type": "SPRINT-S",
             "note": "Mechanical 2-3 line trailer change. Same pattern as WU-1. Existing suite stays green (R4). Note R6: pre-existing step55_board_hygiene stdout-leak risk (low-frequency, out-of-scope to fix) may incidentally surface as verdict:UNKNOWN rows — defensive, not regression. Depends on WU-0 green.",
-            "updated_at": "2026-08-12T14:22:36Z",
-            "next_agent": "qa"
+            "updated_at": "2026-08-12T14:30:09Z",
+            "next_agent": "pm",
+            "qa_verified_by": "qa",
+            "qa_verified_at": "2026-08-12T14:30:08Z",
+            "commit_sha": "ac53ec856",
+            "verification": {
+              "raw_probe": {
+                "tool": "bash",
+                "args": "git show --stat ac53ec856 (diff-shape confirm) + dev-team-tick-preflight.test.sh re-run + AC-10 pre-edit baseline re-run in a disposable git worktree at 976e7c5b7^ + shellcheck -S warning on dev-team-tick-preflight.sh/.test.sh + live standalone smoke-run of the wired trailer (PREFLIGHT_ROOT scratch tree, CLAUDE_CODE_SESSION_ID exported) + grep for CLAUDE_CODE_SESSION_ID/python3 across touched files + docs/agents/dev-team/flow/main.md invocation-line check + direct read of T-LOG6 R6 defensive-degrade test source",
+                "live_value_observed": "dev-team-tick-preflight.test.sh 146/146 PASS (matches claim, incl R6 T-LOG6); pre-edit baseline re-verified independently in worktree: 124/124 PASS (matches claim, not just trusted from journal); shellcheck -S warning clean exit 0 on both touched files; git show --stat ac53ec856 touches only the 3 claimed files, 2 hunks in the .sh (source line + trailer swap), zero touch to run_preflight()/_emit_verdict()/Step 5.5/orch-state.json; live standalone run: stdout exactly one valid JSON doc (jq -e . parses), exit code 0 matched SKIP verdict, telemetry line written with correct 7-key shape, zero CLAUDE_CODE_SESSION_ID value found in the log file via grep; zero python3 hits; dev-team/flow/main.md:89 still single bash-call invocation, unchanged; T-LOG6 genuinely overrides _step55_run_validate (confirmed distinct from the already-fixed _step55_run_cold_evict) and asserts real degrade-to-UNKNOWN behavior",
+                "observed_at": "2026-08-12T14:30:08Z"
+              }
+            }
           },
           {
             "id": "TICK-WU-3-AUDITOR-WIRING",
             "title": "Wire auditor-tier1-probe.sh at trailer case discriminator with double-log negative assertions (WU-3, own design review)",
             "owner": "developer",
             "size": "L",
-            "status": "BACKLOG",
+            "status": "TODO",
             "zone": "cross-service/",
             "depends": [
               "TICK-WU-0-TELEMETRY-LIB",
@@ -3449,7 +3471,7 @@
             ],
             "type": "SPRINT-L",
             "note": "HIGH-RISK OWN-DESIGN task (not mechanical port of WU-1/2). Wraps Tier-1 run_probe and Tier-2/3 run_tiered_probe at their case-statement discriminator to prevent double-log corruption (Q3 architectural risk). Zero touches to internal run_probe/run_tiered_probe code. Existing 1323-line suite stays green (R4). CRITICAL test: assert that Tier-2/3 invocation of run_tiered_probe produces EXACTLY ONE log line (the outer) + ZERO from inner run_probe call — this negative assertion proves the double-log corruption class does NOT occur (R1, the single most important assertion in sprint). Depends on WU-0+1+2 all green (architect gate). R2: auditor test suite has no PREFLIGHT_ROOT seam, must use TICK_TELEMETRY_LOG_PATH override.",
-            "updated_at": "2026-08-12T13:41:48Z"
+            "updated_at": "2026-08-12T14:35:23Z"
           }
         ]
       }
