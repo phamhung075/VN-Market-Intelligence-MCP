@@ -112,6 +112,8 @@ git commit -m "chore(memory/alert-commander): notebook YYYY-MM-DD" -- docs/agent
 - `NEUTRAL`: `kinhDichConfidence≥70` + `kinhDichSignal=BUY` + `newsSentiment≥0.3` + `agentsMajority=BUY`
 **CRITICAL always**: `verified_chain` | `legal_risk` | `crisis_velocity`
 
+> **Field-derivation note (alert-commander, first live fire 2026-08-12T05:05Z):** neither `newsSentiment` nor `agentSignalsMajority` is exposed as a literal numeric field by any tool in this agent's package — both must be derived. `newsSentiment` (for the named candidate ticker): read the `market_context` "RECENT ANALYSIS (24h)" line matching the ticker's driving story — format `[bullish|bearish] <headline> (score:N up|down)` — treat `score:N up` as sentiment ≥0.3 (bullish), `score:N down` as sentiment ≤-0.5 (bearish); absent a matching line, do not assume a value, fall back to suppress. `agentSignalsMajority`: from the `get_agent_signals` bus pull already fetched for Step 3, filter to signals whose title/ticker names the candidate within the same lookback window (hours_back=2) and take the directional majority of that subset (1/1 clean bullish signal with no counter-signal = BUY majority); do not widen the window beyond what Step 3 already fetched. First live instance: VNM (id10730, "NN tăng vốn điều lệ 50.000 tỷ" story) — kinhDich MUA 100%, RECENT ANALYSIS score:10.0 up, 1/1 bus signal bullish → all 4 NEUTRAL conditions cleared, fired.
+
 ## Value Investor Mode
 
 `analysis_mode=value_investor` → skip trader alerts → route to WORK.
