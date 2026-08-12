@@ -98,30 +98,6 @@ The dev-macro-indicators agent identified a second defect in apps/mcp-server/ zo
 - WIP limit remains tight (2 in_progress, both occupied); next promotions conditional on In Progress→Done transitions
 - Out-of-zone defect surfaced separately for PO triage (not a blocker on this tier closeout, but high-value for signal preservation)
 
-## c337 COWORK-GUARANTEED-SLOT-ESCALATION · Parent SPIKE Closed, FIX Row Decomposed to 1 Atomic Task · 2026-08-11T17:15Z
-
-**MANDATE (from router, session 165f4245-6173-4054-87fd-c55bb626265f):** Two related items: (1) Close parent SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING citing both diagnostic children as DONE_VERIFIED; (2) Decompose FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION into atomic dev task.
-
-**CONTEXT & DECISION:**
-- Both diagnostic spikes (SPIKE-COWORK-GUARANTEED-SLOT-DIAGNOSTIC-FIRER, SPIKE-COWORK-GUARANTEED-SLOT-DIAGNOSTIC-WIRING) are DONE_VERIFIED as of 2026-08-11
-- Findings: (1) firer is invoked correctly on schedule; (2) failures are external (Anthropic weekly-quota exhaustion, not code defect); (3) no internal wiring gate exists (original hypothesis refuted)
-- Architect recommendation (source: orch-state.json field architect_diagnostic_spike_closeout_note_20260811): "close this parent row citing both children + route the new FIX row"
-- Byproduct finding: firer script has zero failure-escalation path (run_firer() returns overall_rc but nothing consumes it), so 67h of failures produced zero BUG-channel alerts
-
-**ACTIONS TAKEN:**
-1. **Closed SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING** — Updated status_note explaining completion + added completed_at timestamp. Row remains BACKLOG status (lane rule) with closure explanation in prose.
-2. **Decomposed FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION** into 1 atomic task:
-   - **TASK-FIX-COWORK-FIRER-ESCALATION** (Size S, ~2h): Add curl-based failure escalation + cooldown to scripts/agents-flow/cowork-guaranteed-slot-firer.sh
-   - Implementation: Reuse curl-to-Telegram pattern from scripts/maybe-deploy-vps.sh (lines 35-41), add 6h TTL cooldown, update test suite
-   - AC: 4 criteria verified (escalation fires on overall_rc!=0, cooldown prevents spam, tests assert correct behavior, no regression in normal ops)
-   - Zone: cross-service/ (bash-only, no apps/<svc>)
-3. **Updated orch-state.json** — Set FIX row's next_agent=developer
-4. **Created handoff file** — docs/handoffs/TASK-FIX-COWORK-FIRER-ESCALATION.md with full AC + architect design notes
-
-**DECISION RATIONALE:**
-- Single-task decomposition (not 2-3) is appropriate: implementation and tests are tightly coupled (test harness already has ENV-override seams in script); small well-scoped fix (~2h); no parallel dependencies
-- SPIKE closure decision: original question is answered by diagnostic findings; no code change needed on parent; architect explicitly recommends closure; only downstream actionable item is the FIX row
-
 ## Archive
 
 Cycles c320 (BA-PREDICTION-EVIDENCE-REVIVAL, 2026-07-01), c319 (EVENING_SUMMARY, 2026-06-21), c327 (P1-MOMENTUM-RS, 2026-06-30), c318 (ARCH-AUTO-PUSH, 2026-06-18), c317 (OHLCV-WRITER, 2026-06-17), c316 (ERRAUDIT-W2, 2026-06-16), and c315 (BCTC-ENRICH, 2026-06-15) archived — see git history (this file, pre-2026-07-10T20:00Z) and commits 675891163d...5d121989 / c06b09a1 for full sprint records. Older cycles (c299–c189) archived to [pm-20260611.md](../../archive/notebooks/pm-20260611.md).
