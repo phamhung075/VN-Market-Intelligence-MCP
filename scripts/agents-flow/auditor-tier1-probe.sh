@@ -161,6 +161,10 @@ set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# shellcheck source=./lib/tick-telemetry.sh
+source "$SCRIPT_DIR/lib/tick-telemetry.sh"
+
 SYSTEM_MAP="${SYSTEM_MAP_PATH:-$REPO_ROOT/docs/data/system-map.json}"
 HEARTBEAT_FILE="${HEARTBEAT_FILE_PATH:-$REPO_ROOT/docs/data/auditor-tier1-last-healthy.json}"
 LAUNCHD_DIR="${LAUNCHD_DIR_PATH:-$REPO_ROOT/launchd}"
@@ -898,6 +902,17 @@ run_tiered_probe() {
 }
 
 # ── Standalone execution (only when run directly, not sourced by a test harness) ──
+# TICK-WU-3: tt_capture_and_log wraps EACH branch's own real-stdout call —
+# Tier-1 wraps run_probe (no args), Tier-2/3 wraps run_tiered_probe "$TIER".
+# This is the extracted choke point (architect ratification, sprint-TICK-
+# PREFLIGHT-USAGE-INSTRUMENTATION-architect.md): both branches print directly
+# to real stdout today, so both get their own tt_capture_and_log call. The
+# inner run_probe() call INSIDE run_tiered_probe() (captured into a variable,
+# never reaching real stdout) is NEVER wrapped — wrapping it would double-log
+# every Tier-2/3 invocation. Invalid-tier branch deliberately left unwrapped
+# (R5 — cron-misconfiguration path, never occurs in production). Purely
+# additive telemetry: stdout/exit code/lock behavior are unchanged (AC-3/AC-6/
+# AC-7) — see scripts/agents-flow/lib/tick-telemetry.sh.
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   TIER=1
   for arg in "$@"; do
@@ -909,11 +924,11 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
   case "$TIER" in
     1)
-      run_probe
+      tt_capture_and_log "auditor-tier1-probe.sh" run_probe
       exit $?
       ;;
     2|3)
-      run_tiered_probe "$TIER"
+      tt_capture_and_log "auditor-tier1-probe.sh" run_tiered_probe "$TIER"
       exit $?
       ;;
     *)

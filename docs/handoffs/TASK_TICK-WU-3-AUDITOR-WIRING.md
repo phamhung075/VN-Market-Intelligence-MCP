@@ -206,3 +206,18 @@ Zone: cross-service/
 Depends on: TICK-WU-0-TELEMETRY-LIB (must be green), TICK-WU-1-COWORK-WIRING (must be green), TICK-WU-2-DEVTEAM-WIRING (must be green) — architect gate (all three prerequisites must be complete before WU-3 dispatch).
 
 Blocks: None (WU-3 is the final integration point).
+
+---
+
+## [Developer] Implementation Record
+
+- **Files modified:**
+  - `scripts/agents-flow/auditor-tier1-probe.sh` — added `source "$SCRIPT_DIR/lib/tick-telemetry.sh"` (right after `SCRIPT_DIR`/`REPO_ROOT` resolve, before `SYSTEM_MAP`). Trailer's TWO branches independently wrapped: `1) tt_capture_and_log "auditor-tier1-probe.sh" run_probe; exit $?` and `2|3) tt_capture_and_log "auditor-tier1-probe.sh" run_tiered_probe "$TIER"; exit $?` (+ header comment explaining the double-log-avoidance design). Invalid-tier branch (exit 2) deliberately left unwrapped per R5. Zero other lines touched — `run_probe()`/`run_tiered_probe()`/`_emit_verdict()`/all `return`/all `jq -n` verdict sites byte-identical.
+  - `scripts/agents-flow/auditor-tier1-probe.test.sh` — 7 new test blocks appended (T-LOG..T-LOG7, 33 assertions): Tier-1 ALL_GREEN logging field-shape + session-id-absence check, Tier-1 FAILURE exit-code preservation, Tier-2/3 wrapped-call exactly-one-line + correct-vocabulary check, **CRITICAL double-log negative control** (bare unwrapped calls to both `run_probe("suppress_heartbeat")` and `run_tiered_probe()` write ZERO log lines — proves logging only ever happens via the explicit trailer-level wrap, never as a side effect of the functions themselves), rotation-in-situ, AC-6 stdout purity + AC-2/AC-3 byte-identity (both tiers, via a FAILURE-path stub to avoid a live-timestamp clock-boundary flake that the ALL_GREEN path would have introduced — see decision journal S10), AC-4/AC-5 unwritable-log-destination fault injection (both tiers).
+- **Tests written:** `scripts/agents-flow/auditor-tier1-probe.test.sh` — 33 new assertions, all GREEN.
+- **Git commits:** (pending — see closeout)
+- **tsc status:** N/A — pure bash/jq, no `apps/` TypeScript touched (cross-service/ zone, same as WU-0/1/2).
+- **Full suite:** `auditor-tier1-probe.test.sh` 214/214 (AC-10 pre-edit baseline 181/181 re-confirmed, matches WU-0's own recorded number exactly; R4 confirmed unaffected post-edit before any new test was added; +33 new). Sprint-wide cross-check: `tick-telemetry.test.sh` 53/53, `cowork-tick-preflight.test.sh` 58/58, `dev-team-tick-preflight.test.sh` 146/146 — all unaffected. `shellcheck -S warning` clean on both touched files (2 self-caught `SC2034` unused-var warnings fixed by turning captured exit codes into genuine assertions).
+- **Docs updated:** NONE — this task's own handoff is the only doc impacted; `docs/policies/dev-standards.md`'s WU-0 CANONICAL block is shared-lib-owned (WU-1/WU-2 precedent: not touched by a wiring task's own domain change). Its "WU-1/2/3 wiring... tracked separately" line is now stale (all 3 wired) — flagged for PM/QA at sprint closeout, not fixed here.
+- **Graphify:** skipped (no docs impacted).
+- **Simplicity gate:** PASS — Q1 scope clean (exact 2-branch, ~6-line production diff matching the architect's own blueprint, no extra flags/knobs), Q2 no single-use abstractions (reused WU-0's `tt_capture_and_log` verbatim, zero new library code), Q3 senior-test clean, Q4 ratio <50% overhead (nearly all added lines are the explicitly-requested, CRITICAL-labeled new test coverage, including the mandatory double-log negative control).

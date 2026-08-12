@@ -1317,6 +1317,171 @@ check "T58 MEM_CREEP_SAMPLES=1 (invalid, below AC floor) clamped to 2 -> still c
 check "T58 docker stats was actually called 2x despite the invalid override (clamp, not honor)" "$([ "$(cat "$TMPDIR_TEST/.stats-call-rag" 2>/dev/null)" = "2" ] && echo true || echo false)"
 MEM_CREEP_SAMPLES=2
 
+# ══════════════════════════════════════════════════════════════════════════════
+# TICK-WU-3: telemetry wiring — tt_capture_and_log at the trailer's TWO
+# branches (Tier-1 wraps run_probe, Tier-2/3 wraps run_tiered_probe "$TIER")
+# ══════════════════════════════════════════════════════════════════════════════
+# Exercises the SAME tt_capture_and_log function the real trailer now calls in
+# place of the bare `run_probe; exit $?` / `run_tiered_probe "$TIER"; exit $?`
+# branches. run_probe/run_tiered_probe are the same real functions already
+# sourced above — TICK_TELEMETRY_LOG_PATH (R2 — auditor has NO PREFLIGHT_ROOT
+# override seam, only derived *_PATH vars, unlike cowork/dev-team) is the ONE
+# seam every case below MUST set explicitly; omitting it would leak test
+# telemetry into the REAL repo docs/data/telemetry/auditor-tier1-probe.jsonl.
+# Owning task: TICK-WU-3-AUDITOR-WIRING.
+
+# ── T-LOG: Tier-1 standalone — tt_capture_and_log wraps run_probe (no args),
+# same as the trailer's `1) tt_capture_and_log ... run_probe; exit $?` branch ──
+run_case
+LOG_T_LOG="$TMPDIR_TEST/telemetry-t-log.jsonl"
+OUT_TLOG=$(TICK_TELEMETRY_LOG_PATH="$LOG_T_LOG" tt_capture_and_log "auditor-tier1-probe.sh" run_probe); RC_TLOG=$?
+check "T-LOG Tier-1 ALL_GREEN verdict still reaches caller via tt_capture_and_log wrapper" \
+  "$([ "$(printf '%s' "$OUT_TLOG" | jq -r '.verdict')" = "ALL_GREEN" ] && echo true || echo false)"
+check "T-LOG Tier-1 exit=0 (real run_probe rc preserved through the wrapper)" "$([ "$RC_TLOG" -eq 0 ] && echo true || echo false)"
+check "T-LOG Tier-1 one telemetry line written" "$([ "$(wc -l < "$LOG_T_LOG" | tr -d ' ')" -eq 1 ] && echo true || echo false)"
+check "T-LOG Tier-1 telemetry line script field is auditor-tier1-probe.sh" "$([ "$(jq -r '.script' "$LOG_T_LOG")" = "auditor-tier1-probe.sh" ] && echo true || echo false)"
+check "T-LOG Tier-1 telemetry line verdict field is ALL_GREEN (Tier-1 vocabulary)" "$([ "$(jq -r '.verdict' "$LOG_T_LOG")" = "ALL_GREEN" ] && echo true || echo false)"
+check "T-LOG Tier-1 telemetry line tick field is null (run_probe's verdict JSON has no tick key, AC-3)" "$([ "$(jq -r '.tick == null' "$LOG_T_LOG")" = "true" ] && echo true || echo false)"
+check "T-LOG Tier-1 telemetry line exit_code field == 0" "$([ "$(jq -r '.exit_code' "$LOG_T_LOG")" -eq 0 ] && echo true || echo false)"
+check "T-LOG Tier-1 telemetry line has NO CLAUDE_CODE_SESSION_ID-shaped key (hard contract, script header)" \
+  "$([ "$(jq -r 'has("session_id") or has("session") or has("claude_code_session_id")' "$LOG_T_LOG")" = "false" ] && echo true || echo false)"
+
+# ── T-LOG2: Tier-1 FAILURE path — non-zero exit code preserved through wrapper ──
+run_case
+STUB_DOCKER_PS="one_down"
+LOG_T_LOG2="$TMPDIR_TEST/telemetry-t-log2.jsonl"
+OUT_TLOG2=$(TICK_TELEMETRY_LOG_PATH="$LOG_T_LOG2" tt_capture_and_log "auditor-tier1-probe.sh" run_probe); RC_TLOG2=$?
+check "T-LOG2 Tier-1 FAILURE verdict reaches caller via wrapper" "$([ "$(printf '%s' "$OUT_TLOG2" | jq -r '.verdict')" = "FAILURE" ] && echo true || echo false)"
+check "T-LOG2 Tier-1 FAILURE exit=1 (real run_probe rc preserved, not swallowed by a successful log write)" "$([ "$RC_TLOG2" -eq 1 ] && echo true || echo false)"
+check "T-LOG2 telemetry line exit_code field == 1" "$([ "$(jq -r '.exit_code' "$LOG_T_LOG2")" -eq 1 ] && echo true || echo false)"
+
+# ── T-LOG3: Tier-2/3 wrapper — tt_capture_and_log wraps run_tiered_probe
+# "$TIER", same as the trailer's `2|3) tt_capture_and_log ... run_tiered_probe
+# "$TIER"; exit $?` branch. Verdict vocabulary is SKIP-SPAWN|SPAWN, NOT
+# ALL_GREEN|FAILURE (AC-3's dual-vocabulary requirement). Asserts exactly ONE
+# telemetry line — the positive half of the double-log proof: the ONE real
+# trailer-shaped invocation produces exactly one entry, not two (see T-LOG4
+# for the complementary negative half) ────────────────────────────────────────
+run_case
+LOG_T_LOG3="$TMPDIR_TEST/telemetry-t-log3.jsonl"
+rm -f "$TIER2_HEARTBEAT"
+jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{last_healthy_at:$ts}' > "$TIER2_HEARTBEAT"
+OUT_TLOG3=$(TICK_TELEMETRY_LOG_PATH="$LOG_T_LOG3" HEARTBEAT_FILE_PATH="$TIER2_HEARTBEAT" tt_capture_and_log "auditor-tier1-probe.sh" run_tiered_probe "2"); RC_TLOG3=$?
+check "T-LOG3 Tier-2/3 SKIP-SPAWN verdict reaches caller via wrapper" "$([ "$(printf '%s' "$OUT_TLOG3" | jq -r '.verdict')" = "SKIP-SPAWN" ] && echo true || echo false)"
+check "T-LOG3 Tier-2/3 exit=0" "$([ "$RC_TLOG3" -eq 0 ] && echo true || echo false)"
+check "T-LOG3 exactly ONE telemetry line written (not two — proves the inner run_probe() capture never logs separately)" \
+  "$([ "$(wc -l < "$LOG_T_LOG3" | tr -d ' ')" -eq 1 ] && echo true || echo false)"
+check "T-LOG3 telemetry line verdict field is SKIP-SPAWN (Tier-2/3 vocabulary, the OUTER verdict)" "$([ "$(jq -r '.verdict' "$LOG_T_LOG3")" = "SKIP-SPAWN" ] && echo true || echo false)"
+check "T-LOG3 telemetry line verdict is NOT ALL_GREEN/FAILURE (Tier-1 vocabulary — would indicate the INNER run_probe() call leaked into the log)" \
+  "$([ "$(jq -r '.verdict' "$LOG_T_LOG3")" != "ALL_GREEN" ] && [ "$(jq -r '.verdict' "$LOG_T_LOG3")" != "FAILURE" ] && echo true || echo false)"
+check "T-LOG3 telemetry line tick field is null (run_tiered_probe's verdict JSON has no tick key)" "$([ "$(jq -r '.tick == null' "$LOG_T_LOG3")" = "true" ] && echo true || echo false)"
+
+# ── T-LOG4 (CRITICAL — R1/R4, "THE single most important assertion in the
+# entire sprint" per architect risk note): a BARE call to run_probe() /
+# run_tiered_probe() — NOT routed through tt_capture_and_log at all — must
+# produce ZERO telemetry log lines. run_tiered_probe() internally calls
+# run_probe("suppress_heartbeat") as inner_out=$(...) (captured into a
+# variable, never real stdout); if a naive per-call-site hook had been placed
+# INSIDE run_probe()/run_tiered_probe() instead of at the trailer (the design
+# this task explicitly rejected per FR-4), a bare call to either function
+# would already produce >=1 log line on its own — logging would be a side
+# effect of the FUNCTION CALL, not of the explicit trailer-level wrap. Under
+# the actual trailer-only design, neither function has any internal
+# log_tick_usage reference, so calling them directly (exactly as
+# run_tiered_probe's own inner call does) triggers NO log write whatsoever.
+# Combined with T-LOG3 above (the wrapped call logs EXACTLY once), this is
+# the complete double-log proof: T-LOG3 shows WHERE the one entry comes from
+# (the trailer wrap) and T-LOG4 shows the functions themselves are silent. ──
+run_case
+LOG_T_LOG4="$TMPDIR_TEST/telemetry-t-log4-bare.jsonl"
+OUT_TLOG4_INNER=$(TICK_TELEMETRY_LOG_PATH="$LOG_T_LOG4" run_probe "suppress_heartbeat"); RC_TLOG4_INNER=$?
+check "T-LOG4 bare run_probe(suppress_heartbeat) call (same signature run_tiered_probe's own inner call uses) writes ZERO log lines" \
+  "$([ ! -s "$LOG_T_LOG4" ] && echo true || echo false)"
+check "T-LOG4 bare run_probe(suppress_heartbeat) call still returns a real verdict (sanity — the log seam itself broke nothing)" \
+  "$([ "$(printf '%s' "$OUT_TLOG4_INNER" | jq -r '.verdict')" = "ALL_GREEN" ] && echo true || echo false)"
+check "T-LOG4 bare run_probe(suppress_heartbeat) exit=0 (real rc preserved even though nothing logs it)" \
+  "$([ "$RC_TLOG4_INNER" -eq 0 ] && echo true || echo false)"
+rm -f "$TIER2_HEARTBEAT"
+jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{last_healthy_at:$ts}' > "$TIER2_HEARTBEAT"
+OUT_TLOG4_OUTER=$(TICK_TELEMETRY_LOG_PATH="$LOG_T_LOG4" HEARTBEAT_FILE_PATH="$TIER2_HEARTBEAT" run_tiered_probe "2"); RC_TLOG4_OUTER=$?
+check "T-LOG4 bare run_tiered_probe() call (unwrapped, not via tt_capture_and_log) ALSO writes ZERO log lines" \
+  "$([ ! -s "$LOG_T_LOG4" ] && echo true || echo false)"
+check "T-LOG4 bare run_tiered_probe() exit=0 (real rc preserved even though nothing logs it)" \
+  "$([ "$RC_TLOG4_OUTER" -eq 0 ] && echo true || echo false)"
+check "T-LOG4 bare run_tiered_probe() call still returns a real verdict (sanity check)" \
+  "$([ "$(printf '%s' "$OUT_TLOG4_OUTER" | jq -r '.verdict')" = "SKIP-SPAWN" ] && echo true || echo false)"
+
+# ── T-LOG5: rotation in-situ — over-fill a small-cap log via real Tier-1
+# invocations through the wrapper (mirrors WU-1/WU-2's T-LOG3 pattern) ───────
+run_case
+LOG_T_LOG5="$TMPDIR_TEST/telemetry-t-log5.jsonl"
+i=1
+while [ "$i" -le 8 ]; do
+  TICK_TELEMETRY_LOG_PATH="$LOG_T_LOG5" TICK_TELEMETRY_MAX_LINES=5 \
+    tt_capture_and_log "auditor-tier1-probe.sh" run_probe >/dev/null
+  i=$((i + 1))
+done
+check "T-LOG5 rotation caps the file at TICK_TELEMETRY_MAX_LINES (5), not the 8 real invocations" \
+  "$([ "$(wc -l < "$LOG_T_LOG5" | tr -d ' ')" -eq 5 ] && echo true || echo false)"
+
+# ── T-LOG6: AC-6 stdout purity + AC-2/AC-3 byte-identity — verified for BOTH
+# Tier-1 and Tier-2/3 independently, using a FAILURE-path stub (STUB_DOCKER_PS
+# ="one_down") for BOTH so neither call mints a LIVE wall-clock value into its
+# own verdict JSON (run_probe()'s ALL_GREEN path writes last_healthy_at=
+# _now_iso(); run_tiered_probe()'s ALL_GREEN path can compute a live
+# heartbeat_age_minutes) — either would make two SEPARATE real invocations
+# only PROBABILISTICALLY byte-identical (a clock-tick-boundary flake), which
+# this task's own AC-10 discipline forbids introducing. The FAILURE path's
+# last_healthy_at is read from the pre-existing heartbeat/fixture file (fixed,
+# never re-minted per call) and its heartbeat_age_minutes is unconditionally
+# null (checks_verdict != ALL_GREEN short-circuits the age computation
+# entirely — see run_tiered_probe()'s own branch), making the byte-diff fully
+# deterministic regardless of how much wall-clock time elapses between calls.
+run_case
+STUB_DOCKER_PS="one_down"
+LOG_T_LOG6A="$TMPDIR_TEST/telemetry-t-log6a.jsonl"
+RAW_TLOG6A=$(run_probe)
+WRAPPED_TLOG6A=$(TICK_TELEMETRY_LOG_PATH="$LOG_T_LOG6A" tt_capture_and_log "auditor-tier1-probe.sh" run_probe)
+check "T-LOG6 Tier-1 AC-2/AC-3: wrapper reprints stdout BYTE-IDENTICAL to a direct (unwrapped) run_probe() call" \
+  "$([ "$WRAPPED_TLOG6A" = "$RAW_TLOG6A" ] && echo true || echo false)"
+check "T-LOG6 Tier-1 AC-6: stdout parses as exactly ONE JSON document (no trailing/leading logging noise)" \
+  "$(printf '%s' "$WRAPPED_TLOG6A" | jq -e . >/dev/null 2>&1 && echo true || echo false)"
+
+rm -f "$TIER2_HEARTBEAT"
+jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{last_healthy_at:$ts}' > "$TIER2_HEARTBEAT"
+LOG_T_LOG6B="$TMPDIR_TEST/telemetry-t-log6b.jsonl"
+RAW_TLOG6B=$(HEARTBEAT_FILE_PATH="$TIER2_HEARTBEAT" run_tiered_probe "2")
+WRAPPED_TLOG6B=$(TICK_TELEMETRY_LOG_PATH="$LOG_T_LOG6B" HEARTBEAT_FILE_PATH="$TIER2_HEARTBEAT" tt_capture_and_log "auditor-tier1-probe.sh" run_tiered_probe "2")
+check "T-LOG6 Tier-2/3 AC-2/AC-3: wrapper reprints stdout BYTE-IDENTICAL to a direct (unwrapped) run_tiered_probe() call" \
+  "$([ "$WRAPPED_TLOG6B" = "$RAW_TLOG6B" ] && echo true || echo false)"
+check "T-LOG6 Tier-2/3 AC-6: stdout parses as exactly ONE JSON document (no trailing/leading logging noise)" \
+  "$(printf '%s' "$WRAPPED_TLOG6B" | jq -e . >/dev/null 2>&1 && echo true || echo false)"
+STUB_DOCKER_PS="ok"
+
+# ── T-LOG7: AC-4/AC-5 fault inject — unwritable log destination never changes
+# the caller's real verdict or exit code, for BOTH Tier-1 and Tier-2/3 (same
+# portable root/non-root-safe technique as tick-telemetry.test.sh T9: a FILE
+# occupying a path component that mkdir -p cannot turn into a directory) ─────
+run_case
+BLOCKER_FILE_TLOG7="$TMPDIR_TEST/t-log7-blocker-not-a-dir"
+touch "$BLOCKER_FILE_TLOG7"
+UNWRITABLE_LOG_TLOG7="$BLOCKER_FILE_TLOG7/sub/telemetry.jsonl"
+OUT_TLOG7A=$(TICK_TELEMETRY_LOG_PATH="$UNWRITABLE_LOG_TLOG7" tt_capture_and_log "auditor-tier1-probe.sh" run_probe); RC_TLOG7A=$?
+check "T-LOG7 Tier-1 AC-4/AC-5: unwritable log destination -> verdict still ALL_GREEN (unaffected)" \
+  "$([ "$(printf '%s' "$OUT_TLOG7A" | jq -r '.verdict')" = "ALL_GREEN" ] && echo true || echo false)"
+check "T-LOG7 Tier-1 AC-4/AC-5: unwritable log destination -> exit code still the real run_probe rc (0)" \
+  "$([ "$RC_TLOG7A" -eq 0 ] && echo true || echo false)"
+check "T-LOG7 Tier-1 AC-4/AC-5: unwritable log destination -> no file was created at the blocked path" \
+  "$([ ! -f "$UNWRITABLE_LOG_TLOG7" ] && echo true || echo false)"
+
+rm -f "$TIER2_HEARTBEAT"
+jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{last_healthy_at:$ts}' > "$TIER2_HEARTBEAT"
+OUT_TLOG7B=$(TICK_TELEMETRY_LOG_PATH="$UNWRITABLE_LOG_TLOG7" HEARTBEAT_FILE_PATH="$TIER2_HEARTBEAT" tt_capture_and_log "auditor-tier1-probe.sh" run_tiered_probe "2"); RC_TLOG7B=$?
+check "T-LOG7 Tier-2/3 AC-4/AC-5: unwritable log destination -> verdict still SKIP-SPAWN (unaffected)" \
+  "$([ "$(printf '%s' "$OUT_TLOG7B" | jq -r '.verdict')" = "SKIP-SPAWN" ] && echo true || echo false)"
+check "T-LOG7 Tier-2/3 AC-4/AC-5: unwritable log destination -> exit code still the real run_tiered_probe rc (0)" \
+  "$([ "$RC_TLOG7B" -eq 0 ] && echo true || echo false)"
+
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"
