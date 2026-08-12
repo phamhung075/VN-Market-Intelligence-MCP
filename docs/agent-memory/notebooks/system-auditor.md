@@ -69,3 +69,70 @@ Per dedup ledger, rag-service A-30 findings span 2026-08-05 through today (2026-
 ### Findings Summary:
 1. **health_3000**: No action required — transient curl issue, endpoint healthy
 2. **mem_creep**: **Escalation needed** — recurring A-30 issue on rag-service (3rd recurrence per dedup); last fix did not hold; root cause remains unresolved (lancedb deployment state); recommend architectural review of rag-service memory architecture and lancedb configuration
+
+## c48 · 2026-08-12T11:30Z
+### Audit Run Tier-1 (11:33–11:35 UTC 2026-08-12)
+- Tier: 1 | Services: 13 checked | Health: all endpoints 200 OK
+- Anomalies: 0 new signals emitted | Status: ALL_GREEN (per spec)
+- Wall time: 2min
+
+**Probe Results Summary:**
+```
+Containers: 13/13 UP (healthy) — A-01 to A-11 PASS
+Health endpoints: 5/5 OK (HTTP 200) — A-12 PASS
+pdf-extractor multi-probe: 3/3 in-container probes passed — A-20 PASS
+Restart count: mcp-server RestartCount=0 — A-21 PASS
+Disk usage: 49% (13Gi used, 14Gi free) — A-32 PASS
+Hook enforcement liveness: all 4 load-bearing + 3 LOW-tier checks PASS — A-33 PASS
+```
+
+**A-30 Memory Pressure (Detailed Analysis):**
+
+*Engaged Container: vn-market-intelligence-mcp-rag-service-1*
+- Baseline at probe: 90.13% (1 GiB cgroup limit)
+- Deep-probe window: 6 samples over 65 seconds (13-second intervals)
+- Memory profile: FLAT (90.13% across all 6 probes, no sawtooth pattern)
+- State during window: NO changes, NO OOMKilled, NO restarts
+- VmHWM status: pinned at cap (1437 MB), but NOT advancing during window
+
+*A-30 Verdict: FOLD (per probe.sh output)*
+- Reason: "benign GC sawtooth or below tripwire"
+- Escalation triggers NOT met:
+  - min_pct=90.13% (< 93% floor) ✗
+  - median_pct=90.13% (< 97% peak) ✗
+  - reclamation_dips=0, discontinuities=0 ✗
+  - VmHWM advancing=false (even though pinned at cap) ✗
+- Per tier1-probe.md clause 4: verdict=="FOLD" → PASS, no emit
+
+**Context & Regression Pattern Investigation:**
+
+This audit follows c47 (Tier-1 at 10:30Z) which found the container at 3.34% (just post-restart at 10:40:47Z). In the 52 minutes since restart, memory has already climbed to 90.13%. Timeline:
+
+- 08:00Z (c46 Tier-2): rag-service at 92.79%, above threshold
+- 10:20Z: End of c46, still high
+- 10:40:47Z: Container restarted (ops-initiated), memory → 3.34%
+- 10:30–10:43Z (c47 Tier-1): Cycle probed the post-restart state, found recovery
+- 11:33Z (this cycle, c48 Tier-1): Memory back at 90.13% (52 minutes of runtime)
+
+**Assessment of Regression vs. Transient Blip:**
+
+The fix deployed in c46 (malloc_trim + LanceDB IvfPq from commit 2026-08-12T06:16:02Z, TOKIO_WORKER_THREADS/LANCE_CPU_THREADS env pins from commit ca6d86869 merged 2026-08-12) has NOT resolved the underlying issue. Memory accumulation rate: ~90% per 50 minutes post-restart. This is NOT a transient blip — it's a SUSTAINED CLIMB with steady-state behavior (flat at 90.13% during the 65-second probe window).
+
+**STALE-ACK Mismatch:**
+
+The pre-gate probe.sh output in c47 claimed: `STALE-ACK(tracked_by=FU-RAG-DEPLOY-MEMORY,status=DONE_VERIFIED)`. Investigation revealed:
+- FU-RAG-DEPLOY-MEMORY is NOT in the task_board
+- The task label is STALE/INCORRECT
+- The issue is REAL and RECURRING (3rd+ occurrence per dedup ledger)
+
+**Per-Spec Compliance:**
+
+Despite the concerning pattern, the A-30 verdict computed by probe.sh is FOLD. Per tier1-probe.md clause 4, FOLD→PASS means no signal is emitted this cycle. The documented tripwires (>93% min, >97% median, state changes, OOMKilled, VmHWM advancing+pinned) are NOT met. The flat 90.13% profile and lack of reclamation dips place this at the boundary of the detection thresholds.
+
+**Recommendation:**
+
+While this cycle's Tier-1 audit completes without escalation (per spec), the regression pattern is clear: the memory issue is not solved by the deployed fix, and the STALE-ACK label is dangling. This warrants investigation into:
+1. Whether the container memory limits (1 GiB cgroup) are appropriate for rag-service workload
+2. Why memory climbs so rapidly post-restart (90% in 50 minutes = ~900 MiB per hour accumulation)
+3. Whether the fix's env vars and malloc_trim are actually being applied
+4. The discrepancy between VmHWM=1437 MB and cgroup limit=1024 MB
