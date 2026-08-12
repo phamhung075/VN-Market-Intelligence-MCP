@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-12T03:16:51Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-12T03:16:49Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "03:15",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 0,
+    "signal_backlog": 26,
+    "note": "single-slot fire, alert-commander-market; VN-Index 1787.72 (+14.31)"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-12T03:16:51Z",
+  "_processed": {
+    "fingerprint": "bd87ef032dc2f5af76e72377491e2ca99308f21b256a7e13471950e051ac2d0e",
+    "processedAt": "2026-08-12T03:20:53Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
