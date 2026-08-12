@@ -2,6 +2,57 @@
 
 [Notebook initialized - Tier-2 audit cycle c53]
 
+## c55 · 2026-08-12T15:30Z
+### Audit Run Tier-1 (15:30–15:35 UTC 2026-08-12)
+- Tier: 1 | Status: DEGRADED
+- Anomalies: 2 found (1 new, 1 dedup-known)
+- Wall time: ~4min
+- Summary: A-30 memory pressure on two containers; pdf-extractor escalation continuing; rag-service tracked
+
+**RAW-PROBE:** [2026-08-12T15:33:31Z]
+All services UP (docker ps ✓), all health endpoints 200 ✓, disk 48% ✓
+
+**Container Status (A-01..A-11):** All PASS
+**Health Endpoints (A-12..A-19):** All PASS  
+**A-20 (pdf-extractor multi-probe):** 3/3 probes 200 OK → PASS
+**A-21 (Restart count):** mcp-server RestartCount=0 → PASS
+**A-32 (Disk):** 48% capacity → PASS
+
+**A-30 (Memory Pressure — Multi-Probe Verdict):**
+
+- **vn-market-intelligence-mcp-rag-service-1:** baseline 95.57%
+  - Verdict: ESCALATE — "all samples >93% sustained high — loss of reclamation"
+  - severity: WARN (sustained >93% floor, no state change/OOMKilled/discontinuity/vmhwm advance)
+  - Signal: [emit-signal] SKIP-dedup dedup_key=microservice_degraded:rag-service:A-30 last_sent=2026-08-06T08:16:21Z id=sys-20260812T153534-59fc
+  - DASHBOARD row: [emit-dashboard] OK id=sys-20260812T153534-59fc check_id=A-30
+  - Note: Dedup-skipped (within 7-day window from prior send 2026-08-06)
+
+- **vn-market-intelligence-mcp-pdf-extractor-1:** baseline 95.36%
+  - Verdict: ESCALATE — "all samples >93% sustained high — loss of reclamation"
+  - severity: WARN (sustained >93% floor, no state change/OOMKilled/discontinuity/vmhwm advance)
+  - Signal: [emit-signal] OK dedup_key=microservice_degraded:pdf-extractor:A-30 id=sys-20260812T153538-7fe5
+  - DASHBOARD row: [emit-dashboard] OK id=sys-20260812T153538-7fe5 check_id=A-30
+  - Escalation trend confirmed: 88.95% → 78.16% (SKIP) → 93.92% → 95.23% → 95.36% (current)
+  - Pattern analysis: sustained loss of reclamation without crash cliff indicates workload growth or inefficiency
+
+**Other Containers:** All baseline <85% → SKIP gate → PASS
+
+**Summary:** Both rag-service and pdf-extractor show sustained memory >93% with loss of reclamation pattern. No death indicators (OOMKilled/state change/discontinuity). pdf-extractor shows genuine escalation trend (4-cycle climb from 88.95% baseline). Tracked findings; rag-service known from prior work, pdf-extractor new emit this cycle.
+
+**Signals:**
+- [emit-signal] SKIP-dedup dedup_key=microservice_degraded:rag-service:A-30 last_sent=2026-08-06T08:16:21Z id=sys-20260812T153534-59fc
+- [emit-signal] OK dedup_key=microservice_degraded:pdf-extractor:A-30 id=sys-20260812T153538-7fe5
+- [emit-dashboard] OK id=sys-20260812T153534-59fc check_id=A-30
+- [emit-dashboard] OK id=sys-20260812T153538-7fe5 check_id=A-30
+
+**[OUTPUT-CONTRACT]** signals_posted=2 | telegram_sent=1 | signal_queue_rows_written=2 | dashboard_rows=2 | dedup_skipped=1
+
+**[HEARTBEAT]** no heartbeat written this cycle (Tier-1 subagent never touches auditor-tier1-last-healthy.json)
+
+**[CONTRACT-CONTRADICTION]** NONE
+
+---
+
 ## c53 · 2026-08-12T14:21Z
 ### Audit Run Tier-2 (14:21–14:22 UTC 2026-08-12)
 - Tier: 2 | Services checked: N/A (Tier-2 freshness sweep) | Sources: 28 checked
