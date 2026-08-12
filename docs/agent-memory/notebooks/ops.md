@@ -190,3 +190,36 @@ Session: 165f4245-6173-4054-87fd-c55bb626265f
 
 Session: 165f4245-6173-4054-87fd-c55bb626265f
 
+
+## Cycle 2026-08-12T04:12Z — rag-service Emergency Restart (Memory Pressure)
+
+**Incident:** rag-service at critical memory threshold (99.75% of 1GiB cap, only 3MiB headroom).
+
+**Diagnosis:** Tier-1 auditor cycle c48 and live docker stats independently confirmed 99.66-99.75% sustained memory over 6+ samples. Root cause identified via architect's diagnostic brief (2026-08-12-fix-rag-embedder-idle-unload-second-growth-source.md): LanceDB vector_search() runs brute-force full-column scans on every call (no vector index exists), measured at +340-444MiB per ~200-600 calls in isolated repro. Corpus grows ~100 rows/hour independently; per-query cost stays unbounded until index built.
+
+**Permanent fix staged:** Board row FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS, status=READY, priority=P0, owner=dev-rag-service. Requires LanceDB IvfPq vector index implementation (design detailed in architect brief §6). Next dev-team dispatch window ~04:37Z (~25min from incident time).
+
+**Action taken (stopgap):**
+- Scoped restart: `docker compose stop rag-service && docker compose up -d --no-deps --no-build rag-service`
+- Timestamp: 2026-08-12T04:12:36Z UTC
+- Recovery: 1021MiB (99.75%) → 42.36MiB (4.14%) — **95.84% memory freed**
+- Health: ✓ Healthy immediately post-restart
+- Startup logs: ✓ Clean (no errors, lazy embedder load enabled, services healthy)
+
+**Rationale:** At 99.75% with 3MiB headroom and active search traffic, uncontrolled OOM-kill was imminent. Stopping before permanent fix deployment (30min away) would create unmitigated service gap. Scoped restart aligns with ops-flow constraints (docker.md § FORBIDDEN — no bare `down`/`up -d`, no system-wide restart) and buys ~30-50min before re-climb, per prior restart history cited in architect brief.
+
+**Next steps:** 
+1. ✓ Escalated to PO via telegram/work channel to expedite dev-rag-service dispatch
+2. Monitor memory growth rate over next 30-50 minutes
+3. If climb exceeds 85% before permanent fix deployment, escalate for emergency expedited dispatch
+4. Once vector index fix lands and deploys, will re-run isolated probe scripts (scripts/audits/rag-lancedb-search-mem-arena-probe.py) to verify the steep 0→20-call ramp collapses
+
+**Prior context (cited from brief):**
+- Memory limit: 1GiB (confirmed in docker-compose.yml + docker inspect, raised from 768m on 2026-08-06)
+- Candidate 1 (per-request embedder tensor/cache): ruled out (+5.4MiB/80 calls, asymptotes fast)
+- Candidate 2 (LanceDB reader/mmap accumulation): confirmed dominant (~65-80x candidate 1, no vector index = brute-force scans)
+- Candidate 3 (FTS build path): ruled out (cron disabled by default, one-time lazy-build already bounded by RAG-FTS-BUILD-MEMORY-BOUND)
+
+**Session:** 165f4245-6173-4054-87fd-c55bb626265f
+**Incident ID:** sys-20260812T040810-6125 (from auditor signal)
+
