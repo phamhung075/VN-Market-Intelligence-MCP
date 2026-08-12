@@ -149,3 +149,15 @@
 - AC-5 (historical backfill slice) status: confirmed still gated — `BCTC-ENRICHER-OLD-QUARTERS` is `DEFERRED-SEQUENCED` in `archive/2026-07.json`, not landed. Handoff explicitly scopes AC-5 as QA-deferred pending that row per the architect's own sequencing ruling (brief §7) — not a hidden gap, not treated as blocking.
 **why-decision:** APPROVED, DONE_VERIFIED. AC-1..AC-4 + AC-3 regression fully verified from source+live re-run; AC-5 correctly and explicitly deferred by design, not evidence of incompleteness.
 **why-change:** none — verification matched the architect-ratified plan; broader regression superset (42 vs 39 files) found via my own grep, still 0 fail, strengthens not weakens the claim.
+
+### STEP qa-S77 · qa · 2026-08-12T09:33:12Z
+**task-id:** FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS
+**what-done:** Direct-Commit Verify — commit `4c8c601e6` on main ancestry confirmed. Row's own `files[]=[infrastructure/embedder.py]` does NOT appear in the commit diff at all (stale metadata — architect superseded scope onto `repositories.py`/`app_factory.py`/`handlers.py` instead, per row's own `note`).
+**what-considered:**
+- Re-ran pytest against the ACTUAL deployed image (`vn-market-intelligence-mcp-rag-service:latest`, same deps as production), not host/sandbox: full suite 183 passed/12 failed of 195 — NOT the "195/195 pytest green" the commit trailer claims. Baseline (parent commit `99ed7c8b0`, same image) = 166/175 (9 pre-existing httpx2/TestClient failures, unrelated to this row). This commit's own 3 NEW tests (`TestRebuildVectorIndexAdminEndpoint` x3 in `test_rag_vector_index_build.py`) fail with the SAME missing-httpx2 defect — a genuine regression from this commit's own new code, not merely inherited.
+- `mock-guard.sh` PASS on 3 touched prod files. size-lint: rag-service files clean (only pre-existing unrelated mcp-server offender, as commit itself disclosed).
+- Row's own `note` self-admits the PO-ratified live AC (po-S157, >=2h ops-supervised cold-start growth-rate+plateau) is NOT executed — "needs docker rebuild + live sampling before DONE" — independently confirms DONE_VERIFIED would be premature even setting the test finding aside.
+**why-decision:** vc-changes — route back to `review[]`/owner `dev-rag-service`. Test claim is falsified against the real runtime image (reproduced twice, deterministic), and the row's own text concedes the mandated live AC hasn't run.
+**why-change:** none — verification methodology matched flow spec (re-run real checks, refuse prose trust); outcome (fail) differs from the row's self-reported all-green.
+
+### CAP-REACHED · 2026-08-12T09:33:37Z
