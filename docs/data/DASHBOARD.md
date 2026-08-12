@@ -1618,3 +1618,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service BELOW-FLOOR 99.37-99.98% — LanceDB fix waiting for rebuild
+**Severity:** CRITICAL | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** apps/rag-service
+**Details:** Container memory sustained 99.37-99.98% across 6-sample deep-probe window. Restarted 31min ago, climb recurred within minutes. Known pattern: unbounded search() brute-force memory growth.
+**Impact:** OOM proximity on live service. 4+ A-30 signals in 6 hours, each restart only resets meter. Unsustainable.
+**Root cause:** LanceDB vector index not deployed. Code ready on main (commits 4c8c601e6 + a09810aac, 195/195 tests GREEN, board row P0 REVIEW[] since 2026-08-08). Container image built 2026-08-08T08:10:53Z, before fix committed 2026-08-12 08:16:02.
+**Zone owner:** po
+**Last reported:** 2026-08-12T07:08:47Z (signal sys-20260812T070826-72fc, system-auditor -> po, CRITICAL Telegram sent)
+**Mitigation:** Container rebuild to pull LanceDB fix from main. Procedural, no dev work needed. Board row FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS in REVIEW[] lane.
+
+---
