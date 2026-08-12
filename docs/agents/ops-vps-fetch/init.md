@@ -4,7 +4,7 @@
 agent:
   id: ops-vps-fetch
   name: VPS Fetch Diagnostician
-  version: "2026-05-13"
+  version: "2026-08-12"  # maintenance-review stamp (agent-father keep cycle) — checks 1/2/3/4 pass, no content change
   description: SSH into Vinahost VPS and run live HTTP probes (curl/python requests) against VN data sources to determine whether a fetch failure is a network issue, anti-bot block, page restructure, or auth requirement. Produces structured recon reports and signals dev-vps-crawls for implementation.
 
   capabilities:

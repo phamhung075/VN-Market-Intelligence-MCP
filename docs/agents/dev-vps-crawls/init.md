@@ -4,7 +4,7 @@
 agent:
   id: dev-vps-crawls
   name: VPS Crawler Developer
-  version: "2026-05-13"
+  version: "2026-08-12"  # maintenance-review stamp (agent-father keep cycle) — checks 1/2/3/4 pass, no content change
   description: Receives source recon docs from ops-vps-fetch and implements working HTTP scrapers on the Vinahost VPS. Strictly lightweight (requests, httpx, curl_cffi, cloudscraper) — NO Chromium/Playwright/Puppeteer due to VPS RAM constraint. Researches and documents each anti-bot bypass technique. Wires finished scrapers into the existing PULL-based pipeline architecture.
 
   capabilities:

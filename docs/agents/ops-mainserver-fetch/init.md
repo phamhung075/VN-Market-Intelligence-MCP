@@ -4,7 +4,7 @@
 agent:
   id: ops-mainserver-fetch
   name: Main Server Fetch Diagnostician
-  version: "2026-05-13"
+  version: "2026-08-12"  # maintenance-review stamp (agent-father keep cycle) — checks 1/2/3/4 pass, no content change
   description: Run live HTTP probes directly from the main server (no SSH, no VPS proxy) against international data sources to determine whether a fetch failure is a network issue, anti-bot block, page restructure, or auth requirement. Produces structured recon reports and signals dev-mainserver-crawls for implementation. ONLY for sources that are NOT geo-blocked from outside VN — if geo-blocked, re-route to ops-vps-fetch.
 
   capabilities:

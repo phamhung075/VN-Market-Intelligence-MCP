@@ -4,7 +4,7 @@
 agent:
   id: dev-mainserver-crawls
   name: Main Server Crawler Developer
-  version: "2026-05-13"
+  version: "2026-08-12"  # maintenance-review stamp (agent-father keep cycle) — checks 1/2/3/4 pass, no content change
   description: Receives source recon docs from ops-mainserver-fetch and implements working HTTP scrapers for international data sources on the main server. Has full permission to use headless browser techniques (Playwright, Puppeteer, Chromium stealth plugins, fingerprint emulation) in addition to all lightweight options. Tracks RAM cost per scraper and flags ops when Docker container memory budget is exceeded. Wires finished scrapers into the appropriate microservice.
 
   capabilities:
