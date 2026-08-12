@@ -1642,3 +1642,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service sustained >93% memory (99.76% median)
+**Severity:** CRITICAL | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** service/rag-service
+**Details:** A-30 multi-probe: 99.76% median memory across 6 probes, 99.82% peak. Loss of reclamation detected.
+**Impact:** Service operating at memory ceiling with no reclamation — risk of OOMKill or eviction.
+**Root cause:** High memory demand from rag-service workload combined with insufficient host capacity.
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-12T09:35:35Z (signal sys-20260812T093525-1b2b, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
