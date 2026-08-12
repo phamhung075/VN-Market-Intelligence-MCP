@@ -1690,3 +1690,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-07 · vn-bctc-fetch service unhealthy
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** vps/vn-bctc-fetch
+**Details:** VPS fetch service reported unhealthy status in last health poll
+**Impact:** BCTC data pipeline at risk; may affect financial report data collection
+**Root cause:** VPS service connection or internal state issue
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-12T14:21:25Z (signal sys-20260812T142118-1332, system-auditor -> po, dedup_key=microservice_degraded:vn-bctc-fetch:B-07, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
