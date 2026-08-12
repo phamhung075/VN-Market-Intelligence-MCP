@@ -1,8 +1,10 @@
 # BA — Notebook
 
-**Last updated:** 2026-08-12 | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-08-12 | **Sprint:** TICK-PREFLIGHT-USAGE-INSTRUMENTATION
 
 ## Archive
+
+Cycle TICK-PREFLIGHT-USAGE-INSTRUMENTATION (08-12): same known rolling-heading-byte-counted-but-undroppable over-drop fired again, same-cycle (`FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE`, still BACKLOG, not re-filed) — the section was the ONLY dated section present when added, confirming again it is a byte-cap overage, not a section-count cap. Full content (3 source-verified findings: `exit_code`-not-at-choke-point, `elapsed_ms` BSD-date-`%N` landmine, WU-3's 2-of-3-sites double-log risk) is NOT lost — it lives in `docs/handoffs/TICK-PREFLIGHT-USAGE-INSTRUMENTATION-BA-spec.md` §1 and `docs/agent-memory/decisions/sprint-TICK-PREFLIGHT-USAGE-INSTRUMENTATION-ba.md`, neither of which was ever committed to this notebook, so no git-history recovery is needed either.
 
 Cycles FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING + UC-RDL-P7 (08-12): both dated sections auto-dropped by the auto-prune hook 2026-08-12 same cycle (writing FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING's section pushed the file over the 12000-byte cap even with only 2 dated sections present — same known rolling-heading-byte-counted-but-undroppable over-drop, `FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE`, still BACKLOG, not re-filed) — FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING's full text lives in `docs/handoffs/FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING-BA-spec.md` (never committed to this notebook, so no git-history recovery needed); UC-RDL-P7's full text is in git history (this file, pre-2026-08-12-second-write revision); decision journal at `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-ba.md`.
 
