@@ -93,12 +93,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "UC-CCA-P3-FR5-CODE-GATE",
-    "next_agent": "dev-mcp-server",
-    "next_action": "dev-mcp-server implementing AC-CODE-GATE (unconditional published:* release-refusal guard in coordinationStore.ts releaseTask()/releaseOrphanTask()) per row note + PO B1 ruling. Dispatched directly by router after developer nested-spawn structural block RAW-verified (Agent/Task tools disabled in that subagent).",
-    "updated_at": "2026-08-12T15:06:46Z",
-    "updated_by": "dev-team (router, session 165f4245-6173-4054-87fd-c55bb626265f)"
+    "status": "idle",
+    "updated_at": "2026-08-12T15:54:47Z",
+    "updated_by": "dev-team (router, session 165f4245-6173-4054-87fd-c55bb626265f)",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
