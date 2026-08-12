@@ -137,23 +137,6 @@
     "archive": [],
     "rows": [
       {
-        "id": "sys-20260811T170554-3b8d",
-        "ts": "2026-08-11T17:05:54Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "microservice_degraded",
-        "summary": "pdf-extractor memory sustained high >93% — loss of reclamation",
-        "severity": "WARN",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-11T17:00Z",
-        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30",
-        "triaged_at": "2026-08-11T17:09:47Z",
-        "triaged_by": "po",
-        "disposition": "FOLD -> FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD. Arrived mid-tick (17:05:54Z, auditor-t1 17:00Z cycle) — 4th A-30 pdf-extractor fire in ~60min, same dedup_key as sys-20260811T160638-24f0. PO RAW re-verify at 17:0xZ: pdf-extractor 95.31% (was 94.90% eight minutes earlier) — genuinely sustained and drifting UP, not a probe artifact. WARN severity + covered row already open => FOLD, no mint."
-      },
-      {
         "id": "agent-father-20260811T173215-te-t03-orchstate-commit-needed",
         "ts": "2026-08-11T17:32:15Z",
         "from": "agent-father",
