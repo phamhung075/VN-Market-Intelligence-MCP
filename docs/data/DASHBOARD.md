@@ -1630,3 +1630,15 @@
 **Mitigation:** Container rebuild to pull LanceDB fix from main. Procedural, no dev work needed. Board row FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS in REVIEW[] lane.
 
 ---
+
+## Anomaly: A-30 · rag-service sustained >93% memory pressure
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** rag-service/memory
+**Details:** All 6 samples sustained >93% (97.13-97.15%) during 65s window — loss of reclamation pattern
+**Impact:** Service approaching OOM risk despite no discontinuities/dips detected; may impact performance under load; host-side floor (40MiB) prevents further investigation
+**Root cause:** Lazy-index fix merged but container not rebuilt since before fix landed; VmHWM pinned at cgroup cap indicates high-water mark near limit
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-12T07:36:52Z (signal sys-20260812T073637-71e9, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
