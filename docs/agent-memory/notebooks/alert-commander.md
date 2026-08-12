@@ -1,18 +1,10 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-08-12 05:49 UTC | **Sprint:** FIX-FB-GATE-POINT-PCT-MATH
+**Last updated:** 2026-08-12 06:11 UTC | **Sprint:** FIX-FB-GATE-WEEKLY-FRAME-MODE
 
 **Role:** Event-only alert dispatch (position-danger / watchlist-opportunity / CRITICAL-always) | **Cadence:** `*/15min` market hours (02:00–08:30 UTC) + 4h critical sweep | **Contract:** APPEND class, one `## c<NNN>` section per cycle per `.claude/skills/notebook-write/SKILL.md` AC-6.
 
 > **Structural reset (FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, 2026-07-29):** prior history archived → `docs/agent-memory/notebooks/archive/alert-commander-archive-20260729.md`. One top-level `## c<NNN> · <ISO-timestamp>` section per cycle now.
-
-## c115 · 2026-08-12T05:20:23Z (slot=alert-commander-market, tick=05:15)
-- Signals: bus 10 total (hours_back=2) — 3 chain_catalyst (10722/10723/10724, unchanged from c112-c114), 7 verified_decision (VHM/VIC/HPG ids10719-10721 + VCB id10726 unchanged; SAB id10729/VNM id10730 unchanged from c114; NEW FPT id10728 explicitly checked this cycle — same capital-increase story as VNM's c114 fire) | Fired: 0 | Suppressed: 0 new | MARKET: none. `CYCLE_SNAPSHOT` hit (tick 05:15, created_at 05:17:00Z, <1min fresh).
-- Watchlist-opp: FPT checked via `get_kinhdich_reading(code="FPT")` — Quẻ Giải (40), tín hiệu GIỮ (not MUA/BUY), độ tin cậy 100% — fails kinhDichSignal=BUY leg despite confidence≥70 and same bullish newsSentiment/agentSignalsMajority as VNM's fire. SAB/VCB unchanged-failed (c114/c112 GIU 0%/38%). VNM (10730) already fired c114, unchanged this cycle, no re-fire.
-- ChainCatalyst: 0 fired | 3 unchanged-suppressed (10722 gold safe-haven no-ticker 0.75, 10723 Q2-earnings multi-sector no-ticker 0.85, 10724 SGI Capital below-threshold 0.65<0.75) — no re-`record_signal_outcome`.
-- Position-danger: `get_alerts(type=price)` clean (no active alerts), no stopLossHit — gate fails.
-- CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, `get_crisis_early_warning` clean (WARNING x10 corp-reputation unchanged: BID/BSR/DPM/FPT/FRT/HUT/PLX/SSI/VHM/VNM, no DANGER-tier), no verified_chain in bus.
-- Regime: NEUTRAL (fallback — macro_snapshot text has no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp) | vol NORMAL (rv_20d_pctile=0.74, gk_vol_20d_pct=18.62) | foreign_room market_saturation=5.94% (outflow_z_5d=0.72) | `get_vn_liquidity_state` error unchanged: `{"error":"macro-indicators service unavailable"}` — logged [SKIP], standard thresholds used | Pivot window: false (pivotWindowWarning=null, next Sept 2026). Market OPEN, VN-Index 1792.77 +1.09%. Silent exit — no MARKET/WORK send. `log_agent_work` id=1902.
 
 ## c116 · 2026-08-12T05:33:47Z (slot=alert-commander-market, tick=05:30)
 - Signals: bus 10 total (hours_back=2) — 3 chain_catalyst (10722/10723/10724, unchanged from c113-c115), 7 verified_decision (VHM/VIC/HPG ids10719-10721 + VCB id10726 + FPT id10728 + SAB id10729 + VNM id10730, all unchanged since c114/c115) | Fired: 0 | Suppressed: 0 new | MARKET: none. `CYCLE_SNAPSHOT` hit (tick 05:30, created_at 05:31:21Z, <1min fresh).
@@ -29,3 +21,11 @@
 - Position-danger: `get_alerts(type=price)` clean (no active alerts), no stopLossHit — gate fails.
 - CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, `get_crisis_early_warning` clean (WARNING x10 corp-reputation unchanged: BID/BSR/DPM/FPT/FRT/HUT/PLX/SSI/VHM/VNM, no DANGER-tier), no verified_chain in bus.
 - Regime: NEUTRAL (fallback — macro_snapshot text has no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp) | vol NORMAL (rv_20d_pctile=0.74, gk_vol_20d_pct=18.62) | foreign_room market_saturation=5.94% (outflow_z_5d=0.72) | `get_vn_liquidity_state` error unchanged: `{"error":"macro-indicators service unavailable"}` — logged [SKIP], standard thresholds used | Pivot window: false (pivotWindowWarning=null, next Sept 2026). Market OPEN, VN-Index 1792.77 +1.09% (Δ19.36, unchanged since c114). Silent exit — no MARKET/WORK send. `log_agent_work` id=1904.
+
+## c118 · 2026-08-12T06:11:51Z (slot=alert-commander-market, tick=06:00)
+- Signals: bus 4 total (hours_back=2) — 4 verified_decision (VCB id10726 + FPT id10728 + SAB id10729 + VNM id10730, all unchanged since c114-c117); 0 chain_catalyst — 10722/10723/10724 rolled off the 2h bus TTL (created 04:04, now >2h back), last seen c117 | Fired: 0 | Suppressed: 0 new | MARKET: none.
+- Watchlist-opp: VNM (10730) already fired c114 (2026-08-12T05:05Z), unchanged, no re-fire (config cooldown=0 fires once per genuine trigger). FPT/SAB/VCB unchanged-failed kinhDich (c115/c114/c112: GIỮ 100%/GIU 0%/GIU 38%) — no re-query, unchanged carried state.
+- ChainCatalyst: 0 in window this cycle — 10722-10724 aged out of the rolling 2h bus TTL, no re-`record_signal_outcome`.
+- Position-danger: `get_alerts(type=price)` clean (no active alerts), no stopLossHit — gate fails.
+- CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, `get_crisis_early_warning` clean (WARNING x10 corp-reputation unchanged: BID/BSR/DPM/FPT/FRT/HUT/PLX/SSI/VHM/VNM, no DANGER-tier), no verified_chain in bus.
+- Regime: NEUTRAL (fallback — macro_snapshot JSON shape has no REGIME field; carry.regime=UNKNOWN/carrySpread unavailable, DSI-INV-1 suppressed → CARRY_REGIME=NEUTRAL fallback) | vol NORMAL (rv_20d_pctile=0.73, gk_vol_20d_pct=18.68) | foreign_room market_saturation=5.94% (outflow_z_5d=0.72) | `get_vn_liquidity_state` error unchanged: `{"error":"macro-indicators service unavailable"}` — logged [SKIP], standard thresholds used | Pivot window: false (pivotWindowWarning=null, next Sept 2026). Market OPEN, VN-Index 1788.60 (Δ+15.19 up, source_tier1 live). Silent exit — no MARKET/WORK send. `log_agent_work` id=1905.
