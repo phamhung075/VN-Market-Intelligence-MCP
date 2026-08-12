@@ -1534,3 +1534,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-21-RAG-MEM · rag-service memory escalation: 97.42%
+**Severity:** CRITICAL | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** rag-service container
+**Details:** Memory at 97.42% (994MiB / 1GiB), free 30MiB. Restart-resistant leak: 86.6%→99.33%→restarted→95.14%→97.42%
+**Impact:** Imminent OOM kill risk. Service unresponsiveness or crash within hours.
+**Root cause:** Memory leak in rag-service — 3x escalations sent, FU-RAG-DEPLOY-MEMORY task exists but root cause not yet investigated
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-12T02:22:59Z (signal sys-20260812T022211-2842, system-auditor -> po, dedup_key=microservice_memory_leak:rag-service:escalating-post-restart-20260812, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
