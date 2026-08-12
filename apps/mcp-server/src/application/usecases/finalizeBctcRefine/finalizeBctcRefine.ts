@@ -41,7 +41,7 @@
 
 import type { Database } from "bun:sqlite";
 import { logger } from "../../../infrastructure/logger.js";
-import { parseRefinedMarkdown } from "../../utils/refinedMarkdownParser.js";
+import { parseRefinedMarkdown, type ColumnLayout } from "../../utils/refinedMarkdownParser.js";
 import {
   getCorrectionsMap,
   reAnchorCorrections,
@@ -155,11 +155,22 @@ export function resolveSourceConfidence(sourceConfidence: number | undefined): n
  * back to "general" (reproduced: report_id 96e36139 unit-0003).
  * parseRefinedMarkdown stays pure/stateless per call; this loop owns the
  * ordering and carries `finalSection` forward as the next unit's
- * `initialSection`.
+ * `initialSection`. FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW:
+ * `carryColumnLayout` threads cross-window the same way, for the same
+ * structural reason — a maxWindowPages-truncated tail window's markdown
+ * carries no header row of its own, so resolveColumnLayout() would
+ * otherwise silently default to "code-first" and swap code/label on a
+ * label-first (bank) table.
  */
 function parseDoneUnitsToRows(doneUnits: RefinedUnitRow[], report_id: string): FinalizeBctcTableRow[] {
   const allTableRows: FinalizeBctcTableRow[] = [];
   let carrySection = "general";
+  // FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW: same
+  // cross-window threading pattern as carrySection above — a
+  // maxWindowPages-truncated tail window's markdown carries no header row
+  // of its own, so resolveColumnLayout() would otherwise silently default
+  // to "code-first" and swap code/label on a label-first (bank) table.
+  let carryColumnLayout: ColumnLayout | null = null;
 
   for (const unit of doneUnits) {
     if (!unit.markdown) continue;
@@ -171,8 +182,9 @@ function parseDoneUnitsToRows(doneUnits: RefinedUnitRow[], report_id: string): F
       pageNumbers = [1];
     }
 
-    const parseResult = parseRefinedMarkdown(unit.markdown, report_id, pageNumbers, carrySection);
+    const parseResult = parseRefinedMarkdown(unit.markdown, report_id, pageNumbers, carrySection, carryColumnLayout);
     carrySection = parseResult.finalSection;
+    carryColumnLayout = parseResult.finalColumnLayout;
 
     if (parseResult.errors.length > 0) {
       logger.warn("[finalize_bctc_refine] parser errors in unit", {

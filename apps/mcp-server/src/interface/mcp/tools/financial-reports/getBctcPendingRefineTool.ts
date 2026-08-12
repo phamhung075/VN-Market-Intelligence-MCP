@@ -35,7 +35,7 @@
  *   - confirm_status: value from financial_reports.confirm_status (null or non-CONFIRMED
  *                     for returned rows; exposed for belt-and-suspenders guard in flow)
  *   - windows:        pre-partitioned window list (server-side), each entry:
- *                     { unit_id, page_numbers, page_type, needs_image }
+ *                     { unit_id, page_numbers, page_type, needs_image, truncated_continuation }
  *                     Empty array if page texts unavailable (flow L71 gate handles this).
  *
  * @module interface/mcp/tools/financial-reports/getBctcPendingRefineTool
@@ -86,6 +86,16 @@ export interface RefineWindow {
   page_type: "table" | "prose" | "continuation";
   /** True if any page in the window requires image loading (classifyPageForImageLoad). */
   needs_image: boolean;
+  /**
+   * FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW: pass-through
+   * of Window.truncated_continuation (windowPartitioner.ts) — true when this
+   * window exists because a maxWindowPages cap cut off the true head
+   * window's continuation table. See continuation-stitch.md for how the
+   * leaf worker may use this (informational only — the server-side parser
+   * already recovers correct column layout regardless of whether any caller
+   * reads this field).
+   */
+  truncated_continuation: boolean;
 }
 
 export interface PendingRefineReport {
@@ -331,6 +341,7 @@ export function buildGetBctcPendingRefineHandler(
                     page_numbers: w.page_numbers,
                     page_type,
                     needs_image: needsImage,
+                    truncated_continuation: w.truncated_continuation,
                   };
                 });
               }
@@ -403,7 +414,10 @@ export function registerGetBctcPendingRefineTool(server: McpServer): void {
       "text_status always 'COMPLETE' for default/ticker rows (Phase 0 readiness guard). " +
       "confirm_status is null or non-CONFIRMED for all branches (Phase 0 belt-and-suspenders guard). " +
       "windows[] is the server-side pre-partitioned list; each entry: " +
-      "{ unit_id, page_numbers, page_type ('table'|'prose'|'continuation'), needs_image }. " +
+      "{ unit_id, page_numbers, page_type ('table'|'prose'|'continuation'), needs_image, " +
+      "truncated_continuation }. truncated_continuation is true when this window exists " +
+      "because a maxWindowPages cap cut off the true head window's continuation table " +
+      "(informational only — the server already recovers correct column layout regardless). " +
       "windows is [] if page texts are unavailable (flow handles gracefully). " +
       "Used by the host-level fleet cron (refine_bctc_md flow). " +
       "Read-only — idempotent, safe to re-run. " +

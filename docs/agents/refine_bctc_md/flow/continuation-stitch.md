@@ -25,6 +25,19 @@ STITCH RULES:
 8. page_numbers = [N, N+1] or [N, N+1, N+2] in output JSON.
 ```
 
+## Truncation-Tail Windows (informational — no new step required)
+
+Some windows dispatched here exist because a much longer continuation table exceeded
+`maxWindowPages` and got split (`windows[].truncated_continuation === true` when the server
+surfaces it). For such a window, Step 2's "collect header" may legitimately find NOTHING on
+page N — that is expected, not an error; page N is itself a truncated mid-table continuation,
+not the table's true first page. Do not fabricate a header. Proceed straight to data-row
+collection (same as any window whose first page has no header line). The server-side parser
+(`finalize_bctc_refine`) already recovers the correct code/label column order for these rows by
+inheriting it from the true head window automatically — you do not need to fetch, guess, or
+backfill it. Optional: add flag `truncation_tail_no_own_header` when this occurs, for triage
+visibility only (does not affect confidence scoring).
+
 ## Worked Example — FPT Pages 22–23 (Vietnamese)
 
 **Trang 22** (header + dòng 100–220):

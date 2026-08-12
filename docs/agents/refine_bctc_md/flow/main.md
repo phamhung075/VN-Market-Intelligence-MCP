@@ -1,5 +1,5 @@
 ---
-<!-- size-justification: 187L (FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM 2026-08-06, +6L from 181L — Phase 0 step 5 now documents the actual served fields="ids" projection shape and warns against omitting it) — thin Option-C dispatcher for a Haiku-model leaf worker; Phase 2's inline loop (explicit per-page_type Read step + anti-confabulation guard + the 4-value STATUS enum restated at the loop site) closes the exact contract-drift root cause (non-existent execute_sub_flow_logic() call + invented PARTIAL_EXIT status on 2 consecutive zero-push fires); trimming it back down would re-introduce the ambiguity this fix removes. -->
+<!-- size-justification: 189L (FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW 2026-08-12, +2L from 187L — Phase 1's window shape now documents the real truncated_continuation field, pointing to continuation-stitch.md's new section for its meaning) — thin Option-C dispatcher for a Haiku-model leaf worker; Phase 2's inline loop (explicit per-page_type Read step + anti-confabulation guard + the 4-value STATUS enum restated at the loop site) closes the exact contract-drift root cause (non-existent execute_sub_flow_logic() call + invented PARTIAL_EXIT status on 2 consecutive zero-push fires); trimming it back down would re-introduce the ambiguity this fix removes. -->
 agent:
   id: refine_bctc_md
   model: haiku
@@ -81,7 +81,9 @@ UTC Mon–Fri 02:00–08:59 → log `[refine-orchestrator] OFF-HOSE active` → 
 ## Phase 1 — Window Partition (server-side)
 
 `windows[]` from `get_bctc_pending_refine` is pre-partitioned (continuation-invariant
-enforced server-side). Each: `{ unit_id, page_numbers, page_type, needs_image }`.
+enforced server-side). Each: `{ unit_id, page_numbers, page_type, needs_image,
+truncated_continuation }` — see `continuation-stitch.md` § Truncation-Tail Windows for the
+last field's meaning.
 
 ## Phase 2 — Sequential Inline Loop (NO spawn_agent — Option-C)
 

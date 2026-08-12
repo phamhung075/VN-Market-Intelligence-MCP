@@ -58,6 +58,16 @@ export interface ParseResult {
    * whose header line is printed once, not repeated on continuation pages).
    */
   finalSection: string;
+  /**
+   * FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW: the resolved
+   * ColumnLayout this parse ended on — same threading pattern as
+   * finalSection above, for the SAME structural reason (maxWindowPages can
+   * split a continuation table so a tail window's markdown never carries its
+   * own header row). Callers that parse a report's DONE windows in page
+   * order (finalizeBctcRefine.ts's parseDoneUnitsToRows) thread this value
+   * back in as the NEXT unit's initialColumnLayout.
+   */
+  finalColumnLayout: ColumnLayout;
 }
 
 // ── Section header detection ───────────────────────────────────────────────────
@@ -383,8 +393,34 @@ function isHeaderRow(cells: string[], isAfterSeparator: boolean): boolean {
  * @param headerCells  The captured header row's trimmed cell text, or null
  *   when no header row was recognized for the current table.
  */
-function resolveColumnLayout(headerCells: string[] | null): "code-first" | "label-first" | "label-only" {
-  if (!headerCells || headerCells.length < 2) return "code-first";
+// FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW: named alias for the
+// 3-state column-layout signal, now threaded cross-window the same way
+// statement_section already is (see ParseResult.finalColumnLayout /
+// parseRefinedMarkdown's initialColumnLayout param below).
+export type ColumnLayout = "code-first" | "label-first" | "label-only";
+
+/**
+ * FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW: `inheritedLayout`
+ * is the layout carried forward from a PRIOR window's own resolved header
+ * (ParseResult.finalColumnLayout), exactly mirroring how initialSection/
+ * finalSection thread statement_section across windows. windowPartitioner's
+ * maxWindowPages cap can split ONE continuation table into a genuine head
+ * window (with the real header) and one or more truncation-tail windows
+ * whose first page is itself mid-table — those windows legitimately capture
+ * NO header of their own (headerCells stays null). Previously that null case
+ * always fell back to the hardcoded "code-first" default, silently swapping
+ * code/label on every 4-column row of a label-first (bank) tail window. Now
+ * it falls back to whatever REAL layout the head window resolved, if any —
+ * "code-first" remains the final fallback ONLY when nothing was ever
+ * inherited (first window in a report, or a captured-but-ambiguous header —
+ * unchanged from pre-fix behavior in both cases: 0-diff for every existing
+ * caller that does not pass inheritedLayout).
+ */
+function resolveColumnLayout(
+  headerCells: string[] | null,
+  inheritedLayout: ColumnLayout | null,
+): ColumnLayout {
+  if (!headerCells || headerCells.length < 2) return inheritedLayout ?? "code-first";
   const codeIdx = headerCells.findIndex((c) => /mã|code|stt/i.test(c));
   const labelIdx = headerCells.findIndex((c) => /mục|chỉ\s*tiêu|item/i.test(c));
   if (codeIdx === -1 && labelIdx !== -1) return "label-only";
@@ -416,13 +452,18 @@ function resolveColumnLayout(headerCells: string[] | null): "code-first" | "labe
  *   unit's `finalSection` (see ParseResult) into the NEXT unit's
  *   `initialSection`, in page order — this function stays pure/stateless;
  *   the caller owns the ordering.
- * @returns ParseResult with rows, any parsing errors, and finalSection.
+ * @param initialColumnLayout FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW:
+ *   ColumnLayout carried forward from the prior unit's finalColumnLayout,
+ *   defaulting to null (0-diff for every existing caller that omits it) —
+ *   see ParseResult.finalColumnLayout doc.
+ * @returns ParseResult with rows, any parsing errors, finalSection, and finalColumnLayout.
  */
 export function parseRefinedMarkdown(
   markdown: string,
   report_id: string,
   page_numbers: number[],
   initialSection: string = "general",
+  initialColumnLayout: ColumnLayout | null = null,
 ): ParseResult {
   const rows: BctcTableRow[] = [];
   const errors: string[] = [];
@@ -572,7 +613,7 @@ export function parseRefinedMarkdown(
       // reads the captured header text instead of assuming position;
       // falls back to code-first (0-diff) when no header was captured or
       // it is ambiguous.
-      const layout = resolveColumnLayout(headerCells);
+      const layout = resolveColumnLayout(headerCells, initialColumnLayout);
       if (layout === "label-only") {
         // No Mã/code column exists in this table at all — e.g. a bank
         // equity roll-forward note ("Mục | Số dư đầu năm | Phát sinh
@@ -688,5 +729,10 @@ export function parseRefinedMarkdown(
   // (code=null, values merged into label text) generically, structurally,
   // for ANY bank-form ticker — see bctcRowRepair.ts. Rows not matching the
   // exact corruption signature pass through unchanged (RISK-1 non-lossy).
-  return { rows: repairCorruptedRows(rows, parseVnNumber), errors, finalSection: currentSection };
+  return {
+    rows: repairCorruptedRows(rows, parseVnNumber),
+    errors,
+    finalSection: currentSection,
+    finalColumnLayout: resolveColumnLayout(headerCells, initialColumnLayout),
+  };
 }
