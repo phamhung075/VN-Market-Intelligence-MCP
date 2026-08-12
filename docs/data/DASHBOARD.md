@@ -1594,3 +1594,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service critical memory + restart cycle
+**Severity:** CRITICAL | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** rag-service (vn-market-intelligence-mcp-rag-service-1)
+**Details:** Container restarted during audit window; memory peaked at 99.61% of 1GiB limit before restart; now at 3.65% post-restart. Known root cause: LanceDB vector_search() without index performs full-column scans, causing unbounded memory growth cycle every ~50min.
+**Impact:** Service availability impacted by recurring restart cycle; data pipeline at risk if vector index not implemented soon
+**Root cause:** Missing vector index on rag_entries table; FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (P0) blocked by dev-team WIP budget
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-12T05:07:28Z (signal sys-20260812T050623-7474, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
