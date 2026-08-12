@@ -20140,7 +20140,7 @@
         "last_served_tick": "2026-08-12T09:54:54Z"
       }
     },
-    "_updated_at": "2026-08-12T11:54:28Z",
+    "_updated_at": "2026-08-12T12:21:14Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20628,6 +20628,113 @@
         "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=54 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
         "createdAt": "2026-08-12T11:41:03Z",
         "drained_at": "2026-08-12T11:51:16Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "01dc67de1a483c83fb3c52f0570d450308d7bfe91fe63cb5069781e8d653aa86",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/market-watcher.md. actor=0454e9d8-b475-4230-95c9-8b7d943aa8b3 mode=warn escalated=true prior_warns=18 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T12:10:24Z",
+        "drained_at": "2026-08-12T12:21:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "dfea19382b346d05b16845601ec2fd6e37bac05b017a6eb506d1d84c784ae33c",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c49 · 2026-08-12T12:03Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-12T12:11:12Z",
+        "drained_at": "2026-08-12T12:21:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ac0b6a0d7f650db6c222897e289e63a2b4adadff9d7d7afa3ea969850c3408c0",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T12:08:30Z",
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "news-scout-offhours": 240,
+            "market-watcher-offhours": 240,
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-12T12:08:10Z",
+          "last_fired_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "12:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 27,
+          "note": "3-slot off-hours batch (news-scout-offhours, market-watcher-offhours, alert-commander-critical) — all cadence/cron due at 240min gatherer interval (calendar_status=unknown, no suppression/downgrade applies). Single batch, MAX_PARALLEL=4 (headroom_mb=3228 load1m=2 cores=12, not degraded). Step 4.5 freshness downgrade inapplicable (signal_backlog=27!=0, calendar not holiday/weekend). No CHEF slots this tick, mutex no-op. Step 4.7 tick-snapshot hand-transcription skipped per established pattern. Recurring rag-service A-30 memory signal (dedup_key format drift observed 10:00Z/10:45Z) has produced no NEW to:po row this tick — signal_queue empty of NEW rows, consistent with system-auditor's own cadence."
+        },
+        "createdAt": "2026-08-12T12:08:30Z",
+        "drained_at": "2026-08-12T12:21:14Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1da1904d6fab537c259e3c6143b0d9a92771c956d454c28e3213490435f5b387",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "tied_sections": "5:20260812000000000:## FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING · 2026-08-12\n9:20260812000000000:## UC-RDL-P7 · 2026-08-12",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-12T12:09:51Z",
+        "drained_at": "2026-08-12T12:21:14Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
