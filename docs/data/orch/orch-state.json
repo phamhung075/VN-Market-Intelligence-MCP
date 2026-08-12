@@ -13395,6 +13395,36 @@
             "observed_at": "2026-08-12T05:31:54Z"
           }
         }
+      },
+      {
+        "id": "FIX-FB-GATE-BREADTH-PCT-INTERNAL",
+        "title": "fb-gate Check-H: internal breadth-% vs cited-counts consistency",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "size": "S",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-BREADTH-PCT-INTERNAL",
+        "promoted_at": "2026-07-25T02:15:17Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-12T05:32:47Z",
+        "claimed_at": "2026-08-12T05:22:27Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "rebuild_required": false,
+        "branch": null,
+        "updated_by": "qa",
+        "review_note": "developer: Added Check-J to scripts/fb-data-integrity-gate.sh -- stated advancer/decliner breadth % must match counts cited elsewhere in the same post within BREADTH_PCT_TOLERANCE (new header const, 6.0pp). Stated-% extraction: (1) headline -- first N% within a tight 30-char window AFTER the \"do rong\"/\"breadth\" keyword, same sentence only (prevents grabbing an unrelated later % in the same sentence -- thanh khoan/ticker move); (2) labelled -- N% ma tang/giam either word order. Cited-counts extraction, label-agnostic (covers advancer/decliner/floor/ceiling generically without one regex per label): (a) explicit fraction \"N (label)? cua/tren/trong (tong)? (khoang|~)? M\" e.g. \"81 cua ~350\"; (b) co-occurring \"N ma tang ... M ma giam [... K ma dung gia]\" in one sentence. BLOCKs when stated % is farther than tolerance from every direction-matching candidate. NOTE: ticket title said \"Check-H\" but that letter is STALE -- A-I already claimed (Check-H=point-pct-math, Check-I=stale-macro, both this same day) -- enumerated live via grep before minting, implemented as Check-J, next unclaimed letter, documented inline. RAW fence (real fixtures, no network dependency): full-structure fixture \"Do rong thi truong ~40%. ... 81 cua ~350 ma ...\" with a snapshot file matching the fixture own VN-Index level (isolates from unrelated Check-D noise) -> [BLOCK] Check-J breadth-pct-internal: stated do rong...40% = 40.0% does not match cited counts (81 cua ~350 = 23.14%), delta=16.86pp > 6.0pp tolerance, exit 1. Matching fixture (do rong ~23% + same 81 cua ~350) -> [PASS] fb-data-integrity-gate: 0 violations, exit 0. RED baseline: git show HEAD (pre-fix, commit 41975d433) run against the same BLOCK fixture + matched snapshot -> [PASS] 0 violations (proves the gap existed). Regression: all 48 real docs/social/fb-post-*.md (no snapshot arg, live-independent check) -> 0/48 Check-J false-fires, incl. the closest real near-miss 2026-06-19 (\"chi 25% ma tang trong khi 63% ma giam\" vs cited 81/203/66=350 -> implied 23.14%/58.0%, deltas 1.86pp/5.00pp, both <=6.0pp tolerance). bash -n clean. Simplicity gate Q1-Q4 all NO. Commits ce04d512a (fix) + ce34c588f (decision journal), pushed origin/main.",
+        "status_note": "[QA] Review Record (direct-commit verify) 2026-08-12T05:32:12Z -- APPROVED, DONE_VERIFIED. Read git show ce04d512a -- scripts/fb-data-integrity-gate.sh on disk, not trusted from review_note prose: Check-J genuinely exists (breadth %-vs-cited-counts internal consistency, BREADTH_PCT_TOLERANCE=6.0pp header const). Stated-% extraction confirmed as described: (1) headline -- first N% within a tight 30-char window AFTER the \"do rong\"/\"breadth\" keyword, same sentence; (2) labelled -- N% ma tang/giam either word order, near-immediate adjacency. Cited-counts extraction confirmed label-agnostic: (a) explicit fraction \"N (label)? cua/tren/trong (tong)? (khoang|~)? M\"; (b) co-occurring \"N ma tang ... M ma giam [... K ma dung gia]\" same-sentence, advancer/decliner/flat all candidates. Letter-collision note verified live: grep -oE \"Check-[A-Z]\" on both 41975d433 (parent) and 8e062bbd6 (claim-point) blobs shows A-I already claimed, zero J -- Check-J is genuinely the next unclaimed letter, matches inline documentation exactly. Independently built my OWN BLOCK/PASS fixtures (not copy-pasted from prose, own text following the same described phrasing): \"Do rong thi truong ~40%.\" + \"81 cua ~350 ma\" -> [BLOCK] Check-J breadth-pct-internal: stated 'do rong...40%' = 40.0% does not match cited counts (81 cua ~350 = 23.14%), delta=16.86pp > 6.0pp tolerance, exit 1 -- delta matches claim to 2 decimal places exactly. Matching fixture (~23% + same 81 cua ~350) -> [PASS] fb-data-integrity-gate: 0 violations, exit 0. RED-baseline independently reproduced: git show 41975d433:scripts/fb-data-integrity-gate.sh has zero \"Check-J\" occurrences (grep -c confirmed); ran the SAME BLOCK fixture against that pre-fix blob -> falsely [PASS] fb-data-integrity-gate: 0 violations, exit 0 -- confirms the RED-baseline claim directly, not via git stash. Regression re-run myself TWICE, stronger than the claimed sample: (a) reconstructed the EXACT 41-file docs/social/fb-post-*.md corpus as it existed at commit-time (git ls-tree ce04d512a) -> 0/41 Check-J false-fires; (b) the CURRENT 57-file corpus (16 files added since the fix landed, never tested by the dev) -> 0/57 false-fires -- extraction logic generalizes beyond the originally-tested set, not overfit. Near-miss 2026-06-19 file independently recomputed: cited 81/203/66=350 -> implied 23.14%/58.0% vs stated \"chi 25% ma tang trong khi 63% ma giam\" -> deltas 1.86pp/5.00pp, both <=6.0pp tolerance -- exact match, no false-fire (only unrelated live-price Check-B/D noise fired on this file, expected since it is a stale historical post compared against today's live prices). NOTE (non-blocking, logged not gating): review_note/journal claims regression against \"48\" real fb-post files -- same literal figure as the SAME-DAY sibling Check-I commit's journal entry (copy-pasted boilerplate, not re-counted). Actual repo state at ce04d512a commit-time (git ls-tree) was 41 fb-post-*.md files, matching the SAME discrepancy already found + ruled non-blocking on sibling row FIX-FB-GATE-STALE-MACRO-GUARD this session (qa-S71: the other 7 landed in a later same-day batch-backfill commit at 09:48, different session) -- substance (0 false-fires) independently reconfirmed here with an even larger live sample (57), so not gating. bash -n clean. mock-guard PASS (no production TS source touched -- pure bash+python script; Smart-Skip bun test/tsc structurally N/A). Both commits (ce04d512a code, ce34c588f journal) confirmed real and on main ancestry via git merge-base --is-ancestor. Journal entry present: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-17.md STEP qa-S72.\n",
+        "verification": {
+          "raw_probe": {
+            "tool": "git show/git merge-base --is-ancestor + git ls-tree (corpus reconstruction) + bash scripts/fb-data-integrity-gate.sh (own hand-built BLOCK/PASS fixtures, no network dependency) + bash -n",
+            "args": "git show ce04d512a -- scripts/fb-data-integrity-gate.sh; git show 41975d433:scripts/fb-data-integrity-gate.sh > prefix.sh (RED baseline, grep -c Check-J = 0); grep -oE Check-[A-Z] on 41975d433 + 8e062bbd6 blobs; bash scripts/fb-data-integrity-gate.sh <own-block-fixture.md> 2026-07-25 and <own-pass-fixture.md> 2026-07-25 (BLOCK/PASS); git ls-tree ce04d512a docs/social/ (41-file corpus reconstruction) + loop over all 41 + all 57 current docs/social/fb-post-*.md; bash -n scripts/fb-data-integrity-gate.sh",
+            "live_value_observed": "BLOCK fixture -> [BLOCK] Check-J breadth-pct-internal delta=16.86pp exit 1 (exact match); PASS fixture -> [PASS] 0 violations exit 0; RED-baseline pre-fix blob has 0 Check-J occurrences and falsely PASSes the same BLOCK fixture exit 0; 0/41 Check-J false-fires on exact commit-time corpus, 0/57 on current corpus (stronger superset); near-miss 2026-06-19 deltas 1.86pp/5.00pp both under tolerance, no fire; 48-vs-41 file-count prose discrepancy noted non-blocking (same class already found on sibling Check-I row qa-S71)",
+            "observed_at": "2026-08-12T05:32:46Z"
+          }
+        }
       }
     ],
     "head": {
@@ -19758,27 +19788,6 @@
         "claimed_by": "dev-team (review-lane qa-drain)",
         "redispatch_count": 1,
         "occurrence_count": 12
-      },
-      {
-        "id": "FIX-FB-GATE-BREADTH-PCT-INTERNAL",
-        "title": "fb-gate Check-H: internal breadth-% vs cited-counts consistency",
-        "type": "FIX",
-        "status": "QA",
-        "priority": "P2",
-        "zone": "cross-service/",
-        "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-BREADTH-PCT-INTERNAL",
-        "promoted_at": "2026-07-25T02:15:17Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-12T05:22:28Z",
-        "claimed_at": "2026-08-12T05:22:27Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "rebuild_required": false,
-        "branch": null,
-        "updated_by": "developer",
-        "review_note": "developer: Added Check-J to scripts/fb-data-integrity-gate.sh -- stated advancer/decliner breadth % must match counts cited elsewhere in the same post within BREADTH_PCT_TOLERANCE (new header const, 6.0pp). Stated-% extraction: (1) headline -- first N% within a tight 30-char window AFTER the \"do rong\"/\"breadth\" keyword, same sentence only (prevents grabbing an unrelated later % in the same sentence -- thanh khoan/ticker move); (2) labelled -- N% ma tang/giam either word order. Cited-counts extraction, label-agnostic (covers advancer/decliner/floor/ceiling generically without one regex per label): (a) explicit fraction \"N (label)? cua/tren/trong (tong)? (khoang|~)? M\" e.g. \"81 cua ~350\"; (b) co-occurring \"N ma tang ... M ma giam [... K ma dung gia]\" in one sentence. BLOCKs when stated % is farther than tolerance from every direction-matching candidate. NOTE: ticket title said \"Check-H\" but that letter is STALE -- A-I already claimed (Check-H=point-pct-math, Check-I=stale-macro, both this same day) -- enumerated live via grep before minting, implemented as Check-J, next unclaimed letter, documented inline. RAW fence (real fixtures, no network dependency): full-structure fixture \"Do rong thi truong ~40%. ... 81 cua ~350 ma ...\" with a snapshot file matching the fixture own VN-Index level (isolates from unrelated Check-D noise) -> [BLOCK] Check-J breadth-pct-internal: stated do rong...40% = 40.0% does not match cited counts (81 cua ~350 = 23.14%), delta=16.86pp > 6.0pp tolerance, exit 1. Matching fixture (do rong ~23% + same 81 cua ~350) -> [PASS] fb-data-integrity-gate: 0 violations, exit 0. RED baseline: git show HEAD (pre-fix, commit 41975d433) run against the same BLOCK fixture + matched snapshot -> [PASS] 0 violations (proves the gap existed). Regression: all 48 real docs/social/fb-post-*.md (no snapshot arg, live-independent check) -> 0/48 Check-J false-fires, incl. the closest real near-miss 2026-06-19 (\"chi 25% ma tang trong khi 63% ma giam\" vs cited 81/203/66=350 -> implied 23.14%/58.0%, deltas 1.86pp/5.00pp, both <=6.0pp tolerance). bash -n clean. Simplicity gate Q1-Q4 all NO. Commits ce04d512a (fix) + ce34c588f (decision journal), pushed origin/main."
       }
     ],
     "_closed_signals_20260614": {
