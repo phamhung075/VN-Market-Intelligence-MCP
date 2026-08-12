@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-08-05T07:09:20Z",
+    "fire_time": "2026-08-12T07:07:55Z",
     "matched_slots": [
       "alert-commander-market"
     ],
@@ -16,10 +16,10 @@
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 3,
+    "drift_min": 6,
     "errors": [],
     "pressure_mode": "adaptive",
-    "calendar_status": "open",
+    "calendar_status": "unknown",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
@@ -30,7 +30,7 @@
     "cadence_minutes": {
       "alert-commander-market": null
     },
-    "last_fired_timestamp": "2026-08-05T07:08:29Z",
+    "last_fired_timestamp": "2026-08-12T07:07:31Z",
     "last_fired_slots": [
       "alert-commander-market"
     ],
@@ -41,14 +41,14 @@
     "leader_lock": "acquired",
     "dev_head": "unknown",
     "devq": 5,
-    "signal_backlog": 17,
-    "note": "cycle_snapshot_promoted:false AGAIN this tick (2nd consecutive observed occurrence, 06:45+07:00) -- cycle-snapshot-latest.json still shows created_at=2026-07-31 despite fresh cycle-snapshot-07:05.json written this tick. Escalated: wrote signal cow-20260805T070907 to po (type=system-issue, severity=MED) per recurring-bug policy (2+ occurrences -> escalate, not just note). Non-blocking: agents fall back to direct get_cycle_bootstrap. Also found 1 NEW cowork-drain-scoped signal (sys-20260805T065227-25f7, to=po, db_integrity_breach CRITICAL, 336 daily_ohlcv rows) -- left untouched (po's own drain-signals.md is the actual consumer, not cowork-team)."
+    "signal_backlog": 25,
+    "note": "single-slot tick (alert-commander-market); tick-snapshot Step 4.7 skipped (hand-transcription truncation risk), agent falls back to direct get_cycle_bootstrap"
   },
   "priority": "low",
-  "createdAt": "2026-08-05T07:09:20Z",
+  "createdAt": "2026-08-12T07:07:55Z",
   "_processed": {
-    "fingerprint": "c13d3567f310fa8a534063c13c59296cec280b38f389e518650508de2d31331d",
-    "processedAt": "2026-08-05T07:11:00Z",
+    "fingerprint": "0c010b6b45e763594444fa65fa81d933a7938322bea1e7919567f4e50df85af2",
+    "processedAt": "2026-08-12T07:20:49Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
