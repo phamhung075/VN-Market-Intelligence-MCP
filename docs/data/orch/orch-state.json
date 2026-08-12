@@ -1208,6 +1208,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-12T13:30Z",
         "dedup_key": "auditor-cycle-missing:tier1:2026-08-12T13:30Z"
+      },
+      {
+        "id": "sys-20260812T142118-1332",
+        "ts": "2026-08-12T14:21:18Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "vn-bctc-fetch service unhealthy (VPS fetch service)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-12T12:00Z",
+        "dedup_key": "microservice_degraded:vn-bctc-fetch:B-07"
       }
     ],
     "last_triaged_at": "2026-08-12T08:40:43Z",
@@ -3396,28 +3410,30 @@
             "title": "Wire cowork-tick-preflight.sh at trailer with tt_capture_and_log wrapper + test cases (WU-1)",
             "owner": "developer",
             "size": "S",
-            "status": "TODO",
+            "status": "REVIEW",
             "zone": "cross-service/",
             "depends": [
               "TICK-WU-0-TELEMETRY-LIB"
             ],
             "type": "SPRINT-S",
             "note": "Mechanical 2-line trailer change (source lib + wrap run_preflight). Zero changes inside _emit_verdict or any return site. Existing test suite (which sources+calls functions directly, never reaches trailer) stays green by construction (R4). New logging test cases additive only. AC-3 (zero semantic change) critical. Depends on WU-0 green.",
-            "updated_at": "2026-08-12T14:11:17Z"
+            "updated_at": "2026-08-12T14:22:36Z",
+            "next_agent": "qa"
           },
           {
             "id": "TICK-WU-2-DEVTEAM-WIRING",
             "title": "Wire dev-team-tick-preflight.sh at trailer with tt_capture_and_log wrapper + test cases (WU-2)",
             "owner": "developer",
             "size": "S",
-            "status": "TODO",
+            "status": "REVIEW",
             "zone": "cross-service/",
             "depends": [
               "TICK-WU-0-TELEMETRY-LIB"
             ],
             "type": "SPRINT-S",
             "note": "Mechanical 2-3 line trailer change. Same pattern as WU-1. Existing suite stays green (R4). Note R6: pre-existing step55_board_hygiene stdout-leak risk (low-frequency, out-of-scope to fix) may incidentally surface as verdict:UNKNOWN rows — defensive, not regression. Depends on WU-0 green.",
-            "updated_at": "2026-08-12T14:11:17Z"
+            "updated_at": "2026-08-12T14:22:36Z",
+            "next_agent": "qa"
           },
           {
             "id": "TICK-WU-3-AUDITOR-WIRING",
@@ -20203,7 +20219,7 @@
         "last_served_tick": "2026-08-12T12:55:29Z"
       }
     },
-    "_updated_at": "2026-08-12T13:57:02Z",
+    "_updated_at": "2026-08-12T14:24:54Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20343,6 +20359,89 @@
         "payload": "auditor tier-1 cycle possibly missing — no completion evidence in 84h (cadence 0.5h)",
         "createdAt": "2026-08-12T13:34:41Z",
         "drained_at": "2026-08-12T13:53:19Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6e6ffc0edec1378d9d93e51e843fd0a6043cde2fcd0315ccc0a79883714a68be",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-bf5dcc65",
+          "head_sha": "bf5dcc65db0f0efbc54c11bf54b32d621d1ca6b9",
+          "run_id": 31602576573,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31602576573",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 94133416351
+            },
+            {
+              "name": "task-claim-owner-session-lint",
+              "conclusion": "failure",
+              "jobId": 94133416616
+            }
+          ],
+          "fingerprint": "bc074fa00bb330ef3da3b1ffe6fc396cebfc65688d5c7b629d91289f9b46a2fd",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD bf5dcc65db0f0efbc54c11bf54b32d621d1ca6b9: bun test,task-claim-owner-session-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-12T13:55:29Z",
+        "drained_at": "2026-08-12T14:24:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "510fd9e2eab7b477186ccbbdca8e0a3b70b0c6984fecb139e014ee424bfed90f",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=57 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T14:04:50Z",
+        "drained_at": "2026-08-12T14:24:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5b2294853cad7dba3b352e8dca227e1bb719bd6370097b73c50d66a198c51482",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=58 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T14:06:31Z",
+        "drained_at": "2026-08-12T14:24:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "03d8e0a2cf9b19417510d22d73f24b108fc760fe87d3fb4931e2f568c39e6f5b",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/pm.md. actor=9591c6c6-fb3e-47c7-b5db-2fd82c2b5bc0 mode=warn escalated=false prior_warns=1 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T14:12:20Z",
+        "drained_at": "2026-08-12T14:24:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b9c7294fdf75f59d03cf62072ca5cc94002924d682214a8132977362f92ede66",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c52 · 2026-08-12T14:00Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c51 · 2026-08-12T13:30Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-12T14:22:00Z",
+        "drained_at": "2026-08-12T14:24:54Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
