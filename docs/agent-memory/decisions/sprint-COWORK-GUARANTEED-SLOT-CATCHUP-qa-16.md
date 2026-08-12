@@ -199,3 +199,5 @@
 - Same-epic sibling pattern (depguard-tier-boundaries c646, no-hardcode-allowlist-scan qa-S62 this file) — consistent verification shape across all 4 CI-GUARDRAIL design closeouts.
 **why-decision:** APPROVED, DONE_VERIFIED. Brief adequate (thorough verify-live corrections, sound zero-tolerance sizing call, explicit defer rationale), child scoping correct (dev_agent/next_agent/zone/brief_ref all match, implementation-to-date tracks brief verbatim).
 **why-change:** none — no code exists in this task's own commit to fix; all checks structurally N/A (bun test/tsc/mock-guard) confirmed via diff-stat, not assumed.
+
+### CAP-REACHED · 2026-08-12T04:25:39Z
