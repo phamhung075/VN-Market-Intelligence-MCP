@@ -1,0 +1,36 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork_tick_report",
+  "payload": {
+    "tick": "2026-08-12T16:30Z",
+    "matched_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "spawned": [
+      "refine-bctc-slot-4"
+    ],
+    "one_shots": [],
+    "new_signals": 3,
+    "silent": false,
+    "classification": "FIRE",
+    "due_reasons": {
+      "refine-bctc-slot-4": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-4": null
+    },
+    "note": "3 NEW rows: (1) sys-20260812T160538-57ef pdf-extractor A-30 CRITICAL 95.32% — already escalated at tick 16:00Z, no re-alert; (2) cj-20260812T163125Z code-janitor LOW severity, team-tool-recheck writer dead since 06-23, replace-vs-retire decision needed — no escalation warranted (LOW); (3) sys-20260812T163525-0051 A-30 WARN 94.52% dedup_key vn-market-intelligence-mcp-pdf-extractor-1:A-30 — value receding from the 95.32% CRITICAL peak, distinct dedup_key naming, no fresh escalation."
+  },
+  "priority": "normal",
+  "createdAt": "2026-08-12T16:36:46Z",
+  "_processed": {
+    "fingerprint": "7b3b5220323114af3369b128750cd17e1bbbd010e3047d4fb7b3978593f4b784",
+    "processedAt": "2026-08-12T16:51:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork_tick_report",
+  "payload": {
+    "tick": "2026-08-12T16:15Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "spawned": [],
+    "one_shots": [],
+    "new_signals": 1,
+    "silent": false,
+    "classification": "SIGNAL_ONLY",
+    "note": "1 NEW signal_queue row (sys-20260812T160538-57ef, pdf-extractor A-30 CRITICAL 95.32%) — identical to the row already escalated via telegram at tick 16:00Z, no fresh content, no re-escalation. Still pending po drain. rag-service A-30 thread remains cleared from NEW (no reappearance)."
+  },
+  "priority": "normal",
+  "createdAt": "2026-08-12T16:21:24Z",
+  "_processed": {
+    "fingerprint": "59957244f9ead3aff119d8dfaedc1e7d4aef28cf3b24640539d1dba9f2bbb209",
+    "processedAt": "2026-08-12T16:51:18Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
