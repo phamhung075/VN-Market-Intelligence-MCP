@@ -32,3 +32,16 @@
 - Claim-truth gate: PASS manual review (PLX/VNM/BSR direction + % traceable to live get_market_context; oil macro traceable to live get_macro_snapshot; all figures fetched this cycle — no CCATO)
 - Dedup: task_claim(published:fb-daily:2026-08-07) = claimed:true, first run for this VN date (TTL 100800s)
 - Status: published
+
+## c008 · 2026-08-08T13:25:00Z
+- Date: 2026-08-08 | Mode: WEEKLY_RECAP (Saturday 20:07 VN, slot=fb-weekend) | Post file: docs/social/fb-post-2026-08-08.md
+- VN-Index: 1.768 (closing Friday 2026-08-07, +1.86% from week start ~1.736)
+- Sources read: daily-posts=3/5 (Wed 08-05, Thu 08-06, Fri 08-07; Mon/Tue missing, sufficient ≥3 threshold), unified-agent=yes (EOD + intraday morning/evening cycles through 08-07; 3-4 clusters per cycle: oil Hormuz geopolitical, SOE VNM inflow, real-estate weakness, gold safe-haven risk-off; degraded quality with macro-incomplete + BCTC gaps throughout), news-scout=yes (c243-c245 offhours 04:10–12:12 UTC; impact chains: real-estate decline, global rates ease, gold macro, VIC fund concentration), market-watcher=yes (offhours 08:11–12:12 UTC; anomaly sweep; carry-over: DBC/DPM/KDC stale 48h)
+- week_performance: VN-Index opened ~1.736 (inferred from moves), closed 1.768, +1.86% — high 1.776 (Wed), low 1.765 (Thu); breadth balanced 155 tăng/137 giảm/62 đứng (Fri session)
+- sector_moves: Dầu khí up (PLX +6.68%, BSR +4.59%), nông sản mixed (VNM +5.08% news, DPM/SAB/MSN pressure), hóa chất up (DGC +6.91%), bất động sản down (VHM −5.32%, DXG −2.28%, KDH −1.93%, PDR −1.67%), ngân hàng vừa down (VPB −822k, TCB −749k, SHB −420k shares)
+- foreign_flow_week: Friday session net −2.1M shares (top buyers CTG +459k VNM +258k BSR +129k BID +108k; top sellers VPB −822k TCB −749k SHB −420k VHM −382k DXG −347k) — selective rotation pattern evident
+- macro_week: Oil 83.55 NEUTRAL (stable), Gold 4,399.7 BULLISH (safe-haven risk-off signal +$107), USD/VND 26,030 BEARISH (VND depreciation >25k threshold), Carry 1.37pp NEUTRAL, Yield 3.20pp CHEAP (equities offer 8.2% earnings yield vs 5% deposit)
+- key_news_week: Vinamilk livestock expansion (VNM bullish), Vingroup fund concentration (VIC/VHM watch), Tasco earnings +200% (HUT signal), banking NPL pressure, real-estate sector weakness, US jobs soft → Fed pivot expectations (banking/securities beneficiary)
+- Validation: passed 4/4 gates (jargon: PASS 0 violations; data-integrity-weekly: PASS 0 violations after removing markdown ## headings and **bold** formatting; privacy: PASS 0 violations no portfolio language; claim-truth: PASS no negation-lexicon matches)
+- Dedup: task_claim(published:fb-weekend:2026-08-08) = claimed:true, first weekend run (TTL 100800s)
+- Status: published
