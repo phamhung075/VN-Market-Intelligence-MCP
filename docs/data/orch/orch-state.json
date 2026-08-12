@@ -1150,6 +1150,34 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-12T17:00Z",
         "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30"
+      },
+      {
+        "id": "sys-20260812T173720-69e0",
+        "ts": "2026-08-12T17:37:20Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "memory_pressure",
+        "summary": "rag-service-1 A-30: sustained high memory 96.52% — loss of reclamation",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T17:30Z",
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+      },
+      {
+        "id": "sys-20260812T173729-22bd",
+        "ts": "2026-08-12T17:37:29Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "memory_pressure",
+        "summary": "pdf-extractor-1 A-30: sustained high memory 94.49% — VmHWM pinned at cap",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T17:30Z",
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -19635,6 +19663,33 @@
           "FIX-ANALYSIS-ONLY-EXIT-DETECTOR-INVERSE-PARTIAL-MISSED-NOTEBOOK-WRITE-PASSES"
         ],
         "po_occurrence_20260812T1505Z": "OCCURRENCES 8-13 FOLDED HERE — no new row, no re-open. This row already owns the class and its architect design pass completed 2026-08-12T10:25Z (docs/architecture-briefs/2026-08-12-fix-cowork-delivery-proof-gate-artifact-conjunction-design.md).\n\nCONFIRMED against the router's request to check before re-minting: this row is OPEN (review[], next_agent=pm) and DOES cover the 6-report integrity-gap cluster (telegram 4711/4714/4720/4724/4725/4726/4728/4729/4730/4733, ~01:30Z-07:10Z, spanning system-auditor / unified-agent / ops). Nothing re-minted for it.\n\nThe cluster's own framing as 'a possible shared/systemic write-path defect, NOT yet root-caused' is ALREADY ADJUDICATED on this row and should stop being re-raised: po_occurrence_20260812T0840Z records the host/container-mem-pressure hypothesis (asserted in reports 5138/5139/5140) as REFUTED on record — the class predates this session by 8 weeks and spans agents on entirely different resource paths (project memory feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806). The correlation with the concurrent rag-service crisis window is coincidental. Architect must not spend the design pass on resource forensics.\n\nCRITICAL PATH IS THE DEPENDENCY, NOT THIS ROW: depends_on=[FIX-ANALYSIS-ONLY-EXIT-DETECTOR-INVERSE-PARTIAL-MISSED-NOTEBOOK-WRITE-PASSES] and that row is still sitting in backlog[]. Per this row's own architect_review_note the sequencing is BINDING — the Arm-2 sub-piece must not dispatch before the dependency is DONE_VERIFIED, because today's OR-verdict would both false-green the inverse-partial shape and spuriously block agents with no notebook at all. Dispatching this row's PM decomposition while the dependency is unstarted just re-queues it. PO ruling: dispatch the DEPENDENCY first."
+      },
+      {
+        "id": "FIX-CI-BUNTEST-1108-AGENT-WORK-LOG-STORE",
+        "type": "FIX",
+        "title": "CI RED: bun test (per-file isolation) — src/__tests__/1108-agent-work-log-store.test.ts",
+        "desc": "ci_red CI-RED-0b3d494d (run 31613681006, head 0b3d494d3109a307ce1dde822ef27ada46155ae0, 2026-08-12T15:53:22Z) listed 3 FAILEDFILE entries; two matched existing file-scoped board rows (FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH, FIX-CI-BUNTEST-FOREIGN-FLOW-MISSING-TRADING-DAY-NO-BACKFILL) and this one had ZERO dedup hit across backlog[]+ready[]+in_progress[]+review[]+qa[] AND across done[]+done_verified[]. Minted per the ci_red ANTI-AMNESTY BACKSTOP: the CI plane baseline under scripts/ci-per-file-isolation.sh is 0 fail, so every ci_red is actionable and 'pre-existing' is never a valid disposition without a matched FILE-scoped row. Explicitly NOT folded into FIX-MCP-SUITE-HEALTH-BASELINE — the anti-amnesty fence hard-forbids deduping a ci_red into any LOCAL-full-suite row (the two planes never share a fail set). INTERMITTENCY DATUM (record, do NOT treat as a skip reason): this file failed ONLY in run 31613681006 (0b3d494d, '15112 pass / 40 skip / 6 fail') and PASSED in the bracketing runs 31606982292 (b701e913, 14:53Z, 5 fail) and 31616202191 (f954d591, 16:21Z, 5 fail) — the 6th failure appeared and vanished within a 90-minute window while the other two failing files stayed constant. That is a deflake shape matching the DEFLAKE-VNSTOCK-3STATEMENT precedent (CI per-file-isolation transient), not a hard break. Scope as deflake-or-fix: first establish whether the failure is order-independent by re-running the single file in isolation, before bisecting.",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "qa",
+        "status": "REVIEW",
+        "check_id": "CI-RED-0b3d494d",
+        "dedup_key": "ci_job:bun test|file:src/__tests__/1108-agent-work-log-store.test.ts",
+        "ci_fingerprint": "b2f06dcede777aaa81a1ef5c1dc5b3a6381dc2566ae7edcd1fdb4c8c1094ae92",
+        "files": [
+          "apps/mcp-server/src/__tests__/1108-agent-work-log-store.test.ts"
+        ],
+        "baseline_pass": false,
+        "created_at": "2026-08-12T17:00:39Z",
+        "created_by": "po (dev-team Step 1 triage)",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "AC: gh run view <databaseId with headSha AFTER 0b3d494d> --json jobs -q '.jobs[]|select(.name==\"bun test\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Failing job: bun test. Failing file: src/__tests__/1108-agent-work-log-store.test.ts. Observed RED on 0b3d494d only; GREEN on b701e913 + f954d591. FAILING_FILES read verbatim from gh run view --log-failed FAILEDFILE block, not from job name. Triaged 2026-08-12T17:00:39Z. | Root-caused as real-clock boundary race (independent datetime(now) recompute in fixture INSERT vs purgeOldAgentWorkLogs DELETE), reproduced deterministically via standalone bun:sqlite script. Fix: widened boundary row to +5s jitter margin in the test file only, no production code changed. Isolated run 17/17 pass stable, bun tsc clean. Cherry-picked onto main (worktree diverged, ff-only not possible): 319ef3cac (test fix), 119bc03c2 (notebook+journal).",
+        "updated_at": "2026-08-12T17:41:56Z",
+        "claimed_at": "2026-08-12T17:11:52Z",
+        "claimed_by": "dev-team",
+        "commit": "319ef3cac"
       }
     ],
     "qa": [
@@ -20036,32 +20091,6 @@
         "claimed_at": "2026-08-12T14:27:36Z",
         "claimed_by": "dev-team (ready-lane consumer)",
         "dispatch_lane": "developer"
-      },
-      {
-        "id": "FIX-CI-BUNTEST-1108-AGENT-WORK-LOG-STORE",
-        "type": "FIX",
-        "title": "CI RED: bun test (per-file isolation) — src/__tests__/1108-agent-work-log-store.test.ts",
-        "desc": "ci_red CI-RED-0b3d494d (run 31613681006, head 0b3d494d3109a307ce1dde822ef27ada46155ae0, 2026-08-12T15:53:22Z) listed 3 FAILEDFILE entries; two matched existing file-scoped board rows (FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH, FIX-CI-BUNTEST-FOREIGN-FLOW-MISSING-TRADING-DAY-NO-BACKFILL) and this one had ZERO dedup hit across backlog[]+ready[]+in_progress[]+review[]+qa[] AND across done[]+done_verified[]. Minted per the ci_red ANTI-AMNESTY BACKSTOP: the CI plane baseline under scripts/ci-per-file-isolation.sh is 0 fail, so every ci_red is actionable and 'pre-existing' is never a valid disposition without a matched FILE-scoped row. Explicitly NOT folded into FIX-MCP-SUITE-HEALTH-BASELINE — the anti-amnesty fence hard-forbids deduping a ci_red into any LOCAL-full-suite row (the two planes never share a fail set). INTERMITTENCY DATUM (record, do NOT treat as a skip reason): this file failed ONLY in run 31613681006 (0b3d494d, '15112 pass / 40 skip / 6 fail') and PASSED in the bracketing runs 31606982292 (b701e913, 14:53Z, 5 fail) and 31616202191 (f954d591, 16:21Z, 5 fail) — the 6th failure appeared and vanished within a 90-minute window while the other two failing files stayed constant. That is a deflake shape matching the DEFLAKE-VNSTOCK-3STATEMENT precedent (CI per-file-isolation transient), not a hard break. Scope as deflake-or-fix: first establish whether the failure is order-independent by re-running the single file in isolation, before bisecting.",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "po",
-        "next_agent": "developer",
-        "status": "IN_PROGRESS",
-        "check_id": "CI-RED-0b3d494d",
-        "dedup_key": "ci_job:bun test|file:src/__tests__/1108-agent-work-log-store.test.ts",
-        "ci_fingerprint": "b2f06dcede777aaa81a1ef5c1dc5b3a6381dc2566ae7edcd1fdb4c8c1094ae92",
-        "files": [
-          "apps/mcp-server/src/__tests__/1108-agent-work-log-store.test.ts"
-        ],
-        "baseline_pass": false,
-        "created_at": "2026-08-12T17:00:39Z",
-        "created_by": "po (dev-team Step 1 triage)",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "status_note": "AC: gh run view <databaseId with headSha AFTER 0b3d494d> --json jobs -q '.jobs[]|select(.name==\"bun test\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Failing job: bun test. Failing file: src/__tests__/1108-agent-work-log-store.test.ts. Observed RED on 0b3d494d only; GREEN on b701e913 + f954d591. FAILING_FILES read verbatim from gh run view --log-failed FAILEDFILE block, not from job name. Triaged 2026-08-12T17:00:39Z.",
-        "updated_at": "2026-08-12T17:11:53Z",
-        "claimed_at": "2026-08-12T17:11:52Z",
-        "claimed_by": "dev-team"
       },
       {
         "id": "FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG",
