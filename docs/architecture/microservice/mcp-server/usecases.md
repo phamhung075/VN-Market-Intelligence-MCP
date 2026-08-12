@@ -243,7 +243,9 @@ Test: `src/__tests__/FIX-BCTC-D2-ENSURE-SHELL-ROW.test.ts`.
 
 ### fetchParseAndStoreBctc.ts
 VPS PDF pull → OCR → parser → DB storage. FACTORY-APP-split-fetchParseAndStoreBctc
-(2026-07-08): this file is now a thin Step 1/3/4 sequencer (<=120L); split into
+(2026-07-08): this file is now a thin Step 1/3/4 sequencer (161L as of
+FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST below — carries a
+size-justification header); split into
 `bctc/types.ts` (shared param/insert-fn types), `bctc/resolvePdfText.ts` (Step 2
 PDF download + OCR-cache fallback, Task 293), `bctc/newsChainFallback.ts`
 (Task 1294b news-chain fallback + `buildFiscalPeriod`/`buildAnalysisSummary`,
@@ -295,6 +297,42 @@ defaults `false`, never set `true` outside tests — grep-verified across
 `apps/mcp-server/src`), so it is not part of the 16-ticker incident's actual
 write-back path. Known open gap, intentionally left for a separate scope
 decision rather than folded into FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP.
+
+**FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST (2026-08-12):**
+`listSscDocuments()` (`infrastructure/fetchers/ssc.ts`) has no quarter
+parameter — for a given (ticker, year) every quarter request lists the SAME
+document array — and Step 1 previously took `docs[0]` unconditionally,
+silently returning whichever document the portal happened to list first
+(100+ live period-mismatch refusals, all skewing to a same-year LATER
+quarter). Step 1 now calls the new `selectSscDocumentForPeriod(docs,
+actionCode, year, quarter)` (`bctc/selectSscDocument.ts`) instead: it walks
+`docs` and picks the one whose derived period matches the request, using two
+signals — title text first (`domain/services/financial-reports/
+documentTitlePeriodExtractor.ts`'s pure `extractPeriodFromTitle()`, parses
+Vietnamese "quý N/I..IV năm YYYY" and abbreviated "QN YYYY" forms), falling
+back to `publishedAt` (the already-shipped `deriveQuarterFromPublishedAt` in
+`checkSscReports.ts`) only when the title cannot be parsed. No candidate
+matching throws the new `SscDocumentPeriodNotFoundError` — caught inside
+`fetchParseAndStoreBctc()` and converted to the function's existing `return
+null` contract, with a debounced Telegram bug (mirrors
+`parseBctcReport.ts`'s period-mismatch guard idiom exactly:
+`isBctcSignalDebounced`/`recordBctcSignalSent`/`BCTC_SIGNAL_DEBOUNCE_HOURS`
+from `infrastructure/db/bctcSignalDebounce.ts`, debounce key
+`` `${year}-Q${quarter}:doc-selection-not-found` `` — distinct from the
+period-mismatch guard's own key so the two failure classes are
+distinguishable in logs/Telegram). `listSscDocuments()`/
+`listSscDocumentsWithFlag()` themselves are untouched — `checkSscReports.ts`'s
+`defaultListDocs()` depends on getting back ALL quarters for a year; the
+selection layer sits only at this one call site, per the ratified design in
+`docs/architecture-briefs/2026-08-05-fix-bctc-ssc-doc-selection-quarter-blind.md`.
+The already-shipped `checkPeriodContentConsistency` guard
+(`parseBctcReport.ts` Step 0) is unchanged and remains a second, independent
+defense-in-depth layer downstream of this selection.
+Family B (quarter-preserved/year-shifted mismatches, e.g. the DPM 4407
+counter-example) is a different acquisition path — `bctcVpsIngestHandler.ts`'s
+receive-only `/api/push-bctc-pdf` endpoint, which never calls
+`listSscDocuments()` — confirmed out of scope for this fix (see the brief §5).
+Test: `src/__tests__/FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST.test.ts`.
 
 ### backfillBctcPdfPaths.ts
 

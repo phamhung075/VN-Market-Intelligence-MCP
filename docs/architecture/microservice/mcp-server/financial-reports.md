@@ -2,7 +2,7 @@
 
 **Module path:** `src/interface/mcp/tools/financial-reports/`
 **Scheduler:** `src/scheduler/financial-reports/` (2 cron jobs + 1 startup probe)
-**Domain services:** `src/domain/services/financial-reports/` — balanceSheetExtractor, incomeStatementExtractor, cashFlowExtractor, ratioComputer (22 ratios), periodDeltaComputer (QoQ/YoY), bctcValidator, earningsCalendar, priceNewsValidator, periodContentExtractor (FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT — content-vs-supplied period consistency check)
+**Domain services:** `src/domain/services/financial-reports/` — balanceSheetExtractor, incomeStatementExtractor, cashFlowExtractor, ratioComputer (22 ratios), periodDeltaComputer (QoQ/YoY), bctcValidator, earningsCalendar, priceNewsValidator, periodContentExtractor (FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT — content-vs-supplied period consistency check), documentTitlePeriodExtractor (FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST — pure title-text (year, quarter) parser used to select the correct SSC listing candidate)
 
 Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 
@@ -45,6 +45,26 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 9. `bctcReparseJob` dead-row termination (VCB-MISSING-PDFS, 2026-07-13): a `stranded_bctc_pdf` `agent_feedback` row that is STILL failing past `DEAD_AT_ATTEMPTS` (10) AND whose source PDF is confirmed absent from `data/pdfs/` right now is retired to `status='dead'` — distinct from `'resolved'` (never actually reparsed) — so the job's `WHERE status='new'` selection stops picking it up forever. A row whose file still exists but keeps failing extraction (e.g. repeated low-confidence OCR) is left untouched — a different, still-open failure mode. One-time cleanup for already-stuck rows: `scripts/migrations/reap-dead-stranded-bctc-rows.ts` (generic, dry-run default; see script header).
 10. Period identity is validated against document content, not trusted blind from the caller (FIX-BCTC-INGEST-PERIOD-IDENTITY-UNVALIDATED-VS-CONTENT, 2026-07-28): `parseBctcReport()` runs `checkPeriodContentConsistency()` (domain, `periodContentExtractor.ts`) before any extraction/write. A document whose text confidently states a period contradicting the caller-supplied `(year, quarter)` key is REJECTED — thrown as `BctcPeriodContentMismatchError`, written under NEITHER key — rather than silently occupying the `(action_code, sort_key)` slot the correct filing for that period would need. An inconclusive content signal (poor OCR, or no boundary-date statements found) or a matching signal is indistinguishable from prior behavior — never blocks a filing the check cannot evaluate. Full writeup + live incident: `docs/architecture/microservice/mcp-server/usecases.md` § `parseBctcReport.ts`.
 11. `get_bctc_full` no-explicit-period calls fall back to the newest SERVABLE period, not just the newest by `sort_key` (FIX-BCTC-FULL-SERVING-EMPTY-NEWEST-PERIOD-HEAD-OF-LINE, 2026-08-05, `bctcFullTools.ts:954-1020`): when the caller omits both `year` and `quarter`, the tool scans the newest `CANDIDATE_WINDOW=6` `financial_reports` rows for the ticker (`ORDER BY sort_key DESC LIMIT 6`) and reuses the existing exported `checkPublishability` gate (PUB-1..8) to pick the newest candidate that actually passes — instead of unconditionally trusting the single newest row, which can be an `ensureFinancialReportShellRow.ts` empty extraction shell (`refine_status='PENDING'`, created the instant the PDF is pulled, before extraction runs). Live-confirmed outage, day 4: FPT/HPG/VCB's 2026-Q2 shell head-of-line-blocked their fully-DONE 2026-Q1/2025-Q4 data with a bare "Chưa có dữ liệu BCTC". When a non-newest period is served, the response carries an explicit note (`textOutput` + `content[1].fallback_from_newest_sort_key`) — same FR-DEGRADE-01 transparency philosophy already used in this file for VPS staleness (never silently substitute a period without saying so). **Explicit `{year, quarter}` calls are UNTOUCHED** — byte-identical single-row `LIMIT 1` fetch, no fallback, an explicit-period request must still return an honest per-period answer (including PUB-1's "not ready yet" rejection) rather than a silent substitution. When no candidate in the 6-period window is publishable, falls through to the absolute-newest row unchanged — today's PUB-* rejection text still fires, no new failure mode. Same recurring bug class as `get_financial_summary`'s narrower `FIX-BCTC-SERVE-GATE-FINANCIAL-REPORTS` mitigation (`reports.ts:308-328` — gates on `validation_status='pending_extraction'` with an honest message but still has no fallback to an older COMPLETE period); flagged for a follow-up P2/P3 row, not folded into this fix.
+12. Acquisition-side document selection is quarter-aware, not `docs[0]`
+    (FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST, 2026-08-12):
+    `listSscDocuments()` has no quarter parameter — for a given (ticker,
+    year) it lists the SAME document array for every quarter request.
+    `fetchParseAndStoreBctc()` Step 1 previously took `docs[0]`
+    unconditionally (whatever the portal listed first — 100+ live
+    period-mismatch refusals, always skewing to a same-year LATER quarter).
+    Step 1 now calls `selectSscDocumentForPeriod()` (`application/usecases/
+    bctc/selectSscDocument.ts`), which matches each candidate's
+    title-derived period (`documentTitlePeriodExtractor.ts`, falling back to
+    `publishedAt` via the existing `deriveQuarterFromPublishedAt`) against
+    the request and throws the named `SscDocumentPeriodNotFoundError` when
+    none match — converted to the function's existing `return null` contract
+    with a debounced Telegram bug, never a silent wrong-period document.
+    `listSscDocuments()` itself is unchanged (`checkSscReports.ts` still
+    needs all quarters back). This is upstream of, and complementary to, the
+    content-vs-supplied guard in invariant 10 above — that guard remains the
+    terminal defense-in-depth layer. Full writeup:
+    `docs/architecture/microservice/mcp-server/usecases.md` §
+    `fetchParseAndStoreBctc.ts`.
 
 ---
 

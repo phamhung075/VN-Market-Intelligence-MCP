@@ -1,6 +1,13 @@
 /**
  * Task 048 — SSC Fetch → Parse → Store Pipeline
  * Task 293 — OCR cache fallback wiring
+ * size-justification: 168L — FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-
+ * LATEST (2026-08-12) added the Step 1 quarter-aware selection call +
+ * fail-loud debounced-Telegram error branch (~35L) inline at the one call
+ * site the architect brief scoped the fix to (selection logic itself lives
+ * in the new bctc/selectSscDocument.ts sibling, kept small); further
+ * extraction would split one already-small Step 1 block across two files
+ * for no readability gain.
  *
  * Application use case: orchestrates the full BCTC fetch-parse-store pipeline.
  *
@@ -28,6 +35,12 @@ import { parseBctcReport } from "./parseBctcReport.js";
 import { resolvePdfText, normaliseFilename } from "./bctc/resolvePdfText.js";
 import { buildFiscalPeriod } from "./bctc/newsChainFallback.js";
 import { insertBctcAnalysis } from "./bctc/insertBctcAnalysis.js";
+import { selectSscDocumentForPeriod, SscDocumentPeriodNotFoundError } from "./bctc/selectSscDocument.js";
+import {
+  isBctcSignalDebounced,
+  recordBctcSignalSent,
+  BCTC_SIGNAL_DEBOUNCE_HOURS,
+} from "../../infrastructure/db/bctcSignalDebounce.js";
 
 import type { FinancialReport } from "../../../bctc-schema.js";
 import type { FetchParseAndStoreBctcParams } from "./bctc/types.js";
@@ -52,6 +65,10 @@ export async function fetchParseAndStoreBctc(
 
   const tag = `[fetchParseAndStoreBctc] ${actionCode} ${year}-${quarter}`;
 
+  // Computed once, up-front — Step 1 selection (below) and Step 3 parsing
+  // (further down) both need the numeric quarter / sortKey.
+  const period = buildFiscalPeriod(year, quarter);
+
   // ── Step 1: Resolve SSC document URL ───────────────────────────────────────
   // Task 289: if caller supplied pdfUrl, skip the listing step entirely.
   let doc: { url: string; publishedAt?: string };
@@ -65,7 +82,35 @@ export async function fetchParseAndStoreBctc(
       logger.warn(`${tag} no documents found — aborting`);
       return null;
     }
-    doc = docs[0]!;
+    // FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST: select the
+    // candidate whose title/publishedAt-derived period matches the
+    // requested (year, quarter) instead of taking docs[0] unconditionally
+    // (docs[0] silently resolved to whatever the portal listed first,
+    // producing 100+ live period-mismatch refusals downstream — see
+    // docs/architecture-briefs/2026-08-05-fix-bctc-ssc-doc-selection-quarter-blind.md).
+    try {
+      doc = selectSscDocumentForPeriod(docs, actionCode, year, period.quarter!);
+    } catch (err) {
+      if (!(err instanceof SscDocumentPeriodNotFoundError)) throw err;
+
+      logger.error(`${tag} ${err.message}`);
+
+      // Fail-loud idiom mirrored from parseBctcReport.ts's period-mismatch
+      // guard (debounce-gated Telegram bug — never a raw per-call send).
+      const debounceKey = `${year}-Q${period.quarter}:doc-selection-not-found`;
+      const debounceDb = getDb();
+      if (!isBctcSignalDebounced(debounceDb, actionCode, debounceKey, BCTC_SIGNAL_DEBOUNCE_HOURS)) {
+        recordBctcSignalSent(debounceDb, actionCode, debounceKey);
+        const { sendTelegramBug } = await import("../../infrastructure/notifiers/telegram.js");
+        await sendTelegramBug(err.message).catch(() => {});
+      }
+
+      // Preserves fetchParseAndStoreBctc's documented contract ("returns
+      // null, never throws, when no documents are found") while still being
+      // observably loud — distinguishable in logs/Telegram from the
+      // pre-existing "portal returned zero documents" case above.
+      return null;
+    }
     logger.info(`${tag} using document`, { url: doc.url, publishedAt: doc.publishedAt });
   }
 
@@ -78,8 +123,6 @@ export async function fetchParseAndStoreBctc(
 
   // ── Step 3: Parse BCTC text → FinancialReport ──────────────────────────────
   logger.info(`${tag} step 3: parsing BCTC text`);
-
-  const period = buildFiscalPeriod(year, quarter);
 
   let report: FinancialReport;
   try {

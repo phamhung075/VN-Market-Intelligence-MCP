@@ -187,7 +187,11 @@ describe("Task 293 — OCR cache fallback in fetchParseAndStoreBctc", () => {
     const report = await fetchParseAndStoreBctc({
       actionCode: "VCB",
       year: 2025,
-      quarter: "Q2",
+      // FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST: quarter must
+      // match buildFakeSscHtml's fixture title ("quý 1 năm 2025") — Step 1
+      // now selects by period, so a mismatched quarter here would (correctly)
+      // return null before ever reaching the OCR fallback this test exercises.
+      quarter: "Q1",
       sscHttpClient: makeMockSscHttpClient(),
       pdfHttpClient: makeMockPdfHttpClient(),
       // No pdfTextOverride — triggers real extraction path → OCR fallback
@@ -213,7 +217,8 @@ describe("Task 293 — OCR cache fallback in fetchParseAndStoreBctc", () => {
     const report = await fetchParseAndStoreBctc({
       actionCode: "VCB",
       year: 2025,
-      quarter: "Q3",
+      // FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST: see Q2 test above.
+      quarter: "Q1",
       sscHttpClient: makeMockSscHttpClient(),
       pdfHttpClient: makeMockPdfHttpClient(),
       insertAnalysisFn: mockInsert.fn,
@@ -239,7 +244,12 @@ describe("Task 293 — OCR cache fallback in fetchParseAndStoreBctc", () => {
     const result = await fetchParseAndStoreBctc({
       actionCode: "VCB",
       year: 2025,
-      quarter: "Q4",
+      // FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST: see Q2 test
+      // above — keep quarter aligned to the fixture title so this test's
+      // null result is genuinely caused by the < 0.3 OCR-confidence guard
+      // under test, not masked by an (also-null, but wrong-reason)
+      // selection-not-found short-circuit before Step 2 ever runs.
+      quarter: "Q1",
       sscHttpClient: makeMockSscHttpClient(),
       pdfHttpClient: makeMockPdfHttpClient(),
       insertAnalysisFn: mockInsert.fn,
