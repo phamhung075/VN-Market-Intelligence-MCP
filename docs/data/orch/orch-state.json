@@ -20210,7 +20210,7 @@
         "last_served_tick": "2026-08-12T09:54:54Z"
       }
     },
-    "_updated_at": "2026-08-12T11:24:24Z",
+    "_updated_at": "2026-08-12T11:51:16Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20674,6 +20674,30 @@
         },
         "createdAt": "2026-08-12T11:11:01Z",
         "drained_at": "2026-08-12T11:21:13Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d60373d37508208fdcc01c37c67c10978934526d74140176bbd3f381e9cf9d0f",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 6 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/pm.md docs/data/orch/orch-state.json docs/handoffs/FIX-CHEF-MARKER-KEY-ANCHOR-1-MATCH-SLOTS.md docs/handoffs/FIX-CHEF-MARKER-KEY-ANCHOR-2-MATCH-SLOTS-DOC.md docs/handoffs/FIX-CHEF-MARKER-KEY-ANCHOR-3-SPAWN-FANOUT.md docs/handoffs/FIX-CHEF-MARKER-KEY-ANCHOR-4-CHEF-PARSE.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=53 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T11:30:17Z",
+        "drained_at": "2026-08-12T11:51:16Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "bde6576c22d0c9400c6d37e22b3a6ba68a4c899381e3a658f1a9f3d5bbb6ecd3",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=54 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T11:41:03Z",
+        "drained_at": "2026-08-12T11:51:16Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
