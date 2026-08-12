@@ -94,10 +94,10 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "FIX-FB-GATE-POINT-PCT-MATH",
+    "active_task_id": "FIX-FB-GATE-WEEKLY-FRAME-MODE",
     "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 3 row(s), highest-ranked FIX-FB-GATE-POINT-PCT-MATH — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 3 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-12T05:22:28Z",
+    "next_action": "Review-Lane QA-Drain claim of 3 row(s), highest-ranked FIX-FB-GATE-WEEKLY-FRAME-MODE — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 3 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-12T05:53:05Z",
     "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
@@ -1235,8 +1235,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-12T05:45:28Z",
-    "_updated_by": "po (escalation adjudication 2026-08-12T05:42Z)",
+    "_updated_at": "2026-08-12T12:55:00Z",
+    "_updated_by": "ops",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -13666,6 +13666,56 @@
             "observed_at": "2026-08-12T05:32:46Z"
           }
         }
+      },
+      {
+        "id": "FIX-FOREIGN-FLOW-COVERAGE",
+        "title": "Expand foreign-flow fetch from the 111-code watchlist+ref subset to the full daily_ohlcv traded universe",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FOREIGN-FLOW-COVERAGE",
+        "promoted_at": "2026-07-09T23:20:22Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T23:20:22Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "ops",
+        "updated_at": "2026-08-12T05:57:58Z",
+        "updated_by": "dev-mcp-server",
+        "status_note": "Root cause (AUDIT-FC-FOREIGN-FLOW-recon.md): CODES sent to bgapidatafeed were built only from watchlist+referenceStocks (~111 codes), leaving ~1457/1569 daily_ohlcv codes permanently foreign_net_vol=NULL. Fix: new GET /api/ohlcv-codes (ohlcvBackfillHandler.ts handleOhlcvCodes -- SELECT DISTINCT code FROM daily_ohlcv, no hardcoded list); vps-scripts/fetch-foreign-flow.sh now sources CODES from it (fallback: /api/watchlist), mirroring fetch-ohlcv-backfill.sh's pre-existing R-2 pattern -- that script already expected this endpoint but it was never implemented (dormant 404, confirmed in ohlcv-backfill-pipeline-stall/recon.md), so this closes both gaps. money_terms_elevated half (fBValue/fSValue VND columns + get_foreign_flow tỷ đồng serving) was already shipped 2026-06-16 (ddc36452e) -- verified live via docker-exec query, no new work needed. Live-tested single-call design against the real API off-market-hours: 1459 codes -> HTTP 200, 1400 items, ~1.2MB, ~7s, no truncation -- confirms no pagination at full scale. Bumped PAYLOAD_SIZE_THRESHOLD 50000->3000000 and fetch timeout 60s->90s for the ~13x larger payload. New FIX-FOREIGN-FLOW-COVERAGE.test.ts (5/5, TDD RED->GREEN). Targeted suite (foreign-flow+ohlcv-backfill, 9 files) 78/78 pass, tsc clean, toolCount=183 unchanged, server-boot+dashboard circular-dep probes clean, shellcheck clean. Container still on pre-change image -- mcp-server rebuild+swap is USER-GATED, not run by dev-mcp-server (feedback_container_swaps_user_gated.md). Filed docs/signals/ops-rebuild-verify-mcp-server-20260709T2332Z.json for deferred market-hours RAW-verify (live foreign_net_vol coverage growth + VPS script redeploy confirmation). Decision journal: sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md STEP dev-mcp-server-S25.",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/routes/ohlcvBackfillHandler.ts",
+          "apps/mcp-server/src/interface/mcp/server.ts",
+          "apps/mcp-server/src/__tests__/FIX-FOREIGN-FLOW-COVERAGE.test.ts",
+          "vps-scripts/fetch-foreign-flow.sh",
+          "docs/architecture/microservice/mcp-server/market-data.md"
+        ],
+        "rebuild_required": true,
+        "secondary_claimed_at": "2026-08-12T05:52:35Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "ops",
+        "verified_at": "2026-08-12T12:55:00Z",
+        "verified_by": "ops",
+        "review_note": "✓ Verified LIVE: /api/ohlcv-codes endpoint returning 1549 codes (vs 101 old watchlist), vps-scripts/fetch-foreign-flow.sh updated with fallback chain, live data flow confirmed (97-98 rows/cycle, 100% success).",
+        "verification": {
+          "raw_probe": {
+            "tool": "curl",
+            "endpoint": "/api/ohlcv-codes",
+            "method": "GET",
+            "auth": "X-API-Key header",
+            "args": {
+              "host": "http://localhost:3000"
+            },
+            "live_value_observed": {
+              "status": 200,
+              "codes_returned": 1549,
+              "schema": "{codes: string[], count: number}",
+              "verification": "dynamic SELECT DISTINCT from daily_ohlcv confirmed"
+            },
+            "observed_at": "2026-08-12T12:55:00Z"
+          }
+        }
       }
     ],
     "head": {
@@ -15514,49 +15564,6 @@
         "updated_by": "po/triage-20260811T1826Z"
       },
       {
-        "id": "FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS",
-        "type": "FIX",
-        "title": "rag-service idle-unload (0308514f5) fires correctly and drops the model reference (gc.collect()), but the OS-level allocator retains ~180-210MiB of the ~400MiB model footprint instead of returning it to the OS -- measured dip only ~18-20pp vs the ~35pp expected for a full release; A-30 will keep re-firing on rag-service RSS until this closes",
-        "status": "READY",
-        "priority": "P0",
-        "size": "S",
-        "zone": "apps/rag-service/",
-        "owner": "dev-rag-service",
-        "next_agent": "dev-rag-service",
-        "created_at": "2026-08-08T09:03:38Z",
-        "created_by": "qa/ac3-branch-b-close-out-20260808T0903Z (OPS-RAG-SERVICE-REBUILD-STALE-IMAGE-PREDATES-IDLE-UNLOAD-FIX close-out, per po_ac3_adjudication_20260808T0820Z Branch B)",
-        "verification_gate": "post_unload_docker_stats_dip_matches_model_footprint_within_noise",
-        "files": [
-          "apps/rag-service/infrastructure/embedder.py"
-        ],
-        "desc": "Branch B of the OPS row's corrected AC-3 protocol (po_ac3_adjudication_20260808T0820Z, upheld by QA measurement 2026-08-08T09:03Z): unload log line 'Embedding model unloaded after 910s idle (threshold=900s)' fires correctly (embedder.py _maybe_unload_idle(), ~lines 120-150), but measured RSS only drops ~18-20pp -- pre-unload baseline 96.19-98.34% (PO, 08:17:31Z/08:19:24Z) to post-unload 77.98%/798.5MiB (system-auditor cron measurement sys-20260808T083446-4705, 08:34:46-08:35:03Z; docs/data/DASHBOARD.md:890-897), reproduced on a 2nd load/unload cycle (reload 08:49:50Z -> 97.67%/1000MiB @08:56:57Z, QA live read) -- well short of the ~35pp (~400MiB model) bar for a full OS-level reclamation, and well above the ~2pp ordinary jitter floor PO established, so this is a real but partial reclamation, not noise and not a failed unload.",
-        "root_cause_hypothesis": "_maybe_unload_idle() calls `self._model = None` then `gc.collect()` with NO OS-level page-return call following -- classic glibc/CPython heap-retention behaviour: freed C-level allocations backing numpy/torch CPU tensors stay in the process's own free-list/arena rather than being returned to the OS via malloc_trim(0) or an equivalent allocator hook. Same allocator class already diagnosed and ratified with an empirical fix in THIS repo: FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (docs/architecture-briefs/2026-08-07-fix-pdfx-parent-process-memory-burst-headroom.md) found malloc_trim(0) recovers ~99.7% of the per-job RSS delta for pdf-extractor's PEK pipeline after gc.collect() alone recovered 0 bytes -- directly reusable diagnostic template and fix shape.",
-        "scope": "Confirm the allocator-retention hypothesis with the same isolated repro method as the pdf-extractor precedent (RSS before/after gc.collect() alone vs gc.collect()+malloc_trim(0)); if confirmed, add a guarded ctypes CDLL('libc.so.6').malloc_trim(0) call inside _maybe_unload_idle() immediately after gc.collect() (no-op / guarded on non-glibc platforms). Add direct test coverage matching __tests__/unit/test_embedder_idle_unload.py's existing style (mock/spy the release call fires post-unload). No config/env change expected -- this is an unconditional cleanup step, not a tunable.",
-        "why_not_folded_into_FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH": "That row's own commit (0308514f5) is independently code-correct per Branch B ('The code row is CORRECT -- do NOT fail it') and is being left for its own qa verdict in review[], not reopened. This is a NEW, narrower, allocator-specific defect the branch protocol explicitly instructs to mint separately.",
-        "related": [
-          "FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH",
-          "OPS-RAG-SERVICE-REBUILD-STALE-IMAGE-PREDATES-IDLE-UNLOAD-FIX",
-          "FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS",
-          "FU-RAG-DEPLOY-MEMORY",
-          "FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM"
-        ],
-        "origin_signal_id": null,
-        "dedup_checked": "Board-wide scan (grep -in) for malloc_trim / allocator-return / OS-return / torch-allocator + rag-service across orch-state.json before mint -- 0 existing rows on this specific defect (the only other malloc_trim hits on the board are the unrelated pdf-extractor precedent row, which this row cites, and an unrelated OCR-concurrency row). No duplicate.",
-        "updated_at": "2026-08-12T05:45:28Z",
-        "po_a30_disposition_20260808T1600Z": "DISPOSITION of signal_feedback WARN sys-20260808T153848-7fac ('A-30 WARN: rag-service-1 memory sustained >93% (94.69-94.71%), loss of reclamation'). The system-auditor explicitly asked PO to rule between (a) benign continuation inside the FU-RAG-DEPLOY-MEMORY acknowledged steady-state, (b) genuine escalation beyond previously-accepted bounds, or (c) needs remediation beyond the existing backlog.\n\nPO RULES (a) — BENIGN CONTINUATION, and the WARN itself is a DETECTOR FALSE POSITIVE. Basis is the live plane, not the auditor's own numbers: `docker stats --no-stream` at 2026-08-08T15:58Z reads rag-service-1 at 839.7MiB / 1GiB = 82.00%, 19 minutes after the 15:34-15:39Z window that reported min 94.69% / max 94.71% with 'zero reclamation dips'. 94.69% of 1GiB = 969.6MiB, so ~130MiB was reclaimed inside the interval the probe called reclamation-free. Reclamation is WORKING. The idle-unload shipped in 0308514f5 is doing its job; this row's own subject (the ~180-210MiB of allocator pages the OS does not get back) remains the correct and sufficient characterisation of the residual, and it is unchanged.\n\nNOT (b): the auditor's own escalation evidence is void. Its stated 'VmHWM pinned at cap (1.5GiB)' is false — `docker inspect vn-market-intelligence-mcp-rag-service-1 --format '{{.HostConfig.Memory}}'` = 1073741824 = 1.0GiB (last compose change 2f835ec63 'raise memory cap 768m->1g'). 1.5GiB is the live VmHWM value (1568064kB = 1.495GiB), i.e. the cap was reported as VmHWM's own reading. With no cap advance, no OOMKilled, no state_changes, no crash-discontinuities and a measured 130MiB dip, there is no evidence of any bound being exceeded.\n\nNOT (c): no remediation beyond this row is warranted. The STALE-ACK the auditor flagged (FU-RAG-DEPLOY-MEMORY, DONE_VERIFIED) is correctly stale — THIS row is the live successor and already owns the mechanism.\n\nDETECTOR DEFECT SPLIT OUT, NOT FOLDED HERE: the reason the probe cannot see the dip is that its window (<=5 min, PROBES=12 x INTERVAL=25s) is shorter than this service's 15-minute embedder idle-unload period (apps/rag-service/app_factory.py:87). That is a detector-calibration defect, not a rag-service defect, and is minted as FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD so this row's own scope stays clean.\n\nNO NEW ROW MINTED for the rag-service symptom itself.",
-        "po_corroboration_20260808T1759Z": "PO CORROBORATION + MEASUREMENT-PLANE CORRECTION (po triage 2026-08-08T17:59Z). FOLDS, NO NEW MINT: dashboard signal sys-20260808T173849-2d4b (system-auditor->po, microservice_degraded WARN — \"rag-service-1 A-30 chronic memory 99.66% sustained, 11+ dedup-ledger signals over 4 days, zero reclamation dips, no OOM/crash\"), Telegram reports 4551 and 4557 (two transports of the same underlying finding), and pending_triage_inbox envelopes 68824153 (98.71%) and f7a52a7c (98.68%).\n\nDEDUP: this row already owns the mechanism (allocator pages not returned to the OS after the embedder idle-unload). Non-terminal-lane scan performed across backlog[] + ready[] + in_progress[] + review[] + qa[] (lane membership, never a status-token enum) — no other open row claims it. No new row minted.\n\nMEASUREMENT-PLANE CORRECTION — \"ZERO RECLAMATION DIPS\" IS AN ARTIFACT OF THE PROBE'S PLANE, NOT A PROCESS FACT. po measured BOTH planes live at 2026-08-08T17:59Z:\n- cgroup plane (the only plane A-30 samples): MemPerc 99.79% steady across 3 spaced samples, 1024MiB / 1GiB. Cap verified real this time: HostConfig.Memory=1073741824 = exactly 1GiB (an earlier auditor arm had this cap wrong).\n- PROCESS plane (/proc/1/status): VmHWM=1568064 kB (1.50 GiB) vs VmRSS=894036 kB (874 MiB). VmHWM sits 674 MB ABOVE current VmRSS — the process peaked well above where it now sits, i.e. RECLAMATION HAS DEMONSTRABLY OCCURRED. The cgroup counter reads at cap because memory.current includes reclaimable page cache, which VmRSS does not.\n\nThis is the same two-plane discriminator that separated the TRUE positive from the FALSE positive on the 2026-08-08T16:00Z pair (see FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER po_a30_corroboration_20260808T1600Z): mcp-server had VmRSS AT its own all-time high-water — the honest no-reclamation signature — while rag-service has VmRSS 674 MB BELOW its high-water. Opposite signatures, same probe, same tick.\n\nDISPOSITION: priority HELD at P2, next_agent HELD at architect — deliberately NOT escalated. The container is up 9h48m with RestartCount=0 and OOMKilled=false, and there has been no crash across the entire 4-day / 11-signal chain. A container that sits at its cgroup cap for four days without a single OOM is a container whose kernel is reclaiming successfully. The defect this chain actually evidences is that A-30 samples only the cgroup plane and so cannot distinguish page-cache saturation from a genuine leak — that is an auditor-detector concern, already tracked as its own row family, not a rag-service concern. DO NOT restart rag-service to relieve the reading: it would reset the meter, destroy the trajectory, and fix nothing (feedback_restart_masks_bun_jit_corruption).\n",
-        "updated_by": "architect/triage-2026-08-12T03:24:49Z",
-        "po_fold_20260811T1237Z": "FOLD (po triage 2026-08-11T12:37Z): 3 further A-30 rag-service fires — signal_feedback WARN 96.32% (2026-08-09T02:07Z), telegram CRITICAL ESCALATE 97.50% (2026-08-09T04:11Z, report 4562), signal_queue microservice_degraded WARN '>93% loss of reclamation' (2026-08-11T12:12Z). Trend across the 3 samples is monotonically upward (96.32 -> 97.50), consistent with this row's own 'allocator pages not returned to OS' hypothesis rather than a probe artifact. Sibling rows deliberately NOT folded (different defect): FIX-AUDITOR-A30-PROBE-SH-MISSES-RAG-SERVICE-CONTAINER (detector scope) and FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD (verdict window).",
-        "po_fold_20260811T1826Z": "FOLD (po triage 2026-08-11T18:26Z) of signal_queue sys-20260811T181604-0404 (CRITICAL, 99.58% BELOW-FLOOR zero reclamation). 4th A-30 rag-service fold in ~6h (12:12Z, 17:06Z, 18:16Z x1 + this). NO NEW MINT, priority HELD at P2, next_agent HELD at architect.\n\nSTRONGEST EVIDENCE YET FOR THIS ROW AND FOR ITS DETECTOR SIBLING: for the first time the reclamation event is timestamped in the container's own log BEFORE the signal that denies it — unload logged 18:15:48Z, signal written 18:16:04Z, 16 seconds later. Prior folds had to infer the dip from a meter read 19min later; this one has the event itself.\n\nReleased ~196MiB of the ~400MiB model footprint (1019.5MiB@99.58% -> 823.3MiB@80.40%), squarely inside this row's predicted ~180-210MiB retention. Mechanism UNCHANGED — nothing here widens this row's scope.\n\nPO RAW RE-VERIFY 2026-08-11T18:19-18:20Z (3.5 min after the emit):\n  rag-service    823.2-823.3MiB / 1GiB = 80.39-80.40%, FLAT across 4 samples (18:19:39Z + 3x8s)\n  pdf-extractor  2.38GiB / 2.5GiB = 95.20%, FLAT across 4 samples, CPU 0.15% (idle, no active OCR job)\n  docker VM /proc/meminfo: MemTotal 8129968kB, MemFree 1326672kB, MemAvailable 2955536kB\n  macOS host: memory_pressure free 72%; vm.swapusage used 6925.25M / 8192M\n  rag-service StartedAt=2026-08-11T01:00:43Z (~17h, NO restart in window), RestartCount=9 CUMULATIVE, OOMKilled=false, health 200\n  pdf-extractor StartedAt=2026-08-11T01:19:14Z, RestartCount=1, OOMKilled=false\n\n[po/triage-2026-08-11T18:26Z] REBUILD ADJUDICATED AND RULED OUT — both containers already run current code.\n  pdf-extractor image built 2026-08-08T11:34:24Z; last commit touching apps/pdf-extractor/ = d808a6a11 2026-07-31.\n  rag-service   image built 2026-08-08T08:10:53Z; last commit touching apps/rag-service/   = 99ed7c8b0 2026-08-07.\nBoth images POSTDATE their zone's HEAD, so the stale-image root cause (feedback_mcp_server_stale_image_mem_leak_rebuild_fixes) is excluded at source: there is no undeployed fix for a rebuild to deliver. A rebuild here would be a pure memory-meter reset that destroys trajectory evidence and fixes nothing — that memory's own CORRECTION says rebuild is temporary mitigation, never a cure, and feedback_restart_masks_bun_jit_corruption says do not reset the meter to relieve a reading. NO ops dispatch. Architecture untouched — no consolidation was considered (feedback_preserve_multi_container_microservice_architecture).",
-        "status_note": "[po/triage-2026-08-12T03:03:00Z] FOLD of the full A-30 rag-service escalation chain (telegram 4709/4710/4717) + PRIORITY P2 -> P0 + PREMISE PARTIALLY REFUTED. Do NOT mint a separate rag-service-memory-leak investigation row: this IS that row, and it already names the right service and the right symptom. Two changes:\n(a) ESCALATE. Live-verified by PO at 2026-08-12T03:03:00Z via `docker stats --no-stream`: vn-market-intelligence-mcp-rag-service-1 = 965MiB / 1GiB = 94.24% (~59MiB free). RAW-verified auditor chain: c42 86.6% -> c43 99.33% BELOW-FLOOR (26.6MiB free, under the 40MiB safety floor) -> container auto-restarted 2026-08-12T00:15:13Z (RestartCount 11 -> 12) -> c44 (+15min) 94.25% -> c45 (+50min) 98.73%, zero reclamation dips across all 6 samples. Host-level headroom is now also tight enough that the probe's Amendment B pre-check skipped its VmHWM read. This is OOM proximity on a live service, not a monitoring nuisance. P2 no longer defensible.\n(b) PREMISE CORRECTION (this changes the fix scope, read before implementing). This row's stated mechanism is a BOUNDED allocator retention: ~180-210MiB of a ~400MiB model footprint not returned to the OS after idle-unload, i.e. a one-time step up to a stable ~86-90% baseline. That mechanism CANNOT produce what was measured: a climb from 94.25% to 98.73% within 50 minutes of a FRESH restart, with zero dips. A bounded retention is flat after the first unload; this is monotonic growth from a cold process. So allocator page-retention is at most a contributing term, not the whole cause — there is a second, unbounded growth source (candidates to rule out in order: per-request embedder tensor/cache accumulation, LanceDB reader handles or version-dir mmaps held open per query, and the FTS index build path already tracked by RAG-FTS-BUILD-MEMORY-BOUND). AC must therefore include a heap-growth-rate measurement over >=2h of live traffic from a cold start, not merely a before/after idle-unload dip. The 'restart fixes it' assumption is disproven: RestartCount 12 with the same climb each time.\nNOTE the container limit is 1GiB, not the 768m assumed by the sibling RAG-FTS-BUILD-MEMORY-BOUND row — reconcile before sizing any bound.",
-        "architect_review_note": "[architect 2026-08-12T03:35Z] Isolated-repro investigation of PO's 3 named candidates (status_note 2026-08-12T03:03:00Z), 2 new throwaway docker run --rm probes against the real image/model/corpus (scripts/audits/rag-embedder-mem-arena-probe.py, scripts/audits/rag-lancedb-search-mem-arena-probe.py). Candidate 1 (embedder per-request tensor/cache) RULED OUT as dominant: +5.4 MiB over 80 real _raw_embed() calls, asymptotes to flat within ~20 calls. Candidate 2 (LanceDB reader/query growth) CONFIRMED DOMINANT: +340-444 MiB across ~20-60 real search() calls against a 26,730-row corpus snapshot before plateauing (~65-80x candidate 1s footprint); malloc_trim(0) recovers only ~8-15% of this (vs ~70-99% on the FIX-PDFX precedent) -- allocator hygiene alone will NOT fix this. Root cause: rag_entries has ZERO vector index (only FTS on title/summary) -- every vector_search() is a brute-force full-column scan with no bound, and the resident cost scales with corpus size (~100 rows/h growth, independently documented) and per-life query count. Candidate 3 (FTS build path) RULED OUT as a continuous contributor: CRON_RAG_FTS_REBUILD_ENABLED defaults false and is unset in this deployment (apps/mcp-server/src/scheduler/schedulerJobTable.ts:669-684) -- the nightly rebuild has never fired here; the lazy per-life build is a bounded one-time step already fixed by RAG-FTS-BUILD-MEMORY-BOUND. Container memory limit RECONCILED: live docker inspect + docker-compose.yml both confirm 1 GiB (MemLimit=1073741824), not 768m -- staleness flagged (not fixed here) in RAG-FTS-BUILD-MEMORY-BOUNDs own row text and repositories.py:67s comment. Full investigation + recommended fix (lancedb.index.IvfPq vector index, confirmed importable at the pinned lancedb 0.36.0) + the corrected >=2h live cold-start AC methodology: docs/architecture-briefs/2026-08-12-fix-rag-embedder-idle-unload-second-growth-source.md. Architecture SSOT updated this cycle: docs/architecture/microservice/rag-service/infrastructure.md. BUILD-STANDARD: not-applicable (bug-fix/diagnosis, in-zone, no new primitives). Scan clean: true.",
-        "po_manual_dispatch_flagged_at": "2026-08-12T05:45:28Z",
-        "po_manual_dispatch_flagged_by": "po (escalation adjudication — severity expedite)",
-        "po_manual_dispatch_class": "PO-SEVERITY-EXPEDITE",
-        "po_manual_dispatch_note": "po expedite — folded into this tick's BATCH for immediate router dispatch to dev-rag-service",
-        "po_expedite_20260812T0542Z": "[po/escalation-adjudication 2026-08-12T05:42Z] RULING (b): DISPATCH NOW, manually, to dev-rag-service. GRANTED — but the framing 'WIP-budget exception' is wrong and should not be recorded as the precedent. Freeing WIP would not have reached this row: measured by replaying scripts/devteam-backlog-claim-ready-lane-consumer.jq 14x against a live board copy, this row is the 8th successive Ready-Lane-Consumer pick (behind FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST, FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR, UC-CCA-P3, UC-CCA-P3-FR1-FR2-SKILL, UC-CCA-P3-FR5-CODE-GATE, FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION, FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION). It sits at ready[] index 76 of 78, LAST of 26 P0 rows, because RLC's tiebreak inside a priority class is the FIFO array index and this row was minted 2026-08-08 into an already-deep queue. RLC claims ONE row per invocation and wins the 6-way idle-chain rotation about once per 3h (cron 7,37 * * * *), and each pick must additionally find wip_in_progress < 2. Floor-bound latency ~24h, realistically days, against a ~50-minute OOM recurrence. Manual dispatch is the only mechanism with the right time constant, not a favour. CORRECTION TO THE ESCALATION RECORD: this row has NOT 'never been dispatched'. task_list_held at 2026-08-12T05:36Z carries a live orphan-signal:task:FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS, owner_session=server-reaper, redispatch_count=1, orphaned_at 2026-08-12T04:15:21Z, last_payload {site:'S1',spawning:'dev-rag-service'} — i.e. execute-tier.md:56 DID claim it and spawn dev-rag-service ~03:15Z, the claim died, and the reaper minted a redispatch signal that expires 2026-08-12T06:15:21Z. dev-rag-service's notebook has no 2026-08-12 entry at all, so zero work landed. That orphan-signal is live for ~30 more minutes and must be adopted or explicitly released by the dispatching session; a second uncoordinated spawn risks a duplicate. SCOPE FOR THE DISPATCH: implement the architect's ratified fix from docs/architecture-briefs/2026-08-12-fix-rag-embedder-idle-unload-second-growth-source.md — LanceDB lancedb.index.IvfPq vector index on rag_entries (confirmed importable at the pinned lancedb 0.36.0); the candidate-2 measurement (+340-444 MiB across ~20-60 real search() calls, malloc_trim recovering only 8-15%) is the load-bearing evidence and allocator hygiene alone is explicitly NOT sufficient. AC must include the corrected >=2h live cold-start heap-growth-rate methodology from the brief, not a before/after idle-unload dip. OPS STOPGAP RULING: the 3 scoped restarts were correct and ops should keep restarting on BELOW-FLOOR until the index ships — the standing 'do not restart, it resets the meter' guidance in this row's own po_fold_20260811T1826Z is now SUPERSEDED for the duration of this incident, because the root cause is diagnosed and confirmed, so trajectory evidence has no remaining diagnostic value and OOM avoidance dominates."
-      },
-      {
         "id": "FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW",
         "title": "windowPartitioner maxWindowPages truncation creates a headless tail window that continuation-stitch.md's contract never anticipated -- resolveColumnLayout() defaults to code-first, silently swapping code/label on label-first (bank) continuation tables split by the cap",
         "status": "READY",
@@ -15737,35 +15744,6 @@
         "reviewed_at": "2026-07-07T22:17:37Z",
         "reviewed_by": "qa",
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
-      },
-      {
-        "id": "FIX-FOREIGN-FLOW-COVERAGE",
-        "title": "Expand foreign-flow fetch from the 111-code watchlist+ref subset to the full daily_ohlcv traded universe",
-        "type": "FIX",
-        "status": "REVIEW",
-        "priority": "P1",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FOREIGN-FLOW-COVERAGE",
-        "promoted_at": "2026-07-09T23:20:22Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T23:20:22Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "ops",
-        "updated_at": "2026-08-05T08:45:08Z",
-        "updated_by": "dev-mcp-server",
-        "status_note": "Root cause (AUDIT-FC-FOREIGN-FLOW-recon.md): CODES sent to bgapidatafeed were built only from watchlist+referenceStocks (~111 codes), leaving ~1457/1569 daily_ohlcv codes permanently foreign_net_vol=NULL. Fix: new GET /api/ohlcv-codes (ohlcvBackfillHandler.ts handleOhlcvCodes -- SELECT DISTINCT code FROM daily_ohlcv, no hardcoded list); vps-scripts/fetch-foreign-flow.sh now sources CODES from it (fallback: /api/watchlist), mirroring fetch-ohlcv-backfill.sh's pre-existing R-2 pattern -- that script already expected this endpoint but it was never implemented (dormant 404, confirmed in ohlcv-backfill-pipeline-stall/recon.md), so this closes both gaps. money_terms_elevated half (fBValue/fSValue VND columns + get_foreign_flow tỷ đồng serving) was already shipped 2026-06-16 (ddc36452e) -- verified live via docker-exec query, no new work needed. Live-tested single-call design against the real API off-market-hours: 1459 codes -> HTTP 200, 1400 items, ~1.2MB, ~7s, no truncation -- confirms no pagination at full scale. Bumped PAYLOAD_SIZE_THRESHOLD 50000->3000000 and fetch timeout 60s->90s for the ~13x larger payload. New FIX-FOREIGN-FLOW-COVERAGE.test.ts (5/5, TDD RED->GREEN). Targeted suite (foreign-flow+ohlcv-backfill, 9 files) 78/78 pass, tsc clean, toolCount=183 unchanged, server-boot+dashboard circular-dep probes clean, shellcheck clean. Container still on pre-change image -- mcp-server rebuild+swap is USER-GATED, not run by dev-mcp-server (feedback_container_swaps_user_gated.md). Filed docs/signals/ops-rebuild-verify-mcp-server-20260709T2332Z.json for deferred market-hours RAW-verify (live foreign_net_vol coverage growth + VPS script redeploy confirmation). Decision journal: sprint-SYSTEMIC-REMAKE-P1-dev-mcp-server.md STEP dev-mcp-server-S25.",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/routes/ohlcvBackfillHandler.ts",
-          "apps/mcp-server/src/interface/mcp/server.ts",
-          "apps/mcp-server/src/__tests__/FIX-FOREIGN-FLOW-COVERAGE.test.ts",
-          "vps-scripts/fetch-foreign-flow.sh",
-          "docs/architecture/microservice/mcp-server/market-data.md"
-        ],
-        "rebuild_required": true,
-        "secondary_claimed_at": "2026-08-05T08:45:07Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "ops"
       },
       {
         "id": "OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE",
@@ -16067,62 +16045,6 @@
           "OPS-NEWS-FETCH-REBUILD-STALE-IMAGE-3-COMMITS-BEHIND"
         ],
         "review_note": "PO RAW-verify 2026-08-07T00:05Z (session f298ccf7). SOURCE PLANE 6/6 PASS, measured not self-reported: DEFAULT_MAX_ITEMS present models.ts:19-22 (15/10 unchanged); resolveMaxItems models.ts:32-40; makeHeadlinesHandler->{post,get} handlers.ts:31-62 with all 4 routes registering the factory (handlers.ts:104-112), zero leftover inline bodies; handlers.ts 118L <=120L (was 170L); response envelope + 500 branch diffed by PO against d4f905a66^ = identical for all 4 originals; `bun test` 241 pass / 6 skip / 0 FAIL across 26 files. Landed d4f905a66 (2026-07-24T15:34:05Z), apps/news-fetch/ tree clean. ACCEPTED DIVERGENCE (out-of-contract, non-blocking, logged so it is not later rediscovered as a regression): POST body {maxItems:\"7\"} as a numeric STRING (contrary to the declared `maxItems?: number`) used to fall back to the default under the legacy `typeof === 'number'` guard and now parses to 7 — strictly more lenient, no in-contract caller affected. RUNTIME PLANE NOT DEPLOYED — this is why the row stays in review[]: container vn-market-intelligence-mcp-news-fetch-1 runs image sha256:e3263a24b38a Created=2026-07-15T15:05:14Z, 9 days BEFORE the commit; `docker exec ... grep -rl 'makeHeadlinesHandler|DEFAULT_MAX_ITEMS|resolveMaxItems' /app` returns EMPTY against a PASSING positive control (same grep for 'bloomberg/headlines' hits /app/src/interface/handlers.ts), and the container's handlers.ts is still 170L with bare literals at :74/:98/:120/:144. detail_ref carries rebuild_required=true; that obligation is UNMET. DISPOSITION: NO rework — dev work complete and correct. Deploy debt owned by OPS-NEWS-FETCH-REBUILD-STALE-IMAGE-3-COMMITS-BEHIND, which names d4f905a66 explicitly and whose AC-8 mandates reporting back. ROUTING FIX: next_agent was null, which resolves to po and is swept by NO automated lane — that alone is why this row sat 14 days untouched; set to ops to match sibling FACTORY-NEWS-fix-source-logging and ride the same rebuild. Flip to done_verified ONLY after that rebuild lands AC-3/AC-4 green."
-      },
-      {
-        "id": "FIX-FB-GATE-WEEKLY-FRAME-MODE",
-        "title": "fb-gate weekly/temporal-frame mode: compare weekly posts vs weekly close series; scope Check-C to claim period",
-        "type": "FIX",
-        "status": "REVIEW",
-        "priority": "P2",
-        "zone": "cross-service/",
-        "size": "M",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-WEEKLY-FRAME-MODE",
-        "promoted_at": "2026-07-25T02:46:09Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-25T03:12:12Z",
-        "claimed_at": "2026-07-25T02:46:09Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "rebuild_required": false,
-        "branch": null
-      },
-      {
-        "id": "FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE",
-        "title": "HNX/UPCOM force:true fetches log ERROR-level spam off-hours — sectorRotationTools:181/188, portfolioTools:160/163, marketTools:225+. After-hours HNX/UPCOM endpoints reject/302 (FIX-HNX-SESSION-COOKIE context) but the force:true bypass still fires + logs at ERROR every off-hours tool call, polluting logs + false-alarming monitors. Distinct from FIX-HNX-SESSION-COOKIE (that=cookie correctness for IN-hours). This=log-noise/severity: off-hours expected-rejection must downgrade ERROR->INFO/DEBUG (or skip the HNX/UPCOM force-fetch when now_VN is outside session), not spam.",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "REVIEW",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE",
-        "promoted_at": "2026-07-25T03:16:18Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-25T03:24:53Z",
-        "claimed_at": "2026-07-25T03:16:18Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "branch": null,
-        "updated_by": "dev-mcp-server",
-        "review_note": "STALE-BACKLOG-ROW CLOSURE, not a new fix: the identical off-hours ERROR-log-severity fix for fetchHnxPrices/fetchUpcomPrices was already shipped under sibling ticket FIX-HNX-OFFHOURS-ERROR-DOWNGRADE (commit 93e9dbeb8, 2026-06-21T01:56:45Z), QA-APPROVED (a73bf035d), and rebuild CONFIRMED live (f0ac29998, RAW marker hit both sites, rebuild_required=false) — all BEFORE THIS row was minted (minted_at 2026-06-21T03:14:47Z, 78 min after the fix landed). The row own note admits gateway-blind file-grep triage, live log-severity never probed. Confirmed at HEAD: infrastructure/fetchers/hnx.ts fetchHnxPrices (L354) and fetchUpcomPrices (L436) already branch on isVnTradingWindow(options?.now) (SSOT domain/services/tradingWindow.ts, the shared session helper reused across server-startup/pushPricesHandler/foreignFlowFetcherJob) — in-hours keeps logger.error, off-hours downgrades to logger.debug. All 3 named call sites (sectorRotationTools.ts:181/188, portfolioTools.ts:160/163, marketTools.ts forceOpts:244/253) route through this shared fetcher with no additional error-log wrapper of their own (their catch-paths log warn not error, and only fire on thrown rejections these fetchers never produce). Repo-wide grep sweep found no missed force:true HNX/UPCOM site. Pre-existing FIX-HNX-OFFHOURS-ERROR-DOWNGRADE.test.ts (6 tests) already satisfies the ticket baseline_pass (off-hours expected-rejection -> non-ERROR; in-hours genuine failure -> ERROR, clock-injected) — no duplicate test file added. Evidence: bunx tsc --noEmit exit 0; bun test on pre-existing fix+regression files 50 pass/0 fail/6 skip; sector/portfolio/market tool suites 91 pass/0 fail, zero regression. No code/test commit shipped — only the decision journal (docs/agent-memory/decisions/sprint-FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE-dev-mcp-server.md, commit c2c413def). Nothing to rebuild — fix has been live in production since 2026-06-21."
-      },
-      {
-        "id": "FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
-        "type": "FIX",
-        "title": "get_macro_calendar serves empty events[] — MCP tool proxies the FDA-4 honest-unavailable Go stub while a complete unwired static-calendar domain service exists in mcp-server",
-        "status": "REVIEW",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
-        "promoted_at": "2026-07-25T04:15:55Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-25T04:30:04Z",
-        "claimed_at": "2026-07-25T04:15:55Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "rebuild_required": true,
-        "branch": null
       },
       {
         "id": "FIX-FB-GATE-CHECKC-NEGATION-LEXICON",
@@ -20058,6 +19980,62 @@
         "claimed_by": "dev-team (review-lane qa-drain)",
         "redispatch_count": 1,
         "occurrence_count": 12
+      },
+      {
+        "id": "FIX-FB-GATE-WEEKLY-FRAME-MODE",
+        "title": "fb-gate weekly/temporal-frame mode: compare weekly posts vs weekly close series; scope Check-C to claim period",
+        "type": "FIX",
+        "status": "QA",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "size": "M",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-WEEKLY-FRAME-MODE",
+        "promoted_at": "2026-07-25T02:46:09Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-12T05:53:05Z",
+        "claimed_at": "2026-08-12T05:53:04Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "rebuild_required": false,
+        "branch": null
+      },
+      {
+        "id": "FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE",
+        "title": "HNX/UPCOM force:true fetches log ERROR-level spam off-hours — sectorRotationTools:181/188, portfolioTools:160/163, marketTools:225+. After-hours HNX/UPCOM endpoints reject/302 (FIX-HNX-SESSION-COOKIE context) but the force:true bypass still fires + logs at ERROR every off-hours tool call, polluting logs + false-alarming monitors. Distinct from FIX-HNX-SESSION-COOKIE (that=cookie correctness for IN-hours). This=log-noise/severity: off-hours expected-rejection must downgrade ERROR->INFO/DEBUG (or skip the HNX/UPCOM force-fetch when now_VN is outside session), not spam.",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "QA",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE",
+        "promoted_at": "2026-07-25T03:16:18Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-12T05:53:05Z",
+        "claimed_at": "2026-08-12T05:53:04Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "branch": null,
+        "updated_by": "dev-mcp-server",
+        "review_note": "STALE-BACKLOG-ROW CLOSURE, not a new fix: the identical off-hours ERROR-log-severity fix for fetchHnxPrices/fetchUpcomPrices was already shipped under sibling ticket FIX-HNX-OFFHOURS-ERROR-DOWNGRADE (commit 93e9dbeb8, 2026-06-21T01:56:45Z), QA-APPROVED (a73bf035d), and rebuild CONFIRMED live (f0ac29998, RAW marker hit both sites, rebuild_required=false) — all BEFORE THIS row was minted (minted_at 2026-06-21T03:14:47Z, 78 min after the fix landed). The row own note admits gateway-blind file-grep triage, live log-severity never probed. Confirmed at HEAD: infrastructure/fetchers/hnx.ts fetchHnxPrices (L354) and fetchUpcomPrices (L436) already branch on isVnTradingWindow(options?.now) (SSOT domain/services/tradingWindow.ts, the shared session helper reused across server-startup/pushPricesHandler/foreignFlowFetcherJob) — in-hours keeps logger.error, off-hours downgrades to logger.debug. All 3 named call sites (sectorRotationTools.ts:181/188, portfolioTools.ts:160/163, marketTools.ts forceOpts:244/253) route through this shared fetcher with no additional error-log wrapper of their own (their catch-paths log warn not error, and only fire on thrown rejections these fetchers never produce). Repo-wide grep sweep found no missed force:true HNX/UPCOM site. Pre-existing FIX-HNX-OFFHOURS-ERROR-DOWNGRADE.test.ts (6 tests) already satisfies the ticket baseline_pass (off-hours expected-rejection -> non-ERROR; in-hours genuine failure -> ERROR, clock-injected) — no duplicate test file added. Evidence: bunx tsc --noEmit exit 0; bun test on pre-existing fix+regression files 50 pass/0 fail/6 skip; sector/portfolio/market tool suites 91 pass/0 fail, zero regression. No code/test commit shipped — only the decision journal (docs/agent-memory/decisions/sprint-FIX-HNX-OFFHOURS-FORCE-FETCH-ERROR-DOWNGRADE-dev-mcp-server.md, commit c2c413def). Nothing to rebuild — fix has been live in production since 2026-06-21."
+      },
+      {
+        "id": "FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
+        "type": "FIX",
+        "title": "get_macro_calendar serves empty events[] — MCP tool proxies the FDA-4 honest-unavailable Go stub while a complete unwired static-calendar domain service exists in mcp-server",
+        "status": "QA",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-CALENDAR-WIRE-STATIC-SOURCE",
+        "promoted_at": "2026-07-25T04:15:55Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-12T05:53:05Z",
+        "claimed_at": "2026-08-12T05:53:04Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "rebuild_required": true,
+        "branch": null
       }
     ],
     "_closed_signals_20260614": {
@@ -20078,7 +20056,53 @@
     },
     "last_triaged_at": "2026-08-12T03:03:00Z",
     "last_triaged_by": "po",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS",
+        "type": "FIX",
+        "title": "rag-service idle-unload (0308514f5) fires correctly and drops the model reference (gc.collect()), but the OS-level allocator retains ~180-210MiB of the ~400MiB model footprint instead of returning it to the OS -- measured dip only ~18-20pp vs the ~35pp expected for a full release; A-30 will keep re-firing on rag-service RSS until this closes",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "S",
+        "zone": "apps/rag-service/",
+        "owner": "dev-rag-service",
+        "next_agent": "dev-rag-service",
+        "created_at": "2026-08-08T09:03:38Z",
+        "created_by": "qa/ac3-branch-b-close-out-20260808T0903Z (OPS-RAG-SERVICE-REBUILD-STALE-IMAGE-PREDATES-IDLE-UNLOAD-FIX close-out, per po_ac3_adjudication_20260808T0820Z Branch B)",
+        "verification_gate": "post_unload_docker_stats_dip_matches_model_footprint_within_noise",
+        "files": [
+          "apps/rag-service/infrastructure/embedder.py"
+        ],
+        "desc": "Branch B of the OPS row's corrected AC-3 protocol (po_ac3_adjudication_20260808T0820Z, upheld by QA measurement 2026-08-08T09:03Z): unload log line 'Embedding model unloaded after 910s idle (threshold=900s)' fires correctly (embedder.py _maybe_unload_idle(), ~lines 120-150), but measured RSS only drops ~18-20pp -- pre-unload baseline 96.19-98.34% (PO, 08:17:31Z/08:19:24Z) to post-unload 77.98%/798.5MiB (system-auditor cron measurement sys-20260808T083446-4705, 08:34:46-08:35:03Z; docs/data/DASHBOARD.md:890-897), reproduced on a 2nd load/unload cycle (reload 08:49:50Z -> 97.67%/1000MiB @08:56:57Z, QA live read) -- well short of the ~35pp (~400MiB model) bar for a full OS-level reclamation, and well above the ~2pp ordinary jitter floor PO established, so this is a real but partial reclamation, not noise and not a failed unload.",
+        "root_cause_hypothesis": "_maybe_unload_idle() calls `self._model = None` then `gc.collect()` with NO OS-level page-return call following -- classic glibc/CPython heap-retention behaviour: freed C-level allocations backing numpy/torch CPU tensors stay in the process's own free-list/arena rather than being returned to the OS via malloc_trim(0) or an equivalent allocator hook. Same allocator class already diagnosed and ratified with an empirical fix in THIS repo: FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (docs/architecture-briefs/2026-08-07-fix-pdfx-parent-process-memory-burst-headroom.md) found malloc_trim(0) recovers ~99.7% of the per-job RSS delta for pdf-extractor's PEK pipeline after gc.collect() alone recovered 0 bytes -- directly reusable diagnostic template and fix shape.",
+        "scope": "Confirm the allocator-retention hypothesis with the same isolated repro method as the pdf-extractor precedent (RSS before/after gc.collect() alone vs gc.collect()+malloc_trim(0)); if confirmed, add a guarded ctypes CDLL('libc.so.6').malloc_trim(0) call inside _maybe_unload_idle() immediately after gc.collect() (no-op / guarded on non-glibc platforms). Add direct test coverage matching __tests__/unit/test_embedder_idle_unload.py's existing style (mock/spy the release call fires post-unload). No config/env change expected -- this is an unconditional cleanup step, not a tunable.",
+        "why_not_folded_into_FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH": "That row's own commit (0308514f5) is independently code-correct per Branch B ('The code row is CORRECT -- do NOT fail it') and is being left for its own qa verdict in review[], not reopened. This is a NEW, narrower, allocator-specific defect the branch protocol explicitly instructs to mint separately.",
+        "related": [
+          "FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH",
+          "OPS-RAG-SERVICE-REBUILD-STALE-IMAGE-PREDATES-IDLE-UNLOAD-FIX",
+          "FIX-RECLAMATION-AC-VERIFIED-IN-COLDSTART-WINDOW-BEFORE-WORKLOAD-LOADS",
+          "FU-RAG-DEPLOY-MEMORY",
+          "FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM"
+        ],
+        "origin_signal_id": null,
+        "dedup_checked": "Board-wide scan (grep -in) for malloc_trim / allocator-return / OS-return / torch-allocator + rag-service across orch-state.json before mint -- 0 existing rows on this specific defect (the only other malloc_trim hits on the board are the unrelated pdf-extractor precedent row, which this row cites, and an unrelated OCR-concurrency row). No duplicate.",
+        "updated_at": "2026-08-12T05:50:43Z",
+        "po_a30_disposition_20260808T1600Z": "DISPOSITION of signal_feedback WARN sys-20260808T153848-7fac ('A-30 WARN: rag-service-1 memory sustained >93% (94.69-94.71%), loss of reclamation'). The system-auditor explicitly asked PO to rule between (a) benign continuation inside the FU-RAG-DEPLOY-MEMORY acknowledged steady-state, (b) genuine escalation beyond previously-accepted bounds, or (c) needs remediation beyond the existing backlog.\n\nPO RULES (a) — BENIGN CONTINUATION, and the WARN itself is a DETECTOR FALSE POSITIVE. Basis is the live plane, not the auditor's own numbers: `docker stats --no-stream` at 2026-08-08T15:58Z reads rag-service-1 at 839.7MiB / 1GiB = 82.00%, 19 minutes after the 15:34-15:39Z window that reported min 94.69% / max 94.71% with 'zero reclamation dips'. 94.69% of 1GiB = 969.6MiB, so ~130MiB was reclaimed inside the interval the probe called reclamation-free. Reclamation is WORKING. The idle-unload shipped in 0308514f5 is doing its job; this row's own subject (the ~180-210MiB of allocator pages the OS does not get back) remains the correct and sufficient characterisation of the residual, and it is unchanged.\n\nNOT (b): the auditor's own escalation evidence is void. Its stated 'VmHWM pinned at cap (1.5GiB)' is false — `docker inspect vn-market-intelligence-mcp-rag-service-1 --format '{{.HostConfig.Memory}}'` = 1073741824 = 1.0GiB (last compose change 2f835ec63 'raise memory cap 768m->1g'). 1.5GiB is the live VmHWM value (1568064kB = 1.495GiB), i.e. the cap was reported as VmHWM's own reading. With no cap advance, no OOMKilled, no state_changes, no crash-discontinuities and a measured 130MiB dip, there is no evidence of any bound being exceeded.\n\nNOT (c): no remediation beyond this row is warranted. The STALE-ACK the auditor flagged (FU-RAG-DEPLOY-MEMORY, DONE_VERIFIED) is correctly stale — THIS row is the live successor and already owns the mechanism.\n\nDETECTOR DEFECT SPLIT OUT, NOT FOLDED HERE: the reason the probe cannot see the dip is that its window (<=5 min, PROBES=12 x INTERVAL=25s) is shorter than this service's 15-minute embedder idle-unload period (apps/rag-service/app_factory.py:87). That is a detector-calibration defect, not a rag-service defect, and is minted as FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD so this row's own scope stays clean.\n\nNO NEW ROW MINTED for the rag-service symptom itself.",
+        "po_corroboration_20260808T1759Z": "PO CORROBORATION + MEASUREMENT-PLANE CORRECTION (po triage 2026-08-08T17:59Z). FOLDS, NO NEW MINT: dashboard signal sys-20260808T173849-2d4b (system-auditor->po, microservice_degraded WARN — \"rag-service-1 A-30 chronic memory 99.66% sustained, 11+ dedup-ledger signals over 4 days, zero reclamation dips, no OOM/crash\"), Telegram reports 4551 and 4557 (two transports of the same underlying finding), and pending_triage_inbox envelopes 68824153 (98.71%) and f7a52a7c (98.68%).\n\nDEDUP: this row already owns the mechanism (allocator pages not returned to the OS after the embedder idle-unload). Non-terminal-lane scan performed across backlog[] + ready[] + in_progress[] + review[] + qa[] (lane membership, never a status-token enum) — no other open row claims it. No new row minted.\n\nMEASUREMENT-PLANE CORRECTION — \"ZERO RECLAMATION DIPS\" IS AN ARTIFACT OF THE PROBE'S PLANE, NOT A PROCESS FACT. po measured BOTH planes live at 2026-08-08T17:59Z:\n- cgroup plane (the only plane A-30 samples): MemPerc 99.79% steady across 3 spaced samples, 1024MiB / 1GiB. Cap verified real this time: HostConfig.Memory=1073741824 = exactly 1GiB (an earlier auditor arm had this cap wrong).\n- PROCESS plane (/proc/1/status): VmHWM=1568064 kB (1.50 GiB) vs VmRSS=894036 kB (874 MiB). VmHWM sits 674 MB ABOVE current VmRSS — the process peaked well above where it now sits, i.e. RECLAMATION HAS DEMONSTRABLY OCCURRED. The cgroup counter reads at cap because memory.current includes reclaimable page cache, which VmRSS does not.\n\nThis is the same two-plane discriminator that separated the TRUE positive from the FALSE positive on the 2026-08-08T16:00Z pair (see FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER po_a30_corroboration_20260808T1600Z): mcp-server had VmRSS AT its own all-time high-water — the honest no-reclamation signature — while rag-service has VmRSS 674 MB BELOW its high-water. Opposite signatures, same probe, same tick.\n\nDISPOSITION: priority HELD at P2, next_agent HELD at architect — deliberately NOT escalated. The container is up 9h48m with RestartCount=0 and OOMKilled=false, and there has been no crash across the entire 4-day / 11-signal chain. A container that sits at its cgroup cap for four days without a single OOM is a container whose kernel is reclaiming successfully. The defect this chain actually evidences is that A-30 samples only the cgroup plane and so cannot distinguish page-cache saturation from a genuine leak — that is an auditor-detector concern, already tracked as its own row family, not a rag-service concern. DO NOT restart rag-service to relieve the reading: it would reset the meter, destroy the trajectory, and fix nothing (feedback_restart_masks_bun_jit_corruption).\n",
+        "updated_by": "architect/triage-2026-08-12T03:24:49Z",
+        "po_fold_20260811T1237Z": "FOLD (po triage 2026-08-11T12:37Z): 3 further A-30 rag-service fires — signal_feedback WARN 96.32% (2026-08-09T02:07Z), telegram CRITICAL ESCALATE 97.50% (2026-08-09T04:11Z, report 4562), signal_queue microservice_degraded WARN '>93% loss of reclamation' (2026-08-11T12:12Z). Trend across the 3 samples is monotonically upward (96.32 -> 97.50), consistent with this row's own 'allocator pages not returned to OS' hypothesis rather than a probe artifact. Sibling rows deliberately NOT folded (different defect): FIX-AUDITOR-A30-PROBE-SH-MISSES-RAG-SERVICE-CONTAINER (detector scope) and FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD (verdict window).",
+        "po_fold_20260811T1826Z": "FOLD (po triage 2026-08-11T18:26Z) of signal_queue sys-20260811T181604-0404 (CRITICAL, 99.58% BELOW-FLOOR zero reclamation). 4th A-30 rag-service fold in ~6h (12:12Z, 17:06Z, 18:16Z x1 + this). NO NEW MINT, priority HELD at P2, next_agent HELD at architect.\n\nSTRONGEST EVIDENCE YET FOR THIS ROW AND FOR ITS DETECTOR SIBLING: for the first time the reclamation event is timestamped in the container's own log BEFORE the signal that denies it — unload logged 18:15:48Z, signal written 18:16:04Z, 16 seconds later. Prior folds had to infer the dip from a meter read 19min later; this one has the event itself.\n\nReleased ~196MiB of the ~400MiB model footprint (1019.5MiB@99.58% -> 823.3MiB@80.40%), squarely inside this row's predicted ~180-210MiB retention. Mechanism UNCHANGED — nothing here widens this row's scope.\n\nPO RAW RE-VERIFY 2026-08-11T18:19-18:20Z (3.5 min after the emit):\n  rag-service    823.2-823.3MiB / 1GiB = 80.39-80.40%, FLAT across 4 samples (18:19:39Z + 3x8s)\n  pdf-extractor  2.38GiB / 2.5GiB = 95.20%, FLAT across 4 samples, CPU 0.15% (idle, no active OCR job)\n  docker VM /proc/meminfo: MemTotal 8129968kB, MemFree 1326672kB, MemAvailable 2955536kB\n  macOS host: memory_pressure free 72%; vm.swapusage used 6925.25M / 8192M\n  rag-service StartedAt=2026-08-11T01:00:43Z (~17h, NO restart in window), RestartCount=9 CUMULATIVE, OOMKilled=false, health 200\n  pdf-extractor StartedAt=2026-08-11T01:19:14Z, RestartCount=1, OOMKilled=false\n\n[po/triage-2026-08-11T18:26Z] REBUILD ADJUDICATED AND RULED OUT — both containers already run current code.\n  pdf-extractor image built 2026-08-08T11:34:24Z; last commit touching apps/pdf-extractor/ = d808a6a11 2026-07-31.\n  rag-service   image built 2026-08-08T08:10:53Z; last commit touching apps/rag-service/   = 99ed7c8b0 2026-08-07.\nBoth images POSTDATE their zone's HEAD, so the stale-image root cause (feedback_mcp_server_stale_image_mem_leak_rebuild_fixes) is excluded at source: there is no undeployed fix for a rebuild to deliver. A rebuild here would be a pure memory-meter reset that destroys trajectory evidence and fixes nothing — that memory's own CORRECTION says rebuild is temporary mitigation, never a cure, and feedback_restart_masks_bun_jit_corruption says do not reset the meter to relieve a reading. NO ops dispatch. Architecture untouched — no consolidation was considered (feedback_preserve_multi_container_microservice_architecture).",
+        "status_note": "[po/triage-2026-08-12T03:03:00Z] FOLD of the full A-30 rag-service escalation chain (telegram 4709/4710/4717) + PRIORITY P2 -> P0 + PREMISE PARTIALLY REFUTED. Do NOT mint a separate rag-service-memory-leak investigation row: this IS that row, and it already names the right service and the right symptom. Two changes:\n(a) ESCALATE. Live-verified by PO at 2026-08-12T03:03:00Z via `docker stats --no-stream`: vn-market-intelligence-mcp-rag-service-1 = 965MiB / 1GiB = 94.24% (~59MiB free). RAW-verified auditor chain: c42 86.6% -> c43 99.33% BELOW-FLOOR (26.6MiB free, under the 40MiB safety floor) -> container auto-restarted 2026-08-12T00:15:13Z (RestartCount 11 -> 12) -> c44 (+15min) 94.25% -> c45 (+50min) 98.73%, zero reclamation dips across all 6 samples. Host-level headroom is now also tight enough that the probe's Amendment B pre-check skipped its VmHWM read. This is OOM proximity on a live service, not a monitoring nuisance. P2 no longer defensible.\n(b) PREMISE CORRECTION (this changes the fix scope, read before implementing). This row's stated mechanism is a BOUNDED allocator retention: ~180-210MiB of a ~400MiB model footprint not returned to the OS after idle-unload, i.e. a one-time step up to a stable ~86-90% baseline. That mechanism CANNOT produce what was measured: a climb from 94.25% to 98.73% within 50 minutes of a FRESH restart, with zero dips. A bounded retention is flat after the first unload; this is monotonic growth from a cold process. So allocator page-retention is at most a contributing term, not the whole cause — there is a second, unbounded growth source (candidates to rule out in order: per-request embedder tensor/cache accumulation, LanceDB reader handles or version-dir mmaps held open per query, and the FTS index build path already tracked by RAG-FTS-BUILD-MEMORY-BOUND). AC must therefore include a heap-growth-rate measurement over >=2h of live traffic from a cold start, not merely a before/after idle-unload dip. The 'restart fixes it' assumption is disproven: RestartCount 12 with the same climb each time.\nNOTE the container limit is 1GiB, not the 768m assumed by the sibling RAG-FTS-BUILD-MEMORY-BOUND row — reconcile before sizing any bound.",
+        "architect_review_note": "[architect 2026-08-12T03:35Z] Isolated-repro investigation of PO's 3 named candidates (status_note 2026-08-12T03:03:00Z), 2 new throwaway docker run --rm probes against the real image/model/corpus (scripts/audits/rag-embedder-mem-arena-probe.py, scripts/audits/rag-lancedb-search-mem-arena-probe.py). Candidate 1 (embedder per-request tensor/cache) RULED OUT as dominant: +5.4 MiB over 80 real _raw_embed() calls, asymptotes to flat within ~20 calls. Candidate 2 (LanceDB reader/query growth) CONFIRMED DOMINANT: +340-444 MiB across ~20-60 real search() calls against a 26,730-row corpus snapshot before plateauing (~65-80x candidate 1s footprint); malloc_trim(0) recovers only ~8-15% of this (vs ~70-99% on the FIX-PDFX precedent) -- allocator hygiene alone will NOT fix this. Root cause: rag_entries has ZERO vector index (only FTS on title/summary) -- every vector_search() is a brute-force full-column scan with no bound, and the resident cost scales with corpus size (~100 rows/h growth, independently documented) and per-life query count. Candidate 3 (FTS build path) RULED OUT as a continuous contributor: CRON_RAG_FTS_REBUILD_ENABLED defaults false and is unset in this deployment (apps/mcp-server/src/scheduler/schedulerJobTable.ts:669-684) -- the nightly rebuild has never fired here; the lazy per-life build is a bounded one-time step already fixed by RAG-FTS-BUILD-MEMORY-BOUND. Container memory limit RECONCILED: live docker inspect + docker-compose.yml both confirm 1 GiB (MemLimit=1073741824), not 768m -- staleness flagged (not fixed here) in RAG-FTS-BUILD-MEMORY-BOUNDs own row text and repositories.py:67s comment. Full investigation + recommended fix (lancedb.index.IvfPq vector index, confirmed importable at the pinned lancedb 0.36.0) + the corrected >=2h live cold-start AC methodology: docs/architecture-briefs/2026-08-12-fix-rag-embedder-idle-unload-second-growth-source.md. Architecture SSOT updated this cycle: docs/architecture/microservice/rag-service/infrastructure.md. BUILD-STANDARD: not-applicable (bug-fix/diagnosis, in-zone, no new primitives). Scan clean: true.",
+        "po_manual_dispatch_flagged_at": "2026-08-12T05:45:28Z",
+        "po_manual_dispatch_flagged_by": "po (escalation adjudication — severity expedite)",
+        "po_manual_dispatch_class": "PO-SEVERITY-EXPEDITE",
+        "po_manual_dispatch_note": "po expedite — folded into this tick's BATCH for immediate router dispatch to dev-rag-service",
+        "po_expedite_20260812T0542Z": "[po/escalation-adjudication 2026-08-12T05:42Z] RULING (b): DISPATCH NOW, manually, to dev-rag-service. GRANTED — but the framing 'WIP-budget exception' is wrong and should not be recorded as the precedent. Freeing WIP would not have reached this row: measured by replaying scripts/devteam-backlog-claim-ready-lane-consumer.jq 14x against a live board copy, this row is the 8th successive Ready-Lane-Consumer pick (behind FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST, FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR, UC-CCA-P3, UC-CCA-P3-FR1-FR2-SKILL, UC-CCA-P3-FR5-CODE-GATE, FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION, FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION). It sits at ready[] index 76 of 78, LAST of 26 P0 rows, because RLC's tiebreak inside a priority class is the FIFO array index and this row was minted 2026-08-08 into an already-deep queue. RLC claims ONE row per invocation and wins the 6-way idle-chain rotation about once per 3h (cron 7,37 * * * *), and each pick must additionally find wip_in_progress < 2. Floor-bound latency ~24h, realistically days, against a ~50-minute OOM recurrence. Manual dispatch is the only mechanism with the right time constant, not a favour. CORRECTION TO THE ESCALATION RECORD: this row has NOT 'never been dispatched'. task_list_held at 2026-08-12T05:36Z carries a live orphan-signal:task:FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS, owner_session=server-reaper, redispatch_count=1, orphaned_at 2026-08-12T04:15:21Z, last_payload {site:'S1',spawning:'dev-rag-service'} — i.e. execute-tier.md:56 DID claim it and spawn dev-rag-service ~03:15Z, the claim died, and the reaper minted a redispatch signal that expires 2026-08-12T06:15:21Z. dev-rag-service's notebook has no 2026-08-12 entry at all, so zero work landed. That orphan-signal is live for ~30 more minutes and must be adopted or explicitly released by the dispatching session; a second uncoordinated spawn risks a duplicate. SCOPE FOR THE DISPATCH: implement the architect's ratified fix from docs/architecture-briefs/2026-08-12-fix-rag-embedder-idle-unload-second-growth-source.md — LanceDB lancedb.index.IvfPq vector index on rag_entries (confirmed importable at the pinned lancedb 0.36.0); the candidate-2 measurement (+340-444 MiB across ~20-60 real search() calls, malloc_trim recovering only 8-15%) is the load-bearing evidence and allocator hygiene alone is explicitly NOT sufficient. AC must include the corrected >=2h live cold-start heap-growth-rate methodology from the brief, not a before/after idle-unload dip. OPS STOPGAP RULING: the 3 scoped restarts were correct and ops should keep restarting on BELOW-FLOOR until the index ships — the standing 'do not restart, it resets the meter' guidance in this row's own po_fold_20260811T1826Z is now SUPERSEDED for the duration of this incident, because the root cause is diagnosed and confirmed, so trajectory evidence has no remaining diagnostic value and OOM avoidance dominates.",
+        "claimed_at": "2026-08-12T05:50:42Z",
+        "claimed_by": "router (PO-severity-expedite manual dispatch)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -20107,10 +20131,10 @@
         "last_served_tick": "2026-08-12T05:22:11Z"
       },
       "step1_triage": {
-        "last_served_tick": "2026-08-12T02:51:32Z"
+        "last_served_tick": "2026-08-12T05:52:24Z"
       }
     },
-    "_updated_at": "2026-08-12T05:22:11Z",
+    "_updated_at": "2026-08-12T05:52:24Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20974,6 +20998,130 @@
         },
         "createdAt": "2026-08-12T05:02:36Z",
         "drained_at": "2026-08-12T05:20:55Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8bb45dd8b9e280b1fd797724841e4e1edba413e0ba6e4efd79c8ee008e2add10",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T05:31:37Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-12T05:31:37Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "05:30",
+          "leader_lock": "acquired",
+          "dev_head": "in_progress",
+          "devq": 471,
+          "signal_backlog": 25,
+          "note": "single-slot tick, no collisions, no calendar/cadence suppression"
+        },
+        "createdAt": "2026-08-12T05:31:37Z",
+        "drained_at": "2026-08-12T05:51:41Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a68783304f6cba12dd851d8206f55158f73bd4684e330263849544d0e44287f3",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T05:46:52Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-12T05:46:52Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "05:45",
+          "leader_lock": "acquired",
+          "dev_head": "in_progress",
+          "devq": 473,
+          "signal_backlog": 26,
+          "note": "single-slot tick, 1 signal_queue row (rag-service A-30 restart CRITICAL, already actioned) drained NEW->READ, no cowork slot match for to=po"
+        },
+        "createdAt": "2026-08-12T05:46:52Z",
+        "drained_at": "2026-08-12T05:51:41Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fbe339a218ddd5d4878dbd76dd85e50ea05a3d90f311ee0fea79a12819ac1cfd",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/qa.md",
+          "tied_sections": "15:20260812000000000:## cycle-655 · 2026-08-12 · FIX-FB-GATE-BREADTH-PCT-INTERNAL (developer, real code) — Direct-Commit Verify, APPROVED, DONE_VERIFIED (commit `ce04d512a`+`ce34c588f`)\n25:20260812000000000:## cycle-654 · 2026-08-12 · FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW (dev-mcp-server, real code) — Direct-Commit Verify, CHANGES_REQUESTED (commit `51f162829`+`e0ed0369e`, redispatch_count=1)",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-12T05:34:34Z",
+        "drained_at": "2026-08-12T05:51:41Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
