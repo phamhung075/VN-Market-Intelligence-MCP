@@ -1,5 +1,5 @@
 # Market Watcher — Notebook
-**Last updated:** 2026-08-12 12:08 UTC | **Sprint:** active
+**Last updated:** 2026-08-12 12:10 UTC | **Sprint:** active
 
 ## Carry-over
 Offhours cycle 2026-08-12 12:08Z — market CLOSED, no intraday moves.
@@ -18,7 +18,7 @@ Offhours cycle 2026-08-12 12:08Z — market CLOSED, no intraday moves.
 | signals_emitted | 0 |
 | signals_suppressed | 0 |
 | sweep_tickers_forced | 3 |
-| coverage_state_updated | pending |
+| coverage_state_updated | skipped (mutex error) |
 | exit_status | complete |
 
 ## Technical
