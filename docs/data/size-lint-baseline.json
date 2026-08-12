@@ -112,7 +112,7 @@
     "apps/mcp-server/src/application/usecases/getPipelineHealth.ts": 186,
     "apps/mcp-server/src/application/usecases/ohlcvWriteService.ts": 492,
     "apps/mcp-server/src/application/usecases/parseBctcReport.ts": 859,
-    "apps/mcp-server/src/application/usecases/pollNews.ts": 1444,
+    "apps/mcp-server/src/application/usecases/pollNews.ts": 923,
     "apps/mcp-server/src/application/usecases/runBacktest.ts": 243,
     "apps/mcp-server/src/application/usecases/runImpactChain.ts": 313,
     "apps/mcp-server/src/application/usecases/runPredictionImpactChain.ts": 243,

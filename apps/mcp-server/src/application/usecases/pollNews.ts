@@ -12,10 +12,28 @@
  * Error isolation: each source failure increments `errors` but does not
  * abort the remaining sources.
  *
+ * FACTORY-APP-split-pollNews (staged god-file split, this file was 1444L):
+ * single-responsibility pieces now live in ./pollNews/ —
+ *   types.ts            — PollNewsResult / SourceFetchers / RagRetriever /
+ *                          InsertAnalysisFn / PollNewsOptions
+ *   insiderDetectors.ts — detectInsiderFamilyBuying / detectInsiderSelling
+ *   signalDedup.ts       — deduplicateSignalsByStockAndType
+ *   defaultFetchers.ts  — lazily-loaded real network fetchers + RAG retriever
+ *   dbHelpers.ts        — titleFingerprint / isTitleDuplicate / tryInsertEntry
+ *                          / loadWatchlist
+ * This file is now the orchestrator only: the all-sources-dark cooldown
+ * state + the exported pollNews() pipeline itself. All previously-exported
+ * names (types, detectInsiderFamilyBuying, detectInsiderSelling,
+ * _resetAllDarkAlert, pollNews) are re-exported here unchanged so every
+ * existing `from ".../pollNews.js"` import keeps working with zero call-site
+ * changes. Further staged splits of pollNews() itself (still ~790L of
+ * tightly-coupled local state — fetch/health, dedup/insert,
+ * cascade/alert-generation stages) are tracked as follow-up, not done in
+ * this pass (see docs/agent-memory/notebooks/dev-mcp-server.md).
+ *
  * Layer: application/usecases — may import from domain/ and infrastructure/.
  */
 
-import type { Database } from "bun:sqlite";
 import type { RssItem } from "../../infrastructure/fetchers/rss.js";
 import type { WatchlistEntry } from "../../domain/services/cascadeEngine.js";
 import type { SearchResult } from "../../domain/services/cascadeEngine.js";
@@ -28,11 +46,33 @@ import { generateAlerts } from "../../domain/services/alertGenerator.js";
 import { storeAlerts } from "../../infrastructure/db/alertStore.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { logger } from "../../infrastructure/logger.js";
-import { currentDataEnv } from "../../infrastructure/envCheck.js";
 // FACTORY-APP-pollNews-layering-fix (2026-07-24): globalSourceTracker relocated
 // from interface/ to infrastructure/observability/sourceHealthRegistry.ts —
 // resolves the former Fence-B violation (application must not import interface).
 import { globalSourceTracker, _resetGlobalSourceTracker } from "../../infrastructure/observability/sourceHealthRegistry.js";
+import { detectInsiderFamilyBuying, detectInsiderSelling } from "./pollNews/insiderDetectors.js";
+import { deduplicateSignalsByStockAndType } from "./pollNews/signalDedup.js";
+import {
+  defaultCafefFetcher,
+  defaultVnExpressFetcher,
+  defaultVnEconomyFetcher,
+  defaultTeChromiumNewsFetcher,
+  defaultNewsApiFetcher,
+  defaultRagRetriever,
+} from "./pollNews/defaultFetchers.js";
+import { tryInsertEntry, loadWatchlist } from "./pollNews/dbHelpers.js";
+import type {
+  PollNewsResult,
+  SourceFetchers,
+  RagRetriever,
+  InsertAnalysisFn,
+  PollNewsOptions,
+} from "./pollNews/types.js";
+
+// Re-exported unchanged for backward compatibility — external callers/tests
+// import all of these directly from "application/usecases/pollNews.js".
+export type { PollNewsResult, SourceFetchers, RagRetriever, InsertAnalysisFn, PollNewsOptions };
+export { detectInsiderFamilyBuying, detectInsiderSelling };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants — Reuters/TE fallback chain (Task 1345a)
@@ -74,567 +114,6 @@ let _lastAllDarkAlertAt = 0;
 export function _resetAllDarkAlert(): void {
   _lastAllDarkAlertAt = 0;
   _resetGlobalSourceTracker();
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────────────────────────────────────
-
-export interface PollNewsResult {
-  /** Total RSS items fetched across all sources */
-  fetched: number;
-  /** New AnalysisEntry rows stored in rag_analyses */
-  inserted: number;
-  /** Items skipped because source_url already exists */
-  duplicates: number;
-  /**
-   * Items discarded by the VN-relevance pre-filter (Task 1247, isVnRelevant)
-   * BEFORE they ever reached the dedup/insert loop. Counter-conservation
-   * identity: `fetched === inserted + duplicates + irrelevant` always holds
-   * (FIX-POLLNEWS-COUNTER-CONSERVATION, 2026-07-28) — surfaced as a
-   * first-class field so "fetched - duplicates - inserted" never looks like
-   * an unaccounted silent drop from the logged/returned counters alone.
-   * Optional in the type (not optional at runtime — the real `pollNews()`
-   * always sets it) so pre-existing test doubles that construct a literal
-   * PollNewsResult without this field stay source-compatible.
-   */
-  irrelevant?: number;
-  /** Alert rows generated and stored */
-  alerts: number;
-  /** Source-level failures (non-fatal) */
-  errors: number;
-}
-
-/**
- * Injectable fetcher functions for each RSS source.
- * Allows tests to inject mocks without touching real HTTP.
- */
-export interface SourceFetchers {
-  // Pre-existing sources (local fetchers + RSS)
-  cafef?: () => Promise<RssItem[]>;
-  vnexpress?: () => Promise<RssItem[]>;
-  reuters?: () => Promise<RssItem[]>;
-  vneconomy?: () => Promise<RssItem[]>;
-  tradingeconomics?: () => Promise<RssItem[]>;
-  /** Task 1799: Trading Economics Vietnam news feed via Chromium scraper. */
-  teChromiumNews?: () => Promise<RssItem[]>;
-  // VPS-push-only sources (no local fetcher — data arrives via POST /api/push-news)
-  vietstock?: () => Promise<RssItem[]>;
-  vietnambiz?: () => Promise<RssItem[]>;
-  vnbusiness?: () => Promise<RssItem[]>;
-  tuoitre?: () => Promise<RssItem[]>;
-  nhandan?: () => Promise<RssItem[]>;
-  nld?: () => Promise<RssItem[]>;
-  // Allow arbitrary future VPS source keys without requiring interface changes
-  [key: string]: (() => Promise<RssItem[]>) | undefined;
-}
-
-/**
- * RAG retriever injection point — same pattern as runImpactChain.ts.
- */
-export type RagRetriever = (
-  query: string,
-  options?: { k?: number },
-) => Promise<SearchResult[]>;
-
-/**
- * Injectable function signature for inserting a news article into LanceDB.
- * Defaults to the real `insertAnalysis` from retriever.ts when not provided.
- * Task 1840a.
- */
-// G5b (P2-F): AnalysisInput moved to ragHttpClient.ts (canonical HTTP boundary)
-export type InsertAnalysisFn = (entry: import("../../infrastructure/rag/ragHttpClient.js").AnalysisInput) => Promise<void>;
-
-/**
- * Options for pollNews.
- *
- * @param limit              - Max items per source to process (default 20)
- * @param fetchers           - Injectable fetcher overrides for testing
- * @param db                 - Injectable bun:sqlite Database (defaults to getDb())
- * @param ragRetriever       - Injectable RAG retriever (defaults to no-op in production)
- * @param watchlist          - Watchlist entries used for cascade + alert generation
- * @param reutersLastPushTs  - Optional: last known Reuters VPS push timestamp.
- *                             When provided and older than REUTERS_STALE_MS (90 min),
- *                             the newsapi fallback fetcher is activated. Task 1345a.
- * @param onAllSourcesDark   - Optional: callback fired when all sources return 0 items.
- *                             Deduped per 4h window (module-level `_lastAllDarkAlertAt`).
- *                             Defaults to a Telegram bug channel alert. Task 1345a.
- */
-export interface PollNewsOptions {
-  limit?: number;
-  fetchers?: SourceFetchers;
-  db?: Database;
-  ragRetriever?: RagRetriever;
-  watchlist?: WatchlistEntry[];
-  /** Last Reuters VPS push timestamp — activates newsapi fallback if stale >90 min. Task 1345a. */
-  reutersLastPushTs?: Date | null;
-  /**
-   * Last timestamp when the VPS push pipeline delivered news items (service = "news").
-   * When provided and within VPS_NEWS_STALE_MS (2h), the all-sources-dark alert is
-   * suppressed: scheduled fetchers returning [] is expected behaviour because the VPS
-   * push pipeline is the primary ingestion path (Tasks 1228 + 1843 intentionally stub
-   * all local fetchers). Task 1855a.
-   */
-  vpsNewsLastPushTs?: Date | null;
-  /** All-sources-dark alert callback (injectable for tests). Task 1345a. */
-  onAllSourcesDark?: (message: string) => Promise<void>;
-  /** Clock override for testing the 4h cooldown boundary. Task 1398. */
-  nowMs?: () => number;
-  /**
-   * Sleep function injectable for tests (default: 2000 ms real sleep).
-   * Used by the teChromiumNews 0-item cold-start retry. Task 1821a.
-   */
-  sleepMs?: (ms: number) => Promise<void>;
-  /**
-   * Injectable RAG insert function (defaults to real insertAnalysis from retriever.ts).
-   * Wrap call is non-fatal — errors are logged but do not abort the poll cycle.
-   * Task 1840a.
-   */
-  ragInsert?: InsertAnalysisFn;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Insider family buying detector (Task 1260)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Vietnamese keyword patterns for insider / related-party share accumulation.
- *
- * Returns true when an article title contains BOTH:
- *   (a) a family-relation term (con trai, con gái, vợ, chồng, người nhà, thành viên gia đình, etc.)
- *       OR a related-party term (cổ đông lớn, người thân, lãnh đạo)
- *   AND
- *   (b) a buying-action term (gom cổ phiếu, mua gom, tích lũy, mua vào, đăng ký mua)
- *
- * Exported for unit testing.
- */
-export function detectInsiderFamilyBuying(title: string): boolean {
-  const lower = title.toLowerCase();
-
-  const FAMILY_RELATION_PATTERNS = [
-    "con trai",
-    "con gái",
-    "con gai",
-    "vợ ",
-    "vo ",
-    "chồng ",
-    "chong ",
-    "người nhà",
-    "nguoi nha",
-    "thành viên gia đình",
-    "thanh vien gia dinh",
-    "người thân",
-    "nguoi than",
-    "anh trai",
-    "em trai",
-    "anh gái",
-    "em gái",
-    "bố ",
-    "mẹ ",
-    "cha ",
-    "me ",
-  ];
-
-  const BUYING_ACTION_PATTERNS = [
-    "gom cổ phiếu",
-    "gom co phieu",
-    "mua gom",
-    "tích lũy cổ phiếu",
-    "tich luy co phieu",
-    "mua vào",
-    "mua vao",
-    "đăng ký mua",
-    "dang ky mua",
-    "mua thêm",
-    "mua them",
-    "gom thêm",
-    "gom them",
-  ];
-
-  const hasFamily = FAMILY_RELATION_PATTERNS.some((p) => lower.includes(p));
-  const hasBuying = BUYING_ACTION_PATTERNS.some((p) => lower.includes(p));
-
-  return hasFamily && hasBuying;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Insider selling detector (Task 1308a)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Detects insider / large-shareholder SELLING signals in an article title.
- *
- * Mirrors detectInsiderFamilyBuying() but for sell-side actions. Returns true
- * when the title contains any selling-action keyword associated with insider or
- * large-shareholder disposals.
- *
- * Patterns cover:
- *   Vietnamese: xả hàng, bán ra, thoái vốn, dump (transliterated), bán sạch,
- *               thoái sạch, lãnh đạo bán, nội bộ bán, đăng ký bán
- *   English:    dump, selling, divest, divestiture, offload, sell off
- *
- * Exported for unit testing.
- */
-export function detectInsiderSelling(title: string): boolean {
-  const lower = title.toLowerCase();
-
-  const SELLING_ACTION_PATTERNS = [
-    // Vietnamese
-    "xả hàng",
-    "bán ra",
-    "thoái vốn",
-    "bán sạch",
-    "thoái sạch",
-    "lãnh đạo bán",
-    "nội bộ bán",
-    "đăng ký bán",
-    "bán toàn bộ",
-    "bán hết",
-    // English
-    "dump shares",
-    "dumping shares",
-    "insider selling",
-    "executive selling",
-    "ceo selling",
-    "director selling",
-    "divest",
-    "divestiture",
-    "offload shares",
-    "sell off",
-  ];
-
-  return SELLING_ACTION_PATTERNS.some((p) => lower.includes(p));
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Signal deduplication — prevents N× news_mention spam for the same stock
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Merges duplicate signals that share the same (actionCode, type) pair.
- *
- * For each group:
- *   - Keeps the signal with the highest confidence
- *   - Updates the message to include a count and the top headlines
- *   - Caps severity: a single news_mention cannot exceed "medium" on its own
- *
- * This prevents 30 separate news_mention signals from escalating to CRITICAL
- * in alertGenerator (which treats 3+ signals as CRITICAL).
- */
-function deduplicateSignalsByStockAndType(
-  signals: import("../../domain/services/signalDetector.js").Signal[],
-): import("../../domain/services/signalDetector.js").Signal[] {
-  // Group by (actionCode, type)
-  const groups = new Map<string, typeof signals>();
-  for (const sig of signals) {
-    const key = `${sig.actionCode}::${sig.type}`;
-    const group = groups.get(key);
-    if (group) {
-      group.push(sig);
-    } else {
-      groups.set(key, [sig]);
-    }
-  }
-
-  // Merge each group into a single signal
-  const merged: typeof signals = [];
-  for (const group of groups.values()) {
-    if (group.length === 1) {
-      merged.push(group[0]!);
-      continue;
-    }
-
-    // Sort by confidence descending — keep the best one as base
-    group.sort((a, b) => b.confidence - a.confidence);
-    const best = group[0]!;
-
-    // Collect unique headlines (from the message field)
-    const headlines = group
-      .map((s) => s.message)
-      .filter((m, i, arr) => arr.indexOf(m) === i)
-      .slice(0, 3); // top 3 headlines
-
-    const count = group.length;
-    const headlineSummary = headlines.join(" | ");
-
-    merged.push({
-      ...best,
-      message: `${best.actionCode} mentioned in ${count} articles — ${headlineSummary}`,
-      // A batch of news_mention should stay at most "medium" as a single signal.
-      // Escalation to high/critical should only happen when combined with
-      // price_drop, volume_spike, or report_new signals.
-      severity:
-        best.type === "news_mention" && best.severity === "high"
-          ? "medium"
-          : best.severity,
-    });
-  }
-
-  return merged;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Default real fetchers (loaded lazily so tests never trigger network calls)
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function defaultCafefFetcher(): Promise<RssItem[]> {
-  const { breakers } = await import("../../infrastructure/circuitBreakerRegistry.js");
-  const { fetchCafeF } = await import("../../infrastructure/fetchers/cafef.js");
-  return breakers.cafef.execute(() => fetchCafeF());
-}
-
-async function defaultVnExpressFetcher(): Promise<RssItem[]> {
-  const { breakers } = await import("../../infrastructure/circuitBreakerRegistry.js");
-  const { fetchVnExpress } = await import("../../infrastructure/fetchers/vnexpress.js");
-  return breakers.vnexpress.execute(() => fetchVnExpress());
-}
-
-// defaultReutersFetcher removed — reuters.ts deprecated (G5, Phase 1).
-// Reuters coverage now via news-fetch microservice (port 5008).
-// Sprint 1833g had already disabled this from resolvedFetchers.
-
-async function defaultVnEconomyFetcher(): Promise<RssItem[]> {
-  const { breakers } = await import("../../infrastructure/circuitBreakerRegistry.js");
-  const { fetchVnEconomy } = await import("../../infrastructure/fetchers/vneconomy.js");
-  return breakers.vneconomy.execute(() => fetchVnEconomy());
-}
-
-async function defaultTradingEconomicsFetcher(): Promise<RssItem[]> {
-  const { breakers } = await import("../../infrastructure/circuitBreakerRegistry.js");
-  const { fetchTradingEconomicsStream } = await import("../../infrastructure/fetchers/tradingEconomicsStream.js");
-  return breakers.tradingEconomics.execute(() => fetchTradingEconomicsStream());
-}
-
-/**
- * Task 1799: Trading Economics Vietnam news feed via Chromium scraper.
- *
- * Maps TENewsItem → RssItem so the item flows through the standard
- * normalizeNews → cascade → alert pipeline unchanged.
- *
- * Field mapping:
- *   title    → title
- *   url      → url
- *   summary  → content
- *   date     → publishedAt (relative-date parsed to ISO)
- *   category → appended to content as "[category]"
- *   source   → "tradingeconomics" (matches SOURCE_DISPLAY_NAMES key)
- */
-async function defaultTeChromiumNewsFetcher(): Promise<RssItem[]> {
-  const { breakers } = await import("../../infrastructure/circuitBreakerRegistry.js");
-  const { fetchTradingEconomicsNews, parseRelativeDate } = await import(
-    "../../infrastructure/fetchers/tradingEconomicsChromium.js"
-  );
-  const items = await breakers.tradingEconomics.execute(() => fetchTradingEconomicsNews(20));
-  return items.map((item) => ({
-    title:       item.title,
-    url:         item.url,
-    content:     item.category ? `${item.summary} [${item.category}]` : item.summary,
-    publishedAt: parseRelativeDate(item.date),
-    source:      "tradingeconomics",
-  } satisfies RssItem));
-}
-
-/**
- * NewsAPI.org fallback fetcher — activated when Reuters VPS push is stale >90 min.
- * Returns [] immediately when no API key configured (stub path). Task 1345a.
- */
-async function defaultNewsApiFetcher(): Promise<RssItem[]> {
-  try {
-    const { breakers } = await import("../../infrastructure/circuitBreakerRegistry.js");
-    const { fetchNewsApi } = await import("../../infrastructure/fetchers/newsapi.js");
-    const { loadMcpConfig } = await import("../../infrastructure/config.js");
-    const cfg = loadMcpConfig();
-    const newsapiCfg = (cfg as unknown as Record<string, unknown>)?.newsSources as
-      | { newsapi?: { apiKey?: string; enabled?: boolean } }
-      | undefined;
-    const apiKey = newsapiCfg?.newsapi?.apiKey ?? "";
-    const enabled = newsapiCfg?.newsapi?.enabled ?? false;
-    return breakers.newsapi.execute(() => fetchNewsApi({ apiKey, enabled }));
-  } catch {
-    return [];
-  }
-}
-
-async function defaultRagRetriever(
-  query: string,
-  options?: { k?: number },
-): Promise<SearchResult[]> {
-  // G5b (P2-F): route through ragHttpClient → rag-service HTTP (port 5002)
-  // DFR-P1-MCP FR-4: pass decay_half_life_days for "news" doc_type from config
-  try {
-    const { ragSearch } = await import("../../infrastructure/rag/ragHttpClient.js");
-    const { loadMcpConfig } = await import("../../infrastructure/config.js");
-    const cfg = loadMcpConfig();
-    const decayHalfLifeDays = cfg.rag?.decayHalfLifeDays?.news ?? 2;
-    const response = await ragSearch({
-      query,
-      decay_half_life_days: decayHalfLifeDays,
-      ...(options?.k !== undefined ? { limit: options.k } : {}),
-      // hybrid intentionally omitted — contextual enrichment is semantic, not ticker-exact
-    });
-    return response.results.map((r) => ({
-      id: r.id,
-      level: r.level,
-      title: r.title,
-      summary: r.summary,
-      tags: r.tags,
-      actionCode: r.action_code,
-      createdAt: r.created_at,
-      distance: r.distance,
-    }));
-  } catch {
-    return [];
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DB helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Compute a short title fingerprint: first 50 characters, lowercase, whitespace-normalised.
- * Used for title-based deduplication to catch identical stories published under
- * slightly different URLs (e.g. pagination parameters, tracking suffixes).
- */
-function titleFingerprint(title: string): string {
-  return title.toLowerCase().replace(/\s+/g, " ").trim().slice(0, 50);
-}
-
-/**
- * Returns true if a similar title (matching the first 50 chars) was already
- * stored in rag_analyses within the past 24 hours.
- * This catches re-published stories that differ only in URL.
- */
-function isTitleDuplicate(db: Database, title: string): boolean {
-  if (!title || title.trim().length === 0) return false;
-  const fp = titleFingerprint(title);
-  if (fp.length < 10) return false; // too short to be meaningful
-
-  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const row = db
-    .prepare(
-      `SELECT 1 FROM rag_analyses
-       WHERE LOWER(SUBSTR(REPLACE(source_title, '  ', ' '), 1, 50)) = ?
-         AND created_at >= ?
-       LIMIT 1`,
-    )
-    .get(fp, cutoff);
-  return row != null;
-}
-
-/**
- * Attempt to insert one AnalysisEntry into rag_analyses.
- * Uses INSERT OR IGNORE (URL dedup) + title fingerprint dedup (24 h window).
- * Title dedup is only applied when the entry has a non-empty URL — empty-URL
- * items use a different storage path and must remain insertable on every call
- * (they have no URL uniqueness constraint to rely on).
- * Returns true if inserted, false if duplicate.
- */
-function tryInsertEntry(
-  db: Database,
-  entry: ReturnType<typeof normalizeNews>,
-): boolean {
-  // Guard: createdAt must be a non-empty ISO 8601 string.
-  // normalizeNews() always sets this via new Date().toISOString(), but a defensive
-  // check prevents silent row drops if a code path ever passes undefined.
-  if (!entry.createdAt) {
-    logger.warn("[tryInsertEntry] entry.createdAt is missing — substituting current UTC time", {
-      entryId: entry.id,
-      sourceUrl: entry.sourceUrl,
-    });
-    entry.createdAt = new Date().toISOString();
-  }
-
-  // Title-based dedup: only when entry has a URL (skip for no-URL items to
-  // preserve the existing behaviour that empty-URL articles are always inserted)
-  if (entry.sourceUrl && isTitleDuplicate(db, entry.sourceTitle)) {
-    return false;
-  }
-
-  // Attempt insert with data_env first (production path); fall back without it
-  // if the column does not yet exist (test in-memory DBs, pre-migration schemas).
-  // Pattern mirrors fredApi.ts:188-211.
-  let result: import("bun:sqlite").Changes | undefined;
-  try {
-    const stmt = db.prepare(`
-      INSERT OR IGNORE INTO rag_analyses
-        (id, created_at, level, source_url, source_title, source_type,
-         published_at, sentiment, impact_score, impact_direction, confidence,
-         time_horizon, summary, reasoning, affected_countries, affected_domains,
-         affected_actions, parent_ids, tags, embedding_text, data_env)
-      VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)
-    `);
-    result = stmt.run(
-      entry.id,
-      entry.createdAt,
-      entry.level,
-      entry.sourceUrl || null,          // NULL for empty URLs (partial index exemption)
-      entry.sourceTitle,
-      entry.sourceType,
-      entry.publishedAt,
-      entry.sentiment,
-      entry.impactScore,
-      entry.impactDirection,
-      entry.confidence,
-      entry.timeHorizon,
-      entry.summary,
-      entry.reasoning,
-      JSON.stringify(entry.affectedCountries),
-      JSON.stringify(entry.affectedDomains),
-      JSON.stringify(entry.affectedActions),
-      JSON.stringify(entry.parentIds),
-      JSON.stringify(entry.tags),
-      currentDataEnv(),
-    );
-  } catch (colErr: unknown) {
-    const msg = colErr instanceof Error ? colErr.message : String(colErr);
-    if (!msg.includes("data_env")) throw colErr; // re-throw unrelated errors
-    // Fallback: insert without data_env for pre-migration schemas
-    const stmt = db.prepare(`
-      INSERT OR IGNORE INTO rag_analyses
-        (id, created_at, level, source_url, source_title, source_type,
-         published_at, sentiment, impact_score, impact_direction, confidence,
-         time_horizon, summary, reasoning, affected_countries, affected_domains,
-         affected_actions, parent_ids, tags, embedding_text)
-      VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
-    `);
-    result = stmt.run(
-      entry.id,
-      entry.createdAt,
-      entry.level,
-      entry.sourceUrl || null,
-      entry.sourceTitle,
-      entry.sourceType,
-      entry.publishedAt,
-      entry.sentiment,
-      entry.impactScore,
-      entry.impactDirection,
-      entry.confidence,
-      entry.timeHorizon,
-      entry.summary,
-      entry.reasoning,
-      JSON.stringify(entry.affectedCountries),
-      JSON.stringify(entry.affectedDomains),
-      JSON.stringify(entry.affectedActions),
-      JSON.stringify(entry.parentIds),
-      JSON.stringify(entry.tags),
-    );
-  }
-
-  // bun:sqlite RunResult.changes is 1 when a row was inserted, 0 when ignored
-  return (result?.changes ?? 0) > 0;
-}
-
-/**
- * Load the current watchlist from DB as WatchlistEntry[].
- */
-function loadWatchlist(db: Database): WatchlistEntry[] {
-  const rows = db
-    .prepare(`SELECT code as actionCode, domain, exchange FROM watchlist`)
-    .all() as WatchlistEntry[];
-  return rows;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -29,7 +29,28 @@
 Maintains vnstock reference data (company names, exchanges)
 
 ### pollNews.ts
-RSS/news API polling with deduplication
+RSS/news API polling with deduplication. `pollNews()` orchestrator only
+(923L, `apps/mcp-server/src/application/usecases/pollNews.ts`) — split
+FACTORY-APP-split-pollNews (staged god-file split, was 1444L) into
+single-responsibility siblings under `pollNews/`, all re-exported
+unchanged from `pollNews.ts` so every existing import path keeps working:
+- `pollNews/types.ts` — `PollNewsResult`, `SourceFetchers`, `RagRetriever`,
+  `InsertAnalysisFn`, `PollNewsOptions`
+- `pollNews/insiderDetectors.ts` — `detectInsiderFamilyBuying` (Task 1260),
+  `detectInsiderSelling` (Task 1308a) — pure Vietnamese-keyword title
+  classifiers
+- `pollNews/signalDedup.ts` — `deduplicateSignalsByStockAndType` (internal)
+- `pollNews/defaultFetchers.ts` — lazily-loaded real fetchers (cafef,
+  vnexpress, vneconomy, teChromiumNews, newsapi) + `defaultRagRetriever`
+  (internal). The unused `defaultTradingEconomicsFetcher` (dead since
+  Sprint 1833g disabled its only call site) was dropped, not relocated.
+- `pollNews/dbHelpers.ts` — `titleFingerprint`, `isTitleDuplicate`,
+  `tryInsertEntry`, `loadWatchlist` (internal)
+
+The orchestrator itself (fetch/health tracking → all-sources-dark alert →
+VN-relevance filter → normalize/dedup/insert → cascade + alert generation)
+is still one function — further staged decomposition is tracked as
+follow-up, not done in this pass.
 
 ### syncSectorPeers.ts
 Sector classification sync from static mappings
