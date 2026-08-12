@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-12T04:26:57Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-DOWJONES-STALE-WRONG-VALUE",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 3 row(s), highest-ranked FIX-DOWJONES-STALE-WRONG-VALUE — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 3 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-12T04:52:28Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13221,6 +13222,77 @@
             "observed_at": "2026-08-11T23:27:00Z"
           }
         }
+      },
+      {
+        "title": "Name price_score normalization divisor 0.05 and 7-point threshold",
+        "priority": "P1",
+        "zone": "kinh-dich-service",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-KINHDICH-name-price-score-constants",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-name-price-score-constants",
+        "promoted_at": "2026-07-09T19:17:33Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-07-09T19:17:43Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "dev-kinh-dich",
+        "completed_at": "2026-07-09T19:23:35Z",
+        "completed_by": "dev-kinh-dich",
+        "status_note": "Code complete, tests green, sandbox green. Rebuild verification deferred to ops (signal: ops-rebuild-verify-kinh-dich-20260709T1923Z.json)",
+        "secondary_claimed_at": "2026-08-12T04:51:57Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "dev-kinh-dich",
+        "updated_at": "2026-08-12T04:54:34Z",
+        "qa_verified_at": "2026-08-12T05:05:00Z",
+        "qa_verified_by": "dev-kinh-dich",
+        "review_note": "[dev-kinh-dich QA sign-off 2026-08-12] VERIFIED. (1) Commit 37cef2ed7 exists (2026-07-09) with exact claimed scope: DailyReturnNormalizationBand=0.05 and MinPricePointsForScoring=7 in pkg/domain/models.go. (2) Constants LIVE in current source: models.go L18+L24. (3) Constants referenced correctly: price_score.go L38/43/46/62, usecases.go L18. (4) Docker image vn-market-intelligence-mcp-kinh-dich-service:latest rebuilt 2026-07-15 17:05 (AFTER commit date), confirming deployment. (5) ops-rebuild-verify signal pruned during standard drain lifecycle. RAW-verified all code paths. DONE_VERIFIED.",
+        "verification": {
+          "raw_probe": {
+            "tool": "git show 37cef2ed7 + Read apps/kinh-dich-service/pkg/domain/models.go + docker images --format",
+            "args": "commit details: 37cef2ed7; source: models.go lines 10-25; image: kinh-dich-service:latest CreatedAt",
+            "live_value_observed": "DailyReturnNormalizationBand=0.05 (L18), MinPricePointsForScoring=7 (L24) present in live source; docker image 2026-07-15 17:05:47 postdates commit 2026-07-09 21:24:09",
+            "observed_at": "2026-08-12T05:02:00Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-DOWJONES-STALE-WRONG-VALUE",
+        "title": "dow_jones served value 23750 vs real ~42k (~56% of real / ~44% wrong) — clearly-wrong macro indicator, data-integrity bug in dow_jones source/parse. Flagged NEW report 3237. zone dev-macro-indicators.",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "DONE_VERIFIED",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DOWJONES-STALE-WRONG-VALUE",
+        "promoted_at": "2026-07-24T22:46:18Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-12T04:58:00Z",
+        "claimed_at": "2026-08-12T04:52:27Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "zone_correction_note": "original zone tag apps/macro-indicators/ was stale backlog metadata — verified at source the Go macro-indicators service has zero dow_jones references; real code lives in apps/mcp-server/ (commodityTracker.ts, yahooFinance.ts, systemTools.ts, commodityTrackerRefreshJob.ts, dataAuditShared.ts)",
+        "next_agent": "qa",
+        "dev_completed_at": "2026-07-24T23:12:57Z",
+        "dev_completed_by": "developer",
+        "commits": [
+          "57b916509",
+          "734c7bd28"
+        ],
+        "review_note": "Root cause verified LIVE via docker exec into named-volume market.db: tracked_indicators dow_jones was news-mined garbage (10604/23750/23807/48221/76848, floor-only gate) AND get_system_status Auto-tracked Indicators section ran its own unguarded latest-row query serving 23750 as current (report 3237) — separate from the already-shipped DSI-MACRO-PHANTOM-STALE-GUARD (covers buildMacroSection only). 3-layer fix: (1) new shared infrastructure/db/indicatorPlausibility.ts generic fail-closed band gate (dow_jones 25000-60000), (2) retired dow_jones news-mining regex + added live Yahoo ^DJI mirror (fetchDowJonesIndex/storeDowJonesIndex, fail-closed, wired into commodityTrackerRefreshJob.ts Block 3), (3) systemTools.ts get_system_status switched to the proven staleness-aware listTrackedIndicatorsFromDb() — stale rows now [STALE]-tagged, generic across every indicator. New FIX-DOWJONES-STALE-WRONG-VALUE.test.ts 15/15 pass + extended 1920c job test +3; targeted+adjacent suite (7 files) 68/68 pass; bun tsc --noEmit clean.",
+        "rebuild_required": true,
+        "rebuild_required_note": "REBUILD_REQUIRED: true — code lands but the running vn-market-intelligence-mcp-mcp-server-1 container must be rebuilt for the fix to take effect. verification_gate LIVE-across-2-refresh-cycles portion (served value within DJIA band AND varied vs named-volume DB across 2 daily commodityTrackerRefresh cron cycles, 06:00 UTC) requires the rebuilt container PLUS 2 elapsed cron cycles post-deploy — cannot be completed by this agent (container swap is ops/user-gated per CLAUDE.md). Root cause, fail-closed gate rejecting a synthetic out-of-band value, and sibling-pattern regression are all verified at source/unit level (see review_note).",
+        "decision_journal_ref": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md (STEP developer-S7)",
+        "status_note": "[QA] Review Record (direct-commit verify) 2026-08-12T04:57:16Z -- APPROVED, DONE_VERIFIED. Both commits confirmed real + main ancestry: 57b916509 (code, 8 files: 2 new tests + 6 production) and 734c7bd28 (memory/notebook). git show --stat matches review_note file list exactly (untruncated re-check after an initial paging artifact). Independently read every production diff on disk -- not trusted from prose: indicatorPlausibility.ts is a genuinely generic shared gate (14 indicators incl. dow_jones 25000-60000); commodityTracker.ts news-mining regex for dow_jones removed + inline MIN/MAX maps replaced by the shared gate call; yahooFinance.ts fetchDowJonesIndex/storeDowJonesIndex added, fail-closed, dedup-before-insert, reuses the pre-existing fetchSymbolPrice helper; commodityTrackerRefreshJob.ts Block 3 genuinely wired (isolated try/catch, DI-injectable, rowsWritten sums all 3 blocks); systemTools.ts get_system_status swapped its own unguarded latest-row query for listTrackedIndicatorsFromDb() + [STALE] tagging; dataAuditShared.ts INDICATOR_RANGES got a dow_jones critical band. Cross-checked the \"separate bug from DSI-MACRO-PHANTOM-STALE-GUARD\" claim against that commit (3280d82ab) directly -- it touched only marketContextBuilder.ts/commodityTracker.ts, never systemTools.ts, confirming get_system_status was genuinely unguarded until this fix; listTrackedIndicatorsFromDb itself pre-dates this task and is correctly reused, not fabricated. Ran tests myself (not trusted from review_note): new FIX-DOWJONES-STALE-WRONG-VALUE.test.ts 15/15 pass (real fail-closed rejection logs for 23750/999999, real HTTP-timeout fallback observed). Extended 1920c-commodity-tracker-refresh-job.test.ts 10/10 (7 pre-existing + 3 new, matches \"+3\" claim). Reconstructed the claimed \"7 files/68 tests\" set by per-file counts (025-yahoo-finance 16, 1487-yahoo-finance-extended 7, 1920c 10, 234-system-status-merge 15, DPI-3-commodity-delta 4, DSI-MACRO-PHANTOM-STALE-GUARD 10, FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD 6 = 68) -- exact match, 0 fail. Ran a wider 11-file superset (adds 1039/1489/1833l) = 95/95 pass, 0 fail -- no regression beyond the claimed set either. bun tsc --noEmit: 0 errors. mock-guard.sh --files on all 6 touched production files: PASS. No process.env/secret/password hits in touched files. None of the 6 touched files are domain-layer -- DDD inbound-direction rule N/A. Noted the plausibility band (25000-60000) would not catch a hypothetical future 48221-magnitude bad value, but the code's own comment is honest about this scope limit, and the primary fix (regex retirement) removes that extraction vector entirely regardless of band. DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S7 present, task-id stamped, matches. rebuild_required:true / live 2-cycle verification correctly deferred to ops per row's own note (container swap is user/ops-gated, out of QA unit-level scope) -- not a merge blocker.",
+        "verified_at": "2026-08-12T04:57:16Z",
+        "verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun test (new + extended + 7-file targeted/adjacent suite) + bun tsc --noEmit + mock-guard.sh + git merge-base --is-ancestor + git show --stat",
+            "args": "src/__tests__/FIX-DOWJONES-STALE-WRONG-VALUE.test.ts; src/__tests__/1920c-commodity-tracker-refresh-job.test.ts; src/__tests__/{025-yahoo-finance,1487-yahoo-finance-extended,234-system-status-merge,DPI-3-commodity-delta,DSI-MACRO-PHANTOM-STALE-GUARD,FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD}.test.ts (+1039/1489/1833l superset); mock-guard.sh --files against 6 touched production files; commits 57b916509+734c7bd28",
+            "live_value_observed": "FIX-DOWJONES-STALE-WRONG-VALUE.test.ts 15/15 pass/0 fail; 1920c job test 10/10 (7 pre-existing+3 new); claimed 7-file/68-test set reconstructed exactly (16+7+10+15+4+10+6=68), 0 fail; wider 11-file superset 95/95 pass, 0 fail; tsc --noEmit 0 errors; mock-guard PASS; both commits confirmed main ancestors",
+            "observed_at": "2026-08-12T04:57:16Z"
+          }
+        }
       }
     ],
     "head": {
@@ -15265,28 +15337,6 @@
         "blocked_on": "FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK"
       },
       {
-        "title": "Name price_score normalization divisor 0.05 and 7-point threshold",
-        "priority": "P1",
-        "zone": "kinh-dich-service",
-        "type": "FACTORY",
-        "status": "REVIEW",
-        "id": "FACTORY-KINHDICH-name-price-score-constants",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-KINHDICH-name-price-score-constants",
-        "promoted_at": "2026-07-09T19:17:33Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-07-09T19:17:43Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "dev-kinh-dich",
-        "completed_at": "2026-07-09T19:23:35Z",
-        "completed_by": "dev-kinh-dich",
-        "status_note": "Code complete, tests green, sandbox green. Rebuild verification deferred to ops (signal: ops-rebuild-verify-kinh-dich-20260709T1923Z.json)",
-        "secondary_claimed_at": "2026-08-05T07:44:38Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "dev-kinh-dich",
-        "updated_at": "2026-08-05T07:44:39Z"
-      },
-      {
         "id": "FIX-FOREIGN-FLOW-COVERAGE",
         "title": "Expand foreign-flow fetch from the 111-code watchlist+ref subset to the full daily_ohlcv traded universe",
         "type": "FIX",
@@ -15615,73 +15665,6 @@
           "OPS-NEWS-FETCH-REBUILD-STALE-IMAGE-3-COMMITS-BEHIND"
         ],
         "review_note": "PO RAW-verify 2026-08-07T00:05Z (session f298ccf7). SOURCE PLANE 6/6 PASS, measured not self-reported: DEFAULT_MAX_ITEMS present models.ts:19-22 (15/10 unchanged); resolveMaxItems models.ts:32-40; makeHeadlinesHandler->{post,get} handlers.ts:31-62 with all 4 routes registering the factory (handlers.ts:104-112), zero leftover inline bodies; handlers.ts 118L <=120L (was 170L); response envelope + 500 branch diffed by PO against d4f905a66^ = identical for all 4 originals; `bun test` 241 pass / 6 skip / 0 FAIL across 26 files. Landed d4f905a66 (2026-07-24T15:34:05Z), apps/news-fetch/ tree clean. ACCEPTED DIVERGENCE (out-of-contract, non-blocking, logged so it is not later rediscovered as a regression): POST body {maxItems:\"7\"} as a numeric STRING (contrary to the declared `maxItems?: number`) used to fall back to the default under the legacy `typeof === 'number'` guard and now parses to 7 — strictly more lenient, no in-contract caller affected. RUNTIME PLANE NOT DEPLOYED — this is why the row stays in review[]: container vn-market-intelligence-mcp-news-fetch-1 runs image sha256:e3263a24b38a Created=2026-07-15T15:05:14Z, 9 days BEFORE the commit; `docker exec ... grep -rl 'makeHeadlinesHandler|DEFAULT_MAX_ITEMS|resolveMaxItems' /app` returns EMPTY against a PASSING positive control (same grep for 'bloomberg/headlines' hits /app/src/interface/handlers.ts), and the container's handlers.ts is still 170L with bare literals at :74/:98/:120/:144. detail_ref carries rebuild_required=true; that obligation is UNMET. DISPOSITION: NO rework — dev work complete and correct. Deploy debt owned by OPS-NEWS-FETCH-REBUILD-STALE-IMAGE-3-COMMITS-BEHIND, which names d4f905a66 explicitly and whose AC-8 mandates reporting back. ROUTING FIX: next_agent was null, which resolves to po and is swept by NO automated lane — that alone is why this row sat 14 days untouched; set to ops to match sibling FACTORY-NEWS-fix-source-logging and ride the same rebuild. Flip to done_verified ONLY after that rebuild lands AC-3/AC-4 green."
-      },
-      {
-        "id": "FIX-DOWJONES-STALE-WRONG-VALUE",
-        "title": "dow_jones served value 23750 vs real ~42k (~56% of real / ~44% wrong) — clearly-wrong macro indicator, data-integrity bug in dow_jones source/parse. Flagged NEW report 3237. zone dev-macro-indicators.",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "REVIEW",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DOWJONES-STALE-WRONG-VALUE",
-        "promoted_at": "2026-07-24T22:46:18Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T23:12:57Z",
-        "claimed_at": "2026-07-24T22:46:18Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "zone_correction_note": "original zone tag apps/macro-indicators/ was stale backlog metadata — verified at source the Go macro-indicators service has zero dow_jones references; real code lives in apps/mcp-server/ (commodityTracker.ts, yahooFinance.ts, systemTools.ts, commodityTrackerRefreshJob.ts, dataAuditShared.ts)",
-        "next_agent": "qa",
-        "dev_completed_at": "2026-07-24T23:12:57Z",
-        "dev_completed_by": "developer",
-        "commits": [
-          "57b916509",
-          "734c7bd28"
-        ],
-        "review_note": "Root cause verified LIVE via docker exec into named-volume market.db: tracked_indicators dow_jones was news-mined garbage (10604/23750/23807/48221/76848, floor-only gate) AND get_system_status Auto-tracked Indicators section ran its own unguarded latest-row query serving 23750 as current (report 3237) — separate from the already-shipped DSI-MACRO-PHANTOM-STALE-GUARD (covers buildMacroSection only). 3-layer fix: (1) new shared infrastructure/db/indicatorPlausibility.ts generic fail-closed band gate (dow_jones 25000-60000), (2) retired dow_jones news-mining regex + added live Yahoo ^DJI mirror (fetchDowJonesIndex/storeDowJonesIndex, fail-closed, wired into commodityTrackerRefreshJob.ts Block 3), (3) systemTools.ts get_system_status switched to the proven staleness-aware listTrackedIndicatorsFromDb() — stale rows now [STALE]-tagged, generic across every indicator. New FIX-DOWJONES-STALE-WRONG-VALUE.test.ts 15/15 pass + extended 1920c job test +3; targeted+adjacent suite (7 files) 68/68 pass; bun tsc --noEmit clean.",
-        "rebuild_required": true,
-        "rebuild_required_note": "REBUILD_REQUIRED: true — code lands but the running vn-market-intelligence-mcp-mcp-server-1 container must be rebuilt for the fix to take effect. verification_gate LIVE-across-2-refresh-cycles portion (served value within DJIA band AND varied vs named-volume DB across 2 daily commodityTrackerRefresh cron cycles, 06:00 UTC) requires the rebuilt container PLUS 2 elapsed cron cycles post-deploy — cannot be completed by this agent (container swap is ops/user-gated per CLAUDE.md). Root cause, fail-closed gate rejecting a synthetic out-of-band value, and sibling-pattern regression are all verified at source/unit level (see review_note).",
-        "decision_journal_ref": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md (STEP developer-S7)"
-      },
-      {
-        "id": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
-        "type": "FIX",
-        "title": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW — get_bctc_pending_refine returns 235K chars exceeding MCP inline limit → callers get a file path not data",
-        "zone": "apps/mcp-server/",
-        "status": "REVIEW",
-        "priority": "medium",
-        "size": "S",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
-        "promoted_at": "2026-07-24T23:25:06Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-24T23:47:31Z",
-        "claimed_at": "2026-07-24T23:25:06Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "rebuild_required": true,
-        "branch": null,
-        "updated_by": "dev-mcp-server",
-        "review_note": "get_bctc_pending_refine now bounds/paginates: limit defaults to 20 (max 100, zod .optional().default() order fixed), new offset param pairs with the existing SQL LIMIT (native LIMIT/OFFSET on Branch2 ticker + Branch3 default queries) so all pending-refine rows remain reachable by paging offset+=limit; no rows lost vs the old unbounded dump. Served-path test (real McpServer + registerGetBctcPendingRefineTool): 45-row set -> bounded first page (20 rows, well under MCP inline limit, no file-path fallback), 3-page offset walk (20/20/5) recovers all 45 ids exactly once, default page size applies whenever limit is omitted (incl. with explicit offset). bun tsc --noEmit clean; new test file 5/5 pass; pre-existing FIX-REFINE-PENDING-SCHEMA.test.ts (same tool) 13/13 pass unchanged; gen-project-stats toolCount=184/cronJobCount=88 unchanged (no tool added/removed). Commits 51f162829 (code+test+doc) + e0ed0369e (decision journal), pushed. rebuild_required:true — LIVE inline-payload-size verify needs the container rebuild; leaving to QA/ops cascade per dispatch instruction."
-      },
-      {
-        "id": "FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED",
-        "type": "FIX",
-        "title": "signal_outcomes resolution job stalled: 65/72 rows pending >5d, checked_at never advances; calibration frozen since 2026-06-14",
-        "status": "REVIEW",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED",
-        "promoted_at": "2026-07-25T00:17:59Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-25T00:45:39Z",
-        "claimed_at": "2026-07-25T00:17:59Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "rebuild_required": true,
-        "branch": null,
-        "review_note": "dev-mcp-server: root cause = 2 compounding bugs in signalOutcomeStore.ts (Option-B /price/history envelope-shape parse bug — flat array vs real {code,history}, same class as 1945a — + hardcoded days=3 unusable for old dates; baseline price_at_signal had NO Option-B fallback at all against market_prices_history's rolling ~24h purge). Live-verified 102/105 rows stuck pending despite hourly cron reporting success. Fixed via canonical getPriceHistory client + dynamic days + injectable fetchHistoryFn. Live-copy-DB proof (real stock-price service, not the live container): 102 pending -> 7 (98/105 checked_at populated), remaining 7 legit (2 non-ticker MACRO/MULTI signals, 5 too-recent for 48h window) -- self-heals via the SAME already-scheduled hourly cron once deployed, no backfill script needed. Also fixed folded_scope_orphan_fk durably: cleanExpired()/checkStaleAgentSignals() bulk DELETEs were throwing FOREIGN KEY constraint failed (rolled back, 0 rows) whenever any matched row was still referenced by signal_outcomes -- live-verified 104/5983 expired rows blocked -- guarded both with NOT IN subquery; getAccuracyStats INNER->LEFT JOIN so orphans are not silently dropped from stats; the 1 existing orphan (id=66) resolves normally via the fixed generic resolver, no special-case script. Added checkStalledResolutionLiveness() self-alert guard (>=1 BUG alert/day if rows sit unresolved >72h). SCOPE NOTE: verification_gate (b) get_calibration_report is a DIFFERENT subsystem (prediction_claims/calibrationReportJob.ts) -- live DB already shows computed_at=2026-07-19/resolved=6 (independently self-recovered) -- gate already passes, did not touch that code. Evidence: tsc clean, new suite 9/9 pass, affected+precedent suites 147/147 pass, toolCount=184/cronJobCount=88 unaffected, local server boot clean. Commits 1f4b491b1 (code+test) + 537911454 (memory), pushed origin/main. QA: verify LIVE named-vol DB post-rebuild per verification_gate (a)/(b)/(c)."
       },
       {
         "id": "FIX-FB-GATE-POINT-PCT-MATH",
@@ -19713,6 +19696,46 @@
         "claimed_by": "dev-team (review-lane qa-drain)",
         "redispatch_count": 1,
         "occurrence_count": 12
+      },
+      {
+        "id": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
+        "type": "FIX",
+        "title": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW — get_bctc_pending_refine returns 235K chars exceeding MCP inline limit → callers get a file path not data",
+        "zone": "apps/mcp-server/",
+        "status": "QA",
+        "priority": "medium",
+        "size": "S",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
+        "promoted_at": "2026-07-24T23:25:06Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-12T04:52:28Z",
+        "claimed_at": "2026-08-12T04:52:27Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "rebuild_required": true,
+        "branch": null,
+        "updated_by": "dev-mcp-server",
+        "review_note": "get_bctc_pending_refine now bounds/paginates: limit defaults to 20 (max 100, zod .optional().default() order fixed), new offset param pairs with the existing SQL LIMIT (native LIMIT/OFFSET on Branch2 ticker + Branch3 default queries) so all pending-refine rows remain reachable by paging offset+=limit; no rows lost vs the old unbounded dump. Served-path test (real McpServer + registerGetBctcPendingRefineTool): 45-row set -> bounded first page (20 rows, well under MCP inline limit, no file-path fallback), 3-page offset walk (20/20/5) recovers all 45 ids exactly once, default page size applies whenever limit is omitted (incl. with explicit offset). bun tsc --noEmit clean; new test file 5/5 pass; pre-existing FIX-REFINE-PENDING-SCHEMA.test.ts (same tool) 13/13 pass unchanged; gen-project-stats toolCount=184/cronJobCount=88 unchanged (no tool added/removed). Commits 51f162829 (code+test+doc) + e0ed0369e (decision journal), pushed. rebuild_required:true — LIVE inline-payload-size verify needs the container rebuild; leaving to QA/ops cascade per dispatch instruction."
+      },
+      {
+        "id": "FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED",
+        "type": "FIX",
+        "title": "signal_outcomes resolution job stalled: 65/72 rows pending >5d, checked_at never advances; calibration frozen since 2026-06-14",
+        "status": "QA",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-SIGNAL-OUTCOMES-RESOLUTION-STALLED",
+        "promoted_at": "2026-07-25T00:17:59Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-12T04:52:28Z",
+        "claimed_at": "2026-08-12T04:52:27Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "rebuild_required": true,
+        "branch": null,
+        "review_note": "dev-mcp-server: root cause = 2 compounding bugs in signalOutcomeStore.ts (Option-B /price/history envelope-shape parse bug — flat array vs real {code,history}, same class as 1945a — + hardcoded days=3 unusable for old dates; baseline price_at_signal had NO Option-B fallback at all against market_prices_history's rolling ~24h purge). Live-verified 102/105 rows stuck pending despite hourly cron reporting success. Fixed via canonical getPriceHistory client + dynamic days + injectable fetchHistoryFn. Live-copy-DB proof (real stock-price service, not the live container): 102 pending -> 7 (98/105 checked_at populated), remaining 7 legit (2 non-ticker MACRO/MULTI signals, 5 too-recent for 48h window) -- self-heals via the SAME already-scheduled hourly cron once deployed, no backfill script needed. Also fixed folded_scope_orphan_fk durably: cleanExpired()/checkStaleAgentSignals() bulk DELETEs were throwing FOREIGN KEY constraint failed (rolled back, 0 rows) whenever any matched row was still referenced by signal_outcomes -- live-verified 104/5983 expired rows blocked -- guarded both with NOT IN subquery; getAccuracyStats INNER->LEFT JOIN so orphans are not silently dropped from stats; the 1 existing orphan (id=66) resolves normally via the fixed generic resolver, no special-case script. Added checkStalledResolutionLiveness() self-alert guard (>=1 BUG alert/day if rows sit unresolved >72h). SCOPE NOTE: verification_gate (b) get_calibration_report is a DIFFERENT subsystem (prediction_claims/calibrationReportJob.ts) -- live DB already shows computed_at=2026-07-19/resolved=6 (independently self-recovered) -- gate already passes, did not touch that code. Evidence: tsc clean, new suite 9/9 pass, affected+precedent suites 147/147 pass, toolCount=184/cronJobCount=88 unaffected, local server boot clean. Commits 1f4b491b1 (code+test) + 537911454 (memory), pushed origin/main. QA: verify LIVE named-vol DB post-rebuild per verification_gate (a)/(b)/(c)."
       }
     ],
     "_closed_signals_20260614": {
@@ -19923,7 +19946,7 @@
         "last_served_tick": "2026-08-12T04:21:35Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-12T01:51:27Z"
+        "last_served_tick": "2026-08-12T04:51:35Z"
       },
       "qa_drain": {
         "last_served_tick": "2026-08-12T02:22:00Z"
@@ -19932,7 +19955,7 @@
         "last_served_tick": "2026-08-12T02:51:32Z"
       }
     },
-    "_updated_at": "2026-08-12T04:50:48Z",
+    "_updated_at": "2026-08-12T04:51:35Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
