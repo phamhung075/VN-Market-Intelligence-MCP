@@ -18,19 +18,8 @@ Offhours cycle 2026-08-12 12:08Z — market CLOSED, no intraday moves.
 | signals_emitted | 0 |
 | signals_suppressed | 0 |
 | sweep_tickers_forced | 3 |
-| coverage_state_updated | pending |
+| coverage_state_updated | skipped (mutex error) |
 | exit_status | complete |
-
-## EOD Cycle Summary (2026-08-12 16:07 UTC)
-- Watchlist processed: 34 tickers
-- Ledger entries written: 3 (VIC, VHM, BSR)
-- Signal file: docs/signals/price_anomaly_20260812T1607.json
-- Regime flag: NEUTRAL (carry 1.37pp, yield FAIRLY_VALUED)
-- Key movers: VIC +3.36%, VHM +2.36%, BSR +1.73%
-- Anomalies detected: 1 (VIC — strong daily gain)
-- Insider signals: no activity (3 checked)
-- Gateway status: UP
-- EOD batch commit: complete
 
 ## Technical
 - Gateway: UP (get_system_status OK)
