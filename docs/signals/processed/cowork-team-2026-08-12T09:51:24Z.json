@@ -1,0 +1,28 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-summary",
+  "payload": {
+    "tick": "2026-08-12T09:45Z",
+    "drift_min": 6,
+    "matched_slots": [],
+    "won_slots": [],
+    "spawned": [],
+    "collision_warning": null,
+    "pressure_mode": "adaptive",
+    "due_reasons": {},
+    "cadence_minutes": {},
+    "last_fired_timestamp": null,
+    "classification": "FIRE",
+    "reason": "signal-only tick, no slots/one-shots due",
+    "note": "0 slots matched, 0 one-shots. Same NEW row persists (sys-20260812T093525-1b2b, dedup_key=microservice_degraded:rag-service:A-30, CRITICAL) -- no re-escalation this tick, so no repeat telegram (already flagged bug channel message_id=5150 last tick). Now ~90min since first occurrence (08:15Z), ~15min since CRITICAL. Left at NEW per established rule. Step 4.7 tick-snapshot skipped (established pattern)."
+  },
+  "priority": "normal",
+  "createdAt": "2026-08-12T09:51:24Z",
+  "_processed": {
+    "fingerprint": "3b285cc5b8fe3ad9fe83cc9aabb45c702d259a39994312cfa9a78896677a6c45",
+    "processedAt": "2026-08-12T10:31:35Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -5,8 +5,8 @@
     "last_linecount": 64,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786522916,
-      "last_linecount": 62
+      "last_mtime": 1786530758,
+      "last_linecount": 67
     }
   },
   "decision_journal": [
@@ -133,7 +133,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-12T09:51:44Z",
+    "_updated_at": "2026-08-12T10:32:21.214Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -1231,7 +1231,7 @@
         "type": "signal_feedback",
         "summary": "A-30 FAIL: vn-market-intelligence-mcp-rag-service-1 — sustained memory pressure (95.32% sustained, loss of reclamation)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -1245,7 +1245,7 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-12.json"
       }
     ],
@@ -20176,7 +20176,7 @@
         "last_served_tick": "2026-08-12T09:54:54Z"
       }
     },
-    "_updated_at": "2026-08-12T10:31:35Z",
+    "_updated_at": "2026-08-12T10:32:21.214Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20404,6 +20404,36 @@
         },
         "createdAt": "2026-08-12T10:30:46Z",
         "drained_at": "2026-08-12T10:31:35Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "94f54a9a9ba706cb2cdf82433e97ff4a9a465cd7688290b638cf408f1175367f",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "WARN",
+        "payload": "A-30 FAIL: vn-market-intelligence-mcp-rag-service-1 — sustained memory pressure (95.32% sustained, loss of reclamation)",
+        "createdAt": "2026-08-12T10:06:04Z",
+        "drained_at": "2026-08-12T10:32:21.214Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e87dfcd6066bb312397738de89cccacb5888b51ef6981ac457544f0df24c489c",
+        "source": "dashboard",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "LOW",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-12T10:30:04Z",
+        "drained_at": "2026-08-12T10:32:21.214Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

@@ -1,0 +1,28 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-summary",
+  "payload": {
+    "tick": "2026-08-12T10:15Z",
+    "drift_min": 6,
+    "matched_slots": [],
+    "won_slots": [],
+    "spawned": [],
+    "collision_warning": null,
+    "pressure_mode": "adaptive",
+    "due_reasons": {},
+    "cadence_minutes": {},
+    "last_fired_timestamp": null,
+    "classification": "FIRE",
+    "reason": "signal-only tick, no slots/one-shots due",
+    "note": "0 slots matched, 0 one-shots. Same NEW row persists (sys-20260812T100604-517d, WARN, 95.32%) -- no change since 10:00Z tick, no re-notify. Left at NEW per established rule. Step 4.7 tick-snapshot skipped (established pattern)."
+  },
+  "priority": "normal",
+  "createdAt": "2026-08-12T10:21:21Z",
+  "_processed": {
+    "fingerprint": "dfcc52ec527ec89a255faa573eda3e8f4c8b8a4032f4c3bf5beb2166ab0a812b",
+    "processedAt": "2026-08-12T10:31:35Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
