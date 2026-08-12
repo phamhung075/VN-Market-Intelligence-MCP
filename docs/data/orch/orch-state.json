@@ -1171,6 +1171,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-12T12:00Z",
         "dedup_key": "microservice_degraded:vn-bctc-fetch:B-07"
+      },
+      {
+        "id": "sys-20260812T150735-2e4e",
+        "ts": "2026-08-12T15:07:35Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "pdf-extractor A-30 sustained high memory >93% — loss of reclamation",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T15:00Z",
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30"
       }
     ],
     "last_triaged_at": "2026-08-12T08:40:43Z",
