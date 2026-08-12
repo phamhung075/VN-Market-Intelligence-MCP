@@ -949,6 +949,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-12T00:30Z",
         "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+      },
+      {
+        "id": "sys-20260812T010727-7f75",
+        "ts": "2026-08-12T01:07:27Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service A-30 memory sustained high — 6-sample deep-probe all 98.73% — loss of reclamation",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T01:00Z",
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -20015,7 +20029,7 @@
         "last_served_tick": "2026-08-12T00:21:28Z"
       },
       "sls": {
-        "last_served_tick": "2026-08-11T21:52:52Z"
+        "last_served_tick": "2026-08-12T00:51:18Z"
       },
       "rlc": {
         "last_served_tick": "2026-08-11T22:24:40Z"
@@ -20030,7 +20044,7 @@
         "last_served_tick": "2026-08-11T23:51:40Z"
       }
     },
-    "_updated_at": "2026-08-12T00:50:41Z",
+    "_updated_at": "2026-08-12T01:20:44Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20419,6 +20433,18 @@
         "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=42 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
         "createdAt": "2026-08-12T00:37:39Z",
         "drained_at": "2026-08-12T00:50:41Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "39dcd8a572f2f36d855f9b16560b23198e3942a1412d091e6e9a199905d53b13",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md docs/data/auditor-dedup-ledger.json. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=43 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T01:14:36Z",
+        "drained_at": "2026-08-12T01:20:44Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
