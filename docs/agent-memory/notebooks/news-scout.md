@@ -6,6 +6,13 @@
 
 ---
 
+## c253 · 2026-08-12T04:04:00Z (off-hours, slot=news-scout-offhours)
+
+- Items: 30 fetched (20 domestic cafef/vnexpress/vneconomy + 10 reuters) | Market: OPEN (02:00–08:59 UTC) | Impacts: Gold central-bank/ETF buying momentum safe-haven signal (impact=7/10 bullish macro), Corporate earnings superstocks Q2 margin growth (impact=10/10 bullish real_estate/oil_gas/retail/gold_mining), Banking sector stress test alert (impact=8/10 bearish sector headwind). | Signals: 3 posted (#10722 chain_catalyst gold_macro bullish, #10723 chain_catalyst earnings_bullish bullish, #10724 chain_catalyst banking_stress bearish). | Regime: NEUTRAL (macro_snapshot live tier=2, investment-clock CORE_VN=8, oil NEUTRAL $89.92, gold BULLISH $4462.50, USD/VND BEARISH 25950, carry NEUTRAL 1.37pp, yield FAIRLY_VALUED 1.70pp). | Carry: NEUTRAL.
+- Market sentiment ema_5d=1.27 bullish (bull_ratio=30.0%, bear=14.5%, neutral=55.4%, total_articles_5d=543, confidence=0.4 insufficient baseline). Insider sentiment INSUFFICIENT_DATA (0 transactions 90d window). Evidence: 3 fragments recorded (VCB bearish 0.4/0.5, MARKET macro_bullish 0.8/0.8, SSI bearish 0.4/0.44). Dedup: SELF_SIGNALS_CACHE=[] (empty, no prior news-scout 6h), SIBLING_WINDOW_CACHE=7 entries from alert-engine (verified_decision, cross-sibling check performed, no suppressions), 3 new signals passed gate (no dedup suppressions). Impact chains traced (3 articles: gold 2 entries banking/gold_mining, earnings 8 entries real_estate/oil_gas/retail/securities, banking 8 entries banking/securities). Gateway OK (probe 24ms, bootstrap 19ms, macro 20ms, fetch+analyze 520ms combined domestic+reuters, sentiment 2ms, insider 1ms, signals 1500ms). Exec-proof gate PASS. Session log OPEN/CLOSE (id=pending). Coverage-state update via coverage-stamp.sh. WORK ping sent. Cycle SHIPPED (3 signals, critic=0.8, phase=expansion tier=equity).
+
+---
+
 ## c252 · 2026-08-12T01:32:00Z (off-hours, slot=news-scout-sentiment)
 
 - Items: 30 fetched (20 domestic cafef/vnexpress/vneconomy + 10 reuters) | Market: CLOSED (off-hours) | Impacts: Gold surge bullish macro signal (impact=8/10 bullish safe-haven, central-bank/ETF accumulation), Corporate earnings superstocks with margin growth (impact=9/10 bullish real_estate/tech/retail), Banking sector covered in both signals. | Signals: 2 posted (#10705 chain_catalyst gold_macro bullish, #10706 chain_catalyst earnings bullish). | Regime: NEUTRAL (macro_snapshot live tier=2, investment-clock CORE_VN=8, oil NEUTRAL $89.47, gold BULLISH $4440.90, USD/VND BEARISH 25940, carry NEUTRAL 1.37pp, yield FAIRLY_VALUED 1.70pp). | Carry: NEUTRAL.
