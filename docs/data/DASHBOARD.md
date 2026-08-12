@@ -1714,3 +1714,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service sustained memory 95.57% (loss of reclamation)
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-rag-service-1
+**Details:** Memory pressure sustained across 6-probe window. VmHWM pinned at cgroup limit.
+**Impact:** Service may face memory allocation delays or eviction
+**Root cause:** Sustained high memory utilization without reclamation
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-12T15:35:49Z (signal sys-20260812T153534-59fc, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
