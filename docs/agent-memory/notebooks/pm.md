@@ -125,3 +125,31 @@ The dev-macro-indicators agent identified a second defect in apps/mcp-server/ zo
 ## Archive
 
 Cycles c320 (BA-PREDICTION-EVIDENCE-REVIVAL, 2026-07-01), c319 (EVENING_SUMMARY, 2026-06-21), c327 (P1-MOMENTUM-RS, 2026-06-30), c318 (ARCH-AUTO-PUSH, 2026-06-18), c317 (OHLCV-WRITER, 2026-06-17), c316 (ERRAUDIT-W2, 2026-06-16), and c315 (BCTC-ENRICH, 2026-06-15) archived — see git history (this file, pre-2026-07-10T20:00Z) and commits 675891163d...5d121989 / c06b09a1 for full sprint records. Older cycles (c299–c189) archived to [pm-20260611.md](../../archive/notebooks/pm-20260611.md).
+
+## Cycle 2026-08-12T14:11Z — Decompose + Dispatch TICK-WU-1/2 (Post-QA WU-0 Verified Gate)
+
+**Sprint:** TICK-PREFLIGHT-USAGE-INSTRUMENTATION
+
+**Input:** QA handoff: "WU-0 (TICK-WU-0-TELEMETRY-LIB) is DONE_VERIFIED; dependency gate satisfied for WU-1 and WU-2. Move from BACKLOG to TODO and dispatch."
+
+**Work:**
+1. Read prior PM decomposition (sprint-TICK-PREFLIGHT-USAGE-INSTRUMENTATION-pm.md) — specs already exist, no re-decomposition needed
+2. Read existing handoff files (TASK_TICK-WU-1-COWORK-WIRING.md, TASK_TICK-WU-2-DEVTEAM-WIRING.md) — AC/AC-10/Risk notes confirmed
+3. Verify WU-0 status = DONE_VERIFIED in orch-state.json — confirmed
+4. Check WIP budget (in_progress count) — 1/2, room for 2 more S-sized tasks
+5. Update task status: BACKLOG → TODO for both WU-1 and WU-2 via orch-apply.sh (atomic write)
+6. Commit orch-state.json change (pathspec-scope, no peer dirt sweep) — ea982859c
+
+**Status:** Both tasks flipped to TODO. Ready for developer pickup.
+
+**Decision:** Dispatch both WU-1 and WU-2 to developer in parallel:
+- Both S-sized, same pattern (mechanical 2-3 line trailer wiring)
+- No file overlap (cowork-tick-preflight.sh vs dev-team-tick-preflight.sh)
+- Same zone (cross-service/)
+- No inter-task dependencies (both depend on WU-0, which is satisfied)
+- Fits WIP budget (1 + 2 = 3 total ≤ safe capacity for S+S tasks)
+- Per PM init.md parallel_dispatch: "all independent handoffs in one message"
+
+**Risk Acknowledged:** WU-3 (TICK-WU-3-AUDITOR-WIRING) stays gated on WU-1+WU-2 landing green — do not unblock WU-3 until both complete QA verification.
+
+**Next:** Router to spawn developer with TASK_TICK-WU-1-COWORK-WIRING.md and TASK_TICK-WU-2-DEVTEAM-WIRING.md (both ready, no blockers).
