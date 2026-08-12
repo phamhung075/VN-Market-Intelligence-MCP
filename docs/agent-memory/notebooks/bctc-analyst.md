@@ -1,6 +1,21 @@
 # BCTC Analyst — Notebook
 
-**Last updated:** 2026-08-11T21:03:14Z | **Sprint:** BCTC-EXTRACT-QUALITY
+**Last updated:** 2026-08-12T00:07:42Z | **Sprint:** BCTC-EXTRACT-QUALITY
+
+## c158 · 2026-08-12T00:07:42Z
+### Analysis Cycle (00:03–00:08 UTC) — mode: routine — slot=bctc-analyst-slot-4, cycle_id 20260812-0000
+- E2 guard PASS (00:03Z, well outside 02:00-08:00Z window). Calendar unchanged: EIB/SHB/VCB ĐÃ NỘP (Q1-2026) only, no newly filed watchlist tickers → MODE_RELEASE=false. FPT/HPG/VCB get_bctc_full live-reconfirmed byte-identical to c157 (Q1-2026 latest, Q2-2026 still not extracted). DXG still "Chưa có dữ liệu BCTC" (17th+ cycle).
+- EY_SPREAD live-recomputed, unchanged vs c157: FPT FAIR+2.25pp(PE13.8/ROE28.3%), HPG FAIR+2.04pp(PE14.2/ROE12.7%), VCB FAIR+2.09pp(PE14.1/ROE16.7%), DXG AVOID-3.50pp(PE66.5/ROE1.9%). KD unchanged (FPT/DXG Kien(39) BAT LOI 25%; HPG Du(16) THUAN LOI 50%; VCB Tuy(45) THUAN LOI 62%).
+- ESC gate LIVE-recomputed: ESC-1 unevaluable (no Bash/Glob). ESC-2 FPT/HPG=0.00%, VCB=0.37% → FALSE; DXG unevaluable. ESC-3: FPT/HPG quarters_returned=3/4 → DATA-COVERAGE-LIMITED, coverage guards task_claim(FPT+HPG) → claimed:false both, held since c154 re-arm (TTL 8d, unchanged) → no re-emit; VCB 4/4, divergence=0.368<0.40 → FALSE; DXG unevaluable. ESC-4: FPT non_operating_share=2.0% → FALSE; HPG discarded (operating_profit=0 corrupt, 13th+ cycle); VCB N/A (bank); DXG unevaluable.
+- ESC-5 FPT: report_id e8ea3df5-3f32-413d-a3eb-c71634c0438d live-reconfirmed, 15 units, confidences byte-identical to c157 (7 units <0.50, min=0.45) → ESC-5=TRUE again. Guard task_claim(esc-deepdive:FPT:Q1-2026:ESC-5) → claimed:false, held by prior session (armed c155 15:10Z, TTL 24h, expires ~2026-08-12T15:13Z) → GUARD-HELD, no re-emit (still PENDING dev-team pickup). HPG/VCB ESC-5: refine_status=PARTIAL(report_id=null) → FALSE/skip.
+- 8 evidence fragments recorded (ids 1130-1137): FPT roe_strong(1.00)+report_overdue(0.5); HPG roe_ratio(0.51)+report_overdue(0.5); VCB roe_strong(0.67, not overdue — Q1 ĐÃ NỘP); DXG valuation_premium(1.00)+roe_ratio(0.30)+report_overdue(0.5).
+- get_insider_sentiment: market-wide NEUTRAL, null (INSUFFICIENT_DATA 90d window) — honest-NULL. Legal: zero. Chain findings (30min): 0 (cycle_id 20260812-0000) → no fundamental_validation posted. Insider (per-ticker): none significant (4 tickers).
+- Wrote 4 bctc_signal_{TICKER}_20260812_routine.json (FPT/HPG/VCB/DXG) with full business-context fields + esc_gate block, all "File created".
+- E1 6-pass trick detection: SCOPE-REDUCED — no Bash/Glob to enumerate data/bctc-analysis-cache/. Standing capability gap, unchanged.
+- REGIME=NEUTRAL fallback (macro_snapshot has no Global-Liquidity field — persistent gap). CARRY_REGIME=NEUTRAL(1.37pp). MAX_DEPOSIT_RATE=5%. VN-Index 1773.41(-3.36,down), unchanged from c157 read. Investment Clock=VN_DIRECT/Overheat(CPI5.46%,growth UP) score 8.
+- log_agent_work(id=1883) opened+completed this cycle. Published-marker claimed (published:bctc-analyst-slot-4:2026-08-12T00:00:00Z, no peer collision) — WORK telegram sent.
+- Session note: no Bash tool this session — notebook git-commit deferred to next Bash-capable process (long-running precedent, unchanged).
+- Carry-over to next slot (15:00Z): FPT ESC-5 escalation still PENDING dev-team pickup, guard expires ~2026-08-12T15:13Z — do not re-dispatch while guard held. FPT/HPG ESC-3 8d coverage guards unchanged, expire ~2026-08-17. HPG operating_profit=0 still unresolved (13th+ cycle). DXG "Chưa có dữ liệu" still unresolved (17th+ cycle).
 
 ## c157 · 2026-08-11T21:03:14Z
 ### Analysis Cycle (21:03–21:15 UTC) — mode: routine — slot=bctc-analyst-slot-3, cycle_id 20260811-2100
@@ -31,18 +46,3 @@
 - log_agent_work(id=1878) opened; completing this cycle. Published-marker claimed (published:bctc-analyst-slot-2:2026-08-11T18:00:00Z, no peer collision) — WORK telegram sent.
 - Session note: no Bash tool this session — notebook git-commit deferred to next Bash-capable process (long-running precedent, unchanged).
 - Carry-over to next slot (21:00Z): FPT ESC-5 escalation still PENDING dev-team pickup, guard expires ~2026-08-12T15:13Z — do not re-dispatch while guard held. FPT/HPG ESC-3 8d coverage guards unchanged, expire ~2026-08-17. HPG operating_profit=0 still unresolved (11th+ cycle). DXG "Chưa có dữ liệu" still unresolved (15th+ cycle).
-
-## c155 · 2026-08-11T15:10:18Z
-### Analysis Cycle (15:10–15:19 UTC) — mode: routine — slot=bctc-analyst-slot-1, cycle_id 20260811-1500
-- Gap note: last notebook entry (c154) was 2026-08-09T00:12Z — ~63h gap, likely autoprune of intervening cycles (not a missed-cycle claim; no evidence checked either way). E2 guard PASS (15:10Z, well outside 02:00-08:00Z window). Calendar unchanged: EIB/SHB/VCB ĐÃ NỘP (Q1-2026) only, no newly filed watchlist tickers → MODE_RELEASE=false. FPT/HPG/VCB get_bctc_full still Q1-2026 (Q2-2026 not yet extracted). DXG still "Chưa có dữ liệu BCTC" (live-reconfirmed).
-- EY_SPREAD live-recomputed, unchanged vs last-seen: FPT FAIR+2.25pp(PE13.8/ROE28.3%), HPG FAIR+2.04pp(PE14.2/ROE12.7%), VCB FAIR+2.09pp(PE14.1/ROE16.7%), DXG AVOID-3.50pp(PE66.5/ROE1.9%). KD unchanged (FPT/DXG Kien(39) BAT LOI 25%; HPG Du(16) THUAN LOI 50%; VCB Tuy(45) THUAN LOI 62%).
-- ESC gate LIVE-recomputed: ESC-1 unevaluable (no Bash/Glob). ESC-2 FPT/HPG=0.00%, VCB=0.37% → FALSE; DXG unevaluable. ESC-3: FPT/HPG quarters_returned=3/4 → DATA-COVERAGE-LIMITED, coverage guard task_claim → claimed:false, held by MY OWN session (unchanged since ~c154 re-arm, TTL 8d, expires ~2026-08-17) → no re-emit; VCB 4/4, divergence=|12944932/9462095−1|=0.368<0.40 → FALSE; DXG unevaluable (OCF ~4.2e18, corrupt, discarded). ESC-4: FPT non_operating_share=(2803844.28−2747800)/2803844.28=2.0% → FALSE; HPG discarded (operating_profit=0 corrupt, persistent); VCB N/A (bank); DXG unevaluable.
-- **ESC-5 FPT FIRED TRUE this cycle** — prior 24h dispatch guard (armed ~c152/c153) had lapsed (task_claim → claimed:true, fresh). Ran full get_bctc_report_id(FPT,Q1)→report_id=e8ea3df5-3f32-413d-a3eb-c71634c0438d→get_bctc_refined: 15 units, confidences [0.85,0.8,0.6,0.6,0.6,0.7,0.55,0.5,0.45×7] — 7 units <0.50 (unit-0008..unit-0014, min=0.45) → ESC-5=TRUE. Released premature early-claim, re-claimed correctly inside Escalation Decision (claimed:true) → emitted docs/signals/bctc-analyst-20260811T151018Z.json (esc-deep-dive-request, from=bctc-analyst to=dev-team, severity=HIGH). HPG/VCB ESC-5: refine_status=PARTIAL(report_id=null) → FALSE/skip.
-- 8 evidence fragments recorded (ids 1083–1090): FPT roe_strong(1.00)+report_overdue(0.5); HPG roe_ratio(0.51)+report_overdue(0.5); VCB roe_strong(0.67, not overdue — Q1 ĐÃ NỘP); DXG valuation_premium(1.00)+roe_ratio(0.30)+report_overdue(0.5).
-- get_insider_sentiment: market-wide NEUTRAL, null (INSUFFICIENT_DATA 90d window) — honest-NULL, cited in signal context. Legal: zero. Chain findings (30min): 3 (system-auditor signal_feedback, stock_code=unknown) — not FPT/HPG/VCB/DXG → no fundamental_validation posted. Insider (per-ticker): none significant (4 tickers).
-- Wrote 4 bctc_signal_{TICKER}_20260811_routine.json (FPT/HPG/VCB/DXG) with full business-context fields + esc_gate block, all "File created".
-- E1 6-pass trick detection: SCOPE-REDUCED — no Bash/Glob to enumerate data/bctc-analysis-cache/. Standing capability gap.
-- REGIME=NEUTRAL fallback (macro_snapshot has no Global-Liquidity field — persistent gap). CARRY_REGIME=NEUTRAL(1.37pp). MAX_DEPOSIT_RATE=5%. VN-Index 1773.41(-3.36,down). Investment Clock=VN_DIRECT/CORE_VN score 8.
-- log_agent_work(id=1874) opened; completing this cycle. Published-marker claimed (published:bctc-analyst-slot-1:2026-08-11T15:00:00Z, no peer collision) — WORK telegram sent.
-- Session note: no Bash tool this session — notebook git-commit deferred to next Bash-capable process (long-running precedent).
-- Carry-over to next slot (18:00Z): FPT ESC-5 escalation now PENDING dev-team pickup (guard expires 2026-08-12T15:10Z) — do not re-dispatch while guard held; re-check status next cycle. FPT/HPG ESC-3 8d coverage guards unchanged, expire ~2026-08-17. HPG operating_profit=0 still unresolved. DXG "Chưa có dữ liệu" still unresolved.
