@@ -1738,3 +1738,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · pdf-extractor A-30 CRITICAL memory pressure >93%
+**Severity:** CRITICAL | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** pdf-extractor container
+**Details:** pdf-extractor sustained memory 95.32% max, 95.18% min over 65s window
+**Impact:** Service may be evicted by OOMKiller if memory pressure remains sustained
+**Root cause:** pdf-extractor container memory usage consistently at/near cgroup limit
+**Zone owner:** dev-pdf-extractor
+**Last reported:** 2026-08-12T16:05:46Z (signal sys-20260812T160538-57ef, system-auditor -> po, dedup_key=microservice_degraded:pdf-extractor:A-30, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
