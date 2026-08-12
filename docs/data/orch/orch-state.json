@@ -134,7 +134,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-12T06:27:48Z",
+    "_updated_at": "2026-08-12T06:53:13Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -1063,7 +1063,7 @@
         "type": "system-issue",
         "summary": "stranded-state sweep: unknown paths need owner (8)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -1077,7 +1077,7 @@
         "type": "cron_fire_gap",
         "summary": "cron fire gaps: intelligenceCycle LATE (0.3h), bctcReparseJob MISSED (40.5h), 4 more STALE >280h",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-12T04:00Z",
@@ -19874,7 +19874,7 @@
         "last_served_tick": "2026-08-12T05:52:24Z"
       }
     },
-    "_updated_at": "2026-08-12T06:25:15Z",
+    "_updated_at": "2026-08-12T06:53:13Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -21042,6 +21042,148 @@
         "payload": "low_confidence_financial_reports: 45 financial_reports rows with extraction_confidence < 0.2 (very low confidence OCR extraction)",
         "createdAt": "2026-08-12T06:22:02Z",
         "drained_at": "2026-08-12T06:23:25Z",
+        "routed_to": "po"
+      },
+      {
+        "envelope_id": "e12a288fb70a4f26104d9238d6dddebab6e401b4af9a2b5a49d2844d776319e8",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=50 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T06:40:01Z",
+        "drained_at": "2026-08-12T06:52:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b4f466b039a4df7d95c8aa86ec0c60618515915d3d2898b98cca0f1a9ea09714",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T06:31:51Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-12T06:31:49Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "06:30",
+          "leader_lock": "acquired",
+          "dev_head": "in_progress",
+          "devq": 78,
+          "signal_backlog": 2,
+          "note": null
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-12T06:52:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cf828219912c8474b7c0e93879af33e09c28b2bf198db76e95d907399c68ce27",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T06:47:45Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-12T06:47:37Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "06:45",
+          "leader_lock": "acquired",
+          "dev_head": "in_progress",
+          "devq": 78,
+          "signal_backlog": 2,
+          "note": null
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-12T06:52:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "sha256-sys-20260812T062748-62e0",
+        "source": "dashboard",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "WARN",
+        "payload": "stranded-state sweep: unknown paths need owner (8)",
+        "createdAt": "2026-08-12T06:27:48Z",
+        "drained_at": "2026-08-12T06:53:13Z",
+        "routed_to": "po"
+      },
+      {
+        "envelope_id": "sha256-sys-20260812T063102-52f1",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "priority": "WARN",
+        "payload": "cron fire gaps: intelligenceCycle LATE (0.3h), bctcReparseJob MISSED (40.5h), 4 more STALE >280h",
+        "createdAt": "2026-08-12T06:31:02Z",
+        "drained_at": "2026-08-12T06:53:13Z",
         "routed_to": "po"
       }
     ],

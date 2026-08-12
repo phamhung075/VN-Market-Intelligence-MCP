@@ -3,52 +3,51 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-08-05T01:36:10Z",
+    "fire_time": "2026-08-12T06:31:51Z",
     "matched_slots": [
-      "news-scout-sentiment"
+      "alert-commander-market"
     ],
     "won_slots": [
-      "news-scout-sentiment"
+      "alert-commander-market"
     ],
     "held_by_other": [],
     "all_held": false,
     "spawned": [
-      "docs/agents/news-scout/flow/main.md"
+      "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 2,
+    "drift_min": 0,
     "errors": [],
     "pressure_mode": "adaptive",
-    "calendar_status": "closed",
+    "calendar_status": "open",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
     "due_reasons": {
-      "news-scout-sentiment": "cadence"
+      "alert-commander-market": "cron"
     },
     "cadence_minutes": {
-      "news-scout-sentiment": "240"
+      "alert-commander-market": null
     },
-    "last_fired_timestamp": "2026-08-05T01:35:52Z",
+    "last_fired_timestamp": "2026-08-12T06:31:49Z",
     "last_fired_slots": [
-      "news-scout-sentiment"
+      "alert-commander-market"
     ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
-    "nominal_tick": "01:30",
+    "nominal_tick": "06:30",
     "leader_lock": "acquired",
-    "dev_head": "unknown",
-    "devq": 5,
-    "signal_backlog": 28,
-    "note": "single-slot cadence-due fire (news-scout-sentiment, 240min cadence)"
+    "dev_head": "in_progress",
+    "devq": 78,
+    "signal_backlog": 2,
+    "note": null
   },
   "priority": "low",
-  "createdAt": "2026-08-05T01:36:10Z",
   "_processed": {
-    "fingerprint": "eb7a6c9bcea36b9a30f71d16300797376c151906a0310c97d338cd83752bb4bb",
-    "processedAt": "2026-08-05T06:40:41Z",
+    "fingerprint": "b4f466b039a4df7d95c8aa86ec0c60618515915d3d2898b98cca0f1a9ea09714",
+    "processedAt": "2026-08-12T06:52:27Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
