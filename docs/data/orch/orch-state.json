@@ -20028,7 +20028,7 @@
         "last_served_tick": "2026-08-12T02:51:32Z"
       }
     },
-    "_updated_at": "2026-08-12T03:21:32Z",
+    "_updated_at": "2026-08-12T03:50:57Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20182,6 +20182,136 @@
         },
         "createdAt": "2026-08-12T03:16:51Z",
         "drained_at": "2026-08-12T03:20:53Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "514609c6c8b406d510faaf9d29ac73abe4998cd1e527088b17653673fa68a97e",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/data/cowork-schedule.json docs/signals/cowork-team-2026-08-12T03:34:34Z.json. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=45 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T03:35:29Z",
+        "drained_at": "2026-08-12T03:50:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c0997a397f62316a1f345a93ea180204c455c6abf5fcdac157f5b620923b760e",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c47 · 2026-08-12T03:05Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-12T03:41:12Z",
+        "drained_at": "2026-08-12T03:50:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4fed7c484ec1f63d8aba875a83aefdf6553f4b3eb63628938b25718d8fcde704",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T03:34:34Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-12T03:34:34Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "03:30",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 469,
+          "signal_backlog": 25,
+          "note": "single-slot tick, alert-commander-market cron fire, no collisions, no calendar/cadence suppression"
+        },
+        "createdAt": "2026-08-12T03:34:34Z",
+        "drained_at": "2026-08-12T03:50:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8c3976e867727fc3a0c1e58bfa95fedff6da26d62e4fa0d77212b506687ff49e",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T03:46:44Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-12T03:46:44Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "03:45",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 469,
+          "signal_backlog": 27,
+          "note": "single-slot tick, alert-commander-market cron fire, no collisions, no calendar/cadence suppression"
+        },
+        "createdAt": "2026-08-12T03:46:44Z",
+        "drained_at": "2026-08-12T03:50:57Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
