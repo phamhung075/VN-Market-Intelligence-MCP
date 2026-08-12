@@ -963,6 +963,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-12T01:00Z",
         "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+      },
+      {
+        "id": "sys-20260812T022122-1cb1",
+        "ts": "2026-08-12T02:21:22Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "summary": "bctcReparseJob MISSED (36.4h overdue, threshold 36.0h)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-12T00:00Z",
+        "dedup_key": "auditor-a29-fire-gap:bctcReparseJob"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -20035,7 +20049,7 @@
         "last_served_tick": "2026-08-12T01:21:28Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-11T22:51:22Z"
+        "last_served_tick": "2026-08-12T01:51:27Z"
       },
       "qa_drain": {
         "last_served_tick": "2026-08-11T23:21:05Z"
@@ -20044,7 +20058,7 @@
         "last_served_tick": "2026-08-11T23:51:40Z"
       }
     },
-    "_updated_at": "2026-08-12T01:50:43Z",
+    "_updated_at": "2026-08-12T02:21:01Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20498,6 +20512,153 @@
         },
         "createdAt": "2026-08-12T01:31:50Z",
         "drained_at": "2026-08-12T01:50:43Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ab2ef121e10b974d9bc193e736c2ddb21edc34ac68471e5f1a00a0ea2ceb12e5",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-adfe39b4",
+          "head_sha": "adfe39b4cd8a96a179098bf96a2431f8f9882894",
+          "run_id": 31554343974,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31554343974",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 93983548314
+            },
+            {
+              "name": "size-lint",
+              "conclusion": "failure",
+              "jobId": 93983548564
+            }
+          ],
+          "fingerprint": "355b5c99491e683857fd89d50d566babdcaa75a615fbb3e72eae9eb20cb7bbce",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD adfe39b4cd8a96a179098bf96a2431f8f9882894: bun test,size-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-12T01:51:15Z",
+        "drained_at": "2026-08-12T02:21:01Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1d2d645e97dbed4fcc2fd68de268bdc83512d0763ff1ccf963bec40dadcdc785",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T02:01:45Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-12T02:01:43Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "02:00",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 0,
+          "signal_backlog": 25,
+          "note": "single-slot fire, alert-commander-market (VN market hours open)"
+        },
+        "createdAt": "2026-08-12T02:01:45Z",
+        "drained_at": "2026-08-12T02:21:01Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "550d2aab7e81a489efb2511a18da38f22e37d389e33bf0a12210c8608cd7b935",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T02:17:38Z",
+          "matched_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/unified-agent/flow/chef.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "chef-intraday": "cadence",
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "chef-intraday": 120,
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-12T02:17:35Z",
+          "last_fired_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "02:15",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 0,
+          "signal_backlog": 26,
+          "note": "2-slot fire, chef-intraday + alert-commander-market"
+        },
+        "createdAt": "2026-08-12T02:17:38Z",
+        "drained_at": "2026-08-12T02:21:01Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
