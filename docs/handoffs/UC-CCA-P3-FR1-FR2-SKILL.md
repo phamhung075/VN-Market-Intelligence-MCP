@@ -161,3 +161,17 @@ This task is a blocking dependency for 7 follow-on tasks (all FR-3 wiring tasks)
 - UC-CCA-P3-FR3-SPAWN-FANOUT-CLEANUP
 
 These cannot start until this skill file is complete and visible to the flow-doc wiring tasks.
+
+---
+
+## [Developer] Implementation Record
+
+- **Files modified:** `.claude/skills/published-marker-gate/SKILL.md` (new file, 86L)
+- **Tests written:** none — doc/skill-only task, no `apps/` TS/Go touched, `bun test`/`tsc` structurally N/A
+- **Git commits:** `6d63b9cac` — feat(cross-service): published-marker-gate two-phase gate skill
+- **tsc status:** N/A (no code)
+- **Full suite:** N/A (no code)
+- **Docs updated:** `docs/WORK.md` (one-liner), `docs/data/orch/orch-state.json` (`UC-CCA-P3-FR1-FR2-SKILL` `ready[]`→`review[]`, `UC-CCA-P3` umbrella note, `UC-CCA-P3-FR5-CODE-GATE` dependency-satisfied annotation) — all via `orch-apply.sh`
+- **Graphify:** skipped — no Skill-tool path available to this Task-spawned agent session (structural gap, see `feedback_devteam_flow_needs_nested_agent_spawn_subagent_cannot.md`)
+- **AC verification:** AC-1 all 5 sub-bullets present (frontmatter name+description; Inputs MARKER_KEY/MARKER_TTL/OWNER_AGENT/OWNER_CLIENT_SESSION; Phase-1 pseudocode incl. `task_list_held` no-`task_id`-filter caveat; Phase-2 pseudocode incl. never-release + TTL-sole-expiry language; Design note on Phase-1-optional for alert-commander/bctc-analyst). AC-2: YAML frontmatter parses (verified via `python3 -c yaml.safe_load`). AC-3: `git show --stat 6d63b9cac` confirms exactly one file touched.
+- **Deviation from standard flow:** implemented directly by the dev-team-lead `developer` session rather than dispatched — `.claude/skills/` has no zone owner in `system-map.json` and this row's own `next_agent` was the non-specialist placeholder `"dev-team"`; matches this flow's documented known-drift fallback ("no matching zone → developer handles it directly"). This session also had no Agent-tool binding to nest-spawn a specialist regardless.
