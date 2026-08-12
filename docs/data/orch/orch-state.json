@@ -20032,7 +20032,7 @@
         "last_served_tick": "2026-08-12T00:51:18Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-11T22:24:40Z"
+        "last_served_tick": "2026-08-12T01:21:28Z"
       },
       "drs": {
         "last_served_tick": "2026-08-11T22:51:22Z"
@@ -20044,7 +20044,7 @@
         "last_served_tick": "2026-08-11T23:51:40Z"
       }
     },
-    "_updated_at": "2026-08-12T01:20:44Z",
+    "_updated_at": "2026-08-12T01:50:43Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20445,6 +20445,59 @@
         "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md docs/data/auditor-dedup-ledger.json. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=43 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
         "createdAt": "2026-08-12T01:14:36Z",
         "drained_at": "2026-08-12T01:20:44Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9cd935abf4b1ff03e42d5c269024dbb18f92183bac33418f021f9e88709b700b",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T01:31:50Z",
+          "matched_slots": [
+            "news-scout-sentiment"
+          ],
+          "won_slots": [
+            "news-scout-sentiment"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-sentiment": "cadence"
+          },
+          "cadence_minutes": {
+            "news-scout-sentiment": 240
+          },
+          "last_fired_timestamp": "2026-08-12T01:31:47Z",
+          "last_fired_slots": [
+            "news-scout-sentiment"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "01:30",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 0,
+          "signal_backlog": 26,
+          "note": "single-slot fire, news-scout-sentiment"
+        },
+        "createdAt": "2026-08-12T01:31:50Z",
+        "drained_at": "2026-08-12T01:50:43Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

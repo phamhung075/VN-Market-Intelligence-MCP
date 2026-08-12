@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-12T01:31:50Z",
+    "matched_slots": [
+      "news-scout-sentiment"
+    ],
+    "won_slots": [
+      "news-scout-sentiment"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-sentiment": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-sentiment": 240
+    },
+    "last_fired_timestamp": "2026-08-12T01:31:47Z",
+    "last_fired_slots": [
+      "news-scout-sentiment"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "01:30",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 0,
+    "signal_backlog": 26,
+    "note": "single-slot fire, news-scout-sentiment"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-12T01:31:50Z",
+  "_processed": {
+    "fingerprint": "9cd935abf4b1ff03e42d5c269024dbb18f92183bac33418f021f9e88709b700b",
+    "processedAt": "2026-08-12T01:50:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
