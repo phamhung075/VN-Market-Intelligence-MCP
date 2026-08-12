@@ -136,3 +136,71 @@ While this cycle's Tier-1 audit completes without escalation (per spec), the reg
 2. Why memory climbs so rapidly post-restart (90% in 50 minutes = ~900 MiB per hour accumulation)
 3. Whether the fix's env vars and malloc_trim are actually being applied
 4. The discrepancy between VmHWM=1437 MB and cgroup limit=1024 MB
+
+## c49 · 2026-08-12T12:03Z
+### Audit Run Tier-1 (12:03–12:06 UTC 2026-08-12)
+- Tier: 1 | Services: 13 checked | Health: all endpoints 200 OK
+- Anomalies: 0 new signals emitted | Status: ALL_GREEN (per spec)
+- Wall time: 3min
+
+**Probe Results Summary (RAW-PROBE at 12:03:46Z):**
+```
+Containers: 13/13 UP (healthy) — A-01 to A-11 PASS
+Health endpoints: 5/5 OK (HTTP 200) — A-12 PASS
+pdf-extractor multi-probe: 3/3 in-container probes passed — A-20 PASS
+Restart count: mcp-server RestartCount=0 — A-21 PASS
+Disk usage: 49% (13Gi used, 14Gi free) — A-32 PASS
+Hook enforcement liveness: all 4 load-bearing + 3 LOW-tier checks PASS — A-33 PASS
+```
+
+**A-30 Memory Pressure (Detailed Analysis):**
+
+*Engaged Container: vn-market-intelligence-mcp-rag-service-1*
+- Baseline at probe: 90.81% (1 GiB cgroup limit)
+- Deep-probe window: 6 samples over 65 seconds (13-second intervals)
+- Memory profile: FLAT (90.81% across all 6 probes, zero variation)
+- State during window: NO changes, NO OOMKilled, NO restarts
+- VmHWM status: pinned at cap (1437 MB), but NOT advancing during window
+
+*A-30 Verdict: FOLD (per probe.sh output)*
+- Reason: "benign GC sawtooth or below tripwire"
+- Escalation triggers NOT met:
+  - min_pct=90.81% (< 93% floor, no CRITICAL threshold) ✗
+  - median_pct=90.81% (< 97% peak) ✗
+  - reclamation_dips=0, discontinuities=0 ✗
+  - VmHWM advancing=false (even though pinned at cap) ✗
+- Per tier1-probe.md clause 4: verdict=="FOLD" → PASS, no emit
+
+**CRITICAL FINDING: STALE-ACK Annotation Mismatch**
+
+The pre-gate probe.sh reported:
+```
+STALE-ACK(tracked_by=FU-RAG-DEPLOY-MEMORY,status=DONE_VERIFIED)
+```
+
+Investigation reveals:
+- FU-RAG-DEPLOY-MEMORY task ID does NOT exist in current orch-state.json task_board
+- The STALE-ACK annotation is OUTDATED/INCORRECT
+- Real dedup ledger tracking shows: "microservice_degraded:rag-service:A-30:recurring-unresolved" (ts=2026-08-12T10:43:38Z, severity=WARN)
+- Prior entry: "microservice_degraded:rag-service:A-30:lancedb-undeployed-3rd-recurrence" (ts=2026-08-12T07:08:24Z, severity=CRITICAL)
+
+The original task was OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX (commit 4c8c601e6, 2026-08-12T06:16:02Z, malloc_trim + LanceDB IvfPq fix + TOKIO/LANCE thread pinning commit ca6d86869). This task's AC-3 (acceptance criteria for sustained memory improvement) FAILED and was reassigned to dev-rag-service for root-cause code-level fix.
+
+**Regression Pattern:**
+- 08:00Z (c46 Tier-2): rag-service at 92.79%
+- 10:30–10:43Z (c47 Tier-1): Post-restart at 3.34%, recovered
+- 11:33Z (c48 Tier-1): Memory back at 90.13% (52 minutes post-restart)
+- 12:03Z (this cycle, c49 Tier-1): Memory at 90.81% (~82 minutes post-restart)
+
+Memory accumulation rate: ~90% per 50-82 minutes post-restart. This is a SUSTAINED, STABLE ceiling at ~90%, not a transient blip. The deployed fixes have NOT resolved the underlying leak/creep. However, the stability (flat profile, no OOMKilled, no discontinuities) means the A-30 discriminator correctly classifies this as FOLD/PASS per the documented thresholds.
+
+**Compliance Note:**
+
+This cycle's A-30 verdict is FOLD per spec (no escalation triggers met). However, the pre-gate's STALE-ACK annotation contradicts observable board state (FU-RAG-DEPLOY-MEMORY does not exist). Per AUD-CP-1 (CALLER-INSTRUCTION PRECEDENCE), the spec-based verdict takes precedence; this is documented here as a CONTRACT-CONTRADICTION for auditing purposes.
+
+**Recommendation for ops/dev:**
+
+The rag-service memory issue is REAL (recurring 3rd+ time per dedup ledger) but STABLE in this cycle (FOLD verdict). The STALE-ACK label should be corrected/removed from pre-gate tracking to reflect current board state. The underlying memory accumulation pattern (90% per hour post-restart) remains unresolved and warrants continued investigation into:
+1. Actual fix deployment status (env vars, malloc_trim application)
+2. VmHWM/memory limit calibration (VmHWM 1437 MB > cgroup limit 1024 MB)
+3. LanceDB configuration (IvfPq tuning, thread pool sizing)
