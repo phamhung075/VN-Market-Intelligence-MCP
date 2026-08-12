@@ -1,6 +1,18 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-12T15:55:00Z | **Cycle:** TICK-WU-1-COWORK-WIRING + TICK-WU-2-DEVTEAM-WIRING (cross-service/, sprint TICK-PREFLIGHT-USAGE-INSTRUMENTATION) — both trailer-telemetry wirings landed same cycle, cowork 58/58, dev-team 146/146, both review[]→qa.
+**Last updated:** 2026-08-12T14:35:14Z | **Cycle:** UC-CCA-P3 (cross-service/, sprint COWORK-GUARANTEED-SLOT-CATCHUP) — umbrella dev-team-lead cycle: checked all 9 children, FR1-FR2-SKILL implemented directly, FR5-CODE-GATE dependency confirmed satisfied but unreachable (no Agent tool this session).
+
+## Session 2026-08-12T14:35:14Z — UC-CCA-P3 umbrella (cross-service/, developer, sprint COWORK-GUARANTEED-SLOT-CATCHUP, session 165f4245-6173-4054-87fd-c55bb626265f)
+
+**Task:** dev-team-lead cycle for the UC-CCA-P3 umbrella (published-marker-gate). Checked all 9 children (`UC-CCA-P3-FR1-FR2-SKILL`, 7x `UC-CCA-P3-FR3-*`, `UC-CCA-P3-FR5-CODE-GATE`) — all 9 were still sitting untouched in `ready[]` since 2026-08-08.
+
+**Findings:** (1) `UC-CCA-P3-FR5-CODE-GATE`'s `depends_on` IS a real machine-readable array (`["FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L"]`), not prose. (2) That blocker is DONE_VERIFIED since 2026-08-09 (commit `763ef682252`), so FR5-CODE-GATE is now dependency-satisfied — but its zone (`apps/mcp-server/`→`dev-mcp-server`) is a real specialist and this session has no Agent tool (Task-spawned, Read/Edit/Write/Bash only), so dispatch is structurally unreachable this cycle. Re-verified live: `coordinationStore.ts` releaseTask()/releaseOrphanTask()/ReleaseResult/OrphanReleaseResult anchors (`:888`/`:1000`/`:391-393`/`:395-400`) are UNCHANGED post-split (file now 1173L) — no anchor drift for the eventual implementer. (3) `UC-CCA-P3-FR1-FR2-SKILL` has no zone owner (`.claude/skills/` unmapped in `system-map.json`) and `next_agent:"dev-team"` (non-specialist placeholder) — matches this flow's own documented known-drift fallback ("no matching zone → developer handles it directly"), so implemented directly.
+
+**Implementation:** Created `.claude/skills/published-marker-gate/SKILL.md` (86L, well under 200L skill cap) verbatim from architect brief `2026-08-08-uc-cca-p3-published-marker-gate-skill.md` §3 / handoff `UC-CCA-P3-FR1-FR2-SKILL.md` AC-1. No other files touched (AC-3).
+
+**Closeout:** Board `UC-CCA-P3-FR1-FR2-SKILL` `ready[]`→`review[]`, `next_agent=qa`, via `orch-apply.sh`. Umbrella `UC-CCA-P3` note updated with real child-progress + the FR5/FR-3 dispatch gap flagged for the outer dev-team session (has Agent tool) to pick up next tick. 7x `UC-CCA-P3-FR3-*` remain correctly blocked on FR1-FR2-SKILL until QA approves. Decision journal `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-6.md` STEP developer-S100. Commits pathspec-scoped, no `-a`/`-A`. Graphify NOT run (no Skill-tool path available to this spawned agent session).
+
+---
 
 ## Session 2026-08-12T15:55:00Z — TICK-WU-1-COWORK-WIRING + TICK-WU-2-DEVTEAM-WIRING (cross-service/, developer, sprint TICK-PREFLIGHT-USAGE-INSTRUMENTATION, session 9591c6c6)
 
