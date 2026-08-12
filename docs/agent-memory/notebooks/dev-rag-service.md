@@ -4,6 +4,26 @@ Zone: `apps/rag-service/` | Stack: Python/FastAPI | DB: rag_service.db (write)
 
 ## Working Memory
 
+### 2026-08-12 — FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (P0, PO-severity-expedite)
+
+**Task:** PO-severity-expedite manual dispatch (po-S157/po_expedite_20260812T0542Z) bypassing the idle-tick rotation for a live incident: rag-service hit BELOW-FLOOR memory 3x in ~90min, each recovered only by a scoped ops restart, each climbing back to critical within ~50min. A PRIOR spawn attempt on this task_id (site=S1, ~03:15Z) died silently — confirmed at cycle start: zero notebook entry, no branch/worktree, no uncommitted `apps/rag-service/` state; clean start, nothing to recover. Board row's own title/`root_cause_hypothesis` (malloc_trim/allocator-retention) was PARTIALLY REFUTED and superseded by the architect's 2026-08-12 isolated repro (`docs/architecture-briefs/2026-08-12-fix-rag-embedder-idle-unload-second-growth-source.md`) — implemented per the brief, not the stale row title.
+
+**Root cause (architect-diagnosed):** `rag_entries` had ZERO index on the `vector` column (only FTS on title/summary) — every `vector_search()`/`.nearest_to()` call ran LanceDB's brute-force full-column exact-kNN scan, no eviction. Isolated repro: +340-444 MiB resident growth over ~20-600 real `search()` calls against a 26,730-row corpus, ~65-80x the embedder's own per-call footprint (ruled out as dominant in the same cycle). `malloc_trim(0)` recovered only ~8-15% of this — allocator hygiene alone insufficient.
+
+**Fix:** Primary — `_build_vector_index()`/`_maybe_build_vector_index()` (`infrastructure/repositories.py`): lazy `lancedb.index.IvfPq(distance_type="l2")` build on `vector`, gated by `_VECTOR_INDEX_MIN_ROWS=256` (LanceDB's own IVF_PQ training floor, empirically confirmed via scratch repro — an unguarded build raises `RuntimeError` below it, which would break ~11 existing `search()`-calling tests across tiny fixtures without the gate). Triggered from both `search()` and `hybrid_search()`. `POST /admin/rebuild-vector-index` (mirrors `/admin/rebuild-fts`, deliberately a SEPARATE endpoint, not wired onto RAG-FTS-BUILD-MEMORY-BOUND's disabled cron). Secondary — `_malloc_trim_or_noop()` periodic sweep in `app_factory._idle_unload_loop()`, guarded `ctypes.CDLL("libc.so.6")`, same shape as the FIX-PDFX precedent, silent no-op on non-glibc (this macOS dev host).
+
+**Tests:** 20 new (15 vector-index in new `test_rag_vector_index_build.py` — call-shape, threshold boundary off-by-one, flag-guard, REAL end-to-end IVF_PQ build against a bulk-seeded 300-row corpus with no mocks, hybrid_search coverage, admin-endpoint triad; 5 malloc_trim extending `test_embedder_idle_unload.py` — guard behavior mocked+real, loop cadence independent of unload firing, non-fatal failure). 195/195 pytest green (175 baseline + 20 new).
+
+**Verified:** mypy delta +53 (289→342) scoped-clean via paired stash/pop (production files: +3 occurrences across 2 pre-existing categories — untyped `_get_table()` calls, `-> dict` generic-arg — 0 new categories; rest is the new test file's untyped test functions, same style as 100% of sibling test files). Sandbox primitive 16/16 + module 2/2 exit 0 GREEN. Env audit EMPTY via canonical `_audit_env()`. Fence-A/B clean (pre-existing docstring-only hits, files untouched). Size-lint: 3 files pushed past baseline tolerance by the new code — added/updated size-justification headers with exact post-edit `wc -l` counts (repositories.py 517L→642L, app_factory.py 177L→212L, handlers.py new 233L header) — `--check` now passes for all 3 (only the pre-existing, unrelated mcp-server `transport.ts` offender remains repo-wide). Did NOT run `--update` (would launder that unrelated offender). Simplicity gate: PASS (Q1 no scope creep — index+admin-endpoint+trim all explicitly brief-recommended; Q2 no single-use abstractions — every new method has ≥2 call sites except `_malloc_trim_or_noop`, which mirrors the existing `_maybe_unload_idle` single-caller-but-independently-tested convention; Q3/Q4 clean).
+
+**Scope note:** the brief's actual AC (PO ruling po-S157) is a ≥2h ops-supervised live cold-start heap-growth-rate + plateau measurement, not a before/after dip — that is QA/ops's job per the standard `REBUILD_REQUIRED` chain (docker rebuild + live verify), outside this agent's zone/tool grant (Docker ops = ops's job). RETURN carries `REBUILD_REQUIRED: true`.
+
+**DJ:** `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-rag-service.md` S4.
+
+Zone health: rag-service test suite 195/195 green (+20 this cycle), size-lint clean, no other drift observed. HEALTHY.
+
+---
+
 ### 2026-08-07 — FIX-CI-SIZELINT-RAG-APP-FACTORY-BASELINE (P1, CI-RED, XS)
 
 **Task:** `app_factory.py` grew 121L→168L (baseline-tolerance-exceeded, upper=133L) via commit 0308514f5 (`_idle_unload_loop()` added to `build_lifespan()` for FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH) with no size-justification header. Same fix pattern as sibling FIX-CI-SIZELINT-RAG-EMBEDDER-NEW-OFFENDER (`infrastructure/embedder.py`).
@@ -44,32 +64,4 @@ Zone health: HEALTHY (comment-only header, no behavior/test impact) | FIX-CI-SIZ
 
 ---
 
-### 2026-08-05 — FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP (P1 LIVE INCIDENT)
-
-**Task:** compact() failure-path never reset `_insert_count` — PO already root-caused at source (repositories.py:251 reset was inside the `try`, right after `optimize()`); the `except:` block only warned and returned normally, so ANY optimize() failure left the counter stuck `>= _COMPACT_EVERY` and every following insert re-fired a full-table optimize() — burst rewrites inside the 768MiB cap, matching the OOMKilled=false crash pattern. Scope held to this one file per PO directive; 768MiB cap sizing (FU-RAG-DEPLOY-MEMORY) and on-disk amplification (FIX-RAG-COMPACTION-DISK-AMPLIFICATION) explicitly out of scope.
-
-**Fix:** (1) moved `self._insert_count = 0` into a `finally:` on `compact()` so it resets on both success and failure. (2) Added `self._compact_lock` (per-instance `asyncio.Lock`); `compact()` now does `if self._compact_lock.locked(): return` before entering `async with self._compact_lock:` — a concurrent second trigger short-circuits instead of launching its own `optimize()`, and the in-flight call's `finally` resets the counter for both. Did NOT gate the lock body on a re-checked `_insert_count` threshold (considered, rejected — would silently no-op direct/maintenance-cron `compact()` calls below threshold, changing an already-documented contract not covered by fix_spec).
-
-**Tests (AC1/AC2, the DoD):** both new tests inject failure/tracking on the REAL LanceDB table object (not a `store.compact` monkeypatch shortcut, which would bypass the actual finally/lock logic under test). AC1: `table.optimize = AsyncMock(side_effect=RuntimeError(...))`, insert to threshold, assert `_insert_count == 0` after the failure and that the very next insert does not re-fire compact(). AC2: `asyncio.gather()` of two concurrent `insert()` coroutines both crossing threshold, tracking-wrapper around real `table.optimize`, assert exactly 1 call. Stable across 5 pytest-randomly seeds.
-
-**Verified:** pytest 163/163 (161 baseline + 2 new), 4 pre-existing compaction tests unchanged/still pass. mypy: repositories.py 14→14 errors (0 new, all pre-existing patterns at shifted line numbers); test file baseline-consistent +7 (missing-annotation/method-assign on the 2 new test helpers — same untyped-test-function style already used by 100% of this file's existing tests, not a new category). Sandbox 16/16 primitive + 2/2 module GREEN exit 0. Env audit EMPTY via canonical `_audit_env()` (loose `env|grep` shows the same known `CTX_ADVISOR_*TOKEN*` non-credential substring false positive). Fence-A/B grep hits are pre-existing docstring prose only. Graphify: skipped — no Skill-tool path for this spawned Task-tool agent (same structural constraint noted by prior siblings); doc content (infrastructure.md, testing.md) updated directly instead.
-
-**DJ:** `docs/agent-memory/decisions/sprint-FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP-dev-rag-service.md`
-
-Zone health: `apps/rag-service/` test suite 163/163 green, no other drift observed this cycle. HEALTHY.
-
----
-
-### 2026-07-24 — FACTORY-RAG-delete-dead-sqlite-repo (dead-code removal, P2)
-
-**Task:** delete dead `SQLiteAnalysisRepository` + phantom `AnalysisRepositoryPort`. Investigated at source FIRST (did not trust ticket title): grep-confirmed `SQLiteAnalysisRepository` constructed ONLY in `test_rag_integration.py`'s `sqlite_repo` fixture (4 tests, `TestSQLiteRepository`); `AnalysisRepositoryPort` implemented ONLY by that class; `app_factory.build_real_adapters()` (sole prod-adapter composition point) and `main.py` wire only `SentenceTransformersEmbedder`+`LanceDBVectorStore` — zero `SQLiteAnalysisRepository` construction anywhere live. `IndexUseCase`/`SearchUseCase` `__init__` never took an analysis-repo param (the `IndexUseCase` docstring's `analysis_repo (optional)` claim was itself phantom — fixed). Matches (and independently verified, not just trusted) `docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md` FACTORY-RAG-delete-dead-sqlite-repo entry.
-
-**Deleted:** `SQLiteAnalysisRepository` + `_row_to_entry()` helper + `sqlite3` import (infrastructure/repositories.py), `AnalysisRepositoryPort` ABC (domain/repositories.py), `TestSQLiteRepository`+`sqlite_repo` fixture (test_rag_integration.py). Fixed phantom docstring (usecases.py). Trimmed matching sections from owned docs (domain-model.md, infrastructure.md, testing.md). Net: 238 deletions / 7 insertions.
-
-**Verified:** pytest 165→161 passed (exactly the 4 deleted tests, 0 fail), grep confirms zero remaining refs to either symbol, mypy 259→253 errors (strict decrease, no new), sandbox 16/16 + 2/2 GREEN exit 0, env audit EMPTY via canonical anchored `_audit_env()` (the 3 `CTX_ADVISOR_*` hits from the flow doc's loose `env|grep` one-liner are the SAME known TOKEN-substring false positive already logged in the 07-15 FTS entry below — not credentials). Fence-A/B grep hits are pre-existing docstring prose only, zero real cross-layer imports.
-
-**DJ:** `docs/agent-memory/decisions/sprint-FACTORY-RAG-delete-dead-sqlite-repo-dev-rag-service.md`
-
----
-
-<!-- Entries 2026-07-15 and older split to `docs/agent-memory/notebooks/archive/dev-rag-service-archive-20260805.md` on 2026-08-07 (self-prune, byte cap 12191B/12000B breached: notebook-single-section-breach + context-bloat signals fired on this file after the FIX-CI-SIZELINT-RAG-EMBEDDER-NEW-OFFENDER entry). Nothing deleted; full record in the archive file and git history. -->
+<!-- Entries 2026-08-05 (FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP) and 2026-07-24 (FACTORY-RAG-delete-dead-sqlite-repo) and older split to `docs/agent-memory/notebooks/archive/dev-rag-service-archive-20260805.md` on 2026-08-12 (self-prune, byte cap 12000B breached after the FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS entry landed — same recurring pattern as the 2026-08-07 self-prune). Nothing deleted; full record in the archive file and git history. -->

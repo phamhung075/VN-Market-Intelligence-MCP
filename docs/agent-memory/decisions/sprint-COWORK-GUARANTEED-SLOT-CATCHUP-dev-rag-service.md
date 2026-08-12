@@ -38,3 +38,16 @@
 **why-change:** Board status_note offered a split as "preferred" — overridden by explicit router task instruction (header-only, comment-only, zero behavior change) which takes precedence.
 
 **Merge Gate renumbering note:** authored in its own worktree as a fresh S1 (that worktree branched before the sibling embedder-task journal file existed on main); renumbered to S3 when reapplied, appending after agent aa79e0a60034da7fc's S1/S2 which landed first in this Merge Gate's sequential order.
+
+---
+
+### STEP dev-rag-service-S4 · dev-rag-service · 2026-08-12T06:14:24Z
+**task-id:** FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS
+**what-done:** Implemented per architect's superseding brief (2026-08-12), NOT the board row's own stale allocator-retention title: (1) primary fix — `_build_vector_index()`/`_maybe_build_vector_index()` in `repositories.py`, lazy `lancedb.index.IvfPq` ANN index on `vector`, gated by `_VECTOR_INDEX_MIN_ROWS=256` (LanceDB's own empirically-confirmed IVF_PQ training floor); (2) secondary — `_malloc_trim_or_noop()` periodic sweep in `app_factory._idle_unload_loop()`, guarded `ctypes.CDLL`; (3) `POST /admin/rebuild-vector-index` mirroring `/admin/rebuild-fts`.
+**what-considered:**
+- Unconditional index build in `search()` vs threshold-gated lazy build — chose gated: an unguarded `create_index()` empirically raises `RuntimeError("Not enough rows...")` below 256 rows (confirmed via scratch repro), which would break ~11 existing `search()`-calling tests across tiny fixtures; the gate is a cheap `count_rows()` no-op below threshold, zero regression.
+- Pre-check via `count_rows()` vs try/except around `create_index()` swallowing the specific error string — chose pre-check: deterministic, unit-testable boundary logic, doesn't rely on fragile Rust error-string matching across lancedb versions.
+- Trim sweep tied to the embedder-duck-type early-return (`if not callable(maybe_unload): return`) vs independent trigger — kept tied (simpler, matches "permanent no-op for sandbox fakes" comment/determinism-gate exactly, production embedder always implements the hook anyway).
+- Separate `/admin/rebuild-vector-index` endpoint vs riding `/admin/rebuild-fts` or the disabled FTS nightly cron — chose separate, per brief's explicit instruction not to silently couple the two (cross-row decision left unmade by the brief).
+**why-decision:** Brief §3b named `_get_table()`'s 130 MiB handle-open cost + `search()`'s brute-force `vector_search()` (~340-444 MiB/20-600 calls, ~65-80x embedder footprint) as the confirmed dominant mechanism — architectural fix (index), not allocator hygiene, is the load-bearing remedy; malloc_trim recovers only 8-15% here per the same isolated repro.
+**why-change:** Board row's `root_cause_hypothesis`/title (malloc_trim/allocator-retention as primary) explicitly superseded by architect's isolated repro — implemented the ratified brief instead, landed the allocator fix too as brief's own "cheap, low-risk, still worth landing" secondary recommendation, not a substitute.
