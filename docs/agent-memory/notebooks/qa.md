@@ -1,5 +1,13 @@
 # QA — Notebook
 
+## cycle-671 · 2026-08-12T13:32:00Z · FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE (dev-mcp-server/dev-team-drain, real code) — Direct-Commit Verify, APPROVED, DONE_VERIFIED (commits `0a7e91e5b`+`c1e21aae4`)
+
+Router-dispatched (`mode=verify-committed`, Review-Lane QA-drain, `branch:null` row). Row had no `.commit`/`.files[]` fields; derived both commits from `review_note` prose (`0a7e91e5b` code+tests+doc, `c1e21aae4` memory). Both confirmed on main ancestry; `git show --stat` matches the claimed 5-file set exactly (`alertStore.ts`, `schema-news.ts`, new test, `FIX-AGENT-SIGNALS-IDENTICAL-DUP-EMISSION.test.ts` sibling, `infrastructure.md`).
+
+Read the diff on disk: `buildVerifiedDecisionPayload()` replaces the old hardcoded `'{}'` SQL literal with real content, written via a bound param (`insertSignal.run(..., payloadJson, ...)`) — no string concatenation. Emit-time guard (`payloadJson==="{}"` → fail-loud skip, base `alerts` row unaffected) confirmed live. Re-ran independently: task test 6/6 pass (AC-1..AC-6); sibling dedup test (the index this fix is designed to stay collision-safe against) 10/10 pass, no regression. `bun tsc --noEmit` 0 errors. `mock-guard.sh` PASS on both touched production files. Alert-name-filtered full suite showed 28 fail/814 tests, but every one reproduced 0-fail standalone — shared-DB/parallel test-isolation artifact, not this diff.
+
+VERDICT: DONE_VERIFIED. Moved `qa[]`→`done_verified[]` via `orch-apply.sh` (`verification.raw_probe` attached, conservation-check clean, task_total 755 preserved). `[QA] Review Record (direct-commit verify)` appended to the row's own pre-existing `review_note` field (no `status_note` on this row). Own QA DJ `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-18.md` §qa-S86. Router dispatch held `task:FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-NULL-STOCKCODE` (TTL 3600s) — release is the dispatcher's own responsibility per INV-GATEWAY-1, not called from this specialist context. Live-effect (container restart) flagged by dev as ops follow-up — out of QA static-verify scope.
+
 ## cycle-670 · 2026-08-12T13:28:48Z · FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE (po/dev-team-drain, doc/notebook fix) — Direct-Commit Verify, APPROVED, DONE_VERIFIED (commits `e0033de05`+`37bc91500`+`aeb72d959`)
 
 Router-dispatched (`mode=verify-committed`, review-lane QA-drain, branch:null row, `owner`/`next_agent`=po/qa). All 3 commits confirmed real, on main ancestry, `git show --stat` matches all claimed files (`docs/agents/alert-commander/flow/stage-dispatch-log.md`, `docs/evals/alert-commander.eval.json`, `docs/agent-memory/notebooks/alert-commander.md`, new `docs/agent-memory/notebooks/archive/alert-commander-archive-20260729.md`).
