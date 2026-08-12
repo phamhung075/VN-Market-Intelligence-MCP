@@ -31,6 +31,7 @@
 import { Database } from "bun:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { isPublishedMarkerTaskId } from "../../domain/services/publishedMarkerImmunity.js";
 
 // ---------------------------------------------------------------------------
 // DB singleton (coordination.db is separate from market.db)
@@ -387,9 +388,14 @@ export interface HeartbeatResult {
  * released=1: row was actually deleted.
  * released=0: no-op (wrong owner, non-existent task) — NOT an error.
  * ok=false: DB error only (fail-loud).
+ *
+ * UC-CCA-P3 FR-5 (AC-CODE-GATE): `reason` is an additive, optional field —
+ * populated with "published_marker_immune" when the release-refusal guard
+ * fires. Every pre-existing caller already treats released:0 as a legitimate
+ * no-op, so this is non-breaking.
  */
 export type ReleaseResult =
-  | { ok: true; released: 0 | 1 }
+  | { ok: true; released: 0 | 1; reason?: string }
   | { ok: false; error?: string };
 
 export interface OrphanReleaseResult {
@@ -890,6 +896,12 @@ export function releaseTask(
   owner_client_session: string,  // REQUIRED — P1-FINAL (TASK_1980); default (Rung A) ownership key
   options?: ReleaseOptions,
 ): ReleaseResult {
+  // UC-CCA-P3 FR-5 (AC-CODE-GATE): UNCONDITIONAL release-refusal — fires before
+  // any owner/staleness check, for every caller identically. Never released:1.
+  if (isPublishedMarkerTaskId(task_id)) {
+    return { ok: true, released: 0, reason: "published_marker_immune" };
+  }
+
   const db = getCoordinationDb();
   if (!db) return { ok: false, error: "db_unavailable" };
 
@@ -1002,6 +1014,13 @@ export function releaseOrphanTask(
   owner_client_session: string,  // REQUIRED — P1-FINAL (TASK_1980); sole ownership key
   orphanThresholdSeconds = 600,
 ): OrphanReleaseResult {
+  // UC-CCA-P3 FR-5 (AC-CODE-GATE): UNCONDITIONAL release-refusal — fires BEFORE
+  // the heartbeat-staleness check, so a genuinely stale published:* lock is
+  // still refused. Never released:true.
+  if (isPublishedMarkerTaskId(task_id)) {
+    return { released: false, reason: "published_marker_immune" };
+  }
+
   const db = getCoordinationDb();
   if (!db) return { released: false, reason: "db_unavailable" };
 

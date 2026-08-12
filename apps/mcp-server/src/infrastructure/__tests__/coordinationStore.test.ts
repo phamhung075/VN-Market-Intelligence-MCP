@@ -58,6 +58,7 @@ import {
   _resetCoordinationDbState,
   heartbeatTask,
   releaseTask,
+  releaseOrphanTask,
 } from "../db/coordinationStore.js";
 
 let db: Database;
@@ -116,6 +117,13 @@ function insertOrphanSignalRow(opts: {
     VALUES
       (?, 'orphan-signal', 'server-reaper', ?, NULL, unixepoch('now'), unixepoch('now') + ?, unixepoch('now'), ?, ?, 1)
   `).run(opts.task_id, opts.owner_agent, ttl, ttl, payload);
+}
+
+/** Age a lock's heartbeat_at by the given number of seconds into the past (same idiom as DWF-coordination-phase2.test.ts). */
+function ageHeartbeat(task_id: string, ageSeconds: number): void {
+  db.prepare(
+    "UPDATE task_locks SET heartbeat_at = unixepoch('now') - ? WHERE task_id = ?",
+  ).run(ageSeconds, task_id);
 }
 
 function readRow(task_id: string): {
@@ -319,5 +327,57 @@ describe("releaseTask — FR-2 null-session ladder (orphan-signal only)", () => 
 
     expect(result).toEqual({ ok: true, released: 0 });
     expect(readRow("task:N2")).not.toBeNull(); // row survives — never released via the ladder
+  });
+});
+
+// ---------------------------------------------------------------------------
+// UC-CCA-P3 FR-5 (AC-CODE-GATE) — published:* release-refusal, per architecture
+// brief §6: (a) releaseTask refuses, (b) releaseOrphanTask refuses even on a
+// genuinely stale lock (proves the guard fires BEFORE the staleness check),
+// (c) negative control — a cron:*/sprint-task-shaped task_id with identical
+// staleness characteristics still releases normally (guard is prefix-scoped
+// only, not a general regression).
+// ---------------------------------------------------------------------------
+
+describe("releaseTask — UC-CCA-P3 FR-5 published-marker immunity guard", () => {
+  it("(a) published:* task_id — {ok:true, released:0, reason:'published_marker_immune'}, NOT released:1", () => {
+    insertLiveRow({ task_id: "published:chef:2026-08-12", owner_client_session: "sess-pub-1" });
+
+    const result = releaseTask("published:chef:2026-08-12", "sess-pub-1");
+
+    expect(result).toEqual({ ok: true, released: 0, reason: "published_marker_immune" });
+    expect(readRow("published:chef:2026-08-12")).not.toBeNull(); // never deleted
+  });
+
+  it("(c) negative control — a cron:* task_id with identical shape still releases normally (released:1)", () => {
+    insertLiveRow({ task_id: "cron:foreign-flow-sweep", owner_client_session: "sess-cron-1" });
+
+    const result = releaseTask("cron:foreign-flow-sweep", "sess-cron-1");
+
+    expect(result).toEqual({ ok: true, released: 1 });
+    expect(readRow("cron:foreign-flow-sweep")).toBeNull(); // actually deleted
+  });
+});
+
+describe("releaseOrphanTask — UC-CCA-P3 FR-5 published-marker immunity guard", () => {
+  it("(b) genuinely stale published:* lock — still refused (guard fires BEFORE the staleness check)", () => {
+    insertLiveRow({ task_id: "published:digest-sunday:2026-W33", owner_client_session: "sess-pub-orphan" });
+    ageHeartbeat("published:digest-sunday:2026-W33", 900); // well past the 600s default threshold
+
+    const result = releaseOrphanTask("published:digest-sunday:2026-W33", "sess-pub-orphan", 600);
+
+    expect(result).toEqual({ released: false, reason: "published_marker_immune" });
+    expect(readRow("published:digest-sunday:2026-W33")).not.toBeNull(); // never deleted despite staleness
+  });
+
+  it("(c) negative control — sprint-task-kind lock with identical staleness still releases normally (released:true)", () => {
+    insertLiveRow({ task_id: "task:orphan-sweep-control", owner_client_session: "sess-orphan-ctrl" });
+    ageHeartbeat("task:orphan-sweep-control", 900);
+
+    const result = releaseOrphanTask("task:orphan-sweep-control", "sess-orphan-ctrl", 600);
+
+    expect(result.released).toBe(true);
+    expect(result.reason).toBe("orphan_released");
+    expect(readRow("task:orphan-sweep-control")).toBeNull(); // actually deleted
   });
 });
