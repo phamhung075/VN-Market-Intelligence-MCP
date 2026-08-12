@@ -1,12 +1,12 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1786526514,
-    "last_linecount": 64,
+    "last_mtime": 1786542805,
+    "last_linecount": 65,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786531957,
-      "last_linecount": 68
+      "last_mtime": 1786542805,
+      "last_linecount": 65
     }
   },
   "decision_journal": [
@@ -134,7 +134,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-12T12:53:34Z",
+    "_updated_at": "2026-08-12T13:53:25Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -1189,7 +1189,7 @@
         "type": "microservice_degraded",
         "summary": "rag-service memory pressure: 88.54% (>85% threshold, A-30 WARN boundary)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-12T13:30Z",
@@ -1203,7 +1203,7 @@
         "type": "auditor_cycle_missing",
         "summary": "auditor tier-1 cycle possibly missing — no completion evidence in 84h (cadence 0.5h)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-12T13:30Z",
@@ -20147,9 +20147,149 @@
         "last_served_tick": "2026-08-12T12:55:29Z"
       }
     },
-    "_updated_at": "2026-08-12T13:21:59Z",
+    "_updated_at": "2026-08-12T13:53:25Z",
     "_updated_by": "dev-team",
-    "pending_triage_inbox": [],
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "ad5b83a31fe67d6059283d61b66246ed725ee51086d7ee248f6cda73e7dee363",
+        "source": "file",
+        "from": "agents-architect",
+        "to": "agent-father",
+        "type": "architecture_brief",
+        "priority": "high",
+        "payload": "docs/architecture-briefs/2026-08-12-fix-auditor-dedup-ledger-cas-atomicity.md",
+        "createdAt": "2026-08-12T13:19:43Z",
+        "drained_at": "2026-08-12T13:52:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d5c10973503e492b8cf035841c2aec370b4873cf2b3c670468b273b04c4a90db",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-18.md docs/agent-memory/notebooks/qa.md docs/data/orch/orch-state.json. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=56 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T13:31:33Z",
+        "drained_at": "2026-08-12T13:52:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "33014a9a2edcf9568dd3c54b2f08a782c145c74dd2bf7b95fe1745ebd2cee1e9",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c49 · 2026-08-12T12:03Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c50 · 2026-08-12T12:35Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-12T13:36:08Z",
+        "drained_at": "2026-08-12T13:52:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "099662983d0c50c98b532090a942723c0c38c060c9fb2cf76739161ef3872fd7",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 6 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-TICK-PREFLIGHT-USAGE-INSTRUMENTATION-pm.md docs/data/orch/orch-state.json docs/handoffs/TASK_TICK-WU-0-TELEMETRY-LIB.md docs/handoffs/TASK_TICK-WU-1-COWORK-WIRING.md docs/handoffs/TASK_TICK-WU-2-DEVTEAM-WIRING.md docs/handoffs/TASK_TICK-WU-3-AUDITOR-WIRING.md. actor=9591c6c6-fb3e-47c7-b5db-2fd82c2b5bc0 mode=warn escalated=false prior_warns=0 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T13:42:46Z",
+        "drained_at": "2026-08-12T13:52:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f20801d442768860b129aa6fc39eff9e77648095d6b9f1c3e31c44fef2887586",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": ".claude/skills/notebook-write/SKILL.md",
+          "line_count": 222,
+          "cap": 200,
+          "byte_count": 13464,
+          "byte_cap": 12000,
+          "class": "skill-file",
+          "reason": "line-cap,byte-cap",
+          "overage": 22,
+          "byte_overage": 1464,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-12T13:36:08Z",
+        "drained_at": "2026-08-12T13:52:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "71419ee39daf09c75f5a9549f1672a0469a1fbc9c04a4cde9fe875dfe36c045e",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_telemetry",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-12T13:30Z",
+          "drift_min": 6,
+          "matched_slots": [],
+          "won_slots": [],
+          "spawned": [],
+          "silent": true,
+          "classification": "SILENT",
+          "new_signals": 2,
+          "note": "0 slots due. 2 NEW to:po WARN rows this tick. (1) rag-service A-30 memory pressure 88.54% recurs under dedup_key=microservice_degraded:rag-service:A-30 (back to the original format seen earlier this session, now the 7th distinct dedup_key variant on record for the same underlying condition). (2) NEW distinct signal type: auditor_cycle_missing — tier-1 auditor cycle possibly missing, no completion evidence in 84h at 0.5h cadence. Both left status=NEW (Step 0a scope rule). Both WARN, no CRITICAL crossing — telegram withheld. auditor_cycle_missing warrants po/system-auditor attention distinct from the rag-service thread."
+        },
+        "createdAt": "2026-08-12T13:36:00Z",
+        "drained_at": "2026-08-12T13:52:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "06c8ddecce4a9f7daad62c2aa4af8b26e7b32b1476e950c41e602e3068dfa2e2",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_telemetry",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-12T13:45Z",
+          "drift_min": 6,
+          "matched_slots": [],
+          "won_slots": [],
+          "spawned": [],
+          "silent": true,
+          "classification": "SILENT",
+          "new_signals": 2,
+          "note": "0 slots due. Same 2 to:po WARN rows from 13:30Z persist unchanged (rag-service A-30 memory pressure; auditor_cycle_missing tier-1). No severity change, no fresh content — telegram withheld."
+        },
+        "createdAt": "2026-08-12T13:51:00Z",
+        "drained_at": "2026-08-12T13:52:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fd051fd7635ea5528fd57e38302237fbc5fcffd3fcf28aafccbe4915cf1bba55",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "priority": "WARN",
+        "payload": "rag-service memory pressure: 88.54% (>85% threshold, A-30 WARN boundary)",
+        "createdAt": "2026-08-12T13:34:32Z",
+        "drained_at": "2026-08-12T13:53:19Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b971466a908cd09c54cdae2125f4e7f6746e740ab74f9bd77bfd8b3f4b478e2d",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_missing",
+        "priority": "WARN",
+        "payload": "auditor tier-1 cycle possibly missing — no completion evidence in 84h (cadence 0.5h)",
+        "createdAt": "2026-08-12T13:34:41Z",
+        "drained_at": "2026-08-12T13:53:19Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-12T08:40:43Z",
     "last_po_triage_note": "po/triage-20260811T1656Z (dev-team Step 1, step1_triage rotation). INPUTS: 18 pendingSignals (drained by router into prompt; live inbox confirmed [] and the ONLY uncommitted orch-state delta vs HEAD bba662b96 was that drain — structurally diffed, no peer interference), 5 Pipeline-B signal_queue to=po rows, 93 unresolved telegram reports (ids 4591-4683). OUTPUT: BATCH of 4. TELEGRAM PLANE FULLY CLEARED 93 -> 0 (list_unresolved_reports() == [] verified post-run): 87 duplicate (folded onto already-open rows), 4 monitoring, 1 fixed, 1 monitoring-preresolved. DEDUP RATIO 91/93 = 97.8% — the BUG channel was ~42% ONE defect (39 period-mismatch reports -> FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST, now proven to replay byte-identically for a THIRD consecutive day) and ~25% a second (RECONCILE EXHAUSTED, whose own circuit breaker id 4674 explicitly forbids per-row triage). ONLY 2 GENUINELY UNTRACKED FINDINGS in 93 reports + 23 signals, both minted after live source-probing: (1) FIX-MACRO-LIQUIDITY-STATE-HANDLER-EXCEEDS-CRON-15S-DEADLINE — the daily sbv-omo `unreachable` alert has a FALSE premise; macro-indicators is Up 12 days healthy, /health 200 in 2.6ms, GET /liquidity-state 405 (route registered), but POST hangs >18.4s against the cron`s 15s deadline, so sbv_omo_daily has silently accrued nothing for >=2 days; (2) SPIKE-NEWSSCOUT-KLFL-FALSE-ENOENT-ON-PRESENT-TRACKED-SKILL-FILE — news-scout KLFL-aborted its 16:09Z cycle (no c250 notebook entry) on ENOENT for a file that is present/tracked/unignored and was loaded fine by market-watcher in the SAME dispatch batch. ci_red x2 (CI-RED-1765317d, CI-RED-61b5b6f8) collapsed to ZERO new rows: both runs read at source via `gh run view --log-failed`, FAILED FILES byte-identical, all 3 files already carry exact dedup_key rows; recorded size-lint drift 237L->265L on transport.ts. 4 bug-escalation folded onto FIX-SWEEPGUARD-... (occ 28->32, worst prior_warns now 31 vs threshold 3, two concurrent repeat offenders). rag-service CRITICAL RAW-refuted as recovered (76.9%, no restart since 01:00:43Z); pdf-extractor CONFIRMED sustained and rising (94.90% -> 95.31%). 5/5 Pipeline-B rows closed to triaged with dispositions.",
     "last_po_triage_consumed": 54
