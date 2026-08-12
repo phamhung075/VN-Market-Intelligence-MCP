@@ -1,0 +1,20 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_tiebreak_direction_defaulted",
+  "priority": "normal",
+  "createdAt": "2026-08-12T05:34:34Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/qa.md",
+    "tied_sections": "15:20260812000000000:## cycle-655 · 2026-08-12 · FIX-FB-GATE-BREADTH-PCT-INTERNAL (developer, real code) — Direct-Commit Verify, APPROVED, DONE_VERIFIED (commit `ce04d512a`+`ce34c588f`)\n25:20260812000000000:## cycle-654 · 2026-08-12 · FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW (dev-mcp-server, real code) — Direct-Commit Verify, CHANGES_REQUESTED (commit `51f162829`+`e0ed0369e`, redispatch_count=1)",
+    "direction_applied": "newest_first",
+    "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+    "action_required": "informational_no_action_needed"
+  },
+  "_processed": {
+    "fingerprint": "fbe339a218ddd5d4878dbd76dd85e50ea05a3d90f311ee0fea79a12819ac1cfd",
+    "processedAt": "2026-08-12T05:51:41Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

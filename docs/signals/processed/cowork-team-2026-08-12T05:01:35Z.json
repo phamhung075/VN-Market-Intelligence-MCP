@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-08-12T05:01:35Z",
-    "matched_slots": ["alert-commander-market"],
-    "won_slots": ["alert-commander-market"],
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/alert-commander/flow/main.md"],
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 0,
     "errors": [],
@@ -18,10 +24,16 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "alert-commander-market": "cron" },
-    "cadence_minutes": { "alert-commander-market": null },
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
     "last_fired_timestamp": "2026-08-12T05:01:35Z",
-    "last_fired_slots": ["alert-commander-market"],
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +45,11 @@
     "note": "single-slot tick, no collisions, no calendar/cadence suppression"
   },
   "priority": "low",
-  "createdAt": "2026-08-12T05:01:35Z"
+  "createdAt": "2026-08-12T05:01:35Z",
+  "_processed": {
+    "fingerprint": "833d7eeed0232752ed82cf398b6c1e9c784c222ef77e7a8c423fd5e7aff84a9b",
+    "processedAt": "2026-08-12T05:20:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

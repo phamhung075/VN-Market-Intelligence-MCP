@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-08-12T06:09:29Z",
-    "matched_slots": ["alert-commander-market"],
-    "won_slots": ["alert-commander-market"],
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/alert-commander/flow/main.md"],
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 9,
     "errors": [],
@@ -18,10 +24,16 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": {"alert-commander-market": "cron"},
-    "cadence_minutes": {"alert-commander-market": null},
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
     "last_fired_timestamp": "2026-08-12T06:09:00Z",
-    "last_fired_slots": ["alert-commander-market"],
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -32,5 +44,11 @@
     "signal_backlog": 0,
     "note": "Tick delayed ~9min mid-flow investigating a transient get_macro_snapshot vnIndex plausibility-gate divergence (cross_plane_divergence 28.6%) that had self-resolved by the time macro was re-fetched (vnIndex 1788.6, source_tier:1, real)."
   },
-  "priority": "low"
+  "priority": "low",
+  "_processed": {
+    "fingerprint": "b201abc7c27c3d2dc23fedf005827ce7e21b88bcb6e8c9bc0e2c2cd9be60ce9a",
+    "processedAt": "2026-08-12T06:22:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
