@@ -173,6 +173,8 @@ ROOT="${PREFLIGHT_ROOT:-$DEFAULT_ROOT}"
 
 # shellcheck source=./mcp-call.sh
 source "$SCRIPT_DIR/mcp-call.sh"
+# shellcheck source=./lib/tick-telemetry.sh
+source "$SCRIPT_DIR/lib/tick-telemetry.sh"
 
 # ── Step 5 idle-check paths (env-overridable test seams) ─────────────────────
 SIGNALS_DIR="${SIGNALS_DIR:-$ROOT/docs/signals}"
@@ -680,7 +682,15 @@ run_preflight() {
 }
 
 # ── Standalone execution (only when run directly, not sourced by a test harness) ──
+# TICK-WU-2: tt_capture_and_log wraps run_preflight here — the trailer is the
+# pre-existing choke point every verdict path already converges on with a real
+# $? available (architect ratification, sprint-TICK-PREFLIGHT-USAGE-
+# INSTRUMENTATION-architect.md). Purely additive telemetry: stdout/exit code/
+# lock behavior are unchanged (AC-3/AC-6/AC-7). R6: a pre-existing (out-of-
+# scope) _step55_board_hygiene stdout-leak may surface as a defensive
+# verdict:"UNKNOWN" log row via log_tick_usage's own graceful degrade — not a
+# fix, not a regression. See scripts/agents-flow/lib/tick-telemetry.sh.
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  run_preflight
+  tt_capture_and_log "dev-team-tick-preflight.sh" run_preflight
   exit $?
 fi

@@ -814,6 +814,120 @@ NEW_COUNTER=$(jq -r '.consecutive_run_idle' "$WIDEN_STATE_PATH")
 check "T43 malformed widen-state: verdict stays RUN-IDLE (counter read as 0, not widened)" "$([ "$VERDICT" = "RUN-IDLE" ] && echo true || echo false)"
 check "T43 malformed widen-state: RE-SEEDED with valid JSON, counter=1" "$([ "$NEW_COUNTER" = "1" ] && echo true || echo false)"
 
+# ── TICK-WU-2: telemetry wiring — tt_capture_and_log at the trailer ──────────
+# Exercises the same function the trailer now calls in place of the bare
+# `run_preflight; exit $?`. run_preflight/mcp_call/_step55_* are the same real
+# function + stubs already sourced/defined above — TICK_TELEMETRY_LOG_PATH
+# (Q6 precedence, see tick-telemetry.test.sh) is the ONE seam these tests
+# need. Zero real MCP calls, zero real orch-cold-evict.sh/git shell-outs
+# (still fully stubbed). Owning task: TICK-WU-2-DEVTEAM-WIRING.
+
+# ── T-LOG: logging-specific — RUN path, verify log file JSON contents ────────
+LOG_T_LOG="$TMPDIR_TEST/telemetry-t-log.jsonl"
+run_case
+OUT_TLOG=$(TICK_TELEMETRY_LOG_PATH="$LOG_T_LOG" tt_capture_and_log "dev-team-tick-preflight.sh" run_preflight); RC_TLOG=$?
+check "T-LOG RUN verdict still reaches caller via tt_capture_and_log wrapper" "$([ "$(printf '%s' "$OUT_TLOG" | jq -r '.verdict')" = "RUN" ] && echo true || echo false)"
+check "T-LOG exit=1 (real run_preflight rc preserved through the wrapper)" "$([ "$RC_TLOG" -eq 1 ] && echo true || echo false)"
+check "T-LOG one telemetry line written" "$([ "$(wc -l < "$LOG_T_LOG" | tr -d ' ')" -eq 1 ] && echo true || echo false)"
+check "T-LOG telemetry line script field is dev-team-tick-preflight.sh" "$([ "$(jq -r '.script' "$LOG_T_LOG")" = "dev-team-tick-preflight.sh" ] && echo true || echo false)"
+check "T-LOG telemetry line verdict field mirrors stdout verdict (RUN)" "$([ "$(jq -r '.verdict' "$LOG_T_LOG")" = "RUN" ] && echo true || echo false)"
+check "T-LOG telemetry line tick field present (dev-team shape always carries a real tick, never null)" "$([ "$(jq -r '.tick != null' "$LOG_T_LOG")" = "true" ] && echo true || echo false)"
+check "T-LOG telemetry line exit_code field == 1" "$([ "$(jq -r '.exit_code' "$LOG_T_LOG")" -eq 1 ] && echo true || echo false)"
+check "T-LOG telemetry line has NO CLAUDE_CODE_SESSION_ID-shaped key (hard contract, same as cowork's)" \
+  "$([ "$(jq -r 'has("session_id") or has("session") or has("claude_code_session_id")' "$LOG_T_LOG")" = "false" ] && echo true || echo false)"
+
+# ── T-LOG2: SKIP verdict path — exit=0 preserved through wrapper ─────────────
+LOG_T_LOG2="$TMPDIR_TEST/telemetry-t-log2.jsonl"
+run_case
+STUB_SF1="lost_peer"
+OUT_TLOG2=$(TICK_TELEMETRY_LOG_PATH="$LOG_T_LOG2" tt_capture_and_log "dev-team-tick-preflight.sh" run_preflight); RC_TLOG2=$?
+check "T-LOG2 SKIP verdict reaches caller via wrapper" "$([ "$(printf '%s' "$OUT_TLOG2" | jq -r '.verdict')" = "SKIP" ] && echo true || echo false)"
+check "T-LOG2 SKIP exit=0 (real run_preflight rc preserved)" "$([ "$RC_TLOG2" -eq 0 ] && echo true || echo false)"
+check "T-LOG2 telemetry line exit_code field == 0" "$([ "$(jq -r '.exit_code' "$LOG_T_LOG2")" -eq 0 ] && echo true || echo false)"
+
+# ── T-LOG3: rotation in-situ — over-fill a small-cap log via real invocations ─
+LOG_T_LOG3="$TMPDIR_TEST/telemetry-t-log3.jsonl"
+run_case
+i=1
+while [ "$i" -le 8 ]; do
+  TICK_TELEMETRY_LOG_PATH="$LOG_T_LOG3" TICK_TELEMETRY_MAX_LINES=5 \
+    tt_capture_and_log "dev-team-tick-preflight.sh" run_preflight >/dev/null
+  i=$((i + 1))
+done
+check "T-LOG3 rotation caps the file at TICK_TELEMETRY_MAX_LINES (5), not the 8 real invocations" \
+  "$([ "$(wc -l < "$LOG_T_LOG3" | tr -d ' ')" -eq 5 ] && echo true || echo false)"
+
+# ── T-LOG4: AC-6 stdout purity + AC-2/AC-3 byte-identity — dev-team's
+#     _emit_verdict does NOT pass jq's -c/--compact-output either (same as
+#     cowork's), so the real verdict is ALREADY multi-line pretty-printed
+#     JSON. The real purity contract: the wrapper reprints that multi-line
+#     JSON BYTE-IDENTICAL (diffed against a direct, unwrapped run_preflight()
+#     call under identical stub conditions) with zero logging noise mixed in
+#     — verified both by the byte-diff and by confirming the whole captured
+#     stdout still parses as exactly ONE JSON document (jq -e . fails on ANY
+#     leading/trailing non-JSON text).
+LOG_T_LOG4="$TMPDIR_TEST/telemetry-t-log4.jsonl"
+run_case
+RAW_TLOG4=$(run_preflight)
+WRAPPED_TLOG4=$(TICK_TELEMETRY_LOG_PATH="$LOG_T_LOG4" tt_capture_and_log "dev-team-tick-preflight.sh" run_preflight)
+check "T-LOG4 AC-2/AC-3: wrapper reprints stdout BYTE-IDENTICAL to a direct (unwrapped) run_preflight() call" \
+  "$([ "$WRAPPED_TLOG4" = "$RAW_TLOG4" ] && echo true || echo false)"
+check "T-LOG4 AC-6: stdout parses as exactly ONE JSON document (no trailing/leading logging noise)" \
+  "$(printf '%s' "$WRAPPED_TLOG4" | jq -e . >/dev/null 2>&1 && echo true || echo false)"
+check "T-LOG4 AC-6: negative control — log file DID receive a separate entry (proves logging happened, off stdout)" \
+  "$([ -s "$LOG_T_LOG4" ] && echo true || echo false)"
+
+# ── T-LOG5: AC-4/AC-5 fault inject — unwritable log destination never changes
+#     the caller's real verdict or exit code (same portable root/non-root-safe
+#     technique as tick-telemetry.test.sh T9 / cowork's own T-LOG5) ─────────
+run_case
+BLOCKER_FILE_TLOG5="$TMPDIR_TEST/t-log5-blocker-not-a-dir"
+touch "$BLOCKER_FILE_TLOG5"
+UNWRITABLE_LOG_TLOG5="$BLOCKER_FILE_TLOG5/sub/telemetry.jsonl"
+OUT_TLOG5=$(TICK_TELEMETRY_LOG_PATH="$UNWRITABLE_LOG_TLOG5" tt_capture_and_log "dev-team-tick-preflight.sh" run_preflight); RC_TLOG5=$?
+check "T-LOG5 AC-4/AC-5: unwritable log destination -> verdict still RUN (unaffected)" \
+  "$([ "$(printf '%s' "$OUT_TLOG5" | jq -r '.verdict')" = "RUN" ] && echo true || echo false)"
+check "T-LOG5 AC-4/AC-5: unwritable log destination -> exit code still the real run_preflight rc (1)" \
+  "$([ "$RC_TLOG5" -eq 1 ] && echo true || echo false)"
+check "T-LOG5 AC-4/AC-5: unwritable log destination -> no file was created at the blocked path" \
+  "$([ ! -f "$UNWRITABLE_LOG_TLOG5" ] && echo true || echo false)"
+
+# ── T-LOG6: R6 defensive degrade — IF a pre-existing (out-of-scope) Step 5.5
+#     leak from _step55_run_validate/_step55_git_commit_evict corrupts
+#     run_preflight()'s own captured stdout (see WU-2 handoff R6 + script
+#     header's FIX-DEVTEAM-PREFLIGHT-STEP55-COLDEVICT-STDOUT-LEAK-CORRUPTS-
+#     VERDICT precedent — that fix covers _step55_run_cold_evict only;
+#     _step55_run_validate/_step55_git_commit_evict remain unredirected),
+#     log_tick_usage's OWN `.verdict // "UNKNOWN"` degrade converts the
+#     corrupted capture into a graceful verdict:"UNKNOWN" row instead of
+#     crashing the logger — a beneficial side effect of WU-0's defensive
+#     design, NOT a fix for the pre-existing leak (still out of scope this
+#     sprint). Overrides _step55_run_validate to leak unredirected text,
+#     reproducing the R6 risk shape directly, then restores the normal stub.
+run_case
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-hygiene-trip-notidle.json"
+STUB_WOULD_EVICT="true"
+_step55_run_validate() {
+  echo "_step55_run_validate" >> "$CALL_LOG_FILE"
+  echo "SIMULATED-R6-LEAK: [orch-state-validate] some non-fatal report text reaching real stdout"
+  return "${STUB_VALIDATE_RC:-0}"
+}
+LOG_T_LOG6="$TMPDIR_TEST/telemetry-t-log6.jsonl"
+OUT_TLOG6=$(TICK_TELEMETRY_LOG_PATH="$LOG_T_LOG6" tt_capture_and_log "dev-team-tick-preflight.sh" run_preflight); RC_TLOG6=$?
+check "T-LOG6 R6: pre-existing leak DOES reach the caller's own stdout (confirms this test reproduces the real R6 risk shape — out of scope to fix here, this wiring's own contribution is the graceful degrade below, not a stdout-purity fix)" \
+  "$([[ "$OUT_TLOG6" == *"SIMULATED-R6-LEAK"* ]] && echo true || echo false)"
+check "T-LOG6 R6: telemetry line degrades to verdict UNKNOWN on a corrupted capture (never crashes the logger)" \
+  "$([ "$(jq -r '.verdict' "$LOG_T_LOG6")" = "UNKNOWN" ] && echo true || echo false)"
+check "T-LOG6 R6: telemetry line tick field is null (no parseable 'tick' key in the corrupted capture)" \
+  "$([ "$(jq -r '.tick == null' "$LOG_T_LOG6")" = "true" ] && echo true || echo false)"
+check "T-LOG6 R6: tt_capture_and_log's own returned rc is unaffected (still the real run_preflight rc)" \
+  "$([ "$RC_TLOG6" -eq 1 ] && echo true || echo false)"
+# Restore the normal (non-leaking) stub for hygiene — matches run_case()'s convention.
+_step55_run_validate() {
+  echo "_step55_run_validate" >> "$CALL_LOG_FILE"
+  return "${STUB_VALIDATE_RC:-0}"
+}
+
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"
