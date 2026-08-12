@@ -1666,3 +1666,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: D-CYCLE-2 · Auditor Tier-1 cycle missing — 84h gap (expected: 0.5h)
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** auditor/tier-1
+**Details:** Last healthy heartbeat was 2026-08-09T01:33:22Z; expected cadence 30 minutes; >3 day gap indicates missed audit cycles
+**Impact:** System health not being monitored for Tier-1 container/health checks; risk of undetected runtime failures
+**Root cause:** Tier-1 audit cycles have not completed successfully in 84 hours; possible fire-election losses or spawn gate issues
+**Zone owner:** system-auditor
+**Last reported:** 2026-08-12T13:34:51Z (signal sys-20260812T133441-7e30, system-auditor -> po, dedup_key=auditor-cycle-missing:tier1:2026-08-12T13:30Z, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
