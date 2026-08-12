@@ -1498,3 +1498,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service — sustained high memory 94.25%, loss of reclamation
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-rag-service-1
+**Details:** Deep-probe ESCALATE verdict: all 6 samples sustained at 94.25%, no reclamation occurring
+**Impact:** rag-service memory pressure sustained above 93% without reclamation
+**Root cause:** Ongoing memory pressure exceeding garbage collection reclamation rate
+**Zone owner:** developer
+**Last reported:** 2026-08-12T00:36:15Z (signal sys-20260812T003601-7b74, system-auditor -> po, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
