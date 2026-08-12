@@ -1726,3 +1726,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · pdf-extractor sustained memory 95.36% (loss of reclamation)
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-pdf-extractor-1
+**Details:** Memory pressure sustained across 6-probe window. VmHWM pinned at cgroup limit. Escalating trend observed (88.95%→78.16%→93.92%→95.23%→95.36%).
+**Impact:** Service may face memory allocation delays or eviction
+**Root cause:** Sustained high memory utilization with escalating trend and zero reclamation
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-12T15:35:49Z (signal sys-20260812T153538-7fe5, system-auditor -> po, dedup_key=microservice_degraded:pdf-extractor:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
