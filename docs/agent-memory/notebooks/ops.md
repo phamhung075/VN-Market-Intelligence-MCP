@@ -183,3 +183,41 @@ Session: 165f4245-6173-4054-87fd-c55bb626265f
 
 **Session:** 165f4245-6173-4054-87fd-c55bb626265f
 **Incident ID:** sys-20260812T040810-6125 (from auditor signal)
+
+---
+
+## Cycle 2026-08-12T05:04Z — RAG-Service BELOW-FLOOR Memory Pressure Mitigation #2
+
+**Condition Detected**: System-auditor Tier-1 probe reported vn-market-intelligence-mcp-rag-service-1 at 99.44% memory (1018MiB/1GiB), essentially zero headroom, ~50 minutes after prior mitigation at 2026-08-12T04:12:36Z.
+
+**Pre-Mitigation Diagnostics**:
+```
+docker stats output (pre-restart):   1020MiB / 1GiB = 99.61%
+Container status:                     Up 51 minutes (healthy)
+RestartCount:                          0 (no crash loop, running since prior restart)
+```
+
+**Mitigation Executed** (ops-flow compliant scoped restart):
+```bash
+docker compose stop rag-service && docker compose up -d --no-deps --no-build rag-service
+Timestamp: 2026-08-12T05:04:30Z UTC (dispatch)
+Container restarted: 2026-08-12T05:04:33.067751053Z (verified via docker inspect)
+RestartCount remained: 0 (normal scheduled stop, not crash)
+```
+
+**Post-Mitigation Health Verification**:
+- Memory: 37.42MiB (3.65%) — **96.34% recovery** (identical pattern to prior mitigation 50min earlier)
+- Container status: Up 18 seconds (healthy)
+- Gateway port 3000: Bound ✓
+- Service /health endpoints: All 7 core services responding 200 (pdf-extractor 5001, rag-service 5002, technical-analysis 5003, macro-indicators 5004, kinh-dich 5005, alert-engine 5006, news-fetch 5008)
+- Docker compose ps: All 12 services Up (healthy) — no collateral damage
+- Builder cache prune: 385.9MB reclaimed
+
+**Key Observation**: Recurrence interval shortened from initial ~50 minutes (04:12→05:04) to current ~50 minutes again. This confirms the root cause diagnosis (FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS): vector search workload on unindexed LanceDB table = unbounded brute-force full-column scans accumulating in memory. Every search adds ~20-30MiB to arena, no recovery until container restart.
+
+**Explicit NOT A FIX**: This is identical temporary stopgap as prior mitigation. Permanent fix requires dev-rag-service to land LanceDB IvfPq index (board row status=READY, priority=P0). Current dev-team WIP is saturated (3 unrelated rows in-progress, WIP_CAP=2), blocking dispatch per 2026-08-12T04:37Z escalation.
+
+**Next expected BELOW-FLOOR**: ~2026-08-12T06:00-06:05Z (50min from 05:04Z). If climbing past 85% before permanent fix lands, escalate for emergency dispatch gate override.
+
+**Session:** 165f4245-6173-4054-87fd-c55bb626265f
+**Incident ID:** sys-20260812T050436-rag-repeat (echo of sys-20260812T040810-6125)
