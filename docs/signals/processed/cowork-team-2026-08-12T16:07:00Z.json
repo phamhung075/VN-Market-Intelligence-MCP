@@ -1,0 +1,51 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork_tick_report",
+  "payload": {
+    "tick": "2026-08-12T16:00Z",
+    "classification": "FIRE",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "spawned": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "silent": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "market-watcher-eod": "cadence",
+      "alert-commander-critical": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "market-watcher-eod": 240,
+      "alert-commander-critical": null
+    },
+    "collision_note": "market-watcher matched twice this tick (offhours cadence-due + eod cron 16:00 weekday close report) — Step 4b WARNING only per R3, both spawned as separate instances (by design, distinct slot_ids).",
+    "new_signals": 1,
+    "note": "1 NEW signal_queue row: pdf-extractor A-30 severity CRITICAL (95.32%, escalated from WARN) — telegram sent to bug channel this tick, dedup_key microservice_degraded:pdf-extractor:A-30. rag-service A-30 WARN row from prior ticks no longer in NEW set (drained/routed by po)."
+  },
+  "priority": "normal",
+  "createdAt": "2026-08-12T16:07:00Z",
+  "_processed": {
+    "fingerprint": "ae92470693d035305fa2875c282bab4c90063ae67a7ae85f4d61069408330076",
+    "processedAt": "2026-08-12T16:21:00Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
