@@ -64,6 +64,8 @@ ROOT="${PREFLIGHT_ROOT:-$DEFAULT_ROOT}"
 
 # shellcheck source=./mcp-call.sh
 source "$SCRIPT_DIR/mcp-call.sh"
+# shellcheck source=./lib/tick-telemetry.sh
+source "$SCRIPT_DIR/lib/tick-telemetry.sh"
 
 MCP_JSON_PATH="${MCP_JSON_PATH:-$ROOT/.mcp.json}"
 ORCH_STATE_PATH="${ORCH_STATE_PATH:-$ROOT/docs/data/orch/orch-state.json}"
@@ -297,7 +299,13 @@ run_preflight() {
 }
 
 # ── Standalone execution (only when run directly, not sourced by a test harness) ──
+# TICK-WU-1: tt_capture_and_log wraps run_preflight here — the trailer is the
+# pre-existing choke point every verdict path already converges on with a real
+# $? available (architect ratification, sprint-TICK-PREFLIGHT-USAGE-
+# INSTRUMENTATION-architect.md). Purely additive telemetry: stdout/exit code/
+# lock behavior are unchanged (AC-3/AC-6/AC-7) — see scripts/agents-flow/
+# lib/tick-telemetry.sh for the capture/reprint/log contract.
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  run_preflight
+  tt_capture_and_log "cowork-tick-preflight.sh" run_preflight
   exit $?
 fi

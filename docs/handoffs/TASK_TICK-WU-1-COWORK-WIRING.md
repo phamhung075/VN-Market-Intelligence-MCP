@@ -150,3 +150,18 @@ Zone: cross-service/
 Depends on: TICK-WU-0-TELEMETRY-LIB (must be green)
 
 Blocks: TICK-WU-3-AUDITOR-WIRING (auditor needs both WU-1 and WU-2 done first)
+
+---
+
+## [Developer] Implementation Record
+
+- **Files modified:**
+  - `scripts/agents-flow/cowork-tick-preflight.sh` — added `source "$SCRIPT_DIR/lib/tick-telemetry.sh"` (after the existing `mcp-call.sh` source); trailer swapped `run_preflight; exit $?` → `tt_capture_and_log "cowork-tick-preflight.sh" run_preflight; exit $?` (+comment block). Zero other lines touched — `run_preflight()`/`_emit_verdict()`/all `return` sites byte-identical.
+  - `scripts/agents-flow/cowork-tick-preflight.test.sh` — 5 new test blocks appended (T-LOG..T-LOG5, 18 assertions): logging-specific field-shape check, WORK-path exit-code preservation, rotation-in-situ (8 real invocations, cap=5), AC-6 stdout purity + AC-2/AC-3 byte-identity (diffed against a direct unwrapped `run_preflight()` call — corrected from an initial wrong "single-line stdout" assumption, see decision journal S6), AC-4/AC-5 unwritable-log-destination fault injection.
+- **Tests written:** `scripts/agents-flow/cowork-tick-preflight.test.sh` — 18 new assertions, all GREEN.
+- **Git commits:** (pending — see closeout)
+- **tsc status:** N/A — pure bash/jq, no `apps/` TypeScript touched (cross-service/ zone, same as WU-0).
+- **Full suite:** `cowork-tick-preflight.test.sh` 58/58 (AC-10 pre-edit baseline 40/40 confirmed unchanged by R4 before any new test was added; +18 new). `dev-team-tick-preflight.test.sh` 146/146 unaffected (WU-2 landed same cycle, see its own handoff). `shellcheck -S warning` clean.
+- **Docs updated:** NONE — this task's own handoff is the only doc impacted (Implementation Record below); no `docs/{policies,protocols,standards,references}/` domain doc changed by this mechanical wiring (WU-0 already carries the CANONICAL block).
+- **Graphify:** skipped (no docs impacted).
+- **Simplicity gate:** PASS — Q1 scope clean (exact 3-line production diff, no extra flags/knobs), Q2 no single-use abstractions (reused WU-0's `tt_capture_and_log` verbatim), Q3 senior-test clean, Q4 ratio <50% overhead (nearly all added lines are the explicitly-requested new test coverage).

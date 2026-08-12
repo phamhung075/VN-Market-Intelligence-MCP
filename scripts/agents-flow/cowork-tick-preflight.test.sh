@@ -326,6 +326,92 @@ check "T7 NFR-2 stale non-matching pressure-state stays SILENT (no over-suppress
 check "T7 NFR-2 exit=0" "$([ "$RC" -eq 0 ] && echo true || echo false)"
 export PRESSURE_STATE_PATH="$TMPDIR_TEST/does-not-exist-pressure-state.json"
 
+# ── TICK-WU-1: telemetry wiring — tt_capture_and_log at the trailer ──────────
+# Exercises the same function the trailer now calls in place of the bare
+# `run_preflight; exit $?`. run_preflight/mcp_call are the same real function
+# + stub already sourced above — TICK_TELEMETRY_LOG_PATH (Q6 precedence, see
+# tick-telemetry.test.sh) is the ONE seam these tests need. Zero real MCP
+# calls (mcp_call is still the stub). Owning task: TICK-WU-1-COWORK-WIRING.
+
+# ── T-LOG: logging-specific — SILENT path, verify log file JSON contents ─────
+LOG_T_LOG="$TMPDIR_TEST/telemetry-t-log.jsonl"
+run_case
+export MCP_JSON_PATH="$TMPDIR_TEST/mcp-normal.json"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-no-signals.json"
+export SLOT_MATCHER_CMD='echo "{\"slots\":[],\"drift_min\":3}"'
+OUT_TLOG=$(TICK_TELEMETRY_LOG_PATH="$LOG_T_LOG" tt_capture_and_log "cowork-tick-preflight.sh" run_preflight); RC_TLOG=$?
+check "T-LOG SILENT verdict still reaches caller via tt_capture_and_log wrapper" "$([ "$(printf '%s' "$OUT_TLOG" | jq -r '.verdict')" = "SILENT" ] && echo true || echo false)"
+check "T-LOG exit=0 (real run_preflight rc preserved through the wrapper)" "$([ "$RC_TLOG" -eq 0 ] && echo true || echo false)"
+check "T-LOG one telemetry line written" "$([ "$(wc -l < "$LOG_T_LOG" | tr -d ' ')" -eq 1 ] && echo true || echo false)"
+check "T-LOG telemetry line script field is cowork-tick-preflight.sh" "$([ "$(jq -r '.script' "$LOG_T_LOG")" = "cowork-tick-preflight.sh" ] && echo true || echo false)"
+check "T-LOG telemetry line verdict field mirrors stdout verdict (SILENT)" "$([ "$(jq -r '.verdict' "$LOG_T_LOG")" = "SILENT" ] && echo true || echo false)"
+check "T-LOG telemetry line tick field present (cowork shape always carries a real tick, never null)" "$([ "$(jq -r '.tick != null' "$LOG_T_LOG")" = "true" ] && echo true || echo false)"
+check "T-LOG telemetry line exit_code field == 0" "$([ "$(jq -r '.exit_code' "$LOG_T_LOG")" -eq 0 ] && echo true || echo false)"
+check "T-LOG telemetry line has NO CLAUDE_CODE_SESSION_ID-shaped key (hard contract, script header)" \
+  "$([ "$(jq -r 'has("session_id") or has("session") or has("claude_code_session_id")' "$LOG_T_LOG")" = "false" ] && echo true || echo false)"
+
+# ── T-LOG2: WORK verdict path — non-zero exit code preserved through wrapper ──
+LOG_T_LOG2="$TMPDIR_TEST/telemetry-t-log2.jsonl"
+run_case
+export SLOT_MATCHER_CMD='echo "{\"slots\":[{\"slot_id\":\"news-scout-market\"}],\"drift_min\":2}"'
+OUT_TLOG2=$(TICK_TELEMETRY_LOG_PATH="$LOG_T_LOG2" tt_capture_and_log "cowork-tick-preflight.sh" run_preflight); RC_TLOG2=$?
+check "T-LOG2 WORK verdict reaches caller via wrapper" "$([ "$(printf '%s' "$OUT_TLOG2" | jq -r '.verdict')" = "WORK" ] && echo true || echo false)"
+check "T-LOG2 WORK exit=1 (real run_preflight rc preserved, not swallowed by a successful log write)" "$([ "$RC_TLOG2" -eq 1 ] && echo true || echo false)"
+check "T-LOG2 telemetry line exit_code field == 1" "$([ "$(jq -r '.exit_code' "$LOG_T_LOG2")" -eq 1 ] && echo true || echo false)"
+
+# ── T-LOG3: rotation in-situ — over-fill a small-cap log via real invocations,
+#     newest tick's own log entry survives (see T-LOG4 for its stdout side) ──
+LOG_T_LOG3="$TMPDIR_TEST/telemetry-t-log3.jsonl"
+run_case
+export SLOT_MATCHER_CMD='echo "{\"slots\":[],\"drift_min\":0}"'
+i=1
+while [ "$i" -le 8 ]; do
+  TICK_TELEMETRY_LOG_PATH="$LOG_T_LOG3" TICK_TELEMETRY_MAX_LINES=5 \
+    tt_capture_and_log "cowork-tick-preflight.sh" run_preflight >/dev/null
+  i=$((i + 1))
+done
+check "T-LOG3 rotation caps the file at TICK_TELEMETRY_MAX_LINES (5), not the 8 real invocations" \
+  "$([ "$(wc -l < "$LOG_T_LOG3" | tr -d ' ')" -eq 5 ] && echo true || echo false)"
+
+# ── T-LOG4: AC-6 stdout purity + AC-2/AC-3 byte-identity — cowork's
+#     _emit_verdict does NOT pass jq's -c/--compact-output (see tick-
+#     telemetry.sh header comment), so the real verdict is ALREADY multi-line
+#     pretty-printed JSON — a naive "stdout is a single line" assertion would
+#     be wrong even pre-WU-1. The real purity contract: the wrapper reprints
+#     that multi-line JSON BYTE-IDENTICAL (diffed here against a direct,
+#     unwrapped run_preflight() call under identical stub conditions) with
+#     zero logging noise mixed in — verified both by the byte-diff and by
+#     confirming the whole captured stdout still parses as exactly ONE JSON
+#     document (jq -e . fails on ANY leading/trailing non-JSON text).
+LOG_T_LOG4="$TMPDIR_TEST/telemetry-t-log4.jsonl"
+run_case
+export SLOT_MATCHER_CMD='echo "{\"slots\":[],\"drift_min\":0}"'
+RAW_TLOG4=$(run_preflight)
+WRAPPED_TLOG4=$(TICK_TELEMETRY_LOG_PATH="$LOG_T_LOG4" tt_capture_and_log "cowork-tick-preflight.sh" run_preflight)
+check "T-LOG4 AC-2/AC-3: wrapper reprints stdout BYTE-IDENTICAL to a direct (unwrapped) run_preflight() call" \
+  "$([ "$WRAPPED_TLOG4" = "$RAW_TLOG4" ] && echo true || echo false)"
+check "T-LOG4 AC-6: stdout parses as exactly ONE JSON document (no trailing/leading logging noise)" \
+  "$(printf '%s' "$WRAPPED_TLOG4" | jq -e . >/dev/null 2>&1 && echo true || echo false)"
+check "T-LOG4 AC-6: negative control — log file DID receive a separate entry (proves logging happened, off stdout)" \
+  "$([ -s "$LOG_T_LOG4" ] && echo true || echo false)"
+
+# ── T-LOG5: AC-4/AC-5 fault inject — unwritable log destination never changes
+#     the caller's real verdict or exit code (same portable root/non-root-safe
+#     technique as tick-telemetry.test.sh T9: a FILE occupying a path
+#     component that mkdir -p cannot turn into a directory) ─────────────────
+run_case
+export SLOT_MATCHER_CMD='echo "{\"slots\":[],\"drift_min\":0}"'
+BLOCKER_FILE_TLOG5="$TMPDIR_TEST/t-log5-blocker-not-a-dir"
+touch "$BLOCKER_FILE_TLOG5"
+UNWRITABLE_LOG_TLOG5="$BLOCKER_FILE_TLOG5/sub/telemetry.jsonl"
+OUT_TLOG5=$(TICK_TELEMETRY_LOG_PATH="$UNWRITABLE_LOG_TLOG5" tt_capture_and_log "cowork-tick-preflight.sh" run_preflight); RC_TLOG5=$?
+check "T-LOG5 AC-4/AC-5: unwritable log destination -> verdict still SILENT (unaffected)" \
+  "$([ "$(printf '%s' "$OUT_TLOG5" | jq -r '.verdict')" = "SILENT" ] && echo true || echo false)"
+check "T-LOG5 AC-4/AC-5: unwritable log destination -> exit code still the real run_preflight rc (0)" \
+  "$([ "$RC_TLOG5" -eq 0 ] && echo true || echo false)"
+check "T-LOG5 AC-4/AC-5: unwritable log destination -> no file was created at the blocked path" \
+  "$([ ! -f "$UNWRITABLE_LOG_TLOG5" ] && echo true || echo false)"
+
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"
