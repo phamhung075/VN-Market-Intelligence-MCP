@@ -1180,6 +1180,34 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-12T12:30Z",
         "dedup_key": "audit:rag-service:memory-stale-ack:FU-RAG-DEPLOY-MEMORY"
+      },
+      {
+        "id": "sys-20260812T133432-3b93",
+        "ts": "2026-08-12T13:34:32Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service memory pressure: 88.54% (>85% threshold, A-30 WARN boundary)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T13:30Z",
+        "dedup_key": "microservice_degraded:rag-service:A-30"
+      },
+      {
+        "id": "sys-20260812T133441-7e30",
+        "ts": "2026-08-12T13:34:41Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_missing",
+        "summary": "auditor tier-1 cycle possibly missing — no completion evidence in 84h (cadence 0.5h)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T13:30Z",
+        "dedup_key": "auditor-cycle-missing:tier1:2026-08-12T13:30Z"
       }
     ],
     "last_triaged_at": "2026-08-12T08:40:43Z",
@@ -11774,7 +11802,7 @@
         "size": "M",
         "sprint": "TICK-PREFLIGHT-USAGE-INSTRUMENTATION",
         "zone": "cross-service/",
-        "next_agent": "architect",
+        "next_agent": "pm",
         "owner": "ba",
         "supervised": false,
         "plan_only": false,
@@ -11793,11 +11821,14 @@
         "status": "BACKLOG",
         "created_at": "2026-08-12T13:05:27Z",
         "created_by": "po",
-        "updated_at": "2026-08-12T13:18:36Z",
-        "updated_by": "ba",
+        "updated_at": "2026-08-12T13:34:17Z",
+        "updated_by": "architect",
         "ba_spec_complete": true,
         "ba_handoff": "docs/handoffs/TICK-PREFLIGHT-USAGE-INSTRUMENTATION-BA-spec.md",
-        "ba_completed_at": "2026-08-12T13:18:34Z"
+        "ba_completed_at": "2026-08-12T13:18:34Z",
+        "architect_complete": true,
+        "architect_handoff": "docs/handoffs/TICK-PREFLIGHT-USAGE-INSTRUMENTATION-BA-spec.md",
+        "architect_completed_at": "2026-08-12T13:31:22Z"
       },
       {
         "id": "CLEAN-SIGNALS-INBOX-COWORK-DRIFT-WINDOW-RESIDUE",
