@@ -19647,6 +19647,32 @@
         "claimed_at": "2026-08-12T14:39:11Z",
         "claimed_by": "developer (dev-team lead, no-zone fallback, session 165f4245-6173-4054-87fd-c55bb626265f)",
         "commit_sha": "6d63b9cac"
+      },
+      {
+        "id": "UC-CCA-P3-FR5-CODE-GATE",
+        "title": "FR-5 AC-CODE-GATE: unconditional published:* release-refusal at coordinationStore.ts choke point",
+        "priority": "P0",
+        "zone": "apps/mcp-server/",
+        "next_agent": "qa",
+        "status": "REVIEW",
+        "depends_on": [
+          "FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L"
+        ],
+        "blocked_by": null,
+        "parent": "UC-CCA-P3",
+        "created_at": "2026-08-08T15:10:20Z",
+        "created_by": "po (B1 Path-A ruling)",
+        "note": "FR-5 (AC-CODE-GATE) code track, split from UC-CCA-P3 per PO's B1 Path-A ruling 2026-08-08. Create apps/mcp-server/src/domain/services/publishedMarkerImmunity.ts (pure predicate isPublishedMarkerTaskId, prefix 'published:'); modify apps/mcp-server/src/infrastructure/db/coordinationStore.ts to add an UNCONDITIONAL release-refusal guard as the FIRST statement of releaseTask() (:888) and releaseOrphanTask() (:1000), plus the additive optional reason field on ReleaseResult (:391-393) — OrphanReleaseResult.reason already exists, zero type change there. coordinationTools.ts call sites (:208/:320) need ZERO changes; the guard sits inside the store functions they wrap, so it cannot be routed around. Tests per brief §6: (1) published:* release -> {ok:true,released:0,reason:'published_marker_immune'} NOT released:1; (2) orphan-sweep on a genuinely stale published:* -> still refused (proves guard fires BEFORE the staleness check); (3) negative control — cron:*/sprint-task with identical staleness still releases normally. HARD SEQUENCING (PO B1 ruling): do NOT start until FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L is terminal — that row shrinks/splits this exact file (currently 1388L vs size-lint upper 1365L, the sole live CI-RED offender on origin/main), which both unblocks the ci_green verification gate and relocates every line anchor above. Re-read the anchors after it lands; do not trust the numbers in this note if the file was split. UC-CCA-P3 does NOT close DONE until this child is DONE.",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "updated_at": "2026-08-12T15:33:32Z",
+        "dep_status_note_20260812": "[developer 2026-08-12T14:35Z, dev-team lead cycle] Blocking dependency FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L is DONE_VERIFIED (2026-08-09, commit 763ef682252) — dependency SATISFIED, this row is fully eligible now. Line anchors re-verified LIVE against the post-split coordinationStore.ts (now 1173L): releaseTask() still at :888, releaseOrphanTask() still at :1000, ReleaseResult still at :391-393, OrphanReleaseResult still at :395-400 — UNCHANGED, this row's own note's anchor-drift warning does NOT apply, safe to implement against the numbers already in this row's note. NOT dispatched this cycle: this session (Task-tool-spawned, Read/Edit/Write/Bash only, no Agent tool) cannot nest-spawn dev-mcp-server — flagged for the outer dev-team session (which holds the Agent-tool binding) to dispatch next tick.",
+        "dep_status_note_20260812T1459Z": "[developer 2026-08-12T15:00:26Z, session 165f4245] Dependency confirmed satisfied and anchors re-verified live UNCHANGED (coordinationStore.ts 1173L: releaseTask :888, releaseOrphanTask :1000, ReleaseResult :391-393, OrphanReleaseResult :395-400) -- fully implementable. NOT dispatched: this session's Agent AND Task tools are RAW-verified hard-disabled (\"disabled for this session, in subagents as well as here\"), contradicting the dispatching router's premise. Same structural gap as the prior Task-spawned cycle -- persists. Needs a session with a live-confirmed Agent-tool grant (verify before assuming) to spawn dev-mcp-server directly.",
+        "claimed_at": "2026-08-12T15:06:45Z",
+        "claimed_by": "dev-team (router direct dispatch, Agent-tool-grant confirmed live, bypassing structurally-blocked developer nested-dispatch)",
+        "dispatch_lane": "dev-mcp-server",
+        "updated_by": "dev-mcp-server (session 165f4245)",
+        "commit": "47f987f50f69a876fc66ca38a8475e0d771d730c (code+tests), 068a62d37f8b705896237ddf5ed6d5b4a8bbc5c2 (docs)",
+        "status_note": "IMPLEMENTATION COMPLETE per architecture brief 2026-08-08-uc-cca-p3-published-marker-gate-skill.md §6, verbatim. New domain/services/publishedMarkerImmunity.ts (isPublishedMarkerTaskId, pure prefix predicate on published:). coordinationStore.ts releaseTask()/releaseOrphanTask() both refuse UNCONDITIONALLY as their first statement — before any owner-match or heartbeat-staleness check — returning {ok:true,released:0,reason:published_marker_immune} / {released:false,reason:published_marker_immune}, never released:1/true. ReleaseResult got additive optional reason?:string; OrphanReleaseResult needed zero change (already had reason). Line anchors re-verified live before editing (row note claimed unchanged at 1173L — confirmed exact: releaseTask :888, releaseOrphanTask :1000, ReleaseResult :391-393, OrphanReleaseResult :395-400). SPEC-VERIFICATION FINDING (not a spec-invalidator): coordinationTools.ts:208/:320 anchors cited in this row own note are STALE — an unrelated prior sprint (FIX-CI-SIZELINT-COORDINATIONTOOLS-TS-457L, 2026-08-09) had already split that file into a 54L barrel + 6 per-tool files under ./coordination/. Read taskReleaseTool.ts + taskForceReleaseOrphanTool.ts directly — both JSON.stringify the store return value unmodified, so the zero-changes-needed claim holds true, only the cited line numbers were dead references. Documented correction in system.md. TESTS: new publishedMarkerImmunity.test.ts 8/8 pass (prefix match/non-match incl. mid-string, case-sensitivity). coordinationStore.test.ts extended +4 cases per brief §6 (a: release refused released:0 not released:1; b: orphan-sweep on genuinely stale published:* lock still refused, proves guard fires BEFORE staleness check; c: negative-control cron:*/sprint-task-shaped ids with identical staleness still release normally) — 20/20 pass. All 20 coordination-related test files run together: 335/335 pass. tsc --noEmit clean. Full bun test: 15263 pass/40 skip/55 fail/48122 expect (488s) — grep-confirmed only 2 fail names touch coordination code at all (task_release Zod schema S5/S6 inside FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts), that exact file reproduces 13/13 clean in isolation — load-induced flakiness not a regression, consistent with the documented pre-existing flaky-churn band (S85-S89 siblings 60/63/57/59/57 fail). Gate 2: PORT=3099 clean boot /health {toolCount:183,sessions:0}, gen-project-stats.ts toolCount=183/cronJobCount=88 both match baseline. Dashboard circular-dep check clean (both HTTP 200). size-lint-justification.sh --check PASS — coordinationStore.ts grew 1173L->1192L, well inside the 1365L upper bound (baseline 1241L+10% tolerance), no helper-module factoring needed. Docs updated: domain-model.md (new Specialized-services row) + system.md (new Invariant 8). Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-5.md STEP dev-mcp-server-S90."
       }
     ],
     "qa": [
@@ -20016,30 +20042,6 @@
         "claimed_at": "2026-08-12T14:27:36Z",
         "claimed_by": "dev-team (ready-lane consumer)",
         "dispatch_lane": "developer"
-      },
-      {
-        "id": "UC-CCA-P3-FR5-CODE-GATE",
-        "title": "FR-5 AC-CODE-GATE: unconditional published:* release-refusal at coordinationStore.ts choke point",
-        "priority": "P0",
-        "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
-        "status": "IN_PROGRESS",
-        "depends_on": [
-          "FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L"
-        ],
-        "blocked_by": null,
-        "parent": "UC-CCA-P3",
-        "created_at": "2026-08-08T15:10:20Z",
-        "created_by": "po (B1 Path-A ruling)",
-        "note": "FR-5 (AC-CODE-GATE) code track, split from UC-CCA-P3 per PO's B1 Path-A ruling 2026-08-08. Create apps/mcp-server/src/domain/services/publishedMarkerImmunity.ts (pure predicate isPublishedMarkerTaskId, prefix 'published:'); modify apps/mcp-server/src/infrastructure/db/coordinationStore.ts to add an UNCONDITIONAL release-refusal guard as the FIRST statement of releaseTask() (:888) and releaseOrphanTask() (:1000), plus the additive optional reason field on ReleaseResult (:391-393) — OrphanReleaseResult.reason already exists, zero type change there. coordinationTools.ts call sites (:208/:320) need ZERO changes; the guard sits inside the store functions they wrap, so it cannot be routed around. Tests per brief §6: (1) published:* release -> {ok:true,released:0,reason:'published_marker_immune'} NOT released:1; (2) orphan-sweep on a genuinely stale published:* -> still refused (proves guard fires BEFORE the staleness check); (3) negative control — cron:*/sprint-task with identical staleness still releases normally. HARD SEQUENCING (PO B1 ruling): do NOT start until FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L is terminal — that row shrinks/splits this exact file (currently 1388L vs size-lint upper 1365L, the sole live CI-RED offender on origin/main), which both unblocks the ci_green verification gate and relocates every line anchor above. Re-read the anchors after it lands; do not trust the numbers in this note if the file was split. UC-CCA-P3 does NOT close DONE until this child is DONE.",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "updated_at": "2026-08-12T15:06:46Z",
-        "dep_status_note_20260812": "[developer 2026-08-12T14:35Z, dev-team lead cycle] Blocking dependency FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L is DONE_VERIFIED (2026-08-09, commit 763ef682252) — dependency SATISFIED, this row is fully eligible now. Line anchors re-verified LIVE against the post-split coordinationStore.ts (now 1173L): releaseTask() still at :888, releaseOrphanTask() still at :1000, ReleaseResult still at :391-393, OrphanReleaseResult still at :395-400 — UNCHANGED, this row's own note's anchor-drift warning does NOT apply, safe to implement against the numbers already in this row's note. NOT dispatched this cycle: this session (Task-tool-spawned, Read/Edit/Write/Bash only, no Agent tool) cannot nest-spawn dev-mcp-server — flagged for the outer dev-team session (which holds the Agent-tool binding) to dispatch next tick.",
-        "dep_status_note_20260812T1459Z": "[developer 2026-08-12T15:00:26Z, session 165f4245] Dependency confirmed satisfied and anchors re-verified live UNCHANGED (coordinationStore.ts 1173L: releaseTask :888, releaseOrphanTask :1000, ReleaseResult :391-393, OrphanReleaseResult :395-400) -- fully implementable. NOT dispatched: this session's Agent AND Task tools are RAW-verified hard-disabled (\"disabled for this session, in subagents as well as here\"), contradicting the dispatching router's premise. Same structural gap as the prior Task-spawned cycle -- persists. Needs a session with a live-confirmed Agent-tool grant (verify before assuming) to spawn dev-mcp-server directly.",
-        "claimed_at": "2026-08-12T15:06:45Z",
-        "claimed_by": "dev-team (router direct dispatch, Agent-tool-grant confirmed live, bypassing structurally-blocked developer nested-dispatch)",
-        "dispatch_lane": "dev-mcp-server",
-        "updated_by": "dev-team (router direct dispatch)"
       }
     ]
   },
