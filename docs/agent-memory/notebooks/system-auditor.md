@@ -38,3 +38,49 @@
 
 **D-CYCLE-2:** Tier-1 heartbeat stale >3h. Signal: sys-20260812T133441-7e30 (NEW)
 **A-30 rag-service:** 88.54% memory. Signal dedup-skipped (known tracking)
+
+## c54 · 2026-08-12T15:00Z
+### Audit Run Tier-1 (15:00–15:07 UTC 2026-08-12)
+- Tier: 1 | Status: DEGRADED
+- Anomalies: 1 tracked (A-30 pdf-extractor) | 0 new this cycle (dedup-known)
+- Wall time: ~2min
+- Summary: A-30 memory pressure escalation on pdf-extractor (95.23% sustained); rag-service benign (FOLD)
+
+**RAW-PROBE:** [2026-08-12T15:05:06Z]
+All services UP (docker ps ✓), all health endpoints 200 ✓, disk 51% ✓
+
+**Container Status (A-01..A-11):** All PASS
+**Health Endpoints (A-12..A-19):** All PASS  
+**A-20 (pdf-extractor multi-probe):** 3/3 probes 200 OK → PASS
+**A-21 (Restart count):** mcp-server RestartCount=0 → PASS
+**A-32 (Disk):** 51% capacity → PASS
+
+**A-30 (Memory Pressure — Multi-Probe Verdict):**
+- **vn-market-intelligence-mcp-rag-service-1:** baseline 91.81%
+  - Verdict: FOLD (benign GC sawtooth below tripwire)
+  - 6 samples: all 91.81% (stable, no dips, no crashes) → PASS, no emit
+  
+- **vn-market-intelligence-mcp-pdf-extractor-1:** baseline 95.23%
+  - Verdict: ESCALATE — "loss of reclamation" (all 6 samples >93% sustained, min=95.23%, median=95.23%, 0 dips)
+  - severity: WARN (escalate on >93% sustained-floor, no death indicators present)
+  - Signal emitted: sys-20260812T150735-2e4e
+  - Dedup: SKIP-dedup (last sent 2026-08-11T12:36:18Z — within 7-day window)
+  - DASHBOARD row appended (id=sys-20260812T150735-2e4e)
+
+**Other Containers:** All baseline <85% SKIP gate → PASS
+
+**Summary:** pdf-extractor memory persistent high (95.23% sustained above 93% floor) — no crash cliff, no OOMKilled, no state change during window. Tracked finding. Escalation pattern (88.95%→78.16%→93.92%→95.23% across c51–c54) indicates legitimate workload growth or inefficient reclamation, not transient jitter.
+
+**Signals:** 
+- [emit-signal] SKIP-dedup dedup_key=microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30 last_sent=2026-08-11T12:36:18Z id=sys-20260812T150735-2e4e
+- [emit-dashboard] OK id=sys-20260812T150735-2e4e check_id=A-30
+
+
+**[OUTPUT-CONTRACT]** signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=1
+
+**[HEARTBEAT]** no heartbeat written this cycle (Tier-1 subagent never touches auditor-tier1-last-healthy.json)
+
+**[CONTRACT-CONTRADICTION]** NONE
+
+---
+
