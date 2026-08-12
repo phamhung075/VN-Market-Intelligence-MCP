@@ -5,8 +5,8 @@
     "last_linecount": 28,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786515845,
-      "last_linecount": 57
+      "last_mtime": 1786522916,
+      "last_linecount": 62
     }
   },
   "decision_journal": [
@@ -134,7 +134,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-12T07:52:28Z",
+    "_updated_at": "2026-08-12T08:21:45Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -1119,7 +1119,7 @@
         "type": "signal_feedback",
         "summary": "rag-service A-30 sustained high memory 94.76-96.56% — loss of reclamation",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-12T08:00Z",
@@ -19926,7 +19926,7 @@
         "last_served_tick": "2026-08-12T05:52:24Z"
       }
     },
-    "_updated_at": "2026-08-12T07:59:16Z",
+    "_updated_at": "2026-08-12T08:21:45Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -21422,6 +21422,124 @@
         "createdAt": "2026-08-12T07:36:37Z",
         "drained_at": "2026-08-12T07:52:28Z",
         "routed_to": "po"
+      },
+      {
+        "envelope_id": "a7bc026de7b1dbd1f97ca306ee69081273001a0aaf44f14536de619f75d7f9e1",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/market-watcher.md. actor=0454e9d8-b475-4230-95c9-8b7d943aa8b3 mode=warn escalated=true prior_warns=17 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T08:10:42Z",
+        "drained_at": "2026-08-12T08:21:19Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2fb360b915460e91168dbd592d07ce6221728659c599ab1856ebb1fb42bca4ee",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T07:45Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "spawned": [
+            "alert-commander-market"
+          ],
+          "pressure_mode": "adaptive",
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": {
+            "alert-commander-market": "2026-08-12T07:52:00Z"
+          },
+          "classification": "FIRE",
+          "reason": "spawned",
+          "note": "Step 0a: 1 NEW signal (sys-20260812T073637-71e9, to:po, system-auditor A-30 rag-service memory WARN) left at NEW per feedback_cowork_step0a_blanket_ack_buries_other_agents_signals — not consumed by cowork-team, PO ACKs on its own triage cadence. Step 4.7 tick-snapshot skipped (documented get_cycle_bootstrap fallback used instead — hand-transcription truncation risk, per established pattern)"
+        },
+        "createdAt": "2026-08-12T07:52:07Z",
+        "drained_at": "2026-08-12T08:21:19Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9b343872626468253961beb884f6dc7a6200ca19fb67b737514e4d41547d0d26",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "tick-summary",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-12T08:00Z",
+          "drift_min": 6,
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-market",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-market",
+            "alert-commander-critical"
+          ],
+          "spawned": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-market",
+            "alert-commander-critical"
+          ],
+          "collision_warning": {
+            "agent_id": "alert-commander",
+            "slots": [
+              "alert-commander-market",
+              "alert-commander-critical"
+            ],
+            "action": "both spawned, R3"
+          },
+          "pressure_mode": "adaptive",
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-market": "cron",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "news-scout-offhours": 240,
+            "market-watcher-offhours": 240,
+            "alert-commander-market": null,
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-12T08:08:06Z",
+          "classification": "FIRE",
+          "reason": "spawned",
+          "note": "4-slot batch (single batch, headroom ~3047mb well above 1500mb floor). Collision: alert-commander matched 2 slots (alert-commander-market cron, alert-commander-critical cron) — WARNING telegram sent, both spawned per R3 multi-slot policy. Step 0a: 0 new signals this tick, no drain needed. Step 4.7 tick-snapshot skipped (documented get_cycle_bootstrap fallback, hand-transcription truncation risk, per established pattern)."
+        },
+        "createdAt": "2026-08-12T08:08:32Z",
+        "drained_at": "2026-08-12T08:21:19Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "eb474939137f5f0f0f84bfd587a257624fc1aabba8525abaf33fafef928bf12b",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "WARN",
+        "payload": "rag-service A-30 sustained high memory 94.76-96.56% — loss of reclamation",
+        "createdAt": "2026-08-12T08:10:16Z",
+        "drained_at": "2026-08-12T08:21:45Z",
+        "routed_to": "PO Step 0-SIG"
       }
     ],
     "last_po_triage_at": "2026-08-11T17:09:47Z",
