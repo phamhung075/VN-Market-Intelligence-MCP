@@ -94,6 +94,7 @@
 | `tradingWindow.ts` | VN market hours: 09:00-15:30 GMT+7 Mon-Fri |
 | `sparkline.ts` | ASCII price visualization |
 | `stockSearch.ts` | Ticker normalization + search |
+| `publishedMarkerImmunity.ts` (`isPublishedMarkerTaskId(task_id)`, UC-CCA-P3 FR-5 AC-CODE-GATE) | Pure prefix predicate — true iff `task_id` starts with `"published:"`. Zero I/O. Sole domain invariant consumed by `infrastructure/db/coordinationStore.ts`'s `releaseTask()`/`releaseOrphanTask()` — the FIRST statement of both functions refuses release UNCONDITIONALLY when this predicate is true, returning `{released:0/false, reason:"published_marker_immune"}` before any owner-match or heartbeat-staleness check runs. Code-enforced backstop after 3x prose-gate oscillation on `published:*` marker release (2026-07-02/07-03/07-15) — see `docs/architecture-briefs/2026-08-08-uc-cca-p3-published-marker-gate-skill.md` §6. |
 
 ## Cron Domain (DASH-CRON-RECHECK-TABLE, TASK-DASH-CRON-1)
 **Files:** `apps/mcp-server/src/domain/cron/` — zero imports, pure (Fence-A compliant)
