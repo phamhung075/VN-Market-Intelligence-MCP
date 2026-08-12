@@ -33,6 +33,12 @@ apps/pdf-extractor/PDF-Extract-Kit/
 docs/data/cycle-snapshot-*.json
 docs/data/.cycle-snapshot-*.stage
 docs/data/cycle-snapshot-*.json.tmp
+
+# per-script tick-preflight usage telemetry (WU-0, TICK-PREFLIGHT-USAGE-INSTRUMENTATION)
+# — rolling O_APPEND JSONL, one file per script (see docs/policies/dev-standards.md
+# CANONICAL: tick-telemetry.sh), never tracked, same treatment as cycle-snapshot-*.json above.
+docs/data/telemetry/*.jsonl
+docs/data/telemetry/*.jsonl.tmp.*
 docs/daily/
 docs/outbox/
 
