@@ -1654,3 +1654,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory recurring (3rd occurrence)
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-rag-service-1
+**Details:** Memory threshold breach recurred (3rd time). Container restarted 2026-08-12T10:40:47Z, memory dropped from 92.79% to 3.34%. Dedup ledger shows escalating pattern. Underlying lancedb memory architecture issue unresolved.
+**Impact:** If pattern continues, service availability risk; memory pressure affects RAG model embedding performance
+**Root cause:** LanceDB vector store memory management under RAG embedding load; prior fix (malloc_trim) insufficient
+**Zone owner:** ops
+**Last reported:** 2026-08-12T10:43:51Z (signal sys-20260812T104338-724f, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30:recurring-unresolved, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
