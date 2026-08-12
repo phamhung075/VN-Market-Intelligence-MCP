@@ -1606,3 +1606,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · Cron fire gaps (7 jobs anomalies)
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** cron-scheduler
+**Details:** intelligenceCycle LATE (0.3/0.4h), bctcReparseJob MISSED (40.5/36h), 4x STALE >280h, 1x MISSED 1734h
+**Impact:** periodic jobs not running: TA/BB alerts offline, monthly audits skipped, RAG rebuild stalled 23d
+**Root cause:** cron scheduler failures, possible stale lock or scheduler daemon issue
+**Zone owner:** ops
+**Last reported:** 2026-08-12T06:31:11Z (signal sys-20260812T063102-52f1, system-auditor -> po, dedup_key=auditor-a29-fire-gap:multi, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
