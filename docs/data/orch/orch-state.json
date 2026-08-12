@@ -96,9 +96,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "UC-CCA-P3-FR5-CODE-GATE (zone apps/mcp-server/, next_agent dev-mcp-server) is dependency-satisfied and READY, but dispatch is structurally unreachable from this developer-lane session: Agent AND Task tools RAW-verified hard-disabled (\"disabled for this session, in subagents as well as here\") at 2026-08-12T15:00:26Z, session 165f4245-6173-4054-87fd-c55bb626265f. Router's dispatch premise (\"this session HAS the Agent tool\") was WRONG -- same structural gap as the prior Task-spawned cycle, NOT resolved. NEXT: whoever spawns the next cycle must verify the Agent-tool grant BEFORE asserting it; recommend main terminal spawn dev-mcp-server on UC-CCA-P3-FR5-CODE-GATE DIRECTLY, bypassing developer nested-dispatch, since main terminal is the only confirmed Agent-tool holder in this chain. UC-CCA-P3-FR1-FR2-SKILL correctly left untouched in review[]/next_agent=qa (QA's own cadence). 7x FR-3 children correctly left blocked (depends_on FR1-FR2-SKILL not yet Done).",
-    "updated_at": "2026-08-12T15:00:27Z",
-    "updated_by": "developer (dev-team lead, session 165f4245-6173-4054-87fd-c55bb626265f, Agent-tool-grant verification)"
+    "updated_at": "2026-08-12T15:06:04Z",
+    "updated_by": "pm"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3328,7 +3327,7 @@
         "label": "TICK-PREFLIGHT-USAGE-INSTRUMENTATION — measured silent-tick cost via per-invocation telemetry at preflight script verdict choke points (replaces engineering estimates with real numbers)",
         "opened_at": "2026-08-12",
         "priority": "p2",
-        "status": "ACTIVE",
+        "status": "DONE",
         "tasks": [
           {
             "id": "TICK-WU-0-TELEMETRY-LIB",
@@ -3411,7 +3410,7 @@
             "title": "Wire auditor-tier1-probe.sh at trailer case discriminator with double-log negative assertions (WU-3, own design review)",
             "owner": "developer",
             "size": "L",
-            "status": "REVIEW",
+            "status": "DONE_VERIFIED",
             "zone": "cross-service/",
             "depends": [
               "TICK-WU-0-TELEMETRY-LIB",
@@ -3420,8 +3419,19 @@
             ],
             "type": "SPRINT-L",
             "note": "HIGH-RISK OWN-DESIGN task (not mechanical port of WU-1/2). Wraps Tier-1 run_probe and Tier-2/3 run_tiered_probe at their case-statement discriminator to prevent double-log corruption (Q3 architectural risk). Zero touches to internal run_probe/run_tiered_probe code. Existing 1323-line suite stays green (R4). CRITICAL test: assert that Tier-2/3 invocation of run_tiered_probe produces EXACTLY ONE log line (the outer) + ZERO from inner run_probe call — this negative assertion proves the double-log corruption class does NOT occur (R1, the single most important assertion in sprint). Depends on WU-0+1+2 all green (architect gate). R2: auditor test suite has no PREFLIGHT_ROOT seam, must use TICK_TELEMETRY_LOG_PATH override.",
-            "updated_at": "2026-08-12T14:46:26Z",
-            "next_agent": "qa"
+            "updated_at": "2026-08-12T15:01:16Z",
+            "next_agent": "pm",
+            "qa_verified_by": "qa",
+            "qa_verified_at": "2026-08-12T15:00:42Z",
+            "commit_sha": "df16b5a93",
+            "verification": {
+              "raw_probe": {
+                "tool": "bash",
+                "args": "git show --stat df16b5a93 (diff-shape confirm) + auditor-tier1-probe.test.sh re-run + AC-10 pre-edit baseline re-run at df16b5a93~1 + tick-telemetry.test.sh/cowork-tick-preflight.test.sh/dev-team-tick-preflight.test.sh sprint-wide cross-check + shellcheck -S warning on both touched files + source-trace of run_tiered_probe()'s inner run_probe() call path + live standalone smoke-run of both wired trailer branches (--tier=1, --tier=2; TICK_TELEMETRY_LOG_PATH/HEARTBEAT_FILE_PATH scratch overrides, CLAUDE_CODE_SESSION_ID exported) + grep for CLAUDE_CODE_SESSION_ID leakage",
+                "live_value_observed": "auditor-tier1-probe.test.sh 214/214 PASS (181 pre-existing baseline re-confirmed unchanged at df16b5a93~1 + 33 new T-LOG..T-LOG7, matches claim exactly); tick-telemetry.test.sh 53/53, cowork-tick-preflight.test.sh 58/58, dev-team-tick-preflight.test.sh 146/146 all unaffected (matches claim); git show --stat df16b5a93 touches only the 3 claimed files (auditor-tier1-probe.sh +19/-2, auditor-tier1-probe.test.sh +165 pure-append, TASK_TICK-WU-3-AUDITOR-WIRING.md +15), zero touch to run_probe()/run_tiered_probe()/_emit_verdict()/orch-state.json; trailer case-statement wraps branch 1) run_probe and branch 2|3) run_tiered_probe \"$TIER\" INDEPENDENTLY via tt_capture_and_log, invalid-tier branch left unwrapped per R5; source-read of run_tiered_probe() (line 877) confirms its inner run_probe(\"suppress_heartbeat\") call is a plain command-substitution with zero reference to log_tick_usage/tt_capture_and_log anywhere inside either function body (grep-confirmed only 2 tt_capture_and_log call sites in the whole file, both at the trailer) -- the double-log corruption class is structurally impossible, not just test-asserted; live smoke-run --tier=1 and --tier=2 (real unstubbed docker/health checks) each produced exactly ONE telemetry line with the correct per-tier vocabulary (ALL_GREEN/FAILURE vs SKIP-SPAWN/SPAWN) and zero CLAUDE_CODE_SESSION_ID leakage via grep; shellcheck -S warning NOT literally clean -- 2 pre-existing warnings on auditor-tier1-probe.sh (SC2254 L613, SC2034 L877) and 5 on auditor-tier1-probe.test.sh (SC2034 L447/554/1241/1242/1318), all byte-identical at df16b5a93~1 (pre-dating this task, unrelated legacy debt) -- WU-3's own diff introduces ZERO new shellcheck warnings; developer's \"clean\" claim is an overclaim vs this sprint's WU-0/1/2 precedent of literal zero pre-existing warnings on their touched files -- corrected in QA record, judged non-blocking (not a regression this task introduced)",
+                "observed_at": "2026-08-12T15:00:42Z"
+              }
+            }
           }
         ]
       }

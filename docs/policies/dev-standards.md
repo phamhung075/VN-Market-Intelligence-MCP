@@ -612,11 +612,12 @@ scripts/agents-flow/lib/tick-telemetry.sh
 #   § [Architect] Q1-Q6 Ratification + Design decisions ("the trailer is the
 #   real choke point"). Task handoff: docs/handoffs/TASK_TICK-WU-0-
 #   TELEMETRY-LIB.md.
-# WU-1 (cowork)/WU-2 (dev-team)/WU-3 (auditor) wiring is OUT of this WU-0
-# task's scope — gated on this lib landing green (AC-10), tracked
-# separately (TICK-WU-1/2/3-*). code-janitor-tick-preflight.sh, db-
-# integrity-probe.sh, orch-sentinel-lite-probe.sh are explicit non-goals
-# this sprint (FR-10) — designated follow-up only, do not widen.
+# WU-1/WU-2/WU-3 wiring complete (all DONE_VERIFIED 2026-08-12):
+#   WU-1: docs/handoffs/TASK_TICK-WU-1-COWORK-WIRING.md (cowork-tick-preflight.sh trailer, commit 976e7c5b7)
+#   WU-2: docs/handoffs/TASK_TICK-WU-2-DEVTEAM-WIRING.md (dev-team-tick-preflight.sh trailer, commit ac53ec856)
+#   WU-3: docs/handoffs/TASK_TICK-WU-3-AUDITOR-WIRING.md (auditor-tier1-probe.sh case-statement, commit df16b5a93)
+# code-janitor-tick-preflight.sh, db-integrity-probe.sh, orch-sentinel-lite-probe.sh remain
+# explicit non-goals (FR-10) — designated follow-up only, do not widen.
 ```
 
 **CANONICAL: Fleet worktree push backstop (TASK-AUTO-PUSH-A)**
