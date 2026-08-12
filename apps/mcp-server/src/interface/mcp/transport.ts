@@ -1,59 +1,35 @@
 /**
  * Interface — MCP SSE Transport Manager
  *
- * Manages a map of active SSE sessions (sessionId → SessionRecord).
- * Each GET /sse connection creates a new session; each POST /messages
- * dispatch is routed to the correct session via the sessionId query param.
- *
- * This module is a thin wrapper; the actual SSE protocol framing is
- * handled by @modelcontextprotocol/sdk SSEServerTransport.
- *
- * HEARTBEAT FIX (2026-05-05): Added keep-alive heartbeat messages every 30s
- * to prevent connection timeouts through proxies/Cloudflare.
- *
- * SOAK-VERIFY FIX (FIX-SSE-SOAK-VERIFY-DEPENDS-ON-SHARED-CONTAINER-UPTIME-3RD-RESET,
- * 2026-08-09): the reaper fix below shipped with its >=4h max-age branch
- * "soak-verified" solely via the shared `dev-mcp-server` container's
- * `StartedAt` timestamp — a property ANY peer's unrelated `docker compose up`/
- * rebuild resets (8+ peers legitimately rebuild this container). That AC was
- * unverifiable by construction and was reset 3 times in ~24h (see
- * `FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER`'s `qa_step5_checkpoint_*`
- * notes and the `FIX-SSE-SOAK-VERIFY-...` board row). Fix: `_now` is now an
- * injectable clock (defaults to `Date.now`, same override idiom already used
- * by `_heartbeatIntervalMs`/`_idleTimeoutMs`/`_maxAgeMs`/`_reaperIntervalMs`),
- * threaded through every age computation (`handleSse` createdAt/
- * lastActivityAt, `handleMessage` lastActivityAt bump, `reapStaleSessions`
- * now). Tests can now advance a fake clock past the REAL shipped 4h
- * threshold instantly and assert the max-age branch fires — see T13/T14 in
- * `1862c-transport-session-eviction.test.ts` — decoupling the reaper's
- * correctness proof from both real wall-clock elapsed time and from any
- * shared container's uptime. Generic lesson: an acceptance criterion whose
- * evidence source is a SHARED mutable runtime property is unsatisfiable
- * under a multi-writer fleet.
- *
- * REAPER FIX (FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER, 2026-08-08):
- * Prior to this fix, each session's `McpServer` (one per connection — MCP SDK
- * limitation, one transport per server) was a bare local, never stored and
- * never `.close()`d by either existing eviction path (`res.on("close")`,
- * heartbeat-write-failure). Node's `res.write()` on a broken pipe does not
- * throw synchronously (it buffers, emits an async 'error' later) so the
- * heartbeat-failure branch only fired for already-fully-torn-down sockets —
- * in practice `res.on("close")` was the only branch doing real work, and it
- * still never closed the McpServer. Any session whose client vanished
- * without a clean FIN (the dominant traffic shape — the `gateway` MCP server
- * dials a new /sse connection per tool call and drops it, see
- * `../../infrastructure/telemetry/perCallCounterStore.ts` header) leaked its
- * McpServer's full tool-registration graph (183 tools) for the process
- * lifetime. Live measurement (po_rawverify_20260807T0600Z on the board row)
- * showed ~22% of sessions never reaped, and the leak alone killed the
- * container in <7h. Fix: collapse the two parallel Maps + two duplicated
- * inline cleanup blocks into one `SessionRecord` map and one
- * `evictSession()` method that every trigger (close / heartbeat-fail /
- * idle-reap / max-age-reap / DELETE) calls — `mcpServer.close()` cascades to
- * `transport.close()` (confirmed via installed SDK source,
- * shared/protocol.js:500-502), so one call suffices. Idle/max-age reaper +
- * explicit DELETE /sse|/messages route added as defense-in-depth. Design:
+ * size-justification: 241L — single cohesive SSE session-lifecycle
+ * manager: one `SessionRecord` map, one reaper (idle + max-age), and one
+ * `evictSession()` method that every trigger (client close, heartbeat-write
+ * failure, idle reap, max-age reap, explicit DELETE) funnels through, so
+ * `mcpServer.close()` (cascades to `transport.close()`, confirmed via
+ * installed SDK source) is never missed. This consolidation REPLACED two
+ * parallel Maps + two duplicated inline cleanup blocks
+ * (FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER, 2026-08-08) that had
+ * leaked ~22% of sessions' McpServer instances (183-tool registration graph
+ * each) and killed the container in <7h. Splitting the map/reaper/handlers
+ * across files would force >=2 call sites back onto shared session state —
+ * reintroducing exactly the missed-eviction-path bug this file exists to
+ * close, for zero cohesion benefit. Full design + fix history (incl. the
+ * FIX-SSE-SOAK-VERIFY-DEPENDS-ON-SHARED-CONTAINER-UPTIME-3RD-RESET
+ * injectable-clock follow-up, 2026-08-09):
  * docs/architecture-briefs/2026-08-07-fix-mcp-sse-session-manager-reaper.md
+ * (`git log -- <this file>` for the full commit-by-commit narrative).
+ *
+ * Manages a map of active SSE sessions (sessionId → SessionRecord). Each
+ * GET /sse connection creates a new session; each POST /messages dispatch
+ * is routed to the correct session via the sessionId query param. This
+ * module is a thin wrapper — the actual SSE protocol framing is handled by
+ * @modelcontextprotocol/sdk's SSEServerTransport. Heartbeats every 30s
+ * prevent connection timeouts through proxies/Cloudflare. `_now` is an
+ * injectable clock (default `Date.now`, same override idiom as
+ * `_heartbeatIntervalMs`/`_idleTimeoutMs`/`_maxAgeMs`/`_reaperIntervalMs`)
+ * so tests can advance a fake clock past the real 4h max-age threshold
+ * instantly instead of needing real wall-clock/container uptime — see
+ * T13/T14 in `1862c-transport-session-eviction.test.ts`.
  */
 
 import type { IncomingMessage, ServerResponse } from "node:http";
