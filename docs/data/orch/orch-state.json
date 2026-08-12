@@ -11890,53 +11890,6 @@
         ],
         "status_note": "AC: a bctcReparseJob run completes with >0 rows stored and no period-mismatch quarantine for a ticker whose document period is correctly resolvable. Dedup: scanned backlog/ready/in_progress/review/qa for PERIOD-MISMATCH|PERIOD.?KEY|QUARTER-BLIND|REPARSE — the specifically-named FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST row is NOT present on ANY non-terminal lane (0 hits, all lanes + 2026-08 archive scanned), so these 19 fresh occurrences are unowned. Minted 2026-08-12T15:06:24Z.\n\n[po/triage 2026-08-12T15:36:32Z] +19 occurrences folded, ALL inside a 14-minute window 2026-08-12T14:02:03Z-14:16:24Z (telegram 4747-4765): FRT x2, KDC, KDH, VND x5, DXG, SAB, GEX x2, SHB, DIG x2, PDR, VJC, DBC. Every one is the same shape — the supplied period key is 1-2 years and/or 3 quarters stale versus the document's own boundary-date evidence, with a decisive margin (DIG supplied 2025-Q1 vs content 2026-Q1, 143 matching occurrences vs 28 runner-up; VND supplied 2023-Q4 vs content 2025-Q4, 115 vs 26). The quarantine is WORKING AS DESIGNED and is protecting the DB — do not weaken it.\n\nCAUSAL LINK CONFIRMED THIS TICK: this flood is the tail of bctcReparseJob finally firing after the 40.5h gap A-29 reported (telegram 4715 at 36.4h, 4731 at 40.5h — both now explained and resolved by this fire). So FIX-BCTCREPARSEJOB-NOT-FIRING-40H-LOWCONF-BACKLOG-ACCUMULATING and this row are ONE causal chain: the job stalls, the period key it replays goes stale, then ~100% of the catch-up batch quarantines. Fixing the cadence alone will NOT fix this — the period key must be re-derived from document content at reparse time instead of carried forward from the stale queue row. Whoever takes either row should take both.\n\nAlso folded, same batch, both correct refusals with zero data loss: telegram 4770 (VJC 2025-Q1 reparse write BLOCKED — new extraction total_assets=0 would have overwritten a good stored report at 127684178.83) and 4771 (GEX 2025-Q3 write BLOCKED — total_assets=0 with no prior row, refused rather than creating a corrupt row).",
         "updated_at": "2026-08-12T15:36:33Z"
-      },
-      {
-        "id": "FIX-CI-BUNTEST-1108-AGENT-WORK-LOG-STORE",
-        "type": "FIX",
-        "title": "CI RED: bun test (per-file isolation) — src/__tests__/1108-agent-work-log-store.test.ts",
-        "desc": "ci_red CI-RED-0b3d494d (run 31613681006, head 0b3d494d3109a307ce1dde822ef27ada46155ae0, 2026-08-12T15:53:22Z) listed 3 FAILEDFILE entries; two matched existing file-scoped board rows (FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH, FIX-CI-BUNTEST-FOREIGN-FLOW-MISSING-TRADING-DAY-NO-BACKFILL) and this one had ZERO dedup hit across backlog[]+ready[]+in_progress[]+review[]+qa[] AND across done[]+done_verified[]. Minted per the ci_red ANTI-AMNESTY BACKSTOP: the CI plane baseline under scripts/ci-per-file-isolation.sh is 0 fail, so every ci_red is actionable and 'pre-existing' is never a valid disposition without a matched FILE-scoped row. Explicitly NOT folded into FIX-MCP-SUITE-HEALTH-BASELINE — the anti-amnesty fence hard-forbids deduping a ci_red into any LOCAL-full-suite row (the two planes never share a fail set). INTERMITTENCY DATUM (record, do NOT treat as a skip reason): this file failed ONLY in run 31613681006 (0b3d494d, '15112 pass / 40 skip / 6 fail') and PASSED in the bracketing runs 31606982292 (b701e913, 14:53Z, 5 fail) and 31616202191 (f954d591, 16:21Z, 5 fail) — the 6th failure appeared and vanished within a 90-minute window while the other two failing files stayed constant. That is a deflake shape matching the DEFLAKE-VNSTOCK-3STATEMENT precedent (CI per-file-isolation transient), not a hard break. Scope as deflake-or-fix: first establish whether the failure is order-independent by re-running the single file in isolation, before bisecting.",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "po",
-        "next_agent": "developer",
-        "status": "BACKLOG",
-        "check_id": "CI-RED-0b3d494d",
-        "dedup_key": "ci_job:bun test|file:src/__tests__/1108-agent-work-log-store.test.ts",
-        "ci_fingerprint": "b2f06dcede777aaa81a1ef5c1dc5b3a6381dc2566ae7edcd1fdb4c8c1094ae92",
-        "files": [
-          "apps/mcp-server/src/__tests__/1108-agent-work-log-store.test.ts"
-        ],
-        "baseline_pass": false,
-        "created_at": "2026-08-12T17:00:39Z",
-        "created_by": "po (dev-team Step 1 triage)",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "status_note": "AC: gh run view <databaseId with headSha AFTER 0b3d494d> --json jobs -q '.jobs[]|select(.name==\"bun test\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Failing job: bun test. Failing file: src/__tests__/1108-agent-work-log-store.test.ts. Observed RED on 0b3d494d only; GREEN on b701e913 + f954d591. FAILING_FILES read verbatim from gh run view --log-failed FAILEDFILE block, not from job name. Triaged 2026-08-12T17:00:39Z.",
-        "updated_at": "2026-08-12T17:03:25Z"
-      },
-      {
-        "id": "FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG",
-        "type": "FIX",
-        "title": "get_bctc_full serves operatingProfit=0 + EBITDA=0 + operating_cf=0 for HPG 2026-Q1 while profit_before_tax=10.762,2 tỷ is populated — a corrupt-zero summary scalar that silently DISABLES the ESC-4 escalation gate",
-        "desc": "RAW-VERIFIED THIS TICK (not read off the signal prose): gateway call_tool(vn-market, get_bctc_full, {code:'HPG'}) returns Operating Profit = 0 tỷ VND (0.0%), EBITDA = 0, structured_data.operating_cf = 0, while the SAME payload carries net_revenue=52.900.847, gross_profit=8.365.068,6, profit_before_tax=10.762.183,8 and net_profit=9.055.918,2. The server's own validator already flags it: validation='passed_with_warnings — Net profit exceeds gross profit: netProfit (9.055.918,2) > grossProfit (8.365.068,608) — possible non-operating income'. Published 2026-06-07T11:12:22Z, confidence 80%, refine_status=PARTIAL — so this has been served continuously for ~9 weeks. bctc-analyst has now reported it for 14+ consecutive cycles with no board row anywhere (dedup scanned backlog+ready+in_progress+review+qa on /operating.?profit|LN thuần|operatingProfit/i => 0 hits). CONSEQUENTIAL, not cosmetic: (a) ESC-4 (non-operating-income share) self-reports result='discarded', reason='operating_profit=0 corrupt — non_operating_share formula undefined on corrupt denominator basis' — a corrupt zero is silently switching OFF an escalation gate rather than failing loud, which is exactly the case ESC-4 exists to catch (net>gross => large unseparated non-operating income); (b) Net Debt/EBITDA is forced to N/A because EBITDA=0. SCOPE DISCRIMINANT: this is NOT the already-tracked bank defect — FIX-BCTC-BANK-SUMMARY-MAPPING owns B02-TCTD credit-institution rows, and the two other tickers drained this same tick both serve a populated operating profit (FPT 2.747,8 tỷ; VCB 14.088,6 tỷ), so the failure is specific to this non-bank summary-scalar mapping path, not universal. Fix at the source mapping, then reflow HPG (per feedback_derived_column_fix_needs_reflow, a derived-column fix needs a reflow to take effect on already-stored rows) — do NOT hand-patch the stored scalar.",
-        "priority": "P2",
-        "size": "M",
-        "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
-        "owner": "po",
-        "next_agent": "ba",
-        "status": "BACKLOG",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts",
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/bctcFullTools.ts",
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts"
-        ],
-        "baseline_pass": false,
-        "created_at": "2026-08-12T17:00:39Z",
-        "created_by": "po (dev-team Step 1 triage)",
-        "verification_gate": "live_tool_reserve",
-        "status_note": "AC-1 get_bctc_full({code:'HPG'}) returns a NON-ZERO Operating Profit consistent with the served P&L (gross_profit 8.365,1 tỷ and profit_before_tax 10.762,2 tỷ bracket the plausible range) — verify through the RUNTIME tool via the gateway, never off a host-side SQL read (feedback_host_cli_integrity_check_false_ok_verify_through_runtime). AC-2 EBITDA and structured_data.operating_cf are no longer hard 0 for HPG, or are explicitly served as null/N-A if genuinely unextractable — a corrupt 0 that reads as a real number is the actual defect, an honest null is an acceptable outcome. AC-3 ESC-4 on a fresh HPG bctc_signal returns a real true/false verdict instead of result='discarded'. AC-4 a plausibility check runs on the mapping: reject/flag any extraction where net_profit > gross_profit AND operating_profit == 0 (feedback_nonzero_values_need_plausibility_check — the inverse case, a ZERO that should have been rejected). AC-5 regression covers at least one non-bank ticker beyond HPG so the fix is not validated on a single file (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist). NOTE the reflow dependency: fixing the mapping alone will not repair the already-stored 2026-Q1 row. Triaged 2026-08-12T17:00:39Z from bctc_signal HPG Q1-2026, RAW-verified live via gateway get_bctc_full.",
-        "updated_at": "2026-08-12T17:03:25Z"
       }
     ],
     "closed_sprints": [
@@ -20054,6 +20007,57 @@
         "claimed_at": "2026-08-12T14:27:36Z",
         "claimed_by": "dev-team (ready-lane consumer)",
         "dispatch_lane": "developer"
+      },
+      {
+        "id": "FIX-CI-BUNTEST-1108-AGENT-WORK-LOG-STORE",
+        "type": "FIX",
+        "title": "CI RED: bun test (per-file isolation) — src/__tests__/1108-agent-work-log-store.test.ts",
+        "desc": "ci_red CI-RED-0b3d494d (run 31613681006, head 0b3d494d3109a307ce1dde822ef27ada46155ae0, 2026-08-12T15:53:22Z) listed 3 FAILEDFILE entries; two matched existing file-scoped board rows (FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH, FIX-CI-BUNTEST-FOREIGN-FLOW-MISSING-TRADING-DAY-NO-BACKFILL) and this one had ZERO dedup hit across backlog[]+ready[]+in_progress[]+review[]+qa[] AND across done[]+done_verified[]. Minted per the ci_red ANTI-AMNESTY BACKSTOP: the CI plane baseline under scripts/ci-per-file-isolation.sh is 0 fail, so every ci_red is actionable and 'pre-existing' is never a valid disposition without a matched FILE-scoped row. Explicitly NOT folded into FIX-MCP-SUITE-HEALTH-BASELINE — the anti-amnesty fence hard-forbids deduping a ci_red into any LOCAL-full-suite row (the two planes never share a fail set). INTERMITTENCY DATUM (record, do NOT treat as a skip reason): this file failed ONLY in run 31613681006 (0b3d494d, '15112 pass / 40 skip / 6 fail') and PASSED in the bracketing runs 31606982292 (b701e913, 14:53Z, 5 fail) and 31616202191 (f954d591, 16:21Z, 5 fail) — the 6th failure appeared and vanished within a 90-minute window while the other two failing files stayed constant. That is a deflake shape matching the DEFLAKE-VNSTOCK-3STATEMENT precedent (CI per-file-isolation transient), not a hard break. Scope as deflake-or-fix: first establish whether the failure is order-independent by re-running the single file in isolation, before bisecting.",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "developer",
+        "status": "IN_PROGRESS",
+        "check_id": "CI-RED-0b3d494d",
+        "dedup_key": "ci_job:bun test|file:src/__tests__/1108-agent-work-log-store.test.ts",
+        "ci_fingerprint": "b2f06dcede777aaa81a1ef5c1dc5b3a6381dc2566ae7edcd1fdb4c8c1094ae92",
+        "files": [
+          "apps/mcp-server/src/__tests__/1108-agent-work-log-store.test.ts"
+        ],
+        "baseline_pass": false,
+        "created_at": "2026-08-12T17:00:39Z",
+        "created_by": "po (dev-team Step 1 triage)",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "AC: gh run view <databaseId with headSha AFTER 0b3d494d> --json jobs -q '.jobs[]|select(.name==\"bun test\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Failing job: bun test. Failing file: src/__tests__/1108-agent-work-log-store.test.ts. Observed RED on 0b3d494d only; GREEN on b701e913 + f954d591. FAILING_FILES read verbatim from gh run view --log-failed FAILEDFILE block, not from job name. Triaged 2026-08-12T17:00:39Z.",
+        "updated_at": "2026-08-12T17:11:53Z",
+        "claimed_at": "2026-08-12T17:11:52Z",
+        "claimed_by": "dev-team"
+      },
+      {
+        "id": "FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG",
+        "type": "FIX",
+        "title": "get_bctc_full serves operatingProfit=0 + EBITDA=0 + operating_cf=0 for HPG 2026-Q1 while profit_before_tax=10.762,2 tỷ is populated — a corrupt-zero summary scalar that silently DISABLES the ESC-4 escalation gate",
+        "desc": "RAW-VERIFIED THIS TICK (not read off the signal prose): gateway call_tool(vn-market, get_bctc_full, {code:'HPG'}) returns Operating Profit = 0 tỷ VND (0.0%), EBITDA = 0, structured_data.operating_cf = 0, while the SAME payload carries net_revenue=52.900.847, gross_profit=8.365.068,6, profit_before_tax=10.762.183,8 and net_profit=9.055.918,2. The server's own validator already flags it: validation='passed_with_warnings — Net profit exceeds gross profit: netProfit (9.055.918,2) > grossProfit (8.365.068,608) — possible non-operating income'. Published 2026-06-07T11:12:22Z, confidence 80%, refine_status=PARTIAL — so this has been served continuously for ~9 weeks. bctc-analyst has now reported it for 14+ consecutive cycles with no board row anywhere (dedup scanned backlog+ready+in_progress+review+qa on /operating.?profit|LN thuần|operatingProfit/i => 0 hits). CONSEQUENTIAL, not cosmetic: (a) ESC-4 (non-operating-income share) self-reports result='discarded', reason='operating_profit=0 corrupt — non_operating_share formula undefined on corrupt denominator basis' — a corrupt zero is silently switching OFF an escalation gate rather than failing loud, which is exactly the case ESC-4 exists to catch (net>gross => large unseparated non-operating income); (b) Net Debt/EBITDA is forced to N/A because EBITDA=0. SCOPE DISCRIMINANT: this is NOT the already-tracked bank defect — FIX-BCTC-BANK-SUMMARY-MAPPING owns B02-TCTD credit-institution rows, and the two other tickers drained this same tick both serve a populated operating profit (FPT 2.747,8 tỷ; VCB 14.088,6 tỷ), so the failure is specific to this non-bank summary-scalar mapping path, not universal. Fix at the source mapping, then reflow HPG (per feedback_derived_column_fix_needs_reflow, a derived-column fix needs a reflow to take effect on already-stored rows) — do NOT hand-patch the stored scalar.",
+        "priority": "P2",
+        "size": "M",
+        "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
+        "owner": "po",
+        "next_agent": "ba",
+        "status": "IN_PROGRESS",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/bctcFullTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts"
+        ],
+        "baseline_pass": false,
+        "created_at": "2026-08-12T17:00:39Z",
+        "created_by": "po (dev-team Step 1 triage)",
+        "verification_gate": "live_tool_reserve",
+        "status_note": "AC-1 get_bctc_full({code:'HPG'}) returns a NON-ZERO Operating Profit consistent with the served P&L (gross_profit 8.365,1 tỷ and profit_before_tax 10.762,2 tỷ bracket the plausible range) — verify through the RUNTIME tool via the gateway, never off a host-side SQL read (feedback_host_cli_integrity_check_false_ok_verify_through_runtime). AC-2 EBITDA and structured_data.operating_cf are no longer hard 0 for HPG, or are explicitly served as null/N-A if genuinely unextractable — a corrupt 0 that reads as a real number is the actual defect, an honest null is an acceptable outcome. AC-3 ESC-4 on a fresh HPG bctc_signal returns a real true/false verdict instead of result='discarded'. AC-4 a plausibility check runs on the mapping: reject/flag any extraction where net_profit > gross_profit AND operating_profit == 0 (feedback_nonzero_values_need_plausibility_check — the inverse case, a ZERO that should have been rejected). AC-5 regression covers at least one non-bank ticker beyond HPG so the fix is not validated on a single file (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist). NOTE the reflow dependency: fixing the mapping alone will not repair the already-stored 2026-Q1 row. Triaged 2026-08-12T17:00:39Z from bctc_signal HPG Q1-2026, RAW-verified live via gateway get_bctc_full.",
+        "updated_at": "2026-08-12T17:11:53Z",
+        "claimed_at": "2026-08-12T17:11:52Z",
+        "claimed_by": "dev-team"
       }
     ]
   },
