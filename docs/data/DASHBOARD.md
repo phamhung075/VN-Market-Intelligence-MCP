@@ -1762,3 +1762,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · pdf-extractor sustained memory 94.97% (loss of reclamation)
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** pdf-extractor container
+**Details:** Memory sustained at 94.97% median over 65s window with zero reclamation dips observed. VmHWM pinned at cgroup limit (2587640 KB / 2621440 KB = 98.7%)
+**Impact:** Service may be unable to handle memory spikes or scale; eventual OOMKilled possible
+**Root cause:** Container memory limit too tight for current workload; needs cgroup limit increase or memory optimization
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-12T17:05:26Z (signal sys-20260812T170518-5265, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
