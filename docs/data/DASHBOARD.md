@@ -1522,3 +1522,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · bctcReparseJob MISSED (36.4h overdue)
+**Severity:** CRITICAL | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** mcp-server/cron-jobs
+**Details:** bctcReparseJob last ran 2026-08-10 14:00:02, now 36.4h overdue (threshold 36.0h)
+**Impact:** BCTC data processing pipeline blocked — potential earnings document backlog
+**Root cause:** Job scheduling or execution error
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-12T02:22:58Z (signal sys-20260812T022122-1cb1, system-auditor -> po, dedup_key=auditor-a29-fire-gap:bctcReparseJob, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
