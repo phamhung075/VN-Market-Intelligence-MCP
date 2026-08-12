@@ -1702,3 +1702,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · pdf-extractor memory sustained high (95.23%)
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** mcp-server pod — pdf-extractor-1 container
+**Details:** Memory sustained above 93% floor (95.23% median) with no reclamation recovery. Escalation trend across 4 cycles: 88.95%→78.16%→93.92%→95.23%. No death indicators, no OOMKilled, state stable.
+**Impact:** Container at sustained saturation. Risk of memory pressure events during burst workloads.
+**Root cause:** PDF extraction workload memory profile; potential inefficient reclamation or genuine workload growth
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-12T15:08:28Z (signal sys-20260812T150735-2e4e, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
