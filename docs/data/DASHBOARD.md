@@ -1750,3 +1750,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · pdf-extractor sustained high memory (94.52%)
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** pdf-extractor
+**Details:** Sustained high memory usage 94.49-94.52% across 6-probe window (65 seconds). No state changes or OOMKills detected, but VmHWM pinned at cgroup limit indicates memory pressure.
+**Impact:** Memory pressure may impact PDF extraction performance and increase latency for document processing tasks.
+**Root cause:** Unknown — requires further investigation of application memory usage patterns and potential memory leaks.
+**Zone owner:** dev-lead
+**Last reported:** 2026-08-12T16:35:48Z (signal sys-20260812T163525-0051, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
