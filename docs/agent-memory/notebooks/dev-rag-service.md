@@ -4,6 +4,22 @@ Zone: `apps/rag-service/` | Stack: Python/FastAPI | DB: rag_service.db (write)
 
 ## Working Memory
 
+### 2026-08-12 — OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX (P0, router-reassigned after AC-3 FAIL)
+
+**Task:** the FIX-RAG-EMBEDDER-IDLE-UNLOAD fix below (commit `4c8c601e6`) got deployed by ops (10:14:37Z) but AC-3 FAILED: container OOM-restarted TWICE more within 10min of the "fix" going live (10:18:10Z, 10:24:01Z per ops.md correction). Router reassigned to me with the post-fix samples to find WHY the fix wasn't holding — not to re-attempt a bare rebuild.
+
+**Root cause (dmesg-confirmed, NOT speculation):** `docker inspect .State.OOMKilled` read `false`/`ExitCode=0` for both crashes — **unreliable in this Docker Desktop environment**, the VM-boundary cgroup OOM signal doesn't reliably propagate to dockerd's reported state here. `dmesg` **inside the VM** (`docker run --rm --privileged --pid=host alpine dmesg`) told the true story: kernel memcg OOM-killer invoked BY THREADS NAMED `lancedb-tokio-w`/`lance-cpu` — LanceDB's own native Rust worker pools, not the CPython heap, mid IVF_PQ/KMeans training. Two compounding causes: (1) `strings` on `_lancedb.abi3.so` (0.36.0) surfaced `TOKIO_WORKER_THREADS`/`LANCE_CPU_THREADS` — general-purpose lance-core thread pools that default-size from the HOST's visible CPU count (6, `os.cpu_count()` inside the container agrees — cgroup `cpus: 1.0` quota is invisible to `sched_getaffinity()`), same root-cause SHAPE as the already-landed RAG-FTS-BUILD-MEMORY-BOUND fix, just uncovered knobs it never pinned. (2) `_maybe_build_vector_index()` had no concurrency guard — concurrent `/search` requests on the single asyncio loop could race into building the index N times simultaneously (confirmed live traffic includes concurrent requests), multiplying peak memory. `malloc_trim` (a live hypothesis in the dispatch) is CONFIRMED the wrong layer — different allocator context entirely from Rust's in-use thread-local allocations.
+
+**Fix:** pinned `TOKIO_WORKER_THREADS=1`/`LANCE_CPU_THREADS=1` via `os.environ.setdefault()` (`infrastructure/repositories.py` module header, same placement/pattern as `LANCE_FTS_NUM_SHARDS`) + `_vector_index_lock` (`asyncio.Lock`, double-checked inside), same shape as the existing `_compact_lock` precedent. Commit `ca6d86869`.
+
+**Verified live (no detached background — all sampling done synchronously in-turn):** rebuilt (new image `sha256:b9a7109e...`), first real IVF_PQ build (27,684-row corpus) completed in ~6s (was 40s+, never finished before OOM) and peaked at 796.7MiB (was >1020MiB anon-rss when OOM-killed). 26+ min continuous post-rebuild monitoring: memory flat 796.7-803.9MiB, `restarts=0` throughout, `dmesg` shows ZERO new OOM events since the rebuild. Peers (mcp-server 17h, pdf-extractor 34h) unaffected before/after. 198/198 pytest green (195 baseline + 3 new: env-pin AC-1/AC-2 pair, concurrent-build regression guard via `asyncio.gather()`). mypy +6 (all untyped test fns, 0 new categories). size-lint: header `642L→715L`, PASS. Sandbox primitive+module GREEN, env-audit empty.
+
+**DJ:** none minted (single-cycle FIX, no multi-step decomposition needed).
+
+Zone health: HEALTHY (targeted infra-layer fix, verified against real OOM evidence, no regression) | OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX → REVIEW (next_agent: qa)
+
+---
+
 ### 2026-08-12 — FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (P0, PO-severity-expedite)
 
 **Task:** PO-severity-expedite manual dispatch (po-S157/po_expedite_20260812T0542Z) bypassing the idle-tick rotation for a live incident: rag-service hit BELOW-FLOOR memory 3x in ~90min, each recovered only by a scoped ops restart, each climbing back to critical within ~50min. A PRIOR spawn attempt on this task_id (site=S1, ~03:15Z) died silently — confirmed at cycle start: zero notebook entry, no branch/worktree, no uncommitted `apps/rag-service/` state; clean start, nothing to recover. Board row's own title/`root_cause_hypothesis` (malloc_trim/allocator-retention) was PARTIALLY REFUTED and superseded by the architect's 2026-08-12 isolated repro (`docs/architecture-briefs/2026-08-12-fix-rag-embedder-idle-unload-second-growth-source.md`) — implemented per the brief, not the stale row title.
