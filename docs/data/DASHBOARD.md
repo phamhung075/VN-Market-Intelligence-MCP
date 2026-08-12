@@ -1546,3 +1546,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-20 · pdf-extractor high memory: 87.42%
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** pdf-extractor container
+**Details:** Memory at 87.42% (2.186GiB / 2.5GiB), free 322MiB. Stable, no restarts.
+**Impact:** Approaching critical threshold. Monitor closely.
+**Root cause:** High PDF document processing load
+**Zone owner:** dev-pdf-extractor
+**Last reported:** 2026-08-12T02:23:00Z (signal sys-20260812T022219-6438, system-auditor -> po, dedup_key=microservice_memory_high:pdf-extractor:87.42pct, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
