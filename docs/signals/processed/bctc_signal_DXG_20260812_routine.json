@@ -1,0 +1,43 @@
+{
+  "ticker": "DXG",
+  "signal_type": "bctc_signal",
+  "quarter": "unknown — get_bctc_full returns \"Chưa có dữ liệu BCTC\" (17th+ consecutive cycle, unresolved extraction gap)",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Bất động sản dân dụng — phát triển dự án nhà ở, phân phối/môi giới BĐS (theo hồ sơ ngành, chưa xác nhận qua BCTC do thiếu dữ liệu)",
+  "customer": "Người mua nhà ở cá nhân, nhà đầu tư thứ cấp BĐS (theo hồ sơ ngành, chưa xác nhận qua BCTC do thiếu dữ liệu)",
+  "ops": "get_bctc_full(DXG) trả về \"Chưa có dữ liệu BCTC\" — không có income statement/balance sheet cấu trúc dù có PDF lưu trữ (DXG_2026_Q1.pdf, DXG_2025_Q1..Q4.pdf tồn tại trong list_stored_pdfs) — pipeline trích xuất chưa xử lý hoặc lỗi silent. Chỉ số định giá lấy từ get_sector_comparison (nguồn khác, không phải get_bctc_full): PE 66.5 vs trung vị ngành 16.1 (PREMIUM +312%), PB 1.2 vs 1.3 (NGANG BANG), ROE 1.9% vs trung vị 7.3% (DUOI MEDIAN).",
+  "mgmt": "Không đánh giá được track record quản trị do thiếu dữ liệu BCTC cấu trúc. BCTC Q2-2026 quá hạn nộp (hạn 30/07/2026).",
+  "ey_spread": {
+    "classify": "AVOID",
+    "value_pp": -3.5,
+    "pe": 66.5,
+    "roe_sector_pct": 1.9,
+    "max_deposit_rate_pct": 5
+  },
+  "kinhdich": {
+    "hexagram": "Kien(39)",
+    "trend": "BAT LOI",
+    "signal": "GIU",
+    "confidence_pct": 25
+  },
+  "esc_gate": {
+    "esc1_trick_detection": "unevaluable — no source BCTC data",
+    "esc2_balance_sheet": "unevaluable — no source BCTC data",
+    "esc3_ocf_ni_divergence": "unevaluable — no source BCTC data",
+    "esc4_nonop_share": "unevaluable — no source BCTC data",
+    "esc5_refine_confidence": "unevaluable — no source BCTC data"
+  },
+  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+  "legal_risk": "Không có rủi ro pháp lý trong khoảng thời gian này",
+  "bctc_confidence_pct": null,
+  "data_gap": "DXG get_bctc_full returns 'Chưa có dữ liệu BCTC' — 17th+ consecutive cycle. valuation_verdict AVOID computed from sector-comparison PE/ROE only, NOT corroborated by get_bctc_full financials.",
+  "cycle_tick": "2026-08-12T00:00Z",
+  "generated_at": "2026-08-12T00:03:30Z",
+  "_processed": {
+    "fingerprint": "daf0e5474b9cfed2b7b87edd65a2c5ea7a95cbb27925a1a6fa7d31ab76fec668",
+    "processedAt": "2026-08-12T00:20:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

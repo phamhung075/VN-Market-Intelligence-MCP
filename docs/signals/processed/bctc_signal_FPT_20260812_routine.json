@@ -1,0 +1,69 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Phần mềm xuất khẩu, dịch vụ CNTT tích hợp hệ thống, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+  "customer": "Doanh nghiệp mua CNTT (VN + offshore, mạnh tại Nhật Bản/Châu Âu), thuê bao viễn thông bán lẻ, học sinh/sinh viên FPT Edu",
+  "ops": "Doanh thu thuần 12.480 tỷ VND, biên gộp 34.0%, biên HĐKD 22.0%. ROE 6.2% (Q1 thô, chưa annualize) / 28.3% (so sánh ngành, TREN MEDIAN). D/E 0.40x. PE 13.8 vs trung vị ngành 17.3 (DISCOUNT -20%), PB 3.6 vs 1.5 (PREMIUM +136%). Dòng tiền nước ngoài 5 phiên: -145K cp net (yếu hơn ngành).",
+  "mgmt": "Đổi phương pháp hợp nhất FTEL (toàn bộ → vốn chủ sở hữu) từ 1/1/2026, làm méo YoY nếu không điều chỉnh. Sentiment 30 ngày GIẢM (slope -0.80, 11/13 tin bullish nhưng đang xấu đi). BCTC Q2-2026 quá hạn nộp (hạn 30/07/2026).",
+  "ey_spread": {
+    "classify": "FAIR",
+    "value_pp": 2.25,
+    "pe": 13.8,
+    "roe_sector_pct": 28.3,
+    "max_deposit_rate_pct": 5
+  },
+  "kinhdich": {
+    "hexagram": "Kien(39)",
+    "trend": "BAT LOI",
+    "signal": "GIU",
+    "confidence_pct": 25
+  },
+  "esc_gate": {
+    "esc1_trick_detection": "unevaluable — no Bash/Glob grant, cannot enumerate data/bctc-analysis-cache/",
+    "esc2_balance_sheet": {
+      "result": false,
+      "imbalance_pct": 0
+    },
+    "esc3_ocf_ni_divergence": {
+      "result": "DATA-COVERAGE-LIMITED",
+      "quarters_returned": 3,
+      "quarters_required": 4,
+      "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+      "coverage_guard_held": true
+    },
+    "esc4_nonop_share": {
+      "result": false,
+      "non_operating_share_pct": 2
+    },
+    "esc5_refine_confidence": {
+      "result": true,
+      "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+      "low_confidence_unit_ids": [
+        "unit-0008",
+        "unit-0009",
+        "unit-0010",
+        "unit-0011",
+        "unit-0012",
+        "unit-0013",
+        "unit-0014"
+      ],
+      "min_confidence": 0.45,
+      "escalation_status": "GUARD-HELD",
+      "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
+    }
+  },
+  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+  "legal_risk": "Không có rủi ro pháp lý trong khoảng thời gian này",
+  "bctc_confidence_pct": 81,
+  "cycle_tick": "2026-08-12T00:00Z",
+  "generated_at": "2026-08-12T00:03:30Z",
+  "_processed": {
+    "fingerprint": "2fdd1d17038cfed506d309cd19783bba128681032d9a1ff0b6ea52f926dd2cb2",
+    "processedAt": "2026-08-12T00:20:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

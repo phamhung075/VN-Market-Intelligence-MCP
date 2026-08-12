@@ -1,0 +1,57 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Ngân hàng thương mại quốc doanh — huy động/cho vay, thanh toán quốc tế, ngoại hối, bancassurance",
+  "customer": "Doanh nghiệp lớn/FDI, khách hàng bán lẻ đô thị, đối tác thanh toán quốc tế",
+  "ops": "Thu nhập lãi thuần 17.421 tỷ VND, lợi nhuận HĐKD 14.088,6 tỷ (80.9%), LNST 9.462,1 tỷ (54.3%). ROE 4.2% (Q1 thô) / 16.7% (so sánh ngành, DUOI MEDIAN trung vị 17.6%). PE 14.1 vs trung vị ngành 9.0 (PREMIUM +57%), PB 2.2 vs 1.5 (PREMIUM +45%). OCF/NI ratio Q1 = 1.37x (12.944.932/9.462.095) — không có dấu hiệu accrual bất thường. Dòng tiền nước ngoài 5 phiên: -42K cp net (MẠNH HƠN ngành, ngành -211K).",
+  "mgmt": "Sentiment 30 ngày GIẢM (slope -0.30, 0/7 bullish, 3 bearish). BCTC Q1-2026 ĐÃ NỘP đúng hạn (nộp 2026-07-19, hạn 15/05/2026 — lưu ý ngày nộp sau hạn công bố nhưng đã ghi nhận ĐÃ NỘP trong lịch, không tính là quá hạn theo watchlist tracking).",
+  "ey_spread": {
+    "classify": "FAIR",
+    "value_pp": 2.09,
+    "pe": 14.1,
+    "roe_sector_pct": 16.7,
+    "max_deposit_rate_pct": 5
+  },
+  "kinhdich": {
+    "hexagram": "Tuy(45)",
+    "trend": "THUAN LOI",
+    "signal": "GIU",
+    "confidence_pct": 63
+  },
+  "esc_gate": {
+    "esc1_trick_detection": "unevaluable — no Bash/Glob grant, cannot enumerate data/bctc-analysis-cache/",
+    "esc2_balance_sheet": {
+      "result": false,
+      "imbalance_pct": 0.37
+    },
+    "esc3_ocf_ni_divergence": {
+      "result": false,
+      "ocf_total": 12944932,
+      "net_profit_total": 9462095,
+      "divergence_ratio": 0.368,
+      "quarters_returned": 4
+    },
+    "esc4_nonop_share": {
+      "result": "N/A",
+      "reason": "bank — non-operating-share heuristic not applicable to credit institution P&L structure"
+    },
+    "esc5_refine_confidence": {
+      "result": false,
+      "reason": "refine_status=PARTIAL, report_id=null — refine not finished, skipping"
+    }
+  },
+  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+  "legal_risk": "Không có rủi ro pháp lý trong khoảng thời gian này",
+  "bctc_confidence_pct": 75,
+  "cycle_tick": "2026-08-12T00:00Z",
+  "generated_at": "2026-08-12T00:03:30Z",
+  "_processed": {
+    "fingerprint": "7d9102e6b5a2ab67a48937667938b34226174d509d3baa53a38e6b5f9855b075",
+    "processedAt": "2026-08-12T00:20:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

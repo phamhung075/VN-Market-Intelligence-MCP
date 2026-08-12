@@ -1,0 +1,57 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ — sản xuất khép kín từ quặng đến thành phẩm",
+  "customer": "Nhà thầu xây dựng dân dụng/hạ tầng trong nước, khách hàng công nghiệp cơ khí, xuất khẩu HRC khu vực",
+  "ops": "Doanh thu thuần 52.900,8 tỷ VND, biên gộp 15.8%. ROE 6.5% (Q1 thô) / 12.7% (so sánh ngành, TREN MEDIAN). PE 14.2 vs trung vị ngành 32.6 (DISCOUNT -57%), PB 1.7 vs 0.9 (PREMIUM +93%). Operating Profit=0 trong get_bctc_full — dữ liệu OCR lỗi/thiếu (13+ chu kỳ liên tiếp, chưa khắc phục). Validation warning: Net profit (9.055,9) > Gross profit (8.365,1) — khả năng thu nhập ngoài HĐKD lớn, chưa xác minh được cấu phần do dữ liệu operating_profit hỏng.",
+  "mgmt": "Sentiment 30 ngày TĂNG nhẹ (slope +0.07, 6/13 bullish). BCTC Q2-2026 quá hạn nộp (hạn 30/07/2026).",
+  "ey_spread": {
+    "classify": "FAIR",
+    "value_pp": 2.04,
+    "pe": 14.2,
+    "roe_sector_pct": 12.7,
+    "max_deposit_rate_pct": 5
+  },
+  "kinhdich": {
+    "hexagram": "Du(16)",
+    "trend": "THUAN LOI",
+    "signal": "THAN TRONG",
+    "confidence_pct": 50
+  },
+  "esc_gate": {
+    "esc1_trick_detection": "unevaluable — no Bash/Glob grant, cannot enumerate data/bctc-analysis-cache/",
+    "esc2_balance_sheet": {
+      "result": false,
+      "imbalance_pct": 0
+    },
+    "esc3_ocf_ni_divergence": {
+      "result": "DATA-COVERAGE-LIMITED",
+      "quarters_returned": 3,
+      "quarters_required": 4,
+      "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+      "coverage_guard_held": true
+    },
+    "esc4_nonop_share": {
+      "result": "discarded",
+      "reason": "operating_profit=0 in source data — corrupt/missing field, non_operating_share undefined, 13th+ consecutive cycle unresolved"
+    },
+    "esc5_refine_confidence": {
+      "result": false,
+      "reason": "refine_status=PARTIAL, report_id=null — refine not finished, skipping"
+    }
+  },
+  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+  "legal_risk": "Không có rủi ro pháp lý trong khoảng thời gian này",
+  "bctc_confidence_pct": 80,
+  "cycle_tick": "2026-08-12T00:00Z",
+  "generated_at": "2026-08-12T00:03:30Z",
+  "_processed": {
+    "fingerprint": "98adfbd996bf4cc89cfed246205c72b55a36c54b00ed4ae655f918b40662e40d",
+    "processedAt": "2026-08-12T00:20:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
