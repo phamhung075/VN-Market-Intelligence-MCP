@@ -93,11 +93,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-12T14:26:37Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "UC-CCA-P3",
+    "next_agent": "developer",
+    "next_action": "Ready-Lane Consumer claim of UC-CCA-P3 — spawn developer DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
+    "updated_at": "2026-08-12T14:27:36Z",
+    "updated_by": "dev-team (ready-lane consumer)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -15135,26 +15136,6 @@
         "po_promotion_20260808T1220Z": "PROMOTED BACKLOG->READY by po 2026-08-08 review of FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE, which is now BLOCKED on this row. NEW EVIDENCE strengthening this row's own premise (found during that review, not previously recorded here): the Go plane does not merely HOLD a different constant — it EMITS it into narrative text. macro_usdvnd_direction_classifier.go:91 interpolates the threshold into \"USDVND at %.0f exceeds %.0f threshold — VND depreciation creates import cost pressure (BEARISH)\", rendering literally as \"exceeds 25000 threshold\", and is live-wired via macro_signals.go:144 uvnd.Classify() + usecases.go:194/295. This supplies the missing MECHANISM link for the recurring \"25,000\" citations in published CHEF dishes: they are plausibly faithful relays of this upstream string, NOT the LLM round-number drift previously assumed. Consequence: this row is no longer merely a tidy-up — it gates a supervised, user-facing MARKET-output fix; priority raised medium->high. SEMANTIC CAUTION for whoever takes it: Go 25000 is a DIRECTION-band bound (BEARISH/NEUTRAL/BULLISH, band 23000-25000) while TS 25500 is a CASCADE-IMPACT trigger and TS also carries a 24500 lower band; these may be legitimately distinct concepts rather than one drifted constant. Answer \"same concept or not?\" BEFORE unifying — a blind collapse would be a real regression. 26500 remains sourceless in both planes (0 hits *.ts and *.go)."
       },
       {
-        "id": "UC-CCA-P3",
-        "title": "Published-Marker Lifecycle — umbrella/tracking",
-        "priority": "P0",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "status": "READY",
-        "depends_on": null,
-        "blocked_by": null,
-        "created_at": "2026-08-08T00:00:00Z",
-        "created_by": "architect",
-        "note": "Umbrella task: flow-doc track (FR-1/FR-2/FR-3) decomposed into UC-CCA-P3-FR1-FR2-SKILL + 7 FR-3 wiring tasks. B1 (FR-5 code-gate sequencing) is PO-only, pending decision (pm spawning po). All sub-tasks created in READY.",
-        "updated_at": "2026-08-08T15:10:20Z",
-        "po_goahead_20260808T151020": "po ratified the UC-CCA-P3 architect brief INDEPENDENTLY AT SOURCE (never on a relayed verdict): brief docs/architecture-briefs/2026-08-08-uc-cca-p3-published-marker-gate-skill.md present (34702 bytes, 508L, commit e834b8209 real). Load-bearing FR-5 implementability claims RE-DERIVED FROM SOURCE, not from brief prose: releaseTask() at coordinationStore.ts:888 CONFIRMED; releaseOrphanTask() at :1000 CONFIRMED; ReleaseResult at :391-393 CONFIRMED (does need the additive reason? field, as the brief states); OrphanReleaseResult.reason ALREADY EXISTS at :395-400 so the brief's 'zero type change needed here' is CORRECT; coordinationTools.ts call sites at :208/:320 match EXACTLY, so 'zero interface changes' holds. NOTE: WF-2's hold on this row was released by pm's 15:05:42Z lane move (in_progress->ready, supervised dropped), not by this stamp; the stamp is retained as the durable ratification record.",
-        "b1_ruling_20260808": "[po 2026-08-08T15:10:20Z B1 RULING — PATH A (single wave), WITH A HARD INTRA-WAVE SEQUENCING CONSTRAINT] DECISION: FR-5 stays IN SCOPE; UC-CCA-P3 does NOT close DONE without it. Path B REJECTED: this row is P0 precisely because prose/procedural gates have oscillated 3x across 4 incident classes since 2026-07-02, and the worst (07-15, MARKET ids 932+933) published a FALSE ~29% VN-Index move to real users; deferring the only HARD control for that direction into a 353-row backlog is, at this board's measured throughput, indefinite. NEW DECISIVE FACT neither BA nor architect surfaced (PO verified live this tick): FR-5's landing site apps/mcp-server/src/infrastructure/db/coordinationStore.ts is 1388L against size-lint baseline=1241L/upper=1365L and is RIGHT NOW the SOLE offender failing CI size-lint on origin/main — verified by RUNNING scripts/audits/size-lint-justification.sh --check ('FAIL - 1 offending file(s) (scanned 1369)'), not inferred from a report. CONSTRAINT: the FR-5 code child MUST be sequenced AFTER FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L (already READY, P0, next_agent=dev-mcp-server, same specialist; RLC gate measured OPEN this tick at wip_in_progress=1<2). THREE REASONS: (1) adding the guard first pushes the file further past the bound, deepening the ONE failure that currently makes verification_gate=ci_green_on_subsequent_push UNSATISFIABLE for 6 sibling FIX-CI-SIZELINT-* rows parked in review[] AND for UC-CCA-P3's own Verification-Gate item 4; (2) the size-lint remediation needs -23L minimum and will realistically EXTRACT/split coordinationStore.ts, invalidating every exact line anchor brief §6 depends on (releaseTask :888, releaseOrphanTask :1000, ReleaseResult :391) — implementing FR-5 first GUARANTEES rework; (3) same file + same specialist concurrently = avoidable rebase churn on a hot file. COST OF THE CONSTRAINT IS ~ZERO: the flow-doc track (PM's 8 children) has NO dependency on coordinationStore.ts and proceeds IMMEDIATELY in parallel; only the single FR-5 child waits. Architect's non-binding Path-A observation (brief §9) ACCEPTED as correct on the risk axis; this ruling adds only the sequencing it could not have known. PO MINTED the 9th child UC-CCA-P3-FR5-CODE-GATE this tick — pm does NOT need to re-decompose.",
-        "b1_ruling_path": "A-single-wave-with-fr5-sequencing-dependency",
-        "b1_ruling_decided_by": "po",
-        "b1_ruling_decided_at": "2026-08-08T15:10:20Z",
-        "updated_by": "po (B1 ruling + WF-2 ratification)"
-      },
-      {
         "id": "UC-CCA-P3-FR1-FR2-SKILL",
         "title": "Create published-marker-gate skill",
         "priority": "P0",
@@ -20185,6 +20166,29 @@
           "FIX-CHEF-MARKER-KEY-ANCHOR-3",
           "FIX-CHEF-MARKER-KEY-ANCHOR-4"
         ]
+      },
+      {
+        "id": "UC-CCA-P3",
+        "title": "Published-Marker Lifecycle — umbrella/tracking",
+        "priority": "P0",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "status": "IN_PROGRESS",
+        "depends_on": null,
+        "blocked_by": null,
+        "created_at": "2026-08-08T00:00:00Z",
+        "created_by": "architect",
+        "note": "Umbrella task: flow-doc track (FR-1/FR-2/FR-3) decomposed into UC-CCA-P3-FR1-FR2-SKILL + 7 FR-3 wiring tasks. B1 (FR-5 code-gate sequencing) is PO-only, pending decision (pm spawning po). All sub-tasks created in READY.",
+        "updated_at": "2026-08-12T14:27:36Z",
+        "po_goahead_20260808T151020": "po ratified the UC-CCA-P3 architect brief INDEPENDENTLY AT SOURCE (never on a relayed verdict): brief docs/architecture-briefs/2026-08-08-uc-cca-p3-published-marker-gate-skill.md present (34702 bytes, 508L, commit e834b8209 real). Load-bearing FR-5 implementability claims RE-DERIVED FROM SOURCE, not from brief prose: releaseTask() at coordinationStore.ts:888 CONFIRMED; releaseOrphanTask() at :1000 CONFIRMED; ReleaseResult at :391-393 CONFIRMED (does need the additive reason? field, as the brief states); OrphanReleaseResult.reason ALREADY EXISTS at :395-400 so the brief's 'zero type change needed here' is CORRECT; coordinationTools.ts call sites at :208/:320 match EXACTLY, so 'zero interface changes' holds. NOTE: WF-2's hold on this row was released by pm's 15:05:42Z lane move (in_progress->ready, supervised dropped), not by this stamp; the stamp is retained as the durable ratification record.",
+        "b1_ruling_20260808": "[po 2026-08-08T15:10:20Z B1 RULING — PATH A (single wave), WITH A HARD INTRA-WAVE SEQUENCING CONSTRAINT] DECISION: FR-5 stays IN SCOPE; UC-CCA-P3 does NOT close DONE without it. Path B REJECTED: this row is P0 precisely because prose/procedural gates have oscillated 3x across 4 incident classes since 2026-07-02, and the worst (07-15, MARKET ids 932+933) published a FALSE ~29% VN-Index move to real users; deferring the only HARD control for that direction into a 353-row backlog is, at this board's measured throughput, indefinite. NEW DECISIVE FACT neither BA nor architect surfaced (PO verified live this tick): FR-5's landing site apps/mcp-server/src/infrastructure/db/coordinationStore.ts is 1388L against size-lint baseline=1241L/upper=1365L and is RIGHT NOW the SOLE offender failing CI size-lint on origin/main — verified by RUNNING scripts/audits/size-lint-justification.sh --check ('FAIL - 1 offending file(s) (scanned 1369)'), not inferred from a report. CONSTRAINT: the FR-5 code child MUST be sequenced AFTER FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L (already READY, P0, next_agent=dev-mcp-server, same specialist; RLC gate measured OPEN this tick at wip_in_progress=1<2). THREE REASONS: (1) adding the guard first pushes the file further past the bound, deepening the ONE failure that currently makes verification_gate=ci_green_on_subsequent_push UNSATISFIABLE for 6 sibling FIX-CI-SIZELINT-* rows parked in review[] AND for UC-CCA-P3's own Verification-Gate item 4; (2) the size-lint remediation needs -23L minimum and will realistically EXTRACT/split coordinationStore.ts, invalidating every exact line anchor brief §6 depends on (releaseTask :888, releaseOrphanTask :1000, ReleaseResult :391) — implementing FR-5 first GUARANTEES rework; (3) same file + same specialist concurrently = avoidable rebase churn on a hot file. COST OF THE CONSTRAINT IS ~ZERO: the flow-doc track (PM's 8 children) has NO dependency on coordinationStore.ts and proceeds IMMEDIATELY in parallel; only the single FR-5 child waits. Architect's non-binding Path-A observation (brief §9) ACCEPTED as correct on the risk axis; this ruling adds only the sequencing it could not have known. PO MINTED the 9th child UC-CCA-P3-FR5-CODE-GATE this tick — pm does NOT need to re-decompose.",
+        "b1_ruling_path": "A-single-wave-with-fr5-sequencing-dependency",
+        "b1_ruling_decided_by": "po",
+        "b1_ruling_decided_at": "2026-08-08T15:10:20Z",
+        "updated_by": "po (B1 ruling + WF-2 ratification)",
+        "claimed_at": "2026-08-12T14:27:36Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "developer"
       }
     ]
   },
