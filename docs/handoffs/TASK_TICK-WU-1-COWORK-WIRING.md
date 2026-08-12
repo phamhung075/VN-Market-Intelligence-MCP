@@ -1,0 +1,152 @@
+---
+sprint: TICK-PREFLIGHT-USAGE-INSTRUMENTATION
+branch: task/TICK-WU-1-cowork-wiring
+size: S
+zone: cross-service/
+depends_on: ["TICK-WU-0-TELEMETRY-LIB"]
+blocks: ["TICK-WU-3-AUDITOR-WIRING"]
+---
+
+## TLDR
+Wire `scripts/agents-flow/cowork-tick-preflight.sh` at the "Standalone execution" trailer to log per-invocation telemetry via the WU-0 `tt_capture_and_log` wrapper. Changes: source the new lib, wrap the trailer (2-line diff), add logging-specific test cases. Zero changes inside `_emit_verdict()` or any `return` statement — the logging choke point is the pre-existing trailer where all verdict paths already converge.
+
+## [PM] Planning Context
+
+### Zone
+`cross-service/` (scripts/agents-flow/ infrastructure — same zone as WU-0)
+
+### Acceptance Criteria (PO AC-1..AC-11 carried forward; inherited from WU-0 baseline)
+
+**AC-1..AC-11:** Same as WU-0 (inherited — log_tick_usage and tt_capture_and_log already satisfy all ACs). This task verifies AC compliance *in situ* on this specific script.
+
+**AC-3 (zero semantic change):** Verdict token, JSON field set, exit code, lock claim/release, MCP calls — all byte-identical before/after. The existing `run_preflight()` output is captured into a variable by `tt_capture_and_log`, reprinted byte-identical (`printf '%s\n' "$out"`), and passed to the logger (which writes to file, not stdout). Exit code is the real `$?` from `run_preflight()`, not the logger's result.
+
+**AC-6 (stdout purity):** The cowork verdict line (`{...verdict:SILENT|WORK|..., tick:...}`) is the ONLY stdout. Logging goes to file via `log_tick_usage`. Test: run the wrapped trailer and verify `stdout` contains only the verdict JSON, no logging noise.
+
+**AC-7 (zero tool calls on silent/skip path):** Cowork's `_emit_verdict()` prints to stdout (the only stdout-writing site in the script). The logging wrapper is called AFTER `run_preflight()` returns, purely as a hook on already-emitted verdict — zero new MCP/git/network I/O on any code path.
+
+**AC-10 (pre-sprint baseline):** Before editing this script, run `bash scripts/agents-flow/cowork-tick-preflight.test.sh` NOW and record the count (unverified baseline cited in PO intake as 20/20). Re-run post-landing and verify same or better counts (QA gate).
+
+### FR Requirements
+
+**FR-2 (cowork wiring at trailer):** `log_tick_usage` fires once per invocation at the trailer (not inside `_emit_verdict()`), capturing the exact string that reaches stdout. Specifically:
+- Existing trailer structure:
+  ```bash
+  if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    run_preflight
+    exit $?
+  fi
+  ```
+- New structure:
+  ```bash
+  if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    tt_capture_and_log "cowork-tick-preflight.sh" run_preflight
+    exit $?
+  fi
+  ```
+
+### Design Shape (Architect Blueprint)
+
+The change is a mechanical 2-line swap in the trailer:
+
+```bash
+# OLD (lines ~299-303 or similar)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  run_preflight
+  exit $?
+fi
+
+# NEW
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  tt_capture_and_log "cowork-tick-preflight.sh" run_preflight
+  exit $?
+fi
+```
+
+Plus one new source line near the top (alongside existing `source "$SCRIPT_DIR/mcp-call.sh"`):
+```bash
+source "$SCRIPT_DIR/lib/tick-telemetry.sh"
+```
+
+Total diff: ~3 lines (1 source + 1 trailer swap + 1 exit).
+
+### Exit Code Mapping
+
+Per architect ratification: `exit_code` is captured from the trailer's real `$?` (post-`run_preflight()`), not a lookup table. Verified mapping (architect read-verified):
+- `SILENT` → exit 0 (line ~142, `_step8_silent_release` `return 0`)
+- Everything else (`ERROR|TOMBSTONED|DEFER|LOST_ELECTION|WORK`) → exit 1
+
+The logging wrapper preserves this by capturing the real `$?` after `run_preflight()` returns.
+
+### Test Coverage
+
+**Existing tests:** The ~13+ assertions in `cowork-tick-preflight.test.sh` source the script and call `run_preflight()` directly (never reach the trailer since `BASH_SOURCE[0] != $0` when sourced). These stay green by construction (R4 — `run_preflight()` internals untouched).
+
+**New test cases (additive):**
+1. **Logging-specific case:** Call the wrapped trailer via `tt_capture_and_log` directly (mimic source + call pattern), verify log file contents (JSON format, fields present)
+2. **Rotation in-situ:** Over-fill the log, verify rotation works and latest lines remain
+3. **AC-6 stdout purity:** Verify cowork verdict is FIRST and ONLY line on stdout (negative control: log file has entries, stdout is clean)
+4. **AC-4/AC-5 fault inject:** Unwritable log destination, verify `tt_capture_and_log` returns caller's real exit code unaffected
+
+### Files to read first
+
+- `docs/handoffs/TASK_TICK-WU-0-TELEMETRY-LIB.md` (WU-0 spec — know what tt_capture_and_log does)
+- `scripts/agents-flow/cowork-tick-preflight.sh` (entire file, focus on trailer lines ~299-303 and _emit_verdict lines ~76-82)
+- `scripts/agents-flow/cowork-tick-preflight.test.sh` (understand existing test seam: PREFLIGHT_ROOT fixture, mcp_call stub)
+- `docs/handoffs/TICK-PREFLIGHT-USAGE-INSTRUMENTATION-BA-spec.md` § Verified Paths — cowork section for confirmed choke point and exit-code mapping
+
+### Files to create
+
+- **NEW `scripts/agents-flow/cowork-tick-preflight.test.sh` additions** (within existing file)
+  - Add logging-specific test cases (4-5 new `OUT=...; assert` blocks)
+  - Use existing `PREFLIGHT_ROOT` fixture (already exported in test setup)
+  - Verify log file format, rotation, stdout purity, fault injection
+
+### Files to modify
+
+1. **MODIFIED `scripts/agents-flow/cowork-tick-preflight.sh`**
+   - Line ~top: add `source "$SCRIPT_DIR/lib/tick-telemetry.sh"` (after existing `source "$SCRIPT_DIR/mcp-call.sh"`)
+   - Lines ~299-303 (trailer): replace `run_preflight` with `tt_capture_and_log "cowork-tick-preflight.sh" run_preflight`
+   - Zero other changes (internal `run_preflight()` / `_emit_verdict()` / `return` statements untouched)
+
+2. **MODIFIED `scripts/agents-flow/cowork-tick-preflight.test.sh`**
+   - Add new test cases (nested inside `testMain()` or as separate functions, follow existing pattern)
+   - Use `TICK_TELEMETRY_LOG_PATH` override (passed via environment, no new fixture seam needed — cowork's `PREFLIGHT_ROOT` already covers it)
+   - Assert log file JSON format, field presence, rotation behavior, exit-code preservation
+
+### Dependencies
+
+- **Upstream:** TICK-WU-0-TELEMETRY-LIB (must be green first; cowork depends on `tt_capture_and_log` existing)
+- **Downstream:** TICK-WU-3-AUDITOR-WIRING (auditor depends on both WU-0+WU-1+WU-2 per architect gate)
+
+### Knowledge needed
+
+- Understand `tt_capture_and_log` behavior (read WU-0 handoff)
+- Existing `PREFLIGHT_ROOT` fixture pattern in cowork test suite
+- jq `-c` compact output format
+- JSON line format (one record per line)
+- Expected exit-code mapping for cowork (SILENT→0, others→1)
+
+---
+
+## Risk Notes (Architect's — propagated for dev awareness)
+
+**R1 (correctness-critical):** WU-0's suite must prove stdout purity via fault-injection; this task verifies it works in-situ on cowork. Do not skip the `tt_capture_and_log` → fault-injected-logger negative control.
+
+**R3 (byte-identity edge case, low):** Command-substitution drops trailing NULs; not a risk for cowork's JSON output, but noted.
+
+**R4 (positive):** Existing cowork test suite (which sources the script and calls `run_preflight` directly, never reaching the trailer) stays green by construction. New logging tests are additive only.
+
+---
+
+## RETURN (PM)
+
+Handoff complete. Task ready for developer dispatch.
+
+AC: AC-1..AC-11 (inherited from WU-0 baseline + verified in-situ on this script); exit-code mapping verified; R1/R3/R4 acknowledged.
+
+Zone: cross-service/
+
+Depends on: TICK-WU-0-TELEMETRY-LIB (must be green)
+
+Blocks: TICK-WU-3-AUDITOR-WIRING (auditor needs both WU-1 and WU-2 done first)
