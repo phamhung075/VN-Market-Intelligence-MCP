@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-08-12T15:01:39Z | **Cycle:** UC-CCA-P3-FR5-CODE-GATE dispatch attempt (cross-service/, sprint COWORK-GUARANTEED-SLOT-CATCHUP) — RAW-verified Agent/Task tool grant before dispatching dev-mcp-server; both hard-disabled, dispatch blocked structurally, board+telegram updated.
 
-## Session 2026-08-12T15:01:39Z — UC-CCA-P3-FR5-CODE-GATE dispatch attempt (cross-service/, developer, sprint COWORK-GUARANTEED-SLOT-CATCHUP, session 165f4245-6173-4054-87fd-c55bb626265f)
+## Session 2026-08-12T15:01:39Z — UC-CCA-P3-FR5-CODE-GATE dispatch attempt (cross-service/, developer, sprint COWORK-GUARANTEED-SLOT-CATCHUP, session router)
 
 **Task:** Router-dispatched resume of the UC-CCA-P3 umbrella (same session as the earlier 14:35Z cycle) specifically to dispatch `dev-mcp-server` on `UC-CCA-P3-FR5-CODE-GATE`, asserted by the router to be reachable this cycle because "this session HAS the Agent tool (unlike the prior dev-team-lead cycle)".
 
@@ -28,7 +28,7 @@
 
 ---
 
-## Session 2026-08-12T14:35:14Z — UC-CCA-P3 umbrella (cross-service/, developer, sprint COWORK-GUARANTEED-SLOT-CATCHUP, session 165f4245-6173-4054-87fd-c55bb626265f)
+## Session 2026-08-12T14:35:14Z — UC-CCA-P3 umbrella (cross-service/, developer, sprint COWORK-GUARANTEED-SLOT-CATCHUP, session router)
 
 **Task:** dev-team-lead cycle for the UC-CCA-P3 umbrella (published-marker-gate). Checked all 9 children (`UC-CCA-P3-FR1-FR2-SKILL`, 7x `UC-CCA-P3-FR3-*`, `UC-CCA-P3-FR5-CODE-GATE`) — all 9 were still sitting untouched in `ready[]` since 2026-08-08.
 
