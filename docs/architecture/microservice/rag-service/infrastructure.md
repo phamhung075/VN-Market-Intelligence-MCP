@@ -85,6 +85,56 @@ before landing — flagged for the ops-supervised ≥2h live cold-start verifica
 (brief §5); the corpus keeps growing (~100 rows/h) so the index's own resident size grows slowly over time
 too — expected and bounded, not a regression path.
 
+#### OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX (build-time OOM the above fix introduced)
+The "open, not resolved" flag above was exactly right: deploying the fix (image
+`sha256:bdb808678a26`, 2026-08-12T10:14:37Z) OOM-restarted the container TWICE more within
+10 minutes (10:18:10Z, 10:24:01Z) — the "fix" was itself now the crash trigger. Two
+independent, compounding causes, found by reading `dmesg` **inside the Docker Desktop VM**
+(`docker run --rm --privileged --pid=host alpine dmesg`) — NOT via `docker inspect
+.State.OOMKilled`, which read `false`/`ExitCode=0` for both events and is **unreliable in
+this environment** (the VM-boundary cgroup OOM signal does not reliably propagate to
+dockerd's reported container state here; always cross-check `dmesg` for authoritative
+OOM evidence, not `docker inspect`):
+
+1. **Unbounded general-purpose Lance/Tokio thread pools.** `dmesg` showed the kernel memcg
+   OOM-killer invoked by threads named `lancedb-tokio-w` (truncated `lancedb-tokio-worker`)
+   and `lance-cpu` — i.e. the OOM fires from *inside* LanceDB's native Rust worker threads
+   during IVF_PQ/KMeans training, not inside the CPython heap. This is why
+   `_malloc_trim_or_noop()` (see below) cannot reach it at all: it sweeps glibc's arena via
+   `ctypes`, a completely different allocator context from Rust's still-in-use (not merely
+   fragmented-but-freed) thread-local allocations mid-build.
+   `strings /usr/local/lib/python3.10/dist-packages/lancedb/_lancedb.abi3.so` (installed
+   version **0.36.0** — confirms drift from the FTS fix's own comment referencing 0.33.0;
+   `requirements.txt` only pins `lancedb>=0.6.0`) surfaced the exact knobs, same
+   "process-global `LazyLock`, read once at first use" shape as `LANCE_FTS_NUM_SHARDS` above:
+   - `TOKIO_WORKER_THREADS` — sizes the `lancedb-tokio-worker` async runtime; falls back to
+     the **host's** visible CPU count if unset (`os.cpu_count()` inside the container reports
+     6 — the Docker Desktop VM's allocation — not the compose `cpus: 1.0` cgroup quota, which
+     `sched_getaffinity()`-based detection cannot see without explicit `cpuset` pinning).
+   - `LANCE_CPU_THREADS` — sizes `lance-core`'s separate compute-intensive pool (KMeans/PQ
+     training is exactly this); same host-CPU-count-by-default oversubscription risk.
+   **Fix** (`infrastructure/repositories.py` module header, next to the FTS pins):
+   ```python
+   os.environ.setdefault("TOKIO_WORKER_THREADS", "1")
+   os.environ.setdefault("LANCE_CPU_THREADS", "1")
+   ```
+2. **Unguarded concurrent rebuild race.** `_maybe_build_vector_index()`'s pre-check
+   (`if self._vector_index_built: return`) awaits `_get_table()`/`count_rows()` *before*
+   setting the flag — on the single-threaded asyncio event loop those awaits are yield
+   points, so two `/search` requests arriving close together (confirmed present in the live
+   traffic — the corpus also has a steady stream of concurrent `POST /index` inserts) can
+   both observe the flag still `False` and both launch a full, independent `create_index()`
+   build concurrently, each already expensive enough on its own to approach the 1GiB ceiling
+   — N concurrent builds multiply that peak instead of just repeating it once more. Same race
+   shape `compact()`'s own `_compact_lock` already exists to prevent for `optimize()` (see
+   `FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP` above), just never applied to the newer
+   vector-index path. **Fix:** `_vector_index_lock` (`asyncio.Lock`), double-checked inside
+   the lock — a racing caller blocks, then finds the flag already `True` and no-ops.
+
+Both fixes are unit-tested (`__tests__/unit/test_rag_vector_index_build.py`:
+`TestVectorIndexThreadPoolEnvPinning`, `test_concurrent_calls_build_exactly_once`) — see
+`testing.md`.
+
 ### count()
 Returns `table.count_rows()`, 0 on exception.
 

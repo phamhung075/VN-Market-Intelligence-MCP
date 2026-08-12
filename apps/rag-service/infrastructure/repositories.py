@@ -1,10 +1,12 @@
-# size-justification: 642L — single infrastructure adapter (LanceDBVectorStore)
+# size-justification: 715L — single infrastructure adapter (LanceDBVectorStore)
 # implementing VectorStorePort: table lifecycle (_get_table/FR-1 migration),
 # insert+compaction, filter/dedup helpers, vector ANN index management
 # (FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS,
-# 2026-08-12: _build_vector_index/_maybe_build_vector_index, +38L), FTS index
+# 2026-08-12: _build_vector_index/_maybe_build_vector_index; OPS-RAG-SERVICE-
+# REBUILD-DEPLOY-LANCEDB-FIX, 2026-08-12: TOKIO_WORKER_THREADS/LANCE_CPU_THREADS
+# env pins + _vector_index_lock double-checked-locking, +71L total), FTS index
 # management (DFR-P3), and search()/hybrid_search(). One class's full state —
-# same cohesion argument already accepted for this file's prior 517L baseline
+# same cohesion argument already accepted for this file's prior 642L baseline
 # (RAG-FTS-BUILD-MEMORY-BOUND env-pin block + compaction guard); splitting the
 # vector-index methods into a second file would duplicate _get_table()/table
 # access or force tight cross-file coupling to it, for zero token benefit.
@@ -111,6 +113,53 @@ _COMPACT_RETENTION = timedelta(days=2)
 os.environ.setdefault("LANCE_FTS_NUM_SHARDS", "1")
 os.environ.setdefault("LANCE_FTS_PARTITION_SIZE", "32")
 
+# ── OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX: pin the GENERAL lance-core Rust
+# thread pools, not just the FTS-specific ones above ─────────────────────────
+# ROOT CAUSE (dev-rag-service live diagnosis, 2026-08-12, post FIX-RAG-EMBEDDER-
+# IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS rebuild): that fix's own new
+# lazy IvfPq vector-index build (_build_vector_index() below) was landed and
+# deployed (image sha256:bdb808678a26, 2026-08-12T10:14:37Z) but the container
+# OOM-restarted TWICE more within 10 minutes of the "fix" going live (10:18:10Z,
+# 10:24:01Z — confirmed via `dmesg` inside the Docker Desktop VM, NOT via
+# `docker inspect .State.OOMKilled`, which read false/ExitCode=0 for both and
+# is UNRELIABLE in this environment — the VM-boundary cgroup OOM signal does
+# not reliably propagate to dockerd's reported container state here).
+#
+# `dmesg` showed the kernel's memcg OOM-killer invoked BY THREADS NAMED
+# "lancedb-tokio-w" (truncated "lancedb-tokio-worker", lancedb's own async
+# runtime) and "lance-cpu" (lance-core's compute-intensive thread pool) —
+# i.e. the OOM is triggered from INSIDE LanceDB's native Rust worker threads
+# during the IVF_PQ/KMeans index build, not inside CPython's heap. This is
+# why `_malloc_trim_or_noop()` (app_factory._idle_unload_loop) cannot reach
+# this growth at all: it calls libc malloc_trim(0) against glibc's arena,
+# a completely different allocator context from Rust's thread-local/arena
+# allocations still IN USE (not merely fragmented-but-freed) mid-build.
+#
+# `strings` on the compiled `_lancedb.abi3.so` (0.36.0, confirms drift from
+# the FTS fix's own comment referencing 0.33.0 — requirements.txt only pins
+# `lancedb>=0.6.0`) surfaced the exact env vars lance-core reads to size these
+# two pools, same "process-global, read once at first use" shape as the FTS
+# vars above:
+#   - TOKIO_WORKER_THREADS — sizes the "lancedb-tokio-worker" async runtime
+#     (falls back to "auto" i.e. the HOST's visible CPU count if unset/
+#     invalid — 6 on the box this was diagnosed on; `os.cpu_count()` inside
+#     the container also reports 6, NOT the compose `cpus: 1.0` cgroup quota,
+#     because cgroup CPU quota is invisible to sched_getaffinity()-based
+#     detection without explicit `cpuset` pinning).
+#   - LANCE_CPU_THREADS — sizes lance-core's separate "lance-cpu" pool for
+#     compute-intensive work (KMeans/PQ training is exactly this) —
+#     same host-CPU-count-by-default sizing, same oversubscription risk.
+# EXACT same root-cause SHAPE as the RAG-FTS-BUILD-MEMORY-BOUND fix above
+# (Rust runtime sized from host CPU count, not the container's actual quota)
+# — that fix only pinned the FTS-builder-specific shard/partition knobs, not
+# these two general-purpose pools the NEW vector-index build (and table
+# compaction, and ordinary insert/search traffic) also runs on. Pinning both
+# to 1 (matching the container's `cpus: 1.0` quota) bounds concurrent
+# in-flight KMeans/PQ training buffers to what the container can actually
+# afford, instead of fanning out up to 6x.
+os.environ.setdefault("TOKIO_WORKER_THREADS", "1")
+os.environ.setdefault("LANCE_CPU_THREADS", "1")
+
 # ── FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS: vector ANN index ──
 # ROOT CAUSE (architect isolated repro, docs/architecture-briefs/2026-08-12-fix-rag-
 # embedder-idle-unload-second-growth-source.md §3b): rag_entries carries ZERO index on
@@ -183,6 +232,19 @@ class LanceDBVectorStore(VectorStorePort):
         # _fts_index_built above -- set True after first successful build, never
         # reset to False in normal operation (index persists in LanceDB).
         self._vector_index_built: bool = False
+        # OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX: serializes the vector-index
+        # build the same way _compact_lock already serializes optimize() above.
+        # _maybe_build_vector_index()'s pre-lock check (`if self._vector_index_built:
+        # return`) awaits _get_table()/count_rows() BEFORE setting the flag -- on a
+        # single-threaded asyncio event loop, those awaits are yield points, so two
+        # concurrent search()/hybrid_search() requests arriving close together can
+        # BOTH observe the flag still False and BOTH launch a full, independent
+        # IvfPq/KMeans build concurrently. Confirmed live: corpus traffic includes
+        # concurrent /search requests, and each unguarded build already blows past
+        # the container's 1GiB ceiling on its own (dmesg: memcg OOM-kill invoked by
+        # "lancedb-tokio-w"/"lance-cpu" during the build) -- N concurrent builds
+        # multiply that peak, not just repeat it once more.
+        self._vector_index_lock = asyncio.Lock()
 
     async def _get_table(self):
         """Lazy-initialize LanceDB connection and table.
@@ -492,15 +554,26 @@ class LanceDBVectorStore(VectorStorePort):
         _VECTOR_INDEX_MIN_ROWS (LanceDB's own IVF_PQ training floor -- below it
         this is a cheap count_rows() no-op, re-checked on the next call; it never
         raises for a too-small corpus, unlike an unguarded create_index() call).
+
+        OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX: the cheap pre-lock check below
+        is a fast-path only -- it does NOT by itself prevent concurrent builds
+        (see _vector_index_lock's docstring in __init__). The actual build is
+        double-checked-locked: acquire _vector_index_lock, re-check the flag
+        INSIDE the lock, and only then build. A racing caller that arrives while
+        a build is already in flight blocks on the lock and, once it acquires,
+        finds the flag already True and returns without launching a second build.
         """
         if self._vector_index_built:
             return
-        table = await self._get_table()
-        row_count = await table.count_rows()
-        if row_count < _VECTOR_INDEX_MIN_ROWS:
-            return
-        await self._build_vector_index()
-        self._vector_index_built = True
+        async with self._vector_index_lock:
+            if self._vector_index_built:
+                return  # a racing caller already finished the build while we waited
+            table = await self._get_table()
+            row_count = await table.count_rows()
+            if row_count < _VECTOR_INDEX_MIN_ROWS:
+                return
+            await self._build_vector_index()
+            self._vector_index_built = True
 
     # ── DFR-P3: FTS index management ──────────────────────────────────────
 

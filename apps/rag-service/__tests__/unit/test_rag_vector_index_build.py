@@ -28,6 +28,7 @@ Coverage:
       /admin/rebuild-fts admin-endpoint test triad exactly
 """
 
+import subprocess
 import sys
 import os
 import math
@@ -42,6 +43,61 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from domain.models import AnalysisEntry, EmbeddingVector, SearchResult
 from infrastructure.repositories import LanceDBVectorStore, _VECTOR_INDEX_MIN_ROWS
+
+
+# ── OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX: general lance-core thread-pool
+# env pinning (TOKIO_WORKER_THREADS / LANCE_CPU_THREADS) ────────────────────
+# Same AC-1/AC-2 shape as TestFtsBuildEnvPinning in
+# test_rag_fts_build_memory_bound.py, for the two DIFFERENT env vars that
+# size lance-core's general-purpose async runtime + compute thread pool (the
+# ones the IvfPq/KMeans vector-index build above actually runs on — dmesg-
+# confirmed OOM-kill invokers "lancedb-tokio-w"/"lance-cpu").
+
+
+class TestVectorIndexThreadPoolEnvPinning:
+    def test_env_vars_pinned_after_import(self):
+        assert os.environ.get("TOKIO_WORKER_THREADS") == "1", (
+            "TOKIO_WORKER_THREADS must default to 1 — lancedb's async runtime "
+            "otherwise sizes itself from the HOST's visible CPU count, not the "
+            "container's cgroup quota, oversubscribing concurrent build workers"
+        )
+        assert os.environ.get("LANCE_CPU_THREADS") == "1", (
+            "LANCE_CPU_THREADS must default to 1 — this is lance-core's "
+            "compute-intensive (KMeans/PQ training) thread pool, same "
+            "host-CPU-count-by-default oversubscription risk"
+        )
+
+    def test_operator_override_not_clobbered(self):
+        """setdefault() semantics: a pre-set env var survives module import.
+
+        Fresh subprocess — module-level setdefault() only executes once per
+        process, must not be conflated with the already-imported module here.
+        """
+        env = dict(os.environ)
+        env["TOKIO_WORKER_THREADS"] = "3"
+        env["LANCE_CPU_THREADS"] = "2"
+        service_root = os.path.join(os.path.dirname(__file__), "..", "..")
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "import sys; sys.path.insert(0, '.'); "
+                "import infrastructure.repositories; "
+                "import os; "
+                "print(os.environ['TOKIO_WORKER_THREADS']); "
+                "print(os.environ['LANCE_CPU_THREADS'])",
+            ],
+            cwd=service_root,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert result.returncode == 0, result.stderr
+        lines = result.stdout.strip().splitlines()
+        assert lines == ["3", "2"], (
+            f"operator-provided env vars must survive module import unchanged, got {lines}"
+        )
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────
@@ -244,6 +300,44 @@ class TestMaybeBuildVectorIndexFlagGuard:
         # If _get_table()/count_rows() were called, this would be observable via a
         # crash-on-call sentinel — instead just assert no exception and flag unchanged.
         await store._maybe_build_vector_index()
+        assert store._vector_index_built is True
+
+    async def test_concurrent_calls_build_exactly_once(self, tmp_path, monkeypatch):
+        """OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX regression guard.
+
+        Two concurrent _maybe_build_vector_index() calls (as real concurrent
+        /search requests produce on the single-threaded asyncio event loop) must
+        NOT both observe _vector_index_built==False and both launch a build --
+        confirmed live as a contributing cause of the container blowing past its
+        1GiB ceiling: N concurrent IvfPq/KMeans builds multiply peak memory, not
+        just repeat it. _vector_index_lock double-checked locking must collapse
+        this to exactly one real build; the second caller blocks then no-ops.
+        """
+        import asyncio
+
+        store = LanceDBVectorStore(db_path=str(tmp_path / "lancedb"))
+        await store.insert(_entry("e1"), _vec(0.1))
+        table = await store._get_table()
+        monkeypatch.setattr(table, "count_rows", AsyncMock(return_value=_VECTOR_INDEX_MIN_ROWS))
+
+        build_call_count = 0
+
+        async def slow_build():
+            nonlocal build_call_count
+            build_call_count += 1
+            # Yield control so a concurrently-scheduled second call gets a chance
+            # to reach the same pre-lock check before the first call finishes --
+            # this is what reproduces the race without the lock in place.
+            await asyncio.sleep(0.01)
+
+        store._build_vector_index = slow_build
+
+        await asyncio.gather(
+            store._maybe_build_vector_index(),
+            store._maybe_build_vector_index(),
+        )
+
+        assert build_call_count == 1, f"Expected exactly 1 build under concurrency, got {build_call_count}"
         assert store._vector_index_built is True
 
 

@@ -80,6 +80,15 @@ Mocks: `VectorStorePort`, `EmbedderPort` (AsyncMock)
   `vector_store._build_vector_index()`, 503 when `vector_store` not wired — mirrors the
   existing `/admin/rebuild-fts` admin-endpoint test triad exactly
 
+### OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX additions (same file)
+- `TestVectorIndexThreadPoolEnvPinning`: `TOKIO_WORKER_THREADS`/`LANCE_CPU_THREADS` pinned to
+  `"1"`/`"1"` on module import; `setdefault()` semantics verified in a fresh `subprocess`
+  (same pattern as the FTS env-pinning tests above, different env vars)
+- `test_concurrent_calls_build_exactly_once`: two `_maybe_build_vector_index()` calls fired
+  concurrently via `asyncio.gather()` against a slow (`asyncio.sleep`-yielding) fake build
+  must produce exactly ONE real build call — regression guard for the unguarded-race root
+  cause (see `infrastructure.md` § OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX)
+
 ## Unit Tests — malloc_trim sweep (FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS §6 secondary)
 **File:** `apps/rag-service/__tests__/unit/test_embedder_idle_unload.py` (extended)
 
