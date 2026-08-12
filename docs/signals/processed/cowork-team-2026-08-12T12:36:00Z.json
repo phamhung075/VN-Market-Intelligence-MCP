@@ -1,0 +1,43 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-12T12:36:00Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {},
+    "cadence_minutes": {},
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "classification": "SILENT",
+    "reason": "no_slots_due_signal_only",
+    "nominal_tick": "12:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 27,
+    "note": "0 slots due. Same NEW row as 12:15Z (sys-20260812T121105-7a8f, rag-service stale-ACK, WARN) persists unchanged — no severity change, no telegram."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-12T12:36:00Z",
+  "_processed": {
+    "fingerprint": "fb51672adb5da56d8481bf2d18846bd4cccdd59808932c3adf8c6f6c977d05bb",
+    "processedAt": "2026-08-12T12:52:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

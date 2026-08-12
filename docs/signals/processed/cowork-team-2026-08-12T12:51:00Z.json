@@ -1,0 +1,24 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick": "2026-08-12T12:45Z",
+    "drift_min": 6,
+    "matched_slots": [],
+    "won_slots": [],
+    "spawned": [],
+    "silent": true,
+    "classification": "SILENT",
+    "new_signals": 2,
+    "note": "0 slots due. 2 NEW to:po WARN rows in signal_queue this tick, both re-flagging the same underlying rag-service A-30 memory condition under a 6th distinct dedup_key variant (audit:rag-service:memory-stale-ack:FU-RAG-DEPLOY-MEMORY, alongside the still-unresolved rag-service-stale-ack-fu-deploy-memory-20260812 row from 12:15Z/12:30Z). Both rows left status=NEW (Step 0a scope rule — not routed to a spawned cowork slot). Both WARN severity, no CRITICAL crossing — telegram withheld. Content is consistent across all 6 dedup_key variants observed this session: rag-service resident-set memory pressure (89-91% range) persisting despite FU-RAG-DEPLOY-MEMORY being marked DONE_VERIFIED. Flagged for po/system-auditor triage — dedup_key format instability across audit cycles is itself worth root-causing separately from the underlying memory condition."
+  },
+  "priority": "normal",
+  "createdAt": "2026-08-12T12:51:00Z",
+  "_processed": {
+    "fingerprint": "d60b580b4e74a3d9d09d724334bc519d354fc60e5368afb1b1d07e002b98b61d",
+    "processedAt": "2026-08-12T12:52:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
