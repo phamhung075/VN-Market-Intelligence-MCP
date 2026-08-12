@@ -1582,3 +1582,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service sustained high memory 97.23% (loss of reclamation)
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** docker/rag-service
+**Details:** sustained high memory 97.23% minimum over 65-second window — loss of reclamation, 0 dips detected
+**Impact:** rag-service memory re-climbing post-restart; OOM risk if not resolved
+**Root cause:** known vector indexing issue: LanceDB brute-force full-column scan without vector index
+**Zone owner:** dev-rag-service
+**Last reported:** 2026-08-12T04:37:21Z (signal sys-20260812T043713-660d, system-auditor -> po, dedup_key=microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
