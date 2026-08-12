@@ -106,3 +106,15 @@
 **verify:** `Agent`/`Task` tool probes both returned the identical disabled error text; `task_list_held` via `scripts/agents-flow/mcp-call.sh` confirmed no peer lock on `task:UC-CCA-P3-FR5-CODE-GATE` (not a collision); board note diff + `.head` diff reviewed pre-commit; `wc -l` on notebook confirmed ≤200L post-write (41L).
 
 ---
+
+### STEP developer-S102 · developer · 2026-08-12T17:31:07Z
+**task-id:** FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR
+**what-done:** QA reassigned this row for "author scripts/audits/po-mint-orchapply-actuator-verify.sh". RAW-verify first (not blind re-author): the script + test already exist on disk, committed f9e5113534a65e456886e230c223acdb6cbbbd57 (`git merge-base --is-ancestor` confirmed HEAD ancestor), authored under sibling task FIX-PO-MINT-ACTUATOR-REGRESSION-VERIFIER-SCRIPT. Re-ran it fresh (not trusted from sibling's own note): fleet-wide FAILs on 2 pre-existing out-of-scope files (matches script's own header); scoped via `PO_MINT_ACTUATOR_VERIFY_INCLUDE_OVERRIDE` to the 4 sub-flows this row's AC-1 fixed → PASS. Own test suite 7/7, shellcheck clean. Lane-moved review[]→qa[] (status REVIEW→QA), commit 8d566a037.
+**what-considered:**
+- Re-author the script (per literal dispatch instruction) vs. verify-first — chose verify-first: `git log` on the exact path immediately showed it already committed; re-authoring would have silently overwritten/duplicated a tested artifact and hidden the real gap (this row's board state was just stale, not the code).
+- Merge/dedup the sibling task row into this one vs. leave both and flag — chose flag-only: merging is a board-topology decision outside this task's scope; risked destroying the sibling's own history for no required benefit.
+**why-decision:** RAW-verify before assuming anything is done/not-done is the standing obligation; git history is ground truth over a stale board note.
+**why-change:** scope narrowed from "author" to "verify + re-route" once the artifact was confirmed already landed — no code change needed this cycle.
+**verify:** `bash scripts/audits/po-mint-orchapply-actuator-verify.sh` (fleet) exit 1, 2 known FAILs only; `PO_MINT_ACTUATOR_VERIFY_INCLUDE_OVERRIDE=<4 files>` run exit 0 "0 unpiped ... across 4 files"; `.test.sh` 7/7 PASS; `shellcheck` clean both files; post-write `jq` confirmed row absent from `.task_board.review[]` and present in `.task_board.qa[]` with `status:"QA"`; `git show --stat 8d566a037` confirms orch-state.json in commit.
+
+---
