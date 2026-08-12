@@ -8091,14 +8091,15 @@
         "created_at": "2026-07-30T18:27:28Z",
         "created_by": "pm",
         "note": "Atomic implementation of Step 2.4 collision probe.",
-        "updated_at": "2026-08-12T00:00:27Z",
+        "updated_at": "2026-08-12T00:04:58Z",
         "po_prior_art_suspect_20260808T1600Z": "SKIPPED as this tick's manual-dispatch-sweep selection despite being the top-ranked candidate (P0, BACKLOG-XOR-GAP, unflagged) — PRIOR ART APPEARS ALREADY SHIPPED, so folding it into a BATCH would have burned a dev slot re-implementing live code (feedback_file_prior_art_check_before_minting_row).\n\nThe row's deliverable is 'Implement Cowork-Slot Collision Probe Core (dispatch-claim/SKILL.md + CLAUDE.md)'. Both named targets already carry a collision path: CLAUDE.md:14 has the 'Peer collision' outcome row ('claimed:false + current_holder.owner_client_session != $CLAUDE_CODE_SESSION_ID -> log PRE-CLAIM collision -> send_telegram(work) -> EXIT'); .claude/skills/dispatch-claim/CARD.md:35 carries the same branch; .claude/skills/dispatch-claim/SKILL.md:194 (session-presence collision), :288 (PRE-CLAIM collision) and :563 ('Cross-session collision detection - same agent_id in multiple live sessions'). SKILL.md is 31,235B and was last written 2026-08-07, well after this row's 2026-07-30 mint.\n\nDELIBERATELY NOT CLOSED BY PO: the match is on file+behaviour, not on this row's acceptance criteria (the row carries no `files` and no AC beyond 'Atomic implementation of Step 2.4 collision probe'), and it has two live siblings (TASK-COWORK-MUTEX-002/003) whose scope PO did not examine. Closing a P0 on a partial match would be the mirror of the mistake being avoided. REQUIRED NEXT ACTION (whoever picks this up first): diff Step 2.4 of the originating decomposition against the live SKILL.md/CARD.md/CLAUDE.md and either close 001 as already-shipped or state precisely which sub-behaviour is still missing — do NOT re-implement from the title.",
         "po_manual_dispatch_skipped_at": "2026-08-08T16:06:57Z",
         "po_manual_dispatch_skipped_reason": "prior-art-suspect: deliverable appears live in CLAUDE.md + .claude/skills/dispatch-claim/{CARD,SKILL}.md; needs AC-level verify, not dispatch",
         "po_manual_dispatch_flagged_at": "2026-08-12T00:00:14Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "BACKLOG-XOR-GAP",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced BACKLOG-XOR-GAP candidate — folding into this tick's BATCH (re-admitted, prior stamp 2026-08-11T13:30:22Z was stale >4h)"
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced BACKLOG-XOR-GAP candidate and CORRECTED ITSELF before BATCH: this row carries a deliberate 2026-08-08 PO skip (prior-art-suspect) that flag_reentrant cannot see (FIX-PO-MANUAL-DISPATCH-SKIP-STAMP-FIELD-MISMATCH-STARVES-SWEEP occ 2). Dispatched as a SPIKE for the AC-level prior-art diff this row's own po_prior_art_suspect_20260808T1600Z note demands, NOT as the size-M implementation the title implies.",
+        "po_manual_dispatch_dispatched_as": "SPIKE-COWORK-MUTEX-001-PRIOR-ART-ADJUDICATE"
       },
       {
         "id": "TASK-COWORK-MUTEX-002",
@@ -10404,13 +10405,13 @@
         "created_by": "po/triage-20260808T2054Z",
         "dedup_key": "po-manual-dispatch:skip-stamp-field-mismatch-starves-sweep",
         "verification_gate": "sweep_step1_top_candidate_changes_after_a_skip",
-        "status_note": "LIVE-MEASURED THIS TICK. manual-dispatch-sweep.md Step 1 excludes a candidate only via `flag_reentrant`, which reads exactly one field: `po_manual_dispatch_flagged_at`. But a PO that DELIBERATELY SKIPS a top candidate (correct behaviour — prior-art-suspect, needs AC-level verify not dispatch) writes `po_manual_dispatch_skipped_at` + `po_manual_dispatch_skipped_reason` instead. Those two fields are read by NOTHING. Consequence: the skipped row stays permanently unflagged and re-ranks #1 on every subsequent tick, monopolising Step 2 (which selects exactly ONE row per invocation) forever. PROOF: TASK-COWORK-MUTEX-001 (P0, rank 0, BACKLOG-XOR-GAP) was skipped at 2026-08-08T16:06:57Z with a full documented reason; re-running Step 1 verbatim at 2026-08-08T20:56Z — 4h50m later, past the 14400s staleness window — still returns it as candidate[0] with reflag:false. Live field census: 1 row carries skipped_at, 5 carry flagged_at; the 1 skipped row is the P0 that outranks all 5. So the sweep has produced ZERO new selections since 16:06Z. AC: after a PO records a skip, the NEXT tick Step 1 run must return a DIFFERENT top candidate. Candidate fixes: (a) widen flag_reentrant to `(.po_manual_dispatch_flagged_at // .po_manual_dispatch_skipped_at // \"\")`, or (b) make the documented skip path write flagged_at too. Prefer (a) — keeps the audit distinction between skipped and dispatched while making both suppress re-selection. Same `documented consumer, no documented producer` family as this sub-flows own origin row FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH (REVIEW), one layer down: here the producer writes a field no consumer reads.",
+        "status_note": "LIVE-MEASURED THIS TICK. manual-dispatch-sweep.md Step 1 excludes a candidate only via `flag_reentrant`, which reads exactly one field: `po_manual_dispatch_flagged_at`. But a PO that DELIBERATELY SKIPS a top candidate (correct behaviour — prior-art-suspect, needs AC-level verify not dispatch) writes `po_manual_dispatch_skipped_at` + `po_manual_dispatch_skipped_reason` instead. Those two fields are read by NOTHING. Consequence: the skipped row stays permanently unflagged and re-ranks #1 on every subsequent tick, monopolising Step 2 (which selects exactly ONE row per invocation) forever. PROOF: TASK-COWORK-MUTEX-001 (P0, rank 0, BACKLOG-XOR-GAP) was skipped at 2026-08-08T16:06:57Z with a full documented reason; re-running Step 1 verbatim at 2026-08-08T20:56Z — 4h50m later, past the 14400s staleness window — still returns it as candidate[0] with reflag:false. Live field census: 1 row carries skipped_at, 5 carry flagged_at; the 1 skipped row is the P0 that outranks all 5. So the sweep has produced ZERO new selections since 16:06Z. AC: after a PO records a skip, the NEXT tick Step 1 run must return a DIFFERENT top candidate. Candidate fixes: (a) widen flag_reentrant to `(.po_manual_dispatch_flagged_at // .po_manual_dispatch_skipped_at // \"\")`, or (b) make the documented skip path write flagged_at too. Prefer (a) — keeps the audit distinction between skipped and dispatched while making both suppress re-selection. Same `documented consumer, no documented producer` family as this sub-flows own origin row FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH (REVIEW), one layer down: here the producer writes a field no consumer reads.\n[po/triage-20260812T0000Z] OCCURRENCE 2 — REPRODUCED LIVE, and this time it cost a wrong BATCH decision before I caught it. TASK-COWORK-MUTEX-001 carries po_manual_dispatch_skipped_at=2026-08-08T16:06:57Z with reason 'prior-art-suspect: deliverable appears live in CLAUDE.md + .claude/skills/dispatch-claim/{CARD,SKILL}.md; needs AC-level verify, not dispatch'. Step 1's flag_reentrant does not read that field, so the row ranked #1 again (P0, BACKLOG-XOR-GAP) and I stamped it for dispatch-as-implementation before reading its own note. FOUR days and at least three sweep ticks (08-08, 08-11T13:30Z, this one) have now re-selected a row against an explicit PO decision not to dispatch it. AC ADDITION from this occurrence: flag_reentrant must treat po_manual_dispatch_skipped_at as an exclusion with its OWN (longer) staleness window, not the 4h dispatch window — a skip is a judgement about the row's content and does not go stale on the same clock as an undispatched stamp.",
         "related": [
           "FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH",
           "FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW",
           "TASK-COWORK-MUTEX-001"
         ],
-        "updated_at": "2026-08-08T20:59:43Z"
+        "updated_at": "2026-08-12T00:04:58Z"
       },
       {
         "id": "SPIKE-COWORK-MUTEX-001-PRIOR-ART-AC-DIFF",
@@ -19967,7 +19968,7 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-12T00:00:14Z",
+  "_updated_at": "2026-08-12T00:04:57Z",
   "_updated_by": "po",
   "dev_team_idle_chain": {
     "rotation": {
