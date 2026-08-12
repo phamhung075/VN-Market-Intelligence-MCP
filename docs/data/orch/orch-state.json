@@ -986,6 +986,17 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-12T04:05Z",
         "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+      },
+      {
+        "id": "cj-20260812T043111Z",
+        "ts": "2026-08-12T04:31:11Z",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-12.json"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
