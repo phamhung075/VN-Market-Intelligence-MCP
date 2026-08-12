@@ -57,3 +57,58 @@ TASKS:
 HANDOFF: docs/handoffs/TASK_TICK-WU-0-TELEMETRY-LIB.md, TASK_TICK-WU-1-COWORK-WIRING.md, TASK_TICK-WU-2-DEVTEAM-WIRING.md, TASK_TICK-WU-3-AUDITOR-WIRING.md
 
 PIPELINE: commit → developer dispatch
+
+---
+
+## STEP pm-TICK-S2 · pm · 2026-08-12T14:32:15Z
+
+**task-id:** TICK-WU-3-AUDITOR-WIRING (dependency gate check + board flip)
+
+**what-done:**
+1. Verified WU-0, WU-1, WU-2 DONE_VERIFIED status via commit 5119256b3 (QA raw-verified both WU-1/WU-2 this cycle)
+2. Read existing handoff file `docs/handoffs/TASK_TICK-WU-3-AUDITOR-WIRING.md` (209 lines, comprehensive)
+3. Confirmed handoff contains:
+   - ✓ Full AC criteria (AC-1..AC-11 inherited + AC-3/AC-6/AC-10 emphasized for WU-3's double-log risk)
+   - ✓ FR-4 requirement (auditor via extracted choke point, NOT per-call-site hook)
+   - ✓ Design shape blueprint (exact code blocks showing trailer case-statement wrapping)
+   - ✓ Exit code mapping (verified Tier-1/Tier-2/3 paths)
+   - ✓ Double-log risk explanation (the core design challenge)
+   - ✓ Test coverage requirements (CRITICAL: double-log negative control assertion)
+   - ✓ Files to read/create/modify (7 sections, all explicit)
+   - ✓ Dependencies (TICK-WU-0+1+2 all complete)
+   - ✓ Knowledge prerequisites (no re-derivation of architect's Q3 resolution needed)
+   - ✓ Risk notes (R1, R2, R4, R5 all documented)
+4. Conclusion: Handoff is sufficiently detailed and concrete for a developer to implement without re-reading architect spec or re-deriving Q3's choke-point resolution
+
+**what-considered:**
+- (A) Escalate back to architect for a targeted WU-3-specific design addendum — REJECTED: the handoff file already contains the architect's designed blueprint spelled out concretely (§ Design Shape, § FR-4, the exact code blocks). No architectural ambiguity remains.
+- (B) Dispatch to developer without noting that WU-3 is a different complexity class from WU-1/WU-2 — REJECTED: the handoff explicitly flags the "own design review" distinction (L-sized, not S-sized mechanical port). Risks silent assumption of parity. Handoff already flags this; developer will read it.
+- (C) Re-verify each of WU-0/1/2 completion before releasing WU-3 — REJECTED: task briefing says "QA independently RAW-verified WU-1/WU-2 this cycle (commit 5119256b3)" and "dependencies...are all now DONE_VERIFIED". Trusting QA's verification; if rechecked, this cycle's token budget is spent on verification, not dispatch. Dispatch proceeds.
+
+**why-decision:**
+- The three dependencies (WU-0, WU-1, WU-2) are verified complete by QA. The handoff file for WU-3 pre-exists with full AC/FR/design blueprint — architect's Q3 resolution (trailer choke point vs naive per-site hooks) is already documented with exact code blocks. No new architectural decision needed. WU-3 is a developer-scope implementation task, not an architect-scope design task.
+- Handoff explicitly marks WU-3 as L-sized/"own design review" (distinct from mechanical WU-1/2) — developer will read the CRITICAL sections flagged (double-log negative test, R2 note about TICK_TELEMETRY_LOG_PATH override for auditor tests).
+- AC-10 gate (pre-sprint test baseline) is PM-scope, documented in handoff for QA to execute before marking DONE.
+
+**board update decision:**
+- WU-3 currently BACKLOG (per pm-TICK-S1). Flip to TODO now that dependencies are verified DONE_VERIFIED.
+- No change to other WU row states (WU-0/1/2 remain DONE_VERIFIED).
+- Task.board flipped via orch-apply.sh with pathspec commit (only orch-state.json touched, per sprint convention).
+
+---
+
+## RETURN (pm)
+
+DONE: Dependency gate check passed (WU-0+1+2 verified DONE_VERIFIED by QA commit 5119256b3). Handoff sufficiently detailed (blueprint concrete, no re-derivation needed). Board updated: WU-3 BACKLOG→TODO. Ready for developer dispatch.
+
+DECISION: NEXT=developer. Handoff was already complete; no architect addendum needed. WU-3 is implementation-scope (L-sized own-design integration task), not architecture-scope. Developer reads the CRITICAL risk notes (R1 double-log negative test, R2 TICK_TELEMETRY_LOG_PATH override, R4 existing suite unaffected) + exact code blocks in handoff + AC emphasis on AC-6/AC-10.
+
+DEPENDENCIES: ✓ WU-0 DONE_VERIFIED
+             ✓ WU-1 DONE_VERIFIED (QA raw-verified commit 5119256b3)
+             ✓ WU-2 DONE_VERIFIED (QA raw-verified commit 5119256b3)
+
+HANDOFF: docs/handoffs/TASK_TICK-WU-3-AUDITOR-WIRING.md (complete, concrete, no gaps)
+
+ZONE: cross-service/
+
+PIPELINE: commit + developer dispatch
