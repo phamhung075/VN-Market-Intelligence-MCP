@@ -9602,44 +9602,6 @@
         "updated_by": "po"
       },
       {
-        "id": "FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE",
-        "type": "FIX",
-        "title": "notebook-auto-prune charges the ENTIRE byte-cap overage to dated journal sections: rolling headings (## Archive, ## Known patterns) carry the MAX sentinel key so they can never be the drop candidate, yet they contribute their full bytes to the overage — every breach is paid for by deleting real cycle history while the actual bloat is retained",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "developer",
-        "baseline_pass": true,
-        "created_at": "2026-08-06T19:38:00Z",
-        "created_by": "po/triage-20260806T1929Z",
-        "verification_gate": "replay_on_fixture_both_axes",
-        "files": [
-          "scripts/agents-flow/notebook-auto-prune.sh",
-          "scripts/agents-flow/lib/notebook-section-direction.sh",
-          ".claude/skills/notebook-write/SKILL.md",
-          "docs/data/file-size-caps.json"
-        ],
-        "desc": "REPORTED BY ba (signal ba-2026-08-06T18:53:30Z-gateway-blind), 2x reproduced live on docs/agent-memory/notebooks/ba.md during the TE-T05 cycle (section FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE dropped twice, once after an Edit, once after a full Write; recovered from git HEAD 8732d0854/2b55a01b1). PO READ THE SCRIPT AND THE REPORTER'S STATED ROOT CAUSE IS WRONG — do not implement against it. ba claimed the hook 'counts ALL ## headings toward its 3-section cap instead of scoping to DATED headings only per notebook-write AC-2a'. There is NO 3-section cap anywhere in scripts/agents-flow/notebook-auto-prune.sh: the drop loop is `while true` and breaks the instant BOTH line_count<=LINE_CAP AND byte_count<=BYTE_CAP hold (L389-395). Section count is only consulted for the SECTION_COUNT<=1 safe-fail. The true mechanism is the INVERSE of what was reported: rolling headings are not over-counted as droppable, they are structurally EXEMPT from being dropped while still being fully counted in the byte total.",
-        "root_cause": "Two independently-correct mechanisms compose into a data-loss ratchet. (1) SELECTION plane: nso_sections_with_ts assigns the 17-char MAX sentinel key ($NSO_SENTINEL_KEY) to any '## ' heading with no parseable timestamp. The drop candidate is always MIN_KEY. So a rolling heading — '## Archive', '## Known patterns / preferences', '## Identity', the exact stable-ROLLING-heading convention .claude/skills/notebook-write/SKILL.md itself prescribes — sorts to MAX and can NEVER be the drop candidate as long as one dated section survives. That exemption is deliberate and correct in isolation. (2) MEASUREMENT plane: BYTE_CAP = LINE_CAP * 60 is computed over the WHOLE FILE (L347-352, L387-388), rolling sections included. Compose them and the invariant becomes: 100% of any byte overage is repaid by deleting dated cycle history, 0% by the rolling sections, REGARDLESS of which sections actually hold the bytes. On ba.md the binding axis is bytes, not lines: 45L/10252B against cap 200L/12000B — i.e. it prunes at 22% of the line cap because 2 of its 4 headings are permanently-retained rolling sections. Worse, it is a RATCHET: ba's documented recovery action (re-document the lost content into the Known-patterns section) grows the undroppable share, which makes the NEXT dated section get dropped sooner. Any notebook following the prescribed convention converges to rolling-sections-only.",
-        "corroboration": "Signal notebook-direction-defaulted-docs-agent-memory-notebooks-ba-md-2026-08-06T185213Z fired on the SAME file the SAME day and is the second half of the proof: ba.md's dated headings are date-only ('## TE-T05 · 2026-08-06', '## UC-CRITIC-HOOKS-ENFORCEMENT · 2026-08-06') so they normalize to an IDENTICAL key and tie; the only non-tied sections are the two sentinels, which nso_vote_direction excludes from the direction vote by construction — so direction is UNRESOLVABLE, DIRECTION_SOURCE=default, and the drop falls to the newest_first default (drop physically-LAST of the tie group). The tiebreak signal was filed action_required=informational_no_action_needed; it is not informational, it is the corroborating half of this row.",
-        "fix_spec": "Make the two planes agree. Preferred: make the MEASUREMENT plane match the SELECTION plane — compute the cap predicate over the DROPPABLE (non-sentinel) section bytes only, so the pruner stops deleting history to pay for bytes it is structurally forbidden to reclaim, and instead emits an honest signal when the undroppable remainder alone exceeds cap (the same honest-signal contract L400-425 already uses for the single-section case). Alternative: keep whole-file measurement but make rolling sections droppable-of-last-resort once every dated section is exhausted. Either way the rule must be stated in .claude/skills/notebook-write/SKILL.md so the prescribed Archive/Known-patterns convention and the pruner stop contradicting each other.",
-        "ac": "AC-1 REGRESSION (must FAIL before, PASS after): fixture notebook, 3 dated sections + '## Archive' + '## Known patterns', total bytes over cap, where the two rolling sections alone hold MORE than the overage. Current code deletes a dated section and still leaves the file over cap on the next write; fixed code must retain all 3 dated sections and emit the honest over-cap signal instead. AC-2 NEGATIVE (must not regress): fixture whose bloat genuinely IS in the dated sections and whose rolling sections are small — the true-oldest dated section must still be dropped exactly as today. AC-3 RATCHET: replay the same fixture through 3 consecutive over-cap writes; assert the retained dated-section count is non-decreasing (today it strictly decreases to zero). AC-4: no live notebook is written by the test.",
-        "dedup_checked": "Full-text board grep on the mechanism (prune/notebook/sentinel/rolling/byte-cap/undroppable), not just the id. Nearest neighbours checked and NOT covers: FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS (review[]) shipped the default-and-proceed behaviour and owns the DIRECTION vote when ALL sections are sentinel — it does not touch which sections are eligible to be dropped, nor the byte accounting. FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST (review[]) owns tie ORDER within an already-chosen candidate set. FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH (review[]) owns the heading regex. FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE (review[]) is the degenerate 1-section shape, not the mixed dated+rolling shape. FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP (review[]) is the cron pre-filter, a different actor. FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS (review[]) is the notebook-write SKILL compose step, not this hook. No row covers sentinel-exempt sections being byte-counted.",
-        "lane_note": "next_agent=developer, zone=cross-service/ deliberately — scripts/ is outside agent-father's commit zone, and 37 of 44 DRS-stranded backlog rows already point at agent-father with no draining lane (FIX-DEVTEAM-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-DESTINATION).",
-        "related": [
-          "FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS",
-          "FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST",
-          "FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE"
-        ],
-        "origin_signal_id": "ba-2026-08-06T18:53:30Z-gateway-blind,notebook-direction-defaulted-ba-md-2026-08-06T185213Z",
-        "updated_at": "2026-08-12T03:05:00Z",
-        "po_terminal_state_evidence_20260807T0513": "LIVE TERMINAL-STATE EVIDENCE — this rows own prediction has now been realized on two files, measured 2026-08-07T05:13Z. The row states: \"Any notebook following the prescribed convention converges to rolling-sections-only.\" That end state now EXISTS. docs/agent-memory/notebooks/code-janitor.md = 258L/14618B, section_count=1, and its ONE heading is \"## State summary\". docs/agent-memory/notebooks/digest-predict.md = 38L/16279B, section_count=1, its ONE heading is \"## Known patterns / preferences\". BOTH headings are stable ROLLING headings carrying NO date/timestamp token, so both take the NSO_SENTINEL_KEY MAX key and are structurally undroppable — while contributing 100pct of each files bytes. The pruner therefore has ZERO drop candidates and correctly self-reports \"cannot prune further without data loss\"; that message is not a pruner bug, it is this rows ratchet at its absorbing state. Both agents are declared APPEND class in .claude/skills/notebook-write/SKILL.md AC-6 (cap 200L, retain last 3 DATED sections) yet neither file holds a single dated section — the ratchet has consumed all of them. This upgrades the rows evidence from ba.md (45L/10252B, 2 of 4 headings rolling, i.e. mid-ratchet) to two files at 100pct rolling, and it means AC-3 (retained dated-section count non-decreasing) can be replayed against real live fixtures, not only synthetic ones.",
-        "updated_by": "po (autoprune occurrence 2, mint-bar met)",
-        "status_note": "  || PO TRIAGE 2026-08-08T08:03:43Z — OCCURRENCE 2 ON docs/agent-memory/notebooks/po.md, same agent+file pair as the 2026-08-08T01:16Z occurrence logged in that notebook's own body (which explicitly declined to mint, citing this row's family as owner). Measured this tick: po.md went in at 3 '^## ' sections (new 07:57Z section + 01:16Z + 00:08Z) and the PostToolUse auto-prune hook returned it at 2 sections / 46L — the 2026-08-08T00:08Z section was dropped. notebook-write SKILL.md AC-2 states retention is 'last 3 sections, always', so dropping to 2 is a contract violation, not a cap-driven no-op. Mechanism matches THIS row's thesis specifically (byte-cap overage charged to dated journal sections, so a byte-heavy notebook over-drops past the 3-section floor) rather than the heading-regex rows: po.md uses well-formed '^## ' headings throughout and the NEWEST section survived intact both times, which rules out FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH ('drops NEWEST not oldest') and FIX-NOTEBOOK-PRUNE-HEADING-LEVEL-MISMATCH (that is the '###'-heading trap, agent-father.md). Per triage-signals.md's notebook-guard rule ('mint only when the SAME agent+section pair fires on >=2 separate cycles') this has now met the mint bar — folded here instead of minted because this row already owns the exact mechanism; the >=2-cycle threshold is recorded as MET so whoever picks this up treats it as confirmed data loss, not a suspected FP. Data actually lost: one full PO triage cycle's What-happened/Decisions/Carry-over (the 00:08Z ci_red + 22-report tick). No content of the current cycle was lost.\n\n[po/triage-2026-08-12T03:04:59Z] NEW FAILURE SHAPE, caught in-flight on PO's own notebook — auto-prune DELETED a section instead of MOVING it, and did so with 6KB of headroom to spare. Sequence: PO hand-archived its oldest section (2026-08-11T21:00Z) to docs/agent-memory/notebooks/archive/po-2026-08.md as a whole-section move, then wrote its new 03:03Z section via Edit. The PostToolUse auto-prune hook then fired and dropped the entire 2026-08-12T00:00Z section (6241 bytes) from docs/agent-memory/notebooks/po.md. Two independent defects in that one action:\n(1) UNNECESSARY. Post-edit the file was 6027 bytes against a 12000-byte cap. Restoring the dropped section yields ~12268 — marginally over, so a prune was arguably warranted, but the hook had already been handed a hand-archived section in the same cycle and still counted the file as if it had not been. The prune trigger does not account for a same-cycle manual archive, so an agent that correctly prunes its own notebook is punished with a second, automatic prune on top.\n(2) DESTRUCTIVE, NOT A MOVE — this is the serious half. The dropped bytes were written NOWHERE: docs/agent-memory/notebooks/archive/po-2026-08.md was byte-unchanged by the hook (verified: `grep -c 2026-08-12T00:00Z` on the archive returned 0 immediately after). The content survived only because PO had not yet committed and could recover it with `git show HEAD:docs/agent-memory/notebooks/po.md`. Had the cycle committed first, or had the prior section not been in HEAD, the cycle's findings would have been permanently lost. PO recovered and appended it to the archive manually before committing, so no data was lost THIS time.\nThis is distinct from the byte-accounting defect this row currently names (rolling headings charged to dated sections) and distinct from FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS (in-place rewrite of a retained section). AC to add: auto-prune must APPEND every section it removes to the notebook's archive file in the same operation, and must fail loud rather than drop if the archive write fails — a prune that deletes without archiving is data loss regardless of whether the cap justified it."
-      },
-      {
         "id": "FIX-FENCE-SCRIPT-STALE-COWORK-END-CYCLE-SCAN-PATTERN",
         "type": "FIX",
         "title": "notebook-class-fence.sh scans for the skill name 'cowork-end-cycle' deleted in TE-T05 instead of its replacement 'end-0-cowork' — FENCE-A is silently blind to 9 notebook-writing agents including ba, market-watcher, tran-ngoc-bau, pm, architect and qa-responder",
@@ -15645,6 +15607,79 @@
         "ba_spec_complete": true,
         "ba_handoff": "docs/handoffs/FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING-BA-spec.md",
         "ba_completed_at": "2026-08-12T12:03:37Z"
+      },
+      {
+        "id": "FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE",
+        "type": "FIX",
+        "title": "notebook-auto-prune charges the ENTIRE byte-cap overage to dated journal sections: rolling headings (## Archive, ## Known patterns) carry the MAX sentinel key so they can never be the drop candidate, yet they contribute their full bytes to the overage — every breach is paid for by deleting real cycle history while the actual bloat is retained",
+        "status": "READY",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "baseline_pass": true,
+        "created_at": "2026-08-06T19:38:00Z",
+        "created_by": "po/triage-20260806T1929Z",
+        "verification_gate": "replay_on_fixture_both_axes",
+        "files": [
+          "scripts/agents-flow/notebook-auto-prune.sh",
+          "scripts/agents-flow/lib/notebook-section-direction.sh",
+          ".claude/skills/notebook-write/SKILL.md",
+          "docs/data/file-size-caps.json"
+        ],
+        "desc": "REPORTED BY ba (signal ba-2026-08-06T18:53:30Z-gateway-blind), 2x reproduced live on docs/agent-memory/notebooks/ba.md during the TE-T05 cycle (section FIX-VNINDEX-CROSS-PLANE-PLAUSIBILITY-GATE dropped twice, once after an Edit, once after a full Write; recovered from git HEAD 8732d0854/2b55a01b1). PO READ THE SCRIPT AND THE REPORTER'S STATED ROOT CAUSE IS WRONG — do not implement against it. ba claimed the hook 'counts ALL ## headings toward its 3-section cap instead of scoping to DATED headings only per notebook-write AC-2a'. There is NO 3-section cap anywhere in scripts/agents-flow/notebook-auto-prune.sh: the drop loop is `while true` and breaks the instant BOTH line_count<=LINE_CAP AND byte_count<=BYTE_CAP hold (L389-395). Section count is only consulted for the SECTION_COUNT<=1 safe-fail. The true mechanism is the INVERSE of what was reported: rolling headings are not over-counted as droppable, they are structurally EXEMPT from being dropped while still being fully counted in the byte total.",
+        "root_cause": "Two independently-correct mechanisms compose into a data-loss ratchet. (1) SELECTION plane: nso_sections_with_ts assigns the 17-char MAX sentinel key ($NSO_SENTINEL_KEY) to any '## ' heading with no parseable timestamp. The drop candidate is always MIN_KEY. So a rolling heading — '## Archive', '## Known patterns / preferences', '## Identity', the exact stable-ROLLING-heading convention .claude/skills/notebook-write/SKILL.md itself prescribes — sorts to MAX and can NEVER be the drop candidate as long as one dated section survives. That exemption is deliberate and correct in isolation. (2) MEASUREMENT plane: BYTE_CAP = LINE_CAP * 60 is computed over the WHOLE FILE (L347-352, L387-388), rolling sections included. Compose them and the invariant becomes: 100% of any byte overage is repaid by deleting dated cycle history, 0% by the rolling sections, REGARDLESS of which sections actually hold the bytes. On ba.md the binding axis is bytes, not lines: 45L/10252B against cap 200L/12000B — i.e. it prunes at 22% of the line cap because 2 of its 4 headings are permanently-retained rolling sections. Worse, it is a RATCHET: ba's documented recovery action (re-document the lost content into the Known-patterns section) grows the undroppable share, which makes the NEXT dated section get dropped sooner. Any notebook following the prescribed convention converges to rolling-sections-only.",
+        "corroboration": "Signal notebook-direction-defaulted-docs-agent-memory-notebooks-ba-md-2026-08-06T185213Z fired on the SAME file the SAME day and is the second half of the proof: ba.md's dated headings are date-only ('## TE-T05 · 2026-08-06', '## UC-CRITIC-HOOKS-ENFORCEMENT · 2026-08-06') so they normalize to an IDENTICAL key and tie; the only non-tied sections are the two sentinels, which nso_vote_direction excludes from the direction vote by construction — so direction is UNRESOLVABLE, DIRECTION_SOURCE=default, and the drop falls to the newest_first default (drop physically-LAST of the tie group). The tiebreak signal was filed action_required=informational_no_action_needed; it is not informational, it is the corroborating half of this row.",
+        "fix_spec": "Make the two planes agree. Preferred: make the MEASUREMENT plane match the SELECTION plane — compute the cap predicate over the DROPPABLE (non-sentinel) section bytes only, so the pruner stops deleting history to pay for bytes it is structurally forbidden to reclaim, and instead emits an honest signal when the undroppable remainder alone exceeds cap (the same honest-signal contract L400-425 already uses for the single-section case). Alternative: keep whole-file measurement but make rolling sections droppable-of-last-resort once every dated section is exhausted. Either way the rule must be stated in .claude/skills/notebook-write/SKILL.md so the prescribed Archive/Known-patterns convention and the pruner stop contradicting each other.",
+        "ac": "AC-1 REGRESSION (must FAIL before, PASS after): fixture notebook, 3 dated sections + '## Archive' + '## Known patterns', total bytes over cap, where the two rolling sections alone hold MORE than the overage. Current code deletes a dated section and still leaves the file over cap on the next write; fixed code must retain all 3 dated sections and emit the honest over-cap signal instead. AC-2 NEGATIVE (must not regress): fixture whose bloat genuinely IS in the dated sections and whose rolling sections are small — the true-oldest dated section must still be dropped exactly as today. AC-3 RATCHET: replay the same fixture through 3 consecutive over-cap writes; assert the retained dated-section count is non-decreasing (today it strictly decreases to zero). AC-4: no live notebook is written by the test. AC-5 MIXED-CONVENTION INVERSION (new, from occurrence 5 — must FAIL before, PASS after): fixture notebook over the BYTE cap only, containing exactly 2 undated `## Keep (maintenance) 12:58 - ...` headings plus 1 dated `## EDIT <full-ISO> - ...` heading placed LAST/newest. Current code drops the dated EDIT section (verify by asserting the fixture's dated section is ABSENT after a HEAD-version run). Fixed code MUST retain the dated section. Generalize the invariant under test: when the set of non-sentinel ts_keys in a file has cardinality 1 and at least one sentinel section exists, that single dated section MUST NOT be the drop candidate — one real timestamp is not a chronological ordering, it is a sample size of one, and ranking it against MAX-sentinels manufactures a false 'oldest'. AC-6 NO SILENT DROP (new): any prune whose chosen victim carries the MAXIMUM non-sentinel ts_key in the file MUST write a docs/signals/*.json (suggested type `notebook_prune_dropped_newest_dated_section`, priority high, to=claude-manager-helper, payload carrying file/line/heading/section_count/sentinel_count) BEFORE the atomic write. Today this path is completely silent — zero signal, exit 0 — which is why occurrences 1/3/5 were all caught by luck rather than by the system. This AC is independent of AC-1..AC-5: even if the selection fix lands, the signal must exist for the residual cases. AC-7 SHARED-LIB BLAST RADIUS: nso_ts_key / NSO_SENTINEL_KEY semantics are also consumed by scripts/notebook-compose.sh (FIX-NOTEBOOK-COMPOSE-SCRIPT-ACTUATOR) — any change to sentinel meaning must be re-verified against that caller, and the existing 8/8 scripts/agents-flow/notebook-auto-prune.test.sh suite must stay green (no regression on FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST or -DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+        "dedup_checked": "Full-text board grep on the mechanism (prune/notebook/sentinel/rolling/byte-cap/undroppable), not just the id. Nearest neighbours checked and NOT covers: FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS (review[]) shipped the default-and-proceed behaviour and owns the DIRECTION vote when ALL sections are sentinel — it does not touch which sections are eligible to be dropped, nor the byte accounting. FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST (review[]) owns tie ORDER within an already-chosen candidate set. FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH (review[]) owns the heading regex. FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE (review[]) is the degenerate 1-section shape, not the mixed dated+rolling shape. FIX-NOTEBOOK-LINECAP-SWEEP-BYTE-BLIND-BACKSTOP (review[]) is the cron pre-filter, a different actor. FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS (review[]) is the notebook-write SKILL compose step, not this hook. No row covers sentinel-exempt sections being byte-counted.",
+        "lane_note": "next_agent=developer, zone=cross-service/ deliberately — scripts/ is outside agent-father's commit zone, and 37 of 44 DRS-stranded backlog rows already point at agent-father with no draining lane (FIX-DEVTEAM-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-DESTINATION). || P1->P0 and backlog[]->ready[] by PO router-relay triage 2026-08-12T13:10:42Z. PRIORITY: this row has now produced 5 confirmed drops of real, committed-quality content across 3 different notebooks (ba.md x2 2026-08-06, po.md x2 2026-08-08/2026-08-12, agent-father.md 2026-08-12) in 6 days, and at mint time there is a KNOWN over-cap file (agent-father.md 172L/15376B) that is armed to lose content on its very next write. Every recovery so far depended on an agent noticing and running `git show HEAD:` before committing — an uncommitted-work-only escape hatch that fails closed the moment the losing write happens to be the first write of a cycle. That is active, deterministic, silent data loss on the fleet's own memory substrate, which is the P0 bar. LANE: it sat in backlog[] from 2026-08-06T19:38Z through 5 occurrences and was never picked up; next_agent=developer is a DEV agent so BOUNDED-1 does not gate it out, yet no sweep drained it either. Moved to ready[] with supervised=false / plan_only=false so the Ready-Lane Consumer (no dev/non-dev gate, spawns next_agent directly) actuates it — the same lane correction already documented on sibling row CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT. NOT RE-MINTED AS A NEW TICKET: dedup run over backlog+ready+in_progress+review+qa on /autoprune|auto-prune|notebook/i; this row already names scripts/agents-flow/notebook-auto-prune.sh + lib/notebook-section-direction.sh in .files and its root_cause already identifies NSO_SENTINEL_KEY as the mechanism. Occurrence 5 sharpens it from 'byte accounting is unfair to dated sections' to 'selection is outright inverted on mixed-convention files' and adds AC-5/AC-6/AC-7 — same defect, same fix site, so folding beats minting (the script header already tracks 6 prior FIX-* tickets; a 7th sibling would fragment ownership further).",
+        "related": [
+          "FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS",
+          "FIX-NOTEBOOK-AUTOPRUNE-SAMEDAY-TIE-DROPS-NEWEST",
+          "FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE"
+        ],
+        "origin_signal_id": "ba-2026-08-06T18:53:30Z-gateway-blind,notebook-direction-defaulted-ba-md-2026-08-06T185213Z",
+        "updated_at": "2026-08-12T13:10:43Z",
+        "po_terminal_state_evidence_20260807T0513": "LIVE TERMINAL-STATE EVIDENCE — this rows own prediction has now been realized on two files, measured 2026-08-07T05:13Z. The row states: \"Any notebook following the prescribed convention converges to rolling-sections-only.\" That end state now EXISTS. docs/agent-memory/notebooks/code-janitor.md = 258L/14618B, section_count=1, and its ONE heading is \"## State summary\". docs/agent-memory/notebooks/digest-predict.md = 38L/16279B, section_count=1, its ONE heading is \"## Known patterns / preferences\". BOTH headings are stable ROLLING headings carrying NO date/timestamp token, so both take the NSO_SENTINEL_KEY MAX key and are structurally undroppable — while contributing 100pct of each files bytes. The pruner therefore has ZERO drop candidates and correctly self-reports \"cannot prune further without data loss\"; that message is not a pruner bug, it is this rows ratchet at its absorbing state. Both agents are declared APPEND class in .claude/skills/notebook-write/SKILL.md AC-6 (cap 200L, retain last 3 DATED sections) yet neither file holds a single dated section — the ratchet has consumed all of them. This upgrades the rows evidence from ba.md (45L/10252B, 2 of 4 headings rolling, i.e. mid-ratchet) to two files at 100pct rolling, and it means AC-3 (retained dated-section count non-decreasing) can be replayed against real live fixtures, not only synthetic ones.",
+        "updated_by": "po (router-relay triage: occurrence 5 agent-father.md selection-inversion; P1->P0, backlog->ready)",
+        "status_note": "  || PO TRIAGE 2026-08-08T08:03:43Z — OCCURRENCE 2 ON docs/agent-memory/notebooks/po.md, same agent+file pair as the 2026-08-08T01:16Z occurrence logged in that notebook's own body (which explicitly declined to mint, citing this row's family as owner). Measured this tick: po.md went in at 3 '^## ' sections (new 07:57Z section + 01:16Z + 00:08Z) and the PostToolUse auto-prune hook returned it at 2 sections / 46L — the 2026-08-08T00:08Z section was dropped. notebook-write SKILL.md AC-2 states retention is 'last 3 sections, always', so dropping to 2 is a contract violation, not a cap-driven no-op. Mechanism matches THIS row's thesis specifically (byte-cap overage charged to dated journal sections, so a byte-heavy notebook over-drops past the 3-section floor) rather than the heading-regex rows: po.md uses well-formed '^## ' headings throughout and the NEWEST section survived intact both times, which rules out FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH ('drops NEWEST not oldest') and FIX-NOTEBOOK-PRUNE-HEADING-LEVEL-MISMATCH (that is the '###'-heading trap, agent-father.md). Per triage-signals.md's notebook-guard rule ('mint only when the SAME agent+section pair fires on >=2 separate cycles') this has now met the mint bar — folded here instead of minted because this row already owns the exact mechanism; the >=2-cycle threshold is recorded as MET so whoever picks this up treats it as confirmed data loss, not a suspected FP. Data actually lost: one full PO triage cycle's What-happened/Decisions/Carry-over (the 00:08Z ci_red + 22-report tick). No content of the current cycle was lost.\n\n[po/triage-2026-08-12T03:04:59Z] NEW FAILURE SHAPE, caught in-flight on PO's own notebook — auto-prune DELETED a section instead of MOVING it, and did so with 6KB of headroom to spare. Sequence: PO hand-archived its oldest section (2026-08-11T21:00Z) to docs/agent-memory/notebooks/archive/po-2026-08.md as a whole-section move, then wrote its new 03:03Z section via Edit. The PostToolUse auto-prune hook then fired and dropped the entire 2026-08-12T00:00Z section (6241 bytes) from docs/agent-memory/notebooks/po.md. Two independent defects in that one action:\n(1) UNNECESSARY. Post-edit the file was 6027 bytes against a 12000-byte cap. Restoring the dropped section yields ~12268 — marginally over, so a prune was arguably warranted, but the hook had already been handed a hand-archived section in the same cycle and still counted the file as if it had not been. The prune trigger does not account for a same-cycle manual archive, so an agent that correctly prunes its own notebook is punished with a second, automatic prune on top.\n(2) DESTRUCTIVE, NOT A MOVE — this is the serious half. The dropped bytes were written NOWHERE: docs/agent-memory/notebooks/archive/po-2026-08.md was byte-unchanged by the hook (verified: `grep -c 2026-08-12T00:00Z` on the archive returned 0 immediately after). The content survived only because PO had not yet committed and could recover it with `git show HEAD:docs/agent-memory/notebooks/po.md`. Had the cycle committed first, or had the prior section not been in HEAD, the cycle's findings would have been permanently lost. PO recovered and appended it to the archive manually before committing, so no data was lost THIS time.\nThis is distinct from the byte-accounting defect this row currently names (rolling headings charged to dated sections) and distinct from FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS (in-place rewrite of a retained section). AC to add: auto-prune must APPEND every section it removes to the notebook's archive file in the same operation, and must fail loud rather than drop if the archive write fails — a prune that deletes without archiving is data loss regardless of whether the cap justified it.\n\n[po/router-relay-triage 2026-08-12T13:10:42Z] OCCURRENCE 5 — docs/agent-memory/notebooks/agent-father.md, 2026-08-12T~03:24Z. FIRST OBSERVED CASE OF THE SELECTION PLANE INVERTING OUTRIGHT (not just mis-charging bytes): the file mixed TWO heading conventions — 2x undated `## Keep (maintenance) HH:MM` (HH:MM alone is NOT matched by nso_ts_key's regex, which requires a YYYY-MM-DD date token) and 1x `## EDIT 2026-08-12T03:23:52Z`. Because the EDIT heading was the ONLY section with a parseable timestamp, it was the ONLY non-sentinel key, therefore it WAS MIN_KEY, therefore drop-oldest selected it — and it was the chronologically NEWEST content in the file. 53 lines documenting the system-auditor Tier-2/3 heartbeat fix were deleted. Recovered by agent-father from `git show HEAD:...` and re-committed as 584c2ea65 (verified purely additive, 0 deletions vs HEAD) — recovery happened ONLY because a leaf agent happened to notice; the hook emitted ZERO signal and exited 0 believing it had acted correctly.\nPO RAW-REPRODUCED THE SELECTION, 2026-08-12T13:08Z, by sourcing lib/notebook-section-direction.sh against the live committed file: sections_with_ts = {3:99999999999999999 (Keep), 58:99999999999999999 (Keep), 120:20260812032352000 (EDIT)}; MIN_KEY=20260812032352000; TIE_COUNT=1 so the direction-aware tie-break at L463-509 is never even reached; OLDEST_LINE=120 = the newest section. Deterministic, not probabilistic.\nSTILL LIVE / RE-ARMED AT MINT TIME: the committed agent-father.md is 172L / 15376B against a 12000B byte cap (200L line cap NOT breached — bytes are the binding axis, same as ba.md occurrence 1). The next Write/Edit on that file re-fires the hook and repeats the identical wrong-section drop; measured post-drop state would be 119L/10164B, i.e. under cap, so the loop stops after destroying exactly the one section that mattered. Immediate blast-radius containment is owned by CLEAN-NB-AGENT-FATHER-MIXED-HEADING-OVERCAP-DISARM (ready[], next_agent=agent-father) — that row disarms THIS file; THIS row is the only fleet-wide fix.",
+        "supervised": false,
+        "plan_only": false,
+        "po_escalation_20260812T1310": "P1->P0 and backlog[]->ready[] by PO router-relay triage 2026-08-12T13:10:42Z. PRIORITY: this row has now produced 5 confirmed drops of real, committed-quality content across 3 different notebooks (ba.md x2 2026-08-06, po.md x2 2026-08-08/2026-08-12, agent-father.md 2026-08-12) in 6 days, and at mint time there is a KNOWN over-cap file (agent-father.md 172L/15376B) that is armed to lose content on its very next write. Every recovery so far depended on an agent noticing and running `git show HEAD:` before committing — an uncommitted-work-only escape hatch that fails closed the moment the losing write happens to be the first write of a cycle. That is active, deterministic, silent data loss on the fleet's own memory substrate, which is the P0 bar. LANE: it sat in backlog[] from 2026-08-06T19:38Z through 5 occurrences and was never picked up; next_agent=developer is a DEV agent so BOUNDED-1 does not gate it out, yet no sweep drained it either. Moved to ready[] with supervised=false / plan_only=false so the Ready-Lane Consumer (no dev/non-dev gate, spawns next_agent directly) actuates it — the same lane correction already documented on sibling row CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT. NOT RE-MINTED AS A NEW TICKET: dedup run over backlog+ready+in_progress+review+qa on /autoprune|auto-prune|notebook/i; this row already names scripts/agents-flow/notebook-auto-prune.sh + lib/notebook-section-direction.sh in .files and its root_cause already identifies NSO_SENTINEL_KEY as the mechanism. Occurrence 5 sharpens it from 'byte accounting is unfair to dated sections' to 'selection is outright inverted on mixed-convention files' and adds AC-5/AC-6/AC-7 — same defect, same fix site, so folding beats minting (the script header already tracks 6 prior FIX-* tickets; a 7th sibling would fragment ownership further)."
+      },
+      {
+        "id": "CLEAN-NB-AGENT-FATHER-MIXED-HEADING-OVERCAP-DISARM",
+        "type": "CLEAN",
+        "status": "READY",
+        "priority": "P1",
+        "next_agent": "agent-father",
+        "zone": "docs/agent-memory/notebooks/",
+        "supervised": false,
+        "plan_only": false,
+        "size": "S",
+        "owner": "po",
+        "created_by": "po/router-relay-triage-2026-08-12T13:10:42Z",
+        "created_at": "2026-08-12T13:10:42Z",
+        "updated_at": "2026-08-12T13:10:43Z",
+        "updated_by": "po",
+        "baseline_pass": true,
+        "verification_gate": "wc_both_axes_plus_heading_convention_recheck",
+        "files": [
+          "docs/agent-memory/notebooks/agent-father.md",
+          "docs/agent-memory/notebooks/archive/"
+        ],
+        "related": [
+          "FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE"
+        ],
+        "title": "DISARM the live re-armed auto-prune trap on agent-father.md (172L/15376B vs 12000B byte cap, mixed dated/undated heading conventions): archive-split it under cap AND date its rolling headings, so the next write does not repeat the 2026-08-12 wrong-section drop",
+        "symptom": "docs/agent-memory/notebooks/agent-father.md is committed at 172 lines / 15376 bytes against the 12000-byte cap (line cap 200L is NOT breached — bytes are the binding axis). Its 3 sections are 2x undated `## Keep (maintenance) HH:MM` + 1x dated `## EDIT 2026-08-12T03:23:52Z`. The PostToolUse auto-prune hook will fire on the very next Write/Edit and — reproduced by PO at 2026-08-12T13:08Z — will select the DATED section (line 120) as 'oldest' because it is the only parseable timestamp in the file, deleting the newest content and emitting no signal. This already happened once this cycle; the 53 lost lines were recovered from git HEAD and re-committed as 584c2ea65.",
+        "root_cause": "Downstream victim of FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (the pruner's sentinel-key selection defect). This row does NOT fix the hook — it removes THIS file from the blast radius while the hook fix is in flight.",
+        "fix_spec": "Two parts, both required, both landable by agent-father inside its own commit zone (docs/agent-memory/). (1) CONTAINMENT: move the older `## Keep (maintenance)` history out to docs/agent-memory/notebooks/archive/agent-father-2026-08.md (whole-section MOVE, append to archive, never delete — the archive file is exempt from the cap per docs/data/file-size-caps.json) and land the trimmed notebook in ONE Write that is already under BOTH caps (<=200L AND <=12000B). This is safe: notebook-auto-prune.sh recounts both axes at the top of its drop loop (L390-395) and breaks BEFORE any prune when both are satisfied, so a single under-cap write never triggers the hook. Do NOT land it in two writes where the intermediate state is over cap. (2) DURABLE DISARM — without this, containment REGRESSES on the next few cycles exactly as PO's 2026-08-07T05:13Z scope-correction predicted for code-janitor/digest-predict: every retained `## ` heading must carry a full date token (`YYYY-MM-DD`, e.g. `## Keep (maintenance) 2026-08-12T12:58Z - ...`), because `12:58` alone is not matched by nso_ts_key's regex. Once every heading is dated the ranker has a real ordering, the sentinel population is empty, and drop-oldest is correct again for this file. Do NOT paper the file over with a `<!-- size-justification -->` header — that interacts with FIX-BLOAT-HOOK-JUSTIFY-SUPPRESS to blind the detector permanently (same rejection clause as CLEAN-NB-TRIM-BCTC-ANALYST).",
+        "ac": "AC-1 docs/agent-memory/notebooks/agent-father.md measures <=200 lines AND <=12000 bytes, verified with a live `wc -l -c` (not an estimate) after the commit lands. AC-2 EVERY `^## ` heading in the retained file contains a `[0-9]{4}-[0-9]{2}-[0-9]{2}` date token — verify with: `grep -c '^## ' file` equals `grep -cE '^## .*[0-9]{4}-[0-9]{2}-[0-9]{2}' file`. AC-3 section_count >= 2 after the split (a 1-section file is re-armed for the notebook_single_section_overage_breach failure on its very next cycle regardless of byte count — same clause as CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT AC-5). AC-4 the removed content is present in docs/agent-memory/notebooks/archive/agent-father-2026-08.md — a diff of (retained + archive) against the pre-split file shows ZERO deleted content lines; this is a MOVE, never a delete. AC-5 the `## EDIT 2026-08-12T03:23:52Z` system-auditor Tier-2/3 heartbeat section recovered in 584c2ea65 survives in one of the two files.",
+        "note": "Ordering: this row is the fast blast-radius limiter (minutes, one agent, one commit zone) and should land BEFORE FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE ships. It is deliberately NOT a substitute for that row — every other notebook that mixes dated and undated headings stays armed until the hook itself is fixed. PO chose next_agent=agent-father over claude-manager-helper (the owner of the sibling per-file CLEAN rows) because docs/agent-memory/ is agent-father's own commit zone and AC-2 requires changing the heading convention agent-father itself writes.",
+        "dedup_checked": "Scanned backlog+ready+in_progress+review+qa for rows naming agent-father.md or a notebook cap trim. CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (ready) names only code-janitor/digest-predict. CLEAN-NOTEBOOK-BYTECAP-3-FILES-UNPRUNABLE-SINGLE-SECTION (backlog) is the single-section shape, not the mixed-convention shape. CLEAN-CONTEXT-BLOAT-NOTEBOOKS-20260614 names agent-father.md at 303L but its own AC was already met (the file measured 113L/9703B on 2026-08-06) and PO flagged it as a closure candidate — it does not cover today's re-breach nor AC-2's heading-convention requirement. No open row covers this file's current state."
       }
     ],
     "review": [
@@ -20034,8 +20069,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-12T11:54:42Z",
-    "last_triaged_by": "dev-team (design-router sweep)",
+    "last_triaged_at": "2026-08-12T13:10:42Z",
+    "last_triaged_by": "po",
     "in_progress": [
       {
         "id": "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR",
@@ -20098,7 +20133,7 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-12T06:25:26Z",
+  "_updated_at": "2026-08-12T13:10:42Z",
   "_updated_by": "po",
   "dev_team_idle_chain": {
     "rotation": {
@@ -20121,779 +20156,9 @@
         "last_served_tick": "2026-08-12T12:55:29Z"
       }
     },
-    "_updated_at": "2026-08-12T12:55:29Z",
+    "_updated_at": "2026-08-12T13:11:49Z",
     "_updated_by": "dev-team",
-    "pending_triage_inbox": [
-      {
-        "envelope_id": "a583ab45352530c6bcae9cd1f3313497162fa90615abc36c5ccec5a15a12681f",
-        "source": "file",
-        "from": "ci-health-probe",
-        "to": "po",
-        "type": "ci_red",
-        "priority": "high",
-        "payload": {
-          "check_id": "CI-RED-4424dd41",
-          "head_sha": "4424dd41053580a5d68e9cabc0c0a7b4cc0fb530",
-          "run_id": 31583395162,
-          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31583395162",
-          "conclusion": "failure",
-          "failing_jobs": [
-            {
-              "name": "size-lint",
-              "conclusion": "failure",
-              "jobId": 94071490101
-            },
-            {
-              "name": "bun test",
-              "conclusion": "failure",
-              "jobId": 94071490210
-            }
-          ],
-          "fingerprint": "628f75b9b6e7a4132c7ece60d6889bf7fe199710d4badd7c2b2475d921f7ea9b",
-          "zone_owner": "dev-team (CI fix)",
-          "summary": "CI RED on main HEAD 4424dd41053580a5d68e9cabc0c0a7b4cc0fb530: bun test,size-lint",
-          "suggested_sprint_class": "FIX",
-          "verification_gate": "ci_green_on_subsequent_push"
-        },
-        "createdAt": "2026-08-12T09:53:04Z",
-        "drained_at": "2026-08-12T10:31:35Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "30651be7fcc2c2e34ace0163fb4ebbc4a7ee06d42698e0dbea86dbf0af793d35",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=52 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-12T10:11:28Z",
-        "drained_at": "2026-08-12T10:31:35Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "3b285cc5b8fe3ad9fe83cc9aabb45c702d259a39994312cfa9a78896677a6c45",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "tick-summary",
-        "priority": "normal",
-        "payload": {
-          "tick": "2026-08-12T09:45Z",
-          "drift_min": 6,
-          "matched_slots": [],
-          "won_slots": [],
-          "spawned": [],
-          "collision_warning": null,
-          "pressure_mode": "adaptive",
-          "due_reasons": {},
-          "cadence_minutes": {},
-          "last_fired_timestamp": null,
-          "classification": "FIRE",
-          "reason": "signal-only tick, no slots/one-shots due",
-          "note": "0 slots matched, 0 one-shots. Same NEW row persists (sys-20260812T093525-1b2b, dedup_key=microservice_degraded:rag-service:A-30, CRITICAL) -- no re-escalation this tick, so no repeat telegram (already flagged bug channel message_id=5150 last tick). Now ~90min since first occurrence (08:15Z), ~15min since CRITICAL. Left at NEW per established rule. Step 4.7 tick-snapshot skipped (established pattern)."
-        },
-        "createdAt": "2026-08-12T09:51:24Z",
-        "drained_at": "2026-08-12T10:31:35Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "e908ace31183c8ab02c0155c080114c38df38f0c704b307b9150fb28b03c087a",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "tick-summary",
-        "priority": "normal",
-        "payload": {
-          "tick": "2026-08-12T10:00Z",
-          "drift_min": 6,
-          "matched_slots": [],
-          "won_slots": [],
-          "spawned": [],
-          "collision_warning": null,
-          "pressure_mode": "adaptive",
-          "due_reasons": {},
-          "cadence_minutes": {},
-          "last_fired_timestamp": null,
-          "classification": "FIRE",
-          "reason": "signal-only tick, no slots/one-shots due",
-          "note": "0 slots matched, 0 one-shots. New NEW row this tick (sys-20260812T100604-517d, severity=WARN, 95.32% sustained) -- memory pressure eased vs prior CRITICAL 99.76% (sys-20260812T093525-1b2b, now presumably superseded/dropped off since it no longer appears in the NEW set). No repeat telegram (severity decreased). OBSERVATION for po/system-auditor triage: this row's dedup_key='microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30' (full container name) differs in format from the prior 4 rows' dedup_key='microservice_degraded:rag-service:A-30' (short form) -- same underlying container/check but inconsistent key format means dedup logic won't collapse them across the naming variance. Also audit_cycle_tag=null this row vs populated on priors. Left at NEW per established rule. Step 4.7 tick-snapshot skipped (established pattern)."
-        },
-        "createdAt": "2026-08-12T10:06:31Z",
-        "drained_at": "2026-08-12T10:31:35Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "dfcc52ec527ec89a255faa573eda3e8f4c8b8a4032f4c3bf5beb2166ab0a812b",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "tick-summary",
-        "priority": "normal",
-        "payload": {
-          "tick": "2026-08-12T10:15Z",
-          "drift_min": 6,
-          "matched_slots": [],
-          "won_slots": [],
-          "spawned": [],
-          "collision_warning": null,
-          "pressure_mode": "adaptive",
-          "due_reasons": {},
-          "cadence_minutes": {},
-          "last_fired_timestamp": null,
-          "classification": "FIRE",
-          "reason": "signal-only tick, no slots/one-shots due",
-          "note": "0 slots matched, 0 one-shots. Same NEW row persists (sys-20260812T100604-517d, WARN, 95.32%) -- no change since 10:00Z tick, no re-notify. Left at NEW per established rule. Step 4.7 tick-snapshot skipped (established pattern)."
-        },
-        "createdAt": "2026-08-12T10:21:21Z",
-        "drained_at": "2026-08-12T10:31:35Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "e87dfcd6066bb312397738de89cccacb5888b51ef6981ac457544f0df24c489c",
-        "source": "file",
-        "from": "code-janitor",
-        "to": "po",
-        "type": "system-issue",
-        "priority": "low",
-        "payload": {
-          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
-          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
-          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
-          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
-          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
-        },
-        "createdAt": "2026-08-12T10:30:04Z",
-        "drained_at": "2026-08-12T10:31:35Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "83ef0d0b5b14e01e0a5b6eb4a17ab268dafeeeccd66a64141fa12df88846baa1",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_single_section_overage_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/code-janitor.md",
-          "line_count": 213,
-          "cap": 200,
-          "byte_count": 12820,
-          "byte_cap": 12000,
-          "section_count": 1,
-          "reason": "only preamble+1 section remain; cannot prune further without data loss",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-12T10:30:04Z",
-        "drained_at": "2026-08-12T10:31:35Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "4afa344f740a126e0a7e34d91a40f6a1b5ea5534250590b72db37f234bf201e0",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_single_section_overage_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/code-janitor.md",
-          "line_count": 213,
-          "cap": 200,
-          "byte_count": 12820,
-          "byte_cap": 12000,
-          "section_count": 1,
-          "reason": "only preamble+1 section remain; cannot prune further without data loss",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-12T10:30:46Z",
-        "drained_at": "2026-08-12T10:31:35Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "c7a329773492be472f54de7c99cec566306f6d9a06d2263bea60f69d7fe2f5a9",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_single_section_overage_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/digest-predict.md",
-          "line_count": 41,
-          "cap": 200,
-          "byte_count": 23477,
-          "byte_cap": 12000,
-          "section_count": 1,
-          "reason": "only preamble+1 section remain; cannot prune further without data loss",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-12T10:30:04Z",
-        "drained_at": "2026-08-12T10:31:35Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "3c9c6c371ea61881340771e130fb8d11df8cd2480a940ab6783a0a499f819a5c",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_single_section_overage_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/digest-predict.md",
-          "line_count": 41,
-          "cap": 200,
-          "byte_count": 23477,
-          "byte_cap": 12000,
-          "section_count": 1,
-          "reason": "only preamble+1 section remain; cannot prune further without data loss",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-12T10:30:46Z",
-        "drained_at": "2026-08-12T10:31:35Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "94f54a9a9ba706cb2cdf82433e97ff4a9a465cd7688290b638cf408f1175367f",
-        "source": "dashboard",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "priority": "WARN",
-        "payload": "A-30 FAIL: vn-market-intelligence-mcp-rag-service-1 — sustained memory pressure (95.32% sustained, loss of reclamation)",
-        "createdAt": "2026-08-12T10:06:04Z",
-        "drained_at": "2026-08-12T10:32:21.214Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "e87dfcd6066bb312397738de89cccacb5888b51ef6981ac457544f0df24c489c",
-        "source": "dashboard",
-        "from": "code-janitor",
-        "to": "po",
-        "type": "system-issue",
-        "priority": "LOW",
-        "payload": {
-          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
-          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
-          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
-          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
-          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
-        },
-        "createdAt": "2026-08-12T10:30:04Z",
-        "drained_at": "2026-08-12T10:32:21.214Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "3b16b5dea5c9282ffad28b1f5c6398004035244eae258006b75a5ab2f6fb248a",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json. actor=6194fe17-df8a-4b04-ad52-072efab100ee mode=warn escalated=false prior_warns=0 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-12T10:32:16Z",
-        "drained_at": "2026-08-12T10:51:49Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "c1d6d591b93a421a8641b0765647a03dcded7d6b8215a06e701c7c64ea962a8f",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/agent-memory/notebooks/qa.md' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/agent-memory/notebooks/qa.md' (faed4f258d2a5ce822f263f0d428c29347c22a85) differs from what is about to land in this commit (38974d30c96cd7a42db52514bd802c150a22bb61) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope (two-blob form takes NO pathspec — do not append '-- docs/agent-memory/notebooks/qa.md', that is a git usage error): git diff faed4f258d2a5ce822f263f0d428c29347c22a85 38974d30c96cd7a42db52514bd802c150a22bb61",
-        "createdAt": "2026-08-12T10:43:37Z",
-        "drained_at": "2026-08-12T10:51:49Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "ac3a81c4241c29e99224879bb08a57e1d0cb2abfe9c117cf37bef9d07045ab6d",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/code-janitor.md",
-          "line_count": 213,
-          "cap": 200,
-          "byte_count": 12820,
-          "byte_cap": 12000,
-          "class": "agent-notebook",
-          "reason": "line-cap,byte-cap",
-          "overage": 13,
-          "byte_overage": 820,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-12T10:31:41Z",
-        "drained_at": "2026-08-12T10:51:49Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "004ebb0a33fd356106d58f89b4a4234daa96d9d86826beff391d83bfe162de5b",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "tick-summary",
-        "priority": "normal",
-        "payload": {
-          "tick": "2026-08-12T10:45Z",
-          "drift_min": 6,
-          "matched_slots": [],
-          "won_slots": [],
-          "spawned": [],
-          "collision_warning": null,
-          "pressure_mode": "adaptive",
-          "due_reasons": {},
-          "cadence_minutes": {},
-          "last_fired_timestamp": null,
-          "classification": "FIRE",
-          "reason": "signal-only tick, no slots/one-shots due",
-          "note": "0 slots matched, 0 one-shots. New NEW row (sys-20260812T104338-724f, WARN) -- system-auditor now self-labels this 'rag-service memory issue recurring (3rd occurrence) -- lancedb deployment state unresolved', dedup_key suffix changed to ':recurring-unresolved'. Detector appears to be escalating its own recurrence-tracking; severity still WARN (not CRITICAL) so no repeat telegram (last sent 09:30Z tick, message_id=5150). Left at NEW per established rule. Step 4.7 tick-snapshot skipped (established pattern)."
-        },
-        "createdAt": "2026-08-12T10:51:25Z",
-        "drained_at": "2026-08-12T10:51:49Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "7ed650a6daf22a8004c0ecb00bc4b421597dea3321d297ed20df862bd04b45a8",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_single_section_overage_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/code-janitor.md",
-          "line_count": 213,
-          "cap": 200,
-          "byte_count": 12820,
-          "byte_cap": 12000,
-          "section_count": 1,
-          "reason": "only preamble+1 section remain; cannot prune further without data loss",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-12T10:31:39Z",
-        "drained_at": "2026-08-12T10:51:49Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "32d316a00817c284d62dd3d8ac8a558c03d10ee1b544b1a3578c6929d5347b66",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_single_section_overage_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/code-janitor.md",
-          "line_count": 230,
-          "cap": 200,
-          "byte_count": 14026,
-          "byte_cap": 12000,
-          "section_count": 1,
-          "reason": "only preamble+1 section remain; cannot prune further without data loss",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-12T10:31:50Z",
-        "drained_at": "2026-08-12T10:51:49Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "0f5fb5a916f77e5dc6e2891f5712339cce7f5194a7b2196f009100d17197e5c3",
-        "source": "dashboard",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "microservice_memory_degraded",
-        "priority": "WARN",
-        "payload": "rag-service memory issue recurring (3rd occurrence) — lancedb deployment state unresolved",
-        "createdAt": "2026-08-12T10:43:38Z",
-        "drained_at": "2026-08-12T10:52:25Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "905b9e706921fb5a3d92002c446c2802c40f9a2ae8bdb2f3c8fdc8e7f92fb8ec",
-        "source": "file",
-        "from": "ci-health-probe",
-        "to": "po",
-        "type": "ci_red",
-        "priority": "high",
-        "payload": {
-          "check_id": "CI-RED-4f1ed641",
-          "head_sha": "4f1ed641bc295a5ce0defede27d01f7b3f9991ae",
-          "run_id": 31588799885,
-          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31588799885",
-          "conclusion": "failure",
-          "failing_jobs": [
-            {
-              "name": "bun test",
-              "conclusion": "failure",
-              "jobId": 94088719173
-            },
-            {
-              "name": "task-claim-owner-session-lint",
-              "conclusion": "failure",
-              "jobId": 94088719583
-            }
-          ],
-          "fingerprint": "97526f17b22b66e8bbaca314c1b724d2f8e808e3a3548370ddf02d2526c1459a",
-          "zone_owner": "dev-team (CI fix)",
-          "summary": "CI RED on main HEAD 4f1ed641bc295a5ce0defede27d01f7b3f9991ae: bun test,task-claim-owner-session-lint",
-          "suggested_sprint_class": "FIX",
-          "verification_gate": "ci_green_on_subsequent_push"
-        },
-        "createdAt": "2026-08-12T10:54:59Z",
-        "drained_at": "2026-08-12T11:21:13Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "2d58c5d4115b0d816fbc4cae1b74a9cddfd2678a4781f5da88744fbff20ce54f",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
-          "line_count": 83,
-          "cap": 200,
-          "byte_count": 14124,
-          "byte_cap": 12000,
-          "class": "agent-notebook",
-          "reason": "byte-cap",
-          "overage": 0,
-          "byte_overage": 2124,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-12T11:11:03Z",
-        "drained_at": "2026-08-12T11:21:13Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "4b9bc1fc1f11cff5b1e9963262ae71a27272ce154897c830943237d629bcb36f",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_single_section_overage_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
-          "line_count": 83,
-          "cap": 200,
-          "byte_count": 14124,
-          "byte_cap": 12000,
-          "section_count": 1,
-          "reason": "only preamble+1 section remain; cannot prune further without data loss",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-12T11:11:01Z",
-        "drained_at": "2026-08-12T11:21:13Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "d60373d37508208fdcc01c37c67c10978934526d74140176bbd3f381e9cf9d0f",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 6 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/pm.md docs/data/orch/orch-state.json docs/handoffs/FIX-CHEF-MARKER-KEY-ANCHOR-1-MATCH-SLOTS.md docs/handoffs/FIX-CHEF-MARKER-KEY-ANCHOR-2-MATCH-SLOTS-DOC.md docs/handoffs/FIX-CHEF-MARKER-KEY-ANCHOR-3-SPAWN-FANOUT.md docs/handoffs/FIX-CHEF-MARKER-KEY-ANCHOR-4-CHEF-PARSE.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=53 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-12T11:30:17Z",
-        "drained_at": "2026-08-12T11:51:16Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "bde6576c22d0c9400c6d37e22b3a6ba68a4c899381e3a658f1a9f3d5bbb6ecd3",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=54 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-12T11:41:03Z",
-        "drained_at": "2026-08-12T11:51:16Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "01dc67de1a483c83fb3c52f0570d450308d7bfe91fe63cb5069781e8d653aa86",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/market-watcher.md. actor=0454e9d8-b475-4230-95c9-8b7d943aa8b3 mode=warn escalated=true prior_warns=18 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-12T12:10:24Z",
-        "drained_at": "2026-08-12T12:21:14Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "dfea19382b346d05b16845601ec2fd6e37bac05b017a6eb506d1d84c784ae33c",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c49 · 2026-08-12T12:03Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
-        "createdAt": "2026-08-12T12:11:12Z",
-        "drained_at": "2026-08-12T12:21:14Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "ac0b6a0d7f650db6c222897e289e63a2b4adadff9d7d7afa3ea969850c3408c0",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-12T12:08:30Z",
-          "matched_slots": [
-            "news-scout-offhours",
-            "market-watcher-offhours",
-            "alert-commander-critical"
-          ],
-          "won_slots": [
-            "news-scout-offhours",
-            "market-watcher-offhours",
-            "alert-commander-critical"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/news-scout/flow/main.md",
-            "docs/agents/market-watcher/flow/main.md",
-            "docs/agents/alert-commander/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 6,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "unknown",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "news-scout-offhours": "cadence",
-            "market-watcher-offhours": "cadence",
-            "alert-commander-critical": "cron"
-          },
-          "cadence_minutes": {
-            "news-scout-offhours": 240,
-            "market-watcher-offhours": 240,
-            "alert-commander-critical": null
-          },
-          "last_fired_timestamp": "2026-08-12T12:08:10Z",
-          "last_fired_slots": [
-            "news-scout-offhours",
-            "market-watcher-offhours",
-            "alert-commander-critical"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "12:00",
-          "leader_lock": "acquired",
-          "dev_head": "unknown",
-          "devq": 5,
-          "signal_backlog": 27,
-          "note": "3-slot off-hours batch (news-scout-offhours, market-watcher-offhours, alert-commander-critical) — all cadence/cron due at 240min gatherer interval (calendar_status=unknown, no suppression/downgrade applies). Single batch, MAX_PARALLEL=4 (headroom_mb=3228 load1m=2 cores=12, not degraded). Step 4.5 freshness downgrade inapplicable (signal_backlog=27!=0, calendar not holiday/weekend). No CHEF slots this tick, mutex no-op. Step 4.7 tick-snapshot hand-transcription skipped per established pattern. Recurring rag-service A-30 memory signal (dedup_key format drift observed 10:00Z/10:45Z) has produced no NEW to:po row this tick — signal_queue empty of NEW rows, consistent with system-auditor's own cadence."
-        },
-        "createdAt": "2026-08-12T12:08:30Z",
-        "drained_at": "2026-08-12T12:21:14Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "1da1904d6fab537c259e3c6143b0d9a92771c956d454c28e3213490435f5b387",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_tiebreak_direction_defaulted",
-        "priority": "normal",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/ba.md",
-          "tied_sections": "5:20260812000000000:## FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING · 2026-08-12\n9:20260812000000000:## UC-RDL-P7 · 2026-08-12",
-          "direction_applied": "newest_first",
-          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
-          "action_required": "informational_no_action_needed"
-        },
-        "createdAt": "2026-08-12T12:09:51Z",
-        "drained_at": "2026-08-12T12:21:14Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "7444e8a6229146c343deb915bce2d935ff72e770a57cc0acc05e8c66123e0241",
-        "source": "file",
-        "from": "ci-health-probe",
-        "to": "po",
-        "type": "ci_red",
-        "priority": "high",
-        "payload": {
-          "check_id": "CI-RED-ffb8f8cc",
-          "head_sha": "ffb8f8cc3f0b4e90bf9365d970b793d5921538de",
-          "run_id": 31595301943,
-          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31595301943",
-          "conclusion": "failure",
-          "failing_jobs": [
-            {
-              "name": "bun test",
-              "conclusion": "failure",
-              "jobId": 94109242974
-            },
-            {
-              "name": "task-claim-owner-session-lint",
-              "conclusion": "failure",
-              "jobId": 94109243032
-            }
-          ],
-          "fingerprint": "205538232e4e666d24d1c0e7d434ded07f9123b05dcb10fb8e5282ea6bf0972c",
-          "zone_owner": "dev-team (CI fix)",
-          "summary": "CI RED on main HEAD ffb8f8cc3f0b4e90bf9365d970b793d5921538de: bun test,task-claim-owner-session-lint",
-          "suggested_sprint_class": "FIX",
-          "verification_gate": "ci_green_on_subsequent_push"
-        },
-        "createdAt": "2026-08-12T12:22:41Z",
-        "drained_at": "2026-08-12T12:52:55Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "f09a1966a84ffb37a1449d8e32c04ce2a7f5a08d3907af6c2a4cf2ba9b166c36",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=55 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-12T12:39:05Z",
-        "drained_at": "2026-08-12T12:52:55Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "3d954fddd60769e9f83d526b5171b008c29f09c5b573ad034555720646b79176",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-12T12:21:00Z",
-          "matched_slots": [],
-          "won_slots": [],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [],
-          "silent": true,
-          "drift_min": 6,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "unknown",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {},
-          "cadence_minutes": {},
-          "last_fired_timestamp": null,
-          "last_fired_slots": [],
-          "last_fired_write_errors": null,
-          "classification": "SILENT",
-          "reason": "no_slots_due_signal_only",
-          "nominal_tick": "12:15",
-          "leader_lock": "acquired",
-          "dev_head": "unknown",
-          "devq": 5,
-          "signal_backlog": 27,
-          "note": "0 slots due, 1 NEW signal_queue row (sys-20260812T121105-7a8f, to:po, WARN, dedup_key='rag-service-stale-ack-fu-deploy-memory-20260812') left at NEW per Step 0a scope rule. Continues the recurring rag-service A-30 memory saga under a 5th distinct dedup_key format this session (rag-service:A-30 -> full-container-name:A-30 -> :recurring-unresolved -> now a fu-deploy-memory-stale-ack framing) — summary reframes it as FU-RAG-DEPLOY-MEMORY marked DONE_VERIFIED while the underlying resident-set condition (90.81%) persists, i.e. a prior fix's verification may itself be suspect. WARN only, no telegram (no fresh CRITICAL crossing this tick). Flagged for po/system-auditor triage: dedup_key format instability across 5 variants defeats any exact-match dedup-collapsing consumer."
-        },
-        "createdAt": "2026-08-12T12:21:00Z",
-        "drained_at": "2026-08-12T12:52:55Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "fb51672adb5da56d8481bf2d18846bd4cccdd59808932c3adf8c6f6c977d05bb",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-12T12:36:00Z",
-          "matched_slots": [],
-          "won_slots": [],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [],
-          "silent": true,
-          "drift_min": 6,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "unknown",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {},
-          "cadence_minutes": {},
-          "last_fired_timestamp": null,
-          "last_fired_slots": [],
-          "last_fired_write_errors": null,
-          "classification": "SILENT",
-          "reason": "no_slots_due_signal_only",
-          "nominal_tick": "12:30",
-          "leader_lock": "acquired",
-          "dev_head": "unknown",
-          "devq": 5,
-          "signal_backlog": 27,
-          "note": "0 slots due. Same NEW row as 12:15Z (sys-20260812T121105-7a8f, rag-service stale-ACK, WARN) persists unchanged — no severity change, no telegram."
-        },
-        "createdAt": "2026-08-12T12:36:00Z",
-        "drained_at": "2026-08-12T12:52:55Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "d60b580b4e74a3d9d09d724334bc519d354fc60e5368afb1b1d07e002b98b61d",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "cowork_tick_telemetry",
-        "priority": "normal",
-        "payload": {
-          "tick": "2026-08-12T12:45Z",
-          "drift_min": 6,
-          "matched_slots": [],
-          "won_slots": [],
-          "spawned": [],
-          "silent": true,
-          "classification": "SILENT",
-          "new_signals": 2,
-          "note": "0 slots due. 2 NEW to:po WARN rows in signal_queue this tick, both re-flagging the same underlying rag-service A-30 memory condition under a 6th distinct dedup_key variant (audit:rag-service:memory-stale-ack:FU-RAG-DEPLOY-MEMORY, alongside the still-unresolved rag-service-stale-ack-fu-deploy-memory-20260812 row from 12:15Z/12:30Z). Both rows left status=NEW (Step 0a scope rule — not routed to a spawned cowork slot). Both WARN severity, no CRITICAL crossing — telegram withheld. Content is consistent across all 6 dedup_key variants observed this session: rag-service resident-set memory pressure (89-91% range) persisting despite FU-RAG-DEPLOY-MEMORY being marked DONE_VERIFIED. Flagged for po/system-auditor triage — dedup_key format instability across audit cycles is itself worth root-causing separately from the underlying memory condition."
-        },
-        "createdAt": "2026-08-12T12:51:00Z",
-        "drained_at": "2026-08-12T12:52:55Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "de693b3178a12d5e557c995b46eaf7ac1f46b1d3d8dbe997a027439b5587b3c6",
-        "source": "dashboard",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "priority": "WARN",
-        "payload": "A-30 stale ACK: FU-RAG-DEPLOY-MEMORY DONE_VERIFIED but resident-set tradeoff unresolved — rag-service remains 90.81% of ",
-        "createdAt": "2026-08-12T12:11:05Z",
-        "drained_at": "2026-08-12T12:53:28Z",
-        "routed_to": "po"
-      },
-      {
-        "envelope_id": "0fa0db35c33b117e42dbd68db0084cb6403af36cdba37eda957896c5d1ce45b6",
-        "source": "dashboard",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "microservice_degraded",
-        "priority": "WARN",
-        "payload": "rag-service memory breach (89.18%, 110.8MiB free) — ACK stale (task DONE_VERIFIED)",
-        "createdAt": "2026-08-12T12:38:32Z",
-        "drained_at": "2026-08-12T12:53:28Z",
-        "routed_to": "po"
-      }
-    ],
+    "pending_triage_inbox": [],
     "last_po_triage_at": "2026-08-12T08:40:43Z",
     "last_po_triage_note": "po/triage-20260811T1656Z (dev-team Step 1, step1_triage rotation). INPUTS: 18 pendingSignals (drained by router into prompt; live inbox confirmed [] and the ONLY uncommitted orch-state delta vs HEAD bba662b96 was that drain — structurally diffed, no peer interference), 5 Pipeline-B signal_queue to=po rows, 93 unresolved telegram reports (ids 4591-4683). OUTPUT: BATCH of 4. TELEGRAM PLANE FULLY CLEARED 93 -> 0 (list_unresolved_reports() == [] verified post-run): 87 duplicate (folded onto already-open rows), 4 monitoring, 1 fixed, 1 monitoring-preresolved. DEDUP RATIO 91/93 = 97.8% — the BUG channel was ~42% ONE defect (39 period-mismatch reports -> FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST, now proven to replay byte-identically for a THIRD consecutive day) and ~25% a second (RECONCILE EXHAUSTED, whose own circuit breaker id 4674 explicitly forbids per-row triage). ONLY 2 GENUINELY UNTRACKED FINDINGS in 93 reports + 23 signals, both minted after live source-probing: (1) FIX-MACRO-LIQUIDITY-STATE-HANDLER-EXCEEDS-CRON-15S-DEADLINE — the daily sbv-omo `unreachable` alert has a FALSE premise; macro-indicators is Up 12 days healthy, /health 200 in 2.6ms, GET /liquidity-state 405 (route registered), but POST hangs >18.4s against the cron`s 15s deadline, so sbv_omo_daily has silently accrued nothing for >=2 days; (2) SPIKE-NEWSSCOUT-KLFL-FALSE-ENOENT-ON-PRESENT-TRACKED-SKILL-FILE — news-scout KLFL-aborted its 16:09Z cycle (no c250 notebook entry) on ENOENT for a file that is present/tracked/unignored and was loaded fine by market-watcher in the SAME dispatch batch. ci_red x2 (CI-RED-1765317d, CI-RED-61b5b6f8) collapsed to ZERO new rows: both runs read at source via `gh run view --log-failed`, FAILED FILES byte-identical, all 3 files already carry exact dedup_key rows; recorded size-lint drift 237L->265L on transport.ts. 4 bug-escalation folded onto FIX-SWEEPGUARD-... (occ 28->32, worst prior_warns now 31 vs threshold 3, two concurrent repeat offenders). rag-service CRITICAL RAW-refuted as recovered (76.9%, no restart since 01:00:43Z); pdf-extractor CONFIRMED sustained and rising (94.90% -> 95.31%). 5/5 Pipeline-B rows closed to triaged with dispositions.",
     "last_po_triage_consumed": 54
