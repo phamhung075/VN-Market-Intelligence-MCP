@@ -1,18 +1,10 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-08-12 16:09 UTC | **Sprint:** idle
+**Last updated:** 2026-08-12 20:08 UTC | **Sprint:** TASK_2006
 
 **Role:** Event-only alert dispatch (position-danger / watchlist-opportunity / CRITICAL-always) | **Cadence:** `*/15min` market hours (02:00–08:30 UTC) + 4h critical sweep | **Contract:** APPEND class, one `## c<NNN>` section per cycle per `.claude/skills/notebook-write/SKILL.md` AC-6.
 
 > **Structural reset (FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, 2026-07-29):** prior history archived → `docs/agent-memory/notebooks/archive/alert-commander-archive-20260729.md`. One top-level `## c<NNN> · <ISO-timestamp>` section per cycle now.
-
-## c130 · 2026-08-12T08:53:24Z (slot=alert-commander-market, tick=08:55)
-- Signals: bus 18 (hours_back=2) — all dup/unchanged since c128/c129, no new IDs beyond 10755: verified_decision FRT10736/VIC10738/BID10745/FPT10746/HPG10747/MSN10748/NVL10749/VCB10750/VHM10751/VNM10752/VRE10753/FPT10754/HUT10755 (informational, not consumed type), urgent_news VIC10740/FPT10741/MSN10742 unchanged, chain_catalyst 10743/10744 unchanged (already suppressed+recorded c128) | Fired: 0 | Suppressed: 0 new | MARKET: none. No fresh `CYCLE_SNAPSHOT` (nearest tick 06:45 stale) — direct MCP calls (`get_cycle_bootstrap`/`get_agent_signals` sighted, gateway healthy).
-- Watchlist-opp: fresh `get_kinhdich_reading` re-check VIC/FPT/MSN — all GIU (HOLD) not BUY (VIC 38%, FPT 100%, MSN 100%, unchanged since c129) despite bullish RECENT ANALYSIS (score:10.0 up, SOE-capital-increase story) — cond 2/4 fails all. VNM already fired c114, FRT already suppressed c124 — neither re-checked.
-- ChainCatalyst: 0 new in bus (10743/10744 already suppressed+recorded c128) — no re-`record_signal_outcome`.
-- Position-danger: `get_alerts(type=price)` clean (no active alerts), no stopLossHit — gate fails.
-- CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, `get_crisis_early_warning` clean (WARNING x6 corp-reputation: BSR/FRT/HUT/PLX/SSI/VCB, all <50 no DANGER-tier, unchanged c129), no verified_chain in bus.
-- Regime: NEUTRAL (fallback — macro_snapshot text has no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp) | vol NORMAL (rv_20d_pctile=0.746) | foreign_room market_saturation=5.94% (outflow_z_5d=0.81) | `get_vn_liquidity_state` omo/interbank blocked (HTML parse fail / VPS unreachable) — [SKIP], standard thresholds used | Pivot window: false (pivotWindowWarning=null, next Sept 2026 PMI/CPI/FOMC/SBV). Market OPEN, VN-Index 1793.18 +1.11%. Silent exit — no MARKET/WORK send. `log_agent_work` id=1919.
 
 ## c131 · 2026-08-12T12:10:39Z (slot=alert-commander-critical, tick=12:00)
 - Signals: bus 2 (hours_back=2) — both verified_decision (VJC10767 news_mention, NVL10769 news_mention), informational, not a consumed signal_type — no urgent_news/chain_catalyst/price_anomaly/verified_chain this cycle | Fired: 0 | Suppressed: 0 | MARKET: none. Market CLOSED (outside 02:00–08:59 UTC) — `get_cycle_bootstrap` sighted, gateway healthy.
@@ -27,3 +19,10 @@
 - Position-danger: `get_alerts(type=price)` clean (no active alerts), no stopLossHit — gate fails.
 - CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, `get_crisis_early_warning` clean (no crisis signal; WARNING x6 corp-reputation BSR/FRT/HUT/PLX/SSI/VCB unchanged, all <50 no DANGER-tier), no verified_chain in bus (bus empty).
 - Regime: NEUTRAL (fallback — macro_snapshot text has no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp) | vol NORMAL (rv_20d_pctile=0.746, gk_vol_20d_pct=18.61) | foreign_room market_saturation=24.67% (outflow_z_5d=0.81, avg_utilization=23.02%) | `get_vn_liquidity_state` omo/interbank blocked (HTML parse fail / VPS unreachable) — [SKIP], standard thresholds used | Pivot window: false (pivotWindowWarning=null, next Sept 2026 PMI/CPI/FOMC/SBV). VN-Index 1793.18 +1.11% (last close, market closed). Silent exit — no MARKET/WORK send. `log_agent_work` id=1924.
+
+## c133 · 2026-08-12T20:08:06Z (slot=alert-commander-critical, tick=20:00)
+- Signals: bus 0 (hours_back=2) — `get_agent_signals` returned "Không có tín hiệu mới" (empty) — no urgent_news/chain_catalyst/price_anomaly/verified_chain/legal_risk/crisis_velocity this cycle | Fired: 0 | Suppressed: 0 | MARKET: none. Market CLOSED (20:07 UTC, outside 02:00–08:59 UTC) — no fresh tick-snapshot within 7min (nearest 20:02 stale, prior day) — direct `get_cycle_bootstrap`/`get_macro_snapshot`/`get_agent_signals`, gateway healthy.
+- Watchlist-opp: fresh `get_kinhdich_reading` re-check VIC/NVL/BID (top RECENT ANALYSIS + foreign-flow named tickers: recurring Vingroup logo/cap story +3.36%, NVL "tự doanh mua ròng" accumulation, BID 4d smart-money accumulation) — all GIU (HOLD) not BUY (VIC 38% unchanged c131/c132, NVL 25% BAT LOI/bearish unchanged c131, BID 38% new check) — cond 2/4 fails all.
+- Position-danger: `get_alerts(type=price)` clean (no active alerts), no stopLossHit — gate fails.
+- CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, `get_crisis_early_warning` clean (no crisis signal; WARNING x6 corp-reputation BSR/FRT/HUT/PLX/SSI/VCB unchanged, all <50 no DANGER-tier), no verified_chain in bus (bus empty).
+- Regime: NEUTRAL (fallback — macro_snapshot text has no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp) | vol NORMAL (rv_20d_pctile=0.746, gk_vol_20d_pct=18.61) | foreign_room market_saturation=24.67% (outflow_z_5d=0.81, avg_utilization=23.02%) | `get_vn_liquidity_state` error ("macro-indicators service unavailable") — [SKIP], standard thresholds used | Pivot window: false (pivotWindowWarning=null, next Sept 2026 PMI/CPI/FOMC/SBV). VN-Index 1793.18 +1.11% (last close, market closed). Silent exit — no MARKET/WORK send. `log_agent_work` id=1928.
