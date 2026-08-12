@@ -86,10 +86,19 @@ export const CRONS = {
    *  Widened from single-point '0 7 * * 1-5' to survive server restarts during active dev.
    *  Dedup guard (alreadySentToday) in franceSummaryJob.ts prevents duplicate sends. */
   franceSummary:          Bun.env.CRON_FRANCE_SUMMARY               ?? '*/30 6-8 * * 1-5',
-  /** taAlertScan — every 15min VN market hours (task 1307) */
-  taAlertScan:            Bun.env.CRON_TA_ALERT_SCAN                 ?? '*/15 2-8 * * 1-5',
-  /** bbAlertScan — every 15min VN market hours (task 1309) */
-  bbAlertScan:            Bun.env.CRON_BB_ALERT_SCAN                  ?? '*/15 2-8 * * 1-5',
+  /** alertScanParallel — TA + BB alert scan (both run in parallel inside
+   *  alertScanParallelJob), every 15min VN market hours (tasks 1307+1309, unified
+   *  by task 1309c Scheduler Dispatch Refactoring). Collapsed from two independent
+   *  CRONS keys (taAlertScan/bbAlertScan) into one single key —
+   *  FIX-CRON-ALERTSCAN-CONFIG-KEYS-ORPHANED-BY-PARALLEL-WRAPPER: the pre-refactor
+   *  two-key split left bbAlertScan permanently unregistered (grep-verified: no
+   *  scheduler call site ever read it) while BOTH keys' /api/cron-status Layer-A
+   *  rows resolved to frozen pre-refactor cron_job_runs rows (last real fire
+   *  2026-04-24) forever — the tier-3 honest-fallback in resolveJobNameDb matched
+   *  each literal historical job_name and never advanced. One key now enumerates
+   *  to exactly one Layer-A row that resolves (tier-2 normalized match) to the
+   *  real 'alertScanParallelJob' cron_job_runs rows both scans actually write. */
+  alertScanParallel:      Bun.env.CRON_ALERT_SCAN_PARALLEL           ?? '*/15 2-8 * * 1-5',
   /** taAlertNotifier — deliver unnotified TA alerts to market channel every 15min VN market hours (task 1314) */
   taAlertNotifier:        Bun.env.CRON_TA_ALERT_NOTIFIER               ?? '*/15 2-8 * * 1-5',
   /** signalOutcomeJob — resolve agent_signals outcomes daily at 08:30 UTC (task 1382) */

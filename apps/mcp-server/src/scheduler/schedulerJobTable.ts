@@ -444,9 +444,13 @@ export function buildJobTable(ctx: SchedulerJobTableCtx): JobTableEntry[] {
     // — tasks 1307+1309. Runs TA and BB alert scans in parallel. Both scan watchlist for
     // technical breakouts. No direct Telegram — Alert Commander dispatches via
     // readUnnotifiedAlerts(). Task 1309c: Scheduler Dispatch Refactoring
+    // Cron key: CRONS.alertScanParallel (single key — FIX-CRON-ALERTSCAN-CONFIG-KEYS-
+    // ORPHANED-BY-PARALLEL-WRAPPER collapsed the old taAlertScan/bbAlertScan CRONS keys,
+    // which no longer had any registration call site for the latter and produced two
+    // permanently-frozen /api/cron-status Layer-A rows).
     {
       name: 'alertScanParallelJob',
-      cron: CRONS.taAlertScan,
+      cron: CRONS.alertScanParallel,
       options: { timezone: 'UTC' },
       runner: async () => {
         const result = await runAlertScanParallel()
