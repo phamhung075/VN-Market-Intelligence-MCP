@@ -94,3 +94,15 @@
 **verify:** file 86L (cap 200L, no size-justification needed), YAML frontmatter parses (python yaml check), content matches handoff AC-1 bullets 1-5 verbatim (Inputs/Phase1/Phase2/Design-note all present).
 
 ---
+
+### STEP developer-S101 · developer · 2026-08-12T15:01:39Z
+**task-id:** UC-CCA-P3-FR5-CODE-GATE (umbrella UC-CCA-P3, dev-team lead resume)
+**what-done:** Router resumed this same session specifically to dispatch `dev-mcp-server` on FR5-CODE-GATE, asserting this session "HAS the Agent tool" (unlike the S100 cycle). Probed `Agent`/`Task` tool names directly before attempting any spawn — both returned "disabled for this session, in subagents as well as here." Premise was false. Did not self-implement (off-zone). Updated `UC-CCA-P3`/`UC-CCA-P3-FR5-CODE-GATE` board notes + reset `.head` idle (WF-1) via `orch-apply.sh`, commit `507464c34`. Sent bug telegram (msg 5182) flagging the false premise.
+**what-considered:**
+- Trust the router's assurance and attempt `Agent(dev-mcp-server, ...)` blind vs. RAW-verify the grant first — per memory `feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant.md`, verified live instead of assuming either way.
+- Self-implement FR5-CODE-GATE myself (zone=`apps/mcp-server/`, real specialist owner) vs. stop and escalate — self-implementing off-zone would violate developer's own dispatch-first boundary rule; stopped.
+**why-decision:** only defensible action once the tool grant was confirmed absent — matches the S100 cycle's own precedent (same structural gap), now additionally proven not session-spawn-mechanism-dependent.
+**why-change:** router's stated premise for this cycle (Agent-tool availability) did not hold — corrected board state to reflect the RAW-verified fact rather than the router's assumption, and recommended main terminal dispatch dev-mcp-server directly.
+**verify:** `Agent`/`Task` tool probes both returned the identical disabled error text; `task_list_held` via `scripts/agents-flow/mcp-call.sh` confirmed no peer lock on `task:UC-CCA-P3-FR5-CODE-GATE` (not a collision); board note diff + `.head` diff reviewed pre-commit; `wc -l` on notebook confirmed ≤200L post-write (41L).
+
+---
