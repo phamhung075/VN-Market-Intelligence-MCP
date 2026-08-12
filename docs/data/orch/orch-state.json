@@ -995,8 +995,22 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-12.json"
+      },
+      {
+        "id": "sys-20260812T043713-660d",
+        "ts": "2026-08-12T04:37:13Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service sustained high memory 97.23% (loss of reclamation)",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T04:30Z",
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
