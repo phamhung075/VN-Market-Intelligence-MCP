@@ -935,6 +935,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-12T00:00Z",
         "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+      },
+      {
+        "id": "sys-20260812T003601-7b74",
+        "ts": "2026-08-12T00:36:01Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "A-30 WARN: rag-service — sustained high memory 94.25% (all samples), loss of reclamation",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T00:30Z",
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
       }
     ],
     "last_triaged_at": "2026-07-29T06:25:00Z",
@@ -20016,7 +20030,7 @@
         "last_served_tick": "2026-08-11T23:51:40Z"
       }
     },
-    "_updated_at": "2026-08-12T00:21:28Z",
+    "_updated_at": "2026-08-12T00:50:41Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20358,6 +20372,53 @@
         },
         "createdAt": "2026-08-12T00:03:24Z",
         "drained_at": "2026-08-12T00:20:47Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "263bb20f149e8da6d5e56b82927a73c4de52e384a2c35a1faf305212f48e0153",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-4d89bcbb",
+          "head_sha": "4d89bcbb5b1aee7744d87952bd9720ab1db94d40",
+          "run_id": 31548990986,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31548990986",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 93967357383
+            },
+            {
+              "name": "size-lint",
+              "conclusion": "failure",
+              "jobId": 93967357397
+            }
+          ],
+          "fingerprint": "80f87813ba9a15c6db186dd2b51bc09352e2e687282b214b9d37dc89ddc84096",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 4d89bcbb5b1aee7744d87952bd9720ab1db94d40: bun test,size-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-12T00:21:17Z",
+        "drained_at": "2026-08-12T00:50:41Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5dd0890ce783d425eb26838f868a6d38205430bffb6e26f79df0d98258ceeb7e",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=165f4245-6173-4054-87fd-c55bb626265f mode=warn escalated=true prior_warns=42 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T00:37:39Z",
+        "drained_at": "2026-08-12T00:50:41Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
