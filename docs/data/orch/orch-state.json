@@ -134,7 +134,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-12T09:21:43Z",
+    "_updated_at": "2026-08-12T09:51:44Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -1209,7 +1209,7 @@
         "type": "microservice_degraded",
         "summary": "A-30 CRITICAL: vn-market-intelligence-mcp-rag-service-1 — memory >93% sustained (99.76% median)",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-12T09:30Z",
@@ -20123,7 +20123,7 @@
         "last_served_tick": "2026-08-12T05:52:24Z"
       }
     },
-    "_updated_at": "2026-08-12T09:24:28Z",
+    "_updated_at": "2026-08-12T09:51:44Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20419,6 +20419,103 @@
         "payload": "A-30 FAIL: rag-service memory pressure sustained >93% — loss of reclamation",
         "createdAt": "2026-08-12T09:05:35Z",
         "drained_at": "2026-08-12T09:21:43Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "87c3a1e13ba3037f09ac5d000fef794ef8f7df92321a9363628d964d9a69421a",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-17.md",
+          "line_count": 161,
+          "cap": 600,
+          "byte_count": 36218,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 218,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-12T09:33:26Z",
+        "drained_at": "2026-08-12T09:51:18Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "574bc9b290f79cceb81dbea6530f6bdb11197376993d2ec8f597d8a17dcc462f",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "tick-summary",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-12T09:15Z",
+          "drift_min": 6,
+          "matched_slots": [
+            "fb-daily"
+          ],
+          "won_slots": [
+            "fb-daily"
+          ],
+          "spawned": [
+            "fb-daily"
+          ],
+          "collision_warning": null,
+          "pressure_mode": "adaptive",
+          "due_reasons": {
+            "fb-daily": "cron"
+          },
+          "cadence_minutes": {
+            "fb-daily": null
+          },
+          "last_fired_timestamp": "2026-08-12T09:21:39Z",
+          "classification": "FIRE",
+          "reason": "spawned",
+          "note": "1-slot tick, single agent (fb-market-poster) — no collision possible. fb-daily is guaranteed:true; prior last_fired was 2026-08-07T09:23:01Z (5 days stale, consistent with the 2026-08-11 quota-exhaustion outage window — see project_quota_exhaustion_silent_guaranteed_slot_outage_20260811 memory, unrelated to today, this is simply the first cron-due fire since). 0 NEW signal_queue rows created this tick — the sole NEW row (sys-20260812T090535-7dc5, rag-service A-30 memory WARN, dedup_key=microservice_degraded:rag-service:A-30) is unchanged from the 09:00Z tick, now 2 ticks (~15min) stale unactioned — left at NEW per established rule, flagging persistence for po triage. Step 4.7 tick-snapshot skipped (established pattern)."
+        },
+        "createdAt": "2026-08-12T09:21:52Z",
+        "drained_at": "2026-08-12T09:51:18Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c5a6ee6bfe07b24ada42bb8c40f600e9e978ef969e7aa899ae4070d18ed004a7",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "tick-summary",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-12T09:30Z",
+          "drift_min": 6,
+          "matched_slots": [],
+          "won_slots": [],
+          "spawned": [],
+          "collision_warning": null,
+          "pressure_mode": "adaptive",
+          "due_reasons": {},
+          "cadence_minutes": {},
+          "last_fired_timestamp": null,
+          "classification": "FIRE",
+          "reason": "signal-only tick, no slots/one-shots due",
+          "note": "0 slots matched, 0 one-shots. 1 NEW signal_queue row this tick (sys-20260812T093525-1b2b, to:po) -- dedup_key=microservice_degraded:rag-service:A-30 escalated WARN->CRITICAL (99.76% median memory, loss of reclamation), 4th consecutive occurrence since 08:15Z, now 75+min unactioned. Left at NEW per established scope rule (to:po, not this dispatcher's row) but sent send_telegram(channel=bug, message_id=5150) to flag CRITICAL escalation for dev-team visibility given severity crossed threshold and po drain appears lagged -- informational notify only, no signal_queue write, no fix attempted. Step 4.7 tick-snapshot skipped (established pattern)."
+        },
+        "createdAt": "2026-08-12T09:37:22Z",
+        "drained_at": "2026-08-12T09:51:18Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a397fe6cee86759a9bb043bc0bbb4b5152d4335a108a6d429e54694d0439bbdf",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "priority": "CRITICAL",
+        "payload": "A-30 CRITICAL: vn-market-intelligence-mcp-rag-service-1 — memory >93% sustained (99.76% median)",
+        "createdAt": "2026-08-12T09:35:25Z",
+        "drained_at": "2026-08-12T09:51:44Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
