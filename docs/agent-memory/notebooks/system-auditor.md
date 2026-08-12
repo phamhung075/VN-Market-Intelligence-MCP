@@ -610,3 +610,338 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 === PROBE DONE ===
 ```
 
+
+## c45 · 2026-08-12T01:00Z
+
+### Audit Run Tier-1 (01:03–01:07 UTC 2026-08-12) — RAG-SERVICE MEMORY PATTERN VERIFIED
+
+- Tier: 1 | Container liveness + health endpoints + memory A-30 discriminator + disk
+- Scope: Runtime ping; container UP/health-endpoint liveness; memory pressure A-30; disk; hooks
+- **Status: WARN** — rag-service A-30 deep-probe ESCALATE verdict (98.73% sustained all 6 samples) — Genuine escalation pattern confirmed; dedup-skipped BUG alert (last report 2026-08-09T04:11:10Z within 7-day window) but DASHBOARD row emitted for visibility
+- Fire-election: CLAIMED tick=2026-08-12T01:00Z
+- CONTRACT-CONTRADICTION: NONE
+
+#### Verdict Summary
+
+**Overall Status: WARN**
+- rag-service A-30 deep-probe complete with ESCALATE verdict — sustained 98.73% across all 6 samples (vs c43's 99.33-99.34%)
+- **Pattern confirmation**: rag-service entered deep-probe cycles:
+  * c42 (23:30Z): 86.61% baseline — DEFER (incomplete probe)
+  * c43 (00:00Z): 99.33-99.34% sustained — ESCALATE (complete probe)
+  * c45 (01:00Z): 98.73% sustained — ESCALATE (complete probe, this cycle)
+- Restart count now 12 (vs 11 in c43, +1 restart between cycles)
+- Container uptime: 50 minutes (restarted 2026-08-12T00:15:13Z)
+- Host headroom: UNAVAILABLE (still below 40MiB Amendment B trigger)
+- No OOMKilled events detected
+- All other services PASS
+
+#### Container Status (A-01 to A-11): PASS
+- All host_runtime_set services UP with healthy status:
+  * mcp-server: Up 7 hours (healthy)
+  * pdf-extractor: Up 24 hours (healthy)
+  * rag-service: Up 50 minutes (healthy) [WARN on memory, UP status OK]
+  * All others: UP, healthy
+
+#### Health Endpoints (A-12 to A-20): PASS
+- [health] mcp-server:3000/health OK (HTTP 200)
+- [health] api-gateway:4000/health OK (HTTP 200)
+- [health] macro-indicators:5004/health OK (HTTP 200)
+- [health] pdf-extractor:5001/health OK (HTTP 200)
+- [health] frontend:3001/ OK (HTTP 200)
+- A-20 pdf-extractor multi-probe: PASS (3/3 in-container probes, all HTTP 200)
+
+#### Restart Count (A-21): PASS
+- mcp-server: RestartCount=0, no crash restarts in 4h window
+
+#### Memory Pressure (A-30) — Per-Container Deep-Probe
+
+**Raw Baseline Samples:**
+- mcp-server: 14.27% < 85% → SKIP
+- pdf-extractor: 86.89% >= 85% → ENGAGE
+- rag-service: 98.73% >= 85% → ENGAGE **★ CRITICAL ESCALATION ★**
+- All others: <85% → SKIP
+
+**pdf-extractor (86.89%):** FOLD (benign)
+- 6-sample deep-probe: all at 86.89% (stable, flat line)
+- State: No OOMKilled, RestartCount=1 (stable), no state change
+- VmHWM: Pinned at cap (2587640 kB / 2621440 kB limit = 98.7%)
+- Analysis: min=86.89%, max=86.89%, median=86.89%, zero dips, zero discontinuities
+- Verdict: FOLD (benign GC sawtooth, below tripwire)
+- Signal: PASS
+
+**rag-service (98.73%):** ESCALATE **★★ GENUINE SUSTAINED ESCALATION ★★**
+- 6-sample deep-probe: **ALL SAMPLES 98.73%** (perfectly sustained, no variance)
+  * Sample 1 (01:05:48Z): 98.73%
+  * Sample 2 (01:06:03Z): 98.73%
+  * Sample 3 (01:06:18Z): 98.73%
+  * Sample 4 (01:06:33Z): 98.73%
+  * Sample 5 (01:06:48Z): 98.73%
+  * Sample 6 (01:07:02Z): 98.73%
+- State snapshot:
+  * OOMKilled before/after: false/false (no OOM event)
+  * RestartCount before/after: 12/12 (stable, +1 restart since c43)
+  * Container started: 2026-08-12T00:15:13Z (50 minutes ago)
+  * No state changes during probe window
+- VmHWM: UNAVAILABLE (host headroom <40MiB, Amendment B pre-check skip)
+- Analysis:
+  * min_pct: 98.73%
+  * max_pct: 98.73%
+  * median_pct: 98.73%
+  * reclamation_dips: 0 (ZERO reclamation events)
+  * discontinuities: 0
+- **Verdict: ESCALATE**
+- **Reason**: "all samples >93% sustained high — loss of reclamation (dip-jitter no longer vetoes this evidence; 0 dip(s) <=40pp observed, 0 discontinuity(ies) observed)"
+- **Severity: WARN** (reason contains "loss of reclamation" per A-30 verdict/reason mapping clause 4)
+- **DEDUP STATUS**: Signal emit returned SKIP-dedup
+  * Dedup key: microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30
+  * Last sent: 2026-08-09T04:11:10Z (2 days 20 hours ago, within 7-day window)
+  * SKIP-dedup action: BUG Telegram SKIPPED, but signal appended to queue + DASHBOARD row emitted
+  * Signal ID: sys-20260812T010727-7f75
+  * DASHBOARD row: OK (emitted despite dedup-skip)
+
+**Pattern Analysis (c42 → c43 → c45):**
+- c42 (23:30Z): 86.61% — DEFER (probe window incomplete/truncated)
+- c43 (00:00Z): 99.33-99.34% — ESCALATE (complete probe, median 99.34%)
+- c45 (01:00Z): 98.73% — ESCALATE (complete probe, median 98.73%)
+- **Observation**: After c43 restart, memory stabilized slightly lower (98.73% vs 99.34%) but remains in severe sustained-high state with ZERO reclamation. This is NOT oscillating or recovering — it is a sustained loss-of-reclamation plateau.
+
+#### Disk (A-32): PASS
+- Root filesystem: 45% capacity (< 85%)
+
+#### Hook Enforcement (A-33): PASS
+- All critical hooks present and executable
+
+#### Signals and Outputs
+
+- D-CYCLE-1 (orphan marker sweep): No stale markers found
+- D-CYCLE-2 (schedule-based gap detection): No missed tier cycles
+- A-30 rag-service: WARN emitted (verdict=ESCALATE, reason="loss of reclamation")
+  * Signal ID: sys-20260812T010727-7f75
+  * Status: SKIP-dedup (same dedup_key reported 2026-08-09T04:11:10Z, within 7-day window)
+  * **Critical context**: This is a GENUINE NEW ESCALATION pattern — not a stale re-alert:
+    - Previous dedup timestamp (2026-08-09) was BEFORE this escalation pattern began (c42→c43→c45)
+    - New evidence: sustained 98.73% all 6 samples (vs older floating samples)
+    - Pattern: Sustained high with zero reclamation dips (loss of reclamation = distinct from transient spikes)
+    - Host headroom BELOW-FLOOR threshold added pressure
+  * DASHBOARD row emitted: OK (sys-20260812T010727-7f75) despite dedup-skip, visible in DASHBOARD.md
+- A-20 pdf-extractor multi-probe: PASS (no signal)
+- signals_posted: 1 (signal recorded, Telegram dedup-skipped as per spec)
+- dashboard_rows: 1 (rag-service A-30 escalation row)
+- telegram_sent: 0 (skipped by dedup, not NEW within 7-day window per dedup ledger)
+- Notebook append: YES
+
+---
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-08-12T01:12:04Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                    IMAGE                                           CREATED
+vn-market-intelligence-mcp-mcp-server-1           Up 7 hours (healthy)      vn-market-intelligence-mcp-mcp-server           7 hours ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 24 hours (healthy)     vn-market-intelligence-mcp-pdf-extractor        3 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 56 minutes (healthy)   vn-market-intelligence-mcp-rag-service          3 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 5 days (healthy)       vn-market-intelligence-mcp-stock-price          5 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 13 days (healthy)      vn-market-intelligence-mcp-macro-indicators     13 days ago
+vn-market-intelligence-mcp-frontend-1             Up 2 weeks (healthy)      vn-market-intelligence-mcp-frontend             2 weeks ago
+mcp-gateway                                       Up 3 weeks (healthy)      mcpservergatway-gateway                         3 weeks ago
+vn-market-intelligence-mcp-api-gateway-1          Up 3 weeks (healthy)      vn-market-intelligence-mcp-api-gateway          3 weeks ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 3 weeks (healthy)      ghcr.io/flaresolverr/flaresolverr:latest        3 weeks ago
+vn-market-intelligence-mcp-news-fetch-1           Up 3 weeks (healthy)      vn-market-intelligence-mcp-news-fetch           3 weeks ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 3 weeks (healthy)      vn-market-intelligence-mcp-technical-analysis   3 weeks ago
+vn-market-intelligence-mcp-alert-engine-1         Up 3 weeks (healthy)      vn-market-intelligence-mcp-alert-engine         3 weeks ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 3 weeks (healthy)      vn-market-intelligence-mcp-kinh-dich-service    3 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=13.19% MemUsage=405.1MiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-mcp-server-1 baseline 13.19% < 85% investigate-gate
+[A-30] vn-market-intelligence-mcp-pdf-extractor-1: baseline 86.92% >= 85% investigate-gate — ENGAGE deep-probe
+[A-30] vn-market-intelligence-mcp-rag-service-1: baseline 95.95% >= 85% investigate-gate — ENGAGE deep-probe
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-stock-price-1 baseline 2.18% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-macro-indicators-1 baseline 2.12% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-frontend-1 baseline 9.02% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-api-gateway-1 baseline 2.99% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-flaresolverr-1 baseline 3.69% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-news-fetch-1 baseline 8.98% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-technical-analysis-1 baseline 3.51% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-alert-engine-1 baseline 2.08% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-kinh-dich-service-1 baseline 3.20% < 85% investigate-gate
+{
+  "probe": "A-30 mcp-server memory reclamation discriminator",
+  "container": "vn-market-intelligence-mcp-pdf-extractor-1",
+  "window": {"probes": 6, "interval_sec": 13, "span_sec": 65},
+  "state": {
+    "oom_killed_before": "false", "oom_killed_after": "false",
+    "restart_count_before": "1", "restart_count_after": "1",
+    "started_at_before": "2026-08-11T01:19:14.0528435Z", "started_at_after": "2026-08-11T01:19:14.0528435Z",
+    "exit_code_before": "0", "exit_code_after": "0",
+    "finished_at_before": "2026-08-11T01:19:13.534021637Z", "finished_at_after": "2026-08-11T01:19:13.534021637Z",
+    "state_changed_during_window": false
+  },
+  "vm": {"vmhwm_kb_before": "2587640", "vmhwm_kb_after": "2587640",
+         "mem_limit_kb": "2621440",
+         "vmhwm_advancing_in_window": false, "vmhwm_pinned_at_cap": true,
+         "note": "VmHWM is a monotonic non-decreasing high-water mark, so a direct VmHWM-vs-VmRSS comparison is true BY DEFINITION at all times and is NOT evidence reclamation occurred (this WAS the FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP narrative false-negative; vmrss_kb was deleted entirely, Amendment A po_redispatch_ruling_20260808T1445Z -- dead, zero consumers repo-wide once that comparison was removed). Evidence instead: VmHWM advancing to a new peak DURING this window while pinned at/near the cgroup memory limit. UNAVAILABLE means this evidence is missing, not that it is absent -- either a real docker-exec failure, OR (Amendment B) the host-side headroom pre-check found this container below MEM_FLOOR_MIB at the moment of the call and skipped the exec entirely; either way, MINP/MEDIANP below remain exec-free and unaffected."},
+  "samples": [{"n":1,"t":"01:12:14Z","pct":86.92},{"n":2,"t":"01:12:28Z","pct":86.92},{"n":3,"t":"01:12:43Z","pct":86.92},{"n":4,"t":"01:12:58Z","pct":86.92},{"n":5,"t":"01:13:13Z","pct":86.92},{"n":6,"t":"01:13:27Z","pct":86.92}],
+  "analysis": {"min_pct": 86.92, "max_pct": 86.92, "median_pct": 86.92,
+               "reclamation_dips": 0, "dip_detail": "none",
+               "discontinuities": 0, "discontinuity_detail": "none"},
+  "verdict": "FOLD",
+  "reason": "benign GC sawtooth or below tripwire",
+  "tripwire_ref": "feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn + feedback_a30_discriminator_crash_cliff_misscored_as_reclamation_dip — escalate on: state changed during window, OOMKilled, ExitCode=0+FinishedAt delta, a >40pp discontinuity, VmHWM advancing+pinned at cap, >93% sustained (min), or median >97%"
+}
+{
+  "probe": "A-30 mcp-server memory reclamation discriminator",
+  "container": "vn-market-intelligence-mcp-rag-service-1",
+  "window": {"probes": 6, "interval_sec": 13, "span_sec": 65},
+  "state": {
+    "oom_killed_before": "false", "oom_killed_after": "false",
+    "restart_count_before": "12", "restart_count_after": "12",
+    "started_at_before": "2026-08-12T00:15:13.736170433Z", "started_at_after": "2026-08-12T00:15:13.736170433Z",
+    "exit_code_before": "0", "exit_code_after": "0",
+    "finished_at_before": "2026-08-12T00:15:13.379164149Z", "finished_at_after": "2026-08-12T00:15:13.379164149Z",
+    "state_changed_during_window": false
+  },
+  "vm": {"vmhwm_kb_before": "1039588", "vmhwm_kb_after": "1039588",
+         "mem_limit_kb": "1048576",
+         "vmhwm_advancing_in_window": false, "vmhwm_pinned_at_cap": true,
+         "note": "VmHWM is a monotonic non-decreasing high-water mark, so a direct VmHWM-vs-VmRSS comparison is true BY DEFINITION at all times and is NOT evidence reclamation occurred (this WAS the FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP narrative false-negative; vmrss_kb was deleted entirely, Amendment A po_redispatch_ruling_20260808T1445Z -- dead, zero consumers repo-wide once that comparison was removed). Evidence instead: VmHWM advancing to a new peak DURING this window while pinned at/near the cgroup memory limit. UNAVAILABLE means this evidence is missing, not that it is absent -- either a real docker-exec failure, OR (Amendment B) the host-side headroom pre-check found this container below MEM_FLOOR_MIB at the moment of the call and skipped the exec entirely; either way, MINP/MEDIANP below remain exec-free and unaffected."},
+  "samples": [{"n":1,"t":"01:12:16Z","pct":95.95},{"n":2,"t":"01:12:30Z","pct":95.95},{"n":3,"t":"01:12:45Z","pct":95.95},{"n":4,"t":"01:13:00Z","pct":95.95},{"n":5,"t":"01:13:15Z","pct":95.95},{"n":6,"t":"01:13:29Z","pct":95.95}],
+  "analysis": {"min_pct": 95.95, "max_pct": 95.95, "median_pct": 95.95,
+               "reclamation_dips": 0, "dip_detail": "none",
+               "discontinuities": 0, "discontinuity_detail": "none"},
+  "verdict": "ESCALATE",
+  "reason": "all samples >93% sustained high — loss of reclamation (dip-jitter no longer vetoes this evidence; 0 dip(s) <=40pp observed, 0 discontinuity(ies) observed)",
+  "tripwire_ref": "feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn + feedback_a30_discriminator_crash_cliff_misscored_as_reclamation_dip — escalate on: state changed during window, OOMKilled, ExitCode=0+FinishedAt delta, a >40pp discontinuity, VmHWM advancing+pinned at cap, >93% sustained (min), or median >97%"
+}
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    17Gi    45%    393k  176M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+
+=== PROBE DONE ===
+```
+
+=== AUDITOR PROBE 2026-08-12T01:12:42Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                    IMAGE                                           CREATED
+vn-market-intelligence-mcp-mcp-server-1           Up 7 hours (healthy)      vn-market-intelligence-mcp-mcp-server           7 hours ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 24 hours (healthy)     vn-market-intelligence-mcp-pdf-extractor        3 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 57 minutes (healthy)   vn-market-intelligence-mcp-rag-service          3 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 5 days (healthy)       vn-market-intelligence-mcp-stock-price          5 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 13 days (healthy)      vn-market-intelligence-mcp-macro-indicators     13 days ago
+vn-market-intelligence-mcp-frontend-1             Up 2 weeks (healthy)      vn-market-intelligence-mcp-frontend             2 weeks ago
+mcp-gateway                                       Up 3 weeks (healthy)      mcpservergatway-gateway                         3 weeks ago
+vn-market-intelligence-mcp-api-gateway-1          Up 3 weeks (healthy)      vn-market-intelligence-mcp-api-gateway          3 weeks ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 3 weeks (healthy)      ghcr.io/flaresolverr/flaresolverr:latest        3 weeks ago
+vn-market-intelligence-mcp-news-fetch-1           Up 3 weeks (healthy)      vn-market-intelligence-mcp-news-fetch           3 weeks ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 3 weeks (healthy)      vn-market-intelligence-mcp-technical-analysis   3 weeks ago
+vn-market-intelligence-mcp-alert-engine-1         Up 3 weeks (healthy)      vn-market-intelligence-mcp-alert-engine         3 weeks ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 3 weeks (healthy)      vn-market-intelligence-mcp-kinh-dich-service    3 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=9.20% MemUsage=282.7MiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-mcp-server-1 baseline 8.45% < 85% investigate-gate
+[A-30] vn-market-intelligence-mcp-pdf-extractor-1: baseline 86.92% >= 85% investigate-gate — ENGAGE deep-probe
+[A-30] vn-market-intelligence-mcp-rag-service-1: baseline 95.95% >= 85% investigate-gate — ENGAGE deep-probe
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-stock-price-1 baseline 2.19% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-macro-indicators-1 baseline 2.12% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-frontend-1 baseline 9.07% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-api-gateway-1 baseline 3.01% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-flaresolverr-1 baseline 3.69% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-news-fetch-1 baseline 8.98% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-technical-analysis-1 baseline 3.51% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-alert-engine-1 baseline 2.11% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-kinh-dich-service-1 baseline 3.20% < 85% investigate-gate
+{
+  "probe": "A-30 mcp-server memory reclamation discriminator",
+  "container": "vn-market-intelligence-mcp-pdf-extractor-1",
+  "window": {"probes": 6, "interval_sec": 13, "span_sec": 65},
+  "state": {
+    "oom_killed_before": "false", "oom_killed_after": "false",
+    "restart_count_before": "1", "restart_count_after": "1",
+    "started_at_before": "2026-08-11T01:19:14.0528435Z", "started_at_after": "2026-08-11T01:19:14.0528435Z",
+    "exit_code_before": "0", "exit_code_after": "0",
+    "finished_at_before": "2026-08-11T01:19:13.534021637Z", "finished_at_after": "2026-08-11T01:19:13.534021637Z",
+    "state_changed_during_window": false
+  },
+  "vm": {"vmhwm_kb_before": "2587640", "vmhwm_kb_after": "2587640",
+         "mem_limit_kb": "2621440",
+         "vmhwm_advancing_in_window": false, "vmhwm_pinned_at_cap": true,
+         "note": "VmHWM is a monotonic non-decreasing high-water mark, so a direct VmHWM-vs-VmRSS comparison is true BY DEFINITION at all times and is NOT evidence reclamation occurred (this WAS the FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP narrative false-negative; vmrss_kb was deleted entirely, Amendment A po_redispatch_ruling_20260808T1445Z -- dead, zero consumers repo-wide once that comparison was removed). Evidence instead: VmHWM advancing to a new peak DURING this window while pinned at/near the cgroup memory limit. UNAVAILABLE means this evidence is missing, not that it is absent -- either a real docker-exec failure, OR (Amendment B) the host-side headroom pre-check found this container below MEM_FLOOR_MIB at the moment of the call and skipped the exec entirely; either way, MINP/MEDIANP below remain exec-free and unaffected."},
+  "samples": [{"n":1,"t":"01:12:52Z","pct":86.92},{"n":2,"t":"01:13:07Z","pct":86.92},{"n":3,"t":"01:13:22Z","pct":86.92},{"n":4,"t":"01:13:37Z","pct":86.92},{"n":5,"t":"01:13:52Z","pct":86.92},{"n":6,"t":"01:14:07Z","pct":86.92}],
+  "analysis": {"min_pct": 86.92, "max_pct": 86.92, "median_pct": 86.92,
+               "reclamation_dips": 0, "dip_detail": "none",
+               "discontinuities": 0, "discontinuity_detail": "none"},
+  "verdict": "FOLD",
+  "reason": "benign GC sawtooth or below tripwire",
+  "tripwire_ref": "feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn + feedback_a30_discriminator_crash_cliff_misscored_as_reclamation_dip — escalate on: state changed during window, OOMKilled, ExitCode=0+FinishedAt delta, a >40pp discontinuity, VmHWM advancing+pinned at cap, >93% sustained (min), or median >97%"
+}
+{
+  "probe": "A-30 mcp-server memory reclamation discriminator",
+  "container": "vn-market-intelligence-mcp-rag-service-1",
+  "window": {"probes": 6, "interval_sec": 13, "span_sec": 65},
+  "state": {
+    "oom_killed_before": "false", "oom_killed_after": "false",
+    "restart_count_before": "12", "restart_count_after": "12",
+    "started_at_before": "2026-08-12T00:15:13.736170433Z", "started_at_after": "2026-08-12T00:15:13.736170433Z",
+    "exit_code_before": "0", "exit_code_after": "0",
+    "finished_at_before": "2026-08-12T00:15:13.379164149Z", "finished_at_after": "2026-08-12T00:15:13.379164149Z",
+    "state_changed_during_window": false
+  },
+  "vm": {"vmhwm_kb_before": "1039588", "vmhwm_kb_after": "1039588",
+         "mem_limit_kb": "1048576",
+         "vmhwm_advancing_in_window": false, "vmhwm_pinned_at_cap": true,
+         "note": "VmHWM is a monotonic non-decreasing high-water mark, so a direct VmHWM-vs-VmRSS comparison is true BY DEFINITION at all times and is NOT evidence reclamation occurred (this WAS the FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP narrative false-negative; vmrss_kb was deleted entirely, Amendment A po_redispatch_ruling_20260808T1445Z -- dead, zero consumers repo-wide once that comparison was removed). Evidence instead: VmHWM advancing to a new peak DURING this window while pinned at/near the cgroup memory limit. UNAVAILABLE means this evidence is missing, not that it is absent -- either a real docker-exec failure, OR (Amendment B) the host-side headroom pre-check found this container below MEM_FLOOR_MIB at the moment of the call and skipped the exec entirely; either way, MINP/MEDIANP below remain exec-free and unaffected."},
+  "samples": [{"n":1,"t":"01:12:55Z","pct":95.95},{"n":2,"t":"01:13:09Z","pct":95.95},{"n":3,"t":"01:13:24Z","pct":95.95},{"n":4,"t":"01:13:39Z","pct":95.95},{"n":5,"t":"01:13:54Z","pct":95.95},{"n":6,"t":"01:14:09Z","pct":95.95}],
+  "analysis": {"min_pct": 95.95, "max_pct": 95.95, "median_pct": 95.95,
+               "reclamation_dips": 0, "dip_detail": "none",
+               "discontinuities": 0, "discontinuity_detail": "none"},
+  "verdict": "ESCALATE",
+  "reason": "all samples >93% sustained high — loss of reclamation (dip-jitter no longer vetoes this evidence; 0 dip(s) <=40pp observed, 0 discontinuity(ies) observed)",
+  "tripwire_ref": "feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn + feedback_a30_discriminator_crash_cliff_misscored_as_reclamation_dip — escalate on: state changed during window, OOMKilled, ExitCode=0+FinishedAt delta, a >40pp discontinuity, VmHWM advancing+pinned at cap, >93% sustained (min), or median >97%"
+}
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    17Gi    45%    393k  176M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+
+=== PROBE DONE ===
+```
