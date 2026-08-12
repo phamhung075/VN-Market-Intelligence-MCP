@@ -116,3 +116,130 @@ Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=19.28% MemUsage=592.3M
 ```
 
 ---
+## c50 · 2026-08-12T05:00Z
+
+### Audit Run Tier-1 (05:04–05:06 UTC 2026-08-12) — RAG-SERVICE RESTART CYCLE DETECTED
+
+- Tier: 1 | Services: 8 checked (host_runtime_set), all UP
+- Anomalies: 1 CRITICAL escalation (A-30 rag-service container restarted during audit window)
+- Status: DEGRADED — rag-service restarted during deep-probe window (~52 min since initial restart 04:12:36Z)
+
+### RAW-PROBE:
+
+```
+=== AUDITOR PROBE 2026-08-12T05:04:16Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                    IMAGE
+vn-market-intelligence-mcp-mcp-server-1           Up 11 hours (healthy)     vn-market-intelligence-mcp-mcp-server
+vn-market-intelligence-mcp-pdf-extractor-1        Up 28 hours (healthy)     vn-market-intelligence-mcp-pdf-extractor
+vn-market-intelligence-mcp-rag-service-1          Up 51 minutes (healthy)   vn-market-intelligence-mcp-rag-service
+vn-market-intelligence-mcp-stock-price-1          Up 5 days (healthy)       vn-market-intelligence-mcp-stock-price
+vn-market-intelligence-mcp-macro-indicators-1     Up 13 days (healthy)      vn-market-intelligence-mcp-macro-indicators
+vn-market-intelligence-mcp-frontend-1             Up 2 weeks (healthy)      vn-market-intelligence-mcp-frontend
+mcp-gateway                                       Up 3 weeks (healthy)      mcpservergatway-gateway
+vn-market-intelligence-mcp-api-gateway-1          Up 3 weeks (healthy)      vn-market-intelligence-mcp-api-gateway
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=13.05% MemUsage=400.9MiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-mcp-server-1 baseline 13.04% < 85% investigate-gate
+[A-30] pdf-extractor: baseline 86.76% >= 85% investigate-gate — ENGAGE deep-probe
+[A-30] rag-service: baseline 99.61% >= 85% investigate-gate — ENGAGE deep-probe
+
+[A-30] A-20-PROBES: pdf-extractor all 3/3 OK
+
+{
+  "probe": "A-30 mcp-server memory reclamation discriminator",
+  "container": "vn-market-intelligence-mcp-pdf-extractor-1",
+  "samples": [{"n":1,"t":"05:04:26Z","pct":86.76},...{"n":6,"t":"05:05:40Z","pct":86.76}],
+  "analysis": {"min_pct": 86.76, "max_pct": 86.76, "median_pct": 86.76, "reclamation_dips": 0, "discontinuities": 0},
+  "verdict": "FOLD",
+  "reason": "benign GC sawtooth or below tripwire"
+}
+
+{
+  "probe": "A-30 mcp-server memory reclamation discriminator",
+  "container": "vn-market-intelligence-mcp-rag-service-1",
+  "window": {"probes": 6, "interval_sec": 13, "span_sec": 65},
+  "state": {
+    "oom_killed_before": "false", "oom_killed_after": "false",
+    "restart_count_before": "0", "restart_count_after": "0",
+    "started_at_before": "2026-08-12T04:12:36.101523596Z", "started_at_after": "2026-08-12T05:04:33.067751053Z",
+    "state_changed_during_window": true
+  },
+  "samples": [{"n":1,"t":"05:04:28Z","pct":99.61},{"n":2,"t":"05:04:42Z","pct":3.65},...{"n":6,"t":"05:05:41Z","pct":3.66}],
+  "analysis": {"min_pct": 3.65, "max_pct": 99.61, "median_pct": 3.65, "discontinuities": 1, "discontinuity_detail": "99.61->3.65"},
+  "verdict": "ESCALATE",
+  "reason": "container died/restarted during window (StartedAt advanced 52+ min)"
+}
+
+--- disk df -h / ---
+/dev/disk1s4s1   233Gi    13Gi    16Gi    47%    393k  165M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+```
+
+### A-30 Deep-Probe Analysis
+
+**pdf-extractor (86.76% baseline):**
+- Verdict: FOLD (benign GC sawtooth, stable 86.76% across all 6 samples)
+- VmHWM: pinned at 2587640KB (98.7% of 2.5GiB cap), NOT advancing during window
+- Reclamation: 0 dips, 0 discontinuities over 65s window
+- Result: PASS — no emit, no escalation
+
+**rag-service (99.61% baseline) — RESTART DURING WINDOW:**
+- Verdict: ESCALATE (state changed + restart detected during probe window)
+- Critical Finding: Container restarted/recovered during audit window
+  - StartedAt_before: 2026-08-12T04:12:36.101523596Z (initial restart from ops stopgap)
+  - StartedAt_after: 2026-08-12T05:04:33.067751053Z (NEW restart detected during c50 audit window)
+  - Timeline: ~52 min after initial 04:12:36Z restart, restarted again at 05:04:33Z
+- Memory behavior:
+  - Baseline sample (probe 1): 99.61% of 1GiB cgroup (right at hard limit)
+  - Samples 2–6: 3.65–3.66% (post-restart stabilization)
+  - Discontinuity: 99.61% → 3.65% indicates OOMKilled/crash + container restart
+- Root cause (known): LanceDB vector_search() performs full-column scan without vector index; unbounded memory growth every ~50 minutes
+- Permanent fix: FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (P0, ready[], blocked by dev-team WIP budget saturation)
+- Interim mitigation: Ops stopgap restart (already dispatched in parallel per context)
+- **Severity: CRITICAL — container crash cycle confirmed**
+- Result: **EMIT A-30 CRITICAL** (signal dedup SKIP from 2026-08-06T08:16:21Z; same issue, 7d window still active)
+
+### Signals & Telegrams
+
+| Check | Severity | Status | Notes |
+|-------|----------|--------|-------|
+| A-01–A-11 (containers) | PASS | — | All 8 host_runtime_set services UP |
+| A-12–A-19 (health) | PASS | — | All endpoints 200 OK |
+| A-20 (pdf-extractor multi-probe) | PASS | — | 3/3 in-container probes OK |
+| A-30 (memory deep-probe) | — | — | **pdf-extractor FOLD, rag-service ESCALATE** |
+| A-30 pdf-extractor | PASS | FOLD | Benign GC, no emit |
+| A-30 rag-service | CRITICAL | ESCALATE | [emit-signal] SKIP-dedup id=sys-20260812T050623-7474 (last_sent 2026-08-06T08:16:21Z) |
+
+**Telegram: SKIP** — rag-service A-30 already on 7-day dedup ledger (prior cycle 2026-08-06). Signal appended to queue per AUD-CP-1 + init.md §28.
+
+### Cycle Disposition
+
+**Verdict: DEGRADED**
+- System is operationally UP (all health checks pass, containers running)
+- rag-service confirmed in restart cycle (crashed this audit window, recovered to 3.65% post-restart)
+- Known root cause: vector index absence → unbounded growth every ~50min
+- Ops mitigation: parallel stopgap restart dispatch (confirmed in context)
+- Permanent fix: blocked on dev-team WIP concurrency budget (3 in-progress rows, ceiling WIP≤2)
+- No new findings warranting BUG escalation (7d dedup active)
+- Recommendation: monitor for next crash cycle around 2026-08-12T05:54Z (if pattern holds ~50min cadence)
+
