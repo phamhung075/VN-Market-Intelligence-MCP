@@ -126,3 +126,16 @@
 - Re-ran myself: sibling test 6/6 pass, sector/portfolio/market suites 91/91 pass, tsc 0 errors, mock-guard PASS. Journal `c2c413def` real+main-ancestry.
 **why-decision:** APPROVED, DONE_VERIFIED. Duplicate-closure claim fully corroborated by independent re-derivation from source, not prose trust.
 **why-change:** none — verification matched the plan.
+
+### STEP qa-S75 · qa · 2026-08-12T06:15:03Z
+**task-id:** FIX-FB-GATE-WEEKLY-FRAME-MODE
+**what-done:** Direct-Commit Verify — `--frame=daily|weekly|monthly` on `fb-data-integrity-gate.sh` (commit `f384267fd`+journal `00d971e67`+closeout `796472cd3`, all main-ancestry confirmed). No status_note (row predates that field); reconstructed context from dev's own decision-journal entry, then verified independently on disk — did not trust the prose.
+**what-considered:**
+- Built OWN fixtures (not dev's): weekly post + weekly-close snapshot → 0 D1/D2 violations; SAME post w/ daily-frame+daily-snapshot → Check-D1+D2 BLOCK (exact L5 frame-mismatch reproduction, proves it's a real comparison not a blanket disable). Check-A (±7% HOSE limit): fires in `--frame=daily`, frame-gated OFF in weekly/monthly (own >7% weekly-cumulative fixture). Check-C period-scope: selloff phrase before "Phân tích" label → BLOCK; same phrase moved after label (historical ref) → PASS (own fixtures, both directions).
+- RED baseline reproduced myself via `git show f384267fd~1`: pre-fix script has literally zero `--frame` concept — passing `--frame=weekly` gets swallowed as `$1` (post-file), causing usage-error exit 2 — confirms the L5 gap was real, not fabricated.
+- Live end-to-end smoke against the running mcp-server (no snapshot arg, forces `build_period_snapshot()`'s real curl+ISO-week/month grouping): `--frame=monthly` correctly derived real ~+3.0% MoM VNINDEX move (BLOCK on a wrong +0.5% figure, PASS on the correct one); `--frame=weekly` independently derived a distinct ~+1.1% WoW figure — both genuinely live, not fixture-only.
+- Full 57-file real `docs/social/fb-post-*.md` corpus, apples-to-apples (SAME cached live snapshot fed to both pre-fix-parent and post-fix-at-commit script copies, isolating code diff from time-drift): 0 files with a NEW block, 11 Check-C false-positive removals — zero regressions, exceeds the dev's own claimed 0/48.
+- `docs/agents/fb-market-poster/flow/{main.md STEP 4b, weekly-recap.md STEP 3b, weekly-prediction.md STEP 4b}` frame-mode doc updates confirmed present in the diff; main.md's content later split into `daily.md` (unrelated `TE-T26` refactor, `8d165e8d6`) — FRAME MODE section survived the split intact and is still extended by a subsequent commit (`FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK`), corroborating durability. Dev's claim that ticket's named `digest-predict/flow/weekly.md` caller was wrong (zero gate references, real callers are fb-market-poster's own weekly sub-flows) — independently grep-confirmed.
+- `mock-guard.sh` PASS (bash/python + docs only, no prod TS). No `process.env`/secrets. `bash -n` clean. Commit carries proper `Task:`/`AC:` trailers.
+**why-decision:** APPROVED, DONE_VERIFIED. Every AC independently reproduced from first principles on own fixtures + live server + full-corpus apples-to-apples regression — not a single claim taken on prose trust alone.
+**why-change:** none — verification matched the plan.

@@ -13773,6 +13773,35 @@
             "observed_at": "2026-08-12T06:00:18Z"
           }
         }
+      },
+      {
+        "id": "FIX-FB-GATE-WEEKLY-FRAME-MODE",
+        "title": "fb-gate weekly/temporal-frame mode: compare weekly posts vs weekly close series; scope Check-C to claim period",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "size": "M",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-WEEKLY-FRAME-MODE",
+        "promoted_at": "2026-07-25T02:46:09Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-12T06:15:45Z",
+        "claimed_at": "2026-08-12T05:53:04Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "rebuild_required": false,
+        "branch": null,
+        "updated_by": "qa",
+        "status_note": "[QA] Review Record (direct-commit verify) 2026-08-12T06:15:43Z -- APPROVED, DONE_VERIFIED. No review_note existed on this row (predates that field); reconstructed context from developer decision journal 00d971e67 (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S11) + code commit f384267fd + closeout 796472cd3, all confirmed real and on main ancestry via git merge-base --is-ancestor. Read the diff on disk, not trusted from journal prose: --frame=daily|weekly|monthly flag genuinely parsed out of argv before positional-arg assignment (default=daily=byte-identical prior behavior, confirmed via identical usage-error exit 2 with/without the flag on a missing-file arg); build_period_snapshot() genuinely derives a period-close series via curl against GET ${MCP_BASE}/mcp/api/prices/history (REST mirror of get_price_history) grouped by ISO week/calendar month; Check-A (HOSE +/-7% daily limit) genuinely gated to FRAME==daily only; Check-C selloff-language cross-check genuinely period-scoped to text before the \"Phan tich\" section label (falls back to whole-file when absent) plus a relative past-marker exclusion. Built OWN fixtures (not copy-pasted from journal prose): weekly post + weekly-close snapshot -> 0 Check-D1/D2 violations; SAME post w/ daily-frame+daily-snapshot -> Check-D1+D2 BLOCK (delta=36.2pts/2.16pp) -- exact L5 frame-mismatch reproduction, proves this is a genuine period-aware comparison not a blanket disable. Check-A: own +9.5% weekly-cumulative VIC fixture -> 0 violations under --frame=weekly, [BLOCK] Check-A under --frame=daily on the identical fixture -- frame-gating confirmed both directions. Check-C: own selloff-phrase-before-Phan-tich fixture -> [BLOCK] Check-C breadth-contradiction; SAME phrase moved after the Phan tich label (historical reference) -> [PASS] 0 violations -- period-scope boundary confirmed both directions. RED-baseline independently reproduced via git show f384267fd~1:scripts/fb-data-integrity-gate.sh (pre-fix parent, not git stash): script has literally zero --frame concept -- passing --frame=weekly gets swallowed as $1 (post-file arg), producing a usage-error exit 2 -- confirms the L5 gap was genuinely real pre-fix, not fabricated. Live end-to-end smoke against the actually-running mcp-server (no snapshot arg, forces the real build_period_snapshot() curl+grouping path): --frame=monthly correctly derived a real ~+3.0% MoM VNINDEX move (BLOCK on a wrong +0.5% figure, PASS on the correct figure); --frame=weekly independently derived a distinct ~+1.1% WoW figure -- both genuinely live-derived, not fixture-only. Full 57-file real docs/social/fb-post-*.md corpus regression, apples-to-apples (SAME cached live snapshot fed to both the pre-fix-parent script copy and the post-fix-at-commit script copy, isolating the code diff from live-price time-drift): 0 files with a NEW block, 11 Check-C false-positive removals -- zero regressions, exceeds the journals own claimed 0/48. docs/agents/fb-market-poster/flow/{main.md STEP 4b, weekly-recap.md STEP 3b, weekly-prediction.md STEP 4b} frame-mode doc updates confirmed present in the diff; mains STEP 4b content later moved into daily.md via an unrelated refactor (8d165e8d6, TE-T26 main.md/MODE-ROUTER split) -- FRAME MODE section survived intact and is still actively extended by a subsequent commit (FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK), corroborating durability. Journals claim that the tickets originally-named caller digest-predict/flow/weekly.md was the wrong file (zero fb-data-integrity-gate references, real callers are fb-market-posters own weekly sub-flows) independently grep-confirmed. mock-guard.sh PASS (bash/python + docs only, zero production TS files touched -- Smart-Skip bun test/tsc structurally N/A, matching sibling Check-H/I/J rows this session). No process.env/secrets. bash -n clean. Commit carries proper Task:/AC: trailers per commit-convention.md. Journal entry present: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-17.md STEP qa-S75.",
+        "verification": {
+          "raw_probe": {
+            "tool": "bash scripts/fb-data-integrity-gate.sh --frame=monthly (own fixture, live curl against running mcp-server) + git show f384267fd~1 (RED baseline) + full 57-file corpus apples-to-apples diff",
+            "args": "bash scripts/fb-data-integrity-gate.sh --frame=monthly <own-monthly-post.md> 2026-07-25 (no snapshot arg, forces live build_period_snapshot()); git show f384267fd~1:scripts/fb-data-integrity-gate.sh -- --frame=weekly <file> (usage-error reproduction); for f in docs/social/fb-post-*.md: pre-fix-parent vs post-fix-at-commit scripts, same cached live snapshot",
+            "live_value_observed": "live --frame=monthly derived real ~+2.998% MoM VNINDEX move server-side (BLOCK on wrong +0.5%, PASS on correct +3.00%); pre-fix parent script has zero --frame support, --frame=weekly swallowed as $1 -> usage-error exit 2; full 57-file corpus: 0 NEW blocks, 11 Check-C false-positive removals, 0 regressions",
+            "observed_at": "2026-08-12T06:15:43Z"
+          }
+        }
       }
     ],
     "head": {
@@ -20037,25 +20066,6 @@
         "claimed_by": "dev-team (review-lane qa-drain)",
         "redispatch_count": 1,
         "occurrence_count": 12
-      },
-      {
-        "id": "FIX-FB-GATE-WEEKLY-FRAME-MODE",
-        "title": "fb-gate weekly/temporal-frame mode: compare weekly posts vs weekly close series; scope Check-C to claim period",
-        "type": "FIX",
-        "status": "QA",
-        "priority": "P2",
-        "zone": "cross-service/",
-        "size": "M",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-FB-GATE-WEEKLY-FRAME-MODE",
-        "promoted_at": "2026-07-25T02:46:09Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-12T05:53:05Z",
-        "claimed_at": "2026-08-12T05:53:04Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "rebuild_required": false,
-        "branch": null
       }
     ],
     "_closed_signals_20260614": {
