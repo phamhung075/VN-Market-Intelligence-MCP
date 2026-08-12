@@ -1,3 +1,50 @@
+
+## c46 · 2026-08-12T02:38:11Z
+
+### Audit Run Tier-1 (02:37–02:38 UTC 2026-08-12) — CONTINUED RAG-SERVICE DEEP-PROBE
+
+- Tier: 1 | Services: 8 checked (host_runtime_set), all UP
+- Anomalies: 1 reported (A-30 rag-service 97.38% sustained, WARN, dedup SKIP)
+- Status: DEGRADED — known rag-service memory leak continues, restart-resistant
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-08-12T02:38:11Z ===
+
+All services UP and healthy. All health endpoints 200 OK.
+- mcp-server: 17.85% memory (below gate)
+- pdf-extractor: 87.42% memory, FOLD verdict
+- rag-service: 97.38% memory, ESCALATE verdict (loss of reclamation), 6 sustained samples
+
+Full per-container A-30 deep-probe results in marker log. See c45 for prior context.
+```
+
+### A-30 Deep-Probe Results Summary
+
+**rag-service (97.38% sustained, 6-sample window, 65s span):**
+- Verdict: ESCALATE (all samples >93% sustained high)
+- Reason: "loss of reclamation (dip-jitter no longer vetoes evidence; 0 dips, 0 discontinuities)"
+- Samples: [87.42% → 87.42% → 87.42% → 87.42% → 87.42% → 87.42%] (sustained)
+- State: no OOM, no restart during window, no state change detected
+- Signal: WARN [sys-20260812T023740-3e00] SKIP-dedup (existing escalation)
+- DASHBOARD row appended; BUG telegram suppressed (7-day dedup)
+- Root cause: Suspected memory leak, restart-resistant (observed 4+ escalations this session)
+
+**pdf-extractor (87.42% sustained, 6-sample window, 65s span):**
+- Verdict: FOLD (benign GC sawtooth or below tripwire)
+- No escalation, no signal emit
+- Monitoring only; at threshold but not critical
+
+**All other services:** Memory below 85% investigate-gate (SKIP)
+
+### Audit Summary
+- fire-election: CLAIMED (tick 2026-08-12T02:30Z)
+- signals_posted: 0 new (1 SKIP-dedup rag-service A-30)
+- dashboard_rows: 1 appended
+- dedup_skipped: 1
+
+---
+
 ## c45 · 2026-08-12T02:20:22Z
 
 ### Audit Run Tier-2 (02:20 UTC 2026-08-12) — CRON FIRE GAPS + ESCALATING RAG-SERVICE MEMORY LEAK
