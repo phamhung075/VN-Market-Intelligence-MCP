@@ -996,7 +996,7 @@
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
         "status": "READ",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-12.json"
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-12.json"
       },
       {
         "id": "sys-20260812T043713-660d",
@@ -19932,7 +19932,7 @@
         "last_served_tick": "2026-08-12T02:51:32Z"
       }
     },
-    "_updated_at": "2026-08-12T04:21:35Z",
+    "_updated_at": "2026-08-12T04:50:48Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20411,6 +20411,228 @@
         },
         "createdAt": "2026-08-12T04:16:47Z",
         "drained_at": "2026-08-12T04:20:47Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "115b8cb2b458dfe71bb3ab03c38059444c045f77c533569eea85b27c6ba3268c",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c48 · 2026-08-12T04:05:52Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-12T04:38:30Z",
+        "drained_at": "2026-08-12T04:50:48Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "daa4e9b3af041cfcfacc7be3d5f19a5fcbb64991d2bb8b2c45d46a57c548e3e8",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/code-janitor.md",
+          "line_count": 213,
+          "cap": 200,
+          "byte_count": 12820,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "line-cap,byte-cap",
+          "overage": 13,
+          "byte_overage": 820,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-12T04:31:34Z",
+        "drained_at": "2026-08-12T04:50:48Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b00a7022caaf5d570f66cf8169a016ca8a39fc0e2246eed358dfcec2435d69a6",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T04:31:40Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-12T04:31:40Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "04:30",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 471,
+          "signal_backlog": 30,
+          "note": "single-slot tick, no collisions, no calendar/cadence suppression"
+        },
+        "createdAt": "2026-08-12T04:31:40Z",
+        "drained_at": "2026-08-12T04:50:48Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "627f075c2f78a4dedae064e7ec7b4c94f158a7e304ea1c4a6dcdfad8109ad755",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T04:46:40Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-12T04:46:40Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "04:45",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 471,
+          "signal_backlog": 31,
+          "note": "single-slot tick, 2 signal_queue rows (code-janitor LOW, rag-service A-30 WARN dup of earlier) drained NEW->READ, no cowork slot match for to=po"
+        },
+        "createdAt": "2026-08-12T04:46:40Z",
+        "drained_at": "2026-08-12T04:50:48Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d7cab40b9eea4c6bc407cad15a92c8ca1ccecfb8bd93de6fceea24cfd48df0a0",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-12T04:30:03Z",
+        "drained_at": "2026-08-12T04:50:48Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a4019d231d4953e2d25a24d667a5d8dfa601feb3b335951bf8c44cb6cfe63af1",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/code-janitor.md",
+          "line_count": 213,
+          "cap": 200,
+          "byte_count": 12820,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-12T04:31:31Z",
+        "drained_at": "2026-08-12T04:50:48Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "938c2a851db59bceb8fcf6455dffeef5ecc09117d5cf68a1e33721495b64538c",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 41,
+          "cap": 200,
+          "byte_count": 23477,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-12T04:30:04Z",
+        "drained_at": "2026-08-12T04:50:48Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ce8e537edc96810845b0befd9ac5111b676d24c511d59814a42416ab8c0e7b41",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 41,
+          "cap": 200,
+          "byte_count": 23477,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-12T04:30:49Z",
+        "drained_at": "2026-08-12T04:50:48Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
