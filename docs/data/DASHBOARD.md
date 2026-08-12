@@ -1678,3 +1678,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory pressure: 88.54% (>85% threshold)
+**Severity:** WARN | **Date:** 2026-08-12 | **Status:** OPEN
+**Location:** rag-service / memory
+**Details:** vn-market-intelligence-mcp-rag-service-1 at 88.54% memory usage with 117.4 MiB free of 1 GiB cgroup limit
+**Impact:** Service approaching memory limit; potential OOM risk if usage continues to grow or if system memory pressure increases
+**Root cause:** Tracked by FU-RAG-DEPLOY-MEMORY (status=DONE_VERIFIED); ongoing memory creep detected across Tier-1 probes
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-12T13:34:59Z (signal sys-20260812T133432-3b93, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
