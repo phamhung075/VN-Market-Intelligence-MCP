@@ -138,23 +138,6 @@
     "archive": [],
     "rows": [
       {
-        "id": "sys-20260812T150735-2e4e",
-        "ts": "2026-08-12T15:07:35Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "pdf-extractor A-30 sustained high memory >93% — loss of reclamation",
-        "severity": "WARN",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T15:00Z",
-        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30",
-        "disposition": "FOLD -> FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (open, review[], next_agent=dev-pdf-extractor). CORROBORATED LIVE, no mint: po measured pdf-extractor at 2.38GiB / 2.5GiB = 95.20% via docker stats --no-stream at 2026-08-12T14:58Z, up from the 87.42% reported at 02:22Z (telegram 4718) - a real intra-day climb, consistent with that row's parent-process burst-headroom mechanism, which also already carries the malloc_trim(0) precedent (~99.7% per-job RSS delta recovered) this class is fixed by. Not the rag-service defect and deliberately not folded there: different container, different allocator path, separate owner.",
-        "triaged_at": "2026-08-12T15:10:35Z",
-        "triaged_by": "po"
-      },
-      {
         "id": "sys-20260812T153534-59fc",
         "ts": "2026-08-12T15:35:34Z",
         "from": "system-auditor",
@@ -576,6 +559,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-13T14:30Z",
         "dedup_key": "microservice_degraded:rag-service-1:A-30-SUSTAINED"
+      },
+      {
+        "id": "sys-20260813T151624-07e8",
+        "ts": "2026-08-13T15:16:24Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "A-30 rag-service-1 sustained memory >93% (94.77% median) — loss of reclamation",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-13T15:00Z",
+        "dedup_key": "microservice_degraded:rag-service-1:A-30"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -13219,51 +13216,6 @@
             },
             "live_value_observed": "ancestor=yes; git show --stat = exactly 1 file (.claude/skills/published-marker-gate/SKILL.md, 86L new); YAML frontmatter parses (name+description present); 4 code-fence markers balanced; size-lint-justification.sh --check no flag; mock-guard.sh = no production source to scan, PASS; DDD/security greps zero hits",
             "observed_at": "2026-08-12T16:37:00Z"
-          }
-        }
-      },
-      {
-        "id": "TE-T14",
-        "title": "T-14 system-auditor Step 0c: jq-project 6 key-paths instead of full-reading 50.6KB system-map.json [~75k tok/day]",
-        "owner": "agent-father",
-        "status": "DONE_VERIFIED",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "wave": 2,
-        "est_saving": "~75k tok/day",
-        "zone": "docs/agents/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-14",
-        "note": "Step 0c lists 6 exact key-paths then full-reads 1733L file. Rewrite as single jq projection (~2k tokens vs ~12.7k). CLAUDE.md + system-map-query SKILL already mandate jq-only. Read-only projection of same SSOT, no semantic change.",
-        "next_agent": "agent-father",
-        "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
-        "updated_at": "2026-08-13T15:02:27Z",
-        "po_manual_dispatch_flagged_at": "2026-07-31T22:57:13Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH (re-admitted: prior stamp 2026-07-31T16:04:37Z aged past the 4h staleness window without reaching dispatch)",
-        "updated_by": "agent-father",
-        "claimed_at": "2026-08-06T21:26:17Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "commit_sha": "3b9714ebf596fabf5155fb395c2f3ec31177039a",
-        "review_note": "agent-father: Step 0c rewritten as single jq -c projection over the 6 documented key-paths (was prose full-read). Verified live: jq exit 0, all 6 arrays populated (microservices=11, host_runtime_set=12, not_deployed_by_design=0, data_sources=28, databases=7, zones=12). No cascade -- grepped fleet-wide for Step 0c / jq.*system-map.json callers, none reference the old prose shape. Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md S17.",
-        "status_note": "[QA] Direct-Commit Verify FAILED 2026-08-06 — CHANGES_REQUESTED, RAW re-verified against live repo (not trusted from review_note prose alone). Commit 013c90710 confirmed on main ancestry (git merge-base --is-ancestor), git show --stat matches docs/agents/system-auditor/flow/main.md only. Live-ran the exact Step 0c jq projection (main.md:116-123) against docs/data/system-map.json: exit 0, counts 11/12/0/28/7/12 match review_note's claim.\n\nBUT review_note's central claim \"no semantic change to what system-auditor consumes\" is FALSE. review_note's own audit method (\"grepped fleet-wide for Step 0c / jq.*system-map.json callers\") only checked OTHER files for dependence on the old prose shape — it never checked THIS file's own downstream consumption of system-map.json beyond the 6 bulleted key-paths. Grepping main.md itself for every system-map.json reference surfaces 2 real consumption sites the new projection silently drops:\n\n(1) main.md:297 Cron Fire Check (A-29): \"For each cron in system-map.json microservices[0].crons\" — a live ~70-entry array (verified: jq '.project.microservices[0].crons|length'). New projection at main.md:117 selects only {id, external_port, zone} per microservice — crons is entirely absent from the loaded object. A-29 has nothing to iterate after this change.\n\n(2) main.md:325-339 SLA Resolver (SSOT: system-map.json .project.data_sources[].sla, FIX-BCTC-SLA-THRESHOLD-360) needs .sla.mode / .sla.earnings_window.{trigger_months,window_days_after_quarter_end,stale_threshold_hours} / .sla.default_stale_threshold_hours per source. New projection at main.md:120 selects only {id, expected_cadence_hours, stale_threshold_hours, geo_blocked} — sla dropped entirely. Live-verified: 2/28 data_sources (bctc-discover, bctc-push) carry an sla block; their flat stale_threshold_hours=168h vs the sla-resolved out-of-window effective threshold runs up to ~1714h (per this file's own worked examples, lines 344-349). If the agent treats the Step 0c jq output as its sole in-cycle view of system-map.json — exactly the step's stated purpose, \"never full-read\" — SLA Resolver branch 1 (\"no sla block -> use stale_threshold_hours directly\", line 329) misfires on these 2 sources during the inter-quarter quiet period, re-flattening to 168h and reintroducing the exact false-CRITICAL B-05 bug FIX-BCTC-SLA-THRESHOLD-360 already fixed.\n\nRoot cause: the OLD step did an imperative full Read of the whole file, so crons/sla stayed implicitly present in context even though the 6-bullet list never named them. The NEW jq projection actively strips anything not explicitly selected — a real behavior change, not a documentation nit.\n\nFIX NEEDED: add crons to the microservices projection (main.md:117) and sla to the data_sources projection (main.md:120) — OR explicitly scope Step 0c's \"only 6 key-paths\" claim down and document that A-29 / SLA Resolver each run their OWN separate targeted jq call at point-of-use (fine re: token budget, but current text does not say this and flatly claims \"6 key-paths\" + \"no semantic change to what system-auditor consumes\").\n\nNo application code touched (docs/agents/ + docs/agent-memory/ only) — bun test / tsc / mock-guard structurally N/A (Smart-Skip, doc-only diff).\n\nHeld: .task_board.qa[] -> .task_board.review[], status QA -> REVIEW, owner/next_agent=agent-father, redispatch_count 0 -> 1.\n\n[agent-father REWORK 2026-08-13] Fix landed commit 3b9714ebf596fabf5155fb395c2f3ec31177039a: restored `sla` to the Step 0c data_sources projection (main.md:120) — SLA Resolver (line ~508-522) now gets `.sla.mode`/`.sla.earnings_window.*`/`.sla.default_stale_threshold_hours` from the same single projection, no point-of-use re-read needed. Live re-ran the exact jq -c block: exit 0, same 6-key-group shape, counts unchanged (microservices=11, host_runtime_set=12, not_deployed_by_design=0, data_sources=28, databases=7, zones=12), sla payload now present verbatim for bctc-discover/bctc-push (mode=earnings-window-dependent, default_stale_threshold_hours=168, earnings_window.stale_threshold_hours=24, trigger_months=[1,4,7,10], window_days_after_quarter_end=14) matching system-map.json live. QA finding #2 (sla drop) RESOLVED.\n\nQA finding #1 (A-29 iterating .project.microservices[0].crons) CONTESTED as already-moot, not fixed by adding crons to the projection: grepped main.md fleet-wide for `crons`/`microservices[0]` — the ONLY operative A-29 code path today is the Cron Fire Check section (main.md ~331-404), which per its own in-file changelog (FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP, 2026-08-08 commit, independent of and 2 days AFTER TE-T14 commit 013c90710/2026-08-01 and AFTER QA's 2026-08-06 review) was rewritten to consume the live `GET /api/cron-status` endpoint instead — its own text states verbatim: \"this supersedes `.project.microservices[0].crons` as A-29's inventory source — system-map's crons array is documentation, not the schedule SSOT, and is no longer read by this check.\" Confirmed live: `.project.microservices[0].crons` has 70 entries in system-map.json but zero remaining readers anywhere in main.md. Adding `crons` to the microservices projection would reintroduce ~70 unused entries for no consumer. Documented this explicitly in the projection's field-semantics bullet (commit 3b9714ebf596fabf5155fb395c2f3ec31177039a) so the next reader does not need to re-derive it. Net: took QA option (a) for the real (sla) gap, declined the crons half of option (a) as moot, and did not need option (b) (point-of-use split) since (a) fully closes the live gap.\n\nRedispatch not needed — closing DONE_VERIFIED per dev-team review-lane secondary-drain dispatch instruction (coordination session 632721c2-41e4-4aff-8d06-a47cf80dc0d7): re-verified live before sign-off, not re-asserting review_note prose.",
-        "redispatch_count": 1,
-        "secondary_claimed_at": "2026-08-13T14:56:26Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "agent-father",
-        "reviewed_at": "2026-08-13T15:02:26Z",
-        "reviewed_by": "agent-father",
-        "qa_verified_at": "2026-08-13T15:02:26Z",
-        "qa_verified_by": "agent-father (rework + self-reverify, dev-team review-lane secondary-drain dispatch)",
-        "verification": {
-          "raw_probe": {
-            "tool": "jq -c (exact Step 0c projection block, main.md:116-123 post-fix) against docs/data/system-map.json",
-            "args": "jq -c '{microservices:[.project.microservices[]|{id,external_port,zone}],host_runtime_set:.project.infrastructure.docker.host_runtime_set.services,not_deployed_by_design:.project.infrastructure.docker.host_runtime_set.not_deployed_by_design,data_sources:[.project.data_sources[]|{id,expected_cadence_hours,stale_threshold_hours,geo_blocked,sla}],databases:[.project.infrastructure.databases[]|{id,path}],zones:[.project.zones[]|{id,specialist}]}' docs/data/system-map.json ; plus jq '.project.data_sources[]|select(.sla)' and jq '.project.microservices[0].crons|length' cross-checks",
-            "live_value_observed": "exit 0; counts unchanged microservices=11 host_runtime_set=12 not_deployed_by_design=0 data_sources=28 databases=7 zones=12; sla payload now present verbatim for bctc-discover+bctc-push (mode=earnings-window-dependent, default_stale_threshold_hours=168, earnings_window.stale_threshold_hours=24, trigger_months=[1,4,7,10], window_days_after_quarter_end=14) — closes QA finding #2. Cross-check: .project.microservices[0].crons independently confirmed 70 entries in system-map.json but 0 remaining readers in docs/agents/system-auditor/flow/main.md (fleet grep) — A-29 (main.md ~331-404) reads GET /api/cron-status instead as of its own independent FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP fix (commit landed 2026-08-08, confirmed via in-file changelog + section text) — QA finding #1 confirmed moot, not added to projection.",
-            "observed_at": "2026-08-13T15:02:26Z"
           }
         }
       }
