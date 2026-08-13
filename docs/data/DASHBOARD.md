@@ -1822,3 +1822,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30-SUSTAINED · rag-service-1 sustained elevated baseline (90.75% → 88.88% → 90.40%)
+**Severity:** WARN | **Date:** 2026-08-13 | **Status:** OPEN
+**Location:** rag-service-1 memory
+**Details:** Three consecutive Tier-1 cycles show baseline in high-band (85%+). c70: 90.75%, c71: 88.88%, c72: 90.40%. Not intra-cycle noise.
+**Impact:** Sustained elevated memory baseline requires investigation; possible workload/config shift
+**Root cause:** Memory baseline shifted upward; FU-RAG-DEPLOY-MEMORY closure at 35% may have been premature
+**Zone owner:** ops
+**Last reported:** 2026-08-13T13:47:09Z (signal sys-20260813T134703-3fb8, system-auditor -> po, dedup_key=microservice_degraded:rag-service-1:A-30-SUSTAINED, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
