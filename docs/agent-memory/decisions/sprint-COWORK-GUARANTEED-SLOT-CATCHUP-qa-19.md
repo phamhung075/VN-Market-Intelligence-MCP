@@ -62,3 +62,13 @@
 - Flagged the task-id-collision/re-mint class as a board-hygiene issue in the row's own status_note for PO/router follow-up (not a QA-owned fix — task breakdown is PM's job, board hygiene is PO's).
 **why-decision:** Fix genuinely present + tested live (51/51, exact gate assertions), commit real and on main — nothing left to block on. Duplicate-mint is a bookkeeping defect, not a code defect; approving avoids wasted re-dispatch of already-closed work while surfacing the collision for board-hygiene follow-up.
 **why-change:** Verdict content differs from a routine pass — added the duplicate-provenance finding to status_note (not present in either prior QA pass, since neither knew about the other's re-mint) — everything else (fix correctness) matches the original 2026-07-21 double-QA verdict.
+
+### STEP qa-S100 · qa · 2026-08-13T12:03:31Z
+**task-id:** FACTORY-GUARD-CI-SIZELINT-IMPL
+**what-done:** Direct-Commit Verify (Review-Lane QA-Drain, `branch:null`, row carries no `.commit`/`.files[]`/`.owner`) — derived commit via `git log --all` on the 3 new files named in `.note`: `22cd084d4` (2026-07-29), on main ancestry, `git show --stat` touches exactly the 5 claimed files (+`docs/WORK.md`).
+**what-considered:**
+- Ran the shipped smoke test myself: `size-lint-justification.test.sh` 6/6 PASS (all 4 DoD cases + 2 controls). Did not stop there — built my OWN independent fixtures (separate dir, not the test's) for new-offender/baseline-grown-past-tolerance/shrink-drop cases + a bare `--check` on live repo: all 4 reproduced identically (rc=1/1/0/dropped-from-baseline as expected) — not trusting dev's own test alone (feedback_router_verify_raw_not_badges).
+- `bash scripts/audits/size-lint-justification.sh --check` on live repo: PASS, 0 offenders, scanned 1384 (repo has grown since the 665-entry baseline; ratchet still holds — no drift). CI corroboration: `size-lint` job green on 4 most-recent main-push CI runs (incl. today's), even though the aggregate `CI` workflow is currently red from 2 unrelated jobs (`bun test`, `task-claim-owner-session-lint`) — not this task's scope.
+- No TS/production source touched (`.sh`/`.json`/`.yml`/`.md` only) — `bun test`/`tsc` structurally N/A; `mock-guard.sh --files` on the shell script → PASS "no production source files to scan" (correctly out of its `apps/*.ts|py|go` scan scope). dev-standards.md CANONICAL pointer present at line 1084, matches script usage exactly.
+**why-decision:** vc-approved, DONE_VERIFIED. All 6 DoD items independently reproduced on my own fixtures (not just the shipped test), CI job green across multiple runs, doc pointer present, zero ISSUE.
+**why-change:** none — verdict matches developer's own claim, verified fresh not from prose.
