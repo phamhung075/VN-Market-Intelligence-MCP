@@ -18606,6 +18606,42 @@
         "claimed_at": "2026-08-12T17:11:52Z",
         "claimed_by": "dev-team",
         "commit": "319ef3cac"
+      },
+      {
+        "id": "FIX-COVERAGE-STAMP-TTL-30-BELOW-SCHEMA-MIN-60-FAILS-CLOSED",
+        "type": "FIX",
+        "size": "S",
+        "title": "coverage-stamp.sh:158 passes ttl_seconds:30 but task_claim Zod schema enforces .min(60) - coverage-state:main mutex fails 5/5 every cycle, fail-CLOSED, no coverage-state write fleet-wide (news-scout + market-watcher)",
+        "owner": "po",
+        "next_agent": "qa",
+        "status": "REVIEW",
+        "priority": "P0",
+        "zone": "cross-service/",
+        "files": [
+          "scripts/agents-flow/coverage-stamp.sh"
+        ],
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "created_at": "2026-08-13T17:28:37Z",
+        "created_by": "po/triage-20260813T1722Z",
+        "po_expedited_at": "2026-08-13T17:28:37Z",
+        "dedup_key": "coverage-state-mutex-ttl|file:scripts/agents-flow/coverage-stamp.sh",
+        "verification_gate": "coverage_state_write_observed_after_fix",
+        "status_note": "ROOT CAUSE VERIFIED AT SOURCE BY PO 2026-08-13T17:22Z, both halves read live, not inferred from the reports: (a) scripts/agents-flow/coverage-stamp.sh:158 emits the task_claim argument object with a hardcoded `ttl_seconds:30`; (b) apps/mcp-server/src/interface/mcp/tools/system/coordination/taskClaimTool.ts:81-85 declares `ttl_seconds: z.number().int().min(60).max(691200).optional()`. 30 < 60 so EVERY call is rejected by Zod with `too_small` at the TOOL layer, before it can reach coordinationStore.ts:652's `Math.min(Math.max(input.ttl_seconds ?? 3600, 60), 691200)` clamp - the clamp would have silently corrected this, which is exactly why the defect reads as inexplicable from the agent side. Mutex is never acquired, so the coverage-state write is skipped FAIL-CLOSED on every cycle. CORROBORATION: two INDEPENDENT agents reported the same line+minimum within 36s of each other - telegram 5211 (market-watcher, 2026-08-13T12:14:38Z, 'fails 5x with too_small, mutex never acquired, write skipped fail-CLOSED') and telegram 5212 (news-scout, 12:15:14Z, 'fails 5/5 attempts every cycle, blocks coverage-state writes fleet-wide'). Neither agent can fix it: the script is outside both agents' file-write scope. AC1: bump the literal at line 158 to >=60 (900 is the documented value for a one-scheduler-cycle lock per the tool's own describe() text; 60 is the bare minimum - prefer 900 since coverage-stamp runs once per agent cycle). AC2: grep the whole of scripts/ for any OTHER task_claim call site passing ttl_seconds<60 and fix them in the same pass - this is a schema-vs-caller drift class, not a single typo, and the clamp in coordinationStore.ts means callers that go through a non-tool path are silently fine while tool-path callers hard-fail, so the two planes disagree. AC3: a subsequent news-scout or market-watcher cycle logs a SUCCESSFUL coverage-state:main claim and an actual coverage-state write (verification_gate=coverage_state_write_observed_after_fix). Do NOT close on the lint/grep alone. NOTE for whoever picks this up: memory `project_stale_transport_gap_note_blocks_coverage_state_writes` is a DIFFERENT, already-known blocker on the same write path - do not conflate them; this row is the ttl/Zod defect only. | ROUTER 2026-08-13T19:31Z: AC1+AC2 code fix RAW-verified real, commit a63ab8b0d, pushed to origin/main (was local-only, dev-mcp-server never pushed per known gatewayless-specialist gap). AC3 NOT yet satisfied — coverage-state.json last_covered_* still frozen at 2026-07-25, file mtime 2026-08-06, no news-scout/market-watcher cycle has run since the fix landed. dev-mcp-server substituted a manual mcp-call.sh proof (not a live fleet cycle) and said so explicitly — per row spec (Do NOT close on lint/grep alone) this does not satisfy AC3. Row stays IN_PROGRESS pending a genuine post-fix cycle observation; re-check coverage-state.json last_covered_news_scout/last_covered_market_watcher for a timestamp after 2026-08-13T19:28:58Z on next touch.",
+        "origin_reports": [
+          5211,
+          5212
+        ],
+        "updated_at": "2026-08-13T20:56:11Z",
+        "claimed_at": "2026-08-13T19:24:22Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "dev-mcp-server",
+        "assigned_to": "632721c2-41e4-4aff-8d06-a47cf80dc0d7",
+        "adopted_at": "2026-08-13T20:54:37Z",
+        "tree_hygiene_note": "tree-hygiene: 0 file(s) reverted (apps/mcp-server/ tree clean — self-orphan, no uncommitted work found)",
+        "updated_by": "dev-team (orphan-adoption AC3 verification)",
+        "commit_sha": "a63ab8b0d",
+        "note": "AC3 RAW-verified by router (orphan-adoption re-touch): coverage-state.json _updated_by=news-scout _updated_at=2026-08-13T20:12:55Z, most tickers last_covered_news_scout/last_covered_market_watcher stamped 2026-08-13T20:12Z-20:13Z — genuinely AFTER fix commit a63ab8b0d (2026-08-13T19:28:58Z). coverage-state:main mutex now acquires successfully on live fleet cycles. All 3 ACs satisfied. Self-orphan re-adopted this tick (dead_session==router's own session, presence-staleness gap, tree clean 0 reverts) — redispatching dev-mcp-server would have been wasted duplicate work since the code fix was already done; routing straight to QA instead."
       }
     ],
     "qa": [
@@ -18959,41 +18995,7 @@
     },
     "last_triaged_at": "2026-08-13T19:55:20Z",
     "last_triaged_by": "dev-team (design-router sweep)",
-    "in_progress": [
-      {
-        "id": "FIX-COVERAGE-STAMP-TTL-30-BELOW-SCHEMA-MIN-60-FAILS-CLOSED",
-        "type": "FIX",
-        "size": "S",
-        "title": "coverage-stamp.sh:158 passes ttl_seconds:30 but task_claim Zod schema enforces .min(60) - coverage-state:main mutex fails 5/5 every cycle, fail-CLOSED, no coverage-state write fleet-wide (news-scout + market-watcher)",
-        "owner": "po",
-        "next_agent": "dev-mcp-server",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "zone": "cross-service/",
-        "files": [
-          "scripts/agents-flow/coverage-stamp.sh"
-        ],
-        "baseline_pass": true,
-        "rebuild_required": false,
-        "created_at": "2026-08-13T17:28:37Z",
-        "created_by": "po/triage-20260813T1722Z",
-        "po_expedited_at": "2026-08-13T17:28:37Z",
-        "dedup_key": "coverage-state-mutex-ttl|file:scripts/agents-flow/coverage-stamp.sh",
-        "verification_gate": "coverage_state_write_observed_after_fix",
-        "status_note": "ROOT CAUSE VERIFIED AT SOURCE BY PO 2026-08-13T17:22Z, both halves read live, not inferred from the reports: (a) scripts/agents-flow/coverage-stamp.sh:158 emits the task_claim argument object with a hardcoded `ttl_seconds:30`; (b) apps/mcp-server/src/interface/mcp/tools/system/coordination/taskClaimTool.ts:81-85 declares `ttl_seconds: z.number().int().min(60).max(691200).optional()`. 30 < 60 so EVERY call is rejected by Zod with `too_small` at the TOOL layer, before it can reach coordinationStore.ts:652's `Math.min(Math.max(input.ttl_seconds ?? 3600, 60), 691200)` clamp - the clamp would have silently corrected this, which is exactly why the defect reads as inexplicable from the agent side. Mutex is never acquired, so the coverage-state write is skipped FAIL-CLOSED on every cycle. CORROBORATION: two INDEPENDENT agents reported the same line+minimum within 36s of each other - telegram 5211 (market-watcher, 2026-08-13T12:14:38Z, 'fails 5x with too_small, mutex never acquired, write skipped fail-CLOSED') and telegram 5212 (news-scout, 12:15:14Z, 'fails 5/5 attempts every cycle, blocks coverage-state writes fleet-wide'). Neither agent can fix it: the script is outside both agents' file-write scope. AC1: bump the literal at line 158 to >=60 (900 is the documented value for a one-scheduler-cycle lock per the tool's own describe() text; 60 is the bare minimum - prefer 900 since coverage-stamp runs once per agent cycle). AC2: grep the whole of scripts/ for any OTHER task_claim call site passing ttl_seconds<60 and fix them in the same pass - this is a schema-vs-caller drift class, not a single typo, and the clamp in coordinationStore.ts means callers that go through a non-tool path are silently fine while tool-path callers hard-fail, so the two planes disagree. AC3: a subsequent news-scout or market-watcher cycle logs a SUCCESSFUL coverage-state:main claim and an actual coverage-state write (verification_gate=coverage_state_write_observed_after_fix). Do NOT close on the lint/grep alone. NOTE for whoever picks this up: memory `project_stale_transport_gap_note_blocks_coverage_state_writes` is a DIFFERENT, already-known blocker on the same write path - do not conflate them; this row is the ttl/Zod defect only. | ROUTER 2026-08-13T19:31Z: AC1+AC2 code fix RAW-verified real, commit a63ab8b0d, pushed to origin/main (was local-only, dev-mcp-server never pushed per known gatewayless-specialist gap). AC3 NOT yet satisfied — coverage-state.json last_covered_* still frozen at 2026-07-25, file mtime 2026-08-06, no news-scout/market-watcher cycle has run since the fix landed. dev-mcp-server substituted a manual mcp-call.sh proof (not a live fleet cycle) and said so explicitly — per row spec (Do NOT close on lint/grep alone) this does not satisfy AC3. Row stays IN_PROGRESS pending a genuine post-fix cycle observation; re-check coverage-state.json last_covered_news_scout/last_covered_market_watcher for a timestamp after 2026-08-13T19:28:58Z on next touch.",
-        "origin_reports": [
-          5211,
-          5212
-        ],
-        "updated_at": "2026-08-13T20:54:38Z",
-        "claimed_at": "2026-08-13T19:24:22Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "dev-mcp-server",
-        "assigned_to": "632721c2-41e4-4aff-8d06-a47cf80dc0d7",
-        "adopted_at": "2026-08-13T20:54:37Z",
-        "tree_hygiene_note": "tree-hygiene: 0 file(s) reverted (apps/mcp-server/ tree clean — self-orphan, no uncommitted work found)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
