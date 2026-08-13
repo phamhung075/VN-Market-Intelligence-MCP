@@ -8,33 +8,6 @@
      explicit YYYY-MM-DD token. Nothing deleted; full record in the archive file and git
      history. -->
 
-## EDIT 2026-08-13T13:27:20Z — task UC-ASL-P6 (dev-team Review-Lane SECONDARY-Drain, `next_agent` self-named)
-- Row's own `status_note` (QA, CHANGES_REQUESTED) re-verified live before acting: QA RAW-confirmed my
-  2026-07-31 commit `2728636fd` (init.md/flow/main.md DASHBOARD.md-phantom purge) real, on `main`
-  ancestry, durable through 6 days of later edits — but flagged the task's own cited architecture brief
-  (`2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P6` Change (2)(b)) also
-  required trimming `.claude/skills/signal-dashboard/SKILL.md:22-24`'s manual mtime-record/check/retry
-  instruction, which my 2026-07-31 pass only half-fixed (line 11, not 22-24). `git blame` re-confirmed:
-  those 3 lines unchanged since 2026-06-07, untouched by `2728636fd`.
-- Applied QA's exact suggested fix: replaced the "Shell/flow code MUST record mtime..." sentence with
-  text naming `scripts/orch-apply.sh` as the sole CAS-guard provider for shell/flow writes — removes the
-  contradiction with line 11's own orch-apply mandate + `CANONICAL:SSOT-W1-ORCH-APPLY-WRAPPER`. Left the
-  TS `appendSignalQueueRow()` CAS-loop description (L18-21) untouched — out of the brief's cited scope.
-- First edit pass (4-line wrap) pushed the file to 121L, breaching its own `≤120L` size-justification
-  header — reworded to fit 3 lines, restored 120L before committing. Appended a chronological
-  `UC-ASL-P6 2026-08-13` note to the frontmatter comment (file's own established convention for this
-  file specifically — 4 prior dated notes already there).
-- **Action taken:** self-certified `DONE_VERIFIED` and moved the row `.task_board.review[]` →
-  `.task_board.done_verified[]` via `scripts/orch-apply.sh` — per SECONDARY-Drain's owner-triage design
-  (QA's own note explicitly routed this here as doc-only/no-re-test-needed, no fixer/re-QA loop; no task
-  branch exists to route through PRIMARY QA-Drain anyway). Decision journal:
-  `sprint-ULTRACODE-AUDIT-FIXALL-agent-father.md` STEP `agent-father-S3`.
-- Board disposition (for router/PO — `orch-state.json` excluded from my `commit_zone`,
-  `FU-AGENT-FATHER-ORCH-SCOPE`): write applied to the live file, deliberately left uncommitted, same
-  precedent as every prior closeout above. Gateway-less session (no `mcp__gateway__call_tool` in this
-  session's tool list) — did not attempt `task_release` on the outer `task:UC-ASL-P6` lock; router
-  dispatch note said it already owns that lock and releases it itself.
-
 ## EDIT 2026-08-13T17:01Z — task TE-T14 (dev-team Review-Lane SECONDARY-Drain rework)
 - QA CHANGES_REQUESTED on my 2026-07-31 commit `013c90710` (Step 0c jq-projection): (1) A-29 loses
   `microservices[0].crons`, (2) SLA Resolver loses `.sla` for bctc-discover/bctc-push. Re-verified live:
@@ -120,4 +93,19 @@ SECONDARY-Drain, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
   uncommitted per `FU-AGENT-FATHER-ORCH-SCOPE` — same precedent as every prior closeout above. Also
   dropped 1 `signal_queue` row (`to:po`, `type:task-complete`) as a redundant notification channel
   before realizing the board write itself was in-scope for this lane — left in place, harmless.
-  `task_release` confirmed on `task:FIX-CHEF-MIDFLOW-BAIL-DETERMINISM` via the coordinating session.
+
+## EDIT 2026-08-13T22:35Z — task FIX-DEVFLOW-MICROSERVICE-MAIN-NO-ERROR-BOUNDARY (router-direct
+rework, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
+- PO's `po_review_verdict_20260813.ac2_gap`: commit `6ddb1a812` narrated "matches all 3 live
+  phrasings" but its diff only added 2 (`Run shared flow:`/`Run sub-flow:`), never `Run flow:` — the
+  real live phrasing for all 9 dev-* consumers. Re-read that diff myself (`git show`) before trusting
+  it — confirmed the gap exactly as PO described, not just re-asserted.
+- Fix: `sweep-fixes.md:21` Check #2 trigger widened to 3 phrasings + arrow tolerant of `->`/`→`.
+  Script-driven (not manual) re-run of Check #2 as literally written, over all 14 `docs/agents/dev-*/`
+  dirs: OLD regex → 9 FAIL (dev-alert-engine, dev-api-gateway, dev-kinh-dich, dev-macro-indicators,
+  dev-news-fetch, dev-pdf-extractor, dev-rag-service, dev-stock-price, dev-technical-analysis) exactly
+  matching PO's list; NEW regex → 14/14 PASS, all 9 resolving one-hop to `microservice-main.md`.
+  Did not touch microservice-main.md/dev-mcp-server/dev-frontend (AC-1/AC-3 fenced, already landed).
+- Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md` STEP `agent-father-S38`.
+- Board disposition: row moved `backlog[]`→`review[]`, `next_agent:po` via `scripts/orch-apply.sh`
+  (`FU-AGENT-FATHER-ORCH-SCOPE` — orch-state.json outside commit_zone, applied not committed by me).

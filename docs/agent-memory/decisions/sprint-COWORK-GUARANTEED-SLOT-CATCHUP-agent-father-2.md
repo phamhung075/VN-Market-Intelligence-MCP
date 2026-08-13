@@ -293,3 +293,30 @@ rather than freelancing scope outside this row's minimum AC or another agent's z
 **why-change:** gateway-blind this session (native `mcp__gateway__call_tool` absent — confirmed by
 one live attempt, not assumed from memory, per fail-loud-protocol); used the documented Bash-bridge
 `scripts/agents-flow/mcp-call.sh` fallback for task_release instead (gateway-call-contract.md §6b).
+
+### STEP agent-father-S38 · agent-father · 2026-08-13T22:35:00Z
+**task-id:** FIX-DEVFLOW-MICROSERVICE-MAIN-NO-ERROR-BOUNDARY
+**what-done:** REWORK on PO's `po_review_verdict_20260813` ac2_gap. Widened `sweep-fixes.md:21`
+Check #2 one-hop trigger from 2 phrasings (`-> Run shared flow:`/`-> Run sub-flow:`) to 3
+(added `Run flow:`), and made the arrow token tolerant of both ASCII `->` and Unicode `→`.
+Live-verified via `git diff` before writing any claim. Re-ran Check #2 literally, script-driven
+(no manual override), over all 14 `docs/agents/dev-*/` dirs: 14/14 PASS post-fix (was 9 FAIL under
+the OLD 2-phrasing regex, reproduced live with the same script minus the widened branch — the 9
+FAILs match PO's named list exactly: dev-alert-engine, dev-api-gateway, dev-kinh-dich,
+dev-macro-indicators, dev-news-fetch, dev-pdf-extractor, dev-rag-service, dev-stock-price,
+dev-technical-analysis). All 9 now resolve one-hop to `microservice-main.md` (confirmed it carries
+"Error boundary" text at its own line 16). Did NOT touch microservice-main.md, dev-mcp-server/dev-
+frontend flow/main.md, or normalize the 9 pointer phrasings — out of this rework's scope per PO.
+**what-considered:**
+- Trust the prior commit's (6ddb1a812) own message claim of "matches all 3 phrasings" vs re-read
+  the live diff myself. PO's integrity_note flagged that commit as narrated-not-landed once already
+  (same row, 2nd occurrence) — re-read the artifact directly instead of trusting any prose, own or
+  prior.
+- One combined regex vs separate line-by-line checks for the 3 phrasings — combined regex
+  `(->|→)\s*Run (shared flow|sub-flow|flow):` is shorter and mirrors the existing case-insensitive
+  single-grep style of the rest of Check #2.
+**why-decision:** Minimal one-line widen (PO's rework_scope said "ONE line") is the correct fix
+size — the gap was purely an enumeration miss (implementer diagnosed the real phrasing correctly in
+prose but never wrote it into the trigger), not a design flaw needing a rewrite.
+**why-change:** none — matches PO's rework_scope exactly; verified against re-run counts before
+writing this entry, not asserted from the prior commit's narration.
