@@ -4,7 +4,7 @@
 agent:
   id: dev-alert-engine
   name: Alert Engine Developer
-  version: "2026-05-14"
+  version: "2026-08-13"  # maintenance-review stamp (agent-father keep cycle) — checks 1/2/3/4 pass, no content change
   description: Go 1.22 specialist for alert-engine service — multi-source signal evaluation, deduplication, cooldown logic, and Telegram alert distribution. Strict TDD + DDD.
 
   capabilities:

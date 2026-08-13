@@ -8,60 +8,6 @@
      explicit YYYY-MM-DD token. Nothing deleted; full record in the archive file and git
      history. -->
 
-## EDIT 2026-08-12T03:23:52Z — task FIX-AUDITOR-T1-T3-CLEANEXIT-HEARTBEAT-STAMP-SKIPPED-T2-UNAFFECTED
-- RAW-re-verified PO's evidence myself before touching anything (per AC): `git status --porcelain` +
-  `git diff`/`git log --stat` on all 3 `docs/data/auditor-tier{1,2,3}-last-healthy.json` files. Confirmed
-  T1/T2 both currently uncommitted-but-correctly-written (`M` in git status, right shape, fresh-ish
-  values); T3 byte-identical to HEAD (`835156181`, 2026-08-11T12:19:11Z) — a strictly stronger defect
-  than T1/T2 (never even reached disk, not merely uncommitted). `stat -f %Sm` on T1 confirms its mtime
-  has not moved since 19:32:31Z despite 13+ subsequent Tier-1 notebook cycles (c34→c47) all showing
-  DEGRADED/rag-service-memory-pressure status — i.e. T1's staleness during that window is the
-  documented SOLE-WRITER contract working AS SPECIFIED against a real ongoing degraded condition, not
-  itself a flow bug (pre-gate's own single/dual-sample mem check genuinely keeps returning FAILURE).
-- **Root cause found (T2/T3 shared):** `docs/agents/system-auditor/flow/main.md` §Tier-2/3 Heartbeat
-  Write writes the file to the WORKING TREE only — grepped the entire file for `git add`/`git commit`/
-  `auditor-notebook-commit` and confirmed the ONLY commit call anywhere is pathspec-scoped to the
-  notebook alone. Corroborated in git history: 3+ prior router hand-cleanups of exactly this stranding
-  (`10ab90027`, `9cc6771e1` "complete stranded tier2 heartbeat write", `bb7eb088d` — its own commit
-  message: "the Tier-2 flow spec appears to have no explicit commit step for this sidecar file"). T3
-  additionally showed the write itself silently not landing on a live cycle (telegram 4720 narrated a
-  write that never reached disk) — consistent with this file's own documented pattern of narrating
-  late-in-cycle steps instead of executing them on a long flow.
-- **Fix applied** (`docs/agents/system-auditor/flow/main.md`, +71/-3L): (1) §Tier-2/3 Heartbeat Write —
-  capture `HB_TS` once, add a mandatory POST-WRITE READ-BACK assert (mirrors the DASHBOARD/E-3 pattern
-  already used elsewhere in this file) emitting `[heartbeat-write] OK|ABORT` to `$MARKERS_FILE`; on `OK`,
-  call the SAME mutex-paired `scripts/auditor-notebook-commit.sh` a second time scoped only to the
-  heartbeat path, message convention matching the file's own prior hand-committed history
-  (`chore(data/auditor-tier<N>): heartbeat Tier-<N> cycle completed <ts>`), verdict-branched same as the
-  existing Notebook Commit step. (2) New mandatory RETURN-block `[HEARTBEAT]` line (never-omit
-  discipline, same class as `CONTRACT-CONTRADICTION`) — `NOT-APPLICABLE` unconditionally for tier-1,
-  `OK ts=<>|ABORT <marker>` for tier-2/3, grounded in this cycle's own marker, never assumed. (3)
-  §RAW-CITE GATE + §Tier-1 — Runtime Ping both gain an explicit rule that any RETURN/notebook claim of
-  "heartbeat written/refreshed" from the Tier-1 subagent is categorically false on every verdict (closes
-  the telegram-4711-vs-notebook-c46 divergence PO caught — c46's own committed Status was DEGRADED, not
-  the ALL_GREEN the chat claimed).
-- **Deliberately NOT done:** no new Tier-1 write path invented. `FIX-AUDITOR-TIER1-HEARTBEAT-HANDWRITE-
-  RECURS-SAME-DAY-AS-ITS-OWN-FLOW-FIX` (BACKLOG, next_agent=architect, AC-1 explicitly wants "a POSITIVE
-  path... invokes `auditor-tier1-probe.sh` `_write_heartbeat()` (or an equivalent callable)") already
-  owns that architecture decision — this exact surface has 4 confirmed prior violations plus a hard
-  pre-commit guard and multiple explicit PO rulings against ad hoc prose changes here; inventing a
-  parallel write path in this row would risk a 5th recurrence and duplicate/contradict that row's scope.
-  Also did NOT hand-stamp either `docs/data/auditor-tier{1,3}-last-healthy.json` — explicit prior PO
-  ruling ("Do NOT re-stamp it forward by hand") on the sibling `FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-
-  AGENT-WRITE-TIER1` row; the fixed flow will write+commit correctly on the next genuine clean cycle.
-- Verified both new bash snippets independently (`bash -n` syntax check + a live scratch run reproducing
-  write→read-back→commit-gate end to end) before committing.
-- **Board disposition (for router/PO — orch-state.json excluded from my commit_zone):** T2/T3 heartbeat
-  stranding is a concrete, closed fix. T1's "own chat RETURN text claims it was written" is closed
-  (narration can no longer say that). T1's actual missing-write gap during sustained-degraded windows
-  remains open, blocked on the architect-owned sibling row — this task should NOT be marked DONE for the
-  T1 half without that row landing; recommend REVIEW with a note, not DONE.
-- Gateway-less session (`mcp__gateway__call_tool` unbound, confirmed live). Task lock
-  `task:FIX-AUDITOR-T1-T3-CLEANEXIT-HEARTBEAT-STAMP-SKIPPED-T2-UNAFFECTED` was already held by this SAME
-  `owner_client_session` (re-entrant, prior `owner_agent="dev-team"` payload site=S1) — renewed via
-  `docker exec vn-market-intelligence-mcp-mcp-server-1 bun -e "..."` replicating `heartbeatTask()`'s
-  exact Rung-A SQL (`{changes:1}`), then released the same way at cycle end.
-
 ## EDIT 2026-08-12T14:02:17Z — task DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING (dev-team Review-Lane SECONDARY-Drain, `next_agent` self-named)
 - Row's own `agent_father_disposition_20260805T1658` recommended (a week ago) a narrow QA dispatch of
   brief §7 T-7/T-8 flow-fixture walkthroughs, decoupled from the 6-way `DESIGN-COWORK-FANOUT-T8-QA-TEST-
@@ -92,3 +38,55 @@
   tool available) — did not attempt to touch the dispatcher's outer `task:DESIGN-COWORK-FANOUT-T6-
   MARKET-WATCHER-SLOT-ROUTING` lock; per this dispatch's own instructions, leaving it for the router to
   release after RAW-verifying from git/board state.
+
+### Keep (maintenance) 12:56 — scheduled daily cron (`cron-agent-father.md`, `23 14 * * *` UTC)
+- Trigger: scheduled. Pre-Check gate: `git diff --name-only HEAD~3..HEAD` touched
+  `docs/agent-memory/decisions/*`, `docs/agent-memory/notebooks/{ba,qa}.md`, `docs/data/orch/orch-state.json`
+  — zero `.claude/agents/*.md` / `docs/agents/*/flow/*.md` matches → Steps 1-2 (scan-orphans) SKIPPED
+  per spec, went straight to Steps 3-5 with empty scan-orphans output.
+- Agents scanned: 42 (`.claude/agents/*.md`, `docs/agents/*/init.md`). Top-5 checks (targeting `init.md`
+  per the `dc430566c`-consolidation fix already applied 2026-08-07): Check 1 (fail-loud-protocol) 41/42
+  pass; Check 2 (Error Boundary, case-insensitive + one-hop pointer resolution) — all 9 dev-* zone
+  agents resolve clean via `docs/agents/developer/flow/microservice-main.md`'s Error Boundary block
+  (fixed `2026-08-07`, still present, re-verified live); Check 3 (boundary_rules) 41/42 pass; Check 4
+  (flow path resolves) 41/41 clean (python glob+regex verification against every `init.md`'s
+  `flow.default` path). The lone Check 1/3 fail both cycles is `semble-search` — confirmed (again) as
+  the already-escalated deliberate minimal tool-wrapper doc (`docs/agents/semble-search/init.md` has no
+  `agent:` YAML block at all, self-declares "Tool-style agent... no multi-step flow" in its own
+  `flow/main.md`) — LOW severity, carried-forward from the 2026-08-12 escalation, no new action.
+- **Auto-fix applied (1):** `docs/agents/dev-alert-engine/init.md` — Check 5 (version >90d stale) FAIL:
+  `2026-05-14` = 91 days old, first agent to actually cross the 90-day line this cycle (all 41 others
+  checked <90d). Confirmed checks 1/2/3/4 all pass for this agent before stamping (Check 2 resolves via
+  the same `microservice-main.md` one-hop as its 8 dev-* siblings). Stamped
+  `version: "2026-08-13"  # maintenance-review stamp (agent-father keep cycle) — checks 1/2/3/4 pass, no
+  content change` — same convention as the 4 prior maintenance-review stamps (dev-mainserver-crawls,
+  dev-vps-crawls, ops-mainserver-fetch, ops-vps-fetch, 2026-08-12). No content/behavior change.
+- Step 5 stale notebooks (>30d, informational only, via `git log -1 --date` per file, not raw mtime):
+  9/46 — idea-forge (102d), market-analyst (102d), semble-search (102d), qa-responder (77d),
+  dev-kinh-dich (34d), dev-news-fetch (33d), cowork-refactory-expert.md + its `-2026-07-11-fr1-atomic.md`
+  sibling (32d each), ops-mainserver-fetch (32d). 5 newly crossed the 30d line since the 2026-08-07
+  report (cowork-refactory-expert x2, dev-kinh-dich, dev-news-fetch, ops-mainserver-fetch) — informational
+  only, not auto-fixed, not an escalation (spec: "Do NOT delete — information only").
+- Side-observation (NOT scored — Steps 1-2 gated off again this cycle, same as 2026-08-07): spot-checked
+  `docs/agents/dev-news-fetch/` while running Check 2 — has `flow/main.md` but no `init.md` and no
+  `.claude/agents/dev-news-fetch.md` stub. NOT a new orphan: file self-declares "Owner agent: `developer`
+  (generic — no dev-news-fetch specialist in roster; routed here by zone)" — matches the standing
+  `reference_news_fetch_zone_specialist_is_developer_not_phantom_dev_news_fetch` precedent, a deliberate
+  thin zone-routing pointer, not a registered agent identity. No action.
+- Step 5b (`team-tool-recheck.md`) re-run unconditionally per spec: wrote
+  `docs/agent-memory/health/team-tool-recheck-2026-08-13-1256.md`. Positive control held — alert-commander
+  CRITICAL found (Bash + unqualified "no other writes" claim, origin `610110e16` 2026-07-31, now 13 days
+  unresolved), market-watcher + news-scout same pattern — all 3 identical to the 2026-08-12T12:57Z run,
+  zero change. Mechanical-enforcement status unchanged: PROSE-ONLY (0 `write_boundary` keys in
+  `system-map.json`; 0 `agent-write-boundary-guard` hits in either settings file).
+- No `mcp__gateway__call_tool` MCP binding this session (`.claude/agents/agent-father.md` tools line:
+  `Read, Edit, Write, Glob, Grep, Bash` — confirmed live, no gateway tool) — used keep.md's documented
+  gateway-less direct-pathspec-commit fallback for all writes this cycle, no task_claim/commit-mutex
+  wrapper attempted.
+- PO handoff (Step 7, findings only — no nested `Agent` spawn grant): all findings this cycle are
+  carried-forward, not new — 3 CRITICAL tool-boundary findings (alert-commander/market-watcher/news-scout,
+  13d unresolved, already PO-known from 6+ prior `team-tool-recheck` runs) and 1 LOW semble-search
+  guide-taxonomy gap (already logged 2026-08-12). No new escalation generated this cycle; the 1 auto-fix
+  (dev-alert-engine version stamp) needed no manual authoring.
+- PRE-CLAIM note: this run was router-spawned under lock `intent:agent-father:daily-cron`
+  (`owner_client_session=6194fe17-df8a-4b04-ad52-072efab100ee`) — router owns release, not narrated here.
