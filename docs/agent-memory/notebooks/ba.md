@@ -1,6 +1,10 @@
 # BA — Notebook
 
-**Last updated:** 2026-08-12 | **Sprint:** TICK-PREFLIGHT-USAGE-INSTRUMENTATION
+**Last updated:** 2026-08-13 | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+
+## FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T · 2026-08-13
+
+Review-lane triage (not a spec cycle — dispatched next_agent=ba on a stale REVIEW row, no sprint goal input). Did NOT decompose into dev-actionable task(s); escalated BLOCKED to po instead. Two premises in the row's own `ops_recon_note` (7 CORRUPT/7 NO_DATA/1 VPS_STALE) turned out stale once checked against adjacent evidence rather than trusted at face value: (1) its cited blocker `FIX-BCTC-SERVING-GATE-VPSSTALE-IGNORES-DEMAND-QUEUE-DEPTH` was already DONE_VERIFIED + archived 5 days before this dispatch — "cannot verify until it ships" was moot; (2) a same-family architect SPIKE the very next day (`docs/architecture-briefs/2026-08-07-bctc-q1-2026-servability-census.md`) ran a sharper both-plane live probe and reclassified 6 of ops's 7 "NO_DATA" tickers as a DIFFERENT row's scope (refine-backlog stall, not ingest stall) — only HUT+PLX are true members of this row, plus 2 new ones (BID, DAG) the census surfaced. That census's own RETURN asked po to adjudicate narrowing this row 6 days ago and was never actioned (its own SPIKE row is itself still stuck review[]/next_agent=po since 2026-08-07T20:12:35Z — a second stale-review-lane instance in the same cluster, flagged in the blocker note for po's attention). **Pattern to remember:** on a long-lived multi-agent-touched row, `updated_at`/the newest note is not automatically the freshest TRUTH — grep the board + architecture-briefs for anything dated AFTER the note being trusted before treating it as current; a shipped dependency or a later, more precise recon can silently outdate an in-row note that nobody went back to update. Full note: `docs/data/orch/orch-state.json` `.task_board.review[]` id=`FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T` field `ba_triage_note_20260813T1226Z`; decision journal at `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-ba.md`.
 
 ## Archive
 
