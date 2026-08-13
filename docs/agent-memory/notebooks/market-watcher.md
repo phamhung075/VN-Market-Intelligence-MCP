@@ -1,30 +1,28 @@
 # Market Watcher — Notebook
-**Last updated:** 2026-08-13 04:06 UTC | **Sprint:** active
+**Last updated:** 2026-08-13 08:09 UTC | **Sprint:** 2026-08-13
 
 ## Carry-over
-Offhours cycle 2026-08-13 00:07Z — market CLOSED, no intraday moves.
+(none)
 
-## Cycle Summary (Offhours 04:06 UTC)
-- Stocks monitored: 34 watchlist + 3 sweep-forced | Anomalies: 0 | Volume spikes: 0 | Chain confirms: 0
-- Regime: NEUTRAL | Carry: NEUTRAL | US10Y: RISK-OFF | DXY: USD STRENGTHENING
-- Offhours floor applied: σ≥2.5, vol_mult≥2.5x (prepost-equivalent — unchanged EOD prices)
-- Coverage: sweep forced on 3 oldest (17d stale: DBC, DPM, KDC — last 2026-07-25 08:10Z)
-- Duplicate guard: no signals emitted
+## Cycle (08:07–08:09 UTC, offhours mode)
+- Stocks: 6 | Anomalies: 1 (VIC -3.53%, 1.41σ) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | DXY: BEARISH | US10Y: FAIRLY_VALUED | fx_pressure: [VIC] | pe_risk: [VIC]
+- Sweep forced: 3 (DBC, DPM, KDC — stale >48h)
 
-## Metrics (Cycle 2026-08-13 04:06 UTC)
+## Metrics (cycle 2026-08-13 08:09 UTC)
 | Field | Value |
 |---|---|
-| cycles_run | 6 |
-| items_fetched | 3 |
-| signals_emitted | 0 |
+| cycles_run | 1 |
+| items_fetched | 6 |
+| signals_emitted | 1 |
 | signals_suppressed | 0 |
 | sweep_tickers_forced | 3 |
 | coverage_state_updated | pending |
 | exit_status | complete |
 
-## Technical
-- Gateway: UP (get_system_status OK, elapsed 37ms)
-- Market: OPEN (02:00–08:59 UTC) — cycle run in offhours mode per slot
-- Vol regime: NORMAL (20d percentile 68%, rv_20d 22.2%)
-- Macro: vnIndex stable, oil neutral, gold bullish, usdVnd=25870
-- Bootstrap: 37ms direct MCP call
+## Analysis
+VIC (-3.53% vs sector -2.0%): Real estate sector pressure. VIC PE 112.8 (6x sector norm) creates compression risk. Technical: BB oversold, MACD bearish, RSI neutral. Posted signal to alert-commander.
+
+Sweep tickers (DBC, DPM, KDC): Neutral technical setup, modest -0.6 to -1.8% moves, MACD bullish divergences. No anomalies, coverage-only.
+
+Macro backdrop: Elevated volatility (76th percentile), USD/VND bearish (25870), equities fairly valued vs deposits.
