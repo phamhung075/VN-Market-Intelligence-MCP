@@ -19505,7 +19505,7 @@
         "last_served_tick": "2026-08-12T16:53:15Z"
       }
     },
-    "_updated_at": "2026-08-13T07:49:43Z",
+    "_updated_at": "2026-08-13T09:19:33Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -22642,6 +22642,478 @@
         },
         "createdAt": "2026-08-13T07:36:35Z",
         "drained_at": "2026-08-13T07:49:43Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "190196005ff9b5d042c75bdc2ee0317b3327b7862e794fea9650534a9c1aa19c",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/market-watcher.md. actor=0454e9d8-b475-4230-95c9-8b7d943aa8b3 mode=warn escalated=true prior_warns=24 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-13T08:09:55Z",
+        "drained_at": "2026-08-13T09:19:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "65440294e67b1ab8c05978d6afcd3e2c39140677ac75fc0c33a5689352843afe",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=false prior_warns=1 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-13T08:47:00Z",
+        "drained_at": "2026-08-13T09:19:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d5db1ad9ce7f810a752fab7f8ef8ab1f6d193390bf9d6b2518be24f5e2c4d553",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=false prior_warns=2 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-13T09:18:49Z",
+        "drained_at": "2026-08-13T09:19:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9e8492e7aa7f19038db4922360bb927cf78c728fb2fadc4bd8c74b899cb96038",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-13T07:51:30Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-13T07:51:24Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "SLOTS_FIRED",
+          "reason": "spawned",
+          "nominal_tick": "07:45",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 27,
+          "note": "4th consecutive tick in PRESSURE_MODE=adaptive (stale_warning still false); alert-commander-market resolves via _cron_fallback=true so outcome identical to legacy"
+        },
+        "createdAt": "2026-08-13T07:51:30Z",
+        "drained_at": "2026-08-13T09:19:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d95041e888142975b6145ccb79c621c8de7760c132120146c7e8553ff06622e3",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-13T08:07:05Z",
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-market",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-market",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-market": "cron",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "news-scout-offhours": 240,
+            "market-watcher-offhours": 240,
+            "alert-commander-market": null,
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-13T08:06:57Z",
+          "last_fired_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-market",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "SLOTS_FIRED",
+          "reason": "spawned",
+          "nominal_tick": "08:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 26,
+          "note": "4-slot tick, first multi-slot fire this session; collision guard fired (agent_id=alert-commander matched 2 slots: alert-commander-market + alert-commander-critical) per Step 4b, WARN telegram sent to work channel, both spawned per R3; gatherer freshness-downgrade gate (Step 4.5) not applicable, signal_backlog=26!=0"
+        },
+        "createdAt": "2026-08-13T08:07:05Z",
+        "drained_at": "2026-08-13T09:19:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "797ab93e787f1f0a1eb7b9305bb61233b6c6354aff39bb8457f48b1a010ba7f0",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-13T08:24:42Z",
+          "matched_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/unified-agent/flow/chef.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "chef-intraday": "cadence",
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "chef-intraday": "120",
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-13T08:24:32Z",
+          "last_fired_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "08:15",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 26,
+          "note": "WORK verdict via preflight script; new_signals=1 at drain (cow-20260813T081115, to=po, outbound escalation from prior tick, left NEW for po's own drain)"
+        },
+        "createdAt": "2026-08-13T08:24:42Z",
+        "drained_at": "2026-08-13T09:19:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e99cf07c7a9aa5a6832b8f86ca131a169733ad3b933d72e89a7d29306a8d3172",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-13T08:41:34Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-13T08:41:25Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "08:30",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 27,
+          "note": "tick-snapshot Step 4.7 written from verbatim get_cycle_bootstrap/get_macro_snapshot tool output this cycle (no hand-reconstruction) — direct follow-up to cow-20260813T083022 defect signal"
+        },
+        "createdAt": "2026-08-13T08:41:34Z",
+        "drained_at": "2026-08-13T09:19:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "75e450ebcaf13491fd505c8e24f4d22ece24bf15ca7205be89ba8b1ca6c5756e",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-13T08:56:15Z",
+          "matched_slots": [
+            "chef-eod",
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "chef-eod",
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/unified-agent/flow/chef.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "chef-eod": "cron",
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "chef-eod": null,
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-13T08:55:52Z",
+          "last_fired_slots": [
+            "chef-eod",
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "08:45",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 31,
+          "note": "chef-eod (guaranteed) + alert-commander-market (cron) matched same tick; CHEF same-tick mutex evaluated (no coincidence, chef_mutex_applied=false); tick-snapshot Step 4.7 written verbatim via Write tool for 3rd consecutive tick"
+        },
+        "createdAt": "2026-08-13T08:56:15Z",
+        "drained_at": "2026-08-13T09:19:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b538680468ea6fb677b8d8dbc5f8f0a4a2aa0f190b596bfb6d38376b67ac1273",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "tick_telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T09:00Z",
+          "drift_min": 6,
+          "silent": false,
+          "matched_slots": [
+            "refine-bctc-slot-1"
+          ],
+          "spawned": [
+            "refine-bctc-slot-1"
+          ],
+          "errors": [],
+          "chef_mutex_applied": false,
+          "pressure_mode": "adaptive"
+        },
+        "createdAt": "2026-08-13T09:10:38Z",
+        "drained_at": "2026-08-13T09:19:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2a5aa819f1e702e108565d02eedaf5a4c88a2eeaa5d378fea74505425b129162",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/unified-agent.md",
+          "tied_sections": "5:20260813000000000:## Session: 2026-08-13 (intraday 08:13 UTC)\n25:20260813000000000:## Session: 2026-08-13 (intraday 06:22 UTC)\n44:20260813000000000:## Session: 2026-08-13 (morning)\n65:20260813000000000:## Session: 2026-08-13 (intraday 05:22 UTC)\n81:20260813000000000:## Session: 2026-08-13 (intraday 04:23 UTC)",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-13T08:27:25Z",
+        "drained_at": "2026-08-13T09:19:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e528563a51fbbf54f77d22bd38e66ddc0f57dfdd03b2f4895d23399aabf83be5",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/unified-agent.md",
+          "tied_sections": "5:20260813000000000:## Session: 2026-08-13 (eod 08:45 UTC)\n24:20260813000000000:## Session: 2026-08-13 (intraday 08:13 UTC)\n44:20260813000000000:## Session: 2026-08-13 (intraday 06:22 UTC)\n63:20260813000000000:## Session: 2026-08-13 (morning)\n84:20260813000000000:## Session: 2026-08-13 (intraday 05:22 UTC)",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-13T08:59:13Z",
+        "drained_at": "2026-08-13T09:19:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "75cdb291ca4f76e58ee6a8d5cde1c0e3012e5e2c1bf0e64337cae32d276a7914",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/unified-agent.md",
+          "tied_sections": "5:20260813000000000:## Session: 2026-08-13 (eod 08:45 UTC)\n24:20260813000000000:## Session: 2026-08-13 (intraday 08:13 UTC)\n44:20260813000000000:## Session: 2026-08-13 (intraday 06:22 UTC)\n63:20260813000000000:## Session: 2026-08-13 (morning)",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-13T08:59:14Z",
+        "drained_at": "2026-08-13T09:19:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5b3f1d4efcd8690420d0b1aba485a9275d92de58c3abb775e381363441f48083",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_prune_dropped_newest_dated_section",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/unified-agent.md",
+          "line": 81,
+          "heading": "## Session: 2026-08-13 (intraday 04:23 UTC)",
+          "section_count": 7,
+          "non_sentinel_section_count": 5,
+          "sentinel_section_count": 2,
+          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+          "action_required": "review_dropped_section"
+        },
+        "createdAt": "2026-08-13T08:27:25Z",
+        "drained_at": "2026-08-13T09:19:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e6257fdeb067baf9778637fa498ad45334c4d318d6cfc219696fed712228c9da",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_prune_dropped_newest_dated_section",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/unified-agent.md",
+          "line": 84,
+          "heading": "## Session: 2026-08-13 (intraday 05:22 UTC)",
+          "section_count": 7,
+          "non_sentinel_section_count": 5,
+          "sentinel_section_count": 2,
+          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+          "action_required": "review_dropped_section"
+        },
+        "createdAt": "2026-08-13T08:59:13Z",
+        "drained_at": "2026-08-13T09:19:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "585fe2c691fc37c4c62e73ec86972ec0ec9c9faa216ae408eb61f928a4c592cc",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_prune_dropped_newest_dated_section",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/unified-agent.md",
+          "line": 63,
+          "heading": "## Session: 2026-08-13 (morning)",
+          "section_count": 6,
+          "non_sentinel_section_count": 4,
+          "sentinel_section_count": 2,
+          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+          "action_required": "review_dropped_section"
+        },
+        "createdAt": "2026-08-13T08:59:14Z",
+        "drained_at": "2026-08-13T09:19:33Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

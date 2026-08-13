@@ -3,20 +3,20 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-08-06T09:06:00Z",
+    "fire_time": "2026-08-13T08:41:34Z",
     "matched_slots": [
-      "refine-bctc-slot-1"
+      "alert-commander-market"
     ],
     "won_slots": [
-      "refine-bctc-slot-1"
+      "alert-commander-market"
     ],
     "held_by_other": [],
     "all_held": false,
     "spawned": [
-      "docs/agents/refine_bctc_md/flow/main.md"
+      "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 3,
+    "drift_min": 6,
     "errors": [],
     "pressure_mode": "adaptive",
     "calendar_status": "unknown",
@@ -25,30 +25,30 @@
     "downgraded": [],
     "chef_mutex_applied": false,
     "due_reasons": {
-      "refine-bctc-slot-1": "cron"
+      "alert-commander-market": "cron"
     },
     "cadence_minutes": {
-      "refine-bctc-slot-1": null
+      "alert-commander-market": null
     },
-    "last_fired_timestamp": "2026-08-06T09:05:45Z",
+    "last_fired_timestamp": "2026-08-13T08:41:25Z",
     "last_fired_slots": [
-      "refine-bctc-slot-1"
+      "alert-commander-market"
     ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
-    "nominal_tick": "09:00",
+    "nominal_tick": "08:30",
     "leader_lock": "acquired",
     "dev_head": "unknown",
     "devq": 5,
-    "signal_backlog": 21,
-    "note": "tick-snapshot write skipped this tick (minute-boundary drift 09:04->09:05); refine_bctc_md falls back to direct get_cycle_bootstrap"
+    "signal_backlog": 27,
+    "note": "tick-snapshot Step 4.7 written from verbatim get_cycle_bootstrap/get_macro_snapshot tool output this cycle (no hand-reconstruction) — direct follow-up to cow-20260813T083022 defect signal"
   },
   "priority": "low",
-  "createdAt": "2026-08-06T09:06:00Z",
+  "createdAt": "2026-08-13T08:41:34Z",
   "_processed": {
-    "fingerprint": "7d165b987f550c589cf3b94dda7b9741db829d03c13b27e4f8d14f27b7b4e569",
-    "processedAt": "2026-08-06T09:15:50Z",
+    "fingerprint": "e99cf07c7a9aa5a6832b8f86ca131a169733ad3b933d72e89a7d29306a8d3172",
+    "processedAt": "2026-08-13T09:19:33Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

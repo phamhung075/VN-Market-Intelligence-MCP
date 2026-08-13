@@ -3,52 +3,58 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-08-06T07:36:41Z",
+    "fire_time": "2026-08-13T08:24:42Z",
     "matched_slots": [
+      "chef-intraday",
       "alert-commander-market"
     ],
     "won_slots": [
+      "chef-intraday",
       "alert-commander-market"
     ],
     "held_by_other": [],
     "all_held": false,
     "spawned": [
+      "docs/agents/unified-agent/flow/chef.md",
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 3,
+    "drift_min": 6,
     "errors": [],
     "pressure_mode": "adaptive",
-    "calendar_status": "open",
+    "calendar_status": "unknown",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
     "due_reasons": {
+      "chef-intraday": "cadence",
       "alert-commander-market": "cron"
     },
     "cadence_minutes": {
+      "chef-intraday": "120",
       "alert-commander-market": null
     },
-    "last_fired_timestamp": "2026-08-06T07:36:14Z",
+    "last_fired_timestamp": "2026-08-13T08:24:32Z",
     "last_fired_slots": [
+      "chef-intraday",
       "alert-commander-market"
     ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
-    "nominal_tick": "07:30",
+    "nominal_tick": "08:15",
     "leader_lock": "acquired",
     "dev_head": "unknown",
     "devq": 5,
-    "signal_backlog": 0,
-    "note": "single-slot tick (cron-due alert-commander-market only, no cadence-due CHEF slot this fire); to:po signal_queue rows left at NEW per feedback_cowork_step0a_blanket_ack_buries_other_agents_signals.md — none present this tick anyway (0 NEW rows)"
+    "signal_backlog": 26,
+    "note": "WORK verdict via preflight script; new_signals=1 at drain (cow-20260813T081115, to=po, outbound escalation from prior tick, left NEW for po's own drain)"
   },
   "priority": "low",
-  "createdAt": "2026-08-06T07:36:41Z",
+  "createdAt": "2026-08-13T08:24:42Z",
   "_processed": {
-    "fingerprint": "841bfe96f864010333a82a0d88ed34e2215491506a2c9113bc23707677220a98",
-    "processedAt": "2026-08-06T07:42:19Z",
+    "fingerprint": "797ab93e787f1f0a1eb7b9305bb61233b6c6354aff39bb8457f48b1a010ba7f0",
+    "processedAt": "2026-08-13T09:19:33Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

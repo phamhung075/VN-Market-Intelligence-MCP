@@ -3,58 +3,52 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-08-06T07:23:30Z",
+    "fire_time": "2026-08-13T07:51:30Z",
     "matched_slots": [
-      "chef-intraday",
       "alert-commander-market"
     ],
     "won_slots": [
-      "chef-intraday",
       "alert-commander-market"
     ],
     "held_by_other": [],
     "all_held": false,
     "spawned": [
-      "docs/agents/unified-agent/flow/chef.md",
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 3,
+    "drift_min": 6,
     "errors": [],
     "pressure_mode": "adaptive",
-    "calendar_status": "open",
+    "calendar_status": "unknown",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
     "due_reasons": {
-      "chef-intraday": "cadence",
       "alert-commander-market": "cron"
     },
     "cadence_minutes": {
-      "chef-intraday": "60",
       "alert-commander-market": null
     },
-    "last_fired_timestamp": "2026-08-06T07:23:12Z",
+    "last_fired_timestamp": "2026-08-13T07:51:24Z",
     "last_fired_slots": [
-      "chef-intraday",
       "alert-commander-market"
     ],
     "last_fired_write_errors": null,
-    "classification": "FIRE",
+    "classification": "SLOTS_FIRED",
     "reason": "spawned",
-    "nominal_tick": "07:15",
+    "nominal_tick": "07:45",
     "leader_lock": "acquired",
     "dev_head": "unknown",
     "devq": 5,
-    "signal_backlog": 1,
-    "note": "2 slots fired: chef-intraday (cadence-due, 60min) + alert-commander-market (cron). Both to:po signal_queue rows left NEW (not cowork-consumed) per feedback_cowork_step0a_blanket_ack_buries_other_agents_signals."
+    "signal_backlog": 27,
+    "note": "4th consecutive tick in PRESSURE_MODE=adaptive (stale_warning still false); alert-commander-market resolves via _cron_fallback=true so outcome identical to legacy"
   },
   "priority": "low",
-  "createdAt": "2026-08-06T07:23:30Z",
+  "createdAt": "2026-08-13T07:51:30Z",
   "_processed": {
-    "fingerprint": "e583adf274d38f8c010c8676b0692e51bce6b7bef522272887c5d07b1748d143",
-    "processedAt": "2026-08-06T07:29:17Z",
+    "fingerprint": "9e8492e7aa7f19038db4922360bb927cf78c728fb2fadc4bd8c74b899cb96038",
+    "processedAt": "2026-08-13T09:19:33Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
