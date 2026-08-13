@@ -599,6 +599,20 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-13T13:00Z",
         "dedup_key": "microservice_degraded:rag-service-1:A-30"
+      },
+      {
+        "id": "sys-20260813T134703-3fb8",
+        "ts": "2026-08-13T13:47:03Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service-1 sustained elevated memory baseline — 3 consecutive high-band readings (90.75% → 88.88% → 90.40%)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": null,
+        "dedup_key": "microservice_degraded:rag-service-1:A-30-SUSTAINED"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",

@@ -214,5 +214,9 @@
   "microservice_degraded:rag-service:A-30": {
     "ts": "2026-08-13T08:45:52Z",
     "sev": 2
+  },
+  "microservice_degraded:rag-service-1:A-30-SUSTAINED": {
+    "ts": "2026-08-13T13:47:02Z",
+    "sev": 2
   }
 }
