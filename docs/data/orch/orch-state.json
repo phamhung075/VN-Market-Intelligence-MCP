@@ -133,8 +133,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-13T14:50:58Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-13T15:19:05Z",
+    "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
       {
@@ -573,6 +573,17 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-13T15:00Z",
         "dedup_key": "microservice_degraded:rag-service-1:A-30"
+      },
+      {
+        "id": "cow-20260813T151905",
+        "ts": "2026-08-13T15:19Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "bug-escalation",
+        "summary": "bctc-analyst.md notebook: PostToolUse hook reverted Edit restoring c161 -> stuck at 2 sections, violates notebook-write SKILL.md AC-2 (keep 3)",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -13218,6 +13229,42 @@
             "observed_at": "2026-08-12T16:37:00Z"
           }
         }
+      },
+      {
+        "id": "FACTORY-GUARD-CI-DEADCODE-IMPL",
+        "type": "SPRINT-S",
+        "title": "Implement dead-code-gate CI guardrail (script + delete confirmed-orphaned trees + workflow wiring)",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "size": "M",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-dead-code-gate",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md#3-build-vs-plan--decomposed-not-self-implemented",
+        "dev_agent": "developer",
+        "next_agent": "qa",
+        "parent_task": "FACTORY-GUARD-CI-dead-code-gate",
+        "created_at": "2026-07-24T19:01:20Z",
+        "created_by": "architect",
+        "updated_at": "2026-08-13T15:19:00Z",
+        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "entered_review_at": "2026-07-30T00:54:09Z",
+        "review_note": "New scripts/audits/dead-code-gate.sh (--check, zero-tolerance, 4 checks on TRACKED files: tracked *.bak/*.backup/*.patch, tracked _deprecated/ path segment, Go/TS twin scaffold, //go:build ignore). Fixed all live confirmed-orphaned debt first: deleted 2 stray root docker-compose.yml.backup/.patch, mcp-server's 2 _deprecated/ trees + infrastructure/_deprecated/kinhDichWrapper.ts + the dedicated 1077-kinh-dich-wrapper.test.ts (zero live importers independently grep-verified), pdf-extractor's _deprecated/mock_echo (import-linter clean), stock-price's _deprecated/services_v1.go+test (the only 2 //go:build ignore files repo-wide, golangci-lint clean). Surgical edit to 1081-sprint-054-smoke.test.ts (removed appendKinhDich import + Scenario 5/5b/5c it() blocks only, 17->14 tests, rest of the 569L suite untouched). apps/technical-analysis/package.json trimmed bun-types/typescript devDeps -- its src/ + __tests__/ were ALREADY independently deleted 2026-07-28 (commit 099afddd3, FACTORY-TECHANALYSIS-delete-orphaned-ts-service) before this row was dispatched, explaining the gap vs the architect brief's ~2,070 LOC estimate. Check-3 (twin scaffold) DEVIATES from the board-row note's literal \"any Go cmd/server + package.json + src/ combo bans\" phrasing: that rule permanently false-positives on the LIVE apps/news-fetch (legitimate WIP parallel Go port -- own news-fetch-go-lint CI job + composition-root-logic-gate coverage -- sitting alongside the TS/Bun service its Dockerfile actually builds/deploys). Refined signal generalizes the confirmed technical-analysis dead shape instead: flag only when the service's Dockerfile has ZERO src reference (no Dockerfile also fails, conservative default). New scripts/audits/dead-code-gate.test.sh: 8/8 PASS -- all 4 DoD synthetic-offender cases, a tracked-vs-untracked negative control proving tracked-only semantics, and a twin-scaffold Dockerfile-blind-fails/Dockerfile-referencing-passes pair proving the news-fetch exemption is deliberate not accidental. Wired dead-code-gate job in .github/workflows/ci.yml + CANONICAL pointer in dev-standards.md. Verified: dead-code-gate.sh --check exits 0 on live repo; mcp-server tsc --noEmit clean, eslint src/ clean, 1081-*.test.ts 14/14 pass; technical-analysis go build/go vet/go test ./... clean, golangci-lint run 0 issues, dashboard/build.sh green (35/35 sandbox scenarios + headless render gate, esbuild/playwright-core confirmed still load-bearing post-trim); pdf-extractor lint-imports 3/3 contracts kept; stock-price golangci-lint run 0 issues. Full bun test: standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent full-suite red only -- ran a 3-pass base-vs-head A/B (disposable git worktree at pre-task HEAD, then HEAD twice): base 20fail/9files, head-run1 24fail/10files, head-run2 2fail/2files, every failing file either present in base's pre-existing set or a run-to-run flip on IDENTICAL code (sampled files pass 100% clean standalone) -- zero deterministic net-new failures from this task. Structural note: no MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) -- did all zone work directly, flipped this board row via scripts/orch-apply.sh myself (permitted, pure bash); could not release task:FACTORY-GUARD-CI-DEADCODE-IMPL or send Telegram -- coordinating dev-team session must pick that up. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S31. QA next. | [QA] Review Record (direct-commit verify) 2026-08-13T15:17:05Z -- APPROVED, DONE_VERIFIED. Row carried no .commit/.files[] -- derived commit 448b41b0a via git log --all -- scripts/audits/dead-code-gate.sh, confirmed ancestor of main AND origin/main; git show --stat matches all 24 claimed files exactly. This is the DEADCODE-IMPL child (real code); the sibling design-only brief row (FACTORY-GUARD-CI-dead-code-gate, commit 3b4d5a0d3) was a separate already-verified QA cycle on 2026-08-12, not re-litigated here. RAW re-ran fresh, not trusted from prose: dead-code-gate.sh --check on live repo -> PASS 0 offenders; dead-code-gate.test.sh 8/8 PASS (4 DoD offender cases + tracked-only control + twin-scaffold Dockerfile pair). Confirmed CI job wired at .github/workflows/ci.yml:420 + dev-standards.md CANONICAL pointer present. All 7 named deletions confirmed gone from tracked tree; zero dangling imports (only harmless historical comments reference deleted kinhDichWrapper/reuters.ts). Downstream zone claims reproduced fresh: mcp-server tsc --noEmit 0 errors, eslint src/ 0 issues, 1081-sprint-054-smoke.test.ts 14/14; technical-analysis go build/vet/test clean, golangci-lint 0 issues, dashboard/build.sh 35/35 scenarios + headless render PASS; pdf-extractor lint-imports 3 contracts kept/0 broken; stock-price golangci-lint 0 issues. DDD scan: analysis.ts's infra imports are interface-layer composition-root pattern, not a violation. Security scan clean. mock-guard.sh PASS. Full bun test fresh run: 15262 pass/40 skip/56 fail/15358 total -- zero overlap between the 56 fail names and any file this task touched, all sit in the documented pre-existing FIX-MCP-SUITE-HEALTH-BASELINE flake band. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S106.",
+        "claimed_at": "2026-08-13T14:56:59Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "qa_verified_at": "2026-08-13T15:18:59Z",
+        "qa_verified_by": "qa",
+        "updated_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bash: dead-code-gate.sh --check + dead-code-gate.test.sh + bun tsc/eslint/test + go build/vet/test/golangci-lint + dashboard/build.sh + lint-imports + full bun test",
+            "args": "commit 448b41b0a (derived via git log --all -- scripts/audits/dead-code-gate.sh); re-ran scripts/audits/dead-code-gate.sh --check + dead-code-gate.test.sh on live repo; mcp-server bun tsc --noEmit + eslint src/ + src/__tests__/1081-sprint-054-smoke.test.ts + full bun test; technical-analysis go build/vet/test ./... + golangci-lint run + dashboard/build.sh; pdf-extractor lint-imports; stock-price golangci-lint run",
+            "live_value_observed": "dead-code-gate.sh --check: PASS 0 offenders; dead-code-gate.test.sh: 8/8 PASS; tsc: 0 errors; eslint: 0 issues; 1081 smoke: 14/14 pass; full bun test: 15262 pass/40 skip/56 fail/15358 total (zero overlap between fails and touched files); go build/vet/test: all clean/pass; golangci-lint (technical-analysis + stock-price): 0 issues each; dashboard/build.sh: 35/35 scenarios + headless render PASS; lint-imports: 3 contracts kept/0 broken; mock-guard.sh: PASS",
+            "observed_at": "2026-08-13T15:18:59Z"
+          }
+        }
       }
     ],
     "head": {
@@ -19050,31 +19097,6 @@
         "secondary_claimed_at": "2026-08-13T11:59:22Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "ops"
-      },
-      {
-        "id": "FACTORY-GUARD-CI-DEADCODE-IMPL",
-        "type": "SPRINT-S",
-        "title": "Implement dead-code-gate CI guardrail (script + delete confirmed-orphaned trees + workflow wiring)",
-        "status": "QA",
-        "priority": "P2",
-        "size": "M",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-dead-code-gate",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md#3-build-vs-plan--decomposed-not-self-implemented",
-        "dev_agent": "developer",
-        "next_agent": "qa",
-        "parent_task": "FACTORY-GUARD-CI-dead-code-gate",
-        "created_at": "2026-07-24T19:01:20Z",
-        "created_by": "architect",
-        "updated_at": "2026-08-13T14:56:59Z",
-        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "entered_review_at": "2026-07-30T00:54:09Z",
-        "review_note": "New scripts/audits/dead-code-gate.sh (--check, zero-tolerance, 4 checks on TRACKED files: tracked *.bak/*.backup/*.patch, tracked _deprecated/ path segment, Go/TS twin scaffold, //go:build ignore). Fixed all live confirmed-orphaned debt first: deleted 2 stray root docker-compose.yml.backup/.patch, mcp-server's 2 _deprecated/ trees + infrastructure/_deprecated/kinhDichWrapper.ts + the dedicated 1077-kinh-dich-wrapper.test.ts (zero live importers independently grep-verified), pdf-extractor's _deprecated/mock_echo (import-linter clean), stock-price's _deprecated/services_v1.go+test (the only 2 //go:build ignore files repo-wide, golangci-lint clean). Surgical edit to 1081-sprint-054-smoke.test.ts (removed appendKinhDich import + Scenario 5/5b/5c it() blocks only, 17->14 tests, rest of the 569L suite untouched). apps/technical-analysis/package.json trimmed bun-types/typescript devDeps -- its src/ + __tests__/ were ALREADY independently deleted 2026-07-28 (commit 099afddd3, FACTORY-TECHANALYSIS-delete-orphaned-ts-service) before this row was dispatched, explaining the gap vs the architect brief's ~2,070 LOC estimate. Check-3 (twin scaffold) DEVIATES from the board-row note's literal \"any Go cmd/server + package.json + src/ combo bans\" phrasing: that rule permanently false-positives on the LIVE apps/news-fetch (legitimate WIP parallel Go port -- own news-fetch-go-lint CI job + composition-root-logic-gate coverage -- sitting alongside the TS/Bun service its Dockerfile actually builds/deploys). Refined signal generalizes the confirmed technical-analysis dead shape instead: flag only when the service's Dockerfile has ZERO src reference (no Dockerfile also fails, conservative default). New scripts/audits/dead-code-gate.test.sh: 8/8 PASS -- all 4 DoD synthetic-offender cases, a tracked-vs-untracked negative control proving tracked-only semantics, and a twin-scaffold Dockerfile-blind-fails/Dockerfile-referencing-passes pair proving the news-fetch exemption is deliberate not accidental. Wired dead-code-gate job in .github/workflows/ci.yml + CANONICAL pointer in dev-standards.md. Verified: dead-code-gate.sh --check exits 0 on live repo; mcp-server tsc --noEmit clean, eslint src/ clean, 1081-*.test.ts 14/14 pass; technical-analysis go build/go vet/go test ./... clean, golangci-lint run 0 issues, dashboard/build.sh green (35/35 sandbox scenarios + headless render gate, esbuild/playwright-core confirmed still load-bearing post-trim); pdf-extractor lint-imports 3/3 contracts kept; stock-price golangci-lint run 0 issues. Full bun test: standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent full-suite red only -- ran a 3-pass base-vs-head A/B (disposable git worktree at pre-task HEAD, then HEAD twice): base 20fail/9files, head-run1 24fail/10files, head-run2 2fail/2files, every failing file either present in base's pre-existing set or a run-to-run flip on IDENTICAL code (sampled files pass 100% clean standalone) -- zero deterministic net-new failures from this task. Structural note: no MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) -- did all zone work directly, flipped this board row via scripts/orch-apply.sh myself (permitted, pure bash); could not release task:FACTORY-GUARD-CI-DEADCODE-IMPL or send Telegram -- coordinating dev-team session must pick that up. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S31. QA next.",
-        "claimed_at": "2026-08-13T14:56:59Z",
-        "claimed_by": "dev-team (review-lane qa-drain)"
       }
     ],
     "_closed_signals_20260614": {
@@ -19228,7 +19250,7 @@
         "last_served_tick": "2026-08-13T14:23:06Z"
       }
     },
-    "_updated_at": "2026-08-13T14:55:50Z",
+    "_updated_at": "2026-08-13T15:20:29Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23642,6 +23664,317 @@
         },
         "createdAt": "2026-08-13T14:53:45Z",
         "drained_at": "2026-08-13T14:54:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2d27a083ba68a9d88279b3f27762993c794bb17beb0a8d8dd4c2c14d69f000d2",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Phát triển bất động sản (Đất Xanh Group) — dự án nhà ở, khu đô thị TP.HCM và các tỉnh phía Nam",
+          "customer": "Người mua nhà ở, nhà đầu tư thứ cấp BĐS khu vực phía Nam",
+          "ops": "DATA GAP — get_bctc_full trả về 'Chưa có dữ liệu BCTC' (22 chu kỳ liên tiếp chưa khắc phục); get_cash_flow trả về giá trị phi thực tế (Q1-2026 operating_cf≈4.2×10^18 VND, Q4-2025 financing_cf≈1.8×10^15 VND — lỗi trích xuất/overflow, KHÔNG dùng để phân tích, đã báo dev-team 2026-08-13T00:15Z, chưa xử lý)",
+          "mgmt": "PE 66.5 vs median ngành 16.1 (premium +312%), ROE 1.9% DƯỚI median 7.3%; dòng tiền nước ngoài 5 phiên +11K cp net (mạnh hơn ngành, trái chiều verdict AVOID)",
+          "valuation": {
+            "pe": 66.5,
+            "pe_sector_median": 16.1,
+            "pb": 1.2,
+            "pb_sector_median": 1.3,
+            "ey_spread_pp": -3.5,
+            "verdict": "AVOID"
+          },
+          "kinhdich": {
+            "que": "Ky Te (63)",
+            "xu_huong": "THUAN LOI",
+            "khuyen_nghi": "GIU",
+            "do_tin_cay": 1
+          },
+          "esc_gate": {
+            "ESC-1": "unevaluable (no Bash/Glob grant)",
+            "ESC-2": "unevaluable (no BCTC data)",
+            "ESC-3": "unevaluable (no BCTC data; get_cash_flow output implausible/overflow)",
+            "ESC-4": "unevaluable (no BCTC data)",
+            "ESC-5": "unevaluable (no report_id — no BCTC data on file)"
+          },
+          "data_quality": {
+            "bctc_available": false,
+            "note": "Chưa có dữ liệu BCTC — 22nd+ consecutive cycle; standing dev-team pickup pending for cash-flow overflow anomaly (docs/signals/bctc-analyst-20260813T001500Z.json)"
+          },
+          "cycle_ts": "2026-08-13T15:14:00Z",
+          "slot": "bctc-analyst-slot-1"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-13T15:20:29Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6823467814cb9d3568b9f5aa972f004c2a1fa2ffce7fc4016d4eea61e6eda212",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Xuất khẩu phần mềm, tích hợp hệ thống, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+          "customer": "Doanh nghiệp CNTT nội địa + nước ngoài (Nhật Bản, Mỹ, Châu Âu tăng +44,4%), thuê bao viễn thông, học viên FPT Edu",
+          "ops": "Biên LN gộp 34.0%, LN thuần HĐKD 22.0% (2.747,8 tỷ); doanh thu thuần 12.480 tỷ (-22,3% YoY chưa điều chỉnh, +8,7% YoY đã điều chỉnh sau đổi phương pháp hợp nhất FTEL từ hợp nhất toàn bộ sang vốn CSH từ 01/01/2026)",
+          "mgmt": "ROE ngành (annualized) 28.3% trên median 10.6%; LNST +13.8% YoY (đã điều chỉnh); Q2-2026 vẫn CHƯA được trích xuất dù PDF có sẵn từ 2026-08-01 (12d+ trễ)",
+          "valuation": {
+            "pe": 13.8,
+            "pe_sector_median": 17.3,
+            "pb": 3.6,
+            "pb_sector_median": 1.5,
+            "ey_spread_pp": 2.25,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Minh Di (36)",
+            "xu_huong": "BAT LOI",
+            "khuyen_nghi": "GIU",
+            "do_tin_cay": 0.25
+          },
+          "esc_gate": {
+            "ESC-1": "unevaluable (no Bash/Glob grant)",
+            "ESC-2": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "ESC-3": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+              "guard_held": true
+            },
+            "ESC-4": {
+              "result": false,
+              "non_operating_share_pct": 2
+            },
+            "ESC-5": {
+              "result": true,
+              "low_confidence_unit_ids": [
+                "unit-0008",
+                "unit-0009",
+                "unit-0010",
+                "unit-0011",
+                "unit-0012",
+                "unit-0013",
+                "unit-0014"
+              ],
+              "min_confidence": 0.45,
+              "escalation_status": "GUARD-HELD",
+              "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
+            }
+          },
+          "data_quality": {
+            "stale": true,
+            "stale_since": "2026-08-11T14:37:49.000Z",
+            "stale_age_hours": 48.53,
+            "sla_hours": 48,
+            "note": "FR-DEGRADE-01 last-known-good; Q2-2026 not yet extracted, showing Q1-2026"
+          },
+          "cycle_ts": "2026-08-13T15:14:00Z",
+          "slot": "bctc-analyst-slot-1"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-13T15:20:29Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "487084705cd37fe137e0f7b44fdd9282bc003d9e1783ba5176ab8ad4130e75df",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Thép xây dựng, tôn mạ, ống thép, container (Hòa Phát Group)",
+          "customer": "Doanh nghiệp xây dựng/hạ tầng nội địa, xuất khẩu tôn thép khu vực Đông Nam Á/EU",
+          "ops": "Biên LN gộp 15.8% (8.365,1 tỷ); Operating Profit=0 tỷ VND — lỗi trích xuất OCR (Net Profit 9.055,9 tỷ VƯỢT Gross Profit 8.365,1 tỷ, validation flag 'possible non-operating income'), 18 chu kỳ liên tiếp chưa khắc phục — không phải tín hiệu tài chính thực",
+          "mgmt": "ROE ngành (annualized) 12.7% trên median 2.9%; refine_status=PARTIAL, không có report_id DONE cho ESC-5",
+          "valuation": {
+            "pe": 14.2,
+            "pe_sector_median": 32.6,
+            "pb": 1.7,
+            "pb_sector_median": 0.9,
+            "ey_spread_pp": 2.04,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Su (7)",
+            "xu_huong": "TRUNG TINH",
+            "khuyen_nghi": "GIU",
+            "do_tin_cay": 0.37
+          },
+          "esc_gate": {
+            "ESC-1": "unevaluable (no Bash/Glob grant)",
+            "ESC-2": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "ESC-3": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+              "guard_held": true
+            },
+            "ESC-4": {
+              "result": "DISCARDED — operating_profit=0 known OCR corruption, non_operating_share formula unusable (18th+ cycle)"
+            },
+            "ESC-5": {
+              "result": false,
+              "reason": "report_id null, existing_refine_status=PARTIAL"
+            }
+          },
+          "data_quality": {
+            "stale": true,
+            "stale_since": "2026-08-11T14:37:49.000Z",
+            "stale_age_hours": 48.53,
+            "sla_hours": 48,
+            "note": "FR-DEGRADE-01 last-known-good; Q2-2026 not yet extracted, showing Q1-2026; operating_cf=0 in get_cash_flow Q1-2026 also corrupt"
+          },
+          "cycle_ts": "2026-08-13T15:14:00Z",
+          "slot": "bctc-analyst-slot-1"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-13T15:20:29Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e776e6e1fe0b0c676f00b5e769a8a8fb3cab98b1361706ac75eef6bd78675b8d",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Ngân hàng bán lẻ và doanh nghiệp, tín dụng, bancassurance, thanh toán quốc tế",
+          "customer": "Khách hàng cá nhân đô thị, doanh nghiệp lớn/vừa, XNK — ngân hàng quốc doanh vốn hóa lớn nhất HOSE",
+          "ops": "LN thuần HĐKD 80.9% doanh thu (14.088,6 tỷ); OCF/NI ratio Q1=1.37 (lành mạnh, divergence 0.368 < ngưỡng ESC-3 0.40)",
+          "mgmt": "ROE ngành (annualized) 16.7% DƯỚI median ngành 17.6%; Q1-2026 đã nộp (2026-07-19), không overdue; refine_status=PARTIAL nên ESC-5 không đánh giá được",
+          "valuation": {
+            "pe": 14.1,
+            "pe_sector_median": 9,
+            "pb": 2.2,
+            "pb_sector_median": 1.5,
+            "ey_spread_pp": 2.09,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Thang (46)",
+            "xu_huong": "THUAN LOI",
+            "khuyen_nghi": "GIU",
+            "do_tin_cay": 1
+          },
+          "esc_gate": {
+            "ESC-1": "unevaluable (no Bash/Glob grant)",
+            "ESC-2": {
+              "result": false,
+              "imbalance_pct": 0.37
+            },
+            "ESC-3": {
+              "result": false,
+              "quarters_returned": 4,
+              "divergence_ratio": 0.368,
+              "threshold": 0.4
+            },
+            "ESC-4": {
+              "result": "N/A (bank — non_operating_share formula not applicable to bank P&L structure)"
+            },
+            "ESC-5": {
+              "result": false,
+              "reason": "report_id null, existing_refine_status=PARTIAL"
+            }
+          },
+          "data_quality": {
+            "stale": true,
+            "stale_since": "2026-08-11T14:37:49.000Z",
+            "stale_age_hours": 48.53,
+            "sla_hours": 48,
+            "note": "FR-DEGRADE-01 last-known-good; Q2-2026 not yet extracted, showing Q1-2026"
+          },
+          "cycle_ts": "2026-08-13T15:14:00Z",
+          "slot": "bctc-analyst-slot-1"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-13T15:20:29Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "bbbb99a54a183067a279b7cee53eb8bd9f7f9bf8e88123ea2833cd8bd0f8f67e",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-13T15:08:32Z",
+          "matched_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-1": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-1": null
+          },
+          "last_fired_timestamp": "2026-08-13T15:08:28Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "15:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 27,
+          "note": "single-slot WORK tick — bctc-analyst-slot-1 (cron off-market, bctc-offmarket policy fallback on calendar_status=unknown)"
+        },
+        "createdAt": "2026-08-13T15:08:32Z",
+        "drained_at": "2026-08-13T15:20:29Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
