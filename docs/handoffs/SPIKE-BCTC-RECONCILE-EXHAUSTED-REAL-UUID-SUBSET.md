@@ -99,3 +99,73 @@ Do NOT write code changes in this phase. The goal is diagnosis only, so architec
 ---
 
 **Spike boundary:** Investigation, diagnosis, and brief-writing only. No code changes. Once root cause is confirmed, architect writes a fix design (similar to the fallback-shell brief), PM decomposes it, and dev implements.
+
+---
+
+## [Architect] Brownfield Findings
+
+- **Zone:** apps/pdf-extractor/ (correction — parent SPIKE row inherited `apps/mcp-server/` from its
+  sibling; every file this investigation touched, and every file the fix touches, is under
+  `apps/pdf-extractor/`, a distinct zone with its own specialist `dev-pdf-extractor`,
+  `docs/data/system-map.json`).
+- **Verified paths:**
+  - `apps/pdf-extractor/infrastructure/pek_engine_adapter.py:90-92,656-662` — non-blocking
+    `threading.Semaphore(1)` acquire; contention raises `SemaphoreContendedError` instantly (root cause).
+  - `apps/pdf-extractor/interface/pek_run_helper.py:56-93` — background task; catches+logs the
+    contention error, no retry, no signal back to caller (202 already sent).
+  - `apps/pdf-extractor/interface/routes_pek.py:29-86` — `/pek-extract` route; confirms market-hours
+    guard is time-uniform (not per-request differentiator) and background task is fire-and-forget.
+  - `apps/mcp-server/src/scheduler/financial-reports/bctcExtractReconcileJob.ts:322-527` — re-fires
+    the entire still-pending batch (up to 20) every 30-min tick with no pacing; this is what creates
+    the near-simultaneous burst that triggers the semaphore race.
+  - `apps/pdf-extractor/infrastructure/ocr_gateway.py:119-121,382-389` — existing, already-shipped
+    bounded-blocking-acquire pattern for an analogous shared resource; the fix design reuses this
+    exact shape rather than inventing a new concurrency primitive.
+- **Root cause (RAW-verified via `docker logs vn-market-intelligence-mcp-pdf-extractor-1`, full
+  retained history 2026-08-08→present, plus live DB probes):** NOT the fallback-shell write-gate
+  defect (all 3 named reports carry real, existing UUIDs; confirmed 0 rows in all 3 extraction
+  tables). Root cause is a **silent-drop concurrency defect**: pdf-extractor's single-extraction-at-a-
+  time semaphore fails contended requests immediately instead of queueing them, and the reconcile
+  job's un-throttled batch re-fire creates that contention every tick. FRT 2024-Q1 hit
+  `SemaphoreContendedError` on 8/8 of its recorded reconciliation passes (100%, fully reproduced in
+  logs). BSR 2024-Q1 and HUT 2025-Q3 show the same burst-load symptom one layer upstream (their
+  trigger calls mostly never reached pdf-extractor's logged code path at all — consistent with
+  client-side `unreachable`/timeout under the same load, unconfirmable from mcp-server's side because
+  that container was recycled 2026-08-13, losing its 08-11 logs). Full breakdown, live log excerpts,
+  and the A-30-memory-hypothesis correlation analysis: `docs/architecture-briefs/
+  2026-08-13-fix-pek-extract-semaphore-contention-silent-drop.md` §1.
+- **Reuse patterns:** Extend the existing `_extraction_semaphore` guard (bounded blocking acquire,
+  same shape already shipped in `ocr_gateway.py`'s `_OCR_SLOTS`) — do not invent a new primitive.
+- **Design decisions:**
+  - Layer: infrastructure (`apps/pdf-extractor/infrastructure/pek_engine_adapter.py`) — no DDD
+    violation, no new port/file.
+  - `SemaphoreContendedError` class and its `try/finally: release()` stay unchanged; only the
+    acquire call and its message change.
+- **A-30 memory hypothesis (from this row's own concurrent-hypothesis note):** correlated, not
+  causal. The observed semaphore-contention burst (08-11 12:35:03–12:35:04Z) sits ~1 minute before
+  telegram 4648's A-30 alert (12:36:20Z) — most parsimoniously read as A-30's signal being a
+  downstream symptom of the same un-throttled batch-refire burst, not an independent memory leak.
+  Full brief §1 recommends re-checking this empirically post-fix rather than building a separate
+  memory mitigation now.
+- **Scan clean:** true ✓ — full-history log breakdown (183 total extraction failures: 129
+  semaphore-contention / 53 already-diagnosed fallback-id write-gate 400s / 1 genuine timeout) shows
+  no evidence of a distinct "extraction runs but silently produces empty output" failure class; ruled
+  out the "genuinely malformed source PDFs" alternative hypothesis (both BSR's and FRT's own 2025-Q1
+  filings extracted successfully once they won the semaphore race).
+
+**Standard Detection:** BUG-FIX (in-zone, no new primitives, existing service) → **BUILD-STANDARD: not-applicable**
+
+**Suggested follow-up FIX row (PM to mint per normal task-breakdown flow):**
+`FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE` · zone `apps/pdf-extractor/` → `dev-pdf-extractor`
+· size M · priority P0 · parent `SPIKE-BCTC-RECONCILE-EXHAUSTED-REAL-UUID-SUBSET` · depends: none.
+Full design: `docs/architecture-briefs/2026-08-13-fix-pek-extract-semaphore-contention-silent-drop.md`
+
+## RETURN
+DONE: Root cause confirmed (RAW-verified, not the fallback-shell defect) — silent-drop semaphore
+contention in pdf-extractor's PEK extraction trigger path, driven by the reconcile job's un-throttled
+batch re-fire. Fix design (bounded blocking acquire, reusing the existing ocr_gateway.py pattern)
+written to docs/architecture-briefs/2026-08-13-fix-pek-extract-semaphore-contention-silent-drop.md.
+ZONE: apps/pdf-extractor/
+NEXT: pm | mint FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE per §7 of the brief, route to dev-pdf-extractor
+HANDOFF: docs/handoffs/SPIKE-BCTC-RECONCILE-EXHAUSTED-REAL-UUID-SUBSET.md
+PIPELINE: continue

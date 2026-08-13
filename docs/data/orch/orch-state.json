@@ -94,9 +94,9 @@
   "head": {
     "status": "idle",
     "active_task_id": null,
-    "updated_at": "2026-08-13T22:30:04Z",
-    "updated_by": "qa",
-    "next_agent": "router"
+    "next_agent": "router",
+    "updated_at": "2026-08-13T23:39:24Z",
+    "updated_by": "architect"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3085,26 +3085,6 @@
         "related": [
           "FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK"
         ],
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
-      },
-      {
-        "id": "UC-CCA-P2",
-        "type": "SPRINT-S",
-        "title": "Absorb the DMS-2 sibling-corroboration probe into gateway-availability-gate; de-dup market-watcher double probe; extend to 5 flows",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P2",
-        "note": "SCOPE=verifier Rescope note. Upgrade gateway-availability-gate SKILL with the DMS-2 escalation ladder (CONFIRMED-BLIND skip-backoff, sibling-recent suppression) keeping its correct confirmed-down actions (Write signal+BLOCKED notebook, NEVER send_telegram). Dedup market-watcher inline block; extend the gate to alert-commander/unified-agent/digest-predict/bctc-analyst/fb-market-poster. Coordinate with sibling P1 on cycle.md.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "ba",
         "priority_bumped_from": "P2",
         "priority_bumped_at": "2026-07-17T04:54:03Z",
         "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
@@ -13018,41 +12998,6 @@
     },
     "ready": [
       {
-        "id": "FIX-CI-TASKCLAIM-QA-FLOW-OWNER-SESSION-PAYDOWN",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P0",
-        "status": "READY",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "agent-father",
-        "plan_only": false,
-        "supervised": false,
-        "created_at": "2026-08-12T13:02:45Z",
-        "created_by": "po/triage-20260812T1257Z",
-        "check_id": "CI-RED-ffb8f8cc",
-        "dedup_key": "ci_job:task-claim-owner-session-lint|file:docs/agents/qa/flow/main.md",
-        "ci_fingerprint": "205538232e4e666d24d1c0e7d434ded07f9123b05dcb10fb8e5282ea6bf0972c",
-        "origin_signal_id": "CI-RED-ffb8f8cc",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "baseline_pass": true,
-        "rebuild_required": false,
-        "title": "CI RED — task-claim-owner-session-lint: docs/agents/qa/flow/main.md:22 and :215 task_release omit the REQUIRED owner_client_session. Exact sibling of the DONE_VERIFIED FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN: call sites are UNCHANGED, but lines above them shifted 21->22 and 212->215, de-grandfathering them from the line-keyed baseline. Pay the debt: 2 task_release sites in QA own flow doc.",
-        "files": [
-          "docs/agents/qa/flow/main.md",
-          "docs/data/task-claim-owner-session-baseline.json"
-        ],
-        "related": [
-          "FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN",
-          "FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER"
-        ],
-        "status_note": "AC1: `bash scripts/audits/task-claim-owner-session-lint.sh --check` RC=0 / 0 violations, AND CI job task-claim-owner-session-lint conclusion=success on a subsequent push. AC2 (fix, do NOT re-grandfather): add owner_client_session to docs/agents/qa/flow/main.md:22 and :215 and DELETE both docs/agents/qa/flow/main.md entries from docs/data/task-claim-owner-session-baseline.json, so no future line-shift can re-trigger this. Running --update to re-grandfather is NOT an acceptable close — the lint FAIL text says so explicitly. AC3: parameter names re-derived from apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts, not copied from a sibling doc. AC4: the doc must instruct SUBSTITUTING the real session id from the spawn-prompt Coordination line — writing the literal $CLAUDE_CODE_SESSION_ID inside a call_tool argument gets sent LITERALLY (memory: feedback_llm_issued_call_tool_does_not_expand_session_id_variable); mirror docs/agents/pm/flow/main.md and .claude/skills/commit-mutex/SKILL.md. AC5: this is NOT lint-appeasement — a task_release whose owner does not match the holder orphans the lock (memory: feedback_task_release_owner_agent_mismatch_orphans_lock), so paying the debt is a real correctness fix. PO NOTE: the two call sites are annotated best-effort (no MCP gateway binding in specialist sub-session); adding owner_client_session does not change that posture. LIVE-VERIFIED by po 2026-08-12T12:57Z: lint reproduces at current HEAD; size-lint now PASSES (transport.ts 241L) so the 09:53Z size-lint component of CI-RED-4424dd41 is already fixed and is NOT part of this row. Observed RED SHAs: 4f1ed641 (run 31588799885), ffb8f8cc (run 31595301943).\n\n[po/triage 2026-08-12T15:36:32Z] ci_red dedup HIT (file-scoped, PRIMARY). Additional observed failure: check_id=CI-RED-b701e913 head_sha=b701e913 run_id=31606982292, job=task-claim-owner-session-lint. RAW log from this run: '[task-claim-lint] FAIL — 2 call site(s) missing owner_client_session (scanned 275 files)' at docs/agents/qa/flow/main.md:22 and :215, both tagged LINE-MOVED (grandfathered at baseline lines 21/212 — same file+snippet, NOT a reintroduced regression). The lint's own guidance is explicit: pay the debt by adding owner_client_session; do NOT re-run --update to relabel the lines. Scope is 2 one-line edits in a single doc. No new row minted.\n\n[po/triage-2026-08-12T17:00:39Z] FILE-SCOPED DEDUP HIT x3 this drain — task-claim-owner-session-lint still FAILing on the same 2 call sites, additional observed SHAs: b701e913 (14:53Z), 0b3d494d (15:53Z), f954d591 (16:21Z). Verbatim from gh run view --log-failed: 'FAIL — 2 call site(s) missing owner_client_session', docs/agents/qa/flow/main.md:22 and :215, both task_release calls, both tagged [LINE-MOVED: grandfathered in baseline ... Pay the debt (add owner_client_session); do not re-run --update to relabel the line.]. Scanned-file count drifted 275 -> 276 between runs, so the surrounding corpus is growing while this debt sits. This is a 2-line documentation edit blocking a required CI job on EVERY push — cheapest possible unblock of the CI plane.\n\n[po/triage-2026-08-13T17:28:37Z] SEVERITY EXPEDITE by PO. Moved to the FRONT of ready[] at P0. Rationale: RLC selection is sort_by([priority_rank, ready[]-array-index]), one row per invocation, and RLC only runs on ticks where the 6-way Idle-Tick Rotation picks \"rlc\". Measured live this tick: 60 RLC-eligible rows in ready[]; this row's class sat at eligible queue position 47-48. At 1 row per rlc-selected tick that is unreachable in incident time, and every newly-minted P0 re-buries it. No new diagnosis was needed - the row was already correct. This is the manual stand-in for the missing severity-expedite path (FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0, itself expedited in this same write).\n\n[po/triage-2026-08-13T17:28:37Z] ci_red FOLD x9 (file-scoped dedup, PRIMARY). Nine ci_red signals drained this tick: CI-RED-181fa9e8 (run 31621447612), CI-RED-059886f5 (31676677536), CI-RED-5dfcd01d (31685419503), CI-RED-7e5b0209 (31686549449), CI-RED-77658081 (31697341888), CI-RED-3d72cc9b (31699387752), CI-RED-885dbf54 (31711650335), CI-RED-e91084bf (31716389004), CI-RED-e589e50d (31719468588). MANDATORY pre-dedup failing-file read PERFORMED on 6 of the 9 runs via `gh run view <id> --log-failed`; FAILING_FILES byte-identical on every one: `15113 pass / 40 skip / 5 fail`, `=== FAILED FILES (2) ===` -> src/__tests__/ALLZERO-OHLCV-FETCH.test.ts + src/__tests__/FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts. task-claim-owner-session-lint FAILING_FILE re-read verbatim from run 31719468588 job 94512476875: `FAIL - 2 call site(s) missing owner_client_session (scanned 276 files)` at docs/agents/qa/flow/main.md:22 and :215. No new rows minted. CI confirmed still RED at current HEAD e44a302a (run 31725182429). The fail set has now been IDENTICAL and order-independent across 9 advancing SHAs spanning ~23h - and across ~30 SHAs since 2026-08-11T13:03Z. This is NOT a diagnosis gap and NOT a flake: it is dispatch starvation.",
-        "updated_at": "2026-08-13T17:28:37Z",
-        "po_expedited_at": "2026-08-13T17:28:37Z",
-        "po_expedited_by": "po/triage-20260813T1722Z",
-        "updated_by": "po (triage 2026-08-13T17:22Z - severity expedite)"
-      },
-      {
         "id": "FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR",
         "type": "FIX",
         "title": "orch-conservation-check signal_total 0.5 floor blocks the DOCUMENTED PO durable-inbox clear step, and the only escape hatch is explicitly forbidden to PO",
@@ -15103,34 +15048,6 @@
         "updated_at": "2026-08-12T11:29:41Z"
       },
       {
-        "id": "SPIKE-BCTC-RECONCILE-EXHAUSTED-REAL-UUID-SUBSET",
-        "type": "SPIKE",
-        "title": "Investigate REAL-UUID RECONCILE EXHAUSTED alerts (HUT 2025-Q3, BSR 2024-Q1, FRT 2024-Q1) — 0 rows after 8 extraction passes, NOT explained by fallback-shell fix",
-        "status": "READY",
-        "priority": "P0",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "unassigned",
-        "next_agent": "architect",
-        "created_at": "2026-08-11T19:26:00Z",
-        "created_by": "pm",
-        "depends": [],
-        "blocks": [],
-        "note": "PO flagged (folds 2026-08-11T13:22Z): this subset of RECONCILE EXHAUSTED alerts carries real UUID report_ids (not fallback-% shells) and is growing, NOT explained by FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE premise. Concurrent hypothesis: system-auditor A-30 pdf-extractor sustained-high memory (telegram 4648, 2026-08-11T12:36:20Z, 94.07% loss of reclamation) could cause zero-row extraction on genuinely-extractable PDFs. Root cause distinct from fallback-shell structural issue. Requires investigation and separate root-cause mitigation.",
-        "related": [
-          "FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE",
-          "telegram-report:4648",
-          "telegram-report:4649",
-          "telegram-report:4650"
-        ],
-        "updated_at": "2026-08-12T11:54:42Z",
-        "updated_by": "pm",
-        "promoted_at": "2026-08-12T11:54:42Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='architect' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "architect"
-      },
-      {
         "id": "FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING",
         "type": "FIX",
         "title": "chef.md gathers processed/bctc_signal_* biz-context (c112 auto-cure) but never plumbs it into per-ticker conviction_calls rationale — BIZ_CTX_OK still evaluates false; wire GATHER->Steps 4-7.5",
@@ -15407,6 +15324,31 @@
           "docs/agents/po/flow/main.md"
         ],
         "updated_at": "2026-08-13T20:12:13Z"
+      },
+      {
+        "id": "UC-CCA-P2",
+        "type": "SPRINT-S",
+        "title": "Absorb the DMS-2 sibling-corroboration probe into gateway-availability-gate; de-dup market-watcher double probe; extend to 5 flows",
+        "status": "READY",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P2",
+        "note": "SCOPE=verifier Rescope note. Upgrade gateway-availability-gate SKILL with the DMS-2 escalation ladder (CONFIRMED-BLIND skip-backoff, sibling-recent suppression) keeping its correct confirmed-down actions (Write signal+BLOCKED notebook, NEVER send_telegram). Dedup market-watcher inline block; extend the gate to alert-commander/unified-agent/digest-predict/bctc-analyst/fb-market-poster. Coordinate with sibling P1 on cycle.md.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "ba",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-08-13T23:20:35Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "ba",
+        "updated_at": "2026-08-13T23:20:36Z"
       }
     ],
     "review": [
@@ -18587,6 +18529,77 @@
           "out_of_scope_noted_not_acted": "dev-team/dev-mainserver-crawls/dev-vps-crawls still resolve the cowork SSOT (equivalent exposure PO flagged as an unassessed fleet-unification candidate) -- untouched, per PO's explicit scope fence. Did NOT normalize the 9 dev-* pointer phrasings to the jump-to/SKILL.md:42 canonical `Run sub-flow:` form -- separate, larger, out-of-scope divergence.",
           "handoff": "Routed to po for final close-out sign-off (po opened this rework and fenced AC-1/AC-3/AC-4 as already-landed; only AC-2 remains for po to re-verify)."
         }
+      },
+      {
+        "id": "FIX-CI-TASKCLAIM-QA-FLOW-OWNER-SESSION-PAYDOWN",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P0",
+        "status": "REVIEW",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "po",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-12T13:02:45Z",
+        "created_by": "po/triage-20260812T1257Z",
+        "check_id": "CI-RED-ffb8f8cc",
+        "dedup_key": "ci_job:task-claim-owner-session-lint|file:docs/agents/qa/flow/main.md",
+        "ci_fingerprint": "205538232e4e666d24d1c0e7d434ded07f9123b05dcb10fb8e5282ea6bf0972c",
+        "origin_signal_id": "CI-RED-ffb8f8cc",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "title": "CI RED — task-claim-owner-session-lint: docs/agents/qa/flow/main.md:22 and :215 task_release omit the REQUIRED owner_client_session. Exact sibling of the DONE_VERIFIED FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN: call sites are UNCHANGED, but lines above them shifted 21->22 and 212->215, de-grandfathering them from the line-keyed baseline. Pay the debt: 2 task_release sites in QA own flow doc.",
+        "files": [
+          "docs/agents/qa/flow/main.md",
+          "docs/data/task-claim-owner-session-baseline.json"
+        ],
+        "related": [
+          "FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN",
+          "FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER"
+        ],
+        "status_note": "AC1: `bash scripts/audits/task-claim-owner-session-lint.sh --check` RC=0 / 0 violations, AND CI job task-claim-owner-session-lint conclusion=success on a subsequent push. AC2 (fix, do NOT re-grandfather): add owner_client_session to docs/agents/qa/flow/main.md:22 and :215 and DELETE both docs/agents/qa/flow/main.md entries from docs/data/task-claim-owner-session-baseline.json, so no future line-shift can re-trigger this. Running --update to re-grandfather is NOT an acceptable close — the lint FAIL text says so explicitly. AC3: parameter names re-derived from apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts, not copied from a sibling doc. AC4: the doc must instruct SUBSTITUTING the real session id from the spawn-prompt Coordination line — writing the literal $CLAUDE_CODE_SESSION_ID inside a call_tool argument gets sent LITERALLY (memory: feedback_llm_issued_call_tool_does_not_expand_session_id_variable); mirror docs/agents/pm/flow/main.md and .claude/skills/commit-mutex/SKILL.md. AC5: this is NOT lint-appeasement — a task_release whose owner does not match the holder orphans the lock (memory: feedback_task_release_owner_agent_mismatch_orphans_lock), so paying the debt is a real correctness fix. PO NOTE: the two call sites are annotated best-effort (no MCP gateway binding in specialist sub-session); adding owner_client_session does not change that posture. LIVE-VERIFIED by po 2026-08-12T12:57Z: lint reproduces at current HEAD; size-lint now PASSES (transport.ts 241L) so the 09:53Z size-lint component of CI-RED-4424dd41 is already fixed and is NOT part of this row. Observed RED SHAs: 4f1ed641 (run 31588799885), ffb8f8cc (run 31595301943).\n\n[po/triage 2026-08-12T15:36:32Z] ci_red dedup HIT (file-scoped, PRIMARY). Additional observed failure: check_id=CI-RED-b701e913 head_sha=b701e913 run_id=31606982292, job=task-claim-owner-session-lint. RAW log from this run: '[task-claim-lint] FAIL — 2 call site(s) missing owner_client_session (scanned 275 files)' at docs/agents/qa/flow/main.md:22 and :215, both tagged LINE-MOVED (grandfathered at baseline lines 21/212 — same file+snippet, NOT a reintroduced regression). The lint's own guidance is explicit: pay the debt by adding owner_client_session; do NOT re-run --update to relabel the lines. Scope is 2 one-line edits in a single doc. No new row minted.\n\n[po/triage-2026-08-12T17:00:39Z] FILE-SCOPED DEDUP HIT x3 this drain — task-claim-owner-session-lint still FAILing on the same 2 call sites, additional observed SHAs: b701e913 (14:53Z), 0b3d494d (15:53Z), f954d591 (16:21Z). Verbatim from gh run view --log-failed: 'FAIL — 2 call site(s) missing owner_client_session', docs/agents/qa/flow/main.md:22 and :215, both task_release calls, both tagged [LINE-MOVED: grandfathered in baseline ... Pay the debt (add owner_client_session); do not re-run --update to relabel the line.]. Scanned-file count drifted 275 -> 276 between runs, so the surrounding corpus is growing while this debt sits. This is a 2-line documentation edit blocking a required CI job on EVERY push — cheapest possible unblock of the CI plane.\n\n[po/triage-2026-08-13T17:28:37Z] SEVERITY EXPEDITE by PO. Moved to the FRONT of ready[] at P0. Rationale: RLC selection is sort_by([priority_rank, ready[]-array-index]), one row per invocation, and RLC only runs on ticks where the 6-way Idle-Tick Rotation picks \"rlc\". Measured live this tick: 60 RLC-eligible rows in ready[]; this row's class sat at eligible queue position 47-48. At 1 row per rlc-selected tick that is unreachable in incident time, and every newly-minted P0 re-buries it. No new diagnosis was needed - the row was already correct. This is the manual stand-in for the missing severity-expedite path (FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0, itself expedited in this same write).\n\n[po/triage-2026-08-13T17:28:37Z] ci_red FOLD x9 (file-scoped dedup, PRIMARY). Nine ci_red signals drained this tick: CI-RED-181fa9e8 (run 31621447612), CI-RED-059886f5 (31676677536), CI-RED-5dfcd01d (31685419503), CI-RED-7e5b0209 (31686549449), CI-RED-77658081 (31697341888), CI-RED-3d72cc9b (31699387752), CI-RED-885dbf54 (31711650335), CI-RED-e91084bf (31716389004), CI-RED-e589e50d (31719468588). MANDATORY pre-dedup failing-file read PERFORMED on 6 of the 9 runs via `gh run view <id> --log-failed`; FAILING_FILES byte-identical on every one: `15113 pass / 40 skip / 5 fail`, `=== FAILED FILES (2) ===` -> src/__tests__/ALLZERO-OHLCV-FETCH.test.ts + src/__tests__/FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts. task-claim-owner-session-lint FAILING_FILE re-read verbatim from run 31719468588 job 94512476875: `FAIL - 2 call site(s) missing owner_client_session (scanned 276 files)` at docs/agents/qa/flow/main.md:22 and :215. No new rows minted. CI confirmed still RED at current HEAD e44a302a (run 31725182429). The fail set has now been IDENTICAL and order-independent across 9 advancing SHAs spanning ~23h - and across ~30 SHAs since 2026-08-11T13:03Z. This is NOT a diagnosis gap and NOT a flake: it is dispatch starvation.\n\n[agent-father 2026-08-13T22:58:56Z] DONE. Added owner_client_session to both docs/agents/qa/flow/main.md task_release call sites (now at lines 22/221 — re-located by content, not the dispatch-time line numbers, since the fix itself grew the block by a few lines), re-derived param names from live apps/mcp-server/src/interface/mcp/tools/system/coordination/taskReleaseTool.ts (file split off coordinationTools.ts 2026-08-09). Committed + pushed: ef4b5b29c77547034c72510ca9c7dd6e437ab7f4 (docs/agents/qa/flow/main.md + decision journal only). lint --check verified PASS both before and after commit: 'PASS — 0 new offenders (scanned 276 files; baseline carries 19 grandfathered site(s))', exit 0. AC2 baseline-trim (removing the 2 stale docs/agents/qa/flow/main.md entries from docs/data/task-claim-owner-session-baseline.json) is NOT committed by agent-father — outside its commit_zone.allowed (docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/ only; docs/data/ is excluded), same precedent as the exact sibling task 21e97ab66 (FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN) which handed off its own baseline-trim rather than landing it directly. Ready-to-apply diff (count 19->17, drop the 2 qa/flow/main.md entries at old lines 21/212) is prepared and available; a developer/PO needs to land it in one commit. This does NOT block AC1 — verified live that lint --check passes even with the untrimmed baseline (stale entries become inert once the underlying violation is fixed, they just no longer match any live violation). Routing to po for baseline-trim handoff + CI-green follow-up verification.",
+        "updated_at": "2026-08-13T22:58:57Z",
+        "po_expedited_at": "2026-08-13T17:28:37Z",
+        "po_expedited_by": "po/triage-20260813T1722Z",
+        "updated_by": "agent-father",
+        "claimed_at": "2026-08-13T22:51:13Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "agent-father"
+      },
+      {
+        "id": "SPIKE-BCTC-RECONCILE-EXHAUSTED-REAL-UUID-SUBSET",
+        "type": "SPIKE",
+        "title": "Investigate REAL-UUID RECONCILE EXHAUSTED alerts (HUT 2025-Q3, BSR 2024-Q1, FRT 2024-Q1) — 0 rows after 8 extraction passes, NOT explained by fallback-shell fix",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "unassigned",
+        "next_agent": "po",
+        "created_at": "2026-08-11T19:26:00Z",
+        "created_by": "pm",
+        "depends": [],
+        "blocks": [],
+        "note": "PO flagged (folds 2026-08-11T13:22Z): this subset of RECONCILE EXHAUSTED alerts carries real UUID report_ids (not fallback-% shells) and is growing, NOT explained by FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE premise. Concurrent hypothesis: system-auditor A-30 pdf-extractor sustained-high memory (telegram 4648, 2026-08-11T12:36:20Z, 94.07% loss of reclamation) could cause zero-row extraction on genuinely-extractable PDFs. Root cause distinct from fallback-shell structural issue. Requires investigation and separate root-cause mitigation.",
+        "related": [
+          "FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE",
+          "telegram-report:4648",
+          "telegram-report:4649",
+          "telegram-report:4650"
+        ],
+        "updated_at": "2026-08-13T23:39:24Z",
+        "updated_by": "architect",
+        "promoted_at": "2026-08-12T11:54:42Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='architect' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "architect",
+        "claimed_at": "2026-08-13T23:20:40Z",
+        "claimed_by": "dev-team (design-router sweep)",
+        "architect_completed_at": "2026-08-13T23:39:24Z",
+        "architect_brief": "docs/architecture-briefs/2026-08-13-fix-pek-extract-semaphore-contention-silent-drop.md",
+        "architect_review_note": "[architect 2026-08-13T23:39:24Z ROOT CAUSE CONFIRMED — RAW-verified, NOT the fallback-shell defect] All 3 named reports (HUT 2025-Q3 dab264ae-9702-4045-b488-bbf5d13f97fc, BSR 2024-Q1 d332bf35-d989-4dcc-a180-48c07369ea01, FRT 2024-Q1 268f4544-d66b-42cd-b37e-18ff7b17d55f) carry real, existing UUIDs with pdf_path SET and text_status=COMPLETE, RAW-confirmed 0 rows across bctc_layout_units/bctc_table_rows/bctc_md_tables. FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE's write-gate fix is structurally out of scope (it only rejects fallback- ids; none of these 3 ever reach that write path). ACTUAL ROOT CAUSE: apps/pdf-extractor/infrastructure/pek_engine_adapter.py:90-92,656-662 uses a NON-BLOCKING threading.Semaphore(1) acquire (by design, one extraction at a time) that raises SemaphoreContendedError INSTANTLY on contention instead of queueing; apps/mcp-server/src/scheduler/financial-reports/bctcExtractReconcileJob.ts:322-527 re-fires its ENTIRE still-pek_triggered batch (up to 20) every 30-min tick with zero pacing, creating a near-simultaneous request burst every tick. Live-confirmed via full-history docker logs vn-market-intelligence-mcp-pdf-extractor-1 (2026-08-08-present, 183 total FAILED traces: 129 SemaphoreContendedError / 53 already-diagnosed fallback-id 400s / 1 timeout): FRT 2024-Q1 hit SemaphoreContendedError on 8/8 of its recorded reconciliation passes (100% loss, fully reproduced). BSR/HUT show the same burst symptom one layer upstream (their trigger calls left almost no trace in pdf-extractor log at all, consistent with client-side unreachable/timeout under the same load; unconfirmable from mcp-server side because that container was recycled 2026-08-13, losing its 08-11 logs -- flagged as a 2nd occurrence of the log-retention gap the fallback-shell sibling brief already named once). Ruled out genuinely-malformed PDFs: BSR/FRT own 2025-Q1 filings (different PDF content) extracted successfully (34/27 layout units) once they won the semaphore race; of 67 attempts that started, only already-explained failures (fallback 400s + 1 timeout) account for every non-success. A-30 memory hypothesis (telegram 4648, 94.07% loss of reclamation): correlated not causal -- the observed contention burst (12:35:03-04Z) sits ~1min before A-30 telegram (12:36:20Z), read as A-30 being a downstream symptom of the same burst (thread-pool churn from N simultaneous asyncio.to_thread calls), not an independent leak; recommend empirical re-check post-fix rather than a separate mitigation. FIX DESIGN (docs/architecture-briefs/2026-08-13-fix-pek-extract-semaphore-contention-silent-drop.md): bounded blocking acquire on _extraction_semaphore (acquire(blocking=True, timeout=PEK_SEMAPHORE_WAIT_SECONDS)), reusing the pattern ALREADY SHIPPED in apps/pdf-extractor/infrastructure/ocr_gateway.py (_OCR_SLOTS/_acquire_slot_blocking) -- no new primitive. Zone correction: this row inherited apps/mcp-server/ from its sibling; the actual zone is apps/pdf-extractor/ (specialist dev-pdf-extractor). SECONDARY FINDING (flagged, not fixed, out of scope): HUT 2025-Q3 bctc_vps_queue row shows reconcile_attempts=11 exceeding MAX_RECONCILE_ATTEMPTS=8 while status=enrich_failed -- a status-reset-without-counter-reset queue-lifecycle anomaly (likely a prior out-of-band manual /api/trigger-pek-extract call), separate minor bug, PO/PM visibility only. SUGGESTED FOLLOW-UP FIX ROW (architect does not mint implementation rows -- task-breakdown is PM job): FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE, zone apps/pdf-extractor/ -> dev-pdf-extractor, size M, priority P0, parent this row, depends none. BUILD-STANDARD: not-applicable (bug-fix, in-zone, no new primitives). Full findings: docs/handoffs/SPIKE-BCTC-RECONCILE-EXHAUSTED-REAL-UUID-SUBSET.md § [Architect] Brownfield Findings."
       }
     ],
     "qa": [
@@ -18938,8 +18951,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-13T21:52:12Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-08-13T23:20:35Z",
+    "last_triaged_by": "dev-team (design-router sweep)",
     "in_progress": []
   },
   "_meta": {
@@ -18960,10 +18973,10 @@
         "last_served_tick": "2026-08-13T22:20:51Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-13T19:24:12Z"
+        "last_served_tick": "2026-08-13T22:50:59Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-13T19:55:05Z"
+        "last_served_tick": "2026-08-13T23:20:20Z"
       },
       "qa_drain": {
         "last_served_tick": "2026-08-13T20:23:37Z"
@@ -18972,7 +18985,7 @@
         "last_served_tick": "2026-08-13T21:22:13Z"
       }
     },
-    "_updated_at": "2026-08-13T22:20:51Z",
+    "_updated_at": "2026-08-13T23:20:20Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -25469,6 +25482,283 @@
         },
         "createdAt": "2026-08-13T21:34:35Z",
         "drained_at": "2026-08-13T21:49:58Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "86507cd9b4039f8d75111cf8dc1717c597edc0a2d931c1468e7527eb5a2e0f4c",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-ef1bf885",
+          "head_sha": "ef1bf885afbeb8b6c1e07fc5ca9aaee0219249ac",
+          "run_id": 31747466179,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31747466179",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 94605339079
+            },
+            {
+              "name": "task-claim-owner-session-lint",
+              "conclusion": "failure",
+              "jobId": 94605339152
+            }
+          ],
+          "fingerprint": "92ec99b666d80601f1465d2cb47848052631ebaf214433e4e91f389f9dd94138",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD ef1bf885afbeb8b6c1e07fc5ca9aaee0219249ac: bun test,task-claim-owner-session-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-13T22:19:58Z",
+        "drained_at": "2026-08-13T22:49:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "abe0944ffac722e20fde9f6dc03c745da78ec07267890d4375fad29af24cda65",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/agent-father.md — retained section '## EDIT 2026-08-13T21:40:00Z — task FIX-CHEF-MIDFLOW-BAIL-DETERMINISM (dev-team Review-Lane' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-13T22:35:42Z",
+        "drained_at": "2026-08-13T22:49:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f612821d8f8fd818e407537ec740dfff335c17fc63dfcacf8924e12f44e32823",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=10 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-13T22:35:45Z",
+        "drained_at": "2026-08-13T22:49:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1c52c30e2330a21d0de67d61c7a88c205f0ec365a16cd3e84f17b6d30c02e869",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c83 · 2026-08-13T20:44Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-13T22:37:23Z",
+        "drained_at": "2026-08-13T22:49:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8826fdd093deb9030116e9f5e1723e9c4843ec99ae5baf5770ba356d1af61231",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c84 · 2026-08-13T22:35:08Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-13T22:37:51Z",
+        "drained_at": "2026-08-13T22:49:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d7644570d1abea139219744be9cbdc21e17d0e68596afc199cc4e15e51aa53b3",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-13T22:30:07Z",
+        "drained_at": "2026-08-13T22:49:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b3ba7e57f806831bbce4c9e8e6a7842631a1e4e02c0d5932e57e31319a2e319d",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 34,
+          "cap": 200,
+          "byte_count": 12964,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T22:30:08Z",
+        "drained_at": "2026-08-13T22:49:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "44b95bb112dd110f6d9a7d01bb089eedcab8b56a40fe0b559f91564014d1cb50",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 34,
+          "cap": 200,
+          "byte_count": 12964,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T22:31:59Z",
+        "drained_at": "2026-08-13T22:49:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1b4c92d1b2a9901a9ee920a6c19259f827973a6f78fe462fc54b0d7e31005254",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12877,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T22:30:08Z",
+        "drained_at": "2026-08-13T22:49:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b1dacb44fa2714283ec478ddee03f9e703033ac58dd66425ca824dedc01b335f",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12877,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T22:31:59Z",
+        "drained_at": "2026-08-13T22:49:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "55b684d59b14b3538b81dbdf03c41218a47e03f144ced9aeb914e3ee97d325de",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 83,
+          "cap": 200,
+          "byte_count": 14124,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T22:30:09Z",
+        "drained_at": "2026-08-13T22:49:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "910ed81d6ca1a02fce6be6eb7ecbb2cd57cd7f65f2222b98fdf071a3295df1c0",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 83,
+          "cap": 200,
+          "byte_count": 14124,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T22:31:59Z",
+        "drained_at": "2026-08-13T22:49:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fa7087316a7b17955cae7a2e2f562d551b78a7d546ae7a6d54e664d7dade3732",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 29895,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T22:30:08Z",
+        "drained_at": "2026-08-13T22:49:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "972a25eccbe33260c73b3f5b8d7fc8cc1e766b0b2195859e2a2e92a088743504",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 29895,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T22:31:59Z",
+        "drained_at": "2026-08-13T22:49:32Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
