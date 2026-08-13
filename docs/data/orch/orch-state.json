@@ -594,6 +594,23 @@
         "severity": "LOW",
         "status": "READ",
         "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-13.json"
+      },
+      {
+        "id": "qa-20260813T1105Z",
+        "ts": "2026-08-13T11:05:00Z",
+        "from": "qa",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "QA-Drain re-litigated already-archived DONE_VERIFIED task (FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE) — task-id-collision class needs board-hygiene fix",
+        "severity": "LOW",
+        "status": "OPEN",
+        "payload": {
+          "finding": "task FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE was already fully implemented, QA-approved, DONE_VERIFIED, and round-2 re-gated on 2026-07-21, then cold-evicted to docs/data/orch/archive/2026-07.json. A verbatim-duplicate re-mint of the same task-id (review_note matches archived entry word-for-word) re-entered review[] via a 2026-07-29 un-strand-stale-row board commit and sat unnoticed for ~2 weeks until today Review-Lane QA-Drain picked it up as new work.",
+          "resolution_this_cycle": "QA re-verified the underlying fix is genuinely still live at HEAD (drain-signals.js movedRefs/repointPayloadRefs, 51/51 test pass) — approved DONE_VERIFIED again (no code left to fix), but this is redundant re-litigation of closed work.",
+          "recommendation": "PO/board-hygiene: add a dup-check against archive/*.json task-ids before un-strand/re-mint commits re-add a row to review[]/backlog[], to prevent QA-Drain from re-litigating already-archived DONE_VERIFIED tasks.",
+          "detail_ref": "docs/data/orch/archive/2026-07.json (search FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE, qa_regate_round2_by: qa)",
+          "reported_by": "qa (verify-committed pass, cycle-686), relayed by dev-team dispatcher"
+        }
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
