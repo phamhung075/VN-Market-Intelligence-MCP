@@ -92,12 +92,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-INFRA-split-agentSignalStore",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 1 row(s), highest-ranked FACTORY-INFRA-split-agentSignalStore — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-13T18:51:09Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-08-13T19:19:32Z",
+    "updated_by": "router (head-reset: FACTORY-INFRA-split-agentSignalStore advanced qa[]->done[]->ops, stale head dangled)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -468,6 +467,20 @@
         "provenance": "bctc-analyst",
         "audit_cycle_tag": null,
         "dedup_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
+      },
+      {
+        "id": "sys-20260813T191651-08a9",
+        "ts": "2026-08-13T19:16:51Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 FAIL: rag-service-1 memory — sustained >97% (median 97.61%, 5/6 samples)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-13T19:00Z",
+        "dedup_key": "microservice_degraded:rag-service-1:A-30"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -12047,25 +12060,6 @@
             "observed_at": "2026-08-13T17:35:00Z"
           }
         }
-      },
-      {
-        "title": "Collapse the 7-deep INSERT cascade + split agentSignalStore by query seam",
-        "priority": "P0",
-        "zone": "mcp-server-infra",
-        "type": "FACTORY",
-        "status": "DONE",
-        "id": "FACTORY-INFRA-split-agentSignalStore",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-agentSignalStore",
-        "promoted_at": "2026-08-13T17:51:11Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "updated_at": "2026-08-13T19:07:13Z",
-        "claimed_at": "2026-08-13T18:51:08Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "ops",
-        "updated_by": "qa",
-        "commit_sha": "9ad31c026",
-        "note": "10-branch INSERT cascade collapsed to detectSignalColumns()+buildSignalInsert(); 1774L file split into 20 agentSignals/ modules (all <=120L), agentSignalStore.ts is now a 60L barrel preserving every public name. Round-trip tests (insertBuilder/columnDetect/roundtrip, 25 assertions across 3 files) verify byte-identical column/bind order for all 10 reachable flag combinations. Full agentSignal-adjacent suite 402/402 pass; full bun test 15288 pass/55 fail (pre-existing, grep-confirmed unrelated). tsc clean, toolCount=183/cronJobCount=88 unchanged. REBUILD_REQUIRED=true (ops) + RAW-verify byte-identity against live named-volume DB still open — PRE-REBUILD baseline captured (29-col branch-A schema, 114 rows, latest id=10883) for QA/ops diff post-rebuild. | [QA] Review Record (direct-commit verify) 2026-08-13 — commit 9ad31c026 confirmed ancestor of main; git show --stat matches all 26 claimed files, barrel 60L, all 20 modules <=120L (max 114L). Re-ran 25 round-trip tests (insertBuilder/columnDetect/roundtrip) fresh: 25/25 pass, 222 expect() calls. Independently read pre-refactor parent commits 7-deep _postSignalInner cascade line-by-line and confirmed buildSignalInsert() column/bind order is a byte-identical mechanical reproduction for all 10 reachable flag branches (A-J). Widened net to all 57 agentSignal-adjacent test files: 641/641 pass. tsc clean, DDD/security greps clean, mock-guard PASS. Full suite 15288 pass/55 fail/40 skip EXACT match to claim -- did not trust grep-confirmed-unrelated on faith: built a detached worktree at the parent commit, ran the isolated 17-file/158-test subset containing every failing test name on BOTH commits, got byte-identical 153 pass/5 fail with the same 5 test names on both -- confirms the other 50 are full-suite-only ordering artifacts, not this commit. toolCount=183 confirmed live; cronJobCount unconfirmed to exact 88 but zero scheduler/cron files touched (structurally cannot have moved). VERDICT: APPROVED-CODE-LEVEL, NOT DONE_VERIFIED -- docker inspect confirms the live mcp-server container was built 2026-08-11T18:25Z, ~2 days BEFORE this commit (2026-08-13T18:38Z); per docs/protocols/docker-deployment-runbook.md Microservice Code-Change Close Gate, DONE is gated on ops rebuild+SHA-gate+live-verify; orchStateSchema.ts checkVerificationGate hard-rejects DONE_VERIFIED without verification.raw_probe (this id is not RC_VERIF-grandfathered). Moved qa[]->done[] status=DONE (schema-valid without raw_probe per LANE_ALLOWED_STATUSES), next_agent=ops for the close-gate rebuild sequence (docker compose build/up mcp-server + scripts/verify-deploy-sha.sh + live /health + diff against the PRE-REBUILD baseline already captured: 29-col branch-A schema, 114 rows, latest id=10883) -- follow-up QA live-verify pass required post-rebuild before flipping to done_verified[]. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S111."
       }
     ],
     "done_verified": [
@@ -12828,34 +12822,6 @@
         }
       },
       {
-        "title": "Replace string-interpolated SQL with bound placeholders in agentSignalStore reads",
-        "priority": "P2",
-        "zone": "mcp-server-infra",
-        "type": "FACTORY",
-        "status": "DONE_VERIFIED",
-        "id": "FACTORY-INFRA-agentSignal-sql-binding",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-agentSignal-sql-binding",
-        "promoted_at": "2026-07-24T05:14:29Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-11T17:34:38Z",
-        "claimed_at": "2026-08-11T17:28:33Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-24T05:44:13Z",
-        "review_note": "dev-mcp-server self-closeout: SQLi hardening in agentSignalStore.ts READ paths. Converted 5 caller-supplied-value interpolation sites to bound placeholders -- getSignals() hoursBack/signalType/mark-as-read UPDATE...IN(ids); getSignalEffectiveness() days/fromAgent/signalType -- matching existing codebase idiom (cronJobRunStore.ts/agentWorkLogStore.ts datetime offset pattern; coordinationStore.ts/seedWatchlist.ts generated-placeholder IN-list pattern). No structural dynamic column/table interpolation existed. Empirically verified via git-stash A/B probe which sites were genuinely exploitable pre-fix: fromAgent/signalType already had correct manual quote-escaping (not broken); hoursBack arithmetic coercion neutralized non-numeric input. getSignalEffectiveness's days field was the one live footprint -- unescaped, corrupted the WHERE clause under a crafted stacked-statement payload pre-fix (silent malformed null-row result); post-fix bound and returns a clean empty result, table intact both ways. Evidence: tsc clean. New test file FACTORY-INFRA-agentSignal-sql-binding.test.ts (9 tests incl. the days-field differential proof): 9/9 pass. Full 26-file agentSignalStore-dependent regression: 277/277 pass, identical to baseline. Full bun test: 14733 pass/44 fail/2 errors -- grep-confirmed zero (fail) lines mention agentSignalStore/agentSignal (all pre-existing VPS-push/insider-transactions/market-cap/foreign-flow 5000ms-timeout flake, count fluctuated 42-44 across 2 runs confirming flaky not deterministic). Commit a881b2489. Journal: docs/agent-memory/decisions/sprint-FACTORY-INFRA-agentSignal-sql-binding-dev-mcp-server.md | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commit a881b2489 on main ancestry -- git show --stat matches all 4 claimed files exactly (new test file, agentSignalStore.ts, decision journal, dev-mcp-server notebook). Read the actual diff, not trusted from review_note prose: confirmed all 5 caller-supplied-value sites converted to bound ? placeholders -- getSignals hoursBack + signalType, mark-as-read UPDATE...IN(ids) (generated-placeholder-count pattern), getSignalEffectiveness days + fromAgent + signalType. Spot-checked the days-field differential claim specifically: new test's malicious days payload uses an `as unknown as number` TS-bypass cast (a real risk vector -- GetEffectivenessOptions.days has no runtime validation inside the store fn itself); the MCP tool boundary (get_signal_effectiveness) DOES already z.coerce.number().int().positive() days, so the pre-fix exploit path required bypassing that layer (direct fn call / future unvalidated caller) -- claim is accurate as stated (function-level A/B probe, not an MCP-reachable prod CVE) and not overstated. Independently re-ran: new FACTORY-INFRA-agentSignal-sql-binding.test.ts 9/9 pass live; bun tsc --noEmit 0 errors; mock-guard.sh PASS on agentSignalStore.ts; full 32-file agentSignalStore-dependent regression (wider net than review's claimed 26) 335/335 pass, 0 fail, no regressions. DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-16.md STEP qa-S48.",
-        "qa_verified_at": "2026-08-11T17:34:38Z",
-        "qa_verified_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "bun test (new FACTORY-INFRA-agentSignal-sql-binding.test.ts + 32-file agentSignalStore-dependent regression) + bun tsc --noEmit + mock-guard.sh + git merge-base --is-ancestor + git show --stat",
-            "args": "src/__tests__/FACTORY-INFRA-agentSignal-sql-binding.test.ts (9 tests) + 32 grep-matched agentSignalStore-dependent test files (335 tests total); mock-guard.sh --files apps/mcp-server/src/infrastructure/db/agentSignalStore.ts; commit a881b2489",
-            "live_value_observed": "new test file 9/9 pass; full 32-file dependent regression 335/335 pass 0 fail (wider than review's claimed 26-file/277-test scope, same 0-fail result); tsc --noEmit 0 errors; mock-guard PASS; git show --stat matches all 4 claimed files; git merge-base --is-ancestor confirms a881b2489 on main",
-            "observed_at": "2026-08-11T17:34:38Z"
-          }
-        }
-      },
-      {
         "title": "Move source-health tracker singleton from interface down to infrastructure",
         "priority": "P2",
         "zone": "mcp-server-application",
@@ -13057,73 +13023,6 @@
             },
             "live_value_observed": "ancestor=yes; git show --stat = exactly 1 file (.claude/skills/published-marker-gate/SKILL.md, 86L new); YAML frontmatter parses (name+description present); 4 code-fence markers balanced; size-lint-justification.sh --check no flag; mock-guard.sh = no production source to scan, PASS; DDD/security greps zero hits",
             "observed_at": "2026-08-12T16:37:00Z"
-          }
-        }
-      },
-      {
-        "id": "FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT",
-        "type": "FIX",
-        "title": "refine_bctc_md Phase 2 loop body calls execute_sub_flow_logic() -- a function that exists nowhere -- and all 4 sub-flow docs still describe themselves as spawned Task sub-agents returning to an orchestrator; 2 consecutive zero-push fires on VHM_2026_Q1",
-        "status": "DONE_VERIFIED",
-        "priority": "P0",
-        "size": "S",
-        "zone": "docs/agents/",
-        "owner": "po",
-        "next_agent": "agent-father",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-08-06T11:18:01Z",
-        "created_by": "po/recurring-bug-escalation-20260806T1118Z",
-        "updated_at": "2026-08-13T18:55:28Z",
-        "source": "po recurring-bug escalation 2026-08-06T11:18Z. 2 occurrences crossing feedback_recurring_bug_escalation threshold: 2026-08-06T09:05Z (slot refine-bctc-slot-1, invented status PARTIAL_EXIT, 0 pushes) and 2026-08-06T11:06Z (slot refine-bctc-slot-3, STATUS PARTIAL, 0/12 windows pushed). Both on report_id a3a41225-3491-4b4f-b4d0-3b80a989b76a (VHM_2026_Q1, 43 windows). RAW-verified by po at source, not from agent self-report.",
-        "desc": "ROOT CAUSE (doc contract defect, agent-side behavior is downstream of it): docs/agents/refine_bctc_md/flow/main.md:94 writes the Phase-2 loop body as `result = execute_sub_flow_logic(window)`. That identifier exists NOWHERE -- grep across docs/ apps/ scripts/ .claude/ returns exactly ONE hit, the call site itself. The four docs it dispatches into (table-page.md, prose-page.md, continuation-stitch.md, disagreement-verify.md) all still carry Option-B spawned-subagent language that the Option-C conversion labelled but never rewrote: each has a `## RETURN (Task return value -- NOT a file write)` section saying `Return the following JSON object as the Task return value` and `The orchestrator (main.md) collects this return value directly`, and each frontmatter description ends `Returns result JSON inline to main.md (Option-C)`. So main.md simultaneously asserts SELF-IDENTITY GUARD (`You are a leaf worker... Do NOT delegate`) AND writes its only substantive step as a call into an executor that returns to an orchestrator. The 11:06Z agent's verbatim complaint -- 'Sub-flow logic implementation (OCR->markdown with image validation) not executable with current tool grant' -- names `sub-flow logic` exactly: it is a literal read of main.md:94, not free-floating confabulation. FALSIFIED ALTERNATIVE (a) payload-size: RAW windows from get_bctc_pending_refine show the successfully-processed chunk unit-0000..0011 = 21 pages / 20 images / 4x three-page continuation windows, and the twice-abandoned chunk unit-0012..0023 = 22 pages / 22 images / 4x three-page continuation windows. The two chunks are the same shape; the prior memory note claiming the resume chunk is 'unusually continuation-heavy' is factually wrong. FALSE CLAIM by the agent: the tool grant (Read, Write, mcp__gateway__call_tool -> get_bctc_page_text/get_bctc_page_image/push_bctc_refined_unit/finalize_bctc_refine) is unchanged from the 2026-08-05T16:41-16:44Z fire that pushed 12 units (11 DONE conf 0.75-0.95 + unit-0000 FAILED) on this same report. Grant is proven sufficient; do NOT change it. NOTE this is a LATENT ambiguity, not a deterministic halt -- the same doc executed correctly on 08-05 -- so the fix is to remove the ambiguity so the working reading is the only available reading, not to add another guard on top of a contradiction. SECONDARY DRIFT found in same zone: .claude/agents/refine_bctc_md.md description still says 'Processes one CHUNK (<=7 windows) per invocation' while flow/main.md:72 and init.md:55 both say REFINE_CHUNK_SIZE=12 (raised 7->12 by DONE task BCTC-REFINE-T1-CHUNKSIZE, commit 524a87cc 2026-06-27, which updated the docs/ copy but never the .claude/ copy).",
-        "files": [
-          "docs/agents/refine_bctc_md/flow/main.md",
-          "docs/agents/refine_bctc_md/flow/table-page.md",
-          "docs/agents/refine_bctc_md/flow/prose-page.md",
-          "docs/agents/refine_bctc_md/flow/continuation-stitch.md",
-          "docs/agents/refine_bctc_md/flow/disagreement-verify.md",
-          ".claude/agents/refine_bctc_md.md",
-          "docs/data/cowork-schedule.json"
-        ],
-        "deliverable": "AC-1: main.md:94 no longer names a non-existent function -- Phase 2's loop body is rewritten as literal inline instructions the model performs itself (read the matching sub-flow doc, then for each page call get_bctc_page_text + get_bctc_page_image, produce the markdown, call push_bctc_refined_unit), with an explicit `Read docs/agents/refine_bctc_md/flow/<page_type>.md` step -- main.md currently only says 'apply <file> logic' and never instructs a Read. AC-2: all four sub-flow docs' `## RETURN (Task return value...)` sections rewritten to inline-result language -- no 'Task return value', no 'the orchestrator collects', no wording implying a separate agent. AC-3: an explicit anti-confabulation line in Phase 2 -- you ARE the parser; reading OCR text plus looking at the page image and writing markdown IS the job; there is no external parsing tool to be missing; never report a missing tool for this step. AC-4: the RETURN status enum is restated at the loop site (DONE|PARTIAL|FAILED|SKIPPED only) and PARTIAL is defined as requiring >=1 push -- zero pushes with a full chunk assigned is FAILED, never PARTIAL. AC-5: .claude/agents/refine_bctc_md.md '<=7 windows' corrected to 12. AC-6 (slot pause, same commit): set enabled=false on refine-bctc-slot-1/-2/-3 in docs/data/cowork-schedule.json, leave refine-bctc-slot-4 (cron 30 16) ENABLED as the single canary -- it is the slot that last succeeded. AC-7: re-enable slots 1/2/3 in the SAME commit that closes this row, and record in the row note the first post-fix fire that pushes >=1 unit to report a3a41225 (RAW via get_bctc_refined total_units > 12), never a self-report.",
-        "out_of_scope": "Do NOT change the agent tool grant -- it is proven sufficient by the 08-05 run on this same report. Do NOT change REFINE_CHUNK_SIZE=12 -- the payload hypothesis is falsified above. Do NOT touch apps/mcp-server (see sibling row FIX-GET-BCTC-REFINED-NO-PROJECTION-PARAM).",
-        "not_duplicate_of": "AF-DISAGREEMENT-VERIFY-OVERAGE (backlog) is a 6-line size-cap overage on one of the same files, not the Option-C contract drift. FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS (backlog, dev-mcp-server) owns 'context-budget limit written into report state as a data failure' -- a status-semantics bug in apps/mcp-server, and its premise (a real context limit) is the hypothesis THIS row falsifies for this incident.",
-        "related": [
-          "BCTC-REFINE-STALL-RETRIGGER",
-          "BCTC-REFINE-T1-CHUNKSIZE",
-          "FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS"
-        ],
-        "baseline_pass": "9408",
-        "po_manual_dispatch_flagged_at": "2026-08-06T18:57:46Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate - folding into this tick BATCH. Re-admission #2: prior stamp 2026-08-06T14:53:40Z aged 14464s past the 14400s staleness window without ever being dispatched (TE-T12 shape). Top of 44 candidates, only P0 in the set.",
-        "claimed_by": "agent-father (router direct-dispatch — po BATCH item 1, P0, dev-team tick 18:37Z)",
-        "claimed_at": "2026-08-06T19:08:09Z",
-        "router_verify_note": "agent-father RAW re-verify 2026-08-07T00:41Z, direct docker-exec+bun:sqlite against live /app/data/market.db (gateway MCP call_tool unavailable in this spawn — see report). CORRECTION to 2026-08-06T19:25Z note: KBC (76129128) 24 refined units total but NOT all post-fix — 12 (unit-0000..0011, 14:07:21-14:11:26Z) pushed by slot-2 BEFORE fix commit da489f36f (15:17:45Z); only 12 (unit-0012..0023, 16:37:54-16:40:53Z) are post-fix via slot-4. Post-fix batch quality lower: 9/12 FAILED + 3/12 DONE (all 3 DONE flat confidence=0.55, suspicious) vs pre-fix 10/12 DONE (0.81-0.98 varied) + 2/12 FAILED -- flagged as open observation only, NOT actioned (out_of_scope). KBC refine_status=PENDING is correct-by-design (finalize_bctc_refine only runs once ALL windows pushed, main.md:79/152; 24/31 done, 7 remain -- not a bug). HSG (ae1f30bf) and VHM (a3a41225) both 0 rows in bctc_refined_units -- untouched. AC-7 STILL NOT MET. Queue is strict FIFO by parsed_at with head-of-line retry (getBctcPendingRefineTool.ts) -- HSG/VHM get zero pushes until KBC drains. cowork-schedule.json: slots 1-3 enabled=false unchanged; slot-4 (cron 30 16 daily) fired exactly ONCE since the fix (last_fired=2026-08-06T16:36:27Z), next fire 2026-08-07T16:30Z. At 1 fire/day: KBC likely finishes next fire, HSG (18 windows) needs ~2 more fires, so VHM first push not expected before ~2026-08-10 under current single-canary cadence -- router/PO should be aware AC-7 ETA is days out, not hours. Task lock (task:FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT) read-only checked in coordination.db: claimed_at=2026-08-07T00:33:49Z expires_at=2026-08-07T01:33:49Z ttl=3600s owner_client_session=f298ccf7-8cf4-452d-9a5a-57dcb47e65ac -- this spawn had no gateway/MCP tool access to call task_heartbeat directly and did not write to coordination.db to avoid bypassing the task-lock API; parent/router session (which does have gateway access) should heartbeat-extend. Row correctly left IN_PROGRESS -- legitimate wait, not a stall.",
-        "assigned_to": "f298ccf7-8cf4-452d-9a5a-57dcb47e65ac",
-        "adopted_at": "2026-08-07T00:34:22Z",
-        "tree_hygiene_note": "tree-hygiene: reverted 0 file(s) (zone clean)",
-        "supervised_note": "cleared 2026-08-07T01:4x by dev-team preflight (session f298ccf7) — PO decision po_decision_refine_cadence_20260807 stamped 2026-08-07T01:11Z; dispatching agent-father now for scoped action item (1): cowork-schedule.json refine_bctc_md 0-9 slot enable ONLY. Broader AC-1..7 completion status unchanged by this note. Orphan-signal orphan-signal:task:FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT (orphaned_at 00:07:17Z) is STALE — task has been continuously held+heartbeated by this same session since claimed_at 00:33:49Z; left to expire naturally (TTL 02:07:17Z), owner_client_session=null on that row so task_release no-ops (owner mismatch), by design.",
-        "po_goahead_20260807T011128": "RATIFIED at source (not on relay): cowork-schedule.json read directly (3 refine slots enabled=false, slot 30-16 enabled=true last_fired 2026-08-06T16:36:27Z); live market.db read directly via docker exec (report 76129128-947c... has 24 units, 12 pre-fix 14:07Z + 12 post-fix 16:37Z). The Option-C fix (da489f36f) is CONFIRMED WORKING GENERICALLY on a fresh canary run: 12 windows attempted, correct DONE/FAILED discrimination, correct per-window flags, spec-compliant confidences. The 0.55 flat value is NOT a fix defect (see po_decision below). AC-7 (VHM first push) is a THROUGHPUT observation, not a fix-correctness gate — it must not keep this row held.",
-        "po_decision_refine_cadence_20260807": "PO DECISION 2026-08-07T01:11Z on router-20260807T004700Z-refineac7cadence. (1) CADENCE — PARTIAL re-enable, not full. Re-enable exactly ONE additional refine_bctc_md slot (cron '0 9', currently enabled=false) -> 2x cadence, VHM first push moves from ~2026-08-10 to ~2026-08-08/09. Leave slots '0 11' and '0 14' DISABLED, gated on FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-CONFIDENCE closing. RATIONALE: the canary proved the CONTRACT fix, but the same run proved the IMAGE plane is down (3/3 DONE units image_unavailable). Going to 4x now would bulk-write image-blind <=0.6-confidence units across HSG (18 windows) and VHM. Reliability before coverage. 2x is a real ETA win with bounded blast radius and is trivially reversible. (2) QUALITY — the flat confidence=0.55 hypothesis is REFUTED, do not chase it: bctcSanityValidator.ts can only pass-through (:134) or clamp to 0.4 (:149)/0.1 (:163), so it can never emit 0.55; all three 0.55 units carry flags [image_unavailable:text_only_parse] and table-page.md:55 / continuation-stitch.md:60 mandate confidence <=0.6 on image failure. 0.55 is CORRECT BEHAVIOUR under a degraded input. The real defect is the image fetch itself -> minted as its own row FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-CONFIDENCE (P1, apps/mcp-server/, backlog). agent-father: action item (1) only — edit docs/data/cowork-schedule.json to set enabled=true on the refine_bctc_md '0 9' slot. Do NOT touch the other two slots. Do NOT change any confidence value or the <=0.6 cap.",
-        "updated_by": "agent-father",
-        "po_action_item_1_completed_at": "2026-08-07T01:42:33Z",
-        "po_action_item_1_note": "agent-father completed po_decision_refine_cadence_20260807 action item (1): refine-bctc-slot-1 (cron 0 9) enabled=false->true in docs/data/cowork-schedule.json (commit 3bf1fe322). Slots 0 11 (slot-3) and 0 14 (slot-2) left disabled per PO partial-reenable decision; slot-4 (30 16 canary) untouched. Broader AC-1..AC-7 contract-drift fixes on this row remain open/unactioned by this dispatch — row stays IN_PROGRESS.",
-        "review_note": "agent-father AC-1..AC-6 verification 2026-08-07T02:04Z (dev-team S2 dispatcher-wrap continuation). RAW-verified (grep against live file bytes, not self-report or the size-justification comment alone): AC-1 (main.md Phase-2 loop is literal inline instructions, explicit per-page_type Read step, zero execute_sub_flow_logic references left live), AC-2 (all 4 sub-flow docs RETURN sections rewritten to inline-result language -- zero hits for \"Task return value\"/\"orchestrator collects\"/\"Returns result JSON inline to main.md\"), AC-3 (anti-confabulation line present in main.md Phase 2), AC-4 (4-value STATUS enum DONE|PARTIAL|FAILED|SKIPPED restated at the loop site, PARTIAL requires >=1 push, 0 pushes on a full chunk = FAILED), AC-5 (.claude/agents/refine_bctc_md.md corrected to <=12 windows/REFINE_CHUNK_SIZE=12, zero <=7 remnants) are ALL already fully implemented -- landed in commit da489f36f (2026-08-06T17:17:45+02:00), predating this dispatch. AC-6 (slot pause) same commit. Made ZERO code edits this cycle -- re-writing already-correct text would be pure churn. QA NOTE: do not re-demand AC-6 (slot pause, commit da489f36f) or AC-7/po_action_item_1 (cadence slot-1 re-enable, commit 3bf1fe322, PO-ratified po_decision_refine_cadence_20260807) -- both were completed by EARLIER, SEPARATE dispatches on this same row, not this one. AC-7 (VHM first push timing) is a throughput observation per the row own po_goahead_20260807T011128 note (\"it must not keep this row held\"), not a fix-correctness gate -- out of scope for this pass by explicit dispatch instruction. DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md S31.",
-        "secondary_claimed_at": "2026-08-13T18:50:27Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "agent-father",
-        "done_verified_note": "agent-father DONE_VERIFIED sign-off 2026-08-13T18:53:50Z (dev-team review-lane secondary-drain dispatch, session 632721c2-41e4-4aff-8d06-a47cf80dc0d7). RE-VERIFIED AC-1..AC-6 on CURRENT file bytes (fresh grep, not the stored 2026-08-07T02:04Z note taken on faith) -- zero drift since that pass: AC-1 (main.md:93 only mentions execute_sub_flow_logic() in prose confirming it does NOT exist; zero live call-site hits repo-wide except historical decision-log/orch-state text; explicit per-page_type \"Read docs/agents/refine_bctc_md/flow/<type>.md\" steps present lines 113-116), AC-2 (zero hits for \"Task return value\"/\"orchestrator collects\"/\"Returns result JSON inline to main.md (Option-C)\" across all 4 sub-flow docs -- table-page.md/prose-page.md/continuation-stitch.md/disagreement-verify.md now use a renamed \"## RESULT SHAPE (values you build inline -- NOT a file write; nothing returns them to you)\" section, stronger than the original AC wording, landed in a later commit 8b4f977fd on top of da489f36f without regressing the fix), AC-3 (main.md:90-94 anti-confabulation line intact: \"You ARE the parser\"), AC-4 (main.md:143-184 restates DONE|PARTIAL|FAILED|SKIPPED enum, PARTIAL requires pushed_this_fire>=1, 0 pushes on full chunk = FAILED never PARTIAL), AC-5 (.claude/agents/refine_bctc_md.md:7 reads \"Processes one CHUNK (<=12 windows, REFINE_CHUNK_SIZE=12)\", zero <=7 remnants), AC-6 (cowork-schedule.json: slot-1 enabled=true, slots 2/3 enabled=false gated on FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-CONFIDENCE per po_decision_refine_cadence_20260807, slot-4 canary enabled=true -- unchanged since action-item-1). AC-7 THROUGHPUT: RAW live-DB query (docker exec vn-market-intelligence-mcp-mcp-server-1, bun:sqlite against /app/data/market.db, not self-report) on report a3a41225-3491-4b4f-b4d0-3b80a989b76a (VHM_2026_Q1): 43/43 windows now pushed (26 DONE + 17 FAILED, 0 pending), refined_at window 2026-08-08T16:40:47Z (first post-fix VHM push, matching POs ~08-08/09 ETA) through 2026-08-12T16:43:33Z (last). AC-7 is BOTH non-blocking per the rows own po_goahead_20260807T011128 ruling AND now factually satisfied -- report fully drained, not still pending. Zero code edits this cycle (nothing to fix). Row moved review[] -> done_verified[].",
-        "verification": {
-          "raw_probe": {
-            "tool": "grep (live file bytes) + docker exec bun:sqlite (live /app/data/market.db)",
-            "args": {
-              "report_id": "a3a41225-3491-4b4f-b4d0-3b80a989b76a"
-            },
-            "live_value_observed": "AC-1..AC-6 zero drift on current bytes; VHM bctc_refined_units 43/43 (26 DONE + 17 FAILED, 0 pending), refined_at 2026-08-08T16:40:47Z..2026-08-12T16:43:33Z",
-            "observed_at": "2026-08-13T18:53:50Z"
           }
         }
       }
