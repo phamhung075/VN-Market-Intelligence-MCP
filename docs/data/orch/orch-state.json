@@ -481,6 +481,34 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-13T19:00Z",
         "dedup_key": "microservice_degraded:rag-service-1:A-30"
+      },
+      {
+        "id": "sys-20260813T194711-3644",
+        "ts": "2026-08-13T19:47:11Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 FAIL: rag-service — memory discontinuity (crash cliff) 88.66% → 47.88%",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-13T19:30Z",
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+      },
+      {
+        "id": "sys-20260813T194747-0481",
+        "ts": "2026-08-13T19:47:47Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-30 FAIL: rag-service — memory crash cliff 88.66% → 47.88%",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-13T19:30Z",
+        "dedup_key": "microservice_degraded:rag-service-1:A-30:crash-cliff"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -13023,49 +13051,6 @@
             },
             "live_value_observed": "ancestor=yes; git show --stat = exactly 1 file (.claude/skills/published-marker-gate/SKILL.md, 86L new); YAML frontmatter parses (name+description present); 4 code-fence markers balanced; size-lint-justification.sh --check no flag; mock-guard.sh = no production source to scan, PASS; DDD/security greps zero hits",
             "observed_at": "2026-08-12T16:37:00Z"
-          }
-        }
-      },
-      {
-        "title": "Collapse the 7-deep INSERT cascade + split agentSignalStore by query seam",
-        "priority": "P0",
-        "zone": "mcp-server-infra",
-        "type": "FACTORY",
-        "status": "DONE_VERIFIED",
-        "id": "FACTORY-INFRA-split-agentSignalStore",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-agentSignalStore",
-        "promoted_at": "2026-08-13T17:51:11Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "updated_at": "2026-08-13T19:29:59Z",
-        "claimed_at": "2026-08-13T18:51:08Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "pm",
-        "updated_by": "qa",
-        "commit_sha": "9ad31c026",
-        "note": "10-branch INSERT cascade collapsed to detectSignalColumns()+buildSignalInsert(); 1774L file split into 20 agentSignals/ modules (all <=120L), agentSignalStore.ts is now a 60L barrel preserving every public name. Round-trip tests (insertBuilder/columnDetect/roundtrip, 25 assertions across 3 files) verify byte-identical column/bind order for all 10 reachable flag combinations. Full agentSignal-adjacent suite 402/402 pass; full bun test 15288 pass/55 fail (pre-existing, grep-confirmed unrelated). tsc clean, toolCount=183/cronJobCount=88 unchanged. REBUILD_REQUIRED=true (ops) + RAW-verify byte-identity against live named-volume DB still open — PRE-REBUILD baseline captured (29-col branch-A schema, 114 rows, latest id=10883) for QA/ops diff post-rebuild. | [QA] Review Record (direct-commit verify) 2026-08-13 — commit 9ad31c026 confirmed ancestor of main; git show --stat matches all 26 claimed files, barrel 60L, all 20 modules <=120L (max 114L). Re-ran 25 round-trip tests (insertBuilder/columnDetect/roundtrip) fresh: 25/25 pass, 222 expect() calls. Independently read pre-refactor parent commits 7-deep _postSignalInner cascade line-by-line and confirmed buildSignalInsert() column/bind order is a byte-identical mechanical reproduction for all 10 reachable flag branches (A-J). Widened net to all 57 agentSignal-adjacent test files: 641/641 pass. tsc clean, DDD/security greps clean, mock-guard PASS. Full suite 15288 pass/55 fail/40 skip EXACT match to claim -- did not trust grep-confirmed-unrelated on faith: built a detached worktree at the parent commit, ran the isolated 17-file/158-test subset containing every failing test name on BOTH commits, got byte-identical 153 pass/5 fail with the same 5 test names on both -- confirms the other 50 are full-suite-only ordering artifacts, not this commit. toolCount=183 confirmed live; cronJobCount unconfirmed to exact 88 but zero scheduler/cron files touched (structurally cannot have moved). VERDICT: APPROVED-CODE-LEVEL, NOT DONE_VERIFIED -- docker inspect confirms the live mcp-server container was built 2026-08-11T18:25Z, ~2 days BEFORE this commit (2026-08-13T18:38Z); per docs/protocols/docker-deployment-runbook.md Microservice Code-Change Close Gate, DONE is gated on ops rebuild+SHA-gate+live-verify; orchStateSchema.ts checkVerificationGate hard-rejects DONE_VERIFIED without verification.raw_probe (this id is not RC_VERIF-grandfathered). Moved qa[]->done[] status=DONE (schema-valid without raw_probe per LANE_ALLOWED_STATUSES), next_agent=ops for the close-gate rebuild sequence (docker compose build/up mcp-server + scripts/verify-deploy-sha.sh + live /health + diff against the PRE-REBUILD baseline already captured: 29-col branch-A schema, 114 rows, latest id=10883) -- follow-up QA live-verify pass required post-rebuild before flipping to done_verified[]. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S111. | [QA] Review Record (post-rebuild live-verify) 2026-08-13 — independently re-verified ops's close-gate rebuild claim (commit 37a03065d) rather than trusting prose. SHA: docker inspect label vn.market.git_sha=78e4b06afcfc1a9282966f8b258205fdd4cb4983, container created 2026-08-13T19:18:30Z; confirmed ancestor of current main HEAD (2deae06b0, 2 non-app commits ahead) via git merge-base --is-ancestor; git diff --stat 78e4b06af..HEAD -- apps/ empty — zero app-code drift since deploy, so the running image genuinely reflects current main HEAD. Ran scripts/verify-deploy-sha.sh myself -> OK. is_correlation_stub: ops's cited origin (commit 94de167ea / 2026-06-10) is WRONG — that commit is FIX-ALERT-ORPHAN-CORRELATION (alert_id column, dated 2026-06-13), no is_correlation_stub in its diff. Found the real origin via git log -S\"is_correlation_stub\": commit c06030015 (2026-06-19, alertStore.ts's ensureCorrelationStubColumn) — genuinely pre-existing ~2 months before this refactor; confirmed zero references to is_correlation_stub in any of the 20 new agentSignals/*.ts modules (grep -rl, no match). Live health: curled /health myself -> status=ok, toolCount=183. Live round-trip: called post_agent_signal directly against the running container's /mcp HTTP endpoint (signal_type=signal_feedback, from/to=qa-live-verify) -> wrote row id=10885; get_agent_signals read it back with matching title/detail marker. Independently queried the live DB myself (bun -e inside the running container via bun:sqlite readonly, not ops's numbers): 30 columns, 116 rows, MAX(id)=10885 — exactly baseline 114 + ops's +1 arrival (115/id=10884) + my own probe write (116/id=10885), a fully consistent monotonic chain. VERDICT: DONE_VERIFIED — every ops claim independently re-derived and held (one correction: ops's is_correlation_stub commit citation was wrong, though the underlying fact — pre-existing, not introduced by this refactor — was correct). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S112.",
-        "qa_verified_at": "2026-08-13T19:28:54Z",
-        "qa_verified_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "docker inspect (git_sha label) + git merge-base/diff + curl /health + curl /mcp tools/call post_agent_signal + docker exec bun -e (bun:sqlite readonly PRAGMA table_info + COUNT/MAX(id))",
-            "args": "service=mcp-server; expected_sha=78e4b06afcfc1a9282966f8b258205fdd4cb4983; endpoint=/health; tool=post_agent_signal{from_agent:qa-live-verify,to_agent:qa-live-verify,signal_type:signal_feedback,stock_code:QATEST}; db=/app/data/market.db table=agent_signals",
-            "live_value_observed": {
-              "deployed_git_sha": "78e4b06afcfc1a9282966f8b258205fdd4cb4983",
-              "sha_ancestor_of_head": true,
-              "app_code_drift_since_deploy": false,
-              "health_status": "ok",
-              "health_toolCount": 183,
-              "post_agent_signal_written_id": 10885,
-              "readback_matched": true,
-              "agent_signals_column_count": 30,
-              "agent_signals_row_count": 116,
-              "agent_signals_max_id": 10885,
-              "is_correlation_stub_origin_commit": "c06030015",
-              "is_correlation_stub_origin_date": "2026-06-19",
-              "is_correlation_stub_referenced_in_split_modules": false
-            },
-            "observed_at": "2026-08-13T19:28:54Z"
           }
         }
       }
