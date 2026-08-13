@@ -1,10 +1,27 @@
 # Code Janitor Notebook
 
-**Last updated:** 2026-08-13 (scan-49 Memory+State sweep cycle — scheduled sweep)
+**Last updated:** 2026-08-14 (scan-50 Memory+State sweep cycle — scheduled sweep)
 
 > Archive: docs/archive/notebooks/code-janitor-2026-05-21.md (pre-trim history)
 
 ## 2026-08 Sessions
+
+### Session 50 (2026-08-14 00:12Z — 6-hourly scheduled sweep cycle, post-pre-gate)
+
+**Scope:** Scheduled 6-hourly maintenance sweep (post-pre-gate cycle). No source code changes in last 3 commits (pre-check gate active — git diff HEAD~3..HEAD matches zero files under src/ or apps/*/src/).
+
+**Checks:** DRY scan skipped (zero `src/` or `apps/*/src/` changes). Three unconditional sweeps executed:
+- Memory Prune Sweep: SIGNAL-SKIP (pre-gate cycle 2026-08-13 wrote signal; re-run detects prior payload). Signal payload: docs/signals/janitor-health-recheck-writer-retired-2026-08-13.json
+- Notebook Line-Cap Sweep: 46 notebooks checked; 4 over-cap (ba.md 34L/12964B, digest-predict.md 43L/29895B, dev-team.md 49L/16870B, dev-rag-service.md 83L/14124B), 0 pruned (safe-fail: unparseable or single-section constraint)
+- Cold Archive Sweep: Skipped (not 1st of month)
+
+**Escalations:** None (signal from pre-gate cycle 2026-08-13 already appended by prior session).
+
+**Backlog:** Unchanged at 9 items (JANITOR-034, JANITOR-028 to JANITOR-032, JANITOR-011, -013, -017, -020, -027).
+
+**Quality:** Full. All sweeps executed nominally (idempotent re-run of pre-gate operations). No knowledge load failures. No DRY violations detected (pre-check gate skipped source scan).
+
+---
 
 ### Session 49 (2026-08-13 16:31Z — 6-hourly scheduled sweep cycle, post-pre-gate)
 
