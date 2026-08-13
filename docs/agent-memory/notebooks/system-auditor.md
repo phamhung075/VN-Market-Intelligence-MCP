@@ -15,7 +15,7 @@
 **Audit Gate Context:**
 Pre-gate verdict (auditor-tier1-probe.sh, 2026-08-12 17:30Z) was ALL_GREEN with all 6 checks passing, but heartbeat was stale (717 minutes old vs 480-minute fresh threshold). This fresh Tier-2 pass confirms system state remains healthy: cron watchdogs now reporting STALE (genuine findings, not pre-gate artifacts), all DB/BCTC checks passing. Heartbeat advanced from 2026-08-12T10:34:41Z to 2026-08-13T22:35:08Z. 
 
-**[HEARTBEAT]** OK ts=2026-08-13T22:35:08Z committed=<pending auditor-notebook-commit.sh>
+**[HEARTBEAT]** OK ts=2026-08-13T22:34:46Z committed=ad9cd930e (notebook) + ab7083ccb (heartbeat)
 
 ---
 
