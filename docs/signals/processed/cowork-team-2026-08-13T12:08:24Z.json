@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-08-06T12:08:20Z",
+    "fire_time": "2026-08-13T12:08:24Z",
     "matched_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -22,7 +22,7 @@
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 3,
+    "drift_min": 6,
     "errors": [],
     "pressure_mode": "adaptive",
     "calendar_status": "unknown",
@@ -36,11 +36,11 @@
       "alert-commander-critical": "cron"
     },
     "cadence_minutes": {
-      "news-scout-offhours": "240",
-      "market-watcher-offhours": "240",
-      "alert-commander-critical": "null"
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": null
     },
-    "last_fired_timestamp": "2026-08-06T12:08:11Z",
+    "last_fired_timestamp": "2026-08-13T12:08:12Z",
     "last_fired_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -53,14 +53,14 @@
     "leader_lock": "acquired",
     "dev_head": "unknown",
     "devq": 5,
-    "signal_backlog": 22,
-    "note": "3 slots fired (news-scout-offhours, market-watcher-offhours, alert-commander-critical); 1 signal_queue row left NEW (to:po, per feedback_cowork_step0a_blanket_ack_buries_other_agents_signals — not dispatcher-consumed)"
+    "signal_backlog": 27,
+    "note": "3 offhours/critical slots batch-fanned in a single batch (MAX_PARALLEL=4, healthy headroom/load)"
   },
   "priority": "low",
-  "createdAt": "2026-08-06T12:08:20Z",
+  "createdAt": "2026-08-13T12:08:24Z",
   "_processed": {
-    "fingerprint": "3c9877bb2d049126a1f094094c7126502e9e1360640d4a5af508b30916886cc3",
-    "processedAt": "2026-08-06T12:26:30Z",
+    "fingerprint": "8a398f92c5ecfb64618306489be0237269591626f2eb39e338480c10b1101623",
+    "processedAt": "2026-08-13T12:19:40Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

@@ -92,12 +92,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FE-PG-BCTC-FRESH-FIX",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 1 row(s), highest-ranked FE-PG-BCTC-FRESH-FIX — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-13T12:22:07Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "updated_at": "2026-08-13T12:55:54Z",
+    "updated_by": "dev-team",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -133,44 +132,10 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-13T11:23:18Z",
+    "_updated_at": "2026-08-13T12:54:09Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
-      {
-        "id": "sys-20260812T121105-7a8f",
-        "ts": "2026-08-12T12:11:05Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "A-30 stale ACK: FU-RAG-DEPLOY-MEMORY DONE_VERIFIED but resident-set tradeoff unresolved — rag-service remains 90.81% of ",
-        "severity": "WARN",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T12:00Z",
-        "dedup_key": "rag-service-stale-ack-fu-deploy-memory-20260812",
-        "disposition": "FOLD -> FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (open, review[], next_agent=dev-rag-service, P0). 5 rag-service A-30 rows folded as one chain, no mint. See that row's po_fold_20260812T1505Z for the three premise corrections: (1) report 4733's 'pre-fix image built 08-08T08:10:53Z' is REFUTED - live image is 2026-08-12T10:40:10Z and DOES contain 4c8c601e6; (2) the real undeployed delta is ca6d868695 @11:08:24Z, 28 min NEWER than the image -> one scoped ops rebuild; (3) the 'monotonically declining, settled ~89-93%' read is superseded - live docker stats 14:58Z = 92.26% at only 57 min into a fresh 14:00:55Z restart. The two 'stale ACK' rows are the FU-RAG-DEPLOY-MEMORY ledger floor_enforcement INTENDED outcome, not a defect.",
-        "triaged_at": "2026-08-12T15:10:35Z",
-        "triaged_by": "po"
-      },
-      {
-        "id": "sys-20260812T123832-3b23",
-        "ts": "2026-08-12T12:38:32Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "microservice_degraded",
-        "summary": "rag-service memory breach (89.18%, 110.8MiB free) — ACK stale (task DONE_VERIFIED)",
-        "severity": "WARN",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T12:30Z",
-        "dedup_key": "audit:rag-service:memory-stale-ack:FU-RAG-DEPLOY-MEMORY",
-        "disposition": "FOLD -> FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (open, review[], next_agent=dev-rag-service, P0). 5 rag-service A-30 rows folded as one chain, no mint. See that row's po_fold_20260812T1505Z for the three premise corrections: (1) report 4733's 'pre-fix image built 08-08T08:10:53Z' is REFUTED - live image is 2026-08-12T10:40:10Z and DOES contain 4c8c601e6; (2) the real undeployed delta is ca6d868695 @11:08:24Z, 28 min NEWER than the image -> one scoped ops rebuild; (3) the 'monotonically declining, settled ~89-93%' read is superseded - live docker stats 14:58Z = 92.26% at only 57 min into a fresh 14:00:55Z restart. The two 'stale ACK' rows are the FU-RAG-DEPLOY-MEMORY ledger floor_enforcement INTENDED outcome, not a defect.",
-        "triaged_at": "2026-08-12T15:10:35Z",
-        "triaged_by": "po"
-      },
       {
         "id": "sys-20260812T133432-3b93",
         "ts": "2026-08-12T13:34:32Z",
@@ -617,7 +582,7 @@
         "type": "improvement_proposal",
         "summary": "coverage-stamp.sh:158 ttl_seconds=30 < task_claim schema min=60 — mutex fails 5/5 every cycle, fail-CLOSED, fleet-wide.",
         "severity": "INFO",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/improvement-proposals/IMP-20260813-news-scout-T1-covstamp-ttl.md"
       }
     ],
@@ -13264,104 +13229,6 @@
             "observed_at": "2026-08-12T16:37:00Z"
           }
         }
-      },
-      {
-        "id": "FACTORY-GUARD-CI-SIZELINT-IMPL",
-        "type": "SPRINT-S",
-        "title": "Implement size-lint-justification CI guardrail (script + baseline + workflow wiring)",
-        "status": "DONE_VERIFIED",
-        "priority": "P2",
-        "size": "M",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-size-lint-justification",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md#3-build-vs-plan--decomposed-not-self-implemented",
-        "dev_agent": "developer",
-        "next_agent": "qa",
-        "parent_task": "FACTORY-GUARD-CI-size-lint-justification",
-        "note": "files: scripts/audits/size-lint-justification.sh (new, --check/--update modes), docs/data/size-lint-baseline.json (new, generated), .github/workflows/ci.yml (edit — add size-lint job), docs/policies/dev-standards.md (edit — CANONICAL pointer), scripts/audits/size-lint-justification.test.sh (new). approach: implement --check (CI mode, exit 0/1, walks apps/**/*.ts|*.py|*.go + packages/**/*.ts excl test/vendor/.d.ts, 120L threshold, honors // (ts/go) and # (py) size-justification headers, baseline-file tolerance ±10%/min5L mirrors context-bloat-backstop.sh idiom) and --update (regen docs/data/size-lint-baseline.json from live repo state, prune-eligible entries that shrank/got justified); run --update once to generate initial baseline (grandfathers current ~733 unjustified over-cap files verified 2026-07-24); wire size-lint job into ci.yml (ubuntu-latest, checkout only, no toolchain setup needed); add CANONICAL pointer in dev-standards.md Script Persistence section. dod: --check exits 0 on current repo state (baseline covers all current offenders); synthetic new >120L file with no header fails --check; synthetic baseline file grown past tolerance fails; a justified/shrunk file is dropped by --update; smoke test (size-lint-justification.test.sh) covers all 4 cases; CI green on push. || [QA] Review Record (direct-commit verify) 2026-08-13T12:04:42Z: DONE_VERIFIED. Commit 22cd084d4 (2026-07-29) confirmed on main ancestry (git merge-base --is-ancestor); git show --stat matches all 5 claimed files exactly (scripts/audits/size-lint-justification.sh, docs/data/size-lint-baseline.json, .github/workflows/ci.yml, docs/policies/dev-standards.md, scripts/audits/size-lint-justification.test.sh, +docs/WORK.md). Ran the shipped smoke test myself: 6/6 PASS covering all 4 DoD cases + 2 controls. Did not stop there -- built independent fixtures separate from the shipped test and reproduced all 4 DoD scenarios myself (new-offender fails --check, baseline-grown-past-tolerance fails, within-tolerance passes, shrunk file dropped by --update). Live bash scripts/audits/size-lint-justification.sh --check on current repo HEAD: PASS, 0 offenders, scanned 1384 files -- baseline ratchet still holds. CI: size-lint job = success on the 4 most-recent main-push CI runs (aggregate CI workflow currently red from 2 unrelated pre-existing jobs -- bun test, task-claim-owner-session-lint -- out of this task scope, not caused by this commit). dev-standards.md CANONICAL pointer present at line 1084, matches script usage. No TS/production source touched (.sh/.json/.yml/.md only) -- bun test/tsc structurally N/A; mock-guard.sh --files on the shell script -> PASS \"no production source files to scan\" (correctly out of scan scope). Zero ISSUE. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S100.",
-        "created_at": "2026-07-24T16:55:43Z",
-        "created_by": "architect",
-        "updated_at": "2026-08-13T12:04:43Z",
-        "claimed_at": "2026-08-13T12:00:07Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "commit_sha": "22cd084d4",
-        "qa_verified_at": "2026-08-13T12:04:42Z",
-        "qa_verified_by": "qa",
-        "updated_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "git (merge-base --is-ancestor / show --stat) + scripts/audits/size-lint-justification.sh (--check, --update) + scripts/audits/size-lint-justification.test.sh + gh run view (CI job status) + scripts/audits/mock-guard.sh",
-            "args": {
-              "commit_verified": "22cd084d4"
-            },
-            "live_value_observed": "ancestor=yes; git show --stat matches all 5 claimed files (+docs/WORK.md); smoke test 6/6 PASS; independent QA-built fixtures (separate from shipped test) reproduce all 4 DoD cases; live --check on repo HEAD = PASS 0 offenders (scanned 1384); size-lint CI job = success on 4 most-recent main-push runs; dev-standards.md CANONICAL pointer present L1084; mock-guard PASS (no production source in scan scope, script is bash not ts/py/go)",
-            "observed_at": "2026-08-13T12:04:42Z"
-          }
-        }
-      },
-      {
-        "id": "FE-PG-_INDEX-FRESH-FIX",
-        "type": "FIX",
-        "title": "Add page-level freshness/staleness indicator to /dashboard (Market Overview) — CHEF digest shows only per-dish timestamps, no page-level stale flag",
-        "status": "DONE_VERIFIED",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/frontend/",
-        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
-        "source": "quality-audit-frontend-page-coverage-20260724",
-        "owner": "dev-frontend",
-        "next_agent": "pm",
-        "check_id": "FE-PG-_INDEX-FRESH",
-        "status_note": "FE-PG-_INDEX-FRESH re-check returns PASS || [QA] Review Record (direct-commit verify): Re-verified independently, not from prose. Commit 3184247ab (+ docs 969360919) confirmed real, on main ancestry; git show --stat matches claimed file set exactly (dashboard._index.tsx FreshnessBadge/useFreshnessRevalidator wiring + new FE-PG-_INDEX-FRESH-FIX-dashboard-index-loader.test.ts, 6 cases). Backend data_asof field confirmed live in source (marketDigestHandler.ts:71,169). Targeted 6/6 new unit tests GREEN; full suite 2183 pass/2 fail (exact same pre-existing QUE-TOOLTIP failures already confirmed unrelated by 07-29 dev-team RAW-verify); tsc --noEmit clean; mock-guard.sh PASS. FINDING (new since 07-29): local node_modules had drifted off the committed bun.lock (stray pnpm-resolved tree) -- produced a false esbuild service-version crash plus a false-positive 30-test TopNav Router-context cascade across 6 unrelated files (TopNav.tsx last touched 2026-06-30/07-02, weeks before this commit). `bun install --frozen-lockfile` (CI-parity, matches .github/workflows/ci.yml) made both artifacts vanish, confirming env-drift not a code regression -- flagged to bug channel separately, not blocking this verdict. DEPLOY-GAP RE-CHECKED, STILL OPEN: live :3001 container docker-inspect Created=2026-07-24T18:02:36Z (predates this 2026-07-29 fix commit); curl localhost:3001/dashboard shows no freshness/stale markup in served HTML -- PENDING-REBUILD unresolved, same class as sibling rows, ops-owned deploy gap not a code defect. VERDICT: APPROVED, DONE_VERIFIED.",
-        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-_INDEX-FRESH, WARN). GAP: dashboard._index (market overview front page) renders only per-dish ClientTimestamp; there is no <FreshnessBadge> / page-level staleness SLA, so a stale synthesis feed is not flagged. Ref: project_frontend_freshness_transparency. AC: FE-PG-_INDEX-FRESH re-check returns PASS (page-level 'data as of' + stale indicator visible).",
-        "created_at": "2026-07-24T17:22:24Z",
-        "created_by": "po",
-        "updated_at": "2026-08-13T12:12:26Z",
-        "review_note": "dev-frontend: FreshnessBadge + useFreshnessRevalidator(\"daily\") wired onto dashboard._index.tsx, sourced from GET /api/market-digest data_asof (naive-SQLite string normalized to ISO8601 UTC via reused app/lib/formatDate.ts::parseDate — avoids host-TZ +2h skew). fetchMarketDigestData(origin) extracted as named test helper (fetchMacroData/fetchAlertsData pattern). 6 new unit tests GREEN; vitest 2172 pass/2 fail (same pre-existing QUE-TOOLTIP, confirmed git-stash A/B); tsc clean; Playwright G12 3/3 render-check + 7/7 full e2e GREEN via PLAYWRIGHT_PORT=3011 throwaway dev server (live :3001 container is a stale image predating this commit). Manually confirmed live: green FreshnessBadge renders on GET /dashboard/ against the real, unmodified mcp-server via a second throwaway server on :3012. PENDING-REBUILD: live :3001 container needs ops rebuild to serve this fix — code+behavior proven via throwaway dev server, container deploy is ops-gated, out of dev-frontend zone. [dev-team RAW-verify 2026-07-29T17:34Z: CORRECTION — self-report claimed \"7/7 full e2e GREEN\"; actual re-run = 5/7 (G12 render-check 3/3 GREEN as claimed, but 2/3 quality-audit-lastverified.spec.ts FAIL). Confirmed pre-existing+unrelated: that spec targets /dashboard/quality-audit (different route, last touched 2026-07-25 by FE-PG-QUALITY-AUDIT-LASTVERIFIED-RENDER-FIX, zero file/route overlap with this task); failure is live-data time-decay — the spec hardcodes a 2026-07-25 timestamp as the fresh fixture, which is now genuinely stale 4 days later (bctc SLA breach, already tracked under FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP). Implementation itself independently re-verified clean: diff matches claim, 6/6 new unit tests pass, full vitest 2172/2 exact match, tsc clean, backend data_asof field confirmed live. Not blocking review-flip — flagging for qa visibility only.]",
-        "claimed_at": "2026-08-13T12:00:07Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "updated_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "git merge-base --is-ancestor + git show --stat + bun install --frozen-lockfile + vitest run (targeted+full) + tsc --noEmit + mock-guard.sh + docker inspect + curl",
-            "args": "commit 3184247ab(+969360919); apps/frontend/app/routes/dashboard._index.tsx + app/__tests__/FE-PG-_INDEX-FRESH-FIX-dashboard-index-loader.test.ts; apps/mcp-server/src/interface/mcp/routes/marketDigestHandler.ts:71,169; docker inspect vn-market-intelligence-mcp-frontend-1; curl localhost:3001/dashboard",
-            "live_value_observed": "commit on main ancestry, diff matches claim exactly; backend data_asof field live; targeted 6/6 unit tests GREEN; full suite 2183 pass/2 fail (same pre-existing QUE-TOOLTIP, unrelated); tsc 0 errors; mock-guard PASS; frontend container Created=2026-07-24T18:02:36Z (predates fix commit), curl /dashboard shows no freshness markup -- PENDING-REBUILD still open",
-            "observed_at": "2026-08-13T12:12:25Z"
-          }
-        }
-      },
-      {
-        "id": "FE-PG-BCTC-FRESH-FIX",
-        "type": "FIX",
-        "title": "Flag stale reports on /dashboard/bctc (Financial Reports hub) — per-item updated_at shown but old reports not visually flagged as stale",
-        "status": "DONE_VERIFIED",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/frontend/",
-        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
-        "source": "quality-audit-frontend-page-coverage-20260724",
-        "owner": "dev-frontend",
-        "next_agent": "pm",
-        "check_id": "FE-PG-BCTC-FRESH",
-        "status_note": "FE-PG-BCTC-FRESH re-check returns PASS || [QA] Review Record (direct-commit verify): Re-verified independently, not from prose. Commit 545f2abf3 confirmed real, on main ancestry; git show --stat matches claimed file set exactly (dashboard.bctc.tsx FreshnessBadge/useFreshnessRevalidator wiring + new FE-PG-BCTC-FRESH-FIX-dashboard-bctc-loader.test.ts, 5 cases). Backend generated_at field confirmed live in source (analysisBriefReader.ts:388, new Date().toISOString()). Targeted 5/5 new unit tests GREEN; full suite 2183 pass/2 fail/2185 total (exact same pre-existing QUE-TOOLTIP/QUE-REFERENCE-PAGE failures already confirmed unrelated in sibling verify, zero overlap with dashboard.bctc/fetchAnalysisBriefs); tsc --noEmit clean; mock-guard.sh PASS. DEPLOY-GAP RE-CHECKED PER TASK INSTRUCTIONS: live :3001 container docker-inspect Created=2026-07-24T18:02:36Z (predates this 2026-07-29 fix commit); curl localhost:3001/dashboard/bctc shows no FreshnessBadge/\"Cap nhat luc\" markup in served HTML (stale asset dashboard.bctc-DGvnLd1y.js) -- PENDING-REBUILD unresolved, same class as sibling FE-PG-_INDEX-FRESH-FIX row, ops-owned deploy gap not a code defect. VERDICT: APPROVED, DONE_VERIFIED.",
-        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-BCTC-FRESH, WARN). GAP: dashboard.bctc renders generated_at + per-item updated_at (recency visible) but no <FreshnessBadge> / stale flag on the report list, so an old brief is not visually flagged. Ref: project_frontend_freshness_transparency. AC: FE-PG-BCTC-FRESH re-check returns PASS (stale reports visually flagged on the hub).",
-        "created_at": "2026-07-24T17:22:24Z",
-        "created_by": "po",
-        "updated_at": "2026-08-13T12:26:52Z",
-        "review_note": "dev-frontend: FreshnessBadge + useFreshnessRevalidator(\"event\") wired onto dashboard.bctc.tsx, sourced from GET /api/analysis-briefs generated_at (already real ISO8601 UTC server-side — analysisBriefIndexHandler emits new Date().toISOString(), confirmed live against the running mcp-server, no parseDate normalization needed, unlike sibling FE-PG-_INDEX-FRESH-FIX's data_asof). Also fixed a related provenance bug: fetchAnalysisBriefs previously parsed the DTO's real generated_at then discarded it, substituting a second independently-computed frontend-local timestamp in the loader — now threads the real DTO value through (the same field now also drives the badge). Per-item updated_at unchanged. 5 new unit tests GREEN; full vitest 2177/2179 pass (2 pre-existing QUE-TOOLTIP fails, confirmed identical via git-stash A/B with this diff fully removed); tsc clean; full Playwright suite (not just render-check) 7/7 pass across all 3 spec files (smoke 1/1, render-check 3/3, quality-audit-lastverified 3/3) via PLAYWRIGHT_PORT=3021 throwaway dev server — none related to this change. Manually confirmed live SSR HTML on a second throwaway server (PORT=3022) against the real, unmodified mcp-server: green bg-green-100/bg-green-500 FreshnessBadge + \"Cập nhật lúc\" renders next to ClientTimestamp. PENDING-REBUILD: live :3001 container needs ops rebuild to serve this fix — code+behavior proven via throwaway dev server, container deploy is ops-gated, out of dev-frontend zone.",
-        "claimed_at": "2026-08-13T12:22:06Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "updated_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "git merge-base --is-ancestor + git show --stat + vitest run (targeted+full) + tsc --noEmit + mock-guard.sh + docker inspect + curl",
-            "args": "commit 545f2abf3; apps/frontend/app/routes/dashboard.bctc.tsx + app/__tests__/FE-PG-BCTC-FRESH-FIX-dashboard-bctc-loader.test.ts; apps/mcp-server/src/infrastructure/fileStore/analysisBriefReader.ts:388; docker inspect vn-market-intelligence-mcp-frontend-1; curl localhost:3001/dashboard/bctc",
-            "live_value_observed": "commit on main ancestry, diff matches claim exactly; backend generated_at field live (new Date().toISOString()); targeted 5/5 unit tests GREEN; full suite 2183 pass/2 fail (same pre-existing QUE-TOOLTIP/QUE-REFERENCE, unrelated); tsc 0 errors; mock-guard PASS; frontend container Created=2026-07-24T18:02:36Z (predates fix commit), curl /dashboard/bctc shows no freshness markup -- PENDING-REBUILD still open",
-            "observed_at": "2026-08-13T12:25:49Z"
-          }
-        }
       }
     ],
     "head": {
@@ -19517,7 +19384,7 @@
         "last_served_tick": "2026-08-13T11:25:20Z"
       }
     },
-    "_updated_at": "2026-08-13T12:21:06Z",
+    "_updated_at": "2026-08-13T12:54:09Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23708,6 +23575,99 @@
         },
         "createdAt": "2026-08-13T12:16:54Z",
         "drained_at": "2026-08-13T12:19:40Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e58517f53d09c8791ea732b2d2bae4cbe077495f2bf32900ba36b6b11ebfa0ca",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-3d72cc9b",
+          "head_sha": "3d72cc9bfe13ceb6c67af09d4879ec44785921f9",
+          "run_id": 31699387752,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31699387752",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 94444572372
+            },
+            {
+              "name": "task-claim-owner-session-lint",
+              "conclusion": "failure",
+              "jobId": 94444572542
+            }
+          ],
+          "fingerprint": "8027155b4dd038beeb3c5429e608d22330296c5277d1918dc1c888b84203822f",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 3d72cc9bfe13ceb6c67af09d4879ec44785921f9: bun test,task-claim-owner-session-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-13T12:20:44Z",
+        "drained_at": "2026-08-13T12:53:22Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9eca01b1592010931c4cb813c0b866a77fc5af24bac2d7d37b0bdc82b0a0113a",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 34,
+          "cap": 200,
+          "byte_count": 12964,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 964,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-13T12:29:03Z",
+        "drained_at": "2026-08-13T12:53:22Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "75a4a5771c8501e9ad87e18eaa5b889473fe153078ce20a69d0647e902a81057",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 34,
+          "cap": 200,
+          "byte_count": 12964,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T12:29:01Z",
+        "drained_at": "2026-08-13T12:53:22Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "23ed190a759951913b6d6ecb4daf6f657d1ac9b520e042f4fb717c63d2a9be38",
+        "source": "dashboard",
+        "from": "news-scout",
+        "to": "po",
+        "type": "improvement_proposal",
+        "priority": "INFO",
+        "payload": "---\nCreated by: news-scout\nStatus: DRAFT\nTriggered: 2026-08-13T12:11:00Z\nCycle: c262 news-scout-offhours slot\n---\n\n# Improvement Proposal: coverage-stamp.sh mutex TTL below task_claim schema minimum (T1)\n\n## Weakness\n\n`scripts/agents-flow/coverage-stamp.sh` line 158 hardcodes `ttl_seconds:30` for its\n`coverage-state:main` mutex `task_claim` call. The live `task_claim` MCP tool schema\nenforces a minimum of 60. Every invocation of the script now fails input validation on\nall 5 retry attempts and fail-CLOSED (no write performed) — this is not a transient\nmutex-contention timeout, it is a permanent schema mismatch that cannot self-resolve by\nretrying.\n\n**Workaround applied:** flow doc `docs/agents/news-scout/flow/stage-log-notify.md` Step 7\nalready prescribes exactly this outcome for a genuine transport failure — SKIP the\ncoverage-state write for the cycle and log `[coverage-write-skipped: <reason>]` on the\nWORK ping, never fall back to a full-file rewrite. news-scout followed that path this\ncycle. **Non-fatal to this cycle's signal output, but the 48h staleness sweep\n(`--list-stale`) that this same script also serves depends on `last_covered_news_scout`\ntimestamps actually landing — those timestamps have not been written by news-scout since\nat least this cycle, degrading the sweep's future accuracy.**\n\n## Evidence\n\n**T1 Trigger — tool call returned error (task_claim input-validation failure) on all 5\nretry attempts, every cycle, deterministically:**\n\n```\n[coverage-stamp] WARN: task_claim transport error (attempt 1/5): [mcp-call] ERROR: tool=task_claim isError=true: MCP error -32602: Input validation error: Invalid arguments for tool task_claim: [ { \"code\": \"too_small\", \"minimum\": 60, \"type\": \"number\", ...\n[coverage-stamp] WARN: task_claim transport error (attempt 2/5): ... (same error, attempts 2-5)\n[coverage-stamp] ERROR: could not acquire coverage-state:main mutex after 5 attempts — fail-CLOSED, no write performed\n```\n\nRoot cause confirmed by direct grep of the script:\n`scripts/agents-flow/coverage-stamp.sh:158` — `ttl_seconds:30` literal, hardcoded, not\nparameterised. This is a schema-vs-caller mismatch, not a load/contention issue — retrying\n5, 50, or 500 times produces the identical validation error every time.\n\n**Blast radius:** the script's own header comment (stage-log-notify.md Step 7, and the\nmatching step in `market-watcher`'s flow) states this mutex \"serializ[es] against\nmarket-watcher's own write (co-ships FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE)\" — i.e.\nBOTH news-scout and market-watcher call this same script/mutex path, so the defect is\nfleet-wide, not news-scout-specific. Flagged via `send_telegram(channel=\"bug\")` this cycle\n(message_id 5212) in addition to this DRAFT per PLAN-ONLY self-critique scope.\n\n## Proposed Change\n\n**What:** Raise `ttl_seconds:30` to a value ≥60 (e.g. 60, matching the schema floor\nexactly, or a modest buffer such as 90) on `scripts/agents-flow/coverage-stamp.sh:158`.\n\n**Why:** One-line literal change unblocks `coverage-state:main` mutex acquisition for\nevery future news-scout and market-watcher cycle, restoring `last_covered_*` staleness\ntracking (currently frozen at whatever value each ticker held before the schema minimum\nwas raised to 60). No behavioral change beyond the TTL value itself — the mutex's\nacquire/release/CAS logic is otherwise unaffected.\n\n## Lane\n\n**Lane A** — mechanical parameter fix in a support script; no gate/audit/success-criteria\nchange, no flow-logic change, no user-facing comprehensibility impact.\n\n**Lane Rationale (C-3 answer):** Does this proposal edit gate/audit logic, loop success\ncriteria, an irreversible action, or user-facing comprehensibility? NO. It changes one\nnumeric literal in a mutex-acquisition call inside a support script; the coverage-state\nwrite's own validation (jq surgical patch, CAS-guard) is untouched. Purely mechanical.\n\n## Success Signal\n\n- `coverage-stamp.sh --agent news-scout --tickers <...>` (or the market-watcher\n  equivalent) exits 0 and reports a successful write instead of 5/5 `task_claim` failures.\n- 2 consecutive news-scout cycles complete Step 7 without a `[coverage-write-skipped]`\n  WORK-ping note.\n- `docs/data/coverage-state.json` `.tickers[*].last_covered_news_scout` timestamps advance\n  past 2026-08-13T12:11Z on the next successful cycle.\n\n## Rollback\n\nNo rollback needed — single-literal value change, trivially revertible via git if it\nsomehow regresses (e.g. if some other caller relied on the invalid ttl_seconds=30 never\nsucceeding, which is not the case: the mutex acquisition is unconditionally attempted\nevery cycle today and unconditionally fails today).\n\n---\n\n## Dashboard Entry (signal_queue.rows[])\n\n```json\n{\n  \"id\": \"new-20260813T121100Z\",\n  \"ts\": \"2026-08-13T12:11:00Z\",\n  \"from\": \"news-scout\",\n  \"to\": \"po\",\n  \"type\": \"improvement_proposal\",\n  \"summary\": \"coverage-stamp.sh:158 ttl_seconds=30 < task_claim schema minimum=60 — mutex fails 5/5 every cycle, fail-CLOSED, fleet-wide (news-scout+market-watcher).\",\n  \"severity\": \"INFO\",\n  \"status\": \"NEW\",\n  \"payload_ref\": \"docs/improvement-proposals/IMP-20260813-news-scout-T1-covstamp-ttl.md\"\n}\n```\n",
+        "createdAt": "2026-08-13T12:11:00Z",
+        "drained_at": "2026-08-13T12:54:09Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
