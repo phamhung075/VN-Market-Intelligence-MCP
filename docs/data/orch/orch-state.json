@@ -18575,7 +18575,7 @@
         "status": "REVIEW",
         "priority": "P0",
         "size": "M",
-        "zone": "apps/mcp-server/",
+        "zone": "apps/pdf-extractor/",
         "owner": "unassigned",
         "next_agent": "po",
         "created_at": "2026-08-11T19:26:00Z",
@@ -18589,7 +18589,7 @@
           "telegram-report:4649",
           "telegram-report:4650"
         ],
-        "updated_at": "2026-08-13T23:39:24Z",
+        "updated_at": "2026-08-13T23:41:49Z",
         "updated_by": "architect",
         "promoted_at": "2026-08-12T11:54:42Z",
         "promoted_by": "dev-team (design-router sweep)",
