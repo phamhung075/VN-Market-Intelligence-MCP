@@ -19005,7 +19005,7 @@
         "last_served_tick": "2026-08-13T17:21:25Z"
       }
     },
-    "_updated_at": "2026-08-13T17:21:25Z",
+    "_updated_at": "2026-08-13T17:49:56Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24169,6 +24169,136 @@
         },
         "createdAt": "2026-08-13T16:56:50Z",
         "drained_at": "2026-08-13T17:19:23Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c50fd8f2f21d460363e0afe6751f2b4e4bd5f5895903706ccc5386648edced27",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/triage-20260813T1733Z-po.md docs/agent-memory/notebooks/po.md docs/data/orch/orch-state.json. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=8 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-13T17:32:34Z",
+        "drained_at": "2026-08-13T17:49:56Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e75558a7c67d1e760b5e97ff0b35ac70666fbf24c22b6452f30d31f65f586ede",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 42,
+          "cap": 200,
+          "byte_count": 26750,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 14750,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-13T17:44:59Z",
+        "drained_at": "2026-08-13T17:49:56Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b4f4c8fff9d6aa477b2cafdaa6fdacc16bc67876214e04137eeebc5f2b06cdc4",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-13T17:38:24Z",
+          "matched_slots": [
+            "digest-daily"
+          ],
+          "won_slots": [
+            "digest-daily"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/digest-predict/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "digest-daily": "cron"
+          },
+          "cadence_minutes": {
+            "digest-daily": null
+          },
+          "last_fired_timestamp": "2026-08-13T17:38:12Z",
+          "last_fired_slots": [
+            "digest-daily"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "17:30",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 28,
+          "note": "digest-daily guaranteed daily slot, cron-due, single-slot batch"
+        },
+        "createdAt": "2026-08-13T17:38:24Z",
+        "drained_at": "2026-08-13T17:49:56Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "96a1ffdde32949d72cb0a0aba92810137512975f4d966c4021dfe863272c9785",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 42,
+          "cap": 200,
+          "byte_count": 26750,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T17:44:57Z",
+        "drained_at": "2026-08-13T17:49:56Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a1762dd8cb8451cf2e457b644d1b5677132869c8790822c56eec6844a7b9f228",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 29895,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T17:45:26Z",
+        "drained_at": "2026-08-13T17:49:56Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
