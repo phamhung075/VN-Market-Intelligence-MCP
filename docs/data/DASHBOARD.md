@@ -1798,3 +1798,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service sustained high memory, loss of reclamation
+**Severity:** WARN | **Date:** 2026-08-13 | **Status:** OPEN
+**Location:** rag-service container (vn-market-intelligence-mcp-rag-service-1)
+**Details:** All 6 probes over 65s window returned 95.23% memory usage; zero reclamation dips detected; VmHWM pinned at cgroup memory limit (1.5GB/1.0GB cap)
+**Impact:** Memory pressure sustained without reclamation indicates potential memory leak or ineffective garbage collection; risk of OOMKill if trend continues
+**Root cause:** Continued upward trend (89.34% → 94.60% → 95.23%) suggests growth in resident memory footprint; VmHWM pinned indicates recent peak consumption
+**Zone owner:** infrastructure
+**Last reported:** 2026-08-13T08:46:11Z (signal sys-20260813T084552-622a, system-auditor -> po, dedup_key=microservice_degraded:rag-service:A-30, WARN Telegram sent)
+**Mitigation:** Monitor rag-service memory trend across next 3-4 Tier-1 cycles; consider memory profile/heap dump analysis if trend persists or reaches 98%+
+
+---
