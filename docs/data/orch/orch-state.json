@@ -92,11 +92,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-13T06:20:34Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 2 row(s), highest-ranked FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 2 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-13T07:24:58Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -15597,47 +15598,6 @@
         "po_live_recurrence_20260808T1248Z": "LIVE RECURRENCE, AND THIS TIME IT REACHED GIT. docs/data/auditor-tier1-last-healthy.json currently reads {last_healthy_at: '2026-08-08T12:05:10Z', checks: {... mem_creep: 'PASS' ...}} and was committed at 34521315f by router session 165f4245 on the good-faith premise (quoted from that commit message) that the value is 'a genuine last-all-6-checks-passed timestamp before the mem_creep FAILURE window began'. PO REFUTES THAT PREMISE ON RAW EVIDENCE, three independent ways: (1) the FAILURE window began no later than 2026-08-08T11:04Z — peer auditor cycle c48 (commit 76466302a) records rag-service-1 at 98.53% / 15MiB free / BELOW-FLOOR at that time — so 12:05:10Z is INSIDE the failure window, not before it; (2) PO re-ran the pre-gate read-only at 12:47Z via the documented HEARTBEAT_FILE_PATH=<scratch> seam and got verdict=FAILURE, detail 'mem_creep: ... vn-market-intelligence-mcp-rag-service-1(98.56%, 14.7MiB-free, BELOW-FLOOR(floor=40MiB))', with the container at RestartCount=0 / OOMKilled=false / healthy / StartedAt 2026-08-08T08:11:45Z — i.e. no restart between 11:04Z and now that could have produced a transient green at 12:05Z; (3) the shell pre-gate STRUCTURALLY CANNOT have written it: run_probe() gates _write_heartbeat on an EMPTY failures list, and _mem_container_acked() disqualifies the rag-service acked_memory entry twice over — headroom 15MiB < MEM_FLOOR_MIB=40 -> BELOW-FLOOR, and tracked_by=FU-RAG-DEPLOY-MEMORY reached DONE_VERIFIED at 10:59:52Z -> STALE-ACK. Therefore the 12:05:10Z stamp is an out-of-contract agent write on a DEGRADED cycle — exactly this row's defect — and it is now the committed record. IMPACT beyond this row's existing scope: the tier-1 cron freshness arm reads .last_healthy_at and spawns on age>60min, so a false stamp suppresses that arm for an hour (the verdict=FAILURE arm still fires, so this is degradation, not blindness). REMEDIATION IS NOT PO'S TO EXECUTE: hand-writing this file is explicitly forbidden (pre-commit hook scripts/git-hooks/pre-commit:119 names _write_heartbeat as the sole authorized writer, and the 2026-07-29 PO constraint on scripts/po-s151-tier1-probe-plane-divergence-triage.jq:83 says 'Do NOT hand-write docs/data/auditor-tier1-last-healthy.json'). Correct action, for router/ops: revert the file half of 34521315f so the field returns to its last genuinely-green value 2026-08-07T03:35:32Z (written by b30e533ce), which restores the honest >33h-stale reading and lets the freshness arm work. Do NOT re-stamp it forward by hand."
       },
       {
-        "id": "FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP",
-        "size": "S",
-        "status": "REVIEW",
-        "title": "dev-team post-cycle: sweep ready[]/in_progress[] for epic-wrapper rows whose children are all terminal, auto-dispatch pm for closeout",
-        "type": "FIX",
-        "zone": "docs/agents/dev-team/flow/",
-        "owner": "developer",
-        "priority": "normal",
-        "depends": [],
-        "note": "Discovered 2026-07-10: BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP's ready[] row (owner=pm) sat open for hours after all 11 children (D0/D0B/D1/D2.5/D3/D4/D5+SHG-2..5) reached DONE_VERIFIED. Root cause: Step 0b pipeline-resume in docs/agents/dev-team/flow/main.md only fires on .head.status==\"in_progress\" -- once PM decomposes an epic and head resets to idle, nothing re-checks whether the parent's children are now all terminal. Router caught this only by chance during manual board inspection. Fix: add a Step 4 (post-cycle) candidate that scans ready[]/in_progress[] for rows with non-null/non-empty children[] where every child (board-live or archived) is terminal (DONE/DONE_VERIFIED/CANCELLED/DEFERRED/SKIPPED), and auto-dispatches the row's own next_agent/owner (usually pm) for closeout instead of relying on router luck. Distinct from already-shipped FIX-DEVTEAM-BOUNDED1-EPIC-WRAPPER-GATE (that one prevents premature BOUNDED-1 pickup of a wrapper row; this one closes a wrapper once legitimately done). See feedback_epic_wrapper_closeout_gap_no_auto_revisit memory.",
-        "created_at": "2026-07-10T19:59:57Z",
-        "created_by": "router",
-        "source": "router discovery during routine board inspection, 2026-07-10 dev-team cron tick",
-        "audit_ref": {
-          "audit": "ultracode-2026-07-12",
-          "verdict": "dev-team-loop-P3 CONFIRMED — this row IS the ship vehicle; not double-minted",
-          "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#dev-team-loop-P3"
-        },
-        "promoted_at": "2026-07-29T12:48:14Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-07-29T13:09:41Z",
-        "claimed_at": "2026-07-29T12:48:29Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "next_agent": "qa",
-        "reviewed_at": "2026-07-29T13:09:41Z",
-        "reviewed_by": "developer"
-      },
-      {
-        "id": "SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME",
-        "status": "REVIEW",
-        "type": "SPIKE",
-        "zone": "apps/mcp-server/",
-        "priority": "P2",
-        "title": "SPIKE->FIX: get_cycle_bootstrap under-returns shared/broadcast chain_catalyst vs get_agent_signals (recurring 2+: 07-21 08:20Z, 07-22 04:29Z). Live probe: catalyst 8779 on bus + in alert-commander inbox but status='read'. get_cycle_bootstrap and get_agent_signals inbox-mode share getSignals(db,agent,{status:'unread'}) (agentSignalStore.ts:837) which mark-reads unread->read on read. Leading hypothesis: first consumer to bootstrap a shared/broadcast catalyst (to_agent='all' or multi-recipient) marks it read so later agents' bootstrap (unread-only) miss it; recovery only via non-consuming all-producers path (from_agent=null). SPIKE must (1) fetch created_at + to_agent of the missed rows across BOTH recurrences to rule out a pure timing artifact (signal created after the bootstrap call), then (2) decide fix direction: (a) bootstrap unions shared catalyst types via a non-consuming window, or (b) broadcast signals get per-recipient read-state / are not single-reader-consumed. Then FIX. Plausible CHEF convergence-coverage miss on -2.67% selloff. Source signal: cowork-20260722T043453Z-bootstrap-underreturn.",
-        "verify_note": "prior_status=NEW; minted by po triage 2026-07-22",
-        "updated_at": "2026-07-29T16:11:12Z",
-        "next_agent": "qa",
-        "review_note": "dev-mcp-server SPIKE->FIX complete. Root row id=8779 TTL-purged from live DB (no re-probeable trace) — instead RED-reproduced the exact defect via git-stash A/B (broadcast posted strictly before both bootstrap calls; 2nd recipient bootstrap still returned agent_signals=[] pre-fix), ruling out the pure-timing-artifact alternative. Root cause: agent_signals has ONE global status column (no per-recipient read-state); getSignals unread-only UPDATE flips a to_agent=all row read GLOBALLY on the FIRST recipient bootstrap, so every other recipient later misses it. Fix direction (a) chosen: new non-consuming getBroadcastSignals(db) (WHERE to_agent=all, bounded only by expires_at, ignores status) unioned into getCycleBootstrap via getInboxSignals(), dedup by id. Direction (b) per-recipient read-state table rejected as unnecessary schema migration. Evidence: new SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME.test.ts 5/5 (RED confirmed via stash, GREEN after fix); targeted 12-file signal/bootstrap suite 87/87 pass; tsc clean; toolCount=184/cronJobCount=88 unchanged; live boot health 200 + dashboards 200; full bun test 14901 pass/64 fail/1240 files — the 17 unique failing files grepped clean of any reference to the 2 changed source files (agentSignalStore.ts, getCycleBootstrap.ts), pre-existing order/network flakiness. Files: apps/mcp-server/src/infrastructure/db/agentSignalStore.ts (+getBroadcastSignals), apps/mcp-server/src/application/usecases/getCycleBootstrap.ts (+getInboxSignals merge), apps/mcp-server/src/__tests__/SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME.test.ts (new), docs/agents/tools/list/get_cycle_bootstrap.md (Notes bullet)."
-      },
-      {
         "id": "FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND",
         "title": "FIX: scripts/orch-conservation-check.mjs FLAT_TASK_LANES (~:67) omits 'qa' — the qa[] lane is excluded from task_total, so a catastrophic qa[] drop is invisible to the floor-ratio conservation circuit-breaker. qa[] is now live via QA-Drain. Add 'qa' to FLAT_TASK_LANES + align the documented conservation formula.",
         "status": "REVIEW",
@@ -17274,7 +17234,7 @@
         "next_agent": "po",
         "updated_by": "qa",
         "po_escalation_20260728": "PO triage TNB-c119 — PRIORITY RAISED P2 -> P1, AND THE c110 COMPONENT-SPLIT IS PARTLY OVERTURNED. NEW EVIDENCE (c119, RAW-verified by TNB against both synthesis JSONs on disk): two independently-computed chef-evening dishes exist for the SAME real day 2026-07-28, 8 min apart — unified-agent-synthesis-2026-07-28-evening.json (cycle_id evening-2026-07-28T19:45Z, date_vn 2026-07-28, regime risk-on-consolidation, SSI/VCI/VND STRONG BUY) and unified-agent-synthesis-2026-07-29-evening.json (cycle_id evening-2026-07-28T19:53:00Z, date_vn 2026-07-29, regime risk-balanced_with_sector_rotation, VCI/VND/VHM/VIC all MEDIUM HOLD). Not a duplicate-message artifact: different live fetches, different regime conclusions, OPPOSITE conviction direction on overlapping tickers (VCI STRONG-BUY-2/4 vs MEDIUM-HOLD-1/4). Both self-certify 'Dish published: YES (MARKET plain-VI + WORK detail)'. PO ADJUDICATION: c110 folded Component 2 (dup-publish) to UC-CCA-P3 and left this row as 'Component 1 = cosmetic UTC-header/filepath fix'. That split is WRONG as of c119. The daily chef-evening publish mutex is KEYED ON date_vn (published:chef-evening:2026-07-28 vs published:chef-evening:2026-07-29) — so the very date derivation this row owns IS the mutex key, and its VN-local-rollover bug is what let the two sessions miss each other. Component 1 is therefore NOT cosmetic: it is the direct enabling cause of a confirmed double MARKET-channel publish. Severity upgraded cosmetic -> functional. SCOPE (widened a third time, same single defect): chef.md must derive ONE canonical UTC date once and use it for ALL THREE surfaces — (a) synthesis JSON filepath (c113 finding, Step 7.6 L631 CYCLE_DATE), (b) session/notebook headers (c109 finding), (c) the published:chef-evening:<date> marker key (c119 finding, NEW). AC: (1) single UTC date-derivation point in chef.md, no VN-local date reaches any of the 3 surfaces; (2) RAW-VERIFY on a subsequent evening dish — filepath date, notebook header date and the held marker key all equal the UTC date of execution; (3) exactly one published:chef-evening:<date> marker per real calendar day. DO NOT re-litigate marker RELEASE/IMMUNITY semantics — UC-CCA-P3 still owns those; this row owns key DERIVATION only (same orthogonality test used by FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON). Cross-ref FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (P0, occurrence_count 3 -> this is occurrence 4 of the double-dispatch class) — that row owns WHY two chef sessions spawned; THIS row owns WHY the daily mutex failed to catch them. Both are needed; neither subsumes the other. Reported BUG channel msg 4348.",
-        "updated_at": "2026-08-06T17:45:23Z",
+        "updated_at": "2026-08-13T07:24:09Z",
         "entered_review_at": "2026-07-28T23:57:07Z",
         "review_note": "[agent-father 2026-07-28T23:57:07Z] chef.md now derives ONE canonical UTC date (CYCLE_DATE_UTC, Step 0.5, pinned once) reused verbatim at all 3 surfaces: Step 0.5 single-fire published-marker key, Step 7.6 synthesis JSON filepath + metadata.date_vn, Step 8b notebook header. Root cause: chef-evening cron (19:45 UTC) fires after VN local midnight (17:00 UTC), so VN-local date was structurally +1 day vs the UTC fire day, letting two concurrently-dispatched sessions diverge on the marker key. Also updated cowork-schedule.json publish_date_basis for chef-morning/chef-eod/chef-evening (vn_date->utc_date) so the live catchup-predicate rollover check matches the new basis -- no-op for morning/eod (UTC date == VN date at their fire times), fixes evening. Did NOT touch marker release/immunity semantics (UC-CCA-P3 territory). AC(2) NOT verifiable this session -- requires a subsequent evening dish to confirm filepath/header/marker date all equal the UTC execution date. REVIEW not DONE_VERIFIED.",
         "status_note": " [router 2026-07-29T00:03:46Z] next_agent corrected agent-father->qa: QA-Drain requires status==REVIEW && next_agent==qa to pick a row; agent-father left self-reference, stranding this row from automated QA pickup. | [qa 2026-08-06T17:45:22Z] CHANGES_REQUESTED — Component 1 (VN-local date leak) durably fixed and verified across 9 post-fix dishes; AC(3) (exactly one marker/day) still failing via 2 new mechanisms (07-30 same-day double-dish, 08-06 retry wall-clock date-drift) — see qa_note for full evidence.",
@@ -17283,7 +17243,10 @@
         "qa_verdict": "CHANGES_REQUESTED",
         "qa_note": "CHANGES_REQUESTED (direct-commit verify, mode=verify-committed). Derived commit 8cb767471 (no .commit field on row) via git log on chef.md/cowork-schedule.json, cross-checked against review_note prose — matches: chef.md Step 0.5 now pins ONE canonical CYCLE_DATE_UTC (\"date -u +%Y-%m-%d\") reused verbatim (never recomputed) at Step 7.6 (synthesis JSON filepath + metadata.date_vn), Step 8b (notebook session header), and this step's single-fire published-marker key; cowork-schedule.json publish_date_basis flipped vn_date->utc_date for chef-morning/chef-eod/chef-evening. Commit confirmed on main ancestry.\n\nAC(1) + the literal wording of AC(2) — CONFIRMED, credit given. Sampled ALL 9 evening synthesis JSONs produced since the fix landed (07-29, 07-30 x2, 07-31, 08-04, 08-06, plus the 07-29 \"chef-evening\" variant): zero VN-local-date leaks in any of them; filepath date / metadata.date_vn / notebook header / marker key are always mutually consistent and always equal the UTC calendar date of actual execution, including today's 08-06T06:37Z dish. The Component-1 defect this row was originally opened for (VN-local date leaking into session headers) has NOT recurred.\n\nAC(3) \"exactly one published:chef-evening:<date> marker per real calendar day\" — NOT held, two independent pieces of live post-fix evidence:\n(a) docs/data/unified-agent-synthesis-2026-07-30-evening.json (cycle_id evening-2026-07-30T19:52:43Z, regime \"risk-on_with_caution\") and -2026-07-30-chef-evening.json (cycle_id evening-2026-07-30T19:59:12Z, regime \"bullish-micro-bearish-macro-divergence\") are two independently-computed FULL evening dishes, 6m29s apart, same real day, BOTH correctly UTC-dated (not the original mislabel mechanism). chef.md gates all of Step 0 GATHER behind the Step 0.5 marker claim (unclaimed -> immediate EXIT before any synthesis) — both reaching Step 7.6 persist is strong evidence both marker claims succeeded, i.e. two markers/two live dish computations for one day. Root cause is most likely SLOT_ID not being canonicalized at Step 0.5 (only the DATE component was fixed) — the divergent filenames (-evening.json vs -chef-evening.json, dish_type \"evening_preview\"/\"evening\") point at two dispatch paths passing different slot/dish_type framing into the SAME marker-key formula this row owns.\n(b) Fresh, independently-filed evidence in signal_queue today (id cowork-20260806T064440Z-chef-evening-retry-date-drift, ts 2026-08-06T06:44:40Z, HIGH, routed to po, RAW-verified via get_market_message_digest): pinning CYCLE_DATE_UTC to wall-clock-at-execution (this row's exact design choice) has no backfill-target-date concept, so a ~10h43m-delayed retry (originally for the missed 2026-08-05 evening slot) instead published under TODAY's date, permanently leaving 2026-08-05 evening unfilled and prematurely tombstoning 2026-08-06's marker 13h before tonight's real 19:45 UTC fire.\n\nNot held against this row / not re-litigated: the 07-29-evening.json artifact (cycle_id evening-2026-07-28T19:53:00Z) is the OLD pre-fix c119 artifact already documented in this row's own po_escalation_20260728, not new evidence. Marker release/immunity semantics (UC-CCA-P3) and the double-dispatch spawn cause (FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS) are correctly untouched by commit 8cb767471 and are not blamed on it here.\n\nbun test / tsc --noEmit / mock-guard: structurally N/A — commit touches only docs/agents/unified-agent/flow/chef.md + docs/data/cowork-schedule.json (flow-doc + config, zero .ts production source).\n\nDISPOSITION: held at REVIEW, not DONE_VERIFIED. Component 1 (VN-local leak) is durably fixed. Recommend po adjudicate: (i) whether SLOT_ID canonicalization belongs on THIS row (Step 0.5 marker-key derivation) or folds fully into FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS; (ii) mint/route a backfill-target-date parameter for chef.md retries (architect, per the 08-06 signal_queue filing) before this row can claim DONE_VERIFIED against its own AC(3).",
         "qa_reviewed_at": "2026-08-06T17:45:22Z",
-        "redispatch_count": 1
+        "redispatch_count": 1,
+        "secondary_claimed_at": "2026-08-13T07:24:08Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po"
       },
       {
         "title": "Replace hardcoded 60-min dedup window with a config-sourced DedupWindowMinutes",
@@ -19376,6 +19339,49 @@
         "secondary_claimed_at": "2026-08-12T17:27:23Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "developer"
+      },
+      {
+        "id": "FIX-DEVTEAM-EPIC-WRAPPER-AUTOCLOSE-SWEEP",
+        "size": "S",
+        "status": "QA",
+        "title": "dev-team post-cycle: sweep ready[]/in_progress[] for epic-wrapper rows whose children are all terminal, auto-dispatch pm for closeout",
+        "type": "FIX",
+        "zone": "docs/agents/dev-team/flow/",
+        "owner": "developer",
+        "priority": "normal",
+        "depends": [],
+        "note": "Discovered 2026-07-10: BACKLOG-HYGIENE-VERIFY-PRUNE-SWEEP's ready[] row (owner=pm) sat open for hours after all 11 children (D0/D0B/D1/D2.5/D3/D4/D5+SHG-2..5) reached DONE_VERIFIED. Root cause: Step 0b pipeline-resume in docs/agents/dev-team/flow/main.md only fires on .head.status==\"in_progress\" -- once PM decomposes an epic and head resets to idle, nothing re-checks whether the parent's children are now all terminal. Router caught this only by chance during manual board inspection. Fix: add a Step 4 (post-cycle) candidate that scans ready[]/in_progress[] for rows with non-null/non-empty children[] where every child (board-live or archived) is terminal (DONE/DONE_VERIFIED/CANCELLED/DEFERRED/SKIPPED), and auto-dispatches the row's own next_agent/owner (usually pm) for closeout instead of relying on router luck. Distinct from already-shipped FIX-DEVTEAM-BOUNDED1-EPIC-WRAPPER-GATE (that one prevents premature BOUNDED-1 pickup of a wrapper row; this one closes a wrapper once legitimately done). See feedback_epic_wrapper_closeout_gap_no_auto_revisit memory.",
+        "created_at": "2026-07-10T19:59:57Z",
+        "created_by": "router",
+        "source": "router discovery during routine board inspection, 2026-07-10 dev-team cron tick",
+        "audit_ref": {
+          "audit": "ultracode-2026-07-12",
+          "verdict": "dev-team-loop-P3 CONFIRMED — this row IS the ship vehicle; not double-minted",
+          "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#dev-team-loop-P3"
+        },
+        "promoted_at": "2026-07-29T12:48:14Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "updated_at": "2026-08-13T07:24:58Z",
+        "claimed_at": "2026-08-13T07:24:57Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "reviewed_at": "2026-07-29T13:09:41Z",
+        "reviewed_by": "developer"
+      },
+      {
+        "id": "SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME",
+        "status": "QA",
+        "type": "SPIKE",
+        "zone": "apps/mcp-server/",
+        "priority": "P2",
+        "title": "SPIKE->FIX: get_cycle_bootstrap under-returns shared/broadcast chain_catalyst vs get_agent_signals (recurring 2+: 07-21 08:20Z, 07-22 04:29Z). Live probe: catalyst 8779 on bus + in alert-commander inbox but status='read'. get_cycle_bootstrap and get_agent_signals inbox-mode share getSignals(db,agent,{status:'unread'}) (agentSignalStore.ts:837) which mark-reads unread->read on read. Leading hypothesis: first consumer to bootstrap a shared/broadcast catalyst (to_agent='all' or multi-recipient) marks it read so later agents' bootstrap (unread-only) miss it; recovery only via non-consuming all-producers path (from_agent=null). SPIKE must (1) fetch created_at + to_agent of the missed rows across BOTH recurrences to rule out a pure timing artifact (signal created after the bootstrap call), then (2) decide fix direction: (a) bootstrap unions shared catalyst types via a non-consuming window, or (b) broadcast signals get per-recipient read-state / are not single-reader-consumed. Then FIX. Plausible CHEF convergence-coverage miss on -2.67% selloff. Source signal: cowork-20260722T043453Z-bootstrap-underreturn.",
+        "verify_note": "prior_status=NEW; minted by po triage 2026-07-22",
+        "updated_at": "2026-08-13T07:24:58Z",
+        "next_agent": "qa",
+        "review_note": "dev-mcp-server SPIKE->FIX complete. Root row id=8779 TTL-purged from live DB (no re-probeable trace) — instead RED-reproduced the exact defect via git-stash A/B (broadcast posted strictly before both bootstrap calls; 2nd recipient bootstrap still returned agent_signals=[] pre-fix), ruling out the pure-timing-artifact alternative. Root cause: agent_signals has ONE global status column (no per-recipient read-state); getSignals unread-only UPDATE flips a to_agent=all row read GLOBALLY on the FIRST recipient bootstrap, so every other recipient later misses it. Fix direction (a) chosen: new non-consuming getBroadcastSignals(db) (WHERE to_agent=all, bounded only by expires_at, ignores status) unioned into getCycleBootstrap via getInboxSignals(), dedup by id. Direction (b) per-recipient read-state table rejected as unnecessary schema migration. Evidence: new SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME.test.ts 5/5 (RED confirmed via stash, GREEN after fix); targeted 12-file signal/bootstrap suite 87/87 pass; tsc clean; toolCount=184/cronJobCount=88 unchanged; live boot health 200 + dashboards 200; full bun test 14901 pass/64 fail/1240 files — the 17 unique failing files grepped clean of any reference to the 2 changed source files (agentSignalStore.ts, getCycleBootstrap.ts), pre-existing order/network flakiness. Files: apps/mcp-server/src/infrastructure/db/agentSignalStore.ts (+getBroadcastSignals), apps/mcp-server/src/application/usecases/getCycleBootstrap.ts (+getInboxSignals merge), apps/mcp-server/src/__tests__/SPIKE-BOOTSTRAP-BROADCAST-CATALYST-CONSUME.test.ts (new), docs/agents/tools/list/get_cycle_bootstrap.md (Notes bullet).",
+        "claimed_at": "2026-08-13T07:24:57Z",
+        "claimed_by": "dev-team (review-lane qa-drain)"
       }
     ],
     "_closed_signals_20260614": {
@@ -19520,7 +19526,7 @@
         "last_served_tick": "2026-08-13T06:56:07Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-12T15:55:32Z"
+        "last_served_tick": "2026-08-13T07:23:13Z"
       },
       "qa_drain": {
         "last_served_tick": "2026-08-12T16:21:59Z"
@@ -19529,7 +19535,7 @@
         "last_served_tick": "2026-08-12T16:53:15Z"
       }
     },
-    "_updated_at": "2026-08-13T07:20:45Z",
+    "_updated_at": "2026-08-13T07:23:13Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
