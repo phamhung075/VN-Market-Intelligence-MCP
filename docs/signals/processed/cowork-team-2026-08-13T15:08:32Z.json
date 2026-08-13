@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-08-06T15:05:19Z",
+    "fire_time": "2026-08-13T15:08:32Z",
     "matched_slots": [
       "bctc-analyst-slot-1"
     ],
@@ -16,7 +16,7 @@
       "docs/agents/bctc-analyst/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 2,
+    "drift_min": 6,
     "errors": [],
     "pressure_mode": "adaptive",
     "calendar_status": "unknown",
@@ -30,7 +30,7 @@
     "cadence_minutes": {
       "bctc-analyst-slot-1": null
     },
-    "last_fired_timestamp": "2026-08-06T15:05:19Z",
+    "last_fired_timestamp": "2026-08-13T15:08:28Z",
     "last_fired_slots": [
       "bctc-analyst-slot-1"
     ],
@@ -41,14 +41,14 @@
     "leader_lock": "acquired",
     "dev_head": "unknown",
     "devq": 5,
-    "signal_backlog": 22,
-    "note": "single-slot tick, bctc-analyst offmarket cron (0 15 * * *), last_fired was 2026-08-01T15:09:45Z (5 days stale, cron-driven not cadence), MAX_PARALLEL=4 not_degraded (headroom=2846MB load1m=2 cores=12), no batch wait (last/only batch)"
+    "signal_backlog": 27,
+    "note": "single-slot WORK tick — bctc-analyst-slot-1 (cron off-market, bctc-offmarket policy fallback on calendar_status=unknown)"
   },
   "priority": "low",
-  "createdAt": "2026-08-06T15:05:19Z",
+  "createdAt": "2026-08-13T15:08:32Z",
   "_processed": {
-    "fingerprint": "0bc0ae964d9ee782c35e77ed0e76745ad752f1192308777db919a9530e747bcc",
-    "processedAt": "2026-08-06T15:11:05Z",
+    "fingerprint": "bbbb99a54a183067a279b7cee53eb8bd9f7f9bf8e88123ea2833cd8bd0f8f67e",
+    "processedAt": "2026-08-13T15:20:29Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-13T15:34:04Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: apps/news-fetch/Dockerfile. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=7 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "dc059eb2f0a488dccc22973fbb54b94b78043e84128d1fce4422861b0e569fda",
+    "processedAt": "2026-08-13T15:49:21Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

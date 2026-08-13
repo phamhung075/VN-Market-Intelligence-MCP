@@ -4,49 +4,43 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "net_profit_delta_pct": null,
-  "product": "Software export & IT services (SI, ERP), telecom/broadband (FPT Telecom, moved to equity-method 2026-01-01), education (FPT University/Polytechnic/K-12), digital transformation consulting.",
-  "customer": "Enterprise IT buyers in VN and offshore export markets (Japan, US, Europe — Europe segment +44.4% YoY); FPT Telecom retail broadband/ISP subscribers (now off consolidated P&L); students across FPT's K-12/university network.",
-  "ops": "Gross margin 34.0%, operating margin 22.0%. Headline revenue -22.3% YoY is a consolidation-method artifact (FTEL deconsolidated to equity-method 2026-01-01, disclosed in filing Note 2) — like-for-like restated revenue +8.7% YoY, restated NPAT +13.8% YoY. Q1 operating cash flow -2,848 ty VND vs net profit +2,477 ty VND (working-capital drag; Q4-2025 OCF/NI=1.64x shows this is not a chronic pattern).",
-  "mgmt": "FTEL deconsolidation transparently disclosed with restated comparatives. Balance sheet checks out exactly (assets = liabilities + equity, ESC-2 imbalance 0.00%). Consistent double-digit adjusted profit growth maintained.",
+  "product": "Xuất khẩu phần mềm, tích hợp hệ thống, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+  "customer": "Doanh nghiệp CNTT nội địa + nước ngoài (Nhật Bản, Mỹ, Châu Âu tăng +44,4%), thuê bao viễn thông, học viên FPT Edu",
+  "ops": "Biên LN gộp 34.0%, LN thuần HĐKD 22.0% (2.747,8 tỷ); doanh thu thuần 12.480 tỷ (-22,3% YoY chưa điều chỉnh, +8,7% YoY đã điều chỉnh sau đổi phương pháp hợp nhất FTEL từ hợp nhất toàn bộ sang vốn CSH từ 01/01/2026)",
+  "mgmt": "ROE ngành (annualized) 28.3% trên median 10.6%; LNST +13.8% YoY (đã điều chỉnh); Q2-2026 vẫn CHƯA được trích xuất dù PDF có sẵn từ 2026-08-01 (12d+ trễ)",
   "valuation": {
     "pe": 13.8,
-    "sector_median_pe": 17.3,
+    "pe_sector_median": 17.3,
     "pb": 3.6,
-    "sector_median_pb": 1.5,
-    "roe_pct": 28.3,
-    "sector_median_roe_pct": 10.6,
+    "pb_sector_median": 1.5,
     "ey_spread_pp": 2.25,
     "verdict": "FAIR"
   },
-  "kinh_dich": {
-    "que": "Giai (40)",
-    "trend": "THUAN LOI",
-    "signal": "GIU",
-    "confidence_pct": 100
+  "kinhdich": {
+    "que": "Minh Di (36)",
+    "xu_huong": "BAT LOI",
+    "khuyen_nghi": "GIU",
+    "do_tin_cay": 0.25
   },
   "esc_gate": {
-    "esc1_manipulation": "UNEVALUABLE — no Bash/Glob tool grant, E1 6-pass trick detection scope-reduced (standing gap)",
-    "esc2_balance_sheet": {
-      "result": "FALSE",
-      "imbalance_pct": 0,
-      "note": "balance_check:PASSED in refined units — TONG TAI SAN = TONG NGUON VON exactly"
+    "ESC-1": "unevaluable (no Bash/Glob grant)",
+    "ESC-2": {
+      "result": false,
+      "imbalance_pct": 0
     },
-    "esc3_ocf_vs_ni": {
+    "ESC-3": {
       "result": "DATA-COVERAGE-LIMITED",
       "quarters_returned": 3,
       "quarters_required": 4,
-      "coverage_guard_held": true,
-      "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
-      "coverage_guard_expires_approx": "2026-08-17"
+      "guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+      "guard_held": true
     },
-    "esc4_related_party_nonop": {
-      "result": "FALSE",
+    "ESC-4": {
+      "result": false,
       "non_operating_share_pct": 2
     },
-    "esc5_refine_confidence": {
-      "result": "TRUE",
-      "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+    "ESC-5": {
+      "result": true,
       "low_confidence_unit_ids": [
         "unit-0008",
         "unit-0009",
@@ -57,47 +51,22 @@
         "unit-0014"
       ],
       "min_confidence": 0.45,
-      "escalation_status": "PENDING",
-      "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
-      "guard_held_since": "2026-08-12T18:07:08Z",
-      "guard_expires_approx": "2026-08-13T18:07:08Z",
-      "note": "guard still active this cycle — no re-dispatch, dev-team pickup unconfirmed"
+      "escalation_status": "GUARD-HELD",
+      "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
     }
   },
-  "trick_detection": {
-    "trick_confidence": "none",
-    "trick_summary": null,
-    "scope_note": "E1 6-pass detection SCOPE-REDUCED — no Bash/Glob grant to enumerate data/bctc-analysis-cache/ (standing capability gap, unchanged)."
+  "data_quality": {
+    "stale": true,
+    "stale_since": "2026-08-11T14:37:49.000Z",
+    "stale_age_hours": 48.53,
+    "sla_hours": 48,
+    "note": "FR-DEGRADE-01 last-known-good; Q2-2026 not yet extracted, showing Q1-2026"
   },
-  "insider_signal": "Khong co tin hieu giao dich noi bo dang ke",
-  "legal_risk": "Khong co tin hieu rui ro phap ly",
-  "sentiment_30d": {
-    "direction": "GIAM",
-    "slope": -0.34,
-    "entries": 16
-  },
-  "filing_status": "QUA HAN — Q2-2026 deadline 30/07/2026, not yet filed as of 2026-08-13 (14 days overdue)",
-  "evidence_fragments": [
-    {
-      "id": 1199,
-      "evidence_type": "bctc_roe_strong",
-      "direction": "bullish",
-      "magnitude": 1,
-      "confidence": 0.6
-    },
-    {
-      "id": 1200,
-      "evidence_type": "bctc_report_overdue",
-      "direction": "bearish",
-      "magnitude": 0.5,
-      "confidence": 0.55
-    }
-  ],
-  "cycle_id": "20260813-0000",
-  "generated_at": "2026-08-13T00:09:00Z",
+  "cycle_ts": "2026-08-13T15:14:00Z",
+  "slot": "bctc-analyst-slot-1",
   "_processed": {
-    "fingerprint": "958b7f0e257cf1d8f7c0e3a689cc17b88a615a004f7bc8cdce7e802441844cde",
-    "processedAt": "2026-08-13T06:29:51Z",
+    "fingerprint": "6823467814cb9d3568b9f5aa972f004c2a1fa2ffce7fc4016d4eea61e6eda212",
+    "processedAt": "2026-08-13T15:20:29Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

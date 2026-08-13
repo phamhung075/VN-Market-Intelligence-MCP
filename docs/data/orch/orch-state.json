@@ -92,12 +92,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-GUARD-CI-NOHARDCODE-IMPL",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 1 row(s), highest-ranked FACTORY-GUARD-CI-NOHARDCODE-IMPL — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-13T15:24:25Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "updated_at": "2026-08-13T15:52:09Z",
+    "updated_by": "dev-team",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -133,44 +132,10 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-13T15:19:05Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-08-13T15:50:34Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
-      {
-        "id": "sys-20260812T153534-59fc",
-        "ts": "2026-08-12T15:35:34Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "microservice_degraded",
-        "summary": "A-30 WARN: rag-service — sustained memory 95.57% (loss of reclamation)",
-        "severity": "WARN",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T15:30Z",
-        "dedup_key": "microservice_degraded:rag-service:A-30",
-        "triaged_at": "2026-08-12T17:00:39Z",
-        "triaged_by": "po",
-        "disposition": "REFUTED-BY-LIVE-MEASUREMENT + FOLD -> FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD. rag-service measured 27.76% (284.3MiB/1GiB) at 17:00Z vs the claimed 95.57% at 15:35Z, same container lifetime (StartedAt 14:00:55Z, no restart between the two samples) => reclamation demonstrably occurred and the 'loss of reclamation' verdict is a false ESCALATE from the <=5min probe window. Not a live incident."
-      },
-      {
-        "id": "sys-20260812T153538-7fe5",
-        "ts": "2026-08-12T15:35:38Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "microservice_degraded",
-        "summary": "A-30 WARN: pdf-extractor — sustained memory 95.36% (loss of reclamation)",
-        "severity": "WARN",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T15:30Z",
-        "dedup_key": "microservice_degraded:pdf-extractor:A-30",
-        "triaged_at": "2026-08-12T17:00:39Z",
-        "triaged_by": "po",
-        "disposition": "FOLD -> FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (REVIEW). Confirmed genuine: pdf-extractor live 95.00% at 17:00Z, Up 40h, no OOM kill, no restart => steady-state occupancy. Third consecutive PO tick folding an A-30 pdf-extractor signal to this row."
-      },
       {
         "id": "sys-20260812T160538-57ef",
         "ts": "2026-08-12T16:05:38Z",
@@ -568,7 +533,7 @@
         "type": "microservice_degraded",
         "summary": "A-30 rag-service-1 sustained memory >93% (94.77% median) — loss of reclamation",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-13T15:00Z",
@@ -582,7 +547,7 @@
         "type": "bug-escalation",
         "summary": "bctc-analyst.md notebook: PostToolUse hook reverted Edit restoring c161 -> stuck at 2 sections, violates notebook-write SKILL.md AC-2 (keep 3)",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       }
     ],
@@ -11919,23 +11884,6 @@
         "po_tail_disposition": "The 4 Layer-2 bare-commit sites and the 3 stale init.md 'RULE 1-3' refs that this agent disclosed unprompted are minted as FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2 in this same cycle, so the tail does not orphan when this parent closes. The unprompted disclosure of out-of-scope defects is exactly the behaviour the maintenance lane should reward."
       },
       {
-        "id": "TRACK-CRON-AUDIT-VPS-PLANE",
-        "type": "FIX",
-        "title": "TRACKING MIRROR — VPS plane stale sources (prices/sbv/bctc stale 36-62h) + 2 health-measurement bugs + the never-inventoried VPS crontab/systemd plane",
-        "status": "DONE",
-        "priority": "high",
-        "zone": "cross-service/",
-        "owner": "ops",
-        "created_at": "2026-07-22T16:02:26Z",
-        "created_by": "po/cron-audit-sequencing-20260722",
-        "status_note": "TRACKING ONLY — work is LIVE out-of-band under intent:ops-vps-fetch:vps-plane-stale-sources-audit, dispatched by router 2026-07-22 ~15:48Z. Board-visible mirror, NOT a dispatch target; BLOCKED for the same anti-double-dispatch reason as TRACK-CRON-AUDIT-SERVER-PLANE. Precondition to unblock: the out-of-band agent returns.",
-        "scope": "prices/sbv/bctc sources stale 36-62h; two health-measurement bugs; the VPS crontab + systemd timer plane which has NEVER been inventoried (it is the 5th scheduling plane and was outside the 4-plane audit).",
-        "known_unknown": "The VPS plane is UN-INVENTORIED. Until an inventory exists, no statement about VPS scheduling health — green or red — is supportable.",
-        "updated_at": "2026-07-22T16:29:22Z",
-        "updated_by": "po/dev-team-tick-20260722T1607Z",
-        "resolution": "recon RETURNED 2026-07-22T16:10Z (ops-vps-fetch recon-complete). Tracker purpose (mirror out-of-band VPS-plane recon) fulfilled. Findings spun into board rows: FIX-VPS-SYSTEMD-STARTLIMIT-HARDENING (systemd StartLimitIntervalSec=0 + dead-code cleanup + deploy-script dedup; ops self-minted 16:21Z), FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN (MEASUREMENT-BUG-A), FIX-VPS-SBV-HEALTH-SHARED-TABLE-IS-ESTIMATE (MEASUREMENT-BUG-B). Immediate VPS reset-failed/restart + inbound-firewall (Vinahost edge DROP) are USER/Vinahost-console actions (blocked_by user-escalation-vps-restart on the systemd row), NOT dev backlog. VPS crontab/systemd-timer plane inventory (the un-inventoried 5th plane) remains OPEN -> owned by ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG / TRACK-CRON-AUDIT-SERVER-PLANE line, not re-opened here."
-      },
-      {
         "id": "TRACK-CRON-AUDIT-SERVER-PLANE",
         "type": "FIX",
         "title": "TRACKING MIRROR — mcp-server cron-plane fixes (4 dead Sunday jobs, VPS SSH trigger tools, watchdog 16/85 coverage, 24 bespoke jobs with zero run telemetry, project-stats cronJobCount 2 vs 85)",
@@ -12195,46 +12143,6 @@
         "status_note": "[po/triage-2026-08-11T17:05:08Z] EVIDENCE (every claim probed at source this tick, nothing relayed).\n\nSIGNAL: telegram id 4678, 2026-08-11T16:09:38Z — \"[news-scout] Knowledge load failed: .claude/skills/step-0-cowork/SKILL.md — ENOENT\".\n\nTHE FILE IS NOT MISSING:\n  - `ls -la .claude/skills/step-0-cowork/SKILL.md` -> present, 6364 bytes, mtime 7 jul, unchanged.\n  - `git ls-files --error-unmatch` -> TRACKED.\n  - `git check-ignore -v` -> NOT ignored.\n  - `git log -3` on the path -> last touched by caba878b7; no delete/rename anywhere near 08-11.\nSo \"ENOENT\" is a FALSE premise, not a real missing file. Do not close this by re-creating the file.\n\nWHY IT MATTERS (not cosmetic): the path is declared `fail_loud: true` in docs/agents/news-scout/init.md:60 always_load, so KLFL (.claude/skills/cowork-boundary/SKILL.md §Knowledge Load Failure Protocol) correctly aborts the cycle. news-scout's notebook confirms the loss: newest entry is `## c249 · 2026-08-11T12:07:40Z`; there is NO c250. The 16:09Z cowork slot produced zero signals. A false ENOENT therefore costs a whole production cycle, every time it fires.\n\nNEGATIVE CONTROL ALREADY IN HAND (this is what makes it a real defect and not an environment-wide outage): cowork-fire 2026-08-11T16:09:37Z dispatched 4 slots in ONE batch — news-scout-offhours, market-watcher-offhours, market-watcher-eod, alert-commander-critical. market-watcher loads the SAME path (docs/agents/market-watcher/init.md:64) and COMPLETED, writing docs/agent-memory/notebooks/market-watcher.md at 16:11 UTC. Same batch, same working dir, same file, opposite outcome.\n\nWHAT IS NOT YET KNOWN (the actual spike question): why this agent, this invocation. Grants are NOT the answer — .claude/agents/news-scout.md frontmatter grants `Read` explicitly (`tools: Read, Write, Edit, Bash, mcp__gateway__call_tool`), so this is not the `limitation=structural / check the tool grant` class. Leading hypotheses to discriminate, in order: (1) per-invocation CWD differs for this slot, making the leading-dot RELATIVE path unresolvable — testable by having the spawn log its resolved cwd; (2) a transient read failure got surfaced with a wrong errno label, i.e. the ENOENT string is manufactured by the error path rather than returned by the syscall; (3) news-scout is model:haiku (the only haiku agent in that batch) and mis-narrated a different failure as ENOENT — this would make it an instance of the known analysis-only/false-report pattern already seen on this same agent, NOT a filesystem bug. Hypothesis (3) must be actively ruled in or out; if it holds, the fix is an agent-instruction fix (hence next_agent=agent-father / zone docs/agents/ per the ARTIFACT-CLASS ROUTING RULING), not a code fix.\n\nDEDUP PERFORMED (non-terminal lanes): /knowledge.?load|KLFL|ENOENT/ -> only FIX-L4-FRESHNESS-SLA-MONITOR-SELF-POLICING (unrelated). /step-0-cowork/ -> only UC-CCA-P1-GWBLIND-DEDUP (\"Dedup the duplicated GATEWAY-BLIND block\" — a content-dedup rider on TE-T11, not a load-failure row). No covering row. Minted.\n\n[agent-father/resolve-2026-08-11T19:03:51Z] DIAGNOSIS (verification gate met -- mechanism named + reproduced against raw subagent transcripts, no archaeology gaps). RAW transcript for the actual 16:09:37Z news-scout-offhours spawn (agentId ae474a5c3e7df83b0, session 0454e9d8-b475-4230-95c9-8b7d943aa8b3) recovered from ~/.claude/projects/<project>/0454e9d8-.../subagents/agent-ae474a5c3e7df83b0.jsonl. Line 30: the agent issued Read(file_path=\"/Users/admin/.claude/skills/step-0-cowork/SKILL.md\") -- it anchored the leading-dot relative path .claude/skills/... to the USER HOME directory instead of the PROJECT ROOT cwd. Line 31 tool_result: \"File does not exist. Note: your current working directory is /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP.\" -- a genuine, accurate result for the WRONG absolute path the agent itself constructed; the literal string \"ENOENT\" never appears anywhere in the real tool output -- the agent invented that errno label when composing its KLFL telegram message (line 34, message_id 5087). The SAME misresolution fired earlier in the SAME transcript at line 11 on .claude/skills/gateway-availability-gate/SKILL.md (non-fatal there, not fail_loud, so it silently fell through to a different gateway probe).\n\nNEGATIVE CONTROL: sibling market-watcher-offhours transcript (agentId a5164712412638478, same batch/session/tick/cwd, meta.json-confirmed slot identity) -- line 20 issued Read(file_path=\"/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/.claude/skills/step-0-cowork/SKILL.md\") -- correctly project-root-anchored, loaded successfully at line 21.\n\nH1 (per-invocation CWD differs) RULED OUT: the failing spawn's own Read-tool error message proves its cwd was IDENTICAL and correct (/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP); the defect is in how the agent constructed the absolute file_path, not in its cwd -- no per-slot cwd override mechanism exists anywhere in the spawn path either (spawn-fanout.md Step 5.2's Agent-tool call takes only subagent_type/prompt/description/run_in_background, no cwd parameter).\n\nH2 (transient read failure mislabeled) RULED OUT in its literal form: the Read call never had a chance to succeed -- its target path was wrong from the start, and the tool truthfully reported that wrong path does not exist. Not a syscall/errno mislabel on the RIGHT path.\n\nH3 (news-scout is \"the only haiku agent in that batch\", mis-narrated) -- premise was FACTUALLY WRONG, corrected here: market-watcher (both offhours and eod slots in the SAME batch) is ALSO model:haiku (verified .claude/agents/market-watcher.md frontmatter) and succeeded on the identical path -- model class does not discriminate outcome; only alert-commander in that batch is model:sonnet. So this is not simply \"haiku agents confabulate.\"\n\nACTUAL MECHANISM (new, precise, narrower than H3): a per-invocation stochastic LLM path-construction slip -- the model defaulted to the well-known ~/.claude/ home-directory convention (a real, common path in this very operating environment -- e.g. this project's own CLAUDE.md is literally read from /Users/admin/.claude/CLAUDE.md for every agent) instead of grounding the .claude/-prefixed relative reference in its own already-established project cwd, on ONE spawn -- while a textually byte-identical always_load YAML entry in both news-scout's and market-watcher's init.md succeeded on a sibling spawn seconds later, and succeeded on news-scout's own prior 249 recorded cycles. Not a filesystem bug, not a cwd bug, not an agent-doc-text bug, not deterministically tied to model class -- inference-time stochasticity that happens to collide with a highly primed alternate path convention. The \"ENOENT\" label itself is a narration/embellishment layered on top of a real (if wrongly-targeted) tool result, distinct from (but adjacent in flavor to) the already-tracked leaf-agent narration-fabrication pattern (feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806.md) -- this is a fabricated ERROR DETAIL on a real failure, not a fabricated SUCCESS on a real skip.\n\nFIX APPLIED this task (agent-instruction, in-scope per SPIKE mandate \"if hypothesis 3 or a clear code-level cause is confirmed, apply the fix directly\"): added explicit PROJECT-ROOT-anchor grounding notes on the 3 .claude/skills/* references news-scout's own flow touches -- docs/agents/news-scout/init.md always_load entry, docs/agents/news-scout/flow/cycle.md Step 0-GW, docs/agents/news-scout/flow/stage-bootstrap.md Step 0. Mirrors the proven execute-not-narrate in-prompt mitigation pattern for a structurally similar stochastic-LLM-slip class (3/3 clean when an explicit grounding directive is present, per the same memory file).\n\nFLEET-WIDE FOLLOW-UP MINTED (out of this SPIKE's scope/timebox -- 37 agents reference .claude/skills/* in their own init.md always_load with the byte-identical ambiguous-anchor risk, confirmed via grep -rl '\\''\\.claude/skills/'\\'' docs/agents/*/init.md): FIX-COWORK-AGENTS-CLAUDE-SKILLS-PATH-HOME-DIR-ANCHOR-RISK (backlog[], agent-father, priority medium -- N=1 occurrence fleet-wide, prophylactic sweep not a live incident).\n",
         "updated_at": "2026-08-11T19:05:57Z",
         "closed_at": "2026-08-11T19:03:51Z"
-      },
-      {
-        "title": "Fix composeNewsIngest logging both sources per call",
-        "priority": "P2",
-        "zone": "news-fetch",
-        "type": "FACTORY",
-        "status": "DONE_VERIFIED",
-        "id": "FACTORY-NEWS-fix-source-logging",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-fix-source-logging",
-        "promoted_at": "2026-07-24T14:44:34Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-13T15:35:24Z",
-        "claimed_at": "2026-07-24T14:44:34Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "entered_review_at": "2026-07-24T14:57:06Z",
-        "dev_result": "DONE-CODE: ingestHeadlines(_source,...) ignored its source param, unconditionally emitting BOTH [reuters/headlines] and [bloomberg/headlines] console.warn in every RSS-fallback branch (6 warns total across 3 duplicated pairs -- not 4 pairs as task text estimated, verified by grep -- Bloomberg ingest printed spurious Reuters lines and vice-versa). Fix: renamed _source->source (now used), value-imported NewsSource (was type-only, now needed at runtime for the enum compare), computed tag once (source===NewsSource.REUTERS ? [reuters/headlines] : [bloomberg/headlines] -- confirmed exactly 2 NewsSource members: REUTERS=reuters, BLOOMBERG=bloomberg, in domain/models.ts), collapsed the 3 duplicated pairs to 3 single console.warn calls using the tag. Control flow byte-identical (diffed): same if/else structure, same order, same fallback invocation, same processArticleBatch call -- only console.warn lines + the two import/param lines changed. Warn-line count: 6 -> 3 (halved). RED test added first (source-correct log tag assertions in index.test.ts, 2 new tests) confirmed failing pre-fix, GREEN post-fix. Also updated 3 pre-existing source-text-scan assertions in __tests__/fix-reuters-url-bloomberg-timeout.test.ts that hardcoded the buggy [reuters/headlines]-prefixed literal -- now check the source-agnostic message body (unchanged text), preserving original regression intent without re-encoding the bug. Full suite: bun test 235 pass/0 fail/6 skip (was 233/0/6 baseline, +2 net new tests). bun tsc --noEmit: 0 errors. eslint (lint:ci --max-warnings 0): clean. Sandbox (bun run sandbox --tier=all --module=news-fetch): 16/16 PASS. Security clause: env grep DB_/API_KEY/SECRET/TOKEN/PASSWORD/NEWS_API_KEY returned no credential matches. Journal: docs/agent-memory/decisions/sprint-FACTORY-NEWS-fix-source-logging-developer.md. Commits: fe264aa43 code+tests, e87ae392c journal. rebuild_required=true but PENDING-USER-GATED (code-only landed, no docker rebuild performed per task constraint).",
-        "secondary_claimed_at": "2026-08-13T15:23:55Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "ops",
-        "next_agent": "ops",
-        "rebuild_required": true,
-        "rebuild_authorization": "PO-AUTHORIZED",
-        "rebuild_actuator_row": "OPS-NEWS-FETCH-REBUILD-STALE-IMAGE-3-COMMITS-BEHIND",
-        "po_code_verdict": "DONE_VERIFIED",
-        "po_verified_at": "2026-08-06T21:48:00Z",
-        "po_verified_by": "po (review-lane secondary-drain, dispatch session 24817246)",
-        "po_note": "[po 2026-08-06T21:48Z, review-lane secondary-drain triage, dispatch session 24817246] VERDICT: CODE = DONE_VERIFIED (every AC independently RAW-verified). REBUILD = GENUINELY OWED and PO-AUTHORIZED -> next_agent=ops, actuator row OPS-NEWS-FETCH-REBUILD-STALE-IMAGE-3-COMMITS-BEHIND. The 'rebuild_required=true but PENDING-USER-GATED' clause in dev_result is RETIRED FRAMING: the 2026-08-06T19:00Z greenlight and the standing PO-deploy-rebuild-full-autonomy policy removed manual user gating for this row class. Do NOT wait for a user gate. RAW VERIFICATION (performed independently; the dispatch brief's summary was treated as a claim, not as evidence): (1) COMMITS REAL AND ON MAIN -- both fe264aa43 and e87ae392c exist and `git merge-base --is-ancestor <sha> main` returns YES for each, so neither is a phantom/unmerged sha. (2) DIFF MATCHES THE CLAIM -- read line-by-line: `import type { NewsSource }` -> value import, param `_source` -> `source`, tag computed once, six console.warn collapsed to three; no control-flow line touched. (3) STILL LIVE IN THE TREE -- apps/news-fetch/src/module/news_ingest/index.ts lines 13/102/103/111/115/119 still carry the fix; 13 days of subsequent commits did not revert it. (4) THE ONE WAY THIS FIX COULD BE SUBTLY WRONG IS CLEAN -- the binary ternary is exhaustive only if NewsSource has exactly two members; verified at apps/news-fetch/src/domain/models.ts:9-12, `export enum NewsSource { REUTERS, BLOOMBERG }`, and it is a real runtime enum (not a type alias), so the type->value import switch is legal. A third member would have silently inherited the bloomberg tag; there is none. (5) TESTS ARE REAL AND BIDIRECTIONAL -- index.test.ts:181 and :209 assert toContain(correct tag) AND not.toContain(other tag); they cannot pass against pre-fix code. (6) SUITE RE-RUN BY PO, NOT TRUSTED FROM THE REPORT -- `bun test` in apps/news-fetch = 241 pass / 0 fail / 6 skip across 26 files. Dev claimed 235/0/6 on 07-24; the +6 delta is later unrelated work, and 0 fail is the load-bearing number. (7) `bun tsc --noEmit` re-run = exit 0, clean. REBUILD RULING -- this row is the INVERSE of FACTORY-ALERT-split-sandbox; its rebuild_required=false verdict MUST NOT be generalised here. Applied the FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER occurrence-4 method (check the actual Docker build graph before assuming a rebuild is owed) and it comes back OWED: apps/news-fetch/Dockerfile:34 does `COPY --from=bun-builder /app/src ./src` and :44 runs `CMD [\"bun\",\"run\",\"src/index.ts\"]`, while `docker inspect` shows the container's ONLY mounts are ./data/live and mcp.config.json -- there is NO src bind-mount, so the served code is image-baked and a code-only commit cannot reach production. PROOF the shipped fix is currently inert: `docker exec vn-market-intelligence-mcp-news-fetch-1 grep -n console.warn /app/src/module/news_ingest/index.ts` still returns the unused `_source` param at :102 and all SIX buggy warn lines at :109/112/116/117/121/124. Container Created=2026-07-15, image Created=2026-07-15T15:05:14Z, status 'Up 3 weeks (healthy)' -- it predates fe264aa43 (2026-07-24) by nine days. Carved into its own OPS row rather than absorbed into this sign-off, mirroring OPS-ALERT-ENGINE-REBUILD-STALE-IMAGE-5-COMMITS-BEHIND. WHY NOT done_verified YET: the code has met every AC, but flipping this row terminal now would hand qa a live-verification against an un-rebuilt image -- which is precisely the FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER defect. Row closes to DONE_VERIFIED on ops confirming the rebuild; no further developer work is owed.",
-        "ops_result": "ac1_pass;ac2_pass;ac3_pass;ac4_pass;ac5_pass;ac6_pass;ac7_pass;ac8_pass",
-        "ops_note": "All ACs passed. Single-service rebuild completed. Image 8d42b661e0ab built with GIT_SHA=4bfaf8ac1e6ef90f7c1a78f73ac40a81479e43bd. Fixed Dockerfile symlink issue. Verified: ingestHeadlines now uses 'source' param (was '_source'), console.warn collapsed from 6→3 lines. Health check passing. Dockerfile fix committed (3d7079ba8). Code fix fe264aa43 + e87ae392c now live in production.",
-        "completed_at": "2026-08-13T17:35:00Z",
-        "completed_by": "dev-team",
-        "verification": {
-          "raw_probe": {
-            "tool": "docker",
-            "args": "inspect --format '{{.Image}}' vn-market-intelligence-mcp-news-fetch-1",
-            "live_value_observed": "sha256:8d42b661e0ab77971352ed0a306ce1d77d11ab86dca11a12a936f388a7001f73",
-            "observed_at": "2026-08-13T17:35:00Z"
-          }
-        }
       },
       {
         "id": "OPS-NEWS-FETCH-REBUILD-STALE-IMAGE-3-COMMITS-BEHIND",
@@ -13279,80 +13187,6 @@
             },
             "live_value_observed": "ancestor=yes; git show --stat = exactly 1 file (.claude/skills/published-marker-gate/SKILL.md, 86L new); YAML frontmatter parses (name+description present); 4 code-fence markers balanced; size-lint-justification.sh --check no flag; mock-guard.sh = no production source to scan, PASS; DDD/security greps zero hits",
             "observed_at": "2026-08-12T16:37:00Z"
-          }
-        }
-      },
-      {
-        "id": "FACTORY-GUARD-CI-DEADCODE-IMPL",
-        "type": "SPRINT-S",
-        "title": "Implement dead-code-gate CI guardrail (script + delete confirmed-orphaned trees + workflow wiring)",
-        "status": "DONE_VERIFIED",
-        "priority": "P2",
-        "size": "M",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-dead-code-gate",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md#3-build-vs-plan--decomposed-not-self-implemented",
-        "dev_agent": "developer",
-        "next_agent": "qa",
-        "parent_task": "FACTORY-GUARD-CI-dead-code-gate",
-        "created_at": "2026-07-24T19:01:20Z",
-        "created_by": "architect",
-        "updated_at": "2026-08-13T15:19:00Z",
-        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-dead-code-gate.md",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "entered_review_at": "2026-07-30T00:54:09Z",
-        "review_note": "New scripts/audits/dead-code-gate.sh (--check, zero-tolerance, 4 checks on TRACKED files: tracked *.bak/*.backup/*.patch, tracked _deprecated/ path segment, Go/TS twin scaffold, //go:build ignore). Fixed all live confirmed-orphaned debt first: deleted 2 stray root docker-compose.yml.backup/.patch, mcp-server's 2 _deprecated/ trees + infrastructure/_deprecated/kinhDichWrapper.ts + the dedicated 1077-kinh-dich-wrapper.test.ts (zero live importers independently grep-verified), pdf-extractor's _deprecated/mock_echo (import-linter clean), stock-price's _deprecated/services_v1.go+test (the only 2 //go:build ignore files repo-wide, golangci-lint clean). Surgical edit to 1081-sprint-054-smoke.test.ts (removed appendKinhDich import + Scenario 5/5b/5c it() blocks only, 17->14 tests, rest of the 569L suite untouched). apps/technical-analysis/package.json trimmed bun-types/typescript devDeps -- its src/ + __tests__/ were ALREADY independently deleted 2026-07-28 (commit 099afddd3, FACTORY-TECHANALYSIS-delete-orphaned-ts-service) before this row was dispatched, explaining the gap vs the architect brief's ~2,070 LOC estimate. Check-3 (twin scaffold) DEVIATES from the board-row note's literal \"any Go cmd/server + package.json + src/ combo bans\" phrasing: that rule permanently false-positives on the LIVE apps/news-fetch (legitimate WIP parallel Go port -- own news-fetch-go-lint CI job + composition-root-logic-gate coverage -- sitting alongside the TS/Bun service its Dockerfile actually builds/deploys). Refined signal generalizes the confirmed technical-analysis dead shape instead: flag only when the service's Dockerfile has ZERO src reference (no Dockerfile also fails, conservative default). New scripts/audits/dead-code-gate.test.sh: 8/8 PASS -- all 4 DoD synthetic-offender cases, a tracked-vs-untracked negative control proving tracked-only semantics, and a twin-scaffold Dockerfile-blind-fails/Dockerfile-referencing-passes pair proving the news-fetch exemption is deliberate not accidental. Wired dead-code-gate job in .github/workflows/ci.yml + CANONICAL pointer in dev-standards.md. Verified: dead-code-gate.sh --check exits 0 on live repo; mcp-server tsc --noEmit clean, eslint src/ clean, 1081-*.test.ts 14/14 pass; technical-analysis go build/go vet/go test ./... clean, golangci-lint run 0 issues, dashboard/build.sh green (35/35 sandbox scenarios + headless render gate, esbuild/playwright-core confirmed still load-bearing post-trim); pdf-extractor lint-imports 3/3 contracts kept; stock-price golangci-lint run 0 issues. Full bun test: standing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent full-suite red only -- ran a 3-pass base-vs-head A/B (disposable git worktree at pre-task HEAD, then HEAD twice): base 20fail/9files, head-run1 24fail/10files, head-run2 2fail/2files, every failing file either present in base's pre-existing set or a run-to-run flip on IDENTICAL code (sampled files pass 100% clean standalone) -- zero deterministic net-new failures from this task. Structural note: no MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) -- did all zone work directly, flipped this board row via scripts/orch-apply.sh myself (permitted, pure bash); could not release task:FACTORY-GUARD-CI-DEADCODE-IMPL or send Telegram -- coordinating dev-team session must pick that up. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S31. QA next. | [QA] Review Record (direct-commit verify) 2026-08-13T15:17:05Z -- APPROVED, DONE_VERIFIED. Row carried no .commit/.files[] -- derived commit 448b41b0a via git log --all -- scripts/audits/dead-code-gate.sh, confirmed ancestor of main AND origin/main; git show --stat matches all 24 claimed files exactly. This is the DEADCODE-IMPL child (real code); the sibling design-only brief row (FACTORY-GUARD-CI-dead-code-gate, commit 3b4d5a0d3) was a separate already-verified QA cycle on 2026-08-12, not re-litigated here. RAW re-ran fresh, not trusted from prose: dead-code-gate.sh --check on live repo -> PASS 0 offenders; dead-code-gate.test.sh 8/8 PASS (4 DoD offender cases + tracked-only control + twin-scaffold Dockerfile pair). Confirmed CI job wired at .github/workflows/ci.yml:420 + dev-standards.md CANONICAL pointer present. All 7 named deletions confirmed gone from tracked tree; zero dangling imports (only harmless historical comments reference deleted kinhDichWrapper/reuters.ts). Downstream zone claims reproduced fresh: mcp-server tsc --noEmit 0 errors, eslint src/ 0 issues, 1081-sprint-054-smoke.test.ts 14/14; technical-analysis go build/vet/test clean, golangci-lint 0 issues, dashboard/build.sh 35/35 scenarios + headless render PASS; pdf-extractor lint-imports 3 contracts kept/0 broken; stock-price golangci-lint 0 issues. DDD scan: analysis.ts's infra imports are interface-layer composition-root pattern, not a violation. Security scan clean. mock-guard.sh PASS. Full bun test fresh run: 15262 pass/40 skip/56 fail/15358 total -- zero overlap between the 56 fail names and any file this task touched, all sit in the documented pre-existing FIX-MCP-SUITE-HEALTH-BASELINE flake band. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S106.",
-        "claimed_at": "2026-08-13T14:56:59Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "qa_verified_at": "2026-08-13T15:18:59Z",
-        "qa_verified_by": "qa",
-        "updated_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "bash: dead-code-gate.sh --check + dead-code-gate.test.sh + bun tsc/eslint/test + go build/vet/test/golangci-lint + dashboard/build.sh + lint-imports + full bun test",
-            "args": "commit 448b41b0a (derived via git log --all -- scripts/audits/dead-code-gate.sh); re-ran scripts/audits/dead-code-gate.sh --check + dead-code-gate.test.sh on live repo; mcp-server bun tsc --noEmit + eslint src/ + src/__tests__/1081-sprint-054-smoke.test.ts + full bun test; technical-analysis go build/vet/test ./... + golangci-lint run + dashboard/build.sh; pdf-extractor lint-imports; stock-price golangci-lint run",
-            "live_value_observed": "dead-code-gate.sh --check: PASS 0 offenders; dead-code-gate.test.sh: 8/8 PASS; tsc: 0 errors; eslint: 0 issues; 1081 smoke: 14/14 pass; full bun test: 15262 pass/40 skip/56 fail/15358 total (zero overlap between fails and touched files); go build/vet/test: all clean/pass; golangci-lint (technical-analysis + stock-price): 0 issues each; dashboard/build.sh: 35/35 scenarios + headless render PASS; lint-imports: 3 contracts kept/0 broken; mock-guard.sh: PASS",
-            "observed_at": "2026-08-13T15:18:59Z"
-          }
-        }
-      },
-      {
-        "id": "FACTORY-GUARD-CI-NOHARDCODE-IMPL",
-        "type": "SPRINT-S",
-        "title": "Implement no-hardcode-allowlist-scan CI guardrail (script + fix 2 cosmetic ticker-branches + annotate 2 known-debt findings + workflow wiring)",
-        "status": "DONE_VERIFIED",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-no-hardcode-allowlist-scan",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-no-hardcode-allowlist-scan.md#3-guardrail-design--zero-tolerance-5-sites-small-matches-metric-masklead-code-precedent-not-size-lints-baseline",
-        "dev_agent": "developer",
-        "next_agent": "qa",
-        "parent_task": "FACTORY-GUARD-CI-no-hardcode-allowlist-scan",
-        "created_at": "2026-07-24T19:29:07Z",
-        "created_by": "architect",
-        "updated_at": "2026-08-13T15:31:17Z",
-        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-no-hardcode-allowlist-scan.md",
-        "promoted_at": "2026-07-30T01:18:38Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-08-13T15:24:24Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "entered_review_at": "2026-07-30T02:09:15Z",
-        "review_note": "New scripts/audits/no-hardcode-allowlist-scan.sh (--check, zero-tolerance, 2 mechanically-reliable checks per the design brief's scope-corrected §3): (1) temporal special-case ban -- .includes('YYYY') (TS) or strings.Contains(x,\"YYYY\") (Go) co-occurring within a +/-2 line window with a literal-year ===/== comparison; (2) ticker/code literal-branch ban -- (ticker|symbol|code|action_code), bare or <obj>.<ident> property access, compared via ===/== against a quoted 2-5-char ALL-CAPS literal, denylisting HOSE|HNX|UPCOM|BLOOMBERG (stable domain-enum mappings, not volatile reference data). A generic cross-file ticker-array-duplication detector (would have caught JANITOR-034) is explicitly DEFERRED per brief §3 -- the repo has dozens of legitimately overlapping domain rule tables (predictionCascadeMapper.ts's cascade categories re-use VCB/BID/CTG across unrelated buckets) that would false-positive heavily under a mechanical N-shared-elements check. Fixed the 2 cosmetic diagnostic-reason-string branches outright: backfillBctcScalarsTool.ts dropped the CTG-only \"cover-letter-only PDF\" reason branch to the generic 0-table-rows message; pharmaEventMapper.ts dropped the IMP-only \"vaccine distributor\" reasoning branch to the generic outbreak-demand text -- both RAW-diffed behavior-preserving (only the reason/reasoning string differs; status/table_row_count/code/eventType/direction unchanged, confirmed via the existing BEQ-2-backfill-eligibility/268-pharma-event assertions, neither of which reads reason text). Annotated (not generalized) the 2 known-debt findings via the hardcode-scan-allow: <ticket-id> escape hatch -- newsChainFallback.ts (JANITOR-035, 2023/year===2024 temporal discount) and cascadeExecutor.ts LARGE_CAP_FALLBACK + priceSourceRouter.ts MAJOR_CAPS (JANITOR-034, overlapping ticker arrays -- check-2's regex doesn't actually match array declarations, annotated per the board note's explicit instruction and the brief's own \"resolved via the escape hatch below, not automated detection\" framing, a paper-trail marker not an active suppression) -- both already require a human design decision their own docs/data/code-janitor-known-findings.json entries call for, out of this gate-shipping task's scope to make unilaterally. Verify-live deviation (not in the board-row note's file list): priceBackfillService.ts:224's ticker === \"BAD\" also matches check-2's literal shape but is a documented test-fixture sentinel (already labeled at ohlcvWriteService.ts:49, never called outside __tests__/) the design brief's own §2(c) explicitly excludes from this scan's offender count -- annotated it too (citing brief §2(c) directly) rather than adding an ad-hoc \"BAD\" denylist entry, which would set an undocumented precedent the design never called for (same class of deviation as dead-code-gate's own check-3 board-note correction). New scripts/audits/no-hardcode-allowlist-scan.test.sh: 9/9 PASS (live-repo --check exits 0 post-fix/post-annotation; synthetic TS+Go temporal-combo fails; synthetic ticker-branch + property-access-shape fails; HOSE/HNX/UPCOM/BLOOMBERG denylist passes; an annotated line passes with an unannotated-same-shape negative control failing; comment-only keyword mention passes). Wired no-hardcode-allowlist-scan job in .github/workflows/ci.yml + CANONICAL pointer in dev-standards.md. Verified: tsc --noEmit clean, targeted 17-file suite (backfill/pharma/cascade/price-router + callers) 191/191 pass. Full bun test: 14865-14869 pass/40 skip/52-56 fail across 2 runs -- every failure matches the standing pre-existing order-dependent FIX-MCP-SUITE-HEALTH-BASELINE pattern, grep-confirmed zero fails reference any file/function this task changed. shellcheck clean on both new scripts. Structural note: no MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) -- did all zone work directly, flipped this board row via scripts/orch-apply.sh myself (permitted, pure bash); could not release task:FACTORY-GUARD-CI-NOHARDCODE-IMPL or send Telegram -- coordinating dev-team session must pick that up. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S32. QA next. | [QA] Review Record (direct-commit verify) 2026-08-13T15:30:06Z -- APPROVED, DONE_VERIFIED. Row carried no .commit/.files[] -- derived commit 5b4a13949 via git log --all -- scripts/audits/no-hardcode-allowlist-scan.sh, confirmed ancestor of main; git show --stat matches all 11 claimed files exactly. RAW re-ran fresh, not trusted from prose: no-hardcode-allowlist-scan.sh --check on live repo -> PASS 0 offenders; no-hardcode-allowlist-scan.test.sh 9/9 PASS; shellcheck clean both scripts. Confirmed CI job wired at .github/workflows/ci.yml:439 + dev-standards.md CANONICAL pointer present. Verified the 2 cosmetic fixes (backfillBctcScalarsTool.ts CTG-branch, pharmaEventMapper.ts IMP-branch) are genuinely behavior-preserving via RAW diff -- status/table_row_count/direction/confidence untouched, only reason/reasoning text differs. Verified JANITOR-034/JANITOR-035 are real pre-existing findings in code-janitor-known-findings.json matching the cited detail, hardcode-scan-allow: annotations present at all 3 sites; regex-replayed TICKER_BRANCH_ERE against the LARGE_CAP_FALLBACK/MAJOR_CAPS array-declaration lines -- confirmed it genuinely does NOT match (no ===), matching the claimed paper-trail-not-suppression framing; confirmed it DOES match priceBackfillService.ts:224 ticker === \\\"BAD\\\", and the brief SS2(c) citation for that annotation is real (ohlcvWriteService.ts:49 verbatim labels Writer F as documented mock-only sentinel). tsc --noEmit 0 errors. Targeted suite (17 files, corrected from an initial 16-file grep miss) 182 pass/0 fail (commit claimed 191/191 -- 9-test delta from 2 weeks of intervening commits to shared test files, zero fail either way, non-blocking drift not a discrepancy in the underlying claim). mock-guard.sh PASS on all 7 touched production files. DDD/security scans clean (no infra imports in touched files, no process.env/secrets). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S107.",
-        "updated_by": "qa",
-        "qa_verified_at": "2026-08-13T15:30:06Z",
-        "qa_verified_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "bash: no-hardcode-allowlist-scan.sh --check + .test.sh + bun tsc/test + mock-guard.sh + shellcheck",
-            "args": "commit 5b4a13949 (derived via git log --all -- scripts/audits/no-hardcode-allowlist-scan.sh); re-ran scan --check + test.sh on live repo; mcp-server bun tsc --noEmit + 17-file targeted suite; mock-guard.sh on 7 touched production files; shellcheck on both new scripts",
-            "live_value_observed": "scan --check: PASS 0 offenders; test.sh: 9/9 PASS; shellcheck: clean; tsc: 0 errors; targeted suite: 182 pass/0 fail across 17 files; mock-guard.sh: PASS; CI job confirmed wired ci.yml:439; dev-standards.md CANONICAL pointer confirmed; JANITOR-034/035 confirmed real pre-existing findings",
-            "observed_at": "2026-08-13T15:30:06Z"
           }
         }
       }
@@ -19285,7 +19119,7 @@
         "last_served_tick": "2026-08-13T14:23:06Z"
       }
     },
-    "_updated_at": "2026-08-13T15:23:32Z",
+    "_updated_at": "2026-08-13T15:50:34Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24010,6 +23844,42 @@
         },
         "createdAt": "2026-08-13T15:08:32Z",
         "drained_at": "2026-08-13T15:20:29Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "dc059eb2f0a488dccc22973fbb54b94b78043e84128d1fce4422861b0e569fda",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: apps/news-fetch/Dockerfile. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=7 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-13T15:34:04Z",
+        "drained_at": "2026-08-13T15:49:21Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "sys-20260813T151624-07e8-env",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "priority": "WARN",
+        "payload": "A-30 rag-service-1 sustained memory >93% (94.77% median) — loss of reclamation",
+        "createdAt": "2026-08-13T15:16:24Z",
+        "drained_at": "2026-08-13T15:50:34Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cow-20260813T151905-env",
+        "source": "dashboard",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "MED",
+        "payload": "bctc-analyst.md notebook: PostToolUse hook reverted Edit restoring c161 -> stuck at 2 sections, violates notebook-write SKILL.md AC-2 (keep 3)",
+        "createdAt": "2026-08-13T15:19:00Z",
+        "drained_at": "2026-08-13T15:50:34Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

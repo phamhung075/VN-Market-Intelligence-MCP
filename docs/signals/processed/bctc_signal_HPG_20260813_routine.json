@@ -4,84 +4,57 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "net_profit_delta_pct": null,
-  "product": "Integrated steel manufacturing (blast-furnace) — construction steel, HRC/CRC flat steel, steel pipe, container-grade steel; Hoa Phat Agriculture (animal feed, livestock) as diversification arm.",
-  "customer": "Domestic construction/infrastructure contractors, downstream steel fabricators and re-rollers; agriculture arm sells to feed-mill distributors and livestock farms nationwide.",
-  "ops": "Gross margin 15.8%. CRITICAL DATA-QUALITY FLAG (17th+ consecutive cycle, unresolved): reported Operating Profit = 0 ty VND (0.0%) while Net Profit = 9,056 ty VND EXCEEDS Gross Profit = 8,365 ty VND — tool's own validation flags 'possible non-operating income'. D/E and EBITDA fields also null. ESC-4 (related-party/one-off share) cannot be computed from this corrupted operating-profit field.",
-  "mgmt": "No governance red flags this cycle (no insider activity, no legal risk signals). The operating_profit=0 anomaly is a data-extraction pipeline issue, not a disclosed management action — already flagged to dev-team in prior cycles, not independently actionable by this agent.",
+  "product": "Thép xây dựng, tôn mạ, ống thép, container (Hòa Phát Group)",
+  "customer": "Doanh nghiệp xây dựng/hạ tầng nội địa, xuất khẩu tôn thép khu vực Đông Nam Á/EU",
+  "ops": "Biên LN gộp 15.8% (8.365,1 tỷ); Operating Profit=0 tỷ VND — lỗi trích xuất OCR (Net Profit 9.055,9 tỷ VƯỢT Gross Profit 8.365,1 tỷ, validation flag 'possible non-operating income'), 18 chu kỳ liên tiếp chưa khắc phục — không phải tín hiệu tài chính thực",
+  "mgmt": "ROE ngành (annualized) 12.7% trên median 2.9%; refine_status=PARTIAL, không có report_id DONE cho ESC-5",
   "valuation": {
     "pe": 14.2,
-    "sector_median_pe": 32.6,
+    "pe_sector_median": 32.6,
     "pb": 1.7,
-    "sector_median_pb": 0.9,
-    "roe_pct": 12.7,
-    "sector_median_roe_pct": 2.9,
+    "pb_sector_median": 0.9,
     "ey_spread_pp": 2.04,
     "verdict": "FAIR"
   },
-  "kinh_dich": {
-    "que": "Khiem (15)",
-    "trend": "THUAN LOI",
-    "signal": "GIU",
-    "confidence_pct": 100
+  "kinhdich": {
+    "que": "Su (7)",
+    "xu_huong": "TRUNG TINH",
+    "khuyen_nghi": "GIU",
+    "do_tin_cay": 0.37
   },
   "esc_gate": {
-    "esc1_manipulation": "UNEVALUABLE — no Bash/Glob tool grant, E1 6-pass trick detection scope-reduced (standing gap)",
-    "esc2_balance_sheet": {
-      "result": "FALSE",
+    "ESC-1": "unevaluable (no Bash/Glob grant)",
+    "ESC-2": {
+      "result": false,
       "imbalance_pct": 0
     },
-    "esc3_ocf_vs_ni": {
+    "ESC-3": {
       "result": "DATA-COVERAGE-LIMITED",
       "quarters_returned": 3,
       "quarters_required": 4,
-      "coverage_guard_held": true,
-      "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
-      "coverage_guard_expires_approx": "2026-08-17"
+      "guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+      "guard_held": true
     },
-    "esc4_related_party_nonop": {
-      "result": "DISCARDED",
-      "reason": "operating_profit=0 corrupt/implausible (17th+ cycle) — non_operating_share formula unusable"
+    "ESC-4": {
+      "result": "DISCARDED — operating_profit=0 known OCR corruption, non_operating_share formula unusable (18th+ cycle)"
     },
-    "esc5_refine_confidence": {
-      "result": "FALSE",
-      "reason": "existing_refine_status=PARTIAL, report_id=null (refine not DONE)"
+    "ESC-5": {
+      "result": false,
+      "reason": "report_id null, existing_refine_status=PARTIAL"
     }
   },
-  "trick_detection": {
-    "trick_confidence": "none",
-    "trick_summary": null,
-    "scope_note": "E1 6-pass detection SCOPE-REDUCED — no Bash/Glob grant (standing capability gap, unchanged)."
+  "data_quality": {
+    "stale": true,
+    "stale_since": "2026-08-11T14:37:49.000Z",
+    "stale_age_hours": 48.53,
+    "sla_hours": 48,
+    "note": "FR-DEGRADE-01 last-known-good; Q2-2026 not yet extracted, showing Q1-2026; operating_cf=0 in get_cash_flow Q1-2026 also corrupt"
   },
-  "insider_signal": "Khong co tin hieu giao dich noi bo dang ke",
-  "legal_risk": "Khong co tin hieu rui ro phap ly",
-  "sentiment_30d": {
-    "direction": "TANG",
-    "slope": 0.08,
-    "entries": 15
-  },
-  "filing_status": "QUA HAN — Q2-2026 deadline 30/07/2026, not yet filed as of 2026-08-13 (14 days overdue)",
-  "evidence_fragments": [
-    {
-      "id": 1201,
-      "evidence_type": "bctc_roe_ratio",
-      "direction": "bullish",
-      "magnitude": 0.51,
-      "confidence": 0.6
-    },
-    {
-      "id": 1202,
-      "evidence_type": "bctc_report_overdue",
-      "direction": "bearish",
-      "magnitude": 0.5,
-      "confidence": 0.55
-    }
-  ],
-  "cycle_id": "20260813-0000",
-  "generated_at": "2026-08-13T00:09:00Z",
+  "cycle_ts": "2026-08-13T15:14:00Z",
+  "slot": "bctc-analyst-slot-1",
   "_processed": {
-    "fingerprint": "82724c6b20fc65fa410982b6fe45e11ed170f7cac7006aa31d7749c271003775",
-    "processedAt": "2026-08-13T06:29:51Z",
+    "fingerprint": "487084705cd37fe137e0f7b44fdd9282bc003d9e1783ba5176ab8ad4130e75df",
+    "processedAt": "2026-08-13T15:20:29Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

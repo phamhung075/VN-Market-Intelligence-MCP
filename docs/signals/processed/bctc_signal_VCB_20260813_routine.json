@@ -4,76 +4,56 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "net_profit_delta_pct": null,
-  "product": "State-owned commercial bank — corporate and retail lending, trade finance, treasury/FX, bancassurance, payments/cards.",
-  "customer": "Large state-linked corporates and SOEs, retail depositors/borrowers, trade-finance importers/exporters, bancassurance cross-sell base.",
-  "ops": "Net interest income (revenue proxy) 17,421 ty VND, operating margin 80.9% (typical bank cost structure). Quarterly ROE 4.2% (non-annualized); sector-comparison annualized ROE 16.7%, below sector median 17.6%. OCF/NI ratio Q1 = 1.37x — cash generation exceeds accounting profit, no forensic red flag (ESC-3 divergence 36.8% < 40% threshold).",
-  "mgmt": "Q1-2026 already filed on schedule (DA NOP 2026-07-19) — no overdue flag. Balance sheet nearly balances (0.37% imbalance, within 0.5% tolerance).",
+  "product": "Ngân hàng bán lẻ và doanh nghiệp, tín dụng, bancassurance, thanh toán quốc tế",
+  "customer": "Khách hàng cá nhân đô thị, doanh nghiệp lớn/vừa, XNK — ngân hàng quốc doanh vốn hóa lớn nhất HOSE",
+  "ops": "LN thuần HĐKD 80.9% doanh thu (14.088,6 tỷ); OCF/NI ratio Q1=1.37 (lành mạnh, divergence 0.368 < ngưỡng ESC-3 0.40)",
+  "mgmt": "ROE ngành (annualized) 16.7% DƯỚI median ngành 17.6%; Q1-2026 đã nộp (2026-07-19), không overdue; refine_status=PARTIAL nên ESC-5 không đánh giá được",
   "valuation": {
     "pe": 14.1,
-    "sector_median_pe": 9,
+    "pe_sector_median": 9,
     "pb": 2.2,
-    "sector_median_pb": 1.5,
-    "roe_pct": 16.7,
-    "sector_median_roe_pct": 17.6,
+    "pb_sector_median": 1.5,
     "ey_spread_pp": 2.09,
     "verdict": "FAIR"
   },
-  "kinh_dich": {
-    "que": "Tieu Qua (62)",
-    "trend": "TRUNG TINH",
-    "signal": "GIU",
-    "confidence_pct": 37
+  "kinhdich": {
+    "que": "Thang (46)",
+    "xu_huong": "THUAN LOI",
+    "khuyen_nghi": "GIU",
+    "do_tin_cay": 1
   },
   "esc_gate": {
-    "esc1_manipulation": "UNEVALUABLE — no Bash/Glob tool grant, E1 6-pass trick detection scope-reduced (standing gap)",
-    "esc2_balance_sheet": {
-      "result": "FALSE",
+    "ESC-1": "unevaluable (no Bash/Glob grant)",
+    "ESC-2": {
+      "result": false,
       "imbalance_pct": 0.37
     },
-    "esc3_ocf_vs_ni": {
-      "result": "FALSE",
+    "ESC-3": {
+      "result": false,
       "quarters_returned": 4,
-      "quarters_required": 4,
       "divergence_ratio": 0.368,
-      "ocf_ni_ratio_q1": 1.368
+      "threshold": 0.4
     },
-    "esc4_related_party_nonop": {
-      "result": "N/A",
-      "reason": "bank — pretax/operating-profit non_operating_share formula not meaningful for banking P&L structure"
+    "ESC-4": {
+      "result": "N/A (bank — non_operating_share formula not applicable to bank P&L structure)"
     },
-    "esc5_refine_confidence": {
-      "result": "FALSE",
-      "reason": "existing_refine_status=PARTIAL, report_id=null (refine not DONE)"
+    "ESC-5": {
+      "result": false,
+      "reason": "report_id null, existing_refine_status=PARTIAL"
     }
   },
-  "trick_detection": {
-    "trick_confidence": "none",
-    "trick_summary": null,
-    "scope_note": "E1 6-pass detection SCOPE-REDUCED — no Bash/Glob grant (standing capability gap, unchanged)."
+  "data_quality": {
+    "stale": true,
+    "stale_since": "2026-08-11T14:37:49.000Z",
+    "stale_age_hours": 48.53,
+    "sla_hours": 48,
+    "note": "FR-DEGRADE-01 last-known-good; Q2-2026 not yet extracted, showing Q1-2026"
   },
-  "insider_signal": "Khong co tin hieu giao dich noi bo dang ke",
-  "legal_risk": "Khong co tin hieu rui ro phap ly",
-  "sentiment_30d": {
-    "direction": "TANG",
-    "slope": 0.06,
-    "entries": 8
-  },
-  "filing_status": "DA NOP 2026-07-19 (Q1-2026) — not overdue",
-  "evidence_fragments": [
-    {
-      "id": 1203,
-      "evidence_type": "bctc_roe_strong",
-      "direction": "bullish",
-      "magnitude": 0.67,
-      "confidence": 0.6
-    }
-  ],
-  "cycle_id": "20260813-0000",
-  "generated_at": "2026-08-13T00:09:00Z",
+  "cycle_ts": "2026-08-13T15:14:00Z",
+  "slot": "bctc-analyst-slot-1",
   "_processed": {
-    "fingerprint": "1716790527b0b6d6f96eb37393610399a0a0bef85cd98fb401c7825ac5ec638c",
-    "processedAt": "2026-08-13T06:29:51Z",
+    "fingerprint": "e776e6e1fe0b0c676f00b5e769a8a8fb3cab98b1361706ac75eef6bd78675b8d",
+    "processedAt": "2026-08-13T15:20:29Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
