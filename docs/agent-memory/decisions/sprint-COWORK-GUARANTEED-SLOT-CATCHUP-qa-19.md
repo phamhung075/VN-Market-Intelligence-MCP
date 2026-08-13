@@ -82,3 +82,13 @@
 - Live `:3001`: `docker inspect` Created=2026-07-24 (predates this 07-29 commit); `curl /dashboard` shows no freshness/stale markup — PENDING-REBUILD deploy-gap still open, same class as sibling rows, ops-owned not a code defect.
 **why-decision:** APPROVED, DONE_VERIFIED. Code fix genuinely correct + independently re-verified live (tests/tsc/mock-guard/backend field), not rubber-stamped from prose. Only outstanding gap (container rebuild) is ops-owned, explicitly out of this row's scope per task framing.
 **why-change:** New finding vs. 07-29 note — host `node_modules`/`bun.lock` drift was masking 30 unrelated failures as false regressions; flagged separately (bug channel), not folded into this verdict.
+
+### STEP qa-S102 · qa · 2026-08-13T12:26:00Z
+**task-id:** FE-PG-BCTC-FRESH-FIX
+**what-done:** Direct-Commit Verify — row had no `.commit`/`.files[]`, derived candidate via `git log --oneline -- apps/frontend/app/routes/dashboard.bctc.tsx`: `545f2abf3` (2026-07-29), confirmed on main ancestry; `git show --stat` matches the row's claimed file set exactly (dashboard.bctc.tsx + new 5-case unit-test file). Backend `generated_at` confirmed live in source (`analysisBriefReader.ts:388`, `new Date().toISOString()`).
+**what-considered:**
+- Trust review_note prose vs re-run everything myself — re-ran (matches this repo's established bar, e.g. sibling FE-PG-_INDEX-FRESH-FIX).
+- Re-ran targeted test file myself: 5/5 GREEN. Full suite: 2183 pass/2 fail/2185 total — the 2 fails (`QUE-REFERENCE-PAGE-detail.test.ts`, `QUE-TOOLTIP-DRY-1a-codegen-pipeline.test.tsx`) confirmed pre-existing + zero overlap (grepped both files for `QUE_DESCRIPTIONS`/`dashboard.bctc`/`fetchAnalysisBriefs` — none; entirely disjoint Kinh Dịch tooltip codegen domain). `tsc --noEmit` clean. `mock-guard.sh --files dashboard.bctc.tsx` PASS.
+- Task instructions explicitly asked to check claimed live-service/deploy state directly: `docker inspect vn-market-intelligence-mcp-frontend-1` → Created=2026-07-24T18:02:36Z (predates this 07-29 commit); `curl localhost:3001/dashboard/bctc` → served HTML has no FreshnessBadge/"Cập nhật lúc" markup (asset hash `dashboard.bctc-DGvnLd1y.js`, stale build) — confirms the row's own PENDING-REBUILD claim rather than trusting it.
+**why-decision:** APPROVED, DONE_VERIFIED. Code fix genuinely correct + independently re-verified (tests/tsc/mock-guard/backend field/git ancestry), not rubber-stamped from prose. Deploy gap (container rebuild) is ops-owned, same PENDING-REBUILD class as sibling FE-PG-_INDEX-FRESH-FIX row, explicitly out of dev-frontend zone per the row's own note — not a QA merge-gate blocker.
+**why-change:** No change from plan — verdict matches developer's own claim, verified fresh not from prose.
