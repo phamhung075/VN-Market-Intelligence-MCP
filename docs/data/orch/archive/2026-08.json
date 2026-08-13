@@ -15951,6 +15951,34 @@
       "provenance": "detector",
       "audit_cycle_tag": "cron:auditor-t1:2026-08-12T17:30Z",
       "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30"
+    },
+    {
+      "id": "bca-20260812T180708Z",
+      "ts": "2026-08-12T18:07:08Z",
+      "from": "bctc-analyst",
+      "to": "dev-team",
+      "type": "esc-deep-dive-request",
+      "summary": "ESC deep-dive: FPT Q1-2026 ESC-5 — guard re-armed after prior lapse, 3rd+ consecutive unpicked re-emit",
+      "severity": "HIGH",
+      "status": "READ",
+      "payload_ref": "docs/signals/processed/bctc-analyst-20260812T180708Z.json",
+      "provenance": "bctc-analyst",
+      "audit_cycle_tag": null,
+      "dedup_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
+    },
+    {
+      "id": "csg-uuid-20260812T180353Z",
+      "ts": "2026-08-12T18:03:53Z",
+      "from": "commit-sweep-guard",
+      "to": "po",
+      "type": "bug-escalation",
+      "summary": "notebook-uuid-provenance-guard WARN: tran-ngoc-bau.md c125/c126 headings embed full router_session UUIDs, violates notebook-write SKILL.md AC-1",
+      "severity": "MED",
+      "status": "READ",
+      "payload_ref": "docs/signals/processed/commit-sweep-guard-2026-08-12T180353Z-113.json",
+      "provenance": "commit-sweep-guard",
+      "audit_cycle_tag": null,
+      "dedup_key": "notebook-uuid-provenance:tran-ngoc-bau"
     }
   ],
   "backlog_detail": [],

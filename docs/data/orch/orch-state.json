@@ -133,24 +133,10 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-13T16:36:20Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-08-13T18:17:35Z",
+    "_updated_by": "cowork-team/bridge-write",
     "archive": [],
     "rows": [
-      {
-        "id": "bca-20260812T180708Z",
-        "ts": "2026-08-12T18:07:08Z",
-        "from": "bctc-analyst",
-        "to": "dev-team",
-        "type": "esc-deep-dive-request",
-        "summary": "ESC deep-dive: FPT Q1-2026 ESC-5 — guard re-armed after prior lapse, 3rd+ consecutive unpicked re-emit",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/signals/processed/bctc-analyst-20260812T180708Z.json",
-        "provenance": "bctc-analyst",
-        "audit_cycle_tag": null,
-        "dedup_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
-      },
       {
         "id": "tnb-20260812T2030Z",
         "ts": "2026-08-12T20:30:00Z",
@@ -273,20 +259,6 @@
         "provenance": "detector",
         "audit_cycle_tag": null,
         "dedup_key": null
-      },
-      {
-        "id": "csg-uuid-20260812T180353Z",
-        "ts": "2026-08-12T18:03:53Z",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "summary": "notebook-uuid-provenance-guard WARN: tran-ngoc-bau.md c125/c126 headings embed full router_session UUIDs, violates notebook-write SKILL.md AC-1",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": "docs/signals/processed/commit-sweep-guard-2026-08-12T180353Z-113.json",
-        "provenance": "commit-sweep-guard",
-        "audit_cycle_tag": null,
-        "dedup_key": "notebook-uuid-provenance:tran-ngoc-bau"
       },
       {
         "id": "csg-barecommit-20260813T040848Z",
@@ -482,6 +454,20 @@
         "severity": "LOW",
         "status": "READ",
         "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-13.json"
+      },
+      {
+        "id": "bca-20260813T181200Z",
+        "ts": "2026-08-13T18:12:00Z",
+        "from": "bctc-analyst",
+        "to": "dev-team",
+        "type": "esc-deep-dive-request",
+        "summary": "ESC deep-dive: FPT Q1-2026 ESC-5 — guard lapsed unpicked c161-c163, re-armed & re-dispatched",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/signals/bctc-analyst-20260813T181200Z.json",
+        "provenance": "bctc-analyst",
+        "audit_cycle_tag": null,
+        "dedup_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
