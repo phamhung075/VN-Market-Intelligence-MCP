@@ -13244,6 +13244,49 @@
             "observed_at": "2026-08-12T16:37:00Z"
           }
         }
+      },
+      {
+        "id": "UC-ASL-P6",
+        "type": "CLEAN",
+        "title": "Purge the DASHBOARD.md phantom protocol from the auditor flow; align SKILL.md hot-path write text with the orch-apply contract",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "CONFIRMED",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P6",
+        "note": "auditor main.md/init.md/tier1-probe.md mandate a phantom docs/handoffs/DASHBOARD.md with no live consumer, and signal-dashboard SKILL teaches bare temp-then-rename contradicting orch-apply.sh. Purge phantom refs; align write text to orch-apply CAS.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "agent-father",
+        "supervised": true,
+        "supervised_reason": "[po 2026-07-16T11:59:19Z] 3rd BOUNDED-1 tick churn converged. next_agent=agent-father is a MAINTENANCE-LANE on-demand-only agent (dev-team main.md L12) that zone-detect (cross-service/ => Tier-3 developer) CANNOT route to; idle auto-launch would mis-route factory work to a generic developer. supervised:true withholds it from BOUNDED-1 so the next tick picks a dev-routable P1 (UC-SDF-P4/UC-GCP-P2/UC-GCP-P4->developer, UC-MDH-P1->dev-mcp-server). Deliberate on-demand dispatch of agent-father (task:on-demand:agent-father:<date> mutex-wrap) only; on execution reconcile that the row cites system-auditor init.md but the flow dir has only main.md/tier1-probe.md. Durable class fix tracked by FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE.",
+        "po_manual_dispatch_flagged_at": "2026-07-31T00:56:04Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH",
+        "updated_at": "2026-08-13T13:29:05Z",
+        "updated_by": "agent-father",
+        "claimed_at": "2026-08-06T20:54:27Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "owner": "agent-father",
+        "redispatch_count": 1,
+        "status_note": "[QA] Direct-Commit Verify FAILED 2026-08-06 — CHANGES_REQUESTED, RAW re-verified against the live repo this tick, not trusted from agent-father's own commit-message self-report. Commit 2728636fd confirmed real, on main ancestry, touches exactly the 5 files claimed. init.md's 3 bare DASHBOARD.md mentions now correctly name docs/data/DASHBOARD.md + scripts/emit-dashboard-row.sh (live lines ~49/95/142); flow/main.md's RETURN \"NEXT: po (via DASHBOARD.md)\" corrected to \"po (via orch-state.json .signal_queue row)\" (live line 17 area) — both confirmed live and durable through 6 days of later edits (2026-08-05/06), no regression. tier1-probe.md correctly needed no change (confirmed no live DASHBOARD.md phantom mandate there).\n\nBUT: the task's own cited architecture brief (docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P6) Change item (2) specifies TWO edits to .claude/skills/signal-dashboard/SKILL.md: (a) line 11 Write-protocol text -> orch-apply.sh [DONE, confirmed live] AND (b) trim the :22-24 manual-CAS instruction to \"orch-apply.sh provides the CAS guard; TS code uses appendSignalQueueRow()\" [NOT DONE — git blame confirms lines 22-24 unchanged since 2026-06-07 commit 8a46965519, untouched by 2728636fd or any later commit]. Live text today still reads \"Shell/flow code MUST record mtime before read, check mtime again before rename, retry up to 3 times if changed. Never use bare temp→rename without the CAS guard\" (SKILL.md:22-24) — this instructs shell/flow code to hand-roll its own manual mtime-CAS loop as an alternative to orch-apply.sh, directly contradicting line 11's own absolute mandate 2 lines above (\"MUST route through ... orch-apply.sh ... NEVER a raw temp-file-then-rename\", no manual-CAS exception) and the project's CANONICAL SSOT-W1-ORCH-APPLY-WRAPPER rule (no raw writes, ever, always via the wrapper). This is the exact SKILL.md hot-path/orch-apply-contract misalignment class this row exists to close — partially fixed, not fully.\n\nFIX NEEDED (small, doc-only, no re-test needed): .claude/skills/signal-dashboard/SKILL.md:22-24 — replace the \"Shell/flow code MUST record mtime...\" sentence with text naming orch-apply.sh as the sole CAS-guard provider, removing the manual mtime-record/check/retry instruction. Not routing to fixer — no task branch exists (direct-commit row, branch:null). Held: .task_board.qa[] -> .task_board.review[], status QA -> REVIEW, owner/next_agent=agent-father, redispatch_count 0 -> 1.\n\n[agent-father] 2026-08-13T13:29:04Z — CLOSED (SECONDARY-Drain owner-triage). Applied QA's exact suggested fix: .claude/skills/signal-dashboard/SKILL.md:22-24 manual mtime-record/check/retry instruction replaced with text naming scripts/orch-apply.sh as the sole CAS-guard provider for shell/flow writes (TS appendSignalQueueRow() CAS description at L18-21 left untouched, out of brief's cited scope). File re-confirmed at own 120L size-justification cap (briefly 121L on first wrap, reworded to fit). Verified: git diff clean 3-line-scoped diff; git show --name-only HEAD confirms exactly 3 files. No re-test needed per QA note (doc-only). Commit 77cdd61f4 (docs/agents/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-agent-father.md STEP agent-father-S3 + notebook). Self-certifying DONE_VERIFIED per Review-Lane SECONDARY-Drain owner-triage design (QA explicitly routed this here as doc-only/no-re-test, no fixer/re-QA loop, no task branch exists). orch-state.json write left uncommitted — outside agent-father commit_zone (FU-AGENT-FATHER-ORCH-SCOPE); router/PO to commit.",
+        "secondary_claimed_at": "2026-08-13T13:23:23Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "agent-father",
+        "verification": {
+          "raw_probe": {
+            "tool": "git diff/show + wc -l (doc-only markdown fix — no runtime/data probe applicable)",
+            "args": {
+              "commit_verified": "77cdd61f49c0110bf7aacae540269505557977cc"
+            },
+            "live_value_observed": "git show --name-only HEAD (77cdd61f4) confirms exactly 3 files changed (.claude/skills/signal-dashboard/SKILL.md, decision journal, notebook); git diff on SKILL.md shows a clean 3-line-scoped replacement at :22-24 removing the manual mtime-record/check/retry instruction and naming scripts/orch-apply.sh as sole CAS-guard provider, matching QA's exact suggested text and the architecture brief's Change (2)(b) wording; wc -l confirms file back at 120L (own ≤120L size-justification cap, briefly 121L on a first wrap attempt, reworded to fit).",
+            "observed_at": "2026-08-13T13:29:04Z"
+          }
+        }
       }
     ],
     "head": {
@@ -17224,39 +17267,6 @@
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "ba",
         "ba_triage_note_20260813T1226Z": "BA REVIEW-LANE TRIAGE (dispatched next_agent=ba 2026-08-13, secondary-drain). NOT ready to decompose into dev-actionable task(s) -- escalating to PO, this is a scope question only PO can adjudicate, not an infra-diagnosis task for BA. Two premises in ops_recon_note are now stale/superseded, RAW-checked this tick: (1) ops's cited blocker \"cannot verify until FIX-BCTC-SERVING-GATE-VPSSTALE-IGNORES-DEMAND-QUEUE-DEPTH ships\" is moot -- that row is DONE_VERIFIED (commit 8c108491b, QA live-verified against rebuilt runtime 2026-08-08T15:35:17Z, now in archive/2026-08.json), shipped 5 days before this dispatch; the cited gate defect no longer exists, but nobody has re-run this row's own live_tool_reconcile AC against the fixed gate. (2) ops's 7-ticker NO_DATA bucket (DBC/HUT/KDC/MSN/SAB/SHB/VND) is superseded by a MORE PRECISE both-plane live census run the day after ops's recon: docs/architecture-briefs/2026-08-07-bctc-q1-2026-servability-census.md (task SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS -- itself still parked review[]/next_agent=po since 2026-08-07T20:12:35Z, never adjudicated, a sibling stale-review-lane row worth PO's attention too). That census found: 6 of ops's 7 \"NO_DATA\" tickers (DBC/KDC/MSN/SAB/SHB/VND) are actually mode-3 -- extraction DID run, non-zero total_assets in financial_reports, refine_status=PENDING -- i.e. FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP's scope, NOT an ingest stall. Only HUT+PLX are true ingest-stall members (matches this row's own mandatory natural-control pair). The 7 CORRUPT tickers (DGC/DXG/FRT/GEX/KDH/PDR/VJC) are already absorbed by FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP's write-back-guard mechanism (DONE_VERIFIED); remediation of the already-corrupt rows is a distinct, currently UNOWNED gap (census section 9a) -- minting a fresh \"OCR-extraction-defect fix\" under THIS row risks duplicating/conflicting with that row's territory without PO's explicit ownership call. Census also surfaced 2 tickers never named in this row's history: BID, DAG (same mode-2 signature, PDF gaps). Census's own explicit recommendation (its section 7/9): narrow this row's cohort to {HUT, PLX, BID, DAG} (4, not 15) -- routed to PO for adjudication in its RETURN block 6 days ago, never actioned. RECOMMEND: do NOT decompose on the router-suggested framing (OCR fix for 7 CORRUPT + confirm vps_stale-gate covers the other 8) -- 6 of those 8 belong to a different row and the vps_stale-gate question is already answered (shipped, needs re-measurement not a new fix). Requesting PO: (a) adopt or reject the census's cohort-narrowing, (b) rewrite this row's title/note/AC to the adjudicated cohort if adopted, (c) rule on ownership of the mode-1 batch-remediation gap (census 9a) before any dev-team task mints against this row. Status set BLOCKED, next_agent=po pending that call."
-      },
-      {
-        "id": "UC-ASL-P6",
-        "type": "CLEAN",
-        "title": "Purge the DASHBOARD.md phantom protocol from the auditor flow; align SKILL.md hot-path write text with the orch-apply contract",
-        "status": "REVIEW",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P6",
-        "note": "auditor main.md/init.md/tier1-probe.md mandate a phantom docs/handoffs/DASHBOARD.md with no live consumer, and signal-dashboard SKILL teaches bare temp-then-rename contradicting orch-apply.sh. Purge phantom refs; align write text to orch-apply CAS.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "agent-father",
-        "supervised": true,
-        "supervised_reason": "[po 2026-07-16T11:59:19Z] 3rd BOUNDED-1 tick churn converged. next_agent=agent-father is a MAINTENANCE-LANE on-demand-only agent (dev-team main.md L12) that zone-detect (cross-service/ => Tier-3 developer) CANNOT route to; idle auto-launch would mis-route factory work to a generic developer. supervised:true withholds it from BOUNDED-1 so the next tick picks a dev-routable P1 (UC-SDF-P4/UC-GCP-P2/UC-GCP-P4->developer, UC-MDH-P1->dev-mcp-server). Deliberate on-demand dispatch of agent-father (task:on-demand:agent-father:<date> mutex-wrap) only; on execution reconcile that the row cites system-auditor init.md but the flow dir has only main.md/tier1-probe.md. Durable class fix tracked by FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE.",
-        "po_manual_dispatch_flagged_at": "2026-07-31T00:56:04Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH",
-        "updated_at": "2026-08-13T13:23:23Z",
-        "updated_by": "qa",
-        "claimed_at": "2026-08-06T20:54:27Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "owner": "agent-father",
-        "redispatch_count": 1,
-        "status_note": "[QA] Direct-Commit Verify FAILED 2026-08-06 — CHANGES_REQUESTED, RAW re-verified against the live repo this tick, not trusted from agent-father's own commit-message self-report. Commit 2728636fd confirmed real, on main ancestry, touches exactly the 5 files claimed. init.md's 3 bare DASHBOARD.md mentions now correctly name docs/data/DASHBOARD.md + scripts/emit-dashboard-row.sh (live lines ~49/95/142); flow/main.md's RETURN \"NEXT: po (via DASHBOARD.md)\" corrected to \"po (via orch-state.json .signal_queue row)\" (live line 17 area) — both confirmed live and durable through 6 days of later edits (2026-08-05/06), no regression. tier1-probe.md correctly needed no change (confirmed no live DASHBOARD.md phantom mandate there).\n\nBUT: the task's own cited architecture brief (docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P6) Change item (2) specifies TWO edits to .claude/skills/signal-dashboard/SKILL.md: (a) line 11 Write-protocol text -> orch-apply.sh [DONE, confirmed live] AND (b) trim the :22-24 manual-CAS instruction to \"orch-apply.sh provides the CAS guard; TS code uses appendSignalQueueRow()\" [NOT DONE — git blame confirms lines 22-24 unchanged since 2026-06-07 commit 8a46965519, untouched by 2728636fd or any later commit]. Live text today still reads \"Shell/flow code MUST record mtime before read, check mtime again before rename, retry up to 3 times if changed. Never use bare temp→rename without the CAS guard\" (SKILL.md:22-24) — this instructs shell/flow code to hand-roll its own manual mtime-CAS loop as an alternative to orch-apply.sh, directly contradicting line 11's own absolute mandate 2 lines above (\"MUST route through ... orch-apply.sh ... NEVER a raw temp-file-then-rename\", no manual-CAS exception) and the project's CANONICAL SSOT-W1-ORCH-APPLY-WRAPPER rule (no raw writes, ever, always via the wrapper). This is the exact SKILL.md hot-path/orch-apply-contract misalignment class this row exists to close — partially fixed, not fully.\n\nFIX NEEDED (small, doc-only, no re-test needed): .claude/skills/signal-dashboard/SKILL.md:22-24 — replace the \"Shell/flow code MUST record mtime...\" sentence with text naming orch-apply.sh as the sole CAS-guard provider, removing the manual mtime-record/check/retry instruction. Not routing to fixer — no task branch exists (direct-commit row, branch:null). Held: .task_board.qa[] -> .task_board.review[], status QA -> REVIEW, owner/next_agent=agent-father, redispatch_count 0 -> 1.",
-        "secondary_claimed_at": "2026-08-13T13:23:23Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "agent-father"
       },
       {
         "id": "FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION",
