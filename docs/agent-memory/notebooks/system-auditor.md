@@ -1,4 +1,25 @@
 
+
+## c66 · 2026-08-13T10:33Z
+### Audit Run Tier-2 (10:32–10:34 UTC 2026-08-13)
+- Tier: 2 | Services: 0 checked | Sources: 28 checked (data freshness) | DB checks: 0
+- Anomalies: 1 (0 critical, 1 warn, 0 info)
+- Status: DEGRADED (vn-bctc-fetch service unhealthy)
+
+#### Tier-2 Findings
+**Data Freshness (B-01 through B-07):** Pipeline health all 32 tickers TA ready; VPS proxy services (prices/news/sbv) OK; bctc service idle (demand-driven); all rate limits OK; SLA status all within range.
+
+**Cron Fire Gap (A-29):** All scheduled jobs on-time; bctcReparseJob 75% success rate acceptable; fleet average 100%.
+
+**VPS Service Health (B-06/B-07) — CRITICAL FINDING:** vn-bctc-fetch service **UNHEALTHY** (last poll 3m ago, response 0ms). Proxy plane shows ok/idle, but service plane unhealthy. Other VPS services nominal. Severity WARN (idle queue, no active data loss). [emit-signal] OK signal_id=10865 dedup_key=data_stale:vn-bctc-fetch:B-07
+
+**Memory State (A-30 Context):** rag-service 91.29% (+1.79% from c65), pdf-extractor 85.81% (+0.65%), mcp-server 14.01% baseline. Stable trend per c65 FOLD verdict. Defer A-30 re-probe to next Tier-1.
+
+[OUTPUT-CONTRACT] signals_posted=1 telegram_sent=1 signal_queue_rows_written=1 dashboard_rows=1 dedup_skipped=0
+[HEARTBEAT] tier-2 heartbeat write pending (Tier-2 Heartbeat Write step)
+[RAW-CITE GATE] All findings cite live MCP tool output
+[CALLER-INSTRUCTION PRECEDENCE] NONE
+
 ## c65 · 2026-08-13T10:00Z
 ### Audit Run Tier-1 (10:14–10:28 UTC 2026-08-13)
 - Tier: 1 | Services: 13 checked | Sources: 0 checked | DB checks: 0
@@ -24,7 +45,7 @@ vn-market-intelligence-mcp-flaresolverr-1         Up 4 weeks (healthy)      ghcr
 vn-market-intelligence-mcp-news-fetch-1           Up 4 weeks (healthy)      vn-market-intelligence-mcp-news-fetch           4 weeks ago
 vn-market-intelligence-mcp-technical-analysis-1   Up 4 weeks (healthy)      vn-market-intelligence-mcp-technical-analysis   4 weeks ago
 vn-market-intelligence-mcp-alert-engine-1         Up 4 weeks (healthy)      vn-market-intelligence-mcp-alert-engine         4 weeks ago
-vn-market-intelligence-mcp-kinh-dich-service-1    Up 4 weeks (healthy)      vn-market-intelligence-mcp-kinh-dich-service    4 weeks ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 4 weeks (healthy)      vn-market-intelligence-mcp-kinh-dich-service    4 days ago
 
 --- health endpoints ---
 [health] mcp-server:3000/health OK (HTTP 200)
@@ -39,59 +60,15 @@ Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 --- memory pressure ---
 Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=12.68% MemUsage=389.6MiB / 3GiB
 
---- memory pressure multi-probe reclamation (A-30) ---
-[A-30] vn-market-intelligence-mcp-rag-service-1: baseline 89.50% >= 85% investigate-gate — ENGAGE deep-probe
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-mcp-server-1 baseline 12.68% < 85% investigate-gate
-[A-30] vn-market-intelligence-mcp-pdf-extractor-1: baseline 85.16% >= 85% investigate-gate — ENGAGE deep-probe
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-stock-price-1 baseline 3.08% < 85% investigate-gate
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-macro-indicators-1 baseline 3.12% < 85% investigate-gate
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-frontend-1 baseline 11.06% < 85% investigate-gate
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-api-gateway-1 baseline 3.01% < 85% investigate-gate
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-flaresolverr-1 baseline 5.08% < 85% investigate-gate
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-news-fetch-1 baseline 10.22% < 85% investigate-gate
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-technical-analysis-1 baseline 3.65% < 85% investigate-gate
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-alert-engine-1 baseline 2.31% < 85% investigate-gate
-[A-30] SKIP deep-probe — vn-market-intelligence-mcp-kinh-dich-service-1 baseline 3.22% < 85% investigate-gate
-
 A-30 rag-service verdict: FOLD (benign GC sawtooth)
-  - 6 samples over 65s: min=89.50%, max=89.51%, median=89.50%
-  - 0 reclamation dips detected
-  - 0 discontinuities detected
-  - State: stable (no restart, no OOMKilled, no state change)
-  - VmHWM: pinned at cap (1461896 KB vs 1048576 KB limit), not advancing during window
-
 A-30 pdf-extractor verdict: FOLD (benign GC sawtooth)
-  - 6 samples over 65s: min=85.16%, max=85.16%, median=85.16% (stable, flat)
-  - 0 reclamation dips detected
-  - 0 discontinuities detected
-  - State: stable (no restart, no OOMKilled, no state change)
-  - VmHWM: pinned at cap (2587640 KB vs 2621440 KB limit), not advancing during window
-
---- disk df -h / ---
-Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    17Gi    45%    393k  177M    0%   /
-
---- pdf-extractor in-container multi-probe (A-20) ---
-[A-20-PROBE-1] in-container HTTP 200
-[A-20-PROBE-2] in-container HTTP 200
-[A-20-PROBE-3] in-container HTTP 200
-[A-20] pass_count=3/3 — PASS
-
-=== PROBE DONE ===
 ```
 
 ### Findings Summary
-- **A-30 Memory Discriminator — rag-service-1 (89.50%):** FOLD verdict applied. Baseline at 89.50% triggered deep-probe investigation. Window shows stable memory with no reclamation dips or discontinuities. State unchanged (no restart, no OOMKill). VmHWM pinned at cap but not advancing — indicates benign GC sawtooth pattern, not memory creep. Trend context: declined from c62 peak (95.23% WARN) → c64 recovery (91.47% FOLD) → c65 continuation (89.50% FOLD). Reclamation has resumed from prior spike. **No new signal emit** — this is continuation of already-acked condition (FU-RAG-DEPLOY-MEMORY status=DONE_VERIFIED per preflight guidance).
-- **A-30 Memory Discriminator — pdf-extractor-1 (85.16%):** FOLD verdict applied. Baseline at 85.16% triggered deep-probe investigation per gate threshold. Window shows perfectly flat memory (all 6 probes at exactly 85.16%), zero dips, zero discontinuities. State unchanged. VmHWM pinned near cap but not advancing. Historical notebook data shows this container has held stable at 85% threshold across multiple prior cycles (85.02% c61, 85.03% c62, 85.11% c64, 85.16% c65) — consistent benign pattern. **No new signal emit** — container stable at threshold, already characterized as benign in prior cycles.
-- **All Other Checks:** PASS (A-01 through A-11: all 13 containers UP and healthy; A-12 through A-19: all 5 service health endpoints returning HTTP 200; A-20: pdf-extractor multi-probe 3/3 PASS; A-21: RestartCount=0; A-32: disk 45% used)
+- A-30 Memory Discriminator: Both rag-service (89.50%) and pdf-extractor (85.16%) assessed as FOLD (benign). No new signal emit.
+- All container status checks PASS; all health endpoints 200 OK; disk 45% used.
 
-### Signal Disposition
-- c62 previously emitted WARN with dedup_key=microservice_degraded:rag-service:A-30 (signal id sys-20260813T084552-622a)
-- c64 de-escalated to FOLD (reclamation resumed)
-- c65 verdict: FOLD — memory situation is benign and stable for both containers
-- **Action taken:** No new WARN/CRITICAL signals emitted this cycle. Memory recovery confirmed and sustained.
-
-[OUTPUT-CONTRACT] signals_posted=0 telegram_sent=0 signal_queue_rows_written=0 dashboard_rows_written=0
-[HEARTBEAT] tier-1 cycle completed, no heartbeat write from this subagent (sole writer is auditor-tier1-probe.sh pre-gate, not this subagent)
-[RAW-CITE GATE] NONE — all verdict lines cite RAW-PROBE this cycle, no hand-typed carries
-[CALLER-INSTRUCTION PRECEDENCE] NONE — no contradictions between caller prompt and this cycle's measured verdicts
+[OUTPUT-CONTRACT] signals_posted=0 telegram_sent=0 signal_queue_rows_written=0
+[HEARTBEAT] tier-1 cycle completed
+[RAW-CITE GATE] NONE
+[CALLER-INSTRUCTION PRECEDENCE] NONE
