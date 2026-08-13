@@ -1,0 +1,23 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_prune_dropped_newest_dated_section",
+  "priority": "high",
+  "createdAt": "2026-08-13T19:56:14Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/unified-agent.md",
+    "line": 64,
+    "heading": "## Session: 2026-08-13 (intraday 06:22 UTC)",
+    "section_count": 6,
+    "non_sentinel_section_count": 4,
+    "sentinel_section_count": 2,
+    "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+    "action_required": "review_dropped_section"
+  },
+  "_processed": {
+    "fingerprint": "6f776a3a729daeedaa5eab985d16e063e81b8885926f9973b20c31fc06a45ab3",
+    "processedAt": "2026-08-13T20:20:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

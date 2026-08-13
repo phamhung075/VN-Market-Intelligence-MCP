@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-13T20:23:47Z",
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "won_slots": [
+      "tnb-audit"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "tnb-audit": "cron"
+    },
+    "cadence_minutes": {
+      "tnb-audit": null
+    },
+    "last_fired_timestamp": "2026-08-13T20:23:30Z",
+    "last_fired_slots": [
+      "tnb-audit"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 30,
+    "note": "single guaranteed tnb-audit slot (legacy cron, policy_id=null) fired; tran-ngoc-bau spawned background, Step 5.3 off-flow check deferred to completion notification"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-13T20:23:47Z",
+  "_processed": {
+    "fingerprint": "31584c704ccd164752304c0a76299340e722df6afef74992b12cb0e9ed4de059",
+    "processedAt": "2026-08-13T20:51:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

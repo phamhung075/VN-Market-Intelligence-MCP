@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "20260806T195134Z",
+    "fire_time": "2026-08-13T19:53:35Z",
     "matched_slots": [
       "chef-evening"
     ],
@@ -16,7 +16,7 @@
       "docs/agents/unified-agent/flow/chef.md"
     ],
     "silent": false,
-    "drift_min": 2,
+    "drift_min": 6,
     "errors": [],
     "pressure_mode": "adaptive",
     "calendar_status": "unknown",
@@ -30,7 +30,7 @@
     "cadence_minutes": {
       "chef-evening": null
     },
-    "last_fired_timestamp": "2026-08-06T19:51:07Z",
+    "last_fired_timestamp": "2026-08-13T19:53:20Z",
     "last_fired_slots": [
       "chef-evening"
     ],
@@ -39,16 +39,16 @@
     "reason": "spawned",
     "nominal_tick": "19:45",
     "leader_lock": "acquired",
-    "dev_head": "active",
-    "devq": 2,
-    "signal_backlog": 0,
-    "note": "single guaranteed slot chef-evening, agent a878f6fe5b5d39e7b spawned run_in_background=true"
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 29,
+    "note": "single guaranteed CHEF slot (chef-evening) fired; unified-agent spawned background, Step 5.3 off-flow check deferred to completion notification"
   },
   "priority": "low",
-  "createdAt": "2026-08-06T19:51:34Z",
+  "createdAt": "2026-08-13T19:53:35Z",
   "_processed": {
-    "fingerprint": "69b7261ae6051ec109605ce4ed91d476c58db0745d14f3a00375a58135cf84e0",
-    "processedAt": "2026-08-06T20:01:54Z",
+    "fingerprint": "5b580a71c868f06ec38c24e61d3779028f7aa2a4cb17cae9517a606c0caa1abc",
+    "processedAt": "2026-08-13T20:20:55Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

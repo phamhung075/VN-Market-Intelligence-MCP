@@ -1,8 +1,8 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1786614682,
-    "last_linecount": 33,
+    "last_mtime": 1786654309,
+    "last_linecount": 28,
     "po": {
       "section_name": "po",
       "last_mtime": 1786650637,
@@ -132,24 +132,10 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-13T19:50:35Z",
+    "_updated_at": "2026-08-13T20:51:34Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
-      {
-        "id": "tnb-20260812T2030Z",
-        "ts": "2026-08-12T20:30:00Z",
-        "from": "tran-ngoc-bau",
-        "to": "po",
-        "type": "audit-handoff",
-        "summary": "TNB quality audit c127: NEEDS_ATTENTION — F-CHEF-BIZCTX-JOIN-MISS still live (P0 granted c126), pipeline coverage recovered 3/3 chef dishes",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/signals/processed/tnb-20260812T2030Z.json",
-        "provenance": "tran-ngoc-bau",
-        "audit_cycle_tag": "tnb-audit:c127",
-        "dedup_key": "tnb-audit-handoff:2026-08-12T2030Z"
-      },
       {
         "id": "cj-20260812T223235Z",
         "ts": "2026-08-12T22:32:35Z",
@@ -518,7 +504,7 @@
         "type": "signal_feedback",
         "summary": "A-30: rag-service-1 memory crash-cliff detected — 91.89% → 49.59% discontinuity",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-13T20:30Z",
@@ -13041,42 +13027,6 @@
             "observed_at": "2026-08-12T16:37:00Z"
           }
         }
-      },
-      {
-        "id": "FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT",
-        "type": "FIX",
-        "status": "DONE_VERIFIED",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "next_agent": "qa",
-        "supervised": false,
-        "created_at": "2026-07-25T14:58:00Z",
-        "created_by": "po/triage-20260725T1437",
-        "updated_at": "2026-08-13T20:28:07Z",
-        "updated_by": "qa",
-        "title": "sla-monitor's bctc threshold is NOT a policy constant — it rises 60min/hour in lockstep with the measured staleness, holding a fixed 5439-minute margin. The gate can therefore never clear and never escalates, and the 'threshold' value printed in every CRITICAL alert is meaningless.",
-        "status_note": "MECHANICALLY PROVEN, not inferred. PO extracted every bctc sla-monitor alert from list_unresolved_reports() over a 21-hour window (2026-07-24T17:00Z -> 2026-07-25T14:00Z, 12 samples) and differenced the two numbers in each message:\n  stale=5950 thr=511 | 6010/571 | 6070/631 | 6160/721 | 6250/811 | 6340/901 | 6400/961 | 6550/1111 | 6700/1261 | 6910/1471 | 7090/1651 | 7210/1771\nThe set of (stale - threshold) values across all 12 samples is EXACTLY {5439}. One element. The threshold is not a duration policy — it is a second clock running 5439 minutes behind the first.\n\nISOLATED TO bctc, WHICH IS THE POSITIVE CONTROL THAT MAKES THIS A REAL DEFECT AND NOT A GLOBAL MISREADING: in the same alert stream over the same window, every other metric's threshold is CONSTANT — bond_maturity 10080 (7d) in all samples, signal_quality_audit 2880 (48h) in all, news 30, sbv_fx 30. Only the bctc threshold moves. So this is a bctc-specific threshold computation, not a shared formatter bug and not an artifact of how the message is rendered.\n\nHYPOTHESIS FOR THE ROOT CAUSE, stated as a hypothesis and NOT verified at source (PO did not read the sla-monitor implementation — the next agent must): a constant difference between two quantities that both grow with wall-clock time means BOTH are ages measured from `now` against FIXED timestamps, 5439 minutes apart. That is, the code is almost certainly comparing `now - T_data` against `now - T_other` — an AGE-vs-AGE comparison — where a correct SLA compares an AGE against a DURATION. Whoever picks this up should first confirm or refute that shape before changing anything; if it is refuted, the 5439 constant still has to be explained.\n\nOPERATIONAL COST: the bctc breach re-fires roughly hourly and has done so continuously for at least 21 hours (almost certainly far longer — 3 samples/hour of bond_maturity + signal_quality_audit + bctc dominate the 100-row unresolved-report backlog). Because the margin is fixed, the alert carries zero information about whether the situation is improving or worsening: it will print CRITICAL with a larger pair of numbers forever.",
-        "relationship_to_adjacent_rows": "NOT a duplicate — PO checked the four adjacent bctc-freshness rows and all of them concern WHICH ROWS ARE MEASURED or WHICH LAYER IS MEASURED, none concerns the threshold being non-constant:\n- FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL (backlog) — closest neighbour; excludes url_not_found terminal rows from the metric so genuinely-absent tickers cannot breach forever. That fixes the NUMERATOR (population). This row fixes the COMPARATOR. Both can be true at once and fixing either alone leaves the alert wrong.\n- FIX-BCTC-QUEUE-MAXAGE-GATE (backlog) — drops >30d zero-result tickers from the active SLA queue. Population again.\n- FIX-AUDITOR-B05-BCTC-FRESHNESS-LAYER-SPLIT (backlog) — B-05 applies a 24h SLA to the raw PDF-push layer instead of the analysis layer. That is the system-auditor plane, a DIFFERENT emitter from sla-monitor.\n- SPIKE-FRESHNESS-REMEDIATE-TRIAGE (backlog) — designs the breach-triage layer; consumes SLA verdicts, does not compute them.\nSequencing note: if FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL lands first the staleness number will drop, but the threshold will still track it at 5439 and the gate will still never clear — so that row does NOT subsume this one.",
-        "acceptance": "(1) Read the sla-monitor bctc threshold computation at source and state in the closing report what the 5439 constant actually is. Do not change code before that sentence can be written.\n(2) The bctc threshold must be a FIXED duration from config, asserted equal across at least 3 alert emissions separated by >1h — same property the other four metrics already satisfy today. Use bond_maturity/signal_quality_audit/news/sbv_fx as the positive control: whatever mechanism keeps THEIR thresholds constant is the one bctc should be using.\n(3) BIDIRECTIONAL PROOF, not just 'it no longer fires': show the gate CLEARING on fresh data and FIRING on stale data. A threshold that can only ever be breached is the defect being fixed; a threshold that can never be breached is the mirror defect and is not acceptance either.\n(4) Regression test pinning the bctc threshold to its configured constant, so this cannot silently drift back to a computed value.\n(5) State the configured bctc SLA duration explicitly in the row closure. Nobody currently knows what the intended value is — the alerts have been printing a moving number, so the real policy has never been visible.",
-        "files_hint": "sla-monitor threshold config + the bctc freshness check in apps/mcp-server (locate via the alert string 'CRITICAL breach: bctc stale {N}min (threshold {M}min)'); compare against the bond_maturity / signal_quality_audit / news / sbv_fx threshold definitions in the same module, which are already correct and serve as the in-repo reference implementation.",
-        "baseline_pass": "cd apps/mcp-server && bun test",
-        "evidence_source": "PO triage 2026-07-25T14:37Z tick, from list_unresolved_reports() (100 rows, backlog spans 2026-07-22 -> 2026-07-25). Raw sample ids: 3677(5950/511), 3680(6010/571), 3683(6070/631), 3686(6160/721), 3690(6250/811), 3694(6340/901), 3697(6400/961), 3704(6550/1111), 3709(6700/1261), 3721(6910/1471), 3731(7090/1651), 3738(7210/1771). Not derived from a notebook or a prior agent's summary — read off the live report stream this tick.",
-        "claimed_at": "2026-08-13T20:23:52Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "dev_agent": "dev-mcp-server",
-        "entered_review_at": "2026-07-30T05:16:04Z",
-        "review_note": "AC-1 (read source before changing anything): confirmed PO's hypothesis exactly, not refuted. getSlaThreshold(\"bctc\")'s active branch (non-trading-day / out-of-earnings-window off-hours) returned minutesSinceLast{WindowEnd,EarningsWindowEnd}(now) + OFF_HOURS_GRACE_MINUTES(30) -- literally `now - T_anchor` for a FIXED past anchor timestamp (last VN market-session close, or last earnings-window close). ageMinutes itself is `now - T_data` for the FIXED timestamp of the last real financial_reports row. Both are AGES growing 1:1 with wall-clock `now`, so ageMinutes - thresholdMinutes = (T_anchor - T_data) - grace is a time-invariant constant for as long as no new bctc data arrives and the day/hours regime doesn't flip -- a breach recorded in that regime can NEVER self-clear by the passage of time alone. Algebraically verified against PO's exact 5439 sample: over the 2026-07-24T17:00Z->2026-07-25T14:00Z window every \"now\" fell inside the same VN-Saturday non-trading-day regime, T_anchor = 2026-07-24T08:59Z (last Friday market close), backing out T_data ~= 2026-07-20T13:50Z (last real bctc parse) -- internally consistent with the reported stale=5950min at the first sample.\n\nFIX: getSlaThreshold(\"bctc\") now returns one of exactly two FIXED, config-sourced constants selected only by isBctcEarningsWindowActive(now) (a boolean, not a growing quantity) -- 1440 min (24h) while an earnings-filing window is active, 10080 min (168h/7d) otherwise (AC-5 answer: this IS the configured bctc SLA duration, now finally visible/enforced). SSOT: docs/data/system-map.json .project.data_sources[\"bctc-discover\"].sla -- earnings_window.stale_threshold_hours=24 / default_stale_threshold_hours=168 -- these values already existed there but were never wired into DEFAULT_SLA_CONFIG (which instead carried invented 120/360-min values plus the broken dynamic formula). No minutesSinceX(now) term remains in the bctc branch. Legacy marketHoursThresholdMinutes/offHoursThresholdMinutes fields removed from SignalSlaConfig entirely (grep-confirmed unused elsewhere) so they cannot silently reappear (AC-4).\n\nThe false-CRITICAL-during-quiet-period concern the removed dynamic formula was chasing is now the sole job of the already-shipped queue-depth+service-state idle/crash gate (checkSignalSla, FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH) -- strictly more accurate (real pipeline state vs calendar guesswork) and already short-circuits before the threshold is ever consulted.\n\nAC-2/AC-3 (bidirectional proof + fixed-across-emissions): new dedicated apps/mcp-server/src/__tests__/FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT.test.ts proves the gate CLEARS on fresh data and FIRES on stale data in both regimes (1439/1441min around the 1440 threshold; 10079/10081min around the 10080 threshold), a recovery test (stale->fresh flips breach->recovery on the same now), and asserts the threshold is byte-identical across 3 emissions spanning market-hours/off-hours/weekend and even 90 days apart within the same window-state -- the exact property bond_maturity/signal_quality_audit/news/sbv_fx already had.\n\nTest-fixture ripple (6 existing files, old 120/360-min and dynamic-formula values baked into fixtures): FIX-BCTC-SLA-WEEKEND.test.ts, FIX-BCTC-SLA-THRESHOLD-360.test.ts, FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH.test.ts, 1920i-freshness-sla-extension.test.ts, 234-vps-health-sla.test.ts, 1407b-sla-market-hours-gate.test.ts -- all updated to the new fixed values with explicit supersession notes in their docstrings (kept as historical record, not deleted). Pure calendar-arithmetic tests (isBctcEarningsWindowActive, lastExpectedEarningsWindowEnd, minutesSinceLastEarningsWindowEnd) left untouched since those functions did not change.\n\nEvidence: tsc clean. Targeted SLA/bctc suite (8 files) 107/107 pass. Full `bun test`: 14870 pass/40 skip/60 fail/1240 files (609s) -- zero of the 60 fails reference freshnessSlaChecker/freshnessSlaMonitorJob or any bctc/sla test name (grep-confirmed); same pre-existing unrelated-infra fail set (network/5000ms-timeout MCP-client tests, vps_push_log/vnstock-store schema issues) observed in both a before-my-final-fix run (56 fail) and after (60 fail) -- count variance is the fail set's own known flakiness, not something introduced by this change. toolCount=184/cronJobCount=88 unchanged (gen-project-stats --dry-run). Fresh local boot (PORT=3099 DB_PATH=:memory:, own process, not the pre-existing live container): health 200 toolCount=184, sessions=0/uptime~=6s proving a genuinely fresh boot, zero sla-monitor errors in the boot log. Live-container /api/bctc-inspect + /dashboards/news-fetch/ both 200. Commits 78f945fb2 (code+tests) and abd890ef1 (notebook+journal). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S26. Structural note: no MCP/gateway tool grant this session -- flipped this board row via scripts/orch-apply.sh directly (permitted, pure bash); could not call task_release(task:FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT) or send_telegram -- the coordinating dev-team session holds that lock per its own dispatch note and must release it + RAW-verify this work.\n | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Independently verified both commits 78f945fb2 (code+tests, on main ancestry, git show --stat confirms all 8 claimed files touched incl. freshnessSlaChecker.ts + new FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT.test.ts) and abd890ef1 (notebook+journal) exist on main and match claims. Source-read confirms AC-1: getSlaThreshold(\"bctc\") now branches only on isBctcEarningsWindowActive(now) (boolean) returning cfg.earningsWindowThresholdMinutes (1440) or cfg.defaultThresholdMinutes (10080) -- zero minutesSinceX(now) age terms remain in the bctc branch (apps/mcp-server/src/domain/services/freshnessSlaChecker.ts:636-640). DEFAULT_SLA_CONFIG bctc entry (freshnessSlaConfig.ts:104-110) hardcodes {defaultThresholdMinutes:10080, earningsWindowThresholdMinutes:1440} -- byte-exact match to SSOT docs/data/system-map.json .project.data_sources[\"bctc-discover\"].sla (default_stale_threshold_hours:168=10080min, earnings_window.stale_threshold_hours:24=1440min), independently pulled and diffed, not taken from the review_note's own account (AC-5 confirmed). Legacy marketHoursThresholdMinutes/offHoursThresholdMinutes grep-confirmed absent from SignalSlaConfig and DEFAULT_SLA_CONFIG -- only surviving reference is the new test's own toBeUndefined() regression guard (AC-4). Re-ran tests myself (not trusted from prose): targeted 7-file SLA/bctc suite 110 pass/0 fail; widened to all 9 further bctc/SLA-threshold-touching test files (BANK-AWARE-1, FIX-SLA-EXEMPT-NEWS-SBVFX, FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE, FIX-SLA-WEEKEND-AWARE, FIX-VPSHEALTH-DEMANDROUTE, FU-6f-eval-blob-blockers, VPT-1-vps-proxy-health, bctc-eval-integration, bctc-eval-routes) 140 pass/0 fail; widened again to the full 18-file set of every test importing freshnessSlaChecker/freshnessSlaConfig 271 pass/0 fail -- zero fixture-ripple missed. bun tsc --noEmit: 0 errors. mock-guard.sh PASS on freshnessSlaChecker.ts. DDD grep clean (no infra/application imports in touched domain files). No process.env/secrets introduced. AC-2 (fixed-across-emissions) and AC-3 (bidirectional clear/fire + recovery) both directly exercised and passing in the new dedicated test file, read line-by-line, not summary-trusted. Decision journal confirmed: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S26, task-id line present. Notebook entry (abd890ef1) content matches code and closing report. Full bun test 14870/40/60 claim not independently re-run (609s full-suite cost); scope of RAW verification was the targeted+widened 18-file direct-importer set per verify-committed protocol, which is exhaustive for this change's blast radius.",
-        "qa_verified_at": "2026-08-13T20:27:00Z",
-        "qa_verified_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "git merge-base --is-ancestor + git show --stat (78f945fb2, abd890ef1) + bun test (3 widening rings: 7/9/18 files) + bun tsc --noEmit + mock-guard.sh + jq diff against docs/data/system-map.json",
-            "args": "bun test src/__tests__/{FIX-SLA-BCTC-THRESHOLD-TRACKS-STALENESS-NOT-CONSTANT,FIX-BCTC-SLA-WEEKEND,FIX-BCTC-SLA-THRESHOLD-360,FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH,1920i-freshness-sla-extension,234-vps-health-sla,1407b-sla-market-hours-gate}.test.ts (ring1); +9 more bctc/SLA-threshold test files (ring2); full 18-file freshnessSlaChecker/freshnessSlaConfig importer set (ring3); jq '.project.data_sources[\"bctc-discover\"].sla' docs/data/system-map.json vs DEFAULT_SLA_CONFIG bctc entry",
-            "live_value_observed": "ring1 110 pass/0 fail; ring2 140 pass/0 fail; ring3(all importers) 271 pass/0 fail; tsc 0 errors; mock-guard PASS; SSOT default_stale_threshold_hours=168(=10080min)/earnings_window.stale_threshold_hours=24(=1440min) byte-match DEFAULT_SLA_CONFIG bctc entry; both commits confirmed ancestors of main",
-            "observed_at": "2026-08-13T20:27:00Z"
-          }
-        }
       }
     ],
     "head": {
@@ -19072,7 +19022,7 @@
         "last_served_tick": "2026-08-13T17:21:25Z"
       }
     },
-    "_updated_at": "2026-08-13T20:23:37Z",
+    "_updated_at": "2026-08-13T20:51:34Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -25068,6 +25018,118 @@
         },
         "createdAt": "2026-08-13T19:56:14Z",
         "drained_at": "2026-08-13T20:20:55Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c392389de1f45ce81cd3af1b9c7347ee558bd32d9f1fb61ab33f2163d8ce2d28",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-f8b3b296",
+          "head_sha": "f8b3b296c0b28bcdbf971056302120e3e370bfe2",
+          "run_id": 31739843577,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31739843577",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 94580283521
+            },
+            {
+              "name": "task-claim-owner-session-lint",
+              "conclusion": "failure",
+              "jobId": 94580283688
+            }
+          ],
+          "fingerprint": "18e9a3153a8f38c87351f9b288ad0778dfd2ee3f8cb8404559bd5dffe053978f",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD f8b3b296c0b28bcdbf971056302120e3e370bfe2: bun test,task-claim-owner-session-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-13T20:23:05Z",
+        "drained_at": "2026-08-13T20:51:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "31584c704ccd164752304c0a76299340e722df6afef74992b12cb0e9ed4de059",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-13T20:23:47Z",
+          "matched_slots": [
+            "tnb-audit"
+          ],
+          "won_slots": [
+            "tnb-audit"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/tran-ngoc-bau/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "tnb-audit": "cron"
+          },
+          "cadence_minutes": {
+            "tnb-audit": null
+          },
+          "last_fired_timestamp": "2026-08-13T20:23:30Z",
+          "last_fired_slots": [
+            "tnb-audit"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "20:15",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 30,
+          "note": "single guaranteed tnb-audit slot (legacy cron, policy_id=null) fired; tran-ngoc-bau spawned background, Step 5.3 off-flow check deferred to completion notification"
+        },
+        "createdAt": "2026-08-13T20:23:47Z",
+        "drained_at": "2026-08-13T20:51:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4672c3fb435d01d0a26d0603661574ee2e8e50780d13f910a54270f516ebd166",
+        "source": "file",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "priority": "high",
+        "payload": "docs/handoffs/tnb-audit-latest.md",
+        "createdAt": "2026-08-13T20:22:00Z",
+        "drained_at": "2026-08-13T20:51:11Z",
+        "routed_to": "PO Step 0-TNB"
+      },
+      {
+        "envelope_id": "2bf3e6864d6e7d45f1242f450613e528c15fd057b6035a2c1ce9f12b90cedab6",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "CRITICAL",
+        "payload": "A-30: rag-service-1 memory crash-cliff detected — 91.89% → 49.59% discontinuity",
+        "createdAt": "2026-08-13T20:46:58Z",
+        "drained_at": "2026-08-13T20:51:34Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
