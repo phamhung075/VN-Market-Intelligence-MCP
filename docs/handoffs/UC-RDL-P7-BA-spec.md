@@ -142,3 +142,31 @@ DONE: BA spec complete, zero PO blockers. 21-file inventory (13 FRs + 2 NFRs), D
 NEXT: architect — resolve FR-7(b) pipeline/verify-committed collapse, FR-7(c)/FR-10 CLEAN-workflow retire-or-repurpose call, FR-13 delete-vs-repoint call for the orphaned bundle/WORKFLOW.md docs, then produce brownfield file-level design across the 21-file inventory in §3.
 HANDOFF: docs/handoffs/UC-RDL-P7-BA-spec.md
 PIPELINE: continue
+
+---
+
+## [Architect] Brownfield Findings
+
+**Full design:** `docs/architecture-briefs/2026-08-13-uc-rdl-p7-branch-policy-reconciliation.md` — read that file in full before implementation; this section is a pointer + summary, not a duplicate.
+
+- **Zone:** `multi` — no `apps/<service>/` touched. Two real commit-zone owners, per `agent-father`'s own `commit_zone.allowed` (`docs/agents/`, `.claude/skills/`, `.claude/agents/`) and CLAUDE.md's dispatch table:
+  - **Group A** (`agent-father`, 20 files): FR-2..FR-11 + FR-14 (developer/microservice-main/dev-frontend/doc-review flow docs, 10× `init.md`, qa/fixer/pm/dev-team `main.md`, `.claude/skills/dispatch/SKILL.md`, `docs/agents/po/flow/main.md`).
+  - **Group B** (`developer` generic, 9 files): FR-1, FR-12, FR-13 (`commit-convention.md`, `dev-standards.md`, `.claude/WORKFLOW.md`, `bundle-developer.md`, `bundle-qa.md`).
+  - PM: split into 2 atomic tasks. Group B tier1 (creates the canonical `§ Branch Policy` section every Group-A pointer references) → Group A tier2 `depends_on` tier1. Group A must land as ONE atomic set internally — NFR-2's straddle hazard is entirely inside Group A (creation-half + merge-half), splitting it into sub-tiers reproduces the exact hazard the row exists to close.
+- **3 open calls resolved** (full rationale in the architecture brief §0):
+  1. FR-7(b): **keep both `pipeline`/`verify-committed` entry points**, strip `pipeline`'s checkout/merge git-mechanics to the same main-only no-op `verify-committed` already performs — do NOT collapse outright (the two check DIFFERENT depths: fresh-code full sweep vs already-shipped re-verify; collapsing would be a real behavior change EC-4 rules out).
+  2. FR-7(c)/FR-10: **retire the CLEAN workflow entirely** (not repurpose to worktree-only) — branch-half dead by construction, worktree-half fully redundant with `dev-team/flow/main.md`'s own unconditional every-tick PREFLIGHT T5/T6 worktree GC.
+  3. FR-13: **repoint** (not delete) `.claude/WORKFLOW.md` + `bundle-developer.md`/`bundle-qa.md` — confirmed zero live consumer for all three; `bundle-architect.md`/`bundle-ba.md`/`bundle-fixer.md`/`bundle-pm.md` swept clean (only `bundle-architect.md` has a hit, a harmless tree-illustration line, no edit needed).
+- **New finding — FR-14 (22nd file, not in BA's inventory):** `docs/agents/po/flow/main.md` (lines 21/25/27/59) independently authors the `type: "CLEAN"` triage classification that feeds dev-team's Step 2 Planning CLEAN row — BA's repo-wide grep missed this live file. **Hard sequencing partner of FR-7(c)/FR-10's CLEAN retirement, must land in the same wave** (Group A) — shipping the CLEAN retirement without this file leaves PO still emitting a `type:"CLEAN"` batch dev-team no longer routes.
+- **Reuse patterns:** FR-1 placement mirrors the existing `dev-standards.md § Commit Format` pointer idiom; FR-5's commit-range evidence reuses `qa/flow/main.md` § Direct-Commit Verify's own per-commit `git diff-tree` pattern (not reinvented); FR-2/3/4's "verify on main, clean tree" replacement text is one shared idiom applied at 3 call sites.
+- **Design decisions:** DDD layer — 100% interface (agent-to-agent dispatch protocol prose), matches BA's own §1 mapping, zero domain/infrastructure edits beyond the read-only precedent citations (`scripts/fleet-worktree-push.sh`, `.claude/settings.json`). No new interfaces/ports — pure prose reconciliation to the existing `commit-convention.md § Branch Policy` SSOT (FR-1).
+- **Risk flags:** (1) NFR-2 straddle risk confined to Group A — PM must land it as one atomic wave. (2) Sibling-hook sequencing (`FIX-SUBAGENT-BRANCH-CHECKOUT-HIJACKS-SHARED-WORKING-DIR`, READY/pm) — land Group A before/with the hook, or hook ships `MODE=warn` first; full detail in brief §18. (3) FR-9's `branch:` field drop from PM's handoff template has no schema to update (handoffs are free-form markdown, not Zod-validated) — prose-only fix. (4) 44 live `task_board` rows carrying `.type=="CLEAN"` are a different, unrelated namespace (persisted tech-debt category label) from PO's retired triage-time `CLEAN` tag — confirmed independent, none touched by this design.
+- **BUILD-STANDARD:** not-applicable (bug-fix/reconciliation, no new service/primitive).
+- **Scan clean:** true ✓
+
+## RETURN
+DONE: Technical design complete — 22-file brownfield design (21 BA-inventoried + 1 architect-found), 3 open calls resolved, full detail in `docs/architecture-briefs/2026-08-13-uc-rdl-p7-branch-policy-reconciliation.md`.
+ZONE: multi — Group A (agent-father, 20 files) / Group B (developer generic, 9 files), Group B tier1 → Group A tier2 depends_on tier1.
+NEXT: pm | decompose into Group A + Group B atomic tasks per sequencing above; carry the sibling-hook coordination note into the decomposition
+HANDOFF: docs/handoffs/UC-RDL-P7-BA-spec.md
+PIPELINE: continue

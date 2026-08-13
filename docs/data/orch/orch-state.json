@@ -92,11 +92,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-13T19:31:42Z",
-    "updated_by": "router (dev-mcp-server specialist returned+RAW-verified+pushed; task stays open pending AC3 live-cycle observation, no agent actively working it now)"
+    "status": "in_progress",
+    "active_task_id": "UC-RDL-P7",
+    "next_agent": "architect",
+    "next_action": "BA spec already complete (2026-08-12, docs/handoffs/UC-RDL-P7-BA-spec.md, explicit NEXT: architect) — DRS resolved dispatch_lane from a stale board next_agent=\"ba\"; router-corrected to architect before dispatch. Resolve FR-7(b)/(c)/FR-10/FR-13 open calls, produce brownfield design across the 21-file inventory.",
+    "updated_at": "2026-08-13T19:56:03Z",
+    "updated_by": "dev-team (design-router sweep, next_agent corrected: ba already complete)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3052,32 +3053,6 @@
         "priority_bumped_from": "P2",
         "priority_bumped_at": "2026-07-17T04:54:03Z",
         "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
-      },
-      {
-        "id": "UC-CDC-P1",
-        "type": "SPRINT-M",
-        "title": "Compute calendar_status server-side in emit_pressure_state (break the circular 'unknown') + unblock adaptive path",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "multi",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P1",
-        "note": "SCOPE=verifier Rescope note. Compute calendar_status via vnTradingCalendar isVnTradingDay().session_status (no getSessionStatus export); enum-gate caller override; stop preflight recycling the file value; DELETE the telemetry Step6.0 arg line. REQUIRED: decouple stale_warning from cycle-snapshot promotion refusal or both engines stay in legacy off-hours. Follow-up: resolve flow-vs-matcher weekend divergence in ONE SSOT.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "ba",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "po_triage_20260725T0927": "po_triage 2026-07-25T09:27:11Z — ORIGIN DETERMINED + LANDMINE DETONATED (3rd sighting; NO NEW ROW MINTED).\n\ncowork-team signal cwk-20260725T091107-1f13 asked PO to adjudicate between (a) emitter drift — emit_pressure_state produces a literal the policy vocabulary never had — and (b) \"closed\" is a deliberate fourth state the cadence-policy.json rows were never grown to cover, and warned \"do not mint a fix task against a guessed root cause\".\n\nVERDICT: NEITHER (a) NOR (b). Traced at source, not inferred:\n  - emitPressureStateTool.ts:387 stores `args.calendar_status ?? \"unknown\"`. calendar_status is CALLER-SUPPLIED. The server never computes it and can never itself emit \"closed\" — its only self-generated value is \"unknown\".\n  - telemetry.md Step 6.0 L15 passes `\"calendar_status\": \"<CALENDAR_STATUS from Step 4.3>\"`.\n  - pressure-read.md L65: `CALENDAR_STATUS = PRESSURE_STATE.calendar_status` — read FROM pressure-state.json.\n  The dispatcher reads the field out of the very file it then writes back. Closed self-recycling loop, no authoritative producer anywhere in the chain. Whatever literal enters the file once persists forever. This is precisely the \"circular\" mechanism this row was minted for — so the fix lands in the CALLER + the TOOL BOUNDARY, not in cadence-policy.json.\n\nENABLER (why an out-of-domain literal survives): the tool's Zod schema is bare `z.string().optional()` (emitPressureStateTool.ts:459) — no enum gate — even though its own describe() text names the 5-value domain 'open'|'weekend'|'holiday'|'half_day'|'unknown'. The correct producer ALREADY EXISTS and is simply not wired: vnTradingCalendar.ts session_status returns exactly {open, weekend, half_day, holiday, unknown} — a perfect match for the policy file's domain.\n\nSTATUS CHANGE (this is what is genuinely new, and it is the reason to act):\nmemory lesson feedback_pressure_state_caller_supplied_fields_dead_server_computed_live named \"off_market\" and \"closed\" as an ARMED LANDMINE that was latent ONLY while calendar_status stayed frozen at \"unknown\". IT IS NO LONGER LATENT.\n  - Live docs/data/pressure-state.json at 2026-07-25T09:24:44Z reads calendar_status=\"closed\".\n  - Signal files read \"unknown\" through 2026-07-23, then \"closed\" from 2026-07-24T17:37Z onward — \"closed\" is now the recycled steady state, not a one-off.\n  - Consequence, live every weekend tick since 07-24: no cadence-policy row matches, slots fall through to the 240-min generic default instead of their declared weekend rate (gatherer-standard 480, bctc-offmarket 1440) — over-firing non-guaranteed slots by up to ~5 extra runs per weekend day.\n  - Third out-of-domain literal for the class, historical precedent: \"off_market\" in docs/signals/processed/cowork-team-2026-06-07T19:47:55Z.json.\n\nSCOPE UNCHANGED — no re-scope needed. This row as written already names all four fix points (compute via vnTradingCalendar isVnTradingDay().session_status; enum-gate the caller override; stop preflight recycling the file value; DELETE the telemetry Step 6.0 arg line). Implementer: do not re-litigate the origin, it is settled above.\n\nCO-SHIP REQUIREMENT STANDS: must ship together with FIX-COWORK-CADENCE-DANGLING-POLICY-ID (policy-domain validation). Fixing the producer without validating the domain re-arms the identical class the next time any caller invents a literal.\n",
-        "landmine_state": "DETONATED 2026-07-24T17:37Z — calendar_status live value out-of-domain, no longer latent",
-        "updated_at": "2026-07-25T15:29:39Z",
-        "updated_by": "po/signal-triage-20260725T1507",
-        "po_impact_evidence_20260725T0948": "IMPACT EVIDENCE FOLDED IN — no new row minted. This raises the row from 'a field carries a junk literal' to 'a documented suppression gate never fires, with recurring weekend spawn cost'. PREMISE CORRECTION: this row's own title says 'break the circular unknown', but the live literal is NOT 'unknown' — docs/data/pressure-state.json currently carries calendar_status:'closed' (tick_id 2026-07-25T09:15:00Z). 'closed' is out-of-domain: docs/agents/cowork-team/flow/pressure-read.md Step 4.3 L69 suppresses only on the literal set [\"holiday\",\"weekend\"], and L89 enumerates the recognized no-suppression domain as open/half_day/unknown. 'closed' matches neither list, so it falls through to the conservative no-suppression branch (AC-P1-4-2) — an unrecognized value is silently treated as safe. MEASURED CONSEQUENCE on Saturday 2026-07-25: docs/data/cowork-schedule.json has 23 slots (8 guaranteed / 15 non-guaranteed); five fired today, all non-guaranteed, zero guaranteed — bctc-analyst-slot-4 (bctc-offmarket, 00:11:31Z) and refine-bctc-slot-1 (bctc-offmarket, 09:09:16Z) are legitimately exempt per OQ-P1-3, but news-scout-offhours, market-watcher-offhours and alert-commander-critical (all 08:11:05Z, policies gatherer-standard/gatherer-standard/alert-commander-critical) SHOULD have been suppressed by Step 4.3's 'all other non-guaranteed slots: suppress on holiday OR weekend' rule. Three agent spawns per weekend tick that the design says should not happen. ISOLATION NOT YET DONE — do not overclaim: two paths produce this same outcome and it is unknown which applied at 08:11:05Z — (a) adaptive mode reading the unrecognized 'closed' literal, or (b) PRESSURE_MODE downgraded to 'legacy', in which case Steps 4.3-4.5 are skipped wholesale and no calendar suppression runs at all regardless of the literal. Both end in no-suppression. The 08:11Z tick's mode is recoverable from that tick's telemetry in docs/signals/ if the isolation is wanted before implementation. MECHANISM VERIFIED AT SOURCE this tick (self-recycling loop, no producer of truth anywhere): emitPressureStateTool.ts L387 writes calendar_status: args.calendar_status ?? 'unknown' — purely caller-supplied, never server-computed; its zod schema at L459-461 is z.string().optional() with NO enum gate, so any string validates while the describe() text merely documents the intended domain; and scripts/agents-flow/cowork-tick-preflight.sh L83 READS calendar_status back out of pressure-state.json and L95-97 writes that same value straight back in via emit_pressure_state. The file is its own source. SCOPE ADDITION beyond wiring vnTradingCalendar as the producer: (i) enum-gate calendar_status at the tool boundary so an out-of-domain literal is rejected at write time rather than persisted forever, and (ii) make pressure-read.md Step 4.3 FAIL LOUD on a value outside its known domain instead of silently taking the no-suppression branch — otherwise the next bad literal is equally invisible. Same defect shape as the fail-safe-that-refuses-every-input in UC-SDF-P2: the conservative branch became the only branch.",
-        "po_evidence_20260725T1507": "po_evidence_20260725T1507: FOURTH sighting, NO NEW ROW MINTED (signal sys-20260725T151406-cal1 instructed attach-as-evidence; PO concurs — this row already names the mechanism). WHAT IS ACTUALLY NEW THIS TICK IS NOT THE DEFECT, IT IS THE ISOLATION. The 2026-07-25T09:48Z note on this row explicitly recorded \"ISOLATION NOT YET DONE — do not overclaim: two paths produce this same outcome and it is unknown which applied — (a) adaptive mode reading the unrecognized closed literal, or (b) PRESSURE_MODE downgraded to legacy, in which case Steps 4.3-4.5 are skipped wholesale\". THAT OPEN QUESTION IS NOW CLOSED IN FAVOUR OF (a). Decisive evidence, one telemetry row, all fields from the same tick: docs/signals/processed/cowork-team-20260725T151200Z.json carries pressure_mode:\"adaptive\" (NOT legacy — so Steps 4.3/4.5 DID run and were not skipped) together with calendar_status:\"closed\", suppressed_calendar:[] (nothing suppressed) and cadence_minutes:{\"bctc-analyst-slot-1\":\"240\"}. Path (b) is excluded by the mode field; the 240 can only have come from the unmatched-rule fallback. Implementers may now drop the legacy-downgrade hypothesis entirely. CADENCE ARITHMETIC RE-VERIFIED FROM THE TWO CONFIG FILES, not relayed: docs/data/cowork-schedule.json binds all four bctc-analyst-slot-* and all four refine-bctc-slot-* to policy_id bctc-offmarket (all guaranteed:false); docs/data/cadence-policy.json bctc-offmarket enumerates exactly five calendar_status rows — holiday(null), weekend(1440), open(null,_cron_fallback), half_day(null,_cron_fallback), unknown(null,_cron_fallback). There is no \"closed\" row. Today is Saturday, so the governing rule should have been weekend=1440min; the slot instead ran under 240min, a 6x over-fire. NOTE the 09:48Z entry on this row asserted the bctc slots were \"legitimately exempt per OQ-P1-3\" — that exemption reasoning does not cover the cadence axis, which is separately wrong here. SEQUENCING (unchanged, restated so it is not lost): UC-SDF-P2 lands FIRST per its own 2026-07-25T12:07Z ordering correction; this row and FIX-COWORK-CADENCE-DANGLING-POLICY-ID co-ship. RANK: no priority-field churn — this row stays P1 and remains the highest-ranked cowork-correctness item, now with a live weekend-recurring cost and zero remaining diagnostic ambiguity."
       },
       {
         "id": "UC-CCA-P1-GWBLIND-DEDUP",
@@ -15021,41 +14996,6 @@
         "updated_by": "po"
       },
       {
-        "id": "UC-RDL-P7",
-        "type": "SPRINT-M",
-        "title": "Reconcile branch policy across the FULL branch lifecycle with the main-only invariant (po-gated)",
-        "status": "READY",
-        "priority": "P1",
-        "size": "M",
-        "zone": "multi",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P7",
-        "note": "STEP1 po ruling RECORDED 2026-07-17 (po_decision_ref): DROP the worktree/task-branch exception — the main-only invariant wins (repo verified 100% main-only live; the task/NNN-* + .claude/worktrees/ lifecycle in dev-standards.md is dead doc contradicting the standing user 'NO branches' rule). STEP2 (now unblocked, na=ba): ONE sprint reconciles developer+qa+microservice+fixer+pm+dev-team flows to main-only, puts the canonical commit/branch policy text in ONE place (commit-convention.md), and edits BOTH the branch-creation half AND the QA-merge half together (branch-creation-only edit wedges QA merge).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "architect",
-        "supervised": false,
-        "supervised_note": "STEP1 po-gate RESOLVED 2026-07-17 (see po_decision_ref) — no longer supervised; STEP2 flow-edits route via ba->architect->pm",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "po_gate_resolved": "2026-07-17",
-        "po_decision_ref": "docs/agent-memory/decisions/2026-07-17-UC-RDL-P7-branch-policy-main-only.md",
-        "promoted_at": "2026-08-11T12:26:29Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "ba",
-        "updated_at": "2026-08-12T09:06:49Z",
-        "claimed_at": "2026-08-12T08:57:47Z",
-        "claimed_by": "dev-team (design-router sweep)",
-        "ba_spec_complete": true,
-        "ba_handoff": "docs/handoffs/UC-RDL-P7-BA-spec.md",
-        "ba_completed_at": "2026-08-12T09:06:49Z",
-        "updated_by": "ba"
-      },
-      {
         "id": "OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE",
         "type": "OPS-BACKLOG",
         "priority": "high",
@@ -15395,6 +15335,36 @@
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "po",
         "po_review_verdict_20260813T1629Z": "PO REVIEW VERDICT 2026-08-13T16:29Z — CHANGES_REQUESTED (not sign-off). Re-ran this row's OWN AC-5 guard (triage-signals.md § guard_signal_type_coverage) VERBATIM against the CURRENT live board: FAIL, 9 unrouted to=po types [audit-handoff, bug-escalation, db_data_integrity, db_data_missing, db_data_stale, defect, flow-doc-review, improvement_proposal, memory_pressure]. THREE are guard false positives (audit-handoff/bug-escalation/improvement_proposal ARE routed by the Pipeline-A table but are absent from the hand-maintained $routed literal). SIX have NO rule in any table: db_data_integrity (CRITICAL), db_data_stale (CRITICAL), db_data_missing (HIGH), defect (HIGH+MED), memory_pressure (WARN x2), flow-doc-review (LOW) = 8/25 live to=po rows = 32%, and that set includes BOTH of today's CRITICALs. 23/25 live to=po rows sit READ/OPEN with disposition=null right now.\n\nTHE 2026-08-07 REGRESSION LIST HAS FULLY ROTATED OUT — only bug-escalation survives from those 8 types. .signal_queue.rows[] holds a ~24h window (min ts 2026-08-12T16:31:25Z). Counting the runs recorded on this row and its successor, the unrouted set has now measured DIFFERENT on 5+ independent ticks (08-06, 08-07, 08-08, 08-11, 08-12, 08-13). DO NOT respond with another hand-patch of type rows — four passes have now done exactly that and each decayed within days.\n\nNEW ROOT CAUSE ESTABLISHED THIS TICK (not previously recorded on this row or its successor): the producer namespace is UNCONSTRAINED FREE TEXT. apps/mcp-server/src/infrastructure/orchStateSchema.ts SignalRowSchema declares `type: z.string().optional()` — no enum, no registry, .passthrough(). All 6 genuinely-unrouted types appear NOWHERE in docs/agents/, .claude/skills/ or apps/mcp-server/src/ — they are authored per-emission by the emitting agent. MEASURED SCALE: 101 distinct to=po type tokens have existed (hot + 3 cold archives); the guard's $routed covers 16 = 15.8%. An open producer namespace policed by a closed, hand-maintained consumer allowlist is structurally non-convergent. The fix must INVERT: bound the producer (registry/enum at emit time) and/or make the unknown-type fallback produce a REAL disposition instead of \"log and skip\".\n\nRESIDUAL SCOPE — EXACTLY TWO ITEMS, nothing else:\n\nR1 (cheap, certain, verified false TODAY): triage-signals.md:35's Cold-archive cross-check makes two load-bearing claims that are FALSIFIED against docs/data/orch/archive/2026-0{6,7,8}.json. (a) \"system_issue underscore predates the live system-issue hyphen form ... historical artifact, not a live routing gap\" is INVERTED — the underscore form fired 2026-08-11T03:00Z (6 rows in the 2026-08 archive) while the hyphen form's own range is 2026-07-23 -> 2026-08-12; both spellings are concurrent and the underscore is the LATER fire, with 111 lifetime to=po fires. (b) \"the remaining ~40 cold-archive types are <=1-2 fires each\" is FALSE for 16 types: system_issue 111, repair_task_request 22, cron_fire_gap 19, agent_flow_defect 9, audit-handoff 7, defect 5, recurring-bug-corroboration 5, size_cap_breach 4, diagnosis 4, bug-escalation 4, plus 6 more at 3. This prose actively instructs the next editor to SKIP the largest live class. Two prior PO ticks (08-11T1237Z, 08-11T1437Z) already requested this correction and it is still in the file. Correct or delete both claims.\n\nR2 (mechanism — the actual root cause): AC-5's stated purpose, \"so the drift cannot silently return\", is UNMET. The guard exists only as a bash function inside a markdown doc; a repo-wide grep finds it referenced ONLY in its own doc and in PO decision journals where an agent ran it by hand. Today's earlier PO tick (11:37Z) hand-routed both db_data_* CRITICALs off-table without running it at all. Two sub-parts: (i) derive $routed from the tables themselves — parse the type column out of triage-signals.md + triage-signals-longtail.md and UNION both pipelines — instead of a hand-maintained literal; this also kills the 3 false positives above. (ii) wire an actual caller so it executes without an agent choosing to (PO main.md pre-check, dev-team tick preflight, or CI), and make the unknown-type fallback a real disposition.\n\nAC STATUS: AC-3 MET (system-issue first-class rule, triage-signals.md:46). AC-4 MET (signal-dashboard SKILL Receivers + triaged/RETRACTED enum, QA-verified 08-07). AC-6 MET (77L + 22L, under cap). AC-5 mechanism SOUND (predicate correctly FAILs live; QA verified the synthetic negative control) but its PURPOSE unmet -> R2. AC-1 met only against the frozen 2026-07-31 16-type snapshot it names; fails as a standing invariant. AC-2 NOT MET -> R1. Commits af2f13536 + ee07ae65a are real and on main; this verdict does not dispute the delivered work, only its convergence.\n\nROUTING: next_agent po -> architect. NOT agent-father, for two reasons: (1) the residual is mechanism/design spanning the emitter schema, the guard and the flow doc, which po/init.md not_my_job assigns to architect; (2) agent-father is deliberately OFF the DRS ratified allowlist {architect,ba,pm,po,agents-architect} (scripts/audits/bounded1-supervised-lane-report.sh:171), which is precisely why the successor row FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED has sat BACKLOG for 7 days with no automated picker. Lane moved review[] -> ready[] so the Ready-Lane Consumer can claim it (scripts/devteam-backlog-claim-ready-lane-consumer.jq: READY + not supervised + not plan_only + next_agent present — this row satisfies every clause). .head points at FACTORY-GUARD-CI-RAWVERIFY-IMPL and is untouched by this move. The 2026-08-13T16:23Z dev-team secondary-drain claim that delivered this row to PO is hereby dispositioned; its stamps are retained for audit only.\n\nREAD FIRST: FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (backlog[], P1) is the evidence dossier for this same surface — roughly 10 independent guard re-runs and the correct AC-4 (\"nothing schedules the guard\"). It is repointed to architect in this SAME write so both land in ONE pass. Do not fix them separately.\n"
+      },
+      {
+        "id": "UC-CDC-P1",
+        "type": "SPRINT-M",
+        "title": "Compute calendar_status server-side in emit_pressure_state (break the circular 'unknown') + unblock adaptive path",
+        "status": "READY",
+        "priority": "P1",
+        "size": "M",
+        "zone": "multi",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P1",
+        "note": "SCOPE=verifier Rescope note. Compute calendar_status via vnTradingCalendar isVnTradingDay().session_status (no getSessionStatus export); enum-gate caller override; stop preflight recycling the file value; DELETE the telemetry Step6.0 arg line. REQUIRED: decouple stale_warning from cycle-snapshot promotion refusal or both engines stay in legacy off-hours. Follow-up: resolve flow-vs-matcher weekend divergence in ONE SSOT.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "ba",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "po_triage_20260725T0927": "po_triage 2026-07-25T09:27:11Z — ORIGIN DETERMINED + LANDMINE DETONATED (3rd sighting; NO NEW ROW MINTED).\n\ncowork-team signal cwk-20260725T091107-1f13 asked PO to adjudicate between (a) emitter drift — emit_pressure_state produces a literal the policy vocabulary never had — and (b) \"closed\" is a deliberate fourth state the cadence-policy.json rows were never grown to cover, and warned \"do not mint a fix task against a guessed root cause\".\n\nVERDICT: NEITHER (a) NOR (b). Traced at source, not inferred:\n  - emitPressureStateTool.ts:387 stores `args.calendar_status ?? \"unknown\"`. calendar_status is CALLER-SUPPLIED. The server never computes it and can never itself emit \"closed\" — its only self-generated value is \"unknown\".\n  - telemetry.md Step 6.0 L15 passes `\"calendar_status\": \"<CALENDAR_STATUS from Step 4.3>\"`.\n  - pressure-read.md L65: `CALENDAR_STATUS = PRESSURE_STATE.calendar_status` — read FROM pressure-state.json.\n  The dispatcher reads the field out of the very file it then writes back. Closed self-recycling loop, no authoritative producer anywhere in the chain. Whatever literal enters the file once persists forever. This is precisely the \"circular\" mechanism this row was minted for — so the fix lands in the CALLER + the TOOL BOUNDARY, not in cadence-policy.json.\n\nENABLER (why an out-of-domain literal survives): the tool's Zod schema is bare `z.string().optional()` (emitPressureStateTool.ts:459) — no enum gate — even though its own describe() text names the 5-value domain 'open'|'weekend'|'holiday'|'half_day'|'unknown'. The correct producer ALREADY EXISTS and is simply not wired: vnTradingCalendar.ts session_status returns exactly {open, weekend, half_day, holiday, unknown} — a perfect match for the policy file's domain.\n\nSTATUS CHANGE (this is what is genuinely new, and it is the reason to act):\nmemory lesson feedback_pressure_state_caller_supplied_fields_dead_server_computed_live named \"off_market\" and \"closed\" as an ARMED LANDMINE that was latent ONLY while calendar_status stayed frozen at \"unknown\". IT IS NO LONGER LATENT.\n  - Live docs/data/pressure-state.json at 2026-07-25T09:24:44Z reads calendar_status=\"closed\".\n  - Signal files read \"unknown\" through 2026-07-23, then \"closed\" from 2026-07-24T17:37Z onward — \"closed\" is now the recycled steady state, not a one-off.\n  - Consequence, live every weekend tick since 07-24: no cadence-policy row matches, slots fall through to the 240-min generic default instead of their declared weekend rate (gatherer-standard 480, bctc-offmarket 1440) — over-firing non-guaranteed slots by up to ~5 extra runs per weekend day.\n  - Third out-of-domain literal for the class, historical precedent: \"off_market\" in docs/signals/processed/cowork-team-2026-06-07T19:47:55Z.json.\n\nSCOPE UNCHANGED — no re-scope needed. This row as written already names all four fix points (compute via vnTradingCalendar isVnTradingDay().session_status; enum-gate the caller override; stop preflight recycling the file value; DELETE the telemetry Step 6.0 arg line). Implementer: do not re-litigate the origin, it is settled above.\n\nCO-SHIP REQUIREMENT STANDS: must ship together with FIX-COWORK-CADENCE-DANGLING-POLICY-ID (policy-domain validation). Fixing the producer without validating the domain re-arms the identical class the next time any caller invents a literal.\n",
+        "landmine_state": "DETONATED 2026-07-24T17:37Z — calendar_status live value out-of-domain, no longer latent",
+        "updated_at": "2026-08-13T19:55:21Z",
+        "updated_by": "po/signal-triage-20260725T1507",
+        "po_impact_evidence_20260725T0948": "IMPACT EVIDENCE FOLDED IN — no new row minted. This raises the row from 'a field carries a junk literal' to 'a documented suppression gate never fires, with recurring weekend spawn cost'. PREMISE CORRECTION: this row's own title says 'break the circular unknown', but the live literal is NOT 'unknown' — docs/data/pressure-state.json currently carries calendar_status:'closed' (tick_id 2026-07-25T09:15:00Z). 'closed' is out-of-domain: docs/agents/cowork-team/flow/pressure-read.md Step 4.3 L69 suppresses only on the literal set [\"holiday\",\"weekend\"], and L89 enumerates the recognized no-suppression domain as open/half_day/unknown. 'closed' matches neither list, so it falls through to the conservative no-suppression branch (AC-P1-4-2) — an unrecognized value is silently treated as safe. MEASURED CONSEQUENCE on Saturday 2026-07-25: docs/data/cowork-schedule.json has 23 slots (8 guaranteed / 15 non-guaranteed); five fired today, all non-guaranteed, zero guaranteed — bctc-analyst-slot-4 (bctc-offmarket, 00:11:31Z) and refine-bctc-slot-1 (bctc-offmarket, 09:09:16Z) are legitimately exempt per OQ-P1-3, but news-scout-offhours, market-watcher-offhours and alert-commander-critical (all 08:11:05Z, policies gatherer-standard/gatherer-standard/alert-commander-critical) SHOULD have been suppressed by Step 4.3's 'all other non-guaranteed slots: suppress on holiday OR weekend' rule. Three agent spawns per weekend tick that the design says should not happen. ISOLATION NOT YET DONE — do not overclaim: two paths produce this same outcome and it is unknown which applied at 08:11:05Z — (a) adaptive mode reading the unrecognized 'closed' literal, or (b) PRESSURE_MODE downgraded to 'legacy', in which case Steps 4.3-4.5 are skipped wholesale and no calendar suppression runs at all regardless of the literal. Both end in no-suppression. The 08:11Z tick's mode is recoverable from that tick's telemetry in docs/signals/ if the isolation is wanted before implementation. MECHANISM VERIFIED AT SOURCE this tick (self-recycling loop, no producer of truth anywhere): emitPressureStateTool.ts L387 writes calendar_status: args.calendar_status ?? 'unknown' — purely caller-supplied, never server-computed; its zod schema at L459-461 is z.string().optional() with NO enum gate, so any string validates while the describe() text merely documents the intended domain; and scripts/agents-flow/cowork-tick-preflight.sh L83 READS calendar_status back out of pressure-state.json and L95-97 writes that same value straight back in via emit_pressure_state. The file is its own source. SCOPE ADDITION beyond wiring vnTradingCalendar as the producer: (i) enum-gate calendar_status at the tool boundary so an out-of-domain literal is rejected at write time rather than persisted forever, and (ii) make pressure-read.md Step 4.3 FAIL LOUD on a value outside its known domain instead of silently taking the no-suppression branch — otherwise the next bad literal is equally invisible. Same defect shape as the fail-safe-that-refuses-every-input in UC-SDF-P2: the conservative branch became the only branch.",
+        "po_evidence_20260725T1507": "po_evidence_20260725T1507: FOURTH sighting, NO NEW ROW MINTED (signal sys-20260725T151406-cal1 instructed attach-as-evidence; PO concurs — this row already names the mechanism). WHAT IS ACTUALLY NEW THIS TICK IS NOT THE DEFECT, IT IS THE ISOLATION. The 2026-07-25T09:48Z note on this row explicitly recorded \"ISOLATION NOT YET DONE — do not overclaim: two paths produce this same outcome and it is unknown which applied — (a) adaptive mode reading the unrecognized closed literal, or (b) PRESSURE_MODE downgraded to legacy, in which case Steps 4.3-4.5 are skipped wholesale\". THAT OPEN QUESTION IS NOW CLOSED IN FAVOUR OF (a). Decisive evidence, one telemetry row, all fields from the same tick: docs/signals/processed/cowork-team-20260725T151200Z.json carries pressure_mode:\"adaptive\" (NOT legacy — so Steps 4.3/4.5 DID run and were not skipped) together with calendar_status:\"closed\", suppressed_calendar:[] (nothing suppressed) and cadence_minutes:{\"bctc-analyst-slot-1\":\"240\"}. Path (b) is excluded by the mode field; the 240 can only have come from the unmatched-rule fallback. Implementers may now drop the legacy-downgrade hypothesis entirely. CADENCE ARITHMETIC RE-VERIFIED FROM THE TWO CONFIG FILES, not relayed: docs/data/cowork-schedule.json binds all four bctc-analyst-slot-* and all four refine-bctc-slot-* to policy_id bctc-offmarket (all guaranteed:false); docs/data/cadence-policy.json bctc-offmarket enumerates exactly five calendar_status rows — holiday(null), weekend(1440), open(null,_cron_fallback), half_day(null,_cron_fallback), unknown(null,_cron_fallback). There is no \"closed\" row. Today is Saturday, so the governing rule should have been weekend=1440min; the slot instead ran under 240min, a 6x over-fire. NOTE the 09:48Z entry on this row asserted the bctc slots were \"legitimately exempt per OQ-P1-3\" — that exemption reasoning does not cover the cadence axis, which is separately wrong here. SEQUENCING (unchanged, restated so it is not lost): UC-SDF-P2 lands FIRST per its own 2026-07-25T12:07Z ordering correction; this row and FIX-COWORK-CADENCE-DANGLING-POLICY-ID co-ship. RANK: no priority-field churn — this row stays P1 and remains the highest-ranked cowork-correctness item, now with a live weekend-recurring cost and zero remaining diagnostic ambiguity.",
+        "promoted_at": "2026-08-13T19:55:20Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "ba"
       }
     ],
     "review": [
@@ -18953,8 +18923,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-13T17:51:11Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-08-13T19:55:20Z",
+    "last_triaged_by": "dev-team (design-router sweep)",
     "in_progress": [
       {
         "id": "FIX-COVERAGE-STAMP-TTL-30-BELOW-SCHEMA-MIN-60-FAILS-CLOSED",
@@ -18985,6 +18955,44 @@
         "claimed_at": "2026-08-13T19:24:22Z",
         "claimed_by": "dev-team (ready-lane consumer)",
         "dispatch_lane": "dev-mcp-server"
+      },
+      {
+        "id": "UC-RDL-P7",
+        "type": "SPRINT-M",
+        "title": "Reconcile branch policy across the FULL branch lifecycle with the main-only invariant (po-gated)",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "multi",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P7",
+        "note": "STEP1 po ruling RECORDED 2026-07-17 (po_decision_ref): DROP the worktree/task-branch exception — the main-only invariant wins (repo verified 100% main-only live; the task/NNN-* + .claude/worktrees/ lifecycle in dev-standards.md is dead doc contradicting the standing user 'NO branches' rule). STEP2 (now unblocked, na=ba): ONE sprint reconciles developer+qa+microservice+fixer+pm+dev-team flows to main-only, puts the canonical commit/branch policy text in ONE place (commit-convention.md), and edits BOTH the branch-creation half AND the QA-merge half together (branch-creation-only edit wedges QA merge).",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "pm",
+        "supervised": false,
+        "supervised_note": "STEP1 po-gate RESOLVED 2026-07-17 (see po_decision_ref) — no longer supervised; STEP2 flow-edits route via ba->architect->pm",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "po_gate_resolved": "2026-07-17",
+        "po_decision_ref": "docs/agent-memory/decisions/2026-07-17-UC-RDL-P7-branch-policy-main-only.md",
+        "promoted_at": "2026-08-11T12:26:29Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "architect",
+        "updated_at": "2026-08-13T20:07:12Z",
+        "claimed_at": "2026-08-13T19:55:25Z",
+        "claimed_by": "dev-team (design-router sweep)",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/UC-RDL-P7-BA-spec.md",
+        "ba_completed_at": "2026-08-12T09:06:49Z",
+        "updated_by": "architect",
+        "dispatch_lane_corrected_note": "DRS promote resolved stale board next_agent=\"ba\" (BA completed 2026-08-12); router corrected to architect at S2 dispatch time, ba_spec_complete=true preserved",
+        "architect_complete": true,
+        "architect_review_note": "docs/architecture-briefs/2026-08-13-uc-rdl-p7-branch-policy-reconciliation.md — 22-file design (21 BA-inventoried + FR-14 new: docs/agents/po/flow/main.md), 3 open calls resolved (FR-7(b) keep both entry points strip pipeline mechanics; FR-7(c)/FR-10 retire CLEAN; FR-13 repoint not delete). Zone split: Group A agent-father 20 files (must land atomic wave), Group B developer-generic 9 files (tier1, Group A depends_on it). Sibling-hook sequencing note carried to pm."
       }
     ]
   },
@@ -19009,7 +19017,7 @@
         "last_served_tick": "2026-08-13T19:24:12Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-13T16:22:58Z"
+        "last_served_tick": "2026-08-13T19:55:05Z"
       },
       "qa_drain": {
         "last_served_tick": "2026-08-13T16:50:51Z"
@@ -19018,7 +19026,7 @@
         "last_served_tick": "2026-08-13T17:21:25Z"
       }
     },
-    "_updated_at": "2026-08-13T19:50:35Z",
+    "_updated_at": "2026-08-13T19:55:05Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
