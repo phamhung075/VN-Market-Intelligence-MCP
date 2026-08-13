@@ -1,0 +1,23 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "tick": "2026-08-13T06:00Z",
+    "classification": "SLOTS_FIRED",
+    "slots_fired": [
+      "alert-commander-market"
+    ],
+    "stale_warning_streak": 14,
+    "signal_queue_new_count": 12,
+    "notes": "12 NEW signal_queue rows persisting, none routed to fired slot per Step 0a scope rule. 1 fresh row this tick: sys-20260813T055155-6af6 (db_integrity_breach WARN to:dev-team). 3 CRITICAL/HIGH db_data_* rows (to:po, from 05:22Z) now ~38min unpicked. bca esc-deep-dive (HIGH to:dev-team, 18:07Z prior day) and tnb audit-handoff (HIGH to:po, 20:30Z prior day) both aging >9h unpicked."
+  },
+  "priority": "info",
+  "createdAt": "2026-08-13T06:06:46Z",
+  "_processed": {
+    "fingerprint": "a4ebd830ead28f0bd2fa363927554010fa97833f81441a080852c180f3f3de05",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

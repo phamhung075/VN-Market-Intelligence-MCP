@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-telemetry",
+  "payload": {
+    "tick": "2026-08-13T00:00Z",
+    "classification": "SLOTS_FIRED",
+    "slots_fired": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "bctc-analyst-slot-4": "cron",
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-4": null,
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": null
+    },
+    "max_parallel": 4,
+    "fanout_mode": "policy",
+    "batches": 1,
+    "errors": [],
+    "last_fired_timestamp": "2026-08-13T00:08:07Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "new_signals": 5,
+    "notes": "4/4 slots claimed and spawned background — no held slots, no spawn failures. 5 unchanged NEW signal rows carried forward (2x A-30 WARN, bca FPT ESC-5 HIGH guard-held, tnb audit-handoff HIGH, code-janitor LOW), none addressed to a cowork agent this tick."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-13T00:08:15Z",
+  "_processed": {
+    "fingerprint": "21009ffb9dabd1813ee70771acfd99d9d4a0df9eff6c46485c32392a1929e4a2",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

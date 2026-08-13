@@ -4,33 +4,29 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ — Tập đoàn Hòa Phát, nhà sản xuất thép lớn nhất Việt Nam.",
-  "customer": "Nhà thầu xây dựng, hạ tầng trong nước; khách hàng xuất khẩu thép cuộn/tôn mạ khu vực ASEAN, Mỹ, EU.",
-  "ops": "Doanh thu Q1-2026 52.900,8 tỷ VND, biên gộp 15,8%. Dòng LN thuần HĐKD báo cáo = 0 tỷ (bất thường dữ liệu, chu kỳ thứ 14+ chưa xử lý — validation flag: LN sau thuế 9.055,9 tỷ VƯỢT LN gộp 8.365,1 tỷ, khả năng có thu nhập ngoài HĐKD lớn chưa tách bạch). ROE 12,7% so median ngành 2,9% (TRÊN MEDIAN).",
-  "mgmt": "BCTC Q2-2026 QUÁ HẠN (hạn 30/07/2026, đã trễ 13 ngày) dù PDF đã có trên hệ thống từ 2026-08-01 — chưa được trích xuất. Dữ liệu Operating Profit=0 cho thấy lỗi trích xuất kéo dài cần khắc phục ở nguồn (không phải rủi ro solvency).",
-  "ey_spread": {
+  "product": "Long steel & hot-rolled coil (HRC) production, steel pipe manufacturing, minor agriculture/feed-livestock segment",
+  "customer": "Construction and infrastructure contractors, steel distributors/traders, export markets",
+  "ops": "Gross margin 15.8%. Operating Profit field reported as 0 tỷ VND — corrupt/unresolved OCR extraction (15th+ consecutive cycle), Net Profit (9,056 tỷ) exceeds Gross Profit (8,365 tỷ), tool-flagged 'possible non-operating income'. ESC-3 OCF/NI check DATA-COVERAGE-LIMITED (3/4 quarters returned).",
+  "mgmt": "Operating-profit=0 data anomaly persists unresolved 15+ cycles — attributed to extraction-pipeline defect, not confirmed accounting or management issue; no corroborating insider or legal-risk signal this cycle.",
+  "valuation": {
     "pe": 14.2,
     "sector_median_pe": 32.6,
-    "roe_pct_annualized_sector_comp": 12.7,
-    "earning_yield_pct": 7.04,
-    "max_deposit_rate_pct": 5,
-    "spread_pp": 2.04,
-    "verdict": "FAIR",
-    "rate_sensitive_headwind": false
+    "roe_pct": 12.7,
+    "sector_median_roe_pct": 2.9,
+    "ey_spread_pp": 2.04,
+    "verdict": "FAIR"
   },
   "kinhdich": {
-    "que": "Khiêm (15)",
-    "xu_huong": "THUẬN LỢI",
-    "tin_hieu": "GIỮ",
-    "do_tin_cay_pct": 100
+    "que": "Khiem (15)",
+    "trend": "THUAN LOI",
+    "confidence_pct": 100,
+    "signal": "GIU"
   },
+  "insider": "no significant activity",
   "esc_gate": {
-    "esc1": "unevaluable — no Bash/Glob grant, E1 6-pass cache-dependent trick detection scope-reduced",
+    "esc1": "unevaluable_no_bash_glob",
     "esc2": {
       "result": false,
-      "assets_total": 259327500.205228,
-      "liabilities_total": 119545707.998756,
-      "equity_total": 139781792.206472,
       "imbalance_pct": 0
     },
     "esc3": {
@@ -42,23 +38,20 @@
     },
     "esc4": {
       "result": "discarded",
-      "reason": "operating_profit=0 corrupt (14th+ cycle) — non_operating_share formula undefined on corrupt denominator basis"
+      "reason": "operating_profit=0 corrupt data, non_operating_share unevaluable"
     },
     "esc5": {
       "result": false,
-      "reason": "existing_refine_status=PARTIAL, report_id=null — refine not finished, skip per graceful-null rule"
+      "reason": "refine_status=PARTIAL, report_id=null"
     }
   },
-  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể.",
-  "legal_risk": "Không có tín hiệu rủi ro pháp lý.",
-  "trick_summary": null,
-  "trick_confidence": "none",
-  "trick_pass_versions": [],
-  "data_notes": "Kỳ mới nhất (2026-Q2) chưa được trích xuất — hiển thị Q1-2026. get_bctc_full confidence 80%, validation passed_with_warnings.",
-  "fetchedAt": "2026-08-12T15:07:12.936152763Z",
+  "data_quality_flag": "operating_profit=0 unresolved (15th+ cycle)",
+  "asof": "2026-08-12T21:09:00Z",
+  "source_agent": "bctc-analyst",
+  "cycle_id": "20260812-2100",
   "_processed": {
-    "fingerprint": "ea62cea2eb3ba34c64f63a51f857291e8f4b94631202425e873570d0af2359f8",
-    "processedAt": "2026-08-12T15:21:41Z",
+    "fingerprint": "b2e54189bcbc63dcb40b129aa2c9dc2a14e7043a22eaba0de2acc2a046ae0e23",
+    "processedAt": "2026-08-13T06:29:51Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

@@ -1,46 +1,42 @@
 {
   "ticker": "DXG",
   "signal_type": "bctc_signal",
-  "quarter": "Q1-2026",
+  "quarter": "N/A — no BCTC extraction available",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Bất động sản dân dụng — phát triển dự án nhà ở, môi giới (Đất Xanh Services) tại TP.HCM và các tỉnh vệ tinh.",
-  "customer": "Người mua nhà/nhà đầu tư cá nhân khu vực HCMC mở rộng và các tỉnh lân cận.",
-  "ops": "Chưa có dữ liệu BCTC chi tiết (get_bctc_full trả 'Chưa có dữ liệu BCTC', chu kỳ thứ 18+ liên tiếp) — chỉ số định giá tính từ sector-comparison: PE 66,5x so median ngành BĐS 16,1x (PREMIUM +312%), ROE 1,9% so median 7,3% (DƯỚI MEDIAN). Định giá rất đắt so với hiệu quả sinh lời thực tế.",
-  "mgmt": "BCTC Q2-2026 QUÁ HẠN (hạn 30/07/2026, đã trễ 13 ngày). Khoảng trống trích xuất dữ liệu kéo dài (18+ chu kỳ) đã được báo cáo tới ops (root_task BCTC-HIST-VPS-BACKFILL) — không tự suy diễn số liệu.",
-  "ey_spread": {
+  "product": "Real estate development — residential projects, primarily HCMC/southern Vietnam",
+  "customer": "Retail homebuyers and investors in mid-tier residential segment",
+  "ops": "No BCTC extraction data returned this cycle ('Chưa có dữ liệu BCTC') — 20th+ consecutive cycle with this gap; cannot assess margin/opex trend from financials directly. Sector-comparison-only ratios used as fallback.",
+  "mgmt": "Q2-2026 filing QUÁ HẠN (overdue since 2026-07-30). DXG_2026_Q1.pdf and DXG_2026_Q2.pdf are both present in stored-PDF inventory (uploaded 2026-08-01/08-03) yet extraction has not produced usable BCTC data — this is an extraction-pipeline gap, not a confirmed management/filing failure.",
+  "valuation": {
     "pe": 66.5,
     "sector_median_pe": 16.1,
-    "roe_pct_sector_comp": 1.9,
-    "earning_yield_pct": 1.5,
-    "max_deposit_rate_pct": 5,
-    "spread_pp": -3.5,
-    "verdict": "AVOID",
-    "note": "valuation_verdict=AVOID — do NOT post bullish signal per stage-analyze.md Step 2 rule"
+    "roe_pct": 1.9,
+    "sector_median_roe_pct": 7.3,
+    "ey_spread_pp": -3.5,
+    "verdict": "AVOID"
   },
   "kinhdich": {
-    "que": "Vị Tế (64)",
-    "xu_huong": "TRUNG TÍNH",
-    "tin_hieu": "GIỮ",
-    "do_tin_cay_pct": 38
+    "que": "Vi Te (64)",
+    "trend": "TRUNG TINH",
+    "confidence_pct": 38,
+    "signal": "GIU"
   },
+  "insider": "no significant activity",
   "esc_gate": {
-    "esc1": "unevaluable — no source data (Chưa có dữ liệu BCTC) and no Bash/Glob grant",
-    "esc2": "unevaluable — no balance sheet data returned",
-    "esc3": "unevaluable — no cash-flow data returned",
-    "esc4": "unevaluable — no P&L data returned",
-    "esc5": "unevaluable — no source data to resolve report_id against"
+    "esc1": "unevaluable_no_data",
+    "esc2": "unevaluable_no_data",
+    "esc3": "unevaluable_no_data",
+    "esc4": "unevaluable_no_data",
+    "esc5": "unevaluable_no_data"
   },
-  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể.",
-  "legal_risk": "Không có tín hiệu rủi ro pháp lý.",
-  "trick_summary": null,
-  "trick_confidence": "none",
-  "trick_pass_versions": [],
-  "data_notes": "get_bctc_full(DXG) = 'Chưa có dữ liệu BCTC' — 18th+ consecutive cycle unresolved. All figures above sourced from get_sector_comparison peer-median context only, not from a company-specific extracted BCTC.",
-  "fetchedAt": "2026-08-12T15:07:12.936152763Z",
+  "data_quality_flag": "Chưa có dữ liệu BCTC — unresolved (20th+ cycle)",
+  "asof": "2026-08-12T21:09:00Z",
+  "source_agent": "bctc-analyst",
+  "cycle_id": "20260812-2100",
   "_processed": {
-    "fingerprint": "218ce662cefbccfcf8a365898756eba5deae5b38c8a22c2db0e06dd0c635e5dd",
-    "processedAt": "2026-08-12T15:21:41Z",
+    "fingerprint": "36242bd9e2d9647bb6596a1c28b38747fcc91bbd9aef0dfeb423ab375beadb37",
+    "processedAt": "2026-08-13T06:29:51Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

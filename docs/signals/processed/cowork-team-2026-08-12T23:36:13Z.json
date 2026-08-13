@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "tick-telemetry",
+  "payload": {
+    "tick": "2026-08-12T23:30Z",
+    "classification": "SIGNAL_ONLY",
+    "slots_fired": [],
+    "new_signals": 5,
+    "notes": "5 unchanged NEW rows carried forward (2x A-30 WARN, bca FPT ESC-5 HIGH guard-held ~5h23m unpicked, tnb audit-handoff HIGH, code-janitor LOW). No fresh escalation."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-12T23:36:13Z",
+  "_processed": {
+    "fingerprint": "5c61735990e242991513ba4594f7cab67a4e8b6d103b1ffe28b38b531ba2c9a4",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "State-owned commercial bank — corporate and retail lending, trade finance, treasury/FX, bancassurance, payments/cards.",
+  "customer": "Large state-linked corporates and SOEs, retail depositors/borrowers, trade-finance importers/exporters, bancassurance cross-sell base.",
+  "ops": "Net interest income (revenue proxy) 17,421 ty VND, operating margin 80.9% (typical bank cost structure). Quarterly ROE 4.2% (non-annualized); sector-comparison annualized ROE 16.7%, below sector median 17.6%. OCF/NI ratio Q1 = 1.37x — cash generation exceeds accounting profit, no forensic red flag (ESC-3 divergence 36.8% < 40% threshold).",
+  "mgmt": "Q1-2026 already filed on schedule (DA NOP 2026-07-19) — no overdue flag. Balance sheet nearly balances (0.37% imbalance, within 0.5% tolerance).",
+  "valuation": {
+    "pe": 14.1,
+    "sector_median_pe": 9,
+    "pb": 2.2,
+    "sector_median_pb": 1.5,
+    "roe_pct": 16.7,
+    "sector_median_roe_pct": 17.6,
+    "ey_spread_pp": 2.09,
+    "verdict": "FAIR"
+  },
+  "kinh_dich": {
+    "que": "Tieu Qua (62)",
+    "trend": "TRUNG TINH",
+    "signal": "GIU",
+    "confidence_pct": 37
+  },
+  "esc_gate": {
+    "esc1_manipulation": "UNEVALUABLE — no Bash/Glob tool grant, E1 6-pass trick detection scope-reduced (standing gap)",
+    "esc2_balance_sheet": {
+      "result": "FALSE",
+      "imbalance_pct": 0.37
+    },
+    "esc3_ocf_vs_ni": {
+      "result": "FALSE",
+      "quarters_returned": 4,
+      "quarters_required": 4,
+      "divergence_ratio": 0.368,
+      "ocf_ni_ratio_q1": 1.368
+    },
+    "esc4_related_party_nonop": {
+      "result": "N/A",
+      "reason": "bank — pretax/operating-profit non_operating_share formula not meaningful for banking P&L structure"
+    },
+    "esc5_refine_confidence": {
+      "result": "FALSE",
+      "reason": "existing_refine_status=PARTIAL, report_id=null (refine not DONE)"
+    }
+  },
+  "trick_detection": {
+    "trick_confidence": "none",
+    "trick_summary": null,
+    "scope_note": "E1 6-pass detection SCOPE-REDUCED — no Bash/Glob grant (standing capability gap, unchanged)."
+  },
+  "insider_signal": "Khong co tin hieu giao dich noi bo dang ke",
+  "legal_risk": "Khong co tin hieu rui ro phap ly",
+  "sentiment_30d": {
+    "direction": "TANG",
+    "slope": 0.06,
+    "entries": 8
+  },
+  "filing_status": "DA NOP 2026-07-19 (Q1-2026) — not overdue",
+  "evidence_fragments": [
+    {
+      "id": 1203,
+      "evidence_type": "bctc_roe_strong",
+      "direction": "bullish",
+      "magnitude": 0.67,
+      "confidence": 0.6
+    }
+  ],
+  "cycle_id": "20260813-0000",
+  "generated_at": "2026-08-13T00:09:00Z",
+  "_processed": {
+    "fingerprint": "1716790527b0b6d6f96eb37393610399a0a0bef85cd98fb401c7825ac5ec638c",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

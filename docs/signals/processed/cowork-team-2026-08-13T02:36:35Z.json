@@ -1,0 +1,34 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "tick": "2026-08-13T02:30Z",
+    "classification": "SLOTS_FIRED",
+    "slots_fired": [
+      "alert-commander-market"
+    ],
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "max_parallel": 1,
+    "fanout_mode": "policy",
+    "batches": 1,
+    "errors": [],
+    "last_fired_timestamp": "2026-08-13T02:36:24Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "new_signals": 7,
+    "notes": "1-slot WORK tick. Drain-check: 7 NEW rows (6 carryover + new sys-20260813T022139-5634 db_integrity_breach WARN to:dev-team) — none routed to spawned slot, left NEW per Step 0a. task_claim ok. alert-commander spawned run_in_background. Standing observation carried forward: unified-agent (chef-intraday) notebook+synthesis JSON from 02:15Z tick landed uncommitted (Bash-less class defect) alongside a much larger pre-existing dirty/untracked backlog (~40+ cowork-team telemetry files uncommitted since 08-12T17:51, several other agents' notebooks modified) — flagged for dedicated janitor sweep, not remediated ad hoc this tick."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-13T02:36:35Z",
+  "_processed": {
+    "fingerprint": "10b7f0743e7e05178efa5d532c7b5f6cdead4f6d5bad3071dc22d9a29bf91bc1",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

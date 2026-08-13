@@ -1,0 +1,35 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick": "2026-08-12T21:00:00Z",
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "spawned": [
+      "bctc-analyst-slot-3"
+    ],
+    "silent": false,
+    "classification": "FIRE",
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": null
+    },
+    "new_signals": 4,
+    "note": "4 signal_queue NEW rows unchanged since prior tick (2 WARN memory-pressure to:po, 1 HIGH ESC-5 deep-dive to:dev-team, 1 HIGH tnb audit-handoff to:po) — no severity crossing, no fresh escalation this tick. bctc-analyst-slot-3 fire is a routine/earnings-mode cycle, unrelated to the pending ESC-5 dev-team row."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-12T21:06:00Z",
+  "_processed": {
+    "fingerprint": "a29f07ef0ec420209994db3f8b51e075d1ada00c4aae23ed7807a64152d04ea7",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick": "2026-08-12T18:30:00Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "spawned": [],
+    "silent": false,
+    "classification": "SIGNAL_ONLY",
+    "due_reasons": {},
+    "cadence_minutes": {},
+    "new_signals": 3,
+    "note": "0 slots due this tick. 3 NEW signal_queue rows seen, all unchanged from prior tick: rag-service-1 A-30 WARN 96.52%, pdf-extractor-1 A-30 WARN 94.49% (both to:po, unescalated), and esc-deepdive:FPT:Q1-2026:ESC-5 (to:dev-team, bridged by this dispatcher at 18:07Z tick, still undrained by dev-team). No fresh escalation — no severity crossings this tick."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-12T18:36:00Z",
+  "_processed": {
+    "fingerprint": "3b98b1ce3efb537e78c4e3a0fefb44b33072876bbd04870798deaec329e093cb",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

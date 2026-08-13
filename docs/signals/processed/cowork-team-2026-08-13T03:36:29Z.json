@@ -1,0 +1,22 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "tick": "2026-08-13T03:30Z",
+    "classification": "SLOTS_FIRED",
+    "slots_fired": [
+      "alert-commander-market"
+    ],
+    "new_signals": 4,
+    "notes": "4th consecutive stale_warning:true (02:45/03:00/03:15/03:30) — same tracked FIX-COWORK-CADENCE-DANGLING-POLICY-ID pattern, no new escalation. 7 NEW signal_queue rows unchanged, oldest ~10h (bca esc-deep-dive HIGH to:dev-team)."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-13T03:36:29Z",
+  "_processed": {
+    "fingerprint": "bcecf15abc550cc6071cb5a651ab9c454022005a2e7a019100c22141d19365fe",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

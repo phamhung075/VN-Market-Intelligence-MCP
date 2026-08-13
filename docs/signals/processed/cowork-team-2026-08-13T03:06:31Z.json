@@ -1,0 +1,34 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "tick": "2026-08-13T03:00Z",
+    "classification": "SLOTS_FIRED",
+    "slots_fired": [
+      "alert-commander-market"
+    ],
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "max_parallel": 1,
+    "fanout_mode": "policy",
+    "batches": 1,
+    "errors": [],
+    "last_fired_timestamp": "2026-08-13T03:06:20Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "new_signals": 4,
+    "notes": "1-slot WORK tick. Drain-check: same 7 NEW rows persisted, none routed to spawned slot, left NEW per Step 0a. task_claim ok. alert-commander spawned run_in_background. emit_pressure_state stale_warning:true 2nd consecutive occurrence (02:45Z, 03:00Z both true) — watching next tick; if 3rd consecutive, treat as persistent per isStale=OR legacy-mode rule."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-13T03:06:31Z",
+  "_processed": {
+    "fingerprint": "88fed17d982aab871b6406d71dcd7a20ef09800fa734bcb1276463e5081f1f54",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

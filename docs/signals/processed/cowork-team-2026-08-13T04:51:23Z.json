@@ -1,0 +1,24 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "tick": "2026-08-13T04:45Z",
+    "classification": "SLOTS_FIRED",
+    "slots_fired": [
+      "alert-commander-market"
+    ],
+    "new_signals": 4,
+    "stale_warning": true,
+    "stale_warning_streak": 9,
+    "notes": "9th consecutive stale_warning=true tick — known tracked pattern (FIX-COWORK-CADENCE-DANGLING-POLICY-ID, ref reference_isstale_stale_warning_forces_legacy.md), not re-escalated. Signal queue unchanged at 8 NEW rows since prior tick; tnb-20260812T2030Z (HIGH) now ~8h20m unpicked, bca-20260812T180708Z (HIGH) now ~10h45m unpicked."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-13T04:51:23Z",
+  "_processed": {
+    "fingerprint": "cf5c4a388668d702d8d9b789eb6bb50b8eeaeb14dbc04b955b32f8164117654c",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

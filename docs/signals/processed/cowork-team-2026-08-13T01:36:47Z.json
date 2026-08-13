@@ -1,0 +1,37 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "tick": "2026-08-13T01:30Z",
+    "classification": "SLOTS_FIRED",
+    "slots_fired": [
+      "news-scout-sentiment"
+    ],
+    "due_reasons": {
+      "news-scout-sentiment": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-sentiment": 240
+    },
+    "max_parallel": 1,
+    "fanout_mode": "policy",
+    "batches": 1,
+    "errors": [],
+    "last_fired_timestamp": "2026-08-13T01:36:37Z",
+    "last_fired_slots": [
+      "news-scout-sentiment"
+    ],
+    "last_fired_write_errors": null,
+    "new_signals": 6,
+    "notes": "bca-20260812T180708Z (FPT ESC-5, HIGH, guard-held) age ~7h23m, still unpicked by dev-team. tnb-20260812T2030Z (audit-handoff c127, HIGH) age ~5h00m. pressure-state emit returned stale_warning:true — flagging for next tick's freshness check, no action needed here."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-13T01:36:47Z",
+  "_processed": {
+    "fingerprint": "5b98ce85057057e70bf2960a284aff52b4ef3abf0b42d09e65f454ef27d59301",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

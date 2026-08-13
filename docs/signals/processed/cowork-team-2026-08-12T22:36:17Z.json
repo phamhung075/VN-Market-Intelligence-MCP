@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "log",
+  "type": "dispatch-tick",
+  "payload": {
+    "tick": "2026-08-12T22:30Z",
+    "classification": "SIGNAL_ONLY",
+    "slots_fired": [],
+    "new_signals": 5,
+    "note": "4 unchanged NEW rows persist (rag-service-1 A-30 WARN, pdf-extractor-1 A-30 WARN, bca FPT ESC-5 guard-held ~4h23m unpicked, tnb audit-handoff HIGH) plus 1 fresh row (cj-20260812T223235Z, code-janitor, LOW severity, team-tool-recheck writer dead since 06-23) — LOW severity, no escalation warranted"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-12T22:36:17Z",
+  "_processed": {
+    "fingerprint": "fcf3abb8855c9090e56764c4c78c83388086bd6629391c46ff2a716768c55887",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

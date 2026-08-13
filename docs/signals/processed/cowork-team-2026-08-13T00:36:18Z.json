@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "tick": "2026-08-13T00:30Z",
+    "classification": "SIGNAL_ONLY",
+    "slots_fired": [],
+    "new_signals": 6,
+    "notes": "0-slot tick. bca-20260812T180708Z (FPT ESC-5, HIGH, guard-held) age ~6h23m, still unpicked. tnb-20260812T2030Z (audit-handoff c127, HIGH) age ~4h00m. No new escalation."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-13T00:36:18Z",
+  "_processed": {
+    "fingerprint": "17a31961d470f5752157fbb658f509042d95dd52fdf9e3cc86179b7a3fb04a60",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

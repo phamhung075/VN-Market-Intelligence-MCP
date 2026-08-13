@@ -1,0 +1,25 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick": "2026-08-12T20:45:00Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "spawned": [],
+    "silent": true,
+    "classification": "SIGNAL_ONLY",
+    "due_reasons": {},
+    "cadence_minutes": {},
+    "new_signals": 4,
+    "note": "4 NEW signal_queue rows unchanged since prior tick (2 WARN memory-pressure to:po, 1 HIGH ESC-5 deep-dive to:dev-team, 1 HIGH tnb audit-handoff to:po) — no severity crossing, no fresh escalation this tick."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-12T20:51:00Z",
+  "_processed": {
+    "fingerprint": "a24d6667c3842ce079ffe7dade426bdd8d442ab3d7b0e78fcefff0cbd5aa1ec8",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

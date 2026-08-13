@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "log",
+  "type": "dispatch-tick",
+  "payload": {
+    "tick": "2026-08-12T22:00Z",
+    "classification": "SIGNAL_ONLY",
+    "slots_fired": [],
+    "new_signals": 4,
+    "note": "4 unchanged NEW rows persist (rag-service-1 A-30 WARN, pdf-extractor-1 A-30 WARN, bca FPT ESC-5 guard-held ~3h53m unpicked, tnb audit-handoff HIGH) — no fresh severity crossing, no escalation"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-12T22:06:15Z",
+  "_processed": {
+    "fingerprint": "4cb062dde6e5fb4dc26426426efd5a888d023cd6d816a27dd491636dd9eb161a",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork_tick_report",
+  "payload": {
+    "tick": "2026-08-12T18:00Z",
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "spawned": [
+      "bctc-analyst-slot-2"
+    ],
+    "one_shots": [],
+    "new_signals": 2,
+    "silent": false,
+    "classification": "FIRE",
+    "due_reasons": {
+      "bctc-analyst-slot-2": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-2": null
+    },
+    "note": "2 NEW WARN rows unchanged from 17:45Z (rag-service-1 A-30 96.52%, pdf-extractor-1 A-30 94.49%) — still pending po drain, no fresh crossing, no re-escalation."
+  },
+  "priority": "normal",
+  "createdAt": "2026-08-12T18:06:31Z",
+  "_processed": {
+    "fingerprint": "2e24b19b0315d4f37859024213d9822a53a2288128a61b723750f22f289cf4d9",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

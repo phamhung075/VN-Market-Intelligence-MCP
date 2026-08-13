@@ -4,33 +4,29 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "CNTT xuất khẩu phần mềm/tích hợp hệ thống, dịch vụ viễn thông (FPT Telecom, nay hạch toán theo phương pháp vốn chủ sở hữu), giáo dục (Đại học FPT, hệ thống phổ thông FPT).",
-  "customer": "Doanh nghiệp CNTT tại Nhật/Mỹ/Châu Âu (xuất khẩu phần mềm), thuê bao viễn thông bán lẻ trong nước, học sinh-sinh viên hệ thống giáo dục FPT.",
-  "ops": "Doanh thu Q1-2026 12.480 tỷ VND, biên gộp 34,0%, LN thuần HĐKD 2.747,8 tỷ (22,0%); doanh thu -22,3% theo số báo cáo (do đổi phương pháp hợp nhất FTEL) nhưng +8,7% theo số điều chỉnh cùng phương pháp; LN sau thuế +13,8% YoY (điều chỉnh). Dòng tiền HĐKD âm -2.847,8 tỷ (vốn lưu động tăng phải thu/hàng tồn).",
-  "mgmt": "Đổi phương pháp hợp nhất FTEL (hợp nhất toàn bộ → vốn chủ sở hữu) thực hiện minh bạch, có đối chiếu số liệu điều chỉnh. BCTC Q2-2026 QUÁ HẠN (hạn 30/07/2026, đã trễ 13 ngày) dù PDF đã có trên hệ thống từ 2026-08-01 — chưa được trích xuất.",
-  "ey_spread": {
+  "product": "IT services & software exports (offshore dev for EU/US/Japan), system integration, FPT Telecom broadband/ISP, FPT Education",
+  "customer": "Enterprise IT buyers (domestic + offshore APAC/EU/US clients), retail telecom subscribers, students across FPT school/university network",
+  "ops": "Gross margin 34.0%, operating margin 22.0%. Reported revenue -22.3% YoY (FTEL deconsolidation to equity-method from 2026-01-01); on restated same-method basis revenue +8.7% YoY, NPAT +13.8% YoY. OCF -2,848 tỷ VND vs NI +2,477 tỷ VND this quarter (negative accrual divergence) — ESC-3 multi-quarter check DATA-COVERAGE-LIMITED (only 3/4 quarters returned).",
+  "mgmt": "FTEL equity-method transition executed cleanly with balance-sheet check passing (assets=liab+equity exact match). Consistent quarterly filing cadence. Refine pipeline flags 7 of 15 units <0.50 confidence on complex multi-column footnotes (OCR/extraction quality issue, not a management-track-record signal) — ESC-5 escalation guard-held pending dev-team Opus deep-dive pickup.",
+  "valuation": {
     "pe": 13.8,
     "sector_median_pe": 17.3,
-    "roe_pct_annualized_sector_comp": 28.3,
-    "earning_yield_pct": 7.25,
-    "max_deposit_rate_pct": 5,
-    "spread_pp": 2.25,
-    "verdict": "FAIR",
-    "rate_sensitive_headwind": false
+    "roe_pct": 28.3,
+    "sector_median_roe_pct": 10.6,
+    "ey_spread_pp": 2.25,
+    "verdict": "FAIR"
   },
   "kinhdich": {
-    "que": "Giải (40)",
-    "xu_huong": "THUẬN LỢI",
-    "tin_hieu": "GIỮ",
-    "do_tin_cay_pct": 100
+    "que": "Giai (40)",
+    "trend": "THUAN LOI",
+    "confidence_pct": 100,
+    "signal": "GIU"
   },
+  "insider": "no significant activity",
   "esc_gate": {
-    "esc1": "unevaluable — no Bash/Glob grant, E1 6-pass cache-dependent trick detection scope-reduced",
+    "esc1": "unevaluable_no_bash_glob",
     "esc2": {
       "result": false,
-      "assets_total": 68586094.785217,
-      "liabilities_total": 28464058.214856,
-      "equity_total": 40122036.570361,
       "imbalance_pct": 0
     },
     "esc3": {
@@ -42,31 +38,23 @@
     },
     "esc4": {
       "result": false,
-      "non_operating_share_pct": 2,
-      "pretax_profit": 2803844.281676,
-      "operating_profit": 2747763.82705
+      "non_operating_share_pct": 2
     },
     "esc5": {
       "result": true,
-      "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
-      "total_units": 15,
-      "low_confidence_units": 7,
+      "low_confidence_unit_count": 7,
       "min_confidence": 0.45,
       "escalation_status": "GUARD-HELD",
       "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
-      "note": "PENDING dev-team pickup — guard armed since c155 (2026-08-11T15:10Z), TTL 24h re-armed"
+      "guard_expires_approx": "2026-08-13T18:07Z"
     }
   },
-  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể.",
-  "legal_risk": "Không có tín hiệu rủi ro pháp lý.",
-  "trick_summary": null,
-  "trick_confidence": "none",
-  "trick_pass_versions": [],
-  "data_notes": "Kỳ mới nhất (2026-Q2) chưa được trích xuất — hiển thị Q1-2026. get_bctc_full confidence 81%, validation passed.",
-  "fetchedAt": "2026-08-12T15:07:12.936152763Z",
+  "asof": "2026-08-12T21:07:30Z",
+  "source_agent": "bctc-analyst",
+  "cycle_id": "20260812-2100",
   "_processed": {
-    "fingerprint": "c26d2441a7d0309c9f4e28fa4e1af4ce61f9a48374b881a1b0915eddb8b14437",
-    "processedAt": "2026-08-12T15:21:41Z",
+    "fingerprint": "ccfac6d9359624a4be5f53ad5eefb5bbc447764961e559ff259a034f02c9d09d",
+    "processedAt": "2026-08-13T06:29:51Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

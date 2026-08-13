@@ -1,0 +1,34 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "tick": "2026-08-13T02:45Z",
+    "classification": "SLOTS_FIRED",
+    "slots_fired": [
+      "alert-commander-market"
+    ],
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "max_parallel": 1,
+    "fanout_mode": "policy",
+    "batches": 1,
+    "errors": [],
+    "last_fired_timestamp": "2026-08-13T02:51:22Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "new_signals": 4,
+    "notes": "1-slot WORK tick. Drain-check: same 7 NEW rows persisted (2 sys memory_pressure WARN to:po, bca esc-deep-dive HIGH to:dev-team age~8h38m, tnb audit-handoff HIGH to:po age~6h15m, cj system-issue LOW to:po, bca-datacov LOW to:dev-team, sys db_integrity_breach WARN to:dev-team age~24m) — none routed to spawned slot, left NEW per Step 0a. task_claim ok. alert-commander spawned run_in_background. emit_pressure_state stale_warning:true again (3rd occurrence: 02:00Z true, 02:15Z absent, 02:30Z absent, 02:45Z true — intermittent, not persistent, no legacy-mode forcing yet)."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-13T02:51:32Z",
+  "_processed": {
+    "fingerprint": "0b41109ef36aba88ec7abf43d3ae8b9dc4ab4b667baa84425a7eec8a1d9a894e",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

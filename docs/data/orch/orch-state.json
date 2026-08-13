@@ -573,7 +573,7 @@
         "summary": "ESC deep-dive: FPT Q1-2026 ESC-5 — guard re-armed after prior lapse, 3rd+ consecutive unpicked re-emit",
         "severity": "HIGH",
         "status": "READ",
-        "payload_ref": "docs/signals/bctc-analyst-20260812T180708Z.json",
+        "payload_ref": "docs/signals/processed/bctc-analyst-20260812T180708Z.json",
         "provenance": "bctc-analyst",
         "audit_cycle_tag": null,
         "dedup_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
@@ -587,7 +587,7 @@
         "summary": "TNB quality audit c127: NEEDS_ATTENTION — F-CHEF-BIZCTX-JOIN-MISS still live (P0 granted c126), pipeline coverage recovered 3/3 chef dishes",
         "severity": "HIGH",
         "status": "READ",
-        "payload_ref": "docs/signals/tnb-20260812T2030Z.json",
+        "payload_ref": "docs/signals/processed/tnb-20260812T2030Z.json",
         "provenance": "tran-ngoc-bau",
         "audit_cycle_tag": "tnb-audit:c127",
         "dedup_key": "tnb-audit-handoff:2026-08-12T2030Z"
@@ -601,7 +601,7 @@
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
         "status": "READ",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-12.json"
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-12.json"
       },
       {
         "id": "bca-datacov-20260813T001500Z",
@@ -612,7 +612,7 @@
         "summary": "DXG get_cash_flow returns implausible-magnitude cash-flow figures (up to ~4.2e18 VND) while get_bctc_full has no data",
         "severity": "LOW",
         "status": "READ",
-        "payload_ref": "docs/signals/bctc-analyst-20260813T001500Z.json",
+        "payload_ref": "docs/signals/processed/bctc-analyst-20260813T001500Z.json",
         "provenance": "bctc-analyst",
         "audit_cycle_tag": null,
         "dedup_key": "bctc-data-quality:DXG:cash-flow-overflow"
@@ -710,7 +710,7 @@
         "summary": "notebook-uuid-provenance-guard WARN: tran-ngoc-bau.md c125/c126 headings embed full router_session UUIDs, violates notebook-write SKILL.md AC-1",
         "severity": "MED",
         "status": "NEW",
-        "payload_ref": "docs/signals/commit-sweep-guard-2026-08-12T180353Z-113.json",
+        "payload_ref": "docs/signals/processed/commit-sweep-guard-2026-08-12T180353Z-113.json",
         "provenance": "commit-sweep-guard",
         "audit_cycle_tag": null,
         "dedup_key": "notebook-uuid-provenance:tran-ngoc-bau"
@@ -724,7 +724,7 @@
         "summary": "sweep-guard BARE commit BLOCKED 3x recurring (20260812T200758Z to 20260813T040848Z, prior_warns 21 to 23): market-watcher.md notebook repeatedly staged for a non-pathspec-scoped commit under actor 0454e9d8-b475-4230-95c9-8b7d943aa8b3, every attempt hard-blocked, files remain uncommitted. Likely root cause of the approx 13h/70+file uncommitted backlog observed 2026-08-13T06:21Z git status. Fix: pathspec-scoped git commit -- <own-files-only> only.",
         "severity": "HIGH",
         "status": "NEW",
-        "payload_ref": "docs/signals/commit-sweep-guard-2026-08-13T040848Z-6037.json",
+        "payload_ref": "docs/signals/processed/commit-sweep-guard-2026-08-13T040848Z-6037.json",
         "provenance": "commit-sweep-guard",
         "audit_cycle_tag": null,
         "dedup_key": "sweep-guard-bare-commit-blocked:market-watcher"
@@ -19574,7 +19574,7 @@
         "last_served_tick": "2026-08-12T16:53:15Z"
       }
     },
-    "_updated_at": "2026-08-13T06:26:03Z",
+    "_updated_at": "2026-08-13T06:31:41Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19612,51 +19612,6 @@
         "createdAt": "2026-08-12T17:37:29Z",
         "drained_at": "2026-08-13T06:25:56Z",
         "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "ea89357a7d326aade95a8f01366ff33dd46642958a32af7608844650ddfabe48",
-        "source": "dashboard",
-        "from": "bctc-analyst",
-        "to": "dev-team",
-        "type": "esc-deep-dive-request",
-        "priority": "HIGH",
-        "payload": {
-          "id": "bca-20260812T180708Z",
-          "ts": "2026-08-12T18:07:08Z",
-          "from": "bctc-analyst",
-          "to": "dev-team",
-          "type": "esc-deep-dive-request",
-          "summary": "ESC deep-dive: FPT Q1-2026 ESC-5",
-          "severity": "HIGH",
-          "status": "NEW",
-          "payload_ref": null,
-          "payload": {
-            "trigger_id": "ESC-5",
-            "ticker": "FPT",
-            "quarter": "Q1-2026",
-            "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
-            "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
-            "context": {
-              "low_confidence_unit_ids": [
-                "unit-0008",
-                "unit-0009",
-                "unit-0010",
-                "unit-0011",
-                "unit-0012",
-                "unit-0013",
-                "unit-0014"
-              ],
-              "min_confidence": 0.45
-            },
-            "all_esc_fired": [
-              "ESC-5"
-            ],
-            "note": "Guard re-armed 2026-08-12T18:07Z after prior 24h TTL (armed c155 2026-08-11T15:10Z) lapsed ~2026-08-12T15:13Z with no dev-team pickup observed across c157/c158/c159 — this is a re-emit of the same standing FPT Q1-2026 ESC-5 low-refine-confidence finding, byte-identical unit set/confidences to c155-c159."
-          }
-        },
-        "createdAt": "2026-08-12T18:07:08Z",
-        "drained_at": "2026-08-13T06:25:56Z",
-        "routed_to": "ESC-DISPATCH"
       },
       {
         "envelope_id": "96341443f0ab32e2304c81c5184f98a6b7bc199426c060addc13457e4f84967f",
@@ -19870,6 +19825,2505 @@
         "createdAt": "2026-08-13T05:51:55Z",
         "drained_at": "2026-08-13T06:25:56Z",
         "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6af5632b0c5b08f3244ffd10ee2fa1d9450e2c56ef82436ff24927744b578c1d",
+        "source": "file",
+        "from": "bctc-analyst",
+        "to": "dev-team",
+        "type": "bctc-data-quality-anomaly",
+        "priority": "LOW",
+        "payload": {
+          "ticker": "DXG",
+          "quarter": "Q1-2026",
+          "note": "get_bctc_full(code=DXG) returns 'Chua co du lieu BCTC' (21st+ consecutive routine cycle, unresolved) despite DXG_2026_Q1.pdf (uploaded 2026-08-03) and DXG_2026_Q2.pdf (uploaded 2026-08-01) both present in list_stored_pdfs. Cross-check this cycle: get_cash_flow(ticker=DXG, quarters=4) DOES return non-null period rows, but with astronomically implausible magnitudes suggesting an OCR/extraction overflow or digit-duplication bug, not real financial data:",
+          "implausible_values": [
+            {
+              "period": "Q1/2026",
+              "field": "operating_cf",
+              "value": 4225770766987766000,
+              "unit": "VND (as returned)"
+            },
+            {
+              "period": "Q1/2026",
+              "field": "free_cash_flow",
+              "value": 4225770766991257600,
+              "unit": "VND (as returned)"
+            },
+            {
+              "period": "Q4/2025",
+              "field": "financing_cf",
+              "value": 1795052231922000,
+              "unit": "VND (as returned)"
+            },
+            {
+              "period": "Q3/2025",
+              "field": "financing_cf",
+              "value": 1482418053419,
+              "unit": "VND (as returned)"
+            }
+          ],
+          "context": "For reference, DXG total assets are on the order of tens of trillions VND per its market cap/sector peers (e.g. VHM, VIC in the same sector-comparison group) — values in the 10^15-10^18 range are off by many orders of magnitude and not plausible for any line item on this company's cash-flow statement.",
+          "root_task_suggestion": "BCTC-HIST-VPS-BACKFILL / DXG extraction pipeline — bctc-analyst has no Bash/Glob grant to inspect the underlying OCR source or DB rows; reporting only, not diagnosing root cause.",
+          "not_a_duplicate_of": "the standing 'DXG Chua co du lieu BCTC' notebook carry-over (get_bctc_full gap) — this is a DISTINCT finding surfaced via a different tool (get_cash_flow) this cycle."
+        },
+        "createdAt": "2026-08-13T00:15:00Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "36242bd9e2d9647bb6596a1c28b38747fcc91bbd9aef0dfeb423ab375beadb37",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "N/A — no BCTC extraction available",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Real estate development — residential projects, primarily HCMC/southern Vietnam",
+          "customer": "Retail homebuyers and investors in mid-tier residential segment",
+          "ops": "No BCTC extraction data returned this cycle ('Chưa có dữ liệu BCTC') — 20th+ consecutive cycle with this gap; cannot assess margin/opex trend from financials directly. Sector-comparison-only ratios used as fallback.",
+          "mgmt": "Q2-2026 filing QUÁ HẠN (overdue since 2026-07-30). DXG_2026_Q1.pdf and DXG_2026_Q2.pdf are both present in stored-PDF inventory (uploaded 2026-08-01/08-03) yet extraction has not produced usable BCTC data — this is an extraction-pipeline gap, not a confirmed management/filing failure.",
+          "valuation": {
+            "pe": 66.5,
+            "sector_median_pe": 16.1,
+            "roe_pct": 1.9,
+            "sector_median_roe_pct": 7.3,
+            "ey_spread_pp": -3.5,
+            "verdict": "AVOID"
+          },
+          "kinhdich": {
+            "que": "Vi Te (64)",
+            "trend": "TRUNG TINH",
+            "confidence_pct": 38,
+            "signal": "GIU"
+          },
+          "insider": "no significant activity",
+          "esc_gate": {
+            "esc1": "unevaluable_no_data",
+            "esc2": "unevaluable_no_data",
+            "esc3": "unevaluable_no_data",
+            "esc4": "unevaluable_no_data",
+            "esc5": "unevaluable_no_data"
+          },
+          "data_quality_flag": "Chưa có dữ liệu BCTC — unresolved (20th+ cycle)",
+          "asof": "2026-08-12T21:09:00Z",
+          "source_agent": "bctc-analyst",
+          "cycle_id": "20260812-2100"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5201fd1da64c8432a33ef814ae2b55b65ba7e5485f3dd5e1ed85255715d1d145",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "net_profit_delta_pct": null,
+          "product": "Real estate developer — residential condominiums, townships, land-bank development (Dat Xanh Group); construction and real-estate brokerage arm.",
+          "customer": "Retail homebuyers/investors in HCMC and satellite provinces; institutional land-bank and JV partners.",
+          "ops": "get_bctc_full returns 'Chua co du lieu BCTC' — core financial-statement extraction UNAVAILABLE for the 21st+ consecutive cycle despite DXG_2026_Q1.pdf (uploaded 2026-08-03) and DXG_2026_Q2.pdf (uploaded 2026-08-01) both on file. NEW THIS CYCLE: get_cash_flow(DXG) returns non-null cash-flow rows for Q1-2026/Q4-2025/Q3-2025 but with implausible magnitudes (Q1-2026 operating_cf and free_cash_flow ~4.2x10^18 VND, Q4-2025 financing_cf ~1.8x10^15 VND) — an extraction/overflow defect, not real financial data. Flagged to dev-team as bctc-data-quality-anomaly.",
+          "mgmt": "Cannot assess management track record this cycle — no verified P&L/balance-sheet data available. Valuation ratios below are sourced from get_sector_comparison only (independent pricing feed, not the broken BCTC extraction path).",
+          "valuation": {
+            "pe": 66.5,
+            "sector_median_pe": 16.1,
+            "pb": 1.2,
+            "sector_median_pb": 1.3,
+            "roe_pct": 1.9,
+            "sector_median_roe_pct": 7.3,
+            "ey_spread_pp": -3.5,
+            "verdict": "AVOID"
+          },
+          "kinh_dich": {
+            "que": "Vi Te (64)",
+            "trend": "TRUNG TINH",
+            "signal": "GIU",
+            "confidence_pct": 37
+          },
+          "esc_gate": {
+            "esc1_manipulation": "UNEVALUABLE — no verified BCTC source data",
+            "esc2_balance_sheet": "UNEVALUABLE — no verified BCTC source data",
+            "esc3_ocf_vs_ni": "UNEVALUABLE — net_profit_total unavailable (get_bctc_full has no data); get_cash_flow rows exist but carry implausible magnitudes, not usable for divergence math",
+            "esc4_related_party_nonop": "UNEVALUABLE — no verified BCTC source data",
+            "esc5_refine_confidence": "UNEVALUABLE — no verified BCTC source data"
+          },
+          "trick_detection": {
+            "trick_confidence": "none",
+            "trick_summary": null,
+            "scope_note": "UNEVALUABLE — no source BCTC data; E1 6-pass detection also SCOPE-REDUCED (no Bash/Glob grant)."
+          },
+          "insider_signal": "Khong co tin hieu giao dich noi bo dang ke",
+          "legal_risk": "Khong co tin hieu rui ro phap ly",
+          "sentiment_30d": null,
+          "filing_status": "QUA HAN — Q2-2026 deadline 30/07/2026, not yet filed as of 2026-08-13 (14 days overdue)",
+          "evidence_fragments": [
+            {
+              "id": 1204,
+              "evidence_type": "bctc_valuation_premium",
+              "direction": "bearish",
+              "magnitude": 1,
+              "confidence": 0.6
+            },
+            {
+              "id": 1205,
+              "evidence_type": "bctc_roe_ratio",
+              "direction": "bullish",
+              "magnitude": 0.3,
+              "confidence": 0.6
+            },
+            {
+              "id": 1206,
+              "evidence_type": "bctc_report_overdue",
+              "direction": "bearish",
+              "magnitude": 0.5,
+              "confidence": 0.55
+            }
+          ],
+          "data_quality_anomaly_signal": "docs/signals/bctc-analyst-20260813T001500Z.json",
+          "cycle_id": "20260813-0000",
+          "generated_at": "2026-08-13T00:09:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ccfac6d9359624a4be5f53ad5eefb5bbc447764961e559ff259a034f02c9d09d",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "IT services & software exports (offshore dev for EU/US/Japan), system integration, FPT Telecom broadband/ISP, FPT Education",
+          "customer": "Enterprise IT buyers (domestic + offshore APAC/EU/US clients), retail telecom subscribers, students across FPT school/university network",
+          "ops": "Gross margin 34.0%, operating margin 22.0%. Reported revenue -22.3% YoY (FTEL deconsolidation to equity-method from 2026-01-01); on restated same-method basis revenue +8.7% YoY, NPAT +13.8% YoY. OCF -2,848 tỷ VND vs NI +2,477 tỷ VND this quarter (negative accrual divergence) — ESC-3 multi-quarter check DATA-COVERAGE-LIMITED (only 3/4 quarters returned).",
+          "mgmt": "FTEL equity-method transition executed cleanly with balance-sheet check passing (assets=liab+equity exact match). Consistent quarterly filing cadence. Refine pipeline flags 7 of 15 units <0.50 confidence on complex multi-column footnotes (OCR/extraction quality issue, not a management-track-record signal) — ESC-5 escalation guard-held pending dev-team Opus deep-dive pickup.",
+          "valuation": {
+            "pe": 13.8,
+            "sector_median_pe": 17.3,
+            "roe_pct": 28.3,
+            "sector_median_roe_pct": 10.6,
+            "ey_spread_pp": 2.25,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Giai (40)",
+            "trend": "THUAN LOI",
+            "confidence_pct": 100,
+            "signal": "GIU"
+          },
+          "insider": "no significant activity",
+          "esc_gate": {
+            "esc1": "unevaluable_no_bash_glob",
+            "esc2": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "esc3": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+              "coverage_guard_held": true
+            },
+            "esc4": {
+              "result": false,
+              "non_operating_share_pct": 2
+            },
+            "esc5": {
+              "result": true,
+              "low_confidence_unit_count": 7,
+              "min_confidence": 0.45,
+              "escalation_status": "GUARD-HELD",
+              "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+              "guard_expires_approx": "2026-08-13T18:07Z"
+            }
+          },
+          "asof": "2026-08-12T21:07:30Z",
+          "source_agent": "bctc-analyst",
+          "cycle_id": "20260812-2100"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "958b7f0e257cf1d8f7c0e3a689cc17b88a615a004f7bc8cdce7e802441844cde",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "net_profit_delta_pct": null,
+          "product": "Software export & IT services (SI, ERP), telecom/broadband (FPT Telecom, moved to equity-method 2026-01-01), education (FPT University/Polytechnic/K-12), digital transformation consulting.",
+          "customer": "Enterprise IT buyers in VN and offshore export markets (Japan, US, Europe — Europe segment +44.4% YoY); FPT Telecom retail broadband/ISP subscribers (now off consolidated P&L); students across FPT's K-12/university network.",
+          "ops": "Gross margin 34.0%, operating margin 22.0%. Headline revenue -22.3% YoY is a consolidation-method artifact (FTEL deconsolidated to equity-method 2026-01-01, disclosed in filing Note 2) — like-for-like restated revenue +8.7% YoY, restated NPAT +13.8% YoY. Q1 operating cash flow -2,848 ty VND vs net profit +2,477 ty VND (working-capital drag; Q4-2025 OCF/NI=1.64x shows this is not a chronic pattern).",
+          "mgmt": "FTEL deconsolidation transparently disclosed with restated comparatives. Balance sheet checks out exactly (assets = liabilities + equity, ESC-2 imbalance 0.00%). Consistent double-digit adjusted profit growth maintained.",
+          "valuation": {
+            "pe": 13.8,
+            "sector_median_pe": 17.3,
+            "pb": 3.6,
+            "sector_median_pb": 1.5,
+            "roe_pct": 28.3,
+            "sector_median_roe_pct": 10.6,
+            "ey_spread_pp": 2.25,
+            "verdict": "FAIR"
+          },
+          "kinh_dich": {
+            "que": "Giai (40)",
+            "trend": "THUAN LOI",
+            "signal": "GIU",
+            "confidence_pct": 100
+          },
+          "esc_gate": {
+            "esc1_manipulation": "UNEVALUABLE — no Bash/Glob tool grant, E1 6-pass trick detection scope-reduced (standing gap)",
+            "esc2_balance_sheet": {
+              "result": "FALSE",
+              "imbalance_pct": 0,
+              "note": "balance_check:PASSED in refined units — TONG TAI SAN = TONG NGUON VON exactly"
+            },
+            "esc3_ocf_vs_ni": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_held": true,
+              "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+              "coverage_guard_expires_approx": "2026-08-17"
+            },
+            "esc4_related_party_nonop": {
+              "result": "FALSE",
+              "non_operating_share_pct": 2
+            },
+            "esc5_refine_confidence": {
+              "result": "TRUE",
+              "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+              "low_confidence_unit_ids": [
+                "unit-0008",
+                "unit-0009",
+                "unit-0010",
+                "unit-0011",
+                "unit-0012",
+                "unit-0013",
+                "unit-0014"
+              ],
+              "min_confidence": 0.45,
+              "escalation_status": "PENDING",
+              "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+              "guard_held_since": "2026-08-12T18:07:08Z",
+              "guard_expires_approx": "2026-08-13T18:07:08Z",
+              "note": "guard still active this cycle — no re-dispatch, dev-team pickup unconfirmed"
+            }
+          },
+          "trick_detection": {
+            "trick_confidence": "none",
+            "trick_summary": null,
+            "scope_note": "E1 6-pass detection SCOPE-REDUCED — no Bash/Glob grant to enumerate data/bctc-analysis-cache/ (standing capability gap, unchanged)."
+          },
+          "insider_signal": "Khong co tin hieu giao dich noi bo dang ke",
+          "legal_risk": "Khong co tin hieu rui ro phap ly",
+          "sentiment_30d": {
+            "direction": "GIAM",
+            "slope": -0.34,
+            "entries": 16
+          },
+          "filing_status": "QUA HAN — Q2-2026 deadline 30/07/2026, not yet filed as of 2026-08-13 (14 days overdue)",
+          "evidence_fragments": [
+            {
+              "id": 1199,
+              "evidence_type": "bctc_roe_strong",
+              "direction": "bullish",
+              "magnitude": 1,
+              "confidence": 0.6
+            },
+            {
+              "id": 1200,
+              "evidence_type": "bctc_report_overdue",
+              "direction": "bearish",
+              "magnitude": 0.5,
+              "confidence": 0.55
+            }
+          ],
+          "cycle_id": "20260813-0000",
+          "generated_at": "2026-08-13T00:09:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b2e54189bcbc63dcb40b129aa2c9dc2a14e7043a22eaba0de2acc2a046ae0e23",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Long steel & hot-rolled coil (HRC) production, steel pipe manufacturing, minor agriculture/feed-livestock segment",
+          "customer": "Construction and infrastructure contractors, steel distributors/traders, export markets",
+          "ops": "Gross margin 15.8%. Operating Profit field reported as 0 tỷ VND — corrupt/unresolved OCR extraction (15th+ consecutive cycle), Net Profit (9,056 tỷ) exceeds Gross Profit (8,365 tỷ), tool-flagged 'possible non-operating income'. ESC-3 OCF/NI check DATA-COVERAGE-LIMITED (3/4 quarters returned).",
+          "mgmt": "Operating-profit=0 data anomaly persists unresolved 15+ cycles — attributed to extraction-pipeline defect, not confirmed accounting or management issue; no corroborating insider or legal-risk signal this cycle.",
+          "valuation": {
+            "pe": 14.2,
+            "sector_median_pe": 32.6,
+            "roe_pct": 12.7,
+            "sector_median_roe_pct": 2.9,
+            "ey_spread_pp": 2.04,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Khiem (15)",
+            "trend": "THUAN LOI",
+            "confidence_pct": 100,
+            "signal": "GIU"
+          },
+          "insider": "no significant activity",
+          "esc_gate": {
+            "esc1": "unevaluable_no_bash_glob",
+            "esc2": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "esc3": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+              "coverage_guard_held": true
+            },
+            "esc4": {
+              "result": "discarded",
+              "reason": "operating_profit=0 corrupt data, non_operating_share unevaluable"
+            },
+            "esc5": {
+              "result": false,
+              "reason": "refine_status=PARTIAL, report_id=null"
+            }
+          },
+          "data_quality_flag": "operating_profit=0 unresolved (15th+ cycle)",
+          "asof": "2026-08-12T21:09:00Z",
+          "source_agent": "bctc-analyst",
+          "cycle_id": "20260812-2100"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "82724c6b20fc65fa410982b6fe45e11ed170f7cac7006aa31d7749c271003775",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "net_profit_delta_pct": null,
+          "product": "Integrated steel manufacturing (blast-furnace) — construction steel, HRC/CRC flat steel, steel pipe, container-grade steel; Hoa Phat Agriculture (animal feed, livestock) as diversification arm.",
+          "customer": "Domestic construction/infrastructure contractors, downstream steel fabricators and re-rollers; agriculture arm sells to feed-mill distributors and livestock farms nationwide.",
+          "ops": "Gross margin 15.8%. CRITICAL DATA-QUALITY FLAG (17th+ consecutive cycle, unresolved): reported Operating Profit = 0 ty VND (0.0%) while Net Profit = 9,056 ty VND EXCEEDS Gross Profit = 8,365 ty VND — tool's own validation flags 'possible non-operating income'. D/E and EBITDA fields also null. ESC-4 (related-party/one-off share) cannot be computed from this corrupted operating-profit field.",
+          "mgmt": "No governance red flags this cycle (no insider activity, no legal risk signals). The operating_profit=0 anomaly is a data-extraction pipeline issue, not a disclosed management action — already flagged to dev-team in prior cycles, not independently actionable by this agent.",
+          "valuation": {
+            "pe": 14.2,
+            "sector_median_pe": 32.6,
+            "pb": 1.7,
+            "sector_median_pb": 0.9,
+            "roe_pct": 12.7,
+            "sector_median_roe_pct": 2.9,
+            "ey_spread_pp": 2.04,
+            "verdict": "FAIR"
+          },
+          "kinh_dich": {
+            "que": "Khiem (15)",
+            "trend": "THUAN LOI",
+            "signal": "GIU",
+            "confidence_pct": 100
+          },
+          "esc_gate": {
+            "esc1_manipulation": "UNEVALUABLE — no Bash/Glob tool grant, E1 6-pass trick detection scope-reduced (standing gap)",
+            "esc2_balance_sheet": {
+              "result": "FALSE",
+              "imbalance_pct": 0
+            },
+            "esc3_ocf_vs_ni": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_held": true,
+              "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+              "coverage_guard_expires_approx": "2026-08-17"
+            },
+            "esc4_related_party_nonop": {
+              "result": "DISCARDED",
+              "reason": "operating_profit=0 corrupt/implausible (17th+ cycle) — non_operating_share formula unusable"
+            },
+            "esc5_refine_confidence": {
+              "result": "FALSE",
+              "reason": "existing_refine_status=PARTIAL, report_id=null (refine not DONE)"
+            }
+          },
+          "trick_detection": {
+            "trick_confidence": "none",
+            "trick_summary": null,
+            "scope_note": "E1 6-pass detection SCOPE-REDUCED — no Bash/Glob grant (standing capability gap, unchanged)."
+          },
+          "insider_signal": "Khong co tin hieu giao dich noi bo dang ke",
+          "legal_risk": "Khong co tin hieu rui ro phap ly",
+          "sentiment_30d": {
+            "direction": "TANG",
+            "slope": 0.08,
+            "entries": 15
+          },
+          "filing_status": "QUA HAN — Q2-2026 deadline 30/07/2026, not yet filed as of 2026-08-13 (14 days overdue)",
+          "evidence_fragments": [
+            {
+              "id": 1201,
+              "evidence_type": "bctc_roe_ratio",
+              "direction": "bullish",
+              "magnitude": 0.51,
+              "confidence": 0.6
+            },
+            {
+              "id": 1202,
+              "evidence_type": "bctc_report_overdue",
+              "direction": "bearish",
+              "magnitude": 0.5,
+              "confidence": 0.55
+            }
+          ],
+          "cycle_id": "20260813-0000",
+          "generated_at": "2026-08-13T00:09:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e5adc42d0f6a375eeb5aab16b3d07b8ac54c31e8d3b039247a6802c93590abcb",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Retail and corporate banking, trade finance, bancassurance cross-sell",
+          "customer": "SOE/corporate lending clients, urban retail depositors and borrowers, import/export trade-finance clients",
+          "ops": "Operating margin 80.9% (bank profile). ROE 4.2% quarterly / 16.7% annualized (below sector median 17.6%). OCF/NI ratio 1.37 — healthy accrual quality, no forensic divergence flag (ESC-3 = FALSE, 4/4 quarters covered, divergence_ratio=0.368 < 0.40 threshold).",
+          "mgmt": "Q1-2026 filed on-time (ĐÃ NỘP 2026-07-19, not overdue). PE premium +57% vs sector median (14.1 vs 9.0) reflects market's blue-chip state-bank pricing premium; no insider or legal-risk signal this cycle.",
+          "valuation": {
+            "pe": 14.1,
+            "sector_median_pe": 9,
+            "roe_pct": 16.7,
+            "sector_median_roe_pct": 17.6,
+            "ey_spread_pp": 2.09,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Tieu Qua (62)",
+            "trend": "TRUNG TINH",
+            "confidence_pct": 38,
+            "signal": "GIU"
+          },
+          "insider": "no significant activity",
+          "esc_gate": {
+            "esc1": "unevaluable_no_bash_glob",
+            "esc2": {
+              "result": false,
+              "imbalance_pct": 0.37
+            },
+            "esc3": {
+              "result": false,
+              "quarters_returned": 4,
+              "quarters_required": 4,
+              "divergence_ratio": 0.368,
+              "ocf_ni_ratio_q1": 1.368
+            },
+            "esc4": "not_applicable_bank",
+            "esc5": {
+              "result": false,
+              "reason": "refine_status=PARTIAL, report_id=null"
+            }
+          },
+          "asof": "2026-08-12T21:09:00Z",
+          "source_agent": "bctc-analyst",
+          "cycle_id": "20260812-2100"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1716790527b0b6d6f96eb37393610399a0a0bef85cd98fb401c7825ac5ec638c",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "net_profit_delta_pct": null,
+          "product": "State-owned commercial bank — corporate and retail lending, trade finance, treasury/FX, bancassurance, payments/cards.",
+          "customer": "Large state-linked corporates and SOEs, retail depositors/borrowers, trade-finance importers/exporters, bancassurance cross-sell base.",
+          "ops": "Net interest income (revenue proxy) 17,421 ty VND, operating margin 80.9% (typical bank cost structure). Quarterly ROE 4.2% (non-annualized); sector-comparison annualized ROE 16.7%, below sector median 17.6%. OCF/NI ratio Q1 = 1.37x — cash generation exceeds accounting profit, no forensic red flag (ESC-3 divergence 36.8% < 40% threshold).",
+          "mgmt": "Q1-2026 already filed on schedule (DA NOP 2026-07-19) — no overdue flag. Balance sheet nearly balances (0.37% imbalance, within 0.5% tolerance).",
+          "valuation": {
+            "pe": 14.1,
+            "sector_median_pe": 9,
+            "pb": 2.2,
+            "sector_median_pb": 1.5,
+            "roe_pct": 16.7,
+            "sector_median_roe_pct": 17.6,
+            "ey_spread_pp": 2.09,
+            "verdict": "FAIR"
+          },
+          "kinh_dich": {
+            "que": "Tieu Qua (62)",
+            "trend": "TRUNG TINH",
+            "signal": "GIU",
+            "confidence_pct": 37
+          },
+          "esc_gate": {
+            "esc1_manipulation": "UNEVALUABLE — no Bash/Glob tool grant, E1 6-pass trick detection scope-reduced (standing gap)",
+            "esc2_balance_sheet": {
+              "result": "FALSE",
+              "imbalance_pct": 0.37
+            },
+            "esc3_ocf_vs_ni": {
+              "result": "FALSE",
+              "quarters_returned": 4,
+              "quarters_required": 4,
+              "divergence_ratio": 0.368,
+              "ocf_ni_ratio_q1": 1.368
+            },
+            "esc4_related_party_nonop": {
+              "result": "N/A",
+              "reason": "bank — pretax/operating-profit non_operating_share formula not meaningful for banking P&L structure"
+            },
+            "esc5_refine_confidence": {
+              "result": "FALSE",
+              "reason": "existing_refine_status=PARTIAL, report_id=null (refine not DONE)"
+            }
+          },
+          "trick_detection": {
+            "trick_confidence": "none",
+            "trick_summary": null,
+            "scope_note": "E1 6-pass detection SCOPE-REDUCED — no Bash/Glob grant (standing capability gap, unchanged)."
+          },
+          "insider_signal": "Khong co tin hieu giao dich noi bo dang ke",
+          "legal_risk": "Khong co tin hieu rui ro phap ly",
+          "sentiment_30d": {
+            "direction": "TANG",
+            "slope": 0.06,
+            "entries": 8
+          },
+          "filing_status": "DA NOP 2026-07-19 (Q1-2026) — not overdue",
+          "evidence_fragments": [
+            {
+              "id": 1203,
+              "evidence_type": "bctc_roe_strong",
+              "direction": "bullish",
+              "magnitude": 0.67,
+              "confidence": 0.6
+            }
+          ],
+          "cycle_id": "20260813-0000",
+          "generated_at": "2026-08-13T00:09:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "896d3cb1f460ba8034736ab75d957543b7e462c3065a431538583ce4b43eb85c",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-181fa9e8",
+          "head_sha": "181fa9e8495d72efd5111aa5be5040cf9352cf66",
+          "run_id": 31621447612,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31621447612",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 94197022307
+            },
+            {
+              "name": "task-claim-owner-session-lint",
+              "conclusion": "failure",
+              "jobId": 94197022598
+            }
+          ],
+          "fingerprint": "b3137f0c9469a9ae79bef25f1671dc572ae4fc414e59de3390cc350b2a809d61",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 181fa9e8495d72efd5111aa5be5040cf9352cf66: bun test,task-claim-owner-session-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-12T17:25:33Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4ce9f02124524d0ca6e671555c809d2b14701709454a5bd9005847f731f23b59",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-uuid-provenance-guard] WARN: docs/agent-memory/notebooks/tran-ngoc-bau.md — added heading line embeds a full session/coordination UUID: '## c125 · ~2026-08-08T20:28Z (live MCP `get_system_status`/`get_macro_snapshot` fetchedAt; slot=tnb-audit; router_session=b6da7257-d9fd-4d08-a378-25045f1238c2)'. Per .claude/skills/notebook-write/SKILL.md AC-1 and feedback_agent_commits_session_uuid_into_notebook, a session id is a per-invocation coordination PARAMETER ONLY, never authored into a committed file — use a c<NNN> counter or a fixed source label instead. mode=warn (default warn; set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh). Escape hatch: add 'notebook-uuid-lint-allow: <reason>' on this line if intentional.\n[notebook-uuid-provenance-guard] WARN: docs/agent-memory/notebooks/tran-ngoc-bau.md — added heading line embeds a full session/coordination UUID: '## c126 · ~2026-08-11T20:30Z (live MCP `get_system_status`/`get_market_snapshot` fetchedAt; slot=tnb-audit; router_session=0454e9d8-b475-4230-95c9-8b7d943aa8b3)'. Per .claude/skills/notebook-write/SKILL.md AC-1 and feedback_agent_commits_session_uuid_into_notebook, a session id is a per-invocation coordination PARAMETER ONLY, never authored into a committed file — use a c<NNN> counter or a fixed source label instead. mode=warn (default warn; set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh). Escape hatch: add 'notebook-uuid-lint-allow: <reason>' on this line if intentional.\n",
+        "createdAt": "2026-08-12T18:03:53Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ed4a69b0330c9d152ab423e7c22a5fe4b92e812f22b719dd19506a998fdc0e36",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/market-watcher.md. actor=0454e9d8-b475-4230-95c9-8b7d943aa8b3 mode=warn escalated=true prior_warns=21 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-12T20:07:58Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "49504603f48775ea2f628315920216f698fc4261f4f2b0f5a302140664994037",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/market-watcher.md. actor=0454e9d8-b475-4230-95c9-8b7d943aa8b3 mode=warn escalated=true prior_warns=22 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-13T00:09:37Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a2af5b6feb060bf11fdd7f2afce7f3c9ab1515c16b6ed9229f3a029ac77a03d1",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/market-watcher.md. actor=0454e9d8-b475-4230-95c9-8b7d943aa8b3 mode=warn escalated=true prior_warns=23 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-13T04:08:48Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "46b8d2e4214fe25d6f8b8b0c588a2de0422fb19dcb6e64d3d0c7732ce284bac4",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-18.md",
+          "line_count": 172,
+          "cap": 600,
+          "byte_count": 36790,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 790,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-12T17:30:37Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "648cd84ae8d5af5bd5f1bebabc07d0a090b5b43d395483262c3ad3c35b5fa5e1",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/code-janitor.md",
+          "line_count": 264,
+          "cap": 200,
+          "byte_count": 16599,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "line-cap,byte-cap",
+          "overage": 64,
+          "byte_overage": 4599,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-12T22:32:59Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "91f3a88ff85bc4b0c084de6a43326c684a38ebadb60645ba813e437fd33a55f0",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 41,
+          "cap": 200,
+          "byte_count": 23477,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 11477,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-12T17:44:42Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6fd2d747ef825cbfaded97635e9c8e488492921d77ebb10808d503633024fa78",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-12T17:38:44Z",
+          "matched_slots": [
+            "digest-daily"
+          ],
+          "won_slots": [
+            "digest-daily"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/digest-predict/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 4,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "digest-daily": "cron"
+          },
+          "cadence_minutes": {
+            "digest-daily": null
+          },
+          "last_fired_timestamp": "2026-08-12T17:38:28Z",
+          "last_fired_slots": [
+            "digest-daily"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "17:30",
+          "leader_lock": "acquired",
+          "dev_head": "active",
+          "devq": 216,
+          "signal_backlog": 26,
+          "note": "digest-daily guaranteed slot dispatched (last_fired was 2026-08-11T17:37:17Z, cron 30 17 * * *); no calendar/cadence suppression, no CHEF collision"
+        },
+        "createdAt": "2026-08-12T17:38:44Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "76b8dcfb07733288fb7c36d2723c156396a83d7334f1b59d002595470dd3b5cc",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_report",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-12T17:45Z",
+          "matched_slots": [],
+          "won_slots": [],
+          "spawned": [],
+          "one_shots": [],
+          "new_signals": 2,
+          "silent": false,
+          "classification": "SIGNAL_ONLY",
+          "note": "2 NEW WARN rows, neither CRITICAL: (1) sys-20260812T173720-69e0 rag-service-1 A-30 96.52% 'loss of reclamation' — thread reappeared after clearing from NEW around 16:00Z, now worse than the prior 95.57% peak, still classified WARN by auditor not CRITICAL, no telegram sent per severity-crossing discipline; (2) sys-20260812T173729-22bd pdf-extractor-1 A-30 94.49% 'VmHWM pinned at cap' — flat/persisting vs the 94.52% WARN seen at 16:30Z, no change. Both left NEW for po/system-auditor triage."
+        },
+        "createdAt": "2026-08-12T17:51:29Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2e24b19b0315d4f37859024213d9822a53a2288128a61b723750f22f289cf4d9",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_report",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-12T18:00Z",
+          "matched_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "spawned": [
+            "bctc-analyst-slot-2"
+          ],
+          "one_shots": [],
+          "new_signals": 2,
+          "silent": false,
+          "classification": "FIRE",
+          "due_reasons": {
+            "bctc-analyst-slot-2": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-2": null
+          },
+          "note": "2 NEW WARN rows unchanged from 17:45Z (rag-service-1 A-30 96.52%, pdf-extractor-1 A-30 94.49%) — still pending po drain, no fresh crossing, no re-escalation."
+        },
+        "createdAt": "2026-08-12T18:06:31Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4d63f96ebbb414c94a258372bc50183528746db523543156cb757aa68af5a81b",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_report",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-12T18:15Z",
+          "matched_slots": [],
+          "won_slots": [],
+          "spawned": [],
+          "one_shots": [],
+          "new_signals": 3,
+          "silent": false,
+          "classification": "SIGNAL_ONLY",
+          "note": "3 NEW rows, none fresh: rag-service-1/pdf-extractor-1 A-30 WARN unchanged from 17:45Z, plus bca-20260812T180708Z (ESC-5 FPT deep-dive request, bridge-written by this dispatcher at 18:00Z tick) still pending dev-team drain."
+        },
+        "createdAt": "2026-08-12T18:21:26Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3b98b1ce3efb537e78c4e3a0fefb44b33072876bbd04870798deaec329e093cb",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T18:30:00Z",
+          "matched_slots": [],
+          "won_slots": [],
+          "spawned": [],
+          "silent": false,
+          "classification": "SIGNAL_ONLY",
+          "due_reasons": {},
+          "cadence_minutes": {},
+          "new_signals": 3,
+          "note": "0 slots due this tick. 3 NEW signal_queue rows seen, all unchanged from prior tick: rag-service-1 A-30 WARN 96.52%, pdf-extractor-1 A-30 WARN 94.49% (both to:po, unescalated), and esc-deepdive:FPT:Q1-2026:ESC-5 (to:dev-team, bridged by this dispatcher at 18:07Z tick, still undrained by dev-team). No fresh escalation — no severity crossings this tick."
+        },
+        "createdAt": "2026-08-12T18:36:00Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "99fc4e57300cb3b8252eb3b6f79bcdedd48ccadc270593382c2b782fb6d6c86d",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T18:45:00Z",
+          "matched_slots": [],
+          "won_slots": [],
+          "spawned": [],
+          "silent": false,
+          "classification": "SIGNAL_ONLY",
+          "due_reasons": {},
+          "cadence_minutes": {},
+          "new_signals": 3,
+          "note": "0 slots due this tick. 3 NEW signal_queue rows, all unchanged from prior tick: rag-service-1 A-30 WARN 96.52%, pdf-extractor-1 A-30 WARN 94.49% (both to:po, unescalated), and esc-deepdive:FPT:Q1-2026:ESC-5 (to:dev-team, bridged 18:07Z tick, still undrained). No fresh escalation."
+        },
+        "createdAt": "2026-08-12T18:51:00Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c8f8579f4d8f533b159e79fdbe3e2ea85996cb886ed116628ddad2c3f26e52c4",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T19:00:00Z",
+          "matched_slots": [],
+          "won_slots": [],
+          "spawned": [],
+          "silent": false,
+          "classification": "SIGNAL_ONLY",
+          "due_reasons": {},
+          "cadence_minutes": {},
+          "new_signals": 3,
+          "note": "0 slots due this tick. 3 NEW signal_queue rows, all unchanged: rag-service-1 A-30 WARN 96.52%, pdf-extractor-1 A-30 WARN 94.49% (both to:po, unescalated), and esc-deepdive:FPT:Q1-2026:ESC-5 (to:dev-team, bridged 18:07Z, now ~53min undrained). No fresh escalation this tick."
+        },
+        "createdAt": "2026-08-12T19:06:00Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0aeb03448e86fa1562e5d65785ac44774b95ecfe05d4225aac42bab5e8dae34e",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T19:15:00Z",
+          "matched_slots": [],
+          "won_slots": [],
+          "spawned": [],
+          "silent": false,
+          "classification": "SIGNAL_ONLY",
+          "due_reasons": {},
+          "cadence_minutes": {},
+          "new_signals": 3,
+          "note": "0 slots due this tick. 3 NEW signal_queue rows, all unchanged: rag-service-1 A-30 WARN 96.52%, pdf-extractor-1 A-30 WARN 94.49% (both to:po, unescalated), and esc-deepdive:FPT:Q1-2026:ESC-5 (to:dev-team, bridged 18:07Z, now ~68min undrained). No fresh escalation this tick."
+        },
+        "createdAt": "2026-08-12T19:21:00Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "902b0dcbaca872d81689c0ef17ee98e295c0172a27762a1a70226ff34e479b4a",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T19:30:00Z",
+          "matched_slots": [],
+          "won_slots": [],
+          "spawned": [],
+          "silent": false,
+          "classification": "SIGNAL_ONLY",
+          "due_reasons": {},
+          "cadence_minutes": {},
+          "new_signals": 3,
+          "note": "0 slots due this tick. 3 NEW signal_queue rows, all unchanged: rag-service-1 A-30 WARN 96.52%, pdf-extractor-1 A-30 WARN 94.49% (both to:po, unescalated), and esc-deepdive:FPT:Q1-2026:ESC-5 (to:dev-team, bridged 18:07Z, now ~83min undrained). No fresh escalation this tick."
+        },
+        "createdAt": "2026-08-12T19:36:00Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ed979f6ae694bdce80819e6c1a607443b77f245879a2e6bf81aa4c91865b2b4f",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T19:45:00Z",
+          "matched_slots": [
+            "chef-evening"
+          ],
+          "won_slots": [
+            "chef-evening"
+          ],
+          "spawned": [
+            "chef-evening"
+          ],
+          "silent": false,
+          "classification": "FIRE",
+          "due_reasons": {
+            "chef-evening": "cron"
+          },
+          "cadence_minutes": {
+            "chef-evening": null
+          },
+          "new_signals": 3,
+          "note": "1 slot fired: chef-evening (unified-agent, guaranteed). 3 NEW signal_queue rows, all unchanged: rag-service-1 A-30 WARN 96.52%, pdf-extractor-1 A-30 WARN 94.49% (both to:po, unescalated), and esc-deepdive:FPT:Q1-2026:ESC-5 (to:dev-team, bridged 18:07Z, now ~98min undrained). No fresh escalation."
+        },
+        "createdAt": "2026-08-12T19:51:00Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "016463bb65cb9fd426f2b35285e3a813a44a1d02d7bf1f5da635b69ea94511d4",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T20:00:00Z",
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "spawned": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "silent": false,
+          "classification": "FIRE",
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "news-scout-offhours": 240,
+            "market-watcher-offhours": 240,
+            "alert-commander-critical": null
+          },
+          "new_signals": 3,
+          "note": "3 signal_queue NEW rows unchanged since 17:37Z-18:07Z (2 WARN memory-pressure to:po, 1 HIGH ESC-5 deep-dive to:dev-team) — no severity crossing, no fresh escalation this tick."
+        },
+        "createdAt": "2026-08-12T20:07:00Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "52f6c807a5ad74e3cc47b7432b04aa38077c08d17323fd743325b788f70db409",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T20:15:00Z",
+          "matched_slots": [
+            "tnb-audit"
+          ],
+          "won_slots": [
+            "tnb-audit"
+          ],
+          "spawned": [
+            "tnb-audit"
+          ],
+          "silent": false,
+          "classification": "FIRE",
+          "due_reasons": {
+            "tnb-audit": "cron"
+          },
+          "cadence_minutes": {
+            "tnb-audit": null
+          },
+          "new_signals": 3,
+          "note": "3 signal_queue NEW rows unchanged since 17:37Z-18:07Z (2 WARN memory-pressure to:po, 1 HIGH ESC-5 deep-dive to:dev-team) — no severity crossing, no fresh escalation this tick. ESC-5 row now ~2h08m undrained by dev-team."
+        },
+        "createdAt": "2026-08-12T20:21:00Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "58ec40af02c9beac17a706b22bbf4251dba1f3adc62a4dbed712d578960e2c23",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T20:30:00Z",
+          "matched_slots": [],
+          "won_slots": [],
+          "spawned": [],
+          "silent": true,
+          "classification": "SIGNAL_ONLY",
+          "due_reasons": {},
+          "cadence_minutes": {},
+          "new_signals": 4,
+          "note": "4 NEW signal_queue rows: 3 unchanged since 17:37Z-18:07Z (2 WARN memory-pressure to:po, 1 HIGH ESC-5 deep-dive to:dev-team) + 1 fresh (tnb-20260812T2030Z, HIGH audit-handoff to:po, bridge-written this session at 20:33Z from tran-ngoc-bau's Bash-less output). No spawn this tick to route any of them to; PO-dashboard-visible via signal_queue scan, no telegram sent."
+        },
+        "createdAt": "2026-08-12T20:36:00Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a24d6667c3842ce079ffe7dade426bdd8d442ab3d7b0e78fcefff0cbd5aa1ec8",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T20:45:00Z",
+          "matched_slots": [],
+          "won_slots": [],
+          "spawned": [],
+          "silent": true,
+          "classification": "SIGNAL_ONLY",
+          "due_reasons": {},
+          "cadence_minutes": {},
+          "new_signals": 4,
+          "note": "4 NEW signal_queue rows unchanged since prior tick (2 WARN memory-pressure to:po, 1 HIGH ESC-5 deep-dive to:dev-team, 1 HIGH tnb audit-handoff to:po) — no severity crossing, no fresh escalation this tick."
+        },
+        "createdAt": "2026-08-12T20:51:00Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a29f07ef0ec420209994db3f8b51e075d1ada00c4aae23ed7807a64152d04ea7",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork_tick_telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T21:00:00Z",
+          "matched_slots": [
+            "bctc-analyst-slot-3"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-3"
+          ],
+          "spawned": [
+            "bctc-analyst-slot-3"
+          ],
+          "silent": false,
+          "classification": "FIRE",
+          "due_reasons": {
+            "bctc-analyst-slot-3": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-3": null
+          },
+          "new_signals": 4,
+          "note": "4 signal_queue NEW rows unchanged since prior tick (2 WARN memory-pressure to:po, 1 HIGH ESC-5 deep-dive to:dev-team, 1 HIGH tnb audit-handoff to:po) — no severity crossing, no fresh escalation this tick. bctc-analyst-slot-3 fire is a routine/earnings-mode cycle, unrelated to the pending ESC-5 dev-team row."
+        },
+        "createdAt": "2026-08-12T21:06:00Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c36750157b032c675a2bf2a213261470dd4be2ff4428a1ded5f6f271df21cec6",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "log",
+        "type": "dispatch-tick",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T21:15Z",
+          "classification": "SIGNAL_ONLY",
+          "slots_fired": [],
+          "new_signals": 4,
+          "note": "4 unchanged NEW rows persist (rag-service-1 A-30 WARN, pdf-extractor-1 A-30 WARN, bca FPT ESC-5 guard-held, tnb audit-handoff HIGH) — no fresh severity crossing, no escalation"
+        },
+        "createdAt": "2026-08-12T21:21:20Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5ac1f116e30aac2b6066580d9508bba470ef170358c3dd1dced9d39f6539a7ae",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "log",
+        "type": "dispatch-tick",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T21:30Z",
+          "classification": "SIGNAL_ONLY",
+          "slots_fired": [],
+          "new_signals": 4,
+          "note": "4 unchanged NEW rows persist (rag-service-1 A-30 WARN, pdf-extractor-1 A-30 WARN, bca FPT ESC-5 guard-held, tnb audit-handoff HIGH) — no fresh severity crossing, no escalation"
+        },
+        "createdAt": "2026-08-12T21:36:15Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b1d9e5becc52dc8bba6579f728e0a150267551b95504461730eb8715558e5b9b",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "log",
+        "type": "dispatch-tick",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T21:45Z",
+          "classification": "SIGNAL_ONLY",
+          "slots_fired": [],
+          "new_signals": 4,
+          "note": "4 unchanged NEW rows persist (rag-service-1 A-30 WARN, pdf-extractor-1 A-30 WARN, bca FPT ESC-5 guard-held ~3h38m unpicked, tnb audit-handoff HIGH) — no fresh severity crossing, no escalation"
+        },
+        "createdAt": "2026-08-12T21:51:13Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4cb062dde6e5fb4dc26426426efd5a888d023cd6d816a27dd491636dd9eb161a",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "log",
+        "type": "dispatch-tick",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T22:00Z",
+          "classification": "SIGNAL_ONLY",
+          "slots_fired": [],
+          "new_signals": 4,
+          "note": "4 unchanged NEW rows persist (rag-service-1 A-30 WARN, pdf-extractor-1 A-30 WARN, bca FPT ESC-5 guard-held ~3h53m unpicked, tnb audit-handoff HIGH) — no fresh severity crossing, no escalation"
+        },
+        "createdAt": "2026-08-12T22:06:15Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "03163a2a14d58f16a01467b62326b9c8fb2970d8a19d59fcf84e8130f27e0810",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "log",
+        "type": "dispatch-tick",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T22:15Z",
+          "classification": "SIGNAL_ONLY",
+          "slots_fired": [],
+          "new_signals": 4,
+          "note": "4 unchanged NEW rows persist (rag-service-1 A-30 WARN, pdf-extractor-1 A-30 WARN, bca FPT ESC-5 guard-held ~4h08m unpicked, tnb audit-handoff HIGH) — no fresh severity crossing, no escalation"
+        },
+        "createdAt": "2026-08-12T22:21:13Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fcf3abb8855c9090e56764c4c78c83388086bd6629391c46ff2a716768c55887",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "log",
+        "type": "dispatch-tick",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T22:30Z",
+          "classification": "SIGNAL_ONLY",
+          "slots_fired": [],
+          "new_signals": 5,
+          "note": "4 unchanged NEW rows persist (rag-service-1 A-30 WARN, pdf-extractor-1 A-30 WARN, bca FPT ESC-5 guard-held ~4h23m unpicked, tnb audit-handoff HIGH) plus 1 fresh row (cj-20260812T223235Z, code-janitor, LOW severity, team-tool-recheck writer dead since 06-23) — LOW severity, no escalation warranted"
+        },
+        "createdAt": "2026-08-12T22:36:17Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "68fe10aac89182c267d95fef312555ceac2425ea330b9173494c6ac9b0699a67",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "log",
+        "type": "dispatch-tick",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T22:45Z",
+          "classification": "SIGNAL_ONLY",
+          "slots_fired": [],
+          "new_signals": 5,
+          "note": "5 unchanged NEW rows persist (rag-service-1 A-30 WARN, pdf-extractor-1 A-30 WARN, bca FPT ESC-5 guard-held ~4h38m unpicked, tnb audit-handoff HIGH, cj team-tool-recheck writer LOW) — no fresh severity crossing, no escalation"
+        },
+        "createdAt": "2026-08-12T22:51:13Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a186ad2ae4d17aad0a18ae467cb4f50f4b784026e4692da41f2984870c14a6da",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T23:00Z",
+          "classification": "SIGNAL_ONLY",
+          "slots_fired": [],
+          "new_signals": 5,
+          "notes": "5 unchanged NEW rows carried forward (2x A-30 WARN, bca FPT ESC-5 HIGH guard-held ~4h53m unpicked, tnb audit-handoff HIGH, code-janitor LOW). No fresh escalation."
+        },
+        "createdAt": "2026-08-12T23:06:21Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9302db3bf043b47513c300a265703c19d660aee5668106535f57b4511aa8044e",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T23:15Z",
+          "classification": "SIGNAL_ONLY",
+          "slots_fired": [],
+          "new_signals": 5,
+          "notes": "5 unchanged NEW rows carried forward (2x A-30 WARN, bca FPT ESC-5 HIGH guard-held ~5h08m unpicked, tnb audit-handoff HIGH, code-janitor LOW). No fresh escalation."
+        },
+        "createdAt": "2026-08-12T23:21:13Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5c61735990e242991513ba4594f7cab67a4e8b6d103b1ffe28b38b531ba2c9a4",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T23:30Z",
+          "classification": "SIGNAL_ONLY",
+          "slots_fired": [],
+          "new_signals": 5,
+          "notes": "5 unchanged NEW rows carried forward (2x A-30 WARN, bca FPT ESC-5 HIGH guard-held ~5h23m unpicked, tnb audit-handoff HIGH, code-janitor LOW). No fresh escalation."
+        },
+        "createdAt": "2026-08-12T23:36:13Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ecc0a21f4921debfa7ca997189a903553410c45b85e5a22f8dad9ef6f2c6a4ab",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-12T23:45Z",
+          "classification": "SIGNAL_ONLY",
+          "slots_fired": [],
+          "new_signals": 5,
+          "notes": "5 unchanged NEW rows carried forward (2x A-30 WARN, bca FPT ESC-5 HIGH guard-held ~5h38m unpicked, tnb audit-handoff HIGH, code-janitor LOW). No fresh escalation."
+        },
+        "createdAt": "2026-08-12T23:51:13Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "21009ffb9dabd1813ee70771acfd99d9d4a0df9eff6c46485c32392a1929e4a2",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T00:00Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "bctc-analyst-slot-4",
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "due_reasons": {
+            "bctc-analyst-slot-4": "cron",
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-4": null,
+            "news-scout-offhours": 240,
+            "market-watcher-offhours": 240,
+            "alert-commander-critical": null
+          },
+          "max_parallel": 4,
+          "fanout_mode": "policy",
+          "batches": 1,
+          "errors": [],
+          "last_fired_timestamp": "2026-08-13T00:08:07Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-4",
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "new_signals": 5,
+          "notes": "4/4 slots claimed and spawned background — no held slots, no spawn failures. 5 unchanged NEW signal rows carried forward (2x A-30 WARN, bca FPT ESC-5 HIGH guard-held, tnb audit-handoff HIGH, code-janitor LOW), none addressed to a cowork agent this tick."
+        },
+        "createdAt": "2026-08-13T00:08:15Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9d4a40a33c99d5fa160221739d7b89cd585e28a80183e989c7a86210752b3b05",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T00:15Z",
+          "classification": "SIGNAL_ONLY",
+          "slots_fired": [],
+          "new_signals": 6,
+          "notes": "0-slot tick. bca-20260812T180708Z (FPT ESC-5, HIGH, guard-held) age ~6h08m, still unpicked. tnb-20260812T2030Z (audit-handoff c127, HIGH) age ~3h45m. New this window: bca-datacov-20260813T001500Z (DXG cash-flow overflow, LOW, bridged prior tick). No new escalation."
+        },
+        "createdAt": "2026-08-13T00:21:27Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "17a31961d470f5752157fbb658f509042d95dd52fdf9e3cc86179b7a3fb04a60",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T00:30Z",
+          "classification": "SIGNAL_ONLY",
+          "slots_fired": [],
+          "new_signals": 6,
+          "notes": "0-slot tick. bca-20260812T180708Z (FPT ESC-5, HIGH, guard-held) age ~6h23m, still unpicked. tnb-20260812T2030Z (audit-handoff c127, HIGH) age ~4h00m. No new escalation."
+        },
+        "createdAt": "2026-08-13T00:36:18Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2c98144786780fa6cb01d63cc9fa543004af22df1a0abcadd8aca97a91d48091",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T00:45Z",
+          "classification": "SIGNAL_ONLY",
+          "slots_fired": [],
+          "new_signals": 6,
+          "notes": "0-slot tick. bca-20260812T180708Z (FPT ESC-5, HIGH, guard-held) age ~6h38m, still unpicked by dev-team — no new severity crossing observed, monitoring continues. tnb-20260812T2030Z (audit-handoff c127, HIGH) age ~4h15m."
+        },
+        "createdAt": "2026-08-13T00:51:27Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f445585a5fa9739915e1a113a605cc6686c43da3e8c3578c8e996c8c26fe6424",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T01:00Z",
+          "classification": "SIGNAL_ONLY",
+          "slots_fired": [],
+          "new_signals": 6,
+          "notes": "0-slot tick. bca-20260812T180708Z (FPT ESC-5, HIGH, guard-held) age ~6h53m, still unpicked by dev-team. tnb-20260812T2030Z (audit-handoff c127, HIGH) age ~4h30m. No new escalation."
+        },
+        "createdAt": "2026-08-13T01:06:18Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "89f6ddb7b76df57fc0f0693fe789026508c62326bc283bc82f3bb54b3426804f",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T01:15Z",
+          "classification": "SIGNAL_ONLY",
+          "slots_fired": [],
+          "new_signals": 6,
+          "notes": "0-slot tick. bca-20260812T180708Z (FPT ESC-5, HIGH, guard-held) age ~7h08m, still unpicked by dev-team. tnb-20260812T2030Z (audit-handoff c127, HIGH) age ~4h45m. No new escalation."
+        },
+        "createdAt": "2026-08-13T01:21:17Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5b98ce85057057e70bf2960a284aff52b4ef3abf0b42d09e65f454ef27d59301",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T01:30Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "news-scout-sentiment"
+          ],
+          "due_reasons": {
+            "news-scout-sentiment": "cadence"
+          },
+          "cadence_minutes": {
+            "news-scout-sentiment": 240
+          },
+          "max_parallel": 1,
+          "fanout_mode": "policy",
+          "batches": 1,
+          "errors": [],
+          "last_fired_timestamp": "2026-08-13T01:36:37Z",
+          "last_fired_slots": [
+            "news-scout-sentiment"
+          ],
+          "last_fired_write_errors": null,
+          "new_signals": 6,
+          "notes": "bca-20260812T180708Z (FPT ESC-5, HIGH, guard-held) age ~7h23m, still unpicked by dev-team. tnb-20260812T2030Z (audit-handoff c127, HIGH) age ~5h00m. pressure-state emit returned stale_warning:true — flagging for next tick's freshness check, no action needed here."
+        },
+        "createdAt": "2026-08-13T01:36:47Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1abdf48b3023afd3f044e9fc98902b86d4ad401bcf445218e3fb2ee0fc4f380a",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T01:45Z",
+          "classification": "SIGNAL_ONLY",
+          "slots_fired": [],
+          "new_signals": 4,
+          "notes": "0-slot tick. Drain-check: 6 NEW rows persisted (sys x2 memory_pressure to:po, bca esc-deep-dive HIGH to:dev-team age~7h38m, tnb audit-handoff HIGH to:po age~5h15m, cj system-issue LOW to:po, bca-datacov LOW to:dev-team) — all to:po/to:dev-team, none routed to a spawned slot this tick, left NEW per Step 0a scope rule. emit_pressure_state ok, cycle_snapshot_promoted:false, no stale_warning field returned this call (contrast prior tick's stale_warning:true)."
+        },
+        "createdAt": "2026-08-13T01:51:31Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b5d3e93a7e25d863a0b8a8001099d60eb6c874a3050f4fc21db3658941a0757f",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T02:00Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "alert-commander-market"
+          ],
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "max_parallel": 1,
+          "fanout_mode": "policy",
+          "batches": 1,
+          "errors": [],
+          "last_fired_timestamp": "2026-08-13T02:06:24Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "new_signals": 4,
+          "notes": "1-slot WORK tick. Drain-check: 6 NEW rows persisted (sys x2 memory_pressure to:po, bca esc-deep-dive HIGH to:dev-team age~7h53m, tnb audit-handoff HIGH to:po age~5h30m, cj system-issue LOW to:po, bca-datacov LOW to:dev-team) — none routed to spawned slot, left NEW per Step 0a. task_claim ok (payload as JSON string). alert-commander spawned run_in_background. emit_pressure_state stale_warning:true again this call (2nd consecutive occurrence, prior tick had no stale_warning field) — flagging for next tick's pressure-cadence read per isStale=OR legacy-mode rule."
+        },
+        "createdAt": "2026-08-13T02:06:34Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "359308947f85b400bd23a24eabed9fa3faf744cc8c890e3028caa98dccb7bbb3",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T02:15Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "due_reasons": {
+            "chef-intraday": "cron",
+            "alert-commander-market": "cron"
+          },
+          "max_parallel": 2,
+          "fanout_mode": "policy",
+          "batches": 1,
+          "errors": [],
+          "last_fired_timestamp": "2026-08-13T02:21:26Z",
+          "last_fired_slots": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "new_signals": 4,
+          "notes": "2-slot WORK tick. Drain-check: same 6 NEW rows persisted (sys x2 memory_pressure to:po, bca esc-deep-dive HIGH to:dev-team age~8h08m, tnb audit-handoff HIGH to:po age~5h45m, cj system-issue LOW to:po, bca-datacov LOW to:dev-team) — none routed to spawned slots, left NEW per Step 0a. Both task_claim calls ok. chef-intraday + alert-commander-market spawned run_in_background. emit_pressure_state stale_warning field absent this call (not persistent — alternated: 01:45Z absent, 02:00Z true, 02:15Z absent again — no legacy-mode forcing warranted)."
+        },
+        "createdAt": "2026-08-13T02:21:38Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "10b7f0743e7e05178efa5d532c7b5f6cdead4f6d5bad3071dc22d9a29bf91bc1",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T02:30Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "alert-commander-market"
+          ],
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "max_parallel": 1,
+          "fanout_mode": "policy",
+          "batches": 1,
+          "errors": [],
+          "last_fired_timestamp": "2026-08-13T02:36:24Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "new_signals": 7,
+          "notes": "1-slot WORK tick. Drain-check: 7 NEW rows (6 carryover + new sys-20260813T022139-5634 db_integrity_breach WARN to:dev-team) — none routed to spawned slot, left NEW per Step 0a. task_claim ok. alert-commander spawned run_in_background. Standing observation carried forward: unified-agent (chef-intraday) notebook+synthesis JSON from 02:15Z tick landed uncommitted (Bash-less class defect) alongside a much larger pre-existing dirty/untracked backlog (~40+ cowork-team telemetry files uncommitted since 08-12T17:51, several other agents' notebooks modified) — flagged for dedicated janitor sweep, not remediated ad hoc this tick."
+        },
+        "createdAt": "2026-08-13T02:36:35Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0b41109ef36aba88ec7abf43d3ae8b9dc4ab4b667baa84425a7eec8a1d9a894e",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T02:45Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "alert-commander-market"
+          ],
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "max_parallel": 1,
+          "fanout_mode": "policy",
+          "batches": 1,
+          "errors": [],
+          "last_fired_timestamp": "2026-08-13T02:51:22Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "new_signals": 4,
+          "notes": "1-slot WORK tick. Drain-check: same 7 NEW rows persisted (2 sys memory_pressure WARN to:po, bca esc-deep-dive HIGH to:dev-team age~8h38m, tnb audit-handoff HIGH to:po age~6h15m, cj system-issue LOW to:po, bca-datacov LOW to:dev-team, sys db_integrity_breach WARN to:dev-team age~24m) — none routed to spawned slot, left NEW per Step 0a. task_claim ok. alert-commander spawned run_in_background. emit_pressure_state stale_warning:true again (3rd occurrence: 02:00Z true, 02:15Z absent, 02:30Z absent, 02:45Z true — intermittent, not persistent, no legacy-mode forcing yet)."
+        },
+        "createdAt": "2026-08-13T02:51:32Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "88fed17d982aab871b6406d71dcd7a20ef09800fa734bcb1276463e5081f1f54",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T03:00Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "alert-commander-market"
+          ],
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "max_parallel": 1,
+          "fanout_mode": "policy",
+          "batches": 1,
+          "errors": [],
+          "last_fired_timestamp": "2026-08-13T03:06:20Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "new_signals": 4,
+          "notes": "1-slot WORK tick. Drain-check: same 7 NEW rows persisted, none routed to spawned slot, left NEW per Step 0a. task_claim ok. alert-commander spawned run_in_background. emit_pressure_state stale_warning:true 2nd consecutive occurrence (02:45Z, 03:00Z both true) — watching next tick; if 3rd consecutive, treat as persistent per isStale=OR legacy-mode rule."
+        },
+        "createdAt": "2026-08-13T03:06:31Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9f47f81b48657d919a20690c0ae63734a25bcc59748ba94a3be3fa28721e179e",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T03:15Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "new_signals": 4,
+          "notes": "3rd consecutive stale_warning:true (02:45/03:00/03:15) — matches already-tracked FIX-COWORK-CADENCE-DANGLING-POLICY-ID live degradation pattern per reference_isstale_stale_warning_forces_legacy.md; not a new finding, no row minted. Slots still fired this tick. 7 NEW signal_queue rows unchanged, oldest now ~9h45m (bca esc-deep-dive HIGH to:dev-team)."
+        },
+        "createdAt": "2026-08-13T03:21:29Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "bcecf15abc550cc6071cb5a651ab9c454022005a2e7a019100c22141d19365fe",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T03:30Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "alert-commander-market"
+          ],
+          "new_signals": 4,
+          "notes": "4th consecutive stale_warning:true (02:45/03:00/03:15/03:30) — same tracked FIX-COWORK-CADENCE-DANGLING-POLICY-ID pattern, no new escalation. 7 NEW signal_queue rows unchanged, oldest ~10h (bca esc-deep-dive HIGH to:dev-team)."
+        },
+        "createdAt": "2026-08-13T03:36:29Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "73e33df32bc7226eb6238b70b79b710b500fd62771d634ee5e0c76cb300bef48",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T03:45Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "alert-commander-market"
+          ],
+          "new_signals": 4,
+          "notes": "5th consecutive stale_warning:true (02:45-03:45) — same tracked FIX-COWORK-CADENCE-DANGLING-POLICY-ID pattern, no new escalation. 7 NEW signal_queue rows unchanged, oldest ~10h15m (bca esc-deep-dive HIGH to:dev-team)."
+        },
+        "createdAt": "2026-08-13T03:51:22Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3d1635485a8c26ded2e1f56574205effb3b89ecefb78d50752b075eef95c7edc",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T04:00Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-market",
+            "alert-commander-critical"
+          ],
+          "new_signals": 8,
+          "notes": "New row sys db_integrity_breach MED to:dev-team 03:51:20Z — 2nd db_integrity_breach row from system-auditor this session (1st was WARN 02:21:39Z), left untouched per Step 0a. 6th consecutive stale_warning:true, same tracked FIX-COWORK-CADENCE-DANGLING-POLICY-ID pattern, no new escalation. 8 NEW signal_queue rows now, oldest ~10h30m (bca esc-deep-dive HIGH to:dev-team)."
+        },
+        "createdAt": "2026-08-13T04:06:37Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "72856070e716a6e05813563d1566275bf22778ac6b5a9ca106601e608c3404c8",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T04:15Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "new_signals": 4,
+          "stale_warning": true,
+          "stale_warning_streak": 7,
+          "notes": "7th consecutive stale_warning=true tick — known tracked pattern (FIX-COWORK-CADENCE-DANGLING-POLICY-ID, ref reference_isstale_stale_warning_forces_legacy.md), not re-escalated. Signal queue unchanged at 8 NEW rows since prior tick."
+        },
+        "createdAt": "2026-08-13T04:21:41Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "69ce08cf3304b254d2e7da88c8159dc8283737e67f1a8b072465346d2bb030e7",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T04:30Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "alert-commander-market"
+          ],
+          "new_signals": 4,
+          "stale_warning": true,
+          "stale_warning_streak": 8,
+          "notes": "8th consecutive stale_warning=true tick — known tracked pattern (FIX-COWORK-CADENCE-DANGLING-POLICY-ID, ref reference_isstale_stale_warning_forces_legacy.md), not re-escalated. Signal queue unchanged at 8 NEW rows since prior tick."
+        },
+        "createdAt": "2026-08-13T04:36:22Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cf5c4a388668d702d8d9b789eb6bb50b8eeaeb14dbc04b955b32f8164117654c",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T04:45Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "alert-commander-market"
+          ],
+          "new_signals": 4,
+          "stale_warning": true,
+          "stale_warning_streak": 9,
+          "notes": "9th consecutive stale_warning=true tick — known tracked pattern (FIX-COWORK-CADENCE-DANGLING-POLICY-ID, ref reference_isstale_stale_warning_forces_legacy.md), not re-escalated. Signal queue unchanged at 8 NEW rows since prior tick; tnb-20260812T2030Z (HIGH) now ~8h20m unpicked, bca-20260812T180708Z (HIGH) now ~10h45m unpicked."
+        },
+        "createdAt": "2026-08-13T04:51:23Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f9e9910f9e42e5fa63b07a521a629ae8d3ab6fb5c79c288fa058f66db3a2eddc",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T05:00Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "alert-commander-market"
+          ],
+          "new_signals": 4,
+          "stale_warning": true,
+          "stale_warning_streak": 10,
+          "notes": "10th consecutive stale_warning=true tick — known tracked pattern (FIX-COWORK-CADENCE-DANGLING-POLICY-ID, ref reference_isstale_stale_warning_forces_legacy.md), not re-escalated. Signal queue unchanged at 8 NEW rows since prior tick."
+        },
+        "createdAt": "2026-08-13T05:06:22Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "115c2e59855fdf1706d067a0c685517a35249beae6a05be93258461fcbc753d1",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-13T05:15Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "chef-morning",
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "new_signals": 4,
+          "stale_warning": true,
+          "stale_warning_streak": 11,
+          "notes": "11th consecutive stale_warning=true tick — known tracked pattern (FIX-COWORK-CADENCE-DANGLING-POLICY-ID, ref reference_isstale_stale_warning_forces_legacy.md), not re-escalated. Two unified-agent slots (chef-morning guaranteed daily + chef-intraday) co-fired same tick, same flow file, distinct slot_id — same pattern as alert-commander-market/critical precedent. Signal queue unchanged at 8 NEW rows."
+        },
+        "createdAt": "2026-08-13T05:21:39Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0c00a3c6f8f4cf867657f9719ab326cffb5cae291d425e937081860b326d8a72",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-13T05:30Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "alert-commander-market"
+          ],
+          "new_signals": 7,
+          "stale_warning_streak": 12,
+          "notes": "3 new CRITICAL/HIGH system-auditor rows landed this tick (sys-20260813T052222-052f db_data_stale CRITICAL, sys-20260813T052230-73bd db_data_integrity CRITICAL, sys-20260813T052237-7044 db_data_missing HIGH), all to:po, not routed to any cowork slot, left at status=NEW per Step 0a scope rule. Persisting aging rows unchanged: bca esc-deep-dive HIGH (~11h+ unpicked), tnb audit-handoff HIGH (~9h+ unpicked)."
+        },
+        "createdAt": "2026-08-13T05:36:44Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c5a7e07ed56c48cd20d92ef37613dff85dfc048956d18e8bb818cc0764d25905",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-13T05:45Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "alert-commander-market"
+          ],
+          "new_signals": 7,
+          "stale_warning_streak": 13,
+          "notes": "Same 11 NEW signal_queue rows persist unchanged since 05:30Z tick (incl. 3 CRITICAL/HIGH db_data_* rows from 05:22Z, still unpicked ~29min). No new arrivals this tick."
+        },
+        "createdAt": "2026-08-13T05:51:25Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a4ebd830ead28f0bd2fa363927554010fa97833f81441a080852c180f3f3de05",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "info",
+        "payload": {
+          "tick": "2026-08-13T06:00Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "alert-commander-market"
+          ],
+          "stale_warning_streak": 14,
+          "signal_queue_new_count": 12,
+          "notes": "12 NEW signal_queue rows persisting, none routed to fired slot per Step 0a scope rule. 1 fresh row this tick: sys-20260813T055155-6af6 (db_integrity_breach WARN to:dev-team). 3 CRITICAL/HIGH db_data_* rows (to:po, from 05:22Z) now ~38min unpicked. bca esc-deep-dive (HIGH to:dev-team, 18:07Z prior day) and tnb audit-handoff (HIGH to:po, 20:30Z prior day) both aging >9h unpicked."
+        },
+        "createdAt": "2026-08-13T06:06:46Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "459425015dd74100958c6f7a5950d801d3684b93dbec9f6ffe9e35b13150ef44",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "info",
+        "payload": {
+          "tick": "2026-08-13T06:15Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "stale_warning_streak": 15,
+          "signal_queue_new_count": 12,
+          "notes": "12 NEW signal_queue rows persisting unchanged since 06:00Z tick, none routed to either fired slot per Step 0a scope rule. 3 CRITICAL/HIGH db_data_* rows (to:po, from 05:22Z) now ~59min unpicked. bca esc-deep-dive (HIGH to:dev-team, 18:07Z prior day) and tnb audit-handoff (HIGH to:po, 20:30Z prior day) both aging ~12h+/~10h+ unpicked."
+        },
+        "createdAt": "2026-08-13T06:21:32Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e7630c2b0b69e7fa453509e5165b1e8a49cddd48840e45a8b1a725f003227f50",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-12T22:30:06Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d8dd1b419204997de0995fa6d003a0273daa4a363e5b8cd5b0e2790c970e0c22",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/unified-agent.md",
+          "tied_sections": "5:20260812000000000:## Session: 2026-08-12 (evening)\n22:20260812000000000:## Session: 2026-08-12 (eod)\n40:20260812000000000:## Session: 2026-08-12 (intraday)",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-12T19:54:28Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0dedc19416421e1f6c7cf00cf860f3f4a3f1881932d2901f90189aae7fb20f2e",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/unified-agent.md",
+          "tied_sections": "7:20260813000000000:## Session: 2026-08-13 (intraday 05:22 UTC)\n23:20260813000000000:## Session: 2026-08-13 (intraday 04:23 UTC)\n40:20260813000000000:## Session: 2026-08-13 (intraday 10:21 VN)",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-13T05:22:58Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "70a08d2372709d71abe0765cc3dd15578ae21b91f92de0847e167f810619240e",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_prune_dropped_newest_dated_section",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/unified-agent.md",
+          "line": 40,
+          "heading": "## Session: 2026-08-12 (intraday)",
+          "section_count": 5,
+          "non_sentinel_section_count": 3,
+          "sentinel_section_count": 2,
+          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+          "action_required": "review_dropped_section"
+        },
+        "createdAt": "2026-08-12T19:54:28Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "dcc3e3e1b9bfbd98283f1b48f7a9ffa86fb1bb296e0b2405bb565907e497c940",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_prune_dropped_newest_dated_section",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/unified-agent.md",
+          "line": 40,
+          "heading": "## Session: 2026-08-13 (intraday 10:21 VN)",
+          "section_count": 5,
+          "non_sentinel_section_count": 3,
+          "sentinel_section_count": 2,
+          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+          "action_required": "review_dropped_section"
+        },
+        "createdAt": "2026-08-13T05:22:58Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "564108da36e3e75fece931e324b3441141201115b0666a3b585a58ec0812252d",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/code-janitor.md",
+          "line_count": 247,
+          "cap": 200,
+          "byte_count": 15307,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-12T22:30:07Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "91a80901e575056573b8d71451f82ea93d6d317dcaaf315e82e0b24529b0b2a1",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/code-janitor.md",
+          "line_count": 247,
+          "cap": 200,
+          "byte_count": 15307,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-12T22:32:03Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "055b7e764b8dc2068a386426f68cb3113fa59b2c786a0611c28e0bba4129a018",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/code-janitor.md",
+          "line_count": 264,
+          "cap": 200,
+          "byte_count": 16599,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-12T22:32:57Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "35386c4e33483c9c0dc3249a229486a28c6c0a2293ab90de3f49fb53be46ac1c",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/code-janitor.md",
+          "line_count": 264,
+          "cap": 200,
+          "byte_count": 16599,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T04:30:04Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "04662b8e97e59b82ace9651ce4c5c7ac3c747b62a3666632890adaa063e32837",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/code-janitor.md",
+          "line_count": 264,
+          "cap": 200,
+          "byte_count": 16599,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T04:30:50Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ff428df9db115350800fea17ef0cf401f1588daaa7508d53378ddc902dc6e0fa",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 83,
+          "cap": 200,
+          "byte_count": 14124,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-12T22:30:07Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6c287488c70e5ab5beb38c0b16beb8c723f2a5ba3e9566f01b3759d6c5f41b76",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 83,
+          "cap": 200,
+          "byte_count": 14124,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-12T22:32:04Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "940d399060756b1ac3d4bbaf3f3d5dc61f7bcf813d0834e42ec90b4de5ae10d7",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 83,
+          "cap": 200,
+          "byte_count": 14124,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T04:30:05Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f5f56127364b11b47c68d3ce824acb10eb41e3dc7cf87df0a9ac95fe54810f63",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 83,
+          "cap": 200,
+          "byte_count": 14124,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T04:30:51Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "49f6402921a941963bedf4f47b4fdf8c75688ce278907083f9ac7ce65db8be3a",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 41,
+          "cap": 200,
+          "byte_count": 23477,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-12T17:44:40Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4a7bbaecc8d53e89b5f4f78055a13e793819e958d70a8a648f7797b9d7c31420",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 42,
+          "cap": 200,
+          "byte_count": 26750,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-12T17:45:18Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4a5db51f18c4b1721611a5efbe179ddb4e40969e14c24d1a1d2168ff874f16a4",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 42,
+          "cap": 200,
+          "byte_count": 26750,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-12T22:30:07Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1cbdc19a5b8ad112ded1f224738395912b7dc30cf895faa733cd370b9abf5691",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 42,
+          "cap": 200,
+          "byte_count": 26750,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-12T22:32:04Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8147b0f7d4f3753ed2f1b6870986dcb5ebf45d0c1ca50e5ec1d9729e3ee02a5b",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 42,
+          "cap": 200,
+          "byte_count": 26750,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T04:30:05Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "723c57f1684c636fc325710b03606ba21cb7faf26c7ccb64fa70472e6e938318",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 42,
+          "cap": 200,
+          "byte_count": 26750,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T04:30:51Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "aa8c64aab400ba23efc94e4381ead913680fbd0173beaf50a773d079de2ae478",
+        "source": "file",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "priority": "high",
+        "payload": "docs/handoffs/tnb-audit-latest.md",
+        "createdAt": "2026-08-12T20:30:00Z",
+        "drained_at": "2026-08-13T06:29:51Z",
+        "routed_to": "PO Step 0-TNB"
       }
     ],
     "last_po_triage_at": "2026-08-12T08:40:43Z",

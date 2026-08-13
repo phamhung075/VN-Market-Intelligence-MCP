@@ -1,0 +1,45 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork_tick_telemetry",
+  "payload": {
+    "tick": "2026-08-12T20:00:00Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "spawned": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "silent": false,
+    "classification": "FIRE",
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "alert-commander-critical": null
+    },
+    "new_signals": 3,
+    "note": "3 signal_queue NEW rows unchanged since 17:37Z-18:07Z (2 WARN memory-pressure to:po, 1 HIGH ESC-5 deep-dive to:dev-team) — no severity crossing, no fresh escalation this tick."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-12T20:07:00Z",
+  "_processed": {
+    "fingerprint": "016463bb65cb9fd426f2b35285e3a813a44a1d02d7bf1f5da635b69ea94511d4",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

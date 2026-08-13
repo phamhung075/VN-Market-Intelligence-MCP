@@ -1,0 +1,25 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "tick": "2026-08-13T04:00Z",
+    "classification": "SLOTS_FIRED",
+    "slots_fired": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-market",
+      "alert-commander-critical"
+    ],
+    "new_signals": 8,
+    "notes": "New row sys db_integrity_breach MED to:dev-team 03:51:20Z — 2nd db_integrity_breach row from system-auditor this session (1st was WARN 02:21:39Z), left untouched per Step 0a. 6th consecutive stale_warning:true, same tracked FIX-COWORK-CADENCE-DANGLING-POLICY-ID pattern, no new escalation. 8 NEW signal_queue rows now, oldest ~10h30m (bca esc-deep-dive HIGH to:dev-team)."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-13T04:06:37Z",
+  "_processed": {
+    "fingerprint": "3d1635485a8c26ded2e1f56574205effb3b89ecefb78d50752b075eef95c7edc",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

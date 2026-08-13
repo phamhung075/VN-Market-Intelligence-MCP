@@ -1,0 +1,24 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork_tick_report",
+  "payload": {
+    "tick": "2026-08-12T17:45Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "spawned": [],
+    "one_shots": [],
+    "new_signals": 2,
+    "silent": false,
+    "classification": "SIGNAL_ONLY",
+    "note": "2 NEW WARN rows, neither CRITICAL: (1) sys-20260812T173720-69e0 rag-service-1 A-30 96.52% 'loss of reclamation' — thread reappeared after clearing from NEW around 16:00Z, now worse than the prior 95.57% peak, still classified WARN by auditor not CRITICAL, no telegram sent per severity-crossing discipline; (2) sys-20260812T173729-22bd pdf-extractor-1 A-30 94.49% 'VmHWM pinned at cap' — flat/persisting vs the 94.52% WARN seen at 16:30Z, no change. Both left NEW for po/system-auditor triage."
+  },
+  "priority": "normal",
+  "createdAt": "2026-08-12T17:51:29Z",
+  "_processed": {
+    "fingerprint": "76b8dcfb07733288fb7c36d2723c156396a83d7334f1b59d002595470dd3b5cc",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

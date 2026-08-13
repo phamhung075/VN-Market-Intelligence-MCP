@@ -1,0 +1,51 @@
+{
+  "id": "bca-datacov-20260813T001500Z",
+  "ts": "2026-08-13T00:15:00Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "bctc-data-quality-anomaly",
+  "summary": "DXG get_cash_flow returns implausible-magnitude cash-flow figures while get_bctc_full has no data",
+  "severity": "LOW",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "ticker": "DXG",
+    "quarter": "Q1-2026",
+    "note": "get_bctc_full(code=DXG) returns 'Chua co du lieu BCTC' (21st+ consecutive routine cycle, unresolved) despite DXG_2026_Q1.pdf (uploaded 2026-08-03) and DXG_2026_Q2.pdf (uploaded 2026-08-01) both present in list_stored_pdfs. Cross-check this cycle: get_cash_flow(ticker=DXG, quarters=4) DOES return non-null period rows, but with astronomically implausible magnitudes suggesting an OCR/extraction overflow or digit-duplication bug, not real financial data:",
+    "implausible_values": [
+      {
+        "period": "Q1/2026",
+        "field": "operating_cf",
+        "value": 4225770766987766000,
+        "unit": "VND (as returned)"
+      },
+      {
+        "period": "Q1/2026",
+        "field": "free_cash_flow",
+        "value": 4225770766991257600,
+        "unit": "VND (as returned)"
+      },
+      {
+        "period": "Q4/2025",
+        "field": "financing_cf",
+        "value": 1795052231922000,
+        "unit": "VND (as returned)"
+      },
+      {
+        "period": "Q3/2025",
+        "field": "financing_cf",
+        "value": 1482418053419,
+        "unit": "VND (as returned)"
+      }
+    ],
+    "context": "For reference, DXG total assets are on the order of tens of trillions VND per its market cap/sector peers (e.g. VHM, VIC in the same sector-comparison group) — values in the 10^15-10^18 range are off by many orders of magnitude and not plausible for any line item on this company's cash-flow statement.",
+    "root_task_suggestion": "BCTC-HIST-VPS-BACKFILL / DXG extraction pipeline — bctc-analyst has no Bash/Glob grant to inspect the underlying OCR source or DB rows; reporting only, not diagnosing root cause.",
+    "not_a_duplicate_of": "the standing 'DXG Chua co du lieu BCTC' notebook carry-over (get_bctc_full gap) — this is a DISTINCT finding surfaced via a different tool (get_cash_flow) this cycle."
+  },
+  "_processed": {
+    "fingerprint": "6af5632b0c5b08f3244ffd10ee2fa1d9450e2c56ef82436ff24927744b578c1d",
+    "processedAt": "2026-08-13T06:29:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
