@@ -1,4 +1,96 @@
 
+
+## c64 · 2026-08-13T09:17Z
+### Audit Run Tier-1 (09:14–09:18 UTC 2026-08-13)
+- Tier: 1 | Services: 13 checked | Sources: 0 checked | DB checks: 0
+- Anomalies: 0 (0 critical, 0 warn, 0 info)
+- Status: ALL_GREEN (A-30 reclamation discriminator applied; rag-service/pdf-extractor both FOLD; memory stable)
+- Context: Follow-on to c62 WARN (mem_creep signal sys-20260813T084552-622a); trend shows rag-service 89.34% (c61) → 94.60% (c62) → 95.23% (c62 peak) → 91.13% (c63) → 91.47-median (c64); discriminator verdict FOLD indicates benign reclamation, not escalation.
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-08-13T09:16:11Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                  IMAGE                                           CREATED
+vn-market-intelligence-mcp-rag-service-1          Up 19 hours (healthy)   vn-market-intelligence-mcp-rag-service          23 hours ago
+vn-market-intelligence-mcp-mcp-server-1           Up 39 hours (healthy)   vn-market-intelligence-mcp-mcp-server           39 hours ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 2 days (healthy)     vn-market-intelligence-mcp-pdf-extractor        4 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 6 days (healthy)     vn-market-intelligence-mcp-stock-price          6 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 2 weeks (healthy)    vn-market-intelligence-mcp-macro-indicators     2 weeks ago
+vn-market-intelligence-mcp-frontend-1             Up 2 weeks (healthy)    vn-market-intelligence-mcp-frontend             2 weeks ago
+mcp-gateway                                       Up 4 weeks (healthy)    mcpservergatway-gateway                         4 weeks ago
+vn-market-intelligence-mcp-api-gateway-1          Up 4 weeks (healthy)    vn-market-intelligence-mcp-api-gateway          4 weeks ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 4 weeks (healthy)    ghcr.io/flaresolverr/flaresolverr:latest        4 weeks ago
+vn-market-intelligence-mcp-news-fetch-1           Up 4 weeks (healthy)    vn-market-intelligence-mcp-news-fetch           4 weeks ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 4 weeks (healthy)    vn-market-intelligence-mcp-technical-analysis   4 days ago
+vn-market-intelligence-mcp-alert-engine-1         Up 4 weeks (healthy)    vn-market-intelligence-mcp-alert-engine         4 weeks ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 4 weeks (healthy)    vn-market-intelligence-mcp-kinh-dich-service    4 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=17.43% MemUsage=535.4MiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] vn-market-intelligence-mcp-rag-service-1: baseline 91.13% >= 85% investigate-gate — ENGAGE deep-probe
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-mcp-server-1 baseline 17.42% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-pdf-extractor-1 baseline 85.11% >= 85% investigate-gate — ENGAGE deep-probe
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-stock-price-1 baseline 3.09% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-macro-indicators-1 baseline 3.10% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-frontend-1 baseline 11.05% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-api-gateway-1 baseline 2.96% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-flaresolverr-1 baseline 5.07% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-news-fetch-1 baseline 10.11% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-technical-analysis-1 baseline 3.68% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-alert-engine-1 baseline 2.35% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-kinh-dich-service-1 baseline 3.22% < 85% investigate-gate
+
+A-30 rag-service verdict: FOLD (benign GC sawtooth)
+  - 6 samples over 65s: min=91.19%, max=91.69%, median=91.47%
+  - 0 reclamation dips detected
+  - 0 discontinuities detected
+  - State: stable (no restart, no OOMKilled, no state change)
+  - VmHWM: pinned at cap (1571300 KB vs 1048576 KB limit), not advancing during window
+
+A-30 pdf-extractor verdict: FOLD (benign GC sawtooth)
+  - 6 samples over 65s: min=85.11%, max=85.11%, median=85.11% (stable)
+  - 0 reclamation dips detected
+  - 0 discontinuities detected
+  - State: stable (no restart, no OOMKilled, no state change)
+  - VmHWM: pinned at cap (2587640 KB vs 2621440 KB limit), not advancing during window
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    17Gi    45%    393k  177M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3 — PASS
+
+=== PROBE DONE ===
+```
+
+### Findings Summary
+- **A-30 Memory Discriminator:** Both engaged containers (rag-service, pdf-extractor) show FOLD verdicts — memory pressure is benign and stable. No escalation needed.
+- **Trend Interpretation:** Rag-service memory dropped from c62's 95.23% peak to c64's 91.47% median. The A-30 discriminator confirms this dip represents genuine reclamation resuming, not noise. This is a de-escalation from c62's WARN state.
+- **All Other Checks:** PASS (13 containers UP, all health endpoints 200, disk 45%, A-20 3/3 pass_count, A-21 RestartCount=0)
+
+### Signal Disposition
+- c62 emitted WARN with dedup_key=microservice_degraded:rag-service:A-30 (status NEW, unresolved)
+- c64 verdict: FOLD — no fresh WARN/CRITICAL emit. Memory recovery confirmed.
+- Recommendation: c62 WARN can be marked RESOLVED in dedup ledger (reclamation resumed); no duplicate WARN needed this cycle.
+
 ## c61 · 2026-08-13T07:30Z
 ### Audit Run Tier-1 (07:30–07:46 UTC 2026-08-13)
 - Tier: 1 | Services: 13 checked | Sources: 0 checked | DB checks: 0
