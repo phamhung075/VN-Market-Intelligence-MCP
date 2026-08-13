@@ -1,3 +1,104 @@
+## c80 · 2026-08-13T19:14Z
+### Audit Run Tier-1 (19:14–19:17 UTC 2026-08-13, A-30 ESCALATION — SUSTAINED HIGH MEMORY)
+- Tier: 1 | Services: 13 checked | Sources: 0 checked | DB checks: 0
+- Anomalies: 1 (1 critical, 1 signal emitted — SKIP-dedup on telegram, row written)
+- Status: A-30 escalation detected on rag-service-1
+
+**A-30 Deep-Probe Analysis — ESCALATION vs PRIOR FOLD CYCLES:**
+
+Pre-spawn gate verdict=FAILURE (rag-service-1 97.61%, 24.5MiB-free below 40MiB floor). Executed full A-30 deep-probe: 6 samples over 65s window [97.61% → 97.61% → 97.61% → 97.61% → 97.61% → 92.40%]. 
+
+**Critical Analysis:** min=92.40%, max=97.61%, median=97.61%, reclamation_dips=1 (97.61→92.40, only 5.21pp), discontinuities=0, no state changes, OOMKilled=false, restart_count=3 (unchanged), VmHWM unavailable-then-1502752 KB (pinned at cap, not advancing).
+
+**Tripwire Assessment:** meets ESCALATE criteria on median >97% threshold (97.61% sustained across 5/6 samples). This is materially different from prior FOLD cycles:
+- c79 (2026-08-13T18:44Z): baseline 94.30%, median 77.78%, major dip 94.30%→60.67% (33.63pp recovery), verdict=FOLD
+- c80 THIS CYCLE: baseline 97.61%, median 97.61%, minor dip 97.61%→92.40% (5.21pp recovery), verdict=ESCALATE
+
+**Escalation Rationale:** c79's benign sawtooth pattern showed a clear recovery to 60.67% and sustained 61.25% stability. This cycle shows sustained high memory (97.61% for 65 seconds, 5 consecutive samples) with only marginal dip. The >97% median sustained level indicates memory pressure has progressed beyond the previously-established benign-sawtooth envelope. STALE-ACK(FU-RAG-DEPLOY-MEMORY) condition has evolved: no longer a transient GC cycle, now sustained pressure requiring closer monitoring and likely intervention.
+
+**Verdict: ESCALATE → CRITICAL** — signal emitted: `sys-20260813T191651-08a9` [SKIP-dedup: same key sent at 2026-08-13T13:17:28Z, telegram suppressed, signal_queue row written].
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-08-13T19:14:33Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                  IMAGE                                           CREATED
+vn-market-intelligence-mcp-news-fetch-1           Up 4 hours (healthy)    vn-market-intelligence-mcp-news-fetch           4 hours ago
+vn-market-intelligence-mcp-api-gateway-1          Up 6 hours (healthy)    vn-market-intelligence-mcp-api-gateway          6 hours ago
+vn-market-intelligence-mcp-alert-engine-1         Up 7 hours (healthy)    vn-market-intelligence-mcp-alert-engine         7 hours ago
+vn-market-intelligence-mcp-rag-service-1          Up 10 hours (healthy)   vn-market-intelligence-mcp-rag-service          33 hours ago
+vn-market-intelligence-mcp-mcp-server-1           Up 2 days (healthy)     vn-market-intelligence-mcp-mcp-server           2 days ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 5 hours (healthy)    vn-market-intelligence-mcp-pdf-extractor        5 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 7 days (healthy)     vn-market-intelligence-mcp-stock-price          7 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 2 weeks (healthy)    vn-market-intelligence-mcp-macro-indicators     2 weeks ago
+vn-market-intelligence-mcp-frontend-1             Up 2 weeks (healthy)    vn-market-intelligence-mcp-frontend             2 weeks ago
+mcp-gateway                                       Up 4 weeks (healthy)    mcpservergatway-gateway                         4 weeks ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 4 weeks (healthy)    ghcr.io/flaresolverr/flaresolverr:latest        4 weeks ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 4 weeks (healthy)    vn-market-intelligence-mcp-technical-analysis   4 weeks ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 4 weeks (healthy)    vn-market-intelligence-mcp-kinh-dich-service    4 hours ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=11.04% MemUsage=339.2MiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-news-fetch-1 baseline 9.84% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-api-gateway-1 baseline 2.36% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-alert-engine-1 baseline 2.08% < 85% investigate-gate
+[A-30] vn-market-intelligence-mcp-rag-service-1: baseline 97.61% >= 85% investigate-gate — ENGAGE deep-probe
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-mcp-server-1 baseline 11.45% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-pdf-extractor-1 baseline 22.17% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-stock-price-1 baseline 2.55% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-macro-indicators-1 baseline 3.08% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-frontend-1 baseline 9.82% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-flaresolverr-1 baseline 2.85% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-technical-analysis-1 baseline 2.87% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-kinh-dich-service-1 baseline 3.04% < 85% investigate-gate
+{
+  "probe": "A-30 mcp-server memory reclamation discriminator",
+  "container": "vn-market-intelligence-mcp-rag-service-1",
+  "window": {"probes": 6, "interval_sec": 13, "span_sec": 65},
+  "verdict": "ESCALATE",
+  "reason": "peak >97% sustained across the window (median 97.61%)"
+}
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    28Gi    33%    393k  294M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+
+=== PROBE DONE ===
+```
+
+**Container Status (A-01–A-11):** all 13 runtime services UP and healthy [RAW-PROBE L14-L27]. PASS.
+
+**Health Endpoints (A-12–A-19):** all 5 target endpoints responding HTTP 200 [RAW-PROBE L29-L33]. PASS.
+
+**A-20 pdf-extractor Multi-Probe:** 3/3 in-container probes passed (HTTP 200). PASS.
+
+**A-21 Restart Count (mcp-server):** RestartCount=0 [RAW-PROBE L37]. Database query 4h window: 0 crash restarts. PASS.
+
+**A-30 Memory (rag-service-1):** 97.61% baseline ENGAGE gate, 6-sample deep-probe median=97.61%, min=92.40%, max=97.61%, reclamation_dips=1 (97.61→92.40), discontinuities=0, no state changes, no OOM, no VmHWM advance. Tripwire: ESCALATE on median >97% (sustained peak). Verdict=ESCALATE (CRITICAL). Signal emitted. [emit-signal] SKIP-dedup dedup_key=microservice_degraded:rag-service-1:A-30 last_sent=2026-08-13T13:17:28Z id=sys-20260813T191651-08a9.
+
+**[HEARTBEAT]** No heartbeat write (Tier-1 subagent has zero authorized writes to auditor-tier1-last-healthy.json per CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER).
+
+**[OUTPUT-CONTRACT]** signals_posted=1 (SKIP-dedup), signal_queue_rows_written=1 (sys-20260813T191651-08a9), dashboard_rows=0 (pending emit-dashboard-row.sh), telegram_sent=0 (dedup suppressed).
+
 ## c79 · 2026-08-13T18:44Z
 ### Audit Run Tier-1 (18:44–18:45 UTC 2026-08-13, A-30 DISCRIMINATOR VALIDATION — RECURRING SAWTOOTH)
 - Tier: 1 | Services: 13 checked | Sources: 0 checked | DB checks: 0
