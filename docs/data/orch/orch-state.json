@@ -592,6 +592,21 @@
           "detail_ref": "docs/data/orch/archive/2026-07.json (search FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE, qa_regate_round2_by: qa)",
           "reported_by": "qa (verify-committed pass, cycle-686), relayed by dev-team dispatcher"
         }
+      },
+      {
+        "id": "sys-20260813T115037-cons",
+        "ts": "2026-08-13T11:50:37Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "orch-conservation-check blocks the routine Step-1 durable-inbox clear: 147 fully-triaged envelopes (PO commit f01645c90, verified) cannot be subtracted from pending_triage_inbox because signal_total floor-ratio (0.5) is computed against signal_queue.rows (31) alone dwarfed by the inbox — candidate 31/178=0.174 << 0.5 floor. ORCH_APPLY_ALLOW_SHRINK is scoped ONLY to scripts/orch-cold-evict.sh + docs/agents/pm/flow/task-archive.md (orch-conservation-check.mjs header, explicit NEVER-elsewhere language) — dev-team Step 1 is not an authorized caller, so I did not bypass it.",
+        "severity": "WARN",
+        "status": "OPEN",
+        "payload_ref": null,
+        "provenance": "dev-team",
+        "audit_cycle_tag": "dev-team:2026-08-13T11:07Z",
+        "dedup_key": "orchstate-conservation-guard-blocks-durable-inbox-clear-20260813",
+        "disposition_needed": "Decide: (a) widen ORCH_APPLY_ALLOW_SHRINK/ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS-style whitelist to cover dev-team Step-1 consumed-envelope clears under some caller-scoped guard, or (b) design an incremental multi-tick partial-clear that stays within FLOOR_RATIO=0.5 each write, or (c) exempt pending_triage_inbox from signal_total once every entry is independently confirmed dispositioned (e.g. cross-check against decision_journal). pending_triage_inbox is UNMODIFIED (still 147, no data loss) pending this decision. A near-term side effect: next dev-team tick will likely re-spawn Step-1 PO triage since the inbox is non-empty — expected to fold quickly since all 147 are already reflected on the board."
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
