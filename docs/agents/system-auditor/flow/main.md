@@ -117,17 +117,17 @@ jq -c '{
   microservices: [.project.microservices[] | {id, external_port, zone}],
   host_runtime_set: .project.infrastructure.docker.host_runtime_set.services,
   not_deployed_by_design: .project.infrastructure.docker.host_runtime_set.not_deployed_by_design,
-  data_sources: [.project.data_sources[] | {id, expected_cadence_hours, stale_threshold_hours, geo_blocked}],
+  data_sources: [.project.data_sources[] | {id, expected_cadence_hours, stale_threshold_hours, geo_blocked, sla}],
   databases: [.project.infrastructure.databases[] | {id, path}],
   zones: [.project.zones[] | {id, specialist}]
 }' docs/data/system-map.json
 ```
 
 Field semantics (unchanged from the prior full-read — projection only, no consumption change):
-- `microservices[]` → service ids, external_ports, zones (full catalog — for health endpoint ports and zone_owner lookup)
+- `microservices[]` → service ids, external_ports, zones (full catalog — for health endpoint ports and zone_owner lookup). `crons[]` (per-microservice cron catalog) is deliberately NOT projected: A-29 (§Cron Fire Check below) stopped reading `.project.microservices[0].crons` as of `FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP` (2026-08-08) — its inventory source is now the live `GET /api/cron-status` endpoint — and nothing else in this flow consumes that array; carrying it here would just add ~70 unused entries.
 - `host_runtime_set` → **INTENDED runtime set** — the only set used for container-UP checks in Tier-1. Services NOT in this list are not deployed by design and MUST be reported INFO/grey, never CRITICAL/WARN.
 - `not_deployed_by_design` → cross-check list for INFO labelling
-- `data_sources[]` → source ids, expected_cadence_hours, stale_threshold_hours, geo_blocked
+- `data_sources[]` → source ids, expected_cadence_hours, stale_threshold_hours, geo_blocked, sla (the optional per-source SLA override block — `mode`, `default_stale_threshold_hours`, `earnings_window.*` — required by §SLA Resolver below; carried through so that section's "read ALL values from system-map.json — never hardcode" is satisfiable from this one projection instead of silently falling back to the flat `stale_threshold_hours` for the 2 sources, `bctc-discover`/`bctc-push`, that carry an `sla` block. FIX-TE-T14-SLA-RESOLVER-FIELD-DROP 2026-08-13: QA's Direct-Commit Verify on the original jq-only rewrite found `sla` missing from this key — restored here after confirming A-29's `crons` half of the same finding had already gone moot via the 2026-08-08 A-29 rewrite above (independent fix, unrelated to this Step 0c change).)
 - `databases[]` → DB ids, paths
 - `zones[]` → zone id → specialist (zone_owner)
 
