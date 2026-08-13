@@ -51,3 +51,13 @@ touches exactly `.claude/skills/dispatch-claim/SKILL.md` + `.claude/skills/task-
 - SKILL.md L11 "Write protocol" cited a stale pre-orch-apply.sh brief (bare temp-then-rename), contradicting its own CONCURRENT WRITERS CAS-guard mandate 2 sections below + `dashboard-protocol.md`'s WRITE step 4 (already correct). Fixed to name `orch-apply.sh` directly — scope limited to SKILL.md per task instruction; the same-class stale header line in `dashboard-protocol.md`'s own preamble (L12) was left untouched (out of explicit scope), flagged for follow-up.
 **why-decision:** Task named exactly 4 files; investigated each rather than trusting the row's "phantom" framing was still current. main.md/tier1-probe.md's phantom-FILE-path defect was already closed; init.md and main.md's RETURN line still carried the phantom-PROTOCOL class (routing claims to a file nobody reads) the task title targets.
 **why-change:** Did NOT flip the board row BACKLOG→REVIEW or touch `orch-state.json` — own init.md `commit_zone` excludes it from agent-father commits except a signal-queue DONE-mark, and this dispatch (direct po manual-dispatch board row, no linked signal_queue row) has no such exception. Doc work is complete; only the board-row write is deferred to router/po.
+
+### STEP agent-father-S3 · agent-father · 2026-08-13T13:25:28Z
+**task-id:** UC-ASL-P6
+**what-done:** Closed QA's CHANGES_REQUESTED gap — trimmed `signal-dashboard/SKILL.md:22-24`'s manual mtime-record/check/retry instruction, replaced with text naming `scripts/orch-apply.sh` as sole CAS-guard provider for shell/flow writes.
+**what-considered:**
+- QA's git-blame finding re-verified live before editing: L22-24 still read the pre-fix "Shell/flow code MUST record mtime..." text, S2's 2026-07-31 edit only touched L11, confirmed unchanged.
+- Kept TS `appendSignalQueueRow()` CAS-loop description (L18-21) untouched — brief's Change (2)(b) scopes the trim to the shell/flow instruction only; the TS function's own internal CAS loop is real and orthogonal, not the contradiction QA flagged.
+- First edit pass (4-line wrap) pushed the file to 121L, breaching its own `≤120L` size-justification cap — reworded to fit 3 lines, restored 120L. Appended a chronological `UC-ASL-P6 2026-08-13` note to the frontmatter comment (file's own established convention) documenting the trim.
+**why-decision:** Doc-only fix, exact text matched QA's suggested replacement and the architecture brief's Change (2)(b) wording; no re-test needed per QA note.
+**why-change:** None — closes the row per QA's own routing (no task branch, direct-commit, no fixer handoff needed).

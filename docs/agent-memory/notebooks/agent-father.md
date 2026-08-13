@@ -8,6 +8,33 @@
      explicit YYYY-MM-DD token. Nothing deleted; full record in the archive file and git
      history. -->
 
+## EDIT 2026-08-13T13:27:20Z — task UC-ASL-P6 (dev-team Review-Lane SECONDARY-Drain, `next_agent` self-named)
+- Row's own `status_note` (QA, CHANGES_REQUESTED) re-verified live before acting: QA RAW-confirmed my
+  2026-07-31 commit `2728636fd` (init.md/flow/main.md DASHBOARD.md-phantom purge) real, on `main`
+  ancestry, durable through 6 days of later edits — but flagged the task's own cited architecture brief
+  (`2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P6` Change (2)(b)) also
+  required trimming `.claude/skills/signal-dashboard/SKILL.md:22-24`'s manual mtime-record/check/retry
+  instruction, which my 2026-07-31 pass only half-fixed (line 11, not 22-24). `git blame` re-confirmed:
+  those 3 lines unchanged since 2026-06-07, untouched by `2728636fd`.
+- Applied QA's exact suggested fix: replaced the "Shell/flow code MUST record mtime..." sentence with
+  text naming `scripts/orch-apply.sh` as the sole CAS-guard provider for shell/flow writes — removes the
+  contradiction with line 11's own orch-apply mandate + `CANONICAL:SSOT-W1-ORCH-APPLY-WRAPPER`. Left the
+  TS `appendSignalQueueRow()` CAS-loop description (L18-21) untouched — out of the brief's cited scope.
+- First edit pass (4-line wrap) pushed the file to 121L, breaching its own `≤120L` size-justification
+  header — reworded to fit 3 lines, restored 120L before committing. Appended a chronological
+  `UC-ASL-P6 2026-08-13` note to the frontmatter comment (file's own established convention for this
+  file specifically — 4 prior dated notes already there).
+- **Action taken:** self-certified `DONE_VERIFIED` and moved the row `.task_board.review[]` →
+  `.task_board.done_verified[]` via `scripts/orch-apply.sh` — per SECONDARY-Drain's owner-triage design
+  (QA's own note explicitly routed this here as doc-only/no-re-test-needed, no fixer/re-QA loop; no task
+  branch exists to route through PRIMARY QA-Drain anyway). Decision journal:
+  `sprint-ULTRACODE-AUDIT-FIXALL-agent-father.md` STEP `agent-father-S3`.
+- Board disposition (for router/PO — `orch-state.json` excluded from my `commit_zone`,
+  `FU-AGENT-FATHER-ORCH-SCOPE`): write applied to the live file, deliberately left uncommitted, same
+  precedent as every prior closeout above. Gateway-less session (no `mcp__gateway__call_tool` in this
+  session's tool list) — did not attempt `task_release` on the outer `task:UC-ASL-P6` lock; router
+  dispatch note said it already owns that lock and releases it itself.
+
 ## EDIT 2026-08-12T14:02:17Z — task DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING (dev-team Review-Lane SECONDARY-Drain, `next_agent` self-named)
 - Row's own `agent_father_disposition_20260805T1658` recommended (a week ago) a narrow QA dispatch of
   brief §7 T-7/T-8 flow-fixture walkthroughs, decoupled from the 6-way `DESIGN-COWORK-FANOUT-T8-QA-TEST-
