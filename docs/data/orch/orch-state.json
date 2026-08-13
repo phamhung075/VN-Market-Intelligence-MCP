@@ -156,23 +156,6 @@
         }
       },
       {
-        "id": "sys-20260812T090535-7dc5",
-        "ts": "2026-08-12T09:05:35Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "A-30 FAIL: rag-service memory pressure sustained >93% — loss of reclamation",
-        "severity": "WARN",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T09:00Z",
-        "dedup_key": "microservice_degraded:rag-service:A-30",
-        "triaged_at": "2026-08-12T10:02:07Z",
-        "triaged_by": "po",
-        "disposition": "FOLD onto OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX (ready[], P0, next_agent=ops) — no new row. All 3 are the same A-30 rag-service condition on dedup_key microservice_degraded:rag-service:A-30. Not a detection gap and not a new leak: the code fix (4c8c601e6, LanceDB IvfPq + malloc_trim) is confirmed an ancestor of HEAD and the running image is the pre-fix 2026-08-08T08:10:53Z build, so every sample in this chain measured undeployed code. The rebuild row was promoted into PO's BATCH for direct ops dispatch at 2026-08-12T10:02:07Z."
-      },
-      {
         "id": "sys-20260812T093525-1b2b",
         "ts": "2026-08-12T09:35:25Z",
         "from": "system-auditor",
