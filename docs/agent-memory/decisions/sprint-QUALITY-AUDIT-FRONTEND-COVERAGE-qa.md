@@ -15,6 +15,15 @@
 **why-decision:** All re-run independently: 36/36 targeted tests pass, full suite 2183/2185 (2 pre-existing QUE-TOOLTIP/QUE-REFERENCE failures traced to unrelated commit `067e484d8`, confirmed predate + out-of-zone), tsc 0 errors, mock-guard PASS. Live curl on running container: `/dashboard/bctc-eval` 200 (no error boundary, real MBB/HVN/HPG rows render), `/api/bctc-eval` 200 (no trailing-slash 404).
 **why-change:** No change from plan — verdict APPROVED/DONE_VERIFIED.
 
+### STEP qa-S3 · qa · 2026-08-13T13:10:00Z
+**task-id:** FE-PG-INTEL-FRESH-FIX
+**what-done:** Direct-commit verify of `eddeb7cbd` (row had no `commit`/`files[]` — derived via `git log -- dashboard.intel.tsx`, cross-checked against dev-frontend's own journal STEP dev-frontend-S4, third sibling in the FE-PG-*-FRESH-FIX family).
+**what-considered:**
+- Trust review_note prose alone vs re-run everything myself (per `feedback_router_verify_raw_not_badges`, and the dispatcher's explicit "apply same rigor, not same conclusion" instruction) — re-ran.
+- Re-verify Playwright suite too vs match the depth of the two immediately-prior sibling verify cycles (cycle-688/689, neither re-ran Playwright, both anchored on unit+tsc+mock-guard+live-curl) — matched sibling depth, no Playwright re-run.
+**why-decision:** Commit on main ancestry; `git show --stat`+diff matches claimed files exactly (dashboard.intel.tsx FreshnessBadge+useFreshnessRevalidator("daily") wiring, new 6-case test file). Backend `data_asof` field confirmed live (`marketDigestHandler.ts:71,169`). Targeted 6/6 new unit tests GREEN; full suite 2183 pass/2 fail/2185 (same pre-existing QUE-REFERENCE-PAGE-detail/QUE-TOOLTIP-DRY-1a "exactly 2 own keys" fails, neither file touched by this commit — confirmed disjoint); `tsc --noEmit` clean; `mock-guard.sh` PASS. PENDING-REBUILD claim re-checked live (not trusted): `docker inspect` frontend container Created=2026-07-24T18:02:36Z predates this 07-29 commit; `curl :3001/dashboard/intel` 200 OK, zero occurrences of "Cập nhật lúc"/FreshnessBadge markup — confirms live container genuinely does not yet serve the fix.
+**why-change:** No change from plan — verdict APPROVED/DONE_VERIFIED, zero code ISSUE.
+
 ### STEP qa-S2 · qa · 2026-08-06T19:40:00Z
 **task-id:** FE-PG-QUALITY-AUDIT-LASTVERIFIED-RENDER-FIX
 **what-done:** Direct-commit verify of `3a9803677` — confirmed on main ancestry, author-date 2026-07-25T14:05:48Z (matches row's own `reviewed_at` 14:08:07Z within 2min); `git show --stat` matches the row's single claimed file exactly (`dashboard.quality-audit.tsx`) plus 3 undeclared sibling files (new `check-verification.ts`+test, new e2e spec) — read all 4 directly, code matches review_note prose claim-for-claim.
