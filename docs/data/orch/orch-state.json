@@ -92,11 +92,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-08-13T17:19:01Z",
-    "updated_by": "router (WF-1b head-reset, FIX-VNINDEX-CACHE-STARTUP-PURGE closed by qa)"
+    "status": "in_progress",
+    "active_task_id": "FACTORY-INFRA-split-agentSignalStore",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-INFRA-split-agentSignalStore — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-13T17:51:17Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -575,14 +576,6 @@
         "scope_in": "RC-IDLE-LOOPS §1.1 (dev-team+auditor idle gates), RC-DETECTOR §1.2 (4 promoted detector fixes + READ->RESOLVED closure wiring), RC-DRIFT §1.3 (quarantine zero-reader freeze flag + parity-test extension + narrative number->pointer). Bounded, no redesign, ships on main today.",
         "scope_out": "Phase-2 STRUCTURAL — RC-VERIF+RC-CONVERGE (orch-apply completion gate + DEGRADED enum + recurring-bug re-arm), RC-ORCHMONO (hot/cold split), RC-GITSTATE (gitignore migration), RC-CEREMONY. NOW FULLY USER-AUTHORIZED (RC-VERIF+RC-CONVERGE 2026-07-14; RC-ORCHMONO/RC-GITSTATE/RC-CEREMONY 2026-07-15 — explicit user selection via router AskUserQuestion session e417ef1f), superseding the earlier USER-GATED state. Tracked + sequenced on SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE as a supervised, design-first (architect TECH doc FIRST) architect-led cascade.",
         "success_metric": "All Phase-1 machine-checkable ACs (§1.1 #1-3, §1.2 #1-3, §1.3 #1-3) pass; chore-commit noise trends down on empty-board ticks (a clean git log = the Phase-2 instrument)."
-      },
-      {
-        "id": "COWORK-GUARANTEED-SLOT-DURABILITY",
-        "ts": "2026-07-07T21:00:37Z",
-        "by": "po",
-        "vision": "Guaranteed cowork slots (chef/digest/fb-daily) survive CLI-session absence via a generalized, self-verifying OS-level launchd backstop — one matcher SSOT, zero per-slot hardcode, Tier-1 auditor watches the watcher.",
-        "ruling": "Signed off agents-architect brief 2026-07-07 Option A (generalized); rejected Option B (VPS: no LLM runtime/creds, larger security surface). Re-spec F1.4 + auditor self-check (developer), ops install, agent-father runbook freshen; QA 7-point session-down survival is the DoD gate before signal resolve.",
-        "brief": "docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md"
       },
       {
         "sprint_id": "ANALYSIS-QUALITY-CONVERGENCE",
@@ -4201,15 +4194,6 @@
         "status": "BACKLOG",
         "id": "FACTORY-APP-split-assembleEveningSummary",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-split-assembleEveningSummary"
-      },
-      {
-        "title": "Collapse the 7-deep INSERT cascade + split agentSignalStore by query seam",
-        "priority": "P0",
-        "zone": "mcp-server-infra",
-        "type": "FACTORY",
-        "status": "BACKLOG",
-        "id": "FACTORY-INFRA-split-agentSignalStore",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-agentSignalStore"
       },
       {
         "title": "Reconcile and dedup directionArrow/changePct formatters (behavior decision)",
@@ -11113,6 +11097,66 @@
         "note": "Source: telegram reports 4789 (2026-08-13T08:20:24Z) + 4792 ESCALATION (09:19:20Z). Developer agent a84c43dd61c0848b5 spawned tick 07:37Z ran 60+min with zero completion notification; ticks 08:07Z, 08:37Z and 09:07Z each returned verdict=RUN from the preflight script and were each skipped by the ROUTER's own judgement (not by the gate) to avoid a concurrent duplicate dispatch. The router did the right thing by hand; the gate did not help it. The dangerous edge is the SF-1 lock's ~90min TTL expiring at ~2026-08-13T09:18:44Z while the dispatch may still be live — after which the gate would actively green-light a second concurrent developer racing the first on the same task board and commit-mutex. Correctly NOT killed, per standing 'spawn slow != failed' / 'transcript-silence != dead' guidance. Dedup: PO scanned all 608 non-terminal rows for SF-1|singleton|liveness|in.?flight|preflight — closest are ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG (a session/cron-loop-vanished watchdog, different failure), FIX-QADRAIN-NO-TASKID-LEVEL-CLAIM-DUPLICATE-QA-SPAWN (duplicate QA spawn via a missing task_id claim, different lane) and FIX-DEVTEAM-PREFLIGHT-ROOT-SYMLINK-CWD-FRAGILE (path resolution). None covers dispatch-liveness. Reference: feedback_background_subagent_transcript_silence_is_not_death.md, feedback_spawn_retry_under_lag.md.",
         "status_note": "AC-1: the dev-team tick gate can distinguish 'no dispatch in flight' from 'previous dispatch still working' and returns a non-RUN verdict for the latter, without killing the in-flight agent. AC-2: the SF-1 TTL cannot silently expire under a still-live dispatch into a state where the next tick spawns a duplicate — either the TTL is heartbeat-extended by the live dispatch or the gate independently re-checks liveness before RUN. AC-3: a long-running-but-healthy dispatch is never killed or interrupted by this mechanism (explicit negative AC). Priority: high (near-miss; the clean skips were router judgement, not gate correctness).",
         "updated_at": "2026-08-13T11:36:12Z"
+      },
+      {
+        "id": "CLEAN-TREEMAP-REGISTER-10-ORPHAN-POLICY-PROTOCOL-DOCS",
+        "type": "CLEAN",
+        "status": "BACKLOG",
+        "title": "Register (or explicitly exclude) the 10 tracked docs/policies + docs/protocols files absent from the tree-map DAG",
+        "zone": "cross-service/",
+        "owner": "architect",
+        "next_agent": "architect",
+        "priority": "medium",
+        "size": "S",
+        "created_at": "2026-08-13T18:09:52Z",
+        "created_by": "po/cmh-escalation-reroute-20260813",
+        "depends": [],
+        "blocks": [],
+        "supervised": false,
+        "sprint": null,
+        "origin": "claude-manager-helper 2026-08-13T16:15Z 10-pass audit, Pass 1 Tree-Map Integrity (notebook docs/agent-memory/notebooks/claude-manager-helper.md, commit be63c88d8). CMH flagged these FOR architect DAG registration review but emitted no Pass 10 RETURN block and no .signal_queue.rows[] entry, so the finding had no dispatch path and would have been lost; router raw-verified the gap and rerouted to PO, who minted this row.",
+        "files": [
+          "docs/references/tree-map.md",
+          "docs/policies/market-db-journal-mode-policy.md",
+          "docs/policies/data-sources-coverage.md",
+          "docs/policies/obsolete-file-cleanup.md",
+          "docs/protocols/dev-environment.md",
+          "docs/protocols/system-audit-runbook.md",
+          "docs/protocols/agent-notebook-protocol.md",
+          "docs/protocols/docker-deployment-runbook.md",
+          "docs/protocols/vps-socat-cloudflare-fix-runbook.md",
+          "docs/protocols/dev-star-gateway-binding.md",
+          "docs/protocols/bctc-extraction-runbook.md"
+        ],
+        "note": "PO independently re-verified all 10 at HEAD rather than relaying CMH's claim: every one is git-tracked and returns ZERO occurrences in docs/references/tree-map.md (450L). NOT a detector false positive. CMH's notebook listed bare basenames only; the resolved paths are 3 under docs/policies/ and 7 under docs/protocols/ (enumerated in `files` above). This is a genuine registration gap rather than deliberate omission: tree-map.md:12 declares docs/{policies,protocols,standards,references}/*.md a first-class content class, and tree-map.md:418 assigns maintenance of '(all others)' in that class to Architect / claude-manager-helper. Current coverage is partial, which is the signature of drift, not of policy: 13 of 16 tracked docs/policies/*.md and 20 of 27 tracked docs/protocols/*.md are registered.",
+        "acceptance": "For EACH of the 10 paths: either (a) it appears as a tree-map.md DAG node with a one-line purpose summary in the same style as its registered siblings, or (b) it is recorded as an intentional exclusion with a stated reason. Zero of the 10 may be left silently absent. A re-run of claude-manager-helper Pass 1 reports 0 orphaned files.",
+        "updated_at": "2026-08-13T18:11:13Z"
+      },
+      {
+        "id": "FIX-SPRINTGOAL-STATUSLESS-ENTRY-STRUCTURALLY-UNEVICTABLE",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "title": "sprint_goal.entries[] rows lacking `status`/`sprint_id` are invisible to BOTH the canonicalization guard and cold-eviction, so they accumulate permanently against the 15-entry cap",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "priority": "medium",
+        "size": "S",
+        "created_at": "2026-08-13T18:09:52Z",
+        "created_by": "po/cmh-escalation-reroute-20260813",
+        "depends": [],
+        "blocks": [],
+        "supervised": false,
+        "sprint": null,
+        "origin": "Root cause behind claude-manager-helper's 2026-08-13T16:15Z Pass 5 alert (.sprint_goal.entries at 16 vs cap 15). PO cleared the symptom in the same write by retiring COWORK-GUARANTEED-SLOT-DURABILITY into closed_sprints[]; this row exists so the class does not simply recur.",
+        "files": [
+          "apps/mcp-server/src/infrastructure/orchStateSchema.ts",
+          "scripts/orch-cold-evict.sh",
+          "scripts/orch-validate.mjs"
+        ],
+        "note": "Mechanism, read from source not inferred: checkSprintGoalStatusCanonical() (orchStateSchema.ts § 11) begins its per-entry body with `if (typeof status !== 'string' || status.length === 0) return;` — a status-LESS entry raises no drift issue at all. orch-cold-evict.sh independently matches sprint_goal.entries[] only on a terminal .status (TERMINAL_SPRINT_STATUSES) and keys that array by .sprint_id. An entry carrying NEITHER field is therefore un-retirable by every automated path and can only ever be removed by hand. PO ruling records written in the {id,ts,by,vision,ruling,brief} shape are exactly such entries, and one of them (COWORK-GUARANTEED-SLOT-DURABILITY, parked 2026-07-07) is what pushed the array over cap 37 days later. Note this is a DIFFERENT mechanism from the status-synonym drift that § 11 was built for, but the same unbounded-growth outcome — the § 11 header itself records the array previously reaching 26 against cap 15.",
+        "acceptance": "A shape guard reports any .sprint_goal.entries[] element missing `status` or missing `sprint_id`, surfacing it for PO closure instead of silently skipping it, and runs in the same orch-validate.mjs stage that already calls checkSprintGoalStatusCanonical(). Unit test covers a status-less ruling-shaped entry ({id,ts,by,vision,ruling,brief}) and asserts it is reported. Guard must be report/surface-only for this shape — it must NOT hard-fail the write path, since parking a ruling is legitimate and closing a sprint stays a PO editorial act per the § 11 design note.",
+        "updated_at": "2026-08-13T18:11:13Z"
       }
     ],
     "closed_sprints": [
@@ -11645,6 +11689,25 @@
         "closure_reason": "duplicate-remint-prior-art-already-shipped",
         "closure_note": "CLOSED AS DUPLICATE RE-MINT (PO 2026-08-06). Mint-time prior-art gap, not an active bug: the architect brief docs/architecture-briefs/2026-06-21-digest-rsi-dual-engine-diverge.md was committed 2026-06-21 (8a8d7b994) and BOTH its subtasks shipped the same day — TASK-RSIFIX-1 (60891f75c, ta-engine-contract.md) and TASK-RSIFIX-2 (3e5a5a5a6, digest rewire). The 2026-08-06 decomposition verified the brief EXISTED but never checked whether its subtasks had already SHIPPED, so TASK-503/504 re-minted finished work. Both closed as prior art. Recurring-class: mint-time dedup gap — decomposition-readiness check asserts brief presence without a git-log prior-art probe on the brief's own named files.",
         "verification": "LIVE-plane gate DISCHARGED BY STRUCTURAL IDENTITY, not by an evening_summary cycle run — recorded honestly. The original gate demanded 'identical RSI to 1dp in alert-block vs TA/sector-block across >=3 tickers in a real evening cycle'. PO instead proved divergence is structurally impossible at HEAD: the alert-block (scheduler/market-data/taAlertScanJob.ts CANDLE_SQL, MIN_CANDLES=35 at line 104) and the digest TA-block (briefing/defaultComputeTa.ts) now issue byte-equivalent queries — same table daily_ohlcv, same columns date/close/volume, same window date >= date('now','-60 days'), same ORDER BY ASC — and both feed closes[] to the same Go computeTAIndicators engine behind the same 35-candle gate and the same stub-bar guard, with no TS-local RSI and no fallback on either side. Two callers of one engine over one candle set cannot disagree. Corroborating live probe: get_technical_indicators(NVL) 2026-08-06T07:42:54Z returned RSI(14)=61.6 from the Go engine. The sprint's cited symptom (NVL alert 29.7 vs digest 27.6, 2026-06-19) is PRE-FIX evidence — it predates the 2026-06-21 fix by two days and is quoted verbatim in commit 3e5a5a5a6's own message as the divergence that commit eliminates. Not a still-reproducing bug."
+      },
+      {
+        "id": "COWORK-GUARANTEED-SLOT-DURABILITY",
+        "label": "Guaranteed cowork slots (chef/digest/fb-daily) survive CLI-session absence via a generalized OS-level launchd backstop — PO ruling 2026-07-07, Option A",
+        "status": "DONE",
+        "opened_at": "2026-07-07T21:00:37Z",
+        "closed_at": "2026-08-13T18:09:52Z",
+        "closed_by": "po",
+        "priority": "high",
+        "brief": "docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md",
+        "vision": "Guaranteed cowork slots (chef/digest/fb-daily) survive CLI-session absence via a generalized, self-verifying OS-level launchd backstop — one matcher SSOT, zero per-slot hardcode, Tier-1 auditor watches the watcher.",
+        "ruling": "Signed off agents-architect brief 2026-07-07 Option A (generalized); rejected Option B (VPS: no LLM runtime/creds, larger security surface). Re-spec F1.4 + auditor self-check (developer), ops install, agent-father runbook freshen; QA 7-point session-down survival is the DoD gate before signal resolve.",
+        "tasks": [],
+        "closure_reason": "ruled-deliverable-shipped-residual-tracked-by-successor-sprint",
+        "closure_note": "CLOSED BY PO 2026-08-13T18:09:52Z while triaging claude-manager-helper's 2026-08-13T16:15Z Pass 5 size-cap alert (.sprint_goal.entries at 16, cap 15). This entry was never a sprint goal — it is a PO RULING RECORD written 2026-07-07 in the shape {id,ts,by,vision,ruling,brief}, carrying neither `sprint_id` nor `status`. That shape is why IT, of all 16 entries, was the one that could never leave: checkSprintGoalStatusCanonical() (orchStateSchema.ts § 11) early-returns on a missing/empty status, and orch-cold-evict.sh's TERMINAL_SPRINT_STATUSES predicate matches only on a terminal .status and keys sprint_goal.entries[] by .sprint_id. No automated path could ever retire it. Closing it here also discharges ONE instance of the dangling-sprint-id class tracked by review[] row FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE (owner po) — this id previously had no object in either active_sprints[] or closed_sprints[], so sign-off/eviction/journal-archival were all structurally unreachable for it. The generic class fix is minted separately as FIX-SPRINTGOAL-STATUSLESS-ENTRY-STRUCTURALLY-UNEVICTABLE.",
+        "evidence": "The ruled-on deliverable SHIPPED and was independently QA-verified, so this is a closure of finished work, not an abandonment. PO re-verified at HEAD before closing: launchd/com.vn-market.cowork-guaranteed-slot-firer.plist (139L) is present and tracked; scripts/agents-flow/cowork-guaranteed-slot-firer.sh (225L) + its 203L test harness are present; reports/TASK_REPORT_F1-LAUNCHD-COWORK-BACKSTOP.md records QA's OWN independent re-run of the suite at 25 passed / 0 failed against implementation commit 4df3d1545 on main, explicitly scoped to this brief; the superseded per-slot hardcode (scripts/cowork-fb-daily-firer.sh + launchd/com.vn-market.fb-daily-firer.plist) was retired in the same commit, satisfying the ruling's 'one matcher SSOT, zero per-slot hardcode' requirement.",
+        "residual_owner": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "residual_note": "Remaining scope is NOT dropped — it is carried by the separate still-active sprint_goal entry COWORK-GUARANTEED-SLOT-CATCHUP (created 2026-07-22, ba_status=spec_complete, spec at docs/handoffs/BA-COWORK-GUARANTEED-SLOT-CATCHUP.md), whose own success_metric names this brief's session-down survival test as the gate it extends ('2026-07-07 brief §6 extended'). That successor has 10 live task_board rows (TASK-COWORK-CATCHUP-2 DONE; -3/-4/-5/-10 READY; -6/-7/-8/-9 BACKLOG; BA-COWORK-GUARANTEED-SLOT-CATCHUP BACKLOG) plus follow-on FIX rows FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION, FIX-GUARANTEED-SLOT-DUAL-PLANE-DOUBLE-FIRE, FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION and FIX-COWORK-CATCHUP-FRESHNESS-WINDOW-EXPIRES-DURING-EXECUTION-OUTAGE.",
+        "origin": "claude-manager-helper 2026-08-13T16:15Z 10-pass audit Pass 5 (notebook docs/agent-memory/notebooks/claude-manager-helper.md, commit be63c88d8), rerouted to PO by router after CMH emitted no Pass 10 RETURN block and no .signal_queue.rows[] entry."
       }
     ],
     "done": [
@@ -18971,9 +19034,25 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-13T17:28:37Z",
-    "last_triaged_by": "po",
-    "in_progress": []
+    "last_triaged_at": "2026-08-13T17:51:11Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "title": "Collapse the 7-deep INSERT cascade + split agentSignalStore by query seam",
+        "priority": "P0",
+        "zone": "mcp-server-infra",
+        "type": "FACTORY",
+        "status": "IN_PROGRESS",
+        "id": "FACTORY-INFRA-split-agentSignalStore",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-agentSignalStore",
+        "promoted_at": "2026-08-13T17:51:11Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "updated_at": "2026-08-13T17:51:17Z",
+        "claimed_at": "2026-08-13T17:51:17Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -18982,12 +19061,12 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-13T17:30:59Z",
-  "_updated_by": "po (triage 2026-08-13T17:33Z - stale-claim WIP reclaim, unblocks BOUNDED-1/SLS/RLC/DRS)",
+  "_updated_at": "2026-08-13T18:09:52Z",
+  "_updated_by": "po (triage 2026-08-13T18:09:52Z — claude-manager-helper 2026-08-13 escalation reroute: Pass 1 tree-map orphans -> architect; Pass 5 sprint_goal 16>15 cap cleared by closing COWORK-GUARANTEED-SLOT-DURABILITY + root-cause FIX minted)",
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-13T14:55:50Z"
+        "last_served_tick": "2026-08-13T17:51:02Z"
       },
       "sls": {
         "last_served_tick": "2026-08-13T15:23:32Z"
@@ -19005,7 +19084,7 @@
         "last_served_tick": "2026-08-13T17:21:25Z"
       }
     },
-    "_updated_at": "2026-08-13T17:49:56Z",
+    "_updated_at": "2026-08-13T17:51:02Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
