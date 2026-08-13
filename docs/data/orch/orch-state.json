@@ -132,7 +132,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-13T18:26:03Z",
+    "_updated_at": "2026-08-13T19:21:32Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -476,7 +476,7 @@
         "type": "signal_feedback",
         "summary": "A-30 FAIL: rag-service-1 memory — sustained >97% (median 97.61%, 5/6 samples)",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-13T19:00Z",
@@ -19005,7 +19005,7 @@
         "last_served_tick": "2026-08-13T17:21:25Z"
       }
     },
-    "_updated_at": "2026-08-13T19:21:09Z",
+    "_updated_at": "2026-08-13T19:21:32Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24749,6 +24749,18 @@
         },
         "createdAt": "2026-08-13T19:06:52Z",
         "drained_at": "2026-08-13T19:21:09Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0307b318d2aece8e66d282a9a890b0851a5caab3f8f7b28f4f704fe4a6d7f49c",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "CRITICAL",
+        "payload": "A-30 FAIL: rag-service-1 memory — sustained >97% (median 97.61%, 5/6 samples)",
+        "createdAt": "2026-08-13T19:16:51Z",
+        "drained_at": "2026-08-13T19:21:32Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
