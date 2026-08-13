@@ -9748,6 +9748,39 @@
           "observed_at": "2026-08-13T14:05:47Z"
         }
       }
+    },
+    {
+      "id": "FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL",
+      "type": "SPRINT-S",
+      "title": "New composition-root-logic gate (go/ast) for cmd/server/ across 7 Go services + fix 2 live macro-indicators offenders",
+      "status": "DONE_VERIFIED",
+      "priority": "P2",
+      "size": "M",
+      "zone": "cross-service/",
+      "epic": "FACTORY-MAINTAINABILITY-2026-06",
+      "cluster": "ci-regression-prevention",
+      "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-depguard-tier-boundaries",
+      "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-depguard-tier-boundaries.md#4-build-vs-plan--decomposed-into-2-child-rows-different-toolchains-independently-testable-not-self-implemented",
+      "dev_agent": "developer",
+      "next_agent": "qa",
+      "parent_task": "FACTORY-GUARD-CI-depguard-tier-boundaries",
+      "created_at": "2026-07-24T18:29:15Z",
+      "created_by": "architect",
+      "updated_at": "2026-08-13T14:29:04Z",
+      "entered_review_at": "2026-07-30T00:04:54Z",
+      "review_note": "New scripts/audits/composition-root-logic-gate.go (go/ast+go/parser stdlib, --check, zero-tolerance: flags any cmd/server/**/*.go receiver method with if-count>=2 OR any for/range; escape hatch composition-root-logic-allow:). Live scan reproduced exactly the 2 predicted offenders (both apps/macro-indicators/cmd/server/adapters.go: policyRatesAdapter.FetchPolicyRates 3 ifs, omoAdapter.FetchOMO 4 ifs+1 for), zero FP across the other 6 services (independently re-verified: no receiver methods exist in their cmd/server/ at all). Fixed by moving the fallback/IsEstimate + ParseOK decision logic into 2 new pkg/application resolvers (PolicyRatesResolver, omoResolver) implementing the PRE-EXISTING PolicyRatesProvider/OMOProvider ports -- LiquidityStateUseCase itself untouched. adapters.go shims now pure delegation (policyRatesHTMLAdapter/policyRatesDBAdapter/omoRawAdapter, 0 branching) + a free non-receiver helper convertOMOTenorRows for the tenor-row struct mapping (out of gate scope by construction, mirrors envStr/splitCSV carve-out). Wired 1 composition-root-logic-gate CI job (all 7 services, tool is syntax-only) + CANONICAL pointer in dev-standards.md. New composition-root-logic-gate_test.go (renamed from the board note's literal .test.go -- Go only discovers _test.go) 7/7 PASS covering all 4 DoD cases + 2 extra guards + a live all-7-service regression. RAW-verified against the LIVE running container: rebuilt+recreated macro-indicators (image id confirmed changed), POST /liquidity-state before/after byte-identical modulo fetched_at -- both calls landed live on the exact 2 fallback/fail-closed branches the gate flagged (SBV HTML parse failing in prod right now -> DB fallback; OMO ParseOK=false). go build/go vet/golangci-lint run (Fence-A/B/C) clean; go test ./... unchanged pass set. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S30. QA next. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Derived commit 9431a7cdd (row carried no .commit/.files[]) via git log --all; on main ancestry; git show --stat matches all 7 claimed files exactly (composition-root-logic-gate.go, composition-root-logic-gate_test.go, adapters.go, main.go, usecases_vmt_liquidity_resolvers.go, ci.yml, dev-standards.md). Independently re-ran fresh (row also carried a prior dev-team self-verify from 07-30, not relied on): gate --check across all 7 real services -> 0 violations; composition-root-logic-gate_test.go 7/7 PASS; go build/go vet/golangci-lint run clean on macro-indicators; go test ./... -count=1 12/12 packages pass. Confirmed policyRatesAdapter.FetchPolicyRates/omoAdapter.FetchOMO structurally gone from adapters.go, replaced by 0-branching delegation shims; decision logic now in usecases_vmt_liquidity_resolvers.go; LiquidityStateUseCase 0-diff at this commit. CI job + dev-standards.md CANONICAL pointer confirmed via direct read. Live-container RAW-verify claim reproduced myself right now (not just trusting the 2-week-old prior verify): POST /liquidity-state on the still-running container shows both claimed fallback branches genuinely live (policy_rates DB-fallback is_estimate:true, omo ParseOK=false blocked_reason). mock-guard PASS on all 4 touched production Go files. DJ-GATE-1: developer journal present sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S30; this verify at sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S105.",
+      "claimed_at": "2026-08-13T14:23:41Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "qa_verified_at": "2026-08-13T14:29:04Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "go run scripts/audits/composition-root-logic-gate.go --check + go test + go build/vet/golangci-lint + curl POST /liquidity-state (live container, port 5004)",
+          "args": "gate --check apps/{technical-analysis,macro-indicators,stock-price,alert-engine,api-gateway,kinh-dich-service,news-fetch}/cmd/server; go test scripts/audits/composition-root-logic-gate.go scripts/audits/composition-root-logic-gate_test.go; go build/vet/golangci-lint run ./... (apps/macro-indicators); go test ./... -count=1 (apps/macro-indicators); curl -sS -X POST http://localhost:5004/liquidity-state",
+          "live_value_observed": "gate: 0 violations across 7 dir(s); gate test: 7/7 PASS; build/vet/lint: clean/clean/0 issues; go test: 12/12 packages pass; live curl: policy_rates.source=\"sbv_rates DB fallback (HTML parse failed)\" is_estimate:true, omo.blocked_reason=\"OMO HTML parse: no add/absorb rows found\" — both claimed fallback branches genuinely live",
+          "observed_at": "2026-08-13T14:29:04Z"
+        }
+      }
     }
   ],
   "closed_sprints": [
