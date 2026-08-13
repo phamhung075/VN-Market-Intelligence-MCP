@@ -18934,6 +18934,25 @@
         "secondary_claimed_at": "2026-08-13T11:59:22Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "ops"
+      },
+      {
+        "title": "Collapse the 7-deep INSERT cascade + split agentSignalStore by query seam",
+        "priority": "P0",
+        "zone": "mcp-server-infra",
+        "type": "FACTORY",
+        "status": "QA",
+        "id": "FACTORY-INFRA-split-agentSignalStore",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-agentSignalStore",
+        "promoted_at": "2026-08-13T17:51:11Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "updated_at": "2026-08-13T19:21:23Z",
+        "claimed_at": "2026-08-13T18:51:08Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "updated_by": "ops (restore-from-coldarch-for-qalive-verify)",
+        "commit_sha": "9ad31c026",
+        "note": "10-branch INSERT cascade collapsed to detectSignalColumns()+buildSignalInsert(); 1774L file split into 20 agentSignals/ modules (all <=120L), agentSignalStore.ts is now a 60L barrel preserving every public name. Round-trip tests (insertBuilder/columnDetect/roundtrip, 25 assertions across 3 files) verify byte-identical column/bind order for all 10 reachable flag combinations. Full agentSignal-adjacent suite 402/402 pass; full bun test 15288 pass/55 fail (pre-existing, grep-confirmed unrelated). tsc clean, toolCount=183/cronJobCount=88 unchanged. REBUILD_REQUIRED=true (ops) + RAW-verify byte-identity against live named-volume DB still open — PRE-REBUILD baseline captured (29-col branch-A schema, 114 rows, latest id=10883) for QA/ops diff post-rebuild. | [QA] Review Record (direct-commit verify) 2026-08-13 — commit 9ad31c026 confirmed ancestor of main; git show --stat matches all 26 claimed files, barrel 60L, all 20 modules <=120L (max 114L). Re-ran 25 round-trip tests (insertBuilder/columnDetect/roundtrip) fresh: 25/25 pass, 222 expect() calls. Independently read pre-refactor parent commits 7-deep _postSignalInner cascade line-by-line and confirmed buildSignalInsert() column/bind order is a byte-identical mechanical reproduction for all 10 reachable flag branches (A-J). Widened net to all 57 agentSignal-adjacent test files: 641/641 pass. tsc clean, DDD/security greps clean, mock-guard PASS. Full suite 15288 pass/55 fail/40 skip EXACT match to claim -- did not trust grep-confirmed-unrelated on faith: built a detached worktree at the parent commit, ran the isolated 17-file/158-test subset containing every failing test name on BOTH commits, got byte-identical 153 pass/5 fail with the same 5 test names on both -- confirms the other 50 are full-suite-only ordering artifacts, not this commit. toolCount=183 confirmed live; cronJobCount unconfirmed to exact 88 but zero scheduler/cron files touched (structurally cannot have moved). VERDICT: APPROVED-CODE-LEVEL, NOT DONE_VERIFIED -- docker inspect confirms the live mcp-server container was built 2026-08-11T18:25Z, ~2 days BEFORE this commit (2026-08-13T18:38Z); per docs/protocols/docker-deployment-runbook.md Microservice Code-Change Close Gate, DONE is gated on ops rebuild+SHA-gate+live-verify; orchStateSchema.ts checkVerificationGate hard-rejects DONE_VERIFIED without verification.raw_probe (this id is not RC_VERIF-grandfathered). Moved qa[]->done[] status=DONE (schema-valid without raw_probe per LANE_ALLOWED_STATUSES), next_agent=ops for the close-gate rebuild sequence (docker compose build/up mcp-server + scripts/verify-deploy-sha.sh + live /health + diff against the PRE-REBUILD baseline already captured: 29-col branch-A schema, 114 rows, latest id=10883) -- follow-up QA live-verify pass required post-rebuild before flipping to done_verified[]. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S111."
       }
     ],
     "_closed_signals_20260614": {
@@ -18986,7 +19005,7 @@
         "last_served_tick": "2026-08-13T17:21:25Z"
       }
     },
-    "_updated_at": "2026-08-13T18:49:45Z",
+    "_updated_at": "2026-08-13T19:21:09Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24637,6 +24656,99 @@
         },
         "createdAt": "2026-08-13T18:08:52Z",
         "drained_at": "2026-08-13T18:24:17Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4e1b3572d25000dda3f0a2f4a2632172360364c7d043f7bfcf5c9cf13fbaf434",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-dd5fe4ce",
+          "head_sha": "dd5fe4ce81ada3a6435dac90ca7add4eecc6ebc5",
+          "run_id": 31727715925,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31727715925",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 94540155709
+            },
+            {
+              "name": "task-claim-owner-session-lint",
+              "conclusion": "failure",
+              "jobId": 94540155731
+            }
+          ],
+          "fingerprint": "425d1550b556ad732320d3338b1d5bc8042abd137311f85c5126571153308a66",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD dd5fe4ce81ada3a6435dac90ca7add4eecc6ebc5: bun test,task-claim-owner-session-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-13T18:27:39Z",
+        "drained_at": "2026-08-13T19:21:09Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d74a8168aa11ce9e8eb96009da75de5a235adbeff4c99fae6c182b6af89d2eff",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c77 · 2026-08-13T18:14Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-13T18:33:48Z",
+        "drained_at": "2026-08-13T19:21:09Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "58d0e4fd2478b172b48de54ae55bcc68217360c97dbfd8ba5b2a5c045be2649b",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-5.md",
+          "line_count": 119,
+          "cap": 600,
+          "byte_count": 40939,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 4939,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-13T18:35:51Z",
+        "drained_at": "2026-08-13T19:21:09Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0139c94be066ab86ebfbad7a8faf8a3691fce2727969e4aaeba1127fd86ad350",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md",
+          "line_count": 188,
+          "cap": 600,
+          "byte_count": 41000,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 5000,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-13T19:06:52Z",
+        "drained_at": "2026-08-13T19:21:09Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
