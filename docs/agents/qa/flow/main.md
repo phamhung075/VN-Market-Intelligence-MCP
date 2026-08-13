@@ -19,7 +19,13 @@ Task report | APPROVED merge or CHANGES_REQUESTED with exact file:line issues
 > // INV-GATEWAY-1 (2026-06-07): task_release is the dispatcher session's sole responsibility.
 > // This best-effort call may silently fail (no MCP gateway binding in specialist sub-session).
 > // The dispatcher finally-block and TTL expiry (3600s) are the authoritative release paths.
-> call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id })
+> call_tool(server="vn-market", tool="task_release", arguments={
+>   task_id: "task:" + task_id,
+>   owner_client_session: "<resolved CLAUDE_CODE_SESSION_ID — REQUIRED, apps/mcp-server/src/interface/mcp/
+>     tools/system/coordination/taskReleaseTool.ts:35-41 (P1-FINAL/TASK_1980). Substitute the real session
+>     id read from this spawn prompt's Coordination line (or your own `echo $CLAUDE_CODE_SESSION_ID` if you
+>     hold Bash) — NEVER write the literal text "$CLAUDE_CODE_SESSION_ID", it is sent as-is, not expanded>"
+> })
 > // ok=false acceptable — best-effort. Note: CHANGES_REQUESTED does NOT release (fixer holds lock — intentional).
 > now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 > jq --arg s "idle" --arg t "$now" --arg u "qa" \
@@ -212,7 +218,13 @@ QA non-merge commits with sprint scope (digit in scope) MUST carry `Task:` trail
 // INV-GATEWAY-1 (2026-06-07): task_release is the dispatcher session's sole responsibility.
 // This best-effort call may silently fail (no MCP gateway binding in specialist sub-session).
 // The dispatcher finally-block and TTL expiry (3600s) are the authoritative release paths.
-call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id })
+call_tool(server="vn-market", tool="task_release", arguments={
+  task_id: "task:" + task_id,
+  owner_client_session: "<resolved CLAUDE_CODE_SESSION_ID — REQUIRED, apps/mcp-server/src/interface/mcp/
+    tools/system/coordination/taskReleaseTool.ts:35-41 (P1-FINAL/TASK_1980). Substitute the real session
+    id read from this spawn prompt's Coordination line (or your own `echo $CLAUDE_CODE_SESSION_ID` if you
+    hold Bash) — NEVER write the literal text "$CLAUDE_CODE_SESSION_ID", it is sent as-is, not expanded>"
+})
 // Proceed with merge regardless of ok value — release is best-effort cleanup
 ```
 ```bash

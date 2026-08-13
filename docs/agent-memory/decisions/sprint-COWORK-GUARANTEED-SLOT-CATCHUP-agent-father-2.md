@@ -320,3 +320,22 @@ size — the gap was purely an enumeration miss (implementer diagnosed the real 
 prose but never wrote it into the trigger), not a design flaw needing a rewrite.
 **why-change:** none — matches PO's rework_scope exactly; verified against re-run counts before
 writing this entry, not asserted from the prior commit's narration.
+
+### STEP agent-father-S39 · agent-father · 2026-08-13T22:56:07Z
+**task-id:** FIX-CI-TASKCLAIM-QA-FLOW-OWNER-SESSION-PAYDOWN
+**what-done:** Added `owner_client_session` to both `task_release` call sites in
+`docs/agents/qa/flow/main.md` (WF-1 STOP-RELEASE block + Approved-path release), re-derived param
+names from live `coordination/taskReleaseTool.ts` (file split 2026-08-09, stale line refs in old
+docs), deleted both stale qa/flow/main.md entries from the baseline (count 19→17).
+**what-considered:**
+- Re-grandfather at new line numbers via `--update`: rejected — PO's status_note and the lint's own
+  FAIL text explicitly forbid this, it just defers the same debt past the next line-shift.
+- Copy po/flow/main.md's task_release pattern verbatim: the actual sibling fix (commit 21e97ab66)
+  lives in po/flow/sprint-kickoff.md + sprint-signoff.md, not main.md — mirrored that phrasing
+  instead, adapted to qa's INV-GATEWAY-1 dispatcher-release framing (best-effort, ok=false OK).
+**why-decision:** Real correctness fix, not lint-appeasement — a task_release call missing
+owner_client_session can orphan the sprint-task lock for the full TTL (feedback_task_release_owner_
+agent_mismatch_orphans_lock); the doc text now instructs substituting the real session id from the
+spawn prompt's Coordination line, never the literal $CLAUDE_CODE_SESSION_ID string.
+**why-change:** none — matches dispatch AC1-AC5 exactly; verified `--check` exit 0 (276 files,
+0 offenders) and lint's own 9/9 test suite green before writing this entry.
