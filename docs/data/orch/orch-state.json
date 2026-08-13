@@ -13165,6 +13165,36 @@
             "observed_at": "2026-08-12T16:37:00Z"
           }
         }
+      },
+      {
+        "id": "FIX-VNINDEX-CACHE-STARTUP-PURGE",
+        "title": "vn_index_cache PURGED on mcp-server startup + refresh is market-hours-only -> any off-hours restart strands cache=0 until next Mon open. RECURRING: prior FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (DONE, never done_verified) framed it as a refresh-path bug and did NOT close the root.",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "DONE_VERIFIED",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VNINDEX-CACHE-STARTUP-PURGE",
+        "dev_agent": "dev-mcp-server",
+        "next_agent": "qa",
+        "claimed_at": "2026-08-13T16:51:09Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "entered_review_at": "2026-07-30T04:10:09Z",
+        "updated_at": "2026-08-13T16:56:26Z",
+        "updated_by": "qa",
+        "review_note": "RAW-verified live BEFORE coding: board hypothesis (\"purged on startup + market-hours-only refresh\") was WRONG — zero purge code anywhere (exhaustive grep + full git history). Real root cause: live market.db still carries the Sprint-1922b orphan vn_index_cache table (id/snapshot_json/source/fetched_at/expires_at/created_at, abandoned 1842a design, retired-not-dropped, commit b50ef1777). FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (ac8ad6c78, 2026-06-20) reused the same table name via CREATE TABLE IF NOT EXISTS, which silently no-ops against it — every upsertVnIndexCache() write has failed with \"table vn_index_cache has no column named code\" on every tick since 2026-06-20 (docker-logs-confirmed; sqlite_sequence proves the orphan's AUTOINCREMENT was never used, 0 rows ever). Fix: initMarketDataTables() now detects the legacy/orphan shape (no code column) and DROPs it before the CREATE — safe (0 rows ever, 0 current readers/writers, already deprecated by its own retirement commit). Runs at DB-init (every startup) — the writer/startup path, refresh cron untouched. New FIX-VNINDEX-CACHE-STARTUP-PURGE.test.ts (4/4 pass, reproduces the live orphan shape). LIVE verification: single-service rebuild+restart of the real mcp-server-1 container against the real named-volume market.db — pre-fix 0 rows/legacy schema; immediately post-restart (before any cron tick) schema already migrated; next tick (04:00:03Z) wrote the first successful row in this table's ENTIRE history (VNINDEX 1726.38), zero upsert-failed warnings since. Commit 998ad9b44. tsc clean, targeted+neighbor suites green (schema-slices 78/78, freshness-SLA x5 64/64, EMPTY-REFRESH-PATH 5/5), toolCount=184/cronJobCount=88 unchanged, local :memory: boot health 200 + dashboards 200. Deliberately did NOT perform a 2nd live restart for the literal row-survives-restart leg: it surfaced an ACTIVE occurrence of the already-known-recurring FIX-SQLITE-DOCKER-VIRT-CORRUPTION class (docs/incidents/2026-07-13-sqlite-db-corruption-restart-loop.md) hitting daily_ohlcv/cron_job_runs/system_logs/pdf_extracted_text — a 2nd deliberate restart risked compounding a live corruption incident for a leg already covered by code-level proof (no purge path exists once migrated; DROP only fires on the now-permanently-absent legacy shape). Filed the corruption finding separately as FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730 (P0, owner=ops) — needs immediate ops action, NOT part of this row's scope. Structural note: no MCP/gateway tool grant this session — flipped this board row via scripts/orch-apply.sh directly (permitted, pure bash); could not release task:FIX-VNINDEX-CACHE-STARTUP-PURGE or send_telegram — coordinating dev-team session must pick both up. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S25. || [QA] Review Record (direct-commit verify) 2026-08-13T16:55:12Z: APPROVED, DONE_VERIFIED. Commit 998ad9b44 confirmed on main ancestry (git merge-base --is-ancestor OK); git show --stat matches exactly 2 claimed files (new FIX-VNINDEX-CACHE-STARTUP-PURGE.test.ts, schema-market-data.ts). Diff read directly: initMarketDataTables() runs PRAGMA table_info(vn_index_cache) before CREATE TABLE IF NOT EXISTS, DROPs only when the table exists AND lacks the code column (legacy/orphan shape) -- matches the claimed mechanism exactly, not a paraphrase. Re-ran FIX-VNINDEX-CACHE-STARTUP-PURGE.test.ts fresh: 4/4 pass (VSP-1..4), independently confirmed live -- VSP-4 specifically proves re-running init against an already-migrated table with a live row never re-drops it (code-level proof the DROP path is permanently closed post-migration). Mechanism claim (orphan-table name collision shadowing CREATE TABLE IF NOT EXISTS) cross-checked against real git history, not the commit's own prose: b50ef1777 (2026-05-16, Sprint-1922b) retired the orphan with a comment only -- confirmed NO DROP statement in that diff, table left physically present; ac8ad6c78 (2026-06-20, FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH) added CREATE TABLE IF NOT EXISTS for the new code-keyed shape, explaining why its own :memory: test suite always passed (fresh DB, no orphan) while every live named-volume write since failed -- fully plausible and correctly diagnosed, not just a plausible-sounding story. tsc clean (0 errors); mock-guard.sh PASS on schema-market-data.ts; DDD/security greps clean. Neighbor suites independently re-run, matched claimed counts exactly: 1527-schema-slices.test.ts 78/78, FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH.test.ts 5/5, 5-file freshness-SLA set 64/64. Separately-filed FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730 row independently confirmed genuine, not fabricated: docs/data/orch/archive/2026-07.json, created_by=dev-mcp-server, created_at=2026-07-30T04:10:09Z, source cites this exact task's live-restart verification window (03:58-04:05Z), status=DONE_VERIFIED (resolved same day 08:40:52Z after a corrected non-destructive .recover salvage per docs/incidents/2026-07-30-sqlite-docker-virt-corruption-fix-permanent.md) -- narrative, timestamps and commit trail all line up. DoD judgment call (verification_gate in backlog-detail.json was written under the now-refuted 'purge on startup' hypothesis and literally asks for an OFF-HOURS restart-survival leg): accepted code-level equivalent proof (VSP-4 + the single live restart already performed, confirming correct migration pre-cron-tick) in place of a second live restart, given the second restart was deliberately skipped for a genuine, corroborated, concurrently-active P0 corruption incident -- compounding a live corruption event to chase one already-covered test leg would have been the wrong call. Own QA DJ sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S110. No task_release/send_telegram called -- no MCP gateway tool bound this session; dispatcher's finally-block + TTL(3600s) expiry is the authoritative release path per INV-GATEWAY-1.",
+        "qa_verified_at": "2026-08-13T16:55:12Z",
+        "qa_verified_by": "qa",
+        "commit_sha": "998ad9b44",
+        "verification": {
+          "raw_probe": {
+            "tool": "git (merge-base --is-ancestor / show --stat / show diff) + bun test + bun tsc --noEmit + mock-guard.sh + DDD/security greps + jq board cross-check",
+            "args": {
+              "commit_verified": "998ad9b44"
+            },
+            "live_value_observed": "ancestor=yes; git show --stat = exactly 2 claimed files; DROP fires only when vn_index_cache lacks code column (PRAGMA table_info check read directly); FIX-VNINDEX-CACHE-STARTUP-PURGE.test.ts 4/4 pass live (VSP-1..4); b50ef1777 diff confirmed comment-only no DROP; ac8ad6c78 diff confirmed CREATE TABLE IF NOT EXISTS added; tsc 0 errors; mock-guard PASS; neighbor suites 78/78 + 5/5 + 64/64 all matched claim; FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730 row confirmed present in archive/2026-07.json status=DONE_VERIFIED",
+            "observed_at": "2026-08-13T16:55:12Z"
+          }
+        }
       }
     ],
     "head": {
@@ -18850,23 +18880,6 @@
         "secondary_claimed_at": "2026-08-13T11:59:22Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "ops"
-      },
-      {
-        "id": "FIX-VNINDEX-CACHE-STARTUP-PURGE",
-        "title": "vn_index_cache PURGED on mcp-server startup + refresh is market-hours-only -> any off-hours restart strands cache=0 until next Mon open. RECURRING: prior FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (DONE, never done_verified) framed it as a refresh-path bug and did NOT close the root.",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "QA",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VNINDEX-CACHE-STARTUP-PURGE",
-        "dev_agent": "dev-mcp-server",
-        "next_agent": "qa",
-        "claimed_at": "2026-08-13T16:51:09Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "entered_review_at": "2026-07-30T04:10:09Z",
-        "updated_at": "2026-08-13T16:51:10Z",
-        "updated_by": "dev-mcp-server",
-        "review_note": "RAW-verified live BEFORE coding: board hypothesis (\"purged on startup + market-hours-only refresh\") was WRONG — zero purge code anywhere (exhaustive grep + full git history). Real root cause: live market.db still carries the Sprint-1922b orphan vn_index_cache table (id/snapshot_json/source/fetched_at/expires_at/created_at, abandoned 1842a design, retired-not-dropped, commit b50ef1777). FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (ac8ad6c78, 2026-06-20) reused the same table name via CREATE TABLE IF NOT EXISTS, which silently no-ops against it — every upsertVnIndexCache() write has failed with \"table vn_index_cache has no column named code\" on every tick since 2026-06-20 (docker-logs-confirmed; sqlite_sequence proves the orphan's AUTOINCREMENT was never used, 0 rows ever). Fix: initMarketDataTables() now detects the legacy/orphan shape (no code column) and DROPs it before the CREATE — safe (0 rows ever, 0 current readers/writers, already deprecated by its own retirement commit). Runs at DB-init (every startup) — the writer/startup path, refresh cron untouched. New FIX-VNINDEX-CACHE-STARTUP-PURGE.test.ts (4/4 pass, reproduces the live orphan shape). LIVE verification: single-service rebuild+restart of the real mcp-server-1 container against the real named-volume market.db — pre-fix 0 rows/legacy schema; immediately post-restart (before any cron tick) schema already migrated; next tick (04:00:03Z) wrote the first successful row in this table's ENTIRE history (VNINDEX 1726.38), zero upsert-failed warnings since. Commit 998ad9b44. tsc clean, targeted+neighbor suites green (schema-slices 78/78, freshness-SLA x5 64/64, EMPTY-REFRESH-PATH 5/5), toolCount=184/cronJobCount=88 unchanged, local :memory: boot health 200 + dashboards 200. Deliberately did NOT perform a 2nd live restart for the literal row-survives-restart leg: it surfaced an ACTIVE occurrence of the already-known-recurring FIX-SQLITE-DOCKER-VIRT-CORRUPTION class (docs/incidents/2026-07-13-sqlite-db-corruption-restart-loop.md) hitting daily_ohlcv/cron_job_runs/system_logs/pdf_extracted_text — a 2nd deliberate restart risked compounding a live corruption incident for a leg already covered by code-level proof (no purge path exists once migrated; DROP only fires on the now-permanently-absent legacy shape). Filed the corruption finding separately as FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730 (P0, owner=ops) — needs immediate ops action, NOT part of this row's scope. Structural note: no MCP/gateway tool grant this session — flipped this board row via scripts/orch-apply.sh directly (permitted, pure bash); could not release task:FIX-VNINDEX-CACHE-STARTUP-PURGE or send_telegram — coordinating dev-team session must pick both up. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S25."
       }
     ],
     "_closed_signals_20260614": {
