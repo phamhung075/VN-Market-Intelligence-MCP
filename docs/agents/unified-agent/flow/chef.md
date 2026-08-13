@@ -1,10 +1,15 @@
-<!-- size-justification: TE-T16 split (2026-08-06, agent-father): body relocated to chef-dish.md at
+<!-- size-justification: 224L — TE-T16 split (2026-08-06, agent-father): body relocated to chef-dish.md at
      the existing Step-1 intraday silent-exit hard gate, so silent-intraday fires never pay to load
      the 564L post-gate dish-recipe tail or the 265L of TNB knowledge files it lazy-loads. This file
      keeps ONLY the gate-check portion — Step 0.5 published-marker dedup, Step 0 GATHER, Step 1
      CLUSTER/intraday-gate — load-bearing on every fire, including silent ones. Pure relocation, no
      logic changed; prior full-file changelog preserved verbatim in chef-dish.md's header; git log
-     has the rest. Design ref: docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-16. -->
+     has the rest. Design ref: docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-16.
+     FIX-CHEF-MIDFLOW-BAIL-DETERMINISM (architect brief 2026-08-07, FOLLOW-UP-1, agent-father
+     2026-08-13): +15L (209→224, incl. this header note) — Step 1's Degraded-dish floor trigger condition widened (OR-clause
+     covering tool-failure/budget-exhaustion/self-narrated-inability, not just source-down) + its
+     inline procedure replaced with a pointer to the new chef-telemetry.md § Degraded-Floor Recovery
+     + one Checkpoint pointer added. No new section, in-place growth only. -->
 > Parent: [./main.md](./main.md)
 
 # Unified Agent — Chef Flow (TNB 6-Layer Recipe) — Gate Phase
@@ -197,7 +202,18 @@ emit SILENT Telemetry per `docs/agents/unified-agent/flow/chef-telemetry.md § S
 
 **Gate-fired contract:** When ≥1 cluster qualifies (or `$DISH_TYPE` is `morning` / `eod` / `evening`), Steps 2–8 are MANDATORY. The agent MUST proceed through all steps and publish. Self-refusal — any English prose such as "I cannot complete the full end-to-end execution here", "these require sequential MCP calls", "BLOCKERS:", or "would you like me to…" — is a flow violation. There is no third path between SENT and FAILED.
 
-**Degraded-dish floor (minimum valid dish):** If ≥1 supplementary source is down (macro unavailable, `get_market_hexagram` absent, partial signal set), the dish MUST still be published with: (1) available signal clusters only; (2) explicit degradation note in Block B WORK message listing which sources were unavailable (e.g. `macro=unavailable | market_hexagram=unavailable`); (3) Block A MARKET prose must not mention unavailable sources — omit that layer cleanly; (4) conviction scores capped at `medium` when macro is absent. This is the guaranteed floor: a dish with degradation notes beats no dish every time.
+**Degraded-dish floor (minimum valid dish) — trigger condition (widened, FIX-CHEF-MIDFLOW-BAIL-DETERMINISM, architect brief 2026-08-07 §2.2):**
+```
+IF ≥1 supplementary source is down (macro unavailable, get_market_hexagram absent, partial signal set)
+   OR execution cannot reach Step 8 for any other reason (tool failure, budget exhaustion,
+      uncertainty, self-narrated inability to continue)
+```
+When triggered: the dish MUST still be published. Procedure lives in `docs/agents/unified-agent/flow/chef-telemetry.md § Degraded-Floor Recovery` — do not re-derive it inline here. That procedure guarantees, at minimum: (1) available signal clusters only; (2) explicit degradation note in Block B WORK message listing which sources were unavailable or which steps were not reached; (3) Block A MARKET prose must not mention unavailable sources — omit that layer cleanly; (4) conviction scores capped at `medium`/degraded. This is the guaranteed floor: a dish with degradation notes beats no dish every time.
+
+**Checkpoint:** If you cannot continue past this point for any reason (budget, tool failure,
+uncertainty), STOP — do not narrate a scope-clarification or self-abort. Jump directly to
+`chef-telemetry.md § Degraded-Floor Recovery` using whatever session state exists. This is
+cheaper than explaining why you cannot continue.
 
 **Morning/EOD/Evening:** always continue even if 0 clusters (publish regime-state update at minimum).
 

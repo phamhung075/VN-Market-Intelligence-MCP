@@ -1,4 +1,4 @@
-<!-- size-justification: ~700L — TE-T16 split (2026-08-06, agent-father): Steps 1.5-8 of chef's
+<!-- size-justification: ~775L — TE-T16 split (2026-08-06, agent-father): Steps 1.5-8 of chef's
      TNB 6-layer dish-recipe body, relocated verbatim from chef.md at the existing intraday
      silent-exit hard gate (chef.md Step 1) so that silent-intraday fires (~5/day) never pay to
      load this unreachable tail. Sequential 8-step dish-recipe decision framework (TNB 6-layer);
@@ -7,7 +7,12 @@
      one deterministic block; Step 7.6 persist-JSON write-authorization + CYCLE_DATE-pin comments
      are load-bearing anti-recurrence guards, not changelog — splitting any of these further would
      break the single-enforcement-point guarantee. No logic changed by the relocation; full change
-     history in git log. Design ref: docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-16. -->
+     history in git log. Design ref: docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-16.
+     FIX-CHEF-MIDFLOW-BAIL-DETERMINISM (architect brief 2026-08-07, FOLLOW-UP-1, agent-father
+     2026-08-13): +44L (731→775, incl. this header note) — 8 one-line Checkpoint pointers inserted at every step boundary
+     between the gate-fire and Step 7 (Steps 1.5/2/3/4/5/6/6.5/6.7), each jumping to the new
+     chef-telemetry.md § Degraded-Floor Recovery on budget/tool-failure/uncertainty. No new section,
+     in-place growth only, same pattern as every prior dated entry in this header. -->
 > Parent: [./chef.md](./chef.md)
 
 # Unified Agent — Chef Dish Body (Steps 1.5-8, TNB 6-Layer Recipe)
@@ -41,6 +46,11 @@ Store result as MACRO_HEALTH. This replaces the raw `get_macro_snapshot` snapsho
 
 **T-31 / Fiscal-trap narrative:** When MACRO_HEALTH.liquidity.verdict = TIGHT despite apparent profitability in the banking/rates sector, check for the "thiếu tiền" root cause: budget surplus parking deposits at SBV treasury → system liquidity tight despite individual bank profits. The transmission: government under-spends → deposits remain at SBV → commercial-bank reserve levels tight → OMO outstanding rises. Include this narrative in the Layer-2 banking/rates section when applicable.
 
+**Checkpoint:** If you cannot continue past this point for any reason (budget, tool failure,
+uncertainty), STOP — do not narrate a scope-clarification or self-abort. Jump directly to
+`chef-telemetry.md § Degraded-Floor Recovery` using whatever session state exists. This is
+cheaper than explaining why you cannot continue.
+
 ---
 
 ## Step 2 — LAYER 1 (data discipline check)
@@ -54,6 +64,11 @@ Flags to check (per `tnb-methodology-layers.md`):
 - Volume 2x+ average (accumulation vs distribution)
 
 Mark any level-reporting-only gap in the draft for Layer 6 fix.
+
+**Checkpoint:** If you cannot continue past this point for any reason (budget, tool failure,
+uncertainty), STOP — do not narrate a scope-clarification or self-abort. Jump directly to
+`chef-telemetry.md § Degraded-Floor Recovery` using whatever session state exists. This is
+cheaper than explaining why you cannot continue.
 
 ---
 
@@ -82,6 +97,11 @@ Mark any level-reporting-only gap in the draft for Layer 6 fix.
 **Insider Activity Context (P0 indicator):** When available, `get_insider_sentiment()` provides aggregate insider net sentiment score (net_sentiment_score) reflecting insider buy/sell signal. High positive score (insider buying concentration) + bullish technical setup → corroborating thesis; negative score (insider selling) contradicting bullish thesis → flag as Layer 6 risk divergence. When insider data is unavailable (honest-NULL per `FIX-VPS-SSC-INSIDER-502`), note as a gap explicitly.
 
 **Electronics/IZ/banking sectors:** When any qualifying cluster involves these sectors, invoke `trade-fx-pressure-decomp` (skill: `.claude/skills/trade-fx-pressure-decomp/SKILL.md`) and incorporate TRADE_FX.fx_incidence and margin_trap_flag into the sector layer narrative. Degraded mode (TRADE_FX.is_estimate=true) → note gap explicitly.
+
+**Checkpoint:** If you cannot continue past this point for any reason (budget, tool failure,
+uncertainty), STOP — do not narrate a scope-clarification or self-abort. Jump directly to
+`chef-telemetry.md § Degraded-Floor Recovery` using whatever session state exists. This is
+cheaper than explaining why you cannot continue.
 
 ---
 
@@ -132,6 +152,11 @@ Write one line per cluster in session state:
 If phase is ambiguous (mixed pillar signals), declare `[phase: transition]` and cap conviction at MEDIUM regardless of pillar score.
 Include this line verbatim in Block B (Step 7 WORK detail) inside the Layer 4 section.
 
+**Checkpoint:** If you cannot continue past this point for any reason (budget, tool failure,
+uncertainty), STOP — do not narrate a scope-clarification or self-abort. Jump directly to
+`chef-telemetry.md § Degraded-Floor Recovery` using whatever session state exists. This is
+cheaper than explaining why you cannot continue.
+
 ---
 
 ## Step 5 — LAYER 5 (Kinh Dịch overlay)
@@ -173,6 +198,11 @@ Step 7.5 and Step 7.6 per the reusable rule above. Leave `$L5_GAP_TOKEN` unset/e
 call this cycle succeeded — do not emit a gap token for a layer that was genuinely, successfully walked.
 
 For dish header: if `get_market_hexagram()` returned a result in Step 0, use it as market-wide context. If it was absent/501 (`market_hexagram=unavailable`), skip the market-wide hexagram header line — do NOT abort or degrade conviction.
+
+**Checkpoint:** If you cannot continue past this point for any reason (budget, tool failure,
+uncertainty), STOP — do not narrate a scope-clarification or self-abort. Jump directly to
+`chef-telemetry.md § Degraded-Floor Recovery` using whatever session state exists. This is
+cheaper than explaining why you cannot continue.
 
 ---
 
@@ -239,6 +269,11 @@ Apply fixes before Step 7. If a gap cannot be fixed (missing data) → flag expl
 Store every `[L6-gap: ...]` entry emitted in this step into `$L6_GAP_TOKENS` (empty list if
 none this cycle). This list is carried to Step 8b for the notebook write.
 
+**Checkpoint:** If you cannot continue past this point for any reason (budget, tool failure,
+uncertainty), STOP — do not narrate a scope-clarification or self-abort. Jump directly to
+`chef-telemetry.md § Degraded-Floor Recovery` using whatever session state exists. This is
+cheaper than explaining why you cannot continue.
+
 ---
 
 ## Step 6.5 — SYNTHESIZE (causal chain — mandatory before WRITE DISH)
@@ -258,6 +293,11 @@ Rules:
 - If conf=0.50 on all signals for a cluster (uncertain source baseline), label: `[uncertain-source baseline]` after the ticker state and treat as LOW conviction.
 - **Carry/FII provenance rule (DSI-CONSUMER-HONORS-ISESTIMATE):** The carry spread, carry regime, and any FII-flow thesis derived from the US-VN rate differential MAY ONLY appear in the causal chain when `get_macro_snapshot` returns `carry.is_estimate=false` AND `carry.carrySpread != null`. If `is_estimate=true` OR `carrySpread=null`, insert `[gap: carry regime unavailable — macro is_estimate=true]` at that chain position and do NOT compute a spread from the raw `fedFundsRate` / `vndDepositRate` fields. Never recompute deposit−fed manually from raw rate fields.
 - Store all chain sentences in session state — they become the mandatory spine of paragraph 2 in Step 7.
+
+**Checkpoint:** If you cannot continue past this point for any reason (budget, tool failure,
+uncertainty), STOP — do not narrate a scope-clarification or self-abort. Jump directly to
+`chef-telemetry.md § Degraded-Floor Recovery` using whatever session state exists. This is
+cheaper than explaining why you cannot continue.
 
 ---
 
@@ -337,6 +377,11 @@ GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
 - `2` = config-error → fail-loud: `send_telegram(channel="bug", message="[unified-agent] claim-truth-gate CONFIG ERROR")` and EXIT.
 
 **Signal:** Script fires `narrative_contradiction` on FAIL. Do NOT suppress it.
+
+**Checkpoint:** If you cannot continue past this point for any reason (budget, tool failure,
+uncertainty), STOP — do not narrate a scope-clarification or self-abort. Jump directly to
+`chef-telemetry.md § Degraded-Floor Recovery` using whatever session state exists. This is
+cheaper than explaining why you cannot continue.
 
 ---
 
