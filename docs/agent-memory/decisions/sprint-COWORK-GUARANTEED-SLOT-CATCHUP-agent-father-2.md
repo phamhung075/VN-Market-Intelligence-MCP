@@ -265,3 +265,31 @@ already-vetted design, not mine to re-derive.
 **why-change:** Also repointed the LIVE `.claude/skills/cron-cowork-team/SKILL.md` CronCreate
 ERROR clause (was targeting main.md Step 0a, now removed) — not in the note, but required or the
 armed cron misdirects on the next ERROR verdict.
+
+### STEP agent-father-S28 · agent-father · 2026-08-13T21:36:00Z
+**task-id:** FIX-CHEF-MIDFLOW-BAIL-DETERMINISM
+**what-done:** Review-lane SECONDARY-Drain triage. Read status_note/architect_spec_ref (plan-only
+spec, 2026-08-07) at source, confirmed the brief's own RETURN block already names agent-father as
+FOLLOW-UP-1 implementer with items 1-3 "ship immediately, no dependency" (§6). Implemented
+FOLLOW-UP-1 directly: chef-telemetry.md new § Degraded-Floor Recovery + § True-Abort Fallback,
+Try/Catch Boundary pinned to Step 0.5; chef.md Step 1 trigger widened (OR-clause); 8 Checkpoint
+pointers in chef-dish.md (Steps 1.5/2/3/4/5/6/6.5/6.7). Ran brief §7 verification checks 1/2/3/5 —
+all pass. Committed+pushed c31ee006e (docs/agents/ zone only). Wrote 1 signal_queue row
+(to=po, type=task-complete) recommending review[]->done_verified[] + FOLLOW-UP-2 mint, since
+orch-state.json task_board is outside agent-father's commit_zone. Released task:FIX-CHEF-MIDFLOW-
+BAIL-DETERMINISM via owner_client_session=632721c2-... (coordinating session) — {ok:true,released:1}.
+**what-considered:**
+- Escalate BLOCKED (sign-off genuinely missing) vs implement now vs decompose-only-and-defer.
+- The status_note's "awaiting po/architect sign-off" phrase, read against the brief's own §6
+  sequencing text and PO's own decision journal (triage-20260807T0143Z, D-4: "this PO dispatch IS
+  the ratification event that flag waits for"), does not describe a real open gate for FOLLOW-UP-1
+  items 1-3 — only FOLLOW-UP-2 (system-auditor zone, explicitly non-blocking per brief §3.3) and
+  item 4 (release-call wiring, gated on UC-CCA-P3, not yet shipped) carry a real dependency.
+**why-decision:** Implementing now (not just decomposing a new row) is root-cause-fix, not paperwork
+churn — the brief already fully specified the change, agent-father already owns the exact files,
+and the row is a P1 recurring bug open since 2026-07-16. Deferred FOLLOW-UP-2 (system-auditor's
+zone, P2, non-blocking) and the UC-CCA-P3-gated release-call wiring to the signal's recommendation
+rather than freelancing scope outside this row's minimum AC or another agent's zone.
+**why-change:** gateway-blind this session (native `mcp__gateway__call_tool` absent — confirmed by
+one live attempt, not assumed from memory, per fail-loud-protocol); used the documented Bash-bridge
+`scripts/agents-flow/mcp-call.sh` fallback for task_release instead (gateway-call-contract.md §6b).
