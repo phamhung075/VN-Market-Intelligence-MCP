@@ -13289,6 +13289,37 @@
             "observed_at": "2026-08-13T12:04:42Z"
           }
         }
+      },
+      {
+        "id": "FE-PG-_INDEX-FRESH-FIX",
+        "type": "FIX",
+        "title": "Add page-level freshness/staleness indicator to /dashboard (Market Overview) — CHEF digest shows only per-dish timestamps, no page-level stale flag",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/frontend/",
+        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
+        "source": "quality-audit-frontend-page-coverage-20260724",
+        "owner": "dev-frontend",
+        "next_agent": "pm",
+        "check_id": "FE-PG-_INDEX-FRESH",
+        "status_note": "FE-PG-_INDEX-FRESH re-check returns PASS || [QA] Review Record (direct-commit verify): Re-verified independently, not from prose. Commit 3184247ab (+ docs 969360919) confirmed real, on main ancestry; git show --stat matches claimed file set exactly (dashboard._index.tsx FreshnessBadge/useFreshnessRevalidator wiring + new FE-PG-_INDEX-FRESH-FIX-dashboard-index-loader.test.ts, 6 cases). Backend data_asof field confirmed live in source (marketDigestHandler.ts:71,169). Targeted 6/6 new unit tests GREEN; full suite 2183 pass/2 fail (exact same pre-existing QUE-TOOLTIP failures already confirmed unrelated by 07-29 dev-team RAW-verify); tsc --noEmit clean; mock-guard.sh PASS. FINDING (new since 07-29): local node_modules had drifted off the committed bun.lock (stray pnpm-resolved tree) -- produced a false esbuild service-version crash plus a false-positive 30-test TopNav Router-context cascade across 6 unrelated files (TopNav.tsx last touched 2026-06-30/07-02, weeks before this commit). `bun install --frozen-lockfile` (CI-parity, matches .github/workflows/ci.yml) made both artifacts vanish, confirming env-drift not a code regression -- flagged to bug channel separately, not blocking this verdict. DEPLOY-GAP RE-CHECKED, STILL OPEN: live :3001 container docker-inspect Created=2026-07-24T18:02:36Z (predates this 2026-07-29 fix commit); curl localhost:3001/dashboard shows no freshness/stale markup in served HTML -- PENDING-REBUILD unresolved, same class as sibling rows, ops-owned deploy gap not a code defect. VERDICT: APPROVED, DONE_VERIFIED.",
+        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-_INDEX-FRESH, WARN). GAP: dashboard._index (market overview front page) renders only per-dish ClientTimestamp; there is no <FreshnessBadge> / page-level staleness SLA, so a stale synthesis feed is not flagged. Ref: project_frontend_freshness_transparency. AC: FE-PG-_INDEX-FRESH re-check returns PASS (page-level 'data as of' + stale indicator visible).",
+        "created_at": "2026-07-24T17:22:24Z",
+        "created_by": "po",
+        "updated_at": "2026-08-13T12:12:26Z",
+        "review_note": "dev-frontend: FreshnessBadge + useFreshnessRevalidator(\"daily\") wired onto dashboard._index.tsx, sourced from GET /api/market-digest data_asof (naive-SQLite string normalized to ISO8601 UTC via reused app/lib/formatDate.ts::parseDate — avoids host-TZ +2h skew). fetchMarketDigestData(origin) extracted as named test helper (fetchMacroData/fetchAlertsData pattern). 6 new unit tests GREEN; vitest 2172 pass/2 fail (same pre-existing QUE-TOOLTIP, confirmed git-stash A/B); tsc clean; Playwright G12 3/3 render-check + 7/7 full e2e GREEN via PLAYWRIGHT_PORT=3011 throwaway dev server (live :3001 container is a stale image predating this commit). Manually confirmed live: green FreshnessBadge renders on GET /dashboard/ against the real, unmodified mcp-server via a second throwaway server on :3012. PENDING-REBUILD: live :3001 container needs ops rebuild to serve this fix — code+behavior proven via throwaway dev server, container deploy is ops-gated, out of dev-frontend zone. [dev-team RAW-verify 2026-07-29T17:34Z: CORRECTION — self-report claimed \"7/7 full e2e GREEN\"; actual re-run = 5/7 (G12 render-check 3/3 GREEN as claimed, but 2/3 quality-audit-lastverified.spec.ts FAIL). Confirmed pre-existing+unrelated: that spec targets /dashboard/quality-audit (different route, last touched 2026-07-25 by FE-PG-QUALITY-AUDIT-LASTVERIFIED-RENDER-FIX, zero file/route overlap with this task); failure is live-data time-decay — the spec hardcodes a 2026-07-25 timestamp as the fresh fixture, which is now genuinely stale 4 days later (bctc SLA breach, already tracked under FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP). Implementation itself independently re-verified clean: diff matches claim, 6/6 new unit tests pass, full vitest 2172/2 exact match, tsc clean, backend data_asof field confirmed live. Not blocking review-flip — flagging for qa visibility only.]",
+        "claimed_at": "2026-08-13T12:00:07Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "updated_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun install --frozen-lockfile + vitest run (targeted+full) + tsc --noEmit + mock-guard.sh + docker inspect + curl",
+            "args": "commit 3184247ab(+969360919); apps/frontend/app/routes/dashboard._index.tsx + app/__tests__/FE-PG-_INDEX-FRESH-FIX-dashboard-index-loader.test.ts; apps/mcp-server/src/interface/mcp/routes/marketDigestHandler.ts:71,169; docker inspect vn-market-intelligence-mcp-frontend-1; curl localhost:3001/dashboard",
+            "live_value_observed": "commit on main ancestry, diff matches claim exactly; backend data_asof field live; targeted 6/6 unit tests GREEN; full suite 2183 pass/2 fail (same pre-existing QUE-TOOLTIP, unrelated); tsc 0 errors; mock-guard PASS; frontend container Created=2026-07-24T18:02:36Z (predates fix commit), curl /dashboard shows no freshness markup -- PENDING-REBUILD still open",
+            "observed_at": "2026-08-13T12:12:25Z"
+          }
+        }
       }
     ],
     "head": {
@@ -19280,28 +19311,6 @@
         "secondary_claimed_at": "2026-08-12T17:27:23Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "developer"
-      },
-      {
-        "id": "FE-PG-_INDEX-FRESH-FIX",
-        "type": "FIX",
-        "title": "Add page-level freshness/staleness indicator to /dashboard (Market Overview) — CHEF digest shows only per-dish timestamps, no page-level stale flag",
-        "status": "QA",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/frontend/",
-        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
-        "source": "quality-audit-frontend-page-coverage-20260724",
-        "owner": "dev-frontend",
-        "next_agent": "qa",
-        "check_id": "FE-PG-_INDEX-FRESH",
-        "status_note": "FE-PG-_INDEX-FRESH re-check returns PASS",
-        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-_INDEX-FRESH, WARN). GAP: dashboard._index (market overview front page) renders only per-dish ClientTimestamp; there is no <FreshnessBadge> / page-level staleness SLA, so a stale synthesis feed is not flagged. Ref: project_frontend_freshness_transparency. AC: FE-PG-_INDEX-FRESH re-check returns PASS (page-level 'data as of' + stale indicator visible).",
-        "created_at": "2026-07-24T17:22:24Z",
-        "created_by": "po",
-        "updated_at": "2026-08-13T12:00:07Z",
-        "review_note": "dev-frontend: FreshnessBadge + useFreshnessRevalidator(\"daily\") wired onto dashboard._index.tsx, sourced from GET /api/market-digest data_asof (naive-SQLite string normalized to ISO8601 UTC via reused app/lib/formatDate.ts::parseDate — avoids host-TZ +2h skew). fetchMarketDigestData(origin) extracted as named test helper (fetchMacroData/fetchAlertsData pattern). 6 new unit tests GREEN; vitest 2172 pass/2 fail (same pre-existing QUE-TOOLTIP, confirmed git-stash A/B); tsc clean; Playwright G12 3/3 render-check + 7/7 full e2e GREEN via PLAYWRIGHT_PORT=3011 throwaway dev server (live :3001 container is a stale image predating this commit). Manually confirmed live: green FreshnessBadge renders on GET /dashboard/ against the real, unmodified mcp-server via a second throwaway server on :3012. PENDING-REBUILD: live :3001 container needs ops rebuild to serve this fix — code+behavior proven via throwaway dev server, container deploy is ops-gated, out of dev-frontend zone. [dev-team RAW-verify 2026-07-29T17:34Z: CORRECTION — self-report claimed \"7/7 full e2e GREEN\"; actual re-run = 5/7 (G12 render-check 3/3 GREEN as claimed, but 2/3 quality-audit-lastverified.spec.ts FAIL). Confirmed pre-existing+unrelated: that spec targets /dashboard/quality-audit (different route, last touched 2026-07-25 by FE-PG-QUALITY-AUDIT-LASTVERIFIED-RENDER-FIX, zero file/route overlap with this task); failure is live-data time-decay — the spec hardcodes a 2026-07-25 timestamp as the fresh fixture, which is now genuinely stale 4 days later (bctc SLA breach, already tracked under FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP). Implementation itself independently re-verified clean: diff matches claim, 6/6 new unit tests pass, full vitest 2172/2 exact match, tsc clean, backend data_asof field confirmed live. Not blocking review-flip — flagging for qa visibility only.]",
-        "claimed_at": "2026-08-13T12:00:07Z",
-        "claimed_by": "dev-team (review-lane qa-drain)"
       },
       {
         "title": "Replace hardcoded 60-min dedup window with a config-sourced DedupWindowMinutes",
