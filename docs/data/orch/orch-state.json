@@ -132,7 +132,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-13T20:51:34Z",
+    "_updated_at": "2026-08-13T21:49:58Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -518,7 +518,7 @@
         "type": "task-complete",
         "summary": "FIX-CHEF-MIDFLOW-BAIL-DETERMINISM FOLLOW-UP-1 shipped (commit c31ee006e) - row AC satisfied, recommend DONE_VERIFIED plus mint FOLLOW-UP-2 as separate P2 row",
         "severity": "INFO",
-        "status": "NEW",
+        "status": "READ",
         "payload": {
           "task_id": "FIX-CHEF-MIDFLOW-BAIL-DETERMINISM",
           "dispatched_by": "dev-team (review-lane secondary-drain)",
@@ -18993,7 +18993,7 @@
         "last_served_tick": "2026-08-13T21:22:13Z"
       }
     },
-    "_updated_at": "2026-08-13T21:22:13Z",
+    "_updated_at": "2026-08-13T21:49:58Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -25467,6 +25467,29 @@
         },
         "createdAt": "2026-08-13T21:10:29Z",
         "drained_at": "2026-08-13T21:19:25Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "af-20260813T213435Z-drained",
+        "source": "dashboard",
+        "from": "agent-father",
+        "to": "po",
+        "type": "task-complete",
+        "priority": "INFO",
+        "payload": {
+          "task_id": "FIX-CHEF-MIDFLOW-BAIL-DETERMINISM",
+          "dispatched_by": "dev-team (review-lane secondary-drain)",
+          "coordination_session": "632721c2-41e4-4aff-8d06-a47cf80dc0d7",
+          "architect_spec_ref": "docs/architecture-briefs/2026-08-07-chef-midflow-bail-determinism-guard.md",
+          "action_taken": "Read the plan-only spec, confirmed the RETURN block already named agent-father as FOLLOW-UP-1 implementer with items 1-3 explicitly ship-immediately/no-dependency (brief section 6 sequencing). Implemented FOLLOW-UP-1 directly (within agent-father commit_zone docs/agents/): chef-telemetry.md new section Degraded-Floor Recovery plus True-Abort Fallback sections, Try/Catch Boundary pinned to start at Step 0.5; chef.md Step 1 Degraded-dish-floor trigger widened with OR-clause (tool-failure/budget-exhaustion/self-narrated-inability, not just source-down) plus pointer to the new section; 8 Checkpoint pointers added at every chef-dish.md step boundary (1.5/2/3/4/5/6/6.5/6.7) between the gate-fire and Step 7. Release-call branch is a no-op/log-only stub pending UC-CCA-P3 Release Gate (not shipped) per brief section 5 sequencing note. Verification gate section 7 checks 1/2/3/5 all pass (grep-confirmed). Committed and pushed: c31ee006e.",
+          "recommended_board_actions": [
+            "Move FIX-CHEF-MIDFLOW-BAIL-DETERMINISM review[] to done_verified[]: this row's own AC (a) publish degraded-floor dish and (b) code-enforced explicit abort that releases any claimed marker are both satisfied by FOLLOW-UP-1 (brief section 3.3: Layer 2/system-auditor sweep is explicitly defense-in-depth, NOT a hard blocker of this row's minimum AC).",
+            "Mint FOLLOW-UP-2 as a new backlog[] row (brief section 6 item 5): system-auditor published-marker orphan sweep, P2 suggested, agent-father owns the flow-file edit to docs/agents/system-auditor/flow/main.md, same pattern family as the existing Step 0b.1 stale-marker sweep. Not urgent, not blocking - defense-in-depth only."
+          ],
+          "note": "agent-father commit_zone excludes docs/data/orch/orch-state.json task_board writes by design (commit-boundary SKILL.md RULE 2 zone table) - this signal is the hand-off so po/dev-team performs the actual lane-move plus FOLLOW-UP-2 mint; the real flow-file work is already shipped and pushed on main, independent of this board bookkeeping step."
+        },
+        "createdAt": "2026-08-13T21:34:35Z",
+        "drained_at": "2026-08-13T21:49:58Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
