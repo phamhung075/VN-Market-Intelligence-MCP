@@ -92,11 +92,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-13T10:34:24Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 2 row(s), highest-ranked FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 2 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-13T10:55:15Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -132,7 +133,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-13T09:51:02Z",
+    "_updated_at": "2026-08-13T10:54:02Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -591,8 +592,8 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-13.json"
+        "status": "READ",
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-13.json"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -13159,6 +13160,42 @@
             "observed_at": "2026-08-12T16:37:00Z"
           }
         }
+      },
+      {
+        "id": "FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND",
+        "title": "FIX: scripts/orch-conservation-check.mjs FLAT_TASK_LANES (~:67) omits 'qa' — the qa[] lane is excluded from task_total, so a catastrophic qa[] drop is invisible to the floor-ratio conservation circuit-breaker. qa[] is now live via QA-Drain. Add 'qa' to FLAT_TASK_LANES + align the documented conservation formula.",
+        "status": "DONE_VERIFIED",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "created_at": "2026-07-22T06:40:43Z",
+        "created_by": "po/triage-20260722T0640",
+        "origin_signal_id": "dev-team-20260722T054244Z-triage-batch-wip-deadlock",
+        "root_cause": "scripts/orch-conservation-check.mjs FLAT_TASK_LANES (~line 67) does not list 'qa', so qa[] task rows are not summed into task_total; the floor-ratio guard therefore cannot detect a qa[] collapse. qa[] is now actively populated by the Review-Lane QA-Drain.",
+        "deliverable": "Add 'qa' to FLAT_TASK_LANES; update the documented conservation formula (dev-standards / script header) to match the enumerated lane set.",
+        "acceptance": "A candidate that drops qa[] below FLOOR_RATIO is ABORTED by the orch-apply.sh conservation stage (negative control); a normal additive write is unaffected. Lane set in code == lane set in the documented formula.",
+        "related": [
+          "FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY"
+        ],
+        "note": "Minted from dev-team WIP-deadlock triage-persist-request (dev-team-20260722T054244Z). Full spec = PO decision journal STEP po-S2 (same file, 2026-07-22T05:31:04Z). Latent blind-spot (no active harm yet: qa[] currently 0) -> P2. NOT dispatched at mint (WIP=2/2) — auto-promote via BOUNDED-1/RLC.",
+        "updated_at": "2026-08-13T10:58:57Z",
+        "claimed_at": "2026-08-13T10:55:15Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "commit": "9b39ed5cc",
+        "review_note": "[QA] Review Record (direct-commit verify) — commit 9b39ed5cc on main ancestry (merge-base --is-ancestor exit 0); Task:/AC: trailers match exactly. FLAT_TASK_LANES + header-comment formula both include qa (code==doc parity confirmed, dev-standards.md CANONICAL block never enumerates lanes literally so no edit needed there — verified via grep). Re-ran scripts/test/orch-apply-wrapper-tests.sh live: 75/75 PASS incl. QA-COLLAPSE (qa[] wiped 50->0, exit 1 rejected, fixture unchanged) + QA-APPEND-HAPPY (additive write, exit 0, length+1) — both AC negative/positive controls independently re-exercised, not trusted from commit prose. Later commit cc7e86829 extended the same header comment; qa lane survived intact. No TS touched; mock-guard PASS (no prod source in scope); apps/mcp-server bun tsc --noEmit run anyway as broader regression check, clean. Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S98.",
+        "verified_at": "2026-08-13T10:58:57Z",
+        "verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bash scripts/test/orch-apply-wrapper-tests.sh + grep FLAT_TASK_LANES scripts/orch-conservation-check.mjs + git merge-base --is-ancestor + bun tsc --noEmit (apps/mcp-server) + mock-guard.sh",
+            "args": "orch-apply-wrapper-tests.sh (full 75-case suite incl. QA-COLLAPSE/QA-APPEND-HAPPY sections); grep -n FLAT_TASK_LANES scripts/orch-conservation-check.mjs; git merge-base --is-ancestor 9b39ed5cc main; mock-guard.sh --files scripts/orch-conservation-check.mjs",
+            "live_value_observed": "75/75 PASS (incl. QA-COLLAPSE: qa[] wiped 50->0 rejected exit 1, fixture byte-unchanged; QA-APPEND-HAPPY: additive qa[] write accepted exit 0, length+1); FLAT_TASK_LANES line 139 = [backlog,ready,in_progress,review,qa,done,done_verified] (qa present); merge-base exit 0 (on main ancestry); mock-guard PASS (no production source in scan scope); apps/mcp-server tsc --noEmit 0 errors",
+            "observed_at": "2026-08-13T10:58:57Z"
+          }
+        }
       }
     ],
     "head": {
@@ -15511,46 +15548,6 @@
         "status_note": "IMPLEMENTATION: Root cause confirmed -- docs/agents/system-auditor/flow/main.md:748-755 gates the agent-side Tier-2/3 heartbeat write out of Tier-1, but a 2026-07-29T06:08:22Z DEGRADED Tier-1 cycle wrote docs/data/auditor-tier1-last-healthy.json anyway; no authorizing step anywhere in the flow produced it (the block's own if already correctly excludes tier-1). Collapsed the file from {last_healthy_at, checks{6 keys}} to bare {last_healthy_at}, falsely advancing a healthy marker on a non-healthy cycle. A prose prohibition alone had already been tried and failed (2nd violation). FIX: (AC1) new CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER in docs/policies/dev-standards.md, cited from both writers (auditor-tier1-probe.sh header comment + system-auditor main.md Tier-2/3 Heartbeat Write section). (AC2/AC3) new scripts/git-hooks/pre-commit _check_auditor_heartbeat_shapes -- runs unconditionally before the pre-existing sweep-guard mode dispatch, never GIT_SWEEP_GUARD_MODE-gated: rejects (commit BLOCKED, loud stderr) any staged tier-1 write that is not the exact {last_healthy_at, checks:{docker_ps,health_3000,health_3001,disk,mem_creep,launchd_agents}, all PASS} shape, and any staged tier-2/3 write carrying a checks key at all -- converts the prose prohibition into a code-level, fail-loud guard. (AC4) main.md now states the resolved semantic split explicitly: tier-1 means system-confirmed-healthy, tier-2/3 means an-audit-completed regardless of verdict (fires every Tier-2/3 cycle by design, auditor-signal-loop-P1, load-bearing for the SKIP-SPAWN freshness gate in run_tiered_probe()). Judgment call: re-gating tier-2/3 on green was rejected (would starve the heartbeat on a persistently-tracked DEGRADED cycle and recreate the exact spawn-storm that P1 fix closed); renaming the files/field was rejected (would break FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL's already-planned OH-3.5 reads of these exact paths -- that row explicitly names this one as a sequencing prerequisite). Kept both filenames/fields; made shape (bare vs checks{}) the enforced structural signal distinguishing the two semantics. (AC5) live file repaired by actually running the authorized writer (bash scripts/agents-flow/auditor-tier1-probe.sh) rather than hand-editing -- genuine live ALL_GREEN read, full checks{} shape restored. (AC6) suppress_heartbeat NOT ported to Tier-1; AUDIT_TIER 2/3 gate at main.md:750 NOT dropped -- both directions explicitly rejected per the sibling row's .why_the_obvious_fixes_are_wrong field, read before implementing. VERIFICATION: new scripts/git-hooks/pre-commit-auditor-heartbeat.test.sh RED (3/6 fail pre-guard) -> GREEN (6/6 post-guard). No regressions: pre-existing pre-commit.test.sh 6/6, auditor-tier1-probe.test.sh 141/141, both scripts otherwise byte-identical to before this task. bash -n syntax-clean on the hook. Shell/JSON/MD only -- no apps/mcp-server/ TS touched, bun tsc/bun test not structurally applicable. Graphify incremental update: no Skill-tool/LLM-API-key path available to this spawned agent (same structural constraint as 2 prior sessions today) -- flagged in docs/WORK.md, not silently skipped. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S23.",
         "updated_by": "po/triage-20260808T1248Z",
         "po_live_recurrence_20260808T1248Z": "LIVE RECURRENCE, AND THIS TIME IT REACHED GIT. docs/data/auditor-tier1-last-healthy.json currently reads {last_healthy_at: '2026-08-08T12:05:10Z', checks: {... mem_creep: 'PASS' ...}} and was committed at 34521315f by router session 165f4245 on the good-faith premise (quoted from that commit message) that the value is 'a genuine last-all-6-checks-passed timestamp before the mem_creep FAILURE window began'. PO REFUTES THAT PREMISE ON RAW EVIDENCE, three independent ways: (1) the FAILURE window began no later than 2026-08-08T11:04Z — peer auditor cycle c48 (commit 76466302a) records rag-service-1 at 98.53% / 15MiB free / BELOW-FLOOR at that time — so 12:05:10Z is INSIDE the failure window, not before it; (2) PO re-ran the pre-gate read-only at 12:47Z via the documented HEARTBEAT_FILE_PATH=<scratch> seam and got verdict=FAILURE, detail 'mem_creep: ... vn-market-intelligence-mcp-rag-service-1(98.56%, 14.7MiB-free, BELOW-FLOOR(floor=40MiB))', with the container at RestartCount=0 / OOMKilled=false / healthy / StartedAt 2026-08-08T08:11:45Z — i.e. no restart between 11:04Z and now that could have produced a transient green at 12:05Z; (3) the shell pre-gate STRUCTURALLY CANNOT have written it: run_probe() gates _write_heartbeat on an EMPTY failures list, and _mem_container_acked() disqualifies the rag-service acked_memory entry twice over — headroom 15MiB < MEM_FLOOR_MIB=40 -> BELOW-FLOOR, and tracked_by=FU-RAG-DEPLOY-MEMORY reached DONE_VERIFIED at 10:59:52Z -> STALE-ACK. Therefore the 12:05:10Z stamp is an out-of-contract agent write on a DEGRADED cycle — exactly this row's defect — and it is now the committed record. IMPACT beyond this row's existing scope: the tier-1 cron freshness arm reads .last_healthy_at and spawns on age>60min, so a false stamp suppresses that arm for an hour (the verdict=FAILURE arm still fires, so this is degradation, not blindness). REMEDIATION IS NOT PO'S TO EXECUTE: hand-writing this file is explicitly forbidden (pre-commit hook scripts/git-hooks/pre-commit:119 names _write_heartbeat as the sole authorized writer, and the 2026-07-29 PO constraint on scripts/po-s151-tier1-probe-plane-divergence-triage.jq:83 says 'Do NOT hand-write docs/data/auditor-tier1-last-healthy.json'). Correct action, for router/ops: revert the file half of 34521315f so the field returns to its last genuinely-green value 2026-08-07T03:35:32Z (written by b30e533ce), which restores the honest >33h-stale reading and lets the freshness arm work. Do NOT re-stamp it forward by hand."
-      },
-      {
-        "id": "FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND",
-        "title": "FIX: scripts/orch-conservation-check.mjs FLAT_TASK_LANES (~:67) omits 'qa' — the qa[] lane is excluded from task_total, so a catastrophic qa[] drop is invisible to the floor-ratio conservation circuit-breaker. qa[] is now live via QA-Drain. Add 'qa' to FLAT_TASK_LANES + align the documented conservation formula.",
-        "status": "REVIEW",
-        "type": "FIX",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "qa",
-        "created_at": "2026-07-22T06:40:43Z",
-        "created_by": "po/triage-20260722T0640",
-        "origin_signal_id": "dev-team-20260722T054244Z-triage-batch-wip-deadlock",
-        "root_cause": "scripts/orch-conservation-check.mjs FLAT_TASK_LANES (~line 67) does not list 'qa', so qa[] task rows are not summed into task_total; the floor-ratio guard therefore cannot detect a qa[] collapse. qa[] is now actively populated by the Review-Lane QA-Drain.",
-        "deliverable": "Add 'qa' to FLAT_TASK_LANES; update the documented conservation formula (dev-standards / script header) to match the enumerated lane set.",
-        "acceptance": "A candidate that drops qa[] below FLOOR_RATIO is ABORTED by the orch-apply.sh conservation stage (negative control); a normal additive write is unaffected. Lane set in code == lane set in the documented formula.",
-        "related": [
-          "FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY"
-        ],
-        "note": "Minted from dev-team WIP-deadlock triage-persist-request (dev-team-20260722T054244Z). Full spec = PO decision journal STEP po-S2 (same file, 2026-07-22T05:31:04Z). Latent blind-spot (no active harm yet: qa[] currently 0) -> P2. NOT dispatched at mint (WIP=2/2) — auto-promote via BOUNDED-1/RLC.",
-        "updated_at": "2026-07-29T16:24:26Z"
-      },
-      {
-        "id": "FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE",
-        "type": "FIX",
-        "priority": "P2",
-        "size": "S",
-        "sprint": "BACKLOG",
-        "status": "REVIEW",
-        "zone": "cross-service/",
-        "created_at": "2026-07-22T15:13:42Z",
-        "title": "FIX: signal drain moves a signal payload file from docs/signals/ to docs/signals/processed/ but leaves the owning signal_queue row payload_ref at the old top-level path -> dangling ref; the addressee agent cannot resolve the payload. Update the row payload_ref in the SAME drain transaction that moves the file.",
-        "status_note": "Claimed-minted-but-absent: signal_queue row po-20260720T052606 (po_ref_repair_20260721) states 'Root cause minted as FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE' but grep count=1 across the whole orch-state = only that note; the row was never persisted to any lane. Minting for real now. AC: drain moves the payload file AND rewrites the owning signal_queue row payload_ref atomically; a follow-up read of the row resolves the file at processed/. Regression test asserts no dangling payload_ref after a drain move.",
-        "origin_signal_id": "po-20260720T052606",
-        "updated_at": "2026-07-29T16:48:06Z",
-        "next_agent": "qa",
-        "reviewed_at": "2026-07-29T16:48:06Z",
-        "reviewed_by": "developer",
-        "review_note": "Root cause: scripts/agents-flow/drain-signals.js moved docs/signals/*.json -> processed/ with zero signal_queue awareness. Fix: after the existing move loop, the script now builds a movedRefs map (old repo-relative path -> new processed/ path, both routed-to-po and skipped-duplicate-replay branches) and, if non-empty, calls repointPayloadRefs() -- a jq filter (--argjson bound map, never string-interpolated) that rewrites signal_queue.rows[].payload_ref (fragment-preserving split on \"#\") for every row whose ref matches a moved file, computes {doc, changed}, and skips the write entirely when changed==0 (common case). When changed>0 the candidate is applied via the SAME scripts/orch-apply.sh gate every other orch-state writer uses (Zod schema + conservation + CAS), with up to 3 CAS-retry attempts (re-deriving the candidate from the live file each attempt) and a FAIL-LOUD process.exit(1) if the gated write still cannot land -- silently swallowing that failure would just reproduce the exact bug being fixed. All new diagnostics use console.error (stderr) only, so stdout stays byte-identical for every pre-existing caller/test (confirmed: existing golden-stdout regression test AC7 in drain-signals.test.js still passes verbatim). New verification-gate scenario in scripts/agents-flow/drain-signals.test.js (isolated mkdtemp harness: drain-signals.js + orch-apply.sh + orch-validate.mjs + orch-conservation-check.mjs + orchStateSchema.ts copied in, node_modules symlinked -- never the live orch-state.json) asserts live, in one run: (1) seeded docs/signals/<f>.json now under processed/, (2) the seeded signal_queue row payload_ref rewritten to the processed/ path, (3) the REAL bun scripts/orch-validate.mjs exits 0 against the harness copy. 18/18 total assertions green (15 pre-existing + 3 new). Negative control (pre-fix HEAD copy of the script, run against the identical fixture) reproduces the live bug verbatim -- payload_ref stays at the pre-move path after the file relocates, and a direct dangling-ref fixture separately confirmed orch-validate.mjs Stage 1c genuinely fails (exit 2) on this exact defect class, so the new gate is not vacuously green. Commit scoped to scripts/agents-flow/drain-signals.js + scripts/agents-flow/drain-signals.test.js only (explicit pathspec) -- did not sweep the live orch-state.json (already dirty from a separate concurrent fleet-push) into that commit; this board-transition write is a separate, additive orch-apply.sh write, also not committed by developer (left for the owning fleet-push/PO to pick up)."
       },
       {
         "id": "FACTORY-GUARD-CI-SIZELINT-IMPL",
@@ -19254,6 +19251,26 @@
         "secondary_claimed_at": "2026-08-12T17:27:23Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "developer"
+      },
+      {
+        "id": "FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "S",
+        "sprint": "BACKLOG",
+        "status": "QA",
+        "zone": "cross-service/",
+        "created_at": "2026-07-22T15:13:42Z",
+        "title": "FIX: signal drain moves a signal payload file from docs/signals/ to docs/signals/processed/ but leaves the owning signal_queue row payload_ref at the old top-level path -> dangling ref; the addressee agent cannot resolve the payload. Update the row payload_ref in the SAME drain transaction that moves the file.",
+        "status_note": "Claimed-minted-but-absent: signal_queue row po-20260720T052606 (po_ref_repair_20260721) states 'Root cause minted as FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE' but grep count=1 across the whole orch-state = only that note; the row was never persisted to any lane. Minting for real now. AC: drain moves the payload file AND rewrites the owning signal_queue row payload_ref atomically; a follow-up read of the row resolves the file at processed/. Regression test asserts no dangling payload_ref after a drain move.",
+        "origin_signal_id": "po-20260720T052606",
+        "updated_at": "2026-08-13T10:55:15Z",
+        "next_agent": "qa",
+        "reviewed_at": "2026-07-29T16:48:06Z",
+        "reviewed_by": "developer",
+        "review_note": "Root cause: scripts/agents-flow/drain-signals.js moved docs/signals/*.json -> processed/ with zero signal_queue awareness. Fix: after the existing move loop, the script now builds a movedRefs map (old repo-relative path -> new processed/ path, both routed-to-po and skipped-duplicate-replay branches) and, if non-empty, calls repointPayloadRefs() -- a jq filter (--argjson bound map, never string-interpolated) that rewrites signal_queue.rows[].payload_ref (fragment-preserving split on \"#\") for every row whose ref matches a moved file, computes {doc, changed}, and skips the write entirely when changed==0 (common case). When changed>0 the candidate is applied via the SAME scripts/orch-apply.sh gate every other orch-state writer uses (Zod schema + conservation + CAS), with up to 3 CAS-retry attempts (re-deriving the candidate from the live file each attempt) and a FAIL-LOUD process.exit(1) if the gated write still cannot land -- silently swallowing that failure would just reproduce the exact bug being fixed. All new diagnostics use console.error (stderr) only, so stdout stays byte-identical for every pre-existing caller/test (confirmed: existing golden-stdout regression test AC7 in drain-signals.test.js still passes verbatim). New verification-gate scenario in scripts/agents-flow/drain-signals.test.js (isolated mkdtemp harness: drain-signals.js + orch-apply.sh + orch-validate.mjs + orch-conservation-check.mjs + orchStateSchema.ts copied in, node_modules symlinked -- never the live orch-state.json) asserts live, in one run: (1) seeded docs/signals/<f>.json now under processed/, (2) the seeded signal_queue row payload_ref rewritten to the processed/ path, (3) the REAL bun scripts/orch-validate.mjs exits 0 against the harness copy. 18/18 total assertions green (15 pre-existing + 3 new). Negative control (pre-fix HEAD copy of the script, run against the identical fixture) reproduces the live bug verbatim -- payload_ref stays at the pre-move path after the file relocates, and a direct dangling-ref fixture separately confirmed orch-validate.mjs Stage 1c genuinely fails (exit 2) on this exact defect class, so the new gate is not vacuously green. Commit scoped to scripts/agents-flow/drain-signals.js + scripts/agents-flow/drain-signals.test.js only (explicit pathspec) -- did not sweep the live orch-state.json (already dirty from a separate concurrent fleet-push) into that commit; this board-transition write is a separate, additive orch-apply.sh write, also not committed by developer (left for the owning fleet-push/PO to pick up).",
+        "claimed_at": "2026-08-13T10:55:15Z",
+        "claimed_by": "dev-team (review-lane qa-drain)"
       }
     ],
     "_closed_signals_20260614": {
@@ -19401,13 +19418,13 @@
         "last_served_tick": "2026-08-13T07:23:13Z"
       },
       "qa_drain": {
-        "last_served_tick": "2026-08-12T16:21:59Z"
+        "last_served_tick": "2026-08-13T10:54:59Z"
       },
       "step1_triage": {
         "last_served_tick": "2026-08-12T16:53:15Z"
       }
     },
-    "_updated_at": "2026-08-13T10:22:33Z",
+    "_updated_at": "2026-08-13T10:54:59Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23190,6 +23207,196 @@
         },
         "createdAt": "2026-08-13T09:52:34Z",
         "drained_at": "2026-08-13T10:22:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "156d913cf0be16f54a3e1e6a310a81979edd3b948474b08d481f2cdf0708225a",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md docs/data/auditor-tier2-last-healthy.json. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=3 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-13T10:34:45Z",
+        "drained_at": "2026-08-13T10:53:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5b09cb08632913352981364166c36b1bc6ae1c8b34ba5ec750c47fac194a1c7c",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c65 · 2026-08-13T10:00Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-13T10:34:50Z",
+        "drained_at": "2026-08-13T10:53:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3be70941e58edb04347442e23ba6570747d4eb9a177b8fdc7c79b9e21605a9a2",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-13T10:30:05Z",
+        "drained_at": "2026-08-13T10:53:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8e68cc3d55f4eb9feb1012cadba4ac69e15202265041e054c319dd6bfd9e11ad",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12877,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T10:30:06Z",
+        "drained_at": "2026-08-13T10:53:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b2f7d77a979706ad0bb818e178765a2ef30927aeb283394001856d8eee808776",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12877,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T10:30:54Z",
+        "drained_at": "2026-08-13T10:53:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9c01aa1b96abc85e68c7105e5f5b77388aa85aa99eb06a4d6d47985bc334ae3d",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 83,
+          "cap": 200,
+          "byte_count": 14124,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T10:30:06Z",
+        "drained_at": "2026-08-13T10:53:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "dd9d4a98d08986ac0860ff05a1c5451832f9054235d9d68be1dd7e21e4146137",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 83,
+          "cap": 200,
+          "byte_count": 14124,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T10:30:54Z",
+        "drained_at": "2026-08-13T10:53:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5516e8f468fe2cab62a98d716f93808191a10f1c0882f6e403e3dd54f37f1578",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 42,
+          "cap": 200,
+          "byte_count": 26750,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T10:30:05Z",
+        "drained_at": "2026-08-13T10:53:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ec4c569e59d986654aafa53977fb82e49922824e48bea6d0c3a28175fdebeb83",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 42,
+          "cap": 200,
+          "byte_count": 26750,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T10:30:53Z",
+        "drained_at": "2026-08-13T10:53:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3be70941e58edb04347442e23ba6570747d4eb9a177b8fdc7c79b9e21605a9a2",
+        "source": "dashboard",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "LOW",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-13T10:30:05Z",
+        "drained_at": "2026-08-13T10:54:02Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
