@@ -9442,6 +9442,69 @@
           "observed_at": "2026-08-13T10:31:01Z"
         }
       }
+    },
+    {
+      "id": "FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND",
+      "title": "FIX: scripts/orch-conservation-check.mjs FLAT_TASK_LANES (~:67) omits 'qa' — the qa[] lane is excluded from task_total, so a catastrophic qa[] drop is invisible to the floor-ratio conservation circuit-breaker. qa[] is now live via QA-Drain. Add 'qa' to FLAT_TASK_LANES + align the documented conservation formula.",
+      "status": "DONE_VERIFIED",
+      "type": "FIX",
+      "priority": "P2",
+      "size": "S",
+      "zone": "cross-service/",
+      "owner": "developer",
+      "next_agent": "qa",
+      "created_at": "2026-07-22T06:40:43Z",
+      "created_by": "po/triage-20260722T0640",
+      "origin_signal_id": "dev-team-20260722T054244Z-triage-batch-wip-deadlock",
+      "root_cause": "scripts/orch-conservation-check.mjs FLAT_TASK_LANES (~line 67) does not list 'qa', so qa[] task rows are not summed into task_total; the floor-ratio guard therefore cannot detect a qa[] collapse. qa[] is now actively populated by the Review-Lane QA-Drain.",
+      "deliverable": "Add 'qa' to FLAT_TASK_LANES; update the documented conservation formula (dev-standards / script header) to match the enumerated lane set.",
+      "acceptance": "A candidate that drops qa[] below FLOOR_RATIO is ABORTED by the orch-apply.sh conservation stage (negative control); a normal additive write is unaffected. Lane set in code == lane set in the documented formula.",
+      "related": [
+        "FIX-DRAIN-PERSIST-GUARD-COUNT-DRAINABLE-ONLY"
+      ],
+      "note": "Minted from dev-team WIP-deadlock triage-persist-request (dev-team-20260722T054244Z). Full spec = PO decision journal STEP po-S2 (same file, 2026-07-22T05:31:04Z). Latent blind-spot (no active harm yet: qa[] currently 0) -> P2. NOT dispatched at mint (WIP=2/2) — auto-promote via BOUNDED-1/RLC.",
+      "updated_at": "2026-08-13T10:58:57Z",
+      "claimed_at": "2026-08-13T10:55:15Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "commit": "9b39ed5cc",
+      "review_note": "[QA] Review Record (direct-commit verify) — commit 9b39ed5cc on main ancestry (merge-base --is-ancestor exit 0); Task:/AC: trailers match exactly. FLAT_TASK_LANES + header-comment formula both include qa (code==doc parity confirmed, dev-standards.md CANONICAL block never enumerates lanes literally so no edit needed there — verified via grep). Re-ran scripts/test/orch-apply-wrapper-tests.sh live: 75/75 PASS incl. QA-COLLAPSE (qa[] wiped 50->0, exit 1 rejected, fixture unchanged) + QA-APPEND-HAPPY (additive write, exit 0, length+1) — both AC negative/positive controls independently re-exercised, not trusted from commit prose. Later commit cc7e86829 extended the same header comment; qa lane survived intact. No TS touched; mock-guard PASS (no prod source in scope); apps/mcp-server bun tsc --noEmit run anyway as broader regression check, clean. Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S98.",
+      "verified_at": "2026-08-13T10:58:57Z",
+      "verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "bash scripts/test/orch-apply-wrapper-tests.sh + grep FLAT_TASK_LANES scripts/orch-conservation-check.mjs + git merge-base --is-ancestor + bun tsc --noEmit (apps/mcp-server) + mock-guard.sh",
+          "args": "orch-apply-wrapper-tests.sh (full 75-case suite incl. QA-COLLAPSE/QA-APPEND-HAPPY sections); grep -n FLAT_TASK_LANES scripts/orch-conservation-check.mjs; git merge-base --is-ancestor 9b39ed5cc main; mock-guard.sh --files scripts/orch-conservation-check.mjs",
+          "live_value_observed": "75/75 PASS (incl. QA-COLLAPSE: qa[] wiped 50->0 rejected exit 1, fixture byte-unchanged; QA-APPEND-HAPPY: additive qa[] write accepted exit 0, length+1); FLAT_TASK_LANES line 139 = [backlog,ready,in_progress,review,qa,done,done_verified] (qa present); merge-base exit 0 (on main ancestry); mock-guard PASS (no production source in scan scope); apps/mcp-server tsc --noEmit 0 errors",
+          "observed_at": "2026-08-13T10:58:57Z"
+        }
+      }
+    },
+    {
+      "id": "FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE",
+      "type": "FIX",
+      "priority": "P2",
+      "size": "S",
+      "sprint": "BACKLOG",
+      "status": "DONE_VERIFIED",
+      "zone": "cross-service/",
+      "created_at": "2026-07-22T15:13:42Z",
+      "title": "FIX: signal drain moves a signal payload file from docs/signals/ to docs/signals/processed/ but leaves the owning signal_queue row payload_ref at the old top-level path -> dangling ref; the addressee agent cannot resolve the payload. Update the row payload_ref in the SAME drain transaction that moves the file.",
+      "status_note": "Claimed-minted-but-absent: signal_queue row po-20260720T052606 (po_ref_repair_20260721) states 'Root cause minted as FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE' but grep count=1 across the whole orch-state = only that note; the row was never persisted to any lane. Minting for real now. AC: drain moves the payload file AND rewrites the owning signal_queue row payload_ref atomically; a follow-up read of the row resolves the file at processed/. Regression test asserts no dangling payload_ref after a drain move.\n\n[QA] Review Record (direct-commit verify): Row carries no .commit/.files[]/.owner (pre-drain-convention row) — derived commit via git log --all -- scripts/agents-flow/drain-signals.js{,.test.js}; git blame on repointPayloadRefs()/movedRefs confirms the fix landed in 84096f6170 (bundled under an unrelated peer subject \"fix(auditor-tier1): skip obsolete socat-bridge plist\" alongside sibling 0e28eed23 — content verified via git show --stat/git log -p, not the misleading commit message), on main ancestry (merge-base --is-ancestor exit 0). Code confirmed live at HEAD: movedRefs map (line ~181) + repointPayloadRefs() jq filter (line ~451), --argjson bound (no string interpolation), gated through orch-apply.sh with 3x CAS retry + FAIL-LOUD process.exit(1) on exhaustion. Independently re-ran node scripts/agents-flow/drain-signals.test.js myself (not trusted from review_note prose) -> 51/51 PASS, including the exact FIX-DRAIN-PAYLOADREF gate (1) file->processed/ (2) payload_ref repointed (3) orch-validate.mjs exits 0, plus the ENOBUFS maxBuffer regression scenario. mock-guard.sh --files scripts/agents-flow/drain-signals.js -> PASS. No DDD import violations (plain script, not domain/src). process.env hits are pre-existing override conventions (DRAIN_SIGNALS_DIR_OVERRIDE/DRAIN_PROCESSED_BY/ORCH_APPLY_LIVE_FILE_OVERRIDE), zero secrets. tsc N/A — plain .js under scripts/agents-flow/, not inside any tsconfig include path (not applicable to this zone, not skipped). CRITICAL FINDING (board hygiene, not a code defect): this exact task-id was ALREADY implemented, QA-APPROVED, DONE_VERIFIED, and round-2 re-gated on 2026-07-21 (see docs/data/orch/archive/2026-07.json id=FIX-DRAIN-PAYLOADREF-DANGLE-ON-MOVE, qa_verdict=APPROVED, qa_regate_round2_by=qa) — this row is a verbatim-duplicate re-mint (review_note text matches the archived entry word-for-word) that re-entered review[] via a 2026-07-29 \"un-strand stale row\" board commit (21d4c1809) and sat there until todays Review-Lane QA-Drain picked it up as if new. The underlying fix is real and still correctly in place at HEAD (re-verified live above) — recommend PO/board-hygiene flag this task-id collision class so QA-Drain does not re-litigate already-closed archived work. VERDICT: APPROVED, DONE_VERIFIED (genuinely re-verified, not rubber-stamped from the duplicate prose).",
+      "origin_signal_id": "po-20260720T052606",
+      "updated_at": "2026-08-13T11:02:38Z",
+      "reviewed_at": "2026-07-29T16:48:06Z",
+      "reviewed_by": "developer",
+      "review_note": "Root cause: scripts/agents-flow/drain-signals.js moved docs/signals/*.json -> processed/ with zero signal_queue awareness. Fix: after the existing move loop, the script now builds a movedRefs map (old repo-relative path -> new processed/ path, both routed-to-po and skipped-duplicate-replay branches) and, if non-empty, calls repointPayloadRefs() -- a jq filter (--argjson bound map, never string-interpolated) that rewrites signal_queue.rows[].payload_ref (fragment-preserving split on \"#\") for every row whose ref matches a moved file, computes {doc, changed}, and skips the write entirely when changed==0 (common case). When changed>0 the candidate is applied via the SAME scripts/orch-apply.sh gate every other orch-state writer uses (Zod schema + conservation + CAS), with up to 3 CAS-retry attempts (re-deriving the candidate from the live file each attempt) and a FAIL-LOUD process.exit(1) if the gated write still cannot land -- silently swallowing that failure would just reproduce the exact bug being fixed. All new diagnostics use console.error (stderr) only, so stdout stays byte-identical for every pre-existing caller/test (confirmed: existing golden-stdout regression test AC7 in drain-signals.test.js still passes verbatim). New verification-gate scenario in scripts/agents-flow/drain-signals.test.js (isolated mkdtemp harness: drain-signals.js + orch-apply.sh + orch-validate.mjs + orch-conservation-check.mjs + orchStateSchema.ts copied in, node_modules symlinked -- never the live orch-state.json) asserts live, in one run: (1) seeded docs/signals/<f>.json now under processed/, (2) the seeded signal_queue row payload_ref rewritten to the processed/ path, (3) the REAL bun scripts/orch-validate.mjs exits 0 against the harness copy. 18/18 total assertions green (15 pre-existing + 3 new). Negative control (pre-fix HEAD copy of the script, run against the identical fixture) reproduces the live bug verbatim -- payload_ref stays at the pre-move path after the file relocates, and a direct dangling-ref fixture separately confirmed orch-validate.mjs Stage 1c genuinely fails (exit 2) on this exact defect class, so the new gate is not vacuously green. Commit scoped to scripts/agents-flow/drain-signals.js + scripts/agents-flow/drain-signals.test.js only (explicit pathspec) -- did not sweep the live orch-state.json (already dirty from a separate concurrent fleet-push) into that commit; this board-transition write is a separate, additive orch-apply.sh write, also not committed by developer (left for the owning fleet-push/PO to pick up).",
+      "claimed_at": "2026-08-13T10:55:15Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "verification": {
+        "raw_probe": {
+          "tool": "bash",
+          "args": "node scripts/agents-flow/drain-signals.test.js",
+          "live_value_observed": "51/51 passed, 0 failed (incl. FIX-DRAIN-PAYLOADREF gate 1/2/3 + ENOBUFS regression)",
+          "observed_at": "2026-08-13T11:02:05Z"
+        }
+      }
     }
   ],
   "closed_sprints": [
@@ -15047,6 +15110,24 @@
       "disposition": "FOLD -> FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (open, review[], next_agent=dev-rag-service, P0). 5 rag-service A-30 rows folded as one chain, no mint. See that row's po_fold_20260812T1505Z for the three premise corrections: (1) report 4733's 'pre-fix image built 08-08T08:10:53Z' is REFUTED - live image is 2026-08-12T10:40:10Z and DOES contain 4c8c601e6; (2) the real undeployed delta is ca6d868695 @11:08:24Z, 28 min NEWER than the image -> one scoped ops rebuild; (3) the 'monotonically declining, settled ~89-93%' read is superseded - live docker stats 14:58Z = 92.26% at only 57 min into a fresh 14:00:55Z restart. The two 'stale ACK' rows are the FU-RAG-DEPLOY-MEMORY ledger floor_enforcement INTENDED outcome, not a defect.",
       "triaged_at": "2026-08-12T15:10:35Z",
       "triaged_by": "po"
+    },
+    {
+      "id": "sys-20260811T184040-rag30",
+      "from": "system-auditor",
+      "ts": "2026-08-11T18:41:33Z",
+      "status": "READ",
+      "severity": "WARN",
+      "zone_owner": "ops/infra",
+      "summary": "A-30 rag-service memory regression: 89.55% → 93.43%",
+      "title": "A-30 rag-service memory regression: 89.55% → 93.43% (loss-of-reclamation)",
+      "payload": {
+        "check_id": "A-30",
+        "severity": "WARN",
+        "container": "vn-market-intelligence-mcp-rag-service-1",
+        "title": "A-30 rag-service memory regression: 89.55% → 93.43%, loss-of-reclamation pattern",
+        "detail": "rag-service memory regressed from prior c10 baseline of 89.55% to current 93.43% (sustained across 6 probes, 65s window). Loss-of-reclamation pattern indicates memory held at floor with zero dips. VmHWM pinned at 1040MiB/1024MiB cap, not advancing. No OOM kills, no restarts, process stable. FU-RAG-DEPLOY-MEMORY (DONE_VERIFIED 2026-08-08) means this is deployed-as-designed steady-state, not a fresh defect. ACK correctly expired per code-enforced staleness check.",
+        "dedup_key": "auditor-a30-rag-service-regression:2026-08-11"
+      }
     }
   ],
   "backlog_detail": [],
