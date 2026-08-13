@@ -197,3 +197,4 @@
 **why-decision:** DONE_VERIFIED. All 4 asks held under independent re-derivation: SHA-genuine (code-diff-based, not label-only), `is_correlation_stub` pre-existing (real origin found, ops's citation corrected), health live-green, write path live round-tripped through the actual `postSignal`/`insertBuilder`/`columnDetect` split modules with a fresh raw DB read confirming the row landed.
 **why-change:** none from plan — flipped `qa[]`→`done_verified[]` with `verification.raw_probe` attached (30-col/116-row/id=10885 snapshot + SHA ancestry + health body).
 
+### CAP-REACHED · 2026-08-13T20:29:36Z
