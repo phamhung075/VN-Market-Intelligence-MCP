@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "tick": "2026-08-13T16:00Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "spawned": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "chef_mutex_applied": false,
+    "collision_warn": [
+      "market-watcher"
+    ],
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "market-watcher-eod": "cadence",
+      "alert-commander-critical": "cron"
+    },
+    "last_fired_timestamp": "2026-08-13T16:09:49Z",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "leader_lock": "acquired",
+    "devq": 5,
+    "signal_backlog": 28,
+    "errors": []
+  },
+  "priority": "normal",
+  "createdAt": "2026-08-13T16:10:10Z",
+  "_processed": {
+    "fingerprint": "da2637d43a2e18712beeb669548a6e54480b6dd8ff183c17e1c985bc4fd52d91",
+    "processedAt": "2026-08-13T16:20:17Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -93,10 +93,10 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "FACTORY-GUARD-CI-SHAREDPKG-IMPL",
+    "active_task_id": "FACTORY-GUARD-CI-RAWVERIFY-IMPL",
     "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 1 row(s), highest-ranked FACTORY-GUARD-CI-SHAREDPKG-IMPL — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-13T15:55:13Z",
+    "next_action": "Review-Lane QA-Drain claim of 1 row(s), highest-ranked FACTORY-GUARD-CI-RAWVERIFY-IMPL — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-13T16:24:00Z",
     "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
@@ -133,27 +133,10 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-13T15:50:34Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-13T16:21:25Z",
+    "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
-      {
-        "id": "sys-20260812T160538-57ef",
-        "ts": "2026-08-12T16:05:38Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "microservice_degraded",
-        "summary": "pdf-extractor A-30 CRITICAL — sustained memory >93% (95.32%)",
-        "severity": "CRITICAL",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T16:00Z",
-        "dedup_key": "microservice_degraded:pdf-extractor:A-30",
-        "triaged_at": "2026-08-12T17:00:39Z",
-        "triaged_by": "po",
-        "disposition": "FOLD -> FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (REVIEW). WARN->CRITICAL crossing is a threshold artifact of a flat 94.5-95.4% oscillating band, not new physics: live 95.00% at 17:00Z with 40h uptime, RestartCount=1, OOMKilled=false. Severity escalation recorded as corroboration on the existing row; a second row would duplicate an open REVIEW-lane item."
-      },
       {
         "id": "cj-20260812T163125Z",
         "ts": "2026-08-12T16:31:25Z",
@@ -548,6 +531,17 @@
         "type": "bug-escalation",
         "summary": "bctc-analyst.md notebook: PostToolUse hook reverted Edit restoring c161 -> stuck at 2 sections, violates notebook-write SKILL.md AC-2 (keep 3)",
         "severity": "MED",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "cow-20260813T161544",
+        "ts": "2026-08-13T16:15:44Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "flow-doc-review",
+        "summary": "spawn-fanout.md Step 5.3 OFFFLOW_MARKERS false-positive: single-marker Coordination Results collides with market-watcher genuine closing summary; recommend >=2 co-occurring markers",
+        "severity": "LOW",
         "status": "READ",
         "payload_ref": null
       }
@@ -13190,81 +13184,6 @@
             "observed_at": "2026-08-12T16:37:00Z"
           }
         }
-      },
-      {
-        "title": "Dedup the 4 headline route handlers + name the 15/10 maxItems defaults",
-        "priority": "P2",
-        "zone": "news-fetch",
-        "type": "FACTORY",
-        "status": "DONE_VERIFIED",
-        "id": "FACTORY-NEWS-dedup-handlers-maxitems",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-NEWS-dedup-handlers-maxitems",
-        "promoted_at": "2026-07-24T15:22:45Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-07-24T15:22:45Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "secondary_claimed_at": "2026-08-13T15:54:31Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "ops",
-        "blocked_by": [
-          "OPS-NEWS-FETCH-REBUILD-STALE-IMAGE-3-COMMITS-BEHIND"
-        ],
-        "review_note": "PO RAW-verify 2026-08-07T00:05Z (session f298ccf7). SOURCE PLANE 6/6 PASS, measured not self-reported: DEFAULT_MAX_ITEMS present models.ts:19-22 (15/10 unchanged); resolveMaxItems models.ts:32-40; makeHeadlinesHandler->{post,get} handlers.ts:31-62 with all 4 routes registering the factory (handlers.ts:104-112), zero leftover inline bodies; handlers.ts 118L <=120L (was 170L); response envelope + 500 branch diffed by PO against d4f905a66^ = identical for all 4 originals; `bun test` 241 pass / 6 skip / 0 FAIL across 26 files. Landed d4f905a66 (2026-07-24T15:34:05Z), apps/news-fetch/ tree clean. ACCEPTED DIVERGENCE (out-of-contract, non-blocking, logged so it is not later rediscovered as a regression): POST body {maxItems:\"7\"} as a numeric STRING (contrary to the declared `maxItems?: number`) used to fall back to the default under the legacy `typeof === 'number'` guard and now parses to 7 — strictly more lenient, no in-contract caller affected. RUNTIME PLANE NOW DEPLOYED via OPS-NEWS-FETCH-REBUILD-STALE-IMAGE-3-COMMITS-BEHIND (image 8d42b661e0ab, landed 2026-08-13). DISPOSITION: DEVELOPMENT COMPLETE, DEPLOYMENT VERIFIED.",
-        "verification": {
-          "raw_probe": {
-            "tool": "docker",
-            "args": "exec vn-market-intelligence-mcp-news-fetch-1 grep -rl 'makeHeadlinesHandler|DEFAULT_MAX_ITEMS|resolveMaxItems' /app",
-            "live_value_observed": "/app/src/domain/models.ts /app/src/__tests__/unit/domain-models.test.ts /app/src/interface/handlers.ts",
-            "observed_at": "2026-08-13T18:00:00Z"
-          }
-        },
-        "verification_completed_at": "2026-08-13T18:00:00Z",
-        "verified_by": "dev-team (review-lane secondary-drain)",
-        "runtime_verification_note": "RUNTIME PLANE VERIFIED 2026-08-13T18:00Z: handlers.ts now 118L (was 170L). Commit d4f905a66 verified live in running image 8d42b661e0ab. Factory pattern deployed, dedup complete.",
-        "updated_at": "2026-08-13T15:57:03Z"
-      },
-      {
-        "id": "FACTORY-GUARD-CI-SHAREDPKG-IMPL",
-        "type": "SPRINT-S",
-        "title": "Implement shared-package-import-check CI guardrail (baseline/ratchet script + workflow wiring)",
-        "status": "DONE_VERIFIED",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-shared-package-import-check",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-shared-package-import-check.md#4-build-vs-plan--decomposed-not-self-implemented",
-        "dev_agent": "developer",
-        "next_agent": "pm",
-        "parent_task": "FACTORY-GUARD-CI-shared-package-import-check",
-        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-shared-package-import-check.md",
-        "note": "files: scripts/audits/shared-package-import-check.sh (new, --check/--update modes, baseline/ratchet), docs/data/shared-package-import-baseline.json (new, generated by --update, seeded with shared-types/shared-config/shared-db), .github/workflows/ci.yml (add shared-package-import-check job), docs/policies/dev-standards.md (CANONICAL pointer), scripts/audits/shared-package-import-check.test.sh (new smoke test: baseline entry passes, synthetic new zero-importer package NOT in baseline fails, a package with a real importer passes regardless of baseline membership, an advisory name-collision is emitted without failing --check). EXPLICITLY OUT OF SCOPE (reserved for FACTORY-SHARED-wire-or-prune-shared-packages, still BACKLOG): no edits to packages/shared-*/ contents, no new consumer wiring, no package deletion, no field reconciliation. approach: check 1 (blocking, baseline/ratchet) — for every packages/*/package.json with a @vn-market/-scoped name, grep repo for a real import/dependency reference; zero hits + baseline-listed = PASS; zero hits + not baseline-listed = FAIL (blocks new packages/primitives-shaped phantom packages); any real importer always PASS. check 2 (advisory only, non-blocking) — same-exported-symbol-name collision scan between packages/shared-*/index.ts and apps/**/*.ts (today: Alert/Signal/McpConfig), printed as ADVISORY lines, never fails --check; full AST structural diffing explicitly deferred (no TS AST tool wired into any bash-only audit script in this repo; regex field-diff would false-positive on reorder/JSDoc/optional-marker churn). --update run once to seed baseline from live state (3 current orphans: shared-types/shared-config/shared-db); wire job into ci.yml; add CANONICAL pointer cross-referencing FACTORY-SHARED-wire-or-prune-shared-packages as the task whose completion should shrink the baseline. dod: --check exits 0 on current repo state (all 3 packages baseline-covered); a synthetic new packages/<foo>/package.json with zero importers and no baseline entry fails --check; a synthetic package with >=1 real importer passes even if still baseline-listed; the Alert/Signal/McpConfig advisory lines are emitted and do not affect exit code; smoke test covers all 4 cases; CI green on push.",
-        "created_at": "2026-07-24T19:56:48Z",
-        "created_by": "architect",
-        "updated_at": "2026-08-13T15:59:09Z",
-        "promoted_at": "2026-07-30T02:34:10Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-08-13T15:55:12Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "entered_review_at": "2026-07-30T02:56:22Z",
-        "review_note": "New scripts/audits/shared-package-import-check.sh (--check/--update, baseline/ratchet like size-lint-justification.sh): check-1 (blocking) -- every packages/*/package.json declaring a @vn-market/-scoped name needs a real import/dependency reference in apps/**+packages/** (own dir excluded) OR a docs/data/shared-package-import-baseline.json entry, else FAIL; check-2 (advisory-only, never fails) -- exported-symbol-name collisions between packages/shared-*/index.ts and apps/**/*.ts, printed as ADVISORY lines. Seeded the baseline via --update -- 3 current orphans (shared-types/shared-config/shared-db), live-verified zero real hits repo-wide. Deliberately scoped the importer search to apps/**+packages/** only, NOT docs/** -- this repo's own architecture briefs discuss these package names by name in prose, and scanning docs/ would let that discussion text itself be misread as a real importer, permanently masking the debt. Check-2 surfaced MORE collisions than the brief's cited e.g. Alert/Signal/McpConfig (also loadMcpConfig/ExtractPDFRequest/ComputeTARequest/etc) -- kept the general scan since it's advisory-only. Verify-live catch: first draft's per-file grep subprocess loop hung >2min on this repo's file count (~7K+~34K forks) -- root-cause fixed by batching every candidate file array into ONE grep -l call per package/symbol (O(1) forks), re-measured 7s standalone / 14s full smoke suite. Wired shared-package-import-check job in .github/workflows/ci.yml + CANONICAL pointer in dev-standards.md. New scripts/audits/shared-package-import-check.test.sh: 4/4 PASS (baseline-listed zero-importer package passes; synthetic new zero-importer package NOT in baseline fails; synthetic package with a real importer passes even though ALSO still baseline-listed; Alert/Signal/McpConfig advisory lines emit on the live repo without affecting the green exit code). No apps/ source touched (zone=cross-service/, pure bash+yaml+md+json) -- bun test/tsc structurally N/A. shellcheck clean. Zero edits to packages/shared-*/ contents, zero new consumer wiring, zero package deletion, zero field reconciliation -- all explicitly out of scope, reserved for FACTORY-SHARED-wire-or-prune-shared-packages (still BACKLOG). Structural note: no MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) -- flipped this board row via scripts/orch-apply.sh myself (permitted, pure bash); could not release task:FACTORY-GUARD-CI-SHAREDPKG-IMPL or send Telegram -- coordinating dev-team session must pick that up. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S33. QA next.",
-        "commit_sha": "9e9389089d712b12c08d95380187b487b32f8a55",
-        "status_note": "[QA] Review Record (direct-commit verify) 2026-08-13T15:57:41Z -- APPROVED, DONE_VERIFIED. RAW re-verified live, not from prose. Commit: row carried no .commit/.files[] per developer's own note -- derived via `git log --oneline --all -- scripts/audits/shared-package-import-check.sh` -> single hit 9e9389089d712b12c08d95380187b487b32f8a55 (\"feat(cross-service/factory-guard-ci-sharedpkg-impl): new shared-package-import-check CI gate\"), confirmed `git merge-base --is-ancestor` true against main (HEAD eedb339c2), `git show --stat` matches claimed file list exactly: .github/workflows/ci.yml, docs/data/shared-package-import-baseline.json, docs/policies/dev-standards.md, scripts/audits/shared-package-import-check.sh, scripts/audits/shared-package-import-check.test.sh (+docs/WORK.md log entry). Fresh `bash scripts/audits/shared-package-import-check.sh --check` on live repo HEAD -> exit 0, ~8s. Baseline covers exactly shared-config/shared-db/shared-types -- `git ls-files packages/*/package.json` confirms only these 3 @vn-market/-scoped packages exist repo-wide, all 3 printed BASELINE. Independently re-grepped all 3 myself OUTSIDE the script (manual `grep -rlE` on apps/+packages/, own-dir excluded) -> zero real importers for all 3, matches the script's own verdict -- not trusting the script's self-report alone. Check-2 advisory lines emit (McpConfig/loadMcpConfig/Alert/Signal/ExtractPDFRequest/ExtractPDFResponse/ComputeTARequest/ComputeTAResponse/SearchRequest/SearchResult/ServiceHealth), correctly non-blocking, exit stays 0. Fresh `bash scripts/audits/shared-package-import-check.test.sh` -> 4/4 PASS (rc=0/1/0/0). Read all 4 cases in the script body: case1 baseline-listed zero-importer fixture passes w/ BASELINE line; case2 synthetic new zero-importer fixture NOT in baseline fails w/ FAIL line; case3 synthetic fixture w/ a real importer passes despite ALSO being baseline-listed (real-importer overrides baseline); case4 live-repo run (no overrides) emits Alert/Signal/McpConfig advisory lines without affecting the green exit code. Fixture dir removed via trap, `git status --porcelain` confirms zero residue post-run. CI wiring live at .github/workflows/ci.yml:481-504 (shared-package-import-check job, ubuntu-latest, checkout-only, `bash scripts/audits/shared-package-import-check.sh --check`), YAML parse-validated (python3 yaml.safe_load). CANONICAL pointer live at dev-standards.md:1280-1321, content matches actual script behavior. shellcheck: shared-package-import-check.sh -> 0 findings; shared-package-import-check.test.sh -> 1 SC2329 info (`cleanup()` never invoked directly -- false positive, it's trap-invoked) -- confirmed this is the IDENTICAL finding already present on sibling scripts/audits/size-lint-justification.test.sh (same trap-cleanup idiom, pre-existing approved pattern), non-blocking, matches the review_note's \"shellcheck clean (1 benign SC2329 info...)\" claim. docs/** exclusion confirmed by READING the script itself (list_search_files() globs only apps/**/*.ts+package.json and packages/**/*.ts+package.json in both the default path and the test-override path -- zero docs/** anywhere in the search corpus), not just taken on claim. `git show --stat` confirms zero apps/ source touched (zone=cross-service/, pure bash+yaml+md+json); bun test/tsc correctly N/A -- not run, would be false-negative noise on a zone with zero TS/JS change. No blocking issues found.",
-        "updated_by": "qa",
-        "qa_verified_at": "2026-08-13T15:57:41Z",
-        "qa_verified_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "bash scripts/audits/shared-package-import-check.sh --check && bash scripts/audits/shared-package-import-check.test.sh",
-            "args": "--check (live repo HEAD) then full smoke test suite",
-            "live_value_observed": "check: exit 0, 3/3 packages (shared-config/shared-db/shared-types) BASELINE-passed, 11 advisory lines non-blocking; test: 4/4 PASS (rc=0/1/0/0); shellcheck: .sh 0 findings, .test.sh 1 pre-existing benign SC2329 info (matches sibling size-lint-justification.test.sh)",
-            "observed_at": "2026-08-13T15:57:41Z",
-            "evidence_commit": "9e9389089d712b12c08d95380187b487b32f8a55"
-          }
-        }
       }
     ],
     "head": {
@@ -15596,34 +15515,6 @@
         "po_live_recurrence_20260808T1248Z": "LIVE RECURRENCE, AND THIS TIME IT REACHED GIT. docs/data/auditor-tier1-last-healthy.json currently reads {last_healthy_at: '2026-08-08T12:05:10Z', checks: {... mem_creep: 'PASS' ...}} and was committed at 34521315f by router session 165f4245 on the good-faith premise (quoted from that commit message) that the value is 'a genuine last-all-6-checks-passed timestamp before the mem_creep FAILURE window began'. PO REFUTES THAT PREMISE ON RAW EVIDENCE, three independent ways: (1) the FAILURE window began no later than 2026-08-08T11:04Z — peer auditor cycle c48 (commit 76466302a) records rag-service-1 at 98.53% / 15MiB free / BELOW-FLOOR at that time — so 12:05:10Z is INSIDE the failure window, not before it; (2) PO re-ran the pre-gate read-only at 12:47Z via the documented HEARTBEAT_FILE_PATH=<scratch> seam and got verdict=FAILURE, detail 'mem_creep: ... vn-market-intelligence-mcp-rag-service-1(98.56%, 14.7MiB-free, BELOW-FLOOR(floor=40MiB))', with the container at RestartCount=0 / OOMKilled=false / healthy / StartedAt 2026-08-08T08:11:45Z — i.e. no restart between 11:04Z and now that could have produced a transient green at 12:05Z; (3) the shell pre-gate STRUCTURALLY CANNOT have written it: run_probe() gates _write_heartbeat on an EMPTY failures list, and _mem_container_acked() disqualifies the rag-service acked_memory entry twice over — headroom 15MiB < MEM_FLOOR_MIB=40 -> BELOW-FLOOR, and tracked_by=FU-RAG-DEPLOY-MEMORY reached DONE_VERIFIED at 10:59:52Z -> STALE-ACK. Therefore the 12:05:10Z stamp is an out-of-contract agent write on a DEGRADED cycle — exactly this row's defect — and it is now the committed record. IMPACT beyond this row's existing scope: the tier-1 cron freshness arm reads .last_healthy_at and spawns on age>60min, so a false stamp suppresses that arm for an hour (the verdict=FAILURE arm still fires, so this is degradation, not blindness). REMEDIATION IS NOT PO'S TO EXECUTE: hand-writing this file is explicitly forbidden (pre-commit hook scripts/git-hooks/pre-commit:119 names _write_heartbeat as the sole authorized writer, and the 2026-07-29 PO constraint on scripts/po-s151-tier1-probe-plane-divergence-triage.jq:83 says 'Do NOT hand-write docs/data/auditor-tier1-last-healthy.json'). Correct action, for router/ops: revert the file half of 34521315f so the field returns to its last genuinely-green value 2026-08-07T03:35:32Z (written by b30e533ce), which restores the honest >33h-stale reading and lets the freshness arm work. Do NOT re-stamp it forward by hand."
       },
       {
-        "id": "FACTORY-GUARD-CI-RAWVERIFY-IMPL",
-        "type": "SPRINT-S",
-        "title": "Implement rebuild-raw-verify-hook CI guardrail (pre-push blocking check + CI backstop job)",
-        "status": "REVIEW",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-rebuild-raw-verify-hook",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md#3-guardrail-design--zero-tolerance-going-forward-no-baseline-different-reasoning-than-size-lints-grandfather",
-        "dev_agent": "developer",
-        "next_agent": "qa",
-        "parent_task": "FACTORY-GUARD-CI-rebuild-raw-verify-hook",
-        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md",
-        "note": "files: scripts/audits/rebuild-raw-verify-check.sh (new, <base-sha> <head-sha> positional args, zero-tolerance, no baseline file), scripts/git-hooks/pre-push (extend: call the new script inside the existing CODE_TOUCHING_REGEX block, same fail-open-on-diff-error posture as the tsc check), .github/workflows/ci.yml (add rebuild-raw-verify-hook backstop job), docs/policies/dev-standards.md (CANONICAL pointer + cross-reference under PUSH-AUTONOMY-1 §5), scripts/audits/rebuild-raw-verify-check.test.sh (new smoke test: trigger-path+field-match with no attestation FAILs — reproduce e3386bdfa shape as a synthetic fixture; same diff with a RAW-verify token in the range commit message PASSes; same diff with a raw-verify-allow: inline annotation PASSes; a diff touching only non-trigger paths, or trigger paths with no metric-field-name line, PASSes trivially). EXPLICITLY OUT OF SCOPE: no change to PUSH-AUTONOMY-1 §5 PO-mint-task requirement; no board-state-aware check of whether a VERIFY-*-REALDATA task was actually minted (deferred, documented enhancement). approach: trigger fires when a file under a DB-write/route-serving DDD layer (apps/*/src/infrastructure/**, apps/*/src/interface/**, apps/*/pkg/interface/http/**, apps/*/pkg/infrastructure/**) has an added line matching the metric-mask-lint sibling field regex (confidence|score|impact|magnitude|probability, case-insensitive). On trigger, require ONE of: git log <base>..<head> --format=%B contains raw-verify|raw verified|realdata (case-insensitive); OR the range touches docs/agent-memory/decisions/** or reports/TASK_REPORT_*.md with an added line matching the same token; OR an inline raw-verify-allow: <reason> annotation on the triggering line. Wire primary check into scripts/git-hooks/pre-push (this repo has no PR/branch-protection to gate on — direct push to main is the real merge gate, confirmed live: gh pr list shows exactly 1 PR ever, closed unmerged, and branch protection is 404); wire secondary backstop into ci.yml running the same script against github.event.before..github.sha for visibility when the local hook is bypassed. dod: hook blocks a synthetic un-attested trigger-path push locally; CI job mirrors the same verdict on github.event.before..github.sha; existing doc-only-push fast-skip in pre-push unaffected; smoke test covers all 4 cases (fail/pass-commit-msg/pass-annotation/pass-no-trigger); CI green.",
-        "created_at": "2026-07-24T20:30:58Z",
-        "created_by": "architect",
-        "updated_at": "2026-07-30T03:32:17Z",
-        "promoted_at": "2026-07-30T03:17:20Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-07-30T03:17:29Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "entered_review_at": "2026-07-30T03:32:16Z",
-        "review_note": "New scripts/audits/rebuild-raw-verify-check.sh <base-sha> <head-sha> (zero-tolerance, forward-only diff-range attestation check, no baseline -- mechanizes PUSH-AUTONOMY-1 §5 post-push REAL-DATA verify at the immediately-checkable textual-attestation layer; at design time exactly 2 VERIFY-*-REALDATA rows had ever existed across 54 serving-code commits since §5 was pinned, concrete miss e3386bdfa shipped zero attestation). Trigger composes the two already-designed sibling primitives: a file under a DB-write/route-serving DDD layer (apps/*/src/infrastructure/**, apps/*/src/interface/**, apps/*/pkg/interface/http/**, apps/*/pkg/infrastructure/**) gains an ADDED line matching metric-mask-lint.sh own field regex (confidence|score|impact|magnitude|probability), reused verbatim. Requires ONE of a commit-message RAW-verify/REALDATA token (global), the same token in an added docs/agent-memory/decisions/**|reports/TASK_REPORT_*.md line (global), or an inline raw-verify-allow: <reason> annotation on the triggering line or the line immediately preceding it (per-trigger-point, mirrors metric-mask-allow:/size-justification: idiom). Deviation (verify-live): colocated test files inside these trigger layers (confirmed live via find -- apps/mcp-server/src/infrastructure/**/__tests__/*.test.ts, apps/*/pkg/infrastructure|interface/http/*_test.go) are excluded from the trigger corpus, same exclusion idiom metric-mask-lint.sh already applies to its own scan -- a bare test assertion would otherwise fire on nearly every infra/interface test edit. Wired PRIMARY/blocking into scripts/git-hooks/pre-push existing CODE_TOUCHING_REGEX-gated block (same fail-open-on-diff-error posture as the tsc check); SECONDARY/backstop rebuild-raw-verify-hook job in .github/workflows/ci.yml (fetch-depth: 0, the only job needing full history) against github.event.before..github.sha. CANONICAL pointer + PUSH-AUTONOMY-1 §5 cross-reference added to dev-standards.md. New scripts/audits/rebuild-raw-verify-check.test.sh: 9/9 PASS (all 4 named DoD cases -- trigger+no-attestation FAILs, commit-msg/inline-annotation/non-trigger-path all PASS -- plus bonus coverage: decisions-journal attestation, trigger-path-no-field-match, colocated-test exclusion, usage-error exit 2, zero-SHA fail-open); manually verified against 6 disposable scratch-git-repo scenarios before writing the permanent test. No apps/ TS/Go source touched (zone=cross-service/, pure bash+yaml+md) -- bun test/tsc structurally N/A. shellcheck clean on all 3 touched shell files. YAML validated. EXPLICITLY OUT OF SCOPE (per board-row note): no change to PUSH-AUTONOMY-1 §5 PO-mint-task requirement itself; no board-state-aware check of whether a VERIFY-*-REALDATA task was actually minted (deferred, documented enhancement). Structural note: no MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) -- flipped this board row via scripts/orch-apply.sh myself (permitted, pure bash); could not release task:FACTORY-GUARD-CI-RAWVERIFY-IMPL or send Telegram -- coordinating dev-team session must pick that up. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S34. This closes the 7th and last ci-regression-prevention guardrail -- epic FACTORY-MAINTAINABILITY-2026-06 cluster ci-regression-prevention now complete. QA next."
-      },
-      {
         "id": "FIX-VNINDEX-CACHE-STARTUP-PURGE",
         "title": "vn_index_cache PURGED on mcp-server startup + refresh is market-hours-only -> any off-hours restart strands cache=0 until next Mon open. RECURRING: prior FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (DONE, never done_verified) framed it as a refresh-path bug and did NOT close the root.",
         "type": "FIX",
@@ -17133,7 +17024,7 @@
         "created_at": "2026-07-31T14:32:00Z",
         "created_by": "po/triage-20260731T1429Z",
         "status_note": "Not a theoretical gap: measured 100% fall-through on the live inbox, and the 14:09Z HIGH escalation this same tick is one of the affected rows. Cheap + specific (one table + one SKILL section + one guard). || [QA] verify-committed CHANGES_REQUESTED 2026-08-07: commits af2f13536+ee07ae65a real, on main, touch claimed files; AC-5 guard (triage-signals.md:56-71) mechanism sound (correct FAIL on synthetic negative control). But run verbatim against LIVE orch-state.json -> FAIL, 7 unrouted to=po types (agent_flow_defect x5, bug-escalation x2, db_anomaly_illiquid_ohlcv, dispatch-race-observation, notebook_concurrency_gap, recurring-bug-corroboration, recurring_defect_unfixed x2 = 13/197 rows, 6.6%). 2 of 7 are a pre-existing AC-2 gap not pure post-commit drift: (1) triage-signals.md:35 cross-check claims residual cold-archive types are \"<=1-2 fires each\" but agent_flow_defect fired 4x to=po in docs/data/orch/archive/2026-07.json — contradicts its own inclusion bar, never routed. (2) triage-signals.md:35 claims bug-escalation \"already covered...in the Pipeline-A table above\" but Pipeline-A rule at line 24 is keyed on sender=commit-sweep-guard and parses a raw `payload` string with a [sweep-guard] prefix — Pipeline-B rows (shape {summary,payload_ref}, confirmed live in cold archive row dev-20260731T020908 to=po type=bug-escalation, and hot rows com-20260806T124818/ale-20260806T124818) structurally cannot carry that field, so the claim is false for Pipeline B. Remaining 5 unrouted types (db_anomaly_illiquid_ohlcv, dispatch-race-observation, notebook_concurrency_gap, recurring-bug-corroboration, recurring_defect_unfixed) are genuinely new, all first-fired 2026-08-06 (5 days post-commit) — legitimate follow-up drift, fold into the same edit pass since owner is already touching this table+guard. FIX: add agent_flow_defect + a real Pipeline-B bug-escalation rule (or explicit alias) to triage-signals.md/-longtail.md + sync $routed array (triage-signals.md:57), plus the 5 new types; correct or remove the inaccurate line-35 cross-check claims. AC-3/AC-4/AC-6/DJ-GATE-1 verified OK (system-issue first-class rule present; SKILL.md Receivers+status-enum updated; file sizes 77L/22L well under cap; journal task-id-stamped sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father.md:409). No production src touched (docs/.claude only) — bun test/tsc/mock-guard N/A.",
-        "updated_at": "2026-08-07T01:15:50Z",
+        "updated_at": "2026-08-13T16:23:31Z",
         "po_manual_dispatch_flagged_at": "2026-08-01T04:36:40Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
@@ -17147,7 +17038,10 @@
         "claimed_by": "dev-team (review-lane qa-drain)",
         "redispatch_count": 1,
         "po_regression_recheck_20260807": "PO RE-MEASUREMENT 2026-08-07T01:14Z — QA GATE, DO NOT SIGN OFF WITHOUT READING. This row's own regression verifier (triage-signals.md § guard_signal_type_coverage) was recorded PASS on 2026-08-01. Re-run live today against docs/data/orch/orch-state.json it FAILS with 8 unrouted to=po types: [\"agent_flow_defect\",\"bug-escalation\",\"db_anomaly_illiquid_ohlcv\",\"decision-needed\",\"dispatch-race-observation\",\"notebook_concurrency_gap\",\"recurring-bug-corroboration\",\"recurring_defect_unfixed\"]. Two distinct causes, both in scope for this row: (1) \"bug-escalation\" IS routed by the Pipeline-A table but was never added to the guard's own $routed literal — a false positive that proves the guard's array is hand-maintained and already drifted; the doc itself warns \"$routed MUST be kept in sync ... that is the single point of drift this guard exists to catch\". (2) The other 7 are genuinely new live types with no routing row at all, i.e. the original defect has RECURRED within 6 days. Both of THIS tick's own Pipeline-B signals were of unrouted types (decision-needed, recurring-bug-corroboration) and PO had to hand-route them off-table. Recommendation: the fix cannot be another hand-maintained literal — derive $routed from the tables themselves (parse the type column out of triage-signals.md + triage-signals-longtail.md) or the guard will drift again on the next new type.",
-        "updated_by": "po/triage-20260807T0104Z"
+        "updated_by": "po/triage-20260807T0104Z",
+        "secondary_claimed_at": "2026-08-13T16:23:30Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po"
       },
       {
         "id": "FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT",
@@ -18991,6 +18885,34 @@
         "secondary_claimed_at": "2026-08-13T11:59:22Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "ops"
+      },
+      {
+        "id": "FACTORY-GUARD-CI-RAWVERIFY-IMPL",
+        "type": "SPRINT-S",
+        "title": "Implement rebuild-raw-verify-hook CI guardrail (pre-push blocking check + CI backstop job)",
+        "status": "QA",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-rebuild-raw-verify-hook",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md#3-guardrail-design--zero-tolerance-going-forward-no-baseline-different-reasoning-than-size-lints-grandfather",
+        "dev_agent": "developer",
+        "next_agent": "qa",
+        "parent_task": "FACTORY-GUARD-CI-rebuild-raw-verify-hook",
+        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md",
+        "note": "files: scripts/audits/rebuild-raw-verify-check.sh (new, <base-sha> <head-sha> positional args, zero-tolerance, no baseline file), scripts/git-hooks/pre-push (extend: call the new script inside the existing CODE_TOUCHING_REGEX block, same fail-open-on-diff-error posture as the tsc check), .github/workflows/ci.yml (add rebuild-raw-verify-hook backstop job), docs/policies/dev-standards.md (CANONICAL pointer + cross-reference under PUSH-AUTONOMY-1 §5), scripts/audits/rebuild-raw-verify-check.test.sh (new smoke test: trigger-path+field-match with no attestation FAILs — reproduce e3386bdfa shape as a synthetic fixture; same diff with a RAW-verify token in the range commit message PASSes; same diff with a raw-verify-allow: inline annotation PASSes; a diff touching only non-trigger paths, or trigger paths with no metric-field-name line, PASSes trivially). EXPLICITLY OUT OF SCOPE: no change to PUSH-AUTONOMY-1 §5 PO-mint-task requirement; no board-state-aware check of whether a VERIFY-*-REALDATA task was actually minted (deferred, documented enhancement). approach: trigger fires when a file under a DB-write/route-serving DDD layer (apps/*/src/infrastructure/**, apps/*/src/interface/**, apps/*/pkg/interface/http/**, apps/*/pkg/infrastructure/**) has an added line matching the metric-mask-lint sibling field regex (confidence|score|impact|magnitude|probability, case-insensitive). On trigger, require ONE of: git log <base>..<head> --format=%B contains raw-verify|raw verified|realdata (case-insensitive); OR the range touches docs/agent-memory/decisions/** or reports/TASK_REPORT_*.md with an added line matching the same token; OR an inline raw-verify-allow: <reason> annotation on the triggering line. Wire primary check into scripts/git-hooks/pre-push (this repo has no PR/branch-protection to gate on — direct push to main is the real merge gate, confirmed live: gh pr list shows exactly 1 PR ever, closed unmerged, and branch protection is 404); wire secondary backstop into ci.yml running the same script against github.event.before..github.sha for visibility when the local hook is bypassed. dod: hook blocks a synthetic un-attested trigger-path push locally; CI job mirrors the same verdict on github.event.before..github.sha; existing doc-only-push fast-skip in pre-push unaffected; smoke test covers all 4 cases (fail/pass-commit-msg/pass-annotation/pass-no-trigger); CI green.",
+        "created_at": "2026-07-24T20:30:58Z",
+        "created_by": "architect",
+        "updated_at": "2026-08-13T16:24:00Z",
+        "promoted_at": "2026-07-30T03:17:20Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-08-13T16:23:59Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "entered_review_at": "2026-07-30T03:32:16Z",
+        "review_note": "New scripts/audits/rebuild-raw-verify-check.sh <base-sha> <head-sha> (zero-tolerance, forward-only diff-range attestation check, no baseline -- mechanizes PUSH-AUTONOMY-1 §5 post-push REAL-DATA verify at the immediately-checkable textual-attestation layer; at design time exactly 2 VERIFY-*-REALDATA rows had ever existed across 54 serving-code commits since §5 was pinned, concrete miss e3386bdfa shipped zero attestation). Trigger composes the two already-designed sibling primitives: a file under a DB-write/route-serving DDD layer (apps/*/src/infrastructure/**, apps/*/src/interface/**, apps/*/pkg/interface/http/**, apps/*/pkg/infrastructure/**) gains an ADDED line matching metric-mask-lint.sh own field regex (confidence|score|impact|magnitude|probability), reused verbatim. Requires ONE of a commit-message RAW-verify/REALDATA token (global), the same token in an added docs/agent-memory/decisions/**|reports/TASK_REPORT_*.md line (global), or an inline raw-verify-allow: <reason> annotation on the triggering line or the line immediately preceding it (per-trigger-point, mirrors metric-mask-allow:/size-justification: idiom). Deviation (verify-live): colocated test files inside these trigger layers (confirmed live via find -- apps/mcp-server/src/infrastructure/**/__tests__/*.test.ts, apps/*/pkg/infrastructure|interface/http/*_test.go) are excluded from the trigger corpus, same exclusion idiom metric-mask-lint.sh already applies to its own scan -- a bare test assertion would otherwise fire on nearly every infra/interface test edit. Wired PRIMARY/blocking into scripts/git-hooks/pre-push existing CODE_TOUCHING_REGEX-gated block (same fail-open-on-diff-error posture as the tsc check); SECONDARY/backstop rebuild-raw-verify-hook job in .github/workflows/ci.yml (fetch-depth: 0, the only job needing full history) against github.event.before..github.sha. CANONICAL pointer + PUSH-AUTONOMY-1 §5 cross-reference added to dev-standards.md. New scripts/audits/rebuild-raw-verify-check.test.sh: 9/9 PASS (all 4 named DoD cases -- trigger+no-attestation FAILs, commit-msg/inline-annotation/non-trigger-path all PASS -- plus bonus coverage: decisions-journal attestation, trigger-path-no-field-match, colocated-test exclusion, usage-error exit 2, zero-SHA fail-open); manually verified against 6 disposable scratch-git-repo scenarios before writing the permanent test. No apps/ TS/Go source touched (zone=cross-service/, pure bash+yaml+md) -- bun test/tsc structurally N/A. shellcheck clean on all 3 touched shell files. YAML validated. EXPLICITLY OUT OF SCOPE (per board-row note): no change to PUSH-AUTONOMY-1 §5 PO-mint-task requirement itself; no board-state-aware check of whether a VERIFY-*-REALDATA task was actually minted (deferred, documented enhancement). Structural note: no MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) -- flipped this board row via scripts/orch-apply.sh myself (permitted, pure bash); could not release task:FACTORY-GUARD-CI-RAWVERIFY-IMPL or send Telegram -- coordinating dev-team session must pick that up. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S34. This closes the 7th and last ci-regression-prevention guardrail -- epic FACTORY-MAINTAINABILITY-2026-06 cluster ci-regression-prevention now complete. QA next."
       }
     ],
     "_closed_signals_20260614": {
@@ -19135,7 +19057,7 @@
         "last_served_tick": "2026-08-13T15:53:58Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-13T13:23:03Z"
+        "last_served_tick": "2026-08-13T16:22:58Z"
       },
       "qa_drain": {
         "last_served_tick": "2026-08-13T13:57:20Z"
@@ -19144,7 +19066,7 @@
         "last_served_tick": "2026-08-13T14:23:06Z"
       }
     },
-    "_updated_at": "2026-08-13T15:53:58Z",
+    "_updated_at": "2026-08-13T16:22:58Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23905,6 +23827,118 @@
         "payload": "bctc-analyst.md notebook: PostToolUse hook reverted Edit restoring c161 -> stuck at 2 sections, violates notebook-write SKILL.md AC-2 (keep 3)",
         "createdAt": "2026-08-13T15:19:00Z",
         "drained_at": "2026-08-13T15:50:34Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6b1922ddad8cba1ca612b35bf254d441ab7cfd3f2ef421a300668d1a06982e9a",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-e91084bf",
+          "head_sha": "e91084bf93dd803944ad826c6db24dd26c5cf99d",
+          "run_id": 31716389004,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31716389004",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 94502067694
+            },
+            {
+              "name": "task-claim-owner-session-lint",
+              "conclusion": "failure",
+              "jobId": 94502067740
+            }
+          ],
+          "fingerprint": "770556d1ac99990828fb57489060cd6e8404694366eb0ebd9953cac61e7271aa",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD e91084bf93dd803944ad826c6db24dd26c5cf99d: bun test,task-claim-owner-session-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-13T15:51:06Z",
+        "drained_at": "2026-08-13T16:20:17Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "41bd60d62f4817ed5cf31a3ad6d112ac2549d3313a786c3cbfcd0afb434fed36",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/market-watcher.md. actor=0454e9d8-b475-4230-95c9-8b7d943aa8b3 mode=warn escalated=true prior_warns=26 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-13T16:11:56Z",
+        "drained_at": "2026-08-13T16:20:17Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ccab3edb399cbe6859fdd35b041caa5f5a125a7dadc32acda6507ea4837a455a",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/market-watcher.md docs/agent-memory/notebooks/news-scout.md. actor=0454e9d8-b475-4230-95c9-8b7d943aa8b3 mode=warn escalated=true prior_warns=27 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-13T16:13:11Z",
+        "drained_at": "2026-08-13T16:20:17Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "da2637d43a2e18712beeb669548a6e54480b6dd8ff183c17e1c985bc4fd52d91",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-tick-telemetry",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-13T16:00Z",
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "market-watcher-eod",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "market-watcher-eod",
+            "alert-commander-critical"
+          ],
+          "spawned": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "market-watcher-eod",
+            "alert-commander-critical"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "chef_mutex_applied": false,
+          "collision_warn": [
+            "market-watcher"
+          ],
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "market-watcher-eod": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "last_fired_timestamp": "2026-08-13T16:09:49Z",
+          "classification": "FIRE",
+          "reason": "spawned",
+          "leader_lock": "acquired",
+          "devq": 5,
+          "signal_backlog": 28,
+          "errors": []
+        },
+        "createdAt": "2026-08-13T16:10:10Z",
+        "drained_at": "2026-08-13T16:20:17Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
