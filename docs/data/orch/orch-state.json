@@ -13287,6 +13287,41 @@
             "observed_at": "2026-08-13T13:29:04Z"
           }
         }
+      },
+      {
+        "id": "FACTORY-GUARD-CI-METRICMASK-IMPL",
+        "type": "SPRINT-S",
+        "title": "Implement metric-mask-lint CI guardrail (script + fix live offenders + workflow wiring)",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-metric-mask-lint",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-metric-mask-lint.md#3-build-vs-plan--decomposed-not-self-implemented",
+        "dev_agent": "developer",
+        "next_agent": "qa",
+        "parent_task": "FACTORY-GUARD-CI-metric-mask-lint",
+        "note": "files: scripts/audits/metric-mask-lint.sh (new, --check mode, zero-tolerance no baseline needed), apps/mcp-server/src/domain/services/cascadeEngine.ts (fix 3x seedEntry.confidence ?? 0.6 masks at L356/375/394 feeding stored MSCI cascade confidence), apps/mcp-server/src/domain/services/news-analysis/marketSentimentCalculator.ts (fix row.impact_score ?? 1.0 mask at L174), apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts (annotate thresholds?.impactScore ?? 7 at L198 with metric-mask-allow: — genuine user config threshold, not fabricated metric), .github/workflows/ci.yml (add metric-mask-lint job), docs/policies/dev-standards.md (CANONICAL pointer), scripts/audits/metric-mask-lint.test.sh (new smoke test). approach: single cross-language regex script scanning *.ts/*.py/*.go (excl tests/vendor) for ?? / || / python or / destructuring-or-param default with a NON-ZERO numeric literal on identifiers matching /confidence|score|impact|magnitude|probability/i; 0/0.0/null always allowed (honest-absence idiom); inline metric-mask-allow: <reason> comment suppresses a match (mirrors size-justification: convention); fix the 4 real live masks + annotate the 1 legit config default FIRST so the gate opens at zero offenders and can be true zero-tolerance (no baseline manifest, unlike the size-lint sibling which had 733 debt). dod: --check exits 0 on post-fix repo state; synthetic new ?? 50-style mask fails; ?? 0 / ?? null pass; annotated line passes; the 3+1 live masks fixed with no scoring-behavior regression (RAW-verify MSCI cascade + daily sentiment score after rebuild); smoke test covers all cases; CI green on push.",
+        "created_at": "2026-07-24T17:26:06Z",
+        "created_by": "architect",
+        "updated_at": "2026-08-13T13:38:45Z",
+        "reviewed_at": "2026-07-29T19:39:50Z",
+        "reviewed_by": "developer",
+        "review_note": "Implemented per architect brief section 3 exactly. New scripts/audits/metric-mask-lint.sh (--check, zero-tolerance, no baseline) detects ??/||/python-or/destructuring-default with a non-zero literal on confidence|score|impact|magnitude|probability-matching identifiers; 0/0.0/null always allowed; comment-only mentions never scanned; metric-mask-allow: suppression. Fixed cascadeEngine.ts:356,375,394 (?? 0.6 -> ?? 0, behaviorally identical to old value for every real input since both sit below detectMsci*s 0.7 credibility floor) and marketSentimentCalculator.ts:174 (?? 1.0 -> exclude the row entirely, since impact_score is genuinely nullable unlike cascadeEngine confidence, and ?? 0 would have fabricated a zero-impact weight while still counting confidence in the denominator). Annotated watchlist.ts:198 (legit alert-threshold default). VERIFY-LIVE CATCH beyond the brief stated 4+1: a live dry-run of the built lint surfaced a 5th real hit, brokerCredibilityTools.ts:51 baseConfidence = 1 (zod .default(1)-backed documented input default the brief own manual sweep missed) -- annotated it too rather than narrowing the detector. metric-mask-lint --check exits 0 post-fix (423 files scanned). New metric-mask-lint.test.sh 10/10 PASS. Targeted suites 100 percent green: FIX-1279-msci-bullish 14/14, P0-4-market-sentiment-index 37/37, cascade files (1279a+247+FIX-1268+1224) 31/31, 915-broker-credibility 22/22, watchlist (082+220) 25/25. tsc clean, shellcheck clean. Full bun test: 14904-14907 pass/40 skip/60-63 fail/15007 total across 2 runs -- every failure pre-existing order-dependent full-suite pollution tracked by still-BACKLOG board row FIX-MCP-SUITE-HEALTH-BASELINE, none touching a file this task changed, confirmed by isolated re-run of 3 sampled failing files (32/32 pass standalone). Commits: 7a758d90f (feat), 33aee81e2 (memory). | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Independently RAW-verified -- not trusted from review_note prose. Commits 7a758d90f (feat) + 33aee81e2 (memory) confirmed real, on main ancestry (git merge-base --is-ancestor OK both); git show --stat matches all claimed files exactly. Diffs verified line-by-line: cascadeEngine.ts:356,375,394 seedEntry.confidence ?? 0.6 -> ?? 0 (x3, feeding detectMsciInclusion/Watchlist/Exclusion); marketSentimentCalculator.ts:174 row.impact_score ?? 1.0 -> row excluded entirely (impact===null guard added, ?? 1.0 fallback line removed); watchlist.ts:198 + brokerCredibilityTools.ts:51 both carry metric-mask-allow: annotations matching claim. Ran metric-mask-lint.sh --check live: PASS, 0 offenses (434 keyword-bearing files scanned -- vs devs 423 at 07-29, expected 2-week codebase-growth drift, not a discrepancy). Proved zero-tolerance is REAL not just asserted: injected a synthetic untracked file with a ?? 50 mask -- lint correctly FAILed (exit 1, flagged exact file:line), cleaned up after. metric-mask-lint.test.sh reproduced 10/10 PASS. CI wiring confirmed: metric-mask-lint job present in .github/workflows/ci.yml, ubuntu-latest/checkout-only, correctly structured. shellcheck clean on both new scripts. tsc --noEmit: 0 errors. mock-guard.sh --files <all 4 touched production files>: PASS. DDD scan: domain-layer files (cascadeEngine.ts, marketSentimentCalculator.ts) carry ZERO real infrastructure/application imports (grep hits are comments only); interface-layer files infra imports (watchlist.ts, brokerCredibilityTools.ts) are the expected composition-root pattern, not a domain violation. Security scan clean (no process.env, no real secrets -- one comment false-positive re \"short tokens\" in an NLP context). Targeted suites reproduced EXACTLY matching devs claimed counts: FIX-1279-msci-bullish 14/14, P0-4-market-sentiment-index 37/37, cascade files (1279a+247+FIX-1268+1224) 31/31, 915-broker-credibility 22/22, watchlist (082+220) 25/25 -- 129/129 total. Ran a FRESH independent full bun test: 15262 pass/40 skip/56 fail/1 error/15358 total (480.28s) -- total grew vs devs 2-week-old 15007 (expected repo-wide growth, matches this sprints own documented weekly-growth trend 15007->15056->15087->15358 across sibling QA cycles); fail count 56 sits inside the SAME contemporaneous pre-existing flake band (44-63) independently confirmed by multiple sibling QA verify cycles this same week, tracked by still-BACKLOG board row FIX-MCP-SUITE-HEALTH-BASELINE; grep-confirmed ZERO of the 56 fails + 1 unhandled-error (DB-closed race in an unrelated pollNews 5000ms-timeout test) reference cascade/sentiment/watchlist/broker/credibility/msci/metric-mask by name or file -- none touch a file this task changed. CANONICAL pointer in dev-standards.md (L1101-1119) verified accurate against live script behavior. Commit trailers (Task:/AC:) present and match the briefs DoD items exactly. No ISSUE found. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S103.",
+        "claimed_at": "2026-08-13T13:23:58Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "qa_verified_at": "2026-08-13T13:38:44Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bash scripts/audits/metric-mask-lint.sh --check + metric-mask-lint.test.sh + bun test (targeted+full) + bun tsc --noEmit + shellcheck + mock-guard.sh + git show/merge-base",
+            "args": "metric-mask-lint.sh --check (live repo); metric-mask-lint.test.sh; src/__tests__/{FIX-1279-msci-bullish,P0-4-market-sentiment-index,1279a-msci-inclusion-cascade-red,247-cascade-metrics,FIX-1268-govt-support-cascade,1224-oil-down-aviation-bullish,915-broker-credibility,082-tool-watchlist,220-watchlist-enrichment}.test.ts; full bun test (apps/mcp-server); commits 7a758d90f+33aee81e2 vs main",
+            "live_value_observed": "metric-mask-lint --check: PASS 0/434 files (synthetic ?? 50 injection correctly FAILed, cleaned up); metric-mask-lint.test.sh 10/10 PASS; targeted suites 129/129 pass (14+37+31+22+25) matching dev claim exactly; tsc 0 errors; shellcheck clean; mock-guard PASS on all 4 touched prod files; fresh full bun test 15262 pass/40 skip/56 fail/1 error/15358 total (480.28s), zero fail-list overlap with cascade/sentiment/watchlist/broker/msci/metric-mask; both commits confirmed ancestors of main, git show --stat matches claimed files exactly",
+            "observed_at": "2026-08-13T13:38:44Z"
+          }
+        }
       }
     ],
     "head": {
@@ -19216,31 +19251,6 @@
         "secondary_claimed_at": "2026-08-13T11:59:22Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "ops"
-      },
-      {
-        "id": "FACTORY-GUARD-CI-METRICMASK-IMPL",
-        "type": "SPRINT-S",
-        "title": "Implement metric-mask-lint CI guardrail (script + fix live offenders + workflow wiring)",
-        "status": "QA",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-metric-mask-lint",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-metric-mask-lint.md#3-build-vs-plan--decomposed-not-self-implemented",
-        "dev_agent": "developer",
-        "next_agent": "qa",
-        "parent_task": "FACTORY-GUARD-CI-metric-mask-lint",
-        "note": "files: scripts/audits/metric-mask-lint.sh (new, --check mode, zero-tolerance no baseline needed), apps/mcp-server/src/domain/services/cascadeEngine.ts (fix 3x seedEntry.confidence ?? 0.6 masks at L356/375/394 feeding stored MSCI cascade confidence), apps/mcp-server/src/domain/services/news-analysis/marketSentimentCalculator.ts (fix row.impact_score ?? 1.0 mask at L174), apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts (annotate thresholds?.impactScore ?? 7 at L198 with metric-mask-allow: — genuine user config threshold, not fabricated metric), .github/workflows/ci.yml (add metric-mask-lint job), docs/policies/dev-standards.md (CANONICAL pointer), scripts/audits/metric-mask-lint.test.sh (new smoke test). approach: single cross-language regex script scanning *.ts/*.py/*.go (excl tests/vendor) for ?? / || / python or / destructuring-or-param default with a NON-ZERO numeric literal on identifiers matching /confidence|score|impact|magnitude|probability/i; 0/0.0/null always allowed (honest-absence idiom); inline metric-mask-allow: <reason> comment suppresses a match (mirrors size-justification: convention); fix the 4 real live masks + annotate the 1 legit config default FIRST so the gate opens at zero offenders and can be true zero-tolerance (no baseline manifest, unlike the size-lint sibling which had 733 debt). dod: --check exits 0 on post-fix repo state; synthetic new ?? 50-style mask fails; ?? 0 / ?? null pass; annotated line passes; the 3+1 live masks fixed with no scoring-behavior regression (RAW-verify MSCI cascade + daily sentiment score after rebuild); smoke test covers all cases; CI green on push.",
-        "created_at": "2026-07-24T17:26:06Z",
-        "created_by": "architect",
-        "updated_at": "2026-08-13T13:23:59Z",
-        "reviewed_at": "2026-07-29T19:39:50Z",
-        "reviewed_by": "developer",
-        "review_note": "Implemented per architect brief section 3 exactly. New scripts/audits/metric-mask-lint.sh (--check, zero-tolerance, no baseline) detects ??/||/python-or/destructuring-default with a non-zero literal on confidence|score|impact|magnitude|probability-matching identifiers; 0/0.0/null always allowed; comment-only mentions never scanned; metric-mask-allow: suppression. Fixed cascadeEngine.ts:356,375,394 (?? 0.6 -> ?? 0, behaviorally identical to old value for every real input since both sit below detectMsci*s 0.7 credibility floor) and marketSentimentCalculator.ts:174 (?? 1.0 -> exclude the row entirely, since impact_score is genuinely nullable unlike cascadeEngine confidence, and ?? 0 would have fabricated a zero-impact weight while still counting confidence in the denominator). Annotated watchlist.ts:198 (legit alert-threshold default). VERIFY-LIVE CATCH beyond the brief stated 4+1: a live dry-run of the built lint surfaced a 5th real hit, brokerCredibilityTools.ts:51 baseConfidence = 1 (zod .default(1)-backed documented input default the brief own manual sweep missed) -- annotated it too rather than narrowing the detector. metric-mask-lint --check exits 0 post-fix (423 files scanned). New metric-mask-lint.test.sh 10/10 PASS. Targeted suites 100 percent green: FIX-1279-msci-bullish 14/14, P0-4-market-sentiment-index 37/37, cascade files (1279a+247+FIX-1268+1224) 31/31, 915-broker-credibility 22/22, watchlist (082+220) 25/25. tsc clean, shellcheck clean. Full bun test: 14904-14907 pass/40 skip/60-63 fail/15007 total across 2 runs -- every failure pre-existing order-dependent full-suite pollution tracked by still-BACKLOG board row FIX-MCP-SUITE-HEALTH-BASELINE, none touching a file this task changed, confirmed by isolated re-run of 3 sampled failing files (32/32 pass standalone). Commits: 7a758d90f (feat), 33aee81e2 (memory).",
-        "claimed_at": "2026-08-13T13:23:58Z",
-        "claimed_by": "dev-team (review-lane qa-drain)"
       }
     ],
     "_closed_signals_20260614": {
