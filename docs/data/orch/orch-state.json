@@ -156,23 +156,6 @@
         }
       },
       {
-        "id": "sys-20260812T081016-3443",
-        "ts": "2026-08-12T08:10:16Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "rag-service A-30 sustained high memory 94.76-96.56% — loss of reclamation",
-        "severity": "WARN",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T08:00Z",
-        "dedup_key": "microservice_degraded:rag-service:A-30",
-        "triaged_at": "2026-08-12T08:40:43Z",
-        "triaged_by": "po",
-        "po_disposition": "po triage 2026-08-12T08:33Z. rag-service A-30 / microservice_degraded / signal_feedback rows -> ALL subsumed by OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX (ready[], P0, next=ops): the running image is dated 2026-08-08T08:10:53Z and the fix commit 4c8c601e6 landed 2026-08-12T06:16:02Z, so every one of these samples measured pre-fix code. db_integrity_breach + cron_fire_gap -> FIX-BCTCREPARSEJOB-NOT-FIRING-40H-LOWCONF-BACKLOG-ACCUMULATING (backlog, P1), causally merged rather than minted twice. system-issue sys-20260812T062748-62e0 (stranded-state unknown paths) -> folded as occurrence 7 onto FIX-COWORK-DELIVERY-PROOF-GATE-ONLY-CATCHES-ROUTERLATCH-NARRATION. system-issue cj-20260812T043111Z (team-tool-recheck) -> PO ruling RETIRE PERMANENTLY, written to docs/signals/janitor-health-recheck-writer-retired-2026-08-12.json."
-      },
-      {
         "id": "sys-20260812T084201-2df1",
         "ts": "2026-08-12T08:42:01Z",
         "from": "system-auditor",
@@ -661,6 +644,18 @@
         "provenance": "commit-sweep-guard",
         "audit_cycle_tag": null,
         "dedup_key": "sweep-guard-bare-commit-blocked:market-watcher"
+      },
+      {
+        "id": "cow-20260813T081115",
+        "ts": "2026-08-13T08:11:15Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "defect",
+        "summary": "coverage-state.json _updated_at frozen 19d (07-25); FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE P1 BACKLOG unmoved 12d",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null,
+        "dedup_key": "coverage-state-frozen-cross-agent-lost-update"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -19518,7 +19513,7 @@
         "last_served_tick": "2026-08-12T16:53:15Z"
       }
     },
-    "_updated_at": "2026-08-13T07:23:13Z",
+    "_updated_at": "2026-08-13T07:49:43Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -22514,6 +22509,147 @@
         },
         "createdAt": "2026-08-13T07:06:27Z",
         "drained_at": "2026-08-13T07:20:45Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0fa27eb708411e3f6245c93a2e0d5276ffff3ccd1695d2ec5301ed325ed66388",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-059886f5",
+          "head_sha": "059886f50a2ee511210ab12d64e6e2a903cc0b31",
+          "run_id": 31676677536,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31676677536",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 94372657407
+            },
+            {
+              "name": "task-claim-owner-session-lint",
+              "conclusion": "failure",
+              "jobId": 94372657892
+            }
+          ],
+          "fingerprint": "41cce4ef1497f81b32dd14f6d88b06db6ad886992381703c89ee380cd81a74fd",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 059886f50a2ee511210ab12d64e6e2a903cc0b31: bun test,task-claim-owner-session-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-13T07:22:54Z",
+        "drained_at": "2026-08-13T07:49:43Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7d039fe2f3f12e37581d634893f7b291710f90a1ee83752363de81b8f0a61bf2",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-13T07:22:05Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-13T07:22:01Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "SLOTS_FIRED",
+          "reason": "spawned",
+          "nominal_tick": "07:15",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 26,
+          "note": "first tick this session to take PRESSURE_MODE=adaptive branch (stale_warning false 2nd consecutive tick, age 15min < 20min threshold); policy alert-commander-market carries _cron_fallback=true for all calendar_status values so slot resolution was identical to legacy (due_reason=cron); no downgrade/mutex applicable"
+        },
+        "createdAt": "2026-08-13T07:22:05Z",
+        "drained_at": "2026-08-13T07:49:43Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b18f732972bfec7ff68ed5e576ede10da4bdb122ce68966e734f0c12ff35e1b6",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-13T07:36:35Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-13T07:36:30Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "SLOTS_FIRED",
+          "reason": "spawned",
+          "nominal_tick": "07:30",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 26,
+          "note": "3rd consecutive tick in PRESSURE_MODE=adaptive (stale_warning still false); alert-commander-market resolves via _cron_fallback=true for all calendar_status so outcome identical to legacy; get_vn_liquidity_state errored at c157, watching for resolution"
+        },
+        "createdAt": "2026-08-13T07:36:35Z",
+        "drained_at": "2026-08-13T07:49:43Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

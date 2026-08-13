@@ -14864,6 +14864,23 @@
       "triaged_at": "2026-08-12T08:40:43Z",
       "triaged_by": "po",
       "po_disposition": "po triage 2026-08-12T08:33Z. rag-service A-30 / microservice_degraded / signal_feedback rows -> ALL subsumed by OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX (ready[], P0, next=ops): the running image is dated 2026-08-08T08:10:53Z and the fix commit 4c8c601e6 landed 2026-08-12T06:16:02Z, so every one of these samples measured pre-fix code. db_integrity_breach + cron_fire_gap -> FIX-BCTCREPARSEJOB-NOT-FIRING-40H-LOWCONF-BACKLOG-ACCUMULATING (backlog, P1), causally merged rather than minted twice. system-issue sys-20260812T062748-62e0 (stranded-state unknown paths) -> folded as occurrence 7 onto FIX-COWORK-DELIVERY-PROOF-GATE-ONLY-CATCHES-ROUTERLATCH-NARRATION. system-issue cj-20260812T043111Z (team-tool-recheck) -> PO ruling RETIRE PERMANENTLY, written to docs/signals/janitor-health-recheck-writer-retired-2026-08-12.json."
+    },
+    {
+      "id": "sys-20260812T081016-3443",
+      "ts": "2026-08-12T08:10:16Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "signal_feedback",
+      "summary": "rag-service A-30 sustained high memory 94.76-96.56% — loss of reclamation",
+      "severity": "WARN",
+      "status": "triaged",
+      "payload_ref": null,
+      "provenance": "detector",
+      "audit_cycle_tag": "cron:auditor-t1:2026-08-12T08:00Z",
+      "dedup_key": "microservice_degraded:rag-service:A-30",
+      "triaged_at": "2026-08-12T08:40:43Z",
+      "triaged_by": "po",
+      "po_disposition": "po triage 2026-08-12T08:33Z. rag-service A-30 / microservice_degraded / signal_feedback rows -> ALL subsumed by OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX (ready[], P0, next=ops): the running image is dated 2026-08-08T08:10:53Z and the fix commit 4c8c601e6 landed 2026-08-12T06:16:02Z, so every one of these samples measured pre-fix code. db_integrity_breach + cron_fire_gap -> FIX-BCTCREPARSEJOB-NOT-FIRING-40H-LOWCONF-BACKLOG-ACCUMULATING (backlog, P1), causally merged rather than minted twice. system-issue sys-20260812T062748-62e0 (stranded-state unknown paths) -> folded as occurrence 7 onto FIX-COWORK-DELIVERY-PROOF-GATE-ONLY-CATCHES-ROUTERLATCH-NARRATION. system-issue cj-20260812T043111Z (team-tool-recheck) -> PO ruling RETIRE PERMANENTLY, written to docs/signals/janitor-health-recheck-writer-retired-2026-08-12.json."
     }
   ],
   "backlog_detail": [],
