@@ -143,7 +143,9 @@ agent_signals (id INTEGER PK, from_agent, to_agent, signal_type, stock_code, pay
   -- 2026-07-29): partial UNIQUE(from_agent, signal_type, COALESCE(stock_code,''),
   -- payload, substr(created_at,1,16)) WHERE payload != '{}'. Data-layer backstop
   -- against genuine double-EMISSION (NOT retry) duplicates — paired with
-  -- postSignal()'s INSERT OR IGNORE (agentSignalStore.ts), returns -1 on suppression.
+  -- postSignal()'s INSERT OR IGNORE (agentSignalStore.ts barrel; real impl in
+  -- infrastructure/db/agentSignals/postSignal.ts — FACTORY-INFRA-split-agentSignalStore,
+  -- 2026-08-13), returns -1 on suppression.
   -- WHERE payload != '{}' originally excluded alertStore.ts's verified_decision
   -- correlation stubs (from_agent='alert-engine') back when their payload was
   -- always the literal '{}'. FIX-ALERT-ENGINE-VERIFIED-DECISION-EMPTY-PAYLOAD-
@@ -156,6 +158,33 @@ agent_signals (id INTEGER PK, from_agent, to_agent, signal_type, stock_code, pay
   -- ORPHAN-ALERT-ID) remains the primary dedup mechanism for this row class;
   -- this index is a secondary, emitter-agnostic backstop.
 ```
+
+**FACTORY-INFRA-split-agentSignalStore (2026-08-13):** `_postSignalInner`'s
+6-deep nested column-existence cascade (~270L, 10 hand-written near-identical
+`INSERT OR IGNORE` variants re-probing the schema on every call) moved out of
+`agentSignalStore.ts` into an `agentSignals/` subdirectory, split by query
+seam:
+- `agentSignals/columnDetect.ts` — `detectSignalColumns(db)`, a `WeakMap`-memoized
+  probe of the 6 optional column groups (+ a dedup-guard `created_at` probe) —
+  computed once per `Database` connection instead of on every `postSignal()` call.
+- `agentSignals/insertBuilder.ts` — `buildSignalInsert(flags, values)`, a single
+  dynamic builder that pushes columns/placeholders/binds into parallel arrays,
+  reproducing the exact column/bind order of all 10 pre-refactor branches
+  (verified branch-by-branch in `agentSignals/__tests__/insertBuilder.test.ts`).
+- `agentSignals/postSignal.ts` (+ `dedupGuard.ts` Task 1862g, `earningsConflictGuard.ts`
+  Task 1786) — `postSignal()`.
+- `agentSignals/getSignals.ts`, `getBroadcastSignals.ts`, `getPriceAnomalySignals.ts`,
+  `causalRootGrouping.ts` — the read-query functions.
+- `agentSignals/chainQueries.ts` (+ `chainRowSerializer.ts`) — cycle-window /
+  causal-ref chain traversal.
+- `agentSignals/recordOutcome.ts`, `getSignalEffectiveness.ts`, `cleanExpired.ts`.
+- `agentSignals/criticGate.ts` (+ `criticGateTypes.ts`) — `postSignalWithCriticGate()`.
+- `agentSignalStore.ts` stays the single public import path — a 60L barrel
+  re-exporting every pre-split name unchanged (zero call-site changes across
+  the ~15 files importing from it). Round-trip characterization test (all 10
+  reachable column-flag combinations, driving the real `postSignal()` against
+  10 distinct `:memory:` schema shapes) at
+  `infrastructure/db/__tests__/FACTORY-INFRA-split-agentSignalStore-roundtrip.test.ts`.
 
 **agent_signals.payload for from_agent='alert-engine' (verified_decision correlation stubs)**
 Populated by `buildVerifiedDecisionPayload()` in `alertStore.ts` (called from both
