@@ -798,8 +798,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-12T15:06:24Z",
-    "_updated_by": "po (dev-team S3 triage)",
+    "_updated_at": "2026-08-13T11:36:11Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11316,6 +11316,85 @@
         ],
         "status_note": "AC: a bctcReparseJob run completes with >0 rows stored and no period-mismatch quarantine for a ticker whose document period is correctly resolvable. Dedup: scanned backlog/ready/in_progress/review/qa for PERIOD-MISMATCH|PERIOD.?KEY|QUARTER-BLIND|REPARSE — the specifically-named FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST row is NOT present on ANY non-terminal lane (0 hits, all lanes + 2026-08 archive scanned), so these 19 fresh occurrences are unowned. Minted 2026-08-12T15:06:24Z.\n\n[po/triage 2026-08-12T15:36:32Z] +19 occurrences folded, ALL inside a 14-minute window 2026-08-12T14:02:03Z-14:16:24Z (telegram 4747-4765): FRT x2, KDC, KDH, VND x5, DXG, SAB, GEX x2, SHB, DIG x2, PDR, VJC, DBC. Every one is the same shape — the supplied period key is 1-2 years and/or 3 quarters stale versus the document's own boundary-date evidence, with a decisive margin (DIG supplied 2025-Q1 vs content 2026-Q1, 143 matching occurrences vs 28 runner-up; VND supplied 2023-Q4 vs content 2025-Q4, 115 vs 26). The quarantine is WORKING AS DESIGNED and is protecting the DB — do not weaken it.\n\nCAUSAL LINK CONFIRMED THIS TICK: this flood is the tail of bctcReparseJob finally firing after the 40.5h gap A-29 reported (telegram 4715 at 36.4h, 4731 at 40.5h — both now explained and resolved by this fire). So FIX-BCTCREPARSEJOB-NOT-FIRING-40H-LOWCONF-BACKLOG-ACCUMULATING and this row are ONE causal chain: the job stalls, the period key it replays goes stale, then ~100% of the catch-up batch quarantines. Fixing the cadence alone will NOT fix this — the period key must be re-derived from document content at reparse time instead of carried forward from the stale queue row. Whoever takes either row should take both.\n\nAlso folded, same batch, both correct refusals with zero data loss: telegram 4770 (VJC 2025-Q1 reparse write BLOCKED — new extraction total_assets=0 would have overwritten a good stored report at 127684178.83) and 4771 (GEX 2025-Q3 write BLOCKED — total_assets=0 with no prior row, refused rather than creating a corrupt row).",
         "updated_at": "2026-08-12T15:36:33Z"
+      },
+      {
+        "id": "FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD",
+        "title": "deep_fetch pipeline is 100% dead: all 2172 deep_fetch_queue rows have fetched_at=NULL (only statuses expired/vps-failed, zero successes ever) while the producer still enqueues live (newest row 4min old) — deep_fetch_stats 0 rows is the SAME root cause, not a second finding",
+        "type": "FIX",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "status": "BACKLOG",
+        "priority": "high",
+        "owner": "po",
+        "next_agent": "dev-mcp-server",
+        "created_at": "2026-08-13T11:36:11Z",
+        "created_by": "po",
+        "files": [
+          "apps/mcp-server/src/infrastructure/deepFetchQueueStore.ts"
+        ],
+        "note": "PO-verified live 2026-08-13T11:30Z against /app/data/market.db in the running mcp-server container (NOT from the auditor summary): deep_fetch_queue status tally = expired 2167 / vps-failed 5, total 2172; SUM(fetched_at IS NULL) = 2172/2172; MIN(queued_at)=2026-06-08 15:00:05, MAX(queued_at)=2026-08-13 11:28:58. The queue has NO success/done/pending status at all — not one row has EVER been fetched in 66 days, yet the producer wrote a new row 4 minutes before this triage. deep_fetch_stats (cols domain,date,fetch_count) = 0 rows follows necessarily: the stats writer at deepFetchQueueStore.ts:173 only fires on a successful fetch. CONSOLIDATES 4 signals + 2 telegram reports into ONE row (live consumer/dead producer), superseding the auditor's split framing: db_data_stale CRITICAL 2026-08-13T05:22:22Z (DATA-FETCH-QUEUE-STALE, reported 2134 rows -> now 2172 and GROWING), db_data_missing HIGH 05:22:37Z (DATA-FETCH-STATS-EMPTY), db_integrity_breach WARN 02:21:39Z (deep_fetch_stats), db_integrity_breach MED 03:51:20Z (4 vps-failed rows since 2026-08-05, now 5), telegram reports 4784 + 4786. Dedup: PO scanned all 608 non-terminal lane rows (backlog+ready+in_progress+review+qa) for deep.?fetch|fetch.?queue|fetch.?stats — ZERO matches, this is a genuine uncovered gap, not a re-mint.",
+        "status_note": "AC-1: deep_fetch_queue shows >0 rows in a terminal SUCCESS status with fetched_at NOT NULL. AC-2: deep_fetch_stats row count > 0. AC-3: the 2167 'expired' rows are either drained or explicitly reclassified with a documented retention policy (do not silently DELETE — 66d of enqueued URLs is the evidence trail). AC-4: name whether the consumer job exists and is registered in the scheduler at all — if it was never wired, say so explicitly rather than patching the store. Priority: high (CRITICAL severity, actively worsening).",
+        "updated_at": "2026-08-13T11:36:12Z"
+      },
+      {
+        "id": "FIX-AUDITOR-DATATIER-REINVOKES-STATEFUL-PREGATE-SELF-DEFEATS-ROUTER-SPAWN",
+        "title": "system-auditor AUDIT_TIER=DATA re-runs the SAME stateful db-integrity-probe.sh the router already used to gate its spawn — the router's call refreshed the snapshot baseline, so the subagent's re-check trivially sees 0 diff and self-defeats into SKIP-SPAWN, skipping the sweep it was spawned to perform",
+        "type": "FIX",
+        "size": "S",
+        "zone": "cross-service/",
+        "status": "BACKLOG",
+        "priority": "high",
+        "owner": "po",
+        "next_agent": "agent-father",
+        "created_at": "2026-08-13T11:36:11Z",
+        "created_by": "po",
+        "files": [
+          "docs/agents/system-auditor/flow/main.md",
+          "scripts/db-integrity-probe.sh"
+        ],
+        "note": "Source: telegram report 4793 (cron-db-data-integrity, 2026-08-13T10:17:40Z). Router's own db-integrity-probe.sh call at checked_at=2026-08-13T10:15:04Z returned verdict=SPAWN, tables_changed=4, exit=1 and correctly spawned system-auditor a88da31e125ca6101. The subagent then re-ran the same probe 84s later (checked_at=10:16:28Z), got verdict=SKIP-SPAWN/tables_changed=0 BECAUSE the router's prior call had already refreshed the snapshot, and exited — 0 of the 4 changed tables checked, 0 docs/data/db-integrity-history.json entries appended. The probe is STATEFUL (it refreshes its own baseline as a side effect of being read), so it is not idempotent and must be called exactly once per gate decision. Same defect class as the already-closed FIX-CRON-CODEJANITOR-NO-PRESPAWN-GATE (redundant gate causing wrong boot behavior). Dedup: PO scanned all 608 non-terminal rows for PRESPAWN|pre.?gate|DATA-TIER|db-integrity-probe|CADRAT — only FIX-DEDUPCHECK-MATCHEDTASKID-UNANCHORED-SUBSTRING-MISLABEL (an audit-trail LABEL defect on a different script) and FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE (Tier-1 mem probe sampling, different tier + different probe) matched; neither covers this. Recurring-class note: this is the 2nd agent (after code-janitor) to carry a redundant self-gate that undoes its own router-side spawn gate — worth a fleet grep for other AUDIT_TIER/entry-point re-invocations of a stateful pre-gate.",
+        "status_note": "AC-1: system-auditor main.md AUDIT_TIER=DATA entry point does NOT invoke db-integrity-probe.sh (nor duplicate its gate logic) when the launch prompt already carries a router-side SPAWN verdict — it proceeds straight to the DATA-ANOMALY SWEEP. AC-2: a DATA-tier spawn appends >=1 entry to docs/data/db-integrity-history.json. AC-3: fleet grep for other flow entry points that re-invoke a stateful pre-gate probe they were already gated by; list findings even if not fixed here. Priority: high (silent coverage loss — the cycle reports success while checking nothing).",
+        "updated_at": "2026-08-13T11:36:12Z"
+      },
+      {
+        "id": "FIX-AUDITOR-SELF-COMMIT-STEP-NEVER-FIRES",
+        "title": "system-auditor's own notebook/cycle self-commit step silently does not fire — 11th+ occurrence since 2026-08-09, every time recovered only by a router hand-commit; no dedicated ticket exists because the three adjacent AUDITOR-NOTEBOOK-COMMIT rows are all format/batching, not 'the commit step never runs'",
+        "type": "FIX",
+        "size": "S",
+        "zone": "cross-service/",
+        "status": "BACKLOG",
+        "priority": "high",
+        "owner": "po",
+        "next_agent": "agent-father",
+        "created_at": "2026-08-13T11:36:11Z",
+        "created_by": "po",
+        "files": [
+          "docs/agents/system-auditor/flow/main.md",
+          "scripts/auditor-notebook-commit.sh"
+        ],
+        "note": "Source: telegram report 4794 (router, 2026-08-13T10:19:07Z) explicitly requesting PO mint a dedicated ticket for the root gap. Latest instance c65 2026-08-13T10:00Z (notebook written, commit skipped, hand-committed 92e583c26). PO independently confirmed the non-coverage claim by scanning all 608 non-terminal lane rows: FIX-AUDITOR-NOTEBOOK-COMMIT-TRAILER-DOC (commit-trailer spec + ownership doc line), FIX-AUDITOR-NOTEBOOK-SECOND-COMMIT-RETRO-REWRITES-PUBLISHED-OUTPUT-CONTRACT (double-commit retro-rewrite) and FIX-AUDITOR-DASHBOARD-COMMIT-BATCH-PER-TIER-CYCLE (commit cadence batching) all presuppose the commit FIRES — none covers the fire-at-all condition. Also distinct from FIX-COWORK-DELIVERY-PROOF-GATE-ONLY-CATCHES-ROUTERLATCH-NARRATION (exogenous proof gate, broader class). Reference: feedback_auditor_c11_cycle_completed_but_self_commit_skipped.md, feedback_auditor_notebook_commit_step_silent_noop_c49.md. Related same-day evidence of the wider execution-gap family: telegram 4788 (Tier-1 c62 A-30 write narrated, never landed) and 4795 (Tier-2 c66 signal_queue write narrated, never landed) — those two are folded onto the delivery-proof-gate row, this row is scoped narrowly to the git-commit actuator.",
+        "status_note": "AC-1: a mechanical, non-prose actuator guarantees the auditor's own cycle commit — e.g. the notebook write and the commit are the same script invocation, or an end-of-cycle readback fails loud when git HEAD does not contain the notebook path. AC-2: prose STOP/NEVER restatements do NOT satisfy this AC (see FIX-AUDITOR-TIER1-HEARTBEAT-HANDWRITE-RECURS-SAME-DAY-AS-ITS-OWN-FLOW-FIX — 4 fires against 2 successive doc-only fixes). AC-3: 7 consecutive auditor cycles land their own commit with no router hand-commit. Priority: high (11th+ occurrence, crossed escalation threshold repeatedly).",
+        "updated_at": "2026-08-13T11:36:12Z"
+      },
+      {
+        "id": "FIX-DEVTEAM-SF1-GATE-BLIND-TO-INFLIGHT-DISPATCH-LIVENESS",
+        "title": "SF-1 dev-team singleton gate tracks LOCK POSSESSION, not the liveness of the agent it dispatched — it returned verdict=RUN for 3 consecutive ticks while the 07:37Z developer spawn was still running, and its 90min TTL expiring mid-flight would let the next tick spawn a concurrent duplicate",
+        "type": "FIX",
+        "size": "M",
+        "zone": "cross-service/",
+        "status": "BACKLOG",
+        "priority": "high",
+        "owner": "po",
+        "next_agent": "agents-architect",
+        "created_at": "2026-08-13T11:36:11Z",
+        "created_by": "po",
+        "files": [
+          "scripts/dev-team-tick-preflight.sh",
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "note": "Source: telegram reports 4789 (2026-08-13T08:20:24Z) + 4792 ESCALATION (09:19:20Z). Developer agent a84c43dd61c0848b5 spawned tick 07:37Z ran 60+min with zero completion notification; ticks 08:07Z, 08:37Z and 09:07Z each returned verdict=RUN from the preflight script and were each skipped by the ROUTER's own judgement (not by the gate) to avoid a concurrent duplicate dispatch. The router did the right thing by hand; the gate did not help it. The dangerous edge is the SF-1 lock's ~90min TTL expiring at ~2026-08-13T09:18:44Z while the dispatch may still be live — after which the gate would actively green-light a second concurrent developer racing the first on the same task board and commit-mutex. Correctly NOT killed, per standing 'spawn slow != failed' / 'transcript-silence != dead' guidance. Dedup: PO scanned all 608 non-terminal rows for SF-1|singleton|liveness|in.?flight|preflight — closest are ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG (a session/cron-loop-vanished watchdog, different failure), FIX-QADRAIN-NO-TASKID-LEVEL-CLAIM-DUPLICATE-QA-SPAWN (duplicate QA spawn via a missing task_id claim, different lane) and FIX-DEVTEAM-PREFLIGHT-ROOT-SYMLINK-CWD-FRAGILE (path resolution). None covers dispatch-liveness. Reference: feedback_background_subagent_transcript_silence_is_not_death.md, feedback_spawn_retry_under_lag.md.",
+        "status_note": "AC-1: the dev-team tick gate can distinguish 'no dispatch in flight' from 'previous dispatch still working' and returns a non-RUN verdict for the latter, without killing the in-flight agent. AC-2: the SF-1 TTL cannot silently expire under a still-live dispatch into a state where the next tick spawns a duplicate — either the TTL is heartbeat-extended by the live dispatch or the gate independently re-checks liveness before RUN. AC-3: a long-running-but-healthy dispatch is never killed or interrupted by this mechanism (explicit negative AC). Priority: high (near-miss; the clean skips were router judgement, not gate correctness).",
+        "updated_at": "2026-08-13T11:36:12Z"
       }
     ],
     "closed_sprints": [
@@ -19231,7 +19310,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-12T17:00:39Z",
+    "last_triaged_at": "2026-08-13T11:36:11Z",
     "last_triaged_by": "po",
     "in_progress": [
       {
