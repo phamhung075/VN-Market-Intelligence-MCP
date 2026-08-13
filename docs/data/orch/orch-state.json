@@ -92,12 +92,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-INFRA-split-agentSignalStore",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FACTORY-INFRA-split-agentSignalStore — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-13T17:51:17Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-08-13T18:39:06Z",
+    "updated_by": "orch-apply (Stage 1.5 auto-stamp — caller omitted updated_by)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -18669,6 +18668,25 @@
         "claimed_at": "2026-08-12T17:11:52Z",
         "claimed_by": "dev-team",
         "commit": "319ef3cac"
+      },
+      {
+        "title": "Collapse the 7-deep INSERT cascade + split agentSignalStore by query seam",
+        "priority": "P0",
+        "zone": "mcp-server-infra",
+        "type": "FACTORY",
+        "status": "REVIEW",
+        "id": "FACTORY-INFRA-split-agentSignalStore",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-agentSignalStore",
+        "promoted_at": "2026-08-13T17:51:11Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "updated_at": "2026-08-13T18:39:06Z",
+        "claimed_at": "2026-08-13T17:51:17Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "dev-mcp-server",
+        "commit_sha": "9ad31c026",
+        "note": "10-branch INSERT cascade collapsed to detectSignalColumns()+buildSignalInsert(); 1774L file split into 20 agentSignals/ modules (all <=120L), agentSignalStore.ts is now a 60L barrel preserving every public name. Round-trip tests (insertBuilder/columnDetect/roundtrip, 25 assertions across 3 files) verify byte-identical column/bind order for all 10 reachable flag combinations. Full agentSignal-adjacent suite 402/402 pass; full bun test 15288 pass/55 fail (pre-existing, grep-confirmed unrelated). tsc clean, toolCount=183/cronJobCount=88 unchanged. REBUILD_REQUIRED=true (ops) + RAW-verify byte-identity against live named-volume DB still open — PRE-REBUILD baseline captured (29-col branch-A schema, 114 rows, latest id=10883) for QA/ops diff post-rebuild."
       }
     ],
     "qa": [
@@ -19022,23 +19040,7 @@
     },
     "last_triaged_at": "2026-08-13T17:51:11Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "title": "Collapse the 7-deep INSERT cascade + split agentSignalStore by query seam",
-        "priority": "P0",
-        "zone": "mcp-server-infra",
-        "type": "FACTORY",
-        "status": "IN_PROGRESS",
-        "id": "FACTORY-INFRA-split-agentSignalStore",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-agentSignalStore",
-        "promoted_at": "2026-08-13T17:51:11Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "updated_at": "2026-08-13T17:51:17Z",
-        "claimed_at": "2026-08-13T17:51:17Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
