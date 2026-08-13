@@ -60,9 +60,15 @@
 #       task constraint: never hand-edit coverage-state.json's saturated
 #       stamp VALUES, but a missing top-level config KEY is a structural
 #       repair, not a stamp-value fix).
-#       Wrapped in a task_claim("coverage-state:main") mutex, TTL 30s,
+#       Wrapped in a task_claim("coverage-state:main") mutex, TTL 900s,
 #       fail-CLOSED (peer holds it after retries -> exit non-zero, file is
-#       NEVER written unprotected).
+#       NEVER written unprotected). (FIX-COVERAGE-STAMP-TTL-30-BELOW-SCHEMA-MIN-60-FAILS-CLOSED,
+#       2026-08-13: was ttl_seconds:30, below task_claim's own Zod min(60) —
+#       every claim was rejected at the tool layer with a `too_small` error
+#       before coordinationStore.ts's clamp could ever run, so the mutex was
+#       NEVER acquired and every stamp write silently no-op'd fail-closed.
+#       900 = one scheduler-cycle lock duration per task_claim's own
+#       describe() text, not merely the bare legal minimum.)
 #
 #   coverage-stamp.sh --agent <news-scout|market-watcher> --list-stale --watchlist T1,T2,... [--file PATH]
 #       Read-only, no mutex. Computes STALE_TICKERS = tickers in --watchlist
@@ -143,8 +149,13 @@ _csv_to_json_array() {
 # ── mutex: task_claim("coverage-state:main") with SF-1-style re-entrant
 # self-hold handling (mirrors dev-team-tick-preflight.sh _step_sf1_claim) —
 # same session already holding the lock heartbeat-renews and proceeds rather
-# than phantom-blocking on itself. TTL kept short (30s) because the critical
-# section is a single jq transform + mv, not a whole agent cycle. ───────────
+# than phantom-blocking on itself. TTL is 900s (one scheduler-cycle lock
+# duration per task_claim's own describe() text) even though the critical
+# section itself is only a single jq transform + mv — the tool's own Zod
+# schema enforces min(60), so anything below that is rejected outright
+# (was 30s until FIX-COVERAGE-STAMP-TTL-30-BELOW-SCHEMA-MIN-60-FAILS-CLOSED,
+# 2026-08-13, which is why every claim was failing before it ever reached
+# the peer-holder check below). ─────────────────────────────────────────────
 _acquire_mutex() {
   local session_id="$1" agent="$2"
   local task_id="coverage-state:main"
@@ -155,7 +166,7 @@ _acquire_mutex() {
   while [ $attempt -lt $max_attempts ]; do
     attempt=$((attempt + 1))
     args=$(jq -n --arg tid "$task_id" --arg sess "$session_id" --arg agent "$agent" \
-      '{task_id:$tid, task_kind:"sprint-task", owner_agent:$agent, owner_client_session:$sess, ttl_seconds:30, payload:({site:"coverage-stamp"}|tojson)}')
+      '{task_id:$tid, task_kind:"sprint-task", owner_agent:$agent, owner_client_session:$sess, ttl_seconds:900, payload:({site:"coverage-stamp"}|tojson)}')
     result=$(mcp_call "task_claim" "$args" 2>&1); rc=$?
 
     if [ $rc -ne 0 ]; then
