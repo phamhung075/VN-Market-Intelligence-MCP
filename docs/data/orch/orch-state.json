@@ -95,8 +95,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "updated_at": "2026-08-13T19:19:32Z",
-    "updated_by": "router (head-reset: FACTORY-INFRA-split-agentSignalStore advanced qa[]->done[]->ops, stale head dangled)"
+    "updated_at": "2026-08-13T19:31:42Z",
+    "updated_by": "router (dev-mcp-server specialist returned+RAW-verified+pushed; task stays open pending AC3 live-cycle observation, no agent actively working it now)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13025,6 +13025,49 @@
             "observed_at": "2026-08-12T16:37:00Z"
           }
         }
+      },
+      {
+        "title": "Collapse the 7-deep INSERT cascade + split agentSignalStore by query seam",
+        "priority": "P0",
+        "zone": "mcp-server-infra",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-INFRA-split-agentSignalStore",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-agentSignalStore",
+        "promoted_at": "2026-08-13T17:51:11Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "updated_at": "2026-08-13T19:29:59Z",
+        "claimed_at": "2026-08-13T18:51:08Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "pm",
+        "updated_by": "qa",
+        "commit_sha": "9ad31c026",
+        "note": "10-branch INSERT cascade collapsed to detectSignalColumns()+buildSignalInsert(); 1774L file split into 20 agentSignals/ modules (all <=120L), agentSignalStore.ts is now a 60L barrel preserving every public name. Round-trip tests (insertBuilder/columnDetect/roundtrip, 25 assertions across 3 files) verify byte-identical column/bind order for all 10 reachable flag combinations. Full agentSignal-adjacent suite 402/402 pass; full bun test 15288 pass/55 fail (pre-existing, grep-confirmed unrelated). tsc clean, toolCount=183/cronJobCount=88 unchanged. REBUILD_REQUIRED=true (ops) + RAW-verify byte-identity against live named-volume DB still open — PRE-REBUILD baseline captured (29-col branch-A schema, 114 rows, latest id=10883) for QA/ops diff post-rebuild. | [QA] Review Record (direct-commit verify) 2026-08-13 — commit 9ad31c026 confirmed ancestor of main; git show --stat matches all 26 claimed files, barrel 60L, all 20 modules <=120L (max 114L). Re-ran 25 round-trip tests (insertBuilder/columnDetect/roundtrip) fresh: 25/25 pass, 222 expect() calls. Independently read pre-refactor parent commits 7-deep _postSignalInner cascade line-by-line and confirmed buildSignalInsert() column/bind order is a byte-identical mechanical reproduction for all 10 reachable flag branches (A-J). Widened net to all 57 agentSignal-adjacent test files: 641/641 pass. tsc clean, DDD/security greps clean, mock-guard PASS. Full suite 15288 pass/55 fail/40 skip EXACT match to claim -- did not trust grep-confirmed-unrelated on faith: built a detached worktree at the parent commit, ran the isolated 17-file/158-test subset containing every failing test name on BOTH commits, got byte-identical 153 pass/5 fail with the same 5 test names on both -- confirms the other 50 are full-suite-only ordering artifacts, not this commit. toolCount=183 confirmed live; cronJobCount unconfirmed to exact 88 but zero scheduler/cron files touched (structurally cannot have moved). VERDICT: APPROVED-CODE-LEVEL, NOT DONE_VERIFIED -- docker inspect confirms the live mcp-server container was built 2026-08-11T18:25Z, ~2 days BEFORE this commit (2026-08-13T18:38Z); per docs/protocols/docker-deployment-runbook.md Microservice Code-Change Close Gate, DONE is gated on ops rebuild+SHA-gate+live-verify; orchStateSchema.ts checkVerificationGate hard-rejects DONE_VERIFIED without verification.raw_probe (this id is not RC_VERIF-grandfathered). Moved qa[]->done[] status=DONE (schema-valid without raw_probe per LANE_ALLOWED_STATUSES), next_agent=ops for the close-gate rebuild sequence (docker compose build/up mcp-server + scripts/verify-deploy-sha.sh + live /health + diff against the PRE-REBUILD baseline already captured: 29-col branch-A schema, 114 rows, latest id=10883) -- follow-up QA live-verify pass required post-rebuild before flipping to done_verified[]. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S111. | [QA] Review Record (post-rebuild live-verify) 2026-08-13 — independently re-verified ops's close-gate rebuild claim (commit 37a03065d) rather than trusting prose. SHA: docker inspect label vn.market.git_sha=78e4b06afcfc1a9282966f8b258205fdd4cb4983, container created 2026-08-13T19:18:30Z; confirmed ancestor of current main HEAD (2deae06b0, 2 non-app commits ahead) via git merge-base --is-ancestor; git diff --stat 78e4b06af..HEAD -- apps/ empty — zero app-code drift since deploy, so the running image genuinely reflects current main HEAD. Ran scripts/verify-deploy-sha.sh myself -> OK. is_correlation_stub: ops's cited origin (commit 94de167ea / 2026-06-10) is WRONG — that commit is FIX-ALERT-ORPHAN-CORRELATION (alert_id column, dated 2026-06-13), no is_correlation_stub in its diff. Found the real origin via git log -S\"is_correlation_stub\": commit c06030015 (2026-06-19, alertStore.ts's ensureCorrelationStubColumn) — genuinely pre-existing ~2 months before this refactor; confirmed zero references to is_correlation_stub in any of the 20 new agentSignals/*.ts modules (grep -rl, no match). Live health: curled /health myself -> status=ok, toolCount=183. Live round-trip: called post_agent_signal directly against the running container's /mcp HTTP endpoint (signal_type=signal_feedback, from/to=qa-live-verify) -> wrote row id=10885; get_agent_signals read it back with matching title/detail marker. Independently queried the live DB myself (bun -e inside the running container via bun:sqlite readonly, not ops's numbers): 30 columns, 116 rows, MAX(id)=10885 — exactly baseline 114 + ops's +1 arrival (115/id=10884) + my own probe write (116/id=10885), a fully consistent monotonic chain. VERDICT: DONE_VERIFIED — every ops claim independently re-derived and held (one correction: ops's is_correlation_stub commit citation was wrong, though the underlying fact — pre-existing, not introduced by this refactor — was correct). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S112.",
+        "qa_verified_at": "2026-08-13T19:28:54Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "docker inspect (git_sha label) + git merge-base/diff + curl /health + curl /mcp tools/call post_agent_signal + docker exec bun -e (bun:sqlite readonly PRAGMA table_info + COUNT/MAX(id))",
+            "args": "service=mcp-server; expected_sha=78e4b06afcfc1a9282966f8b258205fdd4cb4983; endpoint=/health; tool=post_agent_signal{from_agent:qa-live-verify,to_agent:qa-live-verify,signal_type:signal_feedback,stock_code:QATEST}; db=/app/data/market.db table=agent_signals",
+            "live_value_observed": {
+              "deployed_git_sha": "78e4b06afcfc1a9282966f8b258205fdd4cb4983",
+              "sha_ancestor_of_head": true,
+              "app_code_drift_since_deploy": false,
+              "health_status": "ok",
+              "health_toolCount": 183,
+              "post_agent_signal_written_id": 10885,
+              "readback_matched": true,
+              "agent_signals_column_count": 30,
+              "agent_signals_row_count": 116,
+              "agent_signals_max_id": 10885,
+              "is_correlation_stub_origin_commit": "c06030015",
+              "is_correlation_stub_origin_date": "2026-06-19",
+              "is_correlation_stub_referenced_in_split_modules": false
+            },
+            "observed_at": "2026-08-13T19:28:54Z"
+          }
+        }
       }
     ],
     "head": {
@@ -13033,33 +13076,6 @@
       "note": "Re-collapsed 3rd time (router, post FIX-SBV-FETCHER-ZERO-VALUE-EMIT verify) — see feedback_orchstate_dual_head_keys_toplevel_authoritative.md. Do not write routing fields here; DeprecatedHeadStubSchema.passthrough() lets them through Zod silently."
     },
     "ready": [
-      {
-        "id": "FIX-COVERAGE-STAMP-TTL-30-BELOW-SCHEMA-MIN-60-FAILS-CLOSED",
-        "type": "FIX",
-        "size": "S",
-        "title": "coverage-stamp.sh:158 passes ttl_seconds:30 but task_claim Zod schema enforces .min(60) - coverage-state:main mutex fails 5/5 every cycle, fail-CLOSED, no coverage-state write fleet-wide (news-scout + market-watcher)",
-        "owner": "po",
-        "next_agent": "dev-mcp-server",
-        "status": "READY",
-        "priority": "P0",
-        "zone": "cross-service/",
-        "files": [
-          "scripts/agents-flow/coverage-stamp.sh"
-        ],
-        "baseline_pass": true,
-        "rebuild_required": false,
-        "created_at": "2026-08-13T17:28:37Z",
-        "created_by": "po/triage-20260813T1722Z",
-        "po_expedited_at": "2026-08-13T17:28:37Z",
-        "dedup_key": "coverage-state-mutex-ttl|file:scripts/agents-flow/coverage-stamp.sh",
-        "verification_gate": "coverage_state_write_observed_after_fix",
-        "status_note": "ROOT CAUSE VERIFIED AT SOURCE BY PO 2026-08-13T17:22Z, both halves read live, not inferred from the reports: (a) scripts/agents-flow/coverage-stamp.sh:158 emits the task_claim argument object with a hardcoded `ttl_seconds:30`; (b) apps/mcp-server/src/interface/mcp/tools/system/coordination/taskClaimTool.ts:81-85 declares `ttl_seconds: z.number().int().min(60).max(691200).optional()`. 30 < 60 so EVERY call is rejected by Zod with `too_small` at the TOOL layer, before it can reach coordinationStore.ts:652's `Math.min(Math.max(input.ttl_seconds ?? 3600, 60), 691200)` clamp - the clamp would have silently corrected this, which is exactly why the defect reads as inexplicable from the agent side. Mutex is never acquired, so the coverage-state write is skipped FAIL-CLOSED on every cycle. CORROBORATION: two INDEPENDENT agents reported the same line+minimum within 36s of each other - telegram 5211 (market-watcher, 2026-08-13T12:14:38Z, 'fails 5x with too_small, mutex never acquired, write skipped fail-CLOSED') and telegram 5212 (news-scout, 12:15:14Z, 'fails 5/5 attempts every cycle, blocks coverage-state writes fleet-wide'). Neither agent can fix it: the script is outside both agents' file-write scope. AC1: bump the literal at line 158 to >=60 (900 is the documented value for a one-scheduler-cycle lock per the tool's own describe() text; 60 is the bare minimum - prefer 900 since coverage-stamp runs once per agent cycle). AC2: grep the whole of scripts/ for any OTHER task_claim call site passing ttl_seconds<60 and fix them in the same pass - this is a schema-vs-caller drift class, not a single typo, and the clamp in coordinationStore.ts means callers that go through a non-tool path are silently fine while tool-path callers hard-fail, so the two planes disagree. AC3: a subsequent news-scout or market-watcher cycle logs a SUCCESSFUL coverage-state:main claim and an actual coverage-state write (verification_gate=coverage_state_write_observed_after_fix). Do NOT close on the lint/grep alone. NOTE for whoever picks this up: memory `project_stale_transport_gap_note_blocks_coverage_state_writes` is a DIFFERENT, already-known blocker on the same write path - do not conflate them; this row is the ttl/Zod defect only.",
-        "origin_reports": [
-          5211,
-          5212
-        ],
-        "updated_at": "2026-08-13T17:28:37Z"
-      },
       {
         "id": "FIX-CI-TASKCLAIM-QA-FLOW-OWNER-SESSION-PAYDOWN",
         "type": "FIX",
@@ -18934,25 +18950,6 @@
         "secondary_claimed_at": "2026-08-13T11:59:22Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "ops"
-      },
-      {
-        "title": "Collapse the 7-deep INSERT cascade + split agentSignalStore by query seam",
-        "priority": "P0",
-        "zone": "mcp-server-infra",
-        "type": "FACTORY",
-        "status": "QA",
-        "id": "FACTORY-INFRA-split-agentSignalStore",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-INFRA-split-agentSignalStore",
-        "promoted_at": "2026-08-13T17:51:11Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "updated_at": "2026-08-13T19:21:23Z",
-        "claimed_at": "2026-08-13T18:51:08Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "updated_by": "ops (restore-from-coldarch-for-qalive-verify)",
-        "commit_sha": "9ad31c026",
-        "note": "10-branch INSERT cascade collapsed to detectSignalColumns()+buildSignalInsert(); 1774L file split into 20 agentSignals/ modules (all <=120L), agentSignalStore.ts is now a 60L barrel preserving every public name. Round-trip tests (insertBuilder/columnDetect/roundtrip, 25 assertions across 3 files) verify byte-identical column/bind order for all 10 reachable flag combinations. Full agentSignal-adjacent suite 402/402 pass; full bun test 15288 pass/55 fail (pre-existing, grep-confirmed unrelated). tsc clean, toolCount=183/cronJobCount=88 unchanged. REBUILD_REQUIRED=true (ops) + RAW-verify byte-identity against live named-volume DB still open — PRE-REBUILD baseline captured (29-col branch-A schema, 114 rows, latest id=10883) for QA/ops diff post-rebuild. | [QA] Review Record (direct-commit verify) 2026-08-13 — commit 9ad31c026 confirmed ancestor of main; git show --stat matches all 26 claimed files, barrel 60L, all 20 modules <=120L (max 114L). Re-ran 25 round-trip tests (insertBuilder/columnDetect/roundtrip) fresh: 25/25 pass, 222 expect() calls. Independently read pre-refactor parent commits 7-deep _postSignalInner cascade line-by-line and confirmed buildSignalInsert() column/bind order is a byte-identical mechanical reproduction for all 10 reachable flag branches (A-J). Widened net to all 57 agentSignal-adjacent test files: 641/641 pass. tsc clean, DDD/security greps clean, mock-guard PASS. Full suite 15288 pass/55 fail/40 skip EXACT match to claim -- did not trust grep-confirmed-unrelated on faith: built a detached worktree at the parent commit, ran the isolated 17-file/158-test subset containing every failing test name on BOTH commits, got byte-identical 153 pass/5 fail with the same 5 test names on both -- confirms the other 50 are full-suite-only ordering artifacts, not this commit. toolCount=183 confirmed live; cronJobCount unconfirmed to exact 88 but zero scheduler/cron files touched (structurally cannot have moved). VERDICT: APPROVED-CODE-LEVEL, NOT DONE_VERIFIED -- docker inspect confirms the live mcp-server container was built 2026-08-11T18:25Z, ~2 days BEFORE this commit (2026-08-13T18:38Z); per docs/protocols/docker-deployment-runbook.md Microservice Code-Change Close Gate, DONE is gated on ops rebuild+SHA-gate+live-verify; orchStateSchema.ts checkVerificationGate hard-rejects DONE_VERIFIED without verification.raw_probe (this id is not RC_VERIF-grandfathered). Moved qa[]->done[] status=DONE (schema-valid without raw_probe per LANE_ALLOWED_STATUSES), next_agent=ops for the close-gate rebuild sequence (docker compose build/up mcp-server + scripts/verify-deploy-sha.sh + live /health + diff against the PRE-REBUILD baseline already captured: 29-col branch-A schema, 114 rows, latest id=10883) -- follow-up QA live-verify pass required post-rebuild before flipping to done_verified[]. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S111."
       }
     ],
     "_closed_signals_20260614": {
@@ -18973,7 +18970,38 @@
     },
     "last_triaged_at": "2026-08-13T17:51:11Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-COVERAGE-STAMP-TTL-30-BELOW-SCHEMA-MIN-60-FAILS-CLOSED",
+        "type": "FIX",
+        "size": "S",
+        "title": "coverage-stamp.sh:158 passes ttl_seconds:30 but task_claim Zod schema enforces .min(60) - coverage-state:main mutex fails 5/5 every cycle, fail-CLOSED, no coverage-state write fleet-wide (news-scout + market-watcher)",
+        "owner": "po",
+        "next_agent": "dev-mcp-server",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "zone": "cross-service/",
+        "files": [
+          "scripts/agents-flow/coverage-stamp.sh"
+        ],
+        "baseline_pass": true,
+        "rebuild_required": false,
+        "created_at": "2026-08-13T17:28:37Z",
+        "created_by": "po/triage-20260813T1722Z",
+        "po_expedited_at": "2026-08-13T17:28:37Z",
+        "dedup_key": "coverage-state-mutex-ttl|file:scripts/agents-flow/coverage-stamp.sh",
+        "verification_gate": "coverage_state_write_observed_after_fix",
+        "status_note": "ROOT CAUSE VERIFIED AT SOURCE BY PO 2026-08-13T17:22Z, both halves read live, not inferred from the reports: (a) scripts/agents-flow/coverage-stamp.sh:158 emits the task_claim argument object with a hardcoded `ttl_seconds:30`; (b) apps/mcp-server/src/interface/mcp/tools/system/coordination/taskClaimTool.ts:81-85 declares `ttl_seconds: z.number().int().min(60).max(691200).optional()`. 30 < 60 so EVERY call is rejected by Zod with `too_small` at the TOOL layer, before it can reach coordinationStore.ts:652's `Math.min(Math.max(input.ttl_seconds ?? 3600, 60), 691200)` clamp - the clamp would have silently corrected this, which is exactly why the defect reads as inexplicable from the agent side. Mutex is never acquired, so the coverage-state write is skipped FAIL-CLOSED on every cycle. CORROBORATION: two INDEPENDENT agents reported the same line+minimum within 36s of each other - telegram 5211 (market-watcher, 2026-08-13T12:14:38Z, 'fails 5x with too_small, mutex never acquired, write skipped fail-CLOSED') and telegram 5212 (news-scout, 12:15:14Z, 'fails 5/5 attempts every cycle, blocks coverage-state writes fleet-wide'). Neither agent can fix it: the script is outside both agents' file-write scope. AC1: bump the literal at line 158 to >=60 (900 is the documented value for a one-scheduler-cycle lock per the tool's own describe() text; 60 is the bare minimum - prefer 900 since coverage-stamp runs once per agent cycle). AC2: grep the whole of scripts/ for any OTHER task_claim call site passing ttl_seconds<60 and fix them in the same pass - this is a schema-vs-caller drift class, not a single typo, and the clamp in coordinationStore.ts means callers that go through a non-tool path are silently fine while tool-path callers hard-fail, so the two planes disagree. AC3: a subsequent news-scout or market-watcher cycle logs a SUCCESSFUL coverage-state:main claim and an actual coverage-state write (verification_gate=coverage_state_write_observed_after_fix). Do NOT close on the lint/grep alone. NOTE for whoever picks this up: memory `project_stale_transport_gap_note_blocks_coverage_state_writes` is a DIFFERENT, already-known blocker on the same write path - do not conflate them; this row is the ttl/Zod defect only. | ROUTER 2026-08-13T19:31Z: AC1+AC2 code fix RAW-verified real, commit a63ab8b0d, pushed to origin/main (was local-only, dev-mcp-server never pushed per known gatewayless-specialist gap). AC3 NOT yet satisfied — coverage-state.json last_covered_* still frozen at 2026-07-25, file mtime 2026-08-06, no news-scout/market-watcher cycle has run since the fix landed. dev-mcp-server substituted a manual mcp-call.sh proof (not a live fleet cycle) and said so explicitly — per row spec (Do NOT close on lint/grep alone) this does not satisfy AC3. Row stays IN_PROGRESS pending a genuine post-fix cycle observation; re-check coverage-state.json last_covered_news_scout/last_covered_market_watcher for a timestamp after 2026-08-13T19:28:58Z on next touch.",
+        "origin_reports": [
+          5211,
+          5212
+        ],
+        "updated_at": "2026-08-13T19:31:42Z",
+        "claimed_at": "2026-08-13T19:24:22Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "dev-mcp-server"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -18993,7 +19021,7 @@
         "last_served_tick": "2026-08-13T18:49:45Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-13T15:53:58Z"
+        "last_served_tick": "2026-08-13T19:24:12Z"
       },
       "drs": {
         "last_served_tick": "2026-08-13T16:22:58Z"
@@ -19005,7 +19033,7 @@
         "last_served_tick": "2026-08-13T17:21:25Z"
       }
     },
-    "_updated_at": "2026-08-13T19:21:32Z",
+    "_updated_at": "2026-08-13T19:24:12Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
