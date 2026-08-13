@@ -60,6 +60,11 @@ EOF
 
 export SYSTEM_MAP_PATH="$FIXTURE_MAP"
 export HEARTBEAT_FILE_PATH="$TMPDIR_TEST/auditor-tier1-last-healthy.json"
+# FIX-AUDITOR-VERDICT-TRANSCRIPTION-PROSE-OVERRIDES-MACHINE-VERDICT (ARM B) —
+# isolated scratch path, mirrors HEARTBEAT_FILE_PATH above. NEVER the live
+# docs/data/auditor-tier1-last-trigger.json — every run_probe()/CLI
+# invocation below inherits this exported override.
+export TRIGGER_FILE_PATH="$TMPDIR_TEST/auditor-tier1-last-trigger.json"
 
 # FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE: _check_mem_creep() now
 # sleeps MEM_CREEP_SAMPLE_INTERVAL_SEC between samples (real default 2s) —
@@ -269,9 +274,17 @@ check "T1 ALL_GREEN last_healthy_at is ISO8601" "$([[ "$LAST_HEALTHY" =~ ^[0-9]{
 check "T1 ALL_GREEN writes heartbeat file" "$([ -f "$HEARTBEAT_FILE_PATH" ] && echo true || echo false)"
 check "T1 heartbeat last_healthy_at matches verdict" "$([ "$(jq -r '.last_healthy_at' "$HEARTBEAT_FILE_PATH")" = "$LAST_HEALTHY" ] && echo true || echo false)"
 check "T1 heartbeat checks all PASS" "$([ "$(jq -r '[.checks[]] | unique | join(",")' "$HEARTBEAT_FILE_PATH")" = "PASS" ] && echo true || echo false)"
+# FIX-AUDITOR-VERDICT-TRANSCRIPTION-PROSE-OVERRIDES-MACHINE-VERDICT (ARM B):
+# the trigger file is written on EVERY genuine Tier-1 run, unlike the
+# heartbeat (ALL_GREEN-only) — asserted here for the ALL_GREEN branch.
+check "T1 ALL_GREEN also writes trigger file" "$([ -f "$TRIGGER_FILE_PATH" ] && echo true || echo false)"
+check "T1 trigger file verdict=ALL_GREEN" "$([ "$(jq -r '.verdict' "$TRIGGER_FILE_PATH")" = "ALL_GREEN" ] && echo true || echo false)"
+check "T1 trigger file checks all PASS (6 keys)" "$([ "$(jq -r '.checks | keys | length' "$TRIGGER_FILE_PATH")" -eq 6 ] && [ "$(jq -r '[.checks[]] | unique | join(",")' "$TRIGGER_FILE_PATH")" = "PASS" ] && echo true || echo false)"
+check "T1 trigger file fire_tick is a */30min UTC boundary" "$([[ "$(jq -r '.fire_tick' "$TRIGGER_FILE_PATH")" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:(00|30)Z$ ]] && echo true || echo false)"
 
 # ── T2: FAILURE — injected fault: docker ps shows mcp-server Exited ──────────
 run_case
+rm -f "$TRIGGER_FILE_PATH"
 STUB_DOCKER_PS="one_down"
 OUT=$(run_probe); RC=$?
 VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
@@ -280,6 +293,14 @@ check "T2 FAILURE verdict (container Exited)" "$([ "$VERDICT" = "FAILURE" ] && e
 check "T2 FAILURE exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
 check "T2 FAILURE detail mentions docker_ps" "$([[ "$DETAIL" == *"docker_ps"* ]] && echo true || echo false)"
 check "T2 FAILURE does NOT write heartbeat file" "$([ ! -f "$HEARTBEAT_FILE_PATH" ] && echo true || echo false)"
+# ARM B: unlike the heartbeat, the trigger file IS written on FAILURE too —
+# this is the whole point (a downstream Arm B check needs to see WHICH check
+# failed, even on the common FAILURE-spawns-a-subagent path).
+check "T2 FAILURE STILL writes trigger file" "$([ -f "$TRIGGER_FILE_PATH" ] && echo true || echo false)"
+check "T2 trigger file verdict=FAILURE" "$([ "$(jq -r '.verdict' "$TRIGGER_FILE_PATH")" = "FAILURE" ] && echo true || echo false)"
+check "T2 trigger file checks.docker_ps=FAIL" "$([ "$(jq -r '.checks.docker_ps' "$TRIGGER_FILE_PATH")" = "FAIL" ] && echo true || echo false)"
+check "T2 trigger file checks.mem_creep=PASS (only docker_ps injected)" "$([ "$(jq -r '.checks.mem_creep' "$TRIGGER_FILE_PATH")" = "PASS" ] && echo true || echo false)"
+check "T2 trigger file detail mentions docker_ps" "$([[ "$(jq -r '.detail' "$TRIGGER_FILE_PATH")" == *"docker_ps"* ]] && echo true || echo false)"
 
 # ── T3: FAILURE — injected fault: docker ps missing a required service ───────
 run_case
@@ -413,6 +434,12 @@ check "T15 heartbeat health_3001 == PASS after recovery" "$([ "$(jq -r '.checks.
 # green above, using the exact same run_probe() these new cases don't touch).
 TIER2_HEARTBEAT="$TMPDIR_TEST/auditor-tier2-fixture.json"
 TIER3_HEARTBEAT="$TMPDIR_TEST/auditor-tier3-fixture.json"
+# FIX-AUDITOR-VERDICT-TRANSCRIPTION-PROSE-OVERRIDES-MACHINE-VERDICT (ARM B):
+# the Tier-1 trigger file must NEVER be touched by a tier2/3 call — its inner
+# run_probe("suppress_heartbeat") invocation shares the SAME suppress gate as
+# the heartbeat write. Wiped here so every tier2/3 case below (T16-T18 etc)
+# can assert non-existence cleanly regardless of what T1/T2 above did.
+rm -f "$TRIGGER_FILE_PATH"
 
 # ── T16: Tier-2 idle steady-state — auditor-signal-loop-P1: heartbeat
 # authorship moved to the system-auditor subagent's own end-of-cycle write,
@@ -438,6 +465,7 @@ check "T16 tier2 checks_verdict == ALL_GREEN under the hood" "$([ "$(printf '%s'
 check "T16 tier2 fresh_threshold_minutes == 480 (2x4h cadence)" "$([ "$(printf '%s' "$OUT_T16B" | jq -r '.fresh_threshold_minutes')" = "480" ] && echo true || echo false)"
 check "T16 tier2 output last_healthy_at == the SEEDED (real-audit) timestamp, not a self-minted one" "$([ "$(printf '%s' "$OUT_T16B" | jq -r '.last_healthy_at')" = "$TIER2_SEEDED_LH" ] && echo true || echo false)"
 check "T16 tier2 fixture file left UNTOUCHED by this script (authorship belongs to subagent only)" "$([ "$(jq -r '.last_healthy_at' "$TIER2_HEARTBEAT")" = "$TIER2_SEEDED_LH" ] && echo true || echo false)"
+check "T16 tier2 calls do NOT write the Tier-1 trigger file (suppress gate shared with heartbeat)" "$([ ! -f "$TRIGGER_FILE_PATH" ] && echo true || echo false)"
 
 # ── T17: Tier-3 idle steady-state — same shape, 2880min (2x24h) threshold,
 # same pre-seeding requirement as T16 ─────────────────────────────────────────
@@ -450,6 +478,7 @@ check "T17 tier3 call A verdict == SKIP-SPAWN" "$([ "$(printf '%s' "$OUT_T17A" |
 check "T17 tier3 call B (no delta) verdict == SKIP-SPAWN" "$([ "$(printf '%s' "$OUT_T17B" | jq -r '.verdict')" = "SKIP-SPAWN" ] && echo true || echo false)"
 check "T17 tier3 call B exit=0" "$([ "$RC_T17B" -eq 0 ] && echo true || echo false)"
 check "T17 tier3 fresh_threshold_minutes == 2880 (2x24h cadence)" "$([ "$(printf '%s' "$OUT_T17B" | jq -r '.fresh_threshold_minutes')" = "2880" ] && echo true || echo false)"
+check "T17 tier3 calls ALSO do NOT write the Tier-1 trigger file" "$([ ! -f "$TRIGGER_FILE_PATH" ] && echo true || echo false)"
 
 # ── T18: Tier-2 FAILURE (a real fault) → verdict SPAWN, exit 1 (cron must
 # still launch the subagent when checks actually fail — the gate must not
@@ -557,6 +586,7 @@ check "T23 CLI no-flag exit=0" "$([ "$CLI_RC_NOFLAG" -eq 0 ] && echo true || ech
 check "T23 CLI no-flag keys == {verdict,detail,last_healthy_at} only" "$([ "$(printf '%s' "$CLI_OUT_NOFLAG" | jq -r 'keys | sort | join(",")')" = "detail,last_healthy_at,verdict" ] && echo true || echo false)"
 check "T23 CLI --tier=1 verdict == ALL_GREEN (identical to no-flag)" "$([ "$(printf '%s' "$CLI_OUT_TIER1" | jq -r '.verdict')" = "ALL_GREEN" ] && echo true || echo false)"
 check "T23 CLI --tier=1 keys == {verdict,detail,last_healthy_at} only" "$([ "$(printf '%s' "$CLI_OUT_TIER1" | jq -r 'keys | sort | join(",")')" = "detail,last_healthy_at,verdict" ] && echo true || echo false)"
+check "T23 CLI no-flag ALSO wrote the (inherited env) trigger file" "$([ -f "$TRIGGER_FILE_PATH" ] && [ "$(jq -r '.verdict' "$TRIGGER_FILE_PATH")" = "ALL_GREEN" ] && echo true || echo false)"
 
 # ══════════════════════════════════════════════════════════════════════════════
 # FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED — launchd_agents check 6 coverage

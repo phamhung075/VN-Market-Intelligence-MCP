@@ -104,6 +104,44 @@
 #                         arms above to make the ledger's own STALENESS RULE
 #                         load-bearing (FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-
 #                         DEAD-TRACKEDBY).
+#   TRIGGER_FILE_PATH   — Tier-1 trigger-verdict output path (default: repo
+#                         docs/data/auditor-tier1-last-trigger.json) — see
+#                         "TRIGGER FILE" section below
+#                         (FIX-AUDITOR-VERDICT-TRANSCRIPTION-PROSE-OVERRIDES-
+#                         MACHINE-VERDICT, ARM B).
+#
+# TRIGGER FILE (FIX-AUDITOR-VERDICT-TRANSCRIPTION-PROSE-OVERRIDES-MACHINE-
+# VERDICT, ARM B, 2026-08-13): every genuine standalone Tier-1 invocation of
+# this script (no `--tier=2/3`; see `suppress_heartbeat` gate below, reused
+# for this write too — a `--tier=2/3` call's INNER run_probe() call must
+# never touch this file, only its own tier-specific heartbeat) atomically
+# persists its FULL verdict JSON — `{written_at, fire_tick, verdict, detail,
+# checks:{6 keys: PASS|FAIL}}` — to `docs/data/auditor-tier1-last-trigger.json`
+# (tmp+mv atomic write, same idiom as `_write_heartbeat()` below), on EVERY
+# run regardless of ALL_GREEN/FAILURE. This is a DISTINCT, NEW file — it
+# never overloads `docs/data/auditor-tier1-last-healthy.json`, whose sole
+# authorized writer/shape contract (FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-
+# AGENT-WRITE-TIER1, `docs/policies/dev-standards.md`
+# CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER) is unrelated and unchanged.
+# Purpose: when this pre-gate's own FAILURE spawns the system-auditor
+# Tier-1 subagent, that subagent's own `scripts/audit-output-contract.sh
+# --trigger-verdict-file` call (§OUTPUT-CONTRACT, `docs/agents/system-
+# auditor/flow/main.md`) reads this file to assert its OWN declared verdict
+# for each failing check does not silently FOLD/PASS/ALL_GREEN a condition
+# THIS pre-gate already found broken — the cross-plane half of that task's
+# two-arm fix (Arm A is the in-commit prose-vs-JSON diff, entirely inside
+# `audit-output-contract.sh`). This file's own `.checks{}` values are
+# already ACK-LEDGER-RECONCILED by the time they land here (a suppressed
+# breach reports PASS from `_mem_container_acked`/`_launchd_label_acked`,
+# never FAIL) — the consuming script deliberately does not re-parse the ack
+# ledger itself; see that script's own header comment for why this makes
+# the cross-plane check safe against legitimate acked-suppression ticks by
+# construction, not by a second copy of this script's own ack logic.
+# SOLE WRITER: `_write_trigger_file()` below, called only from `run_probe()`'s
+# own top-level (non-suppressed) invocation. Read-only from every other
+# caller — same discipline as the heartbeat file, no shape-guard needed in
+# `scripts/git-hooks/pre-commit` yet (this file carries no
+# healthy-vs-degraded ambiguity the way the heartbeat filename family does).
 #
 # HARD CONSTRAINT: every probe below is READ-ONLY (docker ps/stats, curl GET,
 # df, launchctl list, jq). This script NEVER runs docker restart/stop/rm/
@@ -167,6 +205,7 @@ source "$SCRIPT_DIR/lib/tick-telemetry.sh"
 
 SYSTEM_MAP="${SYSTEM_MAP_PATH:-$REPO_ROOT/docs/data/system-map.json}"
 HEARTBEAT_FILE="${HEARTBEAT_FILE_PATH:-$REPO_ROOT/docs/data/auditor-tier1-last-healthy.json}"
+TRIGGER_FILE="${TRIGGER_FILE_PATH:-$REPO_ROOT/docs/data/auditor-tier1-last-trigger.json}"
 LAUNCHD_DIR="${LAUNCHD_DIR_PATH:-$REPO_ROOT/launchd}"
 LAUNCHD_ACK="${LAUNCHD_ACK_PATH:-$REPO_ROOT/docs/data/auditor-launchd-ack.json}"
 ORCH_STATE="${ORCH_STATE_PATH:-$REPO_ROOT/docs/data/orch/orch-state.json}"
@@ -678,6 +717,46 @@ _launchd_label_acked() {
   return 1
 }
 
+# ── Trigger-file write helpers (FIX-AUDITOR-VERDICT-TRANSCRIPTION-PROSE-
+# OVERRIDES-MACHINE-VERDICT, ARM B) — see "TRIGGER FILE" header comment above
+# for the full contract. ──────────────────────────────────────────────────────
+
+# Same */30min boundary arithmetic as docs/agents/system-auditor/flow/
+# main.md's own Step 0d Tier=1 FIRE_TICK derivation — computed independently
+# here (this script never calls task_claim/MCP tools) so a spawned subagent's
+# own FIRE_TICK matches this value as long as both run inside the same
+# 30-minute tick window, the same assumption every other cross-cycle
+# correlation in this flow already relies on (MARKERS_FILE naming, dedup
+# ledger, etc). `10#$min` forces base-10 (a leading-zero minute like "05"
+# would otherwise be parsed as an invalid octal literal by bash arithmetic).
+_tier1_fire_tick() {
+  local min bmin
+  min=$(date -u +%M)
+  bmin=$(( (10#$min / 30) * 30 ))
+  date -u +"%Y-%m-%dT%H:$(printf '%02d' "$bmin")Z"
+}
+
+# Atomic tmp-file + mv rename (same idiom as _write_heartbeat below) — writes
+# the FULL verdict JSON for THIS tick, unconditional on ALL_GREEN/FAILURE
+# (unlike the heartbeat file, which is ALL_GREEN-only). A write failure here
+# never downgrades the run_probe() verdict itself (unlike a heartbeat-write
+# failure) — this file is a diagnostic/cross-check input for a downstream
+# consumer, not a claim this pre-gate makes about system health.
+_write_trigger_file() {
+  local verdict="$1" detail="$2" checks_json="$3" ts fire_tick tmp
+  ts=$(_now_iso)
+  fire_tick=$(_tier1_fire_tick)
+  tmp="$(mktemp "${TRIGGER_FILE}.tmp.XXXXXX" 2>/dev/null)" || tmp="${TRIGGER_FILE}.tmp.$$"
+  jq -n --arg ts "$ts" --arg ft "$fire_tick" --arg v "$verdict" --arg d "$detail" --argjson checks "$checks_json" \
+    '{written_at:$ts, fire_tick:$ft, verdict:$v, detail:$d, checks:$checks}' > "$tmp" 2>/dev/null
+  if [ ! -s "$tmp" ]; then
+    rm -f "$tmp" 2>/dev/null
+    return 1
+  fi
+  chmod 644 "$tmp" 2>/dev/null
+  mv -f "$tmp" "$TRIGGER_FILE" 2>/dev/null
+}
+
 # ── Heartbeat write — atomic tmp-file + mv rename (R10) ───────────────────────
 _write_heartbeat() {
   local ts="$1" checks_json="$2" tmp
@@ -765,6 +844,10 @@ run_probe() {
     local green_detail="all 6 checks passed (docker_ps, health_3000, health_3001, disk, mem_creep, launchd_agents)"
     [ -n "$mem_note" ] && green_detail="${green_detail} — ${mem_note}"
     [ -n "$launchd_note" ] && green_detail="${green_detail} — ${launchd_note}"
+    # ARM B trigger-file write — see "TRIGGER FILE" header comment. Same
+    # suppress gate as the heartbeat write above: a --tier=2/3 caller's inner
+    # run_probe() invocation must never touch the Tier-1 trigger file either.
+    [ "$suppress_heartbeat" != "suppress_heartbeat" ] && _write_trigger_file "ALL_GREEN" "$green_detail" "$checks_json"
     jq -n --arg v "ALL_GREEN" \
       --arg d "$green_detail" \
       --arg lh "$ts" \
@@ -772,6 +855,7 @@ run_probe() {
     return 0
   fi
 
+  [ "$suppress_heartbeat" != "suppress_heartbeat" ] && _write_trigger_file "FAILURE" "$failures" "$checks_json"
   jq -n --arg v "FAILURE" --arg d "$failures" --arg lh "${prev_healthy:-never}" \
     '{verdict:$v, detail:$d, last_healthy_at:$lh}'
   return 1

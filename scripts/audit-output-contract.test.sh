@@ -369,6 +369,166 @@ EOF
 run_audit_output_contract --markers-file "$MF17B" --anomalies-count 0 >/dev/null
 check "T17 durable record accumulates across runs (2 entries from 2 separate invocations)" "$([ "$(jq 'length' "$AUDIT_OUTPUT_CONTRACT_VIOLATIONS_FILE")" -eq 2 ] && echo true || echo false)"
 
+# ── T18-T21: ARM A (V6) — FIX-AUDITOR-VERDICT-TRANSCRIPTION-PROSE-OVERRIDES-
+# MACHINE-VERDICT — this cycle's own captured machine-verdict JSON vs its own
+# declared (prose) verdict, per check id. ───────────────────────────────────
+json_file() {
+  local f="$TMPDIR_TEST/json-$RANDOM.json"
+  cat > "$f"
+  echo "$f"
+}
+EMPTY_MF=$(markers_file <<'EOF'
+EOF
+)
+
+# T18: OCC-1 replay — raw JSON verdict=ESCALATE / reclamation_dips=0 /
+# samples 94.68-95.08 (verbatim shape of scripts/audits/verify-a30-mcp-
+# memory-reclamation.sh's own stdout — no `check`/`check_id` key, the "A-30"
+# check id is derived from the leading token inside `.probe`), declared
+# "A-30=FOLD" — the confirmed 2026-08-06T17:44Z occurrence (commit
+# ab22b3ca5): non-zero exit, names the check, prints ESCALATE-vs-FOLD,
+# contract line carries verdict=ESCALATE.
+reset_log
+rm -f "$AUDIT_OUTPUT_CONTRACT_VIOLATIONS_FILE"
+RVF18=$(json_file <<'EOF'
+{"probe":"A-30 mcp-server memory reclamation discriminator","container":"mcp-server","samples":[{"pct":94.68},{"pct":95.08},{"pct":94.90}],"analysis":{"min_pct":94.68,"max_pct":95.08,"reclamation_dips":0},"verdict":"ESCALATE","reason":"all samples >93% sustained high — loss of reclamation"}
+EOF
+)
+OUT18=$(run_audit_output_contract --markers-file "$EMPTY_MF" --raw-verdicts-file "$RVF18" --declared-verdicts "A-30=FOLD")
+RC18=$?
+check "T18 OCC-1 replay exit!=0" "$([ "$RC18" -ne 0 ] && echo true || echo false)"
+check "T18 OCC-1 replay names the check A-30" "$(printf '%s' "$OUT18" | grep -q 'check=A-30' && echo true || echo false)"
+check "T18 OCC-1 replay prints raw=ESCALATE" "$(printf '%s' "$OUT18" | grep -q 'raw=ESCALATE' && echo true || echo false)"
+check "T18 OCC-1 replay prints declared=FOLD" "$(printf '%s' "$OUT18" | grep -q 'declared=FOLD' && echo true || echo false)"
+check "T18 OCC-1 replay contract line carries verdict=ESCALATE" "$(printf '%s' "$OUT18" | grep -q '^\[OUTPUT-CONTRACT\] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0 | verdict=ESCALATE$' && echo true || echo false)"
+check "T18 OCC-1 replay V6 durably recorded" "$(jq -e '[.[] | select(.detail | startswith("V6 verdict mismatch check=A-30"))] | length >= 1' "$AUDIT_OUTPUT_CONTRACT_VIOLATIONS_FILE" >/dev/null 2>&1 && echo true || echo false)"
+check "T18 OCC-1 replay BUG telegram fired" "$([ "$(call_count_for send_telegram)" -ge 1 ] && echo true || echo false)"
+
+# T19: matching declared/machine verdicts across all checks -> exit 0,
+# no VIOLATION, contract line carries verdict=CLEAN.
+reset_log
+RVF19=$(json_file <<'EOF'
+{"check":"A-30","verdict":"FOLD"}
+EOF
+)
+OUT19=$(run_audit_output_contract --markers-file "$EMPTY_MF" --raw-verdicts-file "$RVF19" --declared-verdicts "A-30=FOLD")
+RC19=$?
+check "T19 matching-verdicts exit=0" "$([ "$RC19" -eq 0 ] && echo true || echo false)"
+check "T19 matching-verdicts no VIOLATION" "$(! printf '%s' "$OUT19" | grep -q 'VIOLATION' && echo true || echo false)"
+check "T19 matching-verdicts contract line carries verdict=CLEAN" "$(printf '%s' "$OUT19" | grep -q 'verdict=CLEAN$' && echo true || echo false)"
+
+# T20: machine verdict with NO declared counterpart -> violation (silent
+# omission is the same bug as a mismatch), forces verdict=ESCALATE.
+reset_log
+RVF20=$(json_file <<'EOF'
+{"check":"B-05","verdict":"WARN"}
+EOF
+)
+OUT20=$(run_audit_output_contract --markers-file "$EMPTY_MF" --raw-verdicts-file "$RVF20")
+RC20=$?
+check "T20 machine-no-declared exit!=0" "$([ "$RC20" -ne 0 ] && echo true || echo false)"
+check "T20 machine-no-declared violation names check=B-05" "$(printf '%s' "$OUT20" | grep -q 'check=B-05' && echo true || echo false)"
+check "T20 machine-no-declared silent-omission wording" "$(printf '%s' "$OUT20" | grep -q 'silent omission' && echo true || echo false)"
+check "T20 machine-no-declared forces verdict=ESCALATE" "$(printf '%s' "$OUT20" | grep -q 'verdict=ESCALATE$' && echo true || echo false)"
+
+# T21: declared verdict with NO machine counterpart -> logged, exit 0 (NOT a
+# violation — PASS-only checks legitimately never emit a structured raw
+# verdict this cycle).
+reset_log
+RVF21=$(json_file <<'EOF'
+{"check":"A-30","verdict":"FOLD"}
+EOF
+)
+OUT21=$(run_audit_output_contract --markers-file "$EMPTY_MF" --raw-verdicts-file "$RVF21" --declared-verdicts "A-30=FOLD,C-08=PASS")
+RC21=$?
+check "T21 declared-no-machine exit=0" "$([ "$RC21" -eq 0 ] && echo true || echo false)"
+check "T21 declared-no-machine logged, not a VIOLATION" "$(printf '%s' "$OUT21" | grep -q 'INFO declared-no-machine-counterpart check=C-08' && echo true || echo false)"
+check "T21 declared-no-machine no C-08 VIOLATION line" "$(! printf '%s' "$OUT21" | grep -q 'VIOLATION.*C-08' && echo true || echo false)"
+
+# ── T22-T25: ARM B (V7) — cross-plane pre-gate-trigger vs declared-verdict
+# divergence. OCC-2 (2026-08-08T12:37Z, rag-service-1 98.53%, BELOW-FLOOR
+# ack-disqualified) + PO corroboration 2026-08-08T14:47Z (c53, the sharper
+# same-shape case: agent wrote everything correctly and the divergence still
+# existed because the faulty plane was upstream). ───────────────────────────
+
+# T22: trigger verdict=FAILURE/mem_creep + returned declared verdict
+# ALL_GREEN for A-30 -> non-zero exit naming mem_creep, verdict=DIVERGENCE
+# (never ESCALATE — this is a cross-plane review flag, not an automatic
+# agent-blame verdict, per po_corroboration_20260808T1447Z).
+reset_log
+TVF22=$(json_file <<'EOF'
+{"written_at":"2026-08-08T12:37:04Z","fire_tick":"2026-08-08T12:30Z","verdict":"FAILURE","detail":"mem_creep: mem >= 85% threshold (A-30 WARN boundary, mem-creep gate): vn-market-intelligence-mcp-rag-service-1(98.53%, 15.1MiB-free, BELOW-FLOOR(floor=40MiB)) ; ","checks":{"docker_ps":"PASS","health_3000":"PASS","health_3001":"PASS","disk":"PASS","mem_creep":"FAIL","launchd_agents":"PASS"}}
+EOF
+)
+OUT22=$(run_audit_output_contract --markers-file "$EMPTY_MF" --trigger-verdict-file "$TVF22" --declared-verdicts "A-30=ALL_GREEN")
+RC22=$?
+check "T22 OCC-2 replay (declared ALL_GREEN) exit!=0" "$([ "$RC22" -ne 0 ] && echo true || echo false)"
+check "T22 OCC-2 replay names mem_creep" "$(printf '%s' "$OUT22" | grep -q 'trigger_check=mem_creep' && echo true || echo false)"
+check "T22 OCC-2 replay names dimension=A-30" "$(printf '%s' "$OUT22" | grep -q 'dimension=A-30' && echo true || echo false)"
+check "T22 OCC-2 replay never forces ESCALATE (DIVERGENCE, not agent-blame)" "$(printf '%s' "$OUT22" | grep -q 'verdict=DIVERGENCE$' && echo true || echo false)"
+
+# T23: SAME trigger fixture, declared "A-30=WARN:dedup-SKIP vs c48" (the
+# correct return per this row's own root_cause — peer cycle c48 already
+# signalled the identical condition 1.5h earlier) -> exit 0, no violation.
+reset_log
+OUT23=$(run_audit_output_contract --markers-file "$EMPTY_MF" --trigger-verdict-file "$TVF22" --declared-verdicts "A-30=WARN:dedup-SKIP vs c48")
+RC23=$?
+check "T23 OCC-2 replay legitimate dedup-SKIP exit=0" "$([ "$RC23" -eq 0 ] && echo true || echo false)"
+check "T23 OCC-2 replay legitimate dedup-SKIP no VIOLATION" "$(! printf '%s' "$OUT23" | grep -q 'VIOLATION' && echo true || echo false)"
+
+# T24: SAME trigger fixture, declared token IS in the bad list (FOLD) but
+# carries an honestly-surfaced acknowledged-degraded qualifier -> exit 0
+# (reconciled against the ack ledger's own semantics, not re-parsed here —
+# see script header comment for why this is sound with zero new ledger code).
+reset_log
+OUT24=$(run_audit_output_contract --markers-file "$EMPTY_MF" --trigger-verdict-file "$TVF22" --declared-verdicts "A-30=FOLD:acknowledged-degraded, tracked FU-RAG-DEPLOY-MEMORY")
+RC24=$?
+check "T24 OCC-2 replay legitimate acked-degraded exit=0" "$([ "$RC24" -eq 0 ] && echo true || echo false)"
+check "T24 OCC-2 replay legitimate acked-degraded no VIOLATION" "$(! printf '%s' "$OUT24" | grep -q 'VIOLATION' && echo true || echo false)"
+
+# T25: pre-gate trigger itself was ALL_GREEN this tick (no FAILURE anywhere)
+# -> Arm B is a structural no-op regardless of what gets declared.
+reset_log
+TVF25=$(json_file <<'EOF'
+{"written_at":"2026-08-08T13:00:00Z","fire_tick":"2026-08-08T13:00Z","verdict":"ALL_GREEN","detail":"all 6 checks passed","checks":{"docker_ps":"PASS","health_3000":"PASS","health_3001":"PASS","disk":"PASS","mem_creep":"PASS","launchd_agents":"PASS"}}
+EOF
+)
+OUT25=$(run_audit_output_contract --markers-file "$EMPTY_MF" --trigger-verdict-file "$TVF25" --declared-verdicts "A-30=ALL_GREEN")
+RC25=$?
+check "T25 trigger-all-green no-op exit=0" "$([ "$RC25" -eq 0 ] && echo true || echo false)"
+check "T25 trigger-all-green no-op no VIOLATION" "$(! printf '%s' "$OUT25" | grep -q 'VIOLATION' && echo true || echo false)"
+
+# T26: BOTH arms engaged in the SAME call, everything matching/legitimate —
+# exit 0, verdict=CLEAN, and V1-V5's own counters are completely unaffected
+# by V6/V7 being engaged (no behavioral change to the pre-existing checks).
+reset_log
+MF26=$(markers_file <<'EOF'
+[emit-signal] OK dedup_key=data_stale:x:B-05 id=sys-20260729T100000-aaaa
+[emit-dashboard] OK id=sys-20260729T100000-aaaa check_id=B-05
+EOF
+)
+RVF26=$(json_file <<'EOF'
+{"check":"A-30","verdict":"FOLD"}
+EOF
+)
+TVF26=$(json_file <<'EOF'
+{"written_at":"2026-08-08T13:00:00Z","fire_tick":"2026-08-08T13:00Z","verdict":"ALL_GREEN","detail":"all 6 checks passed","checks":{"docker_ps":"PASS","health_3000":"PASS","health_3001":"PASS","disk":"PASS","mem_creep":"PASS","launchd_agents":"PASS"}}
+EOF
+)
+OUT26=$(run_audit_output_contract --markers-file "$MF26" --raw-verdicts-file "$RVF26" --declared-verdicts "A-30=FOLD" --trigger-verdict-file "$TVF26")
+RC26=$?
+check "T26 both-arms-engaged-clean exit=0" "$([ "$RC26" -eq 0 ] && echo true || echo false)"
+check "T26 both-arms-engaged-clean no VIOLATION" "$(! printf '%s' "$OUT26" | grep -q 'VIOLATION' && echo true || echo false)"
+check "T26 both-arms-engaged-clean V1-V5 counters unaffected (signals_posted=1, dashboard_rows=1)" "$(printf '%s' "$OUT26" | grep -q 'signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1 | dedup_skipped=0 | verdict=CLEAN$' && echo true || echo false)"
+
+# T27: backward compatibility — neither --raw-verdicts-file nor
+# --declared-verdicts nor --trigger-verdict-file supplied -> STDOUT contract
+# line is BYTE-IDENTICAL to before this fix (no ` | verdict=` suffix at all).
+# This is what makes V6/V7 purely additive for every pre-existing caller.
+reset_log
+OUT27=$(run_audit_output_contract --markers-file "$EMPTY_MF")
+check "T27 backward-compat: no verdict= suffix when arms not engaged" "$(printf '%s' "$OUT27" | grep -q '^\[OUTPUT-CONTRACT\] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0$' && echo true || echo false)"
+
 # ── Summary ──────────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"
