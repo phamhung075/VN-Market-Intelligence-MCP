@@ -1,102 +1,71 @@
 # PM — Notebook
 
-## c339 FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR DECOMPOSITION · Component A (Anchor Propagation) · 2026-08-12T11:30Z
+## c340 UC-RDL-P7 STEP2 DECOMPOSITION · Branch Policy Reconciliation (22 files, 2-group split) · 2026-08-13T20:12Z
 
-**MANDATE (from router, session 165f4245-6173-4054-87fd-c55bb626265f, lane=pm):** Decompose FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR into atomic tasks per architecture brief Component A (window-anchor propagation).
+**MANDATE (from router, session 632721c2-41e4-4aff-8d06-a47cf80dc0d7, dev-team dispatcher, UC-RDL-P7 IN_PROGRESS):** Decompose architect design (branch policy reconciliation, 22 files) into atomic tasks per two-group zone split + dependency tier. Carry sibling-hook sequencing constraint (FIX-SUBAGENT-BRANCH-CHECKOUT-HIJACKS-SHARED-WORKING-DIR coordination).
 
-**CONTEXT:**
-- **Row Status:** IN_PROGRESS → decomposed (child tasks spawned)
-- **Design Source:** FIX-CHEF-PUBLISHED-MARKER-RELEASE's shared brief (docs/architecture-briefs/2026-08-06-cowork-marker-lifecycle-anchor-and-release.md § 2, Component A)
-- **Root Cause:** Two peers spawned for same scheduled window derive different published:*:<key> mutex keys due to independent wall-clock date reads. Affects chef-evening, chef-intraday, and any slot firing across VN midnight (UTC+7). 8+ recurrences, 3 distinct root mechanisms since 2026-07-22.
+**DESIGN CONTEXT:**
+- **Sprint:** UC-RDL-P7 (P1/SPRINT-M, zone multi, supervised:false, po-gated 2026-07-17)
+- **Architect Brief:** docs/architecture-briefs/2026-08-13-uc-rdl-p7-branch-policy-reconciliation.md (complete, 2026-08-13)
+- **BA Spec:** docs/handoffs/UC-RDL-P7-BA-spec.md (complete, 2026-08-12; 21-file inventory + §4 mandatory coordination)
+- **Architect Brownfield Finding:** 22nd file (docs/agents/po/flow/main.md, FR-14) discovered by architect (BA's grep missed); hard sequencing partner of CLEAN retirement
+
+**ZONE SPLIT (architect §1, PM decomposition guidance):**
+Two real commit-zone owners (per CLAUDE.md dispatch + agent-father init.md):
+1. **Group B (developer-generic, tier1):** FR-1, FR-12, FR-13 → 9 files (canonical SSOT creation)
+2. **Group A (agent-father, tier2, depends_on B):** FR-2..FR-11 + FR-14 → 20 files (SSOT pointers + prose reconciliation)
+
+**CRITICAL ATOMICITY REQUIREMENT (NFR-2):**
+Group A MUST land as one atomic wave (creation-half FR-2/3/4/6/14 + merge-half FR-7/8/10 span Developer→QA handoff; partial land reproduces the exact "commit to main, QA tries checkout task/NNN" wedge the PO ruling warned against). Group B lands first (creates § Branch Policy section), then Group A lands (all 20 files point to it).
 
 **DECOMPOSITION COMPLETED:**
-Four atomic tasks created in ready[] lane with dependency chain:
 
-1. **FIX-CHEF-MARKER-KEY-ANCHOR-1** (S, cross-service/, no deps)
-   - Expose `scheduled_utc_time` in cowork-match-slots.js for live MATCHES
-   - Reuses existing `snapToCronBoundary()` function; mirrors cowork-catchup-predicate.js field
-   - Enables symmetric field across live and catch-up dispatch paths
+### UC-RDL-P7-B (Tier1: Policy SSOT)
+- **Zone:** developer/
+- **Size:** M
+- **Dependencies:** none
+- **Blocks:** UC-RDL-P7-A
+- **Files:** docs/policies/commit-convention.md (FR-1 new section), dev-standards.md (FR-12 rewrites), .claude/WORKFLOW.md (FR-13 collapse), bundle-developer.md (FR-13 collapse), bundle-qa.md (FR-13 collapse)
+- **AC (10 bullets):** New § Branch Policy section (main-only, worktree carve-out, post-commit 4-step), all pointers consistent, decision journal, no intruders
+- **Handoff:** docs/handoffs/UC-RDL-P7-B.md
 
-2. **FIX-CHEF-MARKER-KEY-ANCHOR-2** (S, docs/agents/cowork-team/, depends ANCHOR-1)
-   - Document `scheduled_utc_time` in match-slots.md MATCHES schema
-   - Cross-reference catchup_raw field (already present from TASK-COWORK-CATCHUP-1/-2)
-   - Pure documentation; establishes consistent contract
+### UC-RDL-P7-A (Tier2: Flow Doc Reconciliation)
+- **Zone:** agent-father/
+- **Size:** L
+- **Dependencies:** UC-RDL-P7-B
+- **Blocks:** none
+- **Files:** 20 agent-father files: developer/microservice/dev-frontend/doc-review flow docs (4), 10× init.md catalogs, qa/fixer/pm/dev-team flow main.md (4), po/flow/main.md (1), dispatch/SKILL.md (1)
+- **Scope:** Repoint all flows to § Branch Policy SSOT, strip branch checkout/merge/delete mechanics (creation-half: "verify on main, clean tree" no-op), retire CLEAN workflow (FR-7(c)/FR-10/FR-14), maintain distinct pipeline/verify-committed check depths (FR-7(b) architect ratified)
+- **AC (38 bullets):** Line-by-line edits FR-2 through FR-14, all prose repointed or rewritten, CLEAN retirement (CLEAN row deleted from dev-team planning, CLEAN triage dropped from PO) zero stale task/NNN references, decision journal, no intruders
+- **Handoff:** docs/handoffs/UC-RDL-P7-A.md
 
-3. **FIX-CHEF-MARKER-KEY-ANCHOR-3** (S, docs/agents/cowork-team/, depends ANCHOR-1)
-   - Append `scheduled_utc=<ISO8601>` to spawn-fanout.md Step 5.2 ENTRY_PROMPT
-   - Single injection point; benefits all guaranteed slots (chef-*, digest-*, fb-*, tnb-audit)
-   - No branching on is_catchup or due_reason — uniform parameter for both paths
+**SIBLING-HOOK SEQUENCING CONSTRAINT (architect brief §18, mandatory coordination):**
+FIX-SUBAGENT-BRANCH-CHECKOUT-HIJACKS-SHARED-WORKING-DIR hook (READY, next_agent:pm, brief docs/architecture-briefs/2026-07-31-fix-subagent-branch-checkout-hijacks-shared-working-dir.md) defaults to MODE=enforce (hard revert to main on any non-main checkout). That brief explicitly asks PM to coordinate: land Group A's VERIFY-line edits (FR-2/3/4) before or in same wave as the hook, OR sequence hook to start MODE=warn until Group A lands. Once both land, hook + flow docs agree by construction (both expect main). Do NOT let both land uncoordinated.
 
-4. **FIX-CHEF-MARKER-KEY-ANCHOR-4** (M, docs/agents/unified-agent/, depends ANCHOR-1 + ANCHOR-3)
-   - Parse `scheduled_utc=` parameter in chef.md Step 0.5
-   - Derive CYCLE_DATE_UTC from scheduled_utc date portion (fallback: date -u if absent)
-   - Generalize to all guaranteed slots (chef, digest, fb, tnb) per AC5
-   - CRITICAL: CYCLE_DATE_UTC is already the canonical date derivation point, pinned once and reused at Step 7.6 (filename) and Step 8b (notebook header)
-
-**SEQUENCING & DEPENDENCIES:**
-- ANCHOR-1 is independent; can start immediately
-- ANCHOR-2 and ANCHOR-3 can start after ANCHOR-1 (same codebase dependency graph)
-- ANCHOR-4 requires both ANCHOR-1 (field must exist) and ANCHOR-3 (parameter must be sent)
-- Minimum critical path: ANCHOR-1 → ANCHOR-{2,3} || → ANCHOR-4 (~4-6h total, assuming parallel work)
-
-**VERIFICATION GATES (from parent row FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR AC):**
-RAW, not prose: execute two chef-evening peers against SAME scheduled window → exactly ONE published:chef-evening:<window> marker, ONE synthesis artifact, ONE MARKET post. No false-suppression of next day's window by expired marker TTL.
-
-**DECISION & RATIONALE:**
-- Each task is atomic: single file/function group, clear AC, ~1.5-2.5h work
-- Handoff files created (docs/handoffs/FIX-CHEF-MARKER-KEY-ANCHOR-{1..4}-*.md) with all AC and dependency info
-- Component A focused scope (release-gating = Component B, separate row FIX-CHEF-PUBLISHED-MARKER-RELEASE, not decomposed here)
-- UC-CCA-P3 umbrella (lifecycle/claim-timing) is orthogonal; all three rows ship together per PO ruling
-- Board .head reset to idle (mid-sprint decomposition, not sprint closeout)
+**VERIFICATION STRATEGY (from architect brief §19):**
+Pure documentation change (no runtime behavior, no bun test/tsc). Grep-based regression:
+- `grep -rn "task/NNN" docs/agents/ .claude/skills/dispatch/SKILL.md docs/policies/commit-convention.md docs/policies/dev-standards.md .claude/WORKFLOW.md docs/references/bundles/` → zero hits post-landing (old SUPERSEDED marker cleaned by FR-2)
+- `grep -n "CLEAN" docs/agents/qa/flow/main.md docs/agents/dev-team/flow/main.md docs/agents/po/flow/main.md` → zero hits post-FR-7(c)/FR-10/FR-14
+- Spot-check full read of edited qa/flow/main.md pipeline/approved sections (FR-7(b) highest-complexity change)
 
 **BOARD STATE POST-DECOMPOSITION:**
-- in_progress[]: FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR marked with children + status_note
-- ready[]+4: ANCHOR-1 through ANCHOR-4 added with correct depends_on chain
-- Validator: PASS (Stage 1g flagged 16 pre-existing MISSING deps, non-fatal)
-- Head: idle (next dispatch will pick up sibling FIX-CHEF-PUBLISHED-MARKER-RELEASE or rotate to next-lane work)
-
----
-
-## c338 PO-BATCH TIER CLOSEOUT · Two P0/HIGH FIX Tasks Promoted to QA Review · 2026-08-11T17:52Z
-
-**MANDATE (from router, session 165f4245-6173-4054-87fd-c55bb626265f, tier-closeout):** Confirm both merged tasks' board state is coherent; unblock/promote next-tier work per BOUNDED-1/backlog-promotion logic; surface residual out-of-zone defect for PO decision.
-
-**COMPLETED TASKS REVIEWED:**
-1. **FIX-SWEEPGUARD-ESCALATION-HAS-NO-ACTUATOR-REPEAT-OFFENDER-13-STRIKES** (zone: cross-service/, owner: developer)
-   - Status: REVIEW (in lane correctly)
-   - Next agent: qa (correct)
-   - Commits: 2726e708e, 7746683cc, 1704f52e3, 16d31d4aa (replayed onto main post-merge-gate)
-   - Fix delivered: pre-commit hook now emits outcome=blocked|proceeded on sweep-guard escalation signal to de-noise repeat-offender-after-block false-alarm class
-   - Board coherence: ✓ Single lane membership, no dangling refs, next_agent set correctly
-
-2. **FIX-MACRO-LIQUIDITY-STATE-HANDLER-EXCEEDS-CRON-15S-DEADLINE** (zone: apps/macro-indicators/, owner: dev-macro-indicators)
-   - Status: REVIEW (in lane correctly)
-   - Next agent: qa (correct)
-   - Commit: eb6524da9 (direct to main) + 8c158cd9c, 164025ca7 (replayed)
-   - Fix delivered: bounded both liquidity-state upstream SBV HTML fetches (policy_rates + omo) to ONE shared domain.FetchBudgetSec (8s) window, ensuring compliance with 15s cron deadline
-   - Board coherence: ✓ Single lane membership, no dangling refs, next_agent set correctly
-   - Verification gate: sbv_omo_daily accrues on two consecutive daily cron fires with zero BUG-channel unreachable report
-
-**BOARD STATE VALIDATION:**
-- WIP counts: in_progress=2 (at limit), review=167 (both completed tasks in correct lane), ready=77, todo=0
-- Head state: idle (correct, no active sprint/task)
-- Signal queue: clean (no stale references to reviewed tasks)
-- Done_verified overflow: ran cold eviction; reduced from 24→22 items (still above 5-item limit, will continue on future cadence)
-
-**OUT-OF-ZONE RESIDUAL DEFECT (dev-macro-indicators flagged):**
-The dev-macro-indicators agent identified a second defect in apps/mcp-server/ zone (outside their zone scope):
-- **File:** apps/mcp-server/src/scheduler/macro/sbvOmoLiquidityCronJob.ts:70
-- **Issue:** Error string conflates "deadline exceeded" with "unreachable"
-- **Context:** macroFetch already discriminates degrade.reason as deadline|http-error|network (apps/mcp-server/src/infrastructure/fetchers/fetchDeadline.ts:29-33), but the cron job doesn't use it
-- **Impact:** Misdirects triage to service/VPS when actual issue is caller deadline timeout
-- **Recommendation:** Mint a follow-up FIX row zoned apps/mcp-server/ → dev-mcp-server for wording fix
-- **Status:** PO decision item (minting a new row), not actionable by PM directly; noted here to preserve signal
+- in_progress[]: UC-RDL-P7 removed (decomposed into subtasks)
+- ready[]+2: UC-RDL-P7-B (tier1, no deps, blocks A) + UC-RDL-P7-A (tier2, depends_on B, blocks none)
+- WIP: 2→2 (FIX-COVERAGE-STAMP-TTL-30 + UC-RDL-P7 was at limit; now UC-RDL-P7-B in ready waiting developer pickup)
+- Validator: PASS (Stage 1g reports 16 pre-existing MISSING deps in backlog/ready/closed_sprints, non-fatal; no new blockers introduced)
+- Head: idle (mid-sprint decomposition, not sprint closeout; next dispatch picks next-lane work or spins on ready[] work)
 
 **DECISION RATIONALE:**
-- Both completed tasks passed merge gate with correct chirped commits to main; board state is coherent with no orphaned references
-- Cold eviction script ran successfully; done_verified overflow is trending down (will continue cadence)
-- WIP limit remains tight (2 in_progress, both occupied); next promotions conditional on In Progress→Done transitions
-- Out-of-zone defect surfaced separately for PO triage (not a blocker on this tier closeout, but high-value for signal preservation)
+- Both groups' atomicity preserved: Group B creates SSOT (must land first), Group A lands as one atomic wave (NFR-2 straddle risk confined internally)
+- Handoff files complete with full AC + dependency notes + sibling-hook coordination warning (not PM's job to enforce sequencing, but routing note prevents surprises)
+- Zone routing correct per CLAUDE.md dispatch table: developer/generic → developer agent, agent-father files → agent-father agent
+- Sequencing clear: UC-RDL-P7-B ready (tier1) → UC-RDL-P7-A backlog (tier2, gated on B) or both in ready (developer picks B first, then A when B lands)
+- WIP limit respected (decomposition did not increase in_progress, only swapped UC-RDL-P7 for UC-RDL-P7-B in ready)
+
+**NEXT:**
+Router to route UC-RDL-P7-B to developer agent (docpolicy, tier1), then UC-RDL-P7-A to agent-father agent (flow prose, tier2, depends B). Both handoffs include sibling-hook coordination note (brief §18) for PM awareness of sequencing risk with FIX-SUBAGENT-BRANCH-CHECKOUT-HIJACKS-SHARED-WORKING-DIR.
+
+---
 
 ## Archive
 

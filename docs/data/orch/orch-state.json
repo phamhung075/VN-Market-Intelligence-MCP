@@ -92,12 +92,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "UC-RDL-P7",
-    "next_agent": "architect",
-    "next_action": "BA spec already complete (2026-08-12, docs/handoffs/UC-RDL-P7-BA-spec.md, explicit NEXT: architect) — DRS resolved dispatch_lane from a stale board next_agent=\"ba\"; router-corrected to architect before dispatch. Resolve FR-7(b)/(c)/FR-10/FR-13 open calls, produce brownfield design across the 21-file inventory.",
-    "updated_at": "2026-08-13T19:56:03Z",
-    "updated_by": "dev-team (design-router sweep, next_agent corrected: ba already complete)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-08-13T20:12:13Z",
+    "updated_by": "pm"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -15365,6 +15364,67 @@
         "promoted_by": "dev-team (design-router sweep)",
         "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
         "dispatch_lane": "ba"
+      },
+      {
+        "id": "UC-RDL-P7-B",
+        "title": "UC-RDL-P7 Group B: Create canonical branch policy SSOT (docs/policies/commit-convention.md § Branch Policy + pointers)",
+        "owner": "developer",
+        "status": "TODO",
+        "zone": "developer/",
+        "created_at": "2026-08-13T20:12:12Z",
+        "size": "M",
+        "type": "SPRINT-M",
+        "depends": [],
+        "blocks": [
+          "UC-RDL-P7-A"
+        ],
+        "note": "Tier1: creates § Branch Policy SSOT that Group A will reference. Must land before UC-RDL-P7-A. FR-1/FR-12/FR-13.",
+        "files": [
+          "docs/policies/commit-convention.md",
+          "docs/policies/dev-standards.md",
+          ".claude/WORKFLOW.md",
+          "docs/references/bundles/bundle-developer.md",
+          "docs/references/bundles/bundle-qa.md"
+        ],
+        "updated_at": "2026-08-13T20:12:13Z"
+      },
+      {
+        "id": "UC-RDL-P7-A",
+        "title": "UC-RDL-P7 Group A: Repoint all agent-flow prose to canonical branch policy, retire CLEAN workflow",
+        "owner": "agent-father",
+        "status": "TODO",
+        "zone": "agent-father/",
+        "created_at": "2026-08-13T20:12:12Z",
+        "size": "L",
+        "type": "SPRINT-M",
+        "depends": [
+          "UC-RDL-P7-B"
+        ],
+        "blocks": [],
+        "note": "Tier2: depends_on UC-RDL-P7-B. MUST land as ONE atomic wave (NFR-2 atomicity: creation-half + merge-half). Repoints 20 agent files to § Branch Policy, strips branch checkout/merge mechanics, retires CLEAN workflow. FR-2..FR-11 + FR-14. Sibling hook sequencing note: FIX-SUBAGENT-BRANCH-CHECKOUT-HIJACKS-SHARED-WORKING-DIR must land before/with this task or start MODE=warn (see architect brief §18).",
+        "files": [
+          "docs/agents/developer/flow/main.md",
+          "docs/agents/developer/flow/microservice-main.md",
+          "docs/agents/dev-frontend/flow/main.md",
+          "docs/agents/developer/flow/doc-review.md",
+          "docs/agents/developer/init.md",
+          "docs/agents/fixer/init.md",
+          "docs/agents/qa/init.md",
+          "docs/agents/dev-mcp-server/init.md",
+          "docs/agents/dev-stock-price/init.md",
+          "docs/agents/dev-technical-analysis/init.md",
+          "docs/agents/dev-api-gateway/init.md",
+          "docs/agents/dev-rag-service/init.md",
+          "docs/agents/dev-pdf-extractor/init.md",
+          "docs/agents/dev-alert-engine/init.md",
+          "docs/agents/qa/flow/main.md",
+          "docs/agents/fixer/flow/main.md",
+          "docs/agents/pm/flow/main.md",
+          "docs/agents/dev-team/flow/main.md",
+          ".claude/skills/dispatch/SKILL.md",
+          "docs/agents/po/flow/main.md"
+        ],
+        "updated_at": "2026-08-13T20:12:13Z"
       }
     ],
     "review": [
@@ -18955,44 +19015,6 @@
         "claimed_at": "2026-08-13T19:24:22Z",
         "claimed_by": "dev-team (ready-lane consumer)",
         "dispatch_lane": "dev-mcp-server"
-      },
-      {
-        "id": "UC-RDL-P7",
-        "type": "SPRINT-M",
-        "title": "Reconcile branch policy across the FULL branch lifecycle with the main-only invariant (po-gated)",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "M",
-        "zone": "multi",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#router-dispatch-locking-P7",
-        "note": "STEP1 po ruling RECORDED 2026-07-17 (po_decision_ref): DROP the worktree/task-branch exception — the main-only invariant wins (repo verified 100% main-only live; the task/NNN-* + .claude/worktrees/ lifecycle in dev-standards.md is dead doc contradicting the standing user 'NO branches' rule). STEP2 (now unblocked, na=ba): ONE sprint reconciles developer+qa+microservice+fixer+pm+dev-team flows to main-only, puts the canonical commit/branch policy text in ONE place (commit-convention.md), and edits BOTH the branch-creation half AND the QA-merge half together (branch-creation-only edit wedges QA merge).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "pm",
-        "supervised": false,
-        "supervised_note": "STEP1 po-gate RESOLVED 2026-07-17 (see po_decision_ref) — no longer supervised; STEP2 flow-edits route via ba->architect->pm",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "po_gate_resolved": "2026-07-17",
-        "po_decision_ref": "docs/agent-memory/decisions/2026-07-17-UC-RDL-P7-branch-policy-main-only.md",
-        "promoted_at": "2026-08-11T12:26:29Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "architect",
-        "updated_at": "2026-08-13T20:07:12Z",
-        "claimed_at": "2026-08-13T19:55:25Z",
-        "claimed_by": "dev-team (design-router sweep)",
-        "ba_spec_complete": true,
-        "ba_handoff": "docs/handoffs/UC-RDL-P7-BA-spec.md",
-        "ba_completed_at": "2026-08-12T09:06:49Z",
-        "updated_by": "architect",
-        "dispatch_lane_corrected_note": "DRS promote resolved stale board next_agent=\"ba\" (BA completed 2026-08-12); router corrected to architect at S2 dispatch time, ba_spec_complete=true preserved",
-        "architect_complete": true,
-        "architect_review_note": "docs/architecture-briefs/2026-08-13-uc-rdl-p7-branch-policy-reconciliation.md — 22-file design (21 BA-inventoried + FR-14 new: docs/agents/po/flow/main.md), 3 open calls resolved (FR-7(b) keep both entry points strip pipeline mechanics; FR-7(c)/FR-10 retire CLEAN; FR-13 repoint not delete). Zone split: Group A agent-father 20 files (must land atomic wave), Group B developer-generic 9 files (tier1, Group A depends_on it). Sibling-hook sequencing note carried to pm."
       }
     ]
   },
