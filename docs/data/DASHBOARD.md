@@ -1834,3 +1834,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · rag-service memory crash cliff 88.66→47.88%
+**Severity:** CRITICAL | **Date:** 2026-08-13 | **Status:** OPEN
+**Location:** vn-market-intelligence-mcp-rag-service-1 container
+**Details:** Single-step memory discontinuity >40pp detected during probe window; VmHWM pinned at memory limit
+**Impact:** Potential memory management anomaly; service recovered from critical memory state without OOMKill
+**Root cause:** Unknown — memory cliff recovery requires investigation; correlate with container restart/state changes
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-13T19:47:55Z (signal sys-20260813T194747-0481, system-auditor -> po, dedup_key=microservice_degraded:rag-service-1:A-30:crash-cliff, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
