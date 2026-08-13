@@ -608,6 +608,17 @@
         "audit_cycle_tag": "dev-team:2026-08-13T11:07Z",
         "dedup_key": "orchstate-conservation-guard-blocks-durable-inbox-clear-20260813",
         "disposition_needed": "Decide: (a) widen ORCH_APPLY_ALLOW_SHRINK/ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS-style whitelist to cover dev-team Step-1 consumed-envelope clears under some caller-scoped guard, or (b) design an incremental multi-tick partial-clear that stays within FLOOR_RATIO=0.5 each write, or (c) exempt pending_triage_inbox from signal_total once every entry is independently confirmed dispositioned (e.g. cross-check against decision_journal). pending_triage_inbox is UNMODIFIED (still 147, no data loss) pending this decision. A near-term side effect: next dev-team tick will likely re-spawn Step-1 PO triage since the inbox is non-empty — expected to fold quickly since all 147 are already reflected on the board."
+      },
+      {
+        "id": "new-20260813T121100Z",
+        "ts": "2026-08-13T12:11:00Z",
+        "from": "news-scout",
+        "to": "po",
+        "type": "improvement_proposal",
+        "summary": "coverage-stamp.sh:158 ttl_seconds=30 < task_claim schema min=60 — mutex fails 5/5 every cycle, fail-CLOSED, fleet-wide.",
+        "severity": "INFO",
+        "status": "NEW",
+        "payload_ref": "docs/improvement-proposals/IMP-20260813-news-scout-T1-covstamp-ttl.md"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
