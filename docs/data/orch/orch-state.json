@@ -93,10 +93,10 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "FACTORY-GUARD-CI-SIZELINT-IMPL",
+    "active_task_id": "FE-PG-BCTC-FRESH-FIX",
     "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 2 row(s), highest-ranked FACTORY-GUARD-CI-SIZELINT-IMPL — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 2 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-13T12:00:07Z",
+    "next_action": "Review-Lane QA-Drain claim of 1 row(s), highest-ranked FE-PG-BCTC-FRESH-FIX — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-13T12:22:07Z",
     "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
@@ -13331,6 +13331,37 @@
             "observed_at": "2026-08-13T12:12:25Z"
           }
         }
+      },
+      {
+        "id": "FE-PG-BCTC-FRESH-FIX",
+        "type": "FIX",
+        "title": "Flag stale reports on /dashboard/bctc (Financial Reports hub) — per-item updated_at shown but old reports not visually flagged as stale",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/frontend/",
+        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
+        "source": "quality-audit-frontend-page-coverage-20260724",
+        "owner": "dev-frontend",
+        "next_agent": "pm",
+        "check_id": "FE-PG-BCTC-FRESH",
+        "status_note": "FE-PG-BCTC-FRESH re-check returns PASS || [QA] Review Record (direct-commit verify): Re-verified independently, not from prose. Commit 545f2abf3 confirmed real, on main ancestry; git show --stat matches claimed file set exactly (dashboard.bctc.tsx FreshnessBadge/useFreshnessRevalidator wiring + new FE-PG-BCTC-FRESH-FIX-dashboard-bctc-loader.test.ts, 5 cases). Backend generated_at field confirmed live in source (analysisBriefReader.ts:388, new Date().toISOString()). Targeted 5/5 new unit tests GREEN; full suite 2183 pass/2 fail/2185 total (exact same pre-existing QUE-TOOLTIP/QUE-REFERENCE-PAGE failures already confirmed unrelated in sibling verify, zero overlap with dashboard.bctc/fetchAnalysisBriefs); tsc --noEmit clean; mock-guard.sh PASS. DEPLOY-GAP RE-CHECKED PER TASK INSTRUCTIONS: live :3001 container docker-inspect Created=2026-07-24T18:02:36Z (predates this 2026-07-29 fix commit); curl localhost:3001/dashboard/bctc shows no FreshnessBadge/\"Cap nhat luc\" markup in served HTML (stale asset dashboard.bctc-DGvnLd1y.js) -- PENDING-REBUILD unresolved, same class as sibling FE-PG-_INDEX-FRESH-FIX row, ops-owned deploy gap not a code defect. VERDICT: APPROVED, DONE_VERIFIED.",
+        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-BCTC-FRESH, WARN). GAP: dashboard.bctc renders generated_at + per-item updated_at (recency visible) but no <FreshnessBadge> / stale flag on the report list, so an old brief is not visually flagged. Ref: project_frontend_freshness_transparency. AC: FE-PG-BCTC-FRESH re-check returns PASS (stale reports visually flagged on the hub).",
+        "created_at": "2026-07-24T17:22:24Z",
+        "created_by": "po",
+        "updated_at": "2026-08-13T12:26:52Z",
+        "review_note": "dev-frontend: FreshnessBadge + useFreshnessRevalidator(\"event\") wired onto dashboard.bctc.tsx, sourced from GET /api/analysis-briefs generated_at (already real ISO8601 UTC server-side — analysisBriefIndexHandler emits new Date().toISOString(), confirmed live against the running mcp-server, no parseDate normalization needed, unlike sibling FE-PG-_INDEX-FRESH-FIX's data_asof). Also fixed a related provenance bug: fetchAnalysisBriefs previously parsed the DTO's real generated_at then discarded it, substituting a second independently-computed frontend-local timestamp in the loader — now threads the real DTO value through (the same field now also drives the badge). Per-item updated_at unchanged. 5 new unit tests GREEN; full vitest 2177/2179 pass (2 pre-existing QUE-TOOLTIP fails, confirmed identical via git-stash A/B with this diff fully removed); tsc clean; full Playwright suite (not just render-check) 7/7 pass across all 3 spec files (smoke 1/1, render-check 3/3, quality-audit-lastverified 3/3) via PLAYWRIGHT_PORT=3021 throwaway dev server — none related to this change. Manually confirmed live SSR HTML on a second throwaway server (PORT=3022) against the real, unmodified mcp-server: green bg-green-100/bg-green-500 FreshnessBadge + \"Cập nhật lúc\" renders next to ClientTimestamp. PENDING-REBUILD: live :3001 container needs ops rebuild to serve this fix — code+behavior proven via throwaway dev server, container deploy is ops-gated, out of dev-frontend zone.",
+        "claimed_at": "2026-08-13T12:22:06Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "updated_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + vitest run (targeted+full) + tsc --noEmit + mock-guard.sh + docker inspect + curl",
+            "args": "commit 545f2abf3; apps/frontend/app/routes/dashboard.bctc.tsx + app/__tests__/FE-PG-BCTC-FRESH-FIX-dashboard-bctc-loader.test.ts; apps/mcp-server/src/infrastructure/fileStore/analysisBriefReader.ts:388; docker inspect vn-market-intelligence-mcp-frontend-1; curl localhost:3001/dashboard/bctc",
+            "live_value_observed": "commit on main ancestry, diff matches claim exactly; backend generated_at field live (new Date().toISOString()); targeted 5/5 unit tests GREEN; full suite 2183 pass/2 fail (same pre-existing QUE-TOOLTIP/QUE-REFERENCE, unrelated); tsc 0 errors; mock-guard PASS; frontend container Created=2026-07-24T18:02:36Z (predates fix commit), curl /dashboard/bctc shows no freshness markup -- PENDING-REBUILD still open",
+            "observed_at": "2026-08-13T12:25:49Z"
+          }
+        }
       }
     ],
     "head": {
@@ -15685,26 +15716,6 @@
         "po_live_recurrence_20260808T1248Z": "LIVE RECURRENCE, AND THIS TIME IT REACHED GIT. docs/data/auditor-tier1-last-healthy.json currently reads {last_healthy_at: '2026-08-08T12:05:10Z', checks: {... mem_creep: 'PASS' ...}} and was committed at 34521315f by router session 165f4245 on the good-faith premise (quoted from that commit message) that the value is 'a genuine last-all-6-checks-passed timestamp before the mem_creep FAILURE window began'. PO REFUTES THAT PREMISE ON RAW EVIDENCE, three independent ways: (1) the FAILURE window began no later than 2026-08-08T11:04Z — peer auditor cycle c48 (commit 76466302a) records rag-service-1 at 98.53% / 15MiB free / BELOW-FLOOR at that time — so 12:05:10Z is INSIDE the failure window, not before it; (2) PO re-ran the pre-gate read-only at 12:47Z via the documented HEARTBEAT_FILE_PATH=<scratch> seam and got verdict=FAILURE, detail 'mem_creep: ... vn-market-intelligence-mcp-rag-service-1(98.56%, 14.7MiB-free, BELOW-FLOOR(floor=40MiB))', with the container at RestartCount=0 / OOMKilled=false / healthy / StartedAt 2026-08-08T08:11:45Z — i.e. no restart between 11:04Z and now that could have produced a transient green at 12:05Z; (3) the shell pre-gate STRUCTURALLY CANNOT have written it: run_probe() gates _write_heartbeat on an EMPTY failures list, and _mem_container_acked() disqualifies the rag-service acked_memory entry twice over — headroom 15MiB < MEM_FLOOR_MIB=40 -> BELOW-FLOOR, and tracked_by=FU-RAG-DEPLOY-MEMORY reached DONE_VERIFIED at 10:59:52Z -> STALE-ACK. Therefore the 12:05:10Z stamp is an out-of-contract agent write on a DEGRADED cycle — exactly this row's defect — and it is now the committed record. IMPACT beyond this row's existing scope: the tier-1 cron freshness arm reads .last_healthy_at and spawns on age>60min, so a false stamp suppresses that arm for an hour (the verdict=FAILURE arm still fires, so this is degradation, not blindness). REMEDIATION IS NOT PO'S TO EXECUTE: hand-writing this file is explicitly forbidden (pre-commit hook scripts/git-hooks/pre-commit:119 names _write_heartbeat as the sole authorized writer, and the 2026-07-29 PO constraint on scripts/po-s151-tier1-probe-plane-divergence-triage.jq:83 says 'Do NOT hand-write docs/data/auditor-tier1-last-healthy.json'). Correct action, for router/ops: revert the file half of 34521315f so the field returns to its last genuinely-green value 2026-08-07T03:35:32Z (written by b30e533ce), which restores the honest >33h-stale reading and lets the freshness arm work. Do NOT re-stamp it forward by hand."
       },
       {
-        "id": "FE-PG-BCTC-FRESH-FIX",
-        "type": "FIX",
-        "title": "Flag stale reports on /dashboard/bctc (Financial Reports hub) — per-item updated_at shown but old reports not visually flagged as stale",
-        "status": "REVIEW",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/frontend/",
-        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
-        "source": "quality-audit-frontend-page-coverage-20260724",
-        "owner": "dev-frontend",
-        "next_agent": "qa",
-        "check_id": "FE-PG-BCTC-FRESH",
-        "status_note": "FE-PG-BCTC-FRESH re-check returns PASS",
-        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-BCTC-FRESH, WARN). GAP: dashboard.bctc renders generated_at + per-item updated_at (recency visible) but no <FreshnessBadge> / stale flag on the report list, so an old brief is not visually flagged. Ref: project_frontend_freshness_transparency. AC: FE-PG-BCTC-FRESH re-check returns PASS (stale reports visually flagged on the hub).",
-        "created_at": "2026-07-24T17:22:24Z",
-        "created_by": "po",
-        "updated_at": "2026-07-29T18:00:33Z",
-        "review_note": "dev-frontend: FreshnessBadge + useFreshnessRevalidator(\"event\") wired onto dashboard.bctc.tsx, sourced from GET /api/analysis-briefs generated_at (already real ISO8601 UTC server-side — analysisBriefIndexHandler emits new Date().toISOString(), confirmed live against the running mcp-server, no parseDate normalization needed, unlike sibling FE-PG-_INDEX-FRESH-FIX's data_asof). Also fixed a related provenance bug: fetchAnalysisBriefs previously parsed the DTO's real generated_at then discarded it, substituting a second independently-computed frontend-local timestamp in the loader — now threads the real DTO value through (the same field now also drives the badge). Per-item updated_at unchanged. 5 new unit tests GREEN; full vitest 2177/2179 pass (2 pre-existing QUE-TOOLTIP fails, confirmed identical via git-stash A/B with this diff fully removed); tsc clean; full Playwright suite (not just render-check) 7/7 pass across all 3 spec files (smoke 1/1, render-check 3/3, quality-audit-lastverified 3/3) via PLAYWRIGHT_PORT=3021 throwaway dev server — none related to this change. Manually confirmed live SSR HTML on a second throwaway server (PORT=3022) against the real, unmodified mcp-server: green bg-green-100/bg-green-500 FreshnessBadge + \"Cập nhật lúc\" renders next to ClientTimestamp. PENDING-REBUILD: live :3001 container needs ops rebuild to serve this fix — code+behavior proven via throwaway dev server, container deploy is ops-gated, out of dev-frontend zone."
-      },
-      {
         "id": "FE-PG-INTEL-FRESH-FIX",
         "type": "FIX",
         "title": "Add page-level freshness/staleness indicator to /dashboard/intel (AI Bulletin Hub) — only per-item timestamps, no page-level stale flag",
@@ -17350,7 +17361,7 @@
         "id": "FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T",
         "title": "15 watchlist tickers have Q1-2026 BCTC PDFs stored on VPS (06-07..06-13) but earnings-calendar shows QUA HAN + get_bctc_full empty — stored-PDF ingest/reconcile never ran (partial stall, distinct from refine-dispatch dormancy)",
         "owner": "ops",
-        "status": "REVIEW",
+        "status": "BLOCKED",
         "zone": "multi",
         "priority": "high",
         "type": "FIX",
@@ -17362,14 +17373,18 @@
         "source": "docs/signals/processed/bctc-analyst-20260715T003000Z.json",
         "po_idle_observation_20260721T16": "6-DAY-IDLE OBSERVATION + SEQUENCING (PO signal-drain 2026-07-21T16:0xZ, from router scope_correction devteam-20260721T154949-bctcscopecorr). This high-priority RAW-verified row (owner=ops) has sat undispatched since 2026-07-15 while the SAME symptom was being re-investigated from scratch via the bctc escalation — a concrete instance of the already-commissioned 4-loop backlog-dispatch-stall (project_orch_4loop_wiring_audit_20260721: loops 2/4->dev stall, ATB dormant on owned backlog rows). It is DISPATCH-READY (clear AC, named owner, no code-design needed — operational recon+reprocess). SEQUENCING CAVEAT: diagnosis/recon may proceed now, but its verification_gate (get_earnings_calendar no-QUA-HAN + get_bctc_full non-empty for MSN/SAB/PLX) CANNOT be met until pdf-extractor is back up (~21h down); do not close it on an unverifiable serving-path check during the outage.",
         "po_ac_contamination_20260721T16": "AC CLAUSE-1 CONTAMINATED — groups (1) and (2) are NOT disjoint (PO signal-drain 2026-07-21T16:xxZ, RAW-verified via gateway get_earnings_calendar + get_bctc_full this tick). This row's AC clause 1 is 'get_earnings_calendar(Q1-2026) no longer reports QUA HAN for all 15'. LIVE NOW: 13 of the 15 already show DA NOP — DBC 07-20, DGC 07-19, DXG 07-20, FRT 07-19, GEX 07-19, KDC 07-19, KDH 07-20, MSN 07-20, PDR 07-20, SAB 07-19, SHB 07-20, VJC 07-19, VND 07-19. Only HUT and PLX remain QUA HAN. Those submission dates 07-19/07-20 are EXACTLY the NGAY-NOP-flip window of FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP, so clause 1 was satisfied by the CORRUPTION, not by any fix. Corroborated on the serving plane: MSN now shows DA NOP 2026-07-20 yet get_bctc_full(MSN,2026,Q1) still returns 'Chua co du lieu BCTC'. CONSEQUENCES: (i) the reparse corruption has SPREAD INTO this row's 15-ticker cohort — the correction signal's 16/15/4 decomposition is not a partition and must not be treated as one; (ii) clause 1 is no longer evidence of anything and MUST NOT be scored on its own — the conjunctive AND with clause 2 (get_bctc_full non-empty for MSN/SAB/PLX) is the only thing preventing a 13/15 false-green today; (iii) do NOT rewrite the AC to drop clause 2, and do NOT close this row on calendar status alone. RECOMMEND ops re-derive the cohort membership from the SERVING plane (get_bctc_full result) rather than from calendar QUA HAN, which is now a corrupted discriminator. Refs: feedback_nonzero_values_need_plausibility_check, feedback_passive_health_masks_dead_data.",
-        "next_agent": "ba",
+        "next_agent": "po",
         "po_dispatch_unblock_20260721T1649": "DISPATCHING next_agent SET (PO 2026-07-21T16:49Z). This row sat 6 days with owner=ops but next_agent=NULL, so no loop could pick it up — the same null-next_agent stall signature flagged on FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER. next_agent=ops set; recon+reprocess is operational, needs no code design. ESCALATED PRIORITY — THIS ROW NOW BLOCKS ANOTHER ROW: FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP had an acceptance gate demanding non-zero total_assets across its 16 tickers, 13 of which are THIS cohort. Its owner dev-mcp-server could never satisfy that, because the ingest those 13 need lives here. I have removed that dependency from the reparse row's gate (po_acceptance_reconciliation_20260721T1649) so neither row blocks the other, but the underlying serving-plane repair for those 13 is still owned HERE and nowhere else. COHORT NOTE — CANDIDATE 16th MEMBER: D2D presents this row's exact signature (D2D_2026_Q1.pdf, 11.6 MB, stored 2026-06-07, inside this cohort's 06-07..06-13 window; get_bctc_full returns 'Chua co du lieu BCTC' live 2026-07-21T16:4xZ) but was enumerated in NEITHER this row's 15 NOR its '18 correctly DA NOP siblings' list — the 07-15 census missed it, as it also missed CTG. D2D is separately named in OPS-BCTC-REFINE-REPASS-NONBANK-5T. ops: confirm during recon whether D2D folds into this cohort or stays with the nonbank repass row; do NOT silently widen the AC to 16 before that call. BASELINE DEBT — READ BEFORE MEASURING: this row's original evidence sampled the SERVING plane for only 3 of 15 tickers (MSN/SAB/PLX); the other 12 and the 18 siblings were classified on the CALENDAR plane only. There is therefore NO serving-plane baseline for this cohort, which is precisely why 'did the reparse regress these or were they always empty' has been unanswerable all day. Capture get_bctc_full for all 15 BEFORE any reprocess, so the post-fix delta is measurable. SEQUENCING (unchanged): pdf-extractor is confirmed healthy again as of 2026-07-21T16:35Z (bctcExtractReconcileJob + bctcPdfPullJob both last_run success), so the earlier outage caveat is LIFTED and the verification_gate is now reachable.",
         "po_live_evidence_20260806T18": "PO LIVE RE-VERIFY + PREMISE CORRECTION (PO triage 2026-08-06T18:07Z tick, from bctc-analyst signal bca-dataqual-20260806T181200Z \"DXG persistently absent, never extracted, 4+ cycles c141-c144\"). FOLD, NOT A NEW ROW: DXG is already an explicitly-named member of this rows 15-ticker cohort (DBC DGC DXG FRT GEX HUT KDC KDH MSN PDR PLX SAB SHB VJC VND) and its Q1-2026 PDF (stored 2026-06-13) sits inside this rows own 06-07..06-13 window, so the signal is fresh corroboration that this row is STILL FAILING at day 22, not a new defect. THE SIGNALS PREMISE IS WRONG AND MUST NOT BE INHERITED: it asserts get_bctc_full(DXG)=\"Chua co du lieu BCTC\" / \"never extracted\" / \"zero extraction progress in 54+ days\". RAW-verified live this tick via gateway call_tool get_bctc_full(DXG,2026,Q1): the actual response is \"[CORRUPT DATA - SKIP] total_assets=0 (zero or negative - OCR extraction failure), Confidence 0%\". Extraction DID run and DID write a report row; it produced a zero/corrupt balance sheet. That is the total_assets=0 signature of FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP, not an absence. Both strings already score as FAIL under this rows AC (status_note explicitly names both), so the AC is unchanged and still correct - only the attributed mechanism changes, from \"ingest never ran\" to \"ingest ran and wrote zeros\". Whoever picks this up must NOT scope it as a missing-extraction backfill. The signals own root_task_suggestion \"BCTC-HIST-VPS-BACKFILL\" is REJECTED as misrouted: that row is scoped to pre-Q4-2025 historical PDF cache absence, whereas DXGs 2026-Q1/Q2 PDFs are both present on disk. SEPARATE DEFECT SPLIT OUT THIS TICK: the natural-control probe get_bctc_full(PLX,2026,Q1) returned not a report but {\"unavailable\":true,\"reason\":\"vps_stale\",\"stale_age_hours\":57.8}, whose message string ENDS with \"Chua co du lieu BCTC cho PLX\" - i.e. the serving layer is currently relabelling an idle demand-driven route as an infra outage and emitting the exact string bctc-analyst reads as \"no data\". That is tracked separately as FIX-BCTC-SERVING-GATE-VPSSTALE-IGNORES-DEMAND-QUEUE-DEPTH; it CONTAMINATES any serving-plane measurement of this cohort taken while latched, so capture the baseline this row demands only after that gate is fixed, or the 15-ticker census will be unreadable again.",
         "po_dispatch_escalation_20260806T18": "DISPATCH ESCALATION - 22 DAYS IDLE, STRUCTURALLY UNDISPATCHABLE (PO 2026-08-06T18:07Z). This high-priority row has sat in backlog[] since 2026-07-15 and already carried a 6-DAY-IDLE observation on 2026-07-21; it is now at 22 days. Root cause of the stall is now pinned and is NOT neglect: scripts/lib/po-manual-dispatch-eligibility.jq classifies this row DRS-STRANDED-OFF-ALLOWLIST because next_agent=ops and \"ops\" is not a member of the DRS allowlist [\"architect\",\"ba\",\"pm\",\"po\",\"agents-architect\"], so no automated dispatch loop (BOUNDED-1/SLS/RLC/DRS) can ever claim it - it is reachable ONLY by manual/PO dispatch. Confirmed live this tick: PO manual-dispatch-sweep Step 1 surfaced it at rank 4 of 46 candidates with reflag=false, i.e. it had never once been flagged by the sweep in the sub-flows lifetime. Folded into this ticks PO BATCH as an UNBLOCK on those grounds.",
         "origin_signal_id": "bca-dataqual-20260806T181200Z",
-        "updated_at": "2026-08-06T18:45:07Z",
-        "updated_by": "ops",
-        "ops_recon_note": "Baseline captured: 7 tickers CORRUPT (total_assets=0: DGC/DXG/FRT/GEX/KDH/PDR/VJC), 7 NO_DATA (contaminated by vps_stale gate: DBC/HUT/KDC/MSN/SAB/SHB/VND), 1 VPS_STALE (PLX). Root causes: extraction OCR defect (7 CORRUPT) + serving gate logic defect (1 vps_stale + 7 potentially false). Recommend dev-team code review. Cannot verify until FIX-BCTC-SERVING-GATE-VPSSTALE-IGNORES-DEMAND-QUEUE-DEPTH ships."
+        "updated_at": "2026-08-13T12:27:53Z",
+        "updated_by": "ba",
+        "ops_recon_note": "Baseline captured: 7 tickers CORRUPT (total_assets=0: DGC/DXG/FRT/GEX/KDH/PDR/VJC), 7 NO_DATA (contaminated by vps_stale gate: DBC/HUT/KDC/MSN/SAB/SHB/VND), 1 VPS_STALE (PLX). Root causes: extraction OCR defect (7 CORRUPT) + serving gate logic defect (1 vps_stale + 7 potentially false). Recommend dev-team code review. Cannot verify until FIX-BCTC-SERVING-GATE-VPSSTALE-IGNORES-DEMAND-QUEUE-DEPTH ships.",
+        "secondary_claimed_at": "2026-08-13T12:21:35Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "ba",
+        "ba_triage_note_20260813T1226Z": "BA REVIEW-LANE TRIAGE (dispatched next_agent=ba 2026-08-13, secondary-drain). NOT ready to decompose into dev-actionable task(s) -- escalating to PO, this is a scope question only PO can adjudicate, not an infra-diagnosis task for BA. Two premises in ops_recon_note are now stale/superseded, RAW-checked this tick: (1) ops's cited blocker \"cannot verify until FIX-BCTC-SERVING-GATE-VPSSTALE-IGNORES-DEMAND-QUEUE-DEPTH ships\" is moot -- that row is DONE_VERIFIED (commit 8c108491b, QA live-verified against rebuilt runtime 2026-08-08T15:35:17Z, now in archive/2026-08.json), shipped 5 days before this dispatch; the cited gate defect no longer exists, but nobody has re-run this row's own live_tool_reconcile AC against the fixed gate. (2) ops's 7-ticker NO_DATA bucket (DBC/HUT/KDC/MSN/SAB/SHB/VND) is superseded by a MORE PRECISE both-plane live census run the day after ops's recon: docs/architecture-briefs/2026-08-07-bctc-q1-2026-servability-census.md (task SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS -- itself still parked review[]/next_agent=po since 2026-08-07T20:12:35Z, never adjudicated, a sibling stale-review-lane row worth PO's attention too). That census found: 6 of ops's 7 \"NO_DATA\" tickers (DBC/KDC/MSN/SAB/SHB/VND) are actually mode-3 -- extraction DID run, non-zero total_assets in financial_reports, refine_status=PENDING -- i.e. FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP's scope, NOT an ingest stall. Only HUT+PLX are true ingest-stall members (matches this row's own mandatory natural-control pair). The 7 CORRUPT tickers (DGC/DXG/FRT/GEX/KDH/PDR/VJC) are already absorbed by FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP's write-back-guard mechanism (DONE_VERIFIED); remediation of the already-corrupt rows is a distinct, currently UNOWNED gap (census section 9a) -- minting a fresh \"OCR-extraction-defect fix\" under THIS row risks duplicating/conflicting with that row's territory without PO's explicit ownership call. Census also surfaced 2 tickers never named in this row's history: BID, DAG (same mode-2 signature, PDF gaps). Census's own explicit recommendation (its section 7/9): narrow this row's cohort to {HUT, PLX, BID, DAG} (4, not 15) -- routed to PO for adjudication in its RETURN block 6 days ago, never actioned. RECOMMEND: do NOT decompose on the router-suggested framing (OCR fix for 7 CORRUPT + confirm vps_stale-gate covers the other 8) -- 6 of those 8 belong to a different row and the vps_stale-gate question is already answered (shipped, needs re-measurement not a new fix). Requesting PO: (a) adopt or reject the census's cohort-narrowing, (b) rewrite this row's title/note/AC to the adjudicated cohort if adopted, (c) rule on ownership of the mode-1 batch-remediation gap (census 9a) before any dev-team task mints against this row. Status set BLOCKED, next_agent=po pending that call."
       },
       {
         "id": "UC-ASL-P6",
@@ -19487,7 +19502,7 @@
         "last_served_tick": "2026-08-13T11:58:29Z"
       },
       "sls": {
-        "last_served_tick": "2026-08-13T06:32:59Z"
+        "last_served_tick": "2026-08-13T12:21:06Z"
       },
       "rlc": {
         "last_served_tick": "2026-08-13T06:56:07Z"
@@ -19502,7 +19517,7 @@
         "last_served_tick": "2026-08-13T11:25:20Z"
       }
     },
-    "_updated_at": "2026-08-13T11:58:29Z",
+    "_updated_at": "2026-08-13T12:21:06Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23513,6 +23528,186 @@
         },
         "createdAt": "2026-08-11T18:41:33Z",
         "drained_at": "2026-08-13T11:23:18Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "172cd5d8c3b440bf9816823465637a2575c09c325eca880b8937d203a8eeee31",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-77658081",
+          "head_sha": "77658081fbb2cd83372e493d30d047efbbe20b06",
+          "run_id": 31697341888,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31697341888",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 94438038164
+            },
+            {
+              "name": "task-claim-owner-session-lint",
+              "conclusion": "failure",
+              "jobId": 94438038226
+            }
+          ],
+          "fingerprint": "eca92cb3d7b53bbb63733ca22146e61897ac47f7cf36ee93b506a88d44e7cddb",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 77658081fbb2cd83372e493d30d047efbbe20b06: bun test,task-claim-owner-session-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-13T11:57:16Z",
+        "drained_at": "2026-08-13T12:19:40Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "81496143a7d828f91604489fbcb157382414ec61fb97a2bd7cf090c66a652e60",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/market-watcher.md. actor=0454e9d8-b475-4230-95c9-8b7d943aa8b3 mode=warn escalated=true prior_warns=25 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-13T12:14:54Z",
+        "drained_at": "2026-08-13T12:19:40Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "742c6695acb002c511b6ad9391b887404eecd4e87cebaedddf7c0a7c74fe9850",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=4 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-13T12:17:08Z",
+        "drained_at": "2026-08-13T12:19:40Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "951bb453bc56d402e2f22e348927f501b6334df042ea467737ad2418ece6fd4d",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/news-scout.md — retained section '## c262 · 2026-08-13T12:11:00Z (off-hours, slot=news-scout-offhours)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-13T12:18:09Z",
+        "drained_at": "2026-08-13T12:19:40Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a4a010f7eb2a587b38928b00af6d14cac8f2d3d981b03b0bd4f5d6c301532d83",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/system-auditor.md",
+          "line_count": 253,
+          "cap": 200,
+          "byte_count": 22141,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "line-cap,byte-cap",
+          "overage": 53,
+          "byte_overage": 10141,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-13T12:16:56Z",
+        "drained_at": "2026-08-13T12:19:40Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8a398f92c5ecfb64618306489be0237269591626f2eb39e338480c10b1101623",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-13T12:08:24Z",
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "news-scout-offhours": 240,
+            "market-watcher-offhours": 240,
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-13T12:08:12Z",
+          "last_fired_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "12:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 27,
+          "note": "3 offhours/critical slots batch-fanned in a single batch (MAX_PARALLEL=4, healthy headroom/load)"
+        },
+        "createdAt": "2026-08-13T12:08:24Z",
+        "drained_at": "2026-08-13T12:19:40Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3c0791d4cf6b094ee4a0134e961fe3be3a86e456c99c93b78d85b375bdaf73a2",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/system-auditor.md",
+          "line_count": 140,
+          "cap": 200,
+          "byte_count": 12950,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T12:16:54Z",
+        "drained_at": "2026-08-13T12:19:40Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
