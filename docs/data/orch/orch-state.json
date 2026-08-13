@@ -132,7 +132,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-13T06:26:03Z",
+    "_updated_at": "2026-08-13T06:52:39Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -675,7 +675,7 @@
         "type": "bug-escalation",
         "summary": "notebook-uuid-provenance-guard WARN: tran-ngoc-bau.md c125/c126 headings embed full router_session UUIDs, violates notebook-write SKILL.md AC-1",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/processed/commit-sweep-guard-2026-08-12T180353Z-113.json",
         "provenance": "commit-sweep-guard",
         "audit_cycle_tag": null,
@@ -689,7 +689,7 @@
         "type": "bug-escalation",
         "summary": "sweep-guard BARE commit BLOCKED 3x recurring (20260812T200758Z to 20260813T040848Z, prior_warns 21 to 23): market-watcher.md notebook repeatedly staged for a non-pathspec-scoped commit under actor 0454e9d8-b475-4230-95c9-8b7d943aa8b3, every attempt hard-blocked, files remain uncommitted. Likely root cause of the approx 13h/70+file uncommitted backlog observed 2026-08-13T06:21Z git status. Fix: pathspec-scoped git commit -- <own-files-only> only.",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/processed/commit-sweep-guard-2026-08-13T040848Z-6037.json",
         "provenance": "commit-sweep-guard",
         "audit_cycle_tag": null,
@@ -19543,7 +19543,7 @@
         "last_served_tick": "2026-08-12T16:53:15Z"
       }
     },
-    "_updated_at": "2026-08-13T06:32:59Z",
+    "_updated_at": "2026-08-13T06:52:39Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -22293,6 +22293,135 @@
         "createdAt": "2026-08-12T20:30:00Z",
         "drained_at": "2026-08-13T06:29:51Z",
         "routed_to": "PO Step 0-TNB"
+      },
+      {
+        "envelope_id": "97c68af0be9a44b17b0af04bcc3a2c24e45b2befad8a9fce087ff2c557cbb9fa",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/dev-team.md — retained section '## Session: 2026-08-08T22:07Z tick' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-13T06:36:59Z",
+        "drained_at": "2026-08-13T06:50:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "da37e631eea18cb169ea709813684ac78eeac7192e9208699e972eec2fb43401",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 49,
+          "cap": 200,
+          "byte_count": 16870,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 4870,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-13T06:36:42Z",
+        "drained_at": "2026-08-13T06:50:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5c9c99a570d0c77485c381a37ea0673e5fbe256a58bf263e533702101001912e",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-tick-telemetry",
+        "priority": "info",
+        "payload": {
+          "tick": "2026-08-13T06:30Z",
+          "classification": "SLOTS_FIRED",
+          "slots_fired": [
+            "alert-commander-market"
+          ],
+          "stale_warning_streak": 16,
+          "signal_queue_new_count": 2,
+          "notes": "Prior 12 aging NEW rows drained since last tick (good sign, likely po/dev-team pickup). Only the 2 commit-sweep-guard rows bridge-written last tick remain NEW, neither routed to fired slot. Underlying evidence files archived to docs/signals/processed/ by housekeeping sweep."
+        },
+        "createdAt": "2026-08-13T06:36:29Z",
+        "drained_at": "2026-08-13T06:50:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "eaf6fc0f3ab39ef3dfdc215997b034e7a21c6d06f30c783cdfaaaae3982e69f1",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12877,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T06:36:40Z",
+        "drained_at": "2026-08-13T06:50:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f6df749d0ce954649096f78614292326313a10ec1630e655658d09aca7e01a7f",
+        "source": "dashboard",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "MED",
+        "payload": {
+          "from": "commit-sweep-guard",
+          "to": "po",
+          "type": "bug-escalation",
+          "priority": "high",
+          "createdAt": "2026-08-12T18:03:53Z",
+          "payload": "[notebook-uuid-provenance-guard] WARN: docs/agent-memory/notebooks/tran-ngoc-bau.md — added heading line embeds a full session/coordination UUID: '## c125 · ~2026-08-08T20:28Z (live MCP `get_system_status`/`get_macro_snapshot` fetchedAt; slot=tnb-audit; router_session=b6da7257-d9fd-4d08-a378-25045f1238c2)'. Per .claude/skills/notebook-write/SKILL.md AC-1 and feedback_agent_commits_session_uuid_into_notebook, a session id is a per-invocation coordination PARAMETER ONLY, never authored into a committed file — use a c<NNN> counter or a fixed source label instead. mode=warn (default warn; set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh). Escape hatch: add 'notebook-uuid-lint-allow: <reason>' on this line if intentional.\n[notebook-uuid-provenance-guard] WARN: docs/agent-memory/notebooks/tran-ngoc-bau.md — added heading line embeds a full session/coordination UUID: '## c126 · ~2026-08-11T20:30Z (live MCP `get_system_status`/`get_market_snapshot` fetchedAt; slot=tnb-audit; router_session=0454e9d8-b475-4230-95c9-8b7d943aa8b3)'. Per .claude/skills/notebook-write/SKILL.md AC-1 and feedback_agent_commits_session_uuid_into_notebook, a session id is a per-invocation coordination PARAMETER ONLY, never authored into a committed file — use a c<NNN> counter or a fixed source label instead. mode=warn (default warn; set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh). Escape hatch: add 'notebook-uuid-lint-allow: <reason>' on this line if intentional.\n",
+          "_processed": {
+            "fingerprint": "4ce9f02124524d0ca6e671555c809d2b14701709454a5bd9005847f731f23b59",
+            "processedAt": "2026-08-13T06:29:51Z",
+            "processedBy": "dev-team",
+            "result": "routed-to-po"
+          }
+        },
+        "createdAt": "2026-08-12T18:03:53Z",
+        "drained_at": "2026-08-13T06:52:31Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8c28ab0473e755a5002a6512f4f56027205d86b371ec80fd041f6955e3c5fa9b",
+        "source": "dashboard",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "HIGH",
+        "payload": {
+          "from": "commit-sweep-guard",
+          "to": "po",
+          "type": "bug-escalation",
+          "priority": "high",
+          "createdAt": "2026-08-13T04:08:48Z",
+          "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/market-watcher.md. actor=0454e9d8-b475-4230-95c9-8b7d943aa8b3 mode=warn escalated=true prior_warns=23 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+          "_processed": {
+            "fingerprint": "a2af5b6feb060bf11fdd7f2afce7f3c9ab1515c16b6ed9229f3a029ac77a03d1",
+            "processedAt": "2026-08-13T06:29:51Z",
+            "processedBy": "dev-team",
+            "result": "routed-to-po"
+          }
+        },
+        "createdAt": "2026-08-13T04:08:48Z",
+        "drained_at": "2026-08-13T06:52:31Z",
+        "routed_to": "PO Step 0-SIG"
       }
     ],
     "last_po_triage_at": "2026-08-12T08:40:43Z",
