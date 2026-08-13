@@ -14932,6 +14932,23 @@
       "triaged_at": "2026-08-12T10:02:07Z",
       "triaged_by": "po",
       "disposition": "FOLD onto OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX (ready[], P0, next_agent=ops) — no new row. All 3 are the same A-30 rag-service condition on dedup_key microservice_degraded:rag-service:A-30. Not a detection gap and not a new leak: the code fix (4c8c601e6, LanceDB IvfPq + malloc_trim) is confirmed an ancestor of HEAD and the running image is the pre-fix 2026-08-08T08:10:53Z build, so every sample in this chain measured undeployed code. The rebuild row was promoted into PO's BATCH for direct ops dispatch at 2026-08-12T10:02:07Z."
+    },
+    {
+      "id": "sys-20260812T100604-517d",
+      "ts": "2026-08-12T10:06:04Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "signal_feedback",
+      "summary": "A-30 FAIL: vn-market-intelligence-mcp-rag-service-1 — sustained memory pressure (95.32% sustained, loss of reclamation)",
+      "severity": "WARN",
+      "status": "triaged",
+      "payload_ref": null,
+      "provenance": "detector",
+      "audit_cycle_tag": null,
+      "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30",
+      "disposition": "FOLD -> FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (open, review[], next_agent=dev-rag-service, P0). 5 rag-service A-30 rows folded as one chain, no mint. See that row's po_fold_20260812T1505Z for the three premise corrections: (1) report 4733's 'pre-fix image built 08-08T08:10:53Z' is REFUTED - live image is 2026-08-12T10:40:10Z and DOES contain 4c8c601e6; (2) the real undeployed delta is ca6d868695 @11:08:24Z, 28 min NEWER than the image -> one scoped ops rebuild; (3) the 'monotonically declining, settled ~89-93%' read is superseded - live docker stats 14:58Z = 92.26% at only 57 min into a fresh 14:00:55Z restart. The two 'stale ACK' rows are the FU-RAG-DEPLOY-MEMORY ledger floor_enforcement INTENDED outcome, not a defect.",
+      "triaged_at": "2026-08-12T15:10:35Z",
+      "triaged_by": "po"
     }
   ],
   "backlog_detail": [],
