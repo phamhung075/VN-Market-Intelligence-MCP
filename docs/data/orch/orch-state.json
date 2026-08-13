@@ -92,11 +92,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-13T13:54:38Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FACTORY-GUARD-CI-TSBOUNDARIES-IMPL",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 1 row(s), highest-ranked FACTORY-GUARD-CI-TSBOUNDARIES-IMPL — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-13T13:57:37Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13223,6 +13224,42 @@
             "observed_at": "2026-08-12T16:37:00Z"
           }
         }
+      },
+      {
+        "id": "FACTORY-GUARD-CI-TSBOUNDARIES-IMPL",
+        "type": "SPRINT-S",
+        "title": "Wire ESLint boundaries-plugin fences into CI (3 TS services) + fix 3 live fence violations + fix news-fetch routes/ element-map gap + add missing news-fetch-go-lint job",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "size": "M",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-depguard-tier-boundaries",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-depguard-tier-boundaries.md#4-build-vs-plan--decomposed-into-2-child-rows-different-toolchains-independently-testable-not-self-implemented",
+        "dev_agent": "developer",
+        "next_agent": "qa",
+        "parent_task": "FACTORY-GUARD-CI-depguard-tier-boundaries",
+        "created_at": "2026-07-24T18:29:15Z",
+        "created_by": "architect",
+        "updated_at": "2026-08-13T14:06:49Z",
+        "entered_review_at": "2026-07-29T22:58:56Z",
+        "review_note": "3 new CI jobs (mcp-server-eslint/news-fetch-eslint/frontend-eslint) + news-fetch-go-lint wired into .github/workflows/ci.yml. Fixed all live/previously-invisible violations first (zero-tolerance): mcp-server getMoneyRadarComposite.ts 2x Fence-B (interface) fixed by relocating queryMarketWideForeignFlow -> new infrastructure/db/foreignFlowQueries.ts + credit-flow computation -> new application/usecases/computeCreditFlowSignal.ts (creditFlowTools.ts now a thin wrapper); recoverMissingOhlcvSession.ts 1x Fence-B (scheduler) fixed by moving the file application/usecases/ -> scheduler/market-data/ (sole caller + core dep both scheduler-owned). news-fetch: boundaries/elements src/routes/** was unclassified (drifted, invisible to the plugin) -> mapped to interface type, surfacing + then fixing the real Fence-C hit in routes/fetchArticle.ts via a setPlaywrightLauncher DI seam wired from src/index.ts (composition root). Bonus: removed 5 dead react-hooks/exhaustive-deps disable-comments in frontend (plugin never installed) that independently blocked the new frontend-eslint job. Every violation reproduced against a git-stash baseline before fixing (proves real, not cosmetic); 2 scratchpad RAW-verify scripts exercised the actual post-relocation import graph end-to-end (money-radar composite against a seeded real DB; news-fetch DI wiring through a real Hono router) per the task DoD. Zero test regressions: mcp-server 133/133 targeted + full-suite 14797 pass/3 pre-existing fail (chromium-binary-missing + network pollNews, stash-confirmed unrelated); news-fetch 241/241; frontend vitest 2183/2185 (2 pre-existing QUE_DESCRIPTIONS fails, stash-confirmed unrelated). tsc/eslint/size-lint-justification.sh/metric-mask-lint.sh all clean on all 3 services post-fix. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S29. QA next. || [QA] Review Record (direct-commit verify) 2026-08-13T14:05:47Z: APPROVED, DONE_VERIFIED. Dev-team Review-Lane QA-Drain spawn (mode=verify-committed), router asked for RAW re-verify of every review_note claim, not trust. Row carried no .commit/.files[]/.owner -- derived via git log --grep=TSBOUNDARIES: commit 66ab9deb3 (feat, 2026-07-30) + companion 8c45fc1a0 (fix, 2026-07-31, frontend bun.lock unblock -- already independently verified by a separate QA cycle 2026-08-06 f38f02223, own task id FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT, not this row's scope). Both confirmed on main ancestry (git merge-base --is-ancestor). git show --stat 66ab9deb3 matches every claimed file exactly (17 files: ci.yml, foreignFlowQueries.ts new, computeCreditFlowSignal.ts new, marketWideForeignFlowTool.ts/creditFlowTools.ts shrunk to thin wrappers, recoverMissingOhlcvSession.ts relocated app->scheduler, ohlcvCandleGuard.ts + its test updated import paths, news-fetch eslint.config.mjs/index.ts/routes/fetchArticle.ts, 3 frontend zone .tsx files, dev-standards.md).\n\nLine-by-line diff read (not trusted from prose) on every DDD fix claimed: getMoneyRadarComposite.ts (application/usecases) import lines confirmed changed from interface/mcp/tools/* to infrastructure/db/foreignFlowQueries.js + sibling ./computeCreditFlowSignal.js -- Fence-B genuinely fixed. marketWideForeignFlowTool.ts confirmed reduced to re-export shim (query fns moved verbatim into new foreignFlowQueries.ts, byte-identical SQL). news-fetch eslint.config.mjs confirmed src/routes/** newly mapped to \"interface\" type (was unclassified/invisible to plugin -- verified via git blame the mapping is new). fetchArticle.ts confirmed no longer imports infrastructure/ directly -- setPlaywrightLauncher DI seam added, wired from src/index.ts (composition-root, the only file the plugin permits to import infrastructure/) at module load before Bun accepts connections. recoverMissingOhlcvSession.ts confirmed physically relocated to scheduler/market-data/ (find confirms current location), 2 downstream import paths (ohlcvCandleGuard.ts + its test) repointed. Frontend: grep confirms zero \"exhaustive-deps\" disable-comments remain in the 3 named zone files (claimed 5 dead comments removed).\n\nLIVE re-run, not reused from claim: mcp-server eslint src/ --max-warnings=0 exit 0; news-fetch bun run lint:ci exit 0; frontend bun run lint:fence exit 0 (deprecation-warnings-only, same noise class dev-team's own prior RAW-verify logged, zero violations). tsc --noEmit clean on all 3 services (mcp-server/news-fetch/frontend). golangci-lint run --config .golangci.yml on apps/news-fetch (v2.12.2 local, workflow pins action v7/v2.0) -- 0 issues, live re-run not trusted from claim. mcp-server 9-file targeted suite (VMT-6/DSI-S3/1254-credit-flow/MONEY-RADAR-P0-T2/1410-diacritics/251-mcp-tools/MSG-1-foreign-flow/money-radar-api/ALPHA-S1-CANDLE-GUARD) re-run fresh: 132 pass/0 fail (claim was 133/133 -- 1-test count delta, non-blocking, 0 fail either way, likely file-set/counting variance not a regression). news-fetch full suite: 241 pass/0 fail/6 skip -- exact match. frontend full vitest: 2183 pass/2 fail/2185 total -- exact match; the 2 fails are QUE-TOOLTIP-DRY-1a-codegen-pipeline.test.tsx/QUE-REFERENCE-PAGE-detail.test.ts (QUE_DESCRIPTIONS key-count), confirmed pre-existing+unrelated (neither file touched by 66ab9deb3, already confirmed unrelated by 2+ prior sibling QA cycles this week).\n\nmock-guard.sh --files <9 touched prod files> CAUTION (exit 2, non-blocking per spec) on 1 marker in computeCreditFlowSignal.ts:230 (commented-out fetchViraSurvey TODO) -- git log -p confirmed this exact line pre-existed verbatim in creditFlowTools.ts before relocation (moved, not newly introduced fabrication). size-lint-justification.sh --check PASS (0 unjustified offenders, 1384 files scanned). metric-mask-lint.sh --check PASS (0 unjustified masks, 434 keyword-bearing files). DDD scan (grep forbidden imports on all 9 touched files): zero interface/application imports remain in the 2 fixed application-layer files; zero infrastructure imports in fetchArticle.ts (routes/**, now interface-typed, correctly infra-free); all infrastructure imports found are the expected/legal composition-root or infra-layer-internal ones. Security scan (process.env/password/secret/apikey) on all touched files: zero hits.\n\nSTRONGEST evidence -- live production CI (gh run list/view, not just local re-run): most recent main push run 31707531319 shows all 4 jobs this task added are GREEN: mcp-server-eslint checkmark, news-fetch-eslint checkmark, frontend-eslint checkmark, \"News Fetch Go Lint\" checkmark. Overall workflow shows red, but the 2 failing jobs (bun test / task-claim-owner-session-lint) are unrelated pre-existing issues -- inspected both job logs directly: \"bun test\" fails at the per-file-isolation full-suite step (tracked pre-existing flake class, board row FIX-MCP-SUITE-HEALTH-BASELINE, not touched by this task's 9 files); task-claim-owner-session-lint is an entirely separate lint job (task-claim-owner-session-lint --check) with zero relation to eslint-plugin-boundaries. AC \"ci-green\" is satisfied for this task's own scope, proven with real GH Actions evidence, not just local re-run.\n\nVERDICT: DONE_VERIFIED, zero code ISSUE. No merge/push/branch-delete needed -- work already on main (commits 66ab9deb3+8c45fc1a0, both ancestors of current HEAD). Own QA DJ sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S104. No task_release called -- no MCP gateway tool bound in this specialist invocation (Read/Edit/Write/Bash only); dispatcher's finally-block + TTL(3600s) expiry is the authoritative release path per INV-GATEWAY-1.",
+        "claimed_at": "2026-08-13T13:57:36Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "qa_verified_at": "2026-08-13T14:05:47Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git (merge-base --is-ancestor / show --stat / show -p diff-read) + live eslint x3 + tsc x3 + golangci-lint + targeted&full bun test x2 + vitest + mock-guard.sh + size-lint-justification.sh + metric-mask-lint.sh + DDD/security greps + gh run view (live CI)",
+            "args": {
+              "commit_verified": "66ab9deb3",
+              "companion_commit": "8c45fc1a0"
+            },
+            "live_value_observed": "ancestor=yes both commits; git show --stat matches all 17 claimed files; DDD Fence-B/C fixes confirmed line-by-line; eslint fences 0/0/0 live; tsc clean x3; golangci-lint 0 issues; mcp-server targeted 132/132 (claim 133, non-blocking delta); news-fetch 241/241; frontend 2183/2185 (2 pre-existing unrelated); mock-guard CAUTION on pre-existing relocated TODO only; size-lint/metric-mask-lint PASS; DDD/security greps clean; live GH Actions run 31707531319 shows all 4 new jobs green, 2 unrelated pre-existing jobs red",
+            "observed_at": "2026-08-13T14:05:47Z"
+          }
+        }
       }
     ],
     "head": {
@@ -15575,27 +15612,6 @@
         "status_note": "IMPLEMENTATION: Root cause confirmed -- docs/agents/system-auditor/flow/main.md:748-755 gates the agent-side Tier-2/3 heartbeat write out of Tier-1, but a 2026-07-29T06:08:22Z DEGRADED Tier-1 cycle wrote docs/data/auditor-tier1-last-healthy.json anyway; no authorizing step anywhere in the flow produced it (the block's own if already correctly excludes tier-1). Collapsed the file from {last_healthy_at, checks{6 keys}} to bare {last_healthy_at}, falsely advancing a healthy marker on a non-healthy cycle. A prose prohibition alone had already been tried and failed (2nd violation). FIX: (AC1) new CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER in docs/policies/dev-standards.md, cited from both writers (auditor-tier1-probe.sh header comment + system-auditor main.md Tier-2/3 Heartbeat Write section). (AC2/AC3) new scripts/git-hooks/pre-commit _check_auditor_heartbeat_shapes -- runs unconditionally before the pre-existing sweep-guard mode dispatch, never GIT_SWEEP_GUARD_MODE-gated: rejects (commit BLOCKED, loud stderr) any staged tier-1 write that is not the exact {last_healthy_at, checks:{docker_ps,health_3000,health_3001,disk,mem_creep,launchd_agents}, all PASS} shape, and any staged tier-2/3 write carrying a checks key at all -- converts the prose prohibition into a code-level, fail-loud guard. (AC4) main.md now states the resolved semantic split explicitly: tier-1 means system-confirmed-healthy, tier-2/3 means an-audit-completed regardless of verdict (fires every Tier-2/3 cycle by design, auditor-signal-loop-P1, load-bearing for the SKIP-SPAWN freshness gate in run_tiered_probe()). Judgment call: re-gating tier-2/3 on green was rejected (would starve the heartbeat on a persistently-tracked DEGRADED cycle and recreate the exact spawn-storm that P1 fix closed); renaming the files/field was rejected (would break FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL's already-planned OH-3.5 reads of these exact paths -- that row explicitly names this one as a sequencing prerequisite). Kept both filenames/fields; made shape (bare vs checks{}) the enforced structural signal distinguishing the two semantics. (AC5) live file repaired by actually running the authorized writer (bash scripts/agents-flow/auditor-tier1-probe.sh) rather than hand-editing -- genuine live ALL_GREEN read, full checks{} shape restored. (AC6) suppress_heartbeat NOT ported to Tier-1; AUDIT_TIER 2/3 gate at main.md:750 NOT dropped -- both directions explicitly rejected per the sibling row's .why_the_obvious_fixes_are_wrong field, read before implementing. VERIFICATION: new scripts/git-hooks/pre-commit-auditor-heartbeat.test.sh RED (3/6 fail pre-guard) -> GREEN (6/6 post-guard). No regressions: pre-existing pre-commit.test.sh 6/6, auditor-tier1-probe.test.sh 141/141, both scripts otherwise byte-identical to before this task. bash -n syntax-clean on the hook. Shell/JSON/MD only -- no apps/mcp-server/ TS touched, bun tsc/bun test not structurally applicable. Graphify incremental update: no Skill-tool/LLM-API-key path available to this spawned agent (same structural constraint as 2 prior sessions today) -- flagged in docs/WORK.md, not silently skipped. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S23.",
         "updated_by": "po/triage-20260808T1248Z",
         "po_live_recurrence_20260808T1248Z": "LIVE RECURRENCE, AND THIS TIME IT REACHED GIT. docs/data/auditor-tier1-last-healthy.json currently reads {last_healthy_at: '2026-08-08T12:05:10Z', checks: {... mem_creep: 'PASS' ...}} and was committed at 34521315f by router session 165f4245 on the good-faith premise (quoted from that commit message) that the value is 'a genuine last-all-6-checks-passed timestamp before the mem_creep FAILURE window began'. PO REFUTES THAT PREMISE ON RAW EVIDENCE, three independent ways: (1) the FAILURE window began no later than 2026-08-08T11:04Z — peer auditor cycle c48 (commit 76466302a) records rag-service-1 at 98.53% / 15MiB free / BELOW-FLOOR at that time — so 12:05:10Z is INSIDE the failure window, not before it; (2) PO re-ran the pre-gate read-only at 12:47Z via the documented HEARTBEAT_FILE_PATH=<scratch> seam and got verdict=FAILURE, detail 'mem_creep: ... vn-market-intelligence-mcp-rag-service-1(98.56%, 14.7MiB-free, BELOW-FLOOR(floor=40MiB))', with the container at RestartCount=0 / OOMKilled=false / healthy / StartedAt 2026-08-08T08:11:45Z — i.e. no restart between 11:04Z and now that could have produced a transient green at 12:05Z; (3) the shell pre-gate STRUCTURALLY CANNOT have written it: run_probe() gates _write_heartbeat on an EMPTY failures list, and _mem_container_acked() disqualifies the rag-service acked_memory entry twice over — headroom 15MiB < MEM_FLOOR_MIB=40 -> BELOW-FLOOR, and tracked_by=FU-RAG-DEPLOY-MEMORY reached DONE_VERIFIED at 10:59:52Z -> STALE-ACK. Therefore the 12:05:10Z stamp is an out-of-contract agent write on a DEGRADED cycle — exactly this row's defect — and it is now the committed record. IMPACT beyond this row's existing scope: the tier-1 cron freshness arm reads .last_healthy_at and spawns on age>60min, so a false stamp suppresses that arm for an hour (the verdict=FAILURE arm still fires, so this is degradation, not blindness). REMEDIATION IS NOT PO'S TO EXECUTE: hand-writing this file is explicitly forbidden (pre-commit hook scripts/git-hooks/pre-commit:119 names _write_heartbeat as the sole authorized writer, and the 2026-07-29 PO constraint on scripts/po-s151-tier1-probe-plane-divergence-triage.jq:83 says 'Do NOT hand-write docs/data/auditor-tier1-last-healthy.json'). Correct action, for router/ops: revert the file half of 34521315f so the field returns to its last genuinely-green value 2026-08-07T03:35:32Z (written by b30e533ce), which restores the honest >33h-stale reading and lets the freshness arm work. Do NOT re-stamp it forward by hand."
-      },
-      {
-        "id": "FACTORY-GUARD-CI-TSBOUNDARIES-IMPL",
-        "type": "SPRINT-S",
-        "title": "Wire ESLint boundaries-plugin fences into CI (3 TS services) + fix 3 live fence violations + fix news-fetch routes/ element-map gap + add missing news-fetch-go-lint job",
-        "status": "REVIEW",
-        "priority": "P2",
-        "size": "M",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-depguard-tier-boundaries",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-depguard-tier-boundaries.md#4-build-vs-plan--decomposed-into-2-child-rows-different-toolchains-independently-testable-not-self-implemented",
-        "dev_agent": "developer",
-        "next_agent": "qa",
-        "parent_task": "FACTORY-GUARD-CI-depguard-tier-boundaries",
-        "created_at": "2026-07-24T18:29:15Z",
-        "created_by": "architect",
-        "updated_at": "2026-07-29T22:59:15Z",
-        "entered_review_at": "2026-07-29T22:58:56Z",
-        "review_note": "3 new CI jobs (mcp-server-eslint/news-fetch-eslint/frontend-eslint) + news-fetch-go-lint wired into .github/workflows/ci.yml. Fixed all live/previously-invisible violations first (zero-tolerance): mcp-server getMoneyRadarComposite.ts 2x Fence-B (interface) fixed by relocating queryMarketWideForeignFlow -> new infrastructure/db/foreignFlowQueries.ts + credit-flow computation -> new application/usecases/computeCreditFlowSignal.ts (creditFlowTools.ts now a thin wrapper); recoverMissingOhlcvSession.ts 1x Fence-B (scheduler) fixed by moving the file application/usecases/ -> scheduler/market-data/ (sole caller + core dep both scheduler-owned). news-fetch: boundaries/elements src/routes/** was unclassified (drifted, invisible to the plugin) -> mapped to interface type, surfacing + then fixing the real Fence-C hit in routes/fetchArticle.ts via a setPlaywrightLauncher DI seam wired from src/index.ts (composition root). Bonus: removed 5 dead react-hooks/exhaustive-deps disable-comments in frontend (plugin never installed) that independently blocked the new frontend-eslint job. Every violation reproduced against a git-stash baseline before fixing (proves real, not cosmetic); 2 scratchpad RAW-verify scripts exercised the actual post-relocation import graph end-to-end (money-radar composite against a seeded real DB; news-fetch DI wiring through a real Hono router) per the task DoD. Zero test regressions: mcp-server 133/133 targeted + full-suite 14797 pass/3 pre-existing fail (chromium-binary-missing + network pollNews, stash-confirmed unrelated); news-fetch 241/241; frontend vitest 2183/2185 (2 pre-existing QUE_DESCRIPTIONS fails, stash-confirmed unrelated). tsc/eslint/size-lint-justification.sh/metric-mask-lint.sh all clean on all 3 services post-fix. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S29. QA next."
       },
       {
         "id": "FACTORY-GUARD-CI-COMPROOT-LOGIC-IMPL",
@@ -19299,13 +19315,13 @@
         "last_served_tick": "2026-08-13T13:23:03Z"
       },
       "qa_drain": {
-        "last_served_tick": "2026-08-13T10:54:59Z"
+        "last_served_tick": "2026-08-13T13:57:20Z"
       },
       "step1_triage": {
         "last_served_tick": "2026-08-13T11:25:20Z"
       }
     },
-    "_updated_at": "2026-08-13T13:55:33Z",
+    "_updated_at": "2026-08-13T13:57:20Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
