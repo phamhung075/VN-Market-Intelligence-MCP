@@ -72,3 +72,13 @@
 - No TS/production source touched (`.sh`/`.json`/`.yml`/`.md` only) — `bun test`/`tsc` structurally N/A; `mock-guard.sh --files` on the shell script → PASS "no production source files to scan" (correctly out of its `apps/*.ts|py|go` scan scope). dev-standards.md CANONICAL pointer present at line 1084, matches script usage exactly.
 **why-decision:** vc-approved, DONE_VERIFIED. All 6 DoD items independently reproduced on my own fixtures (not just the shipped test), CI job green across multiple runs, doc pointer present, zero ISSUE.
 **why-change:** none — verdict matches developer's own claim, verified fresh not from prose.
+
+### STEP qa-S101 · qa · 2026-08-13T14:15:00Z
+**task-id:** FE-PG-_INDEX-FRESH-FIX
+**what-done:** Direct-Commit Verify — re-ran everything myself: commit `3184247ab`(+docs `969360919`) on main ancestry, diff matches claim exactly (dashboard._index.tsx loader wiring + new 6-case unit-test file). Backend `data_asof` field confirmed live (`marketDigestHandler.ts:71,169`). Re-checked live `:3001` container per task's own PENDING-REBUILD-recheck instruction.
+**what-considered:**
+- MAJOR FINDING: local `node_modules` (pnpm-resolved) had drifted off the committed `bun.lock` — produced a false esbuild "Host version mismatch" service crash AND a false-positive 30-test TopNav Router-context cascade across 6 files, unrelated to this task (TopNav.tsx last touched 06-30/07-02, weeks before this fix). `bun install --frozen-lockfile` (CI-parity, matches `.github/workflows/ci.yml`) made both vanish — confirms env drift, not a code regression.
+- Post-reinstall: targeted 6/6 new unit tests GREEN; full suite 2183 pass/2 fail (exact same pre-existing QUE-TOOLTIP failures the 07-29 RAW-verify already confirmed unrelated); tsc clean; mock-guard PASS.
+- Live `:3001`: `docker inspect` Created=2026-07-24 (predates this 07-29 commit); `curl /dashboard` shows no freshness/stale markup — PENDING-REBUILD deploy-gap still open, same class as sibling rows, ops-owned not a code defect.
+**why-decision:** APPROVED, DONE_VERIFIED. Code fix genuinely correct + independently re-verified live (tests/tsc/mock-guard/backend field), not rubber-stamped from prose. Only outstanding gap (container rebuild) is ops-owned, explicitly out of this row's scope per task framing.
+**why-change:** New finding vs. 07-29 note — host `node_modules`/`bun.lock` drift was masking 30 unrelated failures as false regressions; flagged separately (bug channel), not folded into this verdict.
