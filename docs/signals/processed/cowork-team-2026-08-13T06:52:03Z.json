@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-13T06:52:03Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-13T06:51:56Z",
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "SLOTS_FIRED",
+    "reason": "spawned",
+    "nominal_tick": "06:45",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 2,
+    "note": "single-slot fire, stale_warning streak=17, 2 bridged commit-sweep-guard rows (to:po) still NEW, left unrouted per drain-scope rule"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-13T06:52:03Z",
+  "_processed": {
+    "fingerprint": "c7fc83b397c08383a8612a7f5a4412242c428ef455031e888387b30aa505fb5d",
+    "processedAt": "2026-08-13T07:20:45Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

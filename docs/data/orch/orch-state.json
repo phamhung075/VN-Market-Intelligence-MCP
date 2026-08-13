@@ -5,8 +5,8 @@
     "last_linecount": 38,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786546355,
-      "last_linecount": 63
+      "last_mtime": 1786605685,
+      "last_linecount": 35
     }
   },
   "decision_journal": [
@@ -19529,7 +19529,7 @@
         "last_served_tick": "2026-08-12T16:53:15Z"
       }
     },
-    "_updated_at": "2026-08-13T06:56:07Z",
+    "_updated_at": "2026-08-13T07:20:45Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -22407,6 +22407,124 @@
         },
         "createdAt": "2026-08-13T04:08:48Z",
         "drained_at": "2026-08-13T06:52:31Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "32e2414ca044d39517488f6fd7721c652654133dffd089d4f6d1422ff351f30e",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=false prior_warns=0 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-13T06:58:55Z",
+        "drained_at": "2026-08-13T07:20:45Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c7fc83b397c08383a8612a7f5a4412242c428ef455031e888387b30aa505fb5d",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-13T06:52:03Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "legacy",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-13T06:51:56Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "SLOTS_FIRED",
+          "reason": "spawned",
+          "nominal_tick": "06:45",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 2,
+          "note": "single-slot fire, stale_warning streak=17, 2 bridged commit-sweep-guard rows (to:po) still NEW, left unrouted per drain-scope rule"
+        },
+        "createdAt": "2026-08-13T06:52:03Z",
+        "drained_at": "2026-08-13T07:20:45Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "73075abb309ed7144546623bab9e5167faafe38d57115c858129900ca55e59f0",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-13T07:06:27Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "legacy",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-13T07:06:19Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "SLOTS_FIRED",
+          "reason": "spawned",
+          "nominal_tick": "07:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 27,
+          "note": "single-slot fire, stale_warning streak BROKE this tick (17 consecutive true -> false), pressure-state.json now fresh as of 07:06:22Z"
+        },
+        "createdAt": "2026-08-13T07:06:27Z",
+        "drained_at": "2026-08-13T07:20:45Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-08-06T07:01:22Z",
+    "fire_time": "2026-08-13T07:06:27Z",
     "matched_slots": [
       "alert-commander-market"
     ],
@@ -16,10 +16,10 @@
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 2,
+    "drift_min": 6,
     "errors": [],
     "pressure_mode": "legacy",
-    "calendar_status": "open",
+    "calendar_status": "unknown",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
@@ -30,25 +30,25 @@
     "cadence_minutes": {
       "alert-commander-market": null
     },
-    "last_fired_timestamp": "2026-08-06T06:59:49Z",
+    "last_fired_timestamp": "2026-08-13T07:06:19Z",
     "last_fired_slots": [
       "alert-commander-market"
     ],
     "last_fired_write_errors": null,
-    "classification": "FIRE",
+    "classification": "SLOTS_FIRED",
     "reason": "spawned",
-    "nominal_tick": "06:45",
+    "nominal_tick": "07:00",
     "leader_lock": "acquired",
-    "dev_head": "in_progress",
-    "devq": 2,
-    "signal_backlog": 7,
-    "note": "pressure-state.json stale (~27min > 20min threshold) -- legacy cron fallback, no suppression; single slot alert-commander-market spawned normally."
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 27,
+    "note": "single-slot fire, stale_warning streak BROKE this tick (17 consecutive true -> false), pressure-state.json now fresh as of 07:06:22Z"
   },
   "priority": "low",
-  "createdAt": "2026-08-06T07:01:22Z",
+  "createdAt": "2026-08-13T07:06:27Z",
   "_processed": {
-    "fingerprint": "b2dce41998e96a8a77076edc81e8d22fe044aef88c49a6ae09cb398661541e6b",
-    "processedAt": "2026-08-06T07:12:05Z",
+    "fingerprint": "73075abb309ed7144546623bab9e5167faafe38d57115c858129900ca55e59f0",
+    "processedAt": "2026-08-13T07:20:45Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
