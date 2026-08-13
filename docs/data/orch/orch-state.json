@@ -137,34 +137,6 @@
     "archive": [],
     "rows": [
       {
-        "id": "sys-20260812T173720-69e0",
-        "ts": "2026-08-12T17:37:20Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "memory_pressure",
-        "summary": "rag-service-1 A-30: sustained high memory 96.52% — loss of reclamation",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T17:30Z",
-        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
-      },
-      {
-        "id": "sys-20260812T173729-22bd",
-        "ts": "2026-08-12T17:37:29Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "memory_pressure",
-        "summary": "pdf-extractor-1 A-30: sustained high memory 94.49% — VmHWM pinned at cap",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T17:30Z",
-        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30"
-      },
-      {
         "id": "bca-20260812T180708Z",
         "ts": "2026-08-12T18:07:08Z",
         "from": "bctc-analyst",

@@ -10032,6 +10032,76 @@
           "evidence_commit": "9e9389089d712b12c08d95380187b487b32f8a55"
         }
       }
+    },
+    {
+      "id": "FACTORY-GUARD-CI-RAWVERIFY-IMPL",
+      "type": "SPRINT-S",
+      "title": "Implement rebuild-raw-verify-hook CI guardrail (pre-push blocking check + CI backstop job)",
+      "status": "DONE_VERIFIED",
+      "priority": "P2",
+      "size": "S",
+      "zone": "cross-service/",
+      "epic": "FACTORY-MAINTAINABILITY-2026-06",
+      "cluster": "ci-regression-prevention",
+      "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-rebuild-raw-verify-hook",
+      "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md#3-guardrail-design--zero-tolerance-going-forward-no-baseline-different-reasoning-than-size-lints-grandfather",
+      "dev_agent": "developer",
+      "next_agent": "pm",
+      "parent_task": "FACTORY-GUARD-CI-rebuild-raw-verify-hook",
+      "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md",
+      "note": "files: scripts/audits/rebuild-raw-verify-check.sh (new, <base-sha> <head-sha> positional args, zero-tolerance, no baseline file), scripts/git-hooks/pre-push (extend: call the new script inside the existing CODE_TOUCHING_REGEX block, same fail-open-on-diff-error posture as the tsc check), .github/workflows/ci.yml (add rebuild-raw-verify-hook backstop job), docs/policies/dev-standards.md (CANONICAL pointer + cross-reference under PUSH-AUTONOMY-1 §5), scripts/audits/rebuild-raw-verify-check.test.sh (new smoke test: trigger-path+field-match with no attestation FAILs — reproduce e3386bdfa shape as a synthetic fixture; same diff with a RAW-verify token in the range commit message PASSes; same diff with a raw-verify-allow: inline annotation PASSes; a diff touching only non-trigger paths, or trigger paths with no metric-field-name line, PASSes trivially). EXPLICITLY OUT OF SCOPE: no change to PUSH-AUTONOMY-1 §5 PO-mint-task requirement; no board-state-aware check of whether a VERIFY-*-REALDATA task was actually minted (deferred, documented enhancement). approach: trigger fires when a file under a DB-write/route-serving DDD layer (apps/*/src/infrastructure/**, apps/*/src/interface/**, apps/*/pkg/interface/http/**, apps/*/pkg/infrastructure/**) has an added line matching the metric-mask-lint sibling field regex (confidence|score|impact|magnitude|probability, case-insensitive). On trigger, require ONE of: git log <base>..<head> --format=%B contains raw-verify|raw verified|realdata (case-insensitive); OR the range touches docs/agent-memory/decisions/** or reports/TASK_REPORT_*.md with an added line matching the same token; OR an inline raw-verify-allow: <reason> annotation on the triggering line. Wire primary check into scripts/git-hooks/pre-push (this repo has no PR/branch-protection to gate on — direct push to main is the real merge gate, confirmed live: gh pr list shows exactly 1 PR ever, closed unmerged, and branch protection is 404); wire secondary backstop into ci.yml running the same script against github.event.before..github.sha for visibility when the local hook is bypassed. dod: hook blocks a synthetic un-attested trigger-path push locally; CI job mirrors the same verdict on github.event.before..github.sha; existing doc-only-push fast-skip in pre-push unaffected; smoke test covers all 4 cases (fail/pass-commit-msg/pass-annotation/pass-no-trigger); CI green.",
+      "created_at": "2026-07-24T20:30:58Z",
+      "created_by": "architect",
+      "updated_at": "2026-08-13T16:28:00Z",
+      "promoted_at": "2026-07-30T03:17:20Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+      "claimed_at": "2026-08-13T16:23:59Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "entered_review_at": "2026-07-30T03:32:16Z",
+      "review_note": "New scripts/audits/rebuild-raw-verify-check.sh <base-sha> <head-sha> (zero-tolerance, forward-only diff-range attestation check, no baseline -- mechanizes PUSH-AUTONOMY-1 §5 post-push REAL-DATA verify at the immediately-checkable textual-attestation layer; at design time exactly 2 VERIFY-*-REALDATA rows had ever existed across 54 serving-code commits since §5 was pinned, concrete miss e3386bdfa shipped zero attestation). Trigger composes the two already-designed sibling primitives: a file under a DB-write/route-serving DDD layer (apps/*/src/infrastructure/**, apps/*/src/interface/**, apps/*/pkg/interface/http/**, apps/*/pkg/infrastructure/**) gains an ADDED line matching metric-mask-lint.sh own field regex (confidence|score|impact|magnitude|probability), reused verbatim. Requires ONE of a commit-message RAW-verify/REALDATA token (global), the same token in an added docs/agent-memory/decisions/**|reports/TASK_REPORT_*.md line (global), or an inline raw-verify-allow: <reason> annotation on the triggering line or the line immediately preceding it (per-trigger-point, mirrors metric-mask-allow:/size-justification: idiom). Deviation (verify-live): colocated test files inside these trigger layers (confirmed live via find -- apps/mcp-server/src/infrastructure/**/__tests__/*.test.ts, apps/*/pkg/infrastructure|interface/http/*_test.go) are excluded from the trigger corpus, same exclusion idiom metric-mask-lint.sh already applies to its own scan -- a bare test assertion would otherwise fire on nearly every infra/interface test edit. Wired PRIMARY/blocking into scripts/git-hooks/pre-push existing CODE_TOUCHING_REGEX-gated block (same fail-open-on-diff-error posture as the tsc check); SECONDARY/backstop rebuild-raw-verify-hook job in .github/workflows/ci.yml (fetch-depth: 0, the only job needing full history) against github.event.before..github.sha. CANONICAL pointer + PUSH-AUTONOMY-1 §5 cross-reference added to dev-standards.md. New scripts/audits/rebuild-raw-verify-check.test.sh: 9/9 PASS (all 4 named DoD cases -- trigger+no-attestation FAILs, commit-msg/inline-annotation/non-trigger-path all PASS -- plus bonus coverage: decisions-journal attestation, trigger-path-no-field-match, colocated-test exclusion, usage-error exit 2, zero-SHA fail-open); manually verified against 6 disposable scratch-git-repo scenarios before writing the permanent test. No apps/ TS/Go source touched (zone=cross-service/, pure bash+yaml+md) -- bun test/tsc structurally N/A. shellcheck clean on all 3 touched shell files. YAML validated. EXPLICITLY OUT OF SCOPE (per board-row note): no change to PUSH-AUTONOMY-1 §5 PO-mint-task requirement itself; no board-state-aware check of whether a VERIFY-*-REALDATA task was actually minted (deferred, documented enhancement). Structural note: no MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) -- flipped this board row via scripts/orch-apply.sh myself (permitted, pure bash); could not release task:FACTORY-GUARD-CI-RAWVERIFY-IMPL or send Telegram -- coordinating dev-team session must pick that up. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S34. This closes the 7th and last ci-regression-prevention guardrail -- epic FACTORY-MAINTAINABILITY-2026-06 cluster ci-regression-prevention now complete. QA next.",
+      "qa_verified_by": "qa",
+      "qa_verified_at": "2026-08-13T16:27:28Z",
+      "commit_sha": "127c4a597e0dd40a597589695e7ec3ed29172d88",
+      "status_note": " [QA] Review Record (direct-commit verify, 2026-08-13T16:27:28Z): APPROVED. Commits 127c4a597 (primary) + 654181692 (follow-up fix, ATTEST_ERE hyphenated-past-tense) both confirmed ancestors of main HEAD; git show --stat matches all 5 claimed files. Independently re-ran rebuild-raw-verify-check.test.sh live: 12/12 PASS (not stale 9/9 -- 3 extra tests are from the separate later fix commit; all 9 originally-claimed cases individually confirmed present+passing). shellcheck clean on all 3 shell files (rebuild-raw-verify-check.sh, .test.sh, pre-push); ci.yml YAML-parse-validated. Built an INDEPENDENT scratch-git-repo to exercise the script directly (not trusting the developer bundled test alone): unattested trigger commit -> exit 1 BLOCK; same + RAW-verify: msg token -> exit 0 PASS; doc-only diff -> exit 0 PASS; missing-args -> exit 2; zero-SHA -> exit 0 fail-open -- all matched claims exactly. Confirmed pre-push wiring nested inside existing CODE_TOUCHING_REGEX block (doc-only fast-skip unaffected); CI job has fetch-depth:0 + correct github.event.before/github.sha args. No apps/ files touched (git show --name-only both commits) -- bun test/tsc correctly N/A; mock-guard PASS (no production TS/JS source). Decision-journal entry for developer-S34 confirmed present. QA decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S109.",
+      "verification": {
+        "raw_probe": {
+          "tool": "bash scripts/audits/rebuild-raw-verify-check.test.sh + independent scratch-git-repo exercise",
+          "args": "commit range 127c4a597e0dd40a597589695e7ec3ed29172d88..654181692 vs main HEAD; synthetic scratch repo trigger/attest/non-trigger/usage-error/zero-sha cases run directly against scripts/audits/rebuild-raw-verify-check.sh",
+          "live_value_observed": "12/12 PASS in bundled test.sh; independent scratch-repo runs: unattested-trigger=exit1, attested=exit0, doc-only=exit0, usage-error=exit2, zero-sha=exit0 (all match claimed behavior); shellcheck 0 findings x3 files; YAML valid; 0 apps/ files touched",
+          "observed_at": "2026-08-13T16:27:28Z"
+        }
+      }
+    },
+    {
+      "id": "FIX-VNINDEX-CACHE-STARTUP-PURGE",
+      "title": "vn_index_cache PURGED on mcp-server startup + refresh is market-hours-only -> any off-hours restart strands cache=0 until next Mon open. RECURRING: prior FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (DONE, never done_verified) framed it as a refresh-path bug and did NOT close the root.",
+      "type": "FIX",
+      "priority": "P2",
+      "status": "DONE_VERIFIED",
+      "zone": "apps/mcp-server/",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VNINDEX-CACHE-STARTUP-PURGE",
+      "dev_agent": "dev-mcp-server",
+      "next_agent": "qa",
+      "claimed_at": "2026-08-13T16:51:09Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "entered_review_at": "2026-07-30T04:10:09Z",
+      "updated_at": "2026-08-13T16:56:26Z",
+      "updated_by": "qa",
+      "review_note": "RAW-verified live BEFORE coding: board hypothesis (\"purged on startup + market-hours-only refresh\") was WRONG — zero purge code anywhere (exhaustive grep + full git history). Real root cause: live market.db still carries the Sprint-1922b orphan vn_index_cache table (id/snapshot_json/source/fetched_at/expires_at/created_at, abandoned 1842a design, retired-not-dropped, commit b50ef1777). FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH (ac8ad6c78, 2026-06-20) reused the same table name via CREATE TABLE IF NOT EXISTS, which silently no-ops against it — every upsertVnIndexCache() write has failed with \"table vn_index_cache has no column named code\" on every tick since 2026-06-20 (docker-logs-confirmed; sqlite_sequence proves the orphan's AUTOINCREMENT was never used, 0 rows ever). Fix: initMarketDataTables() now detects the legacy/orphan shape (no code column) and DROPs it before the CREATE — safe (0 rows ever, 0 current readers/writers, already deprecated by its own retirement commit). Runs at DB-init (every startup) — the writer/startup path, refresh cron untouched. New FIX-VNINDEX-CACHE-STARTUP-PURGE.test.ts (4/4 pass, reproduces the live orphan shape). LIVE verification: single-service rebuild+restart of the real mcp-server-1 container against the real named-volume market.db — pre-fix 0 rows/legacy schema; immediately post-restart (before any cron tick) schema already migrated; next tick (04:00:03Z) wrote the first successful row in this table's ENTIRE history (VNINDEX 1726.38), zero upsert-failed warnings since. Commit 998ad9b44. tsc clean, targeted+neighbor suites green (schema-slices 78/78, freshness-SLA x5 64/64, EMPTY-REFRESH-PATH 5/5), toolCount=184/cronJobCount=88 unchanged, local :memory: boot health 200 + dashboards 200. Deliberately did NOT perform a 2nd live restart for the literal row-survives-restart leg: it surfaced an ACTIVE occurrence of the already-known-recurring FIX-SQLITE-DOCKER-VIRT-CORRUPTION class (docs/incidents/2026-07-13-sqlite-db-corruption-restart-loop.md) hitting daily_ohlcv/cron_job_runs/system_logs/pdf_extracted_text — a 2nd deliberate restart risked compounding a live corruption incident for a leg already covered by code-level proof (no purge path exists once migrated; DROP only fires on the now-permanently-absent legacy shape). Filed the corruption finding separately as FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730 (P0, owner=ops) — needs immediate ops action, NOT part of this row's scope. Structural note: no MCP/gateway tool grant this session — flipped this board row via scripts/orch-apply.sh directly (permitted, pure bash); could not release task:FIX-VNINDEX-CACHE-STARTUP-PURGE or send_telegram — coordinating dev-team session must pick both up. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S25. || [QA] Review Record (direct-commit verify) 2026-08-13T16:55:12Z: APPROVED, DONE_VERIFIED. Commit 998ad9b44 confirmed on main ancestry (git merge-base --is-ancestor OK); git show --stat matches exactly 2 claimed files (new FIX-VNINDEX-CACHE-STARTUP-PURGE.test.ts, schema-market-data.ts). Diff read directly: initMarketDataTables() runs PRAGMA table_info(vn_index_cache) before CREATE TABLE IF NOT EXISTS, DROPs only when the table exists AND lacks the code column (legacy/orphan shape) -- matches the claimed mechanism exactly, not a paraphrase. Re-ran FIX-VNINDEX-CACHE-STARTUP-PURGE.test.ts fresh: 4/4 pass (VSP-1..4), independently confirmed live -- VSP-4 specifically proves re-running init against an already-migrated table with a live row never re-drops it (code-level proof the DROP path is permanently closed post-migration). Mechanism claim (orphan-table name collision shadowing CREATE TABLE IF NOT EXISTS) cross-checked against real git history, not the commit's own prose: b50ef1777 (2026-05-16, Sprint-1922b) retired the orphan with a comment only -- confirmed NO DROP statement in that diff, table left physically present; ac8ad6c78 (2026-06-20, FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH) added CREATE TABLE IF NOT EXISTS for the new code-keyed shape, explaining why its own :memory: test suite always passed (fresh DB, no orphan) while every live named-volume write since failed -- fully plausible and correctly diagnosed, not just a plausible-sounding story. tsc clean (0 errors); mock-guard.sh PASS on schema-market-data.ts; DDD/security greps clean. Neighbor suites independently re-run, matched claimed counts exactly: 1527-schema-slices.test.ts 78/78, FIX-VNINDEX-CACHE-EMPTY-REFRESH-PATH.test.ts 5/5, 5-file freshness-SLA set 64/64. Separately-filed FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730 row independently confirmed genuine, not fabricated: docs/data/orch/archive/2026-07.json, created_by=dev-mcp-server, created_at=2026-07-30T04:10:09Z, source cites this exact task's live-restart verification window (03:58-04:05Z), status=DONE_VERIFIED (resolved same day 08:40:52Z after a corrected non-destructive .recover salvage per docs/incidents/2026-07-30-sqlite-docker-virt-corruption-fix-permanent.md) -- narrative, timestamps and commit trail all line up. DoD judgment call (verification_gate in backlog-detail.json was written under the now-refuted 'purge on startup' hypothesis and literally asks for an OFF-HOURS restart-survival leg): accepted code-level equivalent proof (VSP-4 + the single live restart already performed, confirming correct migration pre-cron-tick) in place of a second live restart, given the second restart was deliberately skipped for a genuine, corroborated, concurrently-active P0 corruption incident -- compounding a live corruption event to chase one already-covered test leg would have been the wrong call. Own QA DJ sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S110. No task_release/send_telegram called -- no MCP gateway tool bound this session; dispatcher's finally-block + TTL(3600s) expiry is the authoritative release path per INV-GATEWAY-1.",
+      "qa_verified_at": "2026-08-13T16:55:12Z",
+      "qa_verified_by": "qa",
+      "commit_sha": "998ad9b44",
+      "verification": {
+        "raw_probe": {
+          "tool": "git (merge-base --is-ancestor / show --stat / show diff) + bun test + bun tsc --noEmit + mock-guard.sh + DDD/security greps + jq board cross-check",
+          "args": {
+            "commit_verified": "998ad9b44"
+          },
+          "live_value_observed": "ancestor=yes; git show --stat = exactly 2 claimed files; DROP fires only when vn_index_cache lacks code column (PRAGMA table_info check read directly); FIX-VNINDEX-CACHE-STARTUP-PURGE.test.ts 4/4 pass live (VSP-1..4); b50ef1777 diff confirmed comment-only no DROP; ac8ad6c78 diff confirmed CREATE TABLE IF NOT EXISTS added; tsc 0 errors; mock-guard PASS; neighbor suites 78/78 + 5/5 + 64/64 all matched claim; FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730 row confirmed present in archive/2026-07.json status=DONE_VERIFIED",
+          "observed_at": "2026-08-13T16:55:12Z"
+        }
+      }
     }
   ],
   "closed_sprints": [
@@ -15808,6 +15878,79 @@
       "triaged_at": "2026-08-12T17:00:39Z",
       "triaged_by": "po",
       "disposition": "FOLD -> FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (REVIEW). WARN->CRITICAL crossing is a threshold artifact of a flat 94.5-95.4% oscillating band, not new physics: live 95.00% at 17:00Z with 40h uptime, RestartCount=1, OOMKilled=false. Severity escalation recorded as corroboration on the existing row; a second row would duplicate an open REVIEW-lane item."
+    },
+    {
+      "id": "cj-20260812T163125Z",
+      "ts": "2026-08-12T16:31:25Z",
+      "from": "code-janitor",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+      "severity": "LOW",
+      "status": "triaged",
+      "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-12.json",
+      "triaged_at": "2026-08-12T17:00:39Z",
+      "triaged_by": "po",
+      "disposition": "FOLD -> FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (BACKLOG) + PO DECISION RENDERED: RETIRE team-tool-recheck permanently (do not rebuild as a local cron) — no live reader in 7 weeks, and tool-health is already covered by system-auditor Tier-1/Tier-2. The signal is itself the hardcoded string that row exists to delete."
+    },
+    {
+      "id": "sys-20260812T163525-0051",
+      "ts": "2026-08-12T16:35:25Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "microservice_degraded",
+      "summary": "A-30 WARN: vn-market-intelligence-mcp-pdf-extractor-1 sustained high memory 94.52% (>93% sustained threshold)",
+      "severity": "WARN",
+      "status": "triaged",
+      "payload_ref": null,
+      "provenance": "detector",
+      "audit_cycle_tag": "cron:auditor-t1:2026-08-12T16:30Z",
+      "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30",
+      "triaged_at": "2026-08-12T17:00:39Z",
+      "triaged_by": "po",
+      "disposition": "FOLD -> FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (REVIEW). Same container as sys-20260812T160538-57ef under a different dedup_key spelling (vn-market-intelligence-mcp-pdf-extractor-1:A-30 vs pdf-extractor:A-30) — DEDUP-KEY SPELLING DRIFT on one physical service, flagged so it is not counted as two threads. 94.52% is not a recovery from 95.32%, it is noise inside a flat band."
+    },
+    {
+      "id": "sys-20260812T170518-5265",
+      "ts": "2026-08-12T17:05:18Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "microservice_degraded",
+      "summary": "pdf-extractor A-30 sustained memory 94.97% (loss of reclamation)",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null,
+      "provenance": "detector",
+      "audit_cycle_tag": "cron:auditor-t1:2026-08-12T17:00Z",
+      "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30"
+    },
+    {
+      "id": "sys-20260812T173720-69e0",
+      "ts": "2026-08-12T17:37:20Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "memory_pressure",
+      "summary": "rag-service-1 A-30: sustained high memory 96.52% — loss of reclamation",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null,
+      "provenance": "detector",
+      "audit_cycle_tag": "cron:auditor-t1:2026-08-12T17:30Z",
+      "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
+    },
+    {
+      "id": "sys-20260812T173729-22bd",
+      "ts": "2026-08-12T17:37:29Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "memory_pressure",
+      "summary": "pdf-extractor-1 A-30: sustained high memory 94.49% — VmHWM pinned at cap",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null,
+      "provenance": "detector",
+      "audit_cycle_tag": "cron:auditor-t1:2026-08-12T17:30Z",
+      "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30"
     }
   ],
   "backlog_detail": [],
