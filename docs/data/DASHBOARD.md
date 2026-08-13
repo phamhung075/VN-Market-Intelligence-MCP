@@ -1810,3 +1810,15 @@
 **Mitigation:** Monitor rag-service memory trend across next 3-4 Tier-1 cycles; consider memory profile/heap dump analysis if trend persists or reaches 98%+
 
 ---
+
+## Anomaly: A-30 · rag-service-1 memory discontinuity (crash cliff >40pp)
+**Severity:** CRITICAL | **Date:** 2026-08-13 | **Status:** OPEN
+**Location:** rag-service-1
+**Details:** A-30 deep-probe detected >40pp memory discontinuity (89.61% -> 36.67%) indicating aggressive GC. Sustained baseline 88-90% over 3 consecutive cycles indicates elevated memory pressure pattern.
+**Impact:** Container experiencing high memory pressure; potential for OOM events if baseline continues to rise
+**Root cause:** Workload change or memory allocation pattern shift; requires investigation
+**Zone owner:** data-engineer
+**Last reported:** 2026-08-13T13:17:43Z (signal sys-20260813T131728-61d3, system-auditor -> po, dedup_key=microservice_degraded:rag-service-1:A-30, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
