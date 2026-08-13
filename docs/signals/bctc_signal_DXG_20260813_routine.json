@@ -1,0 +1,46 @@
+{
+  "ticker": "DXG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Bất động sản dân dụng — phát triển dự án nhà ở, đô thị (Đất Xanh Group)",
+  "customer": "Người mua nhà cá nhân, nhà đầu tư thứ cấp thị trường BĐS dân dụng VN",
+  "ops": "DATA-GAP — get_bctc_full trả về 'Chưa có dữ liệu BCTC' (24 chu kỳ liên tiếp, kể cả kỳ này). Chỉ số vận hành lấy từ get_sector_comparison (nguồn giá/thị trường): PE 66,5 (premium +312% so trung vị ngành 16,1), ROE 1,9% (dưới trung vị ngành 7,3%). Không thể xác nhận biên lợi nhuận/dòng tiền do thiếu trích xuất BCTC gốc.",
+  "mgmt": "Không thể đánh giá track record quản trị kỳ này do thiếu dữ liệu BCTC gốc. Q2-2026 QUÁ HẠN (hạn 30/07/2026).",
+  "cycle_id": "20260813-2100",
+  "slot": "bctc-analyst-slot-3",
+  "valuation": {
+    "pe": 66.5,
+    "roe_pct": 1.9,
+    "pb": 1.2,
+    "sector_pe_median": 16.1,
+    "sector_roe_median_pct": 7.3,
+    "earning_yield_pct": 1.504,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pp": -3.50,
+    "verdict": "AVOID"
+  },
+  "kinhdich": {
+    "que": "Ky Te (63)",
+    "xu_huong": "THUAN LOI",
+    "khuyen_nghi": "GIU",
+    "do_tin_cay_pct": 100
+  },
+  "esc_gate": {
+    "esc_1_accounting_manipulation": "unevaluable_no_bash_glob",
+    "esc_2_balance_sheet": "unevaluable — no BCTC data extracted",
+    "esc_3_ocf_ni_divergence": "unevaluable — no BCTC data extracted",
+    "esc_4_related_party_nonop": "unevaluable — no BCTC data extracted",
+    "esc_5_refine_confidence": "unevaluable — no BCTC data extracted"
+  },
+  "data_quality": {
+    "status": "Chưa có dữ liệu BCTC — 24th+ consecutive routine cycle unresolved",
+    "known_open_item": "docs/signals/bctc-analyst-20260813T001500Z.json (data-quality anomaly, cash-flow-anomaly Q1-2026 operating_cf overflow, from c162) — still PENDING dev-team pickup, not re-emitted this cycle to avoid spam"
+  },
+  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+  "legal_risk": "1 tín hiệu rủi ro pháp lý toàn thị trường (điều tra ngành vàng bạc) — không liên quan DXG",
+  "regime": "NEUTRAL (fallback — macro_snapshot không có trường Global Liquidity)",
+  "carry_regime": "NEUTRAL (1.37pp)",
+  "generated_at": "2026-08-13T21:20:00Z"
+}
