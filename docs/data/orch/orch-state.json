@@ -92,11 +92,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-13T12:55:54Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FE-PG-INTEL-FRESH-FIX",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 1 row(s), highest-ranked FE-PG-INTEL-FRESH-FIX — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-13T12:59:08Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13229,6 +13230,37 @@
             "observed_at": "2026-08-12T16:37:00Z"
           }
         }
+      },
+      {
+        "id": "FE-PG-INTEL-FRESH-FIX",
+        "type": "FIX",
+        "title": "Add page-level freshness/staleness indicator to /dashboard/intel (AI Bulletin Hub) — only per-item timestamps, no page-level stale flag",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/frontend/",
+        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
+        "source": "quality-audit-frontend-page-coverage-20260724",
+        "owner": "dev-frontend",
+        "next_agent": "pm",
+        "check_id": "FE-PG-INTEL-FRESH",
+        "status_note": "FE-PG-INTEL-FRESH re-check returns PASS || [QA] Review Record (direct-commit verify): Re-verified independently, not from prose. Commit eddeb7cbd confirmed real, on main ancestry; git show --stat matches claimed file set exactly (dashboard.intel.tsx FreshnessBadge/useFreshnessRevalidator(\"daily\") wiring + new FE-PG-INTEL-FRESH-FIX-dashboard-intel-loader.test.ts, 6 cases). Backend data_asof field confirmed live in source (marketDigestHandler.ts:71,169). Targeted 6/6 new unit tests GREEN; full suite 2183 pass/2 fail/2185 total (exact same pre-existing QUE-TOOLTIP/QUE-REFERENCE-PAGE failures already confirmed unrelated in sibling verifies, zero overlap with dashboard.intel/fetchIntelData). tsc --noEmit clean; mock-guard.sh PASS. DEPLOY-GAP RE-CHECKED PER TASK INSTRUCTIONS: live :3001 container docker-inspect Created=2026-07-24T18:02:36Z (predates this 2026-07-29 fix commit); curl localhost:3001/dashboard/intel shows no FreshnessBadge/\"Cap nhat luc\" markup in served HTML -- PENDING-REBUILD unresolved, same class as sibling FE-PG-_INDEX-FRESH-FIX/FE-PG-BCTC-FRESH-FIX rows, ops-owned deploy gap not a code defect. VERDICT: APPROVED, DONE_VERIFIED.",
+        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-INTEL-FRESH, WARN). GAP: dashboard.intel renders only per-item ts (ClientTimestamp); no <FreshnessBadge> / page-level staleness SLA on the AI bulletin hub, so old bulletins are not flagged as stale. Ref: project_frontend_freshness_transparency. AC: FE-PG-INTEL-FRESH re-check returns PASS (page-level freshness/staleness indicator visible).",
+        "created_at": "2026-07-24T17:22:24Z",
+        "created_by": "po",
+        "updated_at": "2026-08-13T13:04:05Z",
+        "review_note": "dev-frontend: FreshnessBadge + useFreshnessRevalidator(\"daily\") wired onto dashboard.intel.tsx (AI Bulletin Hub), sourced from the same GET /api/market-digest data_asof field already fixed on the immediately-prior sibling task (FE-PG-_INDEX-FRESH-FIX, dashboard._index.tsx — identical endpoint, identical naive-SQLite string, identical parseDate normalization, no forked logic). fetchIntelData(origin) (pre-existing named test helper) now threads data_asof through instead of discarding it. Per-item ts/ClientTimestamp unchanged. Third sibling in the FE-PG-*-FRESH-FIX family — pure pattern replication. 6 new unit tests GREEN (naive-space normalization / already-ISO passthrough / absent+null honest-NULL / 502+network-error no-regression); full vitest 2183/2185 pass (2 pre-existing QUE-TOOLTIP fails, confirmed unrelated — different Kinh Dich codegen test file, zero import overlap with this route); tsc clean; full Playwright suite (all 3 spec files) 7/7 pass via PLAYWRIGHT_PORT=3031 throwaway dev server (smoke 1/1, render-check 3/3, quality-audit-lastverified 3/3) — none related to this change. Manually confirmed live SSR HTML on a second throwaway server (PORT=3032) against the real, unmodified mcp-server: green bg-green-100/bg-green-500 FreshnessBadge + \"Cập nhật lúc\" renders next to the item count and ClientTimestamp. PENDING-REBUILD: live :3001 container needs ops rebuild to serve this fix — code+behavior proven via throwaway dev server, container deploy is ops-gated, out of dev-frontend zone.",
+        "claimed_at": "2026-08-13T12:59:03Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "updated_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + vitest run (targeted+full) + tsc --noEmit + mock-guard.sh + docker inspect + curl",
+            "args": "commit eddeb7cbd; apps/frontend/app/routes/dashboard.intel.tsx + apps/frontend/app/__tests__/FE-PG-INTEL-FRESH-FIX-dashboard-intel-loader.test.ts; apps/mcp-server/src/interface/mcp/routes/marketDigestHandler.ts:71,169; docker inspect vn-market-intelligence-mcp-frontend-1; curl localhost:3001/dashboard/intel",
+            "live_value_observed": "commit on main ancestry, diff matches claim exactly; backend data_asof field live; targeted 6/6 unit tests GREEN; full suite 2183 pass/2 fail (same pre-existing QUE-TOOLTIP/QUE-REFERENCE, unrelated); tsc 0 errors; mock-guard PASS; frontend container Created=2026-07-24T18:02:36Z (predates fix commit), curl /dashboard/intel shows no freshness markup -- PENDING-REBUILD still open",
+            "observed_at": "2026-08-13T13:04:04Z"
+          }
+        }
       }
     ],
     "head": {
@@ -15479,16 +15511,16 @@
         "promoted_at": "2026-07-24T12:17:56Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-06T20:48:12Z",
+        "updated_at": "2026-08-13T12:59:48Z",
         "claimed_at": "2026-07-24T12:17:56Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
         "entered_review_at": "2026-07-24T12:28:33Z",
         "updated_by": "po (review-lane secondary-drain triage)",
         "review_note": "Split by seam per approach spec: capability_manifest.go 104L (types+loadManifest), capability_probe.go 130L (probeHealthEndpoint+mcp types+probeMcpTool, size-justified), capability_prober.go 191L (struct+cache+ProbeAll/capabilityFor/runProbe, size-justified). ct[:17] HasPrefix hardening landed. go build/vet/test 10/10 pkgs clean, gofmt clean, golangci-lint 0 issues, G12 sandbox primitive 14/14 + module 1/1 GREEN. Behavior-unchanged proven via sorted stripped-code diff (only delta = HasPrefix swap). Commit 9fad8d4ad (local main, not pushed). rebuild_required=true, rebuild-verify PENDING-OPS (PO-AUTHORIZED 2026-08-06 — NO user gate; the earlier USER-GATED wording is retired per permanent user directive 2026-08-01). Decision journal: docs/agent-memory/decisions/sprint-FACTORY-APIGW-split-capability-prober-dev-api-gateway.md",
-        "secondary_claimed_at": "2026-08-06T20:44:26Z",
+        "secondary_claimed_at": "2026-08-13T12:58:10Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "po",
-        "next_agent": "ops",
+        "secondary_dispatch_target": "ops",
+        "next_agent": "qa",
         "po_triage_at": "2026-08-06T20:47:03Z",
         "po_triage_verdict": "CODE-ACCEPTED / CLOSE-GATE-NOT-MET -> ops",
         "deploy_gate": "PO-AUTHORIZED",
@@ -15581,26 +15613,6 @@
         "status_note": "IMPLEMENTATION: Root cause confirmed -- docs/agents/system-auditor/flow/main.md:748-755 gates the agent-side Tier-2/3 heartbeat write out of Tier-1, but a 2026-07-29T06:08:22Z DEGRADED Tier-1 cycle wrote docs/data/auditor-tier1-last-healthy.json anyway; no authorizing step anywhere in the flow produced it (the block's own if already correctly excludes tier-1). Collapsed the file from {last_healthy_at, checks{6 keys}} to bare {last_healthy_at}, falsely advancing a healthy marker on a non-healthy cycle. A prose prohibition alone had already been tried and failed (2nd violation). FIX: (AC1) new CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER in docs/policies/dev-standards.md, cited from both writers (auditor-tier1-probe.sh header comment + system-auditor main.md Tier-2/3 Heartbeat Write section). (AC2/AC3) new scripts/git-hooks/pre-commit _check_auditor_heartbeat_shapes -- runs unconditionally before the pre-existing sweep-guard mode dispatch, never GIT_SWEEP_GUARD_MODE-gated: rejects (commit BLOCKED, loud stderr) any staged tier-1 write that is not the exact {last_healthy_at, checks:{docker_ps,health_3000,health_3001,disk,mem_creep,launchd_agents}, all PASS} shape, and any staged tier-2/3 write carrying a checks key at all -- converts the prose prohibition into a code-level, fail-loud guard. (AC4) main.md now states the resolved semantic split explicitly: tier-1 means system-confirmed-healthy, tier-2/3 means an-audit-completed regardless of verdict (fires every Tier-2/3 cycle by design, auditor-signal-loop-P1, load-bearing for the SKIP-SPAWN freshness gate in run_tiered_probe()). Judgment call: re-gating tier-2/3 on green was rejected (would starve the heartbeat on a persistently-tracked DEGRADED cycle and recreate the exact spawn-storm that P1 fix closed); renaming the files/field was rejected (would break FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL's already-planned OH-3.5 reads of these exact paths -- that row explicitly names this one as a sequencing prerequisite). Kept both filenames/fields; made shape (bare vs checks{}) the enforced structural signal distinguishing the two semantics. (AC5) live file repaired by actually running the authorized writer (bash scripts/agents-flow/auditor-tier1-probe.sh) rather than hand-editing -- genuine live ALL_GREEN read, full checks{} shape restored. (AC6) suppress_heartbeat NOT ported to Tier-1; AUDIT_TIER 2/3 gate at main.md:750 NOT dropped -- both directions explicitly rejected per the sibling row's .why_the_obvious_fixes_are_wrong field, read before implementing. VERIFICATION: new scripts/git-hooks/pre-commit-auditor-heartbeat.test.sh RED (3/6 fail pre-guard) -> GREEN (6/6 post-guard). No regressions: pre-existing pre-commit.test.sh 6/6, auditor-tier1-probe.test.sh 141/141, both scripts otherwise byte-identical to before this task. bash -n syntax-clean on the hook. Shell/JSON/MD only -- no apps/mcp-server/ TS touched, bun tsc/bun test not structurally applicable. Graphify incremental update: no Skill-tool/LLM-API-key path available to this spawned agent (same structural constraint as 2 prior sessions today) -- flagged in docs/WORK.md, not silently skipped. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S23.",
         "updated_by": "po/triage-20260808T1248Z",
         "po_live_recurrence_20260808T1248Z": "LIVE RECURRENCE, AND THIS TIME IT REACHED GIT. docs/data/auditor-tier1-last-healthy.json currently reads {last_healthy_at: '2026-08-08T12:05:10Z', checks: {... mem_creep: 'PASS' ...}} and was committed at 34521315f by router session 165f4245 on the good-faith premise (quoted from that commit message) that the value is 'a genuine last-all-6-checks-passed timestamp before the mem_creep FAILURE window began'. PO REFUTES THAT PREMISE ON RAW EVIDENCE, three independent ways: (1) the FAILURE window began no later than 2026-08-08T11:04Z — peer auditor cycle c48 (commit 76466302a) records rag-service-1 at 98.53% / 15MiB free / BELOW-FLOOR at that time — so 12:05:10Z is INSIDE the failure window, not before it; (2) PO re-ran the pre-gate read-only at 12:47Z via the documented HEARTBEAT_FILE_PATH=<scratch> seam and got verdict=FAILURE, detail 'mem_creep: ... vn-market-intelligence-mcp-rag-service-1(98.56%, 14.7MiB-free, BELOW-FLOOR(floor=40MiB))', with the container at RestartCount=0 / OOMKilled=false / healthy / StartedAt 2026-08-08T08:11:45Z — i.e. no restart between 11:04Z and now that could have produced a transient green at 12:05Z; (3) the shell pre-gate STRUCTURALLY CANNOT have written it: run_probe() gates _write_heartbeat on an EMPTY failures list, and _mem_container_acked() disqualifies the rag-service acked_memory entry twice over — headroom 15MiB < MEM_FLOOR_MIB=40 -> BELOW-FLOOR, and tracked_by=FU-RAG-DEPLOY-MEMORY reached DONE_VERIFIED at 10:59:52Z -> STALE-ACK. Therefore the 12:05:10Z stamp is an out-of-contract agent write on a DEGRADED cycle — exactly this row's defect — and it is now the committed record. IMPACT beyond this row's existing scope: the tier-1 cron freshness arm reads .last_healthy_at and spawns on age>60min, so a false stamp suppresses that arm for an hour (the verdict=FAILURE arm still fires, so this is degradation, not blindness). REMEDIATION IS NOT PO'S TO EXECUTE: hand-writing this file is explicitly forbidden (pre-commit hook scripts/git-hooks/pre-commit:119 names _write_heartbeat as the sole authorized writer, and the 2026-07-29 PO constraint on scripts/po-s151-tier1-probe-plane-divergence-triage.jq:83 says 'Do NOT hand-write docs/data/auditor-tier1-last-healthy.json'). Correct action, for router/ops: revert the file half of 34521315f so the field returns to its last genuinely-green value 2026-08-07T03:35:32Z (written by b30e533ce), which restores the honest >33h-stale reading and lets the freshness arm work. Do NOT re-stamp it forward by hand."
-      },
-      {
-        "id": "FE-PG-INTEL-FRESH-FIX",
-        "type": "FIX",
-        "title": "Add page-level freshness/staleness indicator to /dashboard/intel (AI Bulletin Hub) — only per-item timestamps, no page-level stale flag",
-        "status": "REVIEW",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/frontend/",
-        "sprint": "QUALITY-AUDIT-FRONTEND-COVERAGE",
-        "source": "quality-audit-frontend-page-coverage-20260724",
-        "owner": "dev-frontend",
-        "next_agent": "qa",
-        "check_id": "FE-PG-INTEL-FRESH",
-        "status_note": "FE-PG-INTEL-FRESH re-check returns PASS",
-        "note": "Quality-audit frontend page-coverage 2026-07-24 (FE-PG-INTEL-FRESH, WARN). GAP: dashboard.intel renders only per-item ts (ClientTimestamp); no <FreshnessBadge> / page-level staleness SLA on the AI bulletin hub, so old bulletins are not flagged as stale. Ref: project_frontend_freshness_transparency. AC: FE-PG-INTEL-FRESH re-check returns PASS (page-level freshness/staleness indicator visible).",
-        "created_at": "2026-07-24T17:22:24Z",
-        "created_by": "po",
-        "updated_at": "2026-07-29T18:26:36Z",
-        "review_note": "dev-frontend: FreshnessBadge + useFreshnessRevalidator(\"daily\") wired onto dashboard.intel.tsx (AI Bulletin Hub), sourced from the same GET /api/market-digest data_asof field already fixed on the immediately-prior sibling task (FE-PG-_INDEX-FRESH-FIX, dashboard._index.tsx — identical endpoint, identical naive-SQLite string, identical parseDate normalization, no forked logic). fetchIntelData(origin) (pre-existing named test helper) now threads data_asof through instead of discarding it. Per-item ts/ClientTimestamp unchanged. Third sibling in the FE-PG-*-FRESH-FIX family — pure pattern replication. 6 new unit tests GREEN (naive-space normalization / already-ISO passthrough / absent+null honest-NULL / 502+network-error no-regression); full vitest 2183/2185 pass (2 pre-existing QUE-TOOLTIP fails, confirmed unrelated — different Kinh Dich codegen test file, zero import overlap with this route); tsc clean; full Playwright suite (all 3 spec files) 7/7 pass via PLAYWRIGHT_PORT=3031 throwaway dev server (smoke 1/1, render-check 3/3, quality-audit-lastverified 3/3) — none related to this change. Manually confirmed live SSR HTML on a second throwaway server (PORT=3032) against the real, unmodified mcp-server: green bg-green-100/bg-green-500 FreshnessBadge + \"Cập nhật lúc\" renders next to the item count and ClientTimestamp. PENDING-REBUILD: live :3001 container needs ops rebuild to serve this fix — code+behavior proven via throwaway dev server, container deploy is ops-gated, out of dev-frontend zone."
       },
       {
         "id": "FACTORY-GUARD-CI-METRICMASK-IMPL",
@@ -19372,7 +19384,7 @@
         "last_served_tick": "2026-08-13T12:21:06Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-13T06:56:07Z"
+        "last_served_tick": "2026-08-13T12:57:30Z"
       },
       "drs": {
         "last_served_tick": "2026-08-13T07:23:13Z"
@@ -19384,7 +19396,7 @@
         "last_served_tick": "2026-08-13T11:25:20Z"
       }
     },
-    "_updated_at": "2026-08-13T12:54:09Z",
+    "_updated_at": "2026-08-13T12:57:30Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
