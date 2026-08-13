@@ -92,11 +92,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-13T15:52:09Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FACTORY-GUARD-CI-SHAREDPKG-IMPL",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 1 row(s), highest-ranked FACTORY-GUARD-CI-SHAREDPKG-IMPL — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-13T15:55:13Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -15495,10 +15496,10 @@
         "promoted_at": "2026-07-24T15:22:45Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-07T00:06:10Z",
+        "updated_at": "2026-08-13T15:54:31Z",
         "claimed_at": "2026-07-24T15:22:45Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "secondary_claimed_at": "2026-08-06T23:59:42Z",
+        "secondary_claimed_at": "2026-08-13T15:54:31Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "ops",
         "next_agent": "ops",
@@ -15541,34 +15542,6 @@
         "status_note": "IMPLEMENTATION: Root cause confirmed -- docs/agents/system-auditor/flow/main.md:748-755 gates the agent-side Tier-2/3 heartbeat write out of Tier-1, but a 2026-07-29T06:08:22Z DEGRADED Tier-1 cycle wrote docs/data/auditor-tier1-last-healthy.json anyway; no authorizing step anywhere in the flow produced it (the block's own if already correctly excludes tier-1). Collapsed the file from {last_healthy_at, checks{6 keys}} to bare {last_healthy_at}, falsely advancing a healthy marker on a non-healthy cycle. A prose prohibition alone had already been tried and failed (2nd violation). FIX: (AC1) new CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER in docs/policies/dev-standards.md, cited from both writers (auditor-tier1-probe.sh header comment + system-auditor main.md Tier-2/3 Heartbeat Write section). (AC2/AC3) new scripts/git-hooks/pre-commit _check_auditor_heartbeat_shapes -- runs unconditionally before the pre-existing sweep-guard mode dispatch, never GIT_SWEEP_GUARD_MODE-gated: rejects (commit BLOCKED, loud stderr) any staged tier-1 write that is not the exact {last_healthy_at, checks:{docker_ps,health_3000,health_3001,disk,mem_creep,launchd_agents}, all PASS} shape, and any staged tier-2/3 write carrying a checks key at all -- converts the prose prohibition into a code-level, fail-loud guard. (AC4) main.md now states the resolved semantic split explicitly: tier-1 means system-confirmed-healthy, tier-2/3 means an-audit-completed regardless of verdict (fires every Tier-2/3 cycle by design, auditor-signal-loop-P1, load-bearing for the SKIP-SPAWN freshness gate in run_tiered_probe()). Judgment call: re-gating tier-2/3 on green was rejected (would starve the heartbeat on a persistently-tracked DEGRADED cycle and recreate the exact spawn-storm that P1 fix closed); renaming the files/field was rejected (would break FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL's already-planned OH-3.5 reads of these exact paths -- that row explicitly names this one as a sequencing prerequisite). Kept both filenames/fields; made shape (bare vs checks{}) the enforced structural signal distinguishing the two semantics. (AC5) live file repaired by actually running the authorized writer (bash scripts/agents-flow/auditor-tier1-probe.sh) rather than hand-editing -- genuine live ALL_GREEN read, full checks{} shape restored. (AC6) suppress_heartbeat NOT ported to Tier-1; AUDIT_TIER 2/3 gate at main.md:750 NOT dropped -- both directions explicitly rejected per the sibling row's .why_the_obvious_fixes_are_wrong field, read before implementing. VERIFICATION: new scripts/git-hooks/pre-commit-auditor-heartbeat.test.sh RED (3/6 fail pre-guard) -> GREEN (6/6 post-guard). No regressions: pre-existing pre-commit.test.sh 6/6, auditor-tier1-probe.test.sh 141/141, both scripts otherwise byte-identical to before this task. bash -n syntax-clean on the hook. Shell/JSON/MD only -- no apps/mcp-server/ TS touched, bun tsc/bun test not structurally applicable. Graphify incremental update: no Skill-tool/LLM-API-key path available to this spawned agent (same structural constraint as 2 prior sessions today) -- flagged in docs/WORK.md, not silently skipped. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S23.",
         "updated_by": "po/triage-20260808T1248Z",
         "po_live_recurrence_20260808T1248Z": "LIVE RECURRENCE, AND THIS TIME IT REACHED GIT. docs/data/auditor-tier1-last-healthy.json currently reads {last_healthy_at: '2026-08-08T12:05:10Z', checks: {... mem_creep: 'PASS' ...}} and was committed at 34521315f by router session 165f4245 on the good-faith premise (quoted from that commit message) that the value is 'a genuine last-all-6-checks-passed timestamp before the mem_creep FAILURE window began'. PO REFUTES THAT PREMISE ON RAW EVIDENCE, three independent ways: (1) the FAILURE window began no later than 2026-08-08T11:04Z — peer auditor cycle c48 (commit 76466302a) records rag-service-1 at 98.53% / 15MiB free / BELOW-FLOOR at that time — so 12:05:10Z is INSIDE the failure window, not before it; (2) PO re-ran the pre-gate read-only at 12:47Z via the documented HEARTBEAT_FILE_PATH=<scratch> seam and got verdict=FAILURE, detail 'mem_creep: ... vn-market-intelligence-mcp-rag-service-1(98.56%, 14.7MiB-free, BELOW-FLOOR(floor=40MiB))', with the container at RestartCount=0 / OOMKilled=false / healthy / StartedAt 2026-08-08T08:11:45Z — i.e. no restart between 11:04Z and now that could have produced a transient green at 12:05Z; (3) the shell pre-gate STRUCTURALLY CANNOT have written it: run_probe() gates _write_heartbeat on an EMPTY failures list, and _mem_container_acked() disqualifies the rag-service acked_memory entry twice over — headroom 15MiB < MEM_FLOOR_MIB=40 -> BELOW-FLOOR, and tracked_by=FU-RAG-DEPLOY-MEMORY reached DONE_VERIFIED at 10:59:52Z -> STALE-ACK. Therefore the 12:05:10Z stamp is an out-of-contract agent write on a DEGRADED cycle — exactly this row's defect — and it is now the committed record. IMPACT beyond this row's existing scope: the tier-1 cron freshness arm reads .last_healthy_at and spawns on age>60min, so a false stamp suppresses that arm for an hour (the verdict=FAILURE arm still fires, so this is degradation, not blindness). REMEDIATION IS NOT PO'S TO EXECUTE: hand-writing this file is explicitly forbidden (pre-commit hook scripts/git-hooks/pre-commit:119 names _write_heartbeat as the sole authorized writer, and the 2026-07-29 PO constraint on scripts/po-s151-tier1-probe-plane-divergence-triage.jq:83 says 'Do NOT hand-write docs/data/auditor-tier1-last-healthy.json'). Correct action, for router/ops: revert the file half of 34521315f so the field returns to its last genuinely-green value 2026-08-07T03:35:32Z (written by b30e533ce), which restores the honest >33h-stale reading and lets the freshness arm work. Do NOT re-stamp it forward by hand."
-      },
-      {
-        "id": "FACTORY-GUARD-CI-SHAREDPKG-IMPL",
-        "type": "SPRINT-S",
-        "title": "Implement shared-package-import-check CI guardrail (baseline/ratchet script + workflow wiring)",
-        "status": "REVIEW",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-shared-package-import-check",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-shared-package-import-check.md#4-build-vs-plan--decomposed-not-self-implemented",
-        "dev_agent": "developer",
-        "next_agent": "qa",
-        "parent_task": "FACTORY-GUARD-CI-shared-package-import-check",
-        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-shared-package-import-check.md",
-        "note": "files: scripts/audits/shared-package-import-check.sh (new, --check/--update modes, baseline/ratchet), docs/data/shared-package-import-baseline.json (new, generated by --update, seeded with shared-types/shared-config/shared-db), .github/workflows/ci.yml (add shared-package-import-check job), docs/policies/dev-standards.md (CANONICAL pointer), scripts/audits/shared-package-import-check.test.sh (new smoke test: baseline entry passes, synthetic new zero-importer package NOT in baseline fails, a package with a real importer passes regardless of baseline membership, an advisory name-collision is emitted without failing --check). EXPLICITLY OUT OF SCOPE (reserved for FACTORY-SHARED-wire-or-prune-shared-packages, still BACKLOG): no edits to packages/shared-*/ contents, no new consumer wiring, no package deletion, no field reconciliation. approach: check 1 (blocking, baseline/ratchet) — for every packages/*/package.json with a @vn-market/-scoped name, grep repo for a real import/dependency reference; zero hits + baseline-listed = PASS; zero hits + not baseline-listed = FAIL (blocks new packages/primitives-shaped phantom packages); any real importer always PASS. check 2 (advisory only, non-blocking) — same-exported-symbol-name collision scan between packages/shared-*/index.ts and apps/**/*.ts (today: Alert/Signal/McpConfig), printed as ADVISORY lines, never fails --check; full AST structural diffing explicitly deferred (no TS AST tool wired into any bash-only audit script in this repo; regex field-diff would false-positive on reorder/JSDoc/optional-marker churn). --update run once to seed baseline from live state (3 current orphans: shared-types/shared-config/shared-db); wire job into ci.yml; add CANONICAL pointer cross-referencing FACTORY-SHARED-wire-or-prune-shared-packages as the task whose completion should shrink the baseline. dod: --check exits 0 on current repo state (all 3 packages baseline-covered); a synthetic new packages/<foo>/package.json with zero importers and no baseline entry fails --check; a synthetic package with >=1 real importer passes even if still baseline-listed; the Alert/Signal/McpConfig advisory lines are emitted and do not affect exit code; smoke test covers all 4 cases; CI green on push.",
-        "created_at": "2026-07-24T19:56:48Z",
-        "created_by": "architect",
-        "updated_at": "2026-07-30T02:57:04Z",
-        "promoted_at": "2026-07-30T02:34:10Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-07-30T02:34:10Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "entered_review_at": "2026-07-30T02:56:22Z",
-        "review_note": "New scripts/audits/shared-package-import-check.sh (--check/--update, baseline/ratchet like size-lint-justification.sh): check-1 (blocking) -- every packages/*/package.json declaring a @vn-market/-scoped name needs a real import/dependency reference in apps/**+packages/** (own dir excluded) OR a docs/data/shared-package-import-baseline.json entry, else FAIL; check-2 (advisory-only, never fails) -- exported-symbol-name collisions between packages/shared-*/index.ts and apps/**/*.ts, printed as ADVISORY lines. Seeded the baseline via --update -- 3 current orphans (shared-types/shared-config/shared-db), live-verified zero real hits repo-wide. Deliberately scoped the importer search to apps/**+packages/** only, NOT docs/** -- this repo's own architecture briefs discuss these package names by name in prose, and scanning docs/ would let that discussion text itself be misread as a real importer, permanently masking the debt. Check-2 surfaced MORE collisions than the brief's cited e.g. Alert/Signal/McpConfig (also loadMcpConfig/ExtractPDFRequest/ComputeTARequest/etc) -- kept the general scan since it's advisory-only. Verify-live catch: first draft's per-file grep subprocess loop hung >2min on this repo's file count (~7K+~34K forks) -- root-cause fixed by batching every candidate file array into ONE grep -l call per package/symbol (O(1) forks), re-measured 7s standalone / 14s full smoke suite. Wired shared-package-import-check job in .github/workflows/ci.yml + CANONICAL pointer in dev-standards.md. New scripts/audits/shared-package-import-check.test.sh: 4/4 PASS (baseline-listed zero-importer package passes; synthetic new zero-importer package NOT in baseline fails; synthetic package with a real importer passes even though ALSO still baseline-listed; Alert/Signal/McpConfig advisory lines emit on the live repo without affecting the green exit code). No apps/ source touched (zone=cross-service/, pure bash+yaml+md+json) -- bun test/tsc structurally N/A. shellcheck clean. Zero edits to packages/shared-*/ contents, zero new consumer wiring, zero package deletion, zero field reconciliation -- all explicitly out of scope, reserved for FACTORY-SHARED-wire-or-prune-shared-packages (still BACKLOG). Structural note: no MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) -- flipped this board row via scripts/orch-apply.sh myself (permitted, pure bash); could not release task:FACTORY-GUARD-CI-SHAREDPKG-IMPL or send Telegram -- coordinating dev-team session must pick that up. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S33. QA next."
       },
       {
         "id": "FACTORY-GUARD-CI-RAWVERIFY-IMPL",
@@ -18966,6 +18939,34 @@
         "secondary_claimed_at": "2026-08-13T11:59:22Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "ops"
+      },
+      {
+        "id": "FACTORY-GUARD-CI-SHAREDPKG-IMPL",
+        "type": "SPRINT-S",
+        "title": "Implement shared-package-import-check CI guardrail (baseline/ratchet script + workflow wiring)",
+        "status": "QA",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-shared-package-import-check",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-shared-package-import-check.md#4-build-vs-plan--decomposed-not-self-implemented",
+        "dev_agent": "developer",
+        "next_agent": "qa",
+        "parent_task": "FACTORY-GUARD-CI-shared-package-import-check",
+        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-shared-package-import-check.md",
+        "note": "files: scripts/audits/shared-package-import-check.sh (new, --check/--update modes, baseline/ratchet), docs/data/shared-package-import-baseline.json (new, generated by --update, seeded with shared-types/shared-config/shared-db), .github/workflows/ci.yml (add shared-package-import-check job), docs/policies/dev-standards.md (CANONICAL pointer), scripts/audits/shared-package-import-check.test.sh (new smoke test: baseline entry passes, synthetic new zero-importer package NOT in baseline fails, a package with a real importer passes regardless of baseline membership, an advisory name-collision is emitted without failing --check). EXPLICITLY OUT OF SCOPE (reserved for FACTORY-SHARED-wire-or-prune-shared-packages, still BACKLOG): no edits to packages/shared-*/ contents, no new consumer wiring, no package deletion, no field reconciliation. approach: check 1 (blocking, baseline/ratchet) — for every packages/*/package.json with a @vn-market/-scoped name, grep repo for a real import/dependency reference; zero hits + baseline-listed = PASS; zero hits + not baseline-listed = FAIL (blocks new packages/primitives-shaped phantom packages); any real importer always PASS. check 2 (advisory only, non-blocking) — same-exported-symbol-name collision scan between packages/shared-*/index.ts and apps/**/*.ts (today: Alert/Signal/McpConfig), printed as ADVISORY lines, never fails --check; full AST structural diffing explicitly deferred (no TS AST tool wired into any bash-only audit script in this repo; regex field-diff would false-positive on reorder/JSDoc/optional-marker churn). --update run once to seed baseline from live state (3 current orphans: shared-types/shared-config/shared-db); wire job into ci.yml; add CANONICAL pointer cross-referencing FACTORY-SHARED-wire-or-prune-shared-packages as the task whose completion should shrink the baseline. dod: --check exits 0 on current repo state (all 3 packages baseline-covered); a synthetic new packages/<foo>/package.json with zero importers and no baseline entry fails --check; a synthetic package with >=1 real importer passes even if still baseline-listed; the Alert/Signal/McpConfig advisory lines are emitted and do not affect exit code; smoke test covers all 4 cases; CI green on push.",
+        "created_at": "2026-07-24T19:56:48Z",
+        "created_by": "architect",
+        "updated_at": "2026-08-13T15:55:13Z",
+        "promoted_at": "2026-07-30T02:34:10Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-08-13T15:55:12Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "entered_review_at": "2026-07-30T02:56:22Z",
+        "review_note": "New scripts/audits/shared-package-import-check.sh (--check/--update, baseline/ratchet like size-lint-justification.sh): check-1 (blocking) -- every packages/*/package.json declaring a @vn-market/-scoped name needs a real import/dependency reference in apps/**+packages/** (own dir excluded) OR a docs/data/shared-package-import-baseline.json entry, else FAIL; check-2 (advisory-only, never fails) -- exported-symbol-name collisions between packages/shared-*/index.ts and apps/**/*.ts, printed as ADVISORY lines. Seeded the baseline via --update -- 3 current orphans (shared-types/shared-config/shared-db), live-verified zero real hits repo-wide. Deliberately scoped the importer search to apps/**+packages/** only, NOT docs/** -- this repo's own architecture briefs discuss these package names by name in prose, and scanning docs/ would let that discussion text itself be misread as a real importer, permanently masking the debt. Check-2 surfaced MORE collisions than the brief's cited e.g. Alert/Signal/McpConfig (also loadMcpConfig/ExtractPDFRequest/ComputeTARequest/etc) -- kept the general scan since it's advisory-only. Verify-live catch: first draft's per-file grep subprocess loop hung >2min on this repo's file count (~7K+~34K forks) -- root-cause fixed by batching every candidate file array into ONE grep -l call per package/symbol (O(1) forks), re-measured 7s standalone / 14s full smoke suite. Wired shared-package-import-check job in .github/workflows/ci.yml + CANONICAL pointer in dev-standards.md. New scripts/audits/shared-package-import-check.test.sh: 4/4 PASS (baseline-listed zero-importer package passes; synthetic new zero-importer package NOT in baseline fails; synthetic package with a real importer passes even though ALSO still baseline-listed; Alert/Signal/McpConfig advisory lines emit on the live repo without affecting the green exit code). No apps/ source touched (zone=cross-service/, pure bash+yaml+md+json) -- bun test/tsc structurally N/A. shellcheck clean. Zero edits to packages/shared-*/ contents, zero new consumer wiring, zero package deletion, zero field reconciliation -- all explicitly out of scope, reserved for FACTORY-SHARED-wire-or-prune-shared-packages (still BACKLOG). Structural note: no MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) -- flipped this board row via scripts/orch-apply.sh myself (permitted, pure bash); could not release task:FACTORY-GUARD-CI-SHAREDPKG-IMPL or send Telegram -- coordinating dev-team session must pick that up. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S33. QA next."
       }
     ],
     "_closed_signals_20260614": {
@@ -19107,7 +19108,7 @@
         "last_served_tick": "2026-08-13T15:23:32Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-13T12:57:30Z"
+        "last_served_tick": "2026-08-13T15:53:58Z"
       },
       "drs": {
         "last_served_tick": "2026-08-13T13:23:03Z"
@@ -19119,7 +19120,7 @@
         "last_served_tick": "2026-08-13T14:23:06Z"
       }
     },
-    "_updated_at": "2026-08-13T15:50:34Z",
+    "_updated_at": "2026-08-13T15:53:58Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
