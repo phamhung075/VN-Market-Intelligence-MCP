@@ -344,7 +344,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": "bctc-offmarket",
-      "last_fired": "2026-08-12T09:06:37Z",
+      "last_fired": "2026-08-13T09:10:24Z",
       "trigger_id": null,
       "_note": "Slot 1 of 4. Re-enabled 2026-08-07 per po_decision_refine_cadence_20260807 (task FIX-REFINE-SUBFLOW-OPTIONC-CONTRACT-DRIFT, action item 1): Option-C contract fix (commit da489f36f) confirmed working generically by the slot-4 canary (12/12 correct DONE/FAILED discrimination, spec-compliant confidences). PARTIAL re-enable to 2x cadence — slot-2 (cron 0 14) and slot-3 (cron 0 11) remain disabled, gated on FIX-BCTC-REFINE-PAGE-IMAGE-UNAVAILABLE-CAPS-CONFIDENCE closing (image plane degraded, PO wants bounded blast radius before going to 4x)."
     },
