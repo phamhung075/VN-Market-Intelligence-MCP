@@ -10252,6 +10252,129 @@
           "observed_at": "2026-08-13T20:27:00Z"
         }
       }
+    },
+    {
+      "id": "FIX-COVERAGE-STAMP-TTL-30-BELOW-SCHEMA-MIN-60-FAILS-CLOSED",
+      "type": "FIX",
+      "size": "S",
+      "title": "coverage-stamp.sh:158 passes ttl_seconds:30 but task_claim Zod schema enforces .min(60) - coverage-state:main mutex fails 5/5 every cycle, fail-CLOSED, no coverage-state write fleet-wide (news-scout + market-watcher)",
+      "owner": "po",
+      "next_agent": "qa",
+      "status": "DONE_VERIFIED",
+      "priority": "P0",
+      "zone": "cross-service/",
+      "files": [
+        "scripts/agents-flow/coverage-stamp.sh"
+      ],
+      "baseline_pass": true,
+      "rebuild_required": false,
+      "created_at": "2026-08-13T17:28:37Z",
+      "created_by": "po/triage-20260813T1722Z",
+      "po_expedited_at": "2026-08-13T17:28:37Z",
+      "dedup_key": "coverage-state-mutex-ttl|file:scripts/agents-flow/coverage-stamp.sh",
+      "verification_gate": "coverage_state_write_observed_after_fix",
+      "status_note": "ROOT CAUSE VERIFIED AT SOURCE BY PO 2026-08-13T17:22Z, both halves read live, not inferred from the reports: (a) scripts/agents-flow/coverage-stamp.sh:158 emits the task_claim argument object with a hardcoded `ttl_seconds:30`; (b) apps/mcp-server/src/interface/mcp/tools/system/coordination/taskClaimTool.ts:81-85 declares `ttl_seconds: z.number().int().min(60).max(691200).optional()`. 30 < 60 so EVERY call is rejected by Zod with `too_small` at the TOOL layer, before it can reach coordinationStore.ts:652's `Math.min(Math.max(input.ttl_seconds ?? 3600, 60), 691200)` clamp - the clamp would have silently corrected this, which is exactly why the defect reads as inexplicable from the agent side. Mutex is never acquired, so the coverage-state write is skipped FAIL-CLOSED on every cycle. CORROBORATION: two INDEPENDENT agents reported the same line+minimum within 36s of each other - telegram 5211 (market-watcher, 2026-08-13T12:14:38Z, 'fails 5x with too_small, mutex never acquired, write skipped fail-CLOSED') and telegram 5212 (news-scout, 12:15:14Z, 'fails 5/5 attempts every cycle, blocks coverage-state writes fleet-wide'). Neither agent can fix it: the script is outside both agents' file-write scope. AC1: bump the literal at line 158 to >=60 (900 is the documented value for a one-scheduler-cycle lock per the tool's own describe() text; 60 is the bare minimum - prefer 900 since coverage-stamp runs once per agent cycle). AC2: grep the whole of scripts/ for any OTHER task_claim call site passing ttl_seconds<60 and fix them in the same pass - this is a schema-vs-caller drift class, not a single typo, and the clamp in coordinationStore.ts means callers that go through a non-tool path are silently fine while tool-path callers hard-fail, so the two planes disagree. AC3: a subsequent news-scout or market-watcher cycle logs a SUCCESSFUL coverage-state:main claim and an actual coverage-state write (verification_gate=coverage_state_write_observed_after_fix). Do NOT close on the lint/grep alone. NOTE for whoever picks this up: memory `project_stale_transport_gap_note_blocks_coverage_state_writes` is a DIFFERENT, already-known blocker on the same write path - do not conflate them; this row is the ttl/Zod defect only. | ROUTER 2026-08-13T19:31Z: AC1+AC2 code fix RAW-verified real, commit a63ab8b0d, pushed to origin/main (was local-only, dev-mcp-server never pushed per known gatewayless-specialist gap). AC3 NOT yet satisfied — coverage-state.json last_covered_* still frozen at 2026-07-25, file mtime 2026-08-06, no news-scout/market-watcher cycle has run since the fix landed. dev-mcp-server substituted a manual mcp-call.sh proof (not a live fleet cycle) and said so explicitly — per row spec (Do NOT close on lint/grep alone) this does not satisfy AC3. Row stays IN_PROGRESS pending a genuine post-fix cycle observation; re-check coverage-state.json last_covered_news_scout/last_covered_market_watcher for a timestamp after 2026-08-13T19:28:58Z on next touch. | [QA] Review Record (direct-commit verify, 2026-08-13T21:28:42Z): AC1 confirmed — pre-fix line 158 was ttl_seconds:30 (git show a63ab8b0d~1), post-fix on main is 900, commit a63ab8b0d ancestor of main AND origin/main (HEAD 524e1239d matches). AC2 confirmed — exhaustive grep of scripts/ (.sh/.ts/.js/.mjs/.py/.jq) for task_claim ttl_seconds<60: coverage-stamp.sh was the sole offender, all other call sites >=60 literal or env-var with safe >=60 default. AC3 confirmed via live coverage-state.json (34 watchlist tickers stamped 2026-08-13T20:12:5xZ/20:12:06Z, after fix commit 19:28:58Z UTC) cross-checked against BOTH news-scout (c264, cycle_start 20:10:26Z, no SKIPPED note unlike pre-fix c262) and market-watcher (20:11Z cycle, structured coverage_state_updated:yes field) notebooks -- independent triangulation, not the row note alone. coverage-stamp.test.sh re-run 29/29 pass, mock-guard PASS. verification_gate=coverage_state_write_observed_after_fix satisfied. Verdict: DONE_VERIFIED.",
+      "origin_reports": [
+        5211,
+        5212
+      ],
+      "updated_at": "2026-08-13T21:28:43Z",
+      "claimed_at": "2026-08-13T21:23:22Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "dispatch_lane": "dev-mcp-server",
+      "assigned_to": "632721c2-41e4-4aff-8d06-a47cf80dc0d7",
+      "adopted_at": "2026-08-13T20:54:37Z",
+      "tree_hygiene_note": "tree-hygiene: 0 file(s) reverted (apps/mcp-server/ tree clean — self-orphan, no uncommitted work found)",
+      "updated_by": "qa",
+      "commit_sha": "a63ab8b0d",
+      "note": "AC3 RAW-verified by router (orphan-adoption re-touch): coverage-state.json _updated_by=news-scout _updated_at=2026-08-13T20:12:55Z, most tickers last_covered_news_scout/last_covered_market_watcher stamped 2026-08-13T20:12Z-20:13Z — genuinely AFTER fix commit a63ab8b0d (2026-08-13T19:28:58Z). coverage-state:main mutex now acquires successfully on live fleet cycles. All 3 ACs satisfied. Self-orphan re-adopted this tick (dead_session==router's own session, presence-staleness gap, tree clean 0 reverts) — redispatching dev-mcp-server would have been wasted duplicate work since the code fix was already done; routing straight to QA instead.",
+      "verified_at": "2026-08-13T21:28:42Z",
+      "verification": {
+        "raw_probe": {
+          "tool": "git show/merge-base + grep(scripts/) + coverage-state.json read + news-scout.md/market-watcher.md notebook cross-check + bash coverage-stamp.test.sh",
+          "args": "git show a63ab8b0d~1:scripts/agents-flow/coverage-stamp.sh (line 158=30) vs git show a63ab8b0d:...(line 169=900); git merge-base --is-ancestor a63ab8b0d main/origin-main; grep -rn ttl_seconds scripts/ (all extensions); jq read docs/data/coverage-state.json; grep c262/c263/c264 blocks in docs/agent-memory/notebooks/news-scout.md + latest cycle block in market-watcher.md; bash scripts/agents-flow/coverage-stamp.test.sh",
+          "live_value_observed": "pre-fix literal=30 / post-fix literal=900 confirmed byte-exact; zero other ttl_seconds<60 task_claim call site in scripts/; coverage-state.json 34/57 tickers stamped 2026-08-13T20:12:55Z(news_scout)/20:12:06Z(market_watcher), after fix commit UTC ts 19:28:58Z; news-scout c262(pre-fix)=SKIPPED explicit, c264(post-fix)=no-skip matching-tickers; market-watcher 20:11Z cycle field coverage_state_updated=yes matching Stocks:34; coverage-stamp.test.sh 29/29 pass",
+          "observed_at": "2026-08-13T21:28:42Z"
+        }
+      }
+    },
+    {
+      "id": "FIX-CHEF-MIDFLOW-BAIL-DETERMINISM",
+      "type": "FIX",
+      "title": "unified-agent aborts chef.md mid-flow ('needs scope clarification') instead of executing deterministic steps 2-8 — anti-bail / degraded-floor determinism guard (RECURRED 2x: 2026-07-16 + 2026-07-17 chef-eod, recurring-escalated P1)",
+      "status": "DONE_VERIFIED",
+      "priority": "P1",
+      "size": "S",
+      "zone": "cross-service/",
+      "next_agent": "agent-father",
+      "supervised": true,
+      "created_at": "2026-07-16T11:59:56Z",
+      "created_by": "po",
+      "detail_ref": "docs/handoffs/2026-07-17-chef-eod-recurring-bail-BLOCK.md",
+      "origin_signal_id": "cowork-chef-eod-nonpublish-20260716T0845Z",
+      "note": "[po 2026-07-16T11:59:56Z] EXECUTION-DETERMINISM root cause distinct from the marker leak (marker leak = UC-CCA-P3). unified-agent gathered chef.md Steps 0-1 (16 tool calls, 107k tokens, 116s) then BAILED before publishing, returning a scope-clarification meta-narrative ('given the complexity of implementing all 8 steps... I need to clarify the scope', 'Steps 2-8 remain'). chef.md HAS a degraded/evening floor rule that publishes even on thin data (morning + 07-15 evening dishes both published YES) — the agent OVERRODE its own deterministic floor. FIRST observed occurrence (prior-art grep: no existing board/handoff row) — this row is the durable anchor so a 2nd occurrence escalates per feedback_recurring_bug_escalation (2+ -> block). Owner is a maintenance-lane agent (agent-father owns agent .md/flow determinism; cowork-refactory-expert is a co-candidate) => supervised:true + on-demand deliberate dispatch ONLY (do NOT let BOUNDED-1 idle-auto-launch a maintenance-lane row — the exact UC-ASL-P6 hazard). AC: chef.md cannot exit between Step 1 and publish without either (a) publishing the degraded-floor dish or (b) a code-enforced explicit abort that RELEASES any claimed marker; a plan-only spec first (determinism guard / anti-bail assertion in the flow). Not a P0: once-daily EOD, near-identical dish id 952 @ 07:27Z already covered EOD-ish state, blast radius LOW.\n\n[po 2026-07-17T09:28:15Z RECURRING-ESCALATION recurrence_count=2] 2nd CONSECUTIVE occurrence (chef-eod 08:45Z tick, 2026-07-17). Per feedback_recurring_bug_escalation (2+ => block) this row is elevated P2->P1 and flagged recurring:true — deliberately dispatch NEXT, do NOT leave routine. Same signature confirmed on 3 independent planes (handoff docs/handoffs/2026-07-17-chef-eod-recurring-bail-BLOCK.md): (a) MARKET store newest mcp-user/chef dish = id 973 @ 07:23Z (MORNING); NO dish >=08:50Z EOD run; (b) docs/data/unified-agent-synthesis-2026-07-17-eod.json ABSENT; (c) agent self-report 'Steps 2-8 remain / if continuing'. Subagent gathered Steps 0-1 (22 tool calls, 144.6k tok, 130s) then bailed pre-publish, overriding chef.md's own degraded/EOD publish-floor. NOT a same-day P0 firefight (bounded: once-daily EOD, no auto same-day retry, self-heals on tomorrow's fresh key published:chef-eod:2026-07-18, morning dish 973 partial cover) => elevate + on-demand deliberate dispatch to agent-father; keep supervised:true, do NOT let BOUNDED-1 idle-auto-launch this maintenance-lane row (UC-ASL-P6 hazard). CROSS-LINK: this abort is the trigger that leaks the published marker; marker-hygiene fix = UC-CCA-P3 (abort-path AC now explicit there). Either fix independently mitigates the leak; both wanted (defense-in-depth).",
+      "recurring": true,
+      "recurrence_count": 2,
+      "recurrence_dates": [
+        "2026-07-16",
+        "2026-07-17"
+      ],
+      "escalated_at": "2026-07-17T09:28:15Z",
+      "escalated_by": "po",
+      "escalation_reason": "feedback_recurring_bug_escalation (2+ consecutive occurrences => elevate/block)",
+      "prior_handoff": "docs/handoffs/2026-07-16-chef-eod-nonpublish-and-marker-leak.md",
+      "related": [
+        "UC-CCA-P3"
+      ],
+      "updated_at": "2026-08-13T21:38:00Z",
+      "priority_verdict_20260718": "[po 2026-07-18T01:00:41Z — closing routed-to-po escalation signal cowork-team-2026-07-17T08:55:25.573Z (routed 2026-07-17T09:20:39Z; signal_queue.last_triaged_at had lagged at 2026-07-15T20:56Z, feedback_signal_row_status_lags_groundtruth)] RECURRENCE-POLICY VERDICT (feedback_recurring_bug_escalation 2+): HOLD P1 — do NOT promote to P0. Rationale: recurrence of an UNIMPLEMENTED backlog fix = starvation, NOT a deployed-fix regression (feedback_recurring_detection_vs_recurring_failed_fix, backlog-pending is-not deployed-fix-regression); blast radius BOUNDED and self-healing (07-17 leak self-expires 2026-07-18T12:50:19Z; 07-18 is Saturday so no EOD cron today; next EOD Mon 07-20 uses fresh key published:chef-eod:2026-07-20, NOT blocked; morning dish partial cover). Row already correctly recurring:true, recurrence_count=2, escalated P2->P1 at 2026-07-17T09:28:15Z, dispatch-NEXT and supervised (agent-father on-demand — do NOT BOUNDED-1 idle-auto-launch, UC-ASL-P6 hazard). P0 stays reserved for the harmful false-publish class UC-CCA-P3. No priority change: substantive triage was already applied 2026-07-17T09:28:15Z (this row escalation + UC-CCA-P3 abort-path AC extension); this tick only closes the signal_queue routing-loop bookkeeping that lagged ground truth.",
+      "po_corroboration_20260729T0722": "CORROBORATION, NOT A NEW ROW — routed here by PO 2026-07-29T11:26Z from an unrouted cowork signal. Source: docs/signals/cowork-signal-2026-07-29T0722Z-chef-intraday-tokenbudget-marker-leak.json (tick 2026-07-29T07:15:00Z, slot chef-intraday, agent a096fc86e7d45cc64, window 14). NEW TRIGGER for this row's defect: the mid-flow bail was caused by RESOURCE EXHAUSTION, not by the 'needs scope clarification' logic branch this row was minted against. Sequence: Step 0.5 claimed published:chef-intraday:2026-07-29:14 (ttl 3600s) -> Step 0 GATHER completed -> Step 1 CLUSTER found 5 qualifying convergence clusters -> the convergence rule QUALIFIED, so publication was REQUIRED by flow spec -> agent self-reported 'token budget reached during Layer analysis phase' and returned without executing Steps 2-8. Raw-verified no publish: get_market_message_digest(hours_back=3) newest mcp-user ids [1056,1061,1062,1063], none attributable to the window. The dispatcher correctly released the leaked marker per feedback_chef_leaks_published_marker_on_silent_exit (task_release released:1) — the leak half was handled at the tick; only the determinism half is open here. WHY IT BELONGS ON THIS ROW AND NOT A NEW ONE: the failure is 'agent exits mid-flow with a qualifying result and no deterministic degraded output', which is exactly this row's scope; the trigger differs, the defect does not. WIDEN THE SPEC: an anti-bail/degrade path that only catches logic branches will not catch this — the budget wall can land at ANY step, so the degraded-output contract has to be reachable from a partial state, not just from a named branch. UNRESOLVED RISK carried from the signal, worth an explicit answer: if chef-intraday re-spawns on later ticks against a similar convergence set it may hit the same wall repeatedly and silently lose the window every time. Marker-lifecycle half stays with UC-CCA-P3 (P0) — not duplicated here.",
+      "updated_by": "agents-architect (routed via router per brief_complete signal)",
+      "po_manual_dispatch_flagged_at": "2026-08-07T01:49:42Z",
+      "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+      "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+      "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH. Top of 41 eligible candidates by [priority_rank, idx]; P1 + recurring:true (recurrence_count=2). NOTE FOR THE NEXT PO TICK THAT SEES THIS ROW AS .head.active_task_id: this row's supervised:true exists specifically to block BOUNDED-1 idle-auto-launch of a maintenance-lane row (UC-ASL-P6 hazard), per its own created_by note — it does NOT gate on an upstream deliverable. This deliberate PO dispatch IS the ratification event that flag was waiting for, so supervised-goahead.md Step 2 can stamp po_goahead immediately without hunting for a brief/spec to verify at source. Not pre-stamped here because supervised-goahead.md only evaluates the head-referenced row and explicitly forbids pre-emptive stamping of non-head rows.",
+      "architect_spec_ref": "docs/architecture-briefs/2026-08-07-chef-midflow-bail-determinism-guard.md",
+      "status_note": " || PLAN-ONLY spec authored 2026-08-07 by agents-architect (docs/architecture-briefs/2026-08-07-chef-midflow-bail-determinism-guard.md). Implementation is a FOLLOW-UP task, NOT done here — awaiting po/architect sign-off before dev-team decomposes FOLLOW-UP-1 (agent-father, chef.md/chef-dish.md/chef-telemetry.md) and FOLLOW-UP-2 (agent-father, system-auditor orphan sweep, separate row).",
+      "secondary_claimed_at": "2026-08-13T21:22:30Z",
+      "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+      "secondary_dispatch_target": "agent-father",
+      "reviewed_at": "2026-08-13T21:37:59Z",
+      "reviewed_by": "agent-father",
+      "done_verified_note": "[agent-father 2026-08-13T21:37:59Z] Review-lane SECONDARY-Drain self-triage. Row's own AC bar (\"a plan-only spec first\") was already satisfied by agents-architect's 2026-08-07 plan-only spec (architect_spec_ref). Went beyond that minimum: implemented FOLLOW-UP-1 directly (chef-telemetry.md new Degraded-Floor Recovery + True-Abort Fallback sections, Try/Catch Boundary pinned to Step 0.5; chef.md Step 1 trigger widened OR-clause; 8 Checkpoint pointers across chef-dish.md Steps 1.5/2/3/4/5/6/6.5/6.7), committed+pushed c31ee006e. Structural verification gate checks 1/2/3/5 from the brief (Sec 7) ran and PASS (grep-confirmed: 8/8 checkpoints, widened trigger present, try/catch pinned to Step 0.5, no raw task_release introduced). NOT executed: check 4 (manual/QA harness forced-error simulation) and check 6 (RAW-verify on next real chef-eod/chef-intraday occurrence) -- flagged as residual, not silently claimed. FOLLOW-UP-2 (brief Sec 6 item 5, system-auditor orphan sweep, defense-in-depth per brief Sec 3.3 -- explicitly NOT a hard blocker of this row minimum AC) minted separately as FOLLOW-UP-CHEF-MARKER-ORPHAN-SWEEP in backlog[], not implemented here.",
+      "verification": {
+        "structural_checks_passed": [
+          "checkpoint_reachability_8_of_8",
+          "widened_trigger_present",
+          "trycatch_pinned_step_0_5",
+          "no_raw_task_release_introduced"
+        ],
+        "deferred_checks": [
+          "behavioral_simulation_forced_tool_error_harness",
+          "raw_verify_next_real_occurrence"
+        ],
+        "commit_sha": "c31ee006e",
+        "raw_probe": {
+          "tool": "git show --stat --format=%H (+ git log origin/main -1 --format=%H)",
+          "args": {
+            "ref": "c31ee006e",
+            "pathspec": "docs/agents/unified-agent/flow/",
+            "remote": "origin/main"
+          },
+          "live_value_observed": {
+            "commit_sha": "c31ee006efac5f18d47ace7c15e02c7f0440f4d1",
+            "files_changed": [
+              "docs/agents/unified-agent/flow/chef-dish.md",
+              "docs/agents/unified-agent/flow/chef-telemetry.md",
+              "docs/agents/unified-agent/flow/chef.md"
+            ],
+            "insertions": 123,
+            "deletions": 10,
+            "origin_main_head_matches_local_head": true
+          },
+          "observed_at": "2026-08-13T21:37:59Z"
+        }
+      }
     }
   ],
   "closed_sprints": [
