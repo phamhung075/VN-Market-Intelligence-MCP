@@ -29,11 +29,23 @@ ENV PATH="/root/.bun/bin:${PATH}"
 # Do NOT run `playwright install` — binaries already present.
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
-# Copy built artifacts from builder stage
-COPY --from=bun-builder /app/node_modules ./node_modules
-COPY --from=bun-builder /app/src ./src
-COPY --from=bun-builder /app/composition-root.ts ./
-COPY package.json tsconfig.json ./
+# Copy entire /app from builder stage to preserve symlinks and node_modules structure
+COPY --from=bun-builder /app .
+
+# Fix broken symlinks in node_modules that point to non-existent .pnpm directories
+# The actual packages are in node_modules/.ignored/, so create symlinks to them
+RUN if [ -L node_modules/playwright ] && ! [ -e node_modules/playwright ]; then \
+  rm -f node_modules/playwright && \
+  ln -s .ignored/playwright node_modules/playwright; \
+fi && \
+if [ -L node_modules/hono ] && ! [ -e node_modules/hono ]; then \
+  rm -f node_modules/hono && \
+  ln -s .ignored/hono node_modules/hono; \
+fi && \
+if [ -L node_modules/typescript ] && ! [ -e node_modules/typescript ]; then \
+  rm -f node_modules/typescript && \
+  ln -s .ignored/typescript node_modules/typescript; \
+fi
 
 EXPOSE 5008
 ENV PORT=5008
