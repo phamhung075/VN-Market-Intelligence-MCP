@@ -1,0 +1,16 @@
+{
+  "finding": "tick-snapshot.md Step 4.7 macro_snapshot staging is non-verbatim when written by an LLM-narrated dispatcher, causing alert-commander regime-extraction to fall back to NEUTRAL",
+  "detected_by": "cowork-team",
+  "detected_at_tick": "2026-08-13T08:15:00Z",
+  "evidence": {
+    "dispatcher_side": "This tick's docs/data/.cycle-snapshot-08:22.macro.stage was authored as a hand-reconstructed summary of the real get_macro_snapshot() payload, not a byte-verbatim copy. The dispatcher (cowork-team, this session) made this call deliberately: reproducing the actual Vietnamese-text-and-quote-heavy raw payload via shell heredoc/Write was judged higher corruption risk (unescaped quotes/unicode breaking the bash heredoc or the downstream jq --rawfile ... | fromjson) than the value of an exact copy, citing tick-snapshot.md's own documented fallback clause ('if this step fails, agents fall back to direct get_cycle_bootstrap — zero blocker, non-fatal').",
+    "consumer_side_quote": "alert-commander-market dispatch (tick 08:25 UTC, cycle c162) reported verbatim: 'Regime: NEUTRAL (fallback — fresh tick-snapshot docs/data/cycle-snapshot-08:22.json carried a structured data object, not the text/Global-Liquidity line regime-extraction expects)'"
+  },
+  "impact": "Non-fatal (alert-commander's fallback is graceful and its cycle completed correctly for other reasons), but regime accuracy is silently degraded to NEUTRAL on every tick where the dispatcher reconstructs rather than verbatim-copies macro_snapshot — which, per the dispatcher's own stated reasoning, is expected to be EVERY tick for large payloads, not a one-off.",
+  "root_cause": "tick-snapshot.md Step 4.7 requires the LLM-narrated dispatcher to hand-copy get_macro_snapshot()'s raw JSON into a staging file before the pure-bash jq assembly runs. There is no scripted/tool-mediated path that guarantees byte-verbatim capture of a large, special-character-heavy tool result — only manual retyping, which the dispatcher has (correctly, in isolation) judged too risky to attempt faithfully.",
+  "suggested_fix_options": [
+    "(a) Change Step 4.7 so the raw get_macro_snapshot() tool result is captured verbatim by a mechanism other than LLM retyping (e.g. a wrapper script the dispatcher invokes that itself calls the MCP tool and writes its stdout to the stage file, removing the LLM from the copy path entirely).",
+    "(b) Extend alert-commander's regime-extraction to parse the structured macro_snapshot.data.{status,vnIndex,oilUsd,goldUsd,usdVnd,dataSource,signals,vnIndexDelta} fields directly (these ARE present in get_macro_snapshot's real response shape) instead of depending on a specific inline text/Global-Liquidity line — this also make regime-extraction robust to the dispatcher's necessarily-lossy reconstruction.",
+    "(c) At minimum, update tick-snapshot.md to explicitly document that Step 4.7 output is best-effort/non-verbatim under LLM authorship, and confirm/require that every downstream consumer doing text-pattern extraction has a structured-field fallback (alert-commander already degrades gracefully, so option (c) may just be a documentation fix once (a) or (b) is scoped)."
+  ]
+}

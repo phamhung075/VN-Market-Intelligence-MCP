@@ -133,8 +133,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-13T06:52:39Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-13T08:30:22Z",
+    "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
       {
@@ -656,6 +656,18 @@
         "status": "NEW",
         "payload_ref": null,
         "dedup_key": "coverage-state-frozen-cross-agent-lost-update"
+      },
+      {
+        "id": "cow-20260813T083022",
+        "ts": "2026-08-13T08:30:22Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "defect",
+        "summary": "tick-snapshot market_context is non-verbatim reconstruction - alert-commander regime-extract falls back NEUTRAL",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/signals/cowork-tick-snapshot-regime-mismatch-20260813T083022Z.json",
+        "dedup_key": "tick-snapshot-regime-extraction-format-mismatch"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
