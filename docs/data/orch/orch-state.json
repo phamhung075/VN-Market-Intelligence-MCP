@@ -1,12 +1,12 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1786602404,
-    "last_linecount": 38,
+    "last_mtime": 1786614682,
+    "last_linecount": 33,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786605685,
-      "last_linecount": 35
+      "last_mtime": 1786614682,
+      "last_linecount": 33
     }
   },
   "decision_journal": [
@@ -133,8 +133,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-13T08:30:22Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-08-13T09:51:02Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
       {
@@ -602,7 +602,7 @@
         "type": "defect",
         "summary": "coverage-state.json _updated_at frozen 19d (07-25); FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE P1 BACKLOG unmoved 12d",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "dedup_key": "coverage-state-frozen-cross-agent-lost-update"
       },
@@ -614,7 +614,7 @@
         "type": "defect",
         "summary": "tick-snapshot market_context is non-verbatim reconstruction - alert-commander regime-extract falls back NEUTRAL",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/cowork-tick-snapshot-regime-mismatch-20260813T083022Z.json",
         "dedup_key": "tick-snapshot-regime-extraction-format-mismatch"
       },
@@ -626,7 +626,7 @@
         "type": "signal_feedback",
         "summary": "A-30 WARN: vn-market-intelligence-mcp-rag-service-1 — sustained high memory (95.23%), loss of reclamation",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-13T08:30Z",
@@ -19488,7 +19488,7 @@
         "last_served_tick": "2026-08-12T16:53:15Z"
       }
     },
-    "_updated_at": "2026-08-13T09:19:33Z",
+    "_updated_at": "2026-08-13T09:51:02Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23097,6 +23097,145 @@
         },
         "createdAt": "2026-08-13T08:59:14Z",
         "drained_at": "2026-08-13T09:19:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "443a52b68ada41bc7222cdc1ae88794a533cb4038ff3b0ee5e5f0f658d319f41",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-5dfcd01d",
+          "head_sha": "5dfcd01d07b0de8b150c0525f6f3a7524d50a0d5",
+          "run_id": 31685419503,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31685419503",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 94400218387
+            },
+            {
+              "name": "task-claim-owner-session-lint",
+              "conclusion": "failure",
+              "jobId": 94400218465
+            }
+          ],
+          "fingerprint": "2c15f917ed655e441e58e2424087ebe3e1c64e1a58a04bed850c7b64709190d1",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 5dfcd01d07b0de8b150c0525f6f3a7524d50a0d5: bun test,task-claim-owner-session-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-13T09:21:20Z",
+        "drained_at": "2026-08-13T09:49:44Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ac32cf60ef5b375a1f7f07df403e2eec8823de00980efa48d3a1b6710e528a5f",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-13T09:25:36Z",
+          "matched_slots": [
+            "fb-daily"
+          ],
+          "won_slots": [
+            "fb-daily"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/fb-market-poster/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "fb-daily": "cron"
+          },
+          "cadence_minutes": {
+            "fb-daily": null
+          },
+          "last_fired_timestamp": "2026-08-13T09:25:15Z",
+          "last_fired_slots": [
+            "fb-daily"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "09:15",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": null,
+          "signal_backlog": 3,
+          "note": "guaranteed daily fb-daily slot, cron due, single-slot batch"
+        },
+        "createdAt": "2026-08-13T09:25:36Z",
+        "drained_at": "2026-08-13T09:49:44Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d387003f6373403b9ed25251108aac27b512f99e5238d37b6b9f34744dc5d771",
+        "source": "dashboard",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "defect",
+        "priority": "HIGH",
+        "payload": "coverage-state.json _updated_at frozen 19d (07-25); FIX-COVERAGE-STATE-CROSS-AGENT-LOST-UPDATE P1 BACKLOG unmoved 12d",
+        "createdAt": "2026-08-13T08:11:15Z",
+        "drained_at": "2026-08-13T09:50:53Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1a6b861b801bec512ba4a00bf0505f916270c9f248f4b3cc259d6cb6b1446772",
+        "source": "dashboard",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "defect",
+        "priority": "MED",
+        "payload": {
+          "finding": "tick-snapshot.md Step 4.7 macro_snapshot staging is non-verbatim when written by an LLM-narrated dispatcher, causing alert-commander regime-extraction to fall back to NEUTRAL",
+          "detected_by": "cowork-team",
+          "detected_at_tick": "2026-08-13T08:15:00Z",
+          "evidence": {
+            "dispatcher_side": "This tick's docs/data/.cycle-snapshot-08:22.macro.stage was authored as a hand-reconstructed summary of the real get_macro_snapshot() payload, not a byte-verbatim copy. The dispatcher (cowork-team, this session) made this call deliberately: reproducing the actual Vietnamese-text-and-quote-heavy raw payload via shell heredoc/Write was judged higher corruption risk (unescaped quotes/unicode breaking the bash heredoc or the downstream jq --rawfile ... | fromjson) than the value of an exact copy, citing tick-snapshot.md's own documented fallback clause ('if this step fails, agents fall back to direct get_cycle_bootstrap — zero blocker, non-fatal').",
+            "consumer_side_quote": "alert-commander-market dispatch (tick 08:25 UTC, cycle c162) reported verbatim: 'Regime: NEUTRAL (fallback — fresh tick-snapshot docs/data/cycle-snapshot-08:22.json carried a structured data object, not the text/Global-Liquidity line regime-extraction expects)'"
+          },
+          "impact": "Non-fatal (alert-commander's fallback is graceful and its cycle completed correctly for other reasons), but regime accuracy is silently degraded to NEUTRAL on every tick where the dispatcher reconstructs rather than verbatim-copies macro_snapshot — which, per the dispatcher's own stated reasoning, is expected to be EVERY tick for large payloads, not a one-off.",
+          "root_cause": "tick-snapshot.md Step 4.7 requires the LLM-narrated dispatcher to hand-copy get_macro_snapshot()'s raw JSON into a staging file before the pure-bash jq assembly runs. There is no scripted/tool-mediated path that guarantees byte-verbatim capture of a large, special-character-heavy tool result — only manual retyping, which the dispatcher has (correctly, in isolation) judged too risky to attempt faithfully.",
+          "suggested_fix_options": [
+            "(a) Change Step 4.7 so the raw get_macro_snapshot() tool result is captured verbatim by a mechanism other than LLM retyping (e.g. a wrapper script the dispatcher invokes that itself calls the MCP tool and writes its stdout to the stage file, removing the LLM from the copy path entirely).",
+            "(b) Extend alert-commander's regime-extraction to parse the structured macro_snapshot.data.{status,vnIndex,oilUsd,goldUsd,usdVnd,dataSource,signals,vnIndexDelta} fields directly (these ARE present in get_macro_snapshot's real response shape) instead of depending on a specific inline text/Global-Liquidity line — this also make regime-extraction robust to the dispatcher's necessarily-lossy reconstruction.",
+            "(c) At minimum, update tick-snapshot.md to explicitly document that Step 4.7 output is best-effort/non-verbatim under LLM authorship, and confirm/require that every downstream consumer doing text-pattern extraction has a structured-field fallback (alert-commander already degrades gracefully, so option (c) may just be a documentation fix once (a) or (b) is scoped)."
+          ]
+        },
+        "createdAt": "2026-08-13T08:30:22Z",
+        "drained_at": "2026-08-13T09:50:53Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "39295977f26cefe25d7fb4133a3fc20b05abcdfcee213cc9a8f143747705f23d",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "WARN",
+        "payload": "A-30 WARN: vn-market-intelligence-mcp-rag-service-1 — sustained high memory (95.23%), loss of reclamation",
+        "createdAt": "2026-08-13T08:45:52Z",
+        "drained_at": "2026-08-13T09:50:53Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
