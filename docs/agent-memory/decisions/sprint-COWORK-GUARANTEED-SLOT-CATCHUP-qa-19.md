@@ -41,3 +41,14 @@
 - Did not reproduce the full 14901-test run — CANONICAL `FIX-MCP-SUITE-HEALTH-BASELINE` reading applies (targeted/merge-gate suite is the correct bar, not repo-wide); my own targeted re-run already proves zero net-new failures on the touched surface.
 **why-decision:** vc-approved, DONE_VERIFIED. Zero ISSUE — commit real, files match, root-cause+fix logic verified directly from source (not prose), new regression test green, targeted suite 0 fail (count mismatch non-blocking), tsc/mock-guard/DDD/security clean, second independent source corroborates.
 **why-change:** none — verdict matches developer's own claim; router's CI-red note (separate, unrelated pre-existing issue on current HEAD, 2 weeks after this commit) confirmed NOT connected — this commit's own targeted suite is clean.
+
+### STEP qa-S98 · qa · 2026-08-13T11:05:00Z
+**task-id:** FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND
+**what-done:** Direct-commit verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`, no `.commit`/`.files[]` on the row) — derived commit via `git log --all -- scripts/orch-conservation-check.mjs`, found `9b39ed5cc` carrying exact `Task:`/`AC:` trailers matching this id; on main ancestry (`merge-base --is-ancestor` exit 0).
+**what-considered:**
+- Read the live file directly (not row prose): `FLAT_TASK_LANES` (line 139) includes `'qa'`; header-comment formula (lines ~19-27) lists `+ length(qa)` matching the array exactly — code==doc satisfied. `dev-standards.md`'s CANONICAL block never enumerates lanes literally (grep-confirmed), so the commit's claim "no dev-standards edit needed" holds.
+- Re-ran the real negative control myself, not trusted from commit prose: `bash scripts/test/orch-apply-wrapper-tests.sh` → 75/75 PASS, incl. `QA-COLLAPSE` (qa[] wiped 50→0, live=60 total, exit 1 rejected, fixture byte-unchanged) and `QA-APPEND-HAPPY` (normal qa[] append, exit 0, length+1) — both ACs directly exercised live, not read from prior notebook claims.
+- A later unrelated commit (`cc7e86829`, FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE) extended the same header comment further — confirmed `'qa'` survived that extension intact (still present in both array and prose).
+- No TS touched (only `.mjs`/`.sh`/`.md`); mock-guard PASS (no production source under its scan scope); ran `apps/mcp-server` `bun tsc --noEmit` anyway as a broader regression check — clean, 0 errors.
+**why-decision:** vc-approved, DONE_VERIFIED. All 3 acceptance clauses independently re-verified live (qa-collapse aborted, additive write unaffected, code/doc lane-set parity) — not the row's own prose (row carried none — no `review_note`/`status_note` at all, pure derivation from git history + live-file re-read).
+**why-change:** none — verdict matches the row's deliverable/acceptance exactly.
