@@ -1,18 +1,10 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-08-13 06:53 UTC | **Sprint:** idle
+**Last updated:** 2026-08-13 07:08 UTC | **Sprint:** idle
 
 **Role:** Event-only alert dispatch (position-danger / watchlist-opportunity / CRITICAL-always) | **Cadence:** `*/15min` market hours (02:00–08:30 UTC) + 4h critical sweep | **Contract:** APPEND class, one `## c<NNN>` section per cycle per `.claude/skills/notebook-write/SKILL.md` AC-6.
 
 > **Structural reset (FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, 2026-07-29):** prior history archived → `docs/agent-memory/notebooks/archive/alert-commander-archive-20260729.md`. One top-level `## c<NNN> · <ISO-timestamp>` section per cycle now.
-
-## c153 · 2026-08-13T06:23:43Z (slot=alert-commander-market, tick=06:25)
-- Signals: bus 1 (hours_back=2) — VJC verified_decision id10810 (from alert-engine, not in consumes list — no matrix action) | Fired: 0 | Suppressed: 0 | MARKET: none. Market OPEN (06:22 UTC) — no fresh tick-snapshot for today (all `cycle-snapshot-*.json` stale from 08-12) — direct `get_cycle_bootstrap`/`get_macro_snapshot`/`get_macro_calendar`/`get_agent_signals`, gateway healthy.
-- ChainCatalyst: 0 fired | 0 suppressed | event_types: [] — no chain_catalyst signal on bus this cycle (prior oil/CoreWeave signals id10808/id10809 rolled off the 2h window).
-- Watchlist-opp: no candidate this cycle — no urgent_news/chain_catalyst bus signal to route via Step 3 Signal Matrix (prior VIC candidate id10807 rolled off the 2h window; VIC still shows bullish in market_context RECENT ANALYSIS but with no active bus signal there is no Step 3 trigger to evaluate it against the firing gate).
-- Position-danger: `get_alerts(type=price)` clean (no active alerts, no stopLossHit) — gate fails.
-- CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, `get_crisis_early_warning` clean (no crisis signal; WARNING x6 corp-reputation BSR30/FRT39/HUT44.5/PLX30/SSI41/VCB41.1 unchanged, all <50 no DANGER-tier), no verified_chain in bus.
-- Regime: NEUTRAL (fallback — macro_snapshot text has no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp) | vol NORMAL (rv_20d_pctile=0.686, gk_vol_20d_pct=17.86) | foreign_room market_saturation=5.91% (outflow_z_5d=0.22, watchlist-scope top10) | `get_vn_liquidity_state` ERROR (sbv_policy_rates HTML fetch failed, OMO parse failed, interbank unreachable) — logged SKIP, standard thresholds used | Pivot window: false (next Sept 2026 PMI/CPI/FOMC/SBV). VN-Index 1789.92 -0.18% (breadth 122up/166down, turnover -42.1% d/d). Silent exit — no MARKET/WORK send. `log_agent_work` id=1956.
 
 ## c154 · 2026-08-13T06:37:52Z (slot=alert-commander-market, tick=06:40)
 - Signals: bus 3 (hours_back=2) — VIC/HPG/FPT verified_decision id10814-10816 (from alert-engine, "VN-Index tiệm cận 1.800" news_mention, not in consumes list — no matrix action) | Fired: 0 | Suppressed: 0 | MARKET: none. Market OPEN (06:36 UTC) — no fresh tick-snapshot for today (all `cycle-snapshot-*.json` stale from 08-11/08-12) — direct `get_cycle_bootstrap`/`get_macro_snapshot`/`get_macro_calendar`/`get_agent_signals`, gateway healthy.
@@ -29,3 +21,11 @@
 - Position-danger: `get_alerts(type=price)` clean ("Không có cảnh báo nào đang hoạt động" — no active alerts, no stopLossHit) — gate fails.
 - CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, `get_crisis_early_warning` clean (no crisis signal; WARNING x6 corp-reputation BSR30/FRT39/HUT44.5/PLX30/SSI41/VCB41.1 unchanged, all <50 no DANGER-tier), no verified_chain in bus.
 - Regime: NEUTRAL (fallback — macro_snapshot text has no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp) | vol NORMAL (rv_20d_pctile=0.70, gk_vol_20d_pct=17.93) | foreign_room market_saturation=5.91% (outflow_z_5d=0.25, watchlist-scope top10) | `get_vn_liquidity_state` ERROR ("macro-indicators service unavailable") — logged SKIP, standard thresholds used | Pivot window: false (next Sept 2026 PMI/CPI/FOMC/SBV). VN-Index 1782.21 -10.97 (breadth mixed, most watchlist names red: VHM -2.30%, VRE -2.16%, EIB -1.92%, VJC -1.88%). Silent exit — no MARKET/WORK send. `log_agent_work` id=1958.
+
+## c156 · 2026-08-13T07:08:55Z (slot=alert-commander-market, tick=07:10)
+- Signals: bus 3 (hours_back=2) — VIC/HPG/FPT verified_decision id10814-10816 (same alert-engine "VN-Index tiệm cận 1.800" news_mention row as c154/c155, not in consumes list — no matrix action) | Fired: 0 | Suppressed: 0 | MARKET: none. Typed queries clean: urgent_news/price_anomaly/verified_chain/chain_catalyst all "Không có tín hiệu mới". Market OPEN (07:06 UTC) — no fresh tick-snapshot for today (all `cycle-snapshot-*.json` stale from 08-12) — direct `get_cycle_bootstrap`/`get_macro_snapshot`/`get_macro_calendar`/`get_agent_signals`, gateway healthy.
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: [] — no chain_catalyst on bus this cycle.
+- Watchlist-opp: escalated beyond prior cycles' "no bus trigger" reasoning — checked all 3 persistent candidates directly via `get_kinhdich_reading`: VIC=GIU/100%conf (Quẻ Tỷ, THUẬN LỢI but signal=HOLD not BUY), HPG=GIU/38%conf (Quẻ Sư, TRUNG TÍNH), FPT=GIU/25%conf (Quẻ Minh Di, BẤT LỢI) — none clears kinhDichSignal=BUY. Gate fails definitively, not just "no trigger".
+- Position-danger: `get_alerts(type=price)` clean (no active alerts, no stopLossHit); largest single-day move EIB -3.02% (<5% threshold) — gate fails.
+- CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, `get_crisis_early_warning` clean (no crisis signal; WARNING x6 corp-reputation BSR30/FRT39/HUT44.5/PLX30/SSI41/VCB41.1 unchanged, all <50 no DANGER-tier), no verified_chain in bus.
+- Regime: NEUTRAL (fallback — macro_snapshot JSON shape has no Global-Liquidity field; carry.regime=NEUTRAL, carrySpread=1.37pp) | vol NORMAL (rv_20d_pctile=0.72, gk_vol_20d_pct=17.98) | foreign_room market_saturation=5.91% (outflow_z_5d=0.27, watchlist-scope top10) | `get_vn_liquidity_state` degraded (OMO/interbank/sbv_policy_rates all blocked/estimate — HTML parse + unreachable) — logged, standard thresholds used | Pivot window: false (next Sept 2026 PMI/CPI/FOMC/SBV). VN-Index 1773.31 -1.11% (breadth 79up/235down, turnover -2.32% d/d). Silent exit — no MARKET/WORK send. `log_agent_work` id=1959.
