@@ -18985,10 +18985,13 @@
           5211,
           5212
         ],
-        "updated_at": "2026-08-13T19:31:42Z",
+        "updated_at": "2026-08-13T20:54:38Z",
         "claimed_at": "2026-08-13T19:24:22Z",
         "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "dev-mcp-server"
+        "dispatch_lane": "dev-mcp-server",
+        "assigned_to": "632721c2-41e4-4aff-8d06-a47cf80dc0d7",
+        "adopted_at": "2026-08-13T20:54:37Z",
+        "tree_hygiene_note": "tree-hygiene: 0 file(s) reverted (apps/mcp-server/ tree clean — self-orphan, no uncommitted work found)"
       }
     ]
   },
