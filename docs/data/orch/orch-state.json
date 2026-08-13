@@ -92,12 +92,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-GUARD-CI-RAWVERIFY-IMPL",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 1 row(s), highest-ranked FACTORY-GUARD-CI-RAWVERIFY-IMPL — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-13T16:24:00Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-08-13T16:49:03Z",
+    "updated_by": "dev-team (WF-1b head-reset, FACTORY-GUARD-CI-RAWVERIFY-IMPL terminal)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -133,41 +132,10 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-13T16:21:25Z",
+    "_updated_at": "2026-08-13T16:36:20Z",
     "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
-      {
-        "id": "cj-20260812T163125Z",
-        "ts": "2026-08-12T16:31:25Z",
-        "from": "code-janitor",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
-        "severity": "LOW",
-        "status": "triaged",
-        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-12.json",
-        "triaged_at": "2026-08-12T17:00:39Z",
-        "triaged_by": "po",
-        "disposition": "FOLD -> FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (BACKLOG) + PO DECISION RENDERED: RETIRE team-tool-recheck permanently (do not rebuild as a local cron) — no live reader in 7 weeks, and tool-health is already covered by system-auditor Tier-1/Tier-2. The signal is itself the hardcoded string that row exists to delete."
-      },
-      {
-        "id": "sys-20260812T163525-0051",
-        "ts": "2026-08-12T16:35:25Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "microservice_degraded",
-        "summary": "A-30 WARN: vn-market-intelligence-mcp-pdf-extractor-1 sustained high memory 94.52% (>93% sustained threshold)",
-        "severity": "WARN",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T16:30Z",
-        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-pdf-extractor-1:A-30",
-        "triaged_at": "2026-08-12T17:00:39Z",
-        "triaged_by": "po",
-        "disposition": "FOLD -> FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (REVIEW). Same container as sys-20260812T160538-57ef under a different dedup_key spelling (vn-market-intelligence-mcp-pdf-extractor-1:A-30 vs pdf-extractor:A-30) — DEDUP-KEY SPELLING DRIFT on one physical service, flagged so it is not counted as two threads. 94.52% is not a recovery from 95.32%, it is noise inside a flat band."
-      },
       {
         "id": "sys-20260812T170518-5265",
         "ts": "2026-08-12T17:05:18Z",
@@ -553,8 +521,8 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-13.json"
+        "status": "READ",
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-13.json"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -13196,46 +13164,6 @@
             "observed_at": "2026-08-12T16:37:00Z"
           }
         }
-      },
-      {
-        "id": "FACTORY-GUARD-CI-RAWVERIFY-IMPL",
-        "type": "SPRINT-S",
-        "title": "Implement rebuild-raw-verify-hook CI guardrail (pre-push blocking check + CI backstop job)",
-        "status": "DONE_VERIFIED",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-rebuild-raw-verify-hook",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md#3-guardrail-design--zero-tolerance-going-forward-no-baseline-different-reasoning-than-size-lints-grandfather",
-        "dev_agent": "developer",
-        "next_agent": "pm",
-        "parent_task": "FACTORY-GUARD-CI-rebuild-raw-verify-hook",
-        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-rebuild-raw-verify-hook.md",
-        "note": "files: scripts/audits/rebuild-raw-verify-check.sh (new, <base-sha> <head-sha> positional args, zero-tolerance, no baseline file), scripts/git-hooks/pre-push (extend: call the new script inside the existing CODE_TOUCHING_REGEX block, same fail-open-on-diff-error posture as the tsc check), .github/workflows/ci.yml (add rebuild-raw-verify-hook backstop job), docs/policies/dev-standards.md (CANONICAL pointer + cross-reference under PUSH-AUTONOMY-1 §5), scripts/audits/rebuild-raw-verify-check.test.sh (new smoke test: trigger-path+field-match with no attestation FAILs — reproduce e3386bdfa shape as a synthetic fixture; same diff with a RAW-verify token in the range commit message PASSes; same diff with a raw-verify-allow: inline annotation PASSes; a diff touching only non-trigger paths, or trigger paths with no metric-field-name line, PASSes trivially). EXPLICITLY OUT OF SCOPE: no change to PUSH-AUTONOMY-1 §5 PO-mint-task requirement; no board-state-aware check of whether a VERIFY-*-REALDATA task was actually minted (deferred, documented enhancement). approach: trigger fires when a file under a DB-write/route-serving DDD layer (apps/*/src/infrastructure/**, apps/*/src/interface/**, apps/*/pkg/interface/http/**, apps/*/pkg/infrastructure/**) has an added line matching the metric-mask-lint sibling field regex (confidence|score|impact|magnitude|probability, case-insensitive). On trigger, require ONE of: git log <base>..<head> --format=%B contains raw-verify|raw verified|realdata (case-insensitive); OR the range touches docs/agent-memory/decisions/** or reports/TASK_REPORT_*.md with an added line matching the same token; OR an inline raw-verify-allow: <reason> annotation on the triggering line. Wire primary check into scripts/git-hooks/pre-push (this repo has no PR/branch-protection to gate on — direct push to main is the real merge gate, confirmed live: gh pr list shows exactly 1 PR ever, closed unmerged, and branch protection is 404); wire secondary backstop into ci.yml running the same script against github.event.before..github.sha for visibility when the local hook is bypassed. dod: hook blocks a synthetic un-attested trigger-path push locally; CI job mirrors the same verdict on github.event.before..github.sha; existing doc-only-push fast-skip in pre-push unaffected; smoke test covers all 4 cases (fail/pass-commit-msg/pass-annotation/pass-no-trigger); CI green.",
-        "created_at": "2026-07-24T20:30:58Z",
-        "created_by": "architect",
-        "updated_at": "2026-08-13T16:28:00Z",
-        "promoted_at": "2026-07-30T03:17:20Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-08-13T16:23:59Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "entered_review_at": "2026-07-30T03:32:16Z",
-        "review_note": "New scripts/audits/rebuild-raw-verify-check.sh <base-sha> <head-sha> (zero-tolerance, forward-only diff-range attestation check, no baseline -- mechanizes PUSH-AUTONOMY-1 §5 post-push REAL-DATA verify at the immediately-checkable textual-attestation layer; at design time exactly 2 VERIFY-*-REALDATA rows had ever existed across 54 serving-code commits since §5 was pinned, concrete miss e3386bdfa shipped zero attestation). Trigger composes the two already-designed sibling primitives: a file under a DB-write/route-serving DDD layer (apps/*/src/infrastructure/**, apps/*/src/interface/**, apps/*/pkg/interface/http/**, apps/*/pkg/infrastructure/**) gains an ADDED line matching metric-mask-lint.sh own field regex (confidence|score|impact|magnitude|probability), reused verbatim. Requires ONE of a commit-message RAW-verify/REALDATA token (global), the same token in an added docs/agent-memory/decisions/**|reports/TASK_REPORT_*.md line (global), or an inline raw-verify-allow: <reason> annotation on the triggering line or the line immediately preceding it (per-trigger-point, mirrors metric-mask-allow:/size-justification: idiom). Deviation (verify-live): colocated test files inside these trigger layers (confirmed live via find -- apps/mcp-server/src/infrastructure/**/__tests__/*.test.ts, apps/*/pkg/infrastructure|interface/http/*_test.go) are excluded from the trigger corpus, same exclusion idiom metric-mask-lint.sh already applies to its own scan -- a bare test assertion would otherwise fire on nearly every infra/interface test edit. Wired PRIMARY/blocking into scripts/git-hooks/pre-push existing CODE_TOUCHING_REGEX-gated block (same fail-open-on-diff-error posture as the tsc check); SECONDARY/backstop rebuild-raw-verify-hook job in .github/workflows/ci.yml (fetch-depth: 0, the only job needing full history) against github.event.before..github.sha. CANONICAL pointer + PUSH-AUTONOMY-1 §5 cross-reference added to dev-standards.md. New scripts/audits/rebuild-raw-verify-check.test.sh: 9/9 PASS (all 4 named DoD cases -- trigger+no-attestation FAILs, commit-msg/inline-annotation/non-trigger-path all PASS -- plus bonus coverage: decisions-journal attestation, trigger-path-no-field-match, colocated-test exclusion, usage-error exit 2, zero-SHA fail-open); manually verified against 6 disposable scratch-git-repo scenarios before writing the permanent test. No apps/ TS/Go source touched (zone=cross-service/, pure bash+yaml+md) -- bun test/tsc structurally N/A. shellcheck clean on all 3 touched shell files. YAML validated. EXPLICITLY OUT OF SCOPE (per board-row note): no change to PUSH-AUTONOMY-1 §5 PO-mint-task requirement itself; no board-state-aware check of whether a VERIFY-*-REALDATA task was actually minted (deferred, documented enhancement). Structural note: no MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) -- flipped this board row via scripts/orch-apply.sh myself (permitted, pure bash); could not release task:FACTORY-GUARD-CI-RAWVERIFY-IMPL or send Telegram -- coordinating dev-team session must pick that up. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S34. This closes the 7th and last ci-regression-prevention guardrail -- epic FACTORY-MAINTAINABILITY-2026-06 cluster ci-regression-prevention now complete. QA next.",
-        "qa_verified_by": "qa",
-        "qa_verified_at": "2026-08-13T16:27:28Z",
-        "commit_sha": "127c4a597e0dd40a597589695e7ec3ed29172d88",
-        "status_note": " [QA] Review Record (direct-commit verify, 2026-08-13T16:27:28Z): APPROVED. Commits 127c4a597 (primary) + 654181692 (follow-up fix, ATTEST_ERE hyphenated-past-tense) both confirmed ancestors of main HEAD; git show --stat matches all 5 claimed files. Independently re-ran rebuild-raw-verify-check.test.sh live: 12/12 PASS (not stale 9/9 -- 3 extra tests are from the separate later fix commit; all 9 originally-claimed cases individually confirmed present+passing). shellcheck clean on all 3 shell files (rebuild-raw-verify-check.sh, .test.sh, pre-push); ci.yml YAML-parse-validated. Built an INDEPENDENT scratch-git-repo to exercise the script directly (not trusting the developer bundled test alone): unattested trigger commit -> exit 1 BLOCK; same + RAW-verify: msg token -> exit 0 PASS; doc-only diff -> exit 0 PASS; missing-args -> exit 2; zero-SHA -> exit 0 fail-open -- all matched claims exactly. Confirmed pre-push wiring nested inside existing CODE_TOUCHING_REGEX block (doc-only fast-skip unaffected); CI job has fetch-depth:0 + correct github.event.before/github.sha args. No apps/ files touched (git show --name-only both commits) -- bun test/tsc correctly N/A; mock-guard PASS (no production TS/JS source). Decision-journal entry for developer-S34 confirmed present. QA decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S109.",
-        "verification": {
-          "raw_probe": {
-            "tool": "bash scripts/audits/rebuild-raw-verify-check.test.sh + independent scratch-git-repo exercise",
-            "args": "commit range 127c4a597e0dd40a597589695e7ec3ed29172d88..654181692 vs main HEAD; synthetic scratch repo trigger/attest/non-trigger/usage-error/zero-sha cases run directly against scripts/audits/rebuild-raw-verify-check.sh",
-            "live_value_observed": "12/12 PASS in bundled test.sh; independent scratch-repo runs: unattested-trigger=exit1, attested=exit0, doc-only=exit0, usage-error=exit2, zero-sha=exit0 (all match claimed behavior); shellcheck 0 findings x3 files; YAML valid; 0 apps/ files touched",
-            "observed_at": "2026-08-13T16:27:28Z"
-          }
-        }
       }
     ],
     "head": {
@@ -19091,7 +19019,7 @@
         "last_served_tick": "2026-08-13T14:23:06Z"
       }
     },
-    "_updated_at": "2026-08-13T16:22:58Z",
+    "_updated_at": "2026-08-13T16:49:28Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23964,6 +23892,274 @@
         },
         "createdAt": "2026-08-13T16:10:10Z",
         "drained_at": "2026-08-13T16:20:17Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "99a32028b9f84bcd57f8e157297944ee230d17302522d71ae4f1f23ba9e73c79",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-e589e50d",
+          "head_sha": "e589e50d1599eda13ae82f3250a67c8642977b11",
+          "run_id": 31719468588,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31719468588",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 94512476662
+            },
+            {
+              "name": "task-claim-owner-session-lint",
+              "conclusion": "failure",
+              "jobId": 94512476875
+            }
+          ],
+          "fingerprint": "80828d512e0915c5a75d37ed46e8df225b38482fcac3734c3b0fba1bf16edd13",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD e589e50d1599eda13ae82f3250a67c8642977b11: bun test,task-claim-owner-session-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-13T16:22:24Z",
+        "drained_at": "2026-08-13T16:49:28Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6f5a916edfca66b9fe9ccad85048c5c8fb56d20b1023a6e9869d684e9a6f8648",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "telemetry",
+        "type": "tick-summary",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-13T16:30Z",
+          "matched_slots": [
+            "refine-bctc-slot-4"
+          ],
+          "won_slots": [
+            "refine-bctc-slot-4"
+          ],
+          "spawned": [
+            "refine-bctc-slot-4"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "chef_mutex_applied": false,
+          "collision_warn": [],
+          "due_reasons": {
+            "refine-bctc-slot-4": "cron"
+          },
+          "last_fired_timestamp": "2026-08-13T16:38:50Z",
+          "classification": "FIRE",
+          "reason": "spawned",
+          "leader_lock": "acquired",
+          "devq": 5,
+          "signal_backlog": 28,
+          "errors": []
+        },
+        "createdAt": "2026-08-13T16:39:01Z",
+        "drained_at": "2026-08-13T16:49:28Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "64fddb4383666dc2d97c334f88f89225697e460a09e97c5170443a3de0d41110",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-13T16:30:04Z",
+        "drained_at": "2026-08-13T16:49:28Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "62558334d94a41fceb9481ec12397f5928aa9f1df79134281080120aca9ed9b4",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 34,
+          "cap": 200,
+          "byte_count": 12964,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T16:30:05Z",
+        "drained_at": "2026-08-13T16:49:28Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9875d200ecfea8652325929061633c3884c40e0f65ddb94560c55098058e71aa",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 34,
+          "cap": 200,
+          "byte_count": 12964,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T16:30:52Z",
+        "drained_at": "2026-08-13T16:49:28Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b387bdf424dbc25b901e81b264482002a9e3692064a175dddfe104173137bf83",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12877,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T16:30:05Z",
+        "drained_at": "2026-08-13T16:49:28Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "47551520dbd4193562ad4fc74d76a7e6dcc6a2e14ff471d94e94eb3f3e130e1c",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12877,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T16:30:52Z",
+        "drained_at": "2026-08-13T16:49:28Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "594074b255f38b282ea425fedc8deaaba49e5a53c8210fe89ef491038f8870c0",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 83,
+          "cap": 200,
+          "byte_count": 14124,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T16:30:06Z",
+        "drained_at": "2026-08-13T16:49:28Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "96856e0a2b19f18b12f3fcc0ecdacd28444785636772aae2bb2143dfb0adb00e",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 83,
+          "cap": 200,
+          "byte_count": 14124,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T16:30:53Z",
+        "drained_at": "2026-08-13T16:49:28Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "49bd16dde5a8c397a6fa976188063d49026449dd88a00f7e0e6e5489652a6a45",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 42,
+          "cap": 200,
+          "byte_count": 26750,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T16:30:05Z",
+        "drained_at": "2026-08-13T16:49:28Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a3117f8247a1b174031fe2baad2266efadfd2d893ce49a9a4c3796ef71a4cbad",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 42,
+          "cap": 200,
+          "byte_count": 26750,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-13T16:30:52Z",
+        "drained_at": "2026-08-13T16:49:28Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

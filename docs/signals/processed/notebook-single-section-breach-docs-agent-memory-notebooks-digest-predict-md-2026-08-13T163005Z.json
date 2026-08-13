@@ -3,20 +3,20 @@
   "to": "claude-manager-helper",
   "type": "notebook_single_section_overage_breach",
   "priority": "high",
-  "createdAt": "2026-08-06T16:32:05Z",
+  "createdAt": "2026-08-13T16:30:05Z",
   "payload": {
-    "file": "docs/agent-memory/notebooks/code-janitor.md",
-    "line_count": 224,
+    "file": "docs/agent-memory/notebooks/digest-predict.md",
+    "line_count": 42,
     "cap": 200,
-    "byte_count": 12601,
+    "byte_count": 26750,
     "byte_cap": 12000,
     "section_count": 1,
     "reason": "only preamble+1 section remain; cannot prune further without data loss",
     "action_required": "manual_split_to_archive"
   },
   "_processed": {
-    "fingerprint": "62d10b46d8c01c2042348172020decd4d3c603fca8b8e496369dc099bd84ccf9",
-    "processedAt": "2026-08-06T16:39:58Z",
+    "fingerprint": "49bd16dde5a8c397a6fa976188063d49026449dd88a00f7e0e6e5489652a6a45",
+    "processedAt": "2026-08-13T16:49:28Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

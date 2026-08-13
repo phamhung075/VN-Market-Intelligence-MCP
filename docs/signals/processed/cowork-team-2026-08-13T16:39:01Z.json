@@ -1,0 +1,41 @@
+{
+  "from": "cowork-team",
+  "to": "telemetry",
+  "type": "tick-summary",
+  "payload": {
+    "tick": "2026-08-13T16:30Z",
+    "matched_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "spawned": [
+      "refine-bctc-slot-4"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "chef_mutex_applied": false,
+    "collision_warn": [],
+    "due_reasons": {
+      "refine-bctc-slot-4": "cron"
+    },
+    "last_fired_timestamp": "2026-08-13T16:38:50Z",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "leader_lock": "acquired",
+    "devq": 5,
+    "signal_backlog": 28,
+    "errors": []
+  },
+  "priority": "normal",
+  "createdAt": "2026-08-13T16:39:01Z",
+  "_processed": {
+    "fingerprint": "6f5a916edfca66b9fe9ccad85048c5c8fb56d20b1023a6e9869d684e9a6f8648",
+    "processedAt": "2026-08-13T16:49:28Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
