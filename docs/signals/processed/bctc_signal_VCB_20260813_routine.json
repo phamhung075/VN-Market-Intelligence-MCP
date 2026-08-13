@@ -4,16 +4,20 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "State-owned commercial bank — corporate/retail lending, trade finance, bancassurance",
-  "customer": "Large corporates, SOEs, retail depositors, trade-finance clients",
-  "ops": "Net interest income 17,421 tỷ VND Q1-2026; operating margin 80.9%; net margin 54.3%",
-  "mgmt": "Stable filing cadence (Q1-2026 ĐÃ NỘP on time 2026-07-19); largest state bank by assets (2,550,963 tỷ VND)",
+  "product": "Ngân hàng thương mại quốc doanh hàng đầu — tín dụng, huy động, dịch vụ thanh toán/thẻ, bancassurance, tài trợ thương mại",
+  "customer": "Doanh nghiệp lớn, SME, khách hàng bán lẻ đô thị; nền tảng CASA mạnh trong hệ thống ngân hàng VN",
+  "ops": "Lợi nhuận hoạt động/DTT 80,9% (biên cao đặc trưng ngân hàng). ROE quý thô 4,2%, ROE annualized theo so sánh ngành 16,7% (dưới trung vị ngành 17,6%). OCF Q1 dương 12.944,9 tỷ VND, OCF/NI=1,368 — dòng tiền hoạt động lành mạnh so với lợi nhuận.",
+  "mgmt": "Không có phát hiện quản trị mới kỳ này. Q1-2026 đã nộp đúng hạn (15/05/2026, nộp thực tế 19/07/2026); Q2-2026 chưa xuất hiện trong lịch nộp kỳ này.",
+  "cycle_id": "20260813-2100",
+  "slot": "bctc-analyst-slot-3",
   "valuation": {
     "pe": 14.1,
+    "roe_annualized_pct": 16.7,
+    "roe_raw_quarter_pct": 4.2,
     "pb": 2.2,
-    "roe_pct": 16.7,
     "sector_pe_median": 9,
-    "earning_yield_pct": 7.09,
+    "sector_roe_median_pct": 17.6,
+    "earning_yield_pct": 7.092,
     "max_deposit_rate_pct": 5,
     "ey_spread_pp": 2.09,
     "verdict": "FAIR"
@@ -21,50 +25,47 @@
   "kinhdich": {
     "que": "Thang (46)",
     "xu_huong": "THUAN LOI",
-    "tin_hieu": "GIU",
-    "confidence_pct": 100
+    "khuyen_nghi": "GIU",
+    "do_tin_cay_pct": 100
   },
   "esc_gate": {
-    "esc1": "unevaluable_no_bash",
-    "esc2": {
-      "assets_total": 2550963342,
-      "liabilities_total": 2316932013,
-      "equity_total": 224558726,
-      "imbalance_pct": 0.37,
-      "result": false
+    "esc_1_accounting_manipulation": "unevaluable_no_bash_glob",
+    "esc_2_balance_sheet": {
+      "result": false,
+      "imbalance_pct": 0.37
     },
-    "esc3": {
+    "esc_3_ocf_ni_divergence": {
       "result": false,
       "quarters_returned": 4,
+      "quarters_required": 4,
+      "ocf_ni_ratio_q1": 1.368,
       "divergence_ratio": 0.368,
-      "ocf_ni_ratio_q1": 1.368
+      "threshold": 0.4
     },
-    "esc4": {
-      "result": "N/A",
-      "reason": "bank — non_operating_share concept not applicable"
+    "esc_4_related_party_nonop": {
+      "result": "not_applicable",
+      "reason": "bank — non-operating-share heuristic not applicable to banking P&L structure"
     },
-    "esc5": {
+    "esc_5_refine_confidence": {
       "result": false,
-      "reason": "report_id null (refine_status=PARTIAL) — refine not finished"
+      "report_id": null,
+      "existing_refine_status": "PARTIAL"
     }
   },
   "data_quality": {
-    "bctc_stale": true,
-    "stale_since": "2026-08-11T14:37:49.000Z",
-    "stale_age_hours": 51.7,
-    "sla_hours": 48,
+    "latest_extracted_period": "2026-Q1",
     "confidence_pct": 75,
-    "report_overdue": false
+    "stale_age_hours": 54.6,
+    "validation": "passed"
   },
-  "insider": "no significant activity",
-  "cycle_meta": {
-    "slot": "bctc-analyst-slot-2",
-    "cycle_tick": "2026-08-13T18:00:00Z",
-    "generated_at": "2026-08-13T18:14:00Z"
-  },
+  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+  "legal_risk": "1 tín hiệu rủi ro pháp lý toàn thị trường (điều tra ngành vàng bạc) — không liên quan VCB",
+  "regime": "NEUTRAL (fallback — macro_snapshot không có trường Global Liquidity)",
+  "carry_regime": "NEUTRAL (1.37pp)",
+  "generated_at": "2026-08-13T21:20:00Z",
   "_processed": {
-    "fingerprint": "c40ef8ddd892812fd96928c679dc3fe232711bfcd633c13114cfac9686b3a0b2",
-    "processedAt": "2026-08-13T18:24:17Z",
+    "fingerprint": "935573f0e59c0231c62d9b3d7dce516faca0fb2124c76243fe658ba78ecf4353",
+    "processedAt": "2026-08-13T21:19:25Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

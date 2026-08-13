@@ -19027,7 +19027,7 @@
         "last_served_tick": "2026-08-13T17:21:25Z"
       }
     },
-    "_updated_at": "2026-08-13T20:51:34Z",
+    "_updated_at": "2026-08-13T21:19:25Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -25135,6 +25135,372 @@
         "payload": "A-30: rag-service-1 memory crash-cliff detected — 91.89% → 49.59% discontinuity",
         "createdAt": "2026-08-13T20:46:58Z",
         "drained_at": "2026-08-13T20:51:34Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7cfff3017683ce4739a610321ab10a966ec9c0a82c9102900c87c9aac1a657fa",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Bất động sản dân dụng — phát triển dự án nhà ở, đô thị (Đất Xanh Group)",
+          "customer": "Người mua nhà cá nhân, nhà đầu tư thứ cấp thị trường BĐS dân dụng VN",
+          "ops": "DATA-GAP — get_bctc_full trả về 'Chưa có dữ liệu BCTC' (24 chu kỳ liên tiếp, kể cả kỳ này). Chỉ số vận hành lấy từ get_sector_comparison (nguồn giá/thị trường): PE 66,5 (premium +312% so trung vị ngành 16,1), ROE 1,9% (dưới trung vị ngành 7,3%). Không thể xác nhận biên lợi nhuận/dòng tiền do thiếu trích xuất BCTC gốc.",
+          "mgmt": "Không thể đánh giá track record quản trị kỳ này do thiếu dữ liệu BCTC gốc. Q2-2026 QUÁ HẠN (hạn 30/07/2026).",
+          "cycle_id": "20260813-2100",
+          "slot": "bctc-analyst-slot-3",
+          "valuation": {
+            "pe": 66.5,
+            "roe_pct": 1.9,
+            "pb": 1.2,
+            "sector_pe_median": 16.1,
+            "sector_roe_median_pct": 7.3,
+            "earning_yield_pct": 1.504,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": -3.5,
+            "verdict": "AVOID"
+          },
+          "kinhdich": {
+            "que": "Ky Te (63)",
+            "xu_huong": "THUAN LOI",
+            "khuyen_nghi": "GIU",
+            "do_tin_cay_pct": 100
+          },
+          "esc_gate": {
+            "esc_1_accounting_manipulation": "unevaluable_no_bash_glob",
+            "esc_2_balance_sheet": "unevaluable — no BCTC data extracted",
+            "esc_3_ocf_ni_divergence": "unevaluable — no BCTC data extracted",
+            "esc_4_related_party_nonop": "unevaluable — no BCTC data extracted",
+            "esc_5_refine_confidence": "unevaluable — no BCTC data extracted"
+          },
+          "data_quality": {
+            "status": "Chưa có dữ liệu BCTC — 24th+ consecutive routine cycle unresolved",
+            "known_open_item": "docs/signals/bctc-analyst-20260813T001500Z.json (data-quality anomaly, cash-flow-anomaly Q1-2026 operating_cf overflow, from c162) — still PENDING dev-team pickup, not re-emitted this cycle to avoid spam"
+          },
+          "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+          "legal_risk": "1 tín hiệu rủi ro pháp lý toàn thị trường (điều tra ngành vàng bạc) — không liên quan DXG",
+          "regime": "NEUTRAL (fallback — macro_snapshot không có trường Global Liquidity)",
+          "carry_regime": "NEUTRAL (1.37pp)",
+          "generated_at": "2026-08-13T21:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-13T21:19:25Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9c8fc341f0894a74f9165ccec7f58b7fe75121d60d05baa0641404db8b98b8ab",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Xuất khẩu phần mềm & dịch vụ CNTT tích hợp hệ thống, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+          "customer": "Doanh nghiệp CNTT toàn cầu (Nhật Bản +44,4% YoY dẫn đầu, Châu Âu tăng mạnh), thuê bao viễn thông cá nhân VN, sinh viên FPT Edu",
+          "ops": "Biên lợi nhuận gộp 34,0%, biên hoạt động 22,0%. Doanh thu thuần theo phương pháp hợp nhất mới (loại trừ FTEL từ 01/01/2026) +8,7% YoY, LNST +13,8% YoY (đã điều chỉnh cùng phương pháp). OCF Q1 âm -2.847,8 tỷ VND — do biến động vốn lưu động (phải thu/phải trả), không phải suy giảm lợi nhuận cốt lõi.",
+          "mgmt": "Đổi phương pháp hợp nhất công ty con FTEL (hợp nhất toàn bộ → vốn chủ sở hữu) từ 01/01/2026, trình bày minh bạch số liệu điều chỉnh song song 2025/2026. Q2-2026 vẫn chưa được trích xuất dù PDF đã có trên hệ thống từ 2026-08-01 (13 ngày trễ).",
+          "cycle_id": "20260813-2100",
+          "slot": "bctc-analyst-slot-3",
+          "valuation": {
+            "pe": 13.8,
+            "roe_annualized_pct": 28.3,
+            "roe_raw_quarter_pct": 6.2,
+            "pb": 3.6,
+            "sector_pe_median": 17.3,
+            "sector_roe_median_pct": 10.6,
+            "earning_yield_pct": 7.246,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": 2.25,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Minh Di (36)",
+            "xu_huong": "BAT LOI",
+            "khuyen_nghi": "GIU",
+            "do_tin_cay_pct": 25
+          },
+          "esc_gate": {
+            "esc_1_accounting_manipulation": "unevaluable_no_bash_glob",
+            "esc_2_balance_sheet": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "esc_3_ocf_ni_divergence": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_held": true,
+              "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3"
+            },
+            "esc_4_related_party_nonop": {
+              "result": false,
+              "non_operating_share_pct": 2
+            },
+            "esc_5_refine_confidence": {
+              "result": true,
+              "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+              "low_confidence_unit_count": 7,
+              "low_confidence_unit_ids": [
+                "unit-0008",
+                "unit-0009",
+                "unit-0010",
+                "unit-0011",
+                "unit-0012",
+                "unit-0013",
+                "unit-0014"
+              ],
+              "min_confidence": 0.45,
+              "escalation_status": "GUARD-HELD",
+              "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+              "guard_expires_epoch": 1786731161
+            }
+          },
+          "data_quality": {
+            "latest_extracted_period": "2026-Q1",
+            "latest_filed_period": "2026-Q2 (QUÁ HẠN — hạn 30/07/2026, PDF trên hệ thống từ 2026-08-01, chưa trích xuất, 13 ngày)",
+            "confidence_pct": 81,
+            "stale_age_hours": 54.6,
+            "validation": "passed"
+          },
+          "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+          "legal_risk": "1 tín hiệu rủi ro pháp lý toàn thị trường (điều tra ngành vàng bạc) — không liên quan FPT",
+          "regime": "NEUTRAL (fallback — macro_snapshot không có trường Global Liquidity)",
+          "carry_regime": "NEUTRAL (1.37pp)",
+          "generated_at": "2026-08-13T21:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-13T21:19:25Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e27f5b09024fc8c6545211354e4767b4066049550ce3c1a9807576816dad58dd",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ — sản xuất tích hợp từ quặng đến thành phẩm",
+          "customer": "Nhà thầu xây dựng & phân phối thép nội địa, xuất khẩu HRC/tôn mạ sang khu vực Đông Nam Á và các thị trường khác",
+          "ops": "Biên gộp 15,8%. Chỉ tiêu Lợi nhuận hoạt động ghi nhận 0 tỷ VND (dữ liệu OCR lỗi/thiếu trích xuất — mâu thuẫn với LNST 9.055,9 tỷ VND > Lợi nhuận gộp 8.365,1 tỷ VND, hệ thống tự gắn cảnh báo passed_with_warnings). Không dùng chỉ tiêu operating_profit=0 cho phân tích ESC-4 kỳ này.",
+          "mgmt": "Không có phát hiện quản trị mới kỳ này. Q2-2026 vẫn chưa được trích xuất dù PDF đã có trên hệ thống từ 2026-08-01 (13 ngày trễ).",
+          "cycle_id": "20260813-2100",
+          "slot": "bctc-analyst-slot-3",
+          "valuation": {
+            "pe": 14.2,
+            "roe_annualized_pct": 12.7,
+            "roe_raw_quarter_pct": 6.5,
+            "pb": 1.7,
+            "sector_pe_median": 32.6,
+            "sector_roe_median_pct": 2.9,
+            "earning_yield_pct": 7.042,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": 2.04,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Su (7)",
+            "xu_huong": "TRUNG TINH",
+            "khuyen_nghi": "GIU",
+            "do_tin_cay_pct": 37
+          },
+          "esc_gate": {
+            "esc_1_accounting_manipulation": "unevaluable_no_bash_glob",
+            "esc_2_balance_sheet": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "esc_3_ocf_ni_divergence": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_held": true,
+              "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3"
+            },
+            "esc_4_related_party_nonop": {
+              "result": "discarded",
+              "reason": "operating_profit=0 corrupt/incomplete OCR extraction — non_operating_share formula unreliable"
+            },
+            "esc_5_refine_confidence": {
+              "result": false,
+              "report_id": null,
+              "existing_refine_status": "PARTIAL"
+            }
+          },
+          "data_quality": {
+            "latest_extracted_period": "2026-Q1",
+            "latest_filed_period": "2026-Q2 (QUÁ HẠN — hạn 30/07/2026, PDF trên hệ thống từ 2026-08-01, chưa trích xuất, 13 ngày)",
+            "confidence_pct": 80,
+            "stale_age_hours": 54.6,
+            "validation": "passed_with_warnings — net_profit exceeds gross_profit, likely non-operating income / incomplete OCR on operating_profit line"
+          },
+          "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+          "legal_risk": "1 tín hiệu rủi ro pháp lý toàn thị trường (điều tra ngành vàng bạc) — không liên quan HPG",
+          "regime": "NEUTRAL (fallback — macro_snapshot không có trường Global Liquidity)",
+          "carry_regime": "NEUTRAL (1.37pp)",
+          "generated_at": "2026-08-13T21:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-13T21:19:25Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "935573f0e59c0231c62d9b3d7dce516faca0fb2124c76243fe658ba78ecf4353",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Ngân hàng thương mại quốc doanh hàng đầu — tín dụng, huy động, dịch vụ thanh toán/thẻ, bancassurance, tài trợ thương mại",
+          "customer": "Doanh nghiệp lớn, SME, khách hàng bán lẻ đô thị; nền tảng CASA mạnh trong hệ thống ngân hàng VN",
+          "ops": "Lợi nhuận hoạt động/DTT 80,9% (biên cao đặc trưng ngân hàng). ROE quý thô 4,2%, ROE annualized theo so sánh ngành 16,7% (dưới trung vị ngành 17,6%). OCF Q1 dương 12.944,9 tỷ VND, OCF/NI=1,368 — dòng tiền hoạt động lành mạnh so với lợi nhuận.",
+          "mgmt": "Không có phát hiện quản trị mới kỳ này. Q1-2026 đã nộp đúng hạn (15/05/2026, nộp thực tế 19/07/2026); Q2-2026 chưa xuất hiện trong lịch nộp kỳ này.",
+          "cycle_id": "20260813-2100",
+          "slot": "bctc-analyst-slot-3",
+          "valuation": {
+            "pe": 14.1,
+            "roe_annualized_pct": 16.7,
+            "roe_raw_quarter_pct": 4.2,
+            "pb": 2.2,
+            "sector_pe_median": 9,
+            "sector_roe_median_pct": 17.6,
+            "earning_yield_pct": 7.092,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": 2.09,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Thang (46)",
+            "xu_huong": "THUAN LOI",
+            "khuyen_nghi": "GIU",
+            "do_tin_cay_pct": 100
+          },
+          "esc_gate": {
+            "esc_1_accounting_manipulation": "unevaluable_no_bash_glob",
+            "esc_2_balance_sheet": {
+              "result": false,
+              "imbalance_pct": 0.37
+            },
+            "esc_3_ocf_ni_divergence": {
+              "result": false,
+              "quarters_returned": 4,
+              "quarters_required": 4,
+              "ocf_ni_ratio_q1": 1.368,
+              "divergence_ratio": 0.368,
+              "threshold": 0.4
+            },
+            "esc_4_related_party_nonop": {
+              "result": "not_applicable",
+              "reason": "bank — non-operating-share heuristic not applicable to banking P&L structure"
+            },
+            "esc_5_refine_confidence": {
+              "result": false,
+              "report_id": null,
+              "existing_refine_status": "PARTIAL"
+            }
+          },
+          "data_quality": {
+            "latest_extracted_period": "2026-Q1",
+            "confidence_pct": 75,
+            "stale_age_hours": 54.6,
+            "validation": "passed"
+          },
+          "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+          "legal_risk": "1 tín hiệu rủi ro pháp lý toàn thị trường (điều tra ngành vàng bạc) — không liên quan VCB",
+          "regime": "NEUTRAL (fallback — macro_snapshot không có trường Global Liquidity)",
+          "carry_regime": "NEUTRAL (1.37pp)",
+          "generated_at": "2026-08-13T21:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-13T21:19:25Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2b830548309136bd64b2245770e941d93fc9a76aabc7ca5bfcc37269afb01c25",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 5 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/bctc-analyst.md docs/signals/bctc_signal_DXG_20260813_routine.json docs/signals/bctc_signal_FPT_20260813_routine.json docs/signals/bctc_signal_HPG_20260813_routine.json docs/signals/bctc_signal_VCB_20260813_routine.json. actor=0454e9d8-b475-4230-95c9-8b7d943aa8b3 mode=warn escalated=true prior_warns=29 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-13T21:18:59Z",
+        "drained_at": "2026-08-13T21:19:25Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0d5aa3fa8438112a04eb034995eb5a2094fe3009fa999d842376ec5309f6e6cc",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-13T21:10:29Z",
+          "matched_slots": [
+            "bctc-analyst-slot-3"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-3"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-3": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-3": null
+          },
+          "last_fired_timestamp": "2026-08-13T21:10:18Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-3"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "21:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 28,
+          "note": "bctc-offmarket cron slot, calendar_status=unknown -> cron_fallback, single-slot batch, no fanout degrade"
+        },
+        "createdAt": "2026-08-13T21:10:29Z",
+        "drained_at": "2026-08-13T21:19:25Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

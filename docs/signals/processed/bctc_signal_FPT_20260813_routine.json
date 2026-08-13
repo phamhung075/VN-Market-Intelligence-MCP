@@ -4,16 +4,20 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
-  "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers",
-  "ops": "Q1-2026 gross margin 34.0%, operating margin 22.0%, net margin 19.8%; net revenue 12,480 tỷ VND",
-  "mgmt": "Sentiment trend GIẢM (30d slope -0.25); Q2-2026 filing overdue (30/07 deadline passed, not yet extracted, PDF on file since 08-01, 13d+)",
+  "product": "Xuất khẩu phần mềm & dịch vụ CNTT tích hợp hệ thống, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+  "customer": "Doanh nghiệp CNTT toàn cầu (Nhật Bản +44,4% YoY dẫn đầu, Châu Âu tăng mạnh), thuê bao viễn thông cá nhân VN, sinh viên FPT Edu",
+  "ops": "Biên lợi nhuận gộp 34,0%, biên hoạt động 22,0%. Doanh thu thuần theo phương pháp hợp nhất mới (loại trừ FTEL từ 01/01/2026) +8,7% YoY, LNST +13,8% YoY (đã điều chỉnh cùng phương pháp). OCF Q1 âm -2.847,8 tỷ VND — do biến động vốn lưu động (phải thu/phải trả), không phải suy giảm lợi nhuận cốt lõi.",
+  "mgmt": "Đổi phương pháp hợp nhất công ty con FTEL (hợp nhất toàn bộ → vốn chủ sở hữu) từ 01/01/2026, trình bày minh bạch số liệu điều chỉnh song song 2025/2026. Q2-2026 vẫn chưa được trích xuất dù PDF đã có trên hệ thống từ 2026-08-01 (13 ngày trễ).",
+  "cycle_id": "20260813-2100",
+  "slot": "bctc-analyst-slot-3",
   "valuation": {
     "pe": 13.8,
+    "roe_annualized_pct": 28.3,
+    "roe_raw_quarter_pct": 6.2,
     "pb": 3.6,
-    "roe_pct": 28.3,
     "sector_pe_median": 17.3,
-    "earning_yield_pct": 7.25,
+    "sector_roe_median_pct": 10.6,
+    "earning_yield_pct": 7.246,
     "max_deposit_rate_pct": 5,
     "ey_spread_pp": 2.25,
     "verdict": "FAIR"
@@ -21,28 +25,30 @@
   "kinhdich": {
     "que": "Minh Di (36)",
     "xu_huong": "BAT LOI",
-    "tin_hieu": "GIU",
-    "confidence_pct": 25
+    "khuyen_nghi": "GIU",
+    "do_tin_cay_pct": 25
   },
   "esc_gate": {
-    "esc1": "unevaluable_no_bash",
-    "esc2": {
-      "imbalance_pct": 0,
-      "result": false
+    "esc_1_accounting_manipulation": "unevaluable_no_bash_glob",
+    "esc_2_balance_sheet": {
+      "result": false,
+      "imbalance_pct": 0
     },
-    "esc3": {
+    "esc_3_ocf_ni_divergence": {
       "result": "DATA-COVERAGE-LIMITED",
       "quarters_returned": 3,
-      "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
-      "coverage_guard_held": true
+      "quarters_required": 4,
+      "coverage_guard_held": true,
+      "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3"
     },
-    "esc4": {
-      "non_operating_share_pct": 2,
-      "result": false
+    "esc_4_related_party_nonop": {
+      "result": false,
+      "non_operating_share_pct": 2
     },
-    "esc5": {
+    "esc_5_refine_confidence": {
       "result": true,
       "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+      "low_confidence_unit_count": 7,
       "low_confidence_unit_ids": [
         "unit-0008",
         "unit-0009",
@@ -53,28 +59,26 @@
         "unit-0014"
       ],
       "min_confidence": 0.45,
+      "escalation_status": "GUARD-HELD",
       "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
-      "escalation_status": "PENDING",
-      "note": "Prior guard lapsed (24h TTL) unpicked across 3+ held cycles — re-armed + re-dispatched this cycle (bca-20260813T181200Z)"
+      "guard_expires_epoch": 1786731161
     }
   },
   "data_quality": {
-    "bctc_stale": true,
-    "stale_since": "2026-08-11T14:37:49.000Z",
-    "stale_age_hours": 51.7,
-    "sla_hours": 48,
+    "latest_extracted_period": "2026-Q1",
+    "latest_filed_period": "2026-Q2 (QUÁ HẠN — hạn 30/07/2026, PDF trên hệ thống từ 2026-08-01, chưa trích xuất, 13 ngày)",
     "confidence_pct": 81,
-    "report_overdue": true
+    "stale_age_hours": 54.6,
+    "validation": "passed"
   },
-  "insider": "no significant activity",
-  "cycle_meta": {
-    "slot": "bctc-analyst-slot-2",
-    "cycle_tick": "2026-08-13T18:00:00Z",
-    "generated_at": "2026-08-13T18:14:00Z"
-  },
+  "insider": "Không có tín hiệu giao dịch nội bộ đáng kể",
+  "legal_risk": "1 tín hiệu rủi ro pháp lý toàn thị trường (điều tra ngành vàng bạc) — không liên quan FPT",
+  "regime": "NEUTRAL (fallback — macro_snapshot không có trường Global Liquidity)",
+  "carry_regime": "NEUTRAL (1.37pp)",
+  "generated_at": "2026-08-13T21:20:00Z",
   "_processed": {
-    "fingerprint": "9860b1d6505d8bb161f3f88c6dc9a7fda5002f51aeb1eabb0d90823d7c438175",
-    "processedAt": "2026-08-13T18:24:17Z",
+    "fingerprint": "9c8fc341f0894a74f9165ccec7f58b7fe75121d60d05baa0641404db8b98b8ab",
+    "processedAt": "2026-08-13T21:19:25Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

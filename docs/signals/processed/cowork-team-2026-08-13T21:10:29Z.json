@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-08-13T21:10:29Z",
-    "matched_slots": ["bctc-analyst-slot-3"],
-    "won_slots": ["bctc-analyst-slot-3"],
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-3"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/bctc-analyst/flow/main.md"],
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 6,
     "errors": [],
@@ -18,10 +24,16 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "bctc-analyst-slot-3": "cron" },
-    "cadence_minutes": { "bctc-analyst-slot-3": null },
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": null
+    },
     "last_fired_timestamp": "2026-08-13T21:10:18Z",
-    "last_fired_slots": ["bctc-analyst-slot-3"],
+    "last_fired_slots": [
+      "bctc-analyst-slot-3"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +45,11 @@
     "note": "bctc-offmarket cron slot, calendar_status=unknown -> cron_fallback, single-slot batch, no fanout degrade"
   },
   "priority": "low",
-  "createdAt": "2026-08-13T21:10:29Z"
+  "createdAt": "2026-08-13T21:10:29Z",
+  "_processed": {
+    "fingerprint": "0d5aa3fa8438112a04eb034995eb5a2094fe3009fa999d842376ec5309f6e6cc",
+    "processedAt": "2026-08-13T21:19:25Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
