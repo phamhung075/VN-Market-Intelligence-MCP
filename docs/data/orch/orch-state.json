@@ -13265,6 +13265,44 @@
             "observed_at": "2026-08-13T15:18:59Z"
           }
         }
+      },
+      {
+        "id": "FACTORY-GUARD-CI-NOHARDCODE-IMPL",
+        "type": "SPRINT-S",
+        "title": "Implement no-hardcode-allowlist-scan CI guardrail (script + fix 2 cosmetic ticker-branches + annotate 2 known-debt findings + workflow wiring)",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "epic": "FACTORY-MAINTAINABILITY-2026-06",
+        "cluster": "ci-regression-prevention",
+        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-no-hardcode-allowlist-scan",
+        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-no-hardcode-allowlist-scan.md#3-guardrail-design--zero-tolerance-5-sites-small-matches-metric-masklead-code-precedent-not-size-lints-baseline",
+        "dev_agent": "developer",
+        "next_agent": "qa",
+        "parent_task": "FACTORY-GUARD-CI-no-hardcode-allowlist-scan",
+        "created_at": "2026-07-24T19:29:07Z",
+        "created_by": "architect",
+        "updated_at": "2026-08-13T15:31:17Z",
+        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-no-hardcode-allowlist-scan.md",
+        "promoted_at": "2026-07-30T01:18:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-08-13T15:24:24Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "entered_review_at": "2026-07-30T02:09:15Z",
+        "review_note": "New scripts/audits/no-hardcode-allowlist-scan.sh (--check, zero-tolerance, 2 mechanically-reliable checks per the design brief's scope-corrected §3): (1) temporal special-case ban -- .includes('YYYY') (TS) or strings.Contains(x,\"YYYY\") (Go) co-occurring within a +/-2 line window with a literal-year ===/== comparison; (2) ticker/code literal-branch ban -- (ticker|symbol|code|action_code), bare or <obj>.<ident> property access, compared via ===/== against a quoted 2-5-char ALL-CAPS literal, denylisting HOSE|HNX|UPCOM|BLOOMBERG (stable domain-enum mappings, not volatile reference data). A generic cross-file ticker-array-duplication detector (would have caught JANITOR-034) is explicitly DEFERRED per brief §3 -- the repo has dozens of legitimately overlapping domain rule tables (predictionCascadeMapper.ts's cascade categories re-use VCB/BID/CTG across unrelated buckets) that would false-positive heavily under a mechanical N-shared-elements check. Fixed the 2 cosmetic diagnostic-reason-string branches outright: backfillBctcScalarsTool.ts dropped the CTG-only \"cover-letter-only PDF\" reason branch to the generic 0-table-rows message; pharmaEventMapper.ts dropped the IMP-only \"vaccine distributor\" reasoning branch to the generic outbreak-demand text -- both RAW-diffed behavior-preserving (only the reason/reasoning string differs; status/table_row_count/code/eventType/direction unchanged, confirmed via the existing BEQ-2-backfill-eligibility/268-pharma-event assertions, neither of which reads reason text). Annotated (not generalized) the 2 known-debt findings via the hardcode-scan-allow: <ticket-id> escape hatch -- newsChainFallback.ts (JANITOR-035, 2023/year===2024 temporal discount) and cascadeExecutor.ts LARGE_CAP_FALLBACK + priceSourceRouter.ts MAJOR_CAPS (JANITOR-034, overlapping ticker arrays -- check-2's regex doesn't actually match array declarations, annotated per the board note's explicit instruction and the brief's own \"resolved via the escape hatch below, not automated detection\" framing, a paper-trail marker not an active suppression) -- both already require a human design decision their own docs/data/code-janitor-known-findings.json entries call for, out of this gate-shipping task's scope to make unilaterally. Verify-live deviation (not in the board-row note's file list): priceBackfillService.ts:224's ticker === \"BAD\" also matches check-2's literal shape but is a documented test-fixture sentinel (already labeled at ohlcvWriteService.ts:49, never called outside __tests__/) the design brief's own §2(c) explicitly excludes from this scan's offender count -- annotated it too (citing brief §2(c) directly) rather than adding an ad-hoc \"BAD\" denylist entry, which would set an undocumented precedent the design never called for (same class of deviation as dead-code-gate's own check-3 board-note correction). New scripts/audits/no-hardcode-allowlist-scan.test.sh: 9/9 PASS (live-repo --check exits 0 post-fix/post-annotation; synthetic TS+Go temporal-combo fails; synthetic ticker-branch + property-access-shape fails; HOSE/HNX/UPCOM/BLOOMBERG denylist passes; an annotated line passes with an unannotated-same-shape negative control failing; comment-only keyword mention passes). Wired no-hardcode-allowlist-scan job in .github/workflows/ci.yml + CANONICAL pointer in dev-standards.md. Verified: tsc --noEmit clean, targeted 17-file suite (backfill/pharma/cascade/price-router + callers) 191/191 pass. Full bun test: 14865-14869 pass/40 skip/52-56 fail across 2 runs -- every failure matches the standing pre-existing order-dependent FIX-MCP-SUITE-HEALTH-BASELINE pattern, grep-confirmed zero fails reference any file/function this task changed. shellcheck clean on both new scripts. Structural note: no MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) -- did all zone work directly, flipped this board row via scripts/orch-apply.sh myself (permitted, pure bash); could not release task:FACTORY-GUARD-CI-NOHARDCODE-IMPL or send Telegram -- coordinating dev-team session must pick that up. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S32. QA next. | [QA] Review Record (direct-commit verify) 2026-08-13T15:30:06Z -- APPROVED, DONE_VERIFIED. Row carried no .commit/.files[] -- derived commit 5b4a13949 via git log --all -- scripts/audits/no-hardcode-allowlist-scan.sh, confirmed ancestor of main; git show --stat matches all 11 claimed files exactly. RAW re-ran fresh, not trusted from prose: no-hardcode-allowlist-scan.sh --check on live repo -> PASS 0 offenders; no-hardcode-allowlist-scan.test.sh 9/9 PASS; shellcheck clean both scripts. Confirmed CI job wired at .github/workflows/ci.yml:439 + dev-standards.md CANONICAL pointer present. Verified the 2 cosmetic fixes (backfillBctcScalarsTool.ts CTG-branch, pharmaEventMapper.ts IMP-branch) are genuinely behavior-preserving via RAW diff -- status/table_row_count/direction/confidence untouched, only reason/reasoning text differs. Verified JANITOR-034/JANITOR-035 are real pre-existing findings in code-janitor-known-findings.json matching the cited detail, hardcode-scan-allow: annotations present at all 3 sites; regex-replayed TICKER_BRANCH_ERE against the LARGE_CAP_FALLBACK/MAJOR_CAPS array-declaration lines -- confirmed it genuinely does NOT match (no ===), matching the claimed paper-trail-not-suppression framing; confirmed it DOES match priceBackfillService.ts:224 ticker === \\\"BAD\\\", and the brief SS2(c) citation for that annotation is real (ohlcvWriteService.ts:49 verbatim labels Writer F as documented mock-only sentinel). tsc --noEmit 0 errors. Targeted suite (17 files, corrected from an initial 16-file grep miss) 182 pass/0 fail (commit claimed 191/191 -- 9-test delta from 2 weeks of intervening commits to shared test files, zero fail either way, non-blocking drift not a discrepancy in the underlying claim). mock-guard.sh PASS on all 7 touched production files. DDD/security scans clean (no infra imports in touched files, no process.env/secrets). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S107.",
+        "updated_by": "qa",
+        "qa_verified_at": "2026-08-13T15:30:06Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bash: no-hardcode-allowlist-scan.sh --check + .test.sh + bun tsc/test + mock-guard.sh + shellcheck",
+            "args": "commit 5b4a13949 (derived via git log --all -- scripts/audits/no-hardcode-allowlist-scan.sh); re-ran scan --check + test.sh on live repo; mcp-server bun tsc --noEmit + 17-file targeted suite; mock-guard.sh on 7 touched production files; shellcheck on both new scripts",
+            "live_value_observed": "scan --check: PASS 0 offenders; test.sh: 9/9 PASS; shellcheck: clean; tsc: 0 errors; targeted suite: 182 pass/0 fail across 17 files; mock-guard.sh: PASS; CI job confirmed wired ci.yml:439; dev-standards.md CANONICAL pointer confirmed; JANITOR-034/035 confirmed real pre-existing findings",
+            "observed_at": "2026-08-13T15:30:06Z"
+          }
+        }
       }
     ],
     "head": {
@@ -19070,33 +19108,6 @@
         "secondary_claimed_at": "2026-08-13T11:59:22Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "ops"
-      },
-      {
-        "id": "FACTORY-GUARD-CI-NOHARDCODE-IMPL",
-        "type": "SPRINT-S",
-        "title": "Implement no-hardcode-allowlist-scan CI guardrail (script + fix 2 cosmetic ticker-branches + annotate 2 known-debt findings + workflow wiring)",
-        "status": "QA",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-no-hardcode-allowlist-scan",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-no-hardcode-allowlist-scan.md#3-guardrail-design--zero-tolerance-5-sites-small-matches-metric-masklead-code-precedent-not-size-lints-baseline",
-        "dev_agent": "developer",
-        "next_agent": "qa",
-        "parent_task": "FACTORY-GUARD-CI-no-hardcode-allowlist-scan",
-        "created_at": "2026-07-24T19:29:07Z",
-        "created_by": "architect",
-        "updated_at": "2026-08-13T15:24:25Z",
-        "brief_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-no-hardcode-allowlist-scan.md",
-        "promoted_at": "2026-07-30T01:18:38Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-08-13T15:24:24Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "entered_review_at": "2026-07-30T02:09:15Z",
-        "review_note": "New scripts/audits/no-hardcode-allowlist-scan.sh (--check, zero-tolerance, 2 mechanically-reliable checks per the design brief's scope-corrected §3): (1) temporal special-case ban -- .includes('YYYY') (TS) or strings.Contains(x,\"YYYY\") (Go) co-occurring within a +/-2 line window with a literal-year ===/== comparison; (2) ticker/code literal-branch ban -- (ticker|symbol|code|action_code), bare or <obj>.<ident> property access, compared via ===/== against a quoted 2-5-char ALL-CAPS literal, denylisting HOSE|HNX|UPCOM|BLOOMBERG (stable domain-enum mappings, not volatile reference data). A generic cross-file ticker-array-duplication detector (would have caught JANITOR-034) is explicitly DEFERRED per brief §3 -- the repo has dozens of legitimately overlapping domain rule tables (predictionCascadeMapper.ts's cascade categories re-use VCB/BID/CTG across unrelated buckets) that would false-positive heavily under a mechanical N-shared-elements check. Fixed the 2 cosmetic diagnostic-reason-string branches outright: backfillBctcScalarsTool.ts dropped the CTG-only \"cover-letter-only PDF\" reason branch to the generic 0-table-rows message; pharmaEventMapper.ts dropped the IMP-only \"vaccine distributor\" reasoning branch to the generic outbreak-demand text -- both RAW-diffed behavior-preserving (only the reason/reasoning string differs; status/table_row_count/code/eventType/direction unchanged, confirmed via the existing BEQ-2-backfill-eligibility/268-pharma-event assertions, neither of which reads reason text). Annotated (not generalized) the 2 known-debt findings via the hardcode-scan-allow: <ticket-id> escape hatch -- newsChainFallback.ts (JANITOR-035, 2023/year===2024 temporal discount) and cascadeExecutor.ts LARGE_CAP_FALLBACK + priceSourceRouter.ts MAJOR_CAPS (JANITOR-034, overlapping ticker arrays -- check-2's regex doesn't actually match array declarations, annotated per the board note's explicit instruction and the brief's own \"resolved via the escape hatch below, not automated detection\" framing, a paper-trail marker not an active suppression) -- both already require a human design decision their own docs/data/code-janitor-known-findings.json entries call for, out of this gate-shipping task's scope to make unilaterally. Verify-live deviation (not in the board-row note's file list): priceBackfillService.ts:224's ticker === \"BAD\" also matches check-2's literal shape but is a documented test-fixture sentinel (already labeled at ohlcvWriteService.ts:49, never called outside __tests__/) the design brief's own §2(c) explicitly excludes from this scan's offender count -- annotated it too (citing brief §2(c) directly) rather than adding an ad-hoc \"BAD\" denylist entry, which would set an undocumented precedent the design never called for (same class of deviation as dead-code-gate's own check-3 board-note correction). New scripts/audits/no-hardcode-allowlist-scan.test.sh: 9/9 PASS (live-repo --check exits 0 post-fix/post-annotation; synthetic TS+Go temporal-combo fails; synthetic ticker-branch + property-access-shape fails; HOSE/HNX/UPCOM/BLOOMBERG denylist passes; an annotated line passes with an unannotated-same-shape negative control failing; comment-only keyword mention passes). Wired no-hardcode-allowlist-scan job in .github/workflows/ci.yml + CANONICAL pointer in dev-standards.md. Verified: tsc --noEmit clean, targeted 17-file suite (backfill/pharma/cascade/price-router + callers) 191/191 pass. Full bun test: 14865-14869 pass/40 skip/52-56 fail across 2 runs -- every failure matches the standing pre-existing order-dependent FIX-MCP-SUITE-HEALTH-BASELINE pattern, grep-confirmed zero fails reference any file/function this task changed. shellcheck clean on both new scripts. Structural note: no MCP/gateway tool grant in this session (Read/Edit/Write/Bash only) -- did all zone work directly, flipped this board row via scripts/orch-apply.sh myself (permitted, pure bash); could not release task:FACTORY-GUARD-CI-NOHARDCODE-IMPL or send Telegram -- coordinating dev-team session must pick that up. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S32. QA next."
       }
     ],
     "_closed_signals_20260614": {
