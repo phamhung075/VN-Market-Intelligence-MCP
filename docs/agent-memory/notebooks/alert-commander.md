@@ -1,18 +1,10 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-08-13 03:08 UTC | **Sprint:** TASK_2006
+**Last updated:** 2026-08-13 03:23 UTC | **Sprint:** TASK_2006
 
 **Role:** Event-only alert dispatch (position-danger / watchlist-opportunity / CRITICAL-always) | **Cadence:** `*/15min` market hours (02:00–08:30 UTC) + 4h critical sweep | **Contract:** APPEND class, one `## c<NNN>` section per cycle per `.claude/skills/notebook-write/SKILL.md` AC-6.
 
 > **Structural reset (FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, 2026-07-29):** prior history archived → `docs/agent-memory/notebooks/archive/alert-commander-archive-20260729.md`. One top-level `## c<NNN> · <ISO-timestamp>` section per cycle now.
-
-## c137 · 2026-08-13T02:38:29Z (slot=alert-commander-market, tick=02:40)
-- Signals: bus 9 (hours_back=2) — 1 urgent_news(VIC id10798, impact 9/10, Vingroup/Sun Group capital deployment — same story, still in 2h window) + 2 chain_catalyst (CoreWeave AI id10799 regime_adj=0.70, VN30 smart-money id10800 regime_adj=0.60, same signals as c136, both <0.75 NEUTRAL threshold, no stock_code) + 2 SLA-noise urgent_news (freshness-sla-monitor, suppressed per policy) + 4 verified_decision (FRT overbought, HUT/VHM oversold, DXG price_surge — uncounted, informational) | Fired: 0 | Suppressed: 2 | MARKET: none. Market OPEN (02:37 UTC) — no fresh tick-snapshot within 7min — direct `get_cycle_bootstrap`/`get_macro_snapshot`/`get_agent_signals`, gateway healthy.
-- ChainCatalyst: 0 fired | 2 suppressed (re-eval, same ids as c136) | event_types: [AI-earnings-rally (CoreWeave, conf 0.70<0.75), VN30-foreign-inflow (smart-money, conf 0.60<0.75)] — `record_signal_outcome` suppressed for both (10799, 10800).
-- Watchlist-opp: `get_kinhdich_reading` VIC (dominant urgent_news story again this cycle) — GIU (HOLD) 100% conf, not BUY — cond 2/4 fails.
-- Position-danger: `get_alerts(type=price)` clean (no active alerts), no stopLossHit — gate fails.
-- CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, `get_crisis_early_warning` clean (no crisis signal; WARNING x6 corp-reputation BSR/FRT/HUT/PLX/SSI/VCB unchanged, all <50 no DANGER-tier), no verified_chain in bus.
-- Regime: NEUTRAL (fallback — macro_snapshot text has no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp) | vol NORMAL (rv_20d_pctile=0.682, gk_vol_20d_pct=17.85) | foreign_room market_saturation=5.91% (outflow_z_5d=0.12, watchlist-scope top10) | `get_vn_liquidity_state` OMO/interbank blocked (HTML parse fail / VPS unreachable) — [SKIP], standard thresholds used | Pivot window: false (pivotWindowWarning=null, next Sept 2026 PMI/CPI/FOMC/SBV). VN-Index 1792.33 flat (Δ-0.85). Silent exit — no MARKET/WORK send. `log_agent_work` id=1939.
 
 ## c138 · 2026-08-13T02:52:58Z (slot=alert-commander-market, tick=02:55)
 - Signals: bus 9 (hours_back=2) — 1 urgent_news(VIC id10798, impact 9/10, Vingroup/Sun Group capital deployment — same story 3rd consecutive cycle) + 2 chain_catalyst (CoreWeave AI id10799 regime_adj=0.70, VN30 smart-money id10800 regime_adj=0.60, same signals as c136/c137, both <0.75 NEUTRAL threshold, no stock_code) + 2 SLA-noise urgent_news (freshness-sla-monitor, suppressed per policy) + 4 verified_decision (FRT overbought, HUT/VHM oversold, DXG price_surge — uncounted, informational) | Fired: 0 | Suppressed: 2 | MARKET: none. Market OPEN (02:51 UTC) — no fresh tick-snapshot within 7min — direct `get_cycle_bootstrap`/`get_macro_snapshot`/`get_agent_signals`, gateway healthy.
@@ -29,3 +21,11 @@
 - Position-danger: `get_alerts(type=price)` clean (no active alerts), no stopLossHit — gate fails.
 - CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, `get_crisis_early_warning` clean (no crisis signal; WARNING x6 corp-reputation BSR/FRT/HUT/PLX/SSI/VCB unchanged, all <50 no DANGER-tier), no verified_chain in bus.
 - Regime: NEUTRAL (carry.regime=NEUTRAL, carrySpread=1.37pp) | vol NORMAL (rv_20d_pctile=0.682, gk_vol_20d_pct=17.86) | foreign_room market_saturation=5.91% (outflow_z_5d=0.15, watchlist-scope top10) | `get_vn_liquidity_state` OMO/interbank blocked (HTML parse fail / VPS unreachable) — [SKIP], standard thresholds used | Pivot window: false (pivotWindowWarning=null, next Sept 2026 PMI/CPI/FOMC/SBV). VN-Index 1793.30 flat (Δ+0.12). Silent exit — no MARKET/WORK send. `log_agent_work` id=1941.
+
+## c140 · 2026-08-13T03:23:29Z (slot=alert-commander-market, tick=03:25)
+- Signals: bus 7 (hours_back=2) — 1 urgent_news(VIC id10798, impact 9/10, Vingroup/Sun Group capital deployment — 5th consecutive cycle) + 2 chain_catalyst (CoreWeave AI id10799 regime_adj=0.70, VN30 smart-money id10800 regime_adj=0.60, same ids as c136-139, both <0.75 NEUTRAL threshold, no stock_code) + 4 verified_decision (FRT overbought, HUT/VHM oversold, DXG price_surge — uncounted, informational) | Fired: 0 | Suppressed: 2 | MARKET: none. Market OPEN (03:22 UTC) — no fresh tick-snapshot for today — direct `get_cycle_bootstrap`/`get_macro_snapshot`/`get_agent_signals`, gateway healthy.
+- ChainCatalyst: 0 fired | 2 suppressed (re-eval, same ids as c136-139) | event_types: [AI-earnings-rally (CoreWeave, conf 0.70<0.75), VN30-foreign-inflow (smart-money, conf 0.60<0.75)] — `record_signal_outcome` suppressed for both (10799, 10800).
+- Watchlist-opp: fresh `get_kinhdich_reading` VIC (dominant urgent_news story again this cycle, quẻ 8 Tỷ) — GIU (HOLD) 100% conf, not BUY — cond 2/4 fails.
+- Position-danger: `get_alerts(type=price)` clean (no active alerts), no stopLossHit — gate fails.
+- CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, `get_crisis_early_warning` clean (no crisis signal; WARNING x6 corp-reputation BSR/FRT/HUT/PLX/SSI/VCB unchanged, all <50 no DANGER-tier), no verified_chain in bus.
+- Regime: NEUTRAL (fallback — macro_snapshot text has no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp) | vol NORMAL (rv_20d_pctile=0.682, gk_vol_20d_pct=17.86) | foreign_room market_saturation=5.91% (outflow_z_5d=0.16, watchlist-scope top10) | `get_vn_liquidity_state` OMO/interbank blocked (HTML parse fail / VPS unreachable) — [SKIP], standard thresholds used | Pivot window: false (pivotWindowWarning=null, next Sept 2026 PMI/CPI/FOMC/SBV). VN-Index 1791.02 down (Δ-2.16). Silent exit — no MARKET/WORK send. `log_agent_work` id=1942.
