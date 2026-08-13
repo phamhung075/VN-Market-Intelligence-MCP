@@ -5,8 +5,8 @@
     "last_linecount": 33,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786614682,
-      "last_linecount": 33
+      "last_mtime": 1786650637,
+      "last_linecount": 23
     }
   },
   "decision_journal": [
@@ -132,7 +132,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-13T19:21:32Z",
+    "_updated_at": "2026-08-13T19:50:35Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -490,7 +490,7 @@
         "type": "signal_feedback",
         "summary": "A-30 FAIL: rag-service — memory discontinuity (crash cliff) 88.66% → 47.88%",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-13T19:30Z",
@@ -504,7 +504,7 @@
         "type": "signal_feedback",
         "summary": "A-30 FAIL: rag-service — memory crash cliff 88.66% → 47.88%",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-13T19:30Z",
@@ -19018,7 +19018,7 @@
         "last_served_tick": "2026-08-13T17:21:25Z"
       }
     },
-    "_updated_at": "2026-08-13T19:24:12Z",
+    "_updated_at": "2026-08-13T19:50:35Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24774,6 +24774,53 @@
         "payload": "A-30 FAIL: rag-service-1 memory — sustained >97% (median 97.61%, 5/6 samples)",
         "createdAt": "2026-08-13T19:16:51Z",
         "drained_at": "2026-08-13T19:21:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d466d1fa25ed7307f51d38f9a18a011039140b6f7c8644bc5596cf78413a929b",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md",
+          "line_count": 199,
+          "cap": 600,
+          "byte_count": 43609,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 7609,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-13T19:28:07Z",
+        "drained_at": "2026-08-13T19:49:46Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9b5947b2e13be162cb4d45d9d366af6abdb6e0958abd5e49ad5c1cf5ccacb154",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "CRITICAL",
+        "payload": "A-30 FAIL: rag-service — memory discontinuity (crash cliff) 88.66% → 47.88%",
+        "createdAt": "2026-08-13T19:47:11Z",
+        "drained_at": "2026-08-13T19:50:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "94273fceaab3f727afdc5d75a7a979351bf64e5fa5ef89897aeeec114a73680f",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "CRITICAL",
+        "payload": "A-30 FAIL: rag-service — memory crash cliff 88.66% → 47.88%",
+        "createdAt": "2026-08-13T19:47:47Z",
+        "drained_at": "2026-08-13T19:50:27Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
