@@ -92,12 +92,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FACTORY-GUARD-CI-METRICMASK-IMPL",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 1 row(s), highest-ranked FACTORY-GUARD-CI-METRICMASK-IMPL — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-13T13:23:59Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "updated_at": "2026-08-13T13:54:38Z",
+    "updated_by": "dev-team",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -133,44 +132,10 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-13T12:54:09Z",
+    "_updated_at": "2026-08-13T13:55:33Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
-      {
-        "id": "sys-20260812T133432-3b93",
-        "ts": "2026-08-12T13:34:32Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "microservice_degraded",
-        "summary": "rag-service memory pressure: 88.54% (>85% threshold, A-30 WARN boundary)",
-        "severity": "WARN",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T13:30Z",
-        "dedup_key": "microservice_degraded:rag-service:A-30",
-        "disposition": "FOLD -> FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (open, review[], next_agent=dev-rag-service, P0). 5 rag-service A-30 rows folded as one chain, no mint. See that row's po_fold_20260812T1505Z for the three premise corrections: (1) report 4733's 'pre-fix image built 08-08T08:10:53Z' is REFUTED - live image is 2026-08-12T10:40:10Z and DOES contain 4c8c601e6; (2) the real undeployed delta is ca6d868695 @11:08:24Z, 28 min NEWER than the image -> one scoped ops rebuild; (3) the 'monotonically declining, settled ~89-93%' read is superseded - live docker stats 14:58Z = 92.26% at only 57 min into a fresh 14:00:55Z restart. The two 'stale ACK' rows are the FU-RAG-DEPLOY-MEMORY ledger floor_enforcement INTENDED outcome, not a defect.",
-        "triaged_at": "2026-08-12T15:10:35Z",
-        "triaged_by": "po"
-      },
-      {
-        "id": "sys-20260812T133441-7e30",
-        "ts": "2026-08-12T13:34:41Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "auditor_cycle_missing",
-        "summary": "auditor tier-1 cycle possibly missing — no completion evidence in 84h (cadence 0.5h)",
-        "severity": "WARN",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-12T13:30Z",
-        "dedup_key": "auditor-cycle-missing:tier1:2026-08-12T13:30Z",
-        "disposition": "FOLD -> FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL (open, ready[]). PREMISE REFUTED, no mint: tier-1 cycles ARE running (notebook c51 13:30Z / c52 14:00Z / c53 14:21Z). What is 84h stale is docs/data/auditor-tier1-last-healthy.json itself (last_healthy_at=2026-08-09T01:33:22Z, cycle='c10' vs notebook c53 - counter regressed by 43) whose mtime is TODAY: rewritten each cycle with a frozen payload. D-CYCLE-2 keys 'cycle missing' off that self-written file instead of the cycle's durable artifacts, so it alarms on the artifact it is itself corrupting. auditor_cycle_missing is also a previously-unrouted signal type - routing gap folded to FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED.",
-        "triaged_at": "2026-08-12T15:10:35Z",
-        "triaged_by": "po"
-      },
       {
         "id": "sys-20260812T142118-1332",
         "ts": "2026-08-12T14:21:18Z",
@@ -594,7 +559,7 @@
         "type": "signal_feedback",
         "summary": "A-30 ESCALATE: vn-market-intelligence-mcp-rag-service-1 — memory discontinuity (crash cliff) >40pp detected",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-13T13:00Z",
@@ -608,7 +573,7 @@
         "type": "microservice_degraded",
         "summary": "rag-service-1 sustained elevated memory baseline — 3 consecutive high-band readings (90.75% → 88.88% → 90.40%)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -13258,84 +13223,6 @@
             "observed_at": "2026-08-12T16:37:00Z"
           }
         }
-      },
-      {
-        "id": "UC-ASL-P6",
-        "type": "CLEAN",
-        "title": "Purge the DASHBOARD.md phantom protocol from the auditor flow; align SKILL.md hot-path write text with the orch-apply contract",
-        "status": "DONE_VERIFIED",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "CONFIRMED",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P6",
-        "note": "auditor main.md/init.md/tier1-probe.md mandate a phantom docs/handoffs/DASHBOARD.md with no live consumer, and signal-dashboard SKILL teaches bare temp-then-rename contradicting orch-apply.sh. Purge phantom refs; align write text to orch-apply CAS.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "agent-father",
-        "supervised": true,
-        "supervised_reason": "[po 2026-07-16T11:59:19Z] 3rd BOUNDED-1 tick churn converged. next_agent=agent-father is a MAINTENANCE-LANE on-demand-only agent (dev-team main.md L12) that zone-detect (cross-service/ => Tier-3 developer) CANNOT route to; idle auto-launch would mis-route factory work to a generic developer. supervised:true withholds it from BOUNDED-1 so the next tick picks a dev-routable P1 (UC-SDF-P4/UC-GCP-P2/UC-GCP-P4->developer, UC-MDH-P1->dev-mcp-server). Deliberate on-demand dispatch of agent-father (task:on-demand:agent-father:<date> mutex-wrap) only; on execution reconcile that the row cites system-auditor init.md but the flow dir has only main.md/tier1-probe.md. Durable class fix tracked by FIX-DEVTEAM-BOUNDED1-MAINTLANE-NEXTAGENT-GATE.",
-        "po_manual_dispatch_flagged_at": "2026-07-31T00:56:04Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH",
-        "updated_at": "2026-08-13T13:29:05Z",
-        "updated_by": "agent-father",
-        "claimed_at": "2026-08-06T20:54:27Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "owner": "agent-father",
-        "redispatch_count": 1,
-        "status_note": "[QA] Direct-Commit Verify FAILED 2026-08-06 — CHANGES_REQUESTED, RAW re-verified against the live repo this tick, not trusted from agent-father's own commit-message self-report. Commit 2728636fd confirmed real, on main ancestry, touches exactly the 5 files claimed. init.md's 3 bare DASHBOARD.md mentions now correctly name docs/data/DASHBOARD.md + scripts/emit-dashboard-row.sh (live lines ~49/95/142); flow/main.md's RETURN \"NEXT: po (via DASHBOARD.md)\" corrected to \"po (via orch-state.json .signal_queue row)\" (live line 17 area) — both confirmed live and durable through 6 days of later edits (2026-08-05/06), no regression. tier1-probe.md correctly needed no change (confirmed no live DASHBOARD.md phantom mandate there).\n\nBUT: the task's own cited architecture brief (docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P6) Change item (2) specifies TWO edits to .claude/skills/signal-dashboard/SKILL.md: (a) line 11 Write-protocol text -> orch-apply.sh [DONE, confirmed live] AND (b) trim the :22-24 manual-CAS instruction to \"orch-apply.sh provides the CAS guard; TS code uses appendSignalQueueRow()\" [NOT DONE — git blame confirms lines 22-24 unchanged since 2026-06-07 commit 8a46965519, untouched by 2728636fd or any later commit]. Live text today still reads \"Shell/flow code MUST record mtime before read, check mtime again before rename, retry up to 3 times if changed. Never use bare temp→rename without the CAS guard\" (SKILL.md:22-24) — this instructs shell/flow code to hand-roll its own manual mtime-CAS loop as an alternative to orch-apply.sh, directly contradicting line 11's own absolute mandate 2 lines above (\"MUST route through ... orch-apply.sh ... NEVER a raw temp-file-then-rename\", no manual-CAS exception) and the project's CANONICAL SSOT-W1-ORCH-APPLY-WRAPPER rule (no raw writes, ever, always via the wrapper). This is the exact SKILL.md hot-path/orch-apply-contract misalignment class this row exists to close — partially fixed, not fully.\n\nFIX NEEDED (small, doc-only, no re-test needed): .claude/skills/signal-dashboard/SKILL.md:22-24 — replace the \"Shell/flow code MUST record mtime...\" sentence with text naming orch-apply.sh as the sole CAS-guard provider, removing the manual mtime-record/check/retry instruction. Not routing to fixer — no task branch exists (direct-commit row, branch:null). Held: .task_board.qa[] -> .task_board.review[], status QA -> REVIEW, owner/next_agent=agent-father, redispatch_count 0 -> 1.\n\n[agent-father] 2026-08-13T13:29:04Z — CLOSED (SECONDARY-Drain owner-triage). Applied QA's exact suggested fix: .claude/skills/signal-dashboard/SKILL.md:22-24 manual mtime-record/check/retry instruction replaced with text naming scripts/orch-apply.sh as the sole CAS-guard provider for shell/flow writes (TS appendSignalQueueRow() CAS description at L18-21 left untouched, out of brief's cited scope). File re-confirmed at own 120L size-justification cap (briefly 121L on first wrap, reworded to fit). Verified: git diff clean 3-line-scoped diff; git show --name-only HEAD confirms exactly 3 files. No re-test needed per QA note (doc-only). Commit 77cdd61f4 (docs/agents/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-agent-father.md STEP agent-father-S3 + notebook). Self-certifying DONE_VERIFIED per Review-Lane SECONDARY-Drain owner-triage design (QA explicitly routed this here as doc-only/no-re-test, no fixer/re-QA loop, no task branch exists). orch-state.json write left uncommitted — outside agent-father commit_zone (FU-AGENT-FATHER-ORCH-SCOPE); router/PO to commit.",
-        "secondary_claimed_at": "2026-08-13T13:23:23Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "agent-father",
-        "verification": {
-          "raw_probe": {
-            "tool": "git diff/show + wc -l (doc-only markdown fix — no runtime/data probe applicable)",
-            "args": {
-              "commit_verified": "77cdd61f49c0110bf7aacae540269505557977cc"
-            },
-            "live_value_observed": "git show --name-only HEAD (77cdd61f4) confirms exactly 3 files changed (.claude/skills/signal-dashboard/SKILL.md, decision journal, notebook); git diff on SKILL.md shows a clean 3-line-scoped replacement at :22-24 removing the manual mtime-record/check/retry instruction and naming scripts/orch-apply.sh as sole CAS-guard provider, matching QA's exact suggested text and the architecture brief's Change (2)(b) wording; wc -l confirms file back at 120L (own ≤120L size-justification cap, briefly 121L on a first wrap attempt, reworded to fit).",
-            "observed_at": "2026-08-13T13:29:04Z"
-          }
-        }
-      },
-      {
-        "id": "FACTORY-GUARD-CI-METRICMASK-IMPL",
-        "type": "SPRINT-S",
-        "title": "Implement metric-mask-lint CI guardrail (script + fix live offenders + workflow wiring)",
-        "status": "DONE_VERIFIED",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "epic": "FACTORY-MAINTAINABILITY-2026-06",
-        "cluster": "ci-regression-prevention",
-        "source": "architect design brief 2026-07-24, parent FACTORY-GUARD-CI-metric-mask-lint",
-        "detail_ref": "docs/architecture-briefs/2026-07-24-factory-guard-ci-metric-mask-lint.md#3-build-vs-plan--decomposed-not-self-implemented",
-        "dev_agent": "developer",
-        "next_agent": "qa",
-        "parent_task": "FACTORY-GUARD-CI-metric-mask-lint",
-        "note": "files: scripts/audits/metric-mask-lint.sh (new, --check mode, zero-tolerance no baseline needed), apps/mcp-server/src/domain/services/cascadeEngine.ts (fix 3x seedEntry.confidence ?? 0.6 masks at L356/375/394 feeding stored MSCI cascade confidence), apps/mcp-server/src/domain/services/news-analysis/marketSentimentCalculator.ts (fix row.impact_score ?? 1.0 mask at L174), apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts (annotate thresholds?.impactScore ?? 7 at L198 with metric-mask-allow: — genuine user config threshold, not fabricated metric), .github/workflows/ci.yml (add metric-mask-lint job), docs/policies/dev-standards.md (CANONICAL pointer), scripts/audits/metric-mask-lint.test.sh (new smoke test). approach: single cross-language regex script scanning *.ts/*.py/*.go (excl tests/vendor) for ?? / || / python or / destructuring-or-param default with a NON-ZERO numeric literal on identifiers matching /confidence|score|impact|magnitude|probability/i; 0/0.0/null always allowed (honest-absence idiom); inline metric-mask-allow: <reason> comment suppresses a match (mirrors size-justification: convention); fix the 4 real live masks + annotate the 1 legit config default FIRST so the gate opens at zero offenders and can be true zero-tolerance (no baseline manifest, unlike the size-lint sibling which had 733 debt). dod: --check exits 0 on post-fix repo state; synthetic new ?? 50-style mask fails; ?? 0 / ?? null pass; annotated line passes; the 3+1 live masks fixed with no scoring-behavior regression (RAW-verify MSCI cascade + daily sentiment score after rebuild); smoke test covers all cases; CI green on push.",
-        "created_at": "2026-07-24T17:26:06Z",
-        "created_by": "architect",
-        "updated_at": "2026-08-13T13:38:45Z",
-        "reviewed_at": "2026-07-29T19:39:50Z",
-        "reviewed_by": "developer",
-        "review_note": "Implemented per architect brief section 3 exactly. New scripts/audits/metric-mask-lint.sh (--check, zero-tolerance, no baseline) detects ??/||/python-or/destructuring-default with a non-zero literal on confidence|score|impact|magnitude|probability-matching identifiers; 0/0.0/null always allowed; comment-only mentions never scanned; metric-mask-allow: suppression. Fixed cascadeEngine.ts:356,375,394 (?? 0.6 -> ?? 0, behaviorally identical to old value for every real input since both sit below detectMsci*s 0.7 credibility floor) and marketSentimentCalculator.ts:174 (?? 1.0 -> exclude the row entirely, since impact_score is genuinely nullable unlike cascadeEngine confidence, and ?? 0 would have fabricated a zero-impact weight while still counting confidence in the denominator). Annotated watchlist.ts:198 (legit alert-threshold default). VERIFY-LIVE CATCH beyond the brief stated 4+1: a live dry-run of the built lint surfaced a 5th real hit, brokerCredibilityTools.ts:51 baseConfidence = 1 (zod .default(1)-backed documented input default the brief own manual sweep missed) -- annotated it too rather than narrowing the detector. metric-mask-lint --check exits 0 post-fix (423 files scanned). New metric-mask-lint.test.sh 10/10 PASS. Targeted suites 100 percent green: FIX-1279-msci-bullish 14/14, P0-4-market-sentiment-index 37/37, cascade files (1279a+247+FIX-1268+1224) 31/31, 915-broker-credibility 22/22, watchlist (082+220) 25/25. tsc clean, shellcheck clean. Full bun test: 14904-14907 pass/40 skip/60-63 fail/15007 total across 2 runs -- every failure pre-existing order-dependent full-suite pollution tracked by still-BACKLOG board row FIX-MCP-SUITE-HEALTH-BASELINE, none touching a file this task changed, confirmed by isolated re-run of 3 sampled failing files (32/32 pass standalone). Commits: 7a758d90f (feat), 33aee81e2 (memory). | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Independently RAW-verified -- not trusted from review_note prose. Commits 7a758d90f (feat) + 33aee81e2 (memory) confirmed real, on main ancestry (git merge-base --is-ancestor OK both); git show --stat matches all claimed files exactly. Diffs verified line-by-line: cascadeEngine.ts:356,375,394 seedEntry.confidence ?? 0.6 -> ?? 0 (x3, feeding detectMsciInclusion/Watchlist/Exclusion); marketSentimentCalculator.ts:174 row.impact_score ?? 1.0 -> row excluded entirely (impact===null guard added, ?? 1.0 fallback line removed); watchlist.ts:198 + brokerCredibilityTools.ts:51 both carry metric-mask-allow: annotations matching claim. Ran metric-mask-lint.sh --check live: PASS, 0 offenses (434 keyword-bearing files scanned -- vs devs 423 at 07-29, expected 2-week codebase-growth drift, not a discrepancy). Proved zero-tolerance is REAL not just asserted: injected a synthetic untracked file with a ?? 50 mask -- lint correctly FAILed (exit 1, flagged exact file:line), cleaned up after. metric-mask-lint.test.sh reproduced 10/10 PASS. CI wiring confirmed: metric-mask-lint job present in .github/workflows/ci.yml, ubuntu-latest/checkout-only, correctly structured. shellcheck clean on both new scripts. tsc --noEmit: 0 errors. mock-guard.sh --files <all 4 touched production files>: PASS. DDD scan: domain-layer files (cascadeEngine.ts, marketSentimentCalculator.ts) carry ZERO real infrastructure/application imports (grep hits are comments only); interface-layer files infra imports (watchlist.ts, brokerCredibilityTools.ts) are the expected composition-root pattern, not a domain violation. Security scan clean (no process.env, no real secrets -- one comment false-positive re \"short tokens\" in an NLP context). Targeted suites reproduced EXACTLY matching devs claimed counts: FIX-1279-msci-bullish 14/14, P0-4-market-sentiment-index 37/37, cascade files (1279a+247+FIX-1268+1224) 31/31, 915-broker-credibility 22/22, watchlist (082+220) 25/25 -- 129/129 total. Ran a FRESH independent full bun test: 15262 pass/40 skip/56 fail/1 error/15358 total (480.28s) -- total grew vs devs 2-week-old 15007 (expected repo-wide growth, matches this sprints own documented weekly-growth trend 15007->15056->15087->15358 across sibling QA cycles); fail count 56 sits inside the SAME contemporaneous pre-existing flake band (44-63) independently confirmed by multiple sibling QA verify cycles this same week, tracked by still-BACKLOG board row FIX-MCP-SUITE-HEALTH-BASELINE; grep-confirmed ZERO of the 56 fails + 1 unhandled-error (DB-closed race in an unrelated pollNews 5000ms-timeout test) reference cascade/sentiment/watchlist/broker/credibility/msci/metric-mask by name or file -- none touch a file this task changed. CANONICAL pointer in dev-standards.md (L1101-1119) verified accurate against live script behavior. Commit trailers (Task:/AC:) present and match the briefs DoD items exactly. No ISSUE found. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-19.md STEP qa-S103.",
-        "claimed_at": "2026-08-13T13:23:58Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "qa_verified_at": "2026-08-13T13:38:44Z",
-        "qa_verified_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "bash scripts/audits/metric-mask-lint.sh --check + metric-mask-lint.test.sh + bun test (targeted+full) + bun tsc --noEmit + shellcheck + mock-guard.sh + git show/merge-base",
-            "args": "metric-mask-lint.sh --check (live repo); metric-mask-lint.test.sh; src/__tests__/{FIX-1279-msci-bullish,P0-4-market-sentiment-index,1279a-msci-inclusion-cascade-red,247-cascade-metrics,FIX-1268-govt-support-cascade,1224-oil-down-aviation-bullish,915-broker-credibility,082-tool-watchlist,220-watchlist-enrichment}.test.ts; full bun test (apps/mcp-server); commits 7a758d90f+33aee81e2 vs main",
-            "live_value_observed": "metric-mask-lint --check: PASS 0/434 files (synthetic ?? 50 injection correctly FAILed, cleaned up); metric-mask-lint.test.sh 10/10 PASS; targeted suites 129/129 pass (14+37+31+22+25) matching dev claim exactly; tsc 0 errors; shellcheck clean; mock-guard PASS on all 4 touched prod files; fresh full bun test 15262 pass/40 skip/56 fail/1 error/15358 total (480.28s), zero fail-list overlap with cascade/sentiment/watchlist/broker/msci/metric-mask; both commits confirmed ancestors of main, git show --stat matches claimed files exactly",
-            "observed_at": "2026-08-13T13:38:44Z"
-          }
-        }
       }
     ],
     "head": {
@@ -19418,7 +19305,7 @@
         "last_served_tick": "2026-08-13T11:25:20Z"
       }
     },
-    "_updated_at": "2026-08-13T13:23:03Z",
+    "_updated_at": "2026-08-13T13:55:33Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -23726,6 +23613,30 @@
         "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/ops.md. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=5 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
         "createdAt": "2026-08-13T13:01:24Z",
         "drained_at": "2026-08-13T13:19:49Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "sys-20260813T131728-61d3",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "priority": "CRITICAL",
+        "payload": "A-30 ESCALATE: vn-market-intelligence-mcp-rag-service-1 — memory discontinuity (crash cliff) >40pp detected",
+        "createdAt": "2026-08-13T13:17:28Z",
+        "drained_at": "2026-08-13T13:55:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "sys-20260813T134703-3fb8",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "priority": "WARN",
+        "payload": "rag-service-1 sustained elevated memory baseline — 3 consecutive high-band readings (90.75% → 88.88% → 90.40%)",
+        "createdAt": "2026-08-13T13:47:03Z",
+        "drained_at": "2026-08-13T13:55:33Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
