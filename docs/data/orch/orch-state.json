@@ -92,12 +92,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR",
-    "next_agent": "developer",
-    "next_action": "Ready-Lane Consumer claim of FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR — spawn developer DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
-    "updated_at": "2026-08-14T01:55:26Z",
-    "updated_by": "dev-team (ready-lane consumer)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-08-14T02:17:56Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -18809,6 +18808,36 @@
         "architect_completed_at": "2026-08-13T23:39:24Z",
         "architect_brief": "docs/architecture-briefs/2026-08-13-fix-pek-extract-semaphore-contention-silent-drop.md",
         "architect_review_note": "[architect 2026-08-13T23:39:24Z ROOT CAUSE CONFIRMED — RAW-verified, NOT the fallback-shell defect] All 3 named reports (HUT 2025-Q3 dab264ae-9702-4045-b488-bbf5d13f97fc, BSR 2024-Q1 d332bf35-d989-4dcc-a180-48c07369ea01, FRT 2024-Q1 268f4544-d66b-42cd-b37e-18ff7b17d55f) carry real, existing UUIDs with pdf_path SET and text_status=COMPLETE, RAW-confirmed 0 rows across bctc_layout_units/bctc_table_rows/bctc_md_tables. FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE's write-gate fix is structurally out of scope (it only rejects fallback- ids; none of these 3 ever reach that write path). ACTUAL ROOT CAUSE: apps/pdf-extractor/infrastructure/pek_engine_adapter.py:90-92,656-662 uses a NON-BLOCKING threading.Semaphore(1) acquire (by design, one extraction at a time) that raises SemaphoreContendedError INSTANTLY on contention instead of queueing; apps/mcp-server/src/scheduler/financial-reports/bctcExtractReconcileJob.ts:322-527 re-fires its ENTIRE still-pek_triggered batch (up to 20) every 30-min tick with zero pacing, creating a near-simultaneous request burst every tick. Live-confirmed via full-history docker logs vn-market-intelligence-mcp-pdf-extractor-1 (2026-08-08-present, 183 total FAILED traces: 129 SemaphoreContendedError / 53 already-diagnosed fallback-id 400s / 1 timeout): FRT 2024-Q1 hit SemaphoreContendedError on 8/8 of its recorded reconciliation passes (100% loss, fully reproduced). BSR/HUT show the same burst symptom one layer upstream (their trigger calls left almost no trace in pdf-extractor log at all, consistent with client-side unreachable/timeout under the same load; unconfirmable from mcp-server side because that container was recycled 2026-08-13, losing its 08-11 logs -- flagged as a 2nd occurrence of the log-retention gap the fallback-shell sibling brief already named once). Ruled out genuinely-malformed PDFs: BSR/FRT own 2025-Q1 filings (different PDF content) extracted successfully (34/27 layout units) once they won the semaphore race; of 67 attempts that started, only already-explained failures (fallback 400s + 1 timeout) account for every non-success. A-30 memory hypothesis (telegram 4648, 94.07% loss of reclamation): correlated not causal -- the observed contention burst (12:35:03-04Z) sits ~1min before A-30 telegram (12:36:20Z), read as A-30 being a downstream symptom of the same burst (thread-pool churn from N simultaneous asyncio.to_thread calls), not an independent leak; recommend empirical re-check post-fix rather than a separate mitigation. FIX DESIGN (docs/architecture-briefs/2026-08-13-fix-pek-extract-semaphore-contention-silent-drop.md): bounded blocking acquire on _extraction_semaphore (acquire(blocking=True, timeout=PEK_SEMAPHORE_WAIT_SECONDS)), reusing the pattern ALREADY SHIPPED in apps/pdf-extractor/infrastructure/ocr_gateway.py (_OCR_SLOTS/_acquire_slot_blocking) -- no new primitive. Zone correction: this row inherited apps/mcp-server/ from its sibling; the actual zone is apps/pdf-extractor/ (specialist dev-pdf-extractor). SECONDARY FINDING (flagged, not fixed, out of scope): HUT 2025-Q3 bctc_vps_queue row shows reconcile_attempts=11 exceeding MAX_RECONCILE_ATTEMPTS=8 while status=enrich_failed -- a status-reset-without-counter-reset queue-lifecycle anomaly (likely a prior out-of-band manual /api/trigger-pek-extract call), separate minor bug, PO/PM visibility only. SUGGESTED FOLLOW-UP FIX ROW (architect does not mint implementation rows -- task-breakdown is PM job): FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE, zone apps/pdf-extractor/ -> dev-pdf-extractor, size M, priority P0, parent this row, depends none. BUILD-STANDARD: not-applicable (bug-fix, in-zone, no new primitives). Full findings: docs/handoffs/SPIKE-BCTC-RECONCILE-EXHAUSTED-REAL-UUID-SUBSET.md § [Architect] Brownfield Findings."
+      },
+      {
+        "id": "FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR",
+        "type": "FIX",
+        "title": "orch-conservation-check signal_total 0.5 floor blocks the DOCUMENTED PO durable-inbox clear step, and the only escape hatch is explicitly forbidden to PO",
+        "owner": "po",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "S",
+        "sprint": "BACKLOG",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "files": [
+          "scripts/orch-conservation-check.mjs",
+          "scripts/orch-apply.sh",
+          "docs/agents/dev-team/flow/drain-signals.md",
+          "docs/agents/po/flow/triage-signals.md"
+        ],
+        "created_at": "2026-08-11T13:08:45Z",
+        "created_by": "po/triage-20260811T1237Z",
+        "status_note": "REPRODUCED LIVE 2026-08-11T13:07Z. signal_total counts signal_queue.rows[] + dev_team_idle_chain.pending_triage_inbox[] together (live=42 = 13 rows + 29 envelopes). PO's documented clear step (drain-signals.md / triage-signals.md: consume envelopes, then subtract the consumed envelope_ids) therefore drops signal_total 42 -> 13 = 0.31, under the 0.5 floor, and orch-apply ABORTS. The abort message offers ORCH_APPLY_ALLOW_SHRINK, but scripts/orch-apply.sh:60-66 states that bypass is 'Wired ONLY into scripts/orch-cold-evict.sh and docs/agents/pm/flow/task-archive.md ... NEVER set this from any other caller' — so PO has NO sanctioned path and the only ways through are (a) violate the named-caller rule, or (b) split the clear into N artificial sub-batches purely to stay above a ratio. This tick took (b) — 4 sequential writes (42->28->21->14->13), every one a targeted enumerated envelope_id subtraction, never a full-doc replace — which is correct but is a workaround, not a design. CONSEQUENCE IF UNFIXED: the larger the inbox grows the harder it is to clear, so the failure mode is self-reinforcing; a PO tick under time pressure will be tempted into the forbidden bypass (exact class of feedback_ops_silently_switched_to_destructive_fallback_without_reauth). AC-1: a fully-consumed pending_triage_inbox can be cleared in ONE targeted write without setting ORCH_APPLY_ALLOW_SHRINK. Suggested shape (architect to ratify): exclude pending_triage_inbox from the signal_total magnitude ratio and give it its own row-identity guard instead — an inbox is a QUEUE whose whole purpose is to drain to zero, so a magnitude-conservation invariant is the wrong invariant for it; signal_queue.rows[] (an accumulating log) keeps the existing floor unchanged. AC-2: the abort message stops recommending a bypass the caller is forbidden to use, and instead names the correct path. AC-3: regression test drains a 29-envelope fixture inbox to 0 in one write and asserts orch-apply exits 0 with no bypass env var set.\n\n[po/triage-2026-08-13T17:28:37Z] SEVERITY EXPEDITE by PO. Moved to the FRONT of ready[] at P0. Rationale: RLC selection is sort_by([priority_rank, ready[]-array-index]), one row per invocation, and RLC only runs on ticks where the 6-way Idle-Tick Rotation picks \"rlc\". Measured live this tick: 60 RLC-eligible rows in ready[]; this row's class sat at eligible queue position 47-48. At 1 row per rlc-selected tick that is unreachable in incident time, and every newly-minted P0 re-buries it. No new diagnosis was needed - the row was already correct. This is the manual stand-in for the missing severity-expedite path (FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0, itself expedited in this same write).",
+        "updated_at": "2026-08-14T02:17:56Z",
+        "po_expedited_at": "2026-08-13T17:28:37Z",
+        "po_expedited_by": "po/triage-20260813T1722Z",
+        "updated_by": "developer",
+        "occurrence_count": 2,
+        "evidence_20260814": "OCCURRENCE 2, AND THE SELF-REINFORCING PREDICTION IN THIS ROW'S OWN status_note IS NOW CONFIRMED EMPIRICALLY. Occurrence 1 (2026-08-11) was 29 envelopes / signal_total 42 and needed 4 writes. Occurrence 2 is 248 envelopes / signal_total 275 and needed 4 writes — but the intervening 2026-08-13 PO cycle (commit f01645c90) TRIAGED 147 envelopes AND FAILED TO CLEAR THEM AT ALL (telegram 4797, 2026-08-13T11:51:23Z, still unresolved at pickup). Those 147 then sat in the inbox for ~13h while 101 more accumulated on top. Composition proof, measured this tick, not asserted: exactly 147 of the 248 envelopes carried drained_at <= 2026-08-13T11:40Z — a byte-exact match to that commit's own stated count. THIS IS THE CONCRETE HARM THE ROW PREDICTED: a blocked clear does not merely defer work, it re-presents already-dispositioned envelopes to every subsequent tick, so triage cost is paid repeatedly on the same data and the queue that must drain to zero grows monotonically. AC-1 is unchanged and still correct. NOTE FOR THE IMPLEMENTER: the row was already severity-expedited to P0 and moved to the FRONT of ready[] on 2026-08-13T17:28Z and STILL was not picked up in the ~7h before this tick — expediting inside ready[] was not sufficient, which is why this tick folds it directly into PO's BATCH rather than leaving it to the Ready-Lane Consumer.",
+        "claimed_at": "2026-08-14T01:55:26Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "developer"
       }
     ],
     "qa": [
@@ -19162,38 +19191,7 @@
     },
     "last_triaged_at": "2026-08-14T01:00:22Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR",
-        "type": "FIX",
-        "title": "orch-conservation-check signal_total 0.5 floor blocks the DOCUMENTED PO durable-inbox clear step, and the only escape hatch is explicitly forbidden to PO",
-        "owner": "po",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "S",
-        "sprint": "BACKLOG",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "files": [
-          "scripts/orch-conservation-check.mjs",
-          "scripts/orch-apply.sh",
-          "docs/agents/dev-team/flow/drain-signals.md",
-          "docs/agents/po/flow/triage-signals.md"
-        ],
-        "created_at": "2026-08-11T13:08:45Z",
-        "created_by": "po/triage-20260811T1237Z",
-        "status_note": "REPRODUCED LIVE 2026-08-11T13:07Z. signal_total counts signal_queue.rows[] + dev_team_idle_chain.pending_triage_inbox[] together (live=42 = 13 rows + 29 envelopes). PO's documented clear step (drain-signals.md / triage-signals.md: consume envelopes, then subtract the consumed envelope_ids) therefore drops signal_total 42 -> 13 = 0.31, under the 0.5 floor, and orch-apply ABORTS. The abort message offers ORCH_APPLY_ALLOW_SHRINK, but scripts/orch-apply.sh:60-66 states that bypass is 'Wired ONLY into scripts/orch-cold-evict.sh and docs/agents/pm/flow/task-archive.md ... NEVER set this from any other caller' — so PO has NO sanctioned path and the only ways through are (a) violate the named-caller rule, or (b) split the clear into N artificial sub-batches purely to stay above a ratio. This tick took (b) — 4 sequential writes (42->28->21->14->13), every one a targeted enumerated envelope_id subtraction, never a full-doc replace — which is correct but is a workaround, not a design. CONSEQUENCE IF UNFIXED: the larger the inbox grows the harder it is to clear, so the failure mode is self-reinforcing; a PO tick under time pressure will be tempted into the forbidden bypass (exact class of feedback_ops_silently_switched_to_destructive_fallback_without_reauth). AC-1: a fully-consumed pending_triage_inbox can be cleared in ONE targeted write without setting ORCH_APPLY_ALLOW_SHRINK. Suggested shape (architect to ratify): exclude pending_triage_inbox from the signal_total magnitude ratio and give it its own row-identity guard instead — an inbox is a QUEUE whose whole purpose is to drain to zero, so a magnitude-conservation invariant is the wrong invariant for it; signal_queue.rows[] (an accumulating log) keeps the existing floor unchanged. AC-2: the abort message stops recommending a bypass the caller is forbidden to use, and instead names the correct path. AC-3: regression test drains a 29-envelope fixture inbox to 0 in one write and asserts orch-apply exits 0 with no bypass env var set.\n\n[po/triage-2026-08-13T17:28:37Z] SEVERITY EXPEDITE by PO. Moved to the FRONT of ready[] at P0. Rationale: RLC selection is sort_by([priority_rank, ready[]-array-index]), one row per invocation, and RLC only runs on ticks where the 6-way Idle-Tick Rotation picks \"rlc\". Measured live this tick: 60 RLC-eligible rows in ready[]; this row's class sat at eligible queue position 47-48. At 1 row per rlc-selected tick that is unreachable in incident time, and every newly-minted P0 re-buries it. No new diagnosis was needed - the row was already correct. This is the manual stand-in for the missing severity-expedite path (FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0, itself expedited in this same write).",
-        "updated_at": "2026-08-14T01:55:26Z",
-        "po_expedited_at": "2026-08-13T17:28:37Z",
-        "po_expedited_by": "po/triage-20260813T1722Z",
-        "updated_by": "po/triage-20260814T0007Z",
-        "occurrence_count": 2,
-        "evidence_20260814": "OCCURRENCE 2, AND THE SELF-REINFORCING PREDICTION IN THIS ROW'S OWN status_note IS NOW CONFIRMED EMPIRICALLY. Occurrence 1 (2026-08-11) was 29 envelopes / signal_total 42 and needed 4 writes. Occurrence 2 is 248 envelopes / signal_total 275 and needed 4 writes — but the intervening 2026-08-13 PO cycle (commit f01645c90) TRIAGED 147 envelopes AND FAILED TO CLEAR THEM AT ALL (telegram 4797, 2026-08-13T11:51:23Z, still unresolved at pickup). Those 147 then sat in the inbox for ~13h while 101 more accumulated on top. Composition proof, measured this tick, not asserted: exactly 147 of the 248 envelopes carried drained_at <= 2026-08-13T11:40Z — a byte-exact match to that commit's own stated count. THIS IS THE CONCRETE HARM THE ROW PREDICTED: a blocked clear does not merely defer work, it re-presents already-dispositioned envelopes to every subsequent tick, so triage cost is paid repeatedly on the same data and the queue that must drain to zero grows monotonically. AC-1 is unchanged and still correct. NOTE FOR THE IMPLEMENTER: the row was already severity-expedited to P0 and moved to the FRONT of ready[] on 2026-08-13T17:28Z and STILL was not picked up in the ~7h before this tick — expediting inside ready[] was not sufficient, which is why this tick folds it directly into PO's BATCH rather than leaving it to the Ready-Lane Consumer.",
-        "claimed_at": "2026-08-14T01:55:26Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "developer"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
