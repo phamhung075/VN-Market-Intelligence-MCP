@@ -1,0 +1,25 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-08-14T14:59:26Z",
+  "payload": {
+    "file": "docs/agent-memory/decisions/sprint-TOKEN-ECONOMY-AUDIT-qa.md",
+    "line_count": 500,
+    "cap": 600,
+    "byte_count": 36398,
+    "byte_cap": 36000,
+    "class": "sprint-decision-journal",
+    "reason": "byte-cap",
+    "overage": 0,
+    "byte_overage": 398,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "a151b6739a28ea816ef4a1a14055af06e1175d788801519ea3bfa4a301cc99b7",
+    "processedAt": "2026-08-14T15:20:54Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -4,54 +4,69 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Steel manufacturing — construction steel, HRC (hot-rolled coil), steel pipe/wire, agriculture feed & livestock (side businesses)",
-  "customer": "Domestic construction contractors, steel traders/distributors, downstream manufacturers (pipe/wire), export steel buyers",
-  "ops": "Q1-2026 gross margin 15.8%. Reported operating_profit=0 in structured extract vs net_profit 9,055.9 ty VND exceeding gross_profit 8,365.1 ty VND — flagged by source as 'possible non-operating income'; likely a known OCR/parsing corruption in the operating-profit line, not a genuine operating loss.",
-  "mgmt": "ROE 12.7% (sector median 2.9%), PE 14.2 discount -57% vs sector median 32.6x. Q2-2026 BCTC PDF on file since 2026-08-01 (14d) but still not extracted — persistent extraction-lag gap.",
-  "esc_gate": {
-    "esc1_result": "UNEVALUABLE_NO_BASH_GLOB",
-    "esc2_result": false,
-    "esc2_imbalance_pct": 0,
-    "esc3_result": "DATA-COVERAGE-LIMITED",
-    "esc3_quarters_returned": 3,
-    "esc3_quarters_required": 4,
-    "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
-    "coverage_guard_held": true,
-    "esc4_result": "DISCARDED_CORRUPT_DATA",
-    "esc4_note": "operating_profit=0 is a known extraction corruption (persistent 21st+ cycle) — non_operating_share undefined/unreliable, not computed",
-    "esc5_result": false,
-    "esc5_note": "get_bctc_report_id returned report_id=null (refine_status=PARTIAL) — refine not finished, skip"
-  },
-  "valuation": {
+  "net_profit_delta_pct": null,
+  "product": "Thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ; mảng nông nghiệp (chăn nuôi heo, gia cầm, thức ăn chăn nuôi)",
+  "customer": "Xây dựng dân dụng/công nghiệp trong nước, hạ tầng, xuất khẩu HRC; kênh phân phối nông sản/thực phẩm cho mảng nông nghiệp",
+  "ops": "Biên lợi nhuận gộp 15.8% (thấp hơn ngành thép nói chung do chi phí nguyên liệu). Operating Profit trích xuất = 0 tỷ VND — lỗi trích xuất cấu trúc kéo dài (cờ hệ thống: 'Net profit exceeds gross profit — possible non-operating income'), KHÔNG dùng cho ESC-4. Dòng tiền HĐKD Q1 (get_cash_flow) = 0 (cùng lỗi trích xuất, ocf_source=ocr).",
+  "mgmt": "LNST đạt 9.055,9 tỷ VND (biên 17,1%), vượt cả lợi nhuận gộp — bất thường do lỗi trích xuất operating_profit, không phải bằng chứng gian lận. Báo cáo Q2-2026 quá hạn 15 ngày (hạn 30/07/2026); PDF đã có trên hệ thống từ 01/08, VPS-extraction chưa xử lý.",
+  "ey_spread": {
     "pe": 14.2,
     "sector_median_pe": 32.6,
-    "pb": 1.7,
-    "sector_median_pb": 0.9,
     "roe_pct": 12.7,
-    "earning_yield_pct": 7.04,
+    "sector_median_roe_pct": 2.9,
+    "earning_yield_pct": 7.042,
+    "max_deposit_rate_pct": 5,
     "ey_spread_pp": 2.04,
     "verdict": "FAIR"
   },
+  "esc_gate": {
+    "esc1_accounting_manipulation": "UNEVALUABLE (no Bash/Glob grant — E1 pass artifacts not enumerable)",
+    "esc2_balance_sheet": {
+      "result": false,
+      "imbalance_pct": 0
+    },
+    "esc3_ocf_vs_np": {
+      "result": "DATA-COVERAGE-LIMITED",
+      "quarters_returned": 3,
+      "quarters_required": 4,
+      "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+      "coverage_guard_held": true
+    },
+    "esc4_nonop_or_relatedparty": {
+      "result": "DISCARDED",
+      "reason": "operating_profit=0 (corrupt structured extract, 22nd+ consecutive cycle) — non_operating_share formula undefined on this input, not evaluated"
+    },
+    "esc5_refine_confidence": {
+      "result": false,
+      "report_id": null,
+      "existing_refine_status": "PARTIAL",
+      "note": "refine not yet DONE for this report"
+    },
+    "trigger_id": null,
+    "note": "No ESC flag fires TRUE this cycle — no escalation."
+  },
   "kinhdich": {
-    "hexagram": "Su (7)",
-    "trend": "TRUNG TINH",
+    "hexagram": "Que 24 - Phuc",
+    "trend": "THUAN LOI",
     "signal": "GIU",
-    "confidence_pct": 37
+    "confidence_pct": 100
   },
   "data_quality": {
-    "source_tier": 2,
-    "stale": true,
-    "stale_since": "2026-08-11T14:37:49.000Z",
-    "stale_age_hours": 57.5,
-    "latest_period_extracted": "2026-Q1",
-    "newest_period_on_file": "2026-Q2",
-    "confidence_pct": 80,
-    "filing_status": "QUA_HAN"
+    "bctc_period_extracted": "2026-Q1",
+    "bctc_stale": true,
+    "stale_age_hours": 72.46,
+    "vps_push_sla_hours": 48,
+    "q2_2026_deadline": "2026-07-30",
+    "q2_2026_status": "QUA HAN (15 ngay)",
+    "known_extraction_defect": "operating_profit=0, EBITDA=0 — structured-extract bug, 22nd+ cycle unresolved",
+    "legal_risk_match": false,
+    "insider_signal": "khong dang ke",
+    "chain_findings_30min": 0
   },
-  "ts": "2026-08-14T00:10:13Z",
+  "as_of": "2026-08-14T15:04:00Z",
   "_processed": {
-    "fingerprint": "44e26ec27938ee592b6a4c4ffd3c36ebd05ab1fa9bdc0a736f7b3f512dd647cd",
-    "processedAt": "2026-08-14T00:20:22Z",
+    "fingerprint": "0809255a089be503a0338c7f1b8ccc5f3400a99230fbb5b4323c504b3725b3c6",
+    "processedAt": "2026-08-14T15:20:54Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

@@ -4,52 +4,68 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "State-owned commercial bank — corporate/retail lending, trade finance, bancassurance cross-sell, FX/treasury",
-  "customer": "SOE and large-corporate borrowers, retail/mass-affluent depositors, FX/trade-finance clients",
-  "ops": "Q1-2026 net interest income 17,421 ty VND, operating margin 80.9%. OCF/NI ratio 1.368 (healthy, no forensic divergence). Cash on balance sheet reported as 0 (bank-specific line-item convention).",
-  "mgmt": "ROE 16.7% (below sector median 17.6%), PE 14.1 premium +57% vs sector median 9.0x. Q2-2026 filing deadline is 14/08/2026 (today) — status SAP_DEN (due today), not yet overdue. Q2 PDF on file since 2026-08-01 but not yet extracted.",
-  "esc_gate": {
-    "esc1_result": "UNEVALUABLE_NO_BASH_GLOB",
-    "esc2_result": false,
-    "esc2_imbalance_pct": 0.37,
-    "esc3_result": false,
-    "esc3_quarters_returned": 4,
-    "esc3_divergence_ratio": 0.368,
-    "esc4_result": "NOT_APPLICABLE",
-    "esc4_note": "bank — non_operating_share (operating vs pretax profit split) not a meaningful concept for this business model",
-    "esc5_result": false,
-    "esc5_note": "get_bctc_report_id returned report_id=null (refine_status=PARTIAL) — refine not finished, skip"
-  },
-  "valuation": {
+  "net_profit_delta_pct": null,
+  "product": "Ngân hàng bán buôn/bán lẻ, tài trợ thương mại quốc tế, kinh doanh ngoại hối, bancassurance",
+  "customer": "Doanh nghiệp lớn/SOE, khách hàng bán lẻ đô thị, doanh nghiệp xuất nhập khẩu",
+  "ops": "Thu nhập lãi thuần 17.421 tỷ VND. LN thuần HĐKD/doanh thu = 80.9% (đặc thù ngành ngân hàng — chi phí hoạt động thấp tương đối). Biên LNST/doanh thu 54.3%. ROE 16.7% — DƯỚI trung vị ngành (17.6%), yếu hơn nhóm CTG/BID/MBB/ACB/SHB (18-21%).",
+  "mgmt": "EPS 15 VND/cp Q1. Dòng tiền nước ngoài 5 phiên: -91K cp net nhưng MẠNH HƠN trung bình ngành (-111K cp net). Báo cáo Q2-2026 hạn nộp 14/08/2026 (hôm nay) — trạng thái SẮP ĐẾN, chưa quá hạn.",
+  "ey_spread": {
     "pe": 14.1,
     "sector_median_pe": 9,
-    "pb": 2.2,
-    "sector_median_pb": 1.5,
     "roe_pct": 16.7,
-    "earning_yield_pct": 7.09,
+    "sector_median_roe_pct": 17.6,
+    "earning_yield_pct": 7.092,
+    "max_deposit_rate_pct": 5,
     "ey_spread_pp": 2.09,
     "verdict": "FAIR"
   },
+  "esc_gate": {
+    "esc1_accounting_manipulation": "UNEVALUABLE (no Bash/Glob grant — E1 pass artifacts not enumerable)",
+    "esc2_balance_sheet": {
+      "result": false,
+      "imbalance_pct": 0.37
+    },
+    "esc3_ocf_vs_np": {
+      "result": false,
+      "quarters_returned": 4,
+      "ocf_ni_ratio_q1_2026": 1.368,
+      "divergence_ratio": 0.368,
+      "threshold": 0.4
+    },
+    "esc4_nonop_or_relatedparty": {
+      "result": "N/A",
+      "reason": "Bank — non_operating_share (operating-profit-based) formula not meaningful for banking P&L structure"
+    },
+    "esc5_refine_confidence": {
+      "result": false,
+      "report_id": null,
+      "existing_refine_status": "PARTIAL",
+      "note": "refine not yet DONE for this report"
+    },
+    "trigger_id": null,
+    "note": "No ESC flag fires TRUE this cycle — no escalation."
+  },
   "kinhdich": {
-    "hexagram": "Thang (46)",
+    "hexagram": "Que 19 - Lam",
     "trend": "THUAN LOI",
     "signal": "GIU",
     "confidence_pct": 100
   },
   "data_quality": {
-    "source_tier": 2,
-    "stale": true,
-    "stale_since": "2026-08-11T14:37:49.000Z",
-    "stale_age_hours": 57.5,
-    "latest_period_extracted": "2026-Q1",
-    "newest_period_on_file": "2026-Q2",
-    "confidence_pct": 75,
-    "filing_status": "SAP_DEN"
+    "bctc_period_extracted": "2026-Q1",
+    "bctc_stale": true,
+    "stale_age_hours": 72.46,
+    "vps_push_sla_hours": 48,
+    "q2_2026_deadline": "2026-08-14",
+    "q2_2026_status": "SAP DEN (chua qua han)",
+    "legal_risk_match": false,
+    "insider_signal": "khong dang ke",
+    "chain_findings_30min": 0
   },
-  "ts": "2026-08-14T00:10:13Z",
+  "as_of": "2026-08-14T15:04:00Z",
   "_processed": {
-    "fingerprint": "3f8ce1fa27d4fb943c06a79ba334fff98d22265890483e5d01070b65ea0322e8",
-    "processedAt": "2026-08-14T00:20:22Z",
+    "fingerprint": "6ee40a44e74d9d4e04d0695c2429852145b683fd73f7f421a0c32aa67dbc1253",
+    "processedAt": "2026-08-14T15:20:54Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

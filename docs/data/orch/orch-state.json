@@ -92,12 +92,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 9 row(s), highest-ranked FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 9 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-14T14:55:00Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "QA-drain batch (9 rows, claimed_at 2026-08-14T14:55:00Z) fully RAW-verified and released by dispatcher this session; head was left pointing at a now-done_verified row (recurring head-stale-after-lane-move class, see feedback_architect_handoff_leaves_head_stale_third_agent_type.md) — board idle pending next dev-team tick triage.",
+    "updated_at": "2026-08-14T15:20:03Z",
+    "updated_by": "router (dev-team tick gcc-preflight, head-hygiene fix)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -137,37 +137,6 @@
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
-      {
-        "id": "sys-20260813T151624-07e8",
-        "ts": "2026-08-13T15:16:24Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "microservice_degraded",
-        "summary": "A-30 rag-service-1 sustained memory >93% (94.77% median) — loss of reclamation",
-        "severity": "WARN",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-13T15:00Z",
-        "dedup_key": "microservice_degraded:rag-service-1:A-30",
-        "po_disposition_at": "2026-08-14T00:30:11Z",
-        "po_disposition_by": "po/triage-20260814T0007Z",
-        "po_disposition": "RESOLVED — A-30 rag-service/pdf-extractor memory class. Substance triaged onto FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (po_correction_20260814: its ~18-20pp dip measurement is contradicted by 40.78pp/42.30pp on 08-13) and FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD (po_crosslink_20260814). NEW ROW MINTED for the crash-cliff mislabel: FIX-AUDITOR-A30-CRASHCLIFF-BRANCH-CANNOT-BE-A-CRASH-BY-CONSTRUCTION — RAW: rag-service RestartCount=3 unchanged, StartedAt 2026-08-13T09:20:09Z, 15h uptime spanning every 'crash cliff' alert."
-      },
-      {
-        "id": "cow-20260813T151905",
-        "ts": "2026-08-13T15:19Z",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "bug-escalation",
-        "summary": "bctc-analyst.md notebook: PostToolUse hook reverted Edit restoring c161 -> stuck at 2 sections, violates notebook-write SKILL.md AC-2 (keep 3)",
-        "severity": "MED",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "po_disposition_at": "2026-08-14T00:30:11Z",
-        "po_disposition_by": "po/triage-20260814T0007Z",
-        "po_disposition": "RESOLVED — commit-sweep-guard bare-commit class, folded onto FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK. 34 matching envelopes were also in this tick's durable inbox."
-      },
       {
         "id": "cow-20260813T161544",
         "ts": "2026-08-13T16:15:44Z",
@@ -13332,524 +13301,6 @@
             "observed_at": "2026-08-14T14:31:42Z"
           }
         }
-      },
-      {
-        "id": "TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY",
-        "type": "TASK",
-        "size": "S",
-        "priority": "P1",
-        "status": "DONE_VERIFIED",
-        "zone": "cross-service/shared",
-        "owner": "po",
-        "plan_only": true,
-        "sprint": "COWORK-RELIABILITY",
-        "created_at": "2026-08-07T06:00:00Z",
-        "created_by": "pm (decomposition of FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING)",
-        "parent_task_id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
-        "title": "Shared Pure Function: derive_window_key()",
-        "ba_handoff": "docs/handoffs/TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY.md",
-        "description": "Decomposed subtask from FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING Phase 1 delivery",
-        "supervised": true,
-        "supervised_at": "2026-08-07T06:00:00Z",
-        "supervised_by": "pm (plan_only decomposition)",
-        "supervised_note": "Child task of plan_only parent; no code ships without parent re-adjudication by PO",
-        "updated_at": "2026-08-14T15:01:13Z",
-        "promoted_at": "2026-08-08T01:22:03Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='developer' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "developer",
-        "claimed_at": "2026-08-08T03:21:32Z",
-        "claimed_by": "dev-team (supervised-lane sweep)",
-        "reviewed_by": "po",
-        "developer_review_note": "AC-1 (branch 2 corrected per PO Amendment 3): nearest-occurrence algorithm specified -- candidate set {yesterday,today,tomorrow} at CRON_HOUR:00Z, select min |delta| from live_mcp_fetched_at, tie-break=earlier-by-chronological-scan-order (strict '<', unreachable under live crons today, stated for robustness per dispatch instruction). Branches 1/3 unchanged from architect brief. Both PO-mandated test cases worked through explicitly in the spec doc: (1) slot-4, live_mcp_fetched_at=D 23:57Z -> candidates (D-1)T0000Z / D T0000Z / (D+1)T0000Z with deltas 172620s / 86220s / 180s -> resolves (D+1)T0000Z, MATCHES required resolution (concrete D=2026-08-07 -> WINDOW_KEY=20260808T0000Z). (2) slot-3, live_mcp_fetched_at=(D+1) 08:00Z -> candidates D T2100Z / (D+1)T2100Z / (D+2)T2100Z with deltas 39600s / 46800s / 133200s -> resolves D T2100Z, MATCHES required resolution (concrete D=2026-08-07 -> WINDOW_KEY=20260807T2100Z, independently reaching the brief's own worked filename example). Return format fixed as YYYYMMDDTHHMMZ (no seconds field) -- matched to the brief's 2 concrete worked examples (both instances of {WINDOW_KEY} in the brief omit SS), not its looser 'YYYYMMDDTHHMMSSZ-style' prose gloss; flagged explicitly in the spec so no implementer adds a seconds field. Purity confirmed: no Bash `date` calls anywhere in the function, only a jq lookup on the already-loaded schedule JSON + pure arithmetic on the passed-in live_mcp_fetched_at value (NFR-2/EC-3). Consumer contract (function signature, return format, single-derivation-per-cycle NFR-3 restated) documented for tasks 2/3 (TASK-COWORK-SIGNAL-BCTC-REKEY, TASK-COWORK-SIGNAL-CHEF-INTRADAY) to code against without modification. No writer files touched (bctc-analyst/unified-agent/tran-ngoc-bau flow dirs untouched), no shared function file created in application code -- spec-only artifact per plan_only/supervised, per parent row's own stated policy that no code ships without parent re-adjudication by PO.",
-        "spec_doc": "docs/handoffs/TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY-spec.md",
-        "moved_to_review_at": "2026-08-08T03:28:25Z",
-        "moved_by": "developer",
-        "secondary_claimed_at": "2026-08-14T14:54:32Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "po",
-        "po_signoff_at": "2026-08-14T14:58:42Z",
-        "verification": {
-          "raw_probe": {
-            "tool": "Bash: jq .slots[] docs/data/cowork-schedule.json + grep scheduled_utc= + python3 nearest-occurrence re-derivation",
-            "args": {
-              "schedule_file": "docs/data/cowork-schedule.json",
-              "spec_artifact": "docs/handoffs/TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY-spec.md",
-              "sibling_spec_crosschecked": "docs/handoffs/TASK-COWORK-SIGNAL-CHEF-INTRADAY-spec.md",
-              "recompute": "candidate set {D-1,D,D+1} at CRON_HOUR:00Z, min abs(delta) from live_mcp_fetched_at"
-            },
-            "live_value_observed": {
-              "bctc_slot_crons": "slot-1 '0 15 * * *', slot-2 '0 18 * * *', slot-3 '0 21 * * *', slot-4 '0 0 * * *' — all 4 match spec exactly",
-              "scheduled_utc_token_count_in_live_schedule": 0,
-              "slot_token_present_on_live_trigger_prompts": true,
-              "testcase_1_slot4_fetched_20260807T235700Z": "deltas 172620/86220/180 -> 20260808T0000Z (matches PO Amendment 3 required resolution)",
-              "testcase_2_slot3_fetched_20260808T080000Z": "deltas 39600/46800/133200 -> 20260807T2100Z (matches PO Amendment 3 required resolution)",
-              "amendment_4_trigger": "chef-intraday cron '13 2-8 * * 1-5' hour field is a RANGE; jq tonumber('2-8') ERRORS, JS parseInt('2-8',10) silently returns 2 — branch 2 has no guard",
-              "sibling_contradiction": "TASK-COWORK-SIGNAL-CHEF-INTRADAY-spec.md:13 states 'This task does NOT depend on derive_window_key()' — refutes this spec's SS7 'both sibling tasks' claim"
-            },
-            "observed_at": "2026-08-14T14:58:42Z",
-            "verdict": "ACCEPTED — algorithm correct as specified; 1 binding amendment recorded, not returned for rework"
-          }
-        },
-        "po_adjudication_20260814T1458Z": "SIGN-OFF: DONE_VERIFIED with binding Amendment 4. Deliverable (branch-2 nearest-occurrence algorithm per PO Amendment 3) is CORRECT — PO independently re-derived BOTH mandated test cases at source and both reproduce to the second (slot-4 @ D 23:57Z -> 20260808T0000Z via deltas 172620/86220/180; slot-3 @ (D+1) 08:00Z -> 20260807T2100Z via deltas 39600/46800/133200). Also re-verified, NOT taken from the spec's prose: all 4 bctc slot crons exact; 'scheduled_utc=' appears 0 times in the live schedule (branch 1 dormant, branch 2 genuinely the ACTIVE day-one path as claimed); 'slot=' IS present on every live trigger_prompt (branch 2 is reachable at all — had it not been, branch 3 would have been the real active path and the entire Amendment-3 fix would have been dead code). Format call (YYYYMMDDTHHMMZ, no SS) UPHELD: deferring to the brief's 2 concrete instances over its looser 'YYYYMMDDTHHMMSSZ-style' prose gloss was right, and flagging it inline so no implementer re-adds a seconds field was right. AMENDMENT 4 (binding, acceptance-bearing, carried by the future unsupervised implementer; appended in full to the spec doc SS9 so it is not prose-in-a-brief nobody reads — same producer discipline as parent amendment_2): branch 2's 'CRON_HOUR = parseInt(CRON_HOUR_FLD,10)' and SS3.1's coverage proof hold ONLY for a bare-integer hour field on a ONCE-DAILY cron; neither precondition is stated and neither is checked. Live-verified across all 23 slots: satisfied by bctc-analyst-slot-1..4 (the sole real consumer), VIOLATED by chef-intraday '13 2-8 * * 1-5' (range, 7 fires/day) and every '*/N' step cron (news-scout-offhours, market-watcher-offhours, alert-commander-critical, alert-commander-market). On a violating field the parse is undefined AND unguarded: jq tonumber('2-8') errors, JS parseInt('2-8',10) SILENTLY returns 2 — collapsing all 7 chef-intraday windows onto one key/day, i.e. reproducing the exact collision class this parent row exists to close. SS3.1's proof also fails outright there ('consecutive occurrences 24h apart' is false for a multi-fire cron). REQUIRED: (a) correct SS7 — its claim that this function is the 'single, shared dependency of BOTH sibling tasks' and that branch 2 is 'generically enough to serve either writer' is FALSE at source and already contradicted in writing by the sibling deliverable (TASK-COWORK-SIGNAL-CHEF-INTRADAY-spec.md line 13: 'This task does NOT depend on derive_window_key()'); task 3's version is the correct one, TASK-COWORK-SIGNAL-BCTC-REKEY is the sole consumer; same over-claim was inherited from architect brief SS2 and is recorded so it is not inherited a third time; (b) add precondition + FAIL-LOUD to branch 2 — if CRON_HOUR_FLD !~ ^([01]?[0-9]|2[0-3])$ the function MUST fail loud per docs/protocols/fail-loud-protocol.md, never parse-and-continue and never silently fall through to branch 3 (a silent fallback emits a plausible-looking WRONG key, the precise failure mode this row exists to eliminate); (c) SS3.1 must state its own 'once-daily cron' precondition so the next reader cannot re-derive the false generality claim from the proof. NOT RETURNED FOR REWORK: the amendment is documentary + a 3-line guard on an artifact nobody has implemented yet, it changes neither the verified algorithm nor either test case, and a re-dispatch round-trip on a plan_only spec costs more than recording it — same precedent as this row's parent po_architect_signoff_20260807T0545 ('GO with 3 binding amendments — brief approved, not returned to architect'). NOT GRANTED: plan_only + supervised PRESERVED. This certifies the SPEC ARTIFACT, not a licence to ship; parent stays BLOCKED/next_agent=po and still owes 3 child reviews."
-      },
-      {
-        "id": "TE-T33",
-        "title": "T-33 Archival policy for docs/handoffs (11MB/974 files), decisions/ (3.8MB), sessions/ — rotate >30d via janitor cron [~1-3k tok/day + caps growth]",
-        "owner": "developer",
-        "status": "DONE_VERIFIED",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P2",
-        "wave": 4,
-        "est_saving": "~1-3k tok/day + caps unbounded growth curve",
-        "zone": "cross-service/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "depends": [],
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-33",
-        "note": "3 write-heavy dirs grow unboundedly (707/974 handoffs >30d). Add monthly cold-archive sweep to code-janitor 6h cron (guard: 1st of month): mv >30d + no open task_board ref -> archive/YYYY-MM/. Rotate po-decisions.md at 200L. Update DJ-GATE-1 grep to exclude archive/. Mirrors existing orch archive/ precedent.",
-        "audit_ref": {
-          "audit": "ultracode-2026-07-12",
-          "verdict": "memory-docs-hygiene-P4 coordination",
-          "note": "TE-T33 decisions/ leg is SUPERSEDED by UC-MDH-P4 (decision-journal-archive.sh, longest-match closed-only). mtime>30d rotation must NOT be applied to decisions/ (would move open-sprint journals).",
-          "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P4"
-        },
-        "promoted_at": "2026-07-23T14:17:32Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-14T15:02:40Z",
-        "next_agent": "pm",
-        "branch": null,
-        "commit": "82a69523807289a00fc6c8edae6769201a914b78",
-        "files": [
-          "scripts/agents-flow/cold-archive-sweep.sh",
-          "scripts/agents-flow/cold-archive-sweep.test.sh",
-          "scripts/agents-flow/notebook-auto-prune.sh",
-          "docs/agents/code-janitor/flow/main.md",
-          "docs/agents/dev-team/flow/main.md",
-          "docs/policies/dev-standards.md",
-          "docs/WORK.md"
-        ],
-        "completed_at": "2026-07-23T14:37:14Z",
-        "completed_by": "developer",
-        "status_note": "TE-T33: new scripts/agents-flow/cold-archive-sweep.sh (monthly-guarded 1st-of-month, COLD_ARCHIVE_FORCE=1 override), idempotent. Handoffs leg: docs/handoffs/*.md >30d AND not referenced anywhere in the 5 OPEN task_board lanes (jq recursive scan, computed live) -> archive/YYYY-MM/ (live dry-check: 839 candidates, 27 referenced, 2 correctly held back). Sessions leg: non-.md files >30d -> archive/YYYY-MM/ (the .md leg is already owned by memory-prune-sweep.sh at 14d flat-archive -- verified live before coding, no overlap). po-decisions.md 200L rotation reuses notebook-auto-prune.sh drop-oldest-## algorithm via new opt-in NOTEBOOK_PRUNE_EXTRA_GOVERNED_PATH env guard (default empty = zero hot-path behavior change) -- no new prune scheme. Decisions/ archival leg dropped entirely: decision-journal-archive.sh (UC-MDH-P4, shipped same day) already supersedes it (status-based not mtime-based; board row audit_ref note + that script header both name TE-T33) -- confirmed not ambiguous before skipping. Fixed dev-team/main.md 2 unscoped DJ-GATE-1 grep comments (sprint-*-*.md -> sprint-${SPRINT_ID}-*.md, matching qa/pm already-correct canonical pattern -- verified those needed no change). Wired into code-janitor 6h cron flow. CANONICAL pointer added to dev-standards.md. cold-archive-sweep.test.sh 14/14 PASS incl. idempotent re-run + git-diff-quiet proof live po-decisions.md untouched; 3 sibling suites re-run after shared-hook edit, zero regression (7/7, 12/12, 26/26). Journal: sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S13.\n\n[QA] Review Record (direct-commit verify) 2026-08-14T15:01:58Z: commit 82a69523807289a00fc6c8edae6769201a914b78 confirmed real, on main ancestry (git merge-base --is-ancestor PASS); git show --stat matches all 7 claimed files[] exactly (cold-archive-sweep.sh/.test.sh, notebook-auto-prune.sh, code-janitor/dev-team flow docs, dev-standards.md, WORK.md). Re-ran REAL checks, not trusted from prose: cold-archive-sweep.test.sh live 14/14 PASS (exact match to claim, incl. guard-skip, idempotent-rerun, live-po-decisions-untouched). Re-ran the 3 sibling suites the commit claims exercised by its shared-hook edit (notebook-auto-prune.sh's new opt-in NOTEBOOK_PRUNE_EXTRA_GOVERNED_PATH guard): memory-prune-sweep.test.sh 12/12 PASS (exact match), decision-journal-archive.test.sh 26/26 PASS (exact match), notebook-linecap-sweep.test.sh now 11/11 PASS (claim said 7/7 at commit time) -- diffed and traced the discrepancy to a LATER, unrelated commit 7fd919c15 (dual-axis selection fix) that added 4 new test cases to that file after TE-T33 shipped -- not a TE-T33 regression, all cases green. Also re-ran notebook-auto-prune.sh's own regression suite directly (the file TE-T33 modified): 11/11 PASS, zero regression from the new opt-in guard (belt-and-suspenders empty-pattern check confirmed in the diff -- default unset = zero hot-path behavior change). No .ts/.go touched by this commit -> DDD scan + bun tsc N/A; mock-guard.sh --files on the 2 touched production shell scripts: no production TS/Go source, PASS; security greps (process.env/secrets/password/token) clean on all 3 touched .sh files. Doc wiring cross-checked live: code-janitor/flow/main.md Cold Archive Sweep section correctly precedes Memory + State (same every-scan cadence as sibling sweeps); dev-standards.md CANONICAL pointer added under Script Persistence; dev-team/flow/main.md's 2 DJ-GATE-1 grep-pattern fixes (sprint-*-*.md -> sprint-${SPRINT_ID}-*.md) verified to now match qa/main.md's and pm/main.md's own already-correctly-scoped sprint-<SPRINT_ID>-*.md pattern (grep-confirmed live). No stray git status changes from re-running the test suite (mktemp sandbox + trap cleanup confirmed clean). VERDICT: APPROVED, DONE_VERIFIED.",
-        "claimed_at": "2026-08-14T14:54:59Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "verification": {
-          "raw_probe": {
-            "tool": "bash scripts/agents-flow/cold-archive-sweep.test.sh + 3 sibling suites + git merge-base --is-ancestor + git show --stat",
-            "args": {
-              "commit": "82a69523807289a00fc6c8edae6769201a914b78",
-              "files": [
-                "scripts/agents-flow/cold-archive-sweep.sh",
-                "scripts/agents-flow/cold-archive-sweep.test.sh",
-                "scripts/agents-flow/notebook-auto-prune.sh",
-                "docs/agents/code-janitor/flow/main.md",
-                "docs/agents/dev-team/flow/main.md",
-                "docs/policies/dev-standards.md",
-                "docs/WORK.md"
-              ]
-            },
-            "live_value_observed": {
-              "ancestry": "PASS",
-              "files_stat_match": "7/7",
-              "cold_archive_sweep_test": "14/14 PASS",
-              "memory_prune_sweep_test": "12/12 PASS",
-              "decision_journal_archive_test": "26/26 PASS",
-              "notebook_linecap_sweep_test": "11/11 PASS (claim was 7/7 at commit time; later unrelated commit 7fd919c15 added 4 cases)",
-              "notebook_auto_prune_test": "11/11 PASS",
-              "security_scan": "clean",
-              "mock_guard": "PASS (no production TS/Go source)"
-            },
-            "observed_at": "2026-08-14T15:01:58Z"
-          }
-        }
-      },
-      {
-        "id": "FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE",
-        "type": "FIX",
-        "status": "DONE_VERIFIED",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "architect",
-        "next_agent": "qa",
-        "supervised": false,
-        "plan_only": false,
-        "created_at": "2026-07-29T09:10:55Z",
-        "updated_at": "2026-08-14T15:02:41Z",
-        "created_by": "architect/spike-20260729-apigw-health-split",
-        "source": "SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP (Half A -- detection side)",
-        "parent": "SPIKE-DASHBOARD-TIER-HEALTH-CURL-ERR-FLAP",
-        "title": "system-auditor A-12 (and any live A-04/A-13 equivalent) health probe collapses every curl failure mode (timeout/refused/DNS) to one CURL_ERR token and glosses it as \"unreachable\" -- raise/repoint the client budget, capture curl exit code, wire the deferred N-consecutive debounce (scope item 2 of DONE FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE), fix the emitted summary wording",
-        "files": [
-          "docs/agents/system-auditor/probe.sh",
-          "scripts/emit-audit-signal.sh"
-        ],
-        "note": "A1: raise probe.sh:48 --max-time above the realistic cold-fanout cost now (cheap floor); repoint to api-gateway:4000/healthz once Half B's liveness route ships (soft-blocked on that, not hard-depends). A2: capture curl exit code, classify (28=CLIENT_TIMEOUT/7=CONN_REFUSED/6=DNS_FAIL/52=EMPTY_REPLY), stop collapsing to CURL_ERR. A3: wire the N-consecutive debounce from the DONE wrapper scope item 2 -- ONLY alongside A1/A2, never alone (would silence a real worsening latency regression). A4: fix \"unreachable\" gloss wherever templated -- audit all 8/14 historical A-12 rows' phrasing source. A5 (unresolved, confirm before touching): no live file defines check-id A-04 anywhere in docs/agents/system-auditor/ or scripts/ (repo-wide grep, live tree, zero hits outside one archived handoff doc) -- confirm whether A-04/A-13 are a live Tier-2/3 check on the same route or a stale label before assuming either. Design doc: docs/architecture-briefs/2026-07-29-apigw-health-capability-probe-latency.md section 5. ADDENDUM 09:15Z: fresh 23-sample re-measurement confirms the class is sustained/continuous (26% of a 7-minute sample exceed 3000ms), not a rare edge case -- do not close A1-A4 as 'debounce the occasional blip', the underlying cost must actually drop (Half B) for the debounce to be safe per A3's own caveat.",
-        "cross_row_interaction": "A1's repoint sub-item only lands after FIX-APIGW-HEALTH-CAPABILITY-PROBE-GATE-PARALLEL-SINGLEFLIGHT's /healthz decoupling (B4) ships and is verified -- everything else here (A2-A5) is independent.",
-        "verification_gate": "curl exit code captured and classified in probe.sh output (not bare CURL_ERR); emitted signal summary states the observed fact (e.g. \"client timeout after 3000ms\") never \"unreachable\" for a timeout; debounce ships together with, not instead of, the exit-code fix.",
-        "recurring_bug_count": 1,
-        "promoted_at": "2026-07-30T08:07:31Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-08-14T14:54:59Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "review_note": "DEVELOPER IMPLEMENTATION 2026-07-30T08:40Z — A1: probe.sh:48 --max-time 3s->5s (floor only, URL unchanged; repoint half stays soft-blocked on FIX-APIGW-HEALTH-CAPABILITY-PROBE-GATE-PARALLEL-SINGLEFLIGHT, confirmed still BACKLOG). A2: new _classify_curl_exit() in probe.sh (28=CLIENT_TIMEOUT/7=CONN_REFUSED/6=DNS_FAIL/52=EMPTY_REPLY/else=CURL_ERR_n), applied only on the transport-failure branch -- a real non-200 HTTP response (curl succeeded) is unchanged from before. Wrapped probe.sh's real body in a standalone-execution guard (mirrors emit-audit-signal.sh / auditor-tier1-probe.sh) so the classifier is unit-testable via `source` without firing real docker/curl calls -- new docs/agents/system-auditor/probe.test.sh (7/7 PASS; genuine RED confirmed against the pre-fix file, whose own unconditional exit 0 aborted the test process before any assertion ran). A3: N=3-consecutive transport-error debounce (reuses this same file's own A-20 3-sample convention, not a new arbitrary threshold) -- applies ONLY to transport-classified FAILs, never real HTTP-5xx (per the mint note's own \"not HTTP-5xx\" carve-out). Wired in the CONSUMER, not probe.sh: docs/agents/system-auditor/flow/tier1-probe.md's Health-Endpoints section + a NEW extracted child docs/agents/system-auditor/flow/tier1-overrides.md (persisted counter docs/data/auditor-a12-transport-debounce.json, tmp+mv atomic, same pattern as auditor-dedup-ledger.json; NOT pre-seeded/committed -- self-heals empty on first live Tier-1 cycle). probe.sh itself stays single-shot/stateless -- it never calls emit-audit-signal.sh for ANY check by existing design (verified: A-20's own emit call also lives in tier1-probe.md, not probe.sh), so the debounce could only correctly live in the consumer. A4: fixed the \"unreachable\" gloss at its actual template source -- tier1-probe.md's Health-Endpoints bullet list + Emit-per-failure section (the only place --summary/--detail-json text is composed for this check). emit-audit-signal.sh needed ZERO functional change -- confirmed via full-file read, it is a pure passthrough with no hardcoded wording anywhere. A5 (the one open question): CONFIRMED STALE, not implemented. Repo-wide live grep found zero A-04/A-13 check-id definitions under docs/agents/system-auditor/ or scripts/ -- the only hit is an archived 2026-05-19 scope-expansion brief showing A-04/A-13 were an OLD numbering scheme (A-04=technical-analysis docker-ps check, A-13=api-gateway curl health) since renumbered; the live equivalent of \"A-13 api-gateway health\" is today's A-12 (the one real historical signal sys-20260729T083834-4dd9 is literally labeled \"A-12 FAIL: api-gateway health check unreachable\"). Separately, \"A-04\" is ALSO reused in SHIP-WAVE-REAUDIT-BA-spec.md for an unrelated QA/frontend data-freshness check (\"prediction-claims\") -- two independent numbering registries collide on the label, not the same check renamed twice.\n\nFILES CHANGED beyond the assigned 2 (docs/agents/system-auditor/probe.sh, scripts/emit-audit-signal.sh): expanded, investigation-driven, to docs/agents/system-auditor/flow/tier1-probe.md (small edit, 214->217L) + NEW docs/agents/system-auditor/flow/tier1-overrides.md (extracted per tier1-probe.md's own already-documented ~220L fallback, first addition to trigger it) + NEW docs/agents/system-auditor/probe.test.sh. emit-audit-signal.sh itself was read in full and needed NO functional change (pure passthrough) -- flagging this explicitly since it was in the original Files: list but ended up untouched.\n\nVERIFY: probe.test.sh 7/7 PASS. Debounce bash+jq snippet in tier1-overrides.md hand-verified in a scratch dir (bump x3 -> 3, reset -> 0, per-service isolation, self-heal on missing/malformed file). Live sanity runs of the new probe.sh on this session's real host correctly classified TWO different live transient conditions on mcp-server (CONN_REFUSED then, seconds later, CURL_ERR_56, mid-restart) as distinct reasons instead of one bare CURL_ERR -- real-world corroboration, not just synthetic. No apps/ TS/Go source touched (zone cross-service/, pure bash+md) -- bun test/tsc structurally N/A.\n\nFLAGGED FOR SPOT-CHECK (judgment calls, not literally spec-given numbers): the 5000ms A1 floor (chosen as ~32% margin over the highest live-measured sample, 3780ms, brief §6a) and the N=3 A3 debounce threshold (reused from A-20's convention, not independently derived). Also flagged: mcp-server was observed mid-restart-cycling on this host during a live sanity run -- a real, currently-ongoing condition unrelated to this task, out of scope to fix here, surfaced for the coordinating session's awareness only.\n\nSTRUCTURAL GAP: no MCP/gateway tool grant this session (Read/Edit/Write/Bash only) -- could not task_heartbeat/task_release task:FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE or send Telegram; coordinating dev-team session must do both.\n\n\n[QA] Review Record (direct-commit verify) 2026-08-14T15:01:12Z — commit 7298e1ffb20ee2e8242c58cae3a8d9431d06177f confirmed real, on main ancestry (git merge-base --is-ancestor PASS). git show --stat matches probe.sh; emit-audit-signal.sh has zero diff in this commit — independently confirmed accurate (read in full: pure named-arg passthrough, zero hardcoded wording, debounce decision correctly lives in consumer tier1-probe.md/tier1-overrides.md, not this script), not a silent scope-drop. Re-ran probe.test.sh: 24/24 PASS today (file extended by 2 later unrelated A-30 commits); re-diffed the commit itself and confirmed exactly T1-T7 (7/7) landed here, matching the developer's claimed count at commit time. Verified A1 (--max-time 3->5, probe.sh:343), A2 (_classify_curl_exit() probe.sh:34-42, transport-branch only, real non-200 HTTP unchanged), A3 (N=3 debounce wired in tier1-overrides.md, transport-classified FAILs only, same commit as A1/A2), A4 (\"unreachable\" gloss fixed at its real template source in tier1-probe.md; repo-wide grep confirms remaining \"unreachable\" hits elsewhere are unrelated checks, correctly untouched), A5 (A-04/A-13 stale-numbering claim independently re-confirmed, zero live hits). bash -n clean both files; mock-guard.sh --files probe.sh PASS (bash not scanned as prod source); DDD/secret/process.env greps clean. verification_gate fully holds. Non-blocking note: row's files[] field is stale vs actual commit diff (lists emit-audit-signal.sh untouched; actual diff also touched tier1-probe.md/tier1-overrides.md/probe.test.sh) -- documentation-only, already self-flagged by developer, not a code defect. VERDICT: DONE_VERIFIED, zero blocking ISSUE.",
-        "status_note": "[po/triage-2026-08-12T03:03:00Z] FOLD — same single-shot-probe-collapses-a-transient-into-ERROR class, new instrument. Telegram 4708: `[market-db-journal-guard] MARKET_DB_JOURNAL_MODE verdict=ERROR reason=probe_query_failed detail=ERROR:database is locked container=vn-market-intelligence-mcp-mcp-server-1 db=/app/data/market.db` at 2026-08-12T00:04:22Z. PO disproved the persistent reading: get_market_snapshot at 2026-08-12T02:58:29Z returned live data sourced from that same market.db (VN-Index 1787.78, breadth sessionTime 02:58:29, source vndirect) and mcp-server memory is healthy at 570MiB/3GiB = 18.55%. The lock was TRANSIENT write-contention, not corruption and not a wedged DB — no mint, and specifically NOT folded into the open P0 FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH (QA), which is about WAL/DSN-induced silent-empty reads, a different failure. The transferable defect is the probe's: `database is locked` is the single most expected transient outcome on a WAL database under concurrent writers, and MARKET_DB_JOURNAL_MODE collapses it to verdict=ERROR on one shot with no retry/debounce — identical shape to this row's curl-failure-mode collapse. Extend this row's fix to name the journal-mode guard as a second call site, or the same false ERROR keeps reaching the BUG channel.",
-        "commit_sha": "7298e1ffb20ee2e8242c58cae3a8d9431d06177f",
-        "verification": {
-          "raw_probe": {
-            "tool": "git merge-base --is-ancestor + git show --stat + bash docs/agents/system-auditor/probe.test.sh + bash -n + mock-guard.sh + grep (DDD/secret/process.env/unreachable)",
-            "args": "commit=7298e1ffb20ee2e8242c58cae3a8d9431d06177f files=docs/agents/system-auditor/probe.sh,docs/agents/system-auditor/probe.test.sh,docs/agents/system-auditor/flow/tier1-probe.md,docs/agents/system-auditor/flow/tier1-overrides.md",
-            "live_value_observed": "merge-base ancestor=true; git show --stat matches probe.sh (emit-audit-signal.sh untouched, independently confirmed correct); probe.test.sh commit-scoped diff = T1-T7 (7/7), live file today = 24/24 (extended by later unrelated A-30 commits); bash -n clean; mock-guard.sh PASS; DDD/secret/process.env greps = 0 matches",
-            "observed_at": "2026-08-14T15:01:12Z"
-          }
-        }
-      },
-      {
-        "id": "BCT-OBS-01-FIX",
-        "title": "Fix BCT-OBS-01: Does dataAuditDaily produce a data integrity report sent to WORK channel",
-        "owner": "dev-mcp-server",
-        "status": "DONE_VERIFIED",
-        "type": "fix",
-        "size": "S",
-        "priority": "normal",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#BCT-OBS-01-FIX",
-        "promoted_at": "2026-07-23T15:45:46Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-14T15:04:00Z",
-        "next_agent": "qa",
-        "branch": null,
-        "commit": "ccddb9ae6a299733bddb5280e44a4ef79b0d86bd",
-        "files": [
-          "docs/agent-memory/notebooks/dev-mcp-server.md",
-          "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md"
-        ],
-        "completed_at": "2026-07-23T15:57:00Z",
-        "completed_by": "dev-mcp-server",
-        "status_note": "BCT-OBS-01-FIX: verification-only, no code change needed. dataAuditDaily (runDailyAudit, apps/mcp-server/src/scheduler/news-analysis/dataAuditJob.ts) unconditionally writes system_logs(data-auditor)+audit_state, then maybeSendTelegram gates sendTelegramWork on hasIssues (any auto_cleaned>0 or flagged/escalated finding). Live-probed via direct container DB read (not self-report/checklist alone): cron_job_runs shows 4 consecutive real fires 07-19..07-22 (16:00 UTC = 23:00 GMT+7, matches CRONS.dataAuditDaily), all status=success; each wrote a system_logs row with nonzero cleaned+warnings (07-22: 6763/63; 07-21: 18516/63; 07-20: 3931/149; 07-19: 199747/227) -- hasIssues=true every run, so the WORK-channel send-gate fires daily. Live gateway call get_system_status (fresh this session, via scripts/agents-flow/mcp-call.sh) confirms TELEGRAM_BOT_TOKEN/TELEGRAM_INFO_WORK_CHANNEL_ID SET and TELEGRAM_ENABLED=true in the running container -- the exact preconditions sendTelegramWork/coreSend require. Source-read of infrastructure/notifiers/telegram.ts confirms sendTelegramWork has ZERO DB persistence by design (only sendTelegramBug->insertReport persists to telegram_reports; sendTelegramMarket->market_messages) -- so the checklist rows documented recheck_how (read_telegram_reports channel:work) can never observe a WORK send: independently confirms the checklist rows own \"original FAIL was wrong recheck_how\" annotation is correct, not stale. quality-checklist.json BCT-OBS-01 already status=PASS since 2026-06-10T18:00Z citing WORK-channel msg IDs 2743-2766 (a genuine historical live-Telegram observation, not DB-derivable). Unit coverage 157-data-audit-job.test.ts AC-6 (silent on clean DB) + AC-7 (sends when issues exist): 18/18 pass -- contract matches live DB evidence. bun tsc --noEmit clean. Tool count 184 / cronJobCount 88 unaffected (gen-project-stats probe). git status apps/mcp-server/ clean -- zero source files touched. || [QA] Review Record (direct-commit verify): commit ccddb9ae6a2 confirmed real + on main ancestry, both claimed files match git show --stat exactly (notebook+decision-journal only, zero prod code -- verification-only claim self-consistent). Re-read dataAuditJob.ts + telegram.ts source directly: maybeSendTelegram hasIssues gate and sendTelegramWork zero-DB-persistence-by-design both confirmed exactly as claimed, not trusted from prose. Re-ran 157-data-audit-job.test.ts: 22/22 pass (row claimed 18/18 at commit time, file grew 4 tests since, zero regression); AC-6 + AC-7(Telegram) individually re-run, both pass. bun tsc --noEmit: 0 errors. git status apps/mcp-server/: clean. Independently re-probed LIVE state (not the row own 3-week-old snapshot): cron_job_runs shows dataAuditJob:daily firing daily through 2026-08-13 all success; system_logs(source=data-auditor) shows nonzero cleaned+warnings+criticals every day through 08-13, hasIssues=true every run, gate still live-fires today. docker exec into running mcp-server container confirms TELEGRAM_BOT_TOKEN/TELEGRAM_INFO_WORK_CHANNEL_ID set + TELEGRAM_ENABLED=true right now. Cross-checked quality-checklist.json BCT-OBS-01: status=PASS since 2026-06-10T18:00Z citing WORK-channel msg IDs 2743-2766, recheck_how correctly self-flagged as wrong check. VERDICT: DONE_VERIFIED, zero blocking ISSUE.",
-        "claimed_at": "2026-08-14T14:54:59Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "verification": {
-          "raw_probe": {
-            "tool": "bun:sqlite direct query (data/live/market.db, bind-mounted mcp-server container DB)",
-            "args": "SELECT timestamp, source, message FROM system_logs WHERE source='data-auditor' ORDER BY timestamp DESC LIMIT 1",
-            "live_value_observed": "timestamp=2026-08-13 16:00:03 source=data-auditor message='Daily audit complete: 6917 cleaned, 71 warnings, 1 criticals' (hasIssues=true -> sendTelegramWork gate fires; cron_job_runs confirms dataAuditJob:daily status=success same run)",
-            "observed_at": "2026-08-14T15:03:36Z"
-          }
-        },
-        "qa_verified_at": "2026-08-14T15:03:36Z",
-        "qa_verified_by": "qa"
-      },
-      {
-        "id": "FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE",
-        "type": "FIX",
-        "title": "P0 LIVE DATA LOSS: nso_ts_key() tail -1 parses a trailing all-numeric git short-SHA in a '## ' heading as an 8-digit date, so notebook-auto-prune drops the WRONG section — destroyed a P0 row's QA review record",
-        "status": "DONE_VERIFIED",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "qa",
-        "owner": "po",
-        "created_at": "2026-08-14T13:37:19Z",
-        "created_by": "po",
-        "source": "durable-inbox signal from=qa type=notebook_prune_wrong_section_dropped_ts_key_bug 2026-08-14T09:36:17Z",
-        "dedup_key": "notebook-auto-prune|defect:nso_ts_key-tail1-matches-commit-sha-digits",
-        "dedup_checked": "backlog+ready+in_progress+review+qa scanned 2026-08-14T13:3xZ. FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH (review/qa) = heading-regex shape, NOT ts-key extraction. FIX-NOTEBOOKAUTOPRUNE-HOOKGUARD-BASHSOURCE-ZSH-BREAK (backlog) = zsh sourcing. FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (ready) = AC-5/AC-6 sentinel/rolling shape. QA's own report states all three guards structurally miss this signature. NO dedup hit -> minted.",
-        "evidence": "scripts/agents-flow/lib/notebook-section-direction.sh nso_ts_key(): grep -oE date-regex | tail -1 picks the LAST digit-run in the heading line. Live convention 'commit `761988143`' (10-digit numeric SHA prefix) parses as YYYYMMDD and sorts ABOVE the real timestamp. QA reproduced by direct invocation: cycle-705 heading -> ts_key=76198814000000000 instead of 20260814013311000, making the genuinely-OLDEST section look NEWEST; the hook then dropped cycle-711 (UC-CDC-P7 DONE_VERIFIED review record) instead. PO INDEPENDENTLY CONFIRMED A SECOND, WORSE LIVE LOSS 2026-08-14T13:3xZ: `grep -c COWORK-MUTEX-001 docs/agent-memory/notebooks/qa.md` == 0, yet an inbox signal at 09:36:45Z quotes that exact section verbatim ('## cycle-715 · 2026-08-14T09:31:14Z · TASK-COWORK-MUTEX-001 (report-analyzer, commits f8d3891c6+465801802) — Direct-Commit Verify, CHANGES_REQUESTED'). The CHANGES_REQUESTED verdict for TASK-COWORK-MUTEX-001 (P0, still in review[]) is GONE from the notebook AND that row's status_note is empty — the review verdict for a live P0 row was destroyed with zero trace.",
-        "root_cause": "tail -1 over the whole heading line instead of anchoring extraction to the FIRST date-like match after the '## cycle-NNN ·' prefix, or requiring a T..Z time suffix so a bare 8-digit run cannot win.",
-        "acceptance": "AC-1 nso_ts_key on a heading shaped '## cycle-NNN · <ISO ts> · ... commit `<all-digit-prefix>`' returns the ISO-derived key, not the SHA-derived one. AC-2 new RED-first regression fixture in scripts/agents-flow/notebook-auto-prune.test.sh using qa.md's own commit-citation convention. AC-3 re-run over every docs/agent-memory/notebooks/*.md heading: zero headings compute a ts_key from a non-date digit run. AC-4 reconstruct TASK-COWORK-MUTEX-001's destroyed CHANGES_REQUESTED record onto that row's status_note (data-recovery half - see related).",
-        "related": [
-          "TASK-COWORK-MUTEX-001",
-          "FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE",
-          "FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH"
-        ],
-        "consumer_impact": "Also the mechanism behind the 3 [notebook-immutability-guard] AC-2a WARNs in this same inbox (qa.md cycle-715, developer.md x2, qa.md cycle-726): the hook rewrites a retained section mid-cycle, which is exactly what AC-2a detects. Those WARNs are downstream symptoms, not independent findings.",
-        "updated_at": "2026-08-14T15:04:05Z",
-        "promoted_at": "2026-08-14T13:54:25Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-14T14:54:59Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "updated_by": "qa",
-        "status_note": "[QA] Review Record (direct-commit verify): Commits 5c95e59aa1f72e76f4f55259d1e8f3ae967dc71d (fix) + 40ca31df2f57ca62b5be43877fceaedb19dfd7a0 (WORK.md) + 363fd17bf6786cc97d5dda5c29b8d16ce57460c6 (notebook+journal) confirmed real, on main ancestry (git merge-base --is-ancestor). git show --stat matches exactly the claimed deliverable: scripts/agents-flow/lib/notebook-section-direction.sh (nso_ts_key two-tier fix) + notebook-auto-prune.test.sh (new T11) + docs/WORK.md + docs/agent-memory/notebooks/developer.md + decision journal -- no apps/ TS/Go touched (bun test/tsc structurally N/A). Re-ran everything myself, not trusted from commit prose: notebook-auto-prune.test.sh 11/11 pass (incl. new T11 SHA-digit collision case). Independently re-derived the bug by hand (not just the test): the OLD grep -oE regex (optional T..Z suffix, tail -1) extracts 76198814 from the live cycle-705 heading (SHA `761988143` digits misparsed as a date) vs the NEW nso_ts_key() returning the correct 20260814000000000 -- confirms the fix mechanism directly, not just the assertion. AC-3 full-corpus scan reproduced independently over every ## heading in every live docs/agent-memory/notebooks/*.md -- 0 non-sentinel keys with an implausible year prefix. test-notebook-auto-prune.sh Test 9 FAILs but is a PRE-EXISTING, separately-tracked defect (FIX-NOTEBOOKAUTOPRUNE-HOOKGUARD-BASHSOURCE-ZSH-BREAK, still BACKLOG) -- fails at the ${BASH_SOURCE[0]} sourcing line under direct zsh invocation, before nso_ts_key logic is ever reached; not caused by or related to this commit. SIBLING-OVERLAP CROSS-CHECK (dispatcher-flagged, vs FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH, DONE_VERIFIED this session, archived docs/data/orch/archive/2026-08.json#done_tasks.325): grep-confirmed nso_ts_key() in lib/notebook-section-direction.sh is the SOLE date-regex implementation anywhere in scripts/agents-flow/ + scripts/notebook-compose.sh (zero stray grep -oE [0-9]{4} elsewhere) -- the July regex-widening fix (3a2b9228d, originally inline in notebook-auto-prune.sh) was later extracted (7552421bc, Aug 6) into this SAME shared function, which this task further hardens against the SHA-collision defect. Three sequential hardening passes on ONE canonical implementation, never a forked/duplicate copy -- overlap resolves cleanly, no regression reintroduced. Security greps (process.env/secret/password/token) clean on touched files. AC-4 data-recovery verified: TASK-COWORK-MUTEX-001.status_note carries the reconstructed CHANGES_REQUESTED verdict with an honest [RECOVERED 2026-08-14 by developer...] provenance note, not fabricated. VERDICT: APPROVED, DONE_VERIFIED. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-22.md STEP qa-S144.",
-        "qa_verified_at": "2026-08-14T15:02:33Z",
-        "qa_verified_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "git merge-base --is-ancestor + git show --stat + bash notebook-auto-prune.test.sh + hand-derived old-vs-new regex comparison + full-corpus nso_ts_key scan + bash test-notebook-auto-prune.sh + security greps",
-            "args": "commits 5c95e59aa1f72e76f4f55259d1e8f3ae967dc71d/40ca31df2f57ca62b5be43877fceaedb19dfd7a0/363fd17bf6786cc97d5dda5c29b8d16ce57460c6; files scripts/agents-flow/lib/notebook-section-direction.sh + notebook-auto-prune.test.sh; corpus docs/agent-memory/notebooks/*.md",
-            "live_value_observed": "ancestor=yes both; git show --stat matches claimed files exactly; notebook-auto-prune.test.sh 11/11 pass incl new T11; old-regex hand-test extracts 76198814 (SHA) vs new nso_ts_key 20260814000000000 (correct); full-corpus scan 0 suspects; test-notebook-auto-prune.sh Test 9 pre-existing unrelated zsh BASH_SOURCE fail (FIX-NOTEBOOKAUTOPRUNE-HOOKGUARD-BASHSOURCE-ZSH-BREAK, backlog); sibling FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH confirmed same single nso_ts_key implementation, no duplicate path, no regression",
-            "observed_at": "2026-08-14T15:02:33Z"
-          }
-        }
-      },
-      {
-        "id": "MD-FUNC-01-FIX",
-        "title": "Fix MD-FUNC-01: Does get_market_snapshot return VN-Index with price, change_pct, and direction fields",
-        "owner": "dev-mcp-server",
-        "status": "DONE_VERIFIED",
-        "type": "fix",
-        "size": "S",
-        "priority": "normal",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#MD-FUNC-01-FIX",
-        "promoted_at": "2026-07-23T14:49:01Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-14T15:04:07Z",
-        "next_agent": "qa",
-        "branch": null,
-        "commit": "2fb65b5bc1c75a2ac12bd2f11e4382799e021786",
-        "files": [
-          "docs/agent-memory/notebooks/dev-mcp-server.md",
-          "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md"
-        ],
-        "completed_at": "2026-07-23T15:03:44Z",
-        "completed_by": "dev-mcp-server",
-        "status_note": "MD-FUNC-01-FIX: verification-only, no code change needed. get_market_snapshot vn_index{price,change_pct,direction} struct already shipped 815ccaedd/ddc36452e (2026-06-16), predates running mcp-server image (built 2026-07-22) -- live in production. Root-cause check: price/change_pct read from fetchVnIndex(\"VNINDEX\") real VNDirect vnmarket_prices fetch; direction dynamically derived from changePct sign (not hardcoded). Live gateway verification (mcp-call.sh get_market_snapshot {}): vn_index:{price:1699.38, change_pct:1.85, direction:\"up\"} -- all 3 fields non-null, plausible vs same-payload breadth block (189 adv/122 dec). Targeted test 1982-quality-burndown-CHIJ.test.ts MD-FUNC-01 section 18/18 pass; market-tool-adjacent files 83/84 pass (1 pre-existing skip). bun tsc --noEmit clean. Full suite 14679 pass/40 skip/42 fail/1 error (1214 files) -- fail count matches documented 41-42 pre-existing baseline (_deprecated/logVpsPush/timeout classes), zero source files touched this task. Tool count 184 / cronJobCount 88 unaffected. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commit 2fb65b5bc1c75a2ac12bd2f11e4382799e021786 on main ancestry -- git show --stat matches both claimed files exactly (dev-mcp-server.md notebook + sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md decision journal). Did NOT trust status_note prose alone -- read marketTools.ts:334-347 live: vn_index{price,change_pct,direction} struct genuinely present, direction dynamically derived from vnIndex.changePct sign (not hardcoded), price/change_pct sourced from fetchVnIndex() real VNDirect vnmarket_prices fetch. Independently re-ran: targeted 1982-quality-burndown-CHIJ.test.ts MD-FUNC-01 section 18/18 pass (exact claim match); 3 adjacent market-tool test files (185-data-freshness, TSU-DEV-U6, 1881a-source-tier) plus the MD-FUNC-01 file together = 82 pass/0 fail (row's own '83/84 pass, 1 skip' self-description imprecise -- no skip observed -- but zero fail confirmed). bun tsc --noEmit 0 errors. mock-guard.sh on marketTools.ts PASS. process.env/secret greps clean. Cross-checked referenced fix commits 815ccaedd (2026-06-10) and ddc36452e (2026-06-16): both real, on main ancestry, predate this verify commit -- 'already shipped, no code change needed' claim holds. DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md STEP dev-mcp-server-S2 (implementer) + sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-22.md STEP qa-S142 (this verify).",
-        "claimed_at": "2026-08-14T14:54:59Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "qa_verified_at": "2026-08-14T15:02:15Z",
-        "qa_verified_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit + mock-guard.sh + direct source read",
-            "args": {
-              "commit": "2fb65b5bc1c75a2ac12bd2f11e4382799e021786",
-              "files_verified": [
-                "docs/agent-memory/notebooks/dev-mcp-server.md",
-                "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md"
-              ],
-              "source_read": "apps/mcp-server/src/interface/mcp/tools/market-data/marketTools.ts:334-347",
-              "tests_run": [
-                "src/__tests__/1982-quality-burndown-CHIJ.test.ts",
-                "src/__tests__/185-data-freshness.test.ts",
-                "src/__tests__/TSU-DEV-U6-tsh-leftover-descriptions.test.ts",
-                "src/__tests__/1881a-source-tier.test.ts"
-              ],
-              "referenced_fix_commits": [
-                "815ccaedd36d5a4b01fd34c369965b70314d0ffd",
-                "ddc36452e9c4ff49a07ddc97a04a018451f8930a"
-              ]
-            },
-            "live_value_observed": "vn_index struct confirmed live at marketTools.ts:336-347 (price/change_pct/direction; direction = changePct>0?'up':changePct<0?'down':'flat'); 18/18 MD-FUNC-01 targeted tests pass; 82 pass/0 fail across 4-file adjacent sweep; bun tsc --noEmit 0 errors; mock-guard.sh PASS; both referenced fix commits (815ccaedd 2026-06-10, ddc36452e 2026-06-16) real and on main ancestry, predating this verify commit",
-            "observed_at": "2026-08-14T15:02:15Z"
-          }
-        }
-      },
-      {
-        "id": "FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD",
-        "type": "FIX",
-        "priority": "medium",
-        "size": "S",
-        "status": "DONE_VERIFIED",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "pm",
-        "found_by": "SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY",
-        "related": [
-          "FIX-BASE-RATE-COMPUTATION-CRON-DEAD",
-          "SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY"
-        ],
-        "title": "bctcReparseJob: double-wrap recordJobRun + ungated restart catch-up defeat the T4 cadence guard's evidentiary trail",
-        "detail": "Found during SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY AC-2 (findings docs/spikes/SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY.md). runBctcReparseWithDb (apps/mcp-server/src/scheduler/startupHelpers.ts:361-366) wraps recordJobRun(db,'bctcReparseJob',fn) where fn discards runBctcReparseJob()'s real ReparseRunResult (Promise<void> arrow fn) -- so cron_job_runs.rows_written is ALWAYS NULL for this job (RAW-confirmed live: 100% of ~90 sampled rows across 11 days, 2026-07-29). Worse: recordJobRun marks the row 'success' whenever fn() resolves without throwing, REGARDLESS of whether runBctcReparseJob()'s OWN shouldSkipRecoveryReplay guard (bctcReparseJob.ts:718) early-returned a no-op -- so a guard-SKIPPED invocation still writes a fresh 'success' row, silently re-arming its own 21.6h dedup window. This is the SAME double-wrap class already found+fixed for runBaseRateComputationWithDb (FIX-BASE-RATE-COMPUTATION-CRON-DEAD, 2026-07-23) and runEvidenceAccumulatorWithDb (EVIDENCE-ACCUM-SILENT-CRON) -- bctcReparseJob was never patched. It uniquely compounds with a SECOND defect: the startup catch-up in startScheduler.ts:169-182 fires runBctcReparseWithDb(db) UNCONDITIONALLY 30s after every container boot/restart with NO staleness gate -- its own introducing commit (75b729183, 2026-04-12) claimed to mirror runDailyAuditIfStale's pattern (dataAuditJob.ts:292-311, which correctly checks last_daily_audit_at age before running) but never implemented an equivalent check. Net effect, RAW-confirmed live (docker exec, market.db, last 30 days): 2-7 cron_job_runs rows per calendar day for bctcReparseJob (vs. the intended 1x/day), overwhelmingly 0-3ms duration (guard-skip echoes) with occasional real multi-hour runs, plus status='crashed' zombie rows on restart-cluster days (2026-07-19, 2026-07-28) -- the table's 'last success' signal is contaminated by boot-time noise unrelated to real reparse activity, and is the best-supported explanation for the 2026-07-10 incident this SPIKE investigated (ops' pre-edit probe showed clean, then a subsequent restart re-armed the guard within 30s, before ops resorted to falsifying 25 rows instead of using the job's own nowMsFn override).",
-        "ac": "(1) runBctcReparseWithDb gains its own shouldSkipRecoveryReplay(db,'bctcReparseJob',DAILY_CADENCE_MS) check BEFORE calling recordJobRun (mirrors the FIX-BASE-RATE-COMPUTATION-CRON-DEAD fix pattern exactly) so a guard-skip never reaches recordJobRun and never writes a fresh row. (2) fn's default implementation captures runBctcReparseJob()'s real ReparseRunResult and maps resolved+failed to rowsWritten (or an equivalent field) so cron_job_runs.rows_written is no longer always NULL for this job. (3) startScheduler.ts's bctcReparseJob startup catch-up (currently unconditional, :169-182) gains a staleness gate consistent with its own stated intent to mirror runDailyAuditIfStale -- either reuse shouldRunCatchup() (matching the other 5 hardened catchups in the same file) or an equivalent last-run-age check, so a restart does not unconditionally fire the job every single boot. (4) new unit tests proving both fixes through the real default code paths (mirror FIX-BASE-RATE-COMPUTATION-CRON-DEAD.test.ts's approach) -- specifically a test that 2 back-to-back invocations within the cadence window produce exactly 1 cron_job_runs row, not 2. (5) RAW-verify post-fix: cron_job_runs rows-per-day for bctcReparseJob drops to <=1 on days without a genuine multi-file reparse, and rows_written is populated (non-NULL) on real runs.",
-        "created_at": "2026-07-29T15:30:00Z",
-        "created_by": "dev-mcp-server (SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY)",
-        "verify_note": "found_by=SPIKE-BCTC-REPARSE-CADENCE-GUARD-ROOTCAUSE-VERIFY AC-2; live RAW-confirmed pattern (rows_written always NULL, 2-7 rows/day, crashed-row clusters correlate with restart-storm days); precedent fix pattern = FIX-BASE-RATE-COMPUTATION-CRON-DEAD",
-        "updated_at": "2026-08-14T15:04:20Z",
-        "promoted_at": "2026-07-30T14:18:33Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-08-14T14:54:59Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "reviewed_note": "RAW-verified by dev-team: commits cf862f920 (code+test) + 815752129 (journal+notebook), both real/on HEAD. AC-1/AC-2/AC-3 diffs match spec exactly (shouldSkipRecoveryReplay guard before recordJobRun; default fn maps runBctcReparseJob({db}) result to rowsWritten and neutralizes bctcReparseJob.ts:892 self-record via options.db truthy; startScheduler.ts catch-up gated by shouldRunCatchup(db,bctcReparseJob,2,30,now,false)). Independently re-ran: new test file 13/13 pass, broader 22-file scheduler regression (216 tests, superset of claimed 9-file/114-test scope) 0 fail, tsc clean, toolCount/cronJobCount 184/88 unchanged. Full-suite 14906 pass/58 fail/1 error corroborated against same-day precedent commit 78f945fb2 (14870 pass/60 fail) — consistent pre-existing flake band, none of the 58 reference bctcReparse/startupHelpers/startScheduler/cron_job_runs. AC-5 correctly deferred (no post-deploy production history yet). DJ-GATE-1 entry confirmed at sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md:278.\n\n[QA] Review Record (direct-commit verify) 2026-08-14T15:03:19Z — independently RAW-verified. Both commits real, on main ancestry (git merge-base --is-ancestor cf862f920 main PASS, 815752129c8ecf4f1b383f3ba7d239e49f2d1750 main PASS). git show --stat cf862f920 matches exactly the 3 claimed files (startupHelpers.ts, startScheduler.ts, FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD.test.ts new); 815752129 = journal+notebook only, as claimed. Read the actual diffs myself (not prose): AC-1 shouldSkipRecoveryReplay(db,'bctcReparseJob',86400000) guard added in runBctcReparseWithDb BEFORE recordJobRun (startupHelpers.ts:399-410) — confirmed identical shape to FIX-BASE-RATE-COMPUTATION-CRON-DEAD precedent. AC-2 default fn now calls runBctcReparseJob({ db }), maps resolved+failed->rowsWritten; independently read bctcReparseJob.ts:941 `if (!options.db)` self-record block and confirmed options.db is now truthy on every real call path (grepped all production callers — only startScheduler.ts and schedulerJobTable.ts call runBctcReparseWithDb, no direct runBctcReparseJob() callers bypass the wrapper) — the double-wrap is genuinely eliminated, not just claimed. AC-3 startScheduler.ts:172-197 startup catch-up now gated by shouldRunCatchup(db,'bctcReparseJob',2,30,new Date(),false), matching the 6 other hardened catch-ups in the file — diff-confirmed. AC-4 re-ran FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD.test.ts myself: 13/13 pass, incl. T4b explicit \"2 back-to-back invocations -> exactly 1 row\" case and T6/T6b proving rowsWritten is no longer NULL. Broader regression (grep-derived superset of the claimed 22-file/216-test scope, 53 files matching startupHelpers/startScheduler/bctcReparseJob/cronJobRunStore/schedulerJobTable): 503 pass/1 skip/0 fail. bun tsc --noEmit: 0 errors. mock-guard.sh --files on both production files: PASS. DDD scan: pre-existing infrastructure/ imports in these 2 files are legitimate (scheduler/ is the interface/cron layer per dev-standards.md DDD table, not domain/ — no violation, and none introduced by this diff). No process.env, no hardcoded secrets. AC-5 correctly deferred (needs real post-deploy cron history, documented honestly in commit + journal, not silently dropped). DJ-GATE-1 confirmed: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md:278-284, task-id line present, content is genuinely AC-mapped (not boilerplate). VERDICT: APPROVED, DONE_VERIFIED, zero blocking ISSUE.",
-        "updated_by": "qa",
-        "status_note": "[po/triage-2026-08-12T03:03:00Z] FOLD + ESCALATION OF EVIDENCE: the gap is now monotonic across three independent probes and has crossed its own threshold, so the previous 'schedule-blind false CRITICAL' disposition no longer covers it. Successive A-29 fire-gap observations for bctcReparseJob: 2026-08-11T18:22:49Z LATE 28.4h (threshold 36h) -> 2026-08-11T22:20:39Z late 32.3h -> 2026-08-12T02:21:22Z MISSED 36.4h (threshold 36.0h, CRITICAL, telegram 4715, signal_queue row sys-20260812T022122-1cb1). The measured gap advances by exactly the wall-clock elapsed between probes, which means NO fire occurred in any of those windows — that is a property of the data, not of the detector's schedule model, and it is what distinguishes this from the FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL family that the 08-11 ticks folded it into. Two candidate root causes, both already tracked, and they are not mutually exclusive: (a) THIS row — double-wrapped recordJobRun plus ungated restart catch-up corrupt the very last-run timestamp A-29 reads, so the job may be firing while its evidence is unwritable; (b) FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP — the A-29 check is unexecutable as specified against its named data source. DISCRIMINATOR the implementer should run FIRST, because it decides which row is actually broken: read the bctcReparseJob execution evidence from the runtime plane (job-run rows written by the container), not from the host-side cron-status artifact. If real fires exist with unwritten/overwritten run records, it is (a) and the BCTC pipeline is fine; if there are genuinely no fires in 36h, this is a live BCTC pipeline stall and needs an ops recon companion, since the downstream BCTC reparse backlog is user-visible. PO did not resolve this here: sqlite3 is absent from the mcp-server container image (`sh: 1: sqlite3: not found`, rc=127), so the host-side probe PO attempted is not a valid instrument — do not repeat it, and do not read its absence as evidence either way.",
-        "qa_verified_at": "2026-08-14T15:03:19Z",
-        "qa_verified_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "git merge-base --is-ancestor + git show --stat + bun test (targeted+regression) + bun tsc --noEmit + mock-guard.sh",
-            "args": "commits cf862f920/815752129; src/__tests__/FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD.test.ts + 53-file grep-derived superset (startupHelpers|startScheduler|bctcReparseJob|cronJobRunStore|schedulerJobTable); mock-guard.sh --files apps/mcp-server/src/scheduler/startScheduler.ts apps/mcp-server/src/scheduler/startupHelpers.ts",
-            "live_value_observed": "both commits confirmed ancestors of main; git show --stat matches all 3 claimed files exactly; new test file 13/13 pass; 53-file/504-test broader regression 503 pass/1 skip/0 fail; tsc --noEmit 0 errors; mock-guard PASS; no process.env/secrets; DDD scan clean (pre-existing scheduler-layer infra imports only, no domain/ violation)",
-            "observed_at": "2026-08-14T15:03:19Z"
-          }
-        }
-      },
-      {
-        "id": "ALT-FUNC-02-FIX",
-        "title": "Fix ALT-FUNC-02: Does get_alert_accuracy return an accuracy rate between 0 and 1",
-        "owner": "dev-mcp-server",
-        "status": "DONE_VERIFIED",
-        "type": "fix",
-        "size": "S",
-        "priority": "normal",
-        "zone": "dev-mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ALT-FUNC-02-FIX",
-        "promoted_at": "2026-07-23T15:27:04Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "updated_at": "2026-08-14T15:04:36Z",
-        "next_agent": "pm",
-        "branch": null,
-        "commit": "6fed9dc8bcd21752729363d0fbcd97060592535a",
-        "files": [
-          "docs/agent-memory/notebooks/dev-mcp-server.md",
-          "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md"
-        ],
-        "completed_at": "2026-07-23T15:32:54Z",
-        "completed_by": "dev-mcp-server",
-        "status_note": "ALT-FUNC-02-FIX: verification-only, no code change needed. get_alert_accuracy top-level accuracy_rate:number|null already shipped 815ccaedd (2026-06-10T17:24Z, comment ALT-FUNC-02 FIX); null only when hits+misses===0 (insufficientSample data-gap case), tested (1982-quality-burndown-CHIJ.test.ts FIX-3, 3 cases). Backlog row created 2026-06-10T09:27Z -- ~8h BEFORE the fix landed -- a stale pre-fix snapshot BOUNDED-1 auto-picked 6 weeks later; docs/data/quality-checklist.json ALT-FUNC-02 already status=PASS since 2026-06-10T18:00Z citing the same commit. Live gateway verification (mcp-call.sh get_alert_accuracy {}): accuracy_rate:1, insufficientSample:false, scored_pct:19, total:628, hits:110, misses:0, unknowns:518 -- genuine 0..1 rate, AC satisfied live. Targeted tests 46/46 pass (1982-quality-burndown-CHIJ FIX-3 + 183-alert-accuracy + 1847d-D-alert-tools). bun tsc --noEmit clean. Tool count 184 / cronJobCount 88 unaffected (gen-project-stats probe). git status apps/mcp-server/ clean -- zero source files touched.\n\n[QA] Review Record (direct-commit verify) 2026-08-14T15:02:11Z — commit 6fed9dc8bcd21752729363d0fbcd97060592535a (notebook+decision-journal only, verification-only row per its own claim) confirmed real, on main ancestry (git merge-base --is-ancestor PASS). git show --stat matches both files[] entries exactly. Row states the real underlying fix is prior commit 815ccaedd (2026-06-10T17:24:08Z) -- independently confirmed real, on main ancestry, alertAccuracy.ts diff adds top-level accuracy_rate:number|null (hits/scoreable, null iff hits+misses===0); grep-confirmed the field is still live in the current source, un-clobbered by the one later commit that touched the same file (e170624d3, unrelated ISO-8601 datetime-strcompare fix). Re-ran the row cited tests myself, not trusted from prose: 1982-quality-burndown-CHIJ.test.ts 18/18 PASS + 183-alert-accuracy.test.ts/1847d-D-alert-tools.test.ts 28/28 PASS = 46/46 total, exact match to the row claim. bun tsc --noEmit: 0 errors. DDD scan: alertAccuracy.ts imports infrastructure/db/schema+alertStore from the interface layer (interface -> infrastructure is allowed DDD layering; zero domain-file violation). Secret/process.env greps clean. No production source files in THIS commit -> mock-guard N/A (Smart-Skip, docs-only diff). Independent LIVE probe (mcp-call.sh get_alert_accuracy {}), deliberately not the row own cited numbers: accuracy_rate:1 (in [0,1] range), insufficientSample:false -- AC genuinely satisfied on live main today; raw counts differ from the row snapshot (rolling 30-day alert window naturally shifts) but the contract/shape is identical. Cross-checked docs/data/quality-checklist.json independently: ALT-FUNC-02.status=PASS since 2026-06-10T18:00:00Z citing the same commit 815ccaed. VERDICT: DONE_VERIFIED, zero blocking ISSUE. Row correctly self-diagnosed this as a stale pre-fix BOUNDED-1 pickup (backlog row created ~8h before the real fix landed).",
-        "claimed_at": "2026-08-14T14:54:59Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "commit_sha": "6fed9dc8bcd21752729363d0fbcd97060592535a",
-        "verification": {
-          "raw_probe": {
-            "tool": "git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit + mcp-call.sh get_alert_accuracy",
-            "args": {
-              "commit": "6fed9dc8bcd21752729363d0fbcd97060592535a",
-              "underlying_fix_commit": "815ccaedd36d5a4b01fd34c369965b70314d0ffd",
-              "files": [
-                "docs/agent-memory/notebooks/dev-mcp-server.md",
-                "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md"
-              ],
-              "tests": [
-                "1982-quality-burndown-CHIJ.test.ts",
-                "183-alert-accuracy.test.ts",
-                "1847d-D-alert-tools.test.ts"
-              ]
-            },
-            "live_value_observed": {
-              "ancestry": "PASS (both commits)",
-              "files_stat_match": "2/2",
-              "tests": "46/46 PASS (18+28)",
-              "tsc": "0 errors",
-              "live_probe_get_alert_accuracy": {
-                "accuracy_rate": 1,
-                "insufficientSample": false,
-                "total": 425,
-                "hits": 30,
-                "misses": 0
-              },
-              "quality_checklist_json": "ALT-FUNC-02.status=PASS since 2026-06-10T18:00:00Z"
-            },
-            "observed_at": "2026-08-14T15:02:11Z",
-            "verdict": "ACCEPTED — DONE_VERIFIED, zero blocking ISSUE"
-          }
-        }
-      },
-      {
-        "id": "FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW",
-        "title": "windowPartitioner maxWindowPages truncation creates a headless tail window that continuation-stitch.md's contract never anticipated -- resolveColumnLayout() defaults to code-first, silently swapping code/label on label-first (bank) continuation tables split by the cap",
-        "status": "DONE_VERIFIED",
-        "type": "FIX",
-        "priority": "P2",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "pm",
-        "supervised": true,
-        "plan_only": false,
-        "created_at": "2026-08-01T05:28:09Z",
-        "created_by": "dev-mcp-server/spike-SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION",
-        "updated_at": "2026-08-14T15:07:18Z",
-        "source": "SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION findings, docs/spikes/SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION.md",
-        "root_cause": "windowPartitioner.ts's maxWindowPages cap (windowPartitioner.ts:92-101) does NOT fold an over-cap continuation table into its current window -- it starts a brand-new window (i=j) at the very next page, which is itself a mid-table continuation page with no header of its own (that's why it matched CONTINUATION_MARKER in the first place). This 'tail window' gets page_type='continuation' (getBctcPendingRefineTool.ts:319-335) and is dispatched to the SAME sub-flow as a genuine first-page window (docs/agents/refine_bctc_md/flow/continuation-stitch.md), whose contract (Steps 2-3) unconditionally treats the window's first page as carrying the table's real header -- a rule that was never updated to anticipate a truncation-created headless tail. Downstream, refinedMarkdownParser.ts::resolveColumnLayout() (refinedMarkdownParser.ts:386-393) decides code-first vs label-first column order by reading the CAPTURED header row's own cell text, but headerCells is a per-call local re-initialized to null on every parseRefinedMarkdown invocation (refinedMarkdownParser.ts:439) -- unlike statement_section, which IS explicitly threaded window-to-window via initialSection/finalSection (refinedMarkdownParser.ts:404-419, finalizeBctcRefine.ts:162,174-175). A tail window with no header of its own (the expected shape) falls back to the DEFAULT code-first layout (refinedMarkdownParser.ts:387,391), silently swapping code<->label for every 4-column row of a label-first (bank Meu B02a/TCTDHN) continuation table whose true header only existed in the truncated head window. This corrupts (not drops) code/label text; value_current/value_prior are read from the same cell indices in both layouts so numeric values are unaffected. bctcScalarAggregator.ts resolves headline scalars (total_assets, equity_total, net_revenue, ...) via LABEL-CANONICAL matching preferred over code (bctcScalarAggregator.ts:20-21,396-399) and also uses row code/label shape for isBankFormFromRows bank-vs-corporate detection -- a swap can silently degrade or null the headline figures this pipeline exists to produce, with no error and no gate that catches it (checkSectionCompleteness/BEQ-7 only checks statement_section PRESENCE, never code/label correctness -- bctcSectionCompleteness.ts:27-60). Same root mechanism as the already-shipped FIX-BCTC-BANK-BS-COLUMN-ORDER (single-window, no-captured-header case) -- that fix added within-window header capture but never cross-window threading, so the maxWindowPages truncation path re-opens the identical hazard through a side door the original fix did not anticipate. Live-confirmed trigger frequency: 5 truncation WARNs within the same second of a single run (docs/agent-memory/health/team-tool-recheck-2026-06-21-1605.md:195-196) -- not a theoretical edge case. NOT independently reproduced within the spike's 120-min timebox: an actual corrupted bctc_table_rows row instance from a live truncation-tail window (would need pulling a real bctc_refined_units row past a report's first truncated unit_id and diffing against a known label-first bank filing).",
-        "deliverable": "Architect decision (not a blind copy-paste) among 3 non-exclusive candidate mitigations, then implement the chosen combination: (1) raise maxWindowPages default / make it PDF-adaptive so real long bank continuation tables stop splitting; (2) thread a headerCells/column-layout hint forward across windows in parseDoneUnitsToRows the same way carrySection/statement_section already is, so a headless tail window inherits the correct layout from its head window; (3) have windowPartitioner mark truncation-tail windows explicitly (make the already-claimed but nonexistent truncated_continuation flag real -- windowPartitioner.ts:50 docstring vs 0 grep hits) so continuation-stitch.md's live agent-flow contract can fetch the head window's page-N header context on demand instead of silently assuming it is absent. Whichever combination is chosen, add a regression fixture that exercises the actual >maxWindowPages split-across-two-windows path end to end (partition -> refine markdown -> finalize) with a label-first (bank-form) 4+-column continuation table -- no existing test does this (grep -rn maxWindowPages apps/mcp-server/src/__tests__ only covers inputs that never exceed the cap: AR-refined-units-idempotency.test.ts:346,369; FIX-REFINE-WINDOW-DB-PAGELIST.test.ts:128 tests a different bug -- DB-driven page-list construction, not the continuation cap).",
-        "acceptance": "A synthetic label-first (bank Meu B02a/TCTDHN-shaped) continuation table spanning > maxWindowPages pages, run through partitionIntoWindows -> parseRefinedMarkdown (per-window, threading whatever new cross-window state the chosen fix adds) -> finalizeBctcRefine's parseDoneUnitsToRows, produces rows in the tail window with code/label in the CORRECT (non-swapped) order -- not just non-empty. Negative control: an existing code-first (corporate) continuation table fixture is unaffected (0-diff). The health-recheck WARN's severity/wording is corrected in the SAME change (or a follow-up doc-only PR) to stop attributing it to intelligence-cycle/news signal-drop -- see SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION Finding 0.",
-        "files": [
-          "apps/mcp-server/src/application/utils/windowPartitioner.ts",
-          "apps/mcp-server/src/application/utils/refinedMarkdownParser.ts",
-          "apps/mcp-server/src/application/usecases/finalizeBctcRefine/finalizeBctcRefine.ts",
-          "docs/agents/refine_bctc_md/flow/continuation-stitch.md",
-          "docs/agents/refine_bctc_md/flow/main.md"
-        ],
-        "related": [
-          "SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION",
-          "FIX-BCTC-BANK-BS-COLUMN-ORDER"
-        ],
-        "promoted_at": "2026-08-08T05:51:18Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "dev-mcp-server",
-        "claimed_at": "2026-08-14T14:54:59Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "reviewed_by": "architect",
-        "spec_doc": "docs/handoffs/FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW-spec.md",
-        "architect_review_note": "PLAN-ONLY (supervised+plan_only — apps/mcp-server source and refine_bctc_md flow docs NOT edited). Re-verified every SPIKE-BCTC-REFINE-MAXWINDOW-TRUNCATION line-anchor live, zero drift. DECISION among the 3 non-exclusive candidates: adopted (2) FULL — thread a ColumnLayout value cross-window in refinedMarkdownParser.ts/finalizeBctcRefine.ts, an exact structural mirror of the already-shipped statement_section threading (initialSection/finalSection/carrySection) — deterministically correct for any table length or maxWindowPages value, zero new tool calls, zero new wire fields on the correctness-critical path. Adopted (3) FLAG-ONLY — make the already-claimed-but-nonexistent truncated_continuation field real on Window/RefineWindow (windowPartitioner.ts + getBctcPendingRefineTool.ts pass-through), closing a live comment≠code drift at windowPartitioner.ts:50; explicitly did NOT build (3)s on-demand head-window-header-fetch half (new leaf-worker tool-call machinery (2) makes unnecessary). REJECTED (1) raise/adapt maxWindowPages outright — does not fix the defect CLASS (any finite cap still eventually truncates a sufficiently long table, and real bank Mau B02a/TCTDHN tables are exactly the ones that run long per spike Finding 3), and costs real Haiku-model leaf-worker token/image budget with zero correctness benefit once (2) lands. NEW finding beyond the spike: the original design brief (docs/architecture-briefs/2026-05-30-bctc-agentic-refine.md:78-80) intended a LOSSY truncation (\"drop excess pages, flag low trust\") plus a \"never split across two subagents\" invariant that the SHIPPED implementation already silently violates (splits, but per spike Finding 1 never drops data) — reverting to the brief literal design was explicitly rejected, it would regress a verified-good no-data-loss property to fix a property (2) already fixes losslessly; corrected both stale docstrings (windowPartitioner.ts:11-13 and :50) to describe actual behavior instead. WARN-wording acceptance clause: traced its full lifecycle — the RemoteTrigger writer that produced the intelligence-cycle misattribution died 2026-06-22, its output file (team-tool-recheck-2026-06-21-1605.md) is pruned from disk (git-history only, confirmed via git log --all), and the 2026-08-06 replacement flow (agent-father/team-tool-recheck.md) explicitly excludes this WARN class as out-of-scope (handed off separately) — zero live docs carry the wrong attribution today, nothing left to correct there; the one still-live inaccuracy (the truncated_continuation docstring claim) is corrected in this same spec instead. Corroborating finding: the single-page \"last tail window\" edge case (misclassified page_type=table/prose instead of continuation) already self-detects and FAILS LOUD in table-page.md/prose-page.md (continuation-marker-in-wrong-subflow guard) rather than silently corrupting — confirms the correctness hazard is fully confined to the page_type=continuation dispatch path this fix targets, no changes needed to those 2 docs. Full verbatim diffs for windowPartitioner.ts / refinedMarkdownParser.ts / finalizeBctcRefine.ts / getBctcPendingRefineTool.ts (added beyond the tasks own files list — necessary wire pass-through, flagged explicitly) + doc diffs for continuation-stitch.md/main.md + a complete hand-traced regression test file (windowPartitioner cap-hit shape proving exactly 2 windows with only the tail flagged; label-first bank tail-window thread-vs-no-thread contrast proving the swap and its fix; code-first corporate negative control asserting byte-identical rows with/without inheritance; full finalize_bctc_refine DB-integration test) in spec_doc — every assertion hand-traced against post-fix logic including a check that DT-2/DT-3 BLOCK predicates in bctcMagnitudeValidator.ts cannot false-trip the fixture (no total_liabilities/equity_total-labeled rows exist in it, no income_statement rows exist), not asserted on faith; caught and fixed my own negative-control bug (a statement_section carry mismatch unrelated to the parameter under test) before finalizing. Full details: docs/handoffs/FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW-spec.md",
-        "updated_by": "qa",
-        "po_goahead_20260812T035700": "PO ratified architect plan-only spec at source (not on relayed verdict): spec_doc present 760L/42348B commit 551c6b39e; adopted mitigation (2) cross-window ColumnLayout threading independently confirmed implementable as an exact mirror of the live carrySection thread (finalizeBctcRefine.ts:162 let carrySection, :174 parseRefinedMarkdown(...,carrySection), :175 carrySection=parseResult.finalSection); resolveColumnLayout null-guard returns code-first confirmed; plan_only honored (windowPartitioner.ts:50 stale docstring still present, zero source edits). Architect NEW finding independently confirmed: windowPartitioner.ts:11-13 states CRITICAL invariant a continuation table MUST land in ONE window / never split across two subagents, which the shipped cap branch demonstrably violates. plan_only cleared: architect-first design gate is satisfied, implementation authorized. supervised retained as audit trail.",
-        "po_ratified_at": "2026-08-12T03:57:00Z",
-        "dispatch_lane_corrected_at": "2026-08-12T07:24:21Z",
-        "dispatch_lane_corrected_by": "dev-team (router, stale dispatch_lane caught pre-spawn)",
-        "reviewed_note": "Implemented PO-ratified architect spec verbatim (docs/handoffs/FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW-spec.md). ColumnLayout now threads cross-window (refinedMarkdownParser.ts resolveColumnLayout/parseRefinedMarkdown/ParseResult.finalColumnLayout, finalizeBctcRefine.ts carryColumnLayout) mirroring the existing carrySection thread exactly. Window.truncated_continuation is real (windowPartitioner.ts, tracked via pendingTruncationTail) with RefineWindow wire pass-through (getBctcPendingRefineTool.ts, the necessary file architect flagged beyond the tasks own list). 2 stale docstrings corrected. Flow docs updated: continuation-stitch.md (new Truncation-Tail Windows section) + main.md (window shape). RED-first: wrote the specs full hand-traced regression file, 5/7 failed pre-fix, 7/7 GREEN post-fix, every assertion matched the specs hand-traced predictions exactly (rows_parsed=5, tail row code=3 not swapped, BEQ-7 override to PARTIAL as expected). tsc clean. Targeted 412/412 pass across all 32 BCTC/refine-pipeline test files touching the changed functions. Full bun test (2 independent runs): run1 15234 pass/40 skip/57 fail/1 error/48061 expect (770s); run2 fail-list grep-confirmed ZERO overlap with windowPartitioner/refinedMarkdownParser/finalizeBctcRefine/getBctcPendingRefineTool/resolveColumnLayout/BCTC-REFINE-WINDOWTRUNCATION names — consistent with this zones documented pre-existing flaky-churn baseline. Gate 2: PORT=3099 clean boot /health toolCount=183 sessions=0; gen-project-stats.ts toolCount=183/cronJobCount=88 both match baseline. Dashboard circular-dep check (/api/bctc-inspect, /dashboards/news-fetch/) both real HTML. size-lint-justification.sh --check: windowPartitioner.ts crossed the 120L threshold (115L->149L, new-offender) - added its own size-justification header; only pre-existing untouched transport.ts still fails. Health-recheck WARN misattribution: architect already traced zero live docs carry it (source dead 2026-06-22, output file pruned, replacement flow explicitly out-of-scope) - independently spot-checked (grep for the misattributing phrase across docs/ and apps/) returns zero live hits outside the spike doc itself, confirmed closed. Deliberately NOT touched: bctcRefineJob.ts own parseRefinedMarkdown call site (same carrySection-only pattern) - its module header states the production spawn path is DELETED (Option-Y ruling), refineOneReport() is a test-only DI helper, not a live defect path. Commit 8b4f977fd (code+test+docs), pushed clean, pre-push tsc hook green. | [QA] Review Record (direct-commit verify) 2026-08-14T15:05:37Z -- APPROVED, DONE_VERIFIED. Commit 8b4f977fdf4d0784d4190a3fd244ce3f8e704be4 confirmed real, on main ancestry; git show --stat matches all 5 files[] entries exactly (windowPartitioner.ts, refinedMarkdownParser.ts, finalizeBctcRefine.ts, continuation-stitch.md, main.md) plus 2 flagged extras (getBctcPendingRefineTool.ts wire pass-through + new test file) consistent with the reviewed_note's own disclosure. No later commit touched any of these 5 files since. Independent source-diff review confirms the threading is an exact structural mirror of the pre-existing carrySection/finalSection pattern: resolveColumnLayout(headerCells, inheritedLayout) falls back to inheritedLayout ?? \"code-first\" (was hardcoded \"code-first\"); parseRefinedMarkdown carries initialColumnLayout/finalColumnLayout; finalizeBctcRefine.ts carryColumnLayout threads it window-to-window; windowPartitioner.ts pendingTruncationTail correctly delays the cap-hit flag by one iteration onto the NEXT window. New fixture FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW.test.ts: 7/7 pass, 37 expect -- exact match to reviewed_note claim (rows_parsed=5, BEQ-7 override to PARTIAL). Broader 31-file BCTC/refine-pipeline sweep: 404/404 pass, 0 fail -- zero regression (row claimed 412/32, differently-scoped grep, zero-fail is the decisive signal). bun tsc --noEmit: 0 errors. mock-guard.sh PASS on all 4 touched prod files. DDD greps: all 3 core files are application-layer (not domain/); infra imports (logger/db) pre-existing legitimate application-layer deps; refinedMarkdownParser.ts (claims pure/no-I/O) has genuinely zero infra imports. Secret/process.env greps clean. gen-project-stats.ts --dry-run toolCount=183/cronJobCount=88 exact match. size-lint-justification.sh --check PASS 0 offenders (windowPartitioner.ts actual 154L vs header declared 149L -- 5L drift within the script's own tolerance, non-blocking). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-22.md STEP qa-S144. Zero blocking ISSUE.",
-        "qa_verified_at": "2026-08-14T15:05:37Z",
-        "qa_verified_by": "qa",
-        "commit_sha": "8b4f977fdf4d0784d4190a3fd244ce3f8e704be4",
-        "verification": {
-          "raw_probe": {
-            "tool": "bun test",
-            "args": "apps/mcp-server/src/__tests__/FIX-BCTC-REFINE-WINDOWTRUNCATION-COLUMNLAYOUT-CROSSWINDOW.test.ts",
-            "live_value_observed": "7 pass / 0 fail / 37 expect() calls -- rows_parsed=5, tail-window code/label order correct, BEQ-7 override to PARTIAL, negative-control 0-diff, all matching reviewed_note claims",
-            "observed_at": "2026-08-14T15:03:57Z"
-          }
-        }
-      },
-      {
-        "id": "FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1",
-        "type": "FIX",
-        "status": "DONE_VERIFIED",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "qa",
-        "supervised": false,
-        "depends": [],
-        "created_at": "2026-07-29T06:25:00Z",
-        "created_by": "po/triage-20260729T0625-auditor-cycle-defect-cluster",
-        "source": "system-auditor Tier-1 cycle 2026-07-29T06:08:22Z; live file read by PO at 06:16Z",
-        "title": "system-auditor wrote docs/data/auditor-tier1-last-healthy.json on a Tier-1 DEGRADED cycle - a write its own flow explicitly excludes from Tier-1 - collapsing the file's schema and advancing a last-HEALTHY marker on a non-healthy cycle",
-        "root_cause": "docs/agents/system-auditor/flow/main.md:748-755 gates the agent-side heartbeat write on AUDIT_TIER being 2 or 3 and says verbatim '(Tier-1 is untouched - it keeps its own _write_heartbeat inside scripts/agents-flow/auditor-tier1-probe.sh)'. The gated block builds HB_FILE=\"$PROJECT_ROOT/docs/data/auditor-tier${AUDIT_TIER}-last-healthy.json\", so it can only ever produce a tier2 or tier3 filename. The 06:08Z cycle ran AUDIT_TIER=1 and wrote the TIER-1 file anyway. There is no authorizing step for that write anywhere in the flow - this is not a mis-gated block, it is an action with no spec provenance at all. Same class as FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD: the written contract did not bind behaviour.",
-        "consequence_a_schema_collapse": "The canonical Tier-1 writer scripts/agents-flow/auditor-tier1-probe.sh:436 emits jq -n '{last_healthy_at:$ts, checks:$checks}'. The committed HEAD version of the file carried checks{docker_ps, health_3000, health_3001, disk, mem_creep, launchd_agents} with last_healthy_at 2026-07-25T16:03:25Z. The live file is now {\"last_healthy_at\": \"2026-07-29T06:11:29Z\"} only - the agent applied the TIER-2/3 shape (main.md:753, '{last_healthy_at:$ts}') to a Tier-1 file. orch-sentinel OH-3.4 in docs/agents/orch-sentinel/flow/dim-oh3-auditor-blindspot.md does check exactly this shape, but at severity INFO with an explicit log-once instruction because bare-shape is recorded there as a KNOWN LIMITATION - so a genuine regression is absorbed as an already-known condition and never surfaces.",
-        "consequence_b_semantic_falsehood": "The Tier-1 writer advances the marker ONLY on its ALL_GREEN branch, which is what makes the name last_healthy true at Tier 1. The 06:08Z cycle's own reported Status was DEGRADED with 1 WARN anomaly, and it advanced the marker to 06:11:29Z.",
-        "scope_correction_do_not_skip": "The incoming report claimed orch-sentinel OH-3 will now mis-score auditor blind-spots off this timestamp. PO COULD NOT CONFIRM THAT and it should not be used to size the row. OH-3.4 reads SHAPE only and never computes an age - independently stated in FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL .why_the_obvious_fixes_are_wrong ('OH-3.4 reads the heartbeat files but checks SHAPE only, severity INFO, and never computes an age'). The live timestamp consumer is the Tier-1 cron pre-gate at .claude/skills/cron-detect-loop/register.md:84, whose age branch is already established by that same row to be inert on every path it can take (on ALL_GREEN the age is ~0 by construction; on FAILURE the verdict forces the spawn unaided). So there is NO confirmed live suppression today, and P2 rather than P1 reflects that.",
-        "real_exposure_is_forward": "FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL (status READY, next_agent developer) relocates cron-dormancy detection into a NEW orch-sentinel OH-3.5 that reads exactly these heartbeat files and computes their age. If any out-of-contract writer can stamp them, OH-3.5 is blind on the day it ships - and blind specifically when a cycle is degraded, which is when it matters. SEQUENCE THIS ROW BEFORE OR WITH THAT ONE. Coordinate; do not land OH-3.5 against an unprotected input.",
-        "acceptance": "(1) The sole-writer invariant for docs/data/auditor-tier{1,2,3}-last-healthy.json is written in ONE named place and cited from both writers (the probe script and system-auditor main.md), so neither can drift. (2) TIER-1: only scripts/agents-flow/auditor-tier1-probe.sh writes the tier-1 file. Add a guard that makes an agent-side tier-1 write fail LOUDLY rather than silently succeed - a prose prohibition already exists at main.md:748 and was not sufficient, so a repeat of the prose is not an acceptable fix. (3) SHAPE: a writer must emit the full documented shape for the tier it writes; a write that would reduce {last_healthy_at, checks} to {last_healthy_at} is rejected. Consider whether OH-3.4 should distinguish 'bare from birth' (known limitation, INFO) from 'was richer, now bare' (a regression) - the current log-once INFO framing cannot. (4) SEMANTIC: state and enforce that the marker advances ONLY on a green verdict. RESOLVE A REAL DIVERGENCE rather than papering over it - main.md:748 says the Tier-2/3 write 'Runs unconditionally every Tier-2/3 cycle', so at Tier 2/3 the file is a 'a real audit completed' marker while at Tier 1 it is a 'the system was healthy' marker, under one filename family that says healthy. Pick one semantic for the family and rename or re-gate accordingly. (5) Repair the live file - restore checks{} or state why a stub is tolerable until the next genuine ALL_GREEN probe run rewrites it. This is a data file, not infrastructure; the PLAN-ONLY infra fence does not block it. (6) DO NOT port suppress_heartbeat to Tier-1 and DO NOT drop the AUDIT_TIER 2/3 gate at main.md:750. FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL .why_the_obvious_fixes_are_wrong already rejects both directions with reasons - READ IT FIRST.",
-        "related_memory": "feedback_cron_armed_but_wrong_prompt_variant, feedback_passive_health_masks_dead_data, feedback_reader_writes_its_own_trigger_field_check_is_vacuous.",
-        "updated_at": "2026-08-14T15:08:21Z",
-        "promoted_at": "2026-07-29T07:15:53Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-08-14T14:54:59Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "branch": null,
-        "qa_verify_mode": "verify-committed",
-        "commit": "612ee0954 (guard+docs+test), 06f15af0d (live file repair)",
-        "status_note": "IMPLEMENTATION: Root cause confirmed -- docs/agents/system-auditor/flow/main.md:748-755 gates the agent-side Tier-2/3 heartbeat write out of Tier-1, but a 2026-07-29T06:08:22Z DEGRADED Tier-1 cycle wrote docs/data/auditor-tier1-last-healthy.json anyway; no authorizing step anywhere in the flow produced it (the block's own if already correctly excludes tier-1). Collapsed the file from {last_healthy_at, checks{6 keys}} to bare {last_healthy_at}, falsely advancing a healthy marker on a non-healthy cycle. A prose prohibition alone had already been tried and failed (2nd violation). FIX: (AC1) new CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER in docs/policies/dev-standards.md, cited from both writers (auditor-tier1-probe.sh header comment + system-auditor main.md Tier-2/3 Heartbeat Write section). (AC2/AC3) new scripts/git-hooks/pre-commit _check_auditor_heartbeat_shapes -- runs unconditionally before the pre-existing sweep-guard mode dispatch, never GIT_SWEEP_GUARD_MODE-gated: rejects (commit BLOCKED, loud stderr) any staged tier-1 write that is not the exact {last_healthy_at, checks:{docker_ps,health_3000,health_3001,disk,mem_creep,launchd_agents}, all PASS} shape, and any staged tier-2/3 write carrying a checks key at all -- converts the prose prohibition into a code-level, fail-loud guard. (AC4) main.md now states the resolved semantic split explicitly: tier-1 means system-confirmed-healthy, tier-2/3 means an-audit-completed regardless of verdict (fires every Tier-2/3 cycle by design, auditor-signal-loop-P1, load-bearing for the SKIP-SPAWN freshness gate in run_tiered_probe()). Judgment call: re-gating tier-2/3 on green was rejected (would starve the heartbeat on a persistently-tracked DEGRADED cycle and recreate the exact spawn-storm that P1 fix closed); renaming the files/field was rejected (would break FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL's already-planned OH-3.5 reads of these exact paths -- that row explicitly names this one as a sequencing prerequisite). Kept both filenames/fields; made shape (bare vs checks{}) the enforced structural signal distinguishing the two semantics. (AC5) live file repaired by actually running the authorized writer (bash scripts/agents-flow/auditor-tier1-probe.sh) rather than hand-editing -- genuine live ALL_GREEN read, full checks{} shape restored. (AC6) suppress_heartbeat NOT ported to Tier-1; AUDIT_TIER 2/3 gate at main.md:750 NOT dropped -- both directions explicitly rejected per the sibling row's .why_the_obvious_fixes_are_wrong field, read before implementing. VERIFICATION: new scripts/git-hooks/pre-commit-auditor-heartbeat.test.sh RED (3/6 fail pre-guard) -> GREEN (6/6 post-guard). No regressions: pre-existing pre-commit.test.sh 6/6, auditor-tier1-probe.test.sh 141/141, both scripts otherwise byte-identical to before this task. bash -n syntax-clean on the hook. Shell/JSON/MD only -- no apps/mcp-server/ TS touched, bun tsc/bun test not structurally applicable. Graphify incremental update: no Skill-tool/LLM-API-key path available to this spawned agent (same structural constraint as 2 prior sessions today) -- flagged in docs/WORK.md, not silently skipped. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S23.\n\n[QA] Review Record (direct-commit verify) — 2026-08-14T15:03:23Z — Both claimed commits (612ee0954, 06f15af0d) confirmed real and on main ancestry; git show --stat matches every claimed file for both, no extra/missing files. Re-ran scripts/git-hooks/pre-commit-auditor-heartbeat.test.sh live: 6/6 PASS. Regression sweep: pre-commit.test.sh 15/15 PASS (grown from claimed 6/6 via unrelated later commits, 0 fail either way), auditor-tier1-probe.test.sh 226/226 PASS (grown from claimed 141/141, 0 fail). bash -n syntax-clean both touched scripts. mock-guard.sh PASS (no TS production source, shell not scanned, matches claim). DDD N/A (no apps/mcp-server/ TS touched). Security greps clean (no process.env, no real secrets, token/password hits are unrelated prose). Read (not grepped) the live installed .git/hooks/pre-commit symlink -- confirmed byte-identical to tracked scripts/git-hooks/pre-commit, and _check_auditor_heartbeat_shapes runs unconditionally before the sweep-guard mode dispatch, never GIT_SWEEP_GUARD_MODE-gated (AC2/AC3 hold). Read live main.md Tier-2/3 Heartbeat Write block -- AUDIT_TIER 2/3 gate intact, writer still emits bare {last_healthy_at} only, no suppress_heartbeat port (AC6 holds). CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER confirmed cited from dev-standards.md:147, auditor-tier1-probe.sh:83/125, main.md:1295/316, tier1-probe.md:27, and the guard REJECT strings themselves (AC1 holds, wider citation surface than claimed). Went beyond the row own claim: found 3 real docs/signals/processed/commit-sweep-guard-*.json REJECT signals (2026-08-08, 2026-08-11x2) proving the guard has fired and blocked 3 further real out-of-contract hand-write attempts live in production since this fix landed, none reached main. Cross-checked the row own po_live_recurrence_20260808T1248Z note (a 4th incident, 34521315f, that DID reach git by changing only the last_healthy_at value while keeping the checks{} shape intact -- outside this guard SHAPE-only scope by design, not a guard defect) -- confirmed via git log this was already reverted same-day by e9a8c6015, restoring the exact prior-genuine value (2026-08-07T03:35:32Z from b30e533ce) exactly as that note prescribed -- remediation already complete, consistent with the row own scope note that this was not POs to execute. Live tier1 file today (2026-08-14T14:43:21Z) passes the shape guard; tier2/tier3 files carry no checks key. DJ-GATE-1: confirmed sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S23 carries task-id: FIX-AUDITOR-HEARTBEAT-OUT-OF-CONTRACT-AGENT-WRITE-TIER1 verbatim. VERDICT: DONE_VERIFIED, zero blocking ISSUE. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-21.md STEP qa-S141. [2nd pass — 1st write reverted by peer QA-drain full-doc collision, commit a25a790f2]",
-        "updated_by": "po/triage-20260808T1248Z",
-        "po_live_recurrence_20260808T1248Z": "LIVE RECURRENCE, AND THIS TIME IT REACHED GIT. docs/data/auditor-tier1-last-healthy.json currently reads {last_healthy_at: '2026-08-08T12:05:10Z', checks: {... mem_creep: 'PASS' ...}} and was committed at 34521315f by router session 165f4245 on the good-faith premise (quoted from that commit message) that the value is 'a genuine last-all-6-checks-passed timestamp before the mem_creep FAILURE window began'. PO REFUTES THAT PREMISE ON RAW EVIDENCE, three independent ways: (1) the FAILURE window began no later than 2026-08-08T11:04Z — peer auditor cycle c48 (commit 76466302a) records rag-service-1 at 98.53% / 15MiB free / BELOW-FLOOR at that time — so 12:05:10Z is INSIDE the failure window, not before it; (2) PO re-ran the pre-gate read-only at 12:47Z via the documented HEARTBEAT_FILE_PATH=<scratch> seam and got verdict=FAILURE, detail 'mem_creep: ... vn-market-intelligence-mcp-rag-service-1(98.56%, 14.7MiB-free, BELOW-FLOOR(floor=40MiB))', with the container at RestartCount=0 / OOMKilled=false / healthy / StartedAt 2026-08-08T08:11:45Z — i.e. no restart between 11:04Z and now that could have produced a transient green at 12:05Z; (3) the shell pre-gate STRUCTURALLY CANNOT have written it: run_probe() gates _write_heartbeat on an EMPTY failures list, and _mem_container_acked() disqualifies the rag-service acked_memory entry twice over — headroom 15MiB < MEM_FLOOR_MIB=40 -> BELOW-FLOOR, and tracked_by=FU-RAG-DEPLOY-MEMORY reached DONE_VERIFIED at 10:59:52Z -> STALE-ACK. Therefore the 12:05:10Z stamp is an out-of-contract agent write on a DEGRADED cycle — exactly this row's defect — and it is now the committed record. IMPACT beyond this row's existing scope: the tier-1 cron freshness arm reads .last_healthy_at and spawns on age>60min, so a false stamp suppresses that arm for an hour (the verdict=FAILURE arm still fires, so this is degradation, not blindness). REMEDIATION IS NOT PO'S TO EXECUTE: hand-writing this file is explicitly forbidden (pre-commit hook scripts/git-hooks/pre-commit:119 names _write_heartbeat as the sole authorized writer, and the 2026-07-29 PO constraint on scripts/po-s151-tier1-probe-plane-divergence-triage.jq:83 says 'Do NOT hand-write docs/data/auditor-tier1-last-healthy.json'). Correct action, for router/ops: revert the file half of 34521315f so the field returns to its last genuinely-green value 2026-08-07T03:35:32Z (written by b30e533ce), which restores the honest >33h-stale reading and lets the freshness arm work. Do NOT re-stamp it forward by hand.",
-        "verification": {
-          "raw_probe": {
-            "tool": "Bash: git merge-base --is-ancestor + git show --stat + bash scripts/git-hooks/pre-commit-auditor-heartbeat.test.sh + pre-commit.test.sh + auditor-tier1-probe.test.sh + jq shape predicate on live heartbeat files",
-            "args": {
-              "commit_a": "612ee0954",
-              "commit_b": "06f15af0d"
-            },
-            "live_value_observed": {
-              "tests": "pre-commit-auditor-heartbeat.test.sh 6/6 PASS; pre-commit.test.sh 15/15 PASS; auditor-tier1-probe.test.sh 226/226 PASS; bash -n syntax clean",
-              "live_shape": "docs/data/auditor-tier1-last-healthy.json last_healthy_at=2026-08-14T14:43:21Z passes guard jq shape predicate; tier2/tier3 files carry no checks key",
-              "prod_hits": "3 real commit-sweep-guard-*.json REJECT signals found in docs/signals/processed/ dated 2026-08-08 and 2026-08-11 (x2), confirming this guard has blocked 3 real out-of-contract hand-writes in production since landing"
-            },
-            "observed_at": "2026-08-14T15:03:23Z",
-            "verdict": "ACCEPTED — all 6 AC independently reproduced live, zero blocking ISSUE"
-          }
-        }
       }
     ],
     "head": {
@@ -18987,7 +18438,7 @@
         "last_served_tick": "2026-08-14T13:26:05Z"
       }
     },
-    "_updated_at": "2026-08-14T14:53:46Z",
+    "_updated_at": "2026-08-14T15:20:54Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19053,6 +18504,447 @@
         },
         "createdAt": "2026-08-14T14:48:30Z",
         "drained_at": "2026-08-14T14:49:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d5449debbc982d7b39804c9fa0a8fffbdb75b5640625528555c11a2de6864dbe",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "net_profit_delta_pct": null,
+          "product": "Phát triển bất động sản khu dân cư/khu đô thị (Đất Xanh Group) — bán hàng, dịch vụ môi giới BĐS",
+          "customer": "Người mua nhà ở thương mại, nhà đầu tư thứ cấp thị trường BĐS phía Nam",
+          "ops": "Không có dữ liệu BCTC trích xuất (\"Chưa có dữ liệu BCTC\") — persistent gap, 26+ chu kỳ liên tiếp. Không thể đánh giá biên lợi nhuận/cơ cấu chi phí. Diễn biến giá đáng chú ý hôm nay: DXG +6.0% trong khi ngành BĐS -1.3% trung bình, khối lượng đột biến 2.3x trung bình (nhiều cảnh báo HIGH price_surge/volume_spike liên tiếp từ 08:41-08:59 UTC), dòng tiền nước ngoài 5 phiên +129K cp net (MẠNH HƠN ngành).",
+          "mgmt": "Không thể đánh giá track-record do thiếu dữ liệu BCTC gốc. Báo cáo Q2-2026 quá hạn 15 ngày (hạn 30/07/2026). Tín hiệu bất thường dòng tiền HĐKD từ chu kỳ trước (bctc-analyst-20260813T001500Z.json, phát 2026-08-13) vẫn PENDING dev-team xử lý — không phát lại tín hiệu này chu kỳ này để tránh trùng lặp.",
+          "ey_spread": {
+            "pe": 66.5,
+            "sector_median_pe": 16.1,
+            "roe_pct": 1.9,
+            "sector_median_roe_pct": 7.3,
+            "earning_yield_pct": 1.504,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": -3.5,
+            "verdict": "AVOID",
+            "note": "PE/ROE nguồn get_sector_comparison (không phụ thuộc get_bctc_full) — vẫn khả dụng dù thiếu BCTC gốc"
+          },
+          "esc_gate": {
+            "esc1_accounting_manipulation": "UNEVALUABLE (no Bash/Glob grant)",
+            "esc2_balance_sheet": {
+              "result": "UNEVALUABLE",
+              "reason": "Chưa có dữ liệu BCTC"
+            },
+            "esc3_ocf_vs_np": {
+              "result": "UNEVALUABLE",
+              "reason": "Chưa có dữ liệu BCTC"
+            },
+            "esc4_nonop_or_relatedparty": {
+              "result": "UNEVALUABLE",
+              "reason": "Chưa có dữ liệu BCTC"
+            },
+            "esc5_refine_confidence": {
+              "result": "UNEVALUABLE",
+              "reason": "Chưa có dữ liệu BCTC — không có report_id để tra cứu refine"
+            },
+            "trigger_id": null,
+            "note": "No escalation possible — full ESC gate blocked by absent BCTC data, not a clean-pass."
+          },
+          "kinhdich": {
+            "hexagram": "Que 64 - Vi Te",
+            "trend": "TRUNG TINH",
+            "signal": "MUA",
+            "confidence_pct": 38,
+            "note": "Đổi từ Que 63 (Ky Te, THUAN LOI, 100%) chu kỳ trước — Vi Te là quẻ đối lập/bổ sung của Ky Te, phản ánh biến động giá mạnh hôm nay"
+          },
+          "data_quality": {
+            "bctc_period_extracted": "NONE",
+            "bctc_status": "Chua co du lieu BCTC (26+ chu ky lien tiep)",
+            "q2_2026_deadline": "2026-07-30",
+            "q2_2026_status": "QUA HAN (15 ngay)",
+            "legal_risk_match": false,
+            "insider_signal": "khong dang ke",
+            "chain_findings_30min": 0,
+            "price_action_today": "+5.99%, volume 2.3x avg, multiple HIGH price_surge/volume_spike alerts"
+          },
+          "as_of": "2026-08-14T15:04:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-14T15:20:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b2985675e6375640429956a03c6764da9a86a3189f4bc7b2279f586c2814a7b5",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "net_profit_delta_pct": null,
+          "product": "IT services (phần mềm xuất khẩu, tích hợp hệ thống), viễn thông (FPT Telecom, hạch toán theo phương pháp vốn CSH từ 01/2026), giáo dục (FPT Edu)",
+          "customer": "Doanh nghiệp IT trong/ngoài nước (offshore Nhật Bản/Mỹ/Châu Âu), học sinh-sinh viên hệ thống FPT Edu, thuê bao viễn thông bán lẻ",
+          "ops": "Biên lợi nhuận gộp 34.0%, LN thuần HĐKD 22.0%. OCF Q1 âm -2.847,8 tỷ VND (mùa vụ — phải thu tăng, phải trả người lao động/thuế giảm mạnh sau chi trả cuối 2025). Đổi phương pháp hợp nhất FTEL (toàn bộ → vốn chủ sở hữu) khiến doanh thu thuần giảm danh nghĩa -22,3% YoY nhưng +8,7% khi điều chỉnh cùng phương pháp; LNST +13,8% YoY (điều chỉnh).",
+          "mgmt": "Tăng trưởng nổi bật tại Châu Âu (+44,4%) và Nhật Bản; lợi nhuận công ty liên kết +36% YoY. Báo cáo Q2-2026 quá hạn 15 ngày (hạn 30/07/2026) — VPS-extraction vẫn dừng ở Q1-2026, PDF đã có trên hệ thống từ 01/08.",
+          "ey_spread": {
+            "pe": 13.8,
+            "sector_median_pe": 17.3,
+            "roe_pct": 28.3,
+            "sector_median_roe_pct": 10.6,
+            "earning_yield_pct": 7.246,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": 2.25,
+            "verdict": "FAIR"
+          },
+          "esc_gate": {
+            "esc1_accounting_manipulation": "UNEVALUABLE (no Bash/Glob grant — E1 pass artifacts not enumerable)",
+            "esc2_balance_sheet": {
+              "result": false,
+              "imbalance_pct": 0,
+              "note": "balance_check:PASSED confirmed in refined B01 table (68.586.094.785.217 = 68.586.094.785.217)"
+            },
+            "esc3_ocf_vs_np": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+              "coverage_guard_held": true
+            },
+            "esc4_nonop_or_relatedparty": {
+              "result": false,
+              "non_operating_share_pct": 2,
+              "formula": "(PretaxProfit-OperatingProfit)/PretaxProfit = (2,803,844,281,676-2,747,763,827,050)/2,803,844,281,676"
+            },
+            "esc5_refine_confidence": {
+              "result": true,
+              "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+              "low_confidence_units": [
+                "unit-0008",
+                "unit-0009",
+                "unit-0010",
+                "unit-0011",
+                "unit-0012",
+                "unit-0013",
+                "unit-0014"
+              ],
+              "min_confidence": 0.45,
+              "refined_at": "2026-05-31 11:19:09",
+              "escalation_status": "GUARD-HELD",
+              "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
+            },
+            "trigger_id": "ESC-5",
+            "note": "Only ESC-5 fires (TRUE). Guard already held by prior cycle re-arm (expires ~2026-08-14T18:12Z) — no re-emit this cycle."
+          },
+          "kinhdich": {
+            "hexagram": "Que 7 - Su",
+            "trend": "TRUNG TINH",
+            "signal": "GIU",
+            "confidence_pct": 38
+          },
+          "data_quality": {
+            "bctc_period_extracted": "2026-Q1",
+            "bctc_stale": true,
+            "stale_age_hours": 72.46,
+            "vps_push_sla_hours": 48,
+            "q2_2026_deadline": "2026-07-30",
+            "q2_2026_status": "QUA HAN (15 ngay)",
+            "legal_risk_match": false,
+            "insider_signal": "khong dang ke",
+            "chain_findings_30min": 0
+          },
+          "as_of": "2026-08-14T15:04:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-14T15:20:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0809255a089be503a0338c7f1b8ccc5f3400a99230fbb5b4323c504b3725b3c6",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "net_profit_delta_pct": null,
+          "product": "Thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ; mảng nông nghiệp (chăn nuôi heo, gia cầm, thức ăn chăn nuôi)",
+          "customer": "Xây dựng dân dụng/công nghiệp trong nước, hạ tầng, xuất khẩu HRC; kênh phân phối nông sản/thực phẩm cho mảng nông nghiệp",
+          "ops": "Biên lợi nhuận gộp 15.8% (thấp hơn ngành thép nói chung do chi phí nguyên liệu). Operating Profit trích xuất = 0 tỷ VND — lỗi trích xuất cấu trúc kéo dài (cờ hệ thống: 'Net profit exceeds gross profit — possible non-operating income'), KHÔNG dùng cho ESC-4. Dòng tiền HĐKD Q1 (get_cash_flow) = 0 (cùng lỗi trích xuất, ocf_source=ocr).",
+          "mgmt": "LNST đạt 9.055,9 tỷ VND (biên 17,1%), vượt cả lợi nhuận gộp — bất thường do lỗi trích xuất operating_profit, không phải bằng chứng gian lận. Báo cáo Q2-2026 quá hạn 15 ngày (hạn 30/07/2026); PDF đã có trên hệ thống từ 01/08, VPS-extraction chưa xử lý.",
+          "ey_spread": {
+            "pe": 14.2,
+            "sector_median_pe": 32.6,
+            "roe_pct": 12.7,
+            "sector_median_roe_pct": 2.9,
+            "earning_yield_pct": 7.042,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": 2.04,
+            "verdict": "FAIR"
+          },
+          "esc_gate": {
+            "esc1_accounting_manipulation": "UNEVALUABLE (no Bash/Glob grant — E1 pass artifacts not enumerable)",
+            "esc2_balance_sheet": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "esc3_ocf_vs_np": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+              "coverage_guard_held": true
+            },
+            "esc4_nonop_or_relatedparty": {
+              "result": "DISCARDED",
+              "reason": "operating_profit=0 (corrupt structured extract, 22nd+ consecutive cycle) — non_operating_share formula undefined on this input, not evaluated"
+            },
+            "esc5_refine_confidence": {
+              "result": false,
+              "report_id": null,
+              "existing_refine_status": "PARTIAL",
+              "note": "refine not yet DONE for this report"
+            },
+            "trigger_id": null,
+            "note": "No ESC flag fires TRUE this cycle — no escalation."
+          },
+          "kinhdich": {
+            "hexagram": "Que 24 - Phuc",
+            "trend": "THUAN LOI",
+            "signal": "GIU",
+            "confidence_pct": 100
+          },
+          "data_quality": {
+            "bctc_period_extracted": "2026-Q1",
+            "bctc_stale": true,
+            "stale_age_hours": 72.46,
+            "vps_push_sla_hours": 48,
+            "q2_2026_deadline": "2026-07-30",
+            "q2_2026_status": "QUA HAN (15 ngay)",
+            "known_extraction_defect": "operating_profit=0, EBITDA=0 — structured-extract bug, 22nd+ cycle unresolved",
+            "legal_risk_match": false,
+            "insider_signal": "khong dang ke",
+            "chain_findings_30min": 0
+          },
+          "as_of": "2026-08-14T15:04:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-14T15:20:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6ee40a44e74d9d4e04d0695c2429852145b683fd73f7f421a0c32aa67dbc1253",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "net_profit_delta_pct": null,
+          "product": "Ngân hàng bán buôn/bán lẻ, tài trợ thương mại quốc tế, kinh doanh ngoại hối, bancassurance",
+          "customer": "Doanh nghiệp lớn/SOE, khách hàng bán lẻ đô thị, doanh nghiệp xuất nhập khẩu",
+          "ops": "Thu nhập lãi thuần 17.421 tỷ VND. LN thuần HĐKD/doanh thu = 80.9% (đặc thù ngành ngân hàng — chi phí hoạt động thấp tương đối). Biên LNST/doanh thu 54.3%. ROE 16.7% — DƯỚI trung vị ngành (17.6%), yếu hơn nhóm CTG/BID/MBB/ACB/SHB (18-21%).",
+          "mgmt": "EPS 15 VND/cp Q1. Dòng tiền nước ngoài 5 phiên: -91K cp net nhưng MẠNH HƠN trung bình ngành (-111K cp net). Báo cáo Q2-2026 hạn nộp 14/08/2026 (hôm nay) — trạng thái SẮP ĐẾN, chưa quá hạn.",
+          "ey_spread": {
+            "pe": 14.1,
+            "sector_median_pe": 9,
+            "roe_pct": 16.7,
+            "sector_median_roe_pct": 17.6,
+            "earning_yield_pct": 7.092,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": 2.09,
+            "verdict": "FAIR"
+          },
+          "esc_gate": {
+            "esc1_accounting_manipulation": "UNEVALUABLE (no Bash/Glob grant — E1 pass artifacts not enumerable)",
+            "esc2_balance_sheet": {
+              "result": false,
+              "imbalance_pct": 0.37
+            },
+            "esc3_ocf_vs_np": {
+              "result": false,
+              "quarters_returned": 4,
+              "ocf_ni_ratio_q1_2026": 1.368,
+              "divergence_ratio": 0.368,
+              "threshold": 0.4
+            },
+            "esc4_nonop_or_relatedparty": {
+              "result": "N/A",
+              "reason": "Bank — non_operating_share (operating-profit-based) formula not meaningful for banking P&L structure"
+            },
+            "esc5_refine_confidence": {
+              "result": false,
+              "report_id": null,
+              "existing_refine_status": "PARTIAL",
+              "note": "refine not yet DONE for this report"
+            },
+            "trigger_id": null,
+            "note": "No ESC flag fires TRUE this cycle — no escalation."
+          },
+          "kinhdich": {
+            "hexagram": "Que 19 - Lam",
+            "trend": "THUAN LOI",
+            "signal": "GIU",
+            "confidence_pct": 100
+          },
+          "data_quality": {
+            "bctc_period_extracted": "2026-Q1",
+            "bctc_stale": true,
+            "stale_age_hours": 72.46,
+            "vps_push_sla_hours": 48,
+            "q2_2026_deadline": "2026-08-14",
+            "q2_2026_status": "SAP DEN (chua qua han)",
+            "legal_risk_match": false,
+            "insider_signal": "khong dang ke",
+            "chain_findings_30min": 0
+          },
+          "as_of": "2026-08-14T15:04:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-14T15:20:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5d8bbe73470f7e20d57b47acb3db75899d618e40aef23e32e8215e771db4c932",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/data/orch/orch-state.json' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/data/orch/orch-state.json' (0cbc173d6e0de1f3701dbf3d19fe54a6aaba7a8c) differs from what is about to land in this commit (9f8794bf25bc22c31bcf60af49d9249c8c6e4d8d) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope (two-blob form takes NO pathspec — do not append '-- docs/data/orch/orch-state.json', that is a git usage error): git diff 0cbc173d6e0de1f3701dbf3d19fe54a6aaba7a8c 9f8794bf25bc22c31bcf60af49d9249c8c6e4d8d",
+        "createdAt": "2026-08-14T15:02:58Z",
+        "drained_at": "2026-08-14T15:20:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4ec5ae22852ddea7fb435e51b60b99f6f8c2d1e3ad1c66329a67de655b9cfc2d",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/qa.md — retained section '## cycle-745 · 2026-08-14T15:06:00Z · BCT-OBS-01-FIX (dev-mcp-server, commit `ccddb9ae6a2`) — Direct-Commit Verify, APPROVED, DONE_VERIFIED' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-14T15:10:41Z",
+        "drained_at": "2026-08-14T15:20:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8df40a1223ac678647beff90dc4ebf7ca1a4ea485ce88d2b5fb9ba3d3927206b",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-21.md",
+          "line_count": 186,
+          "cap": 600,
+          "byte_count": 42784,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 6784,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-14T15:01:26Z",
+        "drained_at": "2026-08-14T15:20:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a151b6739a28ea816ef4a1a14055af06e1175d788801519ea3bfa4a301cc99b7",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-TOKEN-ECONOMY-AUDIT-qa.md",
+          "line_count": 500,
+          "cap": 600,
+          "byte_count": 36398,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 398,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-14T14:59:26Z",
+        "drained_at": "2026-08-14T15:20:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d43810d4d588e48310b9064d0724db9fc42168d392522952b35ac1135fc0865c",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-14T15:03:59Z",
+          "matched_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-1": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-1": null
+          },
+          "last_fired_timestamp": "2026-08-14T15:03:39Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "15:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 0,
+          "signal_backlog": 0,
+          "note": "single-slot fire, bctc-analyst-slot-1 cron 0 15 * * *"
+        },
+        "createdAt": "2026-08-14T15:03:59Z",
+        "drained_at": "2026-08-14T15:20:54Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

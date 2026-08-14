@@ -4,58 +4,81 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Software export/IT services (FPT Software), telecom (FPT Telecom, equity-method from 01/01/2026), education (FPT Education), digital transformation & semiconductor design",
-  "customer": "Enterprise IT buyers globally (Japan/US/EU offshore dev), domestic telecom/broadband subscribers, K-12/university students",
-  "ops": "Q1-2026 gross margin 34.0%, operating margin 22.0%. FTEL deconsolidated to equity-method 01/01/2026 cuts reported net revenue -22.3% YoY nominal, but +8.7% YoY on like-for-like restated basis; Europe segment +44.4% YoY; associate profit +36% YoY.",
-  "mgmt": "FTEL deconsolidation executed on plan; EPS 1,460 VND vs 1,284 VND YoY (+13.7%). Q2-2026 BCTC PDF on file since 2026-08-01 (14d) but still not extracted by VPS pipeline — persistent extraction-lag gap.",
-  "esc_gate": {
-    "esc1_result": "UNEVALUABLE_NO_BASH_GLOB",
-    "esc2_result": false,
-    "esc2_imbalance_pct": 0,
-    "esc3_result": "DATA-COVERAGE-LIMITED",
-    "esc3_quarters_returned": 3,
-    "esc3_quarters_required": 4,
-    "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
-    "coverage_guard_held": true,
-    "esc4_result": false,
-    "esc4_non_operating_share_pct": 2,
-    "esc5_result": true,
-    "esc5_report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
-    "esc5_low_confidence_units": 7,
-    "esc5_min_confidence": 0.45,
-    "escalation_status": "GUARD-HELD",
-    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
-  },
-  "valuation": {
+  "net_profit_delta_pct": null,
+  "product": "IT services (phần mềm xuất khẩu, tích hợp hệ thống), viễn thông (FPT Telecom, hạch toán theo phương pháp vốn CSH từ 01/2026), giáo dục (FPT Edu)",
+  "customer": "Doanh nghiệp IT trong/ngoài nước (offshore Nhật Bản/Mỹ/Châu Âu), học sinh-sinh viên hệ thống FPT Edu, thuê bao viễn thông bán lẻ",
+  "ops": "Biên lợi nhuận gộp 34.0%, LN thuần HĐKD 22.0%. OCF Q1 âm -2.847,8 tỷ VND (mùa vụ — phải thu tăng, phải trả người lao động/thuế giảm mạnh sau chi trả cuối 2025). Đổi phương pháp hợp nhất FTEL (toàn bộ → vốn chủ sở hữu) khiến doanh thu thuần giảm danh nghĩa -22,3% YoY nhưng +8,7% khi điều chỉnh cùng phương pháp; LNST +13,8% YoY (điều chỉnh).",
+  "mgmt": "Tăng trưởng nổi bật tại Châu Âu (+44,4%) và Nhật Bản; lợi nhuận công ty liên kết +36% YoY. Báo cáo Q2-2026 quá hạn 15 ngày (hạn 30/07/2026) — VPS-extraction vẫn dừng ở Q1-2026, PDF đã có trên hệ thống từ 01/08.",
+  "ey_spread": {
     "pe": 13.8,
     "sector_median_pe": 17.3,
-    "pb": 3.6,
-    "sector_median_pb": 1.5,
     "roe_pct": 28.3,
-    "earning_yield_pct": 7.25,
+    "sector_median_roe_pct": 10.6,
+    "earning_yield_pct": 7.246,
+    "max_deposit_rate_pct": 5,
     "ey_spread_pp": 2.25,
     "verdict": "FAIR"
   },
+  "esc_gate": {
+    "esc1_accounting_manipulation": "UNEVALUABLE (no Bash/Glob grant — E1 pass artifacts not enumerable)",
+    "esc2_balance_sheet": {
+      "result": false,
+      "imbalance_pct": 0,
+      "note": "balance_check:PASSED confirmed in refined B01 table (68.586.094.785.217 = 68.586.094.785.217)"
+    },
+    "esc3_ocf_vs_np": {
+      "result": "DATA-COVERAGE-LIMITED",
+      "quarters_returned": 3,
+      "quarters_required": 4,
+      "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+      "coverage_guard_held": true
+    },
+    "esc4_nonop_or_relatedparty": {
+      "result": false,
+      "non_operating_share_pct": 2,
+      "formula": "(PretaxProfit-OperatingProfit)/PretaxProfit = (2,803,844,281,676-2,747,763,827,050)/2,803,844,281,676"
+    },
+    "esc5_refine_confidence": {
+      "result": true,
+      "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+      "low_confidence_units": [
+        "unit-0008",
+        "unit-0009",
+        "unit-0010",
+        "unit-0011",
+        "unit-0012",
+        "unit-0013",
+        "unit-0014"
+      ],
+      "min_confidence": 0.45,
+      "refined_at": "2026-05-31 11:19:09",
+      "escalation_status": "GUARD-HELD",
+      "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
+    },
+    "trigger_id": "ESC-5",
+    "note": "Only ESC-5 fires (TRUE). Guard already held by prior cycle re-arm (expires ~2026-08-14T18:12Z) — no re-emit this cycle."
+  },
   "kinhdich": {
-    "hexagram": "Minh Di (36)",
-    "trend": "BAT LOI",
+    "hexagram": "Que 7 - Su",
+    "trend": "TRUNG TINH",
     "signal": "GIU",
-    "confidence_pct": 25
+    "confidence_pct": 38
   },
   "data_quality": {
-    "source_tier": 2,
-    "stale": true,
-    "stale_since": "2026-08-11T14:37:49.000Z",
-    "stale_age_hours": 57.5,
-    "latest_period_extracted": "2026-Q1",
-    "newest_period_on_file": "2026-Q2",
-    "confidence_pct": 81,
-    "filing_status": "QUA_HAN"
+    "bctc_period_extracted": "2026-Q1",
+    "bctc_stale": true,
+    "stale_age_hours": 72.46,
+    "vps_push_sla_hours": 48,
+    "q2_2026_deadline": "2026-07-30",
+    "q2_2026_status": "QUA HAN (15 ngay)",
+    "legal_risk_match": false,
+    "insider_signal": "khong dang ke",
+    "chain_findings_30min": 0
   },
-  "ts": "2026-08-14T00:10:13Z",
+  "as_of": "2026-08-14T15:04:00Z",
   "_processed": {
-    "fingerprint": "63724a9f992095ea5751bb99e216f6a2733e24c5345504f5a9136ac2cf7bc086",
-    "processedAt": "2026-08-14T00:20:22Z",
+    "fingerprint": "b2985675e6375640429956a03c6764da9a86a3189f4bc7b2279f586c2814a7b5",
+    "processedAt": "2026-08-14T15:20:54Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
