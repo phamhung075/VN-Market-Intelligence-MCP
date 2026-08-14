@@ -92,12 +92,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 8 row(s), highest-ranked FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 8 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-14T19:29:11Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "updated_at": "2026-08-14T19:38:29Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13688,6 +13687,212 @@
             "observed_at": "2026-08-14T19:34:59Z"
           }
         }
+      },
+      {
+        "id": "FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL",
+        "type": "FIX",
+        "priority": "P3",
+        "status": "DONE_VERIFIED",
+        "title": "bctc SLA freshness metric must exclude url_not_found terminal rows so genuinely-absent tickers can't breach forever",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL",
+        "promoted_at": "2026-07-31T23:26:04Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "next_agent": "pm",
+        "updated_at": "2026-08-14T19:37:53Z",
+        "updated_by": "qa",
+        "claimed_at": "2026-08-14T19:29:10Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "commit_sha": "f0831e6be",
+        "note": "queryBctcPipelineRuntimeState() (freshnessSlaMonitorJob.ts) narrowed bctc queueDepth SQL from status IN ('pending','url_not_found','enrich_failed','pek_triggered') to status IN ('pending','pek_triggered') — url_not_found/enrich_failed are terminal/parked (bounded 7d grace-retry only), counting them permanently defeated the checkSignalSla IDLE branch, letting a genuinely-absent ticker breach the SLA forever. Live DB confirmed: vn-bctc-fetch health unhealthy since 07-28 with 0 pending/pek_triggered (39 url_not_found+128 enrich_failed only) — a genuinely idle queue. get_sla_status (financial_reports.parsed_at MAX) was already structurally unaffected by terminal rows — real defect was the runtime-state CRASH/IDLE gate feeding the live cron. Documented reader contract on PipelineRuntimeState in freshnessSlaChecker.ts. Sibling duplicate bug found in vpsHealthPoller.ts bctc queueGuardSql (same live false-unhealthy symptom) — deliberately NOT touched (separate tool/test contract), flagged as follow-on candidate. RED->GREEN TDD: FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH.test.ts 23/23 pass (4 new/updated cases). Targeted 25-file suite 338/338 pass. tsc clean. toolCount=183/cronJobCount=88 unchanged. Full bun test x2: 15007/15009 pass, 59/57 fail (within documented 14988-14995/52-59 FIX-MCP-SUITE-HEALTH-BASELINE band), zero fail-list matches for freshnessSla|FIX-HEALTH-RECHECK-BCTC|FIX-BCTC-SLA-FRESHNESS|queryBctcPipelineRuntimeState|vpsHealthPoller. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Commit f0831e6be confirmed real, on main ancestry (git merge-base --is-ancestor). git show --stat matches exactly the 3 claimed files (apps/mcp-server/src/domain/services/freshnessSlaChecker.ts, apps/mcp-server/src/scheduler/system/freshnessSlaMonitorJob.ts, apps/mcp-server/src/__tests__/FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH.test.ts). Read the diff directly, not trusted from prose: queryBctcPipelineRuntimeState() SQL narrowed from status IN (\\x27pending\\x27,\\x27url_not_found\\x27,\\x27enrich_failed\\x27,\\x27pek_triggered\\x27) to status IN (\\x27pending\\x27,\\x27pek_triggered\\x27) — generic status-list exclusion, no ticker/date literal, satisfies backlog generic_mandate (no per-ticker carve-out). Reader contract documented on PipelineRuntimeState in the domain file. Re-ran REAL verification independently: touched test file 23/23 pass (new/updated C-2, C-2c, C-2d, C-10 directly assert queueDepth excludes url_not_found/enrich_failed/done/deferred_infra generically, and a queue holding ONLY terminal rows produces queueDepth=0 and NO CRASH escalation — satisfies backlog verification_gate). Targeted 25-file freshness/SLA suite (grep-derived on freshnessSlaChecker|freshnessSlaMonitorJob|queryBctcPipelineRuntimeState) re-run fresh: 338/338 pass — matches the row note claim exactly. bun tsc --noEmit: 0 errors. mock-guard.sh --files (2 prod files) PASS. DDD: freshnessSlaChecker.ts (domain) has zero infrastructure/application imports. process.env/secrets grep clean on both touched prod files. Confirmed sibling vpsHealthPoller.ts bug flagged in the note as deliberately NOT touched is genuinely absent from the commit diffstat. Zero blocking ISSUE. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-23.md STEP qa-S12.",
+        "qa_verified_at": "2026-08-14T19:37:53Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit + mock-guard.sh + grep(DDD/secrets)",
+            "args": {
+              "commit_verified": "f0831e6be",
+              "files_verified": [
+                "apps/mcp-server/src/domain/services/freshnessSlaChecker.ts",
+                "apps/mcp-server/src/scheduler/system/freshnessSlaMonitorJob.ts",
+                "apps/mcp-server/src/__tests__/FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH.test.ts"
+              ],
+              "targeted_suite_files": 25
+            },
+            "live_value_observed": "f0831e6be confirmed on main ancestry via git merge-base --is-ancestor; git show --stat matches exactly the 3 claimed files. Touched test file: 23 pass / 0 fail / 47 expect() calls. Targeted 25-file freshness/SLA suite: 338 pass / 0 fail / 862 expect() calls. bun tsc --noEmit: 0 errors (exit 0). mock-guard.sh --files (2 prod files): PASS. DDD grep + process.env/secrets grep: clean.",
+            "observed_at": "2026-08-14T19:37:53Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR",
+        "type": "FIX",
+        "title": "dev-team board-hygiene reports 'orch-cold-evict.sh failed' with ZERO stderr — 6 fires in 9h, root cause unknowable, and the script runs clean standalone",
+        "desc": "RECURRING (6 fires 2026-08-12: 05:20:30Z, 05:51:24Z, 12:51:40Z, 13:50:59Z, 14:23:06Z + telegram 4744) — dev-team's board-hygiene step emits the fixed string 'board-hygiene: orch-cold-evict.sh failed — cold eviction skipped, retry next tick' and discards the script's actual stderr/exit code. PO ran `bash scripts/orch-cold-evict.sh` standalone at 2026-08-12T15:02:31Z: rc=0, Stage 0 + Stage 1 PASS, conservation-check OK (task_total 752=752, signal_total 83=83), eviction completed and both files jq-validated. So the failure is NOT a deterministic script defect — it is environment/contention-specific to the dev-team tick path (most likely the CAS guard in scripts/orch-apply.sh losing to a concurrent peer writer, which is a benign retry condition, but that is a HYPOTHESIS and cannot be confirmed because the error text is thrown away). MATERIAL CONSEQUENCE: eviction is skipped every time it fires, and the hot board is now backlog=393 / ready=83 / review=128 / qa=7 = 611 non-terminal rows with orch-state.json at 3,575,420 bytes — TE-T15's own row still describes this file as '612KB', a 5.8x growth. FIX SCOPE: capture and surface the script's real stderr + exit code in the telegram/report line (and distinguish a benign CAS-retry loss from a genuine validation abort so the benign class can be downgraded out of the report entirely). Class match: feedback_silent_swallow_serial_bugs, feedback_graceful_premise_verify_error_path.",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "pm",
+        "status": "DONE_VERIFIED",
+        "files": [
+          "docs/agents/dev-team/flow/main.md",
+          "scripts/orch-cold-evict.sh"
+        ],
+        "baseline_pass": false,
+        "created_at": "2026-08-12T15:06:24Z",
+        "created_by": "po (dev-team S3 triage)",
+        "occurrence_count": 23,
+        "verification_gate": "next_coldevict_failure_report_names_the_actual_error",
+        "status_note": "AC: a subsequent 'orch-cold-evict.sh failed' report carries the script's verbatim stderr + exit code, AND a benign CAS-contention loss no longer emits a failure report at all. Dedup: scanned backlog/ready/in_progress/review/qa for COLD-EVICT|COLDEVICT — 7 adjacent rows found, none owns the swallowed-stderr defect (FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE is --exclude-ids vs Stage-1b coherence, a different concern). Minted 2026-08-12T15:06:24Z.\n\n[po/triage 2026-08-12T15:36:32Z] +5 occurrences (telegram 4723 05:20:30Z, 4727 05:51:24Z, 4744 12:51:40Z, 4746 13:50:59Z, 4768 14:23:06Z) — all identical, all with zero stderr, all unactionable AS REPORTED. Occurrence 6 -> 11.\n\nThis row's premise CONFIRMED BY DIRECT EXPERIMENT rather than inference: PO ran `bash scripts/orch-cold-evict.sh` by hand at 2026-08-12T15:36:32Z against the same live orch-state.json and it exited 0 clean — Stage 0 + Stage 1 PASS, conservation-check OK (task_total live=751 candidate=751, signal_total live=69 candidate=69, signal_row_identity clean), both files jq-validated. The router's own tick also ran it successfully this cycle (commit 1875f1bbc, 4 items evicted).\n\nConclusion: the script is NOT broken; these are transient contention-class failures. The ONLY reason 11 fires cannot be told apart from a genuine breakage is that the reporter discards stderr. That makes THIS row the blocker for every future cold-evict report — until stderr is captured nobody can distinguish 'lost a write race' from 'validator hard-failed'. No new row minted.\n\n[po/triage-2026-08-13T17:28:37Z] SEVERITY EXPEDITE by PO. Moved to the FRONT of ready[] at P0. Rationale: RLC selection is sort_by([priority_rank, ready[]-array-index]), one row per invocation, and RLC only runs on ticks where the 6-way Idle-Tick Rotation picks \"rlc\". Measured live this tick: 60 RLC-eligible rows in ready[]; this row's class sat at eligible queue position 47-48. At 1 row per rlc-selected tick that is unreachable in incident time, and every newly-minted P0 re-buries it. No new diagnosis was needed - the row was already correct. This is the manual stand-in for the missing severity-expedite path (FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0, itself expedited in this same write).\n\n[developer 2026-08-14T18:40Z] FIXED — real swallow point was scripts/agents-flow/dev-team-tick-preflight.sh Step 5.5 (_step55_run_cold_evict), NOT main.md (no inline copy exists there). Captured stderr+exit-code now stashed into module globals; new _step55_is_benign_cas_loss() matches the script's own CAS-exhaustion abort line (ABORT: CAS retry limit (N) exceeded ... concurrent writer) — benign loss now logs-only (zero telegram), genuine failure now reports real exit code + verbatim stderr tail. post-cycle.md Step 4.2 spec updated in lockstep. 2 new regression cases (T30b/T30c) + new telegram-args capture seam. Full suite 154/154 (146 pre-existing + 8 new). shellcheck clean. Commits: e817334d1 (code+doc), 4658cf1b0 (memory).\n\n[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Commits e817334d1 (code+doc) + 4658cf1b0 (memory) confirmed real, on main ancestry (git merge-base --is-ancestor). Row's own .files[] (docs/agents/dev-team/flow/main.md, scripts/orch-cold-evict.sh) is a stale triage guess — developer's status_note already explains the real swallow point is scripts/agents-flow/dev-team-tick-preflight.sh Step 5.5 (_step55_run_cold_evict/_step55_cold_evict_and_commit), not main.md (no inline copy exists there) — verified via the flow's Fallback path against the actual diffstat: docs/WORK.md, docs/agents/dev-team/flow/post-cycle.md, scripts/agents-flow/dev-team-tick-preflight.sh, scripts/agents-flow/dev-team-tick-preflight.test.sh. Read the diff directly, not trusted from commit prose: _step55_run_cold_evict() now stashes captured combined stdout+stderr + exit code into module globals (_STEP55_COLD_EVICT_OUTPUT/_STEP55_COLD_EVICT_RC) instead of discarding them past return; new _step55_is_benign_cas_loss() regex checked byte-for-byte against orch-cold-evict.sh:1081's actual log line (\"ABORT: CAS retry limit (${MTIME_CAS_RETRIES}) exceeded — concurrent writer; hot file unchanged\") — exact match, not a guess at the string. Benign-CAS branch now logs only (zero telegram); genuine-failure branch reports real exit code + truncated verbatim stderr tail via the file's pre-existing _trunc() helper. post-cycle.md Step 4.2 doc-parity update read and matches the runtime spec exactly. Re-ran REAL verification independently, not accepted from commit-message prose: full dev-team-tick-preflight.test.sh = 154/154 — independently confirmed the exact 146-pre-existing baseline by checking out the parent commit (5ad6a51a8) into a scratch git worktree and re-running before reading the fix's own diff; 154-146=8 new checks matches T30b (benign CAS-loss -> zero telegram, 4 checks) + T30c (genuine failure -> telegram carries exit code + verbatim stderr, 4 checks) exactly. shellcheck -S warning clean on both the changed script and test file. mock-guard.sh --files on the touched prod script: PASS (pure bash, no TS/prod-domain source — N/A class). process.env/secrets grep clean. Verification_gate (\"next_coldevict_failure_report_names_the_actual_error\") satisfied by the code path itself: the genuine-failure telegram message literally embeds \"exit <rc>\" + \"stderr: <verbatim truncated tail>\"; a benign CAS-contention loss (the exact transient class PO's manual re-runs repeatedly proved across 23 prior occurrences) now emits zero telegram at all. Zero blocking ISSUE. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-23.md STEP qa-S11.",
+        "updated_at": "2026-08-14T19:38:29Z",
+        "po_expedited_at": "2026-08-13T17:28:37Z",
+        "po_expedited_by": "po/triage-20260813T1722Z",
+        "updated_by": "qa",
+        "evidence_20260814": "+12 occurrences on 2026-08-13 alone: telegram 4801 (12:18:59Z), 4802 (12:52:21Z), 4804 (13:18:51Z), 4806 (13:53:07Z), 4826 (14:18:57Z), 4831 (14:49:10Z), 4832 (15:48:55Z), 4834 (16:18:54Z), 4835 (16:48:55Z), 4836 (17:18:49Z), 4838 (19:18:57Z), 4841 (20:48:55Z). All twelve are byte-identical: '[dev-team] board-hygiene: orch-cold-evict.sh failed — cold eviction skipped, retry next tick'. NOT self-resolved and the row is NOT closable: cold-evict DID succeed on the very next run (commit 9a8f44b02, 2026-08-14T00:2xZ, clean), which means the underlying condition was transient — and THAT IS EXACTLY THE DEFECT THIS ROW NAMES. Twelve consecutive reports over 8.5h conveyed zero diagnostic information about a fault that then vanished on its own, so the cause is now unrecoverable from the alert stream. A swallowed-stderr alert on an intermittent fault is strictly worse than no alert: it burns 12 triage slots and leaves nothing to triage. Severity of the underlying eviction gap is real — the 08-13 stall let done/done_verified/terminal sprints accumulate all day.",
+        "claimed_at": "2026-08-14T19:29:10Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "dispatch_lane": "developer",
+        "qa_verified_at": "2026-08-14T19:38:16Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bash test suite + shellcheck + mock-guard.sh + grep(secrets)",
+            "args": {
+              "commits_verified": [
+                "e817334d1",
+                "4658cf1b0"
+              ],
+              "files_verified": [
+                "docs/WORK.md",
+                "docs/agents/dev-team/flow/post-cycle.md",
+                "scripts/agents-flow/dev-team-tick-preflight.sh",
+                "scripts/agents-flow/dev-team-tick-preflight.test.sh"
+              ],
+              "baseline_worktree_commit": "5ad6a51a8"
+            },
+            "live_value_observed": "e817334d1+4658cf1b0 both confirmed on main ancestry via git merge-base --is-ancestor. Row files[] (main.md, orch-cold-evict.sh) did NOT match diffstat — resolved via Fallback path, actual 4-file diffstat confirmed instead. dev-team-tick-preflight.test.sh: 154 pass / 0 fail (independently re-confirmed 146-pass baseline on parent commit 5ad6a51a8 via scratch worktree before reading the fix). shellcheck -S warning: 0 issues (both files). mock-guard.sh --files dev-team-tick-preflight.sh: PASS. process.env/secrets grep: clean. _step55_is_benign_cas_loss regex cross-checked byte-for-byte against orch-cold-evict.sh:1081 live ABORT string: exact match.",
+            "observed_at": "2026-08-14T19:38:16Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-AGENTSIGNALS-EXPIRED-GC-CRON",
+        "type": "FIX",
+        "title": "DB-retention GC cron — no cleanup for expired agent_signals (3493 rows) OR stale-unresolved alerts (205 rows >30d) accumulating unbounded",
+        "priority": "P3",
+        "status": "DONE_VERIFIED",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENTSIGNALS-EXPIRED-GC-CRON",
+        "promoted_at": "2026-08-01T01:17:26Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "claimed_at": "2026-08-14T19:29:10Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "updated_at": "2026-08-14T19:38:31Z",
+        "updated_by": "ops",
+        "commit_sha": "f5698cb76",
+        "note": "RAW-verify-on-pickup found the AC magnitudes stale (live: agent_signals total=124/expired=119 [104 FK-blocked, 15 GC-eligible]; alerts total=8/unresolved=8/unresolved>30d=0 -- far below the 2026-06-20/21 auditor snapshot ~3493/829/205). Root cause: both tables already have working daily off-hours GC wired into the SAME dataAuditJob:daily cron (0 23 * * * Asia/Ho_Chi_Minh) -- agentSignalStore.cleanExpired() for agent_signals, checkStaleAlerts D-3/D-4 for alerts. Hardened both in place instead of shipping a 3rd/4th duplicate mechanism: wrapped both predicates as datetime(col) < datetime(now, ...) not just the threshold (feedback_sqlite_iso8601_datetime_strcompare_bypass -- alerts.triggered_at stores raw JS .toISOString() T...Z while agent_signals.expires_at stores the SQLite-normalized space format), tightened checkStaleAlerts D-4 threshold 60d->30d + resolution_notes marker to auto-resolved by retention GC per spec. Never hard-deletes alert history. Deliberately did NOT narrow cleanExpired() to literal status IN (read,expired) -- no expired status value is ever written; would strand unread-expired rows forever. autoResolveStaleAlerts.ts (72h low/med-only, briefing-triggered) left untouched -- different concern, out of scope. 8 new tests (ISO T...Z format, 30d boundary, resolved-row immunity). tsc clean. toolCount=183/cronJobCount=88 unchanged (no new cron -- folded into existing dataAuditJob:daily). Full bun test: 15035 pass/40 skip/52 fail, 486.66s, inside FIX-MCP-SUITE-HEALTH-BASELINE band, zero fail-list matches for agentSignal/checkStaleAlerts/cleanExpired/retention or any of the 3 touched test files. REBUILD_REQUIRED=true -- signal written to PO per task instructions.\n\n[ops 2026-08-11T18:30Z] REBUILD VERIFIED: single-service rebuild of mcp-server completed. Image ID changed from 6cc23a0c0649 (agent-a39d55f322f904f0e-mcp-server) to 62dbe9da404d (vn-market-intelligence-mcp-mcp-server). Running container confirmed at new image SHA256:62dbe9da404d6398fec375be57c6931e85f59003ed0de3a437048a3b95bb02fd. Ready for qa live verify. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commit f5698cb76 on main ancestry (current HEAD 051299dbd still carries the fix unreverted on both prod files) -- git show --stat matches all 5 claimed files exactly (agentSignalStore.ts, checkStaleAlerts.ts + 3 test files). Independently re-derived the diff, not trusted from prose: cleanExpired() and checkStaleAlerts() D-3/D-4 both wrap the predicate column in datetime(), D-4 threshold tightened 60d->30d, marker text updated to auto-resolved by retention GC, UPDATE-only (no hard-delete). Re-ran fresh: targeted 3 test files (157-data-audit-job, 242-agent-signals, FACTORY-SCHEDULER-split-dataAuditJob) 47/47 pass; bun tsc --noEmit 0 errors; mock-guard.sh --files (2 prod files) PASS; process.env/secrets grep clean; no forbidden domain->infra imports. REBUILD_REQUIRED prerequisite (po_ruling_20260801T0222) already closed by ops 2026-08-11T18:30Z single-service mcp-server rebuild (image 62dbe9da404d) before this drain claim landed. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-23.md STEP qa-S12.",
+        "po_ruling_20260801T0222": "PO RULING 2026-08-01T02:22Z (signal dev-20260801T015751). next_agent qa -> ops. The row carried REBUILD_REQUIRED=true in its prose note with next_agent=qa; no gate in dev-team or qa flow reads that marker (grep-verified: zero consumers), so qa would have live-verified the retention-GC predicates from commit f5698cb76 against the mcp-server image built BEFORE that commit — a structurally false-green pass. ops does a SINGLE-SERVICE rebuild of mcp-server (never `down && up` — feedback_rebuild_recreate_destroys_peers) and confirms the new image ID (feedback_docker_rebuild_race_pgrep_deadlock), then next_agent -> qa for the live verify. NOT urgent on its own merits: dev-mcp-server's own RAW-verify-on-pickup re-measured the live magnitudes far below the AC's 2026-06-20 snapshot (agent_signals 124 total / 119 expired of which only 15 are GC-eligible; alerts 8 total / 0 unresolved >30d), and no new cron was added (folded into the existing dataAuditJob:daily). The ordering, not the deadline, is what mattered. Systemic gap tracked separately by FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER.",
+        "secondary_claimed_at": "2026-08-11T18:23:37Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "ops",
+        "qa_verified_at": "2026-08-14T19:37:50Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit + mock-guard.sh + grep(DDD/secrets)",
+            "args": {
+              "commit_verified": "f5698cb76dce925af4cb2c4ac5530fccd268158f",
+              "files_verified": [
+                "apps/mcp-server/src/infrastructure/db/agentSignalStore.ts",
+                "apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkStaleAlerts.ts",
+                "apps/mcp-server/src/__tests__/157-data-audit-job.test.ts",
+                "apps/mcp-server/src/__tests__/242-agent-signals.test.ts",
+                "apps/mcp-server/src/__tests__/FACTORY-SCHEDULER-split-dataAuditJob.test.ts"
+              ]
+            },
+            "live_value_observed": "commit f5698cb76 confirmed on main ancestry via git merge-base --is-ancestor; current HEAD 051299dbd still carries both prod-file changes unreverted (grep-confirmed datetime(expires_at)/datetime(triggered_at) wraps + 30d threshold live). git show --stat matches exactly 5 claimed files (2 prod + 3 test). Targeted test run: 157-data-audit-job.test.ts + 242-agent-signals.test.ts + FACTORY-SCHEDULER-split-dataAuditJob.test.ts = 47 pass / 0 fail / 171 expect() calls. bun tsc --noEmit (apps/mcp-server): 0 errors (empty output). mock-guard.sh --files agentSignalStore.ts checkStaleAlerts.ts: PASS. process.env/secrets grep: clean on both prod files. DDD grep (from.*infrastructure / from.*application): clean.",
+            "observed_at": "2026-08-14T19:37:50Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-ERRAUDIT-W2-DEADLINE-UNITTEST",
+        "type": "FIX",
+        "priority": "P3",
+        "size": "S",
+        "status": "DONE_VERIFIED",
+        "zone": "apps/mcp-server/",
+        "title": "Unit test fetchDeadline.ts (withDeadline + macroFetch)",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ERRAUDIT-W2-DEADLINE-UNITTEST",
+        "promoted_at": "2026-07-31T21:47:38Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-14T19:38:45Z",
+        "claimed_at": "2026-08-14T19:29:10Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "pm",
+        "updated_by": "qa",
+        "commit_sha": "b3a5c5145",
+        "note": "Added apps/mcp-server/src/infrastructure/fetchers/__tests__/fetchDeadline.test.ts (12 tests): withDeadline (deadline->DeadlineError w/ label/deadlineMs/name+FR-6 log, fast-path clearTimeout exactly-once EC-1, non-abort error rethrown as same instance) + macroFetch (ok:false all 3 DegradeEnvelope.reason branches, ok:true only on response.ok). Test-only, zero production code touched (helper already code-verified via 6-check audit at parent T-1). bun tsc --noEmit clean; standalone 12/12 pass; full bun test x2 (15005/15007 pass, 54/52 fail) inside documented FIX-MCP-SUITE-HEALTH-BASELINE band, grep-confirmed zero fetchDeadline/withDeadline/macroFetch fails in either run. toolCount=183/cronJobCount=88 unchanged (no tool/scheduler code touched). testing.md doc-review done. Commit b3a5c5145; memory commit 3a19ad791. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commit b3a5c5145 on main ancestry -- git show --name-only matches both claimed files exactly: new colocated apps/mcp-server/src/infrastructure/fetchers/__tests__/fetchDeadline.test.ts (247L, 12 tests) + docs/architecture/microservice/mcp-server/testing.md doc update; zero production file touched. Independently re-ran (not trusted from row own note prose): targeted bun test fetchDeadline.test.ts 12/12 pass; bun tsc --noEmit 0 errors; test-only change so DDD/security scan + mock-guard correctly Smart-Skipped (no production file in diff). Read every test assertion side-by-side against the real fetchDeadline.ts implementation -- DeadlineError name/label/deadlineMs/message, FR-6 console.error attribution, clearTimeout-exactly-once (EC-1), non-abort error rethrown as the same instance, all 3 macroFetch DegradeEnvelope.reason branches, ok:true gated strictly on response.ok -- all match exactly, all fetch calls mocked, zero live network. Did not block verdict on the full repo-wide suite (multi-minute, still running backgrounded); row own claim (15005/15007 pass, 52-54 fail across 2 runs, zero fetchDeadline/withDeadline/macroFetch fails) is plausible against the documented drifting FIX-MCP-SUITE-HEALTH-BASELINE band and not itself gating -- verify-committed checklist only mandates the touched test file + tsc + mock-guard-if-production-touched, all satisfied. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-23.md STEP qa-S12.",
+        "qa_verified_at": "2026-08-14T19:38:45Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --name-only + bun test (targeted) + bun tsc --noEmit",
+            "args": {
+              "commit_verified": "b3a5c5145",
+              "files_verified": [
+                "apps/mcp-server/src/infrastructure/fetchers/__tests__/fetchDeadline.test.ts",
+                "docs/architecture/microservice/mcp-server/testing.md"
+              ]
+            },
+            "live_value_observed": "git merge-base --is-ancestor confirms b3a5c5145 on main ancestry; git show --name-only matches both claimed files exactly (fetchDeadline.test.ts + testing.md), zero production file touched; targeted bun test fetchDeadline.test.ts 12/12 pass; bun tsc --noEmit 0 errors; test-only diff so DDD/security scan + mock-guard correctly Smart-Skipped",
+            "observed_at": "2026-08-14T19:38:45Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT",
+        "type": "FIX",
+        "title": "Make get_macro_snapshot.text human-readable like get_market_snapshot (close latent raw-JSON leak-trap)",
+        "priority": "P3",
+        "status": "DONE_VERIFIED",
+        "zone": "apps/mcp-server/",
+        "size": "S",
+        "sprint": "BACKLOG",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT",
+        "promoted_at": "2026-08-01T00:18:28Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-14T19:40:02Z",
+        "claimed_at": "2026-08-14T19:29:10Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "updated_by": "qa",
+        "commit_sha": "e64ad8870",
+        "note": "Added buildMacroSnapshotText() (macroTools.ts): generic recursive renderer (humanizeKey/formatScalar/renderSection) walks the raw macro-indicators response and emits a bracketed [Section]/indented Key: Value prose block — no per-field/per-ticker hardcode, replacing text: JSON.stringify(data, null, 2) (the raw-JSON leak-trap). Added data (raw upstream object, verbatim passthrough) as a new envelope field alongside source_tier/text/fetchedAt for typed access. Rewired 5 test files' parseInner() helper (089-tool-macro, 1423d-thien-thoi-snapshot, 1423f-deposit-rate-display, 1570c-dinh-gia-snapshot, 1903a-dispatch-regression) from JSON.parse(env.text) to env.data — those files' helper WAS the leak-trap behavior itself. New FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT.test.ts (16 tests). bun tsc --noEmit clean, targeted 8-file macro suite 106/106 pass, toolCount=183/cronJobCount=88 unchanged, full bun test x2 15027/15026 pass 52/53 fail inside FIX-MCP-SUITE-HEALTH-BASELINE band with zero macro-related fail-list matches. macro.md + get_macro_snapshot.md doc-review done.",
+        "depends_on": [
+          "FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L"
+        ],
+        "po_gate_20260801T0125": "DO NOT FLIP DONE/DONE_VERIFIED ON THIS ROW UNTIL CI size-lint IS GREEN. Signal dev-20260801T010302 relayed this row as RAW-verified clean, commit e64ad8870, needing only ops rebuild + qa live-verify. PO checked the CI plane and it is NOT clean: e64ad8870 grew apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts from 510L to 618L (RAW: git show e64ad8870^:<path> | wc -l = 510; wc -l at HEAD = 618) against a size-lint baseline of 501L and an upper tolerance of 551L, turning CI job size-lint RED (run 30677336536, reported on HEAD d1a62fd60). The behavioural RAW-verify was correct as far as it went — it simply did not cover the CI plane. New sibling row FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L now carries that fix and is registered here as depends_on. The ops rebuild + qa live-verify this row is waiting on may proceed in parallel; only the terminal flip is gated.",
+        "status_note": " || [QA] Review Record (direct-commit verify): Commit e64ad8870 confirmed real + on main ancestry; git show --stat matches claimed 9-file set (macroTools.ts + 5 rewired parseInner() test files + new FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT.test.ts + macro.md + get_macro_snapshot.md). Re-ran REAL verification, not trusted from prose: targeted 6-file suite (FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT.test.ts + 089-tool-macro.test.ts + 1423d-thien-thoi-snapshot.test.ts + 1423f-deposit-rate-display.test.ts + 1570c-dinh-gia-snapshot.test.ts + 1903a-dispatch-regression.test.ts) = 75/75 pass, 165 expect(); bun tsc --noEmit 0 errors; mock-guard.sh --files macroTools.ts -> PASS. DDD scan: infrastructure/logger + infrastructure/fetchers/fetchDeadline imports confirmed pre-existing via git show e64ad8870^ (established interface/mcp/tools convention) -- not introduced by this commit, no violation; zero application/ imports; process.env/secrets grep clean. PO GATE (po_gate_20260801T0125) independently re-verified satisfied: sibling blocker FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L is DONE_VERIFIED, CI run 30678397978 size-lint job conclusion=success; re-confirmed live today: size-lint-justification.sh --check PASS 0 offenders, macroTools.ts=540L (within 501L baseline / 551L upper tolerance). VERDICT: APPROVED, DONE_VERIFIED.",
+        "verified_at": "2026-08-14T19:39:00Z",
+        "verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun test",
+            "args": "apps/mcp-server: src/__tests__/FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT.test.ts 089-tool-macro.test.ts 1423d-thien-thoi-snapshot.test.ts 1423f-deposit-rate-display.test.ts 1570c-dinh-gia-snapshot.test.ts 1903a-dispatch-regression.test.ts",
+            "live_value_observed": "75 pass / 0 fail, 165 expect() calls; bun tsc --noEmit 0 errors; mock-guard.sh PASS; size-lint-justification.sh --check PASS (macroTools.ts=540L)",
+            "observed_at": "2026-08-14T19:39:00Z",
+            "evidence_commit": "e64ad8870",
+            "verdict": "APPROVED"
+          }
+        }
       }
     ],
     "head": {
@@ -18120,56 +18325,6 @@
         "po_RAG_MEM_DURABILITY_BAR_V2_20260814T0927Z": "[po RULING 2026-08-14T09:27Z] RAG-MEM-DURABILITY-BAR v2 — binding on EVERY rag-service memory row (this row, FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS, FU-RAG-DEPLOY-MEMORY, OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX). SUPERSEDES the v1 bar in po_crossref_20260814T0700Z, which was necessary but gameable.\nRATIONALE FOR RAISING IT AGAIN: this is the THIRD consecutive \"fix landed -> marked DONE_VERIFIED -> recurred within hours\" cycle on one incident. 1) thread-pin ca6d86869 -> OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX certified DONE_VERIFIED 2026-08-12T12:46:40Z -> kernel OOM at +1h00m, +1h14m, +20h34m. 2) cap raise 2f835ec63 -> FU-RAG-DEPLOY-MEMORY certified DONE_VERIFIED 2026-08-08T10:59:52Z -> three kernel OOMs on the raised cap. 3) skip-rebuild 82216e291 -> STALE-ACK'd benign at 08:57Z on a single 84.85% post-restart reading -> monotonic accelerating climb to 89.18% within 24 minutes. Each closure was defeated by the same structural flaw: a NEGATIVE criterion (no crash observed yet) evaluated over a window shorter than the failure's own period, on a signal that cannot see the failure. v2 adds a POSITIVE criterion and closes the two laundering paths.\nD1 SIGNAL (carried from v1, unchanged): >= 24h wall-clock with ZERO `oom_memcg` dmesg events for the rag-service cgroup, read INSIDE the Docker Desktop VM (nsenter). NEVER `docker inspect .State.OOMKilled`, NEVER `.State.ExitCode`, NEVER RestartCount — all three are proven false-negatives here.\nD2 CONTINUOUS LIFETIME (new): the window must span ONE unbroken container lifetime. Any restart or recreate — INCLUDING a preemptive ops mitigation restart — resets it to zero. Evidence must cite `docker inspect .State.StartedAt` at window OPEN and the identical value at window CLOSE. A window whose StartedAt moved is not a short window, it is no window.\nD3 POSITIVE PLATEAU (new — this is the actual fix criterion, D1 alone can never establish one): >= 6 memory samples spread across the window; fit the growth rate over the final 12h. PASS requires BOTH rate <= 0.02 pp/min AND final reading <= 85% of the cap. A run that ends at 95% having merely not died yet is a FAIL. \"Did not OOM\" is not \"bounded\" — the whole incident history above is the proof.\nD4 NO-MITIGATION (new): the window is INVALID if any preemptive restart, cap raise, traffic throttle, or manual memory intervention was applied during it. Mitigation windows and certification windows are mutually exclusive. If the service cannot survive the window unassisted, report that as the finding — never launder it into a green.\nD5 EVIDENCE SHAPE (new, process): the certifying agent MUST write onto the row it closes — `durability_window_started_at` (= .State.StartedAt), `durability_window_container_id`, `durability_window_ended_at`, `durability_samples[]` (>=6 {ts, mem_pct}), `durability_growth_pp_per_min`, and the verbatim in-VM dmesg query used. A prose assertion without those six fields is NOT a certification and any lane move it justifies is void. This also satisfies the schema's verification.raw_probe{} requirement — never close a rag-service memory row via a RC_VERIF_GRANDFATHERED_IDS exemption."
       },
       {
-        "id": "FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR",
-        "type": "FIX",
-        "title": "dev-team board-hygiene reports 'orch-cold-evict.sh failed' with ZERO stderr — 6 fires in 9h, root cause unknowable, and the script runs clean standalone",
-        "desc": "RECURRING (6 fires 2026-08-12: 05:20:30Z, 05:51:24Z, 12:51:40Z, 13:50:59Z, 14:23:06Z + telegram 4744) — dev-team's board-hygiene step emits the fixed string 'board-hygiene: orch-cold-evict.sh failed — cold eviction skipped, retry next tick' and discards the script's actual stderr/exit code. PO ran `bash scripts/orch-cold-evict.sh` standalone at 2026-08-12T15:02:31Z: rc=0, Stage 0 + Stage 1 PASS, conservation-check OK (task_total 752=752, signal_total 83=83), eviction completed and both files jq-validated. So the failure is NOT a deterministic script defect — it is environment/contention-specific to the dev-team tick path (most likely the CAS guard in scripts/orch-apply.sh losing to a concurrent peer writer, which is a benign retry condition, but that is a HYPOTHESIS and cannot be confirmed because the error text is thrown away). MATERIAL CONSEQUENCE: eviction is skipped every time it fires, and the hot board is now backlog=393 / ready=83 / review=128 / qa=7 = 611 non-terminal rows with orch-state.json at 3,575,420 bytes — TE-T15's own row still describes this file as '612KB', a 5.8x growth. FIX SCOPE: capture and surface the script's real stderr + exit code in the telegram/report line (and distinguish a benign CAS-retry loss from a genuine validation abort so the benign class can be downgraded out of the report entirely). Class match: feedback_silent_swallow_serial_bugs, feedback_graceful_premise_verify_error_path.",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "qa",
-        "status": "QA",
-        "files": [
-          "docs/agents/dev-team/flow/main.md",
-          "scripts/orch-cold-evict.sh"
-        ],
-        "baseline_pass": false,
-        "created_at": "2026-08-12T15:06:24Z",
-        "created_by": "po (dev-team S3 triage)",
-        "occurrence_count": 23,
-        "verification_gate": "next_coldevict_failure_report_names_the_actual_error",
-        "status_note": "AC: a subsequent 'orch-cold-evict.sh failed' report carries the script's verbatim stderr + exit code, AND a benign CAS-contention loss no longer emits a failure report at all. Dedup: scanned backlog/ready/in_progress/review/qa for COLD-EVICT|COLDEVICT — 7 adjacent rows found, none owns the swallowed-stderr defect (FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE is --exclude-ids vs Stage-1b coherence, a different concern). Minted 2026-08-12T15:06:24Z.\n\n[po/triage 2026-08-12T15:36:32Z] +5 occurrences (telegram 4723 05:20:30Z, 4727 05:51:24Z, 4744 12:51:40Z, 4746 13:50:59Z, 4768 14:23:06Z) — all identical, all with zero stderr, all unactionable AS REPORTED. Occurrence 6 -> 11.\n\nThis row's premise CONFIRMED BY DIRECT EXPERIMENT rather than inference: PO ran `bash scripts/orch-cold-evict.sh` by hand at 2026-08-12T15:36:32Z against the same live orch-state.json and it exited 0 clean — Stage 0 + Stage 1 PASS, conservation-check OK (task_total live=751 candidate=751, signal_total live=69 candidate=69, signal_row_identity clean), both files jq-validated. The router's own tick also ran it successfully this cycle (commit 1875f1bbc, 4 items evicted).\n\nConclusion: the script is NOT broken; these are transient contention-class failures. The ONLY reason 11 fires cannot be told apart from a genuine breakage is that the reporter discards stderr. That makes THIS row the blocker for every future cold-evict report — until stderr is captured nobody can distinguish 'lost a write race' from 'validator hard-failed'. No new row minted.\n\n[po/triage-2026-08-13T17:28:37Z] SEVERITY EXPEDITE by PO. Moved to the FRONT of ready[] at P0. Rationale: RLC selection is sort_by([priority_rank, ready[]-array-index]), one row per invocation, and RLC only runs on ticks where the 6-way Idle-Tick Rotation picks \"rlc\". Measured live this tick: 60 RLC-eligible rows in ready[]; this row's class sat at eligible queue position 47-48. At 1 row per rlc-selected tick that is unreachable in incident time, and every newly-minted P0 re-buries it. No new diagnosis was needed - the row was already correct. This is the manual stand-in for the missing severity-expedite path (FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0, itself expedited in this same write).\n\n[developer 2026-08-14T18:40Z] FIXED — real swallow point was scripts/agents-flow/dev-team-tick-preflight.sh Step 5.5 (_step55_run_cold_evict), NOT main.md (no inline copy exists there). Captured stderr+exit-code now stashed into module globals; new _step55_is_benign_cas_loss() matches the script's own CAS-exhaustion abort line (ABORT: CAS retry limit (N) exceeded ... concurrent writer) — benign loss now logs-only (zero telegram), genuine failure now reports real exit code + verbatim stderr tail. post-cycle.md Step 4.2 spec updated in lockstep. 2 new regression cases (T30b/T30c) + new telegram-args capture seam. Full suite 154/154 (146 pre-existing + 8 new). shellcheck clean. Commits: e817334d1 (code+doc), 4658cf1b0 (memory).",
-        "updated_at": "2026-08-14T19:29:11Z",
-        "po_expedited_at": "2026-08-13T17:28:37Z",
-        "po_expedited_by": "po/triage-20260813T1722Z",
-        "updated_by": "developer",
-        "evidence_20260814": "+12 occurrences on 2026-08-13 alone: telegram 4801 (12:18:59Z), 4802 (12:52:21Z), 4804 (13:18:51Z), 4806 (13:53:07Z), 4826 (14:18:57Z), 4831 (14:49:10Z), 4832 (15:48:55Z), 4834 (16:18:54Z), 4835 (16:48:55Z), 4836 (17:18:49Z), 4838 (19:18:57Z), 4841 (20:48:55Z). All twelve are byte-identical: '[dev-team] board-hygiene: orch-cold-evict.sh failed — cold eviction skipped, retry next tick'. NOT self-resolved and the row is NOT closable: cold-evict DID succeed on the very next run (commit 9a8f44b02, 2026-08-14T00:2xZ, clean), which means the underlying condition was transient — and THAT IS EXACTLY THE DEFECT THIS ROW NAMES. Twelve consecutive reports over 8.5h conveyed zero diagnostic information about a fault that then vanished on its own, so the cause is now unrecoverable from the alert stream. A swallowed-stderr alert on an intermittent fault is strictly worse than no alert: it burns 12 triage slots and leaves nothing to triage. Severity of the underlying eviction gap is real — the 08-13 stall let done/done_verified/terminal sprints accumulate all day.",
-        "claimed_at": "2026-08-14T19:29:10Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "dispatch_lane": "developer"
-      },
-      {
-        "id": "FIX-ERRAUDIT-W2-DEADLINE-UNITTEST",
-        "type": "FIX",
-        "priority": "P3",
-        "size": "S",
-        "status": "QA",
-        "zone": "apps/mcp-server/",
-        "title": "Unit test fetchDeadline.ts (withDeadline + macroFetch)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ERRAUDIT-W2-DEADLINE-UNITTEST",
-        "promoted_at": "2026-07-31T21:47:38Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-08-14T19:29:11Z",
-        "claimed_at": "2026-08-14T19:29:10Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "updated_by": "dev-mcp-server",
-        "commit_sha": "b3a5c5145",
-        "note": "Added apps/mcp-server/src/infrastructure/fetchers/__tests__/fetchDeadline.test.ts (12 tests): withDeadline (deadline->DeadlineError w/ label/deadlineMs/name+FR-6 log, fast-path clearTimeout exactly-once EC-1, non-abort error rethrown as same instance) + macroFetch (ok:false all 3 DegradeEnvelope.reason branches, ok:true only on response.ok). Test-only, zero production code touched (helper already code-verified via 6-check audit at parent T-1). bun tsc --noEmit clean; standalone 12/12 pass; full bun test x2 (15005/15007 pass, 54/52 fail) inside documented FIX-MCP-SUITE-HEALTH-BASELINE band, grep-confirmed zero fetchDeadline/withDeadline/macroFetch fails in either run. toolCount=183/cronJobCount=88 unchanged (no tool/scheduler code touched). testing.md doc-review done. Commit b3a5c5145; memory commit 3a19ad791."
-      },
-      {
         "id": "FIX-FOREIGN-FLOW-DEAD-ENDPOINT",
         "title": "Remove/stub dead fetchPrimaryVpsEndpoint() — GETs a nonexistent VPS /foreign-flow route, silent 404 every minute",
         "type": "FIX",
@@ -18187,50 +18342,6 @@
         "updated_by": "dev-mcp-server",
         "commit_sha": "9ec88cd4e",
         "note": "fetchForeignFlowWithFallback Strategy 1 (primary VPS GET, http://VINAHOST_IP/foreign-flow) gated behind overrides.fetchFn being explicitly injected — no production caller supplies it (only runForeignFlowFetcherJobCron->runForeignFlowFetcherJob() with no overrides), so the dead route (no /foreign-flow on vps-proxy-server.js, push-only architecture) no longer 404s every market-minute. fetchPrimaryVpsEndpoint kept (not deleted) — 5 test files (incl. 1392-foreign-flow-cb-probe-regression, 1288-foreign-flow-fallback §4) explicitly inject fetchFn as live regression coverage for the historical Task 1392 CB-stuck-open incident; deleting would orphan the out-of-scope foreignFlowValidator.ts. New FIX-foreign-flow-dead-endpoint.test.ts (4 tests) proves zero globalThis.fetch calls on production-shaped invocation. tsc clean, targeted 9-file foreign-flow suite 58/58 pass, full bun test 15008p/40skip/55f within documented FIX-MCP-SUITE-HEALTH-BASELINE band (zero foreign-flow-fetcher fails), toolCount=183/cronJobCount=88 unchanged. pushForeignFlowHandler.ts confirmed sole live writer. REBUILD_REQUIRED=true — live post-rebuild RAW row-count check for qa/ops."
-      },
-      {
-        "id": "FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL",
-        "type": "FIX",
-        "priority": "P3",
-        "status": "QA",
-        "title": "bctc SLA freshness metric must exclude url_not_found terminal rows so genuinely-absent tickers can't breach forever",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL",
-        "promoted_at": "2026-07-31T23:26:04Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "next_agent": "qa",
-        "updated_at": "2026-08-14T19:29:11Z",
-        "updated_by": "dev-mcp-server",
-        "claimed_at": "2026-08-14T19:29:10Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "commit_sha": "f0831e6be",
-        "note": "queryBctcPipelineRuntimeState() (freshnessSlaMonitorJob.ts) narrowed bctc queueDepth SQL from status IN ('pending','url_not_found','enrich_failed','pek_triggered') to status IN ('pending','pek_triggered') — url_not_found/enrich_failed are terminal/parked (bounded 7d grace-retry only), counting them permanently defeated the checkSignalSla IDLE branch, letting a genuinely-absent ticker breach the SLA forever. Live DB confirmed: vn-bctc-fetch health unhealthy since 07-28 with 0 pending/pek_triggered (39 url_not_found+128 enrich_failed only) — a genuinely idle queue. get_sla_status (financial_reports.parsed_at MAX) was already structurally unaffected by terminal rows — real defect was the runtime-state CRASH/IDLE gate feeding the live cron. Documented reader contract on PipelineRuntimeState in freshnessSlaChecker.ts. Sibling duplicate bug found in vpsHealthPoller.ts bctc queueGuardSql (same live false-unhealthy symptom) — deliberately NOT touched (separate tool/test contract), flagged as follow-on candidate. RED->GREEN TDD: FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH.test.ts 23/23 pass (4 new/updated cases). Targeted 25-file suite 338/338 pass. tsc clean. toolCount=183/cronJobCount=88 unchanged. Full bun test x2: 15007/15009 pass, 59/57 fail (within documented 14988-14995/52-59 FIX-MCP-SUITE-HEALTH-BASELINE band), zero fail-list matches for freshnessSla|FIX-HEALTH-RECHECK-BCTC|FIX-BCTC-SLA-FRESHNESS|queryBctcPipelineRuntimeState|vpsHealthPoller."
-      },
-      {
-        "id": "FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT",
-        "type": "FIX",
-        "title": "Make get_macro_snapshot.text human-readable like get_market_snapshot (close latent raw-JSON leak-trap)",
-        "priority": "P3",
-        "status": "QA",
-        "zone": "apps/mcp-server/",
-        "size": "S",
-        "sprint": "BACKLOG",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT",
-        "promoted_at": "2026-08-01T00:18:28Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-08-14T19:29:11Z",
-        "claimed_at": "2026-08-14T19:29:10Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "updated_by": "dev-mcp-server",
-        "commit_sha": "e64ad8870",
-        "note": "Added buildMacroSnapshotText() (macroTools.ts): generic recursive renderer (humanizeKey/formatScalar/renderSection) walks the raw macro-indicators response and emits a bracketed [Section]/indented Key: Value prose block — no per-field/per-ticker hardcode, replacing text: JSON.stringify(data, null, 2) (the raw-JSON leak-trap). Added data (raw upstream object, verbatim passthrough) as a new envelope field alongside source_tier/text/fetchedAt for typed access. Rewired 5 test files' parseInner() helper (089-tool-macro, 1423d-thien-thoi-snapshot, 1423f-deposit-rate-display, 1570c-dinh-gia-snapshot, 1903a-dispatch-regression) from JSON.parse(env.text) to env.data — those files' helper WAS the leak-trap behavior itself. New FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT.test.ts (16 tests). bun tsc --noEmit clean, targeted 8-file macro suite 106/106 pass, toolCount=183/cronJobCount=88 unchanged, full bun test x2 15027/15026 pass 52/53 fail inside FIX-MCP-SUITE-HEALTH-BASELINE band with zero macro-related fail-list matches. macro.md + get_macro_snapshot.md doc-review done.",
-        "depends_on": [
-          "FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L"
-        ],
-        "po_gate_20260801T0125": "DO NOT FLIP DONE/DONE_VERIFIED ON THIS ROW UNTIL CI size-lint IS GREEN. Signal dev-20260801T010302 relayed this row as RAW-verified clean, commit e64ad8870, needing only ops rebuild + qa live-verify. PO checked the CI plane and it is NOT clean: e64ad8870 grew apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts from 510L to 618L (RAW: git show e64ad8870^:<path> | wc -l = 510; wc -l at HEAD = 618) against a size-lint baseline of 501L and an upper tolerance of 551L, turning CI job size-lint RED (run 30677336536, reported on HEAD d1a62fd60). The behavioural RAW-verify was correct as far as it went — it simply did not cover the CI plane. New sibling row FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L now carries that fix and is registered here as depends_on. The ops rebuild + qa live-verify this row is waiting on may proceed in parallel; only the terminal flip is gated."
       },
       {
         "title": "Make StaticServiceRegistry the sole SSOT for default upstream URLs",
@@ -18252,30 +18363,6 @@
         "commit_sha": "b184dde9fdbdb20c5117cad2235ac36bc781c928",
         "note": "main.go serviceURLs 10-entry map literal (9 default docker URLs + hardcoded api alias) replaced with serviceURLOverrides() sparse-map builder over serviceEnvVars lookup table -- only non-empty env vars included, unset keys fall through to registry.go get(key,fallback) defaults (untouched, already correct SSOT). api key omitted (no dedicated env var), still resolves via get(\"api\", mcpURL) inside registry, unchanged. New cmd/server/main_test.go (package main, precedent apps/technical-analysis/cmd/server/main_test.go) unit-tests serviceURLOverrides via t.Setenv: all-unset->empty, subset->exact keys, all-set (docker-compose shape)->full 9-key map matching old literal 1:1, api never present. RED (undefined symbols) confirmed before GREEN. go build/vet/test 10/10 pkgs clean, gofmt -l clean on touched files, golangci-lint 0 issues (Fence-C intact), G12 sandbox primitive 14/14 + module 1/1 GREEN. Zero-credentials scan clean. Commit b184dde9f (code+test+doc), 3fe382445 (decision journal), d930093e3 (notebook) -- local main, explicit pathspecs, not pushed. rebuild_required=true, USER-GATED; rebuild-verify PENDING-USER-GATED, code-only. Decision journal: docs/agent-memory/decisions/sprint-FACTORY-APIGW-dedup-default-urls-dev-api-gateway.md",
         "qa_precondition": "ADVISORY from po 2026-08-06 (no lane/owner change — next_agent stays qa): do NOT verify until api-gateway has been rebuilt. This row commit b184dde9f edits apps/api-gateway/cmd/server/main.go, which is exactly what Dockerfile:12 compiles into the shipped gateway binary; the live image vn-market-intelligence-mcp-api-gateway:latest was built 2026-07-15 17:05 CEST and predates it. Verifying the StaticServiceRegistry default-URL SSOT against that image would be a false green — the code under test is not running. The rebuild already dispatched to ops on FACTORY-APIGW-split-capability-prober (same zone, single `docker compose build api-gateway`) also ships this commit; sequence after it, then verify."
-      },
-      {
-        "id": "FIX-AGENTSIGNALS-EXPIRED-GC-CRON",
-        "type": "FIX",
-        "title": "DB-retention GC cron — no cleanup for expired agent_signals (3493 rows) OR stale-unresolved alerts (205 rows >30d) accumulating unbounded",
-        "priority": "P3",
-        "status": "QA",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AGENTSIGNALS-EXPIRED-GC-CRON",
-        "promoted_at": "2026-08-01T01:17:26Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "claimed_at": "2026-08-14T19:29:10Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "updated_at": "2026-08-14T19:29:11Z",
-        "updated_by": "ops",
-        "commit_sha": "f5698cb76",
-        "note": "RAW-verify-on-pickup found the AC magnitudes stale (live: agent_signals total=124/expired=119 [104 FK-blocked, 15 GC-eligible]; alerts total=8/unresolved=8/unresolved>30d=0 -- far below the 2026-06-20/21 auditor snapshot ~3493/829/205). Root cause: both tables already have working daily off-hours GC wired into the SAME dataAuditJob:daily cron (0 23 * * * Asia/Ho_Chi_Minh) -- agentSignalStore.cleanExpired() for agent_signals, checkStaleAlerts D-3/D-4 for alerts. Hardened both in place instead of shipping a 3rd/4th duplicate mechanism: wrapped both predicates as datetime(col) < datetime(now, ...) not just the threshold (feedback_sqlite_iso8601_datetime_strcompare_bypass -- alerts.triggered_at stores raw JS .toISOString() T...Z while agent_signals.expires_at stores the SQLite-normalized space format), tightened checkStaleAlerts D-4 threshold 60d->30d + resolution_notes marker to auto-resolved by retention GC per spec. Never hard-deletes alert history. Deliberately did NOT narrow cleanExpired() to literal status IN (read,expired) -- no expired status value is ever written; would strand unread-expired rows forever. autoResolveStaleAlerts.ts (72h low/med-only, briefing-triggered) left untouched -- different concern, out of scope. 8 new tests (ISO T...Z format, 30d boundary, resolved-row immunity). tsc clean. toolCount=183/cronJobCount=88 unchanged (no new cron -- folded into existing dataAuditJob:daily). Full bun test: 15035 pass/40 skip/52 fail, 486.66s, inside FIX-MCP-SUITE-HEALTH-BASELINE band, zero fail-list matches for agentSignal/checkStaleAlerts/cleanExpired/retention or any of the 3 touched test files. REBUILD_REQUIRED=true -- signal written to PO per task instructions.\n\n[ops 2026-08-11T18:30Z] REBUILD VERIFIED: single-service rebuild of mcp-server completed. Image ID changed from 6cc23a0c0649 (agent-a39d55f322f904f0e-mcp-server) to 62dbe9da404d (vn-market-intelligence-mcp-mcp-server). Running container confirmed at new image SHA256:62dbe9da404d6398fec375be57c6931e85f59003ed0de3a437048a3b95bb02fd. Ready for qa live verify.",
-        "po_ruling_20260801T0222": "PO RULING 2026-08-01T02:22Z (signal dev-20260801T015751). next_agent qa -> ops. The row carried REBUILD_REQUIRED=true in its prose note with next_agent=qa; no gate in dev-team or qa flow reads that marker (grep-verified: zero consumers), so qa would have live-verified the retention-GC predicates from commit f5698cb76 against the mcp-server image built BEFORE that commit — a structurally false-green pass. ops does a SINGLE-SERVICE rebuild of mcp-server (never `down && up` — feedback_rebuild_recreate_destroys_peers) and confirms the new image ID (feedback_docker_rebuild_race_pgrep_deadlock), then next_agent -> qa for the live verify. NOT urgent on its own merits: dev-mcp-server's own RAW-verify-on-pickup re-measured the live magnitudes far below the AC's 2026-06-20 snapshot (agent_signals 124 total / 119 expired of which only 15 are GC-eligible; alerts 8 total / 0 unresolved >30d), and no new cron was added (folded into the existing dataAuditJob:daily). The ordering, not the deadline, is what mattered. Systemic gap tracked separately by FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER.",
-        "secondary_claimed_at": "2026-08-11T18:23:37Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "ops"
       }
     ],
     "_closed_signals_20260614": {
