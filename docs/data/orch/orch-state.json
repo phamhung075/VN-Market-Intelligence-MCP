@@ -18311,7 +18311,7 @@
         "last_served_tick": "2026-08-14T16:53:28Z"
       }
     },
-    "_updated_at": "2026-08-14T18:23:59Z",
+    "_updated_at": "2026-08-14T18:51:00Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -18856,6 +18856,18 @@
         },
         "createdAt": "2026-08-14T18:01:17Z",
         "drained_at": "2026-08-14T18:19:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ce82b08188279a98318a9c9be700967bb34b01f5d7743dc106a59eb6e0619d40",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=25 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-14T18:37:43Z",
+        "drained_at": "2026-08-14T18:51:00Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
