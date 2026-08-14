@@ -747,7 +747,7 @@
         "type": "system-issue",
         "summary": "stranded-state sweep: unknown paths need owner (7)",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "triaged",
         "payload_ref": null,
         "payload": {
           "paths": [
@@ -759,7 +759,10 @@
             "docs/agent-memory/.auditor-cycle-markers-2026-08-13T20:00Z.tmp",
             "docs/incidents/ops-cycle-20260812-rag-service-below-floor.md"
           ]
-        }
+        },
+        "triaged_at": "2026-08-14T23:03:00Z",
+        "triaged_by": "po",
+        "disposition": "LOW single-fire routine hygiene, no mint (triage-signals system-issue row: WARN/LOW with no corroborating prior fire -> pendingObservations, re-check next tick). 7 unknown paths surfaced by the stranded-state sweep are an ownership-metadata gap, not a failure; no service degraded, no data at risk."
       },
       {
         "id": "dev-team-20260814T225514Z-scriptsptr",
@@ -769,13 +772,16 @@
         "type": "system-issue",
         "summary": "stranded-state sweep: scripts auto-committed — verify Script Persistence pointer (1)",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "triaged",
         "payload_ref": null,
         "payload": {
           "paths": [
             "scripts/agents-flow/test-notebook-auto-prune.sh"
           ]
-        }
+        },
+        "triaged_at": "2026-08-14T23:03:00Z",
+        "triaged_by": "po",
+        "disposition": "PREMISE CHECKED, NOT ACTIONABLE. The auto-committed file is scripts/agents-flow/test-notebook-auto-prune.sh in commit 3f666927e: 1 file changed, 0 insertions(+), 0 deletions(-) — a file-mode bit change on a pre-existing script, not a new script. dev-standards Script Persistence requires an owning-flow-doc pointer for NEW scripts; a chmod on an existing one creates no pointer obligation. No mint."
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -16061,24 +16067,6 @@
         "promoted_by": "dev-team (design-router sweep)",
         "promotion_note": "Design-Router Sweep — assigned dispatch_lane='agents-architect' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
         "dispatch_lane": "agents-architect"
-      },
-      {
-        "id": "TASK_2008c",
-        "title": "Delete telemetry.md calendar arg + fail-loud in pressure-read.md (FR-A4/A5)",
-        "zone": "docs/agents/cowork-team/flow/",
-        "status": "TODO",
-        "size": "M",
-        "priority": "P1",
-        "created_at": "2026-08-14T22:54:44Z",
-        "created_by": "pm",
-        "depends_on": [],
-        "parent_task": "UC-CDC-P1",
-        "note": "FR-A4: delete telemetry.md L15; FR-A5: add fail-loud + send_telegram(bug) on out-of-domain calendar_status in pressure-read.md Step 4.3",
-        "files": [
-          "docs/agents/cowork-team/flow/telemetry.md",
-          "docs/agents/cowork-team/flow/pressure-read.md"
-        ],
-        "updated_at": "2026-08-14T22:54:44Z"
       }
     ],
     "review": [
@@ -18049,6 +18037,26 @@
         ],
         "updated_at": "2026-08-14T23:02:30Z",
         "next_agent": "qa"
+      },
+      {
+        "id": "TASK_2008c",
+        "title": "Delete telemetry.md calendar arg + fail-loud in pressure-read.md (FR-A4/A5)",
+        "zone": "docs/agents/cowork-team/flow/",
+        "status": "REVIEW",
+        "size": "M",
+        "priority": "P1",
+        "created_at": "2026-08-14T22:54:44Z",
+        "created_by": "pm",
+        "depends_on": [],
+        "parent_task": "UC-CDC-P1",
+        "note": "FR-A4: delete telemetry.md L15; FR-A5: add fail-loud + send_telegram(bug) on out-of-domain calendar_status in pressure-read.md Step 4.3",
+        "files": [
+          "docs/agents/cowork-team/flow/telemetry.md",
+          "docs/agents/cowork-team/flow/pressure-read.md"
+        ],
+        "updated_at": "2026-08-14T23:03:02Z",
+        "next_agent": "qa",
+        "agent_father_implementation_note": "FR-A4: deleted telemetry.md Step 6.0 calendar_status arg line (self-recycling emitter arg — server now computes it, TASK_2008a). FR-A5: pressure-read.md Step 4.3 now enumerates CALENDAR_STATUS_DOMAIN={open,half_day,weekend,holiday,unknown} and fails loud (log + send_telegram(channel=\"bug\")) on any out-of-domain value before falling through to the unchanged conservative no-suppression path — no new blocking behavior, no rate-limit (self-heals within one tick once TASK_2008a lands). Both files size-justification headers refreshed to actual line counts (telemetry.md 163L, pressure-read.md 117L, cap 120L). No unit test twin (Step 4.3 is pure LLM-narrated prose) — verification is live-tick notebook observation per AC."
       }
     ],
     "qa": [
