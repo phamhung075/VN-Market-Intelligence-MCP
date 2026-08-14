@@ -132,7 +132,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-14T05:20:14Z",
+    "_updated_at": "2026-08-14T10:50:00Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -632,8 +632,8 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-14.json"
+        "status": "READ",
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-14.json"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -19153,7 +19153,7 @@
         "last_served_tick": "2026-08-14T09:23:37Z"
       }
     },
-    "_updated_at": "2026-08-14T10:21:04Z",
+    "_updated_at": "2026-08-14T10:50:16Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19343,6 +19343,216 @@
         "payload": "task_claim's re-entrant-claim discriminator uses owner_client_session, not owner_session -- discovered live 2026-08-14T09:3xZ by a po sub-agent that hit claimed:false with current_holder.owner_client_session matching its OWN session id but current_holder.owner_session belonging to a DIFFERENT concurrent same-session po sub-agent (peer subagent under the same router session, distinct process). Following the documented re-entrant rule (task_claim/dispatch-claim SKILL.md: claimed:false + current_holder.owner_client_session == own session -> treat as re-entrant, task_heartbeat and proceed) caused the po sub-agent to heartbeat-EXTEND a PEER's lock instead of detecting a genuine collision -- its own subsequent task_release then correctly no-op'd (released:0) since the lock was never actually its own. This affects every PRE-CLAIM/task_claim call fleet-wide that relies on owner_client_session as the re-entrancy discriminator, any time two sub-agents spawned from the same coordinating session (background Agent() calls, e.g. concurrent po/qa/developer sessions this same tick) race on the same task_id. Root cause not yet designed -- likely needs owner_session (unique per process/subagent) added as a second discriminator field, re-entrant treatment should require BOTH owner_client_session AND owner_session to match, not owner_client_session alone. Worth an architect-level design pass since this touches the core task-lock coordination primitive used by every agent type's PRE-CLAIM protocol, not a narrow single-flow fix. Source: po sub-agent (ac362246d1ed5d95c) triage of the rag-service memory incident, flagged in its own completion report, not yet minted as a tracked board row -- dev-team surfacing via signal for po's next triage pass rather than spawning a dedicated cycle immediately, since it is a design-correctness finding, not an active incident.",
         "createdAt": "2026-08-14T09:35:00Z",
         "drained_at": "2026-08-14T09:49:36Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "80df28244bcfd5c0f9dd1d38601d171f84e9644a6f064b14e9a0db260034de3c",
+        "source": "dashboard",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "LOW",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-14T10:33:20Z",
+        "drained_at": "2026-08-14T10:50:00Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a34cba0555d7354c0a231fd252d9d6fc786f7b6bb2ab4ccb535cbc5cfd6c310d",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 11244,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-14T10:20:04Z",
+        "drained_at": "2026-08-14T10:50:16Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3348feb3825a851fc459baa2c6f80fb479d8da749fa8ef65402a4de3ea8ccd99",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-14T10:30:05Z",
+        "drained_at": "2026-08-14T10:50:16Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9ce873a106a917e5e4f4af014710c0fba59047729d06c59d5ba6a1f2644646ae",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12851,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T10:30:06Z",
+        "drained_at": "2026-08-14T10:50:16Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b280a17b04b7a9dc707465e858c222809211514dad07eabedab19e8f486c5d97",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12851,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T10:31:42Z",
+        "drained_at": "2026-08-14T10:50:16Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b8610276c7a3e69f81ebfcb5a71555357d722b4368ede34344116e1e0e89b8d8",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T10:20:02Z",
+        "drained_at": "2026-08-14T10:50:16Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "db6869ef7e7bf77069d21e997ad666b6df242c423f887ca72a3c5c8502a1aac8",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T10:30:07Z",
+        "drained_at": "2026-08-14T10:50:16Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fca8ef44760e04b3d8559567e386ab00c371191811663312d0dd8fed57a4e727",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T10:31:42Z",
+        "drained_at": "2026-08-14T10:50:16Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "15982ccbd8ad5c5d6d219564922040964ba4f1f4681735e5f3d75da14b9cad28",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 29895,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T10:30:06Z",
+        "drained_at": "2026-08-14T10:50:16Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8f9cf84188a51709e261e46be79c365ef1f4f6751da95c7b65d751ea4d8f5497",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 29895,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T10:31:41Z",
+        "drained_at": "2026-08-14T10:50:16Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
