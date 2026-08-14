@@ -13210,6 +13210,315 @@
           "observed_at": "2026-08-14T15:58:00Z"
         }
       }
+    },
+    {
+      "id": "FU-MACRO-SNAPSHOT-TIER-WORSTOF",
+      "priority": "P3",
+      "size": "XS",
+      "sprint": "DATA-SERVE-INTEGRITY",
+      "status": "DONE_VERIFIED",
+      "title": "get_macro_snapshot wrapper source_tier should be worst-of(carry,yield) not carry-only",
+      "type": "FIX",
+      "zone": "apps/mcp-server",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-MACRO-SNAPSHOT-TIER-WORSTOF",
+      "promoted_at": "2026-07-31T00:47:01Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+      "updated_at": "2026-08-14T16:33:34Z",
+      "claimed_at": "2026-08-14T16:24:57Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "dispatched_to": "dev-mcp-server",
+      "dispatch_note": "developer team-lead 2026-07-31T00:55:38Z: zone verdict apps/mcp-server/ (system-map.json zone table + dev-mcp-server/init.md \"All code changes within apps/mcp-server/ only\", zone_restricted) — routed to dev-mcp-server per zone_dispatch, not implemented here. Target: apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts:480-481, sourceTier = data?.signals?.carry?.source_tier ?? 2. Fix: max() over ALL PRESENT signal components source_tier (carry + yield at minimum), excluding absent components from the max (do not default a missing one to tier 0/best-case). GOTCHA: apps/mcp-server/src/__tests__/1881a-source-tier.test.ts shared beforeAll fixture already has carry.source_tier=2 + yield.source_tier=4 — its own get_macro_snapshot assertions (L243, L360-369) currently pass on the pre-fix under-report and MUST be updated to expect 4, or theyll false-green this exact bug. AC(b) carry-only case needs a fresh fetch-mock fixture without signals.yield.",
+      "updated_by": "qa",
+      "next_agent": "qa",
+      "developer_completed_at": "2026-07-31T01:15:32Z",
+      "developer_completed_by": "dev-mcp-server",
+      "review_note": "Fix: get_macro_snapshot handler (macroTools.ts get_macro_snapshot, ~L469-489) now derives sourceTier as max() over source_tier of every PRESENT signals.* component (generic Object.values(data.signals) reduce, not carry-only) — an absent component never enters the max (no tier-0/best-case default); empty fallback (no present tier at all) stays 2, unchanged. Tool description string also corrected (was hardcoded \"Source tier: 2\"). Tests: 1881a-source-tier.test.ts AC-3 case updated 2->4 (shared beforeAll fixture carry=2/yield=4, worst-of=4) with inline comment explaining why; AC-8 firstKey test strengthened with the same value assertion (was firstKey-only, would have false-greened); NEW AC(b) case added with its own local fetch-mock fixture that omits signals.yield entirely, asserting worst-of degenerates to carry=2 when yield absent. 1881a file: 21/21 pass (was 19). Related smoke suites (089-tool-macro, 1423d, 1423f, 1570c, 1903a, 1918a — all fixture carry==yield tier so unaffected): 68/68 pass. tsc --noEmit clean. Server boot on free port 3099: health toolCount=183 (matches gen-project-stats baseline), no import errors. gen-project-stats --dry-run: toolCount=183 cronJobCount=88, unchanged (no tool/scheduler surface touched). Full bun test (repo-wide, informational only per dev-standards.md:1135 CANONICAL merge-gate reading — targeted suite is the actual gate): 14944 pass/40 skip/56 fail/596.81s, consistent with this cluster's already-documented pre-existing flake band; zero grep hits for macro/source_tier/carry/yield/1881a in that runs tail summary context this session. No apps/mcp-server file outside macroTools.ts + its own test touched. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commits a401bda06(code+test)+31beeefab(memory/journal)+67e26e9f6(doc) on main ancestry; git show --stat a401bda06 matches claimed files exactly (macroTools.ts, 1881a-source-tier.test.ts). Read the actual diff, not review_note prose: sourceTier now Math.max() over source_tier of every PRESENT signals.* component (generic Object.values reduce, not carry-only), absent component never enters the max, empty-fallback stays 2 in this specific commit. Noted current HEAD's empty-fallback reads 4, not 2 -- traced to a LATER separate commit tagged FDA-7 (confirmed via live code comment + get_macro_snapshot.md Integration Notes) -- not a regression introduced by this task; no test in 1881a-source-tier.test.ts exercises the fully-empty-signals path so the two changes do not conflict. Independently re-ran: 1881a-source-tier.test.ts 21/21 pass (exact claim match, incl. new AC(b) carry-only=2 case + strengthened AC-8 firstKey+value assertion). 6 adjacent macro smoke files (089-tool-macro/1423d/1423f/1570c/1903a/1918a): 72/72 pass (claim said 68/68 -- test count grew from unrelated later work, zero fail either way). tsc --noEmit 0 errors. mock-guard.sh --files macroTools.ts PASS. DDD: pre-existing infrastructure/ imports in this file are legitimate (interface/mcp/tools layer, not domain/) -- no violation introduced by this diff. Secret grep hit is a comment (\"gap-token contract\"), false positive, not a real secret. Doc commit 67e26e9f6 independently confirmed matches shipped worst-of behavior (get_macro_snapshot.md Integration Notes section). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-22.md STEP qa-S146.",
+      "commits": [
+        "a401bda06 fix(mcp-server/macro): worst-of source_tier handler + test",
+        "31beeefab chore(memory/dev-mcp-server): notebook + journal",
+        "67e26e9f6 docs(mcp-server/macro): get_macro_snapshot reference doc corrected"
+      ],
+      "doc_review_note": "get_macro_snapshot.md tool signature + Integration Notes corrected to describe worst-of tier (was hardcoded 2); broader Yahoo/Vietcombank-vs-HTTP-rewire drift in that same doc is pre-existing, out of this XS task scope.",
+      "qa_verified_at": "2026-08-14T16:33:32Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit + mock-guard.sh",
+          "args": {
+            "commits_verified": [
+              "a401bda06",
+              "31beeefab",
+              "67e26e9f6"
+            ],
+            "files_verified": [
+              "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts",
+              "apps/mcp-server/src/__tests__/1881a-source-tier.test.ts",
+              "docs/agents/tools/list/get_macro_snapshot.md"
+            ],
+            "test_files": [
+              "src/__tests__/1881a-source-tier.test.ts",
+              "src/__tests__/089-tool-macro.test.ts",
+              "src/__tests__/1423d-thien-thoi-snapshot.test.ts",
+              "src/__tests__/1423f-deposit-rate-display.test.ts",
+              "src/__tests__/1570c-dinh-gia-snapshot.test.ts",
+              "src/__tests__/1903a-dispatch-regression.test.ts",
+              "src/__tests__/1918a-macro-snapshot-shape-guard.test.ts"
+            ]
+          },
+          "live_value_observed": "1881a-source-tier.test.ts 21/21 pass; 6 adjacent macro smoke files 72/72 pass; bun tsc --noEmit 0 errors; mock-guard.sh PASS on macroTools.ts; diff of a401bda06 shows sourceTier = presentTiers.length>0 ? Math.max(...presentTiers) : 2, matching worst-of AC exactly; current HEAD empty-fallback is 4 due to a LATER unrelated commit tagged FDA-7, not this task, confirmed via live code comment + get_macro_snapshot.md",
+          "observed_at": "2026-08-14T16:33:32Z"
+        }
+      }
+    },
+    {
+      "title": "Split capability_prober.go into manifest/probe/prober files",
+      "priority": "P2",
+      "zone": "api-gateway",
+      "type": "FACTORY",
+      "status": "DONE_VERIFIED",
+      "id": "FACTORY-APIGW-split-capability-prober",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APIGW-split-capability-prober",
+      "promoted_at": "2026-07-24T12:17:56Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+      "updated_at": "2026-08-14T16:34:06Z",
+      "claimed_at": "2026-08-14T16:24:57Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "entered_review_at": "2026-07-24T12:28:33Z",
+      "updated_by": "po (review-lane secondary-drain triage)",
+      "review_note": "Split by seam per approach spec: capability_manifest.go 104L (types+loadManifest), capability_probe.go 130L (probeHealthEndpoint+mcp types+probeMcpTool, size-justified), capability_prober.go 191L (struct+cache+ProbeAll/capabilityFor/runProbe, size-justified). ct[:17] HasPrefix hardening landed. go build/vet/test 10/10 pkgs clean, gofmt clean, golangci-lint 0 issues, G12 sandbox primitive 14/14 + module 1/1 GREEN. Behavior-unchanged proven via sorted stripped-code diff (only delta = HasPrefix swap). Commit 9fad8d4ad (local main, not pushed). rebuild_required=true, rebuild-verify PENDING-OPS (PO-AUTHORIZED 2026-08-06 — NO user gate; the earlier USER-GATED wording is retired per permanent user directive 2026-08-01). Decision journal: docs/agent-memory/decisions/sprint-FACTORY-APIGW-split-capability-prober-dev-api-gateway.md",
+      "secondary_claimed_at": "2026-08-13T12:58:10Z",
+      "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+      "secondary_dispatch_target": "ops",
+      "next_agent": "qa",
+      "po_triage_at": "2026-08-06T20:47:03Z",
+      "po_triage_verdict": "CODE-ACCEPTED / CLOSE-GATE-NOT-MET -> ops",
+      "deploy_gate": "PO-AUTHORIZED",
+      "rebuild_required": true,
+      "status_note": "PO triage 2026-08-06: code work ACCEPTED — independently re-verified, not taken on self-report: commit 9fad8d4ad IS an ancestor of HEAD; capability_manifest.go 104L / capability_probe.go 130L / capability_prober.go 191L match claimed sizes; `go build ./...` + `go vet ./...` in apps/api-gateway exit 0 at current HEAD; decision journal present. NOT signed DONE_VERIFIED: docker-deployment-runbook.md § Microservice Code-Change Close Gate Step 6 forbids PO marking DONE until Steps 1-5 pass, and they have not — running image vn-market-intelligence-mcp-api-gateway:latest was built 2026-07-15 17:05 CEST, the commit is 2026-07-24 14:24 CEST, so the split code is NOT in the live container. Root cause of the 13-day strand: next_agent was null, so no lane owned the row. ACTION FOR OPS: single-service rebuild only — `docker compose build --build-arg GIT_SHA=\"$(git rev-parse HEAD)\" api-gateway && docker compose up -d --no-deps api-gateway && bash scripts/verify-deploy-sha.sh api-gateway` (MUST exit 0). NEVER down/stop/kill/rm/--force-recreate — peer-killing. Then hand to qa via `scripts/ops-closegate-handoff.jq` with from_lane=review. NOTE: this one rebuild also ships 3 peer api-gateway commits undeployed since 2026-07-15 (251cda70e, 868bf8d1d, b184dde9f) — see zone-wide finding on FACTORY-APIGW-dedup-default-urls and FACTORY-APIGW-split-sandbox.\n\n[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Commit 9fad8d4ad48fc0c6dbfea91598c8e5178cdc6ad4 confirmed real, on main ancestry (git merge-base --is-ancestor PASS). git show --stat matches review_note claimed files exactly: capability_manifest.go 104L, capability_probe.go 130L, capability_prober.go 191L (byte-exact to claim). Re-verified independently at live HEAD, not row prose: go build ./... clean, go vet ./... clean, go test ./... 10/10 packages pass (cmd/server, pkg/application, pkg/domain, pkg/infrastructure, pkg/integration, pkg/interface/http, pkg/module/gateway, pkg/primitive/{not-deployed-rerouter,overall-status-computer,proxy-path-resolver,route-service-matcher}). gofmt -l clean on all 3 files. golangci-lint run ./... 0 issues. mock-guard.sh --files <3 files> PASS. Confirmed strings.HasPrefix(ct,\"text/event-stream\") hardening present at capability_probe.go:114 (replaces brittle ct[:17] slice). Secrets/hardcoded-cred grep clean. DEPLOY GATE (this row own Step-6 blocker, PO-triaged 2026-08-06 as the sole unmet item): confirmed LIVE — running container vn-market-intelligence-mcp-api-gateway-1 image built 2026-08-13T12:59:30Z, label vn.market.git_sha=832cd5a6e015908907f071aaa9dc468b214f2b85; git merge-base --is-ancestor 9fad8d4ad 832cd5a6e0 PASS, and the 3 peer commits this rows own status_note cited as also-undeployed (251cda70e/868bf8d1d/b184dde9f) are ALL now ancestors too -- ops rebuild (2026-08-13) swept the full zone-wide backlog. Step-5 live check: curl localhost:4000/health returned 200 with well-formed JSON from all 9 probed services via this exact prober code path; one transient mcp:down/2000ms reading self-resolved to ok (32-396ms) across 3 immediate re-probes -- consistent with the TTL-cached prober design, not a regression (mcp-server itself confirmed <0.4s reachable both host-side and from inside api-gateway containers own network namespace). verify-deploy-sha.sh reports drift vs CURRENT git HEAD (unrelated commits landed on main since the 08-13 rebuild) -- out of scope, this tasks own commit specifically IS deployed. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-22.md STEP qa-S148.",
+      "deploy_gate_discriminator": "REAL gate, NOT the phantom class. Do not over-generalise the FACTORY-APIGW-split-sandbox finding (PO 2026-08-06T20:33Z: rebuild_required was phantom there because apps/api-gateway/Dockerfile:12 builds `-o gateway ./cmd/server/` only and cmd/sandbox never enters the image). Discriminator run RAW here: `go list -deps ./cmd/server/` DOES return pkg/infrastructure, which is the package holding capability_manifest.go/capability_probe.go/capability_prober.go. This code therefore IS compiled into the shipped gateway binary, and the strings.HasPrefix SSE content-type hardening is a real behaviour change that is NOT running in the live container. Rebuild is required for real.",
+      "qa_verified_at": "2026-08-14T16:34:05Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "go build/vet/test + gofmt + golangci-lint + mock-guard.sh + docker inspect + curl /health",
+          "args": {
+            "cwd": "apps/api-gateway",
+            "commit_verified": "9fad8d4ad48fc0c6dbfea91598c8e5178cdc6ad4"
+          },
+          "live_value_observed": "go build ./... clean; go vet ./... clean; go test ./... 10/10 pkgs pass; gofmt -l clean; golangci-lint 0 issues; mock-guard PASS; deployed image git_sha=832cd5a6e0 (built 2026-08-13T12:59:30Z) confirmed ancestor-of=9fad8d4ad; curl :4000/health 200",
+          "observed_at": "2026-08-14T16:34:05Z"
+        }
+      }
+    },
+    {
+      "id": "FDA-5",
+      "priority": "P3",
+      "size": "S",
+      "sprint": "FAKE-DATA-AUDIT",
+      "status": "DONE_VERIFIED",
+      "title": "energyTools serves 4 hardcoded grid figures (40/22/45/85) — guarded by banner but figures sit in unstructured VN text",
+      "type": "FIX",
+      "zone": "apps/mcp-server",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FDA-5",
+      "promoted_at": "2026-07-31T04:20:03Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+      "updated_at": "2026-08-14T16:34:18Z",
+      "claimed_at": "2026-08-14T16:24:57Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "next_agent": "qa",
+      "updated_by": "po (Step 0-SIG triage-20260731T045857)",
+      "commit_sha": "af272fe1d",
+      "return_summary": "structuredContent field (is_estimate/source_tier/estimated_fields/grid_figures/hydro_data_source) added to get_energy_grid_signals alongside unchanged VN prose banner; 3 commits (af272fe1d code+test, 8084fb4f1 docs, 32476a610 memory); tsc clean, targeted 75/75 pass, toolCount=183/cronJobCount=88 unchanged; DJ sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S36",
+      "po_ci_regression_note_20260731T045857": "PO Step 0-SIG cross-reference (advisory for qa, no status change): the commit that shipped this row, af272fe1d ('fix(mcp-server): energyTools estimate flag now travels in structured field, not just VN prose', 2026-07-31T04:32:28+02:00), grew apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts from ~152L to 215L with NEITHER a size-justification header NOR a baseline entry, turning size-lint red on a file that was previously clean — first observed on run 30604839507 (head 22bdf63b5, 04:42Z): 'energyTools.ts — baseline-tolerance-exceeded (baseline=152L actual=215L upper=167L)'. Tracked separately as FIX-CI-SIZELINT-MCPSERVER-ENERGYTOOLS-NEW-OFFENDER (backlog, P0, dev-mcp-server) so this row's own AC is not silently widened. qa: do not sign this row off as CI-clean without acknowledging that regression.",
+      "status_note": "[QA] Review Record (direct-commit verify) 2026-08-14T16:33:02Z -- APPROVED, DONE_VERIFIED. Verified commit af272fe1d on main ancestry -- git show --stat matches the two files implied by row prose (energyTools.ts, DSI-S3-sector-fin.test.ts; row carries no .files[], fallback derivation used); companion commits 8084fb4f1 (docs) + 32476a610 (memory) also confirmed real and on main. Diff read directly (not trusted from prose): new EnergyGridResult.structuredContent (is_estimate=true/source_tier=4/estimated_fields[]/grid_figures{}/hydro_data_source/signal_count) added to the return object, VN prose content[] banner genuinely unchanged. Independently re-ran: DSI-S3-sector-fin.test.ts 27/27 pass; bun tsc --noEmit 0 errors; mock-guard.sh --files energyTools.ts PASS. PO's po_ci_regression_note_20260731T045857 (energyTools.ts size-lint regression, 152L->215L, no baseline/justification) acknowledged and traced: follow-up commit f4feb6551 (same day 08:11Z) added a size-justification: 224L header, no functional change; fresh size-lint-justification.sh run confirms energyTools.ts is NOT in the current offender list -- regression already closed, not open debt on this row. DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-22.md STEP qa-S148.",
+      "qa_verified_at": "2026-08-14T16:34:17Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + bun test (targeted) + bun tsc --noEmit + mock-guard.sh + size-lint-justification.sh",
+          "args": "commits af272fe1d/8084fb4f1/32476a610; apps/mcp-server/src/__tests__/DSI-S3-sector-fin.test.ts; apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts",
+          "live_value_observed": "all 3 commits confirmed ancestors of main; git show --stat matches energyTools.ts+DSI-S3-sector-fin.test.ts; DSI-S3-sector-fin.test.ts 27/27 pass; bun tsc --noEmit 0 errors; mock-guard.sh --files energyTools.ts PASS; size-lint-justification.sh confirms energyTools.ts NOT in offender list (regression from po_ci_regression_note_20260731T045857 already closed by commit f4feb6551)",
+          "observed_at": "2026-08-14T16:34:17Z"
+        }
+      }
+    },
+    {
+      "id": "FIX-CI-BUNTEST-1108-AGENT-WORK-LOG-STORE",
+      "type": "FIX",
+      "title": "CI RED: bun test (per-file isolation) — src/__tests__/1108-agent-work-log-store.test.ts",
+      "desc": "ci_red CI-RED-0b3d494d (run 31613681006, head 0b3d494d3109a307ce1dde822ef27ada46155ae0, 2026-08-12T15:53:22Z) listed 3 FAILEDFILE entries; two matched existing file-scoped board rows (FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH, FIX-CI-BUNTEST-FOREIGN-FLOW-MISSING-TRADING-DAY-NO-BACKFILL) and this one had ZERO dedup hit across backlog[]+ready[]+in_progress[]+review[]+qa[] AND across done[]+done_verified[]. Minted per the ci_red ANTI-AMNESTY BACKSTOP: the CI plane baseline under scripts/ci-per-file-isolation.sh is 0 fail, so every ci_red is actionable and 'pre-existing' is never a valid disposition without a matched FILE-scoped row. Explicitly NOT folded into FIX-MCP-SUITE-HEALTH-BASELINE — the anti-amnesty fence hard-forbids deduping a ci_red into any LOCAL-full-suite row (the two planes never share a fail set). INTERMITTENCY DATUM (record, do NOT treat as a skip reason): this file failed ONLY in run 31613681006 (0b3d494d, '15112 pass / 40 skip / 6 fail') and PASSED in the bracketing runs 31606982292 (b701e913, 14:53Z, 5 fail) and 31616202191 (f954d591, 16:21Z, 5 fail) — the 6th failure appeared and vanished within a 90-minute window while the other two failing files stayed constant. That is a deflake shape matching the DEFLAKE-VNSTOCK-3STATEMENT precedent (CI per-file-isolation transient), not a hard break. Scope as deflake-or-fix: first establish whether the failure is order-independent by re-running the single file in isolation, before bisecting.",
+      "priority": "P2",
+      "size": "S",
+      "zone": "apps/mcp-server/",
+      "owner": "po",
+      "next_agent": "qa",
+      "status": "DONE_VERIFIED",
+      "check_id": "CI-RED-0b3d494d",
+      "dedup_key": "ci_job:bun test|file:src/__tests__/1108-agent-work-log-store.test.ts",
+      "ci_fingerprint": "b2f06dcede777aaa81a1ef5c1dc5b3a6381dc2566ae7edcd1fdb4c8c1094ae92",
+      "files": [
+        "apps/mcp-server/src/__tests__/1108-agent-work-log-store.test.ts"
+      ],
+      "baseline_pass": false,
+      "created_at": "2026-08-12T17:00:39Z",
+      "created_by": "po (dev-team Step 1 triage)",
+      "verification_gate": "ci_green_on_subsequent_push",
+      "status_note": "AC: gh run view <databaseId with headSha AFTER 0b3d494d> --json jobs -q '.jobs[]|select(.name==\"bun test\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Failing job: bun test. Failing file: src/__tests__/1108-agent-work-log-store.test.ts. Observed RED on 0b3d494d only; GREEN on b701e913 + f954d591. FAILING_FILES read verbatim from gh run view --log-failed FAILEDFILE block, not from job name. Triaged 2026-08-12T17:00:39Z. | Root-caused as real-clock boundary race (independent datetime(now) recompute in fixture INSERT vs purgeOldAgentWorkLogs DELETE), reproduced deterministically via standalone bun:sqlite script. Fix: widened boundary row to +5s jitter margin in the test file only, no production code changed. Isolated run 17/17 pass stable, bun tsc clean. Cherry-picked onto main (worktree diverged, ff-only not possible): 319ef3cac (test fix), 119bc03c2 (notebook+journal). | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Commits 319ef3cac (test fix) + 119bc03c2 (notebook+journal) confirmed real, on main ancestry; git show --stat 319ef3cac matches the row's sole files[] entry exactly (apps/mcp-server/src/__tests__/1108-agent-work-log-store.test.ts), 19 ins/6 del, no other file touched. Diff read directly (not trusted from prose): the \"-30 days\" boundary fixture now inserts datetime('now','-30 days','+5 seconds') instead of exact \"-30 days\", widening the kept-just-inside-window margin against a real-clock race between the fixture's independent datetime('now') and purgeOldAgentWorkLogs's own datetime('now') call a few statements later. Confirmed purgeOldAgentWorkLogs (agentWorkLogStore.ts:180-192) is byte-unchanged — strict \"<\" comparison, DELETE FROM agent_work_log WHERE started_at < datetime('now', ? || ' days') — no production code touched, matches the \"no production code changed\" claim exactly. Re-ran independently: isolated file bun test src/__tests__/1108-agent-work-log-store.test.ts -> 17/17 pass, exact match to the claimed \"isolated run 17/17 pass stable\". bun tsc --noEmit -> 0 errors (first pass transiently hit an unrelated concurrent peer's scratch-check-ac2.ts file, absent from filesystem/git the moment checked — corroborated by a sibling QA-drain notebook entry this same cycle; 2nd run clean, 0 errors, confirming this row's own diff is not the source). mock-guard.sh --files (test file only, zero production source) -> PASS. process.env / secret greps on the touched file: clean. Smart-Skip applies (test-only change, zero production files in the diff) -> DDD + security full scans correctly skipped per flow's own rule, not a gap. Zero blocking ISSUE.",
+      "updated_at": "2026-08-14T16:35:26Z",
+      "claimed_at": "2026-08-14T16:24:57Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "commit": "319ef3cac",
+      "qa_verified_at": "2026-08-14T16:35:25Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit + mock-guard.sh",
+          "args": {
+            "commits_verified": [
+              "319ef3cac",
+              "119bc03c2"
+            ],
+            "files_verified": [
+              "apps/mcp-server/src/__tests__/1108-agent-work-log-store.test.ts"
+            ]
+          },
+          "live_value_observed": "bun test src/__tests__/1108-agent-work-log-store.test.ts -> 17 pass / 0 fail / 41 expect() calls. bun tsc --noEmit -> 0 errors (2nd run after transient unrelated peer scratch-file noise cleared). mock-guard.sh --files <test-file only> -> PASS (no production source files to scan).",
+          "observed_at": "2026-08-14T16:35:25Z"
+        }
+      }
+    },
+    {
+      "id": "CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON",
+      "title": "Replace dead team-tool-recheck writer (cloud RemoteTrigger, killed 2026-06-22 by no-RemoteTrigger directive) with a local cron — do not retire",
+      "owner": "po",
+      "status": "DONE_VERIFIED",
+      "type": "CLEAN",
+      "priority": "P2",
+      "zone": "docs/agents/",
+      "next_agent": "qa",
+      "created_at": "2026-08-06T07:09:22Z",
+      "created_by": "po (triage 2026-08-06)",
+      "origin_signal_id": "cj-20260806T085500",
+      "status_note": "PO DECISION = REPLACE, not retire (see signal cj-20260806T085500 disposition for the full basis). Writer docs/agent-memory/health/team-tool-recheck-*.md silent since 2026-06-23; source was RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by feedback_no_remote_trigger_all_local.md, whose migration rule mandates a local replacement. Urgency evidence from the 2026-08-06 PO cycle: a live tool-grant boundary violation (.claude/agents/alert-commander.md:5 grants Read/Write/Edit/Bash to a declared notebook-only-write agent) went unflagged for the whole 6-week silent window — the recheck's absence is actively masking drift. AC: a LOCAL cron re-establishes the docs/agent-memory/health/team-tool-recheck-*.md writer on a documented cadence; first run must re-detect the alert-commander grant/boundary mismatch as a positive control (a run that reports the fleet clean is a false green and fails this AC). Note memory-prune-sweep.sh drains this family at 30d, so the cadence must be < 30d or the directory re-empties. detail_ref docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3.\n[po/triage-20260812T0000Z] +1 re-fire, code-janitor system-issue 22:30:17Z, same premise (writer silent since 2026-06-23, memory-prune-sweep.sh now deleting the family at 30d). Premise cross-checked and it is the KNOWN one, already owned by this row (replace the dead cloud RemoteTrigger writer with a local cron) and by FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (the hardcoded-premise half). No new mint. Note the janitor is now DELETING the evidence family on a 30d rolling window while the replacement writer is still unbuilt — sequence CHORE before that sweep eats the last recheck files. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commit 9e0f73bb8 on main ancestry -- git show --stat matches PO's AC-verification-named artifacts exactly (team-tool-recheck.md, keep.md Step 5b wiring, first dated health file). Closed PO's explicitly-deferred residual gap (need unattended 2nd cron fire, not just first-run-works): docs/agent-memory/health/team-tool-recheck-*.md now holds 9 dated files -- 7 fires AFTER the PO-checked first one, spanning 2026-08-06/07/08/11(x2)/12/13/14 (8 calendar days); .claude/commands/crons/cron-agent-father.md confirms a registered recurring:true durable:true 14:23-UTC cron. md5 of 4 consecutive files distinct (live content, not copy-paste); 08-14 file's own header cites 08-13 as prior-report-compared. Positive control (CRITICAL-01/02 alert-commander/market-watcher Bash-grant vs declared-boundary) still fires correctly on the most recent run -- not a false green. Zero src/ files touched by the commit (docs/agents/ flow-md + health-report-md only) -- bun test/mock-guard/DDD-security N/A; bun tsc --noEmit re-run clean (0 errors; one transient hit from a concurrent peer's scratch .ts file self-resolved on re-run, unrelated to this row). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-22.md STEP qa-S149.",
+      "updated_at": "2026-08-14T16:36:01Z",
+      "updated_by": "qa",
+      "po_ac_verification_20260806T0752": "AC MET — PROMOTED BACKLOG -> REVIEW, next_agent=qa. Verified AT SOURCE by PO, not on agent-father's self-report.\n\nAC text was: 'a LOCAL cron re-establishes the docs/agent-memory/health/team-tool-recheck-*.md writer on a documented cadence; first run must re-detect the alert-commander grant/boundary mismatch as a positive control (a run that reports the fleet clean is a false green and fails this AC)'.\n\nEVIDENCE PO CHECKED DIRECTLY:\n  1. WRITER EXISTS — docs/agents/agent-father/flow/team-tool-recheck.md, 5857 bytes, mtime 2026-08-06 09:38 local.\n  2. IT PRODUCED OUTPUT — docs/agent-memory/health/team-tool-recheck-2026-08-06-0739.md, 4817 bytes. First file in that directory since 2026-06-23; the 6-week silent window is closed.\n  3. POSITIVE CONTROL GENUINELY FIRES, NOT A FALSE GREEN — the report opens with three ACTIVE FINDINGS (CRITICAL-01 alert-commander, CRITICAL-02 market-watcher, CRITICAL-03 news-scout) and PO re-derived all three independently from the live files rather than accepting the table: each of .claude/agents/{alert-commander,market-watcher,news-scout}.md has L4 asserting 'No other filesystem writes permitted' while L5 reads `tools: Read, Write, Edit, Bash, mcp__gateway__call_tool`. The AC named alert-commander specifically; the run found it plus two siblings.\n  4. CADENCE IS LOCAL AND UNDER THE 30d PRUNE FLOOR — wired into docs/agents/agent-father/flow/keep.md Step 5b on the existing daily cron-agent-father.md fire (`23 14 * * *`). The AC's own caveat was that memory-prune-sweep.sh drains this family at 30d so cadence must be <30d; daily clears that by a wide margin, and no new cron registration was needed (satisfies the no-RemoteTrigger directive that killed the original writer).\n\nQA SHOULD VERIFY ONE THING PO COULD NOT: that the SECOND run actually fires unattended on the 14:23 UTC cron and writes a second dated file. Item 2 proves the writer works when invoked; only a live unattended fire proves the CADENCE is real. Do not sign off on the single first-run artifact alone.\n\nRESIDUAL IS SPLIT OUT, NOT DROPPED — the live-MCP-probe subset agent-father structurally cannot run (no gateway grant) is now tracked as CHECK-TOOL-INTERFACE-SCHEMA-DRIFT-DOC-VS-LIVE. This row's AC never covered it; do not hold this row open for it.",
+      "po_scope_split_note": "PO REJECTED reviving the ~2h cloud-RemoteTrigger cadence verbatim (agent-father's own recommendation, and PO concurs): that cadence was sized for live-incident response, which system-auditor Tier-1/Tier-2 now covers. Static compliance is a daily-cadence concern; the genuinely-uncovered schema-drift class gets its own row and its own cadence decision.",
+      "po_signal_fold_20260806T2304": "SIGNAL FOLDED — NO NEW ROW, AND NO NEW PO DECISION NEEDED. Incoming system-issue signal docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-06.json (from=code-janitor, to=po, createdAt 2026-08-06T22:31:15Z) asks decision_needed: replace the team-tool-recheck job with a local cron OR retire it permanently. That exact question was already ADJUDICATED on this row at 2026-08-06T07:09Z (verdict = REPLACE — see status_note) and the resulting AC was VERIFIED AT SOURCE at 07:52Z (see po_ac_verification_20260806T0752): writer docs/agents/agent-father/flow/team-tool-recheck.md exists, it produced docs/agent-memory/health/team-tool-recheck-2026-08-06-0739.md, and the positive control genuinely fired with 3 CRITICAL findings rather than a false green. The signal is a STALE RE-ASK, not new information — its own idempotency_note says it is written once per docs/signals/ scan, and it was emitted by a memory-prune-sweep.sh pass whose premise (writer silent since 2026-06-23) was TRUE when that script was authored and became FALSE at 07:39Z the same day. Disposition per triage-signals.md system-issue rule: ACK-WITH-CORRECTION. Row stays REVIEW / next_agent=qa, unchanged. The QA ask is UNCHANGED and still open: confirm the SECOND unattended fire on the 14:23 UTC cron writes a second dated file — the first-run artifact alone is not cadence proof.",
+      "po_decision_already_ratified_20260807T0504": "ACK-WITH-CORRECTION for signal cj-20260807T064400. That signal asks PO for a replace-vs-retire decision on the dead team-tool-recheck writer. The decision is ALREADY MADE and this row IS it: REPLACE with a local cron, per the 2026-06-22 no-RemoteTrigger directive (feedback_no_remote_trigger_all_local). The signals decision_needed field is stale — it is re-emitted verbatim every 6h by memory-prune-sweep.sh because of a separate idempotency-guard bug (FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR, ready[]), not because anyone is still awaiting a ruling. PO re-affirms REPLACE this tick; no re-decision, no new row. Note for whoever drains this row: CHECK-TOOL-INTERFACE-SCHEMA-DRIFT-DOC-VS-LIVE (backlog) is the downstream capability this writer used to provide and should be considered together.",
+      "po_triage_20260814T0525_refire": "FOLD x2 (duplicate code-janitor system-issue envelopes @04:30:05Z file-sourced and @04:32:38Z dashboard-sourced — same finding, two drain paths). The signal again asks PO to decide 'replace vs retire'. THE DECISION IS ALREADY MADE AND RECORDED ON THIS ROW: REPLACE, not retire (see this row's existing status_note and signal cj-20260806T085500). No new decision, no new row, no re-litigation. The fact that a code-janitor sweep keeps re-asking a question PO answered on 2026-08-06 is itself the defect tracked by FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE — folded there too.",
+      "claimed_at": "2026-08-14T16:24:57Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "qa_verified_at": "2026-08-14T16:36:00Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "ls -la docs/agent-memory/health/team-tool-recheck-*.md",
+          "args": {
+            "pattern": "docs/agent-memory/health/team-tool-recheck-*.md"
+          },
+          "live_value_observed": "9 dated files on disk spanning 2026-08-06 through 2026-08-14 (2026-08-06 x2, 08-07, 08-08, 08-11 x2, 08-12, 08-13, 08-14) -- 7 fires after the single PO-checked first run, proving unattended daily cadence (registered cron .claude/commands/crons/cron-agent-father.md: recurring=true durable=true 14:23 UTC). Cross-checked distinct md5 across 4 consecutive files (not copy-paste) and confirmed positive control (CRITICAL-01/02 alert-commander/market-watcher) still fires on the 2026-08-14 file.",
+          "observed_at": "2026-08-14T16:36:00Z",
+          "evidence_commit": "9e0f73bb8",
+          "verdict": "APPROVED"
+        }
+      }
+    },
+    {
+      "id": "FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH",
+      "type": "FIX",
+      "title": "audit-output-contract self-check reports signal_queue_rows_written mismatches in BOTH directions and resolves by \"trusting the higher value\" — the reconciliation rule is unsound and the marker parse and the re-read disagree 4x in 50min",
+      "status": "DONE_VERIFIED",
+      "priority": "P2",
+      "size": "S",
+      "zone": "cross-service/",
+      "owner": "architect",
+      "next_agent": "qa",
+      "created_at": "2026-08-05T09:10:11Z",
+      "created_by": "po (dev-team triage tick 2026-08-05T08:37Z)",
+      "source": "telegram-reports 4412, 4413, 4415, 4420 (2026-08-05T06:52:10Z-07:42:17Z)",
+      "verification_gate": "marker_parse_and_independent_reread_agree_or_the_disagreement_is_explained",
+      "status_note": "AC-1: over 10 consecutive audit cycles, marker-parsed signal_queue_rows_written equals the independent re-read of .signal_queue.rows[], or the emitted BUG names WHICH of the two is authoritative and why. AC-2: the \"trusting the higher (real-artifact) value\" rule is either justified in the doc or replaced.  || PO TRIAGE 2026-08-08T07:59:55Z — occurrence folded from Telegram report 4514 @2026-08-08T06:36:34Z ('signal_queue_rows_written mismatch — marker-parsed=1, independent re-read of .signal_queue.rows[]=0. Trusting the higher (real-artifact) value.'), resolution=duplicate. Exact instance of this row's 'mismatches in BOTH directions' thesis. Corroborating measurement this tick: .signal_queue.rows[] holds 0 rows with status=NEW (222 to=po rows, all READ/TRIAGED/RETRACTED) — consistent with the re-read=0 leg. Note the self-check's stated tie-break ('trusting the higher value') is itself unsound: it assumes the marker is the real artifact without checking which side actually wrote, which is the resolution defect this row exists to fix. No new row minted.\n[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. No .commit/.files[] on row — fallback: derived commits from review_note's own list, 479c62613 (scripts+tests) + 7187dff0c (docs) + 9c96687e7 (memory/journal), all 3 confirmed real and on main ancestry (git merge-base --is-ancestor PASS on each); both 479c62613 and 7187dff0c carry Task: FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH trailer; git show --stat on each matches the files review_note claims exactly (scripts/audit-output-contract.sh, scripts/audit-output-contract.test.sh, scripts/emit-audit-signal.sh, scripts/emit-audit-signal.test.sh in 479c62613; docs/agents/system-auditor/flow/main.md, docs/agents/system-auditor/flow/tier1-probe.md, docs/policies/dev-standards.md in 7187dff0c). Re-ran REAL, not trusted from prose: bash scripts/audit-output-contract.test.sh 87/87 pass incl. T9/T10/T12/T13 (Bug-A minute-vs-second .ts compare + Bug-B --cycle-tag exact-scoping, both directions of this row's title); bash scripts/emit-audit-signal.test.sh 123/123 pass incl. T21/T22 (--cycle-tag threads to audit_cycle_tag / omits to null). bash -n clean on both scripts + both test files (pure bash zone, bun test/tsc structurally N/A, confirmed no apps/ TS source touched). mock-guard.sh --files \"scripts/audit-output-contract.sh scripts/emit-audit-signal.sh\" PASS (N/A-scan, bash files). dev-standards.md CANONICAL entry (Audit OUTPUT-CONTRACT parser, L1042-1054) independently checked and accurately states both bugs + the reconciliation-rule justification (take-the-max kept, not replaced, per AC-2). Call-site count: grepped --cycle-tag live — main.md has 5 sites (L636/687/773/989/1228), tier1-probe.md has 3 (L106/341/368); review_note claimed 4+2=6 total (7 incl. the audit-output-contract.sh call), live count is 8 — the extra site is a later, unrelated fix (FIX-AUDITOR-VERDICT-TRANSCRIPTION-PROSE-OVERRIDES-MACHINE-VERDICT, 2026-08-13) adopting the same --cycle-tag convention, not a defect; all 8 correctly pass \"$FIRE_TASK_ID\". AC-1 (marker-parse vs independent re-read agree, T9/T10/T12/T13 replay clean) and AC-2 (reconciliation rule justified) both satisfied. Zero blocking ISSUE. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-22.md STEP qa-S149.",
+      "note": "FOUR FIRES IN ~50 MINUTES, previously untracked (no board row matched AUDIT-OUTPUT-CONTRACT or SIGNAL-QUEUE-ROWS-WRITTEN in any lane):\n  4412 06:52:10Z  marker-parsed=1, independent re-read=0\n  4413 06:52:10Z  signals_posted=2 but dashboard_rows=0 this cycle\n  4415 06:52:40Z  marker-parsed=2, independent re-read=1\n  4420 07:42:17Z  marker-parsed=1, independent re-read=2   <- re-read HIGHER than marker\nRecurrence is established (4 fires, 2 audit cycles), so this is past the single-fire observation threshold.\n\nWHY IT IS WORTH A ROW RATHER THAN AN OBSERVATION: the mismatch runs in BOTH directions. 4412 and 4415 have the marker above the re-read; 4420 has the re-read above the marker. The emitted resolution — \"Trusting the higher (real-artifact) value\" — is therefore not a conservative fallback, it is arbitrary: it picks a different source on different cycles, so the number the auditor finally reports is not attributable to any one plane. An agent self-report whose reconciliation rule is direction-dependent is exactly the class flagged in feedback_agent_selfreport_metalayer_confabulation, and it is being used to attest that signal rows were written.\n\nLIKELY BENIGN EXPLANATION TO RULE OUT FIRST (cheap, do this before any code change): .signal_queue.rows[] is a live hot structure that peer agents write to concurrently, so a marker parsed at time T and a re-read at time T+delta can legitimately differ if another agent appended or if a drain removed rows in between. If that is the whole story the fix is to snapshot once and compare within the snapshot, not to pick the larger number. Confirm or refute by timestamping both reads.",
+      "related": [
+        "telegram-report:4412",
+        "telegram-report:4413",
+        "telegram-report:4415",
+        "telegram-report:4420"
+      ],
+      "updated_at": "2026-08-14T16:36:16Z",
+      "supervised": false,
+      "plan_only": false,
+      "updated_by": "qa",
+      "architect_completed_at": "2026-08-05T09:32:27Z",
+      "architect_brief": "docs/architecture-briefs/2026-08-05-fix-audit-output-contract-signalqueue-mismatch.md",
+      "architect_review_note": "[architect 2026-08-05T09:32:27Z DESIGN COMPLETE — plan-only, no code shipped this cycle] Read scripts/audit-output-contract.sh (255L) and scripts/emit-audit-signal.sh (551L) in full, plus every call site in docs/agents/system-auditor/flow/{main,tier1-probe}.md before designing.\n\nCONCURRENCY RULED OUT AS PO INSTRUCTED, WITH EVIDENCE: reproduced BOTH mismatch directions (occurrences 4412/4415 marker>independent; 4420 independent>marker) against the real, unmodified production script in an isolated scratch dir — single bash process, zero peer sessions, zero cron running. Both reproduce 100% deterministically given the right (common) input shape, which rules out ordinary concurrent-write timing skew by construction, not assumption.\n\nTWO INDEPENDENT STRUCTURAL BUGS, one per direction, both inside scripts/audit-output-contract.sh's V1 check (line 194-216):\nBUG A (explains 4412/4415, marker HIGHER): every tier's FIRE_TICK (main.md Step 0d, lines 140/147/152/165) is minute-precision (\"%Y-%m-%dT%H:%MZ\"); every signal_queue row .ts (emit-audit-signal.sh:529) is second-precision (\"%Y-%m-%dT%H:%M:%SZ\"). V1's raw jq string \".ts >= $cycle_start_ts\" silently drops any row written in the SAME clock-minute as the tick (\":\" 0x3A sorts below \"Z\" 0x5A right after HH:MM) — the common case since Tier-2's wall-time target is <300s. Confirmed empirically: jq -n '\"2026-08-05T06:00:03Z\" >= \"2026-08-05T06:00Z\"' => false. NOT a new defect class: emit-audit-signal.sh::_ledger_prune_and_lookup() (lines 472-478) already carries a `to_epoch` helper solving this exact minute-vs-second mismatch for the dedup ledger; audit-output-contract.sh's V1 check never adopted it. FIX: port to_epoch verbatim, compare as epoch ints not raw strings.\n\nBUG B (explains 4420, independent HIGHER): zero call sites (grep-confirmed, all 6 emit-audit-signal.sh sites + tier1-probe.md's 2) ever pass --from-agent — every tier/session shares the identical default FROM_AGENT=\"system-auditor\". V1's independent query `.from==$from and .ts>=$ts` therefore counts ANY row from ANY concurrently-running tier/session sharing that string within the window, not just what THIS cycle's own $MARKERS_FILE recorded. Tier-1 fires far more frequently than Tier-2/3/5 so cross-tier overlap during a longer cycle is routine. Reproduced: a cycle whose own markers file lists exactly 1 verified row, cross-checked against an orch-state containing that row plus one UNRELATED row sharing from=\"system-auditor\", falsely inflates the FINAL reported signal_queue_rows_written from 1 to 2 — silently crediting the cycle with a write it never made. This IS the dangerous direction PO flagged. FIX: thread the already-computed, already-unique-per-tier-per-tick FIRE_TASK_ID (\"cron:auditor-t<N>:\"+FIRE_TICK) through as a new --cycle-tag flag on both scripts, stored as a new passthrough field audit_cycle_tag on the row (SignalRowSchema.passthrough() verified live at orchStateSchema.ts:187-201, zero migration) and matched exactly in V1 instead of from+ts-window.\n\nRECONCILIATION RULE VERDICT (answers AC-2): JUSTIFY \"trust the higher value\", do not replace it with a direction-locked rule. Once both bugs are fixed, the only remaining legitimate divergence sources both genuinely favor the higher operand: independent<marker means a verified write was drained/pruned after this cycle wrote it (cannot un-write a real append — marker, already the write-time read-back-verified value, correctly wins, no code-path change needed there); independent>marker (now exact-cycle-tag-scoped, so no longer explainable by cross-tier collision) means this cycle's OWN markers file is missing a row that legitimately carries its tag (dropped marker line / bypassed-script write) — real self-report undercount, the scoped ground truth correctly wins. What was actually broken is that Bug A/B fed the max-taking policy corrupted operands, not the policy itself. Replaced the existing one-line comment (states only the under-report half, is silent on why over-reporting isn't equally a risk — exactly the gap that let Bug B go unnoticed) with an explicit two-directional justification.\n\nFull diffs, test plan (T12/T13 new cases + T9/T10 fixture fix to actually exercise real FIRE_TICK shape), and file list: docs/architecture-briefs/2026-08-05-fix-audit-output-contract-signalqueue-mismatch.md. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect-2.md.\n\nROUTING: next_agent=developer (generic), zone=cross-service/ (scripts/ + docs/agents/ + docs/policies/, no single apps/<service> touched) — matches closest precedent FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE (same S/P2 shape, tier1-probe.md+script change, routed developer/cross-service/ directly, no pm decomposition needed for an atomic single-behavior fix). Did not self-mint a child task, did not touch .head.\n\nVERIFICATION GATE (row's own, unchanged): after the fix, replay both §0 repro scenarios from the brief — both must produce no VIOLATION and an exact narrated==independent match. T12/T13 in scripts/audit-output-contract.test.sh are that replay, scripted for CI-repeatability.",
+      "review_note": "DEVELOPER IMPLEMENTATION 2026-08-05T09:52Z — implemented the architect's fully-specified brief (docs/architecture-briefs/2026-08-05-fix-audit-output-contract-signalqueue-mismatch.md) verbatim, both structural bugs.\n\nBug A (minute-vs-second .ts compare, explains 4412/4415): audit-output-contract.sh's V1 legacy from+ts-window path now ports emit-audit-signal.sh's to_epoch helper (_ledger_prune_and_lookup, lines ~472-478) and compares as epoch ints instead of a raw jq string >=, so a row written in the tick's own clock-minute is no longer silently dropped.\n\nBug B (shared default from=\"system-auditor\" cross-tier collision, explains 4420): new --cycle-tag flag on both scripts. emit-audit-signal.sh's _build_row_json() stores it verbatim as the row's new audit_cycle_tag passthrough field (SignalRowSchema.passthrough(), zero migration; omitted -> null). audit-output-contract.sh's V1 does an exact select(.audit_cycle_tag == $tag) match when --cycle-tag is supplied, immune to a peer tier/session sharing the same from value; falls back to the (now Bug-A-fixed) legacy from+ts-window path when absent, for backward compatibility. All 7 call sites (6 emit-audit-signal.sh: main.md:365/401/481/670, tier1-probe.md:89/215; 1 audit-output-contract.sh: main.md:749) now pass --cycle-tag \"$FIRE_TASK_ID\" — the tier's own already-unique-per-tick identifier, previously used only for fire-election task_claim/task_release.\n\nReconciliation-rule verdict (AC-2): JUSTIFIED per brief §3, not replaced — kept take-the-max, replaced the one-line \"never under-report\" comment with the brief's explicit two-directional justification (independent<marker -> a verified write was later drained/pruned, marker correctly wins by construction; independent>marker -> this cycle's own $MARKERS_FILE is missing a row that legitimately carries its cycle-tag, the scoped ground truth correctly wins) tied to both operands now being trustworthy per-direction.\n\nTDD: RED confirmed first — ran the new/modified tests against the UNMODIFIED scripts (8 failures: T9/T10/T12/T13 in audit-output-contract.test.sh; T21 in emit-audit-signal.test.sh) before writing any fix code. GREEN post-fix: audit-output-contract.test.sh 42/42 PASS (T9/T10 fixtures fixed to minute-precision FIRE_TICK-shaped cutoff + a same-tick-minute row, per brief §5, so the suite now catches a Bug-A regression, not just T12/T13's new cases; T12 = bare-FIRE_TICK-shape same-tick-minute case; T13 = --cycle-tag exact-scoping case with a peer row present). emit-audit-signal.test.sh 71/71 PASS (T21/T22: --cycle-tag threads to audit_cycle_tag / omitted -> null). Full scripts/*.test.sh fleet re-run: 157/157 PASS, zero regressions.\n\nVerification gate (row's own): replayed the brief's §0 repro scenarios directly against the fixed scripts in a fresh scratch dir (not just the test suite, real reproduction) — both now produce no VIOLATION and an exact narrated==independent match (Repro A: 2/2; Repro B with --cycle-tag: 1/1, peer row correctly excluded from the count).\n\nDocs: docs/policies/dev-standards.md CANONICAL \"Audit OUTPUT-CONTRACT parser\" entry updated (new --cycle-tag signature + bug summary). docs/agents/system-auditor/flow/main.md and tier1-probe.md size-justification headers updated per this repo's own convention. No handoff file exists for this row (direct PO board-mint per architect's own note, no BA spec) — Implementation Record written directly onto this board row, matching the closest precedent FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE.\n\nSimplicity gate: PASS — Q1 scope clean (only the 2 flags the brief specified), Q2 no single-use abstractions (to_epoch/exact-tag branch mirror existing repo precedent), Q3 senior-test clean, Q4 ratio <50% overhead (every added line directly serves Bug A/B fix, its tests, or the mechanical 7-site call thread).\n\nNo apps/ TS/Go source touched (zone cross-service/, pure bash+md) — bun test/tsc structurally N/A. bash -n clean on both scripts + both test files.\n\nCommits: 479c62613 (scripts + tests), 7187dff0c (docs), 9c96687e7 (notebook + decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-3.md STEP developer-S1).\n\nQA next.\n",
+      "po_occurrence_20260807T0504": "OCCURRENCE — telegram reports 4484 (2026-08-07T04:20:46Z) and 4485 (04:20:57Z), byte-identical text 11s apart: \"signal_queue_rows_written mismatch — marker-parsed=0, independent re-read of .signal_queue.rows[]=1. Trusting the higher (real-artifact) value.\" Confirms BOTH halves of this rows title on one tick: (a) the unsound trust-the-higher-value reconciliation rule, fired verbatim; (b) the marker-parse vs re-read disagreement, here in the marker-undercounts direction (0 vs 1). ADDITIONAL DATUM not previously on this row: the 11-second gap means the same underlying finding was EMITTED TWICE, so the emitter has no dedup on this path either — that doubles the BUG-channel noise per real defect and is worth folding into the fix scope. Sibling FIX-AUDITOR-B12-DOUBLE-INVOKE-EMIT-MARKER-LOSS (backlog) covers the double-invoke shape on a different check and may share a root cause. Both reports resolved to this row; no new mint.",
+      "po_triage_20260814T0525_fold": "FOLD — recurrence while in REVIEW. Telegram 4848 @2026-08-14T02:35:53Z: 'signal_queue_rows_written mismatch — marker-parsed=1, independent re-read of .signal_queue.rows[]=0. Trusting the higher (real-artifact) value.' Note the reconciliation rule fired in the direction this row names as unprincipled: it took the MARKER value (1) over the INDEPENDENT ARTIFACT RE-READ (0), while calling the marker 'the real-artifact value'. That label is inverted — the re-read of .signal_queue.rows[] IS the artifact plane and the marker is the self-report. Recorded because it shows the mismatch text itself misdescribes which side is authoritative, which any fix must correct along with the rule.",
+      "claimed_at": "2026-08-14T16:24:57Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "qa_verified_at": "2026-08-14T16:35:50Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "bash scripts/audit-output-contract.test.sh + bash scripts/emit-audit-signal.test.sh + bash -n + mock-guard.sh + git show --stat on 479c62613/7187dff0c/9c96687e7",
+          "args": {
+            "commits_verified": [
+              "479c62613",
+              "7187dff0c",
+              "9c96687e7"
+            ]
+          },
+          "live_value_observed": "audit-output-contract.test.sh 87/87 pass (T9/T10/T12/T13 confirm both mismatch directions fixed); emit-audit-signal.test.sh 123/123 pass (T21/T22 confirm --cycle-tag threading); bash -n clean both scripts+tests; mock-guard.sh PASS; all 3 commits real+on-main-ancestry, Task: trailer present on 2 of 3; 8 live --cycle-tag call sites (5 main.md + 3 tier1-probe.md) all correct",
+          "observed_at": "2026-08-14T16:35:50Z"
+        }
+      }
+    },
+    {
+      "title": "Delete dead SQLiteAnalysisRepository and phantom AnalysisRepositoryPort",
+      "priority": "P2",
+      "zone": "rag-service",
+      "type": "FACTORY",
+      "status": "DONE_VERIFIED",
+      "id": "FACTORY-RAG-delete-dead-sqlite-repo",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-RAG-delete-dead-sqlite-repo",
+      "promoted_at": "2026-07-24T00:14:29Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+      "updated_at": "2026-08-14T16:37:08Z",
+      "claimed_at": "2026-08-14T16:24:57Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "next_agent": "qa",
+      "entered_review_at": "2026-07-24T00:22:37Z",
+      "review_note": "dev-rag-service: confirmed dead at source (SQLiteAnalysisRepository constructed only in test_rag_integration.py fixture, never by app_factory.build_real_adapters or main.py; AnalysisRepositoryPort had no live implementer/consumer beyond it) — deleted class + _row_to_entry helper + sqlite3 import (infrastructure/repositories.py), AnalysisRepositoryPort ABC (domain/repositories.py), the test that exercised only them, fixed phantom analysis_repo docstring (usecases.py), trimmed matching arch-doc sections. pytest 165->161 (exactly the 4 deleted tests), mypy 259->253 (strict decrease, no new), sandbox 16/16+2/2 GREEN, env audit empty. Journal: docs/agent-memory/decisions/sprint-FACTORY-RAG-delete-dead-sqlite-repo-dev-rag-service.md. Commit 768bee954.",
+      "owner": "dev-rag-service",
+      "redispatch_count": 1,
+      "updated_by": "qa",
+      "po_qa_lane_stale_triage_20260814T0908Z": "[PO 2026-08-14T09:08Z QA-LANE-STALE TRIAGE] NO QA ACTIVITY EVER. Claimed by qa-drain 2026-08-09T05:58:06Z; zero qa verdict/notebook/journal commits in `git log --all --grep`; status_note null (only dev-rag-service's own self-closeout review_note). Spawned qa session produced nothing durable; 5 days stranded with no redispatch path. Re-queued for verify-committed. Fallback input for QA (commit:null): 768bee954 ('chore(rag-service): delete dead SQLiteAnalysisRepository + phantom AnalysisRepositoryPort'), self-closeout 3d05e11 lane-move ed05c5179. owner set dev-rag-service (was null).",
+      "status_note": "[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. No commit/files[] fields on this qa[] row; used PO's stale-triage fallback commit 768bee954, confirmed real and on main ancestry (git merge-base --is-ancestor PASS). git show --stat matches the 4 source files named in dev-rag-service's own review_note exactly (application/usecases.py, domain/repositories.py, infrastructure/repositories.py, __tests__/integration/test_rag_integration.py) plus the journal/notebook/arch-doc trims. Live source re-read (not trusted from prose): domain/repositories.py now contains ONLY VectorStorePort/EmbedderPort (AnalysisRepositoryPort gone); IndexUseCase docstring no longer references phantom analysis_repo param; repo-wide + arch-doc grep for SQLiteAnalysisRepository|AnalysisRepositoryPort = zero hits. Ran pytest INSIDE the actual deployed rag-service image (never host, per non-bun-zone rule): full suite 203 pass/12 fail — traced all 12 to a pre-existing, already-documented, UNRELATED stale-image gap (requirements.txt httpx2 pin landed 2026-08-14T10:18Z UTC, this image was built 2026-08-14T08:39Z UTC, before the pin — confirmed via git -S blame + docker image Created timestamp, not assumed); none of the 12 failing test files reference the deleted symbols. The actually-touched integration file (test_rag_integration.py) run in isolation: 6/6 pass clean. mypy (installed transiently inside the image, scoped to the 3 touched production files): 21 pre-existing errors, zero referencing SQLiteAnalysisRepository/AnalysisRepositoryPort/sqlite3/analysis_repo (grep-confirmed) — deletion introduced no new errors. mock-guard.sh --files \"usecases.py domain/repositories.py infrastructure/repositories.py\" PASS. Zero blocking ISSUE. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-22.md STEP qa-S151.",
+      "qa_verified_at": "2026-08-14T16:35:27Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + pytest(in-image) + mypy(in-image, scoped) + mock-guard.sh + grep",
+          "args": {
+            "commit_verified": "768bee954",
+            "files_verified": [
+              "apps/rag-service/application/usecases.py",
+              "apps/rag-service/domain/repositories.py",
+              "apps/rag-service/infrastructure/repositories.py",
+              "apps/rag-service/__tests__/integration/test_rag_integration.py"
+            ],
+            "docker_image": "vn-market-intelligence-mcp-rag-service:latest"
+          },
+          "live_value_observed": "commit 768bee954 confirmed ancestor of main; git show --stat matches all 4 files; test_rag_integration.py 6/6 pass in isolation; full in-image suite 203 pass/12 fail (12 fail = pre-existing unrelated httpx2 stale-image gap, traced not assumed, zero overlap with deleted symbols); mypy scoped to 3 touched files: 21 pre-existing errors, zero referencing deleted symbols; mock-guard PASS; repo-wide + arch-doc grep for SQLiteAnalysisRepository|AnalysisRepositoryPort = zero hits",
+          "observed_at": "2026-08-14T16:35:27Z"
+        }
+      }
     }
   ],
   "closed_sprints": [
@@ -19442,6 +19751,20 @@
       "severity": "LOW",
       "status": "RESOLVED",
       "payload_ref": null,
+      "po_disposition_at": "2026-08-14T00:30:11Z",
+      "po_disposition_by": "po/triage-20260814T0007Z",
+      "po_disposition": "RESOLVED — triaged in dev-team Step 1, tick 2026-08-14T00:07Z, alongside 248 durable-inbox envelopes and 49 telegram reports (4797-4845, all processed, list_unresolved_reports() == [] verified). Folded onto existing board rows; see docs/agent-memory/decisions/triage-20260814T0007Z-po.md for the per-class dispositions."
+    },
+    {
+      "id": "cj-20260813T163115Z",
+      "ts": "2026-08-13T16:31:08Z",
+      "from": "code-janitor",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+      "severity": "LOW",
+      "status": "RESOLVED",
+      "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-13.json",
       "po_disposition_at": "2026-08-14T00:30:11Z",
       "po_disposition_by": "po/triage-20260814T0007Z",
       "po_disposition": "RESOLVED — triaged in dev-team Step 1, tick 2026-08-14T00:07Z, alongside 248 durable-inbox envelopes and 49 telegram reports (4797-4845, all processed, list_unresolved_reports() == [] verified). Folded onto existing board rows; see docs/agent-memory/decisions/triage-20260814T0007Z-po.md for the per-class dispositions."
