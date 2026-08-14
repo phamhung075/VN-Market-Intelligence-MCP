@@ -10803,6 +10803,40 @@
           "observed_at": "2026-08-14T04:56:57Z"
         }
       }
+    },
+    {
+      "id": "FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER",
+      "type": "FIX",
+      "size": "S",
+      "priority": "P2",
+      "status": "DONE_VERIFIED",
+      "zone": "cross-service/",
+      "title": "WF-2 SUPERVISED-HOLD gate (docs/agents/dev-team/flow/main.md:467-483) has no documented PO-side mechanism that ever produces the po_goahead_* stamp it requires to release",
+      "desc": "grep -rn 'po_goahead' docs/agents/po/ docs/protocols/ .claude/skills/ returns zero hits outside the gate's own consumer-side jq predicate and the rows it has been hand-stamped onto ad hoc (e.g. FIX-AUDITOR-CALLER-PROSE-OVERRIDES-DOCUMENTED-DETECTOR-THRESHOLD this cycle). The stamp exists only because a PO happened to hand-author the exact key pattern; nothing in po/flow/main.md instructs it to. Same structural class as FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (2026-07-21, idled a P0 6+ days) — a documented consumer with no documented producer. AC: po/flow/main.md gains an explicit step/rule for stamping po_goahead_<ts> on a supervised row it ratifies, so the mechanism is reliable rather than incidental.",
+      "created_at": "2026-07-30T09:18:19Z",
+      "created_by": "po/triage-20260730T0853",
+      "source": "PO triage 2026-07-30T09:06Z BATCH item 5/6 — raised by dev-team (SendMessage to a84c0571776271792), confirmed by PO (ruling-20260730T0906Z-po-triage-po.md STEP po-5, po.md notebook), landed to orch-state by dev-team per the same mint-gap as item 1.",
+      "updated_at": "2026-08-14T06:01:48Z",
+      "promoted_at": "2026-07-30T16:16:28Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+      "claimed_at": "2026-08-14T05:56:59Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "next_agent": "qa",
+      "reviewed_at": "2026-07-30T16:28:02Z",
+      "reviewed_by": "developer",
+      "review_note": "Added docs/agents/po/flow/supervised-goahead.md (new PO-side producer for the po_goahead_* stamp WF-2 should_hold gate requires, docs/agents/dev-team/flow/main.md:467-483) + MANDATORY-every-tick pointer step in po/flow/main.md Pre-check + regression verifier scripts/audits/po-goahead-producer-verify.sh (replays should_hold jq against synthetic fixtures: RED before doc existed, GREEN after -- 4/4 PASS). Step 1 of the new sub-flow is scoped to only the .head.active_task_id row (the one row WF-2 actually evaluates per tick), not a broad board scan -- live-tested the broad alternative and it returned ~10 unrelated mid-flight rows, none ready to ratify. Commit 5c1f19b7b. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer.md STEP developer-S44 (commit dff618bde). No apps/ TS/Go touched (zone cross-service/, pure doc+bash) - bun test/tsc structurally N/A. No MCP/gateway tool grant this session (Read/Edit/Write/Bash only) - board flip performed directly via scripts/orch-apply.sh, no task_claim/task_release needed (lock already held by dev-team dispatcher per this task spec, owner_client_session=64c7c677-0f0f-4cee-a3ce-dba79d70b7ae).",
+      "status_note": "[QA] Review Record (direct-commit verify): commits 5c1f19b7b (po/flow/main.md pointer + new supervised-goahead.md producer + new po-goahead-producer-verify.sh regression test) + dff618bde (decision journal STEP developer-S44) both confirmed on main ancestry, diffs match claimed files exactly. Re-ran po-goahead-producer-verify.sh independently: 4/4 OK, exit 0 -- did not trust devs self-reported PASS. Verified supervised-goahead.md Step 1 should_hold jq is byte-identical (modulo bash-var naming) to dev-team/flow/main.md current WF-2 gate (drifted to lines 355-389 since 07-30 -- already re-synced by a later unrelated commit 6a697974f); confirmed live-matching, not a silent no-op. Head-only scope confirmed correct -- matches WF-2 own actual scope (only ever evaluates .head.active_task_id); review[] QA-Drain lane deliberately bypasses sup/po/wrap by separate design (AC-3), no gap vs this task AC. mock-guard PASS (docs+bash audit script, no production source touched). bun test/tsc N/A (no apps/ files touched). VERDICT: DONE_VERIFIED.",
+      "verification": {
+        "raw_probe": {
+          "tool": "bash scripts/audits/po-goahead-producer-verify.sh",
+          "args": "bash scripts/audits/po-goahead-producer-verify.sh",
+          "live_value_observed": "PASS: po_goahead producer is documented (supervised-goahead.md, routed from main.md) and its stamp shape satisfies dev-team WF-2 should_hold predicate. 4/4 OK checks. exit 0",
+          "observed_at": "2026-08-14T06:00:43Z"
+        }
+      },
+      "reviewed_at_qa": "2026-08-14T06:00:43Z",
+      "reviewed_by_qa": "qa"
     }
   ],
   "closed_sprints": [
@@ -16815,6 +16849,20 @@
       "po_disposition_at": "2026-08-14T00:30:11Z",
       "po_disposition_by": "po/triage-20260814T0007Z",
       "po_disposition": "RESOLVED — deep_fetch_queue/deep_fetch_stats/cron_job_runs integrity class, already tracked by FIX-DEEPFETCH-PIPELINE-100PCT-UNFETCHED-PRODUCER-LIVE-CONSUMER-DEAD (minted 2026-08-13, commit f01645c90). No new row: per-occurrence minting on this class is the documented churn pattern."
+    },
+    {
+      "id": "sys-20260813T055155-6af6",
+      "ts": "2026-08-13T05:51:55Z",
+      "from": "system-auditor",
+      "to": "dev-team",
+      "type": "db_integrity_breach",
+      "summary": "scheduler_locks: 1 row: job_name='weeklyPortfolioReport', acquired_at='2026-08-09 16:00:05', released_at='2026-08-09 16:",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": "docs/data/db-integrity-history.json",
+      "provenance": "detector",
+      "audit_cycle_tag": null,
+      "dedup_key": null
     }
   ],
   "backlog_detail": [],
