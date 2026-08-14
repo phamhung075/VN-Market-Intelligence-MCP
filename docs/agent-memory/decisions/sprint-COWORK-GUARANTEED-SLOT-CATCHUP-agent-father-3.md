@@ -155,3 +155,17 @@ control on the next Tier-3 cycle, left untouched per explicit sequence-gate to
 FIX-AGENTMEMORY-INDEX-DEAD-SESSION-POINTERS.
 **why-change:** None — dispatch instruction matched spec_doc exactly; single-file edit, no
 cascade (prose-only Tier-3 check text, no frontmatter/knowledge/routing fields touched).
+
+### STEP agent-father-S50 · agent-father · 2026-08-14T23:05:39Z
+**task-id:** TASK_2008c
+**what-done:** FR-A4 deleted telemetry.md Step 6.0's circular calendar_status arg; FR-A5 added
+CALENDAR_STATUS_DOMAIN enum + fail-loud (log + send_telegram(bug)) on out-of-domain values in
+pressure-read.md Step 4.3; refreshed both size-justification headers to actual line counts.
+**what-considered:**
+- New hard-block gate on out-of-domain value vs. keep conservative no-suppression fallthrough —
+  kept fallthrough per spec's explicit "never worse than today, visibility only" requirement.
+- Rate-limit the new telegram vs. none — chose none: self-heals within one tick once TASK_2008a's
+  server-compute+enum gate lands, so this is a one-shot alert window, not persistent-until-fixed.
+**why-decision:** Architect-ratified BA spec (UC-CDC-P1-BA-spec.md) fully specified both FRs;
+implemented verbatim; matched channel="bug" to existing spawn-fanout.md IDENTITY_CHECK precedent.
+**why-change:** None — implemented as specced.
