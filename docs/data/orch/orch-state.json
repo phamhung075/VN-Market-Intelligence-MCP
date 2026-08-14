@@ -18019,6 +18019,36 @@
         "claimed_at": "2026-08-14T20:12:49Z",
         "claimed_by": "dev-team (Step 3 FIX dispatch)",
         "updated_by": "agent-father"
+      },
+      {
+        "id": "FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE",
+        "type": "FIX",
+        "title": "auditor-notebook-commit.sh AC-4 backstop is structurally unreachable dead code since 2026-08-06 — add reachable Step 2b emit-vs-claim plane cross-check (declared 'Anomalies: N new' vs MARKERS_FILE signal count) that REFUSES the commit on mismatch",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "owner": "po",
+        "created_at": "2026-08-14T20:02:29Z",
+        "created_by": "po",
+        "source": "durable-inbox architecture_brief from=agents-architect 2026-08-14T18:59:03Z — docs/architecture-briefs/2026-08-14-auditor-write-plane-divergence-root-cause.md §8 'New row to mint (PO)'",
+        "brief_ref": "docs/architecture-briefs/2026-08-14-auditor-write-plane-divergence-root-cause.md",
+        "dedup_key": "auditor:write-plane-divergence|gate:emit-vs-claim-crosscheck",
+        "files": [
+          "scripts/auditor-notebook-commit.sh",
+          "scripts/lib/output-contract-invariant.sh",
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "dedup_checked": "backlog+ready+in_progress+review+qa scanned for FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE and for write-plane/notebook-compose siblings: NO row with this id exists. Adjacent open rows deliberately NOT absorbed (brief §7 explicitly rules do-not-close): SPIKE-AUDITOR-WRITE-PLANE-DIVERGENCE-ROOT-CAUSE (review — this row IS its deliverable), FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED (review — wiring the compose actuator, different actuator), FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS (review — fleet-wide rollout, gated on the pilot).",
+        "evidence": "Brief §0/§4: BOTH AC-2 branches fire and compound. scripts/auditor-notebook-commit.sh §2a scans the staged notebook diff for a literal ^\\+\\[OUTPUT-CONTRACT\\] line that docs/agents/system-auditor/flow/main.md never writes into the notebook at all (only into the RETURN block, computed by a different script call the 2026-08-06 reorder now runs AFTER the notebook is already committed) — so the one gate positioned to catch a fabricated claim before it lands has been unreachable for every cycle since 2026-08-06. Brief verified at source this tick: file exists, 21294 bytes, author agents-architect, dated 2026-08-14T18:59:03Z.",
+        "acceptance": "AC-1 scripts/auditor-notebook-commit.sh gains a REACHABLE §2b gate per brief §5 (new optional --markers-file / --cycle-tag args; omitting them is a byte-identical no-op for every non-auditor caller). AC-2 on mismatch (declared_anomalies>0 AND markers_signal_count==0) the script does `git restore --staged` and exits 1 — REFUSE, never rewrite-counters-to-truth and never commit-plus-discrepancy-signal (brief AC-4). AC-3 docs/agents/system-auditor/flow/main.md:1173-1177 passes --markers-file \"$MARKERS_FILE\" --cycle-tag \"$FIRE_TASK_ID\" (both already in scope at that point; agent-father half). AC-4 a synthetic replay proves BEFORE=commit lands with declared>0/markers=0, AFTER=ABORT — the gate must be shown to actually fire, not merely be present (feedback_fence_false_green).",
+        "non_goals": "Do NOT close the 9 adjacent open rows (brief §7). Do NOT replace the existing §2a block — leave it as harmless dead code. Phase-2 (--cycle-tag defense-in-depth) is soft-blocked on FIX-AUDIT-OUTPUT-CONTRACT-V4-V5-DEDUPSKIP-DENOMINATOR-FALSE-VIOLATION and is out of scope for Phase-1.",
+        "status_note": "PO-SPLIT (brief §8, 2 pieces, PO routed 2026-08-14T19:5xZ): (1) scripts/auditor-notebook-commit.sh + scripts/lib/output-contract-invariant.sh -> developer / cross-service — agent-father must NOT implement this half (scripts/ is explicitly outside its commit zone per .claude/skills/commit-boundary/SKILL.md). (2) docs/agents/system-auditor/flow/main.md:1173-1177 two-arg call-site edit + confirm the existing generic ABORT bullet at :1184-1189 already covers the new marker -> agent-father. next_agent=developer for piece (1) first; piece (2) is a 2-arg edit that lands after the script accepts the args. | PIECE-1-LANDED : developer shipped scripts/auditor-notebook-commit.sh new reachable §2b gate + scripts/lib/output-contract-invariant.sh (3 new pure functions) + new scripts/auditor-notebook-commit.test.sh (24/24, incl. the AC-4 before/after synthetic-replay pair I1/I2). AC-1 backward-compat confirmed (omit --markers-file = byte-identical no-op). Piece 2 (docs/agents/system-auditor/flow/main.md:1173-1177 2-arg call-site edit) is agent-father's separate follow-up, deliberately NOT done here — that file confirmed untouched (git status --porcelain empty). QA: verify §2b gate fires (re-run scripts/auditor-notebook-commit.test.sh), confirm §2a left intact, confirm main.md untouched, then route piece 2 to agent-father before closing the parent brief.",
+        "updated_at": "2026-08-14T20:29:57Z",
+        "claimed_at": "2026-08-14T20:12:49Z",
+        "claimed_by": "dev-team (Step 3 FIX dispatch)",
+        "updated_by": "developer"
       }
     ],
     "qa": [
@@ -18080,37 +18110,7 @@
     },
     "last_triaged_at": "2026-08-14T18:56:02Z",
     "last_triaged_by": "dev-team (design-router sweep)",
-    "in_progress": [
-      {
-        "id": "FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE",
-        "type": "FIX",
-        "title": "auditor-notebook-commit.sh AC-4 backstop is structurally unreachable dead code since 2026-08-06 — add reachable Step 2b emit-vs-claim plane cross-check (declared 'Anomalies: N new' vs MARKERS_FILE signal count) that REFUSES the commit on mismatch",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "owner": "po",
-        "created_at": "2026-08-14T20:02:29Z",
-        "created_by": "po",
-        "source": "durable-inbox architecture_brief from=agents-architect 2026-08-14T18:59:03Z — docs/architecture-briefs/2026-08-14-auditor-write-plane-divergence-root-cause.md §8 'New row to mint (PO)'",
-        "brief_ref": "docs/architecture-briefs/2026-08-14-auditor-write-plane-divergence-root-cause.md",
-        "dedup_key": "auditor:write-plane-divergence|gate:emit-vs-claim-crosscheck",
-        "files": [
-          "scripts/auditor-notebook-commit.sh",
-          "scripts/lib/output-contract-invariant.sh",
-          "docs/agents/system-auditor/flow/main.md"
-        ],
-        "dedup_checked": "backlog+ready+in_progress+review+qa scanned for FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE and for write-plane/notebook-compose siblings: NO row with this id exists. Adjacent open rows deliberately NOT absorbed (brief §7 explicitly rules do-not-close): SPIKE-AUDITOR-WRITE-PLANE-DIVERGENCE-ROOT-CAUSE (review — this row IS its deliverable), FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED (review — wiring the compose actuator, different actuator), FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS (review — fleet-wide rollout, gated on the pilot).",
-        "evidence": "Brief §0/§4: BOTH AC-2 branches fire and compound. scripts/auditor-notebook-commit.sh §2a scans the staged notebook diff for a literal ^\\+\\[OUTPUT-CONTRACT\\] line that docs/agents/system-auditor/flow/main.md never writes into the notebook at all (only into the RETURN block, computed by a different script call the 2026-08-06 reorder now runs AFTER the notebook is already committed) — so the one gate positioned to catch a fabricated claim before it lands has been unreachable for every cycle since 2026-08-06. Brief verified at source this tick: file exists, 21294 bytes, author agents-architect, dated 2026-08-14T18:59:03Z.",
-        "acceptance": "AC-1 scripts/auditor-notebook-commit.sh gains a REACHABLE §2b gate per brief §5 (new optional --markers-file / --cycle-tag args; omitting them is a byte-identical no-op for every non-auditor caller). AC-2 on mismatch (declared_anomalies>0 AND markers_signal_count==0) the script does `git restore --staged` and exits 1 — REFUSE, never rewrite-counters-to-truth and never commit-plus-discrepancy-signal (brief AC-4). AC-3 docs/agents/system-auditor/flow/main.md:1173-1177 passes --markers-file \"$MARKERS_FILE\" --cycle-tag \"$FIRE_TASK_ID\" (both already in scope at that point; agent-father half). AC-4 a synthetic replay proves BEFORE=commit lands with declared>0/markers=0, AFTER=ABORT — the gate must be shown to actually fire, not merely be present (feedback_fence_false_green).",
-        "non_goals": "Do NOT close the 9 adjacent open rows (brief §7). Do NOT replace the existing §2a block — leave it as harmless dead code. Phase-2 (--cycle-tag defense-in-depth) is soft-blocked on FIX-AUDIT-OUTPUT-CONTRACT-V4-V5-DEDUPSKIP-DENOMINATOR-FALSE-VIOLATION and is out of scope for Phase-1.",
-        "status_note": "PO-SPLIT (brief §8, 2 pieces, PO routed 2026-08-14T19:5xZ): (1) scripts/auditor-notebook-commit.sh + scripts/lib/output-contract-invariant.sh -> developer / cross-service — agent-father must NOT implement this half (scripts/ is explicitly outside its commit zone per .claude/skills/commit-boundary/SKILL.md). (2) docs/agents/system-auditor/flow/main.md:1173-1177 two-arg call-site edit + confirm the existing generic ABORT bullet at :1184-1189 already covers the new marker -> agent-father. next_agent=developer for piece (1) first; piece (2) is a 2-arg edit that lands after the script accepts the args.",
-        "updated_at": "2026-08-14T20:12:51Z",
-        "claimed_at": "2026-08-14T20:12:49Z",
-        "claimed_by": "dev-team (Step 3 FIX dispatch)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
