@@ -117,3 +117,71 @@ protocol-layer changes.
 RETURN (this triage): DONE — prior-art diff complete, verdict NOT-shipped, board updated
 (`ready[]`, `next_agent: developer`). NEXT: developer (deliberate dispatch, `supervised:true` blocks
 auto-pickup). PIPELINE: continue.
+
+---
+
+## [Developer] Implementation Record — 2026-08-14
+
+- **Files modified:**
+  - `.claude/skills/dispatch-claim/SKILL.md:601-657` — new `## Step 2.4 — Cowork-Slot Cross-Path
+    Collision Probe` section (FR-1 `COWORK_AGENTS` recognition via `cowork-schedule.json` jq;
+    FR-2 `AGENT_SLOTS`/`TARGET_SLOTS` resolution per architect's intent-key-IS-slot_id rule with
+    ALL-SLOTS fallback; FR-3 one `task_list_held(kind="cowork-slot", expired=false)` probe +
+    client-side `cowork-slot:<slot_id>` exact / `published:<slot_id>:` prefix match; FR-4
+    symmetric log/telegram/EXIT reusing Phase B's exact peer-collision text; residual-risk note
+    mirroring architect brief §1), placed immediately after § Phase A.5 (own "Fires: AFTER X,
+    BEFORE Y" header convention) + 4-line forward-pointer added at the top of § Pattern (Phase B)
+    for a reader landing there first; header size-justification note updated (593→670L).
+  - `CLAUDE.md:7` — 1-line phase-list diff: `... + Phase A.5 (presence roster, advisory) + Step 2.4
+    (cowork-slot collision probe, cowork-slot agents only) + Phase B (claim gate) ...`.
+  - `docs/agents/tools/list/task_list_held.md` — added `expired` parameter row (boolean, optional;
+    verified live against `apps/mcp-server/src/interface/mcp/tools/system/coordination/taskListHeldTool.ts`
+    Zod schema, not copied from prose).
+  - `docs/WORK.md` — one-liner summary appended.
+- **Tests written:** none — FR-7 verification harness is TASK-COWORK-MUTEX-002's deliverable, explicitly
+  deferred per this task's own Test Strategy section. Zero `apps/mcp-server` code touched
+  (`BUILD-STANDARD: not-applicable` per architecture brief) — `bun test`/`bun tsc` structurally N/A.
+- **Git commits:** single commit bundling `.claude/skills/dispatch-claim/SKILL.md` + `CLAUDE.md` +
+  `docs/agents/tools/list/task_list_held.md` + `docs/WORK.md` + this handoff (FR-6 lockstep — see
+  commit trailer `FR-6: lockstep CLAUDE.md/SKILL.md update`). SHA recorded in board `status_note` /
+  notebook after commit.
+- **tsc status:** N/A — no `.ts` file touched.
+- **Full suite:** N/A — no code path touched; verified fence-balance (`grep -c '^```' SKILL.md` =
+  28, even) and live-`jq` COWORK_AGENTS/AGENT_SLOTS query correctness against
+  `docs/data/cowork-schedule.json` (9 agents / 23 slots, matches architect brief's own count).
+- **Docs updated:** `CLAUDE.md`, `.claude/skills/dispatch-claim/SKILL.md`,
+  `docs/agents/tools/list/task_list_held.md`, `docs/WORK.md` (all listed above — these files ARE
+  the task's deliverable, not incidental).
+- **Graphify:** SKIPPED, documented not silent — `/graphify docs --update --no-viz` requires the
+  skill's own Part-B semantic-extraction parallel subagents (`Agent`/`Task` tool); this Task-spawned
+  session carries `Read/Edit/Write/Bash` only (same structural no-Agent-tool gap the flow's own
+  header note and 4+ prior developer sessions this month already name — see
+  `docs/agent-memory/notebooks/developer.md` 2026-08-14T06:21:26Z entry for the identical precedent).
+- **BUG telegram (decision-journal CAP-REACHED):** decision journal
+  `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-6.md` breached its byte cap
+  (37,405B > 36,000B; line count 169 < 600 cap, so byte-axis only) on this task's own entry —
+  appended the mandated `### CAP-REACHED` marker and rolled future writes to a new `-7.md`
+  continuation per `decision-journal/SKILL.md` § Cap Check, but could NOT send the mandated
+  `send_telegram(channel="bug", ...)` notice — this session has no MCP gateway binding
+  (`INV-GATEWAY-1`, same structural gap as the graphify skip above). Documented here rather than
+  silently dropped; the CAP-REACHED marker itself is the durable, git-committed evidence of the
+  breach independent of the telegram.
+- **Simplicity gate:** PASS — Q1 scope clean (every line traces to FR-1..FR-5/FR-6 AC, no extra
+  flags/branches), Q2 no single-use abstractions (plain pseudocode block, same style as every
+  sibling Phase A/A.5/Pattern section in this file), Q3 senior-test clean (no indirection layers,
+  no Manager/Handler wrapper), Q4 ratio <50% overhead (residual-risk + spec/ruling pointer lines
+  are the same documentation density every other section in this file already carries).
+
+**Deviation from AC file list (documented, not silent):** `.claude/skills/dispatch-claim/CARD.md`
+was NOT touched. It is absent from architect brief §3's file-level design table (only SKILL.md,
+CLAUDE.md, `cowork-schedule.json` (no-edit), `spawn-fanout.md` (task 003), test script (task 002),
+`apps/mcp-server` (no-edit) are listed) and PM's own AC list names only SKILL.md/CLAUDE.md/
+`task_list_held.md`. CARD.md already omits Step 0a inline detail today ("dispatchers already inline
+their own Step 0a instantiation — see cowork-team/dev-team `main.md`") — the same
+terse-hot-path-card / full-lazy-loaded-reference split this row's Step 2.4 now also follows.
+
+## RETURN
+DONE: Step 2.4 implemented (`.claude/skills/dispatch-claim/SKILL.md`), CLAUDE.md pointer updated
+(1-line diff), doc-sync complete (`task_list_held.md` `expired` param), single commit pending
+bundling all 4 files (FR-6 lockstep).
+NEXT: qa. HANDOFF_DELTA: none (no `## §N-slug` anchors in this file — next full-read).

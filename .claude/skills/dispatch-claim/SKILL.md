@@ -17,7 +17,15 @@
      per sprint-task signal before the redispatch_count>=N_MAX branch, batch-reads .task_board
      once per tick (both flat lanes and active_sprints nesting), classifies by lane membership
      per the architect's backlog+BLOCKED=TERMINAL ruling; (3) added owner_agent to the escalation
-     task_heartbeat call (FR-6), annotated NOT-YET-LIVE pending the same interface/rebuild gate. -->
+     task_heartbeat call (FR-6), annotated NOT-YET-LIVE pending the same interface/rebuild gate.
+     TASK-COWORK-MUTEX-001 2026-08-14 (+77L, 593→670): added `## Step 2.4 — Cowork-Slot Cross-Path
+     Collision Probe` section (FR-1..FR-4 — COWORK_AGENTS recognition, AGENT_SLOTS/TARGET_SLOTS
+     resolution, single `task_list_held(kind="cowork-slot")` probe with client-side prefix match,
+     symmetric peer-collision response reusing Phase B's exact text) placed after § Phase A.5 to
+     match its own "fires AFTER Phase A.5, BEFORE Phase B" header convention; added a 4-line
+     forward-pointer at the top of § Pattern (Phase B) so a reader landing there first still finds
+     Step 2.4. CARD.md unchanged (out of scope per architect brief §3 file-level design table —
+     Step 2.4 stays in this lazy-loaded reference, same split already used for Step 0a). -->
 
 **Trigger:** router (or any dispatcher) about to spawn an agent for sprint-task, intent, or cowork-slot work
 
@@ -248,6 +256,11 @@ This is **optional and advisory** — the primary liveness signal is `heartbeat_
 ---
 
 ## Pattern — Router-Scope Dispatch Wrap (CLAUDE.md step 2.5)
+
+> **Cowork-slot agents only:** if `<agent>` is one of the 9 cowork-slot agents
+> (`docs/data/cowork-schedule.json` `.slots[].agent`), § Step 2.4 — Cowork-Slot Cross-Path
+> Collision Probe (below) runs BEFORE this Phase B claim. Non-cowork-slot agents are unaffected
+> (FR-5) — proceed directly to Phase B as shown below.
 
 ```
 # Step 2.5 — PRE-CLAIM before Agent() spawn (router constitution)
@@ -582,6 +595,78 @@ for each (agent_id, count) in agent_id_counts:
 - Not a gate — never blocks dispatch, even on duplicate agent_id warning.
 - Not a replacement for Phase B PRE-CLAIM (that is the authoritative hard mutex).
 - Not an adoption probe — stale presence rows simply expire; they are never adopted (P2 INVARIANT in § Step 0a).
+
+---
+
+## Step 2.4 — Cowork-Slot Cross-Path Collision Probe
+
+**Sprint:** COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS · TASK-COWORK-MUTEX-001
+**Spec:** `docs/handoffs/FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS-BA-spec.md` §2 (FR-1..FR-5).
+**Ruling:** `docs/architecture-briefs/2026-07-29-fix-cowork-dispatch-router-intent-mutex-bypass-design.md`
+(Candidate A, refined — kind-scoped read probe, zero date-basis duplication).
+
+**Fires:** AFTER Phase A.5 (presence roster), BEFORE Phase B (PRE-CLAIM gate) — cowork-slot agents
+ONLY. Non-cowork-slot agents short-circuit immediately at FR-1 and see zero behavior change (FR-5).
+
+**Purpose:** Router `intent:<agent>:<intent-key>` PRE-CLAIM and the cowork dispatcher's
+`published:<slot_id>:<period>` guard are disjoint `task_id` strings — `task_claim` gives zero mutual
+exclusion across them by construction (confirmed root cause, 3 live occurrences, BA spec §0). This
+probe adds one read-only cross-path check before the router spawns a cowork-slot agent, so a router
+dispatch cannot double-fire a slot the cowork dispatcher already holds mid-work-window.
+
+```
+# --- FR-1: recognize cowork-slot agents — never hardcoded (CLAUDE.md § System Data) ---
+COWORK_AGENTS = jq -r '[.slots[].agent] | unique | .[]' docs/data/cowork-schedule.json
+# 9 agents / 23 slots as of this write: alert-commander, bctc-analyst, digest-predict,
+# fb-market-poster, market-watcher, news-scout, refine_bctc_md, tran-ngoc-bau, unified-agent
+
+if <agent> not in COWORK_AGENTS:
+  # FR-5 — byte-identical behavior. Proceed straight to Phase B PRE-CLAIM (§ Pattern above).
+  goto Phase B
+
+# --- FR-2: resolve intent-key -> TARGET_SLOTS (multi-slot resolution rule) ---
+AGENT_SLOTS = jq --arg a "<agent>" '[.slots[] | select(.agent==$a) | .slot_id]' docs/data/cowork-schedule.json
+
+if <intent-key> in AGENT_SLOTS:
+  TARGET_SLOTS = [<intent-key>]   # unambiguous — mirrors the existing trigger_prompt convention
+                                   # "run <flow_path> slot=<slot_id>" already used by all 23 slots
+else:
+  TARGET_SLOTS = AGENT_SLOTS      # generic/manual intent-key — conservative ALL-SLOTS fallback:
+                                   # check every slot this agent owns (cost asymmetry: one skipped
+                                   # manual spawn is cheaper than a reproduced double-dispatch)
+
+# --- FR-3: one read-only probe, client-side prefix filter — zero date/timezone/cadence logic ---
+held = call_tool(server="vn-market", tool="task_list_held", arguments={ kind: "cowork-slot", expired: false })
+# cron:cowork:<TICK>, cowork-slot:<slot_id>, and published:<slot_id>:<period> all share
+# task_kind "cowork-slot" (BA spec §0 table) — one round trip returns every live cowork-side lock.
+
+collision = null
+for slot_id in TARGET_SLOTS:
+  for row in held:
+    if row.task_id == "cowork-slot:" + slot_id: collision = row; break
+    if row.task_id starts_with "published:" + slot_id + ":": collision = row; break
+    # prefix match, NOT exact period-key — catches daily AND weekly published: keys without the
+    # router ever computing a date/hour/ISO-week (EC-4). No `apps/mcp-server` code required.
+  if collision: break
+
+# --- FR-4: symmetric response — reuse the EXACT Phase B peer-collision text, same lock class ---
+if collision != null:
+  log "[router] PRE-CLAIM collision (cowork-slot) " + collision.task_id + " — held by peer session " + collision.owner_client_session
+  send_telegram(channel="work", "[router] SKIP: cowork-slot " + collision.task_id + " held by peer session")
+  EXIT   # no spawn, no cost — Phase B's own intent: claim is never attempted
+
+# No collision found -> fall through to Phase B PRE-CLAIM unchanged.
+```
+
+**Residual risk — bounded, not closed by this probe (architect brief §1, accepted for this row):**
+1. Probe-to-spawn TOCTOU: sub-second gap between this read and the router's own Phase B claim +
+   `Agent()` call — 1-2 orders of magnitude smaller than the 33s/41s windows in all 3 confirmed
+   incidents.
+2. Cowork spawn-to-first-gate window (pre-existing, not created by this fix): between the cowork
+   dispatcher releasing its own `cowork-slot:<slot_id>` token and the spawned agent's own flow
+   reaching its `published:` claim step, neither key is held, so this probe sees no collision. Not
+   observed in any of the 3 confirmed occurrences (all had `published:` already held at collision
+   time). Out of scope for this row — flagged to PM as an optional future row.
 
 ---
 

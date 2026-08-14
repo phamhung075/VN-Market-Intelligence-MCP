@@ -7,6 +7,7 @@
 |------|------|-------------|
 | `kind` | `string` | Filter by kind optional |
 | `owner_agent` | `string` | Filter by agent optional |
+| `expired` | `boolean` | Filter by expiry state, optional. `true` = only stale locks (`expires_at < now`); `false` = only active locks; omit = return all. |
 
 **Returns:** Array of held locks with metadata
 
