@@ -20974,6 +20974,23 @@
       "po_disposition_at": "2026-08-14T00:30:11Z",
       "po_disposition_by": "po/triage-20260814T0007Z",
       "po_disposition": "RESOLVED — A-30 rag-service/pdf-extractor memory class. Substance triaged onto FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (po_correction_20260814: its ~18-20pp dip measurement is contradicted by 40.78pp/42.30pp on 08-13) and FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD (po_crosslink_20260814). NEW ROW MINTED for the crash-cliff mislabel: FIX-AUDITOR-A30-CRASHCLIFF-BRANCH-CANNOT-BE-A-CRASH-BY-CONSTRUCTION — RAW: rag-service RestartCount=3 unchanged, StartedAt 2026-08-13T09:20:09Z, 15h uptime spanning every 'crash cliff' alert."
+    },
+    {
+      "id": "sys-20260813T204658-0226",
+      "ts": "2026-08-13T20:46:58Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "signal_feedback",
+      "summary": "A-30: rag-service-1 memory crash-cliff detected — 91.89% → 49.59% discontinuity",
+      "severity": "CRITICAL",
+      "status": "RESOLVED",
+      "payload_ref": null,
+      "provenance": "detector",
+      "audit_cycle_tag": "cron:auditor-t1:2026-08-13T20:30Z",
+      "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30",
+      "po_disposition_at": "2026-08-14T00:30:11Z",
+      "po_disposition_by": "po/triage-20260814T0007Z",
+      "po_disposition": "RESOLVED — A-30 rag-service/pdf-extractor memory class. Substance triaged onto FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (po_correction_20260814: its ~18-20pp dip measurement is contradicted by 40.78pp/42.30pp on 08-13) and FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD (po_crosslink_20260814). NEW ROW MINTED for the crash-cliff mislabel: FIX-AUDITOR-A30-CRASHCLIFF-BRANCH-CANNOT-BE-A-CRASH-BY-CONSTRUCTION — RAW: rag-service RestartCount=3 unchanged, StartedAt 2026-08-13T09:20:09Z, 15h uptime spanning every 'crash cliff' alert."
     }
   ],
   "backlog_detail": [],
