@@ -12413,6 +12413,31 @@
         "decomposition_note": "Decomposed into 7 per-agent subtasks: UC-CCA-P2-SKILL-GW-GATE (developer), UC-CCA-P2-MARKET-WATCHER, UC-CCA-P2-ALERT-COMMANDER, UC-CCA-P2-UNIFIED-AGENT, UC-CCA-P2-DIGEST-PREDICT, UC-CCA-P2-BCTC-ANALYST, UC-CCA-P2-FB-MARKET-POSTER. No depends_on between subtasks (genuine parallel-decomposable). Ready for agent-father dispatch.",
         "closed_at": "2026-08-14T12:29:39Z",
         "pm_closeout_note": "PM decomposition complete but left parent row status=IN_PROGRESS/next_agent=pm and .head non-idle (stale-head-on-decomposition recurrence, cf feedback_pm_midsprint_decomposition_leaves_head_stale_not_closeout.md). Router lane-moved in_progress[]->done[] + .head->idle per FIX-READYLANE precedent (commit 86b7a6264). Also router-assigned next_agent on the 7 ready[] subtasks per architect routing note (SKILL-GW-GATE->developer editing shared skill file; other 6->agent-father, single-agent-scoped edit-prepare.md)."
+      },
+      {
+        "id": "UC-CCA-P2-SKILL-GW-GATE",
+        "type": "TASK",
+        "title": "gateway-availability-gate SKILL: DMS-2 ladder + DEFER templates + terminology-parity",
+        "status": "DONE",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "owner": "developer",
+        "parent_id": "UC-CCA-P2",
+        "depends": [],
+        "files": [
+          ".claude/skills/gateway-availability-gate/SKILL.md"
+        ],
+        "note": "FR-1/FR-2: Restructure Step 0-GW with DMS-2 escalation ladder. Classify probe error (CONFIRMED-BLIND vs TRANSIENT) → 30s backoff → PROBE_2 → SIBLING_RECENT corroboration (hours_back=0.25 exactly) → suppress (DEFER notebook+clean EXIT, no signal/bug) or escalate (append payload suffix '2x probe failure + no sibling success in 15-min'). Add DEFER templates (distinct from BLOCKED, same OVERWRITE/APPEND split). Reuse cycle-bootstrap/SKILL.md trigger-text signature exactly (no second definition). Estimated ~171-176L post-edit inside AC-1 ≤200L cap. Verify send_telegram never appears in confirmed-down path (FR-2 invariant).",
+        "created_at": "2026-08-14T12:21:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-14T12:40:05Z",
+        "updated_by": "developer",
+        "commit_sha": "98da23dcb0cc80d9355c9373f28ff65f6381b4ab",
+        "completed_at": "2026-08-14T12:40:04Z",
+        "completed_by": "developer",
+        "status_note": "FR-1/FR-2 shipped per architect ratified design (UC-CCA-P2-BA-spec.md). gateway-availability-gate/SKILL.md restructured 101L->169L: Step 0-GW now runs a DMS-2 ladder (classify CONFIRMED-BLIND/TRANSIENT using cycle-bootstrap/SKILL.md exact trigger-text signature -> 30s backoff -> PROBE_2 -> SIBLING_RECENT via get_agent_signals(hours_back=0.25) -> suppress via new DEFER notebook template or escalate via existing a/b/c actions with additive payload suffix). Verified zero send_telegram anywhere in ladder/confirmed-down paths (grep, FR-2 invariant). Within AC-1 <=200L cap. AC-6 news-scout inheritance re-checked, no file edit needed. Leaf subtask of UC-CCA-P2 -- 9 sibling flow-file insertions (FR-3/4/5) are separate PM-decomposed rows, not in this scope. Commit 98da23dcb."
       }
     ],
     "done_verified": [
@@ -15798,27 +15823,6 @@
         "promoted_by": "dev-team (design-router sweep)",
         "promotion_note": "Design-Router Sweep — assigned dispatch_lane='agents-architect' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
         "dispatch_lane": "agents-architect"
-      },
-      {
-        "id": "UC-CCA-P2-SKILL-GW-GATE",
-        "type": "TASK",
-        "title": "gateway-availability-gate SKILL: DMS-2 ladder + DEFER templates + terminology-parity",
-        "status": "READY",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "owner": "developer",
-        "parent_id": "UC-CCA-P2",
-        "depends": [],
-        "files": [
-          ".claude/skills/gateway-availability-gate/SKILL.md"
-        ],
-        "note": "FR-1/FR-2: Restructure Step 0-GW with DMS-2 escalation ladder. Classify probe error (CONFIRMED-BLIND vs TRANSIENT) → 30s backoff → PROBE_2 → SIBLING_RECENT corroboration (hours_back=0.25 exactly) → suppress (DEFER notebook+clean EXIT, no signal/bug) or escalate (append payload suffix '2x probe failure + no sibling success in 15-min'). Add DEFER templates (distinct from BLOCKED, same OVERWRITE/APPEND split). Reuse cycle-bootstrap/SKILL.md trigger-text signature exactly (no second definition). Estimated ~171-176L post-edit inside AC-1 ≤200L cap. Verify send_telegram never appears in confirmed-down path (FR-2 invariant).",
-        "created_at": "2026-08-14T12:21:00Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-14T12:29:39Z",
-        "next_agent": "developer"
       },
       {
         "id": "UC-CCA-P2-DIGEST-PREDICT",
