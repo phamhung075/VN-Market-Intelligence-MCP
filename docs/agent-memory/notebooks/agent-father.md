@@ -8,42 +8,6 @@
      explicit YYYY-MM-DD token. Nothing deleted; full record in the archive file and git
      history. -->
 
-## EDIT 2026-08-13T22:35Z — task FIX-DEVFLOW-MICROSERVICE-MAIN-NO-ERROR-BOUNDARY (router-direct
-rework, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
-- PO's `po_review_verdict_20260813.ac2_gap`: commit `6ddb1a812` narrated "matches all 3 live
-  phrasings" but its diff only added 2 (`Run shared flow:`/`Run sub-flow:`), never `Run flow:` — the
-  real live phrasing for all 9 dev-* consumers. Re-read that diff myself (`git show`) before trusting
-  it — confirmed the gap exactly as PO described, not just re-asserted.
-- Fix: `sweep-fixes.md:21` Check #2 trigger widened to 3 phrasings + arrow tolerant of `->`/`→`.
-  Script-driven (not manual) re-run of Check #2 as literally written, over all 14 `docs/agents/dev-*/`
-  dirs: OLD regex → 9 FAIL (dev-alert-engine, dev-api-gateway, dev-kinh-dich, dev-macro-indicators,
-  dev-news-fetch, dev-pdf-extractor, dev-rag-service, dev-stock-price, dev-technical-analysis) exactly
-  matching PO's list; NEW regex → 14/14 PASS, all 9 resolving one-hop to `microservice-main.md`.
-  Did not touch microservice-main.md/dev-mcp-server/dev-frontend (AC-1/AC-3 fenced, already landed).
-- Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md` STEP `agent-father-S38`.
-- Board disposition: row moved `backlog[]`→`review[]`, `next_agent:po` via `scripts/orch-apply.sh`
-  (`FU-AGENT-FATHER-ORCH-SCOPE` — orch-state.json outside commit_zone, applied not committed by me).
-
-## EDIT 2026-08-13T22:58Z — task FIX-CI-TASKCLAIM-QA-FLOW-OWNER-SESSION-PAYDOWN (dev-team
-Ready-Lane Consumer direct dispatch, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
-- Both `task_release` call sites in `docs/agents/qa/flow/main.md` (WF-1 STOP-RELEASE block +
-  Approved-path release) omitted `owner_client_session`. Fixed both — param names re-derived from
-  live `coordination/taskReleaseTool.ts` (file split off `coordinationTools.ts` 2026-08-09, old
-  doc line-refs stale). Deliberately did NOT run `--update` (PO status_note + the lint's own FAIL
-  text both explicitly forbid re-grandfathering). `lint --check`: PASS/exit0 both BEFORE (with the
-  untrimmed 19-entry baseline, to isolate the real fix) and AFTER the commit — "0 new offenders
-  (scanned 276 files)". Committed+pushed `ef4b5b29c` (main.md + decision journal only).
-- Baseline trim (drop 2 stale `qa/flow/main.md` entries, count 19→17) prepared as a ready-to-apply
-  diff but NOT committed — `docs/data/` is outside `commit_zone.allowed`, same precedent as the
-  exact sibling fix `21e97ab66`/`7b4a3c91b` (PO-flow task), which handed its own baseline-trim off
-  rather than landing it directly. Diff handed to po in RETURN.
-- Board: `in_progress[]`→`review[]`, `next_agent:po`, applied via `orch-apply.sh`, deliberately left
-  uncommitted (`FU-AGENT-FATHER-ORCH-SCOPE`) — same precedent as every prior closeout above. `.head`
-  re-checked fresh and idled in the SAME write (still named this task).
-- Gateway-blind this session too (no native `mcp__gateway__call_tool`) — used
-  `scripts/agents-flow/mcp-call.sh` bridge for `task_release(task:<id>, owner_client_session=
-  632721c2-...)`: `{ok:true,released:1}`, sprint-task lock cleanly released.
-
 ## EDIT 2026-08-14T04:33Z — task FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING (router-direct
 dispatch, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
 - Architect ratified BA's FR-0..FR-7 (10 flow-doc edit sites, chef.md + chef-dish.md) — `.head`
@@ -98,3 +62,30 @@ dispatch, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
   `commit_zone`, applied not committed by me) + `agent_father_implementation_note` field added
   documenting the change for qa. Not self-certified `DONE_VERIFIED` — orchestration-core dispatch
   logic, no live multi-tick head-pin scenario reproducible in one session; qa to smoke/diff-verify.
+
+## EDIT 2026-08-14T08:10Z — task FIX-DEVTEAM-WF1D-REVIEW-QA-LANE-HEAD-PIN-BLIND +
+FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC (PO stale-`.head`-family triage pair,
+router-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
+- Two mechanical FIX rows off `sprint-TRIAGE-STALE-HEAD-FAMILY-20260814-po.md` (5th/6th instances
+  of the pipeline-resume duplicate-spawn family). WF-1d row: widened `main.md`'s WF-1 task_status
+  array +review[]/qa[] (appended last), inserted WF-1d between WF-1c/WF-2 mirroring WF-1c, found
+  WF-2's own `$row` array ALREADY had review[]/qa[] undocumented — added the missing comment only
+  (no functional change, verified via grep before acting, not fabricated). Bumped WF-2/3/4
+  ordinals, corrected S2 fall-through summary to 4 carve-outs. +43L (1233→1276).
+- Success-path row: inserted `.head` idle-reset into `microservice-main.md` right before RETURN,
+  reusing `developer/flow/main.md:72`'s jq verbatim, guarded on `.head.active_task_id==task_id`
+  (never blind-null). Marked 2 dead branch-prose lines SUPERSEDED (historical marker, not deleted).
+  +16L (169→185).
+- **AC-5 blast-radius check (mandatory before claiming coverage) — found a real gap:** read every
+  `dev-*/flow/main.md` live. 8 are thin pointers and inherit the fix. `dev-frontend`,
+  `dev-mainserver-crawls`, `dev-vps-crawls` each carry a self-contained flow with an independent
+  RETURN/task_board-update block that never reaches `microservice-main.md` — their `.head` gap is
+  UNFIXED by this change (`dev-mcp-server` likewise, but arguably out of family per that file's own
+  known-drift note). Reported honestly rather than claiming full 9-consumer coverage — flagged via
+  RETURN for PO to mint follow-up rows.
+- Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md` STEPs `S42`/`S43`.
+- **Board disposition:** both `backlog[]`→`review[]`, `next_agent:po`, `agent_father_implementation_
+  note` added to each row (incl. the blast-radius gap on the 2nd) via `scripts/orch-apply.sh`
+  (`FU-AGENT-FATHER-ORCH-SCOPE` — outside `commit_zone`, applied not committed by me). `.head` was
+  pointing at an unrelated task (`UC-CDC-P1`) throughout — untouched.
+- AC-7 (WF1d row) verifier extension flagged, not authored — `scripts/` outside `commit_zone`.

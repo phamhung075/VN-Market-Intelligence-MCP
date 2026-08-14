@@ -390,3 +390,21 @@ produced the exact shape the brief specifies.
 **why-change:** none — implemented brief §5 as specified; added one prose line (S2 fall-through
 summary + the stale LOCK-LIFETIME cross-ref) the brief itself didn't spell out verbatim but its own
 §5 ordering section requires for internal consistency.
+
+### STEP agent-father-S42 · agent-father · 2026-08-14T08:00:00Z
+**task-id:** FIX-DEVTEAM-WF1D-REVIEW-QA-LANE-HEAD-PIN-BLIND
+**what-done:** Widened WF-1's task_status array (main.md:301-306) to scan review[]/qa[] (appended last, AC-1); inserted new WF-1d REVIEW-LANE check between WF-1c and WF-2 mirroring WF-1c verbatim, incl. inline AC-6 negative-control sentence (AC-2/AC-6); found WF-2's own $row array already carried review[]/qa[] undocumented — added the missing defense-in-depth comment only, no functional change (AC-3); bumped WF-2/WF-3/WF-4 ordinals + retitled WF-2 cross-ref + corrected S2 fall-through summary to name 4 carve-outs (AC-4); updated size-justification header (AC-5); flagged AC-7 verifier extension via RETURN, not authored (scripts/ outside commit_zone).
+**what-considered:**
+- Reorder WF-2's pre-existing review[]/qa[] entries to the array end to match AC-1's "append-last" convention — rejected: in_progress[] is already first (the only race-safety guarantee that matters), reordering unrequested code with no AC behind it risks unreviewed behavior drift.
+- Also re-sync docs/agents/po/flow/supervised-goahead.md (done for the 2026-08-06 ready-lane precedent) — rejected: WF-2's array is unchanged functionally, supervised-goahead.md already mirrors it; not in this row's `files`/ACs.
+**why-decision:** ACs 1/2/4/5/6 required literal code+prose changes, applied verbatim; AC-3's premise ("widened to review/qa") was already true on disk (pre-existing, undocumented) — verified via grep before acting, documented rather than fabricated a widening that wasn't needed.
+**why-change:** AC-3 executed as a documentation-only sync once live-state check showed the array already correct; everything else no change from plan.
+
+### STEP agent-father-S43 · agent-father · 2026-08-14T08:05:00Z
+**task-id:** FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC
+**what-done:** Inserted `.head` idle-reset step into microservice-main.md's SUCCESS path (after task_board IN_PROGRESS→REVIEW update, before RETURN), reusing developer/flow/main.md:72's exact jq, guarded on `.head.active_task_id == $task_id` (AC-1/AC-2), citing fail-loud-protocol.md:170-171 inline (AC-3); marked Output line + RETURN NEXT line's dead branch prose SUPERSEDED, historical marker only (AC-4); updated size-justification header (AC-6).
+**what-considered:**
+- Blast-radius check (AC-5): read every dev-*/flow/main.md live. 8 thin-pointer consumers (alert-engine/api-gateway/kinh-dich/macro-indicators/pdf-extractor/rag-service/stock-price/technical-analysis) inherit the fix. 3 do NOT — dev-frontend/dev-mainserver-crawls/dev-vps-crawls each have self-contained flow/main.md with independent RETURN/task_board-update blocks that never reach this file's new step; dev-mcp-server is a 4th self-contained flow but arguably out of this family (targets apps/mcp-server/ root per developer/main.md's own known-drift note).
+- Silently claim full 9-consumer coverage anyway (matches board row's framing) vs report the true 3(4)-file gap — rejected the former: would be exactly the kind of narrated-not-verified claim this fleet's memory repeatedly flags as a failure mode.
+**why-decision:** AC-5 explicitly requires confirming coverage BEFORE claiming it; the confirmation surfaced a real gap, so the honest disposition is to report it (RETURN + this entry), not fix unrequested files outside this row's `files` field or silently claim total coverage.
+**why-change:** Scope stayed exactly the 1 file in `files`; the coverage gap found is flagged as a residual follow-up, not fixed here — router/PO can mint FIX rows against dev-frontend/dev-mainserver-crawls/dev-vps-crawls flow files if wanted.

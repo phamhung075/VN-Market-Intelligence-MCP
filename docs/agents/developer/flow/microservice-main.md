@@ -1,4 +1,4 @@
-<!-- size-justification: 169L (+4L, 2026-08-07 FIX-DEVFLOW-MICROSERVICE-MAIN-NO-ERROR-BOUNDARY AC-1: added missing Error Boundary block pointing to fail-loud-protocol.md dev-pipeline SSOT) — shared base flow for all 9 dev-* zone agents; carries both TS/Bun and Python/FastAPI TDD workflows, zone-restriction rule, INV-GATEWAY-1 dispatcher-lock comments, doc-review chain, implementation record template, mandatory decision-journal steps, and RETURN schema; splitting would degrade usability for all 9 consumers -->
+<!-- size-justification: 169L (+4L, 2026-08-07 FIX-DEVFLOW-MICROSERVICE-MAIN-NO-ERROR-BOUNDARY AC-1: added missing Error Boundary block pointing to fail-loud-protocol.md dev-pipeline SSOT) — shared base flow for all 9 dev-* zone agents; carries both TS/Bun and Python/FastAPI TDD workflows, zone-restriction rule, INV-GATEWAY-1 dispatcher-lock comments, doc-review chain, implementation record template, mandatory decision-journal steps, and RETURN schema; splitting would degrade usability for all 9 consumers. FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC 2026-08-14 (agent-father triage, `docs/agent-memory/decisions/sprint-TRIAGE-STALE-HEAD-FAMILY-20260814-po.md`): +16L (169→185) — new `.head` idle-reset step inserted on the SUCCESS/completion path, immediately after the task_board IN_PROGRESS→REVIEW update and before RETURN (AC-1), reusing the exact jq already proven at `docs/agents/developer/flow/main.md:72`/`fail-loud-protocol.md:174`, guarded so it only fires when `.head.active_task_id` still names the completing task (AC-2, never blind-null — a concurrent peer's pin must survive), citing `fail-loud-protocol.md:170-171`'s universal-executability sentence inline (AC-3) — closes the SOURCE-side half of the stale-`.head` family (the error/STOP path already had this idle-reset via fail-loud-protocol.md; the success path never did, by construction, for every dev-* specialist that inherits this shared flow). Adjacent drift fix (AC-4): `## Output` line's "on `task/NNN-*` branch" and the RETURN template's `NEXT:` line's "on branch task/NNN-kebab" marked SUPERSEDED (historical markers, not deleted) — same treatment `docs/agents/developer/flow/main.md` received 2026-08-05 (FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH). BLAST-RADIUS (AC-5): confirmed live 2026-08-14 by reading every dev-*/flow/main.md — 8 consumers (`dev-alert-engine`/`dev-api-gateway`/`dev-kinh-dich`/`dev-macro-indicators`/`dev-pdf-extractor`/`dev-rag-service`/`dev-stock-price`/`dev-technical-analysis`) are thin pointers that fully delegate to this file's success path and inherit the fix automatically. THREE do NOT: `dev-frontend`/`dev-mainserver-crawls`/`dev-vps-crawls` each carry their own self-contained flow/main.md with an independent task_board-update + RETURN block that never reaches this file's new step — their `.head` gap is UNFIXED by this change (`dev-mcp-server` is a fourth self-contained flow/main.md but is arguably out of this family per `developer/flow/main.md`'s own "known drift" note — it targets `apps/mcp-server/` root, not a `microservice-main.md` zone). Full coverage is NOT claimed; flagged via RETURN for PO to mint follow-up rows against the 3 (or 4) independent flow files. -->
 # Microservice Developer — Main Flow
 
 **Scope:** Any `apps/<service>/` zone (TypeScript/Bun or Python/FastAPI). All 9 dev-* zone agents share this flow. The `apps/mcp-server/` root uses [`main.md`](./main.md) instead.
@@ -9,7 +9,7 @@
 `docs/handoffs/TASK_NNN.md` with `[Architect] Brownfield Findings`
 
 ## Output
-Code + tests on `task/NNN-*` branch | `[Developer] Implementation Record` in handoff | PM/QA notified
+Code + tests <!-- SUPERSEDED (doc-self-heal 2026-08-14, FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC AC-4): original text read "on `task/NNN-*` branch" — dead branch prose, contradicting CLAUDE.md § Defaults ("NO branches — all work stays on main"); same treatment `docs/agents/developer/flow/main.md` received 2026-08-05 (FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH) — kept here as a historical marker, not deleted. --> committed directly to `main` | `[Developer] Implementation Record` in handoff | PM/QA notified
 
 ---
 
@@ -158,11 +158,27 @@ If nothing noteworthy: `Zone health: no drift detected`. This line is consumed b
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 
-**Update `docs/data/orch/orch-state.json` `.task_board`**: task status IN_PROGRESS → REVIEW (atomic write per §2.3) → return:
+**Update `docs/data/orch/orch-state.json` `.task_board`**: task status IN_PROGRESS → REVIEW (atomic write per §2.3).
+
+**`.head` idle-reset — SUCCESS path (FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC AC-1/AC-2/AC-3, mandatory, run immediately after the task_board update above, before RETURN):** this specialist just self-lane-moved its own row into `review[]`/`next_agent=qa` above — INV-GATEWAY-1 means it cannot call `task_release`/write `.head` via MCP, but the `.head` idle-reset below IS executable by all agents (plain `jq` + atomic rename, no MCP needed) and applies to ALL agents regardless of MCP binding — `docs/protocols/fail-loud-protocol.md:170-171`. Reuses the EXACT jq already proven in-repo at `docs/agents/developer/flow/main.md:72` / `fail-loud-protocol.md:174`. **GUARD (AC-2, mandatory, not optional):** reset ONLY when `.head.active_task_id` still names THIS task — never blind-null; a concurrent peer's head pin on a different task must survive.
+```bash
+head_active_task=$(jq -r '.head.active_task_id' docs/data/orch/orch-state.json)
+if [ "$head_active_task" = "$task_id" ]; then
+  now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  jq --arg s "idle" --arg t "$now" --arg u "dev-<service>" \
+    '.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}' \
+    docs/data/orch/orch-state.json \
+    | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || true
+fi
+```
+
+**NEXT line note (SUPERSEDED, doc-self-heal 2026-08-14, FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC AC-4):** the RETURN template's `NEXT:` line previously read "run full QA pipeline on branch task/NNN-kebab" — dead branch prose, contradicting CLAUDE.md § Defaults ("NO branches — all work stays on main"); corrected below. Same treatment `docs/agents/developer/flow/main.md` received 2026-08-05 (FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH) — kept here as a historical marker, not silently deleted.
+
+Return:
 ```
 ## RETURN
 DONE: Implementation complete — SERVICE=<service>, CHANGED=[...], NEW_PASS=N, type-check clean
-NEXT: qa | run full QA pipeline on branch task/NNN-kebab
+NEXT: qa | run full QA pipeline
 REBUILD_REQUIRED: true — PO must dispatch ops (docker compose up -d --build <svc>) then qa (live verify) before marking DONE. See docs/protocols/docker-deployment-runbook.md § Microservice Code-Change Close Gate.
 HANDOFF: docs/handoffs/TASK_NNN.md
 PIPELINE: continue
