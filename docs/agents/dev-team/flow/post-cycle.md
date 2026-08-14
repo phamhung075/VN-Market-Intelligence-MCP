@@ -102,7 +102,10 @@ if [ "$BYTE_REDUCTION" -gt 0 ]; then
   # "commit-mutex:main" every other orch-state.json writer uses (a per-caller
   # slug would not mutex against other writers of the same hot file; corrected
   # 2026-07-15 alongside the Step 5.5 relocation, task UC-DTL-P2).
-  # task_claim(task_kind="commit-mutex", task_id="commit-mutex:main", owner_agent="dev-team", ttl_seconds=120)
+  # task_claim(task_kind="commit-mutex", task_id="commit-mutex:main", owner_agent="dev-team",
+  #   owner_client_session="<resolved CLAUDE_CODE_SESSION_ID — REQUIRED, coordinationTools.ts:104-110
+  #   (P1-FINAL/TASK_1980); substitute the real value, NEVER the literal text "$CLAUDE_CODE_SESSION_ID">",
+  #   ttl_seconds=120)
   bash "$PROJECT_ROOT/scripts/orch-cold-evict.sh"
   # Validate gate (SHG-3): run after eviction script, before git commit
   bash "$PROJECT_ROOT/scripts/orch-state-validate.sh" "$PROJECT_ROOT/docs/data/orch/orch-state.json" \
@@ -111,7 +114,7 @@ if [ "$BYTE_REDUCTION" -gt 0 ]; then
   git add docs/data/orch/orch-state.json "$PROJECT_ROOT/docs/data/orch/archive/${YYYYMM}.json"
   git commit -m "chore(tasks): cold-evict terminal sprints/done lanes → archive/${YYYYMM}.json" \
     -- docs/data/orch/orch-state.json "$PROJECT_ROOT/docs/data/orch/archive/${YYYYMM}.json"
-  # task_release(task_id: "commit-mutex:main")
+  # task_release(task_id: "commit-mutex:main", owner_client_session: "<same resolved value as the task_claim above>")
 fi
 ```
 
@@ -143,13 +146,16 @@ PLAN="$(bash "$PROJECT_ROOT/scripts/agents-flow/stranded-state-sweep.sh" --plan)
 if [ "$RC" -ne 0 ]; then
   send_telegram(channel="bug", message="[dev-team] stranded-state-sweep FAILED rc=$RC — skip, retry next tick")
 else
-  # task_claim(task_kind="commit-mutex", task_id="commit-mutex:main", owner_agent="dev-team", ttl_seconds=120)
+  # task_claim(task_kind="commit-mutex", task_id="commit-mutex:main", owner_agent="dev-team",
+  #   owner_client_session="<resolved CLAUDE_CODE_SESSION_ID — REQUIRED, coordinationTools.ts:104-110
+  #   (P1-FINAL/TASK_1980); substitute the real value, NEVER the literal text "$CLAUDE_CODE_SESSION_ID">",
+  #   ttl_seconds=120)
   echo "$PLAN" | jq -c '.auto_commit[]?' | while read -r c; do
     PATHS_STR="$(echo "$c" | jq -r '.paths | map(@sh) | join(" ")')"
     MSG="$(echo "$c" | jq -r '.commit_message')"
     eval "git add -- $PATHS_STR" && eval "git commit -m \"\$MSG\" -- $PATHS_STR"
   done
-  # task_release(task_id: "commit-mutex:main")
+  # task_release(task_id: "commit-mutex:main", owner_client_session: "<same resolved value as the task_claim above>")
   echo "$PLAN" | jq -c '.signals[]? | select(.dedup_skip==false)' | while read -r s; do
     # WRITE via .claude/skills/signal-dashboard/SKILL.md § WRITE — from="dev-team", to/type/summary/payload = s.to/s.type/s.summary/s.payload
   done

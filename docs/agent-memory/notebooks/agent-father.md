@@ -129,3 +129,26 @@
   written, future entries roll to `-agent-father-3.md`.
 - Board disposition NOT applied by me — `.status`/lane-move on `orch-state.json` is router-owned;
   reported REVIEW-ready in RETURN for the router/dev-team dispatcher to apply via `orch-apply.sh`.
+
+## EDIT 2026-08-14T20:20Z — task FIX-CI-TASKCLAIM-DEVTEAM-POSTCYCLE-OWNER-SESSION-PAYDOWN
+(dev-team-dispatched FIX-type direct dispatch, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
+- Change: added `owner_client_session` to `docs/agents/dev-team/flow/post-cycle.md`'s 4
+  grandfathered commit-mutex call sites (task_claim :105/:146, task_release :114/:152) — paid the
+  debt in-file, did NOT run `--update` (AC-2 prohibition honored, baseline file untouched).
+- Files modified: 1 (`docs/agents/dev-team/flow/post-cycle.md`)
+- Cascade: none (comment-only annotation, no structural agent-definition change)
+- Validation: `bash scripts/audits/task-claim-owner-session-lint.sh --check` exit 0 (276 files
+  scanned, 19 grandfathered sites remain elsewhere) — AC-3 met locally; AC-4 (CI green on push) not
+  checkable this session per its own verification_gate note.
+- Decision: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-3.md` S45 (new continuation file —
+  `-2.md` hit its byte cap at S44).
+- Gateway-less this session (tool grant Read/Edit/Write/Glob/Grep/Bash, no
+  `mcp__gateway__call_tool`) — used the documented docker-exec+bun:sqlite fallback (verbatim
+  `claimTask`/`releaseTask` SQL against `coordination.db`) for the commit-mutex:main lock around
+  this commit, rather than skipping it. Sprint-task lock `task:FIX-CI-TASKCLAIM-DEVTEAM-POSTCYCLE-
+  OWNER-SESSION-PAYDOWN` was already held by the dispatching session (same
+  `owner_client_session`) per INV-GATEWAY-1 — dispatcher-owned, not re-claimed here.
+- Board disposition: applied the status-flip lane-move myself (`in_progress[]` → `review[]`,
+  `next_agent=qa`) via `scripts/orch-apply.sh` per this task's explicit dispatch instruction and
+  the `FU-AGENT-FATHER-ORCH-SCOPE` "one allowed signal-queue DONE-mark per task dispatch"
+  exception — narrower than the general orch-state exclusion.
