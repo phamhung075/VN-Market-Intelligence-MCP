@@ -102,3 +102,30 @@
 - Defer the mint and route the whole thing to agent-father as one unit
 **why-decision:** agent-father must NOT touch scripts/ (outside its commit zone), so a single-owner route would have stalled or produced an out-of-zone commit; the brief itself demands the split. Verified brief existence/size/author at source rather than on the relayed signal.
 **why-change:** no change from plan.
+
+### STEP po-S168 · po · 2026-08-14T20:37:55Z
+**task-id:** FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING
+**what-done:** Refused sign-off — RAW-verified the row's own verification_gate FAILS, and recorded that FR-0..FR-7 already shipped (c11504775, 2026-08-14T04:35:40Z) rather than being "in flight" as the escalation assumed.
+**what-considered:**
+- Accept TNB's framing (spec in flight, widen its scope with the DXG evidence)
+- Verify implementation state at source first, then rule
+**why-decision:** Reading the live flow files showed all 7 FRs already present verbatim; all 3 guaranteed dishes AFTER that commit still persist business_context_cited=null, and the evening dish claimed "zero bctc_signal files processed" while 4 in-window files existed. So the root cause has SHIFTED from missing wiring to unenforced wiring — re-dispatching the same prose fix would have shipped a 2nd no-op. Stamped po_goahead only after verifying at source, never on the relay.
+**why-change:** Plan assumed a scope-widening; evidence showed a failed verification gate plus one genuinely uncovered requirement (FR-8, valuation.verdict never enters $BIZ_CTX_SIGNALS so nothing can bind direction).
+
+### STEP po-S169 · po · 2026-08-14T20:37:55Z
+**task-id:** FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION
+**what-done:** Promoted P1->P0 and widened scope to carry the deterministic assertion that three separate live defects now all require.
+**what-considered:**
+- Mint a new enforcement row per defect (biz-ctx null, EOD schema shape, direction enum)
+- Widen this existing ready[] row, which already owns "verdict from narrative self-judgment -> assertion over persisted JSON"
+**why-decision:** The BIZCTX spec's own NFR-4 predicted exactly this convergence 2 days ago; three new rows would re-derive one mechanism three times and race each other on the same file. This row sat in ready[] 13 days at P1 while the defects it would have caught kept shipping.
+**why-change:** no change from plan.
+
+### STEP po-S170 · po · 2026-08-14T20:37:55Z
+**task-id:** FIX-AGENT-BASH-GRANT-COVERAGE-GATE-FLOW-DEMANDS-VS-FRONTMATTER
+**what-done:** Selected as this tick's manual-dispatch-sweep candidate (88 eligible) and folded into BATCH.
+**what-considered:**
+- Take the positional top of the sorted list (TE-T06, a token-economy doc split)
+- Take the equal-rank candidate this tick has fresh HIGH escalation evidence for
+**why-decision:** Both are rank-1/P1; the sort's tie-break is array index, i.e. insertion order, not a priority signal. TNB filed BUG 5307 this tick — 4 consecutive audit cycles (c127-c130) unable to commit or route dashboard writes — and this row is the opt-IN root-cause coverage gate for precisely that class, already carrying a live baseline_pass.
+**why-change:** Deviated from the literal .[0] pick; rationale recorded on the row itself so a later sweep can audit the choice.
