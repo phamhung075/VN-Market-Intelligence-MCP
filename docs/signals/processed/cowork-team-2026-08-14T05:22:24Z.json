@@ -1,0 +1,47 @@
+{
+  "from": "cowork-team",
+  "to": "system",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "tick_id": "2026-08-14T05:15:00Z",
+    "nominal_tick": "2026-08-14T05:15Z",
+    "matched_slots": [
+      "chef-morning",
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "chef-morning",
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "spawned": true,
+    "silent": false,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "due_reasons": {
+      "chef-morning": "cron",
+      "chef-intraday": "cadence",
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "chef-morning": null,
+      "chef-intraday": 120,
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-14T05:22:13Z",
+    "last_fired_slots": [
+      "chef-morning",
+      "chef-intraday",
+      "alert-commander-market"
+    ]
+  },
+  "priority": "normal",
+  "createdAt": "2026-08-14T05:22:24Z",
+  "_processed": {
+    "fingerprint": "bcc02d653db75eaef597cf7e8db013fffc1e84ac1f7b7b6290d0725129cdaa21",
+    "processedAt": "2026-08-14T05:49:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

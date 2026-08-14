@@ -1,0 +1,32 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-dispatch",
+  "priority": "normal",
+  "createdAt": "2026-08-14T05:36:35Z",
+  "payload": {
+    "tick": "2026-08-14T05:30Z",
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_slots": [
+      "alert-commander-market"
+    ],
+    "drift_min": 6
+  },
+  "_processed": {
+    "fingerprint": "68d467535b7a1c3420d3d892fe3a7b610d777b2c3664d5239eb8894d13f88d78",
+    "processedAt": "2026-08-14T05:49:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
