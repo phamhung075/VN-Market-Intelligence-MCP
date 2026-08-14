@@ -62,14 +62,39 @@ hard branch.
      confirmed-down case for the Bootstrap call itself — placing this before Bootstrap would be
      redundant there and would NOT close the actual gap. Session-scoped: chef-dish.md shares this
      session and does not need its own gate. Ref: docs/handoffs/UC-CCA-P2-BA-spec.md § Architect
-     Brownfield Findings, "unified-agent/chef.md placement asymmetry". -->
+     Brownfield Findings, "unified-agent/chef.md placement asymmetry".
+
+     UC-CCA-P3-FR3-CHEF FOLLOW-UP NOTE (agent-father, 2026-08-14): the "protects ONLY the
+     Step 0.5 task_claim mutation window" rationale above is now PARTIALLY STALE — Step 0.5's
+     own mutation was converted to a read-only Phase-1 probe by this task (see Step 0.5's own
+     note below); the real task_claim mutation this gate was designed to protect now happens in
+     chef-dish.md Step 7, reached only after the full Step 0/1/1.5-6.7 pipeline runs (many
+     intervening tool calls, a different file). This gate's placement here still correctly
+     covers Step 0.5's own probe call and the Bootstrap→Step-0.5 gap it was built for, but it no
+     longer sits immediately before the actual marker mutation — a gateway that dies AFTER this
+     gate passes but BEFORE chef-dish.md Step 7's claim is a coverage gap this comment does not
+     claim to close. Not fixed here (UC-CCA-P2/gateway-availability-gate is a different task's
+     zone than UC-CCA-P3/published-marker-gate); flagged for whoever next touches either gate to
+     re-derive whether chef-dish.md needs its own Step 0-GW pointer. -->
 **Step 0-GW — Gateway availability gate** → skill: `.claude/skills/gateway-availability-gate/SKILL.md`
 Replace `<agent-id>` with `unified-agent`. On gateway dead: write signal file + BLOCKED notebook entry
 (APPEND-class) + EXIT. See skill for full protocol and explicit prohibitions.
 
 ---
 
-## Step 0.5 — PUBLISHED MARKER GATE (Layer-A dedup — run BEFORE any send_telegram)
+## Step 0.5 — PUBLISHED MARKER GATE — Phase 1 (cheap probe, Layer-A dedup — run BEFORE any send_telegram)
+
+<!-- UC-CCA-P3-FR3-CHEF (agent-father, 2026-08-14, R1 cross-file threading — see architecture
+     brief 2026-08-08-uc-cca-p3-published-marker-gate-skill.md §4/§10 R1): this step used to
+     claim the marker directly (EARLY-claim defect — before Step 0 GATHER and the full dish
+     pipeline). Converted to a Phase-1 read-only probe per .claude/skills/published-marker-gate/
+     SKILL.md. MARKER_KEY/MARKER_TTL derivation below is UNCHANGED (still the load-bearing
+     FIX-CHEF-INTRADAY-MARKER-CADENCE / FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE fixes) —
+     only the outcome of a HELD probe differs (EXIT here instead of claiming here). The actual
+     Phase-2 claim now happens in chef-dish.md Step 7, immediately before Block A — see this
+     file's own chef-dish.md Input-line note and that file's Step 7 for the other half of this
+     threading fix. DO NOT re-add a task_claim call here — that would silently regress to the
+     EARLY-claim defect this fix exists to close (flagged MANDATORY verification item, brief §10). -->
 
 <!-- AC-5 / FIX-COWORK-GUARANTEED-BACKSTOP: Layer-A RemoteTriggers fire independent CLI sessions
      that bypass the cowork-team dispatcher. This gate is the ONLY dedup defence when both
@@ -139,21 +164,22 @@ else:
   MARKER_KEY    = "published:" + SLOT_ID + ":" + CYCLE_DATE_UTC
   MARKER_TTL    = 100800   # 28h
 
-PUBLISH_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:              MARKER_KEY,
-  task_kind:            "cowork-slot",
-  owner_agent:          "unified-agent",
-  owner_client_session: "<resolved CLAUDE_CODE_SESSION_ID — REQUIRED, coordinationTools.ts:104-110;
-    substitute the real value, NEVER write the literal text "$CLAUDE_CODE_SESSION_ID">",
-  ttl_seconds:          MARKER_TTL
-})
+# Phase 1 — cheap read-only probe (per .claude/skills/published-marker-gate/SKILL.md).
+# task_list_held has NO task_id filter — scan client-side for MARKER_KEY.
+PROBE = call_tool(server="vn-market", tool="task_list_held",
+                   arguments={ kind: "cowork-slot", owner_agent: "unified-agent" })
+HELD  = PROBE.locks contains an entry where task_id == MARKER_KEY AND expires_at > now
 
-if PUBLISH_CLAIM.claimed != true:
-  log "[chef] publish blocked — already published slot=" + SLOT_ID + " key=" + MARKER_KEY
+if HELD:
+  log "[chef] publish blocked (Phase-1 probe) — already held slot=" + SLOT_ID + " key=" + MARKER_KEY
   EXIT with: "DONE: duplicate-publish blocked | PIPELINE: complete | QUALITY: full"
+  # claims NOTHING — a leak from this call is structurally impossible.
 ```
 
-If `claimed == true`: proceed to Step 0 GATHER. The marker is now held — send_telegram in Step 7 will proceed.
+If NOT held: proceed to Step 0 GATHER. `MARKER_KEY`/`MARKER_TTL` (this exact pair, never
+recomputed) are carried forward as session state through Step 0/Step 1 into `chef-dish.md`,
+which performs the mandatory Phase-2 claim in its own Step 7, immediately before Block A —
+send_telegram in Step 7 only proceeds once that claim succeeds.
 
 ---
 

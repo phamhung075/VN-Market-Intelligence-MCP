@@ -51,7 +51,10 @@ Entered ONLY from `chef.md` after the Step 1 gate fires (≥1 cluster qualifies)
 — that path returns from `chef.md` directly and this file is never loaded.
 
 Input: same `$DISH_TYPE` env passed into `chef.md`, plus the session state accumulated in
-`chef.md` Steps 0.5/0/1 (signal groups, `$BIZ_CTX_SIGNALS`, qualifying clusters, published-marker claim).
+`chef.md` Steps 0.5/0/1 (signal groups, `$BIZ_CTX_SIGNALS`, qualifying clusters, `MARKER_KEY`/
+`MARKER_TTL` from Step 0.5's Phase-1 probe — the Phase-2 claim itself now happens in THIS file,
+Step 7, immediately before Block A; UC-CCA-P3-FR3-CHEF R1 cross-file threading, see chef.md
+Step 0.5's own note).
 
 **Tools:** `docs/agents/tools/package/unified-agent.md`
 
@@ -463,6 +466,39 @@ cheaper than explaining why you cannot continue.
 ---
 
 ## Step 7 — WRITE DISH (Dual-Output)
+
+**Published-marker gate — Phase 2 (commit point, MANDATORY, gates BOTH Block A and Block B) →**
+skill: `.claude/skills/published-marker-gate/SKILL.md` (agent-id=unified-agent).
+
+<!-- UC-CCA-P3-FR3-CHEF (agent-father, 2026-08-14, R1): the load-bearing half of the cross-file
+     threading fix — chef.md Step 0.5 now only probes; THIS is where the real claim happens.
+     Placed at the top of Step 7, before either block is composed/sent, so a failed claim skips
+     the WHOLE step (both Block A and Block B) — matching today's pre-existing binary EXIT
+     semantics (a dish either fully publishes or fully doesn't; there is no partial-block state).
+     `MARKER_KEY`/`MARKER_TTL` are the exact values chef.md Step 0.5's Phase-1 probe computed,
+     carried forward as session state — do NOT recompute (session-scoped: this file is only ever
+     entered from chef.md in the same session, per that file's own TE-T16 split note). -->
+
+```
+CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:              MARKER_KEY,   # from chef.md Step 0.5's Phase-1 probe
+  task_kind:            "cowork-slot",
+  owner_agent:          "unified-agent",
+  owner_client_session: "<resolved CLAUDE_CODE_SESSION_ID — REQUIRED, coordinationTools.ts:104-110;
+    substitute the real value, NEVER write the literal text "$CLAUDE_CODE_SESSION_ID">",
+  ttl_seconds:          MARKER_TTL    # from chef.md Step 0.5's Phase-1 probe
+})
+
+if CLAIM.claimed != true:
+  log "[chef] publish blocked (Phase-2 claim) — already published key=" + MARKER_KEY
+  EXIT with: "DONE: duplicate-publish blocked | PIPELINE: complete | QUALITY: full"
+  # a peer claimed between chef.md's Phase-1 probe and this Phase-2 claim — do NOT send anything,
+  # neither Block A nor Block B.
+```
+
+If `claimed == true`: proceed immediately to composing and sending Block A and Block B below.
+NEVER call `task_release` on success or any exit after this point — successful send, failed
+send, exception, process death: all leave the marker in place. TTL is the sole expiry path.
 
 Produce **two outputs** from the synthesized analysis: Block A for the user (MARKET channel — plain Vietnamese), Block B for TNB audit (WORK channel — analyst detail).
 
