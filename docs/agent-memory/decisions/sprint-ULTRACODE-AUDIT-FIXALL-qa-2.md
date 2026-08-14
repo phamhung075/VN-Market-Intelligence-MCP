@@ -184,3 +184,23 @@ size-justification header — PRE-EXISTING (148L before this +6L edit), not intr
   footprint is the architect-mandated minimum single pointer; separate cleanup task, not this row.
 **why-decision:** AC-4 pointer-placement satisfied exactly. Commit c7cd36af4 on main.
 **why-change:** No change — APPROVED, lane-move review->done. Cap-debt flagged in Task Report for PO/janitor follow-up.
+
+### STEP qa-S30 · qa · 2026-08-14T13:05:00Z
+**task-id:** UC-CCA-P1-GWBLIND-DEDUP
+**what-done:** Direct-Commit Verify (dev-team Review-Lane QA-Drain, `branch:null`). Commit
+`a27d7cd21` confirmed on main ancestry; `git show --stat` = 1 file (`step-0-cowork/SKILL.md`,
+40 lines: 4 ins/36 del), matches commit's own AC trailer exactly.
+**what-considered:**
+- Checked all 4 AC trailer items: dup-block-deleted (lines 53-88 gone, grep-confirmed no residue
+  fleet-wide), stub-le-4-lines (counted: exactly 4 content lines), points-at-ssot (verified target
+  section `cycle-bootstrap/SKILL.md:93 § Error handling (fail-loud)` exists + carries the full
+  CONFIRMED-BLIND/TRANSIENT table + Write-fallback protocol, not a phantom pointer), no-flow-
+  rewiring (diff touches only the 1 file, 0 flow files — part (b) correctly left for TE-T11).
+- Cross-checked audit brief §cowork-cycle-agents-P1 Rescope item (2) "amend TE-T11 DoD text" —
+  already satisfied pre-existing (TE-T11 `note` field already reads "composite POINTS to ...SSOT
+  (not full embeds)", verified DONE_VERIFIED 2026-08-06, predates this row's Aug-14 commit — PO's
+  own RESCOPE-time joint edit, not a gap in this commit).
+**why-decision:** All 4 declared AC items independently re-verified at source, not trusted from
+commit prose. Pure `.claude/skills/*.md` docs change, zero TS/Go source touched — bun test/tsc/
+DDD-import-grep/mock-guard.sh structurally N/A (same precedent as TE-T11's own verify).
+**why-change:** No change — APPROVED, lane-move qa->done_verified.
