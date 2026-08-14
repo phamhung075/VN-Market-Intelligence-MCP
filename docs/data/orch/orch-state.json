@@ -9031,7 +9031,7 @@
         "created_at": "2026-08-07T03:30:00Z",
         "created_by": "pm (decomposition)",
         "origin": "docs/architecture-briefs/2026-08-06-guard-notebook-concurrent-write-mutex.md",
-        "note": "BLOCKING PREREQUISITE for agent-father row FIX-NOTEBOOK-WRITE-AC7-SKILL. Add 'notebook-write' to task_kind enum: apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts line ~89 (Zod definition) and apps/mcp-server/src/infrastructure/db/coordinationStore.ts line 346 (TypeScript type). Backward-compatible additive change, zero risk to other 6 callers. Extend AC-2 test harness with new AC-12 describe block (N-concurrent-writer negative/positive control on a fixture .md file) — this directly satisfies GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS verification_gate (two concurrent writers preserve BOTH sections). See brief §6.4 and brief §9 acceptance test spec.",
+        "note": "BLOCKING PREREQUISITE for agent-father row FIX-NOTEBOOK-WRITE-AC7-SKILL. Add 'notebook-write' to task_kind enum: apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts line ~89 (Zod definition) and apps/mcp-server/src/infrastructure/db/coordinationStore.ts line 346 (TypeScript type). Backward-compatible additive change, zero risk to other 6 callers. Extend AC-2 test harness with new AC-12 describe block (N-concurrent-writer negative/positive control on a fixture .md file) — this directly satisfies GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS verification_gate (two concurrent writers preserve BOTH sections). See brief §6.4 and brief §9 acceptance test spec. [RECURRENCE 2026-08-14T18:37:53Z] 9 concurrent QA agents (FACTORY-APIGW-split-capability-prober + FACTORY-RAG-delete-dead-sqlite-repo) raced on qa.md during QA-Drain tick, silently dropped 3 cycle entries (cycle-749/750/751) due to stale-baseline full-file overwrite: commits 6f9b997b0→309c5bdb7. Lost entries non-monotonic (cycles 752/753/754 retained while 749/750/751 vanished), confirming RMW race not AC-2 prune. Defect remains live under real production load. Corroborates initial 2026-08-06 incident; 8-day gap proves design never implemented. Board state intact (done_verified[] rows present); knowledge loss only.",
         "verification_gate": "Zod validation accepts task_kind='notebook-write'; AC-12 test block runs (fixture + N=2 and N=9 concurrent writers); all sections survive; NEGATIVE control (no claim) fails as expected.",
         "next_agent": "dev-team",
         "depends_on": [],
@@ -9039,7 +9039,7 @@
         "head": {
           "status": "idle"
         },
-        "updated_at": "2026-08-07T03:17:24Z",
+        "updated_at": "2026-08-14T16:42:20Z",
         "updated_by": "pm (decomposition)"
       },
       {
@@ -9054,7 +9054,7 @@
         "created_at": "2026-08-07T03:30:00Z",
         "created_by": "pm (decomposition)",
         "origin": "docs/architecture-briefs/2026-08-06-guard-notebook-concurrent-write-mutex.md",
-        "note": "INDEPENDENT, ships anytime (no dependencies). Hardens scripts/agents-flow/notebook-auto-prune.sh PostToolUse hook against concurrent writes landing between its own read and mv. Capture PRE_MTIME/PRE_SIZE immediately after FILE_CONTENT read (~line 379); re-check CUR_MTIME/CUR_SIZE before mv (~line 598). If either differs, abort mv (discard $TEMP), emit 'notebook_prune_aborted_concurrent_write_detected' informational signal, exit 0. Uses existing safe primitives (stat, wc, mv) — no new lock file, avoids VirtioFS/H4 hazard (docs/protocols/head-lock-self-cure.md). Defense-in-depth for backstop path; does NOT by itself close the agent-side race (FIX-NOTEBOOK-WRITE-AC7-SKILL is the primary guard). See brief §6.2.",
+        "note": "INDEPENDENT, ships anytime (no dependencies). Hardens scripts/agents-flow/notebook-auto-prune.sh PostToolUse hook against concurrent writes landing between its own read and mv. Capture PRE_MTIME/PRE_SIZE immediately after FILE_CONTENT read (~line 379); re-check CUR_MTIME/CUR_SIZE before mv (~line 598). If either differs, abort mv (discard $TEMP), emit 'notebook_prune_aborted_concurrent_write_detected' informational signal, exit 0. Uses existing safe primitives (stat, wc, mv) — no new lock file, avoids VirtioFS/H4 hazard (docs/protocols/head-lock-self-cure.md). Defense-in-depth for backstop path; does NOT by itself close the agent-side race (FIX-NOTEBOOK-WRITE-AC7-SKILL is the primary guard). See brief §6.2. [RECURRENCE 2026-08-14T18:37:53Z] 9 concurrent QA agents (FACTORY-APIGW-split-capability-prober + FACTORY-RAG-delete-dead-sqlite-repo) raced on qa.md during QA-Drain tick, silently dropped 3 cycle entries (cycle-749/750/751) due to stale-baseline full-file overwrite: commits 6f9b997b0→309c5bdb7. Lost entries non-monotonic (cycles 752/753/754 retained while 749/750/751 vanished), confirming RMW race not AC-2 prune. Defect remains live under real production load. Corroborates initial 2026-08-06 incident; 8-day gap proves design never implemented. Board state intact (done_verified[] rows present); knowledge loss only.",
         "verification_gate": "Manual: stat/wc calls present; abort+signal pattern confirmed; retest on a live notebook under concurrent write pressure (same test vehicle as AC-12). Script exits 0, prune deferred, signal filed correctly.",
         "next_agent": "developer",
         "depends_on": [],
@@ -9062,7 +9062,7 @@
         "head": {
           "status": "idle"
         },
-        "updated_at": "2026-08-07T03:23:46Z",
+        "updated_at": "2026-08-14T16:42:20Z",
         "updated_by": "pm (decomposition)",
         "router_live_repro_20260807T0323Z": "Router hit 2 fresh, concrete repro cases on docs/agent-memory/notebooks/main.md while writing this same cycle entry: (1) an Edit tool_call (old_string/new_string) reported success but the committed diff (a8bde9f1b) showed only the Written: timestamp changed -- the entire new paragraph never landed, file byte count unchanged (9731 bytes) before/after. Not the prune path (well under cap) and not a concurrency race (single writer, sequential). Retried via full-file Write instead of Edit and it landed correctly (commit 96a478ccd, byte count grew 9731->10155 as expected) -- suggests a possible Edit-tool-specific defect, distinct from notebook-auto-prune.sh prune logic, worth checking as part of this fix. (2) the git commit hook notebook-immutability-guard (scripts/audits/verify-notebook-immutability-gate.sh, mode=warn) flagged the retained cycle-20260807T0137Z section as content-changed on that same commit, but git diff HEAD~1 HEAD shows that sections lines completely unchanged (no -/+ markers) -- looks like a false-positive in the guards own comparison logic (possibly comparing against the wrong baseline when a section is simultaneously dropped for cap reasons in the same commit). Neither finding blocks this task but both are concrete, reproducible, and worth folding into scope."
       },
@@ -9078,7 +9078,7 @@
         "created_at": "2026-08-07T03:30:00Z",
         "created_by": "pm (decomposition)",
         "origin": "docs/architecture-briefs/2026-08-06-guard-notebook-concurrent-write-mutex.md",
-        "note": "BLOCKS on FIX-NOTEBOOK-WRITE-TASK-KIND-ENUM-EXTENSION. Create .claude/skills/notebook-write/SKILL.md with new AC-7 § Concurrency Guard: task_claim(task_id='notebook:<agent-id>', task_kind='notebook-write', ttl_seconds=120) bracketing ONLY the mechanical fresh-read-merge-write span (not the LLM's authoring of new section content, which stays outside the held window — TTL-hazard avoidance per brief §5). Claim→fresh re-read (discard pre-claim read)→compose→Write→release; retry up to 5x if peer holds lock; defer entry if exhausted (never write unguarded). Cascading PostToolUse hooks (notebook-auto-prune.sh) run inside same held window. Also: add 1-sentence prose note to docs/agents/dev-team/flow/main.md § Review-Lane QA-Drain explaining that once AC-7 ships, QA_CAP is a pure throughput tuning knob (brief §6.3). See brief §6.1 and full AC-7 pseudocode in brief text.",
+        "note": "BLOCKS on FIX-NOTEBOOK-WRITE-TASK-KIND-ENUM-EXTENSION. Create .claude/skills/notebook-write/SKILL.md with new AC-7 § Concurrency Guard: task_claim(task_id='notebook:<agent-id>', task_kind='notebook-write', ttl_seconds=120) bracketing ONLY the mechanical fresh-read-merge-write span (not the LLM's authoring of new section content, which stays outside the held window — TTL-hazard avoidance per brief §5). Claim→fresh re-read (discard pre-claim read)→compose→Write→release; retry up to 5x if peer holds lock; defer entry if exhausted (never write unguarded). Cascading PostToolUse hooks (notebook-auto-prune.sh) run inside same held window. Also: add 1-sentence prose note to docs/agents/dev-team/flow/main.md § Review-Lane QA-Drain explaining that once AC-7 ships, QA_CAP is a pure throughput tuning knob (brief §6.3). See brief §6.1 and full AC-7 pseudocode in brief text. [RECURRENCE 2026-08-14T18:37:53Z] 9 concurrent QA agents (FACTORY-APIGW-split-capability-prober + FACTORY-RAG-delete-dead-sqlite-repo) raced on qa.md during QA-Drain tick, silently dropped 3 cycle entries (cycle-749/750/751) due to stale-baseline full-file overwrite: commits 6f9b997b0→309c5bdb7. Lost entries non-monotonic (cycles 752/753/754 retained while 749/750/751 vanished), confirming RMW race not AC-2 prune. Defect remains live under real production load. Corroborates initial 2026-08-06 incident; 8-day gap proves design never implemented. Board state intact (done_verified[] rows present); knowledge loss only.",
         "verification_gate": "AC-7 integration test (from AC-12 test harness) confirms mutex pattern prevents drops; agent notebook writes (qa.md, tran-ngoc-bau.md, system-auditor.md) sustain concurrent writes without section loss; deferred-entry signal fires correctly under lock contention; PO verifies dev-team/flow/main.md prose added correctly.",
         "next_agent": "agent-father",
         "depends_on": [
@@ -9088,7 +9088,7 @@
         "head": {
           "status": "idle"
         },
-        "updated_at": "2026-08-07T03:17:24Z",
+        "updated_at": "2026-08-14T16:42:20Z",
         "updated_by": "pm (decomposition)"
       },
       {
@@ -18546,8 +18546,8 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-14T13:14:04Z",
-  "_updated_by": "qa",
+  "_updated_at": "2026-08-14T18:45:00Z",
+  "_updated_by": "pm (recurrence evidence annotation)",
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
