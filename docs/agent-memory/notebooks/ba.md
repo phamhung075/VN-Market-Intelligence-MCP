@@ -2,11 +2,36 @@
 
 **Last updated:** 2026-08-14 | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
-## UC-CCA-P2 · 2026-08-14
+## UC-ASL-P3 · 2026-08-14
 
-Design-Router dispatch (SPRINT-S/P1, RESCOPE — absorb DMS-2 sibling-corroboration probe into gateway-availability-gate, dedup market-watcher's double probe, extend to 5 flows). Re-verified every anchor live rather than trusting the 07-12 audit text (verifier itself flagged drift): found `fb-market-poster/flow/main.md` had already split into 3 independent cron-entered files (daily/weekly-recap/weekly-prediction, TE-T26 2026-08-06) since the audit ran — the audit's single-file anchor is stale and would leave 2 of 3 fb entry points uncovered if followed literally; corrected FR-5 to 3 files. Also found `alert-commander/flow/cycle.md` is now a zero-step thin dispatcher (no gateway call anywhere), and cross-checked the skill's new CONFIRMED-BLIND classification against `cycle-bootstrap/SKILL.md`'s existing one — same trigger-text signature, same underlying session-transport-gap phenomenon, added a terminology-parity constraint rather than let a second definition drift independently. 6 FRs, 0 PO blockers (all corrections are code-verifiable facts, not priority calls), 3 architect open questions (alert-commander gate-siting choice, chef/chef-dish threading, corrected 10-file count confirmation). Confirmed sibling `UC-CCA-P1-GWBLIND-DEDUP` (REVIEW, commit a27d7cd21) never touched `cycle.md` — the audit's "coordinate with P1" note is a non-issue. Full spec: `docs/handoffs/UC-CCA-P2-BA-spec.md`; decision journal STEP ba-S14. Row `in_progress[]`→`ready[]`, next_agent=architect, `.head` resynced same write (conservation 734↔734). No MCP tool binding this spawn (Read/Edit/Write/Bash only).
+Design-Router dispatch (SPRINT-S/P1, RESCOPE — freeze Tier-2/3 auditor predicates C-01..C-16 +
+B-05/B-09/B-13 into `scripts/auditor-db-checks.sh`, extending `db-integrity-counts.sh` discipline).
+Found 4 sibling rows already carrying design work before writing anything new: C-04 has a full
+ready-made script skeleton (REVIEW/plan_only, `docs/handoffs/FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE-spec.md`
+§3) this task integrates rather than re-derives; C-06/C-11 need new threshold/severity design
+(BACKLOG); C-12's WAL-blinding half resolves for free once the DB-access-pattern decision lands.
+**Superseded the ticket's own dispatched text**: the 07-12 RESCOPE note mandates `docker exec`
+specifically to avoid `db-integrity-counts.sh`'s WAL-blind `file:?immutable=1` open — but that
+objection predates the 2026-08-06 `sqlite-wal-guard.sh` fix that made the open WAL-conditional; 3
+independent sources (C-04's own decision, C-12's own fix_spec "mirror db-integrity-counts.sh as
+shipped", and this ticket's own title) now converge on host-bind, so FR-2 adopts that instead of
+re-litigating it. Verified `docker-compose.yml`: every relevant service (mcp-server, pdf-extractor,
+stock-price, alert-engine) shares the identical `./data/live:/app/data` bind mount, confirming a
+uniform host-path substitution works for every DB the script needs (market.db + new
+`PDF_EXTRACTOR_DB_HOST_PATH` for C-10/C-11 + system-map-enumerated multi-DB loop for C-12).
+Explicitly carved OUT `FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY` (task_board jq count, not
+DB SQL) and `FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE` (file-existence check) — same "predicate-
+drift, architect-owned" family label but different technical content, per the 08-08 epic triage's
+own text. 13 FRs, 0 PO blockers, 7 architect ARCH-RATIFY notes (DB-access confirm, C-06/C-11 SLA-
+reuse design shared question, C-12 table-name re-verify carried forward, mount-drift-check
+extension, zone narrowing cross-service/→scripts/+docs/agents/system-auditor/, C-12 connection-
+reuse shape). Full spec: `docs/handoffs/UC-ASL-P3-BA-spec.md`; decision journal STEP ba-S15. Row
+`in_progress[]`→`ready[]`, next_agent=architect, `.head` resynced same write (conservation
+718↔718). No MCP tool binding this spawn (Read/Edit/Write/Bash only).
 
 ## Archive
+
+UC-CCA-P2 (08-14): auto-dropped from live notebook by `notebook-auto-prune.sh`'s byte-cap gate (same session — landing UC-ASL-P3's section pushed the file over the 12000B cap; hook correctly picked the oldest dated section but, per the known `FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE` bug, left no archive pointer — added here manually so the content stays discoverable). Design-Router dispatch (SPRINT-S/P1, RESCOPE — DMS-2 escalation-ladder absorption into gateway-availability-gate + 5-flow extension); 6 FRs, 0 PO blockers, 3 architect open questions. Full text in git history (this file, commit `db38e3bb5`); decision journal STEP ba-S14; handoff `docs/handoffs/UC-CCA-P2-BA-spec.md`.
 
 TASK-COWORK-MUTEX-001 (08-14): auto-dropped from live notebook by `notebook-auto-prune.sh`'s byte-cap gate (same session — landing UC-CCA-P2's section pushed the file over the 12000B cap; hook correctly picked the oldest dated section but, per the known `FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE` bug, left no archive pointer — added here manually so the content stays discoverable). Prior-art triage, verdict REFUTED (NOT shipped, 0% of Step 2.4 exists); routed directly to developer (BA/architect/PM chain already complete and current, re-planning avoided). Full text in git history (this file, commit `effb12572`); decision journal STEP ba-S13; handoff `docs/handoffs/TASK-COWORK-MUTEX-001.md` § [BA] Prior-art triage.
 
