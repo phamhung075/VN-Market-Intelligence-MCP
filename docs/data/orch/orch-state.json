@@ -17396,7 +17396,7 @@
         "depends": [],
         "created_at": "2026-07-21T18:14:57Z",
         "created_by": "po/decision-consumption-20260721T1811",
-        "updated_at": "2026-08-07T22:09:49Z",
+        "updated_at": "2026-08-14T05:55:30Z",
         "updated_by": "architect",
         "parent_finding": "FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP (QA round-2 approval, router_confirmed_sibling_gap_is_arm_b2_only)",
         "origin": "QA found this sibling writer while approving arm (b2) on parseBctcReport.ts::storeReport(), and explicitly DECLINED to mint or to expand that row (correctly — PO had a scope-hold on it). Router sharpened the finding at source and also declined to mint. Minting is PO's; this is that mint.",
@@ -17428,7 +17428,10 @@
         "ba_completed_at": "2026-08-07T20:34:58Z",
         "architect_review_note": "ARCHITECT 2026-08-07T22:09Z — technical blueprint complete for BAs product decision (news-chain fallback hints move OUT of financial_reports into new non-authoritative bctc_news_fallback_hints table). Full design: docs/architecture-briefs/2026-08-07-fix-bctc-newschain-fallback-zeros-write-target-blueprint.md. Brownfield-reverified every BA-named file byte-exact this cycle (zero material line drift on the 7 cited tests + 9 cited source files). EC-5 live-probed via read-write bun:sqlite handle inside the running mcp-server container (readonly handles risk WAL blind-spots): 0 news_inference rows in production market.db today — no data-migration branch needed. DDL placed in schema-financial-reports.ts initFinancialReportsTables() (10+ live precedent, not the frozen bctc-schema.ts SQLITE_DDL string). newsChainFallback.ts rewrite keeps the signal-query/hints/confidence-calc logic AND the in-memory return contract byte-identical (BA FR-3: no functional change needed on resolvePdfText/fetchParseAndStoreBctc caller side) — only the persistence target changes, financial_reports INSERT replaced with a bctc_news_fallback_hints upsert; removed the now-dead existing-row id-reuse logic (FR-1 makes the PEK-FK/ID-ORPHAN motivation structurally moot for the new table). Full 7-test rewrite plan (6 BA-named + Findings F-1s 7th), 2 new serving-plane regression tests designed (reusing the existing callTool/_registeredTools harness from fix-bctc-identity-serve-guard.test.ts) — found and flagged one implementation gotcha along the way: the AC-2 test serving-plane extension will silently pass for the wrong reason (PUB-1 refusal) unless the seed row also sets refine_status=PARTIAL and gets a bctc_table_rows row, exact fix documented in the blueprint 7 task 7. Grep-verify/RED-before-git-stash-A-B/full-suite process steps specified. FR-7 (admin-inspector companion) flagged non-blocking follow-up for PO, explicitly not folded into this row. next_agent set to dev-mcp-server (zone specialist, apps/mcp-server) — sized for a single implementation pass (BAs own section 6 header addresses architect to developer directly; comparable in size to the sibling arm-b2 fix dev-mcp-server already shipped in one pass), not routed through PM decomposition.",
         "architect_completed_at": "2026-08-07T22:09:32Z",
-        "architect_completed_by": "architect (SLS dispatch)"
+        "architect_completed_by": "architect (SLS dispatch)",
+        "secondary_claimed_at": "2026-08-14T05:55:29Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "dev-mcp-server"
       },
       {
         "id": "FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE",
