@@ -159,3 +159,82 @@ NEXT: architect | brownfield analysis + technical design for FR-1..FR-8 above, g
 HANDOFF: docs/handoffs/FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58-BA-spec.md
 PIPELINE: continue
 ```
+
+---
+
+## [Architect] Brownfield Findings
+
+- **Zone:** multi — `apps/mcp-server/` (primary, write-through hook + audit script) + `scripts/` (audit script, reuses `scripts/migrations/resync-watchlist-sysmap-2026-07-11.ts` exports) + generic-developer (`CLAUDE.md`, `.claude/skills/system-map-query/SKILL.md`, `docs/agents/fb-market-poster/flow/daily.md`, `docs/architecture/microservice/frontend/domain-model.md`) — PM splits per zone below.
+
+### Blocker Q1 — RESOLVED (CONFIRMS 34, not 58)
+
+BA lacked `mcp__gateway__call_tool`; I confirmed I lack it too (`gateway.call_tool(server="vn-market", tool="get_watchlist")` → `No such tool available` — my own `docs/agents/tools/package/architect.md` grants Read/Write/Edit/Bash/Grep + `mcp__semble__*` only, no gateway). BA's framing ("route to whoever holds gateway access — dev-team ... or PO") was correct that architect doesn't hold it either; I re-verified via a **different** methodology than BA's own `docker exec`, at source, live, right now:
+`docker exec vn-market-intelligence-mcp-mcp-server-1` + `bun:sqlite` (readonly, `PRAGMA busy_timeout=8000` — a bare readonly open hit `SQLITE_BUSY` against the live server without it; **note for whoever writes the audit script below: any new readonly connection against `market.db` while the server is live MUST set `busy_timeout` or it will spuriously false-negative/error under contention**) against the exact `DB_PATH=/app/data/market.db` the running container uses:
+`SELECT code, added_at FROM watchlist` → **34 rows**, `diff` against `jq '.project.watchlist[].ticker' docs/data/system-map.json` → **zero-diff, both directions**. All 34 rows share the identical `added_at = "2026-07-31 18:25:37"` (re-confirms BA's bulk-reseed-from-empty read). **Went one step further and also diff'd `apps/frontend/app/domain/market.ts` `WATCHLIST_STOCKS`** (PO's row's own AC-2 target) — also 34/34, zero-diff both directions vs system-map.json.
+
+**Conclusion: DB, `system-map.json`, and the frontend constant are ALL three byte-identical (34 tickers, 33 active + VEA inactive) as of this cycle.** EC-1 (BA's own edge case) is the live outcome: "the fix ships with whatever the live count actually is that day, which could be smaller than PO's row implies." There is no live 41%-hole today — that was true historically (coverage-state.json's 07-25 57-ticker snapshot, pre-corruption) but is not true now. **Reframing for PM/dev, flag to PO — not silently reinterpreted:** AC-2 as literally worded ("ACB, CTG, MBB, VPB specifically present" in the served page) is **not achievable by any sync/architecture fix** — those tickers exist in none of the three planes today. Restoring them requires an explicit `add_to_watchlist` call (a content/business decision, human-originated per EC-4), not a code change. AC-1/AC-3/AC-4 remain fully in scope and are this row's real deliverable; AC-2 should be re-scoped by PO to "frontend serves whatever the live roster is, verified in the served page" (drop the 4 named tickers) rather than engineered around a stale premise.
+
+### Root cause (confirmed at source, `apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts:190-260`)
+
+`add_to_watchlist` — plain `INSERT ... ON CONFLICT DO UPDATE`, zero write-back to `system-map.json`. `remove_from_watchlist` — plain `DELETE`, same gap. `seedWatchlist()` (`seedWatchlist.ts:174-192`) is INSERT/UPDATE-only, **never DELETEs** — confirms BA's one-way, lossy-in-one-direction sync diagram is exactly right. `watchlist` table schema (`PRAGMA table_info`, live-checked) has **no `active` column at all** — `active` is a `system-map.json`-only field, `deriveWatchlistSeedFromSystemMap()` filters `active !== false` before seeding, so an inactive SSOT row (VEA) is *not* in the DB the same way an active one would need re-deriving — confirms write-through (below) must go through the same filter logic, not a raw 1:1 column mirror.
+
+### Design — Candidate (i′) write-through + (ii) audit, per BA's recommendation (ratified, not re-litigated)
+
+**FR-2/FR-3 mechanism — `apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts`:**
+1. New pure function `apps/mcp-server/src/infrastructure/db/systemMapWatchlistWriter.ts` — `upsertSystemMapWatchlistEntry(path, entry)` / `removeSystemMapWatchlistEntry(path, code)`. Read-modify-write `docs/data/system-map.json`, reuse the exact atomic tmp+rename pattern already proven in-repo at `apps/mcp-server/src/infrastructure/fileStore/alertVerdictStore.ts:151-162` (`writeFileSync(${path}.tmp)` → `renameSync`) — do **not** invent a second atomic-write idiom. Docker bind-mount (`./docs/data:/app/docs/data`, confirmed in `seedWatchlist.ts`'s own header comment) makes an in-container write visible on host / git-trackable, so this closes the loop without a cross-boundary problem.
+2. **Schema gap to close, new in this design (BA's file-plan didn't surface it):** `add_to_watchlist`'s zod input has `domain` (closed enum) but not free-text `sector` — `system-map.json` entries carry a richer `sector` string (e.g. "Real Estate / Property Development") that `mapSectorToDomain()` is a lossy many-to-one collapse of; reversing `domain` → `sector` cannot round-trip the original text. **Recommend:** add an optional `sector: z.string().optional()` param to `add_to_watchlist`'s schema (falls back to a Title-Case of `domain` if omitted) so the write-through entry carries real data instead of a degraded label. Small, additive, backward-compatible (existing callers omitting it still work).
+3. Call the writer from inside `add_to_watchlist`'s handler (after the SQLite INSERT commits, before the peer-suggestion fetch — `watchlist.ts:224-226`) and `remove_from_watchlist`'s handler (after the DELETE, `watchlist.ts:279-282`). Wrap in try/catch that logs+returns a warning suffix on the tool response but does **not** fail the primary DB write (fail-open on the file side, matching `loadWatchlistSeedFromSystemMap()`'s own "never crash on file trouble" convention at `seedWatchlist.ts:126-129`) — a race/permission error on the file write must not block the user's actual watchlist mutation.
+4. **Concurrency risk, flagged not blocked:** `add_to_watchlist`/`remove_from_watchlist` are user-facing only (EC-4, confirmed zero agent flow call sites), so near-simultaneous calls are low-probability, not zero. A read-modify-write on `system-map.json` under true concurrency could lose an update. No existing CAS/lock primitive covers this file today (`scripts/orch-apply.sh`'s Zod+CAS pattern is `orch-state.json`-specific). Given low concurrency profile + size-M budget, ship without a lock and note as a follow-up if it ever actually races — do not over-engineer a CAS wrapper for a single-human-session write path.
+
+**FR-3(b) — divergence audit (candidate ii), new script `scripts/checks/watchlist-divergence-audit.ts`:**
+- Import `computeWatchlistDiff` from `scripts/migrations/resync-watchlist-sysmap-2026-07-11.ts` (already exported, pure, unit-tested — do not re-derive). Read live `watchlist` table codes (readonly + `busy_timeout` per the Blocker-Q1 finding above) + `system-map.json` `.project.watchlist[]` codes (reuse `loadSsotWatchlist`, also already exported there). Non-empty `orphans`/`missing` → exit 1 + one-line JSON to stdout + `send_telegram(channel="bug", ...)`.
+- **Considered and rejected:** extending `scripts/agents-flow/db-integrity-probe.sh` — that script is a COUNT(*)-diff **change-detection pre-gate** for the system-auditor DATA-tier SPAWN/SKIP-SPAWN decision, a different concern from a **correctness** set-equality check; conflating them would silently change db-integrity-probe's SPAWN semantics for an unrelated table. Keep the watchlist audit as its own small script.
+- Wiring: reuse the existing standalone-cron skeleton pattern (`.claude/skills/cron-standalone-team/SKILL.md`'s 4 crons) as the cheapest fit — PM/dev decides daily cadence is sufficient (this is a detection backstop for (i′) failing silently, not the primary defense).
+- **EC-5 test requirement (BA's own, restated for dev):** the negative-control test must exercise add-then-simulated-reseed, not a bare add-then-diff — a bare test would pass under the OLD architecture too and prove nothing about (i′) actually closing the gap.
+
+**FR-4/FR-5/FR-7 — doc corrections (generic-developer zone, mechanical):**
+- `CLAUDE.md` §"System Data" — content is already accurate today (system-map.json genuinely is current); no line-text change needed, the FR-2/FR-3 mechanism is what keeps it true going forward.
+- `.claude/skills/system-map-query/SKILL.md` § Watchlist — same: queries are correct today, no line-text change needed.
+- `docs/agents/fb-market-poster/flow/daily.md:157` — confirmed correct as-is (`.project.watchlist[] | select(.active==true)`), BA's stale-citation catch (not `main.md`) is the only actionable item — no doc content needs to change, just confirms BA's file-location correction was right.
+- `docs/architecture/microservice/frontend/domain-model.md:72` — **genuinely stale, needs a real edit**: currently reads "Compiled constant array of 33 entries (30 active + 3 inactive)"; live-verified correct value is **34 entries (33 active + 1 inactive — VEA)**. One-line fix.
+- `docs/architecture/microservice/technical-analysis/usecases.md:41` + `api-reference.md:101` ("... `.project.watchlist` is the ultimate SSOT") — **reviewed, already accurate**, no edit needed; matches the confirmed architecture exactly (DB resolved from system-map.json at composition-root startup).
+
+**FR-6 — frontend codegen:** not needed this cycle (Blocker Q1 resolution: frontend is already 34/34 zero-diff). Keep BA's NFR-3 cost analysis on file as a reference if a future divergence reappears; do not build unused codegen machinery now (YAGNI — nothing in this row's live evidence justifies it today).
+
+**FR-8 — rollout step (no code):** `apps/technical-analysis/cmd/server/main.go:54-64` resolves the DB `watchlist` table once at boot when `WATCHLIST_TICKERS` env is unset — confirmed live. Mandatory rollout checklist item for whoever ships FR-2/FR-3: `docker compose restart technical-analysis` in the SAME deploy as any DB-side change, per the 2026-07-11 round-1 QA precedent BA cited.
+
+### DDD Layer Mapping
+- `systemMapWatchlistWriter.ts` — **Infrastructure** (file adapter), new file, mirrors `alertVerdictStore.ts`'s existing pattern.
+- Write-through call sites inside `watchlist.ts` tool handlers — **Interface** (MCP tool layer, orchestrates infra write after DB write).
+- `watchlist-divergence-audit.ts` — **Infrastructure** (script) + **Interface** (cron/telegram wiring).
+- Doc corrections — **Interface** (documentation-as-contract, per BA's FR-4/FR-5/FR-7 framing).
+
+### Test Strategy
+- Unit: `systemMapWatchlistWriter.ts` upsert/remove against a fixture JSON (pattern: `WATCHLIST-DB-SYSMAP-DRIFT-FIX.test.ts` already does the inverse direction).
+- Unit: `watchlist-divergence-audit.ts` — reuse `computeWatchlistDiff`'s existing test coverage (`resync-watchlist-sysmap-2026-07-11.test.ts`), add a case for the audit's own exit-code/Telegram-trigger wrapper.
+- Integration (EC-5, mandatory): add ticker via `add_to_watchlist` → assert `system-map.json` updated → simulate a reseed cycle (call `seedWatchlist()` fresh, confirm the added ticker survives because the file — not just the DB — now has it) → THEN also assert the divergence audit reports zero drift. A bare add-then-diff test is explicitly insufficient per BA's EC-5.
+
+### BUILD-STANDARD
+`BUILD-STANDARD: not-applicable` — bug-fix/hardening on existing `apps/mcp-server/` primitives, no new service, no new primitive class.
+
+**Scan clean:** true ✓ — brownfield read at source for every file in BA's §6 plan plus the 2 additional doc-drift files; zero speculative paths.
+
+## RETURN
+```
+DONE: Technical design complete — Blocker Q1 RESOLVED (re-verified live via docker exec + bun:sqlite,
+       independent of BA's methodology: DB=system-map.json=frontend, all 34/34/34, zero-diff every
+       direction). Design: candidate (i′) write-through (new systemMapWatchlistWriter.ts infra adapter +
+       2 call sites in watchlist.ts, reusing alertVerdictStore.ts's atomic-write pattern) + candidate (ii)
+       audit script (scripts/checks/watchlist-divergence-audit.ts, reuses computeWatchlistDiff/
+       loadSsotWatchlist already exported from the 2026-07-11 migration script) + 1 real doc fix
+       (domain-model.md stale count) + 1 rollout-checklist item (technical-analysis restart). AC-2 flagged
+       for PO re-scope — not achievable via sync fix given today's live evidence.
+ZONE: multi — apps/mcp-server/ (primary) + scripts/ + generic-developer (docs)
+NEXT: pm | decompose into per-zone subtasks: (1) apps/mcp-server/ — write-through hook + optional
+       `sector` schema field, dev-mcp-server; (2) scripts/ — divergence audit script + cron wiring,
+       developer or dev-mcp-server; (3) generic-developer — domain-model.md 1-line fix, no dependency
+       on (1)/(2), can land independently/first. (2) depends_on (1) landing (audit is meaningless
+       before write-through exists to audit). Route AC-2 rescope question to PO before QA sign-off.
+HANDOFF: docs/handoffs/FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58-BA-spec.md
+PIPELINE: continue
+```

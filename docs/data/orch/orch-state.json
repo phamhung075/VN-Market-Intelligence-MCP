@@ -471,11 +471,14 @@
         "type": "signal_feedback",
         "summary": "A-33 hook-liveness: context-bloat-backstop.sh — settings-file-missing:/Users/admin/Documents/Hung/__works__/__PROJET/__l",
         "severity": "WARN",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-14T02:30Z",
-        "dedup_key": "hook_enforcement_liveness:context-bloat-backstop.sh"
+        "dedup_key": "hook_enforcement_liveness:context-bloat-backstop.sh",
+        "triaged_at": "2026-08-14T08:36:00Z",
+        "triaged_by": "po",
+        "disposition": "FOLD onto FIX-AUDITOR-A33-HOOKLIVENESS-SETTINGS-PATH-MISRESOLVE-FALSE-DEAD-HOOK (BACKLOG) — known false positive, no mint. A-33 reports settings-file-missing for context-bloat-backstop.sh, but that row already establishes the detector MISRESOLVES the settings path for a hook that is registered and demonstrably firing. DIRECT LIVE REFUTATION THIS TICK (not relayed): the very hook A-33 calls dead emitted envelope 7b76e01c (context_bloat_breach on docs/agent-memory/notebooks/dev-rag-service.md) at 2026-08-14T07:04:54Z into THIS SAME drain — a hook that writes a signal 4.5h after being declared missing is alive by construction. severity=WARN + corroborated-FP root cause => pendingObservations volume only, per the signal_feedback single-fire rule."
       },
       {
         "id": "sys-20260814T034703-c8e2",
@@ -538,11 +541,14 @@
         "type": "microservice_degraded",
         "summary": "rag-service memory pressure sustained >93% — loss of reclamation (A-30)",
         "severity": "CRITICAL",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-14T04:00Z",
-        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30:escalate-high-sustained"
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30:escalate-high-sustained",
+        "triaged_at": "2026-08-14T08:36:00Z",
+        "triaged_by": "po",
+        "disposition": "FOLD onto FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (REVIEW, next=qa) — covered by an open incident, no new mint. microservice_degraded CRITICAL 'rag-service memory pressure sustained >93% — loss of reclamation (A-30)'. PREMISE CROSS-CHECKED, not taken at face value: system-auditor tier-1 c97 (commit 99cb101ae, 2026-08-14T08:14Z) ran an A-30 deep-dive + STALE-ACK investigation on this exact symptom 3h57m after this row fired and returned verdict FOLD/PASS. The remediation (per-restart index rebuild, NOT the thread-pin originally suspected) landed 2026-08-14 and its durability window has not elapsed — a >93% reading inside the window is expected residue, not a fresh regression. RE-VERIFY GATE (do not close blind): if rag-service still shows sustained >93% with loss of reclamation after a full 24h dmesg durability window from the fix commit, that IS a genuine uncovered gap and must be escalated as a fresh FIX rather than folded again. Caution flagged for whoever re-verifies: A-30's crash-cliff branch is documented to fire on structurally non-crash drops, so do not score a reclamation dip as a crash."
       },
       {
         "id": "sys-20260814T042152-5a45",
@@ -566,8 +572,11 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "READ",
-        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-14.json"
+        "status": "triaged",
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-14.json",
+        "triaged_at": "2026-08-14T08:36:00Z",
+        "triaged_by": "po",
+        "disposition": "ACK-WITH-CORRECTION + FOLD onto FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (BACKLOG) — no mint. PREMISE REFUTED BEFORE ACTING (system-issue rule: verify the premise first): the summary 'team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed' asks PO to make a product decision on the strength of a date that is HARDCODED in scripts/…/memory-prune-sweep.sh, not measured live — that is precisely the defect the dedup-matched row exists to fix. The '2026-06-23' string matches that row's recorded hardcoded literal exactly, so this signal carries ZERO live evidence that the writer is actually dead. VALID PART ACTIONED: the replace-vs-retire question is real and stays owned by the dedup-matched row. INVALID PART CORRECTED: no replace-vs-retire ruling will be issued off this signal, because a decision taken on an unmeasured premise would retire a possibly-live writer. Whoever fixes the janitor row must make the sweep MEASURE writer liveness before it may re-raise this. severity=LOW => no BUG Telegram."
       },
       {
         "id": "sys-20260814T062025-0123",
@@ -7698,14 +7707,14 @@
         "created_at": "2026-07-30T18:27:28Z",
         "created_by": "pm",
         "note": "Atomic implementation of Step 2.4 collision probe.",
-        "updated_at": "2026-08-14T04:20:01Z",
+        "updated_at": "2026-08-14T08:37:51Z",
         "po_prior_art_suspect_20260808T1600Z": "SKIPPED as this tick's manual-dispatch-sweep selection despite being the top-ranked candidate (P0, BACKLOG-XOR-GAP, unflagged) — PRIOR ART APPEARS ALREADY SHIPPED, so folding it into a BATCH would have burned a dev slot re-implementing live code (feedback_file_prior_art_check_before_minting_row).\n\nThe row's deliverable is 'Implement Cowork-Slot Collision Probe Core (dispatch-claim/SKILL.md + CLAUDE.md)'. Both named targets already carry a collision path: CLAUDE.md:14 has the 'Peer collision' outcome row ('claimed:false + current_holder.owner_client_session != $CLAUDE_CODE_SESSION_ID -> log PRE-CLAIM collision -> send_telegram(work) -> EXIT'); .claude/skills/dispatch-claim/CARD.md:35 carries the same branch; .claude/skills/dispatch-claim/SKILL.md:194 (session-presence collision), :288 (PRE-CLAIM collision) and :563 ('Cross-session collision detection - same agent_id in multiple live sessions'). SKILL.md is 31,235B and was last written 2026-08-07, well after this row's 2026-07-30 mint.\n\nDELIBERATELY NOT CLOSED BY PO: the match is on file+behaviour, not on this row's acceptance criteria (the row carries no `files` and no AC beyond 'Atomic implementation of Step 2.4 collision probe'), and it has two live siblings (TASK-COWORK-MUTEX-002/003) whose scope PO did not examine. Closing a P0 on a partial match would be the mirror of the mistake being avoided. REQUIRED NEXT ACTION (whoever picks this up first): diff Step 2.4 of the originating decomposition against the live SKILL.md/CARD.md/CLAUDE.md and either close 001 as already-shipped or state precisely which sub-behaviour is still missing — do NOT re-implement from the title.",
         "po_manual_dispatch_skipped_at": "2026-08-08T16:06:57Z",
         "po_manual_dispatch_skipped_reason": "prior-art-suspect: deliverable appears live in CLAUDE.md + .claude/skills/dispatch-claim/{CARD,SKILL}.md; needs AC-level verify, not dispatch",
-        "po_manual_dispatch_flagged_at": "2026-08-14T04:20:01Z",
+        "po_manual_dispatch_flagged_at": "2026-08-14T08:36:00Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "BACKLOG-XOR-GAP",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced BACKLOG-XOR-GAP candidate — folding into this tick's BATCH. P0, supervised:true with plan_only ABSENT and owner=developer (dev-role) — the exact lone-flag shape excluded from BOUNDED-1, SLS and DRS simultaneously; 88 live candidates this tick, this is rank-0. Aged 15d since 2026-07-30 mint with zero eligible picker anywhere.",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced BACKLOG-XOR-GAP candidate — folding into this tick's BATCH. RE-ADMITTED under flag_reentrant: prior stamp 2026-08-14T04:20:01Z is 4h16m old (> STALE_SECONDS=14400), i.e. the 04:20Z fold was stamped but the row NEVER LEFT backlog[] — this is the 2nd consecutive fold for this row and the exact TE-T12 stranding shape the bounded re-admission exists to cure. Candidate set this tick: 90 eligible (53 DRS-STRANDED-OFF-ALLOWLIST, 37 BACKLOG-XOR-GAP, 0 READY-XOR) — corroborates the live dispatch-starvation finding (1 row dispatched per tick vs a 90-deep eligible pool, P0 expedite ineffective). Row is P0/rank 0 and has been BACKLOG since 2026-07-30T18:27:28Z (15 days).",
         "po_manual_dispatch_dispatched_as": "SPIKE-COWORK-MUTEX-001-PRIOR-ART-ADJUDICATE"
       },
       {
@@ -17552,7 +17561,7 @@
         "status": "REVIEW",
         "zone": "multi",
         "owner": "po",
-        "next_agent": "architect",
+        "next_agent": "pm",
         "plan_only": true,
         "supervised": true,
         "sprint": "COWORK-RELIABILITY",
@@ -17572,7 +17581,7 @@
         ],
         "baseline_pass": true,
         "note": "MINTED 2026-07-25T17:38Z by po from router triage item 5 (\"ticker-count three-way disagreement, unresolved\"). po RESOLVED the disagreement by probing the runtime rather than comparing files, and what is left after resolving it is this row — a real, live, product-visible defect that the count-comparison was obscuring.\n\nTHERE WAS NEVER A THREE-WAY DISAGREEMENT. THE SETS ARE STRICTLY NESTED. po called the RUNTIME `get_watchlist` tool through the gateway — the exact tool both cowork flows call to build WATCHLIST — and diffed all three sets this tick:\n    system-map (34, 33 active)  SUBSET  coverage-state (57)  SUBSET  get_watchlist (58)\n  get_watchlist \\ coverage-state = {MWG}   (exactly one)\n  coverage-state \\ get_watchlist = {}      (empty)\n  system-map     \\ get_watchlist = {}      (empty)\nNo set contains a ticker the larger one lacks. Nothing contradicts anything; two of the three are simply stale or partial VIEWS of one roster.\n\nAUTHORITATIVE ROSTER = runtime `get_watchlist`, 58 tickers, backed by the SQLite `watchlist` table (cf. apps/mcp-server/src/interface/mcp/tools/sector/correlationTools.ts:50-59, `SELECT code FROM watchlist`; tool registered at src/interface/mcp/tools/system/watchlist.ts:309). news-scout's c200 notebook claim of \"58\" was CORRECT and was wrongly flagged as the outlier by two prior reports — it is the only one of the three numbers that matches what the code actually serves. coverage-state.json (57) is a write-side LEDGER, not a roster, and its one-ticker gap (MWG) self-heals via the coverage-stamp fix; that is handled on FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER and is NOT in scope here.\n\nTHE ACTUAL DEFECT: docs/data/system-map.json `.project.watchlist` HAS 34 ENTRIES AND IS MISSING 24 OF THE 58 LIVE WATCHLIST TICKERS. Missing, verbatim from the set-diff:\n  ACB ACV BDI CTG D2D DHG DLC GAS GVR HCM HSG HVN JSH MBB MWG NKG POW PPC REE SIS TCH VDC VNH VPB\nThat list includes ACB, CTG, MBB and VPB — four of Vietnam's largest listed banks — plus GAS, MWG, HVN, ACV, REE, POW, GVR, HCM. This is not a long tail of illiquid names; it is a 41% hole containing several of the highest-impact tickers on the exchange.\n\nWHY THIS IS NOT COSMETIC — THE STALE FILE HAS LIVE CONSUMERS, VERIFIED AT SOURCE:\n  1. CLAUDE.md instructs EVERY agent: \"All structural data (services, agents, zones, channels, sources, watchlist) lives in docs/data/system-map.json. Query with jq — never hardcode values.\" An agent that obeys this instruction correctly gets 33 active tickers and silently under-covers 24. The project's own canonical anti-hardcode rule currently routes agents to the WRONG roster.\n  2. .claude/skills/system-map-query/SKILL.md:106-115 is the canonical query pattern and ships four worked examples all reading `.project.watchlist[]` — the documented-correct way to get the watchlist returns 33.\n  3. docs/agents/fb-market-poster/flow/main.md:200 derives its ticker set from `.project.watchlist[] | select(.active==true)` — a PUBLIC-FACING publisher operating on 33 of 58.\n  4. apps/frontend/app/domain/market.ts:293 `WATCHLIST_STOCKS` is a COMPILE-TIME constant that mirrors this file (its own docstring says so: \"Canonical watchlist — mirrors docs/data/system-map.json project.watchlist\"), embedded at build time, never read from FS at runtime. po confirmed ACB/CTG/MBB/VPB/GAS/MWG appear NOWHERE in that file. The dashboard therefore cannot show four of the largest banks in the market.\n\nPRIOR ART — THIS EXACT DIVERGENCE HAS ALREADY CAUSED A MISSED DETECTION ONCE. docs/spikes/SPIKE_1946-crisis-detection-plx-gap.md diagnosed a crisis-detection MISS whose root cause it names as \"a watchlist divergence\": PLX was absent from `.project.watchlist[]` while present elsewhere. That instance was fixed (po verified PLX is now at index 31 of system-map and present in market.ts) but the CLASS was never closed — the file drifted straight back to a 24-ticker hole. Treat that spike as the impact precedent when sizing this: the demonstrated consequence is a missed market event, not an inaccurate document.\n\nREMEDY — DIRECTION OPEN, ba/architect own HOW. po did NOT choose, but flags the trap: a one-time hand-sync of 24 rows fixes today and guarantees the same drift returns, exactly as it did after SPIKE_1946. Candidates: (i) GENERATE `.project.watchlist` from the `watchlist` table so the file is derived and cannot drift, with the frontend constant regenerated from it in the same step; (ii) keep the file authored but add a CI/audit check asserting `.project.watchlist` set-equals the runtime `get_watchlist` set, failing loud on divergence; (iii) delete `.project.watchlist` outright and repoint CLAUDE.md, the system-map-query skill, fb-market-poster's flow and the frontend at the runtime tool — smallest surface, but the frontend needs a build-time or runtime fetch it does not have today, so cost is real. Whichever is chosen must also correct the stale docstrings that assert the mirror is canonical.\n\nACCEPTANCE (all RAW):\n  1. `jq '[.project.watchlist[].ticker] | length' docs/data/system-map.json` set-equals the runtime `get_watchlist` roster — assert SET EQUALITY, not the number 58. A count check passes on the wrong 58 tickers; the ticker sets must match exactly, both directions.\n  2. The frontend surface renders the full roster — ACB, CTG, MBB, VPB specifically present — verified in the SERVED page, not in the source constant (feedback_host_cli_integrity_check_false_ok / feedback_factory_testfirst_primitive_tests_copy_not_served_path: check the served path, not a copy).\n  3. NEGATIVE CONTROL, the criterion separating a real fix from a re-sync: add a ticker to the runtime watchlist, then demonstrate the divergence is CAUGHT — by regeneration, by a failing audit, or by a loud warning. A remedy that only reconciles today's 24 leaves the drift mechanism armed and SPIKE_1946 will recur a third time.\n  4. CLAUDE.md's \"never hardcode, query system-map for watchlist\" instruction is either made TRUE or repointed at the real SSOT. Leaving the project's canonical rule pointing at a stale roster is not an acceptable end state.\n\nEXPLICITLY OUT OF SCOPE: the coverage-state ledger and its MWG gap (owned by FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER); the blanket-stamp defect; the Bash-grant transport decision. Do not pull them in — three separate rows, three separate deliverables, one shared symptom of \"nobody agreed which list is the list\".\n",
-        "updated_at": "2026-08-14T08:32:09Z",
+        "updated_at": "2026-08-14T08:40:11Z",
         "updated_by": "ba",
         "promoted_at": "2026-08-07T20:54:39Z",
         "promoted_by": "dev-team (supervised-lane sweep)",
@@ -17587,7 +17596,9 @@
         "entered_review_at": "2026-08-07T23:09:41Z",
         "secondary_claimed_at": "2026-08-14T08:32:09Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "architect"
+        "secondary_dispatch_target": "architect",
+        "architect_completed_at": "2026-08-14T11:05:00Z",
+        "architect_review_note": "Blocker Q1 RESOLVED — CONFIRMS 34 (re-verified live via docker exec + bun:sqlite, independent of BA methodology; architect also confirmed lacking gateway grant, same gap BA hit). DB, system-map.json, and frontend WATCHLIST_STOCKS are all 3 byte-identical, zero-diff every direction, right now — no live 41%-hole exists today (EC-1 outcome). Root cause confirmed at source: add_to_watchlist/remove_from_watchlist write directly to SQLite with zero write-back to system-map.json; seedWatchlist() is INSERT/UPDATE-only, never DELETEs. Design: candidate (i′) write-through (new systemMapWatchlistWriter.ts infra adapter, reuses alertVerdictStore.ts atomic tmp+rename pattern, 2 call sites in watchlist.ts, fail-open on file-write error; flagged a schema gap BA missed — add_to_watchlist has no free-text sector param, recommend adding one) + candidate (ii) audit script (scripts/checks/watchlist-divergence-audit.ts, reuses computeWatchlistDiff/loadSsotWatchlist already exported from the 2026-07-11 migration script; considered extending db-integrity-probe.sh, rejected as a different concern). domain-model.md watchlist count doc is genuinely stale (33/30+3 vs live 34/33+1) — 1-line fix; technical-analysis docs already accurate, no edit needed. FR-6 frontend codegen deferred — zero live drift found, building it now would be scope-creep against a refuted premise. AC-2 (ACB/CTG/MBB/VPB specifically render) flagged for PO RE-SCOPE, not silently reinterpreted — those tickers exist in none of system-map.json/DB/frontend today; restoring them is a content decision (add_to_watchlist call), not a code fix. Full design in [Architect] Brownfield Findings appended to docs/handoffs/FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58-BA-spec.md. NEXT: pm decomposes 3 subtasks — (1) apps/mcp-server/ write-through + optional sector field → dev-mcp-server; (2) scripts/ audit script + cron wiring → developer/dev-mcp-server, depends_on (1); (3) domain-model.md 1-line fix → generic developer, no dependency, can land first/independently. Route AC-2 rescope question to PO before QA sign-off."
       },
       {
         "id": "FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
