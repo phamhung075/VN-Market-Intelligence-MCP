@@ -92,11 +92,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-08-14T11:23:11Z",
-    "updated_by": "pm"
+    "status": "in_progress",
+    "active_task_id": "UC-CCA-P2",
+    "next_agent": "ba",
+    "next_action": "Design-Router Sweep claim of UC-CCA-P2 — spawn ba DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only (if either was set) preserved — do not clear.",
+    "updated_at": "2026-08-14T11:51:28Z",
+    "updated_by": "dev-team (design-router sweep)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11375,27 +11376,6 @@
         "updated_by": "po/triage-20260814T0811Z"
       },
       {
-        "id": "FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR",
-        "type": "FIX",
-        "title": "QA verify-committed verdict paths state the qa[] lane-move in PROSE with no orch-apply.sh pipe — 4 confirmed strandings, permanently saturated QA_CAP=10 and froze the whole review->qa drain",
-        "priority": "P0",
-        "status": "BACKLOG",
-        "next_agent": "agents-architect",
-        "owner": "agents-architect",
-        "zone": "cross-service/",
-        "size": "S",
-        "created_at": "2026-08-14T09:11:11Z",
-        "created_by": "po/QA-LANE-SATURATION-STALE-ROWS-ESCALATION-20260814T0908Z",
-        "baseline_pass": false,
-        "files": [
-          "docs/agents/qa/flow/main.md"
-        ],
-        "desc": "ROOT CAUSE (read at source this tick, not inferred). docs/agents/qa/flow/main.md's two Direct-Commit-Verify verdict exits both describe the board mutation in prose and neither carries an executable write:\n  :189 vc-approved — 'Flip status: QA -> DONE_VERIFIED, move .task_board.qa[] -> .task_board.done_verified[], IN THE SAME orch-apply.sh write'. Names orch-apply.sh but supplies NO jq filter and NO pipe.\n  :198 vc-changes — 'Move .task_board.qa[] -> .task_board.review[] ... stamp redispatch_count += 1'. Does not mention orch-apply.sh AT ALL.\n`grep -rn orch-apply docs/agents/qa/` returns exactly 3 hits fleet-wide in QA's own flow dir: main.md:33 (WF-1 STOP-RELEASE head reset — a real pipe), and quality-audit.md:13/:65 (real pipes). The verdict paths, the single most load-bearing writes QA makes, have none.\n\nTHIS IS A KNOWN, ALREADY-FIXED DEFECT CLASS, NEVER PROPAGATED. Identical shape to FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR: PO's sub-flows had prose-only 'append to backlog[]' with no pipe; fixed 2026-08-05 by commit 3ce726a6e which inlined `jq ... | bash scripts/orch-apply.sh` AT EVERY MUTATION POINT in sprint-kickoff.md/channel-audit.md/market-group.md/telegram-reports.md. That patch shape is the template — replicate it verbatim on qa/flow/main.md's :189 and :198. (The PO row itself is one of the 4 rows this QA-side defect stranded.)\n\nLIVE EVIDENCE, 4 rows, all verified individually this tick — not inferred from a single sample:\n  1. FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR — vc-changes 2026-08-06T13:25Z; commit e6d5b87df touched notebook/journal ONLY, zero orch-state.json bytes. Stranded 8d.\n  2. FACTORY-ALERT-dedup-window-config — vc-changes 2026-08-06T17:45Z; commit 6df088ee8 subject literally reads 'CHANGES_REQUESTED (qa->review)' and touched ONLY docs/agent-memory/notebooks/qa.md. The intended write is spelled out verbatim in the row's status_note ('Held: .task_board.qa[] -> .task_board.review[], status QA -> REVIEW, owner/next_agent=ops, redispatch_count 0 -> 1') and none of it landed. Stranded 8d.\n  3. FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT... — CHANGES_REQUESTED 2026-08-11T15:30:54Z; commit 6b721b889 DID write orch-state.json but only appended the review record to status_note; row's own status stayed 'QA', lane unchanged. Stranded 3d. Proves the failure is not 'QA cannot write orch-state' (it can, and did in the same commit) — it is that the lane-move has no executable form to copy.\n  4. FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN... — partial verdict 2026-08-06T15:41Z held on AC-5; AC-5 later discharged; note ends 'ROUTED BACK TO QA' but the row was already IN qa[], which no drain reads. Stranded 8d.\nNON-DETERMINISM (why this was never caught): the same paths DO sometimes land — 977c533b3/f9e597a76/6245e116d/0fd243794/87755ab3a are real qa->done_verified writes, d146e96b5/0f1cbf920/cd3b7efec real qa->review writes. Success depends entirely on whether the spawned QA session improvises the jq itself. Prose-only = coin-flip, exactly the FIX-PO-BATCH-MINT finding.\n\nBLAST RADIUS: each miss permanently consumes one of QA-Drain's QA_CAP=10 slots (docs/agents/dev-team/flow/main.md § Review-Lane QA-Drain). Measured live 2026-08-14T08:37Z: qa[] 10/10, 9 of 10 stranded, so `QA_WIP -lt QA_CAP` was false and the ENTIRE review->qa pipeline had been dead for an unknown period while 54 review[] rows with next_agent=qa queued behind it, including 3 P0/P1-adjacent ones. The drain lane silently no-op'd — its own gate reports nothing when saturated.\n\nACCEPTANCE:\nAC-1 qa/flow/main.md:189 (vc-approved) carries a literal, copy-executable `jq --arg id ... '<transform>' docs/data/orch/orch-state.json | bash \"$PROJECT_ROOT/scripts/orch-apply.sh\"` performing status QA->DONE_VERIFIED + qa[]->done_verified[] in ONE write (CANONICAL:SSOT-STATUSFLIP-LANEMOVE).\nAC-2 qa/flow/main.md:198 (vc-changes) carries the same, performing status QA->REVIEW + qa[]->review[] + redispatch_count+=1 + next_agent/owner routing, in ONE write.\nAC-3 both blocks carry a post-write self-verification re-reading the file (same shape as po/flow/main.md's AC-3 persistence gate) — RETURN may not assert the lane-move without it.\nAC-4 opt-IN allowlist regression verifier (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist) asserting no verdict-exit step in docs/agents/qa/flow/*.md states a task_board lane mutation without an orch-apply.sh pipe in the same step. scripts/ is outside agent-father's commit_zone -> split to a developer row if needed, do NOT drop it silently.\nAC-5 negative control: a vc-approved fixture and a vc-changes fixture both land their lane-move; a prose-only fixture is rejected by AC-4's verifier.",
-        "po_scope_note": "next_agent=agents-architect deliberately, NOT agent-father: agent-father is OFF the DRS ratified allowlist [architect,ba,pm,po,agents-architect] and a row pointed at it is unreachable by every automated dispatch lane (documented on FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT's own status_note). agents-architect designs then signals agent-father, which is the sanctioned and dispatchable chain for agent flow-doc edits. The design is already fully specified in desc above — no new architecture brief is needed, this should be a one-hop signal to agent-father, not a fresh design cycle.",
-        "updated_at": "2026-08-14T09:11:11Z",
-        "updated_by": "po"
-      },
-      {
         "id": "FIX-DEVTEAM-QA-LANE-STALE-AGE-WATCHDOG-BLIND",
         "type": "FIX",
         "title": "Nothing detects a stranded qa[] row — WF-3/WF-4 bound .head pins on in_progress[] only, WF-1d explicitly refuses to lane-move review[]/qa[]; a QA_CAP slot lost to a missed lane-move is lost forever",
@@ -15518,31 +15498,6 @@
         "updated_at": "2026-08-13T20:12:13Z"
       },
       {
-        "id": "UC-CCA-P2",
-        "type": "SPRINT-S",
-        "title": "Absorb the DMS-2 sibling-corroboration probe into gateway-availability-gate; de-dup market-watcher double probe; extend to 5 flows",
-        "status": "READY",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P2",
-        "note": "SCOPE=verifier Rescope note. Upgrade gateway-availability-gate SKILL with the DMS-2 escalation ladder (CONFIRMED-BLIND skip-backoff, sibling-recent suppression) keeping its correct confirmed-down actions (Write signal+BLOCKED notebook, NEVER send_telegram). Dedup market-watcher inline block; extend the gate to alert-commander/unified-agent/digest-predict/bctc-analyst/fb-market-poster. Coordinate with sibling P1 on cycle.md.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "ba",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "promoted_at": "2026-08-13T23:20:35Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "ba",
-        "updated_at": "2026-08-13T23:20:36Z"
-      },
-      {
         "id": "FIX-SIGNALQUEUE-PUSH-SPAWN-FANOUT-MECHANISM",
         "title": "Signal-queue push mechanism: spawn-fanout Step 5.2b + cowork-schedule flags",
         "status": "TODO",
@@ -15814,6 +15769,31 @@
         "verification_gate": "incident-lane-consumer-mainflow-v1",
         "updated_at": "2026-08-14T11:23:11Z",
         "updated_by": "pm"
+      },
+      {
+        "id": "FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR",
+        "type": "FIX",
+        "title": "QA verify-committed verdict paths state the qa[] lane-move in PROSE with no orch-apply.sh pipe — 4 confirmed strandings, permanently saturated QA_CAP=10 and froze the whole review->qa drain",
+        "priority": "P0",
+        "status": "READY",
+        "next_agent": "agents-architect",
+        "owner": "agents-architect",
+        "zone": "cross-service/",
+        "size": "S",
+        "created_at": "2026-08-14T09:11:11Z",
+        "created_by": "po/QA-LANE-SATURATION-STALE-ROWS-ESCALATION-20260814T0908Z",
+        "baseline_pass": false,
+        "files": [
+          "docs/agents/qa/flow/main.md"
+        ],
+        "desc": "ROOT CAUSE (read at source this tick, not inferred). docs/agents/qa/flow/main.md's two Direct-Commit-Verify verdict exits both describe the board mutation in prose and neither carries an executable write:\n  :189 vc-approved — 'Flip status: QA -> DONE_VERIFIED, move .task_board.qa[] -> .task_board.done_verified[], IN THE SAME orch-apply.sh write'. Names orch-apply.sh but supplies NO jq filter and NO pipe.\n  :198 vc-changes — 'Move .task_board.qa[] -> .task_board.review[] ... stamp redispatch_count += 1'. Does not mention orch-apply.sh AT ALL.\n`grep -rn orch-apply docs/agents/qa/` returns exactly 3 hits fleet-wide in QA's own flow dir: main.md:33 (WF-1 STOP-RELEASE head reset — a real pipe), and quality-audit.md:13/:65 (real pipes). The verdict paths, the single most load-bearing writes QA makes, have none.\n\nTHIS IS A KNOWN, ALREADY-FIXED DEFECT CLASS, NEVER PROPAGATED. Identical shape to FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR: PO's sub-flows had prose-only 'append to backlog[]' with no pipe; fixed 2026-08-05 by commit 3ce726a6e which inlined `jq ... | bash scripts/orch-apply.sh` AT EVERY MUTATION POINT in sprint-kickoff.md/channel-audit.md/market-group.md/telegram-reports.md. That patch shape is the template — replicate it verbatim on qa/flow/main.md's :189 and :198. (The PO row itself is one of the 4 rows this QA-side defect stranded.)\n\nLIVE EVIDENCE, 4 rows, all verified individually this tick — not inferred from a single sample:\n  1. FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR — vc-changes 2026-08-06T13:25Z; commit e6d5b87df touched notebook/journal ONLY, zero orch-state.json bytes. Stranded 8d.\n  2. FACTORY-ALERT-dedup-window-config — vc-changes 2026-08-06T17:45Z; commit 6df088ee8 subject literally reads 'CHANGES_REQUESTED (qa->review)' and touched ONLY docs/agent-memory/notebooks/qa.md. The intended write is spelled out verbatim in the row's status_note ('Held: .task_board.qa[] -> .task_board.review[], status QA -> REVIEW, owner/next_agent=ops, redispatch_count 0 -> 1') and none of it landed. Stranded 8d.\n  3. FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT... — CHANGES_REQUESTED 2026-08-11T15:30:54Z; commit 6b721b889 DID write orch-state.json but only appended the review record to status_note; row's own status stayed 'QA', lane unchanged. Stranded 3d. Proves the failure is not 'QA cannot write orch-state' (it can, and did in the same commit) — it is that the lane-move has no executable form to copy.\n  4. FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN... — partial verdict 2026-08-06T15:41Z held on AC-5; AC-5 later discharged; note ends 'ROUTED BACK TO QA' but the row was already IN qa[], which no drain reads. Stranded 8d.\nNON-DETERMINISM (why this was never caught): the same paths DO sometimes land — 977c533b3/f9e597a76/6245e116d/0fd243794/87755ab3a are real qa->done_verified writes, d146e96b5/0f1cbf920/cd3b7efec real qa->review writes. Success depends entirely on whether the spawned QA session improvises the jq itself. Prose-only = coin-flip, exactly the FIX-PO-BATCH-MINT finding.\n\nBLAST RADIUS: each miss permanently consumes one of QA-Drain's QA_CAP=10 slots (docs/agents/dev-team/flow/main.md § Review-Lane QA-Drain). Measured live 2026-08-14T08:37Z: qa[] 10/10, 9 of 10 stranded, so `QA_WIP -lt QA_CAP` was false and the ENTIRE review->qa pipeline had been dead for an unknown period while 54 review[] rows with next_agent=qa queued behind it, including 3 P0/P1-adjacent ones. The drain lane silently no-op'd — its own gate reports nothing when saturated.\n\nACCEPTANCE:\nAC-1 qa/flow/main.md:189 (vc-approved) carries a literal, copy-executable `jq --arg id ... '<transform>' docs/data/orch/orch-state.json | bash \"$PROJECT_ROOT/scripts/orch-apply.sh\"` performing status QA->DONE_VERIFIED + qa[]->done_verified[] in ONE write (CANONICAL:SSOT-STATUSFLIP-LANEMOVE).\nAC-2 qa/flow/main.md:198 (vc-changes) carries the same, performing status QA->REVIEW + qa[]->review[] + redispatch_count+=1 + next_agent/owner routing, in ONE write.\nAC-3 both blocks carry a post-write self-verification re-reading the file (same shape as po/flow/main.md's AC-3 persistence gate) — RETURN may not assert the lane-move without it.\nAC-4 opt-IN allowlist regression verifier (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist) asserting no verdict-exit step in docs/agents/qa/flow/*.md states a task_board lane mutation without an orch-apply.sh pipe in the same step. scripts/ is outside agent-father's commit_zone -> split to a developer row if needed, do NOT drop it silently.\nAC-5 negative control: a vc-approved fixture and a vc-changes fixture both land their lane-move; a prose-only fixture is rejected by AC-4's verifier.",
+        "po_scope_note": "next_agent=agents-architect deliberately, NOT agent-father: agent-father is OFF the DRS ratified allowlist [architect,ba,pm,po,agents-architect] and a row pointed at it is unreachable by every automated dispatch lane (documented on FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT's own status_note). agents-architect designs then signals agent-father, which is the sanctioned and dispatchable chain for agent flow-doc edits. The design is already fully specified in desc above — no new architecture brief is needed, this should be a one-hop signal to agent-father, not a fresh design cycle.",
+        "updated_at": "2026-08-14T11:51:24Z",
+        "updated_by": "po",
+        "promoted_at": "2026-08-14T11:51:23Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='agents-architect' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "agents-architect"
       }
     ],
     "review": [
@@ -19150,9 +19130,37 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-14T09:52:31Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "last_triaged_at": "2026-08-14T11:51:23Z",
+    "last_triaged_by": "dev-team (design-router sweep)",
+    "in_progress": [
+      {
+        "id": "UC-CCA-P2",
+        "type": "SPRINT-S",
+        "title": "Absorb the DMS-2 sibling-corroboration probe into gateway-availability-gate; de-dup market-watcher double probe; extend to 5 flows",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P2",
+        "note": "SCOPE=verifier Rescope note. Upgrade gateway-availability-gate SKILL with the DMS-2 escalation ladder (CONFIRMED-BLIND skip-backoff, sibling-recent suppression) keeping its correct confirmed-down actions (Write signal+BLOCKED notebook, NEVER send_telegram). Dedup market-watcher inline block; extend the gate to alert-commander/unified-agent/digest-predict/bctc-analyst/fb-market-poster. Coordinate with sibling P1 on cycle.md.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "ba",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-08-13T23:20:35Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "ba",
+        "updated_at": "2026-08-14T11:51:28Z",
+        "claimed_at": "2026-08-14T11:51:27Z",
+        "claimed_by": "dev-team (design-router sweep)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -19175,7 +19183,7 @@
         "last_served_tick": "2026-08-14T10:52:35Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-14T07:50:37Z"
+        "last_served_tick": "2026-08-14T11:51:10Z"
       },
       "qa_drain": {
         "last_served_tick": "2026-08-14T09:00:43Z"
@@ -19184,7 +19192,7 @@
         "last_served_tick": "2026-08-14T09:23:37Z"
       }
     },
-    "_updated_at": "2026-08-14T10:52:35Z",
+    "_updated_at": "2026-08-14T11:51:10Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19584,6 +19592,18 @@
         },
         "createdAt": "2026-08-14T10:31:41Z",
         "drained_at": "2026-08-14T10:50:16Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "29b4a63cdc6fef1afddbfb909a52f26990568b48586b512292e07190e0abeb1c",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 5 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0-pm.md docs/agent-memory/notebooks/pm.md docs/data/orch/orch-state.json docs/handoffs/FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW.md docs/handoffs/FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS.md. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=20 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-14T11:26:00Z",
+        "drained_at": "2026-08-14T11:49:23Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
