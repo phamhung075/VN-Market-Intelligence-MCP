@@ -12,6 +12,9 @@
 import { describe, test, expect, beforeAll, afterAll } from 'bun:test';
 import { getDb, closeDb, initDatabase } from '../infrastructure/db/schema.js';
 import { fetchParseAndStoreBctc } from '../application/usecases/fetchParseAndStoreBctc.js';
+import { tryNewsChainFallback } from '../application/usecases/bctc/newsChainFallback.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { registerBctcFullTools } from '../interface/mcp/tools/financial-reports/bctcFullTools.js';
 import type { Database } from 'bun:sqlite';
 
 let db: Database;
@@ -25,6 +28,25 @@ function daysAgo(d: number): string {
 }
 function daysFromNow(d: number): string {
   return new Date(Date.now() + d * 24 * 60 * 60 * 1000).toISOString();
+}
+
+// Reused from fix-bctc-identity-serve-guard.test.ts:38-53 — invoke a
+// registered MCP tool directly, bypassing SSE transport.
+async function callTool(
+  server: McpServer,
+  toolName: string,
+  args: Record<string, unknown>,
+): Promise<{ content: Array<{ type: string; text: string }> }> {
+  const registry = (server as unknown as {
+    _registeredTools: Record<string, {
+      handler: (args: Record<string, unknown>) => Promise<unknown>;
+    }>;
+  })._registeredTools;
+  const entry = registry[toolName];
+  if (!entry) throw new Error(`Tool "${toolName}" not registered`);
+  return entry.handler(args) as Promise<{
+    content: Array<{ type: string; text: string }>;
+  }>;
 }
 
 beforeAll(async () => {
@@ -114,17 +136,27 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
     expect(result?.confidence).toBeGreaterThanOrEqual(0.45);
     expect(result?.confidence).toBeLessThanOrEqual(0.65);
 
-    // VERIFY: Row inserted into financial_reports with correct metadata
+    // VERIFY (FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET): NO row lands in
+    // financial_reports — this fallback path never writes there anymore, since
+    // the hardcoded all-zero balance sheet would be byte-indistinguishable from
+    // OCR corruption at serve time.
+    const frCount = db.prepare(`
+      SELECT COUNT(*) as cnt FROM financial_reports WHERE action_code = ? AND sort_key = ?
+    `).get('VCB', '2024-Q1') as { cnt: number };
+    expect(frCount.cnt).toBe(0);
+
+    // VERIFY: hint row landed in the new non-authoritative
+    // bctc_news_fallback_hints table instead.
     const row = db.prepare(`
-      SELECT extraction_method, extraction_confidence, extraction_source_note
-      FROM financial_reports
+      SELECT confidence, extraction_source_note
+      FROM bctc_news_fallback_hints
       WHERE action_code = ? AND sort_key = ?
       LIMIT 1
     `).get('VCB', '2024-Q1') as any;
 
     expect(row).toBeDefined();
-    expect(row.extraction_method).toBe('news_inference');
-    expect(row.extraction_confidence).toBeGreaterThanOrEqual(0.45);
+    expect(row.confidence).toBeGreaterThanOrEqual(0.45);
+    expect(row.confidence).toBeLessThanOrEqual(0.65);
     expect(row.extraction_source_note).toContain('chain signals');
     expect(row.extraction_source_note).toContain('PDF');
   });
@@ -380,10 +412,12 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
 
     expect(result?.fallback).toBe(true);
 
-    // VERIFY: Fields extracted from signals
+    // VERIFY (FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET): the three
+    // extracted hint fields land in bctc_news_fallback_hints, NOT
+    // financial_reports — financial_reports stays at 0 rows for this period.
     const row = db.prepare(`
       SELECT revenue_growth_qoq, margin_trend, debt_ratio_hint, extraction_source_note
-      FROM financial_reports
+      FROM bctc_news_fallback_hints
       WHERE action_code = ? AND sort_key = ?
       LIMIT 1
     `).get('VIC', '2024-Q2') as any;
@@ -394,6 +428,11 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
     expect(row.debt_ratio_hint).toBeCloseTo(45, 0); // Extracted: 45%
     expect(row.extraction_source_note).toContain('chain signals');
     expect(row.extraction_source_note).toContain('2');
+
+    const frCount = db.prepare(`
+      SELECT COUNT(*) as cnt FROM financial_reports WHERE action_code = ? AND sort_key = ?
+    `).get('VIC', '2024-Q2') as { cnt: number };
+    expect(frCount.cnt).toBe(0);
   });
 
   test('RED 7: Temporal discount — signal mentions 2023 data for Q1-2024 → confidence reduced', async () => {
@@ -461,15 +500,16 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
 
     expect(result?.fallback).toBe(true);
 
-    // VERIFY: Confidence reduced due to temporal mismatch
+    // VERIFY (FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET): temporal-discount
+    // -reduced confidence now lives in bctc_news_fallback_hints.confidence.
     const row = db.prepare(`
-      SELECT extraction_confidence
-      FROM financial_reports
+      SELECT confidence
+      FROM bctc_news_fallback_hints
       WHERE action_code = ? AND sort_key = ?
       LIMIT 1
     `).get('BSR', '2024-Q1') as any;
 
-    expect(row.extraction_confidence).toBeLessThan(0.55); // Default 0.55 reduced by 0.8x multiplier
+    expect(row.confidence).toBeLessThan(0.55); // Default 0.55 reduced by 0.8x multiplier
   });
 
   test('RED 8: E2E — OCR fails (fallback inserted), then succeeds → OCR overwrites news_inference', async () => {
@@ -538,28 +578,189 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
 
     expect(first?.extraction_method).toBe('news_inference');
 
-    // VERIFY: news_inference row inserted
-    let row = db.prepare(`
-      SELECT extraction_method FROM financial_reports WHERE action_code = ? AND sort_key = ?
+    // VERIFY (FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET): NO row landed
+    // in financial_reports on the fallback branch — instead a hints row landed
+    // in bctc_news_fallback_hints. `extraction_source_note` non-null is the
+    // "fallback ran" signal (this table has no extraction_method column).
+    let frRow = db.prepare(`
+      SELECT id FROM financial_reports WHERE action_code = ? AND sort_key = ?
     `).get('VJC', '2024-Q2') as any;
-    expect(row.extraction_method).toBe('news_inference');
+    expect(frRow).toBeNull();
+
+    let hintRow = db.prepare(`
+      SELECT extraction_source_note FROM bctc_news_fallback_hints WHERE action_code = ? AND sort_key = ?
+    `).get('VJC', '2024-Q2') as any;
+    expect(hintRow).toBeDefined();
+    expect(hintRow.extraction_source_note).not.toBeNull();
 
     // SECOND CALL: PDF now succeeds → OCR extraction succeeds
+    // FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET fixture correction: the
+    // original English pdfTextOverride text below never actually parsed as a
+    // valid BCTC balance sheet (the extractor requires the Vietnamese labels,
+    // e.g. "TỔNG CỘNG TÀI SẢN") — it always produced a zero-confidence/empty
+    // extraction that storeReport() itself refuses to persist. Pre-fix, this
+    // was masked: the FIRST call's fallback write had already created a
+    // financial_reports row, and fetchParseAndStoreBctc.ts's separate "Bug
+    // 1352a" extraction_method-only UPDATE stamped 'pdf-parse' onto that
+    // pre-existing row regardless of storeReport()'s own guard verdict — so
+    // the old assertion passed for the wrong reason. Now that the fallback
+    // branch correctly never creates a financial_reports row, that masking
+    // stale row is gone, exposing the fixture defect. Replaced with a real,
+    // properly-labeled minimal Vietnamese BCTC text (same pattern as
+    // 048-ssc-pipeline.test.ts's MINIMAL_BCTC_TEXT) so this call genuinely
+    // succeeds — matching the test's own stated intent ("PDF now succeeds →
+    // OCR extraction succeeds").
     const second = await fetchParseAndStoreBctc({
       actionCode: 'VJC',
       year: 2024,
       quarter: 'Q2',
       enableBctcFallback: true,
       pdfUrl: 'https://example.com/vjc.pdf',
-      pdfTextOverride: 'balance sheet:\ntotal assets: 500000 million\nrevenue: 50000 million\nnet profit: 5000 million\ncash: 100 million', // Success with proper BCTC fields
+      pdfTextOverride: `
+CÔNG TY CỔ PHẦN VJC
+BÁO CÁO TÀI CHÍNH QUÝ 2/2024
+
+BẢNG CÂN ĐỐI KẾ TOÁN
+Tài sản ngắn hạn                                    50.000.000
+  Tiền và tương đương tiền                            5.000.000
+  Hàng tồn kho                                       12.000.000
+TỔNG CỘNG TÀI SẢN                                   80.000.000
+
+Nợ phải trả                                         30.000.000
+  Vay và nợ thuê tài chính ngắn hạn                   8.000.000
+  Vay và nợ thuê tài chính dài hạn                   10.000.000
+Vốn chủ sở hữu                                      50.000.000
+TỔNG CỘNG NGUỒN VỐN                                 80.000.000
+
+BÁO CÁO KẾT QUẢ HOẠT ĐỘNG KINH DOANH
+Doanh thu thuần                                     39.500.000
+Giá vốn hàng bán                                    25.000.000
+Lợi nhuận gộp                                       14.500.000
+Lợi nhuận thuần từ hoạt động kinh doanh              8.500.000
+Lợi nhuận trước thuế                                 8.600.000
+Thuế TNDN hiện hành                                  1.720.000
+Lợi nhuận sau thuế                                   6.880.000
+
+BÁO CÁO LƯU CHUYỂN TIỀN TỆ
+Lưu chuyển tiền thuần từ hoạt động kinh doanh        5.880.000
+Lưu chuyển tiền thuần từ hoạt động đầu tư           (3.000.000)
+Lưu chuyển tiền thuần từ hoạt động tài chính         1.000.000
+Tiền và tương đương tiền đầu kỳ                      4.000.000
+Tiền và tương đương tiền cuối kỳ                     7.880.000
+`,
     });
 
     expect(second).not.toBeNull();
 
-    // VERIFY: OCR row overwrites (due to UNIQUE constraint on action_code + sort_key)
-    row = db.prepare(`
+    // VERIFY: normal storeReport() path — a plain FIRST insert into
+    // financial_reports (nothing existed there before; not a "transition").
+    const row = db.prepare(`
       SELECT extraction_method FROM financial_reports WHERE action_code = ? AND sort_key = ?
     `).get('VJC', '2024-Q2') as any;
     expect(row.extraction_method).toBe('pdf-parse'); // pdfTextOverride bypasses OCR, stamps pdf-parse
+
+    // VERIFY: the earlier hints-table row from the first call is still present
+    // — harmless history, no cross-table cleanup required (no requirement demands it).
+    hintRow = db.prepare(`
+      SELECT extraction_source_note FROM bctc_news_fallback_hints WHERE action_code = ? AND sort_key = ?
+    `).get('VJC', '2024-Q2') as any;
+    expect(hintRow).toBeDefined();
   }, { timeout: 15000 });
+
+  test('FR-5: fallback branch never invokes insertAnalysisFn (RAG-non-leak, AC-6)', async () => {
+    // SETUP: 2 confirming signals for a fresh ticker.
+    db.prepare(`
+      INSERT INTO agent_signals (from_agent, to_agent, signal_type, stock_code, payload, finding_data, created_at, expires_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      'news_scout', 'market_watcher', 'chain_catalyst', 'RAGCHK', '{}',
+      JSON.stringify({
+        event_type: 'earnings', direction: 'bullish', confidence: 0.8,
+        affected_stocks: ['RAGCHK'], affected_sectors: ['tech'],
+        headline: 'RAGCHK Revenue Growth Outperforms Expectations',
+        source: 'reuters', newsSentiment: 0.6,
+      }),
+      hoursAgo(2), daysFromNow(7),
+    );
+    db.prepare(`
+      INSERT INTO agent_signals (from_agent, to_agent, signal_type, stock_code, payload, finding_data, created_at, expires_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      'market_watcher', 'alert_commander', 'price_confirmation', 'RAGCHK', '{}',
+      JSON.stringify({
+        price_change_pct: 2.5, volume_ratio: 1.8,
+        confirms_direction: true, fully_priced: false, confidence: 0.75,
+      }),
+      hoursAgo(1), daysFromNow(7),
+    );
+
+    let insertAnalysisCalled = false;
+    const result = await fetchParseAndStoreBctc({
+      actionCode: 'RAGCHK',
+      year: 2024,
+      quarter: 'Q1',
+      enableBctcFallback: true,
+      pdfUrl: 'https://example.com/ragchk.pdf',
+      pdfHttpClient: {
+        get: async () => {
+          const e = new Error('timeout');
+          (e as any).name = 'TimeoutError';
+          throw e;
+        },
+      } as any,
+      insertAnalysisFn: async () => { insertAnalysisCalled = true; },
+    });
+
+    expect(result?.fallback).toBe(true);
+    expect(insertAnalysisCalled).toBe(false); // Step 4 must never fire on the fallback branch
+  });
+
+  test('AC-4/verification-gate(a): fallback hint recorded, get_bctc_full still serves honest absence, never CORRUPT', async () => {
+    // SETUP: 2 confirming signals for a ticker with NO prior financial_reports row.
+    db.prepare(`
+      INSERT INTO agent_signals (from_agent, to_agent, signal_type, stock_code, payload, finding_data, created_at, expires_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      'news_scout', 'market_watcher', 'chain_catalyst', 'SERVEHINT', '{}',
+      JSON.stringify({
+        event_type: 'earnings', direction: 'bullish', confidence: 0.8,
+        affected_stocks: ['SERVEHINT'], affected_sectors: ['tech'],
+        headline: 'SERVEHINT Revenue Growth Outperforms Expectations',
+        source: 'reuters', newsSentiment: 0.6,
+      }),
+      hoursAgo(2), daysFromNow(7),
+    );
+    db.prepare(`
+      INSERT INTO agent_signals (from_agent, to_agent, signal_type, stock_code, payload, finding_data, created_at, expires_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      'market_watcher', 'alert_commander', 'price_confirmation', 'SERVEHINT', '{}',
+      JSON.stringify({
+        price_change_pct: 2.5, volume_ratio: 1.8,
+        confirms_direction: true, fully_priced: false, confidence: 0.75,
+      }),
+      hoursAgo(1), daysFromNow(7),
+    );
+
+    const result = await tryNewsChainFallback('SERVEHINT', 2024, 'Q1');
+    expect(result.fallback).toBe(true);
+
+    const frCount = db.prepare(`
+      SELECT COUNT(*) c FROM financial_reports WHERE action_code=? AND sort_key=?
+    `).get('SERVEHINT', '2024-Q1') as { c: number };
+    expect(frCount.c).toBe(0);
+
+    const hintRow = db.prepare(`
+      SELECT confidence FROM bctc_news_fallback_hints WHERE action_code=? AND sort_key=?
+    `).get('SERVEHINT', '2024-Q1');
+    expect(hintRow).not.toBeNull();
+
+    // Serving-plane proof, not DB-plane-only (verification gate (a)'s explicit requirement):
+    const server = new McpServer({ name: 't', version: '0.0.1' }, { capabilities: { tools: {} } });
+    registerBctcFullTools(server);
+    const res = await callTool(server, 'get_bctc_full', { code: 'SERVEHINT', year: 2024, quarter: 'Q1' });
+    const text = res.content[0]!.text;
+    expect(text).toContain('Chưa có dữ liệu BCTC'); // stable substring, EC-2
+    expect(text).not.toContain('[CORRUPT DATA');      // never the corrupt-data marker
+  });
 });

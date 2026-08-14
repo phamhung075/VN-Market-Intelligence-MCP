@@ -298,6 +298,69 @@ defaults `false`, never set `true` outside tests — grep-verified across
 write-back path. Known open gap, intentionally left for a separate scope
 decision rather than folded into FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP.
 
+**FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET (2026-08-14) — GAP ABOVE
+CLOSED, by relocating the write target rather than guarding it in place.**
+PO's product decision (`docs/handoffs/FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET-BA-spec.md`
+§2): the "unconditional guard blocks 100% of writes" reductio above (PO's own
+diagnosis) proves the write TARGET was wrong, not that the guard was
+incomplete — `financial_reports` is the table `bctcIdentityGuard.ts` and every
+identity-guarded serve path (`get_bctc_full`, `get_financial_summary`,
+`compare_financials`) trusts as authoritative, and a row whose every numeric
+field is a hardcoded literal on every call cannot coexist with that trust
+model no matter how it is guarded. `tryNewsChainFallback()` now persists to a
+new, dedicated, non-authoritative table — `bctc_news_fallback_hints`
+(DDL in `schema-financial-reports.ts::initFinancialReportsTables()`,
+`UNIQUE(action_code, sort_key)`, 7 hint-scalar columns only — no balance
+sheet/income statement/cash flow columns, they never belonged on any row this
+function writes) — instead of `financial_reports`. The `INSERT INTO
+financial_reports ... ON CONFLICT ... DO UPDATE SET` block (~180L, including
+the id-reuse dance FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN added above) is
+DELETED; a `bctc_news_fallback_hints` upsert (~25L) replaces it. Arm (b1)'s
+existing-good-row read/gate is UNCHANGED IN POSITION (still blocks the write
+— now the hints-table write — when `financial_reports.total_assets > 0` for
+the period), so the FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP AC-2
+arm-(b1) regression test above still passes unmodified in its DB-plane
+assertions (gained a serving-plane `get_bctc_full` extension proving the same
+non-regression end-to-end). The id-reuse/orphan-protection machinery
+FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN added (above) is now DEAD CODE and
+removed — structurally moot for the new table (nothing FKs to
+`bctc_news_fallback_hints.id`; PEK tables `bctc_layout_units`/
+`bctc_page_zones` are populated only by the real PDF/OCR layout pipeline,
+which a news-inference row never has). `fallbackReport.id` is now an
+unconditional fresh `randomUUID()` per call — purely a control-flow return
+value, never persisted/joined. The in-memory return contract
+(`fallbackReport`'s shape/field values, consumed by `resolvePdfText.ts` and
+transitively `fetchParseAndStoreBctc.ts`) is BYTE-IDENTICAL — only the
+persistence target changed. `buildAnalysisSummary()`'s zero-valued Vietnamese
+RAG summary (line ~73) was independently re-verified to never reach a served
+surface: its sole caller `insertBctcAnalysis.ts` is only reachable from
+`fetchParseAndStoreBctc.ts` Step 4, which the fallback branch's early return
+(`{status:"final", report}`, `fetchParseAndStoreBctc.ts` lines ~119-121) makes
+architecturally unreachable — now locked in as an explicit regression test
+(`FR-5: fallback branch never invokes insertAnalysisFn`, not just a
+control-flow accident). 7 tests rewritten (6 named on the board row + Finding
+F-1's 7th, `FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP.test.ts`'s
+"AC-1/normal path" test) to assert the new contract (writes land in
+`bctc_news_fallback_hints`, zero `financial_reports` rows ever created by this
+path) — not deleted, not skipped. 2 new serving-plane regression tests added
+(reusing the `callTool`/`_registeredTools` harness from
+`fix-bctc-identity-serve-guard.test.ts`): a first-ever-fallback ticker still
+serves honest "Chưa có dữ liệu BCTC" via `get_bctc_full` (never
+`[CORRUPT DATA — SKIP]`), and arm (b1)'s existing-good-row case still serves
+real, non-corrupt data end-to-end. `bctcInspectHandler.ts`'s admin
+`LIST_SQL` (a real, currently-dormant — 0 live `news_inference` rows,
+`enableBctcFallback` still `false` — consumer of `financial_reports`
+news-inference rows for data-quality-gap visibility) loses that visibility
+once this ships; flagged as a non-blocking PO follow-up (FR-7,
+architecture-briefs/2026-08-07-fix-bctc-newschain-fallback-zeros-write-target-blueprint.md
+§11), not folded into this fix. Full design:
+`docs/architecture-briefs/2026-08-07-fix-bctc-newschain-fallback-zeros-write-target-blueprint.md`.
+Tests: `src/__tests__/1294b-bctc-fallback.test.ts`,
+`src/__tests__/FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.test.ts` (both cases
+rewritten — the PEK-FK premise this file's original entry above documents is
+now explicitly noted in-test as structurally moot), and
+`src/__tests__/FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP.test.ts`.
+
 **FIX-BCTC-SSC-DOC-SELECTION-QUARTER-BLIND-ALWAYS-LATEST (2026-08-12):**
 `listSscDocuments()` (`infrastructure/fetchers/ssc.ts`) has no quarter
 parameter — for a given (ticker, year) every quarter request lists the SAME

@@ -47,16 +47,54 @@ Bun.env["DB_PATH"] = ":memory:";
  * tests — grep-verified) and extending the same unconditional guard there
  * was tried and reverted: it breaks the still-active
  * 1294b-bctc-fallback.test.ts feature suite (4 tests) and
- * FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.test.ts (2 tests). Left as a
- * known, reported gap for a follow-up scope decision rather than folded in
- * here — see AC-1/normal-path test below in the tryNewsChainFallback()
- * describe block, unchanged from before this task.
+ * FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.test.ts (2 tests) — guarding the
+ * write IN PLACE, when totalAssets is hardcoded 0 on every call, silently
+ * makes the whole function a no-op. RESOLVED by
+ * FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET (2026-08-14): the write
+ * TARGET moved off financial_reports entirely, into the new non-authoritative
+ * `bctc_news_fallback_hints` table (see newsChainFallback.ts +
+ * schema-financial-reports.ts) — the AC-1/normal-path test below in the
+ * tryNewsChainFallback() describe block is REWRITTEN accordingly (no
+ * financial_reports row is ever created by this path; the hints-table
+ * equivalent of "immutable on re-run" is asserted instead), and the AC-2
+ * test above gained a serving-plane (get_bctc_full) extension proving arm
+ * (b1) non-regression end-to-end, not just at the DB plane.
  */
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { parseBctcReport } from "../application/usecases/parseBctcReport.js";
 import { tryNewsChainFallback } from "../application/usecases/bctc/newsChainFallback.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { registerBctcFullTools } from "../interface/mcp/tools/financial-reports/bctcFullTools.js";
 import type { FiscalPeriod } from "../../bctc-schema.js";
+
+// Reused from fix-bctc-identity-serve-guard.test.ts:38-53 — invoke a
+// registered MCP tool directly, bypassing SSE transport.
+async function callTool(
+  server: McpServer,
+  toolName: string,
+  args: Record<string, unknown>,
+): Promise<{ content: Array<{ type: string; text: string }> }> {
+  const registry = (server as unknown as {
+    _registeredTools: Record<string, {
+      handler: (args: Record<string, unknown>) => Promise<unknown>;
+    }>;
+  })._registeredTools;
+  const entry = registry[toolName];
+  if (!entry) throw new Error(`Tool "${toolName}" not registered`);
+  return entry.handler(args) as Promise<{
+    content: Array<{ type: string; text: string }>;
+  }>;
+}
+
+/** Mirrors readRow()'s pattern, against the new bctc_news_fallback_hints table. */
+function readHintRow(actionCode: string, sortKey: string): { confidence: number; first_seen_at: string } | null {
+  return getDb()
+    .query<{ confidence: number; first_seen_at: string }, [string, string]>(
+      "SELECT confidence, first_seen_at FROM bctc_news_fallback_hints WHERE action_code = ? AND sort_key = ?",
+    )
+    .get(actionCode, sortKey);
+}
 
 function period(actionCode: string, year = 2026): FiscalPeriod {
   return {
@@ -397,16 +435,27 @@ describe("FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP — bctc/newsChainFallb
         published_at, parsed_at, extraction_confidence,
         total_assets, equity_total,
         balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json,
-        validation_status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        validation_status, refine_status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       goodId, ACTION_CODE, "Seed Co", "HOSE", "other",
       YEAR, 1, QUARTER, `${YEAR}-01-01`, `${YEAR}-03-31`, SORT_KEY,
       realFilingDate, realFilingDate, 0.9,
       80_000_000, 50_000_000,
       "{}", "{}", "{}", "{}",
-      "passed",
+      "passed", "PARTIAL",
     );
+    // W1/PUB-2/PUB-3 gotcha (architect blueprint §7 task 7): get_bctc_full's
+    // PUB-1 gate requires refine_status IN ('DONE','PARTIAL') — set above —
+    // AND at least one bctc_table_rows row (PUB-2/PUB-3) to actually reach
+    // buildSummarySection instead of refusing for the wrong reason. Mirrors
+    // fix-bctc-identity-serve-guard.test.ts's insertBalanceSheetRow() helper.
+    db.prepare(`
+      INSERT INTO bctc_table_rows
+        (report_id, page_number, statement_section, row_order, code, label,
+         period_current, value_current, is_summary_row)
+      VALUES (?, 1, 'balance_sheet', 1, '270', 'Total Assets', ?, 80000000, 0)
+    `).run(goodId, SORT_KEY);
 
     seedTwoConfirmingSignals();
 
@@ -423,23 +472,38 @@ describe("FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP — bctc/newsChainFallb
     // the real filing date (never flipped to the processing day).
     expect(row.total_assets).toBe(80_000_000);
     expect(row.published_at).toBe(realFilingDate);
+
+    // NEW: serving-plane proof (verification gate (b), arm b1 regression) —
+    // not DB-plane-only. Without the refine_status/bctc_table_rows additions
+    // above, this would silently pass for the WRONG reason (PUB-1 refusal)
+    // instead of proving arm (b1) non-regression.
+    const server = new McpServer({ name: "t2", version: "0.0.1" }, { capabilities: { tools: {} } });
+    registerBctcFullTools(server);
+    const res = await callTool(server, "get_bctc_full", { code: ACTION_CODE, year: YEAR, quarter: QUARTER });
+    const text = res.content[0]!.text;
+    expect(text).not.toContain("[CORRUPT DATA");
+    expect(text).toContain("BCTC SUMMARY"); // happy-path marker, confirms real data served
   });
 
-  it("AC-1/normal path: fallback DOES write (and is immutable on re-run) when no prior good row exists", async () => {
+  it("AC-1/normal path (REWRITTEN, FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET Finding F-1): fallback never creates a financial_reports row; the hints-table equivalent (first_seen_at) is immutable on re-run when no prior good row exists", async () => {
     // Scope note (po_acceptance_reconciliation_20260721T1649, revised
     // 2026-07-21T16:49Z): arm (b2) — "no prior row -> never manufacture a
     // corrupt row" — is fixed for parseBctcReport.ts::storeReport() above
     // (the actual live write path: bctcReparseJob -> fetchParseAndStoreBctc
-    // -> parseBctcReport -> storeReport always runs on every reparse). This
-    // writer (tryNewsChainFallback) is a SEPARATE, currently
-    // production-unreachable path — `enableBctcFallback` defaults false and
-    // is never set true anywhere outside tests (grep-verified), so it is
-    // NOT part of the 16-ticker incident's write-back path. Extending the
-    // same unconditional (b2) guard here was tried and reverted: it breaks
+    // -> parseBctcReport -> storeReport always runs on every reparse). The
+    // sibling writer (tryNewsChainFallback) used to carry the SAME gap for a
+    // different reason: extending the unconditional (b2) guard onto it (tried
+    // and reverted, see this file's original 2026-07-21 header comment) broke
     // the still-active 1294b-bctc-fallback.test.ts feature suite (4 tests)
-    // and FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.test.ts (2 tests) — a real
-    // scope-widening tradeoff, not this row's mechanism. Left as a known,
-    // reported gap for a follow-up decision rather than folded in here.
+    // and FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN.test.ts (2 tests) — because
+    // guarding the write IN PLACE, when totalAssets is hardcoded 0 on every
+    // call, silently makes the whole function a no-op (PO's reductio, board
+    // row `product_question_decide_before_scoping`). FIX-BCTC-NEWSCHAIN-
+    // FALLBACK-ZEROS-WRITE-TARGET resolves this the other way: the write
+    // TARGET moved off financial_reports entirely (to the new non-
+    // authoritative bctc_news_fallback_hints table), so the guard-in-place
+    // trade-off above no longer applies — this test now asserts the new,
+    // permanent contract instead of leaving the old gap open.
     const OTHER_ACTION_CODE = "NGAYNOPNC2";
     const db = getDb();
     const db2Signals = () => {
@@ -484,18 +548,35 @@ describe("FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP — bctc/newsChainFallb
 
     const first = await tryNewsChainFallback(OTHER_ACTION_CODE, YEAR, QUARTER);
     expect(first.fallback).toBe(true);
-    const row1 = readRow(OTHER_ACTION_CODE, SORT_KEY)!;
-    expect(row1.total_assets).toBe(0);
-    const firstPublishedAt = row1.published_at;
-    expect(firstPublishedAt).not.toBeNull();
 
-    // Re-run — total_assets is still 0 (not > 0), so AC-2's guard does not
-    // block this; the UPSERT proceeds (preserves id, per the sibling
-    // FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN test) — but published_at must
-    // still be immutable across this re-run.
+    // NO financial_reports row is EVER created by this path — superseding the
+    // very assumption this test's own pre-rewrite version asserted
+    // (total_assets===0 row created). This is the row's AC-2 acceptance
+    // criterion, exercised directly here rather than only via the DB-plane
+    // helper the AC-2 test above already covers.
+    const frRow1 = readRow(OTHER_ACTION_CODE, SORT_KEY);
+    expect(frRow1).toBeNull();
+
+    // The hints-table equivalent of "immutable on re-run" transfers instead:
+    // first_seen_at is set once and does not change across a second call.
+    const hintRow1 = readHintRow(OTHER_ACTION_CODE, SORT_KEY);
+    expect(hintRow1).not.toBeNull();
+    const firstSeenAt = hintRow1!.first_seen_at;
+    expect(firstSeenAt).toBeTruthy();
+
+    // Re-run — arm (b1)'s guard does not fire (no good financial_reports row
+    // exists), so the hints upsert proceeds again (idempotent, per the
+    // sibling FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN test) — but first_seen_at
+    // must still be immutable across this re-run, and financial_reports must
+    // still receive no row.
     const second = await tryNewsChainFallback(OTHER_ACTION_CODE, YEAR, QUARTER);
     expect(second.fallback).toBe(true);
-    const row2 = readRow(OTHER_ACTION_CODE, SORT_KEY)!;
-    expect(row2.published_at).toBe(firstPublishedAt);
+
+    const frRow2 = readRow(OTHER_ACTION_CODE, SORT_KEY);
+    expect(frRow2).toBeNull();
+
+    const hintRow2 = readHintRow(OTHER_ACTION_CODE, SORT_KEY);
+    expect(hintRow2).not.toBeNull();
+    expect(hintRow2!.first_seen_at).toBe(firstSeenAt);
   });
 });

@@ -2,19 +2,28 @@ Bun.env["DB_PATH"] = ":memory:";
 /**
  * FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN
  *
- * Second call site of the same class of bug fixed by FIX-BCTC-D1-STABILIZE-
- * REPORT-ID (docs/handoffs/TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md §D1).
- * `tryNewsChainFallback()` used `INSERT OR REPLACE INTO financial_reports`
- * with a fresh `randomUUID()` on every call — SQLite resolves the
- * UNIQUE(action_code, sort_key) conflict via DELETE-then-INSERT, minting a
- * brand-new `id` on every re-run. Downstream PEK tables (bctc_layout_units,
- * bctc_page_zones) reference financial_reports.id via a plain TEXT column
- * (no real FK), so a replaced id silently orphans any rows already written
- * against the old id.
+ * REWRITTEN per FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET (architect
+ * blueprint docs/architecture-briefs/2026-08-07-fix-bctc-newschain-fallback-
+ * zeros-write-target-blueprint.md §6, table rows 5-6).
  *
- * The fix: `INSERT ... ON CONFLICT(action_code, sort_key) DO UPDATE SET
- * <all columns except id>` — the existing row is updated in place, `id` is
- * never touched by the DO UPDATE clause, so it survives every re-run.
+ * Original premise (kept below for context, no longer this test's concern):
+ * `tryNewsChainFallback()` used to write into `financial_reports` and needed
+ * to protect PEK child-row FKs (bctc_layout_units, bctc_page_zones — plain
+ * TEXT columns, not real FKs) from an id that churned on every re-run. That
+ * concern is now STRUCTURALLY MOOT: this function no longer writes to
+ * financial_reports at all — it persists to the new non-authoritative
+ * `bctc_news_fallback_hints` table instead, which nothing else FKs to (PEK
+ * tables are populated only by the real PDF/OCR layout pipeline, which a
+ * news-inference row never has — pdfPath is hardcoded null in the fallback
+ * report). `ON CONFLICT(action_code, sort_key) DO UPDATE` on the new table
+ * exists purely for idempotent re-run (no duplicate hint rows), not for
+ * orphan-prevention.
+ *
+ * This suite now asserts: (1) idempotent upsert — two fallback runs for the
+ * same (action_code, sort_key) produce exactly ONE bctc_news_fallback_hints
+ * row, with `first_seen_at` immutable across the re-run; (2) no cross-period
+ * bleed — a genuinely different sort_key gets its own independent row; (3) in
+ * both cases, financial_reports never receives a row from this path at all.
  */
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { tryNewsChainFallback } from "../application/usecases/bctc/newsChainFallback.js";
@@ -77,6 +86,15 @@ function seedTwoConfirmingSignals(): void {
   );
 }
 
+/** Mirrors the readRow() helper pattern in FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP.test.ts. */
+function readHintRow(actionCode: string, sortKey: string): { first_seen_at: string; last_seen_at: string } | null {
+  return getDb()
+    .query<{ first_seen_at: string; last_seen_at: string }, [string, string]>(
+      "SELECT first_seen_at, last_seen_at FROM bctc_news_fallback_hints WHERE action_code = ? AND sort_key = ?",
+    )
+    .get(actionCode, sortKey);
+}
+
 beforeAll(async () => {
   Bun.env["DB_PATH"] = ":memory:";
   Bun.env["BCTC_FALLBACK_SIGNAL_MAX_AGE_DAYS"] = "30";
@@ -89,64 +107,53 @@ afterAll(() => {
   delete Bun.env["BCTC_FALLBACK_SIGNAL_MAX_AGE_DAYS"];
 });
 
-describe("FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN — financial_reports.id survives re-run", () => {
-  it("keeps the SAME id and preserves child FK rows across two fallback runs for the identical (action_code, sort_key)", async () => {
+describe("FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN — bctc_news_fallback_hints idempotent upsert (PEK-FK concern structurally moot)", () => {
+  it("two fallback runs for the identical (action_code, sort_key) produce exactly ONE hints row, with first_seen_at immutable across the re-run", async () => {
     seedTwoConfirmingSignals();
 
-    // ── Run #1 — first-ever fallback write for this (action_code, sort_key) ──
+    // ── Run #1 — first-ever fallback hint write for this (action_code, sort_key) ──
     const first = await tryNewsChainFallback(ACTION_CODE, YEAR, QUARTER);
     expect(first.fallback).toBe(true);
     expect(first.report).toBeDefined();
-    const firstId = first.report!.id;
-    expect(firstId).toBeTruthy();
 
     const db = getDb();
-    const row1 = db
-      .prepare("SELECT id FROM financial_reports WHERE action_code = ? AND sort_key = ?")
-      .get(ACTION_CODE, SORT_KEY) as { id: string } | null;
+    const row1 = readHintRow(ACTION_CODE, SORT_KEY);
     expect(row1).not.toBeNull();
-    expect(row1!.id).toBe(firstId);
+    const firstSeenAt = row1!.first_seen_at;
+    expect(firstSeenAt).toBeTruthy();
 
-    // Simulate a PEK layout-extraction pass that landed child rows keyed to
-    // this fallback row's id (the exact scenario a replaced id would orphan).
-    db.prepare(`
-      INSERT INTO bctc_layout_units (report_id, unit_id, schema_page, page_numbers_json)
-      VALUES (?, ?, ?, ?)
-    `).run(firstId, "unit-1", 1, JSON.stringify([1]));
-
-    const childCountBefore = db
-      .prepare("SELECT COUNT(*) AS cnt FROM bctc_layout_units WHERE report_id = ?")
-      .get(firstId) as { cnt: number };
-    expect(childCountBefore.cnt).toBe(1);
+    // No financial_reports row was ever created by this path.
+    const frCount1 = db
+      .prepare("SELECT COUNT(*) AS cnt FROM financial_reports WHERE action_code = ? AND sort_key = ?")
+      .get(ACTION_CODE, SORT_KEY) as { cnt: number };
+    expect(frCount1.cnt).toBe(0);
 
     // ── Run #2 — re-run of the SAME (action_code, sort_key) ──────────────────
     const second = await tryNewsChainFallback(ACTION_CODE, YEAR, QUARTER);
     expect(second.fallback).toBe(true);
-    const secondId = second.report!.id;
 
-    // ── Core assertion: id UNCHANGED across the re-run ──────────────────────
-    expect(secondId).toBe(firstId);
-
-    const row2 = db
-      .prepare("SELECT id FROM financial_reports WHERE action_code = ? AND sort_key = ?")
-      .get(ACTION_CODE, SORT_KEY) as { id: string } | null;
-    expect(row2).not.toBeNull();
-    expect(row2!.id).toBe(firstId);
-
-    // ── Exactly one row for this (action_code, sort_key) — no duplicate ─────
+    // ── Exactly ONE row for this (action_code, sort_key) — idempotent upsert,
+    //    no duplicate (ON CONFLICT DO UPDATE, not a fresh INSERT). ─────────
     const countRow = db
-      .prepare("SELECT COUNT(*) AS cnt FROM financial_reports WHERE action_code = ? AND sort_key = ?")
+      .prepare("SELECT COUNT(*) AS cnt FROM bctc_news_fallback_hints WHERE action_code = ? AND sort_key = ?")
       .get(ACTION_CODE, SORT_KEY) as { cnt: number };
     expect(countRow.cnt).toBe(1);
 
-    // ── Child FK rows from run #1 are STILL joinable — not orphaned ────────
-    const childCountAfter = db
-      .prepare("SELECT COUNT(*) AS cnt FROM bctc_layout_units WHERE report_id = ?")
-      .get(firstId) as { cnt: number };
-    expect(childCountAfter.cnt).toBe(1);
+    // ── first_seen_at is immutable across the re-run (mirrors the original
+    //    id-immutability intent, transposed to this table's own immutable
+    //    column) — last_seen_at MAY differ, deliberately not asserted here. ──
+    const row2 = readHintRow(ACTION_CODE, SORT_KEY);
+    expect(row2).not.toBeNull();
+    expect(row2!.first_seen_at).toBe(firstSeenAt);
+
+    // Still no financial_reports row after the re-run either.
+    const frCount2 = db
+      .prepare("SELECT COUNT(*) AS cnt FROM financial_reports WHERE action_code = ? AND sort_key = ?")
+      .get(ACTION_CODE, SORT_KEY) as { cnt: number };
+    expect(frCount2.cnt).toBe(0);
   });
 
-  it("a genuinely different sort_key for the same action_code gets its own id (no cross-period bleed)", async () => {
+  it("a genuinely different sort_key for the same action_code gets its own independent hints row (no cross-period bleed)", async () => {
     const otherQuarter = "Q2" as const;
     const otherSortKey = `${YEAR}-${otherQuarter}`;
 
@@ -154,16 +161,26 @@ describe("FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN — financial_reports.id surviv
     expect(result.fallback).toBe(true);
 
     const db = getDb();
-    const q1Row = db
-      .prepare("SELECT id FROM financial_reports WHERE action_code = ? AND sort_key = ?")
-      .get(ACTION_CODE, SORT_KEY) as { id: string } | null;
-    const q2Row = db
-      .prepare("SELECT id FROM financial_reports WHERE action_code = ? AND sort_key = ?")
-      .get(ACTION_CODE, otherSortKey) as { id: string } | null;
+    const q1Row = readHintRow(ACTION_CODE, SORT_KEY);
+    const q2Row = readHintRow(ACTION_CODE, otherSortKey);
 
     expect(q1Row).not.toBeNull();
     expect(q2Row).not.toBeNull();
-    expect(q2Row!.id).toBe(result.report!.id);
-    expect(q2Row!.id).not.toBe(q1Row!.id);
+
+    // Independent rows — distinct sort_key is the identity now (no more `.id`
+    // equality/inequality assertions; `id` is an unconditional fresh
+    // randomUUID() per call, purely informational, no longer meaningful here).
+    // Two genuinely separate rows exist for this action_code (one per
+    // sort_key) — not one row silently reused/bled across periods.
+    const hintsCountForAction = db
+      .prepare("SELECT COUNT(*) AS cnt FROM bctc_news_fallback_hints WHERE action_code = ?")
+      .get(ACTION_CODE) as { cnt: number };
+    expect(hintsCountForAction.cnt).toBe(2);
+
+    // financial_reports never receives a row for either period from this path.
+    const frCount = db
+      .prepare("SELECT COUNT(*) AS cnt FROM financial_reports WHERE action_code = ?")
+      .get(ACTION_CODE) as { cnt: number };
+    expect(frCount.cnt).toBe(0);
   });
 });

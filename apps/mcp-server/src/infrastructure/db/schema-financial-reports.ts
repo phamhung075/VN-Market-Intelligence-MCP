@@ -5,6 +5,10 @@
  *   - financial_reports   — BCTC financial report data (DDL from bctc-schema.ts)
  *   - pdf_extracted_text  — PDF OCR cache
  *   - bctc_vps_queue      — VPS proxy queue for BCTC PDF fetches
+ *   - bctc_news_fallback_hints — non-authoritative news-chain fallback hints
+ *                            (FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET);
+ *                            NEVER read by bctcIdentityGuard or any identity-
+ *                            guarded serve path
  *   - vnstock_financials  — vnstock income statement data
  *   - vnstock_balance_sheet
  *   - vnstock_cash_flow
@@ -323,6 +327,44 @@ export function initFinancialReportsTables(db: Database): void {
       updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
+
+  // ── FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET: news-fallback hints table ──
+  // Non-authoritative persistence surface for tryNewsChainFallback()'s directional
+  // hints (confidence/revenue-growth/margin-trend/debt-ratio). NEVER read by
+  // bctcIdentityGuard or any of the 3 identity-guarded serve paths (get_bctc_full,
+  // get_financial_summary, compare_financials) — those only ever query
+  // financial_reports, and this path no longer writes there (see newsChainFallback.ts).
+  // No balance sheet / income statement / cash flow columns — they never
+  // belonged on any row this function writes (BA §2/FR-1, architect blueprint §3).
+  // UNIQUE(action_code, sort_key): ON CONFLICT DO UPDATE is for idempotent
+  // re-run only (no duplicate hint rows on repeated fallback calls for the same
+  // period) — NOT for id/orphan protection. The original
+  // FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN concern (PEK child-row FK survival
+  // across re-runs) is structurally moot here: no other table references this
+  // table's id (bctc_layout_units/bctc_page_zones are populated only by the
+  // real PDF/OCR layout pipeline, which a news-inference row never has —
+  // pdfPath is hardcoded null in the fallback report).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bctc_news_fallback_hints (
+      id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+      action_code             TEXT    NOT NULL,
+      period_year             INTEGER NOT NULL,
+      period_quarter          INTEGER,           -- mirrors financial_reports semantics (NULL = annual; always set in practice here, buildFiscalPeriod only produces Q1-Q4)
+      period_type             TEXT    NOT NULL,  -- Q1 | Q2 | Q3 | Q4
+      sort_key                TEXT    NOT NULL,  -- "2024-Q1" — natural key half, mirrors financial_reports.sort_key
+      confidence              REAL    NOT NULL,
+      revenue_growth_qoq      REAL    DEFAULT 0.0,
+      margin_trend            REAL    DEFAULT 0.0,
+      debt_ratio_hint         REAL    DEFAULT 0.0,
+      hints_count             INTEGER NOT NULL DEFAULT 0,
+      extraction_source_note  TEXT,
+      first_seen_at           TEXT    NOT NULL DEFAULT (datetime('now')),
+      last_seen_at            TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(action_code, sort_key)
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_bnfh_action    ON bctc_news_fallback_hints(action_code)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_bnfh_sort_key  ON bctc_news_fallback_hints(action_code, sort_key)`);
 
   // ── vnstock tables (Task 1042) ────────────────────────────────────────────
   db.exec(`

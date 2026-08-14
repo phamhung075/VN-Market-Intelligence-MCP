@@ -237,41 +237,35 @@ export async function tryNewsChainFallback(
 
     logger.info(`${tag} fallback valid — confidence=${finalConfidence.toFixed(2)}`);
 
-    // FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN: reuse the existing row's id when
-    // one already exists for this (action_code, sort_key) — mirrors the D1 fix
-    // in parseBctcReport.ts::storeReport() (docs/handoffs/
-    // TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md §D1). Without this, the
-    // in-memory `fallbackReport.id` returned to the caller would carry a
-    // freshly minted (and never-persisted) uuid on every re-run, silently
-    // diverging from the id actually stored in SQLite by the ON CONFLICT
-    // upsert below. Downstream PEK tables (bctc_layout_units, bctc_page_zones)
-    // reference financial_reports.id via a plain TEXT column — NOT a real FK —
-    // so an id that drifts from what's persisted would orphan them.
+    // FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET: this function no longer
+    // writes to financial_reports at all (see below — persistence target is
+    // now bctc_news_fallback_hints). The id-reuse dance that used to live here
+    // (FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN) existed ONLY to protect PEK
+    // child-row FKs (bctc_layout_units/bctc_page_zones) across re-runs of a
+    // financial_reports row this function minted; that concern is structurally
+    // moot for bctc_news_fallback_hints (no other table references its id —
+    // PEK tables are populated only by the real PDF/OCR layout pipeline, which
+    // a news-inference row never has). We still read financial_reports here,
+    // narrowed to just total_assets, purely as arm (b1)'s pre-condition gate.
     const existingReportRow = db
-      .prepare("SELECT id, total_assets FROM financial_reports WHERE action_code = ? AND sort_key = ?")
-      .get(actionCode, period.sortKey) as { id: string; total_assets: number | null } | null;
-    const reportId = existingReportRow?.id ?? randomUUID();
+      .prepare("SELECT total_assets FROM financial_reports WHERE action_code = ? AND sort_key = ?")
+      .get(actionCode, period.sortKey) as { total_assets: number | null } | null;
 
-    // FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP: this fallback ALWAYS
-    // writes totalAssets=0 (hardcoded placeholder below — it reconstructs
-    // directional hints from news signals, never real balance-sheet figures)
-    // — i.e. every call is, by construction, the exact OCR-corruption
-    // fingerprint bctcIdentityGuard.ts checks for at serve time. Never let it
-    // overwrite a previously-good stored report (existing total_assets > 0).
-    // This mirrors the identical guard in parseBctcReport.ts::storeReport() —
-    // this function is a SECOND, independently-implemented writer to the
-    // same (action_code, sort_key) row and carried the same two defects
-    // (processing-date published_at + unconditional overwrite on conflict).
+    // Arm (b1): when a good real report already exists for this period, do NOT
+    // record a fallback hint either — there is no reason to hint at a period
+    // financial_reports already covers with real data (BA FR-2, generalizes the
+    // original AC-5 non-regression to the new write target). This function no
+    // longer writes to financial_reports at all, so this guard's job is purely
+    // "skip the hints-table write", not "prevent an overwrite".
     if (
       existingReportRow &&
       existingReportRow.total_assets != null &&
       existingReportRow.total_assets > 0
     ) {
       const blockMsg =
-        `[BCTC] News-chain fallback write BLOCKED for ${actionCode} ${period.sortKey}: ` +
-        `fallback always writes total_assets=0 and would overwrite a previously-good ` +
-        `stored report (total_assets=${existingReportRow.total_assets}). Existing row ` +
-        `preserved untouched — flagged for manual review, NOT fallback-overwritten.`;
+        `[BCTC] News-chain fallback hint SKIPPED for ${actionCode} ${period.sortKey}: ` +
+        `a previously-good stored report already exists (total_assets=${existingReportRow.total_assets}). ` +
+        `No hint recorded — real data already covers this period.`;
       logger.warn(blockMsg);
       return {
         fallback: false,
@@ -279,13 +273,14 @@ export async function tryNewsChainFallback(
       };
     }
 
-    // Build minimal fallback report
+    // Build minimal fallback report (in-memory return contract — byte-identical
+    // shape to before this fix; only the persistence target below has changed).
     const fallbackReport: FinancialReport & {
       fallback: boolean;
       extraction_method: string;
       confidence: number;
     } = {
-      id: reportId,
+      id: randomUUID(),   // unconditional fresh id — no longer persisted/joined anywhere; purely a control-flow return value.
       actionCode,
       companyName: 'Unknown (news_inference)',
       exchange: 'UNKNOWN' as any,
@@ -386,195 +381,54 @@ export async function tryNewsChainFallback(
       confidence: finalConfidence,
     } as any;
 
-    // Insert into database with fallback metadata.
-    // FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN: INSERT ... ON CONFLICT(action_code,
-    // sort_key) DO UPDATE SET <all columns except id> — NOT INSERT OR REPLACE.
-    // `financial_reports` has UNIQUE(action_code, sort_key) (bctc-schema.ts).
-    // INSERT OR REPLACE resolves conflicts by DELETE-then-INSERT, which would
-    // mint a brand-new id every re-run (same class of bug fixed in
-    // parseBctcReport.ts::storeReport() — see D1 in docs/handoffs/
-    // TASK_FIX-BCTC-PDFPULL-WIRE-TABLE-EXTRACTION.md). The ON CONFLICT DO
-    // UPDATE form updates the existing row in place instead: `id` is
-    // deliberately omitted from the SET clause, so SQLite never touches it on
-    // conflict — the original row's id (and therefore any bctc_layout_units /
-    // bctc_page_zones rows FK'd to it by convention) survives every re-run.
-    const stmt = db.prepare(`
-      INSERT INTO financial_reports (
-        id, action_code, company_name, exchange, domain,
-        period_year, period_quarter, period_type, period_start, period_end, sort_key,
-        ssc_url, pdf_path, published_at, parsed_at, audit_status, auditor,
-        extraction_confidence,
-        net_revenue, gross_profit, operating_profit, ebitda,
-        profit_before_tax, net_profit, eps, diluted_eps,
-        total_assets, current_assets, cash, inventory,
-        total_liabilities, short_term_debt, long_term_debt, equity_total,
-        operating_cf, investing_cf, financing_cf, capex, free_cash_flow,
-        gross_margin_pct, operating_margin_pct, net_margin_pct,
-        roe, roa, current_ratio, debt_to_equity, net_debt_to_ebitda, pe, pb,
-        balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json,
-        yoy_delta_json, qoq_delta_json,
-        market_data_json, embedding_text, notes_raw_text,
-        validation_status, validation_notes, extraction_method, extraction_source_note,
-        revenue_growth_qoq, margin_trend, debt_ratio_hint
+    // FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET: persist to the
+    // non-authoritative bctc_news_fallback_hints table instead of
+    // financial_reports — a hardcoded all-zero balance sheet (fallbackReport
+    // above) must never land in the table bctcIdentityGuard.ts and every
+    // identity-guarded serve path (get_bctc_full, get_financial_summary,
+    // compare_financials) trusts as authoritative. See architecture blueprint
+    // docs/architecture-briefs/2026-08-07-fix-bctc-newschain-fallback-zeros-write-target-blueprint.md
+    // §4 and schema-financial-reports.ts's bctc_news_fallback_hints DDL comment.
+    const hintsStmt = db.prepare(`
+      INSERT INTO bctc_news_fallback_hints (
+        action_code, period_year, period_quarter, period_type, sort_key,
+        confidence, revenue_growth_qoq, margin_trend, debt_ratio_hint,
+        hints_count, extraction_source_note, first_seen_at, last_seen_at
       ) VALUES (
-        $id, $actionCode, $companyName, $exchange, $domain,
-        $periodYear, $periodQuarter, $periodType, $periodStart, $periodEnd, $sortKey,
-        $sscUrl, $pdfPath, $publishedAt, $parsedAt, $auditStatus, $auditor,
-        $extractionConfidence,
-        $netRevenue, $grossProfit, $operatingProfit, $ebitda,
-        $profitBeforeTax, $netProfit, $eps, $dilutedEps,
-        $totalAssets, $currentAssets, $cash, $inventory,
-        $totalLiabilities, $shortTermDebt, $longTermDebt, $equityTotal,
-        $operatingCf, $investingCf, $financingCf, $capex, $freeCashFlow,
-        $grossMarginPct, $operatingMarginPct, $netMarginPct,
-        $roe, $roa, $currentRatio, $debtToEquity, $netDebtToEbitda, $pe, $pb,
-        $balanceSheetJson, $incomeStmtJson, $cashFlowJson, $ratiosJson,
-        $yoyDeltaJson, $qoqDeltaJson,
-        $marketDataJson, $embeddingText, $notesRawText,
-        $validationStatus, $validationNotes, $extractionMethod, $extractionSourceNote,
-        $revenueGrowthQoq, $marginTrend, $debtRatioHint
+        $actionCode, $periodYear, $periodQuarter, $periodType, $sortKey,
+        $confidence, $revenueGrowthQoq, $marginTrend, $debtRatioHint,
+        $hintsCount, $extractionSourceNote, $now, $now
       )
       ON CONFLICT(action_code, sort_key) DO UPDATE SET
-        company_name = excluded.company_name,
-        exchange = excluded.exchange,
-        domain = excluded.domain,
-        period_year = excluded.period_year,
-        period_quarter = excluded.period_quarter,
-        period_type = excluded.period_type,
-        period_start = excluded.period_start,
-        period_end = excluded.period_end,
-        ssc_url = excluded.ssc_url,
-        pdf_path = excluded.pdf_path,
-        -- published_at is deliberately NOT in this SET clause — SQLite keeps
-        -- the existing row's filing date untouched on conflict, mirroring
-        -- parseBctcReport.ts::storeReport() (FIX-BCTC-REPARSE-BATCH-
-        -- CORRUPTION-NGAYNOP-FLIP). It is only ever set once, on the row's
-        -- original INSERT; the $publishedAt bind value below is discarded by
-        -- SQLite on a real conflict, same as $id.
-        parsed_at = excluded.parsed_at,
-        audit_status = excluded.audit_status,
-        auditor = excluded.auditor,
-        extraction_confidence = excluded.extraction_confidence,
-        net_revenue = excluded.net_revenue,
-        gross_profit = excluded.gross_profit,
-        operating_profit = excluded.operating_profit,
-        ebitda = excluded.ebitda,
-        profit_before_tax = excluded.profit_before_tax,
-        net_profit = excluded.net_profit,
-        eps = excluded.eps,
-        diluted_eps = excluded.diluted_eps,
-        total_assets = excluded.total_assets,
-        current_assets = excluded.current_assets,
-        cash = excluded.cash,
-        inventory = excluded.inventory,
-        total_liabilities = excluded.total_liabilities,
-        short_term_debt = excluded.short_term_debt,
-        long_term_debt = excluded.long_term_debt,
-        equity_total = excluded.equity_total,
-        operating_cf = excluded.operating_cf,
-        investing_cf = excluded.investing_cf,
-        financing_cf = excluded.financing_cf,
-        capex = excluded.capex,
-        free_cash_flow = excluded.free_cash_flow,
-        gross_margin_pct = excluded.gross_margin_pct,
-        operating_margin_pct = excluded.operating_margin_pct,
-        net_margin_pct = excluded.net_margin_pct,
-        roe = excluded.roe,
-        roa = excluded.roa,
-        current_ratio = excluded.current_ratio,
-        debt_to_equity = excluded.debt_to_equity,
-        net_debt_to_ebitda = excluded.net_debt_to_ebitda,
-        pe = excluded.pe,
-        pb = excluded.pb,
-        balance_sheet_json = excluded.balance_sheet_json,
-        income_stmt_json = excluded.income_stmt_json,
-        cash_flow_json = excluded.cash_flow_json,
-        ratios_json = excluded.ratios_json,
-        yoy_delta_json = excluded.yoy_delta_json,
-        qoq_delta_json = excluded.qoq_delta_json,
-        market_data_json = excluded.market_data_json,
-        embedding_text = excluded.embedding_text,
-        notes_raw_text = excluded.notes_raw_text,
-        validation_status = excluded.validation_status,
-        validation_notes = excluded.validation_notes,
-        extraction_method = excluded.extraction_method,
-        extraction_source_note = excluded.extraction_source_note,
-        revenue_growth_qoq = excluded.revenue_growth_qoq,
-        margin_trend = excluded.margin_trend,
-        debt_ratio_hint = excluded.debt_ratio_hint
-      -- id is deliberately NOT in this SET clause — SQLite keeps the existing
-      -- row's id untouched on conflict (FIX-BCTC-NEWS-CHAIN-FALLBACK-ID-ORPHAN).
+        confidence              = excluded.confidence,
+        revenue_growth_qoq      = excluded.revenue_growth_qoq,
+        margin_trend            = excluded.margin_trend,
+        debt_ratio_hint         = excluded.debt_ratio_hint,
+        hints_count             = excluded.hints_count,
+        extraction_source_note  = excluded.extraction_source_note,
+        last_seen_at            = excluded.last_seen_at
+      -- first_seen_at deliberately NOT in this SET clause — immutable across
+      -- re-runs, same immutability pattern as financial_reports.published_at
+      -- (FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP).
     `);
 
-    stmt.run({
-      $id: fallbackReport.id,
-      $actionCode: fallbackReport.actionCode,
-      $companyName: fallbackReport.companyName,
-      $exchange: fallbackReport.exchange,
-      $domain: fallbackReport.domain,
-      $periodYear: fallbackReport.period.year,
-      $periodQuarter: fallbackReport.period.quarter,
-      $periodType: fallbackReport.period.periodType,
-      $periodStart: fallbackReport.period.startDate,
-      $periodEnd: fallbackReport.period.endDate,
-      $sortKey: fallbackReport.period.sortKey,
-      $sscUrl: fallbackReport.source.sscUrl,
-      $pdfPath: fallbackReport.source.pdfPath,
-      $publishedAt: fallbackReport.source.publishedAt,
-      $parsedAt: fallbackReport.source.parsedAt,
-      $auditStatus: fallbackReport.source.auditStatus,
-      $auditor: fallbackReport.source.auditor,
-      $extractionConfidence: fallbackReport.source.extractionConfidence,
-      $netRevenue: fallbackReport.incomeStatement.netRevenue,
-      $grossProfit: fallbackReport.incomeStatement.grossProfit,
-      $operatingProfit: fallbackReport.incomeStatement.operatingProfit,
-      $ebitda: fallbackReport.incomeStatement.ebitda,
-      $profitBeforeTax: fallbackReport.incomeStatement.profitBeforeTax,
-      $netProfit: fallbackReport.incomeStatement.netProfit,
-      $eps: fallbackReport.incomeStatement.eps,
-      $dilutedEps: fallbackReport.incomeStatement.dilutedEps,
-      $totalAssets: fallbackReport.balanceSheet.totalAssets,
-      $currentAssets: fallbackReport.balanceSheet.currentAssets.total,
-      $cash: fallbackReport.balanceSheet.currentAssets.cash,
-      $inventory: fallbackReport.balanceSheet.currentAssets.inventory,
-      $totalLiabilities: fallbackReport.balanceSheet.totalLiabilities,
-      $shortTermDebt: fallbackReport.balanceSheet.currentLiabilities.shortTermDebt,
-      $longTermDebt: fallbackReport.balanceSheet.longTermLiabilities.longTermDebt,
-      $equityTotal: fallbackReport.balanceSheet.equity.total,
-      $operatingCf: fallbackReport.cashFlow.operatingCF,
-      $investingCf: fallbackReport.cashFlow.investingCF,
-      $financingCf: fallbackReport.cashFlow.financingCF,
-      $capex: fallbackReport.cashFlow.capex,
-      $freeCashFlow: fallbackReport.cashFlow.freeCashFlow,
-      $grossMarginPct: fallbackReport.ratios.grossMarginPct ?? null,
-      $operatingMarginPct: fallbackReport.ratios.operatingMarginPct ?? null,
-      $netMarginPct: fallbackReport.ratios.netMarginPct ?? null,
-      $roe: fallbackReport.ratios.roe ?? null,
-      $roa: fallbackReport.ratios.roa ?? null,
-      $currentRatio: fallbackReport.ratios.currentRatio ?? null,
-      $debtToEquity: fallbackReport.ratios.debtToEquity ?? null,
-      $netDebtToEbitda: fallbackReport.ratios.netDebtToEbitda ?? null,
-      $pe: fallbackReport.ratios.pe ?? null,
-      $pb: fallbackReport.ratios.pb ?? null,
-      $balanceSheetJson: JSON.stringify(fallbackReport.balanceSheet),
-      $incomeStmtJson: JSON.stringify(fallbackReport.incomeStatement),
-      $cashFlowJson: JSON.stringify(fallbackReport.cashFlow),
-      $ratiosJson: JSON.stringify(fallbackReport.ratios),
-      $yoyDeltaJson: null,
-      $qoqDeltaJson: null,
-      $marketDataJson: null,
-      $embeddingText: fallbackReport.embeddingText,
-      $notesRawText: fallbackReport.notesRawText,
-      $validationStatus: 'pending',
-      $validationNotes: `Fallback from news chain: ${hints.length} signals (age <${maxAgeDays}d)`,
-      $extractionMethod: 'news_inference',
-      $extractionSourceNote: `Fallback: PDF extraction timeout. Populated from ${hints.length} chain signals (signal age: <${maxAgeDays}d). Confidence: ${finalConfidence.toFixed(2)}`,
+    const nowIso = new Date().toISOString();
+    hintsStmt.run({
+      $actionCode: actionCode,
+      $periodYear: period.year,
+      $periodQuarter: period.quarter,
+      $periodType: period.periodType,
+      $sortKey: period.sortKey,
+      $confidence: finalConfidence,
       $revenueGrowthQoq: avgRevenue,
       $marginTrend: avgMargin,
       $debtRatioHint: hints.length > 0 && hints[0] && hints[0].debt_ratio_pct !== null ? hints[0].debt_ratio_pct : 0.0,
+      $hintsCount: hints.length,
+      $extractionSourceNote: `Fallback: PDF extraction timeout. Populated from ${hints.length} chain signals (signal age: <${maxAgeDays}d). Confidence: ${finalConfidence.toFixed(2)}`,
+      $now: nowIso,
     });
 
-    logger.info(`${tag} fallback report inserted`);
+    logger.info(`${tag} fallback hints recorded (bctc_news_fallback_hints, NOT financial_reports)`);
     return {
       fallback: true,
       report: fallbackReport,
