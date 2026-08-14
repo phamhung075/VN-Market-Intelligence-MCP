@@ -18403,7 +18403,7 @@
         "last_served_tick": "2026-08-14T13:26:05Z"
       }
     },
-    "_updated_at": "2026-08-14T15:51:15Z",
+    "_updated_at": "2026-08-14T16:21:27Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -18910,6 +18910,152 @@
         },
         "createdAt": "2026-08-14T15:03:59Z",
         "drained_at": "2026-08-14T15:20:54Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "37057f2f1898a4abf4983cee24e7d961781de34cc18c16fa8cc6fcf1cccf218f",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/market-watcher.md. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=21 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-14T16:12:17Z",
+        "drained_at": "2026-08-14T16:21:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8061059cc9f18eb8ee1d0048b5223ee33b0068c00ac9468e283e48edce5fd3d5",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/news-scout.md. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=22 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-14T16:12:51Z",
+        "drained_at": "2026-08-14T16:21:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8714510fa7aebaddbebaecfc4f170c524f1ebd45fa9781f8ef067984660fea46",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/alert-commander.md — retained section '## c188 · 2026-08-14T06:38:27Z (slot=alert-commander-market, tick=06:40)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-14T16:14:03Z",
+        "drained_at": "2026-08-14T16:21:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7aa403a5621f9a418319c35d4328a7da3cea7685b0e49d28af415d26eb2f25a8",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-14T16:10:59Z",
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "market-watcher-eod",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "market-watcher-eod",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 7,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "market-watcher-eod": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "news-scout-offhours": 240,
+            "market-watcher-offhours": 240,
+            "market-watcher-eod": 240,
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-14T16:10:51Z",
+          "last_fired_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "market-watcher-eod",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "16:00",
+          "leader_lock": "acquired",
+          "dev_head": "active",
+          "devq": 100,
+          "signal_backlog": 0,
+          "note": "market-watcher matched 2 slots (offhours+eod) same tick, WARN telegram sent per Step 4b collision guard; all 4 slots spawned run_in_background=true, single batch (MAX_PARALLEL=4, headroom_mb=4235, load1m=2, cores=12, degraded=false)"
+        },
+        "createdAt": "2026-08-14T16:10:59Z",
+        "drained_at": "2026-08-14T16:21:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6d62dea94ac0e46b11d74ee3a29e75970ea500b76a8b217b11ade395f52a4cec",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "tied_sections": "5:20260814000000000:## UC-ASL-P3 · 2026-08-14\n32:20260814000000000:## UC-CCA-P2 · 2026-08-14",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-14T16:03:20Z",
+        "drained_at": "2026-08-14T16:21:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "56bc8c25baeb086cec3c7318bde72bd3bdd300055fa5e62045a51f417dd51cae",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_prune_dropped_newest_dated_section",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line": 32,
+          "heading": "## UC-CCA-P2 · 2026-08-14",
+          "section_count": 4,
+          "non_sentinel_section_count": 2,
+          "sentinel_section_count": 2,
+          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+          "action_required": "review_dropped_section"
+        },
+        "createdAt": "2026-08-14T16:03:20Z",
+        "drained_at": "2026-08-14T16:21:27Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
