@@ -92,11 +92,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-14T22:57:16Z",
-    "updated_by": "dev-team (PM decomposed UC-CDC-P1 into 3 tasks, linked children[], row stays IN_PROGRESS as epic-wrapper for Step-4.4 autoclose)",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "updated_at": "2026-08-14T23:00:08Z",
+    "updated_by": "dev-mcp-server",
+    "active_task_id": "TASK_2008a",
+    "next_agent": "dev-mcp-server",
+    "note": "TASK_2008a claimed by dev-mcp-server — FR-A1/FR-A2 calendar_status injectable-deps + enum gate (UC-CDC-P1 slice)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -709,8 +710,11 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "READ",
-        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-14.json"
+        "status": "triaged",
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-14.json",
+        "triaged_at": "2026-08-14T23:00:56Z",
+        "triaged_by": "po",
+        "disposition": "DUPLICATE re-emission of cj-20260814T163219Z (byte-identical summary, 6h apart) — the payload's own idempotency guard did not hold because the janitor-health-recheck-writer-retired-*.json marker it keys on was never written. PO DECISION MADE (retire, not replace) and minted CLEAN-RETIRE-TEAM-TOOL-RECHECK-WRITER, whose AC is exactly that marker; landing it closes both the finding and the re-emission."
       },
       {
         "id": "dev-team-20260814T223711Z",
@@ -720,7 +724,7 @@
         "type": "repair_task_request",
         "summary": "DRS claim script trusts stale cached dispatch_lane field — 2nd live occurrence same day (FIX-CHEF-BIZCTX 02:21Z, UC-CDC-P1 22:35Z). scripts/devteam-backlog-claim-design-router-sweep.jq sets .head.next_agent from dispatch_lane (stamped at promote time) instead of re-resolving effective_next_agent fresh at claim time. Both times the affected row had already cycled through its cached-stage specialist (ba) and moved on (next_agent updated to architect on the row itself) before DRS claimed it, which would have re-dispatched already-completed BA work had the router not manually corrected .head.next_agent pre-spawn each time.",
         "severity": "MEDIUM",
-        "status": "READ",
+        "status": "triaged",
         "payload_ref": null,
         "board_row": null,
         "payload": {
@@ -730,7 +734,10 @@
             "UC-CDC-P1 2026-08-14T22:35Z"
           ],
           "memory_ref": "feedback_drs_claim_script_trusts_stale_dispatch_lane_field"
-        }
+        },
+        "triaged_at": "2026-08-14T23:00:56Z",
+        "triaged_by": "po",
+        "disposition": "MINTED FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (backlog, P1, next_agent=developer). No prior row covered it — the FIX-DRS-SWEEP-00x family is agent-father board-drain work, unrelated to the claim script's next_agent resolution."
       },
       {
         "id": "dev-team-20260814T225514Z-unknown1",
@@ -11401,13 +11408,13 @@
         "created_at": "2026-08-14T06:50:41Z",
         "created_by": "po/dev-team-step1-triage-20260814T0621Z (BATCH mint)",
         "status_note": "Second recorded occurrence of the AC-3 durability class (prior: feedback_ac3_durability_certified_on_window_that_ended_before_metric_settled). Two compounding gate defects, both evidenced live: (1) SIGNAL — docker inspect .State.OOMKilled/ExitCode do not propagate the VM-boundary cgroup OOM in Docker Desktop; read false/0 across 3 real kernel kills. dmesg inside the VM is the only authoritative source, and this was ALREADY documented in commit ca6d86869 and in the certified row's own status_note, yet the gate still passed. (2) WINDOW — certification closed 60min before the first post-fix OOM. No open row covers this class. AC: OOM-class verification_gate must (a) read dmesg in-VM, (b) span a window >= the observed inter-crash interval, (c) forbid docker inspect .State.OOMKilled as sole evidence.\n\nROUTER NOTE (dev-team, 2026-08-14T06:5x): CORROBORATING LIVE EVIDENCE found same-tick — Tier-1 audit cycle c95 (agent abd9a0df0bb3eec97, 2026-08-14T06:44Z) independently FOLDed the same rag-service memory reading using exactly the discredited signal class this row names (docker-level checks: no OOMKilled, no VmHWM pinning, no dmesg read) — a real-time demonstration this row's AC directly closes. Worth citing when this row is picked up.\n",
-        "updated_at": "2026-08-14T18:43:16Z",
+        "updated_at": "2026-08-14T23:02:19Z",
         "updated_by": "po",
         "po_AC_EXTENSION_20260814T0927Z": "[po AC EXTENSION 2026-08-14T09:27Z — PRIORITY P1 -> P0, third recorded occurrence, and the v1 fix this row was minted to specify has now itself been shown gameable.]\nThis row was minted 2026-08-14T06:50Z against two gate defects (SIGNAL: docker inspect cannot see VM-boundary cgroup OOM; WINDOW: certification closed 60min before the first post-fix OOM). Both stand. Three further defects were evidenced live within the following 3 hours and MUST be folded into this row's AC — they are the same class and must not be split into new rows:\n(3) RESTART LAUNDERING. A durability window measured across a preemptive mitigation restart reports zero OOM while the process leaks at an unchanged rate. Observed live: FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED's 24h window opened 2026-08-14T08:41:48Z was invalidated by an ops mitigation restart at 09:23:21Z, 42 minutes in. AC: OOM-class verification_gate must require ONE continuous container lifetime, evidenced by an unchanged `docker inspect .State.StartedAt` at both window open and close, and must declare the window INVALID (not merely reset) if any mitigation was applied during it.\n(4) NEGATIVE-ONLY CRITERION. \"No crash observed in window W\" cannot establish boundedness and has now failed to predict this defect three consecutive times on one incident. AC: OOM-class gates must additionally require a POSITIVE plateau criterion — a fitted growth rate and an absolute ceiling headroom, both measured, both recorded on the row. A window ending at 95% of cap with zero OOM must FAIL.\n(5) GRANDFATHER EXEMPTION ON A FALSIFIED ROW. apps/mcp-server/src/infrastructure/orchStateSchema.ts RC_VERIF_GRANDFATHERED_IDS (line ~536) exempts FU-RAG-DEPLOY-MEMORY from checkVerificationGate()'s verification.raw_probe{} requirement — so it reached DONE_VERIFIED with no live re-probe attached at all, and the exemption survived the falsification of its certification. AC: entries in RC_VERIF_GRANDFATHERED_IDS must be purged when the row's certification is retracted, and a retracted row must not be re-closable via the exemption. At minimum, add a guard that fails validation if a grandfathered id is set back to DONE_VERIFIED after having carried a retraction marker.\nBINDING INTERIM: until this row ships, RAG-MEM-DURABILITY-BAR v2 (D1-D5, recorded verbatim on FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED as po_RAG_MEM_DURABILITY_BAR_V2_20260814T0927Z) is the operative gate for every rag-service memory row. This row's job is to generalise D1-D5 into the qa flow + docs/standards so it binds fleet-wide on every OOM-class AC, not just rag-service.",
-        "po_manual_dispatch_flagged_at": "2026-08-14T18:41:32Z",
+        "po_manual_dispatch_flagged_at": "2026-08-14T23:00:56Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — rank 0 of 90 (P0, next_agent=agent-father, previously unflagged) — folding into this tick's BATCH"
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) re-admitted under flag_reentrant (prior stamp 2026-08-14T18:41:32Z stale by >4h, its BATCH never dispatched). Rank 0 of 88 live candidates this tick (52 DRS-stranded, 36 backlog-XOR-gap), P0, next_agent=agent-father. Directly on the rag-service P0 critical path: this row is the QA gate that certified FU-RAG-DEPLOY-MEMORY on docker inspect (OOMKilled=false, a documented false-negative here) while dmesg inside the Docker VM showed 3 real kernel memcg OOM-kills of the same container. Folded into this tick's BATCH."
       },
       {
         "id": "FIX-PO-AC3-PERSISTENCE-GATE-OWN-COMMIT-VS-HEAD-ANCESTRY",
@@ -11751,6 +11758,90 @@
         "acceptance": "Every link target listed in docs/agent-memory/INDEX.md resolves to an existing file (verify by resolving each relative link with test -f), AND the next Tier-3 DOC-AUDIT cycle after the fix emits ZERO INDEX.md broken-pointer WARN.",
         "note": "SEQUENCING — PO RULING, HARD, DO NOT VIOLATE: do NOT start this row until (a) FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE's edit has landed in docs/agents/system-auditor/flow/main.md AND (b) one post-fix Tier-3 DOC-AUDIT cycle has run and emitted the real INDEX.md broken-pointer WARN. Reason: INDEX.md's currently-broken state IS the parent row's natural negative control (spec_doc docs/handoffs/FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE-spec.md §3) — it is the only evidence that the repointed predicate is live and actionable rather than defanged into a trivially-satisfied file-existence check. Cleaning INDEX.md before that cycle destroys the acceptance evidence and forces QA onto the synthetic scratch-copy fallback (spec §3, steps 1-5). Sourced from architect's ADJACENT FINDING, explicitly out of scope of the parent row; PO opened it as a separate row per architect's request.",
         "updated_at": "2026-08-14T21:30:21Z"
+      },
+      {
+        "id": "FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT",
+        "type": "FIX",
+        "title": "DRS claim script sets head.next_agent from the CACHED dispatch_lane field instead of re-resolving effective_next_agent at claim time — 2 live mis-dispatches same day (FIX-CHEF-BIZCTX 02:21Z, UC-CDC-P1 22:35Z), both caught only by router hand-correction",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "size": "S",
+        "created_at": "2026-08-14T23:00:56Z",
+        "created_by": "po-triage-20260814T2300Z",
+        "origin_signal_id": "dev-team-20260814T223711Z",
+        "supervised": false,
+        "baseline_pass": false,
+        "files": [
+          "scripts/devteam-backlog-claim-design-router-sweep.jq",
+          "scripts/lib/devteam-eligibility.jq"
+        ],
+        "status_note": "AC: scripts/devteam-backlog-claim-design-router-sweep.jq resolves next_agent via effective_next_agent($detail_items) at claim time (the same resolution RLC already performs) and NEVER reads a persisted dispatch_lane value; regression fixture proves a row whose dispatch_lane predates a later next_agent change claims to the LATER agent. Priority: MEDIUM->P1 on 2nd same-day occurrence. Evidence occurrence 1: FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING carried dispatch_lane='ba' stamped 2026-08-12T08:57:41Z, which predates ba_completed_at=2026-08-12T12:03:37Z; DRS claimed it to ba at 2026-08-14T02:21Z; router hand-corrected head.next_agent to architect at 02:22Z (see that row's own stale_dispatch_lane_note field). Evidence occurrence 2: UC-CDC-P1 2026-08-14T22:35Z, same shape, corrected in commit 0f20cfd61. Root cause is a stale-cache read, so the failure is SILENT whenever no router happens to be watching — both catches so far were incidental, not mechanised. Reference: feedback_drs_claim_script_trusts_stale_dispatch_lane_field.md.",
+        "updated_at": "2026-08-14T23:02:19Z"
+      },
+      {
+        "id": "FIX-BCTC-REPARSE-STRANDED-LIST-GATE-STILL-QUERIES-STALE-FILENAME-PERIOD",
+        "type": "FIX",
+        "title": "FIX-BCTC-REPARSE-PERIOD-KEY-...-QUARANTINE fixed the WRITE side only: buildStrandedList's already-filed dedup gate still queries financial_reports under the filename-derived yq the same fix just proved systematically stale — re-enqueues already-stored periods forever",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "dev-mcp-server",
+        "size": "S",
+        "created_at": "2026-08-14T23:00:56Z",
+        "created_by": "po-triage-20260814T2300Z",
+        "supervised": false,
+        "baseline_pass": false,
+        "files": [
+          "apps/mcp-server/src/scheduler/financial-reports/bctcReparseJob.ts"
+        ],
+        "status_note": "AC: the stranded-list already-filed SELECT keys on the SAME period the store path will use (content-derived when confident, filename-derived only on an inconclusive content signal), and a regression fixture proves a PDF whose content period is already stored is NOT re-enqueued. Evidence: bctcReparseJob.ts:477-487 computes effectiveYear/effectiveQuarter from extractPeriodFromContent(rawText) and passes THOSE to deps.pipeline (the fix that shipped as 6cb8641d2, 2026-08-14T15:36:25Z), but bctcReparseJob.ts:616-627 still does `const yq = parseYearQuarterFromFilename(filename)` and then `SELECT COUNT(*) FROM financial_reports WHERE action_code=? AND period_year=? AND period_type=?` bound to yq.year/yq.quarter. The whole premise of 6cb8641d2 is that yq is systematically EARLIER than the document's real period, so this gate asks 'is the WRONG period already filed?' — answer is almost always no, so the row is re-stranded on every job run (unbounded re-reparse), and symmetrically it can skip a period that genuinely IS missing. Same-file inconsistency introduced by the fix itself; not caught because the fix's own test only exercises the write path.",
+        "updated_at": "2026-08-14T23:02:19Z"
+      },
+      {
+        "id": "FIX-COLDEVICT-CAS-RETRY-BUDGET-3-EXHAUSTS-UNDER-NORMAL-PEER-WRITE-PRESSURE",
+        "type": "FIX",
+        "title": "orch-cold-evict.sh aborts after MTIME_CAS_RETRIES=3 with no backoff — 3 failures on 2026-08-14 alone (15:18Z, 16:48Z, 21:50Z); board hygiene silently skipped while the 3.3MB hot file keeps growing",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "size": "S",
+        "created_at": "2026-08-14T23:00:56Z",
+        "created_by": "po-triage-20260814T2300Z",
+        "supervised": false,
+        "baseline_pass": false,
+        "files": [
+          "scripts/orch-cold-evict.sh"
+        ],
+        "status_note": "AC: cold-evict either completes or reports a NON-CAS reason, measured over a 24h window with zero 'CAS retry limit exceeded' aborts; retry loop gains jittered backoff between attempts and a retry budget sized to the observed concurrent-writer rate. Evidence: scripts/orch-cold-evict.sh:114 MTIME_CAS_RETRIES=3, :950 while-loop, :1081 'ABORT: CAS retry limit (3) exceeded — concurrent writer; hot file unchanged'. Three tight-loop attempts with no sleep against a hot file that many peers write per minute is a near-guaranteed loss under load. Live BUG reports 2026-08-14: msg 4886 (15:18:56Z), msg 4888 (16:48:55Z), msg 4894 (21:50:56Z, stderr confirms it reached 'Attempt 1/3: ID maps computed'). PO re-ran the script by hand at 2026-08-14T22:56Z: exit 0, Stage 0+1 PASS, conservation OK, 0 evictions — so the failure is NOT a script defect or a corrupt board, it is purely lost CAS races. Non-fatal (self-heals next tick) but it silently defers the ONE mechanism that bounds hot-file growth, which TE-T15 already tracks as a token-cost problem.",
+        "updated_at": "2026-08-14T23:02:19Z"
+      },
+      {
+        "id": "CLEAN-RETIRE-TEAM-TOOL-RECHECK-WRITER",
+        "type": "CLEAN",
+        "title": "PO DECISION: RETIRE team-tool-recheck permanently (do NOT replace with a local cron) — drop the retirement marker so memory-prune-sweep.sh stops re-emitting the decision-needed signal every janitor session",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "size": "S",
+        "created_at": "2026-08-14T23:00:56Z",
+        "created_by": "po-triage-20260814T2300Z",
+        "origin_signal_id": "cj-20260814T223258Z",
+        "supervised": false,
+        "baseline_pass": false,
+        "files": [
+          "docs/signals/",
+          "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md"
+        ],
+        "status_note": "AC: a docs/signals/janitor-health-recheck-writer-retired-<ISO>.json marker exists (the exact idempotency key code-janitor's own payload names), the next memory-prune-sweep.sh run emits NO team-tool-recheck system-issue signal, and the ultracode-audit brief's #memory-docs-hygiene-P3 section is amended to record RETIRED rather than decision-pending. DECISION RATIONALE (this is the deliverable code-janitor asked PO for, twice — cj-20260814T163219Z and cj-20260814T223258Z): the writer was cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed 2026-06-22 by the standing no-RemoteTrigger directive. Option A (replace with a local cron) adds a 5th standalone cron to a host already under documented memory pressure, to restore a health report that has been absent 7+ weeks with zero observed downstream consumer and zero incident attributable to its absence — its coverage is already subsumed by system-auditor's tier sweeps and the 4 existing standalone crons. Option B (retire) costs one marker file. Choosing B. The 30d rule in memory-prune-sweep.sh drains the directory as designed; that is correct behaviour, not data loss.",
+        "updated_at": "2026-08-14T23:02:19Z"
       }
     ],
     "closed_sprints": [
@@ -15972,43 +16063,6 @@
         "dispatch_lane": "agents-architect"
       },
       {
-        "id": "TASK_2008a",
-        "title": "Wire calendar_status through injectable-deps + enum gate (emitPressureStateTool/vnTradingCalendar)",
-        "zone": "apps/mcp-server/",
-        "status": "TODO",
-        "size": "M",
-        "priority": "P1",
-        "created_at": "2026-08-14T22:54:44Z",
-        "created_by": "pm",
-        "depends_on": [],
-        "parent_task": "UC-CDC-P1",
-        "note": "FR-A1 + FR-A2: wire server-side computation via injectable-deps, add SESSION_STATUSES const, implement WARN+recompute inside runEmitPressureState",
-        "files": [
-          "apps/mcp-server/src/domain/services/vnTradingCalendar.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts",
-          "apps/mcp-server/src/__tests__/emit-pressure-state.test.ts"
-        ],
-        "updated_at": "2026-08-14T22:54:44Z"
-      },
-      {
-        "id": "TASK_2008b",
-        "title": "Stop cowork-tick-preflight.sh recycling calendar_status (SILENT-path emit)",
-        "zone": "scripts/",
-        "status": "TODO",
-        "size": "S",
-        "priority": "P1",
-        "created_at": "2026-08-14T22:54:44Z",
-        "created_by": "pm",
-        "depends_on": [],
-        "parent_task": "UC-CDC-P1",
-        "note": "FR-A3: remove L150 calendar_status read, drop cal arg and key from L162-164 emit_args",
-        "files": [
-          "scripts/agents-flow/cowork-tick-preflight.sh",
-          "scripts/agents-flow/cowork-tick-preflight.test.sh"
-        ],
-        "updated_at": "2026-08-14T22:54:44Z"
-      },
-      {
         "id": "TASK_2008c",
         "title": "Delete telemetry.md calendar arg + fail-loud in pressure-read.md (FR-A4/A5)",
         "zone": "docs/agents/cowork-team/flow/",
@@ -17111,8 +17165,8 @@
         "source": "po triage 2026-08-06T10:15Z — 2 RAW-verified occurrences same session (refine_bctc_md ~09:05Z, system-auditor ~09:52Z) crossing feedback_recurring_bug_escalation 2+; memory feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806 + feedback_refine_bctc_md_invents_partial_exit_skips_mandated_loop + feedback_cowork_spawn_narrates_not_executes (4 prior occurrences 06-18..07-29)",
         "created_at": "2026-08-06T10:15:29Z",
         "created_by": "po",
-        "updated_at": "2026-08-14T00:33:23Z",
-        "updated_by": "architect",
+        "updated_at": "2026-08-14T23:02:19Z",
+        "updated_by": "po (triage expedite)",
         "owner": "po",
         "po_ruling_20260806T1015": "PO RULING: this is layer-level, NOT noise and NOT two agent-specific bugs. Requester offered (a) in-flow self-check / (b) agent-father fleet flow-doc audit / (c) log as noise / (d) other. (a) REJECTED — the project already ratified in-flow self-checks as vacuous (spawn-fanout.md:247-251) and market-watcher empirically re-narrated on 07-29 seventeen days AFTER its in-flow guard landed on 07-12. (b) REJECTED as primary — agent-father's lever is in-flow prose, i.e. the same refuted layer, and a 45-file sweep validated on no reference implementation is the anti-pattern in feedback_fleetwide_gate_validated_on_one_file_optout_allowlist. (c) REJECTED — 7 occurrences, 4 agent types, 7 weeks, plus 6 mechanically-orphaned auditor cycle markers spanning a week; far past threshold. (d) ADOPTED = generalize the EXISTING exogenous caller-side gate (arm 2 artifact-delta) + close the cron-spawn coverage hole. Per feedback_recurring_detection_vs_recurring_failed_fix this is a recurring detection whose remediation has never executed at the correct layer — dispatch it, do not block it.",
         "status": "REVIEW",
@@ -17132,7 +17186,9 @@
           "FIX-ANALYSIS-ONLY-EXIT-DETECTOR-INVERSE-PARTIAL-MISSED-NOTEBOOK-WRITE-PASSES"
         ],
         "po_occurrence_20260812T1505Z": "OCCURRENCES 8-13 FOLDED HERE — no new row, no re-open. This row already owns the class and its architect design pass completed 2026-08-12T10:25Z (docs/architecture-briefs/2026-08-12-fix-cowork-delivery-proof-gate-artifact-conjunction-design.md).\n\nCONFIRMED against the router's request to check before re-minting: this row is OPEN (review[], next_agent=pm) and DOES cover the 6-report integrity-gap cluster (telegram 4711/4714/4720/4724/4725/4726/4728/4729/4730/4733, ~01:30Z-07:10Z, spanning system-auditor / unified-agent / ops). Nothing re-minted for it.\n\nThe cluster's own framing as 'a possible shared/systemic write-path defect, NOT yet root-caused' is ALREADY ADJUDICATED on this row and should stop being re-raised: po_occurrence_20260812T0840Z records the host/container-mem-pressure hypothesis (asserted in reports 5138/5139/5140) as REFUTED on record — the class predates this session by 8 weeks and spans agents on entirely different resource paths (project memory feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806). The correlation with the concurrent rag-service crisis window is coincidental. Architect must not spend the design pass on resource forensics.\n\nCRITICAL PATH IS THE DEPENDENCY, NOT THIS ROW: depends_on=[FIX-ANALYSIS-ONLY-EXIT-DETECTOR-INVERSE-PARTIAL-MISSED-NOTEBOOK-WRITE-PASSES] and that row is still sitting in backlog[]. Per this row's own architect_review_note the sequencing is BINDING — the Arm-2 sub-piece must not dispatch before the dependency is DONE_VERIFIED, because today's OR-verdict would both false-green the inverse-partial shape and spuriously block agents with no notebook at all. Dispatching this row's PM decomposition while the dependency is unstarted just re-queues it. PO ruling: dispatch the DEPENDENCY first.",
-        "evidence_20260814": "FIRST LIVE FALSE-POSITIVE OF THE MARKER LIST, self-reported by the dispatcher (telegram 4833, 2026-08-13T16:15:39Z). market-watcher-offhours tick 16:00Z tripped Step 5.3 on exactly ONE of six markers — the literal heading 'Coordination Results:' — with none of the other five present (no PRE-CLAIM / session-presence / orphan-adoption / Dispatch Routing / Expected Behavior), while the same return text showed unambiguous real execution (34 tickers scanned, sweep-forced DBC/DPM/KDC named, notebook committed, a specific coverage-state-skip reason cited). Probable cause named by the dispatcher: the marker echoes SESSION_ID_LINE's own 'Coordination: owner_client_session=' wording that the dispatcher itself injects, so the gate can be tripped by its own prompt. cowork-team correctly did NOT exclude the slot from WON_SLOTS and left last_fired stamped (16:09:49Z), avoiding a needless duplicate re-fire — the right call, and evidence the gate is currently only safe because a human-in-the-loop overrode it. Concrete AC candidate for this row: require >=2 co-occurring markers, or drop 'Coordination Results' as a standalone signal."
+        "evidence_20260814": "FIRST LIVE FALSE-POSITIVE OF THE MARKER LIST, self-reported by the dispatcher (telegram 4833, 2026-08-13T16:15:39Z). market-watcher-offhours tick 16:00Z tripped Step 5.3 on exactly ONE of six markers — the literal heading 'Coordination Results:' — with none of the other five present (no PRE-CLAIM / session-presence / orphan-adoption / Dispatch Routing / Expected Behavior), while the same return text showed unambiguous real execution (34 tickers scanned, sweep-forced DBC/DPM/KDC named, notebook committed, a specific coverage-state-skip reason cited). Probable cause named by the dispatcher: the marker echoes SESSION_ID_LINE's own 'Coordination: owner_client_session=' wording that the dispatcher itself injects, so the gate can be tripped by its own prompt. cowork-team correctly did NOT exclude the slot from WON_SLOTS and left last_fired stamped (16:09:49Z), avoiding a needless duplicate re-fire — the right call, and evidence the gate is currently only safe because a human-in-the-loop overrode it. Concrete AC candidate for this row: require >=2 co-occurring markers, or drop 'Coordination Results' as a standalone signal.",
+        "po_expedite_20260814T2300": "OCCURRENCE 10 LANDED WHILE THIS ROW SAT UNDISPATCHED. system-auditor Tier-2 c99 (2026-08-14T16:00Z) narrated 11 signal_queue writes that never landed (BUG msg 4889, RAW-verified: .signal_queue.rows[] unchanged, notebook write real). PREMISE CORRECTION to the escalation that followed: BUG msg 4890 asserts 'Structural SPIKE minted P0 to agents-architect'. PO re-read the board at 2026-08-14T23:00Z — NO such SPIKE row exists in any lane, and no row created after 18:40Z matches. That claim is a narrated mint that never reached orch-state (feedback_po_notebook_mint_never_reaches_orchstate_board.md), which is itself the same write-plane defect the escalation was about. PO deliberately did NOT re-mint a new SPIKE: THIS row already owns the exogenous-gate design (docs/protocols/fail-loud-protocol.md names it by id as the owner of 'wiring this detector to run automatically, exogenously, on every spawn'), architect ratified it 2026-08-14T00:33:23Z, and it has sat in review[] for 22.5h with next_agent=pm and plan_only=true. Minting an 11th row would starve identically. ROOT CAUSE OF THE STALL, measured this tick: review[] holds 19 P0 rows and RLC dispatches ~1 row/tick (project_rlc_dispatch_starvation_p0_expedite_ineffective_20260814) — P0 rank confers no effective expedite. ACTION: folded into this tick's BATCH as an UNBLOCK so it is dispatched to pm out-of-band of RLC. Do not re-triage as a fresh finding; the next occurrence belongs on this row's occurrence count, not on a new id.",
+        "po_expedite_class": "RLC-STARVED-P0-ARCHITECT-RATIFIED"
       },
       {
         "id": "FIX-DEVFLOW-MICROSERVICE-MAIN-NO-ERROR-BOUNDARY",
@@ -17787,7 +17843,7 @@
         "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge; WIP over cap, no dispatch). TNB c113 verified NEGATIVE: c112's Step-0 GATHER glob-widening (read docs/signals/processed/bctc_signal_*/fundamental_*) IS present in chef.md (L109-113) and fresh complete VCB/FPT/HPG business-context data existed on disk hours before the 07-18 evening dish -- yet the dish persisted [gap:business_context_absent] in known_gaps[] (RAW-verified in unified-agent-synthesis-2026-07-19-evening.json) and VCB's conviction_calls rationale ('Banking sector mixed: earnings growth offsets deposit-source tightness') cites only generic sector language, NOT a product/customer/ops/mgmt fact traceable to a gathered bctc_signal_* field. Root cause: the c112 fix reaches WHERE to look (Step 0 gather) but not HOW gathered fields flow into the per-ticker narrative at Steps 4-7.5, so BIZ_CTX_OK (chef.md L584-586) never sees a qualifying cite. BA to TRACE the GATHER->conviction_calls wiring: is the drop at Step 4 (thesis build), 5 (portfolio_conviction merge), or 6 (per-ticker rationale)? Deliverable: an explicit chef.md instruction that injects >=1 gathered biz-context field into >=1 ticker's rationale when such a signal was read this cycle, so the gate passes on data not only via gap-token. DISTINCT from FIX-CHEF-STEP0-BCTC-PROCESSED-DIR-BLINDSPOT (the WHERE auto-cure, already landed) and FIX-CHEF-STEP75-L3-BIZCTX-FLOOR (the gate itself, c108).",
         "verification_gate": "A subsequent chef evening/morning dish persists known_gaps[] WITHOUT [gap:business_context_absent] AND >=1 conviction_calls[] rationale cites a product/customer/ops/mgmt fact traceable to a bctc_signal_*/fundamental_* signal read that cycle (RAW-verify the synthesis JSON, not the notebook self-report).",
         "next_agent": "po",
-        "updated_at": "2026-08-14T21:16:01Z",
+        "updated_at": "2026-08-14T23:02:19Z",
         "po_triage_20260806T2205_field_confirmation": "PROMOTED FROM HYPOTHESIS TO CONFIRMED by TNB c123 (telegram report 4471, 2026-08-06T20:30:04Z) with the first concrete ticker-level instance in the 19 days since this row was minted. Evidence: the 08-06 EOD dish (08:50:20Z) emitted [gap:business_context_unavailable] for VCB, while docs/signals/processed/bctc_signal_VCB_20260805_routine.json (ts 2026-08-05T18:06Z) carries full product/customer/ops/mgmt fields for VCB and is in-window per FIX-CHEF-STEP0-BCTC-PROCESSED-DIR-BLINDSPOT. So the upstream data arrived on schedule and the gap token is FACTUALLY WRONG - the defect is exactly the GATHER->Steps 4-7.5 wiring this row already names, not an upstream availability problem. This also independently corroborates bctc-analyst's serve layer as healthy (TNB c144 confirms 4 tickers/cycle on schedule), which removes the last competing explanation. TNB recommended 'architect confirm recurrence (N=1, below 3-cycle auto-cure threshold)'; PO OVERRIDES that gate for this row specifically - the 3-cycle threshold exists to avoid minting on thin evidence, and this row already exists with an independently-derived root cause, so N=1 is corroboration of a standing diagnosis rather than the sole basis for a new one. Folded into BATCH this tick. Stays next_agent=ba/supervised=true: the deliverable is a spec for how biz-context enters conviction_call rationale and how BIZ_CTX_OK is evaluated, not a one-line patch.",
         "status_note": "RECURRENCE CONFIRMED (po triage 2026-08-08T00:02:01Z, tnb-audit c124 handoff + telegram report 4508): F-CHEF-BIZCTX-JOIN-MISS fired on a 2ND consecutive business day with a 2ND ticker. EOD dish 2026-08-07T08:45Z published conviction calls for VCB (HOLD) and DXG (SELL) tokened '[gap:business_context_unavailable: bctc-analyst 14/16 blocked]', while docs/signals/processed/bctc_signal_{VCB,DXG}_20260806_routine.json (both _processed.processedAt 2026-08-06T21:11:09Z, 11.5h before publish and well inside chef's own 24h Step-0 window) carried fully populated product/customer/ops fields — VCB ROE 16.7%/op-margin 80.9%/PE 14.1 vs sector 9; DXG ROE 1.9% vs sector 7.3%/PE 66.5x vs sector 16.1x/AVOID. Upstream availability is proven, the loss is entirely in chef's downstream GATHER->Steps 4-7.5 join, now doubly confirmed. occurrence_count=2. tnb explicitly requested NO new mint (routed here per PO's own c123 ACK directive 'do not hold for N=3'). tnb c125 will escalate to P0-urgency if a 3rd consecutive day / 3rd ticker appears. | 2026-08-11 PO: P0. occurrence_count=3. Standing escalation threshold CROSSED — see escalation_20260811/evidence_20260811. next_agent=ba unchanged (row is supervised:true, needs a spec not a mechanical cure). AC unchanged: BIZ_CTX_OK must evaluate true and per-ticker conviction_calls[].rationale must cite >=1 product/customer/ops/mgmt fact whenever an in-window populated bctc_signal_<TICKER>_*.json exists; re-test against the next dish carrying >=1 conviction call. | 2026-08-12 BA: spec complete. TRACE result: drop is primarily Step 4 (thesis build, chef-dish.md L88-134), compounded by Step 7 citation-discipline loophole, Step 7.5 BIZ_CTX_OK gap-token-of-convenience, Step 7.6 no persisted citation field. Row own Step-5-portfolio_conviction-merge hypothesis is factually wrong (Step 5 = Kinh Dich/get_portfolio_conviction, unrelated to bctc business-context). 7 exact before/after flow-doc edits specified (FR-0..FR-7), all flow-doc-only (chef.md + chef-dish.md), zero new scripts/services. One blocker flagged for PO (opportunistic-vs-force-widen ticker coverage), non-blocking, BA gave default recommendation. next_agent=architect.",
         "occurrence_count": 3,
@@ -17809,7 +17865,7 @@
         "stale_dispatch_lane_note": "DRS claim script (scripts/devteam-backlog-claim-design-router-sweep.jq) set head.next_agent from a stale dispatch_lane=\"ba\" field stamped 2026-08-12T08:57:41Z, predating BA completion (ba_completed_at=2026-08-12T12:03:37Z) and this morning's po-manual-dispatch-sweep confirmation of next_agent=architect. Router corrected head.next_agent to architect before dispatch (2026-08-14T02:22Z) rather than re-run BA. Root cause: claim script trusts cached dispatch_lane instead of re-resolving effective_next_agent fresh at claim time (RLC does the latter). Needs hardening.",
         "architect_completed_at": "2026-08-14T02:29:12Z",
         "architect_review_note": "Ratified FR-0..FR-7 (all 7 CONFIRMED SOUND) against the LIVE chef.md/chef-dish.md — every Before-quote re-verified byte-for-byte. One drift found: chef-dish.md +44L / chef.md +5L since BA wrote the spec (2026-08-13 commit c31ee006e, unrelated FOLLOW-UP-1 checkpoint-pointer insert) shifted every cited line number by a non-uniform offset; content untouched, corrected live line map published in the handoff (e.g. FR-6 BIZ_CTX_OK now at chef-dish.md:535-537 not :490-492). Blast-radius grep (BIZ_CTX token) confirms zero application-code consumers -- pure prose/gate-logic wiring inside 2 flow-doc files, zero DDD/interface risk. Blocker Q1 (opportunistic-vs-force-widen ticker coverage) ruled WITHIN remit: BA default (opportunistic-only, NFR-3) is the correct design and is already baked into FR-3 as specified -- does not block execution; PO retains veto as a follow-up, not a rework. BUILD-STANDARD: not-applicable (flow-doc prose, zero apps/ touch). Fan-out: agent-father is the SOLE next agent -- zero application code, edits confined to 2 agent flow-doc files inside agent-father sole ownership; no PM decomposition needed (one wave, 10 edit sites, no depends_on graph). Precedent: FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION (ready[], same zone) already carries next_agent=agent-father, confirming this is an established routing pattern, not novel. Full findings: [Architect] Brownfield Findings section appended to the BA-spec handoff.",
-        "updated_by": "agent-father",
+        "updated_by": "po (triage)",
         "po_goahead_20260814T042125": "RATIFIED AT SOURCE, not on the relay. Deliverable exists: docs/handoffs/FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING-BA-spec.md, 32085 bytes, provenance real (f5872a52a BA spec + 917c93759 architect ratification), § [Architect] Brownfield Findings present at :319. PO independently re-read ALL 10 corrected line anchors against the live files rather than trusting the table: chef.md:145 (FR-0a anchor text verbatim, inside the 137-151 AUTO-CURE comment), :162 fundamental_* TRANSITION line with blank :163 and 'Supplementary calls' :164 exactly as mapped (FR-1); chef-dish.md:475-476 (FR-0b), :24-25 session-state handoff (FR-2), :116 pillar table row + :122 confidence-scoring bullet end before blank :123 / '**Volatility & Breadth Context**' :124 (FR-3), :294 carry/FII provenance bullet before :295 'Store all chain sentences' (FR-4), :443 Citation Discipline (FR-5), :535-537 BIZ_CTX_OK 3-line block (FR-6), :648 rationale_one_liner before :649 closing brace (FR-7 schema), :685 'Extract conviction calls from Step 4' (FR-7 impl). ALL MATCH. Independently re-derived the one load-bearing implementability claim rather than accepting it: ANY_LAYER_PARTIAL at :540-544 does contain 'OR (BIZ_CTX_OK relied on a gap token)' at :542, and it stays computable after FR-6's rewrite via the new definition's 2nd OR-branch — architect's claim holds. Drift re-checked: last commit touching either file is still c31ee006e, the exact commit architect named as the drift source, so the corrected map is current as of HEAD 774c84f85. BLOCKER Q1 / EC-5: PO does NOT exercise the veto BA reserved. Architect's ruling is right — force-widening ticker coverage to manufacture a BIZ_CTX citation would conflate a data-availability gate with a publish-scope decision, a strictly worse failure than the one this row fixes; FR-3's opportunistic-only clause already implements the safe default. Any later objection is a follow-up FR against FR-3, never a rework of FR-0/1/2/4/5/6/7. AGENT-FATHER: anchor on the QUOTED TEXT, not the numbers (architect risk-flag R1).",
         "agent_father_completed_at": "2026-08-14T04:44:48Z",
         "agent_father_completion_note": "Applied all 7 architect-ratified FR-0..FR-7 flow-doc edits (10 anchor sites, chef.md + chef-dish.md), anchored on quoted live text per architect risk-flag R1, not line numbers (files had already drifted BA-to-architect, and my own earlier edits in this pass shifted later anchors further). Post-edit grep confirms all 10 $BIZ_CTX_SIGNALS/$BIZ_CTX_CITED/business_context_cited tokens landed exactly once at the intended site. Zero application code touched (blast-radius already confirmed by architect: zero non-doc consumers). Committed+pushed c11504775 (chef.md + chef-dish.md only). Cannot self-verify this cycle: the rows own verification_gate requires a live chef dish RAW-verified against a fresh unified-agent-synthesis-*.json (known_gaps[] omits the biz-context gap token AND >=1 conviction_calls[].business_context_cited is non-null) which can only be checked after the NEXT scheduled chef dish actually runs and persists its JSON — routed to po for that RAW-verify pass (likely via the next tnb-audit/system-auditor sweep).",
@@ -17820,7 +17876,8 @@
         "po_scope_widening_FR8": "NEW REQUIREMENT (not covered by FR-0..FR-7): $BIZ_CTX_SIGNALS (chef.md:193-196) carries only product/customer/ops/mgmt/source_file/ts. It does NOT carry valuation.verdict or the kinhdich gate note, so NO existing FR can bind conviction direction. FR-8: extend $BIZ_CTX_SIGNALS with valuation.verdict + valuation.note + kinhdich.note; when valuation.verdict==AVOID for a ticker, chef MUST NOT emit direction in {BUY,ACCUMULATE} for that ticker - it must either honour the gate or explicitly engage/defend the override in rationale (T-45 discipline). Evidence: 2026-08-14 evening issued MEDIUM/ACCUMULATE on DXG against an explicit machine-readable do-NOT-post-bullish gate.",
         "po_enforcement_dependency": "Deterministic enforcement belongs to FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION per this row own BA spec NFR-4, which predicted exactly this convergence. This row cannot pass its verification_gate on prose alone.",
         "po_goahead_20260814T203645": "Ratified at source 2026-08-14: read chef.md/chef-dish.md live (FR-0..7 present verbatim), bctc_signal_DXG_20260814_routine.json (valuation.verdict=AVOID confirmed), and all 4 synthesis JSONs (business_context_cited=null 3/3 post-fix dishes). Not a relayed verdict. Proceed with FR-8 widening.",
-        "agent_father_fr8_completion_note": "FR-8 (PO 2026-08-14 scope-widening, po_goahead_20260814T203645) applied: chef.md Step 0 $BIZ_CTX_SIGNALS extended with valuation.verdict/valuation.note/kinhdich.note (schema byte-verified against live bctc_signal_DXG_20260814_routine.json before editing); chef-dish.md gains a new Step 4 Valuation-gate discipline sub-step + Step 7.5 sub-check (h) VALUATION_GATE_OK (8th ASSEMBLY-then-assert sub-check, same single-pass self-correct-before-write mechanism as (f) SCHEMA_OK/(g) DIRECTION_OK shipped this session in 5829a7ad2) + a valuation_gate field on conviction_calls[] (structured verdict/note/override_engaged/override_rationale, RAW-verifiable like FR-7 business_context_cited) + Step 7.6 post-write self-check #5. Enforcement: an AVOID-gated ticker self-corrects to HOLD before persistence unless the rationale carries a literal [override:valuation_avoid - <data-backed justification>] clause (T-45 adversarial-discipline convention reused verbatim from tran-ngoc-bau/flow/audit-methodology.md, per POs own instruction to check precedent before inventing new language). Files: chef.md 265->281L, chef-dish.md 914->1002L, both header size-justification comments updated with real deltas. Zero application code touched, zero apps/ blast radius (architects original zero-blast-radius ratification on this row still holds for FR-8). Cannot self-certify closure this cycle: this rows own history is FR-0..7 shipped-but-then-PO-verification-FAILED once already (po_verification_verdict field), so only another independent RAW-verify against a live post-fix chef dish cycle (morning/eod/evening) can close it - routed to po for that pass, not self-certified DONE_VERIFIED."
+        "agent_father_fr8_completion_note": "FR-8 (PO 2026-08-14 scope-widening, po_goahead_20260814T203645) applied: chef.md Step 0 $BIZ_CTX_SIGNALS extended with valuation.verdict/valuation.note/kinhdich.note (schema byte-verified against live bctc_signal_DXG_20260814_routine.json before editing); chef-dish.md gains a new Step 4 Valuation-gate discipline sub-step + Step 7.5 sub-check (h) VALUATION_GATE_OK (8th ASSEMBLY-then-assert sub-check, same single-pass self-correct-before-write mechanism as (f) SCHEMA_OK/(g) DIRECTION_OK shipped this session in 5829a7ad2) + a valuation_gate field on conviction_calls[] (structured verdict/note/override_engaged/override_rationale, RAW-verifiable like FR-7 business_context_cited) + Step 7.6 post-write self-check #5. Enforcement: an AVOID-gated ticker self-corrects to HOLD before persistence unless the rationale carries a literal [override:valuation_avoid - <data-backed justification>] clause (T-45 adversarial-discipline convention reused verbatim from tran-ngoc-bau/flow/audit-methodology.md, per POs own instruction to check precedent before inventing new language). Files: chef.md 265->281L, chef-dish.md 914->1002L, both header size-justification comments updated with real deltas. Zero application code touched, zero apps/ blast radius (architects original zero-blast-radius ratification on this row still holds for FR-8). Cannot self-certify closure this cycle: this rows own history is FR-0..7 shipped-but-then-PO-verification-FAILED once already (po_verification_verdict field), so only another independent RAW-verify against a live post-fix chef dish cycle (morning/eod/evening) can close it - routed to po for that pass, not self-certified DONE_VERIFIED.",
+        "po_triage_20260814T2300_verification_window": "NOT VERIFIABLE YET — do not burn a PO tick re-deriving this. agent-father landed FR-8 at 2026-08-14T21:16:01Z (valuation.verdict/valuation.note/kinhdich.note into $BIZ_CTX_SIGNALS; chef-dish.md Step 7.5 sub-check (h) VALUATION_GATE_OK; conviction_calls[].valuation_gate). ZERO chef dishes have fired since. The row's verification_gate demands a RAW post-fix synthesis JSON, so the earliest possible verdict is after the next guaranteed dish (chef-morning, ~05:2xZ). PREMISE CORRECTION for triage callers: BUG msg 4892 (tran-ngoc-bau CRITICAL, DXG ACCUMULATE against an explicit valuation AVOID gate, 2026-08-14T20:25:43Z) is described upstream as 'new evidence for the in-flight BA spec's scope' — it is not in-flight and it is not pending scoping. That exact report IS the evidence PO already converted into FR-8 (po_scope_widening_FR8, po_goahead_20260814T203645) and agent-father already shipped 51 minutes later. msg 4892 is CLOSED-BY-FR8, not actionable again. NEXT PO TICK: RAW-verify the next unified-agent-synthesis-*.json for (a) business_context_cited non-null on >=1 conviction_call, (b) no DXG-class direction in {BUY,ACCUMULATE} while its bctc_signal valuation.verdict==AVOID without a literal [override:valuation_avoid - ...] clause. Verdict FAILED once already on FR-0..7, so do not accept an agent self-report."
       },
       {
         "id": "FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE",
@@ -17973,6 +18030,25 @@
         "updated_by": "agent-father",
         "agent_father_implementation_note": "Trimmed spawn-fanout.md's ~78L FR-P2-7 inline published-marker pattern block (task_claim/TTL/key prose, the original copy-paste source of the 4 EARLY-claim defect instances) to a 1-line pointer at .claude/skills/published-marker-gate/SKILL.md. Pure doc-debt reduction, no logic changed (dispatcher still never calls publish markers). qa to grep-verify: zero task_claim/task_id=\"published: literals remain in spawn-fanout.md, exactly one pointer to the skill.",
         "commit_sha": "f1eb75143"
+      },
+      {
+        "id": "TASK_2008b",
+        "title": "Stop cowork-tick-preflight.sh recycling calendar_status (SILENT-path emit)",
+        "zone": "scripts/",
+        "status": "REVIEW",
+        "size": "S",
+        "priority": "P1",
+        "created_at": "2026-08-14T22:54:44Z",
+        "created_by": "pm",
+        "depends_on": [],
+        "parent_task": "UC-CDC-P1",
+        "note": "FR-A3: remove L150 calendar_status read, drop cal arg and key from L162-164 emit_args",
+        "files": [
+          "scripts/agents-flow/cowork-tick-preflight.sh",
+          "scripts/agents-flow/cowork-tick-preflight.test.sh"
+        ],
+        "updated_at": "2026-08-14T23:02:30Z",
+        "next_agent": "qa"
       }
     ],
     "qa": [
@@ -18209,6 +18285,28 @@
           "TASK_2008b",
           "TASK_2008c"
         ]
+      },
+      {
+        "id": "TASK_2008a",
+        "title": "Wire calendar_status through injectable-deps + enum gate (emitPressureStateTool/vnTradingCalendar)",
+        "zone": "apps/mcp-server/",
+        "status": "IN_PROGRESS",
+        "size": "M",
+        "priority": "P1",
+        "created_at": "2026-08-14T22:54:44Z",
+        "created_by": "pm",
+        "depends_on": [],
+        "parent_task": "UC-CDC-P1",
+        "note": "FR-A1 + FR-A2: wire server-side computation via injectable-deps, add SESSION_STATUSES const, implement WARN+recompute inside runEmitPressureState",
+        "files": [
+          "apps/mcp-server/src/domain/services/vnTradingCalendar.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts",
+          "apps/mcp-server/src/__tests__/emit-pressure-state.test.ts"
+        ],
+        "updated_at": "2026-08-14T23:00:08Z",
+        "claimed_at": "2026-08-14T23:00:07Z",
+        "claimed_by": "dev-mcp-server",
+        "next_agent": "qa"
       }
     ]
   },

@@ -63,3 +63,18 @@ Stop `cowork-tick-preflight.sh` Step 8 (SILENT-path emit) from reading `calendar
 ## RETURN (to be filled by developer)
 
 Task complete → git commit with `Task: TASK_2008b` trailer + acceptance criteria list
+
+---
+
+## [Developer] Implementation Record
+
+- **Files modified:**
+  - `scripts/agents-flow/cowork-tick-preflight.sh:145-181` (`_step8_silent_release()`) — removed the L150 `calendar_status=$(jq -r '.calendar_status // empty' "$PRESSURE_STATE_PATH" ...)` read + its `[ -z "$calendar_status" ] && calendar_status="unknown"` default; dropped `--arg cal "$calendar_status"` and the `calendar_status:$cal` key from the `emit_args` `jq -n` build (was L162-164). `last_regime`/`last_volatility_level` recycling untouched — explicitly out of scope (AC).
+  - `scripts/agents-flow/cowork-tick-preflight.test.sh` — new T2e: fixture `pressure-state.json` seeded with `calendar_status:"open"`, new `EMIT_ARGS_CAPTURE_FILE` stub seam captures the raw `emit_pressure_state` call args, asserts the file is non-empty (proves the call fired) AND does not contain `calendar_status`.
+- **Tests written:** T2e (2 assertions) in `cowork-tick-preflight.test.sh` — RED pre-fix (`grep calendar_status` matched), GREEN post-fix.
+- **Git commits:** `a860a5b9f` — `fix(scripts/cowork-tick-preflight): stop recycling stale calendar_status (FR-A3)`
+- **tsc status:** N/A — pure bash/jq, no `apps/` TS touched.
+- **Full suite:** `bash scripts/agents-flow/cowork-tick-preflight.test.sh` 75/75 pass (was 74/74 pre-T2e), 0 fail. `bash -n` clean.
+- **Docs updated:** `docs/WORK.md` — one-liner appended. `docs/handoffs/TASK_2008b.md` — this record.
+- **Graphify:** skipped (no `docs/{policies,protocols,standards,references}/` domain doc changed — pure script + test + handoff/WORK.md).
+- **Simplicity gate:** PASS — Q1 scope clean (removal only, no new knob/flag), Q2 no single-use abstractions, Q3 senior-test clean, Q4 ratio <50% overhead (net change is a targeted deletion + one new test case).
