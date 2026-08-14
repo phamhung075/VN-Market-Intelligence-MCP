@@ -1,5 +1,17 @@
 # QA — Notebook
 
+## cycle-718 · 2026-08-14T09:36:33Z · FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH (report-analyzer, commit `a9291bbbc`) — Direct-Commit Verify, APPROVED, DONE_VERIFIED
+
+dev-team Review-Lane QA-Drain spawn (`mode=verify-committed`), `qa[]` row, `branch:null`, no explicit `.commit`/`.files[]`-owner fields beyond the sole `files[]` entry — derived commit via `git log -- apps/mcp-server/src/__tests__/ALLZERO-OHLCV-FETCH.test.ts`, cross-checked against the row's own `dev_mcp_server_20260814T0945Z` note timestamp. Did not trust the dev's own 5/5-pass claim — re-ran independently.
+
+Commit `a9291bbbc` confirmed `git merge-base --is-ancestor main`; `git show --stat` matches the row's sole `files[]` entry exactly (test file only, 25+/13- lines, zero production code touched). Diff read at source, not dev prose: root cause genuinely wall-clock date drift — AC-1..AC-3 fixtures hardcoded absolute dates (2026-06-1x/2026-05-30) against `get_price_history`'s live `date('now','-N days')` SQL filter, so real time carrying past ~2026-08-10 pushed them outside the days=60 window. Fix adds a `dateStr(daysAgo)` helper deriving fixtures from `Date.now()`; claimed "same idiom as 178-price-history.test.ts" independently grep-confirmed byte-identical in that file.
+
+Own re-run, both invocations: bare `bun test src/__tests__/ALLZERO-OHLCV-FETCH.test.ts` 5/5 pass; exact CI per-file-isolation invocation (`STOCK_PRICE_DB_PATH=<unique>`, matching `scripts/ci-per-file-isolation.sh`) 5/5 pass. `bun tsc --noEmit` clean (0 output, exit 0). Test-only change (Smart-Skip) → `mock-guard.sh`/DDD/security scans correctly N/A, not skipped without basis.
+
+DJ: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-20.md` STEP qa-S125.
+
+VERDICT: `DONE_VERIFIED`, zero blocking ISSUE. `[QA] Review Record (direct-commit verify)` appended to the row's own `status_note` field (no handoff file — direct-commit row), attached `verification.raw_probe` (own dual-invocation `bun test` + `tsc`) on the write. Moved `task_board.qa[]`→`done_verified[]` via `orch-apply.sh` (conservation clean, task_total 741=741, signal_total 30=30). `.head.active_task_id` WAS this task (highest-ranked row of the QA-Drain batch) — synced to idle in the SAME write per CANONICAL:SSOT-STATUSFLIP-LANEMOVE rule (b). Sibling FAILEDFILE `FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts` correctly left untouched (separate board row, out of scope). This sub-session's tool grant is Read/Edit/Write/Bash only, no `mcp__gateway__call_tool` binding — no `task_release` call made; the coordinating dev-team/router session (`632721c2-41e4-4aff-8d06-a47cf80dc0d7`) holds `task:FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH` and is the authoritative release path.
+
 ## cycle-717 · 2026-08-14T09:32:25Z · FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER (report-analyzer) — Direct-Commit Verify, APPROVED, DONE_VERIFIED
 
 dev-team Review-Lane QA-Drain spawn (`mode=verify-committed`), `qa[]` row — flagged in dispatch as off-drain (placed directly into `qa[]` by a PO reopen write, not the drain script, per its own `po_qa_lane_stale_triage_20260814T0908Z` field — benign/explained, not a new anomaly). No `.commit`/`.files[]` on the row: this is a live-infra remediation action (redeploy stock-price + exercise 4 read paths + checkpoint/flip `journal_mode` back to DELETE), not a code diff — verified against the row's own `verification_gate` instead.
