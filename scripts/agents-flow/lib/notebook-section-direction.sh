@@ -69,8 +69,36 @@
 NSO_SENTINEL_KEY="99999999999999999"
 
 nso_ts_key() {
+  # FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE (2026-08-14): the prior single-
+  # pattern `grep -oE ... | tail -1` treated the date's T..Z time suffix as OPTIONAL,
+  # so a bare run of 8 digits ANYWHERE later in the heading (e.g. an all-numeric git
+  # short-SHA cited as "commit `761988143`") matched the same regex as the real ISO
+  # timestamp — and `tail -1` always preferred whichever match came LAST on the
+  # line, which for the live "## cycle-NNN · <ISO ts> · ... commit `<sha>`" heading
+  # convention is the SHA, not the timestamp. Root-caused + fixed via TWO
+  # independent hardenings (root_cause note on the owning task board row):
+  #
+  #   Tier 1 — require the T..Z time-of-day suffix (no longer optional). A hex git
+  #   SHA can never satisfy this: hex digits are 0-9a-f only, so the literal "T" and
+  #   "Z" characters this pattern requires cannot appear inside a SHA string,
+  #   collision-proof by construction regardless of digit count. `head -1` (first
+  #   match, not last) — headings always carry the canonical timestamp before any
+  #   later digit-shaped noise (commit citation, cycle/task numbers), so "first" is
+  #   also the semantically-correct choice going forward.
+  #
+  #   Tier 2 (fallback, only when Tier 1 finds nothing — the live date-only
+  #   convention, e.g. qa.md "## cycle-N · YYYY-MM-DD · ..." with no time-of-day)
+  #   — same bare 8-digit date pattern as before, but now boundary-guarded:
+  #   `(^|[^0-9])...([^0-9]|$)` rejects any match immediately adjacent to another
+  #   digit on either side. A genuine standalone date is never digit-adjacent; a
+  #   match that IS digit-adjacent is by definition a truncated PREFIX of a longer
+  #   pure-digit run (the same SHA-collision shape Tier 1 closes, for the case
+  #   where no T..Z timestamp is present anywhere in the heading to prefer instead).
   local heading="$1" ts_raw ts_digits ts_key
-  ts_raw=$(echo "$heading" | grep -oE '[0-9]{4}-?[0-9]{2}-?[0-9]{2}(T[0-9]{2}:?[0-9]{2}(:?[0-9]{2}(\.[0-9]+)?)?Z)?' | tail -1)
+  ts_raw=$(echo "$heading" | grep -oE '[0-9]{4}-?[0-9]{2}-?[0-9]{2}T[0-9]{2}:?[0-9]{2}(:?[0-9]{2}(\.[0-9]+)?)?Z' | head -1)
+  if [ -z "$ts_raw" ]; then
+    ts_raw=$(echo "$heading" | grep -oE '(^|[^0-9])[0-9]{4}-?[0-9]{2}-?[0-9]{2}([^0-9]|$)' | head -1)
+  fi
   if [ -n "$ts_raw" ]; then
     ts_digits=$(echo "$ts_raw" | tr -dc '0-9')
     ts_key=$(printf '%-17s' "$ts_digits" | tr ' ' '0' | cut -c1-17)

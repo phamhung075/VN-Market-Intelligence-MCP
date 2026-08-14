@@ -90,6 +90,29 @@
 #       write DOES land here since 2 dated sections + the sentinel remain afterward, so
 #       cardinality never drops to the AC-5 trap).
 #
+# T11 (FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE, 2026-08-14, AC-1/AC-2): the
+# `## cycle-NNN · <ISO ts> · TASK-ID (agent, commit `<sha>`)` heading convention
+# (qa.md's own citation shape) can carry an all-NUMERIC git short-SHA suffix. The
+# old nso_ts_key() (`grep -oE <date-regex> | tail -1`) treated the T..Z time suffix
+# as optional, so an 8-digit run anywhere later in the heading — an all-digit
+# SHA — matched the same pattern as the real ISO timestamp, and `tail -1` always
+# preferred whichever match landed LAST on the line: the SHA, not the timestamp.
+# Live incident: cycle-705's heading (real ts 2026-08-14T01:33:11Z, trailing commit
+# `761988143`) computed ts_key=76198814000000000 (from the SHA) instead of
+# 20260814013311000 (from the real ts) — an inflated key that outranked every
+# legitimate 2026-dated heading, so the genuinely NEWER cycle-711 section (whose
+# correctly-computed key was legitimately smaller) was misidentified as "oldest"
+# and dropped instead — destroying TASK-COWORK-MUTEX-001's CHANGES_REQUESTED
+# review record with zero signal.
+#   T11 reproduces the exact collision shape over the LINE cap only: 2 dated
+#   sections, TASK-OLD (genuinely oldest, 2026-08-01, heading ALSO carries a
+#   trailing all-digit commit SHA that a tail-1/optional-suffix regex would
+#   mis-rank as newest) and TASK-COWORK-MUTEX-001 (genuinely newest, 2026-08-14,
+#   hex SHA — never digit-collision-prone). Asserts the fixed nso_ts_key() drops
+#   TASK-OLD (the true oldest) and retains TASK-COWORK-MUTEX-001 (the true
+#   newest) — pre-fix this assertion FAILS (the SHA-confused key causes the
+#   inverse drop).
+#
 # Run:
 #   bash scripts/agents-flow/notebook-auto-prune.test.sh
 #
@@ -101,7 +124,8 @@
 #               this task closes; see docs/data/notebook-section-order.json for AC-2 context),
 #               FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (T9-T10,
 #               AC-5/AC-6, occurrence 5, 2026-08-12),
-#               UC-CRITIC-HOOKS-ENFORCEMENT (T8)
+#               UC-CRITIC-HOOKS-ENFORCEMENT (T8),
+#               FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE (T11, 2026-08-14)
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -581,6 +605,44 @@ else
     PASS=$((PASS + 1))
   else
     echo "FAIL T10: sections_after=$T10_SECTIONS_AFTER has_A=$T10_HAS_A has_B=$T10_HAS_B has_C=$T10_HAS_C lines_after=$T10_LINES_AFTER sig_before=$T10_SIG_BEFORE sig_after=$T10_SIG_AFTER sig_type_ok=$T10_SIG_TYPE_OK (expected 3 sections, TASK-C dropped, sentinel+TASK-A+TASK-B retained, AC-6 signal emitted)"
+    FAIL=$((FAIL + 1))
+  fi
+fi
+
+# ── T11 (FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE AC-1/AC-2): commit-SHA
+#      digits must never win over a real ISO timestamp in nso_ts_key() ──────────
+# TASK-OLD: genuinely oldest (2026-08-01), heading carries a trailing all-digit
+# commit SHA (`761988143`, 9 digits) — the exact live collision shape.
+# TASK-COWORK-MUTEX-001: genuinely newest (2026-08-14), hex SHA (never digit-
+# collision-prone). Narrow content (width 20, mirrors T5-T7) so only the LINE
+# cap trips — byte axis stays well clear, isolating the ts-key regression.
+T11_FILE="$TMPDIR_TEST/docs/agent-memory/notebooks/sha-digits-vs-date.md"
+{
+  echo "# SHA-Digits-vs-Date Notebook"
+  echo ""
+  echo "Preamble text."
+  echo ""
+  dense_section "cycle-705 · 2026-08-01T00:00:00Z · TASK-OLD (report-analyzer, commit \`761988143\`) — genuinely oldest" 100 20
+  dense_section "cycle-711 · 2026-08-14T01:33:11Z · TASK-COWORK-MUTEX-001 (report-analyzer, commit \`f8d3891c6\`) — CHANGES_REQUESTED, genuinely newest" 100 20
+} > "$T11_FILE"
+
+T11_LINES_BEFORE=$(wc -l < "$T11_FILE" | tr -d ' ')
+
+if [ "$T11_LINES_BEFORE" -le 200 ]; then
+  echo "FAIL T11 (fixture invalid): lines=$T11_LINES_BEFORE — expected >200 pre-run"
+  FAIL=$((FAIL + 1))
+else
+  run_prune "$T11_FILE"
+  T11_SECTIONS_AFTER=$(grep -c "^## " "$T11_FILE" 2>/dev/null || echo 0)
+  T11_HAS_OLD=$(grep -c "TASK-OLD" "$T11_FILE" 2>/dev/null)
+  T11_HAS_MUTEX=$(grep -c "TASK-COWORK-MUTEX-001" "$T11_FILE" 2>/dev/null)
+  T11_LINES_AFTER=$(wc -l < "$T11_FILE" | tr -d ' ')
+
+  if [ "$T11_SECTIONS_AFTER" -eq 1 ] && [ "$T11_HAS_OLD" -eq 0 ] && [ "$T11_HAS_MUTEX" -ge 1 ] && [ "$T11_LINES_AFTER" -le 200 ]; then
+    echo "PASS T11: SHA-digit collision — dropped the genuinely-oldest TASK-OLD section (all-digit commit SHA no longer mis-parsed as a newer date), retained the genuinely-newest TASK-COWORK-MUTEX-001 section"
+    PASS=$((PASS + 1))
+  else
+    echo "FAIL T11: sections_after=$T11_SECTIONS_AFTER has_OLD=$T11_HAS_OLD has_MUTEX=$T11_HAS_MUTEX lines_after=$T11_LINES_AFTER (expected 1 section, TASK-OLD dropped, TASK-COWORK-MUTEX-001 retained)"
     FAIL=$((FAIL + 1))
   fi
 fi
