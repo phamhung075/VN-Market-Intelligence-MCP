@@ -851,8 +851,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-14T05:25:02Z",
-    "_updated_by": "po (dev-team Step 1 triage 2026-08-14T05:25Z)",
+    "_updated_at": "2026-08-14T07:44:07Z",
+    "_updated_by": "po (triage: stale-.head family escalation, 5 occurrences/5 agent types 2026-08-14)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11485,6 +11485,90 @@
         "created_by": "po",
         "updated_at": "2026-08-14T07:07:49Z",
         "updated_by": "po"
+      },
+      {
+        "id": "FIX-DEVTEAM-WF1D-REVIEW-QA-LANE-HEAD-PIN-BLIND",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "owner": "agent-father",
+        "zone": "docs/agents/dev-team/flow/",
+        "next_agent": "agent-father",
+        "created_at": "2026-08-14T07:44:07Z",
+        "created_by": "po/triage-20260814T0745 (router escalation, 5 occurrences/5 agent types in one day)",
+        "updated_at": "2026-08-14T07:44:07Z",
+        "title": "WF-1 resume-gate is BLIND to review[]/qa[] — a specialist that self-lane-moves its own row to review[]/next_agent=qa leaves .head pinned in_progress, task_status resolves EMPTY, and Step 0b falls through to a duplicate S2 re-spawn of already-finished work. 4th/5th instance of the pipeline-resume duplicate-spawn family; WF-1b (terminal) and WF-1c (ready) closed the same shape for their lanes and are verbatim templates for this one.",
+        "files": [
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "recurrence_class": "SAME family as FIX-DEVTEAM-PIPELINE-RESUME-TERMINAL-LANE-BLIND (WF-1b) and FIX-DEVTEAM-RESUME-GATES-OMIT-READY-LANE (WF-1c) — inert-lane residency invisible to WF-1's task_status lookup. DISTINCT from FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN (that = review rows never drained to qa, a throughput gap; THIS = .head left pinned at a review-resident row, a duplicate-spawn gap). DISTINCT from FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE (that = temporal staleness/WF-3/WF-4; THIS = lane-visibility).",
+        "po_evidence": "VERIFIED 2026-08-14 by reading the live gate. docs/agents/dev-team/flow/main.md:301-304 — WF-1's task_status source array is exactly [in_progress[], active_sprints[].tasks[], done[], done_verified[], ready[]]. review[] and qa[] are absent, so a review-resident row resolves task_status=EMPTY, matches no carve-out (WF-1 BLOCKED / WF-1b terminal / WF-1c ready / WF-2 supervised-hold), and reaches S2 dispatcher-wrap. TWO live occurrences today, both worked around by hand by the router: commit 969acbcc7 (dev-rag-service, FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED) and commit 95e07eca5 (dev-mcp-server, FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH). Both commit messages explicitly name the missing WF-1d gate and flag it for the flow-doc owner. Correctness of the idle-reset disposition is already argued in-file by WF-1c: review[]/qa[] residency, like ready[], is a definitional guarantee that no agent currently owns the row (it is awaiting the Review-Lane QA-Drain / SECONDARY-Drain pickers), so .head serves no further resume purpose.",
+        "acceptance": [
+          "AC-1 WF-1's task_status source array (main.md:301-304) widened to ALSO scan review[] and qa[], APPENDED LAST after ready[] — same order-discipline rationale already documented in-file for the done/done_verified and ready widenings: an inert-lane copy must never win the `first` race against an in_progress/active_sprints copy during a transient STATUSFLIP-LANEMOVE dual-presence race.",
+          "AC-2 New WF-1d REVIEW-LANE check inserted between WF-1c READY-LANE and WF-2 SUPERVISED-HOLD, mirroring WF-1c verbatim: idle-reset .head, NO lane-move (the row is already correctly resident in review[]/qa[] where the QA-Drain pickers expect it), then JUMP to drain-signals BEFORE WF-2 can evaluate should_hold on it.",
+          "AC-3 WF-2's own $row source array widened to review[]/qa[] as documented defense-in-depth, flagged provably-unreachable once WF-1d lands, kept for reorder-safety — the identical treatment WF-1b and WF-1c each received.",
+          "AC-4 Ordinal/cross-reference sync: WF-2 retitled to BLOCKED-then-TERMINAL-LANE-then-READY-LANE-then-REVIEW-LANE-then-WF-2; WF-3's and WF-4's 'run FIFTH/SIXTH' ordinals corrected; the S2 fall-through summary line updated to name all FOUR carve-outs (it currently names three).",
+          "AC-5 size-justification header updated per this file's established per-change convention.",
+          "AC-6 NEGATIVE CONTROL (prose-assert at minimum): a row genuinely resident in in_progress[] still resolves IN_PROGRESS and reaches S2 dispatcher-wrap unchanged — WF-1d must not shadow the normal resume path.",
+          "AC-7 Regression verifier is a COMPANION developer row, not this one: scripts/ is outside agent-father's commit_zone.allowed (precedent TE-T02/TE-T12, and the still-PENDING WF-1c AC-4/AC-5 verifier bullet already in this file's Reusable Scripts list). Extend scripts/audits/devteam-pipeline-resume-terminal-lane-verify.sh with a positive control (.head pinned at a review[]-resident row -> WF-1d fires, S2 never reached) + negative control. Flag via RETURN; do not author here."
+        ]
+      },
+      {
+        "id": "FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "owner": "agent-father",
+        "zone": "docs/agents/developer/flow/",
+        "next_agent": "agent-father",
+        "created_at": "2026-08-14T07:44:07Z",
+        "created_by": "po/triage-20260814T0745 (router escalation, source-side fix for the dev-* specialist class)",
+        "updated_at": "2026-08-14T07:44:07Z",
+        "title": "SOURCE FIX for the dev-* half of the stale-.head family: docs/agents/developer/flow/microservice-main.md — the shared base flow all 9 dev-* zone specialists resolve to — has NO .head write on its SUCCESS/completion path. The .head idle-reset is wired ONLY into the error/STOP path (fail-loud-protocol STOP-RELEASE). So a dev-* specialist that finishes cleanly, self-lane-moves its row to review[]/next_agent=qa and RETURNs leaves .head pinned at itself, every time, by construction.",
+        "files": [
+          "docs/agents/developer/flow/microservice-main.md"
+        ],
+        "recurrence_class": "SOURCE-side counterpart to FIX-DEVTEAM-WF1D-REVIEW-QA-LANE-HEAD-PIN-BLIND (that = defensive self-heal at the dev-team gate, covers ALL agent types; THIS = stop producing the staleness in the first place, covers the 9 dev-* specialists). Both wanted — belt and braces — neither subsumes the other.",
+        "po_evidence": "VERIFIED 2026-08-14 by reading all three files. (1) docs/agents/developer/flow/microservice-main.md contains ZERO jq .head writes and ZERO orch-apply.sh invocations — grep-confirmed; its only two .head mentions are line 16 (a prose pointer to the STOP path) and line 72 (a comment). (2) The ROOT flow docs/agents/developer/flow/main.md:72 DOES carry the real write: '.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}'. So the root developer flow is fixed and the shared 9-specialist flow was never given the same treatment. (3) DECISIVE, and it refutes the natural INV-GATEWAY-1 objection: docs/protocols/fail-loud-protocol.md:170 states verbatim 'The .head idle-reset below IS executable by all agents (jq + atomic rename, no MCP needed)' and :171 'applies to ALL agents regardless of MCP binding'. A gateway-less dev-* specialist therefore CAN write .head — it simply is never told to on the success path. That makes this fix cheap and removes the only reason to think the per-flow-doc sync shape was structurally impossible for this class. Live occurrences: commits 969acbcc7 (dev-rag-service) and 95e07eca5 (dev-mcp-server), both clean SUCCESS completions, both left .head pinned, both hand-corrected by the router.",
+        "acceptance": [
+          "AC-1 microservice-main.md's SUCCESS/completion path (the step where the specialist self-lane-moves its row to review[]/next_agent=qa, immediately before the RETURN block) gains the .head idle-reset write, reusing the EXACT jq already proven in-repo at developer/flow/main.md:72 and fail-loud-protocol.md:174 — plain jq piped through scripts/orch-apply.sh, no MCP grant required.",
+          "AC-2 GUARD (mandatory, not optional): reset .head ONLY when .head.active_task_id equals the task id this run just completed. Never blind-null — a concurrent peer's head pin must survive. This guard is the one thing NOT already written in the two precedent sites, because both fire from a context that already owns .head.",
+          "AC-3 Cite fail-loud-protocol.md:170's universal-executability sentence inline at the new step, so a future reader does not re-derive whether a gateway-less dev-* is permitted to write .head. It is — and the absence of that citation is plausibly why this was never added.",
+          "AC-4 ADJACENT DRIFT, same file, in scope because the disposition is already precedented: line 11 Output ('Code + tests on task/NNN-* branch') and the RETURN block's 'run full QA pipeline on branch task/NNN-kebab' are dead branch prose contradicting CLAUDE.md § Defaults ('NO branches — all work stays on main'). Apply the SAME treatment developer/flow/main.md already received on 2026-08-05 under FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH: mark SUPERSEDED as a historical marker, do NOT silently delete.",
+          "AC-5 Blast-radius statement in the decision journal: this file is the shared base flow for all 9 dev-* zone agents, so this is a 1-file/9-consumer change. Confirm no dev-* agent overrides the success path in its own flow file before claiming full coverage.",
+          "AC-6 size-justification header updated per convention."
+        ]
+      },
+      {
+        "id": "FIX-DEVTEAM-HEAD-NEXTAGENT-RESYNC-ON-REASSIGN",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "owner": "agents-architect",
+        "zone": "docs/agents/dev-team/flow/",
+        "next_agent": "agents-architect",
+        "created_at": "2026-08-14T07:44:07Z",
+        "created_by": "po/triage-20260814T0745 (mints the follow-up the 2026-08-07 architect blueprint explicitly recommended to PO and which was never minted)",
+        "updated_at": "2026-08-14T07:44:07Z",
+        "title": "DESIGN: the in_progress-RESIDENT facet of the stale-.head family — a completing agent advances its row's OWN next_agent in place (no lane-move), so task_status is legitimately IN_PROGRESS and every lane-based carve-out (WF-1/1b/1c/1d) correctly declines, yet .head.next_agent still names the finished stage and S2 re-spawns it. No gate anywhere compares .head.next_agent against the row's own next_agent field. 3 occurrences / 3 agent types (router DRS lane-move, pm x2, architect).",
+        "files": [
+          "docs/agents/dev-team/flow/main.md",
+          "docs/agents/pm/flow/main.md",
+          "docs/architecture-briefs/"
+        ],
+        "recurrence_class": "DISTINCT from the lane-visibility rows (WF-1b/1c/1d): those fire because the row LEFT in_progress[]. This one fires because the row STAYED. Lane-widening can never catch it — the discriminator is field-vs-field coherence, not lane residency. Named as the recommended standalone PO follow-up inside FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE's own status_note ('different trigger class: instantaneous write-ordering vs that row's temporal-staleness ACs').",
+        "po_evidence": "3 occurrences, 3 agent types, all router-caught by hand-diffing .head.next_agent against the row's next_agent — never by any automated guard. (1) router's own DRS lane-move (memory feedback_router_lane_move_must_reset_head_same_write). (2) pm mid-sprint decomposition x2 (memory feedback_pm_midsprint_decomposition_leaves_head_stale_not_closeout) — occurrence 2 is the sharp one: pm's flow DID attempt a .head write, commit 95540b50d, but flipped status in_progress->idle while leaving active_task_id and next_agent at their stale values, i.e. a PARTIAL fix that does not match dev-team's WF-1c full-null convention, so the two flows have drifted independently. (3) architect completing FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING, commit 917c93759 — set the row's next_agent=agent-father plus architect_completed_at and a review note, touched .head not at all; architect's flow doc appears to carry no .head contract whatsoever, not even pm's partial one. That memory records the escalation threshold as CROSSED at 3 agent types and says a one-off router patch is no longer proportionate. Corroborating: the 2026-08-07 architect blueprint docs/architecture-briefs/2026-08-07-devteam-head-pin-stale-threshold-resume-bound.md already recommended this exact task id to PO as a standalone follow-up; it was never minted, which is why occurrences kept accruing.",
+        "acceptance": [
+          "AC-1 Produce docs/architecture-briefs/2026-08-14-devteam-head-nextagent-write-coherence.md. This row is DESIGN ONLY — implementation routes to agent-father afterward (docs/agents/** is agent-father's zone per po_routing_ruling_20260721), matching the precedent where the 2026-08-07 head-pin blueprint was authored by architect and applied verbatim by agent-father.",
+          "AC-2 RESOLVE THE CORE AMBIGUITY, which is why this is a design row and not a mechanical one: when .head.next_agent disagrees with the in_progress-resident row's own next_agent, WF-1b/1c/1d's idle-reset disposition is NOT obviously right — those lanes are inert, but here the work is genuinely live and the correct action may be to RESUME the row's next_agent rather than idle-reset. State which field is authoritative, the tie-break rule, and the failure mode of choosing wrong in each direction.",
+          "AC-3 Interaction analysis with WF-3 RESUME-ATTEMPT-BOUND and WF-4 STALE-AGE, both landed 2026-08-14 (same day, same file). WF-4 already corroborates against `git log --since=<claimed_at> --grep=<task_id>` and deliberately does NOT reset when real progress landed — its own in-file comment names this write-coherence gap as explicitly out of its scope and defers it here. The brief must not re-derive or contradict that boundary.",
+          "AC-4 Rule on pm's partial .head write (commit 95540b50d, status-flip only): complete it in docs/agents/pm/flow/main.md, or let the new gate subsume it? If the former, name the companion agent-father row explicitly so it is not lost the way this row was.",
+          "AC-5 Rule on memory-candidate (a), the per-flow-doc handoff sync, for the gateway-HAVING agents (pm, architect, router). NOTE for the designer: (a) is NOT structurally blocked by INV-GATEWAY-1 — fail-loud-protocol.md:170 confirms the .head jq write is executable by every agent regardless of MCP binding — and the dev-* class half of (a) is already covered by companion row FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC. Decide whether (a) is still warranted for pm/architect given WF-1d + that row already provide two layers.",
+          "AC-6 Apply the fleet-gate lesson (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist): if the brief proposes any fleet-wide flow-doc contract, it must be validated on more than one file and use an opt-IN allowlist, never an opt-out."
+        ]
       }
     ],
     "closed_sprints": [

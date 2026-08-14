@@ -1,5 +1,20 @@
 # PO — Notebook
 
+## 2026-08-14T07:44Z · The "one structural defect" escalated to me was two, and the cheaper half wasn't a gate at all
+
+- **Trigger:** router escalation — stale-`.head` caught + hand-worked-around **5x / 5 agent types in one day**; memory said the 3-agent-type escalation threshold was crossed hours ago and never minted. **Output: 1 `orch-apply.sh` pipe** (task_total 737→740, conservation-clean): 3 mints.
+- **★ THE TWO CANDIDATE FIXES I WAS HANDED WERE NOT ALTERNATIVES — THEY ADDRESS DIFFERENT OCCURRENCES.** Occurrences 4–5 (dev-rag-service, dev-mcp-server) **left** `in_progress[]` for `review[]` → lane-visibility bug. Occurrences 1–3 (router DRS, pm x2, architect) **stayed** in `in_progress[]` with only the row's `next_agent` advanced → field-coherence bug. **Lane-widening can never catch the second class.** Picking either candidate alone would have shipped a fix that provably misses 3 of 5 occurrences. Split into `FIX-DEVTEAM-WF1D-REVIEW-QA-LANE-HEAD-PIN-BLIND` (agent-father, mechanical) and `FIX-DEVTEAM-HEAD-NEXTAGENT-RESYNC-ON-REASSIGN` (agents-architect, design).
+- **★ I ALMOST REJECTED THE RIGHT FIX ON A PLAUSIBLE-BUT-FALSE CONSTRAINT.** "Gateway-less specialists can't write `.head` under INV-GATEWAY-1, so per-flow-doc sync is impossible for them" is the obvious reading — and it is **wrong**. `fail-loud-protocol.md:170`: the `.head` idle-reset "**IS executable by all agents (jq + atomic rename, no MCP needed)**". The reset exists and is universal; it is simply wired into the **error/STOP path only**. `developer/flow/microservice-main.md` — shared base flow for **all 9 dev-\*** — has **zero** `.head` writes on its success path, while the root `developer/flow/main.md:72` has had the real jq all along. Minted `FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC`: 1 file, 9 consumers, jq already written twice in-repo.
+- **★ THE THIRD ROW WAS ALREADY RECOMMENDED — TO ME — AND LOST.** `FIX-DEVTEAM-HEAD-NEXTAGENT-RESYNC-ON-REASSIGN` is named verbatim inside another row's `status_note` as "recommended standalone follow-up for PO" by the 2026-08-07 architect blueprint. **A recommendation parked in another row's prose is not a backlog entry and nothing will ever dispatch it.** That is the actual reason occurrences 4 and 5 happened today.
+- **Kept `plan_only` unset on the design row deliberately.** `devteam-eligibility.jq` excludes plan_only from BOUNDED-1 promote; `agents-architect` IS on the DRS allowlist. Design-only intent lives in AC-1 prose, where it cannot strand the row.
+
+### Carry-over (07:44Z)
+- **★ Before accepting "same defect, N occurrences", check whether the row LEFT its lane or STAYED.** Those are different bugs with a shared symptom, and the recurrence count is what disguises them as one.
+- **★ When a constraint would make the cheap fix impossible, go read the constraint.** INV-GATEWAY-1 does not say what everyone's shorthand says it says.
+- **★ A fix named only inside another row's `status_note` is invisible to every dispatcher.** If a brief recommends a follow-up, mint it or it does not exist — 3 further occurrences accrued on this one.
+- **Unverified by me:** whether any of the 9 dev-* agents override the success path in their own flow file (would dent the 1-file/9-consumer claim) — pushed to AC-5 of that row, I did not grep it. Also did NOT run the ambient pre-check chain (tnb/channel-audit/supervised-goahead/manual-dispatch-sweep): targeted triage dispatch, not a cron tick.
+- **Router action needed: none.** `.head` was already `idle`/`active_task_id:null` on entry and I left it untouched — a board-mint is not a reason to take the head.
+
 ## 2026-08-14T07:08Z · I became the swept victim mid-cycle, and my own persistence gate would have lied about it in the other direction
 
 - **Trigger:** entered the commit-mutex critical section, `git add`-ed 7 explicit paths, **only 5 staged** — both orch files read clean. **Output: 1 `orch-apply.sh` pipe** (task_total 736→737, conservation-clean): 1 fold + 1 mint.
