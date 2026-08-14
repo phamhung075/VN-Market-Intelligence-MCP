@@ -36,3 +36,15 @@
 - Whether `FIX-CI-TASKCLAIM-...`'s `next_agent:agent-father` conflicts with the same S137 agent-father instance — checked file sets: post-cycle.md + task-claim-owner-session-baseline.json vs system-auditor/flow/main.md + tools/package/system-auditor.md + notebook-compose.sh + notebooks/system-auditor.md — fully disjoint, safe parallel per Conflict Check "different files, disjoint scopes → parallel."
 **why-decision:** Followed execute-tier.md's Zone Routing note literally: for FIX-type BATCH entries the PM-decomposition step is skipped, so the row's own already-resolved `next_agent` field (set by PO/architect) is used directly rather than re-running zone-detect inference against it.
 **why-change:** No PM decomposition ran for either row (both type=FIX, explicitly skip-to-Step-3 per the routing table) — Tier 1 treated as the BATCH entries themselves, no dependency between the two (disjoint files, independent fixes).
+
+---
+
+### STEP dev-team-S139 · dev-team · 2026-08-14T20:32Z
+**task-id:** FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE (piece 1 completion, piece 2 deferral)
+**what-done:** RAW-verified developer agent `a7c10754c883dc986`'s piece-1 RETURN against `git log` (commit `b48e726c5 fix(scripts): reachable §2b plane-crosscheck gate in auditor-notebook-commit.sh` present on `main`) and the live board row (`status:REVIEW`, `next_agent:qa`, `status_note` confirms PIECE-1-LANDED + explicit QA-first-then-route-piece-2 instruction). Did NOT dispatch `agent-father` for piece 2 this tick.
+**what-considered:**
+- S138's own note said piece 2 should land "once the S137 agent-father instance returns (file free) or piece 1 confirmed landed" — both conditions are now true, which read like a green light to dispatch piece 2 immediately.
+- Checked the row's live field instead of acting on my own prior note: `next_agent` now reads `qa` (developer's own board-write on completion), and `docs/agents/dev-team/flow/main.md:838-905` (Review-Lane QA-Drain, PRIMARY lane) auto-claims exactly this shape (`review[]`, `status==REVIEW`, `effective_next_agent==qa`) on a subsequent tick and dispatches `qa` in `verify-committed` mode — no dev-team hand-dispatch needed or appropriate here.
+- Dispatching `agent-father` for piece 2 directly would jump ahead of the developer's own explicit status_note instruction ("QA: verify §2b gate fires... then route piece 2 to agent-father before closing the parent brief") and duplicate a lane the system already runs automatically.
+**why-decision:** Row's own live `next_agent` field is canonical (established precedent, S137/S25). A completed-piece RETURN's own forward-looking note is a snapshot at spawn time, not an override of the board state the row itself has since moved to — same class of drift the S137 entry already flagged for the opposite direction.
+**why-change:** Reversed my own S138-carried-forward intent to hand-dispatch piece 2 this tick; deferred to the automated Review-Lane QA-Drain lane instead. No board write made (row already correctly in `review[]`/`qa`-owned by developer's own commit).
