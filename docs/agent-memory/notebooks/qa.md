@@ -1,5 +1,17 @@
 # QA — Notebook
 
+## cycle-737 · 2026-08-14T14:39:45Z · DEFLAKE-VNSTOCK-3STATEMENT (dev-mcp-server, commit `8931e47c7`) — Direct-Commit Verify, APPROVED, DONE_VERIFIED
+
+dev-team Review-Lane QA-Drain spawn (`mode=verify-committed`), `qa[]` row, `commit_sha: "8931e47c7"` present. Confirmed real, on `main` ancestry; `git show --stat` matches all 3 claimed files (`schema.ts`, `vnstock-3statement.test.ts`, `1466-sync-db-corruption-bail.test.ts`), diff content matches every prose-claimed defect exactly (busy_timeout PRAGMA reordered to first on a fresh connection; on-disk `Date.now()`-keyed DB path replaced with true `:memory:`; the 1466 test's mock.module "restore" fixed to spread the captured module into a plain object instead of re-registering its own stub).
+
+Independently re-reproduced every AC-4 claim, never trusted commit prose: 20x solo per-file-isolation `bun test vnstock-3statement.test.ts` = 0/20 fail; 27x interleaved (both orderings) with obs-3's co-failing sibling `167-prediction-market-job.test.ts` = 0/27 fail; 18x the 3-file mock.module repro = 0/18 fail — exact match to claimed "0/18 (was 8/18)". Broader-than-claimed 84-file vnstock/foreign-flow/schema zone sweep (claim was 25 files) = 892 pass/3 skip/0 fail — zero regression from the `schema.ts` connection-bootstrap change. `bun tsc --noEmit` 0 errors; `mock-guard.sh --files schema.ts` PASS; DDD/secret greps clean. AC-2's "no retries added" held — no `test.retry`/rerun logic found. Confirmed the one later commit touching `schema.ts` (`6ca2a0c65`) explicitly left the busy_timeout ordering untouched per its own message, re-grep-confirmed live.
+
+Attempted an unscoped full `bun test` for AC-4's literal "full suite stays green" line but killed it: a concurrent peer session's own full-suite run drove both processes into CPU oversubscription, producing "timed out after 5000ms" false fails (environmental, not a regression — ironic given this is the exact flake class this row fixes). Per CANONICAL `docs/policies/dev-standards.md:1611`, full-suite literal 0-fail isn't the actionable gate anyway (standing `FIX-MCP-SUITE-HEALTH-BASELINE` red) — substituted the 84-file zone sweep as the net-new-failure check instead.
+
+DJ: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-21.md` STEP qa-S139.
+
+VERDICT: `DONE_VERIFIED`, zero blocking ISSUE. `[QA] Review Record` appended to `status_note`; `verification.raw_probe` attached same write (row not grandfathered). Moved `task_board.qa[]`→`done_verified[]` via `orch-apply.sh` (Stage0+1 PASS, conservation clean). Re-read the live file fresh right before write (qa lane had shrunk 7→4 from concurrent peer QA-drain sub-sessions since first read) to avoid a CAS-stale candidate; re-read after write to confirm the lane-move landed. Task-lock held by dispatcher — no `task_release` call made here.
+
 ## cycle-736 · 2026-08-14T14:35:00Z · FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH (developer, commit `3a2b9228d`) — Direct-Commit Verify, DONE_VERIFIED
 
 dev-team Review-Lane QA-Drain spawn (`mode=verify-committed`), `qa[]` row predating the drain (no `.commit`/`.files[]`/`.owner`-field wiring, `entered_review_at: 2026-07-12T07:36:27Z`, over a month old). Derived commit via `git log` on `scripts/agents-flow/notebook-auto-prune.sh` + date cross-check: `3a2b9228d25d2f95ba8c9a63fc1f45273f1b4ba5` (2026-07-12T09:37:51+02:00), confirmed real + on `main` ancestry, `git show --stat` matches every file the review_note claims (notebook-auto-prune.sh, its test file, main.md dedup, orch-state.json, decision journal, follow-up signal).
