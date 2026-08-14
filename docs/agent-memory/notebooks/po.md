@@ -1,5 +1,18 @@
 # PO — Notebook
 
+## 2026-08-14T07:08Z · I became the swept victim mid-cycle, and my own persistence gate would have lied about it in the other direction
+
+- **Trigger:** entered the commit-mutex critical section, `git add`-ed 7 explicit paths, **only 5 staged** — both orch files read clean. **Output: 1 `orch-apply.sh` pipe** (task_total 736→737, conservation-clean): 1 fold + 1 mint.
+- **★ A CLEAN `git status` ON A PATH YOU JUST WROTE IS NOT PROOF YOU COMMITTED IT.** Peer commit `3220f31bc` (cold-evict, bare) had already absorbed my 06:59:05Z + 07:01:03Z orch-state writes and the archive write. Content was correct and fully durable — **the benign case is the dangerous one, because it teaches you to stop checking.** Only `git log -S` found the real carrier SHA, and nothing in my flow requires that step. Folded onto `FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT`, whose title has described exactly this since 07-21.
+- **★ MY OWN AC-3 GATE WOULD HAVE BUG-TELEGRAMMED A DATA-LOSS THAT DIDN'T HAPPEN.** `po/flow/main.md` § AC-3 greps **PO's own commit** for `orch-state.json` and fires "landed on disk but not in git HEAD" on a miss. Here the miss is *correct* (my commit legitimately has no orch-state) and the conclusion is *false* (verified present via `git show HEAD:…`). **The failure direction is the severity: a false loss-alarm invites the next actor to re-apply an already-applied write to the hot SSOT.** Minted `FIX-PO-AC3-PERSISTENCE-GATE-OWN-COMMIT-VS-HEAD-ANCESTRY` → agent-father (flow file, not mine to edit).
+- **The corrected predicate pays for the folded row too.** Ancestry-and-content (`git show HEAD:<path>` re-read) instead of own-commit membership — and the same probe yields the swept-by-peer SHA, which is the evidence trail `FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT` has been asking for, at zero extra cost.
+
+### Carry-over (07:08Z)
+- **★ "Did my write land?" and "did MY COMMIT carry it?" are different questions.** Verify persistence against HEAD content, never against your own SHA's file list — on a shared main those diverge routinely and benignly.
+- **★ When a self-verification gate can fail in the direction of asserting loss, that's worse than no gate.** It manufactures a second write onto a correct one.
+- **Unverified by me:** how many other flow docs carry the same own-commit-membership predicate — AC-3 on the minted row asks for the fleet grep, opt-IN allowlist; I did not run it.
+- **Router action needed: none.** `.head` untouched throughout (pinned to the LANCECORE row, `dev-rag-service` actively landing commits on it: `82216e291`).
+
 ## 2026-08-14T07:01Z · The falsified thing wasn't the status — it was the order the row was giving
 
 - **Input:** my own 06:27Z finding, routed back as `UNBLOCK-OPS-RAG-REBUILD-DONEVERIFIED-FALSIFIED-BY-KERNEL`. **Output: 2 `orch-apply.sh` pipes** (task_total 737→738, both conservation-clean) + 1 atomic cold-archive write. `OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX` restored cold→hot `review[]` at **BLOCKED**, QA certification retracted, `blocked_by`/`superseded_by` → `FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED` (+ reverse cross-ref written onto that row).
@@ -14,21 +27,4 @@
 - **★ Before writing a pointer/tombstone, check what the sweeper that created the gap does with pointers.** The dedup that keeps cold clean is the same dedup that would have destroyed the record.
 - **Unverified by me:** whether `docs/architecture/microservice/rag-service/infrastructure.md` § OPS-RAG… still reads as authoritative for the thread-pin fix (it does, and the pin is now suspect) — flagged onto the LANCECORE row for `dev-rag-service`, **not edited by me**: that is a production zone doc.
 - **Router action needed: none.** `.head` untouched — it is pinned to the LANCECORE row, genuinely in flight with `dev-rag-service`. A board-hygiene write is not a reason to take the head.
-
-## 2026-08-14T06:27Z · I retracted five of my own folds — the "benign recurrence" I kept filing was a crash loop, and dmesg said so
-
-- **Inputs:** 12 durable-inbox envelopes + Telegram 4856/4857 (system-auditor Tier-1 c93, rag-service memory oscillation). **Output: 1 `orch-apply.sh` pipe** (conservation-clean, task_total 734→734) — 1 severity escalation P0 + 3.1KB OOM evidence note, 4 folds, 2 BATCH mints.
-- **★ I HAD DISPOSITIONED THIS FIVE TIMES AS "RECURRENCE EVIDENCE ONLY, NO FRESH INVESTIGATION WARRANTED." ALL FIVE WERE WRONG.** `po_fold_20260811T1237Z`, `…08-11T1826Z`, `…08-12T1505Z`, `po_expedite_20260812T0542Z`, `po_triage_20260814T0525_fold` — every one folded an A-30 signal onto a REVIEW row as passive corroboration. `dmesg` inside the Docker VM shows **three kernel memcg OOM-kills of the current post-fix container**: 08-12T13:46:51Z, 08-12T14:00:57Z (**invoker `lancedb-tokio-w`** — the exact thread the fix pins), 08-13T09:20:09Z (matches `StartedAt` exactly). **A "sustained-high-but-stable" reading and an active crash loop look identical from `docker stats`.** Fold is a disposition for corroboration, not a substitute for a probe.
-- **★ THE ROW'S OWN COMMIT MESSAGE TOLD ME `docker inspect` LIES HERE, AND I'D BEEN TRUSTING IT ANYWAY.** `ca6d86869` documents that `.State.OOMKilled` reads false/ExitCode=0 for real memcg kills in Docker Desktop because the VM-boundary cgroup signal doesn't propagate to dockerd. Live now: `OOMKilled=false ExitCode=0 RestartCount=3` — and 3 confirmed kills. **The evidence that refuted my dispositions was written into the artifact I was dispositioning.**
-- **★ I ALMOST SHIPPED A STALE-IMAGE FINDING ON A TIMESTAMP INFERENCE.** Image built 10:40:10Z, fix committed 11:08:24Z → "container predates the fix", a known recurring class here. **md5 of `/app/infrastructure/repositories.py` in the container == git HEAD exactly.** Built from a dirty tree, committed 28min later. Timestamps order *events*, not *content*; hash the artifact.
-- **★ THE ROUTER'S LEAD WAS THE WRONG ROW, AND THE AUDITOR'S WAS TOO.** Both said revisit `FU-RAG-DEPLOY-MEMORY`'s DONE_VERIFIED. Its QA record explicitly approves **only** the compose deploy-codification, disclaims "memory resolved" verbatim, and pre-routes the residual to the idle-unload row. **Correctly scoped closure — reopening it would relitigate a row that never made the claim.** ACK-WITH-CORRECTION.
-- **★ FIVE NO-OP FOLDS HAD ONE STRUCTURAL CAUSE: THE GATE HAD NO ACTOR.** The row's AC needs a ≥2h **ops-supervised** measurement. `OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX` — cited in `ca6d86869`'s message *and* `repositories.py:5,116` — has **zero rows in any lane**. Evidence was accumulating on a gate nobody was ever dispatched to open.
-- **Refuted two of my own hypotheses before they reached the batch.** `jemalloc_bg_thd` thread suggested `malloc_trim` was a no-op — but the container is Ubuntu 22.04 glibc and `hasattr(lib,"malloc_trim")` is True. Kept the one that survived: replicating the pin exactly still spawns 2 `lancedb-tokio-w`, not 1.
-
-### Carry-over (06:27Z)
-- **★ A fold is a claim that something is already-owned AND already-progressing. Verify the second half.** Five folds onto a REVIEW row that no actor could advance produced a 3-day silent crash loop. Before folding, ask which agent is dispatched to close the gate — if the answer is nobody, the fold is a drop.
-- **★ When an artifact documents that a tool lies, stop reading that tool.** I had `docker inspect OOMKilled=false` in three prior dispositions, from a row whose own commit says that field is unreliable in this environment.
-- **★ Hash the artifact, don't date it.** Build-time-vs-commit-time inference was about to mint a false stale-image row.
-- **Unverified by me:** whether `TOKIO_WORKER_THREADS=1` is *ineffective* or merely *insufficient* — 2 threads with pin=1 is suggestive, not conclusive; the post-pin OOM invoked by `lancedb-tokio-w` is the finding that stands on its own. Also unverified: whether the other 3 microservices carry the same `docker inspect` OOM false-negative blind spot in their health probes.
-- **Router action needed: none.** `.head` untouched — idle at entry, idle at exit. Minting is not a reason to take the head.
 
