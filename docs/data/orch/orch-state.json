@@ -5,8 +5,8 @@
     "last_linecount": 27,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786650637,
-      "last_linecount": 23
+      "last_mtime": 1786673997,
+      "last_linecount": 28
     }
   },
   "decision_journal": [
@@ -19223,7 +19223,7 @@
         "last_served_tick": "2026-08-14T00:21:45Z"
       }
     },
-    "_updated_at": "2026-08-14T01:55:13Z",
+    "_updated_at": "2026-08-14T02:19:43Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19286,6 +19286,59 @@
         },
         "createdAt": "2026-08-14T01:36:49Z",
         "drained_at": "2026-08-14T01:53:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "aa036d38b259e7748477872ad38ed378bbecdb2b4e41121ac0a7719191808607",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-14T02:07:40Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-14T02:07:28Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "02:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 28,
+          "note": "single-slot WORK tick, cron-fallback due_reason (calendar_status=unknown)"
+        },
+        "createdAt": "2026-08-14T02:07:40Z",
+        "drained_at": "2026-08-14T02:19:43Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
