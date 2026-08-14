@@ -92,12 +92,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "UC-CCA-P3",
-    "next_agent": "developer",
-    "next_action": "Ready-Lane Consumer claim of UC-CCA-P3 — spawn developer DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
-    "updated_at": "2026-08-14T21:54:23Z",
-    "updated_by": "dev-team (ready-lane consumer)"
+    "status": "idle",
+    "updated_at": "2026-08-14T22:33:46Z",
+    "updated_by": "dev-team (WF-2b same-lane next_agent mismatch, manual correction)",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -701,6 +700,17 @@
         "status": "NEW",
         "payload_ref": null,
         "board_row": "FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE"
+      },
+      {
+        "id": "cj-20260814T223258Z",
+        "ts": "2026-08-14T22:32:58Z",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-14.json"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
