@@ -19178,7 +19178,7 @@
         "last_served_tick": "2026-08-14T00:21:45Z"
       }
     },
-    "_updated_at": "2026-08-14T03:20:50Z",
+    "_updated_at": "2026-08-14T03:58:11Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19515,6 +19515,162 @@
         "payload": "A-33 hook-liveness: context-bloat-backstop.sh — settings-file-missing:/Users/admin/Documents/Hung/__works__/__PROJET/__l",
         "createdAt": "2026-08-14T02:47:29Z",
         "drained_at": "2026-08-14T03:20:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a1a664bcda82c79a24818ccb81f86df966b1b307c21a37acb0dadf8dca2a568a",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-9a9ad9bf",
+          "head_sha": "9a9ad9bf0a6610c6330e67533b97f2306c249f68",
+          "run_id": 31766602285,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31766602285",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 94663703173
+            }
+          ],
+          "fingerprint": "d80f154ebdb8b45d13acd74f670dbc5b06f2e23851e2ee24b0cd09aadcc9c998",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 9a9ad9bf0a6610c6330e67533b97f2306c249f68: bun test",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-14T03:25:19Z",
+        "drained_at": "2026-08-14T03:58:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "053d2c4ce18638ff7b97c7b1cf87989f958a12b7a6d4ea4fb3adb059bbb13e5b",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c6 · 2026-08-14T02:47Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-14T03:20:29Z",
+        "drained_at": "2026-08-14T03:58:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "bad975b8f0857f6d164831f4b4a7121d7e3331f76209310e543549b8a9207382",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md docs/data/orch/orch-state.json. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=14 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-14T03:50:24Z",
+        "drained_at": "2026-08-14T03:58:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2c287f3ed2f9fffe597527bb69f4b111d9cd9a30048d9e90d6120dc57840c418",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "system",
+        "type": "cowork-tick-telemetry",
+        "priority": "INFO",
+        "payload": {
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-14T03:21:42Z",
+          "nominal_tick": "03:15"
+        },
+        "createdAt": "2026-08-14T03:21:47Z",
+        "drained_at": "2026-08-14T03:58:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "02f4823373f6f2aca542d04068e13159778432702fdcb04748957bf5d8fe635a",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "system",
+        "type": "cowork-tick-telemetry",
+        "priority": "INFO",
+        "payload": {
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-14T03:36:20Z",
+          "nominal_tick": "03:30"
+        },
+        "createdAt": "2026-08-14T03:36:26Z",
+        "drained_at": "2026-08-14T03:58:11Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "99a88691968623f0a2bf8b9f4c4ca34c0bfbfbc6f390605f0e499cb3bdbe7f06",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "system",
+        "type": "cowork-tick-telemetry",
+        "priority": "INFO",
+        "payload": {
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-14T03:51:21Z",
+          "nominal_tick": "03:45"
+        },
+        "createdAt": "2026-08-14T03:51:27Z",
+        "drained_at": "2026-08-14T03:58:11Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
