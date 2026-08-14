@@ -94,11 +94,11 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING",
-    "next_agent": "architect",
-    "next_action": "Design-Router Sweep claim of FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING — router-corrected from stale dispatch_lane=ba to current next_agent=architect (BA spec already complete, see docs/handoffs/FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING-BA-spec.md); spawn architect DIRECTLY.",
-    "updated_at": "2026-08-14T02:22:21Z",
-    "updated_by": "dev-team (design-router sweep)",
-    "_updated_at": "2026-08-14T02:22:00Z"
+    "next_agent": "agent-father",
+    "next_action": "Architect ratified FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING (FR-0..FR-7 CONFIRMED SOUND, corrected live line map for chef-dish.md/chef.md drift, blocker Q1 resolved within remit). Spawn agent-father DIRECTLY to apply the 7 flow-doc edits per the corrected line map in docs/handoffs/FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING-BA-spec.md (Architect Brownfield Findings section) — zero application code, agent-father sole ownership, no PM decomposition needed.",
+    "updated_at": "2026-08-14T02:36:25Z",
+    "updated_by": "router (architect handoff — head was stale, architect flow did not reset .head on completion)",
+    "_updated_at": "2026-08-14T02:32:00Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
