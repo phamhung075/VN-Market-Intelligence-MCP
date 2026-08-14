@@ -16976,7 +16976,7 @@
         "supervised_at": "2026-08-07T06:00:00Z",
         "supervised_by": "pm (plan_only decomposition)",
         "supervised_note": "Child task of plan_only parent; no code ships without parent re-adjudication by PO",
-        "updated_at": "2026-08-08T03:56:15Z",
+        "updated_at": "2026-08-14T17:28:08Z",
         "promoted_at": "2026-08-08T01:54:35Z",
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='developer' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
@@ -16987,7 +16987,10 @@
         "spec_doc": "docs/handoffs/TASK-COWORK-SIGNAL-BCTC-REKEY-spec.md",
         "developer_review_note": "FR-2 (filename rekey) + FR-7 (routine-mode explicit emit line) + sequencing fix (WINDOW_KEY pinned once at cycle.md Step 0c, reused unchanged at stage-analyze.md release/routine emit lines and stage-log-notify.md §5d-1 mutex key -- no second computation) specified against 4 live-verified files: cycle.md (Step 0c derivation line), stage-analyze.md (line-114 {YYYYMMDD}->{WINDOW_KEY} substitution for release + new FR-7 \"Emit signal file\" line at end of Step 4c for routine, confirmed no routine-mode emit instruction existed before this spec), stage-consolidate.md (Output section stale cross-reference to stage-log-notify.md Stage 5 corrected -- that file has no bctc_signal write instruction; real emit lives in stage-analyze.md R4/Step-4c), stage-log-notify.md (§5d-1 cycle_tick_ISO token renamed to WINDOW_KEY, guard claim/skip logic unchanged). derive_window_key() cited verbatim from task 1s already-delivered spec (docs/handoffs/TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY-spec.md) -- signature/format/NFR-3 single-derivation contract, not redefined. Worked example bctc_signal_HPG_20260807T2100Z_routine.json cited from the brief, matches task 1 spec Test Case 2 independently. Test strategy specified: unit (deferred to task 1 spec, not re-specified), integration AC-1 (two same-day slots -> two distinct paths), regression NFR-4 (drain-signals.test.js fingerprint-neutrality unmodified -- confirmed NO-OP at source: sha256(from+type+payload+createdAt), basename never in hash). AC-1/AC-2 mapping cited from brief SS9. Dangling ba_handoff pointer (docs/handoffs/TASK-COWORK-SIGNAL-BCTC-REKEY.md, confirmed absent) noted per same precedent as task 1. Scope boundaries respected: zero edits to any of the 4 named flow files, zero touch to unified-agent/ or tran-ngoc-bau/ flow dirs (tasks 3/4), zero attempt at derive_window_key() re-derivation, no further agent spawned.",
         "moved_to_review_at": "2026-08-08T03:56:10Z",
-        "moved_by": "developer"
+        "moved_by": "developer",
+        "secondary_claimed_at": "2026-08-14T17:28:07Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po"
       },
       {
         "id": "TASK-COWORK-SIGNAL-CHEF-INTRADAY",
