@@ -92,12 +92,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING moved in_progress->review by agent-father (all 7 FR flow-doc edits applied, commit c11504775). Awaiting next live chef dish for verification_gate RAW-verify (po/tnb-audit). No other active head directive.",
-    "updated_at": "2026-08-14T04:44:57Z",
-    "updated_by": "agent-father"
+    "status": "in_progress",
+    "active_task_id": "FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 1 row(s), highest-ranked FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-14T04:53:21Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -16212,39 +16212,6 @@
         "status_note": "[po/triage-2026-08-12T03:03:00Z] FOLD + ESCALATION OF EVIDENCE: the gap is now monotonic across three independent probes and has crossed its own threshold, so the previous 'schedule-blind false CRITICAL' disposition no longer covers it. Successive A-29 fire-gap observations for bctcReparseJob: 2026-08-11T18:22:49Z LATE 28.4h (threshold 36h) -> 2026-08-11T22:20:39Z late 32.3h -> 2026-08-12T02:21:22Z MISSED 36.4h (threshold 36.0h, CRITICAL, telegram 4715, signal_queue row sys-20260812T022122-1cb1). The measured gap advances by exactly the wall-clock elapsed between probes, which means NO fire occurred in any of those windows — that is a property of the data, not of the detector's schedule model, and it is what distinguishes this from the FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL family that the 08-11 ticks folded it into. Two candidate root causes, both already tracked, and they are not mutually exclusive: (a) THIS row — double-wrapped recordJobRun plus ungated restart catch-up corrupt the very last-run timestamp A-29 reads, so the job may be firing while its evidence is unwritable; (b) FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP — the A-29 check is unexecutable as specified against its named data source. DISCRIMINATOR the implementer should run FIRST, because it decides which row is actually broken: read the bctcReparseJob execution evidence from the runtime plane (job-run rows written by the container), not from the host-side cron-status artifact. If real fires exist with unwritten/overwritten run records, it is (a) and the BCTC pipeline is fine; if there are genuinely no fires in 36h, this is a live BCTC pipeline stall and needs an ops recon companion, since the downstream BCTC reparse backlog is user-visible. PO did not resolve this here: sqlite3 is absent from the mcp-server container image (`sh: 1: sqlite3: not found`, rc=127), so the host-side probe PO attempted is not a valid instrument — do not repeat it, and do not read its absence as evidence either way."
       },
       {
-        "id": "FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE",
-        "type": "FIX",
-        "title": "get_vps_proxy_health prints \"VPS may be down or unreachable\" for the bctc route when the real cause is an EMPTY work queue — proxy is provably up (prices/news/sbv pushing on the same proxy)",
-        "status": "REVIEW",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "qa",
-        "files": [
-          "apps/mcp-server/src"
-        ],
-        "created_at": "2026-07-29T19:30:16Z",
-        "created_by": "po/triage-20260729T1928",
-        "origin_signal_id": "sys-20260729T183440-1d23",
-        "baseline_pass": true,
-        "rebuild_required": true,
-        "root_cause": "The staleness verdict is derived from last-push AGE alone and then narrated with a fixed causal claim (VPS down/unreachable). bctc is a DEMAND-DRIVEN route: it pushes only when bctc_vps_queue holds actionable rows. RAW live probe 2026-07-29T19:2xZ through the mcp-server runtime: bctc_vps_queue statuses = deferred_infra 328, done 85, enrich_failed 128, url_not_found 39 — ZERO pending/queued. Meanwhile the SAME proxy shows prices ok (373 pushes/24h), news ok (148/24h, last 19:15:19), sbv ok (38/24h, last 18:57:33). The proxy is emphatically up.",
-        "fix_spec": "Separate OBSERVATION from INFERENCE for demand-driven routes. Either (a) suppress/downgrade the STALE verdict for a route whose own work queue has no actionable rows and label it IDLE-NO-WORK, or (b) keep STALE but replace the hardcoded VPS may be down or unreachable narration with a cause discriminated by whether sibling routes on the same proxy are pushing. Generic — no route-name or date literals.",
-        "ac": "AC: with bctc_vps_queue holding zero actionable rows AND >=1 sibling route pushing within its own SLA, get_vps_proxy_health MUST NOT assert the VPS is down/unreachable. Verify against live output, not a fixture.",
-        "dedup_checked": "Distinct from FIX-VPS-NEWS-STALE-FALSEPOS (zone apps/news-fetch/, news route, threshold-vs-cadence miscalibration where the feed IS pushing) and from FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN (off-hours grace double-apply, opposite direction). Here the STALE flag is CORRECT and only the attributed cause is wrong.",
-        "user_impact": "MED — a permanent recurring false incident: the queue stays drained until ALPHA-S6-OPTIONB-DECISION-GATE trips, so this WARN re-fires indefinitely and burns a system-auditor + PO triage slot each time.",
-        "updated_at": "2026-07-30T15:58:51Z",
-        "promoted_at": "2026-07-30T15:16:22Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-07-30T15:16:30Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "raw_verified_by": "dev-team",
-        "raw_verified_at": "2026-07-30T15:58:51Z",
-        "raw_verify_note": "Independently RAW-verified, not self-report: commits 6113890bb+0f8e8ee07 real/on-HEAD; diff matches claim exactly (DEMAND_QUEUE_SQL+getDemandQueueDepth in vpsPushLogStore.ts, formatHealth() idle-no-work branch in vpsProxyTools.ts, isStale() untouched); new test 7/7, sibling suite 22/22 (1113+VPT-1), tsc clean, tool/cron counts unchanged 184/88; live docker-exec probe against real market.db independently reproduces the claimed root cause exactly (bctc_vps_queue 328/128/85/39, 0 pending; news/sbv pushing within 30min); live undeployed get_vps_proxy_health tool call still reproduces the pre-fix bug verbatim, confirming REBUILD_REQUIRED=true is genuine and outstanding."
-      },
-      {
         "id": "FIX-WF2-SUPERVISED-HOLD-NO-PO-SIDE-GOAHEAD-PRODUCER",
         "type": "FIX",
         "size": "S",
@@ -19217,6 +19184,39 @@
         "secondary_claimed_at": "2026-08-13T11:59:22Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "ops"
+      },
+      {
+        "id": "FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE",
+        "type": "FIX",
+        "title": "get_vps_proxy_health prints \"VPS may be down or unreachable\" for the bctc route when the real cause is an EMPTY work queue — proxy is provably up (prices/news/sbv pushing on the same proxy)",
+        "status": "QA",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "qa",
+        "files": [
+          "apps/mcp-server/src"
+        ],
+        "created_at": "2026-07-29T19:30:16Z",
+        "created_by": "po/triage-20260729T1928",
+        "origin_signal_id": "sys-20260729T183440-1d23",
+        "baseline_pass": true,
+        "rebuild_required": true,
+        "root_cause": "The staleness verdict is derived from last-push AGE alone and then narrated with a fixed causal claim (VPS down/unreachable). bctc is a DEMAND-DRIVEN route: it pushes only when bctc_vps_queue holds actionable rows. RAW live probe 2026-07-29T19:2xZ through the mcp-server runtime: bctc_vps_queue statuses = deferred_infra 328, done 85, enrich_failed 128, url_not_found 39 — ZERO pending/queued. Meanwhile the SAME proxy shows prices ok (373 pushes/24h), news ok (148/24h, last 19:15:19), sbv ok (38/24h, last 18:57:33). The proxy is emphatically up.",
+        "fix_spec": "Separate OBSERVATION from INFERENCE for demand-driven routes. Either (a) suppress/downgrade the STALE verdict for a route whose own work queue has no actionable rows and label it IDLE-NO-WORK, or (b) keep STALE but replace the hardcoded VPS may be down or unreachable narration with a cause discriminated by whether sibling routes on the same proxy are pushing. Generic — no route-name or date literals.",
+        "ac": "AC: with bctc_vps_queue holding zero actionable rows AND >=1 sibling route pushing within its own SLA, get_vps_proxy_health MUST NOT assert the VPS is down/unreachable. Verify against live output, not a fixture.",
+        "dedup_checked": "Distinct from FIX-VPS-NEWS-STALE-FALSEPOS (zone apps/news-fetch/, news route, threshold-vs-cadence miscalibration where the feed IS pushing) and from FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN (off-hours grace double-apply, opposite direction). Here the STALE flag is CORRECT and only the attributed cause is wrong.",
+        "user_impact": "MED — a permanent recurring false incident: the queue stays drained until ALPHA-S6-OPTIONB-DECISION-GATE trips, so this WARN re-fires indefinitely and burns a system-auditor + PO triage slot each time.",
+        "updated_at": "2026-08-14T04:53:21Z",
+        "promoted_at": "2026-07-30T15:16:22Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+        "claimed_at": "2026-08-14T04:53:21Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "raw_verified_by": "dev-team",
+        "raw_verified_at": "2026-07-30T15:58:51Z",
+        "raw_verify_note": "Independently RAW-verified, not self-report: commits 6113890bb+0f8e8ee07 real/on-HEAD; diff matches claim exactly (DEMAND_QUEUE_SQL+getDemandQueueDepth in vpsPushLogStore.ts, formatHealth() idle-no-work branch in vpsProxyTools.ts, isStale() untouched); new test 7/7, sibling suite 22/22 (1113+VPT-1), tsc clean, tool/cron counts unchanged 184/88; live docker-exec probe against real market.db independently reproduces the claimed root cause exactly (bctc_vps_queue 328/128/85/39, 0 pending; news/sbv pushing within 30min); live undeployed get_vps_proxy_health tool call still reproduces the pre-fix bug verbatim, confirming REBUILD_REQUIRED=true is genuine and outstanding."
       }
     ],
     "_closed_signals_20260614": {
@@ -19263,13 +19263,13 @@
         "last_served_tick": "2026-08-14T02:20:30Z"
       },
       "qa_drain": {
-        "last_served_tick": "2026-08-13T23:51:04Z"
+        "last_served_tick": "2026-08-14T04:53:05Z"
       },
       "step1_triage": {
         "last_served_tick": "2026-08-14T00:21:45Z"
       }
     },
-    "_updated_at": "2026-08-14T04:51:08Z",
+    "_updated_at": "2026-08-14T04:53:05Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
