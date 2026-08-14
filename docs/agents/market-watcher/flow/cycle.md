@@ -17,14 +17,11 @@ Bootstrap (market context 24h, agent signals) | watchlist prices
 
 ---
 
-**Execution contract (read first — every invocation, every mode):** Once this flow is entered (`mode=market|prepost|offhours`), Step 0-GW through Step 5b are MANDATORY — the agent MUST make the real `mcp__gateway__call_tool` calls for each step and reach a terminal action. There is no third path between (a) a completed Step 5 notebook cycle entry + Step 5b WORK ping and (b) an explicit Step 0-GW gateway-down EXIT (dual-probe confirmed, no sibling corroboration in the 15-min window).
+**Execution contract (read first — every invocation, every mode):** Once this flow is entered (`mode=market|prepost|offhours`), Step 0 through Step 5b are MANDATORY — the agent MUST make the real `mcp__gateway__call_tool` calls for each step and reach a terminal action. There is no third path between (a) a completed Step 5 notebook cycle entry + Step 5b WORK ping and (b) an explicit main.md Step 0-GW gateway-down EXIT (per gateway-availability-gate skill).
 
 Self-refusal is a flow violation — 2x confirmed (2026-06-28, 2026-07-12T04:04Z — `FIX-MARKET-WATCHER-NARRATE-NOT-EXECUTE-GUARD`): writing a step-by-step "execution plan" to the notebook that frames Step 0-GW/0/1/2/3/4 as future actions ("Step 0-GW: Gateway probe — verify...", "Next phase requires...") instead of calling them now is equivalent to the English-prose self-abort prohibited by `no_self_abort` (`docs/agents/market-watcher/init.md`). The Step 5 notebook write records what WAS DONE this cycle, in past tense, from real tool outputs — never a forward-looking plan.
 
 ---
-
-**Step 0-GW — Gateway availability gate** → skill: `.claude/skills/gateway-availability-gate/SKILL.md`
-Replace `<agent-id>` with `market-watcher`. Run BEFORE bootstrap. On gateway dead: write signal file + BLOCKED notebook + EXIT. See skill for full protocol and explicit prohibitions.
 
 **0+0b. Bootstrap + Regime** → skill: `.claude/skills/step-0-cowork/SKILL.md` (replace `<agent-id>` with `market-watcher`) — § 0b-0c only (this flow does not read notebook carry-over at Step 0a)
 Variables: REGIME, CARRY_REGIME, US10Y_SIGNAL, DXY_SIGNAL
