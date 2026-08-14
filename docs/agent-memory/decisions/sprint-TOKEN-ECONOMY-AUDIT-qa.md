@@ -475,3 +475,33 @@ regression.
 RAW verification supported DONE_VERIFIED. Minted one new `backlog[]` row
 for a self-found, out-of-scope regression (test9 bash-vs-zsh) rather than
 silently dropping it.
+
+### STEP qa-S15 · qa · 2026-08-14T17:15:00Z
+**task-id:** TE-T33
+**what-done:** Direct-commit verify of TE-T33 (cold-archive-sweep) against
+main HEAD 82a69523807289a00fc6c8edae6769201a914b78 — ancestry + files[] +
+tests independently re-run, not trusted from developer prose.
+**what-considered:**
+- `git merge-base --is-ancestor` PASS; `git show --stat` matched all 7
+  claimed `files[]` exactly.
+- `cold-archive-sweep.test.sh` 14/14 PASS (re-run live, matches claim).
+- 3 sibling suites re-run: memory-prune-sweep 12/12, decision-journal-archive
+  26/26 (both match claim); notebook-linecap-sweep now 11/11 (claim said
+  7/7) — diffed, explained by a LATER unrelated commit `7fd919c15` adding 4
+  cases to that file after TE-T33 shipped, not a TE-T33 regression.
+- No `.ts` touched → DDD/tsc N/A; security greps (process.env/secrets)
+  clean on all 3 modified `.sh` files; mock-guard PASS (no prod TS/Go
+  source). Doc wiring (code-janitor cron, dev-standards CANONICAL pointer,
+  dev-team DJ-GATE-1 grep scoping) cross-checked against qa/pm's own
+  already-correct `sprint-<SPRINT_ID>-*.md` pattern — matches claim.
+**why-decision:** All checks green on independent re-verification; the one
+numeric discrepancy (linecap 7→11) traced to a legitimate later commit, not
+a false claim — DONE_VERIFIED.
+**why-change:** No change from plan.
+
+### CAP-REACHED · 2026-08-14T17:15:00Z
+(bytes 36398 > cap 36000 after S15 append; lines 500/600 still under.
+Next STEP for this sprint/agent rolls to `sprint-TOKEN-ECONOMY-AUDIT-qa-2.md`.
+send_telegram bug-channel alert skipped — no MCP gateway binding in this
+specialist sub-session, INV-GATEWAY-1; noted here + RETURN instead of
+silently dropped.)
