@@ -1,0 +1,23 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_single_section_overage_breach",
+  "priority": "high",
+  "createdAt": "2026-08-14T22:32:39Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/code-janitor.md",
+    "line_count": 160,
+    "cap": 200,
+    "byte_count": 12625,
+    "byte_cap": 12000,
+    "section_count": 1,
+    "reason": "only preamble+1 section remain; cannot prune further without data loss",
+    "action_required": "manual_split_to_archive"
+  },
+  "_processed": {
+    "fingerprint": "7217bbadd165b698df17a3f6c7170ecaca7f63fa17baf5e8d73be2ba3e3410e7",
+    "processedAt": "2026-08-14T22:49:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
