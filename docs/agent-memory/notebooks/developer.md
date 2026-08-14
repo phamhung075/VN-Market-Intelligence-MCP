@@ -1,6 +1,28 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-14T20:20:00Z | **Cycle:** FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE (P0, PO-split piece 1/2 — reachable §2b plane-crosscheck gate added to auditor-notebook-commit.sh)
+**Last updated:** 2026-08-14T23:02:00Z | **Cycle:** TASK_2008b FR-A3 (S, UC-CDC-P1 tier1/independent — stop cowork-tick-preflight.sh SILENT-path calendar_status recycling)
+
+## Session 2026-08-14T23:02:00Z — TASK_2008b FR-A3 (scripts/, developer, P1 S, UC-CDC-P1 3-way decomposition tier1/independent, session 632721c2)
+
+**Task:** `docs/handoffs/TASK_2008b.md` — `_step8_silent_release()` in `scripts/agents-flow/cowork-tick-preflight.sh` was reading `calendar_status` back out of `pressure-state.json` and writing that SAME value straight back in via the SILENT-path `emit_pressure_state` call — a closed self-recycling loop with no producer of truth. TASK_2008a (dev-mcp-server, parallel/independent, not a dependency) wires the real server-side producer; this task's scope was purely to stop the pass-through on the SILENT path.
+
+**Zone check:** `scripts/` → specialist `developer` (self, per `system-map.json`) — no dispatch needed, handled directly.
+
+**Shipped:** removed the L150 `calendar_status=$(jq -r '.calendar_status // empty' ...)` read and its `[ -z ... ] && ="unknown"` default, and dropped `--arg cal`/`calendar_status:$cal` from the `emit_args` `jq -n` build — SILENT-path emit is now shape-identical to the WORK path (both omit the key). `last_regime`/`last_volatility_level` recycling explicitly left untouched — no independent producer exists yet (UC-SDF-P2's scope), per the task's own AC.
+
+**TDD:** RED-first — new T2e in `cowork-tick-preflight.test.sh` (fixture pressure-state.json with `calendar_status:"open"`, new `EMIT_ARGS_CAPTURE_FILE` stub seam capturing the raw `emit_pressure_state` args) failed pre-fix (`grep calendar_status` matched), GREEN post-fix. Full suite 75/75 (was 74/74).
+
+**Board:** `.task_board.ready[]` → `review[]`, `status: TODO → REVIEW`, `next_agent: qa`, via `orch-apply.sh` (CANONICAL:SSOT-STATUSFLIP-LANEMOVE). `.head` untouched — it was pointing at sibling parallel task TASK_2008a (dev-mcp-server), not this row.
+
+**Regression check:** No `apps/` TS/Go touched (pure bash, `scripts/` zone) — `bun test`/`tsc` N/A. `bash -n` clean.
+
+**Docs updated:** `docs/handoffs/TASK_2008b.md` Implementation Record + `docs/WORK.md` one-liner.
+
+**Structural gap (same class as prior sessions):** graphify incremental step skipped — no Skill-tool binding available to this spawned agent, and no `docs/{policies,protocols,standards,references}/` domain doc changed anyway.
+
+**Closeout:** 2 commits, pathspec-scoped — `a860a5b9f` (script + test), `d234b485a` (handoff + WORK.md + orch-state.json board move). Decision journal STEP developer-S8 (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md`).
+
+---
 
 ## Session 2026-08-14T20:20:00Z — FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE (cross-service/, developer, P0 S, PO-split piece 1/2, session 632721c2)
 
@@ -33,25 +55,5 @@
 **Structural gap (same class as prior sessions):** graphify incremental step skipped — no Skill-tool binding available to this spawned agent.
 
 **Closeout:** commit pending, pathspec-scoped (`scripts/agents-flow/dev-team-tick-preflight.sh` + `.test.sh` + `docs/agents/dev-team/flow/post-cycle.md`, then `docs/WORK.md` alone). Decision journal STEP developer-S27 (`sprint-ULTRACODE-AUDIT-FIXALL-developer.md`). No handoff file existed for this row (Ready-Lane Consumer direct dispatch, board row's own `status_note`/`evidence_20260814` fields are the spec) — none created, matching established precedent. Board flip `in_progress[]`→`review[]`/`status=REVIEW`/`next_agent=qa` via `orch-apply.sh`.
-
----
-
-## Session 2026-08-14T14:00:00Z — FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE (cross-service/, developer, P0 S, BOUNDED-1 idle-capacity auto-pickup, session 632721c2)
-
-**Task:** P0 live data loss — `nso_ts_key()` (`scripts/agents-flow/lib/notebook-section-direction.sh`) used `grep -oE <date-regex> | tail -1` with the ISO time-of-day suffix OPTIONAL, so an all-numeric git short-SHA cited later in a `## cycle-N · <ISO ts> · ... commit \`<sha>\`` heading (live `qa.md` convention) matched the same pattern as the real timestamp — `tail -1` always won on whichever match came LAST, i.e. the SHA. Confirmed live: `notebook-auto-prune.sh`'s drop-oldest loop destroyed `TASK-COWORK-MUTEX-001`'s QA CHANGES_REQUESTED review record with zero signal (cycle-705's real ts 2026-08-14T01:33:11Z buggy-keyed as `76198814000000000` from SHA `761988143`, outranking the genuinely-newer cycle-711's correctly-keyed `20260814013311000`).
-
-**Shipped (AC-1):** two-tier extraction. Tier 1 requires the literal `T..Z` suffix (`head -1`, first match) — collision-proof by construction, hex SHAs (0-9a-f) can never contain a literal `T`/`Z`. Tier 2 fallback (bare date-only, the live `qa.md` "cycle-N · YYYY-MM-DD" convention) is boundary-guarded `(^|[^0-9])...([^0-9]|$)` so a truncated digit-run prefix of a longer pure-digit SHA can never match either. Verified: `nso_ts_key` on the literal cycle-705 heading text now returns `20260814013311000` (not the buggy `76198814000000000`) — matches the board row's own evidence numbers exactly.
-
-**AC-2 (RED-first regression):** new `T11` in `scripts/agents-flow/notebook-auto-prune.test.sh` — 2-section fixture mirroring the live shape (TASK-OLD: genuinely oldest, trailing all-digit SHA `761988143`; TASK-COWORK-MUTEX-001: genuinely newest, hex SHA). `git stash` on just the lib fix reproduced the exact live bug (TASK-OLD wrongly retained, the newest section wrongly dropped) before restoring — proves the test catches the real defect. GREEN: `notebook-auto-prune.test.sh` 11/11 pass.
-
-**AC-3:** scanned every `## ` heading across all live `docs/agent-memory/notebooks/*.md` via `nso_ts_key` — 0 non-sentinel keys with an implausible (non-`20xx`) year prefix.
-
-**AC-4 (data recovery):** `TASK-COWORK-MUTEX-001`'s destroyed CHANGES_REQUESTED verdict was still intact in that row's own `.note` field (only the `qa.md` notebook copy was lost) — reconstructed onto its empty `.status_note` via `orch-apply.sh`.
-
-**Regression check:** sibling test `test-notebook-auto-prune.sh` has one PRE-EXISTING unrelated failure (Test 9, zsh `BASH_SOURCE` sourcing bug, tracked separately as `FIX-NOTEBOOKAUTOPRUNE-HOOKGUARD-BASHSOURCE-ZSH-BREAK`) — reproduced identically with my changes `git stash`-reverted, confirmed out of scope, not caused by this fix.
-
-**Structural gap (same class as prior sessions):** graphify incremental step skipped — no Skill-tool binding available to this spawned agent.
-
-**Closeout:** commit pending, pathspec-scoped (`scripts/agents-flow/lib/notebook-section-direction.sh` + `scripts/agents-flow/notebook-auto-prune.test.sh`, then `docs/WORK.md` alone). Decision journal STEP developer-S5 (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md`). No handoff file existed for this row (BOUNDED-1 direct-execute mint, board `note`/`evidence`/`acceptance` fields are the spec) — none created, matching established precedent for this task shape. Board flip `in_progress[]`→`review[]`/`status=REVIEW`/`next_agent=qa` via `orch-apply.sh`, `.head` synced to idle in the same write per `execute-tier.md` CANONICAL:SSOT-STATUSFLIP-LANEMOVE rule (b) (`branch:null` flip).
 
 ---
