@@ -13443,6 +13443,144 @@
             "observed_at": "2026-08-14T18:01:29Z"
           }
         }
+      },
+      {
+        "id": "INVESTIGATE-EMPTY-DATA-TABLES",
+        "priority": "low",
+        "status": "DONE_VERIFIED",
+        "title": "5 EMPTY data tables — confirm intended-empty vs dead-pipeline: credit_data(0), insider_transactions(0), public_contracts(0), pharma_events(0), broker_sanctions(0). Each has a writer somewhere; 0 rows may be by-design (rare events) OR a dead pipeline. SINGLE investigation task (not 5).",
+        "type": "SPIKE",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#INVESTIGATE-EMPTY-DATA-TABLES",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-31T15:50:36Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-14T18:02:14Z",
+        "claimed_at": "2026-08-14T17:55:40Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "pm",
+        "commit_sha": "d4569c5b8",
+        "review_note": "SPIKE complete — RAW-verified by dev-team: live row counts (all 5 tables = 0, sqlite3 -readonly), broker_sanctions defaultFetchSanctions() stub text, muasamcong.ts getMuasamcongUrl() verbatim env-var passthrough (no ?path= composition), davPharmacyJob.ts uses shouldSkipRecoveryReplay (T4 dedup guard) not shouldRunCatchup (confirms zero startup-catchup guard claim), davPharmacyCheckJob cron_job_runs = exactly 1 success ever (2026-04-30), brokerSanctionsSweep QUARTER_MONTHS=[3,6,9,12] confirms 07-31 internal-skip claim, insiderCheckJob 8/8 sampled days success+rows_written=0 — all spot-checked claims matched exactly. Verdict: credit_data=empty-by-design/already-guarded (no FIX needed); insider_transactions, public_contracts, pharma_events, broker_sanctions=dead-pipeline, each root-caused. 4 follow-up FIX tasks proposed in docs/spikes/SPIKE-INVESTIGATE-EMPTY-DATA-TABLES.md — forwarded to in-flight PO triage for minting rather than re-dispatching a new round. Investigation-only per SPIKE AC, zero code changes, zero orch-state.json touch by the agent (dev-team commit_zone boundary respected). | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commit d4569c5b8 (docs-only: SPIKE doc + notebook + decision journal, ZERO production code -- consistent with the SPIKE's own investigation-only AC) on main ancestry -- git show --stat matches all 3 changed files exactly (SPIKE-INVESTIGATE-EMPTY-DATA-TABLES.md, notebooks/dev-mcp-server.md, decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md). Independently re-ran/re-derived every substantive claim, not trusted from review_note prose: (1) live sqlite3 -readonly row counts on data/live/market.db (the actual bind-mounted prod DB per docker-compose.yml) confirm all 5 tables = 0 today. (2) brokerSanctionsJob.ts:99-105 defaultFetchSanctions() confirmed verbatim TODO stub returning []. (3) brokerSanctionsJob.ts:45 QUARTER_MONTHS=[3,6,9,12] confirmed exact. (4) muasamcong.ts:35-40 getMuasamcongUrl() confirmed to return the proxy env var (or MUASAMCONG_ORIGIN fallback) verbatim, no ?path= composition. (5) davPharmacyJob.ts:18,35 confirmed to import/call only shouldSkipRecoveryReplay, never shouldRunCatchup, though startupHelpers.ts:102 exports a distinct shouldRunCatchup used by 3 other scheduler files -- corroborates the no-catchup-guard claim. (6) sscInsider.ts parseInsiderHtml() confirmed a plain <tr>/<td> regex extractor. bun tsc --noEmit (apps/mcp-server) 0 errors; mock-guard.sh N/A (zero non-doc files in commit); process.env/secrets grep clean on all 3 changed files; DDD scan N/A (no src/ files touched). ONE FRESHNESS CAVEAT (non-blocking): review_note's phrase 'davPharmacyCheckJob cron_job_runs = exactly 1 success ever (2026-04-30)' is now stale vs a live re-query -- cron_job_runs shows a 2nd success at 2026-07-31T23:00:01Z (=Aug-1 ICT monthly fire), landing after the SPIKE commit's own timestamp (07-31T18:05:56+02:00) but before this QA pass. Does not invalidate the diagnosis -- June-1 and July-1 were STILL both missed despite the intervening April-30 and this later July-31 run, corroborating rather than contradicting the unswept startup-catchup-guard-gap root cause. The committed SPIKE doc itself is accurate as written at its own point-in-time; staleness is confined to the qa[] row's later review_note restatement, not the artifact. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-23.md STEP qa-S7.",
+        "updated_by": "qa",
+        "qa_verified_at": "2026-08-14T18:02:14Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + sqlite3 -readonly + grep + bun tsc --noEmit",
+            "args": "commit d4569c5b8 on main ancestry; live row counts on data/live/market.db for credit_data/insider_transactions/public_contracts/pharma_events/broker_sanctions; source greps on brokerSanctionsJob.ts, muasamcong.ts, davPharmacyJob.ts, startupHelpers.ts, sscInsider.ts; cron_job_runs history queries for davPharmacyCheckJob/insiderCheckJob/brokerSanctionsSweep/publicContractsJob; bun tsc --noEmit (apps/mcp-server)",
+            "live_value_observed": "all 5 tables=0 rows live; defaultFetchSanctions() stub confirmed verbatim; QUARTER_MONTHS=[3,6,9,12] confirmed; getMuasamcongUrl() verbatim passthrough confirmed (no ?path=); davPharmacyJob.ts uses shouldSkipRecoveryReplay not shouldRunCatchup confirmed (both exist as distinct exports); parseInsiderHtml() plain regex confirmed; bun tsc --noEmit 0 errors; cron_job_runs shows davPharmacyCheckJob 2 successes (04-30, 07-31) with 06-01/07-01 both still missing -- freshness caveat on review_note wording, non-blocking, diagnosis corroborated not contradicted",
+            "observed_at": "2026-08-14T18:02:14Z",
+            "evidence_commit": "d4569c5b8"
+          }
+        }
+      },
+      {
+        "title": "Replace console.* with the project logger in 5 application files",
+        "priority": "P3",
+        "zone": "mcp-server-application",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-APP-console-to-logger",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-console-to-logger",
+        "promoted_at": "2026-07-31T18:47:09Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-14T18:02:19Z",
+        "claimed_at": "2026-08-14T17:55:40Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-31T19:12:51Z",
+        "updated_by": "qa/verify-committed",
+        "review_note": "Replaced every console.error/warn/log/info call site (24 total) in 5 application-layer files with the existing infrastructure/logger.ts ToolLogger instance -- discoverBctcPdfUrlDirectApi.ts (3x error, added missing logger import), parseBctcReport.ts (1x error, logger already imported), backfillBctcPdfPaths.ts (11x warn/info, added import), imfDataFetcher.ts (1x warn, added import), bctcBatchTableBackfillJob.ts (9x warn/log/error, added import). console.log mapped to logger.info per sibling convention (checkSscReports.ts, assembleAlertDigest.ts); 2-arg console.error(\"msg:\", err) sites (3x in discoverBctcPdfUrlDirectApi.ts) normalised to logger.error(msg, {error: err.message}) matching getMoneyRadarComposite.ts/fetchParseAndStoreBctc.ts convention. Pure mechanism swap -- message content and log level unchanged, no restructuring. RSI/MA consolidation half of the original 2026-06-15 audit finding explicitly OUT OF SCOPE (domain/services/technicalIndicators.ts already deleted; not touched). Also fixed one stale doc reference (usecases.md:289 said \"console.warn\", now \"logger.warn\"). Evidence: bun tsc --noEmit clean. Targeted suite (10 files covering all 5 changed files' own test coverage): 120/120 pass, 0 fail, 569 expect() calls. Fresh server boot (PORT=3099, port 3000 held by the live docker container): /health toolCount=183, zero import errors. gen-project-stats.ts --dry-run: toolCount=183, cronJobCount=88 -- both match pre-task baseline. Full bun test, 2 independent runs: run1=14988 pass/59 fail/2 errors, run2=14995 pass/52 fail/0 errors -- both land exactly inside the already-documented 14988-14995 pass, 52-59 fail FIX-MCP-SUITE-HEALTH-BASELINE order-dependent-red band (S49/S50, same day). Grep-confirmed ZERO matches for any of the 5 changed filenames/their test names in either run's full (fail) list; the 52-59 failures are all pre-existing unrelated classes (vnstock cash-flow/balance-sheet store upserts, VPS proxy health logging, send_telegram channel routing, insider-transactions streak calc, foreign-flow signal text) -- same shape as the previously-catalogued baseline red. REBUILD_REQUIRED=true per docker-deployment-runbook (code change needs image rebuild before live effect). Commits: 3a0619464 (code+doc), bcf820017 (notebook), cb969155f (journal). Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S51. Tool grant note: this specialist agent does NOT have the gateway MCP call_tool grant (developer tools package = Read/Edit/Write/Glob/Grep/Bash/semble only) -- this orch-state.json write is performed via orch-apply.sh (Bash) but left UNCOMMITTED on disk per the dispatch brief's own instruction; dev-team commits it after RAW-verification.",
+        "verified_at": "2026-08-14T18:02:18Z",
+        "verified_by": "qa",
+        "commit_sha": "3a0619464",
+        "status_note": "[QA] Review Record (direct-commit verify) -- qa[dev-team-drain 2026-08-14T18:02:18Z]: APPROVED, DONE_VERIFIED. Commit 3a0619464 confirmed real + main ancestry (git merge-base --is-ancestor). git show --stat matches all 5 claimed application-layer files + 1 doc file (imfDataFetcher.ts, backfillBctcPdfPaths.ts, bctcBatchTableBackfillJob.ts, discoverBctcPdfUrlDirectApi.ts, parseBctcReport.ts, docs/architecture/microservice/mcp-server/usecases.md). Full diff manually re-read: pure mechanism swap confirmed -- message content/log level/control-flow unchanged, only console.* call sites replaced with the existing infrastructure/logger.ts ToolLogger and missing logger imports added. Independent greps: zero remaining console.* call sites in the 5 files (confirms complete swap); logger import present in all 5; zero process.env; zero secrets/password/token hits (false-positive-free); application-layer files legitimately import infrastructure/ (pre-existing pattern e.g. getDb/CircuitBreaker/bctcSignalDebounce plus the new logger import) -- NOT a DDD violation, the repo's DDD rule (docs/ARCHITECTURE.md:7, docs/policies/qa-checklist.md:14) only forbids domain/ importing infrastructure/application/, application-layer orchestrating infrastructure is the documented pattern. bun tsc --noEmit: 0 errors. Targeted regression re-run (broader than the developer's own claimed 10-file/120-test subset): 30 test files referencing the 5 changed modules, run fresh in 2 batches -- 145/145 + 142/142 = 287/287 pass, 0 fail. mock-guard.sh --files (5 production files): PASS, no fabricated-data patterns. Notebook commit bcf820017 and journal commit cb969155f both confirmed real + main ancestry. Doc fix verified: usecases.md now reads logger.warn (was console.warn) at the backfillBctcPdfPaths PENDING no-match path.",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun tsc --noEmit + bun test (targeted, 30 files, 2 batches) + mock-guard.sh + independent greps (console.*, logger import, DDD infrastructure-layer, process.env, secrets)",
+            "args": {
+              "commit_verified": "3a0619464",
+              "notebook_commit_verified": "bcf820017",
+              "journal_commit_verified": "cb969155f",
+              "files_verified": [
+                "apps/mcp-server/src/application/services/imfDataFetcher.ts",
+                "apps/mcp-server/src/application/usecases/backfillBctcPdfPaths.ts",
+                "apps/mcp-server/src/application/usecases/bctcBatchTableBackfillJob.ts",
+                "apps/mcp-server/src/application/usecases/discoverBctcPdfUrlDirectApi.ts",
+                "apps/mcp-server/src/application/usecases/parseBctcReport.ts",
+                "docs/architecture/microservice/mcp-server/usecases.md"
+              ]
+            },
+            "live_value_observed": "git merge-base --is-ancestor: all 3 commits confirmed on main ancestry; git show --stat: exact 6-file match (5 app files + 1 doc); tsc --noEmit: 0 errors; targeted test re-run across 30 referencing test files (2 batches, fresh process each): 145 pass/0 fail + 142 pass/0 fail = 287/287 pass, 0 fail; mock-guard.sh --files <5 production files>: PASS; grep console\\. across 5 files: 0 matches; grep import.*logger across 5 files: 5/5 present; grep process\\.env: 0 matches; grep password|secret|token (excluding test/comment noise): 0 real matches",
+            "observed_at": "2026-08-14T18:02:18Z"
+          }
+        }
+      },
+      {
+        "title": "Remove discarded domain service wiring + inject real port into /health",
+        "priority": "P3",
+        "zone": "technical-analysis",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-TECHANALYSIS-fix-discarded-service-and-port",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-fix-discarded-service-and-port",
+        "promoted_at": "2026-07-31T19:47:52Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-14T18:02:32Z",
+        "claimed_at": "2026-08-14T17:55:40Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "pm",
+        "updated_by": "qa",
+        "commit_sha": "39fbec098",
+        "note": "Discarded domain.CalculateTAService wiring deleted (pkg/domain/services.go removed, zero other callers); /health now reflects the real bound RouterConfig.Port instead of a hardcoded 5003 literal. go build/vet/test + golangci-lint clean; G12 sandbox 35/35 + render-check PASS. REBUILD_REQUIRED — ops rebuild+restart apps/technical-analysis before qa live-verify.",
+        "status_note": "[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Commit 39fbec098433e634006b98e9d8bba1e95362e0f2 confirmed real, on main ancestry; git show --stat matches all 6 files claimed in the commit message exactly (cmd/server/main.go, pkg/domain/services.go [deleted], pkg/interface/http/router.go, pkg/interface/http/router_test.go, docs/architecture/microservice/technical-analysis/api-reference.md, docs/architecture/microservice/technical-analysis/domain-model.md). Re-ran independently, not trusted from commit prose: go build ./... clean, go vet ./... clean, go test ./... -count=1 (fresh, not cached) all 11 packages pass, golangci-lint run ./... 0 issues, G12 sandbox gate (bash dashboard/build.sh) 35 passed/0 failed + headless render-check PASS (exact match to claimed 35/35). Read the diff directly: pkg/domain/services.go (CalculateTAService stub, discarded at old main.go:71 via `_ = domain.NewCalculateTAService(...)`) deleted; repo-wide grep confirms zero remaining callers/references. RouterConfig gained a Port field threaded from the resolved PORT env var; /health now marshals {status,service,port} via struct+json.Marshal using the real bound port instead of a hardcoded \"5003\" literal; empty/unparseable Port falls back to defaultPort=5003 -- confirmed the sandbox caller (cmd/sandbox/service_adapters.go) does not set Port and is correctly unaffected. mock-guard.sh --files main.go router.go exit 0 PASS. process.env/secrets/domain->infrastructure import greps clean (only a comment referencing \"mock infrastructure\", not a real import). Docs (api-reference.md/domain-model.md) updated accurately, consistent with the code change. REBUILD_REQUIRED note on the row treated as non-blocking ops follow-up per standing convention -- verify-committed JUMP-TO has no merge/push/deploy step, code-level certification is what QA gates here, live container redeploy is ops next action. Zero blocking ISSUE.",
+        "qa_verified_at": "2026-08-14T18:01:37Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "go build + go vet + go test -count=1 + golangci-lint run + bash dashboard/build.sh (G12 sandbox+headless render-check) + mock-guard.sh + git merge-base --is-ancestor + git show --stat (Direct-Commit Verify, independent re-run, dev-team Review-Lane QA-Drain)",
+            "args": "commit=39fbec098433e634006b98e9d8bba1e95362e0f2; files=apps/technical-analysis/cmd/server/main.go,apps/technical-analysis/pkg/domain/services.go(deleted),apps/technical-analysis/pkg/interface/http/router.go,apps/technical-analysis/pkg/interface/http/router_test.go,docs/architecture/microservice/technical-analysis/api-reference.md,docs/architecture/microservice/technical-analysis/domain-model.md; go test ./... -count=1; golangci-lint run ./...; bash dashboard/build.sh; mock-guard.sh --files main.go router.go",
+            "live_value_observed": "merge-base ancestor=yes; git show --stat file-list exact 6-file match; go build/vet clean; go test ./... -count=1 all 11 packages ok; golangci-lint 0 issues; G12 sandbox dashboard 35 passed/0 failed, headless render-check PASS (33 dot-green/0 red/0 pending, 0 JS errors); mock-guard exit 0 PASS; process.env/secrets/DDD greps clean",
+            "observed_at": "2026-08-14T18:01:37Z"
+          }
+        }
+      },
+      {
+        "title": "Dedup priceHistory handlers + name the days=30 default",
+        "priority": "P3",
+        "zone": "stock-price",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-STOCK-dedup-history-handlers",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-dedup-history-handlers",
+        "promoted_at": "2026-07-31T21:18:55Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-14T18:02:42Z",
+        "claimed_at": "2026-08-14T17:55:40Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "commit_sha": "4d3394f772d88e8911b0b82368304fdee007c8e8",
+        "completed_at": "2026-07-31T21:22:30Z",
+        "review_note": "rebuild_required:true — ops must rebuild stock-price service before deploy | dev-team RAW-verify 2026-07-31T21:24:46Z: commit_sha corrected from journal-commit 8638467b6 to actual code-commit 4d3394f77 (the refactor commit); rebuild pending ops; independent go build/test/gofmt/lint all clean, exact match to self-report | next_agent patched null->qa 2026-07-31T21:25:12Z (confirmed-recurring gap, feedback_review_flip_next_agent_qa_check_missing_strands_row)",
+        "next_agent": "pm",
+        "status_note": "[QA] Review Record (direct-commit verify) 2026-08-14T18:01:46Z -- APPROVED, DONE_VERIFIED. Verified commit 4d3394f772d88e8911b0b82368304fdee007c8e8 on main ancestry -- git show --stat matches the claimed file (router.go, matches backlog-detail.json#FACTORY-STOCK-dedup-history-handlers files[]) plus a new router_test.go; no later commit touches either file since (live HEAD content == commit content). Independently re-ran: go build ./... clean; go test -count=1 ./... 9/9 packages pass fresh (8/8 in touched interface/http pkg incl. 3 new dedup-behavior tests); gofmt -l clean on both touched files; golangci-lint run ./pkg/interface/http/... 0 issues; go vet flagged 7 pre-existing resp-before-err-check lines, confirmed byte-identical at the parent commit via a throwaway worktree diff -- NOT introduced by this task, non-blocking; mock-guard.sh --files router.go exit 0 PASS; process.env/secrets grep clean. DoD fully met: defaultHistoryDays named const, shared parseDays()/runHistory() helpers, both routes still registered (router.go:49,51), 3 new tests prove identical cross-route behavior. rebuild_required:true on the row is an ops deploy follow-up, not a QA blocker (verify-committed JUMP-TO has no merge/push/deploy step, work already on main). DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-23.md STEP qa-S8.",
+        "verification": {
+          "raw_probe": {
+            "tool": "go build ./... && go test -count=1 ./... && go vet ./... && golangci-lint run ./pkg/interface/http/... && gofmt -l .",
+            "args": {
+              "cwd": "apps/stock-price",
+              "commit_verified": "4d3394f772d88e8911b0b82368304fdee007c8e8"
+            },
+            "live_value_observed": "go build ./... clean; go test -count=1 ./... 9/9 packages pass fresh (8/8 interface/http pkg incl. 3 new dedup tests); gofmt -l clean on router.go+router_test.go; golangci-lint run ./pkg/interface/http/... 0 issues; go vet 7 pre-existing resp-before-err lines confirmed byte-identical at parent commit (not introduced by this task); mock-guard.sh --files router.go exit 0 PASS; git show --stat matches claimed file router.go + new router_test.go; process.env/secrets grep clean",
+            "observed_at": "2026-08-14T18:01:46Z"
+          }
+        },
+        "qa_verified_at": "2026-08-14T18:01:46Z",
+        "qa_verified_by": "qa",
+        "updated_by": "qa"
       }
     ],
     "head": {
@@ -18047,63 +18185,6 @@
         "po_RAG_MEM_DURABILITY_BAR_V2_20260814T0927Z": "[po RULING 2026-08-14T09:27Z] RAG-MEM-DURABILITY-BAR v2 — binding on EVERY rag-service memory row (this row, FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS, FU-RAG-DEPLOY-MEMORY, OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX). SUPERSEDES the v1 bar in po_crossref_20260814T0700Z, which was necessary but gameable.\nRATIONALE FOR RAISING IT AGAIN: this is the THIRD consecutive \"fix landed -> marked DONE_VERIFIED -> recurred within hours\" cycle on one incident. 1) thread-pin ca6d86869 -> OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX certified DONE_VERIFIED 2026-08-12T12:46:40Z -> kernel OOM at +1h00m, +1h14m, +20h34m. 2) cap raise 2f835ec63 -> FU-RAG-DEPLOY-MEMORY certified DONE_VERIFIED 2026-08-08T10:59:52Z -> three kernel OOMs on the raised cap. 3) skip-rebuild 82216e291 -> STALE-ACK'd benign at 08:57Z on a single 84.85% post-restart reading -> monotonic accelerating climb to 89.18% within 24 minutes. Each closure was defeated by the same structural flaw: a NEGATIVE criterion (no crash observed yet) evaluated over a window shorter than the failure's own period, on a signal that cannot see the failure. v2 adds a POSITIVE criterion and closes the two laundering paths.\nD1 SIGNAL (carried from v1, unchanged): >= 24h wall-clock with ZERO `oom_memcg` dmesg events for the rag-service cgroup, read INSIDE the Docker Desktop VM (nsenter). NEVER `docker inspect .State.OOMKilled`, NEVER `.State.ExitCode`, NEVER RestartCount — all three are proven false-negatives here.\nD2 CONTINUOUS LIFETIME (new): the window must span ONE unbroken container lifetime. Any restart or recreate — INCLUDING a preemptive ops mitigation restart — resets it to zero. Evidence must cite `docker inspect .State.StartedAt` at window OPEN and the identical value at window CLOSE. A window whose StartedAt moved is not a short window, it is no window.\nD3 POSITIVE PLATEAU (new — this is the actual fix criterion, D1 alone can never establish one): >= 6 memory samples spread across the window; fit the growth rate over the final 12h. PASS requires BOTH rate <= 0.02 pp/min AND final reading <= 85% of the cap. A run that ends at 95% having merely not died yet is a FAIL. \"Did not OOM\" is not \"bounded\" — the whole incident history above is the proof.\nD4 NO-MITIGATION (new): the window is INVALID if any preemptive restart, cap raise, traffic throttle, or manual memory intervention was applied during it. Mitigation windows and certification windows are mutually exclusive. If the service cannot survive the window unassisted, report that as the finding — never launder it into a green.\nD5 EVIDENCE SHAPE (new, process): the certifying agent MUST write onto the row it closes — `durability_window_started_at` (= .State.StartedAt), `durability_window_container_id`, `durability_window_ended_at`, `durability_samples[]` (>=6 {ts, mem_pct}), `durability_growth_pp_per_min`, and the verbatim in-VM dmesg query used. A prose assertion without those six fields is NOT a certification and any lane move it justifies is void. This also satisfies the schema's verification.raw_probe{} requirement — never close a rag-service memory row via a RC_VERIF_GRANDFATHERED_IDS exemption."
       },
       {
-        "id": "INVESTIGATE-EMPTY-DATA-TABLES",
-        "priority": "low",
-        "status": "QA",
-        "title": "5 EMPTY data tables — confirm intended-empty vs dead-pipeline: credit_data(0), insider_transactions(0), public_contracts(0), pharma_events(0), broker_sanctions(0). Each has a writer somewhere; 0 rows may be by-design (rare events) OR a dead pipeline. SINGLE investigation task (not 5).",
-        "type": "SPIKE",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#INVESTIGATE-EMPTY-DATA-TABLES",
-        "verify_note": "prior_status=TODO",
-        "promoted_at": "2026-07-31T15:50:36Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-08-14T17:55:40Z",
-        "claimed_at": "2026-08-14T17:55:40Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "commit_sha": "d4569c5b8",
-        "review_note": "SPIKE complete — RAW-verified by dev-team: live row counts (all 5 tables = 0, sqlite3 -readonly), broker_sanctions defaultFetchSanctions() stub text, muasamcong.ts getMuasamcongUrl() verbatim env-var passthrough (no ?path= composition), davPharmacyJob.ts uses shouldSkipRecoveryReplay (T4 dedup guard) not shouldRunCatchup (confirms zero startup-catchup guard claim), davPharmacyCheckJob cron_job_runs = exactly 1 success ever (2026-04-30), brokerSanctionsSweep QUARTER_MONTHS=[3,6,9,12] confirms 07-31 internal-skip claim, insiderCheckJob 8/8 sampled days success+rows_written=0 — all spot-checked claims matched exactly. Verdict: credit_data=empty-by-design/already-guarded (no FIX needed); insider_transactions, public_contracts, pharma_events, broker_sanctions=dead-pipeline, each root-caused. 4 follow-up FIX tasks proposed in docs/spikes/SPIKE-INVESTIGATE-EMPTY-DATA-TABLES.md — forwarded to in-flight PO triage for minting rather than re-dispatching a new round. Investigation-only per SPIKE AC, zero code changes, zero orch-state.json touch by the agent (dev-team commit_zone boundary respected)."
-      },
-      {
-        "title": "Replace console.* with the project logger in 5 application files",
-        "priority": "P3",
-        "zone": "mcp-server-application",
-        "type": "FACTORY",
-        "status": "QA",
-        "id": "FACTORY-APP-console-to-logger",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-APP-console-to-logger",
-        "promoted_at": "2026-07-31T18:47:09Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-08-14T17:55:40Z",
-        "claimed_at": "2026-08-14T17:55:40Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-31T19:12:51Z",
-        "updated_by": "dev-mcp-server",
-        "review_note": "Replaced every console.error/warn/log/info call site (24 total) in 5 application-layer files with the existing infrastructure/logger.ts ToolLogger instance -- discoverBctcPdfUrlDirectApi.ts (3x error, added missing logger import), parseBctcReport.ts (1x error, logger already imported), backfillBctcPdfPaths.ts (11x warn/info, added import), imfDataFetcher.ts (1x warn, added import), bctcBatchTableBackfillJob.ts (9x warn/log/error, added import). console.log mapped to logger.info per sibling convention (checkSscReports.ts, assembleAlertDigest.ts); 2-arg console.error(\"msg:\", err) sites (3x in discoverBctcPdfUrlDirectApi.ts) normalised to logger.error(msg, {error: err.message}) matching getMoneyRadarComposite.ts/fetchParseAndStoreBctc.ts convention. Pure mechanism swap -- message content and log level unchanged, no restructuring. RSI/MA consolidation half of the original 2026-06-15 audit finding explicitly OUT OF SCOPE (domain/services/technicalIndicators.ts already deleted; not touched). Also fixed one stale doc reference (usecases.md:289 said \"console.warn\", now \"logger.warn\"). Evidence: bun tsc --noEmit clean. Targeted suite (10 files covering all 5 changed files' own test coverage): 120/120 pass, 0 fail, 569 expect() calls. Fresh server boot (PORT=3099, port 3000 held by the live docker container): /health toolCount=183, zero import errors. gen-project-stats.ts --dry-run: toolCount=183, cronJobCount=88 -- both match pre-task baseline. Full bun test, 2 independent runs: run1=14988 pass/59 fail/2 errors, run2=14995 pass/52 fail/0 errors -- both land exactly inside the already-documented 14988-14995 pass, 52-59 fail FIX-MCP-SUITE-HEALTH-BASELINE order-dependent-red band (S49/S50, same day). Grep-confirmed ZERO matches for any of the 5 changed filenames/their test names in either run's full (fail) list; the 52-59 failures are all pre-existing unrelated classes (vnstock cash-flow/balance-sheet store upserts, VPS proxy health logging, send_telegram channel routing, insider-transactions streak calc, foreign-flow signal text) -- same shape as the previously-catalogued baseline red. REBUILD_REQUIRED=true per docker-deployment-runbook (code change needs image rebuild before live effect). Commits: 3a0619464 (code+doc), bcf820017 (notebook), cb969155f (journal). Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S51. Tool grant note: this specialist agent does NOT have the gateway MCP call_tool grant (developer tools package = Read/Edit/Write/Glob/Grep/Bash/semble only) -- this orch-state.json write is performed via orch-apply.sh (Bash) but left UNCOMMITTED on disk per the dispatch brief's own instruction; dev-team commits it after RAW-verification."
-      },
-      {
-        "title": "Remove discarded domain service wiring + inject real port into /health",
-        "priority": "P3",
-        "zone": "technical-analysis",
-        "type": "FACTORY",
-        "status": "QA",
-        "id": "FACTORY-TECHANALYSIS-fix-discarded-service-and-port",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-TECHANALYSIS-fix-discarded-service-and-port",
-        "promoted_at": "2026-07-31T19:47:52Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-08-14T17:55:40Z",
-        "claimed_at": "2026-08-14T17:55:40Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "updated_by": "dev-technical-analysis",
-        "commit_sha": "39fbec098",
-        "note": "Discarded domain.CalculateTAService wiring deleted (pkg/domain/services.go removed, zero other callers); /health now reflects the real bound RouterConfig.Port instead of a hardcoded 5003 literal. go build/vet/test + golangci-lint clean; G12 sandbox 35/35 + render-check PASS. REBUILD_REQUIRED — ops rebuild+restart apps/technical-analysis before qa live-verify."
-      },
-      {
         "title": "Add reading_composer data-integrity invariant test (pins contract pre-extraction)",
         "priority": "P3",
         "zone": "kinh-dich-service",
@@ -18121,25 +18202,6 @@
         "updated_by": "dev-kinh-dich",
         "commit_sha": "fa02f39f1",
         "note": "6 data-driven invariant tests added (queDataMap/queMetaList/GetAllQueReferences/trigrams/O(1) lookup maps, all pinned at 64 entries 1..64). Test-only, zero production change. go build/vet/test + golangci-lint clean (12/12 packages). RAW-verified by dev-team: independently re-ran all 6 new tests + full suite, matches self-report exactly."
-      },
-      {
-        "title": "Dedup priceHistory handlers + name the days=30 default",
-        "priority": "P3",
-        "zone": "stock-price",
-        "type": "FACTORY",
-        "status": "QA",
-        "id": "FACTORY-STOCK-dedup-history-handlers",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-STOCK-dedup-history-handlers",
-        "promoted_at": "2026-07-31T21:18:55Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-08-14T17:55:40Z",
-        "claimed_at": "2026-08-14T17:55:40Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "commit_sha": "4d3394f772d88e8911b0b82368304fdee007c8e8",
-        "completed_at": "2026-07-31T21:22:30Z",
-        "review_note": "rebuild_required:true — ops must rebuild stock-price service before deploy | dev-team RAW-verify 2026-07-31T21:24:46Z: commit_sha corrected from journal-commit 8638467b6 to actual code-commit 4d3394f77 (the refactor commit); rebuild pending ops; independent go build/test/gofmt/lint all clean, exact match to self-report | next_agent patched null->qa 2026-07-31T21:25:12Z (confirmed-recurring gap, feedback_review_flip_next_agent_qa_check_missing_strands_row)",
-        "next_agent": "qa"
       }
     ],
     "_closed_signals_20260614": {

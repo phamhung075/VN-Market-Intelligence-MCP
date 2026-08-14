@@ -97,6 +97,16 @@
 **why-decision:** vc-approved, DONE_VERIFIED. Zero blocking ISSUE — commit real/on-main, sole claimed file + expected new test file match exactly, every re-run check green, DoD fully met (named const, shared helper, both routes kept, tests prove identical cross-route behavior).
 **why-change:** none — matches row's `review_note`/backlog DoD exactly.
 
+### STEP qa-S9 · qa · 2026-08-14T18:02:03Z
+**task-id:** FACTORY-KINHDICH-add-data-invariant-test
+**what-done:** Direct-Commit Verify (`qa[]` row, `commit_sha=fa02f39f1`, no `.files[]`/`.owner` — files derived from `backlog-detail.json#FACTORY-KINHDICH-add-data-invariant-test`, cross-checked against `git show --stat`). Commit `fa02f39f1547d8f42bd3db839446f7bc1f4d28d2` confirmed real, on `main` ancestry; touches only new `hexagram_invariant_test.go` — zero production file changed, matches claim exactly.
+**what-considered:**
+- Re-ran independently inside `golang:1.22-alpine` (matches `Dockerfile` builder stage, not host go1.26 — version-drift guard): `go build ./...` clean, `go vet ./...` clean, `go test ./...` 13 packages (9 testable/4 no-test-files) all pass, incl. the 6 new invariant tests (queDataMap/queMetaList/GetAllQueReferences/trigrams/O(1) maps).
+- `golangci-lint run ./...` (host v2.12.2) 0 issues. `mock-guard.sh` no-op (only `_test.go` touched, exclude-listed). `process.env`/secrets grep clean; sole import is stdlib `testing`.
+- Row's own note claims "12/12 packages"; my independent count is 9 testable/13 total (no commit since fa02f39f1 changed package count) — prose-count mismatch only, non-blocking, all actual checks green.
+**why-decision:** vc-approved, DONE_VERIFIED. Zero blocking ISSUE — commit real/on-main, sole file matches claim, test-only (no prod change), all re-run checks green inside version-matched container.
+**why-change:** none — matches row's own note claim.
+
 ### STEP qa-S9 · qa · 2026-08-14T18:05:00Z
 **task-id:** FACTORY-APP-console-to-logger
 **what-done:** Direct-Commit Verify (dev-team Review-Lane QA-Drain, `qa[]` row, no `.commit`/`.files[]`/`.owner` drain fields — commit derived from `review_note` prose ("Commits: 3a0619464 (code+doc), bcf820017 (notebook), cb969155f (journal)"). All 3 confirmed real, on `main` ancestry (`git merge-base --is-ancestor`); `git show --stat 3a0619464` matches all 5 claimed application files + the 1 doc file exactly.
