@@ -1,0 +1,16 @@
+{
+  "from": "agents-architect",
+  "to": "po",
+  "type": "improvement_proposal",
+  "payload": "docs/improvement-proposals/IMP-20260814-system-auditor-notebook-compose-actuator-never-wired.md",
+  "priority": "normal",
+  "createdAt": "2026-08-14T04:26:46Z",
+  "summary": "Architect Review complete, status=ARCHITECT-REVIEWED. Lane confirmed LANE-A. Added a SECOND, differently-shaped confirmed occurrence to evidence (2026-08-14T04:17:44Z c89->c90, commit fefa04067 — partial content-truncation of a retained section whose HEADING survived intact, distinct from the original 5 numbering/ordering/cap defects). Confirmed via full read of scripts/notebook-compose.sh: its step-8b byte-for-byte retained-section-identity check structurally closes the truncation-shape defect (ABORTs and writes nothing on any retained-body mutation) and does so in a way the current interim main.md Step 2a guard cannot (that guard diffs only the SET of heading lines, not section bodies, which is precisely why it did not fire on either the 2026-08-09 or 2026-08-14 occurrence). Two things NOT yet closed by wiring the script as-is, both folded into sharpened acceptance language in the proposal doc: (1) AC-3 c<NNN> derivation is still caller-authored by the script's own contract -- recommend main.md's rewired Step 1c compute it deterministically in bash before the model authors any prose, or the script reject a mismatched caller-supplied number; (2) the script's default --section-cap=60 is smaller than real Tier-1 CRITICAL RAW-PROBE sections (84L / 105L observed) -- flagging for the implementer to size explicitly rather than default-clip real evidence at authoring time. Also found: the 2026-08-14 occurrence was NOT under cap pressure (163L reconstructed total, 2 sections, both caps unbreached) -- the freehand-reproduction risk is present on every notebook write with a nontrivial retained section, not only at cap-eviction boundaries, which raises this row's effective priority beyond the P1 already assigned.",
+  "recommendation": "Route via the EXISTING tracked board row FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED (task_board.backlog[], P1, next_agent: agents-architect) -- per this proposal's own LANE-A rationale (agent-father already dropped this exact rewire twice via untracked docs/signals/processed/ handoffs), do not re-signal agent-father directly outside the tracked row. docs/data/orch/orch-state.json is outside agents-architect's declared commit zone (.claude/skills/commit-boundary/SKILL.md RULE 2 zone table), so the board-row field update (status -> ARCHITECT-REVIEWED / occurrence_count -> 3 / sharpened AC-3+AC-1 text) is left to po to apply, not attempted here.",
+  "related_occurrences": [
+    "feedback_auditor_cappressure_trim_partially_truncates_retained_section.md (2026-08-09, c9->c10, 1st occurrence of the truncation shape)",
+    "feedback_auditor_notebook_cycle_counter_regressed_c385_to_c4.md (2026-08-08/2026-08-14, numbering/ordering shape, root cause already found by po 2026-08-14T02:02Z)",
+    "2026-08-14T04:17:44Z c89->c90 commit fefa04067 (2nd occurrence of the truncation shape, this review's new evidence)"
+  ],
+  "board_row_ref": "FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED"
+}
