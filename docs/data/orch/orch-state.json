@@ -12070,6 +12070,20 @@
             "observed_at": "2026-08-13T17:35:00Z"
           }
         }
+      },
+      {
+        "id": "FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT",
+        "title": "PLAN-ONLY: signal-queue receiver-delivery contract (architect-ruled, decomposed by PM)",
+        "status": "DONE",
+        "owner": "",
+        "zone": "cross-service/",
+        "priority": "P1",
+        "plan_only": true,
+        "created_at": "2026-07-21T15:28:00Z",
+        "created_by": "po-signalqueue-triage-20260721",
+        "updated_at": "2026-08-14T01:34:10Z",
+        "updated_by": "pm",
+        "status_note": "Decomposed into 4 atomic implementation subtasks: FIX-SIGNALQUEUE-PUSH-SPAWN-FANOUT-MECHANISM (tier1), FIX-SIGNALQUEUE-SIGNAL-DASHBOARD-DOCS (tier1), FIX-SIGNALQUEUE-UNIFIED-AGENT-CONSUMER (tier2), FIX-SIGNALQUEUE-ALERT-COMMANDER-CONSUMER (tier2)"
       }
     ],
     "done_verified": [
@@ -15401,6 +15415,93 @@
         "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
         "dispatch_lane": "ba",
         "updated_at": "2026-08-13T23:20:36Z"
+      },
+      {
+        "id": "FIX-SIGNALQUEUE-PUSH-SPAWN-FANOUT-MECHANISM",
+        "title": "Signal-queue push mechanism: spawn-fanout Step 5.2b + cowork-schedule flags",
+        "status": "TODO",
+        "owner": "",
+        "zone": "cowork-team",
+        "size": "M",
+        "priority": "P1",
+        "type": "FIX",
+        "created_at": "2026-08-14T01:35:00Z",
+        "created_by": "pm",
+        "depends": [],
+        "blocks": [
+          "FIX-SIGNALQUEUE-UNIFIED-AGENT-CONSUMER",
+          "FIX-SIGNALQUEUE-ALERT-COMMANDER-CONSUMER"
+        ],
+        "note": "Tier 1: Architect Component A. Add signal_queue_push SSOT flag to 6 cowork-schedule slots, implement Step 5.2b claim/mark-READ/release logic, reuse existing dashboard-row lock.",
+        "files": [
+          "docs/data/cowork-schedule.json",
+          "docs/agents/cowork-team/flow/spawn-fanout.md"
+        ],
+        "updated_at": "2026-08-14T01:34:10Z"
+      },
+      {
+        "id": "FIX-SIGNALQUEUE-SIGNAL-DASHBOARD-DOCS",
+        "title": "Signal-dashboard documentation: update SKILL.md + add reference.md section",
+        "status": "TODO",
+        "owner": "",
+        "zone": "docs",
+        "size": "S",
+        "priority": "P1",
+        "type": "FIX",
+        "created_at": "2026-08-14T01:35:00Z",
+        "created_by": "pm",
+        "depends": [],
+        "blocks": [],
+        "note": "Tier 1: Architect Component C. Update Receivers table with delivery-mechanism annotation, add reference.md section explaining push vs pull split and lock-plane contract.",
+        "files": [
+          ".claude/skills/signal-dashboard/SKILL.md",
+          ".claude/skills/signal-dashboard/reference.md"
+        ],
+        "updated_at": "2026-08-14T01:34:10Z"
+      },
+      {
+        "id": "FIX-SIGNALQUEUE-UNIFIED-AGENT-CONSUMER",
+        "title": "Unified-agent consumption: chef.md Step 0.3 + init.md inter_agent entry",
+        "status": "TODO",
+        "owner": "",
+        "zone": "unified-agent",
+        "size": "S",
+        "priority": "P1",
+        "type": "FIX",
+        "created_at": "2026-08-14T01:35:00Z",
+        "created_by": "pm",
+        "depends": [
+          "FIX-SIGNALQUEUE-PUSH-SPAWN-FANOUT-MECHANISM"
+        ],
+        "blocks": [],
+        "note": "Tier 2: Architect Component B Part 1. Add minimal consumption step to parse and apply CROSS-TEAM SIGNAL blocks (methodology-flag override, other types log-only).",
+        "files": [
+          "docs/agents/unified-agent/flow/chef.md",
+          "docs/agents/unified-agent/init.md"
+        ],
+        "updated_at": "2026-08-14T01:34:10Z"
+      },
+      {
+        "id": "FIX-SIGNALQUEUE-ALERT-COMMANDER-CONSUMER",
+        "title": "Alert-commander consumption: cycle.md consumption block + init.md inter_agent entry",
+        "status": "TODO",
+        "owner": "",
+        "zone": "alert-commander",
+        "size": "S",
+        "priority": "P1",
+        "type": "FIX",
+        "created_at": "2026-08-14T01:35:00Z",
+        "created_by": "pm",
+        "depends": [
+          "FIX-SIGNALQUEUE-PUSH-SPAWN-FANOUT-MECHANISM"
+        ],
+        "blocks": [],
+        "note": "Tier 2: Architect Component B Part 2. Add minimal consumption step before Firing Gate to parse and log CROSS-TEAM SIGNAL blocks.",
+        "files": [
+          "docs/agents/alert-commander/flow/cycle.md",
+          "docs/agents/alert-commander/init.md"
+        ],
+        "updated_at": "2026-08-14T01:34:10Z"
       }
     ],
     "review": [
@@ -17094,42 +17195,6 @@
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "ba",
         "ba_triage_note_20260813T1226Z": "BA REVIEW-LANE TRIAGE (dispatched next_agent=ba 2026-08-13, secondary-drain). NOT ready to decompose into dev-actionable task(s) -- escalating to PO, this is a scope question only PO can adjudicate, not an infra-diagnosis task for BA. Two premises in ops_recon_note are now stale/superseded, RAW-checked this tick: (1) ops's cited blocker \"cannot verify until FIX-BCTC-SERVING-GATE-VPSSTALE-IGNORES-DEMAND-QUEUE-DEPTH ships\" is moot -- that row is DONE_VERIFIED (commit 8c108491b, QA live-verified against rebuilt runtime 2026-08-08T15:35:17Z, now in archive/2026-08.json), shipped 5 days before this dispatch; the cited gate defect no longer exists, but nobody has re-run this row's own live_tool_reconcile AC against the fixed gate. (2) ops's 7-ticker NO_DATA bucket (DBC/HUT/KDC/MSN/SAB/SHB/VND) is superseded by a MORE PRECISE both-plane live census run the day after ops's recon: docs/architecture-briefs/2026-08-07-bctc-q1-2026-servability-census.md (task SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS -- itself still parked review[]/next_agent=po since 2026-08-07T20:12:35Z, never adjudicated, a sibling stale-review-lane row worth PO's attention too). That census found: 6 of ops's 7 \"NO_DATA\" tickers (DBC/KDC/MSN/SAB/SHB/VND) are actually mode-3 -- extraction DID run, non-zero total_assets in financial_reports, refine_status=PENDING -- i.e. FIX-BCTC-REFINE-DURABLE-TRIGGER-BACKSTOP's scope, NOT an ingest stall. Only HUT+PLX are true ingest-stall members (matches this row's own mandatory natural-control pair). The 7 CORRUPT tickers (DGC/DXG/FRT/GEX/KDH/PDR/VJC) are already absorbed by FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP's write-back-guard mechanism (DONE_VERIFIED); remediation of the already-corrupt rows is a distinct, currently UNOWNED gap (census section 9a) -- minting a fresh \"OCR-extraction-defect fix\" under THIS row risks duplicating/conflicting with that row's territory without PO's explicit ownership call. Census also surfaced 2 tickers never named in this row's history: BID, DAG (same mode-2 signature, PDF gaps). Census's own explicit recommendation (its section 7/9): narrow this row's cohort to {HUT, PLX, BID, DAG} (4, not 15) -- routed to PO for adjudication in its RETURN block 6 days ago, never actioned. RECOMMEND: do NOT decompose on the router-suggested framing (OCR fix for 7 CORRUPT + confirm vps_stale-gate covers the other 8) -- 6 of those 8 belong to a different row and the vps_stale-gate question is already answered (shipped, needs re-measurement not a new fix). Requesting PO: (a) adopt or reject the census's cohort-narrowing, (b) rewrite this row's title/note/AC to the adjudicated cohort if adopted, (c) rule on ownership of the mode-1 batch-remediation gap (census 9a) before any dev-team task mints against this row. Status set BLOCKED, next_agent=po pending that call."
-      },
-      {
-        "id": "FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT",
-        "title": "PLAN-ONLY: signal-dashboard receivers-table lists unified-agent + alert-commander as valid 'to' targets but NEITHER flow has an inbox/signal-dashboard READ step -> rows addressed to them are structurally undeliverable (dark); spawn-fanout.md Step 5 spawn prompt carries no signal payload. Architect decide: (a) add inbox READ step to both flows, (b) make spawn-fanout deliver matched NEW rows, or (c) remove both from the receivers table.",
-        "status": "REVIEW",
-        "owner": "po",
-        "zone": "cross-service/",
-        "next_agent": "pm",
-        "priority": "P1",
-        "plan_only": true,
-        "created_at": "2026-07-21T15:28:00Z",
-        "created_by": "po-signalqueue-triage-20260721",
-        "origin_signal_id": "cow-20260721T144500",
-        "sibling_of": "FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT",
-        "status_note": "AC: every receiver in .claude/skills/signal-dashboard/SKILL.md Receivers table either (1) has a live inbox drain step in its flow OR (2) is removed from the table - no 'to' value may be a structural no-op. Evidence: docs/signals/cowork-team-20260721T144500-inbox-gap.json. Live casualty: po-20260720T052606 (HIGH CHEF-L6-GOLD-FALSE-PREDICATE, to=unified-agent, dark 33h+, LEFT NEW deliberately). Sibling FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT covers the po->dev-team NEW/READ filter mismatch - design the full receiver-delivery contract together. The casualty's false gold predicate is separately tracked by SPIKE-CTG-FALSE-PRESENCE-BLINDSPOT.",
-        "po_ordering_ruling": "LANDS FIRST of the pair. Ruling by po 2026-07-21T19:29:49Z on cowork escalation cow-20260721T172415, which asked for the ORDERING of the two existing rows to be graded and explicitly asked that no new row be minted. Honoured: no row minted. Rationale: a terminal signal_queue status (READ/DONE) is only safe once a defined receiver consumes the row. Defining the status contract first would mark rows terminal while they are still structurally undeliverable — the exact strand this escalation is objecting to. Delivery capability must precede status semantics.",
-        "po_repro_case": "po-20260720T052606 (from=po, to=unified-agent, methodology-flag, HIGH) is the canonical live reproduction and MUST be used as the acceptance fixture. It has sat status=NEW since 2026-07-20 addressed to a COWORK agent. dev-team drain 0a-D (docs/agents/dev-team/flow/drain-signals.md) collects only rows whose 'to' matches po or a dev-team-addressed agent, so no drain will ever pick it up. It is not backlogged — it is undeliverable. Its content is a live methodology correction for unified-agent (stop pasting the literal gold >$4,300 L6 token, compute from live gold instead), so the cost of the missing delivery path is ongoing wrong output, not merely a stuck row.",
-        "po_status_decision": "This row is DELIBERATELY LEFT status=NEW by po. Marking it READ would destroy the only record that a message was never delivered, and NEW costs nothing here precisely because no drain matches a cowork-addressed row — zero churn. It must stay NEW until a delivery path exists.",
-        "updated_at": "2026-08-14T01:29:28Z",
-        "updated_by": "architect",
-        "router_fileplane_lock_asymmetry_20260721T1946": "ROUTER — RELATED GAP ON THE FILE PLANE, UNROUTED ACROSS SEVERAL TICKS, RECORDED HERE BECAUSE THIS ROW OWNS DELIVERY SEMANTICS. docs/agents/dev-team/flow/drain-signals.md step 0a-D claims a per-row `dashboard-row` lock (row_key = 'dash:signal_queue:' + row.id, ttl 1800) and SKIPS on collision, so the DB plane is guarded against a concurrent peer. The file plane at step 0a-1 has NO equivalent peer-collision guard: it can `mv` a signal file out of docs/signals/ while a live peer is mid-read on that exact path. The two planes of one drain therefore run at different isolation levels, and the unguarded one is the one that mutates the filesystem. This is adjacent to but distinct from the undeliverable-orphan problem this row already covers — same subsystem, and a receiver contract that does not state which plane holds what lock will not close it. PO to decide whether it folds here or needs its own row; router did not mint.",
-        "po_ruling_fileplane_split_20260721T2011": "RULING 4 — DOES NOT FOLD HERE; OWN ROW MINTED AS FIX-DRAIN-FILEPLANE-PEER-COLLISION-GUARD (backlog, P1). This row is PLAN-ONLY and asks an ARCHITECT to decide a receiver-contract question: whether undeliverable 'to' targets get an inbox step, get delivery pushed to them, or get removed from the table. The file-plane lock asymmetry is a concrete concurrency defect in an existing drain step with a known shape and a developer owner. Different question, different agent, different definition of done — and this row's own status is PLAN-ONLY, so folding an implementable defect into it would strand the defect behind an architecture decision that has not been scheduled. Router was right that they are adjacent and right not to merge them. CROSS-LINK IS RETAINED IN BOTH DIRECTIONS: whatever receiver contract this row settles on MUST state which plane holds which lock, and the new row must not be closed in a way that contradicts the contract this row produces.",
-        "supervised": true,
-        "po_lane_repair_20260728": "LANE REPAIR — acute, chain-motivated. Verified by execution: P1, plan_only:true, supervised absent, next_agent architect, depends_on empty and satisfied => is_bounded1_eligible false AND SLS-select false, i.e. no lane. It is ALSO the sole blocking dependency of FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT, which PO lane-repaired earlier in this same tick — repairing the dependent alone would have been useless, since deps_satisfied() would have held it behind a predecessor that itself could never dispatch. Set supervised:true (the missing half of the pair) so the whole two-row chain can move. This is one of the 48 plan_only-without-supervised rows censused on FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER; the other 47 are deliberately left untouched as that row's acceptance evidence.",
-        "promoted_at": "2026-08-07T18:23:29Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "architect",
-        "claimed_at": "2026-08-07T19:01:59Z",
-        "claimed_by": "dev-team (supervised-lane sweep)",
-        "architect_review_note": "Decision: HYBRID — SSOT-flagged push (new signal_queue_push flag on 6 cowork-schedule.json slots feeding spawn-fanout.md Step 5.2b, reusing dev-team's existing dash:signal_queue: lock) + minimal no-op-default consumption step added to chef.md/cycle.md. Rejects pure-(a) (task_claim/task_release marked Phase-2-not-active in both tool packages; would duplicate the CAS-guard dance cowork-team already centralizes; tran-ngoc-bau already implements a correct pull independently — generic push would race it) and (c) (both to-values are live multi-sender, removal reproduces the gap one level up). Repro correction: po-20260720T052606 is now status=triaged (PO folded it 2026-07-22 into FIX-CHEF-L6-GOLD-FALSE-PREDICATE/FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING), not NEW as the row's stale po_repro_case field states — this corroborates rather than weakens the finding. Lock-plane statement (Sec 6 of brief) confirms DB-plane reuse only, file-plane untouched, no contradiction with FIX-DRAIN-FILEPLANE-PEER-COLLISION-GUARD. Full design: docs/architecture-briefs/2026-08-07-fix-signalqueue-receiver-delivery-contract.md",
-        "brief_ref": "docs/architecture-briefs/2026-08-07-fix-signalqueue-receiver-delivery-contract.md",
-        "architect_reviewed_at": "2026-08-07T19:11:59Z",
-        "secondary_claimed_at": "2026-08-14T01:29:28Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "pm"
       },
       {
         "id": "SPIKE-BCTC-Q1-2026-SERVABILITY-CENSUS",
