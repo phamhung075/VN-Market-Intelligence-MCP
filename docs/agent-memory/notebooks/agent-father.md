@@ -8,66 +8,6 @@
      explicit YYYY-MM-DD token. Nothing deleted; full record in the archive file and git
      history. -->
 
-## EDIT 2026-08-14T12:35Z — task UC-CCA-P2-ALERT-COMMANDER (router-dispatched, session
-`632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
-- FR-4 + architect's structural refinement (Q-alert-commander-anchor ruling: Option a).
-  `docs/handoffs/UC-CCA-P2-BA-spec.md` "[Architect] Brownfield Findings" read first; live-reread
-  `docs/agents/alert-commander/flow/cycle.md` before editing — architect's anchors (Dispatch table
-  `:33-40`, zero inline steps before it) matched the live file exactly, zero drift from the
-  2026-08-14 measurement.
-- **Applied both required edits** (architect explicitly ruled prose-only or table-only does not
-  satisfy the thin-dispatcher contract here): (1) new zero-th Dispatch-table row `| **Step 0-GW** —
-  Gateway availability gate | 0-GW | Inline (FIRST — see below) |` inserted before the existing
-  "Bootstrap + Regime + Context + Legal/Crisis" row; (2) inline `## Step 0-GW — Gateway Availability
-  Gate (FIRST STEP — runs before bootstrap)` section inserted immediately after the `## Dispatch`
-  table, pointing at `.claude/skills/gateway-availability-gate/SKILL.md` (agent-id=alert-commander).
-  Mirrored `bctc-analyst/cycle.md`'s live convention (header-plus-content dispatcher-level inline
-  step right after its own table) — read that file first per dispatch instructions, confirmed the
-  shape before writing. Notebook class confirmed APPEND (`init.md:21` "notebook append every
-  cycle" + `stage-dispatch-log.md:73` per BA spec) — referenced in the new section's BLOCKED-path
-  wording, not a new class.
-- Gateway-less this session (tool grant Read/Edit/Write/Bash only, no `mcp__gateway__call_tool`) —
-  task-lock skipped per `edit-apply.md`'s own documented gateway-less exception; router instructed
-  INV-GATEWAY-1 direct pathspec-scoped commit.
-- **Board disposition:** `ready[]`→`review[]`, `next_agent:qa` (AC-4 pointer-placement grep-check is
-  qa-shaped verification, no live agent invocation needed to confirm this mechanical wiring change),
-  `agent_father_implementation_note` added via `scripts/orch-apply.sh` (`FU-AGENT-FATHER-ORCH-SCOPE`
-  — outside `commit_zone`, applied not committed by me). `.head` was idle throughout — untouched.
-
-## EDIT 2026-08-14T12:36Z — task UC-CCA-P2-BCTC-ANALYST (router-dispatched, session
-`632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
-- FR-4 + architect's structural refinement #1. `docs/handoffs/UC-CCA-P2-BA-spec.md` "[Architect]
-  Brownfield Findings" read first; live-reread `docs/agents/bctc-analyst/flow/cycle.md` before
-  editing — architect's anchors (Dispatch table :23-24, E2 block ends :48-50, `## Step 0c` :52)
-  matched the live file exactly, zero drift from the 2026-08-14 measurement.
-- **Applied both required edits** (thin-dispatcher table is the execution-order SSOT here, not
-  prose alone — same ruling as the alert-commander sibling above): (1) new Dispatch-table row
-  `| **Step 0-GW** — Gateway availability gate | 0-GW | Inline (SECOND, after E2 — see below) |`
-  inserted between the existing "E2 Market-hours guard" row and the "Bootstrap + Regime" row; (2)
-  inline `## Step 0-GW — Gateway Availability Gate (SECOND STEP — runs after E2, before bootstrap)`
-  section inserted after the E2 block ends (:48-50), before `## Step 0c` (:52), pointing at
-  `.claude/skills/gateway-availability-gate/SKILL.md` (agent-id=bctc-analyst). E2 stays FIRST and
-  unconditionally ahead of the new gate — documented inline (E2 is a pure wall-clock check, needs
-  no gateway call, architect explicitly ruled it must never be gated behind Step 0-GW). Notebook
-  class confirmed APPEND (`stage-log-notify.md:18` per BA spec) — the skill's existing BLOCKED
-  wording already covers it, not a new class.
-- Gateway-less this session (tool grant Read/Edit/Write/Bash only, no `mcp__gateway__call_tool`) —
-  bridged `task_claim`/`task_heartbeat`/`task_release` via `scripts/agents-flow/mcp-call.sh`
-  (`task:UC-CCA-P2-BCTC-ANALYST`, matches this session's `owner_client_session`) rather than
-  skipping the lock outright — `orch-state.head` was idle (wip≤1, solo per commit-boundary) so
-  either path was sound; used the bridge since it was live-verified working this session.
-- Staged only `docs/agents/bctc-analyst/flow/cycle.md`; found 2 sibling files
-  (`digest-predict/flow/main.md`, `unified-agent/flow/chef.md`) already sitting in the shared git
-  index from concurrent peer UC-CCA-P2 subtasks — did NOT sweep them in, used RULE 2.5
-  pathspec-scoped commit (`git commit ... -- docs/agents/bctc-analyst/flow/cycle.md`) so only my
-  file landed regardless of the shared index state. `git show --name-only HEAD` confirmed exactly
-  1 file. Committed+pushed `6261c722f` (INV-GATEWAY-1 direct pathspec-scoped commit).
-- **Board disposition:** `ready[]`→`review[]`, status `READY`→`REVIEW`, `next_agent: agent-father →
-  qa` — AC-4 (pointer placement) is grep-verifiable without a live cron-window spawn.
-  `agent_father_implementation_note` added via `scripts/orch-apply.sh` (`FU-AGENT-FATHER-ORCH-SCOPE`
-  — outside `commit_zone`, applied not committed by me — orch-validate PASS, conservation OK
-  742/742 task_total unchanged). `.head` was idle throughout — untouched.
-
 ## EDIT 2026-08-14T12:37Z — task UC-CCA-P2-UNIFIED-AGENT (router-dispatched, session
 `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
 - FR-4, single-agent-scoped edit. `docs/handoffs/UC-CCA-P2-BA-spec.md` "[Architect] Brownfield
@@ -124,3 +64,46 @@
   above). `agent_father_completion_note` + `commit_sha` fields added to the row via
   `scripts/orch-apply.sh` (`FU-AGENT-FATHER-ORCH-SCOPE` — applied, not committed by me). `.head` was
   idle throughout — untouched.
+
+## Keep (maintenance) 2026-08-14T12:57Z — scheduled daily cron (`cron-agent-father.md`, `23 14 * * *` UTC)
+- Trigger: scheduled. Pre-Check gate: `git diff --name-only HEAD~3..HEAD` (HEAD=`ddff307a6`) touched
+  `docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-{po,qa-2}.md`,
+  `docs/agent-memory/notebooks/{po,qa}.md`, `docs/data/orch/orch-state.json`,
+  `docs/signals/processed/*` — zero `.claude/agents/*.md` / `docs/agents/*/flow/*.md` matches →
+  Steps 1-2 (scan-orphans) SKIPPED per spec, went straight to Steps 3-5 with empty scan-orphans
+  output.
+- Agents scanned: 42 (`.claude/agents/*.md`, `docs/agents/*/init.md`). Top-5 checks: Check 1
+  (fail-loud-protocol) 41/42 pass; Check 2 (Error Boundary, case-insensitive + one-hop pointer
+  resolution) — all 8 dev-* zone thin-pointer agents resolve clean via
+  `docs/agents/developer/flow/microservice-main.md` (Error Boundary block re-verified present
+  live, line 16); 41/42 pass; Check 3 (`boundary_rules`) 41/42 pass; Check 4 (flow path resolves)
+  42/42 clean; Check 5 (version >90d stale) 0/42 — oldest live versions are `dev-frontend`/
+  `developer` at 89 days, under threshold, no stamp needed this cycle. The lone Check 1/3 fail
+  both checks is `semble-search` (no `agent:` YAML block at all — deliberate minimal tool-wrapper
+  doc) — carried-forward LOW-severity guide-taxonomy gap, escalated 2026-08-12, unchanged, no new
+  action.
+- Auto-fixes applied: 0 (nothing mechanically fixable this cycle — no stale versions, no
+  missing-roster/missing-notebook findings since Steps 1-2 were gated off).
+- Step 5 stale notebooks (>30d vs last-touching-commit date, informational only): idea-forge
+  (104d), market-analyst (104d), semble-search (104d), qa-responder (79d), dev-kinh-dich (36d),
+  dev-news-fetch (35d), `cowork-refactory-expert.md` + `cowork-refactory-expert-2026-07-11-fr1-
+  atomic.md` (34d), ops-mainserver-fetch (34d) — 9 files. Side-observation (NOT scored — Steps 1-2
+  gated off this cycle, same as every prior gated cycle): notebook-file count still exceeds the
+  42-agent roster (`main.md`, `dev-team.md` present as non-Employee-Card files) — carried, not
+  re-investigated out of gate-scope.
+- Step 5b (`team-tool-recheck.md`) re-run unconditionally per spec: wrote
+  `docs/agent-memory/health/team-tool-recheck-2026-08-14-1257.md`. Positive control held —
+  alert-commander/market-watcher/news-scout all still CRITICAL (`Bash` grant vs unqualified "no
+  other writes" description text, origin `610110e16` 2026-07-31), 14 days unresolved, unchanged
+  from the 2026-08-13T12:56Z run. Mechanical-enforcement status unchanged: PROSE-ONLY (`jq
+  '[.. | objects | select(has("write_boundary"))] | length'` on `system-map.json` = 0; 0 hits for
+  `agent-write-boundary-guard` in both settings files).
+- No `mcp__gateway__call_tool` MCP binding this session (confirmed — tool grant is
+  Read/Edit/Write/Glob/Grep/Bash only) — used `keep.md`'s documented INV-GATEWAY-1 gateway-less
+  direct-pathspec-commit fallback for this cycle's writes, no `task_claim`/commit-mutex wrapper
+  attempted.
+- PO handoff (Step 7, findings-only — no `Agent` spawn grant, same structural gap as
+  `feedback_devteam_flow_needs_nested_agent_spawn_subagent_cannot`): both findings groups
+  (3× CRITICAL tool-boundary mismatches, 1× LOW semble-search taxonomy gap) are carried-forward
+  and already PO-known from prior `team-tool-recheck` runs — no new backlog row needed this cycle,
+  surfaced in RETURN per protocol anyway (do not silently drop for lack of a spawn).
