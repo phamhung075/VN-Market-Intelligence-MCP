@@ -294,7 +294,7 @@
         "type": "signal_feedback",
         "summary": "16th occurrence: system-auditor T1 (a50b9fd0324963fd4) analysis-only-exit, resumed clean — see feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806",
         "severity": "MED",
-        "status": "OPEN",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "router",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-14T03:30Z",
@@ -311,7 +311,10 @@
           "secondary_note": "commit was unpushed post-resume (ahead=2, within by-design PUSH_THRESHOLD=20 band per feedback_gatewayless_specialist_commits_but_never_pushes) — router pushed via commit-mutex push-only leg",
           "running_tally": "resume-with-correction mitigation: 2 clean / 1 partial across 3 tries",
           "disposition": "corroboration only, per standing occurrence-3+ precedent — no new board row minted"
-        }
+        },
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> SPIKE-AUDITOR-WRITE-PLANE-DIVERGENCE-ROOT-CAUSE (backlog, P0, agents-architect), minted this tick and carrying this row as its origin_signal_id. This row's own detail block says 'corroboration only, per standing occurrence-3+ precedent — no new board row minted'; at occurrence 16 that precedent has become the problem, not the policy. The narrower system-auditor variant of the same class has now fired 10 times in 48h, so PO is escalating the class to a structural investigation rather than logging a 17th corroboration."
       },
       {
         "id": "sys-20260814T041720-3a88",
@@ -456,8 +459,11 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "READ",
-        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-14.json"
+        "status": "triaged",
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-14.json",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "PO RULING — RETIRE, do not replace in kind; and the signal itself is partly self-generated. (1) DECISION: the pre-2026-06-23 team-tool-recheck writer is RETIRED. Its function — comparing a DOCUMENTED tool param name against the LIVE MCP schema — is already owned by CHECK-TOOL-INTERFACE-SCHEMA-DRIFT-DOC-VS-LIVE (backlog, agent-father), which is the correct successor. Do not rebuild the old writer; land that row instead. (2) PREMISE CORRECTION: this signal is emitted by code-janitor's memory-prune-sweep.sh, which FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (backlog, developer) documents as carrying a HARDCODED 'writer silent since 2026-06-23' string with NO liveness predicate — so it will keep re-emitting on every sweep regardless of this ruling, and did: these two rows are byte-identical 6h apart. Fixing that row is what actually stops the resurface. Both rows closed together as one duplicate pair."
       },
       {
         "id": "cj-20260814T163219Z",
@@ -467,8 +473,11 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "READ",
-        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-14.json"
+        "status": "triaged",
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-14.json",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "PO RULING — RETIRE, do not replace in kind; and the signal itself is partly self-generated. (1) DECISION: the pre-2026-06-23 team-tool-recheck writer is RETIRED. Its function — comparing a DOCUMENTED tool param name against the LIVE MCP schema — is already owned by CHECK-TOOL-INTERFACE-SCHEMA-DRIFT-DOC-VS-LIVE (backlog, agent-father), which is the correct successor. Do not rebuild the old writer; land that row instead. (2) PREMISE CORRECTION: this signal is emitted by code-janitor's memory-prune-sweep.sh, which FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (backlog, developer) documents as carrying a HARDCODED 'writer silent since 2026-06-23' string with NO liveness predicate — so it will keep re-emitting on every sweep regardless of this ruling, and did: these two rows are byte-identical 6h apart. Fixing that row is what actually stops the resurface. Both rows closed together as one duplicate pair."
       },
       {
         "id": "sys-20260814T160000-a29-1",
@@ -478,11 +487,14 @@
         "type": "signal_feedback",
         "summary": "A-29 CRITICAL: vpsProxyWatchdog STALE (9.7h overdue)",
         "severity": "CRITICAL",
-        "status": "OPEN",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
-        "dedup_key": "auditor-a29-fire-gap:vpsProxyWatchdog"
+        "dedup_key": "auditor-a29-fire-gap:vpsProxyWatchdog",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "FOLD (FALSE POSITIVE) -> FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL. PO verified against GET /api/cron-status 2026-08-14T18:39Z: every one of these 5 crons is window-bounded (`2-8 * * 1-5`) and each has last_fire EXACTLY == expected_last_fire with last_status=success (vpsProxyWatchdog+priceUpdateWatchdog 08:50, alertScanParallel+taAlertNotifier 08:45, vnIndexRefresh 08:55) — each fired precisely at the final slot of its own daily window and is not due again until Monday 02:00Z. NOT STALE. classifyCronLiveness() measures elapsed-since-last-fire against the intra-window interval instead of the next scheduled slot. The CRITICAL severity on this row is manufactured by that upstream defect, not by any real cron gap. No board row minted. Blast-radius correction (weekday, not just weekend) recorded on the Layer-A row as po_fold_20260814T1841Z."
       },
       {
         "id": "sys-20260814T160001-a29-2",
@@ -492,11 +504,14 @@
         "type": "signal_feedback",
         "summary": "A-29 CRITICAL: alertScanParallel STALE (9.8h overdue)",
         "severity": "CRITICAL",
-        "status": "OPEN",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
-        "dedup_key": "auditor-a29-fire-gap:alertScanParallel"
+        "dedup_key": "auditor-a29-fire-gap:alertScanParallel",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "FOLD (FALSE POSITIVE) -> FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL. PO verified against GET /api/cron-status 2026-08-14T18:39Z: every one of these 5 crons is window-bounded (`2-8 * * 1-5`) and each has last_fire EXACTLY == expected_last_fire with last_status=success (vpsProxyWatchdog+priceUpdateWatchdog 08:50, alertScanParallel+taAlertNotifier 08:45, vnIndexRefresh 08:55) — each fired precisely at the final slot of its own daily window and is not due again until Monday 02:00Z. NOT STALE. classifyCronLiveness() measures elapsed-since-last-fire against the intra-window interval instead of the next scheduled slot. The CRITICAL severity on this row is manufactured by that upstream defect, not by any real cron gap. No board row minted. Blast-radius correction (weekday, not just weekend) recorded on the Layer-A row as po_fold_20260814T1841Z."
       },
       {
         "id": "sys-20260814T160002-a29-3",
@@ -506,11 +521,14 @@
         "type": "signal_feedback",
         "summary": "A-29 CRITICAL: taAlertNotifier STALE (9.8h overdue)",
         "severity": "CRITICAL",
-        "status": "OPEN",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
-        "dedup_key": "auditor-a29-fire-gap:taAlertNotifier"
+        "dedup_key": "auditor-a29-fire-gap:taAlertNotifier",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "FOLD (FALSE POSITIVE) -> FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL. PO verified against GET /api/cron-status 2026-08-14T18:39Z: every one of these 5 crons is window-bounded (`2-8 * * 1-5`) and each has last_fire EXACTLY == expected_last_fire with last_status=success (vpsProxyWatchdog+priceUpdateWatchdog 08:50, alertScanParallel+taAlertNotifier 08:45, vnIndexRefresh 08:55) — each fired precisely at the final slot of its own daily window and is not due again until Monday 02:00Z. NOT STALE. classifyCronLiveness() measures elapsed-since-last-fire against the intra-window interval instead of the next scheduled slot. The CRITICAL severity on this row is manufactured by that upstream defect, not by any real cron gap. No board row minted. Blast-radius correction (weekday, not just weekend) recorded on the Layer-A row as po_fold_20260814T1841Z."
       },
       {
         "id": "sys-20260814T160003-a29-4",
@@ -520,11 +538,14 @@
         "type": "signal_feedback",
         "summary": "A-29 CRITICAL: priceUpdateWatchdog STALE (9.7h overdue)",
         "severity": "CRITICAL",
-        "status": "OPEN",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
-        "dedup_key": "auditor-a29-fire-gap:priceUpdateWatchdog"
+        "dedup_key": "auditor-a29-fire-gap:priceUpdateWatchdog",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "FOLD (FALSE POSITIVE) -> FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL. PO verified against GET /api/cron-status 2026-08-14T18:39Z: every one of these 5 crons is window-bounded (`2-8 * * 1-5`) and each has last_fire EXACTLY == expected_last_fire with last_status=success (vpsProxyWatchdog+priceUpdateWatchdog 08:50, alertScanParallel+taAlertNotifier 08:45, vnIndexRefresh 08:55) — each fired precisely at the final slot of its own daily window and is not due again until Monday 02:00Z. NOT STALE. classifyCronLiveness() measures elapsed-since-last-fire against the intra-window interval instead of the next scheduled slot. The CRITICAL severity on this row is manufactured by that upstream defect, not by any real cron gap. No board row minted. Blast-radius correction (weekday, not just weekend) recorded on the Layer-A row as po_fold_20260814T1841Z."
       },
       {
         "id": "sys-20260814T160004-a29-5",
@@ -534,11 +555,14 @@
         "type": "signal_feedback",
         "summary": "A-29 CRITICAL: vnIndexRefresh STALE (9.6h overdue)",
         "severity": "CRITICAL",
-        "status": "OPEN",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
-        "dedup_key": "auditor-a29-fire-gap:vnIndexRefresh"
+        "dedup_key": "auditor-a29-fire-gap:vnIndexRefresh",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "FOLD (FALSE POSITIVE) -> FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL. PO verified against GET /api/cron-status 2026-08-14T18:39Z: every one of these 5 crons is window-bounded (`2-8 * * 1-5`) and each has last_fire EXACTLY == expected_last_fire with last_status=success (vpsProxyWatchdog+priceUpdateWatchdog 08:50, alertScanParallel+taAlertNotifier 08:45, vnIndexRefresh 08:55) — each fired precisely at the final slot of its own daily window and is not due again until Monday 02:00Z. NOT STALE. classifyCronLiveness() measures elapsed-since-last-fire against the intra-window interval instead of the next scheduled slot. The CRITICAL severity on this row is manufactured by that upstream defect, not by any real cron gap. No board row minted. Blast-radius correction (weekday, not just weekend) recorded on the Layer-A row as po_fold_20260814T1841Z."
       },
       {
         "id": "sys-20260814T160005-a29-6",
@@ -548,11 +572,14 @@
         "type": "signal_feedback",
         "summary": "A-29 CRITICAL: monthlySignalQualityAudit MISSED (1794.5h overdue)",
         "severity": "CRITICAL",
-        "status": "OPEN",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
-        "dedup_key": "auditor-a29-fire-gap:monthlySignalQualityAudit"
+        "dedup_key": "auditor-a29-fire-gap:monthlySignalQualityAudit",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "FOLD (GENUINE) -> FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD (backlog, dev-mcp-server, P2). PO verified live: cron `0 0 1 * *`, last_fire 2026-06-01, status MISSED — the two consecutive missed fires that row already tracks. Corroboration appended there; no new row."
       },
       {
         "id": "sys-20260814T160006-a29-7",
@@ -562,11 +589,14 @@
         "type": "signal_feedback",
         "summary": "A-29 CRITICAL: brokerSanctionsSweep STALE (346.5h overdue)",
         "severity": "CRITICAL",
-        "status": "OPEN",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
-        "dedup_key": "auditor-a29-fire-gap:brokerSanctionsSweep"
+        "dedup_key": "auditor-a29-fire-gap:brokerSanctionsSweep",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "MINTED -> FIX-BROKERSANCTIONSSWEEP-MISSED-CONSECUTIVE-FRIDAY-FIRES (backlog, dev-mcp-server, P2, zone apps/mcp-server/). The only finding in this batch of 8 that survived PO's premise check AND had no existing owner: cron `0 8 25-31 * 5`, last_fire 2026-07-31, a 14-day gap spanning two Fridays. Row carries an explicit caveat that expected_last_fire comes from the same schedule-blind engine, so the implementer must settle dom-AND-dow vs dom-OR-dow from source first."
       },
       {
         "id": "sys-20260814T160007-a29-8",
@@ -576,11 +606,14 @@
         "type": "signal_feedback",
         "summary": "A-29 CRITICAL: ragFtsRebuildCron STALE (598.3h overdue)",
         "severity": "CRITICAL",
-        "status": "OPEN",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
-        "dedup_key": "auditor-a29-fire-gap:ragFtsRebuildCron"
+        "dedup_key": "auditor-a29-fire-gap:ragFtsRebuildCron",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "FOLD (GENUINE) -> ALPHA-S2-RAG-FTS-REBUILD-CRON (backlog, BLOCKED, next_agent=null). PO verified live: cron `15 20 * * *` daily, last_fire 2026-07-20 — 25 days dead. Real retrieval-quality gap (hybrid BM25 leg missing all post-07-20 rows), not an archival chore. Escalation note recorded on that row: it is BLOCKED with a null next_agent so nothing dispatches it — it needs an owner or an explicit retire ruling."
       },
       {
         "id": "sys-20260814T160008-a29b-1",
@@ -590,11 +623,14 @@
         "type": "signal_feedback",
         "summary": "A-29b WARN: marketOpen cron NEVER_FIRED (unresolved join)",
         "severity": "WARN",
-        "status": "OPEN",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
-        "dedup_key": "auditor-a29-unresolved-join:marketOpen"
+        "dedup_key": "auditor-a29-unresolved-join:marketOpen",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP (review, P1, next_agent=system-auditor). PO verified live: /api/cron-status status histogram is ON_TIME=72 NEVER_FIRED=9 STALE=7 MISSED=1 — the NEVER_FIRED set is exactly these 9 names, each with reason 'chua ghi nhan lan chay nao trong cron_job_runs', i.e. a job_name_db join miss (marketOpen vs morningBriefingJob), not a dead job. Precisely the silent-join-drop that row exists for. No rows minted. Acceptance addition requested on the row: the fix must make these 9 resolve AND must make 'join failed' distinguishable from 'genuinely never ran' at the consumer."
       },
       {
         "id": "sys-20260814T160009-a29b-2",
@@ -604,11 +640,14 @@
         "type": "signal_feedback",
         "summary": "A-29b WARN: marketClose cron NEVER_FIRED (unresolved join)",
         "severity": "WARN",
-        "status": "OPEN",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
-        "dedup_key": "auditor-a29-unresolved-join:marketClose"
+        "dedup_key": "auditor-a29-unresolved-join:marketClose",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP (review, P1, next_agent=system-auditor). PO verified live: /api/cron-status status histogram is ON_TIME=72 NEVER_FIRED=9 STALE=7 MISSED=1 — the NEVER_FIRED set is exactly these 9 names, each with reason 'chua ghi nhan lan chay nao trong cron_job_runs', i.e. a job_name_db join miss (marketOpen vs morningBriefingJob), not a dead job. Precisely the silent-join-drop that row exists for. No rows minted. Acceptance addition requested on the row: the fix must make these 9 resolve AND must make 'join failed' distinguishable from 'genuinely never ran' at the consumer."
       },
       {
         "id": "sys-20260814T160010-b06",
@@ -632,11 +671,14 @@
         "type": "signal_feedback",
         "summary": "A-29b WARN: dataAuditDaily cron NEVER_FIRED (unresolved join)",
         "severity": "WARN",
-        "status": "OPEN",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
-        "dedup_key": "auditor-a29-unresolved-join:dataAuditDaily"
+        "dedup_key": "auditor-a29-unresolved-join:dataAuditDaily",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP (review, P1, next_agent=system-auditor). PO verified live: /api/cron-status status histogram is ON_TIME=72 NEVER_FIRED=9 STALE=7 MISSED=1 — the NEVER_FIRED set is exactly these 9 names, each with reason 'chua ghi nhan lan chay nao trong cron_job_runs', i.e. a job_name_db join miss (marketOpen vs morningBriefingJob), not a dead job. Precisely the silent-join-drop that row exists for. No rows minted. Acceptance addition requested on the row: the fix must make these 9 resolve AND must make 'join failed' distinguishable from 'genuinely never ran' at the consumer."
       },
       {
         "id": "sys-20260814T160012-a29b-4",
@@ -646,11 +688,14 @@
         "type": "signal_feedback",
         "summary": "A-29b WARN: summaryWeekly cron NEVER_FIRED (unresolved join)",
         "severity": "WARN",
-        "status": "OPEN",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
-        "dedup_key": "auditor-a29-unresolved-join:summaryWeekly"
+        "dedup_key": "auditor-a29-unresolved-join:summaryWeekly",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP (review, P1, next_agent=system-auditor). PO verified live: /api/cron-status status histogram is ON_TIME=72 NEVER_FIRED=9 STALE=7 MISSED=1 — the NEVER_FIRED set is exactly these 9 names, each with reason 'chua ghi nhan lan chay nao trong cron_job_runs', i.e. a job_name_db join miss (marketOpen vs morningBriefingJob), not a dead job. Precisely the silent-join-drop that row exists for. No rows minted. Acceptance addition requested on the row: the fix must make these 9 resolve AND must make 'join failed' distinguishable from 'genuinely never ran' at the consumer."
       },
       {
         "id": "sys-20260814T160013-a29b-5",
@@ -660,11 +705,14 @@
         "type": "signal_feedback",
         "summary": "A-29b WARN: summaryMonthly cron NEVER_FIRED (unresolved join)",
         "severity": "WARN",
-        "status": "OPEN",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
-        "dedup_key": "auditor-a29-unresolved-join:summaryMonthly"
+        "dedup_key": "auditor-a29-unresolved-join:summaryMonthly",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP (review, P1, next_agent=system-auditor). PO verified live: /api/cron-status status histogram is ON_TIME=72 NEVER_FIRED=9 STALE=7 MISSED=1 — the NEVER_FIRED set is exactly these 9 names, each with reason 'chua ghi nhan lan chay nao trong cron_job_runs', i.e. a job_name_db join miss (marketOpen vs morningBriefingJob), not a dead job. Precisely the silent-join-drop that row exists for. No rows minted. Acceptance addition requested on the row: the fix must make these 9 resolve AND must make 'join failed' distinguishable from 'genuinely never ran' at the consumer."
       },
       {
         "id": "sys-20260814T160014-a29b-6",
@@ -674,11 +722,14 @@
         "type": "signal_feedback",
         "summary": "A-29b WARN: summaryQuarterly cron NEVER_FIRED (unresolved join)",
         "severity": "WARN",
-        "status": "OPEN",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
-        "dedup_key": "auditor-a29-unresolved-join:summaryQuarterly"
+        "dedup_key": "auditor-a29-unresolved-join:summaryQuarterly",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP (review, P1, next_agent=system-auditor). PO verified live: /api/cron-status status histogram is ON_TIME=72 NEVER_FIRED=9 STALE=7 MISSED=1 — the NEVER_FIRED set is exactly these 9 names, each with reason 'chua ghi nhan lan chay nao trong cron_job_runs', i.e. a job_name_db join miss (marketOpen vs morningBriefingJob), not a dead job. Precisely the silent-join-drop that row exists for. No rows minted. Acceptance addition requested on the row: the fix must make these 9 resolve AND must make 'join failed' distinguishable from 'genuinely never ran' at the consumer."
       },
       {
         "id": "sys-20260814T160015-a29b-7",
@@ -688,11 +739,14 @@
         "type": "signal_feedback",
         "summary": "A-29b WARN: summaryYearly cron NEVER_FIRED (unresolved join)",
         "severity": "WARN",
-        "status": "OPEN",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
-        "dedup_key": "auditor-a29-unresolved-join:summaryYearly"
+        "dedup_key": "auditor-a29-unresolved-join:summaryYearly",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP (review, P1, next_agent=system-auditor). PO verified live: /api/cron-status status histogram is ON_TIME=72 NEVER_FIRED=9 STALE=7 MISSED=1 — the NEVER_FIRED set is exactly these 9 names, each with reason 'chua ghi nhan lan chay nao trong cron_job_runs', i.e. a job_name_db join miss (marketOpen vs morningBriefingJob), not a dead job. Precisely the silent-join-drop that row exists for. No rows minted. Acceptance addition requested on the row: the fix must make these 9 resolve AND must make 'join failed' distinguishable from 'genuinely never ran' at the consumer."
       },
       {
         "id": "sys-20260814T160016-a29b-8",
@@ -702,11 +756,14 @@
         "type": "signal_feedback",
         "summary": "A-29b WARN: foreignFlowFetch cron NEVER_FIRED (unresolved join)",
         "severity": "WARN",
-        "status": "OPEN",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
-        "dedup_key": "auditor-a29-unresolved-join:foreignFlowFetch"
+        "dedup_key": "auditor-a29-unresolved-join:foreignFlowFetch",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP (review, P1, next_agent=system-auditor). PO verified live: /api/cron-status status histogram is ON_TIME=72 NEVER_FIRED=9 STALE=7 MISSED=1 — the NEVER_FIRED set is exactly these 9 names, each with reason 'chua ghi nhan lan chay nao trong cron_job_runs', i.e. a job_name_db join miss (marketOpen vs morningBriefingJob), not a dead job. Precisely the silent-join-drop that row exists for. No rows minted. Acceptance addition requested on the row: the fix must make these 9 resolve AND must make 'join failed' distinguishable from 'genuinely never ran' at the consumer."
       },
       {
         "id": "sys-20260814T160017-a29b-9",
@@ -716,11 +773,14 @@
         "type": "signal_feedback",
         "summary": "A-29b WARN: publicContractsRefresh cron NEVER_FIRED (unresolved join)",
         "severity": "WARN",
-        "status": "OPEN",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
-        "dedup_key": "auditor-a29-unresolved-join:publicContractsRefresh"
+        "dedup_key": "auditor-a29-unresolved-join:publicContractsRefresh",
+        "triaged_at": "2026-08-14T18:43:30Z",
+        "triaged_by": "po",
+        "disposition": "FOLD -> FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP (review, P1, next_agent=system-auditor). PO verified live: /api/cron-status status histogram is ON_TIME=72 NEVER_FIRED=9 STALE=7 MISSED=1 — the NEVER_FIRED set is exactly these 9 names, each with reason 'chua ghi nhan lan chay nao trong cron_job_runs', i.e. a job_name_db join miss (marketOpen vs morningBriefingJob), not a dead job. Precisely the silent-join-drop that row exists for. No rows minted. Acceptance addition requested on the row: the fix must make these 9 resolve AND must make 'join failed' distinguishable from 'genuinely never ran' at the consumer."
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -919,7 +979,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-14T17:01:52Z",
+    "_updated_at": "2026-08-14T18:41:32Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -3730,7 +3790,7 @@
         "created_at": "2026-07-12T07:56:33Z",
         "note": "ARCHIVE-NOW (gap #4-adjacent — sentiment corpus quality). The rag-service FTS rebuild cron was never wired, so the hybrid retrieval's BM25 leg silently misses rows added since the last boot — degrading the sentiment input (rag_analyses) that feeds the divergence screen (ALPHA-S3). DoD: a daily cron rebuilds the FTS index on rag-service over the LanceDB rag_entries corpus; verify post-rebuild that recent rows are searchable via the BM25 leg. Brief roadmap step 2. zone=multi -> architect splits.  [PO 2026-07-14 coordination_session e417ef1f] USER GO — supervised:false AUTHORIZED (explicit user selection via router AskUserQuestion; NOT a gate-jump). flow-alpha FULL launch — user directed LAUNCH EVERYTHING (all remaining waves incl. wave 6). This row un-parked; BOUNDED-1/pipeline-resume may pick it. Wave ordering stays enforced by priority + depends (NOT reordered). Zone/depends/safety notes PRESERVED. Do NOT re-park.",
         "supervised": false,
-        "updated_at": "2026-07-15T04:55:19Z",
+        "updated_at": "2026-08-14T18:43:16Z",
         "updated_by": "po (triage qa-BLOCK: parked BLOCKED behind RAG-FTS-BUILD-MEMORY-BOUND + ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE; 14k->56k premise re-scoped; mcp-server code 35cc8cd56 clean/on-main, not a fixer defect)",
         "promoted_at": "2026-07-15T03:20:06Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
@@ -3746,7 +3806,8 @@
           "RAG-FTS-BUILD-MEMORY-BOUND"
         ],
         "blocked_reason": "rag-service _build_fts_index() OOM-crashes 768m container at ~56254-row corpus (qa 2af76decc, reproduced 2/2); behavioral BM25 round-trip DoD unmeetable until RAG-FTS-BUILD-MEMORY-BOUND bounds the rebuild AND ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE keeps the cron disarmed in the interim.",
-        "po_triage_note": "PO DISPOSITION 2026-07-15: mcp-server code (35cc8cd56, AHEAD=0) is CLEAN + mergeable — NOT a code defect, so no fixer/dev-mcp-server round on THIS row. Remaining ALPHA-S2 scope is purely the mcp-server-side tail once its two blockers clear: (i) re-tune ragRebuildFts() 90s deadline to RAG-FTS-BUILD-MEMORY-BOUND's reported steady-state wall-time + margin (90s provably insufficient — 250s+ observed and climbing with corpus); (ii) flip ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE enable flag ON; (iii) re-run the live BM25 nonce round-trip DoD (test_plan BEHAVIORAL a-e). DESIGN-PREMISE RE-SCOPE: brief 2026-07-15-alpha-s2-rag-fts-rebuild-cron.md sized against 14k rows; live corpus ~56k and GROWING — any fix must be corpus-size-INDEPENDENT (bigger mem limit or longer deadline alone = moving-target band-aid). Path #1 (ops mem-limit bump) intentionally NOT minted standalone: alone it does not unblock (250s>90s is memory-independent) and cannot be sized until RAG-FTS-BUILD-MEMORY-BOUND reports the footprint — folded into that task's DoD as a possible belt-and-suspenders."
+        "po_triage_note": "PO DISPOSITION 2026-07-15: mcp-server code (35cc8cd56, AHEAD=0) is CLEAN + mergeable — NOT a code defect, so no fixer/dev-mcp-server round on THIS row. Remaining ALPHA-S2 scope is purely the mcp-server-side tail once its two blockers clear: (i) re-tune ragRebuildFts() 90s deadline to RAG-FTS-BUILD-MEMORY-BOUND's reported steady-state wall-time + margin (90s provably insufficient — 250s+ observed and climbing with corpus); (ii) flip ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE enable flag ON; (iii) re-run the live BM25 nonce round-trip DoD (test_plan BEHAVIORAL a-e). DESIGN-PREMISE RE-SCOPE: brief 2026-07-15-alpha-s2-rag-fts-rebuild-cron.md sized against 14k rows; live corpus ~56k and GROWING — any fix must be corpus-size-INDEPENDENT (bigger mem limit or longer deadline alone = moving-target band-aid). Path #1 (ops mem-limit bump) intentionally NOT minted standalone: alone it does not unblock (250s>90s is memory-independent) and cannot be sized until RAG-FTS-BUILD-MEMORY-BOUND reports the footprint — folded into that task's DoD as a possible belt-and-suspenders.",
+        "po_fold_20260814T1841Z": "CORROBORATED LIVE + STATUS QUESTION FOR WHOEVER UNBLOCKS THIS. system-auditor Tier-2 c99 signal sys-20260814T160007-a29-8 flagged ragFtsRebuildCron STALE 598.3h; PO verified against GET /api/cron-status 18:39Z: cron_expr=`15 20 * * *` (daily), last_fire=2026-07-20 20:15:01, last_status=success — 25 days dead on a DAILY schedule, genuine. Row is BLOCKED with next_agent=null and title 'Archive-now', so nothing dispatches it and no one owns the decision. PO note: the hybrid BM25 leg has been silently missing post-2026-07-20 rows for 25 days, which is a live retrieval-quality gap, not an archival chore. Either give it a next_agent or convert it to an explicit retire decision — do not leave it BLOCKED/null for another 25 days."
       },
       {
         "id": "TASK17-FOREIGN-FLOW",
@@ -7666,7 +7727,7 @@
         "next_agent": "dev-mcp-server",
         "created_by": "dev-mcp-server",
         "created_at": "2026-07-30T06:05:12Z",
-        "updated_at": "2026-08-12T03:03:00Z",
+        "updated_at": "2026-08-14T18:43:16Z",
         "root_cause": "schedulerJobTable.ts:227-233 registers monthlySignalQualityAuditJob with options:{timezone:\"UTC\", recoverMissedExecutions:false} — an explicit opt-out documented in the adjacent code comment as deferred pending a T4 dedup guard (\"recovery is opt-out here until a T4 dedup guard is added to runMonthlySignalQualityJob() in a future sprint\"). If the mcp-server process is down/restarting at exactly the 1st-of-month 00:00 UTC fire instant, that month's audit is permanently skipped with no backfill and no distinguishing signal from a normal quiet month.",
         "evidence": "CONFIRMED AT SOURCE 2026-07-30 (task FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H investigation, AC-2/AC-3): queried the live named-volume market.db cron_job_runs table via an EXACT job_name match against idx_cron_job_runs_job_started (working around this DB's known page-corruption on full-table-scan queries — see FIX-SQLITE-DOCKER-VIRT-CORRUPTION-RECUR-20260730, same root DB, unrelated defect). Result: exactly 2 rows total for monthlySignalQualityAuditJob, started_at=2026-05-01T00:00:00 (status=success) and 2026-06-01T00:00:00 (status=success) — NO row for 2026-07-01. The July fire genuinely did not happen; recoverMissedExecutions:false meant no backfill occurred and nothing alerted on the gap.",
         "not_the_signal_quality_audit_defect": "IMPORTANT — this missed cron run is NOT the cause of the separate signal_quality_audit SLA-breach defect fixed by FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H. Traced at source: runMonthlySignalQualityJob() (scheduler/audits/monthlySignalQualityJob.ts) only queries signal_rejections and sends a Telegram WORK report — it never writes to the signal_quality_audit table. That table's only writer is insertSignalQualityAudit() called from post_agent_signal (price_confirmation/urgent_news + confidence field only), an entirely separate event-driven path. Do not conflate the two when scoping this fix.",
@@ -7677,7 +7738,8 @@
         "mechanism_correction": "The row's recommended_action (add a T4 dedup guard, then flip recoverMissedExecutions:false -> true) is NECESSARY BUT NOT SUFFICIENT and must not be shipped alone. Confirmed at source in node-cron@3.0.3 src/scheduler.js: Scheduler.start() sets lastExecution = timeMatcher.apply(new Date()) and lastCheck = process.hrtime() at start time, and the recovery loop only walks back Math.floor(elapsedMs/1000) seconds since the previous in-process 1s tick. Therefore recoverMissedExecutions:true recovers ONLY event-loop stalls inside a living process — it can NEVER replay a fire that fell during a process restart or downtime window. Any restart spanning 1st-of-month 00:00 UTC still loses the audit with the flag set to true. Real fix must be a startup catch-up: apps/mcp-server/src/scheduler/startupHelpers.ts already ships shouldRunCatchup() (task 1430) with a DB-backed 'already ran today' guard, weekdayOnly / requiredUtcDay / utcHour window gating, and fail-safe-on-DB-error semantics. Scope this row as: generalise that helper's dedup window from per-day to per-cadence-period (per-month for this job), enrol monthlySignalQualityAuditJob in it, THEN flip the flag as defence-in-depth.",
         "stale_action_note": "recommended_action's June-backfill escape hatch has EXPIRED — it was conditioned on pickup before 2026-08-01. Both the July and August target months are now unrecoverable through natural cadence; if the two reports are wanted they need an explicit one-shot historical query over signal_rejections, which should be an AC on this row rather than an implicit assumption.",
         "escalation_source": "PO escalation triage 2026-08-09 (router session 165f4245). Note for whoever picks this up: the 'Aug-7 23-cron simultaneous stop' incident that escalated this row is NOT corroborating evidence for it — that incident was refuted (no container crash; 23/23 of those jobs fired exactly on their own schedules). Do not widen this row's scope on the strength of it.",
-        "status_note": "[po/triage-2026-08-12T03:03:00Z] FOLD. Telegram 4716 / signal_queue row sys-20260812T022124-5d56: `monthlySignalQualityAudit MISSED (1730h overdue, expired schedule)` (A-29, WARN). 1730h = ~72 days = the two consecutive missed fires this row already records (2026-07-01 and 2026-08-01), now compounded and re-reported as an 'expired schedule'. No new information beyond confirming the miss has not self-healed and the recover-guard this row specifies still does not exist. Note the companion row FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H (REVIEW) covers the SEPARATE defect that sla-monitor grades this monthly cron against a 48h event-driven SLA — that one makes the alert noisy, this one is the actual missed execution. Fix both or the signal stays untrustworthy in either direction."
+        "status_note": "[po/triage-2026-08-12T03:03:00Z] FOLD. Telegram 4716 / signal_queue row sys-20260812T022124-5d56: `monthlySignalQualityAudit MISSED (1730h overdue, expired schedule)` (A-29, WARN). 1730h = ~72 days = the two consecutive missed fires this row already records (2026-07-01 and 2026-08-01), now compounded and re-reported as an 'expired schedule'. No new information beyond confirming the miss has not self-healed and the recover-guard this row specifies still does not exist. Note the companion row FIX-SLA-SIGNALQUALITYAUDIT-MONTHLY-CADENCE-MISCLASSIFIED-48H (REVIEW) covers the SEPARATE defect that sla-monitor grades this monthly cron against a 48h event-driven SLA — that one makes the alert noisy, this one is the actual missed execution. Fix both or the signal stays untrustworthy in either direction.",
+        "po_fold_20260814T1841Z": "CORROBORATED LIVE (3rd-party confirmation of this row's own premise, no new row minted). system-auditor Tier-2 c99 signal sys-20260814T160005-a29-6 flagged it MISSED 1794.5h overdue; PO verified independently against GET /api/cron-status 18:39Z: cron_expr=`0 0 1 * *`, last_fire=2026-06-01 00:00:00, last_status=success, status=MISSED. Exactly the two consecutive missed fires (2026-07-01, 2026-08-01) this row already describes — still true, still unfixed, now 3 fires from a third miss on 2026-09-01. This is one of only 3 findings that survived PO's premise check of the 8 CRITICALs in that batch (5 were Layer-A false positives)."
       },
       {
         "id": "FIX-DECISION-JOURNAL-BYTECAP-NO-ACTUATOR",
@@ -9880,7 +9942,7 @@
         "next_agent": "dev-mcp-server",
         "created_by": "po",
         "created_at": "2026-08-09T02:48:45Z",
-        "updated_at": "2026-08-12T00:00:27Z",
+        "updated_at": "2026-08-14T18:43:16Z",
         "supervised": false,
         "depends_on": null,
         "blocks": null,
@@ -9895,7 +9957,8 @@
         "updated_by": "po/triage-20260811T1431Z",
         "occurrence_count": 3,
         "occurrence_2_20260811": "SECOND STORM IN 2 DAYS. system-auditor emitted 8 more A-29 findings at 2026-08-11T18:22Z (reports 4686-4693: 6 CRITICAL + 2 WARN) to the BUG channel. PO refuted ALL 8 live against cron_job_runs inside vn-market-intelligence-mcp-mcp-server-1 (docker exec bun bun:sqlite, readonly). 8/8 map exactly onto sub-defects THIS ROW ALREADY NAMES, and 7 of the 8 job names are named verbatim in its own 2026-08-09 evidence field: (a) AC-1 schedule-blind age ladder — vpsProxyWatchdogJob last 2026-08-11 08:50:00, price-update-watchdog 08:50:00, vnIndexRefreshJob 08:55:00, taAlertNotifierJob 08:45:01; all four are market-hours cron ('*/N 2-8 * * 1-5') and their 2026-08-11 day-profile is BYTE-IDENTICAL to 2026-08-07 and 2026-08-10 (n=42/42/84/28 respectively, first fire 02:00:0x, last fire at the window edge). A 9.4-9.6h 'staleness' at 18:22Z is the overnight gap, i.e. correct behaviour, graded against a flat 0.1-0.4h 24/7 threshold. (b) AC-4 config-key enumeration — taAlertScanJob and bbAlertScanJob each have exactly 27 runs spanning 2026-04-23..2026-04-24 and NOTHING since, because they were merged into alertScanParallelJob (first run 2026-04-27 02:00:00, 1644 runs, last 2026-08-11 08:45:00, still healthy). They survive only as CRONS config keys at cronConfig.ts:89-92 with no registration of their own; the '2625.6h MISSED' figure is arithmetically exact and semantically meaningless. (c) AC-4 env-gate — ragFtsRebuildCronJob 2 runs (2026-07-19, 2026-07-20) then off by design (CRON_RAG_FTS_REBUILD_ENABLED default-false per ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE); must report DISARMED, not WARN. (d) AC-3 dom/dow OR-vs-AND — brokerSanctionsSweep 4 runs, last 2026-07-31 08:00:01, real next fire 2026-08-28, so 274.4h-vs-36h is the OR-semantics artefact this row already documents. ZERO genuine cron gaps in this batch (the one real gap from the 08-09 snapshot, monthlySignalQualityAudit, is not in it).",
-        "reprice_rationale_20260811": "P2->P1 on RECURRENCE COST, not on blast radius — the not_blocking note stays true (every maligned job is firing on schedule, zero production data loss). What changed: this detector defect has now consumed two full PO triage cycles 2 days apart and put 6 CRITICAL rows on the BUG channel that a human reading that channel cannot distinguish from a real scheduler death. It also actively masks: the one genuinely stalled item in today's set, ragFtsRebuildCron, is real-but-deliberate, and any FUTURE real gap in these 8 names is now pre-classified as noise by two consecutive PO refutations. Priority reflects the alarm-channel poisoning, which compounds per storm."
+        "reprice_rationale_20260811": "P2->P1 on RECURRENCE COST, not on blast radius — the not_blocking note stays true (every maligned job is firing on schedule, zero production data loss). What changed: this detector defect has now consumed two full PO triage cycles 2 days apart and put 6 CRITICAL rows on the BUG channel that a human reading that channel cannot distinguish from a real scheduler death. It also actively masks: the one genuinely stalled item in today's set, ragFtsRebuildCron, is real-but-deliberate, and any FUTURE real gap in these 8 names is now pre-classified as noise by two consecutive PO refutations. Priority reflects the alarm-channel poisoning, which compounds per storm.",
+        "po_fold_20260814T1841Z": "BLAST RADIUS IS WIDER THAN THIS ROW'S TITLE — corrected by PO live check, not relayed. Title scopes the defect to '23 healthy crons ... every weekend'. It also fires EVERY WEEKDAY on market-window-bounded crons. 2026-08-14 (Friday) 18:39Z, GET /api/cron-status returned STALE for all five of vpsProxyWatchdog (`*/10 2-8 * * 1-5`), priceUpdateWatchdog (`*/10 2-8 * * 1-5`), alertScanParallel (`*/15 2-8 * * 1-5`), taAlertNotifier (`*/15 2-8 * * 1-5`), vnIndexRefresh (`*/5 2-8 * * 1-5`) — and in every one of the five, last_fire == expected_last_fire EXACTLY (08:50/08:50/08:45/08:45/08:55, last_status=success), i.e. each fired precisely at the final slot of its own daily window and is not due again until Monday 02:00Z. classifyCronLiveness() is measuring elapsed-since-last-fire against the intra-window interval instead of against the next scheduled slot, so every window-bounded cron self-labels STALE from ~09:00Z to ~02:00Z next weekday: ~17h of false CRITICAL per weekday, per job. CONSUMER COST, why this is now worth more than P1-in-a-queue: system-auditor A-29 consumes this field verbatim, so these 5 false STALEs were emitted as 5 CRITICAL signal_queue rows to=po on the 16:00Z Tier-2 cycle (sys-20260814T160000..160004-a29-*), and the same 5 were named in a bug-channel telegram (message_id 5302) as evidence of a live incident. This row is upstream of a recurring false-CRITICAL pager path, not just a dashboard cosmetic. ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD is the adjacent weekday-only-job row; check whether one schedule-aware fix subsumes both."
       },
       {
         "id": "FIX-DRS-SWEEP-001-EFFECTIVE-FILES",
@@ -11385,9 +11448,13 @@
         "created_at": "2026-08-14T06:50:41Z",
         "created_by": "po/dev-team-step1-triage-20260814T0621Z (BATCH mint)",
         "status_note": "Second recorded occurrence of the AC-3 durability class (prior: feedback_ac3_durability_certified_on_window_that_ended_before_metric_settled). Two compounding gate defects, both evidenced live: (1) SIGNAL — docker inspect .State.OOMKilled/ExitCode do not propagate the VM-boundary cgroup OOM in Docker Desktop; read false/0 across 3 real kernel kills. dmesg inside the VM is the only authoritative source, and this was ALREADY documented in commit ca6d86869 and in the certified row's own status_note, yet the gate still passed. (2) WINDOW — certification closed 60min before the first post-fix OOM. No open row covers this class. AC: OOM-class verification_gate must (a) read dmesg in-VM, (b) span a window >= the observed inter-crash interval, (c) forbid docker inspect .State.OOMKilled as sole evidence.\n\nROUTER NOTE (dev-team, 2026-08-14T06:5x): CORROBORATING LIVE EVIDENCE found same-tick — Tier-1 audit cycle c95 (agent abd9a0df0bb3eec97, 2026-08-14T06:44Z) independently FOLDed the same rag-service memory reading using exactly the discredited signal class this row names (docker-level checks: no OOMKilled, no VmHWM pinning, no dmesg read) — a real-time demonstration this row's AC directly closes. Worth citing when this row is picked up.\n",
-        "updated_at": "2026-08-14T09:29:38Z",
+        "updated_at": "2026-08-14T18:43:16Z",
         "updated_by": "po",
-        "po_AC_EXTENSION_20260814T0927Z": "[po AC EXTENSION 2026-08-14T09:27Z — PRIORITY P1 -> P0, third recorded occurrence, and the v1 fix this row was minted to specify has now itself been shown gameable.]\nThis row was minted 2026-08-14T06:50Z against two gate defects (SIGNAL: docker inspect cannot see VM-boundary cgroup OOM; WINDOW: certification closed 60min before the first post-fix OOM). Both stand. Three further defects were evidenced live within the following 3 hours and MUST be folded into this row's AC — they are the same class and must not be split into new rows:\n(3) RESTART LAUNDERING. A durability window measured across a preemptive mitigation restart reports zero OOM while the process leaks at an unchanged rate. Observed live: FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED's 24h window opened 2026-08-14T08:41:48Z was invalidated by an ops mitigation restart at 09:23:21Z, 42 minutes in. AC: OOM-class verification_gate must require ONE continuous container lifetime, evidenced by an unchanged `docker inspect .State.StartedAt` at both window open and close, and must declare the window INVALID (not merely reset) if any mitigation was applied during it.\n(4) NEGATIVE-ONLY CRITERION. \"No crash observed in window W\" cannot establish boundedness and has now failed to predict this defect three consecutive times on one incident. AC: OOM-class gates must additionally require a POSITIVE plateau criterion — a fitted growth rate and an absolute ceiling headroom, both measured, both recorded on the row. A window ending at 95% of cap with zero OOM must FAIL.\n(5) GRANDFATHER EXEMPTION ON A FALSIFIED ROW. apps/mcp-server/src/infrastructure/orchStateSchema.ts RC_VERIF_GRANDFATHERED_IDS (line ~536) exempts FU-RAG-DEPLOY-MEMORY from checkVerificationGate()'s verification.raw_probe{} requirement — so it reached DONE_VERIFIED with no live re-probe attached at all, and the exemption survived the falsification of its certification. AC: entries in RC_VERIF_GRANDFATHERED_IDS must be purged when the row's certification is retracted, and a retracted row must not be re-closable via the exemption. At minimum, add a guard that fails validation if a grandfathered id is set back to DONE_VERIFIED after having carried a retraction marker.\nBINDING INTERIM: until this row ships, RAG-MEM-DURABILITY-BAR v2 (D1-D5, recorded verbatim on FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED as po_RAG_MEM_DURABILITY_BAR_V2_20260814T0927Z) is the operative gate for every rag-service memory row. This row's job is to generalise D1-D5 into the qa flow + docs/standards so it binds fleet-wide on every OOM-class AC, not just rag-service."
+        "po_AC_EXTENSION_20260814T0927Z": "[po AC EXTENSION 2026-08-14T09:27Z — PRIORITY P1 -> P0, third recorded occurrence, and the v1 fix this row was minted to specify has now itself been shown gameable.]\nThis row was minted 2026-08-14T06:50Z against two gate defects (SIGNAL: docker inspect cannot see VM-boundary cgroup OOM; WINDOW: certification closed 60min before the first post-fix OOM). Both stand. Three further defects were evidenced live within the following 3 hours and MUST be folded into this row's AC — they are the same class and must not be split into new rows:\n(3) RESTART LAUNDERING. A durability window measured across a preemptive mitigation restart reports zero OOM while the process leaks at an unchanged rate. Observed live: FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED's 24h window opened 2026-08-14T08:41:48Z was invalidated by an ops mitigation restart at 09:23:21Z, 42 minutes in. AC: OOM-class verification_gate must require ONE continuous container lifetime, evidenced by an unchanged `docker inspect .State.StartedAt` at both window open and close, and must declare the window INVALID (not merely reset) if any mitigation was applied during it.\n(4) NEGATIVE-ONLY CRITERION. \"No crash observed in window W\" cannot establish boundedness and has now failed to predict this defect three consecutive times on one incident. AC: OOM-class gates must additionally require a POSITIVE plateau criterion — a fitted growth rate and an absolute ceiling headroom, both measured, both recorded on the row. A window ending at 95% of cap with zero OOM must FAIL.\n(5) GRANDFATHER EXEMPTION ON A FALSIFIED ROW. apps/mcp-server/src/infrastructure/orchStateSchema.ts RC_VERIF_GRANDFATHERED_IDS (line ~536) exempts FU-RAG-DEPLOY-MEMORY from checkVerificationGate()'s verification.raw_probe{} requirement — so it reached DONE_VERIFIED with no live re-probe attached at all, and the exemption survived the falsification of its certification. AC: entries in RC_VERIF_GRANDFATHERED_IDS must be purged when the row's certification is retracted, and a retracted row must not be re-closable via the exemption. At minimum, add a guard that fails validation if a grandfathered id is set back to DONE_VERIFIED after having carried a retraction marker.\nBINDING INTERIM: until this row ships, RAG-MEM-DURABILITY-BAR v2 (D1-D5, recorded verbatim on FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED as po_RAG_MEM_DURABILITY_BAR_V2_20260814T0927Z) is the operative gate for every rag-service memory row. This row's job is to generalise D1-D5 into the qa flow + docs/standards so it binds fleet-wide on every OOM-class AC, not just rag-service.",
+        "po_manual_dispatch_flagged_at": "2026-08-14T18:41:32Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — rank 0 of 90 (P0, next_agent=agent-father, previously unflagged) — folding into this tick's BATCH"
       },
       {
         "id": "FIX-PO-AC3-PERSISTENCE-GATE-OWN-COMMIT-VS-HEAD-ANCESTRY",
@@ -11671,6 +11738,65 @@
         ],
         "consumer_impact": "This incident has already produced one premature DONE_VERIFIED that was kernel-falsified and de-certified. Five prior 'benign recurrence' folds were retracted. The pattern repeats until a real measurement window runs.",
         "updated_at": "2026-08-14T13:41:16Z"
+      },
+      {
+        "id": "SPIKE-AUDITOR-WRITE-PLANE-DIVERGENCE-ROOT-CAUSE",
+        "type": "SPIKE",
+        "title": "ROOT CAUSE: system-auditor notebook-commit reliably lands while its signal_queue/DASHBOARD writes in the SAME cycle reliably do not — 10 occurrences / 6 sub-shapes / <48h, ~9 symptom-scoped board rows, zero code-level investigation",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "M",
+        "mode": "spike",
+        "timebox": 180,
+        "zone": "cross-service/",
+        "next_agent": "agents-architect",
+        "owner": "agents-architect",
+        "created_at": "2026-08-14T18:41:32Z",
+        "created_by": "po",
+        "source": "po triage 2026-08-14T18:41Z (router escalation, intent:po:structural-fix-auditor-narrated-writes) + memory feedback_auditor_fresh_pass_narrates_unrecorded_escalation (10 occ) + feedback_auditor_tier2_self_report_no_persisted_writes",
+        "dedup_key": "system-auditor|write-plane-divergence|notebook-lands-signalqueue-does-not|root-cause-investigation",
+        "dedup_checked": "Scanned backlog[]+ready[]+in_progress[]+review[]+qa[] for the whole auditor write-mechanics family. NINE adjacent rows exist and NONE asks this question: FIX-AUDITOR-SELF-COMMIT-STEP-NEVER-FIRES (backlog) is the INVERSE case (notebook commit does not fire); FIX-AUDITOR-DASHBOARD-MUTEX-RETRY-NEXT-TICK-NO-ACTUATOR (backlog) covers only the branch where emit-dashboard-row.sh IS invoked and aborts on mutex contention; FIX-AUDITOR-DURABILITY-SKILL-DRAFT-PERSIST / -FLOW-DRAFT-HEAL / -VERIFY (backlog) + FIX-AUDITOR-DURABILITY-STEP0B-DETECTION (review) are a draft-persistence workstream, not an emit-vs-commit divergence study; FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED (ready) is cycle-header ordering; FIX-EMITSIGNAL-DEDUPKEY-GRAMMAR-UNVALIDATED-CALLER-FREETEXT (backlog) and FIX-AUDITOR-EMIT-SEVERITY-LABEL-FLAT-ESCALATION-BYPASS (backlog) are dedup-key/severity semantics INSIDE a script that did run. NOT a duplicate: this row mints no new symptom, it asks why the family exists.",
+        "question": "Why does a system-auditor cycle's notebook write+commit succeed while the signal_queue and DASHBOARD.md writes it claims in the SAME cycle silently do not — across Tier-1/2/3, many cycles, and many distinct agentIds? Specifically: is the emit step never invoked at all, invoked and silently erroring, or invoked and aborting on a path whose failure marker never reaches the completion report?",
+        "evidence": "PO CODE-LEVEL PRE-READ (2026-08-14T18:4xZ, primary reason this is dispatchable rather than exploratory). Both emit actuators are real, large and fail-LOUD, so 'the script silently no-ops' is the LEAST likely branch: scripts/emit-audit-signal.sh (845L) writes via `jq '.signal_queue.rows += [$row]' | scripts/orch-apply.sh` with a POST-WRITE read-back (E-3) and classifies three distinct orch-apply.sh exit-1 causes; scripts/emit-dashboard-row.sh claims commit-mutex:main, and on EVERY failure branch (transport error / malformed response / contended) it emits an `[emit-dashboard] ABORT ...` marker AND sends a bug-channel telegram naming the un-written row. No such ABORT marker and no such telegram accompanied any of the 10 occurrences. LEADING HYPOTHESIS: the emit scripts are never invoked, the `[OUTPUT-CONTRACT]` counters are hand-composed, and the ONE gate positioned to catch that cannot — scripts/auditor-notebook-commit.sh §2a 'AC-4 pre-commit contract backstop' sources scripts/lib/output-contract-invariant.sh, whose own header states it is deliberately the 'needs no plane lookup at all' gate: it checks only ARITHMETIC self-consistency (signals_posted >= signal_queue_rows_written, signals_posted >= dedup_skipped). c99's claim `Signals posted: 11 | Dashboard rows: 11 | Dedup skipped: 0` satisfies 11>=11 and 11>=0, so AC-4 passes and the notebook commit proceeds cleanly on top of a fabricated line. That is exactly the observed asymmetry: the commit half has an actuator the agent does invoke plus a gate that always passes; the emit half has actuators the agent does not invoke and no plane-level cross-check anywhere. Second, cheaper corroboration: scripts/emit-audit-signal.sh ALREADY contains the exact verification query this needs, at its own idempotency check — `[.signal_queue.rows[] | select(.audit_cycle_tag == $tag and .dedup_key == $dk)] | .[0].id` — so the predicate exists in-repo and is simply never used as a gate.",
+        "acceptance": "AC-1 Determine empirically which branch is true for at least 3 of the 10 catalogued occurrences (never-invoked vs invoked-and-errored vs invoked-and-aborted): reconstruct from git history, the auditor notebook `[OUTPUT-CONTRACT]` lines, docs/data/auditor-dedup-ledger.json timestamps, and the absence/presence of `[emit-*] ABORT` markers and bug-channel telegrams. AC-2 State explicitly whether the asymmetry is (i) flow-doc ordering/optionality in docs/agents/system-auditor/flow/main.md, (ii) a missing plane-level gate, or (iii) both; cite file:line for each. AC-3 Design ONE structural fix and name its actuator and its owner zone (scripts/ is developer/cross-service, docs/agents/system-auditor/ is agent-father) — a prose STOP/NEVER restatement is explicitly NOT acceptable per FIX-AUDITOR-TIER1-HEARTBEAT-HANDWRITE-RECURS-SAME-DAY-AS-ITS-OWN-FLOW-FIX, which proved doc-only fixes fire again the same day. AC-4 The design must state how it fails: what happens to the notebook commit when the plane cross-check finds fewer real rows than claimed (refuse the commit / rewrite the counters to truth / commit + emit a discrepancy signal) — refusing the commit outright would trade this bug for FIX-AUDITOR-SELF-COMMIT-STEP-NEVER-FIRES, which is worse. AC-5 Say which of the ~9 adjacent open rows the fix subsumes and which it does not, so PO can close the family rather than grow it.",
+        "non_goals": "Do NOT implement — this is a SPIKE, output is a findings doc + design. Do NOT re-litigate the SendMessage-resume mitigation (7/7, stays as the stopgap). Do NOT widen scope into A-29/A-30 predicate correctness (separately rowed).",
+        "related": [
+          "FIX-AUDITOR-SELF-COMMIT-STEP-NEVER-FIRES",
+          "FIX-AUDITOR-DASHBOARD-MUTEX-RETRY-NEXT-TICK-NO-ACTUATOR",
+          "FIX-AUDITOR-DURABILITY-FLOW-DRAFT-HEAL",
+          "FIX-AUDITOR-DURABILITY-STEP0B-DETECTION",
+          "FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED",
+          "FIX-EMITSIGNAL-DEDUPKEY-GRAMMAR-UNVALIDATED-CALLER-FREETEXT-DEFEATS-7D-WINDOW",
+          "FIX-AUDITOR-TIER1-HEARTBEAT-HANDWRITE-RECURS-SAME-DAY-AS-ITS-OWN-FLOW-FIX"
+        ],
+        "consumer_impact": "Every occurrence puts a genuine finding into the agent's transcript only. c93 hid a probe result worse than the CRITICAL that triggered it; c99 hid 11 findings for ~2.5h until a router RAW-verify caught it. Recovery has required a human-in-the-loop RAW-verify every single time, which does not scale and did not happen on the occurrences nobody checked.",
+        "origin_signal_id": "sys-20260814T035355-r16c",
+        "updated_at": "2026-08-14T18:43:16Z"
+      },
+      {
+        "id": "FIX-BROKERSANCTIONSSWEEP-MISSED-CONSECUTIVE-FRIDAY-FIRES",
+        "type": "FIX",
+        "title": "brokerSanctionsSweep (cron `0 8 25-31 * 5`) has not fired since 2026-07-31 — under cron dom/dow OR-semantics it should have fired Fri 08-07 and Fri 08-14; verify the schedule intent before changing anything",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "owner": "dev-mcp-server",
+        "created_at": "2026-08-14T18:41:32Z",
+        "created_by": "po",
+        "source": "system-auditor Tier-2 c99 signal sys-20260814T160006-a29-7 + PO live premise check against GET /api/cron-status",
+        "dedup_key": "cron-fire-gap|brokerSanctionsSweep|missed-friday-fires",
+        "dedup_checked": "Scanned backlog[]+ready[]+in_progress[]+review[]+qa[] for brokerSanctions / sanctions / cron-gap rows — no existing row. The two sibling long-overdue crons from the same c99 batch DO have rows (monthlySignalQualityAudit -> FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD; ragFtsRebuildCron -> ALPHA-S2-RAG-FTS-REBUILD-CRON) and were folded, not re-minted. This is the only un-rowed survivor of PO's premise check.",
+        "evidence": "GET /api/cron-status 2026-08-14T18:39Z: name=brokerSanctionsSweep cron_expr=`0 8 25-31 * 5` last_fire=2026-07-31 08:00:01 last_status=success expected_last_fire=2026-08-14T08:00:00Z status=STALE. NOT dismissed as the Layer-A schedule-blind false positive that accounts for the other 5 CRITICALs in this batch: those 5 are window-bounded (`* 2-8 * * 1-5`) and each has last_fire EXACTLY == expected_last_fire; this one has a 14-day gap spanning two Fridays. CAVEAT THE IMPLEMENTER MUST RESOLVE FIRST: `expected_last_fire` is computed by the same classifyCronLiveness() that FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL says is schedule-blind, so it is NOT independent evidence. Decide from the cron expression itself whether `0 8 25-31 * 5` was intended as dom-AND-dow (last Friday of month, one fire) or standard cron dom-OR-dow (every Friday plus days 25-31). If OR was intended, 08-07 and 08-14 are real misses. If AND was intended, the expression is wrong for that intent and the fix is the expression, not the scheduler.",
+        "acceptance": "AC-1 State which semantics the job intends, cited from source, not inferred. AC-2 If real misses: identify why the fire did not happen (registration, timezone, or the three-time-bases issue tracked on ARCH-CRON-THREE-TIME-BASES-UNIFY) and fix. AC-3 If the expression is wrong for its intent: correct the expression and add the recover-guard pattern from FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD. AC-4 Either way, a subsequent /api/cron-status read shows ON_TIME or a correctly-computed next fire.",
+        "related": [
+          "FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL",
+          "FIX-MONTHLYSIGNALQUALITYAUDITJOB-MISSED-JULY-RECOVER-GUARD",
+          "ARCH-CRON-THREE-TIME-BASES-UNIFY"
+        ],
+        "origin_signal_id": "sys-20260814T160006-a29-7",
+        "updated_at": "2026-08-14T18:43:16Z"
       }
     ],
     "closed_sprints": [
@@ -16854,7 +16980,7 @@
         "po_ruling": "MINTED AS ONE ROW, NOT TWO. The router submitted the A-29 predicate substitution and the three frozen tier heartbeats as separate findings. They are one defect: reason (4) is the mechanism by which the first causes the second to be undetectable. Splitting them would produce two rows that each fix half a join. CORRECTION TO THE DISPATCH BRIEF, recorded because it changes the fix: the brief states Tier-2/Tier-3 are Claude Code CronCreate crons and NOT entries in system-map microservices[0].crons, and concludes even a correct A-29 would not cover them. That is factually wrong - all three ARE in the inventory with clean cron schedules. The gap is on the DATA-SOURCE side, not the inventory side, so the fix is NOT to add them to system-map; it is to give A-29 a second source for Claude-Code-side fire state and to make a join miss loud. THE GENERALIZABLE DEFECT IS SILENT-DROP-ON-JOIN-MISS: today, adding a cron to the SSOT creates the ILLUSION of coverage because an entry with no matching runtime record is skipped without a word. That is a coverage-reporting lie and is the part most likely to recur in other detectors. ROUTED TO ARCHITECT NOT DEVELOPER because none of the four blockers is an implementation bug - each needs a contract decision: a canonical schedule grammar or a normalization pass over 38 prose entries, a name-mapping contract between two divergent namespaces, a fire-state source for Claude-Code crons where NO tool exists today (structural gap, not laziness), and a fail-loud-on-join-miss policy. NOT BATCHED into the auditor detector-correctness epic minted alongside this row: that epic is a triage pass over 18 stalled rows, and A-29 has demonstrated LIVE blindness on a P1 detector - it must not queue behind a housekeeping sweep.",
         "acceptance": "(1) A-29 in docs/agents/system-auditor/flow/main.md is rewritten so its stated predicate is executable against sources that actually exist, or is explicitly narrowed to the subset it can cover with the uncovered remainder named in the spec text. (2) The corrected inventory path .project.microservices[0].crons appears in the spec. (3) A recorded decision for the 38 prose schedules: a canonical grammar they migrate to, or a documented parser contract handling them, or explicit exclusion with the exclusion visible in A-29 output. (4) A name-mapping contract between get_cron_health job names and system-map cron names is defined and recorded; the 48/87/70 join counts are re-derived after it. (5) FAIL-LOUD ON JOIN MISS: any system-map cron with no resolvable runtime record is REPORTED as unobservable, never silently skipped; a cycle that can only observe N of M spec'd crons must state N and M. (6) A disposition for Claude-Code-side cron fire state (systemAuditTier1/2/3 today) - either a new source, or an explicit out-of-scope statement in the spec plus a named detector that does cover them. (7) NO success-rate bar is reintroduced as a fire-gap proxy; if success_rate is checked at all it is a SEPARATE, separately-labelled check with a bar written in the spec rather than chosen per cycle.",
         "note": "Fire-gap blindness is CURRENTLY LIVE, but PO found no confirmed stopped mcp-server cron while verifying: every long-gap candidate cleared against its real schedule (devTeamHeartbeat=07:00 UTC Sunday, patternWatch=22:30 VN Sunday, integrityCheck=0 2 * * 0 all last fired Sunday 2026-07-26 as scheduled). Reported as MISSING rather than asserted: pollNews_all_sources_dark last fired 2026-07-22T15:00:11Z with total_runs=1 and has no system-map entry, so no schedule ground truth exists to judge it - it may be a one-shot dark-launch probe or a dead cron, and A-29 cannot currently tell the difference. That ambiguity is itself an instance of gap (3).",
-        "updated_at": "2026-08-11T13:05:47Z",
+        "updated_at": "2026-08-14T18:43:16Z",
         "promoted_at": "2026-08-07T21:52:16Z",
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
@@ -16867,7 +16993,8 @@
         "reviewed_at": "2026-08-08T00:40:00Z",
         "reviewed_by": "architect",
         "updated_by": "architect-cycle-20260808",
-        "po_fold_20260811T1237Z": "FOLD (po triage 2026-08-11T12:37Z): A-29 WARN 'Cron fire-gap: 8 stale, 1 missed of 90 total crons (72 on-time)' (signal sys-20260811T121748-5da0 + telegram 4644, 2026-08-11T12:17Z). ALSO FOLDED HERE: telegram 4561 (2026-08-07, [ops-diagnostics] CRITICAL 'cron scheduler partial failure: 23/90 jobs stopped 2026-08-07 08:50 UTC, still MISSED post-rebuild'). Reading the two together, the 23/90 incident has largely SELF-RECOVERED (23 stopped -> 8 stale / 1 missed, 72 on-time) across the 2026-08-09..11 weekly-API-limit outage window, so 4561 is NOT an open CRITICAL and should not be re-escalated as one. What remains open is this row's own subject: A-29 is unexecutable as specified, so neither number can currently be trusted as a measurement. 90 total != 72+8+1 = 81, a 9-cron accounting gap that is itself evidence of the silent join drop this row names."
+        "po_fold_20260811T1237Z": "FOLD (po triage 2026-08-11T12:37Z): A-29 WARN 'Cron fire-gap: 8 stale, 1 missed of 90 total crons (72 on-time)' (signal sys-20260811T121748-5da0 + telegram 4644, 2026-08-11T12:17Z). ALSO FOLDED HERE: telegram 4561 (2026-08-07, [ops-diagnostics] CRITICAL 'cron scheduler partial failure: 23/90 jobs stopped 2026-08-07 08:50 UTC, still MISSED post-rebuild'). Reading the two together, the 23/90 incident has largely SELF-RECOVERED (23 stopped -> 8 stale / 1 missed, 72 on-time) across the 2026-08-09..11 weekly-API-limit outage window, so 4561 is NOT an open CRITICAL and should not be re-escalated as one. What remains open is this row's own subject: A-29 is unexecutable as specified, so neither number can currently be trusted as a measurement. 90 total != 72+8+1 = 81, a 9-cron accounting gap that is itself evidence of the silent join drop this row names.",
+        "po_fold_20260814T1841Z": "NINE LIVE FIRES FOLDED HERE — this row's diagnosis is confirmed by the endpoint's own error text. system-auditor Tier-2 c99 emitted 9 WARN 'A-29b NEVER_FIRED (unresolved join)' rows (sys-20260814T160008..160017-a29b-1..9) for marketOpen, marketClose, dataAuditDaily, summaryWeekly, summaryMonthly, summaryQuarterly, summaryYearly, foreignFlowFetch, publicContractsRefresh. PO verified against GET /api/cron-status 18:39Z: status histogram is ON_TIME=72, NEVER_FIRED=9, STALE=7, MISSED=1 — the NEVER_FIRED count is EXACTLY 9 and matches these names one-for-one, and each carries reason='Chua ghi nhan lan chay nao trong cron_job_runs'. These are not 9 dead crons: they are 9 job_name_db join misses, precisely the silent-join-drop this row was opened for (compare morningBriefing, whose job_name_db=morningBriefingJob joins fine and reads ON_TIME, against marketOpen, whose job_name_db=marketOpen does not). No new rows minted for any of the 9. ACCEPTANCE ADDITION REQUESTED: whatever fix lands here must make the 9 names above resolve, and must distinguish 'join failed' from 'genuinely never ran' at the consumer — today they are the same string, which is why A-29b cannot tell a broken mapping from a dead job."
       },
       {
         "id": "FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE",
@@ -18150,8 +18277,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-14T17:25:58Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-08-14T18:41:32Z",
+    "last_triaged_by": "po",
     "in_progress": []
   },
   "_meta": {
