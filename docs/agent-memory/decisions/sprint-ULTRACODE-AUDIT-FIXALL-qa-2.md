@@ -50,3 +50,34 @@ PASS, conservation PASS task_total 771=771/signal_total 202=202). Did NOT approv
 (nothing to merge — already on main), did NOT push. `send_telegram`/`task_release` not called —
 no `mcp__gateway__call_tool` binding in this QA specialist sub-session (INV-GATEWAY-1); flagged
 to the calling dev-team dispatcher to release `task:UC-ASL-P6` itself.
+
+### STEP qa-S22 · qa · 2026-08-14T06:31:43Z
+**task-id:** UC-CDC-P7
+**what-done:** Direct-commit verify (verify-committed mode) of commits 15492ff61 (feature,
+16 files) + 2e82756ac (board flip) — all developer claims RAW-reconfirmed, zero blocking issues.
+**what-considered:**
+- Trusted vs re-verified: ran `git merge-base --is-ancestor` on both commits (main ancestry
+  confirmed), `git show --stat` matched all 16 claimed files exactly; did not accept the
+  review_note file-touch prose at face value.
+- TE-T03/TE-T13 collision claim: grepped both off the live board/archives directly —
+  TE-T03 `DONE_VERIFIED` `qa_verified_at:2026-08-11T18:22:00Z`, TE-T13 `DONE_VERIFIED`
+  `verified_at:2026-07-13T15:10:00Z`, main.md absent from 15492ff61's file list — confirmed
+  zero collision, not narrated.
+- Tests: ran all 7 suites myself (not trusted from prose) — match-slots 69/69,
+  tick-preflight 67/67, tick-postflight(new) 28/28, chef-mutex 25, schedule-consistency
+  9/9, catchup-predicate 34/34, guaranteed-slot-firer 28/28 = 260/260, 0 fail — exact
+  match to claimed total. mock-guard PASS, shellcheck -S warning clean. tsc N/A confirmed
+  structurally (zero .ts touched, scripts/agents-flow/ outside every tsconfig include).
+- Self-caught bug fix: read cowork-tick-preflight.sh:107-112 directly — `${8:-{}}` brace bug
+  replaced with `${8:-}` + explicit `[ -z ] && extra="{}"`, matches claim verbatim.
+- Phase 1 park-honesty: verified NEGATIVELY — flow dir still 14 files (not 7), pressure-read.md/
+  pressure-cadence.md still separate, slot-claim.md 4.6b block still present, last-fired.md/
+  tick-snapshot.md carry zero grep hits for `cowork-tick-postflight` — status_note's "PARKED,
+  not complete" claim holds, nothing silently dropped.
+- I16 SSOT field: `cowork_signal_recipient:true` confirmed on exactly po/tran-ngoc-bau/
+  unified-agent/alert-commander in system-map.json; cowork-tick-preflight.sh:90-95 reads it
+  with fail-safe fallback to the same literal set on missing/malformed data.
+**why-decision:** Every one of the developer's 6 headline claims (16-file commit scope,
+TE-coordination, 260/260 tests, bug-fix landing, I16 wiring, Phase-1-parked-not-dropped)
+independently reproduced against live artifacts, not prose. No blocking issues.
+**why-change:** No change from plan — verify-committed JUMP-TO, all checks green, APPROVED.
