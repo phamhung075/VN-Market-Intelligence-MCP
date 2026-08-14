@@ -29,7 +29,7 @@ Note: does NOT skip predictions entirely — predictions are still useful in TIG
 - "No calibration data" → proceed normally
 - "degrading" AND `trend_delta > 0.05` → `DAMPENING_ACTIVE=true`, apply `final_confidence = min(0.95, max(0.05, computed * 0.90))`
 - Improving/stable → proceed normally
-`log_agent_work(summary="Self-assessment: {status}. Dampening: {yes/no}.")`
+`log_agent_work(agent_name="digest-predict", status="running", summary="Self-assessment: {status}. Dampening: {yes/no}.")` — `agent_name`/`status` are REQUIRED on the live tool (verified 2026-08-13, prior prose omitted them); capture the returned `id` and pass it to the P-7 `status="completed"` call below to close the same session record.
 
 **P-1.** `get_watchlist()`
 
@@ -51,7 +51,7 @@ If successful: extract volatility regime (rv_10/20/60d, GK vol), breadth indicat
 Skip "No evidence" | parse: `bullish_score`, `bearish_score`, `neutral_score`, likelihood ratios
 
 **P-4. High-conviction** filter: `bullish_score > 0.6` OR `bearish_score > 0.6`
-→ `get_bctc_full(stock)` | `get_market_snapshot()`
+→ `get_bctc_full(code=stock)` (param name is `code`, NOT `stock` — verified live 2026-08-13, prior prose caused an invalid_type call) | `get_market_snapshot()`
 
 If qualify_count == 0:
   `send_telegram(channel="work", message="[digest-predict] Daily prediction NO-OP {DATE}: zero tickers above conviction threshold. No claims created.")`
@@ -102,6 +102,41 @@ GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
 
 **Signal:** Script fires `narrative_contradiction` on FAIL. Do NOT suppress it.
 
+**P-5a — Published-marker gate (Phase 2 — commit point, MANDATORY) →**
+skill: `.claude/skills/published-marker-gate/SKILL.md` (agent-id=digest-predict).
+
+<!-- UC-CCA-P3-FR3-DIGEST-PREDICT (agent-father, 2026-08-14): this is the REAL landing site for
+     the daily-path Phase-2 claim — NOT docs/agents/digest-predict/flow/daily.md, which the
+     original architecture brief anchored on. daily.md is dead/unrouted (main.md's dispatch
+     table routes the daily window to THIS file; confirmed by docs/architecture-briefs/
+     2026-07-12-ultracode-workflow-improvement-audit.md's own "git rm daily.md" recommendation,
+     never executed). This flow's own irreversible publish action is `create_prediction_claim()`
+     below (a DB write, not a send_telegram — same class as fb-market-poster's file-Write
+     publish action, see brief §1.1), so the marker gates the WHOLE daily claims batch under one
+     key, same pattern as chef.md Step 0.5 gating a whole dish under one key: claim ONCE before
+     the P-5 loop, not once per ticker. `MARKER_KEY` is the exact value main.md's Step pre-D
+     Phase-1 probe computed (`"published:digest-daily:" + UTC_DATE`), carried forward as session
+     state — do NOT recompute UTC_DATE here. -->
+
+```
+CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:              MARKER_KEY,   # "published:digest-daily:" + UTC_DATE, from main.md Step pre-D
+  task_kind:            "cowork-slot",
+  owner_agent:          "digest-predict",
+  owner_client_session: <coordination session UUID from spawn prompt, or fallback — REQUIRED>,
+  ttl_seconds:          86400   # 24h — daily slot, matches main.md Step pre-D's original TTL
+})
+
+if CLAIM.claimed != true:
+  log "[digest-predict] daily-predict publish blocked (Phase-2 claim) — already published date=" + UTC_DATE
+  EXIT with: "DONE: duplicate-publish blocked | PIPELINE: complete | QUALITY: full"
+  # a peer claimed between main.md's Phase-1 probe and this Phase-2 claim — do NOT create any claims.
+```
+
+If `claimed == true`: proceed immediately to the P-5 claim-creation loop below. NEVER call
+`task_release` on success or any exit after this point — a partial batch (e.g. 1 of 3 claims
+created before a mid-loop failure) still leaves the marker held; TTL is the sole expiry path.
+
 For each qualifying ticker (bullish_score > 0.6 OR bearish_score > 0.6):
   Run P-5.5 gate on claim_text
   If PASS:
@@ -122,6 +157,18 @@ Section template (≤10L):
 ### Daily Predictions (HH:MM UTC) YYYY-MM-DD
 - Calibration: [status], delta: [value] | Claims: N | Dampening: [yes/no]
 ```
+**Live convention note (observed 2026-08-13, consistent across ≥11 prior cycles 07-16→08-13):**
+`docs/agent-memory/notebooks/digest-predict.md` in practice uses ONE persistent rolling
+`## Known patterns / preferences` heading (no dated token — the notebook-write skill's
+own "rolling heading, intentionally rewritten every cycle" exception) with a new dated
+`- [MỚI MM-DD] ...` bullet appended each cycle, NOT a fresh `### Daily Predictions (HH:MM
+UTC)` sub-heading per cycle as this template literally shows. Follow the live file's
+established convention (append one dated bullet to the rolling heading), not this
+template, until/unless the file is deliberately migrated.
+**Tool constraint:** per `docs/agents/digest-predict/init.md` `never_use_write_tool: true`,
+land this append via `Edit` (old_string = current last line/bullet, new_string = same +
+new bullet appended) — never the raw `Write` tool, even though the generic
+`notebook-write` skill's Step 2 documents `Write` as its sole form for other agents.
 
 **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
@@ -130,8 +177,13 @@ Section template (≤10L):
 git add docs/agent-memory/notebooks/digest-predict.md
 git commit -m "chore(memory/digest-predict): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/digest-predict.md
 ```
+**No-Bash sessions (recurring — categorical, no Bash tool bound; ≥13 consecutive cycles
+07-31→08-13):** this commit step cannot run at all (`git` requires Bash). Skip it, note
+in the notebook bullet that the file is left uncommitted this cycle, and rely on a
+future Bash-capable cycle/dispatcher to commit — do not fabricate a commit that did not
+happen.
 
-**P-7.** `log_agent_work(summary="Created {N} daily claims for {TICKERS}. Horizons: {5d:X,10d:Y,20d:Z}. Avg: {avg}. Dampening: {yes/no}.")`
+**P-7.** `log_agent_work(agent_name="digest-predict", id=<id from P-0's running call>, status="completed", summary="Created {N} daily claims for {TICKERS}. Horizons: {5d:X,10d:Y,20d:Z}. Avg: {avg}. Dampening: {yes/no}.")`
 
 **P-8. WORK**: `send_telegram(channel="work", message="[digest-predict] Daily claims {DATE}: {N}\n- {TICKER}: {claim_text} (p={prob}, {horizon}d)\n...")`
 `DAMPENING_ACTIVE` → append "Self-correction: confidence -10%."

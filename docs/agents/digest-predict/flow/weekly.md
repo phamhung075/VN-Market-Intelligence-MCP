@@ -75,6 +75,32 @@ GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
 - `1` = FAIL — contradiction detected; signal emitted to `po` by script. Self-correct: call the named tool directly, rewrite the offending sentence in `weekly_digest_text` using real returned values, re-run the gate. Second-pass PASS → proceed. Second-pass FAIL (tool genuinely errors) → replace that sentence with an honest-gap note (do not re-assert the false claim) and proceed with the corrected digest.
 - `2` = config-error → fail-loud: `send_telegram(channel="bug", message="[digest-predict] claim-truth-gate CONFIG ERROR")` and EXIT. Do NOT treat as PASS.
 
+**Published-marker gate — Phase 2 (commit point, MANDATORY) →**
+skill: `.claude/skills/published-marker-gate/SKILL.md` (agent-id=digest-predict).
+
+<!-- UC-CCA-P3-FR3-DIGEST-PREDICT (agent-father, 2026-08-14): Phase-2 claim relocated here from
+     main.md's old EARLY task_claim — main.md now only runs the Phase-1 probe before the
+     Dispatch table. `WEEK_PERIOD`/`MARKER_KEY` are the exact values main.md computed, carried
+     forward as session state — do NOT recompute (same session, same cycle). -->
+
+```
+CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:              MARKER_KEY,   # "published:digest-sunday:" + WEEK_PERIOD.periodKey, from main.md
+  task_kind:            "cowork-slot",
+  owner_agent:          "digest-predict",
+  owner_client_session: <coordination session UUID from spawn prompt, or fallback — REQUIRED>,
+  ttl_seconds:          691200   # ~8 days — weekly slot (spawn-fanout.md)
+})
+
+if CLAIM.claimed != true:
+  log "[digest-predict] publish blocked (Phase-2 claim) — already published slot=digest-sunday period=" + WEEK_PERIOD.periodKey
+  EXIT with: "DONE: duplicate-publish blocked | PIPELINE: complete | QUALITY: full"
+  # a peer claimed between main.md's Phase-1 probe and this Phase-2 claim — do NOT send anything.
+```
+
+If `claimed == true`: proceed immediately to the MARKET send below. NEVER call `task_release`
+on success or any exit after this point — TTL is the sole expiry path.
+
 `send_telegram(channel="market", message=<weekly_digest_text>)`
 `send_telegram(channel="work", message="[Digest & Predict] HH:MM UTC — WEEKLY sent. Next: TIME")`
 

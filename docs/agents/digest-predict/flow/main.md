@@ -18,7 +18,7 @@ Universal entry. Picks the right sub-flow based on current time. Crons and ad-ho
 
 ---
 
-## Step pre-D: DAILY-PREDICT DEDUP GATE (non-Sunday days only)
+## Step pre-D: DAILY-PREDICT DEDUP GATE (non-Sunday days only) — Phase 1 (cheap probe)
 
 <!-- FEAT-PREDICTION-CLAIMS-DAILY-CADENCE (2026-06-24 Sprint S2/ARCH-PREDICTION-DAILY-CADENCE):
      Protects against cron re-fire, session restart, or dispatcher double-fire producing
@@ -28,7 +28,17 @@ Universal entry. Picks the right sub-flow based on current time. Crons and ad-ho
      Pattern mirrors the Sunday Published Marker Gate below but is keyed on the calendar day
      (not week period) and uses a 24h TTL (not 8d).
      The gate is ONLY evaluated on non-Sunday paths; Sunday falls straight through to its own
-     Published Marker Gate (unchanged). -->
+     Published Marker Gate (unchanged).
+     UC-CCA-P3-FR3-DIGEST-PREDICT (agent-father, 2026-08-14): converted from an EARLY task_claim
+     to a Phase-1 read-only probe per .claude/skills/published-marker-gate/SKILL.md. Phase-2
+     claim now happens in daily-predict.md immediately before its P-5 create_prediction_claim
+     loop (that flow's own irreversible publish action) — NOT the docs/agents/digest-predict/
+     flow/daily.md path the original architecture brief anchored on: that file is dead/unrouted
+     code (this dispatch table below routes the daily window to daily-predict.md, never
+     daily.md; confirmed by docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-
+     audit.md's own explicit "git rm daily.md" recommendation, never executed — same
+     stale-anchor class as UC-CCA-P2's fb-market-poster Q-file-count-correction). daily.md
+     left untouched, flagged for a future code-janitor pass. -->
 
 ```
 # Only execute this gate if NOT Sunday (Sunday path has its own Published Marker Gate below)
@@ -43,32 +53,33 @@ IF weekday != Sunday:
   # Each calendar day MUST yield a distinct UTC_DATE (e.g. Mon=2026-06-23, Tue=2026-06-24 …).
   UTC_DATE = <YYYY-MM-DD from UTC-now, e.g. "2026-06-24">
 
-  DAILY_TASK_ID = "published:digest-daily:" + UTC_DATE
+  MARKER_KEY = "published:digest-daily:" + UTC_DATE
 
-  # owner_client_session is a REQUIRED field on the live task_claim schema (not shown in the
-  # older task-lock-protocol.md example — doc gap observed 2026-07-04). Use the coordination
-  # session UUID passed by the spawning dispatcher/cron in the invocation prompt; if none was
-  # passed (bare cron fire with no coordination parameter), fall back to any stable per-session
-  # identifier (e.g. a freshly generated UUID) — the value only needs to be a syntactically
-  # valid string, uniqueness across agents is not required for this gate's correctness.
-  DAILY_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
-    task_id:     DAILY_TASK_ID,
-    task_kind:   "cowork-slot",
-    owner_agent: "digest-predict",
-    owner_client_session: <coordination session UUID from spawn prompt, or fallback>,
-    ttl_seconds: 86400    # 24-hour window
-  })
+  # Phase 1 — cheap read-only probe (per .claude/skills/published-marker-gate/SKILL.md).
+  # task_list_held has NO task_id filter — scan client-side for MARKER_KEY.
+  PROBE = call_tool(server="vn-market", tool="task_list_held",
+                     arguments={ kind: "cowork-slot", owner_agent: "digest-predict" })
+  HELD  = PROBE.locks contains an entry where task_id == MARKER_KEY AND expires_at > now
 
-  if DAILY_CLAIM.claimed != true:
-    log "[digest-predict] daily-predict dedup blocked — already ran for date=" + UTC_DATE
+  if HELD:
+    log "[digest-predict] daily-predict dedup blocked (Phase-1 probe) — already held date=" + UTC_DATE
     EXIT with: "DONE: duplicate-daily-predict blocked | PIPELINE: complete"
+    # claims NOTHING — a leak from this call is structurally impossible.
 
-  # gate passes → proceed to Dispatch table
+  # not held → proceed to Dispatch table; MARKER_KEY carried forward as session state to
+  # daily-predict.md, which performs the mandatory Phase-2 claim (ttl_seconds=86400,
+  # owner_client_session REQUIRED there) immediately before its P-5 claim-creation loop.
 ```
 
 ---
 
-## PUBLISHED MARKER GATE (Layer-A dedup — MANDATORY before Sunday Dispatch)
+## PUBLISHED MARKER GATE — Phase 1 (Layer-A dedup, cheap probe — MANDATORY before Sunday Dispatch)
+
+<!-- UC-CCA-P3-FR3-DIGEST-PREDICT (agent-father, 2026-08-14): converted from an EARLY task_claim
+     to a Phase-1 read-only probe per .claude/skills/published-marker-gate/SKILL.md. Phase-2
+     claim now happens in weekly.md immediately before its own send_telegram(channel="market")
+     call (that flow's irreversible publish action). Week-period derivation below (get_week_period,
+     periodKey) is UNCHANGED and carried forward as session state — do not recompute in weekly.md. -->
 
 <!-- FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP (2026-06-14):
      Root cause A: divergent ISO-week labels (W24 vs W25) for the same Sunday defeated
@@ -101,22 +112,24 @@ WEEK_PERIOD = call_tool(server="vn-market", tool="get_week_period", arguments={}
 #   periodStart, periodEnd, weekNumber, weekYear
 
 # Step G-2: key the mutex on periodKey (date-range), NOT weekLabel
-PUBLISH_TASK_ID = "published:digest-sunday:" + WEEK_PERIOD.periodKey
+MARKER_KEY = "published:digest-sunday:" + WEEK_PERIOD.periodKey
 
-PUBLISH_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     PUBLISH_TASK_ID,
-  task_kind:   "cowork-slot",
-  owner_agent: "digest-predict",
-  owner_client_session: <coordination session UUID from spawn prompt, or fallback>,  # REQUIRED field — see Step pre-D note above
-  ttl_seconds: 691200    # ~8 days — weekly slot (spawn-fanout.md)
-})
+# Phase 1 — cheap read-only probe (per .claude/skills/published-marker-gate/SKILL.md).
+# task_list_held has NO task_id filter — scan client-side for MARKER_KEY.
+PROBE = call_tool(server="vn-market", tool="task_list_held",
+                   arguments={ kind: "cowork-slot", owner_agent: "digest-predict" })
+HELD  = PROBE.locks contains an entry where task_id == MARKER_KEY AND expires_at > now
 
-if PUBLISH_CLAIM.claimed != true:
-  log "[digest-predict] publish blocked — already published slot=digest-sunday period=" + WEEK_PERIOD.periodKey + " weekLabel=" + WEEK_PERIOD.weekLabel
+if HELD:
+  log "[digest-predict] publish blocked (Phase-1 probe) — already held slot=digest-sunday period=" + WEEK_PERIOD.periodKey + " weekLabel=" + WEEK_PERIOD.weekLabel
   EXIT with: "DONE: duplicate-publish blocked | PIPELINE: complete | QUALITY: full"
+  # claims NOTHING — a leak from this call is structurally impossible.
 ```
 
-If `claimed == true`: proceed through the Dispatch table below.
+If NOT held: proceed through the Dispatch table below. `WEEK_PERIOD`/`MARKER_KEY` are carried
+forward as session state to `weekly.md`, which performs the mandatory Phase-2 claim
+(ttl_seconds=691200, owner_client_session REQUIRED there) immediately before its own
+`send_telegram(channel="market")` call.
 
 <!-- NOTE: this gate runs ONLY on the Sunday path (Step 2 above). The daily path uses the
      DAILY-PREDICT DEDUP GATE (Step pre-D) with its own key and TTL. The two gates are
