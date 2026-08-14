@@ -2,152 +2,152 @@
   "_schema": "v1",
   "_ssot": true,
   "_updated_by": "news-scout",
-  "_updated_at": "2026-07-25T16:14:39Z",
+  "_updated_at": "2026-08-14T00:11:17Z",
   "_eod_completed": "2026-07-11T16:06:30Z",
   "tickers": {
     "VNM": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "FPT": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "VCB": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "ACB": {
       "last_covered_news_scout": "2026-07-25T16:14:39Z",
       "last_covered_market_watcher": "2026-07-25T08:10:06Z"
     },
     "HPG": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "BID": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "SHB": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "EIB": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "VHM": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "VIC": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "KBC": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "HUT": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "DIG": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "DXG": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "KDH": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "PDR": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "NVL": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "VRE": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "D2D": {
       "last_covered_news_scout": "2026-07-25T16:14:39Z",
       "last_covered_market_watcher": "2026-07-25T08:10:06Z"
     },
     "MSN": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "FRT": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "KDC": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "SAB": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "DPM": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "GAS": {
       "last_covered_news_scout": "2026-07-25T16:14:39Z",
       "last_covered_market_watcher": "2026-07-25T08:10:06Z"
     },
     "SSI": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "VIX": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "VND": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "VCI": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "DGC": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "VJC": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "GEX": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "BSR": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "PLX": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "DAG": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "DBC": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "GVR": {
       "last_covered_news_scout": "2026-07-25T16:14:39Z",
@@ -206,8 +206,8 @@
       "last_covered_market_watcher": "2026-07-25T08:10:06Z"
     },
     "VEA": {
-      "last_covered_news_scout": "2026-07-25T16:14:39Z",
-      "last_covered_market_watcher": "2026-07-25T08:10:06Z"
+      "last_covered_news_scout": "2026-08-14T00:11:17Z",
+      "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "REE": {
       "last_covered_news_scout": "2026-07-25T16:14:39Z",
@@ -233,5 +233,9 @@
       "last_covered_news_scout": "2026-07-25T16:14:39Z",
       "last_covered_market_watcher": "2026-07-25T08:10:06Z"
     }
+  },
+  "sweep_config": {
+    "max_staleness_hours": 48,
+    "sweep_batch_size": 3
   }
 }
