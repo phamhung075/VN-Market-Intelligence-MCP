@@ -70,18 +70,28 @@ async function callTool(
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
+// `get_price_history` filters rows with `date >= date('now', '-N days')`, a
+// real wall-clock comparison. Fixture dates MUST be relative to `Date.now()`
+// (not hardcoded absolute calendar dates) or they silently fall outside the
+// lookback window as real time advances past the day the fixture was authored
+// — see the identical idiom in 178-price-history.test.ts.
+const dateStr = (daysAgo: number): string =>
+  new Date(Date.now() - daysAgo * 24 * 3600 * 1000).toISOString().slice(0, 10);
+
 describe("ALLZERO-OHLCV-FETCH — zero-row guard in get_price_history", () => {
   // AC-1: all-zero row excluded from results
   it("AC-1: zero OHLCV row (0/0/0/0) is excluded from get_price_history results", async () => {
     const db = buildDb();
-    // Insert one real row and one all-zero row (e.g. 2026-05-30 gap)
+    const realDate = dateStr(1);
+    const zeroDate = dateStr(5); // e.g. a non-trading-day gap row
+    // Insert one real row and one all-zero row
     db.run(
       `INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
-       VALUES ('SHB', '2026-06-12', 13800, 13850, 13513, 13800, 1000000, datetime('now'))`,
+       VALUES ('SHB', '${realDate}', 13800, 13850, 13513, 13800, 1000000, datetime('now'))`,
     );
     db.run(
       `INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
-       VALUES ('SHB', '2026-05-30', 0, 0, 0, 0, 0, datetime('now'))`,
+       VALUES ('SHB', '${zeroDate}', 0, 0, 0, 0, 0, datetime('now'))`,
     );
 
     const server = new McpServer(
@@ -98,8 +108,8 @@ describe("ALLZERO-OHLCV-FETCH — zero-row guard in get_price_history", () => {
     const text = result.content[0]!.text;
     // The real close 13,800 must appear
     expect(text).toContain("13,800");
-    // The zero-date 2026-05-30 must NOT appear in output
-    expect(text).not.toContain("2026-05-30");
+    // The zero-date row must NOT appear in output
+    expect(text).not.toContain(zeroDate);
     // "0" as price (from the zero row) must not appear in the stats line
     // Min should be 13,800 not 0
     expect(text).toContain("Min 13,800");
@@ -110,9 +120,9 @@ describe("ALLZERO-OHLCV-FETCH — zero-row guard in get_price_history", () => {
     const db = buildDb();
     // Insert 3 real rows and one zero row
     const realRows = [
-      { date: "2026-06-12", close: 73500, open: 73100, high: 74300, low: 72369 },
-      { date: "2026-06-11", close: 73100, open: 73100, high: 73900, low: 72369 },
-      { date: "2026-06-10", close: 74200, open: 73700, high: 74500, low: 72800 },
+      { date: dateStr(1), close: 73500, open: 73100, high: 74300, low: 72369 },
+      { date: dateStr(2), close: 73100, open: 73100, high: 73900, low: 72369 },
+      { date: dateStr(3), close: 74200, open: 73700, high: 74500, low: 72800 },
     ];
     const ins = db.prepare(
       `INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
@@ -121,10 +131,10 @@ describe("ALLZERO-OHLCV-FETCH — zero-row guard in get_price_history", () => {
     for (const r of realRows) {
       ins.run(r.date, r.open, r.high, r.low, r.close);
     }
-    // Simulate the 2026-05-30 all-zero gap row
+    // Simulate an all-zero gap row
     db.run(
       `INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
-       VALUES ('FPT', '2026-05-30', 0, 0, 0, 0, 0, datetime('now'))`,
+       VALUES ('FPT', '${dateStr(10)}', 0, 0, 0, 0, 0, datetime('now'))`,
     );
 
     const server = new McpServer(
@@ -147,18 +157,20 @@ describe("ALLZERO-OHLCV-FETCH — zero-row guard in get_price_history", () => {
   // AC-3: foreign-flow stub rows (high=0, low=0) excluded
   it("AC-3: DPI-4 stub rows with high=0/low=0 are excluded from get_price_history", async () => {
     const db = buildDb();
+    const stubDate = dateStr(2);
+    const realDate = dateStr(1);
     // Simulate ohlcvForeignFlowStore stub row: open/high/low/close all zero but
     // with foreign flow data populated — this is the DPI-4 pattern
     db.run(
       `INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at,
          foreign_buy_vol, foreign_sell_vol, foreign_net_vol, put_through_vol)
-       VALUES ('VCB', '2026-06-14', 0, 0, 0, 0, 0, datetime('now'),
+       VALUES ('VCB', '${stubDate}', 0, 0, 0, 0, 0, datetime('now'),
          1500000, 800000, 700000, 0)`,
     );
     // Real row
     db.run(
       `INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
-       VALUES ('VCB', '2026-06-12', 61600, 62100, 60984, 61600, 3000000, datetime('now'))`,
+       VALUES ('VCB', '${realDate}', 61600, 62100, 60984, 61600, 3000000, datetime('now'))`,
     );
 
     const server = new McpServer(
@@ -176,7 +188,7 @@ describe("ALLZERO-OHLCV-FETCH — zero-row guard in get_price_history", () => {
     // Real data visible
     expect(text).toContain("61,600");
     // Stub date not visible
-    expect(text).not.toContain("2026-06-14");
+    expect(text).not.toContain(stubDate);
     // Min not 0
     expect(text).not.toContain("Min 0");
   });
