@@ -9,7 +9,14 @@
      2026-08-13): +15L (209→224, incl. this header note) — Step 1's Degraded-dish floor trigger condition widened (OR-clause
      covering tool-failure/budget-exhaustion/self-narrated-inability, not just source-down) + its
      inline procedure replaced with a pointer to the new chef-telemetry.md § Degraded-Floor Recovery
-     + one Checkpoint pointer added. No new section, in-place growth only. -->
+     + one Checkpoint pointer added. No new section, in-place growth only.
+     UC-CCA-P2-UNIFIED-AGENT (BA spec docs/handoffs/UC-CCA-P2-BA-spec.md, architect-ratified,
+     agent-father 2026-08-14): +15L — inserted a Step 0-GW gateway-availability-gate pointer between
+     Bootstrap and Step 0.5's task_claim (asymmetric placement vs. the sprint's other 5 FR-4/FR-5
+     target files — intentional, protects only the task_claim mutation window; see § Architect
+     Brownfield Findings "chef.md placement asymmetry" in the handoff doc). No logic changed
+     elsewhere. (Note: the "224L" baseline above had already drifted to 243L pre-existing this edit —
+     untouched, out of scope for this XS task.) -->
 > Parent: [./main.md](./main.md)
 
 # Unified Agent — Chef Flow (TNB 6-Layer Recipe) — Gate Phase
@@ -37,6 +44,21 @@ hard branch.
 → Telemetry spec (ENTRY / CLOSE / FAILED / SILENT / try-catch boundary): `docs/agents/unified-agent/flow/chef-telemetry.md`
 
 > Error boundary → skill: `.claude/skills/cowork-boundary/SKILL.md`
+
+---
+
+<!-- UC-CCA-P2-UNIFIED-AGENT (agent-father, 2026-08-14): asymmetric placement, ratified deliberately
+     — do NOT move this before Bootstrap to "match" the other 5 FR-4/FR-5 target files. This gate
+     lands AFTER chef.md's own first gateway call (Bootstrap above), by design: it protects ONLY the
+     Step 0.5 task_claim mutation window (a gateway that dies between a successful Bootstrap and the
+     marker claim). `step-0-cowork/SKILL.md`'s own Bootstrap-gate already covers the general
+     confirmed-down case for the Bootstrap call itself — placing this before Bootstrap would be
+     redundant there and would NOT close the actual gap. Session-scoped: chef-dish.md shares this
+     session and does not need its own gate. Ref: docs/handoffs/UC-CCA-P2-BA-spec.md § Architect
+     Brownfield Findings, "unified-agent/chef.md placement asymmetry". -->
+**Step 0-GW — Gateway availability gate** → skill: `.claude/skills/gateway-availability-gate/SKILL.md`
+Replace `<agent-id>` with `unified-agent`. On gateway dead: write signal file + BLOCKED notebook entry
+(APPEND-class) + EXIT. See skill for full protocol and explicit prohibitions.
 
 ---
 
