@@ -8,61 +8,6 @@
      explicit YYYY-MM-DD token. Nothing deleted; full record in the archive file and git
      history. -->
 
-## EDIT 2026-08-14T04:33Z — task FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING (router-direct
-dispatch, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
-- Architect ratified BA's FR-0..FR-7 (10 flow-doc edit sites, chef.md + chef-dish.md) — `.head`
-  routed straight to agent-father, zero PM decomposition, zero application code.
-- **Action taken:** applied all 10 sites verbatim. Per architect's own risk-flag R1 (files had
-  already drifted BA→architect, +44L chef-dish.md/+5L chef.md from an unrelated 2026-08-13 commit),
-  anchored every edit on grepped quoted text, never on either agent's cited line numbers — my own
-  earlier edits in this same pass kept shifting later-file line numbers, confirming R1 was right.
-  FR-0a/FR-0b temporal-scope the two stale "14/16 blocked" AUTO-CURE comments; FR-1 names
-  `$BIZ_CTX_SIGNALS` at chef.md Step 0 GATHER (the missing handle); FR-2 carries it across the
-  chef.md/chef-dish.md session-state handoff; FR-3 adds the mandatory Step 4 citation sub-step
-  producing `$BIZ_CTX_CITED`; FR-4 folds it into the Step 6.5 causal chain; FR-5 closes the
-  filename-only citation loophole in Step 7 Block B; FR-6 redefines `BIZ_CTX_OK` against the new
-  artifact instead of a bare gap-token-of-convenience; FR-7 persists `business_context_cited` into
-  `conviction_calls[]` (the field this row's own `verification_gate` RAW-verifies against). Post-edit
-  grep confirmed all 10 tokens landed exactly once each at the intended anchor; blast-radius grep in
-  the handoff already confirmed zero non-doc consumers.
-- Task-lock: gateway-blind this session (no native `mcp__gateway__call_tool`) — the `task:<id>` row
-  was already held by this SAME session (router pre-claim, `owner_client_session` match); released
-  via `scripts/agents-flow/mcp-call.sh` bridge at closeout (`{ok:true,released:0}` — row already gone
-  on re-check, clean either way).
-- Committed+pushed `c11504775` (chef.md + chef-dish.md only, explicit pathspec).
-- **Board disposition:** `in_progress[]`→`review[]`, `next_agent:po` — `verification_gate` needs a
-  live chef dish RAW-verified against `unified-agent-synthesis-*.json` (not self-testable this cycle,
-  prose/gate-logic wiring only). `.head` reset in the same write (was pointing at this task).
-
-## EDIT 2026-08-14T06:33Z — task FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE
-(dev-team Review-Lane SECONDARY-Drain owner-triage, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
-- Row was REVIEW/`next_agent:agent-father` carrying a full architect blueprint
-  (`docs/architecture-briefs/2026-08-07-devteam-head-pin-stale-threshold-resume-bound.md`) whose §5
-  was explicitly "agent-father's deliverable" — not a bare sign-off/triage row, an implementation
-  handoff. Live-reread `docs/agents/dev-team/flow/main.md` first (brief's own §1 flagged 12+ edits
-  landed since the brief's line-number citations) — confirmed entry-gate/WF-2/S2 anchor text still
-  matched verbatim, applied on live text via exact-match edits, never the brief's stale line numbers.
-- **Applied:** dropped the `head.updated_at < 24h` clause from Step 0b's entry gate; inserted new
-  WF-3 RESUME-ATTEMPT-BOUND (`.head.resume_attempts`/`last_resume_at`, 3-attempt bound → row `BLOCKED`
-  + `hold_reason` + `resume_attempt_bound_exceeded_at/_by`, `.head` idle-reset, BUG signal) and WF-4
-  STALE-AGE (2h, keyed off row `claimed_at` never `.head.updated_at` — the latter self-defeats the
-  moment WF-3's own counter writes `.head` — git-log corroboration before reset, BUG signal) between
-  WF-2 SUPERVISED-HOLD and S2; S2 gained a 6-line increment write on its successful-claim path; deleted
-  the old 24h stale-crash sibling branch + fixed a stale cross-ref to it in S2's own LOCK-LIFETIME
-  comment. Dry-ran all 3 new jq transforms against a synthetic fixture before treating the patch as
-  done — all produced the exact shape specified. +78L (1152→1230), size-justification header entry
-  added per this file's own per-edit convention.
-- **Not routed through `edit.md`:** `dev-team` has no `.claude/agents/dev-team.md` roster entry (the
-  router's own orchestration loop, not a spawnable agent) — `edit-prepare.md` Step 1's existence Glob
-  would false-block. Applied directly, same precedent as my own 2026-08-13/08-14 chef/qa entries above.
-- Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md` STEP `agent-father-S41`.
-- **Board disposition:** stayed `review[]` (no status flip — still `REVIEW`, so no
-  STATUSFLIP-LANEMOVE obligation), `next_agent: agent-father → qa` (routes to the pre-existing QA-Drain
-  PRIMARY selector next tick) via `scripts/orch-apply.sh` (`FU-AGENT-FATHER-ORCH-SCOPE` — outside
-  `commit_zone`, applied not committed by me) + `agent_father_implementation_note` field added
-  documenting the change for qa. Not self-certified `DONE_VERIFIED` — orchestration-core dispatch
-  logic, no live multi-tick head-pin scenario reproducible in one session; qa to smoke/diff-verify.
-
 ## EDIT 2026-08-14T08:10Z — task FIX-DEVTEAM-WF1D-REVIEW-QA-LANE-HEAD-PIN-BLIND +
 FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC (PO stale-`.head`-family triage pair,
 router-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
@@ -89,6 +34,68 @@ router-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
   (`FU-AGENT-FATHER-ORCH-SCOPE` — outside `commit_zone`, applied not committed by me). `.head` was
   pointing at an unrelated task (`UC-CDC-P1`) throughout — untouched.
 - AC-7 (WF1d row) verifier extension flagged, not authored — `scripts/` outside `commit_zone`.
+
+## EDIT 2026-08-14T12:35Z — task UC-CCA-P2-MARKET-WATCHER (PM subtask off UC-CCA-P2,
+router-dispatch via `docs/agents/agent-father/flow/edit-prepare.md`, session
+`632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
+- FR-3 (architect-ratified `docs/handoffs/UC-CCA-P2-BA-spec.md`): market-watcher's
+  `main.md`/`cycle.md` each independently ran their own Step 0-GW gateway probe per cycle — a
+  live double-probe defect. Read the BA spec's "[Architect] Brownfield Findings" section first,
+  plus both live target files, before editing; both anchors matched the spec byte-for-byte (no
+  drift).
+- **Applied:** `main.md` — replaced the inline Step 3 dual-probe/30s-backoff/`SIBLING_RECENT`
+  corroboration block (lines 61-99) with a one-line pointer to
+  `.claude/skills/gateway-availability-gate/SKILL.md` (agent-id=market-watcher; covers cycle.md
+  AND eod.md — same transitive coverage as before, just de-duplicated to one call site). `cycle.md`
+  — deleted its own Step 0-GW block (lines 26-27); reworded the Execution-contract paragraph
+  "Step 0-GW through Step 5b" → "Step 0 through Step 5b"; terminal clause now reads "an explicit
+  main.md Step 0-GW gateway-down EXIT (per gateway-availability-gate skill)" instead of
+  re-describing its own now-deleted dual-probe. `eod.md` untouched (explicitly out of scope per
+  task — remains zero-gate by design, still transitively covered only via `main.md`, not a new gap).
+- **Verified net effect:** post-edit grep for `Step 0-GW —` / `get_system_status` across both flow
+  files confirms exactly ONE probe pointer (`main.md:61`) — the double-probe is eliminated.
+- Task-lock: gatewayless this session (no native `mcp__gateway__call_tool`) — skipped 5a/7b/8b
+  MCP task-lock calls per the documented gateway-less exception; solo-operation on this single
+  2-file, self-contained subtask (no concurrent agent-father session on the same files observed).
+- Committed `3cfabaa28` (main.md + cycle.md only, explicit pathspec — INV-GATEWAY-1 direct commit,
+  no commit-mutex). Not pushed — push-backstop/PO owns push per `PUSH_THRESHOLD` convention
+  (gatewayless specialists commit but never push, by design).
+- **Board disposition:** `ready[]`→`review[]`, `next_agent: po` via `scripts/orch-apply.sh`
+  (`FU-AGENT-FATHER-ORCH-SCOPE` — outside `commit_zone`, applied not committed by me), status
+  `READY`→`REVIEW`, `commit` field set to `3cfabaa28`, `agent_father_completion_note` added. Routed
+  to po because AC-3 (dedup) needs live-cycle confirmation (next market-watcher WORK ping/notebook
+  shows exactly one `[GATEWAY]` probe log line) — not self-testable this session, prose/flow-doc-only
+  change. `.head` was idle throughout, untouched.
+
+## EDIT 2026-08-14T12:35Z — task UC-CCA-P2-FB-MARKET-POSTER (router-dispatch, session
+`632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
+- FR-5 + architect Q-file-count-correction ruling (`docs/handoffs/UC-CCA-P2-BA-spec.md` § [Architect]
+  Brownfield Findings): audit's original anchor (`main.md`, stale — main.md was split TE-T26
+  2026-08-06 into a thin MODE ROUTER with zero gateway calls) is superseded by the corrected 3-file
+  scope: `daily.md` / `weekly-recap.md` / `weekly-prediction.md`, each an independently cron-spawned
+  session with its own STEP 0 bootstrap and published-marker `task_claim`.
+- **Action taken:** live-read all 3 files first (not the spec's cited line numbers) — matched exactly
+  (daily.md STEP 0a at :40, weekly-recap.md/weekly-prediction.md `## STEP 0 — Bootstrap` at :25/:28,
+  DEDUP_CLAIM blocks immediately after). Inserted one `**Step 0-GW — Gateway availability gate**`
+  pointer line per file: `daily.md` before `**STEP 0a**` (:40); `weekly-recap.md` and
+  `weekly-prediction.md` immediately after their own `## STEP 0 — Bootstrap` heading, before their
+  own `**STEP 0a**`/DEDUP_CLAIM block. Each pointer carries `agent-id=fb-market-poster` + the mode
+  path name so a reader can tell the three apart. `main.md` deliberately left untouched — confirmed
+  0 gateway calls in that file (post-TE-T26 split, thin mode-router only); adding a gate there would
+  be dead code. Post-edit grep: exactly 1 pointer per target file, 0 in main.md, all 3 land strictly
+  before that file's own `task_claim` — satisfies BA's AC-4.
+- +2L per file (6L total) — no size-justification header update needed (each header already states an
+  approximate `~NNNL`, well within tolerance for a 2-line insert).
+- Task-lock: INV-GATEWAY-1 — agent-father's tool grant (`Read, Edit, Write, Glob, Grep, Bash`) has no
+  `mcp__gateway__call_tool` binding; skipped `task_claim`/`task_heartbeat`/`task_release` and
+  `commit-mutex` entirely per the skill's own DISPATCHER-ONLY scope note. Committed directly with an
+  explicit pathspec (all 3 files, one commit).
+- **Board disposition:** `ready[]`→`review[]`, status `READY`→`REVIEW`, `next_agent: agent-father →
+  qa` — AC-4 (pointer placement) is grep-verifiable without a live cron-window spawn; qa can confirm
+  the same 3 grep results above independently. Completion note added to the row. 6 sibling
+  UC-CCA-P2 subtasks (skill file + market-watcher×2 + alert-commander + unified-agent +
+  digest-predict + bctc-analyst) remain `READY`, untouched by this pass — no `depends_on` between
+  them per PM's decomposition note.
 
 ## EDIT 2026-08-14T12:35Z — task UC-CCA-P2-ALERT-COMMANDER (router-dispatched, session
 `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
