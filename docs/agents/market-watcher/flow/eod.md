@@ -99,8 +99,11 @@ Rules:
 
 ```bash
 git add docs/agent-memory/notebooks/market-watcher.md docs/agent-memory/notebooks/news-scout.md
-git_commit_retry -m "chore(memory/market-session-eod): notebook YYYY-MM-DD cycles N"
+git_commit_retry -m "chore(memory/market-session-eod): notebook YYYY-MM-DD cycles N" \
+  -- docs/agent-memory/notebooks/market-watcher.md docs/agent-memory/notebooks/news-scout.md
 ```
+
+> **RULE 2.5 pathspec-scoped commit** (FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC, 2026-08-14): `git_commit_retry` passes `"$@"` straight to `git commit` (`docs/protocols/head-lock-self-cure.md` § F4) — a bare `git commit -m "..."` with no trailing pathspec commits whatever is currently staged in the shared index, not only the two files this step's own `git add` named, exposing this commit to any concurrently-committing peer in the shared working tree. The trailing `-- <paths>` above closes that gap per `.claude/skills/commit-boundary/SKILL.md` RULE 2.5 — same paths as the `git add` line, resolved atomically at commit time.
 
 > `git_commit_retry` idiom: retry up to 3× on `HEAD.lock` / `index.lock` only — see `docs/protocols/head-lock-self-cure.md` § F4.
 > If commit fails after retries: log to BUG channel + `send_telegram(channel="bug", message="[eod] notebook batch commit failed — manual recovery needed: docs/protocols/head-lock-self-cure.md")`. Notebook writes are on disk; git loss window is bounded to this market session.

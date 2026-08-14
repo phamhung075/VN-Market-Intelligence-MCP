@@ -408,3 +408,20 @@ summary + the stale LOCK-LIFETIME cross-ref) the brief itself didn't spell out v
 - Silently claim full 9-consumer coverage anyway (matches board row's framing) vs report the true 3(4)-file gap — rejected the former: would be exactly the kind of narrated-not-verified claim this fleet's memory repeatedly flags as a failure mode.
 **why-decision:** AC-5 explicitly requires confirming coverage BEFORE claiming it; the confirmation surfaced a real gap, so the honest disposition is to report it (RETURN + this entry), not fix unrequested files outside this row's `files` field or silently claim total coverage.
 **why-change:** Scope stayed exactly the 1 file in `files`; the coverage gap found is flagged as a residual follow-up, not fixed here — router/PO can mint FIX rows against dev-frontend/dev-mainserver-crawls/dev-vps-crawls flow files if wanted.
+
+### STEP agent-father-S44 · agent-father · 2026-08-14T17:13:24Z
+**task-id:** FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC
+**what-done:** Landed the agent-father half of brief §3a/§3d/§4 (5 files, docs/data-only): added `market-watcher-eod.supersedes: ["market-watcher-offhours"]` + `_note` to cowork-schedule.json (AC-1); added Step 4.5d (SUPERSEDED-runs-in-script pointer, mirrors 4.5c) to pressure-cadence.md (AC-2); added the one-sentence supersedes-resolves-before-WARN note to match-slots.md Step 4b, WARN left unmodified (AC-3); added trailing `-- <paths>` RULE 2.5 pathspec to both `git_commit_retry` call sites in eod.md Step D and cycle.md offhours self-commit (AC-4). Did NOT touch scripts/agents-flow/ (sibling developer row's zone) or orch-state.json (router-owned, excluded from my commit_zone).
+**what-considered:**
+- Land AC-1..3 now despite the row's `depends_on` sibling script row — the brief's own status_note says the field is INERT (not wired) until the script ships, so landing first is safe; chose to land per PO mint's own framing + explicit dispatch instruction to attempt full scope, not just AC-4.
+- Skip AC-1..3 and ship AC-4 only (dispatch's own fallback instruction) — rejected once verified AC-1..3 carry zero behavioral risk (schema field unread by any live script; doc changes are prose-only pointers).
+**why-decision:** All 4 ACs are independently safe to ship together — AC-1's inertness is architect-confirmed, AC-2/3 are documentation-no-op patterns identical to the shipped 4.5c precedent, AC-4 is a pure pathspec addition to an already-tested wrapper. Verified: cowork-schedule-consistency.test.js (9/9), cowork-chef-mutex.test.js (25/25), cowork-match-slots.test.js (69/69) all still pass; context-bloat-backstop.sh clean on all 4 doc files (updated 2 stale size-justification headers to stay in tolerance).
+**why-change:** No scope change — all 5 files match the PO mint's `files` exactly. AC-5 (no other same-agent multi-slot pair regressed) confirmed by inspection: `supersedes` is scoped to market-watcher-eod only, no other slot object touched.
+
+### CAP-REACHED · 2026-08-14T17:13:50Z
+File crossed the BYTE cap (37086/36000) on this write — LINES still under cap (419/600), byte-axis
+tripped per decision-journal SKILL.md's dual-axis check. New STEP entries continue in
+`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-3.md`. bug-channel telegram alert owed per
+skill protocol but not sent this cycle — agent-father has no MCP/telegram gateway binding
+(`.claude/agents/agent-father.md` tools: Read,Edit,Write,Glob,Grep,Bash only; confirmed against
+`.claude/skills/commit-boundary/SKILL.md`'s own "no gateway binding" listing for this agent type).

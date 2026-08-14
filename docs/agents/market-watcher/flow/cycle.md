@@ -1,4 +1,4 @@
-<!-- size-justification: 332L — atomic price-monitoring flow; sigma-threshold logic, channel routing, coverage-rotation floor, and execution-contract guard are step-by-step coupled; exceeds 200L cap (pre-existing debt, split out of scope); history in git log. FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER 2026-07-25: replaced prose read-modify-write (Step 0-sweep + Step 5c) with calls to the deterministic scripts/agents-flow/coverage-stamp.sh, +18L incl. a documented transport caveat. FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT 2026-08-01: Bash grant landed 2026-07-30T23:18Z (commit 610110e16) — caveat demoted to a genuine invocation-error fallback only, see inline. FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK 2026-08-06: mirrored eod.md's caveat fix; added explicit offhours self-commit + `market-watcher-notebook:main` task_claim mutex guarding the eod/offhours same-16:00Z-tick collision (co-ships with eod.md Step D), +20L. -->
+<!-- size-justification: 336L — atomic price-monitoring flow; sigma-threshold logic, channel routing, coverage-rotation floor, and execution-contract guard are step-by-step coupled; exceeds 200L cap (pre-existing debt, split out of scope); history in git log. FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER 2026-07-25: replaced prose read-modify-write (Step 0-sweep + Step 5c) with calls to the deterministic scripts/agents-flow/coverage-stamp.sh, +18L incl. a documented transport caveat. FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT 2026-08-01: Bash grant landed 2026-07-30T23:18Z (commit 610110e16) — caveat demoted to a genuine invocation-error fallback only, see inline. FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK 2026-08-06: mirrored eod.md's caveat fix; added explicit offhours self-commit + `market-watcher-notebook:main` task_claim mutex guarding the eod/offhours same-16:00Z-tick collision (co-ships with eod.md Step D), +20L. FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC 2026-08-14: offhours self-commit gained a trailing RULE 2.5 pathspec on its `git_commit_retry` call (was bare — swept whatever else was staged in the shared index), +4L. -->
 # Market Watcher — Cycle Flow
 
 **Tools:** `docs/agents/tools/package/market-watcher.md`
@@ -299,8 +299,11 @@ If `claimed:false`: retry up to 2 more times (5s apart, same bounded-retry style
 
 ```bash
 git add docs/agent-memory/notebooks/market-watcher.md
-git_commit_retry -m "chore(memory/market-watcher): offhours cycle YYYY-MM-DD HH:MM UTC"
+git_commit_retry -m "chore(memory/market-watcher): offhours cycle YYYY-MM-DD HH:MM UTC" \
+  -- docs/agent-memory/notebooks/market-watcher.md
 ```
+> **RULE 2.5 pathspec-scoped commit** (FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC, 2026-08-14): `git_commit_retry` passes `"$@"` straight to `git commit` (`docs/protocols/head-lock-self-cure.md` § F4) — a bare `git commit -m "..."` with no trailing pathspec commits whatever is currently staged in the shared index, not only the file this step's own `git add` named. The trailing `-- <path>` above closes that gap per `.claude/skills/commit-boundary/SKILL.md` RULE 2.5.
+
 `task_release(task_id="market-watcher-notebook:main", owner_client_session="<same resolved value as the task_claim above>")` in a finally, regardless of commit outcome.
 > If commit fails after retries: log to BUG channel + `send_telegram(channel="bug", message="[market-watcher] offhours notebook commit failed — manual recovery needed: docs/protocols/head-lock-self-cure.md")`.
 

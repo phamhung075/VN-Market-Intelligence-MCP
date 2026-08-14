@@ -95,4 +95,6 @@ send_telegram(channel="work",
 
 This is a WARNING only — do NOT block spawns. Intentional multi-slot fires (e.g. `*/15` slots) are expected per brief §5 R3.
 
+Declared `supersedes` pairs (`docs/data/cowork-schedule.json`, e.g. `market-watcher-eod.supersedes: ["market-watcher-offhours"]`) are resolved deterministically in-script (`cowork-match-slots.js` `finish()`, see `pressure-cadence.md` Step 4.5d) BEFORE this WARN check ever runs — this WARN stays live as-is (unmodified) as the safety net for any future UNDECLARED same-agent collision; it will simply never fire for a declared pair again post-fix, since the named victim slot no longer co-occurs in `MATCHES` (FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC).
+
 <!-- spawn-guard: policy-only — no runtime assertion; enforced by convention, not code check (ITEM-16 doc note, 1967-10). NEVER spawn dev-team agents from this dispatcher. -->

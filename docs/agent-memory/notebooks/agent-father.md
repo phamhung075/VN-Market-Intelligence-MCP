@@ -107,3 +107,25 @@
   (3× CRITICAL tool-boundary mismatches, 1× LOW semble-search taxonomy gap) are carried-forward
   and already PO-known from prior `team-tool-recheck` runs — no new backlog row needed this cycle,
   surfaced in RETURN per protocol anyway (do not silently drop for lack of a spawn).
+
+## EDIT 2026-08-14T17:14Z — task FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC
+(dev-team-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`, agent-father half of split brief)
+- Design brief `docs/architecture-briefs/2026-08-14-market-watcher-eod-offhours-notebook-collision.md`
+  §3a/§3d/§4. AC-1: `cowork-schedule.json` `market-watcher-eod.supersedes: ["market-watcher-offhours"]`
+  (+`_note`, field confirmed INERT until sibling script row wires it into `cowork-match-slots.js`).
+  AC-2: `pressure-cadence.md` Step 4.5d, doc-no-op pointer mirroring 4.5c. AC-3: `match-slots.md`
+  Step 4b one-sentence note (WARN unmodified). AC-4: `eod.md`/`cycle.md` `git_commit_retry` calls
+  gained trailing `-- <paths>` (RULE 2.5 pathspec — were bare, sweeping the shared index).
+- Verified live: `cowork-schedule-consistency.test.js` 9/9, `cowork-chef-mutex.test.js` 25/25,
+  `cowork-match-slots.test.js` 69/69 all pass unchanged. `context-bloat-backstop.sh` clean on all 4
+  touched docs (updated 2 stale size-justification headers — pressure-cadence.md 180→214L,
+  cycle.md 332→336L — to stay within its ±10% tolerance).
+- Gateway-less this session (`.claude/agents/agent-father.md` tools: Read/Edit/Write/Glob/Grep/Bash
+  only) — no `mcp__gateway__call_tool`. Did not touch `scripts/agents-flow/` (sibling developer row
+  `FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING`'s zone) or `orch-state.json`
+  (router-owned, excluded from my `commit_zone` per `FU-AGENT-FATHER-ORCH-SCOPE`).
+- Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md` S44 (DJ-GATE-1). That
+  file crossed its 36000B byte-cap on this write (line-cap still clear) — CAP-REACHED marker
+  written, future entries roll to `-agent-father-3.md`.
+- Board disposition NOT applied by me — `.status`/lane-move on `orch-state.json` is router-owned;
+  reported REVIEW-ready in RETURN for the router/dev-team dispatcher to apply via `orch-apply.sh`.

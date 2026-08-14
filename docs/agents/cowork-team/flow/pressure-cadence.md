@@ -1,4 +1,4 @@
-<!-- size-justification: 180L — Step 4.4 cadence due-check (live pseudocode) + Steps 4.5/4.5c marked SUPERSEDED (UC-CDC-P7 Phase 2a moved both into cowork-match-slots.js; kept as pointers + historical incident record, not deleted) + 4.5b telemetry-field sourcing table. Child of main.md. -->
+<!-- size-justification: 214L — Step 4.4 cadence due-check (live pseudocode) + Steps 4.5/4.5c/4.5d marked SUPERSEDED (UC-CDC-P7 Phase 2a moved all three into cowork-match-slots.js; kept as pointers + historical incident record, not deleted) + 4.5b telemetry-field sourcing table. Child of main.md. FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC 2026-08-14: added Step 4.5d same-agent supersede-mutex doc pointer (+34L), mirrors 4.5c exactly. -->
 
 ## Step 4.4 — Cadence due-check (adaptive mode) (DWF-PHASE1)
 
@@ -178,3 +178,37 @@ fi
 - **Action:** When both guaranteed and non-guaranteed coexist in MATCHES, keep guaranteed, drop non-guaranteed.
 - **Applies to:** Both adaptive and legacy pressure modes (unconditional).
 - **Root cause closed:** cowork-chef-doublepublish-2026-06-30; prevents legacy-mode cadence-bypass double-posts.
+
+---
+
+## Step 4.5d — Same-agent notebook-collision mutex (supersede) (FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC)
+
+<!-- INVARIANT: a slot with a non-empty `supersedes` array, when matched in the same tick as any
+     slot it names, drops those named slots before spawn-fanout ever sees them.
+     Generalizes the CHEF mutex (Step 4.5c) to same-agent pairs that cannot use the `guaranteed`
+     boolean as a tie-break (both slots `guaranteed: false`) — an explicit, declarative,
+     one-directional, opt-in `supersedes` field on the schedule row instead of an inferred one.
+     market-watcher-eod (`0 16 * * 1-5`) and market-watcher-offhours (`0 */4 * * *`) co-fire every
+     weekday at the 16:00 UTC boundary, both writing the SAME OVERWRITE-class notebook
+     (docs/agent-memory/notebooks/market-watcher.md) — the loser's cycle content is not merged, it
+     is gone. Source: docs/architecture-briefs/2026-08-14-market-watcher-eod-offhours-notebook-collision.md §3. -->
+
+**SUPERSEDED (UC-CDC-P7 Phase 2a pattern, applied here on first ship):** this mutex runs INSIDE
+`scripts/agents-flow/cowork-match-slots.js` (`finish()` calls `cowork-supersede-mutex.js`'s
+`applySupersedeMutex()` in-process via `require()` — never a shell `echo`/`printf` pipe, same
+corruption class the CHEF mutex's own incident record warns about), unconditionally at the tail
+of BOTH the legacy and adaptive branches, immediately AFTER the CHEF mutex (Step 4.5c), on every
+invocation (WORK-path preflight Step 6 AND ERROR-fallback `match-slots.md` Steps 2+3). `MATCHES`
+arriving at this point already has the supersede mutex applied — there is nothing left to do
+here. Read `supersede_mutex_applied` the same way as `chef_mutex_applied` above (WORK:
+`$VERDICT_JSON.supersede_mutex_applied`; ERROR: captured from `$RAW`). This step is a
+documentation no-op; kept for the historical incident record.
+
+**Supersede Mutex Invariant:** For every slot `S` in `MATCHES` whose schedule row declares a
+non-empty `.supersedes` array: if any `slot_id` in `S.supersedes` is ALSO present in `MATCHES`,
+drop those named slot_ids — `S` survives, its named victims do not. Order-preserving on survivors.
+- **Declared pair (first ship):** `market-watcher-eod` supersedes `market-watcher-offhours`
+  (`docs/data/cowork-schedule.json` `market-watcher-eod.supersedes`).
+- **Applies to:** Both adaptive and legacy pressure modes (unconditional), same-tick coincidences only.
+- **Does not affect:** Any tick where `market-watcher-offhours` fires alone (the field is one-directional and opt-in — no change to the offhours slot's own object).
+- **Root cause closed:** market-watcher-eod/offhours OVERWRITE-class notebook data loss + the RULE 2.5 wrong-file-commit this incident also surfaced (fixed separately in `eod.md`/`cycle.md`, see brief §4).
