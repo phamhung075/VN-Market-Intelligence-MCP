@@ -18943,6 +18943,35 @@
         "updated_by": "po",
         "completed_at": "2026-08-14T06:58:58Z",
         "completed_by": "po"
+      },
+      {
+        "id": "FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/rag-service/",
+        "owner": "dev-rag-service",
+        "next_agent": "qa",
+        "title": "rag-service OOM-kills 3x AFTER ca6d86869 thread-pin deployed — invoker still lancedb-tokio-w; re-diagnose at lance-core layer, not allocator\n",
+        "files": [
+          "apps/rag-service/infrastructure/repositories.py",
+          "apps/rag-service/app_factory.py",
+          "docker-compose.yml"
+        ],
+        "baseline_pass": false,
+        "created_at": "2026-08-14T06:50:41Z",
+        "created_by": "po/dev-team-step1-triage-20260814T0621Z (BATCH mint)",
+        "claimed_at": "2026-08-14T06:50:41Z",
+        "claimed_by": "dev-team (P0 emergency dispatch, PO-directed — live crash loop, bypasses normal queue)",
+        "status_note": "Kernel memcg OOM-kills of the CURRENT post-fix container (92e6017318e4), from dmesg inside the Docker Desktop VM: 2026-08-12T13:46:51Z, 2026-08-12T14:00:57Z (invoker lancedb-tokio-w — the exact thread ca6d86869 pins), 2026-08-13T09:20:09Z (matches container StartedAt exactly). docker inspect reports OOMKilled=false ExitCode=0 RestartCount=3 (documented false-negative, re-confirmed). Deploy verified BY CONTENT HASH not timestamp: container /app/infrastructure/repositories.py md5 a42ab41897410756d8b3405cba360b38 == git HEAD == ca6d86869 — stale-image hypothesis REFUTED, the fix is live and failing. Live 2026-08-14T06:29Z: 976.6-977.1MiB/1GiB (95.37-95.42%) monotonically climbing. Lead (unconfirmed): in-container replication of repositories.py:160-161 (os.environ.setdefault TOKIO_WORKER_THREADS=1 / LANCE_CPU_THREADS=1 then lancedb.connect+open_table) still spawns 2 lancedb-tokio-w threads, not 1 — pin may be ineffective rather than merely insufficient; DISCRIMINATE THESE before patching. REFUTED, do not re-run: malloc_trim is NOT a dead call path (Ubuntu 22.04 glibc, ctypes find_library('c') resolves, hasattr malloc_trim True; jemalloc_bg_thd is a bundled dep, not the process allocator). AC: >=2h supervised post-restart sampling with dmesg OOM check as the pass criterion — never docker inspect .State.OOMKilled.\n\nROUTER NOTE (dev-team, 2026-08-14T06:5x): minted + dispatched immediately per PO's explicit directive — live P0 crash loop, not a backlog item. Also cross-referenced: the very next Tier-1 audit cycle (c95, agent abd9a0df0bb3eec97) independently FOLDed this exact rag-service reading using docker-level signals only (no OOMKilled, no VmHWM pinning, no dmesg read) — a live, real-time demonstration of BATCH-mint sibling row FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW's exact defect. Do not let a FOLD verdict from the auditor's own probe (docker-inspect-based) be read as contradicting this row's dmesg-sourced evidence.\n\n\nDEV-RAG-SERVICE (2026-08-14T07:2xZ): Discriminated live in-container — pin IS effective (env vars confirmed set pre-runtime-init, no fallback-to-auto) but INSUFFICIENT (2 lancedb-tokio-w + 2 lance-cpu threads persist regardless; strings scan of _lancedb.abi3.so found no further env knob). Real amplifier: _vector_index_built is per-process, always False on restart -- full IVF_PQ/KMeans rebuild re-fired on every cold start even with a valid persisted index on disk (confirmed: prod vector_idx built once 2026-08-13T09:30:44Z, still valid 22h+ later unrebuilt). Fixed: _maybe_build_vector_index() now checks table.list_indices() before rebuilding, skips if already indexed. 3 new tests (TestVectorIndexPersistsAcrossRestart), 201/201 pytest green, mypy byte-identical to baseline. Commits: 82216e291 (code+docs), 1eac0936f (memory). Handoff: docs/handoffs/FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED.md. REBUILD_REQUIRED: true -- qa/ops must rebuild+redeploy then run the >=2h supervised dmesg-inside-VM window (never docker inspect OOMKilled, never a short window) before any DONE/DONE_VERIFIED flip. Out-of-zone flag for ops: steady-state memory ~91-95%/1GiB even without a rebuild in flight -- docker-compose.yml memory-ceiling review is a reasonable companion action, not made here.",
+        "updated_at": "2026-08-14T07:06:19Z",
+        "po_crossref_20260814T0700Z": "[po 2026-08-14T07:00:55Z | UNBLOCK-OPS-RAG-REBUILD-DONEVERIFIED-FALSIFIED-BY-KERNEL] BIDIRECTIONAL CROSS-REF — read before starting.\nOPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX has been RESTORED from the cold archive (docs/data/orch/archive/2026-08.json .done_tasks[]) into task_board.review[] at status BLOCKED, with blocked_by + superseded_by = THIS row. Its DONE_VERIFIED certification (updated_by=qa, 2026-08-12T12:46:40Z) is RETRACTED: AC-1 (image ID changed) and AC-2 (peers survived) stand and are not disputed; AC-3 (durability) is falsified by the 3 kernel OOM-kills this row exists to diagnose. Its desc previously instructed future actors that the crash \"MUST NOT BE RE-DIAGNOSED\" — that paragraph is banner-marked FALSIFIED in place; do not honour it. Read that row as PRIOR ART (full rebuild/deploy history, AC set, QA record, live samples), never as a closed matter; do NOT re-open, re-close or re-run its AC-3 independently — attach ALL new evidence HERE. Parallel measurement of this exact metric on a sibling row is what produced 5 consecutive no-op folds.\nTWO CARRY-OVER FACTS from that row's own text, still correct, dropped at its closure: (a) RestartCount is a RECREATE-reset counter — never read a low value as a low crash count; (b) `docker inspect .State.OOMKilled` reads false/ExitCode=0 through every confirmed kill in this environment — dmesg inside the Docker Desktop VM is the only authoritative OOM source.\nLIVE DOC CAVEAT (NOT fixed by po — apps/rag-service/ is your zone, and po does not write production docs): docs/architecture/microservice/rag-service/infrastructure.md § OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX documents the TOKIO_WORKER_THREADS/LANCE_CPU_THREADS pin as THE fix for lance-core thread-pool oversubscription. po's 2026-08-14T06:27Z in-container experiment replicating repositories.py:160-161 exactly still spawned 2 `lancedb-tokio-w` threads (the running container shows 2 lancedb-tokio-w + 2 lance-cpu), so the pin sets the env var but does not demonstrably bound the pool. That doc section is now misleading and needs correcting as part of this fix.\nDURABILITY BAR for closing this row (PO ruling — mirrored as the un-block condition in the restored row's verify_note): >= 24h wall-clock on the certified image with ZERO new oom_memcg events for the rag-service cgroup, evidenced by dmesg read INSIDE the Docker Desktop VM. The 3 observed kills fell at +1h00m, +1h14m and +20h34m past the last certification, so any window shorter than 24h is structurally incapable of excluding this failure mode. Never certify on `docker inspect .State.OOMKilled` or RestartCount.\n",
+        "related": [
+          "OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX"
+        ],
+        "supersedes": "OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX",
+        "updated_by": "po"
       }
     ],
     "qa": [
@@ -19300,37 +19329,7 @@
     },
     "last_triaged_at": "2026-08-14T05:52:49Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "M",
-        "zone": "apps/rag-service/",
-        "owner": "dev-rag-service",
-        "next_agent": "dev-rag-service",
-        "title": "rag-service OOM-kills 3x AFTER ca6d86869 thread-pin deployed — invoker still lancedb-tokio-w; re-diagnose at lance-core layer, not allocator\n",
-        "files": [
-          "apps/rag-service/infrastructure/repositories.py",
-          "apps/rag-service/app_factory.py",
-          "docker-compose.yml"
-        ],
-        "baseline_pass": false,
-        "created_at": "2026-08-14T06:50:41Z",
-        "created_by": "po/dev-team-step1-triage-20260814T0621Z (BATCH mint)",
-        "claimed_at": "2026-08-14T06:50:41Z",
-        "claimed_by": "dev-team (P0 emergency dispatch, PO-directed — live crash loop, bypasses normal queue)",
-        "status_note": "Kernel memcg OOM-kills of the CURRENT post-fix container (92e6017318e4), from dmesg inside the Docker Desktop VM: 2026-08-12T13:46:51Z, 2026-08-12T14:00:57Z (invoker lancedb-tokio-w — the exact thread ca6d86869 pins), 2026-08-13T09:20:09Z (matches container StartedAt exactly). docker inspect reports OOMKilled=false ExitCode=0 RestartCount=3 (documented false-negative, re-confirmed). Deploy verified BY CONTENT HASH not timestamp: container /app/infrastructure/repositories.py md5 a42ab41897410756d8b3405cba360b38 == git HEAD == ca6d86869 — stale-image hypothesis REFUTED, the fix is live and failing. Live 2026-08-14T06:29Z: 976.6-977.1MiB/1GiB (95.37-95.42%) monotonically climbing. Lead (unconfirmed): in-container replication of repositories.py:160-161 (os.environ.setdefault TOKIO_WORKER_THREADS=1 / LANCE_CPU_THREADS=1 then lancedb.connect+open_table) still spawns 2 lancedb-tokio-w threads, not 1 — pin may be ineffective rather than merely insufficient; DISCRIMINATE THESE before patching. REFUTED, do not re-run: malloc_trim is NOT a dead call path (Ubuntu 22.04 glibc, ctypes find_library('c') resolves, hasattr malloc_trim True; jemalloc_bg_thd is a bundled dep, not the process allocator). AC: >=2h supervised post-restart sampling with dmesg OOM check as the pass criterion — never docker inspect .State.OOMKilled.\n\nROUTER NOTE (dev-team, 2026-08-14T06:5x): minted + dispatched immediately per PO's explicit directive — live P0 crash loop, not a backlog item. Also cross-referenced: the very next Tier-1 audit cycle (c95, agent abd9a0df0bb3eec97) independently FOLDed this exact rag-service reading using docker-level signals only (no OOMKilled, no VmHWM pinning, no dmesg read) — a live, real-time demonstration of BATCH-mint sibling row FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW's exact defect. Do not let a FOLD verdict from the auditor's own probe (docker-inspect-based) be read as contradicting this row's dmesg-sourced evidence.\n",
-        "updated_at": "2026-08-14T07:01:03Z",
-        "po_crossref_20260814T0700Z": "[po 2026-08-14T07:00:55Z | UNBLOCK-OPS-RAG-REBUILD-DONEVERIFIED-FALSIFIED-BY-KERNEL] BIDIRECTIONAL CROSS-REF — read before starting.\nOPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX has been RESTORED from the cold archive (docs/data/orch/archive/2026-08.json .done_tasks[]) into task_board.review[] at status BLOCKED, with blocked_by + superseded_by = THIS row. Its DONE_VERIFIED certification (updated_by=qa, 2026-08-12T12:46:40Z) is RETRACTED: AC-1 (image ID changed) and AC-2 (peers survived) stand and are not disputed; AC-3 (durability) is falsified by the 3 kernel OOM-kills this row exists to diagnose. Its desc previously instructed future actors that the crash \"MUST NOT BE RE-DIAGNOSED\" — that paragraph is banner-marked FALSIFIED in place; do not honour it. Read that row as PRIOR ART (full rebuild/deploy history, AC set, QA record, live samples), never as a closed matter; do NOT re-open, re-close or re-run its AC-3 independently — attach ALL new evidence HERE. Parallel measurement of this exact metric on a sibling row is what produced 5 consecutive no-op folds.\nTWO CARRY-OVER FACTS from that row's own text, still correct, dropped at its closure: (a) RestartCount is a RECREATE-reset counter — never read a low value as a low crash count; (b) `docker inspect .State.OOMKilled` reads false/ExitCode=0 through every confirmed kill in this environment — dmesg inside the Docker Desktop VM is the only authoritative OOM source.\nLIVE DOC CAVEAT (NOT fixed by po — apps/rag-service/ is your zone, and po does not write production docs): docs/architecture/microservice/rag-service/infrastructure.md § OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX documents the TOKIO_WORKER_THREADS/LANCE_CPU_THREADS pin as THE fix for lance-core thread-pool oversubscription. po's 2026-08-14T06:27Z in-container experiment replicating repositories.py:160-161 exactly still spawned 2 `lancedb-tokio-w` threads (the running container shows 2 lancedb-tokio-w + 2 lance-cpu), so the pin sets the env var but does not demonstrably bound the pool. That doc section is now misleading and needs correcting as part of this fix.\nDURABILITY BAR for closing this row (PO ruling — mirrored as the un-block condition in the restored row's verify_note): >= 24h wall-clock on the certified image with ZERO new oom_memcg events for the rag-service cgroup, evidenced by dmesg read INSIDE the Docker Desktop VM. The 3 observed kills fell at +1h00m, +1h14m and +20h34m past the last certification, so any window shorter than 24h is structurally incapable of excluding this failure mode. Never certify on `docker inspect .State.OOMKilled` or RestartCount.\n",
-        "related": [
-          "OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX"
-        ],
-        "supersedes": "OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX",
-        "updated_by": "po"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
