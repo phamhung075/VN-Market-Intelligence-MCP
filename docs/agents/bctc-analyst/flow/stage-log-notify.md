@@ -34,12 +34,18 @@ git add docs/agent-memory/notebooks/bctc-analyst.md
 git commit -m "chore(memory/bctc-analyst): notebook YYYY-MM-DD" -- docs/agent-memory/notebooks/bctc-analyst.md
 ```
 
-**5d-1. Published-marker guard (dedup vs peer double-post of the same slot's WORK telegram)** —
-established practice since c120, not previously documented here:
-```
-task_claim(task_id="published:bctc-analyst-<slot_id>:<cycle_tick_ISO>", task_kind="sprint-task",
-  owner_agent="bctc-analyst", owner_client_session=$CLAUDE_CODE_SESSION_ID, ttl_seconds=3600)
-```
+**5d-1. Published-marker guard (Phase 2 only — no Phase 1, per skill's own design note: this
+agent's extraction is the core deliverable independent of the WORK-channel notify this marker
+dedups, so an early probe buys no cost-optimisation)** — dedup vs peer double-post of the same
+slot's WORK telegram, established practice since c120 →
+skill: `.claude/skills/published-marker-gate/SKILL.md` (agent-id=bctc-analyst).
+
+Invoke Phase 2 with `MARKER_KEY="published:bctc-analyst-<slot_id>:<cycle_tick_ISO>"`,
+`MARKER_TTL=3600`, `OWNER_AGENT="bctc-analyst"`. **UC-CCA-P3-FR3 task_kind normalization
+(Q-taskkind, resolved YES):** `task_kind="cowork-slot"` — was `"sprint-task"`, the one gate of
+the 6 that did not match the other 5; migration is bounded/self-healing (old-kind markers still
+in flight simply drain within their remaining ≤1h TTL, no script needed).
+
 **`<cycle_tick_ISO>` MUST be the NOMINAL slot fire time from the cron schedule (`0 15,18,21,0 * * *`
 → round DOWN to `HH:00Z`), never the agent's own observed bootstrap timestamp.** Two concurrent
 sessions dispatched for the same slot will have different observed ticks (e.g. one starts 21:07Z,
@@ -48,7 +54,8 @@ defeating the dedup this guard exists for (live-observed 2026-07-30, slot-3 doub
 cycle_id 20260730-2100 — see notebook c133 addendum).
 `claimed:true` → proceed to 5e (WORK telegram). `claimed:false` (peer already posted this slot) →
 skip 5e, log `"[bctc-analyst] published-marker held by peer — WORK telegram skipped this cycle"` to
-notebook carry-over instead.
+notebook carry-over instead. NEVER call `task_release` on success or any exit — TTL is the sole
+expiry path (per skill Phase 2).
 
 **5e. WORK** — `send_telegram(channel="work", message=...)`:
 
