@@ -92,12 +92,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-CRON-JOB-RUNS-DOUBLE-LOG",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 9 row(s), highest-ranked FIX-CRON-JOB-RUNS-DOUBLE-LOG — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 9 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-14T17:55:40Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "updated_at": "2026-08-14T18:01:08Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13291,6 +13290,159 @@
             "observed_at": "2026-08-14T16:34:45Z"
           }
         }
+      },
+      {
+        "id": "FIX-VPS-NEWS-STALE-FALSEPOS",
+        "priority": "P3",
+        "status": "DONE_VERIFIED",
+        "title": "FIX-VPS-NEWS-STALE-FALSEPOS — get_vps_proxy_health reports news:STALE false-positive: 0407 push log shows recent pushes (03:52, 03:36, 03:20, 03:04, 03:00) contradicting the STALE flag. The VPS staleness threshold is miscalibrated vs actual news push cadence; no real data gap. FIX: align the news stale-detection threshold with the observed push cadence (decouple the STALE flag from data-flow health so a healthy, actively-pushing feed is not flagged stale).",
+        "type": "FIX",
+        "zone": "apps/news-fetch/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VPS-NEWS-STALE-FALSEPOS",
+        "commit_sha": "b08045ef0",
+        "next_agent": "pm",
+        "review_note": "RAW-verified by dev-team, zero discrepancies. Commit cherry-picked clean (3 files: vpsProxyStaleness.ts + new test + VPT-1 comment update, no orch-state.json). Code: EXPECTED_INTERVALS.news 10->20 in vpsProxyStaleness.ts confirmed via diff. Cron cadence claim (15min, vn-news-fetch.service) confirmed against docs/standards/cron-jobs.md line 287. Live DB re-queried independently (bun:sqlite in running mcp-server container, not the worktree's stale snapshot): vps_push_log service=news last-7d gaps during isVnNewsPublishHours, independent run got p90=16.08/p99=16.23/max=288.67min (dev claimed p90=16.07/p99=16.22/max=288, near-exact match; gap count differed 694 vs 886 due to query-timing window drift, not a discrepancy in conclusion) -- confirms hard cliff at ~17min and only 1 genuine outage. At old 10min threshold my own independent count showed 46.8% of gaps would false-flag STALE (dev claimed ~42%, same order/conclusion). New test file run directly in live container post-fix: 4/4 pass; pre-fix (accidentally reproduced via a path-copy bug): 1 pass/3 fail, matching dev claimed RED shape. Full 6-file regression group (VPT-1, 1113-vps-proxy-health, freshness-sla + coverage-map suite) run in the live container (proper deps installed, unlike dev's under-provisioned worktree): 77/77 pass -- confirms dev's diagnosis that the SC-2a failure they saw was a worktree dependency-provisioning artifact, not a real regression from this diff. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Commit b08045ef0be9a143f1eb4cd8766671870695d2b9 confirmed real, on main ancestry; git show --stat matches all 3 claimed files exactly (vpsProxyStaleness.ts EXPECTED_INTERVALS.news 10->20 + comment rewrite, VPT-1-vps-proxy-health-endpoint.test.ts threshold-comment update, new FIX-VPS-NEWS-STALE-FALSEPOS-news-threshold-calibration.test.ts). Re-ran independently (not trusted from prose): new calibration test 4/4 pass, VPT-1 endpoint test 7/7 pass, wider regression (VPT-1 + 1113-vps-proxy-health + 1920i-freshness-sla-extension + freshness-coverage-map-checker + new test, 5 files) 67/67 pass, bun tsc --noEmit 0 errors, mock-guard.sh --files vpsProxyStaleness.ts exit 0 PASS, process.env/secrets grep clean. Confirmed EXPECTED_INTERVALS.news still =20 post later VPT-1-SIZELINT config-split refactor (vpsProxyStalenessConfig.ts, commit 9930ee008) re-exported unchanged -- no reversion. DDD: touched prod file is interface/ layer (not domain/), domain+infrastructure imports permitted per golden rule (dev-standards.md:1507 bans only domain/->infrastructure/). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-23.md STEP qa-S5.",
+        "updated_at": "2026-08-14T18:00:12Z",
+        "updated_by": "dev-team (RAW-verify + merge)",
+        "claimed_at": "2026-08-14T17:55:40Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "qa_verified_at": "2026-08-14T17:59:00Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit + mock-guard.sh (Direct-Commit Verify, independent re-run, dev-team Review-Lane QA-Drain)",
+            "args": "commit=b08045ef0be9a143f1eb4cd8766671870695d2b9; files=apps/mcp-server/src/interface/mcp/tools/system/vpsProxyStaleness.ts,apps/mcp-server/src/__tests__/VPT-1-vps-proxy-health-endpoint.test.ts,apps/mcp-server/src/__tests__/FIX-VPS-NEWS-STALE-FALSEPOS-news-threshold-calibration.test.ts; bun test x2 target + 5-file regression group; bun tsc --noEmit; mock-guard.sh --files vpsProxyStaleness.ts",
+            "live_value_observed": "merge-base ancestor=yes; git show --stat file-list exact match (3 files); new calibration test 4/4 pass; VPT-1 endpoint test 7/7 pass; 5-file regression group 67/67 pass, 0 fail; tsc 0 errors; mock-guard exit 0 PASS; EXPECTED_INTERVALS.news live value=20 (confirmed in vpsProxyStalenessConfig.ts, re-exported unchanged)",
+            "observed_at": "2026-08-14T17:59:00Z"
+          }
+        }
+      },
+      {
+        "title": "Move DEFAULT_SLA_CONFIG out of freshnessSlaChecker into shared-config",
+        "priority": "P3",
+        "zone": "mcp-server-domain",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-DOMAIN-extract-sla-config",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-extract-sla-config",
+        "promoted_at": "2026-07-31T17:17:01Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-14T18:00:28Z",
+        "claimed_at": "2026-08-14T17:55:40Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "pm",
+        "entered_review_at": "2026-07-31T17:47:39Z",
+        "updated_by": "dev-mcp-server",
+        "review_note": "Moved SignalType/SignalSlaConfig/DEFAULT_SLA_CONFIG out of freshnessSlaChecker.ts (966L->814L) into new sibling domain/services/freshnessSlaConfig.ts (194L, size-justification header); checker imports+re-exports all 3 unchanged (zero call-site changes, default unchanged everywhere). Did NOT use packages/shared-config (backlog approach primary suggestion) -- 0 real importers repo-wide, tracked separately by FACTORY-SHARED-wire-or-prune-shared-packages, outside apps/mcp-server/ zone -- used the approach note own \"(or a freshness/config.ts)\" alternative instead. Fixed 1 brittle literal-substring test assertion (234-vps-health-sla.test.ts AC-9) broken by the legitimate re-export syntax. Evidence: tsc --noEmit clean; targeted SLA suite 212/212 pass (14 files); size-lint-justification.sh --check PASS both touched files; tool/scheduler counts unchanged (183/88); fresh PORT=3099 server boot clean, zero import errors; full mcp-server suite 2 runs (14988-14995 pass/52-59 fail) grep-confirmed 0 SLA/freshness/config failures (pre-existing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent red). REBUILD_REQUIRED=true per docker-deployment-runbook (code change needs image rebuild before live effect). Commits: 9930ee008 (code), 4097ffaea (memory). Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S49.",
+        "qa_verified_at": "2026-08-14T18:00:06Z",
+        "qa_verified_by": "qa",
+        "status_note": "[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Row's own review_note carried both commit refs (\"Commits: 9930ee008 (code), 4097ffaea (memory)\") — treated as prose claim, not trusted blind. Both confirmed real, on main ancestry (git merge-base --is-ancestor). git show --stat 9930ee008 matches all 3 claimed files exactly: apps/mcp-server/src/domain/services/freshnessSlaChecker.ts, new apps/mcp-server/src/domain/services/freshnessSlaConfig.ts, apps/mcp-server/src/__tests__/234-vps-health-sla.test.ts. Read the diff directly, not prose: SignalType union / SignalSlaConfig interface / DEFAULT_SLA_CONFIG table moved verbatim (byte-identical) into the new sibling file with its own size-justification header; freshnessSlaChecker.ts imports the 3 names and re-exports them unchanged (export type {...} / export {DEFAULT_SLA_CONFIG}) so every existing import path keeps working, zero call-site changes. Test-file hunk confirmed: the one brittle literal-substring AC-9 assertion (checked exact text export type SignalType) updated to check the new re-export line instead — matches claim exactly. git log --follow shows one later unrelated commit (f0831e6be, bctc_vps_queue terminal-state exclusion) touched freshnessSlaChecker.ts after this one, explaining current 829L vs the commit's stated 966L->814L — legitimate subsequent drift, not scope creep in the verified commit itself. Re-ran REAL verification, not trusted from prose: targeted SLA/freshness zone suite (18 files referencing freshnessSlaChecker/freshnessSlaConfig/SignalSlaConfig/DEFAULT_SLA_CONFIG, broader than the row's own claimed 14) 271/271 pass, 0 fail — including the exact 234-vps-health-sla.test.ts AC-9 assertion. bun tsc --noEmit clean, 0 errors. mock-guard.sh --files (both touched prod files) exit 0 PASS. scripts/audits/size-lint-justification.sh --check (both files) PASS — 0 unjustified offenders, freshnessSlaConfig.ts's own header verified present and accurate (194L, ~180L stated tolerance). DDD grep hits on both files are docstring text only (\"Layer: domain/services — must not import from application/ or infrastructure/\"), not actual import statements — confirmed by reading, zero real domain→app/infra imports. process.env / secrets greps clean on both files. Zero blocking ISSUE.",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit + mock-guard.sh + size-lint-justification.sh",
+            "args": {
+              "commits_verified": [
+                "9930ee008",
+                "4097ffaea"
+              ],
+              "files_verified": [
+                "apps/mcp-server/src/domain/services/freshnessSlaChecker.ts",
+                "apps/mcp-server/src/domain/services/freshnessSlaConfig.ts",
+                "apps/mcp-server/src/__tests__/234-vps-health-sla.test.ts"
+              ],
+              "targeted_suite_files": 18,
+              "targeted_suite_result": "271 pass / 0 fail"
+            },
+            "live_value_observed": "9930ee008 (966L->814L extraction) + 4097ffaea (memory, non-code) confirmed real & on main ancestry; git show --stat matches claimed files exactly (freshnessSlaChecker.ts, new freshnessSlaConfig.ts, 234-vps-health-sla.test.ts). Targeted zone suite (18 files) 271 pass / 0 fail. tsc --noEmit 0 errors. mock-guard.sh PASS. size-lint-justification.sh --check PASS (0 unjustified offenders). DDD/secrets/process.env greps clean (docstring-only hits, not real imports).",
+            "observed_at": "2026-08-14T18:00:06Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-CRON-JOB-RUNS-DOUBLE-LOG",
+        "priority": "low",
+        "status": "DONE_VERIFIED",
+        "title": "cron_job_runs double-logging: every job run logged TWICE per started_at (one row blank rows_written, one with the integer). Minor observability bug — inflates run counts + corrupts rows_written aggregates used by audits.",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CRON-JOB-RUNS-DOUBLE-LOG",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-31T13:47:28Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-14T18:01:08Z",
+        "claimed_at": "2026-08-14T17:55:40Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "pm",
+        "updated_by": "qa",
+        "commit_sha": "0a73c5b0490d370cc01d28a9040b56f4920c1aac",
+        "return_summary": "predictionResolutionJob double-wrap fixed (startupHelpers.ts): default fn now calls core runPredictionResolution(db) directly + replicated T4 shouldSkipRecoveryReplay guard, matching the evidenceAccumulator/baseRateComputation/bctcReparse sibling fixes. 10 new tests (RED-then-GREEN via git stash proof), 130/130 related-file regression, tsc clean, toolCount=183/cronJobCount=88 unchanged, full suite 14987 pass/56 fail (within documented 52-59 pre-existing flake band, zero prediction/cron/scheduler matches).",
+        "status_note": "[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Row carried .commit_sha but no .files[] drain field -- files derived from `git show --stat` on 0a73c5b0490d370cc01d28a9040b56f4920c1aac, matched exactly against the commit-message file list (no scope drift). Commit confirmed real, on main ancestry (git merge-base --is-ancestor). Read the diff directly, not return_summary prose: startupHelpers.ts default fn for runPredictionResolutionWithDb swapped the self-recording runPredictionResolutionJob() wrapper call for a direct runPredictionResolution(db) core call (single recordJobRun per run instead of two), and replicated the T4 shouldSkipRecoveryReplay dedup guard (already defined in this same file, used identically by the sibling runBctcReparseWithDb/runBaseRateComputationWithDb wrappers) into this wrapper -- exact match to the diagnosed double-wrap root cause and the sibling fixes established pattern; predictionResolutionJob.ts itself untouched, matching the stated file-touch footprint. Re-ran independently: new FIX-CRON-JOB-RUNS-DOUBLE-LOG.test.ts 10/10 pass (19 expect() calls). Re-ran the same 9-file related-file regression batch cited in the commit message (1420-cron-health-coverage, 1125/PRED-RESOLVER-GAP-FIX/1154 prediction-resolution, FIX-BASE-RATE-COMPUTATION-CRON-DEAD, FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD, ARCH-CRON-recover-jitter, FACTORY-SCHEDULER-job-table-registry, plus the new test file) = 140/140 pass, 0 fail -- matches the claimed 130/130 + 10 new exactly. bun tsc --noEmit: 0 errors. mock-guard.sh --files startupHelpers.ts: exit 0 PASS. DDD: startupHelpers.ts is scheduler/, not domain/ -- pre-existing infrastructure/ imports (recordJobRun, breakers) are out of scope for the domain-import ban, zero new import added by this diff. process.env/secrets grep clean on both touched files. Full 14987-test suite reclaim not repeated this cycle -- targeted + full related-file regression scope satisfies the flow's own substitution instruction, and the claimed 56-fail count sits in the documented pre-existing 52-59 flake band already cross-referenced across 6+ sprint journals. Zero blocking ISSUE. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-23.md STEP qa-S4.",
+        "qa_verified_at": "2026-08-14T18:00:02Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit + mock-guard.sh",
+            "args": {
+              "commit_verified": "0a73c5b0490d370cc01d28a9040b56f4920c1aac",
+              "files_verified": [
+                "apps/mcp-server/src/scheduler/startupHelpers.ts",
+                "apps/mcp-server/src/__tests__/FIX-CRON-JOB-RUNS-DOUBLE-LOG.test.ts"
+              ],
+              "regression_batch": [
+                "apps/mcp-server/src/__tests__/1420-cron-health-coverage.test.ts",
+                "apps/mcp-server/src/__tests__/1125*.test.ts",
+                "apps/mcp-server/src/__tests__/PRED-RESOLVER-GAP-FIX.test.ts",
+                "apps/mcp-server/src/__tests__/1154*.test.ts",
+                "apps/mcp-server/src/__tests__/FIX-BASE-RATE-COMPUTATION-CRON-DEAD.test.ts",
+                "apps/mcp-server/src/__tests__/FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD.test.ts",
+                "apps/mcp-server/src/__tests__/ARCH-CRON-recover-jitter.test.ts",
+                "apps/mcp-server/src/__tests__/FACTORY-SCHEDULER-job-table-registry.test.ts"
+              ]
+            },
+            "live_value_observed": "new test 10/10 pass; 9-file related-file regression batch 140/140 pass (matches claimed 130+10 exactly); tsc --noEmit 0 errors; mock-guard.sh PASS; process.env/secrets grep clean; DDD N/A (scheduler/, not domain/)",
+            "observed_at": "2026-08-14T18:00:02Z"
+          }
+        }
+      },
+      {
+        "title": "Name PDF-quality magic numbers + extract processStrandedFeedback in bctcReparseJob",
+        "priority": "P3",
+        "zone": "mcp-server-scheduler",
+        "type": "FACTORY",
+        "status": "DONE_VERIFIED",
+        "id": "FACTORY-SCHEDULER-split-bctcReparseJob",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-split-bctcReparseJob",
+        "promoted_at": "2026-07-31T19:18:24Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-14T18:01:30Z",
+        "claimed_at": "2026-08-14T17:55:40Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "pm",
+        "entered_review_at": "2026-07-31T19:30:25Z",
+        "updated_by": "qa",
+        "review_note": "Named the 2 inline PDF-quality magic numbers as MIN_PDF_TEXT_CHARS=100 / MIN_PDF_CONFIDENCE=0.3 (all 4/2 occurrences across the Tier 1a/1b/2/3 extraction gates in reparseSingleWithOcrFallback) and extracted the agent_feedback escalation for-loop out of runBctcReparseJob into a new module-private processStrandedFeedback(db, rows, reparse, notify, fileExistsFn) helper -- pure mechanical naming/extraction, resolved threshold values and side-effect ordering/log messages unchanged byte-for-byte. Broader file-split premise from the original 2026-06-15 maintainability-factory-audit finding was overstated per this task's own scoping note (reparseSingleWithOcrFallback already DI'd/pure, no work needed there; oversize is covered by a separate zone-wide cap task) -- out of scope here. processStrandedFeedback kept module-private (not exported): no existing test imports an internal loop function, all 21 importing test files hit only the public exports (parseStrandedDetail, reparseSingleWithOcrFallback, runBctcReparseJob, parseYearQuarterFromFilename, scanDiskForStrandedPdfs). No docs/architecture/microservice/mcp-server/*.md reference the internal loop structure or the literal thresholds by number -- doc-review: NONE needed. Evidence: bun tsc --noEmit clean. Targeted suite (21 test files that import bctcReparseJob.ts): 195/196 pass (1 pre-existing skip), 0 fail, 693 expect() calls. gen-project-stats.ts --dry-run: toolCount=183, cronJobCount=88 -- unchanged (no tool/scheduler registration touched). Full bun test (single run): 14989 pass / 58 fail / 2 errors / 40 skip across 15087 tests -- lands inside the already-documented 14988-14995 pass, 52-59 fail, 0-2 errors FIX-MCP-SUITE-HEALTH-BASELINE order-dependent-red band (S49/S50/S51, same day); the 2 visible error stack traces are freshnessSlaMonitorJob.ts / OHLCV-aggregator / orchStateSchema.test.ts -- unrelated pre-existing classes, zero bctcReparseJob matches. REBUILD_REQUIRED=true per docker-deployment-runbook (live scheduler code change needs image rebuild before live effect). Commit: f0a622472. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S52. Tool grant note: this specialist agent does NOT have the gateway MCP call_tool grant (developer tools package = Read/Edit/Write/Glob/Grep/Bash/semble only) -- this orch-state.json write is performed via orch-apply.sh (Bash) but left UNCOMMITTED on disk per the dispatch brief's own instruction; dev-team commits it after RAW-verification. [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Commit f0a622472eccd0bccbcc1f15e7dd977b7e0db74c (from own review_note prose, no .commit/.files[] drain field) confirmed real, on main ancestry (git merge-base --is-ancestor). git show --stat matches exactly 1 file, matching backlog-detail.json#FACTORY-SCHEDULER-split-bctcReparseJob files[] claim: apps/mcp-server/src/scheduler/financial-reports/bctcReparseJob.ts. Read diff directly, not trusted from prose: MIN_PDF_TEXT_CHARS=100 / MIN_PDF_CONFIDENCE=0.3 named constants substituted into exactly 4/2 raw-literal occurrences across Tier 1a/1b/2/3 gates (resolved values byte-unchanged); processStrandedFeedback(db, rows, reparse, notify, fileExistsFn) extracted verbatim from the runBctcReparseJob for-loop body, called once, partial counters merged unchanged into result -- pure mechanical extraction, kept module-private (no test imports it directly). Re-ran REAL verification on a broader net than dev own claimed 21 files: all 24 test files referencing bctcReparseJob (13 direct import + mock.module + string-ref) -> 220 pass / 1 skip / 0 fail / 747 expect() calls. bun tsc --noEmit 0 errors. mock-guard.sh --files bctcReparseJob.ts exit 0 PASS. DDD: file is scheduler/financial-reports/, not domain/ -- pre-existing infrastructure/ imports (logger, db/schema, fetchers/pdf, notifiers/telegram) out of scope for the domain-import ban, not a violation. process.env/secrets grep clean (only false-hit \\\"tokens\\\" inside a comment). Zero blocking ISSUE.",
+        "qa_verified_at": "2026-08-14T18:01:29Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit + mock-guard.sh",
+            "args": {
+              "commits_verified": [
+                "f0a622472eccd0bccbcc1f15e7dd977b7e0db74c"
+              ],
+              "files_verified": [
+                "apps/mcp-server/src/scheduler/financial-reports/bctcReparseJob.ts"
+              ],
+              "targeted_suite_files": 24,
+              "targeted_suite_result": "220 pass / 1 skip / 0 fail / 747 expect()"
+            },
+            "live_value_observed": "f0a622472eccd0bccbcc1f15e7dd977b7e0db74c confirmed real & on main ancestry; git show --stat shows exactly 1 file changed matching claim (apps/mcp-server/src/scheduler/financial-reports/bctcReparseJob.ts). Broader-net re-run (24 test files referencing bctcReparseJob) 220 pass / 1 skip / 0 fail. tsc --noEmit 0 errors. mock-guard.sh PASS. DDD/secrets/process.env greps clean (scheduler layer, not domain/).",
+            "observed_at": "2026-08-14T18:01:29Z"
+          }
+        }
       }
     ],
     "head": {
@@ -17895,26 +18047,6 @@
         "po_RAG_MEM_DURABILITY_BAR_V2_20260814T0927Z": "[po RULING 2026-08-14T09:27Z] RAG-MEM-DURABILITY-BAR v2 — binding on EVERY rag-service memory row (this row, FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS, FU-RAG-DEPLOY-MEMORY, OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX). SUPERSEDES the v1 bar in po_crossref_20260814T0700Z, which was necessary but gameable.\nRATIONALE FOR RAISING IT AGAIN: this is the THIRD consecutive \"fix landed -> marked DONE_VERIFIED -> recurred within hours\" cycle on one incident. 1) thread-pin ca6d86869 -> OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX certified DONE_VERIFIED 2026-08-12T12:46:40Z -> kernel OOM at +1h00m, +1h14m, +20h34m. 2) cap raise 2f835ec63 -> FU-RAG-DEPLOY-MEMORY certified DONE_VERIFIED 2026-08-08T10:59:52Z -> three kernel OOMs on the raised cap. 3) skip-rebuild 82216e291 -> STALE-ACK'd benign at 08:57Z on a single 84.85% post-restart reading -> monotonic accelerating climb to 89.18% within 24 minutes. Each closure was defeated by the same structural flaw: a NEGATIVE criterion (no crash observed yet) evaluated over a window shorter than the failure's own period, on a signal that cannot see the failure. v2 adds a POSITIVE criterion and closes the two laundering paths.\nD1 SIGNAL (carried from v1, unchanged): >= 24h wall-clock with ZERO `oom_memcg` dmesg events for the rag-service cgroup, read INSIDE the Docker Desktop VM (nsenter). NEVER `docker inspect .State.OOMKilled`, NEVER `.State.ExitCode`, NEVER RestartCount — all three are proven false-negatives here.\nD2 CONTINUOUS LIFETIME (new): the window must span ONE unbroken container lifetime. Any restart or recreate — INCLUDING a preemptive ops mitigation restart — resets it to zero. Evidence must cite `docker inspect .State.StartedAt` at window OPEN and the identical value at window CLOSE. A window whose StartedAt moved is not a short window, it is no window.\nD3 POSITIVE PLATEAU (new — this is the actual fix criterion, D1 alone can never establish one): >= 6 memory samples spread across the window; fit the growth rate over the final 12h. PASS requires BOTH rate <= 0.02 pp/min AND final reading <= 85% of the cap. A run that ends at 95% having merely not died yet is a FAIL. \"Did not OOM\" is not \"bounded\" — the whole incident history above is the proof.\nD4 NO-MITIGATION (new): the window is INVALID if any preemptive restart, cap raise, traffic throttle, or manual memory intervention was applied during it. Mitigation windows and certification windows are mutually exclusive. If the service cannot survive the window unassisted, report that as the finding — never launder it into a green.\nD5 EVIDENCE SHAPE (new, process): the certifying agent MUST write onto the row it closes — `durability_window_started_at` (= .State.StartedAt), `durability_window_container_id`, `durability_window_ended_at`, `durability_samples[]` (>=6 {ts, mem_pct}), `durability_growth_pp_per_min`, and the verbatim in-VM dmesg query used. A prose assertion without those six fields is NOT a certification and any lane move it justifies is void. This also satisfies the schema's verification.raw_probe{} requirement — never close a rag-service memory row via a RC_VERIF_GRANDFATHERED_IDS exemption."
       },
       {
-        "id": "FIX-CRON-JOB-RUNS-DOUBLE-LOG",
-        "priority": "low",
-        "status": "QA",
-        "title": "cron_job_runs double-logging: every job run logged TWICE per started_at (one row blank rows_written, one with the integer). Minor observability bug — inflates run counts + corrupts rows_written aggregates used by audits.",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CRON-JOB-RUNS-DOUBLE-LOG",
-        "verify_note": "prior_status=TODO",
-        "promoted_at": "2026-07-31T13:47:28Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-08-14T17:55:40Z",
-        "claimed_at": "2026-08-14T17:55:40Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "updated_by": "dev-mcp-server (FIX-CRON-JOB-RUNS-DOUBLE-LOG review-flip)",
-        "commit_sha": "0a73c5b0490d370cc01d28a9040b56f4920c1aac",
-        "return_summary": "predictionResolutionJob double-wrap fixed (startupHelpers.ts): default fn now calls core runPredictionResolution(db) directly + replicated T4 shouldSkipRecoveryReplay guard, matching the evidenceAccumulator/baseRateComputation/bctcReparse sibling fixes. 10 new tests (RED-then-GREEN via git stash proof), 130/130 related-file regression, tsc clean, toolCount=183/cronJobCount=88 unchanged, full suite 14987 pass/56 fail (within documented 52-59 pre-existing flake band, zero prediction/cron/scheduler matches)."
-      },
-      {
         "id": "INVESTIGATE-EMPTY-DATA-TABLES",
         "priority": "low",
         "status": "QA",
@@ -17934,41 +18066,6 @@
         "review_note": "SPIKE complete — RAW-verified by dev-team: live row counts (all 5 tables = 0, sqlite3 -readonly), broker_sanctions defaultFetchSanctions() stub text, muasamcong.ts getMuasamcongUrl() verbatim env-var passthrough (no ?path= composition), davPharmacyJob.ts uses shouldSkipRecoveryReplay (T4 dedup guard) not shouldRunCatchup (confirms zero startup-catchup guard claim), davPharmacyCheckJob cron_job_runs = exactly 1 success ever (2026-04-30), brokerSanctionsSweep QUARTER_MONTHS=[3,6,9,12] confirms 07-31 internal-skip claim, insiderCheckJob 8/8 sampled days success+rows_written=0 — all spot-checked claims matched exactly. Verdict: credit_data=empty-by-design/already-guarded (no FIX needed); insider_transactions, public_contracts, pharma_events, broker_sanctions=dead-pipeline, each root-caused. 4 follow-up FIX tasks proposed in docs/spikes/SPIKE-INVESTIGATE-EMPTY-DATA-TABLES.md — forwarded to in-flight PO triage for minting rather than re-dispatching a new round. Investigation-only per SPIKE AC, zero code changes, zero orch-state.json touch by the agent (dev-team commit_zone boundary respected)."
       },
       {
-        "id": "FIX-VPS-NEWS-STALE-FALSEPOS",
-        "priority": "P3",
-        "status": "QA",
-        "title": "FIX-VPS-NEWS-STALE-FALSEPOS — get_vps_proxy_health reports news:STALE false-positive: 0407 push log shows recent pushes (03:52, 03:36, 03:20, 03:04, 03:00) contradicting the STALE flag. The VPS staleness threshold is miscalibrated vs actual news push cadence; no real data gap. FIX: align the news stale-detection threshold with the observed push cadence (decouple the STALE flag from data-flow health so a healthy, actively-pushing feed is not flagged stale).",
-        "type": "FIX",
-        "zone": "apps/news-fetch/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-VPS-NEWS-STALE-FALSEPOS",
-        "commit_sha": "b08045ef0",
-        "next_agent": "qa",
-        "review_note": "RAW-verified by dev-team, zero discrepancies. Commit cherry-picked clean (3 files: vpsProxyStaleness.ts + new test + VPT-1 comment update, no orch-state.json). Code: EXPECTED_INTERVALS.news 10->20 in vpsProxyStaleness.ts confirmed via diff. Cron cadence claim (15min, vn-news-fetch.service) confirmed against docs/standards/cron-jobs.md line 287. Live DB re-queried independently (bun:sqlite in running mcp-server container, not the worktree's stale snapshot): vps_push_log service=news last-7d gaps during isVnNewsPublishHours, independent run got p90=16.08/p99=16.23/max=288.67min (dev claimed p90=16.07/p99=16.22/max=288, near-exact match; gap count differed 694 vs 886 due to query-timing window drift, not a discrepancy in conclusion) -- confirms hard cliff at ~17min and only 1 genuine outage. At old 10min threshold my own independent count showed 46.8% of gaps would false-flag STALE (dev claimed ~42%, same order/conclusion). New test file run directly in live container post-fix: 4/4 pass; pre-fix (accidentally reproduced via a path-copy bug): 1 pass/3 fail, matching dev claimed RED shape. Full 6-file regression group (VPT-1, 1113-vps-proxy-health, freshness-sla + coverage-map suite) run in the live container (proper deps installed, unlike dev's under-provisioned worktree): 77/77 pass -- confirms dev's diagnosis that the SC-2a failure they saw was a worktree dependency-provisioning artifact, not a real regression from this diff.",
-        "updated_at": "2026-08-14T17:55:40Z",
-        "updated_by": "dev-team (RAW-verify + merge)",
-        "claimed_at": "2026-08-14T17:55:40Z",
-        "claimed_by": "dev-team (review-lane qa-drain)"
-      },
-      {
-        "title": "Move DEFAULT_SLA_CONFIG out of freshnessSlaChecker into shared-config",
-        "priority": "P3",
-        "zone": "mcp-server-domain",
-        "type": "FACTORY",
-        "status": "QA",
-        "id": "FACTORY-DOMAIN-extract-sla-config",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-DOMAIN-extract-sla-config",
-        "promoted_at": "2026-07-31T17:17:01Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-08-14T17:55:40Z",
-        "claimed_at": "2026-08-14T17:55:40Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-31T17:47:39Z",
-        "updated_by": "dev-mcp-server",
-        "review_note": "Moved SignalType/SignalSlaConfig/DEFAULT_SLA_CONFIG out of freshnessSlaChecker.ts (966L->814L) into new sibling domain/services/freshnessSlaConfig.ts (194L, size-justification header); checker imports+re-exports all 3 unchanged (zero call-site changes, default unchanged everywhere). Did NOT use packages/shared-config (backlog approach primary suggestion) -- 0 real importers repo-wide, tracked separately by FACTORY-SHARED-wire-or-prune-shared-packages, outside apps/mcp-server/ zone -- used the approach note own \"(or a freshness/config.ts)\" alternative instead. Fixed 1 brittle literal-substring test assertion (234-vps-health-sla.test.ts AC-9) broken by the legitimate re-export syntax. Evidence: tsc --noEmit clean; targeted SLA suite 212/212 pass (14 files); size-lint-justification.sh --check PASS both touched files; tool/scheduler counts unchanged (183/88); fresh PORT=3099 server boot clean, zero import errors; full mcp-server suite 2 runs (14988-14995 pass/52-59 fail) grep-confirmed 0 SLA/freshness/config failures (pre-existing FIX-MCP-SUITE-HEALTH-BASELINE order-dependent red). REBUILD_REQUIRED=true per docker-deployment-runbook (code change needs image rebuild before live effect). Commits: 9930ee008 (code), 4097ffaea (memory). Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S49."
-      },
-      {
         "title": "Replace console.* with the project logger in 5 application files",
         "priority": "P3",
         "zone": "mcp-server-application",
@@ -17986,25 +18083,6 @@
         "entered_review_at": "2026-07-31T19:12:51Z",
         "updated_by": "dev-mcp-server",
         "review_note": "Replaced every console.error/warn/log/info call site (24 total) in 5 application-layer files with the existing infrastructure/logger.ts ToolLogger instance -- discoverBctcPdfUrlDirectApi.ts (3x error, added missing logger import), parseBctcReport.ts (1x error, logger already imported), backfillBctcPdfPaths.ts (11x warn/info, added import), imfDataFetcher.ts (1x warn, added import), bctcBatchTableBackfillJob.ts (9x warn/log/error, added import). console.log mapped to logger.info per sibling convention (checkSscReports.ts, assembleAlertDigest.ts); 2-arg console.error(\"msg:\", err) sites (3x in discoverBctcPdfUrlDirectApi.ts) normalised to logger.error(msg, {error: err.message}) matching getMoneyRadarComposite.ts/fetchParseAndStoreBctc.ts convention. Pure mechanism swap -- message content and log level unchanged, no restructuring. RSI/MA consolidation half of the original 2026-06-15 audit finding explicitly OUT OF SCOPE (domain/services/technicalIndicators.ts already deleted; not touched). Also fixed one stale doc reference (usecases.md:289 said \"console.warn\", now \"logger.warn\"). Evidence: bun tsc --noEmit clean. Targeted suite (10 files covering all 5 changed files' own test coverage): 120/120 pass, 0 fail, 569 expect() calls. Fresh server boot (PORT=3099, port 3000 held by the live docker container): /health toolCount=183, zero import errors. gen-project-stats.ts --dry-run: toolCount=183, cronJobCount=88 -- both match pre-task baseline. Full bun test, 2 independent runs: run1=14988 pass/59 fail/2 errors, run2=14995 pass/52 fail/0 errors -- both land exactly inside the already-documented 14988-14995 pass, 52-59 fail FIX-MCP-SUITE-HEALTH-BASELINE order-dependent-red band (S49/S50, same day). Grep-confirmed ZERO matches for any of the 5 changed filenames/their test names in either run's full (fail) list; the 52-59 failures are all pre-existing unrelated classes (vnstock cash-flow/balance-sheet store upserts, VPS proxy health logging, send_telegram channel routing, insider-transactions streak calc, foreign-flow signal text) -- same shape as the previously-catalogued baseline red. REBUILD_REQUIRED=true per docker-deployment-runbook (code change needs image rebuild before live effect). Commits: 3a0619464 (code+doc), bcf820017 (notebook), cb969155f (journal). Journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S51. Tool grant note: this specialist agent does NOT have the gateway MCP call_tool grant (developer tools package = Read/Edit/Write/Glob/Grep/Bash/semble only) -- this orch-state.json write is performed via orch-apply.sh (Bash) but left UNCOMMITTED on disk per the dispatch brief's own instruction; dev-team commits it after RAW-verification."
-      },
-      {
-        "title": "Name PDF-quality magic numbers + extract processStrandedFeedback in bctcReparseJob",
-        "priority": "P3",
-        "zone": "mcp-server-scheduler",
-        "type": "FACTORY",
-        "status": "QA",
-        "id": "FACTORY-SCHEDULER-split-bctcReparseJob",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FACTORY-SCHEDULER-split-bctcReparseJob",
-        "promoted_at": "2026-07-31T19:18:24Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-08-14T17:55:40Z",
-        "claimed_at": "2026-08-14T17:55:40Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-31T19:30:25Z",
-        "updated_by": "dev-mcp-server",
-        "review_note": "Named the 2 inline PDF-quality magic numbers as MIN_PDF_TEXT_CHARS=100 / MIN_PDF_CONFIDENCE=0.3 (all 4/2 occurrences across the Tier 1a/1b/2/3 extraction gates in reparseSingleWithOcrFallback) and extracted the agent_feedback escalation for-loop out of runBctcReparseJob into a new module-private processStrandedFeedback(db, rows, reparse, notify, fileExistsFn) helper -- pure mechanical naming/extraction, resolved threshold values and side-effect ordering/log messages unchanged byte-for-byte. Broader file-split premise from the original 2026-06-15 maintainability-factory-audit finding was overstated per this task's own scoping note (reparseSingleWithOcrFallback already DI'd/pure, no work needed there; oversize is covered by a separate zone-wide cap task) -- out of scope here. processStrandedFeedback kept module-private (not exported): no existing test imports an internal loop function, all 21 importing test files hit only the public exports (parseStrandedDetail, reparseSingleWithOcrFallback, runBctcReparseJob, parseYearQuarterFromFilename, scanDiskForStrandedPdfs). No docs/architecture/microservice/mcp-server/*.md reference the internal loop structure or the literal thresholds by number -- doc-review: NONE needed. Evidence: bun tsc --noEmit clean. Targeted suite (21 test files that import bctcReparseJob.ts): 195/196 pass (1 pre-existing skip), 0 fail, 693 expect() calls. gen-project-stats.ts --dry-run: toolCount=183, cronJobCount=88 -- unchanged (no tool/scheduler registration touched). Full bun test (single run): 14989 pass / 58 fail / 2 errors / 40 skip across 15087 tests -- lands inside the already-documented 14988-14995 pass, 52-59 fail, 0-2 errors FIX-MCP-SUITE-HEALTH-BASELINE order-dependent-red band (S49/S50/S51, same day); the 2 visible error stack traces are freshnessSlaMonitorJob.ts / OHLCV-aggregator / orchStateSchema.test.ts -- unrelated pre-existing classes, zero bctcReparseJob matches. REBUILD_REQUIRED=true per docker-deployment-runbook (live scheduler code change needs image rebuild before live effect). Commit: f0a622472. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S52. Tool grant note: this specialist agent does NOT have the gateway MCP call_tool grant (developer tools package = Read/Edit/Write/Glob/Grep/Bash/semble only) -- this orch-state.json write is performed via orch-apply.sh (Bash) but left UNCOMMITTED on disk per the dispatch brief's own instruction; dev-team commits it after RAW-verification."
       },
       {
         "title": "Remove discarded domain service wiring + inject real port into /health",
