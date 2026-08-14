@@ -601,7 +601,7 @@ scripts/agents-flow/lib/tick-telemetry.sh
 # tick (null when the source verdict JSON has no "tick" key — true for
 # auditor-tier1-probe.sh's run_probe()/run_tiered_probe() output),
 # verdict_bytes, elapsed_ms, exit_code. NEVER recorded: CLAUDE_CODE_
-# SESSION_ID (not even hashed — cowork-tick-preflight.sh:56-57's existing
+# SESSION_ID (not even hashed — cowork-tick-preflight.sh:61-62's existing
 # stated contract), any computed token/cost field.
 # Destination: docs/data/telemetry/<script>.jsonl (git-ignored — one file
 # PER SCRIPT, not shared — removes the rotation-fairness race a shared file
