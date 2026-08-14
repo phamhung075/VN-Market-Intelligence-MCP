@@ -1846,3 +1846,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-33 · A-33 hook-liveness: context-bloat-backstop.sh settings missing
+**Severity:** WARN | **Date:** 2026-08-14 | **Status:** OPEN
+**Location:** configuration/.claude/settings.local.json
+**Details:** Hook enforcement script is missing its configuration file registration
+**Impact:** Hook enforcement backstop may not fire correctly if configuration becomes unavailable
+**Root cause:** settings.local.json file missing or hook not registered in settings configuration
+**Zone owner:** system-audit
+**Last reported:** 2026-08-14T02:47:35Z (signal sys-20260814T024729-65b0, system-auditor -> po, dedup_key=hook_enforcement_liveness:context-bloat-backstop.sh, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
