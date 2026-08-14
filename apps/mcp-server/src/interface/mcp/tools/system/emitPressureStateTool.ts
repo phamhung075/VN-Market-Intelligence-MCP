@@ -13,7 +13,10 @@
  *
  * Contract (brief §4 — docs/architecture-briefs/2026-06-05-emit-dark-root-cause.md):
  *   - Arguments: all optional — server defaults each to "unknown" / null.
- *   - Computes: signal_backlog, dev_queue_depth, container_vm_headroom_mb, emitted_at.
+ *   - Computes: signal_backlog, dev_queue_depth, container_vm_headroom_mb, calendar_status
+ *     (TASK_2008a FR-A1/FR-A2 — vnTradingCalendar.isVnTradingDay(getTodayVnDate()).session_status;
+ *     an in-domain caller override is honored, an out-of-domain one is WARNed + discarded,
+ *     never a hard Zod-boundary reject — see runEmitPressureState), emitted_at.
  *   - Writes: docs/data/pressure-state.json (atomic tmp→rename).
  *   - Promotes: docs/data/cycle-snapshot-<HH:MM>.json → cycle-snapshot-latest.json
  *     if the per-tick snapshot for tick_id's HH:MM exists.
@@ -39,6 +42,12 @@ import { resolve, join } from "node:path";
 import { execSync } from "node:child_process";
 import { getProjectRoot } from "../../../../infrastructure/projectRoot.js";
 import type { OrchState } from "../../../../infrastructure/orchStateStore.js";
+import {
+  isVnTradingDay,
+  getTodayVnDate,
+  SESSION_STATUSES,
+  type SessionStatus,
+} from "../../../../domain/services/vnTradingCalendar.js";
 
 /**
  * Maximum age (ms) a cycle-snapshot may have before it is considered stale.
@@ -304,6 +313,13 @@ export interface EmitPressureStateDeps {
   computeSignalBacklogFn: (signalsDir: string) => number | null;
   computeDevQueueDepthFn: (orchStatePath: string) => number | null;
   computeContainerVmHeadroomMbFn: () => number | null;
+  /**
+   * Server-side calendar_status compute (TASK_2008a FR-A1) — same injectable-
+   * deps seam as the three fields above. Breaks the circular "unknown"/
+   * self-recycling loop where the SILENT-path cowork tick read the previous
+   * tick's own written value straight back out with no authoritative producer.
+   */
+  computeCalendarStatusFn: () => SessionStatus;
   writePressureStateAtomicFn: (path: string, state: PressureState) => string | null;
   /** Returns { promoted, stale } — stale=true means REFUSED due to freshness gate */
   promoteCycleSnapshotFn: (dataDir: string, tickHHMM: string) => PromoteCycleSnapshotResult;
@@ -315,6 +331,7 @@ const defaultDeps: EmitPressureStateDeps = {
   computeSignalBacklogFn: computeSignalBacklog,
   computeDevQueueDepthFn: computeDevQueueDepth,
   computeContainerVmHeadroomMbFn: computeContainerVmHeadroomMb,
+  computeCalendarStatusFn: () => isVnTradingDay(getTodayVnDate()).session_status,
   writePressureStateAtomicFn: writePressureStateAtomic,
   // Production wrapper: passes through to promoteCycleSnapshot with defaults
   promoteCycleSnapshotFn: (dataDir, tickHHMM) => promoteCycleSnapshot(dataDir, tickHHMM),
@@ -398,6 +415,25 @@ export async function runEmitPressureState(
       ? deps.promoteCycleSnapshotFn(dataDir, tickHHMM)
       : { promoted: false, stale: false };
 
+    // calendar_status: server-computed (FR-A1) unless the caller passes an
+    // in-domain override (FR-A2). An out-of-domain override is NEVER a hard
+    // reject at this layer (that would risk breaking the tool's documented
+    // never-throws contract the MANDATORY telemetry.md Step 6.0 WORK-path
+    // call depends on) — WARN + silently recompute server-side instead.
+    const calendarOverride = args.calendar_status;
+    const calendarOverrideValid =
+      !!calendarOverride && (SESSION_STATUSES as readonly string[]).includes(calendarOverride);
+    if (calendarOverride && !calendarOverrideValid) {
+      console.warn(
+        `[emit_pressure_state] out-of-domain calendar_status override "${calendarOverride}" ` +
+          `(expected one of ${SESSION_STATUSES.join("|")}) — recomputing server-side`,
+      );
+    }
+    const calendar_status: SessionStatus = calendarOverrideValid
+      ? (calendarOverride as SessionStatus)
+      : deps.computeCalendarStatusFn();
+    fieldsWritten.push("calendar_status");
+
     // Build pressure state — 9-key schema (matches telemetry.md PS_EOF lines ~48-58)
     // stale_warning is set when the freshness gate REFUSED a promotion
     const pressureState: PressureState = {
@@ -406,7 +442,7 @@ export async function runEmitPressureState(
       signal_backlog: signal_backlog,
       last_regime: args.last_regime ?? "unknown",
       last_volatility_level: args.last_volatility_level ?? "unknown",
-      calendar_status: args.calendar_status ?? "unknown",
+      calendar_status,
       dev_queue_depth: dev_queue_depth,
       container_vm_headroom_mb: container_vm_headroom_mb,
       stale_warning: promoteResult.stale,
@@ -470,12 +506,15 @@ export function registerEmitPressureStateTool(
     "emit_pressure_state",
     "Write docs/data/pressure-state.json with server-computed infrastructure metrics. " +
       "Accepts calendar_status, tick_id, fire_time, pressure_mode, last_regime, and " +
-      "last_volatility_level from the dispatcher (all optional — server defaults each to 'unknown'). " +
+      "last_volatility_level from the dispatcher (all optional). " +
       "SERVER-COMPUTED: signal_backlog (docs/signals/*.json count excl cowork-team-*), " +
       "dev_queue_depth (orch-state.json TODO+IN_PROGRESS tasks), " +
       "container_vm_headroom_mb (free -m 'available' column, read from inside THIS " +
       "process's own container — i.e. the Docker VM's headroom, NOT the macOS host's; " +
       "null if unavailable, e.g. no `free` binary outside a Linux container), " +
+      "calendar_status (vnTradingCalendar.isVnTradingDay(getTodayVnDate()).session_status when " +
+      "omitted; an in-domain override is honored as-is, an out-of-domain override is WARNed and " +
+      "discarded in favor of the server-computed value — never rejected at the wire boundary), " +
       "emitted_at (server UTC now). " +
       "Writes docs/data/pressure-state.json atomically (tmp→rename). " +
       "Promotes docs/data/cycle-snapshot-<HH:MM>.json to cycle-snapshot-latest.json if present. " +
@@ -486,7 +525,8 @@ export function registerEmitPressureStateTool(
         .optional()
         .describe(
           "Calendar status for this tick: 'open' | 'weekend' | 'holiday' | 'half_day' | 'unknown'. " +
-            "Defaults to 'unknown' if omitted.",
+            "Omitted or out-of-domain values are computed server-side from the VN trading calendar " +
+            "(an out-of-domain value is WARNed and discarded, never a hard rejection).",
         ),
       tick_id: z
         .string()

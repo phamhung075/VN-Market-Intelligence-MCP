@@ -21,7 +21,7 @@
  *   - pressureState → tmpDir/data/pressure-state.json
  */
 
-import { describe, test, expect, beforeEach, afterEach } from "bun:test";
+import { describe, test, expect, beforeEach, afterEach, spyOn } from "bun:test";
 import { tmpdir } from "node:os";
 import {
   mkdirSync,
@@ -585,6 +585,7 @@ describe("runEmitPressureState — never throws", () => {
       computeSignalBacklogFn: () => null,
       computeDevQueueDepthFn: () => null,
       computeContainerVmHeadroomMbFn: () => null,
+      computeCalendarStatusFn: () => "unknown",
       writePressureStateAtomicFn: (path, state) =>
         writePressureStateAtomic(pressureStatePath, state),
       promoteCycleSnapshotFn: (): PromoteCycleSnapshotResult => ({ promoted: false, stale: false }),
@@ -667,6 +668,7 @@ describe("runEmitPressureState — stale/fresh snapshot integration", () => {
       computeSignalBacklogFn: () => 0,
       computeDevQueueDepthFn: () => 0,
       computeContainerVmHeadroomMbFn: () => 512,
+      computeCalendarStatusFn: () => "unknown",
       writePressureStateAtomicFn: (_path, state) => {
         capturedState.value = state;
         return null; // success
@@ -795,6 +797,7 @@ describe("runEmitPressureState — end-to-end with fixtures", () => {
       computeSignalBacklogFn: (dir) => computeSignalBacklog(dir),
       computeDevQueueDepthFn: (path) => computeDevQueueDepth(path),
       computeContainerVmHeadroomMbFn: () => 8192, // fixed for test determinism
+      computeCalendarStatusFn: () => "unknown", // overridden by args.calendar_status="open" below
       writePressureStateAtomicFn: (path, state) =>
         writePressureStateAtomic(path, state),
       promoteCycleSnapshotFn: (): PromoteCycleSnapshotResult => ({ promoted: false, stale: false }),
@@ -862,6 +865,7 @@ describe("runEmitPressureState — end-to-end with fixtures", () => {
       computeSignalBacklogFn: () => 0,
       computeDevQueueDepthFn: () => 0,
       computeContainerVmHeadroomMbFn: () => null,
+      computeCalendarStatusFn: () => "unknown",
       writePressureStateAtomicFn: (_path, state) => {
         // Write to dataDir directly for this test
         const adjustedPath = join(dataDir, "pressure-state.json");
@@ -886,5 +890,77 @@ describe("runEmitPressureState — end-to-end with fixtures", () => {
     expect(existsSync(latestPath)).toBe(true);
     const latest = JSON.parse(readFileSync(latestPath, "utf8"));
     expect(latest.tick).toBe("18:00");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TASK_2008a FR-A1/FR-A2: calendar_status server-side compute + enum gate
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("runEmitPressureState — calendar_status (TASK_2008a FR-A1/FR-A2)", () => {
+  function buildCalDeps(
+    overrides: Partial<EmitPressureStateDeps>,
+  ): { deps: EmitPressureStateDeps; capturedState: { value: PressureState | null } } {
+    const capturedState: { value: PressureState | null } = { value: null };
+    const deps: EmitPressureStateDeps = {
+      getRoot: () => tmpDir,
+      computeSignalBacklogFn: () => null,
+      computeDevQueueDepthFn: () => null,
+      computeContainerVmHeadroomMbFn: () => null,
+      computeCalendarStatusFn: () => "open",
+      writePressureStateAtomicFn: (_path, state) => {
+        capturedState.value = state;
+        return null;
+      },
+      promoteCycleSnapshotFn: (): PromoteCycleSnapshotResult => ({ promoted: false, stale: false }),
+      nowIso: () => "2026-06-05T18:01:31.000Z",
+      ...overrides,
+    };
+    return { deps, capturedState };
+  }
+
+  test("omitted calendar_status: server computes via computeCalendarStatusFn (FR-A1)", async () => {
+    const { deps, capturedState } = buildCalDeps({ computeCalendarStatusFn: () => "half_day" });
+    const result = await runEmitPressureState({}, deps);
+    expect(result.success).toBe(true);
+    expect(capturedState.value?.calendar_status).toBe("half_day");
+  });
+
+  test("in-domain override wins over computeCalendarStatusFn — server not called for the value", async () => {
+    const { deps, capturedState } = buildCalDeps({ computeCalendarStatusFn: () => "open" });
+    const result = await runEmitPressureState({ calendar_status: "weekend" }, deps);
+    expect(result.success).toBe(true);
+    expect(capturedState.value?.calendar_status).toBe("weekend");
+  });
+
+  test("out-of-domain override: WARN + recompute, never throws (FR-A2 enforcement)", async () => {
+    const warnLines: unknown[] = [];
+    const spy = spyOn(console, "warn").mockImplementation((...a: unknown[]) => {
+      warnLines.push(a);
+    });
+
+    const { deps, capturedState } = buildCalDeps({ computeCalendarStatusFn: () => "open" });
+    let threw = false;
+    let result: Awaited<ReturnType<typeof runEmitPressureState>> | null = null;
+    try {
+      result = await runEmitPressureState({ calendar_status: "closed" }, deps);
+    } catch {
+      threw = true;
+    }
+    spy.mockRestore();
+
+    expect(threw).toBe(false);
+    expect(result).not.toBeNull();
+    expect(result!.success).toBe(true);
+    expect(capturedState.value?.calendar_status).toBe("open"); // recomputed, override discarded
+    expect(warnLines.length).toBeGreaterThanOrEqual(1);
+  });
+
+  test("wire-level schema still bare-string (Zod boundary never throws on out-of-domain values)", async () => {
+    // Zod-boundary reject would break the never-throws contract MANDATORY telemetry.md
+    // Step 6.0 depends on — enforcement must live inside runEmitPressureState only.
+    const { deps } = buildCalDeps({ computeCalendarStatusFn: () => "unknown" });
+    const result = await runEmitPressureState({ calendar_status: "off_market" }, deps);
+    expect(result.success).toBe(true);
   });
 });

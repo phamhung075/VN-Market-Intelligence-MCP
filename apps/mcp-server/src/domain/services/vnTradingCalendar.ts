@@ -19,7 +19,17 @@ import { VN_HOLIDAYS, VN_HALF_DAYS, VN_CALENDAR_LAST_YEAR } from "./vnHolidayDat
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type SessionStatus = "open" | "holiday" | "half_day" | "weekend" | "unknown";
+/**
+ * Runtime SSOT for SessionStatus (TASK_2008a FR-A2). `SessionStatus` was a
+ * pure TS type alias with no backing runtime array, so a Zod schema could
+ * not mechanically derive an enum from it — callers had to hand-duplicate
+ * the literal list wherever a runtime domain-check was needed. This const
+ * array is now the single source of truth; the type below is derived FROM
+ * it (not the other way around), so the two can never drift apart again.
+ */
+export const SESSION_STATUSES = ["open", "holiday", "half_day", "weekend", "unknown"] as const;
+
+export type SessionStatus = (typeof SESSION_STATUSES)[number];
 
 export interface TradingDayResult {
   /** The queried date in YYYY-MM-DD format (VN timezone) */
