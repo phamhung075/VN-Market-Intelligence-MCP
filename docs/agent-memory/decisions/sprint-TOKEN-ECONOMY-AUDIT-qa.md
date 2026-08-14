@@ -420,3 +420,58 @@ refs. Zero .ts/.js touched (`git show --name-only` grep empty) → bun
 test/tsc/mock-guard correctly N/A, same class as TE-T16/TE-T26 precedent.
 **why-change:** No change from plan — dev-team Review-Lane QA-Drain dispatched
 verify-committed mode; RAW verification supported DONE_VERIFIED.
+
+### STEP qa-S14 · qa · 2026-08-14T13:00:01Z
+**task-id:** TE-T17
+**what-done:** Direct-commit verify (dev-team Review-Lane QA-Drain, `qa[]` row,
+`branch:null`, PO stale-triage re-queue after 9d no-op prior claim) of the
+notebook prune-bypass fix. Row carried no `.commit`/`.files[]`; used the
+developer's own `status_note` + PO's triage note cited commits `32529e57f`
+(fix) + `29e17fca8` (memory). Flipped QA→DONE_VERIFIED, moved
+`task_board.qa[]`→`task_board.done_verified[]` via `jq`+`scripts/orch-apply.sh`
+(conservation OK task_total 740=740, signal_total 27=27).
+**what-considered:**
+- Trust the developer's 5-point completion prose — rejected. Confirmed both
+  commits real + on `main` ancestry (`git merge-base --is-ancestor`), `git
+  show --stat` matches every path the status_note names.
+- Trust "ops.md pruned 1197L→29L" as still-true today — rejected, re-`wc -l`
+  live: 194L, 3 weeks after landing, still under the 200L cap — confirms the
+  backstop mechanisms (sweep + gate) are durably holding, not just true at
+  commit time.
+- Trust "23 sections moved to docs/incidents/" — rejected, listed the dir
+  myself: files present, one-line pointer live in ops.md.
+- Trust "sweep wired into code-janitor 6h cron" — rejected, read
+  `code-janitor/flow/main.md:123-145` myself: "every scan" section, correct
+  script path. Ran `notebook-linecap-sweep.test.sh` myself: 11/11 PASS
+  (dual-axis byte+line, idempotent re-run, drop-oldest correctness).
+- Trust "ops precommit wc -l gate added" — rejected, read
+  `ops/flow/main.md:91-98` myself: BLOCKING `exit 1` over 200L, present.
+- Ran the paired regression suites myself, not trusted: `notebook-auto-
+  prune.test.sh` 10/10 PASS; `test-notebook-auto-prune.sh` 8/9 PASS — 1 FAIL
+  (Test 9, bash-vs-zsh vote-inversion). Chased the FAIL to its root cause
+  instead of either silently absorbing it into this row's verdict or
+  silently dropping it: `git show 32529e57f:scripts/agents-flow/notebook-
+  auto-prune.sh` has zero `BASH_SOURCE`/`hook-guard` references — the
+  breaking `source lib/hook-guard.sh` line was added by a LATER, unrelated
+  commit `f4d35b5df` ("fail-loud crash discriminator for load-bearing
+  hooks"). Confirmed via `git log --oneline -- notebook-auto-prune.sh`
+  ordering (f4d35b5df postdates 32529e57f). Not a TE-T17 regression — no
+  existing task_board row tracks it (checked backlog/todo); this
+  sub-session has no `mcp__gateway__call_tool` binding (INV-GATEWAY-1, no
+  `send_telegram` reach), so minted a new `task_board.backlog[]` row myself
+  (`FIX-NOTEBOOKAUTOPRUNE-HOOKGUARD-BASHSOURCE-ZSH-BREAK`, P2, owner/
+  next_agent developer, zone `scripts/agents-flow/`) for durable tracking
+  instead — did not block this row on it.
+- `mock-guard.sh --files` → PASS (no production TS/Go source; all touched
+  files `.sh`/`.md`). Security greps (`process.env`/secrets) clean.
+**why-decision:** All 5 AC RAW-true, independently re-verified on live main
+HEAD (not trusted from the developer's or PO's prose): pruned+durably-capped
+notebook, incident bodies preserved, sweep genuinely wired+tested, ops gate
+genuinely blocking, debug dir absent. The one real test failure found belongs
+to a different, later commit — correctly excluded from this row's scope
+rather than either masking it or wrongly failing TE-T17 for someone else's
+regression.
+**why-change:** No change from plan — router dispatched verify-committed;
+RAW verification supported DONE_VERIFIED. Minted one new `backlog[]` row
+for a self-found, out-of-scope regression (test9 bash-vs-zsh) rather than
+silently dropping it.
