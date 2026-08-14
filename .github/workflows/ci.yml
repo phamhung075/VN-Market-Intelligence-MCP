@@ -526,6 +526,33 @@ jobs:
       - name: Run task-claim-owner-session-lint --check
         run: bash scripts/audits/task-claim-owner-session-lint.sh --check
 
+  agent-bash-grant-coverage:
+    name: agent-bash-grant-coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pure bash/grep/jq — no bun/go/python toolchain needed, cheapest job
+      # in the pipeline alongside size-lint/metric-mask-lint/dead-code-gate/
+      # task-claim-owner-session-lint. Root-cause gate for a recurring bug
+      # class: an agent's docs/agents/<id>/**/*.md flow corpus mandates a
+      # Bash-only step (commit-mutex git add/commit/push, `bash scripts/*.sh`)
+      # that its own .claude/agents/<id>.md `tools:` line does not grant —
+      # 4 prior point-fix rows patched one agent each with nothing stopping
+      # the 5th/6th/7th recurrence (live production impact: irreversible
+      # loss of a full-overwrite notebook cycle on tran-ngoc-bau). Baseline/
+      # ratchet design (NOT zero-tolerance) mirrors task-claim-owner-session-
+      # lint.sh: docs/data/agent-bash-grant-coverage-baseline.json grandfathers
+      # exactly 1 already-diagnosed, separately-owned mismatch (bctc-analyst,
+      # owned by FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH) — every baseline
+      # entry requires a non-null owning_task or it still FAILS --check, so
+      # the baseline can never silently launder a new offender.
+      # See task FIX-AGENT-BASH-GRANT-COVERAGE-GATE-FLOW-DEMANDS-VS-FRONTMATTER.
+      - name: Run agent-bash-grant-coverage --check
+        run: bash scripts/audits/agent-bash-grant-coverage.sh --check
+
   rebuild-raw-verify-hook:
     name: rebuild-raw-verify-hook
     runs-on: ubuntu-latest

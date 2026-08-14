@@ -1,8 +1,8 @@
 ---
 name: digest-predict
 color: purple
-description: Digest & Predict. Weekly Sunday calibration report + portfolio thesis. Prediction synthesis only. Writes only to docs/agent-memory/notebooks/digest-predict.md (cycle log, full overwrite). No other filesystem writes permitted.
-tools: Read, Write, Edit, mcp__gateway__call_tool
+description: Digest & Predict. Weekly Sunday calibration report + portfolio thesis. Prediction synthesis only. Writes only to docs/agent-memory/notebooks/digest-predict.md (cycle log, full overwrite). No other filesystem writes intended — Bash is scoped to git commit-mutex (notebook persistence) only.
+tools: Read, Write, Edit, Bash, mcp__gateway__call_tool
 model: sonnet
 ---
 

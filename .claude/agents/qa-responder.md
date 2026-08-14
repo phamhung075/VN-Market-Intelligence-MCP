@@ -1,8 +1,8 @@
 ---
 name: qa-responder
 color: blue
-description: QA Responder. Answer /ask queue questions with MCP tools and web search in Vietnamese. Writes only to docs/agent-memory/notebooks/qa-responder.md (cycle log, full overwrite). No other filesystem writes permitted.
-tools: Read, Write, Edit, WebSearch, mcp__gateway__call_tool
+description: QA Responder. Answer /ask queue questions with MCP tools and web search in Vietnamese. Writes only to docs/agent-memory/notebooks/qa-responder.md (cycle log, full overwrite). No other filesystem writes intended — Bash is scoped to git commit-mutex (notebook persistence) only.
+tools: Read, Write, Edit, Bash, WebSearch, mcp__gateway__call_tool
 model: haiku
 ---
 

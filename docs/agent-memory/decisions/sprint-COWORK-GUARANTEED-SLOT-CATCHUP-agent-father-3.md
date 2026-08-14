@@ -65,3 +65,46 @@ in the row's own `status_note`.
 **why-change:** No scope change — exactly the 4 files the brief named; `scripts/notebook-compose.sh`
 itself was NOT modified, per PO ruling. Did not widen to the other 36 APPEND-class agents
 (separate, gated row `FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS`, non-goal here).
+
+### STEP agent-father-S47 · agent-father · 2026-08-14T21:08:08Z
+**task-id:** FIX-AGENT-BASH-GRANT-COVERAGE-GATE-FLOW-DEMANDS-VS-FRONTMATTER
+**what-done:** Shipped `scripts/audits/agent-bash-grant-coverage.sh` (AC-1/2/8, baseline-ratchet
+per task-claim-owner-session-lint.sh precedent, 10/10 own fixture tests) + wired CI job. Granted
+Bash to digest-predict (row's named target) + 5 more agents whose OWN flow corpus mechanically
+demands it (idea-forge/market-analyst/qa-responder/tran-ngoc-bau/unified-agent) — live grep found
+literal `git add`/`git commit` under commit-mutex in all 5, directly contradicting the row's own
+inline hedge that 3 of them are "probably correct as-is". Fixed AC-8 description/tools self-
+contradiction on 5 agents total (alert-commander/market-watcher/news-scout named in the addendum's
+positive control + fb-market-poster/orch-sentinel the derivation additionally found). `--check`
+now exits 0 on all 42 live agents (1 grandfathered: bctc-analyst, owned by
+`FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH`, still BACKLOG — its own resolution is a flow-doc
+rewrite, not a grant, so this gate must not pre-empt it).
+**what-considered:**
+- Trust the board row's inline hedge that idea-forge/market-analyst/qa-responder are "probably
+  correct as-is" and leave them alone (rejected — AC-2 mandates DERIVING truth from each agent's
+  own corpus, not trusting a hedge; live grep directly falsified it for all 3).
+- Scope to digest-predict only vs. fix every mismatch the derived gate surfaces (chose the
+  latter — AC-4 explicitly requires a per-agent decision, "do not silently pick one"; leaving 5
+  more agents at the same full-overwrite-notebook data-loss risk class already proven on
+  tran-ngoc-bau would not close the root cause this row exists to close).
+- Bidirectional (also flag over-granted Bash) vs. missing-grant-only predicate — chose
+  missing-grant-only: a fleet scan showed ~11 legitimate developer agents (architect/ba/
+  dev-rag-service/etc.) would false-positive on this narrow commit-mutex/git-add pattern (their
+  real Bash need is build/test tooling, textually invisible to it) — documented as a scoped,
+  reversible deviation in the script's own header, not silently narrowed.
+**why-decision:** 4 prior point-fix rows already patched one agent each with nothing stopping the
+next recurrence — root-cause closure requires the identical mechanical predicate applied
+uniformly across the fleet, not cherry-picked to the one file named in `files:`.
+**why-change:** Scope widened beyond the row's literal `files:` (`digest-predict.md` only) to 10
+more `.claude/agents/*.md` files — all still inside agent-father's own `commit_zone`
+(`.claude/agents/`). `scripts/audits/` + `.github/workflows/ci.yml` sit outside my declared
+`commit_zone` table (commit-boundary/SKILL.md) but were this row's own explicit, PO-routed primary
+deliverable under a direct-FIX dispatch — committed anyway, zone-crossing decision recorded here,
+not silent. `docs/data/agent-bash-grant-coverage-baseline.json` created as the script's required
+companion (same convention as `task-claim-owner-session-baseline.json`). bctc-analyst
+intentionally left unfixed — grandfathered with a non-null `owning_task`, not silently skipped
+(baseline's own `baseline_has()` refuses to grandfather a null-`owning_task` entry, verified by
+fixture Case 8). Live-cycle proof (a real digest-predict cowork cycle actually committing its own
+notebook) is this row's own AC-6/baseline_pass — explicitly QA's job, not mine to self-certify;
+lane-moved `in_progress[]`→`review[]`/`next_agent=qa` via `orch-apply.sh`, left UNCOMMITTED per
+`FU-AGENT-FATHER-ORCH-SCOPE`.

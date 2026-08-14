@@ -8,29 +8,6 @@
      explicit YYYY-MM-DD token. Nothing deleted; full record in the archive file and git
      history. -->
 
-## EDIT 2026-08-14T20:20Z — task FIX-CI-TASKCLAIM-DEVTEAM-POSTCYCLE-OWNER-SESSION-PAYDOWN
-(dev-team-dispatched FIX-type direct dispatch, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
-- Change: added `owner_client_session` to `docs/agents/dev-team/flow/post-cycle.md`'s 4
-  grandfathered commit-mutex call sites (task_claim :105/:146, task_release :114/:152) — paid the
-  debt in-file, did NOT run `--update` (AC-2 prohibition honored, baseline file untouched).
-- Files modified: 1 (`docs/agents/dev-team/flow/post-cycle.md`)
-- Cascade: none (comment-only annotation, no structural agent-definition change)
-- Validation: `bash scripts/audits/task-claim-owner-session-lint.sh --check` exit 0 (276 files
-  scanned, 19 grandfathered sites remain elsewhere) — AC-3 met locally; AC-4 (CI green on push) not
-  checkable this session per its own verification_gate note.
-- Decision: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-3.md` S45 (new continuation file —
-  `-2.md` hit its byte cap at S44).
-- Gateway-less this session (tool grant Read/Edit/Write/Glob/Grep/Bash, no
-  `mcp__gateway__call_tool`) — used the documented docker-exec+bun:sqlite fallback (verbatim
-  `claimTask`/`releaseTask` SQL against `coordination.db`) for the commit-mutex:main lock around
-  this commit, rather than skipping it. Sprint-task lock `task:FIX-CI-TASKCLAIM-DEVTEAM-POSTCYCLE-
-  OWNER-SESSION-PAYDOWN` was already held by the dispatching session (same
-  `owner_client_session`) per INV-GATEWAY-1 — dispatcher-owned, not re-claimed here.
-- Board disposition: applied the status-flip lane-move myself (`in_progress[]` → `review[]`,
-  `next_agent=qa`) via `scripts/orch-apply.sh` per this task's explicit dispatch instruction and
-  the `FU-AGENT-FATHER-ORCH-SCOPE` "one allowed signal-queue DONE-mark per task dispatch"
-  exception — narrower than the general orch-state exclusion.
-
 ## EDIT 2026-08-14T20:22Z — task FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED
 (dev-team-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`, per architect brief
 `docs/architecture-briefs/2026-08-14-wire-notebook-compose-actuator-system-auditor-pilot.md`)
@@ -127,3 +104,34 @@
   ("status-flip = lane-move, no exceptions") and the `FU-AGENT-FATHER-ORCH-SCOPE` narrow exception —
   `status_note` carries the full AC-by-AC disposition + the AC-4 external-leg handoff to QA (RAW-verify
   the NEXT live chef fire's persisted JSON directly, exact `jq` commands in the decision journal).
+
+## EDIT 2026-08-14T21:08Z — task FIX-AGENT-BASH-GRANT-COVERAGE-GATE-FLOW-DEMANDS-VS-FRONTMATTER
+(dev-team-dispatched FIX-type direct dispatch, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
+- Change: shipped `scripts/audits/agent-bash-grant-coverage.sh` (CHECK-1 flow-demands-Bash-vs-
+  tools-grant, CHECK-2 AC-8 description/tools self-contradiction; baseline-ratchet, never an
+  opt-out allowlist — a grandfather entry requires a non-null `owning_task` or it still FAILS) +
+  its 10-case fixture test (`agent-bash-grant-coverage.test.sh`) + CI job. Granted Bash to
+  digest-predict (named target) + idea-forge/market-analyst/qa-responder/tran-ngoc-bau/unified-agent
+  — live grep found all 5 genuinely reference `git add`/`git commit` under commit-mutex, refuting
+  the board row's own inline "probably correct as-is" hedge for 3 of them. Fixed the AC-8
+  description-vs-Bash contradiction on 5 agents (alert-commander/market-watcher/news-scout named +
+  fb-market-poster/orch-sentinel newly found by the derivation).
+- Files modified: 11 `.claude/agents/*.md` (digest-predict/idea-forge/market-analyst/qa-responder/
+  tran-ngoc-bau/unified-agent/alert-commander/market-watcher/news-scout/fb-market-poster/
+  orch-sentinel), `.github/workflows/ci.yml` (new job), plus 3 new files
+  (`scripts/audits/agent-bash-grant-coverage.sh`, its `.test.sh`,
+  `docs/data/agent-bash-grant-coverage-baseline.json`).
+- Zone note: `scripts/audits/` + `.github/workflows/ci.yml` sit outside agent-father's declared
+  `commit_zone` table — committed anyway, this row was the PO-routed, explicit primary deliverable
+  under a direct-FIX dispatch (files[] named both). Recorded, not silent — see decision journal S47.
+- Validation: `bash scripts/audits/agent-bash-grant-coverage.sh --check` exits 0 across all 42 live
+  agents (1 grandfathered: bctc-analyst, owning_task=`FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH`,
+  still BACKLOG). `agent-bash-grant-coverage.test.sh`: 10/10 pass. `shellcheck -x`: 0 findings.
+- Not done here (explicit, not silent): the live digest-predict cycle that actually commits its
+  own notebook — this row's own `baseline_pass` DoD names that as the functional proof, and AC-6
+  says route to qa for live-cycle confirmation rather than self-certifying DONE on the edit.
+- Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-3.md` S47.
+- Board disposition: applied the status-flip lane-move myself (`in_progress[]` → `review[]`,
+  `next_agent=qa`) via `scripts/orch-apply.sh` per this task's explicit dispatch instruction
+  ("status-flip = lane-move, no exceptions") and the `FU-AGENT-FATHER-ORCH-SCOPE` narrow exception —
+  `status_note` carries the full pass/fail table + the pending live-cycle verification handoff.

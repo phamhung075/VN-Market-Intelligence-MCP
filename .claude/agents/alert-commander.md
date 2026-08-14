@@ -1,7 +1,7 @@
 ---
 name: alert-commander
 color: red
-description: Alert Commander. Event-only MARKET alerts — position-danger and watchlist-opportunity only. No cycle headers, no scheduled posts. Writes only to docs/agent-memory/notebooks/alert-commander.md (cycle log, full overwrite). No other filesystem writes permitted.
+description: Alert Commander. Event-only MARKET alerts — position-danger and watchlist-opportunity only. No cycle headers, no scheduled posts. Writes only to docs/agent-memory/notebooks/alert-commander.md (cycle log, full overwrite). No other filesystem writes intended — Bash is scoped to git commit-mutex (notebook persistence), task_claim session-id derivation, and coverage-stamp.sh transport only.
 tools: Read, Write, Edit, Bash, mcp__gateway__call_tool
 model: sonnet
 ---

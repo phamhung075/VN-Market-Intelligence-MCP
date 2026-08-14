@@ -2,7 +2,7 @@
 name: idea-forge
 color: green
 description: Idea Forge. Innovation strategist using structured ideation and design thinking.
-tools: Read, Glob, Grep
+tools: Read, Glob, Grep, Bash
 model: haiku
 ---
 
