@@ -11431,6 +11431,25 @@
         "po_rescope_note": "FILED AS DIRECT-FIX, NOT THE FULL BA->ARCHITECT->PM CHAIN THE REPORTER REQUESTED. Rationale, so this is auditable rather than a silent downgrade: the design is fully determined before any architect touches it — the schema CHECK constraint hands us the enum, the remedy pattern is already shipped and proven in this exact file for 4 sibling counts, an existing regression test file is already in place, and PO verified the consumer set is 3 files with a generic passthrough at the 4th. Blast radius is additive-only. The one genuine design trap (running vs failure, see AC-2) is resolved in the ACs above rather than deferred. Sending a 3-file additive change with a written predicate through 3 planning agents is process cost with no design left to buy. If the implementer disagrees and finds a real contract break in AC-3, escalate back to PO and this reroutes to architect — do not silently widen scope.",
         "consumer_impact": "Detector-reliability gap in a DATA-integrity safety net. Not urgent: currently masked because the sibling scan routed the finding via FIX-CRON-RUNS-NULL-ERRORMSG. Must not be deprioritized indefinitely — the masking is coincidence between two spawns, not a control, and the failure mode is SILENT suppression (verdict NOISE, signal_id null) which leaves no trace to detect later.",
         "updated_at": "2026-08-14T09:29:16Z"
+      },
+      {
+        "id": "FIX-NOTEBOOKAUTOPRUNE-HOOKGUARD-BASHSOURCE-ZSH-BREAK",
+        "title": "notebook-auto-prune.sh sourcing of lib/hook-guard.sh + lib/notebook-section-direction.sh via ${BASH_SOURCE[0]} breaks under direct zsh invocation (test-notebook-auto-prune.sh Test 9 FAIL)",
+        "owner": "developer",
+        "next_agent": "developer",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P2",
+        "zone": "scripts/agents-flow/",
+        "sprint": null,
+        "depends": [],
+        "detail_ref": null,
+        "note": "Found during TE-T17 (notebook prune-bypass) direct-commit verify, 2026-08-14. scripts/agents-flow/notebook-auto-prune.sh:112,118 source lib/hook-guard.sh and lib/notebook-section-direction.sh via \"$(dirname \"${BASH_SOURCE[0]}\")/lib/...\". ${BASH_SOURCE[0]} is a bash-only builtin, unset when the script is invoked directly under zsh (echo ... | zsh scripts/agents-flow/notebook-auto-prune.sh -- the exact invocation test-notebook-auto-prune.sh Test 9 uses to assert bash-vs-zsh outcome parity per AC-3 of FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS). Under zsh: dirname \"\" resolves wrong, both source lines fail (\"no such file or directory\"), then hg_resolve_project_root (defined in hook-guard.sh) is undefined -> \"command not found\", script aborts before running any prune logic. Introduced by commit f4d35b5df (fix(cross-service/hooks): fail-loud crash discriminator for load-bearing hooks), which added the hook-guard.sh sourcing line; confirmed absent from the pre-existing script (git show 32529e57f:scripts/agents-flow/notebook-auto-prune.sh has zero BASH_SOURCE/hook-guard hits) -- not a TE-T17 regression, reported separately per QA policy (report real test failures found during verify, do not silently drop). Live evidence: bash scripts/agents-flow/test-notebook-auto-prune.sh exits 1 at Test 9, the only failing test (8/9 otherwise pass). Fix: resolve script dir via a zsh-compatible mechanism (e.g. ${(%):-%x} fallback under zsh, or pass PROJECT_ROOT/script dir explicitly from the caller instead of self-locating) -- consult hook-guard.sh and notebook-section-direction.sh authors intent before changing the sourcing mechanism.",
+        "created_by": "qa",
+        "created_at": "2026-08-14T13:04:42Z",
+        "updated_by": "qa",
+        "updated_at": "2026-08-14T13:04:42Z"
       }
     ],
     "closed_sprints": [
