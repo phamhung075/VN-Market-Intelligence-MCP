@@ -1,0 +1,23 @@
+{
+  "from": "qa",
+  "to": "developer",
+  "type": "notebook_prune_wrong_section_dropped_ts_key_bug",
+  "priority": "high",
+  "createdAt": "2026-08-14T09:36:17Z",
+  "payload": {
+    "file": "scripts/agents-flow/lib/notebook-section-direction.sh",
+    "function": "nso_ts_key()",
+    "reason": "grep -oE '[0-9]{4}-?[0-9]{2}-?[0-9]{2}(T...)?' | tail -1 picks the LAST digit-run in a '## ' heading line, not the section's own designated timestamp. A trailing all-numeric git-commit-hash-prefix citation later in the SAME heading (live convention: 'commit `<10-digit-numeric-sha-prefix>`', e.g. qa.md cycle-705's 'commit `761988143`') gets mis-parsed as an 8-digit YYYYMMDD date and silently WINS over the real timestamp when it sorts numerically higher, corrupting notebook-auto-prune.sh's drop-oldest section selection.",
+    "reproduced_live": "docs/agent-memory/notebooks/qa.md, 2026-08-14T09:3xZ: heading '## cycle-705 ... commit `761988143`' computed ts_key=76198814000000000 (from the commit-hash tail-match) instead of the real 2026-08-14T01:33:11Z -> 20260814013311000, making cycle-705 look NEWEST rather than oldest. Confirmed by direct invocation: source scripts/agents-flow/lib/notebook-section-direction.sh; nso_ts_key of the cycle-705 heading returns 76198814000000000. Live consequence: notebook-auto-prune.sh's PostToolUse hook, triggered by an in-flight QA cycle's own Edit, dropped the wrong (non-oldest) section — '## cycle-711 · ... UC-CDC-P7 ... DONE_VERIFIED' review record — while keeping the genuinely-oldest cycle-705 section, with zero signal (existing AC-5/AC-6 sentinel/tie guards do not cover this shape — all 4 competing sections had distinct non-sentinel keys, just one was WRONG).",
+    "existing_guards_insufficient": "AC-5 (SELECTION-VS-SENTINEL CARDINALITY GUARD) only fires when exactly 1 non-sentinel key competes against >=1 sentinel. AC-6 (dropped-newest-dated-section) only fires when the dropped section's key equals the file's MAX non-sentinel key. Neither fires here: the corrupted key (76198814000000000) becomes the file's spurious MAX, but the ACTUAL victim (cycle-711, real key 20260814063327000) is neither the sentinel-tie shape nor equal to that spurious max — a third, uncovered defect signature.",
+    "blast_radius": "affects EVERY docs/agent-memory/notebooks/*.md heading that cites a numeric-only git short-SHA-prefix after its real timestamp — qa.md's own convention ('commit `<hash>`') is the most exposed since QA writes these headings every verify-committed cycle; also live-reproduced independently colliding with >=2 concurrent peer QA-drain sessions writing the SAME qa.md file within the same ~2min window (separate, already-tracked concurrency issue, not conflated here — see feedback_qa_notebook_fulloverwrite_drops_concurrent_peer_entries_20260806, project_peer_cowork_dispatcher_session_collision_20260801).",
+    "suggested_fix_direction": "anchor nso_ts_key's extraction to the FIRST date-like match immediately following the '## cycle-NNN ·' prefix (or the first match overall), not 'tail -1' over the whole heading line, OR restrict the regex to require a 'T..Z' time-suffix (excluding bare 8-digit date-only matches that can coincide with commit-hash digit runs) when the heading is known to always carry a full ISO timestamp. NOT fixed here — production-code fix is developer's job, this is a QA-side detection-only report per docs/agents/qa/init.md boundary_rules.",
+    "action_required": "developer investigate + fix nso_ts_key() root cause; recommend regression fixture using a heading shaped like qa.md's own 'commit `<all-digit-prefix>`' convention as a new RED case in scripts/agents-flow/notebook-auto-prune.test.sh"
+  },
+  "_processed": {
+    "fingerprint": "1c2a65241973af76e60f6344f2284f652ad772c813b1ff31b5abebeab79a049a",
+    "processedAt": "2026-08-14T09:49:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
