@@ -22,7 +22,7 @@ Entered ONLY from `chef.md` after the Step 1 gate fires (≥1 cluster qualifies)
 — that path returns from `chef.md` directly and this file is never loaded.
 
 Input: same `$DISH_TYPE` env passed into `chef.md`, plus the session state accumulated in
-`chef.md` Steps 0.5/0/1 (signal groups, qualifying clusters, published-marker claim).
+`chef.md` Steps 0.5/0/1 (signal groups, `$BIZ_CTX_SIGNALS`, qualifying clusters, published-marker claim).
 
 **Tools:** `docs/agents/tools/package/unified-agent.md`
 
@@ -113,13 +113,29 @@ For each watchlist ticker in a qualifying cluster, map against all 4 pillars:
 |---|---|---|
 | Money supply | Lượng tiền | Credit growth, M2, banking liquidity |
 | Capital cost | Chi phí vốn | Interest rate environment, bond yields |
-| Earnings outlook | Triển vọng lợi nhuận | BCTC trend, sector revenue |
+| Earnings outlook | Triển vọng lợi nhuận | BCTC trend, sector revenue, business-context fact from `$BIZ_CTX_SIGNALS` if present for this ticker (see mandatory sub-step below) |
 | Valuation risk | Rủi ro định giá | P/E vs sector, premium/discount |
 
 Confidence scoring:
 - All 4 aligned → high conviction (cite in dish)
 - 2-3 aligned → medium conviction
 - <2 aligned → low conviction (flag in dish, do not recommend action)
+
+**Business-context citation (mandatory when `$BIZ_CTX_SIGNALS` has an entry for this ticker):**
+For each ticker in a qualifying cluster with a `$BIZ_CTX_SIGNALS[<TICKER>]` entry, the
+earnings-outlook pillar's rationale text for that ticker MUST quote or closely paraphrase ≥1 of the
+`product`/`customer`/`ops`/`mgmt` field values, attributed to the source file. Store the result:
+```
+$BIZ_CTX_CITED[<TICKER>] = { field: "product"|"customer"|"ops"|"mgmt", text: "<cited excerpt>",
+                              source: "<source_file>" }
+```
+Do NOT fabricate a citation for a ticker with no `$BIZ_CTX_SIGNALS` entry — cite only where gathered
+data actually exists for that specific ticker this cycle. Do NOT pull in a ticker that is not already
+part of this cycle's qualifying clusters/conviction_calls[] purely to satisfy this requirement (see
+§5 Blocker Q1 for the one open policy question this raises). If `$BIZ_CTX_SIGNALS` is empty for
+EVERY ticker in the dish, `$BIZ_CTX_CITED` stays empty and the Step 7.5 gap-token path applies —
+this is the honest floor, identical in spirit to the Step 1 degraded-dish floor and the Step 5
+`$L5_GAP_TOKEN` floor.
 
 **Volatility & Breadth Context (P0 indicators):**
 When available, use `get_volatility_indicators()` and `get_breadth_thrust()` to adjust conviction:
@@ -292,6 +308,11 @@ Rules:
 - Example with gap: "[gap: no US macro signal in cycle] → [gap: carry regime unavailable — macro is_estimate=true] → banking sector under foreign pressure → [gap: no news_impact for VCB] — conviction LOW."
 - If conf=0.50 on all signals for a cluster (uncertain source baseline), label: `[uncertain-source baseline]` after the ticker state and treat as LOW conviction.
 - **Carry/FII provenance rule (DSI-CONSUMER-HONORS-ISESTIMATE):** The carry spread, carry regime, and any FII-flow thesis derived from the US-VN rate differential MAY ONLY appear in the causal chain when `get_macro_snapshot` returns `carry.is_estimate=false` AND `carry.carrySpread != null`. If `is_estimate=true` OR `carrySpread=null`, insert `[gap: carry regime unavailable — macro is_estimate=true]` at that chain position and do NOT compute a spread from the raw `fedFundsRate` / `vndDepositRate` fields. Never recompute deposit−fed manually from raw rate fields.
+- If `$BIZ_CTX_CITED[<ticker>]` is set for the ticker in this cluster's chain, the `[ticker: end
+  state]` component of the causal-chain sentence MUST include the cited fact (or an immediate
+  trailing clause carrying it) — e.g. "...VCB price +4.12% on SOE inflow, ROE 16.7% vs sector 17.6%
+  (bctc_signal_VCB_20260811_routine.json)." This does not change the chain's required shape; it is
+  additive content at the ticker-state position.
 - Store all chain sentences in session state — they become the mandatory spine of paragraph 2 in Step 7.
 
 **Checkpoint:** If you cannot continue past this point for any reason (budget, tool failure,
@@ -440,7 +461,7 @@ send_telegram(channel="market", message=<Block_A_text>)
 **Content:** Full analyst narrative — identical in depth to the former single MARKET dish:
 - Causal-chain sentences from Step 6.5 verbatim (including `[gap: ...]` markers)
 - Paragraph 2 with inline citations: signal ID (`#3350`), source file (`price_anomaly_*`), source_tier
-- Citation Discipline: every paragraph-2 claim MUST cite ≥1 of: signal ID, source file, source_tier. Claims without citations are a FLOW VIOLATION — self-correct or downgrade to "unverified observation".
+- Citation Discipline: every paragraph-2 claim MUST cite ≥1 of: signal ID, source file, source_tier. Claims without citations are a FLOW VIOLATION — self-correct or downgrade to "unverified observation". **When `$BIZ_CTX_CITED[<ticker>]` is set for a ticker discussed in paragraph 2, citing the source filename alone is NOT sufficient — the actual cited fact text (from `$BIZ_CTX_CITED[<ticker>].text`) MUST also appear**, not merely its filename.
 - Metadata footer: "TNB layers walked: Layer 1–6 | Signal IDs consumed: [...] | source_tier values cited: [...]"
 - Full hexagram names in Hán-Việt (`Lão Âm Hào 6`) — TNB expects canonical terminology.
 
@@ -472,8 +493,8 @@ The `[CHEF-DETAIL]` prefix is mandatory — it allows tran-ngoc-bau's audit flow
      persisting many cycles) tracked in docs/agent-memory/notebooks/tran-ngoc-bau.md.
      Adds sub-checks (c) and (d) below, mirroring sub-check (a)'s gap-token floor pattern
      so a genuinely-unavailable source (VIRA scraper down; no bctc_signal_*/fundamental_*
-     data this cycle — see bctc-analyst BCTC-EXTRACT-QUALITY sprint, 14/16 filed tickers
-     currently serve-layer-blocked) still allows QUALITY:full as long as the gap is
+     data this cycle — see bctc-analyst BCTC-EXTRACT-QUALITY sprint, AS-OF-2026-07-13 "14/16 filed tickers
+     serve-layer-blocked" figure — historical, NOT current status) still allows QUALITY:full as long as the gap is
      explicitly tokened, not silently dropped. -->
 
 Before writing the notebook entry or the RETURN block, evaluate the following five sub-checks against the work performed in Steps 2–6 of this cycle:
@@ -532,9 +553,10 @@ L3_OK = (USD/VND level cited from MACRO_HEALTH.fx)
 # flagged when no bctc_signal_*/fundamental_* data was available this cycle for any
 # watchlist ticker in the dish (a frequent, currently-tracked upstream condition — see
 # bctc-analyst BCTC-EXTRACT-QUALITY sprint).
-BIZ_CTX_OK = (≥1 ticker in the dish cites a product/customer/ops/management fact
-              sourced from a bctc_signal_* or fundamental_* signal read in Step 0)
-             OR (an explicit gap token was written, e.g. [gap:business_context_unavailable])
+BIZ_CTX_OK = ($BIZ_CTX_CITED is non-empty for ≥1 ticker in conviction_calls[] this cycle —
+              i.e. Step 4's mandatory citation sub-step actually fired, not merely asserted)
+             OR ($BIZ_CTX_SIGNALS was legitimately empty this cycle — see chef.md Step 0 —
+                 AND an explicit gap token was written, e.g. [gap:business_context_unavailable])
 
 # Sub-check (e) — gap catalogue enumerated if any layer is partial/missing
 ANY_LAYER_PARTIAL = (L2_OK relied on a gap token)
@@ -645,7 +667,8 @@ Example: `docs/data/unified-agent-synthesis-2026-07-03-eod.json`
       "conviction_level": "HIGH|MEDIUM|LOW",
       "direction": "BUY|HOLD|SELL|NEUTRAL",
       "pillars_aligned_count": 0-4,
-      "rationale_one_liner": "..."
+      "rationale_one_liner": "...",
+      "business_context_cited": { "field": "ops", "text": "...", "source": "bctc_signal_VCB_20260811_routine.json" } | null
     }
   ],
   
@@ -683,6 +706,14 @@ Example: `docs/data/unified-agent-synthesis-2026-07-03-eod.json`
   published-marker key (FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE — this binding closes
   the exact gap that let two concurrent sessions independently resolve "today" and diverge).
 - Extract conviction calls from Step 4 per-ticker scoring + Step 4 pillar alignment counts.
+- If `$BIZ_CTX_CITED[<ticker>]` is set for a ticker (Step 4), its `conviction_calls[]` entry's
+  `business_context_cited` field MUST carry that object verbatim (not re-summarized) — this is the
+  field this row's own `verification_gate` RAW-verifies against on the next dish. `rationale_one_liner`
+  for that ticker SHOULD also end with a short clause naming the cited fact (e.g. "; biz-ctx: ROE
+  16.7% vs sector 17.6%, PE premium +57%") so a human reader of the JSON alone sees the same evidence
+  without cross-referencing `business_context_cited`. Tickers with no citation this cycle carry
+  `business_context_cited: null` — explicit null, not an omitted key (keeps the field always present
+  for downstream/frontend consumers per `GAP-CHEF-SYNTHESIS-B-ENDPOINT-CARD`, out of scope here).
 - Extract sector phases from Step 4 phase/tier declarations + Step 4 pillar evidence.
 - Extract regime state from Step 3 macro analysis (Layer 2+3) + carry regime if `$carry_usable=true`.
 - `known_gaps[]` = the UNION of THREE sources this cycle (FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION

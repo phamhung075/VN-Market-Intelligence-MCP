@@ -142,7 +142,9 @@ Read all `docs/signals/*.json` with `mtime` within last 24h (or since last dish 
      chef's 2-4x/day dish schedule. By the time ANY chef dish fires after the drain, fresh
      bctc_signal_*/fundamental_* files are already archived and invisible to a docs/signals/*.json-
      only glob — even on cycles where bctc-analyst's extraction SUCCEEDED (not serve-layer-blocked).
-     DISTINCT from and additional to the already-tracked "14/16 tickers serve-layer-blocked"
+     DISTINCT from and additional to the AS-OF-2026-07-17 "14/16 tickers serve-layer-blocked" figure
+     (historical — do NOT cite this number as current-cycle status; re-derive availability fresh from
+     THIS cycle's Step 0 gather, never from this comment)
      upstream data gap (BCTC-EXTRACT-QUALITY sprint, bctc-analyst-owned) — that explains missing
      DATA; this explains why even SUCCESSFULLY EXTRACTED data (FPT/HPG/VCB 07-17, full
      product/customer/ops/mgmt fields present on disk before tonight's evening dish) never reaches
@@ -160,6 +162,23 @@ Collect file groups:
 - `bctc_signal_*` — from bctc-analyst (merged agent; was financial-analyst) — check BOTH
   `docs/signals/` and `docs/signals/processed/` (see AUTO-CURE note above)
 - `fundamental_*` — from report-analyzer [TRANSITION: dual-accept `signal_type == "bctc_signal" OR signal_type == "fundamental"` during soak window H-18→H-19; remove `fundamental` branch after H-19 archive] — check BOTH locations, same as bctc_signal_*
+
+**Store as `$BIZ_CTX_SIGNALS` (mandatory — this is the ONLY handle Steps 4/6.5/7/7.5/7.6 in
+chef-dish.md read from; without this store, downstream steps have nothing to reference):**
+Build a per-ticker dict from every `bctc_signal_*`/`fundamental_*` file collected above (both
+`docs/signals/` and `docs/signals/processed/`), keyed by ticker symbol:
+```
+$BIZ_CTX_SIGNALS[<TICKER>] = {
+  product: <file.product>, customer: <file.customer>, ops: <file.ops>, mgmt: <file.mgmt>,
+  source_file: "<filename>", ts: <file.ts or file._processed.processedAt>
+}
+```
+If a ticker has more than one qualifying file this cycle, keep only the most recent by
+`ts`/`processedAt`. If ZERO `bctc_signal_*`/`fundamental_*` files were collected this cycle (across
+BOTH locations), `$BIZ_CTX_SIGNALS` is empty — this is the ONLY condition under which the
+`[gap:business_context_unavailable]` path at Step 7.5 is legitimate. Compute this fresh every cycle
+from what THIS Step 0 pass actually read from disk — NEVER from a remembered figure, a prior cycle's
+notebook line, or this file's own changelog comments (see FR-0).
 
 Supplementary calls (all OPTIONAL — failure/absence is NOT a blocker):
 - `get_market_hexagram()` — market-wide Kinh Dịch state. **501 / tool-not-found = expected; treat as `market_hexagram=unavailable`.** Per memory `feedback_chef_kinhdich_confab`: per-ticker hexagrams come from `get_portfolio_conviction` (Step 5), NOT this call. A 501 here does NOT mean hexagram data is absent.
