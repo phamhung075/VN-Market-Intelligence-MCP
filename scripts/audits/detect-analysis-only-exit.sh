@@ -48,7 +48,7 @@
 #                            --since-ts (OPTIONAL — additive, skipped when
 #                            no --extra-artifact given)
 #
-# VERDICT: every CHECKED plane (mandatory: notebook/commit/signal_queue;
+# VERDICT: every CHECKED plane (notebook/commit/signal_queue always checked;
 # optional: ledger/extra, only when supplied) reads exactly 0 -> DETECTED
 # (analysis-only exit, the 5-plane — or fewer, if some are legitimately
 # skipped — zero-diff signature). Any checked plane > 0 -> PASS (the agent
@@ -61,7 +61,45 @@
 # claimed `signal_queue_rows_written=1`. The zero-diff-only OR verdict is
 # blind to a cycle that writes SOME real planes and fabricates the rest of
 # its own contract line — this fixes that without narrowing the original
-# zero-diff signature it still catches unchanged).
+# zero-diff signature it still catches unchanged) OR the MANDATORY-PLANE
+# CHECK below fires (added FIX-ANALYSIS-ONLY-EXIT-DETECTOR-INVERSE-PARTIAL-
+# MISSED-NOTEBOOK-WRITE-PASSES — the INVERSE partial-write shape: some
+# OTHER plane genuinely non-zero, but the plane that plane's own agent
+# contract MANDATES every cycle — normally the notebook — reads 0. The
+# zero-diff-only OR verdict is blind to this because a non-notebook plane
+# being non-zero alone defeats `all_zero`; this closes that without
+# widening `all_zero` itself to `any_zero` — see MANDATORY-PLANE CHECK
+# below for why that naive widening is explicitly rejected).
+#
+# MANDATORY-PLANE CHECK (AC-1/AC-2 of the owning row): a per-agent notion of
+# which planes are MANDATORY every cycle, never inferred from the artifact
+# under test (never from the agent's own claim/output) — either (a)
+# caller-supplied via one or more `--mandatory-plane <name>` flags (explicit
+# override, used verbatim — this is the knob
+# `docs/architecture-briefs/2026-08-12-fix-cowork-delivery-proof-gate-
+# artifact-conjunction-design.md` §2.2 already anticipates: "Step 5.3
+# supplies the subset, the script never infers it from the artifact under
+# test"), or (b) when no `--mandatory-plane` flag is given, AUTO-DERIVED
+# from the agent's own static definition file, `docs/agents/<agent-
+# id>/init.md`'s `memory.notebook` field — a real path -> notebook is
+# mandatory (the default for essentially every fleet agent, all of which
+# declare `append_every_cycle: true` against a real notebook path);
+# literal `none` -> notebook is NOT mandatory (confirmed live:
+# `refine_bctc_md` — "Leaf subagent — stateless per invocation. No
+# persistent notebook.", `docs/agents/refine_bctc_md/init.md:110-112` —
+# also the sibling architect row's own §2.2 occurrence-1 example of why a
+# blanket notebook mandate would spuriously block a real agent). Missing/
+# unreadable init.md -> mandatory=1 (conservative: absence of contract
+# evidence defaults to the strict interpretation, never the permissive
+# one — a silent PASS is worse than an occasional over-strict DETECTED for
+# a detector whose whole purpose is catching narrated-but-unexecuted
+# writes). Deliberately NOT the naive "widen `all_zero` to `any_zero`"
+# fix AC-1 explicitly rejects: only planes actually named mandatory (by
+# config, not by this cycle's own diff) are checked individually — a
+# legitimately dedup-skipped cycle that writes 0 signal rows still PASSes
+# (signal_queue was never declared mandatory), while a missing notebook
+# write on a notebook-mandated agent now DETECTs regardless of how many
+# OTHER planes are non-zero.
 #
 # PARTIAL-WRITE CONTRACT CHECK (AC-1 + AC-2 of the owning row): independent
 # of the zero-diff OR-verdict above, this script now also extracts the
@@ -100,6 +138,19 @@
 #     [--commit-prefix <str>              default: "memory/<agent-id>" — substring match
 #                                          against `git log --grep` on the commit subject]
 #     [--extra-artifact <path>]           repeatable — Plane 5, additive
+#     [--mandatory-plane <name>]          repeatable — AC-1/AC-2 knob, one of
+#                                          notebook|commit|signal_queue|ledger|
+#                                          extra. Explicit caller override of
+#                                          the mandatory-plane set (used
+#                                          verbatim, replaces auto-derivation
+#                                          entirely). Omitted -> auto-derived:
+#                                          notebook is mandatory unless
+#                                          `docs/agents/<agent-id>/init.md`'s
+#                                          `memory.notebook` field reads the
+#                                          literal `none` (missing/unreadable
+#                                          init.md -> mandatory, conservative
+#                                          default). See MANDATORY-PLANE CHECK
+#                                          above for the full rationale.
 #     [--cycle-tag <value>                default: none. When supplied, Plane 3
 #                                          (signal_queue) switches from the
 #                                          ts-window to an EXACT audit_cycle_tag
@@ -109,7 +160,20 @@
 #                                          Immune to same-agent cross-cycle
 #                                          collision that a loose ts-window can't
 #                                          resolve (two Tier-1 spawns 8 minutes
-#                                          apart both read from="system-auditor").]
+#                                          apart both read from="system-auditor").
+#                                          AC-5 of the owning row: --cycle-tag
+#                                          mode has the IDENTICAL inverse-partial
+#                                          blind spot as the ts-window mode —
+#                                          confirmed by test (see T6 in the
+#                                          regression fixture, which pins a
+#                                          --cycle-tag call with signal_queue=1/
+#                                          notebook=0 as DETECTED). --cycle-tag
+#                                          only changes HOW Plane 3 matches; it
+#                                          never touches Plane 1 (notebook) or
+#                                          the MANDATORY-PLANE CHECK, so the fix
+#                                          applies unconditionally to both modes
+#                                          — there is no separate cycle-tag
+#                                          code path to patch.]
 #     [--until-ts <ISO-8601>              default: unbounded (checks up through "now" —
 #                                          the correct default for a live immediate-
 #                                          post-spawn check). Set explicitly when
@@ -121,30 +185,50 @@
 #     [--repo-root <path>                 default: git -C $SCRIPT_DIR rev-parse --show-toplevel]
 #
 # STDOUT (mechanically parseable, grep-friendly):
-#   [detect-analysis-only-exit] PASS agent=<id> since=<ts> notebook=<n> commit=<n> signal_queue=<n> ledger=<n|skip> extra=<n|skip> contract=<ok|absent>
-#   [detect-analysis-only-exit] DETECTED agent=<id> since=<ts> notebook=<n> commit=<n> signal_queue=<n> ledger=<n|skip> extra=<n|skip> contract=<ok|absent|arithmetic-violation|plane-mismatch>
-# `contract=` (trailing field, added by this fix): `absent` = no
-# `[OUTPUT-CONTRACT]` line found in-window (partial-write contract check not
-# applicable, verdict is the zero-diff OR alone); `ok` = a claim line was
+#   [detect-analysis-only-exit] PASS agent=<id> since=<ts> notebook=<n> commit=<n> signal_queue=<n> ledger=<n|skip> extra=<n|skip> contract=<ok|absent> mandatory=<comma-list|none> mandatory_status=<ok|n/a>
+#   [detect-analysis-only-exit] DETECTED agent=<id> since=<ts> notebook=<n> commit=<n> signal_queue=<n> ledger=<n|skip> extra=<n|skip> contract=<ok|absent|arithmetic-violation|plane-mismatch> mandatory=<comma-list|none> mandatory_status=<ok|violation|n/a>
+# `contract=`: `absent` = no `[OUTPUT-CONTRACT]` line found in-window
+# (partial-write contract check not applicable); `ok` = a claim line was
 # found and passed both checks; `arithmetic-violation` / `plane-mismatch` =
-# the specific PARTIAL-WRITE CONTRACT CHECK that forced DETECTED (see above)
-# — DETECTED can fire with every one of notebook/commit/signal_queue > 0
-# when `contract` is one of these two, which is exactly the case the
-# original zero-diff-only OR verdict missed on c80.
+# the PARTIAL-WRITE CONTRACT CHECK forced DETECTED (see above) — can fire
+# with every one of notebook/commit/signal_queue > 0, the case the original
+# zero-diff-only OR verdict missed on c80.
+# `mandatory=` / `mandatory_status=` (trailing fields, added by THIS fix):
+# `mandatory=` lists the plane name(s) this invocation treated as mandatory
+# (comma-separated, e.g. `notebook`, or literal `none` when the mandatory
+# set is empty — e.g. an agent whose contract has no notebook at all).
+# `mandatory_status=ok` = every mandatory plane read non-zero;
+# `mandatory_status=violation` = at least one mandatory plane read exactly 0
+# — this is what forces DETECTED on the INVERSE partial-write shape (some
+# OTHER plane non-zero, the mandated plane silently missing) regardless of
+# `all_zero`; `mandatory_status=n/a` = the mandatory set was empty (no
+# `--mandatory-plane` given and auto-derivation found no mandate for this
+# agent — verdict falls back to the original zero-diff OR + contract check
+# alone, unchanged).
 #
 # EXIT CODE: 0 = PASS. 1 = DETECTED (analysis-only exit, incl. the
-# partial-write contract-violation variant). 2 = usage error.
+# partial-write contract-violation variant and the mandatory-plane-violation
+# variant). 2 = usage error.
 #
 # Regression fixture (AC-5): scripts/audits/detect-analysis-only-exit.test.sh
 # — POSITIVE control (synthetic spawn that wrote nothing -> DETECTED, exit 1)
-# and NEGATIVE control (synthetic spawn that wrote one real signal_queue row
-# -> PASS, exit 0), both against a disposable scratch git repo, never the
-# live repo. Also carries the FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-
-# BLIND-TO-PARTIAL-WRITE-CYCLE fixtures: the RED case replays c80's real
-# published line verbatim (arithmetic-violation, still DETECTED despite
-# notebook=1/commit=1) and the GREEN case replays c79's real published line
-# verbatim (a legitimately quiet cycle, must stay PASS) — see that suite's
-# T8-T11.
+# and NEGATIVE control (synthetic spawn that wrote BOTH its mandatory
+# notebook plane and a signal_queue row -> PASS, exit 0), both against a
+# disposable scratch git repo, never the live repo. Also carries the
+# FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-BLIND-TO-PARTIAL-WRITE-CYCLE
+# fixtures: the RED case replays c80's real published line verbatim
+# (arithmetic-violation, still DETECTED despite notebook=1/commit=1) and the
+# GREEN case replays c79's real published line verbatim (a legitimately
+# quiet cycle, must stay PASS) — see that suite's T8-T11. Also carries the
+# FIX-ANALYSIS-ONLY-EXIT-DETECTOR-INVERSE-PARTIAL-MISSED-NOTEBOOK-WRITE-
+# PASSES fixtures (AC-4): RED-1 signal_queue>0/notebook=0 -> DETECTED
+# (T2, corrected — this exact shape PASSed before this fix, confirmed live
+# 12x per that row's own evidence), RED-2 ledger>0/notebook=0 -> DETECTED
+# (T4, corrected, same reasoning), a --cycle-tag-mode instance of the same
+# RED-1 shape (T6, corrected — AC-5's "does --cycle-tag have the same blind
+# spot" investigation, answered empirically: yes, closed by the same fix),
+# and GREEN — an agent whose init.md declares `memory.notebook: none`
+# (mirrors real `refine_bctc_md`) stays PASS despite notebook=0 (T14).
 #
 # Shell: bash 3.2+ (macOS system /bin/bash) — NO mapfile, NO associative
 # arrays. Only plain indexed arrays / case statements / jq.
@@ -318,6 +402,36 @@ _plane_output_contract_claims() {
   fi
 }
 
+# AUTO-DERIVED MANDATORY-PLANE DEFAULT (AC-1/AC-2, FIX-ANALYSIS-ONLY-EXIT-
+# DETECTOR-INVERSE-PARTIAL-MISSED-NOTEBOOK-WRITE-PASSES): whether the
+# notebook plane is mandatory for this agent's contract, read from the
+# agent's OWN static definition file — `docs/agents/<agent-id>/init.md`'s
+# `memory:` block `notebook:` field — never from the artifact under test
+# (the notebook commit itself, which is exactly what's missing in the
+# defect this fixes). Echoes "1" (mandatory) or "0" (not mandatory).
+# `notebook: none` (literal, confirmed live convention — see
+# docs/agents/refine_bctc_md/init.md:110, "Leaf subagent — stateless per
+# invocation. No persistent notebook.") -> "0". A real path, OR a
+# missing/unreadable init.md, OR a `memory:` block found with no parseable
+# `notebook:` field -> "1" (conservative default — see header rationale).
+_agent_notebook_mandatory() {
+  local repo_root="$1" agent_id="$2" init_file val
+  init_file="$repo_root/docs/agents/${agent_id}/init.md"
+  if [ ! -f "$init_file" ]; then
+    echo "1"
+    return 0
+  fi
+  val=$(grep -A6 '^[[:space:]]*memory:' "$init_file" 2>/dev/null \
+    | grep -m1 'notebook:' \
+    | sed 's/.*notebook:[[:space:]]*//' \
+    | tr -d '[:space:]"')
+  if [ "$val" = "none" ]; then
+    echo "0"
+  else
+    echo "1"
+  fi
+}
+
 # =============================================================================
 # INTERFACE — CLI / library entrypoint
 # =============================================================================
@@ -326,6 +440,7 @@ run_detect_analysis_only_exit() {
   local agent_id="" since_ts="" until_ts="" cycle_tag="" notebook_path="" orch_state_file="" \
         dedup_ledger_file="__UNSET__" commit_prefix="" repo_root=""
   local extra_artifacts=()
+  local explicit_mandatory_planes=()
 
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -338,6 +453,16 @@ run_detect_analysis_only_exit() {
       --dedup-ledger-file) dedup_ledger_file="${2:-}"; shift 2 ;;
       --commit-prefix) commit_prefix="${2:-}"; shift 2 ;;
       --extra-artifact) extra_artifacts+=("${2:-}"); shift 2 ;;
+      --mandatory-plane)
+        case "${2:-}" in
+          notebook|commit|signal_queue|ledger|extra) explicit_mandatory_planes+=("${2:-}") ;;
+          *)
+            echo "[detect-analysis-only-exit] ABORT invalid-mandatory-plane ${2:-<missing>} (expected one of: notebook|commit|signal_queue|ledger|extra)"
+            return 2
+            ;;
+        esac
+        shift 2
+        ;;
       --repo-root) repo_root="${2:-}"; shift 2 ;;
       *)
         echo "[detect-analysis-only-exit] ABORT unknown-arg $1"
@@ -418,16 +543,62 @@ run_detect_analysis_only_exit() {
     fi
   fi
 
+  # MANDATORY-PLANE CHECK (AC-1 + AC-2, FIX-ANALYSIS-ONLY-EXIT-DETECTOR-
+  # INVERSE-PARTIAL-MISSED-NOTEBOOK-WRITE-PASSES) — see header for full
+  # rationale. Explicit caller override (`--mandatory-plane`, repeatable)
+  # wins outright when given at all; otherwise auto-derive from the agent's
+  # own `docs/agents/<agent-id>/init.md` (never from the artifact under
+  # test). Any plane named mandatory that reads exactly 0 forces DETECTED,
+  # independent of how many OTHER planes are non-zero — this is what closes
+  # the inverse-partial blind spot (`all_zero` alone is defeated by ANY
+  # other non-zero plane, even when the one plane this agent's contract
+  # actually mandates is the one that's missing).
+  local mandatory_planes=()
+  if [ "${#explicit_mandatory_planes[@]}" -gt 0 ]; then
+    mandatory_planes=("${explicit_mandatory_planes[@]}")
+  else
+    local nb_mandatory
+    nb_mandatory=$(_agent_notebook_mandatory "$repo_root" "$agent_id")
+    [ "$nb_mandatory" = "1" ] && mandatory_planes=(notebook)
+  fi
+
+  local mandatory_status="n/a" mandatory_display="none" mp
+  if [ "${#mandatory_planes[@]}" -gt 0 ]; then
+    mandatory_status="ok"
+    mandatory_display=""
+    for mp in "${mandatory_planes[@]}"; do
+      [ -z "$mp" ] && continue
+      if [ -n "$mandatory_display" ]; then
+        mandatory_display="${mandatory_display},${mp}"
+      else
+        mandatory_display="$mp"
+      fi
+      case "$mp" in
+        notebook)     [ "${n_notebook:-0}" -eq 0 ] 2>/dev/null && mandatory_status="violation" ;;
+        commit)       [ "${n_commit:-0}" -eq 0 ] 2>/dev/null && mandatory_status="violation" ;;
+        signal_queue) [ "${n_sq:-0}" -eq 0 ] 2>/dev/null && mandatory_status="violation" ;;
+        ledger)
+          if [ "$n_ledger" != "skip" ] && [ "${n_ledger:-0}" -eq 0 ] 2>/dev/null; then mandatory_status="violation"; fi
+          ;;
+        extra)
+          if [ "$n_extra" != "skip" ] && [ "${n_extra:-0}" -eq 0 ] 2>/dev/null; then mandatory_status="violation"; fi
+          ;;
+      esac
+    done
+    [ -z "$mandatory_display" ] && mandatory_display="none"
+  fi
+
   local detected=0
   [ "$all_zero" -eq 1 ] && detected=1
   [ "$contract_status" = "arithmetic-violation" ] && detected=1
   [ "$contract_status" = "plane-mismatch" ] && detected=1
+  [ "$mandatory_status" = "violation" ] && detected=1
 
   if [ "$detected" -eq 1 ]; then
-    echo "[detect-analysis-only-exit] DETECTED agent=${agent_id} since=${since_ts} notebook=${n_notebook} commit=${n_commit} signal_queue=${n_sq} ledger=${n_ledger} extra=${n_extra} contract=${contract_status}"
+    echo "[detect-analysis-only-exit] DETECTED agent=${agent_id} since=${since_ts} notebook=${n_notebook} commit=${n_commit} signal_queue=${n_sq} ledger=${n_ledger} extra=${n_extra} contract=${contract_status} mandatory=${mandatory_display} mandatory_status=${mandatory_status}"
     return 1
   else
-    echo "[detect-analysis-only-exit] PASS agent=${agent_id} since=${since_ts} notebook=${n_notebook} commit=${n_commit} signal_queue=${n_sq} ledger=${n_ledger} extra=${n_extra} contract=${contract_status}"
+    echo "[detect-analysis-only-exit] PASS agent=${agent_id} since=${since_ts} notebook=${n_notebook} commit=${n_commit} signal_queue=${n_sq} ledger=${n_ledger} extra=${n_extra} contract=${contract_status} mandatory=${mandatory_display} mandatory_status=${mandatory_status}"
     return 0
   fi
 }

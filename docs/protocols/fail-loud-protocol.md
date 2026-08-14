@@ -111,18 +111,40 @@ write the independent re-read shows never landed
 (`FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-BLIND-TO-PARTIAL-WRITE-CYCLE`,
 2026-08-08 — confirmed live on system-auditor c80, which wrote its notebook
 and committed but never invoked the E-3 emit actuator while its own
-contract line claimed it had). Any agent, wrapper, or peer reviewer can run
+contract line claimed it had). It ALSO DETECTs on the INVERSE partial write
+— some OTHER plane genuinely non-zero (a real `.signal_queue` row, a real
+dedup-ledger entry) while the plane that agent's OWN contract mandates
+every cycle (normally the notebook) reads 0
+(`FIX-ANALYSIS-ONLY-EXIT-DETECTOR-INVERSE-PARTIAL-MISSED-NOTEBOOK-WRITE-
+PASSES`, 2026-08-14 — confirmed live 12x across system-auditor/unified-
+agent/ops/news-scout: the zero-diff-only OR verdict is defeated by ANY
+non-zero plane, even when the one plane the agent's contract actually
+requires is the one silently missing). The mandatory-plane set is never
+read from the artifact under test — either the caller passes it explicitly
+(`--mandatory-plane <notebook|commit|signal_queue|ledger|extra>`, repeatable)
+or the script auto-derives it from the agent's own
+`docs/agents/<agent-id>/init.md` (`memory.notebook: none` → not mandated,
+e.g. `refine_bctc_md`, a real stateless leaf subagent with no notebook at
+all; anything else, including a missing init.md → mandatory, the
+conservative default). Any agent, wrapper, or peer reviewer can run
 it against a spawn's own `--agent-id` and `--since-ts` (the spawn/cron tick
 time) to verify a cycle actually landed something, independent of what that
 cycle's RETURN says:
 ```bash
 bash scripts/audits/detect-analysis-only-exit.sh \
   --agent-id <agent-id> --since-ts <cycle-start-ISO8601>
-# exit 0 = PASS. exit 1 = DETECTED — either a zero-diff (nothing changed on
-# any checked plane) or a partial-write contract violation (see `contract=`
-# in the stdout line) — treat the cycle's RETURN as unverified narration,
-# not completion, either way.
+# exit 0 = PASS. exit 1 = DETECTED — a zero-diff (nothing changed on any
+# checked plane), a partial-write contract violation (see `contract=` in
+# the stdout line), or a mandatory-plane violation (see `mandatory=` /
+# `mandatory_status=` in the stdout line — fires when the agent's own
+# mandated plane, normally the notebook, reads 0 even though some other
+# plane is genuinely non-zero) — treat the cycle's RETURN as unverified
+# narration, not completion, either way.
 ```
+Applies identically under `--cycle-tag` mode (confirmed, not assumed —
+`--cycle-tag` only changes how the `.signal_queue` plane is matched; the
+notebook/mandatory-plane check is unaffected either way).
+
 Regression fixture (positive + negative controls, never against the live
 repo): `scripts/audits/detect-analysis-only-exit.test.sh`.
 

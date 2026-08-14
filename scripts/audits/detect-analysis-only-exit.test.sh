@@ -4,7 +4,9 @@
 # Regression fixture for scripts/audits/detect-analysis-only-exit.sh
 # (FIX-LEAF-AGENT-ANALYSIS-ONLY-EXIT-NARRATES-INSTEAD-OF-EXECUTING, AC-5;
 # widened by FIX-ANALYSIS-ONLY-EXIT-DETECTOR-OR-VERDICT-BLIND-TO-PARTIAL-
-# WRITE-CYCLE, T8-T11, per that row's own baseline_pass requirement).
+# WRITE-CYCLE, T8-T11; widened again by FIX-ANALYSIS-ONLY-EXIT-DETECTOR-
+# INVERSE-PARTIAL-MISSED-NOTEBOOK-WRITE-PASSES, T13-T15 + corrected
+# assertions on T2/T4/T6 — see that row's own AC-4/AC-5).
 #
 # AC-5 requires BOTH:
 #   POSITIVE control — a spawn that genuinely wrote nothing -> detector fires
@@ -16,6 +18,35 @@
 # the per-plane isolation cases (notebook-only write, commit-only write,
 # signal_queue-only write, ledger-only write, extra-artifact-only write)
 # and the --cycle-tag exact-match mode.
+#
+# CORRECTED T2/T4/T6 (FIX-ANALYSIS-ONLY-EXIT-DETECTOR-INVERSE-PARTIAL-
+# MISSED-NOTEBOOK-WRITE-PASSES, AC-1/AC-4): T2 (signal_queue-only write) and
+# T4 (ledger-only write) used to assert PASS — that assertion validated the
+# exact defect this widening fixes (confirmed live 12x: a plane OTHER than
+# notebook non-zero, notebook itself silently missing, used to defeat
+# `all_zero` and PASS). Both now assert DETECTED via the new
+# `mandatory_status=violation` gate (AC-4's RED-1/RED-2). T6 (--cycle-tag
+# mode) is the same correction, and doubles as this row's AC-5 "does
+# --cycle-tag mode share the blind spot" investigation — answered
+# empirically: yes, closed by the same fix (Plane 1/mandatory-plane logic
+# is independent of which Plane-3 matching mode is in use).
+#
+# T13-T15 (FIX-ANALYSIS-ONLY-EXIT-DETECTOR-INVERSE-PARTIAL-MISSED-NOTEBOOK-
+# WRITE-PASSES, AC-1/AC-2/AC-4):
+#   T13 — corrected NEGATIVE control: notebook AND signal_queue both
+#              written (the actually-healthy version of what T2 used to
+#              represent) -> stays PASS.
+#   T14 GREEN — an agent whose `docs/agents/<id>/init.md` declares
+#              `memory.notebook: none` (real live shape:
+#              `docs/agents/refine_bctc_md/init.md:110`) -> same
+#              notebook=0/signal_queue=1 shape as T2/RED-1, but PASSes,
+#              because auto-derivation reads THIS agent's own contract, not
+#              the artifact under test — guards AC-1's false-positive risk.
+#   T15 — explicit `--mandatory-plane` caller override replaces
+#              auto-derivation verbatim (the CLI contract
+#              `docs/architecture-briefs/2026-08-12-fix-cowork-delivery-
+#              proof-gate-artifact-conjunction-design.md` §2.2 already
+#              anticipates for the sibling exogenous-gate row).
 #
 # T8-T11 (PARTIAL-WRITE CONTRACT CHECK, AC-1/AC-2/AC-3 of the widening row):
 #   T8  RED  — system-auditor c80's REAL published [OUTPUT-CONTRACT] line,
@@ -103,8 +134,17 @@ else
   bad "T1-positive-control-zero-diff-detected (rc=$RC1): $OUT1"
 fi
 
-# ── T2 (NEGATIVE control, AC-5): a real signal_queue row inside the window
-#     -> PASS, detector silent (no DETECTED line) ──────────────────────────
+# ── T2 (RED-1, AC-4, FIX-ANALYSIS-ONLY-EXIT-DETECTOR-INVERSE-PARTIAL-
+# MISSED-NOTEBOOK-WRITE-PASSES) — a real signal_queue row inside the window,
+# notebook=0. This is the EXACT fixture that used to be this suite's own
+# "negative control ... PASS" assertion (pre-fix) — confirmed live 12x
+# (system-auditor/unified-agent/ops/news-scout) as the INVERSE partial-write
+# blind spot the owning row exists to close: the notebook plane the fixture
+# agent's contract mandates (auto-derived default, no `docs/agents/test-
+# agent/init.md` in this scratch repo -> conservative mandatory=1) reads 0
+# while signal_queue is genuinely non-zero. Must now DETECTED via
+# `mandatory_status=violation`, independent of `all_zero` (signal_queue=1
+# alone used to defeat `all_zero` and PASS this exact shape). ─────────────
 R2="$TMPROOT/t2"
 _new_fixture "$R2"
 cat > "$R2/docs/data/orch-state.json" <<'EOF'
@@ -114,11 +154,13 @@ OUT2=$(bash "$DETECTOR" --agent-id test-agent --since-ts "$SINCE" --until-ts "$U
   --orch-state-file "$R2/docs/data/orch-state.json" --dedup-ledger-file "" \
   --repo-root "$R2")
 RC2=$?
-if [ "$RC2" -eq 0 ] && printf '%s' "$OUT2" | grep -q '^\[detect-analysis-only-exit\] PASS' \
-   && printf '%s' "$OUT2" | grep -q 'signal_queue=1'; then
-  ok "T2-negative-control-real-write-passes-silent (rc=$RC2)"
+if [ "$RC2" -eq 1 ] && printf '%s' "$OUT2" | grep -q '^\[detect-analysis-only-exit\] DETECTED' \
+   && printf '%s' "$OUT2" | grep -q 'signal_queue=1' \
+   && printf '%s' "$OUT2" | grep -q 'mandatory=notebook' \
+   && printf '%s' "$OUT2" | grep -q 'mandatory_status=violation'; then
+  ok "T2-RED1-signalqueue-nonzero-notebook-zero-detected (rc=$RC2)"
 else
-  bad "T2-negative-control-real-write-passes-silent (rc=$RC2): $OUT2"
+  bad "T2-RED1-signalqueue-nonzero-notebook-zero-detected (rc=$RC2): $OUT2"
 fi
 
 # ── T3: notebook-only write inside the window -> PASS via Plane 1 ─────────
@@ -138,7 +180,11 @@ else
   bad "T3-notebook-only-write-passes (rc=$RC3): $OUT3"
 fi
 
-# ── T4: ledger-only write inside the window -> PASS via Plane 4 ────────────
+# ── T4 (RED-2, AC-4, FIX-ANALYSIS-ONLY-EXIT-DETECTOR-INVERSE-PARTIAL-
+# MISSED-NOTEBOOK-WRITE-PASSES) — ledger-only write inside the window,
+# notebook=0. Same shape as T2/RED-1, via Plane 4 instead of Plane 3
+# (confirmed live: news-scout 2026-08-07T04:00Z, ledger=1/notebook=0,
+# PASSed pre-fix). Must now DETECTED via `mandatory_status=violation`. ────
 R4="$TMPROOT/t4"
 _new_fixture "$R4"
 LEDGER4="$R4/docs/data/auditor-dedup-ledger.json"
@@ -147,10 +193,12 @@ OUT4=$(bash "$DETECTOR" --agent-id test-agent --since-ts "$SINCE" --until-ts "$U
   --orch-state-file "$R4/docs/data/orch-state.json" --dedup-ledger-file "$LEDGER4" \
   --repo-root "$R4")
 RC4=$?
-if [ "$RC4" -eq 0 ] && printf '%s' "$OUT4" | grep -q 'ledger=1'; then
-  ok "T4-ledger-only-write-passes (rc=$RC4)"
+if [ "$RC4" -eq 1 ] && printf '%s' "$OUT4" | grep -q '^\[detect-analysis-only-exit\] DETECTED' \
+   && printf '%s' "$OUT4" | grep -q 'ledger=1' \
+   && printf '%s' "$OUT4" | grep -q 'mandatory_status=violation'; then
+  ok "T4-RED2-ledger-nonzero-notebook-zero-detected (rc=$RC4)"
 else
-  bad "T4-ledger-only-write-passes (rc=$RC4): $OUT4"
+  bad "T4-RED2-ledger-nonzero-notebook-zero-detected (rc=$RC4): $OUT4"
 fi
 
 # ── T5: ledger explicitly skipped (dedup_ledger_file="") + all other planes
@@ -169,7 +217,17 @@ fi
 
 # ── T6: --cycle-tag exact-match mode — a row OUTSIDE the ts-window but WITH
 #     the matching audit_cycle_tag still counts (precision over recall);
-#     a row with a DIFFERENT tag inside the ts-window must NOT count ───────
+#     a row with a DIFFERENT tag inside the ts-window must NOT count. Also
+#     doubles as AC-5's "does --cycle-tag mode have the same inverse-partial
+#     blind spot" evidence (owning row's own investigation requirement,
+#     answered empirically, not assumed): notebook=0 in this fixture, so the
+#     mandatory-plane check must still force DETECTED even though Plane 3
+#     is in --cycle-tag mode, not ts-window mode — proving the fix applies
+#     unconditionally to both Plane-3 matching modes (Plane 1/mandatory-
+#     plane logic is completely independent of --cycle-tag). The
+#     `signal_queue=1` assertion is retained unchanged — it is what proves
+#     the wrong-tag row was correctly excluded, orthogonal to the overall
+#     verdict. ─────────────────────────────────────────────────────────────
 R6="$TMPROOT/t6"
 _new_fixture "$R6"
 cat > "$R6/docs/data/orch-state.json" <<'EOF'
@@ -183,10 +241,12 @@ OUT6=$(bash "$DETECTOR" --agent-id test-agent --since-ts "$SINCE" --until-ts "$U
   --orch-state-file "$R6/docs/data/orch-state.json" --dedup-ledger-file "" \
   --repo-root "$R6")
 RC6=$?
-if [ "$RC6" -eq 0 ] && printf '%s' "$OUT6" | grep -q 'signal_queue=1'; then
-  ok "T6-cycle-tag-exact-match-excludes-wrong-tag-same-window (rc=$RC6)"
+if [ "$RC6" -eq 1 ] && printf '%s' "$OUT6" | grep -q '^\[detect-analysis-only-exit\] DETECTED' \
+   && printf '%s' "$OUT6" | grep -q 'signal_queue=1' \
+   && printf '%s' "$OUT6" | grep -q 'mandatory_status=violation'; then
+  ok "T6-cycle-tag-exact-match-excludes-wrong-tag-AND-ac5-blind-spot-closed (rc=$RC6)"
 else
-  bad "T6-cycle-tag-exact-match-excludes-wrong-tag-same-window (rc=$RC6): $OUT6"
+  bad "T6-cycle-tag-exact-match-excludes-wrong-tag-AND-ac5-blind-spot-closed (rc=$RC6): $OUT6"
 fi
 
 # ── T7: usage errors — missing required args -> exit 2, never silently PASS
@@ -353,6 +413,105 @@ if [ "$RC12" -eq 1 ] && printf '%s' "$OUT12" | grep -q '^\[detect-analysis-only-
   ok "T12-bundled-commit-fabricated-line-not-masked-by-later-legit-line (rc=$RC12)"
 else
   bad "T12-bundled-commit-fabricated-line-not-masked-by-later-legit-line (rc=$RC12): $OUT12"
+fi
+
+# ── T13 (corrected NEGATIVE control, AC-5 of the owning row) — a genuinely
+# healthy cycle: the mandatory notebook plane IS written AND a real
+# signal_queue row landed. Replaces the concept T2 used to carry pre-fix
+# (T2 is now RED-1, above) with a fixture that actually satisfies the new
+# mandatory-plane contract — must stay PASS. Proves the fix does not turn
+# into a false-positive machine on a normal multi-plane cycle. ────────────
+R13="$TMPROOT/t13"
+_new_fixture "$R13"
+{ echo ""; echo "## c2 · 2026-08-06T15:10Z"; echo "real cycle entry, healthy multi-plane write"; } >> "$R13/docs/agent-memory/notebooks/test-agent.md"
+git -C "$R13" add -- docs/agent-memory/notebooks/test-agent.md >/dev/null
+GIT_AUTHOR_DATE="2026-08-06T15:10:00Z" GIT_COMMITTER_DATE="2026-08-06T15:10:00Z" \
+  git -C "$R13" commit -q -m "chore(memory/test-agent): cycle c2 healthy" -- docs/agent-memory/notebooks/test-agent.md
+cat > "$R13/docs/data/orch-state.json" <<'EOF'
+{"signal_queue":{"rows":[{"id":"test-20260806T151500-bbbb","from":"test-agent","to":"po","ts":"2026-08-06T15:15:00Z","summary":"real write"}]}}
+EOF
+OUT13=$(bash "$DETECTOR" --agent-id test-agent --since-ts "$SINCE" --until-ts "$UNTIL" \
+  --orch-state-file "$R13/docs/data/orch-state.json" --dedup-ledger-file "" \
+  --repo-root "$R13")
+RC13=$?
+if [ "$RC13" -eq 0 ] && printf '%s' "$OUT13" | grep -q '^\[detect-analysis-only-exit\] PASS' \
+   && printf '%s' "$OUT13" | grep -q 'notebook=1' && printf '%s' "$OUT13" | grep -q 'signal_queue=1' \
+   && printf '%s' "$OUT13" | grep -q 'mandatory_status=ok'; then
+  ok "T13-healthy-notebook-plus-signalqueue-passes (rc=$RC13)"
+else
+  bad "T13-healthy-notebook-plus-signalqueue-passes (rc=$RC13): $OUT13"
+fi
+
+# ── T14 (GREEN control, AC-4, FIX-ANALYSIS-ONLY-EXIT-DETECTOR-INVERSE-
+# PARTIAL-MISSED-NOTEBOOK-WRITE-PASSES) — an agent whose contract does NOT
+# mandate a notebook write. Fixture mirrors the real live agent this
+# exact shape is confirmed on, `docs/agents/refine_bctc_md/init.md:110`
+# ("notebook: none ... Leaf subagent — stateless per invocation. No
+# persistent notebook."): a `docs/agents/<agent-id>/init.md` with a
+# `memory:` block whose `notebook:` field reads the literal `none`.
+# notebook=0, signal_queue=1 — the EXACT SAME shape as T2/RED-1, but here
+# it must stay PASS, because auto-derivation correctly reads this agent's
+# OWN contract (not the artifact under test) and finds no notebook
+# mandate at all. Guards AC-1's own false-positive risk. ──────────────────
+R14="$TMPROOT/t14"
+_new_fixture "$R14"
+# _new_fixture seeds a "test-agent" notebook; this fixture's agent-id is
+# distinct ("green-agent") specifically so no notebook file/history exists
+# for it at all — the realistic shape for a genuinely notebook-less agent.
+mkdir -p "$R14/docs/agents/green-agent"
+cat > "$R14/docs/agents/green-agent/init.md" <<'EOF'
+agent:
+  id: green-agent
+  memory:
+    notebook: none
+    append_every_cycle: false
+    note: "Leaf subagent — stateless per invocation. No persistent notebook."
+EOF
+git -C "$R14" add -- docs/agents/green-agent/init.md >/dev/null
+GIT_AUTHOR_DATE="2026-08-01T00:00:00Z" GIT_COMMITTER_DATE="2026-08-01T00:00:00Z" \
+  git -C "$R14" commit -q -m "chore: seed green-agent init.md" -- docs/agents/green-agent/init.md
+cat > "$R14/docs/data/orch-state.json" <<'EOF'
+{"signal_queue":{"rows":[{"id":"green-20260806T151500-cccc","from":"green-agent","to":"po","ts":"2026-08-06T15:15:00Z","summary":"real write, no notebook mandate"}]}}
+EOF
+OUT14=$(bash "$DETECTOR" --agent-id green-agent --since-ts "$SINCE" --until-ts "$UNTIL" \
+  --notebook-path "docs/agent-memory/notebooks/green-agent.md" \
+  --orch-state-file "$R14/docs/data/orch-state.json" --dedup-ledger-file "" \
+  --repo-root "$R14")
+RC14=$?
+if [ "$RC14" -eq 0 ] && printf '%s' "$OUT14" | grep -q '^\[detect-analysis-only-exit\] PASS' \
+   && printf '%s' "$OUT14" | grep -q 'notebook=0' && printf '%s' "$OUT14" | grep -q 'signal_queue=1' \
+   && printf '%s' "$OUT14" | grep -q 'mandatory=none' && printf '%s' "$OUT14" | grep -q 'mandatory_status=n/a'; then
+  ok "T14-GREEN-agent-without-notebook-mandate-passes-despite-notebook-zero (rc=$RC14)"
+else
+  bad "T14-GREEN-agent-without-notebook-mandate-passes-despite-notebook-zero (rc=$RC14): $OUT14"
+fi
+
+# ── T15 (explicit --mandatory-plane override, AC-1/AC-2 contract check) —
+# caller-supplied override must be used VERBATIM, replacing auto-derivation
+# entirely (docs/architecture-briefs/2026-08-12-fix-cowork-delivery-proof-
+# gate-artifact-conjunction-design.md §2.2's own anticipated contract:
+# "Step 5.3 supplies the subset, the script never infers it from the
+# artifact under test"). Same notebook=0/signal_queue=1 shape as T2/RED-1
+# (which would auto-derive notebook=mandatory and DETECTED), but here the
+# caller explicitly declares signal_queue (not notebook) as the mandatory
+# plane -> must PASS, since signal_queue=1 satisfies the CALLER's own
+# declared contract regardless of what auto-derivation would have picked. ──
+R15="$TMPROOT/t15"
+_new_fixture "$R15"
+cat > "$R15/docs/data/orch-state.json" <<'EOF'
+{"signal_queue":{"rows":[{"id":"test-20260806T151500-dddd","from":"test-agent","to":"po","ts":"2026-08-06T15:15:00Z","summary":"real write"}]}}
+EOF
+OUT15=$(bash "$DETECTOR" --agent-id test-agent --since-ts "$SINCE" --until-ts "$UNTIL" \
+  --mandatory-plane signal_queue \
+  --orch-state-file "$R15/docs/data/orch-state.json" --dedup-ledger-file "" \
+  --repo-root "$R15")
+RC15=$?
+if [ "$RC15" -eq 0 ] && printf '%s' "$OUT15" | grep -q '^\[detect-analysis-only-exit\] PASS' \
+   && printf '%s' "$OUT15" | grep -q 'notebook=0' && printf '%s' "$OUT15" | grep -q 'mandatory=signal_queue' \
+   && printf '%s' "$OUT15" | grep -q 'mandatory_status=ok'; then
+  ok "T15-explicit-mandatory-plane-override-replaces-auto-derivation (rc=$RC15)"
+else
+  bad "T15-explicit-mandatory-plane-override-replaces-auto-derivation (rc=$RC15): $OUT15"
 fi
 
 echo ""
