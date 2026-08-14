@@ -79,3 +79,74 @@
 - DJ-GATE-1 confirmed: dev-mcp-server journal lines 278-284, genuinely AC-mapped content, not boilerplate.
 **why-decision:** APPROVED, DONE_VERIFIED. Every AC claim independently re-derived from the actual diff + fresh test/tsc/mock-guard runs, not the row's own review prose. Zero blocking ISSUE.
 **why-change:** none — AC-5 correctly deferred by developer (needs real post-deploy cron history), documented honestly, not silently dropped.
+
+### STEP qa-S146 · qa · 2026-08-14T16:33:00Z
+**task-id:** FU-MACRO-SNAPSHOT-TIER-WORSTOF
+**what-done:** Direct-Commit Verify. `a401bda06`(code+test)+`31beeefab`(memory)+`67e26e9f6`(doc) confirmed real, on `main` ancestry; `git show --stat a401bda06` matches claimed files exactly (`macroTools.ts`, `1881a-source-tier.test.ts`).
+**what-considered:**
+- Read the actual diff, not prose: old `sourceTier = data?.signals?.carry?.source_tier ?? 2` replaced by `Object.values(data.signals).map(c=>c?.source_tier).filter(isSourceTier)` then `Math.max(...)`, fallback `2` when no present tier — exactly matches AC (worst-of present components, absent never in max, carry-only degenerate case).
+- Noted current HEAD's fallback reads `4` not `2` — traced to a LATER separate commit tagged `FDA-7` (visible in live code comment + `get_macro_snapshot.md` Integration Notes), not a regression of this task; no test in `1881a-source-tier.test.ts` exercises the fully-empty-signals path so the two changes don't conflict.
+- Re-ran independently: `1881a-source-tier.test.ts` 21/21 pass (exact claim match, incl. new AC(b) carry-only=2 case + strengthened AC-8 firstKey+value assertion). 6 adjacent macro smoke files (089/1423d/1423f/1570c/1903a/1918a): 72/72 pass (claim said 68/68 — test count grew from unrelated later work, zero fail either way). `tsc --noEmit` 0 errors. `mock-guard.sh --files macroTools.ts` PASS. DDD: pre-existing `infrastructure/` imports in this file are legitimate (interface/mcp/tools layer, not domain/) — no violation introduced by this diff. Secret grep hit is a comment ("gap-token contract") — false positive, not a real secret.
+**why-decision:** vc-approved, DONE_VERIFIED. Every code/test claim independently re-derived from the actual diff + fresh test/tsc/mock-guard runs, not the row's own review prose. Zero blocking ISSUE.
+**why-change:** none — verdict matches the row's own claim.
+
+### STEP qa-S147 · qa · 2026-08-14T16:35:00Z
+**task-id:** FIX-SCHEDULER-DOUBLE-REGISTRATION
+**what-done:** Direct-Commit Verify (`review_note`-derived commits, no `.files[]` on row). `51b5fa14a`(code+test+doc)+`0fb2bd15a`(ops rebuild notebook) confirmed real, on `main` ancestry; `git show --stat 51b5fa14a` matches all 3 files named in `dev_mcp_server_review_note` exactly (`startupHelpers.ts`, new test, `system.md`).
+**what-considered:**
+- Read the actual diff, not prose: new `dedupeCronTick()` wraps `func` with a `Math.floor(now.getTime()/1000)` whole-second last-fired guard, only for `Date` ticks (manual/init passthrough untouched); `scheduleCron()`'s return line changed to call it. Grepped repo-wide: `scheduleCron`'s `cron.schedule(...)` call is the ONLY `cron.schedule(` invocation outside tests — single funnel confirmed, zero bypass.
+- Re-ran independently: new test 8/8 pass. 6-file targeted scheduler regression (recover-jitter, job-table-registry, watchdog, idempotency, Sunday-catchup, base-rate-cron) 88/88 pass. `tsc --noEmit` 0 errors. `mock-guard.sh --files startupHelpers.ts` PASS. DDD grep hit (`infrastructure/` imports) is pre-existing, unrelated to this diff hunk, and `scheduler/` is not `domain/` — no violation. Secrets/`process.env` clean.
+- LIVE gate (chain-mandated, ops->qa handoff explicit): RAW-queried `cron_job_runs` inside the running `mcp-server` container (`docker exec ... bun:sqlite` against `/app/data/market.db`, readonly) for `vnIndexRefreshJob`+`vpsServiceHealthJob` since container `StartedAt` (2026-08-13T19:18:35Z, 21h+ window ≫ "2 full fetch cycles"): grouped by job+minute, `HAVING cnt>1` → zero duplicate-minute rows across 84+199 real rows. Confirms the fix holds in the actual post-rebuild deployment, not just unit tests.
+**why-decision:** vc-approved, DONE_VERIFIED. Root-cause claim (node-cron millisecond-precision guard vs whole-second ticks) independently traced in the diff comments + confirmed live via zero-duplicate cron_job_runs query. Zero blocking ISSUE.
+**why-change:** none — verdict matches the row's own claim; ops rebuild (0fb2bd15a, 2026-08-08) already discharged, LIVE gate now satisfied by this verify.
+
+### STEP qa-S148 · qa · 2026-08-14T16:33:02Z
+**task-id:** FDA-5
+**what-done:** Direct-Commit Verify. `af272fe1d`(code+test)+`8084fb4f1`(docs)+`32476a610`(memory) confirmed real, on `main` ancestry; `git show --stat af272fe1d` matches the two files implied by row prose (`energyTools.ts`, `DSI-S3-sector-fin.test.ts`) — no `.files[]` on this row, fallback used.
+**what-considered:**
+- Read the actual diff, not prose: new `EnergyGridResult.structuredContent` (`is_estimate:true`/`source_tier:4`/`estimated_fields[]`/`grid_figures{}`/`hydro_data_source`/`signal_count`) added to the return object alongside the unchanged VN prose `content[]` — exactly matches the row's `return_summary` claim.
+- PO's `po_ci_regression_note_20260731T045857` flagged energyTools.ts size-lint regression (152L→215L, no baseline/justification). Traced independently: follow-up commit `f4feb6551` (same day, 08:11Z) added a `size-justification: 224L` header, no functional change. `size-lint-justification.sh` run fresh: energyTools.ts absent from offender output — regression already closed, not this row's open debt.
+- Re-ran independently: `DSI-S3-sector-fin.test.ts` 27/27 pass. `tsc --noEmit` 0 errors. `mock-guard.sh --files energyTools.ts` PASS.
+**why-decision:** vc-approved, DONE_VERIFIED. Code diff + size-lint regression both independently re-derived, zero blocking ISSUE.
+**why-change:** none — verdict matches the row's own claim; size-lint regression acknowledged per PO note, confirmed already resolved by a separate commit.
+
+### STEP qa-S149 · qa · 2026-08-14T16:33:49Z
+**task-id:** FIX-AUDIT-OUTPUT-CONTRACT-SIGNALQUEUE-ROWS-WRITTEN-SELFREPORT-MISMATCH
+**what-done:** Direct-Commit Verify. No `.commit`/`.files[]` on the row — derived from `review_note`'s own commit list: `479c62613`(scripts+tests)+`7187dff0c`(docs)+`9c96687e7`(memory). All 3 on `main` ancestry; both carry `Task:` trailer matching this id; `git show --stat` on each matches the files review_note claims.
+**what-considered:**
+- Re-ran REAL, not prose: `bash scripts/audit-output-contract.test.sh` 87/87 pass incl. T9/T10/T12/T13 (Bug-A minute-vs-second `.ts` compare + Bug-B `--cycle-tag` exact-scoping, both directions of the title's "mismatches in BOTH directions"). `bash scripts/emit-audit-signal.test.sh` 123/123 pass incl. T21/T22 (`--cycle-tag`→`audit_cycle_tag` threads/omits-to-null). `bash -n` clean on both scripts+both test files (pure bash zone, bun test/tsc N/A per review_note, confirmed no apps/ TS touched).
+- Verified doc/call-site claims independently, not trusted: `dev-standards.md` CANONICAL entry (L1042-1054) states both bugs + the reconciliation-rule justification accurately. Grepped all `--cycle-tag` call sites live: main.md has 5 (636/687/773/989/1228, one more than review_note's claimed 4 — extra site added by a later, unrelated fix `FIX-AUDITOR-VERDICT-TRANSCRIPTION...` following the same convention, not a defect), tier1-probe.md has 3 (106/341/368 vs claimed 2, same explanation) — all correctly pass `"$FIRE_TASK_ID"`.
+- `mock-guard.sh --files "audit-output-contract.sh emit-audit-signal.sh"` → PASS (bash files, no production-source scan target for this guard — expected N/A-pass, not a false green).
+**why-decision:** vc-approved, DONE_VERIFIED. Both structural bugs (minute/second `.ts` compare; shared `from=` cross-tier collision) independently re-derived from the diff + re-proven by re-running (not trusting) the test suites; AC-1/AC-2 verification_gate satisfied.
+**why-change:** none — verdict matches the row's own claim; call-site counts drifted upward (5/3 vs 4/2) due to later unrelated work adopting the same convention, noted not corrected here.
+
+### STEP qa-S148 · qa · 2026-08-14T16:33:08Z
+**task-id:** FACTORY-APIGW-split-capability-prober
+**what-done:** Direct-Commit Verify (`qa[]` row, no `.commit`/`.files[]` — fallback used). Commit `9fad8d4ad` confirmed real, on `main` ancestry; `git show --stat` matches all 3 files review_note claims exactly, byte-exact sizes (104L/130L/191L).
+**what-considered:**
+- go build/vet ./... clean; go test ./... 10/10 pkgs pass (matches claim). gofmt -l clean, golangci-lint 0 issues (matches claim). mock-guard PASS. `strings.HasPrefix(ct,"text/event-stream")` hardening confirmed present at `capability_probe.go:114`. Secrets grep clean.
+- Deploy gate (status_note's own Step-6 blocker, PO-triaged 2026-08-06 as the ONLY unmet item): confirmed LIVE not from prose — running `api-gateway` image built 2026-08-13T12:59:30Z, `vn.market.git_sha=832cd5a6e0`; `merge-base --is-ancestor 9fad8d4ad 832cd5a6e0` PASS, plus the 3 peer commits status_note cited as also-undeployed (`251cda70e`/`868bf8d1d`/`b184dde9f`) are ALL now ancestors too — ops rebuild swept the whole zone backlog.
+- Step-5 live check: `curl :4000/health` 200 well-formed JSON via this exact prober code; one transient `"mcp":"down"`/2000ms self-resolved to `"ok"` (32-396ms) across 3 immediate re-probes — TTL-cache artifact, not a regression (`mcp-server` itself <0.4s reachable both host-side and from inside `api-gateway`'s own container network).
+**why-decision:** vc-approved, DONE_VERIFIED. Build/test/lint claims + the deploy-gate PO explicitly could not sign (Step 6 blocked on rebuild) both independently re-derived at live HEAD + live running container.
+**why-change:** none — verdict matches row's PO-triaged path (CODE-ACCEPTED); this verify closes the deploy-gate half.
+
+### STEP qa-S149 · qa · 2026-08-14T16:34:21Z
+**task-id:** CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON
+**what-done:** Direct-Commit Verify (`qa[]` row, no `.commit`/`.files[]` — fallback: derived commit from status_note's named artifacts). Commit `9e0f73bb8` confirmed real, on `main` ancestry; `git show --stat` matches the 3 files PO's AC-verification prose names exactly (`team-tool-recheck.md`, `keep.md`, first dated health file).
+**what-considered:**
+- PO's own note flagged ONE unverified gap: only the first (manual-trigger) run was checked; a second unattended cron fire was needed to prove cadence, not just writer-works-when-invoked. Did not trust that gap as still-open — checked the artifact family directly.
+- `ls docs/agent-memory/health/team-tool-recheck-*.md`: 9 dated files now, not 2 — 2026-08-06(x2)/07/08/11(x2)/12/13/14, i.e. 7 fires AFTER the PO-checked first one, spanning 8 calendar days, `.claude/commands/crons/cron-agent-father.md` confirms `CronCreate recurring:true durable:true 23 14 * * *`. md5 of 4 consecutive files all distinct (not copy-paste); 08-14 file's own header cites "Prior report compared: ...08-13" — live chain, not static.
+- Positive control still fires correctly on the most recent (08-14) run: CRITICAL-01/02 (alert-commander/market-watcher Bash-grant vs declared boundary) still flagged, not silently gone false-green.
+- Zero `src/` files touched by this commit (docs/agents/ flow-md + health-report-md only) — `bun test`/`mock-guard`/DDD-security-greps N/A, no code path affected. Ran `bun tsc --noEmit` anyway as a main-still-green sanity check: one transient error hit a concurrent peer's scratch `.ts` file mid-run (self-resolved on re-run, unrelated to this row) — 2nd run 0 errors.
+**why-decision:** vc-approved, DONE_VERIFIED. AC's own residual ask (unattended second fire) is answered 7x over with distinct dated artifacts + registered durable cron, not just PO's single first-run check.
+**why-change:** none — this verify closes exactly the one gap PO's `po_ac_verification_20260806T0752` note explicitly deferred to QA.
+
+### STEP qa-S150 · qa · 2026-08-14T16:34:16Z
+**task-id:** FIX-CI-BUNTEST-1108-AGENT-WORK-LOG-STORE
+**what-done:** Direct-Commit Verify (`qa[]` row, `.commit`+`.files[]` present). Commits `319ef3cac`(test fix)+`119bc03c2`(notebook+journal) confirmed real, on `main` ancestry; `git show --stat 319ef3cac` matches the row's sole `files[]` entry exactly (`1108-agent-work-log-store.test.ts`), 19 ins/6 del.
+**what-considered:**
+- Read the actual diff, not prose: the `-30 days` boundary fixture now inserts `datetime('now','-30 days','+5 seconds')` instead of exact `-30 days`, widening the kept-just-inside-window margin against a real-clock race between the fixture INSERT and `purgeOldAgentWorkLogs`'s own independent `datetime('now')` call. Confirmed `purgeOldAgentWorkLogs` (agentWorkLogStore.ts:180-192) itself byte-unchanged — strict `<` comparison, no production code touched, matches the "no production code changed" claim.
+- Re-ran independently (not trusted): isolated file 17/17 pass (exact match to claim). `bun tsc --noEmit` 0 errors — first run hit a transient error against a concurrent peer's `scratch-check-ac2.ts` (file absent from filesystem/git the moment I checked, corroborating a sibling S149 entry's same observation this cycle), 2nd run clean. `mock-guard.sh --files <test-file>` → PASS (no production source touched). `process.env`/secret greps on the touched file: clean.
+- Smart-Skip applies (test-only change): DDD/security full scans skipped per flow's own rule; not needed since zero production files in the diff.
+**why-decision:** vc-approved, DONE_VERIFIED. Root-cause (independent real-clock `datetime('now')` recompute race, not a code regression) matches the row's own status_note and is corroborated by re-reading the untouched production function; fix is test-scope-only and deterministic (5s jitter margin, still far from the -40-day purge fixture).
+**why-change:** none — verdict matches the row's own claim.
