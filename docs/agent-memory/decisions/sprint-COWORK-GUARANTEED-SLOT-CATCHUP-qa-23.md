@@ -179,3 +179,5 @@
 - DDD/security: `freshnessSlaChecker.ts` (domain) has zero `infrastructure`/`application` imports — clean. `process.env`/secrets grep clean on both touched prod files. Confirmed sibling `vpsHealthPoller.ts` bug flagged in the note as "deliberately NOT touched" is genuinely absent from the commit's diffstat.
 **why-decision:** vc-approved, DONE_VERIFIED. Zero blocking ISSUE — commit real/on-main, exact file-list match, diff independently read and matches both the backlog's `generic_mandate`/`verification_gate` and the commit's own note, every re-run check green.
 **why-change:** none — matches row's own `note` claim.
+
+### CAP-REACHED · 2026-08-14T19:38:00Z
