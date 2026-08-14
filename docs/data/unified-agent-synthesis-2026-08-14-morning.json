@@ -1,0 +1,41 @@
+{
+  "metadata": {
+    "cycle_id": "morning-2026-08-14T05:23:00Z",
+    "dish_type": "morning",
+    "date_vn": "2026-08-14",
+    "timestamp_utc": "2026-08-14T05:23:10Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:US_macro_partial] [gap:business_context_unavailable] [gap:L4_partial_pillar_coverage]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "risk-off",
+    "regime_confidence": "LOW",
+    "us_macro_layer": "US macro data unavailable — Fed funds rate 3.63%, carry spread neutral at 1.37pp, but no PMI/employment/Fed liquidity indicators available this cycle. [gap:US_macro_partial]",
+    "vn_macro_layer": "VN-Index down 1.18% to 1744.75; USD/VND depreciation at 25.890 creates import-cost headwind (BEARISH). Gold at $4,380 signals safe-haven demand (risk-off). No CPI/VIRA data available. Yield model: equities fairly valued at 1.70pp earnings premium over deposits.",
+    "valuation_layer": "No converging clusters this cycle; 4 isolated micro signals (VIC ta alert, KDC insider news, HPG margin news, DGC export news) present individual stock moves without sector correlation. Business context missing — no BCTC/fundamental data sourced this cycle. [gap:business_context_unavailable]"
+  },
+  "conviction_calls": [],
+  "sector_phases": [
+    {
+      "sector_vn": "mixed",
+      "investment_phase": "transition",
+      "pyramid_tier": "cash",
+      "direction_this_cycle": "mixed"
+    }
+  ],
+  "known_gaps": [
+    "[gap:US_macro_partial — Fed funds rate available, PMI/employment unavailable]",
+    "[gap:business_context_unavailable — no bctc_signal_*/fundamental_* files sourced this cycle]",
+    "[gap:L4_partial_pillar_coverage — insufficient data for 4-pillar alignment scoring]",
+    "[L6-gap: gold >$4,300 active — regime-drift risk: safe-haven pricing may lag macro reversal]"
+  ],
+  "causal_chains": [
+    "[gap: no converging cluster identified] → [USD/VND depreciation pressure 25.890] → [diversified micro signals: VIC TA warning, KDC insider-sell, DGC export headwind] → [ticker-level moves without macro validation]"
+  ],
+  "clusters_summary": {
+    "qualified": 0,
+    "tickers_covered": ["VIC", "KDC", "HPG", "DGC"],
+    "sectors_covered": ["real_estate", "agriculture", "chemicals"]
+  }
+}
