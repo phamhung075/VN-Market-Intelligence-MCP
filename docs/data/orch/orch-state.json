@@ -18108,7 +18108,7 @@
         "last_served_tick": "2026-08-14T16:53:28Z"
       }
     },
-    "_updated_at": "2026-08-14T17:22:46Z",
+    "_updated_at": "2026-08-14T17:51:37Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -18132,6 +18132,155 @@
         },
         "createdAt": "2026-08-14T17:13:40Z",
         "drained_at": "2026-08-14T17:21:01Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8524c07a0bff448503bc80ccc6876549b098c1466f6c6ad28f87d38a7b42ead3",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-TOKEN-ECONOMY-AUDIT-qa-2.md docs/data/orch/orch-state.json. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=24 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-14T17:37:35Z",
+        "drained_at": "2026-08-14T17:51:37Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e9c33c2c65dad6dc4bc9f1f46f71cda46a0f3947a96d14a22ca5119702845862",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-22.md",
+          "line_count": 193,
+          "cap": 600,
+          "byte_count": 37919,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 1919,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-14T17:35:52Z",
+        "drained_at": "2026-08-14T17:51:37Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1a5b3243176e13e2266a6668455e5c946140e70723cdbcd712d07f9f40839df5",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 29895,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 17895,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-14T17:43:56Z",
+        "drained_at": "2026-08-14T17:51:37Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "673829e0f0b64eb23b95cfda0f13567e637a749edb05df1c6dd084509e3ef560",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-14T17:39:00Z",
+          "matched_slots": [
+            "digest-daily"
+          ],
+          "won_slots": [
+            "digest-daily"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/digest-predict/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 5,
+          "errors": [],
+          "pressure_mode": "legacy",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {},
+          "cadence_minutes": {},
+          "last_fired_timestamp": "2026-08-14T17:38:59Z",
+          "last_fired_slots": [
+            "digest-daily"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "17:30",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 0,
+          "signal_backlog": 0,
+          "note": "digest-daily (guaranteed, cron 30 17 * * *) spawned digest-predict; last_fired stamped"
+        },
+        "createdAt": "2026-08-14T17:39:00Z",
+        "drained_at": "2026-08-14T17:51:37Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "acfad79c3fc7e86a58318ec447f8c8d1ea0a0d577329d9ececef0552b8eb7da4",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 29895,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T17:43:54Z",
+        "drained_at": "2026-08-14T17:51:37Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c4e6f0e00a8f3e1baf426cb3234a15c46d1984e5e434531ddf663076e907a084",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 44,
+          "cap": 200,
+          "byte_count": 32387,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T17:44:12Z",
+        "drained_at": "2026-08-14T17:51:37Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
