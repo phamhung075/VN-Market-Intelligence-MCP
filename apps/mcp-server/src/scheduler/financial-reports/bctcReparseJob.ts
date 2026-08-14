@@ -38,6 +38,7 @@ import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 import { extractPdfText } from "../../infrastructure/fetchers/pdf.js";
 import { getCachedPdfText } from "../../infrastructure/fetchers/pdfOcrWorker.js";
 import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
+import { extractPeriodFromContent } from "../../domain/services/financial-reports/periodContentExtractor.js";
 import type { PdfExtractorResult } from "../../infrastructure/fetchers/pdfExtractorClient.js";
 import type { Database } from "bun:sqlite";
 
@@ -458,12 +459,32 @@ export async function reparseSingleWithOcrFallback(
     }
   }
 
+  // ── Re-derive the period from document content ────────────────────────────
+  // FIX-BCTC-REPARSE-PERIOD-KEY-SYSTEMATICALLY-STALE-100PCT-QUARANTINE: `yq`
+  // above is derived from the STALE queue row's own filename (set whenever the
+  // PDF was first flagged stranded) and does not track what the reparse pass
+  // is actually about to store. By the time this job fires, the resolved
+  // `rawText` can describe a LATER filing than the filename encodes, so
+  // parseBctcReport's checkPeriodContentConsistency guard (correct, must not
+  // be weakened) refuses to store under either key — 100% quarantine, 0%
+  // completion. Reuse the same pure content-signal function the write-time
+  // guard itself uses (periodContentExtractor.ts) to prefer the DOCUMENT's own
+  // period when confident, falling back to the filename-derived `yq` only when
+  // the content signal is inconclusive (poor OCR / no boundary dates) — the
+  // identical "cannot determine" negative control the guard already applies,
+  // so a poor-OCR filing is not newly blocked by this change.
+  const contentPeriod = extractPeriodFromContent(rawText);
+  const effectiveYear = contentPeriod?.year ?? yq.year;
+  const effectiveQuarter = contentPeriod
+    ? (`Q${contentPeriod.quarter}` as "Q1" | "Q2" | "Q3" | "Q4")
+    : yq.quarter;
+
   // ── Run the parse+store pipeline ──────────────────────────────────────────
   try {
     const result = await deps.pipeline({
       actionCode: payload.ticker,
-      year: yq.year,
-      quarter: yq.quarter,
+      year: effectiveYear,
+      quarter: effectiveQuarter,
       pdfTextOverride: rawText,
       pdfUrl: `file://${payload.filePath}`,
     });
