@@ -30,7 +30,19 @@ GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
 
 ---
 
-**Published-marker gate (AC extension, discovered live 2026-07-23 06:13Z — doc-self-heal, was undocumented tribal knowledge):** Before the FIRST `send_telegram(channel="market")` of this cycle (i.e. only when the Firing Gate above has already resolved to a fire — never claim on a silent-exit cycle), claim a tombstone lock: `task_claim(task_id="published:alert-commander-market:<nominal_tick>", task_kind="cowork-slot", owner_agent="alert-commander", owner_client_session=<expanded session id>, ttl_seconds=900)`. `<nominal_tick>` = this cycle's dispatched tick (e.g. `2026-07-23T06:00Z`), NOT a calendar date — tick-scoped (not date-scoped like chef's daily-dish marker, see `docs/agents/unified-agent/flow/chef.md` § Step 0.5) because this agent legitimately fires more than once per day on distinct tickers/events; a date-scoped key would wrongly block a second same-day legitimate fire. `claimed:false` → EXIT without sending (a peer session already published this exact tick). `claimed:true` → proceed to send; on success the marker is a **tombstone — never call `task_release`**, TTL is its sole expiry (mirrors `docs/agents/unified-agent/flow/chef.md` § Step 0.5 and the live `published:chef-*`/`published:digest-*` rows in `task_list_held`).
+**Published-marker gate (Phase 2 only — no Phase 1, per skill's own design note: this agent's
+Firing Gate above already decides fire/no-fire independent of dedup outcome, so an early probe
+buys no cost-optimisation) →** skill: `.claude/skills/published-marker-gate/SKILL.md`
+(agent-id=alert-commander). Before the FIRST `send_telegram(channel="market")` of this cycle
+(i.e. only when the Firing Gate above has already resolved to a fire — never claim on a
+silent-exit cycle), invoke Phase 2 with `MARKER_KEY="published:alert-commander-market:<nominal_tick>"`
+(`<nominal_tick>` = this cycle's dispatched tick, e.g. `2026-07-23T06:00Z` — tick-scoped, NOT
+date-scoped like chef's daily-dish marker, because this agent legitimately fires more than once
+per day on distinct tickers/events; a date-scoped key would wrongly block a second same-day
+legitimate fire), `MARKER_TTL=900`, `OWNER_AGENT="alert-commander"`. `claimed:false` → EXIT
+without sending (a peer session already published this exact tick). `claimed:true` → proceed to
+send; NEVER call `task_release` on success or any exit after — TTL is the sole expiry path (per
+skill Phase 2).
 
 **4a. MARKET channel**
 Pre-send: `get_market_snapshot()` — divergence > 5% → discard, max 2 attempts
