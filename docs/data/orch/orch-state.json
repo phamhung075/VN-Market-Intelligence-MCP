@@ -93,10 +93,10 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-08-14T09:33:56Z",
-    "updated_by": "qa",
     "active_task_id": null,
-    "next_agent": "router"
+    "next_agent": "router",
+    "updated_at": "2026-08-14T09:59:03Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3155,31 +3155,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
         "updated_at": "2026-07-29T03:22:34Z",
         "blocked_reason": "ZONE-MISMATCH: task was assigned to apps/stock-price/ but market_prices_history table and writer (24h rolling cutoff at pushPricesHandler.ts:224-236) are in apps/mcp-server/. Re-route to dev-mcp-server required."
-      },
-      {
-        "id": "UC-CCA-P1-GWBLIND-DEDUP",
-        "type": "CLEAN",
-        "title": "Dedup the duplicated GATEWAY-BLIND block: step-0-cowork points at cycle-bootstrap SSOT (rider on TE-T11)",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": ".claude/skills/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P1",
-        "note": "SCOPE=verifier Rescope note. Drop original part (b) flow-rewiring (owned by queued TE-T11, broader 11-flow list). Keep part (a): delete step-0-cowork SKILL lines 53-88 duplicated GATEWAY-BLIND guard, replace with <=4-line stub pointing at cycle-bootstrap Error handling SSOT; amend TE-T11 DoD text (composite POINTERS to SSOT, not embeds). Do NOT create a parallel rewiring task.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "depends": [
-          "TE-T11"
-        ],
-        "related": [
-          "FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK"
-        ],
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
       },
       {
         "id": "UC-ASL-P5",
@@ -12549,7 +12524,7 @@
         "sprint": "TOKEN-ECONOMY-AUDIT",
         "depends": [],
         "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-11",
-        "note": "Composite skill shipped (Sprint 1968c-P02) but grep shows 0 flow adopters. Per-flow one-line swap replacing cycle-bootstrap+regime-extraction reads with step-0-cowork usage line. 11 mechanical edits under agent-md-factory discipline; composite embeds same GATEWAY-BLIND + regime-fallback boundaries.",
+        "note": "Composite skill shipped (Sprint 1968c-P02) but grep shows 0 flow adopters. Per-flow one-line swap replacing cycle-bootstrap+regime-extraction reads with step-0-cowork usage line. 11 mechanical edits under agent-md-factory discipline; composite POINTS to cycle-bootstrap Error handling SSOT (not full embeds) for GATEWAY-BLIND + regime-fallback boundaries — see UC-CCA-P1-GWBLIND-DEDUP.",
         "audit_ref": {
           "audit": "ultracode-2026-07-12",
           "verdict": "cowork-cycle-agents-P1 rider (UC-CCA-P1-GWBLIND-DEDUP)",
@@ -12558,7 +12533,7 @@
         },
         "next_agent": "pm",
         "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
-        "updated_at": "2026-08-06T21:24:34Z",
+        "updated_at": "2026-08-14T09:59:03Z",
         "po_manual_dispatch_flagged_at": "2026-07-31T02:12:46Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
@@ -19053,6 +19028,40 @@
         "redispatch_count": 1,
         "qa_verify_failed_at": "2026-08-14T09:32:19Z",
         "qa_verify_failed_by": "qa"
+      },
+      {
+        "id": "UC-CCA-P1-GWBLIND-DEDUP",
+        "type": "CLEAN",
+        "title": "Dedup the duplicated GATEWAY-BLIND block: step-0-cowork points at cycle-bootstrap SSOT (rider on TE-T11)",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": ".claude/skills/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P1",
+        "note": "RESCOPE part (a) only, per verifier note. Deleted step-0-cowork/SKILL.md's duplicated GATEWAY-BLIND block (was lines 53-88) and replaced with a 4-line stub pointing at cycle-bootstrap/SKILL.md § Error handling (fail-loud) SSOT. TE-T11's own DoD note amended in the same write to describe composite POINTERS (not full embeds). Part (b) flow-rewiring left untouched — owned by TE-T11 (already DONE_VERIFIED), not re-implemented here.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "depends": [
+          "TE-T11"
+        ],
+        "related": [
+          "FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK"
+        ],
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-08-14T09:52:31Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-08-14T09:59:03Z",
+        "claimed_at": "2026-08-14T09:52:37Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "updated_by": "developer",
+        "commit_sha": "a27d7cd21"
       }
     ],
     "qa": [
@@ -19112,8 +19121,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-14T09:27:43Z",
-    "last_triaged_by": "po",
+    "last_triaged_at": "2026-08-14T09:52:31Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
   "_meta": {
@@ -19128,7 +19137,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-14T05:52:34Z"
+        "last_served_tick": "2026-08-14T09:52:21Z"
       },
       "sls": {
         "last_served_tick": "2026-08-14T07:10:03Z"
@@ -19146,7 +19155,7 @@
         "last_served_tick": "2026-08-14T09:23:37Z"
       }
     },
-    "_updated_at": "2026-08-14T09:49:36Z",
+    "_updated_at": "2026-08-14T09:52:21Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
