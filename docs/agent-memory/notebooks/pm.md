@@ -1,81 +1,79 @@
 # PM — Notebook
 
-## c341 FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT PLAN-ONLY DECOMPOSITION · 2026-08-14T01:45Z
+## c342 FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0 ZONE-SPLIT DECOMPOSITION · 2026-08-14T11:23Z
 
-**MANDATE (from router, session 632721c2-41e4-4aff-8d06-a47cf80dc0d7, dev-team dispatcher, FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT REVIEW lane):** Decompose architect-ruled HYBRID design (signal-queue receiver-delivery contract) into 4 atomic implementation tasks per component breakdown + dependency tier. This is a plan-only row where architect has already ruled; PM decomposes the ruling into concrete developer work.
+**MANDATE (from dev-team dispatcher, pipeline-resume dispatch, FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0 IN_PROGRESS lane):** Break down architect-designed incident-lane consumer (dedicated throughput mechanism for po_expedited_at rows) into zone-split implementation tasks (scripts/ and docs/agents/dev-team/) per established convention. Parent task is DESIGN (zero production code at architect stage); PM decomposes the design into two atomic implementation rows.
 
 **DESIGN CONTEXT:**
-- **Parent Task:** FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT (P1, plan_only:true, supervised:true, architect_reviewed 2026-08-07T19:11:59Z)
-- **Architect Brief:** docs/architecture-briefs/2026-08-07-fix-signalqueue-receiver-delivery-contract.md (complete, ruling: HYBRID)
-- **Architect Ruling:** HYBRID approach — SSOT-flagged push (Component A: cowork-team spawn-fanout Step 5.2b) + minimal no-op-default consumption (Component B: unified-agent chef.md + alert-commander cycle.md) + docs update (Component C: signal-dashboard)
-- **Origin Issue:** Receiver delivery contract gap — unified-agent and alert-commander listed as valid 'to' targets in signal-dashboard Receivers table but neither flow has a signal_queue READ step; rows addressed to them are structurally undeliverable
-- **Repro Case (superseded):** po-20260720T052606 (was status=NEW, now status=triaged, folded into FIX-CHEF-L6-GOLD-FALSE-PREDICATE by PO 2026-07-22T15:13:06Z) — evidence that undeliverable channel forces workarounds
+- **Parent Task:** FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0 (P0, cross-service/, architect-owned, moved to DONE in this cycle)
+- **Architect Brief:** docs/architecture-briefs/2026-08-14-readylane-incident-lane-throughput.md (complete, decision: adjudicated design option (c), rejected comparator-only fixes (a)/(b))
+- **Root Problem:** Ready-lane consumer (RLC) selects exactly 1 row per invocation, runs ~1/6 hourly cadence (via Idle-Tick Rotation), causing 68-row eligible queue to starve despite perfect ordering. PO's live measurement (2026-08-13): two severity-expedited rows already rank #1/#2 and are STILL undispatched after 10+ hours — proves ordering fix alone insufficient.
+- **Architect Ruling:** Dedicated Incident-Lane Consumer (ILC) — independent budget (`INCIDENT_CAP=2`), batch-claim N rows per invocation, unconditional Session-Gate→Step-1 invocation (not rotation-gated). Reuses QA-Drain's proven throughput pattern (226→56 PRIMARY drain over 8 days on structurally identical starvation). Never a comparator change or new priority tier.
+- **Precedent:** QA-Drain 2026-08-06 implementation (brief: 2026-08-06-review-lane-qadrain-throughput-unblock.md) — same independent-budget + batch + unconditional-invocation recipe delivered measured 4x throughput improvement.
 
-**COMPONENT BREAKDOWN (per architect brief):**
-1. **Component A (Push):** cowork-team/spawn-fanout.md Step 5.2b + cowork-schedule.json SSOT flag (6 slots: chef-morning, chef-intraday, chef-eod, chef-evening, alert-commander-market, alert-commander-critical)
-2. **Component B (Consumption):** unified-agent/chef.md Step 0.3 + alert-commander/cycle.md equivalent (both parse CROSS-TEAM SIGNAL block, apply methodology-flag overrides)
-3. **Component C (Docs):** signal-dashboard/SKILL.md Receivers table annotation + reference.md new section (explain push vs pull split, lock-plane statement)
+**ZONE-SPLIT BREAKDOWN (per brief §5 and established PM convention):**
+1. **Scripts & Predicates:** developer zone
+   - Add `is_po_expedited` + `incident_wip_in_progress` predicates to devteam-eligibility.jq
+   - Create NEW `scripts/devteam-backlog-claim-incident-lane-consumer.jq` (batch claim script)
+   - Update RLC header comment with cross-reference (no logic change)
+   - Extend devteam-dispatch-gate-satisfiability.sh with ILC fixtures
+   - HARD PREREQUISITE for mainflow row (mainflow calls this script file)
+
+2. **Main Flow Integration:** agent-father zone (depends_on: SCRIPTS row)
+   - Insert § Incident-Lane Consumer section after Session Gate (content-anchored)
+   - Place BEFORE § Review-Lane SECONDARY-Drain (priority ordering: ILC → SECONDARY → QA-Drain)
+   - Implement invocation: INCIDENT_WIP guard → batch-claim call → spawn loop → JUMP TO end
+   - Update SECONDARY-Drain intro (no other logic changes)
+   - Add INCIDENT_CAP to Invariants section
 
 **DECOMPOSITION COMPLETED:**
 
-### FIX-SIGNALQUEUE-PUSH-SPAWN-FANOUT-MECHANISM (Tier1)
-- **Zone:** cowork-team
+### FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS (Tier1, ready now)
+- **Zone:** scripts/
 - **Size:** M
-- **Dependencies:** none (blocks: tasks 3, 4)
-- **Scope:** Architect Component A. Add signal_queue_push SSOT flag to 6 cowork-schedule slots, implement Step 5.2b claim/mark-READ/release logic using existing dashboard-row lock (reuse dev-team drain-signals.md §0a-D lock namespace)
-- **Handoff:** docs/handoffs/FIX-SIGNALQUEUE-PUSH-SPAWN-FANOUT-MECHANISM.md
+- **Dependencies:** none (blocks: MAINFLOW row)
+- **Scope:** Add 2 predicates to devteam-eligibility.jq, create devteam-backlog-claim-incident-lane-consumer.jq (batch claim, priority-then-oldest-expedite-first sort), update RLC header comment, extend satisfiability fixtures
+- **Handoff:** docs/handoffs/FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS.md
 
-### FIX-SIGNALQUEUE-SIGNAL-DASHBOARD-DOCS (Tier1, parallel)
-- **Zone:** docs
-- **Size:** S
-- **Dependencies:** none
-- **Scope:** Architect Component C. Update Receivers table with one-line delivery-mechanism annotation, add reference.md § Receiver Delivery Mechanism section (explain push injection at spawn-fanout Step 5.2b, latency bounds per receiver, lock-plane statement)
-- **Handoff:** docs/handoffs/FIX-SIGNALQUEUE-SIGNAL-DASHBOARD-DOCS.md
-
-### FIX-SIGNALQUEUE-UNIFIED-AGENT-CONSUMER (Tier2)
-- **Zone:** unified-agent
-- **Size:** S
-- **Dependencies:** FIX-SIGNALQUEUE-PUSH-SPAWN-FANOUT-MECHANISM
-- **Scope:** Architect Component B Part 1. Add chef.md Step 0.3 (parse CROSS-TEAM SIGNAL, apply methodology-flag corrections, log); update init.md inter_agent.receives_from entry (documents signal_queue_push reception)
-- **Handoff:** docs/handoffs/FIX-SIGNALQUEUE-UNIFIED-AGENT-CONSUMER.md
-
-### FIX-SIGNALQUEUE-ALERT-COMMANDER-CONSUMER (Tier2, parallel with task 3)
-- **Zone:** alert-commander
-- **Size:** S
-- **Dependencies:** FIX-SIGNALQUEUE-PUSH-SPAWN-FANOUT-MECHANISM
-- **Scope:** Architect Component B Part 2. Add cycle.md consumption block before Firing Gate (parse CROSS-TEAM SIGNAL, apply methodology-flag corrections, log); update init.md inter_agent.receives_from entry (documents signal_queue_push reception)
-- **Handoff:** docs/handoffs/FIX-SIGNALQUEUE-ALERT-COMMANDER-CONSUMER.md
+### FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW (Tier2, after SCRIPTS)
+- **Zone:** docs/agents/dev-team/
+- **Size:** M
+- **Dependencies:** FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS (hard: calls script file not existing until SCRIPTS ships)
+- **Scope:** Insert § Incident-Lane Consumer at Session-Gate→Step-1 anchor (unconditional batch-claim invocation, `INCIDENT_CAP=2`); update SECONDARY-Drain intro; add INCIDENT_CAP to Invariants
+- **Handoff:** docs/handoffs/FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW.md
 
 **DEPENDENCY TIERS:**
-- **Tier 1 (parallel, ready now):** FIX-SIGNALQUEUE-PUSH-SPAWN-FANOUT-MECHANISM + FIX-SIGNALQUEUE-SIGNAL-DASHBOARD-DOCS (no blockers)
-- **Tier 2 (after tier 1):** FIX-SIGNALQUEUE-UNIFIED-AGENT-CONSUMER + FIX-SIGNALQUEUE-ALERT-COMMANDER-CONSUMER (both depend_on tier1 task 1)
+- **Tier 1 (ready now):** FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS (no blockers, developer zone, parallel-dispatchable)
+- **Tier 2 (after tier 1):** FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW (depends_on tier1, agent-father zone, must execute after SCRIPTS ships)
 
-**CRITICAL SEQUENCING NOTE:**
-Both Component A (push) and Component B (consumption) should land together or in quick sequence to avoid intermediate state where push fires but no consumer listens. Architect brief §6 lock-plane statement (DB-plane only, file-plane unchanged) is mandatory and must ship with Component A to avoid contradicting FIX-DRAIN-FILEPLANE-PEER-COLLISION-GUARD. Component C (docs) can land anytime but should be in place before or with Component A for developer reference.
+**CRITICAL ORDERING NOTE:**
+Hard dependency: MAINFLOW's call site `-f scripts/devteam-backlog-claim-incident-lane-consumer.jq` references a file that does not exist at all until SCRIPTS row ships. Unlike QA-Drain's own dependency (which had backward-compatible fallback), no intermediate state is viable here.
 
 **BOARD STATE POST-DECOMPOSITION:**
-- Parent task moved: review[] → done[]
-- New tasks added: ready[] += 4 (FIX-SIGNALQUEUE-*)
-- WIP: unchanged (no in_progress impact, parent was plan_only, not executing)
-- Validator: PASS (Stage 1g: 16 pre-existing MISSING deps in backlog/ready/closed_sprints, non-fatal; no new blockers introduced)
+- Parent task moved: in_progress[] → done[] (marked DONE, closed_at stamped)
+- New tasks added: ready[] += 2 (FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS, FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW)
+- WIP: -1 (parent removed from in_progress, 2 TODO rows added to ready — no net WIP impact)
+- .head updated: idled (active_task_id=FIX-READYLANE-... → null, status=idle per non-closeout reset, Step 4c)
+- Validator: PASS (Stage 1g: 16 pre-existing MISSING deps unchanged; no new blockers introduced)
 
 **DECISION RATIONALE:**
-- Architect ruled on delivery mechanism (HYBRID, not pure-pull or pure-push or removal); PM role is to decompose ruling into atomizable developer tasks
-- Each task is single zone, ~1-2h, clear AC, testable in isolation
-- Tier structure preserves push-before-consume semantics (tier1 implements push mechanism, tier2 implements consumers that depend on mechanism existing)
-- Multi-zone split (4 zones: cowork-team, unified-agent, alert-commander, docs) allows parallel developer dispatch per zone routing
-- No new code/tooling complexity — reuses existing dashboard-row lock, minimal consumption steps (no-op default), lightweight docs updates
+- Architect ruled on mechanism (dedicated ILC, not comparator fix); PM decomposes ruling into concrete work
+- Each task is single zone, ~2h, clear AC, testable with provided fixtures
+- Zone split preserves architectural coherence: scripts/ and docs/agents/ by established routing rule (`po_routing_ruling_20260721`)
+- Hard dependency captures the runtime requirement (SCRIPTS creates a file that MAINFLOW calls)
+- Tier structure ensures prerequisite lands before dependent (safe sequential dispatch)
+- Independent budget (`INCIDENT_CAP=2`) keeps ILC from saturating like a 4th priority tier (design constraint §4b of brief)
+- Batch-claim + unconditional invocation (not rotation-gated) directly addresses the 1-per-6-ticks throughput ceiling
 
 **HANDOFF FILES CREATED:**
-1. docs/handoffs/FIX-SIGNALQUEUE-PUSH-SPAWN-FANOUT-MECHANISM.md (AC-1 through AC-8, 8 criteria)
-2. docs/handoffs/FIX-SIGNALQUEUE-SIGNAL-DASHBOARD-DOCS.md (AC-1 through AC-7, 7 criteria)
-3. docs/handoffs/FIX-SIGNALQUEUE-UNIFIED-AGENT-CONSUMER.md (AC-1 through AC-8, 8 criteria)
-4. docs/handoffs/FIX-SIGNALQUEUE-ALERT-COMMANDER-CONSUMER.md (AC-1 through AC-8, 8 criteria)
+1. docs/handoffs/FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS.md (AC-1 through AC-6 + design rationale)
+2. docs/handoffs/FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW.md (AC-1 through AC-5 + placement rules + design rationale)
 
 **NEXT:**
-- Router to dispatch tier1 tasks (1, 2) to cowork-team and docs specialist agents (parallel)
-- Once tier1 tasks land, tier2 tasks (3, 4) unblock for unified-agent and alert-commander specialists (parallel after tier1)
-- All 4 tasks should land before sibling task FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT (depends on this row's lock-plane contract being settled)
+- Router to dispatch tier1 task (SCRIPTS) to developer specialist (ready now)
+- Once tier1 task lands, tier2 task (MAINFLOW) unblocks for agent-father specialist
+- Both tasks should land before any other dev-team flow changes that might edit the Session-Gate→Step-1 insertion point
+- Live measurement after both tasks ship: expect incident-queue depth to drop over the following week (precedent: QA-Drain delivered 226→56 PRIMARY drain over 8 days on structurally identical mechanism)
 
 ---
 
