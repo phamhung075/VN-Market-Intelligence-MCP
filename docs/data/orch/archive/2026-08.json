@@ -16401,6 +16401,20 @@
       "provenance": "bctc-analyst",
       "audit_cycle_tag": null,
       "dedup_key": "bctc-data-quality:DXG:cash-flow-overflow"
+    },
+    {
+      "id": "sys-20260813T022139-5634",
+      "ts": "2026-08-13T02:21:39Z",
+      "from": "system-auditor",
+      "to": "dev-team",
+      "type": "db_integrity_breach",
+      "summary": "deep_fetch_stats: Table empty (0 rows) despite having production writer at deepFetchQueueStore.ts:173. Writer is schedul",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": "docs/data/db-integrity-history.json",
+      "provenance": "detector",
+      "audit_cycle_tag": null,
+      "dedup_key": null
     }
   ],
   "backlog_detail": [],

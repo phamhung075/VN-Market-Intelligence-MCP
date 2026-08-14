@@ -139,20 +139,6 @@
     "archive": [],
     "rows": [
       {
-        "id": "sys-20260813T022139-5634",
-        "ts": "2026-08-13T02:21:39Z",
-        "from": "system-auditor",
-        "to": "dev-team",
-        "type": "db_integrity_breach",
-        "summary": "deep_fetch_stats: Table empty (0 rows) despite having production writer at deepFetchQueueStore.ts:173. Writer is schedul",
-        "severity": "WARN",
-        "status": "READ",
-        "payload_ref": "docs/data/db-integrity-history.json",
-        "provenance": "detector",
-        "audit_cycle_tag": null,
-        "dedup_key": null
-      },
-      {
         "id": "sys-20260813T035120-5969",
         "ts": "2026-08-13T03:51:20Z",
         "from": "system-auditor",
@@ -588,6 +574,20 @@
         "severity": "HIGH",
         "status": "NEW",
         "payload_ref": "docs/improvement-proposals/IMP-20260814-system-auditor-notebook-compose-actuator-never-wired.md"
+      },
+      {
+        "id": "sys-20260814T024729-65b0",
+        "ts": "2026-08-14T02:47:29Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-33 hook-liveness: context-bloat-backstop.sh — settings-file-missing:/Users/admin/Documents/Hung/__works__/__PROJET/__l",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-14T02:30Z",
+        "dedup_key": "hook_enforcement_liveness:context-bloat-backstop.sh"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
