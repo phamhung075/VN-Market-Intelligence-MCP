@@ -81,3 +81,28 @@ to the calling dev-team dispatcher to release `task:UC-ASL-P6` itself.
 TE-coordination, 260/260 tests, bug-fix landing, I16 wiring, Phase-1-parked-not-dropped)
 independently reproduced against live artifacts, not prose. No blocking issues.
 **why-change:** No change from plan — verify-committed JUMP-TO, all checks green, APPROVED.
+
+### STEP qa-S23 · qa · 2026-08-14T08:53:00Z
+**task-id:** FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED
+**what-done:** Direct-commit verify of commit 82216e291 (list_indices() persisted-index skip)
+found the code sound (tests/mypy/mock-guard independently re-verified) but discovered the
+REBUILD_REQUIRED AC had not been actioned — live container was still on the pre-fix image.
+Performed the rebuild+redeploy myself, then intentionally left status at qa (not DONE_VERIFIED).
+**what-considered:**
+- Flip DONE_VERIFIED now on code-review-green alone — REJECTED, PO ruling explicitly requires
+  >=24h dmesg-clean wall-clock on the deployed image; certifying without it repeats the exact
+  AC-3-premature-certification defect this row exists to correct (5 prior no-op folds).
+- Leave the row untouched since rebuild wasn't done yet, report back to router — REJECTED,
+  next_agent:qa + REBUILD_REQUIRED both explicitly assign the rebuild step to this role, and
+  leaving it undone wastes a full cycle for zero progress when the action is bounded/safe
+  (single-service, hard constraints known, direct precedent from the sibling OPS-RAG row).
+- Rebuild, verify AC-1/AC-2 now, but explicitly cannot certify AC-3 (durability) — CHOSEN:
+  starts the 24h clock, documents the exact next-check timestamp + container id, keeps status
+  at qa (neither DONE_VERIFIED nor changes-requested — code has no defect, only elapsed time is
+  missing).
+**why-decision:** Certifying on a partial window is the precise failure mode PO's own ruling
+(po_crossref_20260814T0700Z) names and the sibling FIX-QA-OOM-CLASS-AC3 row exists to prevent;
+honesty about "not yet, here's exactly when" beats a fabricated green.
+**why-change:** No change from plan — router's own task explicitly asked me to determine
+whether the durability bar could be certified now or must stay open, and to correct the
+misleading infrastructure.md caveat either way (done, independent of the durability bar).
