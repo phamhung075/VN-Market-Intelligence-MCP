@@ -132,7 +132,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-14T04:23:59Z",
+    "_updated_at": "2026-08-14T05:20:14Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -645,7 +645,7 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-14.json"
       }
     ],
@@ -19235,7 +19235,7 @@
         "last_served_tick": "2026-08-14T00:21:45Z"
       }
     },
-    "_updated_at": "2026-08-14T04:53:05Z",
+    "_updated_at": "2026-08-14T05:20:14Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20236,6 +20236,141 @@
         },
         "createdAt": "2026-08-14T04:32:03Z",
         "drained_at": "2026-08-14T04:51:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4b2f483b18afc4672c620ac0eb31b5f86ef68d1c5bc3d835f2be0ebf1dd957d5",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/alert-commander.md — retained section '## c179 · 2026-08-14T04:25:00Z (slot=alert-commander-market, tick=04:25)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-14T04:54:54Z",
+        "drained_at": "2026-08-14T05:19:44Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7b67012b2714d57407acf0ed8b676d56abaaf38283167e094778f2030a38e657",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "system",
+        "type": "cowork-tick-telemetry",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-14T04:45Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-14T04:51:18Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "04:45"
+        },
+        "createdAt": "2026-08-14T04:51:27Z",
+        "drained_at": "2026-08-14T05:19:44Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "551f2aaed000716bdc6c9f9bcd3b2fe226f746801b0a332b8938b06029622254",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "system",
+        "type": "cowork-tick-telemetry",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-14T05:00Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-14T05:06:20Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "05:00"
+        },
+        "createdAt": "2026-08-14T05:06:29Z",
+        "drained_at": "2026-08-14T05:19:44Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e00c3a8247ae3f66656d8827e234ab262a9e8d1821898fb13ddf78a75833855c",
+        "source": "file",
+        "from": "qa",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "medium",
+        "payload": {
+          "mechanism": "nso_ts_key() in scripts/agents-flow/lib/notebook-section-direction.sh:71-81 extracts a timestamp via `grep -oE '[0-9]{4}-?[0-9]{2}-?[0-9]{2}(T...Z)?' | tail -1` -- ANY run of >=8 digits that happens to fall into a YYYY-MM-DD shape matches, with no anchoring to require the T...Z time suffix and no distinction between 'the section's real timestamp' and 'any other digit run on the same heading line.' `tail -1` always prefers the LAST match on the line, so a heading of the form '## cycle-705 - 2026-08-14T01:33:11Z - ... (commit `761988143`)' extracts the real timestamp '2026-08-14T01:33:11Z' but is vulnerable the moment a second qualifying digit run (any embedded commit SHA/PR number/etc that happens to start with an 8-digit date-shaped prefix) appears AFTER the real timestamp in the same heading -- the parser silently keys off the hash instead.",
+          "independently_confirmed": "router re-derived by hand against the live regex+heading pair in docs/agent-memory/notebooks/qa.md:15 ('## cycle-705 ... commit `761988143`'): grep -oE against that exact string returns '2026-08-14' then '76198814' as two separate matches (the commit hash's leading 8 digits alone satisfy the YYYY-MM-DD shape); `tail -1` picks '76198814', zero-padded to '76198814000000000' -- a sort key ~2.4 million years in the future relative to any real section. Confirmed this IS a live, reachable code path, not a hypothetical -- did not independently reproduce a live mis-drop of cycle-708 (qa.md currently holds only 2 sections, cycle-709 and cycle-705, 29 lines total, nowhere near cap -- no prune actually fired this tick, so cycle-708's absence could not be attributed to this bug specifically vs. an earlier unrelated drop; QA's own agent (aa95e653b09a1880f) reported reproducing the misselection directly via nso_sections_with_ts against reconstructed pre-hook content, which router did not re-run).",
+          "distinct_from_existing_board_rows": "grepped orch-state.json task_board for related rows before filing (avoid duplicate mint): FIX-NOTEBOOK-PRUNE-HEADING-LEVEL-MISMATCH, FIX-NOTEBOOK-AUTO-PRUNE-STALENESS-GUARD, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, and FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH (status=REVIEW, next_agent=qa, developer's 2026-07-12 fix widened the heading regex to cover multiple timestamp FORMATS and fixed a 'drops newest not oldest' sort-direction defect -- a different mechanism, sort direction vs. false-positive timestamp extraction). None of the four cover 'a non-timestamp digit run on the same heading line gets misparsed as a timestamp.' This also is not the same shape as the two entries already in feedback_auditor_cappressure_trim_partially_truncates_retained_section.md (partial truncation of a byte-identical retained section) or the sentinel-key processed signal from 2026-08-07 (dated section always wins as MIN_KEY against sentinel-keyed rolling sections) -- this is a THIRD distinct nso_ts_key()/prune-selection defect family.",
+          "recommended_fix_direction": "anchor the regex so a bare digit run without the T...Z time-suffix is not eligible as a timestamp candidate at all (require the full ISO shape, not just the date prefix), and/or restrict extraction to a fixed position in the heading template (immediately after the '## cycle-NNN Β· ' prefix) rather than scanning the whole line with tail -1. Either change independently closes this path without touching the FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH fix already in flight.",
+          "originating_report": "QA agent aa95e653b09a1880f, dispatched by dev-team Review-Lane QA-Drain for FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE direct-commit verify -- this finding was incidental to that task (QA's own notebook write triggered it) and explicitly out of QA's not_my_job scope; QA did not attempt a self-fix.",
+          "recovery_status": "no data-loss in the SSOT sense per QA's own note -- any mis-dropped section's underlying task record remains in orch-state.json.task_board and git commit history regardless of notebook prose pruning."
+        },
+        "createdAt": "2026-08-14T05:03:00Z",
+        "drained_at": "2026-08-14T05:19:44Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ef9bdf40a5677b1a50dc890b8a7c7d82aaa23da80a40ef60fac26d089ed992b1",
+        "source": "dashboard",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "LOW",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-14T04:32:38Z",
+        "drained_at": "2026-08-14T05:20:09Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
