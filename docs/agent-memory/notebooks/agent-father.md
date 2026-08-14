@@ -94,3 +94,33 @@
   qa` (AC-4 pointer-placement is grep-verifiable, no live cron-window spawn needed). `commit_sha` +
   completion note added to the row via `scripts/orch-apply.sh` (`FU-AGENT-FATHER-ORCH-SCOPE` —
   applied, git commit of `orch-state.json` left to router/PO). `.head` idle throughout — untouched.
+
+## EDIT 2026-08-14T12:38Z — task UC-CCA-P2-DIGEST-PREDICT (router-dispatched, session
+`632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
+- FR-4, single top-of-file placement. `docs/handoffs/UC-CCA-P2-BA-spec.md` "[Architect] Brownfield
+  Findings" read first; live-reread `docs/agents/digest-predict/flow/main.md` before editing —
+  architect's anchor (`## Step pre-D` at line 15) matched the live file exactly, zero drift.
+- **Applied:** inserted `## Step 0-GW — Gateway availability gate` + pointer (skill:
+  `.claude/skills/gateway-availability-gate/SKILL.md`, agent-id=digest-predict) immediately before
+  Step pre-D. One placement suffices — both the non-Sunday `DAILY_CLAIM` path (inside Step pre-D)
+  and the Sunday Published Marker Gate (further down, outside Step pre-D's own weekday guard)
+  execute unconditionally after this point; no new if-guard added. +6L.
+- **AC-4 self-verified:** post-edit grep confirms exactly one `Step 0-GW` pointer (line 17), strictly
+  before both `task_claim` calls (line 54 non-Sunday `DAILY_CLAIM`, line 106 Sunday `PUBLISH_CLAIM`).
+- Gateway-less this session (Read/Edit/Write/Bash, no `mcp__gateway__call_tool`) — skipped
+  `task_claim`/`task_heartbeat`/`task_release`; solo single-file subtask; router instructed
+  INV-GATEWAY-1 direct pathspec-scoped commit.
+- **Concurrency note:** 2 prior attempts to land this exact notebook entry were lost before commit —
+  ≥3 other UC-CCA-P2 agent-father sessions (market-watcher, fb-market-poster, alert-commander,
+  bctc-analyst, unified-agent) wrote to this same file concurrently, plus the
+  `notebook-auto-prune.sh` PostToolUse hook fired on each of their edits, dropping oldest sections.
+  No content lost from the actual flow-doc edit (landed safely in commit `c7cd36af4`, RULE 3
+  self-verified) — only this narration needed re-writing twice.
+- Committed `c7cd36af4` (digest-predict/flow/main.md only, explicit pathspec, RULE 2.5 — did not
+  sweep in sibling peer files sitting in the shared git index at commit time). `git show
+  --name-only HEAD` confirmed exactly 1 file.
+- **Board disposition:** `ready[]`→`review[]`, status `READY`→`REVIEW`, `next_agent: agent-father →
+  qa` — AC-4 (pointer placement) is grep-verifiable without a live cron-window spawn (self-verified
+  above). `agent_father_completion_note` + `commit_sha` fields added to the row via
+  `scripts/orch-apply.sh` (`FU-AGENT-FATHER-ORCH-SCOPE` — applied, not committed by me). `.head` was
+  idle throughout — untouched.
