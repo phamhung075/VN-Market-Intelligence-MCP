@@ -1,12 +1,12 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1786726293,
-    "last_linecount": 21,
+    "last_mtime": 1786749604,
+    "last_linecount": 38,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786726293,
-      "last_linecount": 21
+      "last_mtime": 1786749604,
+      "last_linecount": 38
     }
   },
   "decision_journal": [
@@ -18349,7 +18349,7 @@
         "last_served_tick": "2026-08-14T19:54:56Z"
       }
     },
-    "_updated_at": "2026-08-14T22:49:10Z",
+    "_updated_at": "2026-08-14T23:19:42Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19038,6 +19038,18 @@
         },
         "createdAt": "2026-08-14T22:32:40Z",
         "drained_at": "2026-08-14T22:49:10Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "bd66d6ec3352eb6e254111adbaa06f545a03c1430ee0058351da4850da77ad3b",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 4 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/pm.md docs/handoffs/TASK_2008a.md docs/handoffs/TASK_2008b.md docs/handoffs/TASK_2008c.md. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=27 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-14T22:55:53Z",
+        "drained_at": "2026-08-14T23:19:42Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
