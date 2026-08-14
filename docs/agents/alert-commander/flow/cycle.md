@@ -34,7 +34,15 @@ MARKET alert (only when firing condition met) | BUG on error | Silent exit when 
 
 | Stage | Steps | Sub-flow |
 |---|---|---|
+| **Step 0-GW** — Gateway availability gate | 0-GW | Inline (FIRST — see below) |
 | Bootstrap + Regime + Context + Legal/Crisis | 0, 0b, 1, 2 | `→ Run sub-flow: ./stage-bootstrap.md` |
 | Signal Matrix + Price-Override + chain_catalyst | 3, 3b, 3c | `→ Run sub-flow: ./stage-signals.md` |
 | **Firing gate** — evaluate position-danger + watchlist-opp rules. If neither → EXIT | — | (inline gate, no sub-flow) |
 | MARKET dispatch + Verdict (4a, only when condition met) + Notebook (5, every cycle incl. silent exit — `memory.append_every_cycle: true` in `init.md`) | 4a, 5 | `→ Run sub-flow: ./stage-dispatch-log.md` |
+
+---
+
+## Step 0-GW — Gateway Availability Gate (FIRST STEP — runs before bootstrap)
+
+**Step 0-GW — Gateway availability gate** → skill: `.claude/skills/gateway-availability-gate/SKILL.md`
+Replace `<agent-id>` with `alert-commander`. Run BEFORE bootstrap. On gateway dead: write signal file + BLOCKED notebook entry (APPEND-class, `stage-dispatch-log.md`) + EXIT. See skill for full protocol and explicit prohibitions.

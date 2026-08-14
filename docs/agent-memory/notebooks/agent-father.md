@@ -89,3 +89,29 @@ router-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
   (`FU-AGENT-FATHER-ORCH-SCOPE` — outside `commit_zone`, applied not committed by me). `.head` was
   pointing at an unrelated task (`UC-CDC-P1`) throughout — untouched.
 - AC-7 (WF1d row) verifier extension flagged, not authored — `scripts/` outside `commit_zone`.
+
+## EDIT 2026-08-14T12:35Z — task UC-CCA-P2-ALERT-COMMANDER (router-dispatched, session
+`632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
+- FR-4 + architect's structural refinement (Q-alert-commander-anchor ruling: Option a).
+  `docs/handoffs/UC-CCA-P2-BA-spec.md` "[Architect] Brownfield Findings" read first; live-reread
+  `docs/agents/alert-commander/flow/cycle.md` before editing — architect's anchors (Dispatch table
+  `:33-40`, zero inline steps before it) matched the live file exactly, zero drift from the
+  2026-08-14 measurement.
+- **Applied both required edits** (architect explicitly ruled prose-only or table-only does not
+  satisfy the thin-dispatcher contract here): (1) new zero-th Dispatch-table row `| **Step 0-GW** —
+  Gateway availability gate | 0-GW | Inline (FIRST — see below) |` inserted before the existing
+  "Bootstrap + Regime + Context + Legal/Crisis" row; (2) inline `## Step 0-GW — Gateway Availability
+  Gate (FIRST STEP — runs before bootstrap)` section inserted immediately after the `## Dispatch`
+  table, pointing at `.claude/skills/gateway-availability-gate/SKILL.md` (agent-id=alert-commander).
+  Mirrored `bctc-analyst/cycle.md`'s live convention (header-plus-content dispatcher-level inline
+  step right after its own table) — read that file first per dispatch instructions, confirmed the
+  shape before writing. Notebook class confirmed APPEND (`init.md:21` "notebook append every
+  cycle" + `stage-dispatch-log.md:73` per BA spec) — referenced in the new section's BLOCKED-path
+  wording, not a new class.
+- Gateway-less this session (tool grant Read/Edit/Write/Bash only, no `mcp__gateway__call_tool`) —
+  task-lock skipped per `edit-apply.md`'s own documented gateway-less exception; router instructed
+  INV-GATEWAY-1 direct pathspec-scoped commit.
+- **Board disposition:** `ready[]`→`review[]`, `next_agent:qa` (AC-4 pointer-placement grep-check is
+  qa-shaped verification, no live agent invocation needed to confirm this mechanical wiring change),
+  `agent_father_implementation_note` added via `scripts/orch-apply.sh` (`FU-AGENT-FATHER-ORCH-SCOPE`
+  — outside `commit_zone`, applied not committed by me). `.head` was idle throughout — untouched.
