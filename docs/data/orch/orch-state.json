@@ -92,12 +92,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "TASK-COWORK-MUTEX-001",
-    "next_agent": "ba",
-    "next_action": "SPRINT-M Step 2 planning, sequence ba -> architect -> pm. PO manual-dispatch-sweep pick (90-deep eligible pool, P0/rank0, BACKLOG 15 days). PRIOR-ART CAUTION carried from row note: PO suspects this deliverable (cowork-slot collision probe) is already shipped in CLAUDE.md + .claude/skills/dispatch-claim/{CARD,SKILL}.md — ba must diff against live files FIRST and either close as already-shipped or state precisely which sub-behaviour is missing, not write a spec assuming net-new work.",
-    "updated_at": "2026-08-14T08:47:35Z",
-    "updated_by": "dev-team (router S1 dispatch, SPRINT-M sequence start)"
+    "status": "idle",
+    "updated_at": "2026-08-14T08:57:49Z",
+    "updated_by": "ba",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -9801,22 +9800,6 @@
         "updated_at": "2026-08-12T00:04:58Z"
       },
       {
-        "id": "SPIKE-COWORK-MUTEX-001-PRIOR-ART-AC-DIFF",
-        "type": "SPIKE",
-        "status": "BACKLOG",
-        "next_agent": "ba",
-        "zone": "cross-service/",
-        "mode": "spike",
-        "question": "Does live CLAUDE.md + .claude/skills/dispatch-claim/{CARD,SKILL}.md already satisfy Step 2.4 of the cowork-mutex decomposition? Close TASK-COWORK-MUTEX-001 as shipped, or name precisely which sub-behaviour is missing. Check siblings 002/003 too. Do NOT re-implement from the title.",
-        "timebox": 60,
-        "size": "S",
-        "created_by": "po (triage-signals, dev-team tick 2026-08-08T20:37Z)",
-        "created_at": "2026-08-08T21:04:00Z",
-        "note": "PO returned this SPIKE in its triage BATCH but did not board-mint it (main.md:951 routes SPIKE to direct Step-3 dispatch, which requires SF-1 — SF-1 was already released before this notification landed, per feedback_sf1_released_before_backgrounded_po_triage_return_blocks_step3, so router did not self-spawn). Board-minted here as plain bookkeeping so it is not lost; full PO reasoning in docs/agent-memory/decisions/triage-20260808T2054Z-po.md. Will surface via normal ba-lane pickup.",
-        "updated_at": "2026-08-12T15:37:44Z",
-        "status_note": "\n\n[po/triage 2026-08-12T15:37:44Z] DISPATCHED via PO BATCH this tick. Selected by manual-dispatch-sweep indirectly: the sweep's own top-ranked candidate (rank 0 of 88 — TASK-COWORK-MUTEX-001, P0, BACKLOG-XOR-GAP) re-entered eligibility on the 4h staleness window after being flagged at 2026-08-12T05:45:28Z. PO declined to re-fold 001 itself because THIS row is 001's blocker and has sat in backlog[] untouched since 2026-08-08T21:07:13Z with next_agent=ba — dispatching the parent while its adjudication starves would repeat the exact prior-art mistake 001's own po_prior_art_suspect_20260808T1600Z note was written to prevent.\n\nConcrete task, unchanged from the mint: diff Step 2.4 of the originating decomposition against the LIVE CLAUDE.md / .claude/skills/dispatch-claim/CARD.md / .claude/skills/dispatch-claim/SKILL.md, then either close TASK-COWORK-MUTEX-001 as already-shipped or state precisely which sub-behaviour is still missing. Do NOT re-implement from the title. Prior-art pointers already gathered on 001 and re-verified as still live: CLAUDE.md carries the 'Peer collision' outcome row; CARD.md:35 carries the same branch; SKILL.md:194 (session-presence collision), :288 (PRE-CLAIM collision), :563 (cross-session same-agent_id detection). Siblings TASK-COWORK-MUTEX-002/003 were never scope-checked and should be adjudicated in the same pass."
-      },
-      {
         "id": "FIX-RUNIDLE-PREDICATE-D-ACTIVE-SPRINTS-PERMANENT-FLOOR",
         "type": "FIX",
         "title": "RC-IDLE-LOOPS shipped 5/5 but its AC-3 empirical criterion is UNMET: dev-team RUN-IDLE predicate (d) active_sprints==0 has a permanent non-zero floor, so RUN-IDLE has never fired",
@@ -12364,6 +12347,23 @@
           "FIX-SLA-MONITOR-MARKET-OPEN-BOUNDARY-DETERMINISTIC-DAILY-BREACH (pre-existing, reprioritized P2->P1)"
         ],
         "po_signoff_note": "=== PO SIGN-OFF 2026-08-14T04:11:35Z (REVIEW-lane, claimed by dev-team secondary-drain 2026-08-14T04:03:05Z, commit 1c81fab4a) ===\n\nVERDICT: APPROVED. The 403-line design doc answers all five questions the SPIKE asked, is grounded in 20 code-verified brownfield paths rather than assertion, and its single most valuable finding is a NEGATIVE one: it proves the current escalation path is a dead end BY DESIGN (alert-commander correctly suppresses infra noise — wrong addressee, not a bug), which is what makes the redirect the crux rather than a nice-to-have. Timebox 120min honoured. Reuse discipline held: 2 new pure-domain files, 2 infra files, 1 signal writer, 1 additive table — everything else extends live mechanisms.\n\nANSWERS TO §10 OPEN QUESTIONS:\n\nQ1 — bucket 3 (~14 MCP-REST computed gauges: indicator-gauges x5, momentum-indicators x5, money-radar x4): ACCEPT the architect's 'upstream-bounded, no independent probe' disposition. NO 4th bucket-3 follow-up will be sized. Rationale: these gauges are DERIVED from daily_ohlcv/market_prices/news_articles, which the legacy price/technical/news signal types already cover — 14 redundant per-gauge probes is precisely the per-source point-patch multiplication this SPIKE was opened to end, and it would put 14 new CRITICAL emitters in front of an anti-spam layer that has not yet proven itself in production. ONE PRODUCT REQUIREMENT ATTACHED so the frontend does not silently lose accuracy: each bucket-3 row in docs/data/frontend-data-coverage-map.json must carry an additive `upstream_bounded_by: <table>` annotation, so FIX-L3-FRONTEND-AUTOREFRESH-FRESHNESS-BADGE can render the UPSTREAM's freshness on the gauge badge instead of rendering nothing. That is a JSON annotation, not a probe — it belongs in the bucket-2 widening row, not its own task. Revisit only if a live user-visible incident is ever traced to a gauge that was stale while its upstream was fresh.\n\nQ2 — new `surface_breach_audit` table vs relaxing `sla_breach_audit`'s CHECK constraint: APPROVED, build the NEW additive table exactly as designed. Two independent reasons. (i) Risk asymmetry: `CREATE TABLE IF NOT EXISTS` is zero-risk on a live DB; relaxing a CHECK on a table that 12 legacy signal types already write requires a rebuild-and-copy on SQLite (no ALTER ... DROP CONSTRAINT), i.e. a genuine migration on shared production data, to buy nothing. (ii) The two things being stored are not the same KIND of key: `sla_breach_audit.signal_type` is a CLOSED 12-value allowlist, coverage-map surfaces are an OPEN namespace that grows whenever a row is added to frontend-data-coverage-map.json. Merging an open namespace into a closed allowlist is a failure mode this repo has already paid for once (signal-row type open-namespace vs closed-allowlist, 4x redispatch, root-caused 2026-08-13). Keep the closed allowlist closed; give the open namespace its own table. HARD CONSTRAINT ON THE IMPLEMENTER: do not touch `sla_breach_audit`'s DDL or its CHECK list in the same change.\n\nQ3 — isVnMarketHours 02:00->02:15 as its own fast FIX: AGREED, and it is ALREADY MINTED — FIX-SLA-MONITOR-MARKET-OPEN-BOUNDARY-DETERMINISTIC-DAILY-BREACH (backlog, dev-mcp-server, created 2026-08-07T02:50:38Z, i.e. before the brief was written). NOT re-minted; reprioritized P2 -> P1 and the brief's line-level root cause (freshnessSlaChecker.ts:144-159) cross-linked onto it. See that row's own PO note for how the boundary shift and its AC-1 warm-up compose rather than compete.\n\nTWO CONSTRAINTS PO ADDS ON TOP OF THE DESIGN (both carried onto every minted row):\n1. FAIL-OPEN IS NON-NEGOTIABLE (the design's own §9 bullet, promoted here to an acceptance criterion): an unresolvable or errored probe returns NO VERDICT and falls back to the legacy age-only check — never a fabricated CRASH. A classifier that manufactures false CRASH FIX rows is strictly worse than today's silence, because today's failure mode costs nothing and that one costs PO triage capacity on every tick.\n2. NO ROW MAY BE CLOSED ON A GREEN UNIT TEST ALONE. The design's own live-acceptance criterion is the closing gate: at a real 02:00Z tick, `bash scripts/check-foreign-flow-freshness.sh` reports verdict=PASS while the classifier emits NO CRITICAL for foreign_flow or price. Both PO-folded false positives (foreign_flow 3899/1020/1020min; price 44/59/59min, all at 02:00Z = 09:00 ICT, before the 09:15 open) must be regression fixtures in freshnessCadenceConfig's unit tests AND must be confirmed silent live.\n\nSCOPE FENCE: FIX-L4-FRESHNESS-SLA-MONITOR-SELF-POLICING (detector) and FIX-L3-FRONTEND-AUTOREFRESH-FRESHNESS-BADGE (consumer) stay untouched by this decomposition, as the brief states. §9's flagged pre-existing duplication (vpsHealthPoller.ts's second, independent idle-vs-unhealthy classifier) is ACKNOWLEDGED AND DEFERRED — not folded in, not minted. Consolidating two live classifiers while replacing the escalation path of one of them is how a 4-row change becomes an incident; revisit after the TRIAGE layer is live and quiet for a week.\n\nBUILD-STANDARD: lean (§11) — dev-mcp-server drives end-to-end, no BA/PM relay, no pilot-status file."
+      },
+      {
+        "id": "SPIKE-COWORK-MUTEX-001-PRIOR-ART-AC-DIFF",
+        "type": "SPIKE",
+        "status": "DONE",
+        "zone": "cross-service/",
+        "mode": "spike",
+        "question": "Does live CLAUDE.md + .claude/skills/dispatch-claim/{CARD,SKILL}.md already satisfy Step 2.4 of the cowork-mutex decomposition? Close TASK-COWORK-MUTEX-001 as shipped, or name precisely which sub-behaviour is missing. Check siblings 002/003 too. Do NOT re-implement from the title.",
+        "timebox": 60,
+        "size": "S",
+        "created_by": "po (triage-signals, dev-team tick 2026-08-08T20:37Z)",
+        "created_at": "2026-08-08T21:04:00Z",
+        "note": "PO returned this SPIKE in its triage BATCH but did not board-mint it (main.md:951 routes SPIKE to direct Step-3 dispatch, which requires SF-1 — SF-1 was already released before this notification landed, per feedback_sf1_released_before_backgrounded_po_triage_return_blocks_step3, so router did not self-spawn). Board-minted here as plain bookkeeping so it is not lost; full PO reasoning in docs/agent-memory/decisions/triage-20260808T2054Z-po.md. Will surface via normal ba-lane pickup.",
+        "updated_at": "2026-08-14T08:57:49Z",
+        "status_note": "\n\n[po/triage 2026-08-12T15:37:44Z] DISPATCHED via PO BATCH this tick. Selected by manual-dispatch-sweep indirectly: the sweep's own top-ranked candidate (rank 0 of 88 — TASK-COWORK-MUTEX-001, P0, BACKLOG-XOR-GAP) re-entered eligibility on the 4h staleness window after being flagged at 2026-08-12T05:45:28Z. PO declined to re-fold 001 itself because THIS row is 001's blocker and has sat in backlog[] untouched since 2026-08-08T21:07:13Z with next_agent=ba — dispatching the parent while its adjudication starves would repeat the exact prior-art mistake 001's own po_prior_art_suspect_20260808T1600Z note was written to prevent.\n\nConcrete task, unchanged from the mint: diff Step 2.4 of the originating decomposition against the LIVE CLAUDE.md / .claude/skills/dispatch-claim/CARD.md / .claude/skills/dispatch-claim/SKILL.md, then either close TASK-COWORK-MUTEX-001 as already-shipped or state precisely which sub-behaviour is still missing. Do NOT re-implement from the title. Prior-art pointers already gathered on 001 and re-verified as still live: CLAUDE.md carries the 'Peer collision' outcome row; CARD.md:35 carries the same branch; SKILL.md:194 (session-presence collision), :288 (PRE-CLAIM collision), :563 (cross-session same-agent_id detection). Siblings TASK-COWORK-MUTEX-002/003 were never scope-checked and should be adjudicated in the same pass.",
+        "closed_at": "2026-08-14T08:57:48Z",
+        "resolution_note": "Answer: TASK-COWORK-MUTEX-001 NOT shipped (Step 2.4 entirely missing) -- see that row's ba_prior_art_refuted_20260814 field for the full diff. This board row and docs/spikes/SPIKE-COWORK-MUTEX-001-PRIOR-ART-ADJUDICATE.md (committed 2026-08-12, differently-named working file) answer the identical adjudication question -- reconciled/closed together here so neither is re-dispatched by a future triage sweep."
       }
     ],
     "done_verified": [
@@ -15852,6 +15852,36 @@
         "ba_handoff": "docs/handoffs/UC-CDC-P1-BA-spec.md",
         "ba_completed_at": "2026-08-14T07:57:57Z",
         "ba_spec_note_20260814T0757Z": "WP-A (READY, no blocker): FR-A1 compute calendar_status via vnTradingCalendar.isVnTradingDay(getTodayVnDate()).session_status; FR-A2 enum-gate calendar_status Zod field (open/weekend/holiday/half_day/unknown); FR-A3 stop cowork-tick-preflight.sh Step 8 (L144-161) recycling calendar_status back from pressure-state.json; FR-A4 delete telemetry.md Step 6.0 L15 calendar_status arg; FR-A5 pressure-read.md Step 4.3 fail-loud (log+telegram bug) on out-of-domain calendar_status instead of silent no-suppression fallthrough. Co-ship (different row, not implemented here): FIX-COWORK-CADENCE-DANGLING-POLICY-ID domain-value-axis check in cadence-policy.js evaluateCadence() -- that row still carries a superseded 15/240 instance clause CADRAT-1 already delivered (commit 8c2acb44c) -- flagged to PM/PO to strip, not touched. WP-B (BLOCKED): decouple stale_warning from cycle-snapshot-promotion-refusal in emitPressureStateTool.ts -- verified live this cycle UC-SDF-P2 still BACKLOG/plan_only/not claimed, its own note says sequence UC-SDF-P2 first or the decouple targets a signal (promoteResult.stale) that is provably always false today. Recommend PM promote UC-SDF-P2. Full FR/DDD/AC detail + 2 non-gating blockers (Q1 sequencing, Q2 enum-gate error-vs-warn behavior, default=WARN+recompute): docs/handoffs/UC-CDC-P1-BA-spec.md"
+      },
+      {
+        "id": "TASK-COWORK-MUTEX-001",
+        "type": "TASK",
+        "title": "Implement Cowork-Slot Collision Probe Core (dispatch-claim/SKILL.md + CLAUDE.md)",
+        "status": "READY",
+        "priority": "P0",
+        "size": "M",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "supervised": true,
+        "created_at": "2026-07-30T18:27:28Z",
+        "created_by": "pm",
+        "note": "Atomic implementation of Step 2.4 collision probe.",
+        "updated_at": "2026-08-14T08:57:49Z",
+        "po_prior_art_suspect_20260808T1600Z": "SKIPPED as this tick's manual-dispatch-sweep selection despite being the top-ranked candidate (P0, BACKLOG-XOR-GAP, unflagged) — PRIOR ART APPEARS ALREADY SHIPPED, so folding it into a BATCH would have burned a dev slot re-implementing live code (feedback_file_prior_art_check_before_minting_row).\n\nThe row's deliverable is 'Implement Cowork-Slot Collision Probe Core (dispatch-claim/SKILL.md + CLAUDE.md)'. Both named targets already carry a collision path: CLAUDE.md:14 has the 'Peer collision' outcome row ('claimed:false + current_holder.owner_client_session != $CLAUDE_CODE_SESSION_ID -> log PRE-CLAIM collision -> send_telegram(work) -> EXIT'); .claude/skills/dispatch-claim/CARD.md:35 carries the same branch; .claude/skills/dispatch-claim/SKILL.md:194 (session-presence collision), :288 (PRE-CLAIM collision) and :563 ('Cross-session collision detection - same agent_id in multiple live sessions'). SKILL.md is 31,235B and was last written 2026-08-07, well after this row's 2026-07-30 mint.\n\nDELIBERATELY NOT CLOSED BY PO: the match is on file+behaviour, not on this row's acceptance criteria (the row carries no `files` and no AC beyond 'Atomic implementation of Step 2.4 collision probe'), and it has two live siblings (TASK-COWORK-MUTEX-002/003) whose scope PO did not examine. Closing a P0 on a partial match would be the mirror of the mistake being avoided. REQUIRED NEXT ACTION (whoever picks this up first): diff Step 2.4 of the originating decomposition against the live SKILL.md/CARD.md/CLAUDE.md and either close 001 as already-shipped or state precisely which sub-behaviour is still missing — do NOT re-implement from the title.",
+        "po_manual_dispatch_skipped_at": "2026-08-08T16:06:57Z",
+        "po_manual_dispatch_skipped_reason": "prior-art-suspect: deliverable appears live in CLAUDE.md + .claude/skills/dispatch-claim/{CARD,SKILL}.md; needs AC-level verify, not dispatch",
+        "po_manual_dispatch_flagged_at": "2026-08-14T08:36:00Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "BACKLOG-XOR-GAP",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced BACKLOG-XOR-GAP candidate — folding into this tick's BATCH. RE-ADMITTED under flag_reentrant: prior stamp 2026-08-14T04:20:01Z is 4h16m old (> STALE_SECONDS=14400), i.e. the 04:20Z fold was stamped but the row NEVER LEFT backlog[] — this is the 2nd consecutive fold for this row and the exact TE-T12 stranding shape the bounded re-admission exists to cure. Candidate set this tick: 90 eligible (53 DRS-STRANDED-OFF-ALLOWLIST, 37 BACKLOG-XOR-GAP, 0 READY-XOR) — corroborates the live dispatch-starvation finding (1 row dispatched per tick vs a 90-deep eligible pool, P0 expedite ineffective). Row is P0/rank 0 and has been BACKLOG since 2026-07-30T18:27:28Z (15 days).",
+        "po_manual_dispatch_dispatched_as": "SPIKE-COWORK-MUTEX-001-PRIOR-ART-ADJUDICATE",
+        "claimed_at": "2026-08-14T08:47:34Z",
+        "claimed_by": "dev-team (S1 SPRINT-M dispatch)",
+        "next_agent": "developer",
+        "ba_spec_complete": true,
+        "ba_completed_at": "2026-08-14T08:57:48Z",
+        "ba_handoff": "docs/handoffs/TASK-COWORK-MUTEX-001.md (BA triage addendum, 2026-08-14) + docs/handoffs/FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS-BA-spec.md + docs/architecture-briefs/2026-07-29-fix-cowork-dispatch-router-intent-mutex-bypass-design.md",
+        "ba_prior_art_refuted_20260814": "PO prior-art suspicion (po_prior_art_suspect_20260808T1600Z) REFUTED after independent diff. Diffed live CLAUDE.md:14 / CARD.md:35 / SKILL.md:194,288,563 against the Step 2.4 requirement (originating decomposition: this row's own handoff + architecture brief + BA spec). All 5 cited lines are the PRE-EXISTING generic intent: collision pattern (predates this row's 07-30 mint) or unrelated presence/roster mechanisms; none construct AGENT_SLOTS/TARGET_SLOTS, none read cowork-schedule.json, none probe the cowork-slot:/published: keyspace. Zero repo hits for Step 2.4 / Cross-Path Collision / COWORK_AGENTS / AGENT_SLOTS / TARGET_SLOTS outside planning docs. Missing sub-behaviour = the ENTIRE Step 2.4 mechanism (0% shipped, not partial). Independently re-verifies docs/spikes/SPIKE-COWORK-MUTEX-001-PRIOR-ART-ADJUDICATE.md (committed 4107ce310 on 2026-08-12, same finding, never board-reflected until this write) as still fully current: git log --since=2026-08-12 is EMPTY on SKILL.md/CARD.md/CLAUDE.md/task_list_held.md/spawn-fanout.md and the FR-7 test script still does not exist. BA spec (07-23), architect brief (07-29, ruled Candidate A refined, full file-level design table), and PM decomposition (07-30, this row + siblings 002/003 with complete AC/files) ALREADY EXIST and are re-verified valid/current/unchanged -- no new BA/architect/PM cycle needed; routing straight to developer per PM's own already-recorded RETURN NEXT instruction (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-pm.md STEP pm-S5: Router/PO explicitly dispatches TASK-COWORK-MUTEX-001 to developer). supervised:true left UNCHANGED (not BA's call to clear) -- RLC excludes supervised rows by design, so this will NOT auto-fire; router/PO deliberate dispatch still required, matching PM's S5 note. Siblings TASK-COWORK-MUTEX-002/003 re-checked: still correctly BACKLOG/depends=[001], untouched, dependency chain coherent."
       }
     ],
     "review": [
@@ -19418,33 +19448,7 @@
     },
     "last_triaged_at": "2026-08-14T07:50:56Z",
     "last_triaged_by": "dev-team (design-router sweep)",
-    "in_progress": [
-      {
-        "id": "TASK-COWORK-MUTEX-001",
-        "type": "TASK",
-        "title": "Implement Cowork-Slot Collision Probe Core (dispatch-claim/SKILL.md + CLAUDE.md)",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "M",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "supervised": true,
-        "created_at": "2026-07-30T18:27:28Z",
-        "created_by": "pm",
-        "note": "Atomic implementation of Step 2.4 collision probe.",
-        "updated_at": "2026-08-14T08:47:35Z",
-        "po_prior_art_suspect_20260808T1600Z": "SKIPPED as this tick's manual-dispatch-sweep selection despite being the top-ranked candidate (P0, BACKLOG-XOR-GAP, unflagged) — PRIOR ART APPEARS ALREADY SHIPPED, so folding it into a BATCH would have burned a dev slot re-implementing live code (feedback_file_prior_art_check_before_minting_row).\n\nThe row's deliverable is 'Implement Cowork-Slot Collision Probe Core (dispatch-claim/SKILL.md + CLAUDE.md)'. Both named targets already carry a collision path: CLAUDE.md:14 has the 'Peer collision' outcome row ('claimed:false + current_holder.owner_client_session != $CLAUDE_CODE_SESSION_ID -> log PRE-CLAIM collision -> send_telegram(work) -> EXIT'); .claude/skills/dispatch-claim/CARD.md:35 carries the same branch; .claude/skills/dispatch-claim/SKILL.md:194 (session-presence collision), :288 (PRE-CLAIM collision) and :563 ('Cross-session collision detection - same agent_id in multiple live sessions'). SKILL.md is 31,235B and was last written 2026-08-07, well after this row's 2026-07-30 mint.\n\nDELIBERATELY NOT CLOSED BY PO: the match is on file+behaviour, not on this row's acceptance criteria (the row carries no `files` and no AC beyond 'Atomic implementation of Step 2.4 collision probe'), and it has two live siblings (TASK-COWORK-MUTEX-002/003) whose scope PO did not examine. Closing a P0 on a partial match would be the mirror of the mistake being avoided. REQUIRED NEXT ACTION (whoever picks this up first): diff Step 2.4 of the originating decomposition against the live SKILL.md/CARD.md/CLAUDE.md and either close 001 as already-shipped or state precisely which sub-behaviour is still missing — do NOT re-implement from the title.",
-        "po_manual_dispatch_skipped_at": "2026-08-08T16:06:57Z",
-        "po_manual_dispatch_skipped_reason": "prior-art-suspect: deliverable appears live in CLAUDE.md + .claude/skills/dispatch-claim/{CARD,SKILL}.md; needs AC-level verify, not dispatch",
-        "po_manual_dispatch_flagged_at": "2026-08-14T08:36:00Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "BACKLOG-XOR-GAP",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced BACKLOG-XOR-GAP candidate — folding into this tick's BATCH. RE-ADMITTED under flag_reentrant: prior stamp 2026-08-14T04:20:01Z is 4h16m old (> STALE_SECONDS=14400), i.e. the 04:20Z fold was stamped but the row NEVER LEFT backlog[] — this is the 2nd consecutive fold for this row and the exact TE-T12 stranding shape the bounded re-admission exists to cure. Candidate set this tick: 90 eligible (53 DRS-STRANDED-OFF-ALLOWLIST, 37 BACKLOG-XOR-GAP, 0 READY-XOR) — corroborates the live dispatch-starvation finding (1 row dispatched per tick vs a 90-deep eligible pool, P0 expedite ineffective). Row is P0/rank 0 and has been BACKLOG since 2026-07-30T18:27:28Z (15 days).",
-        "po_manual_dispatch_dispatched_as": "SPIKE-COWORK-MUTEX-001-PRIOR-ART-ADJUDICATE",
-        "claimed_at": "2026-08-14T08:47:34Z",
-        "claimed_by": "dev-team (S1 SPRINT-M dispatch)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",

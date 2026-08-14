@@ -71,3 +71,49 @@ This task does NOT include new tests — it defines the interface that TASK-COWO
 ## RETURN
 DONE: Step 2.4 implemented, CLAUDE.md pointer updated, doc-sync complete, single commit verified.
 NEXT: TASK-COWORK-MUTEX-002 (test harness, depends on this task's interface).
+
+---
+
+## [BA] Prior-art triage — 2026-08-14
+
+**Trigger:** row carried `po_prior_art_suspect_20260808T1600Z` — PO suspected this deliverable was
+already shipped in `CLAUDE.md`/`dispatch-claim/{CARD,SKILL}.md` and required a diff before any new
+work. Router dispatched this row to BA specifically to resolve that, not to re-decompose from the
+title.
+
+**Verdict: NOT shipped. Prior-art suspicion REFUTED. Missing sub-behaviour = the entire Step 2.4
+mechanism (0% shipped, not partial).** Diffed the 5 cited lines (`CLAUDE.md:14`, `CARD.md:35`,
+`SKILL.md:194/288/563`) against the AC list above — all 5 are the pre-existing generic `intent:`
+collision pattern (predates this row's 2026-07-30 mint) or unrelated presence/roster mechanisms.
+None construct `AGENT_SLOTS`/`TARGET_SLOTS`, none read `cowork-schedule.json`, none probe the
+`cowork-slot:`/`published:` keyspace. Full-repo grep for `Step 2.4`/`Cross-Path Collision`/
+`COWORK_AGENTS`/`AGENT_SLOTS`/`TARGET_SLOTS` returns zero hits outside planning docs. The FR-7 test
+script (`scripts/agents-flow/cowork-dispatch-collision-probe.test.sh`, task 002's deliverable) does
+not exist; the `spawn-fanout.md` cross-reference annotation (task 003's deliverable) does not exist
+either — both siblings correctly remain `BACKLOG`, `depends: [TASK-COWORK-MUTEX-001]`, dependency
+chain coherent.
+
+**This independently re-confirms** `docs/spikes/SPIKE-COWORK-MUTEX-001-PRIOR-ART-ADJUDICATE.md`
+(committed `4107ce310`, 2026-08-12) — same investigation, same verdict, done under a differently-named
+working file that was never board-reflected (the board's own `SPIKE-COWORK-MUTEX-001-PRIOR-ART-AC-DIFF`
+row, minted 2026-08-08, didn't know it had already been answered). `git log --since=2026-08-12` on
+`CLAUDE.md`/`CARD.md`/`SKILL.md`/`task_list_held.md`/`spawn-fanout.md` is empty — zero drift since
+that spike ran. Both board rows are now reconciled/closed (this cycle's `orch-apply.sh` write): the
+`AC-DIFF` spike row moved `backlog[]` → `done[]`, and this row moved `in_progress[]` → `ready[]`.
+
+**No new BA/architect/PM work needed.** The BA spec (`FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS-BA-spec.md`,
+2026-07-23), the architect brief (2026-07-29, ruled Candidate A refined, full file-level design table
+in §3), and the PM decomposition (this exact handoff + siblings 002/003, 2026-07-30, complete AC/files)
+already exist and were re-verified today as still valid, current and unchanged. PM's own decision
+journal (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-pm.md` STEP pm-S5) already recorded `NEXT: Router/PO
+explicitly dispatches TASK-COWORK-MUTEX-001 to developer` — this triage executes that already-decided
+next step rather than re-running a completed ba→architect→pm sequence.
+
+`supervised: true` is left unchanged (not BA's call to clear) — the Ready-Lane Consumer explicitly
+excludes `supervised` rows, so this will **not** auto-fire; router/PO must still perform a deliberate
+dispatch to `developer`, matching PM's own S5 note and the `supervised`-flag design intent for
+protocol-layer changes.
+
+RETURN (this triage): DONE — prior-art diff complete, verdict NOT-shipped, board updated
+(`ready[]`, `next_agent: developer`). NEXT: developer (deliberate dispatch, `supervised:true` blocks
+auto-pickup). PIPELINE: continue.
