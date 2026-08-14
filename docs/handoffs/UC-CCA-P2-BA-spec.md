@@ -207,15 +207,289 @@ and requires no priority/business judgment call.
 
 ## [Architect] Brownfield Findings
 
-(pending — architect to fill in per BA→architect handoff convention)
+**Zone:** `cross-service/` (row's own field, confirmed correct) — real touched surface is
+`.claude/skills/gateway-availability-gate/SKILL.md` + 9 agent flow-doc files across 6 agent families
+(market-watcher, alert-commander, unified-agent, digest-predict, bctc-analyst, fb-market-poster).
+Zone-detect Tier-1 does not apply (no `apps/` path). **BUILD-STANDARD: not-applicable**
+(BUG-FIX/REFACTOR — in-zone dedup + wiring, no new primitives, no new interfaces) — Standard
+Detection matrix skip confirmed.
+
+**Ratification — all 10 files re-read live (2026-08-14), byte-for-byte, not trusted from the spec:**
+`.claude/skills/gateway-availability-gate/SKILL.md` (101L confirmed), `cycle-bootstrap/SKILL.md`
+(CONFIRMED-BLIND/TRANSIENT trigger-text at :109-114 confirmed), `market-watcher/flow/main.md`
+(inline block :61-99 confirmed exact, ends immediately before :101 "4. Read and execute..."),
+`market-watcher/flow/cycle.md` (Step 0-GW block :26-27 confirmed, Execution-contract paragraph :20
+confirmed), `alert-commander/flow/cycle.md` (Dispatch table :33-40, zero inline steps before it,
+confirmed), `unified-agent/flow/chef.md` (Bootstrap :33 / Step 0.5 :43 confirmed), `digest-predict/
+flow/main.md` (Step pre-D :15 confirmed, top-of-file), `bctc-analyst/flow/cycle.md` (E2 block ends
+:48-50, Step 0c :52, confirmed), `fb-market-poster/flow/{daily.md:40, weekly-recap.md:25/27,
+weekly-prediction.md:28/30}` (all confirmed), `news-scout/flow/cycle.md:15` (existing unedited
+consumer, confirmed unchanged). **Zero drift from BA's own same-day pass** — no line numbers moved
+between BA's 11:58Z read and this cycle. FR-6's 5 APPEND-class notebook citations
+(`alert-commander/stage-dispatch-log.md:73`, `unified-agent/chef-dish.md` Step 8 "APPEND class",
+`digest-predict/daily-predict.md:118`, `bctc-analyst/stage-log-notify.md:18`, `fb-market-poster/
+daily.md` ~:844 "AC-6 — APPEND class") independently re-read and confirmed verbatim.
+
+---
+
+### FR-1/FR-2 — DMS-2 ladder absorption design
+
+Restructure `gateway-availability-gate/SKILL.md` § Step 0-GW as follows (replaces the current flat
+"probe once, fail immediately" shape at :19-30 with the ladder; :32-82 "Confirmed-down actions" stay
+structurally the actions a/b/c today, with ONE additive change to action (a)'s payload text — see
+below):
+
+```
+## Step 0-GW — Gateway probe
+
+PROBE_1 = call_tool(server="vn-market", tool="get_system_status", arguments={})
+
+### On success — unchanged (log + continue)
+
+### On PROBE_1 failure — classify the error (DMS-2 escalation ladder)
+
+- CONFIRMED-BLIND — error text contains "no such tool" / "tool not found" / "unknown tool"
+  (IDENTICAL trigger-text signature to `cycle-bootstrap/SKILL.md` § Error handling's own
+  CONFIRMED-BLIND classification — SSOT for the signature lives there; do not fork a second
+  definition) → skip the 30s backoff entirely, go straight to Confirmed-down actions below,
+  payload UNCHANGED from today (FR-2).
+- TRANSIENT — any other error/timeout → WAIT 30s (CPU-spike backoff) → PROBE_2.
+  - PROBE_2 succeeds → gateway UP → continue (PROBE_2's own error, if any, is NOT
+    re-classified — always falls through to SIBLING_RECENT below, matching market-watcher's
+    live behavior byte-for-byte; no new judgment call introduced at this step).
+  - PROBE_2 fails → SIBLING_RECENT = get_agent_signals(from_agent=null, status="all",
+    hours_back=0.25).
+    - non-empty → SUPPRESS: log one line, write a DEFER notebook entry (new template, see
+      below), EXIT cleanly. NO signal file. NO bug escalation (FR-1).
+    - empty → Confirmed-down actions below, action (a) payload gets ONE additive suffix:
+      " — 2x probe failure + no sibling success in 15-min window" (appended to today's
+      existing sentence, not a rewrite — keeps FR-2's "actions stay exactly as today" literally
+      true for the CONFIRMED-BLIND path and additive-only for this path).
+
+## Confirmed-down actions (a/b/c — unchanged mechanics, FR-2)
+[today's a/b/c verbatim, action (a)'s payload conditional per above]
+
+## DEFER notebook entry (SIBLING_RECENT-suppressed path — NEW, distinct from BLOCKED)
+OVERWRITE-class (market-watcher): same header/Metrics shape as the existing BLOCKED template,
+  body text "DEFERRED — Step 0-GW: 2x probe failure, sibling activity confirmed in 15-min window
+  (gateway reachable via peer — this session's failure treated as local transient, not a real
+  outage). No data fetched. No signals emitted. No coverage stamps written.", Metrics
+  exit_status=deferred, gateway_probe=TRANSIENT_SUPPRESSED, rest unchanged.
+APPEND-class (news-scout + all 5 new FR-4/FR-5 consumers): one-line entry, "DEFERRED — Step 0-GW:
+  2x probe failure, sibling activity confirmed (15-min window) — suppressing false gateway-down,
+  no real outage. No data fetched. No signals emitted.", exit_status: deferred.
+```
+
+**Why this design, not a simpler one:** FR-6 already rules "not a new class" — DEFER reuses the
+SAME OVERWRITE/APPEND class split as BLOCKED, only the body wording differs (a genuine new *content*
+variant, never a new *write-mechanism*). The payload-suffix approach for action (a) (additive, not a
+second bespoke string) keeps FR-2's "unchanged" claim literally true for the untouched
+CONFIRMED-BLIND path while still satisfying FR-1's explicit payload-note requirement for the
+ladder-exhausted path — a single divergent full-rewrite would have made FR-2's audit claim false.
+
+**Size budget:** current 101L. This restructure (~50L: classify+retry+sibling blocks) + 2 DEFER
+templates (~20L) + terminology-parity cross-reference (~3L) ≈ **+70-75L → ~171-176L** — higher than
+BA's own +45-55L estimate (BA did not account for the DEFER templates as a distinct addition from
+the ladder logic itself) but comfortably inside AC-1's ≤200L cap. Flag for whoever implements: keep
+DEFER templates terse (mirror the BLOCKED templates' exact line count) to preserve headroom.
+
+**version bump recommendation (non-blocking):** bump the skill's `version:` frontmatter field to the
+land date and note the DMS-2/UC-CCA-P2 provenance, mirroring the existing `incident:` field
+convention — cosmetic, agent-father's call at implementation time.
+
+---
+
+### FR-3 — market-watcher dedup
+
+Ratified exactly as BA specified, no changes. `main.md` :61-99 → single pointer line (BA's exact
+text). `cycle.md`: delete :26-27, reword :20's Execution-contract paragraph per BA's before/after.
+Net: one probe per invocation at the dispatcher level, `eod.md` unchanged (still zero gate of its
+own, still transitively covered only via `main.md`'s single Step 3 probe — confirmed, not a new gap).
+
+---
+
+### FR-4/FR-5 — 5-flow extension: 2 structural refinements beyond BA's literal text
+
+**1. `alert-commander/cycle.md` and `bctc-analyst/cycle.md` are "thin dispatcher" files whose
+Dispatch TABLE — not just body prose — is the execution-order SSOT.** Both files route strictly by
+table row order; sub-flow rows (e.g. "Bootstrap + Regime → stage-bootstrap.md") carry NO inline body
+text at all, only a table row. Inserting the Step 0-GW pointer as body prose alone (BA's literal
+instruction) without a matching table-row edit would leave the table inaccurate about execution
+order — a real, if small, doc-drift risk for the next reader. **Design addition (both files):**
+- `alert-commander/cycle.md`: add a new ZERO-th Dispatch-table row — `| **Step 0-GW** — Gateway
+  availability gate | 0-GW | Inline (FIRST — see below) |` — before the existing "Bootstrap +
+  Regime..." row (:37). Ratifies **Q-alert-commander-anchor Option (a)** (see ruling below); place
+  the actual inline `## Step 0-GW` section right after the `## Dispatch` table (:40), mirroring
+  `bctc-analyst/cycle.md`'s own convention of putting a dispatcher-level inline step immediately
+  after its own table.
+- `bctc-analyst/cycle.md`: add a new row between the existing "E2 Market-hours guard" row and
+  "Bootstrap + Regime" row — `| **Step 0-GW** — Gateway availability gate | 0-GW | Inline (SECOND,
+  after E2 — see below) |` — and insert the inline content at BA's specified body position (after
+  E2 ends :48-50, before Step 0c :52).
+
+**2. `unified-agent/chef.md` placement asymmetry — ratified, but flagged so it is not "corrected"
+later.** Of the 5 FR-4/FR-5 target files, chef.md is the ONLY one where BA's chosen insertion point
+(between Bootstrap :33 and Step 0.5 :43) lands the new Step 0-GW gate AFTER that flow's own first
+gateway call (`get_cycle_bootstrap`, expanded via the `0. Bootstrap` pointer at :33), not before it.
+The other 4 (alert-commander, digest-predict, bctc-analyst, and all 3 fb-market-poster files) all
+land Step 0-GW strictly before their own first gateway-touching step. **This is intentional and
+correct, not an inconsistency to fix:** `cycle-bootstrap/SKILL.md`'s own Step 0 already carries a
+CONFIRMED-BLIND/TRANSIENT/GATEWAY-BLIND-fallback gate (the exact terminology-parity SSOT FR-1 cites)
+— if the gateway is genuinely down, Bootstrap's own error handling exits chef.md cleanly before line
+34 is ever reached, making a "before Bootstrap" placement redundant for the confirmed-down case here
+specifically. BA's stated rationale ("before the task_claim, so a dead gateway never burns the
+marker") is narrower and still correct: it protects the Step 0.5 task_claim mutation specifically
+against a gateway that dies in the window *between* a successful Bootstrap and the marker claim — a
+real, if narrow, race Bootstrap's own gate cannot cover. Ratified as specified, no change.
+
+**Q-alert-commander-anchor RULING: Option (a)** (new Dispatch-table row in `cycle.md` itself, not
+inside `stage-bootstrap.md`). `bctc-analyst/cycle.md` is the closer live precedent (E2 kept at the
+dispatcher level, not pushed into a sub-flow) and this repo's established "thin dispatcher table is
+the execution-order SSOT" convention (finding #1 above) makes (b) actively wrong — burying the
+pointer inside `stage-bootstrap.md` would hide it from the one place (`cycle.md`'s own table) a
+reader checks to learn what runs and in what order.
+
+**Q-chef-threading RULING: confirmed, one Step 0-GW in `chef.md` is sufficient — do NOT duplicate
+into `chef-dish.md`.** `chef.md`/`chef-dish.md` are sub-flows of ONE continuous session (unlike
+fb-market-poster's 3 separately cron-entered files) — gateway liveness is a session-scoped property.
+This is the same assumption FR-3's own dedup already relies on fleet-wide (market-watcher's single
+`main.md`-level probe is accepted as sufficient for its downstream `cycle.md`/`eod.md`, which make
+their own later gateway calls without re-probing) — applying it to chef.md/chef-dish.md is consistent,
+not a new risk class.
+
+**Q-file-count-correction RULING: confirmed, 10 files supersedes the audit's original 8.** 1 skill +
+`market-watcher/{main,cycle}.md` (2) + `alert-commander/cycle.md` (1) + `unified-agent/chef.md` (1) +
+`digest-predict/main.md` (1) + `bctc-analyst/cycle.md` (1) + `fb-market-poster/{daily,weekly-recap,
+weekly-prediction}.md` (3) = 9 flow files + 1 skill = **10**. Re-counted independently, matches BA's
+figure exactly. (Findings #1 above add table-row edits WITHIN 2 already-counted files — no new file.)
+
+---
+
+### FR-6 — notebook class mapping
+
+Ratified as specified — all 5 new consumers independently re-confirmed APPEND-class at their live
+anchors (see Ratification above). DEFER-entry wording (this design's own addition, FR-1) reuses the
+SAME class split, agent-id-only substitution — not a new class, per BA's own framing.
+
+---
+
+### DDD Layer Mapping (BA's §1 table, accepted as-written)
+
+| FR | Layer | Note |
+|---|---|---|
+| FR-1/FR-2 | **Infrastructure** | resilience/circuit-breaker adapter over the MCP gateway transport, cross-cutting |
+| FR-3 | **Application** | flow orchestration — collapsing a duplicated use-case step into one |
+| FR-4/FR-5 | **Application** | wiring a shared infrastructure gate into 5 independent flow use-cases |
+| FR-6 | **Interface** | agent-facing notebook output contract |
+
+These are prose/flow-doc files, not typed code — "Infrastructure/Application/Interface" is used in
+the same loose sense already established by the `FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING` and
+`FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE` precedents (both `cross-service/`, both flow-doc-only).
+No objection.
+
+---
+
+### File-by-file edit plan (10 files, ~16 edit sites — for PM's decomposition)
+
+| # | File | Edit(s) | FR |
+|---|---|---|---|
+| 1 | `.claude/skills/gateway-availability-gate/SKILL.md` | ladder restructure + DEFER templates + terminology-parity xref | FR-1/FR-2 |
+| 2 | `market-watcher/flow/main.md` | replace :61-99 with 1-line pointer | FR-3 |
+| 3 | `market-watcher/flow/cycle.md` | delete :26-27; reword :20 | FR-3 |
+| 4 | `alert-commander/flow/cycle.md` | new table row + new inline `## Step 0-GW` section | FR-4 |
+| 5 | `unified-agent/flow/chef.md` | insert pointer between :33 and :43 | FR-4 |
+| 6 | `digest-predict/flow/main.md` | insert pointer before :15 | FR-4 |
+| 7 | `bctc-analyst/flow/cycle.md` | new table row + insert content after E2 (:48-50), before :52 | FR-4 |
+| 8 | `fb-market-poster/flow/daily.md` | insert pointer before :40 | FR-5 |
+| 9 | `fb-market-poster/flow/weekly-recap.md` | insert pointer after :25, before :27 | FR-5 |
+| 10 | `fb-market-poster/flow/weekly-prediction.md` | insert pointer after :28, before :30 | FR-5 |
+
+No `depends_on` graph needed — every flow-file edit is a self-contained pointer insertion, valid
+regardless of the skill file's internal richness (no file blocks another). Recommend landing #1
+(the skill) first purely for narrative coherence, not because any edit technically requires it first.
+
+---
+
+### Test strategy (no application code — no unit/integration suite exercises flow-doc prose)
+
+1. **AC-1 (size):** `wc -l .claude/skills/gateway-availability-gate/SKILL.md` ≤ 200 post-edit.
+2. **AC-2 (behavior-unchanged):** grep the edited skill file for `send_telegram` — zero hits anywhere
+   in the Confirmed-down actions or ladder failure branches (FR-2 domain invariant).
+3. **AC-3 (dedup):** next live market-watcher cycle's WORK ping / notebook shows exactly one
+   `[GATEWAY]` probe log line, not two.
+4. **AC-4 (pointer placement):** grep each of the 5 new consumers' flow file for exactly one Step
+   0-GW pointer line, strictly before that file's first `task_claim`/marker mutation.
+5. **AC-5 (terminology parity):** manual diff of the 3-string trigger-text list
+   (`gateway-availability-gate/SKILL.md` vs `cycle-bootstrap/SKILL.md` § Error handling) — must be
+   byte-identical. **Optional follow-up (not this task's scope, flagged for a future janitor/CI
+   pass):** a small grep-diff audit script (`scripts/audits/`) could make this self-checking instead
+   of review-time-only — not proposed here, avoid scope creep.
+6. **AC-6 (news-scout inheritance):** re-read `news-scout/cycle.md` + its notebook-write APPEND
+   convention post-merge to confirm the inherited DEFER wording reads coherently — verification-only,
+   no file edit (BA's own AC-6 requirement).
+
+---
+
+### Risk flags
+
+- **R1 (payload-branch discipline):** action (a)'s conditional payload suffix (see FR-1/FR-2 design)
+  must not collapse into one generic string during implementation — it is the one place FR-1's new
+  ladder-exhausted observability and FR-2's "unchanged" claim coexist; losing the branch loses FR-2
+  auditability.
+- **R2 (PROBE_2 non-reclassification):** PROBE_2's own error is never re-classified as CONFIRMED-BLIND
+  even if it happens to match the trigger-text — always falls through to SIBLING_RECENT, matching
+  live market-watcher behavior exactly. An implementer "improving" this by symmetrizing the
+  classification would be an unrequested behavior change.
+- **R3 (UC-CCA-P3 timing):** BA's own §6 flags UC-CCA-P3's rows touch the SAME 5 files at a
+  late/claim-time layer and may land first. Re-verify anchors immediately before editing at
+  implementation time — do not trust this design doc's line numbers if time has passed (same
+  discipline this cycle applied against BA's own numbers, which held with zero drift only because
+  same-day).
+- **R4 (size headroom):** the ~171-176L post-edit estimate (see FR-1/FR-2) leaves only ~24-29L of
+  headroom under the 200L cap — if implementation naturally runs longer, keep an eye on it, but do
+  NOT compress the DEFER templates below the BLOCKED templates' own line density just to save room.
+
+**Reuse check:** no new interface, no new script, no new service. The DEFER template reuses the
+existing OVERWRITE/APPEND class split verbatim; the ladder reuses cycle-bootstrap's own trigger-text
+signature by reference, not reinvention. Nothing to flag.
+
+**Fan-out ruling — NEXT: pm (not a direct agent-father route, unlike the FIX-CHEF-BIZCTX/FIX-CHEF-
+USDVND precedents in this same zone):** those precedents were each scoped to files under exactly ONE
+agent (`unified-agent`'s own `chef.md`+`chef-dish.md`). `agent-father`'s own `edit` flow
+(`docs/agents/agent-father/flow/edit-prepare.md` Step 1) takes a single `agent_name` input and
+validates it against `.claude/agents/<agent_name>.md` before reading that ONE agent's files — it is
+architecturally single-agent-scoped by its own documented input contract. This task spans SIX
+distinct agent families (market-watcher, alert-commander, unified-agent, digest-predict, bctc-analyst,
+fb-market-poster) plus one shared, agent-independent skill file — a shape that does not fit one
+`agent-father edit` invocation. This is a genuine decomposition need (unlike the 1-agent precedents),
+squarely PM's job per architect's own `not_my_job: task breakdown`. Recommend PM mint ~7 atomic
+`agent-father`-assigned subtasks (skill file; market-watcher×2-file; alert-commander; unified-agent;
+digest-predict; bctc-analyst; fb-market-poster×3-file) — exact grouping/count is PM's call, no
+`depends_on` needed between any of them (see File-by-file plan above).
+
+**Scan clean:** true ✓
+
+## Decision Journal
+See `docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-architect.md`, task_id `UC-CCA-P2`.
 
 ## RETURN
-DONE: BA requirements decomposition complete for UC-CCA-P2 (rescope). 6 FRs (DMS-2 ladder absorption,
-confirmed-down actions preserved, market-watcher dedup, 4-agent extension, fb-market-poster 3-file
-scope correction, notebook-class mapping), 0 PO blockers, 3 architect open questions, coordination
-with UC-CCA-P1 (resolved, no conflict) and UC-CCA-P3 (no line overlap, re-verify at implementation).
+DONE: Technical design complete for UC-CCA-P2's 10-file wiring. Ratified BA's 6 FRs with zero live
+drift (same-day re-verification). Designed the FR-1/FR-2 DMS-2 ladder restructure for
+gateway-availability-gate/SKILL.md (classify→backoff→sibling-corroborate→suppress-or-escalate, new
+DEFER notebook template distinct from BLOCKED, additive payload-suffix design keeping FR-2's
+"unchanged" claim literally true) — estimated ~171-176L post-edit, inside the ≤200L AC-1 cap. Found 2
+structural refinements beyond BA's literal text: (1) alert-commander/cycle.md + bctc-analyst/cycle.md
+need a Dispatch-TABLE row edit alongside the body-text insertion (thin-dispatcher table is the real
+execution-order SSOT, not prose alone); (2) chef.md is the one FR-4/FR-5 file where Step 0-GW lands
+AFTER that flow's own first gateway call — ratified as intentional (protects the task_claim mutation
+window specifically; cycle-bootstrap's own Step-0 gate already covers the general confirmed-down
+case), not a defect. Resolved all 3 open questions: Q-alert-commander-anchor → Option (a); Q-chef-
+threading → single gate in chef.md sufficient, session-scoped; Q-file-count-correction → 10 confirmed.
 ZONE: cross-service/ (`.claude/skills/gateway-availability-gate/SKILL.md` + 9 flow files across
 market-watcher, alert-commander, unified-agent, digest-predict, bctc-analyst, fb-market-poster)
-NEXT: architect | brownfield scan + technical design for the 10-file wiring
+NEXT: pm | decompose the 10-file/~16-edit-site wiring into per-agent-scoped agent-father subtasks —
+agent-father's own edit flow is single-`agent_name`-scoped by its documented input contract, and this
+task spans 6 distinct agent families + 1 shared skill file, unlike the 1-agent precedents in this
+same zone that skipped PM. No depends_on graph needed between subtasks.
 HANDOFF: docs/handoffs/UC-CCA-P2-BA-spec.md
 PIPELINE: continue

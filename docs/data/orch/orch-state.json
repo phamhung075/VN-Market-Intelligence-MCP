@@ -19165,7 +19165,7 @@
         "last_served_tick": "2026-08-14T09:23:37Z"
       }
     },
-    "_updated_at": "2026-08-14T11:51:10Z",
+    "_updated_at": "2026-08-14T12:19:12Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19577,6 +19577,45 @@
         "payload": "[sweep-guard] BARE commit about to absorb 5 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0-pm.md docs/agent-memory/notebooks/pm.md docs/data/orch/orch-state.json docs/handoffs/FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW.md docs/handoffs/FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS.md. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=20 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
         "createdAt": "2026-08-14T11:26:00Z",
         "drained_at": "2026-08-14T11:49:23Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "56605aef85cf977d2ca5b7c14ce3b47e40674d94e7aad66f34dcf638abdbf06d",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "tied_sections": "5:20260814000000000:## UC-CCA-P2 · 2026-08-14\n9:20260814000000000:## TASK-COWORK-MUTEX-001 · 2026-08-14",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-14T12:01:38Z",
+        "drained_at": "2026-08-14T12:19:12Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4fc1ac7c6566f2dbab58ae2e86f66c51bbf0e98926afa3256a317cee5a1f0b0e",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_prune_dropped_newest_dated_section",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line": 9,
+          "heading": "## TASK-COWORK-MUTEX-001 · 2026-08-14",
+          "section_count": 4,
+          "non_sentinel_section_count": 2,
+          "sentinel_section_count": 2,
+          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+          "action_required": "review_dropped_section"
+        },
+        "createdAt": "2026-08-14T12:01:38Z",
+        "drained_at": "2026-08-14T12:19:12Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
