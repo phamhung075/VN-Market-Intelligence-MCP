@@ -1,0 +1,48 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Retail and corporate banking, trade finance, bancassurance, FX and treasury services",
+  "customer": "Large corporate + SOE clients, retail depositors, cross-border trade finance customers",
+  "ops": "Q1-2026 net interest income 17,421 tỷ VND; operating profit margin 80.9%; NPAT 9,462 tỷ VND (54.3% margin); ROE 4.2% (quarterly, non-annualized)",
+  "mgmt": "No governance flags this cycle; Q2-2026 filing deadline is TODAY (14/08) — status SẮP ĐẾN, not yet overdue",
+  "valuation": {
+    "pe": 14.1,
+    "pb": 2.2,
+    "roe_pct": 16.7,
+    "sector_median_pe": 9.0,
+    "sector_verdict": "PREMIUM",
+    "earning_yield_pct": 7.092,
+    "ey_spread_pp": 2.092,
+    "valuation_verdict": "FAIR"
+  },
+  "kinhdich": {
+    "hexagram": "Lam (19)",
+    "trend": "THUAN LOI",
+    "signal": "GIU",
+    "confidence_pct": 100
+  },
+  "esc_gate": {
+    "ESC-1": "unevaluable_no_bash",
+    "ESC-2": { "result": false, "imbalance_pct": 0.37 },
+    "ESC-3": { "result": false, "quarters_returned": 4, "divergence_ratio": 0.368 },
+    "ESC-4": { "result": "n/a_bank" },
+    "ESC-5": { "result": false, "note": "report_id=null (refine_status=PARTIAL) — refine not yet run" }
+  },
+  "data_quality": {
+    "period_latest_available": "2026-Q1",
+    "period_current_expected": "2026-Q2",
+    "pdf_on_file_since": "2026-08-01",
+    "extraction_lag_days": 14,
+    "stale_age_hours": 78.6,
+    "confidence_pct": 75,
+    "note": "Q2-2026 PDF on file 14 days, not yet extracted — extraction-pipeline lag"
+  },
+  "report_overdue": false,
+  "insider_signals": "none_significant",
+  "legal_risk": "none",
+  "cycle_id": "20260814-2100",
+  "generated_at": "2026-08-14T21:14:07Z"
+}

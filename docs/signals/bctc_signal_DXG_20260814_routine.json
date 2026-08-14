@@ -1,0 +1,47 @@
+{
+  "ticker": "DXG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Residential real-estate development (Dat Xanh Group) — project sales, brokerage/distribution services",
+  "customer": "Retail homebuyers, institutional JV partners in southern/central VN residential projects",
+  "ops": "No structured BCTC data available — get_bctc_full returns 'Chưa có dữ liệu BCTC' (28th+ consecutive cycle); valuation/ratios below sourced from get_sector_comparison only",
+  "mgmt": "Unable to assess — no BCTC data extracted despite Q2-2026 PDF on file since 2026-08-01",
+  "valuation": {
+    "pe": 66.5,
+    "pb": 1.2,
+    "roe_pct": 1.9,
+    "sector_median_pe": 16.1,
+    "sector_verdict": "PREMIUM",
+    "earning_yield_pct": 1.504,
+    "ey_spread_pp": -3.496,
+    "valuation_verdict": "AVOID"
+  },
+  "kinhdich": {
+    "hexagram": "Vi Te (64)",
+    "trend": "TRUNG TINH",
+    "signal": "MUA",
+    "confidence_pct": 38
+  },
+  "esc_gate": {
+    "ESC-1": "unevaluable_no_data",
+    "ESC-2": "unevaluable_no_data",
+    "ESC-3": "unevaluable_no_data",
+    "ESC-4": "unevaluable_no_data",
+    "ESC-5": "unevaluable_no_data"
+  },
+  "data_quality": {
+    "period_latest_available": null,
+    "period_current_expected": "2026-Q2",
+    "pdf_on_file_since": "2026-08-01",
+    "extraction_lag_days": 14,
+    "confidence_pct": 0,
+    "note": "Chưa có dữ liệu BCTC — 28th+ consecutive cycle. Standing cash-flow-anomaly signal (bctc-analyst-20260813T001500Z.json, from c162) still PENDING dev-team pickup; not re-emitted this cycle (no guard on this finding type, avoid signal spam). Live price action: +5.99% today vs sector -1.3%, volume 2.3x avg, foreign inflow +129K cp net — noted for market-watcher/alert-commander awareness only, not this agent's scope."
+  },
+  "report_overdue": true,
+  "insider_signals": "none_significant",
+  "legal_risk": "none",
+  "cycle_id": "20260814-2100",
+  "generated_at": "2026-08-14T21:14:07Z"
+}
