@@ -334,3 +334,73 @@ NEXT: po | review spec (this row moves to review[], next_agent=po per dispatch i
 HANDOFF: docs/handoffs/TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY-spec.md
 PIPELINE: hold — supervised row, no auto-continue; tasks 2/3/4 remain separate dispatches
 ```
+
+---
+
+## 9. PO Adjudication — 2026-08-14T14:58:42Z (appended by po, sign-off)
+
+**VERDICT: ACCEPTED — `DONE_VERIFIED`, with ONE binding amendment (Amendment 4, below).**
+Same disposition shape as this row's parent received at `po_architect_signoff_20260807T0545`: approved in
+place with an acceptance-bearing amendment, **not** returned for rework. The deliverable — branch 2's
+nearest-occurrence algorithm — is correct as specified and is not being changed.
+
+### 9.1 What PO re-verified at source this tick (not read from this document's prose)
+
+| Claim in this spec | Verified how | Result |
+|---|---|---|
+| bctc slot crons `0 15/18/21/0 * * *` | `jq .slots[] docs/data/cowork-schedule.json` | CONFIRMED, all 4 exact |
+| `scheduled_utc=` absent from every live trigger_prompt ⇒ branch 1 dormant, branch 2 is the ACTIVE path | `grep -c 'scheduled_utc=' docs/data/cowork-schedule.json` → `0` | CONFIRMED |
+| `slot=<slot_id>` present on live trigger_prompts ⇒ branch 2 is reachable at all | live `trigger_prompt` read for all 4 bctc slots + chef-intraday | CONFIRMED (`run …/main.md  slot=bctc-analyst-slot-N`) |
+| Test case 1 → `20260808T0000Z` | candidate set + \|delta\| recomputed independently (172620 / 86220 / **180**) | CONFIRMED exact |
+| Test case 2 → `20260807T2100Z` | candidate set + \|delta\| recomputed independently (**39600** / 46800 / 133200) | CONFIRMED exact |
+
+Both PO-mandated Amendment-3 cases reproduce to the second. The `YYYYMMDDTHHMMZ` (no `SS`) format call is
+**upheld** — deferring to the brief's two concrete instances over its looser prose gloss was the right read,
+and flagging it inline so no implementer re-adds a seconds field was the right call.
+
+### 9.2 Amendment 4 — BINDING, acceptance-bearing, on the future unsupervised implementer
+
+**Branch 2 has an unstated precondition and no guard for its violation.**
+
+`CRON_HOUR = parseInt(CRON_HOUR_FLD, 10)` (§2, step 2a) and the §3.1 coverage proof are sound **only** for a
+cron whose hour field is a bare integer **and** which fires **once per day**. Neither condition is stated, and
+neither is checked. Live-verified against all 23 slots in `docs/data/cowork-schedule.json` this tick:
+
+- **Satisfied by** `bctc-analyst-slot-1..4` — the only writer that actually calls this function (task 2).
+- **VIOLATED by** `chef-intraday` = `13 2-8 * * 1-5` (hour field is a **range**, 7 fires/day), and by every
+  step-cron: `news-scout-offhours` / `market-watcher-offhours` / `alert-commander-critical` = `0 */4 * * *`,
+  `alert-commander-market` = `*/15 2-8 * * 1-5`.
+
+On a violating field the parse is **undefined and unguarded**: `jq`'s `tonumber` *errors* on `"2-8"`, while a
+JS `parseInt("2-8", 10)` silently returns **`2`** (and `parseInt("*/4", 10)` returns `NaN`). The silent-`2`
+path is the dangerous one — it collapses all seven of chef-intraday's daily windows onto **one key per day**,
+reproducing precisely the collision class this parent row exists to close. §3.1's proof also fails outright
+there: its load-bearing premise, "consecutive occurrences of a once-daily cron are exactly 24h apart", is
+false for a multi-fire cron, so `{yesterday, today, tomorrow}` is not merely insufficient but structurally
+the wrong candidate set.
+
+**Required — three changes, none of which touch the verified algorithm or either test case:**
+
+- **(a) §7 is factually wrong and must be corrected.** Strike the claim that this function is "the **single,
+  shared** dependency of both sibling tasks" and that branch 2 "is written generically enough to serve either
+  writer". Refuted at source: `docs/handoffs/TASK-COWORK-SIGNAL-CHEF-INTRADAY-spec.md` line 13 states, in
+  bold, **"This task does NOT depend on `derive_window_key()`."** — task 3 uses `VN_HOUR`. Task 1 and task 3
+  are currently in **written disagreement** about whether task 3 consumes task 1; **task 3's version is
+  correct** and §7 is corrected to match. `TASK-COWORK-SIGNAL-BCTC-REKEY` is the sole real consumer. This
+  same over-claim was inherited from architect brief §2 ("One function, reused verbatim by every writer this
+  row touches (bctc-analyst, chef-intraday)") — recorded here so it is not inherited a third time.
+- **(b) Add an explicit precondition + fail-loud to branch 2.** If `CRON_HOUR_FLD` does not match
+  `^([01]?[0-9]|2[0-3])$`, the function MUST fail loud (throw / non-zero exit) per
+  `docs/protocols/fail-loud-protocol.md`. It MUST NOT parse-and-continue, and MUST NOT silently fall through
+  to branch 3 — a silent fallback emits a *plausible-looking wrong key*, which is exactly the failure mode
+  this row exists to eliminate. ~3 lines in a spec nobody has implemented yet.
+- **(c) §3.1 must state its own precondition** ("once-daily cron; not valid for range/step hour fields"), so
+  the next reader cannot re-derive the false generality claim from the proof.
+
+### 9.3 Explicitly NOT granted by this sign-off
+
+`plan_only` + `supervised` remain **PRESERVED**. This sign-off certifies the **spec artifact**, not a licence
+to ship. Per the parent's own `supervised_note`, no code ships until PO re-adjudicates
+`FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING` — which still owes review on the remaining children
+(`TASK-COWORK-SIGNAL-BCTC-REKEY`, `TASK-COWORK-SIGNAL-CHEF-INTRADAY`, `TASK-COWORK-SIGNAL-NAMING-CONTRACT`)
+and remains `BLOCKED`, `next_agent=po`. An implementer arriving here MUST carry Amendment 4 (a)+(b)+(c).

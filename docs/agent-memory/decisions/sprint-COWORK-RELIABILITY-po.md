@@ -22,3 +22,14 @@
 **why-decision:** The brief is sound; both flagged items were mis-framed rather than mis-designed. FR-4's two options both assumed the mechanism was unowned — the board says otherwise, and the deciding evidence (the qa.md recurrence) sits on a plane the architect never looked at. EC-2's split is right and only its trigger was unowned. The one substantive technical gap I found is in FR-1's fallback, which the brief itself declares the ACTIVE day-one path: `WINDOW_KEY = <date of live_mcp_fetched_at> + CRON_HOUR` re-creates this row's own collision class at the UTC day boundary — `bctc-analyst-slot-4`'s cron is exactly `0 0 * * *`, so a fire a few minutes early keys to the previous day's window and clobbers a 24h-old file, and a slot-3 run delayed or re-run past midnight keys to a future window the real fire will then collide with. Snapping to the NEAREST `CRON_HOUR:00Z` occurrence (not "most recent at-or-before" — only "nearest" is correct in both the early and late directions) closes it with no new I/O and no signature change.
 
 **why-change:** Three changes from the architect's plan. (1) FR-4 removed from scope entirely rather than dispositioned within it. (2) EC-2's follow-on row minted this tick as BLOCKED rather than deferred to an unowned future trigger. (3) FR-1 fallback branch 2 gains a nearest-occurrence rule plus two unit cases (slot-4 @ D 23:57Z → (D+1)T0000Z; slot-3 @ (D+1) 08:00Z → (D)T2100Z).
+
+### STEP po-2 · po · 2026-08-14T15:01:13Z
+**task-id:** TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY
+**what-done:** Signed off the derive_window_key() spec DONE_VERIFIED with binding Amendment 4 (branch-2 cron-hour domain guard + §7 shared-consumer over-claim corrected); parent left BLOCKED/next_agent=po.
+**what-considered:**
+- Return for rework — rejected: defect is documentary + a 3-line guard on an unimplemented artifact; round-trip costs more than the fix.
+- Sign off clean — rejected: §7's "serves either writer" is false at source; a future implementer would wire a range-hour cron in and re-ship the collision class.
+- Sign off + binding amendment — CHOSEN.
+- Escalate BLOCKED — rejected: nothing external is missing; the block is PO's own review debt.
+**why-decision:** Same precedent as this row's parent at po_architect_signoff_20260807T0545 — approve in place with acceptance-bearing amendments rather than bounce. Algorithm verified correct: both PO-mandated test cases re-derived independently and reproduce to the second.
+**why-change:** Amendment 4 was not in plan — surfaced only by checking the function's cron-field assumption against all 23 live slots instead of the 4 the spec cites.
