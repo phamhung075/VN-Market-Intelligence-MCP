@@ -4,55 +4,49 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "cycle_id": "20260814-1800",
-  "slot": "bctc-analyst-slot-2",
-  "ts": "2026-08-14T18:05:45Z",
-  "product": "Phat trien bat dong san nha o va khu do thi (Dat Xanh Group) - du an can ho, dat nen, khu dan cu tai TP.HCM va cac tinh ve tinh.",
-  "customer": "Nguoi mua nha o thuc va nha dau tu ca nhan trong nuoc; kenh phan phoi qua san moi gioi rieng (Dat Xanh Services).",
-  "ops": "get_bctc_full tra ve 'Chua co du lieu BCTC' 27+ chu ky lien tiep du PDF Q1/Q2-2026 da co tren he thong tu 03/08 - loi pipeline trich xuat, khong phai thieu bao cao; ROE sector-comp 1.9% thap hon nhieu trung vi nganh BDS (7.3%).",
-  "mgmt": "PE 66.5 premium +312% so median nganh - dinh gia cuc ky dat tren nen tang loi nhuan yeu; gia co phieu tang +5.99% hom nay voi khoi luong 2.3x trung binh va dong von ngoai duong 129K cp - bien dong gia khong duoc xac nhan boi du lieu co ban (data gap), can than trong phan biet catalyst tin tuc/ky thuat voi nen tang tai chinh.",
+  "product": "Residential real-estate development (Dat Xanh Group) — project sales, brokerage/distribution services",
+  "customer": "Retail homebuyers, institutional JV partners in southern/central VN residential projects",
+  "ops": "No structured BCTC data available — get_bctc_full returns 'Chưa có dữ liệu BCTC' (28th+ consecutive cycle); valuation/ratios below sourced from get_sector_comparison only",
+  "mgmt": "Unable to assess — no BCTC data extracted despite Q2-2026 PDF on file since 2026-08-01",
   "valuation": {
     "pe": 66.5,
+    "pb": 1.2,
+    "roe_pct": 1.9,
     "sector_median_pe": 16.1,
+    "sector_verdict": "PREMIUM",
     "earning_yield_pct": 1.504,
-    "max_deposit_rate_pct": 5,
     "ey_spread_pp": -3.496,
-    "verdict": "AVOID",
-    "regime": "NEUTRAL",
-    "rate_sensitive_headwind": false,
-    "note": "valuation_verdict=AVOID — do NOT post bullish signal"
+    "valuation_verdict": "AVOID"
   },
   "kinhdich": {
-    "que": "Vi Te (64)",
-    "xu_huong": "TRUNG TINH",
-    "tin_hieu": "MUA",
-    "do_tin_cay_pct": 37,
-    "note": "kinhdich signal (MUA) conflicts with valuation verdict (AVOID) — valuation gate takes precedence per stage-analyze.md, no bullish signal posted"
-  },
-  "data_quality": {
-    "source": "get_bctc_full",
-    "status": "Chua co du lieu BCTC",
-    "occurrence": "27th+ consecutive cycle",
-    "note": "Q1-2026 and Q2-2026 PDFs both on file since 2026-08-02/08-03 — extraction-pipeline gap, not a missing filing",
-    "pending_signal": "bctc-data-quality-anomaly still PENDING dev-team pickup (bctc-analyst-20260813T001500Z.json from c162), not re-emitted this cycle per no-spam policy"
+    "hexagram": "Vi Te (64)",
+    "trend": "TRUNG TINH",
+    "signal": "MUA",
+    "confidence_pct": 38
   },
   "esc_gate": {
-    "esc_1": "unevaluable — no BCTC line-item data",
-    "esc_2": "unevaluable — no BCTC line-item data",
-    "esc_3": "unevaluable — net_profit_total unavailable (get_bctc_full has no data), cash-flow figures returned by get_cash_flow show implausible OCR magnitudes (e.g. operating_cf ~4.2e18) not usable for divergence calc",
-    "esc_4": "unevaluable — no BCTC line-item data",
-    "esc_5": "unevaluable — no report_id lookup attempted (no confirmed BCTC data this cycle)"
+    "ESC-1": "unevaluable_no_data",
+    "ESC-2": "unevaluable_no_data",
+    "ESC-3": "unevaluable_no_data",
+    "ESC-4": "unevaluable_no_data",
+    "ESC-5": "unevaluable_no_data"
   },
-  "insider_signals": "no significant insider activity",
-  "price_action_note": "DXG +5.99% today vs sector -1.3%, volume 2.3x avg, multiple HIGH price_surge/volume_spike alerts 08:41-08:59Z UTC, foreign flow +129K cp net (stronger than sector) — flagged for market-watcher/alert-commander awareness, not this agent's job to act on",
-  "evidence_fragments_recorded": [
-    "bctc_valuation_premium id=1308",
-    "bctc_roe_ratio id=1309",
-    "bctc_report_overdue id=1310"
-  ],
+  "data_quality": {
+    "period_latest_available": null,
+    "period_current_expected": "2026-Q2",
+    "pdf_on_file_since": "2026-08-01",
+    "extraction_lag_days": 14,
+    "confidence_pct": 0,
+    "note": "Chưa có dữ liệu BCTC — 28th+ consecutive cycle. Standing cash-flow-anomaly signal (bctc-analyst-20260813T001500Z.json, from c162) still PENDING dev-team pickup; not re-emitted this cycle (no guard on this finding type, avoid signal spam). Live price action: +5.99% today vs sector -1.3%, volume 2.3x avg, foreign inflow +129K cp net — noted for market-watcher/alert-commander awareness only, not this agent's scope."
+  },
+  "report_overdue": true,
+  "insider_signals": "none_significant",
+  "legal_risk": "none",
+  "cycle_id": "20260814-2100",
+  "generated_at": "2026-08-14T21:14:07Z",
   "_processed": {
-    "fingerprint": "a8d081542538c7ae59a62e803a9b9af51c0ce4f2cbd7ada54e7bc2927ede5bb6",
-    "processedAt": "2026-08-14T18:19:54Z",
+    "fingerprint": "ddb4e37b85116a6cac395fdd5fa5612ace6578835b12902e2310b34826841f06",
+    "processedAt": "2026-08-14T21:22:45Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

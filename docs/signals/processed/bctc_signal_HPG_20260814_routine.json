@@ -4,68 +4,65 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "cycle_id": "20260814-1800",
-  "slot": "bctc-analyst-slot-2",
-  "ts": "2026-08-14T18:05:45Z",
-  "product": "San xuat thep xay dung, thep cuon can nong (HRC), ong thep va ton mang - chuoi gia tri khep kin tu quang sat den thanh pham.",
-  "customer": "Nha thau xay dung, nha phan phoi thep noi dia, khach hang xuat khau (ASEAN, My, EU).",
-  "ops": "Bien loi nhuan gop Q1-2026 chi 15.8% nhung loi nhuan sau thue vuot loi nhuan gop (9.055,9 ty > 8.365,1 ty) - dau hieu thu nhap ngoai hoat dong lon; operating_profit=0 loi trich xuat cau truc (22nd+ chu ky chua khac phuc).",
-  "mgmt": "ROE (sector-comp, annualized) 12.7% tren trung vi nganh thep (2.9%); PE 14.2 discount -57% so median nganh - dinh gia re tuong doi du du lieu van hanh (operating profit) con loi trich xuat, can than trong khi dien giai chat luong loi nhuan.",
+  "product": "Steel production (construction steel, HRC, steel pipe/wire), agriculture (livestock feed), electrical/plastic pipes",
+  "customer": "Domestic construction contractors, downstream steel fabricators, export markets (HRC), retail agriculture distributors",
+  "ops": "Q1-2026 net revenue 52,901 tỷ VND, gross margin 15.8%; reported net profit 9,056 tỷ VND (17.1% margin) but operating_profit=0 in structured extract — known corrupt field (unresolved 24th+ cycle, not a genuine zero-operating-profit event)",
+  "mgmt": "No new insider or governance signal this cycle; steel-sector commentary (pig-farming unit, unrelated to core steel ops)",
   "valuation": {
     "pe": 14.2,
+    "pb": 1.7,
+    "roe_pct": 12.7,
     "sector_median_pe": 32.6,
+    "sector_verdict": "DISCOUNT",
     "earning_yield_pct": 7.042,
-    "max_deposit_rate_pct": 5,
     "ey_spread_pp": 2.042,
-    "verdict": "FAIR",
-    "regime": "NEUTRAL",
-    "rate_sensitive_headwind": false
+    "valuation_verdict": "FAIR"
   },
   "kinhdich": {
-    "que": "Phuc (24)",
-    "xu_huong": "THUAN LOI",
-    "tin_hieu": "GIU",
-    "do_tin_cay_pct": 100
-  },
-  "data_quality": {
-    "source": "get_bctc_full",
-    "period_shown": "2026-Q1",
-    "latest_period_extracted": "2026-Q2 NOT extracted — Q2 PDF on file since 2026-08-01, VPS extraction lag now 14d+",
-    "stale": true,
-    "stale_age_hours": 75.47,
-    "confidence_pct": 80,
-    "validation": "passed_with_warnings — net profit exceeds gross profit, possible non-operating income"
+    "hexagram": "Phuc (24)",
+    "trend": "THUAN LOI",
+    "signal": "GIU",
+    "confidence_pct": 100
   },
   "esc_gate": {
-    "esc_1": "unevaluable — no Bash/Glob grant, cannot run 6-pass trick detection",
-    "esc_2": {
+    "ESC-1": "unevaluable_no_bash",
+    "ESC-2": {
       "result": false,
-      "imbalance_pct": 0
+      "imbalance_pct": 0,
+      "note": "balance_check:PASSED"
     },
-    "esc_3": {
+    "ESC-3": {
       "result": "DATA-COVERAGE-LIMITED",
       "quarters_returned": 3,
-      "quarters_required": 4,
       "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
       "coverage_guard_held": true
     },
-    "esc_4": {
+    "ESC-4": {
       "result": "DISCARDED",
-      "note": "operating_profit=0 corrupt in structured extract, non_operating_share undefined"
+      "note": "operating_profit=0 corrupt in structured extract — 24th+ cycle, unresolved"
     },
-    "esc_5": {
+    "ESC-5": {
       "result": false,
-      "note": "report_id=null, refine_status=PARTIAL — refine not complete"
+      "note": "report_id=null (refine_status=PARTIAL) — refine not yet run"
     }
   },
-  "insider_signals": "no significant insider activity",
-  "evidence_fragments_recorded": [
-    "bctc_roe_ratio id=1305",
-    "bctc_report_overdue id=1306"
-  ],
+  "data_quality": {
+    "period_latest_available": "2026-Q1",
+    "period_current_expected": "2026-Q2",
+    "pdf_on_file_since": "2026-08-01",
+    "extraction_lag_days": 14,
+    "stale_age_hours": 78.6,
+    "confidence_pct": 80,
+    "note": "operating_profit=0 structured-field corruption unresolved 24th+ cycle; Q2-2026 extraction still pending"
+  },
+  "report_overdue": true,
+  "insider_signals": "none_significant",
+  "legal_risk": "none",
+  "cycle_id": "20260814-2100",
+  "generated_at": "2026-08-14T21:14:07Z",
   "_processed": {
-    "fingerprint": "1c2f3ea9d0be1b657bd785e1d416fa7818ee458a967048932fe4ccb8689f3fac",
-    "processedAt": "2026-08-14T18:19:54Z",
+    "fingerprint": "8431097657775a1d8aa97afc9f326b5ccd2c33784bebc19973607e9cb8d78ee6",
+    "processedAt": "2026-08-14T21:22:45Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
