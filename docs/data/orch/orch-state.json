@@ -92,12 +92,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "idle — no active task; QA-Drain batch fully drained 2026-08-14, dev-team-tick-preflight will determine next action",
-    "updated_at": "2026-08-14T16:49:35Z",
-    "updated_by": "router (head-stale reset — FIX-CI-BUNTEST-1108-AGENT-WORK-LOG-STORE terminal DONE_VERIFIED, pre gcc-preflight cold-evict unblock)"
+    "status": "in_progress",
+    "active_task_id": "FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING",
+    "next_agent": "developer",
+    "next_action": "developer half of FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING in flight (agent afe3b8850c473c9c5, background) — awaiting completion notification, then RAW-verify + status-flip to review[]",
+    "updated_at": "2026-08-14T17:23:42Z",
+    "updated_by": "dev-team (self-heal)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11450,32 +11450,6 @@
         ],
         "consumer_impact": "This incident has already produced one premature DONE_VERIFIED that was kernel-falsified and de-certified. Five prior 'benign recurrence' folds were retracted. The pattern repeats until a real measurement window runs.",
         "updated_at": "2026-08-14T13:41:16Z"
-      },
-      {
-        "id": "FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING",
-        "type": "FIX",
-        "title": "New pure-function scripts/agents-flow/cowork-supersede-mutex.js + sibling test + unconditional wiring into cowork-match-slots.js finish() — the actuator that makes a declared `supersedes` pair drop its victims before spawn-fanout (brief §3b/§3c)",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "S",
-        "zone": "scripts/agents-flow/",
-        "next_agent": "developer",
-        "owner": "po",
-        "created_at": "2026-08-14T17:01:52Z",
-        "created_by": "po",
-        "source": "durable-inbox signal from=agents-architect type=architecture_brief 2026-08-14T16:22:12Z",
-        "detail_ref": "docs/architecture-briefs/2026-08-14-market-watcher-eod-offhours-notebook-collision.md",
-        "dedup_key": "scripts/agents-flow|cowork-supersede-mutex|new-script-plus-matchslots-wiring",
-        "dedup_checked": "Same NON-TERMINAL-lane scan as the sibling row (8 hits on /EOD-OFFHOURS|SAMETICK|SUPERSEDE|COLLISION/i, all read). No row proposes a supersede mutex or any second mutex in cowork-match-slots.js. TASK-COWORK-MUTEX-001 (review) / -002 (backlog) concern the ALREADY-SHIPPED CHEF mutex (scripts/agents-flow/cowork-chef-mutex.js) which this new script mirrors but does not modify — brief §3 is explicit that market-watcher's two slots are BOTH guaranteed:false, so applyChefMutex's guaranteed-boolean tie-break structurally cannot resolve them and a sibling mechanism with a declarative priority is required.",
-        "acceptance": "AC-1 CREATE scripts/agents-flow/cowork-supersede-mutex.js exporting pure `applySupersedeMutex(matches, scheduleSlots) -> { matches, supersede_mutex_applied, dropped }`: for every slot S in matches whose schedule row has a non-empty .supersedes array, drop from matches any slot_id S names that is also present; S survives, order-preserving on survivors. AC-2 it FAILS LOUD (error envelope + exit 1) on malformed input, matching applyChefMutex's error contract — the silent-empty posture is the exact failure class that mutex's own incident record (FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT) documents; do not reproduce it. AC-3 CREATE scripts/agents-flow/cowork-supersede-mutex.test.js with the brief's 5 named cases: both present -> offhours dropped/eod survives; only offhours -> no-op; only eod -> no-op; no supersedes field anywhere -> no-op with supersede_mutex_applied:false; malformed input -> fail loud. AC-4 MODIFY scripts/agents-flow/cowork-match-slots.js finish() to chain applySupersedeMutex AFTER applyChefMutex and surface supersede_mutex_applied on meta — unconditional tail placement so it runs on BOTH legacy and adaptive pressure modes and on BOTH the cowork-tick-preflight.sh Step 6 WORK path and the match-slots.md Steps 2+3 ERROR-fallback path. Re-read finish() live before patching: brief cites L242-255 as a CONTENT anchor, not a line anchor. AC-5 the live call site invokes it IN-PROCESS via require(), never through a shell echo/printf pipe — this sidesteps the echo-mangles-backslash class by construction rather than by discipline (a CLI entry point may still exist for symmetry/testability). AC-6 (optional, brief §3e) extend scripts/agents-flow/cowork-schedule-consistency.test.js with a static assertion that every `supersedes` entry names a real slot_id present elsewhere in the same file, so a future typo cannot silently no-op.",
-        "non_goals": "Do NOT modify scripts/agents-flow/cowork-chef-mutex.js or its test — the CHEF mutex is shipped, in production on every tick, and this is a sibling mechanism, not a refactor of it. Do NOT infer supersede priority from cron frequency or the `guaranteed` flag: the mechanism is deliberately opt-in/declarative so shipping it has ZERO effect on any slot pair until an author explicitly opts one in (brief §6). Do NOT edit docs/data/cowork-schedule.json or any docs/agents/** file from this row — those are the sibling agent-father row's zone.",
-        "related": [
-          "FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC",
-          "TASK-COWORK-MUTEX-001",
-          "TASK-COWORK-MUTEX-002"
-        ],
-        "status_note": "PO SPLIT PER BRIEF §7's OWN ASK — developer half (code). This row is the ACTUATOR: the sibling agent-father row's `supersedes` schema field is inert without it, so if only one of the two ships, this one carries the behaviour. Required reading before implementing: scripts/agents-flow/cowork-chef-mutex.js — the brief specifies this new script mirrors its shape and error contract exactly, and that mutex has already been hardened once against a real regression, so its current form encodes lessons this one should not re-learn.",
-        "updated_at": "2026-08-14T17:02:00Z"
       }
     ],
     "closed_sprints": [
@@ -18284,7 +18258,36 @@
     },
     "last_triaged_at": "2026-08-14T17:01:52Z",
     "last_triaged_by": "po",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING",
+        "type": "FIX",
+        "title": "New pure-function scripts/agents-flow/cowork-supersede-mutex.js + sibling test + unconditional wiring into cowork-match-slots.js finish() — the actuator that makes a declared `supersedes` pair drop its victims before spawn-fanout (brief §3b/§3c)",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "scripts/agents-flow/",
+        "next_agent": "developer",
+        "owner": "po",
+        "created_at": "2026-08-14T17:01:52Z",
+        "created_by": "po",
+        "source": "durable-inbox signal from=agents-architect type=architecture_brief 2026-08-14T16:22:12Z",
+        "detail_ref": "docs/architecture-briefs/2026-08-14-market-watcher-eod-offhours-notebook-collision.md",
+        "dedup_key": "scripts/agents-flow|cowork-supersede-mutex|new-script-plus-matchslots-wiring",
+        "dedup_checked": "Same NON-TERMINAL-lane scan as the sibling row (8 hits on /EOD-OFFHOURS|SAMETICK|SUPERSEDE|COLLISION/i, all read). No row proposes a supersede mutex or any second mutex in cowork-match-slots.js. TASK-COWORK-MUTEX-001 (review) / -002 (backlog) concern the ALREADY-SHIPPED CHEF mutex (scripts/agents-flow/cowork-chef-mutex.js) which this new script mirrors but does not modify — brief §3 is explicit that market-watcher's two slots are BOTH guaranteed:false, so applyChefMutex's guaranteed-boolean tie-break structurally cannot resolve them and a sibling mechanism with a declarative priority is required.",
+        "acceptance": "AC-1 CREATE scripts/agents-flow/cowork-supersede-mutex.js exporting pure `applySupersedeMutex(matches, scheduleSlots) -> { matches, supersede_mutex_applied, dropped }`: for every slot S in matches whose schedule row has a non-empty .supersedes array, drop from matches any slot_id S names that is also present; S survives, order-preserving on survivors. AC-2 it FAILS LOUD (error envelope + exit 1) on malformed input, matching applyChefMutex's error contract — the silent-empty posture is the exact failure class that mutex's own incident record (FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT) documents; do not reproduce it. AC-3 CREATE scripts/agents-flow/cowork-supersede-mutex.test.js with the brief's 5 named cases: both present -> offhours dropped/eod survives; only offhours -> no-op; only eod -> no-op; no supersedes field anywhere -> no-op with supersede_mutex_applied:false; malformed input -> fail loud. AC-4 MODIFY scripts/agents-flow/cowork-match-slots.js finish() to chain applySupersedeMutex AFTER applyChefMutex and surface supersede_mutex_applied on meta — unconditional tail placement so it runs on BOTH legacy and adaptive pressure modes and on BOTH the cowork-tick-preflight.sh Step 6 WORK path and the match-slots.md Steps 2+3 ERROR-fallback path. Re-read finish() live before patching: brief cites L242-255 as a CONTENT anchor, not a line anchor. AC-5 the live call site invokes it IN-PROCESS via require(), never through a shell echo/printf pipe — this sidesteps the echo-mangles-backslash class by construction rather than by discipline (a CLI entry point may still exist for symmetry/testability). AC-6 (optional, brief §3e) extend scripts/agents-flow/cowork-schedule-consistency.test.js with a static assertion that every `supersedes` entry names a real slot_id present elsewhere in the same file, so a future typo cannot silently no-op.",
+        "non_goals": "Do NOT modify scripts/agents-flow/cowork-chef-mutex.js or its test — the CHEF mutex is shipped, in production on every tick, and this is a sibling mechanism, not a refactor of it. Do NOT infer supersede priority from cron frequency or the `guaranteed` flag: the mechanism is deliberately opt-in/declarative so shipping it has ZERO effect on any slot pair until an author explicitly opts one in (brief §6). Do NOT edit docs/data/cowork-schedule.json or any docs/agents/** file from this row — those are the sibling agent-father row's zone.",
+        "related": [
+          "FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC",
+          "TASK-COWORK-MUTEX-001",
+          "TASK-COWORK-MUTEX-002"
+        ],
+        "status_note": "PO SPLIT PER BRIEF §7's OWN ASK — developer half (code). This row is the ACTUATOR: the sibling agent-father row's `supersedes` schema field is inert without it, so if only one of the two ships, this one carries the behaviour. Required reading before implementing: scripts/agents-flow/cowork-chef-mutex.js — the brief specifies this new script mirrors its shape and error contract exactly, and that mutex has already been hardened once against a real regression, so its current form encodes lessons this one should not re-learn.",
+        "updated_at": "2026-08-14T17:23:42Z",
+        "claimed_at": "2026-08-14T17:23:41Z",
+        "claimed_by": "dev-team (router self-heal — S2 dispatcher-wrap board lane-move was skipped at spawn time, agent afe3b8850c473c9c5 already running)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -18298,7 +18301,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-14T13:54:17Z"
+        "last_served_tick": "2026-08-14T17:22:46Z"
       },
       "sls": {
         "last_served_tick": "2026-08-14T14:53:46Z"
@@ -18316,7 +18319,7 @@
         "last_served_tick": "2026-08-14T16:53:28Z"
       }
     },
-    "_updated_at": "2026-08-14T17:21:01Z",
+    "_updated_at": "2026-08-14T17:22:46Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
