@@ -1,5 +1,33 @@
 # System Auditor — Tier-1 Notebook
 
+
+## c94 · 2026-08-14T06:41:00Z
+
+### Audit Run Tier-2 (06:40–06:41 UTC 2026-08-14, Cron gaps + VPS cross-plane)
+- Tier: 2 | Services: 0 checked | Sources: 5 checked | DB checks: 2
+- **Anomalies: 3 A-29 STALE/MISSED (cron gaps), 1 B-06 WARN (VPS cross-plane)**
+- Dedup-skipped: 0 | Signals posted: 4 | Status: DEGRADED
+
+### A-29 Cron Fire Check:
+```
+Layer A: 89 total, 77 ON_TIME, 2 STALE, 1 MISSED, 9 UNRESOLVED-JOIN
+- MISSED: monthlySignalQualityAudit (last: 2026-06-01, overdue 1782.7h, threshold 1080h)
+- STALE: brokerSanctionsSweep (last: 2026-07-31 08:00, overdue 334.7h, threshold 36h)
+- STALE: ragFtsRebuildCron (last: 2026-07-20 20:15, overdue 586.4h, threshold 36h)
+- UNRESOLVED-JOIN: marketOpen, marketClose, dataAuditDaily, summaryWeekly, summaryMonthly, summaryQuarterly, summaryYearly, foreignFlowFetch, publicContractsRefresh (9 names)
+```
+
+### B-06/B-07 VPS Route Health:
+Cross-plane disagreement for bctc routes (bctc-discover, bctc-push):
+- Proxy plane (get_vps_proxy_health): "ok" status
+- Service plane (get_vps_service_health): vn-bctc-fetch "unhealthy"
+- Verdict: WARN (single-plane disagreement requires corroboration)
+
+### Data Freshness (B-01..B-07, B-11, B-12):
+All sources within SLA: price(0min/10min), bctc(953min/10080min), news(12min/30min), sbv_fx(11min/30min), foreign_flow(0min/10min) — PASS
+
+### DB Spot Checks (C-06, C-07):
+Pipeline health OK: 33 tickers with TA ready, aggregator last run 2026-08-06, backfill complete — PASS
 ## c93 · 2026-08-14T06:16:37Z
 
 ### Audit Run Tier-1 (06:14–06:16 UTC 2026-08-14, A-30 escalation — recurrence pattern c90→c93)
