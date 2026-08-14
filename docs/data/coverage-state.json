@@ -2,7 +2,7 @@
   "_schema": "v1",
   "_ssot": true,
   "_updated_by": "news-scout",
-  "_updated_at": "2026-08-14T01:40:08Z",
+  "_updated_at": "2026-08-14T04:11:17Z",
   "_eod_completed": "2026-07-11T16:06:30Z",
   "tickers": {
     "VNM": {
@@ -10,11 +10,11 @@
       "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "FPT": {
-      "last_covered_news_scout": "2026-08-14T01:40:08Z",
+      "last_covered_news_scout": "2026-08-14T04:11:17Z",
       "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "VCB": {
-      "last_covered_news_scout": "2026-08-14T01:40:08Z",
+      "last_covered_news_scout": "2026-08-14T04:11:17Z",
       "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "ACB": {
@@ -26,7 +26,7 @@
       "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "BID": {
-      "last_covered_news_scout": "2026-08-14T01:40:08Z",
+      "last_covered_news_scout": "2026-08-14T04:11:17Z",
       "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "SHB": {
@@ -34,7 +34,7 @@
       "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "EIB": {
-      "last_covered_news_scout": "2026-08-14T01:40:08Z",
+      "last_covered_news_scout": "2026-08-14T04:11:17Z",
       "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "VHM": {
@@ -42,7 +42,7 @@
       "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "VIC": {
-      "last_covered_news_scout": "2026-08-14T01:40:08Z",
+      "last_covered_news_scout": "2026-08-14T04:11:17Z",
       "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "KBC": {
@@ -90,7 +90,7 @@
       "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "KDC": {
-      "last_covered_news_scout": "2026-08-14T01:40:08Z",
+      "last_covered_news_scout": "2026-08-14T04:11:17Z",
       "last_covered_market_watcher": "2026-08-13T20:12:06Z"
     },
     "SAB": {
