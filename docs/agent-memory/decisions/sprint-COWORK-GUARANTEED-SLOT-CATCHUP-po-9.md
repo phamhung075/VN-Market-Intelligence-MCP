@@ -129,3 +129,23 @@
 - Take the equal-rank candidate this tick has fresh HIGH escalation evidence for
 **why-decision:** Both are rank-1/P1; the sort's tie-break is array index, i.e. insertion order, not a priority signal. TNB filed BUG 5307 this tick — 4 consecutive audit cycles (c127-c130) unable to commit or route dashboard writes — and this row is the opt-IN root-cause coverage gate for precisely that class, already carrying a live baseline_pass.
 **why-change:** Deviated from the literal .[0] pick; rationale recorded on the row itself so a later sweep can audit the choice.
+
+### STEP po-S171 · po · 2026-08-14T21:29:41Z
+**task-id:** FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE
+**what-done:** Refused DONE_VERIFIED on the stale review[] row; re-verified at source that main.md still carries the phantom path, approved the plan_only spec, cleared plan_only, re-routed architect->agent-father, stamped po_goahead, moved row review[]->backlog[].
+**what-considered:**
+- Sign off DONE_VERIFIED (architect's note reads like completed work)
+- Request rework on the spec
+- Approve the plan and route to an implementer
+**why-decision:** Live grep shows docs/agents/system-auditor/flow/main.md:841 STILL reads the phantom `memory/MEMORY.md` — plan_only means nothing was edited, so DONE_VERIFIED would have been a fabricated close. Spec quality is high and its verbatim BEFORE block still matches byte-for-byte at the drifted line numbers, so rework buys nothing. Implementer must be agent-father, not developer/architect: docs/agents/*/flow/*.md is agent-father's scope and PO is forbidden to edit agent files.
+**why-change:** Kept supervised:true rather than clearing both flags — agent-father is deliberately off the DRS allowlist (fleet-wide blast radius), so the row is manual-dispatch-only by design and PO gates it via BATCH.
+
+### STEP po-S172 · po · 2026-08-14T21:29:41Z
+**task-id:** FIX-AGENTMEMORY-INDEX-DEAD-SESSION-POINTERS
+**what-done:** Opened the follow-up row architect's ADJACENT FINDING asked PO to decide on (INDEX.md's 5 listed session pointers all dead since ace28b78d), with a hard sequencing ruling.
+**what-considered:**
+- Decline — fold into the parent row
+- Open it and let it dispatch immediately (P3 doc-hygiene, trivially fixable)
+- Open it gated behind the parent row's post-fix audit cycle
+**why-decision:** INDEX.md's broken state IS the parent row's natural negative control (spec §3) — it is the only evidence the repointed predicate is live rather than defanged into a trivial file-existence check. Fixing it first destroys the parent's acceptance evidence and forces QA onto the synthetic scratch-copy fallback. depends_on + an explicit note enforce the order.
+**why-change:** no change from plan.

@@ -924,8 +924,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-14T21:01:17Z",
-    "_updated_by": "po (child 4/4 sign-off + Phase-1 impl mint)",
+    "_updated_at": "2026-08-14T21:29:41Z",
+    "_updated_by": "po (review-lane adjudication)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11715,6 +11715,64 @@
         "supervised_note_history": "The parent's 'no code ships without parent re-adjudication by PO' gate is DISCHARGED for this row by po_phase1_readjudication_20260814T2101Z on the parent. plan_only and supervised are deliberately FALSE here -- that discharge is the whole purpose of this row.",
         "updated_at": "2026-08-14T21:05:14Z",
         "updated_by": "po (Phase-1 re-adjudication)"
+      },
+      {
+        "id": "FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE",
+        "title": "FIX: system-auditor DOC-AUDIT memory-integrity check emits 'docs/agent-memory/MEMORY.md is MISSING' — that path NEVER existed (git diff-filter=D empty; project memory index is docs/agent-memory/INDEX.md, and the auditor spec main.md:445 names memory/MEMORY.md = the Claude auto-memory which is present+healthy). Recurring WARN false-positive from a drifted path predicate.",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "S",
+        "zone": "docs/agents/system-auditor/flow/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "plan_only": false,
+        "supervised": true,
+        "created_at": "2026-07-22T00:49:21Z",
+        "created_by": "po/triage-20260722T0049",
+        "origin_signal_id": "sys-20260722T003235-52bb",
+        "root_cause": "DOC-AUDIT section (docs/agents/system-auditor/flow/main.md § 1 Memory integrity, :445) references memory/MEMORY.md; the implementation resolves this to docs/agent-memory/MEMORY.md, never a canonical project artifact (docs/agent-memory uses INDEX.md/README.md/AGENT_STARTUP.md + notebooks/). Missing-file check on a phantom path => WARN FP re-emitted each auditor tier cycle.",
+        "deliverable": "Point the DOC-AUDIT memory-integrity predicate at the REAL memory index (docs/agent-memory/INDEX.md) OR remove the phantom docs/agent-memory/MEMORY.md existence check; align main.md:445 wording so the checked artifact is unambiguous. Verify no other DOC-AUDIT sub-check hardcodes a non-existent canonical path.",
+        "acceptance": "One live DOC-AUDIT cycle emits ZERO 'MEMORY.md MISSING' signal against the current tree, and a deliberately-broken memory index still trips a real WARN (negative control).",
+        "related": [
+          "FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE"
+        ],
+        "note": "Auditor-FP family (feedback_auditor_predicate_drift_false_regression). Distinct from the A12/A20/A30 health-probe converge row (runtime health predicates vs this doc-integrity path predicate). PO source-verified path absence (ls + git log --diff-filter=D empty) before minting.",
+        "promoted_at": "2026-08-08T03:21:27Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "spec_doc": "docs/handoffs/FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE-spec.md",
+        "architect_review_note": "PLAN-ONLY (supervised+plan_only — main.md NOT edited). Re-verified stale main.md:445 citation live — real section is :720-722. Verbatim diff proposed (spec §1): repoint §1 Memory integrity from phantom `memory/MEMORY.md` (never existed, confirmed git diff-filter=D empty) at `docs/agent-memory/INDEX.md` (real repo-tracked memory index) ONLY — explicitly do NOT attempt to validate Claude Code's external per-session auto-memory file (no canonical repo-relative path, platform-managed, would require hardcoding a host-specific absolute path in violation of this repo's own no-hardcode convention). Sibling sweep of DOC-AUDIT items 2-6 (spec §2): zero other phantom paths found — all referenced docs/policies|protocols|standards|references dirs, tool-registry/cron-registry/stock-classification.json, .claude/agents/*.md, CLAUDE.md, project-stats.json + generator all confirmed present; DB-health container paths are runtime-resolved via docker exec, not static, so out of this defect class. ADJACENT FINDING flagged not fixed: docs/agent-memory/INDEX.md itself (the fix's new target) already has all 5 of its own listed session pointers dead (stale since commit ace28b78d, 2026-04-27) — this is a real, pre-existing doc-hygiene gap the phantom-path bug has been masking; serves as spec §3's natural negative control (first post-fix cycle should emit zero phantom-MISSING AND one new real INDEX.md broken-pointer WARN in the same cycle) but its cleanup is out of THIS task's scope — PO to decide on a follow-up row. Full verbatim diff + negative-control design + implementation notes in spec_doc.",
+        "updated_at": "2026-08-14T21:30:21Z",
+        "adjudicated_at": "2026-08-14T21:29:41Z",
+        "adjudicated_by": "po",
+        "status_note": "PO ADJUDICATION 2026-08-14T21:29:41Z (Review-Lane SECONDARY-Drain): plan APPROVED, NOT done. Live re-verify: docs/agents/system-auditor/flow/main.md:841 STILL reads '### 1. Memory integrity — `memory/MEMORY.md`' (spec cited :720-722, line numbers drifted; the verbatim 3-line BEFORE block at :841-843 still matches byte-for-byte so the spec diff applies unchanged). plan_only cleared true->false: implementation is now authorized. Re-routed architect -> agent-father (zone docs/agents/*/flow/*.md is agent-father scope per agent-father/flow/keep.md:33 + dispatch table; PO is forbidden to edit agent files). Dispatch: intent=edit, agent_name=system-auditor, change_description = apply spec_doc §1 verbatim diff (3L->5L) at the CURRENT line numbers, do NOT trust :720. supervised:true RETAINED (agent-father = fleet-wide blast radius, deliberately off the DRS allowlist) — so this row is DRS-STRANDED-OFF-ALLOWLIST by design, reachable only via PO/router manual dispatch; PO folded it into this cycle's BATCH. Stale architect-lane dispatch_lane/claimed_*/secondary_* stamps cleared so no sweeper blind-claims it into the wrong lane.",
+        "po_goahead_20260814T212941": "PO ratified 2026-08-14 at source, not on relay: spec_doc present (13760B), its BEFORE block re-grepped live in main.md (now :841-843, matches verbatim), phantom docs/agent-memory/MEMORY.md re-confirmed absent, and the spec's load-bearing adjacent finding independently re-derived (cat docs/agent-memory/INDEX.md + ls docs/agent-memory/sessions/ -> all 5 listed pointers dead). Implementation authorized for agent-father."
+      },
+      {
+        "id": "FIX-AGENTMEMORY-INDEX-DEAD-SESSION-POINTERS",
+        "title": "FIX: docs/agent-memory/INDEX.md lists 5 session pointers that are ALL dead (sessions/LATEST.md + 4x sessions/2026-04-26-{alert-commander,developer,qa,ops}.md). INDEX.md content untouched since ace28b78d (2026-04-27) while docs/agent-memory/sessions/ evolved to dated files + archive/ + *.log. Real pre-existing doc-hygiene gap, masked for ~4mo by the phantom-path DOC-AUDIT predicate that never looked at the real file.",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "priority": "P3",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "created_at": "2026-08-14T21:29:41Z",
+        "created_by": "po/review-adjudication-20260814T2129",
+        "depends_on": [
+          "FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE"
+        ],
+        "related": [
+          "FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE"
+        ],
+        "origin_signal_id": "sys-20260722T003235-52bb",
+        "root_cause": "docs/agent-memory/INDEX.md was written against a retired per-agent session-file scheme (sessions/LATEST.md + sessions/2026-04-26-<agent>.md). That scheme was retired by commit ace28b78d (2026-04-27, 'agent-memory cleanup') and INDEX.md was never updated to track the replacement layout. Nothing ever caught it because the only gate that checks the memory index (system-auditor DOC-AUDIT §1 Memory integrity) was pointed at a phantom path.",
+        "deliverable": "Re-point or delete INDEX.md's 5 dead session bullets so every listed pointer resolves against the CURRENT docs/agent-memory/sessions/ layout. Also re-check the '## Write Protocol' line (append_session_record) still names a live MCP tool.",
+        "acceptance": "Every link target listed in docs/agent-memory/INDEX.md resolves to an existing file (verify by resolving each relative link with test -f), AND the next Tier-3 DOC-AUDIT cycle after the fix emits ZERO INDEX.md broken-pointer WARN.",
+        "note": "SEQUENCING — PO RULING, HARD, DO NOT VIOLATE: do NOT start this row until (a) FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE's edit has landed in docs/agents/system-auditor/flow/main.md AND (b) one post-fix Tier-3 DOC-AUDIT cycle has run and emitted the real INDEX.md broken-pointer WARN. Reason: INDEX.md's currently-broken state IS the parent row's natural negative control (spec_doc docs/handoffs/FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE-spec.md §3) — it is the only evidence that the repointed predicate is live and actionable rather than defanged into a trivially-satisfied file-existence check. Cleaning INDEX.md before that cycle destroys the acceptance evidence and forces QA onto the synthetic scratch-copy fallback (spec §3, steps 1-5). Sourced from architect's ADJACENT FINDING, explicitly out of scope of the parent row; PO opened it as a separate row per architect's request.",
+        "updated_at": "2026-08-14T21:30:21Z"
       }
     ],
     "closed_sprints": [
@@ -13573,6 +13631,47 @@
             },
             "live_value_observed": "git merge-base --is-ancestor confirms fa02f39f1 on main; git show --stat matches sole claimed file (new hexagram_invariant_test.go, 236 lines, zero prod file touched); go build ./... clean; go vet ./... clean; go test ./... 13 packages (9 testable/4 no-test-files), all pass incl. 6 new invariant tests; golangci-lint run ./... 0 issues; mock-guard.sh no-op (test-only); process.env/secrets grep clean",
             "observed_at": "2026-08-14T18:03:45Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-CI-TASKCLAIM-DEVTEAM-POSTCYCLE-OWNER-SESSION-PAYDOWN",
+        "type": "FIX",
+        "title": "CI RED — task-claim-owner-session-lint: docs/agents/dev-team/flow/post-cycle.md 4 call sites (105/114/146/152) missing owner_client_session",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "pm",
+        "owner": "po",
+        "created_at": "2026-08-14T20:02:29Z",
+        "created_by": "po",
+        "source": "durable-inbox ci_red x2 from=ci-health-probe 2026-08-14T18:54:53Z (CI-RED-e12a95a9, run 31830667440) + 2026-08-14T19:25:35Z (CI-RED-b3e8d8aa, run 31832822616)",
+        "check_id": "CI-RED-e12a95a9",
+        "dedup_key": "ci_job:task-claim-owner-session-lint|file:docs/agents/dev-team/flow/post-cycle.md",
+        "ci_fingerprint": "a45bf11ca432d7e54847203092dce5b1bcd0e6ec06759094b920e4876fb97547",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "files": [
+          "docs/agents/dev-team/flow/post-cycle.md",
+          "docs/data/task-claim-owner-session-baseline.json"
+        ],
+        "dedup_checked": "MANDATORY pre-dedup failing-file read done FIRST (triage-signals.md ci_red row): `gh run view <run_id> --log-failed` on BOTH runs. Job task-claim-owner-session-lint is NOT the bun-test isolation runner so no FAILEDFILE block exists; FAILING_FILES taken verbatim from the failing step's own error lines = exactly ONE file, docs/agents/dev-team/flow/post-cycle.md (4 call sites). FILE-SCOPED dedup (primary) on ci_job:task-claim-owner-session-lint|file:docs/agents/dev-team/flow/post-cycle.md scanned backlog+ready+in_progress+review+qa: NO match. Nearest siblings are DIFFERENT files and must NOT absorb this: FIX-CI-TASKCLAIM-QA-FLOW-OWNER-SESSION-PAYDOWN (review, same job, file=docs/agents/qa/flow/main.md) and FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER (ready, dedup_key ci_gate_divergence|hook:pre-push, the gate-plane root cause, not a file paydown). One row PER DISTINCT FILE per the contract; sibling-row precedent FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT.",
+        "evidence": "FAILING_FILES (verbatim from gh run view 31830667440 --log-failed, identical on 31832822616): [task-claim-lint] FAIL - 4 call site(s) missing owner_client_session (scanned 276 files): docs/agents/dev-team/flow/post-cycle.md:105 task_claim(task_kind=\"commit-mutex\", task_id=\"commit-mutex:main\", owner_agent=\"dev-team\", ttl_seconds=120); :114 task_release(task_id: \"commit-mutex:main\"); :146 (same task_claim); :152 (same task_release). Each carries the lint's own [LINE-MOVED: grandfathered in baseline at line 100/109 - same file+snippet, NOT a new call site, NOT a reintroduced regression. Pay the debt (add owner_client_session); do not re-run --update to relabel the line.] annotation. Observed on 2 consecutive advancing HEADs: e12a95a9397689e1293dcb4141ae5926e70af03e (run 31830667440, 18:52Z) and b3e8d8aa24e411dbccaed5fa62022c7a7a3351c5 (run 31832822616, 19:20Z) - the file-scoped fail set is byte-identical across both, confirming a standing unpaid debt, not a flake.",
+        "acceptance": "AC-1 all 4 call sites in docs/agents/dev-team/flow/post-cycle.md carry owner_client_session=$CLAUDE_CODE_SESSION_ID (task_claim at :105/:146 and task_release at :114/:152). AC-2 the baseline is NOT relabelled via `--update` to re-grandfather the moved lines - the lint's own output explicitly forbids that path; the debt must be paid in the file. AC-3 `bash scripts/audits/task-claim-owner-session-lint.sh --check` exits 0 locally. AC-4 verification_gate=ci_green_on_subsequent_push: `gh run view <databaseId with headSha AFTER b3e8d8aa24e411dbccaed5fa62022c7a7a3351c5> --json jobs -q '.jobs[]|select(.name==\"task-claim-owner-session-lint\")|.conclusion'` == success.",
+        "non_goals": "Does NOT fix docs/agents/qa/flow/main.md (owned by FIX-CI-TASKCLAIM-QA-FLOW-OWNER-SESSION-PAYDOWN, review) and does NOT change the pre-push path-filter (owned by FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER, ready). ANTI-AMNESTY FENCE observed: never deduped into FIX-MCP-SUITE-HEALTH-BASELINE or any LOCAL-full-suite row.",
+        "status_note": "AC: gh run view <databaseId with headSha AFTER b3e8d8aa24e411dbccaed5fa62022c7a7a3351c5> --json jobs -q '.jobs[]|select(.name==\"task-claim-owner-session-lint\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: task-claim-owner-session-lint. Failing file: docs/agents/dev-team/flow/post-cycle.md. Observed SHAs: e12a95a9 (CI-RED-e12a95a9, run 31830667440), b3e8d8aa (CI-RED-b3e8d8aa, run 31832822616) - second ci_red folded onto this row rather than minted separately (same job+file dedup_key). | agent-father: AC-1/AC-2/AC-3 met (owner_client_session added to all 4 call sites, baseline untouched, --check exit 0). AC-4 VERIFIED LIVE: gh run 31837293956 headSha=db7b08e2e871b420f96597deb79dc5017afafebe job task-claim-owner-session-lint conclusion=success. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Commit db7b08e2e871b420f96597deb79dc5017afafebe confirmed real, on main ancestry; git show --stat matches claimed docs/agents/dev-team/flow/post-cycle.md; docs/data/task-claim-owner-session-baseline.json (also listed in files[]) has an empty diff -- correctly untouched per AC-2 (commit message confirms --update was not run to relabel grandfathered lines). Independently re-ran, not trusted from prose: scripts/audits/task-claim-owner-session-lint.sh --check exit 0, \"PASS -- 0 new offenders (scanned 276 files; baseline carries 19 grandfathered site(s))\" (AC-3); grep confirms all 4 call sites (task_claim :106/:150, task_release :117/:158) now carry owner_client_session (AC-1); AC-4 independently queried via gh run view 31837293956 -- headSha=db7b08e2e871b420f96597deb79dc5017afafebe (the fix commit itself), job task-claim-owner-session-lint conclusion=success, merge-base confirms this headSha postdates the 2nd observed red SHA b3e8d8aa24e411 per verification_gate wording (AC-4). No production/.ts source touched (doc-only flow-file comment change, 3-file diffstat = journal+notebook+post-cycle.md) -- bun test/tsc/mock-guard N/A; process.env/secret/password/token greps on touched file clean. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-24.md STEP qa-S15.",
+        "updated_at": "2026-08-14T21:31:03Z",
+        "claimed_at": "2026-08-14T21:27:10Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "updated_by": "qa",
+        "qa_verified_at": "2026-08-14T21:30:33Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "gh run view + git merge-base --is-ancestor + git show --stat + scripts/audits/task-claim-owner-session-lint.sh --check + grep",
+            "args": "gh run view 31837293956 --json headSha,jobs; git show --stat db7b08e2e871b420f96597deb79dc5017afafebe; git merge-base --is-ancestor b3e8d8aa24e411dbccaed5fa62022c7a7a3351c5 db7b08e2e871b420f96597deb79dc5017afafebe; scripts/audits/task-claim-owner-session-lint.sh --check; grep -n owner_client_session docs/agents/dev-team/flow/post-cycle.md",
+            "live_value_observed": "gh run 31837293956 headSha=db7b08e2e871b420f96597deb79dc5017afafebe job task-claim-owner-session-lint conclusion=success; merge-base confirms db7b08e2e postdates b3e8d8aa; lint --check exit 0 PASS 0 new offenders (276 files scanned); grep shows all 4 call sites (post-cycle.md:106/117/150/158) carry owner_client_session; task-claim-owner-session-baseline.json diff empty (AC-2 held)",
+            "observed_at": "2026-08-14T21:30:33Z"
           }
         }
       }
@@ -16706,41 +16805,6 @@
         "po_verdict": "AMEND-THEN-RESUBMIT"
       },
       {
-        "id": "FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE",
-        "title": "FIX: system-auditor DOC-AUDIT memory-integrity check emits 'docs/agent-memory/MEMORY.md is MISSING' — that path NEVER existed (git diff-filter=D empty; project memory index is docs/agent-memory/INDEX.md, and the auditor spec main.md:445 names memory/MEMORY.md = the Claude auto-memory which is present+healthy). Recurring WARN false-positive from a drifted path predicate.",
-        "status": "REVIEW",
-        "type": "FIX",
-        "priority": "P2",
-        "size": "S",
-        "zone": "docs/agents/system-auditor/flow/",
-        "owner": "po",
-        "next_agent": "po",
-        "plan_only": true,
-        "supervised": true,
-        "created_at": "2026-07-22T00:49:21Z",
-        "created_by": "po/triage-20260722T0049",
-        "origin_signal_id": "sys-20260722T003235-52bb",
-        "root_cause": "DOC-AUDIT section (docs/agents/system-auditor/flow/main.md § 1 Memory integrity, :445) references memory/MEMORY.md; the implementation resolves this to docs/agent-memory/MEMORY.md, never a canonical project artifact (docs/agent-memory uses INDEX.md/README.md/AGENT_STARTUP.md + notebooks/). Missing-file check on a phantom path => WARN FP re-emitted each auditor tier cycle.",
-        "deliverable": "Point the DOC-AUDIT memory-integrity predicate at the REAL memory index (docs/agent-memory/INDEX.md) OR remove the phantom docs/agent-memory/MEMORY.md existence check; align main.md:445 wording so the checked artifact is unambiguous. Verify no other DOC-AUDIT sub-check hardcodes a non-existent canonical path.",
-        "acceptance": "One live DOC-AUDIT cycle emits ZERO 'MEMORY.md MISSING' signal against the current tree, and a deliberately-broken memory index still trips a real WARN (negative control).",
-        "related": [
-          "FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE"
-        ],
-        "note": "Auditor-FP family (feedback_auditor_predicate_drift_false_regression). Distinct from the A12/A20/A30 health-probe converge row (runtime health predicates vs this doc-integrity path predicate). PO source-verified path absence (ls + git log --diff-filter=D empty) before minting.",
-        "promoted_at": "2026-08-08T03:21:27Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "architect",
-        "claimed_at": "2026-08-08T05:22:44Z",
-        "claimed_by": "dev-team (supervised-lane sweep)",
-        "spec_doc": "docs/handoffs/FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE-spec.md",
-        "architect_review_note": "PLAN-ONLY (supervised+plan_only — main.md NOT edited). Re-verified stale main.md:445 citation live — real section is :720-722. Verbatim diff proposed (spec §1): repoint §1 Memory integrity from phantom `memory/MEMORY.md` (never existed, confirmed git diff-filter=D empty) at `docs/agent-memory/INDEX.md` (real repo-tracked memory index) ONLY — explicitly do NOT attempt to validate Claude Code's external per-session auto-memory file (no canonical repo-relative path, platform-managed, would require hardcoding a host-specific absolute path in violation of this repo's own no-hardcode convention). Sibling sweep of DOC-AUDIT items 2-6 (spec §2): zero other phantom paths found — all referenced docs/policies|protocols|standards|references dirs, tool-registry/cron-registry/stock-classification.json, .claude/agents/*.md, CLAUDE.md, project-stats.json + generator all confirmed present; DB-health container paths are runtime-resolved via docker exec, not static, so out of this defect class. ADJACENT FINDING flagged not fixed: docs/agent-memory/INDEX.md itself (the fix's new target) already has all 5 of its own listed session pointers dead (stale since commit ace28b78d, 2026-04-27) — this is a real, pre-existing doc-hygiene gap the phantom-path bug has been masking; serves as spec §3's natural negative control (first post-fix cycle should emit zero phantom-MISSING AND one new real INDEX.md broken-pointer WARN in the same cycle) but its cleanup is out of THIS task's scope — PO to decide on a follow-up row. Full verbatim diff + negative-control design + implementation notes in spec_doc.",
-        "updated_at": "2026-08-14T21:26:41Z",
-        "secondary_claimed_at": "2026-08-14T21:26:41Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "po"
-      },
-      {
         "id": "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
         "title": "D4 held-lock detector re-fires on data-quality-anomaly:* — KNOWN_LEGIT_PREFIXES (authored 2026-07-08) never learned the lock kind bctc-analyst introduced 2026-07-19; whitelist is a static list that lags every new escalation-lock kind",
         "status": "REVIEW",
@@ -17971,37 +18035,6 @@
         "spawned_row": "FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE",
         "claimed_at": "2026-08-14T21:27:10Z",
         "claimed_by": "dev-team (review-lane qa-drain)"
-      },
-      {
-        "id": "FIX-CI-TASKCLAIM-DEVTEAM-POSTCYCLE-OWNER-SESSION-PAYDOWN",
-        "type": "FIX",
-        "title": "CI RED — task-claim-owner-session-lint: docs/agents/dev-team/flow/post-cycle.md 4 call sites (105/114/146/152) missing owner_client_session",
-        "status": "QA",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "qa",
-        "owner": "po",
-        "created_at": "2026-08-14T20:02:29Z",
-        "created_by": "po",
-        "source": "durable-inbox ci_red x2 from=ci-health-probe 2026-08-14T18:54:53Z (CI-RED-e12a95a9, run 31830667440) + 2026-08-14T19:25:35Z (CI-RED-b3e8d8aa, run 31832822616)",
-        "check_id": "CI-RED-e12a95a9",
-        "dedup_key": "ci_job:task-claim-owner-session-lint|file:docs/agents/dev-team/flow/post-cycle.md",
-        "ci_fingerprint": "a45bf11ca432d7e54847203092dce5b1bcd0e6ec06759094b920e4876fb97547",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "files": [
-          "docs/agents/dev-team/flow/post-cycle.md",
-          "docs/data/task-claim-owner-session-baseline.json"
-        ],
-        "dedup_checked": "MANDATORY pre-dedup failing-file read done FIRST (triage-signals.md ci_red row): `gh run view <run_id> --log-failed` on BOTH runs. Job task-claim-owner-session-lint is NOT the bun-test isolation runner so no FAILEDFILE block exists; FAILING_FILES taken verbatim from the failing step's own error lines = exactly ONE file, docs/agents/dev-team/flow/post-cycle.md (4 call sites). FILE-SCOPED dedup (primary) on ci_job:task-claim-owner-session-lint|file:docs/agents/dev-team/flow/post-cycle.md scanned backlog+ready+in_progress+review+qa: NO match. Nearest siblings are DIFFERENT files and must NOT absorb this: FIX-CI-TASKCLAIM-QA-FLOW-OWNER-SESSION-PAYDOWN (review, same job, file=docs/agents/qa/flow/main.md) and FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER (ready, dedup_key ci_gate_divergence|hook:pre-push, the gate-plane root cause, not a file paydown). One row PER DISTINCT FILE per the contract; sibling-row precedent FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT.",
-        "evidence": "FAILING_FILES (verbatim from gh run view 31830667440 --log-failed, identical on 31832822616): [task-claim-lint] FAIL - 4 call site(s) missing owner_client_session (scanned 276 files): docs/agents/dev-team/flow/post-cycle.md:105 task_claim(task_kind=\"commit-mutex\", task_id=\"commit-mutex:main\", owner_agent=\"dev-team\", ttl_seconds=120); :114 task_release(task_id: \"commit-mutex:main\"); :146 (same task_claim); :152 (same task_release). Each carries the lint's own [LINE-MOVED: grandfathered in baseline at line 100/109 - same file+snippet, NOT a new call site, NOT a reintroduced regression. Pay the debt (add owner_client_session); do not re-run --update to relabel the line.] annotation. Observed on 2 consecutive advancing HEADs: e12a95a9397689e1293dcb4141ae5926e70af03e (run 31830667440, 18:52Z) and b3e8d8aa24e411dbccaed5fa62022c7a7a3351c5 (run 31832822616, 19:20Z) - the file-scoped fail set is byte-identical across both, confirming a standing unpaid debt, not a flake.",
-        "acceptance": "AC-1 all 4 call sites in docs/agents/dev-team/flow/post-cycle.md carry owner_client_session=$CLAUDE_CODE_SESSION_ID (task_claim at :105/:146 and task_release at :114/:152). AC-2 the baseline is NOT relabelled via `--update` to re-grandfather the moved lines - the lint's own output explicitly forbids that path; the debt must be paid in the file. AC-3 `bash scripts/audits/task-claim-owner-session-lint.sh --check` exits 0 locally. AC-4 verification_gate=ci_green_on_subsequent_push: `gh run view <databaseId with headSha AFTER b3e8d8aa24e411dbccaed5fa62022c7a7a3351c5> --json jobs -q '.jobs[]|select(.name==\"task-claim-owner-session-lint\")|.conclusion'` == success.",
-        "non_goals": "Does NOT fix docs/agents/qa/flow/main.md (owned by FIX-CI-TASKCLAIM-QA-FLOW-OWNER-SESSION-PAYDOWN, review) and does NOT change the pre-push path-filter (owned by FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER, ready). ANTI-AMNESTY FENCE observed: never deduped into FIX-MCP-SUITE-HEALTH-BASELINE or any LOCAL-full-suite row.",
-        "status_note": "AC: gh run view <databaseId with headSha AFTER b3e8d8aa24e411dbccaed5fa62022c7a7a3351c5> --json jobs -q '.jobs[]|select(.name==\"task-claim-owner-session-lint\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: task-claim-owner-session-lint. Failing file: docs/agents/dev-team/flow/post-cycle.md. Observed SHAs: e12a95a9 (CI-RED-e12a95a9, run 31830667440), b3e8d8aa (CI-RED-b3e8d8aa, run 31832822616) - second ci_red folded onto this row rather than minted separately (same job+file dedup_key). | agent-father: AC-1/AC-2/AC-3 met (owner_client_session added to all 4 call sites, baseline untouched, --check exit 0). AC-4 VERIFIED LIVE: gh run 31837293956 headSha=db7b08e2e871b420f96597deb79dc5017afafebe job task-claim-owner-session-lint conclusion=success.",
-        "updated_at": "2026-08-14T21:27:10Z",
-        "claimed_at": "2026-08-14T21:27:10Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "updated_by": "agent-father"
       },
       {
         "id": "FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE",
