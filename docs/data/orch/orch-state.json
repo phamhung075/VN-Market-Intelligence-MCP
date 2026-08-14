@@ -19287,7 +19287,7 @@
         "last_served_tick": "2026-08-14T09:23:37Z"
       }
     },
-    "_updated_at": "2026-08-14T12:19:12Z",
+    "_updated_at": "2026-08-14T12:49:35Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19738,6 +19738,48 @@
         },
         "createdAt": "2026-08-14T12:01:38Z",
         "drained_at": "2026-08-14T12:19:12Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "67991db51555fdd2d9db0f565666615eb57bac9f3df57eb312fc60f3f15c61ed",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-39692ca5",
+          "head_sha": "39692ca5c6c8123b94176b76b629f1cf4c29edca",
+          "run_id": 31798007816,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31798007816",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 94759271788
+            }
+          ],
+          "fingerprint": "746986a4f266e7e0a07aa4850630dffd810c04bc765376253d9641d0cee99fa3",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 39692ca5c6c8123b94176b76b629f1cf4c29edca: bun test",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-14T12:19:44Z",
+        "drained_at": "2026-08-14T12:49:35Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4bede10c696008863724cf5177ac6c5dbe256e95938be7ab82349e9f2b47e7b8",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/developer.md — retained section '## Session 2026-08-14T09:10:00Z — TASK-COWORK-MUTEX-001 (cross-service/, developer, P0 supervised, router deliberate dispatch per BA-triage, session 632721c2)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/developer.md — retained section '## Session 2026-08-14T09:52:37Z — UC-CCA-P1-GWBLIND-DEDUP (`.claude/skills/`, developer, P1 S, BOUNDED-1 auto-pickup, session 632721c2)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-14T12:40:38Z",
+        "drained_at": "2026-08-14T12:49:35Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
