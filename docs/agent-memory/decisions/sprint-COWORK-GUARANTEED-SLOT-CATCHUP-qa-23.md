@@ -181,3 +181,13 @@
 **why-change:** none — matches row's own `note` claim.
 
 ### CAP-REACHED · 2026-08-14T19:38:00Z
+
+### STEP qa-S13 · qa · 2026-08-14T19:41:00Z
+**task-id:** FIX-ERRAUDIT-W2-DEADLINE-UNITTEST
+**what-done:** RE-APPEND — prior S12 entry for this task-id (written ~19:38Z) was lost to a race with a concurrent peer qa session's own append/commit to this same file (commit `28db4500d` landed moments later, contains peer entries only, mine absent — confirmed via grep + git show). Direct-Commit Verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`) of `b3a5c5145` — commit real, on main ancestry, `git show --name-only` matches exactly the 2 files claimed (new colocated `fetchDeadline.test.ts` + `testing.md` doc), zero production code touched.
+**what-considered:**
+- Re-ran REAL verification, not trusted from prose: targeted `bun test .../fetchDeadline.test.ts` → 12/12 pass independently. `bun tsc --noEmit` → 0 errors. Test-only change (Smart-Skip) → DDD/security scan + mock-guard correctly skipped (no production file in diff).
+- Read the test file + `fetchDeadline.ts` source side-by-side: every assertion (DeadlineError name/label/deadlineMs/message, FR-6 console.error attribution, clearTimeout-exactly-once EC-1, non-abort error rethrown as same instance, all 3 macroFetch DegradeEnvelope.reason branches, ok:true gated strictly on response.ok) matches the real implementation exactly — no fabricated/mismatched expectation found. All fetch calls mocked, zero live network.
+- Did not block verdict on the full repo-wide suite (multi-minute, backgrounded); flow's verify-committed checklist only mandates touched test file + tsc + mock-guard-if-production-touched, all satisfied; note's full-suite claim (15005/15007, 52-54 fail) plausible against the documented drifting `FIX-MCP-SUITE-HEALTH-BASELINE` band, not itself gating.
+**why-decision:** vc-approved, DONE_VERIFIED. orch-state lane-move (qa[]->done_verified[]) already applied+committed before this re-append was discovered lost — this entry restores the required journal trail retroactively, verdict unchanged.
+**why-change:** re-append only, same verdict as the lost S12 entry — not a new decision.
