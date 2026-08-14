@@ -19232,7 +19232,7 @@
         "last_served_tick": "2026-08-14T05:23:15Z"
       }
     },
-    "_updated_at": "2026-08-14T05:52:34Z",
+    "_updated_at": "2026-08-14T06:21:36Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19371,6 +19371,135 @@
         "payload": "docs/improvement-proposals/IMP-20260814-system-auditor-notebook-compose-actuator-never-wired.md",
         "createdAt": "2026-08-14T05:35:45Z",
         "drained_at": "2026-08-14T05:49:37Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d35ef88249daa3cc87c2b465f00d946b55d2d15636fb6b63b09d66e359d41977",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 14 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md docs/data/orch/orch-state.json docs/signals/cowork-team-2026-08-14T05:22:24Z.json docs/signals/cowork-team-2026-08-14T05:36:35Z.json docs/signals/processed/ci-red-83bb4359-20260807053338.json docs/signals/processed/commit-sweep-guard-2026-08-14T052533Z-32227.json docs/signals/processed/cowork-team-2026-08-07T05:14:02Z.json docs/signals/processed/cowork-team-2026-08-07T05:19:06Z.json docs/signals/processed/cowork-team-2026-08-14T05:22:24Z.json docs/signals/processed/cowork-team-2026-08-14T05:36:35Z.json docs/signals/processed/notebook-direction-defaulted-docs-agent-memory-notebooks-unified-agent-md-2026-08-14T052429Z.json docs/signals/processed/notebook-prune-dropped-newest-docs-agent-memory-notebooks-unified-agent-md-2026-08-14T052429Z.json docs/signals/processed/po-20260814T053545Z.json docs/signals/processed/router-2026-08-07T05:24:00Z-chef-commit-gap.json. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=15 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-14T05:50:25Z",
+        "drained_at": "2026-08-14T06:21:36Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1c31c0e632e7a775e231f632e24695a69c64174d16d42e69fbd4278d8726a7d9",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c91 · 2026-08-14T04:44:01Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c90 · 2026-08-14T04:17:44Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-14T05:50:30Z",
+        "drained_at": "2026-08-14T06:21:36Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "678d9e9355e80694e3f4bae09ae1b00e6a45a40906491f53dc65a20e1d64e91e",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md docs/data/orch/orch-state.json. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=16 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-14T06:20:32Z",
+        "drained_at": "2026-08-14T06:21:36Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "241d2037fb327ad8876e66c990c771e3fd9e6c4651e3ac4b57d85e3cdb919125",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-dispatch",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-14T05:45Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "drift_min": 6
+        },
+        "createdAt": "2026-08-14T05:51:26Z",
+        "drained_at": "2026-08-14T06:21:36Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4fa856360d7ba0424583bf90f8dabf78e80f56c08647b7fe6d61b21606bc8ce3",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-dispatch",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-14T06:00Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "drift_min": 6
+        },
+        "createdAt": "2026-08-14T06:06:29Z",
+        "drained_at": "2026-08-14T06:21:36Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cf09565572cc807f43f908968512ff997d3272f47684f224d5cc66d8339dbdf8",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-dispatch",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-14T06:15Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "suppressed_cadence": [
+            "chef-intraday"
+          ],
+          "drift_min": 6
+        },
+        "createdAt": "2026-08-14T06:21:31Z",
+        "drained_at": "2026-08-14T06:21:36Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
