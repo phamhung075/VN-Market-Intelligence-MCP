@@ -1,4 +1,8 @@
 # QA — Notebook
+## cycle-745 · 2026-08-14T15:03:19Z · FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD (dev-mcp-server, commit `cf862f920`) — Direct-Commit Verify, DONE_VERIFIED
+
+dev-team Review-Lane QA-Drain spawn (`mode=verify-committed`). Commits `cf862f920`(code+test)+`815752129`(journal+notebook) confirmed real, on `main` ancestry; `git show --stat` matches all 3 claimed files exactly. AC-1 `shouldSkipRecoveryReplay` guard added before `recordJobRun`. AC-2 default fn maps `resolved+failed`→`rowsWritten`, neutralizes `bctcReparseJob.ts:941`'s self-record block (confirmed no bypass callers). AC-3 startup catch-up gated by `shouldRunCatchup`. New test 13/13 pass incl. AC-4 case. 53-file regression 503/1skip/0fail. tsc 0 errors. mock-guard PASS. DDD/secrets clean. AC-5 correctly deferred. DJ: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-22.md` STEP qa-S145. Board write confirmed durable (commit `a25a790f2` lineage) — this notebook entry itself was lost repeatedly to concurrent peer full-overwrites before landing.
+
 
 ## cycle-745 · 2026-08-14T15:06:00Z · BCT-OBS-01-FIX (dev-mcp-server, commit `ccddb9ae6a2`) — Direct-Commit Verify, APPROVED, DONE_VERIFIED
 
