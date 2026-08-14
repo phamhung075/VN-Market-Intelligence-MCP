@@ -95,8 +95,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "idle — both FIX-COWORK brief rows now in review[], dev-team-tick-preflight will determine next action",
-    "updated_at": "2026-08-14T17:25:06Z",
+    "next_action": "idle — TE-T23 found already-satisfied, routed to qa for closure; dev-team-tick-preflight will determine next action",
+    "updated_at": "2026-08-14T17:27:32Z",
     "updated_by": "dev-team"
   },
   "narrative": {
@@ -3276,24 +3276,6 @@
         "mode": "spike",
         "timebox": 240,
         "next_agent": "ba"
-      },
-      {
-        "id": "TE-T23",
-        "title": "T-23 CLAUDE.md step-2.5 (21L): compress to ~5L (detail in dispatch-claim CARD) [~11k tok/day]",
-        "owner": "developer",
-        "status": "BACKLOG",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "wave": 2,
-        "est_saving": "~11k tok/day (rides every subagent context)",
-        "zone": "cross-service/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-23",
-        "note": "SEQUENCING: depends on TE-T12 (CARD.md must exist first). CLAUDE.md is injected into EVERY subagent system prompt, so 21 router-only lines are paid by every spawn. Compress to ~5L pointing at CARD. Net -16L from CLAUDE.md; kills 3-copy pre-claim drift.",
-        "depends_on": [
-          "TE-T12"
-        ]
       },
       {
         "id": "TE-T06",
@@ -18228,6 +18210,32 @@
         "commit": "662d1fcc3",
         "commit_summary": "feat(cowork/supersede-mutex): new cowork-supersede-mutex.js (applySupersedeMutex, pure/fail-loud, mirrors cowork-chef-mutex.js shape+error contract) + test (32/32) + unconditional wiring into cowork-match-slots.js finish() tail (both legacy+adaptive modes, both WORK+ERROR-fallback paths) + AC-6 static assertion in cowork-schedule-consistency.test.js (13/13, was 9/9). Decision journal: 87e0554db.",
         "review_note": "Sibling row FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC already in review[] (commit 5918c55fe). Both FIX rows from this brief now shipped — AC-1 supersedes field on the sibling row is NO LONGER INERT: this row is the actuator. Router RAW-verified: commits 662d1fcc3+87e0554db exist and are pushed (origin/main matches HEAD), file list matches claim exactly (cowork-match-slots.js, cowork-match-slots.test.js, cowork-schedule-consistency.test.js, cowork-supersede-mutex.js, cowork-supersede-mutex.test.js + decision journal), all 4 claimed test suites independently re-run and confirmed (supersede-mutex 32/32, match-slots 69/69, chef-mutex 25/25 byte-identical/non-goal honored, schedule-consistency 13/13). Zero scope creep confirmed: docs/data/cowork-schedule.json, docs/agents/**, cowork-chef-mutex.js/test, orch-state.json all untouched by the agent (board row was found still BACKLOG when the agent finished — router self-healed the missing S2 lane-move separately, commit 70ba8dad4, before this flip)."
+      },
+      {
+        "id": "TE-T23",
+        "title": "T-23 CLAUDE.md step-2.5 (21L): compress to ~5L (detail in dispatch-claim CARD) [~11k tok/day]",
+        "owner": "dev-team",
+        "status": "REVIEW",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P1",
+        "wave": 2,
+        "est_saving": "~11k tok/day (rides every subagent context)",
+        "zone": "cross-service/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-23",
+        "note": "SEQUENCING: depends on TE-T12 (CARD.md must exist first). CLAUDE.md is injected into EVERY subagent system prompt, so 21 router-only lines are paid by every spawn. Compress to ~5L pointing at CARD. Net -16L from CLAUDE.md; kills 3-copy pre-claim drift.",
+        "depends_on": [
+          "TE-T12"
+        ],
+        "promoted_at": "2026-08-14T17:25:58Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-08-14T17:27:32Z",
+        "claimed_at": "2026-08-14T17:26:02Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "next_agent": "qa",
+        "review_note": "Router (BOUNDED-1 idle-pickup) claimed this row then found its acceptance criteria already satisfied by prior work before spawning a developer: CLAUDE.md step-2.5 (docs/agents/../CLAUDE.md, live HEAD) is already 2 lines (line 7-8) referencing .claude/skills/dispatch-claim/CARD.md for the full Phase A/A.5/B protocol, well under the briefs ~5L target (docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-23); CARD.md itself exists since 2026-07-31 (git log confirms, unrelated later commit f8d3891c6 touched CLAUDE.md 2026-08-14 for a different task, task-cowork-mutex-001, step 2.4). Total CLAUDE.md is 63L, under the briefs 58L target even. No code/doc change made — routing to qa for closure sign-off (DONE_VERIFIED, no-op-by-prior-completion) instead of dispatching a developer to redundantly redo already-shipped work."
       }
     ],
     "qa": [
@@ -18287,8 +18295,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-14T17:01:52Z",
-    "last_triaged_by": "po",
+    "last_triaged_at": "2026-08-14T17:25:58Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": []
   },
   "_meta": {
