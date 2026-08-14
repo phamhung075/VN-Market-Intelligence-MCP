@@ -137,20 +137,6 @@
     "archive": [],
     "rows": [
       {
-        "id": "cj-20260813T103005Z",
-        "ts": "2026-08-13T10:30:05Z",
-        "from": "code-janitor",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
-        "severity": "LOW",
-        "status": "RESOLVED",
-        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-13.json",
-        "po_disposition_at": "2026-08-14T00:30:11Z",
-        "po_disposition_by": "po/triage-20260814T0007Z",
-        "po_disposition": "RESOLVED — triaged in dev-team Step 1, tick 2026-08-14T00:07Z, alongside 248 durable-inbox envelopes and 49 telegram reports (4797-4845, all processed, list_unresolved_reports() == [] verified). Folded onto existing board rows; see docs/agent-memory/decisions/triage-20260814T0007Z-po.md for the per-class dispositions."
-      },
-      {
         "id": "qa-20260813T1105Z",
         "ts": "2026-08-13T11:05:00Z",
         "from": "qa",
