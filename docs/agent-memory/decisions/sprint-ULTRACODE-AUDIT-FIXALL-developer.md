@@ -416,3 +416,22 @@ flow-doc rewiring, which needs its own verified pass.
 **why-change:** Self-caught `${8:-{}}` bash brace-matching bug while wiring
 cowork-tick-preflight.sh metadata passthrough (silently corrupted every non-empty 8th
 arg) — fixed + regression-tested, not in original plan.
+
+### STEP developer-S25 · developer · 2026-08-14T09:58Z
+**task-id:** UC-CCA-P1-GWBLIND-DEDUP
+**what-done:** Deleted step-0-cowork/SKILL.md's duplicated GATEWAY-BLIND block
+(lines 53-88, verified current before editing) and replaced with a 4-line pointer
+stub at cycle-bootstrap/SKILL.md § Error handling (fail-loud). Amended TE-T11's own
+DoD note in the same orch-apply.sh write to describe composite POINTERS, not embeds.
+**what-considered:**
+- Also rewiring flows per the row's original part (b) — rejected per the RESCOPE
+  verdict, owned by TE-T11 (already DONE_VERIFIED), not re-implemented here.
+- Skip the graphify incremental step — only path: this specialist's tool grant
+  (Read/Edit/Write/Bash/mcp__semble only, per developer.md tools package) has no
+  Skill-tool binding to invoke `/graphify`; same structural gap hit 06:21Z this
+  session and by prior sessions (developer.md notebook precedent).
+**why-decision:** Line numbers matched the task's own scope note exactly (no drift
+since 2026-07-13 scoping); cycle-bootstrap's § Error handling already covers every
+case the duplicate carried (CONFIRMED-BLIND/TRANSIENT/market_context), so the stub
+loses zero coverage.
+**why-change:** no change from plan.

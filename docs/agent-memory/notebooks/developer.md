@@ -1,6 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-14T09:10:00Z | **Cycle:** TASK-COWORK-MUTEX-001 (cross-service/, `.claude/skills/dispatch-claim/SKILL.md` Step 2.4 collision probe + CLAUDE.md 1-line diff + `task_list_held.md` doc-sync)
+**Last updated:** 2026-08-14T09:59:03Z | **Cycle:** UC-CCA-P1-GWBLIND-DEDUP (`.claude/skills/step-0-cowork/SKILL.md` GATEWAY-BLIND dedup + TE-T11 DoD amend)
 
 ## Session 2026-08-14T06:21:26Z — UC-CDC-P7 Phase 2 partial (cross-service/, developer, BOUNDED-1 auto-pickup, session 632721c2)
 
@@ -35,5 +35,21 @@
 **Structural gaps hit again (same class as prior sessions, not new):** no MCP gateway binding this cycle (INV-GATEWAY-1) — could not send the decision-journal skill's own mandated CAP-REACHED BUG telegram when `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-6.md` breached its byte cap (37,405B > 36,000B; line count stayed under cap) on this task's own entry; appended the marker, rolled future writes to `-7.md`, documented the missed telegram in the handoff instead of silently dropping it. Same gap blocks graphify (see 06:21Z entry above) for this session shape.
 
 **Closeout:** commit pending, pathspec-scoped (`.claude/skills/dispatch-claim/SKILL.md` + `CLAUDE.md` + `docs/agents/tools/list/task_list_held.md` + `docs/WORK.md` + `docs/handoffs/TASK-COWORK-MUTEX-001.md` + this notebook + decision journal `-6.md`, single commit per FR-6). Decision journal STEP developer-S106. Board flip `ready[]`→`review[]`/`next_agent=qa` via `orch-apply.sh` — no `.head` write (dispatcher owns `.head` per this task's own dispatch instruction, INV-GATEWAY-1).
+
+---
+
+## Session 2026-08-14T09:52:37Z — UC-CCA-P1-GWBLIND-DEDUP (`.claude/skills/`, developer, P1 S, BOUNDED-1 auto-pickup, session 632721c2)
+
+**Task:** RESCOPE verdict — part (a) ONLY: delete `step-0-cowork/SKILL.md`'s duplicated GATEWAY-BLIND classification/fallback block and replace with a pointer to `cycle-bootstrap/SKILL.md` § Error handling SSOT, then amend TE-T11's own DoD note (composite POINTERS, not embeds). Part (b) flow-rewiring explicitly OUT of scope — belongs to TE-T11, already `DONE_VERIFIED`, not touched. No zone match (`.claude/skills/` has no specialist owner) — handled directly per the fallback rule, matching this task's own dispatch note.
+
+**Verified line numbers before editing** (task scope was set 2026-07-13, one month stale-risk flagged): re-read the live file first — the duplicated block was still exactly lines 53-88, byte-identical to the scope note. No drift.
+
+**Shipped:** 4-line stub replacing the 36-line duplicate (`**GATEWAY-BLIND guard — SSOT:** ... § Error handling (fail-loud) ... Follow that section exactly; do not duplicate it here`). Confirmed cycle-bootstrap's § Error handling covers every case the duplicate carried (CONFIRMED-BLIND/TRANSIENT classification, retry table incl. `market_context` row, Write-fallback-signal + graceful-DEFER protocol) — zero coverage lost. Commit `a27d7cd21`.
+
+**TE-T11 DoD amend + board flip, one `orch-apply.sh` write:** amended `task_board.done_verified[].note` for TE-T11 to read "composite POINTS to cycle-bootstrap Error handling SSOT (not full embeds)" in place of the old "composite embeds the same GATEWAY-BLIND + regime-fallback boundaries" (self-contradicting the fix just landed). Lane-moved `UC-CCA-P1-GWBLIND-DEDUP` `in_progress[]`→`review[]`, `status=REVIEW`/`next_agent=qa`. Synced top-level `.head` to the idle terminal state in the SAME write per `execute-tier.md`'s canonical `CANONICAL:SSOT-STATUSFLIP-LANEMOVE` rule (b) — this row WAS `.head.active_task_id`, `branch:null` flip to REVIEW → `.head={status:idle, active_task_id:null, next_agent:"router", ...}` (NOT `next_agent:null` — my own flow doc's STOP-RELEASE block uses `null`, but the CANONICAL execute-tier.md rule explicitly names `"router"` and I followed the more specific/newer SSOT; `.task_board.head` is deprecated, left untouched). `orch-validate.mjs` Stage0/1 PASS, conservation `task_total 732=732` (pure lane move), commit `7894d8e69`.
+
+**Structural gap (same class as prior sessions):** graphify incremental step skipped — this specialist's own tools package (`docs/agents/tools/package/developer.md`) grants only Read/Edit/Write/Glob/Grep/Bash + `mcp__semble__*`, no Skill-tool binding to invoke `/graphify`; matches this same session's earlier 06:21Z/09:10Z entries hitting the identical class of gap.
+
+**Closeout:** 2 code/board commits pathspec-scoped (`.claude/skills/step-0-cowork/SKILL.md` alone, then `docs/data/orch/orch-state.json` alone — deliberately not batched, since the board write depended on the first commit's SHA). Decision journal STEP developer-S25 (`sprint-ULTRACODE-AUDIT-FIXALL-developer.md`, 437L, well under 600L cap). No handoff file existed for this task (direct board-row auto-pickup, board `note` field is the spec) — none created, matching the FACTORY-KINHDICH-class precedent for this task shape.
 
 ---
