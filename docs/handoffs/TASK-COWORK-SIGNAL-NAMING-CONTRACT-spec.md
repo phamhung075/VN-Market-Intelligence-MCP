@@ -257,9 +257,89 @@ Autoclose Sweep, once PO re-adjudicates all 4 specs together per the parent's ow
 
 ---
 
+## 7. PO Binding Amendment 7 (2026-08-14T21:01Z) — READ BEFORE §1 AND §2
+
+> **Status of this document: PO-VERIFIED, `DONE_VERIFIED`.** The amendment below is **acceptance-bearing and
+> OVERRIDES the spec text it amends**. Parts (a), (e) and (f) change what must be written; do **not** paste
+> §1.3 or §2.4 verbatim. Implementation is dispatched under
+> `FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING-PHASE1-IMPL` (backlog, `next_agent=developer`), which supersedes
+> this row's `plan_only`/`supervised` hold. Full amendment JSON also lives on the board row
+> (`.task_board.done_verified[]`, field `po_amendment_7_20260814T2101Z`).
+
+**(a) §2.3/§2.4 anchor is dead AND the verbatim insertion is DESTRUCTIVE — acceptance-bearing.**
+`docs/agents/dev-team/flow/drain-signals.md` is now **228L** (≈150L when the brief was written).
+Its **line 93 is inside the §0a-D jq code fence** (`| .signal_queue.rows |= map(...)`), so inserting §2.4's
+markdown bullet there injects a `- **…**` line into an executable pipeline that is piped to `orch-apply.sh`.
+Cause: `5ad4a3f92` (FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN, 150→216L) and `b27ba6507` (216→228L), both
+landed after this spec was authored. **Corrected anchor:** the fingerprint line is now **146**, and its text
+changed to `2. **Fingerprint check (classification only — non-destructive):** …`; the two sub-bullets that
+followed were rewritten (147-148) and the spec's quoted 94-97 no longer exist in that form. Insert **after
+live line 146, before line 147**. The 3-leading-space indentation instruction is still correct (re-verified
+against live 147/148). Anchor on quoted text, never the number — this is the 4th anchor drift on this
+decomposition and the 2nd destructive one.
+
+**(b) §2.1/§3 `drain-signals.js` citation is stale; the substance is UPHELD.** The file is now 591L; live
+line 173 is `const files = fs.readdirSync(SIG)…`. The real call site is **251-252**, with field origins at
+244-249 and `payload = JSON.stringify(payloadObj)` at 250. Formula unchanged, and `base` (239/257/260/264),
+`fp_path` and `dest` are never arguments to `.update()`. **AC-3's NO-OP verdict stands**, re-derived at source
+2026-08-14, not re-cited.
+
+**(c) §1.1/§1.2 `mcp-tools.md` anchor CONFIRMED still live.** Lines 148-166 match the spec's quotation
+byte-for-byte (167 blank, 168 = next H2; file 211L). This is the **only** anchor on the entire 4-child
+decomposition still valid at dispatch time — recorded so it is not reflexively distrusted. §1.2's insertion
+point (after 164, before 166, additive-only) **stands**.
+
+**(d) All three absence claims re-checked at source and TRUE.** `grep` on `mcp-tools.md` for
+`Signal Bus|bctc_signal|unified-agent-synthesis|WINDOW_KEY` returns exactly one hit (the line-148 heading);
+`docs/handoffs/TASK-COWORK-SIGNAL-NAMING-CONTRACT.md` is genuinely absent; the basename genuinely never enters
+the hash. False-absence was 3-for-3 across siblings — this spec breaks the streak.
+
+**(e) The WINDOW_KEY invariant in §1.3 is OVERSTATED and is false for BOTH families — acceptance-bearing.**
+§1.3 asserts "the SAME value backs both this filename component AND that writer's published-marker mutex key".
+Live: bctc-analyst's marker is `published:bctc-analyst-<slot_id>:<cycle_tick_ISO>` rounded to `HH:00Z`
+(`docs/agents/bctc-analyst/flow/stage-log-notify.md:40-44`) while the filename WINDOW_KEY is `YYYYMMDDTHHMMZ`
+— same instant, **different serialization**. Worse, chef-intraday's multi-fire `MARKER_KEY` is
+`published:{SLOT_ID}:{WORK_DATE}:{VN_HOUR}` on `TZ=Asia/Ho_Chi_Minh` (`chef.md:104-105,127`) while the
+filename uses `CYCLE_DATE_UTC` (`chef.md:106`) — **different calendar bases, deliberately**, since Amendment 2
+ratified shipping `VN_HOUR` verbatim in Phase 1 and handed the residual to
+`FIX-CHEF-INTRADAY-MARKER-KEY-UTC-HOUR-BASIS-MIGRATION`. Publishing this as an established invariant invites an
+auditor or implementer to "repair" the mismatch by rewriting the live marker keyspace to the filename format —
+silently rotating every in-flight key and permitting one double-post per writer per window, the exact class
+`FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR` exists to prevent. **Required rewrite:** state that the same scheduled-window
+*instant* anchors both, that each may serialize it differently (filename `YYYYMMDDTHHMMZ`; bctc marker
+`<slot>:<ISO HH:00Z>`; chef-intraday marker `<VN date>:<VN hour>`), that neither may be re-derived from a
+run-start clock read, and that **the marker keyspace must not be rewritten to match the filename format**. Add
+an explicit Phase-1 carve-out naming chef-intraday's VN basis and pointing at the migration row.
+
+**(f) §1.3 leaves `{SLOT_ID}` and `{CYCLE_DATE}` unpinned — acceptance-bearing.** This discharges Amendment 6's
+carry-forward (3), which named this task as owner of the determinism rule. **Mechanism found at source (new —
+Amendment 6c had only the symptom):** `docs/agents/unified-agent/flow/chef.md:103` defines
+`SLOT_ID = chef-morning | chef-eod | chef-evening | chef-intraday` (**chef-prefixed**), while
+`docs/agents/unified-agent/flow/chef-dish.md:737` writes `FILEPATH = …-{CYCLE_DATE}-{SLOT_ID}.json` and `:740`
+exemplifies `…-2026-07-03-eod.json` (**prefix stripped**). One SSOT flow contradicting itself across two files.
+Live proof: `docs/data/unified-agent-synthesis-2026-08-13-intraday.json` **and**
+`…-2026-08-13-chef-intraday.json` both exist. **Required:** the contract subsection must (1) pin `{SLOT_ID}`'s
+literal domain and state which form the filename takes — and the implementer must reconcile `chef.md:103`
+against `chef-dish.md:737/740` in the same change, since documenting one form while the flow emits the other
+merely relocates the ambiguity; (2) pin `{CYCLE_DATE}`'s basis as **UTC**, citing `chef.md:106`
+`CYCLE_DATE_UTC`; (3) state the determinism property normatively — given a slot and a scheduled window,
+exactly one filename is computable, and no second convention for the same artifact family is permitted.
+Without these, the parent's AC-1 is passable by accident while the auditability property stays unreachable.
+
+**(g) Shipping zero edits was the CORRECT disposition — ratified.** Procedurally the row is
+`plan_only`+`supervised` and the parent gates all shipping, documentation included (the spec's own header
+reasons this correctly). Substantively — the stronger ground — landing §1.3 and §2.4 verbatim would have
+corrupted a live jq pipeline (a) and written a false invariant (e) plus an unpinned filename grammar (f) into
+the standards SSOT. The spec-only disposition prevented three defects from shipping. **AC-3 is closed on
+documentation alone, as claimed.** The two insertions land under the implementation row with (a)'s corrected
+anchor and (e)/(f)'s corrected text.
+
+---
+
 ## Decision Journal
 See `docs/agent-memory/decisions/sprint-COWORK-RELIABILITY-developer.md`, task_id
 `TASK-COWORK-SIGNAL-NAMING-CONTRACT`.
+PO review + Amendment 7: `docs/agent-memory/decisions/sprint-COWORK-RELIABILITY-po.md`.
 
 ## RETURN
 ```
