@@ -65,6 +65,26 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
     terminal defense-in-depth layer. Full writeup:
     `docs/architecture/microservice/mcp-server/usecases.md` §
     `fetchParseAndStoreBctc.ts`.
+13. `bctcReparseJob` re-derives its supplied period from extracted TEXT, not
+    the stale queue-row filename (FIX-BCTC-REPARSE-PERIOD-KEY-
+    SYSTEMATICALLY-STALE-100PCT-QUARANTINE, 2026-08-14): `reparseSingle
+    WithOcrFallback` previously called `deps.pipeline({..., year, quarter})`
+    using ONLY `parseYearQuarterFromFilename(payload.filename)` — the
+    stranded `agent_feedback` row's filename, fixed at whatever moment the
+    PDF was first flagged stranded. Once the job's cadence stalled (see
+    `FIX-BCTCREPARSEJOB-NOT-FIRING-40H-LOWCONF-BACKLOG-ACCUMULATING`), the
+    resolved extraction could describe a LATER filing than that stale
+    filename, so invariant 10's `checkPeriodContentConsistency` guard
+    correctly refused every one of a 19/19 batch — 0% completion, backlog
+    could never drain even once the job fired again. Fix: after text
+    extraction, call `extractPeriodFromContent(rawText)` (the SAME pure
+    domain function invariant 10's guard uses) and prefer its (year,
+    quarter) signal when confident; falls back to the filename-derived
+    period only when the content signal is inconclusive (identical negative
+    control already applied at write time — a poor-OCR filing is not newly
+    blocked). Invariant 10's guard itself is untouched and remains the
+    terminal defense — this fix only stops feeding it a supplied period
+    that is stale by construction.
 
 ---
 
