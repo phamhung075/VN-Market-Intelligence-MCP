@@ -133,8 +133,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-14T22:37:11Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-14T22:40:43Z",
+    "_updated_by": "cowork-team",
     "archive": [],
     "rows": [
       {
@@ -710,7 +710,7 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-14.json"
       },
       {
@@ -721,7 +721,7 @@
         "type": "repair_task_request",
         "summary": "DRS claim script trusts stale cached dispatch_lane field — 2nd live occurrence same day (FIX-CHEF-BIZCTX 02:21Z, UC-CDC-P1 22:35Z). scripts/devteam-backlog-claim-design-router-sweep.jq sets .head.next_agent from dispatch_lane (stamped at promote time) instead of re-resolving effective_next_agent fresh at claim time. Both times the affected row had already cycled through its cached-stage specialist (ba) and moved on (next_agent updated to architect on the row itself) before DRS claimed it, which would have re-dispatched already-completed BA work had the router not manually corrected .head.next_agent pre-spawn each time.",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "board_row": null,
         "payload": {
