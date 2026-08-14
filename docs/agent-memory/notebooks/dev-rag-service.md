@@ -4,6 +4,26 @@ Zone: `apps/rag-service/` | Stack: Python/FastAPI | DB: rag_service.db (write)
 
 ## Working Memory
 
+### 2026-08-14 — FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED (P0, live incident, router-dispatched)
+
+**Task:** container `92e6017318e4` OOM-killed 3x in ~44h (dmesg-confirmed, invoker `lancedb-tokio-w`) AFTER `ca6d86869`'s `TOKIO_WORKER_THREADS=1`/`LANCE_CPU_THREADS=1` pin deployed + content-hash-verified live. PO asked to discriminate ineffective-vs-insufficient before patching.
+
+**Discrimination (done live, in-container, `docker exec` against the running prod image, scratch db — no prod data touched):** pin IS effective — fresh isolated process confirmed both env vars read `"1"` before the first `lancedb.connect_async()`, no `"Falling back to auto"` fallback in logs (confirmed as the binary's own literal error path via `strings`). But INSUFFICIENT — `/proc/<pid>/task/*/comm` showed 2 `lancedb-tokio-w` + 2 `lance-cpu` threads persisting regardless, in BOTH prod and the isolated repro. `strings` on `_lancedb.abi3.so` (live v0.36.0) found no `max_blocking_threads`-equivalent knob anywhere — Tokio's separate on-demand blocking-thread pool (shares the same thread-name prefix) and lance-core's rayon IO-core-reservation floor each bottom out above 1, with no further env lever available. Root-caused the REAL amplifier instead: `_vector_index_built` is per-process, always False on restart, so the full IVF_PQ/KMeans corpus rebuild re-fires on EVERY cold start even when a valid index already persists on disk (confirmed live: prod `vector_idx` built once 2026-08-13T09:30:44Z, still valid unrebuilt 22h+ later).
+
+**Fix:** `_maybe_build_vector_index()` (`infrastructure/repositories.py`) now calls `table.list_indices()` inside the existing `_vector_index_lock` before attempting a build — skips the rebuild entirely if the `vector` column is already indexed; `list_indices()` failure degrades gracefully to the pre-existing row-count-gated check.
+
+**Tests:** 3 new in `test_rag_vector_index_build.py` (`TestVectorIndexPersistsAcrossRestart`) — real end-to-end persisted-index-skip via a simulated restart (2nd store instance, same `db_path`), negative control (no persisted index still builds), `list_indices()`-raises fallback. RED confirmed first. 201/201 pytest green. mypy: byte-identical error set to `main` baseline (diffed via stash), 0 new categories.
+
+**Still open, flagged for PO/ops (out of zone — `docker-compose.yml` is infra):** steady-state memory ~91-95%/1GiB even with no rebuild in flight — a memory-ceiling review is a reasonable companion action, not made here.
+
+**AC (binding, next actor):** `REBUILD_REQUIRED: true`. Verification = ≥2h supervised `dmesg`-inside-VM sampling ONLY — never `docker inspect .State.OOMKilled`, never a short window (sibling row `FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW` exists because a prior cert on this exact container used both invalid signals and was falsified 60min later).
+
+**DJ:** `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-rag-service.md` S5.
+
+Zone health: rag-service test suite 201/201 green (+3 this cycle), no other drift observed. HEALTHY | FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED → REVIEW (next_agent: qa)
+
+---
+
 ### 2026-08-12 — OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX (P0, router-reassigned after AC-3 FAIL)
 
 **Task:** the FIX-RAG-EMBEDDER-IDLE-UNLOAD fix below (commit `4c8c601e6`) got deployed by ops (10:14:37Z) but AC-3 FAILED: container OOM-restarted TWICE more within 10min of the "fix" going live (10:18:10Z, 10:24:01Z per ops.md correction). Router reassigned to me with the post-fix samples to find WHY the fix wasn't holding — not to re-attempt a bare rebuild.
