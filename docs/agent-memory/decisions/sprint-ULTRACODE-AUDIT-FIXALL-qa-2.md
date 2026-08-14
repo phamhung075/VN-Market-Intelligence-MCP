@@ -106,3 +106,27 @@ honesty about "not yet, here's exactly when" beats a fabricated green.
 **why-change:** No change from plan — router's own task explicitly asked me to determine
 whether the durability bar could be certified now or must stay open, and to correct the
 misleading infrastructure.md caveat either way (done, independent of the durability bar).
+
+### STEP qa-S24 · qa · 2026-08-14T09:33:00Z
+**task-id:** FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN-SWALLOWED-EMPTY-KILLS-KINHDICH
+**what-done:** Direct-Commit Verify — independently re-verified AC-1..AC-5 (AC-5 never actually
+re-checked by QA before; PO's 08-06 redeploy discharged it but routed back to a QA that never
+re-spawned since the row sat in qa[] not review[]).
+**what-considered:**
+- Trust PO's 08-06T16:01Z redeploy evidence + PO's 08-14T09:08Z lane-move note as sufficient —
+  REJECTED, task instructions + feedback_router_verify_raw_not_badges require QA's own re-run,
+  and today's 04:34Z "database is locked" telegram (po_triage_20260814T0525_corroboration) needed
+  independent resolution, not inherited trust.
+- Full independent re-verify: source AC-1..AC-4, fresh `go test ./... -count=1`, mock-guard,
+  live gate script BEFORE and AFTER live-exercising all 4 read paths, deployed-binary content
+  check (image sha + string literals), container log sweep for recurrence of the lock error —
+  CHOSEN, matches the row's own explicit re-QA framing and AC-5's exact ordering requirement.
+**why-decision:** All checks green: DSNs mode=ro/no _journal_mode (4/4 sites, stale comment
+gone), errors no longer swallowed, DELETE-mode regression test passes, alert-engine .DBPath
+confirmed still dead (0 non-decl references), gate script PASS journal_mode=delete both before
+and after live curl to /price/history, gateway, /reading/HVN, /market — all real non-empty data.
+Deployed image sha256:663e258b50de (unchanged since PO's 08-06T15:59Z redeploy, durable 8 days).
+04:34Z lock telegram did not recur (0 hits, mcp-server logs 6h; stock-price logs 2h clean) —
+consistent with PO's own "non-discriminating ERROR verdict" caveat, not a live regression.
+**why-change:** No change from plan — router explicitly flagged this as genuine re-QA, not
+repeat work; executed the verify-committed flow's own Direct-Commit Verify steps 1-4 in full.
