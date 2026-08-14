@@ -92,11 +92,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-14T02:17:56Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING",
+    "next_agent": "architect",
+    "next_action": "Design-Router Sweep claim of FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING — router-corrected from stale dispatch_lane=ba to current next_agent=architect (BA spec already complete, see docs/handoffs/FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING-BA-spec.md); spawn architect DIRECTLY.",
+    "updated_at": "2026-08-14T02:22:21Z",
+    "updated_by": "dev-team (design-router sweep)",
+    "_updated_at": "2026-08-14T02:22:00Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3150,30 +3152,6 @@
         ],
         "related": [
           "FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK"
-        ],
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
-      },
-      {
-        "id": "UC-ASL-P3",
-        "type": "SPRINT-S",
-        "title": "Freeze Tier-2/3 auditor predicates into scripts/auditor-db-checks.sh (extend db-integrity-counts.sh discipline)",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P3",
-        "note": "SCOPE=verifier Rescope note. New scripts/auditor-db-checks.sh mirroring db-integrity-counts.sh DISCIPLINE ONLY (NOT its WAL-blind immutable open — use docker exec bun {readonly:true}). Embed C-01..C-16 / B-05 gate / B-09 / B-13 SQL; fold in (do not copy) the two queued predicate corrections and REPOINT FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE + FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE at the script as SSOT. Must be standalone (P2 emit-script is a dependency only if it lands).",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "ba",
-        "related": [
-          "FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE",
-          "FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE"
         ],
         "priority_bumped_from": "P2",
         "priority_bumped_at": "2026-07-17T04:54:03Z",
@@ -15231,42 +15209,6 @@
         "updated_at": "2026-08-12T11:29:41Z"
       },
       {
-        "id": "FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING",
-        "type": "FIX",
-        "title": "chef.md gathers processed/bctc_signal_* biz-context (c112 auto-cure) but never plumbs it into per-ticker conviction_calls rationale — BIZ_CTX_OK still evaluates false; wire GATHER->Steps 4-7.5",
-        "status": "READY",
-        "priority": "P0",
-        "zone": "cross-service/",
-        "owner": "po",
-        "supervised": true,
-        "created_at": "2026-07-18T20:56:16Z",
-        "created_by": "po-tnb-c113-triage",
-        "origin": "docs/handoffs/tnb-audit-latest.md",
-        "origin_signal_id": "tnb-20260718T2020Z",
-        "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge; WIP over cap, no dispatch). TNB c113 verified NEGATIVE: c112's Step-0 GATHER glob-widening (read docs/signals/processed/bctc_signal_*/fundamental_*) IS present in chef.md (L109-113) and fresh complete VCB/FPT/HPG business-context data existed on disk hours before the 07-18 evening dish -- yet the dish persisted [gap:business_context_absent] in known_gaps[] (RAW-verified in unified-agent-synthesis-2026-07-19-evening.json) and VCB's conviction_calls rationale ('Banking sector mixed: earnings growth offsets deposit-source tightness') cites only generic sector language, NOT a product/customer/ops/mgmt fact traceable to a gathered bctc_signal_* field. Root cause: the c112 fix reaches WHERE to look (Step 0 gather) but not HOW gathered fields flow into the per-ticker narrative at Steps 4-7.5, so BIZ_CTX_OK (chef.md L584-586) never sees a qualifying cite. BA to TRACE the GATHER->conviction_calls wiring: is the drop at Step 4 (thesis build), 5 (portfolio_conviction merge), or 6 (per-ticker rationale)? Deliverable: an explicit chef.md instruction that injects >=1 gathered biz-context field into >=1 ticker's rationale when such a signal was read this cycle, so the gate passes on data not only via gap-token. DISTINCT from FIX-CHEF-STEP0-BCTC-PROCESSED-DIR-BLINDSPOT (the WHERE auto-cure, already landed) and FIX-CHEF-STEP75-L3-BIZCTX-FLOOR (the gate itself, c108).",
-        "verification_gate": "A subsequent chef evening/morning dish persists known_gaps[] WITHOUT [gap:business_context_absent] AND >=1 conviction_calls[] rationale cites a product/customer/ops/mgmt fact traceable to a bctc_signal_*/fundamental_* signal read that cycle (RAW-verify the synthesis JSON, not the notebook self-report).",
-        "next_agent": "architect",
-        "updated_at": "2026-08-14T00:31:52Z",
-        "po_triage_20260806T2205_field_confirmation": "PROMOTED FROM HYPOTHESIS TO CONFIRMED by TNB c123 (telegram report 4471, 2026-08-06T20:30:04Z) with the first concrete ticker-level instance in the 19 days since this row was minted. Evidence: the 08-06 EOD dish (08:50:20Z) emitted [gap:business_context_unavailable] for VCB, while docs/signals/processed/bctc_signal_VCB_20260805_routine.json (ts 2026-08-05T18:06Z) carries full product/customer/ops/mgmt fields for VCB and is in-window per FIX-CHEF-STEP0-BCTC-PROCESSED-DIR-BLINDSPOT. So the upstream data arrived on schedule and the gap token is FACTUALLY WRONG - the defect is exactly the GATHER->Steps 4-7.5 wiring this row already names, not an upstream availability problem. This also independently corroborates bctc-analyst's serve layer as healthy (TNB c144 confirms 4 tickers/cycle on schedule), which removes the last competing explanation. TNB recommended 'architect confirm recurrence (N=1, below 3-cycle auto-cure threshold)'; PO OVERRIDES that gate for this row specifically - the 3-cycle threshold exists to avoid minting on thin evidence, and this row already exists with an independently-derived root cause, so N=1 is corroboration of a standing diagnosis rather than the sole basis for a new one. Folded into BATCH this tick. Stays next_agent=ba/supervised=true: the deliverable is a spec for how biz-context enters conviction_call rationale and how BIZ_CTX_OK is evaluated, not a one-line patch.",
-        "status_note": "RECURRENCE CONFIRMED (po triage 2026-08-08T00:02:01Z, tnb-audit c124 handoff + telegram report 4508): F-CHEF-BIZCTX-JOIN-MISS fired on a 2ND consecutive business day with a 2ND ticker. EOD dish 2026-08-07T08:45Z published conviction calls for VCB (HOLD) and DXG (SELL) tokened '[gap:business_context_unavailable: bctc-analyst 14/16 blocked]', while docs/signals/processed/bctc_signal_{VCB,DXG}_20260806_routine.json (both _processed.processedAt 2026-08-06T21:11:09Z, 11.5h before publish and well inside chef's own 24h Step-0 window) carried fully populated product/customer/ops fields — VCB ROE 16.7%/op-margin 80.9%/PE 14.1 vs sector 9; DXG ROE 1.9% vs sector 7.3%/PE 66.5x vs sector 16.1x/AVOID. Upstream availability is proven, the loss is entirely in chef's downstream GATHER->Steps 4-7.5 join, now doubly confirmed. occurrence_count=2. tnb explicitly requested NO new mint (routed here per PO's own c123 ACK directive 'do not hold for N=3'). tnb c125 will escalate to P0-urgency if a 3rd consecutive day / 3rd ticker appears. | 2026-08-11 PO: P0. occurrence_count=3. Standing escalation threshold CROSSED — see escalation_20260811/evidence_20260811. next_agent=ba unchanged (row is supervised:true, needs a spec not a mechanical cure). AC unchanged: BIZ_CTX_OK must evaluate true and per-ticker conviction_calls[].rationale must cite >=1 product/customer/ops/mgmt fact whenever an in-window populated bctc_signal_<TICKER>_*.json exists; re-test against the next dish carrying >=1 conviction call. | 2026-08-12 BA: spec complete. TRACE result: drop is primarily Step 4 (thesis build, chef-dish.md L88-134), compounded by Step 7 citation-discipline loophole, Step 7.5 BIZ_CTX_OK gap-token-of-convenience, Step 7.6 no persisted citation field. Row own Step-5-portfolio_conviction-merge hypothesis is factually wrong (Step 5 = Kinh Dich/get_portfolio_conviction, unrelated to bctc business-context). 7 exact before/after flow-doc edits specified (FR-0..FR-7), all flow-doc-only (chef.md + chef-dish.md), zero new scripts/services. One blocker flagged for PO (opportunistic-vs-force-widen ticker coverage), non-blocking, BA gave default recommendation. next_agent=architect.",
-        "occurrence_count": 3,
-        "escalation_20260811": "P1->P0 ON THE STANDING RULE, NOT ON NEW BLAST RADIUS. tnb-audit c126 (2026-08-11T20:30Z) delivered the first RAW-verified 3rd instance, which is the exact threshold PO itself set in its own c123/c124/c125 ACKs ('3rd consecutive day / 3rd ticker -> raise to P0'). Occurrences: c123 2026-08-06 EOD (VCB solo), c124 2026-08-07 EOD (VCB+DXG), c126 2026-08-11 evening (VCB+FPT). VCB present in all three.",
-        "evidence_20260811": "Verified against docs/data/unified-agent-synthesis-2026-08-11-evening.json (RAW synthesis, NOT the unified-agent notebook self-report — the row's own verification_gate demands RAW). (a) known_gaps[] still carries the token [gap:business_context_unavailable_signal_drain_archive]; (b) conviction_calls[] rationale for VCB ('Fair valuation (yield +1.70pp) undermined by USD/VND carry reversal pressure + FII outflow on banking sector; Kinh Dich Su (7) HOLD posture confirms caution') and for FPT ('Position underwater -11.33%; Khon hexagram patience signal; insufficient tech-sector earnings data') cite ZERO product/customer/ops/mgmt facts; (c) yet docs/signals/processed/bctc_signal_VCB_20260811_routine.json and bctc_signal_FPT_20260811_routine.json both carry _processed.processedAt=2026-08-11T18:20:54Z — 1h32m BEFORE the dish fired at 19:53:18Z — and both are fully populated (VCB: SOE bank lending/deposit/bancassurance, NII 17,421 ty VND, OCF/NI 1.37x; FPT: IT services/software export/telecom/education, ROE 28.3% vs sector 10.6%). PO independently re-confirmed the same four bctc_signal payloads (DXG/FPT/HPG/VCB) sitting in its OWN pendingSignals[] inbox this tick at createdAt 2026-08-11T18:08:03Z. (d) chef's us_macro_layer/valuation_layer text asserts 'bctc_signal archive block 14/16 watchlist tickers' — FACTUALLY FALSE for VCB and FPT specifically. The gap token is not a missing-data report, it is a wiring defect mislabelled as a data gap.",
-        "promoted_at": "2026-08-12T08:57:41Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "ba",
-        "claimed_at": "2026-08-12T11:54:47Z",
-        "claimed_by": "dev-team (design-router sweep)",
-        "ba_spec_complete": true,
-        "ba_handoff": "docs/handoffs/FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING-BA-spec.md",
-        "ba_completed_at": "2026-08-12T12:03:37Z",
-        "po_manual_dispatch_flagged_at": "2026-08-14T00:30:11Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "READY-XOR-SUP-OR-PLANONLY",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) re-admitted this row under flag_reentrant (prior stamp 2026-08-12T15:06:24Z was stale by >4h and its BATCH never dispatched). Rank 1 of 89 live candidates this tick, P0, ready[], next_agent=architect, BA spec already complete at docs/handoffs/FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING-BA-spec.md. Folded into this tick's BATCH."
-      },
-      {
         "id": "FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE",
         "type": "FIX",
         "title": "notebook-auto-prune charges the ENTIRE byte-cap overage to dated journal sections: rolling headings (## Archive, ## Known patterns) carry the MAX sentinel key so they can never be the drop candidate, yet they contribute their full bytes to the overage — every breach is paid for by deleting real cycle history while the actual bloat is retained",
@@ -15619,6 +15561,35 @@
           "docs/agents/alert-commander/init.md"
         ],
         "updated_at": "2026-08-14T01:34:10Z"
+      },
+      {
+        "id": "UC-ASL-P3",
+        "type": "SPRINT-S",
+        "title": "Freeze Tier-2/3 auditor predicates into scripts/auditor-db-checks.sh (extend db-integrity-counts.sh discipline)",
+        "status": "READY",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P3",
+        "note": "SCOPE=verifier Rescope note. New scripts/auditor-db-checks.sh mirroring db-integrity-counts.sh DISCIPLINE ONLY (NOT its WAL-blind immutable open — use docker exec bun {readonly:true}). Embed C-01..C-16 / B-05 gate / B-09 / B-13 SQL; fold in (do not copy) the two queued predicate corrections and REPOINT FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE + FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE at the script as SSOT. Must be standalone (P2 emit-script is a dependency only if it lands).",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "ba",
+        "related": [
+          "FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE",
+          "FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE"
+        ],
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-08-14T02:21:00Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "ba",
+        "updated_at": "2026-08-14T02:20:49Z"
       }
     ],
     "review": [
@@ -19189,9 +19160,50 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-14T01:00:22Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "last_triaged_at": "2026-08-14T02:21:00Z",
+    "last_triaged_by": "dev-team (design-router sweep)",
+    "in_progress": [
+      {
+        "id": "FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING",
+        "type": "FIX",
+        "title": "chef.md gathers processed/bctc_signal_* biz-context (c112 auto-cure) but never plumbs it into per-ticker conviction_calls rationale — BIZ_CTX_OK still evaluates false; wire GATHER->Steps 4-7.5",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "zone": "cross-service/",
+        "owner": "po",
+        "supervised": true,
+        "created_at": "2026-07-18T20:56:16Z",
+        "created_by": "po-tnb-c113-triage",
+        "origin": "docs/handoffs/tnb-audit-latest.md",
+        "origin_signal_id": "tnb-20260718T2020Z",
+        "note": "PLAN-ONLY (anomaly->BACKLOG bridge, project_anomaly_task_bridge; WIP over cap, no dispatch). TNB c113 verified NEGATIVE: c112's Step-0 GATHER glob-widening (read docs/signals/processed/bctc_signal_*/fundamental_*) IS present in chef.md (L109-113) and fresh complete VCB/FPT/HPG business-context data existed on disk hours before the 07-18 evening dish -- yet the dish persisted [gap:business_context_absent] in known_gaps[] (RAW-verified in unified-agent-synthesis-2026-07-19-evening.json) and VCB's conviction_calls rationale ('Banking sector mixed: earnings growth offsets deposit-source tightness') cites only generic sector language, NOT a product/customer/ops/mgmt fact traceable to a gathered bctc_signal_* field. Root cause: the c112 fix reaches WHERE to look (Step 0 gather) but not HOW gathered fields flow into the per-ticker narrative at Steps 4-7.5, so BIZ_CTX_OK (chef.md L584-586) never sees a qualifying cite. BA to TRACE the GATHER->conviction_calls wiring: is the drop at Step 4 (thesis build), 5 (portfolio_conviction merge), or 6 (per-ticker rationale)? Deliverable: an explicit chef.md instruction that injects >=1 gathered biz-context field into >=1 ticker's rationale when such a signal was read this cycle, so the gate passes on data not only via gap-token. DISTINCT from FIX-CHEF-STEP0-BCTC-PROCESSED-DIR-BLINDSPOT (the WHERE auto-cure, already landed) and FIX-CHEF-STEP75-L3-BIZCTX-FLOOR (the gate itself, c108).",
+        "verification_gate": "A subsequent chef evening/morning dish persists known_gaps[] WITHOUT [gap:business_context_absent] AND >=1 conviction_calls[] rationale cites a product/customer/ops/mgmt fact traceable to a bctc_signal_*/fundamental_* signal read that cycle (RAW-verify the synthesis JSON, not the notebook self-report).",
+        "next_agent": "agent-father",
+        "updated_at": "2026-08-14T02:29:30Z",
+        "po_triage_20260806T2205_field_confirmation": "PROMOTED FROM HYPOTHESIS TO CONFIRMED by TNB c123 (telegram report 4471, 2026-08-06T20:30:04Z) with the first concrete ticker-level instance in the 19 days since this row was minted. Evidence: the 08-06 EOD dish (08:50:20Z) emitted [gap:business_context_unavailable] for VCB, while docs/signals/processed/bctc_signal_VCB_20260805_routine.json (ts 2026-08-05T18:06Z) carries full product/customer/ops/mgmt fields for VCB and is in-window per FIX-CHEF-STEP0-BCTC-PROCESSED-DIR-BLINDSPOT. So the upstream data arrived on schedule and the gap token is FACTUALLY WRONG - the defect is exactly the GATHER->Steps 4-7.5 wiring this row already names, not an upstream availability problem. This also independently corroborates bctc-analyst's serve layer as healthy (TNB c144 confirms 4 tickers/cycle on schedule), which removes the last competing explanation. TNB recommended 'architect confirm recurrence (N=1, below 3-cycle auto-cure threshold)'; PO OVERRIDES that gate for this row specifically - the 3-cycle threshold exists to avoid minting on thin evidence, and this row already exists with an independently-derived root cause, so N=1 is corroboration of a standing diagnosis rather than the sole basis for a new one. Folded into BATCH this tick. Stays next_agent=ba/supervised=true: the deliverable is a spec for how biz-context enters conviction_call rationale and how BIZ_CTX_OK is evaluated, not a one-line patch.",
+        "status_note": "RECURRENCE CONFIRMED (po triage 2026-08-08T00:02:01Z, tnb-audit c124 handoff + telegram report 4508): F-CHEF-BIZCTX-JOIN-MISS fired on a 2ND consecutive business day with a 2ND ticker. EOD dish 2026-08-07T08:45Z published conviction calls for VCB (HOLD) and DXG (SELL) tokened '[gap:business_context_unavailable: bctc-analyst 14/16 blocked]', while docs/signals/processed/bctc_signal_{VCB,DXG}_20260806_routine.json (both _processed.processedAt 2026-08-06T21:11:09Z, 11.5h before publish and well inside chef's own 24h Step-0 window) carried fully populated product/customer/ops fields — VCB ROE 16.7%/op-margin 80.9%/PE 14.1 vs sector 9; DXG ROE 1.9% vs sector 7.3%/PE 66.5x vs sector 16.1x/AVOID. Upstream availability is proven, the loss is entirely in chef's downstream GATHER->Steps 4-7.5 join, now doubly confirmed. occurrence_count=2. tnb explicitly requested NO new mint (routed here per PO's own c123 ACK directive 'do not hold for N=3'). tnb c125 will escalate to P0-urgency if a 3rd consecutive day / 3rd ticker appears. | 2026-08-11 PO: P0. occurrence_count=3. Standing escalation threshold CROSSED — see escalation_20260811/evidence_20260811. next_agent=ba unchanged (row is supervised:true, needs a spec not a mechanical cure). AC unchanged: BIZ_CTX_OK must evaluate true and per-ticker conviction_calls[].rationale must cite >=1 product/customer/ops/mgmt fact whenever an in-window populated bctc_signal_<TICKER>_*.json exists; re-test against the next dish carrying >=1 conviction call. | 2026-08-12 BA: spec complete. TRACE result: drop is primarily Step 4 (thesis build, chef-dish.md L88-134), compounded by Step 7 citation-discipline loophole, Step 7.5 BIZ_CTX_OK gap-token-of-convenience, Step 7.6 no persisted citation field. Row own Step-5-portfolio_conviction-merge hypothesis is factually wrong (Step 5 = Kinh Dich/get_portfolio_conviction, unrelated to bctc business-context). 7 exact before/after flow-doc edits specified (FR-0..FR-7), all flow-doc-only (chef.md + chef-dish.md), zero new scripts/services. One blocker flagged for PO (opportunistic-vs-force-widen ticker coverage), non-blocking, BA gave default recommendation. next_agent=architect.",
+        "occurrence_count": 3,
+        "escalation_20260811": "P1->P0 ON THE STANDING RULE, NOT ON NEW BLAST RADIUS. tnb-audit c126 (2026-08-11T20:30Z) delivered the first RAW-verified 3rd instance, which is the exact threshold PO itself set in its own c123/c124/c125 ACKs ('3rd consecutive day / 3rd ticker -> raise to P0'). Occurrences: c123 2026-08-06 EOD (VCB solo), c124 2026-08-07 EOD (VCB+DXG), c126 2026-08-11 evening (VCB+FPT). VCB present in all three.",
+        "evidence_20260811": "Verified against docs/data/unified-agent-synthesis-2026-08-11-evening.json (RAW synthesis, NOT the unified-agent notebook self-report — the row's own verification_gate demands RAW). (a) known_gaps[] still carries the token [gap:business_context_unavailable_signal_drain_archive]; (b) conviction_calls[] rationale for VCB ('Fair valuation (yield +1.70pp) undermined by USD/VND carry reversal pressure + FII outflow on banking sector; Kinh Dich Su (7) HOLD posture confirms caution') and for FPT ('Position underwater -11.33%; Khon hexagram patience signal; insufficient tech-sector earnings data') cite ZERO product/customer/ops/mgmt facts; (c) yet docs/signals/processed/bctc_signal_VCB_20260811_routine.json and bctc_signal_FPT_20260811_routine.json both carry _processed.processedAt=2026-08-11T18:20:54Z — 1h32m BEFORE the dish fired at 19:53:18Z — and both are fully populated (VCB: SOE bank lending/deposit/bancassurance, NII 17,421 ty VND, OCF/NI 1.37x; FPT: IT services/software export/telecom/education, ROE 28.3% vs sector 10.6%). PO independently re-confirmed the same four bctc_signal payloads (DXG/FPT/HPG/VCB) sitting in its OWN pendingSignals[] inbox this tick at createdAt 2026-08-11T18:08:03Z. (d) chef's us_macro_layer/valuation_layer text asserts 'bctc_signal archive block 14/16 watchlist tickers' — FACTUALLY FALSE for VCB and FPT specifically. The gap token is not a missing-data report, it is a wiring defect mislabelled as a data gap.",
+        "promoted_at": "2026-08-12T08:57:41Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "ba",
+        "claimed_at": "2026-08-14T02:21:00Z",
+        "claimed_by": "dev-team (design-router sweep)",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING-BA-spec.md",
+        "ba_completed_at": "2026-08-12T12:03:37Z",
+        "po_manual_dispatch_flagged_at": "2026-08-14T00:30:11Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "READY-XOR-SUP-OR-PLANONLY",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) re-admitted this row under flag_reentrant (prior stamp 2026-08-12T15:06:24Z was stale by >4h and its BATCH never dispatched). Rank 1 of 89 live candidates this tick, P0, ready[], next_agent=architect, BA spec already complete at docs/handoffs/FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING-BA-spec.md. Folded into this tick's BATCH.",
+        "stale_dispatch_lane_note": "DRS claim script (scripts/devteam-backlog-claim-design-router-sweep.jq) set head.next_agent from a stale dispatch_lane=\"ba\" field stamped 2026-08-12T08:57:41Z, predating BA completion (ba_completed_at=2026-08-12T12:03:37Z) and this morning's po-manual-dispatch-sweep confirmation of next_agent=architect. Router corrected head.next_agent to architect before dispatch (2026-08-14T02:22Z) rather than re-run BA. Root cause: claim script trusts cached dispatch_lane instead of re-resolving effective_next_agent fresh at claim time (RLC does the latter). Needs hardening.",
+        "architect_completed_at": "2026-08-14T02:29:12Z",
+        "architect_review_note": "Ratified FR-0..FR-7 (all 7 CONFIRMED SOUND) against the LIVE chef.md/chef-dish.md — every Before-quote re-verified byte-for-byte. One drift found: chef-dish.md +44L / chef.md +5L since BA wrote the spec (2026-08-13 commit c31ee006e, unrelated FOLLOW-UP-1 checkpoint-pointer insert) shifted every cited line number by a non-uniform offset; content untouched, corrected live line map published in the handoff (e.g. FR-6 BIZ_CTX_OK now at chef-dish.md:535-537 not :490-492). Blast-radius grep (BIZ_CTX token) confirms zero application-code consumers -- pure prose/gate-logic wiring inside 2 flow-doc files, zero DDD/interface risk. Blocker Q1 (opportunistic-vs-force-widen ticker coverage) ruled WITHIN remit: BA default (opportunistic-only, NFR-3) is the correct design and is already baked into FR-3 as specified -- does not block execution; PO retains veto as a follow-up, not a rework. BUILD-STANDARD: not-applicable (flow-doc prose, zero apps/ touch). Fan-out: agent-father is the SOLE next agent -- zero application code, edits confined to 2 agent flow-doc files inside agent-father sole ownership; no PM decomposition needed (one wave, 10 edit sites, no depends_on graph). Precedent: FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION (ready[], same zone) already carries next_agent=agent-father, confirming this is an established routing pattern, not novel. Full findings: [Architect] Brownfield Findings section appended to the BA-spec handoff.",
+        "updated_by": "architect"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -19214,7 +19226,7 @@
         "last_served_tick": "2026-08-14T01:55:13Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-13T23:20:20Z"
+        "last_served_tick": "2026-08-14T02:20:30Z"
       },
       "qa_drain": {
         "last_served_tick": "2026-08-13T23:51:04Z"

@@ -316,6 +316,90 @@ RAW-verify against the synthesis JSON, never the notebook self-report."*
 
 ---
 
+## [Architect] Brownfield Findings
+
+**Zone:** `cross-service/` (row's own field, confirmed correct) — real touched surface is
+`docs/agents/unified-agent/flow/chef.md` + `docs/agents/unified-agent/flow/chef-dish.md`, i.e. agent
+flow-doc/prose files, **not** `apps/<service>/` application code. Zone-detect Tier-1 does not apply
+(no `apps/` path); `BUILD-STANDARD: not-applicable` (BUG-FIX/refactor-in-doc, no new primitives) —
+Standard Detection matrix skip confirmed.
+
+**Ratification — FR-0 through FR-7 (all 7 CONFIRMED SOUND, content-verified against live files):**
+Re-read every "Before" quote in §2 against the current on-disk `chef.md`/`chef-dish.md` byte-for-byte
+(not trusted from the spec) — all 10 anchor strings (FR-0 x2, FR-1, FR-2, FR-3 x2, FR-4, FR-5, FR-6,
+FR-7 x2) match verbatim. **One drift found, non-blocking:** `chef-dish.md` picked up +44L on
+2026-08-13 (commit `c31ee006e`, `FIX-CHEF-MIDFLOW-BAIL-DETERMINISM` — 8 Checkpoint pointers inserted
+at step boundaries) and `chef.md` +5L, both AFTER BA wrote this spec (2026-08-12) — every line number
+in §2/§6 is now stale by a variable, non-uniform offset per file-region. Content is unaffected (no
+edit touched any FR-anchored text), but a line-literal patch against BA's cited numbers would land in
+the wrong place. **Corrected live line map** (re-verified this cycle, use these — or better, anchor
+on the quoted text itself, not the number):
+
+| FR | File | BA's line | Live line (2026-08-14) |
+|---|---|---|---|
+| FR-0a | `chef.md` | :140 | **:145** |
+| FR-0b | `chef-dish.md` | :430-431 | **:475-476** |
+| FR-1 (insert) | `chef.md` | after :157 | **after :162**, before blank :163 / `Supplementary calls` :164 |
+| FR-2 | `chef-dish.md` | :19-20 | **:24-25** |
+| FR-3 (table row) | `chef-dish.md` | :96 | **:116** |
+| FR-3 (insert) | `chef-dish.md` | after :99-102 | **after :122** (confidence-scoring bullets end), before blank :123 / `**Volatility & Breadth Context**` :124 |
+| FR-4 (insert) | `chef-dish.md` | after :258, before :260 | **after :294** (carry/FII provenance bullet), before :295 `Store all chain sentences...` |
+| FR-5 | `chef-dish.md` | :398 | **:443** |
+| FR-6 | `chef-dish.md` | :490-492 | **:535-537** (3-line block, verified verbatim incl. the `ANY_LAYER_PARTIAL` sibling check at :542 — FR-6's rewrite does not touch it and does not need to, "relied on a gap token" stays computable from the new definition's 2nd OR-branch) |
+| FR-7 (schema) | `chef-dish.md` | after :603-604 | **after :648** (`"rationale_one_liner": "..."`), before :649 closing `}` |
+| FR-7 (impl rule) | `chef-dish.md` | after :640 | **after :685** (`- Extract conviction calls from Step 4 per-ticker scoring...`) |
+
+**Blast-radius check (repo-wide grep, `BIZ_CTX` token):** zero hits outside `chef.md`/`chef-dish.md` +
+this handoff + BA's decision journal + the unified-agent notebook. No TS/Go/shell consumer reads
+`$BIZ_CTX_SIGNALS`/`$BIZ_CTX_CITED`/`BIZ_CTX_OK` — confirms NFR-1's "no new data source" framing and,
+more importantly, confirms there is genuinely **zero application-code blast radius**: this is prose-only
+wiring inside 2 markdown files, full stop. No hidden script/test depends on the old `BIZ_CTX_OK`
+definition text.
+
+**DDD/layer mapping (§3 table):** accepted as-written. These are prose/gate-logic files, not typed
+code, so "Interface/Application/Infrastructure" is used in BA's loose sense (already the convention
+on the USDVND precedent, `FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE-BA-spec.md` §3) — instruction
+text = Interface, `BIZ_CTX_OK` verdict logic = Application, the persisted JSON schema = Infrastructure.
+No objection; extending the existing convention, not inventing a new one.
+
+**Blocker Q1 (§5 EC-5) — RULING, within architect's remit (this is a design-soundness question, not
+a publish-scope veto):** BA's opportunistic-only default (NFR-3, already baked into FR-3's own text —
+"Do NOT pull in a ticker that is not already part of this cycle's qualifying clusters... purely to
+satisfy this requirement") is the technically correct design and is **ratified as specified, no
+change**. Force-widening ticker coverage to manufacture a citation would conflate a data-availability
+gate with a publish-scope decision — a strictly worse failure mode than the one this row exists to
+fix (chef publishing a call on a ticker that never cluster-qualified, purely to make `BIZ_CTX_OK`
+pass). Since FR-3 as written already implements the safe default, **this does not block agent-father's
+execution** — PO retains veto right per BA's note, but a later veto is a follow-up FR against FR-3's
+opportunistic clause, not a rework of FR-0/1/2/4/5/6/7.
+
+**Reuse check:** confirms BA's own §6 finding — no new interface, no new script/service, no new data
+file. `$BIZ_CTX_SIGNALS`/`$BIZ_CTX_CITED` follow the exact existing "Store as `$VAR`" prose pattern
+(`MACRO_HEALTH`, `$L5_GAP_TOKEN`, `$L6_GAP_TOKENS`) — extend, not duplicate. Nothing to flag.
+
+**Risk flags:** none blocking.
+- R1 (informational): the stale-line-number drift above will recur on the NEXT flow-doc edit that
+  lands on either file before this fix ships — agent-father's own edit-prepare flow already re-reads
+  the live file before patching (per its `edit-prepare.md`), so this is self-correcting in practice;
+  flagged only so agent-father does not blindly trust BA's line numbers either.
+- R2 (informational, not actioned per BA's own EC-3): `chef.md:162`'s `fundamental_*` `[TRANSITION]`
+  branch (soak window H-18→H-19) has zero live files backing it — confirmed still true this cycle
+  (0 `fundamental_*` files anywhere on disk). Does not affect FR-1 (keys on `bctc_signal_*` field
+  names, verified live). Candidate for a future code-janitor/doc-self-heal pass, out of scope here.
+- R3 (informational): `FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION` (`ready[]`,
+  `next_agent: agent-father`, same zone) confirms agent-father-as-next_agent is an already-established,
+  currently-live routing pattern for this exact file family — not a novel routing choice being
+  introduced by this row.
+
+**Fan-out (this row only — no PM step, no developer step):** `agent-father` is the sole next agent.
+Rationale: zero application code, zero new interfaces, edits confined to 2 agent flow-doc files
+squarely inside `agent-father`'s "All agent-file lifecycle" ownership (dispatch table). Routing through
+PM would add a decomposition step with nothing to decompose (one wave, 2 files, 10 edit sites, no
+`depends_on` graph). Matches BA's own RETURN recommendation and the (unshipped) USDVND precedent's
+identical fan-out shape.
+
+**Scan clean:** true ✓
+
 ## Decision Journal
 See `docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-ba.md`, task_id
 `FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING`.
