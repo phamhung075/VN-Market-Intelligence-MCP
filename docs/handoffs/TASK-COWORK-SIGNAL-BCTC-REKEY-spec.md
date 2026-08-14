@@ -303,3 +303,118 @@ NEXT: po | review spec (this row moves to review[], next_agent=po per dispatch i
 HANDOFF: docs/handoffs/TASK-COWORK-SIGNAL-BCTC-REKEY-spec.md
 PIPELINE: hold — supervised row, no auto-continue; tasks 3/4 remain separate dispatches
 ```
+
+---
+
+## 11. PO Adjudication — 2026-08-14T17:34Z (appended by po, sign-off)
+
+**VERDICT: ACCEPTED — `DONE_VERIFIED`, with ONE binding amendment (Amendment 5, below).**
+Same disposition shape as this row's sibling task 1 received at its §9 and as the parent received at
+`po_architect_signoff_20260807T0545`: approved in place with an acceptance-bearing amendment, **not**
+returned for rework. The deliverable — the 4-file edit set, both mode branches, the mutex-key rename, and
+the stale-cross-reference correction — is verified correct at source and is not being changed.
+
+### 11.1 What PO re-verified at source this tick (not read from this document's prose)
+
+| Claim in this spec | Verified how | Result |
+|---|---|---|
+| §3.1 release emit line at `stage-analyze.md:114` with `{YYYYMMDD}_release.json` | `grep -n` live | CONFIRMED, line number still exact |
+| §3.2 routine mode has NO emit line anywhere (FR-7 gap is real) | full read of `## Routine Mode` (lines 6-82) | CONFIRMED absent; Step 4c @61, final sentence @80, `---` @82, `## Release Mode` @84 — all four anchors exact |
+| §4 `stage-log-notify.md` §5d-1 carries `<cycle_tick_ISO>` + the "NOMINAL slot fire time" prose at line 43 | live read | CONFIRMED, prose line 43 exact |
+| §5 `stage-consolidate.md:64` cross-reference to `stage-log-notify.md` step 5 is stale | `grep -n 'bctc_signal' docs/agents/bctc-analyst/flow/*.md` → **zero** hits in `stage-log-notify.md` | CONFIRMED stale; the correction is right |
+| §7 NFR-4 fingerprint no-op | `scripts/agents-flow/drain-signals.js:251-252` read at source: `sha256(String(from)+String(type)+payload+String(createdAt))` | CONFIRMED — basename genuinely absent from the hash; rekey is fingerprint-neutral by construction |
+| Not superseded during the 6-day review idle | `grep -rn 'WINDOW_KEY\|derive_window_key' docs/agents/bctc-analyst/` → **no matches** | CONFIRMED — nothing shipped; spec is still live work |
+| Compatibility with task 1's Amendment 4 (landed 2026-08-14T14:58Z, *after* this spec was written) | task 1 spec §9.2 read in full | **COMPATIBLE** — see 11.2 |
+
+### 11.2 Amendment 4 compatibility — checked, and it *strengthens* this spec
+
+Task 1 was signed off yesterday with Amendment 4, whose part (a) strikes task 1 §7's "single, shared
+dependency of both sibling tasks" over-claim and rules that **`TASK-COWORK-SIGNAL-BCTC-REKEY` is the sole
+real consumer** of `derive_window_key()` (task 3 uses `VN_HOUR`; task 3's spec line 13 was correct).
+This *upholds* §1 of this document — this task's consumption of the function is the genuine one — and the
+`YYYYMMDDTHHMMZ` (no `SS`) format §1 cites was explicitly upheld at task 1 §9.1.
+Amendment 4(b)'s new branch-2 fail-loud domain guard (`^([01]?[0-9]|2[0-3])$` on the cron hour field) is
+**inert for this consumer**: all four bctc slots are bare-integer once-daily crons (`0 15/18/21/0 * * *`,
+re-verified live in `docs/data/cowork-schedule.json` this tick), so the guard never trips here. No
+behavioural change to anything specified in §2-§5. Amendment 3 is likewise confined to branch-2 internals,
+as §1 of this document already correctly states.
+
+### 11.3 Amendment 5 — BINDING, acceptance-bearing, on the future unsupervised implementer
+
+**(a) THE CALL'S FOUR ARGUMENTS ARE UNBOUND AT THE ONLY CALL SITE IN THE DECOMPOSITION. — the one
+acceptance-bearing gap.**
+
+Task 1 §1 declares all four inputs are supplied *by the caller* from session state ("already-loaded",
+"already in session state (no re-fetch, no wall-clock read)"). Amendment 4(a) then establishes that this
+task is the **sole** consumer. Therefore §2 of this document is the *only* place in the entire 4-task
+decomposition where those four parameters ever bind to real values — and it binds none of them. Verified
+live across all of `docs/agents/bctc-analyst/flow/` this tick:
+
+| Argument | Occurrences in `docs/agents/bctc-analyst/flow/` |
+|---|---|
+| `prompt_text` | **0** |
+| `slot_id` | **1** — and it is itself an undefined placeholder (`<slot_id>` at `stage-log-notify.md:40`) |
+| `cowork_schedule_json` | **0** — no step anywhere loads `docs/data/cowork-schedule.json` |
+| `live_mcp_fetched_at` | **0** |
+
+`stage-bootstrap.md` is 6 lines and delegates to `.claude/skills/step-0-cowork/SKILL.md` §0b-0c, whose
+declared `## Outputs` are `$AGENT_NOTEBOOK`, `$CYCLE_SNAPSHOT`/`$MARKET_CONTEXT`+`$MACRO_SNAPSHOT`,
+`$REGIME`, `$CARRY_REGIME` — **none of the four**. Nothing upstream of Step 0c supplies them.
+
+**Why this is acceptance-bearing and not a nit:** an implementer following §2 verbatim writes the call line
+and every argument is undefined. Branch 2 cannot resolve a slot record, `WINDOW_KEY` comes back empty or
+garbage, and the filename template in §3 collapses to a *constant* across all four daily slots — silently
+re-shipping the exact intra-day collision this parent row exists to close. That is Amendment 4(b)'s
+"plausible-looking wrong key" failure mode arriving through the **caller** instead of the parse, and
+Amendment 4(b)'s guard does not catch it.
+
+**Required — §2 must bind all four before the `derive_window_key()` line, using material already verified:**
+- `prompt_text` — the agent's own invocation prompt. Live-verified this tick, all 4 bctc slots'
+  `trigger_prompt` in `docs/data/cowork-schedule.json` read exactly:
+  `run docs/agents/bctc-analyst/flow/main.md  slot=bctc-analyst-slot-N`.
+- `slot_id` — parsed from the `slot=` token of that prompt (`bctc-analyst-slot-1..4`). **Do NOT** adopt PM
+  stub `TASK-002-bctc-analyst-rekey.md` AC-2's claim that slot_id is "already known at this step (Calendar
+  Gate already determined it)" — that is **false at source**: `cycle.md` Step 0c determines
+  `RELEASE_TICKERS`/`ROUTINE_TICKERS`/`CYCLE_MODE` and never a slot id.
+- `cowork_schedule_json` — an explicit read of `docs/data/cowork-schedule.json`, added as its own line.
+- `live_mcp_fetched_at` — **the genuine residual.** It exists nowhere in this agent's flow *or* in
+  step-0-cowork's outputs, so the implementer must bind it to a named, already-fetched MCP payload
+  timestamp from Step 0b's bootstrap result. It MUST NOT be satisfied by a wall-clock read: task 1 §1
+  forbids it, and bctc-analyst is a Bash-less agent class — it cannot shell out to `date` at all. This is
+  the one sub-item that may need a bootstrap-side addition rather than a pure `cycle.md` edit; if Step 0b's
+  payload carries no usable fetch timestamp, that is a real dependency to raise before implementing, not to
+  paper over.
+- Carry PM stub Implementation Note 2 (**NFR-2 no-Bash**) into §2 verbatim — this document omits it entirely
+  and it is load-bearing for precisely this agent.
+
+**(b) §10's factual claim is wrong and must be struck.** §10 states the PM decomposition "minted 4 board
+rows but did not also mint 4 corresponding per-task handoff stub files". **False** — all four exist and are
+dated 2026-08-07 07:59: `docs/handoffs/TASK-001-derive-windowkey.md`, `TASK-002-bctc-analyst-rekey.md`
+(8926 bytes, this task's own), `TASK-003-chef-intraday-filename.md`, `TASK-004-naming-contract.md`. The row's
+`ba_handoff` field points at a *wrong filename*, not at a missing artifact. Consequence, not merely
+cosmetic: this 305-line spec was authored without reading PM's own acceptance handoff for the same task,
+and that stub carries both items this document lacks — the argument-sourcing detail (its AC-2) and the
+NFR-2 no-Bash constraint (its Implementation Note 2), i.e. exactly Amendment 5(a). Note the provenance:
+this false claim was inherited verbatim from task 1's spec §10 rather than checked, which is the **third**
+unverified sibling-restatement in this decomposition (after architect brief §2's shared-consumer over-claim
+and task 1 §7's inheritance of it). Correct disposition when specs disagree or assert absence: verify at
+source, per the parent's own `po_child_review_progress_20260814T1458Z` instruction.
+
+**(c) §2's `cycle.md` line anchors are stale by +9 and must be replaced with the text anchor.** Live this
+tick: Step 0c is at line **61** (spec says 52), its "Run AFTER stage-bootstrap.md" header line is **63**
+(spec says 54), and the `Set session variable CYCLE_MODE:` block is **95-99** (spec says 86-89). Current
+lines 86-89 are the middle of the *"Sequencing rule for mixed cycles"* bullet list — an implementer
+trusting the numeric anchor inserts the pin inside that list and breaks it. The spec's quoted-text anchor
+("immediately after the existing `Set session variable CYCLE_MODE:` block") remains unambiguous and
+correct, so strike the line numbers in favour of it. Noted for calibration: **only `cycle.md` drifted** —
+`stage-analyze.md` (114, 61/80/84), `stage-log-notify.md` (43) and `stage-consolidate.md` (64) all still
+match this spec exactly, so the spec's live-verification discipline was sound; it is 6 days of drift on one
+file, not sloppy sourcing.
+
+### 11.4 Explicitly NOT granted by this sign-off
+
+`plan_only` + `supervised` remain **PRESERVED**. This certifies the **spec artifact**, not a licence to
+ship. Per the parent's own `supervised_note`, no code ships until PO re-adjudicates
+`FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING`, which stays `BLOCKED`/`next_agent=po` and still owes review on
+`TASK-COWORK-SIGNAL-CHEF-INTRADAY` and `TASK-COWORK-SIGNAL-NAMING-CONTRACT` (2 of 4 remaining). An
+implementer arriving here MUST carry Amendment 5 (a)+(b)+(c) **and** task 1's Amendment 4 (a)+(b)+(c).
