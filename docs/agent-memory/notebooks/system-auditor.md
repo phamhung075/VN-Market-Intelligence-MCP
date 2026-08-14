@@ -1,28 +1,53 @@
-## c86 · 2026-08-14T00:00:42Z
+## c6 · 2026-08-14T02:47Z
 
-### Audit Run Tier-2 (Freshness Sweep — 00:00 UTC 2026-08-14, fail-open dispatch: A-30 mem_creep)
-- Tier: 2 | Cron checks: 1 (A-29) | DB checks: 2 (C-06/C-07) | Dispatch: A-30 rag-service 88.50% fail-open spawn
-- Anomalies: 1 (1 warn, 0 critical, 0 info)
-- Status: WARN — 3 stale/missed crons detected
+### Audit Run Tier-1 (02:30–02:47 UTC 2026-08-14)
+- Tier: 1 | Services: 13 checked | Sources: 0 checked | DB checks: 0
+- Anomalies: 1 new (C=0 W=1 I=0) | Dedup-skipped: 0
+- Status: DEGRADED
 
-**Dispatch Context (Non-Escalation Confirmed):**
-Tier-1 probe detected A-30 memory check rag-service at 88.50% (117.8 MiB free), triggering fail-open dispatch to this Tier-2 audit. Cross-reference prior cycles c73/c85: continuation of known oscillation pattern (35%–90% range) tracked as STALE-ACK under FIX-RAG-DEPLOY-MEMORY (status=DONE_VERIFIED). Per dispatch instruction, confirmed as FOLD pattern — no re-escalation, monitoring continues.
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-08-14T02:46:09Z ===
 
-**Tier-2 Findings:**
-- [A-29] Cron Fire Check: 76 ON_TIME, 3 STALE/MISSED
-  - `monthlySignalQualityAudit` (MISSED, 1778.6h overdue; last: 2026-06-01)
-  - `brokerSanctionsSweep` (STALE, 330.6h overdue; last: 2026-07-31 08:00)
-  - `ragFtsRebuildCron` (STALE, 582.3h overdue; last: 2026-07-20 20:15)
-  → Verdict: **WARN** (3 stale/missed crons, escalation warranted)
+--- docker ps -a ---
+NAMES                                             STATUS                  IMAGE                                           CREATED
+vn-market-intelligence-mcp-mcp-server-1           Up 7 hours (healthy)    vn-market-intelligence-mcp-mcp-server           7 hours ago
+vn-market-intelligence-mcp-news-fetch-1           Up 11 hours (healthy)   vn-market-intelligence-mcp-news-fetch           11 hours ago
+vn-market-intelligence-mcp-api-gateway-1          Up 14 hours (healthy)   vn-market-intelligence-mcp-api-gateway          14 hours ago
+vn-market-intelligence-mcp-alert-engine-1         Up 15 hours (healthy)   vn-market-intelligence-mcp-alert-engine         15 hours ago
+vn-market-intelligence-mcp-rag-service-1          Up 17 hours (healthy)   vn-market-intelligence-mcp-rag-service          40 hours ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 12 hours (healthy)   vn-market-intelligence-mcp-pdf-extractor        5 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 7 days (healthy)     vn-market-intelligence-mcp-stock-price          7 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 2 weeks (healthy)    vn-market-intelligence-mcp-macro-indicators     2 weeks ago
+vn-market-intelligence-mcp-frontend-1             Up 2 weeks (healthy)    vn-market-intelligence-mcp-frontend             2 weeks ago
+mcp-gateway                                       Up 4 weeks (healthy)    mcpservergatway-gateway                         4 weeks ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 4 weeks (healthy)    ghcr.io/flaresolverr/flaresolverr:latest        4 weeks ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 4 weeks (healthy)    vn-market-intelligence-mcp-technical-analysis   4 weeks ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 4 weeks (healthy)    vn-market-intelligence-mcp-kinh-dich-service    4 weeks ago
 
-- [C-06] Market messages (3h window): 3 messages — **PASS**
-- [C-07] Agent signals (24h window): 29 signals — **PASS**
-- [B-06/B-07] VPS Proxy Health: endpoints unavailable (deferred to next cycle)
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
 
-**Signal Emissions:**
-- [emit-signal] A-29 cron-fire-gap: severity=WARN
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-rag-service-1 baseline 84.27% < 85% investigate-gate
+(All 12 containers SKIP, all below 85%)
+```
 
-**[HEARTBEAT]** OK ts=2026-08-14T00:00:42Z (Tier-2 cycle completed)
+### Findings:
+- [A-01–A-11] Container status: ALL PASS (13 containers UP)
+- [A-12–A-20] Health endpoints: ALL PASS (5 endpoints OK, A-20 pdf-extractor 3/3 probes)
+- [A-21] Restart count: PASS (0 cumulative, no crashes in 4h window)
+- [A-30] Memory pressure: ALL SKIP (all containers below 85% investigate-gate, rag-service at 84.27% per oscillation pattern)
+- [A-32] Disk: PASS (36% capacity)
+- [A-33] Hook liveness: WARN — context-bloat-backstop.sh settings-file missing
+  [emit-signal] OK dedup_key=hook_enforcement_liveness:context-bloat-backstop.sh id=sys-20260814T024729-65b0
+  [emit-dashboard] OK id=sys-20260814T024729-65b0 check_id=A-33
+
+**Summary:** 1 anomaly (WARN). rag-service memory 84.27% — below alert threshold, oscillation pattern continues per STALE-ACK FU-RAG-DEPLOY-MEMORY. System degraded due to hook config issue (A-33).
 
 ---
 
