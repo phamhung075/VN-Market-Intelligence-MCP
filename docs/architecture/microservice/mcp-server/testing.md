@@ -12,6 +12,7 @@
 | `013-rag-retriever.test.ts` | RAG search functionality |
 | `155-log-rotation.test.ts` | Log file management |
 | `178-price-history.test.ts` | Price time series queries |
+| `emit-pressure-state.test.ts` | `runEmitPressureState`/`emitPressureStateTool.ts` — 35 tests. AC-1..AC-5: signal_backlog/dev_queue_depth/container_vm_headroom_mb compute + atomic write + cycle-snapshot freshness-gated promotion + never-throws. TASK_2008a FR-A1/FR-A2 (added 2026-08-14): `calendar_status` server-compute via injectable `computeCalendarStatusFn` when omitted; in-domain override (`SESSION_STATUSES` in `vnTradingCalendar.ts`) honored as-is; out-of-domain override `console.warn`'d + discarded in favor of the recomputed value, asserted via `spyOn(console,"warn")`, never throws (Zod wire-level stays bare `z.string().optional()` — enforcement lives inside `runEmitPressureState`, not the schema boundary). |
 
 ### WAL Checkpoint / DB Health
 | Test File | Coverage |

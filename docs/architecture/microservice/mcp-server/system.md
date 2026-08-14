@@ -38,6 +38,7 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 | `get_analysis_history` | Historical analysis log for a ticker | ticker, days? | market.db |
 | `smart_compact` | Compact a cowork session context | — | cowork agent helper |
 | `get_evidence_summary` | Evidence items for open chain findings | chain_id? | market.db (evidence_items) |
+| `emit_pressure_state` | Writes `docs/data/pressure-state.json` (9-key, atomic tmp→rename) with server-computed infra metrics for the cowork dispatcher's MANDATORY telemetry Step 6.0 call — `emitPressureStateTool.ts`, injectable `EmitPressureStateDeps` seam. Server-computed: `signal_backlog`, `dev_queue_depth`, `container_vm_headroom_mb`, and (TASK_2008a FR-A1) `calendar_status` via `computeCalendarStatusFn` default `isVnTradingDay(getTodayVnDate()).session_status`. `calendar_status` override handling (FR-A2): in-domain value (`SESSION_STATUSES` in `vnTradingCalendar.ts`) honored as-is; out-of-domain value is `console.warn`'d and discarded in favor of the server-computed value — deliberately NOT a Zod-boundary reject, to preserve the tool's documented never-throws contract `telemetry.md` Step 6.0 depends on. Also promotes `cycle-snapshot-<HH:MM>.json` → `cycle-snapshot-latest.json` (freshness-gated, `SNAPSHOT_MAX_STALENESS_MS`=4h). NEVER throws — `{success:false, reason}` on any internal error. | calendar_status?, tick_id?, fire_time?, pressure_mode?, last_regime?, last_volatility_level? (all optional) | docs/data/pressure-state.json + docs/signals/*.json + orch-state.json (read-only) |
 
 ---
 

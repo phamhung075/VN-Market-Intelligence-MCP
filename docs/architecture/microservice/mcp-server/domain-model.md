@@ -91,6 +91,7 @@
 |---------|-----------|
 | `kinhDich/` (7 services) | Hexagram backtesting, I-Ching mapping |
 | `financial-reports/` | bctcValidator, ratioComputer, earningsCalendar |
+| `vnTradingCalendar.ts` (`isVnTradingDay(date)`, `getTodayVnDate()`) | Pure, embedded-holiday-data VN exchange calendar. `SESSION_STATUSES = ["open","holiday","half_day","weekend","unknown"] as const` (TASK_2008a FR-A2) is the runtime SSOT `SessionStatus` is derived FROM (`typeof SESSION_STATUSES[number]`) — added because a pure TS type alias has no backing array a Zod schema/domain-check can enumerate over. Consumed by `isTradingDayTool.ts` and, as of TASK_2008a FR-A1, `emitPressureStateTool.ts`'s `EmitPressureStateDeps.computeCalendarStatusFn` default (see `system.md` § `emit_pressure_state`). |
 | `tradingWindow.ts` | VN market hours: 09:00-15:30 GMT+7 Mon-Fri |
 | `sparkline.ts` | ASCII price visualization |
 | `stockSearch.ts` | Ticker normalization + search |
