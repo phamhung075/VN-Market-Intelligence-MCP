@@ -94,10 +94,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "UC-CCA-P2",
-    "next_agent": "ba",
-    "next_action": "Design-Router Sweep claim of UC-CCA-P2 — spawn ba DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only (if either was set) preserved — do not clear.",
-    "updated_at": "2026-08-14T11:51:28Z",
-    "updated_by": "dev-team (design-router sweep)"
+    "next_agent": "architect",
+    "next_action": "BA spec complete (docs/handoffs/UC-CCA-P2-BA-spec.md) — 6 FRs (DMS-2 ladder absorption into gateway-availability-gate, market-watcher dedup, 4-agent + fb-market-poster 3-file extension), 0 PO blockers, 3 architect open questions. Spawn architect for brownfield design across the 10-file wiring.",
+    "updated_at": "2026-08-14T11:58:56Z",
+    "updated_by": "ba"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -15794,6 +15794,37 @@
         "promoted_by": "dev-team (design-router sweep)",
         "promotion_note": "Design-Router Sweep — assigned dispatch_lane='agents-architect' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
         "dispatch_lane": "agents-architect"
+      },
+      {
+        "id": "UC-CCA-P2",
+        "type": "SPRINT-S",
+        "title": "Absorb the DMS-2 sibling-corroboration probe into gateway-availability-gate; de-dup market-watcher double probe; extend to 5 flows",
+        "status": "READY",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P2",
+        "note": "SCOPE=verifier Rescope note. Upgrade gateway-availability-gate SKILL with the DMS-2 escalation ladder (CONFIRMED-BLIND skip-backoff, sibling-recent suppression) keeping its correct confirmed-down actions (Write signal+BLOCKED notebook, NEVER send_telegram). Dedup market-watcher inline block; extend the gate to alert-commander/unified-agent/digest-predict/bctc-analyst/fb-market-poster. Coordinate with sibling P1 on cycle.md.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "architect",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-08-13T23:20:35Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "ba",
+        "updated_at": "2026-08-14T11:58:56Z",
+        "claimed_at": "2026-08-14T11:51:27Z",
+        "claimed_by": "dev-team (design-router sweep)",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/UC-CCA-P2-BA-spec.md",
+        "ba_completed_at": "2026-08-14T11:58:45Z",
+        "updated_by": "ba"
       }
     ],
     "review": [
@@ -19132,35 +19163,7 @@
     },
     "last_triaged_at": "2026-08-14T11:51:23Z",
     "last_triaged_by": "dev-team (design-router sweep)",
-    "in_progress": [
-      {
-        "id": "UC-CCA-P2",
-        "type": "SPRINT-S",
-        "title": "Absorb the DMS-2 sibling-corroboration probe into gateway-availability-gate; de-dup market-watcher double probe; extend to 5 flows",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-cycle-agents-P2",
-        "note": "SCOPE=verifier Rescope note. Upgrade gateway-availability-gate SKILL with the DMS-2 escalation ladder (CONFIRMED-BLIND skip-backoff, sibling-recent suppression) keeping its correct confirmed-down actions (Write signal+BLOCKED notebook, NEVER send_telegram). Dedup market-watcher inline block; extend the gate to alert-commander/unified-agent/digest-predict/bctc-analyst/fb-market-poster. Coordinate with sibling P1 on cycle.md.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "ba",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "promoted_at": "2026-08-13T23:20:35Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "ba",
-        "updated_at": "2026-08-14T11:51:28Z",
-        "claimed_at": "2026-08-14T11:51:27Z",
-        "claimed_by": "dev-team (design-router sweep)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
