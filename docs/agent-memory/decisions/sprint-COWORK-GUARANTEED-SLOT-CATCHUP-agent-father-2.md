@@ -339,3 +339,24 @@ agent_mismatch_orphans_lock); the doc text now instructs substituting the real s
 spawn prompt's Coordination line, never the literal $CLAUDE_CODE_SESSION_ID string.
 **why-change:** none — matches dispatch AC1-AC5 exactly; verified `--check` exit 0 (276 files,
 0 offenders) and lint's own 9/9 test suite green before writing this entry.
+
+### STEP agent-father-S40 · agent-father · 2026-08-14T04:33:23Z
+**task-id:** FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING
+**what-done:** Applied all 7 flow-doc edits (FR-0..FR-7, 10 anchor sites) to
+`docs/agents/unified-agent/flow/chef.md` + `chef-dish.md`, wiring the Step-0-gathered
+`bctc_signal_*`/`fundamental_*` data into `$BIZ_CTX_SIGNALS`/`$BIZ_CTX_CITED`, Step 4's mandatory
+citation sub-step, Step 6.5's causal chain, Step 7 Block B citation discipline, Step 7.5's
+redefined `BIZ_CTX_OK`, and Step 7.6's persisted `business_context_cited` JSON field.
+**what-considered:**
+- Trust BA's original line numbers vs re-anchor on quoted text (architect risk-flag R1): re-anchored
+  on quoted text every time — files had already drifted once (BA→architect) and drifted again
+  further as my own earlier edits in this same pass shifted later line numbers.
+- Route through edit-prepare/edit-apply's full agent-identity cascade flow vs apply directly: applied
+  directly — architect's ratification explicitly named a fully-specified 10-site edit set with zero
+  application code and zero cascade (no frontmatter/roster/dispatch touch), the agent-identity
+  cascade machinery does not apply to flow-doc prose edits of this shape.
+**why-decision:** All 10 "Before" quotes grepped unique + verbatim-matched the live files before each
+edit; each edit landed exactly the architect-ratified "After" text, verified post-edit via grep for
+every new `$BIZ_CTX_*`/`business_context_cited` token (all present, correct count).
+**why-change:** none — architect's ratification (FR-0..FR-7 CONFIRMED SOUND, Blocker Q1 ruled
+within-remit) was applied as specified, no rework.
