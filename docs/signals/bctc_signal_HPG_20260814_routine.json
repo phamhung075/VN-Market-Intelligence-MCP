@@ -1,0 +1,54 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "cycle_id": "20260814-1800",
+  "slot": "bctc-analyst-slot-2",
+  "ts": "2026-08-14T18:05:45Z",
+  "product": "San xuat thep xay dung, thep cuon can nong (HRC), ong thep va ton mang - chuoi gia tri khep kin tu quang sat den thanh pham.",
+  "customer": "Nha thau xay dung, nha phan phoi thep noi dia, khach hang xuat khau (ASEAN, My, EU).",
+  "ops": "Bien loi nhuan gop Q1-2026 chi 15.8% nhung loi nhuan sau thue vuot loi nhuan gop (9.055,9 ty > 8.365,1 ty) - dau hieu thu nhap ngoai hoat dong lon; operating_profit=0 loi trich xuat cau truc (22nd+ chu ky chua khac phuc).",
+  "mgmt": "ROE (sector-comp, annualized) 12.7% tren trung vi nganh thep (2.9%); PE 14.2 discount -57% so median nganh - dinh gia re tuong doi du du lieu van hanh (operating profit) con loi trich xuat, can than trong khi dien giai chat luong loi nhuan.",
+  "valuation": {
+    "pe": 14.2,
+    "sector_median_pe": 32.6,
+    "earning_yield_pct": 7.042,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pp": 2.042,
+    "verdict": "FAIR",
+    "regime": "NEUTRAL",
+    "rate_sensitive_headwind": false
+  },
+  "kinhdich": {
+    "que": "Phuc (24)",
+    "xu_huong": "THUAN LOI",
+    "tin_hieu": "GIU",
+    "do_tin_cay_pct": 100
+  },
+  "data_quality": {
+    "source": "get_bctc_full",
+    "period_shown": "2026-Q1",
+    "latest_period_extracted": "2026-Q2 NOT extracted — Q2 PDF on file since 2026-08-01, VPS extraction lag now 14d+",
+    "stale": true,
+    "stale_age_hours": 75.47,
+    "confidence_pct": 80,
+    "validation": "passed_with_warnings — net profit exceeds gross profit, possible non-operating income"
+  },
+  "esc_gate": {
+    "esc_1": "unevaluable — no Bash/Glob grant, cannot run 6-pass trick detection",
+    "esc_2": { "result": false, "imbalance_pct": 0.00 },
+    "esc_3": {
+      "result": "DATA-COVERAGE-LIMITED",
+      "quarters_returned": 3,
+      "quarters_required": 4,
+      "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+      "coverage_guard_held": true
+    },
+    "esc_4": { "result": "DISCARDED", "note": "operating_profit=0 corrupt in structured extract, non_operating_share undefined" },
+    "esc_5": { "result": false, "note": "report_id=null, refine_status=PARTIAL — refine not complete" }
+  },
+  "insider_signals": "no significant insider activity",
+  "evidence_fragments_recorded": ["bctc_roe_ratio id=1305", "bctc_report_overdue id=1306"]
+}
