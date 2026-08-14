@@ -13290,6 +13290,112 @@
             "observed_at": "2026-08-14T16:34:45Z"
           }
         }
+      },
+      {
+        "id": "FU-CTG-DISCOVERY-FILENAME-FILTER",
+        "priority": "P3",
+        "size": "S",
+        "sprint": "BCTC-EXTRACT-QUALITY",
+        "status": "DONE_VERIFIED",
+        "title": "VPS HNX BCTC discovery (discover-bctc-urls-browser.py) resolves a legit-titled article to a cover-letter PDF attachment -> re-poison risk; add filename-based CV_CBTT detection",
+        "type": "FIX",
+        "zone": "vps-scripts + apps/mcp-server (fetch-pipeline design)",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-CTG-DISCOVERY-FILENAME-FILTER",
+        "promoted_at": "2026-07-31T08:46:22Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-14T17:35:51Z",
+        "claimed_at": "2026-08-14T17:29:10Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "updated_by": "qa",
+        "commit_sha": "1c9959cdd16e80831c1ae90e6d62e192972e7e60",
+        "return_summary": "Filename-based cover-letter reject added to _fetch_pdf_url() in vps-scripts/discover-bctc-urls-browser.py — resolved PDF filenames containing cv_cbtt/cong_van_cbtt (case-insensitive) are skipped even when the article title passed FIX-CTG-2's title filter, matching article 613699's repro (good title, cover-letter attachment). 15 new tests (vps-scripts/test_discover_bctc_filename_classifier.py), 57/57 full suite PASS, py_compile clean. Fix fully contained in vps-scripts/ — no apps/mcp-server change needed for this defect. Deploy to VPS NOT performed (user-gated per standing policy).",
+        "status_note": "[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. No .files[] field on this qa[] row; derived touched files via git show --stat 1c9959cdd1 (fallback per flow doc), which matches the row's own return_summary description exactly. Commit 1c9959cdd16e80831c1ae90e6d62e192972e7e60 confirmed real, on main ancestry (git merge-base --is-ancestor true); touches exactly vps-scripts/discover-bctc-urls-browser.py + new vps-scripts/test_discover_bctc_filename_classifier.py. Non-bun zone: script has stdlib-only imports (no 3rd-party deps) so host python3 == VPS deployed runtime for this file -- docker-image substitution not applicable (that rule targets dockerized microservices like rag-service/pdf-extractor). Re-ran independently, not trusted from prose: new suite 15/15 pass, full vps-scripts/ suite 57/57 pass (matches claim exactly), py_compile clean on both touched files, mock-guard.sh --files vps-scripts/discover-bctc-urls-browser.py exit 0 PASS, process.env/secret greps clean. Read the diff directly: is_cover_letter_filename() checks only the final path segment post query-strip+URL-decode, case-insensitive, for cv_cbtt/cong_van_cbtt markers; wired into _fetch_pdf_url()'s href loop so a rejected cover-letter attachment does not short-circuit -- scanning continues for a later legit href in the same ArticlesFileAttach response. Matches AC and the article-613699 repro described in the commit message. Scope confirmed contained to vps-scripts/ -- no apps/mcp-server change needed for this defect, consistent with the row's own claim. VPS deploy correctly withheld per standing user-gate policy -- not a QA blocker (verify-committed JUMP-TO has no merge/push/deploy step, work already on main). Zero blocking ISSUE. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-22.md STEP qa-S153.",
+        "qa_verified_at": "2026-08-14T17:35:50Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + python3 -m pytest + py_compile + mock-guard.sh",
+            "args": {
+              "commit_verified": "1c9959cdd16e80831c1ae90e6d62e192972e7e60",
+              "files_verified": [
+                "vps-scripts/discover-bctc-urls-browser.py",
+                "vps-scripts/test_discover_bctc_filename_classifier.py"
+              ]
+            },
+            "live_value_observed": "git merge-base --is-ancestor 1c9959cdd16e80831c1ae90e6d62e192972e7e60 main -> exit 0 (IS ANCESTOR OF MAIN). git show --stat 1c9959cdd1 -> matches exactly vps-scripts/discover-bctc-urls-browser.py (56++/3-) and new vps-scripts/test_discover_bctc_filename_classifier.py (256++). python3 -m pytest vps-scripts/test_discover_bctc_filename_classifier.py -v -> 15 passed in 0.28s. python3 -m pytest vps-scripts/ -v -> 57 passed in 0.83s (matches row's claimed 57/57 full-suite result exactly). python3 -m py_compile on both touched files -> clean, no output/errors. bash scripts/audits/mock-guard.sh --files vps-scripts/discover-bctc-urls-browser.py -> \"[mock-guard] PASS -- no fabricated-data patterns found in production source.\" exit=0. grep for process.env/password/secret in the touched production file -> zero hits.",
+            "observed_at": "2026-08-14T17:35:50Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-LANCEDB-INSERT-SEGFAULT",
+        "priority": "P3",
+        "size": "XS",
+        "status": "DONE_VERIFIED",
+        "title": "Fix LanceDB insert segfault (Bun v1.3.13)",
+        "type": "DEV",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-LANCEDB-INSERT-SEGFAULT",
+        "verify_note": "prior_status=TODO",
+        "promoted_at": "2026-07-31T11:51:03Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-14T17:37:00Z",
+        "claimed_at": "2026-08-14T17:29:10Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "commit_sha": "41f522117",
+        "review_note": "ROOT CAUSE RE-VERIFIED — DOES NOT HOLD: backlog note claimed a Bun v1.3.13 native @lancedb/lancedb segfault (addr 0x20) in fetchParseAndStoreBctc step-4 (2026-06-07T12:33:46Z repro). Commit d29da3a8d (2026-05-24, G5b HTTP rewire) had already replaced the native LanceDB call at that exact call site with an HTTP POST to rag-service (ragHttpClient.ts ragIndex, port 5002) — 2 WEEKS before the repro the note is based on. Commit 456851797 (2026-07-16, CI-RED-da847805-FIX) independently deleted the last @lancedb/lancedb import anywhere in the repo (_deprecated/, tests-only, zero production imports, confirmed by repo-wide grep before deletion). Live grep today: zero @lancedb/lancedb import statements in apps/mcp-server/src (2 comment-only mentions) — a native segfault on this path is categorically impossible today.\n\nREAL LIVE GUARD-GAP FOUND (same defect class — per task instruction to reproduce the same code path/guard-gap when a literal segfault can't be harnessed): insertBctcAnalysis.ts's `const inserter = insertAnalysisFn ?? (await getDefaultInsertAnalysis())` sat OUTSIDE its own try/catch. A throw during resolution (missing module, or historically a native-addon-import crash — the exact mechanism CI-RED-da847805-FIX fixed for bun test) propagated uncaught through fetchParseAndStoreBctc's unguarded Step-4 call, silently breaking the file's own documented \"LanceDB failure is non-fatal\" contract.\n\nFIX: moved the resolution line inside the try block (1-line structural move, insertBctcAnalysis.ts). Added a deterministic insertAnalysisResolverFn injection seam (both types.ts and insertBctcAnalysis.ts already document an \"everything injectable\" test philosophy), threaded through fetchParseAndStoreBctc.ts — used only by the new regression test, defaults to the real resolver in production.\n\nTEST EVIDENCE (RED->GREEN, apps/mcp-server/src/__tests__/FIX-LANCEDB-INSERT-SEGFAULT-step4-guard.test.ts, 2 cases: unit-level insertBctcAnalysis() + integration-level fetchParseAndStoreBctc()): RED confirmed genuinely by temporarily reverting the try/catch placement and re-running the SAME test file — both cases failed with the exact propagation stack insertBctcAnalysis.ts:79 -> fetchParseAndStoreBctc.ts:121. GREEN post-fix: both pass, insert failure logged non-fatal, SQLite Step-3 persistence unaffected. Design note: an earlier mock.module()-based simulation attempt was abandoned after empirical diagnosis showed it is order-dependent/flaky under the full suite (Bun eagerly hot-swaps a throwing factory at registration time whenever the target module was already cached by an earlier-run file — true almost always for ragHttpClient.js in a full run).\n\nGATES: bun tsc --noEmit clean. AC3 regression subset (new file + 1181-financial-reports-persist + 1352a-async-extraction-race + 1352b-pdf-extractor-wiring + p2-f-rag-http-rewire): 33/33 pass. gen-project-stats --dry-run: toolCount=183, cronJobCount=88 (unchanged, no tool/scheduler file touched). Full bun test: 14974 pass/40 skip/56 fail, 575s — inside the SAME pre-existing flake band already documented in this notebook's prior cycle this session (52-59; class: 5000ms-timeout/DB-contention — VPS Proxy Health/get_market_cap/insider_transactions/balance-cashflow-stores/MCP-SSE); this diff's own new test file is 0-fail in the full run (was itself flaky under the earlier mock.module design, now fixed); the sole fetchParseAndStoreBctc-touching entry in the fail list (FIX-1267 AC-7, 17.7s) independently re-run standalone -> 9/9 pass, confirming full-suite-only resource contention unrelated to this change. Port 3000 occupied by the live production Docker container -> skipped a conflicting local server-boot probe (Gate 2b); this is an mcp-server code change and needs an ops rebuild before it is live (not deployed by this task).\n\nBOUNDARY: dev-rag-service NOT touched (ragHttpClient.ts / rag-service source unchanged) — fix is 100% mcp-server-side, no cross-zone patch needed; the backlog's own \"dev-rag-service/dev-mcp-server boundary\" framing no longer applies once the root-cause correction above is accounted for.\n\nCommit 41f522117 (fix+test) + 32279f9a0 (memory: notebook+journal). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S43. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Commit 41f522117 (fix+test) + 32279f9a0 (memory) confirmed real, on main ancestry; git show --stat matches all 4 review_note-claimed files exactly (insertBctcAnalysis.ts, types.ts, fetchParseAndStoreBctc.ts, new test FIX-LANCEDB-INSERT-SEGFAULT-step4-guard.test.ts). Root-cause reversal independently re-derived (not trusted from prose): live grep '@lancedb/lancedb' apps/mcp-server/src returns only 2 comment-only hits, zero production imports -- native segfault categorically dead today. Diff read directly: resolver line genuinely moved inside try/catch, insertAnalysisResolverFn injection seam added exactly as claimed. Re-ran REAL verification: new test file 2/2 pass, AC3 regression subset (1181/1352a/1352b/p2-f-rag-http-rewire+new) 33/33 pass (byte-identical to claim), bun tsc --noEmit clean, mock-guard.sh PASS on 3 touched prod files, secrets/process.env grep clean, DDD scan N/A (all touched files are application/usecases/, zero domain/ layer files in scope -- application may import infrastructure per file's own documented layering). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-22.md STEP qa-S154.",
+        "updated_by": "qa",
+        "qa_verified_at": "2026-08-14T17:36:35Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun test (targeted) + bun tsc --noEmit + mock-guard.sh + grep",
+            "args": "commits 41f522117+32279f9a0 ancestry+stat; src/__tests__/FIX-LANCEDB-INSERT-SEGFAULT-step4-guard.test.ts + 1181-financial-reports-persist.test.ts + 1352a-async-extraction-race.test.ts + 1352b-pdf-extractor-wiring.test.ts + p2-f-rag-http-rewire.test.ts; mock-guard.sh --files insertBctcAnalysis.ts,types.ts,fetchParseAndStoreBctc.ts; grep -rn @lancedb/lancedb apps/mcp-server/src",
+            "live_value_observed": "both commits on main ancestry; git show --stat matches all 4 claimed files; new test file 2/2 pass; AC3 regression subset 33/33 pass; bun tsc --noEmit 0 errors; mock-guard.sh exit 0 PASS; secrets/process.env grep clean; live @lancedb/lancedb grep = 2 comment-only hits, 0 production imports",
+            "observed_at": "2026-08-14T17:36:35Z"
+          }
+        }
+      },
+      {
+        "id": "FDA-10",
+        "priority": "P3",
+        "size": "XS",
+        "sprint": "FAKE-DATA-AUDIT",
+        "status": "DONE_VERIFIED",
+        "title": "shippingIndex stale 'SCFI placeholder resolves to BDI' comment — misleading, code does NOT fabricate (delete comment)",
+        "type": "CLEAN",
+        "zone": "apps/mcp-server",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FDA-10",
+        "promoted_at": "2026-07-31T08:17:00Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+        "updated_at": "2026-08-14T17:37:10Z",
+        "claimed_at": "2026-08-14T17:29:10Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "commit_sha": "ec27c69d3108032244de7c18c9b9641d1c81cacb",
+        "status_note": "Deleted/corrected the stale 'SCFI placeholder resolves to BDI' comment at shippingIndex.ts L7 + L73-77 (JSDoc for SHIPPING_SYMBOLS). Independently re-verified: SHIPPING_SYMBOLS (L79-82) only ever contained ^BDI/^BFIY — no SCFI symbol, proxy, or placeholder logic anywhere in the file (grep -i scfi confirms only the 2 comment mentions, both now corrected). Comment-only edit, SHIPPING_SYMBOLS/fetch logic untouched. cd apps/mcp-server && bun test src/__tests__/252-shipping-index.test.ts: 8 pass/0 fail (unchanged). bun tsc --noEmit: clean. | [QA] Review Record (direct-commit verify, 2026-08-14T17:37:10Z): commit ec27c69d3108032244de7c18c9b9641d1c81cacb confirmed on main ancestry, touches exactly the claimed file (shippingIndex.ts). Diff re-read directly — matches status_note verbatim (stale SCFI-placeholder comment deleted L7, JSDoc corrected L73-77), no residual misleading claim (grep -i scfi confirms). Re-ran independently: bun test src/__tests__/252-shipping-index.test.ts 8/8 pass, bun tsc --noEmit clean, mock-guard.sh PASS. Comment-only, no logic change. Verdict: DONE_VERIFIED.",
+        "updated_by": "qa (direct-commit verify)",
+        "verified_at": "2026-08-14T17:37:10Z",
+        "verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit + mock-guard.sh",
+            "args": {
+              "cwd": "apps/mcp-server",
+              "commit": "ec27c69d3108032244de7c18c9b9641d1c81cacb",
+              "files_verified": [
+                "apps/mcp-server/src/infrastructure/fetchers/shippingIndex.ts"
+              ]
+            },
+            "live_value_observed": "commit confirmed ancestor of main; git show --stat touches exactly 1 file (shippingIndex.ts, 2 insertions/3 deletions), matching backlog-detail.json#FDA-10.files[]; diff content matches status_note verbatim (stale SCFI-placeholder line deleted L7, JSDoc corrected L73-77); current-file grep -i scfi shows only the corrected line, no residual misleading claim; bun test src/__tests__/252-shipping-index.test.ts 8 pass/0 fail; bun tsc --noEmit 0 errors; mock-guard.sh --files shippingIndex.ts exit 0 PASS",
+            "observed_at": "2026-08-14T17:37:10Z"
+          }
+        }
       }
     ],
     "head": {
@@ -18023,6 +18129,35 @@
         "evidence_20260814": "TWO 2026-08-13 instances that are the row's INVERSE and should be read as a scope check before the QA verdict lands. Telegram 4827 (HPG 2025-Q4) and 4828 (VJC 2025-Q1) both carry composite=0.00/financial=0.00 — NOT the financial=0.10 unit-mismatch short-circuit this row is about — and both DO name a concrete triggering rule (4827 BCTC-VAL-01 total_assets=98670778.69 < total_equity=3101380352.22; 4828 BCTC-VAL-10 operating_margin=45970432% beyond the +/-500% bound). So on the 0.00 path the alert's rule citation is ACCURATE and actionable, and only the trailing boilerplate '(matches the VNM/VEA OCR-corruption signature: assets<equity or margin>100%)' is redundant. This row's fix must therefore be scoped to the financial=0.10 path only — a blanket removal of the OCR-corruption sentence would strip a correct citation from the 0.00 path.",
         "status_note": "[QA] Direct-Commit Verify FAILED 2026-08-14 — CHANGES_REQUESTED. Commit 7ac55adc8 verified on main ancestry, both claimed files present (git show --stat), targeted regression suite FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY.test.ts 9/9 pass, bun tsc --noEmit clean, mock-guard PASS. AC-1 (name the real detector, no hard-coded ticker hint) is genuinely met.\n\nAC-2 is NOT met: describeConfidenceFinancialReason's matchesVnmVeaSignature gate (apps/mcp-server/src/domain/services/financial-reports/confidenceFinancialReasonBuilder.ts:73-77) attaches the VNM/VEA corruption-signature phrase whenever ANY fired violation's rule is BCTC-VAL-01/03/10 — it does not check whether that rule fired ALONE, nor whether the resulting confidence actually landed on 0.0/0.8 as AC-2 requires (\"the VNM/VEA hint may only appear on values that rule family can actually return (0.0/0.8)\"). Reproduced live: figures {totalAssets:1000, totalEquity:500, totalLiabilities:400, operatingMargin:2.0, netRevenue:-1} -> validateFinancialFiguresDetailed returns confidence=0.6 (BCTC-VAL-03 + BCTC-VAL-05 stacked), yet describeConfidenceFinancialReason still appends \"(matches the VNM/VEA OCR-corruption signature: assets<equity or margin>100%)\" — a value outside the AC-2-mandated {0.0,0.8} set.\n\nThe function's own code comment (confidenceFinancialReasonBuilder.ts:31-33: \"a lone VAL-03 soft violation yields exactly 0.8 ... falls out of the function's own structure\") is factually wrong — refuted by the task's OWN AC-3 test (FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY.test.ts:342-356), which stacks VAL-01-SCALE+VAL-03+VAL-05 to reach confidence=0.4, proving VAL-03 is not always lone. This is reachable in production: any report with low extraction confidence (composite=min(extraction,financial)<=0.3) whose financial figures trip BCTC-VAL-03 alongside VAL-05/VAL-06/VAL-01-SCALE will ship an alert falsely claiming the VNM/VEA signature at financial=0.4 or 0.6 — the exact class of misleading-hint bug this task exists to close, relocated rather than removed.\n\nAC-4's regression coverage has a matching gap: the existing \"does NOT attach VNM/VEA signature\" test (FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY.test.ts:176-200) only exercises BCTC-VAL-05 ALONE, never VAL-03 co-firing with another soft rule, so this defect shipped un-caught.\n\nFIX NEEDED: gate matchesVnmVeaSignature on violations.length===1 (equivalently confidence===0.0||confidence===0.8), not rule-membership alone; add a regression test asserting the hint is absent when BCTC-VAL-03 stacks with a second soft violation (e.g. VAL-05 or VAL-01-SCALE).\n\nNot routing to fixer — no task branch exists (direct-commit row, branch:null). Held: .task_board.qa[] -> .task_board.review[], status QA -> REVIEW, owner/next_agent=dev-mcp-server, redispatch_count 0 -> 1.\n",
         "redispatch_count": 1
+      },
+      {
+        "id": "TE-T23",
+        "title": "T-23 CLAUDE.md step-2.5 (21L): compress to ~5L (detail in dispatch-claim CARD) [~11k tok/day]",
+        "owner": "dev-team",
+        "status": "REVIEW",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P1",
+        "wave": 2,
+        "est_saving": "~11k tok/day (rides every subagent context)",
+        "zone": "cross-service/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-23",
+        "note": "SEQUENCING: depends on TE-T12 (CARD.md must exist first). CLAUDE.md is injected into EVERY subagent system prompt, so 21 router-only lines are paid by every spawn. Compress to ~5L pointing at CARD. Net -16L from CLAUDE.md; kills 3-copy pre-claim drift.",
+        "depends_on": [
+          "TE-T12"
+        ],
+        "promoted_at": "2026-08-14T17:25:58Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-08-14T17:36:29Z",
+        "claimed_at": "2026-08-14T17:29:10Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "dev-team",
+        "review_note": "Router (BOUNDED-1 idle-pickup) claimed this row then found its acceptance criteria already satisfied by prior work before spawning a developer: CLAUDE.md step-2.5 (docs/agents/../CLAUDE.md, live HEAD) is already 2 lines (line 7-8) referencing .claude/skills/dispatch-claim/CARD.md for the full Phase A/A.5/B protocol, well under the briefs ~5L target (docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-23); CARD.md itself exists since 2026-07-31 (git log confirms, unrelated later commit f8d3891c6 touched CLAUDE.md 2026-08-14 for a different task, task-cowork-mutex-001, step 2.4). Total CLAUDE.md is 63L, under the briefs 58L target even. No code/doc change made — routing to qa for closure sign-off (DONE_VERIFIED, no-op-by-prior-completion) instead of dispatching a developer to redundantly redo already-shipped work.",
+        "status_note": "[QA] Direct-Commit Verify (2026-08-14, qa, session 632721c2) — CHANGES_REQUESTED, review_note's no-op claim NOT confirmed. Evidence: (1) CLAUDE.md:7-14 'step 2.5' block (pointer+task_claim call+3-row outcome table) is 8L, not \"2 lines\" — review_note counted only CLAUDE.md:7-8, omitting the table at CLAUDE.md:10-14 which is structurally part of step 2.5's content; ~5L target still ~60% over (11L if step-3 finally block CLAUDE.md:15-17 is included, matching the brief's own original span measurement \"2.5 PRE-CLAIM through finally: task_release()\"). (2) Total CLAUDE.md is 63L — OVER (not \"under\" as review_note literally states) the brief's 58L target; 63>58 is an arithmetic error in the review_note. (3) CLAUDE.md:8,10-14 (task_claim call + 3-outcome table) duplicate .claude/skills/dispatch-claim/CARD.md:28-35 near-verbatim — the \"3-copy pre-claim drift\" T-23 exists to kill is still live, contradicting this row's own `note` field claim (\"kills 3-copy pre-claim drift\"). (4) Sibling commit 92ba46360 (TE-T12, 2026-07-31)'s own commit message states verbatim: \"Unblocks sibling row TE-T23 (CLAUDE.md step-2.5 prose compression, developer-owned, out of scope here)\" — direct contradicting evidence the AC remains undone (TE-T12 unblocked it via depends_on, did not do it). Remaining work: collapse CLAUDE.md:8 (full task_claim call) + CLAUDE.md:10-14 (3-row table) into a terse pointer-only reference to CARD.md's own Phase B section (CARD.md:26-36) — target ~5L for step 2.5, net CLAUDE.md ~58L. Route: owner (dev-team) — no task branch exists, apply a NEW direct commit.",
+        "redispatch_count": 1,
+        "updated_by": "qa"
       }
     ],
     "qa": [
@@ -18132,32 +18267,6 @@
         "review_note": "Sibling row FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC already in review[] (commit 5918c55fe). Both FIX rows from this brief now shipped — AC-1 supersedes field on the sibling row is NO LONGER INERT: this row is the actuator. Router RAW-verified: commits 662d1fcc3+87e0554db exist and are pushed (origin/main matches HEAD), file list matches claim exactly (cowork-match-slots.js, cowork-match-slots.test.js, cowork-schedule-consistency.test.js, cowork-supersede-mutex.js, cowork-supersede-mutex.test.js + decision journal), all 4 claimed test suites independently re-run and confirmed (supersede-mutex 32/32, match-slots 69/69, chef-mutex 25/25 byte-identical/non-goal honored, schedule-consistency 13/13). Zero scope creep confirmed: docs/data/cowork-schedule.json, docs/agents/**, cowork-chef-mutex.js/test, orch-state.json all untouched by the agent (board row was found still BACKLOG when the agent finished — router self-healed the missing S2 lane-move separately, commit 70ba8dad4, before this flip)."
       },
       {
-        "id": "TE-T23",
-        "title": "T-23 CLAUDE.md step-2.5 (21L): compress to ~5L (detail in dispatch-claim CARD) [~11k tok/day]",
-        "owner": "dev-team",
-        "status": "QA",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "wave": 2,
-        "est_saving": "~11k tok/day (rides every subagent context)",
-        "zone": "cross-service/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-23",
-        "note": "SEQUENCING: depends on TE-T12 (CARD.md must exist first). CLAUDE.md is injected into EVERY subagent system prompt, so 21 router-only lines are paid by every spawn. Compress to ~5L pointing at CARD. Net -16L from CLAUDE.md; kills 3-copy pre-claim drift.",
-        "depends_on": [
-          "TE-T12"
-        ],
-        "promoted_at": "2026-08-14T17:25:58Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-08-14T17:29:11Z",
-        "claimed_at": "2026-08-14T17:29:10Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "review_note": "Router (BOUNDED-1 idle-pickup) claimed this row then found its acceptance criteria already satisfied by prior work before spawning a developer: CLAUDE.md step-2.5 (docs/agents/../CLAUDE.md, live HEAD) is already 2 lines (line 7-8) referencing .claude/skills/dispatch-claim/CARD.md for the full Phase A/A.5/B protocol, well under the briefs ~5L target (docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-23); CARD.md itself exists since 2026-07-31 (git log confirms, unrelated later commit f8d3891c6 touched CLAUDE.md 2026-08-14 for a different task, task-cowork-mutex-001, step 2.4). Total CLAUDE.md is 63L, under the briefs 58L target even. No code/doc change made — routing to qa for closure sign-off (DONE_VERIFIED, no-op-by-prior-completion) instead of dispatching a developer to redundantly redo already-shipped work."
-      },
-      {
         "id": "FDA-6",
         "priority": "P3",
         "size": "S",
@@ -18200,48 +18309,6 @@
         "return_summary": "get_macro_snapshot fetchedAt fallback new Date()->null, source_tier fallback 2->4 when Go upstream omits provenance; commit 24022a53a (code+test+doc); tsc clean, targeted 128/128 pass (10 files, incl 4 new RED->GREEN FDA-7 tests), server boot toolCount=183/cronJobCount=88 unchanged, dashboard probes 200; full bun test 14961/40skip/53fail in-band (52-59), zero macro-related fails; DJ sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S39"
       },
       {
-        "id": "FDA-10",
-        "priority": "P3",
-        "size": "XS",
-        "sprint": "FAKE-DATA-AUDIT",
-        "status": "QA",
-        "title": "shippingIndex stale 'SCFI placeholder resolves to BDI' comment — misleading, code does NOT fabricate (delete comment)",
-        "type": "CLEAN",
-        "zone": "apps/mcp-server",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FDA-10",
-        "promoted_at": "2026-07-31T08:17:00Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-08-14T17:29:11Z",
-        "claimed_at": "2026-08-14T17:29:10Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "commit_sha": "ec27c69d3108032244de7c18c9b9641d1c81cacb",
-        "status_note": "Deleted/corrected the stale 'SCFI placeholder resolves to BDI' comment at shippingIndex.ts L7 + L73-77 (JSDoc for SHIPPING_SYMBOLS). Independently re-verified: SHIPPING_SYMBOLS (L79-82) only ever contained ^BDI/^BFIY — no SCFI symbol, proxy, or placeholder logic anywhere in the file (grep -i scfi confirms only the 2 comment mentions, both now corrected). Comment-only edit, SHIPPING_SYMBOLS/fetch logic untouched. cd apps/mcp-server && bun test src/__tests__/252-shipping-index.test.ts: 8 pass/0 fail (unchanged). bun tsc --noEmit: clean.",
-        "updated_by": "dev-mcp-server (BOUNDED-1 auto-pickup)"
-      },
-      {
-        "id": "FU-CTG-DISCOVERY-FILENAME-FILTER",
-        "priority": "P3",
-        "size": "S",
-        "sprint": "BCTC-EXTRACT-QUALITY",
-        "status": "QA",
-        "title": "VPS HNX BCTC discovery (discover-bctc-urls-browser.py) resolves a legit-titled article to a cover-letter PDF attachment -> re-poison risk; add filename-based CV_CBTT detection",
-        "type": "FIX",
-        "zone": "vps-scripts + apps/mcp-server (fetch-pipeline design)",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-CTG-DISCOVERY-FILENAME-FILTER",
-        "promoted_at": "2026-07-31T08:46:22Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-08-14T17:29:11Z",
-        "claimed_at": "2026-08-14T17:29:10Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "updated_by": "dev-vps-crawls",
-        "commit_sha": "1c9959cdd16e80831c1ae90e6d62e192972e7e60",
-        "return_summary": "Filename-based cover-letter reject added to _fetch_pdf_url() in vps-scripts/discover-bctc-urls-browser.py — resolved PDF filenames containing cv_cbtt/cong_van_cbtt (case-insensitive) are skipped even when the article title passed FIX-CTG-2's title filter, matching article 613699's repro (good title, cover-letter attachment). 15 new tests (vps-scripts/test_discover_bctc_filename_classifier.py), 57/57 full suite PASS, py_compile clean. Fix fully contained in vps-scripts/ — no apps/mcp-server change needed for this defect. Deploy to VPS NOT performed (user-gated per standing policy)."
-      },
-      {
         "id": "FU-BACKFILL-MULTIPLE-COVER-LETTERS",
         "priority": "P3",
         "size": "S",
@@ -18261,27 +18328,6 @@
         "review_note": "Residual weakness #2 from FIX-CTG-PDF-MISLINK (77092007): backlog hypothesised \"first-match-only\" cover-letter exclusion, but code already used .filter() (excludes ALL literal cover letters). Real gap: the \"consolidated\" bucket was NEGATIVE-match (!isCoverLetterFilename) -- \"not a recognised cover letter\" != \"is the real report\". A non-report file (e.g. a P&L-variance explanatory note) that merely failed the cover-letter pattern could be wrongly selected as the sole \"consolidated\" candidate, or inflate false ambiguity when a real consolidated file was also present.\nFix (backfillBctcPdfPaths.ts): new isConsolidatedReportFilename() -- POSITIVE match on Vietnamese \"hop nhat\" / English \"consolidated\" marker (same signal hsxBctcFetcher.ts::rankItem() already uses). Both the NULL-pass and heal-pass now require this positive match before selecting a PDF among 2+ candidates; a lone candidate still always links (generalised from coverLetters.length===1 to matches.length===1). Zero positive matches among 2+ candidates -> loud console.warn, row stays PENDING (never a silent wrong pick). Heal-pass re-check guard broadened from isCoverLetterFilename(current) to !isConsolidatedReportFilename(current).\nAC1/AC2: FU-BACKFILL-MULTIPLE-COVER-LETTERS.test.ts (12 cases). Granular 2-layer RED confirmed: (1) isConsolidatedReportFilename added standalone first (no selection-logic change yet) -- AC-1/AC-3/AC-4/AC-2-GREEN genuinely failed against unmodified selection logic (AC-3 concretely reproduced the live mislink: old code returned updated=1, silently linking the non-report file); (2) legacyNegativeMatchSelect() -- a frozen, non-imported snapshot of the exact pre-fix 77092007 decision branches -- independently proves {kind:\"ambiguous\"} (fails to heal) on the identical AC-1 fixture. Post-fix: 12/12 pass.\nOne unrelated pre-existing gap found+sidestepped (out of scope, not fixed): extractTicker()'s KEYWORD_SET is missing \"CV\", so a CV_CBTT_TICKER_...-ordered filename mis-parses ticker as \"CV\" -- fixtures use the already-proven TICKER_..._CV_CBTT_... ordering instead.\nEvidence: bun tsc --noEmit clean. Targeted suite (new file + FIX-CTG-PDF-MISLINK.test.ts + PI3-bctc-inspect-reopen2.test.ts): 56/56 pass. gen-project-stats.ts --dry-run: toolCount=183, cronJobCount=88 -- unchanged from pre-task baseline. Fresh server boot (DB_PATH=:memory:, free port): /health toolCount=183; /api/bctc-inspect + /dashboards/news-fetch/ both 200. Full bun test (RAW-verified, full-capture, non-truncated log): 14971 pass/40 skip/57 fail/1 error/47501 expect (565.80s) -- grep of the complete \"(fail)\" line list confirms ZERO matches on bctc/pdf/backfill/cover/consolidated/financial_report; fail count is inside the documented pre-existing flake band (52-59, this session's own recent notebook entries: 52-53 on the last two cycles) -- driven by network-timeout/vps_push_log-table tests unrelated to this change. Docs: docs/architecture/microservice/mcp-server/usecases.md -- new backfillBctcPdfPaths.ts section (previously undocumented as its own use case). Simplicity gate: PASS. Commits: c515ec142 (fix+test+doc), 26bb028bc (notebook+DJ). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S42.",
         "review_by": "dev-mcp-server",
         "commit_sha": "c515ec142"
-      },
-      {
-        "id": "FIX-LANCEDB-INSERT-SEGFAULT",
-        "priority": "P3",
-        "size": "XS",
-        "status": "QA",
-        "title": "Fix LanceDB insert segfault (Bun v1.3.13)",
-        "type": "DEV",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-LANCEDB-INSERT-SEGFAULT",
-        "verify_note": "prior_status=TODO",
-        "promoted_at": "2026-07-31T11:51:03Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
-        "updated_at": "2026-08-14T17:29:11Z",
-        "claimed_at": "2026-08-14T17:29:10Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "qa",
-        "commit_sha": "41f522117",
-        "review_note": "ROOT CAUSE RE-VERIFIED — DOES NOT HOLD: backlog note claimed a Bun v1.3.13 native @lancedb/lancedb segfault (addr 0x20) in fetchParseAndStoreBctc step-4 (2026-06-07T12:33:46Z repro). Commit d29da3a8d (2026-05-24, G5b HTTP rewire) had already replaced the native LanceDB call at that exact call site with an HTTP POST to rag-service (ragHttpClient.ts ragIndex, port 5002) — 2 WEEKS before the repro the note is based on. Commit 456851797 (2026-07-16, CI-RED-da847805-FIX) independently deleted the last @lancedb/lancedb import anywhere in the repo (_deprecated/, tests-only, zero production imports, confirmed by repo-wide grep before deletion). Live grep today: zero @lancedb/lancedb import statements in apps/mcp-server/src (2 comment-only mentions) — a native segfault on this path is categorically impossible today.\n\nREAL LIVE GUARD-GAP FOUND (same defect class — per task instruction to reproduce the same code path/guard-gap when a literal segfault can't be harnessed): insertBctcAnalysis.ts's `const inserter = insertAnalysisFn ?? (await getDefaultInsertAnalysis())` sat OUTSIDE its own try/catch. A throw during resolution (missing module, or historically a native-addon-import crash — the exact mechanism CI-RED-da847805-FIX fixed for bun test) propagated uncaught through fetchParseAndStoreBctc's unguarded Step-4 call, silently breaking the file's own documented \"LanceDB failure is non-fatal\" contract.\n\nFIX: moved the resolution line inside the try block (1-line structural move, insertBctcAnalysis.ts). Added a deterministic insertAnalysisResolverFn injection seam (both types.ts and insertBctcAnalysis.ts already document an \"everything injectable\" test philosophy), threaded through fetchParseAndStoreBctc.ts — used only by the new regression test, defaults to the real resolver in production.\n\nTEST EVIDENCE (RED->GREEN, apps/mcp-server/src/__tests__/FIX-LANCEDB-INSERT-SEGFAULT-step4-guard.test.ts, 2 cases: unit-level insertBctcAnalysis() + integration-level fetchParseAndStoreBctc()): RED confirmed genuinely by temporarily reverting the try/catch placement and re-running the SAME test file — both cases failed with the exact propagation stack insertBctcAnalysis.ts:79 -> fetchParseAndStoreBctc.ts:121. GREEN post-fix: both pass, insert failure logged non-fatal, SQLite Step-3 persistence unaffected. Design note: an earlier mock.module()-based simulation attempt was abandoned after empirical diagnosis showed it is order-dependent/flaky under the full suite (Bun eagerly hot-swaps a throwing factory at registration time whenever the target module was already cached by an earlier-run file — true almost always for ragHttpClient.js in a full run).\n\nGATES: bun tsc --noEmit clean. AC3 regression subset (new file + 1181-financial-reports-persist + 1352a-async-extraction-race + 1352b-pdf-extractor-wiring + p2-f-rag-http-rewire): 33/33 pass. gen-project-stats --dry-run: toolCount=183, cronJobCount=88 (unchanged, no tool/scheduler file touched). Full bun test: 14974 pass/40 skip/56 fail, 575s — inside the SAME pre-existing flake band already documented in this notebook's prior cycle this session (52-59; class: 5000ms-timeout/DB-contention — VPS Proxy Health/get_market_cap/insider_transactions/balance-cashflow-stores/MCP-SSE); this diff's own new test file is 0-fail in the full run (was itself flaky under the earlier mock.module design, now fixed); the sole fetchParseAndStoreBctc-touching entry in the fail list (FIX-1267 AC-7, 17.7s) independently re-run standalone -> 9/9 pass, confirming full-suite-only resource contention unrelated to this change. Port 3000 occupied by the live production Docker container -> skipped a conflicting local server-boot probe (Gate 2b); this is an mcp-server code change and needs an ops rebuild before it is live (not deployed by this task).\n\nBOUNDARY: dev-rag-service NOT touched (ragHttpClient.ts / rag-service source unchanged) — fix is 100% mcp-server-side, no cross-zone patch needed; the backlog's own \"dev-rag-service/dev-mcp-server boundary\" framing no longer applies once the root-cause correction above is accounted for.\n\nCommit 41f522117 (fix+test) + 32279f9a0 (memory: notebook+journal). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S43.",
-        "updated_by": "dev-mcp-server"
       }
     ],
     "_closed_signals_20260614": {
