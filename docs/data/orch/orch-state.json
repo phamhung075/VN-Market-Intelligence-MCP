@@ -92,12 +92,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "UC-CDC-P7",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 1 row(s), highest-ranked UC-CDC-P7 — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-14T06:26:53Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "updated_at": "2026-08-14T06:33:36Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13356,6 +13355,52 @@
             "observed_at": "2026-08-14T01:33:11Z"
           }
         }
+      },
+      {
+        "id": "UC-CDC-P7",
+        "type": "SPRINT-L",
+        "title": "Collapse the 12-file cowork flow to ~7 files; push per-tick logic into the deterministic script layer",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "L",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P7",
+        "note": "SCOPE=verifier Rescope note (corrected sequencing + I16 fix). Run Phase2 (script moves: match-slots 4.5/4.5c, tick-postflight last_fired batch) BEFORE the pressure-file merge (200L cap). I16: add an SSOT cowork_signal_recipient field to system-map.json, never derive from type==cowork (drops po+tran-ngoc-bau). COORDINATE with TE-T03 (main.md rewrite) + TE-T13 (line-1 purge) — sequence after or merge to avoid 3-way collision.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "depends": [
+          "TE-T03"
+        ],
+        "related": [
+          "TE-T13"
+        ],
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-08-14T05:52:49Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-08-14T06:33:36Z",
+        "claimed_at": "2026-08-14T06:26:53Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "updated_by": "developer",
+        "entered_review_at": "2026-08-14T06:25:15Z",
+        "next_agent": "qa",
+        "review_note": "developer S24: landed RESCOPE Phase 2 only (script moves), per the row's explicit 'Phase2 BEFORE merge' ordering. TE-T03/TE-T13 coordination check: both DONE_VERIFIED before session start (TE-T03 2026-08-11, TE-T13 2026-07-13) -- zero collision, main.md untouched. (a) scripts/agents-flow/cowork-match-slots.js now applies Step 4.5 freshness-downgrade (applyFreshnessDowngrade, gatherer set derived from cowork-schedule.json parallel_group==\"gatherers\", no hardcoded literal) + Step 4.5c CHEF mutex (in-process, unconditional both legacy/adaptive modes) at the tail of every call -- matchSlots() array-return contract unchanged (new options.meta out-param, additive-only, NFR-2-style). CLI stdout + meta gain pressure_mode/downgraded/suppressed_cadence/chef_mutex_applied/due_reasons/cadence_minutes; threaded into cowork-tick-preflight.sh's WORK verdict (_emit_verdict new optional 8th arg) + match-slots.md's ERROR path. pressure-cadence.md Steps 4.5/4.5c marked SUPERSEDED (script does it now), historical incident record kept not deleted. Self-caught bug found via testing: ${8:-{}} in bash defeats brace-matching (literal {} default appends a stray } to any non-empty 8th arg, corrupting every WORK verdict) -- fixed to ${8:-} + [ -z ] && extra=\"{}\". (b) NEW scripts/agents-flow/cowork-tick-postflight.sh: last_fired batch write (verbatim delegation to cowork-write-last-fired.js, zero reimplementation) + cycle-snapshot assembly (same jq contract as tick-snapshot.md) + NEW docs/signals/processed/cowork-team-*.json >14d retention sweep (I13), scoped to already-processedAt-stamped files ONLY (never the live inbox, never an unstamped row -- avoids the exact unconditional-processed/-prune bug class drain-signals.js was hardened against; git rm stages, does not commit, mirrors purge-legacy-processed-signals.sh). (c) I16: added cowork_signal_recipient:true to po/tran-ngoc-bau/unified-agent/alert-commander in system-map.json (never derivable from type==\"cowork\", a different 9-agent set that drops po+tran-ngoc-bau); wired cowork-tick-preflight.sh Step 7 to read it (fail-safe fallback to the prior literal on missing/malformed file -- every pre-existing fixture keeps passing unmodified); updated work-tick.md + dispatch/SKILL.md + system-map-query/SKILL.md prose pointers. Tests: cowork-match-slots.test.js 43->69/69, cowork-tick-preflight.test.sh 58->67/67 (new T2c/T2d/T-SSOT), new cowork-tick-postflight.test.sh 28/28 (real isolated git-repo fixture, not mocked -- caught + fixed a git-rm empty-leading-dir-prune gotcha mid-write). cowork-chef-mutex/cowork-schedule-consistency/cowork-catchup-predicate/cowork-guaranteed-slot-firer suites all unaffected (260 assertions total across 7 suites, 0 regressions). shellcheck -S warning clean on all touched .sh files. bun test/tsc N/A (zero apps/ TS/Go touched, zone cross-service/). Commit 15492ff61. Decision journal sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S24.",
+        "status_note": "PARKED, not complete -- Phase 1 (12->7 file collapse: merge pressure-read.md+pressure-cadence.md into pressure.md, fold pressure-emit.md into telemetry.md, delete slot-claim.md's retired 4.6b block, merge last-fired.md into spawn-fanout.md, update main.md JUMP-TO) is NOT started this pass, per the row's own explicit 'Phase2 script moves BEFORE the pressure-file merge' sequencing. Also NOT done: wiring last-fired.md/tick-snapshot.md to actually CALL the new cowork-tick-postflight.sh in the live flow -- Step 4.7 (snapshot) must run BEFORE spawn-fanout (Step 5) so agents can read a fresh snapshot, Step 5b (last_fired) must run AFTER spawns, so a single combined call site at the tail is NOT a drop-in; the script already supports a 2-call split (SKIP_SNAPSHOT/SKIP_RETENTION env flags) but wiring it into the live cron-facing flow docs needs a verified live dry-run tick before/after, which did not fit in this session -- next pickup should do that wiring FIRST (script + tests already exist and are green), then proceed to the Phase 1 merge. I16 SSOT field IS fully wired end-to-end (system-map.json + cowork-tick-preflight.sh + work-tick.md + dispatch/SKILL.md), not partial.\n[QA] Review Record (direct-commit verify) 2026-08-14T06:32:20Z: APPROVED, DONE_VERIFIED. Commits 15492ff61 (feature, 16 files) + 2e82756ac (board flip) both `git merge-base --is-ancestor`-confirmed on main. `git show --stat 15492ff61` matches all 16 claimed files exactly (cowork-match-slots.js/.test.js, cowork-tick-preflight.sh/.test.sh, NEW cowork-tick-postflight.sh/.test.sh, system-map.json, match-slots.md, pressure-cadence.md, work-tick.md, dispatch/SKILL.md, system-map-query/SKILL.md, dev-standards.md, WORK.md, developer notebook+journal); docs/agents/cowork-team/flow/main.md absent from the diff, confirmed untouched. TE-T03/TE-T13 coordination re-checked at source, not trusted from prose: TE-T03 DONE_VERIFIED qa_verified_at=2026-08-11T18:22:00Z (orch-state.json:13138), TE-T13 DONE_VERIFIED verified_at=2026-07-13T15:10:00Z (archive/2026-07.json) — zero collision confirmed. Tests re-run myself (not trusted from claimed counts): cowork-match-slots.test.js 69/69, cowork-tick-preflight.test.sh 67/67, cowork-tick-postflight.test.sh(new) 28/28, plus the 4 \"unaffected\" suites cowork-chef-mutex 25, cowork-schedule-consistency 9/9, cowork-catchup-predicate 34/34, cowork-guaranteed-slot-firer 28/28 — sum 260/260, 0 fail, exact match to claimed total. mock-guard.sh PASS on all touched production files. shellcheck -S warning clean on both touched .sh files. bun tsc --noEmit N/A confirmed structurally (git show --name-only: zero .ts files touched; scripts/agents-flow/ falls outside every tsconfig's include array repo-wide). Self-caught bug fix verified landed verbatim: cowork-tick-preflight.sh:107-112 replaced `${8:-{}}` (bash brace-matching defeat) with `${8:-}` + explicit `[ -z \"$extra\" ] && extra=\"{}\"`. I16 SSOT field verified end-to-end: `cowork_signal_recipient:true` present on exactly po/tran-ngoc-bau/unified-agent/alert-commander in system-map.json (grep-counted, not the type==\"cowork\" 9-agent set); cowork-tick-preflight.sh:90-95 `_cowork_signal_recipients()` reads it with fail-safe fallback to the same literal set on missing/malformed data. Phase-1-parked honesty independently NEGATIVE-verified (not just accepted): docs/agents/cowork-team/flow/ still 14 files (pressure-read.md + pressure-cadence.md still separate, slot-claim.md Step 4.6b block still present, last-fired.md/spawn-fanout.md still separate) — Phase 1 12->7 collapse genuinely not started; grep for `cowork-tick-postflight` in last-fired.md/tick-snapshot.md/main.md/work-tick.md returns zero hits — the postflight-wiring gap is genuinely unwired, matching status_note's own \"NOT done\" claim. DJ: sprint-ULTRACODE-AUDIT-FIXALL-qa-2.md STEP qa-S22. VERDICT: APPROVED, DONE_VERIFIED. No merge/branch-delete needed — work already on main.",
+        "qa_verified_at": "2026-08-14T06:33:27Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git (merge-base --is-ancestor / show --stat / show --name-only) + bun test + bash test suites + mock-guard.sh + shellcheck -S warning + jq",
+            "args": "git merge-base --is-ancestor 15492ff61 main; git merge-base --is-ancestor 2e82756ac main; git show --stat 15492ff61; bun test scripts/agents-flow/cowork-match-slots.test.js scripts/agents-flow/cowork-chef-mutex.test.js scripts/agents-flow/cowork-schedule-consistency.test.js scripts/agents-flow/cowork-catchup-predicate.test.js; bash scripts/agents-flow/cowork-tick-preflight.test.sh scripts/agents-flow/cowork-tick-postflight.test.sh scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh; bash scripts/audits/mock-guard.sh --files <touched production files>; shellcheck -S warning <touched .sh files>; jq recipient-set count on system-map.json",
+            "live_value_observed": "both commits ancestor=yes; git show --stat matches exactly 16 files; tests 69+67+28+25+9+34+28=260/260 pass 0 fail (exact match to claim); mock-guard PASS; shellcheck 0 warnings; ${8:-{}} bug-fix confirmed landed at cowork-tick-preflight.sh:107-112; cowork_signal_recipient:true on exactly 4 agents (po/tran-ngoc-bau/unified-agent/alert-commander); TE-T03/TE-T13 both DONE_VERIFIED pre-session, zero collision; Phase-1 park confirmed negative (flow dir still 14 files, postflight-wiring grep = 0 hits)",
+            "observed_at": "2026-08-14T06:33:27Z"
+          }
+        }
       }
     ],
     "head": {
@@ -17423,7 +17468,7 @@
         "size": "S",
         "zone": "docs/agents/dev-team/flow/",
         "owner": "architect",
-        "next_agent": "agent-father",
+        "next_agent": "qa",
         "supervised": true,
         "plan_only": true,
         "depends": [],
@@ -17437,7 +17482,7 @@
         "scope_out": "Do NOT fix by raising WIP or by removing the head gate — the WIP<=1 BOUNDED-1 bound is user-gated (2026-07-04) and out of scope. Do NOT diagnose why dev-mcp-server specifically produced nothing on FIX-VNINDEX-CACHE-STARTUP-PURGE; that row is back in backlog[] and, if it stalls the head a second time, becomes a separate reproducible per-row dispatch failure.",
         "related_not_duplicate": "FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION (chain ORDERING / lane starvation — chronic, independent, the P0 rows were already starving 4 days before this pin) and ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG (session-scoped CronCreate loop liveness — a different plane; this row is about board-head liveness and would fire even with the cron plane perfectly healthy).",
         "prior_art_note": "PO grep-checked the board before minting for STARV/DRAIN/STALE-CRASH/HEAD-PIN/WATCHDOG/LIVENESS/DISPATCH-GATE: the two nearest rows are named above and are both distinct. No existing row covers the 24h-threshold-vs-tick-cadence mismatch or the unobservable Pipeline-Resume respawn.",
-        "updated_at": "2026-08-14T06:26:20Z",
+        "updated_at": "2026-08-14T06:33:46Z",
         "po_occurrence_20260805T1830Z": "PO OCCURRENCE 2026-08-05T18:30Z (po, dev-team tick triage) - ADJACENT MECHANISM on the same head-pin surface, folded here rather than minted as a new row (single observation, and no incorrect action actually resulted; feedback_single_observation_degenerate_case_read_as_broken_mechanism).\nOBSERVED: .head carried {active_task_id: FIX-MCP-MEMORY-CODE-LEAK, next_agent: 'architect', next_action: 'spawn architect DIRECTLY (no zone-detect indirection; lane already resolved at promote time)', updated_at 2026-08-05T17:51:18Z, updated_by 'dev-team (supervised-lane sweep)'} while the row it names had ALREADY moved to next_agent = owner = dev-mcp-server (claimed_at 2026-08-05T17:51:16Z, same sweep, ~2s earlier). .head was never re-synced.\nCLASS: this is a WRITE-COHERENCE gap (the head pin is not updated when the named row's next_agent is reassigned), which is DISTINCT from this row's own 24h-auto-reset-threshold premise - but it lands on the same head-pin surface and has a WORSE consequence shape: dev-team dispatches off .head.next_agent, so had this row not been independently held by the WF-2 SUPERVISED-HOLD gate, this tick would have spawned architect instead of dev-mcp-server. That is a SILENT MIS-DISPATCH, not a stall - the stall shape this row already describes is the benign half of the same defect.\nSUGGESTED SCOPE ADDITION: whoever implements the head-pin fix should also assert head.next_agent == row.next_agent for the row .head names, not only a time-based reset.\nACTION TAKEN THIS TICK: none. .head deliberately left unchanged (a live dev-mcp-server agent holds task:FIX-MCP-MEMORY-CODE-LEAK until 18:51:58Z; rewriting .head under it would risk a duplicate spawn).\n",
         "po_live_evidence_20260806T0921": "PO LIVE EVIDENCE 2026-08-06T09:21Z - FIRST MEASURED INSTANCE of the failure this row predicts. UC-CRITIC-HOOKS-ENFORCEMENT (P1, supervised+plan_only, next_agent=ba) already carried po_goahead_20260805T090611, so the WF-2 SUPERVISED-HOLD gate was RELEASED at 2026-08-05T09:06:11Z - yet the row sat in task_board.in_progress[] with no live lock and no spawn until the router hand-dispatched ba at 2026-08-06T09:19:24Z. Idle span ~24.2h, matching this row 24h head-pin auto-reset threshold. Proves ratification landing does NOT imply dispatch. Coverage check done before attaching rather than minting: FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER scopes ready[]/review[] ONLY, so it does not cover an in_progress[] row that .head has moved off; this row is the correct owner and its priority case is now backed by a measurement, not a projection.",
         "promoted_at": "2026-08-07T20:52:49Z",
@@ -17449,10 +17494,11 @@
         "architect_review_note_20260807": "ARCHITECT 2026-08-07T22:37Z — full blueprint: docs/architecture-briefs/2026-08-07-devteam-head-pin-stale-threshold-resume-bound.md.\n\nTHRESHOLD (AC-1): 2h (not 24h). Basis: dev-team cron cadence measured live at 30min (.claude/skills/cron-detect-loop/register.md:81, */30 * * * *) = 2h is 4x the measured p100 close-time (~13-30min, this rows own instance evidence) and 2x the existing 1h task:<id> lock TTL backstop (S2s own LOCK-LIFETIME comment already names that TTL the same role as the 24h reset) — so it structurally cannot collide with a genuinely-still-running specialist. Corroborated against git log since the rows claimed_at (AC-1s own \"no head movement AND no commit\" wording) before actually resetting.\n\n2 LOAD-BEARING FINDINGS NOT IN THE ROWS OWN TEXT: (1) scripts/orch-stamp-updated-at.mjs auto-refreshes .head.updated_at on ANY .head write — including the new resume_attempts counter this row itself requires (AC-3) — so the age check keys off the in_progress[] rows own claimed_at, never .head.updated_at, or AC-3 would silently defeat AC-1. (2) the CURRENT 24h check has NO supervised-hold exemption (po_live_evidence_20260806T0921 on this same row measured a 24.2h supervised-hold span) — naively shrinking to 2h without reordering would create a new routine false-positive class; the new age check is placed strictly AFTER WF-2 SUPERVISED-HOLD in a restructured single chain.\n\nAC-2 (signal): 2 distinct BUG-channel Telegram shapes, both naming task id + pin duration computed from claimed_at.\nAC-3/AC-4: new .head.resume_attempts/last_resume_at (incremented once per genuine S2 resume-respawn, never on first claim); 3-attempt bound escalates to status:BLOCKED + hold_reason (reused existing field) + resume_attempt_bound_exceeded_at/_by (new pair — deliberately NOT blocked_by, which is already schema-meaningful as a reverse dependency edge, orchStateSchema.ts:707, and would have corrupted dep resolution), mirroring WF-1s own BLOCKED-carve-out shape (idle-reset head + lane-move to backlog[]).\n\nSCOPE: po_occurrence_20260805T1830Z (head.next_agent not re-synced on same-tick row reassignment) scoped OUT with reasoning in the brief §6 — different trigger class (instantaneous write-ordering vs this rows temporal-staleness ACs), matches feedback_selfreport_conflates_two_dbadjacent_defects_by_topic. Recommended standalone follow-up for PO: FIX-DEVTEAM-HEAD-NEXTAGENT-RESYNC-ON-REASSIGN.\n\nHANDOFF ZONE CORRECTION: next_agent set to agent-father, not developer (the dispatch prompts own guess) — per po_routing_ruling_20260721 (agent-instruction prose under docs/agents/** routes to agent-father; developer carries no commit-zone grant there and its own init.md forbids .ts/.py), already applied twice to this exact file (TE-T02, 2026-08-06 qadrain brief §1c). §5 (main.md ready-to-apply patch) is agent-fathers deliverable; §7/§8 (optional HeadSchema typing + regression verifier) is a non-blocking developer companion, NOT spawned this cycle, PO to mint separately if wanted.\n\nBUILD-STANDARD: not-applicable (bug-fix/refactor, in-zone, no new primitives).",
         "reviewed_at": "2026-08-07T22:41:51Z",
         "reviewed_by": "architect",
-        "updated_by": "architect-cycle-20260807",
+        "updated_by": "agent-father",
         "secondary_claimed_at": "2026-08-14T06:26:19Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "agent-father"
+        "secondary_dispatch_target": "agent-father",
+        "agent_father_implementation_note": "AGENT-FATHER 2026-08-14T06:32Z — implemented architect blueprint §5 verbatim in docs/agents/dev-team/flow/main.md: dropped the 24h age clause from Step 0b entry gate; inserted WF-3 RESUME-ATTEMPT-BOUND (.head.resume_attempts/last_resume_at, 3-attempt bound escalates to BLOCKED+hold_reason+resume_attempt_bound_exceeded_at/_by, idle-resets .head, BUG signal) and WF-4 STALE-AGE (2h threshold, keyed off row claimed_at not .head.updated_at, git-log corroboration before reset, BUG signal) between WF-2 SUPERVISED-HOLD and S2 dispatcher-wrap; S2 gained the resume_attempts/last_resume_at increment on its successful-claim path; deleted the old 24h stale-crash sibling branch + fixed one stale cross-reference to it in S2 own LOCK-LIFETIME comment. All 3 new jq transforms (WF-3 BLOCKED-flip, WF-4 age-calc, S2 increment) dry-run-verified against a synthetic fixture before closeout. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md STEP agent-father-S41. Companion schema typing (HeadSchema.resume_attempts/last_resume_at) + a synthetic-fixture regression verifier (brief §7/§8) are optional non-blocking developer-zone follow-ups, not spawned this cycle, flagged as a PENDING Reusable-Scripts bullet in main.md itself for PO to mint separately if wanted. Not self-testable end-to-end this cycle (requires a live multi-tick dev-team head-pin scenario) — routing to qa for smoke/diff verification rather than self-certifying DONE_VERIFIED on orchestration-core dispatch logic."
       },
       {
         "id": "FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58",
@@ -19155,42 +19201,6 @@
         "secondary_claimed_at": "2026-08-13T11:59:22Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "ops"
-      },
-      {
-        "id": "UC-CDC-P7",
-        "type": "SPRINT-L",
-        "title": "Collapse the 12-file cowork flow to ~7 files; push per-tick logic into the deterministic script layer",
-        "status": "QA",
-        "priority": "P1",
-        "size": "L",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P7",
-        "note": "SCOPE=verifier Rescope note (corrected sequencing + I16 fix). Run Phase2 (script moves: match-slots 4.5/4.5c, tick-postflight last_fired batch) BEFORE the pressure-file merge (200L cap). I16: add an SSOT cowork_signal_recipient field to system-map.json, never derive from type==cowork (drops po+tran-ngoc-bau). COORDINATE with TE-T03 (main.md rewrite) + TE-T13 (line-1 purge) — sequence after or merge to avoid 3-way collision.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "depends": [
-          "TE-T03"
-        ],
-        "related": [
-          "TE-T13"
-        ],
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "promoted_at": "2026-08-14T05:52:49Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-08-14T06:26:53Z",
-        "claimed_at": "2026-08-14T06:26:53Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "updated_by": "developer",
-        "entered_review_at": "2026-08-14T06:25:15Z",
-        "next_agent": "qa",
-        "review_note": "developer S24: landed RESCOPE Phase 2 only (script moves), per the row's explicit 'Phase2 BEFORE merge' ordering. TE-T03/TE-T13 coordination check: both DONE_VERIFIED before session start (TE-T03 2026-08-11, TE-T13 2026-07-13) -- zero collision, main.md untouched. (a) scripts/agents-flow/cowork-match-slots.js now applies Step 4.5 freshness-downgrade (applyFreshnessDowngrade, gatherer set derived from cowork-schedule.json parallel_group==\"gatherers\", no hardcoded literal) + Step 4.5c CHEF mutex (in-process, unconditional both legacy/adaptive modes) at the tail of every call -- matchSlots() array-return contract unchanged (new options.meta out-param, additive-only, NFR-2-style). CLI stdout + meta gain pressure_mode/downgraded/suppressed_cadence/chef_mutex_applied/due_reasons/cadence_minutes; threaded into cowork-tick-preflight.sh's WORK verdict (_emit_verdict new optional 8th arg) + match-slots.md's ERROR path. pressure-cadence.md Steps 4.5/4.5c marked SUPERSEDED (script does it now), historical incident record kept not deleted. Self-caught bug found via testing: ${8:-{}} in bash defeats brace-matching (literal {} default appends a stray } to any non-empty 8th arg, corrupting every WORK verdict) -- fixed to ${8:-} + [ -z ] && extra=\"{}\". (b) NEW scripts/agents-flow/cowork-tick-postflight.sh: last_fired batch write (verbatim delegation to cowork-write-last-fired.js, zero reimplementation) + cycle-snapshot assembly (same jq contract as tick-snapshot.md) + NEW docs/signals/processed/cowork-team-*.json >14d retention sweep (I13), scoped to already-processedAt-stamped files ONLY (never the live inbox, never an unstamped row -- avoids the exact unconditional-processed/-prune bug class drain-signals.js was hardened against; git rm stages, does not commit, mirrors purge-legacy-processed-signals.sh). (c) I16: added cowork_signal_recipient:true to po/tran-ngoc-bau/unified-agent/alert-commander in system-map.json (never derivable from type==\"cowork\", a different 9-agent set that drops po+tran-ngoc-bau); wired cowork-tick-preflight.sh Step 7 to read it (fail-safe fallback to the prior literal on missing/malformed file -- every pre-existing fixture keeps passing unmodified); updated work-tick.md + dispatch/SKILL.md + system-map-query/SKILL.md prose pointers. Tests: cowork-match-slots.test.js 43->69/69, cowork-tick-preflight.test.sh 58->67/67 (new T2c/T2d/T-SSOT), new cowork-tick-postflight.test.sh 28/28 (real isolated git-repo fixture, not mocked -- caught + fixed a git-rm empty-leading-dir-prune gotcha mid-write). cowork-chef-mutex/cowork-schedule-consistency/cowork-catchup-predicate/cowork-guaranteed-slot-firer suites all unaffected (260 assertions total across 7 suites, 0 regressions). shellcheck -S warning clean on all touched .sh files. bun test/tsc N/A (zero apps/ TS/Go touched, zone cross-service/). Commit 15492ff61. Decision journal sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S24.",
-        "status_note": "PARKED, not complete -- Phase 1 (12->7 file collapse: merge pressure-read.md+pressure-cadence.md into pressure.md, fold pressure-emit.md into telemetry.md, delete slot-claim.md's retired 4.6b block, merge last-fired.md into spawn-fanout.md, update main.md JUMP-TO) is NOT started this pass, per the row's own explicit 'Phase2 script moves BEFORE the pressure-file merge' sequencing. Also NOT done: wiring last-fired.md/tick-snapshot.md to actually CALL the new cowork-tick-postflight.sh in the live flow -- Step 4.7 (snapshot) must run BEFORE spawn-fanout (Step 5) so agents can read a fresh snapshot, Step 5b (last_fired) must run AFTER spawns, so a single combined call site at the tail is NOT a drop-in; the script already supports a 2-call split (SKIP_SNAPSHOT/SKIP_RETENTION env flags) but wiring it into the live cron-facing flow docs needs a verified live dry-run tick before/after, which did not fit in this session -- next pickup should do that wiring FIRST (script + tests already exist and are green), then proceed to the Phase 1 merge. I16 SSOT field IS fully wired end-to-end (system-map.json + cowork-tick-preflight.sh + work-tick.md + dispatch/SKILL.md), not partial."
       }
     ],
     "_closed_signals_20260614": {
