@@ -86,6 +86,17 @@ before landing — flagged for the ops-supervised ≥2h live cold-start verifica
 too — expected and bounded, not a regression path.
 
 #### OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX (build-time OOM the above fix introduced)
+**CAVEAT (qa, 2026-08-14, added while closing FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED):**
+the `TOKIO_WORKER_THREADS`/`LANCE_CPU_THREADS` pin documented in this section is CONFIRMED
+necessary but **INSUFFICIENT ALONE** — 3 kernel memcg OOM-kills recurred after this exact fix
+deployed and was content-hash-verified live, all invoked by `lancedb-tokio-w`, the very thread
+the pin targets. Do **not** read this section as a complete resolution. See
+§ FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED below for the live in-container
+discrimination (the pin measurably takes effect but neither Tokio's on-demand blocking pool nor
+lance-core's rayon IO-core-reservation floor can be pinned below 2 threads — no further env
+lever exists) and the fix that actually addresses the restart-triggered amplifier (skip the
+redundant full-corpus index rebuild when a valid index already persists on disk).
+
 The "open, not resolved" flag above was exactly right: deploying the fix (image
 `sha256:bdb808678a26`, 2026-08-12T10:14:37Z) OOM-restarted the container TWICE more within
 10 minutes (10:18:10Z, 10:24:01Z) — the "fix" was itself now the crash trigger. Two
