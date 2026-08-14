@@ -15,9 +15,16 @@
 #     3. Validation via bun scripts/orch-validate.mjs (Zod schema + dup-key
 #        + coherence + ref integrity). NEVER duplicated here — single SSOT.
 #     4. Conservation circuit-breaker via bun scripts/orch-conservation-check.mjs
-#        (whole-board task_total/signal_total magnitude-ratio guard PLUS an
-#        independent, never-bypassable signal_queue.rows[] row-identity guard
-#        — FIX-ORCHSTATE-SIGNALQUEUE-UNCOMMITTED-ROWS-LOST-TO-PEER-FULLDOC-WRITE).
+#        (whole-board task_total/signal_total magnitude-ratio guard PLUS two
+#        independent, never-bypassable row-identity guards: signal_queue.rows[]
+#        — FIX-ORCHSTATE-SIGNALQUEUE-UNCOMMITTED-ROWS-LOST-TO-PEER-FULLDOC-WRITE
+#        — and dev_team_idle_chain.pending_triage_inbox[] — FIX-ORCHAPPLY-
+#        CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR, 2026-08-14,
+#        which also REMOVED the inbox from the signal_total magnitude ratio
+#        entirely: it is a drain-to-zero queue, not an accumulating log, so a
+#        legitimate full clear must never trip a magnitude floor — see that
+#        script's own header for the full rationale + the
+#        ORCH_APPLY_DECLARED_INBOX_TRIAGED env var).
 #        NEVER duplicated here — single SSOT. Closes the empirically live-exploitable
 #        full-doc-collapse class (commit de595a44) — see
 #        docs/architecture-briefs/2026-07-10-auditor-orchstate-conservation-guard.md
@@ -178,6 +185,14 @@ stamp_output=$(bun "${REPO_ROOT}/scripts/orch-stamp-updated-at.mjs" "${LIVE_FILE
 # Read directly by orch-conservation-check.mjs from its inherited process env;
 # no special plumbing needed here beyond the normal env-inheritance a
 # subprocess already gets.
+#
+# ROW-IDENTITY DIMENSIONS (never bypassable by ORCH_APPLY_ALLOW_SHRINK above —
+# orthogonal claims): signal_queue.rows[] via ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS
+# (wired ONLY into scripts/orch-cold-evict.sh) and
+# dev_team_idle_chain.pending_triage_inbox[] via ORCH_APPLY_DECLARED_INBOX_TRIAGED
+# (wired ONLY into docs/agents/dev-team/flow/main.md § Step 1 "Durable-inbox
+# CLEAR", FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR,
+# 2026-08-14) — both also just inherited env vars, no plumbing needed here either.
 conservation_output=$(bun "${REPO_ROOT}/scripts/orch-conservation-check.mjs" "${LIVE_FILE}" "${TMP}" 2>&1) || {
   conservation_exit=$?
   printf '%s\n' "${conservation_output}" >&2

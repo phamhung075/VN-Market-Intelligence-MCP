@@ -1043,6 +1043,189 @@ fi
 assert_real_live_unchanged "ROW-APPEND-HAPPY"
 
 # =============================================================================
+# INBOX ROW-IDENTITY TESTS (FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-
+# PO-INBOX-DRAIN-CLEAR)
+# =============================================================================
+# scripts/orch-conservation-check.mjs's magnitude-ratio floor previously folded
+# dev_team_idle_chain.pending_triage_inbox[] into signal_total alongside
+# signal_queue.rows[] -- but the inbox is a QUEUE meant to drain to zero on every
+# legitimate dev-team Step-1 triage pass, not an accumulating log like
+# signal_queue.rows[], so a single large legitimate clear tripped the same floor
+# built to catch accidental mass-deletion, with the sole bypass
+# (ORCH_APPLY_ALLOW_SHRINK) explicitly forbidden to this caller -- forcing
+# artificial sequential sub-batching (reproduced live: 29 envelopes / 4 writes
+# 2026-08-11, 248 envelopes / 4 writes 2026-08-14).
+#
+# Fix: the inbox is now EXCLUDED from signal_total entirely (a magnitude floor
+# it is not part of can never block it) and given its own independent,
+# never-bypassable per-envelope row-identity guard instead (mirrors the
+# existing signal_queue.rows[] row-identity dimension one level down, via the
+# new ORCH_APPLY_DECLARED_INBOX_TRIAGED env var).
+#
+# INBOX-FULL-DRAIN-DECLARED (AC-3)  -- the reported incident shape: 29-envelope
+#   inbox drained to 0 in ONE write, every dropped id declared via
+#   ORCH_APPLY_DECLARED_INBOX_TRIAGED, NO ORCH_APPLY_ALLOW_SHRINK set -- must be
+#   exit 0 (previously required 4 artificial sub-batches to clear this size).
+# INBOX-DROP-UNDECLARED-REJECTED    -- negative control: the exact same full
+#   wipe, undeclared -- must still be exit 1 (proves the guard still catches an
+#   accidental full wipe, not just weakened/removed).
+# INBOX-DROP-ALLOW-SHRINK-NO-BYPASS -- orthogonality: ORCH_APPLY_ALLOW_SHRINK
+#   does NOT bypass the inbox row-identity dimension either.
+# INBOX-APPEND-HAPPY                -- regression guard: a normal single-entry
+#   inbox append (zero drops) must not be blocked by either dimension.
+# =============================================================================
+INBOX_LIVE="$FIXTURE_DIR/inbox-live.json"
+N_INBOX=29
+N_INBOX_SIGNAL_ROWS=13
+
+build_inbox_fixture() {
+  jq -n \
+    --argjson n_inbox "$N_INBOX" \
+    --argjson n_rows "$N_INBOX_SIGNAL_ROWS" \
+    '{
+      "_meta": {"schema":"v4","ssot":true,"updated_at":"2026-08-14T00:00:00Z","updated_by":"fixture"},
+      "head": {"status":"idle","active_task_id":null,"next_agent":null},
+      "task_board": {"backlog": [{"id":"INBOX-BACKLOG","status":"BACKLOG"}], "active_sprints": []},
+      "signal_queue": {
+        "_updated_at":"2026-08-14T00:00:00Z","_updated_by":"fixture",
+        "rows": [range($n_rows) | {id: ("INBOX-SIG-" + (. | tostring)), summary: "fixture row", severity: "INFO", status: "NEW"}]
+      },
+      "dev_team_idle_chain": {
+        "pending_triage_inbox": [range($n_inbox) | {envelope_id: ("INBOX-ENV-" + (. | tostring)), source: "file", from: "x", to: "dev-team", type: "y", priority: "LOW", payload: {}, createdAt: "2026-08-14T00:00:00Z"}]
+      }
+    }' > "$INBOX_LIVE"
+}
+build_inbox_fixture
+
+if ! bun "$VALIDATOR" "$INBOX_LIVE" >/dev/null 2>&1; then
+  fail "INBOX setup — populated fixture failed standalone validation (test bug, not product bug)"
+fi
+
+INBOX_HASH_BEFORE=$(file_hash "$INBOX_LIVE")
+ALL_INBOX_IDS=$(jq -c '[.dev_team_idle_chain.pending_triage_inbox[].envelope_id]' "$INBOX_LIVE")
+ALL_INBOX_IDS_CSV=$(echo "$ALL_INBOX_IDS" | jq -r 'join(",")')
+
+INBOX_DRAIN_CANDIDATE=$(jq --arg now "2026-08-14T00:01:00Z" \
+  '.dev_team_idle_chain.pending_triage_inbox = [] | .dev_team_idle_chain._updated_at = $now
+   | .dev_team_idle_chain._updated_by = "dev-team" | ._meta.updated_at = $now' \
+  "$INBOX_LIVE")
+
+# ─────────────────────────────────────────────────────────────────────────
+# INBOX-FULL-DRAIN-DECLARED (AC-3) — 29-envelope inbox drained to 0 in ONE
+# write, declared, no ORCH_APPLY_ALLOW_SHRINK — must be exit 0.
+# ─────────────────────────────────────────────────────────────────────────
+EXIT_INBOX_DRAIN=0
+printf '%s' "$INBOX_DRAIN_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$INBOX_LIVE" ORCH_APPLY_DECLARED_INBOX_TRIAGED="$ALL_INBOX_IDS_CSV" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_INBOX_DRAIN=$?
+
+if [ "$EXIT_INBOX_DRAIN" -eq 0 ]; then
+  pass "INBOX-FULL-DRAIN-DECLARED (AC-3) — 29-envelope inbox drained to 0 in ONE write, no bypass env var — exit 0"
+else
+  fail "INBOX-FULL-DRAIN-DECLARED (AC-3) — expected exit 0, got $EXIT_INBOX_DRAIN"
+fi
+
+INBOX_POST_DRAIN_N=$(jq '.dev_team_idle_chain.pending_triage_inbox | length' "$INBOX_LIVE" 2>/dev/null || echo -1)
+if [ "$INBOX_POST_DRAIN_N" = "0" ]; then
+  pass "INBOX-FULL-DRAIN-DECLARED (AC-3) — fixture inbox now empty (rename applied)"
+else
+  fail "INBOX-FULL-DRAIN-DECLARED (AC-3) — expected inbox length 0, got $INBOX_POST_DRAIN_N"
+fi
+
+INBOX_POST_DRAIN_ROWS_N=$(jq '.signal_queue.rows | length' "$INBOX_LIVE" 2>/dev/null || echo -1)
+if [ "$INBOX_POST_DRAIN_ROWS_N" = "$N_INBOX_SIGNAL_ROWS" ]; then
+  pass "INBOX-FULL-DRAIN-DECLARED (AC-3) — signal_queue.rows[] untouched (still $N_INBOX_SIGNAL_ROWS)"
+else
+  fail "INBOX-FULL-DRAIN-DECLARED (AC-3) — signal_queue.rows[] expected $N_INBOX_SIGNAL_ROWS, got $INBOX_POST_DRAIN_ROWS_N"
+fi
+assert_real_live_unchanged "INBOX-FULL-DRAIN-DECLARED"
+
+# Reset fixture for the remaining inbox sub-tests (drain above mutated it)
+build_inbox_fixture
+
+# ─────────────────────────────────────────────────────────────────────────
+# INBOX-DROP-UNDECLARED-REJECTED — same full wipe, undeclared — must still be
+# exit 1 (guard still catches an accidental full wipe, not just weakened).
+# ─────────────────────────────────────────────────────────────────────────
+EXIT_INBOX_UNDECLARED=0
+printf '%s' "$INBOX_DRAIN_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$INBOX_LIVE" bash "$APPLY_SH" 2>/tmp/inbox-undeclared-stderr.$$ \
+  || EXIT_INBOX_UNDECLARED=$?
+
+if [ "$EXIT_INBOX_UNDECLARED" -eq 1 ]; then
+  pass "INBOX-DROP-UNDECLARED-REJECTED — undeclared full inbox wipe rejected — exit 1"
+else
+  fail "INBOX-DROP-UNDECLARED-REJECTED — expected exit 1, got $EXIT_INBOX_UNDECLARED"
+fi
+
+if grep -q "INBOX-ENV-0" /tmp/inbox-undeclared-stderr.$$ 2>/dev/null; then
+  pass "INBOX-DROP-UNDECLARED-REJECTED — stderr names a dropped envelope_id (INBOX-ENV-0)"
+else
+  fail "INBOX-DROP-UNDECLARED-REJECTED — stderr did not name a dropped envelope_id"
+fi
+rm -f /tmp/inbox-undeclared-stderr.$$
+
+INBOX_HASH_AFTER_UNDECLARED=$(file_hash "$INBOX_LIVE")
+if [ "$INBOX_HASH_BEFORE" = "$INBOX_HASH_AFTER_UNDECLARED" ]; then
+  pass "INBOX-DROP-UNDECLARED-REJECTED — fixture UNCHANGED (no rename occurred)"
+else
+  fail "INBOX-DROP-UNDECLARED-REJECTED — fixture CHANGED (CRITICAL — undeclared inbox wipe was applied)"
+fi
+assert_real_live_unchanged "INBOX-DROP-UNDECLARED-REJECTED"
+
+# ─────────────────────────────────────────────────────────────────────────
+# INBOX-DROP-ALLOW-SHRINK-NO-BYPASS — same undeclared wipe WITH
+# ORCH_APPLY_ALLOW_SHRINK set — must STILL be exit 1.
+# ─────────────────────────────────────────────────────────────────────────
+EXIT_INBOX_SHRINK=0
+printf '%s' "$INBOX_DRAIN_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$INBOX_LIVE" ORCH_APPLY_ALLOW_SHRINK="test-attempted-bypass" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_INBOX_SHRINK=$?
+
+if [ "$EXIT_INBOX_SHRINK" -eq 1 ]; then
+  pass "INBOX-DROP-ALLOW-SHRINK-NO-BYPASS — ORCH_APPLY_ALLOW_SHRINK does NOT bypass inbox row-identity — exit 1"
+else
+  fail "INBOX-DROP-ALLOW-SHRINK-NO-BYPASS — expected exit 1 (bypass must not apply), got $EXIT_INBOX_SHRINK"
+fi
+
+INBOX_HASH_AFTER_SHRINK=$(file_hash "$INBOX_LIVE")
+if [ "$INBOX_HASH_BEFORE" = "$INBOX_HASH_AFTER_SHRINK" ]; then
+  pass "INBOX-DROP-ALLOW-SHRINK-NO-BYPASS — fixture UNCHANGED"
+else
+  fail "INBOX-DROP-ALLOW-SHRINK-NO-BYPASS — fixture CHANGED (CRITICAL — bypass leaked into inbox row-identity gate)"
+fi
+assert_real_live_unchanged "INBOX-DROP-ALLOW-SHRINK-NO-BYPASS"
+
+# ─────────────────────────────────────────────────────────────────────────
+# INBOX-APPEND-HAPPY — regression guard: a normal single-entry inbox append
+# (zero drops) must not be blocked by either dimension.
+# ─────────────────────────────────────────────────────────────────────────
+INBOX_APPEND_CANDIDATE=$(jq --arg now "2026-08-14T00:02:00Z" \
+  '.dev_team_idle_chain.pending_triage_inbox += [{"envelope_id":"INBOX-ENV-NEW","source":"file","from":"x","to":"dev-team","type":"y","priority":"LOW","payload":{},"createdAt":"2026-08-14T00:02:00Z"}]
+   | .dev_team_idle_chain._updated_at = $now | .dev_team_idle_chain._updated_by = "dev-team"
+   | ._meta.updated_at = $now' \
+  "$INBOX_LIVE")
+
+EXIT_INBOX_APPEND=0
+printf '%s' "$INBOX_APPEND_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$INBOX_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_INBOX_APPEND=$?
+
+if [ "$EXIT_INBOX_APPEND" -eq 0 ]; then
+  pass "INBOX-APPEND-HAPPY — new inbox envelope (zero drops) accepted — exit 0"
+else
+  fail "INBOX-APPEND-HAPPY — expected exit 0, got $EXIT_INBOX_APPEND"
+fi
+
+INBOX_POST_APPEND_N=$(jq '.dev_team_idle_chain.pending_triage_inbox | length' "$INBOX_LIVE" 2>/dev/null || echo -1)
+if [ "$INBOX_POST_APPEND_N" = "$((N_INBOX + 1))" ]; then
+  pass "INBOX-APPEND-HAPPY — inbox length == pre+1"
+else
+  fail "INBOX-APPEND-HAPPY — inbox length expected $((N_INBOX + 1)), got $INBOX_POST_APPEND_N"
+fi
+assert_real_live_unchanged "INBOX-APPEND-HAPPY"
+
+# =============================================================================
 # Summary
 # =============================================================================
 TOTAL=$((PASS+FAIL))

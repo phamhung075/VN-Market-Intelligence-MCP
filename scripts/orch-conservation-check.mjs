@@ -21,32 +21,42 @@
  * METRICS (brief §4.1 formula, EXTENDED FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND
  *   to include the 'qa' lane — see that task for why the original brief's lane
  *   set went stale: 'qa' is now actively populated by the Review-Lane QA-Drain
- *   mechanism, so a qa[] collapse must be counted or the guard is blind to it;
- *   FURTHER EXTENDED FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE 2026-08-09, §3.4 of
- *   docs/architecture-briefs/2026-07-25-devteam-idle-chain-rotation-durable-inbox.md
- *   — see the dedicated paragraph below signal_total(doc) for why):
+ *   mechanism, so a qa[] collapse must be counted or the guard is blind to it.
+ *   `dev_team_idle_chain.pending_triage_inbox[]` was BRIEFLY folded into this metric
+ *   (FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE, 2026-08-09) and then REMOVED again
+ *   (FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR, 2026-08-14) — see
+ *   the dedicated "INBOX ROW-IDENTITY DIMENSION" paragraph below for why and what replaced it):
  *   task_total(doc)   = length(backlog) + length(ready) + length(in_progress)
  *                     + length(review) + length(qa) + length(done) + length(done_verified)
  *                     + Σ active_sprints[].tasks[].length
  *                     + Σ closed_sprints[].tasks[].length
  *   signal_total(doc) = length(signal_queue.rows)
- *                     + length(dev_team_idle_chain.pending_triage_inbox)
  *
- * DURABLE PENDING-TRIAGE-INBOX DIMENSION (FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE, 2026-08-09):
- *   `.dev_team_idle_chain.pending_triage_inbox[]` (FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN,
- *   2026-08-08) is a SECOND durable holding area for not-yet-triaged signals, structurally
- *   identical in kind to `signal_queue.rows[]` (both hold un-consumed signal envelopes awaiting
- *   PO/Step-1 action) but was invisible to the pre-2026-08-09 formula above — a bug in the
- *   inbox's own append/clear logic (main.md § Step 1 — PO Triage "Durable-inbox CLEAR", or
- *   drain-signals.js's appendDurableBatch()) that silently wiped the whole array (e.g. a
- *   mis-scoped `= []` instead of the mandated subtractive-by-envelope_id filter) would sail
- *   through this circuit-breaker undetected as long as `signal_queue.rows[]` itself stayed
- *   intact — the EXACT same blind spot the original FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-
- *   BREAKER task closed for `signal_queue.rows[]` collapse, now closed for its durable-inbox
- *   sibling too. Summed into ONE `signal_total` (not a third independent metric) because both
- *   arrays are the same conceptual "signals not yet delivered/consumed" quantity — a signal
- *   moving from `signal_queue.rows[]` accounting into the inbox (or vice versa) must not itself
- *   look like a collapse.
+ * INBOX ROW-IDENTITY DIMENSION (FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-
+ *   DRAIN-CLEAR, 2026-08-14, supersedes the FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE 2026-08-09
+ *   magnitude-metric approach above): `.dev_team_idle_chain.pending_triage_inbox[]`
+ *   (FIX-DEVTEAM-IDLE-CHAIN-P2A-DURABLE-DRAIN, 2026-08-08) is a SECOND durable holding area for
+ *   not-yet-triaged signals, structurally identical in kind to `signal_queue.rows[]` — but unlike
+ *   `signal_queue.rows[]` (an accumulating log), the inbox is a QUEUE whose entire purpose is to
+ *   drain to zero on every legitimate dev-team Step-1 triage pass (main.md § Step 1 — PO Triage
+ *   "Durable-inbox CLEAR") — so folding it into the `signal_total` MAGNITUDE ratio was the wrong
+ *   invariant: a single large, fully-legitimate clear (REPRODUCED LIVE: 2026-08-11, 29 envelopes;
+ *   2026-08-14, 248 envelopes) trips the exact same floor built to catch accidental mass-deletion,
+ *   with no sanctioned bypass (`ORCH_APPLY_ALLOW_SHRINK` is explicitly forbidden to every caller
+ *   except `orch-cold-evict.sh`/`task-archive.md`) — forcing callers into artificial sequential
+ *   sub-batching purely to stay above the ratio, which is self-reinforcing (an unclearable inbox
+ *   only grows, making the next clear even harder). Fix: REMOVE the inbox from `signal_total`
+ *   entirely (a full clear-to-zero can never trip a magnitude floor it is not part of) and give it
+ *   its OWN row-identity guard instead — see `undeclaredInboxDrops()` below — which still catches
+ *   an accidental full (or partial) wipe: any `.envelope_id` present in LIVE and absent from
+ *   CANDIDATE must be named in the caller-declared `ORCH_APPLY_DECLARED_INBOX_TRIAGED` env var
+ *   (the "this id was legitimately triaged" marker), mirroring `undeclaredSignalRowDrops()`'s
+ *   existing `ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS` mechanism for `signal_queue.rows[]` one level
+ *   down. `docs/agents/dev-team/flow/main.md` § Step 1 "Durable-inbox CLEAR" already computes the
+ *   exact consumed-id list this write removes (`consumed_ids`) — it now passes that same list
+ *   through verbatim as the declaration, so a full clear-to-zero lands in ONE write with no
+ *   artificial sub-batching, while an undeclared drop (accidental wipe, or a stale/buggy candidate)
+ *   is still hard-rejected.
  *
  * ROW-IDENTITY DIMENSION (FIX-ORCHSTATE-SIGNALQUEUE-UNCOMMITTED-ROWS-LOST-TO-
  *   PEER-FULLDOC-WRITE, 2026-08-08): the magnitude-ratio metric above is
@@ -111,15 +121,36 @@
  *                              (and not in candidate's `.signal_queue.archive[]`)
  *                              that disappears between live and candidate is
  *                              an undeclared drop → hard reject.
+ *   ORCH_APPLY_DECLARED_INBOX_TRIAGED  comma-separated list of
+ *                              `dev_team_idle_chain.pending_triage_inbox[].envelope_id`
+ *                              values the CALLER explicitly declares it
+ *                              legitimately triaged/removed this write (see
+ *                              "INBOX ROW-IDENTITY DIMENSION" above). Wired
+ *                              ONLY into docs/agents/dev-team/flow/main.md
+ *                              § Step 1 "Durable-inbox CLEAR" (the sole
+ *                              legitimate remover of inbox entries), which
+ *                              already computes this exact id list
+ *                              (`consumed_ids`) before the write — passed
+ *                              through verbatim, never hand-maintained. Any
+ *                              envelope_id NOT in this set that disappears
+ *                              between live and candidate is an undeclared
+ *                              drop → hard reject. Independent of (does not
+ *                              share a name or a bypass path with)
+ *                              ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS above —
+ *                              the two arrays have no archive-lane equivalent
+ *                              in common either.
  *
  * EXIT CODES:
  *   0 = conservation OK (within floor, below MIN_BASELINE, or bypass honored)
- *       AND zero undeclared row-identity drops.
+ *       AND zero undeclared row-identity drops (signal_queue.rows[] AND
+ *       pending_triage_inbox[]).
  *   1 = conservation violated (task_total or signal_total dropped below the
  *       floor ratio, no bypass set) OR at least one signal_queue.rows[] id
  *       vanished between live and candidate without being declared/archived
- *       (row-identity violation — never bypassable) — reuses the caller's
- *       existing "validation failed, live file untouched" exit class.
+ *       OR at least one pending_triage_inbox[] envelope_id vanished without
+ *       being declared (both row-identity violations — never bypassable) —
+ *       reuses the caller's existing "validation failed, live file untouched"
+ *       exit class.
  *   3 = usage error (missing args, file not found / unreadable / unparseable)
  *
  * HARD CONSTRAINTS:
@@ -167,11 +198,14 @@ function taskTotal(doc) {
 }
 
 /**
- * signal_total(doc) = length(signal_queue.rows) + length(dev_team_idle_chain.pending_triage_inbox)
- * FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE (2026-08-09): the durable pending-triage inbox is a
- * second not-yet-triaged-signal holding area, structurally identical in kind to
- * signal_queue.rows[] — see the file-header "DURABLE PENDING-TRIAGE-INBOX DIMENSION" paragraph
- * for the full rationale (circuit-breaker guard against a silent whole-inbox wipe bug).
+ * signal_total(doc) = length(signal_queue.rows)
+ * FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR (2026-08-14):
+ * `dev_team_idle_chain.pending_triage_inbox` was REMOVED from this metric (previously added by
+ * FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE, 2026-08-09) — see the file-header "INBOX ROW-IDENTITY
+ * DIMENSION" paragraph for the full rationale (the inbox is a drain-to-zero QUEUE, not an
+ * accumulating log like signal_queue.rows[], so a magnitude-ratio floor was structurally the
+ * wrong invariant for it; `undeclaredInboxDrops()` below replaces the protection this metric used
+ * to (partially) provide, without blocking a legitimate full clear).
  * @param {unknown} doc
  * @returns {number}
  */
@@ -179,9 +213,7 @@ function signalTotal(doc) {
   const d = /** @type {Record<string, unknown>} */ (doc && typeof doc === 'object' ? doc : {});
   const sq = /** @type {Record<string, unknown>} */ (d.signal_queue);
   const rows = sq ? sq.rows : undefined;
-  const idleChain = /** @type {Record<string, unknown>} */ (d.dev_team_idle_chain);
-  const inbox = idleChain ? idleChain.pending_triage_inbox : undefined;
-  return (Array.isArray(rows) ? rows.length : 0) + (Array.isArray(inbox) ? inbox.length : 0);
+  return Array.isArray(rows) ? rows.length : 0;
 }
 
 /**
@@ -232,6 +264,56 @@ function undeclaredSignalRowDrops(liveDoc, candidateDoc) {
     if (candidateRowIds.has(id)) continue; // still present — not a drop
     if (candidateArchiveIds.has(id)) continue; // accounted for — moved to inline archive
     if (declared.has(id)) continue; // accounted for — caller declared this eviction
+    dropped.push(id);
+  }
+  return dropped;
+}
+
+/**
+ * Extract the set of `.envelope_id` strings from
+ * `dev_team_idle_chain.pending_triage_inbox[]`. Non-string / missing ids are
+ * skipped — identity-tracking helper only, not a schema validator.
+ * @param {unknown} doc
+ * @returns {Set<string>}
+ */
+function inboxEnvelopeIdSet(doc) {
+  const chain = /** @type {Record<string, unknown>} */ (doc && typeof doc === 'object' ? doc.dev_team_idle_chain : undefined);
+  const arr = chain ? chain.pending_triage_inbox : undefined;
+  const out = new Set();
+  if (Array.isArray(arr)) {
+    for (const row of arr) {
+      const id = row && typeof row === 'object' ? row.envelope_id : undefined;
+      if (typeof id === 'string' && id.length > 0) out.add(id);
+    }
+  }
+  return out;
+}
+
+/**
+ * INBOX row-identity conservation dimension (FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-
+ * SANCTIONED-PO-INBOX-DRAIN-CLEAR, 2026-08-14) — see file header "INBOX ROW-IDENTITY DIMENSION"
+ * for full rationale. Mirrors undeclaredSignalRowDrops() one level down: returns the list of
+ * live `.dev_team_idle_chain.pending_triage_inbox[]` envelope_ids that vanished in the candidate
+ * WITHOUT being accounted for. There is no archive-lane equivalent for this array (unlike
+ * signal_queue.rows[]/.archive[]) — the caller-declared env var is the ONLY accounting mechanism.
+ * @param {unknown} liveDoc
+ * @param {unknown} candidateDoc
+ * @returns {string[]}
+ */
+function undeclaredInboxDrops(liveDoc, candidateDoc) {
+  const liveIds = inboxEnvelopeIdSet(liveDoc);
+  const candidateIds = inboxEnvelopeIdSet(candidateDoc);
+  const declared = new Set(
+    (process.env.ORCH_APPLY_DECLARED_INBOX_TRIAGED ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
+  );
+
+  const dropped = [];
+  for (const id of liveIds) {
+    if (candidateIds.has(id)) continue; // still present — not a drop
+    if (declared.has(id)) continue; // accounted for — caller declared this as legitimately triaged
     dropped.push(id);
   }
   return dropped;
@@ -289,21 +371,22 @@ const metrics = [
 
 const violations = metrics.filter((m) => m.live >= MIN_BASELINE && m.candidate < m.live * FLOOR_RATIO);
 
-// Row-identity dimension — INDEPENDENT of the magnitude check above, and
+// Row-identity dimensions — INDEPENDENT of the magnitude check above, and
 // NEVER bypassable by ORCH_APPLY_ALLOW_SHRINK (see file header).
 const droppedIds = undeclaredSignalRowDrops(liveDoc, candidateDoc);
+const droppedInboxIds = undeclaredInboxDrops(liveDoc, candidateDoc);
 
-if (violations.length === 0 && droppedIds.length === 0) {
+if (violations.length === 0 && droppedIds.length === 0 && droppedInboxIds.length === 0) {
   process.stdout.write(
     `[orch-conservation-check] OK — ` +
       metrics.map((m) => `${m.name} live=${m.live} candidate=${m.candidate}`).join(', ') +
-      `, signal_row_identity=clean\n`
+      `, signal_row_identity=clean, inbox_row_identity=clean\n`
   );
   process.exit(0);
 }
 
 // Row-identity violations are reported and enforced FIRST, unconditionally —
-// no bypass exists for this dimension regardless of ORCH_APPLY_ALLOW_SHRINK.
+// no bypass exists for either of these two dimensions regardless of ORCH_APPLY_ALLOW_SHRINK.
 if (droppedIds.length > 0) {
   process.stderr.write(
     `\n[orch-conservation-check] ABORTED — row-identity violation: ${droppedIds.length} ` +
@@ -320,6 +403,28 @@ if (droppedIds.length > 0) {
       `ORCH_APPLY_ALLOW_SHRINK to work around this, it does not bypass row-identity checks. If this ` +
       `is unintentional, the candidate was built from a stale read — re-read the live file and ` +
       `re-apply your filter.\n`
+  );
+  process.exit(1);
+}
+
+if (droppedInboxIds.length > 0) {
+  process.stderr.write(
+    `\n[orch-conservation-check] ABORTED — inbox row-identity violation: ${droppedInboxIds.length} ` +
+      `dev_team_idle_chain.pending_triage_inbox[] envelope_id(s) present in live but absent from ` +
+      `candidate WITHOUT being declared (not in ORCH_APPLY_DECLARED_INBOX_TRIAGED):\n`
+  );
+  for (const id of droppedInboxIds) {
+    process.stderr.write(`  ${id}\n`);
+  }
+  process.stderr.write(
+    `  fix: this is NOT a magnitude problem — do NOT set ORCH_APPLY_ALLOW_SHRINK (it is forbidden ` +
+      `for this caller anyway, and it does not bypass row-identity checks). Set ` +
+      `ORCH_APPLY_DECLARED_INBOX_TRIAGED=<comma-separated envelope_id list> naming exactly the ` +
+      `envelope_id(s) this write legitimately triaged/removed — docs/agents/dev-team/flow/main.md ` +
+      `§ Step 1 "Durable-inbox CLEAR" already computes this exact list (consumed_ids) and passes it ` +
+      `through verbatim. A full clear-to-zero is fully supported in ONE write this way, no artificial ` +
+      `sub-batching required. If this drop is unintentional, the candidate was built from a stale ` +
+      `read — re-read the live file and re-apply your filter.\n`
   );
   process.exit(1);
 }

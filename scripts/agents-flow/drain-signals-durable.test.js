@@ -31,11 +31,17 @@
 // Plus two supporting negative controls:
 //   - Backward-compat: a pre-migration fixture with NO `dev_team_idle_chain` key at all must not
 //     crash Step 1's own read (defaults to `[]`) and must bootstrap the key cleanly on first append.
-//   - Conservation Guard Extension (subtask 2, scripts/orch-conservation-check.mjs §3.4): a
-//     candidate that silently wipes `dev_team_idle_chain.pending_triage_inbox` while
-//     `signal_queue.rows` stays untouched is now REJECTED by the circuit-breaker (it was
-//     structurally invisible to the pre-extension `signal_total()` formula); a normal
-//     single-entry inbox growth is NOT blocked (regression parity).
+//   - Conservation Guard Extension (subtask 2, scripts/orch-conservation-check.mjs §3.4,
+//     UPDATED 2026-08-14 by FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-
+//     CLEAR — see that script's own header for the full rationale): `pending_triage_inbox` was
+//     removed from the `signal_total` magnitude ratio (it is a drain-to-zero queue, not an
+//     accumulating log) and is now guarded by its own independent, never-bypassable per-envelope
+//     row-identity dimension instead. An UNDECLARED candidate that silently drops entries (full
+//     wipe OR a single entry) is REJECTED; the SAME drop is ACCEPTED once every dropped
+//     `envelope_id` is named via `ORCH_APPLY_DECLARED_INBOX_TRIAGED` — the exact declaration
+//     `docs/agents/dev-team/flow/main.md` § Step 1 "Durable-inbox CLEAR" now makes, letting a
+//     full clear-to-zero land in ONE write instead of the artificial multi-write sub-batching PO
+//     previously needed. A normal single-entry inbox growth (zero drops) is NOT blocked either way.
 //
 // ISOLATION: every scenario builds its own mkdtemp harness — a full self-contained COPY of
 // drain-signals.js + the real orch-apply.sh/orch-validate.mjs/orch-conservation-check.mjs/
@@ -408,9 +414,18 @@ cleanup(scenario1Harness); // release scenario 1's harness now that S2/S3/S3b ar
 
 // ============================================================================
 // Conservation Guard Extension (subtask 2 — scripts/orch-conservation-check.mjs §3.4):
-// signal_total() now counts BOTH signal_queue.rows AND dev_team_idle_chain.pending_triage_inbox.
-// Calls the REAL bun script directly (no orch-apply.sh chain needed — this is a pure
-// live-vs-candidate file comparator, not a write path) against two hand-built fixtures.
+// ORIGINALLY signal_total() counted BOTH signal_queue.rows AND
+// dev_team_idle_chain.pending_triage_inbox (FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE, 2026-08-09).
+// SUPERSEDED (FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR,
+// 2026-08-14): the inbox is a drain-to-zero QUEUE (main.md § Step 1 "Durable-inbox CLEAR"), not
+// an accumulating log like signal_queue.rows[] — folding it into the magnitude ratio meant a
+// single large LEGITIMATE clear tripped the same floor built to catch accidental mass-deletion,
+// with no sanctioned bypass. The inbox is now EXCLUDED from signal_total entirely and given its
+// own independent, never-bypassable per-envelope row-identity guard instead
+// (ORCH_APPLY_DECLARED_INBOX_TRIAGED, mirrors signal_queue.rows[]'s existing
+// ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS one level down). Calls the REAL bun script directly (no
+// orch-apply.sh chain needed — this is a pure live-vs-candidate file comparator, not a write
+// path) against hand-built fixtures.
 // ============================================================================
 {
   const h = fs.mkdtempSync(path.join(os.tmpdir(), 'conservation-inbox-test-'));
@@ -419,8 +434,8 @@ cleanup(scenario1Harness); // release scenario 1's harness now that S2/S3/S3b ar
   const checkScript = path.join(REPO_ROOT, 'scripts/orch-conservation-check.mjs');
 
   // Fixed signal_queue.rows (SAME ids live vs candidate, both fixtures below) — keeps the
-  // separate, independent row-identity dimension a clean pass so only the NEW
-  // pending_triage_inbox-driven magnitude dimension is under test here.
+  // separate, independent signal_queue.rows[] row-identity dimension a clean pass so only the
+  // pending_triage_inbox-driven dimension is under test here.
   const fixedRows = [
     { id: 'row-1', summary: 'r1', severity: 'LOW', status: 'NEW' },
     { id: 'row-2', summary: 'r2', severity: 'LOW', status: 'NEW' },
@@ -431,15 +446,13 @@ cleanup(scenario1Harness); // release scenario 1's harness now that S2/S3/S3b ar
     signal_queue: { _updated_at: '2026-08-09T00:00:00Z', _updated_by: 'test-harness', rows: fixedRows, archive: [] },
   });
 
-  // --- Case A: silent inbox wipe -> MUST now be rejected -----------------------------------
-  // Live: 2 signal_queue.rows + 10 pending_triage_inbox entries = signal_total 12 (>= MIN_BASELINE).
-  // Candidate: same 2 rows, pending_triage_inbox WIPED to [] = signal_total 2. Ratio 2/12 ≈ 0.167
-  // < FLOOR_RATIO(0.5) -> exit 1. Before this extension, signal_total only counted
-  // signal_queue.rows (2 live / 2 candidate = ratio 1.0) — this exact candidate would have sailed
-  // through silently, which is precisely the "circuit-breaker guard against silent data loss"
-  // rationale this extension closes (a bug in inbox append/clear logic that wipes the whole
-  // inbox is now caught, same class as FIX-ORCHSTATE-CONSERVATION-GUARD-CIRCUIT-BREAKER's
-  // original full-doc-collapse catch).
+  // --- Case A: silent full inbox wipe, UNDECLARED -> MUST still be rejected ----------------
+  // Live: 2 signal_queue.rows (unchanged, ratio 1.0 — inert) + 10 pending_triage_inbox entries.
+  // Candidate: same 2 rows, pending_triage_inbox WIPED to [] with NO
+  // ORCH_APPLY_DECLARED_INBOX_TRIAGED set -> the inbox row-identity dimension (not signal_total
+  // magnitude — that metric no longer includes this array at all) rejects it: 10 undeclared
+  // envelope_id drops -> exit 1. Proves the "accidental full wipe" catch AC-1 requires still
+  // holds even though the magnitude dimension that used to (partially) provide it is gone.
   {
     const liveDoc = baseDoc();
     liveDoc.dev_team_idle_chain = {
@@ -451,8 +464,30 @@ cleanup(scenario1Harness); // release scenario 1's harness now that S2/S3/S3b ar
     fs.writeFileSync(candidatePath, JSON.stringify(candidateDoc, null, 2));
 
     const run = spawnSync('bun', [checkScript, livePath, candidatePath], { encoding: 'utf8' });
-    assert('conservation-ext: silent pending_triage_inbox wipe (10->0, rows unchanged) is REJECTED — exit 1', run.status, 1);
-    assert('conservation-ext: rejection reason names signal_total', /signal_total/.test(run.stdout + run.stderr), true);
+    assert('conservation-ext: silent pending_triage_inbox wipe (10->0, undeclared, rows unchanged) is REJECTED — exit 1', run.status, 1);
+    assert('conservation-ext: rejection reason names pending_triage_inbox row-identity', /pending_triage_inbox/.test(run.stdout + run.stderr), true);
+  }
+
+  // --- Case A2: same full wipe, but EVERY id declared via ORCH_APPLY_DECLARED_INBOX_TRIAGED --
+  // MUST be accepted — proves a legitimate full clear-to-zero lands in ONE write, the entire
+  // point of this task (AC-3, real fixture: scripts/test/orch-apply-wrapper-tests.sh
+  // INBOX-FULL-DRAIN-DECLARED exercises the identical shape through the full orch-apply.sh chain).
+  {
+    const liveDoc = baseDoc();
+    const ids = Array.from({ length: 10 }, (_, i) => `env-${i}`);
+    liveDoc.dev_team_idle_chain = {
+      pending_triage_inbox: ids.map((envelope_id) => ({ envelope_id, source: 'file', from: 'x', to: 'dev-team', type: 'y', priority: 'LOW', payload: {}, createdAt: '2026-08-09T00:00:00Z' })),
+    };
+    const candidateDoc = baseDoc();
+    candidateDoc.dev_team_idle_chain = { pending_triage_inbox: [] };
+    fs.writeFileSync(livePath, JSON.stringify(liveDoc, null, 2));
+    fs.writeFileSync(candidatePath, JSON.stringify(candidateDoc, null, 2));
+
+    const run = spawnSync('bun', [checkScript, livePath, candidatePath], {
+      encoding: 'utf8',
+      env: { ...process.env, ORCH_APPLY_DECLARED_INBOX_TRIAGED: ids.join(',') },
+    });
+    assert('conservation-ext: full inbox wipe (10->0) WITH every id declared is accepted — exit 0', run.status, 0);
   }
 
   // --- Case B: normal single-entry inbox growth -> MUST NOT be blocked (regression parity) --
@@ -468,8 +503,29 @@ cleanup(scenario1Harness); // release scenario 1's harness now that S2/S3/S3b ar
     assert('conservation-ext: normal single-entry inbox append is NOT blocked — exit 0', run.status, 0);
   }
 
-  // --- Case C: normal single-entry inbox CONSUME (Step 1 clearing one entry) -> MUST NOT be
-  // blocked either — inbox shrinking by exactly the amount PO triaged is routine, not collapse.
+  // --- Case C: single-entry inbox CONSUME (Step 1 clearing one entry), DECLARED -> MUST NOT be
+  // blocked — this is the exact shape main.md § Step 1 "Durable-inbox CLEAR" now produces: it
+  // already computes consumed_ids and passes them through as ORCH_APPLY_DECLARED_INBOX_TRIAGED.
+  {
+    const liveDoc = baseDoc();
+    liveDoc.dev_team_idle_chain = { pending_triage_inbox: Array.from({ length: 10 }, (_, i) => ({ envelope_id: `env-${i}` })) };
+    const candidateDoc = baseDoc();
+    candidateDoc.dev_team_idle_chain = { pending_triage_inbox: liveDoc.dev_team_idle_chain.pending_triage_inbox.slice(1) };
+    fs.writeFileSync(livePath, JSON.stringify(liveDoc, null, 2));
+    fs.writeFileSync(candidatePath, JSON.stringify(candidateDoc, null, 2));
+
+    const run = spawnSync('bun', [checkScript, livePath, candidatePath], {
+      encoding: 'utf8',
+      env: { ...process.env, ORCH_APPLY_DECLARED_INBOX_TRIAGED: 'env-0' },
+    });
+    assert('conservation-ext: single-entry inbox consume (10->9), declared, is NOT blocked — exit 0', run.status, 0);
+  }
+
+  // --- Case D: same single-entry consume, UNDECLARED -> MUST be rejected -------------------
+  // Negative control: this exact shape (9/10 = 90% retained) sailed through the OLD magnitude
+  // floor trivially — proves the new row-identity dimension catches even a small undeclared
+  // drop, not just a full wipe (AC-1's literal "every envelope_id ... with no corresponding
+  // marker" wording, not just a full-wipe special case).
   {
     const liveDoc = baseDoc();
     liveDoc.dev_team_idle_chain = { pending_triage_inbox: Array.from({ length: 10 }, (_, i) => ({ envelope_id: `env-${i}` })) };
@@ -479,7 +535,7 @@ cleanup(scenario1Harness); // release scenario 1's harness now that S2/S3/S3b ar
     fs.writeFileSync(candidatePath, JSON.stringify(candidateDoc, null, 2));
 
     const run = spawnSync('bun', [checkScript, livePath, candidatePath], { encoding: 'utf8' });
-    assert('conservation-ext: single-entry inbox consume (10->9, well within floor) is NOT blocked — exit 0', run.status, 0);
+    assert('conservation-ext: single-entry inbox consume (10->9), UNDECLARED, is REJECTED — exit 1', run.status, 1);
   }
 
   fs.rmSync(h, { recursive: true, force: true });
