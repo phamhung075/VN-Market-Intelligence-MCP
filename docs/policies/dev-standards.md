@@ -1455,6 +1455,23 @@ toolchain — cheapest job in the pipeline). Test:
 Go DSN re-arm fixture FAIL, coordinationStore.ts-shape negative control PASS, Go test-file PASS, bare-read
 PASS).
 
+**CANONICAL: cowork-team tick-postflight batch (UC-CDC-P7 Phase 2b)**
+```bash
+scripts/agents-flow/cowork-tick-postflight.sh <slot_id> [<slot_id> ...]
+```
+Consolidates 3 previously-separate per-tick call sites: (a) Step 5b `last_fired` batch write —
+verbatim delegation to `scripts/agents-flow/cowork-write-last-fired.js`, no reimplementation;
+(b) Step 4.7 cycle-snapshot assembly (pure-bash jq, same contract as `tick-snapshot.md`); (c)
+NEW `docs/signals/processed/cowork-team-*.json` retention sweep (>14d, `git rm` — staged, not
+committed), deliberately scoped to already-`processedAt`-stamped files only (never the live
+inbox, never an unstamped row) so it cannot delete anything `drain-signals.js` hasn't already
+finished with. Owning flow docs: `docs/agents/cowork-team/flow/last-fired.md`,
+`docs/agents/cowork-team/flow/tick-snapshot.md`. Test: `scripts/agents-flow/cowork-tick-postflight.test.sh`.
+Also see `scripts/agents-flow/cowork-match-slots.js`'s in-script Step 4.5 freshness-downgrade +
+Step 4.5c CHEF mutex (same UC-CDC-P7 Phase 2a) — `applyFreshnessDowngrade()` derives the
+gatherer-slot set from `cowork-schedule.json`'s `parallel_group=="gatherers"` field, never a
+hardcoded literal.
+
 `/tmp` is allowed ONLY for throwaway run-scoped DATA (payload json, stderr capture, session-id cache) — never for executable logic.
 
 **Maintenance (user directive 2026-06-07):** agents MAY update/upgrade an existing `scripts/` script to work better or optimize (fix bugs, harden, speed up, extend) — improving the shared script beats writing a parallel one-off. Rules: (1) if the script implements a flow spec, edit the spec first, then the script — they MUST stay in sync; (2) smoke-test after the change (clean no-op run at minimum); (3) keep the usage contract (CLI args/env/stdout) backward-compatible or update every caller + flow pointer in the same commit; (4) commit under commit-mutex.

@@ -884,7 +884,8 @@
       },
       {
         "id": "po",
-        "type": "dev-core"
+        "type": "dev-core",
+        "cowork_signal_recipient": true
       },
       {
         "id": "qa",
@@ -932,7 +933,8 @@
       },
       {
         "id": "tran-ngoc-bau",
-        "type": "dev-core"
+        "type": "dev-core",
+        "cowork_signal_recipient": true
       },
       {
         "id": "semble-search",
@@ -1007,7 +1009,8 @@
       },
       {
         "id": "alert-commander",
-        "type": "cowork"
+        "type": "cowork",
+        "cowork_signal_recipient": true
       },
       {
         "id": "digest-predict",
@@ -1035,7 +1038,8 @@
       },
       {
         "id": "unified-agent",
-        "type": "cowork"
+        "type": "cowork",
+        "cowork_signal_recipient": true
       },
       {
         "id": "fb-market-poster",

@@ -19,9 +19,24 @@
 //   options.mode         — 'legacy' (default) | 'adaptive'
 //   options.pressureState — pressure-state.json object (required for adaptive)
 //   options.policyObj     — cadence-policy.json object (required for adaptive)
+//   options.meta          — optional out-param object (UC-CDC-P7 Phase 2a). If supplied,
+//                            mutated with {pressure_mode, downgraded, suppressed_cadence,
+//                            due_reasons, cadence_minutes, chef_mutex_applied} after the
+//                            call returns. matchSlots() itself still returns a plain array
+//                            (NFR-2 — unchanged contract for the 5 pre-existing direct
+//                            callers in this test file); only the CLI entrypoint below
+//                            passes options.meta, to populate the new stdout JSON fields.
+//
+// UC-CDC-P7 Phase 2a (ultracode-audit-2026-07-12 #cowork-dispatcher-cron-P7): Step 4.5
+// (freshness silent-downgrade) and Step 4.5c (CHEF same-tick mutex) — previously
+// LLM-narrated inline in docs/agents/cowork-team/flow/pressure-cadence.md — now run
+// in-script, always, as the tail of matchSlots()'s pipeline. Both docs/agents flow files
+// (main.md JUMP-TO + pressure-cadence.md) are updated to point here instead of duplicating
+// the logic in prose.
 
 const fs = require('fs');
 const path = require('path');
+const { applyChefMutex } = require('./cowork-chef-mutex.js');
 
 const schedPath = path.join(process.cwd(), 'docs/data/cowork-schedule.json');
 const sched = JSON.parse(fs.readFileSync(schedPath, 'utf8'));
@@ -122,6 +137,51 @@ function legacyCandidates(candidates, nowUnix) {
     }));
 }
 
+// applyFreshnessDowngrade: Step 4.5 (DWF-PHASE1 FR-P1-5, moved in-script UC-CDC-P7 Phase 2a).
+// Silently drops non-guaranteed gatherer slots when nothing has changed AND the market is
+// closed: last_regime=="unknown" AND signal_backlog==0 AND calendar_status in
+// ["holiday","weekend"] (three-condition AND gate — AC-P1-5-1, not two of three).
+// Only meaningful in adaptive mode (matchSlots() only calls this when pressureState is
+// present); guaranteed slots and non-gatherer slots are never touched regardless.
+//
+// Gatherer-slot membership is DERIVED from cowork-schedule.json's own
+// `parallel_group === "gatherers"` field (+ guaranteed===false, belt-and-suspenders) —
+// NOT a hardcoded id literal. UC-CDC-P7 rescope note: the pre-existing GATHERER_SLOTS
+// array (news-scout-offhours/market-watcher-offhours/news-scout-sentiment/
+// market-watcher-eod) lived only in pressure-cadence.md prose; schedule.json already
+// carries the equivalent grouping (verified: exactly those 4 slot_ids have
+// parallel_group=="gatherers", zero others), so a new gatherer slot only needs one
+// declaration (the schedule row) instead of two (schedule row + this literal).
+//
+// Pure function — no I/O. Exported for unit testing.
+function applyFreshnessDowngrade(matches, pressureState, scheduleSlots) {
+  const downgraded = [];
+  if (!pressureState) return { matches, downgraded };
+
+  const calendarStatus = pressureState.calendar_status || 'unknown';
+  const conditionsHold = pressureState.last_regime === 'unknown'
+    && pressureState.signal_backlog === 0
+    && (calendarStatus === 'holiday' || calendarStatus === 'weekend');
+  if (!conditionsHold) return { matches, downgraded };
+
+  const gathererIds = new Set(
+    (scheduleSlots || [])
+      .filter(s => s && s.parallel_group === 'gatherers' && s.guaranteed === false)
+      .map(s => s.slot_id)
+  );
+  if (gathererIds.size === 0) return { matches, downgraded };
+
+  const kept = matches.filter(m => {
+    if (m && gathererIds.has(m.slot_id)) {
+      downgraded.push(m.slot_id);
+      console.error('[cowork-match-slots] freshness downgrade:', m.slot_id, '— no regime, empty backlog, market closed');
+      return false;
+    }
+    return true;
+  });
+  return { matches: kept, downgraded };
+}
+
 // cronMatches: exported for testing. Accepts cron string + optional time context object.
 // When ctx is omitted the function reads the system clock (production path).
 // ctx shape: { actualM, H, DOM, MON, DOW }  (all UTC, DOW 0=Sun..6=Sat)
@@ -171,6 +231,28 @@ function matchSlots(schedule, ctx, options) {
   const mode         = opts.mode || 'legacy';
   const pressureState= opts.pressureState || null;
   const policyObj    = opts.policyObj || null;
+  const meta         = opts.meta || null;
+  const scheduleSlots = (schedule && schedule.slots) || [];
+
+  // finish(): shared tail for every return point — Step 4.5c CHEF same-tick mutex
+  // (unconditional, BOTH legacy and adaptive modes per the invariant) runs here exactly
+  // once, then (if the caller supplied options.meta) the out-param is populated with the
+  // observability fields telemetry.md Step 6.1 needs. matchSlots() itself still returns
+  // only the plain final array (NFR-2).
+  function finish(matches, extra) {
+    const mutexResult = applyChefMutex(matches, scheduleSlots);
+    if (meta) {
+      Object.assign(meta, {
+        pressure_mode:      (mode === 'adaptive' && pressureState && policyObj) ? 'adaptive' : 'legacy',
+        downgraded:         (extra && extra.downgraded) || [],
+        suppressed_cadence: (extra && extra.suppressed_cadence) || [],
+        due_reasons:        (extra && extra.due_reasons) || {},
+        cadence_minutes:    (extra && extra.cadence_minutes) || {},
+        chef_mutex_applied: mutexResult.chef_mutex_applied
+      });
+    }
+    return mutexResult.matches;
+  }
 
   // nowUnix: real wall-clock seconds-since-epoch, aligned with how the CLI entrypoint (and
   // therefore all 3 callers — dispatcher/preflight/firer, which all invoke this script with
@@ -184,7 +266,7 @@ function matchSlots(schedule, ctx, options) {
 
   if (mode !== 'adaptive' || !pressureState || !policyObj) {
     // Legacy mode: cron-matched slots with last_fired boundary dedup applied (UC-CDC-P3).
-    return legacyCandidates(candidates, nowUnix);
+    return finish(legacyCandidates(candidates, nowUnix));
   }
 
   // Adaptive mode: require cadence-policy.js evaluator
@@ -196,13 +278,14 @@ function matchSlots(schedule, ctx, options) {
   } catch (e) {
     // Evaluator unavailable → fall back to legacy (same boundary dedup applies)
     console.warn('[cowork-match-slots] WARN: cadence-policy.js unavailable, falling back to legacy mode:', e.message);
-    return legacyCandidates(candidates, nowUnix);
+    return finish(legacyCandidates(candidates, nowUnix));
   }
 
   const { signal_backlog_tier, volatility_tier } = computeTiers(pressureState);
   const calendar_status = (pressureState && pressureState.calendar_status) || 'unknown';
 
   const results = [];
+  const suppressedCadence = [];
 
   for (const sl of candidates) {
     const base = {
@@ -233,6 +316,7 @@ function matchSlots(schedule, ctx, options) {
     // interval_minutes=null → suppress (calendar or policy says no)
     if (evalResult.interval_minutes === null) {
       console.error('[cowork-match-slots] cadence suppress:', sl.slot_id, 'policy=' + sl.policy_id, 'calendar=' + calendar_status);
+      suppressedCadence.push(sl.slot_id);
       continue;
     }
 
@@ -260,10 +344,27 @@ function matchSlots(schedule, ctx, options) {
       console.error('[cowork-match-slots] cadence skip:', sl.slot_id,
         'elapsed=' + Math.floor(elapsedSeconds) + 's cadence=' + cadenceSeconds + 's',
         '(snapped_last_fired=' + new Date(snappedLastFired * 1000).toISOString() + ')');
+      suppressedCadence.push(sl.slot_id);
     }
   }
 
-  return results;
+  // Step 4.5 — freshness silent-downgrade for gatherer slots (adaptive only, in-script).
+  const downgradeResult = applyFreshnessDowngrade(results, pressureState, scheduleSlots);
+
+  const due_reasons = {};
+  const cadence_minutes = {};
+  for (const r of downgradeResult.matches) {
+    due_reasons[r.slot_id] = r.due_reason;
+    cadence_minutes[r.slot_id] = r.cadence_minutes;
+  }
+
+  // Step 4.5c (finish()) — CHEF same-tick mutex runs unconditionally on the way out.
+  return finish(downgradeResult.matches, {
+    downgraded: downgradeResult.downgraded,
+    suppressed_cadence: suppressedCadence,
+    due_reasons,
+    cadence_minutes
+  });
 }
 
 // extractPromptFlowPath: given a slot's trigger_prompt string of the form
@@ -323,7 +424,8 @@ if (require.main === module) {
     }
   }
 
-  const hits     = matchSlots(sched, undefined, { mode, pressureState, policyObj });
+  const meta     = {};
+  const hits     = matchSlots(sched, undefined, { mode, pressureState, policyObj, meta });
   const driftMin = actualM - M; // always 0–14; negative drift impossible given floor()
 
   // catchup_raw (FR-9a, TASK-COWORK-CATCHUP-2): guaranteed-slot catch-up candidates,
@@ -348,7 +450,21 @@ if (require.main === module) {
     console.warn('[cowork-match-slots] WARN: cowork-catchup-predicate.js unavailable, catchup_raw=[]:', e.message);
   }
 
-  process.stdout.write(JSON.stringify({ slots: hits, drift_min: driftMin, catchup_raw: catchupRaw }));
+  // UC-CDC-P7 Phase 2a: pressure_mode/downgraded/suppressed_cadence/chef_mutex_applied/
+  // due_reasons/cadence_minutes are additive stdout fields — meta always carries safe
+  // defaults ({} out-param populated by matchSlots()'s finish(), never undefined) so this
+  // is a pure superset of the pre-existing {slots, drift_min, catchup_raw} contract (NFR-2).
+  process.stdout.write(JSON.stringify(Object.assign(
+    { slots: hits, drift_min: driftMin, catchup_raw: catchupRaw },
+    {
+      pressure_mode:      meta.pressure_mode || 'legacy',
+      downgraded:         meta.downgraded || [],
+      suppressed_cadence: meta.suppressed_cadence || [],
+      chef_mutex_applied: meta.chef_mutex_applied || false,
+      due_reasons:        meta.due_reasons || {},
+      cadence_minutes:    meta.cadence_minutes || {}
+    }
+  )));
 }
 
-module.exports = { cronMatches, matchSlots, field, dowMatch, snapToCronBoundary, isSuppressedByBoundaryDedup, extractPromptFlowPath, slotEntryPathsAgree };
+module.exports = { cronMatches, matchSlots, field, dowMatch, snapToCronBoundary, isSuppressedByBoundaryDedup, extractPromptFlowPath, slotEntryPathsAgree, applyFreshnessDowngrade };

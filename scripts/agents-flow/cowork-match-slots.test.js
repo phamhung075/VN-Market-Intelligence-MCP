@@ -19,7 +19,7 @@ const schedPath = path.join(process.cwd(), 'docs/data/cowork-schedule.json');
 const sched = JSON.parse(fs.readFileSync(schedPath, 'utf8'));
 
 // This require must succeed — if the script does not export, we fail loud.
-const { cronMatches, matchSlots, snapToCronBoundary, isSuppressedByBoundaryDedup } = require(path.join(process.cwd(), 'scripts/agents-flow/cowork-match-slots.js'));
+const { cronMatches, matchSlots, snapToCronBoundary, isSuppressedByBoundaryDedup, applyFreshnessDowngrade } = require(path.join(process.cwd(), 'scripts/agents-flow/cowork-match-slots.js'));
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -369,6 +369,10 @@ console.log('\nTC-23: isSuppressedByBoundaryDedup — malformed last_fired → f
 // ---------------------------------------------------------------------------
 const SRC_SCRIPT = path.join(process.cwd(), 'scripts/agents-flow/cowork-match-slots.js');
 const SRC_PREDICATE = path.join(process.cwd(), 'scripts/agents-flow/cowork-catchup-predicate.js');
+// UC-CDC-P7 Phase 2a: cowork-match-slots.js now requires cowork-chef-mutex.js unconditionally
+// (Step 4.5c CHEF mutex must never silently no-op — that is the exact double-publish class
+// FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT hardened against), so the CLI harness must carry it too.
+const SRC_CHEF_MUTEX = path.join(process.cwd(), 'scripts/agents-flow/cowork-chef-mutex.js');
 
 function makeCliHarness() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cowork-match-slots-cli-test-'));
@@ -376,6 +380,7 @@ function makeCliHarness() {
   fs.mkdirSync(path.join(dir, 'docs/data'), { recursive: true });
   fs.copyFileSync(SRC_SCRIPT, path.join(dir, 'scripts/agents-flow/cowork-match-slots.js'));
   fs.copyFileSync(SRC_PREDICATE, path.join(dir, 'scripts/agents-flow/cowork-catchup-predicate.js'));
+  fs.copyFileSync(SRC_CHEF_MUTEX, path.join(dir, 'scripts/agents-flow/cowork-chef-mutex.js'));
   return dir;
 }
 
@@ -483,6 +488,148 @@ console.log('\nTC-27: catchup_raw falls back to [] (not a crash) when cowork-cat
   assert('catchup_raw falls back to an empty array (Array type)', Array.isArray(out.catchup_raw), true);
   assert('catchup_raw falls back to an empty array (length 0)', out.catchup_raw.length, 0);
   assert('stderr carries a WARN for the missing module', /cowork-catchup-predicate\.js unavailable/.test(run.stderr), true);
+  cleanup(h);
+}
+
+// ---------------------------------------------------------------------------
+// TC-28..TC-35: UC-CDC-P7 Phase 2a — Step 4.5 freshness-downgrade + Step 4.5c CHEF
+// mutex moved in-script (previously LLM-narrated inline in pressure-cadence.md).
+// ---------------------------------------------------------------------------
+
+const GATHERER_SCHED_SLOTS = [
+  { slot_id: 'news-scout-offhours', parallel_group: 'gatherers', guaranteed: false },
+  { slot_id: 'market-watcher-eod', parallel_group: 'gatherers', guaranteed: false },
+  { slot_id: 'alert-commander-market', parallel_group: 'alerts', guaranteed: false },
+];
+
+console.log('\nTC-28: applyFreshnessDowngrade — all 3 conditions hold, gatherer slot present -> downgraded');
+{
+  const matches = [{ slot_id: 'news-scout-offhours', due_reason: 'cadence', cadence_minutes: 240 }];
+  const pressureState = { last_regime: 'unknown', signal_backlog: 0, calendar_status: 'weekend' };
+  const result = applyFreshnessDowngrade(matches, pressureState, GATHERER_SCHED_SLOTS);
+  assert('gatherer slot removed from matches', result.matches.length, 0);
+  assert('downgraded lists the slot_id', JSON.stringify(result.downgraded), JSON.stringify(['news-scout-offhours']));
+}
+
+console.log('\nTC-29: applyFreshnessDowngrade — AND gate: only 2 of 3 conditions hold -> NOT downgraded (AC-P1-5-1)');
+{
+  const matches = [{ slot_id: 'news-scout-offhours', due_reason: 'cadence', cadence_minutes: 240 }];
+  const pressureState = { last_regime: 'bull', signal_backlog: 0, calendar_status: 'weekend' }; // regime known
+  const result = applyFreshnessDowngrade(matches, pressureState, GATHERER_SCHED_SLOTS);
+  assert('slot survives (regime known)', result.matches.length, 1);
+  assert('downgraded stays empty', result.downgraded.length, 0);
+}
+
+console.log('\nTC-30: applyFreshnessDowngrade — non-gatherer slot (parallel_group != "gatherers") never touched');
+{
+  const matches = [{ slot_id: 'alert-commander-market', due_reason: 'cron', cadence_minutes: null }];
+  const pressureState = { last_regime: 'unknown', signal_backlog: 0, calendar_status: 'holiday' };
+  const result = applyFreshnessDowngrade(matches, pressureState, GATHERER_SCHED_SLOTS);
+  assert('non-gatherer slot survives', result.matches.length, 1);
+}
+
+console.log('\nTC-31: applyFreshnessDowngrade — pressureState null (legacy) -> pure passthrough, no-op');
+{
+  const matches = [{ slot_id: 'news-scout-offhours', due_reason: 'cron', cadence_minutes: null }];
+  const result = applyFreshnessDowngrade(matches, null, GATHERER_SCHED_SLOTS);
+  assert('matches unchanged when pressureState is null', result.matches.length, 1);
+  assert('downgraded stays empty', result.downgraded.length, 0);
+}
+
+console.log('\nTC-32: matchSlots adaptive — freshness downgrade runs in-pipeline, meta.downgraded populated');
+{
+  const sched = {
+    slots: [{
+      slot_id: 'news-scout-offhours', cron: '* * * * *', agent: 'news-scout',
+      flow_path: 'docs/agents/news-scout/flow/main.md', trigger_prompt: 'run test',
+      guaranteed: false, enabled: true, parallel_group: 'gatherers',
+      policy_id: 'gatherer-standard', last_fired: null,
+    }]
+  };
+  const ctx = { actualM: 0, H: 8, DOM: 6, MON: 6, DOW: 6 };
+  const pressureState = { last_regime: 'unknown', signal_backlog: 0, calendar_status: 'weekend' };
+  const policyObj = { _staleness_threshold_minutes: 20, policies: [{ policy_id: 'gatherer-standard', calendar_status: '*', signal_backlog_tier: '*', volatility_tier: '*', interval_minutes: 240, _cron_fallback: false }] };
+  const meta = {};
+  const slots = matchSlots(sched, ctx, { mode: 'adaptive', pressureState, policyObj, meta });
+  assert('slot suppressed by in-pipeline downgrade (0 results)', slots.length, 0);
+  assert('meta.downgraded carries the slot_id', JSON.stringify(meta.downgraded), JSON.stringify(['news-scout-offhours']));
+  assert('meta.pressure_mode is adaptive', meta.pressure_mode, 'adaptive');
+}
+
+console.log('\nTC-33: matchSlots adaptive — CHEF mutex runs in-pipeline: guaranteed + non-guaranteed same tick -> only guaranteed survives');
+{
+  const sched = {
+    slots: [
+      { slot_id: 'chef-morning', cron: '* * * * *', agent: 'unified-agent', flow_path: 'docs/agents/unified-agent/flow/chef.md', trigger_prompt: 'run test', guaranteed: true, enabled: true, parallel_group: 'chef', policy_id: null, last_fired: null },
+      { slot_id: 'chef-intraday', cron: '* * * * *', agent: 'unified-agent', flow_path: 'docs/agents/unified-agent/flow/chef.md', trigger_prompt: 'run test', guaranteed: false, enabled: true, parallel_group: 'chef', policy_id: null, last_fired: null },
+    ]
+  };
+  const ctx = { actualM: 0, H: 8, DOM: 6, MON: 6, DOW: 6 };
+  const pressureState = { last_regime: 'bull', signal_backlog: 5, calendar_status: 'open' };
+  const policyObj = { _staleness_threshold_minutes: 20, policies: [] };
+  const meta = {};
+  const slots = matchSlots(sched, ctx, { mode: 'adaptive', pressureState, policyObj, meta });
+  assert('exactly one CHEF slot survives', slots.length, 1);
+  assert('the guaranteed slot is the survivor', slots[0].slot_id, 'chef-morning');
+  assert('meta.chef_mutex_applied is true', meta.chef_mutex_applied, true);
+}
+
+console.log('\nTC-34: matchSlots legacy — CHEF mutex applies UNCONDITIONALLY in legacy mode too (invariant: both modes)');
+{
+  const sched = {
+    slots: [
+      { slot_id: 'chef-morning', cron: '* * * * *', agent: 'unified-agent', flow_path: 'docs/agents/unified-agent/flow/chef.md', trigger_prompt: 'run test', guaranteed: true, enabled: true, parallel_group: 'chef', policy_id: null, last_fired: null },
+      { slot_id: 'chef-intraday', cron: '* * * * *', agent: 'unified-agent', flow_path: 'docs/agents/unified-agent/flow/chef.md', trigger_prompt: 'run test', guaranteed: false, enabled: true, parallel_group: 'chef', policy_id: 'chef-intraday', last_fired: null },
+    ]
+  };
+  const ctx = { actualM: 0, H: 8, DOM: 6, MON: 6, DOW: 6 };
+  const meta = {};
+  const slots = matchSlots(sched, ctx, { mode: 'legacy', meta });
+  assert('legacy mode: exactly one CHEF slot survives', slots.length, 1);
+  assert('legacy mode: the guaranteed slot is the survivor', slots[0].slot_id, 'chef-morning');
+  assert('legacy mode: meta.chef_mutex_applied is true', meta.chef_mutex_applied, true);
+  assert('legacy mode: meta.pressure_mode is legacy', meta.pressure_mode, 'legacy');
+}
+
+console.log('\nTC-35: matchSlots adaptive — meta.suppressed_cadence captures a not-yet-due slot (Step 4.4)');
+{
+  const sched = {
+    slots: [{
+      slot_id: 'test-not-due', cron: '* * * * *', agent: 'test-agent',
+      flow_path: 'docs/agents/test/flow/main.md', trigger_prompt: 'run test',
+      guaranteed: false, enabled: true, parallel_group: 'gatherers',
+      policy_id: 'gatherer-standard', last_fired: '2026-06-06T07:59:00Z',
+    }]
+  };
+  const ctx = { actualM: 0, H: 8, DOM: 6, MON: 6, DOW: 6, nowUnix: new Date('2026-06-06T08:00:05Z').getTime() / 1000 };
+  const pressureState = { last_regime: 'bull', signal_backlog: 5, calendar_status: 'open' };
+  const policyObj = { _staleness_threshold_minutes: 20, policies: [{ policy_id: 'gatherer-standard', calendar_status: '*', signal_backlog_tier: '*', volatility_tier: '*', interval_minutes: 240, _cron_fallback: false }] };
+  const meta = {};
+  const slots = matchSlots(sched, ctx, { mode: 'adaptive', pressureState, policyObj, meta });
+  assert('slot not yet due -> excluded from results', slots.length, 0);
+  assert('meta.suppressed_cadence carries the slot_id', JSON.stringify(meta.suppressed_cadence), JSON.stringify(['test-not-due']));
+}
+
+console.log('\nTC-36: CLI stdout JSON contract gains pressure_mode/downgraded/suppressed_cadence/chef_mutex_applied/due_reasons/cadence_minutes fields');
+{
+  const h = makeCliHarness();
+  const sched = {
+    slots: [{
+      slot_id: 'cli-test-legacy', cron: '* * * * *', agent: 'test-agent',
+      flow_path: 'docs/agents/test/flow/main.md', trigger_prompt: 'run test',
+      guaranteed: false, enabled: true, policy_id: null, last_fired: null,
+    }]
+  };
+  fs.writeFileSync(path.join(h, 'docs/data/cowork-schedule.json'), JSON.stringify(sched));
+  const run = spawnSync('node', [path.join(h, 'scripts/agents-flow/cowork-match-slots.js')], { cwd: h, encoding: 'utf8' });
+  assert('CLI exits 0', run.status, 0);
+  const out = JSON.parse(run.stdout);
+  assert('pressure_mode key present', typeof out.pressure_mode, 'string');
+  assert('downgraded key is an Array', Array.isArray(out.downgraded), true);
+  assert('suppressed_cadence key is an Array', Array.isArray(out.suppressed_cadence), true);
+  assert('chef_mutex_applied key is a boolean', typeof out.chef_mutex_applied, 'boolean');
+  assert('due_reasons key is an object', typeof out.due_reasons, 'object');
+  assert('cadence_minutes key is an object', typeof out.cadence_minutes, 'object');
   cleanup(h);
 }
 

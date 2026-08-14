@@ -58,6 +58,13 @@ jq '.project.agents[] | select(.zone=="apps/mcp-server") | .id' docs/data/system
 
 # Count by type
 jq '[.project.agents[] | .type] | group_by(.) | map({type: .[0], count: length})' docs/data/system-map.json
+
+# Cowork-inbox signal recipients (I16/UC-CDC-P7 SSOT field) — NEVER derive this set from
+# type=="cowork": that selects a DIFFERENT 9-agent set and drops po + tran-ngoc-bau (both
+# type:"dev-core" but real cowork-inbox recipients). cowork_signal_recipient:true is the
+# explicit, independent field for this — used by scripts/agents-flow/cowork-tick-
+# preflight.sh (Step 7 SILENT gate) and docs/agents/cowork-team/flow/work-tick.md (Step 0a).
+jq '[.project.agents[] | select(.cowork_signal_recipient==true) | .id]' docs/data/system-map.json
 ```
 
 ### Zones

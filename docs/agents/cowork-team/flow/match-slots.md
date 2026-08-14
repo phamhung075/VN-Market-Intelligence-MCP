@@ -1,4 +1,4 @@
-<!-- size-justification: 80L — cohesive slot-matching block: resolve UTC, run matcher script, drift guard, silent-exit if no matches, collision-detection guard. Child of main.md. -->
+<!-- size-justification: 98L — cohesive slot-matching block: resolve UTC, run matcher script (+UC-CDC-P7 Phase 2a metadata capture), drift guard, silent-exit if no matches, collision-detection guard. Child of main.md. -->
 <!-- TOKEN-ECONOMY-TICK-PREFLIGHT WU-1 (2026-07-02): on the normal SILENT/WORK path Steps 1-3
      (resolve UTC, run cowork-match-slots.js, drift guard) now run deterministically inside
      scripts/agents-flow/cowork-tick-preflight.sh Step 6 — same script, invoked as-is, no
@@ -23,9 +23,19 @@ Save as NOW_ISO. Slot-matcher script reads the system clock directly — no fiel
 RAW=$(node scripts/agents-flow/cowork-match-slots.js)
 MATCHES=$(echo "$RAW" | jq '.slots')
 DRIFT_MIN=$(echo "$RAW" | jq '.drift_min')
+# UC-CDC-P7 Phase 2a: MATCHES above already has Step 4.5 freshness-downgrade + Step 4.5c
+# CHEF mutex applied in-script (see pressure-cadence.md — both are documentation no-ops on
+# this ERROR-fallback path too, same as the WORK path). Capture the observability fields for
+# Step 6 telemetry — mirrors cowork-tick-preflight.sh's WORK-path $VERDICT_JSON passthrough.
+PRESSURE_MODE_META=$(echo "$RAW" | jq -r '.pressure_mode // "legacy"')
+DOWNGRADED_META=$(echo "$RAW" | jq -c '.downgraded // []')
+SUPPRESSED_CADENCE_META=$(echo "$RAW" | jq -c '.suppressed_cadence // []')
+CHEF_MUTEX_APPLIED_META=$(echo "$RAW" | jq -r '.chef_mutex_applied // false')
+DUE_REASONS_META=$(echo "$RAW" | jq -c '.due_reasons // {}')
+CADENCE_MINUTES_META=$(echo "$RAW" | jq -c '.cadence_minutes // {}')
 ```
 
-Script SSOT: `scripts/agents-flow/cowork-match-slots.js` — reads `docs/data/cowork-schedule.json`, filters `enabled && !_disabled_by`, cron ±2min window, returns `{"slots": [{slot_id, agent, flow_path, cron, trigger_prompt}, ...], "drift_min": <N>, "catchup_raw": [...]}`. `drift_min` = `actualUTCMinute − nominalTick` (always 0–14).
+Script SSOT: `scripts/agents-flow/cowork-match-slots.js` — reads `docs/data/cowork-schedule.json`, filters `enabled && !_disabled_by`, cron ±2min window, returns `{"slots": [{slot_id, agent, flow_path, cron, trigger_prompt}, ...], "drift_min": <N>, "catchup_raw": [...], "pressure_mode", "downgraded", "suppressed_cadence", "chef_mutex_applied", "due_reasons", "cadence_minutes"}`. `drift_min` = `actualUTCMinute − nominalTick` (always 0–14).
 
 `catchup_raw` (FR-9a, TASK-COWORK-CATCHUP-2): guaranteed-slot catch-up candidates computed by `cowork-catchup-predicate.js` — array, empty on the common no-catch-up tick, one record per considered `guaranteed:true` slot not already in `.slots[]` this tick: `{slot_id, dish_type, agent, flow_path, trigger_prompt, guaranteed:true, scheduled_utc_time, scheduled_key_part, expected_publish_task_id, catchup_eligible, reason}`. Not yet consumed here — wiring `catchup_raw` into a Step 4.55 sub-flow (`task_list_held` delivery-evidence check, union into `MATCHES`) is a later task in this sprint per architecture brief §2.3/§2.1 (`docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md`).
 

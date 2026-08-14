@@ -216,6 +216,55 @@ check "T2b WORK verdict via signal_queue" "$([ "$VERDICT" = "WORK" ] && echo tru
 check "T2b new_signals=1" "$([ "$NEW_SIGNALS" -eq 1 ] && echo true || echo false)"
 export ORCH_STATE_PATH="$TMPDIR_TEST/orch-no-signals.json"
 
+# ── T2c: WORK verdict envelope carries the UC-CDC-P7 Phase 2a matcher-metadata fields
+#     (pressure_mode/downgraded/suppressed_cadence/chef_mutex_applied/due_reasons/
+#     cadence_minutes), pulled through from cowork-match-slots.js's stdout — and the
+#     envelope is a CLEAN merge (no stray brace corruption from the `${8:-{}}` bash
+#     brace-matching bug this test would have caught: that bug appended a literal `}`
+#     after any non-empty extra arg, which would break `jq -r '.verdict'` here) ──
+run_case
+export SLOT_MATCHER_CMD='echo "{\"slots\":[{\"slot_id\":\"news-scout-market\"}],\"drift_min\":1,\"pressure_mode\":\"adaptive\",\"downgraded\":[\"market-watcher-eod\"],\"suppressed_cadence\":[\"news-scout-sentiment\"],\"chef_mutex_applied\":true,\"due_reasons\":{\"news-scout-market\":\"cron\"},\"cadence_minutes\":{\"news-scout-market\":null}}"'
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T2c WORK verdict (envelope parses clean — no brace-corruption regression)" "$([ "$VERDICT" = "WORK" ] && echo true || echo false)"
+check "T2c pressure_mode passed through" "$([ "$(printf '%s' "$OUT" | jq -r '.pressure_mode')" = "adaptive" ] && echo true || echo false)"
+check "T2c downgraded passed through" "$([ "$(printf '%s' "$OUT" | jq -r '.downgraded[0]')" = "market-watcher-eod" ] && echo true || echo false)"
+check "T2c suppressed_cadence passed through" "$([ "$(printf '%s' "$OUT" | jq -r '.suppressed_cadence[0]')" = "news-scout-sentiment" ] && echo true || echo false)"
+check "T2c chef_mutex_applied passed through" "$([ "$(printf '%s' "$OUT" | jq -r '.chef_mutex_applied')" = "true" ] && echo true || echo false)"
+check "T2c due_reasons passed through" "$([ "$(printf '%s' "$OUT" | jq -r '.due_reasons["news-scout-market"]')" = "cron" ] && echo true || echo false)"
+
+# ── T2d: non-WORK verdicts still emit a clean envelope with no matcher-metadata keys
+#     (the 8th `_emit_verdict` arg defaults to {} — no leakage from a prior WORK call,
+#     no stray-brace corruption on the default-value path either) ──
+run_case
+export SLOT_MATCHER_CMD='echo "{\"slots\":[],\"drift_min\":0}"'
+OUT=$(run_preflight); RC=$?
+check "T2d SILENT verdict envelope parses (jq -e .)" "$(printf '%s' "$OUT" | jq -e . >/dev/null 2>&1 && echo true || echo false)"
+check "T2d SILENT verdict carries no pressure_mode key (extra={} default, not leaked)" "$([ "$(printf '%s' "$OUT" | jq 'has("pressure_mode")')" = "false" ] && echo true || echo false)"
+
+# ── T-SSOT: I16 (UC-CDC-P7) — cowork-inbox recipient set is read from system-map.json's
+#     cowork_signal_recipient:true field, not the hardcoded fallback literal, when the
+#     file is present. A row addressed to an agent NOT in this custom map does not count. ──
+run_case
+export SYSTEM_MAP_PATH="$TMPDIR_TEST/system-map-custom.json"
+cat > "$SYSTEM_MAP_PATH" <<'JSON'
+{"project":{"agents":[{"id":"only-this-agent","type":"dev-core","cowork_signal_recipient":true},{"id":"po","type":"dev-core"}]}}
+JSON
+cat > "$TMPDIR_TEST/orch-ssot-signal.json" <<'JSON'
+{"signal_queue":{"rows":[{"id":"s1","status":"NEW","to":"only-this-agent","from":"test"},{"id":"s2","status":"NEW","to":"po","from":"test"}]}}
+JSON
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-ssot-signal.json"
+export SLOT_MATCHER_CMD='echo "{\"slots\":[],\"drift_min\":0}"'
+OUT=$(run_preflight); RC=$?
+NEW_SIGNALS=$(printf '%s' "$OUT" | jq '.new_signals')
+check "T-SSOT counts only the SSOT-flagged recipient (po dropped from custom map -> count=1, not 2)" "$([ "$NEW_SIGNALS" -eq 1 ] && echo true || echo false)"
+# Reset to a non-existent path (never a bare `unset` — SYSTEM_MAP_PATH is assigned once at
+# source-time under `set -u`; unsetting it here would make every later reference an unbound-
+# variable error) so `_cowork_signal_recipients` falls back to the last-known-good literal,
+# matching the PRESSURE_STATE_PATH reset convention already used elsewhere in this file.
+export SYSTEM_MAP_PATH="$TMPDIR_TEST/does-not-exist-system-map.json"
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-no-signals.json"
+
 # ── T3: presence NEVER gates — rewritten for FIX-COWORK-PREFLIGHT-PRESENCE-CLAIM-GAP.
 #     OLD behaviour (removed): a presence-tool transport failure emitted ERROR
 #     (gated the tick). NEW contract: same fault injection now proceeds through

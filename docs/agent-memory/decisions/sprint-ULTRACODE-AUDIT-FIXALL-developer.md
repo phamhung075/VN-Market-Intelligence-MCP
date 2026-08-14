@@ -394,3 +394,25 @@ FR-2 (`hook-guard.sh` + 4 scripts, named guards only), FR-3 (A-33 in tier1-probe
 removal) bound scope; deviations recorded in handoff Implementation Record.
 **why-change:** Found+fixed 1 incidental bug (BSD mktemp suffix-after-X non-random
 template) surfaced only once the swallowing wrapper was removed — root cause, in scope.
+
+### STEP developer-S24 · developer · 2026-08-14T06:21:26Z
+**task-id:** UC-CDC-P7
+**what-done:** Landed RESCOPE Phase 2 only (script moves) — deferred Phase 1 (12->7
+file merge) per the row's explicit "Phase2 BEFORE merge" ordering; did NOT attempt the
+merge this pass. Moved Step 4.5/4.5c into cowork-match-slots.js (in-process, both modes
+for mutex); new cowork-tick-postflight.sh (last_fired delegate + snapshot + I13
+retention sweep); I16 SSOT field wired end-to-end.
+**what-considered:**
+- matchSlots() return-shape change vs additive `options.meta` out-param — out-param won
+  (zero-risk to 5 pre-existing direct callers, NFR-2-style backward compat).
+- Retention sweep scope: blind age-sweep on all processed/ vs stamped-only — stamped-only
+  won (blind sweep reintroduces the exact bug drain-signals.js was hardened against).
+- Wiring last-fired.md/tick-snapshot.md to CALL the new postflight script this pass vs
+  parking it — parked: Step 4.7 must run BEFORE spawn (Step 5), Step 5b AFTER; a single
+  combined call site is not a drop-in without a live dry-run I couldn't safely run here.
+**why-decision:** Rescope note is explicit about sequencing; script-layer work is fully
+tested (69+67+28 new/extended assertions) and independently safe to land without the
+flow-doc rewiring, which needs its own verified pass.
+**why-change:** Self-caught `${8:-{}}` bash brace-matching bug while wiring
+cowork-tick-preflight.sh metadata passthrough (silently corrupted every non-empty 8th
+arg) — fixed + regression-tested, not in original plan.

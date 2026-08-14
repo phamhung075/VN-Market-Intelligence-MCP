@@ -9,7 +9,10 @@
 ## Step 0a — Drain `docs/data/orch/orch-state.json .signal_queue` (cross-team inbox)
 
 Read `.signal_queue.rows[]` per skill `.claude/skills/signal-dashboard/SKILL.md` § READ.
-Find all cowork-addressed rows (`to` ∈ {po, tran-ngoc-bau, unified-agent, alert-commander}).
+Find all cowork-addressed rows — `to` ∈ the SSOT recipient set from `docs/data/system-map.json`
+(`jq '[.project.agents[] | select(.cowork_signal_recipient==true) | .id]'`, currently
+{po, tran-ngoc-bau, unified-agent, alert-commander}; I16/UC-CDC-P7 — never derive this from
+`type=="cowork"`, which is a DIFFERENT 9-agent set and drops po + tran-ngoc-bau).
 Collect `status=NEW` rows → load payload_ref → route to matching agent slot at Step 5 or log for PO.
 Mark each processed row `NEW → READ` (atomic write). If orch-state.json missing → log `"[cowork-team] signal_queue skip"` and continue. Never fail-loud on this step.
 

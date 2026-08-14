@@ -1,4 +1,4 @@
-<!-- size-justification: 166L — Steps 4.4 + 4.5 + 4.5b + 4.5c: cadence due-check, freshness downgrade, CADENCE_MATCHES rebind, same-tick CHEF mutex (delegates to scripts/agents-flow/cowork-chef-mutex.js — FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT). Child of main.md. -->
+<!-- size-justification: 180L — Step 4.4 cadence due-check (live pseudocode) + Steps 4.5/4.5c marked SUPERSEDED (UC-CDC-P7 Phase 2a moved both into cowork-match-slots.js; kept as pointers + historical incident record, not deleted) + 4.5b telemetry-field sourcing table. Child of main.md. -->
 
 ## Step 4.4 — Cadence due-check (adaptive mode) (DWF-PHASE1)
 
@@ -71,25 +71,16 @@ for each slot in CALENDAR_ALLOWED:
      AC-P1-5-1: Three-condition AND gate enforced (not two of three).
      This downgrade applies only to non-guaranteed gatherers; guaranteed slots are never touched. -->
 
-Only runs if `PRESSURE_MODE = "adaptive"`.
-
-```
-GATHERER_SLOTS = ["news-scout-offhours", "market-watcher-offhours", "news-scout-sentiment", "market-watcher-eod"]
-
-DOWNGRADED = []
-
-if PRESSURE_STATE.last_regime == "unknown"
-   AND PRESSURE_STATE.signal_backlog == 0
-   AND CALENDAR_STATUS in ["holiday", "weekend"]:
-
-  for each slot in CADENCE_MATCHES:
-    if slot.slot_id in GATHERER_SLOTS AND slot.guaranteed == false:
-      DOWNGRADED.push(slot.slot_id)
-      log "[cowork] freshness downgrade: " + slot.slot_id + " — no regime, empty backlog, market closed"
-
-  CADENCE_MATCHES = CADENCE_MATCHES.filter(s => !DOWNGRADED.includes(s.slot_id))
-  # Note: these slots were in CADENCE_MATCHES but not yet claimed — no token release needed (BLOCKER-1)
-```
+**SUPERSEDED (UC-CDC-P7 Phase 2a):** this gate now runs INSIDE `scripts/agents-flow/
+cowork-match-slots.js` (`applyFreshnessDowngrade()`) — the SAME single computation used by
+Steps 2+3 above, on BOTH the WORK path (`cowork-tick-preflight.sh` Step 6) and the
+ERROR-fallback path (`match-slots.md` Steps 2+3). `CADENCE_MATCHES`/`MATCHES` arriving at this
+point in the flow ALREADY have this filtering applied — there is nothing left to do here.
+Gatherer-slot membership is derived from `cowork-schedule.json`'s own
+`parallel_group=="gatherers"` field (no more `GATHERER_SLOTS` literal to keep in sync).
+Observability: the script's stdout carries `downgraded` (array of removed slot_ids) — on the
+WORK path read `$VERDICT_JSON.downgraded`; on the ERROR path read it from the Steps 2+3 `$RAW`
+capture. This step is a documentation no-op; kept for the historical FR-P1-5/AC-P1-5-1 spec.
 
 ---
 
@@ -117,6 +108,14 @@ Telemetry fields added to Step 6 payload (for observability):
   "cadence_minutes":      { "<slot_id>": <N|null> }
 }
 ```
+Sourcing (UC-CDC-P7 Phase 2a — `pressure_mode`/`suppressed_cadence`/`downgraded`/`due_reasons`/
+`cadence_minutes`/`chef_mutex_applied` are now script-computed, not LLM-narrated):
+- **WORK path:** read straight off `$VERDICT_JSON.<field>` (`cowork-tick-preflight.sh` Step 6
+  already captured them from the matcher's stdout into the verdict envelope).
+- **ERROR-fallback path:** `match-slots.md` Steps 2+3 capture the same fields from `$RAW`
+  (the direct `cowork-match-slots.js` CLI call) into local vars of the same names.
+- `suppressed_calendar` (Step 4.3, `pressure-read.md`) and `calendar_status` are the only two
+  fields in this payload still computed inline in this flow, not the script.
 
 ---
 
@@ -131,6 +130,19 @@ Telemetry fields added to Step 6 payload (for observability):
      Source: docs/signals/cowork-chef-doublepublish-2026-06-30.md FIX-A.
      Runs AFTER both pressure-mode branches complete (adaptive & legacy both reach here).
      Applies unconditionally to guarantee the mutex across all pressure states. -->
+
+**SUPERSEDED (UC-CDC-P7 Phase 2a):** the mutex now runs INSIDE `scripts/agents-flow/
+cowork-match-slots.js` (`finish()` calls `cowork-chef-mutex.js`'s `applyChefMutex()`
+in-process — no more `printf | node` subprocess round-trip), unconditionally at the tail of
+BOTH the legacy and adaptive branches, on every invocation (WORK-path preflight Step 6 AND
+ERROR-fallback `match-slots.md` Steps 2+3). `MATCHES` arriving at this point already has the
+mutex applied — there is nothing left to do here. Read `chef_mutex_applied` the same way as
+`downgraded` above (WORK: `$VERDICT_JSON.chef_mutex_applied`; ERROR: captured from `$RAW`).
+This step is a documentation no-op; kept for the historical FIX-COWORK-CHEF-SAMETICK-MUTEX /
+FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT incident record below.
+
+<details>
+<summary>Historical incident record (pre-UC-CDC-P7 inline shell implementation)</summary>
 
 ```
 # FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT (2nd occurrence, 07-14 + 07-16T05:15Z): the prior
@@ -157,6 +169,8 @@ if [ "$CHEF_MUTEX_APPLIED" = "true" ]; then
   log "[cowork] CHEF mutex: dropped non-guaranteed CHEF slots; guaranteed CHEF slot will publish this tick"
 fi
 ```
+
+</details>
 
 **CHEF Mutex Invariant:** Exactly one CHEF dish per tick. GUARANTEED > NON-GUARANTEED.
 - **Guaranteed CHEF slots:** chef-morning, chef-eod, chef-evening (daily guaranteed; `guaranteed: true, policy_id: null`)

@@ -100,7 +100,7 @@ Caveman spec → `.claude/skills/caveman/SKILL.md` (ultra: agent-to-agent | lite
 | Concern | SSOT |
 |---|---|
 | Cowork signal bus (news→alert-commander, BCTC→alert-commander, price-anomaly→alert-commander, suppress→all cowork) | `docs/standards/mcp-tools.md` § Signal Bus |
-| Cowork inbox / read-unread tracking for po, tran-ngoc-bau, unified-agent, alert-commander | `docs/data/orch/orch-state.json .signal_queue` + skill: `signal-dashboard` |
+| Cowork inbox / read-unread tracking — recipient set is `docs/data/system-map.json` `.project.agents[] | select(.cowork_signal_recipient==true)` (I16/UC-CDC-P7 SSOT; never derive from `type=="cowork"` — that drops po + tran-ngoc-bau) | `docs/data/orch/orch-state.json .signal_queue` + skill: `signal-dashboard` |
 | Telegram channels — market (alerts), work (dev/cycle), bug (errors, ALL agents) | `docs/policies/alert-policy.md` |
 | Fail-loud on any knowledge Read failure → `send_telegram(channel="bug")` + STOP | `docs/protocols/fail-loud-protocol.md` |
 | DDD (domain never imports infra), restart policy, WIP=2, parameterized SQL, VPS proxy for VN sources | `docs/policies/dev-standards.md` · `docs/policies/restart-policy.md` · `docs/ARCHITECTURE.md` |

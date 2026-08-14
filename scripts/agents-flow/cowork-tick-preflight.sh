@@ -50,6 +50,8 @@
 #   MCP_JSON_PATH           — .mcp.json path (blind guard)
 #   ORCH_STATE_PATH         — orch-state.json path (signal_queue count)
 #   PRESSURE_STATE_PATH     — pressure-state.json path (Step 8 last-known values)
+#   SYSTEM_MAP_PATH         — system-map.json path (Step 7 cowork-inbox recipient SSOT,
+#                             I16/UC-CDC-P7 — default: $ROOT/docs/data/system-map.json)
 #   SLOT_MATCHER_CMD        — command to run for Step 6 (default: node cowork-match-slots.js)
 #   MCP_HTTP_URL, MCP_CALL_TIMEOUT_S — see mcp-call.sh
 #
@@ -70,17 +72,48 @@ source "$SCRIPT_DIR/lib/tick-telemetry.sh"
 MCP_JSON_PATH="${MCP_JSON_PATH:-$ROOT/.mcp.json}"
 ORCH_STATE_PATH="${ORCH_STATE_PATH:-$ROOT/docs/data/orch/orch-state.json}"
 PRESSURE_STATE_PATH="${PRESSURE_STATE_PATH:-$ROOT/docs/data/pressure-state.json}"
+SYSTEM_MAP_PATH="${SYSTEM_MAP_PATH:-$ROOT/docs/data/system-map.json}"
 SLOT_MATCHER_CMD="${SLOT_MATCHER_CMD:-node \"$ROOT/scripts/agents-flow/cowork-match-slots.js\"}"
 BACKSTOP_HOURS="0 4 8 12 16 20"
 
 _trunc() { printf '%s' "$1" | tr '\n' ' ' | cut -c1-200; }
 
+# ── I16 (UC-CDC-P7): cowork-inbox signal-recipient SSOT ──
+# Reads the agent ids carrying `cowork_signal_recipient:true` in system-map.json instead
+# of a hardcoded literal — the prior hardcoded set {po, tran-ngoc-bau, unified-agent,
+# alert-commander} silently diverged from `type=="cowork"` (which selects 9 agents, drops
+# po + tran-ngoc-bau -- see docs/architecture-briefs/2026-07-12-ultracode-workflow-
+# improvement-audit.md #cowork-dispatcher-cron-P7 Verifier note). Fail-safe: missing file,
+# missing field, or malformed JSON all fall back to that SAME last-known-good literal set
+# (never blocks the tick — R3-style conservative default, matching every other guard in
+# this script).
+_cowork_signal_recipients() {
+  local recipients
+  recipients=$(jq -c '[.project.agents[]? | select(.cowork_signal_recipient == true) | .id]' "$SYSTEM_MAP_PATH" 2>/dev/null)
+  if [ -z "$recipients" ] || [ "$recipients" = "null" ] || [ "$recipients" = "[]" ]; then
+    recipients='["po","tran-ngoc-bau","unified-agent","alert-commander"]'
+  fi
+  printf '%s' "$recipients"
+}
+
 _emit_verdict() {
   local verdict="$1" tick="$2" drift="$3" slots="$4" one_shots="$5" new_signals="$6" detail="$7"
+  # UC-CDC-P7 Phase 2a: optional 8th arg — a JSON object merged into the verdict envelope.
+  # Only the WORK verdict call site passes one (the slot-matcher's pressure_mode/downgraded/
+  # suppressed_cadence/chef_mutex_applied/due_reasons/cadence_minutes, computed in-script by
+  # cowork-match-slots.js at Step 6 below) so main.md § WORK continuation / telemetry.md
+  # Step 6.1 can read them straight off $VERDICT_JSON instead of re-deriving. Every other
+  # call site omits it -> defaults to "{}" -> no-op merge, envelope shape unchanged.
+  # NOTE: NOT `${8:-{}}` — a literal `{}` inside a `${VAR:-default}` default-value clause
+  # defeats bash's brace-matching (the FIRST `}` after the opening `{` closes the parameter
+  # expansion early, leaving a stray literal `}` appended after it — verified: this silently
+  # corrupted every non-WORK verdict's envelope until caught by T2/T-LOG2 WORK assertions).
+  local extra="${8:-}"
+  [ -z "$extra" ] && extra="{}"
   jq -n --arg verdict "$verdict" --arg tick "$tick" --argjson drift "${drift:-0}" \
         --argjson slots "${slots:-[]}" --argjson one_shots "${one_shots:-[]}" \
-        --argjson new_signals "${new_signals:-0}" --arg detail "$detail" \
-    '{verdict:$verdict, tick:$tick, drift_min:$drift, slots:$slots, one_shots:$one_shots, new_signals:$new_signals, detail:$detail}'
+        --argjson new_signals "${new_signals:-0}" --arg detail "$detail" --argjson extra "$extra" \
+    '{verdict:$verdict, tick:$tick, drift_min:$drift, slots:$slots, one_shots:$one_shots, new_signals:$new_signals, detail:$detail} + $extra'
 }
 
 # ── Tombstone predicate (FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE FR-1) ──
@@ -281,9 +314,19 @@ run_preflight() {
     fi
   fi
 
+  # UC-CDC-P7 Phase 2a: pull through the per-tick observability fields cowork-match-slots.js
+  # now computes in-script (Step 4.5 freshness-downgrade + Step 4.5c CHEF mutex, previously
+  # LLM-narrated inline in pressure-cadence.md) so the WORK verdict below can carry them.
+  local matcher_meta
+  matcher_meta=$(printf '%s' "$slot_result" | jq -c '{pressure_mode: (.pressure_mode // "legacy"), downgraded: (.downgraded // []), suppressed_cadence: (.suppressed_cadence // []), chef_mutex_applied: (.chef_mutex_applied // false), due_reasons: (.due_reasons // {}), cadence_minutes: (.cadence_minutes // {})}' 2>/dev/null)
+  if [ -z "$matcher_meta" ]; then
+    matcher_meta='{"pressure_mode":"legacy","downgraded":[],"suppressed_cadence":[],"chef_mutex_applied":false,"due_reasons":{},"cadence_minutes":{}}'
+  fi
+
   # ---- Step 7: SILENT gate ----
-  local signal_count slots_empty one_shots_empty
-  signal_count=$(jq '[.signal_queue.rows[]? | select(.status=="NEW" and (.to as $t | ["po","tran-ngoc-bau","unified-agent","alert-commander"] | index($t) != null))] | length' "$ORCH_STATE_PATH" 2>/dev/null)
+  local signal_count slots_empty one_shots_empty recipients_json
+  recipients_json=$(_cowork_signal_recipients)
+  signal_count=$(jq --argjson recipients "$recipients_json" '[.signal_queue.rows[]? | select(.status=="NEW" and (.to as $t | $recipients | index($t) != null))] | length' "$ORCH_STATE_PATH" 2>/dev/null)
   [[ "$signal_count" =~ ^[0-9]+$ ]] || signal_count=0
   slots_empty=$(printf '%s' "$slots" | jq 'length == 0')
   one_shots_empty=$(printf '%s' "$one_shots" | jq 'length == 0')
@@ -294,7 +337,8 @@ run_preflight() {
   fi
 
   _emit_verdict "WORK" "$tick" "$drift_min" "$slots" "$one_shots" "$signal_count" \
-    "election lock held — continue at main.md Step 4.2 (signal drain, slot fan-out, spawn, emit, release)"
+    "election lock held — continue at main.md Step 4.2 (signal drain, slot fan-out, spawn, emit, release)" \
+    "$matcher_meta"
   return 1
 }
 
