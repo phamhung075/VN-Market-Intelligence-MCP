@@ -35,7 +35,13 @@
      matches the router's own unconditional `CLAUDE.md` step-3 precedent and does not require a
      future flow author to remember to opt in). `slot.trigger_prompt` in `cowork-schedule.json`
      stays byte-identical — `SESSION_ID_LINE` is appended to the composed `ENTRY_PROMPT` only,
-     never written back to the stored field. -->
+     never written back to the stored field.
+     UC-CCA-P3-FR3-SPAWN-FANOUT-CLEANUP (agent-father, 2026-08-14): -78L — trimmed the FR-P2-7
+     inline published-marker pattern block (task_claim/TTL/key prose, the original copy-paste
+     source of the 4 EARLY-claim defect instances) to a 1-line pointer at .claude/skills/
+     published-marker-gate/SKILL.md, now the single documented source for the Phase-1/Phase-2
+     pattern across all 6 cowork guaranteed-slot gates. No logic changed — pure doc-debt
+     reduction, architecture brief 2026-08-08-uc-cca-p3-published-marker-gate-skill.md §4. -->
 <!-- BGFAN-1: every Agent spawn in this file MUST use run_in_background=true; UC-CDC-P4 bounds
      CONCURRENCY ACROSS batches via Step 5.1/5.2, it does not relax background=true within a
      batch. Canonical rule + batcher carve-out → docs/protocols/agent-chaining-protocol.md
@@ -81,84 +87,19 @@ if SESSION_BLIND == true:
 # SESSION_BLIND == false → fall through to normal fan-out (behavior unchanged)
 ```
 
-<!-- Published marker gate (FR-P2-7, DWF-DEV-CROSS-4 Phase 2 — ARCH-DECIDE-C):
-     The spawned agent flow MUST claim a published marker BEFORE calling send_telegram.
-     This is belt-and-suspenders with the per-work-item token: the token prevents duplicate
-     spawns; the publish marker prevents duplicate sends if a spawn somehow executes twice.
+<!-- UC-CCA-P3-FR3-SPAWN-FANOUT-CLEANUP (agent-father, 2026-08-14, Q-skill-siting doc-debt cleanup):
+     the ~78L pattern block that used to live here (FR-P2-7 inline task_claim/TTL/key prose) was
+     the original copy-paste source the 4 EARLY-claim defect instances (chef, fb-market-poster,
+     digest-predict, tran-ngoc-bau) were cloned from — now fully superseded by the shared skill
+     below, which documents the correct Phase-1 (optional)/Phase-2 (mandatory, late-claim) pattern
+     once for all 6 gates. Trimmed per architecture brief 2026-08-08-uc-cca-p3-published-marker-
+     gate-skill.md §4/§Q-skill-siting. -->
 
-     Pattern each spawned agent MUST follow (in its own flow, before send_telegram):
-       1. Compute work_date = current VN date (GMT+7) in YYYY-MM-DD format
-       2. Claim the published marker:
-          publish_claim = call_tool(server="vn-market", tool="task_claim", arguments={
-            task_id:              "published:" + slot_id + ":" + work_date,
-            task_kind:            "cowork-slot",
-            owner_agent:          "<agent_id>",
-            owner_client_session: $CLAUDE_CODE_SESSION_ID,   // REQUIRED — P1-FINAL (TASK_1980)
-            ttl_seconds:          100800   # 28h per ARCH-DECIDE-D (daily slots)
-          })
-       3. if publish_claim.claimed == false:
-            log "[cowork] publish blocked — already published work-id=" + slot_id + ":" + work_date
-            EXIT (do not call send_telegram)
-       4. if publish_claim.claimed == true:
-            proceed with send_telegram(...)
-     Weekly slots (digest-sunday only — FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON
-     2026-07-29 removed tnb-audit from this list; tnb-audit's cron is daily, so it now follows
-     the daily-slot template below, same as chef-morning/eod/evening/fb-daily):
-     FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP (2026-06-14):
-       (A) use get_week_period MCP tool to get the canonical week period (not local `date +%G-W%V`)
-       (B) key the mutex on periodKey (date-range "YYYY-MM-DD/YYYY-MM-DD"), NOT weekLabel.
-       e.g. "published:digest-sunday:2026-06-08/2026-06-14" not "published:digest-sunday:2026-W24".
-       ttl_seconds=691200 (8d) per spawn-fanout.md.
-     INVARIANT: a marker's key period MUST equal its slot's cron period — daily cron -> daily
-     key (ttl 100800), weekly cron -> ISO-week periodKey (ttl 691200). Check the target slot's
-     actual cron cadence before copy-pasting either pattern onto a new slot.
-     The publisher owns the marker — the dispatcher (this flow) does NOT call publish markers. -->
-
-**Important — Published marker gate (FR-P2-7):** Each spawned agent MUST check and set a
-published marker BEFORE calling `send_telegram`. This is the final belt-and-suspenders
-defense against duplicate Telegram posts: the per-work-item token (Step 4.6) prevents
-duplicate spawns; the published marker prevents duplicate sends if a spawn somehow executes
-twice (e.g. retry under transport lag).
-
-The key identifies CONTENT, not the dispatch attempt: `published:<slot_id>:<YYYY-MM-DD>`.
-A new date = genuinely new content = new key, so the next day's dish is never blocked.
-
-```
-# In the spawned agent flow — BEFORE send_telegram:
-
-WORK_DATE=$(TZ="Asia/Ho_Chi_Minh" date +%Y-%m-%d)   # VN date (GMT+7)
-PUBLISHED_KEY="published:<slot_id>:${WORK_DATE}"
-
-MARKER_CLAIM=$(call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:              PUBLISHED_KEY,
-  task_kind:            "cowork-slot",
-  owner_agent:          "<agent_id>",
-  owner_client_session: $CLAUDE_CODE_SESSION_ID,   // REQUIRED — P1-FINAL (TASK_1980)
-  ttl_seconds:          100800    # 28h for daily slots (ARCH-DECIDE-D) — includes tnb-audit
-                                  # Weekly slots (digest-sunday only): ttl_seconds = ~8 days
-                                  # (see coordinationStore TTL cap)
-}))
-
-if MARKER_CLAIM.claimed != true:
-  log "[cowork] publish blocked — already published work-id=<slot_id>:<WORK_DATE>"
-  EXIT   # Do NOT call send_telegram — already published today
-
-# Marker claimed → proceed with send_telegram(channel="<target>", message="<content>")
-```
-
-TTL values:
-- **Daily slots** (`ttl_seconds: 100800` = 28 hours): covers the full 24h content cycle
-  with a 4h buffer against timezone drift. A 24h TTL risks a same-day retry leaking through
-  at a 23h59m gap.
-- **Weekly slots** (`ttl_seconds` = ~8 days, see coordinationStore TTL cap): digest-sunday
-  uses ISO week as `work_date` (`YYYY-WW` format, e.g. `2026-W22`). tnb-audit's cron is daily
-  (`13 20 * * *`) — it uses the daily-slot pattern above, NOT this one (moved here 2026-07-29,
-  FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON — a weekly key on a daily cron silently
-  blocked 5 of 6 daily audits per ISO week).
-
-Where this gate lives: inside each spawned agent's own flow, co-located with `send_telegram`.
-The dispatcher (this file) does NOT set published markers — the publishing agent is responsible.
-See `docs/protocols/dwf-ops-runbook.md` § Published Marker Interaction for ops context.
+**Published marker gate:** See `.claude/skills/published-marker-gate/SKILL.md` — the spawned
+agent claims the marker immediately before its own irreversible publish action (never here).
+The dispatcher (this flow) does NOT call publish markers — the publisher owns the marker
+(unchanged invariant). Ops context: `docs/protocols/dwf-ops-runbook.md` § Published Marker
+Interaction.
 
 ## Step 5.1 — Compute MAX_PARALLEL (headroom-gated batch cap, UC-CDC-P4)
 
