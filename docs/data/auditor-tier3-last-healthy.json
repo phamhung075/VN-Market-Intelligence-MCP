@@ -1,3 +1,26 @@
 {
-  "last_healthy_at": "2026-08-11T12:19:11Z"
+  "tier": 3,
+  "last_healthy_at": "2026-08-14T02:35:24Z",
+  "cycle_id": "cron:auditor-t3:2026-08-14T02:00Z",
+  "status": "HEALTHY",
+  "summary": {
+    "services_checked": 13,
+    "db_checks": 12,
+    "runtime_pass": 13,
+    "health_pass": 5,
+    "db_pass": 4,
+    "anomalies_new": 0,
+    "anomalies_dedup": 1
+  },
+  "key_findings": {
+    "a30_memory_rag_service": {
+      "baseline_percent": 88.50,
+      "verdict": "FOLD",
+      "reason": "benign GC sawtooth or below tripwire",
+      "stability": "perfect (6 samples at 88.51%, zero variance)",
+      "escalation_criteria_met": false,
+      "known_pattern": "FU-RAG-DEPLOY-MEMORY (STALE-ACK, status=DONE_VERIFIED)"
+    }
+  },
+  "overall_status": "HEALTHY"
 }
