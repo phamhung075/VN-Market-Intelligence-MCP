@@ -13519,6 +13519,404 @@
           "observed_at": "2026-08-14T16:35:27Z"
         }
       }
+    },
+    {
+      "id": "FU-CTG-DISCOVERY-FILENAME-FILTER",
+      "priority": "P3",
+      "size": "S",
+      "sprint": "BCTC-EXTRACT-QUALITY",
+      "status": "DONE_VERIFIED",
+      "title": "VPS HNX BCTC discovery (discover-bctc-urls-browser.py) resolves a legit-titled article to a cover-letter PDF attachment -> re-poison risk; add filename-based CV_CBTT detection",
+      "type": "FIX",
+      "zone": "vps-scripts + apps/mcp-server (fetch-pipeline design)",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-CTG-DISCOVERY-FILENAME-FILTER",
+      "promoted_at": "2026-07-31T08:46:22Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+      "updated_at": "2026-08-14T17:35:51Z",
+      "claimed_at": "2026-08-14T17:29:10Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "next_agent": "qa",
+      "updated_by": "qa",
+      "commit_sha": "1c9959cdd16e80831c1ae90e6d62e192972e7e60",
+      "return_summary": "Filename-based cover-letter reject added to _fetch_pdf_url() in vps-scripts/discover-bctc-urls-browser.py — resolved PDF filenames containing cv_cbtt/cong_van_cbtt (case-insensitive) are skipped even when the article title passed FIX-CTG-2's title filter, matching article 613699's repro (good title, cover-letter attachment). 15 new tests (vps-scripts/test_discover_bctc_filename_classifier.py), 57/57 full suite PASS, py_compile clean. Fix fully contained in vps-scripts/ — no apps/mcp-server change needed for this defect. Deploy to VPS NOT performed (user-gated per standing policy).",
+      "status_note": "[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. No .files[] field on this qa[] row; derived touched files via git show --stat 1c9959cdd1 (fallback per flow doc), which matches the row's own return_summary description exactly. Commit 1c9959cdd16e80831c1ae90e6d62e192972e7e60 confirmed real, on main ancestry (git merge-base --is-ancestor true); touches exactly vps-scripts/discover-bctc-urls-browser.py + new vps-scripts/test_discover_bctc_filename_classifier.py. Non-bun zone: script has stdlib-only imports (no 3rd-party deps) so host python3 == VPS deployed runtime for this file -- docker-image substitution not applicable (that rule targets dockerized microservices like rag-service/pdf-extractor). Re-ran independently, not trusted from prose: new suite 15/15 pass, full vps-scripts/ suite 57/57 pass (matches claim exactly), py_compile clean on both touched files, mock-guard.sh --files vps-scripts/discover-bctc-urls-browser.py exit 0 PASS, process.env/secret greps clean. Read the diff directly: is_cover_letter_filename() checks only the final path segment post query-strip+URL-decode, case-insensitive, for cv_cbtt/cong_van_cbtt markers; wired into _fetch_pdf_url()'s href loop so a rejected cover-letter attachment does not short-circuit -- scanning continues for a later legit href in the same ArticlesFileAttach response. Matches AC and the article-613699 repro described in the commit message. Scope confirmed contained to vps-scripts/ -- no apps/mcp-server change needed for this defect, consistent with the row's own claim. VPS deploy correctly withheld per standing user-gate policy -- not a QA blocker (verify-committed JUMP-TO has no merge/push/deploy step, work already on main). Zero blocking ISSUE. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-22.md STEP qa-S153.",
+      "qa_verified_at": "2026-08-14T17:35:50Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + python3 -m pytest + py_compile + mock-guard.sh",
+          "args": {
+            "commit_verified": "1c9959cdd16e80831c1ae90e6d62e192972e7e60",
+            "files_verified": [
+              "vps-scripts/discover-bctc-urls-browser.py",
+              "vps-scripts/test_discover_bctc_filename_classifier.py"
+            ]
+          },
+          "live_value_observed": "git merge-base --is-ancestor 1c9959cdd16e80831c1ae90e6d62e192972e7e60 main -> exit 0 (IS ANCESTOR OF MAIN). git show --stat 1c9959cdd1 -> matches exactly vps-scripts/discover-bctc-urls-browser.py (56++/3-) and new vps-scripts/test_discover_bctc_filename_classifier.py (256++). python3 -m pytest vps-scripts/test_discover_bctc_filename_classifier.py -v -> 15 passed in 0.28s. python3 -m pytest vps-scripts/ -v -> 57 passed in 0.83s (matches row's claimed 57/57 full-suite result exactly). python3 -m py_compile on both touched files -> clean, no output/errors. bash scripts/audits/mock-guard.sh --files vps-scripts/discover-bctc-urls-browser.py -> \"[mock-guard] PASS -- no fabricated-data patterns found in production source.\" exit=0. grep for process.env/password/secret in the touched production file -> zero hits.",
+          "observed_at": "2026-08-14T17:35:50Z"
+        }
+      }
+    },
+    {
+      "id": "FIX-LANCEDB-INSERT-SEGFAULT",
+      "priority": "P3",
+      "size": "XS",
+      "status": "DONE_VERIFIED",
+      "title": "Fix LanceDB insert segfault (Bun v1.3.13)",
+      "type": "DEV",
+      "zone": "apps/mcp-server/",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-LANCEDB-INSERT-SEGFAULT",
+      "verify_note": "prior_status=TODO",
+      "promoted_at": "2026-07-31T11:51:03Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+      "updated_at": "2026-08-14T17:37:00Z",
+      "claimed_at": "2026-08-14T17:29:10Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "next_agent": "qa",
+      "commit_sha": "41f522117",
+      "review_note": "ROOT CAUSE RE-VERIFIED — DOES NOT HOLD: backlog note claimed a Bun v1.3.13 native @lancedb/lancedb segfault (addr 0x20) in fetchParseAndStoreBctc step-4 (2026-06-07T12:33:46Z repro). Commit d29da3a8d (2026-05-24, G5b HTTP rewire) had already replaced the native LanceDB call at that exact call site with an HTTP POST to rag-service (ragHttpClient.ts ragIndex, port 5002) — 2 WEEKS before the repro the note is based on. Commit 456851797 (2026-07-16, CI-RED-da847805-FIX) independently deleted the last @lancedb/lancedb import anywhere in the repo (_deprecated/, tests-only, zero production imports, confirmed by repo-wide grep before deletion). Live grep today: zero @lancedb/lancedb import statements in apps/mcp-server/src (2 comment-only mentions) — a native segfault on this path is categorically impossible today.\n\nREAL LIVE GUARD-GAP FOUND (same defect class — per task instruction to reproduce the same code path/guard-gap when a literal segfault can't be harnessed): insertBctcAnalysis.ts's `const inserter = insertAnalysisFn ?? (await getDefaultInsertAnalysis())` sat OUTSIDE its own try/catch. A throw during resolution (missing module, or historically a native-addon-import crash — the exact mechanism CI-RED-da847805-FIX fixed for bun test) propagated uncaught through fetchParseAndStoreBctc's unguarded Step-4 call, silently breaking the file's own documented \"LanceDB failure is non-fatal\" contract.\n\nFIX: moved the resolution line inside the try block (1-line structural move, insertBctcAnalysis.ts). Added a deterministic insertAnalysisResolverFn injection seam (both types.ts and insertBctcAnalysis.ts already document an \"everything injectable\" test philosophy), threaded through fetchParseAndStoreBctc.ts — used only by the new regression test, defaults to the real resolver in production.\n\nTEST EVIDENCE (RED->GREEN, apps/mcp-server/src/__tests__/FIX-LANCEDB-INSERT-SEGFAULT-step4-guard.test.ts, 2 cases: unit-level insertBctcAnalysis() + integration-level fetchParseAndStoreBctc()): RED confirmed genuinely by temporarily reverting the try/catch placement and re-running the SAME test file — both cases failed with the exact propagation stack insertBctcAnalysis.ts:79 -> fetchParseAndStoreBctc.ts:121. GREEN post-fix: both pass, insert failure logged non-fatal, SQLite Step-3 persistence unaffected. Design note: an earlier mock.module()-based simulation attempt was abandoned after empirical diagnosis showed it is order-dependent/flaky under the full suite (Bun eagerly hot-swaps a throwing factory at registration time whenever the target module was already cached by an earlier-run file — true almost always for ragHttpClient.js in a full run).\n\nGATES: bun tsc --noEmit clean. AC3 regression subset (new file + 1181-financial-reports-persist + 1352a-async-extraction-race + 1352b-pdf-extractor-wiring + p2-f-rag-http-rewire): 33/33 pass. gen-project-stats --dry-run: toolCount=183, cronJobCount=88 (unchanged, no tool/scheduler file touched). Full bun test: 14974 pass/40 skip/56 fail, 575s — inside the SAME pre-existing flake band already documented in this notebook's prior cycle this session (52-59; class: 5000ms-timeout/DB-contention — VPS Proxy Health/get_market_cap/insider_transactions/balance-cashflow-stores/MCP-SSE); this diff's own new test file is 0-fail in the full run (was itself flaky under the earlier mock.module design, now fixed); the sole fetchParseAndStoreBctc-touching entry in the fail list (FIX-1267 AC-7, 17.7s) independently re-run standalone -> 9/9 pass, confirming full-suite-only resource contention unrelated to this change. Port 3000 occupied by the live production Docker container -> skipped a conflicting local server-boot probe (Gate 2b); this is an mcp-server code change and needs an ops rebuild before it is live (not deployed by this task).\n\nBOUNDARY: dev-rag-service NOT touched (ragHttpClient.ts / rag-service source unchanged) — fix is 100% mcp-server-side, no cross-zone patch needed; the backlog's own \"dev-rag-service/dev-mcp-server boundary\" framing no longer applies once the root-cause correction above is accounted for.\n\nCommit 41f522117 (fix+test) + 32279f9a0 (memory: notebook+journal). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S43. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Commit 41f522117 (fix+test) + 32279f9a0 (memory) confirmed real, on main ancestry; git show --stat matches all 4 review_note-claimed files exactly (insertBctcAnalysis.ts, types.ts, fetchParseAndStoreBctc.ts, new test FIX-LANCEDB-INSERT-SEGFAULT-step4-guard.test.ts). Root-cause reversal independently re-derived (not trusted from prose): live grep '@lancedb/lancedb' apps/mcp-server/src returns only 2 comment-only hits, zero production imports -- native segfault categorically dead today. Diff read directly: resolver line genuinely moved inside try/catch, insertAnalysisResolverFn injection seam added exactly as claimed. Re-ran REAL verification: new test file 2/2 pass, AC3 regression subset (1181/1352a/1352b/p2-f-rag-http-rewire+new) 33/33 pass (byte-identical to claim), bun tsc --noEmit clean, mock-guard.sh PASS on 3 touched prod files, secrets/process.env grep clean, DDD scan N/A (all touched files are application/usecases/, zero domain/ layer files in scope -- application may import infrastructure per file's own documented layering). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-22.md STEP qa-S154.",
+      "updated_by": "qa",
+      "qa_verified_at": "2026-08-14T17:36:35Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + bun test (targeted) + bun tsc --noEmit + mock-guard.sh + grep",
+          "args": "commits 41f522117+32279f9a0 ancestry+stat; src/__tests__/FIX-LANCEDB-INSERT-SEGFAULT-step4-guard.test.ts + 1181-financial-reports-persist.test.ts + 1352a-async-extraction-race.test.ts + 1352b-pdf-extractor-wiring.test.ts + p2-f-rag-http-rewire.test.ts; mock-guard.sh --files insertBctcAnalysis.ts,types.ts,fetchParseAndStoreBctc.ts; grep -rn @lancedb/lancedb apps/mcp-server/src",
+          "live_value_observed": "both commits on main ancestry; git show --stat matches all 4 claimed files; new test file 2/2 pass; AC3 regression subset 33/33 pass; bun tsc --noEmit 0 errors; mock-guard.sh exit 0 PASS; secrets/process.env grep clean; live @lancedb/lancedb grep = 2 comment-only hits, 0 production imports",
+          "observed_at": "2026-08-14T17:36:35Z"
+        }
+      }
+    },
+    {
+      "id": "FDA-10",
+      "priority": "P3",
+      "size": "XS",
+      "sprint": "FAKE-DATA-AUDIT",
+      "status": "DONE_VERIFIED",
+      "title": "shippingIndex stale 'SCFI placeholder resolves to BDI' comment — misleading, code does NOT fabricate (delete comment)",
+      "type": "CLEAN",
+      "zone": "apps/mcp-server",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FDA-10",
+      "promoted_at": "2026-07-31T08:17:00Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+      "updated_at": "2026-08-14T17:37:10Z",
+      "claimed_at": "2026-08-14T17:29:10Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "next_agent": "qa",
+      "commit_sha": "ec27c69d3108032244de7c18c9b9641d1c81cacb",
+      "status_note": "Deleted/corrected the stale 'SCFI placeholder resolves to BDI' comment at shippingIndex.ts L7 + L73-77 (JSDoc for SHIPPING_SYMBOLS). Independently re-verified: SHIPPING_SYMBOLS (L79-82) only ever contained ^BDI/^BFIY — no SCFI symbol, proxy, or placeholder logic anywhere in the file (grep -i scfi confirms only the 2 comment mentions, both now corrected). Comment-only edit, SHIPPING_SYMBOLS/fetch logic untouched. cd apps/mcp-server && bun test src/__tests__/252-shipping-index.test.ts: 8 pass/0 fail (unchanged). bun tsc --noEmit: clean. | [QA] Review Record (direct-commit verify, 2026-08-14T17:37:10Z): commit ec27c69d3108032244de7c18c9b9641d1c81cacb confirmed on main ancestry, touches exactly the claimed file (shippingIndex.ts). Diff re-read directly — matches status_note verbatim (stale SCFI-placeholder comment deleted L7, JSDoc corrected L73-77), no residual misleading claim (grep -i scfi confirms). Re-ran independently: bun test src/__tests__/252-shipping-index.test.ts 8/8 pass, bun tsc --noEmit clean, mock-guard.sh PASS. Comment-only, no logic change. Verdict: DONE_VERIFIED.",
+      "updated_by": "qa (direct-commit verify)",
+      "verified_at": "2026-08-14T17:37:10Z",
+      "verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit + mock-guard.sh",
+          "args": {
+            "cwd": "apps/mcp-server",
+            "commit": "ec27c69d3108032244de7c18c9b9641d1c81cacb",
+            "files_verified": [
+              "apps/mcp-server/src/infrastructure/fetchers/shippingIndex.ts"
+            ]
+          },
+          "live_value_observed": "commit confirmed ancestor of main; git show --stat touches exactly 1 file (shippingIndex.ts, 2 insertions/3 deletions), matching backlog-detail.json#FDA-10.files[]; diff content matches status_note verbatim (stale SCFI-placeholder line deleted L7, JSDoc corrected L73-77); current-file grep -i scfi shows only the corrected line, no residual misleading claim; bun test src/__tests__/252-shipping-index.test.ts 8 pass/0 fail; bun tsc --noEmit 0 errors; mock-guard.sh --files shippingIndex.ts exit 0 PASS",
+          "observed_at": "2026-08-14T17:37:10Z"
+        }
+      }
+    },
+    {
+      "id": "FDA-7",
+      "priority": "P3",
+      "size": "S",
+      "sprint": "FAKE-DATA-AUDIT",
+      "status": "DONE_VERIFIED",
+      "title": "macroTools proxy re-stamps fetchedAt=now + source_tier ?? 2 when Go upstream omits provenance",
+      "type": "FIX",
+      "zone": "apps/mcp-server",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FDA-7",
+      "promoted_at": "2026-07-31T06:19:47Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+      "updated_at": "2026-08-14T17:37:57Z",
+      "claimed_at": "2026-08-14T17:29:10Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "next_agent": "qa",
+      "updated_by": "qa",
+      "commit_sha": "24022a53a",
+      "return_summary": "get_macro_snapshot fetchedAt fallback new Date()->null, source_tier fallback 2->4 when Go upstream omits provenance; commit 24022a53a (code+test+doc); tsc clean, targeted 128/128 pass (10 files, incl 4 new RED->GREEN FDA-7 tests), server boot toolCount=183/cronJobCount=88 unchanged, dashboard probes 200; full bun test 14961/40skip/53fail in-band (52-59), zero macro-related fails; DJ sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S39",
+      "status_note": "[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. No .commit/.files[] drain fields on this qa[] row -- commit derived from .commit_sha=24022a53a, files derived from backlog-detail.json#FDA-7 files[] claim (single file, macroTools.ts). Commit 24022a53a confirmed real, on main ancestry (git merge-base --is-ancestor); git show --stat matches the claimed file exactly, plus macroSnapshotGuard.ts (doc-comment only), new 089-tool-macro.test.ts assertions, and get_macro_snapshot.md doc, all consistent with FIX scope. Read the diff itself, not return_summary prose: source_tier fallback flipped from \"?? 2\" (optimistic aggregator tier) to \"?? 4\" (conservative/unknown) when no present signals.* component carries a tier; fetchedAt fallback flipped from \"?? new Date().toISOString()\" (fresh-stamp) to \"?? null\" (fail-loud absence) when Go upstream omits provenance -- exact match to the backlog note stated FIX. Re-ran independently: 089-tool-macro.test.ts 21/21 pass (incl. 4 new FDA-7 RED->GREEN tests -- null fetchedAt on omission, tier=4 when signals present-but-tierless, tier=4 when signals entirely absent, no-regression real-fetchedAt passthrough -- read each assertion, not just pass count). bun tsc --noEmit clean (0 output). mock-guard.sh --files macroTools.ts macroSnapshotGuard.ts exit 0 PASS. DDD: interface/mcp/tools/macro/ importing infrastructure/logger.js + fetchDeadline.js is pre-existing/untouched by this diffs hunks, file is not domain/ -- no violation. process.env/secrets grep clean on both files. Zero blocking ISSUE.",
+      "qa_verified_at": "2026-08-14T17:37:56Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit + mock-guard.sh",
+          "args": {
+            "commit_verified": "24022a53a",
+            "files_verified": [
+              "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts",
+              "apps/mcp-server/src/interface/mcp/tools/macro/macroSnapshotGuard.ts",
+              "apps/mcp-server/src/__tests__/089-tool-macro.test.ts",
+              "docs/agents/tools/list/get_macro_snapshot.md"
+            ],
+            "test_file": "apps/mcp-server/src/__tests__/089-tool-macro.test.ts"
+          },
+          "live_value_observed": "089-tool-macro.test.ts 21/21 pass (incl 4 new FDA-7 RED->GREEN tests). tsc --noEmit 0 errors. mock-guard.sh PASS. DDD/secrets grep clean.",
+          "observed_at": "2026-08-14T17:37:56Z"
+        }
+      }
+    },
+    {
+      "id": "FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING",
+      "type": "FIX",
+      "title": "New pure-function scripts/agents-flow/cowork-supersede-mutex.js + sibling test + unconditional wiring into cowork-match-slots.js finish() — the actuator that makes a declared `supersedes` pair drop its victims before spawn-fanout (brief §3b/§3c)",
+      "status": "DONE_VERIFIED",
+      "priority": "P1",
+      "size": "S",
+      "zone": "scripts/agents-flow/",
+      "next_agent": "qa",
+      "owner": "po",
+      "created_at": "2026-08-14T17:01:52Z",
+      "created_by": "po",
+      "source": "durable-inbox signal from=agents-architect type=architecture_brief 2026-08-14T16:22:12Z",
+      "detail_ref": "docs/architecture-briefs/2026-08-14-market-watcher-eod-offhours-notebook-collision.md",
+      "dedup_key": "scripts/agents-flow|cowork-supersede-mutex|new-script-plus-matchslots-wiring",
+      "dedup_checked": "Same NON-TERMINAL-lane scan as the sibling row (8 hits on /EOD-OFFHOURS|SAMETICK|SUPERSEDE|COLLISION/i, all read). No row proposes a supersede mutex or any second mutex in cowork-match-slots.js. TASK-COWORK-MUTEX-001 (review) / -002 (backlog) concern the ALREADY-SHIPPED CHEF mutex (scripts/agents-flow/cowork-chef-mutex.js) which this new script mirrors but does not modify — brief §3 is explicit that market-watcher's two slots are BOTH guaranteed:false, so applyChefMutex's guaranteed-boolean tie-break structurally cannot resolve them and a sibling mechanism with a declarative priority is required.",
+      "acceptance": "AC-1 CREATE scripts/agents-flow/cowork-supersede-mutex.js exporting pure `applySupersedeMutex(matches, scheduleSlots) -> { matches, supersede_mutex_applied, dropped }`: for every slot S in matches whose schedule row has a non-empty .supersedes array, drop from matches any slot_id S names that is also present; S survives, order-preserving on survivors. AC-2 it FAILS LOUD (error envelope + exit 1) on malformed input, matching applyChefMutex's error contract — the silent-empty posture is the exact failure class that mutex's own incident record (FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT) documents; do not reproduce it. AC-3 CREATE scripts/agents-flow/cowork-supersede-mutex.test.js with the brief's 5 named cases: both present -> offhours dropped/eod survives; only offhours -> no-op; only eod -> no-op; no supersedes field anywhere -> no-op with supersede_mutex_applied:false; malformed input -> fail loud. AC-4 MODIFY scripts/agents-flow/cowork-match-slots.js finish() to chain applySupersedeMutex AFTER applyChefMutex and surface supersede_mutex_applied on meta — unconditional tail placement so it runs on BOTH legacy and adaptive pressure modes and on BOTH the cowork-tick-preflight.sh Step 6 WORK path and the match-slots.md Steps 2+3 ERROR-fallback path. Re-read finish() live before patching: brief cites L242-255 as a CONTENT anchor, not a line anchor. AC-5 the live call site invokes it IN-PROCESS via require(), never through a shell echo/printf pipe — this sidesteps the echo-mangles-backslash class by construction rather than by discipline (a CLI entry point may still exist for symmetry/testability). AC-6 (optional, brief §3e) extend scripts/agents-flow/cowork-schedule-consistency.test.js with a static assertion that every `supersedes` entry names a real slot_id present elsewhere in the same file, so a future typo cannot silently no-op.",
+      "non_goals": "Do NOT modify scripts/agents-flow/cowork-chef-mutex.js or its test — the CHEF mutex is shipped, in production on every tick, and this is a sibling mechanism, not a refactor of it. Do NOT infer supersede priority from cron frequency or the `guaranteed` flag: the mechanism is deliberately opt-in/declarative so shipping it has ZERO effect on any slot pair until an author explicitly opts one in (brief §6). Do NOT edit docs/data/cowork-schedule.json or any docs/agents/** file from this row — those are the sibling agent-father row's zone.",
+      "related": [
+        "FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC",
+        "TASK-COWORK-MUTEX-001",
+        "TASK-COWORK-MUTEX-002"
+      ],
+      "status_note": "[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Independently re-verified, not trusted from router's RAW-verify prose alone. Commits 662d1fcc3 (feat) + 87e0554db (dev journal) confirmed real, on main ancestry via git merge-base --is-ancestor; git show --stat matches all 5 claimed files exactly (new cowork-supersede-mutex.js + .test.js, modified cowork-match-slots.js + .test.js + cowork-schedule-consistency.test.js). AC-1: applySupersedeMutex reads only .supersedes off scheduleSlots, drops named victims present in matches, S never drops itself (self-ref guarded, TC-6), order-preserving on survivors -- read live source directly. AC-2: fail() envelope shape (ok:false/error/matches:[]/<flag>:false, exit 1) byte-diffed against cowork-chef-mutex.js's own fail() -- identical contract. AC-3: 5 brief-named cases present as TC-1..TC-5 in the test file, all pass. AC-4: grep -n \"finish(\" confirms all 3 matchSlots() return points (legacy L275, legacy-fallback L287, adaptive L368) route through finish(), which chains applySupersedeMutex after applyChefMutex unconditionally, surfaces supersede_mutex_applied on meta+CLI stdout. AC-5: wiring diff shows require('./cowork-supersede-mutex.js') at the live call site -- in-process, never a shell pipe. AC-6 (optional): static assertion added to cowork-schedule-consistency.test.js (TC-8..TC-11), passes against the LIVE docs/data/cowork-schedule.json which the sibling row (commit 5918c55fe) already wired market-watcher-eod.supersedes=[\"market-watcher-offhours\"] into (confirmed via jq on the live file -- this row's actuator is genuinely no longer inert). Re-ran all 4 claimed test suites independently: cowork-supersede-mutex.test.js 32/32, cowork-match-slots.test.js 69/69, cowork-schedule-consistency.test.js 13/13, cowork-chef-mutex.test.js 25/25 (confirmed byte-identical/untouched -- git log -1 on that file predates this commit, non_goals honored). mock-guard.sh PASS on both touched production files (cowork-supersede-mutex.js, cowork-match-slots.js). Secrets/hardcoded-token grep clean; sole process.env usage (SCHED_FILE override) mirrors the pre-existing shipped chef-mutex.js pattern, not a new leak. bun tsc --noEmit N/A -- scripts/agents-flow/ is outside tsconfig.json's include (plain Node zone, confirmed by reading tsconfig.json directly). Scope check: git show --name-only on both commits confirms zero touch to cowork-chef-mutex.js/.test.js, docs/data/cowork-schedule.json, docs/agents/**, orch-state.json -- all non_goals honored. Zero blocking ISSUE. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-22.md STEP qa-S154.",
+      "updated_at": "2026-08-14T17:38:03Z",
+      "claimed_at": "2026-08-14T17:29:10Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "commit": "662d1fcc3",
+      "commit_summary": "feat(cowork/supersede-mutex): new cowork-supersede-mutex.js (applySupersedeMutex, pure/fail-loud, mirrors cowork-chef-mutex.js shape+error contract) + test (32/32) + unconditional wiring into cowork-match-slots.js finish() tail (both legacy+adaptive modes, both WORK+ERROR-fallback paths) + AC-6 static assertion in cowork-schedule-consistency.test.js (13/13, was 9/9). Decision journal: 87e0554db.",
+      "review_note": "Sibling row FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC already in review[] (commit 5918c55fe). Both FIX rows from this brief now shipped — AC-1 supersedes field on the sibling row is NO LONGER INERT: this row is the actuator. Router RAW-verified: commits 662d1fcc3+87e0554db exist and are pushed (origin/main matches HEAD), file list matches claim exactly (cowork-match-slots.js, cowork-match-slots.test.js, cowork-schedule-consistency.test.js, cowork-supersede-mutex.js, cowork-supersede-mutex.test.js + decision journal), all 4 claimed test suites independently re-run and confirmed (supersede-mutex 32/32, match-slots 69/69, chef-mutex 25/25 byte-identical/non-goal honored, schedule-consistency 13/13). Zero scope creep confirmed: docs/data/cowork-schedule.json, docs/agents/**, cowork-chef-mutex.js/test, orch-state.json all untouched by the agent (board row was found still BACKLOG when the agent finished — router self-healed the missing S2 lane-move separately, commit 70ba8dad4, before this flip).",
+      "qa_verified_at": "2026-08-14T17:38:03Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + node <test>.test.js (independent re-run, all 4 suites) + mock-guard.sh",
+          "args": {
+            "commits_verified": [
+              "662d1fcc3",
+              "87e0554db"
+            ],
+            "files_verified": [
+              "scripts/agents-flow/cowork-supersede-mutex.js",
+              "scripts/agents-flow/cowork-supersede-mutex.test.js",
+              "scripts/agents-flow/cowork-match-slots.js",
+              "scripts/agents-flow/cowork-match-slots.test.js",
+              "scripts/agents-flow/cowork-schedule-consistency.test.js"
+            ]
+          },
+          "live_value_observed": "cowork-supersede-mutex.test.js 32/32 pass; cowork-match-slots.test.js 69/69 pass; cowork-schedule-consistency.test.js 13/13 pass (incl. new AC-6 TC-8..11 against live cowork-schedule.json); cowork-chef-mutex.test.js 25/25 pass, file byte-identical/untouched; mock-guard.sh PASS on cowork-supersede-mutex.js+cowork-match-slots.js; tsc N/A (scripts/agents-flow/ outside tsconfig.json include)",
+          "observed_at": "2026-08-14T17:38:03Z"
+        }
+      }
+    },
+    {
+      "id": "TASK-COWORK-SIGNAL-BCTC-REKEY",
+      "type": "TASK",
+      "size": "M",
+      "priority": "P1",
+      "status": "DONE_VERIFIED",
+      "zone": "cross-service/bctc-analyst",
+      "owner": "po",
+      "plan_only": true,
+      "sprint": "COWORK-RELIABILITY",
+      "created_at": "2026-08-07T06:00:00Z",
+      "created_by": "pm (decomposition of FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING)",
+      "parent_task_id": "FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING",
+      "title": "bctc-analyst Filename Rekey & Sequencing (FR-2, FR-7)",
+      "ba_handoff": "docs/handoffs/TASK-COWORK-SIGNAL-BCTC-REKEY.md",
+      "description": "Decomposed subtask from FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING Phase 1 delivery",
+      "supervised": true,
+      "supervised_at": "2026-08-07T06:00:00Z",
+      "supervised_by": "pm (plan_only decomposition)",
+      "supervised_note": "Child task of plan_only parent; no code ships without parent re-adjudication by PO",
+      "updated_at": "2026-08-14T17:38:25Z",
+      "promoted_at": "2026-08-08T01:54:35Z",
+      "promoted_by": "dev-team (supervised-lane sweep)",
+      "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='developer' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+      "dispatch_lane": "developer",
+      "claimed_at": "2026-08-08T03:51:01Z",
+      "claimed_by": "dev-team (supervised-lane sweep)",
+      "reviewed_by": "developer",
+      "spec_doc": "docs/handoffs/TASK-COWORK-SIGNAL-BCTC-REKEY-spec.md",
+      "developer_review_note": "FR-2 (filename rekey) + FR-7 (routine-mode explicit emit line) + sequencing fix (WINDOW_KEY pinned once at cycle.md Step 0c, reused unchanged at stage-analyze.md release/routine emit lines and stage-log-notify.md §5d-1 mutex key -- no second computation) specified against 4 live-verified files: cycle.md (Step 0c derivation line), stage-analyze.md (line-114 {YYYYMMDD}->{WINDOW_KEY} substitution for release + new FR-7 \"Emit signal file\" line at end of Step 4c for routine, confirmed no routine-mode emit instruction existed before this spec), stage-consolidate.md (Output section stale cross-reference to stage-log-notify.md Stage 5 corrected -- that file has no bctc_signal write instruction; real emit lives in stage-analyze.md R4/Step-4c), stage-log-notify.md (§5d-1 cycle_tick_ISO token renamed to WINDOW_KEY, guard claim/skip logic unchanged). derive_window_key() cited verbatim from task 1s already-delivered spec (docs/handoffs/TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY-spec.md) -- signature/format/NFR-3 single-derivation contract, not redefined. Worked example bctc_signal_HPG_20260807T2100Z_routine.json cited from the brief, matches task 1 spec Test Case 2 independently. Test strategy specified: unit (deferred to task 1 spec, not re-specified), integration AC-1 (two same-day slots -> two distinct paths), regression NFR-4 (drain-signals.test.js fingerprint-neutrality unmodified -- confirmed NO-OP at source: sha256(from+type+payload+createdAt), basename never in hash). AC-1/AC-2 mapping cited from brief SS9. Dangling ba_handoff pointer (docs/handoffs/TASK-COWORK-SIGNAL-BCTC-REKEY.md, confirmed absent) noted per same precedent as task 1. Scope boundaries respected: zero edits to any of the 4 named flow files, zero touch to unified-agent/ or tran-ngoc-bau/ flow dirs (tasks 3/4), zero attempt at derive_window_key() re-derivation, no further agent spawned.",
+      "moved_to_review_at": "2026-08-08T03:56:10Z",
+      "moved_by": "developer",
+      "updated_by": "po (child-2 spec adjudication)",
+      "po_signoff_at": "2026-08-14T17:34:18Z",
+      "po_signoff_by": "po",
+      "moved_to_done_verified_at": "2026-08-14T17:34:18Z",
+      "po_adjudication_20260814T1734Z": "SIGN-OFF: DONE_VERIFIED with binding Amendment 5 (full text appended to docs/handoffs/TASK-COWORK-SIGNAL-BCTC-REKEY-spec.md SS11). Same shape as sibling task 1 and the parent architect sign-off: accepted in place with an acceptance-bearing amendment, NOT returned for rework. DELIVERABLE VERIFIED AT SOURCE, not from the spec prose: stage-analyze.md:114 release emit line exact; routine-mode emit-line gap (FR-7) genuinely absent with all four anchors (Step 4c @61, final sentence @80, --- @82, ## Release Mode @84) still exact; stage-log-notify.md SS5d-1 cycle_tick_ISO token + line-43 prose exact; stage-consolidate.md:64 cross-reference CONFIRMED stale by grep proving ZERO bctc_signal write instruction anywhere in stage-log-notify.md; NFR-4 fingerprint no-op CONFIRMED at drain-signals.js:251-252 = sha256(from+type+payload+createdAt), basename absent from the hash. NOT SUPERSEDED during the 6-day review idle: grep for WINDOW_KEY/derive_window_key across docs/agents/bctc-analyst/ returns zero matches, so nothing shipped and this is still live work. AMENDMENT 4 COMPATIBILITY CHECKED (task 1 signed off 14:58Z, after this spec was written): compatible and strengthening -- 4(a) names THIS row the sole real consumer of derive_window_key(), upholding SS1; 4(b) new branch-2 cron-hour domain guard is inert here because all 4 bctc slots are bare-integer once-daily crons (0 15/18/21/0, re-verified live). AMENDMENT 5, three parts, binding on the future unsupervised implementer: (a) ACCEPTANCE-BEARING -- the four derive_window_key() arguments are UNBOUND at the only call site in the decomposition. Task 1 SS1 declares all four are supplied by the caller from session state; Amendment 4(a) makes this task the sole consumer; so SS2 here is the only place they ever bind to real values, and it binds none. Live-verified counts across docs/agents/bctc-analyst/flow/: prompt_text 0 occurrences, cowork_schedule_json 0, live_mcp_fetched_at 0, slot_id 1 and that one is itself an undefined placeholder at stage-log-notify.md:40. stage-bootstrap.md is 6 lines delegating to step-0-cowork SKILL whose declared Outputs are AGENT_NOTEBOOK/CYCLE_SNAPSHOT/MARKET_CONTEXT/MACRO_SNAPSHOT/REGIME/CARRY_REGIME -- none of the four. Consequence: implementer writes the call verbatim, every arg undefined, WINDOW_KEY empty or garbage, filename template collapses to a CONSTANT across all 4 daily slots -- silently re-shipping the exact intra-day collision this parent row exists to close. That is Amendment 4(b) plausible-looking-wrong-key arriving through the caller, where the 4(b) guard cannot catch it. Fix specified from already-verified material: prompt_text = the invocation prompt (live trigger_prompt for all 4 slots reads run docs/agents/bctc-analyst/flow/main.md  slot=bctc-analyst-slot-N); slot_id = parsed from that slot= token, and PM stub AC-2 claim that slot_id is already known at Step 0c is FALSE at source (Step 0c determines RELEASE_TICKERS/ROUTINE_TICKERS/CYCLE_MODE, never a slot id); cowork_schedule_json = explicit read of docs/data/cowork-schedule.json. live_mcp_fetched_at is the genuine residual -- absent from this agent flow AND from step-0-cowork outputs, must bind to a named already-fetched MCP payload timestamp from Step 0b, never a wall-clock read (task 1 SS1 forbids it and bctc-analyst is a Bash-less class), and may need a bootstrap-side addition rather than a pure cycle.md edit -- raise as a dependency, do not paper over. Also carry PM Implementation Note 2 (NFR-2 no-Bash) which this spec omits entirely. (b) SS10 factual claim STRUCK: it says PM minted 4 board rows but no per-task handoff stubs -- FALSE, all four exist dated 2026-08-07 07:59 (docs/handoffs/TASK-001-derive-windowkey.md, TASK-002-bctc-analyst-rekey.md 8926 bytes for this very task, TASK-003-chef-intraday-filename.md, TASK-004-naming-contract.md). The ba_handoff field points at a WRONG FILENAME, not at a missing artifact. Not cosmetic: this 305-line spec was authored without reading PM own acceptance handoff for the same task, and that stub carries both items the spec lacks (argument sourcing in its AC-2, NFR-2 no-Bash in its Implementation Note 2) = exactly Amendment 5(a). Provenance recorded: the false claim was inherited verbatim from task 1 SS10 rather than checked -- THIRD unverified sibling-restatement in this decomposition after architect brief SS2 shared-consumer over-claim and task 1 SS7 inheritance of it. (c) SS2 cycle.md line anchors stale by +9 (Step 0c is 61 not 52, header 63 not 54, CYCLE_MODE block 95-99 not 86-89); current 86-89 is the middle of the Sequencing rule for mixed cycles bullet list, so a numeric-anchor insert breaks that list. Strike the numbers, keep the quoted-text anchor which is still correct. Calibration note: ONLY cycle.md drifted -- stage-analyze.md, stage-log-notify.md, stage-consolidate.md anchors all still exact, so the spec live-verification discipline was sound. NOT GRANTED: plan_only + supervised PRESERVED. Certifies the spec artifact, not a licence to ship.",
+      "verification": {
+        "raw_probe": {
+          "tool": "Bash: grep -n live anchors across docs/agents/bctc-analyst/flow/ + grep -rn WINDOW_KEY supersede-check + sed drain-signals.js:249-256 + jq cowork-schedule.json trigger_prompts + read task-1 spec SS1/SS7/SS9.2",
+          "args": {
+            "spec_artifact": "docs/handoffs/TASK-COWORK-SIGNAL-BCTC-REKEY-spec.md",
+            "pm_stub_crosschecked": "docs/handoffs/TASK-002-bctc-analyst-rekey.md",
+            "sibling_spec_crosschecked": "docs/handoffs/TASK-COWORK-SIGNAL-DERIVE-WINDOWKEY-spec.md (SS9.2 Amendment 4)",
+            "flow_files_probed": "cycle.md, stage-analyze.md, stage-consolidate.md, stage-log-notify.md, stage-bootstrap.md",
+            "fingerprint_source": "scripts/agents-flow/drain-signals.js:251-252"
+          },
+          "live_value_observed": {
+            "release_emit_line": "stage-analyze.md:114 = Emit signal file: docs/signals/bctc_signal_{TICKER}_{YYYYMMDD}_release.json — spec anchor EXACT",
+            "routine_emit_gap": "FR-7 gap REAL — zero Emit-signal-file instruction in Routine Mode (lines 6-82); anchors Step4c@61, final-sentence@80, ---@82, Release-Mode@84 all EXACT",
+            "mutex_key_anchor": "stage-log-notify.md SS5d-1 carries <cycle_tick_ISO>; NOMINAL-slot-fire-time prose at line 43 — EXACT",
+            "stale_xref_confirmed": "grep -n bctc_signal docs/agents/bctc-analyst/flow/*.md returns ZERO hits in stage-log-notify.md — stage-consolidate.md:64 cross-reference is genuinely stale, correction is right",
+            "nfr4_fingerprint": "drain-signals.js:251-252 sha256(String(from)+String(type)+payload+String(createdAt)) — basename absent from hash, rekey fingerprint-neutral CONFIRMED",
+            "supersede_check": "grep -rn 'WINDOW_KEY|derive_window_key' docs/agents/bctc-analyst/ -> NO MATCHES; nothing shipped in the 6-day review idle, row is still live work",
+            "amendment_5a_unbound_args": "docs/agents/bctc-analyst/flow/ occurrence counts — prompt_text 0, cowork_schedule_json 0, live_mcp_fetched_at 0, slot_id 1 (itself an undefined placeholder at stage-log-notify.md:40); step-0-cowork SKILL Outputs = AGENT_NOTEBOOK/CYCLE_SNAPSHOT/MARKET_CONTEXT/MACRO_SNAPSHOT/REGIME/CARRY_REGIME, none of the four",
+            "amendment_5b_false_absence": "SS10 claims PM minted no per-task handoff stubs — REFUTED: docs/handoffs/TASK-001-derive-windowkey.md, TASK-002-bctc-analyst-rekey.md (8926 bytes), TASK-003-chef-intraday-filename.md, TASK-004-naming-contract.md all exist, dated 2026-08-07 07:59",
+            "amendment_5c_line_drift": "cycle.md drifted +9 — Step 0c at 61 (spec says 52), header 63 (54), CYCLE_MODE block 95-99 (86-89); live 86-89 is the mixed-cycle Sequencing-rule bullet list. Other 3 files zero drift",
+            "amendment_4_compat": "task-1 SS9.2(a) names THIS row the sole real consumer — upholds SS1; 4(b) cron-hour domain guard inert here, all 4 bctc slots bare-integer once-daily (0 15/18/21/0 verified live)",
+            "live_trigger_prompts": "all 4 bctc slots = 'run docs/agents/bctc-analyst/flow/main.md  slot=bctc-analyst-slot-N' — supplies prompt_text + slot_id for the Amendment 5(a) fix"
+          },
+          "observed_at": "2026-08-14T17:34:18Z",
+          "verdict": "ACCEPTED — 4-file edit set correct as specified; 1 binding amendment (5a/5b/5c) recorded, not returned for rework; plan_only+supervised PRESERVED"
+        }
+      }
+    },
+    {
+      "id": "FDA-6",
+      "priority": "P3",
+      "size": "S",
+      "sprint": "FAKE-DATA-AUDIT",
+      "status": "DONE_VERIFIED",
+      "title": "creditFlowTools fabricates mortgage/credit values + stamps date=now on estimate (already provenance-flagged)",
+      "type": "FIX",
+      "zone": "apps/mcp-server",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FDA-6",
+      "promoted_at": "2026-07-31T04:47:59Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+      "updated_at": "2026-08-14T17:38:29Z",
+      "claimed_at": "2026-08-14T17:29:10Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "next_agent": "qa",
+      "updated_by": "qa",
+      "commit_sha": "6a6d47e3a",
+      "return_summary": "structuredContent field (is_estimate/source_tier/estimated_fields/mortgage_is_estimate/yoy_is_estimate/fully_estimated/current_date/previous_date) added to get_credit_flow_signal alongside unchanged VN prose; date=now fabrication fixed (CreditData.date null when mortgage/yoy estimated, not new Date()); 2 commits (6a6d47e3a code+test+doc, 08666fa6d memory); tsc clean, targeted 136/136 pass, toolCount=183/cronJobCount=88 unchanged; DJ sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server.md S37",
+      "status_note": "[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commit 6a6d47e3a on main ancestry -- git diff-tree matches all 4 claimed non-doc files (creditFlowTools.ts, computeCreditFlowSignal.ts, creditFlowAnalyzer.ts, DSI-S3-sector-fin.test.ts; files[] sourced from backlog-detail.json#FDA-6, row lacked its own .files[]/.owner drain fields). Independently re-ran: bun test src/__tests__/DSI-S3-sector-fin.test.ts 27/27 pass; bun tsc --noEmit 0 errors; mock-guard.sh --files creditFlowTools.ts+computeCreditFlowSignal.ts+creditFlowAnalyzer.ts exit 2 CAUTION (pre-existing unrelated commented-out TODO at computeCreditFlowSignal.ts:230, not fabricated-data marker, non-blocking). Read commit body: CreditData.date now null when mortgageIsEstimate||yoyIsEstimate (fixes date=now fabrication), structuredContent field (is_estimate/source_tier/estimated_fields/mortgage_is_estimate/yoy_is_estimate/fully_estimated/current_date/previous_date) added, VN prose claimed byte-identical. DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-23.md STEP qa-S2.",
+      "qa_verified_at": "2026-08-14T17:37:53Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git diff-tree --no-commit-id --name-only -r + bun test (targeted) + bun tsc --noEmit + mock-guard.sh",
+          "args": {
+            "commit": "6a6d47e3a",
+            "files_verified": [
+              "apps/mcp-server/src/interface/mcp/tools/sector/creditFlowTools.ts",
+              "apps/mcp-server/src/application/usecases/computeCreditFlowSignal.ts",
+              "apps/mcp-server/src/domain/services/creditFlowAnalyzer.ts",
+              "apps/mcp-server/src/__tests__/DSI-S3-sector-fin.test.ts"
+            ]
+          },
+          "live_value_observed": "commit confirmed ancestor of main; diff-tree file set exact match on all 4 non-doc files; bun test DSI-S3-sector-fin.test.ts 27/27 pass 0 fail; bun tsc --noEmit 0 errors; mock-guard.sh exit 2 CAUTION (pre-existing unrelated TODO comment, non-blocking)",
+          "observed_at": "2026-08-14T17:37:53Z"
+        }
+      }
+    },
+    {
+      "id": "FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC",
+      "type": "FIX",
+      "title": "market-watcher-eod + market-watcher-offhours co-fire every weekday 16:00Z onto one OVERWRITE-class notebook: declare `supersedes` in cowork-schedule.json, 2 cowork-team doc updates, 2 RULE-2.5 pathspec fixes (brief §3a/§3d/§4)",
+      "status": "DONE_VERIFIED",
+      "priority": "P1",
+      "size": "S",
+      "zone": "docs/agents/",
+      "next_agent": "qa",
+      "owner": "po",
+      "created_at": "2026-08-14T17:01:52Z",
+      "created_by": "po",
+      "source": "durable-inbox signal from=agents-architect type=architecture_brief 2026-08-14T16:22:12Z",
+      "detail_ref": "docs/architecture-briefs/2026-08-14-market-watcher-eod-offhours-notebook-collision.md",
+      "dedup_key": "cowork-schedule|market-watcher-eod+offhours|sametick-notebook-collision|docs-and-data-half",
+      "dedup_checked": "Scanned all NON-TERMINAL lanes (backlog+ready+in_progress+review+qa) on /EOD-OFFHOURS|SAMETICK|SUPERSEDE|COLLISION|MARKETWATCHER-EOD/i — 8 hits, all read, none covers this pair. Nearest neighbours and why each is disjoint: FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (review) is the 2026-08-06 fix that added the market-watcher-notebook:main task_claim mutex around the git add+commit step — brief §2.2 shows that mutex runs AFTER cycle.md Step 5's raw Write() already overwrote the file, so it orders committers and cannot restore content never on disk; it does not close this. GUARD-NOTEBOOK-CONCURRENT-EDIT-COLLISION-DATA-LOSS (backlog/BLOCKED) is a generic notebook-write guard, not a schedule-layer fix, and is BLOCKED. TASK-COWORK-MUTEX-001 (review) / -002 (backlog) are the CHEF-pair mutex family this brief's §3 explicitly generalizes FROM, not a duplicate of. No row anywhere on the board mentions the market-watcher-eod/offhours pair.",
+      "evidence": "Brief §1, independently re-verified by the architect against the live repo (not taken from the router's self-report): both slots landed identical last_fired=2026-08-14T16:10:51Z in docs/data/cowork-schedule.json; the EOD notebook entry is CONFIRMED LOST (git log on docs/agent-memory/notebooks/market-watcher.md shows only the offhours slot's own commit 23eed1755, no EOD-authored entry in history or working tree); and commit 6cfdfb227 titled `chore(memory/market-watcher-eod): EOD notebook` actually touched docs/agent-memory/notebooks/news-scout.md ONLY (+7L) — a live RULE 2.5 bare-commit sweep. 16:00 UTC is one of the six */4 boundaries on every weekday, so this is a guaranteed daily double-spawn, not a drift fluke.",
+      "acceptance": "AC-1 docs/data/cowork-schedule.json: market-watcher-eod carries `supersedes: [\"market-watcher-offhours\"]` (§3a) — one-directional, opt-in, no change to the offhours object. AC-2 docs/agents/cowork-team/flow/pressure-cadence.md gains Step 4.5d worded like the existing 4.5c SUPERSEDED-runs-in-script section (§3d). AC-3 docs/agents/cowork-team/flow/match-slots.md Step 4b gains one sentence that declared supersedes pairs resolve in-script before the WARN runs; Step 4b's WARN stays live UNMODIFIED as the net for future UNDECLARED collisions (§3d). AC-4 (§4, independently valuable — do NOT skip if AC-1..3 slip) both git_commit_retry call sites gain a trailing explicit pathspec: docs/agents/market-watcher/flow/eod.md Step D and docs/agents/market-watcher/flow/cycle.md 'Offhours self-commit'. git_commit_retry passes \"$@\" straight to git commit, so `-- <paths>` after -m needs no wrapper change. AC-5 verify no OTHER same-agent multi-slot pair regressed: brief §6 confirms news-scout(2)/bctc-analyst(4)/refine_bctc_md(4) share no colliding tick today.",
+      "non_goals": "Do NOT split market-watcher's notebook into per-slot files (brief §5 Option A, rejected: docs/agents/fb-market-poster/flow/daily.md and init.md read docs/agent-memory/notebooks/market-watcher.md by path as one of 4 fixed daily-recap inputs). Do NOT add a task_claim mutex around cycle.md Step 5's raw Write() (brief §5 Option C, rejected: OVERWRITE-class file with no merge step, so the lock loser's content is still fully replaced — it makes the loss deterministic, not absent). Do NOT touch alert-commander's slots (brief §6: same collision SHAPE at 04:00/08:00Z but APPEND-class notebook, materially lower severity, flagged for awareness only).",
+      "depends_on": [
+        "FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING"
+      ],
+      "related": [
+        "FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING",
+        "FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK",
+        "TASK-COWORK-MUTEX-001"
+      ],
+      "status_note": "PO SPLIT PER BRIEF §7's OWN ASK — the brief explicitly flags that it spans an agent-father zone (docs/agents/**, cowork-schedule.json as agent-behaviour data) and a developer zone (scripts/agents-flow/**, code) and asks PO to split rather than silently drop one half. This is the agent-father half. SEQUENCING: AC-1's `supersedes` field is INERT until the sibling developer row ships applySupersedeMutex + its finish() wiring — the schema field alone changes no behaviour, so landing this row first is safe but not sufficient. AC-4 (the RULE 2.5 pathspec fix) is fully independent of the sibling row and of AC-1..3, and closes a live defect that exposes market-watcher's notebook commits to ANY concurrently-committing peer — ship it even if the rest slips.\n\n[QA] Review Record (direct-commit verify): DONE_VERIFIED. Independently re-verified AC-1..4 against the actual diff of commit 5918c55fe (not trusting review_note prose). AC-1: docs/data/cowork-schedule.json diff confirmed market-watcher-eod gained \"supersedes\": [\"market-watcher-offhours\"] verbatim (brief §3a), offhours object itself untouched. AC-2: pressure-cadence.md diff confirmed new Step 4.5d, worded as a SUPERSEDED doc-no-op pointer mirroring the shipped 4.5c CHEF-mutex section exactly (same invariant-comment/heading/field-read pattern). AC-3: match-slots.md diff confirmed exactly one sentence added after the existing WARN paragraph (declared supersedes pairs resolve in-script before the WARN runs); the WARN paragraph itself is byte-unchanged (pure addition, no deletion). AC-4: eod.md and cycle.md diffs both confirmed the git_commit_retry call gained a trailing \"-- <paths>\" pathspec matching the git add line exactly, per brief §4 / RULE 2.5. Cross-checked the \"AC-1 no longer inert\" claim independently rather than trusting it: sibling row FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING commit 662d1fcc3 is confirmed an ancestor of main (git merge-base --is-ancestor) and cowork-match-slots.js finish() is confirmed live-wired to applySupersedeMutex(chefResult.matches, scheduleSlots) — the actuator is genuinely on main, so this row's AC-1 field is live, not inert (note: that sibling row's own task_board lane is still stuck in qa[] despite an earlier qa-S154 decision-journal entry narrating a DONE_VERIFIED verdict for it 2026-08-14T17:35:45Z — a narrated-write-never-executed discrepancy on a DIFFERENT row, flagged for awareness, not a blocker for this row). Re-ran tests independently (not trusted from router prose): cowork-schedule-consistency.test.js 13/13 (grew from 9/9 via the sibling's AC-6 typo-guard, includes a live assertion that this row's new supersedes entry names a real slot_id — passes), cowork-chef-mutex.test.js 25/25 (unaffected, confirms non-goal honored), cowork-match-slots.test.js 69/69. bash scripts/audits/size-lint-justification.sh --check -> PASS 0 offenders repo-wide (confirms pressure-cadence.md/cycle.md size-justification headers stay within tolerance post-edit). No production TS/JS touched by this commit (docs/agents/** + docs/data/cowork-schedule.json only) -> tsc/mock-guard N/A, DDD/security scan N/A. Zero blocking issues. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-22.md.",
+      "updated_at": "2026-08-14T17:39:06Z",
+      "commit": "5918c55fe9627e966f0719efcb6d0ddaa420cee4",
+      "commit_summary": "cowork-schedule.json supersedes field (AC-1), pressure-cadence.md Step 4.5d (AC-2), match-slots.md Step 4b sentence (AC-3), eod.md+cycle.md RULE-2.5 pathspec fix (AC-4). Files: docs/data/cowork-schedule.json, docs/agents/cowork-team/flow/pressure-cadence.md, docs/agents/cowork-team/flow/match-slots.md, docs/agents/market-watcher/flow/eod.md, docs/agents/market-watcher/flow/cycle.md. Router RAW-verified commit + re-ran cowork-schedule-consistency.test.js (9/9), cowork-chef-mutex.test.js (25/25), cowork-match-slots.test.js (69/69) — all pass.",
+      "review_note": "AC-1..4 shipped per this half. AC-1 supersedes field is INERT until sibling row FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING (developer, next in sequential dispatch) ships applySupersedeMutex + finish() wiring. AC-4 pathspec fix is independently live/effective now.",
+      "claimed_at": "2026-08-14T17:29:10Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "qa_verified_at": "2026-08-14T17:39:05Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + git diff-per-file + bun test + size-lint-justification.sh",
+          "args": {
+            "commit_verified": "5918c55fe9627e966f0719efcb6d0ddaa420cee4",
+            "sibling_actuator_commit_verified": "662d1fcc3",
+            "files_verified": [
+              "docs/data/cowork-schedule.json",
+              "docs/agents/cowork-team/flow/pressure-cadence.md",
+              "docs/agents/cowork-team/flow/match-slots.md",
+              "docs/agents/market-watcher/flow/eod.md",
+              "docs/agents/market-watcher/flow/cycle.md"
+            ],
+            "test_files": [
+              "scripts/agents-flow/cowork-schedule-consistency.test.js",
+              "scripts/agents-flow/cowork-chef-mutex.test.js",
+              "scripts/agents-flow/cowork-match-slots.test.js"
+            ]
+          },
+          "live_value_observed": "commit 5918c55fe confirmed ancestor of main; per-file git show diffs confirm AC-1 (supersedes field literal), AC-2 (Step 4.5d added), AC-3 (one sentence added, WARN paragraph unchanged), AC-4 (trailing pathspec added to both git_commit_retry calls); sibling actuator commit 662d1fcc3 confirmed ancestor of main + applySupersedeMutex confirmed wired into cowork-match-slots.js finish() via grep, so AC-1 field is live not inert; cowork-schedule-consistency.test.js 13/13, cowork-chef-mutex.test.js 25/25, cowork-match-slots.test.js 69/69; size-lint-justification.sh --check PASS 0 offenders repo-wide",
+          "observed_at": "2026-08-14T17:39:05Z"
+        }
+      }
+    },
+    {
+      "id": "FU-BACKFILL-MULTIPLE-COVER-LETTERS",
+      "priority": "P3",
+      "size": "S",
+      "sprint": "BCTC-EXTRACT-QUALITY",
+      "status": "DONE_VERIFIED",
+      "title": "BCTC backfill: handle multiple cover-letter PDFs per ticker-quarter (skip ALL, not first-match)",
+      "type": "FIX",
+      "zone": "apps/mcp-server/",
+      "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-BACKFILL-MULTIPLE-COVER-LETTERS",
+      "promoted_at": "2026-07-31T10:47:00Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=3)",
+      "updated_at": "2026-08-14T17:39:07Z",
+      "claimed_at": "2026-08-14T17:29:10Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "next_agent": "pm",
+      "review_note": "Residual weakness #2 from FIX-CTG-PDF-MISLINK (77092007): backlog hypothesised \"first-match-only\" cover-letter exclusion, but code already used .filter() (excludes ALL literal cover letters). Real gap: the \"consolidated\" bucket was NEGATIVE-match (!isCoverLetterFilename) -- \"not a recognised cover letter\" != \"is the real report\". A non-report file (e.g. a P&L-variance explanatory note) that merely failed the cover-letter pattern could be wrongly selected as the sole \"consolidated\" candidate, or inflate false ambiguity when a real consolidated file was also present.\nFix (backfillBctcPdfPaths.ts): new isConsolidatedReportFilename() -- POSITIVE match on Vietnamese \"hop nhat\" / English \"consolidated\" marker (same signal hsxBctcFetcher.ts::rankItem() already uses). Both the NULL-pass and heal-pass now require this positive match before selecting a PDF among 2+ candidates; a lone candidate still always links (generalised from coverLetters.length===1 to matches.length===1). Zero positive matches among 2+ candidates -> loud console.warn, row stays PENDING (never a silent wrong pick). Heal-pass re-check guard broadened from isCoverLetterFilename(current) to !isConsolidatedReportFilename(current).\nAC1/AC2: FU-BACKFILL-MULTIPLE-COVER-LETTERS.test.ts (12 cases). Granular 2-layer RED confirmed: (1) isConsolidatedReportFilename added standalone first (no selection-logic change yet) -- AC-1/AC-3/AC-4/AC-2-GREEN genuinely failed against unmodified selection logic (AC-3 concretely reproduced the live mislink: old code returned updated=1, silently linking the non-report file); (2) legacyNegativeMatchSelect() -- a frozen, non-imported snapshot of the exact pre-fix 77092007 decision branches -- independently proves {kind:\"ambiguous\"} (fails to heal) on the identical AC-1 fixture. Post-fix: 12/12 pass.\nOne unrelated pre-existing gap found+sidestepped (out of scope, not fixed): extractTicker()'s KEYWORD_SET is missing \"CV\", so a CV_CBTT_TICKER_...-ordered filename mis-parses ticker as \"CV\" -- fixtures use the already-proven TICKER_..._CV_CBTT_... ordering instead.\nEvidence: bun tsc --noEmit clean. Targeted suite (new file + FIX-CTG-PDF-MISLINK.test.ts + PI3-bctc-inspect-reopen2.test.ts): 56/56 pass. gen-project-stats.ts --dry-run: toolCount=183, cronJobCount=88 -- unchanged from pre-task baseline. Fresh server boot (DB_PATH=:memory:, free port): /health toolCount=183; /api/bctc-inspect + /dashboards/news-fetch/ both 200. Full bun test (RAW-verified, full-capture, non-truncated log): 14971 pass/40 skip/57 fail/1 error/47501 expect (565.80s) -- grep of the complete \"(fail)\" line list confirms ZERO matches on bctc/pdf/backfill/cover/consolidated/financial_report; fail count is inside the documented pre-existing flake band (52-59, this session's own recent notebook entries: 52-53 on the last two cycles) -- driven by network-timeout/vps_push_log-table tests unrelated to this change. Docs: docs/architecture/microservice/mcp-server/usecases.md -- new backfillBctcPdfPaths.ts section (previously undocumented as its own use case). Simplicity gate: PASS. Commits: c515ec142 (fix+test+doc), 26bb028bc (notebook+DJ). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-2.md S42. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commit c515ec142 (fix+test+doc, single commit) on main ancestry -- git show --stat matches all 3 claimed files exactly (FU-BACKFILL-MULTIPLE-COVER-LETTERS.test.ts, backfillBctcPdfPaths.ts, docs/architecture/microservice/mcp-server/usecases.md). Independently re-ran (not trusted from review_note prose): new test file 12/12 pass (matches AC1/AC2 claim); wider regression batch (new file + FIX-CTG-PDF-MISLINK.test.ts + PI3-bctc-inspect-reopen2.test.ts) 56/56 pass, byte-identical to the row's own claimed 56/56 count. bun tsc --noEmit 0 errors. mock-guard.sh --files backfillBctcPdfPaths.ts exit 0 PASS. process.env/secrets grep clean. DDD: file greps a from.*infrastructure hit (logger.js import) but is application/usecases/, not domain/ -- dev-standards.md golden rule scopes the ban to domain/ only, application importing infrastructure is the documented established pattern -- not a violation; zero domain/ files in scope. Read the fix code directly: isConsolidatedReportFilename() positive-match gate applied to both NULL-pass and heal-pass, replacing the old negative-match !isCoverLetterFilename -- matches the described mechanism exactly, not just accepted from prose. usecases.md doc section confirmed present in the commit itself. DJ-GATE-1: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-23.md STEP qa-S1 (this verify).",
+      "review_by": "dev-mcp-server",
+      "commit_sha": "c515ec142",
+      "updated_by": "qa",
+      "qa_verified_at": "2026-08-14T17:39:06Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "bun test",
+          "args": "src/__tests__/FU-BACKFILL-MULTIPLE-COVER-LETTERS.test.ts + FIX-CTG-PDF-MISLINK.test.ts + PI3-bctc-inspect-reopen2.test.ts + bun tsc --noEmit + mock-guard.sh (apps/mcp-server)",
+          "live_value_observed": "12/12 new tests pass; 56/56 pass across the 3-file regression batch; bun tsc --noEmit 0 errors; mock-guard.sh PASS; process.env/secrets grep 0 hits",
+          "observed_at": "2026-08-14T17:39:06Z",
+          "evidence_commit": "c515ec142"
+        }
+      }
     }
   ],
   "closed_sprints": [
