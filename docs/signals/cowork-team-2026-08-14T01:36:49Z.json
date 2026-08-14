@@ -1,0 +1,18 @@
+{
+  "from": "cowork-team",
+  "to": "system",
+  "type": "cowork-fire",
+  "payload": {
+    "tick": "2026-08-14T01:30Z",
+    "matched_slots": ["news-scout-sentiment"],
+    "won_slots": ["news-scout-sentiment"],
+    "spawned": ["news-scout-sentiment"],
+    "silent": false,
+    "due_reasons": {"news-scout-sentiment": "cadence"},
+    "cadence_minutes": {"news-scout-sentiment": 240},
+    "classification": "FIRE",
+    "reason": "spawned"
+  },
+  "priority": "INFO",
+  "createdAt": "2026-08-14T01:36:49Z"
+}
