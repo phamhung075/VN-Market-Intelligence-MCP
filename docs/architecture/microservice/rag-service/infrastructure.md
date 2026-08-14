@@ -135,6 +135,80 @@ Both fixes are unit-tested (`__tests__/unit/test_rag_vector_index_build.py`:
 `TestVectorIndexThreadPoolEnvPinning`, `test_concurrent_calls_build_exactly_once`) — see
 `testing.md`.
 
+#### FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED (post-deploy: the thread-pool pin is confirmed effective but insufficient; the real per-restart amplifier fixed)
+After `ca6d86869` (the two `os.environ.setdefault()` pins above) deployed and was
+content-hash-verified live (container `/app/infrastructure/repositories.py` md5 matched
+`git HEAD` — not a stale-image issue), `dmesg` **inside the Docker Desktop VM** still showed
+3 kernel memcg OOM-kills over the following ~44h (2026-08-12T13:46:51Z, 14:00:57Z,
+2026-08-13T09:20:09Z), all invoked by `lancedb-tokio-w` — the exact thread the pin targets.
+`docker inspect .State.OOMKilled` read `false`/`ExitCode=0` for all 3 (confirmed unreliable
+in this environment, per the section above — never trust it here).
+
+**Discrimination (ineffective vs. insufficient) — done in-container, live, against the
+running production image, not theoretically:**
+1. Isolated a fresh Python process inside the live container (`docker exec`, same
+   `/app/infrastructure/repositories.py`, scratch LanceDB path — no production data
+   touched) and confirmed, by print, that `os.environ["TOKIO_WORKER_THREADS"]` /
+   `["LANCE_CPU_THREADS"]` read `"1"` **before** the first `lancedb.connect_async()` call
+   (the pin's own documented ordering requirement). No `"Falling back to auto"` fallback
+   message (confirmed present in the compiled `_lancedb.abi3.so` via `strings` as the
+   literal error path for an unparseable value) appeared in container logs — the value is
+   syntactically valid and accepted.
+2. Enumerated `/proc/<pid>/task/*/comm` in BOTH the live production container and the
+   isolated fresh-process repro: **2 `lancedb-tokio-w` + 2 `lance-cpu` threads persist even
+   with both vars pinned to `"1"`** — never converging to 1. A parallel no-pin control run
+   (env vars suppressed) showed a comparable 2/2 count, not the theoretical
+   `num_cpus`-sized (6) blow-up the pin was designed to prevent — i.e. the pin measurably
+   changes behavior (rules out "silently ignored"), it simply cannot reach exactly 1.
+3. `strings` on the compiled `.so` found **no `max_blocking_threads` (or equivalent)** env
+   knob anywhere in the binary. Root cause: `TOKIO_WORKER_THREADS` sizes only Tokio's CORE
+   async-executor worker pool; Tokio maintains a SEPARATE, always-present, on-demand
+   BLOCKING-thread pool (used for blocking file I/O during table-open/index-build) that
+   inherits the SAME `"lancedb-tokio-worker"` thread-name prefix (hence indistinguishable
+   in `/proc`) but has no exposed size knob here. `lance-cpu` is a `rayon` pool whose
+   `LANCE_CPU_THREADS` interacts with an undocumented `LANCE_IO_CORE_RESERVATION` floor
+   (message string: `"Number of CPUs is less than or equal to the number of IO core
+   reservations... using 1 CPU for compute intensive tasks"`) — also bottoms out above 1.
+   **Verdict: NOT ineffective — INSUFFICIENT. No further env-var lever exists for either
+   pool; do not re-attempt a tighter pin.**
+
+**The actual restart-triggered amplifier (fixed this row):** `_vector_index_built` is a
+per-**process** flag — always `False` on a fresh container start — but a LanceDB index is
+part of the on-disk Lance dataset manifest and **persists across restarts**. Confirmed live:
+production `vector_idx` was built once at `2026-08-13T09:30:44Z` (~10 min after the
+`09:20:09Z` restart/OOM) and was still valid, unrebuilt, 22h+ later
+(`num_indexed_rows=29,364` of `29,419` total — a normal small incremental gap, not a stale
+index). Without a check, **every** restart re-triggers a full IVF_PQ/KMeans retrain over the
+WHOLE corpus on the first `search()`/`hybrid_search()` call — the single most
+thread/memory-heavy operation in this file — even when a valid index from the prior
+process's build is already sitting on disk. `_maybe_build_vector_index()` now calls
+`table.list_indices()` inside the existing `_vector_index_lock` critical section before
+attempting a build; if an index already covers the `vector` column, it sets
+`_vector_index_built = True` and returns without rebuilding.
+`list_indices()` failure (older lancedb / API drift) degrades to the pre-existing
+row-count-gated build check (never silently skips a legitimately-needed first build).
+Unit-tested: `TestVectorIndexPersistsAcrossRestart` in
+`__tests__/unit/test_rag_vector_index_build.py` (persisted-index skip, negative control —
+no persisted index still builds normally, `list_indices()`-raises fallback) — see `testing.md`.
+
+**Still open, flagged for PO/ops — out of this agent's zone (`apps/rag-service/` code
+only, not `docker-compose.yml`):** live container memory sits at ~91–95% of the 1GiB
+ceiling even in **steady state** (no rebuild in flight) — `docker stats` sampled
+934.3MiB/1024MiB (91.24%) post-fix-diagnosis, task board recorded 976.6–977.1MiB
+(95.37–95.42%) at dispatch time. The redundant-rebuild fix above removes the dominant
+per-restart amplifier, but does not by itself prove headroom is sufficient for every future
+growth/traffic scenario at a corpus that keeps growing (~100 rows/h) — a memory-limit
+review of `docker-compose.yml`'s `rag-service.deploy.resources.limits.memory` (currently
+`1g`) is a reasonable companion action for ops to consider, not made here.
+
+**AC per PO directive (binding, do not weaken):** REBUILD_REQUIRED — after redeploy,
+verification is **≥2h supervised sampling with `dmesg` inside the Docker Desktop VM** as the
+sole pass/fail signal. **Never** `docker inspect .State.OOMKilled` (proven unreliable this
+incident) and **never** a short/immediate-only probe window — the sibling row
+`FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW` exists precisely
+because a prior certification on this exact container used both invalid signals and was
+falsified by the kernel 60 minutes after closing.
+
 ### count()
 Returns `table.count_rows()`, 0 on exception.
 

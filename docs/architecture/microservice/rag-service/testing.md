@@ -89,6 +89,20 @@ Mocks: `VectorStorePort`, `EmbedderPort` (AsyncMock)
   must produce exactly ONE real build call — regression guard for the unguarded-race root
   cause (see `infrastructure.md` § OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX)
 
+### FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED additions (same file)
+`TestVectorIndexPersistsAcrossRestart` — the per-process `_vector_index_built` flag must not
+cause a redundant rebuild of an already-persisted-to-disk index after a simulated restart:
+- `test_new_process_does_not_rebuild_existing_persisted_index`: `store1` builds a REAL 300-row
+  IVF_PQ index end-to-end; a brand-new `store2` instance pointed at the SAME `db_path`
+  (simulates a fresh container process after restart — no shared in-memory state) must detect
+  the persisted index via `table.list_indices()` and skip `_build_vector_index()` entirely
+- `test_no_persisted_index_still_builds_normally`: negative control — a fresh `db_path` with
+  no persisted index still builds normally once the corpus crosses `_VECTOR_INDEX_MIN_ROWS`
+  (the persisted-index check must not accidentally short-circuit a legitimate first build)
+- `test_list_indices_failure_falls_back_to_existing_behavior`: `table.list_indices()` raising
+  (older lancedb / API drift) degrades gracefully to the pre-existing row-count-gated build
+  check, rather than crashing or silently skipping a legitimately-needed build
+
 ## Unit Tests — malloc_trim sweep (FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS §6 secondary)
 **File:** `apps/rag-service/__tests__/unit/test_embedder_idle_unload.py` (extended)
 

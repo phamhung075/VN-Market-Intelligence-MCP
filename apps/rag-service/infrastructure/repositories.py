@@ -569,6 +569,49 @@ class LanceDBVectorStore(VectorStorePort):
             if self._vector_index_built:
                 return  # a racing caller already finished the build while we waited
             table = await self._get_table()
+
+            # FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED: _vector_index_built
+            # is a per-PROCESS flag -- it always resets to False on a fresh container
+            # start, but a LanceDB index PERSISTS on disk (part of the Lance dataset
+            # manifest) across restarts. Without this check, EVERY restart re-triggers
+            # a full IVF_PQ/KMeans retrain over the WHOLE corpus on the first
+            # search()/hybrid_search() call -- the single most expensive, thread/memory
+            # -heavy operation in this file -- even when a valid index from a PRIOR
+            # process's build is already sitting on disk and still serving correctly.
+            # Confirmed live: this is a real, not theoretical, restart-triggered OOM
+            # amplifier -- dmesg-confirmed kernel OOM-kills continued after the
+            # TOKIO_WORKER_THREADS=1/LANCE_CPU_THREADS=1 pin (ca6d86869) was deployed
+            # and independently verified as genuinely taking effect (in-container
+            # re-test: env vars resolve correctly pre-runtime-init, no "Falling back
+            # to auto" fallback logged, thread count measurably below the unpinned
+            # host-CPU-count baseline) -- the pin is INSUFFICIENT, not ineffective:
+            # Tokio's separate on-demand blocking-thread pool and lance-core's rayon
+            # IO-core-reservation floor each keep >=2 OS threads alive under the
+            # "lancedb-tokio-w"/"lance-cpu" names regardless of the "1" pin value, and
+            # no further env-var lever exists (exhaustive `strings` scan of the
+            # compiled _lancedb.abi3.so surfaced no max_blocking_threads or
+            # equivalent knob). Skipping the redundant rebuild removes the actual
+            # trigger instead of chasing a thread-count floor that cannot go lower.
+            # try/except: list_indices() failing (older lancedb / API drift) must
+            # degrade to the PRE-EXISTING behavior (attempt the build), never silently
+            # skip a legitimately-needed first build.
+            try:
+                existing_indices = await table.list_indices()
+            except Exception as exc:  # noqa: BLE001
+                logger.debug(
+                    "[LanceDBVectorStore] list_indices() failed (non-fatal, falling "
+                    "back to row-count-gated build check): %s",
+                    exc,
+                )
+                existing_indices = []
+            if any("vector" in getattr(idx, "columns", []) for idx in existing_indices):
+                logger.info(
+                    "[LanceDBVectorStore] Vector index already persisted on disk "
+                    "(survived process restart) — skipping redundant rebuild."
+                )
+                self._vector_index_built = True
+                return
+
             row_count = await table.count_rows()
             if row_count < _VECTOR_INDEX_MIN_ROWS:
                 return

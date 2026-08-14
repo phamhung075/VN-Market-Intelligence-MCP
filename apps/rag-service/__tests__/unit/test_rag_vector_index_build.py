@@ -381,6 +381,97 @@ class TestVectorIndexEndToEnd:
         assert build_calls == [1], f"Expected exactly 1 real build, got {len(build_calls)}"
 
 
+# ── (d2) persisted index must survive a process restart ────────────────────
+# FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED: dmesg-confirmed kernel
+# OOM-kills (2026-08-12/13, invoker lancedb-tokio-w/lance-cpu) continued AFTER
+# ca6d86869's TOKIO_WORKER_THREADS=1/LANCE_CPU_THREADS=1 pin was deployed and
+# live-verified as genuinely in effect (in-container isolated re-test: env vars
+# resolve correctly, no "Falling back to auto" fallback, thread count objectively
+# below the unpinned host-CPU-count baseline) — the pin is NOT ineffective, it is
+# INSUFFICIENT: Tokio's on-demand blocking-thread pool + lance-core's rayon
+# IO-core-reservation floor keep 2 OS threads alive under each name regardless of
+# the "1" pin, and no further env knob exists (exhaustive `strings` scan of the
+# compiled _lancedb.abi3.so found no max_blocking_threads/equivalent). The real
+# amplifier: _vector_index_built is a per-PROCESS in-memory flag that always
+# resets to False on a fresh container start, so the single most expensive
+# operation in this file (full IVF_PQ/KMeans retrain over the WHOLE corpus) was
+# unconditionally re-triggered by the FIRST search()/hybrid_search() call after
+# EVERY restart — even when a valid index from a prior process's build is
+# already sitting on disk (LanceDB indices persist in the Lance dataset
+# manifest; confirmed live: production vector_idx built once 2026-08-13T09:30Z,
+# still valid 22h+ later, no further restart should ever need to rebuild it).
+@pytest.mark.asyncio
+class TestVectorIndexPersistsAcrossRestart:
+    async def test_new_process_does_not_rebuild_existing_persisted_index(self, tmp_path):
+        """Simulates a container restart: store1 builds a real index and is then
+        discarded (no shared in-memory state); store2 is a FRESH instance pointing
+        at the SAME db_path (the only thing that survives a real restart). store2
+        must detect the persisted index via list_indices() and skip the expensive
+        rebuild entirely — _build_vector_index() must not be called."""
+        db_path = str(tmp_path / "lancedb")
+
+        store1 = LanceDBVectorStore(db_path=db_path)
+        await _seed_bulk_rows(store1, 300)
+        await store1._maybe_build_vector_index()
+        assert store1._vector_index_built is True
+
+        # Fresh process simulation: brand-new instance, _vector_index_built starts
+        # False again exactly as it does on a real container restart.
+        store2 = LanceDBVectorStore(db_path=db_path)
+        assert store2._vector_index_built is False
+
+        rebuild_calls = []
+        store2._build_vector_index = AsyncMock(side_effect=lambda: rebuild_calls.append(1))
+
+        await store2._maybe_build_vector_index()
+
+        assert rebuild_calls == [], (
+            "a persisted vector index from a prior process must never be rebuilt "
+            "on the next process's first call — this is the restart-triggered "
+            "OOM amplifier this test guards against"
+        )
+        assert store2._vector_index_built is True
+
+    async def test_no_persisted_index_still_builds_normally(self, tmp_path, monkeypatch):
+        """Negative control: a fresh db_path with NO persisted index must still
+        build normally once the corpus crosses the threshold — the persisted-index
+        check must not accidentally short-circuit the legitimate first build."""
+        store = LanceDBVectorStore(db_path=str(tmp_path / "lancedb"))
+        await store.insert(_entry("e1"), _vec(0.1))
+        table = await store._get_table()
+        monkeypatch.setattr(table, "count_rows", AsyncMock(return_value=_VECTOR_INDEX_MIN_ROWS))
+
+        build_calls = []
+        store._build_vector_index = AsyncMock(side_effect=lambda: build_calls.append(1))
+
+        await store._maybe_build_vector_index()
+
+        assert build_calls == [1]
+        assert store._vector_index_built is True
+
+    async def test_list_indices_failure_falls_back_to_existing_behavior(self, tmp_path, monkeypatch):
+        """Defensive: if list_indices() raises (older lancedb / API drift), the
+        check must degrade gracefully to the pre-existing behavior (attempt the
+        build) rather than crash or silently skip a legitimately-needed build."""
+        store = LanceDBVectorStore(db_path=str(tmp_path / "lancedb"))
+        await store.insert(_entry("e1"), _vec(0.1))
+        table = await store._get_table()
+        monkeypatch.setattr(table, "count_rows", AsyncMock(return_value=_VECTOR_INDEX_MIN_ROWS))
+
+        async def raising_list_indices():
+            raise RuntimeError("list_indices not supported")
+
+        monkeypatch.setattr(table, "list_indices", raising_list_indices)
+
+        build_calls = []
+        store._build_vector_index = AsyncMock(side_effect=lambda: build_calls.append(1))
+
+        await store._maybe_build_vector_index()
+
+        assert build_calls == [1]
+        assert store._vector_index_built is True
+
+
 # ── (e) hybrid_search() also triggers the same lazy build ──────────────────
 
 
