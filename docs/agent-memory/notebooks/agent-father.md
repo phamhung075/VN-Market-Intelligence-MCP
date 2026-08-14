@@ -8,33 +8,6 @@
      explicit YYYY-MM-DD token. Nothing deleted; full record in the archive file and git
      history. -->
 
-## EDIT 2026-08-14T08:10Z — task FIX-DEVTEAM-WF1D-REVIEW-QA-LANE-HEAD-PIN-BLIND +
-FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC (PO stale-`.head`-family triage pair,
-router-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
-- Two mechanical FIX rows off `sprint-TRIAGE-STALE-HEAD-FAMILY-20260814-po.md` (5th/6th instances
-  of the pipeline-resume duplicate-spawn family). WF-1d row: widened `main.md`'s WF-1 task_status
-  array +review[]/qa[] (appended last), inserted WF-1d between WF-1c/WF-2 mirroring WF-1c, found
-  WF-2's own `$row` array ALREADY had review[]/qa[] undocumented — added the missing comment only
-  (no functional change, verified via grep before acting, not fabricated). Bumped WF-2/3/4
-  ordinals, corrected S2 fall-through summary to 4 carve-outs. +43L (1233→1276).
-- Success-path row: inserted `.head` idle-reset into `microservice-main.md` right before RETURN,
-  reusing `developer/flow/main.md:72`'s jq verbatim, guarded on `.head.active_task_id==task_id`
-  (never blind-null). Marked 2 dead branch-prose lines SUPERSEDED (historical marker, not deleted).
-  +16L (169→185).
-- **AC-5 blast-radius check (mandatory before claiming coverage) — found a real gap:** read every
-  `dev-*/flow/main.md` live. 8 are thin pointers and inherit the fix. `dev-frontend`,
-  `dev-mainserver-crawls`, `dev-vps-crawls` each carry a self-contained flow with an independent
-  RETURN/task_board-update block that never reaches `microservice-main.md` — their `.head` gap is
-  UNFIXED by this change (`dev-mcp-server` likewise, but arguably out of family per that file's own
-  known-drift note). Reported honestly rather than claiming full 9-consumer coverage — flagged via
-  RETURN for PO to mint follow-up rows.
-- Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md` STEPs `S42`/`S43`.
-- **Board disposition:** both `backlog[]`→`review[]`, `next_agent:po`, `agent_father_implementation_
-  note` added to each row (incl. the blast-radius gap on the 2nd) via `scripts/orch-apply.sh`
-  (`FU-AGENT-FATHER-ORCH-SCOPE` — outside `commit_zone`, applied not committed by me). `.head` was
-  pointing at an unrelated task (`UC-CDC-P1`) throughout — untouched.
-- AC-7 (WF1d row) verifier extension flagged, not authored — `scripts/` outside `commit_zone`.
-
 ## EDIT 2026-08-14T12:35Z — task UC-CCA-P2-MARKET-WATCHER (PM subtask off UC-CCA-P2,
 router-dispatch via `docs/agents/agent-father/flow/edit-prepare.md`, session
 `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
@@ -122,3 +95,37 @@ router-dispatch via `docs/agents/agent-father/flow/edit-prepare.md`, session
   qa-shaped verification, no live agent invocation needed to confirm this mechanical wiring change),
   `agent_father_implementation_note` added via `scripts/orch-apply.sh` (`FU-AGENT-FATHER-ORCH-SCOPE`
   — outside `commit_zone`, applied not committed by me). `.head` was idle throughout — untouched.
+
+## EDIT 2026-08-14T12:36Z — task UC-CCA-P2-BCTC-ANALYST (router-dispatched, session
+`632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
+- FR-4 + architect's structural refinement #1. `docs/handoffs/UC-CCA-P2-BA-spec.md` "[Architect]
+  Brownfield Findings" read first; live-reread `docs/agents/bctc-analyst/flow/cycle.md` before
+  editing — architect's anchors (Dispatch table :23-24, E2 block ends :48-50, `## Step 0c` :52)
+  matched the live file exactly, zero drift from the 2026-08-14 measurement.
+- **Applied both required edits** (thin-dispatcher table is the execution-order SSOT here, not
+  prose alone — same ruling as the alert-commander sibling above): (1) new Dispatch-table row
+  `| **Step 0-GW** — Gateway availability gate | 0-GW | Inline (SECOND, after E2 — see below) |`
+  inserted between the existing "E2 Market-hours guard" row and the "Bootstrap + Regime" row; (2)
+  inline `## Step 0-GW — Gateway Availability Gate (SECOND STEP — runs after E2, before bootstrap)`
+  section inserted after the E2 block ends (:48-50), before `## Step 0c` (:52), pointing at
+  `.claude/skills/gateway-availability-gate/SKILL.md` (agent-id=bctc-analyst). E2 stays FIRST and
+  unconditionally ahead of the new gate — documented inline (E2 is a pure wall-clock check, needs
+  no gateway call, architect explicitly ruled it must never be gated behind Step 0-GW). Notebook
+  class confirmed APPEND (`stage-log-notify.md:18` per BA spec) — the skill's existing BLOCKED
+  wording already covers it, not a new class.
+- Gateway-less this session (tool grant Read/Edit/Write/Bash only, no `mcp__gateway__call_tool`) —
+  bridged `task_claim`/`task_heartbeat`/`task_release` via `scripts/agents-flow/mcp-call.sh`
+  (`task:UC-CCA-P2-BCTC-ANALYST`, matches this session's `owner_client_session`) rather than
+  skipping the lock outright — `orch-state.head` was idle (wip≤1, solo per commit-boundary) so
+  either path was sound; used the bridge since it was live-verified working this session.
+- Staged only `docs/agents/bctc-analyst/flow/cycle.md`; found 2 sibling files
+  (`digest-predict/flow/main.md`, `unified-agent/flow/chef.md`) already sitting in the shared git
+  index from concurrent peer UC-CCA-P2 subtasks — did NOT sweep them in, used RULE 2.5
+  pathspec-scoped commit (`git commit ... -- docs/agents/bctc-analyst/flow/cycle.md`) so only my
+  file landed regardless of the shared index state. `git show --name-only HEAD` confirmed exactly
+  1 file. Committed+pushed `6261c722f` (INV-GATEWAY-1 direct pathspec-scoped commit).
+- **Board disposition:** `ready[]`→`review[]`, status `READY`→`REVIEW`, `next_agent: agent-father →
+  qa` — AC-4 (pointer placement) is grep-verifiable without a live cron-window spawn.
+  `agent_father_implementation_note` added via `scripts/orch-apply.sh` (`FU-AGENT-FATHER-ORCH-SCOPE`
+  — outside `commit_zone`, applied not committed by me — orch-validate PASS, conservation OK
+  742/742 task_total unchanged). `.head` was idle throughout — untouched.
