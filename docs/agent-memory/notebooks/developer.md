@@ -1,6 +1,26 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-14T13:38:00Z | **Cycle:** FIX-COWORK-CRONREG-MARKER-RENEWAL-HEARTBEAT-STRANDED-ON-ERROR-ONLY-BRANCH (cron-registration:cowork-team heartbeat moved onto the real per-tick script)
+**Last updated:** 2026-08-14T14:35:00Z | **Cycle:** FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE (P0 live-data-loss — nso_ts_key() commit-SHA/date collision fixed)
+
+## Session 2026-08-14T14:00:00Z — FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE (cross-service/, developer, P0 S, BOUNDED-1 idle-capacity auto-pickup, session 632721c2)
+
+**Task:** P0 live data loss — `nso_ts_key()` (`scripts/agents-flow/lib/notebook-section-direction.sh`) used `grep -oE <date-regex> | tail -1` with the ISO time-of-day suffix OPTIONAL, so an all-numeric git short-SHA cited later in a `## cycle-N · <ISO ts> · ... commit \`<sha>\`` heading (live `qa.md` convention) matched the same pattern as the real timestamp — `tail -1` always won on whichever match came LAST, i.e. the SHA. Confirmed live: `notebook-auto-prune.sh`'s drop-oldest loop destroyed `TASK-COWORK-MUTEX-001`'s QA CHANGES_REQUESTED review record with zero signal (cycle-705's real ts 2026-08-14T01:33:11Z buggy-keyed as `76198814000000000` from SHA `761988143`, outranking the genuinely-newer cycle-711's correctly-keyed `20260814013311000`).
+
+**Shipped (AC-1):** two-tier extraction. Tier 1 requires the literal `T..Z` suffix (`head -1`, first match) — collision-proof by construction, hex SHAs (0-9a-f) can never contain a literal `T`/`Z`. Tier 2 fallback (bare date-only, the live `qa.md` "cycle-N · YYYY-MM-DD" convention) is boundary-guarded `(^|[^0-9])...([^0-9]|$)` so a truncated digit-run prefix of a longer pure-digit SHA can never match either. Verified: `nso_ts_key` on the literal cycle-705 heading text now returns `20260814013311000` (not the buggy `76198814000000000`) — matches the board row's own evidence numbers exactly.
+
+**AC-2 (RED-first regression):** new `T11` in `scripts/agents-flow/notebook-auto-prune.test.sh` — 2-section fixture mirroring the live shape (TASK-OLD: genuinely oldest, trailing all-digit SHA `761988143`; TASK-COWORK-MUTEX-001: genuinely newest, hex SHA). `git stash` on just the lib fix reproduced the exact live bug (TASK-OLD wrongly retained, the newest section wrongly dropped) before restoring — proves the test catches the real defect. GREEN: `notebook-auto-prune.test.sh` 11/11 pass.
+
+**AC-3:** scanned every `## ` heading across all live `docs/agent-memory/notebooks/*.md` via `nso_ts_key` — 0 non-sentinel keys with an implausible (non-`20xx`) year prefix.
+
+**AC-4 (data recovery):** `TASK-COWORK-MUTEX-001`'s destroyed CHANGES_REQUESTED verdict was still intact in that row's own `.note` field (only the `qa.md` notebook copy was lost) — reconstructed onto its empty `.status_note` via `orch-apply.sh`.
+
+**Regression check:** sibling test `test-notebook-auto-prune.sh` has one PRE-EXISTING unrelated failure (Test 9, zsh `BASH_SOURCE` sourcing bug, tracked separately as `FIX-NOTEBOOKAUTOPRUNE-HOOKGUARD-BASHSOURCE-ZSH-BREAK`) — reproduced identically with my changes `git stash`-reverted, confirmed out of scope, not caused by this fix.
+
+**Structural gap (same class as prior sessions):** graphify incremental step skipped — no Skill-tool binding available to this spawned agent.
+
+**Closeout:** commit pending, pathspec-scoped (`scripts/agents-flow/lib/notebook-section-direction.sh` + `scripts/agents-flow/notebook-auto-prune.test.sh`, then `docs/WORK.md` alone). Decision journal STEP developer-S5 (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md`). No handoff file existed for this row (BOUNDED-1 direct-execute mint, board `note`/`evidence`/`acceptance` fields are the spec) — none created, matching established precedent for this task shape. Board flip `in_progress[]`→`review[]`/`status=REVIEW`/`next_agent=qa` via `orch-apply.sh`, `.head` synced to idle in the same write per `execute-tier.md` CANONICAL:SSOT-STATUSFLIP-LANEMOVE rule (b) (`branch:null` flip).
+
+---
 
 ## Session 2026-08-14T13:00:00Z — FIX-COWORK-CRONREG-MARKER-RENEWAL-HEARTBEAT-STRANDED-ON-ERROR-ONLY-BRANCH (cross-service/, developer, P1, router direct dispatch per PO triage, session 632721c2)
 
@@ -17,22 +37,6 @@
 **Structural gap (same class as prior sessions):** graphify incremental step skipped — no Skill-tool binding available to this spawned agent.
 
 **Closeout:** 2 code/doc commits pathspec-scoped (`scripts/agents-flow/cowork-tick-preflight.sh` + `.test.sh` + `docs/agents/cowork-team/flow/preflight-error-fallback.md` + `docs/architecture-briefs/2026-08-06-cron-rearm-cross-session-dedup.md`, then `docs/policies/dev-standards.md` alone — a stale line-number citation the first edit shifted). Decision journal STEP developer-S1..S4 (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` — base+`-2..-6` all capped). No handoff file existed for this row (direct PO-authored board row, no PM decomposition) — none created, matching established precedent for this task shape. Board flip `backlog[]`→`review[]`/`next_agent=qa` via `orch-apply.sh`.
-
----
-
-## Session 2026-08-14T09:52:37Z — UC-CCA-P1-GWBLIND-DEDUP (`.claude/skills/`, developer, P1 S, BOUNDED-1 auto-pickup, session 632721c2)
-
-**Task:** RESCOPE verdict — part (a) ONLY: delete `step-0-cowork/SKILL.md`'s duplicated GATEWAY-BLIND classification/fallback block and replace with a pointer to `cycle-bootstrap/SKILL.md` § Error handling SSOT, then amend TE-T11's own DoD note (composite POINTERS, not embeds). Part (b) flow-rewiring explicitly OUT of scope — belongs to TE-T11, already `DONE_VERIFIED`, not touched. No zone match (`.claude/skills/` has no specialist owner) — handled directly per the fallback rule, matching this task's own dispatch note.
-
-**Verified line numbers before editing** (task scope was set 2026-07-13, one month stale-risk flagged): re-read the live file first — the duplicated block was still exactly lines 53-88, byte-identical to the scope note. No drift.
-
-**Shipped:** 4-line stub replacing the 36-line duplicate (`**GATEWAY-BLIND guard — SSOT:** ... § Error handling (fail-loud) ... Follow that section exactly; do not duplicate it here`). Confirmed cycle-bootstrap's § Error handling covers every case the duplicate carried (CONFIRMED-BLIND/TRANSIENT classification, retry table incl. `market_context` row, Write-fallback-signal + graceful-DEFER protocol) — zero coverage lost. Commit `a27d7cd21`.
-
-**TE-T11 DoD amend + board flip, one `orch-apply.sh` write:** amended `task_board.done_verified[].note` for TE-T11 to read "composite POINTS to cycle-bootstrap Error handling SSOT (not full embeds)" in place of the old "composite embeds the same GATEWAY-BLIND + regime-fallback boundaries" (self-contradicting the fix just landed). Lane-moved `UC-CCA-P1-GWBLIND-DEDUP` `in_progress[]`→`review[]`, `status=REVIEW`/`next_agent=qa`. Synced top-level `.head` to the idle terminal state in the SAME write per `execute-tier.md`'s canonical `CANONICAL:SSOT-STATUSFLIP-LANEMOVE` rule (b) — this row WAS `.head.active_task_id`, `branch:null` flip to REVIEW → `.head={status:idle, active_task_id:null, next_agent:"router", ...}` (NOT `next_agent:null` — my own flow doc's STOP-RELEASE block uses `null`, but the CANONICAL execute-tier.md rule explicitly names `"router"` and I followed the more specific/newer SSOT; `.task_board.head` is deprecated, left untouched). `orch-validate.mjs` Stage0/1 PASS, conservation `task_total 732=732` (pure lane move), commit `7894d8e69`.
-
-**Structural gap (same class as prior sessions):** graphify incremental step skipped — this specialist's own tools package (`docs/agents/tools/package/developer.md`) grants only Read/Edit/Write/Glob/Grep/Bash + `mcp__semble__*`, no Skill-tool binding to invoke `/graphify`; matches this same session's earlier entries hitting the identical class of gap.
-
-**Closeout:** 2 code/board commits pathspec-scoped (`.claude/skills/step-0-cowork/SKILL.md` alone, then `docs/data/orch/orch-state.json` alone — deliberately not batched, since the board write depended on the first commit's SHA). Decision journal STEP developer-S25 (`sprint-ULTRACODE-AUDIT-FIXALL-developer.md`, 437L, well under 600L cap). No handoff file existed for this task (direct board-row auto-pickup, board `note` field is the spec) — none created, matching the FACTORY-KINHDICH-class precedent for this task shape.
 
 ---
 
