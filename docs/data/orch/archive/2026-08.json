@@ -14813,6 +14813,210 @@
           "observed_at": "2026-08-14T21:31:43Z"
         }
       }
+    },
+    {
+      "id": "UC-CCA-P3-FR3-BCTC-ANALYST",
+      "title": "Wire published-marker-gate into bctc-analyst (late-claim + task_kind fix)",
+      "priority": "P0",
+      "zone": "docs/agents/bctc-analyst/",
+      "next_agent": "pm",
+      "status": "DONE_VERIFIED",
+      "depends_on": "UC-CCA-P3-FR1-FR2-SKILL",
+      "blocked_by": null,
+      "created_at": "2026-08-08T00:00:00Z",
+      "created_by": "pm",
+      "note": "FR-3 gate #3: stage-log-notify.md Phase-2 only. ALSO: normalize task_kind 'sprint-task' → 'cowork-slot' (Q-taskkind resolved YES). Migration risk ≤1h natural drain.",
+      "updated_at": "2026-08-14T23:26:32Z",
+      "updated_by": "agent-father",
+      "agent_father_implementation_note": "stage-log-notify.md 5d-1 swapped inline task_claim prose for a pointer to .claude/skills/published-marker-gate/SKILL.md (Phase 2 only, no Phase 1 -- extraction is the core deliverable independent of the WORK-notify this marker dedups). Q-taskkind resolved YES: task_kind normalized \"sprint-task\" -> \"cowork-slot\" (the one gate of 6 that didn't already match -- was invisible to a kind=cowork-slot task_list_held sweep). Migration bounded/self-healing (old-kind in-flight markers drain within remaining <=1h TTL, no script needed). qa to grep-verify: task_kind literal is now cowork-slot, cycle_tick_ISO derivation rule (round-down to HH:00Z) preserved verbatim.",
+      "commit_sha": "9ba9f97e5",
+      "claimed_at": "2026-08-14T23:22:30Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "status_note": "[QA] Review Record (direct-commit verify): commit 9ba9f97e5 confirmed real, on main ancestry (git merge-base --is-ancestor=true); git show --stat touches exactly docs/agents/bctc-analyst/flow/stage-log-notify.md (14+/7-), matching zone+agent_father_implementation_note; git diff 9ba9f97e5..HEAD on that file = empty (no drift). Cross-checked against architecture-briefs/2026-08-08-uc-cca-p3-published-marker-gate-skill.md SS4 wiring table row 3 (bctc-analyst): skill pointer swap + task_kind sprint-task->cowork-slot match exactly, incl. Phase-1 SKIP (design note SS matches verbatim). cycle_tick_ISO round-down-to-HH:00Z rule verified byte-identical pre/post commit (git show 9ba9f97e5^). Never-release language now explicit, matches brief SS7 Q-send-fail resolution. Pure flow-doc change, zero production/test source -> bun test/tsc/mock-guard N/A (same precedent as prior QA-drain doc-only rows this sprint). process.env/secret/password/token greps clean. Zero blocking ISSUE.",
+      "qa_verified_at": "2026-08-14T23:26:02Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + git diff (post-commit drift check) + architecture-brief cross-check + process.env/secrets grep",
+          "args": {
+            "commit_verified": "9ba9f97e54842d82757c16cd37951c2494f65ca1",
+            "files_verified": [
+              "docs/agents/bctc-analyst/flow/stage-log-notify.md"
+            ]
+          },
+          "live_value_observed": "git merge-base --is-ancestor confirms commit on main; git show --stat matches sole claimed file (14 insertions/7 deletions); git diff 9ba9f97e5..HEAD on file = empty (no post-commit drift); cycle_tick_ISO derivation paragraph byte-identical pre/post commit via git show 9ba9f97e5^; task_kind literal grep confirms cowork-slot (was sprint-task); process.env/secret/password/token greps on file = 0 matches",
+          "observed_at": "2026-08-14T23:26:02Z"
+        }
+      }
+    },
+    {
+      "id": "UC-CCA-P3-FR3-TRAN-NGOC-BAU",
+      "title": "Wire published-marker-gate into tran-ngoc-bau (multi-file)",
+      "priority": "P0",
+      "zone": "docs/agents/tran-ngoc-bau/",
+      "next_agent": "pm",
+      "status": "DONE_VERIFIED",
+      "depends_on": "UC-CCA-P3-FR1-FR2-SKILL",
+      "blocked_by": null,
+      "created_at": "2026-08-08T00:00:00Z",
+      "created_by": "pm",
+      "note": "FR-3 gate #6: main.md Phase-1 probe → auto-cure-and-handoff.md Phase-2 claim before send_telegram(work). Cross-file: main probes, auto-cure claims. | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commit e7a8b3996ed1766ddb9942b274c0b21c2f61b855 on main ancestry -- git show --stat confirms both claimed files (docs/agents/tran-ngoc-bau/flow/main.md, docs/agents/tran-ngoc-bau/flow/auto-cure-and-handoff.md) touched, matches row title. Independently grep-verified AC-2/AC-4: main.md's PUBLISHED MARKER GATE now runs only a read-only Phase-1 probe (task_list_held, 0 task_claim calls in main.md's gate section); auto-cure-and-handoff.md carries exactly 1 functional task_claim (marker-gate Phase 2, line 25) placed before Step 7's WORK send_telegram. Cross-checked against .claude/skills/published-marker-gate/SKILL.md line-by-line -- Phase-1/Phase-2 shapes match exactly; confirmed task_list_held is a real registered MCP tool (taskListHeldTool.ts) with matching kind/owner_agent schema + task_id field on lock rows. Zero production/test (.ts) files touched -- bun test/tsc/mock-guard N/A; process.env/secrets/password/token greps clean on both files. Non-blocking doc nit: auto-cure-and-handoff.md now has two adjacent 'Step 7 --' headers (gate + quality-report) -- cosmetic numbering only, no execution-order impact. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-24.md STEP qa-S18.",
+      "updated_at": "2026-08-14T23:26:56Z",
+      "updated_by": "qa",
+      "agent_father_implementation_note": "main.md's PUBLISHED MARKER GATE converted from an EARLY task_claim (before the 4 audit sub-flows run) to a Phase-1 read-only probe (task_list_held) per .claude/skills/published-marker-gate/SKILL.md. Mandatory Phase-2 claim added to auto-cure-and-handoff.md Step 7, immediately before the WORK send (this agent's own irreversible publish action -- tran-ngoc-bau has no MARKET send). Key/TTL derivation (published:tnb-audit:<VN date>, ttl 100800s) unchanged, carried forward as session state between the two files (same session, architect-confirmed safe). qa to grep-verify: zero task_claim in main.md's gate section, exactly one task_claim in auto-cure-and-handoff.md Step 7 before send_telegram(work).",
+      "commit_sha": "e7a8b3996",
+      "claimed_at": "2026-08-14T23:22:30Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "qa_verified_at": "2026-08-14T23:26:22Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + grep(task_claim/task_list_held) + skill cross-check + process.env/secrets grep",
+          "args": {
+            "commit_verified": "e7a8b3996ed1766ddb9942b274c0b21c2f61b855",
+            "files_verified": [
+              "docs/agents/tran-ngoc-bau/flow/main.md",
+              "docs/agents/tran-ngoc-bau/flow/auto-cure-and-handoff.md"
+            ]
+          },
+          "live_value_observed": "git merge-base --is-ancestor confirms e7a8b3996 on main; git show --stat matches both claimed files; grep -c task_claim main.md=0 (gate section, comment-only reference), auto-cure-and-handoff.md=1 functional call at L25 before L45 send_telegram(work); task_list_held confirmed real MCP tool w/ matching schema; process.env/secrets/password/token greps clean on both files",
+          "observed_at": "2026-08-14T23:26:22Z"
+        }
+      }
+    },
+    {
+      "id": "UC-CCA-P3-FR3-DIGEST-PREDICT",
+      "title": "Wire published-marker-gate into digest-predict (multi-file)",
+      "priority": "P0",
+      "zone": "docs/agents/digest-predict/",
+      "next_agent": "pm",
+      "status": "DONE_VERIFIED",
+      "depends_on": "UC-CCA-P3-FR1-FR2-SKILL",
+      "blocked_by": null,
+      "created_at": "2026-08-08T00:00:00Z",
+      "created_by": "pm",
+      "note": "FR-3 gate #5: main.md Phase-1 probes (daily + weekly) → daily.md + weekly.md Phase-2 claims before send_telegram. Cross-file: main dispatches, sub-flows claim.",
+      "updated_at": "2026-08-14T23:26:58Z",
+      "updated_by": "agent-father",
+      "agent_father_implementation_note": "main.md's two published-marker gates (non-Sunday daily + Sunday weekly) converted from EARLY task_claim to Phase-1 read-only probes. Phase-2 claims added at the real irreversible-publish-action sites: weekly.md immediately before send_telegram(market); daily-predict.md immediately before the P-5 create_prediction_claim() loop (a DB write, not a Telegram send). SCOPE CORRECTION (own finding, not in source brief): the brief anchored the daily-path claim on docs/agents/digest-predict/flow/daily.md -- that file is DEAD/UNROUTED code, main.md's live Dispatch table routes the daily window to daily-predict.md, never daily.md (docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md already recommended git rm daily.md for this exact reason, never executed -- same stale-anchor class as UC-CCA-P2's fb-market-poster Q-file-count-correction). daily.md left untouched, no pointer added there (would mislead), flagged for a future code-janitor pass. qa to grep-verify: zero task_claim in main.md's two gate sections, exactly one task_claim each in weekly.md (before market send) and daily-predict.md (before P-5 loop), zero edits to daily.md.",
+      "commit_sha": "636efc128",
+      "claimed_at": "2026-08-14T23:22:30Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "status_note": "[QA] Review Record (direct-commit verify): commit 636efc128 confirmed real, on main ancestry (git merge-base --is-ancestor=true); git show --stat touches exactly the 3 claimed files (docs/agents/digest-predict/flow/main.md, weekly.md, daily-predict.md), matching zone+agent_father_implementation_note. Grep-verified row instruction: main.md two gates now call task_list_held only (0 functional task_claim, 2 mentions are prose comments about the removed EARLY call); weekly.md exactly 1 functional task_claim (before send_telegram market); daily-predict.md exactly 1 functional task_claim for this gate (before P-5 create_prediction_claim loop) plus 1 unrelated pre-existing commit-mutex comment (different key namespace, not scope creep); daily.md confirmed untouched (last commit on it is unrelated 5bae0a65d). Cross-checked both gates against .claude/skills/published-marker-gate/SKILL.md line-by-line: Phase-1 probe shape, Phase-2 claim shape, TTLs (86400 daily / 691200 weekly), never-release-on-success — all match exactly. SCOPE CORRECTION independently verified, not trusted from prose: main.md live dispatch table routes Daily 17:30 UTC cron to daily-predict.md, never daily.md; docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md:1006 itself recommends git rm daily.md for the identical reason. 2 bundled extra fixes (log_agent_work agent_name/status required, get_bctc_full param code not stock) checked against live tool schemas in apps/mcp-server/src/interface/mcp/tools/system/agentWorkLogTools.ts and .../financial-reports/bctcFullTools.ts — both accurate. Pure flow-doc change, zero production/test source touched -> bun test/tsc/mock-guard N/A (same precedent as prior QA-drain doc-only rows this sprint). process.env/secret/password/token greps clean. task-claim-owner-session-lint.sh --check PASS 0 new offenders. Zero blocking ISSUE.",
+      "qa_verified_at": "2026-08-14T23:26:57Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + git log (daily.md untouched) + published-marker-gate SKILL.md cross-check + architecture-brief cross-check + live tool-schema check + task-claim-owner-session-lint.sh + process.env/secrets grep",
+          "args": {
+            "commit_verified": "636efc1289275b672ab33de6b432fc6e210b4210",
+            "files_verified": [
+              "docs/agents/digest-predict/flow/main.md",
+              "docs/agents/digest-predict/flow/weekly.md",
+              "docs/agents/digest-predict/flow/daily-predict.md"
+            ]
+          },
+          "live_value_observed": "git merge-base --is-ancestor confirms commit on main; git show --stat matches all 3 claimed files (129 insertions/38 deletions across 3 files); main.md 0 functional task_claim in the 2 gate sections (task_list_held only); weekly.md exactly 1 functional task_claim before send_telegram(market); daily-predict.md exactly 1 functional task_claim before P-5 loop; daily.md last-touching commit is unrelated (5bae0a65d), confirmed untouched by this commit; task-claim-owner-session-lint.sh --check PASS 0 new offenders (scanned 276 files); process.env/secret/password/token greps on all 3 files = 0 matches",
+          "observed_at": "2026-08-14T23:26:57Z"
+        }
+      }
+    },
+    {
+      "id": "UC-CCA-P3-FR3-ALERT-COMMANDER",
+      "title": "Wire published-marker-gate into alert-commander (late-claim only)",
+      "priority": "P0",
+      "zone": "docs/agents/alert-commander/",
+      "next_agent": "pm",
+      "status": "DONE_VERIFIED",
+      "depends_on": "UC-CCA-P3-FR1-FR2-SKILL",
+      "blocked_by": null,
+      "created_at": "2026-08-08T00:00:00Z",
+      "created_by": "pm",
+      "note": "FR-3 gate #2: stage-dispatch-log.md Phase-2 only (no Phase 1; pre-gate work not conditioned on dedup). Already LATE-claim, correct location.",
+      "updated_at": "2026-08-14T23:27:18Z",
+      "updated_by": "qa",
+      "agent_father_implementation_note": "stage-dispatch-log.md:33 inline published-marker prose swapped for a pointer to .claude/skills/published-marker-gate/SKILL.md (Phase 2 only, no Phase 1 per skill's own design note -- pre-gate work not conditioned on dedup outcome). task_kind/TTL/key shape already matched the skill contract exactly -- cosmetic normalization only, zero behavior change. Agent-specific tick-scoped key rationale (not date-scoped, fires >1x/day) kept inline. qa to grep-verify: pointer present, tick-scoped key format unchanged, never-release language explicit.",
+      "commit_sha": "e0aa2cc21",
+      "claimed_at": "2026-08-14T23:22:30Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "status_note": "[QA] Review Record (direct-commit verify) — commit e0aa2cc21b15ab63e98b8fd3e040cc2a7569203f confirmed real, on main ancestry; git show --stat touches exactly the claimed docs/agents/alert-commander/flow/stage-dispatch-log.md (+13/-1). Independently re-verified against docs/handoffs/UC-CCA-P3-FR3-ALERT-COMMANDER.md QA Gate + .claude/skills/published-marker-gate/SKILL.md (not the row prose alone): Phase-2-only call present, no Phase-1 probe added (skill design note explicitly names alert-commander SKIP); MARKER_KEY tick-scoped format unchanged verbatim (published:alert-commander-market:<nominal_tick>); MARKER_TTL=900/task_kind=cowork-slot/OWNER_AGENT=alert-commander match skill contract; NEVER-release language explicit at line 44. File re-read in full: valid markdown, rest of doc untouched. Zero production/test code touched (pure flow-doc prose swap) -> bun test/tsc/mock-guard N/A. process.env/secret/password/token greps on file clean. Zero blocking ISSUE. VERDICT: DONE_VERIFIED.",
+      "qa_verified_at": "2026-08-14T23:27:00Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + skill-spec cross-check + handoff QA-Gate re-verify + process.env/secrets grep",
+          "args": {
+            "commit_verified": "e0aa2cc21b15ab63e98b8fd3e040cc2a7569203f",
+            "files_verified": [
+              "docs/agents/alert-commander/flow/stage-dispatch-log.md"
+            ]
+          },
+          "live_value_observed": "git merge-base --is-ancestor e0aa2cc21b15ab63e98b8fd3e040cc2a7569203f main = true; git show --stat matches sole claimed file (+13/-1); MARKER_KEY/MARKER_TTL=900/task_kind=cowork-slot/OWNER_AGENT verbatim match skill contract; NEVER task_release language present at line 44; process.env/secret/password/token greps on file = 0 matches",
+          "observed_at": "2026-08-14T23:27:00Z"
+        }
+      }
+    },
+    {
+      "id": "UC-CCA-P3-FR3-CHEF",
+      "title": "Wire published-marker-gate into chef flow (cross-file, R1 risk)",
+      "priority": "P0",
+      "zone": "docs/agents/unified-agent/",
+      "next_agent": "pm",
+      "status": "DONE_VERIFIED",
+      "depends_on": "UC-CCA-P3-FR1-FR2-SKILL",
+      "blocked_by": null,
+      "created_at": "2026-08-08T00:00:00Z",
+      "created_by": "pm",
+      "note": "FR-3 gate #1: chef.md Phase-1 probe (Step 0.5) + chef-dish.md Phase-2 claim (Step 7). Cross-file threading R1 risk: ensure Phase 2 stays in chef-dish.md.",
+      "updated_at": "2026-08-14T23:28:06Z",
+      "updated_by": "agent-father",
+      "agent_father_implementation_note": "HIGHEST-RISK gate (R1 cross-file threading, brief SS10). chef.md Step 0.5 converted from an EARLY task_claim (before Step 0 GATHER and the ~650L dish pipeline) to a Phase-1 read-only probe; MARKER_KEY/MARKER_TTL derivation (cadence-aware) unchanged. Mandatory Phase-2 claim lands in chef-dish.md Step 7, immediately before Block A -- gates BOTH Block A and Block B (a failed claim skips the whole step, matching the pre-existing binary EXIT semantics). chef-dish.md's Input line corrected per brief's exact diff. FOLLOW-UP FLAGGED (different task's zone, not fixed here): UC-CCA-P2's Step 0-GW gateway gate in chef.md was rationalized as protecting the Step-0.5 task_claim mutation window -- that mutation moved to chef-dish.md Step 7 by this change; comment corrected to flag the now-partially-stale rationale and possible new coverage gap for a future task. qa MANDATORY per brief SS10 R1: verify Phase 2 stays in chef-dish.md, does NOT get moved back to chef.md.",
+      "commit_sha": "3b10e4f74",
+      "claimed_at": "2026-08-14T23:22:30Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "status_note": "[QA] Review Record (direct-commit verify) 2026-08-14T23:27:08Z -- APPROVED, DONE_VERIFIED. Commit 3b10e4f74 (full: 3b10e4f74df618e8828a5df3fc89da401a9a6abb) confirmed real, on main ancestry; git show --stat touches exactly chef.md (+40/-14) and chef-dish.md (+37/-1), matching agent_father_implementation_note. R1 cross-file threading (the row own MANDATORY verification item, brief 2026-08-08-uc-cca-p3-published-marker-gate-skill.md sec10) verified BOTH directions: task_claim appears ZERO times as a live call in chef.md (comment-only mentions), EXACTLY ONCE in chef-dish.md Step 7 immediately before Block A/B send -- gates both blocks; task_list_held (Phase-1 probe) appears only in chef.md Step 0.5, absent from chef-dish.md -- Phase 2 did NOT regress back to chef.md. Both call shapes cross-checked verbatim against .claude/skills/published-marker-gate/SKILL.md (Phase-1 probe args, Phase-2 claim args) and against live server source (taskListHeldTool.ts kind/owner_agent filters + locks[].task_id/expires_at normalized fields; taskClaimTool.ts task_id/task_kind/owner_agent/owner_client_session/ttl_seconds args) -- not fabricated. AC-2 (late-claim): claim relocated from before Step 0 GATHER to immediately before Step 7 Block A/B. AC-4 (skill reference): both files point to .claude/skills/published-marker-gate/SKILL.md for this gate. Dependency UC-CCA-P3-FR1-FR2-SKILL confirmed DONE_VERIFIED on board. Zero production/test code touched (pure flow-doc) -- bun test/tsc/mock-guard N/A, same precedent as sibling FR3 gate rows; process.env/secret/password/token greps on both files clean. NON-BLOCKING observation: neither file own size-justification header received a dated delta note for this task growth (chef.md 281L->307L, chef-dish.md 1004L->1040L) despite both files established convention of doing so on every prior edit -- not CI-enforced (size-lint-justification.sh is scoped to apps/**/packages/**, not docs/agents/**), not one of this task AC, flagged only for whoever next touches either file. Zero blocking ISSUE.",
+      "qa_verified_at": "2026-08-14T23:27:08Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat/diff + grep(task_claim,task_list_held,published-marker-gate) across chef.md/chef-dish.md + cross-read .claude/skills/published-marker-gate/SKILL.md + docs/architecture-briefs/2026-08-08-uc-cca-p3-published-marker-gate-skill.md sec4/sec10/sec11 + live tool source (taskListHeldTool.ts, taskClaimTool.ts)",
+          "args": "commit=3b10e4f74df618e8828a5df3fc89da401a9a6abb; files=docs/agents/unified-agent/flow/chef.md,docs/agents/unified-agent/flow/chef-dish.md",
+          "live_value_observed": "ancestor=true; diffstat exact match (chef.md +40/-14, chef-dish.md +37/-1); task_claim count chef.md=0(comments-only)/chef-dish.md=1(Step7); task_list_held count chef.md=1(Step0.5)/chef-dish.md=0; skill-ref present both files; tool arg-shapes match live coordinationTools registration",
+          "observed_at": "2026-08-14T23:27:08Z"
+        }
+      }
+    },
+    {
+      "id": "UC-CCA-P3-FR3-FB-MARKET-POSTER",
+      "title": "Wire published-marker-gate into fb-market-poster (EARLY + file Write, R2 risk)",
+      "priority": "P0",
+      "zone": "docs/agents/fb-market-poster/",
+      "next_agent": "pm",
+      "status": "DONE_VERIFIED",
+      "depends_on": "UC-CCA-P3-FR1-FR2-SKILL",
+      "blocked_by": null,
+      "created_at": "2026-08-08T00:00:00Z",
+      "created_by": "pm",
+      "note": "FR-3 gate #4: daily.md STEP 0a Phase-1 probe + STEP 5 Phase-2 claim before Write(FILEPATH), NOT send_telegram (fb has no MARKET send). R2 risk: fb-specific publish action generalization.",
+      "updated_at": "2026-08-14T23:28:18Z",
+      "updated_by": "qa",
+      "agent_father_implementation_note": "All 3 independently cron-spawned pipeline files (daily.md, weekly-recap.md, weekly-prediction.md) had their STEP 0a date/period-keyed DEDUP_CLAIM converted from EARLY task_claim to Phase-1 read-only probes. Mandatory Phase-2 claim added immediately before each file's own STEP 5/4 file Write (fb-market-poster's actual irreversible publish action -- no MARKET-channel send_telegram exists anywhere in this flow, brief SS1.1 R2). Both Saturday/Sunday still share the single fb-weekend period key, unchanged. qa to grep-verify: zero task_claim in any STEP 0a section, exactly one task_claim per file immediately before its own Write call.",
+      "commit_sha": "1ce429ef6",
+      "claimed_at": "2026-08-14T23:22:30Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "status_note": "[QA] Review Record (direct-commit verify) 2026-08-14T23:27:51Z: APPROVED, DONE_VERIFIED. Commit 1ce429ef61477715057e604269c6e1c12edb9475 confirmed on main ancestry (git merge-base --is-ancestor); git show --stat matches exactly the 3 files named in agent_father_implementation_note (docs/agents/fb-market-poster/flow/daily.md, weekly-recap.md, weekly-prediction.md) -- main.md untouched (out of scope, confirmed). AC-2 (late-claim): STEP 0a in all 3 files converted from task_claim to a Phase-1 task_list_held read-only probe -- grep confirms ZERO task_claim calls in any STEP 0a section (only historical prose mentions). AC-4 (skill reference): all 3 files reference .claude/skills/published-marker-gate/SKILL.md; Phase-1 probe shape (task_list_held, no task_id filter, client-side scan) matches the skill spec verbatim. R2 (file-Write not send_telegram): Phase-2 task_claim placed immediately before each file's own irreversible Write -- daily.md STEP 5 has exactly one functional task_claim (:811, Write at :831), 'NEVER task_release on success' present; weekly-recap.md STEP 4 and weekly-prediction.md STEP 5 delegate by reference ('Execute identically to daily.md STEP 5 Phase-2 block') immediately before their own Write -- same by-reference authoring convention already used for the pre-existing jargon/integrity/privacy/claim-truth gates throughout these files, not a gap. STEP-number cross-refs verified correct (weekly-recap points to its own STEP 4 = Write step; weekly-prediction points to its own STEP 5 = Write step). Zero production TS touched (3 .md flow-spec files only) -- bun test/tsc --noEmit N/A; mock-guard.sh run anyway: 'No production source files to scan. PASS', same precedent as cycle-778/779/780. process.env / secret / password / token greps clean (only unrelated 'forbidden token' privacy-gate prose hits). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-24.md STEP qa-S20.",
+      "qa_verified_at": "2026-08-14T23:27:51Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git (merge-base --is-ancestor / show --stat) + grep (task_claim/task_list_held/process.env/secret) + mock-guard.sh",
+          "args": {
+            "commit_verified": "1ce429ef61477715057e604269c6e1c12edb9475"
+          },
+          "live_value_observed": "ancestor=yes; git show --stat = exactly 3 files (docs/agents/fb-market-poster/flow/daily.md, weekly-recap.md, weekly-prediction.md), main.md absent from diff; grep task_claim in STEP 0a sections = 0 live calls (prose-only); daily.md has exactly 1 functional task_claim at STEP 5 immediately before Write; weekly-recap.md/weekly-prediction.md delegate Phase-2 by reference to daily.md STEP 5, immediately before their own Write (STEP 4/STEP 5 resp.); mock-guard.sh = no production source to scan, PASS; process.env/secret/password/token greps zero relevant hits",
+          "observed_at": "2026-08-14T23:27:51Z"
+        }
+      }
     }
   ],
   "closed_sprints": [
