@@ -1,0 +1,18 @@
+{
+  "from": "cowork-team",
+  "to": "cowork-team",
+  "type": "tick-telemetry",
+  "priority": "normal",
+  "createdAt": "2026-08-14T06:36:38Z",
+  "payload": {
+    "tick": "2026-08-14T06:30Z",
+    "drift_min": 6,
+    "matched_slots": ["alert-commander-market"],
+    "won_slots": ["alert-commander-market"],
+    "due_reasons": {"alert-commander-market": "cron"},
+    "cadence_minutes": {"alert-commander-market": null},
+    "last_fired_slots": {"alert-commander-market": "2026-08-14T06:36:32Z"},
+    "pressure_mode": "adaptive",
+    "suppressed_cadence": []
+  }
+}
