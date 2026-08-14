@@ -1,79 +1,76 @@
 # PM — Notebook
 
-## c342 FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0 ZONE-SPLIT DECOMPOSITION · 2026-08-14T11:23Z
+## c343 UC-CDC-P1 CALENDAR_STATUS COMPUTE + ENUM GATE 3-WAY ZONE-SPLIT · 2026-08-15T00:22Z
 
-**MANDATE (from dev-team dispatcher, pipeline-resume dispatch, FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0 IN_PROGRESS lane):** Break down architect-designed incident-lane consumer (dedicated throughput mechanism for po_expedited_at rows) into zone-split implementation tasks (scripts/ and docs/agents/dev-team/) per established convention. Parent task is DESIGN (zero production code at architect stage); PM decomposes the design into two atomic implementation rows.
+**MANDATE (from dev-team dispatcher, architecture-complete handoff):** Decompose architect-ratified 3-way zone-split design (apps/mcp-server + scripts + docs/agents/cowork-team/flow/) for calendar_status server-side computation, injectable-deps wiring, SESSION_STATUSES SSOT, and fail-loud enum enforcement.
 
 **DESIGN CONTEXT:**
-- **Parent Task:** FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0 (P0, cross-service/, architect-owned, moved to DONE in this cycle)
-- **Architect Brief:** docs/architecture-briefs/2026-08-14-readylane-incident-lane-throughput.md (complete, decision: adjudicated design option (c), rejected comparator-only fixes (a)/(b))
-- **Root Problem:** Ready-lane consumer (RLC) selects exactly 1 row per invocation, runs ~1/6 hourly cadence (via Idle-Tick Rotation), causing 68-row eligible queue to starve despite perfect ordering. PO's live measurement (2026-08-13): two severity-expedited rows already rank #1/#2 and are STILL undispatched after 10+ hours — proves ordering fix alone insufficient.
-- **Architect Ruling:** Dedicated Incident-Lane Consumer (ILC) — independent budget (`INCIDENT_CAP=2`), batch-claim N rows per invocation, unconditional Session-Gate→Step-1 invocation (not rotation-gated). Reuses QA-Drain's proven throughput pattern (226→56 PRIMARY drain over 8 days on structurally identical starvation). Never a comparator change or new priority tier.
-- **Precedent:** QA-Drain 2026-08-06 implementation (brief: 2026-08-06-review-lane-qadrain-throughput-unblock.md) — same independent-budget + batch + unconditional-invocation recipe delivered measured 4x throughput improvement.
+- **Parent Task:** UC-CDC-P1 (P1, SPRINT-M, multi-zone decomposition now, status IN_PROGRESS)
+- **Architect Handoff:** docs/handoffs/UC-CDC-P1-BA-spec.md § [Architect] Brownfield Findings (WP-A ratified READY with 3 design refinements; WP-B blocked on UC-SDF-P2)
+- **Root Problem:** Self-recycling calendar_status loop (emitPressureStateTool.ts writes caller-supplied literal; cowork-tick-preflight.sh reads it back out and writes it straight in; telemetry.md does the same on WORK path). No authoritative producer, out-of-domain values ("closed"/"off_market") persist forever, live weekend cadence fires at wrong rates.
+- **Live Defect Status:** calendar_status currently "closed" (not "unknown"), detected 2026-07-24T17:37Z, measured impact on weekend slots (3 agents per-tick over-firing at 6x rate due to unmatched cadence rule, fallback to 240-min default instead of declared 1440-min weekend rate).
+- **Architect Solution (3-way split, 0 inter-dependencies):**
+  1. **FR-A1+A2 (dev-mcp-server zone):** Wire calendar_status through injectable-deps (matches existing pattern for signal_backlog/dev_queue_depth), add SESSION_STATUSES const to vnTradingCalendar.ts as SSOT, implement WARN+recompute enforcement inside runEmitPressureState (not hard Zod boundary, preserves never-throws contract on mandatory telemetry.md Step 6.0 WORK-path call).
+  2. **FR-A3 (developer zone):** Stop cowork-tick-preflight.sh Step 8 reading calendar_status from pressure-state.json and writing it back (delete L150 read, drop cal arg/key from L162-164 emit_args).
+  3. **FR-A4+A5 (agent-father zone):** Delete telemetry.md Step 6.0 L15 circular arg line; add fail-loud + send_telegram(channel="bug") to pressure-read.md Step 4.3 on out-of-domain values (defense-in-depth for legacy on-disk files predating fix).
 
-**ZONE-SPLIT BREAKDOWN (per brief §5 and established PM convention):**
-1. **Scripts & Predicates:** developer zone
-   - Add `is_po_expedited` + `incident_wip_in_progress` predicates to devteam-eligibility.jq
-   - Create NEW `scripts/devteam-backlog-claim-incident-lane-consumer.jq` (batch claim script)
-   - Update RLC header comment with cross-reference (no logic change)
-   - Extend devteam-dispatch-gate-satisfiability.sh with ILC fixtures
-   - HARD PREREQUISITE for mainflow row (mainflow calls this script file)
-
-2. **Main Flow Integration:** agent-father zone (depends_on: SCRIPTS row)
-   - Insert § Incident-Lane Consumer section after Session Gate (content-anchored)
-   - Place BEFORE § Review-Lane SECONDARY-Drain (priority ordering: ILC → SECONDARY → QA-Drain)
-   - Implement invocation: INCIDENT_WIP guard → batch-claim call → spawn loop → JUMP TO end
-   - Update SECONDARY-Drain intro (no other logic changes)
-   - Add INCIDENT_CAP to Invariants section
+**ZONE DISTRIBUTION (corrected from dispatch note's assumed 2-way):**
+- `apps/mcp-server/` (FR-A1, FR-A2) → **dev-mcp-server**
+- `scripts/` (FR-A3) → **developer**
+- `docs/agents/cowork-team/flow/` agent-instruction prose (FR-A4, FR-A5) → **agent-father** (per po_routing_ruling_20260721 precedent; agent-father's commit_zone.allowed includes docs/agents/, developer's does not)
+- **NOT 2-way as dispatch assumed:** routing as single developer task would hand FR-A4/A5 to an agent with no commit-zone grant for docs/agents/ files
 
 **DECOMPOSITION COMPLETED:**
 
-### FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS (Tier1, ready now)
-- **Zone:** scripts/
+### TASK_2008a: Calendar_Status Injectable-Deps + Session_Statuses SSOT (dev-mcp-server specialist)
+- **Zone:** apps/mcp-server/
 - **Size:** M
-- **Dependencies:** none (blocks: MAINFLOW row)
-- **Scope:** Add 2 predicates to devteam-eligibility.jq, create devteam-backlog-claim-incident-lane-consumer.jq (batch claim, priority-then-oldest-expedite-first sort), update RLC header comment, extend satisfiability fixtures
-- **Handoff:** docs/handoffs/FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS.md
+- **Priority:** P1
+- **Dependencies:** none
+- **Status:** TODO (ready now, no blockers)
+- **Scope:** FR-A1 new computeCalendarStatusFn field on EmitPressureStateDeps, FR-A2 add SESSION_STATUSES const to vnTradingCalendar.ts + WARN+recompute enforcement inside runEmitPressureState, blast-radius fix in 4 test-construction sites (buildDeps, makeRunDeps, 2 standalone literals)
+- **Handoff:** docs/handoffs/TASK_2008a.md
+- **Files affected:** emitPressureStateTool.ts, vnTradingCalendar.ts, emit-pressure-state.test.ts
+- **Blast radius note:** 4 test sites must be updated (not hidden); no new field added to output shape (only computation path changes), L827 length assertion unaffected
 
-### FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW (Tier2, after SCRIPTS)
-- **Zone:** docs/agents/dev-team/
+### TASK_2008b: Preflight Stop Calendar Recycling (developer specialist)
+- **Zone:** scripts/
+- **Size:** S
+- **Priority:** P1
+- **Dependencies:** none
+- **Status:** TODO (ready now, no blockers)
+- **Scope:** FR-A3 remove L150 calendar_status read from pressure-state.json, drop --arg cal and calendar_status:$cal key from L162-164 emit_args build; SILENT-path emit becomes shape-identical to WORK path (both omit calendar_status, server computes fresh)
+- **Handoff:** docs/handoffs/TASK_2008b.md
+- **Files affected:** cowork-tick-preflight.sh, cowork-tick-preflight.test.sh (add negative assertion for key absence)
+- **Explicitly out of scope:** last_regime/last_volatility_level recycling (same mechanism, same lines, intentional degrade-gracefully default per script's R3 comment; UC-SDF-P2 WIDEN clause addresses separate producer gap)
+
+### TASK_2008c: Telemetry Delete + Pressure-Read Fail-Loud (agent-father specialist)
+- **Zone:** docs/agents/cowork-team/flow/
 - **Size:** M
-- **Dependencies:** FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS (hard: calls script file not existing until SCRIPTS ships)
-- **Scope:** Insert § Incident-Lane Consumer at Session-Gate→Step-1 anchor (unconditional batch-claim invocation, `INCIDENT_CAP=2`); update SECONDARY-Drain intro; add INCIDENT_CAP to Invariants
-- **Handoff:** docs/handoffs/FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW.md
+- **Priority:** P1
+- **Dependencies:** none
+- **Status:** TODO (ready now, no blockers)
+- **Scope:** FR-A4 delete telemetry.md L15 (circular arg line), FR-A5 add enumeration + fail-loud + send_telegram(channel="bug") to pressure-read.md Step 4.3 on out-of-domain calendar_status values; refresh stale file-size-justification headers
+- **Handoff:** docs/handoffs/TASK_2008c.md
+- **Files affected:** telemetry.md, pressure-read.md
+- **Test strategy:** LLM-narrated prose has no unit test; verify via live-tick notebook observation post-deploy (legacy on-disk values surface via telegram anomaly alert, then self-heal within one tick once FR-A1+FR-A2 land)
 
 **DEPENDENCY TIERS:**
-- **Tier 1 (ready now):** FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS (no blockers, developer zone, parallel-dispatchable)
-- **Tier 2 (after tier 1):** FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW (depends_on tier1, agent-father zone, must execute after SCRIPTS ships)
+- **Tier 1 (ready now, parallel):** TASK_2008a, TASK_2008b, TASK_2008c (zero inter-dependencies per architect spec; all 3 are independent, no blocking edges)
 
-**CRITICAL ORDERING NOTE:**
-Hard dependency: MAINFLOW's call site `-f scripts/devteam-backlog-claim-incident-lane-consumer.jq` references a file that does not exist at all until SCRIPTS row ships. Unlike QA-Drain's own dependency (which had backward-compatible fallback), no intermediate state is viable here.
+**BLOCKED WORK (not part of WP-A decomposition, forwarded notes to PO):**
+- **WP-B (UC-CDC-P1's own decouple stale_warning clause):** Verified live this cycle — UC-SDF-P2 still BACKLOG/plan_only/not claimed, its own sequencing note says UC-SDF-P2 must land first (promoteResult.stale provably always false today due to filename-key mismatch unfixed in UC-SDF-P2). Recommend PO prioritize UC-SDF-P2 dispatch (P1, un-dispatched 3+ weeks despite explicit next_agent:"ba").
+- **Co-ship flag (not implemented here):** FIX-COWORK-CADENCE-DANGLING-POLICY-ID (BACKLOG) — title still carries superseded 15/240 instance clause; commit 8c2acb44c (CADRAT-1) already delivered real fix (verified live in cadence-policy.json: both policy_ids now carry 10 calendar_status-keyed rows, matching architecture brief). PM/PO: strip stale clause before dispatch.
 
-**BOARD STATE POST-DECOMPOSITION:**
-- Parent task moved: in_progress[] → done[] (marked DONE, closed_at stamped)
-- New tasks added: ready[] += 2 (FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS, FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW)
-- WIP: -1 (parent removed from in_progress, 2 TODO rows added to ready — no net WIP impact)
-- .head updated: idled (active_task_id=FIX-READYLANE-... → null, status=idle per non-closeout reset, Step 4c)
-- Validator: PASS (Stage 1g: 16 pre-existing MISSING deps unchanged; no new blockers introduced)
+**ORC-STATE UPDATE:**
+- UC-CDC-P1 status: IN_PROGRESS → IN_PROGRESS (kept, added status_note for decomposition cross-reference)
+- Added to task_board.ready[]: TASK_2008a, TASK_2008b, TASK_2008c (all TODO, all P1)
+- Metadata: _updated_at 2026-08-15T00:22:32Z, _updated_by "pm"
 
-**DECISION RATIONALE:**
-- Architect ruled on mechanism (dedicated ILC, not comparator fix); PM decomposes ruling into concrete work
-- Each task is single zone, ~2h, clear AC, testable with provided fixtures
-- Zone split preserves architectural coherence: scripts/ and docs/agents/ by established routing rule (`po_routing_ruling_20260721`)
-- Hard dependency captures the runtime requirement (SCRIPTS creates a file that MAINFLOW calls)
-- Tier structure ensures prerequisite lands before dependent (safe sequential dispatch)
-- Independent budget (`INCIDENT_CAP=2`) keeps ILC from saturating like a 4th priority tier (design constraint §4b of brief)
-- Batch-claim + unconditional invocation (not rotation-gated) directly addresses the 1-per-6-ticks throughput ceiling
-
-**HANDOFF FILES CREATED:**
-1. docs/handoffs/FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS.md (AC-1 through AC-6 + design rationale)
-2. docs/handoffs/FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW.md (AC-1 through AC-5 + placement rules + design rationale)
-
-**NEXT:**
-- Router to dispatch tier1 task (SCRIPTS) to developer specialist (ready now)
-- Once tier1 task lands, tier2 task (MAINFLOW) unblocks for agent-father specialist
-- Both tasks should land before any other dev-team flow changes that might edit the Session-Gate→Step-1 insertion point
-- Live measurement after both tasks ship: expect incident-queue depth to drop over the following week (precedent: QA-Drain delivered 226→56 PRIMARY drain over 8 days on structurally identical mechanism)
+**CRITICAL NOTES:**
+1. **Never-throws contract binding:** FR-A2's WARN+recompute enforcement must run INSIDE runEmitPressureState, not at Zod boundary. telemetry.md Step 6.0 is a MANDATORY, un-skippable WORK-path call documented as "never throws" — Zod rejection at schema boundary risks breaking that contract. Enforcement inside (console.warn on override && !valid) satisfies FR-A2 intent (bad literal never written) without risking the documented invariant.
+2. **Line number drifts noted:** Architect's own re-verification cycle flagged minor drift (FR-A3 lines ~2-3L off from BA's read); all re-verified live this cycle against actual file state at 2026-08-14. No blockers, both flagged.
+3. **Sequencing note:** WP-B (decouple stale_warning from cycle-snapshot-promotion-refusal) depends on UC-SDF-P2 — do NOT implement WP-B until UC-SDF-P2 lands. WP-A ships independently, requires no UC-SDF-P2 prerequisite.
 
 ---
 
