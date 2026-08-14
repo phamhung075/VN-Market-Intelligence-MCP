@@ -69,3 +69,13 @@
 - Sibling-overlap check (dispatcher flag): grep-confirmed `nso_ts_key` is the SOLE date-regex implementation repo-wide (zero stray `grep -oE [0-9]{4}` elsewhere) — the July `FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH` widening and this SHA-collision hardening are sequential passes on the SAME function, not forked copies. No apps/ TS touched → bun test/tsc N/A. Security greps clean. AC-4 data-recovery on `TASK-COWORK-MUTEX-001.status_note` confirmed present, honestly labelled `[RECOVERED ...]`, not fabricated.
 **why-decision:** APPROVED, DONE_VERIFIED. All ACs (AC-1..AC-4) independently reproduced against live code/data, zero blocking ISSUE.
 **why-change:** none — verified exactly what the row scoped.
+
+### STEP qa-S145 · qa · 2026-08-14T15:03:19Z
+**task-id:** FIX-BCTC-REPARSE-DOUBLE-WRAP-DEDUP-GUARD
+**what-done:** Direct-Commit Verify. `cf862f920`+`815752129` confirmed real, on `main` ancestry; `git show --stat` matches all 3 claimed files exactly (startupHelpers.ts, startScheduler.ts, new test file).
+**what-considered:**
+- Read the actual diffs, not prose: AC-1 `shouldSkipRecoveryReplay` guard added before `recordJobRun` (identical shape to base-rate precedent). AC-2 default fn now calls `runBctcReparseJob({ db })`; independently read `bctcReparseJob.ts:941`'s `if (!options.db)` self-record block and grepped ALL production callers of `runBctcReparseWithDb`/`runBctcReparseJob` — only startScheduler.ts + schedulerJobTable.ts call the wrapper, no bypass path — double-wrap genuinely eliminated. AC-3 startup catch-up now gated by `shouldRunCatchup(db,'bctcReparseJob',2,30,now,false)`, diff-confirmed.
+- Re-ran new test file: 13/13 pass incl. T4b explicit AC-4 case. Broader regression (53-file grep-superset of claimed 22/216 scope): 503 pass/1 skip/0 fail. `tsc --noEmit` 0 errors. `mock-guard.sh` PASS both prod files. DDD: pre-existing infra imports in scheduler/ are legitimate (interface/cron layer, not domain/) — no violation introduced.
+- DJ-GATE-1 confirmed: dev-mcp-server journal lines 278-284, genuinely AC-mapped content, not boilerplate.
+**why-decision:** APPROVED, DONE_VERIFIED. Every AC claim independently re-derived from the actual diff + fresh test/tsc/mock-guard runs, not the row's own review prose. Zero blocking ISSUE.
+**why-change:** none — AC-5 correctly deferred by developer (needs real post-deploy cron history), documented honestly, not silently dropped.
