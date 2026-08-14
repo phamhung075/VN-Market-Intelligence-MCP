@@ -69,3 +69,32 @@ dispatch, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
 - **Board disposition:** `in_progress[]`→`review[]`, `next_agent:po` — `verification_gate` needs a
   live chef dish RAW-verified against `unified-agent-synthesis-*.json` (not self-testable this cycle,
   prose/gate-logic wiring only). `.head` reset in the same write (was pointing at this task).
+
+## EDIT 2026-08-14T06:33Z — task FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE
+(dev-team Review-Lane SECONDARY-Drain owner-triage, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
+- Row was REVIEW/`next_agent:agent-father` carrying a full architect blueprint
+  (`docs/architecture-briefs/2026-08-07-devteam-head-pin-stale-threshold-resume-bound.md`) whose §5
+  was explicitly "agent-father's deliverable" — not a bare sign-off/triage row, an implementation
+  handoff. Live-reread `docs/agents/dev-team/flow/main.md` first (brief's own §1 flagged 12+ edits
+  landed since the brief's line-number citations) — confirmed entry-gate/WF-2/S2 anchor text still
+  matched verbatim, applied on live text via exact-match edits, never the brief's stale line numbers.
+- **Applied:** dropped the `head.updated_at < 24h` clause from Step 0b's entry gate; inserted new
+  WF-3 RESUME-ATTEMPT-BOUND (`.head.resume_attempts`/`last_resume_at`, 3-attempt bound → row `BLOCKED`
+  + `hold_reason` + `resume_attempt_bound_exceeded_at/_by`, `.head` idle-reset, BUG signal) and WF-4
+  STALE-AGE (2h, keyed off row `claimed_at` never `.head.updated_at` — the latter self-defeats the
+  moment WF-3's own counter writes `.head` — git-log corroboration before reset, BUG signal) between
+  WF-2 SUPERVISED-HOLD and S2; S2 gained a 6-line increment write on its successful-claim path; deleted
+  the old 24h stale-crash sibling branch + fixed a stale cross-ref to it in S2's own LOCK-LIFETIME
+  comment. Dry-ran all 3 new jq transforms against a synthetic fixture before treating the patch as
+  done — all produced the exact shape specified. +78L (1152→1230), size-justification header entry
+  added per this file's own per-edit convention.
+- **Not routed through `edit.md`:** `dev-team` has no `.claude/agents/dev-team.md` roster entry (the
+  router's own orchestration loop, not a spawnable agent) — `edit-prepare.md` Step 1's existence Glob
+  would false-block. Applied directly, same precedent as my own 2026-08-13/08-14 chef/qa entries above.
+- Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md` STEP `agent-father-S41`.
+- **Board disposition:** stayed `review[]` (no status flip — still `REVIEW`, so no
+  STATUSFLIP-LANEMOVE obligation), `next_agent: agent-father → qa` (routes to the pre-existing QA-Drain
+  PRIMARY selector next tick) via `scripts/orch-apply.sh` (`FU-AGENT-FATHER-ORCH-SCOPE` — outside
+  `commit_zone`, applied not committed by me) + `agent_father_implementation_note` field added
+  documenting the change for qa. Not self-certified `DONE_VERIFIED` — orchestration-core dispatch
+  logic, no live multi-tick head-pin scenario reproducible in one session; qa to smoke/diff-verify.

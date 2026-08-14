@@ -360,3 +360,33 @@ edit; each edit landed exactly the architect-ratified "After" text, verified pos
 every new `$BIZ_CTX_*`/`business_context_cited` token (all present, correct count).
 **why-change:** none — architect's ratification (FR-0..FR-7 CONFIRMED SOUND, Blocker Q1 ruled
 within-remit) was applied as specified, no rework.
+
+### STEP agent-father-S41 · agent-father · 2026-08-14T06:32:10Z
+**task-id:** FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE
+**what-done:** Applied architect blueprint §5 verbatim to `docs/agents/dev-team/flow/main.md`:
+dropped the 24h age clause from Step 0b's entry gate; inserted WF-3 RESUME-ATTEMPT-BOUND (3-attempt
+escalation to BLOCKED, `.head` idle-reset, BUG signal) and WF-4 STALE-AGE (2h, keyed off row
+`claimed_at` not `.head.updated_at`, git-log corroboration before reset) between WF-2 and S2;
+gained a 6-line `resume_attempts`/`last_resume_at` increment on S2's successful-claim path; deleted
+the old 24h stale-crash sibling branch; fixed 1 stale cross-ref in S2's own LOCK-LIFETIME comment
+that still named the deleted branch.
+**what-considered:**
+- Run through `edit.md`/`edit-prepare.md`'s full agent-identity cascade flow vs apply directly:
+  applied directly — `dev-team` has no `.claude/agents/dev-team.md` roster entry (it is the
+  router's own orchestration loop, not a spawnable agent per CLAUDE.md), so Step 1's `Glob:
+  .claude/agents/<agent_name>.md` existence check would false-block; same precedent as my own
+  S38/S39/S40 entries above (all router-direct dev-team/chef flow-doc edits, none routed through
+  edit.md).
+- Leave §7/§8 (schema typing + regression verifier) unimplemented vs implement now: left as a
+  PENDING Reusable-Scripts bullet — architect's own RETURN names them a non-blocking `developer`
+  follow-up outside agent-father's `commit_zone` (`scripts/`, `orchStateSchema.ts`), not spawned
+  this cycle per the row's own text.
+**why-decision:** Live-reread `main.md` before editing (brief's own §1 flagged 12+ edits landed
+since the brief's 2026-08-07 line-number citations) — confirmed the brief's cited entry-gate/WF-2/S2
+anchors still match verbatim modulo drift, applied on the LIVE text via exact-match `old_string`,
+not the brief's stale line numbers. Dry-ran both new jq transforms (WF-3 BLOCKED-flip, WF-4 age
+calc, S2 increment) against a synthetic fixture before treating the patch as done — all three
+produced the exact shape the brief specifies.
+**why-change:** none — implemented brief §5 as specified; added one prose line (S2 fall-through
+summary + the stale LOCK-LIFETIME cross-ref) the brief itself didn't spell out verbatim but its own
+§5 ordering section requires for internal consistency.
