@@ -19390,7 +19390,7 @@
         "last_served_tick": "2026-08-14T05:23:15Z"
       }
     },
-    "_updated_at": "2026-08-14T07:10:03Z",
+    "_updated_at": "2026-08-14T07:19:13Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19467,6 +19467,50 @@
         },
         "createdAt": "2026-08-14T06:51:26Z",
         "drained_at": "2026-08-14T07:03:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7b76e01c410991c7680d2b13ac17aad685045af731f2e87b04b794881852b7bc",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 103,
+          "cap": 200,
+          "byte_count": 17328,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 5328,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-14T07:04:54Z",
+        "drained_at": "2026-08-14T07:19:13Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4c94d5cf2cc1dd9a389a4fd86f1d081030809f2e2392b84b338e50e6174a0e98",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 103,
+          "cap": 200,
+          "byte_count": 17328,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T07:04:52Z",
+        "drained_at": "2026-08-14T07:19:13Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
