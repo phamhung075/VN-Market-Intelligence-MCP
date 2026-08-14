@@ -17988,6 +17988,37 @@
         "status_note": "agents-architect SPIKE COMPLETE (commit 808d0b63f, on origin/main): brief docs/architecture-briefs/2026-08-14-auditor-write-plane-divergence-root-cause.md + signal docs/signals/processed/2026-08-14-auditor-write-plane-divergence-root-cause.json routed to agent-father. Recommends PO mint FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE (P0, split developer+agent-father). Signal drained to PO durable inbox this tick (type=brief_complete). Router RAW-verified deliverable before this closeout. Was left ready[]-resident with next_agent=agents-architect (already-spawned) — moved here to prevent a future DRS pass from duplicate-spawning agents-architect on an already-completed SPIKE.\n[po/triage 2026-08-14T20:02:29Z] SPIKE DELIVERABLE ACCEPTED. Brief verified at source (docs/architecture-briefs/2026-08-14-auditor-write-plane-divergence-root-cause.md, 21294 bytes, author agents-architect, dated 2026-08-14T18:59:03Z) — not accepted on a relayed verdict. All 5 SPIKE ACs answered in-brief: AC-1 empirical branch classification, AC-2 both branches (flow-doc ordering AND missing plane gate) confirmed compounding, AC-3/AC-4 structural fix + REFUSE-on-mismatch failure mode, AC-5 disposition of the 9 adjacent rows (all left open per brief §7). PO executed the brief's own §8 mandate: minted FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE (backlog, P0, size S) with the 2-piece PO-split routed (scripts/ -> developer, docs/agents/system-auditor/flow/ -> agent-father). next_agent flipped po -> qa; PO has no remaining action on the spike itself.",
         "po_signoff_at": "2026-08-14T20:02:29Z",
         "spawned_row": "FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE"
+      },
+      {
+        "id": "FIX-CI-TASKCLAIM-DEVTEAM-POSTCYCLE-OWNER-SESSION-PAYDOWN",
+        "type": "FIX",
+        "title": "CI RED — task-claim-owner-session-lint: docs/agents/dev-team/flow/post-cycle.md 4 call sites (105/114/146/152) missing owner_client_session",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "owner": "po",
+        "created_at": "2026-08-14T20:02:29Z",
+        "created_by": "po",
+        "source": "durable-inbox ci_red x2 from=ci-health-probe 2026-08-14T18:54:53Z (CI-RED-e12a95a9, run 31830667440) + 2026-08-14T19:25:35Z (CI-RED-b3e8d8aa, run 31832822616)",
+        "check_id": "CI-RED-e12a95a9",
+        "dedup_key": "ci_job:task-claim-owner-session-lint|file:docs/agents/dev-team/flow/post-cycle.md",
+        "ci_fingerprint": "a45bf11ca432d7e54847203092dce5b1bcd0e6ec06759094b920e4876fb97547",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "files": [
+          "docs/agents/dev-team/flow/post-cycle.md",
+          "docs/data/task-claim-owner-session-baseline.json"
+        ],
+        "dedup_checked": "MANDATORY pre-dedup failing-file read done FIRST (triage-signals.md ci_red row): `gh run view <run_id> --log-failed` on BOTH runs. Job task-claim-owner-session-lint is NOT the bun-test isolation runner so no FAILEDFILE block exists; FAILING_FILES taken verbatim from the failing step's own error lines = exactly ONE file, docs/agents/dev-team/flow/post-cycle.md (4 call sites). FILE-SCOPED dedup (primary) on ci_job:task-claim-owner-session-lint|file:docs/agents/dev-team/flow/post-cycle.md scanned backlog+ready+in_progress+review+qa: NO match. Nearest siblings are DIFFERENT files and must NOT absorb this: FIX-CI-TASKCLAIM-QA-FLOW-OWNER-SESSION-PAYDOWN (review, same job, file=docs/agents/qa/flow/main.md) and FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER (ready, dedup_key ci_gate_divergence|hook:pre-push, the gate-plane root cause, not a file paydown). One row PER DISTINCT FILE per the contract; sibling-row precedent FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT.",
+        "evidence": "FAILING_FILES (verbatim from gh run view 31830667440 --log-failed, identical on 31832822616): [task-claim-lint] FAIL - 4 call site(s) missing owner_client_session (scanned 276 files): docs/agents/dev-team/flow/post-cycle.md:105 task_claim(task_kind=\"commit-mutex\", task_id=\"commit-mutex:main\", owner_agent=\"dev-team\", ttl_seconds=120); :114 task_release(task_id: \"commit-mutex:main\"); :146 (same task_claim); :152 (same task_release). Each carries the lint's own [LINE-MOVED: grandfathered in baseline at line 100/109 - same file+snippet, NOT a new call site, NOT a reintroduced regression. Pay the debt (add owner_client_session); do not re-run --update to relabel the line.] annotation. Observed on 2 consecutive advancing HEADs: e12a95a9397689e1293dcb4141ae5926e70af03e (run 31830667440, 18:52Z) and b3e8d8aa24e411dbccaed5fa62022c7a7a3351c5 (run 31832822616, 19:20Z) - the file-scoped fail set is byte-identical across both, confirming a standing unpaid debt, not a flake.",
+        "acceptance": "AC-1 all 4 call sites in docs/agents/dev-team/flow/post-cycle.md carry owner_client_session=$CLAUDE_CODE_SESSION_ID (task_claim at :105/:146 and task_release at :114/:152). AC-2 the baseline is NOT relabelled via `--update` to re-grandfather the moved lines - the lint's own output explicitly forbids that path; the debt must be paid in the file. AC-3 `bash scripts/audits/task-claim-owner-session-lint.sh --check` exits 0 locally. AC-4 verification_gate=ci_green_on_subsequent_push: `gh run view <databaseId with headSha AFTER b3e8d8aa24e411dbccaed5fa62022c7a7a3351c5> --json jobs -q '.jobs[]|select(.name==\"task-claim-owner-session-lint\")|.conclusion'` == success.",
+        "non_goals": "Does NOT fix docs/agents/qa/flow/main.md (owned by FIX-CI-TASKCLAIM-QA-FLOW-OWNER-SESSION-PAYDOWN, review) and does NOT change the pre-push path-filter (owned by FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER, ready). ANTI-AMNESTY FENCE observed: never deduped into FIX-MCP-SUITE-HEALTH-BASELINE or any LOCAL-full-suite row.",
+        "status_note": "AC: gh run view <databaseId with headSha AFTER b3e8d8aa24e411dbccaed5fa62022c7a7a3351c5> --json jobs -q '.jobs[]|select(.name==\"task-claim-owner-session-lint\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: task-claim-owner-session-lint. Failing file: docs/agents/dev-team/flow/post-cycle.md. Observed SHAs: e12a95a9 (CI-RED-e12a95a9, run 31830667440), b3e8d8aa (CI-RED-b3e8d8aa, run 31832822616) - second ci_red folded onto this row rather than minted separately (same job+file dedup_key). | agent-father: AC-1/AC-2/AC-3 met (owner_client_session added to all 4 call sites, baseline untouched, --check exit 0). AC-4 VERIFIED LIVE: gh run 31837293956 headSha=db7b08e2e871b420f96597deb79dc5017afafebe job task-claim-owner-session-lint conclusion=success.",
+        "updated_at": "2026-08-14T20:19:48Z",
+        "claimed_at": "2026-08-14T20:12:49Z",
+        "claimed_by": "dev-team (Step 3 FIX dispatch)",
+        "updated_by": "agent-father"
       }
     ],
     "qa": [
@@ -18050,36 +18081,6 @@
     "last_triaged_at": "2026-08-14T18:56:02Z",
     "last_triaged_by": "dev-team (design-router sweep)",
     "in_progress": [
-      {
-        "id": "FIX-CI-TASKCLAIM-DEVTEAM-POSTCYCLE-OWNER-SESSION-PAYDOWN",
-        "type": "FIX",
-        "title": "CI RED — task-claim-owner-session-lint: docs/agents/dev-team/flow/post-cycle.md 4 call sites (105/114/146/152) missing owner_client_session",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "agent-father",
-        "owner": "po",
-        "created_at": "2026-08-14T20:02:29Z",
-        "created_by": "po",
-        "source": "durable-inbox ci_red x2 from=ci-health-probe 2026-08-14T18:54:53Z (CI-RED-e12a95a9, run 31830667440) + 2026-08-14T19:25:35Z (CI-RED-b3e8d8aa, run 31832822616)",
-        "check_id": "CI-RED-e12a95a9",
-        "dedup_key": "ci_job:task-claim-owner-session-lint|file:docs/agents/dev-team/flow/post-cycle.md",
-        "ci_fingerprint": "a45bf11ca432d7e54847203092dce5b1bcd0e6ec06759094b920e4876fb97547",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "files": [
-          "docs/agents/dev-team/flow/post-cycle.md",
-          "docs/data/task-claim-owner-session-baseline.json"
-        ],
-        "dedup_checked": "MANDATORY pre-dedup failing-file read done FIRST (triage-signals.md ci_red row): `gh run view <run_id> --log-failed` on BOTH runs. Job task-claim-owner-session-lint is NOT the bun-test isolation runner so no FAILEDFILE block exists; FAILING_FILES taken verbatim from the failing step's own error lines = exactly ONE file, docs/agents/dev-team/flow/post-cycle.md (4 call sites). FILE-SCOPED dedup (primary) on ci_job:task-claim-owner-session-lint|file:docs/agents/dev-team/flow/post-cycle.md scanned backlog+ready+in_progress+review+qa: NO match. Nearest siblings are DIFFERENT files and must NOT absorb this: FIX-CI-TASKCLAIM-QA-FLOW-OWNER-SESSION-PAYDOWN (review, same job, file=docs/agents/qa/flow/main.md) and FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER (ready, dedup_key ci_gate_divergence|hook:pre-push, the gate-plane root cause, not a file paydown). One row PER DISTINCT FILE per the contract; sibling-row precedent FIX-CI-FRONTEND-ESLINT-BUNLOCK-DUAL-LOCKFILE-DRIFT.",
-        "evidence": "FAILING_FILES (verbatim from gh run view 31830667440 --log-failed, identical on 31832822616): [task-claim-lint] FAIL - 4 call site(s) missing owner_client_session (scanned 276 files): docs/agents/dev-team/flow/post-cycle.md:105 task_claim(task_kind=\"commit-mutex\", task_id=\"commit-mutex:main\", owner_agent=\"dev-team\", ttl_seconds=120); :114 task_release(task_id: \"commit-mutex:main\"); :146 (same task_claim); :152 (same task_release). Each carries the lint's own [LINE-MOVED: grandfathered in baseline at line 100/109 - same file+snippet, NOT a new call site, NOT a reintroduced regression. Pay the debt (add owner_client_session); do not re-run --update to relabel the line.] annotation. Observed on 2 consecutive advancing HEADs: e12a95a9397689e1293dcb4141ae5926e70af03e (run 31830667440, 18:52Z) and b3e8d8aa24e411dbccaed5fa62022c7a7a3351c5 (run 31832822616, 19:20Z) - the file-scoped fail set is byte-identical across both, confirming a standing unpaid debt, not a flake.",
-        "acceptance": "AC-1 all 4 call sites in docs/agents/dev-team/flow/post-cycle.md carry owner_client_session=$CLAUDE_CODE_SESSION_ID (task_claim at :105/:146 and task_release at :114/:152). AC-2 the baseline is NOT relabelled via `--update` to re-grandfather the moved lines - the lint's own output explicitly forbids that path; the debt must be paid in the file. AC-3 `bash scripts/audits/task-claim-owner-session-lint.sh --check` exits 0 locally. AC-4 verification_gate=ci_green_on_subsequent_push: `gh run view <databaseId with headSha AFTER b3e8d8aa24e411dbccaed5fa62022c7a7a3351c5> --json jobs -q '.jobs[]|select(.name==\"task-claim-owner-session-lint\")|.conclusion'` == success.",
-        "non_goals": "Does NOT fix docs/agents/qa/flow/main.md (owned by FIX-CI-TASKCLAIM-QA-FLOW-OWNER-SESSION-PAYDOWN, review) and does NOT change the pre-push path-filter (owned by FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER, ready). ANTI-AMNESTY FENCE observed: never deduped into FIX-MCP-SUITE-HEALTH-BASELINE or any LOCAL-full-suite row.",
-        "status_note": "AC: gh run view <databaseId with headSha AFTER b3e8d8aa24e411dbccaed5fa62022c7a7a3351c5> --json jobs -q '.jobs[]|select(.name==\"task-claim-owner-session-lint\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Priority: high. Failing job: task-claim-owner-session-lint. Failing file: docs/agents/dev-team/flow/post-cycle.md. Observed SHAs: e12a95a9 (CI-RED-e12a95a9, run 31830667440), b3e8d8aa (CI-RED-b3e8d8aa, run 31832822616) - second ci_red folded onto this row rather than minted separately (same job+file dedup_key).",
-        "updated_at": "2026-08-14T20:12:51Z",
-        "claimed_at": "2026-08-14T20:12:49Z",
-        "claimed_by": "dev-team (Step 3 FIX dispatch)"
-      },
       {
         "id": "FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE",
         "type": "FIX",
