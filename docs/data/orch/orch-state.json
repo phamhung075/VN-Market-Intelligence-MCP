@@ -138,38 +138,6 @@
     "archive": [],
     "rows": [
       {
-        "id": "cow-20260813T083022",
-        "ts": "2026-08-13T08:30:22Z",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "defect",
-        "summary": "tick-snapshot market_context is non-verbatim reconstruction - alert-commander regime-extract falls back NEUTRAL",
-        "severity": "MED",
-        "status": "RESOLVED",
-        "payload_ref": "docs/signals/cowork-tick-snapshot-regime-mismatch-20260813T083022Z.json",
-        "dedup_key": "tick-snapshot-regime-extraction-format-mismatch",
-        "po_disposition_at": "2026-08-14T00:30:11Z",
-        "po_disposition_by": "po/triage-20260814T0007Z",
-        "po_disposition": "RESOLVED — triaged in dev-team Step 1, tick 2026-08-14T00:07Z, alongside 248 durable-inbox envelopes and 49 telegram reports (4797-4845, all processed, list_unresolved_reports() == [] verified). Folded onto existing board rows; see docs/agent-memory/decisions/triage-20260814T0007Z-po.md for the per-class dispositions."
-      },
-      {
-        "id": "sys-20260813T084552-622a",
-        "ts": "2026-08-13T08:45:52Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "A-30 WARN: vn-market-intelligence-mcp-rag-service-1 — sustained high memory (95.23%), loss of reclamation",
-        "severity": "WARN",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-13T08:30Z",
-        "dedup_key": "microservice_degraded:rag-service:A-30",
-        "po_disposition_at": "2026-08-14T00:30:11Z",
-        "po_disposition_by": "po/triage-20260814T0007Z",
-        "po_disposition": "RESOLVED — A-30 rag-service/pdf-extractor memory class. Substance triaged onto FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (po_correction_20260814: its ~18-20pp dip measurement is contradicted by 40.78pp/42.30pp on 08-13) and FIX-AUDITOR-A30-SUSTAINED-WINDOW-SHORTER-THAN-TARGET-RECLAMATION-PERIOD (po_crosslink_20260814). NEW ROW MINTED for the crash-cliff mislabel: FIX-AUDITOR-A30-CRASHCLIFF-BRANCH-CANNOT-BE-A-CRASH-BY-CONSTRUCTION — RAW: rag-service RestartCount=3 unchanged, StartedAt 2026-08-13T09:20:09Z, 15h uptime spanning every 'crash cliff' alert."
-      },
-      {
         "id": "cj-20260813T103005Z",
         "ts": "2026-08-13T10:30:05Z",
         "from": "code-janitor",
