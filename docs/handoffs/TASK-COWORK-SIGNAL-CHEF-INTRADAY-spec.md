@@ -372,3 +372,161 @@ HANDOFF: docs/handoffs/TASK-COWORK-SIGNAL-CHEF-INTRADAY-spec.md
 PIPELINE: hold — supervised row, no auto-continue; task 4/4 (TASK-COWORK-SIGNAL-NAMING-CONTRACT)
           remains a separate dispatch, not attempted here
 ```
+
+---
+
+## 11. PO ADJUDICATION — DONE_VERIFIED + binding Amendment 6 (2026-08-14T18:01Z)
+
+**Verdict: ACCEPTED.** Row `review[] → done_verified[]`. Mechanism, scope discipline, and the one
+flagged design refinement are all correct; the defects below are recorded as binding amendments
+rather than a rework bounce. `plan_only` + `supervised` **PRESERVED** — this ratifies the *design*
+only. No code ships from this document until the parent row
+(`FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING`) is re-adjudicated on the **full** child set; 1 of 4
+(`TASK-COWORK-SIGNAL-NAMING-CONTRACT`) is still unreviewed.
+
+Amendment 6 parts (a), (b), (d), (e), (g) are **acceptance-bearing**. Full text also lives on the
+board row (`po_amendment_6_20260814T1801Z`); this section is the implementer-facing copy.
+
+### 6(a) — Line anchors have drifted; §1.2's literal edit instruction is now DESTRUCTIVE
+
+Highest-severity item. §1.2 says *"Replace lines 567-574"* of `chef-dish.md`. **Those lines today are
+inside Step 7.5's quality-gate verdict block** (`GAP_CATALOGUE_OK` … `# Verdict` … `if L2_OK AND
+L3_OK AND L4_PILLARS_OK AND BIZ_CTX_OK AND GAP_CATALOGUE_OK` … `$QUALITY_VERDICT = "full"`).
+Following it literally deletes the quality verdict and pastes a `FILEPATH` derivation over it.
+
+Re-anchored live 2026-08-14:
+
+| Element | Spec says | Live now |
+|---|---|---|
+| `chef-dish.md` Step 7.6 header | 539 | **606** |
+| `chef-dish.md` `CYCLE_DATE = CYCLE_DATE_UTC` | 568 | **635** |
+| `chef-dish.md` `FILEPATH` | 571 | **638** |
+| `chef-dish.md` stale changelog sentence (§1.3) | 555-558 | **622-625** |
+| `chef.md` Step 0.5 header | 38 | **65** |
+| `chef.md` "no slot name is hardcoded" | 44-48 | **75** |
+| `chef.md` `VN_HOUR` | 78 | **105** |
+| `chef.md` `IS_MULTI_FIRE` | 91 | **118** |
+| `chef.md` multi-fire `MARKER_KEY` | 100 | **127** |
+| `chef.md` TE-T16 split note | 15-20 | **27** |
+
+`chef-dish.md` is now 806L, `chef.md` 265L. **The drift is NON-UNIFORM** (+67/+69 vs +27 —
+agent-father's `UC-CCA-P2-UNIFIED-AGENT` Step 0-GW insertion added +15L to `chef.md` on 2026-08-14
+alone), so no single offset repairs this document. **RULE: every line number here is advisory.**
+Anchor every edit on the *quoted text* (still exact in both files) and re-verify before writing.
+
+### 6(b) — §7's absence claim is false; the PM stub exists and is required reading
+
+§7 asserts the PM decomposition *"did not also mint 4 corresponding per-task handoff stub files."*
+**False.** `docs/handoffs/TASK-001-derive-windowkey.md`, `TASK-002-bctc-analyst-rekey.md`,
+`TASK-003-chef-intraday-filename.md` (9522 B), `TASK-004-naming-contract.md` all exist, dated
+2026-08-07 07:59. This task's stub is **`TASK-003-chef-intraday-filename.md`** and it is load-bearing:
+it carries AC-1 (intraday-only extension), AC-2 (`HOUR_COMPONENT`/NFR-3 sourcing) and AC-3 (`cycle_id`
+non-promotion). The true, narrower fact is that the row's `ba_handoff` **field** points at a wrong
+*filename*, not at a missing artifact. **The implementer must read BOTH `TASK-003-chef-intraday-filename.md`
+AND this spec.** Fourth occurrence of the inherited-false-absence class on this chain.
+
+### 6(c) — The `IS_MULTI_FIRE` refinement is UPHELD, and it overrides the stub
+
+§1.1's choice of Step 0.5's generic `IS_MULTI_FIRE` flag over a hardcoded `SLOT_ID == "intraday"`
+match is **approved**, and flagging it as reviewer-overridable was the right call. Grounds verified at
+source: `IS_MULTI_FIRE` derives at `chef.md:118` from the slot's own cron hour field read live from
+`cowork-schedule.json` (`chef.md:112-114`), computed unconditionally before the `:120` branch; and
+`chef.md:75` already ratifies the convention in words ("Rule is generic — no slot name is
+hardcoded"), so a string match would *regress* a convention this file already carries.
+**Consequence:** stub `TASK-003` AC-1 says *"Apply to: `if SLOT_ID == "intraday"` branch"* — **this
+amendment overrides that line.** Do not "restore" the string match on the stub's authority.
+
+### 6(d) — §3's EC-2 boundedness argument must be re-grounded
+
+The EC-2 *conclusion* (bounded-not-closed, defer to Phase 2) is correct; its *evidence base* is not.
+§3 grounds "no live fire pattern can alias…" entirely in the declared cron string. Live artifacts
+refute the cron string as a bound on actual fire times:
+
+- `unified-agent-synthesis-2026-08-12-intraday.json` carries `cycle_id: intraday-2026-08-12T15:13Z` —
+  **outside the declared 02-08 UTC window altogether**. (Its own mtime, 08:25Z, implies that stamp is
+  a VN-local time mislabelled `Z` — a second, fully independent reason §4's `cycle_id` non-promotion
+  rule is right, and worth adding to that comment.)
+- Run-start drift against the nominal window is real: **+7 to +22 min across 11 live intraday
+  artifacts** (worst: 2026-08-07, nominal 04:13Z, cycle start 04:35Z). `VN_HOUR` is a run-start
+  `date +%H` read (`chef.md:105`), so the margin before the hour digit flips is **47 min** (`:13`→`:00`)
+  and a live fire has already consumed ~47% of it.
+
+Required edits before the §3 comment is embedded: **(i)** re-ground the boundedness sentence on
+*observed fire times* plus the 47-minute run-start margin, not the cron shape alone; **(ii)** widen the
+TRIPWIRE from "any change to chef-intraday's cron in `cowork-schedule.json`" to "any change to the
+cron **OR any observed fire outside the declared window**" — that schedule row now carries
+`_superseded_by: "cowork-dispatcher"` and `trigger_status: "deleted"`, so while the cron *field*
+remains the live discriminator SSOT `chef.md:114` reads, it is **no longer the actuator** and a
+cron-only tripwire is bypassable by a dispatcher-side cadence change.
+
+### 6(e) — Filename key and mutex key disagree on their DATE basis (unnoted)
+
+This is the half of the parent row's binding 2026-07-22 CAUTION the spec never confronts. §4 quotes
+the `cycle_id` half accurately and discharges it. The CAUTION's other operative clause reads *"never a
+leaf-side `date`/run-start read … so the filename key and the mutex key agree by construction"* — and
+`VN_HOUR` **is** exactly a leaf-side run-start read. Verified at source, post-fix the two keys agree
+on the HOUR and **disagree on the DATE**:
+
+- filename = `{CYCLE_DATE_UTC}-{SLOT_ID}-{VN_HOUR}` (`chef-dish.md:635` pins `CYCLE_DATE = CYCLE_DATE_UTC`)
+- intraday mutex = `published:{SLOT_ID}:{WORK_DATE}:{VN_HOUR}` (`chef.md:104,127`; `WORK_DATE` = VN-local date)
+
+They coincide today only because UTC 02-08 falls inside one VN calendar day — **contingently, not "by
+construction"** as stub `TASK-003`'s own AC-2/NFR-3 framing claims. This does **not** block Phase 1
+(deferring to the window-anchor migration is right, and the Phase-2 row exists). It must be recorded
+in two places: **(i)** the §3 EC-2 comment must state *both* basis mixes — `VN_HOUR`-vs-`CYCLE_DATE_UTC`
+inside the filename, **and** `CYCLE_DATE_UTC`-vs-`WORK_DATE` between filename and mutex; **(ii)** the
+Phase-2 row `FIX-CHEF-INTRADAY-MARKER-KEY-UTC-HOUR-BASIS-MIGRATION`'s AC-1 today names only the *hour*
+component — it must be widened to migrate the **date** component in the same change, or Phase 2 will
+close half this defect and certify the whole of it closed.
+
+### 6(f) — §5's worked example does not match the day it names
+
+§5 states outright that it was *"cited verbatim from the architecture brief §4.1 — not independently
+re-derived."* Re-derived here: the real 2026-08-07 intraday artifact
+(`unified-agent-synthesis-2026-08-07-intraday.json`) has cycle start **04:35Z = VN hour 11**, so its
+post-fix path is `-intraday-11.json`, **not** the `-intraday-09.json` cited by this spec, by brief
+§4.1, and by stub `TASK-003` AC-1/AC-2. The `-09` value is a sound arithmetic illustration of the
+02:13Z window but it is not the day it names, and three documents now repeat it. **Fix:** relabel as a
+*synthetic* example, or use the real 04:35Z / VN-11 pair.
+
+### 6(g) — NEW **AC-5**: the slot component is non-deterministic, which defeats AC-1 and AC-4
+
+Added rather than bounced — the spec's own AC-1/AC-4 are not meaningful without it. The synthesis
+filename family carries **two live slot-component conventions**: 4 files use the `chef-`-prefixed
+`slot_id` (`chef-eod` ×1, `chef-evening` ×2, `chef-intraday` ×1) against 64 using the bare
+`dish_type`. **On 2026-08-13 both shapes exist for the intraday slot on the same day**:
+
+- `unified-agent-synthesis-2026-08-13-chef-intraday.json` — metadata `{slot_id: "chef-intraday",
+  cycle_utc: "…T03:21:00Z", cycle_vn_hour: 10, dish_type: "convergence_scan"}`
+- `unified-agent-synthesis-2026-08-13-intraday.json` — metadata `{cycle_id: "intraday-…T08:13:00Z",
+  dish_type: "intraday", quality_verdict: …}`
+
+…with **different metadata schemas** — the same schema-instability harm the parent row's
+`po_measurement_20260730T2148` recorded for the bctc family, now demonstrated on the chef family.
+Three acceptance-bearing consequences:
+
+1. **§8's AC-1 test can pass spuriously.** Two same-day intraday paths *already* differ today via the
+   slot component, with no hour discriminator at all. The test must assert the paths differ **in the
+   hour component**, with the slot component held identical — and must additionally assert the slot
+   component is stable across the two fires.
+2. **AC-4's audit property is unreachable** while an auditor cannot deterministically compute the
+   expected path — verbatim the complaint the parent row logged on 2026-07-19.
+3. **The hour already exists as a field.** The newer writer emits `cycle_vn_hour: 10` in metadata; bind
+   the filename component to that same pinned value rather than introducing a third derivation.
+
+Not hindsight: the 3 pre-existing `chef-`-prefixed files date from 2026-07-29/07-30, so the variance
+was observable when this spec was written on 08-08.
+
+> **AC-5 (new, binding):** the slot component of the synthesis filename resolves deterministically to
+> ONE convention for a given slot, and an auditor can compute the expected path for any non-silent
+> cycle from pinned session values alone.
+
+### Verified-at-source this tick (nothing accepted on the spec's prose)
+
+`chef.md` 27/65/75/104/105/112-114/118/120/127/132 · `chef-dish.md` 567-574 (current content),
+606/616/617/622-625/634-639 · `cowork-schedule.json` chef-intraday slot record in full ·
+`drain-signals.js` 55/173 (SIG root — **confirms §6's AC-2 out-of-scope claim is correct**) · board
+rows `FIX-CHEF-INTRADAY-MARKER-KEY-UTC-HOUR-BASIS-MIGRATION` (exists, BLOCKED — §3 cites a real row)
+and `FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR` (now READY, decomposed into ANCHOR-1..4 on 2026-08-13, so the
+Phase-2 dependency is live, not dormant) · `docs/handoffs/TASK-00{1,2,3,4}-*.md` existence + TASK-003
+body · 15 live `unified-agent-synthesis-*.json` metadata records + mtimes.
