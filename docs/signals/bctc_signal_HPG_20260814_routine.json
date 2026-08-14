@@ -1,0 +1,52 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Steel manufacturing — construction steel, HRC (hot-rolled coil), steel pipe/wire, agriculture feed & livestock (side businesses)",
+  "customer": "Domestic construction contractors, steel traders/distributors, downstream manufacturers (pipe/wire), export steel buyers",
+  "ops": "Q1-2026 gross margin 15.8%. Reported operating_profit=0 in structured extract vs net_profit 9,055.9 ty VND exceeding gross_profit 8,365.1 ty VND — flagged by source as 'possible non-operating income'; likely a known OCR/parsing corruption in the operating-profit line, not a genuine operating loss.",
+  "mgmt": "ROE 12.7% (sector median 2.9%), PE 14.2 discount -57% vs sector median 32.6x. Q2-2026 BCTC PDF on file since 2026-08-01 (14d) but still not extracted — persistent extraction-lag gap.",
+  "esc_gate": {
+    "esc1_result": "UNEVALUABLE_NO_BASH_GLOB",
+    "esc2_result": false,
+    "esc2_imbalance_pct": 0.0,
+    "esc3_result": "DATA-COVERAGE-LIMITED",
+    "esc3_quarters_returned": 3,
+    "esc3_quarters_required": 4,
+    "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+    "coverage_guard_held": true,
+    "esc4_result": "DISCARDED_CORRUPT_DATA",
+    "esc4_note": "operating_profit=0 is a known extraction corruption (persistent 21st+ cycle) — non_operating_share undefined/unreliable, not computed",
+    "esc5_result": false,
+    "esc5_note": "get_bctc_report_id returned report_id=null (refine_status=PARTIAL) — refine not finished, skip"
+  },
+  "valuation": {
+    "pe": 14.2,
+    "sector_median_pe": 32.6,
+    "pb": 1.7,
+    "sector_median_pb": 0.9,
+    "roe_pct": 12.7,
+    "earning_yield_pct": 7.04,
+    "ey_spread_pp": 2.04,
+    "verdict": "FAIR"
+  },
+  "kinhdich": {
+    "hexagram": "Su (7)",
+    "trend": "TRUNG TINH",
+    "signal": "GIU",
+    "confidence_pct": 37
+  },
+  "data_quality": {
+    "source_tier": 2,
+    "stale": true,
+    "stale_since": "2026-08-11T14:37:49.000Z",
+    "stale_age_hours": 57.5,
+    "latest_period_extracted": "2026-Q1",
+    "newest_period_on_file": "2026-Q2",
+    "confidence_pct": 80,
+    "filing_status": "QUA_HAN"
+  },
+  "ts": "2026-08-14T00:10:13Z"
+}

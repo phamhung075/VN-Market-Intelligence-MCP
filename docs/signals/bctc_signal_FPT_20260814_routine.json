@@ -1,0 +1,56 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Software export/IT services (FPT Software), telecom (FPT Telecom, equity-method from 01/01/2026), education (FPT Education), digital transformation & semiconductor design",
+  "customer": "Enterprise IT buyers globally (Japan/US/EU offshore dev), domestic telecom/broadband subscribers, K-12/university students",
+  "ops": "Q1-2026 gross margin 34.0%, operating margin 22.0%. FTEL deconsolidated to equity-method 01/01/2026 cuts reported net revenue -22.3% YoY nominal, but +8.7% YoY on like-for-like restated basis; Europe segment +44.4% YoY; associate profit +36% YoY.",
+  "mgmt": "FTEL deconsolidation executed on plan; EPS 1,460 VND vs 1,284 VND YoY (+13.7%). Q2-2026 BCTC PDF on file since 2026-08-01 (14d) but still not extracted by VPS pipeline — persistent extraction-lag gap.",
+  "esc_gate": {
+    "esc1_result": "UNEVALUABLE_NO_BASH_GLOB",
+    "esc2_result": false,
+    "esc2_imbalance_pct": 0.0,
+    "esc3_result": "DATA-COVERAGE-LIMITED",
+    "esc3_quarters_returned": 3,
+    "esc3_quarters_required": 4,
+    "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+    "coverage_guard_held": true,
+    "esc4_result": false,
+    "esc4_non_operating_share_pct": 2.0,
+    "esc5_result": true,
+    "esc5_report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+    "esc5_low_confidence_units": 7,
+    "esc5_min_confidence": 0.45,
+    "escalation_status": "GUARD-HELD",
+    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
+  },
+  "valuation": {
+    "pe": 13.8,
+    "sector_median_pe": 17.3,
+    "pb": 3.6,
+    "sector_median_pb": 1.5,
+    "roe_pct": 28.3,
+    "earning_yield_pct": 7.25,
+    "ey_spread_pp": 2.25,
+    "verdict": "FAIR"
+  },
+  "kinhdich": {
+    "hexagram": "Minh Di (36)",
+    "trend": "BAT LOI",
+    "signal": "GIU",
+    "confidence_pct": 25
+  },
+  "data_quality": {
+    "source_tier": 2,
+    "stale": true,
+    "stale_since": "2026-08-11T14:37:49.000Z",
+    "stale_age_hours": 57.5,
+    "latest_period_extracted": "2026-Q1",
+    "newest_period_on_file": "2026-Q2",
+    "confidence_pct": 81,
+    "filing_status": "QUA_HAN"
+  },
+  "ts": "2026-08-14T00:10:13Z"
+}

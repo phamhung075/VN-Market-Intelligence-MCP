@@ -1,0 +1,46 @@
+{
+  "ticker": "DXG",
+  "signal_type": "bctc_signal",
+  "quarter": "N/A",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Real estate developer — residential projects (HCMC/southern provinces), land-bank development",
+  "customer": "Individual homebuyers, investors in residential/condo projects",
+  "ops": "get_bctc_full(DXG) returns 'Chua co du lieu BCTC' (no data) — 25th+ consecutive cycle with this gap despite Q1-2025/Q2-2025/Q1-2026/Q2-2026 PDFs all present in list_stored_pdfs (earliest since 2026-06-13). Standing VPS extraction-pipeline gap, not a filing gap.",
+  "mgmt": "Cannot assess management track record — no structured BCTC data available. Sector-comparison-only valuation used below (external market data, not BCTC-derived).",
+  "esc_gate": {
+    "esc1_result": "UNEVALUABLE_NO_DATA",
+    "esc2_result": "UNEVALUABLE_NO_DATA",
+    "esc3_result": "UNEVALUABLE_NO_DATA",
+    "esc4_result": "UNEVALUABLE_NO_DATA",
+    "esc5_result": "UNEVALUABLE_NO_DATA",
+    "note": "No get_bctc_full data at all for DXG this cycle — ESC gate cannot be evaluated on any dimension. Prior open finding docs/signals/bctc-analyst-20260813T001500Z.json (cash-flow-anomaly, from c162) remains PENDING dev-team pickup; not re-emitted this cycle to avoid signal spam (no re-emit guard on this finding type)."
+  },
+  "valuation": {
+    "pe": 66.5,
+    "sector_median_pe": 16.1,
+    "pb": 1.2,
+    "sector_median_pb": 1.3,
+    "roe_pct": 1.9,
+    "earning_yield_pct": 1.50,
+    "ey_spread_pp": -3.50,
+    "verdict": "AVOID",
+    "note": "Do NOT post bullish signal — valuation_verdict=AVOID per flow rule"
+  },
+  "kinhdich": {
+    "hexagram": "Ky Te (63)",
+    "trend": "THUAN LOI",
+    "signal": "GIU",
+    "confidence_pct": 100
+  },
+  "data_quality": {
+    "source_tier": null,
+    "stale": null,
+    "latest_period_extracted": "NONE",
+    "newest_period_on_file": "2026-Q2",
+    "confidence_pct": 0,
+    "filing_status": "QUA_HAN",
+    "gap_cycles": "25th+"
+  },
+  "ts": "2026-08-14T00:10:13Z"
+}
