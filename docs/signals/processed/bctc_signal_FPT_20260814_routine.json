@@ -4,44 +4,59 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "net_profit_delta_pct": null,
-  "product": "IT services (phần mềm xuất khẩu, tích hợp hệ thống), viễn thông (FPT Telecom, hạch toán theo phương pháp vốn CSH từ 01/2026), giáo dục (FPT Edu)",
-  "customer": "Doanh nghiệp IT trong/ngoài nước (offshore Nhật Bản/Mỹ/Châu Âu), học sinh-sinh viên hệ thống FPT Edu, thuê bao viễn thông bán lẻ",
-  "ops": "Biên lợi nhuận gộp 34.0%, LN thuần HĐKD 22.0%. OCF Q1 âm -2.847,8 tỷ VND (mùa vụ — phải thu tăng, phải trả người lao động/thuế giảm mạnh sau chi trả cuối 2025). Đổi phương pháp hợp nhất FTEL (toàn bộ → vốn chủ sở hữu) khiến doanh thu thuần giảm danh nghĩa -22,3% YoY nhưng +8,7% khi điều chỉnh cùng phương pháp; LNST +13,8% YoY (điều chỉnh).",
-  "mgmt": "Tăng trưởng nổi bật tại Châu Âu (+44,4%) và Nhật Bản; lợi nhuận công ty liên kết +36% YoY. Báo cáo Q2-2026 quá hạn 15 ngày (hạn 30/07/2026) — VPS-extraction vẫn dừng ở Q1-2026, PDF đã có trên hệ thống từ 01/08.",
-  "ey_spread": {
+  "cycle_id": "20260814-1800",
+  "slot": "bctc-analyst-slot-2",
+  "ts": "2026-08-14T18:05:45Z",
+  "product": "Xuat khau phan mem, tich hop he thong CNTT, dich vu vien thong (FPT Telecom), giao duc (FPT Edu).",
+  "customer": "Doanh nghiep CNTT trong nuoc va quoc te (Nhat Ban, My, Chau Au, APAC), khach hang vien thong ban le, sinh vien he thong giao duc FPT.",
+  "ops": "Bien loi nhuan gop Q1-2026 34.0%, loi nhuan thuan HDKD 22.0%; ROE (sector-comp, annualized) 28.3% vuot troi nganh (10.6%); PE 13.8 discount -20% so median nganh du PB premium +136%.",
+  "mgmt": "Doanh thu thuan giam 22.3% YoY do doi phuong phap hop nhat FTEL (tu hop nhat toan bo sang von chu so huu); so lieu dieu chinh cung phuong phap cho thay tang truong thuc +8.7% doanh thu, +13.8% LNST YoY - khong phai suy giam hoat dong kinh doanh cot loi.",
+  "valuation": {
     "pe": 13.8,
     "sector_median_pe": 17.3,
-    "roe_pct": 28.3,
-    "sector_median_roe_pct": 10.6,
     "earning_yield_pct": 7.246,
     "max_deposit_rate_pct": 5,
-    "ey_spread_pp": 2.25,
-    "verdict": "FAIR"
+    "ey_spread_pp": 2.246,
+    "verdict": "FAIR",
+    "regime": "NEUTRAL",
+    "rate_sensitive_headwind": false,
+    "gbond_regime_signal": "unavailable — no G-Bond 10Y yield source (only NVL corporate bond seed data returned)"
+  },
+  "kinhdich": {
+    "que": "Su (7)",
+    "xu_huong": "TRUNG TINH",
+    "tin_hieu": "GIU",
+    "do_tin_cay_pct": 37
+  },
+  "data_quality": {
+    "source": "get_bctc_full",
+    "period_shown": "2026-Q1",
+    "latest_period_extracted": "2026-Q2 NOT extracted — Q2 PDF on file since 2026-08-01, VPS extraction lag now 14d+",
+    "stale": true,
+    "stale_age_hours": 75.47,
+    "confidence_pct": 81
   },
   "esc_gate": {
-    "esc1_accounting_manipulation": "UNEVALUABLE (no Bash/Glob grant — E1 pass artifacts not enumerable)",
-    "esc2_balance_sheet": {
+    "esc_1": "unevaluable — no Bash/Glob grant, cannot run 6-pass trick detection",
+    "esc_2": {
       "result": false,
-      "imbalance_pct": 0,
-      "note": "balance_check:PASSED confirmed in refined B01 table (68.586.094.785.217 = 68.586.094.785.217)"
+      "imbalance_pct": 0
     },
-    "esc3_ocf_vs_np": {
+    "esc_3": {
       "result": "DATA-COVERAGE-LIMITED",
       "quarters_returned": 3,
       "quarters_required": 4,
       "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
       "coverage_guard_held": true
     },
-    "esc4_nonop_or_relatedparty": {
+    "esc_4": {
       "result": false,
-      "non_operating_share_pct": 2,
-      "formula": "(PretaxProfit-OperatingProfit)/PretaxProfit = (2,803,844,281,676-2,747,763,827,050)/2,803,844,281,676"
+      "non_operating_share_pct": 2
     },
-    "esc5_refine_confidence": {
+    "esc_5": {
       "result": true,
       "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
-      "low_confidence_units": [
+      "low_confidence_unit_ids": [
         "unit-0008",
         "unit-0009",
         "unit-0010",
@@ -51,34 +66,18 @@
         "unit-0014"
       ],
       "min_confidence": 0.45,
-      "refined_at": "2026-05-31 11:19:09",
       "escalation_status": "GUARD-HELD",
       "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
-    },
-    "trigger_id": "ESC-5",
-    "note": "Only ESC-5 fires (TRUE). Guard already held by prior cycle re-arm (expires ~2026-08-14T18:12Z) — no re-emit this cycle."
+    }
   },
-  "kinhdich": {
-    "hexagram": "Que 7 - Su",
-    "trend": "TRUNG TINH",
-    "signal": "GIU",
-    "confidence_pct": 38
-  },
-  "data_quality": {
-    "bctc_period_extracted": "2026-Q1",
-    "bctc_stale": true,
-    "stale_age_hours": 72.46,
-    "vps_push_sla_hours": 48,
-    "q2_2026_deadline": "2026-07-30",
-    "q2_2026_status": "QUA HAN (15 ngay)",
-    "legal_risk_match": false,
-    "insider_signal": "khong dang ke",
-    "chain_findings_30min": 0
-  },
-  "as_of": "2026-08-14T15:04:00Z",
+  "insider_signals": "no significant insider activity",
+  "evidence_fragments_recorded": [
+    "bctc_roe_strong id=1303",
+    "bctc_report_overdue id=1304"
+  ],
   "_processed": {
-    "fingerprint": "b2985675e6375640429956a03c6764da9a86a3189f4bc7b2279f586c2814a7b5",
-    "processedAt": "2026-08-14T15:20:54Z",
+    "fingerprint": "a4ce19e658cbc9c7157606d35bf043e49e0fcffcf43013e2b2c8cdba74345951",
+    "processedAt": "2026-08-14T18:19:54Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

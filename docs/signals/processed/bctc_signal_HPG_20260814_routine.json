@@ -4,69 +4,68 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "net_profit_delta_pct": null,
-  "product": "Thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ; mảng nông nghiệp (chăn nuôi heo, gia cầm, thức ăn chăn nuôi)",
-  "customer": "Xây dựng dân dụng/công nghiệp trong nước, hạ tầng, xuất khẩu HRC; kênh phân phối nông sản/thực phẩm cho mảng nông nghiệp",
-  "ops": "Biên lợi nhuận gộp 15.8% (thấp hơn ngành thép nói chung do chi phí nguyên liệu). Operating Profit trích xuất = 0 tỷ VND — lỗi trích xuất cấu trúc kéo dài (cờ hệ thống: 'Net profit exceeds gross profit — possible non-operating income'), KHÔNG dùng cho ESC-4. Dòng tiền HĐKD Q1 (get_cash_flow) = 0 (cùng lỗi trích xuất, ocf_source=ocr).",
-  "mgmt": "LNST đạt 9.055,9 tỷ VND (biên 17,1%), vượt cả lợi nhuận gộp — bất thường do lỗi trích xuất operating_profit, không phải bằng chứng gian lận. Báo cáo Q2-2026 quá hạn 15 ngày (hạn 30/07/2026); PDF đã có trên hệ thống từ 01/08, VPS-extraction chưa xử lý.",
-  "ey_spread": {
+  "cycle_id": "20260814-1800",
+  "slot": "bctc-analyst-slot-2",
+  "ts": "2026-08-14T18:05:45Z",
+  "product": "San xuat thep xay dung, thep cuon can nong (HRC), ong thep va ton mang - chuoi gia tri khep kin tu quang sat den thanh pham.",
+  "customer": "Nha thau xay dung, nha phan phoi thep noi dia, khach hang xuat khau (ASEAN, My, EU).",
+  "ops": "Bien loi nhuan gop Q1-2026 chi 15.8% nhung loi nhuan sau thue vuot loi nhuan gop (9.055,9 ty > 8.365,1 ty) - dau hieu thu nhap ngoai hoat dong lon; operating_profit=0 loi trich xuat cau truc (22nd+ chu ky chua khac phuc).",
+  "mgmt": "ROE (sector-comp, annualized) 12.7% tren trung vi nganh thep (2.9%); PE 14.2 discount -57% so median nganh - dinh gia re tuong doi du du lieu van hanh (operating profit) con loi trich xuat, can than trong khi dien giai chat luong loi nhuan.",
+  "valuation": {
     "pe": 14.2,
     "sector_median_pe": 32.6,
-    "roe_pct": 12.7,
-    "sector_median_roe_pct": 2.9,
     "earning_yield_pct": 7.042,
     "max_deposit_rate_pct": 5,
-    "ey_spread_pp": 2.04,
-    "verdict": "FAIR"
+    "ey_spread_pp": 2.042,
+    "verdict": "FAIR",
+    "regime": "NEUTRAL",
+    "rate_sensitive_headwind": false
+  },
+  "kinhdich": {
+    "que": "Phuc (24)",
+    "xu_huong": "THUAN LOI",
+    "tin_hieu": "GIU",
+    "do_tin_cay_pct": 100
+  },
+  "data_quality": {
+    "source": "get_bctc_full",
+    "period_shown": "2026-Q1",
+    "latest_period_extracted": "2026-Q2 NOT extracted — Q2 PDF on file since 2026-08-01, VPS extraction lag now 14d+",
+    "stale": true,
+    "stale_age_hours": 75.47,
+    "confidence_pct": 80,
+    "validation": "passed_with_warnings — net profit exceeds gross profit, possible non-operating income"
   },
   "esc_gate": {
-    "esc1_accounting_manipulation": "UNEVALUABLE (no Bash/Glob grant — E1 pass artifacts not enumerable)",
-    "esc2_balance_sheet": {
+    "esc_1": "unevaluable — no Bash/Glob grant, cannot run 6-pass trick detection",
+    "esc_2": {
       "result": false,
       "imbalance_pct": 0
     },
-    "esc3_ocf_vs_np": {
+    "esc_3": {
       "result": "DATA-COVERAGE-LIMITED",
       "quarters_returned": 3,
       "quarters_required": 4,
       "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
       "coverage_guard_held": true
     },
-    "esc4_nonop_or_relatedparty": {
+    "esc_4": {
       "result": "DISCARDED",
-      "reason": "operating_profit=0 (corrupt structured extract, 22nd+ consecutive cycle) — non_operating_share formula undefined on this input, not evaluated"
+      "note": "operating_profit=0 corrupt in structured extract, non_operating_share undefined"
     },
-    "esc5_refine_confidence": {
+    "esc_5": {
       "result": false,
-      "report_id": null,
-      "existing_refine_status": "PARTIAL",
-      "note": "refine not yet DONE for this report"
-    },
-    "trigger_id": null,
-    "note": "No ESC flag fires TRUE this cycle — no escalation."
+      "note": "report_id=null, refine_status=PARTIAL — refine not complete"
+    }
   },
-  "kinhdich": {
-    "hexagram": "Que 24 - Phuc",
-    "trend": "THUAN LOI",
-    "signal": "GIU",
-    "confidence_pct": 100
-  },
-  "data_quality": {
-    "bctc_period_extracted": "2026-Q1",
-    "bctc_stale": true,
-    "stale_age_hours": 72.46,
-    "vps_push_sla_hours": 48,
-    "q2_2026_deadline": "2026-07-30",
-    "q2_2026_status": "QUA HAN (15 ngay)",
-    "known_extraction_defect": "operating_profit=0, EBITDA=0 — structured-extract bug, 22nd+ cycle unresolved",
-    "legal_risk_match": false,
-    "insider_signal": "khong dang ke",
-    "chain_findings_30min": 0
-  },
-  "as_of": "2026-08-14T15:04:00Z",
+  "insider_signals": "no significant insider activity",
+  "evidence_fragments_recorded": [
+    "bctc_roe_ratio id=1305",
+    "bctc_report_overdue id=1306"
+  ],
   "_processed": {
-    "fingerprint": "0809255a089be503a0338c7f1b8ccc5f3400a99230fbb5b4323c504b3725b3c6",
-    "processedAt": "2026-08-14T15:20:54Z",
+    "fingerprint": "1c2f3ea9d0be1b657bd785e1d416fa7818ee458a967048932fe4ccb8689f3fac",
+    "processedAt": "2026-08-14T18:19:54Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

@@ -4,68 +4,66 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "net_profit_delta_pct": null,
-  "product": "Ngân hàng bán buôn/bán lẻ, tài trợ thương mại quốc tế, kinh doanh ngoại hối, bancassurance",
-  "customer": "Doanh nghiệp lớn/SOE, khách hàng bán lẻ đô thị, doanh nghiệp xuất nhập khẩu",
-  "ops": "Thu nhập lãi thuần 17.421 tỷ VND. LN thuần HĐKD/doanh thu = 80.9% (đặc thù ngành ngân hàng — chi phí hoạt động thấp tương đối). Biên LNST/doanh thu 54.3%. ROE 16.7% — DƯỚI trung vị ngành (17.6%), yếu hơn nhóm CTG/BID/MBB/ACB/SHB (18-21%).",
-  "mgmt": "EPS 15 VND/cp Q1. Dòng tiền nước ngoài 5 phiên: -91K cp net nhưng MẠNH HƠN trung bình ngành (-111K cp net). Báo cáo Q2-2026 hạn nộp 14/08/2026 (hôm nay) — trạng thái SẮP ĐẾN, chưa quá hạn.",
-  "ey_spread": {
+  "cycle_id": "20260814-1800",
+  "slot": "bctc-analyst-slot-2",
+  "ts": "2026-08-14T18:05:45Z",
+  "product": "Ngan hang thuong mai quoc doanh hang dau - huy dong von, tin dung doanh nghiep/ban le, dich vu thanh toan quoc te, bancassurance.",
+  "customer": "Doanh nghiep lon, SME, khach hang ban le thu nhap trung-cao, doi tac thuong mai quoc te (thanh toan XNK).",
+  "ops": "Loi nhuan thuan tu HDKD chiem 80.9% doanh thu; OCF/NI ratio Q1-2026 = 1.37 (lanh manh, duoi nguong phan ky 40%); ROE (sector-comp) 16.7% duoi trung vi nganh NH (17.6%).",
+  "mgmt": "PE 14.1 premium +57% so median nganh ngan hang - dinh gia cao hon peer du ROE duoi trung vi; dong von ngoai 5 phien gan nhat MANH HON nganh (-91K cp so voi -111K cp nganh); BCTC Q2-2026 den han nop dung hom nay (14/08), chua qua han.",
+  "valuation": {
     "pe": 14.1,
     "sector_median_pe": 9,
-    "roe_pct": 16.7,
-    "sector_median_roe_pct": 17.6,
     "earning_yield_pct": 7.092,
     "max_deposit_rate_pct": 5,
-    "ey_spread_pp": 2.09,
-    "verdict": "FAIR"
+    "ey_spread_pp": 2.092,
+    "verdict": "FAIR",
+    "regime": "NEUTRAL",
+    "rate_sensitive_headwind": false
+  },
+  "kinhdich": {
+    "que": "Lam (19)",
+    "xu_huong": "THUAN LOI",
+    "tin_hieu": "GIU",
+    "do_tin_cay_pct": 100
+  },
+  "data_quality": {
+    "source": "get_bctc_full",
+    "period_shown": "2026-Q1",
+    "latest_period_extracted": "2026-Q2 NOT extracted — Q2 PDF on file since 2026-08-01, VPS extraction lag now 14d+",
+    "stale": true,
+    "stale_age_hours": 75.47,
+    "confidence_pct": 75
   },
   "esc_gate": {
-    "esc1_accounting_manipulation": "UNEVALUABLE (no Bash/Glob grant — E1 pass artifacts not enumerable)",
-    "esc2_balance_sheet": {
+    "esc_1": "unevaluable — no Bash/Glob grant, cannot run 6-pass trick detection",
+    "esc_2": {
       "result": false,
       "imbalance_pct": 0.37
     },
-    "esc3_ocf_vs_np": {
+    "esc_3": {
       "result": false,
       "quarters_returned": 4,
-      "ocf_ni_ratio_q1_2026": 1.368,
-      "divergence_ratio": 0.368,
-      "threshold": 0.4
+      "ocf_ni_ratio": 1.368,
+      "divergence_ratio": 0.368
     },
-    "esc4_nonop_or_relatedparty": {
+    "esc_4": {
       "result": "N/A",
-      "reason": "Bank — non_operating_share (operating-profit-based) formula not meaningful for banking P&L structure"
+      "note": "bank — non_operating_share heuristic not applicable to credit-institution P&L structure"
     },
-    "esc5_refine_confidence": {
+    "esc_5": {
       "result": false,
-      "report_id": null,
-      "existing_refine_status": "PARTIAL",
-      "note": "refine not yet DONE for this report"
-    },
-    "trigger_id": null,
-    "note": "No ESC flag fires TRUE this cycle — no escalation."
+      "note": "report_id=null, refine_status=PARTIAL — refine not complete"
+    }
   },
-  "kinhdich": {
-    "hexagram": "Que 19 - Lam",
-    "trend": "THUAN LOI",
-    "signal": "GIU",
-    "confidence_pct": 100
-  },
-  "data_quality": {
-    "bctc_period_extracted": "2026-Q1",
-    "bctc_stale": true,
-    "stale_age_hours": 72.46,
-    "vps_push_sla_hours": 48,
-    "q2_2026_deadline": "2026-08-14",
-    "q2_2026_status": "SAP DEN (chua qua han)",
-    "legal_risk_match": false,
-    "insider_signal": "khong dang ke",
-    "chain_findings_30min": 0
-  },
-  "as_of": "2026-08-14T15:04:00Z",
+  "insider_signals": "no significant insider activity",
+  "evidence_fragments_recorded": [
+    "bctc_roe_strong id=1307"
+  ],
+  "deadline_watch": "Q2-2026 deadline 14/08/2026 = TODAY, status SAP DEN (not yet overdue)",
   "_processed": {
-    "fingerprint": "6ee40a44e74d9d4e04d0695c2429852145b683fd73f7f421a0c32aa67dbc1253",
-    "processedAt": "2026-08-14T15:20:54Z",
+    "fingerprint": "c487db9e6af8284f8b4ac2659e0329e2d9e8cb9947ee1975e03ac57ebecfedf1",
+    "processedAt": "2026-08-14T18:19:54Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-08-14T18:04:20Z",
-    "matched_slots": ["bctc-analyst-slot-2"],
-    "won_slots": ["bctc-analyst-slot-2"],
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-2"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/bctc-analyst/flow/main.md"],
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 0,
     "errors": [],
@@ -21,7 +27,9 @@
     "due_reasons": {},
     "cadence_minutes": {},
     "last_fired_timestamp": "2026-08-14T18:04:09Z",
-    "last_fired_slots": ["bctc-analyst-slot-2"],
+    "last_fired_slots": [
+      "bctc-analyst-slot-2"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +41,11 @@
     "note": "pressure-state.json stale (age~21.5min>20min) -> legacy cadence fallback; single slot bctc-analyst-slot-2 fired, no collisions/suppressions"
   },
   "priority": "low",
-  "createdAt": "2026-08-14T18:04:20Z"
+  "createdAt": "2026-08-14T18:04:20Z",
+  "_processed": {
+    "fingerprint": "f4169ee823edce2c6d1135f375ffe295a18c65e0735625522101b4f9a9fc0155",
+    "processedAt": "2026-08-14T18:19:54Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

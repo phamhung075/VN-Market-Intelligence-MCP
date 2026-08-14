@@ -4,64 +4,55 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "net_profit_delta_pct": null,
-  "product": "Phát triển bất động sản khu dân cư/khu đô thị (Đất Xanh Group) — bán hàng, dịch vụ môi giới BĐS",
-  "customer": "Người mua nhà ở thương mại, nhà đầu tư thứ cấp thị trường BĐS phía Nam",
-  "ops": "Không có dữ liệu BCTC trích xuất (\"Chưa có dữ liệu BCTC\") — persistent gap, 26+ chu kỳ liên tiếp. Không thể đánh giá biên lợi nhuận/cơ cấu chi phí. Diễn biến giá đáng chú ý hôm nay: DXG +6.0% trong khi ngành BĐS -1.3% trung bình, khối lượng đột biến 2.3x trung bình (nhiều cảnh báo HIGH price_surge/volume_spike liên tiếp từ 08:41-08:59 UTC), dòng tiền nước ngoài 5 phiên +129K cp net (MẠNH HƠN ngành).",
-  "mgmt": "Không thể đánh giá track-record do thiếu dữ liệu BCTC gốc. Báo cáo Q2-2026 quá hạn 15 ngày (hạn 30/07/2026). Tín hiệu bất thường dòng tiền HĐKD từ chu kỳ trước (bctc-analyst-20260813T001500Z.json, phát 2026-08-13) vẫn PENDING dev-team xử lý — không phát lại tín hiệu này chu kỳ này để tránh trùng lặp.",
-  "ey_spread": {
+  "cycle_id": "20260814-1800",
+  "slot": "bctc-analyst-slot-2",
+  "ts": "2026-08-14T18:05:45Z",
+  "product": "Phat trien bat dong san nha o va khu do thi (Dat Xanh Group) - du an can ho, dat nen, khu dan cu tai TP.HCM va cac tinh ve tinh.",
+  "customer": "Nguoi mua nha o thuc va nha dau tu ca nhan trong nuoc; kenh phan phoi qua san moi gioi rieng (Dat Xanh Services).",
+  "ops": "get_bctc_full tra ve 'Chua co du lieu BCTC' 27+ chu ky lien tiep du PDF Q1/Q2-2026 da co tren he thong tu 03/08 - loi pipeline trich xuat, khong phai thieu bao cao; ROE sector-comp 1.9% thap hon nhieu trung vi nganh BDS (7.3%).",
+  "mgmt": "PE 66.5 premium +312% so median nganh - dinh gia cuc ky dat tren nen tang loi nhuan yeu; gia co phieu tang +5.99% hom nay voi khoi luong 2.3x trung binh va dong von ngoai duong 129K cp - bien dong gia khong duoc xac nhan boi du lieu co ban (data gap), can than trong phan biet catalyst tin tuc/ky thuat voi nen tang tai chinh.",
+  "valuation": {
     "pe": 66.5,
     "sector_median_pe": 16.1,
-    "roe_pct": 1.9,
-    "sector_median_roe_pct": 7.3,
     "earning_yield_pct": 1.504,
     "max_deposit_rate_pct": 5,
-    "ey_spread_pp": -3.5,
+    "ey_spread_pp": -3.496,
     "verdict": "AVOID",
-    "note": "PE/ROE nguồn get_sector_comparison (không phụ thuộc get_bctc_full) — vẫn khả dụng dù thiếu BCTC gốc"
-  },
-  "esc_gate": {
-    "esc1_accounting_manipulation": "UNEVALUABLE (no Bash/Glob grant)",
-    "esc2_balance_sheet": {
-      "result": "UNEVALUABLE",
-      "reason": "Chưa có dữ liệu BCTC"
-    },
-    "esc3_ocf_vs_np": {
-      "result": "UNEVALUABLE",
-      "reason": "Chưa có dữ liệu BCTC"
-    },
-    "esc4_nonop_or_relatedparty": {
-      "result": "UNEVALUABLE",
-      "reason": "Chưa có dữ liệu BCTC"
-    },
-    "esc5_refine_confidence": {
-      "result": "UNEVALUABLE",
-      "reason": "Chưa có dữ liệu BCTC — không có report_id để tra cứu refine"
-    },
-    "trigger_id": null,
-    "note": "No escalation possible — full ESC gate blocked by absent BCTC data, not a clean-pass."
+    "regime": "NEUTRAL",
+    "rate_sensitive_headwind": false,
+    "note": "valuation_verdict=AVOID — do NOT post bullish signal"
   },
   "kinhdich": {
-    "hexagram": "Que 64 - Vi Te",
-    "trend": "TRUNG TINH",
-    "signal": "MUA",
-    "confidence_pct": 38,
-    "note": "Đổi từ Que 63 (Ky Te, THUAN LOI, 100%) chu kỳ trước — Vi Te là quẻ đối lập/bổ sung của Ky Te, phản ánh biến động giá mạnh hôm nay"
+    "que": "Vi Te (64)",
+    "xu_huong": "TRUNG TINH",
+    "tin_hieu": "MUA",
+    "do_tin_cay_pct": 37,
+    "note": "kinhdich signal (MUA) conflicts with valuation verdict (AVOID) — valuation gate takes precedence per stage-analyze.md, no bullish signal posted"
   },
   "data_quality": {
-    "bctc_period_extracted": "NONE",
-    "bctc_status": "Chua co du lieu BCTC (26+ chu ky lien tiep)",
-    "q2_2026_deadline": "2026-07-30",
-    "q2_2026_status": "QUA HAN (15 ngay)",
-    "legal_risk_match": false,
-    "insider_signal": "khong dang ke",
-    "chain_findings_30min": 0,
-    "price_action_today": "+5.99%, volume 2.3x avg, multiple HIGH price_surge/volume_spike alerts"
+    "source": "get_bctc_full",
+    "status": "Chua co du lieu BCTC",
+    "occurrence": "27th+ consecutive cycle",
+    "note": "Q1-2026 and Q2-2026 PDFs both on file since 2026-08-02/08-03 — extraction-pipeline gap, not a missing filing",
+    "pending_signal": "bctc-data-quality-anomaly still PENDING dev-team pickup (bctc-analyst-20260813T001500Z.json from c162), not re-emitted this cycle per no-spam policy"
   },
-  "as_of": "2026-08-14T15:04:00Z",
+  "esc_gate": {
+    "esc_1": "unevaluable — no BCTC line-item data",
+    "esc_2": "unevaluable — no BCTC line-item data",
+    "esc_3": "unevaluable — net_profit_total unavailable (get_bctc_full has no data), cash-flow figures returned by get_cash_flow show implausible OCR magnitudes (e.g. operating_cf ~4.2e18) not usable for divergence calc",
+    "esc_4": "unevaluable — no BCTC line-item data",
+    "esc_5": "unevaluable — no report_id lookup attempted (no confirmed BCTC data this cycle)"
+  },
+  "insider_signals": "no significant insider activity",
+  "price_action_note": "DXG +5.99% today vs sector -1.3%, volume 2.3x avg, multiple HIGH price_surge/volume_spike alerts 08:41-08:59Z UTC, foreign flow +129K cp net (stronger than sector) — flagged for market-watcher/alert-commander awareness, not this agent's job to act on",
+  "evidence_fragments_recorded": [
+    "bctc_valuation_premium id=1308",
+    "bctc_roe_ratio id=1309",
+    "bctc_report_overdue id=1310"
+  ],
   "_processed": {
-    "fingerprint": "d5449debbc982d7b39804c9fa0a8fffbdb75b5640625528555c11a2de6864dbe",
-    "processedAt": "2026-08-14T15:20:54Z",
+    "fingerprint": "a8d081542538c7ae59a62e803a9b9af51c0ce4f2cbd7ada54e7bc2927ede5bb6",
+    "processedAt": "2026-08-14T18:19:54Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
