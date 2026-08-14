@@ -12,5 +12,11 @@
     "feedback_auditor_notebook_cycle_counter_regressed_c385_to_c4.md (2026-08-08/2026-08-14, numbering/ordering shape, root cause already found by po 2026-08-14T02:02Z)",
     "2026-08-14T04:17:44Z c89->c90 commit fefa04067 (2nd occurrence of the truncation shape, this review's new evidence)"
   ],
-  "board_row_ref": "FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED"
+  "board_row_ref": "FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED",
+  "_processed": {
+    "fingerprint": "f2701f2275397d9746ed6ad9970a53cd682d672695962f850b896457c5f9c989",
+    "processedAt": "2026-08-14T04:51:08Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

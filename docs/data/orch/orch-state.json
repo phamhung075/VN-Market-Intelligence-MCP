@@ -647,7 +647,7 @@
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
         "status": "NEW",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-14.json"
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-14.json"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -19269,7 +19269,7 @@
         "last_served_tick": "2026-08-14T00:21:45Z"
       }
     },
-    "_updated_at": "2026-08-14T04:23:59Z",
+    "_updated_at": "2026-08-14T04:51:08Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19976,6 +19976,301 @@
         "drained_at": "2026-08-14T04:23:59Z",
         "routed_to": "PO Step 0-SIG",
         "deviation_note": "payload_ref (docs/data/db-integrity-history.json, 900KB shared audit ledger) NOT inlined whole — extracted the single findings[] entry matching this signal_id instead, per prior-cycle precedent in docs/agent-memory/notebooks/dev-team.md (2026-08-14 earlier entry)"
+      },
+      {
+        "envelope_id": "f2701f2275397d9746ed6ad9970a53cd682d672695962f850b896457c5f9c989",
+        "source": "file",
+        "from": "agents-architect",
+        "to": "po",
+        "type": "improvement_proposal",
+        "priority": "normal",
+        "payload": "docs/improvement-proposals/IMP-20260814-system-auditor-notebook-compose-actuator-never-wired.md",
+        "createdAt": "2026-08-14T04:26:46Z",
+        "drained_at": "2026-08-14T04:51:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "27a7f837ca516a840ce08b5b4a7c9ad7116c3caf75280b7ef3434e96c46a5ea3",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 63,
+          "cap": 200,
+          "byte_count": 22578,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 10578,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-14T04:31:10Z",
+        "drained_at": "2026-08-14T04:51:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f2cacc870c5f29541db98b620a8843a6f928e9c1feb92d7076a44b220b8b9f69",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "system",
+        "type": "cowork-tick-telemetry",
+        "priority": "normal",
+        "payload": {
+          "tick": "2026-08-14T04:30Z",
+          "matched_slots": [
+            "alert-commander-market"
+          ],
+          "won_slots": [
+            "alert-commander-market"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "due_reasons": {
+            "alert-commander-market": "cron"
+          },
+          "cadence_minutes": {
+            "alert-commander-market": null
+          },
+          "last_fired_timestamp": "2026-08-14T04:36:19Z",
+          "last_fired_slots": [
+            "alert-commander-market"
+          ],
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "04:30"
+        },
+        "createdAt": "2026-08-14T04:36:28Z",
+        "drained_at": "2026-08-14T04:51:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4f840b6d6e53dd1e47320402c41e168e50c3cad4ea4dff85b577ce008a22f3e2",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-14T04:30:05Z",
+        "drained_at": "2026-08-14T04:51:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9d8534441235b303f5364d9c8a3d80d0ffe25b9fe59cdac81fa69591688b1c4d",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 34,
+          "cap": 200,
+          "byte_count": 12964,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T04:30:05Z",
+        "drained_at": "2026-08-14T04:51:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "165df9ab43085e14aed21008d2e05a6a3f442276800e5798ab49bbeab5f36fed",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 34,
+          "cap": 200,
+          "byte_count": 12964,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T04:32:03Z",
+        "drained_at": "2026-08-14T04:51:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ddc980252eb336bd67b919a2e22356d7a1e98d5445bc3bebde2c607b014e0f84",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12877,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T04:30:06Z",
+        "drained_at": "2026-08-14T04:51:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "70fdbf2422dc654eb82494dc9877f492490232b16a117e38b19ca57576cbde3e",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12851,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T04:31:09Z",
+        "drained_at": "2026-08-14T04:51:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2910977185305556d2e0f6d0b4ed2a798478f06fc8bb358ff13e8afc15b2d9d9",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12851,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T04:32:04Z",
+        "drained_at": "2026-08-14T04:51:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "312d288e74dd43fe8dbb1785a00e40673b22b2614cf0bda86bf1efed5aae3082",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 83,
+          "cap": 200,
+          "byte_count": 14124,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T04:30:06Z",
+        "drained_at": "2026-08-14T04:51:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8bdb047c28ca962642424673020514e5faf35bb9c4dc524d6a342e582551bda1",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 83,
+          "cap": 200,
+          "byte_count": 14124,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T04:32:04Z",
+        "drained_at": "2026-08-14T04:51:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d7f7eb8419ac58846f2e354f85d10ba5e347637a8bc48077a5f392fb3320e7d2",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 29895,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T04:30:06Z",
+        "drained_at": "2026-08-14T04:51:08Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e71d034c63f58e4f4338e616948ad16fcc5e0ad0186d00cb200cae8a46587f7c",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 29895,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-14T04:32:03Z",
+        "drained_at": "2026-08-14T04:51:08Z",
+        "routed_to": "PO Step 0-SIG"
       }
     ],
     "last_po_triage_at": "2026-08-14T04:11:35Z",

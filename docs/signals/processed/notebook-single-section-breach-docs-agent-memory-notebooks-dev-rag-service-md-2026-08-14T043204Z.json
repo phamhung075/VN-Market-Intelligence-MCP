@@ -1,0 +1,23 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_single_section_overage_breach",
+  "priority": "high",
+  "createdAt": "2026-08-14T04:32:04Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+    "line_count": 83,
+    "cap": 200,
+    "byte_count": 14124,
+    "byte_cap": 12000,
+    "section_count": 1,
+    "reason": "only preamble+1 section remain; cannot prune further without data loss",
+    "action_required": "manual_split_to_archive"
+  },
+  "_processed": {
+    "fingerprint": "8bdb047c28ca962642424673020514e5faf35bb9c4dc524d6a342e582551bda1",
+    "processedAt": "2026-08-14T04:51:08Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
