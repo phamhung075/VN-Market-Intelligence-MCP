@@ -150,3 +150,14 @@
 - Smart-Skip applies (test-only change): DDD/security full scans skipped per flow's own rule; not needed since zero production files in the diff.
 **why-decision:** vc-approved, DONE_VERIFIED. Root-cause (independent real-clock `datetime('now')` recompute race, not a code regression) matches the row's own status_note and is corroborated by re-reading the untouched production function; fix is test-scope-only and deterministic (5s jitter margin, still far from the -40-day purge fixture).
 **why-change:** none — verdict matches the row's own claim.
+
+### STEP qa-S151 · qa · 2026-08-14T16:35:27Z
+**task-id:** FACTORY-RAG-delete-dead-sqlite-repo
+**what-done:** Direct-Commit Verify (`qa[]` row, no `.commit`/`.files[]` — PO's stale-triage note supplied fallback commit `768bee954`). Confirmed real, on `main` ancestry; `git show --stat` matches all 4 source files in dev-rag-service's own review_note (usecases.py, domain/repositories.py, infrastructure/repositories.py, test_rag_integration.py) plus journal/notebook/arch-doc trims.
+**what-considered:**
+- Ran pytest INSIDE the actual deployed `rag-service` image (never host), per non-bun-zone rule — full suite showed 12 pre-existing failures, but traced them: all in files unrelated to the deletion (test_dfr_p3_hybrid_search/test_embedder_idle_unload/test_gfd13_lazy_load/test_lancedb_compaction/test_rag_vector_index_build), caused by a documented stale-image gap (`requirements.txt`'s `httpx2` pin landed 08-14T10:18Z UTC, AFTER this image's 08:39Z build) — confirmed via `-S` blame + image `Created` timestamp, not assumed.
+- Ran the actually-touched integration test file directly: 6/6 pass, clean.
+- mypy (installed transiently in-image, scoped to the 3 touched production files): 21 pre-existing errors, none referencing the deleted `SQLiteAnalysisRepository`/`AnalysisRepositoryPort`/`sqlite3`/`analysis_repo` symbols (grep-confirmed zero hits) — deletion introduced no new errors.
+- `grep -rn SQLiteAnalysisRepository|AnalysisRepositoryPort apps/rag-service` + arch-docs: zero hits (clean removal, no dangling refs). `mock-guard.sh` PASS on the 3 touched production files.
+**why-decision:** vc-approved, DONE_VERIFIED. Deletion is behavior-neutral and complete; the only test-suite failures present are a pre-existing, already-documented, unrelated dependency-drift issue (not caused by or blocking this task).
+**why-change:** none — verdict matches the row's own review_note claim.
