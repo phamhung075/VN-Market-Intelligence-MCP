@@ -1,18 +1,10 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-08-13 20:13 UTC | **Sprint:** idle
+**Last updated:** 2026-08-14 00:10 UTC | **Sprint:** idle
 
 **Role:** Event-only alert dispatch (position-danger / watchlist-opportunity / CRITICAL-always) | **Cadence:** `*/15min` market hours (02:00–08:30 UTC) + 4h critical sweep | **Contract:** APPEND class, one `## c<NNN>` section per cycle per `.claude/skills/notebook-write/SKILL.md` AC-6.
 
 > **Structural reset (FIX-ALERT-COMMANDER-NOTEBOOK-SINGLE-BLOB-UNPRUNABLE, 2026-07-29):** prior history archived → `docs/agent-memory/notebooks/archive/alert-commander-archive-20260729.md`. One top-level `## c<NNN> · <ISO-timestamp>` section per cycle now.
-
-## c165 · 2026-08-13T12:11:04Z (slot=alert-commander-critical, tick=12:00)
-- Signals: bus 3 (hours_back=2) — VERIFIED_DECISION FPT/SSI id10866-10867 (read, low-sev echo, not an input signal_type) + URGENT_NEWS id10868 freshness-sla-monitor "SLA BREACH: news stale 31min" (recurring infra noise, standing-suppressed per 07-12 clarification). No verified_chain/chain_catalyst/legal_risk/crisis_velocity on bus. Fired: 0 | Suppressed: 1 (SLA noise) | MARKET: none. Fresh tick-snapshot `cycle-snapshot-12:06.json` (1min old) — skipped `get_cycle_bootstrap`, direct `get_macro_calendar`/`get_agent_signals`, gateway healthy (probe OK).
-- ChainCatalyst: 0 fired | 0 suppressed | event_types: [] (none on bus this cycle).
-- Watchlist-opp: no bullish candidate surfaced — `get_watchlist` shows 34/34 tickers red (VN-Index 1765.63 -27.55, broadly negative session, market CLOSED as of 08:59), no urgent_news/chain_catalyst bullish signal in bus to name a candidate — gate not satisfiable, skipped `get_kinhdich_reading` (no ticker to check).
-- Position-danger: `get_alerts(type=price)` clean (no active alerts, no stopLossHit); largest single-day move EIB -3.85% / VIC -3.53% (both <5% threshold) — gate fails.
-- CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, bus legal_risk clean, `get_crisis_early_warning` clean (no crisis signal; WARNING x7 corp-reputation BSR32/FRT46/HUT49/PLX34/VCB39.1/VJC39.1/VNM44, all <50 no DANGER-tier), no verified_chain in bus.
-- Regime: NEUTRAL (fallback — snapshot `.macro.text` carries Investment-Clock/carry/yield JSON, no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp) | vol ELEVATED (rv_20d_pctile=0.76, gk_vol_20d_pct=18.17, drawdown_252d=16.38%) | `get_vn_liquidity_state` degraded (OMO/interbank HTML fetch failed, policy_rates estimate) — logged, standard thresholds used | foreign_room market_saturation=22.2% (outflow_z_5d=0.32, top10) | Pivot window: false (`pivotWindowWarning=null`, next Sept 2026 PMI/CPI/FOMC/SBV). Silent exit — no MARKET/WORK send. `log_agent_work` id=1970.
 
 ## c166 · 2026-08-13T16:11:00Z (slot=alert-commander-critical, tick=16:00)
 - Signals: bus empty (hours_back=2, `get_agent_signals`: "Không có tín hiệu mới") — no urgent_news/verified_chain/chain_catalyst/legal_risk/crisis_velocity this cycle. Fired: 0 | Suppressed: 0 | MARKET: none. Fresh tick-snapshot `cycle-snapshot-16:07.json` (2min old) — skipped `get_cycle_bootstrap`/`get_macro_snapshot`, direct `get_macro_calendar`/`get_agent_signals`, gateway healthy.
@@ -29,3 +21,11 @@
 - Position-danger: `get_alerts(type=price)` clean (no active alerts, no stopLossHit); largest single-day move EIB -3.85% / VIC -3.53% (both <5% threshold) — gate fails.
 - CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, bus legal_risk clean, `get_crisis_early_warning` clean (no crisis signal; WARNING x7 corp-reputation BSR32/FRT46/HUT49/PLX34/VCB39.1/VJC39.1/VNM44, all <50 no DANGER-tier), no verified_chain in bus.
 - Regime: NEUTRAL (fallback — tick-snapshot `macro_snapshot.text` carries Investment-Clock/oil/gold/carry/yield block, no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp) | vol ELEVATED (rv_20d_pctile=0.76, gk_vol_20d_pct=18.17, drawdown_252d=16.38%) | `get_vn_liquidity_state` degraded (OMO blocked "no add/absorb rows found", interbank_1w blocked "VPS unreachable", policy_rates HTML-fallback estimate) — logged SKIP, standard thresholds used | foreign_room market_saturation=24.4% (outflow_z_5d=0.32, top10) | Pivot window: false (`pivotWindowWarning=null`, next Sept 2026 PMI/CPI/FOMC/SBV). Silent exit — no MARKET/WORK send. `log_agent_work` id=1979.
+
+## c168 · 2026-08-14T00:10:23Z (slot=alert-commander-critical, tick=00:00)
+- Signals: bus empty (hours_back=2, `get_agent_signals`: "Không có tín hiệu mới") — no urgent_news/verified_chain/chain_catalyst/legal_risk/crisis_velocity this cycle. Fired: 0 | Suppressed: 0 | MARKET: none. No fresh tick-snapshot (latest on disk `cycle-snapshot-21:07.json`, >2h stale) — direct `get_cycle_bootstrap`/`get_macro_snapshot`/`get_macro_calendar`/`get_agent_signals`, gateway healthy.
+- ChainCatalyst: 0 fired | 0 suppressed | event_types: [] (none on bus this cycle).
+- Watchlist-opp: no bullish candidate surfaced — bus empty, no urgent_news/chain_catalyst bullish signal to name a candidate; market broadly red (VN-Index 1765.63 -27.55, only MSN +0.60%/DGC +0.23% green, session closed as of 08:59) — gate not satisfiable, skipped `get_kinhdich_reading` (no ticker to check).
+- Position-danger: `get_alerts(type=price)` clean (no active alerts, no stopLossHit); largest single-day move EIB -3.85% / VIC -3.53% (both <5% threshold) — gate fails.
+- CRITICAL-always: `get_legal_risk_signals(days=1,hours_back=6)` clean, bus legal_risk clean, `get_crisis_early_warning` clean (no crisis signal; WARNING x7 corp-reputation BSR32/FRT46/HUT49/PLX34/VCB39.1/VJC39.1/VNM44, all <50 no DANGER-tier), no verified_chain in bus.
+- Regime: NEUTRAL (fallback — `macro_snapshot.text` carries Investment-Clock/oil/gold/carry/yield block, no Global-Liquidity line; carry.regime=NEUTRAL, carrySpread=1.37pp) | vol ELEVATED (rv_20d_pctile=0.76, gk_vol_20d_pct=18.17, drawdown_252d=16.38%) | `get_vn_liquidity_state` degraded (OMO blocked "no add/absorb rows found", interbank_1w blocked "VPS unreachable", policy_rates HTML-fallback estimate) — logged SKIP, standard thresholds used | foreign_room market_saturation=24.4% (outflow_z_5d=0.32, top10) | Pivot window: false (`pivotWindowWarning=null`, next Sept 2026 PMI/CPI/FOMC/SBV). Silent exit — no MARKET/WORK send. `log_agent_work` id=1982.
