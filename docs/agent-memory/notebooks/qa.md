@@ -1,5 +1,17 @@
 # QA — Notebook
 
+## cycle-730 · 2026-08-14T14:29:32Z · FIX-PO-MINT-ACTUATOR-REGRESSION-VERIFIER-SCRIPT (developer, commit `f9e5113534a`) — Direct-Commit Verify, APPROVED, DONE_VERIFIED
+
+dev-team Review-Lane QA-Drain spawn (`mode=verify-committed`), `qa[]` row, `.commit`+`.files[]`/`.status_note` present (post-drain shape). Confirmed real (full-hash match), on `main` ancestry; `git show --stat` matches claimed deliverable exactly: new `scripts/audits/po-mint-orchapply-actuator-verify.sh` (239L) + `.test.sh` (218L), `docs/WORK.md` entry — no `apps/` TS/JS touched (bun test/tsc structurally N/A, confirmed via diff stat, not assumed).
+
+Ran everything myself, not trusted from commit prose: `po-mint-orchapply-actuator-verify.test.sh` → 7/7 (DoD-1..DoD-7 all PASS, exact match to claim). Live fleet-wide run of the script itself against the real corpus (all 15 `docs/agents/po/flow/*.md`): 13 PASS / 2 FAIL (`triage-signals.md`, `triage-signals-longtail.md`), same defect class the row claims (board-mutation prose/table-cell rows, zero `orch-apply.sh` pipe). `shellcheck` 0.11.0 clean both files, `bash -n` clean, security greps (`process.env`/secret/password/token) clean, `mock-guard.sh` PASS (bash scripts outside its TS/Go scan scope). Both files executable (`rwxr-xr-x`).
+
+Two non-blocking observations recorded, neither disputes the AC: (1) live violation count today is 6 lines, not the 8 the script's own header/status_note cite at authoring time (Aug 6) — traced via `git log --follow` to 2 unrelated later commits (Aug 9, Aug 14) editing `triage-signals.md`, naturally shifting the corpus; this is exactly what a regression verifier is meant to keep re-measuring, not a script defect. (2) `docs/agents/po/flow/main.md:173` still literally reads "spec, unimplemented" though the script now exists — stale doc pointer, out of this task's own AC-trailer scope, left for a future doc-self-heal pass.
+
+DJ: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-21.md` STEP qa-S133.
+
+VERDICT: `DONE_VERIFIED`, zero blocking ISSUE. `[QA] Review Record (direct-commit verify)` appended (` || ` separator) to the row's own existing `status_note` field, preserving the developer's original note; `verification.raw_probe` attached on the same write. Moved `task_board.qa[]`→`done_verified[]` via `orch-apply.sh` (conservation clean, task_total 736=736, signal_total 25=25). Task-lock (`task:FIX-PO-MINT-ACTUATOR-REGRESSION-VERIFIER-SCRIPT`) held by the dev-team dispatcher on my behalf per spawn instruction — no `task_release` call made here, dispatcher's finally-block/TTL is the authoritative release path.
+
 ## cycle-729 · 2026-08-14T13:22:00Z · FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (dev-rag-service, commit `0eb733b577a`) — Direct-Commit Verify, CODE PASS but AC unmet, BLOCKED (not done_verified)
 
 dev-team Review-Lane QA-Drain spawn (`mode=verify-committed`), `qa[]` row, `commit_sha` present on the row (post-drain field). Confirmed real + on `main` ancestry. `files[]` was stale from the original 2026-08-08 mint (still `embedder.py`, already flagged once by a prior 2026-08-12 QA round and never corrected) — corrected on this write to the true 9-file diff (`app_factory.py`, `infrastructure/{config,repositories}.py`, `pyproject.toml`, `requirements.txt`, new test, 2 architecture docs, new audit script).
