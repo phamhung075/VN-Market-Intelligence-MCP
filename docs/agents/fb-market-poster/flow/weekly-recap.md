@@ -24,6 +24,8 @@ Saturday cron fires: 13:07 UTC = 20:07 VN. `main.md` MODE ROUTER (VN_DOW=6) rout
 
 ## STEP 0 — Bootstrap
 
+**Step 0-GW — Gateway availability gate** → skill: `.claude/skills/gateway-availability-gate/SKILL.md` (agent-id=fb-market-poster; WEEKLY_RECAP path — probe before the STEP 0a dedup `task_claim` below, so a dead gateway never burns the publish-once marker)
+
 **STEP 0a — Publish-once dedup gate (WEEKLY_RECAP path)**
 
 Before starting expensive data-gathering, claim a week-keyed published marker. Guards against double-fire when standalone launchd crons and cowork slots (`fb-weekend`) briefly overlap, and ensures any re-spawn of the same weekend is a no-op.

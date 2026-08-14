@@ -27,6 +27,8 @@ This is the expected behavior — do NOT wait for or attempt to sync with digest
 
 ## STEP 0 — Bootstrap
 
+**Step 0-GW — Gateway availability gate** → skill: `.claude/skills/gateway-availability-gate/SKILL.md` (agent-id=fb-market-poster; WEEKLY_PREDICTION path — probe before the STEP 0a dedup `task_claim` below, so a dead gateway never burns the publish-once marker)
+
 **STEP 0a — Publish-once dedup gate (WEEKLY_PREDICTION path)**
 
 Before starting expensive data-gathering, claim a week-keyed published marker. Guards against double-fire when standalone launchd crons and cowork slots (`fb-weekend`) briefly overlap, and ensures any re-spawn of the same weekend is a no-op.

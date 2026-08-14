@@ -37,6 +37,8 @@ Capture cycle start anchor:
 CYCLE_START_UTC = date -u +"%Y-%m-%dT%H:%M:%SZ"
 ```
 
+**Step 0-GW — Gateway availability gate** → skill: `.claude/skills/gateway-availability-gate/SKILL.md` (agent-id=fb-market-poster; DAILY path — probe before the STEP 0a dedup `task_claim` below, so a dead gateway never burns the publish-once marker)
+
 **STEP 0a — Publish-once dedup gate (DAILY path)**
 
 Before starting expensive data-gathering, claim a date-keyed published marker. Guards against double-fire when standalone crons and cowork slots (`fb-daily`) briefly overlap, and ensures any re-spawn of the same tick is a no-op.
