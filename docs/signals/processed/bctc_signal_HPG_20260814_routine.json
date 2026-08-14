@@ -11,7 +11,7 @@
   "esc_gate": {
     "esc1_result": "UNEVALUABLE_NO_BASH_GLOB",
     "esc2_result": false,
-    "esc2_imbalance_pct": 0.0,
+    "esc2_imbalance_pct": 0,
     "esc3_result": "DATA-COVERAGE-LIMITED",
     "esc3_quarters_returned": 3,
     "esc3_quarters_required": 4,
@@ -48,5 +48,11 @@
     "confidence_pct": 80,
     "filing_status": "QUA_HAN"
   },
-  "ts": "2026-08-14T00:10:13Z"
+  "ts": "2026-08-14T00:10:13Z",
+  "_processed": {
+    "fingerprint": "44e26ec27938ee592b6a4c4ffd3c36ebd05ab1fa9bdc0a736f7b3f512dd647cd",
+    "processedAt": "2026-08-14T00:20:22Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

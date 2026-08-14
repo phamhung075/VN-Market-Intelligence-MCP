@@ -22,7 +22,7 @@
   },
   "valuation": {
     "pe": 14.1,
-    "sector_median_pe": 9.0,
+    "sector_median_pe": 9,
     "pb": 2.2,
     "sector_median_pb": 1.5,
     "roe_pct": 16.7,
@@ -46,5 +46,11 @@
     "confidence_pct": 75,
     "filing_status": "SAP_DEN"
   },
-  "ts": "2026-08-14T00:10:13Z"
+  "ts": "2026-08-14T00:10:13Z",
+  "_processed": {
+    "fingerprint": "3f8ce1fa27d4fb943c06a79ba334fff98d22265890483e5d01070b65ea0322e8",
+    "processedAt": "2026-08-14T00:20:22Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

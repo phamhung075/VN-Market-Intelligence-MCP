@@ -19057,9 +19057,40 @@
         "last_served_tick": "2026-08-14T00:21:45Z"
       }
     },
-    "_updated_at": "2026-08-14T00:59:51Z",
+    "_updated_at": "2026-08-14T01:25:29Z",
     "_updated_by": "dev-team",
-    "pending_triage_inbox": [],
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "12fc278ead82d41a3e0c998f0ba0d86a9c2e5f6b29054e0d3fcce6010c1e2cba",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-87a7a6d2",
+          "head_sha": "87a7a6d24a1a0dd58df6a2cabe2b28122f15715c",
+          "run_id": 31758121017,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31758121017",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 94638330892
+            }
+          ],
+          "fingerprint": "643d32b36aeb85b1fa0be360f0754e32cc1e342c76abd3289fd3b467f66fd9b0",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 87a7a6d24a1a0dd58df6a2cabe2b28122f15715c: bun test",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-14T00:58:35Z",
+        "drained_at": "2026-08-14T01:25:29Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-14T00:30:11Z",
     "last_po_triage_note": "po/triage-20260814T0007Z (dev-team Step 1, step1_triage rotation). INPUTS: 248 durable-inbox envelopes (147 already-triaged carry-over from the blocked f01645c90 clear + 101 net-new), 27 signal_queue rows, 49 unresolved telegram reports (ids 4797-4845). OUTPUT: BATCH of 3. NET-NEW MINTS: 1 (FIX-AUDITOR-A30-CRASHCLIFF-BRANCH-CANNOT-BE-A-CRASH-BY-CONSTRUCTION). DEDUP: all 9 net-new ci_red envelopes folded to zero new rows (gh run view 31752313877 --log-failed read at source: FAILEDFILE 1862c-transport-session-eviction / ALLZERO-OHLCV-FETCH / FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL, all 3 already carry open board rows); 22 sweep-guard bug-escalations -> FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK; 30 to=claude-manager-helper envelopes -> FIX-DEVTEAM-DRAIN-ROUTES-NON-PO-ENVELOPES-TO-PO-STEP0SIG; 16 bctc_signal + 10 cowork-fire/telemetry = informational, no defect. TWO REPORT CLASSES REFUTED AT SOURCE: (a) telegram 4799/4800 coverage-stamp ttl_seconds:30 is ALREADY FIXED — HEAD:scripts/agents-flow/coverage-stamp.sh:169 reads ttl_seconds:900, landed commit a63ab8b0d; (b) telegram 4842/4843/4844 audit-output-contract 'BUG' lines are the NEW verdict-token-integrity guard (commit 6f10770cb, FIX-AUDITOR-VERDICT-TRANSCRIPTION-PROSE-OVERRIDES-MACHINE-VERDICT DONE_VERIFIED efacf4f48) working as designed, not a regression.",
     "last_po_triage_consumed": 248,

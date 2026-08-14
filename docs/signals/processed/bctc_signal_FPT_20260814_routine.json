@@ -11,14 +11,14 @@
   "esc_gate": {
     "esc1_result": "UNEVALUABLE_NO_BASH_GLOB",
     "esc2_result": false,
-    "esc2_imbalance_pct": 0.0,
+    "esc2_imbalance_pct": 0,
     "esc3_result": "DATA-COVERAGE-LIMITED",
     "esc3_quarters_returned": 3,
     "esc3_quarters_required": 4,
     "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
     "coverage_guard_held": true,
     "esc4_result": false,
-    "esc4_non_operating_share_pct": 2.0,
+    "esc4_non_operating_share_pct": 2,
     "esc5_result": true,
     "esc5_report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
     "esc5_low_confidence_units": 7,
@@ -52,5 +52,11 @@
     "confidence_pct": 81,
     "filing_status": "QUA_HAN"
   },
-  "ts": "2026-08-14T00:10:13Z"
+  "ts": "2026-08-14T00:10:13Z",
+  "_processed": {
+    "fingerprint": "63724a9f992095ea5751bb99e216f6a2733e24c5345504f5a9136ac2cf7bc086",
+    "processedAt": "2026-08-14T00:20:22Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

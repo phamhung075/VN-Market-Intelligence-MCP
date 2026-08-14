@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-08-07T00:14:25Z",
+    "fire_time": "2026-08-14T00:09:17Z",
     "matched_slots": [
       "bctc-analyst-slot-4",
       "news-scout-offhours",
@@ -25,9 +25,9 @@
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 7,
+    "drift_min": 6,
     "errors": [],
-    "pressure_mode": "legacy",
+    "pressure_mode": "adaptive",
     "calendar_status": "unknown",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
@@ -45,7 +45,7 @@
       "market-watcher-offhours": 240,
       "alert-commander-critical": null
     },
-    "last_fired_timestamp": "2026-08-07T00:14:25Z",
+    "last_fired_timestamp": "2026-08-14T00:09:10Z",
     "last_fired_slots": [
       "bctc-analyst-slot-4",
       "news-scout-offhours",
@@ -57,16 +57,16 @@
     "reason": "spawned",
     "nominal_tick": "00:00",
     "leader_lock": "acquired",
-    "dev_head": "in_progress",
-    "devq": 67,
-    "signal_backlog": 0,
-    "note": "pressure-state stale (age>20min at Step 4.2 eval) -> legacy cadence fallback; calendar unknown -> no suppression; all 4 matched slots won+spawned, none guaranteed, no chef slots this tick"
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 28,
+    "note": "tick-snapshot pre-step skipped this tick (Step 4.7) — agents fall back to direct get_cycle_bootstrap; all 4 spawns launched background, off-flow check deferred to completion notifications"
   },
   "priority": "low",
-  "createdAt": "2026-08-07T00:14:25Z",
+  "createdAt": "2026-08-14T00:09:17Z",
   "_processed": {
-    "fingerprint": "78a823cf440d27fbdc01ed22dac24e5b4d5ece0b3e77f16f8b011976a960c29f",
-    "processedAt": "2026-08-07T00:31:40Z",
+    "fingerprint": "6706cc67b24e84c1b87b000f5c4f64d90879e7d62b9679b5140758dbdbbe02fb",
+    "processedAt": "2026-08-14T00:20:22Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
