@@ -109,6 +109,77 @@ console.log('\nTC-7: every slot in the live docs/data/cowork-schedule.json has t
 }
 
 // ---------------------------------------------------------------------------
+// AC-6 (FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING, optional per brief §3e):
+// every `.supersedes` entry must name a real `slot_id` present elsewhere in the same file —
+// same spirit as the trigger_prompt/flow_path check above, prevents a future typo'd
+// `supersedes` value from silently no-op'ing (cowork-supersede-mutex.js can only drop a
+// slot_id it can actually find in `matches`; a typo'd victim id is indistinguishable from
+// "victim not due this tick" and the mutex silently never fires for that pair).
+//
+// findInvalidSupersedesEntries — local to this test file (not exported production code: this
+// is a schedule-authoring static check, not runtime behaviour). Exercised first against
+// synthetic fixtures (proves the detector actually flags a bad entry, not just that today's
+// live schedule happens to be clean), then against the live schedule.
+// ---------------------------------------------------------------------------
+function findInvalidSupersedesEntries(slots) {
+  const allSlotIds = new Set(slots.map(sl => sl.slot_id));
+  const violations = [];
+  for (const sl of slots) {
+    if (!Array.isArray(sl.supersedes) || sl.supersedes.length === 0) continue;
+    for (const victimId of sl.supersedes) {
+      if (victimId === sl.slot_id) {
+        violations.push(`${sl.slot_id}: supersedes names itself ('${victimId}')`);
+      } else if (!allSlotIds.has(victimId)) {
+        violations.push(`${sl.slot_id}: supersedes names unknown slot_id '${victimId}' (typo? not present anywhere in the file)`);
+      }
+    }
+  }
+  return violations;
+}
+
+console.log('\nTC-8: findInvalidSupersedesEntries — typo\'d victim slot_id is flagged');
+{
+  const fixture = [
+    { slot_id: 'market-watcher-eod', supersedes: ['market-watcher-offhors'] }, // typo: missing 'u'
+    { slot_id: 'market-watcher-offhours' },
+  ];
+  const violations = findInvalidSupersedesEntries(fixture);
+  assert('typo\'d supersedes entry is flagged', violations.length, 1);
+}
+
+console.log('\nTC-9: findInvalidSupersedesEntries — valid pair passes clean');
+{
+  const fixture = [
+    { slot_id: 'market-watcher-eod', supersedes: ['market-watcher-offhours'] },
+    { slot_id: 'market-watcher-offhours' },
+  ];
+  assert('valid supersedes entry -> zero violations', findInvalidSupersedesEntries(fixture).length, 0);
+}
+
+console.log('\nTC-10: findInvalidSupersedesEntries — self-referencing entry is flagged');
+{
+  const fixture = [{ slot_id: 'self-ref-slot', supersedes: ['self-ref-slot'] }];
+  const violations = findInvalidSupersedesEntries(fixture);
+  assert('self-referencing supersedes entry is flagged', violations.length, 1);
+}
+
+console.log('\nTC-11: every `.supersedes` entry in the live docs/data/cowork-schedule.json names a real slot_id present elsewhere in the same file');
+{
+  const violations = findInvalidSupersedesEntries(sched.slots);
+  if (violations.length === 0) {
+    const declaredCount = sched.slots.filter(sl => Array.isArray(sl.supersedes) && sl.supersedes.length > 0).length;
+    console.log(`  PASS  all declared .supersedes entries (${declaredCount} slot(s) with a non-empty .supersedes array) name real slot_ids`);
+    passed++;
+  } else {
+    console.log('  FAIL  live schedule has invalid .supersedes entries:');
+    for (const v of violations) {
+      console.log(`        ${v}`);
+    }
+    failed++;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 const total = passed + failed;

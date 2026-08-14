@@ -373,6 +373,10 @@ const SRC_PREDICATE = path.join(process.cwd(), 'scripts/agents-flow/cowork-catch
 // (Step 4.5c CHEF mutex must never silently no-op — that is the exact double-publish class
 // FIX-COWORK-CHEF-MUTEX-ECHO-JQ-DEFEAT hardened against), so the CLI harness must carry it too.
 const SRC_CHEF_MUTEX = path.join(process.cwd(), 'scripts/agents-flow/cowork-chef-mutex.js');
+// FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING (brief §3c): cowork-match-slots.js's
+// finish() now ALSO requires cowork-supersede-mutex.js unconditionally (same invariant as the
+// CHEF mutex above — must never silently no-op), so the CLI harness must carry this too.
+const SRC_SUPERSEDE_MUTEX = path.join(process.cwd(), 'scripts/agents-flow/cowork-supersede-mutex.js');
 
 function makeCliHarness() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cowork-match-slots-cli-test-'));
@@ -381,6 +385,7 @@ function makeCliHarness() {
   fs.copyFileSync(SRC_SCRIPT, path.join(dir, 'scripts/agents-flow/cowork-match-slots.js'));
   fs.copyFileSync(SRC_PREDICATE, path.join(dir, 'scripts/agents-flow/cowork-catchup-predicate.js'));
   fs.copyFileSync(SRC_CHEF_MUTEX, path.join(dir, 'scripts/agents-flow/cowork-chef-mutex.js'));
+  fs.copyFileSync(SRC_SUPERSEDE_MUTEX, path.join(dir, 'scripts/agents-flow/cowork-supersede-mutex.js'));
   return dir;
 }
 

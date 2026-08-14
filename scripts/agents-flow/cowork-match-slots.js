@@ -21,7 +21,8 @@
 //   options.policyObj     — cadence-policy.json object (required for adaptive)
 //   options.meta          — optional out-param object (UC-CDC-P7 Phase 2a). If supplied,
 //                            mutated with {pressure_mode, downgraded, suppressed_cadence,
-//                            due_reasons, cadence_minutes, chef_mutex_applied} after the
+//                            due_reasons, cadence_minutes, chef_mutex_applied,
+//                            supersede_mutex_applied} after the
 //                            call returns. matchSlots() itself still returns a plain array
 //                            (NFR-2 — unchanged contract for the 5 pre-existing direct
 //                            callers in this test file); only the CLI entrypoint below
@@ -37,6 +38,7 @@
 const fs = require('fs');
 const path = require('path');
 const { applyChefMutex } = require('./cowork-chef-mutex.js');
+const { applySupersedeMutex } = require('./cowork-supersede-mutex.js');
 
 const schedPath = path.join(process.cwd(), 'docs/data/cowork-schedule.json');
 const sched = JSON.parse(fs.readFileSync(schedPath, 'utf8'));
@@ -234,24 +236,28 @@ function matchSlots(schedule, ctx, options) {
   const meta         = opts.meta || null;
   const scheduleSlots = (schedule && schedule.slots) || [];
 
-  // finish(): shared tail for every return point — Step 4.5c CHEF same-tick mutex
-  // (unconditional, BOTH legacy and adaptive modes per the invariant) runs here exactly
-  // once, then (if the caller supplied options.meta) the out-param is populated with the
+  // finish(): shared tail for every return point — Step 4.5c CHEF same-tick mutex, then
+  // Step 4.5d supersede mutex (FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING,
+  // brief §3c) — both unconditional, BOTH legacy and adaptive modes per the invariant, run
+  // here exactly once each, in-process via require() (never a shell echo/printf pipe — AC-5),
+  // then (if the caller supplied options.meta) the out-param is populated with the
   // observability fields telemetry.md Step 6.1 needs. matchSlots() itself still returns
   // only the plain final array (NFR-2).
   function finish(matches, extra) {
-    const mutexResult = applyChefMutex(matches, scheduleSlots);
+    const chefResult      = applyChefMutex(matches, scheduleSlots);
+    const supersedeResult = applySupersedeMutex(chefResult.matches, scheduleSlots);
     if (meta) {
       Object.assign(meta, {
-        pressure_mode:      (mode === 'adaptive' && pressureState && policyObj) ? 'adaptive' : 'legacy',
-        downgraded:         (extra && extra.downgraded) || [],
-        suppressed_cadence: (extra && extra.suppressed_cadence) || [],
-        due_reasons:        (extra && extra.due_reasons) || {},
-        cadence_minutes:    (extra && extra.cadence_minutes) || {},
-        chef_mutex_applied: mutexResult.chef_mutex_applied
+        pressure_mode:           (mode === 'adaptive' && pressureState && policyObj) ? 'adaptive' : 'legacy',
+        downgraded:              (extra && extra.downgraded) || [],
+        suppressed_cadence:      (extra && extra.suppressed_cadence) || [],
+        due_reasons:             (extra && extra.due_reasons) || {},
+        cadence_minutes:         (extra && extra.cadence_minutes) || {},
+        chef_mutex_applied:      chefResult.chef_mutex_applied,
+        supersede_mutex_applied: supersedeResult.supersede_mutex_applied
       });
     }
-    return mutexResult.matches;
+    return supersedeResult.matches;
   }
 
   // nowUnix: real wall-clock seconds-since-epoch, aligned with how the CLI entrypoint (and
@@ -451,16 +457,18 @@ if (require.main === module) {
   }
 
   // UC-CDC-P7 Phase 2a: pressure_mode/downgraded/suppressed_cadence/chef_mutex_applied/
-  // due_reasons/cadence_minutes are additive stdout fields — meta always carries safe
-  // defaults ({} out-param populated by matchSlots()'s finish(), never undefined) so this
-  // is a pure superset of the pre-existing {slots, drift_min, catchup_raw} contract (NFR-2).
+  // supersede_mutex_applied/due_reasons/cadence_minutes are additive stdout fields — meta
+  // always carries safe defaults ({} out-param populated by matchSlots()'s finish(), never
+  // undefined) so this is a pure superset of the pre-existing {slots, drift_min, catchup_raw}
+  // contract (NFR-2).
   process.stdout.write(JSON.stringify(Object.assign(
     { slots: hits, drift_min: driftMin, catchup_raw: catchupRaw },
     {
-      pressure_mode:      meta.pressure_mode || 'legacy',
-      downgraded:         meta.downgraded || [],
-      suppressed_cadence: meta.suppressed_cadence || [],
-      chef_mutex_applied: meta.chef_mutex_applied || false,
+      pressure_mode:           meta.pressure_mode || 'legacy',
+      downgraded:              meta.downgraded || [],
+      suppressed_cadence:      meta.suppressed_cadence || [],
+      chef_mutex_applied:      meta.chef_mutex_applied || false,
+      supersede_mutex_applied: meta.supersede_mutex_applied || false,
       due_reasons:        meta.due_reasons || {},
       cadence_minutes:    meta.cadence_minutes || {}
     }
