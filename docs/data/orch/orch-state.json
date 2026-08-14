@@ -92,11 +92,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-14T04:58:03Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "UC-CDC-P7",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of UC-CDC-P7 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-14T05:52:55Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3114,31 +3115,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
         "updated_at": "2026-07-29T03:22:34Z",
         "blocked_reason": "ZONE-MISMATCH: task was assigned to apps/stock-price/ but market_prices_history table and writer (24h rolling cutoff at pushPricesHandler.ts:224-236) are in apps/mcp-server/. Re-route to dev-mcp-server required."
-      },
-      {
-        "id": "UC-CDC-P7",
-        "type": "SPRINT-L",
-        "title": "Collapse the 12-file cowork flow to ~7 files; push per-tick logic into the deterministic script layer",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "L",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P7",
-        "note": "SCOPE=verifier Rescope note (corrected sequencing + I16 fix). Run Phase2 (script moves: match-slots 4.5/4.5c, tick-postflight last_fired batch) BEFORE the pressure-file merge (200L cap). I16: add an SSOT cowork_signal_recipient field to system-map.json, never derive from type==cowork (drops po+tran-ngoc-bau). COORDINATE with TE-T03 (main.md rewrite) + TE-T13 (line-1 purge) — sequence after or merge to avoid 3-way collision.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "depends": [
-          "TE-T03"
-        ],
-        "related": [
-          "TE-T13"
-        ],
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17"
       },
       {
         "id": "UC-CCA-P1-GWBLIND-DEDUP",
@@ -19210,9 +19186,41 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-14T05:25:02Z",
-    "last_triaged_by": "po",
-    "in_progress": []
+    "last_triaged_at": "2026-08-14T05:52:49Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "UC-CDC-P7",
+        "type": "SPRINT-L",
+        "title": "Collapse the 12-file cowork flow to ~7 files; push per-tick logic into the deterministic script layer",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "L",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P7",
+        "note": "SCOPE=verifier Rescope note (corrected sequencing + I16 fix). Run Phase2 (script moves: match-slots 4.5/4.5c, tick-postflight last_fired batch) BEFORE the pressure-file merge (200L cap). I16: add an SSOT cowork_signal_recipient field to system-map.json, never derive from type==cowork (drops po+tran-ngoc-bau). COORDINATE with TE-T03 (main.md rewrite) + TE-T13 (line-1 purge) — sequence after or merge to avoid 3-way collision.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "depends": [
+          "TE-T03"
+        ],
+        "related": [
+          "TE-T13"
+        ],
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-08-14T05:52:49Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-08-14T05:52:55Z",
+        "claimed_at": "2026-08-14T05:52:54Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -19226,7 +19234,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-14T00:59:51Z"
+        "last_served_tick": "2026-08-14T05:52:34Z"
       },
       "sls": {
         "last_served_tick": "2026-08-14T01:28:52Z"
@@ -19244,7 +19252,7 @@
         "last_served_tick": "2026-08-14T05:23:15Z"
       }
     },
-    "_updated_at": "2026-08-14T05:49:37Z",
+    "_updated_at": "2026-08-14T05:52:34Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
