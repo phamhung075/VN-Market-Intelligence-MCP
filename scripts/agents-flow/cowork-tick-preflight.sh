@@ -14,7 +14,10 @@
 #      docs/agents/cowork-team/flow/main.md Step 0b.1: claim, heartbeat only on
 #      re-entry by this same session. NEVER gates — proceeds regardless of
 #      claim/heartbeat outcome (ERROR is reserved for fire-election/transport
-#      failures below, not presence)
+#      failures below, not presence). Also fires the cron-registration:cowork-team
+#      renewal heartbeat (FIX-COWORK-CRONREG-MARKER-RENEWAL-HEARTBEAT-STRANDED-ON-
+#      ERROR-ONLY-BRANCH) — the real per-tick site for FIX-CRON-REARM-CROSS-SESSION-
+#      DEDUP §1.4, best-effort, on all five verdicts, before Step 2.5's early return.
 #   2.5. Pre-election tombstone check (FIX-COWORK-FIRE-ELECTION-TICK-TOMBSTONE
 #      FR-1/FR-3) — _tick_already_ran() compares pressure-state.json's tick_id
 #      (normalized second-precision -> minute-precision) against the nominal
@@ -214,6 +217,25 @@ run_preflight() {
     fi
   fi
   # Transport error on the claim itself falls through here too — presence never gates.
+
+  # ---- FIX-COWORK-CRONREG-MARKER-RENEWAL-HEARTBEAT-STRANDED-ON-ERROR-ONLY-BRANCH ----
+  # Renewal heartbeat for the cross-session cron-registration marker
+  # (.claude/skills/cron-cowork-team/SKILL.md Step 1c). This is the REAL per-tick site —
+  # FIX-CRON-REARM-CROSS-SESSION-DEDUP §1.4 originally targeted docs/agents/cowork-team/
+  # flow/main.md's Step 0a session-presence block on the (stale, already-false-when-written)
+  # premise that it "already fires every */15 tick"; that block had already been superseded
+  # by this script (TOKEN-ECONOMY-TICK-PREFLIGHT WU-1, 2026-07-13) and only
+  # docs/agents/cowork-team/flow/preflight-error-fallback.md:57-63 (reached ONLY on ERROR
+  # verdict) ever carried the call — so it never executed on the ~100% of ticks that resolve
+  # SILENT/WORK/LOST_ELECTION/DEFER/TOMBSTONED. Placement here is load-bearing: it MUST run
+  # on all five verdicts, so it sits after presence and BEFORE Step 2.5's early TOMBSTONED
+  # return (the tightest of those five to prove pre-election). Best-effort, no-op if this
+  # session doesn't own the marker (or it was never claimed yet) — ok=false is the normal,
+  # expected outcome here and must NEVER gate, alter the verdict, or produce ERROR. See
+  # docs/architecture-briefs/2026-08-06-cron-rearm-cross-session-dedup.md §1.4 (corrected
+  # 2026-08-14) and preflight-error-fallback.md:57-63 (verbatim ERROR-fallback sibling call,
+  # left in place — harmless/idempotent, last-writer-wins, per the brief's own note).
+  mcp_call "task_heartbeat" "$(jq -n --arg tid "cron-registration:cowork-team" --arg sess "$session_id" '{task_id:$tid, owner_client_session:$sess}')" >/dev/null 2>&1
 
   # ---- Step 2.5: pre-election tombstone check (FR-1/FR-3) ----
   # MUST run before Step 3 ever calls task_claim on cron:cowork:$tick -- a

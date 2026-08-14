@@ -81,6 +81,12 @@ mcp_call() {
   echo "${tool}|${log_kind}|${log_tid}" >> "$CALL_LOG_FILE"
   case "$tool" in
     task_heartbeat)
+      if [[ "$args" == *"cron-registration:cowork-team"* ]]; then
+        case "${STUB_CRONREG_HB:-ok}" in
+          ok) echo '{"ok":true,"expires_at":9999999999}'; return 0 ;;
+          error) echo "simulated cron-registration heartbeat transport error" >&2; return 1 ;;
+        esac
+      fi
       if [[ "$args" == *"cron:cowork:"* ]]; then
         echo '{"ok":true,"expires_at":9999999999}'; return 0
       fi
@@ -126,6 +132,7 @@ run_case() {
   # Resets scenario knobs to defaults before each test.
   STUB_PRESENCE_CLAIM="claimed"; STUB_PRESENCE_HB="ok"
   STUB_ELECTION="won"; STUB_CLAIM_DUE="empty"; STUB_EMIT="ok"
+  STUB_CRONREG_HB="ok"
   : > "$CALL_LOG_FILE"
 }
 
@@ -193,6 +200,8 @@ VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
 check "T1 SILENT verdict" "$([ "$VERDICT" = "SILENT" ] && echo true || echo false)"
 check "T1 SILENT exit=0" "$([ "$RC" -eq 0 ] && echo true || echo false)"
 check "T1 SILENT releases election lock" "$(log_has task_release)"
+check "T1 AC-2: SILENT tick fires cron-registration:cowork-team renewal heartbeat" \
+  "$(log_has_line "task_heartbeat||cron-registration:cowork-team")"
 
 # ── T2: WORK path — one due slot ──────────────────────────────────────────────
 run_case
@@ -361,6 +370,37 @@ VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
 check "T6 TOMBSTONED verdict (pressure-state.json already has the live current tick)" "$([ "$VERDICT" = "TOMBSTONED" ] && echo true || echo false)"
 check "T6 TOMBSTONED exit=1" "$([ "$RC" -eq 1 ] && echo true || echo false)"
 check "T6 TOMBSTONED zero cowork-slot task_claim calls (AC-1 tool-call level, not merely zero successful claims)" "$([ "$(log_count "task_claim|cowork-slot")" -eq 0 ] && echo true || echo false)"
+check "T6 AC-2: TOMBSTONED tick still fires cron-registration:cowork-team renewal heartbeat (tightest proof — this verdict returns at line ~225 before every other MCP call, so the heartbeat is genuinely pre-election)" \
+  "$(log_has_line "task_heartbeat||cron-registration:cowork-team")"
+export PRESSURE_STATE_PATH="$TMPDIR_TEST/does-not-exist-pressure-state.json"
+
+# ── T-CRONREG-NEG: AC-2 negative control — a transport failure on the cron-registration:
+#     cowork-team heartbeat call must NOT gate, NOT alter the verdict, and NOT produce ERROR.
+#     Exercised on both a SILENT tick and a TOMBSTONED tick (the tightest, pre-election path). ──
+run_case
+export SLOT_MATCHER_CMD='echo "{\"slots\":[],\"drift_min\":0}"'
+STUB_CRONREG_HB="error"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T-CRONREG-NEG SILENT: cron-registration heartbeat transport failure -> verdict still SILENT (unaffected)" \
+  "$([ "$VERDICT" = "SILENT" ] && echo true || echo false)"
+check "T-CRONREG-NEG SILENT: exit still 0 (rc not corrupted by the injected failure)" \
+  "$([ "$RC" -eq 0 ] && echo true || echo false)"
+
+run_case
+export SLOT_MATCHER_CMD='echo "{\"slots\":[],\"drift_min\":0}"'
+STUB_CRONREG_HB="error"
+T_CRONREG_NEG_CUR_MIN=$(date -u +%M); T_CRONREG_NEG_CUR_MIN=$((10#$T_CRONREG_NEG_CUR_MIN))
+T_CRONREG_NEG_BOUNDARY_MIN=$(( T_CRONREG_NEG_CUR_MIN / 15 * 15 ))
+T_CRONREG_NEG_TICK=$(date -u +"%Y-%m-%dT%H:$(printf '%02d' "$T_CRONREG_NEG_BOUNDARY_MIN")Z")
+export PRESSURE_STATE_PATH="$TMPDIR_TEST/pressure-cronreg-neg-tombstone.json"
+jq -n --arg tid "${T_CRONREG_NEG_TICK%Z}:00Z" '{tick_id:$tid}' > "$PRESSURE_STATE_PATH"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T-CRONREG-NEG TOMBSTONED: cron-registration heartbeat transport failure -> verdict still TOMBSTONED (unaffected)" \
+  "$([ "$VERDICT" = "TOMBSTONED" ] && echo true || echo false)"
+check "T-CRONREG-NEG TOMBSTONED: exit still 1 (rc not corrupted by the injected failure)" \
+  "$([ "$RC" -eq 1 ] && echo true || echo false)"
 export PRESSURE_STATE_PATH="$TMPDIR_TEST/does-not-exist-pressure-state.json"
 
 # ── T7: NFR-2 regression — stale/non-matching pressure-state.json must NOT

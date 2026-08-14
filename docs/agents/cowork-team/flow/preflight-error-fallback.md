@@ -57,6 +57,10 @@ if not presence_result.claimed:
 # FIX-CRON-REARM-CROSS-SESSION-DEDUP §1.4: renewal heartbeat for the cross-session cron-registration
 # marker (.claude/skills/cron-cowork-team/SKILL.md Step 1c). Best-effort, no-op if this session
 # doesn't own it (or the marker was never claimed yet) — never a gate on dispatch.
+# NOTE (FIX-COWORK-CRONREG-MARKER-RENEWAL-HEARTBEAT-STRANDED-ON-ERROR-ONLY-BRANCH, 2026-08-14):
+# this file is reached ONLY on preflight verdict=ERROR (see the file header above) — the PRIMARY
+# per-tick site for this same call is now scripts/agents-flow/cowork-tick-preflight.sh's Step 2
+# (runs on all five verdicts). This call stays here too — harmless/idempotent, last-writer-wins.
 call_tool(server="vn-market", tool="task_heartbeat", arguments={
   task_id: "cron-registration:cowork-team",
   owner_client_session: $CLAUDE_CODE_SESSION_ID

@@ -147,6 +147,17 @@ each family already has:
 - **cowork-team** (`docs/agents/cowork-team/flow/main.md` — Step 0a session-presence block, already
   fires every `*/15` tick): add one `task_heartbeat(task_id="cron-registration:cowork-team", ...)`
   call, best-effort (no-op if this session doesn't own it).
+  > **CORRECTED 2026-08-14** (`FIX-COWORK-CRONREG-MARKER-RENEWAL-HEARTBEAT-STRANDED-ON-ERROR-ONLY-
+  > BRANCH`): the premise above was already false the day this brief was written. `main.md`'s Step 0a
+  > had been superseded three weeks earlier by `TOKEN-ECONOMY-TICK-PREFLIGHT WU-1` (2026-07-13), which
+  > moved the per-tick presence/election logic into `scripts/agents-flow/cowork-tick-preflight.sh` —
+  > the CronCreate prompt invokes that script on every tick, not `main.md`'s Step 0a. The
+  > implementation that followed this brief landed the call correctly-looking but unreachable, in
+  > `docs/agents/cowork-team/flow/preflight-error-fallback.md` (reached only on preflight
+  > verdict=`ERROR`, ~0% of ticks) instead. The real per-tick site is
+  > `scripts/agents-flow/cowork-tick-preflight.sh`'s `run_preflight()` Step 2 (the presence block),
+  > after the session-presence claim/renew and before the Step 2.5 tombstone check — fixed there;
+  > `preflight-error-fallback.md`'s copy is kept as a harmless idempotent sibling, not deleted.
 - **detect-loop** (`docs/agents/dev-team/flow/preflight-fallback.md` + `system-auditor/flow/main.md`
   Step 0d — both already fire a per-tick presence/fire-election block): same addition,
   `cron-registration:detect-loop`. Multiple flows heartbeat the same marker — harmless/idempotent,
