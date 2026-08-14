@@ -39,6 +39,44 @@
   ("status-flip = lane-move, no exceptions") and the `FU-AGENT-FATHER-ORCH-SCOPE` narrow exception —
   `status_note` carries the full pass/fail table + the pending live-cycle verification handoff.
 
+## EDIT 2026-08-14T21:36Z — task FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE
+(PO-adjudicated, router-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
+- Change: `docs/agents/system-auditor/flow/main.md` DOC-AUDIT § "1. Memory integrity" — repointed
+  the phantom `memory/MEMORY.md` predicate (never existed as a tracked path — repo-wide grep zero
+  hits, ~4 months of meaningless MISSING-file WARN noise per Tier-3 cycle) at the real
+  `docs/agent-memory/INDEX.md`. Applied spec's verbatim diff (3L→5L) by MATCHING the quoted BEFORE
+  text — the spec's own `:720-722` line citation was stale (+121L drift); live block was at
+  `:841-843`, byte-verified identical before editing. Kept the 2nd/3rd bullets ("each entry: file
+  exists... not stale" / "broken pointers... fix or delete") unchanged per spec §3's explicit
+  anti-defang warning — only bullet 1's target path + a new scope-note bullet changed.
+- Files modified: 1 (`docs/agents/system-auditor/flow/main.md`, 1424→1431 lines).
+- Cascade: none — prose-only Tier-3 check text, no frontmatter/knowledge/routing fields touched,
+  no other agent's flow references this section.
+- Validation: post-edit grep confirms zero remaining hits of the phantom predicate (`memory/
+  MEMORY.md` now appears only inside the new scope-note's intentional one-time name-drop of the
+  external Claude auto-memory file, exactly as the spec's "verdict" instructed). Confirmed
+  `docs/agent-memory/INDEX.md` exists (15 lines) — the new check target is live, not another
+  phantom.
+- Task-lock: found an EXISTING re-entrant `task:FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE`
+  sprint-task lock already held by this exact `owner_client_session` (from the upstream dev-team
+  SECONDARY-Drain → po dispatch chain that led to this spawn) — renewed via heartbeat (not a fresh
+  claim) per task-lock/SKILL.md's re-entrant path, using the docker-exec SQL fallback
+  (`edit-apply.md` Step 5a Gateway-less exception — this agent's tool grant has no
+  `mcp__gateway__call_tool` binding). Released at completion.
+- Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-3.md` S49.
+- Board disposition: applied the lane-move myself (`.task_board.backlog[]` → `.task_board.review[]`,
+  `status=REVIEW`, `next_agent=qa`) via `scripts/orch-apply.sh` per this task's explicit dispatch
+  instruction and the `FU-AGENT-FATHER-ORCH-SCOPE` narrow exception (matches S47/S48 precedent) —
+  `status_note` carries the full disposition + the pending live-cycle verification handoff (next
+  Tier-3 DOC-AUDIT cycle proof). Conservation guard confirmed `task_total` unchanged (690→690).
+  Left UNCOMMITTED per `FU-AGENT-FATHER-ORCH-SCOPE` (`docs/data/orch/orch-state.json` sits outside
+  this agent's `commit_zone` for anything beyond that one exception).
+- Deliberately NOT touched: `docs/agent-memory/INDEX.md`'s own content (5/5 dead session
+  pointers, stale since `ace28b78d`) — that is the sequence-gated follow-up row
+  `FIX-AGENTMEMORY-INDEX-DEAD-SESSION-POINTERS`, which must wait for one post-fix Tier-3 DOC-AUDIT
+  cycle to emit a real broken-pointer WARN against it first (negative-control proof that the
+  repointed predicate is live, not defanged) before it may start.
+
 ## EDIT 2026-08-14T21:20Z — task FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING (FR-8 follow-on)
 (dev-team-dispatched, dispatcher-wrap lock, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
 - Context: FR-0..FR-7 (this row's original spec) already shipped `c1150477546` — PO RAW-verified

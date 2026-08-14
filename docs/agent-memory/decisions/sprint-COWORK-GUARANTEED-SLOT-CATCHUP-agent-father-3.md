@@ -135,3 +135,23 @@ override language per PO's own instruction to check precedent first.
 **why-change:** None — PO's FR-8 spec matched exactly against the live schema
 (`bctc_signal_DXG_20260814_routine.json`'s `valuation`/`kinhdich` objects, byte-verified before
 editing). Zero application code touched; both files stay inside my `docs/agents/` commit_zone.
+
+### STEP agent-father-S49 · agent-father · 2026-08-14T21:36:26Z
+**task-id:** FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE
+**what-done:** Applied PO-ratified spec_doc §1 verbatim diff at system-auditor/flow/main.md's
+CURRENT live line 841-843 (not the spec's own stale :720-722 citation, byte-matched first):
+repointed DOC-AUDIT §1 Memory integrity from phantom `memory/MEMORY.md` to real
+`docs/agent-memory/INDEX.md`, kept the 2nd/3rd bullets intact (anti-defang), added a scope note
+naming the external Claude auto-memory file once so no future auditor re-derives the confusion.
+**what-considered:**
+- Trust spec's `:720-722` line citation vs. re-grep live first — chose re-grep (found at :841,
+  +121L drift matches dispatch brief's own warning); matched on quoted BEFORE text, not line#.
+- Drop the 2nd/3rd bullets for a terser fix vs. keep both — kept both per spec §3's explicit
+  "would defang the check" warning; only bullet 1's target path changed.
+**why-decision:** Repo-wide grep confirms `docs/agent-memory/MEMORY.md` never existed as a
+tracked path (zero source hits); INDEX.md is the real, git-tracked project memory index and is
+already itself broken (5/5 dead session pointers) — serves as the fix's own natural negative
+control on the next Tier-3 cycle, left untouched per explicit sequence-gate to
+FIX-AGENTMEMORY-INDEX-DEAD-SESSION-POINTERS.
+**why-change:** None — dispatch instruction matched spec_doc exactly; single-file edit, no
+cascade (prose-only Tier-3 check text, no frontmatter/knowledge/routing fields touched).

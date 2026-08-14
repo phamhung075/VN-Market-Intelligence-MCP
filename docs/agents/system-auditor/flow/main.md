@@ -838,8 +838,13 @@ git -C "$PROJECT_ROOT" log --since="24 hours ago" --oneline 2>/tmp/sau_gitlog_er
 
 NOTE — root cause of false "no commits" (FIX-AUDITOR-FLOW-TIER-EARLYEXIT, corrected 2026-06-07): the previous form used `origin/main` as a ref, which lags behind local main due to the repo's NO-branches policy where all commits land directly on local main. Using the stale `origin/main` ref re-triggers the exact false "no commits in 24h" early-exit that this task was opened to kill. The correct form queries local HEAD with `--since="24 hours ago"` (valid git date string, replacing the broken `"24h"`), reflecting the actual current state of the repository.
 
-### 1. Memory integrity — `memory/MEMORY.md`
-- Each entry: file exists, content current, not stale
+### 1. Memory integrity — `docs/agent-memory/INDEX.md`
+- Scope note: this checks the REPO-TRACKED project memory index only. Claude Code's own external
+  per-session auto-memory file (`~/.claude/projects/<project-hash>/memory/MEMORY.md`, outside this
+  repo, platform-managed) is NOT this check's concern — it has no canonical repo-relative path and
+  its existence is guaranteed by the Claude Code platform, not by this project's doc conventions.
+- `docs/agent-memory/INDEX.md` exists; each entry it lists (session/notebook pointer): file exists,
+  content current, not stale
 - Broken pointers | index > 200 lines | contradictions → fix or delete
 
 ### 2. Knowledge hygiene — `docs/{policies,protocols,standards,references}/*.md`
