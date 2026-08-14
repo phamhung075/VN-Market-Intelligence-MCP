@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-08-14T07:56:51Z
-
-**Brief:** `docs/architecture-briefs/2026-08-14-devteam-head-nextagent-write-coherence.md`
-
-PO triage's `FIX-DEVTEAM-HEAD-NEXTAGENT-RESYNC-ON-REASSIGN` (in_progress-resident facet of the stale-`.head` family, 3 confirmed agent types: router DRS, pm ×2, architect). Designed WF-2b: a new `dev-team/main.md` check inserted between WF-2 and WF-3 that, unlike every other WF-N carve-out, never JUMPs away — it resyncs `.head.next_agent` to match the row's own current `next_agent` when they disagree (the row is authoritative, not `.head` — dispatcher-only mirror state, single reader), resets `resume_attempts` to 0 in the same write (prevents a WF-3 false-positive tripping on the first correct dispatch after a fix), and lets S2 dispatch the corrected agent the same tick. Row-lookup scoped to `in_progress[]`+`active_sprints[].tasks[]` only — proven safe regardless of the concurrently-landing WF-1d row's own order (a review/qa-resident row resolves empty either way, never double-fixed). Ruled memory-candidate (a) (per-flow-doc handoff sync) NOT warranted for pm/architect/router given WF-2b's zero-latency single-file fix; ruled pm's partial `.head` write (commit `95540b50d`, status-flip only) needs its own narrow companion (different malformed shape/entry gate, WF-2b structurally can't catch it). Flagged 2 companion rows for PO to mint: `FIX-PM-NONCLOSEOUT-HEAD-RESET-INCOMPLETE-NULLOUT` (agent-father) + `FIX-DEVTEAM-HEAD-NEXTAGENT-COHERENCE-VERIFY` (developer).
-
-**Signal dropped:** `docs/signals/devteam-head-nextagent-write-coherence-20260814.json` → agent-father
-
----
-
 ## 2026-08-14T12:54:30Z
 
 **Brief:** `docs/architecture-briefs/2026-08-14-pm-decompose-closeout-reachability-and-nextagent-mint.md`
@@ -37,3 +27,13 @@ Router-dispatched (RAW-verified, not self-reported): `market-watcher-offhours` (
 SPIKE-AUDITOR-WRITE-PLANE-DIVERGENCE-ROOT-CAUSE (PO-triaged, 10 occurrences/6 sub-shapes). ROOT CAUSE confirmed file:line: `scripts/auditor-notebook-commit.sh`'s AC-4 pre-commit backstop, meant to catch a fabricated `[OUTPUT-CONTRACT]` line before it commits, is structurally unreachable dead code since the 2026-08-06 durability reorder made `flow/main.md` commit the notebook BEFORE that line is ever computed, and the line is only ever pasted into RETURN, never the notebook (live-confirmed: notebook HEAD has zero `OUTPUT-CONTRACT` occurrences). Independently forensically confirmed (new evidence) at least 4/10 occurrences are "emit script never invoked": `docs/data/auditor-output-contract-violations.json` (29 real entries, proves the script DOES catch this shape when run) has zero entries for 3 occurrences after its last 04:18:13Z entry; a surviving orphaned marker file (`.auditor-cycle-markers-2026-08-13T12:00Z.tmp`) matching a catalogued occurrence has bookkeeping lines but zero `[emit-signal]` lines. Fix: additive Step 2b in `auditor-notebook-commit.sh` (new optional `--markers-file`/`--cycle-tag` args, both already in scope at the flow's existing call site) cross-checks the notebook's own mandated "Anomalies: N new" line against a real markers-file emit count, REFUSES the commit on mismatch — reuses the proven 7/7 SendMessage-resume mitigation rather than trading for `FIX-AUDITOR-SELF-COMMIT-STEP-NEVER-FIRES`. Disposed all 9 adjacent open rows — none subsumed, none to close.
 
 **Signal dropped:** `docs/signals/2026-08-14-auditor-write-plane-divergence-root-cause.json` → agent-father
+
+---
+
+## 2026-08-14T19:09:30Z
+
+**Brief:** `docs/architecture-briefs/2026-08-14-wire-notebook-compose-actuator-system-auditor-pilot.md`
+
+FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED (P0, PILOT system-auditor only). Wires the already-built/tested `scripts/notebook-compose.sh` (zero callers 8 days after landing — 2 prior signal-only handoffs both filed to `processed/` with no board row, neither landed) into system-auditor's notebook write: AC-1 one scripted-actuator call replacing the freehand compose ladder; AC-2 Bash-allowlist grant (the specific prior-attempt failure mode PO flagged); AC-3 `c<NNN>` derived in `main.md`'s own bash per PO ruling (script itself untouched); AC-4 concurrent-tier race closed via already-valid `task_kind="commit-mutex"` under a dedicated `task_id` — zero dependency on the BLOCKED `FIX-NOTEBOOK-WRITE-TASK-KIND-ENUM-EXTENSION` chain, matching PO's stated preference; AC-5 separate data-repair commit (fresh evidence this cycle: `c31626·18:20Z` still sits below `c99`/`c98`, defect live and ongoing, not historical); AC-6 hardens the dead marker reaper (14 stale `.tmp` now, up from 13) with a fail-loud empty-`FIRE_TICK` guard + a real per-cycle trace. Success Signal 3 replaced with a runtime-execution proof (script's `OK` marker embedded in a committed git message) per PO ruling, not a doc-grep. Routes through the existing tracked board row, not a fresh handoff — that exact "processed/ signal, no board row" shape is the second-order defect this task exists to close.
+
+**Signal dropped:** `docs/signals/2026-08-14-wire-notebook-compose-actuator-system-auditor-pilot.json` → agent-father
