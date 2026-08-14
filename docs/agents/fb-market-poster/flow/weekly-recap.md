@@ -24,11 +24,16 @@ Saturday cron fires: 13:07 UTC = 20:07 VN. `main.md` MODE ROUTER (VN_DOW=6) rout
 
 ## STEP 0 — Bootstrap
 
-**Step 0-GW — Gateway availability gate** → skill: `.claude/skills/gateway-availability-gate/SKILL.md` (agent-id=fb-market-poster; WEEKLY_RECAP path — probe before the STEP 0a dedup `task_claim` below, so a dead gateway never burns the publish-once marker)
+**Step 0-GW — Gateway availability gate** → skill: `.claude/skills/gateway-availability-gate/SKILL.md` (agent-id=fb-market-poster; WEEKLY_RECAP path — probe before the STEP 0a dedup Phase-1 probe below, so a dead gateway never burns the publish-once marker)
 
-**STEP 0a — Publish-once dedup gate (WEEKLY_RECAP path)**
+**STEP 0a — Publish-once dedup gate (WEEKLY_RECAP path) — Phase 1 (cheap probe) →**
+skill: `.claude/skills/published-marker-gate/SKILL.md` (agent-id=fb-market-poster).
 
-Before starting expensive data-gathering, claim a week-keyed published marker. Guards against double-fire when standalone launchd crons and cowork slots (`fb-weekend`) briefly overlap, and ensures any re-spawn of the same weekend is a no-op.
+<!-- UC-CCA-P3-FR3-FB-MARKET-POSTER (agent-father, 2026-08-14): converted from an EARLY
+     task_claim to a Phase-1 read-only probe. Phase-2 claim now happens in STEP 4 immediately
+     before the file Write (this flow's own irreversible publish action). -->
+
+Before starting expensive data-gathering, probe for a week-keyed published marker. Guards against double-fire when standalone launchd crons and cowork slots (`fb-weekend`) briefly overlap, and ensures any re-spawn of the same weekend is a no-op.
 
 ```
 # VN_DATE = today's calendar date in VN timezone (UTC+7).
@@ -40,28 +45,29 @@ VN_DATE   = date part of (CYCLE_START_UTC + 7h)          # YYYY-MM-DD in UTC+7
 # based on the Saturday date. This prevents double-posting across Sat/Sun.
 # Derive: if VN_DOW==0 (Sunday), use VN_DATE - 1 day (Saturday); else use VN_DATE directly.
 PERIOD_SAT = (if VN_DOW==0 then VN_DATE - 1 day else VN_DATE)  # Saturday of this weekend
-DEDUP_KEY = "published:fb-weekend:" + PERIOD_SAT                # e.g. "published:fb-weekend:2026-06-27"
+MARKER_KEY = "published:fb-weekend:" + PERIOD_SAT                # e.g. "published:fb-weekend:2026-06-27"
 
-DEDUP_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
-  "task_id":              DEDUP_KEY,
-  "task_kind":            "cowork-slot",
-  "owner_agent":          "fb-market-poster",
-  "owner_client_session": $CLAUDE_CODE_SESSION_ID,
-  "ttl_seconds":          100800
-})
+# Phase 1 — cheap read-only probe. task_list_held has NO task_id filter — scan client-side.
+PROBE = call_tool(server="vn-market", tool="task_list_held",
+                   arguments={ kind: "cowork-slot", owner_agent: "fb-market-poster" })
+HELD  = PROBE.locks contains an entry where task_id == MARKER_KEY AND expires_at > now
 ```
 
-- `claimed: true` → first run for this weekend → proceed to `Log cycle start` below.
-- `claimed: false` → already published for this weekend → send WORK notification and EXIT cleanly:
+- NOT held → first run for this weekend → proceed to `Log cycle start` below.
+- Held → already published for this weekend → send WORK notification and EXIT cleanly:
 
 ```
-if DEDUP_CLAIM.claimed != true:
+if HELD:
   call_tool(server="vn-market", tool="send_telegram", arguments={
     "channel": "work",
     "message": "[fb-market-poster] dedup: already published for weekend " + PERIOD_SAT + " (slot=fb-weekend) — skipping re-run"
   })
   EXIT with: "DONE: duplicate-weekend-fb-post blocked | already published for weekend=" + PERIOD_SAT + " | PIPELINE: no-op"
+  # claims NOTHING — a leak from this call is structurally impossible.
 ```
+
+`MARKER_KEY` is carried forward as session state to STEP 4, where the mandatory Phase-2 claim
+happens immediately before the file `Write` (ttl_seconds=100800, owner_client_session REQUIRED).
 
 Log cycle start:
 ```
@@ -205,6 +211,14 @@ Log "CLAIM-TRUTH GATE: PASS" in RETURN block after clean pass (or "FAIL-correcte
 ## STEP 4 — Write deliverable
 
 DATE = Saturday VN date (UTC+7), YYYY-MM-DD.
+
+**Published-marker gate — Phase 2 (commit point, MANDATORY) →**
+skill: `.claude/skills/published-marker-gate/SKILL.md` (agent-id=fb-market-poster).
+Execute identically to `daily.md` STEP 5's Phase-2 block, with `task_id=MARKER_KEY` (the
+`published:fb-weekend:<PERIOD_SAT>` value STEP 0a's Phase-1 probe computed) and
+`ttl_seconds=100800`. `claimed != true` → WORK notify + EXIT (do NOT write the file). NEVER
+call `task_release` on success or any exit after this point.
+
 Write to `docs/social/fb-post-{DATE}.md` using the file format in `daily.md` STEP 5.
 Verify/create `docs/social/fb-feedback.md` (same as `daily.md` STEP 6).
 

@@ -37,41 +37,48 @@ Capture cycle start anchor:
 CYCLE_START_UTC = date -u +"%Y-%m-%dT%H:%M:%SZ"
 ```
 
-**Step 0-GW — Gateway availability gate** → skill: `.claude/skills/gateway-availability-gate/SKILL.md` (agent-id=fb-market-poster; DAILY path — probe before the STEP 0a dedup `task_claim` below, so a dead gateway never burns the publish-once marker)
+**Step 0-GW — Gateway availability gate** → skill: `.claude/skills/gateway-availability-gate/SKILL.md` (agent-id=fb-market-poster; DAILY path — probe before the STEP 0a dedup Phase-1 probe below, so a dead gateway never burns the publish-once marker)
 
-**STEP 0a — Publish-once dedup gate (DAILY path)**
+**STEP 0a — Publish-once dedup gate (DAILY path) — Phase 1 (cheap probe) →**
+skill: `.claude/skills/published-marker-gate/SKILL.md` (agent-id=fb-market-poster).
 
-Before starting expensive data-gathering, claim a date-keyed published marker. Guards against double-fire when standalone crons and cowork slots (`fb-daily`) briefly overlap, and ensures any re-spawn of the same tick is a no-op.
+<!-- UC-CCA-P3-FR3-FB-MARKET-POSTER (agent-father, 2026-08-14): converted from an EARLY
+     task_claim to a Phase-1 read-only probe. Phase-2 claim now happens in STEP 5 immediately
+     before the file Write (this flow's own irreversible publish action — there is no
+     send_telegram(market) anywhere in this flow, see brief §1.1 R2). -->
+
+Before starting expensive data-gathering, probe for a date-keyed published marker. Guards against double-fire when standalone crons and cowork slots (`fb-daily`) briefly overlap, and ensures any re-spawn of the same tick is a no-op.
 
 ```
 # VN_DATE = today's calendar date in VN timezone (UTC+7).
 # Derive from CYCLE_START_UTC: add 7 hours, take the YYYY-MM-DD date part.
 # e.g. CYCLE_START_UTC="2026-06-29T02:15:00Z" → VN="2026-06-29T09:15:00+07" → VN_DATE="2026-06-29"
-VN_DATE   = date part of (CYCLE_START_UTC + 7h)          # YYYY-MM-DD in UTC+7
-DEDUP_KEY = "published:fb-daily:" + VN_DATE              # e.g. "published:fb-daily:2026-06-29"
+VN_DATE    = date part of (CYCLE_START_UTC + 7h)          # YYYY-MM-DD in UTC+7
+MARKER_KEY = "published:fb-daily:" + VN_DATE              # e.g. "published:fb-daily:2026-06-29"
 
-DEDUP_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
-  "task_id":              DEDUP_KEY,
-  "task_kind":            "cowork-slot",
-  "owner_agent":          "fb-market-poster",
-  "owner_client_session": $CLAUDE_CODE_SESSION_ID,
-  "ttl_seconds":          100800
-})
+# Phase 1 — cheap read-only probe. task_list_held has NO task_id filter — scan client-side.
+PROBE = call_tool(server="vn-market", tool="task_list_held",
+                   arguments={ kind: "cowork-slot", owner_agent: "fb-market-poster" })
+HELD  = PROBE.locks contains an entry where task_id == MARKER_KEY AND expires_at > now
 ```
 
-- `claimed: true` → first run for this VN date → proceed to `Log cycle start` below.
-- `claimed: false` → already published today → send WORK notification and EXIT cleanly (no re-post, no data gathering):
+- NOT held → first run for this VN date → proceed to `Log cycle start` below.
+- Held → already published today → send WORK notification and EXIT cleanly (no re-post, no data gathering):
 
 ```
-if DEDUP_CLAIM.claimed != true:
+if HELD:
   call_tool(server="vn-market", tool="send_telegram", arguments={
     "channel": "work",
     "message": "[fb-market-poster] dedup: already published for " + VN_DATE + " (slot=fb-daily) — skipping re-run"
   })
   EXIT with: "DONE: duplicate-daily-fb-post blocked | already published for date=" + VN_DATE + " | PIPELINE: no-op"
+  # claims NOTHING — a leak from this call is structurally impossible.
 ```
 
-**Weekend note:** WEEKLY_RECAP and WEEKLY_PREDICTION modes jump to their sub-flows via the MODE ROUTER BEFORE reaching STEP 0. Their equivalent dedup gate (STEP 0a) uses a period-keyed task_claim (`published:fb-weekend:<PERIOD_SAT>`, same kind/ttl as daily) and is implemented in both sub-flows' STEP 0a sections. Both Saturday and Sunday of the same weekend share the same Saturday-date key to prevent double-posting within the weekend window.
+`MARKER_KEY` is carried forward as session state to STEP 5, where the mandatory Phase-2 claim
+happens immediately before the file `Write` (ttl_seconds=100800, owner_client_session REQUIRED).
+
+**Weekend note:** WEEKLY_RECAP and WEEKLY_PREDICTION modes jump to their sub-flows via the MODE ROUTER BEFORE reaching STEP 0. Their equivalent dedup gate (STEP 0a) uses a period-keyed Phase-1 probe (`published:fb-weekend:<PERIOD_SAT>`, same skill/kind/ttl as daily), with the matching Phase-2 claim before each sub-flow's own file Write, and is implemented in both sub-flows' own STEP 0a / Write sections. Both Saturday and Sunday of the same weekend share the same Saturday-date key to prevent double-posting within the weekend window.
 
 Log cycle start:
 ```
@@ -789,6 +796,37 @@ Compute today's date in VN timezone (UTC+7):
 DATE = today's date in YYYY-MM-DD format (VN time)
 FILEPATH = docs/social/fb-post-{DATE}.md
 ```
+
+**Published-marker gate — Phase 2 (commit point, MANDATORY) →**
+skill: `.claude/skills/published-marker-gate/SKILL.md` (agent-id=fb-market-poster).
+
+<!-- UC-CCA-P3-FR3-FB-MARKET-POSTER (agent-father, 2026-08-14): this flow's own irreversible
+     publish action is the file Write below, NOT a send_telegram — fb-market-poster has no
+     MARKET-channel Telegram call anywhere in its flow (brief §1.1 R2). Placed immediately
+     before the Write, not at STEP 0a (defeats FR-2) and not wrapped around synthesis (defeats
+     the cost-optimisation Phase 1 exists for). `MARKER_KEY` is the exact value STEP 0a's
+     Phase-1 probe computed, carried forward as session state. -->
+
+```
+CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:              MARKER_KEY,   # "published:fb-daily:" + VN_DATE, from STEP 0a
+  task_kind:            "cowork-slot",
+  owner_agent:          "fb-market-poster",
+  owner_client_session: $CLAUDE_CODE_SESSION_ID,
+  ttl_seconds:          100800
+})
+
+if CLAIM.claimed != true:
+  call_tool(server="vn-market", tool="send_telegram", arguments={
+    "channel": "work",
+    "message": "[fb-market-poster] publish blocked (Phase-2 claim) — already published for " + VN_DATE + " (slot=fb-daily)"
+  })
+  EXIT with: "DONE: duplicate-daily-fb-post blocked | already published for date=" + VN_DATE + " | PIPELINE: no-op"
+  # a peer claimed between STEP 0a's Phase-1 probe and this Phase-2 claim — do NOT write the file.
+```
+
+If `claimed == true`: proceed immediately to the Write below. NEVER call `task_release` on
+success or any exit after this point — TTL is the sole expiry path.
 
 Write the post to `FILEPATH`. File format:
 ```markdown
