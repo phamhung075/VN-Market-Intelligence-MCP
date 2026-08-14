@@ -144,24 +144,33 @@ _tick_already_ran() {
 # ── Step 8 (SILENT only): emit last-known pressure state, release election lock ──
 _step8_silent_release() {
   local tick="$1" drift_min="$2" session_id="$3"
-  local calendar_status="" last_regime="" last_vol="" fire_time tick_id emit_args pressure_result pressure_rc
+  local last_regime="" last_vol="" fire_time tick_id emit_args pressure_result pressure_rc
 
   if [ -f "$PRESSURE_STATE_PATH" ]; then
-    calendar_status=$(jq -r '.calendar_status // empty' "$PRESSURE_STATE_PATH" 2>/dev/null)
     last_regime=$(jq -r '.last_regime // empty' "$PRESSURE_STATE_PATH" 2>/dev/null)
     last_vol=$(jq -r '.last_volatility_level // empty' "$PRESSURE_STATE_PATH" 2>/dev/null)
   fi
   # R3: safe default "unknown" — missing file, missing field, or malformed JSON.
-  [ -z "$calendar_status" ] && calendar_status="unknown"
+  # calendar_status intentionally NOT read/passed here (FR-A3, TASK_2008b):
+  # the old L150 read + L162-164 pass-through recycled the SAME value this
+  # script wrote on the previous tick — a closed self-recycling loop with no
+  # producer of truth. TASK_2008a wires the real producer (server-side
+  # vnTradingCalendar computation inside emit_pressure_state) — omitting the
+  # arg here lets the server compute it fresh every call, shape-identical to
+  # the WORK-path emit (which never carried this key either). last_regime/
+  # last_volatility_level are explicitly OUT of scope — no independent
+  # producer exists yet (UC-SDF-P2 addresses that separately); their
+  # last-known-value recycling stays as the intentional degrade-gracefully
+  # default this comment already describes.
   [ -z "$last_regime" ] && last_regime="unknown"
   [ -z "$last_vol" ] && last_vol="unknown"
 
   fire_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   tick_id="${tick%Z}:00Z"
 
-  emit_args=$(jq -n --arg cal "$calendar_status" --arg tick_id "$tick_id" --arg fire "$fire_time" \
+  emit_args=$(jq -n --arg tick_id "$tick_id" --arg fire "$fire_time" \
     --arg regime "$last_regime" --arg vol "$last_vol" \
-    '{calendar_status:$cal, tick_id:$tick_id, fire_time:$fire, pressure_mode:"unknown", last_regime:$regime, last_volatility_level:$vol}')
+    '{tick_id:$tick_id, fire_time:$fire, pressure_mode:"unknown", last_regime:$regime, last_volatility_level:$vol}')
 
   pressure_result=$(mcp_call "emit_pressure_state" "$emit_args" 2>&1); pressure_rc=$?
   if [ $pressure_rc -ne 0 ]; then

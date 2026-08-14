@@ -118,6 +118,12 @@ mcp_call() {
       esac
       ;;
     emit_pressure_state)
+      # FR-A3 (TASK_2008b): optional raw-args capture seam — when
+      # EMIT_ARGS_CAPTURE_FILE is set, the exact emit_pressure_state args this
+      # call received are written verbatim so a test can assert on key
+      # presence/absence (e.g. calendar_status) without CALL_LOG_FILE's
+      # tool|kind|tid summary, which never carries top-level payload keys.
+      [ -n "${EMIT_ARGS_CAPTURE_FILE:-}" ] && printf '%s' "$args" > "$EMIT_ARGS_CAPTURE_FILE"
       case "${STUB_EMIT:-ok}" in
         ok) echo '{"success":true,"emitted_at":"2026-01-01T00:00:00Z"}'; return 0 ;;
       esac
@@ -250,6 +256,27 @@ export SLOT_MATCHER_CMD='echo "{\"slots\":[],\"drift_min\":0}"'
 OUT=$(run_preflight); RC=$?
 check "T2d SILENT verdict envelope parses (jq -e .)" "$(printf '%s' "$OUT" | jq -e . >/dev/null 2>&1 && echo true || echo false)"
 check "T2d SILENT verdict carries no pressure_mode key (extra={} default, not leaked)" "$([ "$(printf '%s' "$OUT" | jq 'has("pressure_mode")')" = "false" ] && echo true || echo false)"
+
+# ── T2e: FR-A3 — SILENT-path emit_pressure_state call stops recycling stale
+#     calendar_status out of pressure-state.json. Once TASK_2008a lands, the
+#     server computes calendar_status fresh every call; this script must no
+#     longer pass a caller-supplied value at all (shape-identical to the WORK
+#     path, which never carried the key either). Precedent: T2d's "carries no
+#     pressure_mode key" shape assertion, applied to the mcp_call args instead
+#     of the verdict envelope. ──
+run_case
+export SLOT_MATCHER_CMD='echo "{\"slots\":[],\"drift_min\":0}"'
+export PRESSURE_STATE_PATH="$TMPDIR_TEST/pressure-t2e-with-calendar-status.json"
+echo '{"calendar_status":"open","last_regime":"bull","last_volatility_level":"low"}' > "$PRESSURE_STATE_PATH"
+EMIT_ARGS_CAPTURE_FILE="$TMPDIR_TEST/emit-args-t2e.json"
+export EMIT_ARGS_CAPTURE_FILE
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T2e SILENT verdict (FR-A3 fixture)" "$([ "$VERDICT" = "SILENT" ] && echo true || echo false)"
+check "T2e FR-A3: SILENT-path emit_pressure_state call args do NOT contain calendar_status key" \
+  "$([ -s "$EMIT_ARGS_CAPTURE_FILE" ] && ! grep -q 'calendar_status' "$EMIT_ARGS_CAPTURE_FILE" && echo true || echo false)"
+unset EMIT_ARGS_CAPTURE_FILE
+export PRESSURE_STATE_PATH="$TMPDIR_TEST/does-not-exist-pressure-state.json"
 
 # ── T-SSOT: I16 (UC-CDC-P7) — cowork-inbox recipient set is read from system-map.json's
 #     cowork_signal_recipient:true field, not the hardcoded fallback literal, when the
