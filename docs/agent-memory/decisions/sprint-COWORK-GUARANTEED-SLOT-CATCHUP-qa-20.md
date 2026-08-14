@@ -106,3 +106,90 @@
 - `mock-guard.sh --files` on all 3 touched files: "No production source files to scan. PASS." (docs+bash audit script, not app source) — bun test/tsc N/A confirmed (no apps/ files touched).
 **why-decision:** vc-approved, DONE_VERIFIED — producer now reliably matches consumer's live gate, AC met, no gap found.
 **why-change:** none — verdict matches dev's own claim. `[QA] Review Record` appended to the row's own `status_note`; lane-moved `qa[]→done_verified[]` in the same `orch-apply.sh` write. `.head.active_task_id` was a different task (`UC-CDC-P7`), left untouched. No gateway/MCP tool grant this session — could not `task_release`; coordinating dispatcher session is the authoritative release path.
+
+### STEP qa-S122 · qa · 2026-08-14T10:15:00Z
+**task-id:** FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR
+**what-done:** RE-QA (row stranded in `qa[]` 8 days by a separate lane-move bug, `FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR`). Direct-Commit Verify, fresh — re-verified `3ce726a6e` (parent fix) + `f9e511353` (follow-up verifier, the prior CHANGES_REQUESTED's sole blocker) from scratch, not trusting the status_note's own claims.
+**what-considered:**
+- Ancestry: both `merge-base --is-ancestor main` OK. `git show --stat` matches claimed files exactly for both commits (4 po/flow docs + notebook/journal; script+test+WORK.md).
+- AC-1/AC-2/AC-3-first-half live-confirmed in current main.md/4 sub-flows: `own_paths` includes `orch-state.json` (main.md:155), AC-3 `git show --stat` self-verify block present (main.md:161-164), all 4 sub-flows carry `orch-apply.sh` (grep count >0 each), no dangling `§2.3` remains in any of the 4.
+- AC-3 second-half (the actual prior blocker): script+test exist, executable, shellcheck clean. Own re-run: test suite 7/7 PASS; scoped run on exactly the 4 fixed sub-flows: 0 unpiped instances PASS; fleet-wide still FAILs on triage-signals.md/-longtail.md (agent-father zone, documented out-of-scope) — count drifted 8→7 vs Aug-6 commit msg due to unrelated intervening edits (c1c97e340 etc), not a regression of this row.
+**why-decision:** vc-approved, DONE_VERIFIED — the row's genuine blocker (missing regression-verifier artifact) is confirmed discharged; the 8-day stranding was the separate lane-move-actuator bug, already tracked elsewhere, not a reason to re-block this row.
+**why-change:** none — router's re-QA dispatch confirmed genuinely fixed via independent re-run, exactly as asked.
+
+### STEP qa-S123 · qa · 2026-08-14T09:33:46Z
+**task-id:** FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET
+**what-done:** Direct-Commit Verify (QA-Drain, `qa[]` row, `branch:null`, commit `215010308`). Did not trust dev-mcp-server's own "19/19 pass, 15289/56 full suite" claim — re-verified from source + own targeted re-run.
+**what-considered:**
+- Ancestry OK; `git show --stat` matches all 6 claimed files. Own `bun test` on all 3 touched test files → 19/19 pass exact match. `tsc --noEmit` clean. `mock-guard.sh` PASS on both prod files. Security greps clean. DDD scan flagged app→infra imports in newsChainFallback.ts but confirmed byte-identical on parent commit — pre-existing, not this diff's fault.
+- Read every diff hunk at source: zero remaining `INSERT`/`UPSERT` into `financial_reports` (grep-confirmed, only a read-only arm-b1 SELECT remains); new `bctc_news_fallback_hints` table has zero balance-sheet columns. All 6 named tests + Finding F-1's 7th genuinely rewritten (RED-1/6/7/8-first-call + both ID-ORPHAN cases) to assert new contract, not deleted/skipped. AC-4 honest-absence and arm-(b1) non-regression both gained new SERVING-plane (`get_bctc_full`) assertions, confirmed passing live. AC-6 RAG-non-leak locked by new `FR-5` test (`insertAnalysisFn` never called on fallback branch), confirmed passing.
+- Did NOT independently reproduce the full 15289/56 suite claim — own full-suite re-run was still in-flight (I/O-bound) past a reasonable wait; not blocking, the flow's own Direct-Commit Verify spec requires only the touched-file targeted suite (satisfied, exact match to dev's claim).
+**why-decision:** vc-approved, DONE_VERIFIED — all 6 acceptance criteria + 5-part verification_gate independently source/live-verified, zero blocking ISSUE.
+**why-change:** none — verdict matches the commit's own claim on every axis I could independently re-run.
+
+### STEP qa-S123 · qa · 2026-08-14T09:30:50Z
+**task-id:** FIX-MCP-SSE-SESSION-MANAGER-PERCONN-LEAK-NO-REAPER
+**what-done:** Direct-Commit Verify (QA-Drain re-claim of an already-reviewed `qa[]` row, soak-AC waived by PO). Re-ran every check from scratch, did not trust prose alone.
+**what-considered:**
+- Ancestry: b746c112b/925641bb9/8b7a34674/d24ddf6b6/a3d7ff35f/550fda673/523ab712f all confirmed `merge-base --is-ancestor main`; 523ab712f diffed byte-for-byte = comment-only.
+- Mechanism live-read: `SessionRecord`/`evictSession`(8 sites incl DELETE)/`reapStaleSessions`/`stopReaper`/injectable `_now` present in transport.ts; server.ts DELETE route + `stopReaper()` wired.
+- Fresh re-run: 1862c-transport-session-eviction 14/14 (incl T13/T14), 081-bun-mcp-server 10/10, tsc 0 errors, mock-guard PASS, DDD/security greps = only pre-existing infra/app imports (diffed vs parent, zero new).
+- Soak waiver agreed: shared-container-uptime AC structurally unsatisfiable (reset 3x); T13/T14 deterministic firing supersedes it. FIX-CI-BUNTEST-1862C-TRANSPORT-SESSION-EVICTION is a separate BACKLOG track (test-harness flake), not a blocker.
+**why-decision:** vc-approved, DONE_VERIFIED — code-correctness re-confirmed, deploy-gate already discharged live 2026-08-08, soak AC legitimately waived.
+**why-change:** none — closing per PO's explicit 2026-08-14T09:08Z instruction to close on unit-test evidence.
+
+### STEP qa-S123 · qa · 2026-08-14T09:30:39Z
+**task-id:** TASK-COWORK-MUTEX-001
+**what-done:** Direct-Commit Verify, `qa[]` row, `branch:null`. Commits `f8d3891c6`(SKILL.md+CLAUDE.md+task_list_held.md+WORK.md) + `465801802`(memory) confirmed on `main` ancestry, `git show --stat` matches all claimed files, content diffed at source (not trusted from prose): FR-1..FR-5 pseudocode correct, 9-agent/23-slot count live-confirmed vs `cowork-schedule.json`, `expired` param doc-sync matches `taskListHeldTool.ts` Zod schema exactly, fence-balance 28 (even).
+**what-considered:**
+- CLAUDE.md:7 + SKILL.md header (line 3-9, self-declared) both say CARD.md is the actual per-dispatch hot-path read, SKILL.md only reached "when CARD.md's edge-path pointers send an agent here." `.claude/skills/dispatch-claim/CARD.md` (39L) has ZERO mention of Step 2.4/cowork-slot — grep-confirmed 0 hits. A router driving off CARD.md alone (the documented normal path) never learns Step 2.4 exists — reproduces the exact "silently disables Step 2.4" failure FR-6 exists to prevent, one layer removed.
+- Precedent this is a known gap-class, not a novel nitpick: `FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-PM-decomposition-20260722.md:152` — a prior dev explicitly flagged "leave CARD.md's abbreviated pseudocode silently missing the guard if a dispatcher literally drives off CARD.md alone" as a known risk on a sibling change, un-actioned.
+- Architect brief's §3 file table predates the CARD.md hot-path split (brief 07-29, TE-T12 split 07-31) — its CARD.md omission is stale, not a deliberate scope ruling; AC checklist doesn't name CARD.md either (same staleness), but the row's own title ("Collision Probe Core") requires the probe to actually fire, not just exist as unreachable prose.
+- No code touched (0 .ts/.js in diff) — bun test/tsc/mock-guard/security greps all correctly N/A, confirmed not assumed.
+**why-decision:** vc-changes. Feature is textually complete but functionally dead in the router's real hot path — CARD.md needs a compact Step-2.4 entry (mirrors Phase A.5's density) or the probe never executes for real dispatches.
+**why-change:** none — verifying exactly what the row's title promises (a working probe), not a stricter bar than scoped.
+
+### STEP qa-S124 · qa · 2026-08-14T09:31:28Z
+**task-id:** FIX-CI-BUNTEST-FOREIGN-FLOW-MISSING-TRADING-DAY-NO-BACKFILL
+**what-done:** Direct-Commit Verify (dev-team Review-Lane QA-Drain, `qa[]` row, branch:null). Re-ran all checks independently, did not trust prose.
+**what-considered:**
+- Commits 6f7299aaa/dd5276c6c/41ee25e08 all `merge-base --is-ancestor main`; `git show --stat` matches claimed test file + checkForeignFlowGap.ts + infrastructure.md doc.
+- Diff read at source: injectable `today` param defaults to real `getTodayVnDate()`; production call site `dataAuditJob.ts:131` re-grepped, still calls with zero args — unaffected.
+- Independent re-run: isolated bun test 9/9 pass, `tsc --noEmit` clean, mock-guard PASS, DDD/security greps clean (imports only bun:sqlite + local domain helper).
+- Cross-plane concern (sla-monitor staleness) resolved by design: detector has no backfill path (file header + infrastructure.md D-NEW4) — matches dev's claim, not fabricated.
+**why-decision:** vc-approved, DONE_VERIFIED — minimal testability-only fix, root cause matches CI's actual failure (wall-clock drift on unseeded fixture), zero production behavior change.
+**why-change:** none — closing per verify-committed flow, no deviation from plan.
+
+### CAP-REACHED · 2026-08-14T09:31:28Z
+Byte cap breached (36032B/36000B; line count 170/600 still under) — dual-axis cap per FIX-DECISION-JOURNAL-SKILL-CAPCHECK-LINE-ONLY-NO-BYTE-ROLLOVER. New STEP entries roll to sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-21.md. send_telegram(bug) not sent — this sub-session has no mcp__gateway__call_tool binding (Read/Edit/Write/Bash grant only); flagging in RETURN for the coordinating session to relay.
+
+### STEP qa-S124 · qa · 2026-08-14T09:31:15Z
+**task-id:** FIX-MARKETDB-WAL-SEQUENCE-STEPS-2-4-NO-OWNER
+**what-done:** Direct-Commit Verify (QA-Drain, off-drain PO-placed row per `po_qa_lane_stale_triage_20260814T0908Z` — no `commit`/`files[]`, live-infra row not a code diff). Re-ran the row's own `verification_gate` script live, 4x over 3 min: `verify-market-db-journal-mode.sh` → PASS `journal_mode=delete wal_present=false shm_present=false` every time, incl. across an independent mcp-server container restart (started 2026-08-13T19:18Z, new image, unrelated to the 08-06 flip) — proves durability, not a one-off.
+**what-considered:**
+- 2-hr-zero-FAIL gate: repo-wide search since the 08-06T16:01Z flip found ZERO `verdict=FAIL`, only 3 `verdict=ERROR` events (08-11/08-12/08-14) — cross-checked `FIX-AUDITOR-A12-PROBE-TIMEOUT-EXITCODE-DEBOUNCE` (REVIEW), whose own 08-12T03:03Z finding already root-caused these as single-shot `database is locked` transient-write-contention false-positives of the probe (no retry/debounce), corroborated live via `get_market_snapshot` returning real data at the time — NOT evidence of `journal_mode=wal`.
+- Today's `po_triage_20260814T0525_corroboration` re-reads the SAME symptom as "AC-5 not discharged" — contradicts the 08-12 finding on the identical evidence class; sided with the raw re-run over either prose interpretation.
+**why-decision:** vc-approved, DONE_VERIFIED — row's own verification_gate independently satisfied live, far beyond the 2h bar (8 days, 2 container generations).
+**why-change:** none — remediation was already complete per the row's 08-06 status_note; this pass supplies the missing independent QA verdict.
+
+### STEP qa-S124 · qa · 2026-08-14T00:00:00Z
+**task-id:** FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE
+**what-done:** RE-QA (row's `claimed_at` was a stale carry-over from an earlier bounded-1 promotion; real qa[] arrival 2026-08-08 per PO triage). Direct-Commit Verify, `branch:null`, commit `763519447` derived via `git log --all -- docs/agents/dev-team/flow/main.md` (row carried no `.commit`/`.files[]`) and cross-checked against `agent_father_implementation_note`.
+**what-considered:**
+- Ancestry: `763519447` `merge-base --is-ancestor main` OK. `git show --stat` matches: only `docs/agents/dev-team/flow/main.md` + agent-father notebook/journal (no app code) — bun test/tsc/mock-guard correctly N/A, confirmed not assumed.
+- Read the landed WF-3/WF-4 at source, not prose: jq filters dry-run-verified (age-calc + BLOCKED-map both produce correct shape). AC-1 (2h, keyed off row `claimed_at` not `.head.updated_at`), AC-2 (2 BUG-channel signals naming task+duration), AC-4 (3-attempt bound → BLOCKED+escalate) all present in the live file. `HeadSchema`/`TaskSchema` `.passthrough()` confirmed at source — new fields validate with zero schema change, as claimed. `blocked_by` confirmed genuinely schema-meaningful (reverse dep edge, `effective_depends_on`) — correct to avoid it. `hold_reason` confirmed a real pre-existing convention (`has_hold_reason()`, `scripts/lib/devteam-eligibility.jq:491-493`) — correctly reused, not invented.
+- BLOCKING ISSUE found independent of dev's own narration: WF-3's escalation (`main.md:455-464`) flips the row's `.status` to `BLOCKED` inside `.task_board.in_progress[]` but never lane-moves it to `backlog[]` in the same write — violates `execute-tier.md` § MUST — CANONICAL:SSOT-STATUSFLIP-LANEMOVE(c) ("An IN_PROGRESS -> BLOCKED flip MUST still move the row OUT of in_progress[] and INTO backlog[]... FORBIDDEN" without it), a rule with "Confirmed recurrence (3x)" and literally the same incident class (`FU-CNYVND-DEAD-FIELD-REMOVE`) this row's own `mechanism` text investigates. Architect's OWN `architect_review_note_20260807` on this row explicitly promised WF-3 would mirror "WF-1's own BLOCKED-carve-out shape (idle-reset head + lane-move to backlog[])" — the brief's §3 prose repeats that promise, but the brief's own §5c ready-to-apply code (which agent-father copied verbatim) omits the lane-move; a genuine gap in the blueprint itself, not an agent-father deviation. `wip_in_progress` excludes BLOCKED rows so no WIP freeze results, but the CANONICAL rule (c) explicitly forecloses that as an excuse ("NOT a license to leave a row wherever it happened to be"). No live occurrence yet (`.head.resume_attempts` absent, no BLOCKED row from this mechanism on the board today) but latent — will strand silently once resume_attempts hits 3 on any future pin. Secondary, non-blocking: WF-3's own BUG-signal (`main.md:465`) gives "pinned since <timestamp>" while the brief's own §4 spec and WF-4's message both compute a "(<Xh Ym>)" duration — WF-3 omits the parenthetical duration WF-4 carries; minor AC-2 text-fidelity gap, not called out as the primary blocker.
+**why-decision:** vc-changes. AC-1/AC-2(partial)/AC-3/AC-4 substantively met and independently re-verified at source, but the escalation write is a real CANONICAL:SSOT-STATUSFLIP-LANEMOVE(c) violation — a documented hard MUST/FORBIDDEN rule, not a style nit — must not ship silently into orchestration-core dispatch logic.
+**why-change:** none — held to the same bar as every other STATUSFLIP-LANEMOVE check on this board, not a stricter one invented for this row.
+
+### STEP qa-S125 · qa · 2026-08-14T09:31:55Z
+**task-id:** FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH
+**what-done:** Direct-Commit Verify (dev-team Review-Lane QA-Drain, `qa[]` row, `branch:null`, no explicit `.commit` field on row — derived via `git log -- apps/mcp-server/src/__tests__/ALLZERO-OHLCV-FETCH.test.ts`, cross-checked against the row's own `dev_mcp_server_20260814T0945Z` note timestamp).
+**what-considered:**
+- Commit `a9291bbbc` `merge-base --is-ancestor main` OK; `git show --stat` matches the row's sole `files[]` entry exactly (test file only, 25+/13- lines).
+- Diff read at source, not dev prose: root cause is genuinely wall-clock date drift — AC-1..AC-3 hardcoded absolute fixture dates (2026-06-1x/2026-05-30) vs `get_price_history`'s live `date('now','-N days')` SQL filter; fix adds `dateStr(daysAgo)` deriving fixtures from `Date.now()`. Claimed "same idiom as 178-price-history.test.ts" independently grep-confirmed byte-identical (`dateStr` helper, lines 92-93/121-122 of that file).
+- Own re-run, both invocations: bare `bun test src/__tests__/ALLZERO-OHLCV-FETCH.test.ts` 5/5 pass; exact CI isolation invocation (`STOCK_PRICE_DB_PATH=<unique>`) 5/5 pass. `bun tsc --noEmit` clean (0 output, exit 0). No production file touched (Smart-Skip: test-only change) → mock-guard/DDD/security scans correctly N/A, not skipped-without-basis.
+**why-decision:** vc-approved, DONE_VERIFIED. Zero ISSUE — commit ancestry, file-scope, root-cause-accuracy, and independent re-run all hold; test-only change carries no production regression risk.
+**why-change:** none — verified exactly what the row scoped (this file only; sibling FAILEDFILE FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL is a separate board row, correctly left untouched).
+
+### CAP-REACHED · 2026-08-14T09:34:30Z
