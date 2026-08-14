@@ -92,12 +92,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "UC-CDC-P7",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of UC-CDC-P7 — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-14T05:52:55Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-08-14T06:26:11Z",
+    "updated_by": "developer",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17433,7 +17432,7 @@
         "scope_out": "Do NOT fix by raising WIP or by removing the head gate — the WIP<=1 BOUNDED-1 bound is user-gated (2026-07-04) and out of scope. Do NOT diagnose why dev-mcp-server specifically produced nothing on FIX-VNINDEX-CACHE-STARTUP-PURGE; that row is back in backlog[] and, if it stalls the head a second time, becomes a separate reproducible per-row dispatch failure.",
         "related_not_duplicate": "FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION (chain ORDERING / lane starvation — chronic, independent, the P0 rows were already starving 4 days before this pin) and ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG (session-scoped CronCreate loop liveness — a different plane; this row is about board-head liveness and would fire even with the cron plane perfectly healthy).",
         "prior_art_note": "PO grep-checked the board before minting for STARV/DRAIN/STALE-CRASH/HEAD-PIN/WATCHDOG/LIVENESS/DISPATCH-GATE: the two nearest rows are named above and are both distinct. No existing row covers the 24h-threshold-vs-tick-cadence mismatch or the unobservable Pipeline-Resume respawn.",
-        "updated_at": "2026-08-07T22:42:23Z",
+        "updated_at": "2026-08-14T06:26:20Z",
         "po_occurrence_20260805T1830Z": "PO OCCURRENCE 2026-08-05T18:30Z (po, dev-team tick triage) - ADJACENT MECHANISM on the same head-pin surface, folded here rather than minted as a new row (single observation, and no incorrect action actually resulted; feedback_single_observation_degenerate_case_read_as_broken_mechanism).\nOBSERVED: .head carried {active_task_id: FIX-MCP-MEMORY-CODE-LEAK, next_agent: 'architect', next_action: 'spawn architect DIRECTLY (no zone-detect indirection; lane already resolved at promote time)', updated_at 2026-08-05T17:51:18Z, updated_by 'dev-team (supervised-lane sweep)'} while the row it names had ALREADY moved to next_agent = owner = dev-mcp-server (claimed_at 2026-08-05T17:51:16Z, same sweep, ~2s earlier). .head was never re-synced.\nCLASS: this is a WRITE-COHERENCE gap (the head pin is not updated when the named row's next_agent is reassigned), which is DISTINCT from this row's own 24h-auto-reset-threshold premise - but it lands on the same head-pin surface and has a WORSE consequence shape: dev-team dispatches off .head.next_agent, so had this row not been independently held by the WF-2 SUPERVISED-HOLD gate, this tick would have spawned architect instead of dev-mcp-server. That is a SILENT MIS-DISPATCH, not a stall - the stall shape this row already describes is the benign half of the same defect.\nSUGGESTED SCOPE ADDITION: whoever implements the head-pin fix should also assert head.next_agent == row.next_agent for the row .head names, not only a time-based reset.\nACTION TAKEN THIS TICK: none. .head deliberately left unchanged (a live dev-mcp-server agent holds task:FIX-MCP-MEMORY-CODE-LEAK until 18:51:58Z; rewriting .head under it would risk a duplicate spawn).\n",
         "po_live_evidence_20260806T0921": "PO LIVE EVIDENCE 2026-08-06T09:21Z - FIRST MEASURED INSTANCE of the failure this row predicts. UC-CRITIC-HOOKS-ENFORCEMENT (P1, supervised+plan_only, next_agent=ba) already carried po_goahead_20260805T090611, so the WF-2 SUPERVISED-HOLD gate was RELEASED at 2026-08-05T09:06:11Z - yet the row sat in task_board.in_progress[] with no live lock and no spawn until the router hand-dispatched ba at 2026-08-06T09:19:24Z. Idle span ~24.2h, matching this row 24h head-pin auto-reset threshold. Proves ratification landing does NOT imply dispatch. Coverage check done before attaching rather than minting: FIX-DEVTEAM-READY-REVIEW-LANE-SUPERVISED-PLANONLY-NO-PICKER scopes ready[]/review[] ONLY, so it does not cover an in_progress[] row that .head has moved off; this row is the correct owner and its priority case is now backed by a measurement, not a projection.",
         "promoted_at": "2026-08-07T20:52:49Z",
@@ -17445,7 +17444,10 @@
         "architect_review_note_20260807": "ARCHITECT 2026-08-07T22:37Z — full blueprint: docs/architecture-briefs/2026-08-07-devteam-head-pin-stale-threshold-resume-bound.md.\n\nTHRESHOLD (AC-1): 2h (not 24h). Basis: dev-team cron cadence measured live at 30min (.claude/skills/cron-detect-loop/register.md:81, */30 * * * *) = 2h is 4x the measured p100 close-time (~13-30min, this rows own instance evidence) and 2x the existing 1h task:<id> lock TTL backstop (S2s own LOCK-LIFETIME comment already names that TTL the same role as the 24h reset) — so it structurally cannot collide with a genuinely-still-running specialist. Corroborated against git log since the rows claimed_at (AC-1s own \"no head movement AND no commit\" wording) before actually resetting.\n\n2 LOAD-BEARING FINDINGS NOT IN THE ROWS OWN TEXT: (1) scripts/orch-stamp-updated-at.mjs auto-refreshes .head.updated_at on ANY .head write — including the new resume_attempts counter this row itself requires (AC-3) — so the age check keys off the in_progress[] rows own claimed_at, never .head.updated_at, or AC-3 would silently defeat AC-1. (2) the CURRENT 24h check has NO supervised-hold exemption (po_live_evidence_20260806T0921 on this same row measured a 24.2h supervised-hold span) — naively shrinking to 2h without reordering would create a new routine false-positive class; the new age check is placed strictly AFTER WF-2 SUPERVISED-HOLD in a restructured single chain.\n\nAC-2 (signal): 2 distinct BUG-channel Telegram shapes, both naming task id + pin duration computed from claimed_at.\nAC-3/AC-4: new .head.resume_attempts/last_resume_at (incremented once per genuine S2 resume-respawn, never on first claim); 3-attempt bound escalates to status:BLOCKED + hold_reason (reused existing field) + resume_attempt_bound_exceeded_at/_by (new pair — deliberately NOT blocked_by, which is already schema-meaningful as a reverse dependency edge, orchStateSchema.ts:707, and would have corrupted dep resolution), mirroring WF-1s own BLOCKED-carve-out shape (idle-reset head + lane-move to backlog[]).\n\nSCOPE: po_occurrence_20260805T1830Z (head.next_agent not re-synced on same-tick row reassignment) scoped OUT with reasoning in the brief §6 — different trigger class (instantaneous write-ordering vs this rows temporal-staleness ACs), matches feedback_selfreport_conflates_two_dbadjacent_defects_by_topic. Recommended standalone follow-up for PO: FIX-DEVTEAM-HEAD-NEXTAGENT-RESYNC-ON-REASSIGN.\n\nHANDOFF ZONE CORRECTION: next_agent set to agent-father, not developer (the dispatch prompts own guess) — per po_routing_ruling_20260721 (agent-instruction prose under docs/agents/** routes to agent-father; developer carries no commit-zone grant there and its own init.md forbids .ts/.py), already applied twice to this exact file (TE-T02, 2026-08-06 qadrain brief §1c). §5 (main.md ready-to-apply patch) is agent-fathers deliverable; §7/§8 (optional HeadSchema typing + regression verifier) is a non-blocking developer companion, NOT spawned this cycle, PO to mint separately if wanted.\n\nBUILD-STANDARD: not-applicable (bug-fix/refactor, in-zone, no new primitives).",
         "reviewed_at": "2026-08-07T22:41:51Z",
         "reviewed_by": "architect",
-        "updated_by": "architect-cycle-20260807"
+        "updated_by": "architect-cycle-20260807",
+        "secondary_claimed_at": "2026-08-14T06:26:19Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "agent-father"
       },
       {
         "id": "FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58",
@@ -18811,6 +18813,42 @@
         "po_goahead_20260814T042125": "RATIFIED AT SOURCE, not on the relay. Deliverable exists: docs/handoffs/FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING-BA-spec.md, 32085 bytes, provenance real (f5872a52a BA spec + 917c93759 architect ratification), § [Architect] Brownfield Findings present at :319. PO independently re-read ALL 10 corrected line anchors against the live files rather than trusting the table: chef.md:145 (FR-0a anchor text verbatim, inside the 137-151 AUTO-CURE comment), :162 fundamental_* TRANSITION line with blank :163 and 'Supplementary calls' :164 exactly as mapped (FR-1); chef-dish.md:475-476 (FR-0b), :24-25 session-state handoff (FR-2), :116 pillar table row + :122 confidence-scoring bullet end before blank :123 / '**Volatility & Breadth Context**' :124 (FR-3), :294 carry/FII provenance bullet before :295 'Store all chain sentences' (FR-4), :443 Citation Discipline (FR-5), :535-537 BIZ_CTX_OK 3-line block (FR-6), :648 rationale_one_liner before :649 closing brace (FR-7 schema), :685 'Extract conviction calls from Step 4' (FR-7 impl). ALL MATCH. Independently re-derived the one load-bearing implementability claim rather than accepting it: ANY_LAYER_PARTIAL at :540-544 does contain 'OR (BIZ_CTX_OK relied on a gap token)' at :542, and it stays computable after FR-6's rewrite via the new definition's 2nd OR-branch — architect's claim holds. Drift re-checked: last commit touching either file is still c31ee006e, the exact commit architect named as the drift source, so the corrected map is current as of HEAD 774c84f85. BLOCKER Q1 / EC-5: PO does NOT exercise the veto BA reserved. Architect's ruling is right — force-widening ticker coverage to manufacture a BIZ_CTX citation would conflate a data-availability gate with a publish-scope decision, a strictly worse failure than the one this row fixes; FR-3's opportunistic-only clause already implements the safe default. Any later objection is a follow-up FR against FR-3, never a rework of FR-0/1/2/4/5/6/7. AGENT-FATHER: anchor on the QUOTED TEXT, not the numbers (architect risk-flag R1).",
         "agent_father_completed_at": "2026-08-14T04:44:48Z",
         "agent_father_completion_note": "Applied all 7 architect-ratified FR-0..FR-7 flow-doc edits (10 anchor sites, chef.md + chef-dish.md), anchored on quoted live text per architect risk-flag R1, not line numbers (files had already drifted BA-to-architect, and my own earlier edits in this pass shifted later anchors further). Post-edit grep confirms all 10 $BIZ_CTX_SIGNALS/$BIZ_CTX_CITED/business_context_cited tokens landed exactly once at the intended site. Zero application code touched (blast-radius already confirmed by architect: zero non-doc consumers). Committed+pushed c11504775 (chef.md + chef-dish.md only). Cannot self-verify this cycle: the rows own verification_gate requires a live chef dish RAW-verified against a fresh unified-agent-synthesis-*.json (known_gaps[] omits the biz-context gap token AND >=1 conviction_calls[].business_context_cited is non-null) which can only be checked after the NEXT scheduled chef dish actually runs and persists its JSON — routed to po for that RAW-verify pass (likely via the next tnb-audit/system-auditor sweep)."
+      },
+      {
+        "id": "UC-CDC-P7",
+        "type": "SPRINT-L",
+        "title": "Collapse the 12-file cowork flow to ~7 files; push per-tick logic into the deterministic script layer",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "L",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P7",
+        "note": "SCOPE=verifier Rescope note (corrected sequencing + I16 fix). Run Phase2 (script moves: match-slots 4.5/4.5c, tick-postflight last_fired batch) BEFORE the pressure-file merge (200L cap). I16: add an SSOT cowork_signal_recipient field to system-map.json, never derive from type==cowork (drops po+tran-ngoc-bau). COORDINATE with TE-T03 (main.md rewrite) + TE-T13 (line-1 purge) — sequence after or merge to avoid 3-way collision.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "depends": [
+          "TE-T03"
+        ],
+        "related": [
+          "TE-T13"
+        ],
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "promoted_at": "2026-08-14T05:52:49Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-08-14T06:26:11Z",
+        "claimed_at": "2026-08-14T05:52:54Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "updated_by": "developer",
+        "entered_review_at": "2026-08-14T06:25:15Z",
+        "next_agent": "qa",
+        "review_note": "developer S24: landed RESCOPE Phase 2 only (script moves), per the row's explicit 'Phase2 BEFORE merge' ordering. TE-T03/TE-T13 coordination check: both DONE_VERIFIED before session start (TE-T03 2026-08-11, TE-T13 2026-07-13) -- zero collision, main.md untouched. (a) scripts/agents-flow/cowork-match-slots.js now applies Step 4.5 freshness-downgrade (applyFreshnessDowngrade, gatherer set derived from cowork-schedule.json parallel_group==\"gatherers\", no hardcoded literal) + Step 4.5c CHEF mutex (in-process, unconditional both legacy/adaptive modes) at the tail of every call -- matchSlots() array-return contract unchanged (new options.meta out-param, additive-only, NFR-2-style). CLI stdout + meta gain pressure_mode/downgraded/suppressed_cadence/chef_mutex_applied/due_reasons/cadence_minutes; threaded into cowork-tick-preflight.sh's WORK verdict (_emit_verdict new optional 8th arg) + match-slots.md's ERROR path. pressure-cadence.md Steps 4.5/4.5c marked SUPERSEDED (script does it now), historical incident record kept not deleted. Self-caught bug found via testing: ${8:-{}} in bash defeats brace-matching (literal {} default appends a stray } to any non-empty 8th arg, corrupting every WORK verdict) -- fixed to ${8:-} + [ -z ] && extra=\"{}\". (b) NEW scripts/agents-flow/cowork-tick-postflight.sh: last_fired batch write (verbatim delegation to cowork-write-last-fired.js, zero reimplementation) + cycle-snapshot assembly (same jq contract as tick-snapshot.md) + NEW docs/signals/processed/cowork-team-*.json >14d retention sweep (I13), scoped to already-processedAt-stamped files ONLY (never the live inbox, never an unstamped row -- avoids the exact unconditional-processed/-prune bug class drain-signals.js was hardened against; git rm stages, does not commit, mirrors purge-legacy-processed-signals.sh). (c) I16: added cowork_signal_recipient:true to po/tran-ngoc-bau/unified-agent/alert-commander in system-map.json (never derivable from type==\"cowork\", a different 9-agent set that drops po+tran-ngoc-bau); wired cowork-tick-preflight.sh Step 7 to read it (fail-safe fallback to the prior literal on missing/malformed file -- every pre-existing fixture keeps passing unmodified); updated work-tick.md + dispatch/SKILL.md + system-map-query/SKILL.md prose pointers. Tests: cowork-match-slots.test.js 43->69/69, cowork-tick-preflight.test.sh 58->67/67 (new T2c/T2d/T-SSOT), new cowork-tick-postflight.test.sh 28/28 (real isolated git-repo fixture, not mocked -- caught + fixed a git-rm empty-leading-dir-prune gotcha mid-write). cowork-chef-mutex/cowork-schedule-consistency/cowork-catchup-predicate/cowork-guaranteed-slot-firer suites all unaffected (260 assertions total across 7 suites, 0 regressions). shellcheck -S warning clean on all touched .sh files. bun test/tsc N/A (zero apps/ TS/Go touched, zone cross-service/). Commit 15492ff61. Decision journal sprint-ULTRACODE-AUDIT-FIXALL-developer.md STEP developer-S24.",
+        "status_note": "PARKED, not complete -- Phase 1 (12->7 file collapse: merge pressure-read.md+pressure-cadence.md into pressure.md, fold pressure-emit.md into telemetry.md, delete slot-claim.md's retired 4.6b block, merge last-fired.md into spawn-fanout.md, update main.md JUMP-TO) is NOT started this pass, per the row's own explicit 'Phase2 script moves BEFORE the pressure-file merge' sequencing. Also NOT done: wiring last-fired.md/tick-snapshot.md to actually CALL the new cowork-tick-postflight.sh in the live flow -- Step 4.7 (snapshot) must run BEFORE spawn-fanout (Step 5) so agents can read a fresh snapshot, Step 5b (last_fired) must run AFTER spawns, so a single combined call site at the tail is NOT a drop-in; the script already supports a 2-call split (SKIP_SNAPSHOT/SKIP_RETENTION env flags) but wiring it into the live cron-facing flow docs needs a verified live dry-run tick before/after, which did not fit in this session -- next pickup should do that wiring FIRST (script + tests already exist and are green), then proceed to the Phase 1 merge. I16 SSOT field IS fully wired end-to-end (system-map.json + cowork-tick-preflight.sh + work-tick.md + dispatch/SKILL.md), not partial."
       }
     ],
     "qa": [
@@ -19168,39 +19206,7 @@
     },
     "last_triaged_at": "2026-08-14T05:52:49Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "UC-CDC-P7",
-        "type": "SPRINT-L",
-        "title": "Collapse the 12-file cowork flow to ~7 files; push per-tick logic into the deterministic script layer",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "L",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#cowork-dispatcher-cron-P7",
-        "note": "SCOPE=verifier Rescope note (corrected sequencing + I16 fix). Run Phase2 (script moves: match-slots 4.5/4.5c, tick-postflight last_fired batch) BEFORE the pressure-file merge (200L cap). I16: add an SSOT cowork_signal_recipient field to system-map.json, never derive from type==cowork (drops po+tran-ngoc-bau). COORDINATE with TE-T03 (main.md rewrite) + TE-T13 (line-1 purge) — sequence after or merge to avoid 3-way collision.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "depends": [
-          "TE-T03"
-        ],
-        "related": [
-          "TE-T13"
-        ],
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "promoted_at": "2026-08-14T05:52:49Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-08-14T05:52:55Z",
-        "claimed_at": "2026-08-14T05:52:54Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
