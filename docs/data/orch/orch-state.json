@@ -93,11 +93,13 @@
   ],
   "head": {
     "status": "in_progress",
-    "active_task_id": "FIX-FRESHNESS-WRITER-PROBE-REGISTRY-GENERALIZE-IDLE-VS-CRASH",
-    "next_agent": "dev-mcp-server",
-    "next_action": "PO signed off SPIKE-FRESHNESS-REMEDIATE-TRIAGE (review -> done, APPROVED) and decomposed the approved design into 4 backlog rows. BUILD-STANDARD lean (§11): dev-mcp-server drives end-to-end, no BA/PM relay. Land FIX-FRESHNESS-WRITER-PROBE-REGISTRY-GENERALIZE-IDLE-VS-CRASH first (the redirect row `depends` on it), then FIX-FRESHNESS-BREACH-REDIRECT-TO-SIGNALQUEUE-PO-WITH-DEDUP-COOLDOWN, then FIX-FRESHNESS-CADENCE-CLASS-SESSION-GATE-SSOT. FIX-COVERAGE-MAP-ENDPOINT-DB-QUERY-BUCKET2-WIDENING is P2 and explicitly parallelizable — never a precondition. Read docs/architecture-briefs/2026-08-07-freshness-auto-remediate-triage-design.md before touching code; the design is complete and must not be re-derived.",
-    "updated_at": "2026-08-14T04:15:21Z",
-    "updated_by": "po (SPIKE-FRESHNESS-REMEDIATE-TRIAGE sign-off + decomposition — lane move review->done in this same write)"
+    "active_task_id": "FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING",
+    "next_agent": "agent-father",
+    "next_action": "Architect ratified FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING (FR-0..FR-7 CONFIRMED SOUND, corrected live line map for chef-dish.md/chef.md drift, blocker Q1 resolved within remit). Spawn agent-father DIRECTLY to apply the 7 flow-doc edits per the corrected line map in docs/handoffs/FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING-BA-spec.md (Architect Brownfield Findings section) — zero application code, agent-father sole ownership, no PM decomposition needed.",
+    "updated_at": "2026-08-14T04:19:29Z",
+    "updated_by": "po (SELF-CORRECTION — restoring router head set at 02:36:25Z commit c9a02fbab)",
+    "po_head_selfcorrection_20260814": "PO commit 153bdeb06 OVERWROTE this head with FIX-FRESHNESS-WRITER-PROBE-REGISTRY-GENERALIZE-IDLE-VS-CRASH/dev-mcp-server while signing off SPIKE-FRESHNESS-REMEDIATE-TRIAGE. That was WRONG and is reverted here. The lane-move->reset-head rule applies when the moved row IS the head's task; the SPIKE was not — head pointed at a DIFFERENT, still-live agent-father dispatch (FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING, in_progress, agent_father_completed_at absent), which the router had itself just repaired from a stale architect handoff. Overwriting it silently dropped a live routing directive. The 4 rows PO minted this tick are backlog[] rows reachable by normal RLC/BOUNDED-1 picking and never needed .head; land order and rationale live on the rows and on the SPIKE's po_signoff_note, not here.",
+    "_updated_at": "2026-08-14T02:32:00Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7707,14 +7709,14 @@
         "created_at": "2026-07-30T18:27:28Z",
         "created_by": "pm",
         "note": "Atomic implementation of Step 2.4 collision probe.",
-        "updated_at": "2026-08-12T15:37:44Z",
+        "updated_at": "2026-08-14T04:20:01Z",
         "po_prior_art_suspect_20260808T1600Z": "SKIPPED as this tick's manual-dispatch-sweep selection despite being the top-ranked candidate (P0, BACKLOG-XOR-GAP, unflagged) — PRIOR ART APPEARS ALREADY SHIPPED, so folding it into a BATCH would have burned a dev slot re-implementing live code (feedback_file_prior_art_check_before_minting_row).\n\nThe row's deliverable is 'Implement Cowork-Slot Collision Probe Core (dispatch-claim/SKILL.md + CLAUDE.md)'. Both named targets already carry a collision path: CLAUDE.md:14 has the 'Peer collision' outcome row ('claimed:false + current_holder.owner_client_session != $CLAUDE_CODE_SESSION_ID -> log PRE-CLAIM collision -> send_telegram(work) -> EXIT'); .claude/skills/dispatch-claim/CARD.md:35 carries the same branch; .claude/skills/dispatch-claim/SKILL.md:194 (session-presence collision), :288 (PRE-CLAIM collision) and :563 ('Cross-session collision detection - same agent_id in multiple live sessions'). SKILL.md is 31,235B and was last written 2026-08-07, well after this row's 2026-07-30 mint.\n\nDELIBERATELY NOT CLOSED BY PO: the match is on file+behaviour, not on this row's acceptance criteria (the row carries no `files` and no AC beyond 'Atomic implementation of Step 2.4 collision probe'), and it has two live siblings (TASK-COWORK-MUTEX-002/003) whose scope PO did not examine. Closing a P0 on a partial match would be the mirror of the mistake being avoided. REQUIRED NEXT ACTION (whoever picks this up first): diff Step 2.4 of the originating decomposition against the live SKILL.md/CARD.md/CLAUDE.md and either close 001 as already-shipped or state precisely which sub-behaviour is still missing — do NOT re-implement from the title.",
         "po_manual_dispatch_skipped_at": "2026-08-08T16:06:57Z",
         "po_manual_dispatch_skipped_reason": "prior-art-suspect: deliverable appears live in CLAUDE.md + .claude/skills/dispatch-claim/{CARD,SKILL}.md; needs AC-level verify, not dispatch",
-        "po_manual_dispatch_flagged_at": "2026-08-12T15:37:44Z",
+        "po_manual_dispatch_flagged_at": "2026-08-14T04:20:01Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "BACKLOG-XOR-GAP",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) re-surfaced this P0 as top-ranked candidate (rank 0 of 88). NOT folded into BATCH directly: its own prior-art adjudication SPIKE-COWORK-MUTEX-001-PRIOR-ART-AC-DIFF is already minted and is the actual blocker, so the SPIKE is what this tick dispatches. Re-implementing 001 from its title before that adjudication lands would burn a dev slot on live code.",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced BACKLOG-XOR-GAP candidate — folding into this tick's BATCH. P0, supervised:true with plan_only ABSENT and owner=developer (dev-role) — the exact lone-flag shape excluded from BOUNDED-1, SLS and DRS simultaneously; 88 live candidates this tick, this is rank-0. Aged 15d since 2026-07-30 mint with zero eligible picker anywhere.",
         "po_manual_dispatch_dispatched_as": "SPIKE-COWORK-MUTEX-001-PRIOR-ART-ADJUDICATE"
       },
       {
