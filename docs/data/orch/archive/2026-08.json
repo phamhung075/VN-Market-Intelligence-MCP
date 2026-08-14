@@ -10752,6 +10752,57 @@
           "observed_at": "2026-08-14T04:13:24Z"
         }
       }
+    },
+    {
+      "id": "FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE",
+      "type": "FIX",
+      "title": "get_vps_proxy_health prints \"VPS may be down or unreachable\" for the bctc route when the real cause is an EMPTY work queue — proxy is provably up (prices/news/sbv pushing on the same proxy)",
+      "status": "DONE_VERIFIED",
+      "priority": "P2",
+      "size": "S",
+      "zone": "apps/mcp-server/",
+      "owner": "dev-mcp-server",
+      "next_agent": "qa",
+      "files": [
+        "apps/mcp-server/src"
+      ],
+      "created_at": "2026-07-29T19:30:16Z",
+      "created_by": "po/triage-20260729T1928",
+      "origin_signal_id": "sys-20260729T183440-1d23",
+      "baseline_pass": true,
+      "rebuild_required": true,
+      "root_cause": "The staleness verdict is derived from last-push AGE alone and then narrated with a fixed causal claim (VPS down/unreachable). bctc is a DEMAND-DRIVEN route: it pushes only when bctc_vps_queue holds actionable rows. RAW live probe 2026-07-29T19:2xZ through the mcp-server runtime: bctc_vps_queue statuses = deferred_infra 328, done 85, enrich_failed 128, url_not_found 39 — ZERO pending/queued. Meanwhile the SAME proxy shows prices ok (373 pushes/24h), news ok (148/24h, last 19:15:19), sbv ok (38/24h, last 18:57:33). The proxy is emphatically up.",
+      "fix_spec": "Separate OBSERVATION from INFERENCE for demand-driven routes. Either (a) suppress/downgrade the STALE verdict for a route whose own work queue has no actionable rows and label it IDLE-NO-WORK, or (b) keep STALE but replace the hardcoded VPS may be down or unreachable narration with a cause discriminated by whether sibling routes on the same proxy are pushing. Generic — no route-name or date literals.",
+      "ac": "AC: with bctc_vps_queue holding zero actionable rows AND >=1 sibling route pushing within its own SLA, get_vps_proxy_health MUST NOT assert the VPS is down/unreachable. Verify against live output, not a fixture.",
+      "dedup_checked": "Distinct from FIX-VPS-NEWS-STALE-FALSEPOS (zone apps/news-fetch/, news route, threshold-vs-cadence miscalibration where the feed IS pushing) and from FIX-VPS-HEALTH-OFFHOURS-MASK-FALSE-GREEN (off-hours grace double-apply, opposite direction). Here the STALE flag is CORRECT and only the attributed cause is wrong.",
+      "user_impact": "MED — a permanent recurring false incident: the queue stays drained until ALPHA-S6-OPTIONB-DECISION-GATE trips, so this WARN re-fires indefinitely and burns a system-auditor + PO triage slot each time.",
+      "updated_at": "2026-08-14T04:58:03Z",
+      "promoted_at": "2026-07-30T15:16:22Z",
+      "promoted_by": "dev-team (bounded-1 auto-pickup)",
+      "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
+      "claimed_at": "2026-08-14T04:53:21Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "raw_verified_by": "dev-team",
+      "raw_verified_at": "2026-07-30T15:58:51Z",
+      "raw_verify_note": "Independently RAW-verified, not self-report: commits 6113890bb+0f8e8ee07 real/on-HEAD; diff matches claim exactly (DEMAND_QUEUE_SQL+getDemandQueueDepth in vpsPushLogStore.ts, formatHealth() idle-no-work branch in vpsProxyTools.ts, isStale() untouched); new test 7/7, sibling suite 22/22 (1113+VPT-1), tsc clean, tool/cron counts unchanged 184/88; live docker-exec probe against real market.db independently reproduces the claimed root cause exactly (bctc_vps_queue 328/128/85/39, 0 pending; news/sbv pushing within 30min); live undeployed get_vps_proxy_health tool call still reproduces the pre-fix bug verbatim, confirming REBUILD_REQUIRED=true is genuine and outstanding.",
+      "status_note": "[QA] Review Record (direct-commit verify) 2026-08-14T04:56:57Z: APPROVED, DONE_VERIFIED. Independently re-verified -- did not trust raw_verified_by=dev-team prose alone. Commits 6113890bb+0f8e8ee07 confirmed on main AND origin/main ancestry via git merge-base --is-ancestor. git show --stat matches diff exactly: FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE.test.ts (new, 245L), vpsPushLogStore.ts (+60), vpsProxyTools.ts (+46/-7), docs/agents/tools/list/get_vps_proxy_health.md, docs/architecture/microservice/mcp-server/system.md. Read source directly (not commit-message narration): getDemandQueueDepth()/DEMAND_QUEUE_SQL was later split into vpsDemandQueue.ts and formatHealth() into vpsProxyHealthFormat.ts by an unrelated later refactor (FIX-CI-SIZELINT-MCPSERVER-SIX-UNCOVERED-OFFENDERS) -- confirmed the demand-driven idle-no-work logic and isStale() OBSERVATION/INFERENCE separation survived that refactor intact, re-exported for back-compat from vpsPushLogStore.ts. Own re-run of targeted test: 7/7 PASS (matches claim). Sibling suite (1113-vps-proxy-health.test.ts + VPT-1-vps-proxy-health-endpoint.test.ts): 22/22 PASS (matches claim). Broader downstream suite built atop this fix (1406b-vps-health-idle-constraint, FIX-BCTC-SERVING-GATE-VPSSTALE-IGNORES-DEMAND-QUEUE-DEPTH, FIX-BCTC-VPS-QUEUE-STALE-TRIAGE, FIX-BCTC-VPS-QUEUE-SYNC, FIX-VPS-HEALTH-FRESHN): 47/47 PASS -- no regression from later work layered on this fix. bun tsc --noEmit: 0 errors. DDD scan (grep domain->infrastructure/application imports on the 4 touched production files): 0 matches. Security scan (process.env, password/secret/token): 0 matches. mock-guard.sh --files on the 4 touched production files: PASS. rebuild_required=true left untouched -- genuine, outstanding ops/deploy concern (live undeployed tool still reproduces the pre-fix bug per raw_verify_note), orthogonal to this source-level QA gate. DJ: sprint-FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE-qa.md STEP qa-S1.",
+      "qa_verified_at": "2026-08-14T04:56:57Z",
+      "qa_verified_by": "qa",
+      "updated_by": "qa",
+      "commit_sha": "6113890bb9228630fdba99b52780f27de2764a45+0f8e8ee076adcf7720a535dffffc66cc7faf83b8",
+      "verification": {
+        "raw_probe": {
+          "tool": "bun test + bun tsc --noEmit + mock-guard.sh + git merge-base/show --stat + grep DDD/security",
+          "args": {
+            "commit_verified": "6113890bb+0f8e8ee07",
+            "targeted_test": "FIX-VPSHEALTH-DEMANDROUTE-EMPTYQUEUE-MISREPORTS-PROXY-UNREACHABLE.test.ts",
+            "sibling_suite": "1113-vps-proxy-health.test.ts+VPT-1-vps-proxy-health-endpoint.test.ts",
+            "downstream_suite": "1406b-vps-health-idle-constraint+FIX-BCTC-SERVING-GATE-VPSSTALE-IGNORES-DEMAND-QUEUE-DEPTH+FIX-BCTC-VPS-QUEUE-STALE-TRIAGE+FIX-BCTC-VPS-QUEUE-SYNC+FIX-VPS-HEALTH-FRESHN"
+          },
+          "live_value_observed": "targeted 7/7 PASS; sibling suite 22/22 PASS; downstream suite 47/47 PASS; tsc --noEmit 0 errors; DDD/security grep 0 matches; mock-guard.sh PASS; both commits ancestor=yes on main AND origin/main",
+          "observed_at": "2026-08-14T04:56:57Z"
+        }
+      }
     }
   ],
   "closed_sprints": [
