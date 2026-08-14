@@ -12,6 +12,36 @@ If notebook shows same error repeated 3+ cycles:
 4. Log: `"[AutoCure] {agent}/flow.md — added regime caveat check at Step N"`
 5. Send to WORK: `"[Tran Ngoc Bau] Fixed: {agent} flow — {description}"`
 
+**Step 7 — Published-marker gate (Phase 2 — MANDATORY, commit point) →**
+skill: `.claude/skills/published-marker-gate/SKILL.md` (agent-id=tran-ngoc-bau).
+
+<!-- UC-CCA-P3-FR3-TRAN-NGOC-BAU (agent-father, 2026-08-14): Phase-2 claim relocated here from
+     main.md's old EARLY task_claim — main.md now only runs the Phase-1 probe (§ PUBLISHED
+     MARKER GATE) before the 4 audit sub-flows. `MARKER_KEY` is the exact string main.md
+     computed (`"published:tnb-audit:" + WORK_DATE`), carried forward as session state —
+     do NOT recompute WORK_DATE here (session-scoped, same cycle). -->
+
+```
+CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:              MARKER_KEY,   # from main.md's Phase-1 probe, carried forward verbatim
+  task_kind:            "cowork-slot",
+  owner_agent:          "tran-ngoc-bau",
+  owner_client_session: <resolved CLAUDE_CODE_SESSION_ID — REQUIRED, never the literal token text;
+                          live-confirmed 2026-07-21 c115: omitting this field fails Zod validation
+                          before any lock is attempted>,
+  ttl_seconds:          100800   # 28h daily slot (ARCH-DECIDE-D)
+})
+
+if CLAIM.claimed != true:
+  log "[tran-ngoc-bau] publish blocked (Phase-2 claim) — already published key=" + MARKER_KEY
+  EXIT with: "DONE: duplicate-publish blocked | PIPELINE: complete | QUALITY: full"
+  # a peer claimed between main.md's Phase-1 probe and this Phase-2 claim — do NOT send anything.
+```
+
+If `claimed == true`: proceed immediately to Step 7's own WORK send below. NEVER call
+`task_release` on success or any exit after this point — successful send, failed send,
+exception, process death: all leave the marker in place. TTL is the sole expiry path.
+
 **Step 7 — Quality report to WORK** — `send_telegram(channel="work", message=...)`:
 ```
 [Tran Ngoc Bau] Quality Audit HH:MM UTC

@@ -12,7 +12,15 @@ If you find yourself about to refuse execution or delegate upward → that is th
 
 > Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
-## PUBLISHED MARKER GATE (Layer-A dedup — MANDATORY before Dispatch)
+## PUBLISHED MARKER GATE — Phase 1 (cheap probe, MANDATORY before Dispatch)
+
+<!-- UC-CCA-P3-FR3-TRAN-NGOC-BAU (agent-father, 2026-08-14): this section used to claim the
+     marker directly (EARLY-claim defect — before the 4 audit sub-flows run). Converted to a
+     Phase-1 read-only probe per .claude/skills/published-marker-gate/SKILL.md; the actual
+     Phase-2 claim now happens in auto-cure-and-handoff.md immediately before Step 7's WORK
+     send (this agent's own irreversible publish action). Key/TTL derivation logic below is
+     UNCHANGED (still load-bearing, still the FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON
+     fix) — only the outcome of a HELD probe differs (EXIT here instead of claiming here). -->
 
 <!-- FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON (2026-07-29, PO-decided, option (a)):
      tran-ngoc-bau's audit cron (`13 20 * * *`) is DAILY, but this gate used to key its dedup
@@ -48,29 +56,26 @@ SLOT_ID = "tnb-audit"
 WORK_DATE = TZ="Asia/Ho_Chi_Minh" date +%Y-%m-%d   # VN date (GMT+7) of the current tick
 
 # Step G-2: key the mutex on the daily date — cron period (daily) == key period
-PUBLISH_TASK_ID = "published:tnb-audit:" + WORK_DATE
+MARKER_KEY = "published:tnb-audit:" + WORK_DATE
 
-PUBLISH_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:              PUBLISH_TASK_ID,
-  task_kind:            "cowork-slot",
-  owner_agent:          "tran-ngoc-bau",
-  owner_client_session: $CLAUDE_CODE_SESSION_ID,   # REQUIRED — task_claim schema (P1-FINAL TASK_1980);
-                                                    # live-confirmed 2026-07-21 (c115): omitting this field
-                                                    # fails with a zod validation error before any lock is
-                                                    # attempted, on the FIRST real invocation of this gate
-                                                    # (all prior c97-c114 cycles skipped it — MCP was unbound
-                                                    # in tran-ngoc-bau's frontmatter until the 2026-07-19
-                                                    # agent-father fix, so this schema gap was never hit live)
-  ttl_seconds:          100800    # 28h — daily slot (ARCH-DECIDE-D), covers the full 24h content
-                                  # cycle with a 4h buffer against timezone drift
-})
+# Phase 1 — cheap read-only probe (per .claude/skills/published-marker-gate/SKILL.md).
+# task_list_held has NO task_id filter — scan client-side for MARKER_KEY.
+PROBE = call_tool(server="vn-market", tool="task_list_held",
+                   arguments={ kind: "cowork-slot", owner_agent: "tran-ngoc-bau" })
+HELD  = PROBE.locks contains an entry where task_id == MARKER_KEY AND expires_at > now
 
-if PUBLISH_CLAIM.claimed != true:
-  log "[tran-ngoc-bau] publish blocked — already published slot=tnb-audit date=" + WORK_DATE
+if HELD:
+  log "[tran-ngoc-bau] publish blocked (Phase-1 probe) — already held slot=tnb-audit date=" + WORK_DATE
   EXIT with: "DONE: duplicate-publish blocked | PIPELINE: complete | QUALITY: full"
+  # claims NOTHING — a leak from this call is structurally impossible.
 ```
 
-If `claimed == true`: proceed through the Dispatch table below.
+If NOT held: proceed through the Dispatch table below. `MARKER_KEY` (this exact string,
+`WORK_DATE` reused verbatim, never recomputed) is carried forward as session state to
+`auto-cure-and-handoff.md`, which performs the mandatory Phase-2 claim (owner_client_session
+REQUIRED there — live-confirmed 2026-07-21 c115: omitting it fails Zod validation before any
+lock is attempted) immediately before Step 7's WORK send, TTL 100800s (28h daily slot,
+ARCH-DECIDE-D).
 
 ---
 
