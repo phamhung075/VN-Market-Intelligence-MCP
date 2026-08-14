@@ -92,11 +92,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "updated_at": "2026-08-14T09:59:03Z",
-    "updated_by": "developer"
+    "status": "in_progress",
+    "active_task_id": "FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0",
+    "next_agent": "pm",
+    "next_action": "Architect design complete for FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0 -- read architect_review_note on the row + docs/architecture-briefs/2026-08-14-readylane-incident-lane-throughput.md, mint the 2 implementation rows per brief Section 5.",
+    "updated_at": "2026-08-14T11:03:56Z",
+    "updated_by": "architect (design handoff, head-nextagent-resync convention)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13347,38 +13348,6 @@
         "po_ruling_20260814": "PO DISPATCH RULING: implement NOW, not sequenced behind anything. (1) agents-architect delivered the full patch spec (commit 9ef864ba7, brief §3) — design phase is closed, next_agent retargeted agents-architect -> agent-father. (2) Sequencing rationale: WF-1d landed in this SAME file (docs/agents/dev-team/flow/main.md) 11 minutes ago (commit 418fe33fb). Applying WF-2b while that edit is the freshest state MINIMISES the concurrent-edit risk the brief itself flagged (§9) — deferring would increase it, since main.md is one of the highest-churn files in the repo. (3) WF-2b is orthogonal by construction to WF-1d: WF-1d fires on lane-residency (row NOT in in_progress[]), WF-2b fires only on rows that ARE in in_progress[]/active_sprints[].tasks[] — disjoint predicates, no ordering hazard between them. (4) Ordering constraints that ARE non-negotiable (brief §9): WF-2b must sit BETWEEN WF-2 and WF-3 — placing it after WF-3/WF-4 reproduces the false-positive class it exists to prevent and leaves WF-4 dispatching the STALE agent.\n\nADDED SCOPE — AC-8 (PO folds brief §4 addendum into THIS row rather than minting a 4th micro-row; the architect explicitly left the bundle-or-split call to PO and priced it as cheap): at the `head.status == \"idle\"` fall-through (live line ~547 of main.md, the `head.status == idle / done -> Idle-Tick Rotation Selection` bullet), BEFORE Idle-Tick Rotation Selection runs, add the defensive dangling-field null-out from brief §4. PO VERIFIED this gap is REAL and still open: the live bullet documents `active_task_id:null, next_agent:\"router\"` as an *established convention* in prose only, with zero enforcing guard anywhere in the idle path. Same file, same agent, same tick — bundling avoids a 4th row for a ~6-line guard.\n\nSCOPE EXPLICITLY REMOVED — brief §4's named companion row FIX-PM-NONCLOSEOUT-HEAD-RESET-INCOMPLETE-NULLOUT is NOT minted: ALREADY SHIPPED. See this task's PO notes and the sibling ruling recorded on the board."
       },
       {
-        "id": "FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0",
-        "type": "FIX",
-        "priority": "P0",
-        "status": "READY",
-        "size": "M",
-        "zone": "cross-service/",
-        "owner": "architect",
-        "next_agent": "architect",
-        "created_at": "2026-08-12T05:45:28Z",
-        "created_by": "po (escalation adjudication 2026-08-12T05:42Z)",
-        "title": "Ready-Lane Consumer has no severity/incident expedite path: inside one priority class the tiebreak is the ready[] array index, so a P0 minted for a LIVE production incident lands at the back of a 78-deep queue and is unreachable in incident time",
-        "desc": "MEASURED, not inferred. Replaying scripts/devteam-backlog-claim-ready-lane-consumer.jq 14 successive times against a live copy of the board on 2026-08-12T05:36Z put FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS — a P0 for a service that was OOM-cycling every ~50 minutes and had taken 3 emergency ops restarts in 90 minutes — at pick #8. It sits at ready[] index 76 of 78 and is the LAST of 26 P0 rows in the lane. RLC's documented selection is 'ordered by priority_rank ascending, tiebreak by ready[] array index (FIFO proxy)'; a row minted today is always appended, so recency and severity are anti-correlated with dispatch order inside a priority class. Compounding factors, both live-verified: RLC claims exactly ONE row per invocation (its own header: 'single row per invocation'), and it only runs when it wins the 6-way idle-chain rotation (.dev_team_idle_chain.rotation shows all 6 candidates served ~30min apart, i.e. ~3h per lane, against cron `7,37 * * * *`). Every pick must additionally satisfy wip_in_progress < 2. Floor-bound expected latency for the tail of the P0 class is ~24h and realistically days. PO had to hand-dispatch out of band, which is a producer-with-no-mechanism escape hatch, not a designed path.",
-        "scope": "Design an expedite/severity dimension for ready-lane selection that does NOT simply add a 4th priority tier (P0 is already saturated at 26 rows — a new tier saturates the same way). Candidate shapes for the architect to adjudicate, none pre-selected: (a) an explicit, PO-settable `expedite_at` / `incident_ref` field that sorts ahead of priority_rank and is bounded to N rows so it cannot itself saturate; (b) age-weighted or arrival-inverted tiebreak inside a priority class so a fresh incident row is not structurally last; (c) a separate low-cardinality incident lane with its own budget, outside the shared WIP<=2 slot and outside the 6-way rotation, mirroring how QA-Drain already carries an independent qa[] budget for structurally different work. Any design MUST keep the existing single-linear head-writer collision-freedom proof intact (docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md).",
-        "files": [
-          "scripts/devteam-backlog-claim-ready-lane-consumer.jq",
-          "scripts/lib/devteam-eligibility.jq",
-          "docs/agents/dev-team/flow/main.md"
-        ],
-        "dedup_checked": "Scanned backlog[]/ready[]/in_progress[]/review[] for expedite|starv|fifo|ready-lane rows before mint. Nearest neighbours are all distinct: FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION (starvation of the step1_triage lane under rotation, not ordering WITHIN the ready lane), FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION (dependency-status starvation), FIX-DEVTEAM-READYLANE-DISPATCH-GUARD-NO-REGRESSION-TEST (test coverage for the dispatch guard). No existing row owns intra-priority-class ordering or an incident expedite path.",
-        "related": [
-          "FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS",
-          "FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION",
-          "FIX-DEVTEAM-READYLANE-DISPATCH-GUARD-NO-REGRESSION-TEST"
-        ],
-        "updated_at": "2026-08-14T00:36:53Z",
-        "po_expedited_at": "2026-08-13T17:28:37Z",
-        "po_expedited_by": "po/triage-20260813T1722Z",
-        "status_note": "\n\n[po/triage-2026-08-13T17:28:37Z] SEVERITY EXPEDITE by PO. Moved to the FRONT of ready[] at P0. Rationale: RLC selection is sort_by([priority_rank, ready[]-array-index]), one row per invocation, and RLC only runs on ticks where the 6-way Idle-Tick Rotation picks \"rlc\". Measured live this tick: 60 RLC-eligible rows in ready[]; this row's class sat at eligible queue position 47-48. At 1 row per rlc-selected tick that is unreachable in incident time, and every newly-minted P0 re-buries it. No new diagnosis was needed - the row was already correct. This is the manual stand-in for the missing severity-expedite path (FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0, itself expedited in this same write).",
-        "updated_by": "po/triage-20260814T0007Z",
-        "po_measurement_20260814": "MEASURED LIVE, AND THE MEASUREMENT PARTIALLY REFUTES THIS ROW'S OWN FRAMING — READ BEFORE IMPLEMENTING. Live RLC-eligible ready[] depth is 88 rows (computed with devteam-eligibility.jq's own effective_supervised/effective_plan_only/is_epic_wrapper predicates, not a raw lane length). Two data points from this tick: (1) FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR sits at RLC queue position 1 of 88 — I severity-expedited it to the FRONT at P0 on 2026-08-13T17:28Z — and it STILL was not dispatched in the ~7h before this tick. (2) FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM sits at position 51 of 88 and is now 24 days unactioned despite a BATCH promotion on 2026-08-13 (tran-ngoc-bau c128 re-verified it live and lists it as an explicit c129 priority). THE IMPLICATION: this row is titled as a PRIORITY-ORDERING defect ('FIFO buries incident P0'), but data point (1) shows perfect ordering does not help — the row was already first in line and still starved. The binding constraint is THROUGHPUT, not order: RLC claims ONE row per invocation and only runs on ticks where the 6-way Idle-Tick Rotation selects 'rlc', so the lane's ceiling is roughly one row per six ticks against a queue of 88. An expedite path alone would have changed nothing for either row. Whatever ships here must address per-invocation batch size and/or rotation frequency, not only the comparator. Corroborating precedent already in the flow doc: main.md's own rotation section records 6 FIX-ORPHAN-FR* children (3 of them P0) sitting untouched in ready[] 2026-07-22 -> 2026-08-08 for the structurally identical reason."
-      },
-      {
         "id": "FIX-BCTC-REPARSE-PERIOD-KEY-SYSTEMATICALLY-STALE-100PCT-QUARANTINE",
         "type": "FIX",
         "title": "bctcReparseJob fired after a 40h gap and quarantined 19/19 attempts on period mismatch — supplied period is EARLIER than document content in 100% of cases, so the low-confidence backlog can never drain",
@@ -19121,7 +19090,45 @@
     },
     "last_triaged_at": "2026-08-14T09:52:31Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0",
+        "type": "FIX",
+        "priority": "P0",
+        "status": "IN_PROGRESS",
+        "size": "M",
+        "zone": "cross-service/",
+        "owner": "architect",
+        "next_agent": "pm",
+        "created_at": "2026-08-12T05:45:28Z",
+        "created_by": "po (escalation adjudication 2026-08-12T05:42Z)",
+        "title": "Ready-Lane Consumer has no severity/incident expedite path: inside one priority class the tiebreak is the ready[] array index, so a P0 minted for a LIVE production incident lands at the back of a 78-deep queue and is unreachable in incident time",
+        "desc": "MEASURED, not inferred. Replaying scripts/devteam-backlog-claim-ready-lane-consumer.jq 14 successive times against a live copy of the board on 2026-08-12T05:36Z put FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS — a P0 for a service that was OOM-cycling every ~50 minutes and had taken 3 emergency ops restarts in 90 minutes — at pick #8. It sits at ready[] index 76 of 78 and is the LAST of 26 P0 rows in the lane. RLC's documented selection is 'ordered by priority_rank ascending, tiebreak by ready[] array index (FIFO proxy)'; a row minted today is always appended, so recency and severity are anti-correlated with dispatch order inside a priority class. Compounding factors, both live-verified: RLC claims exactly ONE row per invocation (its own header: 'single row per invocation'), and it only runs when it wins the 6-way idle-chain rotation (.dev_team_idle_chain.rotation shows all 6 candidates served ~30min apart, i.e. ~3h per lane, against cron `7,37 * * * *`). Every pick must additionally satisfy wip_in_progress < 2. Floor-bound expected latency for the tail of the P0 class is ~24h and realistically days. PO had to hand-dispatch out of band, which is a producer-with-no-mechanism escape hatch, not a designed path.",
+        "scope": "Design an expedite/severity dimension for ready-lane selection that does NOT simply add a 4th priority tier (P0 is already saturated at 26 rows — a new tier saturates the same way). Candidate shapes for the architect to adjudicate, none pre-selected: (a) an explicit, PO-settable `expedite_at` / `incident_ref` field that sorts ahead of priority_rank and is bounded to N rows so it cannot itself saturate; (b) age-weighted or arrival-inverted tiebreak inside a priority class so a fresh incident row is not structurally last; (c) a separate low-cardinality incident lane with its own budget, outside the shared WIP<=2 slot and outside the 6-way rotation, mirroring how QA-Drain already carries an independent qa[] budget for structurally different work. Any design MUST keep the existing single-linear head-writer collision-freedom proof intact (docs/architecture-briefs/2026-07-29-qadrain-head-slot-decouple.md).",
+        "files": [
+          "scripts/devteam-backlog-claim-ready-lane-consumer.jq",
+          "scripts/lib/devteam-eligibility.jq",
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "dedup_checked": "Scanned backlog[]/ready[]/in_progress[]/review[] for expedite|starv|fifo|ready-lane rows before mint. Nearest neighbours are all distinct: FIX-DEVTEAM-IDLE-CHAIN-STEP1-TRIAGE-STARVATION (starvation of the step1_triage lane under rotation, not ordering WITHIN the ready lane), FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION (dependency-status starvation), FIX-DEVTEAM-READYLANE-DISPATCH-GUARD-NO-REGRESSION-TEST (test coverage for the dispatch guard). No existing row owns intra-priority-class ordering or an incident expedite path.",
+        "related": [
+          "FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS",
+          "FIX-DEVTEAM-IDLE-CHAIN-P1A-MAIN-ROTATION",
+          "FIX-DEVTEAM-READYLANE-DISPATCH-GUARD-NO-REGRESSION-TEST"
+        ],
+        "updated_at": "2026-08-14T11:03:56Z",
+        "po_expedited_at": "2026-08-13T17:28:37Z",
+        "po_expedited_by": "po/triage-20260813T1722Z",
+        "status_note": "\n\n[po/triage-2026-08-13T17:28:37Z] SEVERITY EXPEDITE by PO. Moved to the FRONT of ready[] at P0. Rationale: RLC selection is sort_by([priority_rank, ready[]-array-index]), one row per invocation, and RLC only runs on ticks where the 6-way Idle-Tick Rotation picks \"rlc\". Measured live this tick: 60 RLC-eligible rows in ready[]; this row's class sat at eligible queue position 47-48. At 1 row per rlc-selected tick that is unreachable in incident time, and every newly-minted P0 re-buries it. No new diagnosis was needed - the row was already correct. This is the manual stand-in for the missing severity-expedite path (FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0, itself expedited in this same write).",
+        "updated_by": "architect",
+        "po_measurement_20260814": "MEASURED LIVE, AND THE MEASUREMENT PARTIALLY REFUTES THIS ROW'S OWN FRAMING — READ BEFORE IMPLEMENTING. Live RLC-eligible ready[] depth is 88 rows (computed with devteam-eligibility.jq's own effective_supervised/effective_plan_only/is_epic_wrapper predicates, not a raw lane length). Two data points from this tick: (1) FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR sits at RLC queue position 1 of 88 — I severity-expedited it to the FRONT at P0 on 2026-08-13T17:28Z — and it STILL was not dispatched in the ~7h before this tick. (2) FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM sits at position 51 of 88 and is now 24 days unactioned despite a BATCH promotion on 2026-08-13 (tran-ngoc-bau c128 re-verified it live and lists it as an explicit c129 priority). THE IMPLICATION: this row is titled as a PRIORITY-ORDERING defect ('FIFO buries incident P0'), but data point (1) shows perfect ordering does not help — the row was already first in line and still starved. The binding constraint is THROUGHPUT, not order: RLC claims ONE row per invocation and only runs on ticks where the 6-way Idle-Tick Rotation selects 'rlc', so the lane's ceiling is roughly one row per six ticks against a queue of 88. An expedite path alone would have changed nothing for either row. Whatever ships here must address per-invocation batch size and/or rotation frequency, not only the comparator. Corroborating precedent already in the flow doc: main.md's own rotation section records 6 FIX-ORPHAN-FR* children (3 of them P0) sitting untouched in ready[] 2026-07-22 -> 2026-08-08 for the structurally identical reason.",
+        "claimed_at": "2026-08-14T10:52:48Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "architect",
+        "architect_completed_at": "2026-08-14T11:03:56Z",
+        "architect_review_note": "Design complete: docs/architecture-briefs/2026-08-14-readylane-incident-lane-throughput.md. PO measurement (po_measurement_20260814) refutes this rows own comparator framing -- live-reverified this cycle: both live po_expedited_at ready[] rows already rank #1/#2 of RLCs own 68-row eligible candidate set and are STILL undispatched (10h+ stale) -- proves ordering/comparator fixes (candidates a/b) cannot close this gap. Adjudicated: candidate (c), reshaped as a dedicated Incident-Lane Consumer (ILC) mirroring QA-Drains proven Part1/2/3 pattern (measured live this cycle: review[] PRIMARY 226->56 over 8 days on the structurally identical mechanism) -- independent INCIDENT_CAP=2 budget outside the shared WIP<=2 slot, batch-claim, head-decoupled invocation at the Session-Gate->Step-1 anchor (unconditional, every tick, not gated by the 6-way Idle-Tick Rotation). Reuses the ALREADY-LIVE po_expedited_at field as a lane-selector (not a new expedite_at/incident_ref comparator field). Single-linear head-writer collision-freedom proof kept intact: reuses the existing $head_free conditional-guard .head-write idiom verbatim (RLC/SLS/DRS/QA-Drain), never a new write pattern. Zone-split for implementation (mirrors QA-Drains own 2026-08-06 zone-correction): FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS (developer; scripts/lib/devteam-eligibility.jq new defs is_po_expedited + incident_wip_in_progress, new scripts/devteam-backlog-claim-incident-lane-consumer.jq, satisfiability-instrument extension) then FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW (agent-father, depends_on the SCRIPTS row -- a HARD dependency, the main.md call site references a script file that does not exist until SCRIPTS ships). BUILD-STANDARD: not-applicable (bug-fix/design, in-zone, no new primitives). NEXT: pm to mint both rows per brief Section 5."
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -19141,7 +19148,7 @@
         "last_served_tick": "2026-08-14T10:21:04Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-14T07:20:10Z"
+        "last_served_tick": "2026-08-14T10:52:35Z"
       },
       "drs": {
         "last_served_tick": "2026-08-14T07:50:37Z"
@@ -19153,7 +19160,7 @@
         "last_served_tick": "2026-08-14T09:23:37Z"
       }
     },
-    "_updated_at": "2026-08-14T10:50:16Z",
+    "_updated_at": "2026-08-14T10:52:35Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
