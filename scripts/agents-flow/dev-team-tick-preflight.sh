@@ -468,8 +468,22 @@ _step55_cold_evict_and_commit() {
   fi
 
   if ! _step55_run_cold_evict; then
-    echo "[dev-team-preflight] board-hygiene: orch-cold-evict.sh FAILED — skip commit, retry next tick" >&2
-    mcp_call "send_telegram" "$(jq -n --arg ch "bug" --arg msg "[dev-team] board-hygiene: orch-cold-evict.sh failed — cold eviction skipped, retry next tick" '{channel:$ch, message:$msg}')" >/dev/null 2>&1
+    local ce_out="${_STEP55_COLD_EVICT_OUTPUT:-}" ce_rc="${_STEP55_COLD_EVICT_RC:-1}" ce_tail
+    ce_tail=$(_trunc "$ce_out")
+    if _step55_is_benign_cas_loss "$ce_out"; then
+      # Benign, expected-under-concurrency loss (orch-cold-evict.sh's own
+      # mtime-CAS retry loop, or orch-apply.sh's downstream exit-2 CAS guard,
+      # exhausted retries because a peer writer won the race) — NOT a bug.
+      # Log only (cron-log visibility retained), no telegram: this is a
+      # normal retry condition, matches the fail-loud/benign-retry split
+      # this repo already applies elsewhere (docs/protocols/fail-loud-
+      # protocol.md), not a fresh pattern.
+      echo "[dev-team-preflight] board-hygiene: orch-cold-evict.sh lost a benign CAS-contention race (concurrent writer, exit ${ce_rc}) — skip commit, retry next tick. NOT reported as a failure (expected under concurrent writers). Detail: ${ce_tail}" >&2
+    else
+      echo "[dev-team-preflight] board-hygiene: orch-cold-evict.sh FAILED (exit ${ce_rc}) — skip commit, retry next tick" >&2
+      mcp_call "send_telegram" "$(jq -n --arg ch "bug" --arg rc "$ce_rc" --arg tail "$ce_tail" \
+        '{channel:$ch, message:("[dev-team] board-hygiene: orch-cold-evict.sh failed (exit " + $rc + ") — cold eviction skipped, retry next tick. stderr: " + $tail)}')" >/dev/null 2>&1
+    fi
     mcp_call "task_release" "$(jq -n --arg tid "$mutex_id" --arg sess "$session_id" '{task_id:$tid, owner_client_session:$sess}')" >/dev/null 2>&1
     return 0
   fi
@@ -513,7 +527,39 @@ _step55_run_cold_evict() {
   # channel (stderr) keeps cron-log debugging value unchanged while fixing
   # only the channel it lands on.
   [ -n "$out" ] && printf '%s\n' "$out" >&2
+  # FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR (2026-08-14): the
+  # printf above sends $out to THIS script's own real stderr (cron-log
+  # visibility only) — the caller (_step55_cold_evict_and_commit) never sees
+  # it, because a plain `if ! _step55_run_cold_evict; then` call captures
+  # nothing but the exit code. Stash both into module-level globals so the
+  # caller can build a diagnostically-useful report instead of the old fixed
+  # string. Overwritten on every invocation (no stale carryover between
+  # ticks/tests) — safe because build+return happen atomically within this
+  # one function call, never read concurrently.
+  _STEP55_COLD_EVICT_OUTPUT="$out"
+  _STEP55_COLD_EVICT_RC="$rc"
   return "$rc"
+}
+
+# ── FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR (2026-08-14): a
+# failed orch-cold-evict.sh run is NOT a uniform "bug" — its own live loop
+# (lines ~950-1083 of scripts/orch-cold-evict.sh) exhausts MTIME_CAS_RETRIES
+# and exits 1 with the fixed line "ABORT: CAS retry limit (N) exceeded —
+# concurrent writer; hot file unchanged" whenever a peer writer wins the race
+# on docs/data/orch/orch-state.json's mtime-CAS guard (its own OR
+# orch-apply.sh's downstream exit-2 CAS guard, retried internally) — this is
+# the exact benign, expected-under-concurrency condition PO's own manual
+# re-runs kept proving out (clean exit 0 moments later, same file). Every
+# OTHER abort path in that script (structural sentinel, cold/hot temp
+# sentinel, orch-state-validate.sh SHG-3 gate, or orch-apply.sh returning a
+# non-CAS non-zero exit) is a genuine validation-class failure and must keep
+# reporting loudly. This predicate is the ONLY place that line's text is
+# matched — `.*` (not the literal em-dash byte) bridges the two known ways
+# the log() helper's message can be re-encoded/quoted without coupling to a
+# non-ASCII character match.
+_step55_is_benign_cas_loss() {
+  local text="$1"
+  printf '%s' "$text" | grep -Eq 'ABORT: CAS retry limit \([0-9]+\) exceeded.*concurrent writer'
 }
 
 _step55_run_validate() {

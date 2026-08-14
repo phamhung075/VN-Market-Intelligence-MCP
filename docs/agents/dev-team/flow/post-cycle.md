@@ -10,7 +10,12 @@
      itself is a thin invocation + per-row dispatcher-wrap — longer than Step 4.3's pure script+
      commit shape because this sweep is two-phase (SSOT lane-move, then a follow-up per-row agent
      spawn), the bulk of the eligibility/predicate rationale lives in the .jq scripts' own headers,
-     not duplicated here). -->
+     not duplicated here). FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR 2026-08-14: +17L
+     (263→280) — Step 4.2's "Script exit non-zero" line expanded from a single sentence into the
+     benign-CAS-loss-vs-genuine-failure classification spec (this section says "edit the spec
+     first" — the runtime fix landed in scripts/agents-flow/dev-team-tick-preflight.sh
+     _step55_is_benign_cas_loss/_step55_cold_evict_and_commit, this is that fix's doc parity
+     update, not new scope). -->
 # Dev Team — Step 4 & 4.5: Scan + Compact Checkpoint
 
 **Parent flow:** `docs/agents/dev-team/flow/main.md` (Step 4 / 4.5 dispatcher)
@@ -112,7 +117,21 @@ fi
 
 **Mutex contract:** claim `commit-mutex:main` (TTL=120s) before calling script; release after git commit.  
 **Invariant (HSC-6):** `done_verified[]` never grows beyond 5 items in hot file after this hook is active.  
-Script exit non-zero → log BUG-channel Telegram; skip commit; continue to Step 4.5 (do not block compact).
+**Script exit non-zero (FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR, 2026-08-14):** capture the
+script's combined stdout+stderr and exit code (never discard them before building the report — this row's
+own 23 occurrences were all diagnostically useless precisely because the prior text threw the real error
+away). Classify before reporting:
+- **Benign CAS-contention loss** — captured text matches `ABORT: CAS retry limit (N) exceeded ... concurrent
+  writer` (the script's own mtime-CAS retry loop, or its downstream `orch-apply.sh` exit-2 CAS guard,
+  exhausted retries because a peer writer won the race on `docs/data/orch/orch-state.json`). This is an
+  expected, retryable condition — log it (cron-log visibility only) and skip commit; do **NOT** send a
+  BUG-channel telegram at all.
+- **Genuine validation failure** — any other non-zero exit (structural sentinel, cold/hot temp sentinel,
+  `orch-state-validate.sh` SHG-3 gate, or a non-CAS `orch-apply.sh` failure) — log BUG-channel telegram
+  carrying the real exit code and the captured stderr (truncated), skip commit; continue to Step 4.5 (do not
+  block compact).
+Runtime implementation: `scripts/agents-flow/dev-team-tick-preflight.sh` `_step55_run_cold_evict` /
+`_step55_is_benign_cas_loss` / `_step55_cold_evict_and_commit` (Step 5.5, this section's CANON-SCRIPT).
 
 ---
 

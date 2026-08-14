@@ -76,6 +76,12 @@ cleanup() { rm -rf "$TMPDIR_TEST"; }
 trap cleanup EXIT
 CALL_LOG_FILE="$TMPDIR_TEST/call-log.txt"
 WOULD_EVICT_LOG_FILE="$TMPDIR_TEST/would-evict-log.txt"
+# FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR: captures the raw
+# jq-args blob passed to every stubbed send_telegram call (one line each,
+# NOT just a call-count like CALL_LOG_FILE) so T30b/T30c below can assert on
+# the actual message CONTENT (exit code + stderr detail present, or absent
+# entirely for the benign-CAS case), not merely "a telegram was sent".
+TELEGRAM_ARGS_LOG_FILE="$TMPDIR_TEST/telegram-args-log.txt"
 
 # ── Step 5 idle-check fixtures (P1-IDLE-DEVTEAM-PREFLIGHT-SCRIPT) ────────────
 # NEVER let the idle-check read the LIVE repo's docs/signals/ or orch-state.json
@@ -162,7 +168,7 @@ mcp_call() {
       ;;
     task_heartbeat) echo '{"ok":true,"expires_at":9999999999}'; return 0 ;;
     task_release) echo '{"ok":true,"released":1}'; return 0 ;;
-    send_telegram) echo '{"ok":true}'; return 0 ;;
+    send_telegram) printf '%s\n' "$args" >> "$TELEGRAM_ARGS_LOG_FILE"; echo '{"ok":true}'; return 0 ;;
     *) echo "unstubbed tool in test: $tool" >&2; return 1 ;;
   esac
 }
@@ -201,6 +207,14 @@ _step55_run_cold_evict() {
     return $?
   fi
   echo "_step55_run_cold_evict" >> "$CALL_LOG_FILE"
+  # FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR: mirrors the REAL
+  # implementation's own contract — always (re)sets these globals so a
+  # scenario's fixture output can never leak into the NEXT scenario's
+  # assertions (all T-cases run in one sourced process). Default output is
+  # empty (matches every pre-existing T29-T31-shaped case, none of which
+  # asserted on message CONTENT before this fix).
+  _STEP55_COLD_EVICT_OUTPUT="${STUB_COLD_EVICT_OUTPUT:-}"
+  _STEP55_COLD_EVICT_RC="${STUB_COLD_EVICT_RC:-0}"
   return "${STUB_COLD_EVICT_RC:-0}"
 }
 _step55_run_validate() {
@@ -216,6 +230,7 @@ run_case() {
   # Resets scenario knobs to defaults before each test.
   STUB_PRESENCE="ok"; STUB_SF1="won"; STUB_ELECTION="won"
   STUB_MUTEX="won"; STUB_COLD_EVICT_RC=0; STUB_VALIDATE_RC=0
+  STUB_COLD_EVICT_OUTPUT=""
   STUB_WOULD_EVICT="false"
   USE_REAL_COLD_EVICT="false"
   # Step 5 idle-check fixtures — default = deliberately NOT idle (isolates
@@ -233,6 +248,7 @@ run_case() {
   rm -f "$WIDEN_STATE_PATH"
   : > "$CALL_LOG_FILE"
   : > "$WOULD_EVICT_LOG_FILE"
+  : > "$TELEGRAM_ARGS_LOG_FILE"
 }
 
 log_count() {
@@ -552,6 +568,43 @@ check "T30 hygiene: cold-evict invoked (attempted)" "$([ "$(log_has _step55_run_
 check "T30 hygiene: validate NOT invoked after cold-evict failure" "$([ "$(log_has _step55_run_validate)" = "false" ] && echo true || echo false)"
 check "T30 hygiene: git commit NOT invoked after cold-evict failure" "$([ "$(log_has _step55_git_commit_evict)" = "false" ] && echo true || echo false)"
 check "T30 hygiene: sends bug telegram on cold-evict failure" "$([ "$(log_has send_telegram)" = "true" ] && echo true || echo false)"
+
+# ── T30b: FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR AC — a benign
+# CAS-contention loss (orch-cold-evict.sh's own mtime-CAS retry loop, or its
+# downstream orch-apply.sh exit-2 CAS guard, exhausted retries because a peer
+# writer won the race) must NOT emit a failure report at all — this is the
+# exact condition PO's own manual re-runs repeatedly proved to be transient/
+# benign (23 occurrences, script always clean seconds later against the same
+# file) — see task row. ─────────────────────────────────────────────────────
+run_case
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-hygiene-trip-notidle.json"
+STUB_WOULD_EVICT="true"
+STUB_COLD_EVICT_RC=1
+STUB_COLD_EVICT_OUTPUT="[orch-cold-evict] Attempt 3/3: ID maps computed
+[orch-cold-evict] ABORT: CAS retry limit (3) exceeded — concurrent writer; hot file unchanged"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T30b RUN verdict still emitted despite benign CAS-contention loss" "$([ "$VERDICT" = "RUN" ] && echo true || echo false)"
+check "T30b hygiene: cold-evict invoked (attempted)" "$([ "$(log_has _step55_run_cold_evict)" = "true" ] && echo true || echo false)"
+check "T30b hygiene: git commit NOT invoked after benign CAS loss" "$([ "$(log_has _step55_git_commit_evict)" = "false" ] && echo true || echo false)"
+check "T30b hygiene: NO telegram sent for benign CAS-contention loss (AC)" "$([ "$(log_has send_telegram)" = "false" ] && echo true || echo false)"
+
+# ── T30c: FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR AC — a genuine
+# (non-CAS) orch-cold-evict.sh failure MUST keep reporting, and the telegram
+# message MUST carry the real exit code + verbatim stderr detail, not the old
+# fixed diagnostically-useless string. ──────────────────────────────────────
+run_case
+export ORCH_STATE_PATH="$TMPDIR_TEST/orch-hygiene-trip-notidle.json"
+STUB_WOULD_EVICT="true"
+STUB_COLD_EVICT_RC=1
+STUB_COLD_EVICT_OUTPUT="[orch-cold-evict] Validating hot file: /fixture/orch-state.json
+[orch-cold-evict] ABORT: orch-state-validate.sh failed — hot file NOT modified"
+OUT=$(run_preflight); RC=$?
+VERDICT=$(printf '%s' "$OUT" | jq -r '.verdict')
+check "T30c RUN verdict still emitted despite genuine cold-evict failure" "$([ "$VERDICT" = "RUN" ] && echo true || echo false)"
+check "T30c hygiene: sends bug telegram on genuine cold-evict failure" "$([ "$(log_has send_telegram)" = "true" ] && echo true || echo false)"
+check "T30c telegram carries the real exit code (not the old fixed string)" "$(grep -qF 'exit 1' "$TELEGRAM_ARGS_LOG_FILE" && echo true || echo false)"
+check "T30c telegram carries the script's verbatim stderr detail (AC)" "$(grep -qF 'orch-state-validate.sh failed' "$TELEGRAM_ARGS_LOG_FILE" && echo true || echo false)"
 
 # ── T31: orch-state-validate.sh fails post-eviction — commit ABORTED, bug
 # telegram, tick verdict unaffected ──────────────────────────────────────────
