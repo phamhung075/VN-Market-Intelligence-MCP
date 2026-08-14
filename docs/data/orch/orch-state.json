@@ -8069,7 +8069,7 @@
         "plan_only": false,
         "created_by": "po/triage-20260731T1752",
         "created_at": "2026-07-31T17:52:41Z",
-        "updated_at": "2026-08-14T20:36:46Z",
+        "updated_at": "2026-08-14T20:41:10Z",
         "origin_report_id": 4241,
         "dedup_key": "agent_tool_grant|bash|coverage-gate",
         "title": "Agent flow docs mandate Bash-only steps (commit-mutex git add/commit, bash scripts/*.sh) that the agent's own .claude/agents/<id>.md `tools:` line does not grant — a structural contradiction that has now produced 4 separate point-fix rows and is still open for digest-predict. Close it at the root with an opt-IN coverage gate (flow demands Bash => frontmatter must grant Bash) instead of a 5th per-agent patch.",
@@ -8097,7 +8097,9 @@
         "po_manual_dispatch_flagged_at": "2026-08-14T20:36:45Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate - folding into this tick BATCH. Selected over positional top TE-T06: both rank-1/P1, idx is insertion-order not a priority signal, and this tick carries fresh HIGH escalation evidence (TNB c130 + BUG msg 5307: tran-ngoc-bau 4 consecutive cycles c127-c130 with no Bash/git grant, notebook backlog uncommitted, orch-apply.sh dashboard writes skipped every cycle). This row is the opt-IN root-cause coverage gate for exactly that class."
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate - folding into this tick BATCH. Selected over positional top TE-T06: both rank-1/P1, idx is insertion-order not a priority signal, and this tick carries fresh HIGH escalation evidence (TNB c130 + BUG msg 5307: tran-ngoc-bau 4 consecutive cycles c127-c130 with no Bash/git grant, notebook backlog uncommitted, orch-apply.sh dashboard writes skipped every cycle). This row is the opt-IN root-cause coverage gate for exactly that class.",
+        "po_evidence_permanent_data_loss": "MEASURED 2026-08-14T20:4xZ by po: git HEAD for docs/handoffs/tnb-audit-latest.md was still CYCLE 128 when this tick ran. Cycles 129 AND 130 were never committed because tran-ngoc-bau has no git grant. Because the file is a single latest.md that each cycle full-overwrites, c129 was overwritten by c130 on disk before either reached git — c129 findings are PERMANENTLY LOST, unrecoverable from any plane. PO manually committed c130 (935da25e3) to rescue it. This upgrades the impact class from -perpetual dirty artifacts- (project_bctc_analyst_no_bash_grant_perpetual_dirty_artifacts) to IRREVERSIBLE DATA LOSS on a full-overwrite artifact, recurring once per audit cycle.",
+        "po_evidence_recorded_at": "2026-08-14T20:41:10Z"
       },
       {
         "id": "FIX-PO-MAINFLOW-ORPHANS-TELEGRAM-REPORTS-RESOLVER-SUBFLOW",
