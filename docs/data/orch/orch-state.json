@@ -13656,6 +13656,48 @@
             "observed_at": "2026-08-14T13:01:20Z"
           }
         }
+      },
+      {
+        "id": "FIX-PO-TRIAGE-SIGNALS-CIRED-TEMPLATE-STATUS-TODO-REJECTED-BY-VALIDATOR",
+        "type": "FIX",
+        "title": "triage-signals.md ci_red mint template hardcodes status \"TODO\" for a backlog[] append — lane-coherence validator only accepts BACKLOG|BLOCKED, so every ci_red mint fails orch-apply on first attempt",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "created_at": "2026-07-31T14:55:59Z",
+        "created_by": "po/triage-20260731T1437Z",
+        "baseline_pass": "14908",
+        "files": [
+          "docs/agents/po/flow/triage-signals.md"
+        ],
+        "desc": "docs/agents/po/flow/triage-signals.md, `ci_red` row: the mint template instructs `append to .task_board.backlog[]: {id: ..., status: \"TODO\", ...}`. orch-apply Stage 1b lane-coherence rejects it: 'task_board.backlog[id=...].status: \"TODO\" is not allowed in lane \"backlog\", expected: BACKLOG|BLOCKED'. Reproduced live this tick 2026-07-31T14:5xZ while minting FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API — the write ABORTED (live file untouched) and only succeeded after relabelling to BACKLOG. Every existing backlog row uses BACKLOG (spot-checked TE-T12, FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE), so the doc template — not the validator — is the drifted side. Impact: not silent (orch-apply fails loud and refuses the write), but it costs every ci_red triage a wasted round-trip and invites an agent under token pressure to mis-'fix' it by moving the row to the wrong lane, which the validator's own message explicitly offers as an alternative remedy.",
+        "deliverable": "AC: (1) change the `ci_red` mint template in docs/agents/po/flow/triage-signals.md from status: \"TODO\" to status: \"BACKLOG\"; (2) grep the rest of that file (and the sibling po/flow/*.md mint templates) for any other `.task_board.<lane>[]` append whose literal status token is not in that lane's allowed set per apps/mcp-server/src/infrastructure/orchStateSchema.ts, and correct them in the same pass — this is a template-vs-validator drift class, not a one-token typo.",
+        "out_of_scope": "Relaxing the lane-coherence validator to accept TODO in backlog[] — the validator is the correct side and is load-bearing for lane/status coherence.",
+        "status_note": "Found by po during triage tick 2026-07-31T14:37Z, reproduced live (orch-apply Stage 1b abort, exit 2). Routed to agent-father per the ARTIFACT-CLASS ROUTING RULING 2026-07-21 (docs/agents/** = instruction-prose an agent loads and executes).\n\n[QA] Review Record (direct-commit verify, qa, 2026-08-14T13:03:09Z): APPROVED, DONE_VERIFIED — with a commit_sha CORRECTION. Row's stored `.commit_sha` (b164e37781f015680df8fe85d7a7419378b49fa7) is WRONG for this task: `git show --stat` on that hash is an unrelated agent-father notebook-merge commit ('merge S15/S16 journal + notebook — TE-T12 + ci_red-template-drift'), touches only STEP-COWORK-*-agent-father.md/notebooks/agent-father.md/a context-bloat signal json — NONE of this row's claimed po/flow files. It IS on main ancestry (passes check-2) but FAILS check-3 (no files[] entry appears in its own diff). The prior dev-team review_note's cross-check ('commit cb6ba9567 cherry-picked, sha above post-merge, confirmed... diff matches claim exactly') is therefore also unverifiable as stated against that hash — flagging for visibility, not re-litigating since the underlying work IS genuinely landed (see below). REAL commit found via `git log --all --grep=<task-id>` (exactly 1 hit, zero ambiguity): c1c97e3402671d5d95cae16fef36ffe835279d69 — confirmed `git merge-base --is-ancestor` main, `git show --stat` touches exactly docs/agents/po/flow/{triage-signals,channel-audit,sprint-kickoff}.md + new scripts/audits/po-triage-mint-backlog-status-lane-coherence-verify.sh, matches the row's own AC exactly (5x TODO->BACKLOG across 3 files + new regression script). Sibling cb6ba956719c85fca15c6544e8f0c3533eb34d61 (byte-identical author/date/message, different tree — parallel-worktree artifact per b164e377's own commit message) is NOT on main ancestry — dead-end duplicate, correctly superseded by c1c97e340's landing. Live content re-verified on main HEAD directly (not trusting either commit's diff alone): zero `status: \"TODO\"` tokens remain anywhere across all 15 docs/agents/po/flow/*.md files; every `.task_board.backlog[]` mint append across that directory now writes `status: \"BACKLOG\"`; orchStateSchema.ts LANE_ALLOWED_STATUSES.backlog independently confirmed unchanged = {BACKLOG, BLOCKED} (out-of-scope guard honored, validator not touched). Re-ran the fix's own regression harness fresh (not trusted from review_note prose): scripts/audits/po-triage-mint-backlog-status-lane-coherence-verify.sh — 42/42 PASS, real live orch-state.json confirmed untouched by the fixture-harness run. No production TS/JS source touched by this fix (pure prose templates + one new bash audit script) — bun test/tsc/mock-guard/DDD/security scans correctly N/A, not skipped without basis; the purpose-built regression script IS the targeted verification for this template-vs-schema-validator artifact class (no existing bun test suite covers markdown mint-template prose). Corrected `.commit_sha` on this write to the real commit.",
+        "related": [
+          "FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API"
+        ],
+        "updated_at": "2026-08-14T13:03:09Z",
+        "commit_sha": "c1c97e3402671d5d95cae16fef36ffe835279d69",
+        "review_note": "dev-team RAW-verify 2026-07-31T15:57Z: commit cb6ba9567 (cherry-picked, sha above post-merge) confirmed. Diff to triage-signals.md/channel-audit.md/sprint-kickoff.md matches claim exactly (5x TODO->BACKLOG). Independently confirmed orchStateSchema.ts LANE_ALLOWED_STATUSES.backlog = {BACKLOG, BLOCKED} by reading the file directly. Independently re-ran scripts/audits/po-triage-mint-backlog-status-lane-coherence-verify.sh -- 42/42 PASS, exact match to self-report. Did not touch orch-apply.sh/orchStateSchema.ts or orch-state.json (commit_zone honored).",
+        "claimed_at": "2026-08-14T12:55:14Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "updated_by": "qa",
+        "completed_at": "2026-08-14T13:03:09Z",
+        "completed_by": "qa",
+        "qa_verified_at": "2026-08-14T13:03:09Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "grep + bash scripts/audits/po-triage-mint-backlog-status-lane-coherence-verify.sh",
+            "args": "grep -n 'status: \"TODO\"' docs/agents/po/flow/*.md (expect empty, 15 files); bash scripts/audits/po-triage-mint-backlog-status-lane-coherence-verify.sh (fixture-harness replay of every fixed mint template against the real orch-apply.sh)",
+            "live_value_observed": "0 TODO-status matches across all 15 po/flow/*.md files; verify script 42/42 PASS; LANE_ALLOWED_STATUSES.backlog={BACKLOG,BLOCKED} unchanged in orchStateSchema.ts",
+            "observed_at": "2026-08-14T13:03:09Z",
+            "evidence_commit": "c1c97e3402671d5d95cae16fef36ffe835279d69"
+          }
+        }
       }
     ],
     "head": {
@@ -19338,35 +19380,6 @@
           "health_check_passed": true,
           "fleet_status": "12/12 healthy"
         }
-      },
-      {
-        "id": "FIX-PO-TRIAGE-SIGNALS-CIRED-TEMPLATE-STATUS-TODO-REJECTED-BY-VALIDATOR",
-        "type": "FIX",
-        "title": "triage-signals.md ci_red mint template hardcodes status \"TODO\" for a backlog[] append — lane-coherence validator only accepts BACKLOG|BLOCKED, so every ci_red mint fails orch-apply on first attempt",
-        "status": "QA",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "qa",
-        "created_at": "2026-07-31T14:55:59Z",
-        "created_by": "po/triage-20260731T1437Z",
-        "baseline_pass": "14908",
-        "files": [
-          "docs/agents/po/flow/triage-signals.md"
-        ],
-        "desc": "docs/agents/po/flow/triage-signals.md, `ci_red` row: the mint template instructs `append to .task_board.backlog[]: {id: ..., status: \"TODO\", ...}`. orch-apply Stage 1b lane-coherence rejects it: 'task_board.backlog[id=...].status: \"TODO\" is not allowed in lane \"backlog\", expected: BACKLOG|BLOCKED'. Reproduced live this tick 2026-07-31T14:5xZ while minting FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API — the write ABORTED (live file untouched) and only succeeded after relabelling to BACKLOG. Every existing backlog row uses BACKLOG (spot-checked TE-T12, FIX-CI-GOLANGCI-CONFIG-VERIFY-NETWORK-FLAKE), so the doc template — not the validator — is the drifted side. Impact: not silent (orch-apply fails loud and refuses the write), but it costs every ci_red triage a wasted round-trip and invites an agent under token pressure to mis-'fix' it by moving the row to the wrong lane, which the validator's own message explicitly offers as an alternative remedy.",
-        "deliverable": "AC: (1) change the `ci_red` mint template in docs/agents/po/flow/triage-signals.md from status: \"TODO\" to status: \"BACKLOG\"; (2) grep the rest of that file (and the sibling po/flow/*.md mint templates) for any other `.task_board.<lane>[]` append whose literal status token is not in that lane's allowed set per apps/mcp-server/src/infrastructure/orchStateSchema.ts, and correct them in the same pass — this is a template-vs-validator drift class, not a one-token typo.",
-        "out_of_scope": "Relaxing the lane-coherence validator to accept TODO in backlog[] — the validator is the correct side and is load-bearing for lane/status coherence.",
-        "status_note": "Found by po during triage tick 2026-07-31T14:37Z, reproduced live (orch-apply Stage 1b abort, exit 2). Routed to agent-father per the ARTIFACT-CLASS ROUTING RULING 2026-07-21 (docs/agents/** = instruction-prose an agent loads and executes).",
-        "related": [
-          "FIX-CI-IMF-INTEGRATION-TEST-NONHERMETIC-LIVE-API"
-        ],
-        "updated_at": "2026-08-14T12:55:14Z",
-        "commit_sha": "b164e37781f015680df8fe85d7a7419378b49fa7",
-        "review_note": "dev-team RAW-verify 2026-07-31T15:57Z: commit cb6ba9567 (cherry-picked, sha above post-merge) confirmed. Diff to triage-signals.md/channel-audit.md/sprint-kickoff.md matches claim exactly (5x TODO->BACKLOG). Independently confirmed orchStateSchema.ts LANE_ALLOWED_STATUSES.backlog = {BACKLOG, BLOCKED} by reading the file directly. Independently re-ran scripts/audits/po-triage-mint-backlog-status-lane-coherence-verify.sh -- 42/42 PASS, exact match to self-report. Did not touch orch-apply.sh/orchStateSchema.ts or orch-state.json (commit_zone honored).",
-        "claimed_at": "2026-08-14T12:55:14Z",
-        "claimed_by": "dev-team (review-lane qa-drain)"
       }
     ],
     "_closed_signals_20260614": {
