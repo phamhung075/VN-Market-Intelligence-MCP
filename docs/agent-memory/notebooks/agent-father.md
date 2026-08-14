@@ -8,71 +8,6 @@
      explicit YYYY-MM-DD token. Nothing deleted; full record in the archive file and git
      history. -->
 
-## Keep (maintenance) 2026-08-14T12:57Z — scheduled daily cron (`cron-agent-father.md`, `23 14 * * *` UTC)
-- Trigger: scheduled. Pre-Check gate: `git diff --name-only HEAD~3..HEAD` (HEAD=`ddff307a6`) touched
-  `docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-{po,qa-2}.md`,
-  `docs/agent-memory/notebooks/{po,qa}.md`, `docs/data/orch/orch-state.json`,
-  `docs/signals/processed/*` — zero `.claude/agents/*.md` / `docs/agents/*/flow/*.md` matches →
-  Steps 1-2 (scan-orphans) SKIPPED per spec, went straight to Steps 3-5 with empty scan-orphans
-  output.
-- Agents scanned: 42 (`.claude/agents/*.md`, `docs/agents/*/init.md`). Top-5 checks: Check 1
-  (fail-loud-protocol) 41/42 pass; Check 2 (Error Boundary, case-insensitive + one-hop pointer
-  resolution) — all 8 dev-* zone thin-pointer agents resolve clean via
-  `docs/agents/developer/flow/microservice-main.md` (Error Boundary block re-verified present
-  live, line 16); 41/42 pass; Check 3 (`boundary_rules`) 41/42 pass; Check 4 (flow path resolves)
-  42/42 clean; Check 5 (version >90d stale) 0/42 — oldest live versions are `dev-frontend`/
-  `developer` at 89 days, under threshold, no stamp needed this cycle. The lone Check 1/3 fail
-  both checks is `semble-search` (no `agent:` YAML block at all — deliberate minimal tool-wrapper
-  doc) — carried-forward LOW-severity guide-taxonomy gap, escalated 2026-08-12, unchanged, no new
-  action.
-- Auto-fixes applied: 0 (nothing mechanically fixable this cycle — no stale versions, no
-  missing-roster/missing-notebook findings since Steps 1-2 were gated off).
-- Step 5 stale notebooks (>30d vs last-touching-commit date, informational only): idea-forge
-  (104d), market-analyst (104d), semble-search (104d), qa-responder (79d), dev-kinh-dich (36d),
-  dev-news-fetch (35d), `cowork-refactory-expert.md` + `cowork-refactory-expert-2026-07-11-fr1-
-  atomic.md` (34d), ops-mainserver-fetch (34d) — 9 files. Side-observation (NOT scored — Steps 1-2
-  gated off this cycle, same as every prior gated cycle): notebook-file count still exceeds the
-  42-agent roster (`main.md`, `dev-team.md` present as non-Employee-Card files) — carried, not
-  re-investigated out of gate-scope.
-- Step 5b (`team-tool-recheck.md`) re-run unconditionally per spec: wrote
-  `docs/agent-memory/health/team-tool-recheck-2026-08-14-1257.md`. Positive control held —
-  alert-commander/market-watcher/news-scout all still CRITICAL (`Bash` grant vs unqualified "no
-  other writes" description text, origin `610110e16` 2026-07-31), 14 days unresolved, unchanged
-  from the 2026-08-13T12:56Z run. Mechanical-enforcement status unchanged: PROSE-ONLY (`jq
-  '[.. | objects | select(has("write_boundary"))] | length'` on `system-map.json` = 0; 0 hits for
-  `agent-write-boundary-guard` in both settings files).
-- No `mcp__gateway__call_tool` MCP binding this session (confirmed — tool grant is
-  Read/Edit/Write/Glob/Grep/Bash only) — used `keep.md`'s documented INV-GATEWAY-1 gateway-less
-  direct-pathspec-commit fallback for this cycle's writes, no `task_claim`/commit-mutex wrapper
-  attempted.
-- PO handoff (Step 7, findings-only — no `Agent` spawn grant, same structural gap as
-  `feedback_devteam_flow_needs_nested_agent_spawn_subagent_cannot`): both findings groups
-  (3× CRITICAL tool-boundary mismatches, 1× LOW semble-search taxonomy gap) are carried-forward
-  and already PO-known from prior `team-tool-recheck` runs — no new backlog row needed this cycle,
-  surfaced in RETURN per protocol anyway (do not silently drop for lack of a spawn).
-
-## EDIT 2026-08-14T17:14Z — task FIX-MARKETWATCHER-EOD-OFFHOURS-SAMETICK-COLLISION-SCHEDULE-AND-PATHSPEC
-(dev-team-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`, agent-father half of split brief)
-- Design brief `docs/architecture-briefs/2026-08-14-market-watcher-eod-offhours-notebook-collision.md`
-  §3a/§3d/§4. AC-1: `cowork-schedule.json` `market-watcher-eod.supersedes: ["market-watcher-offhours"]`
-  (+`_note`, field confirmed INERT until sibling script row wires it into `cowork-match-slots.js`).
-  AC-2: `pressure-cadence.md` Step 4.5d, doc-no-op pointer mirroring 4.5c. AC-3: `match-slots.md`
-  Step 4b one-sentence note (WARN unmodified). AC-4: `eod.md`/`cycle.md` `git_commit_retry` calls
-  gained trailing `-- <paths>` (RULE 2.5 pathspec — were bare, sweeping the shared index).
-- Verified live: `cowork-schedule-consistency.test.js` 9/9, `cowork-chef-mutex.test.js` 25/25,
-  `cowork-match-slots.test.js` 69/69 all pass unchanged. `context-bloat-backstop.sh` clean on all 4
-  touched docs (updated 2 stale size-justification headers — pressure-cadence.md 180→214L,
-  cycle.md 332→336L — to stay within its ±10% tolerance).
-- Gateway-less this session (`.claude/agents/agent-father.md` tools: Read/Edit/Write/Glob/Grep/Bash
-  only) — no `mcp__gateway__call_tool`. Did not touch `scripts/agents-flow/` (sibling developer row
-  `FIX-COWORK-SUPERSEDE-MUTEX-SCRIPT-AND-MATCHSLOTS-WIRING`'s zone) or `orch-state.json`
-  (router-owned, excluded from my `commit_zone` per `FU-AGENT-FATHER-ORCH-SCOPE`).
-- Decision journal: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-2.md` S44 (DJ-GATE-1). That
-  file crossed its 36000B byte-cap on this write (line-cap still clear) — CAP-REACHED marker
-  written, future entries roll to `-agent-father-3.md`.
-- Board disposition NOT applied by me — `.status`/lane-move on `orch-state.json` is router-owned;
-  reported REVIEW-ready in RETURN for the router/dev-team dispatcher to apply via `orch-apply.sh`.
-
 ## EDIT 2026-08-14T20:20Z — task FIX-CI-TASKCLAIM-DEVTEAM-POSTCYCLE-OWNER-SESSION-PAYDOWN
 (dev-team-dispatched FIX-type direct dispatch, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
 - Change: added `owner_client_session` to `docs/agents/dev-team/flow/post-cycle.md`'s 4
@@ -136,3 +71,59 @@
   `docs/data/orch/orch-state.json` UNCOMMITTED per `FU-AGENT-FATHER-ORCH-SCOPE` (excluded from
   this agent's commit_zone beyond the one signal-queue DONE-mark exception, which does not apply
   here — this is a task_board field update, not a signal-queue mark).
+
+## EDIT 2026-08-14T21:01Z — task FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION
+(dev-team-dispatched FIX-type direct dispatch, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`, P0,
+3rd live occurrence + PO 2026-08-14 scope-widening)
+- Change: `docs/agents/unified-agent/flow/chef-dish.md` Step 7.5 (QUALITY VERDICT GATE) rewritten
+  from a narrative self-grade ("evaluate against the work performed in Steps 2-6") into an
+  ASSEMBLY-then-assert mechanism — assembles the exact literal field text/objects
+  (`$US_MACRO_LAYER_TEXT`/`$VN_MACRO_LAYER_TEXT`/`$VALUATION_LAYER_TEXT`/`$CONVICTION_CALLS`/
+  `$KNOWN_GAPS_SO_FAR`) Step 7.6 persists, then scores 7 sub-checks (5 pre-existing L2/L3/L4/BizCtx/
+  gap-catalogue + 2 new widened-scope: SCHEMA_OK, DIRECTION_OK) as literal substring/key/enum tests
+  against that same assembly — single pass, verdict and `known_gaps[]` cannot diverge (AC-1/AC-2).
+  Step 7.6 trimmed to a pure write + mandatory post-write Read-back self-check (parses JSON,
+  `quality_verdict` matches, top-level keys match schema, every `direction` in enum) — closes AC-4
+  mechanically inside the flow itself, not just deferred to the next audit. `chef.md` untouched — no
+  L1-L6 layer content lives there (gate/gather/cluster only).
+- Root cause confirmed by cross-reading `docs/handoffs/tnb-audit-latest.md` c130: the 5 pre-existing
+  sub-checks (landed across 3 prior AutoCures — c103, c108, F-EVENING-QUALITY-OVERCLAIM) were STILL
+  narratively graded, so they recurred false-"full" 3 more times (07-21, 07-31, 08-14) despite being
+  correctly worded in prose — the rule text was right, the grading mechanism was not.
+- Widened scope (PO `po_scope_widening`, promoted P1→P0): (a) BIZ_CTX_OK now null-scans
+  `$CONVICTION_CALLS[].business_context_cited` literally + requires a MECHANICAL empty-dict check on
+  `$BIZ_CTX_SIGNALS` before the gap-token branch is legitimate — closes c130 Headline #1 exactly
+  (gap-token claimed 2026-08-14 evening while DXG's bctc_signal was genuinely in-window); did NOT
+  touch the BIZCTX row's own gather/citation wiring (that row is REVIEW-lane, not mine, and its
+  FR-0..FR-7 wiring is already live — confirmed by direct read before editing). (b) SCHEMA_OK checks
+  top-level + `tnb_synthesis` key conformance for every `$DISH_TYPE` incl. `eod`, forcing
+  self-correction before write (not a disclosed gap) — targets c130 Headline #2 (eod's
+  tnb_layers/clustering/signals/thesis_summary shape substitution). (c) DIRECTION_OK checks literal
+  `BUY|HOLD|SELL|NEUTRAL` enum membership + ticker-is-a-real-symbol — targets evening's
+  ACCUMULATE/RISK_OFF/MACRO_BRENT findings. Explicitly NOT in scope: c130 Headline #1's deeper
+  AVOID-gate-reversal defect (chef's ACCUMULATE call contradicting DXG's own upstream
+  `valuation.verdict=AVOID`) — different defect class, documented inline as out-of-scope, tracked on
+  the BIZCTX row.
+- AC-3 negative control: no test runner exists for a prose flow-doc, so verified by manual
+  walkthrough (documented inline as an "Illustrative negative-control example" in Step 7.5 + in the
+  decision journal) — synthetic `$US_MACRO_LAYER_TEXT = ""` mechanically scores `L2_OK = FALSE`
+  regardless of every other sub-check, forcing `degraded` + `[gap:L2_US_macro_absent_no_gap_token]`;
+  contrast case with `"PMI 52.3"` present scores `L2_OK = TRUE` under the identical rule — confirms
+  content-sensitivity, not a constant-degrade stub.
+- Files modified: 1 (`docs/agents/unified-agent/flow/chef-dish.md`, 806→901L, header
+  size-justification updated with the delta + rationale).
+- Cascade: none (no rename, no `flow.catalog`/`knowledge.always_load` path change; `chef-telemetry.md`
+  and `chef.md` already reference "Step 7.5"/gap-token vocabulary generically and remain accurate
+  unchanged).
+- Validation: code-fence balance check (42 fences, paired) on the edited file; manually re-applied
+  the new rule set against 3 synthetic scenarios (L2-stripped → degraded+token; all-present → full;
+  BIZ_CTX_SIGNALS non-empty + all-null citations + no token, mirroring c130's live DXG case →
+  correctly forces degraded, where the pre-fix gate would have narratively passed). No
+  scripts/services/data-files created — flow-doc-only per PO's explicit scope note on the board row.
+- Decision journal:
+  `sprint-FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION-agent-father.md` (new file, S1).
+- Board disposition: applied the status-flip lane-move myself (`in_progress[]` → `review[]`,
+  `next_agent=qa`) via `scripts/orch-apply.sh` per this task's explicit dispatch instruction
+  ("status-flip = lane-move, no exceptions") and the `FU-AGENT-FATHER-ORCH-SCOPE` narrow exception —
+  `status_note` carries the full AC-by-AC disposition + the AC-4 external-leg handoff to QA (RAW-verify
+  the NEXT live chef fire's persisted JSON directly, exact `jq` commands in the decision journal).

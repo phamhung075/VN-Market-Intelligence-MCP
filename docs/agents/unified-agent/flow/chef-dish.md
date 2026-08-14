@@ -12,7 +12,21 @@
      2026-08-13): +44L (731→775, incl. this header note) — 8 one-line Checkpoint pointers inserted at every step boundary
      between the gate-fire and Step 7 (Steps 1.5/2/3/4/5/6/6.5/6.7), each jumping to the new
      chef-telemetry.md § Degraded-Floor Recovery on budget/tool-failure/uncertainty. No new section,
-     in-place growth only, same pattern as every prior dated entry in this header. -->
+     in-place growth only, same pattern as every prior dated entry in this header.
+     FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION (PO triage 2026-07-21, 3x recurrence
+     incl. widened scope 2026-08-14, agent-father 2026-08-14): +95L (806→901, incl. this header note
+     — the "775L" baseline above had already drifted to 806L pre-existing this edit from untouched
+     interim edits, same pattern as chef.md's own header note on this file's sibling row; out of
+     scope for this fix). Step 7.5 QUALITY VERDICT GATE rewritten from a narrative self-grade
+     ("evaluate against the work performed in Steps 2-6") into an ASSEMBLY-then-assert mechanism: the
+     step now assembles the exact literal field text/objects Step 7.6 persists, then scores all
+     sub-checks (5 existing + 2 new: SCHEMA_OK, DIRECTION_OK) as substring/key/enum tests against
+     that assembled text — closing the two-independent-judgements defect that let the 5 pre-existing
+     sub-checks self-certify "full"/pass BIZ_CTX_OK three more times despite already being written in
+     prose. Step 7.6 correspondingly shrinks to a pure write + mandatory post-write Read-back
+     self-check (no independent field re-extraction). No new section, no split — same
+     single-enforcement-point guarantee, now backed by a mechanical assembly+assertion instead of
+     narrative recollection. -->
 > Parent: [./chef.md](./chef.md)
 
 # Unified Agent — Chef Dish Body (Steps 1.5-8, TNB 6-Layer Recipe)
@@ -496,80 +510,131 @@ The `[CHEF-DETAIL]` prefix is mandatory — it allows tran-ngoc-bau's audit flow
      data this cycle — see bctc-analyst BCTC-EXTRACT-QUALITY sprint, AS-OF-2026-07-13 "14/16 filed tickers
      serve-layer-blocked" figure — historical, NOT current status) still allows QUALITY:full as long as the gap is
      explicitly tokened, not silently dropped. -->
+<!-- FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION (PO triage 2026-07-21, RECURRED
+     2026-07-31 and 2026-08-14 morning/eod/evening — 3 confirmed live occurrences of THIS gate
+     self-certifying "full" while its own persisted payload lacked the mandatory content, DESPITE
+     the 5 sub-checks above already existing in prose. Root cause (agent-father 2026-08-14, cross-
+     checked against tnb-audit c130's independent finding "wiring present but not executed" on the
+     sibling BIZCTX row): the sub-checks were graded against "the work performed in Steps 2-6" — a
+     narrative recollection — while Step 7.6 (below) independently re-extracted the actual JSON
+     field text from the same steps. Two independent judgements of "the same" cycle CAN disagree,
+     and did — e.g. 07-21 morning certified full with tnb_synthesis.us_macro_layer containing
+     Fed-funds-only content (no PMI, no EFFR-IORB, no L2 gap token); 2026-08-14 evening certified
+     BIZ_CTX_OK via the gap-token branch while $BIZ_CTX_SIGNALS was NOT actually empty that cycle
+     (DXG bctc_signal was in-window — c130 Headline #1, RAW-verified). Fix: this step now ASSEMBLES
+     the exact field text Step 7.6 will persist (the same extraction Step 7.6 used to perform
+     independently — moved up here; Step 7.6 now performs ZERO re-derivation), then every sub-check
+     is a literal substring/key/enum test against that assembled text, not a judgement call about
+     what happened earlier. PO's same-cycle scope-widening (`po_scope_widening`, task board) added
+     sub-checks (f) SCHEMA_OK and (g) DIRECTION_OK for two more live 2026-08-14 defects found by the
+     same audit: eod emitted a wholly different JSON shape (tnb_layers/clustering/signals/
+     thesis_summary, zero conviction_calls key — c130 Headline #2, schema non-conformance not a
+     data gap) and evening emitted direction values ACCUMULATE/RISK_OFF plus a macro label
+     MACRO_BRENT in the ticker field (enum violation). Same single-pass mechanism covers all three
+     widened domains — not three separate patches, per PO's directive. NOT this fix's scope: c130
+     Headline #1's deeper defect (chef's ACCUMULATE call actively contradicting DXG's own upstream
+     bctc valuation.verdict=AVOID gate) is a conviction-direction-vs-source-data contradiction, a
+     different defect class from "was business context cited at all" — tracked on the BIZCTX row
+     (REVIEW lane), not conflated here; this fix only makes business_context_cited's NULL-vs-token
+     assertion mechanical, it does not cross-reference valuation verdicts. -->
 
-Before writing the notebook entry or the RETURN block, evaluate the following five sub-checks against the work performed in Steps 2–6 of this cycle:
+Before writing the notebook entry or the RETURN block, run the ASSEMBLY block below, then score all
+seven sub-checks against the assembled text/objects — not against a recollection of "what was done in
+Steps 2-6." A sub-check is TRUE only if the literal assembled value contains the required
+token/shape/enum member; if there is any doubt, treat it as FALSE (unchanged rule, now applied to
+concrete text instead of narrative).
+
+**ASSEMBLY (run once, before scoring — Step 7.6 Writes these exact variables verbatim; it performs NO
+independent re-extraction):**
+```
+$US_MACRO_LAYER_TEXT  = <the Layer 2 narrative text composed in Step 3 — verbatim, this exact string
+                         becomes tnb_synthesis.us_macro_layer in Step 7.6>
+$VN_MACRO_LAYER_TEXT  = <the Layer 3 narrative text composed in Step 3 — verbatim, this exact string
+                         becomes tnb_synthesis.vn_macro_layer in Step 7.6>
+$VALUATION_LAYER_TEXT = <the Layer 4 narrative text composed in Step 4 (sector phases + conviction
+                         drivers) — verbatim, this exact string becomes tnb_synthesis.valuation_layer>
+$CONVICTION_CALLS     = [ { ticker, conviction_level, direction, pillars_aligned_count,
+                            rationale_one_liner, business_context_cited }, ... ]
+                        — one entry per ticker in a Step-1 qualifying cluster: conviction_level +
+                        pillars_aligned_count from Step 4's per-ticker scoring, direction from the
+                        BUY/HOLD/SELL/NEUTRAL vocabulary composed in Step 7 (Step 6.7 AF-2),
+                        business_context_cited = $BIZ_CTX_CITED[ticker] (Step 4) verbatim or null.
+                        This is the EXACT array Step 7.6 writes as conviction_calls[].
+$KNOWN_GAPS_SO_FAR    = union of $L6_GAP_TOKENS (Step 6) + $L5_GAP_TOKEN (Step 5, if set) — the same
+                        union rule Step 7.6 documents for known_gaps[], computed here so this gate can
+                        see it before scoring sub-check (e).
+```
 
 ```
-# Sub-check (a) — US macro layer (L2) presence
+# Sub-check (a) — US macro layer (L2) presence — literal scan of $US_MACRO_LAYER_TEXT
 # MINIMUM FLOOR (AutoCure tran-ngoc-bau c103 2026-06-30 — FIX-CHEF-STEP75-L2OK-CARRY-PROXY-FLOOR):
-# "Substantively walked" requires at least ONE of the following concrete US macro elements:
-#   - US PMI value cited (ideally with sub-components) from get_macro_snapshot Step 3
-#   - EFFR–IORB spread cited with a numeric value from get_macro_snapshot Step 3
-#   - A global risk sentiment / geopolitical event cited in Step 3 (NEW 4th US-stack
-#     element — event summary + direction/confidence, per LANE A brief
-#     docs/architecture-briefs/2026-07-21-global-geopolitical-signal-coverage.md §2 A4)
-# Carry trade spread alone (e.g. "carry 1.37pp NEUTRAL") is NOT sufficient —
-# it is a source_tier-3 derived proxy of the US/VN rate differential and does NOT
-# represent a US macro stack walk (PMI, consumer sentiment, Fed liquidity plumbing).
-# If neither PMI, EFFR-IORB, nor a geopolitical event signal is available (macro_health
-# unavailable AND no open chain_catalyst geopolitical signal), an explicit gap token is
-# REQUIRED — write [gap:macro_health_missing], [gap:US_macro_unavailable], or
-# [gap:geopolitical_event_absent] in the Block B WORK message and in the L6 gap catalogue.
-L2_OK = (US PMI value cited in Step 3 with a numeric data point)
-        OR (EFFR-IORB spread cited in Step 3 with a numeric value)
-        OR (a global risk sentiment / geopolitical event cited in Step 3, per the NEW 4th US-stack element — event summary + direction/confidence)
-        OR (at least one explicit gap token was written for L2,
-            e.g. [gap:macro_health_missing], [gap:US_macro_unavailable], or [gap:geopolitical_event_absent])
+# Carry trade spread alone (e.g. "carry 1.37pp NEUTRAL") is NOT sufficient — it is a source_tier-3
+# derived proxy of the US/VN rate differential and does NOT represent a US macro stack walk.
+L2_OK = ($US_MACRO_LAYER_TEXT contains "PMI" with an adjacent numeric value)
+        OR ($US_MACRO_LAYER_TEXT contains "EFFR" AND "IORB" with an adjacent numeric spread)
+        OR ($US_MACRO_LAYER_TEXT cites a geopolitical/risk-sentiment event with a direction/confidence
+            clause — the 4th US-stack element per docs/architecture-briefs/2026-07-21-global-
+            geopolitical-signal-coverage.md §2 A4)
+        OR ($US_MACRO_LAYER_TEXT or $KNOWN_GAPS_SO_FAR literally contains an L2 gap token, e.g.
+            [gap:macro_health_missing], [gap:US_macro_unavailable], or [gap:geopolitical_event_absent])
+If $US_MACRO_LAYER_TEXT is empty or unset, L2_OK is FALSE unless the 4th clause's gap token is present.
 
-# Sub-check (b) — all 4 valuation pillars named (L4)
-# Each pillar must be either cited with data OR explicitly flagged missing in Step 4
-L4_PILLARS_OK = (lượng_tiền cited OR flagged_missing)
-            AND (chi_phi_von cited OR flagged_missing)
-            AND (trien_vong_loi_nhuan cited OR flagged_missing)
-            AND (rui_ro_dinh_gia cited OR flagged_missing)
+# Sub-check (b) — all 4 valuation pillars named (L4) — literal scan of $VALUATION_LAYER_TEXT +
+# $CONVICTION_CALLS
+L4_PILLARS_OK = (every entry in $CONVICTION_CALLS has a numeric pillars_aligned_count 0-4, AND
+                 $VALUATION_LAYER_TEXT names or explicitly flags-missing all 4 pillar labels:
+                 lượng tiền, chi phí vốn, triển vọng lợi nhuận, rủi ro định giá)
 
-# Sub-check (c) — VN macro layer (L3) presence
-# MINIMUM FLOOR (AutoCure tran-ngoc-bau c108 2026-07-13 — FIX-CHEF-STEP75-L3-BIZCTX-FLOOR):
-# TNB Layer 3 requires three elements per tnb-methodology-layers.md: USD/VND vs 26,500
-# (source: MACRO_HEALTH.fx), CPI trend (source: MACRO_HEALTH.inflation.cpi_peaked), and
-# FX reserves via VIRA. USD/VND alone — cited as a raw level in nearly every dish — is only
-# 1 of 3 required elements and does NOT by itself satisfy the VN macro stack walk. CPI and
-# VIRA/FX-reserves are each individually satisfied by a cited value OR an explicit gap token
-# (VIRA scraper outage is a known, tracked upstream condition — see F4 in tran-ngoc-bau
-# notebook — so this floor does not block QUALITY:full when the gap is tokened honestly).
-L3_OK = (USD/VND level cited from MACRO_HEALTH.fx)
-        AND (CPI trend cited from MACRO_HEALTH.inflation.cpi_peaked
-             OR an explicit gap token was written, e.g. [gap:CPI_unavailable])
-        AND (FX reserves / VIRA cited
-             OR an explicit gap token was written,
-             e.g. [gap:VIRA_unavailable] or [gap:FX_reserves_unavailable])
+# Sub-check (c) — VN macro layer (L3) presence — literal scan of $VN_MACRO_LAYER_TEXT
+# MINIMUM FLOOR (AutoCure tran-ngoc-bau c108 2026-07-13 — FIX-CHEF-STEP75-L3-BIZCTX-FLOOR): USD/VND
+# alone does NOT satisfy L3 — CPI and VIRA/FX-reserves are each independently required (cited or
+# gap-tokened).
+L3_OK = ($VN_MACRO_LAYER_TEXT contains a USD/VND level)
+        AND ($VN_MACRO_LAYER_TEXT contains "CPI" OR $KNOWN_GAPS_SO_FAR contains [gap:CPI_unavailable])
+        AND ($VN_MACRO_LAYER_TEXT contains "VIRA" or "FX reserves" OR $KNOWN_GAPS_SO_FAR contains
+             [gap:VIRA_unavailable] or [gap:FX_reserves_unavailable])
 
-# Sub-check (d) — business context presence (product / customer / ops / management)
-# MINIMUM FLOOR (AutoCure tran-ngoc-bau c108 2026-07-13 — FIX-CHEF-STEP75-L3-BIZCTX-FLOOR):
-# tnb-methodology.md's foundational philosophy requires every investment thesis to be
-# anchored in the business behind the ticker, sourced from bctc_signal_* or fundamental_*
-# gatherer signals read in Step 0 GATHER. At least ONE ticker in the dish must cite ≥1
-# business-context field (product/customer/ops/management) OR the gap must be explicitly
-# flagged when no bctc_signal_*/fundamental_* data was available this cycle for any
-# watchlist ticker in the dish (a frequent, currently-tracked upstream condition — see
-# bctc-analyst BCTC-EXTRACT-QUALITY sprint).
-BIZ_CTX_OK = ($BIZ_CTX_CITED is non-empty for ≥1 ticker in conviction_calls[] this cycle —
-              i.e. Step 4's mandatory citation sub-step actually fired, not merely asserted)
-             OR ($BIZ_CTX_SIGNALS was legitimately empty this cycle — see chef.md Step 0 —
-                 AND an explicit gap token was written, e.g. [gap:business_context_unavailable])
+# Sub-check (d) — business context presence — literal null-check on $CONVICTION_CALLS[].
+# business_context_cited (NOT a recollection of "did Step 4's sub-step fire" — the array entry
+# itself, the exact value Step 7.6 persists). The gap-token branch requires MECHANICALLY confirming
+# $BIZ_CTX_SIGNALS is a literal empty dict (zero keys) this cycle — not a narrated "no files found";
+# c130 Headline #1 (2026-08-14 evening, DXG) is exactly the failure this closes: the gap-token
+# branch was claimed while $BIZ_CTX_SIGNALS held a genuine, in-window DXG entry.
+BIZ_CTX_OK = (≥1 entry in $CONVICTION_CALLS has business_context_cited != null)
+             OR ($BIZ_CTX_SIGNALS is a literal empty dict — zero keys — this cycle, checked against
+                 the actual dict from chef.md Step 0, AND $KNOWN_GAPS_SO_FAR literally contains
+                 [gap:business_context_unavailable])
 
 # Sub-check (e) — gap catalogue enumerated if any layer is partial/missing
 ANY_LAYER_PARTIAL = (L2_OK relied on a gap token)
                  OR (L3_OK relied on a gap token for CPI or VIRA/FX-reserves)
                  OR (BIZ_CTX_OK relied on a gap token)
-                 OR (NOT all 4 L4 pillars cited with data)
+                 OR (NOT L4_PILLARS_OK)
                  OR (any other layer scored PARTIAL/FAIL in this cycle)
 GAP_CATALOGUE_OK = (NOT ANY_LAYER_PARTIAL)
-                OR (Step 6 gap catalogue was explicitly enumerated with ≥1 [gap:X] token
-                    in the Block B WORK message sent in Step 7)
+                OR ($KNOWN_GAPS_SO_FAR literally contains ≥1 [gap:X] token)
 
-# Verdict
-if L2_OK AND L3_OK AND L4_PILLARS_OK AND BIZ_CTX_OK AND GAP_CATALOGUE_OK:
+# Sub-check (f) — SCHEMA CONFORMANCE (widened scope 2026-08-14, PO — mandatory for EVERY $DISH_TYPE
+# including eod; unified-agent-synthesis-2026-08-14-eod.json emitted tnb_layers/clustering/signals/
+# thesis_summary and ZERO conviction_calls key — a wholesale shape substitution, not a data gap)
+SCHEMA_OK = (the assembled payload's top-level keys are EXACTLY {metadata, tnb_synthesis,
+             conviction_calls, sector_phases, known_gaps, causal_chains, clusters_summary} — the ONE
+             schema in Step 7.6, identical for every $DISH_TYPE, no dish-type-specific exception)
+        AND (tnb_synthesis has exactly {clock_phase, regime_state, regime_confidence, us_macro_layer,
+             vn_macro_layer, valuation_layer})
+        AND (conviction_calls is present as a top-level array — even [] — never renamed, omitted, or
+             replaced by a differently-shaped field)
+
+# Sub-check (g) — DIRECTION ENUM CONFORMANCE (widened scope 2026-08-14, PO — evening dish emitted
+# ACCUMULATE/RISK_OFF as direction and MACRO_BRENT as a ticker)
+DIRECTION_OK = (every $CONVICTION_CALLS entry's direction is exactly one of
+                "BUY" | "HOLD" | "SELL" | "NEUTRAL" — case-sensitive literal enum membership)
+           AND (every entry's ticker is an actual ticker symbol from a Step-1 qualifying cluster —
+                never a macro/commodity/composite label such as "MACRO_BRENT"; macro/commodity
+                context belongs only in tnb_synthesis narrative text, never in conviction_calls[].ticker)
+
+# Verdict — single pass, all seven ANDed
+if L2_OK AND L3_OK AND L4_PILLARS_OK AND BIZ_CTX_OK AND GAP_CATALOGUE_OK AND SCHEMA_OK AND DIRECTION_OK:
   $QUALITY_VERDICT = "full"
   $CONVICTION_CAP  = (no additional cap)
   $LAYERS_WALKED_SUMMARY = "1-6 (full)"
@@ -583,22 +648,56 @@ else:
   if NOT L4_PILLARS_OK:   $FAILED_CHECKS.append("[gap:L4_partial_pillar_coverage]")
   if NOT BIZ_CTX_OK:      $FAILED_CHECKS.append("[gap:business_context_absent]")
   if NOT GAP_CATALOGUE_OK: $FAILED_CHECKS.append("[gap:L6_gap_catalogue_not_enumerated]")
+  if NOT SCHEMA_OK:
+    # NOT a data-availability gap — self-correct the assembled payload to the mandated schema (map
+    # any tnb_layers/clustering/signals/thesis_summary-style content into the 7 keys above) BEFORE
+    # Step 7.6 writes anything. The token below documents that a correction occurred; it never
+    # excuses writing the wrong shape to disk.
+    $FAILED_CHECKS.append("[gap:schema_nonconformant_corrected]")
+  if NOT DIRECTION_OK:
+    # Also self-correct FIRST — map each non-enum direction to the nearest of BUY/HOLD/SELL/NEUTRAL
+    # (e.g. ACCUMULATE→BUY, RISK_OFF→HOLD or SELL per that ticker's own thesis stance) and remove any
+    # macro/composite ticker label from $CONVICTION_CALLS (it belongs in tnb_synthesis narrative
+    # text) BEFORE Step 7.6 writes anything.
+    $FAILED_CHECKS.append("[gap:direction_enum_violation_corrected]")
   $LAYERS_WALKED_SUMMARY = "partial — " + join($FAILED_CHECKS, " ")
 
 # L5 (Kinh Dịch) gap-token append — FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION.
 # Runs AFTER the verdict above on BOTH branches and does NOT participate in the full/degraded
-# computation (asserting $QUALITY_VERDICT over L5 is FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-
-# NO-LAYER-ASSERTION's job, a separate row) — this only guarantees the token set in Step 5 is
-# VISIBLE wherever $LAYERS_WALKED_SUMMARY is read (notebook Step 8b, JSON Step 7.6), on every path.
+# computation — this only guarantees the token set in Step 5 is VISIBLE wherever
+# $LAYERS_WALKED_SUMMARY is read (notebook Step 8b, JSON Step 7.6), on every path.
 if $L5_GAP_TOKEN is set:
   $LAYERS_WALKED_SUMMARY = $LAYERS_WALKED_SUMMARY + " " + $L5_GAP_TOKEN
 ```
 
+**Illustrative negative-control example (AC-3 — proves the assertion actually fires, not merely
+always-degrades):** synthetic dish, L2 stripped — `$US_MACRO_LAYER_TEXT = ""` (Step 3 produced no
+Layer-2 narrative this cycle) and `$KNOWN_GAPS_SO_FAR` carries no L2 token. Sub-check (a): `"PMI"` not
+found, `"EFFR"`/`"IORB"` not found, no geopolitical clause, no gap token in either scanned string →
+`L2_OK = FALSE`. Every other sub-check independently TRUE on the synthetic remainder (L3/L4/BizCtx/
+gap-catalogue/schema/direction all pass) still forces the overall AND to FALSE →
+`$QUALITY_VERDICT = "degraded"`, `$FAILED_CHECKS = ["[gap:L2_US_macro_absent_no_gap_token]"]`,
+`$LAYERS_WALKED_SUMMARY = "partial — [gap:L2_US_macro_absent_no_gap_token]"`. This is a mechanical
+substring-absence result, not a judgement call — the same rule applied to a dish where
+`$US_MACRO_LAYER_TEXT` genuinely contains `"PMI 52.3"` would score `L2_OK = TRUE` regardless of any
+other layer's state. Contrast with the pre-fix mechanism: a narrative "was PMI cited in Step 3?"
+self-grade has no mechanical tie to `$US_MACRO_LAYER_TEXT`'s actual content — exactly how 07-21/07-31/
+08-14 certified "full"/passed BIZ_CTX_OK with absent or Fed-funds-only L2 content and a genuinely
+non-empty `$BIZ_CTX_SIGNALS`.
+
 **Enforcement rules (non-negotiable):**
-- `$QUALITY_VERDICT = "full"` requires ALL FIVE sub-checks to be TRUE. A single FALSE forces `degraded`.
-- `$QUALITY_VERDICT` MUST be computed from the actual work performed this cycle, not narrated or assumed. If there is any doubt about whether a sub-check passed, treat it as FALSE.
+- `$QUALITY_VERDICT = "full"` requires ALL SEVEN sub-checks to be TRUE. A single FALSE forces `degraded`.
+- Every sub-check is scored against the literal ASSEMBLY variables above — the SAME variables Step 7.6
+  writes verbatim. There is no second, independent judgement anywhere in this pipeline (AC-2). If a
+  sub-check's required text is not literally present in the assembled variable, the sub-check is FALSE
+  — narrating that the work "was done" is not evidence.
+- `(f) SCHEMA_OK` and `(g) DIRECTION_OK` failures are corrected BEFORE Step 7.6 writes — Step 7.6 never
+  persists a wrong-shape object or an out-of-enum direction/ticker value, even transiently. These are
+  output-validity requirements, not data-availability gaps like (a)-(e); the gap token documents that a
+  correction occurred, it never substitutes for the correction.
 - When `$QUALITY_VERDICT = "degraded"`, conviction scores throughout the dish are retroactively capped at MEDIUM (this mirrors the EOD degraded-dish floor in Step 1 and the per-cluster LOW conviction rule in Step 6.5).
-- This gate fires for ALL `$DISH_TYPE` values (morning / intraday / eod / evening). There is no dish window exempt from the gate.
+- This gate fires for ALL `$DISH_TYPE` values (morning / intraday / eod / evening) — including
+  sub-checks (f)/(g), which apply identically regardless of dish type. There is no dish window exempt.
 - The intraday silent-exit path (Step 1, 0 clusters) is exempt — it exits before Step 7 and may still use `QUALITY: full` in its EXIT line because no layer-walk was attempted (nothing to degrade).
 
 ---
@@ -611,7 +710,7 @@ if $L5_GAP_TOKEN is set:
      step as a permission conflict; that was a real, now-fixed contradiction between the agent-def L4 description
      and this step, not a tool limitation. -->
 
-After the quality verdict gate (Step 7.5) completes, persist the synthesized TNB 6-layer analysis to a machine-queryable JSON file. This enables frontend queries and downstream tools to access the structured conviction/sector/regime/gap data without parsing Telegram prose or notebooks.
+After the quality verdict gate (Step 7.5) completes, persist the synthesized TNB 6-layer analysis to a machine-queryable JSON file. **This step performs NO independent field extraction or re-derivation — every field below is Step 7.5's assembled ASSEMBLY variable, written verbatim (FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION, agent-father 2026-08-14: this single-assembly-then-write is what closes AC-2 — one pass, not two independent judgements of the same cycle).** This enables frontend queries and downstream tools to access the structured conviction/sector/regime/gap data without parsing Telegram prose or notebooks.
 
 **File path — CYCLE_DATE is PINNED to Step 0.5's value, never recomputed here:**
 <!-- FIX (GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST, agent-father 2026-07-19): confirmed root cause of the
@@ -640,7 +739,8 @@ FILEPATH   = docs/data/unified-agent-synthesis-{CYCLE_DATE}-{SLOT_ID}.json
 
 Example: `docs/data/unified-agent-synthesis-2026-07-03-eod.json`
 
-**JSON schema — synthesized 6-layer delivery:**
+**JSON schema — synthesized 6-layer delivery (this is the ONE schema Step 7.5 sub-check (f) SCHEMA_OK
+asserts against — identical for every `$DISH_TYPE` including `eod`, no dish-type exception):**
 ```json
 {
   "metadata": {
@@ -699,42 +799,50 @@ Example: `docs/data/unified-agent-synthesis-2026-07-03-eod.json`
 }
 ```
 
-**Implementation rules:**
+**Field mapping (FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION, agent-father 2026-08-14 —
+each field below is the Step 7.5 ASSEMBLY variable of the same purpose, written verbatim; this step
+does NOT re-derive, re-summarize, or independently re-extract any of them — that would reintroduce the
+exact two-independent-judgements defect this fix closes):**
 - `metadata.date_vn` = `CYCLE_DATE` verbatim (the Step 0.5-pinned canonical UTC date) — NEVER
   independently re-derived via a fresh `date` call in this step. The field name is legacy
   ("date_vn"); its value is the same canonical date used for the filepath and the Step 0.5
   published-marker key (FIX-CHEF-EVENING-DUP-DATE-MISLABEL-INVESTIGATE — this binding closes
   the exact gap that let two concurrent sessions independently resolve "today" and diverge).
-- Extract conviction calls from Step 4 per-ticker scoring + Step 4 pillar alignment counts.
-- If `$BIZ_CTX_CITED[<ticker>]` is set for a ticker (Step 4), its `conviction_calls[]` entry's
-  `business_context_cited` field MUST carry that object verbatim (not re-summarized) — this is the
-  field this row's own `verification_gate` RAW-verifies against on the next dish. `rationale_one_liner`
-  for that ticker SHOULD also end with a short clause naming the cited fact (e.g. "; biz-ctx: ROE
-  16.7% vs sector 17.6%, PE premium +57%") so a human reader of the JSON alone sees the same evidence
-  without cross-referencing `business_context_cited`. Tickers with no citation this cycle carry
-  `business_context_cited: null` — explicit null, not an omitted key (keeps the field always present
-  for downstream/frontend consumers per `GAP-CHEF-SYNTHESIS-B-ENDPOINT-CARD`, out of scope here).
-- Extract sector phases from Step 4 phase/tier declarations + Step 4 pillar evidence.
-- Extract regime state from Step 3 macro analysis (Layer 2+3) + carry regime if `$carry_usable=true`.
-- `known_gaps[]` = the UNION of THREE sources this cycle (FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION
-  — REUSABLE RULE applied: every layer's gap token must reach this array, not just Step 6's):
-  (i) Step 6 `$L6_GAP_TOKENS` (the `[L6-gap: ...]` methodological entries written to Step 7 Block B);
-  (ii) Step 7.5's `$FAILED_CHECKS` list when `$QUALITY_VERDICT = "degraded"` (the `[gap:L2_...]` /
-  `[gap:L3_...]` / `[gap:L4_...]` / `[gap:business_context_absent]` / `[gap:L6_gap_catalogue_not_enumerated]`
-  tokens — these were previously computed but silently stopped at `$LAYERS_WALKED_SUMMARY` and never
-  reached this array, the business-context instance of the same silent-omission pattern L5 has);
-  (iii) `$L5_GAP_TOKEN` from Step 5 if set. Omit empty entries; dedup exact-string matches.
-- Extract causal chains from Step 6.5 session state (the full sentences produced for the dish).
-- Extract cluster summary from Step 1 cluster grouping results.
-- `quality_verdict` and `layers_walked_summary` sourced directly from Step 7.5 gate output.
+- `metadata.quality_verdict` / `metadata.layers_walked_summary` = Step 7.5's `$QUALITY_VERDICT` /
+  `$LAYERS_WALKED_SUMMARY` verbatim.
+- `tnb_synthesis.us_macro_layer` / `vn_macro_layer` / `valuation_layer` = Step 7.5's
+  `$US_MACRO_LAYER_TEXT` / `$VN_MACRO_LAYER_TEXT` / `$VALUATION_LAYER_TEXT` verbatim.
+- `conviction_calls[]` = Step 7.5's `$CONVICTION_CALLS` verbatim — already includes
+  `business_context_cited` (= `$BIZ_CTX_CITED[<ticker>]` verbatim or explicit `null`, never an
+  omitted key) and an already-enum-checked `direction` (Step 7.5 sub-check (g)). Do not rebuild this
+  array independently from Step 4 here.
+- `sector_phases[]` = extracted from Step 4 phase/tier declarations + Step 4 pillar evidence
+  (unchanged — not part of the assertion mechanism, no live defect found on this field).
+- `regime_state` / `regime_confidence` / `clock_phase` = extracted from Step 3 macro analysis
+  (Layer 2+3) + carry regime if `$carry_usable=true` (unchanged).
+- `known_gaps[]` = Step 7.5's `$KNOWN_GAPS_SO_FAR` UNION Step 7.5's `$FAILED_CHECKS` (dedup
+  exact-string matches) — the same union rule as before (Step 6 `$L6_GAP_TOKENS` + Step 7.5's
+  computed gap tokens + `$L5_GAP_TOKEN`), now assembled once in Step 7.5 rather than re-derived here.
+- `causal_chains[]` = Step 6.5 session state (unchanged).
+- `clusters_summary` = Step 1 cluster grouping results (unchanged).
 
 **Write tool call (single atomic write):**
 ```
-Write(path=FILEPATH, content=<JSON content from above schema>)
+Write(path=FILEPATH, content=<JSON content, all fields per the mapping above>)
 ```
 
-**Verification (after write):**
-Confirm the JSON file exists at FILEPATH and is valid JSON with non-empty `conviction_calls` and `sector_phases` arrays (unless the cycle was intraday-silent, in which case SKIP this step entirely per the intraday silent-exit exception below).
+**Post-write RAW self-check (mandatory — AC-4, closes the "assert over the payload it just wrote" gap
+at the source rather than deferring entirely to the next audit cycle):** Immediately after the Write
+call, Read the file back from FILEPATH. Confirm, against the literal bytes just read (not memory of
+what was intended):
+1. It parses as valid JSON.
+2. `metadata.quality_verdict` equals the exact value Step 7.5 computed.
+3. Top-level keys match Step 7.5 sub-check (f) SCHEMA_OK's mandated set.
+4. Every `conviction_calls[].direction` is in `{BUY, HOLD, SELL, NEUTRAL}` (Step 7.5 sub-check (g)).
+If any of these 4 checks fails, re-Write once with the corrected object and Read back again. If the
+second attempt also fails, treat as `tool-error` per `chef-telemetry.md`'s Try/Catch Boundary →
+Degraded-Floor Recovery — do not silently continue with an unverified persisted file. (Skipped entirely
+on the intraday-silent path — see the exception immediately below.)
 
 **Intraday silent-exit exception:**
 If the cycle exited silently in Step 1 (0 clusters, intraday slot), skip Step 7.6 entirely — no JSON file is written for silent cycles. The exit in Step 1 already returned early before reaching Step 7.
