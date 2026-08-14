@@ -92,12 +92,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-08-14T23:00:08Z",
+    "status": "idle",
+    "updated_at": "2026-08-14T23:15:04Z",
     "updated_by": "dev-mcp-server",
-    "active_task_id": "TASK_2008a",
-    "next_agent": "dev-mcp-server",
-    "note": "TASK_2008a claimed by dev-mcp-server — FR-A1/FR-A2 calendar_status injectable-deps + enum gate (UC-CDC-P1 slice)."
+    "active_task_id": null,
+    "next_agent": "router",
+    "note": "TASK_2008a self-closeout (branch:null direct-execute path) — dev-mcp-server DONE, lane-moved to review[], next_agent=qa."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -18057,6 +18057,29 @@
         "updated_at": "2026-08-14T23:03:02Z",
         "next_agent": "qa",
         "agent_father_implementation_note": "FR-A4: deleted telemetry.md Step 6.0 calendar_status arg line (self-recycling emitter arg — server now computes it, TASK_2008a). FR-A5: pressure-read.md Step 4.3 now enumerates CALENDAR_STATUS_DOMAIN={open,half_day,weekend,holiday,unknown} and fails loud (log + send_telegram(channel=\"bug\")) on any out-of-domain value before falling through to the unchanged conservative no-suppression path — no new blocking behavior, no rate-limit (self-heals within one tick once TASK_2008a lands). Both files size-justification headers refreshed to actual line counts (telemetry.md 163L, pressure-read.md 117L, cap 120L). No unit test twin (Step 4.3 is pure LLM-narrated prose) — verification is live-tick notebook observation per AC."
+      },
+      {
+        "id": "TASK_2008a",
+        "title": "Wire calendar_status through injectable-deps + enum gate (emitPressureStateTool/vnTradingCalendar)",
+        "zone": "apps/mcp-server/",
+        "status": "REVIEW",
+        "size": "M",
+        "priority": "P1",
+        "created_at": "2026-08-14T22:54:44Z",
+        "created_by": "pm",
+        "depends_on": [],
+        "parent_task": "UC-CDC-P1",
+        "note": "FR-A1 + FR-A2: wire server-side computation via injectable-deps, add SESSION_STATUSES const, implement WARN+recompute inside runEmitPressureState",
+        "files": [
+          "apps/mcp-server/src/domain/services/vnTradingCalendar.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts",
+          "apps/mcp-server/src/__tests__/emit-pressure-state.test.ts"
+        ],
+        "updated_at": "2026-08-14T23:15:04Z",
+        "claimed_at": "2026-08-14T23:00:07Z",
+        "claimed_by": "dev-mcp-server",
+        "next_agent": "qa",
+        "dispatch_note": "TASK_2008a DONE by dev-mcp-server 2026-08-14T23:15:04Z. FR-A1/FR-A2 calendar_status injectable-deps + enum gate implemented, tested, documented. bun test emit-pressure-state.test.ts 35/35, tsc clean, toolCount=183/cronJobCount=88 unchanged, full suite 15291 pass/51 fail (below noise band, zero fails touch this task). Commits: 75cc18eca (code+test), 994a2c117 (docs), 70bd7e7bd (memory)."
       }
     ],
     "qa": [
@@ -18293,28 +18316,6 @@
           "TASK_2008b",
           "TASK_2008c"
         ]
-      },
-      {
-        "id": "TASK_2008a",
-        "title": "Wire calendar_status through injectable-deps + enum gate (emitPressureStateTool/vnTradingCalendar)",
-        "zone": "apps/mcp-server/",
-        "status": "IN_PROGRESS",
-        "size": "M",
-        "priority": "P1",
-        "created_at": "2026-08-14T22:54:44Z",
-        "created_by": "pm",
-        "depends_on": [],
-        "parent_task": "UC-CDC-P1",
-        "note": "FR-A1 + FR-A2: wire server-side computation via injectable-deps, add SESSION_STATUSES const, implement WARN+recompute inside runEmitPressureState",
-        "files": [
-          "apps/mcp-server/src/domain/services/vnTradingCalendar.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts",
-          "apps/mcp-server/src/__tests__/emit-pressure-state.test.ts"
-        ],
-        "updated_at": "2026-08-14T23:00:08Z",
-        "claimed_at": "2026-08-14T23:00:07Z",
-        "claimed_by": "dev-mcp-server",
-        "next_agent": "qa"
       }
     ]
   },
