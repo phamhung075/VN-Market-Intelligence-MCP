@@ -92,11 +92,11 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-14T06:33:36Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "updated_at": "2026-08-14T06:51:04Z",
+    "updated_by": "dev-team",
+    "active_task_id": "FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED",
+    "next_agent": "dev-rag-service"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11379,6 +11379,26 @@
         ],
         "status_note": "MINTED on the SECOND triage tick, per the WARN single-fire discipline (first fire carried as an observation on 2026-08-14T04:15Z, re-fired and triaged again 05:25Z). RAW-VERIFIED AT SOURCE THIS TICK — the finding is a DETECTOR FALSE POSITIVE, not a dead hook. EVIDENCE: (1) signal_feedback WARN sys @2026-08-14T02:47:29Z / Telegram 4849: 'A-33 hook-liveness: context-bloat-backstop.sh — settings-file-missing:/Users/admin/.../__l' (path truncated by the 120-char summary cap only). (2) tier1-probe.md:282 sets SETTINGS_LOCAL=\"$PROJECT_ROOT/.claude/settings.local.json\"; :295-301 emit 'settings-file-missing:$settings_file' ONLY when [ -f \"$settings_file\" ] is false. (3) That file EXISTS on disk and DOES register the hook — `jq '[.hooks[][] | .hooks[]?.command // empty | select(contains(\"context-bloat-backstop.sh\"))]' .claude/settings.local.json` returns `[\"bash \\\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/scripts/agents-flow/context-bloat-backstop.sh\\\"\"]`. (4) INDEPENDENT LIVENESS PROOF: the same hook emitted a real context_bloat_breach signal at 04:31:10Z (from=context-bloat-backstop-hook, payload docs/agent-memory/notebooks/dev-team.md 22578B vs 12000B byte-cap) — 104 minutes AFTER A-33 declared it dead. A hook that emits cannot be missing. ROOT CAUSE: $PROJECT_ROOT misresolves in the probe's runtime context, so the -f test fails on a file that exists. SAME CLASS as FIX-DEVTEAM-PREFLIGHT-ROOT-SYMLINK-CWD-FRAGILE (CWD-dependent root resolution through the apps/mcp-server/{docs,scripts} symlinks) — cross-referenced deliberately; different script, different check, so a sibling row not a fold. WHY THIS IS P1 AND NOT COSMETIC — IT HAS ALREADY CAUSED A WRONG CONCLUSION IN A PO NOTEBOOK: the 2026-08-14T04:15Z PO carry-over recorded 'context-bloat-backstop.sh is genuinely absent from all three settings files (verified: 0 matches each), so the hook is dead' and instructed the next tick to MINT on that premise. That verification was wrong — .claude/settings.local.json has 1 match — and acting on it would have produced a fix for a non-existent problem while the real defect (the probe's own path resolution) survived. A false-dead verdict on a liveness probe is strictly worse than no probe. AC-1: reproduce the misresolution (run the A-33 check from the invocation cwd the auditor actually uses) and fix the root-path resolution — do not paper over it by widening the -f test. AC-2 DISCRIMINATION, load-bearing: 'settings-file-missing' and 'not-registered' must be distinguishable from 'probe could not resolve its own root'. A path the probe failed to resolve MUST emit a distinct third reason token and MUST NOT be reported as a hook-liveness failure, because the hook's liveness is simply unknown in that state. AC-3 NEGATIVE CONTROL, mandatory: with the root resolving correctly, temporarily deregister one of the 4 checked hooks and assert A-33 still reports it not-registered — a fix that merely stops the WARN is a false green and is indistinguishable from deleting the check. AC-4: all 4 checks at tier1-probe.md:309-312 share the one $SETTINGS_LOCAL, so verify all four report correctly, not just context-bloat-backstop.",
         "origin_signal_id": "telegram:4849"
+      },
+      {
+        "id": "FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "title": "QA verification gate certifies OOM-class ACs on docker inspect + an immediate probe — both proven wrong here; require dmesg + a settled window\n",
+        "files": [
+          "docs/agents/qa/flow/",
+          "docs/standards/"
+        ],
+        "baseline_pass": false,
+        "created_at": "2026-08-14T06:50:41Z",
+        "created_by": "po/dev-team-step1-triage-20260814T0621Z (BATCH mint)",
+        "status_note": "Second recorded occurrence of the AC-3 durability class (prior: feedback_ac3_durability_certified_on_window_that_ended_before_metric_settled). Two compounding gate defects, both evidenced live: (1) SIGNAL — docker inspect .State.OOMKilled/ExitCode do not propagate the VM-boundary cgroup OOM in Docker Desktop; read false/0 across 3 real kernel kills. dmesg inside the VM is the only authoritative source, and this was ALREADY documented in commit ca6d86869 and in the certified row's own status_note, yet the gate still passed. (2) WINDOW — certification closed 60min before the first post-fix OOM. No open row covers this class. AC: OOM-class verification_gate must (a) read dmesg in-VM, (b) span a window >= the observed inter-crash interval, (c) forbid docker inspect .State.OOMKilled as sole evidence.\n\nROUTER NOTE (dev-team, 2026-08-14T06:5x): CORROBORATING LIVE EVIDENCE found same-tick — Tier-1 audit cycle c95 (agent abd9a0df0bb3eec97, 2026-08-14T06:44Z) independently FOLDed the same rag-service memory reading using exactly the discredited signal class this row names (docker-level checks: no OOMKilled, no VmHWM pinning, no dmesg read) — a real-time demonstration this row's AC directly closes. Worth citing when this row is picked up.\n",
+        "updated_at": "2026-08-14T06:51:04Z"
       }
     ],
     "closed_sprints": [
@@ -19223,7 +19243,52 @@
     },
     "last_triaged_at": "2026-08-14T05:52:49Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/rag-service/",
+        "owner": "dev-rag-service",
+        "next_agent": "dev-rag-service",
+        "title": "rag-service OOM-kills 3x AFTER ca6d86869 thread-pin deployed — invoker still lancedb-tokio-w; re-diagnose at lance-core layer, not allocator\n",
+        "files": [
+          "apps/rag-service/infrastructure/repositories.py",
+          "apps/rag-service/app_factory.py",
+          "docker-compose.yml"
+        ],
+        "baseline_pass": false,
+        "created_at": "2026-08-14T06:50:41Z",
+        "created_by": "po/dev-team-step1-triage-20260814T0621Z (BATCH mint)",
+        "claimed_at": "2026-08-14T06:50:41Z",
+        "claimed_by": "dev-team (P0 emergency dispatch, PO-directed — live crash loop, bypasses normal queue)",
+        "status_note": "Kernel memcg OOM-kills of the CURRENT post-fix container (92e6017318e4), from dmesg inside the Docker Desktop VM: 2026-08-12T13:46:51Z, 2026-08-12T14:00:57Z (invoker lancedb-tokio-w — the exact thread ca6d86869 pins), 2026-08-13T09:20:09Z (matches container StartedAt exactly). docker inspect reports OOMKilled=false ExitCode=0 RestartCount=3 (documented false-negative, re-confirmed). Deploy verified BY CONTENT HASH not timestamp: container /app/infrastructure/repositories.py md5 a42ab41897410756d8b3405cba360b38 == git HEAD == ca6d86869 — stale-image hypothesis REFUTED, the fix is live and failing. Live 2026-08-14T06:29Z: 976.6-977.1MiB/1GiB (95.37-95.42%) monotonically climbing. Lead (unconfirmed): in-container replication of repositories.py:160-161 (os.environ.setdefault TOKIO_WORKER_THREADS=1 / LANCE_CPU_THREADS=1 then lancedb.connect+open_table) still spawns 2 lancedb-tokio-w threads, not 1 — pin may be ineffective rather than merely insufficient; DISCRIMINATE THESE before patching. REFUTED, do not re-run: malloc_trim is NOT a dead call path (Ubuntu 22.04 glibc, ctypes find_library('c') resolves, hasattr malloc_trim True; jemalloc_bg_thd is a bundled dep, not the process allocator). AC: >=2h supervised post-restart sampling with dmesg OOM check as the pass criterion — never docker inspect .State.OOMKilled.\n\nROUTER NOTE (dev-team, 2026-08-14T06:5x): minted + dispatched immediately per PO's explicit directive — live P0 crash loop, not a backlog item. Also cross-referenced: the very next Tier-1 audit cycle (c95, agent abd9a0df0bb3eec97) independently FOLDed this exact rag-service reading using docker-level signals only (no OOMKilled, no VmHWM pinning, no dmesg read) — a live, real-time demonstration of BATCH-mint sibling row FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW's exact defect. Do not let a FOLD verdict from the auditor's own probe (docker-inspect-based) be read as contradicting this row's dmesg-sourced evidence.\n",
+        "updated_at": "2026-08-14T06:51:04Z"
+      },
+      {
+        "id": "UNBLOCK-OPS-RAG-REBUILD-DONEVERIFIED-FALSIFIED-BY-KERNEL",
+        "type": "UNBLOCK",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "po",
+        "title": "Revert DONE_VERIFIED on cold-archived OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX — certified 12:46:40Z, container OOM-killed 3x after\n",
+        "files": [
+          "docs/data/orch/archive/2026-08.json",
+          "docs/data/orch/orch-state.json"
+        ],
+        "baseline_pass": false,
+        "created_at": "2026-08-14T06:50:41Z",
+        "created_by": "po/dev-team-step1-triage-20260814T0621Z (BATCH mint)",
+        "claimed_at": "2026-08-14T06:50:41Z",
+        "claimed_by": "dev-team (S4 UNBLOCK dispatch)",
+        "status_note": "Row lives in docs/data/orch/archive/2026-08.json (cold), status DONE_VERIFIED, updated_by=qa @2026-08-12T12:46:40Z. Kernel OOM-killed the container it certified at +1h00m, +1h14m (invoker lancedb-tokio-w) and +20h34m. Its status_note asserts 'ROOT CAUSE FOUND + FIXED + LIVE-VERIFIED' and instructs 'WHY THIS IS NOT A NEW BUG AND MUST NOT BE RE-DIAGNOSED' — that instruction is falsified by kernel evidence and MUST NOT be honoured by the next actor. Same note correctly warned RestartCount is recreate-reset and docker inspect OOMKilled is unreliable here; both cautions were dropped at closure. AC-3 durability-window failure. Needs cold->hot restore + status revert (e.g. to REVIEW or BLOCKED with a cross-ref to FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED, which supersedes it as the live tracking row). NOTE the row is invisible to every lane-scoped dedup scan while cold — PO reproduced that blind spot itself this tick and self-corrected (commit c8c360f21).\n\nROUTER NOTE (dev-team, 2026-08-14T06:5x): routed to po (S4 UNBLOCK dispatch) — po already has full context from its own investigation and cold-archive access; this is a board-hygiene correction, not a code fix.\n",
+        "updated_at": "2026-08-14T06:51:04Z"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
