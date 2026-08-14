@@ -1,4 +1,4 @@
-<!-- size-justification: 90L — Steps 4.2 + 4.3: pressure-state load + adaptive/legacy mode decision + calendar suppression gate. Child of main.md. -->
+<!-- size-justification: 117L — Steps 4.2 + 4.3: pressure-state load + adaptive/legacy mode decision + calendar suppression gate. Child of main.md. FR-A5 (TASK_2008c, UC-CDC-P1, 2026-08-15): added CALENDAR_STATUS_DOMAIN enumeration + fail-loud (log + send_telegram(channel="bug")) on out-of-domain calendar_status, defense-in-depth for legacy on-disk values predating TASK_2008a's server-side enum gate. -->
 
 ## Step 4.2 — Read and validate pressure-state.json (DWF-PHASE1)
 
@@ -63,8 +63,20 @@ Only runs if `PRESSURE_MODE = "adaptive"`.
 
 ```
 CALENDAR_STATUS = PRESSURE_STATE.calendar_status   # from Step 4.2
+CALENDAR_STATUS_DOMAIN = ["open", "half_day", "weekend", "holiday", "unknown"]   # FR-A5: the only 5 values a producer may ever write
 
 SUPPRESS_CALENDAR = new Set()
+
+if CALENDAR_STATUS not in CALENDAR_STATUS_DOMAIN:
+  # FR-A5 fail-loud (defense-in-depth for a legacy on-disk file predating FR-A1/FR-A2's
+  # server-computed producer + enum gate): an out-of-domain literal (e.g. historically
+  # observed "closed"/"off_market") must be VISIBLE, not silently indistinguishable from
+  # a legitimate "unknown". No rate-limit (unlike the Step 4.2 staleness warning) — once
+  # FR-A1/FR-A2 land, the value self-heals within one tick, so this is a one-shot alert
+  # window, not a persistent-until-fixed condition.
+  log "[cowork] WARN: out-of-domain calendar_status value: " + CALENDAR_STATUS + " — falling through to no-suppression (conservative)"
+  send_telegram(channel="bug", message="[pressure-read] out-of-domain calendar_status: " + CALENDAR_STATUS)
+  # falls through below unchanged — same no-suppression path as a legitimate "unknown"
 
 if CALENDAR_STATUS in ["holiday", "weekend"]:
   for each slot in MATCHES:
@@ -86,7 +98,7 @@ if CALENDAR_STATUS in ["holiday", "weekend"]:
 CALENDAR_ALLOWED = MATCHES.filter(s => !SUPPRESS_CALENDAR.has(s.slot_id))
 ```
 
-For `CALENDAR_STATUS` values `"open"`, `"half_day"`, `"unknown"`: no suppression (conservative — AC-P1-4-2).
+For `CALENDAR_STATUS` values `"open"`, `"half_day"`, `"unknown"`, or any value outside the 5-value domain `CALENDAR_STATUS_DOMAIN` above: no suppression (conservative — AC-P1-4-2). Out-of-domain values additionally fail loud (log + `send_telegram(channel="bug")`, above) — this is the ONLY behavioral difference; the no-suppression fallthrough itself is unchanged.
 
 <!-- SIGNAL-TRIAGE HELPER (added 2026-07-21, escalate-path list updated 2026-08-08 per
      FIX-AUDITOR-A30-DISCRIMINATOR-CRASH-CLIFF-SCORED-AS-RECLAMATION-DIP): when a

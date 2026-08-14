@@ -8,62 +8,6 @@
      explicit YYYY-MM-DD token. Nothing deleted; full record in the archive file and git
      history. -->
 
-## EDIT 2026-08-14T21:44Z — task FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE (piece 2 of PO-split, agent-father half)
-(router-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
-- Context: piece 1 (`scripts/auditor-notebook-commit.sh` + `scripts/lib/output-contract-invariant.sh`
-  + new `scripts/auditor-notebook-commit.test.sh`, 24/24 pass incl. AC-4 before/after synthetic-replay)
-  already shipped by developer, commit `b48e726c5`, QA-verified (`git status --porcelain` on
-  `main.md` empty at read-time — piece 2 genuinely not started). Row's own `status_note` routed
-  piece 2 here: `docs/agents/system-auditor/flow/main.md`'s notebook-commit call site (drifted from
-  the row's cited `:1173-1177`/`:1181-1183` to live `:1186-1189`, confirmed by direct read before
-  editing, not trusted from the citation).
-- Change: `docs/agents/system-auditor/flow/main.md` — the `bash scripts/auditor-notebook-commit.sh`
-  call at the notebook-commit step (§Notebook Write's Commit block) gains
-  `--markers-file "$MARKERS_FILE" --cycle-tag "$FIRE_TASK_ID"`. Both confirmed already in scope at
-  that point before editing: `$MARKERS_FILE` set at Step 0d/§0b (L306), `$FIRE_TASK_ID` set per-tier
-  in Step 0d (L218/225/238/252) and already reused verbatim at 5 other `--cycle-tag` call sites in
-  this same file (L661/712/798/1019/1245) — same value, no new derivation. This wires the call site
-  to piece 1's new reachable §2b emit-vs-claim plane cross-check gate (declared "Anomalies: N new"
-  vs real `[emit-signal]` count in `$MARKERS_FILE`; REFUSES the commit via `git restore --staged` +
-  exit 1 on mismatch). The sibling heartbeat-commit call site (same script, ~L1364, different path
-  `docs/data/auditor-tier<N>-last-healthy.json`) was deliberately NOT touched — §2b is scoped to the
-  notebook's own "Anomalies: N new" template line, not the heartbeat sidecar; out of this row's AC-3.
-- Second AC-3 sub-requirement: read the existing generic ABORT-verdict bullet (drifted to live
-  `:1215`) before assuming — confirmed its `[auditor-commit] ABORT ...` wildcard pattern-match
-  already mechanically catches any ABORT reason (including the new `contract-plane-mismatch`), and
-  the bug-telegram action already embeds `<marker line>` verbatim, so the real reason string always
-  reaches the alert with zero branch-logic change needed. Made one small additive wording edit only
-  (parenthetical reason list now names `contract-arithmetic-violation §2a` / `contract-plane-mismatch
-  §2b` explicitly, for reader accuracy — the old list only named the 2 original ABORT reasons and was
-  drifting stale even before this row) — not a functional change, does not affect AC-3 disposition.
-- Also appended one changelog delta to the file's own top-of-file size-justification comment
-  (established per-fix convention in this file) documenting this edit.
-- Deliberately NOT touched (out of zone per this row's own scoping): `scripts/auditor-notebook-
-  commit.sh`, `scripts/lib/output-contract-invariant.sh` (developer's piece 1, already shipped),
-  `docs/policies/dev-standards.md` (developer-owned CANONICAL doc, its own stale `:1173-1177`
-  citation left as-is — not this row's zone, `docs/policies/` is outside agent-father's
-  `commit_zone`).
-- Files modified: 1 (`docs/agents/system-auditor/flow/main.md`, 3 non-adjacent edits: call-site
-  2-arg addition + explanatory prose, ABORT-bullet wording, top-of-file changelog delta).
-- Validation: code-fence balance (94, even) confirmed post-edit; `git status --porcelain` on the
-  sibling heartbeat call site (~L1364) confirmed unchanged; live re-grep of both call sites
-  post-edit confirmed exactly one (the notebook-commit one) carries the new flags.
-- Lock: re-entrant `task:FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE` lock (already held by
-  this session from an earlier dev-team dispatch, `owner_client_session` matched) — heartbeat-renewed
-  via the documented gateway-less fallback (agent-father's tool grant has no
-  `mcp__gateway__call_tool` binding; replicated `heartbeatTask()`'s exact SQL via `docker exec
-  vn-market-intelligence-mcp-mcp-server-1 bun -e "..."` against `/app/data/coordination.db`,
-  live-verified the row + ownership match before touching it, no business-logic bypass). Released
-  the same way after this edit.
-- Board disposition: `ready[]` → `qa[]`, `status: READY → QA`, `next_agent: agent-father → qa`,
-  `updated_by: agent-father` via `scripts/orch-apply.sh` (validate + conservation-check both PASS,
-  `task_total` unchanged 690→690) — re-enters QA per the row's own instruction ("When piece 2 lands
-  it will re-enter qa[] via the same direct-commit path; QA should then verify AC-3 end-to-end").
-  Left UNCOMMITTED per `FU-AGENT-FATHER-ORCH-SCOPE` (`docs/data/orch/orch-state.json` sits outside
-  this agent's `commit_zone` for anything beyond the ONE allowed signal-queue DONE-mark exception,
-  matching S47/S48/S49 precedent above) — the write is applied and on disk, ready for the next
-  commit sweep (router/cowork/PO) to pick up.
-
 ## EDIT 2026-08-14T22:12Z — task UC-CCA-P3 (7x FR-3 subtasks), router-dispatched, session
 `632721c2-41e4-4aff-8d06-a47cf80dc0d7`
 - Router-spawned as `developer` onto the umbrella row UC-CCA-P3 with an explicit flag: the 7
@@ -127,3 +71,37 @@
   `UC-CCA-P3-FR3-CHEF`'s R1 threading) is the real remaining work before this umbrella can close.
   Applied via `scripts/orch-apply.sh`, left UNCOMMITTED per `FU-AGENT-FATHER-ORCH-SCOPE` (matches
   S47/S48/S49/UC-CCA-P2 precedent above) — write is on disk, ready for the next commit sweep.
+
+## EDIT 2026-08-14T23:03Z — task TASK_2008c (UC-CDC-P1 3-way split, agent-father slice),
+router-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`
+- Context: UC-CDC-P1 (compute `calendar_status` server-side, break the circular self-recycling
+  loop) decomposed by PM into 3 tier-1/independent tasks — TASK_2008a (dev-mcp-server, FR-A1/A2),
+  TASK_2008b (developer, FR-A3), TASK_2008c (this row, agent-father, FR-A4/A5,
+  `docs/agents/cowork-team/flow/` zone). Zero `depends_on`; no coordination needed with 2008a/2008b.
+- FR-A4: deleted `telemetry.md` Step 6.0's `"calendar_status": "<CALENDAR_STATUS from Step 4.3>"`
+  arg (L15) from the `emit_pressure_state` call_tool block — the WORK-path half of the
+  self-recycling loop (dispatcher read the value out of pressure-state.json in Step 4.2, then
+  wrote it straight back on Step 6.0); TASK_2008a closes the server-compute half. Step 6.0's own
+  MANDATORY/un-skippable invariant untouched — only the one arg line removed. Confirmed L63's
+  payload `calendar_status` field (Step 6.1 observability write) is a distinct purpose, out of
+  FR-A4 scope, left as-is.
+- FR-A5: `pressure-read.md` Step 4.3 previously silently fell through to the no-suppression branch
+  for ANY value outside `["holiday","weekend"]` — indistinguishable from a legitimate `"unknown"`,
+  the exact mechanism that let a stale `"closed"` literal persist undetected for days. Added
+  explicit `CALENDAR_STATUS_DOMAIN=[open,half_day,weekend,holiday,unknown]`; any value outside it
+  now logs + `send_telegram(channel="bug", message="[pressure-read] out-of-domain calendar_status:
+  <value>")` before falling through to the SAME unchanged no-suppression path — no new blocking
+  behavior, no rate-limit (self-heals within one tick once TASK_2008a lands). Style matched to
+  existing `spawn-fanout.md` IDENTITY_CHECK=FAIL `channel="bug"` precedent.
+- Refreshed both files' stale `size-justification` headers to actual post-edit counts:
+  `telemetry.md` 153L→163L (net −1, still over the 120L flow-file cap, pre-existing exemption),
+  `pressure-read.md` 90L→117L (net +12, now under the 120L cap outright). No unit-test twin for
+  either FR (Step 4.3 is pure LLM-narrated prose, no JS/TS mirror) — verification is live-tick
+  notebook observation per the row's own AC.
+- Lock: no gateway binding (tool grant Read/Edit/Write/Bash only) — Solo operation exception
+  applied (`.head.status=idle`, `active_task_id=null` at read time) per `commit-boundary/SKILL.md`;
+  no lock claimed, none needed.
+- Board disposition: `TASK_2008c` `ready[]` → `review[]`, `status: TODO → REVIEW`,
+  `next_agent: null → qa`, `agent_father_implementation_note` added, via `scripts/orch-apply.sh`
+  (validate + conservation-check both PASS, `task_total` unchanged 695→695). Left UNCOMMITTED per
+  `FU-AGENT-FATHER-ORCH-SCOPE` — write is on disk, ready for the next commit sweep.

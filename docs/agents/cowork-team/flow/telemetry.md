@@ -1,4 +1,4 @@
-<!-- size-justification: 153L — Step 6 + call_tool emit_pressure_state (EMIT-DARK-v2 Option C) + conditional signal write (atomic temp+validate+rename, CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR step 1) + Error Guard (same atomic pattern). Child of main.md. -->
+<!-- size-justification: 163L — Step 6 + call_tool emit_pressure_state (EMIT-DARK-v2 Option C) + conditional signal write (atomic temp+validate+rename, CLEAN-COWORK-DISPATCHER-TELEMETRY-DRAIN-DIR step 1) + Error Guard (same atomic pattern). Child of main.md. FR-A4 (TASK_2008c, UC-CDC-P1, 2026-08-15): deleted circular calendar_status arg from Step 6.0's emit_pressure_state call — server now computes it server-side (TASK_2008a), closing the self-recycling loop this arg fed. -->
 
 ## Step 6 — Write telemetry signal + emit pressure state
 
@@ -12,7 +12,6 @@ Execute this call_tool BEFORE the conditional signal-file write. It is un-skippa
 
 ```
 call_tool(server="vn-market", tool="emit_pressure_state", arguments={
-  "calendar_status": "<CALENDAR_STATUS from Step 4.3>",
   "tick_id": "<nominal_tick, e.g. 2026-06-05T18:00:00Z>",
   "fire_time": "<ISO now>",
   "pressure_mode": "<adaptive|legacy as computed in Step 4.2>",
