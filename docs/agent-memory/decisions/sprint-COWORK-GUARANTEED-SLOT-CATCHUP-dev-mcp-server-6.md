@@ -20,3 +20,12 @@
 **what-done:** RAW-verify pass ahead of push (PUSH-AUTONOMY-1 §5 attestation), independent of dev-mcp-server's own self-report — router re-ran the check itself rather than trusting the notebook claim at face value.
 **what-considered:** `grep -n "INSERT INTO financial_reports\|financial_reports" apps/mcp-server/src/application/usecases/bctc/newsChainFallback.ts` — confirmed zero write statements, only read/comment references. Confirmed `bctc_news_fallback_hints` table live in `schema-financial-reports.ts` (`initFinancialReportsTables()`, `UNIQUE(action_code, sort_key)`, indexed). Independently ran `bun test src/__tests__/1294b-bctc-fallback.test.ts` live (not from cache/mock) — 10 pass / 0 fail / 40 expect() calls; live log output confirms the actual code path (`"fallback hints recorded (bctc_news_fallback_hints, NOT financial_reports)"`) fires for real fallback cases, not a fabricated/stubbed assertion.
 **why-decision:** RAW-verified — commits 215010308/af4d7e166/dd579e292 match their own claims; attesting to unblock push per PUSH-AUTONOMY-1 §5 (RAW-verify token in an added decisions/** line).
+
+### STEP dev-mcp-server-S2 · dev-mcp-server · 2026-08-14T09:35:00Z
+**task-id:** FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH
+**what-done:** Diagnosed + fixed CI-red `ALLZERO-OHLCV-FETCH.test.ts` — AC-1..AC-3 fixtures hardcoded absolute dates (`2026-06-1x`) against `get_price_history`'s real `date('now','-N days')` SQL filter; wall-clock drift carried them outside the `days=60` window, so the file failed even in isolation (not cross-test leakage). Replaced literals with a `dateStr(daysAgo)` helper deriving fixture dates from `Date.now()` — same idiom already used in `178-price-history.test.ts`.
+**what-considered:**
+- Widen `days` param instead of fixing dates — REJECTED: masks symptom, next drift cycle re-breaks it; doesn't fix root cause.
+- Freeze `Bun.env`/mock the clock — REJECTED: heavier, file has no existing clock-injection seam, `dateStr()` is the established repo convention for this exact class.
+**why-decision:** Root-cause fix (dynamic relative dates) matches the sibling test's already-proven pattern; zero production code touched.
+**why-change:** No change from brief — brief flagged "per-file isolation" as diagnostic hint; confirmed via isolated run the defect is intra-file (stale fixtures), not cross-file state leakage. Did not touch `FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts` (the sibling FAILEDFILE) — separate board row, out of scope.

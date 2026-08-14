@@ -1,19 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-08-12 — FIX-CI-BUNTEST-1108-AGENT-WORK-LOG-STORE (P2, S, dispatch_lane=dev-mcp-server) → REVIEW, next_agent=qa
-
-**Session:** 165f4245-6173-4054-87fd-c55bb626265f. PO triage (dev-team Step 1, tick 17:00Z) minted this via the ci_red ANTI-AMNESTY BACKSTOP — sole FAILEDFILE across run `31613681006` (head `0b3d494d`) with zero dedup hit anywhere on the board; PASSED on both bracketing runs (`b701e913`, `f954d591`). Brief explicitly forbade bisecting-as-regression until flaky-vs-real was determined.
-
-**Root cause:** `purgeOldAgentWorkLogs keeps rows exactly at the boundary` in `1108-agent-work-log-store.test.ts` is a real-clock race, not a code defect. The fixture INSERTs a row at `datetime('now','-30 days')` and then calls `purgeOldAgentWorkLogs(db, 30)`, whose own `DELETE ... WHERE started_at < datetime('now', '-30 days')` independently recomputes `'now'`. If the wall clock ticks over a second boundary between the two statements, the row flips from kept to deleted. Reproduced deterministically with a standalone `bun:sqlite` script (insert boundary row → inject a 1.1s delay → run the same DELETE): `deleted=1`, matching the CI failure shape. Both bracketing commits are unrelated notebook/orch-state writes — confirms deflake, not regression.
-
-**Fix (test-file only, per dispatch scope):** widened the boundary row to `datetime('now','-30 days','+5 seconds')` — still exercises "row just inside the retention window must be kept" (the `<` not `<=` semantics the test exists to prove), but now needs >5s of real jitter between two back-to-back synchronous SQLite statements to flip, which is orders of magnitude beyond realistic CI scheduling variance. Re-ran the same 1.1s-delay repro against the new value: `deleted=0`. Left `agentWorkLogStore.ts` (production code) untouched — its `datetime('now')` usage is internally consistent (DEFAULT column + all filters use SQLite's own format, no ISO8601 string-vs-space-separator strcompare bypass).
-
-**Verified:** isolated `bun test src/__tests__/1108-agent-work-log-store.test.ts`: 17/17 pass, 41 expect (stable, re-run clean). `bun tsc --noEmit`: clean (worktree had no `node_modules` — ran `bun install` first, 424 packages, before this gate was runnable). Full non-isolated `bun test`: 15262 pass/56 fail/1 error/1272 files (497s) — per `scripts/test-all.sh`'s own documented rationale (Bun singleton/env-leakage across files sharing one process) this is expected pre-existing noise, not gating evidence for a single-file fix; the actual CI runner `scripts/ci-per-file-isolation.sh` never invokes bare `bun test`. No production code touched — Gate 2b/2c/2d (tool/scheduler count, server boot) not triggered.
-
-**Evidence:** DJ `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-5.md` S91.
-
-Zone health: single flaky-fixture defect closed at its real-clock-race root cause (not point-patched by bisection or margin-padding a symptom), zero production code touched, tsc clean, isolated target file stable across repeated runs | HEALTHY.
-
 ## 2026-08-13 — FACTORY-INFRA-split-agentSignalStore (P0, L, dispatch_lane=dev-mcp-server) → REVIEW, next_agent=qa
 
 **Session:** 632721c2-41e4-4aff-8d06-a47cf80dc0d7 (dev-team dispatcher wrap; task pre-claimed by dispatcher, BOUNDED-1 auto-pickup). File had drifted 1569L→1774L since the 2026-06-15 audit wrote this task (new getBroadcastSignals/getPriceAnomalySignals/getSignalsGroupedByCausalRoot/migrateUnknownStockCodes landed after).
@@ -41,3 +27,17 @@ Zone health: hottest-write-path file (agent_signals bus) collapsed from a 10-bra
 **Evidence:** DJ `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md` S1. Docs: `usecases.md` updated (new dated entry closing the "known open gap" note the parent NGAYNOP-FLIP task left). Commit: `215010308`.
 
 Zone health: second independently-implemented `financial_reports` writer's zero-fabrication defect closed by relocating its write target (not guarding in place), zero regression across targeted + full-suite runs, tsc clean, toolCount/cronJobCount unchanged, one masked test-fixture defect found and fixed at root cause | HEALTHY.
+
+## 2026-08-14 — FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH (P0, S, Ready-Lane Consumer dispatch) → REVIEW, next_agent=qa
+
+**Session:** 632721c2-41e4-4aff-8d06-a47cf80dc0d7. Router PRE-CLAIM held `task:FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH` + `intent:dev-mcp-server:FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH`. Row had sat READY→IN_PROGRESS since 2026-08-11T13:03Z, folded ~20x by PO across advancing SHAs before this dispatch (dispatch starvation, not a diagnosis gap — see row's own status_note history).
+
+**Root cause:** `ALLZERO-OHLCV-FETCH.test.ts` AC-1/AC-2/AC-3 fixtures hardcoded absolute calendar dates (`2026-06-1x`, `2026-05-30`) as `daily_ohlcv` rows, then queried `get_price_history` with `days=60`. That tool's SQL filter is `date >= date('now', '-' || ? || ' days')` — a real wall-clock comparison. As real time carried past ~2026-08-10, the fixture dates fell outside the 60-day window and every real-data assertion started returning "no data" instead of the seeded rows — reproduced even running the file alone (`bun test <file>`), confirming this is stale-fixture date drift, NOT the "per-file isolation"/cross-test-state-leakage class the CI job name suggested. `normalizeResidualContam()`'s own tests (AC-4/AC-4b) were unaffected — that function has no date filter.
+
+**Fix (test-file only):** added a `dateStr(daysAgo) => new Date(Date.now() - daysAgo*86400000).toISOString().slice(0,10)` helper and rewrote every fixture row + corresponding assertion literal to use it — the identical idiom already used in the sibling `178-price-history.test.ts`. Zero production code touched.
+
+**Verified:** isolated `bun test src/__tests__/ALLZERO-OHLCV-FETCH.test.ts`: 5/5 pass, 17 expect (both bare and via the exact CI invocation `STOCK_PRICE_DB_PATH=<unique> bun test <file>` from `scripts/ci-per-file-isolation.sh`). `tsc --noEmit`: clean. Gate 2b/2c/2d: `PORT=3099` boot clean (`/health` 200, toolCount=183), `toolCount`=183/`cronJobCount`=88 both match baseline (no barrel change, ran anyway for completeness). Full non-isolated `bun test`: 15292 pass/40 skip/53 fail (488.57s) — within/below the documented 55-56 pre-existing-noise band from the last 2 cycles' entries (Bun singleton/env-leakage across files sharing one process, not gating evidence per `scripts/test-all.sh`'s own rationale); the real CI runner never invokes bare `bun test`. Left the sibling `FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts` (the board's OTHER named FAILEDFILE) untouched — separate board row, out of scope, "one row per distinct file" policy.
+
+**Evidence:** DJ `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md` S2. Docs: `testing.md` updated (new Market Data row for the test file + the fix).
+
+Zone health: CI-red test-fixture defect closed at its real root cause (calendar-date drift vs. a live wall-clock SQL filter, not a code bug), zero production code touched, tsc clean, isolated + CI-faithful invocation both green, toolCount/cronJobCount unchanged | HEALTHY.
