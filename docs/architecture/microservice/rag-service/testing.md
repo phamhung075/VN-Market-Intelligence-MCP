@@ -115,6 +115,41 @@ cause a redundant rebuild of an already-persisted-to-disk index after a simulate
 - A trim-sweep exception is non-fatal — the loop survives and keeps polling (mirrors the
   existing `maybe_unload()` exception-swallow behaviour)
 
+## Unit Tests — FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (Session cache bound + compaction retention, in-process attribution follow-up)
+**File:** `apps/rag-service/__tests__/unit/test_rag_lancedb_session_and_retention_bound.py`
+
+Root cause named via a real in-process memory profile (tracemalloc + gc
+object-type census + pyarrow's own native memory-pool accounting — see
+`infrastructure.md`'s section of the same name for the full writeup):
+`lancedb.connect_async()` with no `session=` defaults to a 6GB index / 1GB
+metadata cache inside a 1GB container; `_COMPACT_RETENTION`'s 2-day default
+never prunes anything within this container's real uptime.
+
+- `test_get_table_session_is_none_when_cache_bytes_not_provided`: default
+  construction (no cache-size kwargs) must NOT build a session — preserves
+  the exact pre-fix behaviour for every other test in the suite
+- `test_get_table_builds_bounded_session_when_cache_bytes_given`: real
+  `lancedb.Session` gets constructed and wired when cache bytes are given
+- `test_get_table_session_constructed_with_exact_configured_bytes`: patches
+  `lancedb.Session` to assert the EXACT `index_cache_size_bytes`/
+  `metadata_cache_size_bytes` kwargs this fix wires through
+- `test_bounded_session_stays_near_configured_ceiling_under_real_traffic`:
+  REAL end-to-end (no mocks) — 80 inserts + 20 searches against a deliberately
+  tiny (256KiB/128KiB) cache bound, asserts the live `Session.size_bytes`
+  never blows past a generous multiple of its configured ceiling — a
+  regression guard against the old unbounded-by-default behaviour
+- `test_compact_retention_defaults_to_module_constant` /
+  `test_compact_retention_uses_constructor_override`: `_compact_retention`
+  wiring on the instance
+- `test_compact_uses_configured_retention_not_module_default`: real table,
+  spy on `optimize()`, confirms `compact()` passes the CONFIGURED override to
+  `cleanup_older_than`, not the module-level `_COMPACT_RETENTION`
+- Config env default/override pairs for `LANCEDB_INDEX_CACHE_MB` (96),
+  `LANCEDB_METADATA_CACHE_MB` (32), `LANCEDB_COMPACT_RETENTION_HOURS` (1)
+- `test_build_real_adapters_wires_cache_and_retention_from_config`: production
+  wiring path (`app_factory.build_real_adapters()`) threads all three Config
+  fields into the real `LanceDBVectorStore` it constructs
+
 ## Run Commands
 ```bash
 cd apps/rag-service && python -m pytest

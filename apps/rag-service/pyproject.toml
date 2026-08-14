@@ -21,6 +21,12 @@ dev = [
     "pytest-asyncio>=0.23.6",
     "mypy>=1.9.0",
     "import-linter>=2.11",
+    # FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (2026-08-14):
+    # fastapi.testclient.TestClient requires "httpx2" (not "httpx") against the
+    # starlette version this repo resolves — see requirements.txt for the full
+    # writeup. Kept in sync here so a host `pip install -e ".[dev]"` matches the
+    # deployed image's actual TestClient dependency.
+    "httpx2>=2.10.0",
 ]
 
 [tool.pytest.ini_options]

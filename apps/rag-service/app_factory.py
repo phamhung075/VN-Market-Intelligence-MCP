@@ -1,5 +1,9 @@
-# size-justification: 212L (+35L, 2026-08-12 FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-
-# PAGES-NOT-RETURNED-TO-OS: added _malloc_trim_or_noop() + its call site inside
+# size-justification: 230L (+18L, 2026-08-14 FIX-RAG-EMBEDDER-IDLE-UNLOAD-
+# ALLOCATOR-PAGES-NOT-RETURNED-TO-OS in-process attribution follow-up: threaded
+# Config-driven lancedb Session cache bounds + compact_retention through
+# build_real_adapters()'s existing LanceDBVectorStore construction call — same
+# adapter-construction concern this function already owns, not new scope; prior
+# entry: +35L, 2026-08-12, added _malloc_trim_or_noop() + its call site inside
 # _idle_unload_loop() — same background-loop/process-hygiene scope the loop already
 # owns, not a new concern) — composition-root app-factory: build_lifespan()
 # (FastAPI lifespan wiring + FIX-RAG-EMBEDDER-IDLE-UNLOAD-PATH background loop),
@@ -207,6 +211,20 @@ def build_real_adapters(
         model_name=cfg.embedding_model,
         cache_dir=cfg.embedding_cache_dir,
     )
-    vector_store = LanceDBVectorStore(db_path=cfg.lancedb_path)
+    # FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (2026-08-14):
+    # bound lancedb's native Session cache (see repositories.py's _get_table()
+    # for the full in-process attribution) -- without this, lancedb.connect_async()
+    # defaults to a 6GB index / 1GB metadata cache ceiling inside a 1GB container.
+    # Also bounds the version-manifest retention window (see repositories.py's
+    # _COMPACT_RETENTION module comment) -- the prior 2-day default never pruned
+    # anything inside this container's real uptime.
+    from datetime import timedelta as _timedelta
+
+    vector_store = LanceDBVectorStore(
+        db_path=cfg.lancedb_path,
+        index_cache_bytes=cfg.lancedb_index_cache_mb * 1024 * 1024,
+        metadata_cache_bytes=cfg.lancedb_metadata_cache_mb * 1024 * 1024,
+        compact_retention=_timedelta(hours=cfg.lancedb_compact_retention_hours),
+    )
 
     return embedder, vector_store, cfg

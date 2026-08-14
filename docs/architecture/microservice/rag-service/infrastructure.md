@@ -26,9 +26,16 @@ After each insert, increments an internal `_insert_count` counter. When
 resets the counter. Compaction failure is non-fatal — insert still succeeds.
 
 ### compact()
-Runs `table.optimize(cleanup_older_than=timedelta(days=2))`:
+Runs `table.optimize(cleanup_older_than=self._compact_retention)` —
+`self._compact_retention` defaults to the module constant `_COMPACT_RETENTION`
+(2 days) but is normally overridden in production via `Config.
+lancedb_compact_retention_hours` (env `LANCEDB_COMPACT_RETENTION_HOURS`,
+default **1h** — see the
+`FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (in-process
+attribution, 2026-08-14)` section below for why the 2-day default was measured
+to never prune anything in this container's real uptime):
 - Merges small fragment files into larger compacted files (online-safe, reads/writes continue)
-- Prunes version manifests older than 2 days; latest version is always kept
+- Prunes version manifests older than the configured retention window; latest version is always kept
 - Resets `_insert_count` to 0 **in a `finally:` block — unconditionally, whether `optimize()`
   succeeds or raises** (FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP, 2026-08-05: the reset used to
   live only in the try success-path, so a failed `optimize()` left the counter stuck
@@ -220,6 +227,108 @@ incident) and **never** a short/immediate-only probe window — the sibling row
 because a prior certification on this exact container used both invalid signals and was
 falsified by the kernel 60 minutes after closing.
 
+#### FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (in-process attribution, 2026-08-14: the row's own long-standing "monotonic growth from a cold process" symptom, finally named — not RSS-delta-inferred)
+
+PO ruling `po_RULING_CRITICAL_PATH_20260814T0927Z` explicitly banned another
+restart-timing/deploy-config guess after three prior fixes (memory cap raise,
+thread-pool pin, redundant-rebuild skip above) each looked like a fix and then
+failed within hours. This required a real **in-process memory profile**, not
+another RSS before/after number.
+
+**Method** (`scripts/audits/rag-lancedb-mem-attribution-probe.py`, run against
+the deployed image with a read-write COPY of the production corpus — never the
+live container's own data): drove the real `LanceDBVectorStore` singleton
+(same call shape production uses) through the **real live traffic mix**
+(`docker logs`, 2026-08-14T09:39Z 60-min window: ~79 `POST /index` : ~19
+`POST /search`, i.e. **write-dominated**, not read-dominated — both prior
+2026-08-12 probes tested `search()` only) while instrumenting three
+independent, orthogonal planes simultaneously at every checkpoint:
+1. `tracemalloc` — Python-heap allocation attribution by file:line.
+2. `gc.get_objects()` type census (dependency-free `objgraph.show_growth()`
+   equivalent — `objgraph` itself is not installed in the deployed image).
+3. `pyarrow.default_memory_pool().bytes_allocated()` — Arrow's own native
+   memory-pool accounting (confirmed live: backend `mimalloc`, a THIRD
+   allocator context, separate from both glibc and CPython's heap).
+
+**Result, by elimination:** over 140 ops (~4.5min), RSS climbed ~120MB while
+ALL THREE planes stayed essentially flat — `tracemalloc_current_kb` moved
+39784→39844 (+60KB total), `pyarrow` pool `bytes_allocated` stayed **0 the
+entire run**, and `lancedb`/`pyarrow` wrapper-object live counts (via the gc
+census) never grew past +1. None of Python's own heap, PyArrow's own buffer
+pool, or Python-visible object counts can account for the growth — it is
+native memory inside lance-core's Rust internals, invisible to
+`malloc_trim(0)` (glibc-only, see the `FIX-PDFX` precedent this row already
+cites) and to every Python-level tool.
+
+**Named root cause:** `lancedb.connect_async()` called with no `session=`
+kwarg (the pre-fix code in `_get_table()`) builds lancedb's own internal
+`Session.default()` — confirmed live against lancedb 0.37.1's own docstring:
+*"equivalent to creating a session with 6GB index cache and 1GB metadata
+cache"*. That is a 7GB native LRU ceiling inside a container whose entire
+memory budget is 1GB — in practice indistinguishable from unbounded, because
+it never gets remotely close to its own eviction floor before the container
+OOMs. Every unique IVF_PQ index page and every dataset-version manifest
+touched by `insert()`/`search()`/`hybrid_search()`/`compact()` gets cached and
+is never evicted.
+
+**Fix 1 — bounded Session:** `LanceDBVectorStore.__init__` now accepts
+`index_cache_bytes`/`metadata_cache_bytes`; when either is set, `_get_table()`
+builds an explicit `lancedb.Session(index_cache_size_bytes=...,
+metadata_cache_size_bytes=...)` and passes it into
+`connect_async(session=session)`. `None` (default, e.g. every existing test
+that constructs `LanceDBVectorStore(db_path=...)` with no extra kwargs)
+preserves the exact pre-fix unbounded behaviour — zero behaviour change for
+any caller that doesn't opt in. Production always opts in via
+`Config.lancedb_index_cache_mb` / `lancedb_metadata_cache_mb` (env
+`LANCEDB_INDEX_CACHE_MB` / `LANCEDB_METADATA_CACHE_MB`, default **96MB /
+32MB** — sized to comfortably hold this corpus's ~136MB on-disk IVF_PQ index
+footprint while leaving headroom under the 1GB cap for the ~400-700MB warm
+embedding model). The constructed `Session` is kept as `self._session` so a
+caller/diagnostic can read `.size_bytes` / `.approx_num_items` directly.
+
+**Fix 2 — bounded compaction retention (a second, independently measured
+contributor):** even with the Session bounded, a long synthetic replay
+(~1200 ops) still showed RSS climbing, because `_COMPACT_RETENTION`
+(`timedelta(days=2)`) means version manifests are **never** eligible for
+pruning within any realistic single container lifetime (this service has
+OOM-restarted every 30-90min throughout the incident). Direct confirmation:
+re-running `table.optimize(cleanup_older_than=timedelta(seconds=0))` against
+the same grown corpus copy pruned **4170 old versions and reclaimed
+422,906,121 bytes (~422MiB)** of stale on-disk version data in one call
+(`OptimizeStats(...).prune.bytes_removed`) — entirely invisible to, and
+unaffected by, the Session-cache bound (a separate, read-side LRU).
+`compact_retention` (constructor param, wired from
+`Config.lancedb_compact_retention_hours` / env
+`LANCEDB_COMPACT_RETENTION_HOURS`, default **1h**) shortens this window so
+nearly every `_COMPACT_EVERY`-triggered `compact()` cycle actually finds
+something to prune, instead of every commit in the container's entire life
+staying live forever. This trades a shorter rollback/time-travel window for a
+memory-bounded, actually-surviving container — a deliberate tradeoff, not
+hidden.
+
+**Tests:** `__tests__/unit/test_rag_lancedb_session_and_retention_bound.py` —
+Session-not-built-by-default, Session built with exact configured bytes
+(patched `lancedb.Session` spy), a REAL end-to-end traffic replay confirming
+the live `Session.size_bytes` stays bounded (not unbounded) under real
+insert()/search() traffic, retention-override wiring through `compact()`
+(real table, spy on `optimize()`), `Config` env defaults/overrides for all
+three new knobs, and `build_real_adapters()` production wiring. 215/215
+pytest green (201 baseline + 14 new).
+
+**Co-fixed same cycle (QA `CHANGES_REQUESTED` 2026-08-12T09:33Z, blocking
+honest test attestation on every prior rag-service closure):**
+`fastapi.testclient.TestClient` could not import in the deployed image —
+`starlette` (resolves to 1.6.0 here) requires **`httpx2`**, not `httpx`
+(confirmed via the literal live error message); added `httpx2>=2.10.0` to
+`requirements.txt`.
+
+**Still open — this row's own AC, not closable from this agent's zone alone:**
+closure requires the `RAG-MEM-DURABILITY-BAR v2` D1-D5 measurement (in
+particular D3's positive plateau: `<=0.02 pp/min over the final 12h AND
+<=85% of cap`) — an ops-supervised, multi-hour post-deploy measurement, not
+something a single dev-rag-service cycle can execute. `REBUILD_REQUIRED:
+true`.
+
 ### count()
 Returns `table.count_rows()`, 0 on exception.
 
@@ -364,4 +473,8 @@ class Config:
     host: str = "0.0.0.0"
     port: int = 5002
     embedder_idle_unload_minutes: int = 15  # env: EMBEDDER_IDLE_UNLOAD_MINUTES
+    # FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (2026-08-14)
+    lancedb_index_cache_mb: int = 96          # env: LANCEDB_INDEX_CACHE_MB
+    lancedb_metadata_cache_mb: int = 32       # env: LANCEDB_METADATA_CACHE_MB
+    lancedb_compact_retention_hours: float = 1  # env: LANCEDB_COMPACT_RETENTION_HOURS
 ```

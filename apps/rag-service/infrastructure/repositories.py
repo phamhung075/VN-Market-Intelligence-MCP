@@ -1,15 +1,24 @@
-# size-justification: 715L — single infrastructure adapter (LanceDBVectorStore)
-# implementing VectorStorePort: table lifecycle (_get_table/FR-1 migration),
-# insert+compaction, filter/dedup helpers, vector ANN index management
-# (FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS,
-# 2026-08-12: _build_vector_index/_maybe_build_vector_index; OPS-RAG-SERVICE-
-# REBUILD-DEPLOY-LANCEDB-FIX, 2026-08-12: TOKIO_WORKER_THREADS/LANCE_CPU_THREADS
-# env pins + _vector_index_lock double-checked-locking, +71L total), FTS index
-# management (DFR-P3), and search()/hybrid_search(). One class's full state —
-# same cohesion argument already accepted for this file's prior 642L baseline
-# (RAG-FTS-BUILD-MEMORY-BOUND env-pin block + compaction guard); splitting the
-# vector-index methods into a second file would duplicate _get_table()/table
-# access or force tight cross-file coupling to it, for zero token benefit.
+# size-justification: 892L (+177L, 2026-08-14 FIX-RAG-EMBEDDER-IDLE-UNLOAD-
+# ALLOCATOR-PAGES-NOT-RETURNED-TO-OS in-process attribution follow-up: bounded
+# lancedb.Session index/metadata cache wiring in _get_table() + configurable
+# compact_retention threaded through __init__/compact() — both are the SAME
+# "connection/table lifecycle + its native resource bounds" concern this
+# constructor and _get_table() already own, not a new abstraction; most of the
+# added lines are the root-cause writeup comments, not new logic) — single
+# infrastructure adapter (LanceDBVectorStore) implementing VectorStorePort:
+# table lifecycle (_get_table/FR-1 migration/session+cache bounds), insert+
+# compaction (incl. configurable retention window), filter/dedup helpers,
+# vector ANN index management (FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-
+# NOT-RETURNED-TO-OS, 2026-08-12: _build_vector_index/_maybe_build_vector_index;
+# OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX, 2026-08-12: TOKIO_WORKER_THREADS/
+# LANCE_CPU_THREADS env pins + _vector_index_lock double-checked-locking;
+# FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED, 2026-08-14: persisted-
+# index list_indices() skip-check), FTS index management (DFR-P3), and
+# search()/hybrid_search(). One class's full state — same cohesion argument
+# already accepted for this file's prior 715L baseline; splitting the
+# vector-index/session/compaction methods into a second file would duplicate
+# _get_table()/table access or force tight cross-file coupling to it, for zero
+# token benefit.
 """
 Infrastructure — LanceDBVectorStore.
 
@@ -55,7 +64,34 @@ _PHASE1_ADD_COLUMNS = {
 # Run optimize() every N inserts to prevent write-amplification bloat.
 # 100 inserts ≈ one daily intelligence cycle — compaction is cheap and online-safe.
 _COMPACT_EVERY = 100
-# Keep versions from the last 2 days; the latest version is always preserved.
+# FALLBACK default only — see LanceDBVectorStore.__init__'s `compact_retention`
+# param and Config.lancedb_compact_retention_hours. Kept here unchanged (still
+# used by any caller that does not opt into an override, e.g. existing tests)
+# so this stays a zero-behaviour-change constant on its own.
+#
+# FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (2026-08-14,
+# in-process attribution follow-up): a 2-day retention window is a genuine,
+# measured contributor to this row's growth, independent of the Session-cache
+# fix below. Every table.add() commits a NEW dataset version (LanceDB's own
+# versioned/transactional on-disk format); `cleanup_older_than=timedelta(days=2)`
+# means NONE of those versions are ever eligible for pruning within any
+# realistic single container lifetime (this service has OOM-restarted every
+# 30-90min throughout this incident) -- version/manifest history accumulates
+# for the container's entire life, unbounded in practice. Measured directly
+# (scripts/audits/rag-lancedb-mem-attribution-probe.py's write-heavy replay,
+# ~1200 ops / ~13min): `_versions` grew from 2678 to 4153 manifest files;
+# re-running table.optimize(cleanup_older_than=timedelta(seconds=0)) against
+# that same corpus copy pruned 4170 old versions and reclaimed 422,906,121
+# bytes (~422 MiB) of stale on-disk version data in one call
+# (OptimizeStats(...).prune.bytes_removed) -- entirely invisible to, and
+# unaffected by, the Session-cache bound (a separate, read-side LRU). Keeping
+# a 2-day rollback window is a real design tradeoff, but it was sized without
+# regard to this container's actual write-churn rate (~79 POST /index/h,
+# live docker logs 2026-08-14T09:39Z) or its 1GiB memory budget -- default
+# shortened via Config.lancedb_compact_retention_hours (LANCEDB_COMPACT_RETENTION_HOURS,
+# default 1h) so nearly every _COMPACT_EVERY-triggered compact() cycle actually
+# finds something to prune, instead of every commit in the container's entire
+# life staying live forever.
 _COMPACT_RETENTION = timedelta(days=2)
 
 # ── RAG-FTS-BUILD-MEMORY-BOUND: bounded native FTS index build ───────────────
@@ -214,8 +250,27 @@ class LanceDBVectorStore(VectorStorePort):
     Supports hybrid BM25+vector search via LanceDB FTS index + RRFReranker (DFR-P3).
     """
 
-    def __init__(self, db_path: str) -> None:
+    def __init__(
+        self,
+        db_path: str,
+        index_cache_bytes: Optional[int] = None,
+        metadata_cache_bytes: Optional[int] = None,
+        compact_retention: Optional[timedelta] = None,
+    ) -> None:
         self._db_path = db_path
+        # FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (2026-08-14):
+        # see _get_table() below for the full root-cause writeup. None means "use
+        # lancedb's Session.default() unbounded 6GB/1GB behaviour" -- kept as an
+        # explicit opt-out (tests / callers that pass neither still work) but
+        # production always wires real values from Config (app_factory.py).
+        self._index_cache_bytes = index_cache_bytes
+        self._metadata_cache_bytes = metadata_cache_bytes
+        self._session = None  # set in _get_table() once the connection is opened
+        # FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (2026-08-14):
+        # see _COMPACT_RETENTION's module-level comment for the measured evidence.
+        # None preserves the exact pre-fix module constant (_COMPACT_RETENTION,
+        # 2 days) — zero behaviour change for any caller that doesn't opt in.
+        self._compact_retention = compact_retention if compact_retention is not None else _COMPACT_RETENTION
         self._db = None
         self._table = None
         self._insert_count: int = 0  # inserts since last compaction
@@ -261,7 +316,81 @@ class LanceDBVectorStore(VectorStorePort):
             return self._table
 
         os.makedirs(self._db_path, exist_ok=True)
-        self._db = await lancedb.connect_async(self._db_path)
+
+        # FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS
+        # (dev-rag-service in-process attribution, 2026-08-14 -- PO ruling
+        # po_RULING_CRITICAL_PATH_20260814T0927Z, "no more restart-timing or
+        # deploy-config tweaks", per-allocation-site attribution required):
+        #
+        # ROOT CAUSE, NOW NAMED (not RSS-delta-inferred): `lancedb.connect_async()`
+        # called with no `session=` kwarg (the code below, before this fix)
+        # constructs lancedb's own INTERNAL default Session --
+        # `lancedb.Session.default()`'s own docstring, confirmed live against the
+        # deployed image (lancedb 0.37.1): "equivalent to creating a session with
+        # 6GB index cache and 1GB metadata cache". That is a 7GB native (Rust,
+        # lance-core-owned) LRU ceiling for a container whose ENTIRE memory
+        # budget is 1GB -- in practice indistinguishable from unbounded, because
+        # the cache never gets remotely close to its own eviction floor before
+        # the container OOMs. Every unique IVF_PQ index page and every dataset-
+        # version manifest touched by insert()/search()/hybrid_search()/compact()
+        # gets cached and is NEVER evicted.
+        #
+        # WHY THIS WAS INVISIBLE TO EVERY PRIOR PROBE: an in-process attribution
+        # probe (scripts/audits/rag-lancedb-mem-attribution-probe.py) drove the
+        # real production ~4:1 insert:search traffic mix (matches live docker
+        # logs) against this exact singleton pattern and instrumented THREE
+        # independent planes simultaneously -- tracemalloc (Python heap),
+        # gc.get_objects() type census (lancedb/pyarrow wrapper-object counts),
+        # and pyarrow's own native memory-pool accounting
+        # (`pyarrow.default_memory_pool().bytes_allocated()`, backend=mimalloc).
+        # Over 140 ops (~4.5min wall time), RSS climbed ~120MB while ALL THREE
+        # planes stayed essentially flat (tracemalloc_current_kb 39784->39844,
+        # +60KB total; pyarrow pool bytes_allocated 0 the entire run;
+        # lancedb.arrow.AsyncRecordBatchReader / pyarrow.lib.RecordBatch live
+        # counts capped at +1, never growing further). By elimination across all
+        # three Python/PyArrow-visible layers, the growth could only be native
+        # memory allocated entirely inside lance-core's Rust internals, owned by
+        # something that outlives every individual call -- exactly what a
+        # process-lifetime Session cache is. `strings` on the compiled
+        # `_lancedb.abi3.so` confirmed `index_cache_size_bytes` /
+        # `metadata_cache_size_bytes` / `IndexCache` symbols exist, and
+        # `lancedb.Session` is a first-class, documented Python API (not a hidden
+        # knob) -- `Session(index_cache_size_bytes=..., metadata_cache_size_bytes=...)`
+        # then `connect_async(..., session=session)`.
+        #
+        # This explains everything the allocator-hygiene fixes upstream in this
+        # same file could not: why `malloc_trim(0)` (glibc-only) barely helped
+        # (this cache isn't glibc-owned); why the IvfPq vector-index fix reduced
+        # but did not eliminate growth (an index still gets CACHED once built,
+        # just cheaper to build); why the TOKIO_WORKER_THREADS/LANCE_CPU_THREADS
+        # pin was "insufficient" (that bounds CPU thread count, not this memory
+        # cache); why growth was "monotonic and accelerating from a cold
+        # process" (more unique pages/versions get touched and cached the longer
+        # the process runs); and why OOM-kills were invoked from inside
+        # lance-core's own native threads, not CPython's heap.
+        #
+        # FIX: bound the session explicitly to a size the container can actually
+        # afford. None (index_cache_bytes/metadata_cache_bytes both unset, e.g.
+        # in tests that construct LanceDBVectorStore(db_path=...) directly)
+        # preserves the exact pre-fix behaviour (lancedb's own Session.default())
+        # -- zero behaviour change for any caller that doesn't opt in. Production
+        # always wires real values from Config (app_factory.build_real_adapters()),
+        # sized to comfortably hold this corpus's ~136MB on-disk IVF_PQ index
+        # footprint (default 96MB index / 32MB metadata = 128MB total ceiling)
+        # while leaving headroom under the 1GB cap for the ~400-700MB warm
+        # embedding model plus per-request working memory.
+        session = None
+        if self._index_cache_bytes is not None or self._metadata_cache_bytes is not None:
+            session = lancedb.Session(
+                index_cache_size_bytes=self._index_cache_bytes,
+                metadata_cache_size_bytes=self._metadata_cache_bytes,
+            )
+        # Kept as an instance attribute (not just a local) so a caller/diagnostic
+        # can read `store._session.size_bytes` / `.approx_num_items` directly --
+        # the most direct possible confirmation this cache is actually bounded,
+        # rather than inferring it from RSS alone.
+        self._session = session
+        self._db = await lancedb.connect_async(self._db_path, session=session)
 
         names = await self._db.table_names()
         if TABLE_NAME in names:
@@ -351,6 +480,11 @@ class LanceDBVectorStore(VectorStorePort):
         Called automatically every _COMPACT_EVERY inserts, and can be invoked
         directly (e.g. from a maintenance endpoint or daily cron).
 
+        `cleanup_older_than` is `self._compact_retention` (constructor param
+        `compact_retention`, wired from Config.lancedb_compact_retention_hours in
+        production — default 1h, see _COMPACT_RETENTION's module comment for why
+        the old 2-day default never pruned anything on this container in practice).
+
         Compaction is online-safe: reads and writes continue during compaction.
         The latest version is always preserved — no data loss is possible.
         Temporal-decay logic is unaffected (stored created_at timestamps are not changed).
@@ -386,7 +520,7 @@ class LanceDBVectorStore(VectorStorePort):
         async with self._compact_lock:
             try:
                 table = await self._get_table()
-                stats = await table.optimize(cleanup_older_than=_COMPACT_RETENTION)
+                stats = await table.optimize(cleanup_older_than=self._compact_retention)
                 logger.info(
                     "LanceDB compaction complete: compaction=%s prune=%s",
                     stats.compaction,

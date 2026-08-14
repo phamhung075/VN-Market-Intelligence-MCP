@@ -17,3 +17,15 @@ pydantic>=2.6.4
 # Development / testing
 pytest>=8.1.1
 pytest-asyncio>=0.23.6
+# QA CHANGES_REQUESTED 2026-08-12T09:33Z (fold: FIX-RAG-EMBEDDER-IDLE-UNLOAD-
+# ALLOCATOR-PAGES-NOT-RETURNED-TO-OS po_RULING_CRITICAL_PATH_20260814T0927Z):
+# starlette (pinned transitively via fastapi>=0.110.0, resolves to 1.6.0 in the
+# deployed image) requires "httpx2" -- NOT "httpx" -- for fastapi.testclient.
+# TestClient: `starlette.testclient` raises "The starlette.testclient module
+# requires the httpx2 package to be installed" verbatim, confirmed live inside
+# the deployed image (python3 -c "from fastapi.testclient import TestClient").
+# Without this, TestClient cannot import at all, failing every test that uses
+# it (11-12 tests across test_dfr_p3_hybrid_search.py, test_embedder_idle_
+# unload.py, test_gfd13_lazy_load.py, test_lancedb_compaction.py,
+# test_rag_vector_index_build.py) on EVERY in-image QA pass.
+httpx2>=2.10.0
