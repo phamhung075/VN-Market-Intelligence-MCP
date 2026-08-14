@@ -8,68 +8,6 @@
      explicit YYYY-MM-DD token. Nothing deleted; full record in the archive file and git
      history. -->
 
-## EDIT 2026-08-14T12:35Z — task UC-CCA-P2-MARKET-WATCHER (PM subtask off UC-CCA-P2,
-router-dispatch via `docs/agents/agent-father/flow/edit-prepare.md`, session
-`632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
-- FR-3 (architect-ratified `docs/handoffs/UC-CCA-P2-BA-spec.md`): market-watcher's
-  `main.md`/`cycle.md` each independently ran their own Step 0-GW gateway probe per cycle — a
-  live double-probe defect. Read the BA spec's "[Architect] Brownfield Findings" section first,
-  plus both live target files, before editing; both anchors matched the spec byte-for-byte (no
-  drift).
-- **Applied:** `main.md` — replaced the inline Step 3 dual-probe/30s-backoff/`SIBLING_RECENT`
-  corroboration block (lines 61-99) with a one-line pointer to
-  `.claude/skills/gateway-availability-gate/SKILL.md` (agent-id=market-watcher; covers cycle.md
-  AND eod.md — same transitive coverage as before, just de-duplicated to one call site). `cycle.md`
-  — deleted its own Step 0-GW block (lines 26-27); reworded the Execution-contract paragraph
-  "Step 0-GW through Step 5b" → "Step 0 through Step 5b"; terminal clause now reads "an explicit
-  main.md Step 0-GW gateway-down EXIT (per gateway-availability-gate skill)" instead of
-  re-describing its own now-deleted dual-probe. `eod.md` untouched (explicitly out of scope per
-  task — remains zero-gate by design, still transitively covered only via `main.md`, not a new gap).
-- **Verified net effect:** post-edit grep for `Step 0-GW —` / `get_system_status` across both flow
-  files confirms exactly ONE probe pointer (`main.md:61`) — the double-probe is eliminated.
-- Task-lock: gatewayless this session (no native `mcp__gateway__call_tool`) — skipped 5a/7b/8b
-  MCP task-lock calls per the documented gateway-less exception; solo-operation on this single
-  2-file, self-contained subtask (no concurrent agent-father session on the same files observed).
-- Committed `3cfabaa28` (main.md + cycle.md only, explicit pathspec — INV-GATEWAY-1 direct commit,
-  no commit-mutex). Not pushed — push-backstop/PO owns push per `PUSH_THRESHOLD` convention
-  (gatewayless specialists commit but never push, by design).
-- **Board disposition:** `ready[]`→`review[]`, `next_agent: po` via `scripts/orch-apply.sh`
-  (`FU-AGENT-FATHER-ORCH-SCOPE` — outside `commit_zone`, applied not committed by me), status
-  `READY`→`REVIEW`, `commit` field set to `3cfabaa28`, `agent_father_completion_note` added. Routed
-  to po because AC-3 (dedup) needs live-cycle confirmation (next market-watcher WORK ping/notebook
-  shows exactly one `[GATEWAY]` probe log line) — not self-testable this session, prose/flow-doc-only
-  change. `.head` was idle throughout, untouched.
-
-## EDIT 2026-08-14T12:35Z — task UC-CCA-P2-FB-MARKET-POSTER (router-dispatch, session
-`632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
-- FR-5 + architect Q-file-count-correction ruling (`docs/handoffs/UC-CCA-P2-BA-spec.md` § [Architect]
-  Brownfield Findings): audit's original anchor (`main.md`, stale — main.md was split TE-T26
-  2026-08-06 into a thin MODE ROUTER with zero gateway calls) is superseded by the corrected 3-file
-  scope: `daily.md` / `weekly-recap.md` / `weekly-prediction.md`, each an independently cron-spawned
-  session with its own STEP 0 bootstrap and published-marker `task_claim`.
-- **Action taken:** live-read all 3 files first (not the spec's cited line numbers) — matched exactly
-  (daily.md STEP 0a at :40, weekly-recap.md/weekly-prediction.md `## STEP 0 — Bootstrap` at :25/:28,
-  DEDUP_CLAIM blocks immediately after). Inserted one `**Step 0-GW — Gateway availability gate**`
-  pointer line per file: `daily.md` before `**STEP 0a**` (:40); `weekly-recap.md` and
-  `weekly-prediction.md` immediately after their own `## STEP 0 — Bootstrap` heading, before their
-  own `**STEP 0a**`/DEDUP_CLAIM block. Each pointer carries `agent-id=fb-market-poster` + the mode
-  path name so a reader can tell the three apart. `main.md` deliberately left untouched — confirmed
-  0 gateway calls in that file (post-TE-T26 split, thin mode-router only); adding a gate there would
-  be dead code. Post-edit grep: exactly 1 pointer per target file, 0 in main.md, all 3 land strictly
-  before that file's own `task_claim` — satisfies BA's AC-4.
-- +2L per file (6L total) — no size-justification header update needed (each header already states an
-  approximate `~NNNL`, well within tolerance for a 2-line insert).
-- Task-lock: INV-GATEWAY-1 — agent-father's tool grant (`Read, Edit, Write, Glob, Grep, Bash`) has no
-  `mcp__gateway__call_tool` binding; skipped `task_claim`/`task_heartbeat`/`task_release` and
-  `commit-mutex` entirely per the skill's own DISPATCHER-ONLY scope note. Committed directly with an
-  explicit pathspec (all 3 files, one commit).
-- **Board disposition:** `ready[]`→`review[]`, status `READY`→`REVIEW`, `next_agent: agent-father →
-  qa` — AC-4 (pointer placement) is grep-verifiable without a live cron-window spawn; qa can confirm
-  the same 3 grep results above independently. Completion note added to the row. 6 sibling
-  UC-CCA-P2 subtasks (skill file + market-watcher×2 + alert-commander + unified-agent +
-  digest-predict + bctc-analyst) remain `READY`, untouched by this pass — no `depends_on` between
-  them per PM's decomposition note.
-
 ## EDIT 2026-08-14T12:35Z — task UC-CCA-P2-ALERT-COMMANDER (router-dispatched, session
 `632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
 - FR-4 + architect's structural refinement (Q-alert-commander-anchor ruling: Option a).
@@ -129,3 +67,30 @@ router-dispatch via `docs/agents/agent-father/flow/edit-prepare.md`, session
   `agent_father_implementation_note` added via `scripts/orch-apply.sh` (`FU-AGENT-FATHER-ORCH-SCOPE`
   — outside `commit_zone`, applied not committed by me — orch-validate PASS, conservation OK
   742/742 task_total unchanged). `.head` was idle throughout — untouched.
+
+## EDIT 2026-08-14T12:37Z — task UC-CCA-P2-UNIFIED-AGENT (router-dispatched, session
+`632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
+- FR-4, single-agent-scoped edit. `docs/handoffs/UC-CCA-P2-BA-spec.md` "[Architect] Brownfield
+  Findings" § "chef.md placement asymmetry" read first; live-reread `docs/agents/unified-agent/
+  flow/chef.md` before editing — Bootstrap/Step-0.5 anchors had drifted from the spec's `:33`/`:43`
+  to live `:40`/`:65` (pre-existing header drift 224L→243L, noted not fixed, out of scope for this
+  XS task); the pointer-insertion *relationship* (between Bootstrap and Step 0.5's `task_claim`)
+  held exactly.
+- **Applied the ratified asymmetric placement, deliberately NOT normalized to match the other 4
+  FR-4/FR-5 target files.** Inserted `**Step 0-GW — Gateway availability gate**` pointer + an
+  inline HTML comment (flags "do NOT fix to match the other 5" for the next reader) immediately
+  after the existing Error-boundary block and immediately before Step 0.5's `task_claim` — i.e.
+  AFTER Bootstrap, unlike every other FR-4/FR-5 consumer (which gate BEFORE their first gateway
+  call). Intentional per architect's ruling: `step-0-cowork/SKILL.md`'s own Bootstrap gate already
+  covers the general confirmed-down case for Bootstrap itself; this gate exists only to close the
+  gap between a successful Bootstrap and the Step 0.5 marker mutation. `chef-dish.md` left
+  untouched (Q-chef-threading ruling: one session-scoped gate in chef.md is sufficient). Appended
+  a matching delta note to the file's own size-justification header (+15L, 243→258).
+- Gateway-less this session (tool grant Read/Edit/Write/Bash, no `mcp__gateway__call_tool`) —
+  task-lock skipped per `edit-apply.md`'s gateway-less exception; INV-GATEWAY-1 direct pathspec-
+  scoped commit `afb2d4773a50153202bc69e946bd8b7f9a4e8484` (chef.md only), `git show --name-only
+  HEAD` self-verified single file, pushed to `origin/main` clean on first attempt.
+- **Board disposition:** `ready[]`→`review[]`, status `READY`→`REVIEW`, `next_agent: agent-father →
+  qa` (AC-4 pointer-placement is grep-verifiable, no live cron-window spawn needed). `commit_sha` +
+  completion note added to the row via `scripts/orch-apply.sh` (`FU-AGENT-FATHER-ORCH-SCOPE` —
+  applied, git commit of `orch-state.json` left to router/PO). `.head` idle throughout — untouched.
