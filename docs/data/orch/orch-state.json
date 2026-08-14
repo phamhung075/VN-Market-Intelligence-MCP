@@ -93,10 +93,10 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-08-14T18:01:08Z",
-    "updated_by": "qa",
     "active_task_id": null,
-    "next_agent": null
+    "next_agent": "router",
+    "updated_at": "2026-08-14T18:37:07Z",
+    "updated_by": "developer"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -469,6 +469,160 @@
         "severity": "LOW",
         "status": "READ",
         "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-14.json"
+      },
+      {
+        "id": "sys-20260814T160000-a29-1",
+        "ts": "2026-08-14T16:00:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-29 CRITICAL: vpsProxyWatchdog STALE (9.7h overdue)",
+        "severity": "CRITICAL",
+        "status": "OPEN",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
+        "dedup_key": "auditor-a29-fire-gap:vpsProxyWatchdog"
+      },
+      {
+        "id": "sys-20260814T160001-a29-2",
+        "ts": "2026-08-14T16:00:01Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-29 CRITICAL: alertScanParallel STALE (9.8h overdue)",
+        "severity": "CRITICAL",
+        "status": "OPEN",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
+        "dedup_key": "auditor-a29-fire-gap:alertScanParallel"
+      },
+      {
+        "id": "sys-20260814T160002-a29-3",
+        "ts": "2026-08-14T16:00:02Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-29 CRITICAL: taAlertNotifier STALE (9.8h overdue)",
+        "severity": "CRITICAL",
+        "status": "OPEN",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
+        "dedup_key": "auditor-a29-fire-gap:taAlertNotifier"
+      },
+      {
+        "id": "sys-20260814T160003-a29-4",
+        "ts": "2026-08-14T16:00:03Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-29 CRITICAL: priceUpdateWatchdog STALE (9.7h overdue)",
+        "severity": "CRITICAL",
+        "status": "OPEN",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
+        "dedup_key": "auditor-a29-fire-gap:priceUpdateWatchdog"
+      },
+      {
+        "id": "sys-20260814T160004-a29-5",
+        "ts": "2026-08-14T16:00:04Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-29 CRITICAL: vnIndexRefresh STALE (9.6h overdue)",
+        "severity": "CRITICAL",
+        "status": "OPEN",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
+        "dedup_key": "auditor-a29-fire-gap:vnIndexRefresh"
+      },
+      {
+        "id": "sys-20260814T160005-a29-6",
+        "ts": "2026-08-14T16:00:05Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-29 CRITICAL: monthlySignalQualityAudit MISSED (1794.5h overdue)",
+        "severity": "CRITICAL",
+        "status": "OPEN",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
+        "dedup_key": "auditor-a29-fire-gap:monthlySignalQualityAudit"
+      },
+      {
+        "id": "sys-20260814T160006-a29-7",
+        "ts": "2026-08-14T16:00:06Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-29 CRITICAL: brokerSanctionsSweep STALE (346.5h overdue)",
+        "severity": "CRITICAL",
+        "status": "OPEN",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
+        "dedup_key": "auditor-a29-fire-gap:brokerSanctionsSweep"
+      },
+      {
+        "id": "sys-20260814T160007-a29-8",
+        "ts": "2026-08-14T16:00:07Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-29 CRITICAL: ragFtsRebuildCron STALE (598.3h overdue)",
+        "severity": "CRITICAL",
+        "status": "OPEN",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
+        "dedup_key": "auditor-a29-fire-gap:ragFtsRebuildCron"
+      },
+      {
+        "id": "sys-20260814T160008-a29b-1",
+        "ts": "2026-08-14T16:00:08Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-29b WARN: marketOpen cron NEVER_FIRED (unresolved join)",
+        "severity": "WARN",
+        "status": "OPEN",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
+        "dedup_key": "auditor-a29-unresolved-join:marketOpen"
+      },
+      {
+        "id": "sys-20260814T160009-a29b-2",
+        "ts": "2026-08-14T16:00:09Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "A-29b WARN: marketClose cron NEVER_FIRED (unresolved join)",
+        "severity": "WARN",
+        "status": "OPEN",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
+        "dedup_key": "auditor-a29-unresolved-join:marketClose"
+      },
+      {
+        "id": "sys-20260814T160010-b06",
+        "ts": "2026-08-14T16:00:10Z",
+        "from": "system-auditor",
+        "to": "ops",
+        "type": "signal_feedback",
+        "summary": "B-06 WARN: vn-bctc-fetch service unhealthy (timeout)",
+        "severity": "WARN",
+        "status": "OPEN",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-14T16:00Z",
+        "dedup_key": "auditor-b06-vps-service-unhealthy:vn-bctc-fetch"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -13378,33 +13532,6 @@
         "po_ruling_20260814": "PO DISPATCH RULING: implement NOW, not sequenced behind anything. (1) agents-architect delivered the full patch spec (commit 9ef864ba7, brief §3) — design phase is closed, next_agent retargeted agents-architect -> agent-father. (2) Sequencing rationale: WF-1d landed in this SAME file (docs/agents/dev-team/flow/main.md) 11 minutes ago (commit 418fe33fb). Applying WF-2b while that edit is the freshest state MINIMISES the concurrent-edit risk the brief itself flagged (§9) — deferring would increase it, since main.md is one of the highest-churn files in the repo. (3) WF-2b is orthogonal by construction to WF-1d: WF-1d fires on lane-residency (row NOT in in_progress[]), WF-2b fires only on rows that ARE in in_progress[]/active_sprints[].tasks[] — disjoint predicates, no ordering hazard between them. (4) Ordering constraints that ARE non-negotiable (brief §9): WF-2b must sit BETWEEN WF-2 and WF-3 — placing it after WF-3/WF-4 reproduces the false-positive class it exists to prevent and leaves WF-4 dispatching the STALE agent.\n\nADDED SCOPE — AC-8 (PO folds brief §4 addendum into THIS row rather than minting a 4th micro-row; the architect explicitly left the bundle-or-split call to PO and priced it as cheap): at the `head.status == \"idle\"` fall-through (live line ~547 of main.md, the `head.status == idle / done -> Idle-Tick Rotation Selection` bullet), BEFORE Idle-Tick Rotation Selection runs, add the defensive dangling-field null-out from brief §4. PO VERIFIED this gap is REAL and still open: the live bullet documents `active_task_id:null, next_agent:\"router\"` as an *established convention* in prose only, with zero enforcing guard anywhere in the idle path. Same file, same agent, same tick — bundling avoids a 4th row for a ~6-line guard.\n\nSCOPE EXPLICITLY REMOVED — brief §4's named companion row FIX-PM-NONCLOSEOUT-HEAD-RESET-INCOMPLETE-NULLOUT is NOT minted: ALREADY SHIPPED. See this task's PO notes and the sibling ruling recorded on the board."
       },
       {
-        "id": "FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR",
-        "type": "FIX",
-        "title": "dev-team board-hygiene reports 'orch-cold-evict.sh failed' with ZERO stderr — 6 fires in 9h, root cause unknowable, and the script runs clean standalone",
-        "desc": "RECURRING (6 fires 2026-08-12: 05:20:30Z, 05:51:24Z, 12:51:40Z, 13:50:59Z, 14:23:06Z + telegram 4744) — dev-team's board-hygiene step emits the fixed string 'board-hygiene: orch-cold-evict.sh failed — cold eviction skipped, retry next tick' and discards the script's actual stderr/exit code. PO ran `bash scripts/orch-cold-evict.sh` standalone at 2026-08-12T15:02:31Z: rc=0, Stage 0 + Stage 1 PASS, conservation-check OK (task_total 752=752, signal_total 83=83), eviction completed and both files jq-validated. So the failure is NOT a deterministic script defect — it is environment/contention-specific to the dev-team tick path (most likely the CAS guard in scripts/orch-apply.sh losing to a concurrent peer writer, which is a benign retry condition, but that is a HYPOTHESIS and cannot be confirmed because the error text is thrown away). MATERIAL CONSEQUENCE: eviction is skipped every time it fires, and the hot board is now backlog=393 / ready=83 / review=128 / qa=7 = 611 non-terminal rows with orch-state.json at 3,575,420 bytes — TE-T15's own row still describes this file as '612KB', a 5.8x growth. FIX SCOPE: capture and surface the script's real stderr + exit code in the telegram/report line (and distinguish a benign CAS-retry loss from a genuine validation abort so the benign class can be downgraded out of the report entirely). Class match: feedback_silent_swallow_serial_bugs, feedback_graceful_premise_verify_error_path.",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "developer",
-        "status": "READY",
-        "files": [
-          "docs/agents/dev-team/flow/main.md",
-          "scripts/orch-cold-evict.sh"
-        ],
-        "baseline_pass": false,
-        "created_at": "2026-08-12T15:06:24Z",
-        "created_by": "po (dev-team S3 triage)",
-        "occurrence_count": 23,
-        "verification_gate": "next_coldevict_failure_report_names_the_actual_error",
-        "status_note": "AC: a subsequent 'orch-cold-evict.sh failed' report carries the script's verbatim stderr + exit code, AND a benign CAS-contention loss no longer emits a failure report at all. Dedup: scanned backlog/ready/in_progress/review/qa for COLD-EVICT|COLDEVICT — 7 adjacent rows found, none owns the swallowed-stderr defect (FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE is --exclude-ids vs Stage-1b coherence, a different concern). Minted 2026-08-12T15:06:24Z.\n\n[po/triage 2026-08-12T15:36:32Z] +5 occurrences (telegram 4723 05:20:30Z, 4727 05:51:24Z, 4744 12:51:40Z, 4746 13:50:59Z, 4768 14:23:06Z) — all identical, all with zero stderr, all unactionable AS REPORTED. Occurrence 6 -> 11.\n\nThis row's premise CONFIRMED BY DIRECT EXPERIMENT rather than inference: PO ran `bash scripts/orch-cold-evict.sh` by hand at 2026-08-12T15:36:32Z against the same live orch-state.json and it exited 0 clean — Stage 0 + Stage 1 PASS, conservation-check OK (task_total live=751 candidate=751, signal_total live=69 candidate=69, signal_row_identity clean), both files jq-validated. The router's own tick also ran it successfully this cycle (commit 1875f1bbc, 4 items evicted).\n\nConclusion: the script is NOT broken; these are transient contention-class failures. The ONLY reason 11 fires cannot be told apart from a genuine breakage is that the reporter discards stderr. That makes THIS row the blocker for every future cold-evict report — until stderr is captured nobody can distinguish 'lost a write race' from 'validator hard-failed'. No new row minted.\n\n[po/triage-2026-08-13T17:28:37Z] SEVERITY EXPEDITE by PO. Moved to the FRONT of ready[] at P0. Rationale: RLC selection is sort_by([priority_rank, ready[]-array-index]), one row per invocation, and RLC only runs on ticks where the 6-way Idle-Tick Rotation picks \"rlc\". Measured live this tick: 60 RLC-eligible rows in ready[]; this row's class sat at eligible queue position 47-48. At 1 row per rlc-selected tick that is unreachable in incident time, and every newly-minted P0 re-buries it. No new diagnosis was needed - the row was already correct. This is the manual stand-in for the missing severity-expedite path (FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0, itself expedited in this same write).",
-        "updated_at": "2026-08-14T00:31:52Z",
-        "po_expedited_at": "2026-08-13T17:28:37Z",
-        "po_expedited_by": "po/triage-20260813T1722Z",
-        "updated_by": "po/triage-20260814T0007Z",
-        "evidence_20260814": "+12 occurrences on 2026-08-13 alone: telegram 4801 (12:18:59Z), 4802 (12:52:21Z), 4804 (13:18:51Z), 4806 (13:53:07Z), 4826 (14:18:57Z), 4831 (14:49:10Z), 4832 (15:48:55Z), 4834 (16:18:54Z), 4835 (16:48:55Z), 4836 (17:18:49Z), 4838 (19:18:57Z), 4841 (20:48:55Z). All twelve are byte-identical: '[dev-team] board-hygiene: orch-cold-evict.sh failed — cold eviction skipped, retry next tick'. NOT self-resolved and the row is NOT closable: cold-evict DID succeed on the very next run (commit 9a8f44b02, 2026-08-14T00:2xZ, clean), which means the underlying condition was transient — and THAT IS EXACTLY THE DEFECT THIS ROW NAMES. Twelve consecutive reports over 8.5h conveyed zero diagnostic information about a fault that then vanished on its own, so the cause is now unrecoverable from the alert stream. A swallowed-stderr alert on an intermittent fault is strictly worse than no alert: it burns 12 triage slots and leaves nothing to triage. Severity of the underlying eviction gap is real — the 08-13 stall let done/done_verified/terminal sprints accumulate all day."
-      },
-      {
         "id": "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR",
         "title": "PUBLISHED-MARKER KEY AGREEMENT — derive the dedup key from the scheduled UTC fire-window, never from a wall-clock date read (P0: chef-evening double-published 2026-07-22 19:56Z + 20:00Z on keys :2026-07-22 vs :2026-07-23 derived from ONE instant; the same defect will FALSELY SUPPRESS the 2026-07-23 19:45Z dish)",
         "type": "FIX",
@@ -17836,6 +17963,36 @@
         "status_note": "[QA] Direct-Commit Verify (2026-08-14, qa, session 632721c2) — CHANGES_REQUESTED, review_note's no-op claim NOT confirmed. Evidence: (1) CLAUDE.md:7-14 'step 2.5' block (pointer+task_claim call+3-row outcome table) is 8L, not \"2 lines\" — review_note counted only CLAUDE.md:7-8, omitting the table at CLAUDE.md:10-14 which is structurally part of step 2.5's content; ~5L target still ~60% over (11L if step-3 finally block CLAUDE.md:15-17 is included, matching the brief's own original span measurement \"2.5 PRE-CLAIM through finally: task_release()\"). (2) Total CLAUDE.md is 63L — OVER (not \"under\" as review_note literally states) the brief's 58L target; 63>58 is an arithmetic error in the review_note. (3) CLAUDE.md:8,10-14 (task_claim call + 3-outcome table) duplicate .claude/skills/dispatch-claim/CARD.md:28-35 near-verbatim — the \"3-copy pre-claim drift\" T-23 exists to kill is still live, contradicting this row's own `note` field claim (\"kills 3-copy pre-claim drift\"). (4) Sibling commit 92ba46360 (TE-T12, 2026-07-31)'s own commit message states verbatim: \"Unblocks sibling row TE-T23 (CLAUDE.md step-2.5 prose compression, developer-owned, out of scope here)\" — direct contradicting evidence the AC remains undone (TE-T12 unblocked it via depends_on, did not do it). Remaining work: collapse CLAUDE.md:8 (full task_claim call) + CLAUDE.md:10-14 (3-row table) into a terse pointer-only reference to CARD.md's own Phase B section (CARD.md:26-36) — target ~5L for step 2.5, net CLAUDE.md ~58L. Route: owner (dev-team) — no task branch exists, apply a NEW direct commit.",
         "redispatch_count": 1,
         "updated_by": "qa"
+      },
+      {
+        "id": "FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR",
+        "type": "FIX",
+        "title": "dev-team board-hygiene reports 'orch-cold-evict.sh failed' with ZERO stderr — 6 fires in 9h, root cause unknowable, and the script runs clean standalone",
+        "desc": "RECURRING (6 fires 2026-08-12: 05:20:30Z, 05:51:24Z, 12:51:40Z, 13:50:59Z, 14:23:06Z + telegram 4744) — dev-team's board-hygiene step emits the fixed string 'board-hygiene: orch-cold-evict.sh failed — cold eviction skipped, retry next tick' and discards the script's actual stderr/exit code. PO ran `bash scripts/orch-cold-evict.sh` standalone at 2026-08-12T15:02:31Z: rc=0, Stage 0 + Stage 1 PASS, conservation-check OK (task_total 752=752, signal_total 83=83), eviction completed and both files jq-validated. So the failure is NOT a deterministic script defect — it is environment/contention-specific to the dev-team tick path (most likely the CAS guard in scripts/orch-apply.sh losing to a concurrent peer writer, which is a benign retry condition, but that is a HYPOTHESIS and cannot be confirmed because the error text is thrown away). MATERIAL CONSEQUENCE: eviction is skipped every time it fires, and the hot board is now backlog=393 / ready=83 / review=128 / qa=7 = 611 non-terminal rows with orch-state.json at 3,575,420 bytes — TE-T15's own row still describes this file as '612KB', a 5.8x growth. FIX SCOPE: capture and surface the script's real stderr + exit code in the telegram/report line (and distinguish a benign CAS-retry loss from a genuine validation abort so the benign class can be downgraded out of the report entirely). Class match: feedback_silent_swallow_serial_bugs, feedback_graceful_premise_verify_error_path.",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "qa",
+        "status": "REVIEW",
+        "files": [
+          "docs/agents/dev-team/flow/main.md",
+          "scripts/orch-cold-evict.sh"
+        ],
+        "baseline_pass": false,
+        "created_at": "2026-08-12T15:06:24Z",
+        "created_by": "po (dev-team S3 triage)",
+        "occurrence_count": 23,
+        "verification_gate": "next_coldevict_failure_report_names_the_actual_error",
+        "status_note": "AC: a subsequent 'orch-cold-evict.sh failed' report carries the script's verbatim stderr + exit code, AND a benign CAS-contention loss no longer emits a failure report at all. Dedup: scanned backlog/ready/in_progress/review/qa for COLD-EVICT|COLDEVICT — 7 adjacent rows found, none owns the swallowed-stderr defect (FIX-COLD-EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE is --exclude-ids vs Stage-1b coherence, a different concern). Minted 2026-08-12T15:06:24Z.\n\n[po/triage 2026-08-12T15:36:32Z] +5 occurrences (telegram 4723 05:20:30Z, 4727 05:51:24Z, 4744 12:51:40Z, 4746 13:50:59Z, 4768 14:23:06Z) — all identical, all with zero stderr, all unactionable AS REPORTED. Occurrence 6 -> 11.\n\nThis row's premise CONFIRMED BY DIRECT EXPERIMENT rather than inference: PO ran `bash scripts/orch-cold-evict.sh` by hand at 2026-08-12T15:36:32Z against the same live orch-state.json and it exited 0 clean — Stage 0 + Stage 1 PASS, conservation-check OK (task_total live=751 candidate=751, signal_total live=69 candidate=69, signal_row_identity clean), both files jq-validated. The router's own tick also ran it successfully this cycle (commit 1875f1bbc, 4 items evicted).\n\nConclusion: the script is NOT broken; these are transient contention-class failures. The ONLY reason 11 fires cannot be told apart from a genuine breakage is that the reporter discards stderr. That makes THIS row the blocker for every future cold-evict report — until stderr is captured nobody can distinguish 'lost a write race' from 'validator hard-failed'. No new row minted.\n\n[po/triage-2026-08-13T17:28:37Z] SEVERITY EXPEDITE by PO. Moved to the FRONT of ready[] at P0. Rationale: RLC selection is sort_by([priority_rank, ready[]-array-index]), one row per invocation, and RLC only runs on ticks where the 6-way Idle-Tick Rotation picks \"rlc\". Measured live this tick: 60 RLC-eligible rows in ready[]; this row's class sat at eligible queue position 47-48. At 1 row per rlc-selected tick that is unreachable in incident time, and every newly-minted P0 re-buries it. No new diagnosis was needed - the row was already correct. This is the manual stand-in for the missing severity-expedite path (FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0, itself expedited in this same write).\n\n[developer 2026-08-14T18:40Z] FIXED — real swallow point was scripts/agents-flow/dev-team-tick-preflight.sh Step 5.5 (_step55_run_cold_evict), NOT main.md (no inline copy exists there). Captured stderr+exit-code now stashed into module globals; new _step55_is_benign_cas_loss() matches the script's own CAS-exhaustion abort line (ABORT: CAS retry limit (N) exceeded ... concurrent writer) — benign loss now logs-only (zero telegram), genuine failure now reports real exit code + verbatim stderr tail. post-cycle.md Step 4.2 spec updated in lockstep. 2 new regression cases (T30b/T30c) + new telegram-args capture seam. Full suite 154/154 (146 pre-existing + 8 new). shellcheck clean. Commits: e817334d1 (code+doc), 4658cf1b0 (memory).",
+        "updated_at": "2026-08-14T18:37:07Z",
+        "po_expedited_at": "2026-08-13T17:28:37Z",
+        "po_expedited_by": "po/triage-20260813T1722Z",
+        "updated_by": "developer",
+        "evidence_20260814": "+12 occurrences on 2026-08-13 alone: telegram 4801 (12:18:59Z), 4802 (12:52:21Z), 4804 (13:18:51Z), 4806 (13:53:07Z), 4826 (14:18:57Z), 4831 (14:49:10Z), 4832 (15:48:55Z), 4834 (16:18:54Z), 4835 (16:48:55Z), 4836 (17:18:49Z), 4838 (19:18:57Z), 4841 (20:48:55Z). All twelve are byte-identical: '[dev-team] board-hygiene: orch-cold-evict.sh failed — cold eviction skipped, retry next tick'. NOT self-resolved and the row is NOT closable: cold-evict DID succeed on the very next run (commit 9a8f44b02, 2026-08-14T00:2xZ, clean), which means the underlying condition was transient — and THAT IS EXACTLY THE DEFECT THIS ROW NAMES. Twelve consecutive reports over 8.5h conveyed zero diagnostic information about a fault that then vanished on its own, so the cause is now unrecoverable from the alert stream. A swallowed-stderr alert on an intermittent fault is strictly worse than no alert: it burns 12 triage slots and leaves nothing to triage. Severity of the underlying eviction gap is real — the 08-13 stall let done/done_verified/terminal sprints accumulate all day.",
+        "claimed_at": "2026-08-14T18:24:23Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "developer"
       }
     ],
     "qa": [
@@ -17917,7 +18074,7 @@
         "last_served_tick": "2026-08-14T17:54:23Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-14T15:23:20Z"
+        "last_served_tick": "2026-08-14T18:23:59Z"
       },
       "drs": {
         "last_served_tick": "2026-08-14T15:51:15Z"
@@ -17929,7 +18086,7 @@
         "last_served_tick": "2026-08-14T16:53:28Z"
       }
     },
-    "_updated_at": "2026-08-14T18:19:54Z",
+    "_updated_at": "2026-08-14T18:23:59Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
