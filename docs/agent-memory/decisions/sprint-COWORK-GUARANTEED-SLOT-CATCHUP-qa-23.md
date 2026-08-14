@@ -126,3 +126,56 @@
 - `bun tsc --noEmit` (apps/mcp-server) 0 errors; mock-guard N/A (no production files in commit); secrets/process.env grep clean; DDD N/A (no src/ touched).
 **why-decision:** APPROVED, DONE_VERIFIED. Zero blocking ISSUE — commit real/on-main, file list matches, every substantive code/DB claim independently re-verified true, one metadata-only staleness caveat recorded but not disqualifying.
 **why-change:** none — verified exactly what the row scoped; freshness caveat flagged additively.
+
+### STEP qa-S10 · qa · 2026-08-14T19:32:00Z
+**task-id:** FIX-BCTC-1345B-REPORT-BATCH
+**what-done:** Direct-Commit Verify (dev-team Review-Lane QA-Drain, `qa[]` row, `.commit_sha=893aca43b`, no `.files[]`/`.owner` drain fields — files derived from `review_note` prose, cross-checked against `git show --stat`). Commit `893aca43b` (+`8a08bb510` memory) confirmed real, on `main` ancestry; touches exactly the 2 claimed files (`parseBctcReport.ts` + new `FIX-BCTC-1345B-REPORT-BATCH.test.ts`), matching claim exactly.
+**what-considered:**
+- Read the diff directly, not trusted from prose: fix gates the existing `[BCTC-1345b]` Telegram send on a new `financial_reports.validation_status='low_confidence'` lookup for the same `(action_code, sort_key)`, ANDed with the pre-existing 1792 1h debounce — additive guard, no removed logic, reuses existing column (no migration).
+- Re-ran REAL verification, not trusted from prose: new test file 3/3 pass (independently, not from review_note claim) — RED/GREEN daily-reparse-retry regression, no-over-suppression-across-tickers, self-closing-on-status-flip. 4 named sibling suites (1792-conviction-debounce, 1345e-integration-pipeline, 1424a-bctc-unit-scale-mismatch, 1810c-vnm-unit-mismatch) re-run fresh: 24/24 pass, no regression. `bun tsc --noEmit` 0 errors. `mock-guard.sh --files` (1 prod file) PASS.
+- DDD gate: application-layer file importing `infrastructure/db`+`infrastructure/logger` is the documented pattern (qa-checklist.md:14 only forbids `domain/`→infrastructure/application); diff adds zero new imports (reuses existing `getDb`). `process.env`/secrets grep clean on changed file. Noted PO SCOPE-HOLD on the row (alert TEXT correctness tracked separately by FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE) — this row's own scope is dedup/volume only, matches what was verified.
+**why-decision:** vc-approved, DONE_VERIFIED. Zero blocking ISSUE — commit real/on-main, exact file-list match, diff independently read and confirmed matches review_note's mechanism claim, every re-run check green.
+**why-change:** none — matches row's own `review_note` claim.
+
+### STEP qa-S11 · qa · 2026-08-14T21:40:00Z
+**task-id:** FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR
+**what-done:** Direct-Commit Verify (dev-team Review-Lane QA-Drain, `qa[]` row) of `e817334d1` (+`4658cf1b0` memory). Row's own `.files[]` (`main.md`, `orch-cold-evict.sh`) matched NEITHER actual diffstat — developer's `status_note` explains why (real swallow point is `dev-team-tick-preflight.sh` Step 5.5, not the triage guess); treated as the flow's Fallback path and re-derived the real file set from `git show --stat` (4 files) instead of hard-failing on the stale files[] claim.
+**what-considered:**
+- Verified the fix's own causal claim, not just its prose: `_step55_run_cold_evict()` already captured combined stdout+stderr into a LOCAL var, printed only to this script's own stderr — confirmed the caller (`_step55_cold_evict_and_commit`) previously only branched on exit code (`if ! _step55_run_cold_evict`), so the diagnosis is structurally correct, not narrated.
+- `_step55_is_benign_cas_loss()` regex (`ABORT: CAS retry limit \([0-9]+\) exceeded.*concurrent writer`) checked byte-for-byte against `orch-cold-evict.sh:1081`'s actual `log "ABORT: CAS retry limit (${MTIME_CAS_RETRIES}) exceeded — concurrent writer; hot file unchanged"` — matches exactly, not a guess at the string.
+- Re-ran REAL verification, not trusted from prose: full `dev-team-tick-preflight.test.sh` = 154/154 (independently confirmed baseline was exactly 146 by checking out parent commit `5ad6a51a8` into a scratch worktree and re-running — the claimed "146 pre-existing + 8 new" is exact, not rounded). `shellcheck -S warning` clean on both changed script + test file. `mock-guard.sh --files` on the touched prod script → PASS (no TS/prod-domain files; bash zone). `process.env`/secrets grep clean.
+- `post-cycle.md` Step 4.2 doc updated in lockstep with the runtime behavior (benign-CAS vs genuine-failure classification spec), matches implementation exactly — doc-parity claim held.
+**why-decision:** vc-approved, DONE_VERIFIED. Zero blocking ISSUE. AC (`benign-cas-loss-emits-no-report` / `genuine-failure-reports-exit-code-and-verbatim-stderr`) satisfied by both the code path reading and the T30b/T30c regression tests, which I independently re-ran rather than accepting the commit message's count.
+**why-change:** none — files[] mismatch resolved via Fallback path per flow spec (stale triage guess, developer's own note explains the correct location), not a defect in this verify.
+
+### STEP qa-S12 · qa · 2026-08-14T19:35:00Z
+**task-id:** FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT
+**what-done:** Direct-Commit Verify (dev-team Review-Lane QA-Drain, `qa[]` row, `.commit_sha=e64ad8870`, no `.files[]` on the row — derived from `git show --stat`). Commit confirmed real, on `main` ancestry, touches exactly the 9 claimed files (macroTools.ts, 5 rewired parseInner() test files, new FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT.test.ts, macro.md, get_macro_snapshot.md doc pair).
+**what-considered:**
+- Row carried a hard PO gate (`po_gate_20260801T0125`): DO NOT flip DONE until CI size-lint green on the sibling blocker `FIX-CI-SIZELINT-MACROTOOLS-HUMANIZE-618L` (this row grew macroTools.ts 510L→618L, tripping the 551L tolerance). Checked `depends_on` row: status DONE_VERIFIED, its own QA record confirms CI run 30678397978 size-lint job conclusion=success post-extraction (macroSnapshotText.ts split out). Re-confirmed live, not trusted from prose: `size-lint-justification.sh --check` today → PASS 0 offenders; `wc -l macroTools.ts`=540 (within 551L upper tolerance). Gate satisfied — safe to flip this row.
+- Re-ran REAL verification, not trusted from prose: targeted 6-file suite (FIX-MACRO-SNAPSHOT-HUMANIZE-TEXT + 089-tool-macro + 4 rewired siblings) = 75/75 pass, 165 expect(). `bun tsc --noEmit` (apps/mcp-server) 0 errors. `mock-guard.sh --files macroTools.ts` PASS.
+- DDD gate: macroTools.ts imports `infrastructure/logger` + `infrastructure/fetchers/fetchDeadline` — checked `git show e64ad8870^:<path>`, both imports pre-existed before this commit (established interface/mcp/tools convention), not introduced by this diff. No `application/` imports. `process.env`/secrets grep clean.
+**why-decision:** vc-approved, DONE_VERIFIED. Zero blocking ISSUE — commit real/on-main, exact file-list match, dependent CI-gate independently confirmed green (not just trusted from the sibling row's own claim), all re-run checks green.
+**why-change:** none — matches row's own note claim; PO gate condition independently re-verified true, not rubber-stamped.
+
+### CAP-REACHED · 2026-08-14T19:36:00Z
+
+### STEP qa-S12 · qa · 2026-08-14T19:36:57Z
+**task-id:** FIX-AGENTSIGNALS-EXPIRED-GC-CRON
+**what-done:** Direct-Commit Verify (dev-team Review-Lane QA-Drain, `qa[]` row, `.commit_sha=f5698cb76`, no `.files[]`/`.owner` — 5 files derived via `git show --stat`, cross-checked). Commit confirmed real, on `main` ancestry, current HEAD (051299dbd) still carries the fix unreverted on both touched prod files.
+**what-considered:**
+- Independently re-derived the diff, not trusted from prose: `agentSignalStore.cleanExpired()` and `checkStaleAlerts()` D-3/D-4 both wrap the predicate column in `datetime()` (not just the threshold), D-4 threshold tightened 60d→30d, marker text updated, UPDATE-only (no hard-delete) — matches row's own note claim exactly.
+- Re-ran REAL verification: targeted 3 test files (157-data-audit-job, 242-agent-signals, FACTORY-SCHEDULER-split-dataAuditJob) 47/47 pass fresh. `bun tsc --noEmit` (apps/mcp-server) 0 errors. `mock-guard.sh --files` (2 prod files) PASS. `process.env`/secrets grep clean; no forbidden domain→infra imports (both files are infra/scheduler layer, not domain).
+- Row carries a prior `po_ruling_20260801T0222` (next_agent qa→ops for rebuild) plus a 2026-08-11T18:30Z ops note confirming single-service mcp-server rebuild completed (image 62dbe9da404d) — REBUILD_REQUIRED gate already satisfied before this drain claim, live image reflects the commit under test.
+**why-decision:** vc-approved, DONE_VERIFIED. Zero blocking ISSUE — commit real/on-main/unreverted, diff independently confirmed, all re-run checks green, rebuild-before-verify prerequisite already closed by ops.
+**why-change:** none — matches row's own note claim.
+
+### STEP qa-S12 · qa · 2026-08-14T22:05:00Z
+**task-id:** FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL
+**what-done:** Direct-Commit Verify (dev-team Review-Lane QA-Drain, `qa[]` row, `.commit_sha=f0831e6be`, no `.files[]`/`.owner` — files derived from the row's own `note` prose, cross-checked against `git show --stat`). Commit `f0831e6be` confirmed real, on `main` ancestry; touches exactly the 3 claimed files (`freshnessSlaChecker.ts`, `freshnessSlaMonitorJob.ts`, `FIX-HEALTH-RECHECK-BCTC-IDLE-VS-CRASH.test.ts`), matching `note` exactly.
+**what-considered:**
+- Read the diff directly: `queryBctcPipelineRuntimeState()` SQL narrowed from `status IN ('pending','url_not_found','enrich_failed','pek_triggered')` to `status IN ('pending','pek_triggered')` — generic status-list exclusion, no ticker/date literal, matches backlog `generic_mandate` ("no per-ticker carve-out") exactly. Reader contract documented on `PipelineRuntimeState` in the domain file.
+- Re-ran REAL verification, not trusted from prose: touched test file 23/23 pass (new/updated cases C-2, C-2c, C-2d, C-10 directly assert queueDepth excludes url_not_found/enrich_failed/done/deferred_infra generically and queueDepth=0-only-terminal-rows produces NO CRASH escalation — matches backlog `verification_gate`). Targeted 25-file freshness/SLA suite (grep-derived, same set the commit's own note calls "25-file") re-run fresh: 338/338 pass, matches note's claim exactly. `bun tsc --noEmit` 0 errors. `mock-guard.sh --files` (2 prod files) PASS.
+- DDD/security: `freshnessSlaChecker.ts` (domain) has zero `infrastructure`/`application` imports — clean. `process.env`/secrets grep clean on both touched prod files. Confirmed sibling `vpsHealthPoller.ts` bug flagged in the note as "deliberately NOT touched" is genuinely absent from the commit's diffstat.
+**why-decision:** vc-approved, DONE_VERIFIED. Zero blocking ISSUE — commit real/on-main, exact file-list match, diff independently read and matches both the backlog's `generic_mandate`/`verification_gate` and the commit's own note, every re-run check green.
+**why-change:** none — matches row's own `note` claim.
