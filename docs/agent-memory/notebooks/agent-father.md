@@ -8,63 +8,6 @@
      explicit YYYY-MM-DD token. Nothing deleted; full record in the archive file and git
      history. -->
 
-## EDIT 2026-08-14T12:37Z — task UC-CCA-P2-UNIFIED-AGENT (router-dispatched, session
-`632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
-- FR-4, single-agent-scoped edit. `docs/handoffs/UC-CCA-P2-BA-spec.md` "[Architect] Brownfield
-  Findings" § "chef.md placement asymmetry" read first; live-reread `docs/agents/unified-agent/
-  flow/chef.md` before editing — Bootstrap/Step-0.5 anchors had drifted from the spec's `:33`/`:43`
-  to live `:40`/`:65` (pre-existing header drift 224L→243L, noted not fixed, out of scope for this
-  XS task); the pointer-insertion *relationship* (between Bootstrap and Step 0.5's `task_claim`)
-  held exactly.
-- **Applied the ratified asymmetric placement, deliberately NOT normalized to match the other 4
-  FR-4/FR-5 target files.** Inserted `**Step 0-GW — Gateway availability gate**` pointer + an
-  inline HTML comment (flags "do NOT fix to match the other 5" for the next reader) immediately
-  after the existing Error-boundary block and immediately before Step 0.5's `task_claim` — i.e.
-  AFTER Bootstrap, unlike every other FR-4/FR-5 consumer (which gate BEFORE their first gateway
-  call). Intentional per architect's ruling: `step-0-cowork/SKILL.md`'s own Bootstrap gate already
-  covers the general confirmed-down case for Bootstrap itself; this gate exists only to close the
-  gap between a successful Bootstrap and the Step 0.5 marker mutation. `chef-dish.md` left
-  untouched (Q-chef-threading ruling: one session-scoped gate in chef.md is sufficient). Appended
-  a matching delta note to the file's own size-justification header (+15L, 243→258).
-- Gateway-less this session (tool grant Read/Edit/Write/Bash, no `mcp__gateway__call_tool`) —
-  task-lock skipped per `edit-apply.md`'s gateway-less exception; INV-GATEWAY-1 direct pathspec-
-  scoped commit `afb2d4773a50153202bc69e946bd8b7f9a4e8484` (chef.md only), `git show --name-only
-  HEAD` self-verified single file, pushed to `origin/main` clean on first attempt.
-- **Board disposition:** `ready[]`→`review[]`, status `READY`→`REVIEW`, `next_agent: agent-father →
-  qa` (AC-4 pointer-placement is grep-verifiable, no live cron-window spawn needed). `commit_sha` +
-  completion note added to the row via `scripts/orch-apply.sh` (`FU-AGENT-FATHER-ORCH-SCOPE` —
-  applied, git commit of `orch-state.json` left to router/PO). `.head` idle throughout — untouched.
-
-## EDIT 2026-08-14T12:38Z — task UC-CCA-P2-DIGEST-PREDICT (router-dispatched, session
-`632721c2-41e4-4aff-8d06-a47cf80dc0d7`)
-- FR-4, single top-of-file placement. `docs/handoffs/UC-CCA-P2-BA-spec.md` "[Architect] Brownfield
-  Findings" read first; live-reread `docs/agents/digest-predict/flow/main.md` before editing —
-  architect's anchor (`## Step pre-D` at line 15) matched the live file exactly, zero drift.
-- **Applied:** inserted `## Step 0-GW — Gateway availability gate` + pointer (skill:
-  `.claude/skills/gateway-availability-gate/SKILL.md`, agent-id=digest-predict) immediately before
-  Step pre-D. One placement suffices — both the non-Sunday `DAILY_CLAIM` path (inside Step pre-D)
-  and the Sunday Published Marker Gate (further down, outside Step pre-D's own weekday guard)
-  execute unconditionally after this point; no new if-guard added. +6L.
-- **AC-4 self-verified:** post-edit grep confirms exactly one `Step 0-GW` pointer (line 17), strictly
-  before both `task_claim` calls (line 54 non-Sunday `DAILY_CLAIM`, line 106 Sunday `PUBLISH_CLAIM`).
-- Gateway-less this session (Read/Edit/Write/Bash, no `mcp__gateway__call_tool`) — skipped
-  `task_claim`/`task_heartbeat`/`task_release`; solo single-file subtask; router instructed
-  INV-GATEWAY-1 direct pathspec-scoped commit.
-- **Concurrency note:** 2 prior attempts to land this exact notebook entry were lost before commit —
-  ≥3 other UC-CCA-P2 agent-father sessions (market-watcher, fb-market-poster, alert-commander,
-  bctc-analyst, unified-agent) wrote to this same file concurrently, plus the
-  `notebook-auto-prune.sh` PostToolUse hook fired on each of their edits, dropping oldest sections.
-  No content lost from the actual flow-doc edit (landed safely in commit `c7cd36af4`, RULE 3
-  self-verified) — only this narration needed re-writing twice.
-- Committed `c7cd36af4` (digest-predict/flow/main.md only, explicit pathspec, RULE 2.5 — did not
-  sweep in sibling peer files sitting in the shared git index at commit time). `git show
-  --name-only HEAD` confirmed exactly 1 file.
-- **Board disposition:** `ready[]`→`review[]`, status `READY`→`REVIEW`, `next_agent: agent-father →
-  qa` — AC-4 (pointer placement) is grep-verifiable without a live cron-window spawn (self-verified
-  above). `agent_father_completion_note` + `commit_sha` fields added to the row via
-  `scripts/orch-apply.sh` (`FU-AGENT-FATHER-ORCH-SCOPE` — applied, not committed by me). `.head` was
-  idle throughout — untouched.
-
 ## Keep (maintenance) 2026-08-14T12:57Z — scheduled daily cron (`cron-agent-father.md`, `23 14 * * *` UTC)
 - Trigger: scheduled. Pre-Check gate: `git diff --name-only HEAD~3..HEAD` (HEAD=`ddff307a6`) touched
   `docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-{po,qa-2}.md`,
@@ -152,3 +95,44 @@
   `next_agent=qa`) via `scripts/orch-apply.sh` per this task's explicit dispatch instruction and
   the `FU-AGENT-FATHER-ORCH-SCOPE` "one allowed signal-queue DONE-mark per task dispatch"
   exception — narrower than the general orch-state exclusion.
+
+## EDIT 2026-08-14T20:22Z — task FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED
+(dev-team-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`, per architect brief
+`docs/architecture-briefs/2026-08-14-wire-notebook-compose-actuator-system-auditor-pilot.md`)
+- Change: wired the already-built, already-tested `scripts/notebook-compose.sh` (unmodified) as
+  `system-auditor`'s notebook-write actuator, PILOT-ONLY (Tier-1/2/3/5 fire-election cycles;
+  Tier-4/D-FLEET untouched, out of PO-closed scope). `main.md`'s old Steps 1a-1g/2/2a (read-whole-
+  notebook/reproduce-every-section/Write/diff-and-revert) replaced with ONE scripted call +
+  stdout-marker branch. `c<NNN>` now derived deterministically in bash before any prose (AC-3).
+  Dedicated `commit-mutex:system-auditor-notebook` claim/release wraps the compose call (AC-4).
+  Step 0b.1 marker-sweep made real+executed with filename-key validation; `FIRE_TICK` fail-loud
+  empty guard added, having first verified Tier-4/D-FLEET is NOT the source (it skips this whole
+  election block by design) (AC-6). Commit message for future notebook commits now embeds the
+  script's own `[notebook-compose OK|WARN ...]` marker as a `git log`-permanent runtime-execution
+  proof, per PO ruling replacing the doc-grep-only Success Signal 3.
+- Files modified: 2 code (`docs/agents/system-auditor/flow/main.md`,
+  `docs/agents/tools/package/system-auditor.md`) + 1 data-repair
+  (`docs/agent-memory/notebooks/system-auditor.md`, separate commit).
+- Data repair: `c31626` (corrupt counter, newest by timestamp yet sitting last) renumbered `c100`
+  and moved to top; `c99`/`c98` untouched. Every retained section's body verified byte-identical
+  before/after via `diff` — only the heading line + position changed. Result: 186L, 3 sections,
+  strictly descending in both counter and timestamp.
+- Cascade: none beyond the 2 files (script itself intentionally NOT modified, per PO ruling —
+  it already has other callers to keep generic).
+- Validation: local dry-run of `notebook-compose.sh` against a scratch copy AND the real
+  post-commit notebook, both times producing the expected `OK sections=3 dropped=1 ...
+  direction=newest_first` marker with correct drop-oldest/retain-newest behavior; real on-disk
+  file confirmed untouched by the dry-runs (`git status --porcelain` empty after each).
+- Verification Gate: items 1-3 pass today at rest (headings/line-count/doc-grep); items 4-5
+  mechanically require 3 real elapsed auditor cycles (incl. one Tier-1/Tier-2 overlap) + a
+  1h-later stale-marker sample — cannot be produced synchronously, so the board row was NOT
+  self-certified `DONE_VERIFIED`; left `status=REVIEW`, `next_agent=po` with the exact recheck
+  steps recorded in the row's `status_note`.
+- Decision: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-3.md` S46.
+- Board disposition: updated `next_agent`/`updated_at`/`updated_by`/`status_note` on the existing
+  tracked row (kept `status=REVIEW`, did not flip to DONE) via `scripts/orch-apply.sh` — task
+  itself explicitly required "update this board row on completion, do not just file another
+  processed/ signal" (2 prior identical handoffs did exactly that and neither landed). Left
+  `docs/data/orch/orch-state.json` UNCOMMITTED per `FU-AGENT-FATHER-ORCH-SCOPE` (excluded from
+  this agent's commit_zone beyond the one signal-queue DONE-mark exception, which does not apply
+  here — this is a task_board field update, not a signal-queue mark).
