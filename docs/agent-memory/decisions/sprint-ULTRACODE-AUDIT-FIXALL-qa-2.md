@@ -130,3 +130,57 @@ Deployed image sha256:663e258b50de (unchanged since PO's 08-06T15:59Z redeploy, 
 consistent with PO's own "non-discriminating ERROR verdict" caveat, not a live regression.
 **why-change:** No change from plan — router explicitly flagged this as genuine re-QA, not
 repeat work; executed the verify-committed flow's own Direct-Commit Verify steps 1-4 in full.
+
+### STEP qa-S25 · qa · 2026-08-14T12:49:55Z
+**task-id:** UC-CCA-P2-ALERT-COMMANDER
+**what-done:** Re-read cycle.md live (not trusted from prose): zero-th Dispatch-table row +
+matching inline `## Step 0-GW` section both present, right after table, before Bootstrap row.
+**what-considered:**
+- Trust agent_father_completion_note alone — REJECTED, grep/Read live file per task instruction.
+- Table-only or prose-only would fail architect's "both required" ruling — neither found, both present.
+**why-decision:** Grep confirms single insertion, no dup, 48L file (cap 120L). commit 33795b745 on main.
+**why-change:** No change — APPROVED, lane-move review->done.
+
+### STEP qa-S26 · qa · 2026-08-14T12:49:55Z
+**task-id:** UC-CCA-P2-FB-MARKET-POSTER
+**what-done:** Re-verified all 3 pipeline files (daily/weekly-recap/weekly-prediction) each carry
+exactly 1 Step 0-GW pointer strictly before their own DEDUP_CLAIM task_claim; main.md re-grepped
+for call_tool/gateway — zero hits, confirming the "thin router, no gateway calls" claim is TRUE.
+**what-considered:**
+- Accept "main.md deliberately untouched" prose at face value — REJECTED, independently grepped.
+- Check weekend paths not silently skipped — CONFIRMED both weekly-recap/weekly-prediction covered.
+**why-decision:** All 3 files independently gated, no gap, no duplicate. Commit bc18a4cc4 on main.
+**why-change:** No change — APPROVED, lane-move review->done.
+
+### STEP qa-S27 · qa · 2026-08-14T12:49:55Z
+**task-id:** UC-CCA-P2-UNIFIED-AGENT
+**what-done:** Confirmed chef.md's single Step 0-GW pointer sits between Bootstrap(:40) and Step
+0.5(:65), asymmetric-vs-siblings by design; inline HTML comment (:50-58) explicitly warns future
+readers not to "fix" this — present and coherent. chef-dish.md re-grepped: zero duplicate gate.
+**what-considered:**
+- Flag asymmetry as inconsistency — REJECTED, architect brief explicitly ratifies it (task_claim
+  mutation-window protection, Bootstrap's own gate already covers general case).
+**why-decision:** Placement + warning comment match BA-spec.md verbatim. Commit afb2d4773a on main.
+**why-change:** No change — APPROVED, lane-move review->done.
+
+### STEP qa-S28 · qa · 2026-08-14T12:49:55Z
+**task-id:** UC-CCA-P2-BCTC-ANALYST
+**what-done:** cycle.md re-read: new table row between E2 and Bootstrap+Regime rows; inline
+`## Step 0-GW` section after E2 block, before Step 0c — E2 itself stays first/ungated (pure
+wall-clock check), explicitly documented inline. File 119L, within 120L flow-file cap.
+**what-considered:**
+- Verify E2 not accidentally gated behind 0-GW — REJECTED risk, table + prose both confirm E2 first.
+**why-decision:** Grep confirms single insertion, correct order, no dup. Commit 6261c722f on main.
+**why-change:** No change — APPROVED, lane-move review->done.
+
+### STEP qa-S29 · qa · 2026-08-14T12:49:55Z
+**task-id:** UC-CCA-P2-DIGEST-PREDICT
+**what-done:** main.md re-grepped independently: single Step 0-GW pointer at :15/17, strictly
+before both task_claim calls (:54 DAILY_CLAIM, :106 PUBLISH_CLAIM) — matches router's own
+grep-verification exactly. Noted (non-blocking): file is 154L, over the 120L flow-file cap, no
+size-justification header — PRE-EXISTING (148L before this +6L edit), not introduced by this task.
+**what-considered:**
+- Block on the pre-existing cap overage — REJECTED, debt predates this task by 28L+, this task's
+  footprint is the architect-mandated minimum single pointer; separate cleanup task, not this row.
+**why-decision:** AC-4 pointer-placement satisfied exactly. Commit c7cd36af4 on main.
+**why-change:** No change — APPROVED, lane-move review->done. Cap-debt flagged in Task Report for PO/janitor follow-up.
