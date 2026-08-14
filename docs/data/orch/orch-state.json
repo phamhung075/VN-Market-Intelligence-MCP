@@ -18877,10 +18877,10 @@
         "last_served_tick": "2026-08-14T12:55:05Z"
       },
       "step1_triage": {
-        "last_served_tick": "2026-08-14T09:23:37Z"
+        "last_served_tick": "2026-08-14T13:26:05Z"
       }
     },
-    "_updated_at": "2026-08-14T13:20:05Z",
+    "_updated_at": "2026-08-14T13:26:05Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
