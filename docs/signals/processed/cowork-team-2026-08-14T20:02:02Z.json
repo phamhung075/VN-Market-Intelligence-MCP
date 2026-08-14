@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-08-07T19:52:50Z",
+    "fire_time": "2026-08-14T20:02:02Z",
     "matched_slots": [
       "chef-evening"
     ],
@@ -16,21 +16,17 @@
       "docs/agents/unified-agent/flow/chef.md"
     ],
     "silent": false,
-    "drift_min": 6,
+    "drift_min": 14,
     "errors": [],
-    "pressure_mode": "adaptive",
+    "pressure_mode": "legacy",
     "calendar_status": "unknown",
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": {
-      "chef-evening": "cron"
-    },
-    "cadence_minutes": {
-      "chef-evening": null
-    },
-    "last_fired_timestamp": "2026-08-07T19:52:42Z",
+    "due_reasons": {},
+    "cadence_minutes": {},
+    "last_fired_timestamp": "2026-08-14T20:02:02Z",
     "last_fired_slots": [
       "chef-evening"
     ],
@@ -40,15 +36,15 @@
     "nominal_tick": "19:45",
     "leader_lock": "acquired",
     "dev_head": "unknown",
-    "devq": 5,
-    "signal_backlog": 25,
-    "note": "guaranteed chef-evening slot, single-slot batch, not degraded (headroom=2742MB load=2.46)"
+    "devq": 0,
+    "signal_backlog": 0,
+    "note": "chef-evening guaranteed slot fired via legacy pressure_mode (pressure-state.json fallback); PO Triage still running in background from prior dev-team tick"
   },
   "priority": "low",
-  "createdAt": "2026-08-07T19:52:50Z",
+  "createdAt": "2026-08-14T20:02:02Z",
   "_processed": {
-    "fingerprint": "c7b7724810df14bb62751fb7afccfa962479df895491526386ca7289beb05170",
-    "processedAt": "2026-08-07T20:20:37Z",
+    "fingerprint": "d03c8184075098d14bff16dc03cb3ef4d15cfeb9dab291f1068230d13e479a02",
+    "processedAt": "2026-08-14T20:25:55Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

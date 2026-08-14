@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-14T20:21:58Z",
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "won_slots": [
+      "tnb-audit"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 4,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "tnb-audit": "cron"
+    },
+    "cadence_minutes": {
+      "tnb-audit": null
+    },
+    "last_fired_timestamp": "2026-08-14T20:21:44Z",
+    "last_fired_slots": [
+      "tnb-audit"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 0,
+    "note": "single-slot tick, tnb-audit spawned tran-ngoc-bau in background"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-14T20:21:58Z",
+  "_processed": {
+    "fingerprint": "4d59e4fa8b974566cae8652a9bccd472d9608ab807a2658b4e49f30832f0b75a",
+    "processedAt": "2026-08-14T20:25:55Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
