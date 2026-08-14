@@ -1,19 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-08-14 — FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH (P0, S, Ready-Lane Consumer dispatch) → REVIEW, next_agent=qa
-
-**Session:** 632721c2-41e4-4aff-8d06-a47cf80dc0d7. Router PRE-CLAIM held `task:FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH` + `intent:dev-mcp-server:FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH`. Row had sat READY→IN_PROGRESS since 2026-08-11T13:03Z, folded ~20x by PO across advancing SHAs before this dispatch (dispatch starvation, not a diagnosis gap — see row's own status_note history).
-
-**Root cause:** `ALLZERO-OHLCV-FETCH.test.ts` AC-1/AC-2/AC-3 fixtures hardcoded absolute calendar dates (`2026-06-1x`, `2026-05-30`) as `daily_ohlcv` rows, then queried `get_price_history` with `days=60`. That tool's SQL filter is `date >= date('now', '-' || ? || ' days')` — a real wall-clock comparison. As real time carried past ~2026-08-10, the fixture dates fell outside the 60-day window and every real-data assertion started returning "no data" instead of the seeded rows — reproduced even running the file alone (`bun test <file>`), confirming this is stale-fixture date drift, NOT the "per-file isolation"/cross-test-state-leakage class the CI job name suggested. `normalizeResidualContam()`'s own tests (AC-4/AC-4b) were unaffected — that function has no date filter.
-
-**Fix (test-file only):** added a `dateStr(daysAgo) => new Date(Date.now() - daysAgo*86400000).toISOString().slice(0,10)` helper and rewrote every fixture row + corresponding assertion literal to use it — the identical idiom already used in the sibling `178-price-history.test.ts`. Zero production code touched.
-
-**Verified:** isolated `bun test src/__tests__/ALLZERO-OHLCV-FETCH.test.ts`: 5/5 pass, 17 expect (both bare and via the exact CI invocation `STOCK_PRICE_DB_PATH=<unique> bun test <file>` from `scripts/ci-per-file-isolation.sh`). `tsc --noEmit`: clean. Gate 2b/2c/2d: `PORT=3099` boot clean (`/health` 200, toolCount=183), `toolCount`=183/`cronJobCount`=88 both match baseline (no barrel change, ran anyway for completeness). Full non-isolated `bun test`: 15292 pass/40 skip/53 fail (488.57s) — within/below the documented 55-56 pre-existing-noise band from the last 2 cycles' entries (Bun singleton/env-leakage across files sharing one process, not gating evidence per `scripts/test-all.sh`'s own rationale); the real CI runner never invokes bare `bun test`. Left the sibling `FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts` (the board's OTHER named FAILEDFILE) untouched — separate board row, out of scope, "one row per distinct file" policy.
-
-**Evidence:** DJ `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md` S2. Docs: `testing.md` updated (new Market Data row for the test file + the fix).
-
-Zone health: CI-red test-fixture defect closed at its real root cause (calendar-date drift vs. a live wall-clock SQL filter, not a code bug), zero production code touched, tsc clean, isolated + CI-faithful invocation both green, toolCount/cronJobCount unchanged | HEALTHY.
-
 ## 2026-08-14 — FIX-CI-BUNTEST-FOREIGN-FLOW-MISSING-TRADING-DAY-NO-BACKFILL (P0, S, router direct-dispatch, PO starvation escalation) → REVIEW, next_agent=qa
 
 **Session:** 632721c2-41e4-4aff-8d06-a47cf80dc0d7. Router bypassed RLC entirely (row READY/P0/front-of-queue-expedited since 2026-08-11T13:03:49Z, ~67h, ~30 SHAs, 13 ci_red folds, zero pickup — RLC claims ≤1 row/tick against ~60 eligible rows, pure dispatch starvation per PO's own measured ruling).
@@ -43,3 +29,19 @@ Zone health: CI-red test-fixture defect closed at its real root cause (hardcoded
 **Evidence:** DJ `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md` S4. Docs: `financial-reports.md` invariant 13 added, `WORK.md` updated. Commits: `6cb8641d2` (code+test), `a1eb8f164` (docs).
 
 Zone health: 100%-reproducible period-mismatch quarantine class closed at its source (stale-filename-vs-content staleness, not a guard defect), guard itself untouched and still strict, zero regression across targeted + full-suite runs, tsc clean, toolCount/cronJobCount unchanged | HEALTHY.
+
+## 2026-08-14 — TASK_2008a FR-A1/FR-A2 calendar_status injectable-deps + enum gate (P1, M, UC-CDC-P1 3-way decomposition, tier1/independent) → REVIEW, next_agent=qa
+
+**Session:** 632721c2-41e4-4aff-8d06-a47cf80dc0d7. Router direct-dispatched with handoff `docs/handoffs/TASK_2008a.md` already carrying architect-verified FR-A1/FR-A2 spec. Sibling `TASK_2008b`/`TASK_2008c` are separate zones, zero coordination needed (confirmed independent, ran in parallel).
+
+**FR-A2:** added `SESSION_STATUSES = ["open","holiday","half_day","weekend","unknown"] as const` to `vnTradingCalendar.ts` as the runtime SSOT `SessionStatus` is now derived FROM (`typeof SESSION_STATUSES[number]`) — closes a real gap: a pure TS type alias has no backing array a Zod schema/domain-check can mechanically enumerate over.
+
+**FR-A1:** wired `calendar_status` through the SAME injectable-deps seam `signal_backlog`/`dev_queue_depth`/`container_vm_headroom_mb` already use in `emitPressureStateTool.ts` — new `computeCalendarStatusFn: () => SessionStatus` on `EmitPressureStateDeps`, `defaultDeps` wires `isVnTradingDay(getTodayVnDate()).session_status`, replaced the old `args.calendar_status ?? "unknown"` line. Breaks the circular self-recycling loop (TASK_2008b's sibling fix stops the SILENT-path preflight script feeding the previous tick's own written value back in as an override).
+
+**FR-A2 enforcement:** lives INSIDE `runEmitPressureState`, not the Zod boundary — in-domain override honored as-is; out-of-domain override `console.warn`'d + discarded in favor of the recomputed value. Zod wire-level field stays bare `z.string().optional()` (unchanged) — a hard `z.enum()` reject risked breaking the tool's documented never-throws contract that `telemetry.md` Step 6.0's MANDATORY WORK-path call depends on (Design Rationale in the handoff, architect-verified).
+
+**Verified:** RED confirmed first (new 4-test describe block, 3/4 failed pre-impl — 4th passed trivially since override-wins was already pre-existing behavior). All 4 blast-radius test-construction sites updated (`buildDeps`, `makeRunDeps`, 2 standalone literals). `bun test src/__tests__/emit-pressure-state.test.ts`: 35/35 pass. `tsc --noEmit` clean. Gate 2b/2c/2d: `PORT=3099` boot clean (`/health` 200), `toolCount`=183/`cronJobCount`=88 unchanged (no barrel edit). 4 consumer test files exercising `vnTradingCalendar.ts`/`emitPressureStateTool.ts` (`DWF-is-trading-day`, `FIX-FOREIGN-FLOW-MISSING-TRADING-DAY...`, `ALPHA-S1-STARTUP-CANDLE-GUARD`, `PRED-RESOLVER-GAP-FIX`): 64/64 pass. Full non-isolated `bun test`: 15291 pass/40 skip/51 fail (484.02s) — below the ~55-57 documented noise band; grepped every `(fail)` line for `pressure|calendar|vnTrading|isTradingDay`, zero matches.
+
+**Evidence:** DJ `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md` S5. Docs: `domain-model.md` (new `vnTradingCalendar.ts` row), `system.md` (added the previously-undocumented `emit_pressure_state` tool row), `testing.md` (new test-file row), `WORK.md` (one-liner). Also filled TASK_2008a.md handoff's Implementation Record.
+
+Zone health: circular "unknown"-recycling loop's server-side producer half now wired at its real root cause (no authoritative producer existed before), runtime SSOT gap closed for `SessionStatus`, enforcement placed to protect the never-throws contract rather than risk it, zero regression across targeted/consumer/full-suite runs, tsc clean, toolCount/cronJobCount unchanged | HEALTHY.
