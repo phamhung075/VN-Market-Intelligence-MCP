@@ -597,6 +597,20 @@
         "severity": "LOW",
         "status": "READ",
         "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-14.json"
+      },
+      {
+        "id": "sys-20260814T062025-0123",
+        "ts": "2026-08-14T06:20:25Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "rag-service A-30 sustained high memory 97.59-97.78% (6/6 samples >93%) — oscillating pattern c90:98.15%→c91:88.78%→c92:92.67%→c93:97.59% suggests FU-RAG-DEPLOY-MEMORY incomplete",
+        "severity": "WARN",
+        "status": "OPEN",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-14T06:15Z",
+        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
