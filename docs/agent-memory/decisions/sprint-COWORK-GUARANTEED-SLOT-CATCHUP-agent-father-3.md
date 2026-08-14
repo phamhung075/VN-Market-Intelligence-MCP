@@ -108,3 +108,30 @@ fixture Case 8). Live-cycle proof (a real digest-predict cowork cycle actually c
 notebook) is this row's own AC-6/baseline_pass — explicitly QA's job, not mine to self-certify;
 lane-moved `in_progress[]`→`review[]`/`next_agent=qa` via `orch-apply.sh`, left UNCOMMITTED per
 `FU-AGENT-FATHER-ORCH-SCOPE`.
+
+### STEP agent-father-S48 · agent-father · 2026-08-14T21:20:00Z
+**task-id:** FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING
+**what-done:** Applied PO's FR-8 scope-widening (po_goahead_20260814T203645): chef.md Step 0 now
+collects `valuation.verdict`/`valuation.note`/`kinhdich.note` into `$BIZ_CTX_SIGNALS`; chef-dish.md
+gains a Step 4 valuation-gate discipline sub-step + Step 7.5 sub-check (h) VALUATION_GATE_OK
+(8th ASSEMBLY-then-assert sub-check, same mechanism as (f)/(g) from 5829a7ad2) + a `valuation_gate`
+field on `conviction_calls[]` + Step 7.6 post-write self-check #5.
+**what-considered:**
+- Enforce via a hard Step-6a-style block (like Scenario-4) vs. fold into the existing Step 7.5
+  self-correct-before-write mechanism — chose the latter: matches the substrate PO explicitly named
+  as this row's dependency (FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION), avoids a 2nd
+  independent enforcement point (the exact defect class this whole row exists to close).
+- Override discipline as free-text prose only vs. a literal `[override:valuation_avoid — ...]`
+  bracket-token substring test — chose the literal-token form so sub-check (h) stays a mechanical
+  substring/key test like (a)-(g), not a narrative judgement call re-introducing AC-2's own defect.
+- Persist `valuation_gate` as structured JSON (verdict/note/override_engaged/override_rationale) in
+  addition to the rationale-text marker, not text-only — gives QA/tnb-audit a RAW-verifiable field
+  (same precedent as FR-7's `business_context_cited`), stronger than requiring a prose grep.
+**why-decision:** PO's own evidence (DXG 2026-08-14 evening, ACCUMULATE against a live
+`valuation.verdict=AVOID`) is exactly the shape sub-check (h)'s negative-control example encodes;
+reusing T-45's existing "challenged and either defended with data or explicitly down-weighted"
+convention (verified live in `tran-ngoc-bau/flow/audit-methodology.md`) avoids inventing new
+override language per PO's own instruction to check precedent first.
+**why-change:** None — PO's FR-8 spec matched exactly against the live schema
+(`bctc_signal_DXG_20260814_routine.json`'s `valuation`/`kinhdich` objects, byte-verified before
+editing). Zero application code touched; both files stay inside my `docs/agents/` commit_zone.

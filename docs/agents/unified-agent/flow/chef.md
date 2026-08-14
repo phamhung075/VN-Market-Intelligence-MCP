@@ -16,7 +16,14 @@
      target files — intentional, protects only the task_claim mutation window; see § Architect
      Brownfield Findings "chef.md placement asymmetry" in the handoff doc). No logic changed
      elsewhere. (Note: the "224L" baseline above had already drifted to 243L pre-existing this edit —
-     untouched, out of scope for this XS task.) -->
+     untouched, out of scope for this XS task.)
+     FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING FR-8 (PO 2026-08-14 scope-widening on this row's own
+     post-fix RAW-verification failure, agent-father 2026-08-14): +~15L — Step 0's `$BIZ_CTX_SIGNALS`
+     per-ticker dict gains `valuation.verdict`/`valuation.note`/`kinhdich.note` (previously
+     product/customer/ops/mgmt/source_file/ts only), so downstream steps can bind conviction direction
+     to bctc-analyst's own machine-readable "do NOT post bullish signal" gate. The enforcement
+     mechanism (new chef-dish.md Step 7.5 sub-check (h) VALUATION_GATE_OK) lives in that file, not
+     here — see its own header note, same date. No logic changed elsewhere in this file. -->
 > Parent: [./main.md](./main.md)
 
 # Unified Agent — Chef Flow (TNB 6-Layer Recipe) — Gate Phase
@@ -186,15 +193,24 @@ Collect file groups:
 - `fundamental_*` — from report-analyzer [TRANSITION: dual-accept `signal_type == "bctc_signal" OR signal_type == "fundamental"` during soak window H-18→H-19; remove `fundamental` branch after H-19 archive] — check BOTH locations, same as bctc_signal_*
 
 **Store as `$BIZ_CTX_SIGNALS` (mandatory — this is the ONLY handle Steps 4/6.5/7/7.5/7.6 in
-chef-dish.md read from; without this store, downstream steps have nothing to reference):**
+chef-dish.md read from, including Step 7.5 sub-check (h) VALUATION_GATE_OK (FR-8); without this
+store, downstream steps have nothing to reference):**
 Build a per-ticker dict from every `bctc_signal_*`/`fundamental_*` file collected above (both
 `docs/signals/` and `docs/signals/processed/`), keyed by ticker symbol:
 ```
 $BIZ_CTX_SIGNALS[<TICKER>] = {
   product: <file.product>, customer: <file.customer>, ops: <file.ops>, mgmt: <file.mgmt>,
+  valuation: { verdict: <file.valuation.verdict or null>, note: <file.valuation.note or null> },
+  kinhdich: { note: <file.kinhdich.note or null> },
   source_file: "<filename>", ts: <file.ts or file._processed.processedAt>
 }
 ```
+`valuation`/`kinhdich` (FR-8, PO 2026-08-14 scope-widening) carry the machine-readable publish gate
+`bctc-analyst` already computes per ticker (`docs/agents/bctc-analyst/flow/stage-analyze.md`:
+`valuation_verdict=AVOID` → "do NOT post bullish signal") plus its Kinh Dịch cross-check note —
+chef-dish.md Step 4/7.5 bind conviction direction to these, closing the gap that let an AVOID-gated
+ticker (DXG, 2026-08-14 evening) receive an ACCUMULATE call unopposed. Absent on files that predate
+this fix or carry no `valuation`/`kinhdich` object — treat as `null`, never fabricate a verdict.
 If a ticker has more than one qualifying file this cycle, keep only the most recent by
 `ts`/`processedAt`. If ZERO `bctc_signal_*`/`fundamental_*` files were collected this cycle (across
 BOTH locations), `$BIZ_CTX_SIGNALS` is empty — this is the ONLY condition under which the

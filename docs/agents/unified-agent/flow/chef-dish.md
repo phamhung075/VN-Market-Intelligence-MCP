@@ -26,7 +26,22 @@
      prose. Step 7.6 correspondingly shrinks to a pure write + mandatory post-write Read-back
      self-check (no independent field re-extraction). No new section, no split — same
      single-enforcement-point guarantee, now backed by a mechanical assembly+assertion instead of
-     narrative recollection. -->
+     narrative recollection.
+     FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING FR-8 (PO 2026-08-14 scope-widening on this row's own
+     post-fix RAW-verification failure, agent-father 2026-08-14): +88L (914→1002, incl. this header
+     note and the negative-control example added below AC-3's, mirroring that section's own precedent).
+     This is exactly the follow-on
+     the paragraph above deferred ("c130 Headline #1's deeper defect... a conviction-direction-vs-
+     source-data contradiction... tracked on the BIZCTX row, not conflated here"). Step 7.5 gains an
+     8th ASSEMBLY-then-assert sub-check, (h) VALUATION_GATE_OK, same single-pass mechanism as (f)
+     SCHEMA_OK/(g) DIRECTION_OK: binds conviction direction to the `valuation.verdict`/`kinhdich.note`
+     fields chef.md Step 0 now also collects into `$BIZ_CTX_SIGNALS` (see that file's own header note,
+     same date) — an AVOID-gated ticker cannot silently ship a BUY/ACCUMULATE call; it self-corrects
+     to HOLD before Step 7.6 writes unless the rationale carries an explicit, data-defended
+     `[override:valuation_avoid — ...]` clause (T-45 adversarial-discipline convention, same as
+     `tran-ngoc-bau/flow/audit-methodology.md`'s adversarial gate). New Step 4 sub-step, new
+     `valuation_gate` field on `$CONVICTION_CALLS`/`conviction_calls[]`, new Step 7.6 post-write
+     self-check #5. No new section, no split — same single-enforcement-point guarantee. -->
 > Parent: [./chef.md](./chef.md)
 
 # Unified Agent — Chef Dish Body (Steps 1.5-8, TNB 6-Layer Recipe)
@@ -150,6 +165,33 @@ part of this cycle's qualifying clusters/conviction_calls[] purely to satisfy th
 EVERY ticker in the dish, `$BIZ_CTX_CITED` stays empty and the Step 7.5 gap-token path applies —
 this is the honest floor, identical in spirit to the Step 1 degraded-dish floor and the Step 5
 `$L5_GAP_TOKEN` floor.
+
+**Valuation-gate discipline (mandatory when `$BIZ_CTX_SIGNALS[<TICKER>].valuation.verdict` is set for
+this ticker — FR-8, PO 2026-08-14 scope-widening):**
+`bctc-analyst` already computes a machine-readable publish gate per ticker
+(`docs/agents/bctc-analyst/flow/stage-analyze.md`: `valuation_verdict=AVOID` → "do NOT post bullish
+signal"). When `$BIZ_CTX_SIGNALS[<TICKER>].valuation.verdict == "AVOID"`, this ticker's thesis MUST
+NOT conclude a BUY or ACCUMULATE direction this cycle unless the rationale explicitly engages and
+defends the override with data — T-45 adversarial discipline, the same convention as
+`tran-ngoc-bau/flow/audit-methodology.md`'s adversarial gate ("a claim that was challenged and either
+defended with data or explicitly down-weighted"); silent disregard of the gate is never acceptable.
+Two valid outcomes only:
+1. **Honour the gate (default):** direction is HOLD / SELL / NEUTRAL for this ticker this cycle.
+2. **Engaged override (rare, must be defended):** direction stays BUY only if the rationale text
+   contains a literal `[override:valuation_avoid — <data-backed justification>]` clause naming the
+   specific evidence that outweighs the AVOID verdict (e.g. a confirmed catalyst the valuation gate
+   does not price in). A bare restatement of the bullish thesis is NOT a justification — it must name
+   what makes THIS AVOID wrong, not merely why the ticker looks attractive otherwise.
+Store the result:
+```
+$VALUATION_GATE[<TICKER>] = { verdict: $BIZ_CTX_SIGNALS[<TICKER>].valuation.verdict,
+                               note: $BIZ_CTX_SIGNALS[<TICKER>].valuation.note,
+                               override_engaged: true|false,
+                               override_rationale: "<text>" | null }
+```
+Tickers with no `$BIZ_CTX_SIGNALS[<TICKER>].valuation` entry this cycle are not gated —
+`$VALUATION_GATE[<TICKER>]` stays unset (no valuation data available this cycle, nothing to enforce
+against; do not treat a missing verdict as an implicit AVOID or an implicit clearance).
 
 **Volatility & Breadth Context (P0 indicators):**
 When available, use `get_volatility_indicators()` and `get_breadth_thrust()` to adjust conviction:
@@ -554,11 +596,12 @@ $VN_MACRO_LAYER_TEXT  = <the Layer 3 narrative text composed in Step 3 — verba
 $VALUATION_LAYER_TEXT = <the Layer 4 narrative text composed in Step 4 (sector phases + conviction
                          drivers) — verbatim, this exact string becomes tnb_synthesis.valuation_layer>
 $CONVICTION_CALLS     = [ { ticker, conviction_level, direction, pillars_aligned_count,
-                            rationale_one_liner, business_context_cited }, ... ]
+                            rationale_one_liner, business_context_cited, valuation_gate }, ... ]
                         — one entry per ticker in a Step-1 qualifying cluster: conviction_level +
                         pillars_aligned_count from Step 4's per-ticker scoring, direction from the
                         BUY/HOLD/SELL/NEUTRAL vocabulary composed in Step 7 (Step 6.7 AF-2),
-                        business_context_cited = $BIZ_CTX_CITED[ticker] (Step 4) verbatim or null.
+                        business_context_cited = $BIZ_CTX_CITED[ticker] (Step 4) verbatim or null,
+                        valuation_gate = $VALUATION_GATE[ticker] (Step 4, FR-8) verbatim or null.
                         This is the EXACT array Step 7.6 writes as conviction_calls[].
 $KNOWN_GAPS_SO_FAR    = union of $L6_GAP_TOKENS (Step 6) + $L5_GAP_TOKEN (Step 5, if set) — the same
                         union rule Step 7.6 documents for known_gaps[], computed here so this gate can
@@ -633,8 +676,23 @@ DIRECTION_OK = (every $CONVICTION_CALLS entry's direction is exactly one of
                 never a macro/commodity/composite label such as "MACRO_BRENT"; macro/commodity
                 context belongs only in tnb_synthesis narrative text, never in conviction_calls[].ticker)
 
-# Verdict — single pass, all seven ANDed
-if L2_OK AND L3_OK AND L4_PILLARS_OK AND BIZ_CTX_OK AND GAP_CATALOGUE_OK AND SCHEMA_OK AND DIRECTION_OK:
+# Sub-check (h) — VALUATION-GATE CONFORMANCE (FR-8, PO 2026-08-14 scope-widening — the 2026-08-14
+# evening dish issued ACCUMULATE on DXG against bctc_signal_DXG_20260814_routine.json's own
+# machine-readable valuation.verdict=AVOID gate, silently ignored, no override ever logged)
+VALUATION_GATE_OK = for every $CONVICTION_CALLS entry where valuation_gate != null AND
+                     valuation_gate.verdict == "AVOID":
+    (entry.direction is NOT "BUY" and the raw pre-DIRECTION_OK-correction direction is NOT
+     "ACCUMULATE" either)
+    OR (valuation_gate.override_engaged == true AND valuation_gate.override_rationale is non-empty
+        AND rationale_one_liner literally contains "[override:valuation_avoid")
+Entries with valuation_gate == null or valuation_gate.verdict != "AVOID" do not participate in this
+check (nothing to gate — same opportunistic-only floor as BIZ_CTX_OK/NFR-3 on this row's own FR-3).
+**Ordering note:** score this BEFORE any DIRECTION_OK ACCUMULATE→BUY remap is applied — a raw
+"ACCUMULATE" against an AVOID gate must fail (h) on its own terms, not be silently laundered into a
+passing "BUY" by (g)'s enum-correction running first.
+
+# Verdict — single pass, all eight ANDed
+if L2_OK AND L3_OK AND L4_PILLARS_OK AND BIZ_CTX_OK AND GAP_CATALOGUE_OK AND SCHEMA_OK AND DIRECTION_OK AND VALUATION_GATE_OK:
   $QUALITY_VERDICT = "full"
   $CONVICTION_CAP  = (no additional cap)
   $LAYERS_WALKED_SUMMARY = "1-6 (full)"
@@ -660,6 +718,16 @@ else:
     # macro/composite ticker label from $CONVICTION_CALLS (it belongs in tnb_synthesis narrative
     # text) BEFORE Step 7.6 writes anything.
     $FAILED_CHECKS.append("[gap:direction_enum_violation_corrected]")
+  if NOT VALUATION_GATE_OK:
+    # NOT a data-availability gap — self-correct BEFORE Step 7.6 writes: downgrade direction to HOLD
+    # for every offending entry (never silently ship BUY/ACCUMULATE against an unengaged AVOID gate).
+    # This correction takes PRECEDENCE over DIRECTION_OK's ACCUMULATE→BUY remap for the same entry —
+    # if both (g) and (h) fail on one ticker, the result is HOLD, not BUY. If the model genuinely
+    # intends an engaged override, it must add the `[override:valuation_avoid — <justification>]`
+    # clause to rationale_one_liner AND set valuation_gate.override_engaged=true BEFORE this check
+    # re-runs — do not fabricate the override marker just to pass the gate; an unjustified override
+    # is a worse failure than an honest HOLD.
+    $FAILED_CHECKS.append("[gap:valuation_gate_violation_corrected]")
   $LAYERS_WALKED_SUMMARY = "partial — " + join($FAILED_CHECKS, " ")
 
 # L5 (Kinh Dịch) gap-token append — FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION.
@@ -685,19 +753,37 @@ self-grade has no mechanical tie to `$US_MACRO_LAYER_TEXT`'s actual content — 
 08-14 certified "full"/passed BIZ_CTX_OK with absent or Fed-funds-only L2 content and a genuinely
 non-empty `$BIZ_CTX_SIGNALS`.
 
+**Illustrative negative-control example (FR-8 — proves sub-check (h) actually fires on the exact live
+instance PO cited):** live 2026-08-14 evening dish, DXG. `$BIZ_CTX_SIGNALS["DXG"].valuation.verdict =
+"AVOID"` (from `bctc_signal_DXG_20260814_routine.json`), so `valuation_gate = { verdict: "AVOID",
+note: "valuation_verdict=AVOID — do NOT post bullish signal", override_engaged: false,
+override_rationale: null }`. The composed `$CONVICTION_CALLS` entry for DXG carried `direction =
+"ACCUMULATE"` and a `rationale_one_liner` with no `[override:valuation_avoid` clause anywhere. Scoring
+sub-check (h): `valuation_gate.verdict == "AVOID"` → gated; `direction` is `"ACCUMULATE"` → first
+clause FALSE; `override_engaged == false` → second clause FALSE → `VALUATION_GATE_OK = FALSE` for this
+entry, which forces the overall AND to FALSE regardless of every other sub-check's state →
+`$QUALITY_VERDICT = "degraded"`, `direction` self-corrected to `"HOLD"` BEFORE Step 7.6 writes,
+`$FAILED_CHECKS` includes `"[gap:valuation_gate_violation_corrected]"`. Contrast with a dish where the
+same rationale instead read "...ACCUMULATE — `[override:valuation_avoid — foreign-flow +129K cp today
+confirms accumulation despite the AVOID-priced PE, a live catalyst the quarterly valuation note does
+not capture]`" and `valuation_gate.override_engaged = true`: sub-check (h)'s second clause is TRUE,
+`VALUATION_GATE_OK = TRUE` for that entry, and `direction` ships as composed (still subject to every
+other sub-check independently).
+
 **Enforcement rules (non-negotiable):**
-- `$QUALITY_VERDICT = "full"` requires ALL SEVEN sub-checks to be TRUE. A single FALSE forces `degraded`.
+- `$QUALITY_VERDICT = "full"` requires ALL EIGHT sub-checks to be TRUE. A single FALSE forces `degraded`.
 - Every sub-check is scored against the literal ASSEMBLY variables above — the SAME variables Step 7.6
   writes verbatim. There is no second, independent judgement anywhere in this pipeline (AC-2). If a
   sub-check's required text is not literally present in the assembled variable, the sub-check is FALSE
   — narrating that the work "was done" is not evidence.
-- `(f) SCHEMA_OK` and `(g) DIRECTION_OK` failures are corrected BEFORE Step 7.6 writes — Step 7.6 never
-  persists a wrong-shape object or an out-of-enum direction/ticker value, even transiently. These are
-  output-validity requirements, not data-availability gaps like (a)-(e); the gap token documents that a
-  correction occurred, it never substitutes for the correction.
+- `(f) SCHEMA_OK`, `(g) DIRECTION_OK`, and `(h) VALUATION_GATE_OK` failures are corrected BEFORE Step
+  7.6 writes — Step 7.6 never persists a wrong-shape object, an out-of-enum direction/ticker value, or
+  an unengaged BUY/ACCUMULATE against an AVOID gate, even transiently. These are output-validity
+  requirements, not data-availability gaps like (a)-(e); the gap token documents that a correction
+  occurred, it never substitutes for the correction.
 - When `$QUALITY_VERDICT = "degraded"`, conviction scores throughout the dish are retroactively capped at MEDIUM (this mirrors the EOD degraded-dish floor in Step 1 and the per-cluster LOW conviction rule in Step 6.5).
 - This gate fires for ALL `$DISH_TYPE` values (morning / intraday / eod / evening) — including
-  sub-checks (f)/(g), which apply identically regardless of dish type. There is no dish window exempt.
+  sub-checks (f)/(g)/(h), which apply identically regardless of dish type. There is no dish window exempt.
 - The intraday silent-exit path (Step 1, 0 clusters) is exempt — it exits before Step 7 and may still use `QUALITY: full` in its EXIT line because no layer-walk was attempted (nothing to degrade).
 
 ---
@@ -768,7 +854,8 @@ asserts against — identical for every `$DISH_TYPE` including `eod`, no dish-ty
       "direction": "BUY|HOLD|SELL|NEUTRAL",
       "pillars_aligned_count": 0-4,
       "rationale_one_liner": "...",
-      "business_context_cited": { "field": "ops", "text": "...", "source": "bctc_signal_VCB_20260811_routine.json" } | null
+      "business_context_cited": { "field": "ops", "text": "...", "source": "bctc_signal_VCB_20260811_routine.json" } | null,
+      "valuation_gate": { "verdict": "AVOID", "note": "...", "override_engaged": false, "override_rationale": null } | null
     }
   ],
   
@@ -814,8 +901,9 @@ exact two-independent-judgements defect this fix closes):**
   `$US_MACRO_LAYER_TEXT` / `$VN_MACRO_LAYER_TEXT` / `$VALUATION_LAYER_TEXT` verbatim.
 - `conviction_calls[]` = Step 7.5's `$CONVICTION_CALLS` verbatim — already includes
   `business_context_cited` (= `$BIZ_CTX_CITED[<ticker>]` verbatim or explicit `null`, never an
-  omitted key) and an already-enum-checked `direction` (Step 7.5 sub-check (g)). Do not rebuild this
-  array independently from Step 4 here.
+  omitted key), `valuation_gate` (= `$VALUATION_GATE[<ticker>]` verbatim or explicit `null` — FR-8,
+  already asserted against Step 7.5 sub-check (h)), and an already-enum-checked `direction` (Step 7.5
+  sub-checks (g) and (h)). Do not rebuild this array independently from Step 4 here.
 - `sector_phases[]` = extracted from Step 4 phase/tier declarations + Step 4 pillar evidence
   (unchanged — not part of the assertion mechanism, no live defect found on this field).
 - `regime_state` / `regime_confidence` / `clock_phase` = extracted from Step 3 macro analysis
@@ -839,7 +927,9 @@ what was intended):
 2. `metadata.quality_verdict` equals the exact value Step 7.5 computed.
 3. Top-level keys match Step 7.5 sub-check (f) SCHEMA_OK's mandated set.
 4. Every `conviction_calls[].direction` is in `{BUY, HOLD, SELL, NEUTRAL}` (Step 7.5 sub-check (g)).
-If any of these 4 checks fails, re-Write once with the corrected object and Read back again. If the
+5. No `conviction_calls[]` entry has `valuation_gate.verdict == "AVOID"` AND `direction` in
+   `{BUY, ACCUMULATE}` AND `valuation_gate.override_engaged != true` (Step 7.5 sub-check (h)).
+If any of these 5 checks fails, re-Write once with the corrected object and Read back again. If the
 second attempt also fails, treat as `tool-error` per `chef-telemetry.md`'s Try/Catch Boundary →
 Degraded-Floor Recovery — do not silently continue with an unverified persisted file. (Skipped entirely
 on the intraday-silent path — see the exception immediately below.)
