@@ -459,3 +459,23 @@ architect both re-verified live same-day); followed it verbatim, only resolving
 the 2 non-normative flags (send_telegram wording, version bump) via precedent.
 **why-change:** No change from plan. Landed at 169L vs the ~171-176L estimate —
 under, not over, still comfortably inside the 200L cap (AC-1).
+
+### STEP developer-S27 · developer · 2026-08-14T18:40Z
+**task-id:** FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR
+**what-done:** Real swallow point was `dev-team-tick-preflight.sh` Step 5.5
+(`_step55_run_cold_evict`), NOT `main.md` (no inline copy exists). Stashed
+captured stderr+exit-code into module globals; added `_step55_is_benign_cas_loss`
+matching the script's own CAS-exhaustion abort line; benign loss now logs-only
+(no telegram), genuine failure now reports real exit code + stderr tail.
+**what-considered:**
+- Exit-code-only classification vs text-match — text-match won: orch-cold-evict.sh
+  returns exit 1 for EVERY failure class (CAS-exhaustion included), so exit code
+  alone cannot distinguish; the CAS-exhaustion line is the only unambiguous signal.
+- Also fixing the sibling `orch-state-validate.sh` failure branch (T31) — rejected,
+  out of this row's scope (task/AC name only the cold-evict report specifically).
+- New truncation helper vs reusing this file's own pre-existing `_trunc()` — reused
+  (established convention, no new pattern invented).
+**why-decision:** Matches task's own class-match precedent (fail-loud vs benign-
+retry split this repo already applies elsewhere) — CAS-contention is the textbook
+benign/retryable case, every other abort path is a genuine validation defect.
+**why-change:** No change from plan.

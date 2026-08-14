@@ -1,6 +1,22 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-14T14:35:00Z | **Cycle:** FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE (P0 live-data-loss — nso_ts_key() commit-SHA/date collision fixed)
+**Last updated:** 2026-08-14T18:40:00Z | **Cycle:** FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR (P0, 23 occurrences — real swallow point was dev-team-tick-preflight.sh Step 5.5, not main.md)
+
+## Session 2026-08-14T18:40:00Z — FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR (cross-service/, developer, P0 S, Ready-Lane Consumer dispatch, session 632721c2)
+
+**Task:** 23 occurrences of "orch-cold-evict.sh failed" with zero stderr — PO's own manual re-runs always exited 0 clean seconds later against the same file, proving the script itself was not the defect.
+
+**Found the real swallow point:** NOT `docs/agents/dev-team/flow/main.md` (no inline copy of this step exists there — confirmed via grep, zero hits). It is `scripts/agents-flow/dev-team-tick-preflight.sh` Step 5.5, the CANON-SCRIPT runtime for `post-cycle.md` § Step 4.2. `_step55_run_cold_evict()` already captured `orch-cold-evict.sh`'s combined stdout+stderr into a LOCAL var (printed to this script's own stderr for cron-log visibility per the earlier STDOUT-LEAK fix) but never exposed it past the function return — the caller (`_step55_cold_evict_and_commit`) only ever saw the exit code.
+
+**Shipped:** (1) stash captured output+rc into module globals (`_STEP55_COLD_EVICT_OUTPUT`/`_STEP55_COLD_EVICT_RC`, freshly overwritten every call); (2) new `_step55_is_benign_cas_loss()` matches the script's own definitive CAS-exhaustion line (`ABORT: CAS retry limit (N) exceeded ... concurrent writer`) — the ONLY message it emits when its mtime-CAS loop or `orch-apply.sh`'s downstream exit-2 CAS guard loses to a peer writer; (3) benign branch logs only, zero telegram; (4) genuine-failure branch keeps reporting, now with real exit code + `_trunc()`'d verbatim stderr (reused the file's own existing helper, no new truncation pattern). `post-cycle.md` § Step 4.2 updated in lockstep (its own header says "edit the spec first").
+
+**Test coverage:** 2 new cases in `dev-team-tick-preflight.test.sh` — T30b (synthetic CAS-exhaustion fixture → zero `send_telegram` calls, AC), T30c (synthetic genuine-failure fixture → telegram content asserted to contain both `exit 1` and the verbatim stderr snippet, AC). New `TELEGRAM_ARGS_LOG_FILE` capture seam added to the test harness's `mcp_call` stub (previously call-counted only, never content-asserted). Full suite 154/154 (146 pre-existing + 8 new), zero regressions. `shellcheck -S warning` clean on both touched scripts.
+
+**Structural gap (same class as prior sessions):** graphify incremental step skipped — no Skill-tool binding available to this spawned agent.
+
+**Closeout:** commit pending, pathspec-scoped (`scripts/agents-flow/dev-team-tick-preflight.sh` + `.test.sh` + `docs/agents/dev-team/flow/post-cycle.md`, then `docs/WORK.md` alone). Decision journal STEP developer-S27 (`sprint-ULTRACODE-AUDIT-FIXALL-developer.md`). No handoff file existed for this row (Ready-Lane Consumer direct dispatch, board row's own `status_note`/`evidence_20260814` fields are the spec) — none created, matching established precedent. Board flip `in_progress[]`→`review[]`/`status=REVIEW`/`next_agent=qa` via `orch-apply.sh`.
+
+---
 
 ## Session 2026-08-14T14:00:00Z — FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE (cross-service/, developer, P0 S, BOUNDED-1 idle-capacity auto-pickup, session 632721c2)
 
@@ -37,21 +53,5 @@
 **Structural gap (same class as prior sessions):** graphify incremental step skipped — no Skill-tool binding available to this spawned agent.
 
 **Closeout:** 2 code/doc commits pathspec-scoped (`scripts/agents-flow/cowork-tick-preflight.sh` + `.test.sh` + `docs/agents/cowork-team/flow/preflight-error-fallback.md` + `docs/architecture-briefs/2026-08-06-cron-rearm-cross-session-dedup.md`, then `docs/policies/dev-standards.md` alone — a stale line-number citation the first edit shifted). Decision journal STEP developer-S1..S4 (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` — base+`-2..-6` all capped). No handoff file existed for this row (direct PO-authored board row, no PM decomposition) — none created, matching established precedent for this task shape. Board flip `backlog[]`→`review[]`/`next_agent=qa` via `orch-apply.sh`.
-
----
-
-## Session 2026-08-14T12:40:16Z — UC-CCA-P2-SKILL-GW-GATE (cross-service/, developer, P1 S, PM-decomposed subtask of UC-CCA-P2, router dispatch, session 632721c2)
-
-**Task:** FR-1/FR-2 per architect's ratified design (`UC-CCA-P2-BA-spec.md` § [Architect] Brownfield Findings) — restructure `gateway-availability-gate/SKILL.md`'s flat "probe once, fail immediately" Step 0-GW into a DMS-2 escalation ladder. Scope is this ONE file only — the 9 sibling flow-file insertions (FR-3/FR-4/FR-5) are separate PM-decomposed rows owned by market-watcher/alert-commander/unified-agent/digest-predict/bctc-analyst/fb-market-poster, not touched here.
-
-**Shipped:** classify PROBE_1 error — CONFIRMED-BLIND (trigger text IDENTICAL to `cycle-bootstrap/SKILL.md` § Error handling's own signature, cited not forked) skips backoff, escalates immediately (unchanged); TRANSIENT waits 30s → PROBE_2 (own failure never re-classified, always falls through to the sibling check) → `SIBLING_RECENT = get_agent_signals(hours_back=0.25)` — non-empty suppresses (new DEFER notebook template, OVERWRITE/APPEND split mirroring BLOCKED, no signal/no bug, clean EXIT), empty escalates via the existing a/b/c actions with one additive payload suffix. 101L→169L, inside AC-1's ≤200L cap (architect's own ~171-176L estimate — landed under it).
-
-**Verified FR-2 hard invariant:** `grep -n "send_telegram"` on the edited file returns zero hits — the one place I considered naming the tool literally (a new PROHIBITIONS bullet) I paraphrased instead ("Telegram/notification tool call"), matching the original file's own pattern of never naming `send_telegram` literally and keeping AC-2's grep-zero-hits check literally true, not just spiritually true.
-
-**AC-6 (news-scout inheritance):** re-checked `news-scout/flow/cycle.md:15` — still points at the skill unchanged; the new APPEND-class DEFER wording is agent-id-generic and reads coherently for news-scout without any file edit (verification-only, per BA's own AC-6 requirement).
-
-**Structural gap (same class as prior sessions):** graphify incremental step skipped — no Skill-tool binding; no MCP gateway binding either (INV-GATEWAY-1) — immaterial this task, no `task_claim`/`send_telegram` was needed.
-
-**Closeout:** commit pending, pathspec-scoped (`.claude/skills/gateway-availability-gate/SKILL.md` alone). Decision journal STEP developer-S26. Board flip `ready[]`→`done[]`/`status=DONE` — leaf task, no downstream `next_agent` per router's own dispatch note.
 
 ---
