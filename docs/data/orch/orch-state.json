@@ -132,8 +132,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-14T16:51:21Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-14T19:57:09Z",
+    "_updated_by": "po",
     "archive": [],
     "rows": [
       {
@@ -730,6 +730,18 @@
         "triaged_at": "2026-08-14T18:43:30Z",
         "triaged_by": "po",
         "disposition": "FOLD -> FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP (review, P1, next_agent=system-auditor). PO verified live: /api/cron-status status histogram is ON_TIME=72 NEVER_FIRED=9 STALE=7 MISSED=1 — the NEVER_FIRED set is exactly these 9 names, each with reason 'chua ghi nhan lan chay nao trong cron_job_runs', i.e. a job_name_db join miss (marketOpen vs morningBriefingJob), not a dead job. Precisely the silent-join-drop that row exists for. No rows minted. Acceptance addition requested on the row: the fix must make these 9 resolve AND must make 'join failed' distinguishable from 'genuinely never ran' at the consumer."
+      },
+      {
+        "id": "po-20260814T195709",
+        "ts": "2026-08-14T19:57:09Z",
+        "from": "po",
+        "to": "agents-architect",
+        "type": "system-issue",
+        "summary": "Step 2.4 cowork probe: 28h marker TTL > 24h cadence blocks all 5 daily slots every day — 2 live blocks today",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null,
+        "board_row": "FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -11556,10 +11568,10 @@
         "type": "FIX",
         "title": "cowork-slot collision probe FR-3: published:<kind>:<period> TTL=100800s (28h) exceeds the 24h daily cadence, so yesterday's still-live marker prefix-matches and blocks today's dispatch for 4h every single day",
         "status": "BACKLOG",
-        "priority": "P1",
+        "priority": "P0",
         "size": "S",
         "zone": "cross-service/",
-        "next_agent": "developer",
+        "next_agent": "agents-architect",
         "owner": "po",
         "created_at": "2026-08-14T13:37:19Z",
         "created_by": "po",
@@ -11569,14 +11581,19 @@
         "evidence": "PO read the source rather than trusting the report. .claude/skills/dispatch-claim/SKILL.md:647-648 reads: `if row.task_id starts_with \"published:\" + slot_id + \":\": collision = row; break` / `# prefix match, NOT exact period-key — catches daily AND weekly published: keys without the`. The prefix match is DELIBERATE and documented (cadence-agnostic so the prober need not know daily-vs-weekly). Live observation from report 4861: published:fb-daily:2026-08-13 still TTL-live (expires 2026-08-14T13:25:39Z, TTL=100800s), no fb-post-2026-08-14.md exists (today genuinely unpublished), and the session-presence roster shows no live session for the claimed owner 0454e9d8-b475-4230-95c9-8b7d943aa8b3 (stale claim, not an active peer).",
         "root_cause": "TWO-SIDED, and the reporter's recommended fix addresses only one side. 28h TTL against a 24h period guarantees a 4h window EVERY day in which the prior period's marker is simultaneously live and prefix-matching. Switching FR-3 to exact period-key match as recommended would break the weekly case the prefix match was explicitly written for.",
         "po_rescope_note": "EXPLICIT CORRECTION TO THE REPORTER: report 4861's recommendation ('FR-3 should exact-match the period key') is INSUFFICIENT on its own and would regress weekly slots. Any fix must reconcile both axes - either TTL <= cadence period (so a prior-period marker cannot outlive its period), or caller-computed exact period key PLUS a separate cadence-resolution step that preserves weekly coverage. Do not implement the one-line change.",
-        "acceptance": "AC-1 a stale prior-period marker can never block the current period's manual dispatch, for BOTH daily and weekly slots. AC-2 a genuinely-live current-period marker still blocks (no regression of the double-publish guard TASK-COWORK-MUTEX-001 exists to provide). AC-3 stale-owner detection: a marker whose owner session is absent from the presence roster should not block. AC-4 fixture in cowork-dispatch-collision-probe.test.sh covering the daily 4h-overlap window and the weekly case.",
+        "acceptance": "AC-1 a stale prior-period marker can never block the current period's manual dispatch, for BOTH daily and weekly slots. AC-2 a genuinely-live current-period marker still blocks (no regression of the double-publish guard TASK-COWORK-MUTEX-001 exists to provide). AC-3 stale-owner detection: a marker whose owner session is absent from the presence roster should not block. AC-4 fixture in cowork-dispatch-collision-probe.test.sh covering the daily 4h-overlap window and the weekly case. AC-5 (INTERIM, ship first and separately if the full fix needs a design cycle): the Step 2.4 probe must not block on a marker whose owner_client_session has no live session-presence row — this is one extra read the router already makes at Phase A.5, needs no date logic, and unblocks all 5 daily slots today. AC-6: whichever axis is chosen, a fixture must assert chef-evening dispatch succeeds at 19:45Z with yesterday marker still TTL-live, since that is the exact production-blocked case.",
         "related": [
           "TASK-COWORK-MUTEX-001",
           "TASK-COWORK-MUTEX-002",
           "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR"
         ],
         "consumer_impact": "Affects router-manual dispatch of every cowork-slot agent. Cron path uses a separate fire-election and is unaffected. Already blocked one legitimate fb-market-poster dispatch on 2026-08-14.",
-        "updated_at": "2026-08-14T13:41:16Z"
+        "updated_at": "2026-08-14T19:57:09Z",
+        "updated_by": "po",
+        "occurrence_2_20260814T1952Z": "SECOND live block, 10h29m after occurrence 1 (fb-daily). Router probe at 2026-08-14T19:52:07Z on slot chef-evening (cron `45 19 * * *`) matched published:chef-evening:2026-08-13 (owner_client_session 0454e9d8-b475-4230-95c9-8b7d943aa8b3, claimed_at 2026-08-13T19:53:37Z, ttl 100800, expires 2026-08-14T23:53:37Z). PO re-verified live via task_list_held: (a) published:chef-evening:2026-08-14 ABSENT -> today genuinely unpublished, (b) NO session-presence row for 0454e9d8 -> holder session dead, exactly the AC-3 stale-owner shape, (c) no cowork-slot:chef-evening and no intent:unified-agent:* held -> no live peer. Same dead session 0454e9d8 also holds published:chef-morning:2026-08-14, so one dead session is now blocking two slots.",
+        "blast_radius_20260814": "NOT slot-specific and NOT probabilistic — DETERMINISTIC for every daily-cadence slot, computable from config alone. Live 100800s markers confirmed on 5 slots: chef-evening, chef-eod, chef-morning, tnb-audit, fb-daily. Blocked window per slot = 28h TTL minus 24h cadence = 4h, positioned to START at the slot fire time, i.e. the prior marker is ALWAYS live at the exact moment the next fire dispatches. chef-evening blocked window = 19:45Z fire vs 23:53Z expiry = 100% of every fire, every day, forever. digest-daily (ttl 86400 = cadence exactly) is marginal-not-safe: it blocks whenever today fire is even one second earlier than yesterday claim.",
+        "po_ruling_20260814T1952Z": "P1 -> P0 and next_agent developer -> agents-architect. P0 because this is now a confirmed-recurring DAILY availability defect on the guaranteed-slot publish path with 2 live blocks in one day, not a latent design smell. Routed to agents-architect (not developer) because the prefix match is a DELIBERATE ruling from docs/architecture-briefs/2026-07-29-fix-cowork-dispatch-router-intent-mutex-bypass-design.md (Candidate A refined, zero date-basis duplication) — the brief author must re-rule the axis, since the three candidate axes trade off against each other and two of them regress something. Developer implements AFTER the ruling. Reference: PO already rejected the naive one-line fix in po_rescope_note; that rejection STANDS.",
+        "axis_analysis_po_20260814": "Three axes, none free. (A) exact period-key match: regresses weekly slots and re-introduces the date-basis duplication the brief eliminated — already rejected, see po_rescope_note. (B) TTL <= cadence: cheap and correct in isolation, BUT the 28h was chosen deliberately (ARCH-DECIDE-D, spawn-fanout.md:150 `covers the full 24h content cycle`) and the guaranteed-slot CATCHUP flow can legitimately re-run a missed slot using the PRIOR period key — shortening TTL may re-open the double-publish window that catch-up specifically needs closed. Architect must confirm against the catch-up flow before picking B. (C) stale-owner / presence-roster check (already written as AC-3): cleanest fit for BOTH observed occurrences (both blocking holders were dead sessions absent from the roster), cadence-agnostic, and preserves the weekly prefix match untouched. PO does not choose the axis — but records that C is the only one that fits both live occurrences without regressing a documented behaviour."
       },
       {
         "id": "FIX-TASKCLAIM-REENTRANCY-DISCRIMINATOR-UNSOUND-FOR-SAME-SESSION-SUBAGENTS",
@@ -17652,7 +17669,7 @@
         "created_at": "2026-07-30T18:27:28Z",
         "created_by": "pm",
         "note": "Step 2.4 Cowork-Slot Cross-Path Collision Probe implemented in dispatch-claim/SKILL.md (FR-1..FR-4) + CLAUDE.md 1-line phase-list diff (FR-6 lockstep, single commit f8d3891c6) + task_list_held.md expired-param doc-sync. Zero apps/mcp-server code (BUILD-STANDARD not-applicable per architect brief) — no new tests in this task, FR-7 harness deferred to TASK-COWORK-MUTEX-002 per its own Test Strategy. Memory commit 465801802 (notebook+journal). Implementation Record: docs/handoffs/TASK-COWORK-MUTEX-001.md.\n\n[QA] Review Record (direct-commit verify) — CHANGES_REQUESTED, 2026-08-14T09:31:14Z. Commits f8d3891c6/465801802 verified on main ancestry; git show --stat matches all claimed files; FR-1..FR-5 pseudocode, 9-agent/23-slot recognition (live-checked vs cowork-schedule.json), expired-param doc-sync (live-checked vs taskListHeldTool.ts Zod schema) all correct at source. BLOCKING: probe is functionally unreachable from the router real hot path. CLAUDE.md:7 + dispatch-claim/SKILL.md:3-9 (self-declared header) both say .claude/skills/dispatch-claim/CARD.md is the per-dispatch hot-path read, SKILL.md only reached via CARD.md own edge-path pointers -- CARD.md (39L) has ZERO mention of Step 2.4 / cowork-slot (grep-confirmed, 0 hits). A router driving off CARD.md alone never learns Step 2.4 exists -- reproduces the exact silently-disables-the-phase failure this row own FR-6 edge case exists to prevent, one layer removed (CARD.md<->SKILL.md instead of CLAUDE.md<->SKILL.md). Known gap-class, not a novel QA nitpick: docs/handoffs/FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD-PM-decomposition-20260722.md:152 already flagged the identical CARD.md-blind-spot risk on a sibling change (un-actioned there). FIX: add a compact Step-2.4 entry to CARD.md (mirror Phase A.5 density -- recognition+resolve+probe+symmetric EXIT, or at minimum a 1-line edge-path pointer) between its existing Phase A.5 and Phase B entries, in a NEW direct commit. No code/tests touched by this finding -- bun test/tsc/mock-guard/security greps all correctly N/A (docs-only change), re-confirmed independently this pass.",
-        "updated_at": "2026-08-14T14:27:01Z",
+        "updated_at": "2026-08-14T19:57:09Z",
         "po_prior_art_suspect_20260808T1600Z": "SKIPPED as this tick's manual-dispatch-sweep selection despite being the top-ranked candidate (P0, BACKLOG-XOR-GAP, unflagged) — PRIOR ART APPEARS ALREADY SHIPPED, so folding it into a BATCH would have burned a dev slot re-implementing live code (feedback_file_prior_art_check_before_minting_row).\n\nThe row's deliverable is 'Implement Cowork-Slot Collision Probe Core (dispatch-claim/SKILL.md + CLAUDE.md)'. Both named targets already carry a collision path: CLAUDE.md:14 has the 'Peer collision' outcome row ('claimed:false + current_holder.owner_client_session != $CLAUDE_CODE_SESSION_ID -> log PRE-CLAIM collision -> send_telegram(work) -> EXIT'); .claude/skills/dispatch-claim/CARD.md:35 carries the same branch; .claude/skills/dispatch-claim/SKILL.md:194 (session-presence collision), :288 (PRE-CLAIM collision) and :563 ('Cross-session collision detection - same agent_id in multiple live sessions'). SKILL.md is 31,235B and was last written 2026-08-07, well after this row's 2026-07-30 mint.\n\nDELIBERATELY NOT CLOSED BY PO: the match is on file+behaviour, not on this row's acceptance criteria (the row carries no `files` and no AC beyond 'Atomic implementation of Step 2.4 collision probe'), and it has two live siblings (TASK-COWORK-MUTEX-002/003) whose scope PO did not examine. Closing a P0 on a partial match would be the mirror of the mistake being avoided. REQUIRED NEXT ACTION (whoever picks this up first): diff Step 2.4 of the originating decomposition against the live SKILL.md/CARD.md/CLAUDE.md and either close 001 as already-shipped or state precisely which sub-behaviour is still missing — do NOT re-implement from the title.",
         "po_manual_dispatch_skipped_at": "2026-08-08T16:06:57Z",
         "po_manual_dispatch_skipped_reason": "prior-art-suspect: deliverable appears live in CLAUDE.md + .claude/skills/dispatch-claim/{CARD,SKILL}.md; needs AC-level verify, not dispatch",
@@ -17671,7 +17688,8 @@
         "updated_by": "qa",
         "commit_sha": "f8d3891c6",
         "redispatch_count": 1,
-        "status_note": "[QA] Review Record (direct-commit verify) — CHANGES_REQUESTED, 2026-08-14T09:31:14Z. Commits f8d3891c6/465801802 verified on main ancestry; git show --stat matches all claimed files; FR-1..FR-5 pseudocode, 9-agent/23-slot recognition (live-checked vs cowork-schedule.json), expired-param doc-sync (live-checked vs taskListHeldTool.ts Zod schema) all correct at source. BLOCKING: probe is functionally unreachable from the router real hot path — CLAUDE.md:7 + dispatch-claim/SKILL.md:3-9 both say .claude/skills/dispatch-claim/CARD.md is the per-dispatch hot-path read, SKILL.md only reached via CARD.md own edge-path pointers — CARD.md has ZERO mention of Step 2.4/cowork-slot. FIX: add a compact Step-2.4 entry to CARD.md (mirror Phase A.5 density) between Phase A.5 and Phase B, in a NEW direct commit. [RECOVERED 2026-08-14 by developer, task FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE AC-4 — original qa.md notebook cycle-715 entry was silently dropped by the nso_ts_key commit-SHA/date-collision bug this task fixes; full text reconstructed from this row's own intact .note field, which the bug never touched.]"
+        "status_note": "[QA] Review Record (direct-commit verify) — CHANGES_REQUESTED, 2026-08-14T09:31:14Z. Commits f8d3891c6/465801802 verified on main ancestry; git show --stat matches all claimed files; FR-1..FR-5 pseudocode, 9-agent/23-slot recognition (live-checked vs cowork-schedule.json), expired-param doc-sync (live-checked vs taskListHeldTool.ts Zod schema) all correct at source. BLOCKING: probe is functionally unreachable from the router real hot path — CLAUDE.md:7 + dispatch-claim/SKILL.md:3-9 both say .claude/skills/dispatch-claim/CARD.md is the per-dispatch hot-path read, SKILL.md only reached via CARD.md own edge-path pointers — CARD.md has ZERO mention of Step 2.4/cowork-slot. FIX: add a compact Step-2.4 entry to CARD.md (mirror Phase A.5 density) between Phase A.5 and Phase B, in a NEW direct commit. [RECOVERED 2026-08-14 by developer, task FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE AC-4 — original qa.md notebook cycle-715 entry was silently dropped by the nso_ts_key commit-SHA/date-collision bug this task fixes; full text reconstructed from this row's own intact .note field, which the bug never touched.]",
+        "po_sequencing_gate_20260814T1952Z": "BLOCKING SEQUENCE RULING (po): do NOT land the QA-requested CARD.md Step-2.4 wiring until FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE ships. Rationale: QA CHANGES_REQUESTED is correct that CARD.md has zero Step-2.4 mention (re-verified 2026-08-14T19:5xZ, still 0 hits) — but Step 2.4 is ALREADY partially reachable because CLAUDE.md step 2.5 names it explicitly, which is how it blocked 2 real dispatches today. Wiring CARD.md closes the remaining reachability gap and would therefore AMPLIFY a known-broken gate from partial to fleet-wide: every router dispatch of every daily cowork slot would false-positive-block. Fix the TTL defect first, or land both in one commit. This does not dispute the QA finding; it orders it."
       },
       {
         "id": "FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE",
@@ -18051,10 +18069,10 @@
         "last_served_tick": "2026-08-14T19:28:46Z"
       },
       "step1_triage": {
-        "last_served_tick": "2026-08-14T16:53:28Z"
+        "last_served_tick": "2026-08-14T19:54:56Z"
       }
     },
-    "_updated_at": "2026-08-14T19:50:14Z",
+    "_updated_at": "2026-08-14T19:54:56Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
