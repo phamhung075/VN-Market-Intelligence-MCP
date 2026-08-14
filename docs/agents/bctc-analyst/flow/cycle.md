@@ -21,6 +21,7 @@ Bootstrap (market context 24h, earnings calendar, stored PDFs) | Mode selection 
 | Stage | Steps | Sub-flow |
 |---|---|---|
 | **E2 Market-hours guard** | E2 | Inline (FIRST — see below) |
+| **Step 0-GW** — Gateway availability gate | 0-GW | Inline (SECOND, after E2 — see below) |
 | Bootstrap + Regime | 0, 0b | `→ Run sub-flow: ./stage-bootstrap.md` |
 | Calendar gate + Mode | 0c | Inline (mandatory — see below) |
 | BCTC + Analyze + Chain validation | 1–4b | `→ Run sub-flow: ./stage-analyze.md` |
@@ -46,6 +47,14 @@ IF now_utc >= market_window_start AND now_utc < market_window_end:
 **In-flight completion rule:** If a pass block has ALREADY STARTED when the agent detects it has crossed into the market window (e.g., long consolidation runs past 02:00 UTC), the currently-running pass MUST complete. Defer remaining passes to the next scheduled slot. Notebook entry: `status=partial, deferred_passes=[list]`.
 
 **Defense-in-depth:** Cron `0 15,18,21,0 * * *` keeps all trigger times outside the market window. This guard is the second line of defense against schedule drift or manual invocations.
+
+---
+
+## Step 0-GW — Gateway Availability Gate (SECOND STEP — runs after E2, before bootstrap)
+
+**Step 0-GW — Gateway availability gate** → skill: `.claude/skills/gateway-availability-gate/SKILL.md` (agent-id=bctc-analyst)
+
+Runs immediately after the Step E2 market-hours guard passes, before Step 0 (bootstrap). E2 stays first and is never gated behind this step — it is a pure wall-clock check that needs no gateway call.
 
 ---
 
