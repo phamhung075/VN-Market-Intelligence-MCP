@@ -92,12 +92,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Ready-Lane Consumer claim of FIX-CI-BUNTEST-ALLZERO-OHLCV-FETCH — spawn dev-mcp-server DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
-    "updated_at": "2026-08-14T07:20:25Z",
-    "updated_by": "dev-team (ready-lane consumer)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "",
+    "updated_at": "2026-08-14T07:37:55Z",
+    "updated_by": "dev-team (WF-1d review-lane gap workaround — row already REVIEW/qa)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
