@@ -1,0 +1,15 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "architecture_brief",
+  "payload": "docs/architecture-briefs/2026-08-14-devteam-head-nextagent-write-coherence.md",
+  "priority": "high",
+  "createdAt": "2026-08-14T07:56:51Z",
+  "summary": "FIX-DEVTEAM-HEAD-NEXTAGENT-RESYNC-ON-REASSIGN design complete. New WF-2b next_agent-coherence check for docs/agents/dev-team/flow/main.md, inserted between WF-2 and WF-3 (never JUMPs away, unlike every other WF-N carve-out -- always falls through, correcting .head.next_agent to match the in_progress/active_sprints-resident row's own current next_agent when they disagree, and resetting resume_attempts to 0 in the same write to avoid a WF-3 false-positive on the first correct dispatch after a fix). File is CONCURRENTLY being edited right now (WF-1d landing) -- brief anchors by content, not line numbers; re-read live before applying. Also flags 2 companion rows for PO to mint: FIX-PM-NONCLOSEOUT-HEAD-RESET-INCOMPLETE-NULLOUT (agent-father, XS, docs/agents/pm/flow/main.md -- complete pm's partial status-flip-only .head reset from commit 95540b50d to match the WF-1c full-null idiom) and FIX-DEVTEAM-HEAD-NEXTAGENT-COHERENCE-VERIFY (developer, S, scripts/audits/ regression verifier, 7 fixtures incl. WF-3/WF-4 interaction controls).",
+  "_processed": {
+    "fingerprint": "d5f02b55f651f8d4735b30fcfd49a24ec5fea3022ed63f3468b53836f3225fbc",
+    "processedAt": "2026-08-14T08:25:25Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
