@@ -92,11 +92,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-14T13:25:02Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-14T13:54:31Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11389,32 +11390,6 @@
         "updated_at": "2026-08-14T13:04:42Z"
       },
       {
-        "id": "FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE",
-        "type": "FIX",
-        "title": "P0 LIVE DATA LOSS: nso_ts_key() tail -1 parses a trailing all-numeric git short-SHA in a '## ' heading as an 8-digit date, so notebook-auto-prune drops the WRONG section — destroyed a P0 row's QA review record",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "owner": "po",
-        "created_at": "2026-08-14T13:37:19Z",
-        "created_by": "po",
-        "source": "durable-inbox signal from=qa type=notebook_prune_wrong_section_dropped_ts_key_bug 2026-08-14T09:36:17Z",
-        "dedup_key": "notebook-auto-prune|defect:nso_ts_key-tail1-matches-commit-sha-digits",
-        "dedup_checked": "backlog+ready+in_progress+review+qa scanned 2026-08-14T13:3xZ. FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH (review/qa) = heading-regex shape, NOT ts-key extraction. FIX-NOTEBOOKAUTOPRUNE-HOOKGUARD-BASHSOURCE-ZSH-BREAK (backlog) = zsh sourcing. FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (ready) = AC-5/AC-6 sentinel/rolling shape. QA's own report states all three guards structurally miss this signature. NO dedup hit -> minted.",
-        "evidence": "scripts/agents-flow/lib/notebook-section-direction.sh nso_ts_key(): grep -oE date-regex | tail -1 picks the LAST digit-run in the heading line. Live convention 'commit `761988143`' (10-digit numeric SHA prefix) parses as YYYYMMDD and sorts ABOVE the real timestamp. QA reproduced by direct invocation: cycle-705 heading -> ts_key=76198814000000000 instead of 20260814013311000, making the genuinely-OLDEST section look NEWEST; the hook then dropped cycle-711 (UC-CDC-P7 DONE_VERIFIED review record) instead. PO INDEPENDENTLY CONFIRMED A SECOND, WORSE LIVE LOSS 2026-08-14T13:3xZ: `grep -c COWORK-MUTEX-001 docs/agent-memory/notebooks/qa.md` == 0, yet an inbox signal at 09:36:45Z quotes that exact section verbatim ('## cycle-715 · 2026-08-14T09:31:14Z · TASK-COWORK-MUTEX-001 (report-analyzer, commits f8d3891c6+465801802) — Direct-Commit Verify, CHANGES_REQUESTED'). The CHANGES_REQUESTED verdict for TASK-COWORK-MUTEX-001 (P0, still in review[]) is GONE from the notebook AND that row's status_note is empty — the review verdict for a live P0 row was destroyed with zero trace.",
-        "root_cause": "tail -1 over the whole heading line instead of anchoring extraction to the FIRST date-like match after the '## cycle-NNN ·' prefix, or requiring a T..Z time suffix so a bare 8-digit run cannot win.",
-        "acceptance": "AC-1 nso_ts_key on a heading shaped '## cycle-NNN · <ISO ts> · ... commit `<all-digit-prefix>`' returns the ISO-derived key, not the SHA-derived one. AC-2 new RED-first regression fixture in scripts/agents-flow/notebook-auto-prune.test.sh using qa.md's own commit-citation convention. AC-3 re-run over every docs/agent-memory/notebooks/*.md heading: zero headings compute a ts_key from a non-date digit run. AC-4 reconstruct TASK-COWORK-MUTEX-001's destroyed CHANGES_REQUESTED record onto that row's status_note (data-recovery half - see related).",
-        "related": [
-          "TASK-COWORK-MUTEX-001",
-          "FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE",
-          "FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH"
-        ],
-        "consumer_impact": "Also the mechanism behind the 3 [notebook-immutability-guard] AC-2a WARNs in this same inbox (qa.md cycle-715, developer.md x2, qa.md cycle-726): the hook rewrites a retained section mid-cycle, which is exactly what AC-2a detects. Those WARNs are downstream symptoms, not independent findings.",
-        "updated_at": "2026-08-14T13:41:16Z"
-      },
-      {
         "id": "FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS",
         "type": "FIX",
         "title": "sweep-guard REPEAT-OFFENDER-AFTER-BLOCK: the router coordinating session reached prior_warns=20 against threshold=3 and is now hard-blocked mid-commit, with 5 peer-staged files in the blast radius",
@@ -19017,9 +18992,41 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-14T13:00:17Z",
-    "last_triaged_by": "po (cowork dispatcher silence triage 2026-08-14)",
-    "in_progress": []
+    "last_triaged_at": "2026-08-14T13:54:25Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "in_progress": [
+      {
+        "id": "FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE",
+        "type": "FIX",
+        "title": "P0 LIVE DATA LOSS: nso_ts_key() tail -1 parses a trailing all-numeric git short-SHA in a '## ' heading as an 8-digit date, so notebook-auto-prune drops the WRONG section — destroyed a P0 row's QA review record",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "po",
+        "created_at": "2026-08-14T13:37:19Z",
+        "created_by": "po",
+        "source": "durable-inbox signal from=qa type=notebook_prune_wrong_section_dropped_ts_key_bug 2026-08-14T09:36:17Z",
+        "dedup_key": "notebook-auto-prune|defect:nso_ts_key-tail1-matches-commit-sha-digits",
+        "dedup_checked": "backlog+ready+in_progress+review+qa scanned 2026-08-14T13:3xZ. FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH (review/qa) = heading-regex shape, NOT ts-key extraction. FIX-NOTEBOOKAUTOPRUNE-HOOKGUARD-BASHSOURCE-ZSH-BREAK (backlog) = zsh sourcing. FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (ready) = AC-5/AC-6 sentinel/rolling shape. QA's own report states all three guards structurally miss this signature. NO dedup hit -> minted.",
+        "evidence": "scripts/agents-flow/lib/notebook-section-direction.sh nso_ts_key(): grep -oE date-regex | tail -1 picks the LAST digit-run in the heading line. Live convention 'commit `761988143`' (10-digit numeric SHA prefix) parses as YYYYMMDD and sorts ABOVE the real timestamp. QA reproduced by direct invocation: cycle-705 heading -> ts_key=76198814000000000 instead of 20260814013311000, making the genuinely-OLDEST section look NEWEST; the hook then dropped cycle-711 (UC-CDC-P7 DONE_VERIFIED review record) instead. PO INDEPENDENTLY CONFIRMED A SECOND, WORSE LIVE LOSS 2026-08-14T13:3xZ: `grep -c COWORK-MUTEX-001 docs/agent-memory/notebooks/qa.md` == 0, yet an inbox signal at 09:36:45Z quotes that exact section verbatim ('## cycle-715 · 2026-08-14T09:31:14Z · TASK-COWORK-MUTEX-001 (report-analyzer, commits f8d3891c6+465801802) — Direct-Commit Verify, CHANGES_REQUESTED'). The CHANGES_REQUESTED verdict for TASK-COWORK-MUTEX-001 (P0, still in review[]) is GONE from the notebook AND that row's status_note is empty — the review verdict for a live P0 row was destroyed with zero trace.",
+        "root_cause": "tail -1 over the whole heading line instead of anchoring extraction to the FIRST date-like match after the '## cycle-NNN ·' prefix, or requiring a T..Z time suffix so a bare 8-digit run cannot win.",
+        "acceptance": "AC-1 nso_ts_key on a heading shaped '## cycle-NNN · <ISO ts> · ... commit `<all-digit-prefix>`' returns the ISO-derived key, not the SHA-derived one. AC-2 new RED-first regression fixture in scripts/agents-flow/notebook-auto-prune.test.sh using qa.md's own commit-citation convention. AC-3 re-run over every docs/agent-memory/notebooks/*.md heading: zero headings compute a ts_key from a non-date digit run. AC-4 reconstruct TASK-COWORK-MUTEX-001's destroyed CHANGES_REQUESTED record onto that row's status_note (data-recovery half - see related).",
+        "related": [
+          "TASK-COWORK-MUTEX-001",
+          "FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE",
+          "FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH"
+        ],
+        "consumer_impact": "Also the mechanism behind the 3 [notebook-immutability-guard] AC-2a WARNs in this same inbox (qa.md cycle-715, developer.md x2, qa.md cycle-726): the hook rewrites a retained section mid-cycle, which is exactly what AC-2a detects. Those WARNs are downstream symptoms, not independent findings.",
+        "updated_at": "2026-08-14T13:54:31Z",
+        "promoted_at": "2026-08-14T13:54:25Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-14T13:54:30Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
+      }
+    ]
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
@@ -19033,7 +19040,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-14T09:52:21Z"
+        "last_served_tick": "2026-08-14T13:54:17Z"
       },
       "sls": {
         "last_served_tick": "2026-08-14T10:21:04Z"
@@ -19051,9 +19058,40 @@
         "last_served_tick": "2026-08-14T13:26:05Z"
       }
     },
-    "_updated_at": "2026-08-14T13:26:05Z",
+    "_updated_at": "2026-08-14T14:19:46Z",
     "_updated_by": "dev-team",
-    "pending_triage_inbox": [],
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "50f8303a7f2185e9fe947a044701edde3b27d9e777e8c3f728a0672b01f54536",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-48ff396c",
+          "head_sha": "48ff396c911c3878605f87bca573c2bad93dbf44",
+          "run_id": 31806565407,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31806565407",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "Kinh Dich Go Lint",
+              "conclusion": "failure",
+              "jobId": 94786811693
+            }
+          ],
+          "fingerprint": "e4e3c3ccd1e8aeffc4afa99b4ad06c257d19c79fc2dc3ed2102ce2a1428bffd4",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 48ff396c911c3878605f87bca573c2bad93dbf44: Kinh Dich Go Lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-14T13:53:34Z",
+        "drained_at": "2026-08-14T14:19:46Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-14T04:11:35Z",
     "last_po_triage_note": "po/triage-20260814T0411Z (router-spawned after dev-team tick 2026-08-14T03:37Z could not nested-spawn). INPUTS: 18 durable-inbox envelopes. OUTPUT: 0 net-new mints from triage, 5 folds. DEDUP/FOLD: 2 ci_red (CI-RED-87a7a6d2 run 31758121017, CI-RED-9a9ad9bf run 31766602285) read at source via gh run view --log-failed — identical FAILED FILES (ALLZERO-OHLCV-FETCH.test.ts, FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts), both already carry open READY rows, file-scoped dedup HIT, SHAs appended; 3 sweep-guard bug-escalation escalated=true prior_warns=12/13/14 -> FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK occ 21->24; 2 notebook-immutability-guard on system-auditor.md sections c5/c6 -> FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS. NO MINT: 1 signal_feedback A-33 hook-liveness WARN (context-bloat-backstop.sh settings-file-missing) — PREMISE VERIFIED TRUE at source (0 matches for context-bloat-backstop in ~/.claude/settings.json, .claude/settings.json, .claude/settings.local.json — the hook is genuinely unregistered) but it is a first fire (1/1 in signal_queue) and the WARN single-fire rule forbids minting on one tick; carried to next tick for recurrence confirmation. 1 improvement_proposal is PO's OWN OUTBOUND (from=po to=agents-architect, IMP-20260814-system-auditor-notebook-compose-actuator-never-wired) misrouted into PO's own inbox by the drain — already board-backed by FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED (backlog, agents-architect); ACK only. 9 cowork-fire/tick-dispatch/cowork-tick-telemetry envelopes addressed to system/dev-team/cowork-team, not to po — informational, no defect, skipped. CONVERGENT FINDING: 3 of the 4 to=po defect classes this tick (3 sweep-guard + 2 notebook-immutability + the improvement proposal) all trace to ONE actor, system-auditor's unwired notebook-compose actuator. SEPARATELY: SPIKE-FRESHNESS-REMEDIATE-TRIAGE signed off APPROVED (review->done) and decomposed into 4 new backlog rows + 1 reprioritization. INBOX CLEAR NOT WRITTEN — owned by dev-team/flow/main.md Step 1 per triage-signals.md, PO does not write the subtractive clear.",
     "last_po_triage_consumed": 18,
