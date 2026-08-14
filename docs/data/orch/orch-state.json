@@ -138,20 +138,6 @@
     "archive": [],
     "rows": [
       {
-        "id": "sys-20260813T035120-5969",
-        "ts": "2026-08-13T03:51:20Z",
-        "from": "system-auditor",
-        "to": "dev-team",
-        "type": "db_integrity_breach",
-        "summary": "deep_fetch_queue: 4 rows stuck in status='vps-failed' since 2026-08-05 (8 days old), attempts=1 (never retried). URLs: h",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": "docs/data/db-integrity-history.json",
-        "provenance": "detector",
-        "audit_cycle_tag": null,
-        "dedup_key": null
-      },
-      {
         "id": "sys-20260813T052222-052f",
         "ts": "2026-08-13T05:22:22Z",
         "from": "system-auditor",
@@ -215,23 +201,6 @@
         "provenance": "detector",
         "audit_cycle_tag": null,
         "dedup_key": null
-      },
-      {
-        "id": "csg-barecommit-20260813T040848Z",
-        "ts": "2026-08-13T04:08:48Z",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "summary": "sweep-guard BARE commit BLOCKED 3x recurring (20260812T200758Z to 20260813T040848Z, prior_warns 21 to 23): market-watcher.md notebook repeatedly staged for a non-pathspec-scoped commit under actor 0454e9d8-b475-4230-95c9-8b7d943aa8b3, every attempt hard-blocked, files remain uncommitted. Likely root cause of the approx 13h/70+file uncommitted backlog observed 2026-08-13T06:21Z git status. Fix: pathspec-scoped git commit -- <own-files-only> only.",
-        "severity": "HIGH",
-        "status": "RESOLVED",
-        "payload_ref": "docs/signals/processed/commit-sweep-guard-2026-08-13T040848Z-6037.json",
-        "provenance": "commit-sweep-guard",
-        "audit_cycle_tag": null,
-        "dedup_key": "sweep-guard-bare-commit-blocked:market-watcher",
-        "po_disposition_at": "2026-08-14T00:30:11Z",
-        "po_disposition_by": "po/triage-20260814T0007Z",
-        "po_disposition": "RESOLVED — commit-sweep-guard bare-commit class, folded onto FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK. 34 matching envelopes were also in this tick's durable inbox."
       },
       {
         "id": "cow-20260813T081115",
@@ -12004,24 +11973,6 @@
         "po_tail_disposition": "The 4 Layer-2 bare-commit sites and the 3 stale init.md 'RULE 1-3' refs that this agent disclosed unprompted are minted as FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-LAYER2 in this same cycle, so the tail does not orphan when this parent closes. The unprompted disclosure of out-of-scope defects is exactly the behaviour the maintenance lane should reward."
       },
       {
-        "id": "TRACK-CRON-AUDIT-SERVER-PLANE",
-        "type": "FIX",
-        "title": "TRACKING MIRROR — mcp-server cron-plane fixes (4 dead Sunday jobs, VPS SSH trigger tools, watchdog 16/85 coverage, 24 bespoke jobs with zero run telemetry, project-stats cronJobCount 2 vs 85)",
-        "status": "DONE",
-        "priority": "high",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "created_at": "2026-07-22T16:02:26Z",
-        "created_by": "po/cron-audit-sequencing-20260722",
-        "status_note": "TRACKING ONLY — work is LIVE out-of-band under intent:dev-mcp-server:cron-audit-server-fixes, dispatched by router 2026-07-22 ~15:48Z. This row is a board-visible mirror, NOT a dispatch target. BLOCKED keeps it out of every promote/claim gate (BOUNDED-1 / SLS / RLC) so it cannot be double-dispatched, and keeps the WIP<=2 in_progress budget undistorted. Precondition to unblock: the out-of-band agent returns. Whoever adopts this row MUST first read the agent's actual output — do not re-derive scope from this title.",
-        "scope": "(1) 4 jobs dead since 2026-06-28: integrityCheckJob, devTeamHeartbeatJob, bondMaturityPollerJob, predictionOutcomeJob — all Sunday-scheduled. (2) VPS SSH trigger tools that never worked (no ssh binary in the container). (3) watchdog covers 16 of 85 jobs. (4) 24 bespoke scheduleCron jobs emit no run telemetry. (5) docs/data/project-stats.json cronJobCount:2 vs 85 actual.",
-        "known_unknown": "The 24 bespoke scheduleCron jobs emit NO run telemetry, so 'absent from get_cron_health' is EXPECTED for them and is NOT evidence of failure. Nobody currently knows whether they fire. Closing the telemetry gap is a PREREQUISITE to any claim about their health — do not report them clean or broken until telemetry exists.",
-        "do_not_absorb": "Jobs showing crashed at 2026-07-22T14:52Z (alertDigestJob, imfIndicatorPollerJob, macroIndicatorRefreshJob, weatherCheckJob) are container-restart catch-up-burst ARTIFACTS, not normal-schedule failures. Do NOT treat them as scheduling bugs.",
-        "updated_at": "2026-07-22T17:23:09Z",
-        "updated_by": "po/cron-audit-push-deploy-sequencing-20260722",
-        "resolution": "dev-mcp-server RETURNED 2026-07-22 ~17:00Z; full reasoning in docs/agent-memory/decisions/sprint-cron-audit-server-fixes-dev-mcp-server.md. Tracker purpose (mirror the out-of-band server-plane dispatch) fulfilled. Items 1/2/3 are code-complete in commits ac621f648..752d76477 (UNPUSHED, and item 2 is INERT until the image is rebuilt). Spun out by this tick: BLOCK-PUSH-CRON-AUDIT-BATCH-NO-QA (push withheld — PUSH-AUTONOMY-1 cond.(a) QA APPROVE unmet), OPS-REBUILD-MCP-SERVER-OPENSSH (held behind QA), VERIFY-FIX-VPS-SSH-TRIGGER-FAIL-LOUD-REALDATA (blocked on the VPS user gate), FIX-MCP-DOCKERFILE-ENTRYPOINT-KNOWNHOSTS-REGRESSION (accept-new ruling), FIX-CRON-SSCCHECKERJOB-DEAD-87D (new incident). Scope item (5) project-stats cronJobCount is CLOSED: now 88, generator-computed with a MIN_PLAUSIBLE_CRON_COUNT floor guard. Scope item (4) '24 bespoke jobs with zero telemetry' is only PARTLY closed — 3 were genuinely blind and are now wired, 2 were already recorded under a different job_name; the remaining full-fleet coverage is NOT done and is carried by FIX-CRON-SSCCHECKERJOB-DEAD-87D's class-fix clause. The known_unknown on this row therefore still stands for the un-widened remainder."
-      },
-      {
         "id": "OPS-REBUILD-MCP-SERVER-OPENSSH",
         "type": "FIX",
         "status": "DONE_VERIFIED",
@@ -13404,45 +13355,6 @@
             "args": "detect-analysis-only-exit.test.sh (own invocation); --agent-id system-auditor --since-ts 2026-08-12T05:35:00Z --until-ts 2026-08-12T05:55:00Z; --agent-id news-scout --since-ts 2026-08-07T03:55:00Z --until-ts 2026-08-07T04:30:00Z; commit 761988143351ea211f40f040387370aa22536a3c",
             "live_value_observed": "15/15 PASS (own re-run, not trusted from dev claim); system-auditor repro -> DETECTED all_zero+mandatory_status=violation (signal_queue plane has since drained, honestly reported, detector still correctly fires); news-scout repro -> DETECTED mandatory_status=violation notebook=0/ledger=1 (flipped from pre-fix live PASS, exact inverse-partial shape closed); shellcheck 0 warnings both files; mock-guard PASS; commit confirmed ancestor of main and origin/main",
             "observed_at": "2026-08-14T01:33:11Z"
-          }
-        }
-      },
-      {
-        "id": "FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE",
-        "type": "FIX",
-        "status": "DONE_VERIFIED",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "po",
-        "next_agent": "qa",
-        "sprint": "INFRA-AUDIT",
-        "created_at": "2026-07-28T19:00:26Z",
-        "created_by": "po/triage-20260728T1837",
-        "origin_signal_id": "sys-20260728T174652-22a6",
-        "title": "auditor-tier1-probe.sh _check_mem_creep() is a single-point-sample gate per invocation — live-verified re-run ~5.5min after a cited ALL_GREEN flipped GREEN->FAIL (pdf-extractor 99.91% MemPerc)",
-        "note": "System-auditor commit 7ee6eede5 (T1-PREGATE-SAMPLE-FREQ signal, 2026-07-28T17:51Z). Distinct from FIX-AUDITOR-TIER1-A30-MEM-SINGLE-CONTAINER-SCOPE (loop scope, already fixed) and FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE (mcp-server veto tautology) — this is a NEW detector-methodology gap: a single sample can miss a transient memory peak, understating real risk during exactly the pdf-extractor P0 concurrency window (FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT). pdf-extractor's own memory condition is NOT re-signalled here — already owned by FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM.",
-        "acceptance": "_check_mem_creep() in scripts/agents-flow/auditor-tier1-probe.sh takes N>=2 samples over a short window (or retries once before flipping ALL_GREEN) so a transient peak cannot be missed by a single unlucky sample; regression test reproduces the observed GREEN->FAIL flip scenario.",
-        "updated_at": "2026-08-14T04:13:25Z",
-        "promoted_at": "2026-07-30T07:43:55Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=2)",
-        "claimed_at": "2026-08-14T04:05:07Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "status_note": "[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Row predated the QA-Drain (no commit/files[] on the row itself) -- derived commit via `git log --oneline --all -- scripts/agents-flow/auditor-tier1-probe.sh` cross-checked against the row's title/acceptance text: commit 2e2446853 (2026-07-30T10:04:02+02:00, developer, BOUNDED-1 auto-pickup), confirmed on main AND origin/main ancestry. git show --stat matches scripts/agents-flow/auditor-tier1-probe.sh + auditor-tier1-probe.test.sh (plus docs/WORK.md + own decision-journal doc). Read the diff at source, not narration: _check_mem_creep() now loops MEM_CREEP_SAMPLES (>=2, default 2, clamped up if <2) docker-stats samples per container, MEM_CREEP_SAMPLE_INTERVAL_SEC apart (default 2s), and gates off the WORST (max) parsed pct observed in the window -- a breach in any one sample forces FAILURE even if another sample reads GREEN; any single sample's stats-unavailable/unparseable still breaches (unchanged fail-loud). Independently re-ran `bash scripts/agents-flow/auditor-tier1-probe.test.sh` myself: 226/226 PASS (full current suite, includes T54-T58 added by this commit). T54 reproduces the cited live incident verbatim: sample1=70.00% (would read GREEN under the old single-sample gate) then sample2=99.91% (the exact pdf-extractor MemPerc figure from the incident) -> verdict FAILURE, detail names the WORST sample not the first. T55 proves worst-of-window not last-sample via reversed order. T56-T58 prove the loop actually calls docker stats N times (file-based call-count assertion) and the N>=2 floor is defensively clamped. shellcheck -x -e SC1091 on both changed files: the 2 warnings in auditor-tier1-probe.sh both predate this commit (git blame: SC2254 line 652 from 84096f617 2026-07-21, SC2034 line 961 from ba1524e9f 2026-07-16) -- confirmed neither falls inside this commit's diff hunks. auditor-tier1-probe.test.sh carries 8 more warnings, 7 of which also predate this commit (git blame confirmed); one new SC2034 at line 1348 (MEM_CREEP_SAMPLES=2 reset at end of the T57/T58 block) is cosmetic -- same defensive-reset idiom already used for LAUNCHD_DIR/LAUNCHD_ACK a few lines above (lines 1271-1272, same warning class, pre-existing) -- not a functional bug, non-blocking. mock-guard.sh N/A (pure bash zone, no TS/JS production source touched; bun test/tsc N/A). Live sanity: ran the actual script against real docker (MEM_CREEP_SAMPLE_INTERVAL_SEC=1) -- multi-sample mechanism is live and operating (returned FAILURE on a real, unrelated, pre-existing rag-service memory condition -- not this task's scope, not re-signalled here). DJ-GATE-1: developer's own journal confirmed present, sprint-FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE-developer.md, task-id line matches verbatim (3 STEP entries). Both ACs met: N>=2 samples over a short window (not retry-only-if-first-green, the alternative the AC's \"or\" phrasing allows -- developer's own journal names this a deliberate choice) with the transient-peak GREEN->FAIL flip scenario reproduced by regression test T54. .head.active_task_id is a DIFFERENT task (FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING) -- left untouched per CANONICAL:SSOT-STATUSFLIP-LANEMOVE rule (b). This sub-session's tool grant has no mcp__gateway__call_tool binding -- could not call task_release myself; the coordinating router session (632721c2-41e4-4aff-8d06-a47cf80dc0d7) holds task:FIX-AUDITOR-T1-PREGATE-MEMCREEP-SINGLE-POINT-SAMPLE and is the authoritative release path.",
-        "commit": "2e2446853",
-        "files": [
-          "scripts/agents-flow/auditor-tier1-probe.sh",
-          "scripts/agents-flow/auditor-tier1-probe.test.sh"
-        ],
-        "qa_verified_at": "2026-08-14T04:13:24Z",
-        "qa_verified_by": "qa",
-        "verification": {
-          "raw_probe": {
-            "tool": "bash scripts/agents-flow/auditor-tier1-probe.test.sh + shellcheck + git merge-base --is-ancestor + live docker run",
-            "args": "full suite re-run (226 cases incl T54-T58) against HEAD; shellcheck -x -e SC1091 on both changed .sh files; git merge-base --is-ancestor 2e2446853 main / origin/main; MEM_CREEP_SAMPLE_INTERVAL_SEC=1 bash scripts/agents-flow/auditor-tier1-probe.sh --tier=1 against live docker",
-            "live_value_observed": "226 passed, 0 failed (T54-T58 all PASS, reproduces sample1=70.00% GREEN / sample2=99.91% FAIL -> FAILURE, worst-of-window not last-sample); commit 2e2446853 confirmed ancestor of both main and origin/main; shellcheck: 2 pre-existing warnings in .sh (predate commit, git-blame confirmed), 1 new cosmetic SC2034 info-level in .test.sh (non-blocking); live script run against real docker returned a real FAILURE verdict (multi-sample loop demonstrably executing, unrelated pre-existing rag-service memory condition, out of task scope)",
-            "observed_at": "2026-08-14T04:13:24Z"
           }
         }
       }
