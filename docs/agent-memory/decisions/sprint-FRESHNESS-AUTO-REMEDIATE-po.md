@@ -32,3 +32,21 @@
 - Fold + attach evidence (chosen).
 **why-decision:** The 2 ci_red envelopes were read AT SOURCE (`gh run view --log-failed`) rather than dispositioned on job name, which is what proved both runs share one FAILED FILES block already owned by 2 open READY rows. The one genuine judgement call was the 2 notebook-immutability fires: the rule's letter says pendingObservations (different sections), but same agent + consecutive cycles + a same-morning root-cause row for the unwired compose actuator makes it the tracked mechanism, not an interleaved-cycle false positive — folded, with the override reasoning written onto the row.
 **why-change:** No change from plan.
+
+### STEP po-S4 · po · 2026-08-14T04:19:28Z
+**what-done:** SELF-CORRECTION — reverted the `.head` overwrite my own commit `153bdeb06` introduced, restoring the router's `FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING`/`agent-father` directive (set at 02:36:25Z, commit `c9a02fbab`). [ambient]
+**what-considered:**
+- Leave it and note the change — rejected: that head was a LIVE directive on an `in_progress` row with `agent_father_completed_at` absent; leaving it silently strands an agent-father dispatch the router had just repaired from a stale architect handoff.
+- Restore verbatim + record the overwrite on the head object (chosen).
+**why-decision:** The lane-move→reset-head rule applies when the moved row IS `.head`'s task. The SPIKE was not — head pointed at a different, still-live task. My own prior two ticks both correctly recorded "Router action needed: none. No `.head` change"; minting 4 backlog rows is not a reason to take the head, since backlog rows are reached by RLC/BOUNDED-1 picking.
+**why-change:** Deviates from what I committed 4 minutes earlier; the commit was wrong.
+
+### STEP po-S5 · po · 2026-08-14T04:21:26Z
+**task-id:** FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING
+**what-done:** Ran both MANDATORY `main.md` pre-checks. supervised-goahead: `should_hold=true` on the head row → ratified the deliverable AT SOURCE and stamped `po_goahead_20260814T042125`, re-verified `should_hold=false`. manual-dispatch-sweep: 88 candidates → stamped top row `TASK-COWORK-MUTEX-001` (BACKLOG-XOR-GAP, P0, 15d).
+**what-considered:**
+- Skip both as out-of-scope for the router's brief (triage + one sign-off) — rejected: `main.md` marks them MANDATORY every tick, and skipping is exactly how a producer-less consumer gate goes unfed.
+- Stamp on architect's ratification prose — rejected: `supervised`+`po_goahead` exists so PO is the ratifier of record; accepting a relayed verdict makes the gate vacuous.
+- Independently re-read all 10 FR anchors + re-derive one load-bearing claim (chosen).
+**why-decision:** All 10 corrected line anchors matched the live files verbatim, `c31ee006e` is still the last commit touching either file so the map is current, and `ANY_LAYER_PARTIAL:542` stays computable after FR-6's rewrite — the relay was accurate, but the stamp is now on my own evidence. Declined the EC-5 veto BA reserved: force-widening ticker coverage to manufacture a BIZ_CTX citation conflates a data-availability gate with a publish-scope decision, a worse failure than the one the row fixes.
+**why-change:** Deferred these pre-checks initially to serve the router's narrow brief; that was wrong — running them is what surfaced both the dropped directive and a 2h-old unratified hold.
