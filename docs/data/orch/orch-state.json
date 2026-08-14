@@ -614,6 +614,33 @@
           "state_verified": "No OOMKilled, no restart, no state_changed_during_window, VmHWM pinned at cap, container running cleanly",
           "escalation_rule": "A-30 discriminator rule: verdict=ESCALATE + reason contains 'discontinuity' → CRITICAL per tier1-probe.md clause 4"
         }
+      },
+      {
+        "id": "sys-20260814T035355-r16c",
+        "ts": "2026-08-14T03:53:55Z",
+        "from": "router",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "16th occurrence: system-auditor T1 (a50b9fd0324963fd4) analysis-only-exit, resumed clean — see feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806",
+        "severity": "MED",
+        "status": "OPEN",
+        "payload_ref": null,
+        "provenance": "router",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-14T03:30Z",
+        "dedup_key": "leaf-agent-analysis-only-exit:corroboration:2026-08-14T03:46Z:a50b9fd0324963fd4",
+        "detail": {
+          "class": "leaf-agent-analysis-only-exit",
+          "tracking_memory": "feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806",
+          "occurrence": 16,
+          "agent_type": "system-auditor",
+          "agent_id": "a50b9fd0324963fd4",
+          "first_turn_outcome": "correct A-30 analysis, zero writes (notebook/signal/commit all absent, RAW-verified)",
+          "mitigation": "resume-with-correction (SendMessage, EXECUTE-NOT-NARRATE directive)",
+          "resume_outcome": "CLEAN — notebook ## c89, signal sys-20260814T034703-c8e2, commit bfb93e450, RAW-verified matching",
+          "secondary_note": "commit was unpushed post-resume (ahead=2, within by-design PUSH_THRESHOLD=20 band per feedback_gatewayless_specialist_commits_but_never_pushes) — router pushed via commit-mutex push-only leg",
+          "running_tally": "resume-with-correction mitigation: 2 clean / 1 partial across 3 tries",
+          "disposition": "corroboration only, per standing occurrence-3+ precedent — no new board row minted"
+        }
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
