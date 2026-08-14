@@ -17338,7 +17338,7 @@
         ],
         "created_at": "2026-07-25T07:39:10Z",
         "created_by": "po",
-        "updated_at": "2026-08-07T21:42:02Z",
+        "updated_at": "2026-08-14T04:03:05Z",
         "promoted_at": "2026-08-07T20:21:50Z",
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
@@ -17347,7 +17347,10 @@
         "claimed_by": "dev-team (supervised-lane sweep)",
         "architect_review_note": "Design complete: docs/architecture-briefs/2026-08-07-freshness-auto-remediate-triage-design.md. (1) CLASSIFIER — generalize queryBctcPipelineRuntimeState into a writer-token->probe registry over vps_service_health (5 svcs) + cron_job_runs (57+ jobs, both already live, unread by this job) + bctc queue pattern. (2) ROUTING — CRASH->microservice_degraded (mint FIX), IDLE-overdue->data_stale (re-invoke via schedule_task or in-process job call), zone/agent resolved from system-map.json. (3) REDIRECT — new appendSignalQueueRow() signal writer (mirrors bctcImageFetchDegradedSignalWriter.ts) lands to=po on 2 ALREADY-ROUTED PO Pipeline-B types, zero new PO logic, drop the alert-commander urgent_news call (correct suppression, wrong addressee). (4) ANTI-SPAM — TS port of alert-engine djb2 dedup-key+cooldown-gate + new additive surface_breach_audit table (sla_breach_audit CHECK cannot hold non-enum surfaces) + open-remediation suppression. (5) scoped ENDPOINT_DB_QUERY widening into 5 buckets, ~24 mechanically mappable, recommend NOT blocking classifier on it. Root-caused both PO-folded false positives to code (isVnMarketHours 02:00-vs-02:15 boundary; foreign_flow threshold copy-pasted from price cadence). 3 open questions for PO in doc §10.",
         "architect_completed_at": "2026-08-07T21:42:01Z",
-        "architect_completed_by": "architect (SLS dispatch)"
+        "architect_completed_by": "architect (SLS dispatch)",
+        "secondary_claimed_at": "2026-08-14T04:03:05Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po"
       },
       {
         "id": "FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET",
