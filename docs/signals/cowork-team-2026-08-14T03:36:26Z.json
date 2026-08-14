@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "system",
+  "type": "cowork-tick-telemetry",
+  "payload": {
+    "matched_slots": ["alert-commander-market"],
+    "won_slots": ["alert-commander-market"],
+    "spawned": ["docs/agents/alert-commander/flow/main.md"],
+    "silent": false,
+    "drift_min": 6,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "due_reasons": {"alert-commander-market": "cron"},
+    "cadence_minutes": {"alert-commander-market": null},
+    "last_fired_timestamp": "2026-08-14T03:36:20Z",
+    "nominal_tick": "03:30"
+  },
+  "priority": "INFO",
+  "createdAt": "2026-08-14T03:36:26Z"
+}
