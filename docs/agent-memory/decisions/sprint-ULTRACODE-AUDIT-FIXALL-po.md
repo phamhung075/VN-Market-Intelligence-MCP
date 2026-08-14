@@ -24,3 +24,13 @@
 - Path A + dependency on FIX-CI-SIZELINT-COORDINATIONSTORE-BASELINE-1388L → chosen.
 **why-decision:** The risk axis and the sequencing axis are independent, so I did not have to trade them. Keeping FR-5 in scope preserves the hard guarantee; ordering it behind the size-lint row costs ~zero wall-clock because the 8 flow-doc children have no dependency on that file, and it avoids guaranteed rework — the size-lint fix needs -23L and will split the file, invalidating every line anchor brief §6 depends on.
 **why-change:** Adds a constraint neither BA nor architect could have known: I verified the size-lint failure by RUNNING the checker, not by reading the stale CI telegram.
+
+### STEP po-S3 · po · 2026-08-14T12:48:31Z
+**task-id:** UC-CCA-P2-MARKET-WATCHER
+**what-done:** Withheld AC-3 sign-off; row held in `review[]` with a po_note recording the static PASS, the missing live-cycle evidence, and the cowork-dispatcher outage that blocks it.
+**what-considered:**
+- Sign off on the static grep (exactly one Step 0-GW probe at `main.md:61`) — rejected: AC-3 is worded as a LIVE-cycle criterion, static proof is the half agent-father already did and is why the row was routed to po not qa.
+- Hand-spawn market-watcher to force a ping — rejected: not in PO's flow, a forced spawn is not the "next live cycle" AC-3 names, and it races the cowork-slot mutex.
+- Wait for the 16:00Z firing then close — rejected as a plan: the master dispatcher is down, so 16:00Z will not fire either.
+**why-decision:** Every evidence source (notebook 04:09Z, `last_fired` 04:08:29Z, work-log id 1975) predates commit `3cfabaa28` (12:35:04Z). Zero post-commit cycles exist, so a PASS would be fabricated.
+**why-change:** Plan assumed a natural cycle would fire; discovered the cowork master dispatcher has been silent since tick 06:45Z, so the 08:00Z/12:00Z ticks were missed and closure now depends on a `/cron-cowork-team` re-arm outside this task.
