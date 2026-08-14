@@ -92,12 +92,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-14T13:54:31Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-08-14T14:35:16Z",
+    "updated_by": "developer",
+    "active_task_id": null,
+    "next_agent": "router"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13524,6 +13523,43 @@
             "observed_at": "2026-08-14T14:32:29Z"
           }
         }
+      },
+      {
+        "id": "FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH",
+        "title": "notebook-auto-prune regex mismatch -- drops NEWEST not oldest, regresses e24e6b8b6 (false-green)",
+        "status": "DONE_VERIFIED",
+        "zone": "cross-service/",
+        "priority": "normal",
+        "type": "FIX",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH",
+        "owner": "developer",
+        "next_agent": "qa",
+        "entered_review_at": "2026-07-12T07:36:27Z",
+        "review_note": "[developer] Regex widened to one ERE (optional dash/colon separators) covering ALL live notebook heading formats (compact cycle-YYYYMMDDTHHMMZ / dashed-no-seconds Tick.../ dashed-with-seconds-or-ms suffix / date-only), normalized to a 17-char zero-padded numeric sort key, sort restricted to -k2,2 -s (was unbounded -k2, silently alphabetical on ties). Added detection-only duplicate-heading tripwire (pre-cap+post-prune) as defense-in-depth; root cause of the duplicate-heading symptom found to be UPSTREAM (docs/agents/dev-team/flow/post-cycle.md Step 4.5 missing notebook-write SKILL AC-3 discipline) -- signal filed docs/signals/developer-2026-07-12T073316Z-main-notebook-writepath-missing-ac3.json, out of this zone. 5/5 regression tests GREEN (2 new real-format cases + 1 duplicate-tripwire case). AC-4 live-verified against 100%-real main.md content (HEAD + reinstated real historical section, 207L) via the actual fixed script: oldest dropped, newest retained, final 177L, zero duplicate headings -- confirmed via direct grep/wc, not self-report. Also manually deduped a second, independent live duplicate found active in main.md at task start. Full trail: docs/agent-memory/decisions/sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S1/S2/S3.",
+        "secondary_claimed_at": "2026-08-05T08:15:09Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "developer",
+        "updated_at": "2026-08-14T14:35:00Z",
+        "claimed_at": "2026-08-14T14:23:59Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "status_note": "[QA] Review Record (direct-commit verify): row predated the drain (no .commit/.files[]/.owner-field wiring) -- derived commit via git log on scripts/agents-flow/notebook-auto-prune.sh + cross-checked date against entered_review_at (2026-07-12T07:36:27Z): 3a2b9228d25d2f95ba8c9a63fc1f45273f1b4ba5 (2026-07-12T09:37:51+02:00), confirmed on main ancestry, git show --stat matches notebook-auto-prune.sh + test-notebook-auto-prune.sh + docs/agent-memory/notebooks/main.md + orch-state.json + decision journal + signal file, all as claimed. Independently re-ran the widened regex (nso_ts_key, now living in scripts/agents-flow/lib/notebook-section-direction.sh post 2026-08-06 extraction) against all 4 real heading shapes the review_note claims: compact cycle-YYYYMMDDTHHMMZ, dashed-no-seconds Tick.../, dashed-with-seconds/ms, date-only -- all resolve to correct sort keys; undated headings correctly sentinel. Ran BOTH regression suites in an isolated `git worktree --detach HEAD` (kept the shared dirty tree + a concurrent devs live WIP untouched): legacy test-notebook-auto-prune.sh tests 1-4 (this rows own 2 new real-format regression cases, exactly as claimed) + tests 5-8 (later dup-heading task) all PASS. Test 9 (a LATER, unrelated tasks bash-vs-zsh AC-3 check, added 2026-07-31) crashes on BASH_SOURCE under zsh -- confirmed by chronology this is caused by even-later commits (UC-CRITIC-HOOKS-ENFORCEMENT + 2026-08-06 lib extraction), postdates and is unrelated to 3a2b9228d, and is already separately tracked at FIX-NOTEBOOKAUTOPRUNE-HOOKGUARD-BASHSOURCE-ZSH-BREAK (BACKLOG) -- not this rows regression, not blocking. Canonical current suite notebook-auto-prune.test.sh: 10/10 PASS. mock-guard/DDD/security scans on the touched production file: clean (mock-guard does not scan .sh as production source; zero DDD/secret hits). FLAG (per dispatcher instruction, not resolved here): this rows own fix (originally inline in 3a2b9228d, extracted 2026-08-06 into scripts/agents-flow/lib/notebook-section-direction.shs nso_ts_key()) is the EXACT SAME file+function a DIFFERENT concurrent developer session is editing RIGHT NOW (uncommitted WIP, git blame shows Not Committed Yet dated 2026-08-14T16:26:03+02:00 today) for task FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE -- a real, adjacent SHA-collision defect this rows own widening helped create (confirmed live: a heading with a trailing numeric commit-sha collides with the optional-time-suffix + tail-1 pattern) but out of THIS rows AC scope (which only required matching real heading FORMATS, not adversarial digit collisions). No conflict resolved, flagged only.",
+        "commit_sha": "3a2b9228d25d2f95ba8c9a63fc1f45273f1b4ba5",
+        "updated_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bash (isolated `git worktree --detach HEAD`, non-destructive to shared dirty tree)",
+            "args": {
+              "commands": [
+                "bash scripts/agents-flow/notebook-auto-prune.test.sh",
+                "bash scripts/agents-flow/test-notebook-auto-prune.sh",
+                "function-level nso_ts_key probe vs 4 real heading formats + SENTINEL"
+              ],
+              "worktree_head": "437645beb"
+            },
+            "live_value_observed": "notebook-auto-prune.test.sh (canonical): 10 passed, 0 failed. test-notebook-auto-prune.sh (legacy, this rows own regression cases): tests 1-4 (append/prepend/compact-cycle/dashed-tick real-format regression, this rows AC) PASS, tests 5-8 (dup-heading, later task) PASS, test 9 (unrelated later bash-vs-zsh AC-3 check) crashed on pre-existing BASH_SOURCE-under-zsh defect -- separately tracked FIX-NOTEBOOKAUTOPRUNE-HOOKGUARD-BASHSOURCE-ZSH-BREAK (BACKLOG), not this rows regression.",
+            "observed_at": "2026-08-14T14:33:32Z"
+          }
+        }
       }
     ],
     "head": {
@@ -18862,6 +18898,38 @@
         "po_RULING_CRITICAL_PATH_20260814T0927Z": "[po RULING 2026-08-14T09:27Z — THIS ROW IS NOW THE CRITICAL PATH FOR THE WHOLE rag-service MEMORY INCIDENT. P0 stands. next_agent=dev-rag-service stands. Route here, not to another mitigation.]\nNEW EVIDENCE — the cleanest dataset this incident has ever produced, and it CONFIRMS this row's own PO premise-correction of 2026-08-12T03:03:00Z (\"a bounded allocator retention is flat after the first unload; this is monotonic growth from a cold process, so there is a SECOND, UNBOUNDED growth source\"). Measured on the CURRENT post-fix image sha256:4a955869f002 (carries 82216e291 skip-redundant-vector-index-rebuild, content-verified in-container by QA), container 632080976c9bbb45, cold start 2026-08-14T08:41:48Z, RestartCount=0, NO restart boundary anywhere in the series — so none of the usual confounders apply and the crash-cliff/reclamation-dip misreading (feedback_a30_discriminator_crash_cliff_misscored_as_reclamation_dip) is structurally excluded:\n  +15.2min (08:57Z) = 84.85%   <- the reading a Tier-1 cycle STALE-ACK'd as \"benign warm-up\"\n  +31.2min (09:13Z) = 86.11%   <- auditor-tier1-probe.sh FAILURE\n  +39.2min (09:21Z) = 89.18%   <- independently RAW-verified by router via live docker stats/inspect\n  segment rates 0.08 -> 0.16 -> 0.38 pp/min: MONOTONIC AND ACCELERATING. ~4.3pp in 24 minutes. Extrapolates to the 1GiB ceiling within ~30-45 further minutes; a preemptive ops restart was executed at 09:23:21Z to pre-empt an uncontrolled OOMKill (mitigation only, resets nothing about the defect).\nWHAT THIS RULES OUT — do not spend another cycle on any of it: (i) restart-warmup / settling noise (RestartCount=0, single continuous lifetime, growth accelerating not decaying); (ii) stale image (content-hash verified by QA post-deploy); (iii) redundant vector-index rebuild as the driver (82216e291 is live and skipping correctly, climb reproduces anyway); (iv) lance-core thread oversubscription as the driver (ca6d86869 pin is effective-but-insufficient, discriminated in-container by dev-rag-service 2026-08-14T07:2xZ); (v) \"just restart it\" (RestartCount reached 12 on the prior container with the identical climb each time).\nDIRECTIVE — NO MORE RESTART-TIMING OR DEPLOY-CONFIG TWEAKS. Three consecutive fixes (cap raise 2f835ec63, thread-pin ca6d86869, skip-rebuild 82216e291) all attacked the environment around the process and all failed within hours. The next change must come from an actual measurement of WHERE THE BYTES GO inside the running process. PO is not prescribing the tooling — that is dev-rag-service's call and the choice should be justified in the handoff — but the deliverable is a per-allocation-site attribution of the growth, from cold start, under live traffic, sufficient to name the retaining object graph. Ruling out the remaining candidates this row already lists (per-request embedder tensor/cache accumulation; LanceDB reader handles or version-dir mmaps held open per query; the FTS build path tracked by RAG-FTS-BUILD-MEMORY-BOUND) is in scope; guessing between them is not.\nAC (supersedes the po-S157 phrasing on growth-rate alone): (1) a named retaining allocation site or object graph, evidenced by an in-process profile taken on the deployed image, NOT inferred from RSS deltas; (2) a fix targeting that site; (3) closure ONLY under RAG-MEM-DURABILITY-BAR v2 D1-D5 as recorded on FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED — in particular D3's POSITIVE plateau (<=0.02 pp/min over the final 12h AND <=85% of cap), because \"no OOM observed\" has now failed to predict this defect three times.\nKNOWN CO-BLOCKER, still open, do not lose it: the QA CHANGES_REQUESTED from 2026-08-12T09:33Z stands — fastapi.testclient.TestClient cannot import in the deployed image (httpx/httpx2 undeclared in apps/rag-service/requirements.txt), which is why 11-12 tests fail in-image on every QA pass and why this zone cannot cleanly attest a suite. Bundle that requirements fix with this work; it is cheap and it unblocks honest test attestation for every future rag-service closure.\nCROSS-REF: FU-RAG-DEPLOY-MEMORY was de-certified this tick (done_verified[] -> review[] at BLOCKED, blocked_by = THIS row) precisely so it can no longer be read as \"rag-service memory is closed\". FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED's durability window was VOIDED this tick and is blocked_by THIS row. Both are downstream of this row closing. This is the only rag-service memory row that should receive a dispatch.",
         "dev_implementation_20260814T1018Z": "[dev-rag-service 2026-08-14T10:18:29Z] IN-PROCESS ATTRIBUTION DELIVERED (PO ruling po_RULING_CRITICAL_PATH_20260814T0927Z AC-1/AC-2). Method: scripts/audits/rag-lancedb-mem-attribution-probe.py drove the REAL production ~4:1 insert:search traffic mix (docker logs, 79 POST /index : 19 POST /search over 60min, 2026-08-14T09:39Z) against the real LanceDBVectorStore singleton, instrumenting 3 orthogonal planes simultaneously (tracemalloc Python-heap, gc.get_objects() type census as a dependency-free objgraph equivalent, pyarrow.default_memory_pool().bytes_allocated() -- backend=mimalloc, confirmed a 3rd allocator context). Over 140 ops (~4.5min) RSS climbed ~120MB while ALL THREE planes stayed flat (tracemalloc_current_kb +60KB total; pyarrow pool bytes_allocated=0 the entire run; lancedb/pyarrow wrapper-object gc counts capped at +1) -- ruling out Python heap and PyArrow buffers BY ELIMINATION, not guess. NAMED ROOT CAUSE (confirmed live against lancedb 0.37.1): lancedb.connect_async() with no session= kwarg builds lancedb own internal Session.default() -- its own docstring: 6GB index cache + 1GB metadata cache inside a 1GB container, i.e. effectively unbounded (never reaches its own eviction floor before OOM). FIX 1: _get_table() now builds an explicit lancedb.Session(index_cache_size_bytes=.., metadata_cache_size_bytes=..) wired from Config.lancedb_index_cache_mb/lancedb_metadata_cache_mb (env LANCEDB_INDEX_CACHE_MB=96/LANCEDB_METADATA_CACHE_MB=32 default), None preserves exact pre-fix behaviour for every caller that does not opt in. FIX 2 (2nd independently-measured contributor, found while validating fix 1 did not fully plateau growth in a long synthetic replay): _COMPACT_RETENTION 2-day default never prunes anything within this container real uptime (OOM-restarts every 30-90min) -- direct confirmation: re-running table.optimize(cleanup_older_than=timedelta(seconds=0)) against the SAME grown corpus copy (post ~1200 synthetic ops) pruned 4170 stale versions / 422,906,121 bytes (~422MiB) in one call, entirely invisible to the Session-cache bound (separate read-side LRU). Now configurable via compact_retention ctor param / Config.lancedb_compact_retention_hours (env LANCEDB_COMPACT_RETENTION_HOURS, default 1h). CO-FIXED (co-blocker per PO ruling): QA CHANGES_REQUESTED 2026-08-12T09:33Z -- fastapi.testclient.TestClient could not import in the deployed image; live error message says starlette requires httpx2 (not httpx) verbatim -- added httpx2>=2.10.0 to requirements.txt + pyproject.toml dev extras, confirmed TestClient imports post-install and all previously-failing tests now pass in-image. VERIFIED: 215/215 pytest green in-image (201 baseline + 14 new in __tests__/unit/test_rag_lancedb_session_and_retention_bound.py, incl. a REAL end-to-end no-mocks traffic replay against a deliberately tiny cache bound confirming Session.size_bytes stays bounded not unbounded), mypy no new error categories (git-stash diff skipped -- shared multi-agent repo, feedback_qa_git_stash_collision_shared_repo_near_miss.md risk -- verified manually line-by-line instead: all repositories.py hits are pre-existing self._db/self._table untyped-attribute categories, config.py/app_factory.py show ZERO mypy hits at all), sandbox primitive 16/16 + module 2/2 GREEN exit 0, env-audit empty (modulo CLAUDE_CODE_MESSAGING_TOKEN false-positive from running the grep in this agent own host shell, not the sandbox subprocess -- unrelated to rag-service), fence-A/B clean (pre-existing docstring-only hits, files untouched), size-lint --check PASS repo-wide, mock-guard PASS. Commit . NOT executed by this row (explicitly out of a single dev cycle scope per PO own AC): the RAG-MEM-DURABILITY-BAR v2 D1-D5 ops-supervised multi-hour post-deploy measurement (D3 positive plateau <=0.02pp/min over final 12h AND <=85% of cap) -- REBUILD_REQUIRED: true, next actor after QA code-review is ops (rebuild+deploy) then a supervised multi-hour window, not another dev-rag-service cycle.",
         "blocked_reason": "Code review PASSED (commit 0eb733b577a32f343c472fec525cad49b9e9f86a, independently re-verified by QA). Cannot go done_verified[]: this row's own AC (po_RULING_CRITICAL_PATH_20260814T0927Z) requires closure ONLY under RAG-MEM-DURABILITY-BAR v2 D1-D5 (>=12h positive plateau <=0.02pp/min AND <=85% of cap). Fix is committed to main but NOT yet deployed (running container image predates this commit). Next: ops rebuild+deploy, then the supervised multi-hour window. See status_note for full QA record."
+      },
+      {
+        "id": "FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE",
+        "type": "FIX",
+        "title": "P0 LIVE DATA LOSS: nso_ts_key() tail -1 parses a trailing all-numeric git short-SHA in a '## ' heading as an 8-digit date, so notebook-auto-prune drops the WRONG section — destroyed a P0 row's QA review record",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "owner": "po",
+        "created_at": "2026-08-14T13:37:19Z",
+        "created_by": "po",
+        "source": "durable-inbox signal from=qa type=notebook_prune_wrong_section_dropped_ts_key_bug 2026-08-14T09:36:17Z",
+        "dedup_key": "notebook-auto-prune|defect:nso_ts_key-tail1-matches-commit-sha-digits",
+        "dedup_checked": "backlog+ready+in_progress+review+qa scanned 2026-08-14T13:3xZ. FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH (review/qa) = heading-regex shape, NOT ts-key extraction. FIX-NOTEBOOKAUTOPRUNE-HOOKGUARD-BASHSOURCE-ZSH-BREAK (backlog) = zsh sourcing. FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (ready) = AC-5/AC-6 sentinel/rolling shape. QA's own report states all three guards structurally miss this signature. NO dedup hit -> minted.",
+        "evidence": "scripts/agents-flow/lib/notebook-section-direction.sh nso_ts_key(): grep -oE date-regex | tail -1 picks the LAST digit-run in the heading line. Live convention 'commit `761988143`' (10-digit numeric SHA prefix) parses as YYYYMMDD and sorts ABOVE the real timestamp. QA reproduced by direct invocation: cycle-705 heading -> ts_key=76198814000000000 instead of 20260814013311000, making the genuinely-OLDEST section look NEWEST; the hook then dropped cycle-711 (UC-CDC-P7 DONE_VERIFIED review record) instead. PO INDEPENDENTLY CONFIRMED A SECOND, WORSE LIVE LOSS 2026-08-14T13:3xZ: `grep -c COWORK-MUTEX-001 docs/agent-memory/notebooks/qa.md` == 0, yet an inbox signal at 09:36:45Z quotes that exact section verbatim ('## cycle-715 · 2026-08-14T09:31:14Z · TASK-COWORK-MUTEX-001 (report-analyzer, commits f8d3891c6+465801802) — Direct-Commit Verify, CHANGES_REQUESTED'). The CHANGES_REQUESTED verdict for TASK-COWORK-MUTEX-001 (P0, still in review[]) is GONE from the notebook AND that row's status_note is empty — the review verdict for a live P0 row was destroyed with zero trace.",
+        "root_cause": "tail -1 over the whole heading line instead of anchoring extraction to the FIRST date-like match after the '## cycle-NNN ·' prefix, or requiring a T..Z time suffix so a bare 8-digit run cannot win.",
+        "acceptance": "AC-1 nso_ts_key on a heading shaped '## cycle-NNN · <ISO ts> · ... commit `<all-digit-prefix>`' returns the ISO-derived key, not the SHA-derived one. AC-2 new RED-first regression fixture in scripts/agents-flow/notebook-auto-prune.test.sh using qa.md's own commit-citation convention. AC-3 re-run over every docs/agent-memory/notebooks/*.md heading: zero headings compute a ts_key from a non-date digit run. AC-4 reconstruct TASK-COWORK-MUTEX-001's destroyed CHANGES_REQUESTED record onto that row's status_note (data-recovery half - see related).",
+        "related": [
+          "TASK-COWORK-MUTEX-001",
+          "FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE",
+          "FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH"
+        ],
+        "consumer_impact": "Also the mechanism behind the 3 [notebook-immutability-guard] AC-2a WARNs in this same inbox (qa.md cycle-715, developer.md x2, qa.md cycle-726): the hook rewrites a retained section mid-cycle, which is exactly what AC-2a detects. Those WARNs are downstream symptoms, not independent findings.",
+        "updated_at": "2026-08-14T14:35:16Z",
+        "promoted_at": "2026-08-14T13:54:25Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-14T13:54:30Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "updated_by": "developer"
       }
     ],
     "qa": [
@@ -18903,25 +18971,6 @@
         "blocked_by": "FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS",
         "po_WINDOW_VOIDED_20260814T0927Z": "[po RULING 2026-08-14T09:27Z — DURABILITY WINDOW VOID, NOT MERELY RESET. Certification cannot proceed; do NOT come back at 2026-08-15T08:41:48Z expecting to certify.]\nFACTS, po RAW-verified on the host at 2026-08-14T09:23-09:24Z (docker ps / docker stats --no-stream / docker inspect), not relayed:\n (a) The container this row's window was opened on — 632080976c9bbb45 on image sha256:4a955869f002 — was RESTARTED at 2026-08-14T09:23:21.675Z. State.StartedAt moved 08:41:48Z -> 09:23:21Z; container id and image are UNCHANGED (docker restart, not recreate), RestartCount still 0. Memory read seconds later: 34.54MiB/1GiB = 3.37%, i.e. cold. The restart was a deliberate preemptive ops mitigation dispatched by the router to avoid an uncontrolled OOMKill — correct as a stopgap, fatal to this window.\n (b) BEFORE that restart, on the SAME post-fix image from a genuinely cold start at 08:41:48Z, with RestartCount=0 and NO restart boundary anywhere in the series, memory climbed MONOTONICALLY: 84.85% @08:57Z (+15.2min) -> 86.11% @09:13Z (+31.2min) -> 89.18% @09:21Z (+39.2min). Segment rates 0.08 -> 0.16 -> 0.38 pp/min: monotonic AND accelerating, ~4.3pp gained in 24 minutes, tracking to the 1GiB ceiling inside ~30-45 further minutes. The 09:21Z 89.18% point was independently RAW-verified by the router via live docker stats/inspect.\nWHY THE WINDOW IS VOID RATHER THAN RESTARTED: under RAG-MEM-DURABILITY-BAR v2 clause D4 a window is invalid if any mitigation (preemptive restart, cap raise, traffic throttle) was applied during it. Restarting a leaking process at 89% and then reporting \"zero OOM in 24h\" is a FALSE GREEN of exactly the same family as the `docker inspect .State.OOMKilled` false-negative this bar was written to replace: it measures the mitigation, not the fix. If this service needs a preemptive restart every ~40-80 minutes to stay alive, it CANNOT produce a valid 24h continuous-lifetime window, and that impossibility is itself the finding.\nWHAT (b) MEANS FOR THIS ROW'S OWN FIX: commit 82216e291 (skip redundant vector-index rebuild on restart) is NECESSARY BUT INSUFFICIENT — the same verdict the thread-pin ca6d86869 earned before it. QA's code review of 82216e291 stands (sound, correctly targets the discriminated per-process-flag defect, tests+mypy verified in-image) and NO rework of that commit is requested. But the amplifier hypothesis — that the redundant rebuild was what drove the climb — is REFUTED by (b): the climb reproduces on the post-82216e291 image, from cold, with the rebuild demonstrably skipped. Per this row's own standing instruction, that returns the problem to dev-rag-service for further diagnosis; per that same instruction, do NOT re-patch blind and do NOT open a third tracking row. Evidence lives here; the diagnosis is owned by FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS, now blocked_by-linked from this row.\nDISPOSITION: status stays QA (code has no defect requiring rework), qa_durability_certified stays false, window fields nulled + VOID, blocked_by = the leak row. This row CANNOT be certified until the leak row closes. Any agent that flips it DONE/DONE_VERIFIED before then is fabricating a certification.",
         "po_RAG_MEM_DURABILITY_BAR_V2_20260814T0927Z": "[po RULING 2026-08-14T09:27Z] RAG-MEM-DURABILITY-BAR v2 — binding on EVERY rag-service memory row (this row, FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS, FU-RAG-DEPLOY-MEMORY, OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX). SUPERSEDES the v1 bar in po_crossref_20260814T0700Z, which was necessary but gameable.\nRATIONALE FOR RAISING IT AGAIN: this is the THIRD consecutive \"fix landed -> marked DONE_VERIFIED -> recurred within hours\" cycle on one incident. 1) thread-pin ca6d86869 -> OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX certified DONE_VERIFIED 2026-08-12T12:46:40Z -> kernel OOM at +1h00m, +1h14m, +20h34m. 2) cap raise 2f835ec63 -> FU-RAG-DEPLOY-MEMORY certified DONE_VERIFIED 2026-08-08T10:59:52Z -> three kernel OOMs on the raised cap. 3) skip-rebuild 82216e291 -> STALE-ACK'd benign at 08:57Z on a single 84.85% post-restart reading -> monotonic accelerating climb to 89.18% within 24 minutes. Each closure was defeated by the same structural flaw: a NEGATIVE criterion (no crash observed yet) evaluated over a window shorter than the failure's own period, on a signal that cannot see the failure. v2 adds a POSITIVE criterion and closes the two laundering paths.\nD1 SIGNAL (carried from v1, unchanged): >= 24h wall-clock with ZERO `oom_memcg` dmesg events for the rag-service cgroup, read INSIDE the Docker Desktop VM (nsenter). NEVER `docker inspect .State.OOMKilled`, NEVER `.State.ExitCode`, NEVER RestartCount — all three are proven false-negatives here.\nD2 CONTINUOUS LIFETIME (new): the window must span ONE unbroken container lifetime. Any restart or recreate — INCLUDING a preemptive ops mitigation restart — resets it to zero. Evidence must cite `docker inspect .State.StartedAt` at window OPEN and the identical value at window CLOSE. A window whose StartedAt moved is not a short window, it is no window.\nD3 POSITIVE PLATEAU (new — this is the actual fix criterion, D1 alone can never establish one): >= 6 memory samples spread across the window; fit the growth rate over the final 12h. PASS requires BOTH rate <= 0.02 pp/min AND final reading <= 85% of the cap. A run that ends at 95% having merely not died yet is a FAIL. \"Did not OOM\" is not \"bounded\" — the whole incident history above is the proof.\nD4 NO-MITIGATION (new): the window is INVALID if any preemptive restart, cap raise, traffic throttle, or manual memory intervention was applied during it. Mitigation windows and certification windows are mutually exclusive. If the service cannot survive the window unassisted, report that as the finding — never launder it into a green.\nD5 EVIDENCE SHAPE (new, process): the certifying agent MUST write onto the row it closes — `durability_window_started_at` (= .State.StartedAt), `durability_window_container_id`, `durability_window_ended_at`, `durability_samples[]` (>=6 {ts, mem_pct}), `durability_growth_pp_per_min`, and the verbatim in-VM dmesg query used. A prose assertion without those six fields is NOT a certification and any lane move it justifies is void. This also satisfies the schema's verification.raw_probe{} requirement — never close a rag-service memory row via a RC_VERIF_GRANDFATHERED_IDS exemption."
-      },
-      {
-        "id": "FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH",
-        "title": "notebook-auto-prune regex mismatch -- drops NEWEST not oldest, regresses e24e6b8b6 (false-green)",
-        "status": "QA",
-        "zone": "cross-service/",
-        "priority": "normal",
-        "type": "FIX",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH",
-        "owner": "developer",
-        "next_agent": "qa",
-        "entered_review_at": "2026-07-12T07:36:27Z",
-        "review_note": "[developer] Regex widened to one ERE (optional dash/colon separators) covering ALL live notebook heading formats (compact cycle-YYYYMMDDTHHMMZ / dashed-no-seconds Tick.../ dashed-with-seconds-or-ms suffix / date-only), normalized to a 17-char zero-padded numeric sort key, sort restricted to -k2,2 -s (was unbounded -k2, silently alphabetical on ties). Added detection-only duplicate-heading tripwire (pre-cap+post-prune) as defense-in-depth; root cause of the duplicate-heading symptom found to be UPSTREAM (docs/agents/dev-team/flow/post-cycle.md Step 4.5 missing notebook-write SKILL AC-3 discipline) -- signal filed docs/signals/developer-2026-07-12T073316Z-main-notebook-writepath-missing-ac3.json, out of this zone. 5/5 regression tests GREEN (2 new real-format cases + 1 duplicate-tripwire case). AC-4 live-verified against 100%-real main.md content (HEAD + reinstated real historical section, 207L) via the actual fixed script: oldest dropped, newest retained, final 177L, zero duplicate headings -- confirmed via direct grep/wc, not self-report. Also manually deduped a second, independent live duplicate found active in main.md at task start. Full trail: docs/agent-memory/decisions/sprint-TOKEN-ECONOMY-AUDIT-developer.md STEP developer-S1/S2/S3.",
-        "secondary_claimed_at": "2026-08-05T08:15:09Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "developer",
-        "updated_at": "2026-08-14T14:23:59Z",
-        "claimed_at": "2026-08-14T14:23:59Z",
-        "claimed_by": "dev-team (review-lane qa-drain)"
       },
       {
         "id": "FIX-AUDITOR-EMPTYTABLE-CHECK-NO-WRITER-DISCRIMINATOR",
@@ -19082,39 +19131,7 @@
     },
     "last_triaged_at": "2026-08-14T13:54:25Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "FIX-NSO-TS-KEY-COMMIT-SHA-DIGITS-PARSED-AS-DATE",
-        "type": "FIX",
-        "title": "P0 LIVE DATA LOSS: nso_ts_key() tail -1 parses a trailing all-numeric git short-SHA in a '## ' heading as an 8-digit date, so notebook-auto-prune drops the WRONG section — destroyed a P0 row's QA review record",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "owner": "po",
-        "created_at": "2026-08-14T13:37:19Z",
-        "created_by": "po",
-        "source": "durable-inbox signal from=qa type=notebook_prune_wrong_section_dropped_ts_key_bug 2026-08-14T09:36:17Z",
-        "dedup_key": "notebook-auto-prune|defect:nso_ts_key-tail1-matches-commit-sha-digits",
-        "dedup_checked": "backlog+ready+in_progress+review+qa scanned 2026-08-14T13:3xZ. FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH (review/qa) = heading-regex shape, NOT ts-key extraction. FIX-NOTEBOOKAUTOPRUNE-HOOKGUARD-BASHSOURCE-ZSH-BREAK (backlog) = zsh sourcing. FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (ready) = AC-5/AC-6 sentinel/rolling shape. QA's own report states all three guards structurally miss this signature. NO dedup hit -> minted.",
-        "evidence": "scripts/agents-flow/lib/notebook-section-direction.sh nso_ts_key(): grep -oE date-regex | tail -1 picks the LAST digit-run in the heading line. Live convention 'commit `761988143`' (10-digit numeric SHA prefix) parses as YYYYMMDD and sorts ABOVE the real timestamp. QA reproduced by direct invocation: cycle-705 heading -> ts_key=76198814000000000 instead of 20260814013311000, making the genuinely-OLDEST section look NEWEST; the hook then dropped cycle-711 (UC-CDC-P7 DONE_VERIFIED review record) instead. PO INDEPENDENTLY CONFIRMED A SECOND, WORSE LIVE LOSS 2026-08-14T13:3xZ: `grep -c COWORK-MUTEX-001 docs/agent-memory/notebooks/qa.md` == 0, yet an inbox signal at 09:36:45Z quotes that exact section verbatim ('## cycle-715 · 2026-08-14T09:31:14Z · TASK-COWORK-MUTEX-001 (report-analyzer, commits f8d3891c6+465801802) — Direct-Commit Verify, CHANGES_REQUESTED'). The CHANGES_REQUESTED verdict for TASK-COWORK-MUTEX-001 (P0, still in review[]) is GONE from the notebook AND that row's status_note is empty — the review verdict for a live P0 row was destroyed with zero trace.",
-        "root_cause": "tail -1 over the whole heading line instead of anchoring extraction to the FIRST date-like match after the '## cycle-NNN ·' prefix, or requiring a T..Z time suffix so a bare 8-digit run cannot win.",
-        "acceptance": "AC-1 nso_ts_key on a heading shaped '## cycle-NNN · <ISO ts> · ... commit `<all-digit-prefix>`' returns the ISO-derived key, not the SHA-derived one. AC-2 new RED-first regression fixture in scripts/agents-flow/notebook-auto-prune.test.sh using qa.md's own commit-citation convention. AC-3 re-run over every docs/agent-memory/notebooks/*.md heading: zero headings compute a ts_key from a non-date digit run. AC-4 reconstruct TASK-COWORK-MUTEX-001's destroyed CHANGES_REQUESTED record onto that row's status_note (data-recovery half - see related).",
-        "related": [
-          "TASK-COWORK-MUTEX-001",
-          "FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE",
-          "FIX-NOTEBOOK-AUTOPRUNE-REGEX-HEADING-MISMATCH"
-        ],
-        "consumer_impact": "Also the mechanism behind the 3 [notebook-immutability-guard] AC-2a WARNs in this same inbox (qa.md cycle-715, developer.md x2, qa.md cycle-726): the hook rewrites a retained section mid-cycle, which is exactly what AC-2a detects. Those WARNs are downstream symptoms, not independent findings.",
-        "updated_at": "2026-08-14T13:54:31Z",
-        "promoted_at": "2026-08-14T13:54:25Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-14T13:54:30Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
