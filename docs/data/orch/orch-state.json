@@ -18793,7 +18793,7 @@
         "last_served_tick": "2026-08-14T13:26:05Z"
       }
     },
-    "_updated_at": "2026-08-14T14:19:46Z",
+    "_updated_at": "2026-08-14T14:49:32Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -18824,6 +18824,41 @@
         },
         "createdAt": "2026-08-14T13:53:34Z",
         "drained_at": "2026-08-14T14:19:46Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4f4893afcb0bf2d193eb802a611facd2c42a8536f5f75c7c93241c48c38776c3",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/data/orch/orch-state.json' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/data/orch/orch-state.json' (e5b4411ea91cc54c23c8640d9715a75d0ab665ee) differs from what is about to land in this commit (18338ccb021212b89b450f4d4cd4db90d7454ce3) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope (two-blob form takes NO pathspec — do not append '-- docs/data/orch/orch-state.json', that is a git usage error): git diff e5b4411ea91cc54c23c8640d9715a75d0ab665ee 18338ccb021212b89b450f4d4cd4db90d7454ce3",
+        "createdAt": "2026-08-14T14:31:46Z",
+        "drained_at": "2026-08-14T14:49:32Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b258e75b85071b229ec6f0d3949b0a5072af2f016e0d86e0f4c9b498d511eccb",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-21.md",
+          "line_count": 169,
+          "cap": 600,
+          "byte_count": 37618,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 1618,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-14T14:48:30Z",
+        "drained_at": "2026-08-14T14:49:32Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
