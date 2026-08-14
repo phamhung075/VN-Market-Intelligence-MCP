@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-08-11T12:38:53Z
-
-**Brief:** `docs/architecture-briefs/2026-08-11-chore-commit-overhead-audit.md`
-
-Router-dispatched skeptical audit of chore-commit volume (85%+ of last 500 commits). Re-verified independently: type-mix matches router's read, but raw insertion-volume was skewed ~2x by an active bug — drain-signals.md's payload_ref inlining rule re-pastes the ENTIRE 745KB db-integrity-history.json into orch-state.json on every db_integrity_breach drain (one live commit added +33k lines from this alone, ~49% of the whole chore-insertion sample). Root-caused the 438 chore commits to 5 structural drivers (notebook/40%, orch-state bookkeeping/16%, signal drain+prune/13%, system-auditor per-finding commits/12%, cold-evict/8%) — majority IS crash-safety-mandated (CAS-guarded board writes, per-agent notebook isolation), confirming the router's spot-check verdict (real, not fabricated). Found one already-diagnosed-but-only-half-shipped fix (2026-07-12 brief flagged `docs/signals/processed/*.json` git-churn; only `signals.db` got untracked) and one proven-safe precedent (2026-05-21 L-7 notebook-commit batching, already live for market-watcher/news-scout) to generalize into system-auditor's per-finding DASHBOARD commits. Investigated PM's `done_verified[]>0` cold-evict trigger as a candidate 4th fix and dropped it — traced to a deliberate HSC-6 design decision, not an oversight.
-
-**Signal dropped:** `docs/signals/2026-08-11-chore-commit-overhead-audit.json` → agent-father (cc po, pm/dev-team)
-
----
-
 ## 2026-08-11T13:59:53Z
 
 **Brief:** `docs/architecture-briefs/2026-08-11-cron-heartbeat-prespawn-gating.md`
@@ -37,3 +27,13 @@ Root-caused the auditor-dedup-ledger.json key-loss (2-instance escalation thresh
 Did not mint a new board row or a new architecture brief (existing tracked row `FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED`, P1, backlog, already covers this). Did not re-route to `agent-father` (already dropped this exact rewire twice via untracked `docs/signals/processed/` handoffs — the tracked board row is what makes LANE-A viable this time, per the proposal's own rationale). `docs/data/orch/orch-state.json` board-row field update left to `po` — outside this agent's declared commit zone.
 
 **Signal dropped:** `docs/signals/IMP-20260814-system-auditor-notebook-compose-actuator-never-wired-review.json` → po
+
+---
+
+## 2026-08-14T07:56:51Z
+
+**Brief:** `docs/architecture-briefs/2026-08-14-devteam-head-nextagent-write-coherence.md`
+
+PO triage's `FIX-DEVTEAM-HEAD-NEXTAGENT-RESYNC-ON-REASSIGN` (in_progress-resident facet of the stale-`.head` family, 3 confirmed agent types: router DRS, pm ×2, architect). Designed WF-2b: a new `dev-team/main.md` check inserted between WF-2 and WF-3 that, unlike every other WF-N carve-out, never JUMPs away — it resyncs `.head.next_agent` to match the row's own current `next_agent` when they disagree (the row is authoritative, not `.head` — dispatcher-only mirror state, single reader), resets `resume_attempts` to 0 in the same write (prevents a WF-3 false-positive tripping on the first correct dispatch after a fix), and lets S2 dispatch the corrected agent the same tick. Row-lookup scoped to `in_progress[]`+`active_sprints[].tasks[]` only — proven safe regardless of the concurrently-landing WF-1d row's own order (a review/qa-resident row resolves empty either way, never double-fixed). Ruled memory-candidate (a) (per-flow-doc handoff sync) NOT warranted for pm/architect/router given WF-2b's zero-latency single-file fix; ruled pm's partial `.head` write (commit `95540b50d`, status-flip only) needs its own narrow companion (different malformed shape/entry gate, WF-2b structurally can't catch it). Flagged 2 companion rows for PO to mint: `FIX-PM-NONCLOSEOUT-HEAD-RESET-INCOMPLETE-NULLOUT` (agent-father) + `FIX-DEVTEAM-HEAD-NEXTAGENT-COHERENCE-VERIFY` (developer).
+
+**Signal dropped:** `docs/signals/devteam-head-nextagent-write-coherence-20260814.json` → agent-father
