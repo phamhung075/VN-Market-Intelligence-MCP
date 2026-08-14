@@ -1,0 +1,36 @@
+{
+  "from": "cowork-team",
+  "to": "cowork-team",
+  "type": "tick-dispatch",
+  "payload": {
+    "matched_slots": [
+      "alert-commander-market"
+    ],
+    "won_slots": [
+      "alert-commander-market"
+    ],
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "due_reasons": {
+      "alert-commander-market": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-market": null
+    },
+    "last_fired_timestamp": "2026-08-14T03:06:28Z",
+    "nominal_tick": "03:00"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-14T03:06:35Z",
+  "_processed": {
+    "fingerprint": "ee9ed7536f02fed3da628722c5de897c3e4109cfc5eed945fbea2d23d13b4511",
+    "processedAt": "2026-08-14T03:19:58Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
