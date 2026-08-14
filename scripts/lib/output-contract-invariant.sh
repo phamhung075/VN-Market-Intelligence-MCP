@@ -33,6 +33,50 @@
 #   `signals_posted=0 | signal_queue_rows_written=1 | dedup_skipped=1`
 #   — 0 >= 1 is false on both counts.
 #
+# ── FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE (2026-08-14) additions ──
+# scripts/auditor-notebook-commit.sh §2b (see that script's header). The §2a
+# backstop above (and the AC-1/AC-2 detector in scripts/audits/detect-
+# analysis-only-exit.sh) both key off a literal `[OUTPUT-CONTRACT]` line the
+# current flow doc never actually writes INTO the notebook (only into the
+# RETURN block, computed AFTER the notebook commit per the 2026-08-06
+# reorder — full mechanism proof: docs/architecture-briefs/2026-08-14-
+# auditor-write-plane-divergence-root-cause.md §4) — making that backstop
+# structurally unreachable every cycle since. The three functions below read
+# a DIFFERENT pair of already-mandatory, reachable-by-construction facts
+# instead: the notebook template's own "Anomalies: N new" line (flow/
+# main.md:1129, present in every committed cycle section) and the real
+# `[emit-signal] OK...` line count in $MARKERS_FILE (mechanically populated
+# by emit-audit-signal.sh's own call site, not a separate narratable step).
+# Same "one algorithm, one file" precedent as the rest of this file.
+#
+#   oc_extract_declared_anomaly_count_from_diff
+#     Reads unified diff text (e.g. `git diff --cached -- <notebook path>`)
+#     on STDIN. Echoes the integer N from the FIRST diff-ADDED line matching
+#     `^\+.*Anomalies: [0-9]+ new` (the notebook template's own mandatory
+#     line, flow/main.md:1129), or "0" if no such added line exists. Anchored
+#     on the diff-add prefix so an unchanged context line or a removed line
+#     can never contribute — only what THIS commit is actually adding counts
+#     as "declared" for the plane cross-check.
+#
+#   oc_count_real_emit_signals <markers_file>
+#     Echoes the count of lines in <markers_file> matching
+#     `^\[emit-signal\] (OK|OK-escalation-bypass|SKIP-dedup|OK e3-only|OK
+#     no-telegram) ` — the exact same marker-line alternation the Notebook
+#     Append Gate (flow/main.md:1079) and scripts/audit-output-contract.sh
+#     already use for "was anything real emitted this cycle", not a new
+#     pattern. Prints "0" (never errors) when the file is missing/empty —
+#     that is a legitimate "nothing emitted yet" state, not a fault.
+#
+#   oc_check_emit_vs_claim_plane <declared_n> <real_signals_n>
+#     Returns 0 (sound — either no new-anomaly claim was made, or at least
+#     one real emit-signal backs it) or 1 (violation — declared_n > 0 AND
+#     real_signals_n == 0: a nonzero "Anomalies: N new" claim landing with
+#     ZERO corroborating emit-signal evidence, the exact shape proven live
+#     across all 10 catalogued occurrences, brief §6). The `declared_n > 0`
+#     guard means a genuine ALL_GREEN cycle (declared_n == 0) never engages
+#     this check — same threshold semantics as the Notebook Append Gate's
+#     own condition (a), flow/main.md:1078/1081.
+#
 # Functions exported (source this file, then call directly):
 #
 #   oc_extract_all_added_contract_lines_from_text
@@ -93,5 +137,34 @@ oc_check_arithmetic_invariant() {
   local sp="${1:-0}" sqr="${2:-0}" ds="${3:-0}"
   if [ "$sp" -lt "$sqr" ] 2>/dev/null; then return 1; fi
   if [ "$sp" -lt "$ds" ] 2>/dev/null; then return 1; fi
+  return 0
+}
+
+# oc_extract_declared_anomaly_count_from_diff — see header (FIX-AUDITOR-
+# NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE section).
+oc_extract_declared_anomaly_count_from_diff() {
+  local n
+  n=$(grep -E '^\+.*Anomalies: [0-9]+ new' | grep -oE 'Anomalies: [0-9]+' | head -1 | grep -oE '[0-9]+')
+  printf '%s' "${n:-0}"
+}
+
+# oc_count_real_emit_signals <markers_file> — see header.
+oc_count_real_emit_signals() {
+  local markers_file="${1:-}" n
+  if [ -z "$markers_file" ] || [ ! -f "$markers_file" ]; then
+    printf '0'
+    return 0
+  fi
+  n=$(grep -cE '^\[emit-signal\] (OK|OK-escalation-bypass|SKIP-dedup|OK e3-only|OK no-telegram) ' "$markers_file" 2>/dev/null)
+  printf '%s' "${n:-0}"
+}
+
+# oc_check_emit_vs_claim_plane <declared_n> <real_signals_n> — see header.
+# rc 0 = sound, rc 1 = violation (declared>0 AND real_signals==0).
+oc_check_emit_vs_claim_plane() {
+  local declared_n="${1:-0}" real_n="${2:-0}"
+  if [ "$declared_n" -gt 0 ] 2>/dev/null && [ "$real_n" -eq 0 ] 2>/dev/null; then
+    return 1
+  fi
   return 0
 }

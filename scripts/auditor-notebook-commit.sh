@@ -20,7 +20,29 @@
 # in bash, not narrated.
 #
 # CONTRACT
-#   scripts/auditor-notebook-commit.sh "<commit message>" <path1> [path2 ...]
+#   scripts/auditor-notebook-commit.sh "<commit message>" <path1> [path2 ...] \
+#     [--markers-file <path>]   # NEW, optional (FIX-AUDITOR-NOTEBOOK-COMMIT-
+#                                # PLANE-CROSSCHECK-GATE) — this cycle's
+#                                # $MARKERS_FILE. Omitted => §2b below is a
+#                                # complete no-op, byte-identical to before
+#                                # this change — every existing non-auditor
+#                                # caller (and even system-auditor's own call
+#                                # site until its own follow-up 2-arg edit
+#                                # lands, docs/agents/system-auditor/flow/
+#                                # main.md:1173-1177) is unaffected.
+#     [--cycle-tag <value>]     # NEW, optional, reserved for a Phase-2
+#                                # defense-in-depth live signal_queue.rows[]
+#                                # cross-check — NOT implemented this phase
+#                                # (soft-blocked on FIX-AUDIT-OUTPUT-CONTRACT-
+#                                # V4-V5-DEDUPSKIP-DENOMINATOR-FALSE-
+#                                # VIOLATION, see architecture brief §5).
+#                                # Accepted-and-ignored here only so the
+#                                # eventual call-site edit can pass both new
+#                                # flags in one landing without a second
+#                                # script change.
+#   --markers-file / --cycle-tag may appear anywhere after <path1> (order
+#   relative to the explicit paths does not matter); every other token is
+#   treated as an explicit commit path, exactly as before.
 #
 #   Env:
 #     CLAUDE_CODE_SESSION_ID      REQUIRED — owner_client_session for the
@@ -61,7 +83,9 @@
 #        no staged changes    -> "[auditor-commit] SKIP no-staged-changes paths=<n>"
 #        mutex claim failed   -> "[auditor-commit] SKIP mutex-claim-failed <reason> — retry next tick"
 #        foreign-path abort   -> "[auditor-commit] ABORT foreign-path-after-restore <paths>"
-#        contract violation   -> "[auditor-commit] ABORT contract-arithmetic-violation path=<p> line=\"<line>\"" (AC-4)
+#        contract violation   -> "[auditor-commit] ABORT contract-arithmetic-violation path=<p> line=\"<line>\"" (AC-4, §2a)
+#        plane-crosscheck mismatch -> "[auditor-commit] ABORT contract-plane-mismatch declared_anomalies=<n> markers_signal_count=<n> markers_file=<path> path=<p>" (§2b,
+#                                only when --markers-file was passed — see FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE below)
 #        git commit failed    -> "[auditor-commit] ABORT git-commit-failed rc=<n>"
 #        bad usage / no paths -> "[auditor-commit] ERROR no paths given — refusing to run"
 #        no session id        -> "[auditor-commit] ERROR CLAUDE_CODE_SESSION_ID not set — refusing to run"
@@ -91,6 +115,35 @@
 # being caught after the fact by a downstream detector. No-op for every
 # other caller (non-notebook paths, or a notebook path with no
 # `[OUTPUT-CONTRACT]` line at all — e.g. non-auditor notebook commits).
+#
+# §2b PLANE-LEVEL EMIT-VS-CLAIM BACKSTOP (FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-
+# CROSSCHECK-GATE, 2026-08-14): the §2a backstop above is ADDITIVE, harmless
+# dead code for any future caller that DOES paste a bracketed
+# `[OUTPUT-CONTRACT]` line — left in place, unchanged, not replaced. But
+# root-cause analysis (docs/architecture-briefs/2026-08-14-auditor-write-
+# plane-divergence-root-cause.md §4) proved §2a has been structurally
+# UNREACHABLE for every system-auditor cycle since 2026-08-06: the flow
+# doc's own 2026-08-06 reorder now runs the OUTPUT-CONTRACT step (the only
+# place that line is ever written) AFTER this commit already lands, so the
+# notebook diff §2a scans never contains that line. §2b is a SECOND,
+# independently-reachable gate on a DIFFERENT pair of facts that ARE always
+# present in what is being committed right now: the notebook template's own
+# mandatory "Anomalies: N new" line (declared_n) cross-checked against the
+# real `[emit-signal] OK...` line count in $MARKERS_FILE (real_signals_n) —
+# see scripts/lib/output-contract-invariant.sh's own FIX-AUDITOR-NOTEBOOK-
+# COMMIT-PLANE-CROSSCHECK-GATE header section for the full extraction/
+# invariant proof. Only engages when the caller passes --markers-file
+# (optional, see CONTRACT above) — omitted, this block is a complete no-op,
+# byte-identical to before this change (AC-1). On mismatch (declared_n > 0
+# AND real_signals_n == 0): REFUSES the commit (git restore --staged, exit
+# 1) — never rewrites the counters to the truth, never commits-plus-a-
+# discrepancy-signal (brief's explicit AC-4 ruling on failure-mode choice;
+# rationale: the working-tree content is NOT discarded by `git restore
+# --staged`, only unstaged — a resumed agent re-reads the same content,
+# actually runs the emit sequence, and re-attempts the commit). Only scans
+# the exact system-auditor notebook path (not every `notebook/*.md`, unlike
+# §2a) — this check's "Anomalies: N new" template line and $MARKERS_FILE
+# convention are system-auditor-specific, per the brief's own scoping.
 #
 # Owning flow: docs/agents/system-auditor/flow/main.md (notebook commit step).
 #
@@ -126,7 +179,35 @@ trap _release_mutex EXIT
 # ── 0. Usage guard — refuse to run without explicit paths (no mutex touched) ──
 COMMIT_MSG="${1:-}"
 shift || true
-PATHS=("$@")
+
+# FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE: `--markers-file <path>` /
+# `--cycle-tag <value>` are NEW, OPTIONAL, named flags parsed out of the
+# remaining args — every other token is still an explicit commit path,
+# exactly as before. Neither flag present in "$@" ⇒ PATHS ends up byte-
+# identical to the old `PATHS=("$@")` assignment (AC-1 backward-compat —
+# every existing caller that never passes these flags is unaffected).
+PATHS=()
+MARKERS_FILE_ARG=""
+CYCLE_TAG_ARG=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --markers-file)
+      MARKERS_FILE_ARG="${2:-}"
+      shift
+      [ $# -gt 0 ] && shift
+      ;;
+    --cycle-tag)
+      # shellcheck disable=SC2034  # reserved for Phase-2 (see CONTRACT above) — accepted-and-ignored this phase
+      CYCLE_TAG_ARG="${2:-}"
+      shift
+      [ $# -gt 0 ] && shift
+      ;;
+    *)
+      PATHS+=("$1")
+      shift
+      ;;
+  esac
+done
 
 if [ -z "$COMMIT_MSG" ] || [ ${#PATHS[@]} -eq 0 ]; then
   echo "[auditor-commit] ERROR no paths given — refusing to run"
@@ -241,6 +322,31 @@ for _p in "${PATHS[@]}"; do
       ;;
   esac
 done
+
+# ── 2b. Plane-level emit-vs-claim backstop (NEW — see header comment above,
+# FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE) ─────────────────────────
+# Reachable-by-construction inputs only (unlike §2a's dead `[OUTPUT-CONTRACT]`
+# scan): (1) the "Anomalies: N new" line the notebook template ALREADY
+# mandates every cycle (flow/main.md:1129) — the artifact being committed
+# right now, no new field invented; (2) $MARKERS_FILE, whose population is
+# baked into emit-audit-signal.sh's OWN call site — not a separate step an
+# LLM can narrate-and-skip once it DOES call that script. Complete no-op
+# (AC-1) when the caller omits --markers-file (MARKERS_FILE_ARG empty).
+if [ -n "$MARKERS_FILE_ARG" ]; then
+  for _p in "${PATHS[@]}"; do
+    case "$_p" in
+      docs/agent-memory/notebooks/system-auditor.md)
+        _declared_n=$(git diff --cached -- "$_p" | oc_extract_declared_anomaly_count_from_diff)
+        _real_signals=$(oc_count_real_emit_signals "$MARKERS_FILE_ARG")
+        if ! oc_check_emit_vs_claim_plane "$_declared_n" "$_real_signals"; then
+          git restore --staged -- "${PATHS[@]}"
+          echo "[auditor-commit] ABORT contract-plane-mismatch declared_anomalies=${_declared_n} markers_signal_count=${_real_signals} markers_file=${MARKERS_FILE_ARG} path=${_p}"
+          exit 1
+        fi
+        ;;
+    esac
+  done
+fi
 
 # Nothing to commit for the named paths → skip cleanly (not an error).
 if git diff --cached --quiet -- "${PATHS[@]}"; then
