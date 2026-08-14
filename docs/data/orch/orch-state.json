@@ -1,12 +1,12 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1786672433,
-    "last_linecount": 27,
+    "last_mtime": 1786681462,
+    "last_linecount": 30,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786677663,
-      "last_linecount": 28
+      "last_mtime": 1786681462,
+      "last_linecount": 30
     }
   },
   "decision_journal": [
@@ -135,7 +135,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-14T03:20:50Z",
+    "_updated_at": "2026-08-14T04:23:59Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -620,7 +620,7 @@
         "type": "microservice_degraded",
         "summary": "rag-service memory pressure sustained >93% — loss of reclamation (A-30)",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-14T04:00Z",
@@ -634,7 +634,7 @@
         "type": "db_integrity_breach",
         "summary": "vn_index_cache: Only 1 row (VNINDEX) present; typically should contain multiple index types. Expected 2+ index entries (",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/data/db-integrity-history.json",
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -19259,7 +19259,7 @@
         "last_served_tick": "2026-08-14T00:21:45Z"
       }
     },
-    "_updated_at": "2026-08-14T04:22:05Z",
+    "_updated_at": "2026-08-14T04:23:59Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19933,6 +19933,39 @@
         "createdAt": "2026-08-14T04:21:40Z",
         "drained_at": "2026-08-14T04:22:05Z",
         "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "af669335efac3a73bc6c5a42ec1ad029de5ec7ae8d6f1b47788c4257f687edcb",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "priority": "CRITICAL",
+        "payload": "rag-service memory pressure sustained >93% — loss of reclamation (A-30)",
+        "createdAt": "2026-08-14T04:17:20Z",
+        "drained_at": "2026-08-14T04:23:59Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3f81588f9babf99e3d5589b6b3c1861978503b77b0e91e3352c1a103a882d0f4",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "type": "db_integrity_breach",
+        "priority": "MED",
+        "payload": {
+          "table": "vn_index_cache",
+          "class": "FAIL/MISSING",
+          "detail": "Only 1 row (VNINDEX) present; typically should contain multiple index types. Expected 2+ index entries (VNINDEX, other regional/sector indices)",
+          "verdict": "REAL",
+          "severity": "MED",
+          "root_cause_hypothesis": "Index cache writer only populating VNINDEX, missing other index types in ingestion pipeline or schema change not yet reflected in cache build",
+          "signal_id": "sys-20260814T042152-5a45"
+        },
+        "createdAt": "2026-08-14T04:21:52Z",
+        "drained_at": "2026-08-14T04:23:59Z",
+        "routed_to": "PO Step 0-SIG",
+        "deviation_note": "payload_ref (docs/data/db-integrity-history.json, 900KB shared audit ledger) NOT inlined whole — extracted the single findings[] entry matching this signal_id instead, per prior-cycle precedent in docs/agent-memory/notebooks/dev-team.md (2026-08-14 earlier entry)"
       }
     ],
     "last_po_triage_at": "2026-08-14T04:11:35Z",

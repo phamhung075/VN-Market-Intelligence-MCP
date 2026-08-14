@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-08-07T04:08:30Z",
+    "fire_time": "2026-08-14T04:08:29Z",
     "matched_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -25,7 +25,7 @@
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 2,
+    "drift_min": 6,
     "errors": [],
     "pressure_mode": "adaptive",
     "calendar_status": "unknown",
@@ -45,7 +45,7 @@
       "alert-commander-market": null,
       "alert-commander-critical": null
     },
-    "last_fired_timestamp": "2026-08-07T04:07:58Z",
+    "last_fired_timestamp": "2026-08-14T04:08:29Z",
     "last_fired_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -57,16 +57,16 @@
     "reason": "spawned",
     "nominal_tick": "04:00",
     "leader_lock": "acquired",
-    "dev_head": "idle",
-    "devq": 1,
-    "signal_backlog": 1,
-    "note": "4-slot batch (collision WARN sent: alert-commander matched 2 slots, both expected per schedule R3). All spawned run_in_background, tokens released."
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 31,
+    "note": "4-slot tick — 2x gatherer-standard cadence-due + 2x alert-commander cron collision (R3 multi-slot, WARN telegram sent)"
   },
   "priority": "low",
-  "createdAt": "2026-08-07T04:08:30Z",
+  "createdAt": "2026-08-14T04:08:35Z",
   "_processed": {
-    "fingerprint": "b4fd9874c51c7c42e64b6ef5fa653d5a9cec10a635bd86ef19306b8753ef942d",
-    "processedAt": "2026-08-07T04:10:31Z",
+    "fingerprint": "58ae86b2b2ad3c31285ed1329ed56a32bb14069edfe97834bee2a14103798945",
+    "processedAt": "2026-08-14T04:22:05Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
