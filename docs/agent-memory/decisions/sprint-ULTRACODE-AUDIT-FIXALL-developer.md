@@ -435,3 +435,27 @@ since 2026-07-13 scoping); cycle-bootstrap's § Error handling already covers ev
 case the duplicate carried (CONFIRMED-BLIND/TRANSIENT/market_context), so the stub
 loses zero coverage.
 **why-change:** no change from plan.
+
+### STEP developer-S26 · developer · 2026-08-14T12:40:16Z
+**task-id:** UC-CCA-P2-SKILL-GW-GATE
+**what-done:** Restructured `gateway-availability-gate/SKILL.md` (101L→169L) per
+architect's ratified FR-1/FR-2 design in `UC-CCA-P2-BA-spec.md` — DMS-2 ladder
+(classify→30s backoff→PROBE_2→SIBLING_RECENT→suppress-or-escalate) + new DEFER
+notebook template (OVERWRITE/APPEND split, distinct from BLOCKED) + terminology-
+parity xref to `cycle-bootstrap/SKILL.md`'s CONFIRMED-BLIND trigger text.
+**what-considered:**
+- Literal "send_telegram" string in the new PROHIBITIONS bullet vs a paraphrase —
+  paraphrase won (AC-2's grep-zero-hits check + the task's own hard invariant read
+  as "the string must never appear", not just "never be called"; original file
+  never named the tool literally either — matched that precedent).
+- `version:` frontmatter bump — architect flagged non-blocking, "agent-father's
+  call"; applied it anyway since it is this repo's own established convention
+  (mirrors the `incident:` field) and zero-risk, no AC required it either way.
+- No handoff file created — only path: board-row `note` field is the spec (same
+  shape as the FACTORY-KINHDICH/UC-CCA-P1-GWBLIND-DEDUP precedents), and this task
+  is an explicit leaf (no downstream next_agent) per the row's own dispatch note.
+**why-decision:** Design doc's pseudocode was already implementation-ready (BA+
+architect both re-verified live same-day); followed it verbatim, only resolving
+the 2 non-normative flags (send_telegram wording, version bump) via precedent.
+**why-change:** No change from plan. Landed at 169L vs the ~171-176L estimate —
+under, not over, still comfortably inside the 200L cap (AC-1).
