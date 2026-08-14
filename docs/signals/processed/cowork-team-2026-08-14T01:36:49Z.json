@@ -1,0 +1,34 @@
+{
+  "from": "cowork-team",
+  "to": "system",
+  "type": "cowork-fire",
+  "payload": {
+    "tick": "2026-08-14T01:30Z",
+    "matched_slots": [
+      "news-scout-sentiment"
+    ],
+    "won_slots": [
+      "news-scout-sentiment"
+    ],
+    "spawned": [
+      "news-scout-sentiment"
+    ],
+    "silent": false,
+    "due_reasons": {
+      "news-scout-sentiment": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-sentiment": 240
+    },
+    "classification": "FIRE",
+    "reason": "spawned"
+  },
+  "priority": "INFO",
+  "createdAt": "2026-08-14T01:36:49Z",
+  "_processed": {
+    "fingerprint": "5761a74993891f1a03c431bdee5601a29eafa32018e2b068123a73aa50baf31d",
+    "processedAt": "2026-08-14T01:53:39Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

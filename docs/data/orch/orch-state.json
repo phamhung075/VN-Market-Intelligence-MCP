@@ -1,8 +1,8 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1786654309,
-    "last_linecount": 28,
+    "last_mtime": 1786672433,
+    "last_linecount": 27,
     "po": {
       "section_name": "po",
       "last_mtime": 1786650637,
@@ -19135,7 +19135,7 @@
         "last_served_tick": "2026-08-14T00:21:45Z"
       }
     },
-    "_updated_at": "2026-08-14T01:28:52Z",
+    "_updated_at": "2026-08-14T01:53:39Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19166,6 +19166,38 @@
         },
         "createdAt": "2026-08-14T00:58:35Z",
         "drained_at": "2026-08-14T01:25:29Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5761a74993891f1a03c431bdee5601a29eafa32018e2b068123a73aa50baf31d",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "system",
+        "type": "cowork-fire",
+        "priority": "INFO",
+        "payload": {
+          "tick": "2026-08-14T01:30Z",
+          "matched_slots": [
+            "news-scout-sentiment"
+          ],
+          "won_slots": [
+            "news-scout-sentiment"
+          ],
+          "spawned": [
+            "news-scout-sentiment"
+          ],
+          "silent": false,
+          "due_reasons": {
+            "news-scout-sentiment": "cadence"
+          },
+          "cadence_minutes": {
+            "news-scout-sentiment": 240
+          },
+          "classification": "FIRE",
+          "reason": "spawned"
+        },
+        "createdAt": "2026-08-14T01:36:49Z",
+        "drained_at": "2026-08-14T01:53:39Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
