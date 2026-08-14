@@ -125,6 +125,16 @@ describe("FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL — findFo
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL — checkForeignFlowGap", () => {
+  // Fixed "today" matching the sibling findForeignFlowGapDays describe block
+  // above (real Sat strictly after the incident window). checkForeignFlowGap
+  // accepts an injectable `today` for exactly this reason — without it, every
+  // real VN trading day that passes between authoring and CI run time would
+  // silently add another zero-row "gap" day to this in-memory fixture (which
+  // is never seeded past 2026-08-07), permanently breaking rowsAffected/
+  // action assertions below as real time advances. Same wall-clock-drift
+  // defect class fixed in the sibling ALLZERO-OHLCV-FETCH test.
+  const CHECK_TODAY = "2026-08-08";
+
   function seedRealIncidentFixture(db: Database) {
     seedForeignFlowRow(db, "FPT", "2026-08-03");
     seedForeignFlowRow(db, "FPT", "2026-08-04");
@@ -138,7 +148,7 @@ describe("FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL — checkF
     const db = getDb();
     seedRealIncidentFixture(db);
 
-    const findings = checkForeignFlowGap(db);
+    const findings = checkForeignFlowGap(db, CHECK_TODAY);
     expect(findings.length).toBe(1);
     expect(findings[0]!.check).toBe("foreign_flow_day_completeness");
     expect(findings[0]!.action).toBe("flagged");
@@ -164,10 +174,10 @@ describe("FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL — checkF
   it("AC-5b: idempotent — a second run against an UNCHANGED gap set does not re-file feedback", () => {
     const db = getDb();
     seedRealIncidentFixture(db);
-    checkForeignFlowGap(db); // first run files the finding
+    checkForeignFlowGap(db, CHECK_TODAY); // first run files the finding
 
     const before = db.query<{ cnt: number }, []>("SELECT COUNT(*) as cnt FROM agent_feedback").get()!.cnt;
-    checkForeignFlowGap(db); // second run — same gap set, same title -> deduped
+    checkForeignFlowGap(db, CHECK_TODAY); // second run — same gap set, same title -> deduped
     const after = db.query<{ cnt: number }, []>("SELECT COUNT(*) as cnt FROM agent_feedback").get()!.cnt;
 
     expect(after).toBe(before);
@@ -180,7 +190,7 @@ describe("FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL — checkF
     seedForeignFlowRow(db, "FPT", "2026-08-06");
     seedForeignFlowRow(db, "FPT", "2026-08-07");
 
-    const findings = checkForeignFlowGap(db);
+    const findings = checkForeignFlowGap(db, CHECK_TODAY);
     expect(findings.length).toBe(1);
     expect(findings[0]!.action).toBe("none");
     expect(findings[0]!.severity).toBe("info");

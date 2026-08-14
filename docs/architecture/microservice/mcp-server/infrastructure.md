@@ -495,6 +495,22 @@ nothing is ever backfilled) — this deliberately makes the
 so a later, independent gap day is never silently swallowed by an older
 still-open finding for a different day count.
 
+**Testability fix (2026-08-14, FIX-CI-BUNTEST-FOREIGN-FLOW-MISSING-TRADING-
+DAY-NO-BACKFILL):** `checkForeignFlowGap(db, today: string = getTodayVnDate())`
+now takes `today` as an injectable second parameter (mirrors
+`findForeignFlowGapDays(db, vnToday)` one layer down; production callers —
+`dataAuditJob.ts` — are unaffected since the default still resolves to the
+real wall clock). Root cause of the CI red was a testability gap, not a
+production defect: the test suite's `checkForeignFlowGap` fixture only ever
+seeded `daily_foreign_flow` through 2026-08-07, but the function always
+computed "today" from the real system clock with no override — so every VN
+trading day that passed in real time between authoring (2026-08-07) and a
+later CI run silently added another zero-row "gap" day the fixture never
+accounted for, permanently drifting `rowsAffected`/`action` assertions
+further from expected as wall-clock time advanced (same defect class as the
+sibling `ALLZERO-OHLCV-FETCH.test.ts` fix, commit `a9291bbbc`). The test now
+pins `CHECK_TODAY = "2026-08-08"` and passes it explicitly.
+
 Root cause (RAW-verified live against `vps_push_log`, 2026-08-07): the VPS
 push-only pipelines for `prices` and `foreign-flow` (two SEPARATE systemd
 services on the Vinahost VPS, `vn-price-fetch.service`/

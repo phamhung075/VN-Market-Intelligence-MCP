@@ -61,12 +61,12 @@ import { findForeignFlowGapDays } from "./foreignFlowGapDetection.js";
 export { findForeignFlowGapDays };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Public audit-check entry point
+// Public audit-check entry point — `today` injectable (default real
+// getTodayVnDate()) so tests pin a fixed VN date, mirroring
+// findForeignFlowGapDays' vnToday param (see infrastructure.md).
 // ─────────────────────────────────────────────────────────────────────────────
-
-export function checkForeignFlowGap(db: Database): AuditFinding[] {
+export function checkForeignFlowGap(db: Database, today: string = getTodayVnDate()): AuditFinding[] {
   try {
-    const today = getTodayVnDate();
     const gapDays = findForeignFlowGapDays(db, today);
 
     if (gapDays.length === 0) {
