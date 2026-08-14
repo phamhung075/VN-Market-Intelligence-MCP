@@ -92,11 +92,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-08-14T06:51:04Z",
+    "status": "idle",
+    "updated_at": "2026-08-14T07:09:08Z",
     "updated_by": "dev-team",
-    "active_task_id": "FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED",
-    "next_agent": "dev-rag-service"
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6258,9 +6258,10 @@
         "note": "Split out of FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD architect design (docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md § AC-6). The commit-path pre-commit hook detects a sweep from the SWEEPING actor's own process at commit time (git diff --cached is race-free once inside the hook's index.lock transaction) but git carries NO per-file staging-intent attribution, so the SWEPT victim (who never gets to run a commit at all -- its git add just silently loses the race) cannot be notified in real time by anything living on the commit path alone. Needs an out-of-band intent-declaration or a post-hoc reconciliation check (e.g. end-of-cycle: confirm each of my staged-then-presumed-committed paths appears in a commit I actually authored, querying the sweep-guard evidence the parent row already emits to docs/signals/ + .git/sweep-guard.log) added as an EXECUTABLE step (not prose) to the shared end-of-cycle infra, not N per-flow-doc edits. PLAN-ONLY; pick-time pre-verify the parent row actually shipped first.",
         "owner": "developer",
         "next_agent": "developer",
-        "updated_at": "2026-07-21T17:24:33Z",
-        "updated_by": "po/triage-20260721T1707",
-        "po_orphan_repair_20260721T1724": "ORPHAN REPAIR. Row carried owner:null + next_agent:null — the same structurally-undispatchable signature that let its predecessor idle six weeks while the defect fired twice more. Assigned owner+next_agent=developer. Row stays BACKLOG/P2 and is gated by depends[], which is the CORRECT gate; the null owner was not a gate, it was an accident. depends[] re-pointed from the parent umbrella (now BLOCKED, will never itself ship) to the two children that actually carry the implementation — pick-time pre-verify still applies per the row note."
+        "updated_at": "2026-08-14T07:07:49Z",
+        "updated_by": "po",
+        "po_orphan_repair_20260721T1724": "ORPHAN REPAIR. Row carried owner:null + next_agent:null — the same structurally-undispatchable signature that let its predecessor idle six weeks while the defect fired twice more. Assigned owner+next_agent=developer. Row stays BACKLOG/P2 and is gated by depends[], which is the CORRECT gate; the null owner was not a gate, it was an accident. depends[] re-pointed from the parent umbrella (now BLOCKED, will never itself ship) to the two children that actually carry the implementation — pick-time pre-verify still applies per the row note.",
+        "po_live_occurrence_20260814T0710Z": "[po 2026-08-14T07:07:35Z | UNBLOCK-OPS-RAG-REBUILD-DONEVERIFIED-FALSIFIED-BY-KERNEL] LIVE OCCURRENCE — I was the victim, and I self-detected only by accident.\nWHAT HAPPENED: I landed two gated writes to docs/data/orch/orch-state.json (orch-apply.sh, 06:59:05Z and 07:01:03Z) plus one atomic write to docs/data/orch/archive/2026-08.json. When I entered the commit-mutex critical section at ~07:08Z and ran `git add` on my 7 explicit paths, only 5 staged — both orch files reported as already-clean. They had been absorbed into a PEER's bare commit 3220f31bc (\"chore(tasks): cold-evict terminal sprints/done lanes -> archive/2026-08.json\"), which is exactly this row's thesis: a clean `git status` on a path you just wrote is INDISTINGUISHABLE from \"my commit landed\". I only caught it because I ran `git log --oneline -- <path>` and `git log -S` to find which SHA actually carried my content. Nothing in my flow required that step.\nSECOND, SHARPER FINDING — THE EXISTING AC-3 GATE WOULD HAVE FIRED A FALSE ALARM ON THIS: `docs/agents/po/flow/main.md` § AC-3 tests `git show --stat $(git rev-parse HEAD) | grep -q 'docs/data/orch/orch-state.json'` against PO'S OWN commit and, on miss, sends `send_telegram(channel=\"bug\", \"...landed on disk via orch-apply.sh but not in git HEAD\")`. On this cycle that grep MISSES (my commit abfa9de90 legitimately does not contain orch-state.json — a peer's did) while the write is nonetheless fully durable in HEAD ancestry, verified by reading the content back out of `git show HEAD:docs/data/orch/orch-state.json`. The gate conflates \"not in MY commit\" with \"not in git HEAD\". Its failure direction matters: it would emit a bug report asserting a data-loss that did not occur, inviting the next actor to re-apply an already-applied write. Correct predicate is ancestry-and-content, not own-commit-membership: `git show HEAD:<path>` re-read (or `git log -S<marker> -1 --format=%H -- <path>` returning any SHA reachable from HEAD), with own-commit-membership demoted to an informational note.\nNO DATA LOSS THIS TIME: I verified all 4 board assertions by reading them back out of `git show HEAD:...` — restored row BLOCKED with banner + retractions intact, UNBLOCK row REVIEW, LANCECORE cross-ref present (2621B), .head untouched. Benign sweep, correct content. That is precisely why it is worth recording: the benign case is the one that trains agents to stop checking.\n"
       },
       {
         "id": "FIX-COWORK-SIBLING-WINDOW-CACHE-FAIL-OPEN",
@@ -11455,6 +11456,34 @@
         "created_by": "po/dev-team-step1-triage-20260814T0621Z (BATCH mint)",
         "status_note": "Second recorded occurrence of the AC-3 durability class (prior: feedback_ac3_durability_certified_on_window_that_ended_before_metric_settled). Two compounding gate defects, both evidenced live: (1) SIGNAL — docker inspect .State.OOMKilled/ExitCode do not propagate the VM-boundary cgroup OOM in Docker Desktop; read false/0 across 3 real kernel kills. dmesg inside the VM is the only authoritative source, and this was ALREADY documented in commit ca6d86869 and in the certified row's own status_note, yet the gate still passed. (2) WINDOW — certification closed 60min before the first post-fix OOM. No open row covers this class. AC: OOM-class verification_gate must (a) read dmesg in-VM, (b) span a window >= the observed inter-crash interval, (c) forbid docker inspect .State.OOMKilled as sole evidence.\n\nROUTER NOTE (dev-team, 2026-08-14T06:5x): CORROBORATING LIVE EVIDENCE found same-tick — Tier-1 audit cycle c95 (agent abd9a0df0bb3eec97, 2026-08-14T06:44Z) independently FOLDed the same rag-service memory reading using exactly the discredited signal class this row names (docker-level checks: no OOMKilled, no VmHWM pinning, no dmesg read) — a real-time demonstration this row's AC directly closes. Worth citing when this row is picked up.\n",
         "updated_at": "2026-08-14T06:51:04Z"
+      },
+      {
+        "id": "FIX-PO-AC3-PERSISTENCE-GATE-OWN-COMMIT-VS-HEAD-ANCESTRY",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "sprint": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": false,
+        "files": [
+          "docs/agents/po/flow/main.md"
+        ],
+        "related": [
+          "FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT",
+          "FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK"
+        ],
+        "title": "PO AC-3 persistence gate tests OWN-COMMIT membership, not HEAD ancestry — fires a FALSE data-loss bug-telegram whenever a peer bare-commit legitimately absorbs the write (reproduced live 2026-08-14T07:08Z)",
+        "desc": "Minted by po 2026-08-14T07:07:35Z from a live occurrence during UNBLOCK-OPS-RAG-REBUILD-DONEVERIFIED-FALSIFIED-BY-KERNEL.\nDEFECT: `docs/agents/po/flow/main.md` § \"AC-3 — mandatory self-verification before RETURN may assert persistence\" verifies persistence by grepping PO'S OWN commit: `SHA=$(git rev-parse HEAD); git show --stat \"$SHA\" | grep -q 'docs/data/orch/orch-state.json'` and, on miss, fires `send_telegram(channel=\"bug\", \"[po] FAIL-LOUD: orch-state.json NOT in own commit $SHA — landed on disk via orch-apply.sh but not in git HEAD\")`.\nWHY IT IS WRONG: on a shared main, a peer's bare commit routinely absorbs another agent's already-written data file (the tracked FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT class). When that happens the write IS durably in git HEAD but is NOT in the writing agent's own commit, so the gate reports a data-loss that did not occur. Reproduced live 2026-08-14T07:08Z: po's writes at 06:59:05Z/07:01:03Z were swept into peer commit 3220f31bc; po's own commit abfa9de90 legitimately contains no orch-state.json; content verified fully intact via `git show HEAD:docs/data/orch/orch-state.json`.\nFAILURE DIRECTION IS THE SEVERITY: this is a FALSE POSITIVE that asserts loss. A bug-channel message saying \"landed on disk but not in git HEAD\" invites the next actor to re-apply an already-applied board write — a second write on top of a correct one, on the hot SSOT file.\nAC-1: the gate's predicate is ancestry-and-content, not own-commit-membership — e.g. re-read `git show HEAD:docs/data/orch/orch-state.json` and assert the specific mutation is present, or `git log -S'<marker>' -1 --format=%H -- <path>` returns a SHA reachable from HEAD. Own-commit membership may remain as an informational log line, never as the alarm trigger.\nAC-2: when the write IS in HEAD but NOT in the agent's own commit, the flow emits a distinct SWEPT-BY-PEER note (work channel, not bug) naming the absorbing SHA — this is the missing evidence trail FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT asks for, produced at zero extra cost from the same probe.\nAC-3: the same own-commit-membership pattern is grepped for across `docs/agents/*/flow/*.md` and every sibling instance is corrected or explicitly allowlisted — opt-IN allowlist only (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist); do NOT assume po is the only carrier.\nZONE NOTE: po deliberately did NOT self-fix. `docs/agents/po/flow/main.md` is an agent definition/flow file — po's own init.md forbidden_outputs bars po from modifying it (\"NEVER modify agent definition files — use agent-father for that\"), hence next_agent=agent-father rather than a self-repair.\n",
+        "source": "po live occurrence during UNBLOCK-OPS-RAG-REBUILD-DONEVERIFIED-FALSIFIED-BY-KERNEL, 2026-08-14T07:07:35Z",
+        "created_at": "2026-08-14T07:07:35Z",
+        "created_by": "po",
+        "updated_at": "2026-08-14T07:07:49Z",
+        "updated_by": "po"
       }
     ],
     "closed_sprints": [
