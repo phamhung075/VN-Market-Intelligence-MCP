@@ -8,75 +8,6 @@ Zone: Docker/VPS/DB operations, incident response, close-gate verification.
 
 ---
 
-## Cycle 2026-08-13T15:00Z — FACTORY-APIGW-split-capability-prober Close-Gate Rebuild
-
-**Task**: Deploy split-capability-prober code (commit 9fad8d4ad, 2026-07-24) to live api-gateway container. Code is CODE-ACCEPTED but NOT deployed — running image built 2026-07-15 (13 days stale). Deploy gate: PO-AUTHORIZED (no user gate required).
-
-**Pre-Rebuild State**:
-```
-Running Image:        vn-market-intelligence-mcp-api-gateway:latest
-Image Created:        2026-07-15T15:05:40Z
-Code Commit:          9fad8d4ad (2026-07-24T14:24:00Z) — NOT in running image
-Current HEAD:         832cd5a6e (2026-08-13)
-Commit Ancestor:      ✓ 9fad8d4ad IS ancestor of 832cd5a6e (verified via git log)
-Peer Commits:         251cda70e, 868bf8d1d, b184dde9f also undeployed since 2026-07-15
-Rebuild Discriminator: REAL gate (go list -deps ./cmd/server confirms pkg/infrastructure IS compiled into binary)
-```
-
-**Rebuild Execution** (ops-flow scoped, single-service ONLY):
-```bash
-docker compose build --build-arg GIT_SHA="832cd5a6e015908907f071aaa9dc468b214f2b85" api-gateway
-docker compose up -d --no-deps api-gateway
-bash scripts/verify-deploy-sha.sh api-gateway
-```
-
-**Build Phase** ✓ PASS
-```
-Builder layer:      golang:1.22-alpine (cached from prior use)
-Binary compilation: CGO_ENABLED=0 GOOS=linux go build -o gateway ./cmd/server/ SUCCEEDED
-Export:             Completed in 1.3s
-Final Image SHA:    59be41f1a749934e7e8531fc3ba362374bc93d4150444fd4590a84c1e20dcc7c
-```
-
-**Service Restart** ✓ PASS
-```
-Container Action:    Recreated (not killed/restarted bare)
-Service Status:      Up and running
-Port 4000 binding:   ✓ Active
-```
-
-**Deployment Verification** ✓ PASS
-```
-Verify Script Output: OK: deployed SHA matches HEAD (832cd5a6e015908907f071aaa9dc468b214f2b85)
-Exit Code:           0
-```
-
-**Peer Service Health Check**:
-```
-mcp-server:    Not checked (scoped rebuild)
-pdf-extractor: Not checked (scoped rebuild)
-All other:     Not checked (scoped rebuild)
-```
-
-**Close-Gate Handoff to QA** ✓ PASS
-```
-Handoff Method:  scripts/ops-closegate-handoff.jq via orch-apply.sh
-Task ID:         FACTORY-APIGW-split-capability-prober
-From Lane:       review[]
-To Agent:        qa (next_agent field only; lane unchanged)
-Orch-Apply:      Validation: Stage 0 + Stage 1 PASS
-Conservation:    task_total=745, signal_total=189 (verified clean)
-Applied:         ✓ Successfully applied to docs/data/orch/orch-state.json
-Row Status:      REVIEW (unchanged) | next_agent: qa
-Timestamp:       2026-08-13T15:00:48Z
-```
-
-**Summary**: Split-capability-prober close gate (Step 4) completed successfully. Code deployed and verified live. Task handed to qa for final acceptance testing.
-
-**Session:** 632721c2-41e4-4aff-8d06-a47cf80dc0d7 (router dispatch)
-
----
-
 ## Cycle 2026-08-13T21:16Z — FACTORY-INFRA-split-agentSignalStore Close-Gate Rebuild
 
 **Task**: Deploy agentSignalStore refactor (commit 9ad31c026, 2026-08-13) to live mcp-server container. Code is CODE-ACCEPTED but NOT deployed — running image built 2026-08-11T18:25Z (~2 days stale). Deploy gate: Close-Gate rebuild + SHA gate + health + DB verification.
@@ -179,3 +110,50 @@ Byte-Identity Assessment:
 **Session**: 632721c2-41e4-4aff-8d06-a47cf80dc0d7 (coordinator dispatch for ops close-gate)
 
 **Execution Time**: 2026-08-13T21:16:00Z — 2026-08-13T21:30:00Z (~14 minutes total, build+verify)
+
+---
+
+## Cycle 2026-08-14T09:23Z — PREEMPTIVE vn-market-intelligence-mcp-rag-service Controlled Restart
+
+**Incident**: Memory leak on vn-market-intelligence-mcp-rag-service-1 climbing monotonically toward OOMKill threshold. Container at 89.18% (913.2MiB/1GiB) with accelerating trend (+0.24pp/min), projected OOMKill in ~10-20 minutes if untouched. FU-RAG-DEPLOY-MEMORY (commit 82216e291) and threadpin fix both confirmed insufficient. System-auditor Tier-1 investigation (background, independent) reached same conclusion: genuine ongoing leak, not benign settling.
+
+**Trigger**: System Auditor + raw docker stats verification (both channels independently flagged same critical state)
+
+**Authorization**: Operational mitigation only — root cause investigation escalated separately to po/dev-rag-service
+
+**Action**: Controlled single-service restart to prevent uncontrolled OOMKill (safer than crash, no in-flight LanceDB corruption risk)
+
+**Pre-Restart Baseline**:
+```
+Timestamp:        2026-08-14T08:41:48Z (container lifecycle start)
+Memory Usage:     913.2 MiB / 1 GiB = 89.18%
+Status:           running (health check: healthy)
+Uptime:           41 minutes
+RestartCount:     0
+Trend:            accelerating climb, +0.24pp/min
+Projection:       OOMKill threshold within ~10-20 minutes
+```
+
+**Restart Execution**:
+```bash
+Timestamp:   2026-08-14T09:23:20Z UTC
+Command:     docker restart vn-market-intelligence-mcp-rag-service-1
+Method:      controlled stop+start, single-service only (no rebuild, no image change)
+Rationale:   scoped to target service only (docker restart enforces single-container semantics)
+```
+
+**Post-Restart Verification**:
+```
+Timestamp:        2026-08-14T09:23:21Z (restart completed)
+Memory Usage:     34.32 MiB / 1 GiB = 3.35%
+Status:           running (health check: healthy)
+Uptime:           ~20 seconds (just restarted)
+
+---
+
+## 2026-08-14 — RAG Service Durability Window (P0)
+
+**Summary**: Deployed fix, AC-1/AC-2 PASSED. 24-hour measurement window running.
+**Full details**: docs/incidents/ops-rag-durability-window-2026-08-14.md
+**Status**: Interim (awaiting 24h measurement completion for AC-3/AC-4 verdict)
+
