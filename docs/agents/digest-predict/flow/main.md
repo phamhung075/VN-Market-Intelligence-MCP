@@ -12,6 +12,12 @@ Universal entry. Picks the right sub-flow based on current time. Crons and ad-ho
 
 **Tools:** `docs/agents/tools/package/digest-predict.md`
 
+## Step 0-GW — Gateway availability gate
+
+**Step 0-GW — Gateway availability gate** → skill: `.claude/skills/gateway-availability-gate/SKILL.md` (agent-id=digest-predict; single top-of-file placement — covers BOTH the non-Sunday `DAILY_CLAIM` path inside Step pre-D below AND the Sunday Published Marker Gate further down this file, since both execute unconditionally after this point — UC-CCA-P2 FR-4, architect-ratified, no conditional/if-guard needed)
+
+---
+
 ## Step pre-D: DAILY-PREDICT DEDUP GATE (non-Sunday days only)
 
 <!-- FEAT-PREDICTION-CLAIMS-DAILY-CADENCE (2026-06-24 Sprint S2/ARCH-PREDICTION-DAILY-CADENCE):
