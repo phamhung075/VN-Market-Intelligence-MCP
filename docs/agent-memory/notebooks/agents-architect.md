@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-08-11T13:59:53Z
-
-**Brief:** `docs/architecture-briefs/2026-08-11-cron-heartbeat-prespawn-gating.md`
-
-New angle vs. the 2026-08-06 cadence brief (interval tuning): does every outer cron heartbeat need to boot a full subagent regardless of real work. Surveyed all 11 outer-heartbeat CronCreate entries across cron-cowork-team/cron-detect-loop/cron-standalone-team — 8/11 already pre-gated by a deterministic shell script embedded in the CronCreate prompt (cowork-team master, all 4 detect-loop crons, db-integrity ×2, market-db-journal-guard); cron-detect-loop has zero gaps. Of the remaining 3, agent-father and claude-manager-helper need no change (real judgment work every observed tick / cadence already right-sized). code-janitor is the one real gap: CADRAT-3's git-diff Pre-Check lives post-boot inside main.md, gating only the DRY scan, while 3 fully-deterministic sweeps boot a full subagent unconditionally 4x/day — last 10 recorded cycles show the DRY-scan branch suppressed 10/10. Recommended mirroring the existing pre-spawn shell-gate pattern. Explicitly rejected any LLM/local-model pre-gate anywhere in the 3 families — no fuzzy pre-spawn judgment case found; cited 3 live instances of safe-looking gates silently disabling their own mechanism, including `FIX-AGENTFATHER-KEEP-PRECHECK-GATE-BLIND-TO-3-OF-5-SCAN-SURFACES` discovered this same session.
-
-**Signal dropped:** `docs/signals/2026-08-11-cron-heartbeat-prespawn-gating.json` → po (cc agent-father)
-
----
-
 ## 2026-08-12T13:22:49Z
 
 **Brief:** `docs/architecture-briefs/2026-08-12-fix-auditor-dedup-ledger-cas-atomicity.md`
@@ -37,3 +27,13 @@ Did not mint a new board row or a new architecture brief (existing tracked row `
 PO triage's `FIX-DEVTEAM-HEAD-NEXTAGENT-RESYNC-ON-REASSIGN` (in_progress-resident facet of the stale-`.head` family, 3 confirmed agent types: router DRS, pm ×2, architect). Designed WF-2b: a new `dev-team/main.md` check inserted between WF-2 and WF-3 that, unlike every other WF-N carve-out, never JUMPs away — it resyncs `.head.next_agent` to match the row's own current `next_agent` when they disagree (the row is authoritative, not `.head` — dispatcher-only mirror state, single reader), resets `resume_attempts` to 0 in the same write (prevents a WF-3 false-positive tripping on the first correct dispatch after a fix), and lets S2 dispatch the corrected agent the same tick. Row-lookup scoped to `in_progress[]`+`active_sprints[].tasks[]` only — proven safe regardless of the concurrently-landing WF-1d row's own order (a review/qa-resident row resolves empty either way, never double-fixed). Ruled memory-candidate (a) (per-flow-doc handoff sync) NOT warranted for pm/architect/router given WF-2b's zero-latency single-file fix; ruled pm's partial `.head` write (commit `95540b50d`, status-flip only) needs its own narrow companion (different malformed shape/entry gate, WF-2b structurally can't catch it). Flagged 2 companion rows for PO to mint: `FIX-PM-NONCLOSEOUT-HEAD-RESET-INCOMPLETE-NULLOUT` (agent-father) + `FIX-DEVTEAM-HEAD-NEXTAGENT-COHERENCE-VERIFY` (developer).
 
 **Signal dropped:** `docs/signals/devteam-head-nextagent-write-coherence-20260814.json` → agent-father
+
+---
+
+## 2026-08-14T12:54:30Z
+
+**Brief:** `docs/architecture-briefs/2026-08-14-pm-decompose-closeout-reachability-and-nextagent-mint.md`
+
+3rd-occurrence, escalated pm-decomposition defect: Step 4c's head-release fix sits AFTER Step 3c's own inlined RETURN in the same unbroken numbered-step family — unreachable by construction, not by omission. Fix restructures in place (move 3d/4c content above the RETURN as new 3d/3e, relocate the genuinely-later 4/4b under a new explicit heading) rather than appending — per the row's own caution against repeating occ-2's failure shape. Also designed: explicit `decomposition_complete` flag driving closeout(`done[]`+`.children`)-vs-partial(row `next_agent` corrected) branching; `next_agent` as a conditional-mandatory mint-time field (doc note + staged WARN-tier write-gate, not a hard reject); a narrow RLC cowork-lane exclusion predicate — deliberately NOT a reuse of DRS's ratified allowlist, which would have silently blocked agent-father's 17 live `ready[]` rows (confirmed via live census, not assumed). 39-file fleet sweep for the RETURN-reachability shape found pm the sole current occurrence. Found and reconciled an undersold overlap with `FIX-DEVTEAM-EPICWRAPPER-PARENTHOOD-FIELD-DRIFT-AUTOCLOSE-BLIND`'s write-side scope (same file, same edit site) — flagged for PO to narrow that row to READ-side only. `docs/data/orch/orch-state.json` board mutations (3 follow-up rows to mint + 1 scope-narrowing edit) left to PO/agent-father — outside this agent's declared commit zone.
+
+**Signal dropped:** `docs/signals/2026-08-14-pm-decompose-closeout-reachability-and-nextagent-mint.json` → agent-father
