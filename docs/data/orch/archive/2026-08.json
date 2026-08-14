@@ -17694,6 +17694,38 @@
       "po_disposition_at": "2026-08-14T00:30:11Z",
       "po_disposition_by": "po/triage-20260814T0007Z",
       "po_disposition": "RESOLVED — triaged in dev-team Step 1, tick 2026-08-14T00:07Z, alongside 248 durable-inbox envelopes and 49 telegram reports (4797-4845, all processed, list_unresolved_reports() == [] verified). Folded onto existing board rows; see docs/agent-memory/decisions/triage-20260814T0007Z-po.md for the per-class dispositions."
+    },
+    {
+      "id": "sys-20260813T115037-cons",
+      "ts": "2026-08-13T11:50:37Z",
+      "from": "dev-team",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "orch-conservation-check blocks the routine Step-1 durable-inbox clear: 147 fully-triaged envelopes (PO commit f01645c90, verified) cannot be subtracted from pending_triage_inbox because signal_total floor-ratio (0.5) is computed against signal_queue.rows (31) alone dwarfed by the inbox — candidate 31/178=0.174 << 0.5 floor. ORCH_APPLY_ALLOW_SHRINK is scoped ONLY to scripts/orch-cold-evict.sh + docs/agents/pm/flow/task-archive.md (orch-conservation-check.mjs header, explicit NEVER-elsewhere language) — dev-team Step 1 is not an authorized caller, so I did not bypass it.",
+      "severity": "WARN",
+      "status": "RESOLVED",
+      "payload_ref": null,
+      "provenance": "dev-team",
+      "audit_cycle_tag": "dev-team:2026-08-13T11:07Z",
+      "dedup_key": "orchstate-conservation-guard-blocks-durable-inbox-clear-20260813",
+      "disposition_needed": "Decide: (a) widen ORCH_APPLY_ALLOW_SHRINK/ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS-style whitelist to cover dev-team Step-1 consumed-envelope clears under some caller-scoped guard, or (b) design an incremental multi-tick partial-clear that stays within FLOOR_RATIO=0.5 each write, or (c) exempt pending_triage_inbox from signal_total once every entry is independently confirmed dispositioned (e.g. cross-check against decision_journal). pending_triage_inbox is UNMODIFIED (still 147, no data loss) pending this decision. A near-term side effect: next dev-team tick will likely re-spawn Step-1 PO triage since the inbox is non-empty — expected to fold quickly since all 147 are already reflected on the board.",
+      "po_disposition_at": "2026-08-14T00:30:11Z",
+      "po_disposition_by": "po/triage-20260814T0007Z",
+      "po_disposition": "RESOLVED — this is the conservation-guard signal itself (telegram 4797). Durable inbox cleared 248->0 this tick via 4 subtractive-by-envelope_id orch-apply writes, no ORCH_APPLY_ALLOW_SHRINK. Root cause tracked on FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR (occurrence_count 1->2, evidence_20260814) and folded into this tick's BATCH for actual dispatch."
+    },
+    {
+      "id": "new-20260813T121100Z",
+      "ts": "2026-08-13T12:11:00Z",
+      "from": "news-scout",
+      "to": "po",
+      "type": "improvement_proposal",
+      "summary": "coverage-stamp.sh:158 ttl_seconds=30 < task_claim schema min=60 — mutex fails 5/5 every cycle, fail-CLOSED, fleet-wide.",
+      "severity": "INFO",
+      "status": "RESOLVED",
+      "payload_ref": "docs/improvement-proposals/IMP-20260813-news-scout-T1-covstamp-ttl.md",
+      "po_disposition_at": "2026-08-14T00:30:11Z",
+      "po_disposition_by": "po/triage-20260814T0007Z",
+      "po_disposition": "RESOLVED — REFUTED AT SOURCE, no longer live. The proposal asks to raise coverage-stamp.sh ttl_seconds above task_claim's Zod min(60); HEAD:scripts/agents-flow/coverage-stamp.sh:169 already reads ttl_seconds:900 (landed commit a63ab8b0d, and the script header at :66 names the fix task). Same for telegram 4799/4800."
     }
   ],
   "backlog_detail": [],

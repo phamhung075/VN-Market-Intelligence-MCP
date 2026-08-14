@@ -94,10 +94,10 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "UC-CCA-P2",
-    "next_agent": "architect",
-    "next_action": "BA spec complete (docs/handoffs/UC-CCA-P2-BA-spec.md) — 6 FRs (DMS-2 ladder absorption into gateway-availability-gate, market-watcher dedup, 4-agent + fb-market-poster 3-file extension), 0 PO blockers, 3 architect open questions. Spawn architect for brownfield design across the 10-file wiring.",
-    "updated_at": "2026-08-14T11:58:56Z",
-    "updated_by": "ba"
+    "next_agent": "pm",
+    "next_action": "Architect design complete (docs/handoffs/UC-CCA-P2-BA-spec.md § Architect Brownfield Findings). Spawn pm to decompose the 10-file/~16-edit-site wiring into per-agent-scoped agent-father subtasks.",
+    "updated_at": "2026-08-14T12:18:40Z",
+    "updated_by": "architect"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -137,38 +137,6 @@
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
-      {
-        "id": "sys-20260813T115037-cons",
-        "ts": "2026-08-13T11:50:37Z",
-        "from": "dev-team",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "orch-conservation-check blocks the routine Step-1 durable-inbox clear: 147 fully-triaged envelopes (PO commit f01645c90, verified) cannot be subtracted from pending_triage_inbox because signal_total floor-ratio (0.5) is computed against signal_queue.rows (31) alone dwarfed by the inbox — candidate 31/178=0.174 << 0.5 floor. ORCH_APPLY_ALLOW_SHRINK is scoped ONLY to scripts/orch-cold-evict.sh + docs/agents/pm/flow/task-archive.md (orch-conservation-check.mjs header, explicit NEVER-elsewhere language) — dev-team Step 1 is not an authorized caller, so I did not bypass it.",
-        "severity": "WARN",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "provenance": "dev-team",
-        "audit_cycle_tag": "dev-team:2026-08-13T11:07Z",
-        "dedup_key": "orchstate-conservation-guard-blocks-durable-inbox-clear-20260813",
-        "disposition_needed": "Decide: (a) widen ORCH_APPLY_ALLOW_SHRINK/ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS-style whitelist to cover dev-team Step-1 consumed-envelope clears under some caller-scoped guard, or (b) design an incremental multi-tick partial-clear that stays within FLOOR_RATIO=0.5 each write, or (c) exempt pending_triage_inbox from signal_total once every entry is independently confirmed dispositioned (e.g. cross-check against decision_journal). pending_triage_inbox is UNMODIFIED (still 147, no data loss) pending this decision. A near-term side effect: next dev-team tick will likely re-spawn Step-1 PO triage since the inbox is non-empty — expected to fold quickly since all 147 are already reflected on the board.",
-        "po_disposition_at": "2026-08-14T00:30:11Z",
-        "po_disposition_by": "po/triage-20260814T0007Z",
-        "po_disposition": "RESOLVED — this is the conservation-guard signal itself (telegram 4797). Durable inbox cleared 248->0 this tick via 4 subtractive-by-envelope_id orch-apply writes, no ORCH_APPLY_ALLOW_SHRINK. Root cause tracked on FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR (occurrence_count 1->2, evidence_20260814) and folded into this tick's BATCH for actual dispatch."
-      },
-      {
-        "id": "new-20260813T121100Z",
-        "ts": "2026-08-13T12:11:00Z",
-        "from": "news-scout",
-        "to": "po",
-        "type": "improvement_proposal",
-        "summary": "coverage-stamp.sh:158 ttl_seconds=30 < task_claim schema min=60 — mutex fails 5/5 every cycle, fail-CLOSED, fleet-wide.",
-        "severity": "INFO",
-        "status": "RESOLVED",
-        "payload_ref": "docs/improvement-proposals/IMP-20260813-news-scout-T1-covstamp-ttl.md",
-        "po_disposition_at": "2026-08-14T00:30:11Z",
-        "po_disposition_by": "po/triage-20260814T0007Z",
-        "po_disposition": "RESOLVED — REFUTED AT SOURCE, no longer live. The proposal asks to raise coverage-stamp.sh ttl_seconds above task_claim's Zod min(60); HEAD:scripts/agents-flow/coverage-stamp.sh:169 already reads ttl_seconds:900 (landed commit a63ab8b0d, and the script header at :66 names the fix task). Same for telegram 4799/4800."
-      },
       {
         "id": "sys-20260813T131728-61d3",
         "ts": "2026-08-13T13:17:28Z",
@@ -15810,7 +15778,7 @@
         "note": "SCOPE=verifier Rescope note. Upgrade gateway-availability-gate SKILL with the DMS-2 escalation ladder (CONFIRMED-BLIND skip-backoff, sibling-recent suppression) keeping its correct confirmed-down actions (Write signal+BLOCKED notebook, NEVER send_telegram). Dedup market-watcher inline block; extend the gate to alert-commander/unified-agent/digest-predict/bctc-analyst/fb-market-poster. Coordinate with sibling P1 on cycle.md.",
         "created_at": "2026-07-13T19:31:11Z",
         "created_by": "po",
-        "next_agent": "architect",
+        "next_agent": "pm",
         "priority_bumped_from": "P2",
         "priority_bumped_at": "2026-07-17T04:54:03Z",
         "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
@@ -15818,13 +15786,15 @@
         "promoted_by": "dev-team (design-router sweep)",
         "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
         "dispatch_lane": "ba",
-        "updated_at": "2026-08-14T11:58:56Z",
+        "updated_at": "2026-08-14T12:18:40Z",
         "claimed_at": "2026-08-14T11:51:27Z",
         "claimed_by": "dev-team (design-router sweep)",
         "ba_spec_complete": true,
         "ba_handoff": "docs/handoffs/UC-CCA-P2-BA-spec.md",
         "ba_completed_at": "2026-08-14T11:58:45Z",
-        "updated_by": "ba"
+        "updated_by": "architect",
+        "architect_completed_at": "2026-08-14T12:18:39Z",
+        "architect_review_note": "[architect 2026-08-14T12:16Z DESIGN COMPLETE] Ratified BA 6 FRs against all 10 live files, zero drift. Designed FR-1/FR-2 DMS-2 ladder restructure for gateway-availability-gate/SKILL.md (classify->30s backoff->SIBLING_RECENT corroborate->suppress-or-escalate; new DEFER notebook template distinct from BLOCKED, same OVERWRITE/APPEND split; additive payload-suffix keeps FR-2 unchanged claim literally true for the CONFIRMED-BLIND path) - ~171-176L post-edit, inside AC-1 200L cap. Found 2 refinements beyond BA text: (1) alert-commander/cycle.md + bctc-analyst/cycle.md need a Dispatch-TABLE row edit alongside the body insertion (thin-dispatcher table is the real execution-order SSOT); (2) chef.md is the one FR-4/FR-5 file landing Step 0-GW AFTER its own first gateway call (Bootstrap) - ratified as intentional, protects the Step-0.5 task_claim mutation window specifically, cycle-bootstrap own Step-0 already covers the general case. Resolved all 3 open Qs: alert-commander-anchor -> Option (a) new table row; chef-threading -> single gate in chef.md sufficient (session-scoped); file-count -> 10 confirmed. ROUTING: next_agent=pm (not direct agent-father, unlike the FIX-CHEF-BIZCTX/USDVND precedents in this zone) - agent-father/flow/edit-prepare.md Step 1 takes a single agent_name input, architecturally single-agent-scoped; this task spans 6 agent families + 1 shared skill, a genuine PM-decomposition shape (~7 subtasks, no depends_on needed). Full findings: [Architect] Brownfield Findings section in the BA-spec handoff."
       }
     ],
     "review": [
