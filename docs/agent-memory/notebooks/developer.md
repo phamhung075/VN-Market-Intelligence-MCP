@@ -1,6 +1,22 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-15T10:30:00Z | **Cycle:** FU-RAG-DEPLOY-MEMORY (P0 M, PO re-scope + unblock, router-direct dispatch)
+**Last updated:** 2026-08-15T13:25:57Z | **Cycle:** FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR (P0 S, stale review[] SECONDARY-Drain sign-off, dev-team dispatch)
+
+## Session 2026-08-15T13:25:57Z — FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR (cross-service/, developer, P0 S, review[] SECONDARY-Drain sign-off triage, session 632721c2)
+
+**Task:** stale `review[]` row (branch:null, direct-commit, same precondition as PRIMARY QA-Drain, `next_agent=developer` so SECONDARY-Drain routed it here) — take next action per own judgment: DONE_VERIFIED / rework / reassign / BLOCKED. Router flagged an open question: RAW-check whether a companion `-2026-08-14`-suffixed id already implements this row's AC-1/AC-2/AC-3, do not assume duplication either way.
+
+**RAW-verified, not trusted from the row's own status_note prose:** searched orch-state.json (`jq .. | objects | select(.id?==...)`) and `git log --all` for the `-2026-08-14` suffix — it does not exist anywhere. The real fix landed under THIS EXACT task_id: commit `b27ba6507` (2026-08-14T04:17:20+02:00, tagged `Task: FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR` verbatim), 45s before `f08bb1c2d` moved this SAME row IN_PROGRESS→REVIEW. Not a duplicate — this review row IS the review checkpoint for that already-landed commit.
+
+**AC-1** (single-write full drain, no `ORCH_APPLY_ALLOW_SHRINK`): confirmed in code — `orch-conservation-check.mjs`'s `signalTotal()` dropped `pending_triage_inbox`, new `undeclaredInboxDrops()` + `ORCH_APPLY_DECLARED_INBOX_TRIAGED` guard it independently; `dev-team/flow/main.md` Step 1 passes `consumed_ids_csv` as the declaration. ALSO confirmed live in production: 8 real durable-inbox CLEAR commits landed 2026-08-14/08-15 post-fix (44/12/9/33/17/29 envelopes among them), every one a single write, no sub-batching, no bypass — sharp contrast to the pre-fix incidents (29 env/4 writes 08-11, 248 env/4 writes 08-14) this row itself documents. **AC-2** (abort message names the correct path): confirmed verbatim in `orch-conservation-check.mjs` — explicitly says do NOT set `ORCH_APPLY_ALLOW_SHRINK`, names `ORCH_APPLY_DECLARED_INBOX_TRIAGED`. **AC-3** (29-envelope regression, exit 0, no bypass): `INBOX-FULL-DRAIN-DECLARED` in `scripts/test/orch-apply-wrapper-tests.sh`, re-ran the FULL suite live — 89/89 PASS, including that test plus the negative controls (`INBOX-DROP-UNDECLARED-REJECTED` exit 1, `INBOX-DROP-ALLOW-SHRINK-NO-BYPASS` exit 1). All 4 files in the row's `files[]` list confirmed touched, none reverted.
+
+**Disposition:** DONE_VERIFIED. `review[] → done_verified[]` via `scripts/orch-apply.sh`.
+
+**Regression:** `bash scripts/test/orch-apply-wrapper-tests.sh` 89/89. No `apps/` TS/Go touched, no code change this cycle — pure board-state closeout following the `FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE` (`7bdeb606e`) precedent for a review-lane SECONDARY-Drain row whose deliverable was found already-shipped.
+
+**Closeout:** board write only (this cycle), pathspec-scoped commit pending. Decision-journal entry appended to `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` (S55). No handoff file (flat `review[]` row, SECONDARY-Drain's own dispatch context is the spec). Router (session 632721c2) held `task:FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR` — released via `task_release` at session close per lock-lifetime convention.
+
+---
 
 ## Session 2026-08-15T10:30:00Z — FU-RAG-DEPLOY-MEMORY (docker-compose.yml root, developer, P0 M, PO re-scope + unblock dispatch, session 632721c2)
 
@@ -31,25 +47,5 @@
 **Structural gap (recurring, same class as prior sessions):** this Task-tool spawn has `Read/Edit/Write/Bash` only — no `mcp__gateway__call_tool`/`mcp__semble__search` (both probed directly, both `No such tool available`). Per `feedback_local_cowork_subagents_gateway_blind`, used the documented Bash-transport fallback `scripts/agents-flow/mcp-call.sh` (direct JSON-RPC-over-curl to the vn-market endpoint) to run `task_claim`/`task_release` for `commit-mutex:main` — this specialist DOES need the commit-mutex here (direct-commit row, branch:null, no outer dispatcher holding a per-commit lock for this triage path) and it worked cleanly both times (claim/critical-section/release).
 
 **Closeout:** 2 commits, both pathspec-scoped and pushed — `c678ef57e` (script fix only) and `007b30077` (`orch-state.json` board row `review[]→qa[]` lane-move: status REVIEW→QA, owner=developer, next_agent=qa, `commit_sha` recorded, `status_note` documents the fix). Decision-journal entry appended to `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` (S53). No handoff file (flat `review[]` row, no PM decomposition, no task branch — router's own triage instruction is the spec).
-
----
-
-## Session 2026-08-15T09:56:30Z — FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION (cross-service/, developer, P0 S, router-direct dispatch, PO priority-bump 09:15Z, session 632721c2)
-
-**Task:** `orch-backlog-stub.sh`'s `build_detail_temp()` merge branch crashed on the REAL live `backlog-detail.json` `.items` (a 442-element ARRAY, not the id-keyed object the merge assumed) — exit 5, `array (...) and object (...) cannot be multiplied`. Blocked the `FIX-ORCHSTATE-HOTFILE-BLOAT` LANES=backlog,ready,review migration entirely; PO bumped P1→P0 same-tick — 41 board rows over the prose-ceiling can't be `po_goahead`-ratified until this lands (PO's own janitor-triage write was itself rejected for the same reason).
-
-**AC-1:** normalized cold `.items` on ingest via `scripts/lib/devteam-eligibility.jq`'s `detail_items_from()` (reused via `jq -L "$REPO_ROOT" 'include ...'`, not hand-rolled) before the F-3 per-field merge. **Shape decision (documented in the script header + dev-standards.md):** `.items` now ALWAYS written back ARRAY-shaped — matches the live shape, matches `po-detail-resync-review-lifecycle-routing.sh`'s own read+write convention (the only other writer — would flip it back to array on its next run regardless), and is the only shape that round-trips the 1 pre-id-scheme legacy cold record without destroying it. Also fixed the adjacent reconciliation bug (`.items | keys` on an array yields indices, not ids — flagged but not repaired by an earlier PO row).
-
-**AC-2 (F-5):** preserved `^po_goahead` keys through `build_hot_temp()`'s `STUB_FIELDS` whitelist by prefix — WF-2 `should_hold` has no cold fallback for that key, so a stub re-run used to silently revoke a PO ratification; verified all 6 live `po_goahead_*` rows byte-preserved post-rehearsal.
-
-**AC-3:** new T8 (array-shaped cold input + id-less legacy record preservation, the exact gap that hid F-4) + T9 (`po_goahead_*` survival, prefix-scoped not blanket) in `orch-backlog-stub.test.sh`; T3-T7 assertions updated for the shape decision (`.items|keys` → `[.items[].id]`). 35/35 pass (was 25/25, all 6 new RED pre-fix).
-
-**AC-4 (mandatory, done before claiming this row done):** re-ran the exact PO-specified scratch rehearsal against a byte-identical read-only copy of the live `orch-state.json`+`backlog-detail.json` (`LANES=backlog,ready,review`) — pre-fix exit 5 (crash reproduced verbatim), post-fix exit 0, `Reconciliation PASS — all hot stub ids confirmed in cold detail`, hot file 3,455,546B→1,209,788B. Never written to the real files (scratch dir only, cleaned up after).
-
-**Structural gap (recurring, same class as the last 2 sessions):** graphify incremental step attempted (`graphify update docs`) but the CLI subcommand is AST/code-only (no LLM) and treats the target path as its OWN project root — created an unwanted nested `docs/graphify-out/` (72,579 nodes) instead of touching the canonical root-level graph; removed (was untracked, zero commit risk). No Skill-tool binding available to this spawned agent (Read/Edit/Write/Bash only) to run the real semantic-extraction pipeline. Documented as skipped rather than fabricated.
-
-**Regression:** `bash scripts/orch-backlog-stub.test.sh` 35/35. `shellcheck scripts/orch-backlog-stub.sh` clean. No `apps/` TS/Go touched — `bun test`/`tsc` N/A (pure bash/jq).
-
-**Closeout:** 3 commits, all pathspec-scoped — `b1aa63b7a` (fix + regression tests), `6f55a013e` (dev-standards.md CANONICAL block + WORK.md), `94b78d502` (board row `backlog[]→review[]` lane-move + status flip, same write per the status-flip=lane-move rule established last cycle). Decision-journal entry appended to `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` (S52). No handoff file (flat `backlog[]` row, PO-direct P0 mint, no PM decomposition — board row's own AC note is the spec, per `main.md`'s known-drift precedent). Router (session 632721c2) holds no per-task lock per INV-GATEWAY-1 (PRE-CLAIM was intent-level only, `intent:developer:<key>`) — this specialist did not attempt `task_claim`/`task_release`.
 
 ---
