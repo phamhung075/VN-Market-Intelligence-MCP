@@ -195,3 +195,5 @@
 - Not OOM-class (schema/interface only) — Durability Gate N/A.
 **why-decision:** vc-approved, DONE_VERIFIED — every own-scope AC independently green; NFR-3 rebuild-gate already dispatcher-RAW-verified (outside my scope).
 **why-change:** none from plan.
+
+### CAP-REACHED · 2026-08-15T07:59:08Z
