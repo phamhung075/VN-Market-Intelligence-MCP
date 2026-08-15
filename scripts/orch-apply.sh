@@ -28,6 +28,14 @@
 #        NEVER duplicated here — single SSOT. Closes the empirically live-exploitable
 #        full-doc-collapse class (commit de595a44) — see
 #        docs/architecture-briefs/2026-07-10-auditor-orchstate-conservation-guard.md
+#     4.5. Row-level prose-ceiling guard (Stage 2.5) via bun
+#        scripts/orch-row-prose-ceiling-check.mjs — GROWTH-ONLY: a row already
+#        over ORCH_ROW_PROSE_CEILING_BYTES (default 12000) that is NOT growing
+#        this write is a non-blocking WARN (grandfathered); only NET NEW
+#        inline growth past the ceiling hard-rejects, pointing the caller at
+#        detail_ref. NEVER duplicated here — single SSOT. Task:
+#        FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT — see
+#        docs/architecture-briefs/2026-08-09-fix-orchstate-hotfile-inline-prose-ceiling.md §2.4
 #     5. Diff-based updated_at stamping via bun scripts/orch-stamp-updated-at.mjs
 #        (task: FIX-ORCHSTATE-UPDATED-AT-WRITE-PATH) — runs AFTER Stage 0/1
 #        validation (so it never interferes with the raw-text dup-key scan)
@@ -53,12 +61,16 @@
 #        candidate — should not occur in practice)
 #        OR conservation check failed (candidate's task_total/signal_total
 #        dropped below FLOOR_RATIO of the live value) — live file left UNTOUCHED
+#        OR row prose-ceiling check failed (Stage 2.5 — a row's candidate
+#        prose bytes exceed ORCH_ROW_PROSE_CEILING_BYTES AND its own live
+#        prose bytes — net new inline growth past ceiling) — live file left
+#        UNTOUCHED
 #   2  = CAS mtime mismatch — concurrent writer detected; caller should retry
 #   3  = usage error (empty stdin, live file missing, I/O error)
 #
 # HARD CONSTRAINTS:
-#   - NEVER duplicate or reimplement validation logic — REUSE orch-validate.mjs
-#     and orch-conservation-check.mjs
+#   - NEVER duplicate or reimplement validation logic — REUSE orch-validate.mjs,
+#     orch-conservation-check.mjs, and orch-row-prose-ceiling-check.mjs
 #   - Live file is SACRED — on any failure, leave it untouched
 #   - Coherence WARNINGS from validator (exit 0 with stderr lines) are
 #     non-blocking: they do NOT abort the write
@@ -200,6 +212,24 @@ conservation_output=$(bun "${REPO_ROOT}/scripts/orch-conservation-check.mjs" "${
   exit 1
 }
 [[ -n "${conservation_output}" ]] && printf '%s\n' "${conservation_output}" >&2
+
+# ─── Stage 2.5: Row-level prose-ceiling guard ────────────────────────────────
+# REUSE bun scripts/orch-row-prose-ceiling-check.mjs — do NOT duplicate this
+# logic. GROWTH-ONLY: a row already over ORCH_ROW_PROSE_CEILING_BYTES that is
+# NOT growing this write is a non-blocking WARN (grandfathered, printed but
+# does not abort); only NET NEW inline growth past the ceiling hard-rejects.
+# Task: FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT — see
+# docs/architecture-briefs/2026-08-09-fix-orchstate-hotfile-inline-prose-ceiling.md §2.4
+# NO BYPASS ENV VAR by design (detail_ref is already the sanctioned escape
+# hatch — see that script's own header for why a bypass would be a foot-gun
+# with no legitimate use case, unlike ORCH_APPLY_ALLOW_SHRINK above).
+ceiling_output=$(bun "${REPO_ROOT}/scripts/orch-row-prose-ceiling-check.mjs" "${LIVE_FILE}" "${TMP}" 2>&1) || {
+  ceiling_exit=$?
+  printf '%s\n' "${ceiling_output}" >&2
+  printf '[orch-apply] ABORTED: row prose ceiling check exit %s — live file untouched\n' "${ceiling_exit}" >&2
+  exit 1
+}
+[[ -n "${ceiling_output}" ]] && printf '%s\n' "${ceiling_output}" >&2
 
 # ─── CAS-mtime guard: re-check before rename ─────────────────────────────────
 # If the live file was modified between the caller's read and our rename,
