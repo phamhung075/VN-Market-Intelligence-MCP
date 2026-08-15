@@ -14389,6 +14389,50 @@
             "observed_at": "2026-08-15T06:01:07Z"
           }
         }
+      },
+      {
+        "id": "FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR",
+        "type": "FIX",
+        "title": "orch-conservation-check signal_total 0.5 floor blocks the DOCUMENTED PO durable-inbox clear step, and the only escape hatch is explicitly forbidden to PO",
+        "owner": "po",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "S",
+        "sprint": "BACKLOG",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "files": [
+          "scripts/orch-conservation-check.mjs",
+          "scripts/orch-apply.sh",
+          "docs/agents/dev-team/flow/drain-signals.md",
+          "docs/agents/po/flow/triage-signals.md"
+        ],
+        "created_at": "2026-08-11T13:08:45Z",
+        "created_by": "po/triage-20260811T1237Z",
+        "status_note": "REPRODUCED LIVE 2026-08-11T13:07Z. signal_total counts signal_queue.rows[] + dev_team_idle_chain.pending_triage_inbox[] together (live=42 = 13 rows + 29 envelopes). PO's documented clear step (drain-signals.md / triage-signals.md: consume envelopes, then subtract the consumed envelope_ids) therefore drops signal_total 42 -> 13 = 0.31, under the 0.5 floor, and orch-apply ABORTS. The abort message offers ORCH_APPLY_ALLOW_SHRINK, but scripts/orch-apply.sh:60-66 states that bypass is 'Wired ONLY into scripts/orch-cold-evict.sh and docs/agents/pm/flow/task-archive.md ... NEVER set this from any other caller' — so PO has NO sanctioned path and the only ways through are (a) violate the named-caller rule, or (b) split the clear into N artificial sub-batches purely to stay above a ratio. This tick took (b) — 4 sequential writes (42->28->21->14->13), every one a targeted enumerated envelope_id subtraction, never a full-doc replace — which is correct but is a workaround, not a design. CONSEQUENCE IF UNFIXED: the larger the inbox grows the harder it is to clear, so the failure mode is self-reinforcing; a PO tick under time pressure will be tempted into the forbidden bypass (exact class of feedback_ops_silently_switched_to_destructive_fallback_without_reauth). AC-1: a fully-consumed pending_triage_inbox can be cleared in ONE targeted write without setting ORCH_APPLY_ALLOW_SHRINK. Suggested shape (architect to ratify): exclude pending_triage_inbox from the signal_total magnitude ratio and give it its own row-identity guard instead — an inbox is a QUEUE whose whole purpose is to drain to zero, so a magnitude-conservation invariant is the wrong invariant for it; signal_queue.rows[] (an accumulating log) keeps the existing floor unchanged. AC-2: the abort message stops recommending a bypass the caller is forbidden to use, and instead names the correct path. AC-3: regression test drains a 29-envelope fixture inbox to 0 in one write and asserts orch-apply exits 0 with no bypass env var set.\n\n[po/triage-2026-08-13T17:28:37Z] SEVERITY EXPEDITE by PO. Moved to the FRONT of ready[] at P0. Rationale: RLC selection is sort_by([priority_rank, ready[]-array-index]), one row per invocation, and RLC only runs on ticks where the 6-way Idle-Tick Rotation picks \"rlc\". Measured live this tick: 60 RLC-eligible rows in ready[]; this row's class sat at eligible queue position 47-48. At 1 row per rlc-selected tick that is unreachable in incident time, and every newly-minted P0 re-buries it. No new diagnosis was needed - the row was already correct. This is the manual stand-in for the missing severity-expedite path (FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0, itself expedited in this same write).",
+        "updated_at": "2026-08-15T13:25:57Z",
+        "po_expedited_at": "2026-08-13T17:28:37Z",
+        "po_expedited_by": "po/triage-20260813T1722Z",
+        "updated_by": "developer",
+        "occurrence_count": 2,
+        "evidence_20260814": "OCCURRENCE 2, AND THE SELF-REINFORCING PREDICTION IN THIS ROW'S OWN status_note IS NOW CONFIRMED EMPIRICALLY. Occurrence 1 (2026-08-11) was 29 envelopes / signal_total 42 and needed 4 writes. Occurrence 2 is 248 envelopes / signal_total 275 and needed 4 writes — but the intervening 2026-08-13 PO cycle (commit f01645c90) TRIAGED 147 envelopes AND FAILED TO CLEAR THEM AT ALL (telegram 4797, 2026-08-13T11:51:23Z, still unresolved at pickup). Those 147 then sat in the inbox for ~13h while 101 more accumulated on top. Composition proof, measured this tick, not asserted: exactly 147 of the 248 envelopes carried drained_at <= 2026-08-13T11:40Z — a byte-exact match to that commit's own stated count. THIS IS THE CONCRETE HARM THE ROW PREDICTED: a blocked clear does not merely defer work, it re-presents already-dispositioned envelopes to every subsequent tick, so triage cost is paid repeatedly on the same data and the queue that must drain to zero grows monotonically. AC-1 is unchanged and still correct. NOTE FOR THE IMPLEMENTER: the row was already severity-expedited to P0 and moved to the FRONT of ready[] on 2026-08-13T17:28Z and STILL was not picked up in the ~7h before this tick — expediting inside ready[] was not sufficient, which is why this tick folds it directly into PO's BATCH rather than leaving it to the Ready-Lane Consumer.",
+        "claimed_at": "2026-08-14T01:55:26Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "developer",
+        "secondary_claimed_at": "2026-08-15T13:20:33Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "developer",
+        "developer_signoff_note": "STALE REVIEW-ROW SIGN-OFF, not new implementation — RAW-verified against live code/tests/git history, not trusted from this row's own status_note prose (per router dispatch instruction). The fix this row describes was ALREADY implemented and shipped under THIS EXACT task_id: commit b27ba6507 (\"fix(cross-service/orch-apply): inbox row-identity guard replaces conservation-floor block on PO drain-clear\", 2026-08-14T04:17:20+02:00), 45 seconds before this board row was moved IN_PROGRESS->REVIEW in commit f08bb1c2d (2026-08-14T04:18:05+02:00). No duplicate/companion row exists — the router prompt's \"-2026-08-14\" suffixed id was searched for directly in orch-state.json (jq .. | objects | select(.id?==...)) and via git log --all; it does not exist anywhere in this repo. b27ba6507 itself is tagged \"Task: FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR\" verbatim — the SAME id as this row, confirming this review row IS the review checkpoint for that already-landed commit, not a stray duplicate.\n\nAC-1 (single-write full drain, no ORCH_APPLY_ALLOW_SHRINK) — VERIFIED LIVE IN CODE: scripts/orch-conservation-check.mjs signalTotal() (line ~213) no longer includes dev_team_idle_chain.pending_triage_inbox — only signal_queue.rows. A new undeclaredInboxDrops() (line ~303) replaces it with an independent, never-bypassable per-envelope row-identity guard gated on ORCH_APPLY_DECLARED_INBOX_TRIAGED. docs/agents/dev-team/flow/main.md Step 1 \"Durable-inbox CLEAR\" (lines ~1101-1107) is the sole declaration site: consumed_ids (already computed for the subtractive filter) is now ALSO exported as consumed_ids_csv and passed through verbatim as ORCH_APPLY_DECLARED_INBOX_TRIAGED — never ORCH_APPLY_ALLOW_SHRINK. AC-1 ALSO VERIFIED IN LIVE PRODUCTION, not just code-review: 8 real \"durable-inbox CLEAR\" commits landed AFTER the fix (all 2026-08-14/08-15, spanning a full day+), each a SINGLE write, no artificial sub-batching, sizes 44/12/9/33/17/29 envelopes (2ca20a4c3, a63e94144, 3bf60bff5, 6ad448f2b, ebe38438d, 4e00264dd + 2 more) — a sharp contrast to the pre-fix incidents this row itself documents (29 envelopes needing 4 writes on 2026-08-11, 248 envelopes needing 4 writes on 2026-08-14). No new \"conservation guard blocks durable-inbox clear\" signal/row has been minted since the fix landed.\n\nAC-2 (abort message stops recommending the forbidden bypass, names the correct path) — VERIFIED LIVE IN CODE: scripts/orch-conservation-check.mjs's inbox-drop abort branch (line ~409) reads verbatim: \"fix: this is NOT a magnitude problem — do NOT set ORCH_APPLY_ALLOW_SHRINK (it is forbidden for this caller anyway, and it does not bypass row-identity checks). Set ORCH_APPLY_DECLARED_INBOX_TRIAGED=<comma-separated envelope_id list> naming exactly the envelope_id(s) this write legitimately triaged/removed — docs/agents/dev-team/flow/main.md § Step 1 'Durable-inbox CLEAR' already computes this exact list (consumed_ids) and passes it through verbatim.\" Matches AC-2 exactly.\n\nAC-3 (29-envelope regression fixture, exit 0, no bypass env var) — VERIFIED LIVE: scripts/test/orch-apply-wrapper-tests.sh contains INBOX-FULL-DRAIN-DECLARED (N_INBOX=29, line ~1078-1123), sets ONLY ORCH_APPLY_DECLARED_INBOX_TRIAGED (no ORCH_APPLY_ALLOW_SHRINK), asserts exit 0 and the inbox drained to empty in one write. Re-ran the FULL suite live this cycle: `bash scripts/test/orch-apply-wrapper-tests.sh` -> 89/89 PASS, including INBOX-FULL-DRAIN-DECLARED, INBOX-DROP-UNDECLARED-REJECTED (undeclared wipe still hard-rejected, exit 1), and INBOX-DROP-ALLOW-SHRINK-NO-BYPASS (ALLOW_SHRINK does NOT bypass the inbox row-identity guard, exit 1 — orthogonality preserved).\n\nFiles list cross-check (all 4 named files touched by b27ba6507, confirmed present at HEAD, none reverted): scripts/orch-conservation-check.mjs (signalTotal + undeclaredInboxDrops), scripts/orch-apply.sh (header comment cross-ref, no functional change needed — env var already inherited), docs/agents/dev-team/flow/drain-signals.md (cross-reference note, this file only APPENDS never CLEARs), docs/agents/po/flow/triage-signals.md (cross-reference note, PO never writes the CLEAR).\n\noccurrence_count:2 / evidence_20260814 (248-envelope incident, 147 stuck 13h) both predate the fix — evidence_20260814 was captured before claimed_at (2026-08-14T01:55:26Z), i.e. it is the MEASUREMENT that justified the fix, not a post-fix recurrence. No third occurrence found in git history after the fix landed.\n\nDisposition: DONE_VERIFIED. review[] -> done_verified[].",
+        "developer_signoff_by": "developer",
+        "developer_signoff_session": "632721c2-41e4-4aff-8d06-a47cf80dc0d7",
+        "verification": {
+          "raw_probe": {
+            "tool": "git log/show + Read + bash scripts/test/orch-apply-wrapper-tests.sh",
+            "args": "git log --all --oneline; git show b27ba6507; grep ORCH_APPLY_DECLARED_INBOX_TRIAGED scripts/orch-conservation-check.mjs docs/agents/dev-team/flow/main.md; bash scripts/test/orch-apply-wrapper-tests.sh (full suite, live re-run)",
+            "live_value_observed": "b27ba6507 (2026-08-14T04:17:20+02:00) landed under THIS task_id 45s before f08bb1c2d moved the row IN_PROGRESS->REVIEW. signalTotal() no longer sums pending_triage_inbox; undeclaredInboxDrops()+ORCH_APPLY_DECLARED_INBOX_TRIAGED present at HEAD, wired into main.md Step 1 consumed_ids_csv. Abort message names ORCH_APPLY_DECLARED_INBOX_TRIAGED, explicitly says do NOT set ORCH_APPLY_ALLOW_SHRINK. orch-apply-wrapper-tests.sh: 89/89 PASS incl. INBOX-FULL-DRAIN-DECLARED (AC-3, 29-envelope fixture, exit 0, no bypass env). 8 live post-fix durable-inbox CLEAR commits 2026-08-14/08-15 (44/12/9/33/17/29 envelopes among them), each ONE write, no sub-batching, no ALLOW_SHRINK.",
+            "observed_at": "2026-08-15T13:25:56Z"
+          }
+        }
       }
     ],
     "head": {
@@ -17607,36 +17651,6 @@
         "po_starvation_evidence_20260815T0040": "DISPATCH-STARVATION MEASUREMENT, not a re-triage. Architect ratified this row 2026-08-14T00:33:23Z. The 2026-08-14T23:03Z PO tick folded it into BATCH as an UNBLOCK expedite (po_expedite_20260814T2300). One full dev-team tick later it is STILL review[]/P0/next_agent=pm/plan_only=true, unmoved — so a P0 expedite through BATCH did not dispatch it, which independently corroborates project_rlc_dispatch_starvation_p0_expedite_ineffective_20260814 (RLC ~1 row/tick against ~19 P0 rows resident in review[] alone). Re-folded into this tick's BATCH. If it does not move again, the correct next action is a ruling on the dispatch ceiling itself, NOT a third expedite stamp — three identical expedites with no lane movement would make the expedite mechanism the defect under investigation."
       },
       {
-        "id": "FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR",
-        "type": "FIX",
-        "title": "orch-conservation-check signal_total 0.5 floor blocks the DOCUMENTED PO durable-inbox clear step, and the only escape hatch is explicitly forbidden to PO",
-        "owner": "po",
-        "status": "REVIEW",
-        "priority": "P0",
-        "size": "S",
-        "sprint": "BACKLOG",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "files": [
-          "scripts/orch-conservation-check.mjs",
-          "scripts/orch-apply.sh",
-          "docs/agents/dev-team/flow/drain-signals.md",
-          "docs/agents/po/flow/triage-signals.md"
-        ],
-        "created_at": "2026-08-11T13:08:45Z",
-        "created_by": "po/triage-20260811T1237Z",
-        "status_note": "REPRODUCED LIVE 2026-08-11T13:07Z. signal_total counts signal_queue.rows[] + dev_team_idle_chain.pending_triage_inbox[] together (live=42 = 13 rows + 29 envelopes). PO's documented clear step (drain-signals.md / triage-signals.md: consume envelopes, then subtract the consumed envelope_ids) therefore drops signal_total 42 -> 13 = 0.31, under the 0.5 floor, and orch-apply ABORTS. The abort message offers ORCH_APPLY_ALLOW_SHRINK, but scripts/orch-apply.sh:60-66 states that bypass is 'Wired ONLY into scripts/orch-cold-evict.sh and docs/agents/pm/flow/task-archive.md ... NEVER set this from any other caller' — so PO has NO sanctioned path and the only ways through are (a) violate the named-caller rule, or (b) split the clear into N artificial sub-batches purely to stay above a ratio. This tick took (b) — 4 sequential writes (42->28->21->14->13), every one a targeted enumerated envelope_id subtraction, never a full-doc replace — which is correct but is a workaround, not a design. CONSEQUENCE IF UNFIXED: the larger the inbox grows the harder it is to clear, so the failure mode is self-reinforcing; a PO tick under time pressure will be tempted into the forbidden bypass (exact class of feedback_ops_silently_switched_to_destructive_fallback_without_reauth). AC-1: a fully-consumed pending_triage_inbox can be cleared in ONE targeted write without setting ORCH_APPLY_ALLOW_SHRINK. Suggested shape (architect to ratify): exclude pending_triage_inbox from the signal_total magnitude ratio and give it its own row-identity guard instead — an inbox is a QUEUE whose whole purpose is to drain to zero, so a magnitude-conservation invariant is the wrong invariant for it; signal_queue.rows[] (an accumulating log) keeps the existing floor unchanged. AC-2: the abort message stops recommending a bypass the caller is forbidden to use, and instead names the correct path. AC-3: regression test drains a 29-envelope fixture inbox to 0 in one write and asserts orch-apply exits 0 with no bypass env var set.\n\n[po/triage-2026-08-13T17:28:37Z] SEVERITY EXPEDITE by PO. Moved to the FRONT of ready[] at P0. Rationale: RLC selection is sort_by([priority_rank, ready[]-array-index]), one row per invocation, and RLC only runs on ticks where the 6-way Idle-Tick Rotation picks \"rlc\". Measured live this tick: 60 RLC-eligible rows in ready[]; this row's class sat at eligible queue position 47-48. At 1 row per rlc-selected tick that is unreachable in incident time, and every newly-minted P0 re-buries it. No new diagnosis was needed - the row was already correct. This is the manual stand-in for the missing severity-expedite path (FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0, itself expedited in this same write).",
-        "updated_at": "2026-08-14T02:17:56Z",
-        "po_expedited_at": "2026-08-13T17:28:37Z",
-        "po_expedited_by": "po/triage-20260813T1722Z",
-        "updated_by": "developer",
-        "occurrence_count": 2,
-        "evidence_20260814": "OCCURRENCE 2, AND THE SELF-REINFORCING PREDICTION IN THIS ROW'S OWN status_note IS NOW CONFIRMED EMPIRICALLY. Occurrence 1 (2026-08-11) was 29 envelopes / signal_total 42 and needed 4 writes. Occurrence 2 is 248 envelopes / signal_total 275 and needed 4 writes — but the intervening 2026-08-13 PO cycle (commit f01645c90) TRIAGED 147 envelopes AND FAILED TO CLEAR THEM AT ALL (telegram 4797, 2026-08-13T11:51:23Z, still unresolved at pickup). Those 147 then sat in the inbox for ~13h while 101 more accumulated on top. Composition proof, measured this tick, not asserted: exactly 147 of the 248 envelopes carried drained_at <= 2026-08-13T11:40Z — a byte-exact match to that commit's own stated count. THIS IS THE CONCRETE HARM THE ROW PREDICTED: a blocked clear does not merely defer work, it re-presents already-dispositioned envelopes to every subsequent tick, so triage cost is paid repeatedly on the same data and the queue that must drain to zero grows monotonically. AC-1 is unchanged and still correct. NOTE FOR THE IMPLEMENTER: the row was already severity-expedited to P0 and moved to the FRONT of ready[] on 2026-08-13T17:28Z and STILL was not picked up in the ~7h before this tick — expediting inside ready[] was not sufficient, which is why this tick folds it directly into PO's BATCH rather than leaving it to the Ready-Lane Consumer.",
-        "claimed_at": "2026-08-14T01:55:26Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "developer"
-      },
-      {
         "id": "OPS-RAG-SERVICE-REBUILD-DEPLOY-LANCEDB-FIX",
         "type": "FIX",
         "title": "rag-service container is running a PRE-FIX image (built 2026-08-08T08:10:53Z) — the LanceDB IvfPq + malloc_trim OOM fix landed on main as 4c8c601e6 at 2026-08-12T06:16:02Z and has NEVER been deployed; container back at 94.95% within 23min of its 4th restart today. Single blocking action = rebuild THIS ONE service.",
@@ -18667,10 +18681,10 @@
         "last_served_tick": "2026-08-15T12:51:15Z"
       },
       "step1_triage": {
-        "last_served_tick": "2026-08-15T10:22:28Z"
+        "last_served_tick": "2026-08-15T13:20:13Z"
       }
     },
-    "_updated_at": "2026-08-15T12:51:15Z",
+    "_updated_at": "2026-08-15T13:20:13Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
