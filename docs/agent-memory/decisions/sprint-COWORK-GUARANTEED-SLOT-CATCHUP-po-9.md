@@ -170,3 +170,40 @@
 - Decline + BLOCKED + mint the blocker with the repro — chosen.
 **why-decision:** I rehearsed step 3 end-to-end against a byte-identical scratch copy (real code path, real cold file) instead of reasoning from the brief: it aborts exit 5, `array ... and object cannot be multiplied` — live `backlog-detail.json` `.items` is an ARRAY of 442 objects, not the id-keyed object `build_detail_temp` assumes. Pre-existing (pre-F-3 `+` form breaks identically), invisible to all 25 stub assertions because every fixture creates cold via the from_entries branch. Second blocker: `STUB_FIELDS` is an unconditional whitelist, so the migration strips `po_goahead_*`, which WF-2 reads from hot row keys only — 4 live supervised rows would have been silently un-ratified. Ratifying would have authorized a write that crashes, and whose success would have been worse than its failure.
 **why-change:** Brief §2.4's premise that STUB_FIELDS "deliberately never strips" lifecycle/provenance fields is factually wrong — `build_hot_temp` strips all of them; that inaccuracy is what hid blocker 2 at design time. Brief §0's 623-row basis is also stale (546 today, review[] 186->37).
+
+### STEP po-S175 · po · 2026-08-15T09:26:12Z
+**task-id:** FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM
+**what-done:** Minted UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT (P1/OPS/ops) as the ops actor row; left FIX-PDFX untouched (33,898B, over prose ceiling).
+**what-considered:**
+- Hold until a quieter window — REJECTED: pdf-extractor is at 50.00% MemPerc (trough) right now vs the 95-98% quoted earlier in this incident; this IS the quiet window.
+- Move FIX-PDFX to ready/next_agent=ops directly — REJECTED: needs an inline write to a 33,898B row, hard-blocked by Stage 2.5.
+- Mint a separate ops row (chosen) — mirrors the ratified rag-service convention the dev agent cited.
+**why-decision:** The fix was designed, ratified 2026-08-08, then sat unlanded 7 days; it is now landed but undeployed. Holding again repeats the exact failure mode this row already suffered once.
+**why-change:** No change from plan; dev-pdf-extractor's routing to po was correct.
+
+### STEP po-S176 · po · 2026-08-15T09:26:12Z
+**task-id:** UNBLOCK-RAG-OPS-DEPLOY-AND-DURABILITY-MEASUREMENT-WINDOW
+**what-done:** Corrected a stale FALSE premise on this P0 and re-scoped it deploy->measurement-only; re-stamped manual-dispatch flag.
+**what-considered:**
+- Trust the row's own status_note + its 00:40Z reaffirm — REJECTED, both assert the pre-fix image still runs; live docker inspect refutes it.
+- Verify at source (chosen): image is now sha256:26e681b0 (built 2026-08-14T20:12:15Z, != pre-fix 4a955869f002) and malloc_trim is physically present in /app/infrastructure/repositories.py.
+**why-decision:** AC-1 and AC-2 are already SATISFIED — the deploy happened ~10min after the previous tick's BATCH fold. Dispatching ops to "rebuild" again would reset the banked 13h durability window for nothing.
+**why-change:** Row's remaining scope is AC-3/AC-4 only. Advance signal (not a verdict): 89.24%/90.14% of the 1 GiB cap, above the D3 <=85% bar.
+
+### STEP po-S177 · po · 2026-08-15T09:26:12Z
+**task-id:** FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION
+**what-done:** Priority P1 -> P0. Third independent instance of the prose-ceiling deadlock landed this tick, including on PO's own write.
+**what-considered:**
+- Leave at P1 — REJECTED: it now blocks PO's own ratification path, not just a migration.
+- Authorize the LANES=review stub sweep instead — REJECTED: the sweep script itself crashes on the real backlog-detail.json shape, so authorizing it is a no-op.
+**why-decision:** Dependency chain is this row -> stub sweep -> FIX-ORCHSTATE-HOTFILE-BLOAT ratification -> po_goahead stamping on 41 over-ceiling rows. Size S, zone cross-service/ — cheapest row in the chain and it gates all of it.
+**why-change:** Escalated beyond report 4911's framing after measuring blast radius live (41 rows, two orch-apply runs).
+
+### STEP po-S178 · po · 2026-08-15T09:26:12Z
+**task-id:** FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE
+**what-done:** RETRACTED signal cj-20260815T043004Z as a verified false positive; attached a ceiling-safe disproof pointer to the existing root-cause row. No new row minted.
+**what-considered:**
+- Answer the "replace-vs-retire" question as asked — REJECTED: the premise is false, so both options are wrong.
+- Mint a detector-fix row — REJECTED as duplicate; two rows already exist.
+**why-decision:** The writer is demonstrably ALIVE — docs/agent-memory/health/team-tool-recheck-2026-08-14-1257.md (5253B, ~20h old), 9 files since 08-06 — yet the same signal fired 7 consecutive days (08-08..08-15), burning a PO triage slot each time.
+**why-change:** Full evidence had to go here, not on the row: the row is 11,133B and my write would have breached the 12,000B ceiling. Live proof of STEP po-S177's own thesis.
