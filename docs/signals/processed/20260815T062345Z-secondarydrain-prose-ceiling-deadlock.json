@@ -1,0 +1,22 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "repair_task_request",
+  "priority": "high",
+  "createdAt": "2026-08-15T06:23:45Z",
+  "payload": {
+    "check_id": "SECONDARYDRAIN-PROSE-CEILING-DEADLOCK",
+    "summary": "Review-Lane SECONDARY-Drain permanently stalls when the OLDEST SECONDARY-eligible review[] row is already over ORCH_ROW_PROSE_CEILING_BYTES=12000 — scripts/devteam-review-claim-secondary-drain.jq's inline stamp (secondary_claimed_at/secondary_claimed_by/secondary_dispatch_target) grows the row's byte size, tripping orch-row-prose-ceiling-check's net-new-growth ABORT (grandfathered already-over-ceiling rows are only exempt when NOT growing). orch-apply.sh aborts, live file untouched, claim silently no-ops every tick — SECONDARY-Drain deterministically re-picks the SAME oldest row and re-fails, so no review[] row drains via this lane until this one is resolved, not just this row.",
+    "reproduced": "2026-08-15T06:22:58Z, dev-team idle-tick (rotation SELECTED=drs no-op -> unconditional SECONDARY-Drain call site) — jq --arg now ... -f scripts/devteam-review-claim-secondary-drain.jq | bash scripts/orch-apply.sh -> [orch-row-prose-ceiling-check] ABORTED, id=SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD live=34725B -> candidate=34880B",
+    "blocked_row": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (review[], next_agent=dev-mcp-server, updated_at=2026-08-11T17:36:34Z — oldest SECONDARY-eligible candidate)",
+    "suggested_remedy": "Either (a) route SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD's prose through detail_ref via scripts/orch-backlog-stub.sh (LANES=review) to bring it back under ceiling before SECONDARY-Drain next runs, unblocking this tick's deadlock immediately, and/or (b) harden devteam-review-claim-secondary-drain.jq (and the sibling QA-Drain/BOUNDED-1/SLS/RLC/DRS claim scripts, same stamp-only-growth pattern) to skip an over-ceiling row's own claim-stamp fields to detail_ref instead of inline, or to select the next-oldest eligible row on an abort instead of deterministically re-picking the same blocking one every tick.",
+    "suggested_sprint_class": "FIX",
+    "zone_owner": "dev-team / architect (claim-script hardening, scripts/ outside agent-father commit_zone)"
+  },
+  "_processed": {
+    "fingerprint": "51361d0c1f644b1e5ee02ef0fea6b33d450e7448d2ac8240bb81226b694b13bb",
+    "processedAt": "2026-08-15T06:49:32Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
