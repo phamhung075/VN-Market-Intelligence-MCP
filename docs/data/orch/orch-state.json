@@ -18455,7 +18455,7 @@
         "last_served_tick": "2026-08-15T00:33:53Z"
       }
     },
-    "_updated_at": "2026-08-15T02:50:59Z",
+    "_updated_at": "2026-08-15T03:19:19Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -18647,6 +18647,41 @@
         "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/data/orch/orch-state.json' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/data/orch/orch-state.json' (7e7a4a9ff132779c2e8e814ce3e4e22d6ba9dd22) differs from what is about to land in this commit (d504706cb25ef093bc27d0ea51536a62eecc5ba0) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope (two-blob form takes NO pathspec — do not append '-- docs/data/orch/orch-state.json', that is a git usage error): git diff 7e7a4a9ff132779c2e8e814ce3e4e22d6ba9dd22 d504706cb25ef093bc27d0ea51536a62eecc5ba0",
         "createdAt": "2026-08-15T02:23:26Z",
         "drained_at": "2026-08-15T02:49:45Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "72c0d991956c11f27278fe261247f0205d152591dd9dd138313a5d8fba284fd1",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-24.md docs/agent-memory/notebooks/qa.md docs/data/orch/orch-state.json. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=30 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-15T03:01:35Z",
+        "drained_at": "2026-08-15T03:19:19Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "df7034368692cd6a77559eadf28832e9d3e76e37986617fb7ddd22e66bc03e84",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-24.md",
+          "line_count": 175,
+          "cap": 600,
+          "byte_count": 38222,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 2222,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-15T02:58:20Z",
+        "drained_at": "2026-08-15T03:19:19Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

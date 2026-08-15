@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-15T02:23:09Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 16 staged file(s) not necessarily this actor's own: .gitignore docs/agent-memory/.auditor-cycle-markers-2026-08-11T18:00Z.tmp docs/agent-memory/.auditor-cycle-markers-2026-08-12T05:30Z.tmp docs/agent-memory/.auditor-cycle-markers-2026-08-12T08:00Z.tmp docs/agent-memory/.auditor-cycle-markers-2026-08-12T08:30Z.tmp docs/agent-memory/.auditor-cycle-markers-2026-08-12T10:00Z.tmp docs/agent-memory/.auditor-cycle-markers-auditor-t1:2026-08-11T16:30Z.tmp docs/agent-memory/.auditor-cycle-markers-auditor-t1:2026-08-11T18:00Z.tmp docs/agents/system-auditor/flow/main.md docs/data/auditor-dedup-ledger.json docs/data/orch/orch-state.json scripts/audit-output-contract.sh scripts/audit-output-contract.test.sh scripts/auditor-durability-sweep.sh scripts/auditor-durability-sweep.test.sh scripts/dev-fix-auditor-durability-step0b-detection-redispatch2-to-review.jq. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=29 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "09b006161009b12e37f8d27f2357e137a7a098b92fa4159740a82c3ed79e8092",
+    "processedAt": "2026-08-15T02:49:45Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
