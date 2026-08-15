@@ -21498,6 +21498,35 @@
       "triaged_at": "2026-08-14T08:36:00Z",
       "triaged_by": "po",
       "disposition": "FOLD onto FIX-AUDITOR-A33-HOOKLIVENESS-SETTINGS-PATH-MISRESOLVE-FALSE-DEAD-HOOK (BACKLOG) — known false positive, no mint. A-33 reports settings-file-missing for context-bloat-backstop.sh, but that row already establishes the detector MISRESOLVES the settings path for a hook that is registered and demonstrably firing. DIRECT LIVE REFUTATION THIS TICK (not relayed): the very hook A-33 calls dead emitted envelope 7b76e01c (context_bloat_breach on docs/agent-memory/notebooks/dev-rag-service.md) at 2026-08-14T07:04:54Z into THIS SAME drain — a hook that writes a signal 4.5h after being declared missing is alive by construction. severity=WARN + corroborated-FP root cause => pendingObservations volume only, per the signal_feedback single-fire rule."
+    },
+    {
+      "id": "sys-20260814T034703-c8e2",
+      "ts": "2026-08-14T03:47:03Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "signal_feedback",
+      "summary": "A-30 CRITICAL rag-service-1: crash cliff discontinuity 94.68%→52.13% (>40pp) — continuation of known cross-cycle oscillation pattern",
+      "severity": "CRITICAL",
+      "status": "triaged",
+      "payload_ref": null,
+      "provenance": "detector",
+      "audit_cycle_tag": "cron:auditor-t1:2026-08-14T03:30Z",
+      "dedup_key": "microservice_degraded:rag-service-1:A-30-CRASH-CLIFF",
+      "detail": {
+        "check_id": "A-30",
+        "service_id": "rag-service-1",
+        "violation": "crash cliff discontinuity >40pp",
+        "baseline_pct": 94.68,
+        "min_pct": 52.13,
+        "max_pct": 96,
+        "discontinuity_detail": "94.68->52.13 (single-step drop within 65s window)",
+        "cross_cycle_context": "Part of documented rag-service oscillation pattern (c87: 88.50%, c88: 85.87%, c89: 94.68% with volatile swing). FU-RAG-DEPLOY-MEMORY marked DONE_VERIFIED on 2026-08-13 based on single 35% dip; pattern recurrence suggests closure was premature. Reference: project_ragservice_memory_oscillation_contradicts_staleack_20260813",
+        "state_verified": "No OOMKilled, no restart, no state_changed_during_window, VmHWM pinned at cap, container running cleanly",
+        "escalation_rule": "A-30 discriminator rule: verdict=ESCALATE + reason contains 'discontinuity' → CRITICAL per tier1-probe.md clause 4"
+      },
+      "triaged_at": "2026-08-14T09:29:37Z",
+      "triaged_by": "po",
+      "disposition": "FOLD onto FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS. The 94.68% -> 52.13% \"crash cliff\" is a container RESTART boundary, not reclamation and not a cliff in the A-30 sense — see feedback_a30_crashcliff_branch_fires_on_structurally_noncrash_drop. The actionable half is the 94.68% pre-drop reading, which is the same unbounded climb tracked on the leak row. No separate mint."
     }
   ],
   "backlog_detail": [],
