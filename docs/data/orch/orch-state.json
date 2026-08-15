@@ -3665,11 +3665,11 @@
         "note": "QA-GATED. SUPERSEDES existing backlog row NB-AUDITOR-MAIN-SPLIT (same work, richer scope) — dedup/close NB-AUDITOR-MAIN-SPLIT on pickup. main.md -> <=170L dispatcher; extract L153-435 -> tier2-freshness.md, L438-655 -> tier3-integrity.md, dup emit block -> emit-sequence.md. Tier-1 sub-flow pattern already proven by shipped tier1-probe.md.",
         "next_agent": "agent-father",
         "po_routing_ruling_20260721": "PO ARTIFACT-CLASS ROUTING RULING 2026-07-21T18:42Z. Rule: routing follows ARTIFACT CLASS, not directory. Any row whose deliverable is instruction-prose that an agent LOADS AND EXECUTES — .claude/agents/**, docs/agents/** (init/flow/knowledge/tools-package), .claude/skills/**/SKILL.md — routes to agent-father. Executable code (apps/**, scripts/**), codegen-from-registry, and data/root-config (docs/data/**, CLAUDE.md) route to zone-matched dev-* or developer. Rationale: for this system a flow doc IS the executable source; agent-father is already sole owner of agent-file lifecycle (dispatch/SKILL.md:48) and of NEW cron skill files (:50), and board precedent has 5/5 pre-existing docs/agents/ rows routed to agent-father/agents-architect/po and 0 to developer. Precedent for SKILL.md specifically: docs/signals/processed/dev-team-20260716T102429Z-autolaunch-safety-hold-uc-asl-p6.json already routed a signal-dashboard SKILL.md edit to agent-father as 'the factory rule'. ROOT CAUSE this closes: .claude/skills/zone-detect/SKILL.md resolves ONLY dev-<service> (Tier-1/2, needs apps/<service>/-shaped zone) or generic developer (Tier-3 fallback) — it has NO path to agent-father, so any docs/agents/ or .claude/skills/ row reaching execute-tier with next_agent unset gets the 'developer' placeholder and mis-routes. EXPECTED SIDE EFFECT (do NOT 'fix' this): next_agent=agent-father does not match the dev-role pattern ^dev(-|$)|^developer$, so the BOUNDED-1 NON-DEV-NEXT_AGENT gate (dev-team/flow/main.md:518) now WITHHOLDS these rows from unattended idle auto-pickup. That is the intended outcome — they require deliberate router dispatch to agent-father, not silent promotion to a generic developer.",
-        "updated_at": "2026-08-12T03:03:00Z",
-        "po_manual_dispatch_flagged_at": "2026-08-12T03:03:00Z",
+        "updated_at": "2026-08-15T13:12:35Z",
+        "po_manual_dispatch_flagged_at": "2026-08-15T13:06:03Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
         "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) surfaced DRS-STRANDED-OFF-ALLOWLIST candidate — folding into this tick's BATCH; re-admitted after prior stamp 2026-08-06T22:05:17Z went stale (>4h) without dispatch. CO-EDIT WARNING: this splits docs/agents/system-auditor/main.md, the same file FIX-AUDITOR-T1-T3-CLEANEXIT-HEARTBEAT-STAMP-SKIPPED-T2-UNAFFECTED must edit — land the heartbeat FIX first or rebase the split onto it.",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) re-admitted stale-flagged DRS-STRANDED-OFF-ALLOWLIST candidate (prior flag 2026-08-12T03:03:00Z, >4h stale) — folding into this tick's BATCH",
         "po_size_recheck_20260806T0752": "TITLE LINE COUNT IS STALE AND UNDERSTATED. Title says 787L; live `wc -l docs/agents/system-auditor/flow/main.md` = 965L as of 2026-08-06T07:52Z. Corroborated same-tick and independently: agent-father had to create docs/agents/system-auditor/flow/data-writer-provenance.md as a NEW sibling specifically because docs/agents/system-auditor/flow/audit-dimensions.md is already at its own 200L hard cap and could not absorb the D-DATA dimension. The split is no longer 'scheduled-later, low urgency' — file growth is now actively displacing new dimension content into ad-hoc siblings with no registry entry.",
         "po_dedup_note_20260806T0752": "DUPLICATE FOUND: NB-AUDITOR-MAIN-SPLIT (backlog, priority low) targets the SAME file and the SAME Tier-2/Tier-3 extraction, quoting 627L. Both line counts are stale against the live 965L. TE-T06 is the surviving row (P1, owner+next_agent set, dispatched this tick); NB-AUDITOR-MAIN-SPLIT is marked superseded_by TE-T06 — do not work both."
       },
@@ -4251,7 +4251,7 @@
       },
       {
         "id": "AF-SEMBLE-INIT-DEF",
-        "priority": "P3",
+        "priority": "P2",
         "size": "S",
         "status": "BACKLOG",
         "title": "semble-search agent-def structural gap: docs/agents/semble-search/init.md is a pure markdown skill-pointer (no agent: block, no flow pointer). Decide pattern: delete init.md + point .claude/agents/semble-search.md straight at .claude/skills/semble-search/SKILL.md, OR rewrite init.md as a real agent def. agents-architect picks pattern (consistency with other agent bootstraps); agent-father implements.",
@@ -4260,7 +4260,7 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#AF-SEMBLE-INIT-DEF",
         "verify_note": "prior_status=TODO",
         "next_agent": "agent-father",
-        "updated_by": "po/triage-agentfather-20260807T1303Z",
+        "updated_by": "po/triage-agentfather-20260815T1306Z",
         "po_ruling_20260806T1345Z": {
           "by": "po/triage-agentfather-20260806T1318Z",
           "source": "agent-father keep sweep 2026-08-06T13:18Z, Checks #1/#3 escalation (LOW) — docs/agent-memory/notebooks/agent-father.md",
@@ -4284,7 +4284,7 @@
           ],
           "doctrine_sync_deferred_to": "FIX-AGENT-GUIDE-SSOT-NO-AUTHORIZED-WRITER — the carve-out belongs in docs/AGENT_CREATION_GUIDE.md Section 5 as doctrine, but NO agent is authorized to write that file today (agent-father's forbidden_outputs bans it explicitly; agents-architect cannot write outside docs/architecture-briefs/). It lands in sweep-fixes.md — agent-father's own zone, and where the check actually executes — so this row is landable NOW; the guide sync rides the ownership row."
         },
-        "updated_at": "2026-08-07T13:09:54Z",
+        "updated_at": "2026-08-15T13:10:38Z",
         "occurrence_2": {
           "at": "2026-08-07T13:09:54Z",
           "by": "po/triage-agentfather-20260807T1303Z",
@@ -4297,6 +4297,27 @@
           },
           "premise_correction": "MATERIAL, and it changes WHY this row matters without changing WHAT to do. The ruling's AC-1 rationale said the exception was needed 'so Checks #1/#3 stop re-firing daily'. That daily re-fire was NOT semble-search-specific: commit ac58cf667 (2026-08-07) proved Checks 1/3/5 were grepping the thin .claude/agents/<id>.md stub instead of docs/agents/<id>/init.md, producing 42/42 false-FAIL fleet-wide. That fleet-wide cause is now fixed and is NOT this row's business. What survives the corrected probe is a genuine, now 1-of-42, TRUE POSITIVE: docs/agents/semble-search/init.md really does carry no agent: block, no version:, no boundary_rules, no flow.default. So the ruling's ACs remain exactly right and remain needed; only the AC-1 rationale sentence should be restated to attribute the fleet-wide re-fire to ac58cf667 rather than to the missing exception.",
           "priority_held": "P3 retained — LOW, correctly ranked below the P1 Error-Boundary row. Not dispatched this tick (manual-dispatch-sweep dispatches exactly ONE row per invocation by design)."
+        },
+        "occurrence_3": {
+          "at": "2026-08-15T13:06:03Z",
+          "by": "po/triage-agentfather-20260815T1306Z",
+          "source": "agent-father Keep-cycle 2026-08-15 (commit baf52fb7e, raw-verified) — re-reported as escalation 1, severity LOW-MEDIUM",
+          "disposition": "FOLD — 3rd relay, no re-mint, NO re-decision. The po_ruling_20260806T1345Z stands verbatim and unchanged: FORMALIZE the tool-style exception class, do NOT delete init.md, do NOT force full compliance, DO require the minimal floor (version: field + one-line boundary contract). The relay again framed this as 'needs a decision: formalize as a proper agent vs. document as exempt skill-not-agent' — that binary was already decided 9 days ago and the answer was NEITHER pole: a named tool-style exception WITH a minimal floor.",
+          "ac_status_reverified_at_source": {
+            "AC-1": "STILL NOT LANDED (re-probed 2026-08-15T13:06Z). docs/agents/agent-father/flow/sweep-fixes.md: only match for 'exception|tool.style|semble|waive|allowlist' remains line 14, the same unrelated lesson citation occurrence_2 identified. No tool-style exception note, no named allowlist, no 5-criteria test.",
+            "AC-2": "STILL NOT LANDED (re-probed 2026-08-15T13:06Z). docs/agents/semble-search/init.md is 19 lines, unchanged pure skill-pointer: zero 'version' match, zero 'boundary' match. Confirms the relay's own 'unchanged shape, not new drift' finding.",
+            "AC-3": "STILL NOT LANDED — blocked on AC-1/AC-2."
+          },
+          "stall_finding": "This row has now absorbed THREE agent-father relays (2026-08-06, 2026-08-07, 2026-08-15) and has been implementable-with-no-open-questions for 9 days. AC-2 is a two-line edit to a 19-line file inside agent-father's own commit zone. The recurring relay cost now exceeds the fix cost, which is the sole reason for the priority bump below — the underlying severity is unchanged and still genuinely LOW.",
+          "priority_change": "P3 -> P2. NOT a severity re-rating. Rationale: at P3 the row sits below the board's large P1 band and has never been selected by manual-dispatch-sweep (which dispatches exactly one row per invocation, priority-ordered); three relays prove P3 is functionally 'never'. P2 lifts it above the noise floor without competing with genuine P1 work. Held OUT of P1 deliberately: it is still a lint/consistency defect with no user-facing or data-integrity impact.",
+          "new_subfinding_not_in_prior_ruling": {
+            "claim": "The relay surfaced one genuinely NEW fact the 2026-08-06 ruling did not consider: a THIRD self-description exists and disagrees with the other two. docs/references/agent-roster.md:45 classifies semble-search as 'N/A (skill, not agent)', while .claude/agents/semble-search.md is a real, spawnable subagent stub (name/color/model: claude-haiku-4-5/description/tools: Bash, Read) whose body bootstraps to docs/agents/semble-search/init.md.",
+            "verified_at_source": "Both files read directly 2026-08-15T13:06Z, not taken from the relay.",
+            "ruling": "This is NOT a new open question — the existing tool-style exception class already answers it. semble-search IS an agent (it is spawnable, it holds tools, it bootstraps through init.md like all 42 others); it is a tool-style agent, which is precisely the class the 2026-08-06 ruling created. The roster line is simply stale text that predates that class existing. Fix the roster line to name the class; do not change the agent's status either way.",
+            "adds": "AC-4 below. No new row, no new decision, no architect step."
+          },
+          "AC-4": "docs/references/agent-roster.md:45 — replace the 'N/A (skill, not agent)' cell with a cell naming the real class, e.g. 'tool-style agent (see docs/agents/agent-father/flow/sweep-fixes.md Step 3 exception table)'. The Semble Search row keeps its skill pointer; only the misleading not-an-agent classification changes. Rationale: three artifacts describing one entity must not disagree; the roster is the one that is wrong.",
+          "ac_ownership_note": "AC-1/AC-2/AC-4 are all inside agent-father's commit zone (docs/agents/**, docs/references/**). next_agent stays agent-father. No agents-architect pre-step — occurrence_2 already established the SPIKE framing is over-spec and the row is directly implementable."
         }
       },
       {
@@ -12302,6 +12323,41 @@
         "build_standard_rationale": "Bug-fix in an existing interface-layer route + its existing scheduler sibling, no new primitive, no new file.",
         "priority_rationale": "P1 not P0: it destroys no data on its own and its symptom is dormant while the semaphore defect dominates. P1 not P2 because it BLOCKS the recovery path for the ~58 enrich_failed rows — if it ships after the semaphore fix, the first remediation attempt will silently fail and look like the semaphore fix did not work. Best sequenced alongside or just before that row's AC-8 live verification.",
         "dispatch_note": "Both files are apps/mcp-server/ -> dev-mcp-server. No architect hop needed: the defect, its exact line, and the already-correct sibling implementation to copy are all identified above."
+      },
+      {
+        "id": "FIX-COWORK-WRITE-BOUNDARY-ENFORCEMENT-BRIEF-ORPHANED-NEVER-IMPLEMENTED",
+        "type": "FIX",
+        "priority": "P1",
+        "size": "M",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "next_agent": "pm",
+        "owner": "pm",
+        "created_at": "2026-08-15T13:06:03Z",
+        "created_by": "po/triage-agentfather-20260815T1306Z",
+        "detail_ref": "docs/architecture-briefs/2026-08-06-guard-cowork-notebook-agent-write-boundary.md",
+        "title": "ORPHANED BRIEF: the cowork write-boundary guard (write_boundary SSOT + PreToolUse agent-write-boundary-guard hook + doc-fix-proposal channel) is 0-of-10 files implemented 9 days after its P1 brief shipped, because the brief's PLAN-ONLY row was closed DONE on brief delivery and no implementation row was ever minted. Mint the implementation, and correct the brief's now-stale Bash-vector scope count (3 of 7 -> 6 of 7) while doing it.",
+        "note": "PO TRIAGE of agent-father Keep-cycle 2026-08-15 escalation 2 (commit baf52fb7e). The escalation asked to 're-widen the brief scope 3->6, or mint a task for the 3 newly-granted agents'. PO REJECTS that framing and re-scopes: widening the scope section of a spec that nobody is implementing produces a better-scoped orphan, not enforcement. FOUR PREMISE CORRECTIONS, all verified at source 2026-08-15T13:06Z, none taken from the relay: (A) THE ENFORCEMENT SCOPE WAS NEVER 3. The brief's mechanical scope is SEVEN agents, stated in three independent places: para 1 names all 7 (alert-commander, bctc-analyst, market-watcher, news-scout, digest-predict, unified-agent, qa-responder); section 4.1 spells out seven write_boundary blocks; section 5 lists seven .claude/agents/*.md files to modify. The number 3 appears ONLY inside the section 7 residual-risk flag, counting how many of the 7 also held Bash on 2026-08-06. Scope-in and Bash-holding are different sets and the relay conflated them. (B) bctc-analyst IS IN SCOPE, not a holdout. Section 4.1 gives it the RICHEST allow-list of all 7 (notebook + docs/signals/** + docs/analysis-briefs/*.md + data/bctc-analysis-cache/**). It is the sole holdout of the BASH GRANT, not of the enforcement scope. (C) The 3->6 arithmetic is right by accident. Commit 476646c4e granted Bash to six agents (digest-predict, idea-forge, market-analyst, qa-responder, tran-ngoc-bau, unified-agent), of which only THREE are brief-scope-in. Live re-derivation from .claude/agents/*.md tools: lines gives Bash on 6 of the 7 scope-in agents; bctc-analyst alone lacks it. So section 7's count does go 3 of 7 -> 6 of 7, but not for the reason given. (D) THE LOAD-BEARING FINDING, absent from the relay: NOTHING SHIPPED. Probed all ten section-5 paths: docs/data/system-map.json has zero 'write_boundary' occurrences; scripts/agents-flow/agent-write-boundary-guard.mjs does not exist; .claude/settings.json has no such PreToolUse registration; docs/signals/doc-fix-proposals/ does not exist; .claude/skills/doc-self-heal/SKILL.md has no Step 0 boundary gate; .claude/skills/cowork-boundary/SKILL.md forbidden_outputs is unamended. ROOT CAUSE of the orphaning: the origin row GUARD-COWORK-NOTEBOOK-AGENTS-SELF-EDIT-FLOW-DOC carried plan_only:true, so delivering the brief correctly satisfied it and it was closed status=DONE (now in docs/data/orch/archive/2026-08.json). The brief's own RETURN said 'NEXT: agent-father | implement 4.1-4.4 per spec, in one commit' and 'PIPELINE: continue (routed via brief_complete signal -> po -> route_to: agent-father)' — that routing never produced a successor row. Closing a plan_only row on plan delivery is correct; letting it close with no successor is the defect. WHY P1 AND NOT LOWER: this is the closed origin row's OWN P1, inherited unchanged. Re-minting the same unretired risk at a lower priority would silently launder a P1. The risk is NOT retired: the declarative 'No other filesystem writes permitted' boundary that 4 confirmed historical instances crossed is still declarative-only today. WHY THE section-7 DOWNGRADE NO LONGER HOLDS: section 7 justified treating the Bash vector as 'a residual, not the load-bearing gap' on the grounds that all 4 confirmed instances used Edit and Bash affected a 3-of-7 minority. At 6 of 7 that minority argument is gone, and the guard as specced is a PreToolUse Write|Edit hook that a Bash write (sed -i, cp, heredoc redirect) bypasses entirely — so shipping section 4.2 alone would now leave the majority of scope-in agents with an unenforced boundary. The section-7 follow-up candidate (a PostToolUse/Bash backstop modelled on the existing orch-state-hook-bash-backstop.sh) is therefore promoted from optional residual to in-scope here. FORWARD-LOOKING: the 6-of-7 figure is unstable, not a floor. Backlog row FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH exists precisely because bctc-analyst's own stage-log-notify.md mandates git add/commit blocks its package cannot run; resolving it by granting Bash takes the gap to 7 of 7. Do not design for 6. RELATIONSHIP TO ADJACENT ROWS, deliberately kept separate: FIX-COWORK-AGENT-DESC-STALE-VS-DELIBERATE-BASH-GRANT (P1, backlog, agent-father) fixes DESCRIPTION TEXT on 3 agents and its own note explicitly ring-fences 'building the mechanical write_boundary keys / agent-write-boundary-guard hook' as OUT OF SCOPE and a separate design question. THIS ROW IS THAT SEPARATE ROW. It does not supersede or absorb that one; they are complementary and may ship independently. FIX-AGENT-BASH-GRANT-COVERAGE-GATE-FLOW-DEMANDS-VS-FRONTMATTER (qa lane) governs whether a grant EXISTS; this row governs what a grant may TOUCH. No overlap.",
+        "acceptance": [
+          "AC-1 PM decomposes per the existing brief — no architect re-design step. The brief is a complete, unamended spec; the only open question was ever ownership. Split on commit-zone lines: (a) CODE leg -> developer: scripts/agents-flow/agent-write-boundary-guard.mjs + its .test.mjs + the .claude/settings.json PreToolUse registration (note: the brief's section 3 records that the sibling orch-state-hook-prewrite.mjs is registered ONLY in the gitignored settings.local.json — this guard MUST register in the tracked .claude/settings.json or it is not fleet-wide); (b) DATA/DOC leg -> agent-father: docs/data/system-map.json write_boundary blocks, .claude/skills/doc-self-heal/SKILL.md Step 0, .claude/skills/cowork-boundary/SKILL.md forbidden_outputs, the 7 .claude/agents/*.md description clauses, docs/agents/po/flow/triage-signals.md, docs/agents/agent-father/flow/main.md, docs/agents/agent-father/flow/edit-prepare.md, docs/policies/dev-standards.md. Rationale for the split: the brief's own RETURN assigned all of 4.1-4.4 to agent-father, but scripts/ is outside agent-father's commit zone, so as written the brief was undeliverable by its named owner — a second, independent reason it stalled.",
+          "AC-2 Section 8 atomicity is a HARD sequencing gate across the split, not a suggestion. The brief requires the mechanism (4.2) and the legitimate channel (4.3) to land together, because a mechanism shipping first leaves a cowork agent blocked mid-cycle with no legal alternative — strictly worse than today. Since the split puts the mechanism with developer and the channel with agent-father, PM must either land both legs in one commit or sequence the channel leg FIRST. Never the mechanism first.",
+          "AC-3 write_boundary blocks are authored for all SEVEN scope-in agents including bctc-analyst, per brief section 4.1 verbatim. Do not reduce to 6 and do not treat bctc-analyst as out-of-scope.",
+          "AC-4 The Bash vector is covered, not deferred. Ship the section-7 PostToolUse/Bash backstop (analogous to the existing scripts/agents-flow/orch-state-hook-bash-backstop.sh, scoped to docs/agents/** and .claude/agents/** paths plus write-verbs, same fail-open policy) in the same task as the PreToolUse guard. Justification is recorded in this row's note: at 6-of-7 (trending 7-of-7) the Edit-only guard leaves the majority of scope-in agents unenforced.",
+          "AC-5 Fail-open is preserved everywhere, per brief section 7. Any parse/read/lookup failure allows the write through. This is a deliberate, documented policy choice matching the sibling hook; it may not be changed inside this task.",
+          "AC-6 The brief itself is amended, not silently superseded. Append a dated amendment note to docs/architecture-briefs/2026-08-06-guard-cowork-notebook-agent-write-boundary.md section 7 recording: Bash-vector count corrected 3-of-7 -> 6-of-7 as of commit 476646c4e (2026-08-14T23:11Z); bctc-analyst named as the sole non-Bash holdout AND explicitly still in enforcement scope; the 'residual, not load-bearing' downgrade withdrawn with its reason. Also correct section 3's exclusion note for tran-ngoc-bau — it now holds Bash too (same commit), though its exclusion still stands on its own stated grounds (no notebook-only frontmatter claim to correct). Keeps the brief honest for the next reader instead of relying on this row's note surviving.",
+          "AC-7 Verify by mechanism, never by narration. Post-implementation, a RAW probe of all ten section-5 paths returns non-zero for each (the exact probe this triage ran and that returned 0-of-10). Plus one live negative control: a scope-in agent attempting a Write/Edit outside its allow-list is blocked, and the same attempt via a Bash write-verb is caught by the AC-4 backstop.",
+          "AC-8 No successor-orphan recurrence. This row may only close on implementation landing, never on a plan/brief/spec being delivered. It is NOT plan_only. If decomposition produces sub-rows, this row stays open until they are all DONE_VERIFIED."
+        ],
+        "po_ruling_20260815T1306Z": {
+          "by": "po/triage-agentfather-20260815T1306Z",
+          "source": "agent-father Keep-cycle 2026-08-15, escalation 2 (MEDIUM, standing) — commit baf52fb7e",
+          "decision": "MINT an implementation row rather than re-widen the brief. The brief's scope section was a symptom; the orphaning is the defect.",
+          "rejected_option_widen_brief_only": "REJECTED. Editing section 7's count from 3 to 6 with no implementation row leaves 0-of-10 files shipped and produces a more accurately-scoped orphan. The scope correction is real and is preserved as AC-6, riding the implementation instead of replacing it.",
+          "rejected_option_new_row_for_the_3_newly_granted": "REJECTED on a false premise. digest-predict, unified-agent and qa-responder were already in the brief's enforcement scope from day one (section 4.1 authors write_boundary blocks for all three). A row 'to cover the 3 newly-granted agents' would duplicate work the existing brief already specifies and would fragment a spec whose own section 8 requires atomic delivery.",
+          "rejected_option_fold_into_adjacent_bash_row": "REJECTED. FIX-COWORK-AGENT-DESC-STALE-VS-DELIBERATE-BASH-GRANT's own note deliberately ring-fences this mechanism as out of scope. Folding would override a prior deliberate PO scope decision and turn an XS description-text fix into an M mechanism build."
+        },
+        "escalation_provenance": "agent-father cannot act on this itself — it holds no Agent/spawn grant, so it can only re-report. This is the second consecutive cycle class where agent-father surfaces a correct finding it is structurally unable to route (see AF-SEMBLE-INIT-DEF occurrence_3, same cycle). Noted so the pattern is visible, not re-derived next time.",
+        "updated_at": "2026-08-15T13:11:53Z"
       }
     ],
     "closed_sprints": [
@@ -18560,8 +18616,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-15T07:28:30Z",
-    "last_triaged_by": "po",
+    "last_triaged_at": "2026-08-15T13:06:03Z",
+    "last_triaged_by": "po/triage-agentfather-20260815T1306Z",
     "in_progress": [
       {
         "id": "UC-CCA-P3",
