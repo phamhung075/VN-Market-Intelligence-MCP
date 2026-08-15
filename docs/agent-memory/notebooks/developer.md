@@ -1,6 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-15T09:56:30Z | **Cycle:** FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION (P0 S, router-direct dispatch)
+**Last updated:** 2026-08-15T10:05:00Z | **Cycle:** FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK (P1 S, stale review-lane triage, router-direct dispatch)
+
+## Session 2026-08-15T10:05:00Z — FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK (docs/agents/fb-market-poster/ + scripts/, developer, P1 S, stale review[] row triage, router-direct dispatch, session 632721c2)
+
+**Task:** stale `review[]` row, QA CHANGES_REQUESTED. Original substance fix (`1b506cbdd`, Check-D2 non-waivable) confirmed by QA still live/correct — the ONLY problem: unrelated LATER commit `8d165e8d6` (agent-father main.md/daily.md split, 2026-08-06) relocated the entire STEP 4b block, including the Check-D2 NON-WAIVABLE marker + fix protocol, from `flow/main.md` into `flow/daily.md` verbatim. This task's own regression harness (`scripts/test-fb-gate-checkd2-nonwaivable.sh`) still hardcoded `MAIN_FLOW` at the pre-split `main.md` path (assertions 3b/3c) — false-RED (8/10) against live HEAD despite the real fix being intact.
+
+**Fix (test-pointer-only, no flow-doc change):** re-verified via grep that `daily.md:649-650,686-687` carries the NON-WAIVABLE marker + Check-D2 fix protocol + Check-C's own honest-gap-and-PROCEED waive language verbatim, and that `weekly-recap.md`/`weekly-prediction.md` already correctly point at `daily.md STEP 4b`. Repointed `MAIN_FLOW` (line 57) + the 2 assertion labels/comments at `docs/agents/fb-market-poster/flow/daily.md`.
+
+**Verify:** `bash scripts/test-fb-gate-checkd2-nonwaivable.sh` → 10/10 GREEN against live HEAD. `bash scripts/test-fb-gate-checkc-negation.sh` (sibling harness) → 6/6, no collateral damage.
+
+**Structural gap (recurring, same class as prior sessions):** this Task-tool spawn has `Read/Edit/Write/Bash` only — no `mcp__gateway__call_tool`/`mcp__semble__search` (both probed directly, both `No such tool available`). Per `feedback_local_cowork_subagents_gateway_blind`, used the documented Bash-transport fallback `scripts/agents-flow/mcp-call.sh` (direct JSON-RPC-over-curl to the vn-market endpoint) to run `task_claim`/`task_release` for `commit-mutex:main` — this specialist DOES need the commit-mutex here (direct-commit row, branch:null, no outer dispatcher holding a per-commit lock for this triage path) and it worked cleanly both times (claim/critical-section/release).
+
+**Closeout:** 2 commits, both pathspec-scoped and pushed — `c678ef57e` (script fix only) and `007b30077` (`orch-state.json` board row `review[]→qa[]` lane-move: status REVIEW→QA, owner=developer, next_agent=qa, `commit_sha` recorded, `status_note` documents the fix). Decision-journal entry appended to `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` (S53). No handoff file (flat `review[]` row, no PM decomposition, no task branch — router's own triage instruction is the spec).
+
+---
 
 ## Session 2026-08-15T09:56:30Z — FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION (cross-service/, developer, P0 S, router-direct dispatch, PO priority-bump 09:15Z, session 632721c2)
 
@@ -37,27 +51,5 @@
 **Regression:** `pre-commit-notebook-uuid-provenance.test.sh` 10/10 (unchanged, neither script edited). No `apps/` touched — `bun test`/`tsc` N/A.
 
 **Closeout:** commits pending this write (notebook scrub, board lane-move, this notebook). DJ: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` S51. No gateway/Agent tool this session (Read/Edit/Write/Bash only) — board write via `orch-apply.sh` directly; dispatcher (dev-team) holds the outer `task:` lock per INV-GATEWAY-1, did not attempt `task_claim`/`task_release`.
-
----
-
-## Session 2026-08-15T07:50:00Z — FIX-PROSECEILING-SECONDARY-CLAIM-STAMP-FIELDS-MISSING-FROM-STRUCTURAL-EXCLUDE-SET (cross-service/, developer, P1 S, dev-team Step 1 triage dispatch)
-
-**Task:** Same-day regression from `4513c45df` (this developer's own prior cycle): `orch-row-prose-ceiling-check.mjs`'s `STRUCTURAL_FIELDS` excluded `claimed_at`/`claimed_by` but not the `secondary_claimed_at`/`secondary_claimed_by`/`secondary_dispatch_target`/`dispatch_target` family `scripts/devteam-review-claim-secondary-drain.jq` stamps in place inside `review[]` — the claim stamp itself counted as prose growth on an already-over-ceiling row, hard-rejecting the write every tick and deterministically livelocking the whole Review-Lane SECONDARY-Drain lane (picker is oldest-first with no failed-claim exclusion — same row re-picked forever). 27 eligible rows starved behind one frozen row (`SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD`, `updated_at` frozen since 2026-08-11T17:36:34Z).
-
-**AC-1 fix:** added the 4 field names to `STRUCTURAL_FIELDS` — ~4 tokens, same coordination-metadata argument that already admitted `claimed_at`/`claimed_by`.
-
-**AC-2 (the real deliverable):** new DYNAMIC regression test `SECONDARY-DRAIN-STAMP` in `scripts/test/orch-row-prose-ceiling-check-tests.sh` — stamps a synthetic over-ceiling `review[]` row with the real SECONDARY-Drain claim-field set, asserts exit 0. Confirmed genuinely RED pre-fix via `git stash` (18/19 pass, new test failing with the exact livelock `ABORTED` message) before restoring the fix and confirming GREEN (19/19) — a static field-list scan (`4513c45df`'s own shipping verification) would have passed even pre-fix, which is exactly how this regression slipped through.
-
-**AC-3 scope fence (verified independently, not just trusted):** did NOT touch the other 5 claim scripts (QA-Drain/BOUNDED-1/SLS/RLC/DRS) — grep-confirmed they all move rows OUT of the 3 guarded lanes on claim (into `qa[]`/`in_progress[]`), so the claimed row leaves the measured set before this guard ever inspects it. `devteam-review-claim-secondary-drain.jq` is the only claim script that stamps in place inside a guarded lane.
-
-**AC-4:** did not adopt the `detail_ref`-migration workaround (blocked by separate P1 `FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION`, wouldn't fix the other 45 over-ceiling rows anyway).
-
-**AC-5 verified LIVE, not by inspection:** during this session a concurrent dev-team SECONDARY-Drain tick ran against the already-fixed (then-uncommitted) script and stamped `SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD` — `updated_at` moved off the frozen 2026-08-11T17:36:34Z to 2026-08-15T07:40:55Z, `secondary_claimed_at`/`secondary_claimed_by`/`secondary_dispatch_target` all present (row is 36242B, ~3x ceiling). Observed directly via `jq` read of the live file — NOT self-executed; this specialist does not run dev-team's own dispatcher-tick claim scripts.
-
-**Regression:** `orch-row-prose-ceiling-check-tests.sh` 19/19 (was 18, +1 new), `orch-apply-wrapper-tests.sh` 89/89 unaffected. No `apps/` TS/Go touched — `bun test`/`tsc` N/A.
-
-**Structural gap (same class as prior sessions):** graphify incremental step skipped — no Skill-tool binding available to this spawned agent (Read/Edit/Write/Bash only).
-
-**Closeout:** 3 commits, all pathspec-scoped — `90e84270d` (fix + regression test), `59304db7d` (dev-standards.md CANONICAL block update + WORK.md), `c2e69375e` (board row `backlog[]→review[]` lane-move + status flip, same write per the status-flip=lane-move rule; this write also captured the concurrent SECONDARY-Drain stamp on `SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD` already sitting in the working tree). Decision-journal entry appended to `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` (S50). Router/dispatcher (dev-team) holds the outer `task:` sprint-task lock per INV-GATEWAY-1 — this specialist did not attempt `task_claim`/`task_release`.
 
 ---
