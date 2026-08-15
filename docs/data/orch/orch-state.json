@@ -18501,7 +18501,7 @@
         "last_served_tick": "2026-08-15T07:20:46Z"
       }
     },
-    "_updated_at": "2026-08-15T08:54:11Z",
+    "_updated_at": "2026-08-15T09:20:56Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -18707,6 +18707,55 @@
         "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/data/orch/orch-state.json' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/data/orch/orch-state.json' (dd57d6734bc83d5a4518abf4da0bdb07e36328b8) differs from what is about to land in this commit (47f00785ef28f43e5f831a578368f8d5942682f1) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope (two-blob form takes NO pathspec — do not append '-- docs/data/orch/orch-state.json', that is a git usage error): git diff dd57d6734bc83d5a4518abf4da0bdb07e36328b8 47f00785ef28f43e5f831a578368f8d5942682f1",
         "createdAt": "2026-08-15T08:47:56Z",
         "drained_at": "2026-08-15T08:50:45Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c336989ceb440fa303d03ad2f20331b0d09b0a9634cf28700fcdacc3c5c49cdd",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "20260815T090510Z",
+          "matched_slots": [
+            "refine-bctc-slot-1"
+          ],
+          "won_slots": [
+            "refine-bctc-slot-1"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/refine_bctc_md/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "legacy",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {},
+          "cadence_minutes": {},
+          "last_fired_timestamp": "2026-08-15T09:04:34Z",
+          "last_fired_slots": [
+            "refine-bctc-slot-1"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "09:00",
+          "leader_lock": "acquired",
+          "dev_head": "active",
+          "devq": 120,
+          "signal_backlog": 1,
+          "note": "single-slot tick (refine-bctc-slot-1, cron 0 9 * * *, bctc-offmarket); pressure_mode=legacy (script fallback); spawned agent a88b5eefa1d824f4d in background"
+        },
+        "createdAt": "20260815T090510Z",
+        "drained_at": "2026-08-15T09:20:56Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

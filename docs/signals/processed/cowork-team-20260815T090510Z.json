@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "20260815T090510Z",
-    "matched_slots": ["refine-bctc-slot-1"],
-    "won_slots": ["refine-bctc-slot-1"],
+    "matched_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-1"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/refine_bctc_md/flow/main.md"],
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 0,
     "errors": [],
@@ -21,7 +27,9 @@
     "due_reasons": {},
     "cadence_minutes": {},
     "last_fired_timestamp": "2026-08-15T09:04:34Z",
-    "last_fired_slots": ["refine-bctc-slot-1"],
+    "last_fired_slots": [
+      "refine-bctc-slot-1"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +41,11 @@
     "note": "single-slot tick (refine-bctc-slot-1, cron 0 9 * * *, bctc-offmarket); pressure_mode=legacy (script fallback); spawned agent a88b5eefa1d824f4d in background"
   },
   "priority": "low",
-  "createdAt": "20260815T090510Z"
+  "createdAt": "20260815T090510Z",
+  "_processed": {
+    "fingerprint": "c336989ceb440fa303d03ad2f20331b0d09b0a9634cf28700fcdacc3c5c49cdd",
+    "processedAt": "2026-08-15T09:20:56Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
