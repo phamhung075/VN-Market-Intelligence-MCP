@@ -1,20 +1,20 @@
 # Market Watcher — Notebook
-**Last updated:** 2026-08-15 04:19 UTC | **Sprint:** market-watcher-offhours
+**Last updated:** 2026-08-15 08:11 UTC | **Sprint:** market-watcher-offhours
 
 ## Carry-over
 None
 
-## Cycle (04:18–04:19 UTC)
-- Stocks: 34 | Anomalies: 0 (offhours, closed market, stale prices) | Volume spikes: 0 | Chain confirms: 0
-- Regime: NEUTRAL | DXY: USD STRENGTHENING (25950) | US10Y: FAIRLY_VALUED | Carry: NEUTRAL | Vol: ELEVATED (79th %-ile)
-- fx_pressure: none | pe_risk: none
-- Sweep-forced: 0
-- Note: VN market CLOSED (outside 02:00–08:59 UTC). All watchlist prices unchanged from 2026-08-14 08:59. ADL -468 (declining breadth). No new anomalies. AutoCure guard: no duplicates to suppress (no prior signal for this session on stale data).
+## Cycle (08:11 UTC — offhours)
+- Market: CLOSED (outside 02:00–08:59 UTC); prices stale from 2026-08-14 08:59 UTC (23h+ old)
+- Stocks monitored: 34 | Anomalies: 0 (2.5σ offhours floor) | Chain confirms: 0
+- Regime: NEUTRAL | DXY: USD STABLE (24500 within band) | Gold: BULLISH (safe-haven, $2350) | Vol: ELEVATED (79th %-ile, rv_20d=23.82%)
+- ADL: −468 (declining breadth) | New lows: 23 (market pressure) | New highs: 0
+- AutoCure guard: no duplicates to suppress (same-closing-price suppression applied; no new moves detected)
 
 ## Market Summary
-VN-Index 1729.08 (−36.55 intraday, −2.07% w/w). Market closed; off-hours scan finds no moves exceeding 2.5σ threshold. Volatility remains elevated (23.82% rv_20d); breadth declining (ADL −468 rolling weakness over 3 weeks). Macro regime NEUTRAL; USD strong (25950 VND/USD threshold gate passed); gold safe-haven signal (4432). No market-hours data available for this cycle.
+VN-Index 1729.08 (−36.55 intraday, −2.07% w/w). Market closed off-hours; all 34 watchlist tickers unchanged from market close 2026-08-14 08:59 UTC. Volatility elevated (rv_20d=23.82%, 79th percentile); breadth deteriorating with ADL falling to −468 (3-week rolling weakness). Momentum consensus weak (RS composite 48.6, below neutral). 52-week proximity shows 23 tickers at/near 52w lows, zero new highs — indicative of sustained downside pressure without relief rallies. Macro regime neutral; gold pricing (safe-haven spike to $2350) signals latent risk-off sentiment despite NEUTRAL investment clock. No price anomalies detected above 2.5σ threshold (offhours floor). No open chain findings (15-min window).
 
-## Metrics (cycle 2026-08-15 04:19 UTC)
+## Metrics (cycle 2026-08-15 08:11 UTC)
 | Field | Value |
 |---|---|
 | cycles_run | 1 |
