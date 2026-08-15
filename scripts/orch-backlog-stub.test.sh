@@ -23,9 +23,26 @@
 #                          dep is still MISSING/not-DONE_VERIFIED -> the row
 #                          correctly stays UNSATISFIED (still gated).
 #   T2 (regression control, OLD buggy default forced via env override) —
-#                          proves the test methodology itself is sound: with
-#                          the pre-fix field list, the SAME fixture flips to
-#                          wrongly SATISFIED (gate silently re-opens).
+#                          UPDATED 2026-08-15 (task: FIX-ORCHSTATE-HOTFILE-
+#                          BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT, F-3 cold-
+#                          merge fix, see T3/T4 below): under the OLD buggy
+#                          STUB_FIELDS list the row's HOT stub still loses its
+#                          inline depends_on (assertion 2 below still
+#                          reproduces that half of the original defect), BUT
+#                          the gate no longer wrongly re-opens, because
+#                          build_detail_temp() captures the FULL hot row
+#                          (unfiltered by STUB_FIELDS) and — post F-3 — the
+#                          cold-merge now lets that full hot row win per-field
+#                          over any stale cold value, so the cold detail
+#                          store ends up holding the CORRECT depends_on
+#                          regardless of the STUB_FIELDS regression. This is
+#                          F-3 providing a second, independent protection
+#                          layer, not a test bug — deps_satisfied() now
+#                          correctly stays UNSATISFIED even under the old
+#                          field list. See T3/T4 for a dedicated, isolated
+#                          reproduction of F-3's own bug (data loss on a
+#                          hot-exclusive field with no STUB_FIELDS override
+#                          involved at all).
 #
 # All I/O is against an ISOLATED scratch tree (mktemp -d) — never the live
 # docs/data/orch/orch-state.json or docs/data/orch/archive/backlog-detail.json.
@@ -182,8 +199,102 @@ check "T2: hot stub STRIPS depends_on under the OLD field list (reproduces the b
   "$( [ "$T2_HAS_DEPENDS_ON" = "false" ] && echo true || echo false )"
 
 T2_SATISFIED=$(exec_deps_satisfied "$T2_DIR/hot.json" "$T2_DIR/archive/backlog-detail.json")
-check "T2: deps_satisfied() wrongly returns true — gate SILENTLY RE-OPENS (the exact defect AC-4 closes)" \
-  "$( [ "$T2_SATISFIED" = "true" ] && echo true || echo false )"
+check "T2: deps_satisfied() stays false — F-3 cold-merge fix now protects even the OLD buggy STUB_FIELDS list (defense-in-depth, see header note)" \
+  "$( [ "$T2_SATISFIED" = "false" ] && echo true || echo false )"
+
+# ═════════════════════════════════════════════════════════════════════════
+# T3/T4 — F-3 cold-merge fix (task: FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-
+# NOT-TERMINAL-DRIFT), isolated from the STUB_FIELDS/AC-4 scenario above:
+# proves build_detail_temp()'s merge is now a PER-FIELD deep merge
+# (`.items = (.items * $new_items)`), not the old shallow
+# `($new_items + .items)` where an existing cold value won WHOLESALE for a
+# duplicate id, silently discarding ANY field that only ever existed on the
+# hot side (e.g. fresh prose added since the row's last stub run).
+#
+# Scenario: cold pre-seeded with an OLD title + a cold-exclusive `note` field
+# (already stripped from hot by a prior run, survives only in cold). Hot
+# carries a NEW title (re-edited since the last stub — a genuinely re-editable
+# field) + a brand-new `review_note` field that was NEVER stubbed (added to
+# hot after the last stub run, has no cold counterpart at all).
+#
+# T3 (title, field COLLISION)      — hot wins: cold detail's title updates to
+#                                     the hot value, not frozen at the stale
+#                                     cold copy.
+# T4a (note, COLD-exclusive field) — survives untouched (proves the fix is a
+#                                     true merge, not a hot-wholesale-wins
+#                                     replacement — the opposite defect).
+# T4b (review_note, HOT-exclusive
+#      field, THE F-3 REPRODUCTION) — picked up into cold. Under the PRE-FIX
+#                                     shallow merge this field was silently
+#                                     discarded (existing cold entry, lacking
+#                                     review_note entirely, won wholesale) —
+#                                     manually verified RED against the
+#                                     pre-fix `($new_items + .items)` line via
+#                                     `git stash` before landing this suite;
+#                                     GREEN is the permanent regression proof.
+# ═════════════════════════════════════════════════════════════════════════
+T3_DIR="$TMPDIR_TEST/t3-cold-merge"
+mkdir -p "$T3_DIR/archive"
+
+cat > "$T3_DIR/hot.json" <<'EOF'
+{
+  "_meta": { "schema": "v4" },
+  "head": { "status": "idle", "active_task_id": null },
+  "signal_queue": { "_updated_at": "2026-01-01T00:00:00Z", "_updated_by": "test", "rows": [] },
+  "task_board": {
+    "backlog": [
+      {
+        "id": "FIX-MERGETEST-ROW",
+        "title": "NEW TITLE (re-edited since last stub)",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "type": "FIX",
+        "zone": "test/",
+        "sprint": null,
+        "detail_ref": "archive/backlog-detail.json#FIX-MERGETEST-ROW",
+        "review_note": "fresh hot-only prose, added after the last stub run, no cold counterpart"
+      }
+    ],
+    "active_sprints": []
+  }
+}
+EOF
+
+cat > "$T3_DIR/archive/backlog-detail.json" <<'EOF'
+{
+  "_sentinel": "backlog-detail-v1",
+  "created_at": "2026-01-01T00:00:00Z",
+  "updated_at": "2026-01-01T00:00:00Z",
+  "count": 1,
+  "items": {
+    "FIX-MERGETEST-ROW": {
+      "id": "FIX-MERGETEST-ROW",
+      "title": "OLD TITLE (stale, pre-dates the hot re-edit)",
+      "note": "cold-only prose, already stripped from hot by a prior stub run"
+    }
+  }
+}
+EOF
+
+ORCH_STATE="$T3_DIR/hot.json" \
+ARCHIVE_DIR="$T3_DIR/archive" \
+DETAIL_FILE="$T3_DIR/archive/backlog-detail.json" \
+  bash "$STUB_SH" >"$T3_DIR/run.log" 2>&1
+T3_EXIT=$?
+check "T3/T4: orch-backlog-stub.sh exits 0 (cold-merge fixture)" "$( [ "$T3_EXIT" -eq 0 ] && echo true || echo false )"
+
+T3_COLD_TITLE=$(jq -r '.items["FIX-MERGETEST-ROW"].title' "$T3_DIR/archive/backlog-detail.json" 2>/dev/null)
+check "T3: field COLLISION — cold title updated to the HOT (re-edited) value" \
+  "$( [ "$T3_COLD_TITLE" = "NEW TITLE (re-edited since last stub)" ] && echo true || echo false )"
+
+T4A_COLD_NOTE=$(jq -r '.items["FIX-MERGETEST-ROW"].note' "$T3_DIR/archive/backlog-detail.json" 2>/dev/null)
+check "T4a: COLD-exclusive field (note) survives untouched" \
+  "$( [ "$T4A_COLD_NOTE" = "cold-only prose, already stripped from hot by a prior stub run" ] && echo true || echo false )"
+
+T4B_COLD_REVIEW_NOTE=$(jq -r '.items["FIX-MERGETEST-ROW"].review_note' "$T3_DIR/archive/backlog-detail.json" 2>/dev/null)
+check "T4b: HOT-exclusive field (review_note) is PICKED UP into cold — F-3 data-loss reproduction, GREEN post-fix" \
+  "$( [ "$T4B_COLD_REVIEW_NOTE" = "fresh hot-only prose, added after the last stub run, no cold counterpart" ] && echo true || echo false )"
 
 echo "──────────────────────────────────────────────────────────────"
 echo "orch-backlog-stub.test.sh: ${PASS} pass / ${FAIL} fail"

@@ -115,11 +115,25 @@ mkdir -p "${ARCHIVE_DIR}"
 #
 # Reads the CURRENT hot backlog and merges full items into the cold detail file.
 #
-# Merge strategy: $new_items + $existing_cold_items
-#   - Right-side (existing cold) WINS for duplicate ids.
-#   - This preserves the FULL version of items already in cold even when hot
-#     only has a stub (idempotent re-run safety).
-#   - New items (not yet in cold) come from the left side ($new_items from hot).
+# Merge strategy (FIXED — F-3, task: FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-
+# NOT-TERMINAL-DRIFT, architect brief 2026-08-09 §2.1): PER-FIELD DEEP MERGE,
+# `.items = (.items * $new_items)` — jq's `*` on two objects recurses into
+# matching keys; for a duplicate id, the result is the UNION of both sides'
+# fields, with the HOT side ($new_items, right operand) winning on any field
+# present in both (a genuinely re-editable field, e.g. `title`/`status`) while
+# a field that exists ONLY in cold (prose already stripped from hot by a prior
+# stub run, e.g. `note`) survives untouched, AND a field that exists ONLY in
+# the current hot snapshot (fresh prose added since the last stub run, e.g. a
+# new `review_note`) is picked up rather than discarded.
+#
+# BUG THIS FIXES (reproduced in isolation, scripts/orch-backlog-stub.test.sh
+# T3/T4): the PRIOR shallow merge -- `.items = ($new_items + .items)`, plain jq
+# `+` -- is id-keyed but NOT field-keyed: for any id present on both sides, the
+# EXISTING COLD VALUE WINS WHOLESALE (jq plus operator right-hand-object-wins-
+# whole-key semantics, no recursion). Any field added to the hot row since the
+# last stub (e.g. a fresh `review_note`) was silently discarded -- not in cold
+# (never captured), about to be stripped from hot by build_hot_temp own
+# unconditional field filter -- data loss with zero error, zero trace.
 #
 # detail_ref is stripped from items before writing to cold (the field is added
 # by this script and is not part of the original source record).
@@ -145,8 +159,14 @@ build_detail_temp() {
           | {key: .id, value: .}
         ] | from_entries) as $new_items |
 
-        # Merge: $new_items + .items → existing cold keys WIN (right side in jq + wins)
-        .items   = ($new_items + .items) |
+        # Merge: .items * $new_items -> PER-FIELD deep merge (jq star operator
+        # recurses on objects); hot ($new_items, right operand) wins per-field
+        # on any key present in both sides, cold-exclusive fields survive
+        # untouched, hot-exclusive (freshly-added-since-last-stub) fields are
+        # picked up. FIXED -- was ($new_items + .items) (shallow,
+        # existing-cold-wins-wholesale), see F-3 in the function header
+        # comment above.
+        .items   = (.items * $new_items) |
         .count   = (.items | length) |
         .updated_at = $now
       ' "${DETAIL_FILE}" > "${output}"
