@@ -132,7 +132,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-15T02:20:46Z",
+    "_updated_at": "2026-08-15T04:50:33Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -845,8 +845,8 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-15.json"
+        "status": "READ",
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-15.json"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -11478,32 +11478,6 @@
         "origin_signal_id": "telegram:4849"
       },
       {
-        "id": "FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "agent-father",
-        "next_agent": "agent-father",
-        "title": "QA verification gate certifies OOM-class ACs on docker inspect + an immediate probe — both proven wrong here; require dmesg + a settled window\n",
-        "files": [
-          "docs/agents/qa/flow/",
-          "docs/standards/"
-        ],
-        "baseline_pass": false,
-        "created_at": "2026-08-14T06:50:41Z",
-        "created_by": "po/dev-team-step1-triage-20260814T0621Z (BATCH mint)",
-        "status_note": "Second recorded occurrence of the AC-3 durability class (prior: feedback_ac3_durability_certified_on_window_that_ended_before_metric_settled). Two compounding gate defects, both evidenced live: (1) SIGNAL — docker inspect .State.OOMKilled/ExitCode do not propagate the VM-boundary cgroup OOM in Docker Desktop; read false/0 across 3 real kernel kills. dmesg inside the VM is the only authoritative source, and this was ALREADY documented in commit ca6d86869 and in the certified row's own status_note, yet the gate still passed. (2) WINDOW — certification closed 60min before the first post-fix OOM. No open row covers this class. AC: OOM-class verification_gate must (a) read dmesg in-VM, (b) span a window >= the observed inter-crash interval, (c) forbid docker inspect .State.OOMKilled as sole evidence.\n\nROUTER NOTE (dev-team, 2026-08-14T06:5x): CORROBORATING LIVE EVIDENCE found same-tick — Tier-1 audit cycle c95 (agent abd9a0df0bb3eec97, 2026-08-14T06:44Z) independently FOLDed the same rag-service memory reading using exactly the discredited signal class this row names (docker-level checks: no OOMKilled, no VmHWM pinning, no dmesg read) — a real-time demonstration this row's AC directly closes. Worth citing when this row is picked up.\n",
-        "updated_at": "2026-08-15T04:31:20Z",
-        "updated_by": "po",
-        "po_AC_EXTENSION_20260814T0927Z": "[po AC EXTENSION 2026-08-14T09:27Z — PRIORITY P1 -> P0, third recorded occurrence, and the v1 fix this row was minted to specify has now itself been shown gameable.]\nThis row was minted 2026-08-14T06:50Z against two gate defects (SIGNAL: docker inspect cannot see VM-boundary cgroup OOM; WINDOW: certification closed 60min before the first post-fix OOM). Both stand. Three further defects were evidenced live within the following 3 hours and MUST be folded into this row's AC — they are the same class and must not be split into new rows:\n(3) RESTART LAUNDERING. A durability window measured across a preemptive mitigation restart reports zero OOM while the process leaks at an unchanged rate. Observed live: FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED's 24h window opened 2026-08-14T08:41:48Z was invalidated by an ops mitigation restart at 09:23:21Z, 42 minutes in. AC: OOM-class verification_gate must require ONE continuous container lifetime, evidenced by an unchanged `docker inspect .State.StartedAt` at both window open and close, and must declare the window INVALID (not merely reset) if any mitigation was applied during it.\n(4) NEGATIVE-ONLY CRITERION. \"No crash observed in window W\" cannot establish boundedness and has now failed to predict this defect three consecutive times on one incident. AC: OOM-class gates must additionally require a POSITIVE plateau criterion — a fitted growth rate and an absolute ceiling headroom, both measured, both recorded on the row. A window ending at 95% of cap with zero OOM must FAIL.\n(5) GRANDFATHER EXEMPTION ON A FALSIFIED ROW. apps/mcp-server/src/infrastructure/orchStateSchema.ts RC_VERIF_GRANDFATHERED_IDS (line ~536) exempts FU-RAG-DEPLOY-MEMORY from checkVerificationGate()'s verification.raw_probe{} requirement — so it reached DONE_VERIFIED with no live re-probe attached at all, and the exemption survived the falsification of its certification. AC: entries in RC_VERIF_GRANDFATHERED_IDS must be purged when the row's certification is retracted, and a retracted row must not be re-closable via the exemption. At minimum, add a guard that fails validation if a grandfathered id is set back to DONE_VERIFIED after having carried a retraction marker.\nBINDING INTERIM: until this row ships, RAG-MEM-DURABILITY-BAR v2 (D1-D5, recorded verbatim on FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED as po_RAG_MEM_DURABILITY_BAR_V2_20260814T0927Z) is the operative gate for every rag-service memory row. This row's job is to generalise D1-D5 into the qa flow + docs/standards so it binds fleet-wide on every OOM-class AC, not just rag-service.",
-        "po_manual_dispatch_flagged_at": "2026-08-15T04:31:20Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) re-admitted under flag_reentrant — THIRD stamp (prior: 2026-08-14T18:41:32Z, 2026-08-14T23:00:56Z; the 23:00Z stamp is 5h27m old, stale by >4h). Rank 0 of 91 live candidates this tick (54 DRS-stranded, 36 backlog-XOR-gap, 1 ready-XOR), P0, next_agent=agent-father (off the DRS allowlist, so no automated lane will ever pick it up). ESCALATION NOTE FOR THE ROUTER: this row has now been stamped and folded into a PO BATCH three times without ever being dispatched. Per FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW the staleness window is designed to re-admit exactly this case, and it is working as specified — but a row re-entering on its 3rd cycle is evidence the BATCH->spawn handoff, not the sweep, is where this row dies. If this tick's BATCH also fails to reach agent-father, the next PO tick should treat the handoff itself as the defect rather than re-stamping a 4th time. LIVE URGENCY: FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED is sitting in the qa lane RIGHT NOW (P0, next_agent=qa) and will be certified against precisely the OOM-class gates this row proves unsound (docker inspect .State.OOMKilled reads false across real VM-boundary cgroup kills; negative-only 'no crash in window' criterion; restart-laundered windows). Shipping this row is a prerequisite for that QA verdict being worth anything."
-      },
-      {
         "id": "FIX-PO-AC3-PERSISTENCE-GATE-OWN-COMMIT-VS-HEAD-ANCESTRY",
         "type": "FIX",
         "status": "BACKLOG",
@@ -18126,6 +18100,34 @@
         "po_goahead_20260814T203645": "Ratified at source 2026-08-14: read chef.md/chef-dish.md live (FR-0..7 present verbatim), bctc_signal_DXG_20260814_routine.json (valuation.verdict=AVOID confirmed), and all 4 synthesis JSONs (business_context_cited=null 3/3 post-fix dishes). Not a relayed verdict. Proceed with FR-8 widening.",
         "agent_father_fr8_completion_note": "FR-8 (PO 2026-08-14 scope-widening, po_goahead_20260814T203645) applied: chef.md Step 0 $BIZ_CTX_SIGNALS extended with valuation.verdict/valuation.note/kinhdich.note (schema byte-verified against live bctc_signal_DXG_20260814_routine.json before editing); chef-dish.md gains a new Step 4 Valuation-gate discipline sub-step + Step 7.5 sub-check (h) VALUATION_GATE_OK (8th ASSEMBLY-then-assert sub-check, same single-pass self-correct-before-write mechanism as (f) SCHEMA_OK/(g) DIRECTION_OK shipped this session in 5829a7ad2) + a valuation_gate field on conviction_calls[] (structured verdict/note/override_engaged/override_rationale, RAW-verifiable like FR-7 business_context_cited) + Step 7.6 post-write self-check #5. Enforcement: an AVOID-gated ticker self-corrects to HOLD before persistence unless the rationale carries a literal [override:valuation_avoid - <data-backed justification>] clause (T-45 adversarial-discipline convention reused verbatim from tran-ngoc-bau/flow/audit-methodology.md, per POs own instruction to check precedent before inventing new language). Files: chef.md 265->281L, chef-dish.md 914->1002L, both header size-justification comments updated with real deltas. Zero application code touched, zero apps/ blast radius (architects original zero-blast-radius ratification on this row still holds for FR-8). Cannot self-certify closure this cycle: this rows own history is FR-0..7 shipped-but-then-PO-verification-FAILED once already (po_verification_verdict field), so only another independent RAW-verify against a live post-fix chef dish cycle (morning/eod/evening) can close it - routed to po for that pass, not self-certified DONE_VERIFIED.",
         "po_triage_20260814T2300_verification_window": "NOT VERIFIABLE YET — do not burn a PO tick re-deriving this. agent-father landed FR-8 at 2026-08-14T21:16:01Z (valuation.verdict/valuation.note/kinhdich.note into $BIZ_CTX_SIGNALS; chef-dish.md Step 7.5 sub-check (h) VALUATION_GATE_OK; conviction_calls[].valuation_gate). ZERO chef dishes have fired since. The row's verification_gate demands a RAW post-fix synthesis JSON, so the earliest possible verdict is after the next guaranteed dish (chef-morning, ~05:2xZ). PREMISE CORRECTION for triage callers: BUG msg 4892 (tran-ngoc-bau CRITICAL, DXG ACCUMULATE against an explicit valuation AVOID gate, 2026-08-14T20:25:43Z) is described upstream as 'new evidence for the in-flight BA spec's scope' — it is not in-flight and it is not pending scoping. That exact report IS the evidence PO already converted into FR-8 (po_scope_widening_FR8, po_goahead_20260814T203645) and agent-father already shipped 51 minutes later. msg 4892 is CLOSED-BY-FR8, not actionable again. NEXT PO TICK: RAW-verify the next unified-agent-synthesis-*.json for (a) business_context_cited non-null on >=1 conviction_call, (b) no DXG-class direction in {BUY,ACCUMULATE} while its bctc_signal valuation.verdict==AVOID without a literal [override:valuation_avoid - ...] clause. Verdict FAILED once already on FR-0..7, so do not accept an agent self-report."
+      },
+      {
+        "id": "FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "agent-father",
+        "next_agent": "qa",
+        "title": "QA verification gate certifies OOM-class ACs on docker inspect + an immediate probe — both proven wrong here; require dmesg + a settled window\n",
+        "files": [
+          "docs/agents/qa/flow/",
+          "docs/standards/"
+        ],
+        "baseline_pass": false,
+        "created_at": "2026-08-14T06:50:41Z",
+        "created_by": "po/dev-team-step1-triage-20260814T0621Z (BATCH mint)",
+        "status_note": "Second recorded occurrence of the AC-3 durability class (prior: feedback_ac3_durability_certified_on_window_that_ended_before_metric_settled). Two compounding gate defects, both evidenced live: (1) SIGNAL — docker inspect .State.OOMKilled/ExitCode do not propagate the VM-boundary cgroup OOM in Docker Desktop; read false/0 across 3 real kernel kills. dmesg inside the VM is the only authoritative source, and this was ALREADY documented in commit ca6d86869 and in the certified row's own status_note, yet the gate still passed. (2) WINDOW — certification closed 60min before the first post-fix OOM. No open row covers this class. AC: OOM-class verification_gate must (a) read dmesg in-VM, (b) span a window >= the observed inter-crash interval, (c) forbid docker inspect .State.OOMKilled as sole evidence.\n\nROUTER NOTE (dev-team, 2026-08-14T06:5x): CORROBORATING LIVE EVIDENCE found same-tick — Tier-1 audit cycle c95 (agent abd9a0df0bb3eec97, 2026-08-14T06:44Z) independently FOLDed the same rag-service memory reading using exactly the discredited signal class this row names (docker-level checks: no OOMKilled, no VmHWM pinning, no dmesg read) — a real-time demonstration this row's AC directly closes. Worth citing when this row is picked up.\n",
+        "updated_at": "2026-08-15T04:50:36Z",
+        "updated_by": "agent-father",
+        "po_AC_EXTENSION_20260814T0927Z": "[po AC EXTENSION 2026-08-14T09:27Z — PRIORITY P1 -> P0, third recorded occurrence, and the v1 fix this row was minted to specify has now itself been shown gameable.]\nThis row was minted 2026-08-14T06:50Z against two gate defects (SIGNAL: docker inspect cannot see VM-boundary cgroup OOM; WINDOW: certification closed 60min before the first post-fix OOM). Both stand. Three further defects were evidenced live within the following 3 hours and MUST be folded into this row's AC — they are the same class and must not be split into new rows:\n(3) RESTART LAUNDERING. A durability window measured across a preemptive mitigation restart reports zero OOM while the process leaks at an unchanged rate. Observed live: FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED's 24h window opened 2026-08-14T08:41:48Z was invalidated by an ops mitigation restart at 09:23:21Z, 42 minutes in. AC: OOM-class verification_gate must require ONE continuous container lifetime, evidenced by an unchanged `docker inspect .State.StartedAt` at both window open and close, and must declare the window INVALID (not merely reset) if any mitigation was applied during it.\n(4) NEGATIVE-ONLY CRITERION. \"No crash observed in window W\" cannot establish boundedness and has now failed to predict this defect three consecutive times on one incident. AC: OOM-class gates must additionally require a POSITIVE plateau criterion — a fitted growth rate and an absolute ceiling headroom, both measured, both recorded on the row. A window ending at 95% of cap with zero OOM must FAIL.\n(5) GRANDFATHER EXEMPTION ON A FALSIFIED ROW. apps/mcp-server/src/infrastructure/orchStateSchema.ts RC_VERIF_GRANDFATHERED_IDS (line ~536) exempts FU-RAG-DEPLOY-MEMORY from checkVerificationGate()'s verification.raw_probe{} requirement — so it reached DONE_VERIFIED with no live re-probe attached at all, and the exemption survived the falsification of its certification. AC: entries in RC_VERIF_GRANDFATHERED_IDS must be purged when the row's certification is retracted, and a retracted row must not be re-closable via the exemption. At minimum, add a guard that fails validation if a grandfathered id is set back to DONE_VERIFIED after having carried a retraction marker.\nBINDING INTERIM: until this row ships, RAG-MEM-DURABILITY-BAR v2 (D1-D5, recorded verbatim on FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED as po_RAG_MEM_DURABILITY_BAR_V2_20260814T0927Z) is the operative gate for every rag-service memory row. This row's job is to generalise D1-D5 into the qa flow + docs/standards so it binds fleet-wide on every OOM-class AC, not just rag-service.",
+        "po_manual_dispatch_flagged_at": "2026-08-15T04:31:20Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) re-admitted under flag_reentrant — THIRD stamp (prior: 2026-08-14T18:41:32Z, 2026-08-14T23:00:56Z; the 23:00Z stamp is 5h27m old, stale by >4h). Rank 0 of 91 live candidates this tick (54 DRS-stranded, 36 backlog-XOR-gap, 1 ready-XOR), P0, next_agent=agent-father (off the DRS allowlist, so no automated lane will ever pick it up). ESCALATION NOTE FOR THE ROUTER: this row has now been stamped and folded into a PO BATCH three times without ever being dispatched. Per FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW the staleness window is designed to re-admit exactly this case, and it is working as specified — but a row re-entering on its 3rd cycle is evidence the BATCH->spawn handoff, not the sweep, is where this row dies. If this tick's BATCH also fails to reach agent-father, the next PO tick should treat the handoff itself as the defect rather than re-stamping a 4th time. LIVE URGENCY: FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED is sitting in the qa lane RIGHT NOW (P0, next_agent=qa) and will be certified against precisely the OOM-class gates this row proves unsound (docker inspect .State.OOMKilled reads false across real VM-boundary cgroup kills; negative-only 'no crash in window' criterion; restart-laundered windows). Shipping this row is a prerequisite for that QA verdict being worth anything.",
+        "commit": "49719e1d7 1a6f27176",
+        "agent_father_implementation_note": "[agent-father 2026-08-15T04:50Z] Generalised RAG-MEM-DURABILITY-BAR v2 (D1-D5) fleet-wide: new SSOT docs/standards/oom-durability-verification-bar.md (detection rule + D1-D5 + defect-5 grandfather-exemption/retraction guard + v1-failure rationale) + wired into docs/agents/qa/flow/main.md (new OOM-Class Durability Gate in Pipeline, mandatory cross-ref gating vc-approved in Direct-Commit Verify — the observed path for OOM-class rows). Closes defects 1-4 fully (docker-inspect-only signal, unsettled window, restart-laundering, negative-only criterion). Defect 5 closed at the process-control level (doc-mandated retraction-marker check); the underlying orchStateSchema.ts checkVerificationGate() runtime code guard is a production-code change out of this docs-only rows files[] scope (docs/agents/qa/flow/, docs/standards/) and agent-father'\\''s own forbidden_outputs (never write production code) — flagged in the new doc SS4 as an open engineering gap for a future dev-mcp-server task. Commits: 49719e1d7 (deliverable, qa/flow/main.md + new standards doc), 1a6f27176 (doc self-heal, edit-apply.md notebook-heading template), 797dde808/90268c5b5/0ca3251f3 (agent-father memory bookkeeping). Routing to qa for verification since agent-father cannot self-certify a change to qa's own verification gate."
       }
     ],
     "qa": [
@@ -18496,9 +18498,280 @@
         "last_served_tick": "2026-08-15T03:50:57Z"
       }
     },
-    "_updated_at": "2026-08-15T04:36:13Z",
+    "_updated_at": "2026-08-15T04:49:38Z",
     "_updated_by": "dev-team",
-    "pending_triage_inbox": [],
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "314775ad248169d78cbf86a3e591192afc93bf04e4c25448d25a19e6b346c89f",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/agent-father.md — retained section '## EDIT 2026-08-14T23:03Z — task TASK_2008c (UC-CDC-P1 3-way split, agent-father slice),' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-15T04:47:23Z",
+        "drained_at": "2026-08-15T04:49:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6e81e411768e21e7477d619a3125414b607f9f3f6d57b75635bc2581f80ec065",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/agent-father.md — retained section '## EDIT 2026-08-14T23:03Z — task TASK_2008c (UC-CDC-P1 3-way split, agent-father slice),' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-15T04:48:46Z",
+        "drained_at": "2026-08-15T04:49:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3b33e2e779a4be5198d9ff16c177c11d57c769fca61fed33c46a6f493144296a",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-uuid-provenance-guard] WARN: docs/agent-memory/notebooks/agent-father.md — added heading line embeds a full session/coordination UUID: '## EDIT 2026-08-15T04:45Z — task FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW, router-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`'. Per .claude/skills/notebook-write/SKILL.md AC-1 and feedback_agent_commits_session_uuid_into_notebook, a session id is a per-invocation coordination PARAMETER ONLY, never authored into a committed file — use a c<NNN> counter or a fixed source label instead. mode=warn (default warn; set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh). Escape hatch: add 'notebook-uuid-lint-allow: <reason>' on this line if intentional.\n",
+        "createdAt": "2026-08-15T04:48:47Z",
+        "drained_at": "2026-08-15T04:49:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "dbfd8ba7a1324532f9064a277b406fb8a48ba6a20d07e5576fd2ebb6c23bf50b",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/code-janitor.md",
+          "line_count": 194,
+          "cap": 200,
+          "byte_count": 15662,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 3662,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-15T04:32:08Z",
+        "drained_at": "2026-08-15T04:49:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4b3519f65d4553ec6e28c1432d43826e218c54c870e1b98090b65c9d9c2f000b",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-15T04:30:04Z",
+        "drained_at": "2026-08-15T04:49:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "de9d57020dd8bfc1aa243f6a1d4b48f4813b84c76750dcefcf170f5631b5ae25",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12851,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T04:30:05Z",
+        "drained_at": "2026-08-15T04:49:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4def5e203514c122914346dd8daa2db34b72e98f967e2a792a6f1b2b7bc3986e",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12851,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T04:31:22Z",
+        "drained_at": "2026-08-15T04:49:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c9c410a9f19eb4310057bff8a18eed1e701dbf44f7e2faa418a7c07701489e23",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/code-janitor.md",
+          "line_count": 177,
+          "cap": 200,
+          "byte_count": 14119,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T04:30:04Z",
+        "drained_at": "2026-08-15T04:49:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "10a3d8beba5d2028f89c9906ee7a9a9c6303f9ec78eafee134bb234abb3b41ec",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/code-janitor.md",
+          "line_count": 177,
+          "cap": 200,
+          "byte_count": 14119,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T04:31:21Z",
+        "drained_at": "2026-08-15T04:49:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d6d240be6eb0d4513cb380ab38734b3d41bb949274d223c3b36c278991073cd3",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/code-janitor.md",
+          "line_count": 194,
+          "cap": 200,
+          "byte_count": 15662,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T04:32:06Z",
+        "drained_at": "2026-08-15T04:49:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1c482056f388067e795725c21df633aca3a146d7a674ab88fb9a14113c4be1ad",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T04:30:05Z",
+        "drained_at": "2026-08-15T04:49:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cbe608abcbd42d6d06f98b998f10bfbda90dd2fdaf8bea314f1277e034360f2e",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T04:31:22Z",
+        "drained_at": "2026-08-15T04:49:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "da2351819ed05f21a657c88079197b28fae0be80a1562cb13912d3c605ecbc40",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 44,
+          "cap": 200,
+          "byte_count": 32387,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T04:30:04Z",
+        "drained_at": "2026-08-15T04:49:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "636614851cd312212804668e6796ed33de9a491023c4a2a4f1c97d0a729fa406",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 44,
+          "cap": 200,
+          "byte_count": 32387,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T04:31:21Z",
+        "drained_at": "2026-08-15T04:49:38Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-14T04:11:35Z",
     "last_po_triage_note": "po/triage-20260814T0411Z (router-spawned after dev-team tick 2026-08-14T03:37Z could not nested-spawn). INPUTS: 18 durable-inbox envelopes. OUTPUT: 0 net-new mints from triage, 5 folds. DEDUP/FOLD: 2 ci_red (CI-RED-87a7a6d2 run 31758121017, CI-RED-9a9ad9bf run 31766602285) read at source via gh run view --log-failed — identical FAILED FILES (ALLZERO-OHLCV-FETCH.test.ts, FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts), both already carry open READY rows, file-scoped dedup HIT, SHAs appended; 3 sweep-guard bug-escalation escalated=true prior_warns=12/13/14 -> FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK occ 21->24; 2 notebook-immutability-guard on system-auditor.md sections c5/c6 -> FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS. NO MINT: 1 signal_feedback A-33 hook-liveness WARN (context-bloat-backstop.sh settings-file-missing) — PREMISE VERIFIED TRUE at source (0 matches for context-bloat-backstop in ~/.claude/settings.json, .claude/settings.json, .claude/settings.local.json — the hook is genuinely unregistered) but it is a first fire (1/1 in signal_queue) and the WARN single-fire rule forbids minting on one tick; carried to next tick for recurrence confirmation. 1 improvement_proposal is PO's OWN OUTBOUND (from=po to=agents-architect, IMP-20260814-system-auditor-notebook-compose-actuator-never-wired) misrouted into PO's own inbox by the drain — already board-backed by FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED (backlog, agents-architect); ACK only. 9 cowork-fire/tick-dispatch/cowork-tick-telemetry envelopes addressed to system/dev-team/cowork-team, not to po — informational, no defect, skipped. CONVERGENT FINDING: 3 of the 4 to=po defect classes this tick (3 sweep-guard + 2 notebook-immutability + the improvement proposal) all trace to ONE actor, system-auditor's unwired notebook-compose actuator. SEPARATELY: SPIKE-FRESHNESS-REMEDIATE-TRIAGE signed off APPROVED (review->done) and decomposed into 4 new backlog rows + 1 reprioritization. INBOX CLEAR NOT WRITTEN — owned by dev-team/flow/main.md Step 1 per triage-signals.md, PO does not write the subtractive clear.",
     "last_po_triage_consumed": 18,

@@ -9,5 +9,11 @@
     "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
     "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
     "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+  },
+  "_processed": {
+    "fingerprint": "4b3519f65d4553ec6e28c1432d43826e218c54c870e1b98090b65c9d9c2f000b",
+    "processedAt": "2026-08-15T04:49:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
