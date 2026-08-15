@@ -12,6 +12,16 @@ delegates to one `register_*_routes()` module per endpoint group
 Request schemas: `interface/schemas.py`. Statement-section allow-set:
 `domain/constants.py::STATEMENT_SECTIONS`.
 
+**Process-hygiene note (`/pek-extract`, FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-
+HEADROOM, 2026-08-15):** `pek_run_helper.py::_run_pek_extract` calls a
+guarded `_malloc_trim_or_noop()` (glibc `malloc_trim(0)`) in a `finally:`
+block after every PEK job, success or failure — no request/response contract
+change. PEK layout+table inference (PyTorch/PaddlePaddle) runs thread- not
+process-isolated inside PID1 (unlike the `/extract` tesseract path, which is
+a real `ProcessPoolExecutor` child); the trim call returns per-job native-
+allocator growth to the OS. Evidence + full mechanism:
+`docs/architecture-briefs/2026-08-07-fix-pdfx-parent-process-memory-burst-headroom.md`.
+
 ## GET /health
 ```json
 { "status": "ok", "service": "pdf-extractor" }

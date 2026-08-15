@@ -1,3 +1,11 @@
+# size-justification: 135L — FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM
+# 2026-08-15 (93L -> 135L, +42L): added _malloc_trim_or_noop() + its
+# finally-block call site inside _run_pek_extract. Same allocator-hygiene
+# concern this file already owns at the request-lifecycle boundary
+# (PDF-AVAIL-02-FIX already lives here) — not new scope, and per architect
+# brief docs/architecture-briefs/2026-08-07-fix-pdfx-parent-process-memory-
+# burst-headroom.md §10, this is where the fix belongs (interface layer,
+# not PekEngineAdapter).
 """
 Interface — background-task runner for POST /pek-extract.
 
@@ -13,6 +21,29 @@ __tests__/test_pek_engine_adapter.py asserts against that exact logger name.
 
 import asyncio
 from typing import Any
+
+
+def _malloc_trim_or_noop() -> None:
+    """
+    Best-effort glibc malloc_trim(0) — returns freed native-allocator arena
+    pages back to the OS. FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM §3/§6:
+    isolated repro measured this recovering ~70-99% of each PEK job's per-job
+    RSS growth (gc.collect() recovers 0 bytes — native/glibc-arena memory,
+    invisible to Python's own GC). Same ctypes.CDLL("libc.so.6") shape as the
+    sibling rag-service fix (app_factory._malloc_trim_or_noop), which in turn
+    cites THIS row as its own precedent.
+
+    Guarded: "libc.so.6" only resolves on glibc-based Linux (the production
+    container's actual runtime) — macOS dev/test host, musl/Alpine, etc.
+    raise OSError/AttributeError here, caught and treated as a silent no-op.
+    """
+    try:
+        import ctypes
+
+        libc = ctypes.CDLL("libc.so.6")
+        libc.malloc_trim(0)
+    except (OSError, AttributeError):
+        pass  # non-glibc platform (e.g. macOS dev/test host) — nothing to trim
 
 
 async def _run_pek_extract(
@@ -91,3 +122,14 @@ async def _run_pek_extract(
             report_id,
             exc_info=True,
         )
+    finally:
+        # FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM: return freed
+        # native-allocator memory (torch/PaddlePaddle layout+table buffers)
+        # to the OS on BOTH the success and exception path — a failed job
+        # still pays the full layout-detection allocation cost (brief §2's
+        # retry-storm observation). Never lets a trim failure escape this
+        # function — memory hygiene must not turn into a new failure mode.
+        try:
+            await asyncio.to_thread(_malloc_trim_or_noop)
+        except Exception:
+            _log.exception("_run_pek_extract: malloc_trim sweep failed (non-fatal)")

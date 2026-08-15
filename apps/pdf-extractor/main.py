@@ -193,7 +193,14 @@ def create_app() -> FastAPI:
     )
 
     # --- PEK-INTEGRATE: PDF-Extract-Kit engine adapter ---
-    # Lazy singleton: models load on first extraction call (cold-start RSS ~80MB).
+    # Lazy singleton: models load on first extraction call. FIX-PDFX-PARENT-
+    # PROCESS-MEMORY-BURST-HEADROOM 2026-08-15: this comment previously read
+    # "cold-start RSS ~80MB" — STALE, corrected here. Measured cold-start
+    # (docs/architecture-briefs/2026-08-07-fix-pdfx-parent-process-memory-
+    # burst-headroom.md §3, isolated repro, same image+weights) is +845.4
+    # MiB (torch/PaddlePaddle model weights resident in PID1, thread- not
+    # process-isolated) — over 10x the old figure. See that brief for the
+    # full per-job growth + malloc_trim(0) recovery evidence.
     # Sequential guard: threading.Semaphore(1) inside PekEngineAdapter.
     # Market-hours guard (Layer 1): CRON_BCTC_REPARSE_JOB env var in docker-compose.yml.
     # Market-hours guard (Layer 2): handled at route level in interface/handlers.py.
