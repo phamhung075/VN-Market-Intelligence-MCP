@@ -92,11 +92,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-15T03:21:14Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 2 row(s), highest-ranked FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 2 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-15T05:51:27Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -14018,6 +14019,61 @@
             "observed_at": "2026-08-15T02:59:54Z"
           }
         }
+      },
+      {
+        "id": "FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "agent-father",
+        "next_agent": "pm",
+        "title": "QA verification gate certifies OOM-class ACs on docker inspect + an immediate probe — both proven wrong here; require dmesg + a settled window\n",
+        "files": [
+          "docs/agents/qa/flow/",
+          "docs/standards/"
+        ],
+        "baseline_pass": false,
+        "created_at": "2026-08-14T06:50:41Z",
+        "created_by": "po/dev-team-step1-triage-20260814T0621Z (BATCH mint)",
+        "status_note": "Second recorded occurrence of the AC-3 durability class (prior: feedback_ac3_durability_certified_on_window_that_ended_before_metric_settled). Two compounding gate defects, both evidenced live: (1) SIGNAL — docker inspect .State.OOMKilled/ExitCode do not propagate the VM-boundary cgroup OOM in Docker Desktop; read false/0 across 3 real kernel kills. dmesg inside the VM is the only authoritative source, and this was ALREADY documented in commit ca6d86869 and in the certified row's own status_note, yet the gate still passed. (2) WINDOW — certification closed 60min before the first post-fix OOM. No open row covers this class. AC: OOM-class verification_gate must (a) read dmesg in-VM, (b) span a window >= the observed inter-crash interval, (c) forbid docker inspect .State.OOMKilled as sole evidence.\n\nROUTER NOTE (dev-team, 2026-08-14T06:5x): CORROBORATING LIVE EVIDENCE found same-tick — Tier-1 audit cycle c95 (agent abd9a0df0bb3eec97, 2026-08-14T06:44Z) independently FOLDed the same rag-service memory reading using exactly the discredited signal class this row names (docker-level checks: no OOMKilled, no VmHWM pinning, no dmesg read) — a real-time demonstration this row's AC directly closes. Worth citing when this row is picked up.\n\n\n[QA] Review Record (direct-commit verify) — APPROVED, DONE_VERIFIED. Independently re-verified per verify-committed entry point (dev-team Review-Lane QA-Drain), not trusted from agent_father_implementation_note prose alone. Two commits confirmed real + on main ancestry via `git merge-base --is-ancestor` (both PASS): 49719e1d7 (deliverable) and 1a6f27176 (edit-apply.md self-heal, outside this row's own files[] scope but a harmless separate doc fix, verified independently — not blocking). `git show --stat 49719e1d7` matches claimed scope exactly: docs/agents/qa/flow/main.md (+18/-2) and new docs/standards/oom-durability-verification-bar.md (+80L new) — both are the row's own claimed files[] directories (docs/agents/qa/flow/, docs/standards/), nothing outside them in that commit. Content independently read in full (not grepped): the new SSOT doc's D1-D5 cross-checked verbatim-in-substance against the source ruling po_RAG_MEM_DURABILITY_BAR_V2_20260814T0927Z on FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED — thresholds match exactly (24h window, 0.02pp/min growth cap, 85% cap ceiling, >=6 samples, D2 StartedAt-identity continuous-lifetime check, D4 no-mitigation invalidation, D5 six evidence fields). qa/flow/main.md wiring independently read: new OOM-Class Durability Gate section correctly placed in Pipeline (after BCTC Eval Gate, before verdict routing) plus a second mandatory cross-reference gating vc-approved inside Direct-Commit Verify — matches the live fact that every OOM-class row observed to date lands via Direct-Commit Verify, branch:null. Defects 1-4 (docker-inspect-only signal, unsettled window, restart-laundering, negative-only criterion) fully and accurately closed. Defect 5 (grandfather-exemption/retraction guard) closed ONLY at the process/doc level (new doc §4) — independently confirmed live against apps/mcp-server/src/infrastructure/orchStateSchema.ts:585 (checkOne) that checkVerificationGate() genuinely has no runtime code guard rejecting a grandfathered id from re-entering DONE_VERIFIED after carrying a retraction marker; the doc HONESTLY discloses this as an open engineering gap requiring a future dev-mcp-server code task, not a hidden gap — accepted as legitimate given this row's own files[] scope (docs/agents/qa/flow/, docs/standards/, set 2026-08-14 at po-triage mint time, predating the harder po_AC_EXTENSION ask) and agent-father's own forbidden_outputs bars writing production code; matches this same lane's own precedent (architect+PO-ratified sequence-split accepted, cycle-787). Targeted re-verification run fresh (not trusted from prose): bun tsc --noEmit (apps/mcp-server) clean 0 errors; bun test src/infrastructure/__tests__/orchStateSchema.test.ts 120/120 pass 0 fail (chosen because the new doc directly cites this exact file/function) — zero regression. DDD/security greps N/A by construction (zero .ts/production files touched, pure .md); mock-guard.sh N/A same reason. Recommend a follow-up task be minted (e.g. a dev-mcp-server row for the RC_VERIF_GRANDFATHERED_IDS retraction-guard code change) for the residual defect-5 runtime gap — flagged for the record, NOT a blocker for this row. VERDICT: DONE_VERIFIED, zero blocking ISSUE. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-24.md STEP qa-S25.",
+        "updated_at": "2026-08-15T05:57:41Z",
+        "updated_by": "qa",
+        "po_AC_EXTENSION_20260814T0927Z": "[po AC EXTENSION 2026-08-14T09:27Z — PRIORITY P1 -> P0, third recorded occurrence, and the v1 fix this row was minted to specify has now itself been shown gameable.]\nThis row was minted 2026-08-14T06:50Z against two gate defects (SIGNAL: docker inspect cannot see VM-boundary cgroup OOM; WINDOW: certification closed 60min before the first post-fix OOM). Both stand. Three further defects were evidenced live within the following 3 hours and MUST be folded into this row's AC — they are the same class and must not be split into new rows:\n(3) RESTART LAUNDERING. A durability window measured across a preemptive mitigation restart reports zero OOM while the process leaks at an unchanged rate. Observed live: FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED's 24h window opened 2026-08-14T08:41:48Z was invalidated by an ops mitigation restart at 09:23:21Z, 42 minutes in. AC: OOM-class verification_gate must require ONE continuous container lifetime, evidenced by an unchanged `docker inspect .State.StartedAt` at both window open and close, and must declare the window INVALID (not merely reset) if any mitigation was applied during it.\n(4) NEGATIVE-ONLY CRITERION. \"No crash observed in window W\" cannot establish boundedness and has now failed to predict this defect three consecutive times on one incident. AC: OOM-class gates must additionally require a POSITIVE plateau criterion — a fitted growth rate and an absolute ceiling headroom, both measured, both recorded on the row. A window ending at 95% of cap with zero OOM must FAIL.\n(5) GRANDFATHER EXEMPTION ON A FALSIFIED ROW. apps/mcp-server/src/infrastructure/orchStateSchema.ts RC_VERIF_GRANDFATHERED_IDS (line ~536) exempts FU-RAG-DEPLOY-MEMORY from checkVerificationGate()'s verification.raw_probe{} requirement — so it reached DONE_VERIFIED with no live re-probe attached at all, and the exemption survived the falsification of its certification. AC: entries in RC_VERIF_GRANDFATHERED_IDS must be purged when the row's certification is retracted, and a retracted row must not be re-closable via the exemption. At minimum, add a guard that fails validation if a grandfathered id is set back to DONE_VERIFIED after having carried a retraction marker.\nBINDING INTERIM: until this row ships, RAG-MEM-DURABILITY-BAR v2 (D1-D5, recorded verbatim on FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED as po_RAG_MEM_DURABILITY_BAR_V2_20260814T0927Z) is the operative gate for every rag-service memory row. This row's job is to generalise D1-D5 into the qa flow + docs/standards so it binds fleet-wide on every OOM-class AC, not just rag-service.",
+        "po_manual_dispatch_flagged_at": "2026-08-15T04:31:20Z",
+        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
+        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
+        "po_manual_dispatch_note": "po (manual-dispatch-sweep) re-admitted under flag_reentrant — THIRD stamp (prior: 2026-08-14T18:41:32Z, 2026-08-14T23:00:56Z; the 23:00Z stamp is 5h27m old, stale by >4h). Rank 0 of 91 live candidates this tick (54 DRS-stranded, 36 backlog-XOR-gap, 1 ready-XOR), P0, next_agent=agent-father (off the DRS allowlist, so no automated lane will ever pick it up). ESCALATION NOTE FOR THE ROUTER: this row has now been stamped and folded into a PO BATCH three times without ever being dispatched. Per FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW the staleness window is designed to re-admit exactly this case, and it is working as specified — but a row re-entering on its 3rd cycle is evidence the BATCH->spawn handoff, not the sweep, is where this row dies. If this tick's BATCH also fails to reach agent-father, the next PO tick should treat the handoff itself as the defect rather than re-stamping a 4th time. LIVE URGENCY: FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED is sitting in the qa lane RIGHT NOW (P0, next_agent=qa) and will be certified against precisely the OOM-class gates this row proves unsound (docker inspect .State.OOMKilled reads false across real VM-boundary cgroup kills; negative-only 'no crash in window' criterion; restart-laundered windows). Shipping this row is a prerequisite for that QA verdict being worth anything.",
+        "commit": "49719e1d7 1a6f27176",
+        "agent_father_implementation_note": "[agent-father 2026-08-15T04:50Z] Generalised RAG-MEM-DURABILITY-BAR v2 (D1-D5) fleet-wide: new SSOT docs/standards/oom-durability-verification-bar.md (detection rule + D1-D5 + defect-5 grandfather-exemption/retraction guard + v1-failure rationale) + wired into docs/agents/qa/flow/main.md (new OOM-Class Durability Gate in Pipeline, mandatory cross-ref gating vc-approved in Direct-Commit Verify — the observed path for OOM-class rows). Closes defects 1-4 fully (docker-inspect-only signal, unsettled window, restart-laundering, negative-only criterion). Defect 5 closed at the process-control level (doc-mandated retraction-marker check); the underlying orchStateSchema.ts checkVerificationGate() runtime code guard is a production-code change out of this docs-only rows files[] scope (docs/agents/qa/flow/, docs/standards/) and agent-father'\\''s own forbidden_outputs (never write production code) — flagged in the new doc SS4 as an open engineering gap for a future dev-mcp-server task. Commits: 49719e1d7 (deliverable, qa/flow/main.md + new standards doc), 1a6f27176 (doc self-heal, edit-apply.md notebook-heading template), 797dde808/90268c5b5/0ca3251f3 (agent-father memory bookkeeping). Routing to qa for verification since agent-father cannot self-certify a change to qa's own verification gate.",
+        "claimed_at": "2026-08-15T05:51:26Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "qa_verified_at": "2026-08-15T05:57:41Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun tsc --noEmit + bun test",
+            "args": {
+              "commits": [
+                "49719e1d7",
+                "1a6f27176"
+              ],
+              "target": "main",
+              "test_file": "apps/mcp-server/src/infrastructure/__tests__/orchStateSchema.test.ts"
+            },
+            "live_value_observed": {
+              "ancestry_49719e1d7": "PASS (is-ancestor of main)",
+              "ancestry_1a6f27176": "PASS (is-ancestor of main)",
+              "diffstat_match": "docs/agents/qa/flow/main.md +18/-2, docs/standards/oom-durability-verification-bar.md +80 new (matches row files[])",
+              "tsc_errors": 0,
+              "test_result": "120/120 pass, 0 fail",
+              "defect5_code_guard_confirmed_absent": "orchStateSchema.ts:585 checkOne() has no retraction-marker check for RC_VERIF_GRANDFATHERED_IDS members"
+            },
+            "observed_at": "2026-08-15T05:56:38Z",
+            "evidence_commit": "49719e1d7"
+          }
+        }
       }
     ],
     "head": {
@@ -17130,7 +17186,7 @@
           "UC-ASL-P3"
         ],
         "note": "DO NOT RELEASE the lock. PO RAW-probed task_list_held: data-quality-anomaly:DGC:Q1-2026 is LIVE (sprint-task, bctc-analyst, claimed 2026-07-23T15:15:40Z, ttl 604800s, expires 2026-07-30T15:15:40Z, ~5.3d remaining) — legit board-row-less escalation per feedback_esc3_held_lock_no_board_row_is_legit. Signal is a FALSE POSITIVE; releasing would drop an in-flight 7-day data-quality escalation. Prior art checked: no existing row covers the prefix gap; git log on tasksMdJanitorJob.ts since 2026-07-20 empty and worktree clean, so no in-flight peer fix.",
-        "updated_at": "2026-08-11T13:05:47Z",
+        "updated_at": "2026-08-15T05:50:27Z",
         "po_second_facet_20260728": "SECOND FACET FOLDED IN (converge, no new row — the detector is one root cause with two emissions). The row as written covers the `not_found` emission (held lock has no board row). The SAME detector also emits a `pipeline_mismatch` row for the same lock: 'orch-state/lock mismatch: active=<head.active_task_id> held=data-quality-anomaly:DGC:Q1-2026'. That comparison is a CATEGORY ERROR, not a stale whitelist: it compares .head.active_task_id (the dev-team dispatch head, a dev task) against a long-TTL sprint-task escalation lock owned by a DIFFERENT agent (bctc-analyst) in a DIFFERENT plane. Those two are never required to be equal, so the predicate mismatches on every tick for the entire 7-day TTL regardless of system state — a whitelist entry alone will NOT silence it unless the pipeline_mismatch path consults the same exclusion. Both emissions must be fixed together or the FP count only halves. EVIDENCE: the identical pair fired on 2026-07-27 AND 2026-07-28 with nothing changing in between (4 signal_queue rows, ids sau-d4-data-quality-anomaly-dgc-q1-2026-{not_found,pipeline_mismatch}-2026072{7,8}), on top of the 2026-07-25 pair that minted this row. PRIORITY P3 -> P2: not damage, but a confirmed 2-per-day recurring false positive into PO's inbox that has now survived 3 consecutive days and 6 signal rows; at P3 it sits behind 42 rows and keeps emitting. The lock itself is LIVE and LEGIT (expires 2026-07-30T15:15:40Z) — the standing DO NOT RELEASE instruction in .note is unchanged.",
         "updated_by": "dev-mcp-server",
         "promoted_at": "2026-08-08T03:50:55Z",
@@ -17141,7 +17197,10 @@
         "claimed_by": "dev-team (supervised-lane sweep)",
         "spec_doc": "docs/handoffs/FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX-spec.md",
         "dev_mcp_server_review_note": "PLAN-ONLY (supervised+plan_only — tasksMdJanitorJob.ts/handlers.md/audit-dimensions.md/system-map.json NOT edited). Re-verified live: the row cited lock data-quality-anomaly:DGC:Q1-2026 has TTL-EXPIRED (2026-07-30) and is no longer held — but bctc-analyst has since renamed this escalation lock-kind to bctc-dataquality:* (3 locks held today), which is ALREADY producing first-occurrence D4 candidates in TODAY 2026-08-08T03:00Z notebook cycle and will emit a fresh FP batch at the next cycle if unaddressed — fix must cover BOTH prefixes, not just the row literal. po_second_facet_20260728 pipeline_mismatch category-error claim REFUTED against live code: git blame shows R-2 per-lock mismatch loop has scoped to survivingLocks (post R-1b filter), not heldLocks, since the SAME commit (e109f49f81, 2026-07-08) that ported R-1b — one whitelist entry already silences BOTH not_found and pipeline_mismatch emissions, no separate consultation needed. handlers.md:19/audit-dimensions.md:88-90 stale-doc-gap claims confirmed FALSE (code shipped same-day, e109f49f8) — correction included. DESIGN DECISION: promoted KNOWN_LEGIT_PREFIXES to docs/data/system-map.json .project.coordination.known_legit_lock_prefixes (option 2b) over a structural <kind>:<TICKER>:<PERIOD> pattern-match (option 2a) — live bctc-dataquality:vnindex-crosstool-mismatch lock is NOT ticker/period-shaped, so a shape-regex would have missed this real currently-forming FP; mirrors this codebase own proven loadWatchlistSeedFromSystemMap() precedent (seedWatchlist.ts) with a non-empty fail-open FALLBACK_KNOWN_LEGIT_PREFIXES (never suppress LESS on SSOT-read failure). Verbatim before/after diffs for all 4 files + test-table extension (negative control: bogus-escalation:XYZ:Q1-2026:ESC-1 must still trip D4) in spec_doc. Full details: docs/handoffs/FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX-spec.md",
-        "po_fold_20260811T1237Z": "FOLD + SCOPE CORRECTION (po triage 2026-08-11T12:37Z): 6 further D4 signals (sau-d4-* rows, 2026-08-11T03:00Z; telegram 4627/4628/4629). VERIFIED LIVE via task_list_held at 2026-08-11T13:00Z — all three locks genuinely exist and are legitimate: bctc-dataquality:DXG:persistent-absence, bctc-dataquality:HPG:operating-profit-zero, bctc-dataquality:vnindex-crosstool-mismatch, all owner_agent=bctc-analyst, ttl=691200s (8d), expiring 2026-08-14/15. CORRECTION TO THIS ROW'S SCOPE: the live prefix is 'bctc-dataquality:' — NOT the 'data-quality-anomaly:' this row's title names — so a whitelist written against the titled prefix would NOT suppress these fires. Whitelist must cover 'bctc-dataquality:' AND 'esc-datacov:' (esc-datacov:HPG:Q1-2026:ESC-3 and esc-datacov:FPT:Q1-2026:ESC-3 are live now, same owner, same by-design no-board-row shape). SECOND, DISTINCT DEFECT surfaced by the same 6 signals: the 'orch-state/lock mismatch: active=<X> held=<Y>' variant compares .head.active_task_id against EVERY held lock, which is guaranteed to mismatch for any lock not currently at head — structurally a false positive by construction, not a whitelist gap. Note the 'active=' value in all 6 (FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE) is ALSO stale: that task is DONE_VERIFIED (commit a0476209c) and head has since moved to UC-RDL-P4. THIRD, for whoever owns bctc-analyst: these long-lived data-quality markers are claimed with task_kind='sprint-task', which is an enum misuse (they are not sprint tasks and are never adoptable work) — that mislabel is what puts them in D4's scan set at all."
+        "po_fold_20260811T1237Z": "FOLD + SCOPE CORRECTION (po triage 2026-08-11T12:37Z): 6 further D4 signals (sau-d4-* rows, 2026-08-11T03:00Z; telegram 4627/4628/4629). VERIFIED LIVE via task_list_held at 2026-08-11T13:00Z — all three locks genuinely exist and are legitimate: bctc-dataquality:DXG:persistent-absence, bctc-dataquality:HPG:operating-profit-zero, bctc-dataquality:vnindex-crosstool-mismatch, all owner_agent=bctc-analyst, ttl=691200s (8d), expiring 2026-08-14/15. CORRECTION TO THIS ROW'S SCOPE: the live prefix is 'bctc-dataquality:' — NOT the 'data-quality-anomaly:' this row's title names — so a whitelist written against the titled prefix would NOT suppress these fires. Whitelist must cover 'bctc-dataquality:' AND 'esc-datacov:' (esc-datacov:HPG:Q1-2026:ESC-3 and esc-datacov:FPT:Q1-2026:ESC-3 are live now, same owner, same by-design no-board-row shape). SECOND, DISTINCT DEFECT surfaced by the same 6 signals: the 'orch-state/lock mismatch: active=<X> held=<Y>' variant compares .head.active_task_id against EVERY held lock, which is guaranteed to mismatch for any lock not currently at head — structurally a false positive by construction, not a whitelist gap. Note the 'active=' value in all 6 (FIX-DEVTEAM-IDLE-CHAIN-TEST-DURABLE) is ALSO stale: that task is DONE_VERIFIED (commit a0476209c) and head has since moved to UC-RDL-P4. THIRD, for whoever owns bctc-analyst: these long-lived data-quality markers are claimed with task_kind='sprint-task', which is an enum misuse (they are not sprint tasks and are never adoptable work) — that mislabel is what puts them in D4's scan set at all.",
+        "secondary_claimed_at": "2026-08-15T05:50:27Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po"
       },
       {
         "id": "FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS",
@@ -17255,58 +17314,6 @@
           "FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION"
         ],
         "po_review_20260815T041948": "po (2026-08-15T04:19Z): SUPERVISED GO-AHEAD **DECLINED** for step 3 (live LANES=backlog,ready,review migration) per docs/agents/po/flow/supervised-goahead.md Step 2 \"not ratified\" branch. NO po_goahead_* key written — step 3 remains unauthorized. Steps 1/2/4/5 RATIFIED: I re-ran all 4 suites myself rather than accept the self-report — orch-backlog-stub.test.sh 25/25, orch-row-prose-ceiling-check-tests.sh 18/18, orch-apply-wrapper-tests.sh 89/89, orch-cold-evict-tests.sh 59/59 (191/191 reproduced), all 6 commits confirmed on local HEAD and origin/main, live orch-state.json SHA256 byte-identical before/after the full test run. TWO BLOCKERS found by end-to-end REHEARSAL of step 3 against a byte-identical scratch copy of the live file (ORCH_STATE/ARCHIVE_DIR/DETAIL_FILE overrides, real code path incl. orch-apply Stage 2/2.5) — neither is visible to the shipped test suites. (F-4, HARD BLOCKER, step 3 is UNEXECUTABLE TODAY) build_detail_temp merge branch aborts exit 5: `jq: error: array ([{\"baseline...) and object ({\"TASK_RUNI...) cannot be multiplied`. The REAL docs/data/orch/archive/backlog-detail.json has `.items` as an ARRAY of 442 id-bearing objects, NOT the id-keyed object the script assumes; `.items * $new_items` is array*object. PRE-EXISTING, NOT developer-introduced — the pre-F-3 form `($new_items + .items)` is object+array and errors identically; the merge branch has never worked against the live cold file. Invisible to all 25 stub assertions because every fixture creates cold via the fresh-create branch, which emits from_entries object shape — the merge branch is only ever tested against cold files this script itself wrote. The READER side was explicitly hardened for this exact array shape on 2026-07-09 (FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX, scripts/lib/devteam-eligibility.jq detail_items_from()); the WRITER never was. Data-safe abort held perfectly: cold-first ordering + set -e + trap cleanup left scratch hot AND cold byte-identical, zero temp leak. (F-5, CORRECTNESS, survives an F-4 fix) STUB_FIELDS is an unconditional whitelist — build_hot_temp strips EVERY field not in it, including po_goahead_*. WF-2 should_hold reads the goahead key from HOT row keys UNION .head keys ONLY, with no cold fallback (unlike effective_supervised/plan_only/owner/next_agent, which all have one). Measured live: 5 rows in ready[]+review[] carry a po_goahead stamp and 4 are supervised:true (FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM, FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE, FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE, FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING) — the migration would silently revoke 4 ratifications already granted and re-hold those rows. Same silent-loss shape as F-3, different field family. Self-defeating for THIS row too: it lives in review[], so any po_goahead I stamped would be stripped by the very migration it authorized. Secondary: is_non_dev_owner_unrouted() reads .next_agent inline-only (no effective_ wrapper) and 116 in-scope rows lose inline next_agent -> predicate flips true -> newly gated. ROOT CAUSE OF THE DESIGN MISS: brief §2.4 asserts the exclude-set is a \"superset of orch-backlog-stub.shs STUB_FIELDS plus the lifecycle/provenance fields STUB_FIELDS deliberately never strips\" — factually wrong, build_hot_temp strips all of them; that inaccuracy is what made F-5 invisible at design time. ALSO STALE: brief §0 measured 623 rows (backlog 361/ready 76/review 186) on 08-09; today is 546 (418/91/37) — review[] drained 186->37 by normal churn, so the review-lane bulk-paydown rationale is now much smaller and the 12KB p90 ceiling was tuned on a distribution that no longer exists (env-tunable, not a blocker). PAYOFF IS STILL REAL and worth unblocking: verified dry-run projects 3391728 -> 1114243 bytes, -2277485 (-67%), now mostly from backlog[]. DISPOSITION: status BLOCKED, blocked_by the newly-minted FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION; .head left untouched (was already idle, nothing held). Once that lands, PO re-runs this same scratch rehearsal and ratifies step 3 then — do NOT re-attempt step 3 before it is DONE_VERIFIED."
-      },
-      {
-        "id": "FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS",
-        "type": "FEATURE",
-        "title": "Add Zod schemas for FR-1/FR-2 optional params; update task_heartbeat/task_release registration per FR-6/FR-7",
-        "status": "REVIEW",
-        "priority": "P0",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "pm",
-        "next_agent": "qa",
-        "depends": [
-          "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER"
-        ],
-        "supervised": false,
-        "created_at": "2026-07-22T01:15:30Z",
-        "created_by": "pm/decomposition-20260722T0115",
-        "updated_at": "2026-08-15T04:58:06Z",
-        "updated_by": "developer (review-lane secondary-drain triage)",
-        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
-        "subtasks": [
-          {
-            "seq": 1,
-            "title": "Add optional ttl_seconds to task_heartbeat Zod schema (min:60, max:691200)",
-            "acceptance": "Schema allows omitted ttl_seconds (backward compatible); .describe() prose updated"
-          },
-          {
-            "seq": 2,
-            "title": "Add optional payload_patch to task_heartbeat Zod schema",
-            "acceptance": "Schema allows omitted payload_patch; .describe() prose updated"
-          },
-          {
-            "seq": 3,
-            "title": "Add optional owner_agent + original_owner_client_session to task_heartbeat/task_release schemas",
-            "acceptance": "Both params optional, both schemas document use for null-session orphan-signal ladder only"
-          }
-        ],
-        "claimed_at": "2026-08-08T23:52:08Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "developer",
-        "dev_note": "Zod schemas (ttl_seconds/payload_patch/owner_agent/original_owner_client_session) added to task_heartbeat+task_release in coordinationTools.ts per FR-7; handler pass-through fix required (both handlers previously dropped every param beyond task_id/owner_client_session) to satisfy the row own AC. New FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts 13/13 GREEN (RED-confirmed first). Combined targeted coordination suite 132/132 pass, 0 regressions. bun tsc --noEmit clean. Zone-dispatch deviation documented (no Agent tool grant, cannot nest-spawn dev-mcp-server — see feedback_devteam_flow_needs_nested_agent_spawn_subagent_cannot.md). NOT yet live in the running container (NFR-3 rebuild gate, separate step). Commits fb5207746 (code+test)/98259e871 (handoff+WORK.md)/80bda1800 (notebook+journal).",
-        "secondary_claimed_at": "2026-08-15T04:54:01Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "developer",
-        "status_note": "[developer] SECONDARY-Drain triage 2026-08-15T04:57Z — reassigning next_agent to qa for formal Direct-Commit Verify sign-off. Not self-certifying DONE_VERIFIED: test pipeline/merge gate is qa's job (developer agent boundary), and this row's own dev_note already documents the code work as complete — only the NFR-3 rebuild-gate question was open.\n\nREBUILD GATE: RESOLVED THIS CYCLE. Running container vn-market-intelligence-mcp-mcp-server-1 (image built 2026-08-13T21:15:38+02:00, label vn.market.git_sha=78e4b06afcfc1a9282966f8b258205fdd4cb4983) has BOTH fb5207746 (the feature commit) and 1653cea0a (same-day size-lint refactor that split coordinationTools.ts into 6 per-tool files, verbatim/zero-logic-change per its own message) confirmed as git ancestors (`git merge-base --is-ancestor` both true). Container runs `bun run src/index.ts` directly from source (no dist/ build step, verified — package.json \"start\" script + no /app/dist dir) so on-disk file contents ARE the live runtime behavior. `docker exec` confirmed /app/src/interface/mcp/tools/system/coordination/taskHeartbeatTool.ts and taskReleaseTool.ts (the post-refactor live locations) contain payload_patch/owner_agent/original_owner_client_session — feature is live in production, not just committed.\n\nRE-VERIFIED THIS CYCLE (local, host bun, same as original dev_note claims): FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts 13/13 pass; task-lock-coordination-tools.test.ts + coordinationStore.test.ts 38/38 pass, 0 regressions.\n\nNOT re-run this cycle (left for qa's own Direct-Commit Verify per docs/agents/qa/flow/main.md § Direct-Commit Verify, since branch:null/no handoff): full `bun test`, `bun tsc --noEmit`, `scripts/audits/mock-guard.sh`. Row is NOT OOM-class (Zod schema/coordination-tool interface change only) — Durability Gate N/A.\n\nCommits: fb5207746 (code+test), 1653cea0a (refactor, preserves change verbatim), 98259e871 (handoff), 80bda1800 (notebook). All on main ancestry.",
-        "commit": "fb5207746 1653cea0a 98259e871 80bda1800",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskHeartbeatTool.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskReleaseTool.ts",
-          "apps/mcp-server/src/__tests__/FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts"
-        ]
       },
       {
         "id": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
@@ -18088,34 +18095,6 @@
         "po_goahead_20260814T203645": "Ratified at source 2026-08-14: read chef.md/chef-dish.md live (FR-0..7 present verbatim), bctc_signal_DXG_20260814_routine.json (valuation.verdict=AVOID confirmed), and all 4 synthesis JSONs (business_context_cited=null 3/3 post-fix dishes). Not a relayed verdict. Proceed with FR-8 widening.",
         "agent_father_fr8_completion_note": "FR-8 (PO 2026-08-14 scope-widening, po_goahead_20260814T203645) applied: chef.md Step 0 $BIZ_CTX_SIGNALS extended with valuation.verdict/valuation.note/kinhdich.note (schema byte-verified against live bctc_signal_DXG_20260814_routine.json before editing); chef-dish.md gains a new Step 4 Valuation-gate discipline sub-step + Step 7.5 sub-check (h) VALUATION_GATE_OK (8th ASSEMBLY-then-assert sub-check, same single-pass self-correct-before-write mechanism as (f) SCHEMA_OK/(g) DIRECTION_OK shipped this session in 5829a7ad2) + a valuation_gate field on conviction_calls[] (structured verdict/note/override_engaged/override_rationale, RAW-verifiable like FR-7 business_context_cited) + Step 7.6 post-write self-check #5. Enforcement: an AVOID-gated ticker self-corrects to HOLD before persistence unless the rationale carries a literal [override:valuation_avoid - <data-backed justification>] clause (T-45 adversarial-discipline convention reused verbatim from tran-ngoc-bau/flow/audit-methodology.md, per POs own instruction to check precedent before inventing new language). Files: chef.md 265->281L, chef-dish.md 914->1002L, both header size-justification comments updated with real deltas. Zero application code touched, zero apps/ blast radius (architects original zero-blast-radius ratification on this row still holds for FR-8). Cannot self-certify closure this cycle: this rows own history is FR-0..7 shipped-but-then-PO-verification-FAILED once already (po_verification_verdict field), so only another independent RAW-verify against a live post-fix chef dish cycle (morning/eod/evening) can close it - routed to po for that pass, not self-certified DONE_VERIFIED.",
         "po_triage_20260814T2300_verification_window": "NOT VERIFIABLE YET — do not burn a PO tick re-deriving this. agent-father landed FR-8 at 2026-08-14T21:16:01Z (valuation.verdict/valuation.note/kinhdich.note into $BIZ_CTX_SIGNALS; chef-dish.md Step 7.5 sub-check (h) VALUATION_GATE_OK; conviction_calls[].valuation_gate). ZERO chef dishes have fired since. The row's verification_gate demands a RAW post-fix synthesis JSON, so the earliest possible verdict is after the next guaranteed dish (chef-morning, ~05:2xZ). PREMISE CORRECTION for triage callers: BUG msg 4892 (tran-ngoc-bau CRITICAL, DXG ACCUMULATE against an explicit valuation AVOID gate, 2026-08-14T20:25:43Z) is described upstream as 'new evidence for the in-flight BA spec's scope' — it is not in-flight and it is not pending scoping. That exact report IS the evidence PO already converted into FR-8 (po_scope_widening_FR8, po_goahead_20260814T203645) and agent-father already shipped 51 minutes later. msg 4892 is CLOSED-BY-FR8, not actionable again. NEXT PO TICK: RAW-verify the next unified-agent-synthesis-*.json for (a) business_context_cited non-null on >=1 conviction_call, (b) no DXG-class direction in {BUY,ACCUMULATE} while its bctc_signal valuation.verdict==AVOID without a literal [override:valuation_avoid - ...] clause. Verdict FAILED once already on FR-0..7, so do not accept an agent self-report."
-      },
-      {
-        "id": "FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW",
-        "type": "FIX",
-        "status": "REVIEW",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "owner": "agent-father",
-        "next_agent": "qa",
-        "title": "QA verification gate certifies OOM-class ACs on docker inspect + an immediate probe — both proven wrong here; require dmesg + a settled window\n",
-        "files": [
-          "docs/agents/qa/flow/",
-          "docs/standards/"
-        ],
-        "baseline_pass": false,
-        "created_at": "2026-08-14T06:50:41Z",
-        "created_by": "po/dev-team-step1-triage-20260814T0621Z (BATCH mint)",
-        "status_note": "Second recorded occurrence of the AC-3 durability class (prior: feedback_ac3_durability_certified_on_window_that_ended_before_metric_settled). Two compounding gate defects, both evidenced live: (1) SIGNAL — docker inspect .State.OOMKilled/ExitCode do not propagate the VM-boundary cgroup OOM in Docker Desktop; read false/0 across 3 real kernel kills. dmesg inside the VM is the only authoritative source, and this was ALREADY documented in commit ca6d86869 and in the certified row's own status_note, yet the gate still passed. (2) WINDOW — certification closed 60min before the first post-fix OOM. No open row covers this class. AC: OOM-class verification_gate must (a) read dmesg in-VM, (b) span a window >= the observed inter-crash interval, (c) forbid docker inspect .State.OOMKilled as sole evidence.\n\nROUTER NOTE (dev-team, 2026-08-14T06:5x): CORROBORATING LIVE EVIDENCE found same-tick — Tier-1 audit cycle c95 (agent abd9a0df0bb3eec97, 2026-08-14T06:44Z) independently FOLDed the same rag-service memory reading using exactly the discredited signal class this row names (docker-level checks: no OOMKilled, no VmHWM pinning, no dmesg read) — a real-time demonstration this row's AC directly closes. Worth citing when this row is picked up.\n",
-        "updated_at": "2026-08-15T04:50:36Z",
-        "updated_by": "agent-father",
-        "po_AC_EXTENSION_20260814T0927Z": "[po AC EXTENSION 2026-08-14T09:27Z — PRIORITY P1 -> P0, third recorded occurrence, and the v1 fix this row was minted to specify has now itself been shown gameable.]\nThis row was minted 2026-08-14T06:50Z against two gate defects (SIGNAL: docker inspect cannot see VM-boundary cgroup OOM; WINDOW: certification closed 60min before the first post-fix OOM). Both stand. Three further defects were evidenced live within the following 3 hours and MUST be folded into this row's AC — they are the same class and must not be split into new rows:\n(3) RESTART LAUNDERING. A durability window measured across a preemptive mitigation restart reports zero OOM while the process leaks at an unchanged rate. Observed live: FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED's 24h window opened 2026-08-14T08:41:48Z was invalidated by an ops mitigation restart at 09:23:21Z, 42 minutes in. AC: OOM-class verification_gate must require ONE continuous container lifetime, evidenced by an unchanged `docker inspect .State.StartedAt` at both window open and close, and must declare the window INVALID (not merely reset) if any mitigation was applied during it.\n(4) NEGATIVE-ONLY CRITERION. \"No crash observed in window W\" cannot establish boundedness and has now failed to predict this defect three consecutive times on one incident. AC: OOM-class gates must additionally require a POSITIVE plateau criterion — a fitted growth rate and an absolute ceiling headroom, both measured, both recorded on the row. A window ending at 95% of cap with zero OOM must FAIL.\n(5) GRANDFATHER EXEMPTION ON A FALSIFIED ROW. apps/mcp-server/src/infrastructure/orchStateSchema.ts RC_VERIF_GRANDFATHERED_IDS (line ~536) exempts FU-RAG-DEPLOY-MEMORY from checkVerificationGate()'s verification.raw_probe{} requirement — so it reached DONE_VERIFIED with no live re-probe attached at all, and the exemption survived the falsification of its certification. AC: entries in RC_VERIF_GRANDFATHERED_IDS must be purged when the row's certification is retracted, and a retracted row must not be re-closable via the exemption. At minimum, add a guard that fails validation if a grandfathered id is set back to DONE_VERIFIED after having carried a retraction marker.\nBINDING INTERIM: until this row ships, RAG-MEM-DURABILITY-BAR v2 (D1-D5, recorded verbatim on FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED as po_RAG_MEM_DURABILITY_BAR_V2_20260814T0927Z) is the operative gate for every rag-service memory row. This row's job is to generalise D1-D5 into the qa flow + docs/standards so it binds fleet-wide on every OOM-class AC, not just rag-service.",
-        "po_manual_dispatch_flagged_at": "2026-08-15T04:31:20Z",
-        "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
-        "po_manual_dispatch_class": "DRS-STRANDED-OFF-ALLOWLIST",
-        "po_manual_dispatch_note": "po (manual-dispatch-sweep) re-admitted under flag_reentrant — THIRD stamp (prior: 2026-08-14T18:41:32Z, 2026-08-14T23:00:56Z; the 23:00Z stamp is 5h27m old, stale by >4h). Rank 0 of 91 live candidates this tick (54 DRS-stranded, 36 backlog-XOR-gap, 1 ready-XOR), P0, next_agent=agent-father (off the DRS allowlist, so no automated lane will ever pick it up). ESCALATION NOTE FOR THE ROUTER: this row has now been stamped and folded into a PO BATCH three times without ever being dispatched. Per FIX-PO-MANUAL-DISPATCH-SWEEP-FLAG-WITHOUT-DISPATCH-STRANDS-ROW the staleness window is designed to re-admit exactly this case, and it is working as specified — but a row re-entering on its 3rd cycle is evidence the BATCH->spawn handoff, not the sweep, is where this row dies. If this tick's BATCH also fails to reach agent-father, the next PO tick should treat the handoff itself as the defect rather than re-stamping a 4th time. LIVE URGENCY: FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED is sitting in the qa lane RIGHT NOW (P0, next_agent=qa) and will be certified against precisely the OOM-class gates this row proves unsound (docker inspect .State.OOMKilled reads false across real VM-boundary cgroup kills; negative-only 'no crash in window' criterion; restart-laundered windows). Shipping this row is a prerequisite for that QA verdict being worth anything.",
-        "commit": "49719e1d7 1a6f27176",
-        "agent_father_implementation_note": "[agent-father 2026-08-15T04:50Z] Generalised RAG-MEM-DURABILITY-BAR v2 (D1-D5) fleet-wide: new SSOT docs/standards/oom-durability-verification-bar.md (detection rule + D1-D5 + defect-5 grandfather-exemption/retraction guard + v1-failure rationale) + wired into docs/agents/qa/flow/main.md (new OOM-Class Durability Gate in Pipeline, mandatory cross-ref gating vc-approved in Direct-Commit Verify — the observed path for OOM-class rows). Closes defects 1-4 fully (docker-inspect-only signal, unsettled window, restart-laundering, negative-only criterion). Defect 5 closed at the process-control level (doc-mandated retraction-marker check); the underlying orchStateSchema.ts checkVerificationGate() runtime code guard is a production-code change out of this docs-only rows files[] scope (docs/agents/qa/flow/, docs/standards/) and agent-father'\\''s own forbidden_outputs (never write production code) — flagged in the new doc SS4 as an open engineering gap for a future dev-mcp-server task. Commits: 49719e1d7 (deliverable, qa/flow/main.md + new standards doc), 1a6f27176 (doc self-heal, edit-apply.md notebook-heading template), 797dde808/90268c5b5/0ca3251f3 (agent-father memory bookkeeping). Routing to qa for verification since agent-father cannot self-certify a change to qa's own verification gate."
       }
     ],
     "qa": [
@@ -18364,6 +18343,58 @@
         "secondary_claimed_at": "2026-08-15T01:23:41Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "developer"
+      },
+      {
+        "id": "FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS",
+        "type": "FEATURE",
+        "title": "Add Zod schemas for FR-1/FR-2 optional params; update task_heartbeat/task_release registration per FR-6/FR-7",
+        "status": "QA",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "pm",
+        "next_agent": "qa",
+        "depends": [
+          "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER"
+        ],
+        "supervised": false,
+        "created_at": "2026-07-22T01:15:30Z",
+        "created_by": "pm/decomposition-20260722T0115",
+        "updated_at": "2026-08-15T05:51:27Z",
+        "updated_by": "developer (review-lane secondary-drain triage)",
+        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
+        "subtasks": [
+          {
+            "seq": 1,
+            "title": "Add optional ttl_seconds to task_heartbeat Zod schema (min:60, max:691200)",
+            "acceptance": "Schema allows omitted ttl_seconds (backward compatible); .describe() prose updated"
+          },
+          {
+            "seq": 2,
+            "title": "Add optional payload_patch to task_heartbeat Zod schema",
+            "acceptance": "Schema allows omitted payload_patch; .describe() prose updated"
+          },
+          {
+            "seq": 3,
+            "title": "Add optional owner_agent + original_owner_client_session to task_heartbeat/task_release schemas",
+            "acceptance": "Both params optional, both schemas document use for null-session orphan-signal ladder only"
+          }
+        ],
+        "claimed_at": "2026-08-15T05:51:26Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "dispatch_lane": "developer",
+        "dev_note": "Zod schemas (ttl_seconds/payload_patch/owner_agent/original_owner_client_session) added to task_heartbeat+task_release in coordinationTools.ts per FR-7; handler pass-through fix required (both handlers previously dropped every param beyond task_id/owner_client_session) to satisfy the row own AC. New FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts 13/13 GREEN (RED-confirmed first). Combined targeted coordination suite 132/132 pass, 0 regressions. bun tsc --noEmit clean. Zone-dispatch deviation documented (no Agent tool grant, cannot nest-spawn dev-mcp-server — see feedback_devteam_flow_needs_nested_agent_spawn_subagent_cannot.md). NOT yet live in the running container (NFR-3 rebuild gate, separate step). Commits fb5207746 (code+test)/98259e871 (handoff+WORK.md)/80bda1800 (notebook+journal).",
+        "secondary_claimed_at": "2026-08-15T04:54:01Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "developer",
+        "status_note": "[developer] SECONDARY-Drain triage 2026-08-15T04:57Z — reassigning next_agent to qa for formal Direct-Commit Verify sign-off. Not self-certifying DONE_VERIFIED: test pipeline/merge gate is qa's job (developer agent boundary), and this row's own dev_note already documents the code work as complete — only the NFR-3 rebuild-gate question was open.\n\nREBUILD GATE: RESOLVED THIS CYCLE. Running container vn-market-intelligence-mcp-mcp-server-1 (image built 2026-08-13T21:15:38+02:00, label vn.market.git_sha=78e4b06afcfc1a9282966f8b258205fdd4cb4983) has BOTH fb5207746 (the feature commit) and 1653cea0a (same-day size-lint refactor that split coordinationTools.ts into 6 per-tool files, verbatim/zero-logic-change per its own message) confirmed as git ancestors (`git merge-base --is-ancestor` both true). Container runs `bun run src/index.ts` directly from source (no dist/ build step, verified — package.json \"start\" script + no /app/dist dir) so on-disk file contents ARE the live runtime behavior. `docker exec` confirmed /app/src/interface/mcp/tools/system/coordination/taskHeartbeatTool.ts and taskReleaseTool.ts (the post-refactor live locations) contain payload_patch/owner_agent/original_owner_client_session — feature is live in production, not just committed.\n\nRE-VERIFIED THIS CYCLE (local, host bun, same as original dev_note claims): FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts 13/13 pass; task-lock-coordination-tools.test.ts + coordinationStore.test.ts 38/38 pass, 0 regressions.\n\nNOT re-run this cycle (left for qa's own Direct-Commit Verify per docs/agents/qa/flow/main.md § Direct-Commit Verify, since branch:null/no handoff): full `bun test`, `bun tsc --noEmit`, `scripts/audits/mock-guard.sh`. Row is NOT OOM-class (Zod schema/coordination-tool interface change only) — Durability Gate N/A.\n\nCommits: fb5207746 (code+test), 1653cea0a (refactor, preserves change verbatim), 98259e871 (handoff), 80bda1800 (notebook). All on main ancestry.",
+        "commit": "fb5207746 1653cea0a 98259e871 80bda1800",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskHeartbeatTool.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskReleaseTool.ts",
+          "apps/mcp-server/src/__tests__/FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts"
+        ]
       }
     ],
     "_closed_signals_20260614": {
@@ -18474,7 +18505,7 @@
         "last_served_tick": "2026-08-15T05:19:51Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-15T02:23:12Z"
+        "last_served_tick": "2026-08-15T05:49:52Z"
       },
       "drs": {
         "last_served_tick": "2026-08-15T02:50:59Z"
@@ -18486,7 +18517,7 @@
         "last_served_tick": "2026-08-15T03:50:57Z"
       }
     },
-    "_updated_at": "2026-08-15T05:19:51Z",
+    "_updated_at": "2026-08-15T05:49:52Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
