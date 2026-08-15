@@ -1,0 +1,23 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_prune_dropped_newest_dated_section",
+  "priority": "high",
+  "createdAt": "2026-08-15T08:46:44Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/dev-mcp-server.md",
+    "line": 3,
+    "heading": "## 2026-08-15 — SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD supervised-hold triage (P1, M, review-lane SECONDARY-Drain unstuck, no code work) → HELD, deferred to PO",
+    "section_count": 4,
+    "non_sentinel_section_count": 4,
+    "sentinel_section_count": 0,
+    "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+    "action_required": "review_dropped_section"
+  },
+  "_processed": {
+    "fingerprint": "59f08a4851b9002aad07e877cdc5a6c06fbcff6c3f57f1b12f3c640af24db938",
+    "processedAt": "2026-08-15T10:20:28Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

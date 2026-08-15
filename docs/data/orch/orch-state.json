@@ -18542,7 +18542,7 @@
         "last_served_tick": "2026-08-15T07:20:46Z"
       }
     },
-    "_updated_at": "2026-08-15T09:49:16Z",
+    "_updated_at": "2026-08-15T10:20:28Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -18824,6 +18824,27 @@
         },
         "createdAt": "2026-08-15T09:30:00Z",
         "drained_at": "2026-08-15T09:49:16Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "59f08a4851b9002aad07e877cdc5a6c06fbcff6c3f57f1b12f3c640af24db938",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_prune_dropped_newest_dated_section",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-mcp-server.md",
+          "line": 3,
+          "heading": "## 2026-08-15 — SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD supervised-hold triage (P1, M, review-lane SECONDARY-Drain unstuck, no code work) → HELD, deferred to PO",
+          "section_count": 4,
+          "non_sentinel_section_count": 4,
+          "sentinel_section_count": 0,
+          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+          "action_required": "review_dropped_section"
+        },
+        "createdAt": "2026-08-15T08:46:44Z",
+        "drained_at": "2026-08-15T10:20:28Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

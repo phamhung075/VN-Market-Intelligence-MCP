@@ -1,0 +1,29 @@
+{
+  "from": "router",
+  "to": "po",
+  "type": "flow_defect_report",
+  "priority": "low",
+  "createdAt": "2026-08-15T09:30:00Z",
+  "payload": {
+    "source": "po triage run b6bf37d10 (2026-08-15T09:15Z), decision journal docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-po-9.md",
+    "findings": [
+      {
+        "defect": "docs/agents/po/flow/main.md AC-3 false-negative by construction",
+        "detail": "AC-3 checks `git show --stat \"$SHA\" | grep -q 'orch-state.json'` to confirm a po commit carries its own orch-state.json write, and fires a BUG telegram on miss. This misses whenever a peer commit sweeps po's own orch-apply.sh write into HEAD before po's own commit lands — po's diff then legitimately carries only notebook+journal, no orch-state.json path, and the check still fires a false BUG. Occurred this run: peer commit b0c5d42b9 swept the write, po's own b6bf37d10 carried only notebook+journal. Po worked around it inline by verifying via `git show HEAD:docs/data/orch/orch-state.json` (content-in-HEAD) instead of trusting the AC-3 script (path-in-own-diff). Fix should re-scope AC-3 to check content landed in HEAD, not that po's own commit's diff names the path.",
+        "severity": "low — self-worked-around this run, no data/board consequence, but will misfire again on the next peer-sweep race"
+      },
+      {
+        "defect": "process_telegram_report / claim_telegram_report absent from docs/agents/tools/package/po.md",
+        "detail": "Reports 4911 (SPIKE-BCTC, 34,725 B — unratifiable by anyone under the 12,000 B prose ceiling) and 4912 remain status=new and will keep resurfacing every triage pass because po's documented tool package has no claim/process step for the telegram-report queue. Po acted on their content this run anyway but could not drain the queue state.",
+        "severity": "low — non-blocking, but queue will keep re-surfacing the same reports until the tool package is extended"
+      }
+    ],
+    "note": "Both are non-urgent, already-worked-around findings from a specialist's own report — dropped as a signal only so they reach the next PO/agent-father triage instead of sitting undiscovered in a decision-journal file. No router action taken beyond routing."
+  },
+  "_processed": {
+    "fingerprint": "081f99f5deb3e8e3335e31f45206d82f2d57e2bee9031a7ca65dc03210fbeb27",
+    "processedAt": "2026-08-15T09:49:16Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
