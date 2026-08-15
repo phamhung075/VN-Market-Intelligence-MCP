@@ -14,27 +14,38 @@
  *
  * FACTORY-APP-split-pollNews (staged god-file split, this file was 1444L):
  * single-responsibility pieces now live in ./pollNews/ —
- *   types.ts            — PollNewsResult / SourceFetchers / RagRetriever /
- *                          InsertAnalysisFn / PollNewsOptions
- *   insiderDetectors.ts — detectInsiderFamilyBuying / detectInsiderSelling
- *   signalDedup.ts       — deduplicateSignalsByStockAndType
- *   defaultFetchers.ts  — lazily-loaded real network fetchers + RAG retriever
- *   dbHelpers.ts        — titleFingerprint / isTitleDuplicate / tryInsertEntry
- *                          / loadWatchlist
- * This file is now the orchestrator only: the all-sources-dark cooldown
- * state + the exported pollNews() pipeline itself. All previously-exported
+ *   types.ts               — PollNewsResult / SourceFetchers / RagRetriever /
+ *                             InsertAnalysisFn / PollNewsOptions
+ *   insiderDetectors.ts    — detectInsiderFamilyBuying / detectInsiderSelling
+ *   signalDedup.ts         — deduplicateSignalsByStockAndType
+ *   defaultFetchers.ts     — lazily-loaded real network fetchers + RAG retriever
+ *   dbHelpers.ts           — titleFingerprint / isTitleDuplicate /
+ *                             tryInsertEntry / loadWatchlist
+ * Stage 1 of the pipeline-body decomposition (fetch/health — same "one
+ * extraction per commit" ladder the task's own DoD approach names) landed
+ * this pass:
+ *   resolveFetchers.ts     — per-cycle fetcher-set resolution (local
+ *                             defaults + injected overrides + newsapi
+ *                             fallback + VPS-only keys)
+ *   teChromiumRetry.ts     — Task 1821a 0-item cold-start retry wrapper
+ *   sourceHealth.ts        — SOURCE_DISPLAY_NAMES / STUB_CAPABLE_KEYS /
+ *                             isNewsapiConfigured
+ *   fetchAndRecordHealth.ts — Promise.allSettled fetch execution +
+ *                             globalSourceTracker health recording
+ *   allSourcesDarkAlert.ts — DB-backed cooldown + Telegram bug alert
+ * This file is now the orchestrator: fetch/health stage delegated above,
+ * plus the still-inline dedup/insert and cascade/alert-generation stages,
+ * and the all-sources-dark cooldown state box. All previously-exported
  * names (types, detectInsiderFamilyBuying, detectInsiderSelling,
  * _resetAllDarkAlert, pollNews) are re-exported here unchanged so every
  * existing `from ".../pollNews.js"` import keeps working with zero call-site
- * changes. Further staged splits of pollNews() itself (still ~790L of
- * tightly-coupled local state — fetch/health, dedup/insert,
- * cascade/alert-generation stages) are tracked as follow-up, not done in
- * this pass (see docs/agent-memory/notebooks/dev-mcp-server.md).
+ * changes. Remaining stages (dedup/insert, cascade/alert-generation) are
+ * tracked as follow-up, not done in this pass (see
+ * docs/agent-memory/notebooks/dev-mcp-server.md).
  *
  * Layer: application/usecases — may import from domain/ and infrastructure/.
  */
 
-import type { RssItem } from "../../infrastructure/fetchers/rss.js";
 import type { WatchlistEntry } from "../../domain/services/cascadeEngine.js";
 import type { SearchResult } from "../../domain/services/cascadeEngine.js";
 import { normalizeNews } from "../../domain/services/newsNormalizer.js";
@@ -49,18 +60,14 @@ import { logger } from "../../infrastructure/logger.js";
 // FACTORY-APP-pollNews-layering-fix (2026-07-24): globalSourceTracker relocated
 // from interface/ to infrastructure/observability/sourceHealthRegistry.ts —
 // resolves the former Fence-B violation (application must not import interface).
-import { globalSourceTracker, _resetGlobalSourceTracker } from "../../infrastructure/observability/sourceHealthRegistry.js";
+import { _resetGlobalSourceTracker } from "../../infrastructure/observability/sourceHealthRegistry.js";
 import { detectInsiderFamilyBuying, detectInsiderSelling } from "./pollNews/insiderDetectors.js";
 import { deduplicateSignalsByStockAndType } from "./pollNews/signalDedup.js";
-import {
-  defaultCafefFetcher,
-  defaultVnExpressFetcher,
-  defaultVnEconomyFetcher,
-  defaultTeChromiumNewsFetcher,
-  defaultNewsApiFetcher,
-  defaultRagRetriever,
-} from "./pollNews/defaultFetchers.js";
+import { defaultRagRetriever } from "./pollNews/defaultFetchers.js";
 import { tryInsertEntry, loadWatchlist } from "./pollNews/dbHelpers.js";
+import { resolveFetchers } from "./pollNews/resolveFetchers.js";
+import { fetchAndRecordHealth } from "./pollNews/fetchAndRecordHealth.js";
+import { maybeAlertAllSourcesDark, type DarkAlertState } from "./pollNews/allSourcesDarkAlert.js";
 import type {
   PollNewsResult,
   SourceFetchers,
@@ -75,31 +82,16 @@ export type { PollNewsResult, SourceFetchers, RagRetriever, InsertAnalysisFn, Po
 export { detectInsiderFamilyBuying, detectInsiderSelling };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Constants — Reuters/TE fallback chain (Task 1345a)
+// All-sources-dark cooldown state (Task 1345a / 1398 / 1793)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Reuters VPS push runs hourly. 90 min allows one missed cycle before
- * the newsapi fallback activates. Mirrors REUTERS_STALE_MS in vpsProxyWatchdogJob.ts.
+ * Module-level dedup timer box for the all-sources-dark alert (see
+ * ./pollNews/allSourcesDarkAlert.ts). A plain mutable object (not a bare
+ * `let`) so both `maybeAlertAllSourcesDark()` and `_resetAllDarkAlert()`
+ * below observe/mutate the SAME cooldown state across the module boundary.
  */
-const REUTERS_STALE_MS = 90 * 60 * 1000;
-
-/**
- * VPS news push freshness window. The VPS push pipeline delivers news every ~15 min.
- * If the last push is within 2 hours, the scheduled job returning [] is expected
- * behaviour (fetchers intentionally stubbed — Tasks 1228 + 1843), not an outage.
- * Task 1855a.
- */
-const VPS_NEWS_STALE_MS = 2 * 60 * 60 * 1000;
-
-/**
- * Minimum interval between "all sources dark" Telegram bug alerts.
- * One alert per 24-hour window — prevents alert spam during sustained VPS push gaps.
- */
-const ALL_DARK_ALERT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
-
-/** Module-level dedup timer for all-sources-dark alert. */
-let _lastAllDarkAlertAt = 0;
+const darkAlertState: DarkAlertState = { lastAt: 0 };
 
 /**
  * Test-only reset for the all-sources-dark dedup timer and source health tracker.
@@ -112,7 +104,7 @@ let _lastAllDarkAlertAt = 0;
  * @internal
  */
 export function _resetAllDarkAlert(): void {
-  _lastAllDarkAlertAt = 0;
+  darkAlertState.lastAt = 0;
   _resetGlobalSourceTracker();
 }
 
@@ -165,279 +157,34 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
   const watchlist: WatchlistEntry[] =
     options.watchlist !== undefined ? options.watchlist : loadWatchlist(db);
 
-  // Known keys — local sources with defaults + named VPS-only sources
-  const knownKeys: Record<string, true> = {
-    cafef: true, vnexpress: true, reuters: true, vneconomy: true,
-    tradingeconomics: true, teChromiumNews: true, vietstock: true, vietnambiz: true,
-    vnbusiness: true, tuoitre: true, nhandan: true, nld: true,
-    newsapi: true,
-  };
+  // ── Stage 1: fetch/health (FACTORY-APP-split-pollNews, extracted to ./pollNews/) ──
+  // Task 1345a: resolve the per-cycle fetcher set (local defaults + injected
+  // overrides + Reuters-stale newsapi fallback + Task 1821a cold-start retry).
+  const { resolvedFetchers } = resolveFetchers({
+    reutersLastPushTs: options.reutersLastPushTs ?? null,
+    ...(options.fetchers !== undefined && { fetchers: options.fetchers }),
+    ...(options.sleepMs !== undefined && { sleepMs: options.sleepMs }),
+  });
 
-  // ── Task 1345a: Reuters fallback chain ───────────────────────────────────
-  // If reutersLastPushTs is provided and is stale >90 min, activate the newsapi
-  // fallback fetcher so we have international news coverage during VPS downtime.
-  const reutersTs = options.reutersLastPushTs ?? null;
-  const reutersAgeMs = reutersTs ? Date.now() - reutersTs.getTime() : Infinity;
-  const reutersIsStale = reutersAgeMs >= REUTERS_STALE_MS;
-
-  // Resolve fetchers — local sources get defaults; VPS-only sources are
-  // injected when provided and skipped during scheduled runs.
-  // Unknown future VPS keys are passed through as-is from the caller.
-  // Use a Record<string, ...> accumulator to avoid exactOptionalPropertyTypes issues.
-  const resolvedFetchers: Record<string, () => Promise<RssItem[]>> = {
-    cafef:          options.fetchers?.cafef          ?? defaultCafefFetcher,
-    vnexpress:      options.fetchers?.vnexpress      ?? defaultVnExpressFetcher,
-    vneconomy:      options.fetchers?.vneconomy      ?? defaultVnEconomyFetcher,
-    // Task 1799: TE Vietnam news feed via Chromium scraper (separate source slot)
-    // CI-NETWORK-SKIP-GUARDS: skip real Chromium fetcher in CI to avoid 2s cold-start
-    // retry causing >5000ms timeout. CI env var is set by GitHub Actions automatically.
-    teChromiumNews: options.fetchers?.teChromiumNews ??
-      (Bun.env.CI === "true" ? async () => [] : defaultTeChromiumNewsFetcher),
-    // Sprint 1833g: reuters (RSS) and tradingeconomics (legacy stream) are
-    // permanently disabled from the default resolved set.
-    // They remain in SourceFetchers so callers can inject them for tests or
-    // one-off overrides, but they will never fire in scheduled production runs.
-    ...(options.fetchers?.reuters !== undefined && { reuters: options.fetchers.reuters }),
-    ...(options.fetchers?.tradingeconomics !== undefined && { tradingeconomics: options.fetchers.tradingeconomics }),
-  };
-  // Task 1345a: add newsapi fetcher when Reuters is stale OR caller explicitly injects it
-  // CI-NETWORK-SKIP-GUARDS: in CI env, skip real newsapi HTTP call to avoid ETIMEDOUT.
-  if (reutersIsStale || options.fetchers?.newsapi !== undefined) {
-    resolvedFetchers["newsapi"] = options.fetchers?.newsapi ??
-      (Bun.env.CI === "true" ? async () => [] : defaultNewsApiFetcher);
-    if (reutersIsStale) {
-      logger.info("[pollNews] Reuters VPS push stale — activating newsapi fallback fetcher", {
-        reutersAgeMinutes: Math.round(reutersAgeMs / 60_000),
-      });
-    }
-  }
-  // VPS-push-only keys: only add if the caller provided them
-  const vpsOnlyKeys = ["vietstock", "vietnambiz", "vnbusiness", "tuoitre", "nhandan", "nld"] as const;
-  for (const key of vpsOnlyKeys) {
-    const fn = options.fetchers?.[key];
-    if (fn !== undefined) resolvedFetchers[key] = fn;
-  }
-  // Propagate any additional unknown future VPS keys injected by the caller
-  for (const [k, fn] of Object.entries(options.fetchers ?? {})) {
-    if (!(k in knownKeys) && fn !== undefined) {
-      resolvedFetchers[k] = fn;
-    }
-  }
-
-  // ── Task 1821a: teChromiumNews 0-item cold-start retry ──────────────────
-  // Playwright cold-launch occasionally returns 0 items on the first call
-  // (browser not yet warmed up). Wrap the teChromiumNews fetcher so that
-  // a fulfilled-but-empty result triggers a single 2-second sleep + retry.
-  // Only teChromiumNews gets this treatment — other sources are unaffected.
-  const _realSleep = (ms: number): Promise<void> =>
-    new Promise((resolve) => setTimeout(resolve, ms));
-  const sleep = options.sleepMs ?? _realSleep;
-
-  const TE_CHROMIUM_KEY = "teChromiumNews";
-  // CI-NETWORK-SKIP-GUARDS: skip cold-start retry in CI ONLY when using the real
-  // Chromium fetcher (no caller-injected override) — the no-op CI fetcher returns []
-  // immediately; retrying with a 2s sleep would cause >5000ms timeout.
-  // When caller injects options.fetchers?.teChromiumNews (e.g. test stubs), the retry
-  // wrapper MUST always run so AC-1/AC-2/AC-4 contract tests are hermetic in CI.
-  const teIsInjectedByTest = options.fetchers?.teChromiumNews !== undefined;
-  if (resolvedFetchers[TE_CHROMIUM_KEY] !== undefined &&
-      (teIsInjectedByTest || Bun.env.CI !== "true")) {
-    const originalFetcher = resolvedFetchers[TE_CHROMIUM_KEY]!;
-    resolvedFetchers[TE_CHROMIUM_KEY] = async (): Promise<RssItem[]> => {
-      const firstResult = await originalFetcher();
-      if (firstResult.length > 0) return firstResult;
-      // Cold-start empty result — wait and retry once
-      await sleep(2000);
-      return originalFetcher();
-    };
-  }
-
-  // ── Step 1: Fetch all active sources in parallel with health tracking ───
-  type SourceResult = { name: string; result: PromiseSettledResult<RssItem[]> };
-
-  // Build source entries dynamically from all resolved fetchers
-  const sourceEntries: Array<{ name: string; promise: Promise<RssItem[]> }> =
-    Object.entries(resolvedFetchers).map(([key, fn]) => ({ name: key, promise: fn() }));
-
-  const settled = await Promise.allSettled(sourceEntries.map((s) => s.promise));
-
-  const sourceResults: SourceResult[] = sourceEntries.map((s, idx) => ({
-    name: s.name,
-    result: settled[idx] as PromiseSettledResult<RssItem[]>,
-  }));
-
-  const allItems: RssItem[] = [];
-  let errors = 0;
-
-  // Task 1333: translate raw fetcher keys to display names before recording health.
-  // These values must exactly match the bucket keys pre-seeded by
-  // globalSourceTracker.seedKnownSources() in sourceHealthTools.ts.
-  // "tradingeconomics" → "Trading Economics" (no "RSS" suffix) to match seedKnownSources line 54.
-  const SOURCE_DISPLAY_NAMES: Record<string, string> = {
-    reuters: "Reuters RSS",
-    cafef: "CafeF RSS",
-    vnexpress: "VnExpress RSS",
-    vneconomy: "VnEconomy RSS",
-    tradingeconomics: "Trading Economics",
-    // Task 1799: Chromium-scraped news feed (distinct slot from RSS tradingeconomics)
-    teChromiumNews: "Trading Economics News",
-  };
-
-  // Sources that return [] immediately when unconfigured (no API key / enabled:false).
-  // When these return empty, check config before recording a failure — if they are
-  // disabled/unconfigured, record "disabled" status instead of incrementing the
-  // failure counter (which produced false "8 consecutive failures" WARNs).
-  const STUB_CAPABLE_KEYS = new Set(["newsapi"]);
-
-  // Lazily resolve newsapi config once per pollNews call — only needed when newsapi
-  // is in the active result set. Reads synchronously from the already-loaded mcpConfig
-  // singleton to avoid dynamic imports in the hot path.
-  let _newsapiConfiguredCache: boolean | null = null;
-  function isNewsapiConfigured(): boolean {
-    if (_newsapiConfiguredCache !== null) return _newsapiConfiguredCache;
-    try {
-      // mcpConfig is a module-level singleton (already loaded at startup) — safe to import
-      // synchronously by accessing the already-resolved module cache via a direct path.
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const configModule = require("../../infrastructure/config.js") as
-        { mcpConfig?: Record<string, unknown> };
-      const cfg = configModule.mcpConfig;
-      const newsapiCfg = (cfg as Record<string, unknown> | undefined)?.newsSources as
-        | { newsapi?: { apiKey?: string; enabled?: boolean } }
-        | undefined;
-      _newsapiConfiguredCache =
-        Boolean(newsapiCfg?.newsapi?.enabled) && Boolean(newsapiCfg?.newsapi?.apiKey);
-    } catch {
-      _newsapiConfiguredCache = false;
-    }
-    return _newsapiConfiguredCache;
-  }
-
-  // ── Task 1832b: Active-source count snapshot (pre-fetch-loop state) ─────
-  // Snapshot which sources are expected to be functional BEFORE the health-update
-  // loop below calls recordFailure/recordSuccess for this cycle's results.
-  // Using pre-loop state ensures a single failed cycle does not immediately
-  // remove a source from the active count — it takes DOWN_THRESHOLD (5)
-  // consecutive failures before a source is classified as CB-open.
-  // This also avoids cross-test state pollution in the full test suite where
-  // multiple pollNews calls accumulate recordFailure counts within the same
-  // Bun process (the tracker is a globalThis singleton).
-  const activeSourceCount = sourceResults.filter(({ name }) => {
-    const displayName = SOURCE_DISPLAY_NAMES[name] ?? name;
-    if (STUB_CAPABLE_KEYS.has(name) && !isNewsapiConfigured()) return false; // disabled
-    if (globalSourceTracker.isDown(displayName)) return false; // CB-open (5+ prior failures)
-    return true;
-  }).length;
-
-  for (const { name, result } of sourceResults) {
-    const displayName = SOURCE_DISPLAY_NAMES[name] ?? name;
-    if (result.status === "fulfilled") {
-      allItems.push(...result.value.slice(0, limit));
-      if (result.value.length > 0) {
-        // Task 1227: only record success when items are actually returned.
-        // A fulfilled-but-empty result means the fetcher silently swallowed
-        // a geo-block or timeout (Reuters/Google News pattern) — recording
-        // success in that case produces false-OK in the source health table.
-        globalSourceTracker.recordSuccess(displayName);
-      } else if (STUB_CAPABLE_KEYS.has(name) && !isNewsapiConfigured()) {
-        // Source is explicitly disabled or has no API key — not a failure.
-        // Record "disabled" so the health table shows the true reason rather
-        // than accumulating consecutive-failure counts (Task fix/fetch-source-issues).
-        globalSourceTracker.recordDisabled(displayName);
-        logger.debug(`[pollNews] ${name} skipped — disabled or no API key configured`, { source: name });
-      } else {
-        // Fulfilled with 0 items — record as transient failure in the health
-        // tracker (so source health shows "degraded" instead of "OK") but do
-        // NOT increment `errors`. The `errors` counter in PollNewsResult
-        // represents sources that threw an exception, not empty-result sources.
-        // Empty results are normal off-hours behaviour and should not affect
-        // the error count returned to callers or logged as failures.
-        // Task 1288: separated health-tracking concern from error-counting.
-        globalSourceTracker.recordFailure(displayName, "empty result — no items returned");
-        logger.debug(`[pollNews] ${name} returned 0 items — recorded as transient failure`, { source: name });
-      }
-    } else {
-      errors++;
-      const errorMsg = result.reason instanceof Error
-        ? result.reason.message
-        : String(result.reason);
-      globalSourceTracker.recordFailure(displayName, errorMsg);
-      logger.error(`[pollNews] ${name} fetch failed: ${errorMsg.slice(0, 120)}`, {
-        source: name,
-        error: errorMsg,
-      });
-    }
-  }
+  // Step 1: fetch all active sources in parallel + record health per source.
+  const { allItems, errors, activeSourceCount, sourceCount } =
+    await fetchAndRecordHealth(resolvedFetchers, limit);
 
   const fetched = allItems.length;
 
-  // ── Task 1345a / 1398: All-sources-dark detection ───────────────────────
-  // When every fetcher returned 0 items, send a single Telegram bug alert.
-  // Deduped to one alert per 4-hour window. Task 1398 adds a DB-backed guard
-  // (via cron_job_runs) that persists the last-sent timestamp across restarts,
-  // preventing re-alert floods when the server restarts during a sustained outage.
-  // Task 1832b: only fire when at least one source is expected to be functional
-  // (activeSourceCount > 0). If all sources are CB-open or disabled, the zero
-  // result is expected behaviour — not an outage.
-  // Task 1855a: suppress alert when VPS push pipeline recently delivered news.
-  // The scheduled job fetchers are intentionally stubbed (Tasks 1228 + 1843) so
-  // they always return []. If the VPS push delivered items within VPS_NEWS_STALE_MS
-  // (2h), a 0-item scheduled cycle is expected — not a real outage.
-  const vpsNewsPushTs = options.vpsNewsLastPushTs ?? null;
-  const vpsNewsAgeMs = vpsNewsPushTs
-    ? (options.nowMs?.() ?? Date.now()) - vpsNewsPushTs.getTime()
-    : Infinity;
-  const vpsPushIsHealthy = vpsNewsAgeMs < VPS_NEWS_STALE_MS;
-
-  if (allItems.length === 0 && activeSourceCount > 0 && !vpsPushIsHealthy) {
-    const now = options.nowMs?.() ?? Date.now();
-    // DB-backed last-sent: read MAX(started_at) for the cooldown key
-    const dbRow = (() => {
-      try {
-        return db.prepare(
-          `SELECT MAX(started_at) AS ts FROM cron_job_runs WHERE job_name = 'pollNews_all_sources_dark'`,
-        ).get() as { ts: string | null } | undefined;
-      } catch (e) {
-        logger.warn("[pollNews] cooldown SELECT failed — DB schema drift?", { error: String(e) });
-        return undefined;
-      }
-    })();
-    const dbLastMs = dbRow?.ts ? new Date(dbRow.ts).getTime() : 0;
-    const lastSentMs = Math.max(_lastAllDarkAlertAt, dbLastMs);
-    if (now - lastSentMs >= ALL_DARK_ALERT_COOLDOWN_MS) {
-      _lastAllDarkAlertAt = now;
-      // Persist send timestamp to DB so cross-restart cooldown is enforced (Task 1398).
-      // FIX Task 1793: store `now` (from nowMs injection) not SQLite strftime('now').
-      // Using strftime('now') stored the real wall clock, which diverged from the
-      // `now` used in the comparison whenever nowMs was injected (tests or future
-      // clock overrides). A fake-future nowMs + real-clock DB row meant the stored
-      // timestamp looked ancient from the fake clock's perspective → cooldown bypassed.
-      const nowIso = new Date(now).toISOString();
-      try {
-        db.prepare(
-          `INSERT INTO cron_job_runs (job_name, started_at, status) VALUES ('pollNews_all_sources_dark', ?, 'success')`,
-        ).run(nowIso);
-      } catch (e) {
-        logger.warn("[pollNews] cooldown INSERT failed — cooldown will not persist across restart", { error: String(e) });
-      }
-      const darkMsg =
-        "[pollNews] All news sources returned 0 items — possible VPS/network outage. " +
-        `Sources checked: ${Object.keys(resolvedFetchers).join(", ")} ` +
-        `(active: ${activeSourceCount}/${sourceResults.length})`;
-      logger.warn(darkMsg);
-      try {
-        if (options.onAllSourcesDark) {
-          await options.onAllSourcesDark(darkMsg);
-        } else {
-          // Production default: send to Telegram bug channel
-          const { sendTelegramBug } = await import("../../infrastructure/notifiers/telegram.js");
-          await sendTelegramBug(darkMsg, { parseMode: "" });
-        }
-      } catch {
-        // Best-effort — alert failure must not abort the cycle
-      }
-    }
-  }
+  // Task 1345a / 1398 / 1832b / 1855a: all-sources-dark Telegram alert
+  // (DB-backed cooldown, VPS-push-healthy suppression).
+  await maybeAlertAllSourcesDark({
+    db,
+    fetchedCount: fetched,
+    activeSourceCount,
+    sourceKeys: Object.keys(resolvedFetchers),
+    sourceCount,
+    vpsNewsLastPushTs: options.vpsNewsLastPushTs ?? null,
+    ...(options.nowMs !== undefined && { nowMs: options.nowMs }),
+    ...(options.onAllSourcesDark !== undefined && { onAllSourcesDark: options.onAllSourcesDark }),
+    state: darkAlertState,
+  });
 
   // ── Step 1c: VN relevance pre-filter (Task 1247) ─────────────────────────
   // Discard non-VN articles (sports, US personal finance, entertainment) that

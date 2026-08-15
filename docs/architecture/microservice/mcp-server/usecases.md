@@ -30,7 +30,7 @@ Maintains vnstock reference data (company names, exchanges)
 
 ### pollNews.ts
 RSS/news API polling with deduplication. `pollNews()` orchestrator only
-(923L, `apps/mcp-server/src/application/usecases/pollNews.ts`) — split
+(671L, `apps/mcp-server/src/application/usecases/pollNews.ts`) — split
 FACTORY-APP-split-pollNews (staged god-file split, was 1444L) into
 single-responsibility siblings under `pollNews/`, all re-exported
 unchanged from `pollNews.ts` so every existing import path keeps working:
@@ -47,10 +47,33 @@ unchanged from `pollNews.ts` so every existing import path keeps working:
 - `pollNews/dbHelpers.ts` — `titleFingerprint`, `isTitleDuplicate`,
   `tryInsertEntry`, `loadWatchlist` (internal)
 
-The orchestrator itself (fetch/health tracking → all-sources-dark alert →
-VN-relevance filter → normalize/dedup/insert → cascade + alert generation)
-is still one function — further staged decomposition is tracked as
-follow-up, not done in this pass.
+**Stage 1 of the pipeline-body decomposition (fetch/health) — extracted
+this pass, closing QA's CHANGES_REQUESTED gap on commit `0f23a703f`**
+(all 5 new files independently `<=120L`, no size-justification header
+needed):
+- `pollNews/resolveFetchers.ts` — `resolveFetchers()`: per-cycle fetcher-set
+  resolution (local defaults + injected overrides + Task 1345a Reuters-stale
+  newsapi fallback + VPS-only/unknown key passthrough)
+- `pollNews/teChromiumRetry.ts` — `wrapTeChromiumRetry()`: Task 1821a
+  teChromiumNews 0-item cold-start retry wrapper (in-place fetcher mutation)
+- `pollNews/sourceHealth.ts` — `SOURCE_DISPLAY_NAMES`, `STUB_CAPABLE_KEYS`,
+  `isNewsapiConfigured()`
+- `pollNews/fetchAndRecordHealth.ts` — `fetchAndRecordHealth()`:
+  `Promise.allSettled` fetch execution + `globalSourceTracker` health
+  recording (Tasks 1227/1288/1333/1832b)
+- `pollNews/allSourcesDarkAlert.ts` — `maybeAlertAllSourcesDark()`: DB-backed
+  cooldown (`cron_job_runs`, Task 1398) + Telegram bug alert (Tasks 1345a/
+  1793/1855a); caller (`pollNews.ts`) owns the `DarkAlertState` box so
+  `_resetAllDarkAlert()` can still reset it directly
+
+Pure code motion — zero behavior change (all 209 pollNews-touching test
+assertions across the pre-existing test files pass unchanged; full `bun
+test` suite green). Remaining stages — dedup/insert (Step 2-3: normalize →
+sentiment → insert → RAG embed → deep-fetch gate) and cascade/
+alert-generation (Step 4-5: causal-chain signal building → mention-velocity
+→ dedup → `generateAlerts`/`storeAlerts`) — are still inline in
+`pollNews()` and tracked as follow-up on the same "one extraction per
+commit" ladder, not done in this pass.
 
 ### syncSectorPeers.ts
 Sector classification sync from static mappings
