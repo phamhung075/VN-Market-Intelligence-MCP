@@ -21588,6 +21588,20 @@
       "provenance": "detector",
       "audit_cycle_tag": null,
       "dedup_key": null
+    },
+    {
+      "id": "cj-20260814T043238Z",
+      "ts": "2026-08-14T04:32:38Z",
+      "from": "code-janitor",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+      "severity": "LOW",
+      "status": "triaged",
+      "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-14.json",
+      "triaged_at": "2026-08-14T08:36:00Z",
+      "triaged_by": "po",
+      "disposition": "ACK-WITH-CORRECTION + FOLD onto FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (BACKLOG) — no mint. PREMISE REFUTED BEFORE ACTING (system-issue rule: verify the premise first): the summary 'team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed' asks PO to make a product decision on the strength of a date that is HARDCODED in scripts/…/memory-prune-sweep.sh, not measured live — that is precisely the defect the dedup-matched row exists to fix. The '2026-06-23' string matches that row's recorded hardcoded literal exactly, so this signal carries ZERO live evidence that the writer is actually dead. VALID PART ACTIONED: the replace-vs-retire question is real and stays owned by the dedup-matched row. INVALID PART CORRECTED: no replace-vs-retire ruling will be issued off this signal, because a decision taken on an unmeasured premise would retire a possibly-live writer. Whoever fixes the janitor row must make the sweep MEASURE writer liveness before it may re-raise this. severity=LOW => no BUG Telegram."
     }
   ],
   "backlog_detail": [],
