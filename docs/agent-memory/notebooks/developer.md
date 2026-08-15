@@ -1,6 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-15T04:10:00Z | **Cycle:** FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT (M, review-lane secondary-drain — steps 1/2/4/5 of architect's 5-step decomposition, step 3 supervised-gated)
+**Last updated:** 2026-08-15T04:58:06Z | **Cycle:** FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS (M, review-lane secondary-drain owner-triage)
+
+## Session 2026-08-15T04:58:06Z — FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS (apps/mcp-server/, developer, P0 M, review-lane secondary-drain owner-triage, session 632721c2)
+
+**Task:** Stale `review[]` row (`next_agent: developer`, so PRIMARY QA-Drain — which only fires on `next_agent=="qa"` — would never reach it). Row's own `dev_note` already recorded the code work complete (Zod schemas + handler pass-through for `task_heartbeat`/`task_release`, 13/13 new tests GREEN, 132/132 combined suite, tsc clean, commits `fb5207746`/`98259e871`/`80bda1800`) but flagged the NFR-3 rebuild gate as an open, separate step.
+
+**Verification performed this cycle:** confirmed `fb5207746` (feature commit) AND `1653cea0a` (same-day size-lint refactor that split `coordinationTools.ts` into 6 per-tool files, verbatim/zero-logic-change per its own commit message) are BOTH `git merge-base --is-ancestor` of the running `mcp-server` container's baked-in git sha (`vn.market.git_sha=78e4b06a...`, image built 2026-08-13T21:15:38+02:00). Container runs `bun run src/index.ts` directly from source (no `dist/` build step — confirmed via `package.json` + absence of `/app/dist`), so on-disk source IS live runtime behavior. `docker exec` into the running container confirmed `taskHeartbeatTool.ts`/`taskReleaseTool.ts` at their post-refactor live path (`src/interface/mcp/tools/system/coordination/`) contain `payload_patch`/`owner_agent`/`original_owner_client_session`. Re-ran the row's own test file locally (13/13 pass) plus the wider coordination suite (38/38 pass, 0 regressions). **NFR-3 rebuild gate: RESOLVED** — feature is live in production, not just committed.
+
+**Decision — reassigned rather than self-certified:** developer's own agent-identity `not_my_job` list names "Test pipeline and merge gate" as qa's job, and qa's flow already has a purpose-built Direct-Commit Verify entry point for exactly this `branch:null`/no-handoff row shape. Set `next_agent: developer → qa`, populated `commit`/`files[]`/`status_note` (rebuild-gate evidence + what was/wasn't re-run) on the board row via `orch-apply.sh` so qa's Direct-Commit Verify doesn't need to re-derive the rebuild-gate evidence — only its own re-run of `bun test`/`tsc`/`mock-guard.sh` remains. Row is NOT OOM-class (Zod schema/interface change only) — Durability Gate N/A. Left `status: REVIEW` unchanged (in-place stamp, no lane move — row already lives in `.task_board.review[]`).
+
+**Regression:** no production code touched this cycle (verification-only task) — `bun test`/`tsc` re-runs cited above were confirmatory, not new work. No `apps/` files modified.
+
+**Closeout:** board-row update via `orch-apply.sh` only (`docs/data/orch/orch-state.json`), decision-journal entry appended to `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` (S49). No handoff file (review-lane secondary-drain dispatch — board row's own fields are the spec). Router/dispatcher (dev-team) holds the outer `task:` sprint-task lock per INV-GATEWAY-1 — this specialist did not attempt `task_claim`/`task_release`.
+
+---
 
 ## Session 2026-08-15T04:10:00Z — FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT (cross-service/, developer, P1 M, review-lane secondary-drain, session 632721c2)
 

@@ -17265,15 +17265,15 @@
         "size": "M",
         "zone": "apps/mcp-server/",
         "owner": "pm",
-        "next_agent": "developer",
+        "next_agent": "qa",
         "depends": [
           "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER"
         ],
         "supervised": false,
         "created_at": "2026-07-22T01:15:30Z",
         "created_by": "pm/decomposition-20260722T0115",
-        "updated_at": "2026-08-09T00:13:41Z",
-        "updated_by": "developer",
+        "updated_at": "2026-08-15T04:58:06Z",
+        "updated_by": "developer (review-lane secondary-drain triage)",
         "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
         "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
         "subtasks": [
@@ -17296,7 +17296,17 @@
         "claimed_at": "2026-08-08T23:52:08Z",
         "claimed_by": "dev-team (ready-lane consumer)",
         "dispatch_lane": "developer",
-        "dev_note": "Zod schemas (ttl_seconds/payload_patch/owner_agent/original_owner_client_session) added to task_heartbeat+task_release in coordinationTools.ts per FR-7; handler pass-through fix required (both handlers previously dropped every param beyond task_id/owner_client_session) to satisfy the row own AC. New FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts 13/13 GREEN (RED-confirmed first). Combined targeted coordination suite 132/132 pass, 0 regressions. bun tsc --noEmit clean. Zone-dispatch deviation documented (no Agent tool grant, cannot nest-spawn dev-mcp-server — see feedback_devteam_flow_needs_nested_agent_spawn_subagent_cannot.md). NOT yet live in the running container (NFR-3 rebuild gate, separate step). Commits fb5207746 (code+test)/98259e871 (handoff+WORK.md)/80bda1800 (notebook+journal)."
+        "dev_note": "Zod schemas (ttl_seconds/payload_patch/owner_agent/original_owner_client_session) added to task_heartbeat+task_release in coordinationTools.ts per FR-7; handler pass-through fix required (both handlers previously dropped every param beyond task_id/owner_client_session) to satisfy the row own AC. New FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts 13/13 GREEN (RED-confirmed first). Combined targeted coordination suite 132/132 pass, 0 regressions. bun tsc --noEmit clean. Zone-dispatch deviation documented (no Agent tool grant, cannot nest-spawn dev-mcp-server — see feedback_devteam_flow_needs_nested_agent_spawn_subagent_cannot.md). NOT yet live in the running container (NFR-3 rebuild gate, separate step). Commits fb5207746 (code+test)/98259e871 (handoff+WORK.md)/80bda1800 (notebook+journal).",
+        "secondary_claimed_at": "2026-08-15T04:54:01Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "developer",
+        "status_note": "[developer] SECONDARY-Drain triage 2026-08-15T04:57Z — reassigning next_agent to qa for formal Direct-Commit Verify sign-off. Not self-certifying DONE_VERIFIED: test pipeline/merge gate is qa's job (developer agent boundary), and this row's own dev_note already documents the code work as complete — only the NFR-3 rebuild-gate question was open.\n\nREBUILD GATE: RESOLVED THIS CYCLE. Running container vn-market-intelligence-mcp-mcp-server-1 (image built 2026-08-13T21:15:38+02:00, label vn.market.git_sha=78e4b06afcfc1a9282966f8b258205fdd4cb4983) has BOTH fb5207746 (the feature commit) and 1653cea0a (same-day size-lint refactor that split coordinationTools.ts into 6 per-tool files, verbatim/zero-logic-change per its own message) confirmed as git ancestors (`git merge-base --is-ancestor` both true). Container runs `bun run src/index.ts` directly from source (no dist/ build step, verified — package.json \"start\" script + no /app/dist dir) so on-disk file contents ARE the live runtime behavior. `docker exec` confirmed /app/src/interface/mcp/tools/system/coordination/taskHeartbeatTool.ts and taskReleaseTool.ts (the post-refactor live locations) contain payload_patch/owner_agent/original_owner_client_session — feature is live in production, not just committed.\n\nRE-VERIFIED THIS CYCLE (local, host bun, same as original dev_note claims): FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts 13/13 pass; task-lock-coordination-tools.test.ts + coordinationStore.test.ts 38/38 pass, 0 regressions.\n\nNOT re-run this cycle (left for qa's own Direct-Commit Verify per docs/agents/qa/flow/main.md § Direct-Commit Verify, since branch:null/no handoff): full `bun test`, `bun tsc --noEmit`, `scripts/audits/mock-guard.sh`. Row is NOT OOM-class (Zod schema/coordination-tool interface change only) — Durability Gate N/A.\n\nCommits: fb5207746 (code+test), 1653cea0a (refactor, preserves change verbatim), 98259e871 (handoff), 80bda1800 (notebook). All on main ancestry.",
+        "commit": "fb5207746 1653cea0a 98259e871 80bda1800",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskHeartbeatTool.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskReleaseTool.ts",
+          "apps/mcp-server/src/__tests__/FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts"
+        ]
       },
       {
         "id": "FIX-BCTC-ANALYST-READS-DRAIN-MOVE-AS-SIGNAL-WRITE-LOSS-4-CYCLES",
@@ -18480,7 +18490,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-15T00:55:38Z"
+        "last_served_tick": "2026-08-15T04:53:36Z"
       },
       "sls": {
         "last_served_tick": "2026-08-15T01:50:43Z"
@@ -18498,7 +18508,7 @@
         "last_served_tick": "2026-08-15T03:50:57Z"
       }
     },
-    "_updated_at": "2026-08-15T04:49:38Z",
+    "_updated_at": "2026-08-15T04:53:36Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
