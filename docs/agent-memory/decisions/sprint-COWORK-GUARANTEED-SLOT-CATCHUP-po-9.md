@@ -149,3 +149,13 @@
 - Open it gated behind the parent row's post-fix audit cycle
 **why-decision:** INDEX.md's broken state IS the parent row's natural negative control (spec §3) — it is the only evidence the repointed predicate is live rather than defanged into a trivial file-existence check. Fixing it first destroys the parent's acceptance evidence and forces QA onto the synthetic scratch-copy fallback. depends_on + an explicit note enforce the order.
 **why-change:** no change from plan.
+
+### STEP po-S173 · po · 2026-08-15T01:00:55Z
+**task-id:** FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE
+**what-done:** Ratified the PLAN-ONLY C-04 design (po_goahead stamped), cleared supervised+plan_only, re-zoned cross-service/, next_agent=developer, review[]->ready[]; minted 2 dependent follow-up rows.
+**what-considered:**
+- Sign off DONE_VERIFIED as-is — rejected: plan_only means nothing shipped; C-04 still runs the defective inline SQL.
+- Keep supervised:true after stamping — rejected: is_bounded1_eligible/RLC exclude supervised outright regardless of po_goahead, so the row would sit in READY-XOR-SUP-OR-PLANONLY manual-only limbo (the FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER failure that idled a P0 6 days).
+- One row for script + flow-doc edit — rejected: docs/agents/system-auditor/flow/ is agent-father's zone, scripts/ is not; cross-zone edit by developer is a zone violation.
+**why-decision:** Independently re-verified at source (not on architect's relay): parseBctcReport.ts:433-449 ON CONFLICT DO UPDATE SET carries `parsed_at = excluded.parsed_at` while published_at is verbatim commented out of the SET clause; :834 `callerPublishedAt ?? parsedAt`; ensureFinancialReportShellRow.ts:119 binds 'pending_extraction',0; MARKET_DB_HOST_PATH fixture seam + sqlite-wal-guard.sh both real; spec_doc committed c84cc13d5, clean. Design is implementable as written.
+**why-change:** Split into 3 rows instead of the spec's implicit 1 — zone ownership forces it, and the flow-doc flip MUST land after the script exists or C-04 references a missing file.
