@@ -98,13 +98,22 @@ Produce human-readable summary:
 
 **Notebook commit** — append to `docs/agent-memory/notebooks/agent-father.md`:
 ```
-### Edit (<agent_name>) HH:MM
+## EDIT <ISO-timestamp> — task <task_id or agent_name>, router-dispatched (intent=edit)
 - Change: <one-line summary>
 - Files modified: N
 - Cascade: <none | list>
 - Validation: N/5 passed
 - Decision: <why this change was made, guide ref>
 ```
+Use a top-level `## ` heading, NOT `### ` — the live file's real section-boundary convention
+(`.claude/skills/notebook-write/SKILL.md` AC-1) treats `## ` as the anchor; a `### ` sub-heading
+appended after the last `## ` section nests INTO that prior section instead of opening a new one,
+which mutates a retained section and trips the notebook-immutability guard (AC-2a) WARN (doc-
+self-heal 2026-08-15, `FIX-QA-OOM-CLASS-AC3-...` cycle — this template's stale `### ` form caused
+exactly that WARN live). Never embed the literal `$CLAUDE_CODE_SESSION_ID` value in the heading —
+a session id is a per-invocation coordination parameter only, never authored into a committed file
+(AC-1, `feedback_agent_commits_session_uuid_into_notebook`) — trips the notebook-uuid-provenance
+guard WARN.
 **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
 # own_paths: [docs/agent-memory/notebooks/agent-father.md]
