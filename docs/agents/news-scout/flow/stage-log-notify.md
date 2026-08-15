@@ -1,4 +1,4 @@
-<!-- size-justification: 140L — FIX-NEWSSCOUT-COMMIT-POLICY-NEVER-MECHANICALLY-WIRED 2026-08-15: ported market-watcher's working off-hours-self-commit block (task_claim mutex + git_commit_retry + RULE 2.5 pathspec + task_release + BUG fallback) verbatim, +26L; the block is non-factorizable without breaking the same mutex-guard/retry/pathspec contract market-watcher's identical fix already establishes as the correct pattern. Exceeds the 120L flow-file cap (pre-existing debt: file was already 113L before this fix). -->
+<!-- size-justification: 145L — FIX-NEWSSCOUT-COMMIT-POLICY-NEVER-MECHANICALLY-WIRED 2026-08-15: ported market-watcher's working off-hours-self-commit block (task_claim mutex + git_commit_retry + RULE 2.5 pathspec + task_release + BUG fallback) verbatim, +26L; the block is non-factorizable without breaking the same mutex-guard/retry/pathspec contract market-watcher's identical fix already establishes as the correct pattern. Exceeds the 120L flow-file cap (pre-existing debt: file was already 113L before this fix). +5L (FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK, 2026-08-15 rework): the ported block's mutex key deliberately differs from eod.md's own ("news-scout-notebook:main" vs "market-watcher-notebook:main" — by design, so the two agents never deadlock on each other's OWN file) but eod.md's Step D also commits news-scout.md in its own batch under ITS key, on the identical shared 16:00 UTC Mon-Fri tick — a same-tick clean-diff guard was added so the benign case (eod.md's batch lands first, this step's own git add finds nothing pending) is skipped instead of misrouted into the BUG-channel escalation, which would otherwise fire a false-positive alert every co-firing weekday. -->
 > Parent: [./cycle.md](./cycle.md)
 
 # News Scout — Stage 4–5: Session Log, WORK Notify, Batch 2
@@ -32,15 +32,20 @@ LOCK = call_tool(server="vn-market", tool="task_claim", arguments={
 ```
 If `claimed:false`: retry up to 2 more times (5s apart, same bounded-retry style as `git_commit_retry`); if still held after 3 attempts, proceed unguarded and log `[news-scout] notebook-lock contended 3x — proceeding unguarded`.
 
+> **Same-tick clean-diff guard** (FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK, 2026-08-15): `news-scout-offhours` (`0 */4 * * *`) and `market-watcher-eod` (`0 16 * * 1-5`) share the identical 16:00 UTC Mon-Fri tick (same co-fire class `eod.md`'s own "Same-agent multi-slot mutex" note documents) — `eod.md` Step D ALSO commits `news-scout.md` in its own batch, under a DIFFERENT mutex key (`market-watcher-notebook:main`, by design, so the two agents never deadlock on each other's own file). If `eod.md`'s batch commit lands first on a shared tick, this step's own `git add` finds nothing pending — a benign no-op, NOT a failure. Check for a real diff before attempting the commit so that benign case never reaches the BUG-channel branch below:
 ```bash
-git add docs/agent-memory/notebooks/news-scout.md
-git_commit_retry -m "chore(memory/news-scout): offhours cycle YYYY-MM-DD HH:MM UTC" \
-  -- docs/agent-memory/notebooks/news-scout.md
+if git diff --quiet HEAD -- docs/agent-memory/notebooks/news-scout.md 2>/dev/null; then
+  log "[news-scout] offhours notebook already committed this tick (eod.md batch landed first) — skip, no BUG"
+else
+  git add docs/agent-memory/notebooks/news-scout.md
+  git_commit_retry -m "chore(memory/news-scout): offhours cycle YYYY-MM-DD HH:MM UTC" \
+    -- docs/agent-memory/notebooks/news-scout.md
+fi
 ```
 > **RULE 2.5 pathspec-scoped commit**: `git_commit_retry` passes `"$@"` straight to `git commit` (`docs/protocols/head-lock-self-cure.md` § F4) — a bare `git commit -m "..."` with no trailing pathspec commits whatever is currently staged in the shared index, not only the file this step's own `git add` named. The trailing `-- <path>` above closes that gap per `.claude/skills/commit-boundary/SKILL.md` RULE 2.5.
 
-`task_release(task_id="news-scout-notebook:main", owner_client_session="<same resolved value as the task_claim above>")` in a finally, regardless of commit outcome.
-> If commit fails after retries: log to BUG channel + `send_telegram(channel="bug", message="[news-scout] offhours notebook commit failed — manual recovery needed: docs/protocols/head-lock-self-cure.md")`.
+`task_release(task_id="news-scout-notebook:main", owner_client_session="<same resolved value as the task_claim above>")` in a finally, regardless of outcome (including the clean-diff skip branch above).
+> If the `else` branch's commit fails after retries (a genuine failure — index/HEAD lock exhausted, or any other non-lock `git commit` error): log to BUG channel + `send_telegram(channel="bug", message="[news-scout] offhours notebook commit failed — manual recovery needed: docs/protocols/head-lock-self-cure.md")`. The clean-diff skip branch above is NEVER a BUG-channel condition.
 
 ---
 
