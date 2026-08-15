@@ -1,0 +1,40 @@
+{
+  "id": "bca-20260815T001700Z",
+  "ts": "2026-08-15T00:17:00Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "esc-deep-dive-request",
+  "summary": "ESC deep-dive: FPT Q1-2026 ESC-5",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "trigger_id": "ESC-5",
+    "ticker": "FPT",
+    "quarter": "Q1-2026",
+    "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+    "context": {
+      "low_confidence_unit_ids": [
+        "unit-0008",
+        "unit-0009",
+        "unit-0010",
+        "unit-0011",
+        "unit-0012",
+        "unit-0013",
+        "unit-0014"
+      ],
+      "min_confidence": 0.45
+    },
+    "all_esc_fired": [
+      "ESC-5"
+    ],
+    "note": "6th consecutive cycle this ESC-5 finding fires on byte-identical FPT Q1-2026 refine data (c164/c166/c167/c168/c169/this cycle). ANOMALY: c169's fresh 24h re-arm (2026-08-14T21:14:07Z, ttl=86400s, expected expiry ~2026-08-15T21:14Z) was NOT held when this cycle probed the same guard_key at 2026-08-15T00:1x — task_claim returned claimed:true (no current_holder) roughly 3h into what should have been a 24h hold. Could indicate a completed dev-team deep-dive pickup that released the guard on completion, or an early guard-clear/reaper event — bctc-analyst has no visibility into which. Flagging for dev-team/PO awareness; re-armed fresh this cycle regardless per deterministic gate."
+  },
+  "_processed": {
+    "fingerprint": "3dc0b0cfeed70e0719a80c50871f196ef758235bd2799d2a08044cfa9b9d612c",
+    "processedAt": "2026-08-15T00:27:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-08-08T00:11:16Z",
+    "fire_time": "2026-08-15T00:13:14Z",
     "matched_slots": [
       "bctc-analyst-slot-4",
       "news-scout-offhours",
@@ -25,7 +25,7 @@
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 6,
+    "drift_min": 10,
     "errors": [],
     "pressure_mode": "adaptive",
     "calendar_status": "unknown",
@@ -45,7 +45,7 @@
       "market-watcher-offhours": 240,
       "alert-commander-critical": null
     },
-    "last_fired_timestamp": "2026-08-08T00:10:54Z",
+    "last_fired_timestamp": "2026-08-15T00:13:14Z",
     "last_fired_slots": [
       "bctc-analyst-slot-4",
       "news-scout-offhours",
@@ -58,15 +58,15 @@
     "nominal_tick": "00:00",
     "leader_lock": "acquired",
     "dev_head": "unknown",
-    "devq": 5,
-    "signal_backlog": 24,
-    "note": "4-slot WORK tick, MAX_PARALLEL=2 (degraded: headroom 1124MB < 1500MB floor), 2 batches, all spawns dispatched run_in_background=true"
+    "devq": null,
+    "signal_backlog": 0,
+    "note": "WORK tick 2026-08-15T00:00Z, drift_min=10, 4 non-guaranteed slots fired in one MAX_PARALLEL=4 batch (headroom 4705MB, not degraded)."
   },
   "priority": "low",
-  "createdAt": "2026-08-08T00:11:16Z",
+  "createdAt": "2026-08-15T00:13:14Z",
   "_processed": {
-    "fingerprint": "b636844b79deb2ed8901fa4b29ab1d6aed290cc8c28a48e35d6f6953ef5f4c26",
-    "processedAt": "2026-08-08T00:20:58Z",
+    "fingerprint": "7f0d9a97d64e20b8dc646a5292dd9801a370729964c57f7dc83220f28caab671",
+    "processedAt": "2026-08-15T00:27:47Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

@@ -1,0 +1,61 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Steel production — construction steel, hot-rolled coil (HRC), steel pipe",
+  "customer": "Construction contractors, manufacturers, export markets",
+  "ops": "Gross margin 15.8%; operating_profit field reported as 0 (extraction gap, 25th+ consecutive cycle); reported net profit 9,055.9 tỷ exceeds gross profit 8,365.1 tỷ — validation warning flags possible non-operating income, cannot confirm from current extract",
+  "mgmt": "Balance sheet checks pass (assets=liab+equity, 0.00% imbalance); ROE 6.5% is a single-quarter non-annualized figure; Q2-2026 filing overdue (deadline 30/07 passed)",
+  "valuation": {
+    "pe": 14.2,
+    "roe_pct": 12.7,
+    "earning_yield_pct": 7.04,
+    "ey_spread_pp": 2.04,
+    "verdict": "FAIR",
+    "vs_sector": "DISCOUNT -57% PE, PREMIUM +93% PB, ROE above sector median"
+  },
+  "kinhdich": {
+    "que": "Phuc (24)",
+    "xu_huong": "THUAN LOI",
+    "khuyen_nghi": "GIU",
+    "do_tin_cay_pct": 100
+  },
+  "esc_gate": {
+    "esc_1": "unevaluable_no_bash",
+    "esc_2": {
+      "result": false,
+      "imbalance_pct": 0,
+      "note": "balance_check:PASSED"
+    },
+    "esc_3": {
+      "result": "DATA-COVERAGE-LIMITED",
+      "quarters_returned": 3,
+      "coverage_guard_held": true
+    },
+    "esc_4": {
+      "result": "DISCARDED",
+      "note": "operating_profit=0 corrupt field, 25th+ cycle"
+    },
+    "esc_5": {
+      "result": false,
+      "note": "get_bctc_report_id returned null (refine_status=PARTIAL) — skipping"
+    }
+  },
+  "data_quality": {
+    "bctc_confidence_pct": 80,
+    "stale": true,
+    "stale_age_hours": 81.6,
+    "vps_last_push": "2026-08-11T14:37:49.000Z",
+    "known_gap": "operating_profit=0 corrupt (standing, 25th+ cycle)"
+  },
+  "as_of": "2026-08-15T00:17:00Z",
+  "cycle_id": "20260815-0000",
+  "_processed": {
+    "fingerprint": "323a26e8ecad3c1a3a00d321e088b381a42cc3fb075bbe144dd804a9ac2657e1",
+    "processedAt": "2026-08-15T00:27:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "ticker": "DXG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Real estate development — residential projects (HCMC, satellite provinces)",
+  "customer": "Retail homebuyers, property investors",
+  "ops": "No BCTC data extracted — 'Chưa có dữ liệu BCTC', 29th+ consecutive cycle; PE 66.5x vs sector median 16.1x (+312% premium), ROE 1.9% vs sector 7.3% (below median)",
+  "mgmt": "Cannot assess from current data gap; DXG cash-flow-anomaly signal (bctc-analyst-20260813T001500Z.json, from c162) still PENDING dev-team pickup; price +5.99% on 2.3x avg volume, foreign net buy +129K cp (08-14 session) — noted for market-watcher/alert-commander, not this agent's scope",
+  "valuation": {
+    "pe": 66.5,
+    "roe_pct": 1.9,
+    "earning_yield_pct": 1.5,
+    "ey_spread_pp": -3.5,
+    "verdict": "AVOID",
+    "vs_sector": "PREMIUM +312% PE, ROE below sector median"
+  },
+  "kinhdich": {
+    "que": "Vi Te (64)",
+    "xu_huong": "TRUNG TINH",
+    "khuyen_nghi": "MUA",
+    "do_tin_cay_pct": 37
+  },
+  "esc_gate": {
+    "esc_1": "unevaluable_no_data",
+    "esc_2": "unevaluable_no_data",
+    "esc_3": "unevaluable_no_data",
+    "esc_4": "unevaluable_no_data",
+    "esc_5": "unevaluable_no_data"
+  },
+  "data_quality": {
+    "bctc_confidence_pct": null,
+    "known_gap": "Chưa có dữ liệu BCTC — 29th+ consecutive cycle, standing extraction failure",
+    "pending_signal": "bctc-analyst-20260813T001500Z.json (cash-flow-anomaly, PENDING dev-team since c162)"
+  },
+  "as_of": "2026-08-15T00:17:00Z",
+  "cycle_id": "20260815-0000",
+  "_processed": {
+    "fingerprint": "eaf21d41dceebd0dc01df6d25c66eeda7afff3e8cc02d514d4b11ad6ef85ed28",
+    "processedAt": "2026-08-15T00:27:47Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
