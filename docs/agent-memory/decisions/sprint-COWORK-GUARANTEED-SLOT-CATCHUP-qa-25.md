@@ -18,3 +18,16 @@
 **why-decision:** vc-approved, DONE_VERIFIED — every router-mandated check independently reproduced with matching results; zero blocking ISSUE.
 **why-change:** none from plan — routine independent re-verify, single-pass clean.
 
+### STEP qa-S28 · qa · 2026-08-15T08:39:09Z
+**task-id:** FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW
+**what-done:** Direct-Commit Verify round 2 (rework of my own 2026-08-12 CHANGES_REQUESTED). Independently RAW-re-verified guard logic, live data, losslessness, toolCount — all PASS — but found a NEW blocking deployment-durability defect not raised by the rework's own report.
+**what-considered:**
+- Code: read 532fc71a0's full diff — guard checks `text.length` post-assembly (not `limit`), matches claim.
+- Tests: targeted file 9/9, 5 sibling files 87/87, `tsc --noEmit` clean, `mock-guard.sh` PASS — all reproduced myself on host.
+- Live data (own DI-seam invocation, not trusting reported numbers): limit=1→7,562 (silent) | limit=20→guard fires at 153,138 (drift claim reproduced) | limit=50→373,767 | limit=100→695,225 (exact match to their number).
+- Losslessness: diffed guard-written oversized file vs. raw guard-disabled fetch for limit=100 — byte-identical (695,225B, 100/100 rows).
+- toolCount: git-checkout A/B on ONLY the touched file (rest of tree at HEAD) — 183 both before+after this diff, confirms pre-existing/unrelated drift claim.
+- NEW FINDING: `docker inspect` — running mcp-server image built 2026-08-13T19:15:38Z, BEFORE commit 532fc71a0 (2026-08-15T08:23:42Z). Container's copy of the file has post-build mtime + non-root uid 501/dialout (every sibling file root-owned, build-time mtime) — no src bind-mount in either compose file. Conclusion: out-of-band `docker cp` hot-patch, not a real image rebuild. `rebuild_required` field on the row still `true`, never resolved across 2 rounds. The "live-verified in the running container" claim in the rework's report was tested against this hot-patch, not a durable deployment — a container recreate/restart (routine fleet event) would silently revert the fix.
+**why-decision:** vc-changes (CHANGES_REQUESTED) — code/tests/logic all independently correct, but the deployment substrate backing the "live production verify" claim is not durable; requires a genuine `docker compose build mcp-server && up -d` (ops/PO, per feedback_rebuild_after_dev_change.md) + re-verify before DONE_VERIFIED.
+**why-change:** escalated beyond router's mandated checklist — router asked to independently confirm (a)-(d), all confirmed true, but I also independently caught a 5th gap (deployment durability) neither the router prompt nor the rework's own report raised.
+
