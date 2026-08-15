@@ -1,5 +1,42 @@
 # OPS: RAG Service D1-D5 Durability Measurement — 2026-08-15
 
+> ## ⚠️ PO RULING 2026-08-15T10:09Z — READ BEFORE ACTING ON THIS DOCUMENT
+>
+> The **measurement below is sound** and its **FAIL verdict stands**. Two of its
+> conclusions are **REFUTED** and one of its instructions is **now wrong**.
+> Authoritative ruling: `FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED`
+> § `po_RULING_20260815T1002Z` (commit `e83a4f60f`).
+>
+> 1. **"Memory leak persists" (§ Root Cause Assessment) is REFUTED** — by this
+>    document's own dataset. Peak-ceiling drift across 14 cycles is **+0.048
+>    pp/cycle** (flat); the trough floor is **flat at 32-48% for 10.5h**; each
+>    cycle **releases 47-55pp (~480-565 MiB)**. A leak does not return pages.
+>    The oscillation is the **embedder 900s idle-unload cycle**, named verbatim
+>    in the container's own logs. The real D3 failure is the **cap clause**:
+>    peak working set ~1002 MiB does not fit a 1073 MiB limit.
+> 2. **"volatility 2.368 / 93.120 pp/min, 118x threshold" is the WRONG STATISTIC.**
+>    D3 says *fit* the growth rate — a regression. Adjacent-sample absolute
+>    deltas measure sawtooth *amplitude*. Correct fits: +0.0642 / +0.0228 /
+>    +0.0503 pp/min over nested sub-windows — **non-monotonic**, i.e. tracking
+>    sawtooth phase, not trend. That clause is **undecidable** on this data and
+>    is **not** the basis of the fail.
+> 3. **AC-4 is NOT inconclusive.** dmesg inside the Docker Desktop VM *is*
+>    reachable: `docker run --rm --privileged --pid=host justincormack/nsenter1
+>    /bin/sh -c "dmesg -T | grep -iE 'oom|killed process'"` → **ZERO
+>    `oom_memcg` for container `66656926d503`** across the full window. D1 clean
+>    so far, D2 and D4 both PASS.
+> 4. **"Do NOT rebuild rag-service again" (§ Next Steps) NO LONGER APPLIES.**
+>    It was correct against a *leak* hypothesis. The ratified fix is a
+>    **memory-cap raise on `FU-RAG-DEPLOY-MEMORY`** (ready[]/P0/developer),
+>    which *requires* a single-service rebuild + redeploy. The current window
+>    is void under D2 the moment that happens — expected and correct; a fresh
+>    D1-D5 window follows.
+> 5. **§ Evidence Chain's `/tmp` path is ephemeral and was being corrupted** by
+>    three concurrent samplers writing two schemas (796 of 2391 raw lines
+>    mangled; only 799 well-formed). The stats survive the filter, but the
+>    durable cleaned series is
+>    `docs/incidents/data/rag-durability-2026-08-14T2015Z-66656926d503-samples.csv`.
+
 **Date**: 2026-08-15T09:15Z  
 **Task**: UNBLOCK-RAG-OPS-DEPLOY-AND-DURABILITY-MEASUREMENT-WINDOW (P0 CRITICAL PATH)  
 **Owner**: ops (session 632721c2-41e4-4aff-8d06-a47cf80dc0d7)  
