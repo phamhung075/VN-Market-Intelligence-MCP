@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "2026-08-08T04:08:52Z",
+    "fire_time": "2026-08-15T04:18:16Z",
     "matched_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -22,7 +22,7 @@
       "docs/agents/alert-commander/flow/main.md"
     ],
     "silent": false,
-    "drift_min": 6,
+    "drift_min": 14,
     "errors": [],
     "pressure_mode": "adaptive",
     "calendar_status": "unknown",
@@ -40,7 +40,7 @@
       "market-watcher-offhours": 240,
       "alert-commander-critical": null
     },
-    "last_fired_timestamp": "2026-08-08T04:08:35Z",
+    "last_fired_timestamp": "2026-08-15T04:18:09Z",
     "last_fired_slots": [
       "news-scout-offhours",
       "market-watcher-offhours",
@@ -51,16 +51,16 @@
     "reason": "spawned",
     "nominal_tick": "04:00",
     "leader_lock": "acquired",
-    "dev_head": "unknown",
-    "devq": 5,
-    "signal_backlog": 24,
-    "note": "3-slot WORK tick, MAX_PARALLEL=4 (not degraded: headroom 3933MB >= 1500MB floor, load1m=3 well under 24 threshold), 1 batch, all spawns dispatched run_in_background=true"
+    "dev_head": "idle",
+    "devq": 509,
+    "signal_backlog": 7,
+    "note": "off-hours 4h-cadence slots (news-scout, market-watcher) + alert-commander-critical cron slot fired together at 04:00Z tick; tick-snapshot pre-step skipped (write-fidelity risk on embedded-quote/unicode market_context blob) per documented zero-blocker fallback, agents use get_cycle_bootstrap directly"
   },
   "priority": "low",
-  "createdAt": "2026-08-08T04:08:52Z",
+  "createdAt": "2026-08-15T04:18:47Z",
   "_processed": {
-    "fingerprint": "f79a6af298ba1d1633a8002b9dad3521b32c83ae690ee79584b30b4ee886e327",
-    "processedAt": "2026-08-08T04:20:49Z",
+    "fingerprint": "6e0569440cb66fc66ad24e4bf40ac6e15e530dbbf319bf074ea24664424f58fa",
+    "processedAt": "2026-08-15T04:24:03Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
