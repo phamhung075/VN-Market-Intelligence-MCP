@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-08-14T12:54:30Z
-
-**Brief:** `docs/architecture-briefs/2026-08-14-pm-decompose-closeout-reachability-and-nextagent-mint.md`
-
-3rd-occurrence, escalated pm-decomposition defect: Step 4c's head-release fix sits AFTER Step 3c's own inlined RETURN in the same unbroken numbered-step family — unreachable by construction, not by omission. Fix restructures in place (move 3d/4c content above the RETURN as new 3d/3e, relocate the genuinely-later 4/4b under a new explicit heading) rather than appending — per the row's own caution against repeating occ-2's failure shape. Also designed: explicit `decomposition_complete` flag driving closeout(`done[]`+`.children`)-vs-partial(row `next_agent` corrected) branching; `next_agent` as a conditional-mandatory mint-time field (doc note + staged WARN-tier write-gate, not a hard reject); a narrow RLC cowork-lane exclusion predicate — deliberately NOT a reuse of DRS's ratified allowlist, which would have silently blocked agent-father's 17 live `ready[]` rows (confirmed via live census, not assumed). 39-file fleet sweep for the RETURN-reachability shape found pm the sole current occurrence. Found and reconciled an undersold overlap with `FIX-DEVTEAM-EPICWRAPPER-PARENTHOOD-FIELD-DRIFT-AUTOCLOSE-BLIND`'s write-side scope (same file, same edit site) — flagged for PO to narrow that row to READ-side only. `docs/data/orch/orch-state.json` board mutations (3 follow-up rows to mint + 1 scope-narrowing edit) left to PO/agent-father — outside this agent's declared commit zone.
-
-**Signal dropped:** `docs/signals/2026-08-14-pm-decompose-closeout-reachability-and-nextagent-mint.json` → agent-father
-
----
-
 ## 2026-08-14T16:25:04Z
 
 **Brief:** `docs/architecture-briefs/2026-08-14-market-watcher-eod-offhours-notebook-collision.md`
@@ -37,3 +27,13 @@ SPIKE-AUDITOR-WRITE-PLANE-DIVERGENCE-ROOT-CAUSE (PO-triaged, 10 occurrences/6 su
 FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED (P0, PILOT system-auditor only). Wires the already-built/tested `scripts/notebook-compose.sh` (zero callers 8 days after landing — 2 prior signal-only handoffs both filed to `processed/` with no board row, neither landed) into system-auditor's notebook write: AC-1 one scripted-actuator call replacing the freehand compose ladder; AC-2 Bash-allowlist grant (the specific prior-attempt failure mode PO flagged); AC-3 `c<NNN>` derived in `main.md`'s own bash per PO ruling (script itself untouched); AC-4 concurrent-tier race closed via already-valid `task_kind="commit-mutex"` under a dedicated `task_id` — zero dependency on the BLOCKED `FIX-NOTEBOOK-WRITE-TASK-KIND-ENUM-EXTENSION` chain, matching PO's stated preference; AC-5 separate data-repair commit (fresh evidence this cycle: `c31626·18:20Z` still sits below `c99`/`c98`, defect live and ongoing, not historical); AC-6 hardens the dead marker reaper (14 stale `.tmp` now, up from 13) with a fail-loud empty-`FIRE_TICK` guard + a real per-cycle trace. Success Signal 3 replaced with a runtime-execution proof (script's `OK` marker embedded in a committed git message) per PO ruling, not a doc-grep. Routes through the existing tracked board row, not a fresh handoff — that exact "processed/ signal, no board row" shape is the second-order defect this task exists to close.
 
 **Signal dropped:** `docs/signals/2026-08-14-wire-notebook-compose-actuator-system-auditor-pilot.json` → agent-father
+
+---
+
+## 2026-08-15T11:21:35Z
+
+**Brief:** `docs/architecture-briefs/2026-08-15-cowork-cron-registration-sibling-process-defer.md`
+
+Router-dispatched: user's hand-authored defer note sat inert in the wrong file (`cron-detect-loop/register.md`, governs a different skill's 4 jobs). Root-caused the real bug: `cron-cowork-team/SKILL.md` Step 1a's fast path keys only on `owner_client_session`; two OS processes sharing one `$CLAUDE_CODE_SESSION_ID` (4 distinct `claude` processes confirmed live on this host via `ps` this session) both pass it and each independently local-`CronCreate`s, invisible to each other. Corrected the router's own evidence: `owner_session` is the MCP **server's** own process/boot diagnostic (`taskClaimTool.ts:25-30`), not a client-terminal discriminator — cannot resolve this; session-presence's "1 live row" is equally uninformative (per-session singleton by construction). New finding, flagged not fixed here: the same shared-UUID gap also defeats the P3 fire-election's RE-ENTRANT branch (leader-lock.md + dev-team + auditor tiers + router's own dispatch-claim hot path) — a double-dispatch correctness bug, recommended to PO as a separate follow-up given blast radius. Fix designed (agent-father's own `.md` zone, no MCP schema change): client-side `$PPID`+`lstart` fingerprint (empirically verified stable this session) stored in the existing marker's free-form payload, compared on Step 1a; mismatch → defer + WORK telegram, with a `heartbeat_at`-based self-heal so a genuinely-dead sibling doesn't permanently block re-arm. Rejected reintroducing the retired human "defer" convention as primary (would silently reverse P3's rationale) — kept as an explicit, narrowly-scoped fallback subsection instead.
+
+**Signal dropped:** `docs/signals/2026-08-15-cowork-cron-registration-sibling-process-defer.json` → agent-father
