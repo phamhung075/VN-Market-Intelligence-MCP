@@ -21813,6 +21813,23 @@
       "triaged_at": "2026-08-14T09:29:37Z",
       "triaged_by": "po",
       "disposition": "FOLD onto FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS. This signal's own hypothesis — \"suggests FU-RAG-DEPLOY-MEMORY incomplete\" — is CONFIRMED and actioned: FU-RAG-DEPLOY-MEMORY moved done_verified[] -> review[] at BLOCKED this tick, durability claim retracted on falsifying in-VM dmesg evidence. Correct call by the auditor."
+    },
+    {
+      "id": "sys-20260814T092039-48d2",
+      "ts": "2026-08-14T09:20:39Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "signal_feedback",
+      "summary": "A-30 ESCALATE: rag-service memory creep post-restart — oscillation pattern recurs (89.18% current, climbing)",
+      "severity": "WARN",
+      "status": "triaged",
+      "payload_ref": null,
+      "provenance": "detector",
+      "audit_cycle_tag": "manual-tier1-audit-2026-08-14T09:15:25Z",
+      "dedup_key": "microservice_degraded:rag-service:A-30",
+      "triaged_at": "2026-08-14T09:29:37Z",
+      "triaged_by": "po",
+      "disposition": "FOLD onto FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (P0, critical path) — NOT benign, NOT warm-up. Confirmed by po RAW re-verify 2026-08-14T09:23Z: monotonic accelerating climb 84.85%(+15min) -> 86.11%(+31min) -> 89.18%(+39min) on a single continuous container lifetime, RestartCount=0, post-82216e291 image. Skip-rebuild fix is necessary-but-insufficient; amplifier hypothesis refuted. Ops executed a preemptive restart 09:23:21Z (mitigation only). FU-RAG-DEPLOY-MEMORY de-certified this tick so it can no longer be STALE-ACK'd as closed. No new row minted (3rd/4th tracking row is forbidden on this incident)."
     }
   ],
   "backlog_detail": [],
