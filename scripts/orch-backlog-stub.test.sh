@@ -284,17 +284,29 @@ DETAIL_FILE="$T3_DIR/archive/backlog-detail.json" \
 T3_EXIT=$?
 check "T3/T4: orch-backlog-stub.sh exits 0 (cold-merge fixture)" "$( [ "$T3_EXIT" -eq 0 ] && echo true || echo false )"
 
-T3_COLD_TITLE=$(jq -r '.items["FIX-MERGETEST-ROW"].title' "$T3_DIR/archive/backlog-detail.json" 2>/dev/null)
+# NOTE (F-4 fix, FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-
+# MIGRATION): cold `.items` is now ALWAYS written back ARRAY-shaped (decided +
+# documented in the script's own header + dev-standards.md CANONICAL block —
+# matches the live file's real shape, matches po-detail-resync-review-
+# lifecycle-routing.sh's own read+write convention, and is the only shape that
+# can round-trip an id-less legacy cold item, see T8 below). T3/T4's cold
+# fixture is deliberately pre-seeded OBJECT-shaped (proves object-shaped INPUT
+# is still accepted, back-compat) but assertions read the ARRAY-shaped OUTPUT.
+T3_COLD_TITLE=$(jq -r '.items[] | select(.id=="FIX-MERGETEST-ROW") | .title' "$T3_DIR/archive/backlog-detail.json" 2>/dev/null)
 check "T3: field COLLISION — cold title updated to the HOT (re-edited) value" \
   "$( [ "$T3_COLD_TITLE" = "NEW TITLE (re-edited since last stub)" ] && echo true || echo false )"
 
-T4A_COLD_NOTE=$(jq -r '.items["FIX-MERGETEST-ROW"].note' "$T3_DIR/archive/backlog-detail.json" 2>/dev/null)
+T4A_COLD_NOTE=$(jq -r '.items[] | select(.id=="FIX-MERGETEST-ROW") | .note' "$T3_DIR/archive/backlog-detail.json" 2>/dev/null)
 check "T4a: COLD-exclusive field (note) survives untouched" \
   "$( [ "$T4A_COLD_NOTE" = "cold-only prose, already stripped from hot by a prior stub run" ] && echo true || echo false )"
 
-T4B_COLD_REVIEW_NOTE=$(jq -r '.items["FIX-MERGETEST-ROW"].review_note' "$T3_DIR/archive/backlog-detail.json" 2>/dev/null)
+T4B_COLD_REVIEW_NOTE=$(jq -r '.items[] | select(.id=="FIX-MERGETEST-ROW") | .review_note' "$T3_DIR/archive/backlog-detail.json" 2>/dev/null)
 check "T4b: HOT-exclusive field (review_note) is PICKED UP into cold — F-3 data-loss reproduction, GREEN post-fix" \
   "$( [ "$T4B_COLD_REVIEW_NOTE" = "fresh hot-only prose, added after the last stub run, no cold counterpart" ] && echo true || echo false )"
+
+T4C_COLD_IS_ARRAY=$(jq -r '.items | type' "$T3_DIR/archive/backlog-detail.json" 2>/dev/null)
+check "T4c: cold .items OUTPUT is ARRAY-shaped even though INPUT was object-shaped (shape decision self-heals on write)" \
+  "$( [ "$T4C_COLD_IS_ARRAY" = "array" ] && echo true || echo false )"
 
 # ═════════════════════════════════════════════════════════════════════════
 # T5/T6/T7 — LANES generalization (task: FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-
@@ -361,9 +373,11 @@ T5_REVIEW_UNTOUCHED=$(jq -r '.task_board.review[0] | has("note") and (has("detai
 check "T5: review[0] left COMPLETELY untouched (default lane = backlog only)" \
   "$( [ "$T5_REVIEW_UNTOUCHED" = "true" ] && echo true || echo false )"
 
-T5_COLD_KEYS=$(jq -c '.items | keys' "$T5_DIR/archive/backlog-detail.json" 2>/dev/null)
+# ARRAY-shaped cold .items (F-4 shape decision) — extract ids via [.items[].id],
+# not object `keys` (which would yield array indices, not ids, on this shape).
+T5_COLD_IDS=$(jq -c '[.items[].id]' "$T5_DIR/archive/backlog-detail.json" 2>/dev/null)
 check "T5: cold detail contains ONLY the backlog[] id" \
-  "$( [ "$T5_COLD_KEYS" = '["LANE-BACKLOG-1"]' ] && echo true || echo false )"
+  "$( [ "$T5_COLD_IDS" = '["LANE-BACKLOG-1"]' ] && echo true || echo false )"
 
 # ── T6: --lane=review — review[] ALONE, NOT merged with the backlog default ─
 T6_DIR="$TMPDIR_TEST/t6-lane-review-only"
@@ -394,9 +408,9 @@ T6_BACKLOG_UNTOUCHED=$(jq -r '.task_board.backlog[0] | has("note") and (has("det
 check "T6: backlog[0] left untouched — --lane OVERRIDES, does not merge with the default" \
   "$( [ "$T6_BACKLOG_UNTOUCHED" = "true" ] && echo true || echo false )"
 
-T6_COLD_KEYS=$(jq -c '.items | keys' "$T6_DIR/archive/backlog-detail.json" 2>/dev/null)
+T6_COLD_IDS=$(jq -c '[.items[].id]' "$T6_DIR/archive/backlog-detail.json" 2>/dev/null)
 check "T6: cold detail contains ONLY the review[] id" \
-  "$( [ "$T6_COLD_KEYS" = '["LANE-REVIEW-1"]' ] && echo true || echo false )"
+  "$( [ "$T6_COLD_IDS" = '["LANE-REVIEW-1"]' ] && echo true || echo false )"
 
 # ── T7: LANES=backlog,ready,review — the one-time-migration invocation shape ─
 T7_DIR="$TMPDIR_TEST/t7-lanes-all-three"
@@ -414,9 +428,160 @@ check "T7: LANES=backlog,ready,review exits 0 (reconciliation PASS across all 3)
 T7_ALL_STUBBED=$(jq -r '[.task_board.backlog[0], .task_board.ready[0], .task_board.review[0]] | map(has("detail_ref")) | all' "$T7_DIR/hot.json" 2>/dev/null)
 check "T7: ALL 3 lanes stubbed in ONE run" "$( [ "$T7_ALL_STUBBED" = "true" ] && echo true || echo false )"
 
-T7_COLD_KEYS=$(jq -c '.items | keys | sort' "$T7_DIR/archive/backlog-detail.json" 2>/dev/null)
-check "T7: SAME cold detail file holds all 3 ids (id -> object map, not lane-scoped)" \
-  "$( [ "$T7_COLD_KEYS" = '["LANE-BACKLOG-1","LANE-READY-1","LANE-REVIEW-1"]' ] && echo true || echo false )"
+T7_COLD_IDS=$(jq -c '[.items[].id] | sort' "$T7_DIR/archive/backlog-detail.json" 2>/dev/null)
+check "T7: SAME cold detail file holds all 3 ids (id-keyed, not lane-scoped)" \
+  "$( [ "$T7_COLD_IDS" = '["LANE-BACKLOG-1","LANE-READY-1","LANE-REVIEW-1"]' ] && echo true || echo false )"
+
+# ═════════════════════════════════════════════════════════════════════════
+# T8 — F-4 fix (task: FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-
+# LANES-MIGRATION): build_detail_temp()'s merge branch crashed on an
+# ARRAY-shaped cold `.items` — the REAL live-data shape (442-element array of
+# id-bearing objects) — because it hardcoded an object*object deep merge. This
+# is the exact gap that hid F-4 from every fixture in T1-T7 above (all of
+# which pre-seed OBJECT-shaped cold fixtures). Reproduced live 2026-08-15 by
+# PO against a scratch copy of the real orch-state.json +
+# backlog-detail.json: `jq: error ... array (...) and object (...) cannot be
+# multiplied`, exit 5.
+#
+# Fixture: ARRAY-shaped cold pre-seed, one entry sharing an id with a hot row
+# (proves the merge itself, not just shape tolerance — hot title wins,
+# cold-exclusive field survives, mirrors T3/T4 but on the REAL input shape)
+# PLUS one id-LESS legacy entry (mirrors the real cold file's one pre-id-
+# scheme record, docs/data/orch/archive/backlog-detail.json's "ORCH-STATE-
+# HOT-COLD-SPLIT follow-on" stub) that must survive the round-trip untouched
+# even though it cannot be id-keyed for the merge.
+# ═════════════════════════════════════════════════════════════════════════
+T8_DIR="$TMPDIR_TEST/t8-array-shaped-cold-input"
+mkdir -p "$T8_DIR/archive"
+
+cat > "$T8_DIR/hot.json" <<'EOF'
+{
+  "_meta": { "schema": "v4" },
+  "head": { "status": "idle", "active_task_id": null },
+  "signal_queue": { "_updated_at": "2026-01-01T00:00:00Z", "_updated_by": "test", "rows": [] },
+  "task_board": {
+    "backlog": [
+      {
+        "id": "FIX-ARRAYSHAPE-ROW",
+        "title": "NEW TITLE (re-edited since last stub)",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "type": "FIX",
+        "zone": "test/",
+        "sprint": null,
+        "detail_ref": "archive/backlog-detail.json#FIX-ARRAYSHAPE-ROW"
+      }
+    ],
+    "active_sprints": []
+  }
+}
+EOF
+
+cat > "$T8_DIR/archive/backlog-detail.json" <<'EOF'
+{
+  "_sentinel": "backlog-detail-v1",
+  "created_at": "2026-01-01T00:00:00Z",
+  "updated_at": "2026-01-01T00:00:00Z",
+  "count": 2,
+  "items": [
+    {
+      "id": "FIX-ARRAYSHAPE-ROW",
+      "title": "OLD TITLE (stale, pre-dates the hot re-edit)",
+      "note": "cold-only prose, already stripped from hot by a prior stub run"
+    },
+    {
+      "created_at": "2026-06-26T20:10:51Z",
+      "created_by": "po",
+      "desc": "id-less legacy cold record — pre-dates the id addressing scheme, cannot be id-keyed, must survive the round-trip untouched (mirrors the live backlog-detail.json ORCH-STATE-HOT-COLD-SPLIT follow-on stub)"
+    }
+  ]
+}
+EOF
+
+ORCH_STATE="$T8_DIR/hot.json" \
+ARCHIVE_DIR="$T8_DIR/archive" \
+DETAIL_FILE="$T8_DIR/archive/backlog-detail.json" \
+  bash "$STUB_SH" >"$T8_DIR/run.log" 2>&1
+T8_EXIT=$?
+check "T8: orch-backlog-stub.sh does NOT crash on ARRAY-shaped cold .items (F-4 fix, the real live-data shape)" \
+  "$( [ "$T8_EXIT" -eq 0 ] && echo true || echo false )"
+
+T8_COLD_TITLE=$(jq -r '.items[] | select(.id=="FIX-ARRAYSHAPE-ROW") | .title' "$T8_DIR/archive/backlog-detail.json" 2>/dev/null)
+check "T8: merge still correct on array input — cold title updated to the HOT value" \
+  "$( [ "$T8_COLD_TITLE" = "NEW TITLE (re-edited since last stub)" ] && echo true || echo false )"
+
+T8_COLD_NOTE=$(jq -r '.items[] | select(.id=="FIX-ARRAYSHAPE-ROW") | .note' "$T8_DIR/archive/backlog-detail.json" 2>/dev/null)
+check "T8: merge still correct on array input — cold-exclusive field (note) survives" \
+  "$( [ "$T8_COLD_NOTE" = "cold-only prose, already stripped from hot by a prior stub run" ] && echo true || echo false )"
+
+T8_IDLESS_SURVIVES=$(jq -r '[.items[] | select(.id == null) | select(.desc | contains("id-less legacy cold record"))] | length' "$T8_DIR/archive/backlog-detail.json" 2>/dev/null)
+check "T8: id-less legacy cold item is PRESERVED, not silently dropped by the id-keyed merge" \
+  "$( [ "$T8_IDLESS_SURVIVES" = "1" ] && echo true || echo false )"
+
+T8_RECONCILE_PASS=$(grep -c "Reconciliation PASS" "$T8_DIR/run.log" 2>/dev/null || echo 0)
+check "T8: post-write reconciliation PASSES against array-shaped cold (adjacent defect fixed: keys-vs-array-index)" \
+  "$( [ "$T8_RECONCILE_PASS" -ge 1 ] && echo true || echo false )"
+
+# ═════════════════════════════════════════════════════════════════════════
+# T9 — F-5 fix (same task, AC-2): STUB_FIELDS is an unconditional whitelist,
+# so build_hot_temp() used to strip po_goahead_* stamps from hot rows even
+# though they are not literally in STUB_FIELDS. WF-2 should_hold
+# (dev-team/flow/main.md) reads a `^po_goahead` key straight off the HOT row
+# (union'd with `.head` keys, no cold fallback) — silently stripping it would
+# REVOKE a PO ratification with no error and no trace. Fixture: a supervised
+# review[] row carrying both a po_goahead_<ts> stamp AND ordinary
+# prose NOT in STUB_FIELDS (proves the fix is prefix-scoped to `^po_goahead`,
+# not a blanket "keep everything" regression).
+# ═════════════════════════════════════════════════════════════════════════
+T9_DIR="$TMPDIR_TEST/t9-po-goahead-survives"
+mkdir -p "$T9_DIR/archive"
+
+cat > "$T9_DIR/hot.json" <<'EOF'
+{
+  "_meta": { "schema": "v4" },
+  "head": { "status": "idle", "active_task_id": null },
+  "signal_queue": { "_updated_at": "2026-01-01T00:00:00Z", "_updated_by": "test", "rows": [] },
+  "task_board": {
+    "backlog": [],
+    "review": [
+      {
+        "id": "FIX-GOAHEADTEST-ROW",
+        "title": "fixture row for po_goahead_* survival test",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "type": "FIX",
+        "zone": "test/",
+        "sprint": null,
+        "supervised": true,
+        "po_goahead_20260815T090000": "RATIFIED — synthetic test stamp, must survive the stub strip",
+        "unrelated_prose_field": "this SHOULD still be stripped — proves the fix is scoped to ^po_goahead, not a blanket keep-all"
+      }
+    ],
+    "active_sprints": []
+  }
+}
+EOF
+
+ORCH_STATE="$T9_DIR/hot.json" \
+ARCHIVE_DIR="$T9_DIR/archive" \
+DETAIL_FILE="$T9_DIR/archive/backlog-detail.json" \
+  bash "$STUB_SH" --lane=review >"$T9_DIR/run.log" 2>&1
+T9_EXIT=$?
+check "T9: orch-backlog-stub.sh --lane=review exits 0 (po_goahead fixture)" "$( [ "$T9_EXIT" -eq 0 ] && echo true || echo false )"
+
+T9_GOAHEAD_SURVIVES=$(jq -r '.task_board.review[0] | has("po_goahead_20260815T090000")' "$T9_DIR/hot.json" 2>/dev/null)
+check "T9: po_goahead_* stamp SURVIVES the hot stub strip (F-5 fix — PO ratification not silently revoked)" \
+  "$( [ "$T9_GOAHEAD_SURVIVES" = "true" ] && echo true || echo false )"
+
+T9_UNRELATED_STRIPPED=$(jq -r '.task_board.review[0] | has("unrelated_prose_field")' "$T9_DIR/hot.json" 2>/dev/null)
+check "T9: non-po_goahead prose field STILL stripped (fix is prefix-scoped, not a blanket keep-all)" \
+  "$( [ "$T9_UNRELATED_STRIPPED" = "false" ] && echo true || echo false )"
+
+T9_GOAHEAD_VALUE=$(jq -r '.task_board.review[0].po_goahead_20260815T090000' "$T9_DIR/hot.json" 2>/dev/null)
+check "T9: po_goahead_* stamp VALUE is byte-identical, not just the key" \
+  "$( [ "$T9_GOAHEAD_VALUE" = "RATIFIED — synthetic test stamp, must survive the stub strip" ] && echo true || echo false )"
 
 echo "──────────────────────────────────────────────────────────────"
 echo "orch-backlog-stub.test.sh: ${PASS} pass / ${FAIL} fail"

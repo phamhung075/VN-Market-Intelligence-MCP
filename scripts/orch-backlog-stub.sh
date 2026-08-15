@@ -14,10 +14,38 @@
 # Strips prose from every item in the configured LANES (default: backlog[]
 # only, 100% backward-compatible) of docs/data/orch/orch-state.json (HOT),
 # keeping only the hot-stub fields, and writes the FULL original item to the
-# SAME cold detail store at docs/data/orch/archive/backlog-detail.json, keyed
-# by id (`items` is already a flat `id -> object` map, not lane-scoped —
-# reusing it for ready[]/review[] rows matches the live convention
-# po-detail-resync-review-lifecycle-routing.sh already depends on).
+# SAME cold detail store at docs/data/orch/archive/backlog-detail.json,
+# id-addressable — reusing it for ready[]/review[] rows matches the live
+# convention po-detail-resync-review-lifecycle-routing.sh already depends on.
+#
+# COLD `.items` SHAPE DECISION (F-4 fix, task: FIX-ORCHBACKLOGSTUB-COLD-ITEMS-
+# ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION, 2026-08-15): `.items` is always
+# read AND written back as an ARRAY of id-bearing objects — NOT an id-keyed
+# object map. This is a deliberate decision, not an accident:
+#   - It is the REAL live-data shape (docs/data/orch/archive/backlog-
+#     detail.json's `.items` has been a 442-element array since 2026-07,
+#     per FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX) — every reader in
+#     this repo (scripts/lib/devteam-eligibility.jq detail_items_from() and
+#     ~15 callers) is already shape-defensive BECAUSE array is what they
+#     actually see in production; object-shaped input is only ever a
+#     synthetic test fixture.
+#   - po-detail-resync-review-lifecycle-routing.sh (the ONLY other writer of
+#     this file) reads+writes it via `.items | map(...)`, which
+#     unconditionally re-serializes as an ARRAY regardless of input shape —
+#     so object-shaped output from THIS script would not even survive that
+#     script's next matching run. Choosing array here makes the file's shape
+#     stable across BOTH writers instead of flip-flopping.
+#   - Array is the only shape that can round-trip a cold item lacking `.id`
+#     (a pre-id-addressing-scheme legacy record — one exists in the live
+#     file today) without destroying it: an id-keyed object has no key to
+#     hold it under. build_detail_temp() below preserves any such item
+#     unchanged, appended to the array, exactly like this script's existing
+#     "items without id kept in hot" policy for the HOT side.
+# Ingest is shape-defensive (accepts array OR object on read, normalizes via
+# scripts/lib/devteam-eligibility.jq's detail_items_from() — the SAME def the
+# reader side already uses, not a second hand-rolled copy) so a pre-existing
+# object-shaped file (synthetic fixture, or a file from before this fix) is
+# still accepted; the OUTPUT is always normalized to array.
 #
 # Usage:
 #   scripts/orch-backlog-stub.sh [--dry-run] [--lane=<comma-separated-lanes>]
@@ -56,8 +84,12 @@
 #   MTIME_CAS_RETRIES — concurrent-writer retry limit (default: 3)
 #
 # Lazy-load pattern for readers (HSC-4 §cold reader contract):
-#   # Load full detail for one item (any of the 3 lanes) by id:
-#   jq '.items["<id>"]' docs/data/orch/archive/backlog-detail.json
+#   # Load full detail for one item (any of the 3 lanes) by id — `.items` is
+#   # ARRAY-shaped (see COLD `.items` SHAPE DECISION above), NOT id-indexable:
+#   jq '.items[] | select(.id=="<id>")' docs/data/orch/archive/backlog-detail.json
+#   # Shape-defensive form (also tolerates a legacy/synthetic object-shaped
+#   # file): jq --slurpfile detail docs/data/orch/archive/backlog-detail.json
+#   #   -L . 'include "scripts/lib/devteam-eligibility"; detail_items_from($detail)["<id>"]' -n
 #
 # Owning brief:  docs/architecture-briefs/2026-06-26-orch-state-hot-cold-split.md §HSC-4
 #   Multi-lane extension: docs/architecture-briefs/2026-08-09-fix-orchstate-hotfile-inline-prose-ceiling.md §2.2
@@ -204,9 +236,30 @@ mkdir -p "${ARCHIVE_DIR}"
 # (never captured), about to be stripped from hot by build_hot_temp own
 # unconditional field filter -- data loss with zero error, zero trace.
 #
+# SHAPE NORMALIZATION (F-4 fix, task: FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-
+# SHAPE-CRASH-BLOCKS-LANES-MIGRATION, 2026-08-15): the merge above was itself
+# still crash-prone -- `.items * $new_items` hardcodes an object*object merge,
+# but the REAL live docs/data/orch/archive/backlog-detail.json `.items` is an
+# ARRAY of 442 id-bearing objects, not an id-keyed object (`array (...) and
+# object (...) cannot be multiplied`, exit 5 -- reproduced against a scratch
+# copy of the live file, PO 2026-08-15). Every fixture in T1-T7 pre-seeds an
+# OBJECT-shaped cold file, which is why this never surfaced. Fixed by
+# normalizing the EXISTING cold `.items` to an id-keyed object via
+# `detail_items_from()` (scripts/lib/devteam-eligibility.jq -- the SAME
+# shape-defensive ingest def the reader side already uses; reused via
+# `include`, not hand-rolled a second time) BEFORE the per-field deep merge,
+# then flattening the merged result back into an ARRAY for the write (see
+# "COLD `.items` SHAPE DECISION" in this script's header). `detail_items_from`
+# drops any cold item lacking `.id` (it cannot be object-keyed) -- those are
+# captured separately as `$cold_idless` and re-appended to the output array
+# untouched, so a pre-id-scheme legacy cold record (one exists in the live
+# file today) is never silently destroyed by this round-trip.
+#
 # detail_ref is stripped from items before writing to cold (the field is added
 # by this script and is not part of the original source record).
-# Items without 'id' are excluded (cannot be keyed; they stay in hot).
+# Items without 'id' are excluded from the hot-side flatten (cannot be keyed;
+# they stay in hot) -- see the SEPARATE cold-side id-less handling above,
+# which is about PRE-EXISTING cold records, not hot ones.
 # =============================================================================
 build_detail_temp() {
   local output="$1"
@@ -216,11 +269,30 @@ build_detail_temp() {
   if [[ -f "${DETAIL_FILE}" ]]; then
     # Append / merge: existing cold items win for known ids.
     jq \
+      -L "${REPO_ROOT}" \
       --arg now          "${now}" \
       --argjson lanes    "${LANES_JSON}" \
       --slurpfile hot    "${ORCH_STATE}" \
+      --slurpfile detail "${DETAIL_FILE}" \
       '
+        include "scripts/lib/devteam-eligibility";
+
         ($hot[0].task_board) as $tb |
+
+        # Shape-defensive ingest (F-4): normalizes ARRAY-shaped (live) or
+        # OBJECT-shaped (legacy/synthetic) cold .items to an id-keyed object.
+        (detail_items_from($detail)) as $cold_items |
+
+        # Cold items with NO id cannot be object-keyed by detail_items_from()
+        # (dropped by design) -- capture them separately so the merge below
+        # does not silently destroy them; only possible when the raw cold
+        # .items was array-shaped (an object-shaped file has no such thing).
+        (($detail[0].items // []) as $raw_cold_items
+          | if ($raw_cold_items | type) == "array"
+            then [ $raw_cold_items[] | select(.id == null) ]
+            else []
+            end
+        ) as $cold_idless |
 
         # Flatten EVERY configured lane into ONE new_items map (id -> full
         # item). Multi-lane extension (LANES config var, default unchanged =
@@ -235,19 +307,22 @@ build_detail_temp() {
            | {key: .id, value: .}
          ] | from_entries) as $new_items |
 
-        # Merge: .items * $new_items -> PER-FIELD deep merge (jq star operator
-        # recurses on objects); hot ($new_items, right operand) wins per-field
-        # on any key present in both sides, cold-exclusive fields survive
-        # untouched, hot-exclusive (freshly-added-since-last-stub) fields are
-        # picked up. FIXED -- was ($new_items + .items) (shallow,
-        # existing-cold-wins-wholesale), see F-3 in the function header
-        # comment above.
-        .items   = (.items * $new_items) |
+        # Merge: $cold_items * $new_items -> PER-FIELD deep merge (jq star
+        # operator recurses on objects); hot ($new_items, right operand) wins
+        # per-field on any key present in both sides, cold-exclusive fields
+        # survive untouched, hot-exclusive (freshly-added-since-last-stub)
+        # fields are picked up. FIXED -- was ($new_items + .items) (shallow,
+        # existing-cold-wins-wholesale), see F-3 above. Flattened back to an
+        # ARRAY (`[.[]]` streams object values) + the preserved id-less
+        # items, per the COLD `.items` SHAPE DECISION in the header.
+        .items   = (( ($cold_items * $new_items) | [.[]] ) + $cold_idless) |
         .count   = (.items | length) |
         .updated_at = $now
       ' "${DETAIL_FILE}" > "${output}"
   else
-    # Create new cold detail file.
+    # Create new cold detail file. ARRAY-shaped from the start (F-4 shape
+    # decision, see header) — consistent with the merge branch above so the
+    # file's shape never flip-flops between a fresh create and a later re-run.
     jq \
       --arg sentinel        "${DETAIL_SENTINEL}" \
       --arg now             "${now}" \
@@ -260,8 +335,7 @@ build_detail_temp() {
            | (($tb[$lane] // [])[])
            | select(.id != null)
            | del(.detail_ref)
-           | {key: .id, value: .}
-         ] | from_entries) as $items |
+         ]) as $items |
 
         {
           _sentinel:  $sentinel,
@@ -285,6 +359,22 @@ build_detail_temp() {
 #
 # The jq `with_entries(select(...))` approach is fully parameterised:
 # STUB_FIELDS is passed as a comma-separated string and converted to a lookup set.
+#
+# PO_GOAHEAD PRESERVATION (F-5 fix, task: FIX-ORCHBACKLOGSTUB-COLD-ITEMS-
+# ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION, AC-2, 2026-08-15): STUB_FIELDS was
+# an UNCONDITIONAL whitelist, so any `po_goahead_<ts>` ratification stamp on a
+# hot row got silently stripped by a stub re-run. dev-team's WF-2 SUPERVISED-
+# HOLD `should_hold` (docs/agents/dev-team/flow/main.md) reads a key matching
+# `^po_goahead` straight off the HOT row (union'd with `.head` keys, NO cold
+# fallback — unlike effective_supervised/plan_only/owner/next_agent, which all
+# have a detail-side fallback). Silently stripping it would REVOKE a PO
+# ratification with zero error, zero trace, and re-arm a hard hold on a row
+# that was already cleared to proceed. Same defense-in-depth rationale that
+# put depends_on/depends/blocked_by into STUB_FIELDS (2026-07-30,
+# FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE) — but po_goahead_* is a
+# TIMESTAMPED, open-ended key family (new key per stamp), so it is preserved
+# by PREFIX match (`^po_goahead`) rather than by adding fixed names to
+# STUB_FIELDS. Every OTHER non-stub field is still stripped as before.
 # =============================================================================
 build_hot_temp() {
   local output="$1"
@@ -305,8 +395,12 @@ build_hot_temp() {
             if .id != null then
               # 1. Add detail_ref pointer before strip (so it survives the field filter)
               . + {detail_ref: ($detail_ref_base + "#" + .id)} |
-              # 2. Strip to stub fields only
-              with_entries(select(.key as $k | $sf[$k] == true))
+              # 2. Strip to stub fields only, EXCEPT any key matching
+              #    ^po_goahead (F-5 — a WF-2 ratification stamp must never be
+              #    silently revoked by this whitelist).
+              with_entries(select(
+                (.key as $k | $sf[$k] == true) or (.key | test("^po_goahead"))
+              ))
             else
               # No id → cannot move to cold → keep all fields in hot
               .
@@ -472,14 +566,23 @@ COLD_N=$(jq '.count' "${DETAIL_FILE}")
 # Reconciliation: every hot-stub id (across ALL configured lanes) must exist
 # as a key in cold detail items. Items without id (kept in hot) are excluded
 # from this check.
+# F-4 fix: cold `.items` is ARRAY-shaped on disk (see COLD `.items` SHAPE
+# DECISION in the header) — `.items | keys` on an array yields integer-string
+# indices ("0","1",...), NOT ids, so this reconciliation could never actually
+# match by id (adjacent defect flagged, not yet fixed, by
+# scripts/po-eligibility-clause-d-detail-first-lifecycle-20260808.jq). Fixed
+# by reusing detail_items_from() (the same shape-defensive ingest used in
+# build_detail_temp() above) to id-key the cold items before taking `keys`.
 RECONCILE_RESULT=$(jq -n \
+  -L "${REPO_ROOT}" \
   --slurpfile hot    "${ORCH_STATE}" \
   --slurpfile cold   "${DETAIL_FILE}" \
   --argjson lanes    "${LANES_JSON}" \
   '
+    include "scripts/lib/devteam-eligibility";
     ($hot[0].task_board) as $tb |
     ([ $lanes[] as $lane | (($tb[$lane] // [])[]) | select(.id != null) | .id ]) as $hot_ids |
-    ($cold[0].items | keys) as $cold_keys |
+    ((detail_items_from($cold)) | keys) as $cold_keys |
     ([$cold_keys[]] | map({key: ., value: true}) | from_entries) as $cold_set |
 
     {
