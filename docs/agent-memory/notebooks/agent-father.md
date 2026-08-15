@@ -76,7 +76,7 @@ router-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`
   (validate + conservation-check both PASS, `task_total` unchanged 695→695). Left UNCOMMITTED per
   `FU-AGENT-FATHER-ORCH-SCOPE` — write is on disk, ready for the next commit sweep.
 
-## EDIT 2026-08-15T04:45Z — task FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW, router-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`
+## EDIT 2026-08-15T04:45Z — task FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW, router-dispatched (intent=edit)
 - Change: generalised RAG-MEM-DURABILITY-BAR v2 (D1-D5) fleet-wide — new SSOT
   `docs/standards/oom-durability-verification-bar.md` (detection rule, D1-D5, §4 grandfather-
   exemption/retraction guard, v1-failure rationale) + wired into `docs/agents/qa/flow/main.md`
