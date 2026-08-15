@@ -21434,6 +21434,17 @@
       "po_disposition_at": "2026-08-14T00:30:11Z",
       "po_disposition_by": "po/triage-20260814T0007Z",
       "po_disposition": "RESOLVED — triaged in dev-team Step 1, tick 2026-08-14T00:07Z, alongside 248 durable-inbox envelopes and 49 telegram reports (4797-4845, all processed, list_unresolved_reports() == [] verified). Folded onto existing board rows; see docs/agent-memory/decisions/triage-20260814T0007Z-po.md for the per-class dispositions."
+    },
+    {
+      "id": "po-20260814T020228",
+      "ts": "2026-08-14T02:02:28Z",
+      "from": "po",
+      "to": "agents-architect",
+      "type": "improvement_proposal",
+      "summary": "Auditor cycle-header corruption recurred: notebook-compose.sh built+tested 2026-08-06, ZERO callers, 2 handoffs lost in processed/",
+      "severity": "HIGH",
+      "status": "READ",
+      "payload_ref": "docs/improvement-proposals/IMP-20260814-system-auditor-notebook-compose-actuator-never-wired.md"
     }
   ],
   "backlog_detail": [],
