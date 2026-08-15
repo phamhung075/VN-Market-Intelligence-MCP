@@ -14074,6 +14074,70 @@
             "evidence_commit": "49719e1d7"
           }
         }
+      },
+      {
+        "id": "FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS",
+        "type": "FEATURE",
+        "title": "Add Zod schemas for FR-1/FR-2 optional params; update task_heartbeat/task_release registration per FR-6/FR-7",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "pm",
+        "next_agent": "qa",
+        "depends": [
+          "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER"
+        ],
+        "supervised": false,
+        "created_at": "2026-07-22T01:15:30Z",
+        "created_by": "pm/decomposition-20260722T0115",
+        "updated_at": "2026-08-15T06:01:38Z",
+        "updated_by": "qa",
+        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
+        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
+        "subtasks": [
+          {
+            "seq": 1,
+            "title": "Add optional ttl_seconds to task_heartbeat Zod schema (min:60, max:691200)",
+            "acceptance": "Schema allows omitted ttl_seconds (backward compatible); .describe() prose updated"
+          },
+          {
+            "seq": 2,
+            "title": "Add optional payload_patch to task_heartbeat Zod schema",
+            "acceptance": "Schema allows omitted payload_patch; .describe() prose updated"
+          },
+          {
+            "seq": 3,
+            "title": "Add optional owner_agent + original_owner_client_session to task_heartbeat/task_release schemas",
+            "acceptance": "Both params optional, both schemas document use for null-session orphan-signal ladder only"
+          }
+        ],
+        "claimed_at": "2026-08-15T05:51:26Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "dispatch_lane": "developer",
+        "dev_note": "Zod schemas (ttl_seconds/payload_patch/owner_agent/original_owner_client_session) added to task_heartbeat+task_release in coordinationTools.ts per FR-7; handler pass-through fix required (both handlers previously dropped every param beyond task_id/owner_client_session) to satisfy the row own AC. New FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts 13/13 GREEN (RED-confirmed first). Combined targeted coordination suite 132/132 pass, 0 regressions. bun tsc --noEmit clean. Zone-dispatch deviation documented (no Agent tool grant, cannot nest-spawn dev-mcp-server — see feedback_devteam_flow_needs_nested_agent_spawn_subagent_cannot.md). NOT yet live in the running container (NFR-3 rebuild gate, separate step). Commits fb5207746 (code+test)/98259e871 (handoff+WORK.md)/80bda1800 (notebook+journal).",
+        "secondary_claimed_at": "2026-08-15T04:54:01Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "developer",
+        "status_note": "[developer] SECONDARY-Drain triage 2026-08-15T04:57Z — reassigning next_agent to qa for formal Direct-Commit Verify sign-off. Not self-certifying DONE_VERIFIED: test pipeline/merge gate is qa's job (developer agent boundary), and this row's own dev_note already documents the code work as complete — only the NFR-3 rebuild-gate question was open.\n\nREBUILD GATE: RESOLVED THIS CYCLE. Running container vn-market-intelligence-mcp-mcp-server-1 (image built 2026-08-13T21:15:38+02:00, label vn.market.git_sha=78e4b06afcfc1a9282966f8b258205fdd4cb4983) has BOTH fb5207746 (the feature commit) and 1653cea0a (same-day size-lint refactor that split coordinationTools.ts into 6 per-tool files, verbatim/zero-logic-change per its own message) confirmed as git ancestors (`git merge-base --is-ancestor` both true). Container runs `bun run src/index.ts` directly from source (no dist/ build step, verified — package.json \"start\" script + no /app/dist dir) so on-disk file contents ARE the live runtime behavior. `docker exec` confirmed /app/src/interface/mcp/tools/system/coordination/taskHeartbeatTool.ts and taskReleaseTool.ts (the post-refactor live locations) contain payload_patch/owner_agent/original_owner_client_session — feature is live in production, not just committed.\n\nRE-VERIFIED THIS CYCLE (local, host bun, same as original dev_note claims): FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts 13/13 pass; task-lock-coordination-tools.test.ts + coordinationStore.test.ts 38/38 pass, 0 regressions.\n\nNOT re-run this cycle (left for qa's own Direct-Commit Verify per docs/agents/qa/flow/main.md § Direct-Commit Verify, since branch:null/no handoff): full `bun test`, `bun tsc --noEmit`, `scripts/audits/mock-guard.sh`. Row is NOT OOM-class (Zod schema/coordination-tool interface change only) — Durability Gate N/A.\n\nCommits: fb5207746 (code+test), 1653cea0a (refactor, preserves change verbatim), 98259e871 (handoff), 80bda1800 (notebook). All on main ancestry.\n\n[QA] Review Record (direct-commit verify) — 2026-08-15T06:01:07Z: APPROVED, DONE_VERIFIED. Independently re-verified — dispatcher's RAW-verification of the NFR-3 rebuild-gate claim only was taken as-is (that specific sub-claim, outside qa's flow scope); everything else re-derived from scratch, not trusted from dispatcher paraphrase or the SECONDARY-drain prose.\n\nAll 4 commits (fb5207746/1653cea0a/98259e871/80bda1800) confirmed real + on main ancestry via `git merge-base --is-ancestor`. Each row files[] entry present across the commit set: fb5207746 = pre-split coordinationTools.ts edit + new FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts; 1653cea0a (size-lint split, verbatim/zero-logic-change per its own message) = the file that produced the current taskHeartbeatTool.ts/taskReleaseTool.ts locations.\n\nLive code read in full on both files: optional ttl_seconds (min:60,max:691200)/payload_patch/owner_agent/original_owner_client_session Zod fields present on both task_heartbeat and task_release schemas, .describe() prose updated; handler conditional-spread pass-through to heartbeatTask()/releaseTask() confirmed matching store fn signatures (src/infrastructure/db/coordinationStore.ts:785,894).\n\nFresh re-run (not trusted from prose): FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts 13/13 pass. Broader coordination zone suite (6 files: task-lock-coordination-tools.test.ts, infrastructure/__tests__/coordinationStore.test.ts, task-lock-coordination-store.test.ts, commit-mutex-coordination.test.ts, DWF-coordination-phase2.test.ts, task-lock-reaper-timer.test.ts) 134/134 pass, 0 fail, 0 regressions — exceeds dev's own claimed 132/132 (2 extra files picked up). bun tsc --noEmit: 0 errors. bash scripts/audits/mock-guard.sh --files on both production files: PASS (exit 0). Security grep (process.env/secret/password/token): clean on both files.\n\nDDD infra-import grep flags both files (interface layer importing infrastructure/db/coordinationStore.ts directly) — confirmed this is the precedented existing pattern across all 6 sibling coordination tool files in the same directory (taskClaimTool.ts, taskListHeldTool.ts, etc.), not a new violation introduced by this task, and not a domain-layer import (these files live under interface/mcp/tools/, not domain/).\n\nRow is NOT OOM-class (Zod schema/coordination-tool interface change only, no memory/crash/durability claim in title/AC/status_note) — OOM-Class Durability Gate N/A, consistent with dev's own disposition.\n\nNFR-3 rebuild-gate claim (running container has both fb5207746 and 1653cea0a as ancestors, live in /app/src/interface/mcp/tools/system/coordination/{taskHeartbeatTool,taskReleaseTool}.ts) already independently RAW-verified by the dispatcher this cycle (docker inspect + git merge-base --is-ancestor against the full container sha) — outside qa's own flow scope (Direct-Commit Verify does not itself mandate a live-container check), not re-derived here.\n\nDecision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-24.md STEP qa-S26.\n",
+        "commit": "fb5207746 1653cea0a 98259e871 80bda1800",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskHeartbeatTool.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskReleaseTool.ts",
+          "apps/mcp-server/src/__tests__/FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts"
+        ],
+        "qa_verified_at": "2026-08-15T06:01:07Z",
+        "qa_verified_by": "qa",
+        "reviewed_at": "2026-08-15T06:01:07Z",
+        "reviewed_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun test",
+            "args": "apps/mcp-server/src/__tests__/FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts + coordination zone suite (6 files: task-lock-coordination-tools.test.ts, infrastructure/__tests__/coordinationStore.test.ts, task-lock-coordination-store.test.ts, commit-mutex-coordination.test.ts, DWF-coordination-phase2.test.ts, task-lock-reaper-timer.test.ts) + bun tsc --noEmit + scripts/audits/mock-guard.sh",
+            "live_value_observed": "targeted 13/13 pass; zone suite 134/134 pass, 0 fail, 0 regressions; tsc 0 errors; mock-guard PASS (exit 0)",
+            "observed_at": "2026-08-15T06:01:07Z"
+          }
+        }
       }
     ],
     "head": {
@@ -18343,58 +18407,6 @@
         "secondary_claimed_at": "2026-08-15T01:23:41Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "developer"
-      },
-      {
-        "id": "FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS",
-        "type": "FEATURE",
-        "title": "Add Zod schemas for FR-1/FR-2 optional params; update task_heartbeat/task_release registration per FR-6/FR-7",
-        "status": "QA",
-        "priority": "P0",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "pm",
-        "next_agent": "qa",
-        "depends": [
-          "FIX-ORPHAN-FR1-FR2-INFRA-HEARTBEAT-LADDER"
-        ],
-        "supervised": false,
-        "created_at": "2026-07-22T01:15:30Z",
-        "created_by": "pm/decomposition-20260722T0115",
-        "updated_at": "2026-08-15T05:51:27Z",
-        "updated_by": "developer (review-lane secondary-drain triage)",
-        "origin_task": "FIX-ORPHAN-ADOPTION-BOARD-STATE-GUARD",
-        "parent_fix_spec": "fix_spec(a)+(c)/AC1+AC3",
-        "subtasks": [
-          {
-            "seq": 1,
-            "title": "Add optional ttl_seconds to task_heartbeat Zod schema (min:60, max:691200)",
-            "acceptance": "Schema allows omitted ttl_seconds (backward compatible); .describe() prose updated"
-          },
-          {
-            "seq": 2,
-            "title": "Add optional payload_patch to task_heartbeat Zod schema",
-            "acceptance": "Schema allows omitted payload_patch; .describe() prose updated"
-          },
-          {
-            "seq": 3,
-            "title": "Add optional owner_agent + original_owner_client_session to task_heartbeat/task_release schemas",
-            "acceptance": "Both params optional, both schemas document use for null-session orphan-signal ladder only"
-          }
-        ],
-        "claimed_at": "2026-08-15T05:51:26Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "dispatch_lane": "developer",
-        "dev_note": "Zod schemas (ttl_seconds/payload_patch/owner_agent/original_owner_client_session) added to task_heartbeat+task_release in coordinationTools.ts per FR-7; handler pass-through fix required (both handlers previously dropped every param beyond task_id/owner_client_session) to satisfy the row own AC. New FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts 13/13 GREEN (RED-confirmed first). Combined targeted coordination suite 132/132 pass, 0 regressions. bun tsc --noEmit clean. Zone-dispatch deviation documented (no Agent tool grant, cannot nest-spawn dev-mcp-server — see feedback_devteam_flow_needs_nested_agent_spawn_subagent_cannot.md). NOT yet live in the running container (NFR-3 rebuild gate, separate step). Commits fb5207746 (code+test)/98259e871 (handoff+WORK.md)/80bda1800 (notebook+journal).",
-        "secondary_claimed_at": "2026-08-15T04:54:01Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "developer",
-        "status_note": "[developer] SECONDARY-Drain triage 2026-08-15T04:57Z — reassigning next_agent to qa for formal Direct-Commit Verify sign-off. Not self-certifying DONE_VERIFIED: test pipeline/merge gate is qa's job (developer agent boundary), and this row's own dev_note already documents the code work as complete — only the NFR-3 rebuild-gate question was open.\n\nREBUILD GATE: RESOLVED THIS CYCLE. Running container vn-market-intelligence-mcp-mcp-server-1 (image built 2026-08-13T21:15:38+02:00, label vn.market.git_sha=78e4b06afcfc1a9282966f8b258205fdd4cb4983) has BOTH fb5207746 (the feature commit) and 1653cea0a (same-day size-lint refactor that split coordinationTools.ts into 6 per-tool files, verbatim/zero-logic-change per its own message) confirmed as git ancestors (`git merge-base --is-ancestor` both true). Container runs `bun run src/index.ts` directly from source (no dist/ build step, verified — package.json \"start\" script + no /app/dist dir) so on-disk file contents ARE the live runtime behavior. `docker exec` confirmed /app/src/interface/mcp/tools/system/coordination/taskHeartbeatTool.ts and taskReleaseTool.ts (the post-refactor live locations) contain payload_patch/owner_agent/original_owner_client_session — feature is live in production, not just committed.\n\nRE-VERIFIED THIS CYCLE (local, host bun, same as original dev_note claims): FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts 13/13 pass; task-lock-coordination-tools.test.ts + coordinationStore.test.ts 38/38 pass, 0 regressions.\n\nNOT re-run this cycle (left for qa's own Direct-Commit Verify per docs/agents/qa/flow/main.md § Direct-Commit Verify, since branch:null/no handoff): full `bun test`, `bun tsc --noEmit`, `scripts/audits/mock-guard.sh`. Row is NOT OOM-class (Zod schema/coordination-tool interface change only) — Durability Gate N/A.\n\nCommits: fb5207746 (code+test), 1653cea0a (refactor, preserves change verbatim), 98259e871 (handoff), 80bda1800 (notebook). All on main ancestry.",
-        "commit": "fb5207746 1653cea0a 98259e871 80bda1800",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskHeartbeatTool.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/coordination/taskReleaseTool.ts",
-          "apps/mcp-server/src/__tests__/FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS.test.ts"
-        ]
       }
     ],
     "_closed_signals_20260614": {

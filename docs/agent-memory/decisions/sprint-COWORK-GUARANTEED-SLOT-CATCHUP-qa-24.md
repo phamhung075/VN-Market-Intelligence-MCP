@@ -184,3 +184,14 @@
 **why-decision:** vc-approved, DONE_VERIFIED. Core AC (generalise D1-D5 fleet-wide into qa flow + docs) fully and accurately delivered; residual defect-5 code-level gap is honestly flagged, out of this row's own scope, and non-blocking — recommend a follow-up `dev-mcp-server` task be minted for it (not this row's job to write production code).
 **why-change:** none from plan — routine independent-reverify pass, no deviation.
 **why-change:** none — verify-committed entry point matched row disposition (`branch:null`) exactly; single-pass clean verify after developer's redispatch response.
+
+### STEP qa-S26 · qa · 2026-08-15T06:00:16Z
+**task-id:** FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS
+**what-done:** Direct-Commit Verify (Review-Lane QA-Drain, mode=verify-committed). Independently re-verified, not trusted from dispatcher paraphrase or dev's SECONDARY-drain prose.
+**what-considered:**
+- 4 commits (fb5207746/1653cea0a/98259e871/80bda1800) confirmed real+main-ancestry; files[] each present across the set (fb5207746 pre-split coordinationTools.ts+new test, 1653cea0a split verbatim into taskHeartbeatTool.ts/taskReleaseTool.ts).
+- Live code read in full: optional ttl_seconds(60-691200)/payload_patch/owner_agent/original_owner_client_session on both schemas + conditional-spread handler pass-through confirmed matching store fn signatures.
+- Fresh re-run: targeted test 13/13; broader coordination zone suite 134/134 (0 regressions, exceeds dev's 132/132); tsc clean; mock-guard PASS. DDD infra-import grep precedented across all 6 sibling tool files (interface layer, not domain) — not new.
+- Not OOM-class (schema/interface only) — Durability Gate N/A.
+**why-decision:** vc-approved, DONE_VERIFIED — every own-scope AC independently green; NFR-3 rebuild-gate already dispatcher-RAW-verified (outside my scope).
+**why-change:** none from plan.
