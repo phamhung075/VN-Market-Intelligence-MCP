@@ -1045,8 +1045,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-15T02:59:54Z",
-    "_updated_by": "qa (FIX-AUDITOR-DURABILITY-STEP0B-DETECTION direct-commit verify)",
+    "_updated_at": "2026-08-15T05:23:42Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -14018,6 +14018,46 @@
             "observed_at": "2026-08-15T02:59:54Z"
           }
         }
+      },
+      {
+        "id": "FIX-BCTC-ANALYST-READS-DRAIN-MOVE-AS-SIGNAL-WRITE-LOSS-4-CYCLES",
+        "title": "bctc-analyst escalates a BY-DESIGN drain move as data loss: it Read-verifies docs/signals/bctc_signal_*_routine.json absent after every 3h slot, but drain-signals.js moved them to docs/signals/processed/ — 4 consecutive cycles of false escalation, agent has no Bash/Glob grant to see the truth",
+        "type": "FIX",
+        "owner": "po",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "size": "S",
+        "created_at": "2026-08-09T01:35:08Z",
+        "created_by": "po",
+        "updated_at": "2026-08-15T05:25:35Z",
+        "supervised": false,
+        "plan_only": false,
+        "depends_on": [],
+        "blocks": [],
+        "dedup_key": "bctc-analyst:signal-write-verify|defect:absent-after-drain-is-by-design",
+        "status_note": "ANSWERED (ACK-WITH-CORRECTION, PO 2026-08-09T01:35Z): the files are NOT lost. `ls docs/signals/processed/ | grep bctc_signal` = 24 files, including bctc_signal_{FPT,HPG,VCB,DXG}_20260809_routine.json and the 20260808 set. dev-team Step 0a drain (docs/agents/dev-team/flow/drain-signals.md §0a-1, canonical script scripts/agents-flow/drain-signals.js) moves every drainable docs/signals/*.json to docs/signals/processed/ on each tick, by design. bctc-analyst's Read-only post-write verify at the ORIGINAL path therefore reports 'absent' on every subsequent cycle — a by-design move misread as a persistence gap, unresolvable by the agent because it has no Bash/Glob grant to inspect processed/. AC-1 amend docs/agents/bctc-analyst/flow/*.md write-verify step: absence at docs/signals/<name>.json is EXPECTED post-drain; verify at docs/signals/processed/<name>.json (or drop the cross-cycle re-verify entirely and verify only the Write tool's own result). AC-2 do NOT close by granting Bash — the correct fix is a correct verification premise, not a wider tool surface. AC-3 regression: replay a full write->drain->next-slot cycle and assert zero escalation. EVIDENCE: bug-escalation 2026-08-08T18:15:00Z from bctc-analyst, self-described 4th consecutive cycle (c149/c150/c151 + 18:00Z slot), explicitly requesting dev-team/architect confirm design intent. Memory class: feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant, project_bctc_analyst_no_bash_grant_perpetual_dirty_artifacts. || PO SIGN-OFF (DONE_VERIFIED, 2026-08-15T05:23:42Z, review-lane SECONDARY-drain owner triage): commit c23d19da4 diff read directly, NOT taken from dev_note. AC-1 MET — 24-line read-first \"SIGNAL-FILE WRITE VERIFICATION\" block added to docs/agents/bctc-analyst/flow/main.md; the Write tool's own return is now the sole per-cycle write-verification signal, and a cross-cycle Read of a docs/signals/*.json path this agent wrote earlier is explicitly forbidden and named as the recurring bug. Guard present in HEAD and on disk (1 hit each); zero competing or contradicting re-verify instruction anywhere else under docs/agents/bctc-analyst/ (grep for persistence-plane|write-verif|re-read|still-there returns only unrelated get_bctc_full re-reads in deep-dive-opus.md), which independently confirms the commit's claim that the bad check was self-invented and notebook-carried, never doc-specified. AC-2 MET — .claude/agents/bctc-analyst.md tools line is still exactly \"Read, Write, Edit, mcp__gateway__call_tool\", and git log c23d19da4..HEAD on that path is EMPTY, so no Bash/Glob crept in afterwards; the tool surface stayed narrow as mandated. AC-3 MET BY LIVE EVIDENCE, not by the dev_note's own \"traced not replayed\" claim, which PO does NOT accept at face value: production has since supplied a stronger replay than the in-session synthetic one AC-3 asked for. Trigger condition provably PRESENT on every post-fix day — 24 bctc_signal_{FPT,HPG,VCB,DXG}_routine.json files dated 08-09/11/12/13/14/15 now sit in docs/signals/processed/, i.e. the drain really did move the agent's files out from under it, repeatedly. Response: ZERO recurrence across ALL 7 post-fix committed revisions of docs/agent-memory/notebooks/bctc-analyst.md (grep PERSISTENCE-PLANE|File does not exist|signal.*data loss = 0 in every single one), and zero escalation payloads matching that signature under docs/signals/. Non-vacuous: the agent is demonstrably still running and still writing — notebook c170 (2026-08-15T00:20:00Z) records writing 4 bctc_signal_*_20260815_routine.json files, all confirmed by \"File created\", which is precisely the AC-1 prescribed behaviour (trust the Write return, no cross-cycle re-Read). Pre-fix baseline was 4 consecutive false escalations (c149/c150/c151/c153); post-fix c157 through c170 is clean across ~21 cycles / 6 days. Journal STEP developer-S91 verified present, and its rejected-alternative reasoning (verifying at processed/ rejected because that is still a moving-target Read the agent cannot disambiguate from a dedup rename without Glob) is sound. No rework requested; closing.",
+        "origin_signal_id": "bug-escalation:bctc-analyst:signals-absent-4th-cycle",
+        "updated_by": "po",
+        "dev_note": "Fixed: added read-first SIGNAL-FILE WRITE VERIFICATION guard to docs/agents/bctc-analyst/flow/main.md — Write tool's own return is now the ONLY write-verification signal (per-cycle), agent must never Read a docs/signals/*.json path it wrote in a prior cycle to re-confirm presence. AC-2: no Bash/Glob grant added, tool grant stays narrow. AC-3 regression traced (not replayed) in decision journal. Commit c23d19da4 (pushed to origin/main). Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md STEP developer-S91.",
+        "verification": {
+          "raw_probe": {
+            "tool": "bash: (1) git show HEAD:docs/agents/bctc-analyst/flow/main.md | grep -c 'SIGNAL-FILE WRITE VERIFICATION'; (2) per-revision grep of the 7 post-fix bctc-analyst notebook commits for 'PERSISTENCE-PLANE|File does not exist|signal.*data loss'; (3) ls docs/signals/processed/ | grep -cE 'bctc_signal_.*_(202608(09|1[0-5]))_'; (4) grep '^tools:' .claude/agents/bctc-analyst.md; (5) git log c23d19da4..HEAD -- .claude/agents/bctc-analyst.md",
+            "args": "repo HEAD at sign-off time; post-fix window = --since 2026-08-09 (commit c23d19da4 landed 2026-08-09 03:57 +0200)",
+            "live_value_observed": {
+              "guard_present_in_HEAD": 1,
+              "post_fix_notebook_revisions_scanned": 7,
+              "recurrences_of_bug_signature": 0,
+              "drained_post_fix_bctc_signals_in_processed": 24,
+              "tool_grant_line": "tools: Read, Write, Edit, mcp__gateway__call_tool",
+              "commits_to_agent_def_since_fix": 0,
+              "latest_cycle_evidence": "notebook c170 2026-08-15T00:20:00Z — wrote 4 bctc_signal_*_20260815_routine.json, all confirmed 'File created' (Write-return-only verification, no cross-cycle re-Read)"
+            },
+            "observed_at": "2026-08-15T05:23:42Z",
+            "evidence_commit": "c23d19da43d3a6c1af2218cd7592614b23950ec0",
+            "verdict": "AC-1 MET / AC-2 MET / AC-3 MET (live 6-day production replay supersedes the dev_note's 'traced not replayed')"
+          }
+        }
       }
     ],
     "head": {
@@ -17309,28 +17349,6 @@
         ]
       },
       {
-        "id": "FIX-BCTC-ANALYST-READS-DRAIN-MOVE-AS-SIGNAL-WRITE-LOSS-4-CYCLES",
-        "title": "bctc-analyst escalates a BY-DESIGN drain move as data loss: it Read-verifies docs/signals/bctc_signal_*_routine.json absent after every 3h slot, but drain-signals.js moved them to docs/signals/processed/ — 4 consecutive cycles of false escalation, agent has no Bash/Glob grant to see the truth",
-        "type": "FIX",
-        "owner": "po",
-        "status": "REVIEW",
-        "priority": "P2",
-        "zone": "cross-service/",
-        "size": "S",
-        "created_at": "2026-08-09T01:35:08Z",
-        "created_by": "po",
-        "updated_at": "2026-08-09T01:57:26Z",
-        "supervised": false,
-        "plan_only": false,
-        "depends_on": [],
-        "blocks": [],
-        "dedup_key": "bctc-analyst:signal-write-verify|defect:absent-after-drain-is-by-design",
-        "status_note": "ANSWERED (ACK-WITH-CORRECTION, PO 2026-08-09T01:35Z): the files are NOT lost. `ls docs/signals/processed/ | grep bctc_signal` = 24 files, including bctc_signal_{FPT,HPG,VCB,DXG}_20260809_routine.json and the 20260808 set. dev-team Step 0a drain (docs/agents/dev-team/flow/drain-signals.md §0a-1, canonical script scripts/agents-flow/drain-signals.js) moves every drainable docs/signals/*.json to docs/signals/processed/ on each tick, by design. bctc-analyst's Read-only post-write verify at the ORIGINAL path therefore reports 'absent' on every subsequent cycle — a by-design move misread as a persistence gap, unresolvable by the agent because it has no Bash/Glob grant to inspect processed/. AC-1 amend docs/agents/bctc-analyst/flow/*.md write-verify step: absence at docs/signals/<name>.json is EXPECTED post-drain; verify at docs/signals/processed/<name>.json (or drop the cross-cycle re-verify entirely and verify only the Write tool's own result). AC-2 do NOT close by granting Bash — the correct fix is a correct verification premise, not a wider tool surface. AC-3 regression: replay a full write->drain->next-slot cycle and assert zero escalation. EVIDENCE: bug-escalation 2026-08-08T18:15:00Z from bctc-analyst, self-described 4th consecutive cycle (c149/c150/c151 + 18:00Z slot), explicitly requesting dev-team/architect confirm design intent. Memory class: feedback_agent_reported_limitation_may_be_structural_check_the_tool_grant, project_bctc_analyst_no_bash_grant_perpetual_dirty_artifacts.",
-        "origin_signal_id": "bug-escalation:bctc-analyst:signals-absent-4th-cycle",
-        "updated_by": "developer",
-        "dev_note": "Fixed: added read-first SIGNAL-FILE WRITE VERIFICATION guard to docs/agents/bctc-analyst/flow/main.md — Write tool's own return is now the ONLY write-verification signal (per-cycle), agent must never Read a docs/signals/*.json path it wrote in a prior cycle to re-confirm presence. AC-2: no Bash/Glob grant added, tool grant stays narrow. AC-3 regression traced (not replayed) in decision journal. Commit c23d19da4 (pushed to origin/main). Journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-5.md STEP developer-S91."
-      },
-      {
         "id": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW",
         "type": "FIX",
         "title": "FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW — get_bctc_pending_refine returns 235K chars exceeding MCP inline limit → callers get a file path not data",
@@ -18493,7 +18511,7 @@
         "last_served_tick": "2026-08-15T04:53:36Z"
       },
       "sls": {
-        "last_served_tick": "2026-08-15T01:50:43Z"
+        "last_served_tick": "2026-08-15T05:19:51Z"
       },
       "rlc": {
         "last_served_tick": "2026-08-15T02:23:12Z"
@@ -18508,7 +18526,7 @@
         "last_served_tick": "2026-08-15T03:50:57Z"
       }
     },
-    "_updated_at": "2026-08-15T04:53:36Z",
+    "_updated_at": "2026-08-15T05:19:51Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {

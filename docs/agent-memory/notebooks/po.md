@@ -1,5 +1,13 @@
 # PO — Notebook
 
+## 2026-08-15T05:26Z · AC-3 was "traced, not replayed" — production had already replayed it ~21 times.
+
+- **Trigger:** Review-Lane SECONDARY-drain, stale row `FIX-BCTC-ANALYST-READS-DRAIN-MOVE-AS-SIGNAL-WRITE-LOSS-4-CYCLES` → **DONE_VERIFIED**. **1 `orch-apply.sh` pipe: review 38→37, done_verified 25→26, conservation clean, `.head` untouched.**
+- **★ THE ONLY OPEN AC WAS ALREADY CLOSED BY ELAPSED TIME; THE WORK WAS GOING TO LOOK FOR IT.** Dev self-reported AC-3 *traced, not replayed* (no live 3h slot in-session). Fix landed 08-09, it is 08-15 — a synthetic replay now is **strictly weaker** than ~21 real cycles on disk.
+- **★ "NO RECURRENCE" IS VACUOUS UNLESS THE TRIGGER FIRED — SO I PROVED IT FIRED.** 24 `bctc_signal_*_routine.json` dated 08-09/11/12/13/14/15 sit in `docs/signals/processed/`: drain moved its files out from under it every post-fix day. Against that, **0 hits** for `PERSISTENCE-PLANE|File does not exist|signal.*data loss` across **all 7** post-fix notebook revs. c170 shows it still live, writing 4 signals `all "File created"` — the AC-1 behaviour. Pre-fix 4 straight false escalations → c157–c170 clean.
+- **Read the diff, not the dev_note.** Guard in HEAD *and* on disk; **zero** competing re-verify instruction under `docs/agents/bctc-analyst/` — corroborating "self-invented, notebook-carried, never doc-specified". AC-2: tools still exactly `Read, Write, Edit, mcp__gateway__call_tool`; `git log c23d19da4..HEAD` on the agent def **EMPTY**.
+- **Carry-over:** For a flow-guard fix on a **cron-driven** agent, sign-off delayed past several natural cycles should close on observed production behaviour — but only after proving the trigger fired in that window, else a clean scan proves nothing.
+
 ## 2026-08-15T04:31Z · The inbox held one envelope, it was addressed to somebody else, and that made it the strongest evidence yet.
 
 - **Trigger:** dev-team Step 1 triage, tick 2026-08-15T04:07Z. Durable inbox = **1 entry** (`cowork-fire`), `read_telegram_reports(status="new")` re-run at source → none, `list_unresolved_reports` → empty. **Output: 1 `orch-apply.sh` pipe — 0 mints, 2 rows mutated (1 fold occ 4→5, 1 manual-dispatch stamp). task_total 694→694, conservation clean, Stage 2.5 = 42 grandfathered WARNs / 0 net-new. `.head` untouched (idle).**
