@@ -26,7 +26,21 @@
  * offset += limit each call, until a call returns fewer than `limit` rows. Both
  * are ignored when `report_id` is supplied (single-row fetch).
  *
- * Output: Array<{ id, filename, page_count, text_status, confirm_status, refine_status, windows[] }>
+ * Response-size guard (FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW rework, 2026-08-15):
+ * the row-count clamp above bounds the WORST case only under a point-in-time real
+ * avg-row-size assumption — real production data drifts (confirmed live: the same
+ * limit=20 query grew from 125,211 to 153,138 chars in 3 days with zero code
+ * change, as the pending queue ages and per-report window counts grow). Every
+ * response is therefore ALSO checked against SAFE_INLINE_CHAR_LIMIT after
+ * assembly, independent of `limit`/`offset`/`report_id`. If the actual payload
+ * would exceed it, the tool writes the full lossless payload to a timestamped
+ * file under `data/exports/` and returns a small structured
+ * `{ error: "response_too_large", file_path, char_count, row_count,
+ * suggested_limit, ... }` object instead — under this tool's own control, not
+ * an opaque downstream transport-level spill-to-file (the original bug: callers
+ * received a bare, unparseable path string with no indication of what happened).
+ *
+ * Output (normal case): Array<{ id, filename, page_count, text_status, confirm_status, refine_status, windows[] }>
  *   - filename:       basename of pdf_path (the PDF filename without path)
  *   - page_count:     max page_number from pdf_extracted_text for the report's
  *                     filename (0 if no OCR pages found)
@@ -43,7 +57,8 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { basename } from "node:path";
+import { basename, join } from "node:path";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { getDb } from "../../../../infrastructure/db/schema.js";
 import { logger } from "../../../../infrastructure/logger.js";
 import { partitionIntoWindows } from "../../../../application/utils/windowPartitioner.js";
@@ -65,6 +80,38 @@ const REFINE_MAX_WINDOW_PAGES = parseInt(Bun.env.REFINE_MAX_WINDOW_PAGES ?? "3",
 // is what produced the 235K-char inline overflow (bridge file-path fallback).
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
+
+// FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW (rework, 2026-08-15): the MAX_LIMIT
+// row-count clamp above does NOT, by itself, guarantee a bounded inline
+// payload — real production data drifts. QA live-verified 2026-08-12:
+// limit=20 -> 125,211 chars (confirmed safe at the time), limit=50 ->
+// 301,654, limit=100 -> 565,285 (2.4x the original 235K bug this fix exists
+// to close). A live re-measurement of the SAME limit=20 query 3 days later
+// (2026-08-15, zero code change) already found 153,138 chars — a +22%
+// organic drift purely from the pending queue aging (heavier average
+// bctc_refined_units window counts per report over time). A row-count cap
+// recalibrated from any single point-in-time average would eventually
+// re-break the same way. This guard checks the ACTUAL assembled payload
+// size on every call, independent of `limit`/avg-row-size assumptions, and
+// gracefully degrades to a small, structured, self-describing file-path
+// response — under THIS tool's own control, not the opaque downstream
+// bridge spill that produced a bare, unparseable path string in the
+// original bug — whenever the real payload would exceed a conservative
+// safe inline ceiling.
+//
+// SAFE_INLINE_CHAR_LIMIT=150,000 is deliberately conservative: comfortably
+// below the smallest confirmed-overflowing size (the original 235,209-char
+// bug report, and QA's 301,654/565,285 reproductions) while still above the
+// then-current default-page measurement, leaving headroom for further
+// real-data growth without knowing the exact downstream limit (external to
+// this codebase — the actual MCP client transport boundary, not something
+// this server can introspect).
+const SAFE_INLINE_CHAR_LIMIT = 150_000;
+
+// Mirrors the exportPortfolioSnapshot.ts convention (data/exports/, timestamped
+// filename, mkdirSync recursive + writeFileSync) — no new file-fallback
+// convention invented.
+const OVERSIZED_EXPORT_DIR = "data/exports";
 
 // ── DB row type ───────────────────────────────────────────────────────────────
 
@@ -150,16 +197,29 @@ const InputSchema = z.object({
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 
+/** Dep-injection seam for the response-size guard (FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW rework). */
+export interface ResponseSizeGuardOverride {
+  /** Overrides SAFE_INLINE_CHAR_LIMIT — tests inject a tiny value to trip the guard deterministically. */
+  safeInlineCharLimit?: number;
+  /** Overrides OVERSIZED_EXPORT_DIR — tests inject an isolated tmp dir, never the real data/exports/. */
+  exportDir?: string;
+}
+
 /**
  * Dep-injectable handler builder.
  *
  * @param dbOverride        Optional in-memory Database for tests.
  * @param fetchPageTextsDeps  Optional dep injection for fetchAllPageTexts (avoids HTTP in tests).
+ * @param guardOverride      Optional dep injection for the response-size guard (avoids HUGE synthetic
+ *                           fixtures in tests, and avoids writing to the real data/exports/ dir).
  */
 export function buildGetBctcPendingRefineHandler(
   dbOverride?: ReturnType<typeof getDb>,
   fetchPageTextsDeps?: FetchPageTextsDeps,
+  guardOverride?: ResponseSizeGuardOverride,
 ): (input: z.input<typeof InputSchema>) => Promise<{ content: [{ type: "text"; text: string }] }> {
+  const safeInlineCharLimit = guardOverride?.safeInlineCharLimit ?? SAFE_INLINE_CHAR_LIMIT;
+  const exportDir = guardOverride?.exportDir ?? OVERSIZED_EXPORT_DIR;
   return async (rawInput) => {
     const parsed = InputSchema.safeParse(rawInput);
     if (!parsed.success) {
@@ -366,11 +426,88 @@ export function buildGetBctcPendingRefineHandler(
         }),
       );
 
+      const text = JSON.stringify(reports, null, 2);
+
+      // FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW (rework): response-size guard.
+      // Checks the ACTUAL assembled payload, regardless of what `limit` was
+      // requested (protects the report_id single-row branch too, where a
+      // single pathological report's windows[] alone could overflow) — see
+      // SAFE_INLINE_CHAR_LIMIT rationale above.
+      if (text.length > safeInlineCharLimit && reports.length > 0) {
+        try {
+          mkdirSync(exportDir, { recursive: true });
+          const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+          const filePath = join(exportDir, `bctc-pending-refine-oversized-${stamp}.json`);
+          writeFileSync(filePath, text, "utf-8");
+
+          const avgCharsPerRow = text.length / reports.length;
+          // report_id fetches bypass limit/offset entirely — not paginable,
+          // so a "retry with a smaller limit" suggestion would be misleading.
+          const suggestedLimit =
+            report_id !== undefined ? undefined : Math.max(1, Math.floor(safeInlineCharLimit / avgCharsPerRow));
+
+          logger.warn("[get_bctc_pending_refine] response-size guard tripped — wrote oversized payload to file", {
+            filePath,
+            charCount: text.length,
+            rowCount: reports.length,
+            safeInlineCharLimit,
+          });
+
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify(
+                  {
+                    error: "response_too_large",
+                    message:
+                      `Assembled payload (${text.length} chars, ${reports.length} rows) exceeds the safe inline ` +
+                      `limit (${safeInlineCharLimit} chars). Full data written to file_path (lossless, all ` +
+                      `${reports.length} rows intact) instead of an inline blob. ` +
+                      (suggestedLimit !== undefined
+                        ? `Retry with limit=${suggestedLimit} (or lower) to stay inline.`
+                        : "report_id fetches are not paginable — this single report's windows[] alone exceed the safe inline limit."),
+                    file_path: filePath,
+                    char_count: text.length,
+                    row_count: reports.length,
+                    safe_inline_char_limit: safeInlineCharLimit,
+                    requested_limit: limit,
+                    requested_offset: offset,
+                    suggested_limit: suggestedLimit,
+                  },
+                  null,
+                  2,
+                ),
+              },
+            ],
+          };
+        } catch (writeErr) {
+          // File write itself failed — do NOT silently return the oversized
+          // inline blob (that's the exact bug this guard exists to close)
+          // and do NOT silently drop data. Fail loud with the error.
+          const msg = writeErr instanceof Error ? writeErr.message : String(writeErr);
+          logger.warn("[get_bctc_pending_refine] oversized-payload file fallback write failed", { error: msg });
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  error: "response_too_large_and_file_write_failed",
+                  message: msg,
+                  char_count: text.length,
+                  row_count: reports.length,
+                }),
+              },
+            ],
+          };
+        }
+      }
+
       return {
         content: [
           {
             type: "text" as const,
-            text: JSON.stringify(reports, null, 2),
+            text,
           },
         ],
       };
@@ -424,7 +561,11 @@ export function registerGetBctcPendingRefineTool(server: McpServer): void {
       `Paginated (FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW): limit defaults to ${DEFAULT_LIMIT} (max ${MAX_LIMIT}) so the ` +
       "inline payload never overflows the MCP response limit. Page through ALL pending rows with offset: " +
       "call with offset=0, then offset += limit on each subsequent call, until a call returns fewer than `limit` " +
-      "rows (that page is the last one — no rows are skipped or lost). limit/offset are ignored when report_id is supplied.",
+      "rows (that page is the last one — no rows are skipped or lost). limit/offset are ignored when report_id is supplied. " +
+      "Response-size guard: if the assembled payload would still exceed the safe inline limit (real per-report " +
+      "window weight varies and drifts over time), the tool returns " +
+      '{ error: "response_too_large", file_path, char_count, row_count, suggested_limit } instead of an oversized ' +
+      "blob — the full data is written losslessly to file_path; retry with suggested_limit (when present) to stay inline.",
     {
       limit: z
         .coerce
