@@ -23,6 +23,12 @@
 #   USAGE-MISSING-ARGS / USAGE-BAD-JSON / USAGE-MISSING-FILE -> exit 3
 #   STRUCTURAL-FIELDS-EXCLUDED — growing only a structural field (e.g. status)
 #                          never counts as prose growth
+#   SECONDARY-DRAIN-STAMP — dynamic regression (FIX-PROSECEILING-SECONDARY-
+#                          CLAIM-STAMP-FIELDS-MISSING-FROM-STRUCTURAL-
+#                          EXCLUDE-SET, 2026-08-15): stamping an ALREADY-
+#                          over-ceiling review[] row with the real
+#                          scripts/devteam-review-claim-secondary-drain.jq
+#                          claim-field set -> exit 0, not a livelock
 #
 # All I/O is against throwaway mktemp fixtures — never the live
 # docs/data/orch/orch-state.json.
@@ -262,6 +268,43 @@ if [ "$EXIT_8" -eq 0 ]; then
   pass "STRUCTURAL-FIELDS-EXCLUDED — status/owner/zone edits never count as prose growth -> exit 0"
 else
   fail "STRUCTURAL-FIELDS-EXCLUDED — expected exit 0, got $EXIT_8 ($OUT_8)"
+fi
+
+# =============================================================================
+# SECONDARY-DRAIN-STAMP: regression for FIX-PROSECEILING-SECONDARY-CLAIM-
+# STAMP-FIELDS-MISSING-FROM-STRUCTURAL-EXCLUDE-SET. Stamps a synthetic
+# ALREADY-OVER-CEILING review[] row with the EXACT field set
+# scripts/devteam-review-claim-secondary-drain.jq stamps in place
+# (secondary_claimed_at/secondary_claimed_by/secondary_dispatch_target) plus
+# dispatch_target -> must be exit 0 (the stamp is coordination metadata, not
+# prose growth), same as claimed_at/claimed_by already were. This is
+# DYNAMIC (live-vs-candidate with a real mutation), not a static field-list
+# scan — a static scan of STRUCTURAL_FIELDS would have passed even before
+# the fix landed, which is exactly how the regression slipped through
+# 4513c45df's own (static, read-only) production-safety check.
+# =============================================================================
+LIVE_9="$FIXTURE_DIR/live-secondary-stamp.json"
+jq -n --arg big "$BIG_PROSE" \
+  '{"task_board":{"backlog":[],"ready":[],
+    "review":[{"id":"ROW-SECONDARY-DRAIN","status":"REVIEW","next_agent":"ops","note":$big,
+               "updated_at":"2026-08-11T17:36:34Z"}]}}' \
+  > "$LIVE_9"
+
+CAND_9_FILE="$FIXTURE_DIR/cand-secondary-stamp.json"
+jq '.task_board.review[0] += {
+      "secondary_claimed_at":"2026-08-15T08:00:00Z",
+      "secondary_claimed_by":"dev-team (review-lane secondary-drain)",
+      "secondary_dispatch_target":"po",
+      "dispatch_target":"po"
+    }' \
+  "$LIVE_9" > "$CAND_9_FILE"
+
+OUT_9=$(bun "$CHECK_MJS" "$LIVE_9" "$CAND_9_FILE" 2>&1)
+EXIT_9=$?
+if [ "$EXIT_9" -eq 0 ]; then
+  pass "SECONDARY-DRAIN-STAMP — over-ceiling row stamped with SECONDARY-Drain claim fields -> exit 0 (not treated as prose growth)"
+else
+  fail "SECONDARY-DRAIN-STAMP — expected exit 0, got $EXIT_9 ($OUT_9) — claim stamp fields missing from STRUCTURAL_FIELDS would livelock this lane"
 fi
 
 # =============================================================================

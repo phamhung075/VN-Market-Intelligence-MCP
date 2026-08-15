@@ -109,6 +109,20 @@ const PROSE_CEILING_LANES = ['backlog', 'ready', 'review'];
  * footnote. Superset of scripts/orch-backlog-stub.sh's STUB_FIELDS plus the
  * lifecycle/provenance fields STUB_FIELDS deliberately never strips.
  * Everything NOT in this set counts as "prose" for ceiling purposes.
+ *
+ * secondary_claimed_at/secondary_claimed_by/secondary_dispatch_target/
+ * dispatch_target (added FIX-PROSECEILING-SECONDARY-CLAIM-STAMP-FIELDS-
+ * MISSING-FROM-STRUCTURAL-EXCLUDE-SET, 2026-08-15, same-day follow-up to
+ * 4513c45df): claimed_at/claimed_by were already excluded as PRIMARY
+ * QA-Drain's claim-stamp coordination metadata, but the SECONDARY-Drain
+ * sweep (scripts/devteam-review-claim-secondary-drain.jq) stamps this
+ * *_secondary_* prefixed family in place inside review[] and none of them
+ * were in the set — the claim stamp itself counted as prose growth on an
+ * already-over-ceiling row, hard-rejecting the write every tick
+ * (deterministic livelock — see FIX-PROSECEILING-SECONDARY-CLAIM-STAMP-
+ * FIELDS-MISSING-FROM-STRUCTURAL-EXCLUDE-SET for the full trace). Same
+ * class of field as claimed_at/claimed_by by construction — coordination
+ * metadata, not author-written prose.
  * @type {Set<string>}
  */
 const STRUCTURAL_FIELDS = new Set([
@@ -137,6 +151,10 @@ const STRUCTURAL_FIELDS = new Set([
   'updated_by',
   'claimed_at',
   'claimed_by',
+  'secondary_claimed_at',
+  'secondary_claimed_by',
+  'secondary_dispatch_target',
+  'dispatch_target',
   'promoted_at',
   'promoted_by',
   'dispatch_lane',
