@@ -92,12 +92,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 1 row(s), highest-ranked FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 1 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-15T01:51:52Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "updated_at": "2026-08-15T02:22:36Z",
+    "updated_by": "dev-team",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -133,7 +132,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-14T22:55:14Z",
+    "_updated_at": "2026-08-15T02:20:46Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -780,7 +779,7 @@
         "type": "auditor_cycle_loss",
         "summary": "auditor cycle lost tick=2026-08-11T18:00Z — orphaned marker, mid-run death",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -794,7 +793,7 @@
         "type": "auditor_cycle_loss",
         "summary": "auditor cycle lost tick=2026-08-13T12:00Z — orphaned marker, mid-run death",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -808,7 +807,7 @@
         "type": "auditor_cycle_loss",
         "summary": "auditor cycle lost tick=malformed-key — orphaned marker, mid-run death",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -822,7 +821,7 @@
         "type": "auditor_cycle_loss",
         "summary": "auditor cycle lost tick=2026-08-14T02:00Z — orphaned marker, mid-run death",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -836,7 +835,7 @@
         "type": "auditor_cycle_loss",
         "summary": "auditor cycle lost tick=2026-08-12T05:30Z — orphaned marker, mid-run death",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -850,7 +849,7 @@
         "type": "auditor_cycle_loss",
         "summary": "auditor cycle lost tick=2026-08-13T08:00Z — orphaned marker, mid-run death",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -864,7 +863,7 @@
         "type": "auditor_cycle_loss",
         "summary": "auditor cycle lost tick=2026-08-12T08:30Z — orphaned marker, mid-run death",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -878,7 +877,7 @@
         "type": "auditor_cycle_loss",
         "summary": "auditor cycle lost tick=2026-08-13T07:30Z — orphaned marker, mid-run death",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -892,7 +891,7 @@
         "type": "auditor_cycle_loss",
         "summary": "auditor cycle lost tick=2026-08-12T08:00Z — orphaned marker, mid-run death",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -906,7 +905,7 @@
         "type": "auditor_cycle_loss",
         "summary": "auditor cycle lost tick=2026-08-12T10:00Z — orphaned marker, mid-run death",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -920,7 +919,7 @@
         "type": "auditor_cycle_loss",
         "summary": "auditor cycle lost tick=2026-08-13T20:00Z — orphaned marker, mid-run death",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -18436,7 +18435,7 @@
         "last_served_tick": "2026-08-15T01:50:43Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-14T21:54:11Z"
+        "last_served_tick": "2026-08-15T02:23:12Z"
       },
       "drs": {
         "last_served_tick": "2026-08-14T22:35:03Z"
@@ -18448,7 +18447,7 @@
         "last_served_tick": "2026-08-15T00:33:53Z"
       }
     },
-    "_updated_at": "2026-08-15T01:50:43Z",
+    "_updated_at": "2026-08-15T02:23:12Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -18473,6 +18472,150 @@
         "createdAt": "2026-08-15T00:28:50Z",
         "drained_at": "2026-08-15T00:51:13Z",
         "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7397df9d71b8e51ea84e61536847a9840884dcef29489768492e8d8b043226f2",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-24.md docs/agent-memory/notebooks/qa.md docs/data/orch/orch-state.json. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=28 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-15T01:55:23Z",
+        "drained_at": "2026-08-15T02:19:29Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "auditor-cycle-loss:sys-20260815T021802-7b3a",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_loss",
+        "priority": "WARN",
+        "payload": null,
+        "createdAt": "2026-08-15T02:20:46Z",
+        "drained_at": "2026-08-15T02:20:46Z",
+        "routed_to": "po"
+      },
+      {
+        "envelope_id": "auditor-cycle-loss:sys-20260815T021804-78e3",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_loss",
+        "priority": "WARN",
+        "payload": null,
+        "createdAt": "2026-08-15T02:20:46Z",
+        "drained_at": "2026-08-15T02:20:46Z",
+        "routed_to": "po"
+      },
+      {
+        "envelope_id": "auditor-cycle-loss:sys-20260815T021806-3f6c",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_loss",
+        "priority": "WARN",
+        "payload": null,
+        "createdAt": "2026-08-15T02:20:46Z",
+        "drained_at": "2026-08-15T02:20:46Z",
+        "routed_to": "po"
+      },
+      {
+        "envelope_id": "auditor-cycle-loss:sys-20260815T021808-7b4e",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_loss",
+        "priority": "WARN",
+        "payload": null,
+        "createdAt": "2026-08-15T02:20:46Z",
+        "drained_at": "2026-08-15T02:20:46Z",
+        "routed_to": "po"
+      },
+      {
+        "envelope_id": "auditor-cycle-loss:sys-20260815T021811-3e4a",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_loss",
+        "priority": "WARN",
+        "payload": null,
+        "createdAt": "2026-08-15T02:20:46Z",
+        "drained_at": "2026-08-15T02:20:46Z",
+        "routed_to": "po"
+      },
+      {
+        "envelope_id": "auditor-cycle-loss:sys-20260815T021814-7a2c",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_loss",
+        "priority": "WARN",
+        "payload": null,
+        "createdAt": "2026-08-15T02:20:46Z",
+        "drained_at": "2026-08-15T02:20:46Z",
+        "routed_to": "po"
+      },
+      {
+        "envelope_id": "auditor-cycle-loss:sys-20260815T021816-360f",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_loss",
+        "priority": "WARN",
+        "payload": null,
+        "createdAt": "2026-08-15T02:20:46Z",
+        "drained_at": "2026-08-15T02:20:46Z",
+        "routed_to": "po"
+      },
+      {
+        "envelope_id": "auditor-cycle-loss:sys-20260815T021818-5e15",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_loss",
+        "priority": "WARN",
+        "payload": null,
+        "createdAt": "2026-08-15T02:20:46Z",
+        "drained_at": "2026-08-15T02:20:46Z",
+        "routed_to": "po"
+      },
+      {
+        "envelope_id": "auditor-cycle-loss:sys-20260815T021821-7640",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_loss",
+        "priority": "WARN",
+        "payload": null,
+        "createdAt": "2026-08-15T02:20:46Z",
+        "drained_at": "2026-08-15T02:20:46Z",
+        "routed_to": "po"
+      },
+      {
+        "envelope_id": "auditor-cycle-loss:sys-20260815T021823-705c",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_loss",
+        "priority": "WARN",
+        "payload": null,
+        "createdAt": "2026-08-15T02:20:46Z",
+        "drained_at": "2026-08-15T02:20:46Z",
+        "routed_to": "po"
+      },
+      {
+        "envelope_id": "auditor-cycle-loss:sys-20260815T021825-6e05",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_loss",
+        "priority": "WARN",
+        "payload": null,
+        "createdAt": "2026-08-15T02:20:46Z",
+        "drained_at": "2026-08-15T02:20:46Z",
+        "routed_to": "po"
       }
     ],
     "last_po_triage_at": "2026-08-14T04:11:35Z",

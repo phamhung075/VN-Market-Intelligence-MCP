@@ -1,12 +1,4 @@
 {
-  "memory_pressure:rag-service:A-30-loss-of-reclamation": {
-    "ts": "2026-08-07T06:09:31Z",
-    "sev": 3
-  },
-  "memory_pressure:mcp-server:A-30-loss-of-reclamation": {
-    "ts": "2026-08-07T05:48:25Z",
-    "sev": 3
-  },
   "microservice_memory_degraded:rag-service:A-30": {
     "ts": "2026-08-08T06:05:41Z",
     "sev": 2
@@ -218,5 +210,49 @@
   "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30:escalate-high-sustained": {
     "ts": "2026-08-14T04:17:19Z",
     "sev": 3
+  },
+  "auditor-cycle-loss:2026-08-11T18:00Z": {
+    "ts": "2026-08-15T02:18:02Z",
+    "sev": 2
+  },
+  "auditor-cycle-loss:2026-08-13T12:00Z": {
+    "ts": "2026-08-15T02:18:04Z",
+    "sev": 2
+  },
+  "auditor-cycle-loss:malformed-key": {
+    "ts": "2026-08-15T02:18:06Z",
+    "sev": 2
+  },
+  "auditor-cycle-loss:2026-08-14T02:00Z": {
+    "ts": "2026-08-15T02:18:08Z",
+    "sev": 2
+  },
+  "auditor-cycle-loss:2026-08-12T05:30Z": {
+    "ts": "2026-08-15T02:18:10Z",
+    "sev": 2
+  },
+  "auditor-cycle-loss:2026-08-13T08:00Z": {
+    "ts": "2026-08-15T02:18:13Z",
+    "sev": 2
+  },
+  "auditor-cycle-loss:2026-08-12T08:30Z": {
+    "ts": "2026-08-15T02:18:15Z",
+    "sev": 2
+  },
+  "auditor-cycle-loss:2026-08-13T07:30Z": {
+    "ts": "2026-08-15T02:18:18Z",
+    "sev": 2
+  },
+  "auditor-cycle-loss:2026-08-12T08:00Z": {
+    "ts": "2026-08-15T02:18:20Z",
+    "sev": 2
+  },
+  "auditor-cycle-loss:2026-08-12T10:00Z": {
+    "ts": "2026-08-15T02:18:22Z",
+    "sev": 2
+  },
+  "auditor-cycle-loss:2026-08-13T20:00Z": {
+    "ts": "2026-08-15T02:18:25Z",
+    "sev": 2
   }
 }

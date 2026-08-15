@@ -529,6 +529,38 @@ reset_log
 OUT27=$(run_audit_output_contract --markers-file "$EMPTY_MF")
 check "T27 backward-compat: no verdict= suffix when arms not engaged" "$(printf '%s' "$OUT27" | grep -q '^\[OUTPUT-CONTRACT\] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0$' && echo true || echo false)"
 
+# ── V8 — FIX-AUDITOR-DURABILITY-STEP0B-DETECTION (redispatch 2):
+# --require-durability-sweep, purely additive/opt-in ──────────────────────────
+
+# T28: flag OMITTED (default) — a markers file with zero [durability-sweep]
+# lines produces NO violation and IDENTICAL output to before this fix.
+reset_log
+OUT28=$(run_audit_output_contract --markers-file "$EMPTY_MF")
+check "T28 flag-omitted: no durability-sweep line, no VIOLATION" "$(! printf '%s' "$OUT28" | grep -q 'VIOLATION' && echo true || echo false)"
+
+# T29: flag SET, marker file HAS the mandatory [durability-sweep] summary
+# line (the common zero-hits case a real cycle produces) -> exit 0, no V8.
+reset_log
+MF29=$(markers_file <<'EOF'
+[durability-sweep] swept=0 malformed=0 found=0 schedule_gap_t1=0 schedule_gap_t2=0 schedule_gap_t3=0
+EOF
+)
+OUT29=$(run_audit_output_contract --markers-file "$MF29" --require-durability-sweep)
+RC29=$?
+check "T29 flag-set+marker-present exit=0" "$([ "$RC29" -eq 0 ] && echo true || echo false)"
+check "T29 flag-set+marker-present no V8 VIOLATION" "$(! printf '%s' "$OUT29" | grep -q 'VIOLATION' && echo true || echo false)"
+
+# T30: flag SET, marker file MISSING the [durability-sweep] line entirely —
+# this is the exact narrates-vs-executes gap V8 exists to catch: the whole
+# scripts/auditor-durability-sweep.sh call was skipped this cycle.
+reset_log
+OUT30=$(run_audit_output_contract --markers-file "$EMPTY_MF" --require-durability-sweep)
+RC30=$?
+check "T30 flag-set+marker-absent exit!=0" "$([ "$RC30" -ne 0 ] && echo true || echo false)"
+check "T30 flag-set+marker-absent V8 VIOLATION line" "$(printf '%s' "$OUT30" | grep -q 'VIOLATION: durability-sweep marker missing this cycle' && echo true || echo false)"
+check "T30 flag-set+marker-absent BUG telegram fired" "$(grep -q '^CALL: send_telegram' "$CALL_LOG" && echo true || echo false)"
+check "T30 flag-set+marker-absent V1-V5 counters unaffected (all zero)" "$(printf '%s' "$OUT30" | grep -q 'signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0 | dedup_skipped=0$' && echo true || echo false)"
+
 # ── Summary ──────────────────────────────────────────────────────────────────
 echo ""
 echo "Results: $PASS passed, $FAIL failed"

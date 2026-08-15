@@ -200,6 +200,31 @@
 #                                       # a mandatory REVIEW flag, never an
 #                                       # automatic agent-blame verdict.
 #
+#     [--require-durability-sweep]     # V8 — FIX-AUDITOR-DURABILITY-STEP0B-
+#                                       # DETECTION (redispatch 2). Opt-in,
+#                                       # off by default (byte-identical STDOUT
+#                                       # when omitted). When set: this
+#                                       # cycle's $MARKERS_FILE MUST contain a
+#                                       # `[durability-sweep] swept=...` line
+#                                       # (the mandatory summary
+#                                       # scripts/auditor-durability-sweep.sh
+#                                       # always prints, even on its own
+#                                       # common zero-hits case) — its absence
+#                                       # is a VIOLATION (this whole script
+#                                       # never got invoked this cycle, the
+#                                       # exact "narrates vs executes" gap this
+#                                       # flag exists to close: previously
+#                                       # nothing downstream could ever tell
+#                                       # apart "ran the sweep, found nothing"
+#                                       # from "never ran the sweep at all").
+#                                       # main.md's own single call site
+#                                       # passes this on EVERY tier's EVERY
+#                                       # cycle (main.md §Step 0b.1 documents
+#                                       # the sweep itself as running
+#                                       # unconditionally on every tier). WARN-
+#                                       # level violation (same class as V1-
+#                                       # V7) — never aborts the cycle.
+#
 # STDOUT — MANDATORY, paste verbatim into the RETURN block:
 #   [OUTPUT-CONTRACT] signals_posted=<N> | telegram_sent=<N> | signal_queue_rows_written=<N> | dashboard_rows=<N> | dedup_skipped=<N>
 # ...with a trailing ` | verdict=<CLEAN|DIVERGENCE|ESCALATE>` field APPENDED
@@ -417,6 +442,7 @@ run_audit_output_contract() {
   local from_agent="system-auditor"
   local cycle_tag=""
   local raw_verdicts_file="" declared_verdicts_spec="" trigger_verdict_file=""
+  local require_durability_sweep="false"
 
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -430,6 +456,7 @@ run_audit_output_contract() {
       --raw-verdicts-file) raw_verdicts_file="${2:-}"; shift 2 ;;
       --declared-verdicts) declared_verdicts_spec="${2:-}"; shift 2 ;;
       --trigger-verdict-file) trigger_verdict_file="${2:-}"; shift 2 ;;
+      --require-durability-sweep) require_durability_sweep="true"; shift ;;
       *)
         echo "[audit-output-contract] ABORT unknown-arg $1"
         return 2
@@ -444,11 +471,20 @@ run_audit_output_contract() {
 
   local signals_posted=0 telegram_sent=0 signal_queue_rows_written=0 dashboard_rows=0 dedup_skipped=0
   local violations=0
+  local durability_sweep_seen=0
 
   if [ -f "$markers_file" ]; then
     while IFS= read -r line; do
       [ -z "$line" ] && continue
       case "$line" in
+        '[durability-sweep] '*)
+          # V8 presence check only — this summary line counts toward NONE of
+          # the counters above (it is not an [emit-signal]/[emit-dashboard]/
+          # [post-agent-signal] marker itself; the individual [emit-signal]
+          # lines a durability-sweep run ALSO pastes through are already
+          # counted by their own case arms above, unchanged).
+          durability_sweep_seen=1
+          ;;
         '[emit-signal] ABORT'*)
           : # counts toward nothing
           ;;
@@ -584,6 +620,20 @@ run_audit_output_contract() {
     echo "[OUTPUT-CONTRACT] VIOLATION: RETURN NEXT=clean but signals_posted>0"
     _record_violation_durable "V5 RETURN NEXT=clean but signals_posted=${signals_posted}" "$cycle_tag" "$from_agent"
     _send_bug_telegram "[audit-output-contract] BUG: RETURN NEXT token said clean but signals_posted=${signals_posted} this cycle"
+    violations=$((violations + 1))
+  fi
+
+  # ── V8 — FIX-AUDITOR-DURABILITY-STEP0B-DETECTION (redispatch 2): opt-in
+  # (--require-durability-sweep), OFF by default (byte-identical behavior when
+  # omitted). Closes the exact "narrates vs executes" invisibility gap QA
+  # flagged for §Step 0b.1/0b.2 — this cycle's own $MARKERS_FILE MUST carry
+  # the mandatory `[durability-sweep] ...` summary line
+  # scripts/auditor-durability-sweep.sh always prints (even its own zero-hits
+  # case); its absence means that whole script never got invoked this cycle.
+  if [ "$require_durability_sweep" = "true" ] && [ "$durability_sweep_seen" -ne 1 ]; then
+    echo "[OUTPUT-CONTRACT] VIOLATION: durability-sweep marker missing this cycle"
+    _record_violation_durable "V8 durability-sweep marker missing (scripts/auditor-durability-sweep.sh never invoked this cycle)" "$cycle_tag" "$from_agent"
+    _send_bug_telegram "[audit-output-contract] BUG: [durability-sweep] marker missing from \$MARKERS_FILE this cycle — scripts/auditor-durability-sweep.sh (Step 0b.1/0b.2) was never invoked"
     violations=$((violations + 1))
   fi
 

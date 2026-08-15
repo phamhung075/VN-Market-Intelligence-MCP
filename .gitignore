@@ -34,6 +34,16 @@ docs/data/cycle-snapshot-*.json
 docs/data/.cycle-snapshot-*.stage
 docs/data/cycle-snapshot-*.json.tmp
 
+# system-auditor per-cycle marker scratch file (FIX-AUDITOR-DURABILITY-STEP0B-
+# DETECTION redispatch 2) — created by main.md §Step 0d, removed via `rm -f`
+# at the end of every cycle by §OUTPUT-CONTRACT; never itself an artifact.
+# Same untracked-scratch treatment as docs/data/cycle-snapshot-*.json.tmp
+# above — 7 copies had been accidentally git-tracked by an unrelated commit
+# (2ddbe5321), breaking the "rm -f is a safe reclaim" design premise the
+# source architecture brief specified; this entry + a `git rm --cached`
+# restores it.
+docs/agent-memory/.auditor-cycle-markers-*.tmp
+
 # per-script tick-preflight usage telemetry (WU-0, TICK-PREFLIGHT-USAGE-INSTRUMENTATION)
 # — rolling O_APPEND JSONL, one file per script (see docs/policies/dev-standards.md
 # CANONICAL: tick-telemetry.sh), never tracked, same treatment as cycle-snapshot-*.json above.
