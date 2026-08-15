@@ -14240,69 +14240,6 @@
             "observed_at": "2026-08-15T06:01:07Z"
           }
         }
-      },
-      {
-        "id": "FIX-CI-TASKCLAIM-QA-FLOW-OWNER-SESSION-PAYDOWN",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P0",
-        "status": "DONE_VERIFIED",
-        "zone": "cross-service/",
-        "owner": "po",
-        "plan_only": false,
-        "supervised": false,
-        "created_at": "2026-08-12T13:02:45Z",
-        "created_by": "po/triage-20260812T1257Z",
-        "check_id": "CI-RED-ffb8f8cc",
-        "dedup_key": "ci_job:task-claim-owner-session-lint|file:docs/agents/qa/flow/main.md",
-        "ci_fingerprint": "205538232e4e666d24d1c0e7d434ded07f9123b05dcb10fb8e5282ea6bf0972c",
-        "origin_signal_id": "CI-RED-ffb8f8cc",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "baseline_pass": true,
-        "rebuild_required": false,
-        "title": "CI RED — task-claim-owner-session-lint: docs/agents/qa/flow/main.md:22 and :215 task_release omit the REQUIRED owner_client_session. Exact sibling of the DONE_VERIFIED FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN: call sites are UNCHANGED, but lines above them shifted 21->22 and 212->215, de-grandfathering them from the line-keyed baseline. Pay the debt: 2 task_release sites in QA own flow doc.",
-        "files": [
-          "docs/agents/qa/flow/main.md",
-          "docs/data/task-claim-owner-session-baseline.json"
-        ],
-        "related": [
-          "FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN",
-          "FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER"
-        ],
-        "status_note": "AC1: `bash scripts/audits/task-claim-owner-session-lint.sh --check` RC=0 / 0 violations, AND CI job task-claim-owner-session-lint conclusion=success on a subsequent push. AC2 (fix, do NOT re-grandfather): add owner_client_session to docs/agents/qa/flow/main.md:22 and :215 and DELETE both docs/agents/qa/flow/main.md entries from docs/data/task-claim-owner-session-baseline.json, so no future line-shift can re-trigger this. Running --update to re-grandfather is NOT an acceptable close — the lint FAIL text says so explicitly. AC3: parameter names re-derived from apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts, not copied from a sibling doc. AC4: the doc must instruct SUBSTITUTING the real session id from the spawn-prompt Coordination line — writing the literal $CLAUDE_CODE_SESSION_ID inside a call_tool argument gets sent LITERALLY (memory: feedback_llm_issued_call_tool_does_not_expand_session_id_variable); mirror docs/agents/pm/flow/main.md and .claude/skills/commit-mutex/SKILL.md. AC5: this is NOT lint-appeasement — a task_release whose owner does not match the holder orphans the lock (memory: feedback_task_release_owner_agent_mismatch_orphans_lock), so paying the debt is a real correctness fix. PO NOTE: the two call sites are annotated best-effort (no MCP gateway binding in specialist sub-session); adding owner_client_session does not change that posture. LIVE-VERIFIED by po 2026-08-12T12:57Z: lint reproduces at current HEAD; size-lint now PASSES (transport.ts 241L) so the 09:53Z size-lint component of CI-RED-4424dd41 is already fixed and is NOT part of this row. Observed RED SHAs: 4f1ed641 (run 31588799885), ffb8f8cc (run 31595301943).\n\n[po/triage 2026-08-12T15:36:32Z] ci_red dedup HIT (file-scoped, PRIMARY). Additional observed failure: check_id=CI-RED-b701e913 head_sha=b701e913 run_id=31606982292, job=task-claim-owner-session-lint. RAW log from this run: '[task-claim-lint] FAIL — 2 call site(s) missing owner_client_session (scanned 275 files)' at docs/agents/qa/flow/main.md:22 and :215, both tagged LINE-MOVED (grandfathered at baseline lines 21/212 — same file+snippet, NOT a reintroduced regression). The lint's own guidance is explicit: pay the debt by adding owner_client_session; do NOT re-run --update to relabel the lines. Scope is 2 one-line edits in a single doc. No new row minted.\n\n[po/triage-2026-08-12T17:00:39Z] FILE-SCOPED DEDUP HIT x3 this drain — task-claim-owner-session-lint still FAILing on the same 2 call sites, additional observed SHAs: b701e913 (14:53Z), 0b3d494d (15:53Z), f954d591 (16:21Z). Verbatim from gh run view --log-failed: 'FAIL — 2 call site(s) missing owner_client_session', docs/agents/qa/flow/main.md:22 and :215, both task_release calls, both tagged [LINE-MOVED: grandfathered in baseline ... Pay the debt (add owner_client_session); do not re-run --update to relabel the line.]. Scanned-file count drifted 275 -> 276 between runs, so the surrounding corpus is growing while this debt sits. This is a 2-line documentation edit blocking a required CI job on EVERY push — cheapest possible unblock of the CI plane.\n\n[po/triage-2026-08-13T17:28:37Z] SEVERITY EXPEDITE by PO. Moved to the FRONT of ready[] at P0. Rationale: RLC selection is sort_by([priority_rank, ready[]-array-index]), one row per invocation, and RLC only runs on ticks where the 6-way Idle-Tick Rotation picks \"rlc\". Measured live this tick: 60 RLC-eligible rows in ready[]; this row's class sat at eligible queue position 47-48. At 1 row per rlc-selected tick that is unreachable in incident time, and every newly-minted P0 re-buries it. No new diagnosis was needed - the row was already correct. This is the manual stand-in for the missing severity-expedite path (FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0, itself expedited in this same write).\n\n[po/triage-2026-08-13T17:28:37Z] ci_red FOLD x9 (file-scoped dedup, PRIMARY). Nine ci_red signals drained this tick: CI-RED-181fa9e8 (run 31621447612), CI-RED-059886f5 (31676677536), CI-RED-5dfcd01d (31685419503), CI-RED-7e5b0209 (31686549449), CI-RED-77658081 (31697341888), CI-RED-3d72cc9b (31699387752), CI-RED-885dbf54 (31711650335), CI-RED-e91084bf (31716389004), CI-RED-e589e50d (31719468588). MANDATORY pre-dedup failing-file read PERFORMED on 6 of the 9 runs via `gh run view <id> --log-failed`; FAILING_FILES byte-identical on every one: `15113 pass / 40 skip / 5 fail`, `=== FAILED FILES (2) ===` -> src/__tests__/ALLZERO-OHLCV-FETCH.test.ts + src/__tests__/FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts. task-claim-owner-session-lint FAILING_FILE re-read verbatim from run 31719468588 job 94512476875: `FAIL - 2 call site(s) missing owner_client_session (scanned 276 files)` at docs/agents/qa/flow/main.md:22 and :215. No new rows minted. CI confirmed still RED at current HEAD e44a302a (run 31725182429). The fail set has now been IDENTICAL and order-independent across 9 advancing SHAs spanning ~23h - and across ~30 SHAs since 2026-08-11T13:03Z. This is NOT a diagnosis gap and NOT a flake: it is dispatch starvation.\n\n[agent-father 2026-08-13T22:58:56Z] DONE. Added owner_client_session to both docs/agents/qa/flow/main.md task_release call sites (now at lines 22/221 — re-located by content, not the dispatch-time line numbers, since the fix itself grew the block by a few lines), re-derived param names from live apps/mcp-server/src/interface/mcp/tools/system/coordination/taskReleaseTool.ts (file split off coordinationTools.ts 2026-08-09). Committed + pushed: ef4b5b29c77547034c72510ca9c7dd6e437ab7f4 (docs/agents/qa/flow/main.md + decision journal only). lint --check verified PASS both before and after commit: 'PASS — 0 new offenders (scanned 276 files; baseline carries 19 grandfathered site(s))', exit 0. AC2 baseline-trim (removing the 2 stale docs/agents/qa/flow/main.md entries from docs/data/task-claim-owner-session-baseline.json) is NOT committed by agent-father — outside its commit_zone.allowed (docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/ only; docs/data/ is excluded), same precedent as the exact sibling task 21e97ab66 (FIX-CI-TASKCLAIM-PO-FLOW-OWNER-SESSION-PAYDOWN) which handed off its own baseline-trim rather than landing it directly. Ready-to-apply diff (count 19->17, drop the 2 qa/flow/main.md entries at old lines 21/212) is prepared and available; a developer/PO needs to land it in one commit. This does NOT block AC1 — verified live that lint --check passes even with the untrimmed baseline (stale entries become inert once the underlying violation is fixed, they just no longer match any live violation). Routing to po for baseline-trim handoff + CI-green follow-up verification.\n\n[po/review-drain 2026-08-15T12:24:56Z] DONE_VERIFIED. RAW-verified independently by po, not accepted from agent self-report. AC1 CONFIRMED: `bash scripts/audits/task-claim-owner-session-lint.sh --check` executed live by po -> RC=0, \"PASS - 0 new offenders (scanned 276 files)\". Verification gate ci_green_on_subsequent_push SATISFIED: job task-claim-owner-session-lint conclusion=success on 4 consecutive post-fix pushes (runs 31883061393/152f08a12, 31882412530/282ac6aaf, 31881972518/54735352c, 31880629878/46f5c677c), all later than ef4b5b29c (2026-08-13T22:58Z, confirmed ancestor of origin/main via git merge-base --is-ancestor). AC2 LANDED BY PO THIS TICK - the piece agent-father structurally could not commit (docs/data/ outside its commit_zone.allowed): deleted both stale docs/agents/qa/flow/main.md entries (old lines 21/212) from docs/data/task-claim-owner-session-baseline.json, count 19->17; lint re-run AFTER the trim still RC=0, \"baseline carries 17 grandfathered site(s)\". Diff verified exactly scoped: 1 file, 1 insertion, 11 deletions. Baseline confirmed to hold ZERO docs/agents/po/flow/main.md entries, i.e. the sibling row's trim did land - same precedent now closed for qa. AC3 CONFIRMED: param name owner_client_session matches live apps/mcp-server/src/interface/mcp/tools/system/coordination/taskReleaseTool.ts:35, re-derived not copied. AC4 CONFIRMED: both call sites (now lines 22/235 - content-located; the dispatch note's \"221\" was stale line drift, benign) instruct substituting the resolved session id and explicitly warn NEVER to write the literal $CLAUDE_CODE_SESSION_ID text. AC5 CONFIRMED: best-effort / INV-GATEWAY-1 posture preserved - this is a real orphaned-lock correctness fix, not lint appeasement. SCOPE NOTE: umbrella CI workflow remains RED on an UNRELATED job - size-lint, offender apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts (baseline=464L actual=605L upper=510L) - already tracked by backlog row FIX-CI-SIZELINT-GETBCTCPENDINGREFINETOOL-BASELINE-TOLERANCE-EXCEEDED, so no new row minted. This row's dedup_key + ci_fingerprint scope is fully closed.",
-        "updated_at": "2026-08-15T12:30:29Z",
-        "po_expedited_at": "2026-08-13T17:28:37Z",
-        "po_expedited_by": "po/triage-20260813T1722Z",
-        "updated_by": "po (review-lane secondary-drain sign-off)",
-        "claimed_at": "2026-08-13T22:51:13Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "agent-father",
-        "secondary_claimed_at": "2026-08-15T12:21:50Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "po",
-        "qa_verified_at": "2026-08-15T12:24:56Z",
-        "verified_at": "2026-08-15T12:24:56Z",
-        "verified_by": "po",
-        "verification": {
-          "raw_probe": {
-            "tool": "bash scripts/audits/task-claim-owner-session-lint.sh --check (run live by po, pre- AND post-baseline-trim) + gh run view <run_id> --json jobs (job-level conclusion, 4 runs) + git merge-base --is-ancestor ef4b5b29c origin/main + jq count/entries on docs/data/task-claim-owner-session-baseline.json + grep of live taskReleaseTool.ts",
-            "args": "lint --check at HEAD 4572e602a; gh runs 31883061393/152f08a12, 31882412530/282ac6aaf, 31881972518/54735352c, 31880629878/46f5c677c filtered to job name==\"task-claim-owner-session-lint\"; jq '.entries|map(select(.file!=\"docs/agents/qa/flow/main.md\"))' baseline; grep -n 'owner_client_session' apps/mcp-server/src/interface/mcp/tools/system/coordination/taskReleaseTool.ts",
-            "live_value_observed": "lint PRE-trim: RC=0 'PASS - 0 new offenders (scanned 276 files; baseline carries 19 grandfathered site(s))'. lint POST-trim: RC=0 'PASS - 0 new offenders (scanned 276 files; baseline carries 17 grandfathered site(s))'. CI job task-claim-owner-session-lint conclusion=success on all 4 probed post-fix runs. ef4b5b29c IS ancestor of origin/main (pushed). baseline count 19->17, qa/flow entries remaining=0, diff 1 file/1 insertion/11 deletions. taskReleaseTool.ts:35 declares owner_client_session (param name matches doc). Umbrella CI still failure but ONLY on unrelated job size-lint (getBctcPendingRefineTool.ts baseline=464L actual=605L upper=510L), already tracked by FIX-CI-SIZELINT-GETBCTCPENDINGREFINETOOL-BASELINE-TOLERANCE-EXCEEDED.",
-            "observed_at": "2026-08-15T12:24:56Z",
-            "evidence_commit": "ef4b5b29c77547034c72510ca9c7dd6e437ab7f4",
-            "verdict": "DONE_VERIFIED - all 5 ACs independently confirmed; AC2 baseline-trim executed by po this tick",
-            "post_trim_ci_confirmation": {
-              "run_id": 31884730770,
-              "job_id": 95012261435,
-              "head_sha": "119acd83427d8f4da53225ff9bf51eb042918f17",
-              "job": "task-claim-owner-session-lint",
-              "conclusion": "success",
-              "ci_log_verbatim": "[task-claim-lint] PASS — 0 new offenders (scanned 276 files; baseline carries 17 grandfathered site(s))",
-              "observed_at": "2026-08-15T12:30:28Z",
-              "note": "Gate re-confirmed IN CI on the AC2 baseline-trim commit itself (not only on the 4 pre-trim runs) — proves the 19->17 trim did not regress the lint. Closes ci_green_on_subsequent_push against po's own change."
-            }
-          }
-        }
       }
     ],
     "head": {
