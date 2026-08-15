@@ -2,7 +2,7 @@
   "_generated_by": "scripts/audits/task-claim-owner-session-lint.sh --update",
   "_note": "Per-call-site grandfather baseline for scripts/audits/task-claim-owner-session-lint.sh --check. Keyed on the EXACT (file, line, snippet) triple — any edit to a grandfathered line forces re-triage (ratchet, not silence). Entries drop automatically on the next --update once a call site gains owner_client_session.",
   "_ssot": "docs/data/task-claim-owner-session-baseline.json",
-  "count": 19,
+  "count": 17,
   "entries": [
     {
       "file": "docs/agents/ba/init.md",
@@ -87,16 +87,6 @@
     {
       "file": "docs/agents/pm/init.md",
       "line": 139,
-      "snippet": "call_tool(server=\"vn-market\", tool=\"task_release\", arguments={ task_id: \"task:\" + task_id })"
-    },
-    {
-      "file": "docs/agents/qa/flow/main.md",
-      "line": 21,
-      "snippet": "> call_tool(server=\"vn-market\", tool=\"task_release\", arguments={ task_id: \"task:\" + task_id })"
-    },
-    {
-      "file": "docs/agents/qa/flow/main.md",
-      "line": 212,
       "snippet": "call_tool(server=\"vn-market\", tool=\"task_release\", arguments={ task_id: \"task:\" + task_id })"
     }
   ]
