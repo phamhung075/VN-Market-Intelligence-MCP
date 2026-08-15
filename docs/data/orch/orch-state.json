@@ -17417,7 +17417,7 @@
         "promoted_at": "2026-08-12T06:25:30Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "updated_at": "2026-08-12T09:38:06Z",
+        "updated_at": "2026-08-15T08:23:43Z",
         "claimed_at": "2026-08-12T09:24:52Z",
         "claimed_by": "dev-team (review-lane qa-drain)",
         "next_agent": "dev-mcp-server",
@@ -17425,7 +17425,10 @@
         "commit_sha": "0f23a703f",
         "note": "Split pollNews.ts (1444L, no size-justification header) into 5 single-responsibility siblings under application/usecases/pollNews/ (types.ts, insiderDetectors.ts, signalDedup.ts, defaultFetchers.ts, dbHelpers.ts) + a 923L orchestrator that re-exports everything unchanged (zero external call-site changes, grep-verified). Dropped grep-confirmed-dead defaultTradingEconomicsFetcher. Further staged decomposition of the orchestrator body itself is flagged as follow-up, not done this pass. tsc clean, size-lint clean (scoped baseline update, only pre-existing untouched transport.ts still fails), 13/13 pollNews test files pass in isolation, Gate 2b/2c/2d match baseline (toolCount=183/cronJobCount=88). Full-suite-under-contention timeouts on 4 pollNews-touching tests reproduced identically against pre-split HEAD — pre-existing flake, not a regression (detail: DJ sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-5.md S86).",
         "status_note": "[QA] Direct-Commit Verify (verify-committed) — CHANGES_REQUESTED, redispatch. Commit 0f23a703f is real, on main ancestry, touches all claimed files; zero-external-call-site-change claim confirmed by grep; tsc clean; size-lint-justification.sh --check clean (only pre-existing untouched transport.ts fails); mock-guard PASS; DDD/security greps clean; all 21 pollNews-touching test files re-run myself in isolation, 109/109 pass (2 flake only under batch contention, matches commit's own disclosed claim). ISSUE: DoD/approach (backlog-detail.json) named target modules insiderSignalDetector(->domain/)/sourceFetchers/sourceHealth/ingestEntries/buildSignals — extraction of pollNews()'s own pipeline STAGES, target pollNews.ts ~120L thin orchestrator, each module <=120L. Delivered pollNews.ts is still 923L; the ~790L pipeline body (fetch/health -> dedup/insert -> cascade/alert-generation) is untouched — only peripheral clusters (types/insiderDetectors/signalDedup/defaultFetchers/dbHelpers) were extracted, none of which correspond to the approach's named stage targets; 4/5 new files already exceed the 120L cap (size-justification headers present, so size-lint passes, but the task's own DoD text is unmet). Commit message itself discloses this gap (\"further staged decomposition... not done this pass\") but the row was routed to qa[] as if terminal. Sibling same-epic precedent FACTORY-APP-split-assembleBriefing (commit 4744b0792) hit its identical \"thin <=120L\" DoD fully in ONE commit (1327L -> 72L sequencer, ALL 19 steps extracted) — direct evidence this task is achievable in the intended shape and this delivery falls far short. Not a regression, not broken — genuinely incomplete against its own Definition of Done. Next: owner continues the \"one extraction per commit\" ladder (approach note) to actually decompose pollNews()'s pipeline body, or PO re-scopes/splits the task if partial closure is intended. Full reasoning: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-18.md STEP qa-S78.",
-        "redispatch_count": 1
+        "redispatch_count": 1,
+        "secondary_claimed_at": "2026-08-15T08:23:42Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "dev-mcp-server"
       },
       {
         "id": "FIX-COWORK-DELIVERY-PROOF-GATE-ONLY-CATCHES-ROUTERLATCH-NARRATION",
@@ -18547,7 +18550,7 @@
         "last_served_tick": "2026-08-15T07:53:07Z"
       },
       "sls": {
-        "last_served_tick": "2026-08-15T05:19:51Z"
+        "last_served_tick": "2026-08-15T08:23:02Z"
       },
       "rlc": {
         "last_served_tick": "2026-08-15T05:49:52Z"
@@ -18562,7 +18565,7 @@
         "last_served_tick": "2026-08-15T07:20:46Z"
       }
     },
-    "_updated_at": "2026-08-15T08:19:45Z",
+    "_updated_at": "2026-08-15T08:23:02Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
