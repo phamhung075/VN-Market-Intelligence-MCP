@@ -12014,28 +12014,6 @@
         "updated_at": "2026-08-15T04:01:32Z"
       },
       {
-        "id": "FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION",
-        "type": "FIX",
-        "size": "S",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "owner": "developer",
-        "supervised": false,
-        "depends_on": [],
-        "blocks": [
-          "FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT"
-        ],
-        "created_at": "2026-08-15T04:19:48Z",
-        "created_by": "po (supervised-goahead ratification of FIX-ORCHSTATE-HOTFILE-BLOAT step 3)",
-        "updated_at": "2026-08-15T09:23:43Z",
-        "title": "orch-backlog-stub.sh cold-merge crashes on the REAL backlog-detail.json (.items is an ARRAY, not an id-keyed object) - blocks the LANES=backlog,ready,review migration",
-        "note": "BLOCKER for FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT step 3 (the supervised one-time LANES=backlog,ready,review migration). Found by PO during supervised-goahead ratification 2026-08-15 via end-to-end rehearsal against a byte-identical scratch copy of the live file — NOT caught by any of the 4 green suites (191/191). REPRO (read-only, safe, ~10s): cp docs/data/orch/orch-state.json + docs/data/orch/archive/backlog-detail.json into a scratch dir, then `LANES=backlog,ready,review ORCH_STATE=<scratch>/orch-state.json ARCHIVE_DIR=<scratch>/archive DETAIL_FILE=<scratch>/archive/backlog-detail.json bash scripts/orch-backlog-stub.sh` -> exit 5, `jq: error: array ([{\"baseline...) and object ({\"TASK_RUNI...) cannot be multiplied`. AC-1 (F-4, the crash): build_detail_temp merge branch assumes cold `.items` is an id-keyed OBJECT; the real docs/data/orch/archive/backlog-detail.json `.items` is an ARRAY of 442 id-bearing objects (top-level `.count` says 437 — already drifted, fix that too). Both merge forms break on it: post-F-3 `.items * $new_items` = array*object, and the pre-F-3 `($new_items + .items)` = object+array — i.e. PRE-EXISTING, the merge branch has never once worked against the live cold file, only against cold files this script itself created via its fresh-create/from_entries branch (which is why 25/25 stub assertions stay green). Normalize the shape at ingest exactly as the READER side already does — scripts/lib/devteam-eligibility.jq detail_items_from() (FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX, 2026-07-09) — and reuse that def rather than hand-rolling a second copy (this repo has already paid for hole-by-hole duplication of these predicates). Decide and document whether the cold file is rewritten to object shape or kept array-shaped for back-compat with every existing reader. AC-2 (F-5, silent ratification revocation): STUB_FIELDS is an unconditional whitelist, so build_hot_temp strips po_goahead_* from hot rows; WF-2 should_hold reads that key from HOT row keys UNION .head keys with NO cold fallback (unlike effective_supervised/plan_only/owner/next_agent). Live today: 5 ready[]+review[] rows carry a po_goahead stamp, 4 supervised:true — a migration would silently un-ratify them. Preserve any key matching ^po_goahead through the strip (simplest: whitelist-by-prefix in build_hot_temp, same defense-in-depth rationale that put depends_on/depends/blocked_by into STUB_FIELDS). AC-3: a regression test that runs the merge branch against an ARRAY-shaped cold fixture (the gap that hid F-4), and one asserting a po_goahead_* key survives a stub run. AC-4 (verification bar, do not skip): re-run the scratch rehearsal above end-to-end to exit 0 with reconciliation PASS BEFORE claiming done — the shipped fixture suites provably do not cover this path. Consider also is_non_dev_owner_unrouted() reading .next_agent inline-only (116 in-scope rows lose it -> predicate flips true -> newly gated); confirm intended or widen to effective_next_agent. Full evidence in the blocked rows po_review_20260815T041948 field.",
-        "po_priority_bump_20260815T0915Z": "[po 2026-08-15T09:15Z] PRIORITY P1 -> P0. This is no longer just a migration blocker, it is a GOVERNANCE DEADLOCK on PO own ratification path, and the evidence arrived twice independently this tick. (1) Report 4911 (dev-mcp-server, 2026-08-15T07:49:20Z): SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD is 34,725B vs the 12,000B ceiling, so Stage 2.5 hard-rejects ANY inline write to it INCLUDING PO own future po_goahead_* stamp — that row cannot be ratified by anyone until this lands. (2) dev-pdf-extractor verify_note (2026-08-15T09:08:10Z) hit the identical wall on FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (29,151B live) and had to route its disposition into verify_note as a workaround. PO measured the true blast radius live this tick via two orch-apply.sh runs: 41 distinct rows are already over ceiling and grandfathered, several of them P0/P1 rows in review[] awaiting exactly the kind of PO stamp that is now impossible to write. The sanctioned remedy (LANES=review orch-backlog-stub.sh detail_ref sweep, gated behind FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT which is supervised+plan_only/next_agent=po) CANNOT be authorized by PO until THIS crash is fixed, because the sweep script itself crashes on the real backlog-detail.json shape. So the dependency chain is: this row -> unblocks the stub sweep -> unblocks FIX-ORCHSTATE-HOTFILE-BLOAT ratification -> unblocks po_goahead stamping on the 41 over-ceiling rows. Size is S and zone is cross-service/ — cheapest row in the whole chain and it gates all of it. Fix root cause, not the symptom: do NOT keep routing individual dispositions into verify_note as dev-pdf-extractor was forced to.",
-        "updated_by": "po/triage-20260815T0915Z"
-      },
-      {
         "id": "FIX-TASKKIND-ENUM-NO-GUARD-MARKER-CATEGORY",
         "type": "FIX",
         "size": "M",
@@ -12082,8 +12060,11 @@
         ],
         "consumer_impact": "BCTC extraction pipeline: pdf-extractor is the OCR/table-extraction hop for every bctc PDF. Its parent-process burst reached VmHWM 2,541,184kB (~97% of the 2.5 GiB cap) in a prior life; until the malloc_trim fix is actually running, that headroom risk is live on every burst and an OOM there silently stalls BCTC ingestion.",
         "sequencing": "DISPATCH ORDER CONSTRAINT (PO decision, 2026-08-15T09:15Z): if this row and UNBLOCK-RAG-OPS-DEPLOY-AND-DURABILITY-MEASUREMENT-WINDOW go to the same ops session, take the rag-service D1-D5 durability READING FIRST (read-only sampling, its 12h+ post-deploy window is already banked and a rebuild on the same host can perturb it — see the 2026-08-08 SSE soak that was reset 3x by unrelated shared-container churn), THEN do this rebuild. Never interleave.",
-        "updated_at": "2026-08-15T09:22:36Z",
-        "updated_by": "po/triage-20260815T0915Z"
+        "updated_at": "2026-08-15T09:49:23Z",
+        "updated_by": "ops",
+        "ops_ac1_ac2_status": "PASS",
+        "ops_deployment_verdict": "SUCCESS: AC-1/AC-2 verified, new image deployed, malloc_trim present",
+        "ops_new_image_sha": "sha256:4ee7f1c3598ed8508697a1db638e6f5a3ed2ef25b5e9c77e0b7e4a69565ac997"
       }
     ],
     "closed_sprints": [
@@ -16860,7 +16841,7 @@
         "created_by": "router",
         "next_agent": "developer",
         "supervised": false,
-        "updated_at": "2026-08-13T06:57:13Z",
+        "updated_at": "2026-08-15T09:54:40Z",
         "promoted_at": "2026-07-25T16:26:38Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
@@ -16873,7 +16854,7 @@
         "owner": "developer",
         "redispatch_count": 1,
         "status_note": "[QA] Direct-Commit Verify FAILED 2026-08-06 — CHANGES_REQUESTED. Independently re-ran the self-report's own regression harness (scripts/test-fb-gate-checkd2-nonwaivable.sh) against live HEAD (742ae5850) rather than trusting the \"GREEN 10/10\" prose in review_note: RESULT NOW 8 passed / 2 failed. Both failures are section (3) doc-prose assertions:\n  - (3b) scripts/test-fb-gate-checkd2-nonwaivable.sh:168 checks docs/agents/fb-market-poster/flow/main.md for \"NON-WAIVABLE\" + \"Check-D2 fix protocol\" — FAILS, not found.\n  - (3c) scripts/test-fb-gate-checkd2-nonwaivable.sh:174 checks main.md for the Check-C honest-gap-and-PROCEED waive sentence — FAILS, not found.\n\nROOT CAUSE: NOT a regression of this fix's substance. A LATER, unrelated commit 8d165e8d6 (chore(agent-father/TE-T26): split fb-market-poster main.md at MODE ROUTER, 2026-08-06) relocated ALL of STEP 4b — including the entire Check-D2 NON-WAIVABLE block this task added — out of main.md (now an 88L thin dispatcher) into a NEW file docs/agents/fb-market-poster/flow/daily.md:640-641,677-678. Confirmed via grep the content IS present there verbatim, and weekly-recap.md:173-174 / weekly-prediction.md:219-220 were correctly repointed by that same split commit to \"apply daily.md STEP 4b's Check-D2 fix protocol\" instead of main.md. So the flow-doc fix itself is intact and live; only this task's OWN test script (assertions 3b/3c hardcode MAIN_FLOW=.../flow/main.md) was left pointing at the pre-split location and is now a false-RED.\n\nAssertions (1)/(2) [live-fixture runtime BLOCK proof + no-regression contrast PASS] and (3a)/(3d) [ambiguous-phrase-removed + cross-file marker present] all still hold. Re-ran sibling scripts/test-fb-gate-checkc-negation.sh too: 6/6 unaffected, no collateral damage. Confirmed docs/social/fb-post-2026-07-25.md untouched (0 diff) as claimed; commits 1b506cbdd + 7b87ac372 both real, on main ancestry, touch exactly the files claimed.\n\nFIX NEEDED (small, test-only, no flow-doc change required): scripts/test-fb-gate-checkd2-nonwaivable.sh:57 MAIN_FLOW var (and the two grep targets at :168 and :174) must point at docs/agents/fb-market-poster/flow/daily.md, not main.md — this task's own regression proof must pass GREEN against the CURRENT file layout before this can go done_verified. Not routing to fixer — no task branch exists (direct-commit row, branch:null). Held: .task_board.qa[] -> .task_board.review[], status QA -> REVIEW, owner/next_agent=developer, redispatch_count 0 -> 1.",
-        "secondary_claimed_at": "2026-08-13T06:57:12Z",
+        "secondary_claimed_at": "2026-08-15T09:54:39Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "developer"
       },
@@ -18106,6 +18087,36 @@
         "ops_measurement_verdict": "FAIL: D3 durability bar not met (peak 97.87%, 46% samples exceed 85%, volatility 118x threshold)",
         "ops_measurement_window": "13.2 hours (2026-08-14T20:19:20Z to 2026-08-15T09:35:54Z)",
         "updated_by": "ops"
+      },
+      {
+        "id": "FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION",
+        "type": "FIX",
+        "size": "S",
+        "status": "REVIEW",
+        "priority": "P0",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "owner": "developer",
+        "supervised": false,
+        "depends_on": [],
+        "blocks": [
+          "FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT"
+        ],
+        "created_at": "2026-08-15T04:19:48Z",
+        "created_by": "po (supervised-goahead ratification of FIX-ORCHSTATE-HOTFILE-BLOAT step 3)",
+        "updated_at": "2026-08-15T09:56:53Z",
+        "title": "orch-backlog-stub.sh cold-merge crashes on the REAL backlog-detail.json (.items is an ARRAY, not an id-keyed object) - blocks the LANES=backlog,ready,review migration",
+        "note": "BLOCKER for FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT step 3 (the supervised one-time LANES=backlog,ready,review migration). Found by PO during supervised-goahead ratification 2026-08-15 via end-to-end rehearsal against a byte-identical scratch copy of the live file — NOT caught by any of the 4 green suites (191/191). REPRO (read-only, safe, ~10s): cp docs/data/orch/orch-state.json + docs/data/orch/archive/backlog-detail.json into a scratch dir, then `LANES=backlog,ready,review ORCH_STATE=<scratch>/orch-state.json ARCHIVE_DIR=<scratch>/archive DETAIL_FILE=<scratch>/archive/backlog-detail.json bash scripts/orch-backlog-stub.sh` -> exit 5, `jq: error: array ([{\"baseline...) and object ({\"TASK_RUNI...) cannot be multiplied`. AC-1 (F-4, the crash): build_detail_temp merge branch assumes cold `.items` is an id-keyed OBJECT; the real docs/data/orch/archive/backlog-detail.json `.items` is an ARRAY of 442 id-bearing objects (top-level `.count` says 437 — already drifted, fix that too). Both merge forms break on it: post-F-3 `.items * $new_items` = array*object, and the pre-F-3 `($new_items + .items)` = object+array — i.e. PRE-EXISTING, the merge branch has never once worked against the live cold file, only against cold files this script itself created via its fresh-create/from_entries branch (which is why 25/25 stub assertions stay green). Normalize the shape at ingest exactly as the READER side already does — scripts/lib/devteam-eligibility.jq detail_items_from() (FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX, 2026-07-09) — and reuse that def rather than hand-rolling a second copy (this repo has already paid for hole-by-hole duplication of these predicates). Decide and document whether the cold file is rewritten to object shape or kept array-shaped for back-compat with every existing reader. AC-2 (F-5, silent ratification revocation): STUB_FIELDS is an unconditional whitelist, so build_hot_temp strips po_goahead_* from hot rows; WF-2 should_hold reads that key from HOT row keys UNION .head keys with NO cold fallback (unlike effective_supervised/plan_only/owner/next_agent). Live today: 5 ready[]+review[] rows carry a po_goahead stamp, 4 supervised:true — a migration would silently un-ratify them. Preserve any key matching ^po_goahead through the strip (simplest: whitelist-by-prefix in build_hot_temp, same defense-in-depth rationale that put depends_on/depends/blocked_by into STUB_FIELDS). AC-3: a regression test that runs the merge branch against an ARRAY-shaped cold fixture (the gap that hid F-4), and one asserting a po_goahead_* key survives a stub run. AC-4 (verification bar, do not skip): re-run the scratch rehearsal above end-to-end to exit 0 with reconciliation PASS BEFORE claiming done — the shipped fixture suites provably do not cover this path. Consider also is_non_dev_owner_unrouted() reading .next_agent inline-only (116 in-scope rows lose it -> predicate flips true -> newly gated); confirm intended or widen to effective_next_agent. Full evidence in the blocked rows po_review_20260815T041948 field.",
+        "po_priority_bump_20260815T0915Z": "[po 2026-08-15T09:15Z] PRIORITY P1 -> P0. This is no longer just a migration blocker, it is a GOVERNANCE DEADLOCK on PO own ratification path, and the evidence arrived twice independently this tick. (1) Report 4911 (dev-mcp-server, 2026-08-15T07:49:20Z): SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD is 34,725B vs the 12,000B ceiling, so Stage 2.5 hard-rejects ANY inline write to it INCLUDING PO own future po_goahead_* stamp — that row cannot be ratified by anyone until this lands. (2) dev-pdf-extractor verify_note (2026-08-15T09:08:10Z) hit the identical wall on FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM (29,151B live) and had to route its disposition into verify_note as a workaround. PO measured the true blast radius live this tick via two orch-apply.sh runs: 41 distinct rows are already over ceiling and grandfathered, several of them P0/P1 rows in review[] awaiting exactly the kind of PO stamp that is now impossible to write. The sanctioned remedy (LANES=review orch-backlog-stub.sh detail_ref sweep, gated behind FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT which is supervised+plan_only/next_agent=po) CANNOT be authorized by PO until THIS crash is fixed, because the sweep script itself crashes on the real backlog-detail.json shape. So the dependency chain is: this row -> unblocks the stub sweep -> unblocks FIX-ORCHSTATE-HOTFILE-BLOAT ratification -> unblocks po_goahead stamping on the 41 over-ceiling rows. Size is S and zone is cross-service/ — cheapest row in the whole chain and it gates all of it. Fix root cause, not the symptom: do NOT keep routing individual dispositions into verify_note as dev-pdf-extractor was forced to.",
+        "updated_by": "developer",
+        "status_note": "F-4 (AC-1): build_detail_temp() merge branch crashed on the real ARRAY-shaped cold .items (442-element array, not id-keyed object) — exit 5, \"array (...) and object (...) cannot be multiplied\". Fixed by normalizing via scripts/lib/devteam-eligibility.jq detail_items_from() (reused via jq -L + include, not hand-rolled) before the F-3 per-field merge. Shape decision (documented in the script header + dev-standards.md): .items now ALWAYS written back ARRAY-shaped — matches the live shape, matches po-detail-resync-review-lifecycle-routing.sh own read+write convention (only other writer — would flip it back to array on its next run regardless), and is the only shape that round-trips the 1 pre-id-scheme legacy cold record without destroying it. Also fixed the adjacent reconciliation bug (.items | keys on an array yields indices not ids). F-5 (AC-2): preserved ^po_goahead keys through build_hot_temp() STUB_FIELDS whitelist by prefix — WF-2 should_hold has no cold fallback for that key, so a stub re-run used to silently revoke a PO ratification; verified all 6 live po_goahead_* rows byte-preserved. AC-3: new T8 (array-shaped cold input + id-less legacy record preservation) + T9 (po_goahead survival) in orch-backlog-stub.test.sh; T3-T7 updated for the shape decision (35/35, was 25/25, all 6 new RED pre-fix). AC-4 (mandatory, done before claiming this row done): re-ran the exact scratch rehearsal against a byte-identical read-only copy of the live orch-state.json + backlog-detail.json (LANES=backlog,ready,review) — pre-fix exit 5 (crash reproduced verbatim), post-fix exit 0, \"Reconciliation PASS — all hot stub ids confirmed in cold detail\", hot file 3455546B->1209788B; never written to the real files. shellcheck clean. No apps/ TS/Go touched, bun test/tsc N/A (pure bash/jq). Unblocks: FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT step 3 (supervised live migration) -> PO po_goahead stamping on the 41 over-ceiling rows.",
+        "commit": "b1aa63b7a,6f55a013e",
+        "files": [
+          "scripts/orch-backlog-stub.sh",
+          "scripts/orch-backlog-stub.test.sh",
+          "docs/policies/dev-standards.md",
+          "docs/WORK.md"
+        ]
       }
     ],
     "qa": [
@@ -18513,13 +18524,13 @@
         "last_served_tick": "2026-08-15T09:26:45Z"
       },
       "qa_drain": {
-        "last_served_tick": "2026-08-15T06:50:58Z"
+        "last_served_tick": "2026-08-15T09:54:08Z"
       },
       "step1_triage": {
         "last_served_tick": "2026-08-15T07:20:46Z"
       }
     },
-    "_updated_at": "2026-08-15T09:26:45Z",
+    "_updated_at": "2026-08-15T09:49:16Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -18774,6 +18785,33 @@
         },
         "createdAt": "20260815T090510Z",
         "drained_at": "2026-08-15T09:20:56Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "081f99f5deb3e8e3335e31f45206d82f2d57e2bee9031a7ca65dc03210fbeb27",
+        "source": "file",
+        "from": "router",
+        "to": "po",
+        "type": "flow_defect_report",
+        "priority": "low",
+        "payload": {
+          "source": "po triage run b6bf37d10 (2026-08-15T09:15Z), decision journal docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-po-9.md",
+          "findings": [
+            {
+              "defect": "docs/agents/po/flow/main.md AC-3 false-negative by construction",
+              "detail": "AC-3 checks `git show --stat \"$SHA\" | grep -q 'orch-state.json'` to confirm a po commit carries its own orch-state.json write, and fires a BUG telegram on miss. This misses whenever a peer commit sweeps po's own orch-apply.sh write into HEAD before po's own commit lands — po's diff then legitimately carries only notebook+journal, no orch-state.json path, and the check still fires a false BUG. Occurred this run: peer commit b0c5d42b9 swept the write, po's own b6bf37d10 carried only notebook+journal. Po worked around it inline by verifying via `git show HEAD:docs/data/orch/orch-state.json` (content-in-HEAD) instead of trusting the AC-3 script (path-in-own-diff). Fix should re-scope AC-3 to check content landed in HEAD, not that po's own commit's diff names the path.",
+              "severity": "low — self-worked-around this run, no data/board consequence, but will misfire again on the next peer-sweep race"
+            },
+            {
+              "defect": "process_telegram_report / claim_telegram_report absent from docs/agents/tools/package/po.md",
+              "detail": "Reports 4911 (SPIKE-BCTC, 34,725 B — unratifiable by anyone under the 12,000 B prose ceiling) and 4912 remain status=new and will keep resurfacing every triage pass because po's documented tool package has no claim/process step for the telegram-report queue. Po acted on their content this run anyway but could not drain the queue state.",
+              "severity": "low — non-blocking, but queue will keep re-surfacing the same reports until the tool package is extended"
+            }
+          ],
+          "note": "Both are non-urgent, already-worked-around findings from a specialist's own report — dropped as a signal only so they reach the next PO/agent-father triage instead of sitting undiscovered in a decision-journal file. No router action taken beyond routing."
+        },
+        "createdAt": "2026-08-15T09:30:00Z",
+        "drained_at": "2026-08-15T09:49:16Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
