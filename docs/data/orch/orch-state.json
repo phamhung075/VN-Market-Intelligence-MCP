@@ -18522,7 +18522,7 @@
         "last_served_tick": "2026-08-15T07:20:46Z"
       }
     },
-    "_updated_at": "2026-08-15T08:23:02Z",
+    "_updated_at": "2026-08-15T08:50:45Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -18704,6 +18704,30 @@
         },
         "createdAt": "2026-08-15T08:11:09Z",
         "drained_at": "2026-08-15T08:19:45Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "253d408c96f40829cf2ead3ef23f68812a298ef039cd3df20e81483a95ac7743",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/dev-mcp-server.md docs/data/orch/orch-state.json. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=32 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-15T08:47:13Z",
+        "drained_at": "2026-08-15T08:50:45Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3c7c6d9211c17980df949288df5e2622654677c6adfa89477cc8653aa23020d8",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/data/orch/orch-state.json' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/data/orch/orch-state.json' (dd57d6734bc83d5a4518abf4da0bdb07e36328b8) differs from what is about to land in this commit (47f00785ef28f43e5f831a578368f8d5942682f1) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope (two-blob form takes NO pathspec — do not append '-- docs/data/orch/orch-state.json', that is a git usage error): git diff dd57d6734bc83d5a4518abf4da0bdb07e36328b8 47f00785ef28f43e5f831a578368f8d5942682f1",
+        "createdAt": "2026-08-15T08:47:56Z",
+        "drained_at": "2026-08-15T08:50:45Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
