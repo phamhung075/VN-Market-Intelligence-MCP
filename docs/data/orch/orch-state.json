@@ -18563,7 +18563,7 @@
         "last_served_tick": "2026-08-15T07:20:46Z"
       }
     },
-    "_updated_at": "2026-08-15T07:53:07Z",
+    "_updated_at": "2026-08-15T08:19:45Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -18668,6 +18668,83 @@
         },
         "createdAt": "2026-08-15T07:41:40Z",
         "drained_at": "2026-08-15T07:50:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c98c2ef5701ee87be3bdadd2ba180998c2856edd5bdc9d919419379a45436ea8",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json. actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 mode=warn escalated=true prior_warns=31 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-15T08:02:54Z",
+        "drained_at": "2026-08-15T08:19:45Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ee7e7f341b7da949cf717ed58e809f819c8fdd86822e5e08520a7c1b8a24868e",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-15T08:11:09Z",
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 7,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "unknown",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "news-scout-offhours": "240",
+            "market-watcher-offhours": "240",
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-15T08:11:09Z",
+          "last_fired_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "08:00",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 33,
+          "note": "3-slot single batch (MAX_PARALLEL=4, headroom_mb=4188, load1m=4/cores=12, not degraded); all backgrounded, no spawn errors; tick-snapshot write skipped (minute-boundary jq race, non-fatal, agents fall back to direct get_cycle_bootstrap)"
+        },
+        "createdAt": "2026-08-15T08:11:09Z",
+        "drained_at": "2026-08-15T08:19:45Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
