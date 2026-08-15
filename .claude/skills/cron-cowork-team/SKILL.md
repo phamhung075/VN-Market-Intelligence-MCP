@@ -32,14 +32,41 @@ CronCreate/CronList are strictly per-CLI-session — a peer terminal's registrat
 both `CronCreate` the same dispatcher, THEN runs the local `CronList` classify below.
 Full mechanism spec: `docs/architecture-briefs/2026-08-06-cron-rearm-cross-session-dedup.md` §1.2-1.4.
 
-**Step 1a — Fast path (cheap, blind heartbeat):**
+**Step 1a — Fast path (per-process fingerprint compare, FIX-COWORK-CRON-SIBLING-PROCESS-DEFER):**
+
+Compute once per invocation — guards two sibling OS processes sharing one `$CLAUDE_CODE_SESSION_ID`
+(session-UUID alone can't tell them apart; `CronCreate`/`CronList` are strictly per-OS-process):
+```bash
+PPID_START="$(ps -p "$PPID" -o lstart= 2>/dev/null | tr -s ' ' '_')"; PPID_START="${PPID_START:-unknown}"
+LOCAL_FP="ppid-${PPID}-start-${PPID_START}-host-$(hostname)"
+```
 ```
 hb = call_tool(server="vn-market", tool="task_heartbeat", arguments={
   task_id: "cron-registration:cowork-team", owner_client_session: $CLAUDE_CODE_SESSION_ID
 })
 ```
-`hb.ok == true` → this session already owns the marker → **GOTO Step 1d** (local classify).
-`hb.ok == false` → not found, or owned by someone else → continue to Step 1b.
+`hb.ok == false` → continue to Step 1b.
+`hb.ok == true` → session UUID matches, but a sibling process could too — compare fingerprints:
+```
+marker_rows = call_tool(server="vn-market", tool="task_list_held", arguments={kind: "sprint-task"})
+# filter client-side for task_id == "cron-registration:cowork-team"
+STORED_FP = marker_row.payload.registering_process   # absent = pre-fix marker
+```
+- Absent → one-time backfill (avoids a false-positive defer on the first post-fix tick):
+  `task_release` then `task_claim` (Step 1c fields) with the existing payload plus
+  `registering_process: LOCAL_FP` → **GOTO Step 1d**.
+- `STORED_FP == LOCAL_FP` → same OS process, unchanged happy path → **GOTO Step 1d**.
+- `STORED_FP != LOCAL_FP` → **SIBLING-PROCESS mismatch.** `age_seconds = now -
+  marker_row.heartbeat_at` (renewed only by the fingerprinted process's own `cowork-tick-
+  preflight.sh` Step 2 — a per-process liveness proxy, unlike session-presence):
+  - `age_seconds <= 1800` → **DEFER**: log + `send_telegram(channel="work", "[cron-cowork-team]
+    sibling-process collision — session <SID> already armed by another live terminal sharing this
+    session ID. This terminal will NOT register its own */15 dispatcher.")`. **STOP** — no
+    Step 1d/1b/`Cron*` calls this invocation.
+  - `age_seconds > 1800` → sibling presumed dead — self-heal: `task_claim` (Step 1c fields) with
+    `registering_process: LOCAL_FP` + a `note` recording the steal/age → **GOTO Step 1d**.
+
+Full spec: `docs/architecture-briefs/2026-08-15-cowork-cron-registration-sibling-process-defer.md` §2.
 
 **Step 1b — Read the marker + resolve the holder:**
 ```
@@ -81,7 +108,7 @@ claim = call_tool(server="vn-market", tool="task_claim", arguments={
   task_id: "cron-registration:cowork-team", task_kind: "sprint-task",
   owner_agent: "cron-cowork-team", owner_client_session: $CLAUDE_CODE_SESSION_ID,
   ttl_seconds: 691200,
-  payload: {"jobs":[{"identity":"cowork-team master dispatcher","cron_expression":"*/15 * * * *"}],"registered_at":"<ISO8601 now>"}
+  payload: {"jobs":[{"identity":"cowork-team master dispatcher","cron_expression":"*/15 * * * *"}],"registered_at":"<ISO8601 now>","registering_process":"<LOCAL_FP from Step 1a>"}
 })
 ```
 `claim.claimed == true` → **GOTO Step 1d.** `claim.claimed == false` → a peer won a race between
@@ -240,3 +267,17 @@ Until TASK_1995 sign-off, the operator convention remains as FALLBACK (if the co
 **Period-key formula (reference):**
 `cron:cowork:<TICK>` where `TICK = floor(current_minute / 15) * 15 → YYYY-MM-DDTHH:MMZ`.
 See `docs/architecture-briefs/2026-06-28-fire-time-leader-election-P3-addendum.md` §A for full spec.
+
+---
+
+## Sibling-Process Defer — Fallback Only (not primary; Step 1a's fingerprint check is primary)
+
+If Step 1a's `registering_process` fingerprint check is ever suspected unreliable (e.g. the
+`$PPID`/`lstart` assumption doesn't hold in some future runtime), fall back to operator discipline:
+if this terminal should never run the cowork dispatcher (another terminal owns it), simply do not
+invoke `/cron-cowork-team` here. Mirrors the P3-OBSERVE-ONLY-RETIREMENT posture above —
+code-enforced first, human convention kept only as an explicit fallback, never silently primary.
+Retire once Step 1a has 2+ observed clean sibling-process defers with no false-positive — track in
+notebook, not a formal smoke-test gate (`.md`-only fix, no dev-team QA sprint).
+
+Full spec: `docs/architecture-briefs/2026-08-15-cowork-cron-registration-sibling-process-defer.md` §3.
