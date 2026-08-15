@@ -1,0 +1,25 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-08-15T11:28:02Z",
+  "payload": {
+    "file": ".claude/skills/cron-cowork-team/SKILL.md",
+    "line_count": 288,
+    "cap": 200,
+    "byte_count": 17356,
+    "byte_cap": 12000,
+    "class": "skill-file",
+    "reason": "line-cap,byte-cap",
+    "overage": 88,
+    "byte_overage": 5356,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "6f0317cd7549ac7b06f439e1b857477880a1dd7ffada1a35abe26088580ddcb9",
+    "processedAt": "2026-08-15T11:49:21Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
