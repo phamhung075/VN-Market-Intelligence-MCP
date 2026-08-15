@@ -159,3 +159,14 @@
 - One row for script + flow-doc edit — rejected: docs/agents/system-auditor/flow/ is agent-father's zone, scripts/ is not; cross-zone edit by developer is a zone violation.
 **why-decision:** Independently re-verified at source (not on architect's relay): parseBctcReport.ts:433-449 ON CONFLICT DO UPDATE SET carries `parsed_at = excluded.parsed_at` while published_at is verbatim commented out of the SET clause; :834 `callerPublishedAt ?? parsedAt`; ensureFinancialReportShellRow.ts:119 binds 'pending_extraction',0; MARKET_DB_HOST_PATH fixture seam + sqlite-wal-guard.sh both real; spec_doc committed c84cc13d5, clean. Design is implementable as written.
 **why-change:** Split into 3 rows instead of the spec's implicit 1 — zone ownership forces it, and the flow-doc flip MUST land after the script exists or C-04 references a missing file.
+
+### STEP po-S174 · po · 2026-08-15T04:19:48Z
+**task-id:** FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT
+**what-done:** DECLINED the supervised go-ahead for step 3 (live LANES=backlog,ready,review migration) — no `po_goahead_*` key written; row -> BLOCKED behind a newly-minted blocker FIX. Ratified steps 1/2/4/5 (reran all 4 suites myself: 191/191, 6 commits on origin/main).
+**what-considered:**
+- Ratify + execute step 3 now — REFUTED BY REHEARSAL, it cannot run at all.
+- Ratify + execute with a post-hoc re-stamp of the 4 clobbered `po_goahead` rows — rejected: patches a symptom I found by luck, leaves the write-side shape bug live.
+- Decline, leave row in REVIEW untouched — rejected: no machine-readable link to the blocker, row re-triaged from scratch every tick.
+- Decline + BLOCKED + mint the blocker with the repro — chosen.
+**why-decision:** I rehearsed step 3 end-to-end against a byte-identical scratch copy (real code path, real cold file) instead of reasoning from the brief: it aborts exit 5, `array ... and object cannot be multiplied` — live `backlog-detail.json` `.items` is an ARRAY of 442 objects, not the id-keyed object `build_detail_temp` assumes. Pre-existing (pre-F-3 `+` form breaks identically), invisible to all 25 stub assertions because every fixture creates cold via the from_entries branch. Second blocker: `STUB_FIELDS` is an unconditional whitelist, so the migration strips `po_goahead_*`, which WF-2 reads from hot row keys only — 4 live supervised rows would have been silently un-ratified. Ratifying would have authorized a write that crashes, and whose success would have been worse than its failure.
+**why-change:** Brief §2.4's premise that STUB_FIELDS "deliberately never strips" lifecycle/provenance fields is factually wrong — `build_hot_temp` strips all of them; that inaccuracy is what hid blocker 2 at design time. Brief §0's 623-row basis is also stale (546 today, review[] 186->37).
