@@ -1,6 +1,24 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-15T10:05:00Z | **Cycle:** FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK (P1 S, stale review-lane triage, router-direct dispatch)
+**Last updated:** 2026-08-15T10:30:00Z | **Cycle:** FU-RAG-DEPLOY-MEMORY (P0 M, PO re-scope + unblock, router-direct dispatch)
+
+## Session 2026-08-15T10:30:00Z — FU-RAG-DEPLOY-MEMORY (docker-compose.yml root, developer, P0 M, PO re-scope + unblock dispatch, session 632721c2)
+
+**Task:** raise rag-service's `docker-compose.yml` memory cap per PO's D1-D5 capacity-sizing decision — measured flat-ceilinged ~1002 MiB peak (97.87% of the prior 1g cap, only 2.13% margin to OOMKill), host VM has ~5657 MiB available headroom. AC-1 raise limit >=2x peak, AC-2 single-service redeploy verified by image ID/`docker inspect` not restart alone; AC-3/AC-4/AC-5 (fresh RAG-MEM-DURABILITY-BAR v2 D1-D5 window, VM-internal dmesg, persisted sampler) explicitly out of this dispatch's scope — needs hours of post-redeploy accrual.
+
+**Fix:** `deploy.resources.limits.memory` 1g→2g, `reservations.memory` 512m→1g (kept the pre-existing 50% limit:reservation ratio — AC-1 only specified the limit figure). `docker compose build rag-service && docker compose up -d --no-deps rag-service`.
+
+**Verify:** RAW `docker inspect` post-deploy: `Memory=2147483648`, `MemoryReservation=1073741824`, `Status=running`, `Health=healthy`, `StartedAt=2026-08-15T10:16:22Z`. `docker compose ps`: all 12 peer containers' uptimes untouched (mcp-server 2h / pdf-extractor 28min / stock-price 8d etc. unchanged) — confirms `--no-deps` single-service safety. Logs clean, single startup, `/health 200 OK` x3, zero error/OOM signature.
+
+**Board write race (new pattern, worth flagging):** `git add`+`git commit -- docs/data/orch/orch-state.json` staged my `ready[]→review[]` lane-move cleanly, but between `add` and `commit` a concurrent peer's cold-evict cron process ran its own pathspec commit and swept my already-staged content into ITS commit (`d52087319`, "cold-evict terminal sprints/done lanes") instead of landing under my own message. Verified post-hoc the content survived correctly (exactly 1 `FU-RAG-DEPLOY-MEMORY` row, in `review[]`, all my field changes + note present, no duplication) — a live instance of the documented `feedback_concurrent_commit_race.md` class: commit-authorship mismatch, not data loss.
+
+**Row prose-ceiling gate note:** this board row is already ~45KB (~4x `ORCH_ROW_PROSE_CEILING_BYTES=12000`, grandfathered WARN). Appending to `status_note` would have tripped the GROWTH-ONLY hard-reject (Stage 2.5). Routed the delivery note into `verify_note` instead — that field is in `orch-row-prose-ceiling-check.mjs`'s `STRUCTURAL_FIELDS` exclude-set, so it never counts toward the ceiling measurement. Worth remembering for any future write to an already-oversized row.
+
+**Out of zone, not touched:** `docs/architecture/microservice/rag-service/infrastructure.md` still reads "currently `1g`" — that doc is dev-rag-service's sole-committer zone, left stale for that specialist to correct.
+
+**Closeout:** 3 commits — `4df192e05` (docker-compose.yml), `d52087319` (orch-state.json board move, authored by the peer cold-evict process per the race above, content mine), `e6c9d0b2b` (WORK.md one-liner). Decision journal S54 in `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md`. Graphify skipped — no Skill-tool binding this Task-tool spawn (structural gap, same class as prior sessions). No `apps/` TS/Go touched — `bun test`/`tsc` N/A. QA next (delivery-scope review only — AC-3/4/5 durability window is a separate future task).
+
+---
 
 ## Session 2026-08-15T10:05:00Z — FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK (docs/agents/fb-market-poster/ + scripts/, developer, P1 S, stale review[] row triage, router-direct dispatch, session 632721c2)
 
@@ -33,23 +51,5 @@
 **Regression:** `bash scripts/orch-backlog-stub.test.sh` 35/35. `shellcheck scripts/orch-backlog-stub.sh` clean. No `apps/` TS/Go touched — `bun test`/`tsc` N/A (pure bash/jq).
 
 **Closeout:** 3 commits, all pathspec-scoped — `b1aa63b7a` (fix + regression tests), `6f55a013e` (dev-standards.md CANONICAL block + WORK.md), `94b78d502` (board row `backlog[]→review[]` lane-move + status flip, same write per the status-flip=lane-move rule established last cycle). Decision-journal entry appended to `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` (S52). No handoff file (flat `backlog[]` row, PO-direct P0 mint, no PM decomposition — board row's own AC note is the spec, per `main.md`'s known-drift precedent). Router (session 632721c2) holds no per-task lock per INV-GATEWAY-1 (PRE-CLAIM was intent-level only, `intent:developer:<key>`) — this specialist did not attempt `task_claim`/`task_release`.
-
----
-
-## Session 2026-08-15T07:52:00Z — FIX-NOTEBOOK-UUID-PROVENANCE-GUARD-STUCK-IN-WARN-MODE-3-NOTEBOOKS-LEAKED-AT-HEAD (cross-service/, developer, P3 S, dev-team dispatch)
-
-**Task:** guard at `scripts/git-hooks/pre-commit:556` (`GIT_NOTEBOOK_UUID_PROVENANCE_MODE:-warn`) has sat in warn-only mode since 2026-08-05 — 6 raw session UUIDs were live in body prose (never heading lines) across `agent-father.md`/`dev-team.md`/`qa.md`.
-
-**AC-1 done:** scrubbed all 6 occurrences (agent-father.md L12/L46, dev-team.md L7/L13/L27, qa.md L5) with fixed descriptive labels, zero escape-hatch use. Verified 0 residual full-UUID matches.
-
-**AC-2 done:** `verify-notebook-uuid-provenance-gate.sh --all-history` on the 3 files = 0/0 hits each. Fleet-wide default scan (54 files) found ONE other active producer: `tran-ngoc-bau.md` — 4 RULE1 hits in its last 8 commits, incl. its 3 most-recent (c128/c130/c131), no `notebook-uuid-lint-allow`.
-
-**AC-3 deliberately NOT executed** — hook's own header states RULE1's flip precondition ("no legitimate full-UUID-on-heading-line convention... still in active use"); AC-2's own run falsified it live. Flipping now would strand tran-ngoc-bau's next notebook commit — same class this row exists to prevent, for a 4th file outside `files[]` scope. Kept `:-warn`. Routed `next_agent: po` for the scope decision (mint a tran-ngoc-bau-scoped follow-up vs. accept partial completion).
-
-**AC-4:** residual surface unchanged as documented (heading-line-only, notebooks/-dir-only) + this session's own finding (tran-ngoc-bau.md's live pattern, also a standing SKILL.md AC-1 violation independent of the guard).
-
-**Regression:** `pre-commit-notebook-uuid-provenance.test.sh` 10/10 (unchanged, neither script edited). No `apps/` touched — `bun test`/`tsc` N/A.
-
-**Closeout:** commits pending this write (notebook scrub, board lane-move, this notebook). DJ: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` S51. No gateway/Agent tool this session (Read/Edit/Write/Bash only) — board write via `orch-apply.sh` directly; dispatcher (dev-team) holds the outer `task:` lock per INV-GATEWAY-1, did not attempt `task_claim`/`task_release`.
 
 ---
