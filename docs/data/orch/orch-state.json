@@ -4692,7 +4692,9 @@
         "zone": "agent-father / docs/data/cowork-schedule.json",
         "size": "S",
         "title": "Add a market-hours news-scout analysis slot (02-08 UTC VN session) — current 4-hourly offhours leaves 05:00-08:00 with zero scheduled news analysis",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ADD-NEWS-SCOUT-INTRADAY-SLOT"
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#ADD-NEWS-SCOUT-INTRADAY-SLOT",
+        "po_occurrence_20260815T0728": "Occurrence 2026-08-15T06:00:03Z — sla-monitor CRITICAL: news stale 92min vs 30min threshold (Telegram report 4908). 06:00Z is inside the 02-08 UTC VN session window this row exists to cover, so it is direct evidence for this row rather than a separate incident. SELF-RESOLVED: get_sla_status at 2026-08-15T07:27Z reads news age=3min, 5 ok / 0 breached. Triaged here by po 2026-08-15T07:28Z, no new row minted. `news` freshness is MAX(created_at) FROM rag_analyses (freshnessSlaMonitorJob.ts:114), so the breach measures the RAG/news-analysis writer cadence, not a fetch outage — a flat 30min SLA against a several-hourly producer is structurally breach-prone, same shape as the CANCELLED FIX-SLA-SBV-FX-BUSINESS-DAY-AWARE. Sibling coverage for the threshold half: FIX-AUDITOR-SBVFX-SLA-POSTMARKET-TOLERANCE (poll-cadence tolerance band).",
+        "updated_at": "2026-08-15T07:30:01Z"
       },
       {
         "id": "FIX-AUDITOR-B11-NEWS-FRESHNESS-LAYER-SPLIT",
@@ -11012,10 +11014,11 @@
         "owner": "po",
         "created_at": "2026-08-12T08:38:17Z",
         "created_by": "po",
-        "updated_at": "2026-08-14T08:35:05Z",
+        "updated_at": "2026-08-15T07:30:01Z",
         "updated_by": "po",
         "occurrence_count": 1,
-        "po_triage_20260814T0831_fold": "[po/triage 2026-08-14T08:31Z] FOLD +2 fires, both on docs/agent-memory/notebooks/dev-rag-service.md: envelope 7b76e01c (context_bloat_breach, 07:04:54Z, reason=byte-cap, action_required=prune_or_split) and 4c94d5cf (notebook_single_section_overage_breach, 07:04:52Z, action_required=manual_split_to_archive). Fired 2s apart -- ONE incident, two hooks, not two incidents. section_count=1, so the drop-oldest-section pruner still has no candidate and self-reports 'cannot prune further without data loss'. RAW-RE-VERIFIED LIVE with `wc -lc`, NOT read off the signal payload: 103L / 17328B. Line cap 200 is NOT the binding constraint; the 12000B byte cap is breached by 5328B. RUNAWAY GROWTH WHILE THIS ROW SAT IN BACKLOG: 83L / 14124B on 2026-08-12 -> 103L / 17328B today = +20L / +3204B in 2 days, byte overage 2124B -> 5328B (2.5x). Same runaway-under-active-hook shape the sibling row already documents for code-janitor.md. dev-rag-service.md is the third file this row's title COUNTS but never NAMES -- naming it here so the row is actionable without cross-reading the sibling. DISPATCH NOTE (why this has not moved): next_agent=claude-manager-helper is OFF the DRS ratified allowlist [architect,ba,pm,po,agents-architect] AND this row is in backlog[], which is exactly the DRS-STRANDED-OFF-ALLOWLIST 'no lane' hole the sibling CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT documents and deliberately dodged by minting into ready[] instead. Board-hygiene flag from that sibling still stands: the two rows overlap and should be merged or one closed."
+        "po_triage_20260814T0831_fold": "[po/triage 2026-08-14T08:31Z] FOLD +2 fires, both on docs/agent-memory/notebooks/dev-rag-service.md: envelope 7b76e01c (context_bloat_breach, 07:04:54Z, reason=byte-cap, action_required=prune_or_split) and 4c94d5cf (notebook_single_section_overage_breach, 07:04:52Z, action_required=manual_split_to_archive). Fired 2s apart -- ONE incident, two hooks, not two incidents. section_count=1, so the drop-oldest-section pruner still has no candidate and self-reports 'cannot prune further without data loss'. RAW-RE-VERIFIED LIVE with `wc -lc`, NOT read off the signal payload: 103L / 17328B. Line cap 200 is NOT the binding constraint; the 12000B byte cap is breached by 5328B. RUNAWAY GROWTH WHILE THIS ROW SAT IN BACKLOG: 83L / 14124B on 2026-08-12 -> 103L / 17328B today = +20L / +3204B in 2 days, byte overage 2124B -> 5328B (2.5x). Same runaway-under-active-hook shape the sibling row already documents for code-janitor.md. dev-rag-service.md is the third file this row's title COUNTS but never NAMES -- naming it here so the row is actionable without cross-reading the sibling. DISPATCH NOTE (why this has not moved): next_agent=claude-manager-helper is OFF the DRS ratified allowlist [architect,ba,pm,po,agents-architect] AND this row is in backlog[], which is exactly the DRS-STRANDED-OFF-ALLOWLIST 'no lane' hole the sibling CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT documents and deliberately dodged by minting into ready[] instead. Board-hygiene flag from that sibling still stands: the two rows overlap and should be merged or one closed.",
+        "po_dedup_ruling_20260815T0728": "SUPERSEDED — do NOT work this row. It duplicates ready[] row CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT: same three files (code-janitor.md, dev-rag-service.md, digest-predict.md — that row title names only two but its files[] carries all three), same root cause (section_count=1, auto-prune self-reports cannot prune further without data loss), same next_agent claude-manager-helper. The ready[] twin is the survivor: it is further along the lane AND carries the stricter acceptance set (AC-4 no size-justification paper-over, AC-5 post-split section_count>=2). Before closing, port THIS row's one non-duplicated insight into the survivor: digest-predict.md at ~573 bytes/line is a PRODUCER defect, not an overage — find and fix what writes mega-line prose FIRST, or the split relocates bytes and re-breaches within days. Ruled by po 2026-08-15T07:28Z during dev-team Step 1 triage, after 10 of 16 durable-inbox envelopes resolved to this same duplicated pair."
       },
       {
         "id": "BA-TICK-PREFLIGHT-USAGE-INSTRUMENTATION",
@@ -11869,9 +11872,10 @@
           "scripts/orch-cold-evict.sh"
         ],
         "status_note": "AC: cold-evict either completes or reports a NON-CAS reason, measured over a 24h window with zero 'CAS retry limit exceeded' aborts; retry loop gains jittered backoff between attempts and a retry budget sized to the observed concurrent-writer rate. Evidence: scripts/orch-cold-evict.sh:114 MTIME_CAS_RETRIES=3, :950 while-loop, :1081 'ABORT: CAS retry limit (3) exceeded — concurrent writer; hot file unchanged'. Three tight-loop attempts with no sleep against a hot file that many peers write per minute is a near-guaranteed loss under load. Live BUG reports 2026-08-14: msg 4886 (15:18:56Z), msg 4888 (16:48:55Z), msg 4894 (21:50:56Z, stderr confirms it reached 'Attempt 1/3: ID maps computed'). PO re-ran the script by hand at 2026-08-14T22:56Z: exit 0, Stage 0+1 PASS, conservation OK, 0 evictions — so the failure is NOT a script defect or a corrupt board, it is purely lost CAS races. Non-fatal (self-heals next tick) but it silently defers the ONE mechanism that bounds hot-file growth, which TE-T15 already tracks as a token-cost problem.",
-        "updated_at": "2026-08-15T00:43:00Z",
+        "updated_at": "2026-08-15T07:30:01Z",
         "updated_by": "po",
-        "po_fold_20260815T0040": "FOLD of 5 board-hygiene telegram reports (4886 15:18:56Z, 4888 16:48:55Z, 4894 21:50:56Z, 4895 23:49:01Z, 4896 2026-08-15T00:26:43Z), all 'orch-cold-evict.sh failed (exit 1) — cold eviction skipped, retry next tick', stderr truncated at 'Attempt 1/3: ID maps computed'. NOT a new defect and NOT a re-triage: the proximate cause of this specific run of 5 was head.active_task_id pointing at UC-CCA-P3-FR3-SPAWN-FANOUT-CLEANUP, an already-done_verified row, which failed orch-cold-evict's referential-integrity gate; dev-team WF-1b self-healed it this same tick (commit 8ec50e71a) and .head is now status=idle/active_task_id=null, so this particular sequence should stop. Recorded here because the 5 reports still corroborate THIS row's own thesis independent of that trigger: a 3-attempt budget with no backoff has no headroom under normal peer-write pressure, so any transient gate failure converts into an indefinite 'retry next tick' loop that no one notices — 5 consecutive silent skips over 9h07m is the measured cost. AC unchanged; these 5 are volume evidence for the backoff, not a separate incident."
+        "po_fold_20260815T0040": "FOLD of 5 board-hygiene telegram reports (4886 15:18:56Z, 4888 16:48:55Z, 4894 21:50:56Z, 4895 23:49:01Z, 4896 2026-08-15T00:26:43Z), all 'orch-cold-evict.sh failed (exit 1) — cold eviction skipped, retry next tick', stderr truncated at 'Attempt 1/3: ID maps computed'. NOT a new defect and NOT a re-triage: the proximate cause of this specific run of 5 was head.active_task_id pointing at UC-CCA-P3-FR3-SPAWN-FANOUT-CLEANUP, an already-done_verified row, which failed orch-cold-evict's referential-integrity gate; dev-team WF-1b self-healed it this same tick (commit 8ec50e71a) and .head is now status=idle/active_task_id=null, so this particular sequence should stop. Recorded here because the 5 reports still corroborate THIS row's own thesis independent of that trigger: a 3-attempt budget with no backoff has no headroom under normal peer-write pressure, so any transient gate failure converts into an indefinite 'retry next tick' loop that no one notices — 5 consecutive silent skips over 9h07m is the measured cost. AC unchanged; these 5 are volume evidence for the backoff, not a separate incident.",
+        "po_occurrence_20260815T0728": "4th occurrence, 2026-08-15T06:18:55Z (dev-team board-hygiene, exit 1, cold eviction skipped) — extends the row title's 3-on-08-14 list. SELF-RESOLVED on retry: the dev-team dispatcher re-ran orch-cold-evict.sh at 2026-08-15T07:19Z, clean exit, 0 items evicted. Telegram report 4909 triaged to THIS row by po 2026-08-15T07:28Z, no new row minted — the retry succeeding is the exact signature of MTIME_CAS_RETRIES=3 exhausting under transient peer-write pressure, i.e. corroborating evidence for this row rather than a distinct defect. Note the pattern: every occurrence so far self-heals on the next tick, which is why it stays P2 and not P1 — but it also means the failure is invisible unless someone reads the Telegram, so do not close this as benign."
       },
       {
         "id": "CLEAN-RETIRE-TEAM-TOOL-RECHECK-WRITER",
@@ -12095,6 +12099,60 @@
         "updated_at": "2026-08-15T06:03:27Z",
         "title": "task_claim enum has no guard/marker category, so every persistent escalation lock is minted as sprint-task - that pollution is the sole reason D4 needs a name-prefix whitelist at all",
         "note": "Split out of FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX by po 2026-08-15 during PLAN review. Do NOT block that row on this one — it should land its whitelist/SSOT fix as-is; this row removes the need for the whitelist to exist at all.\n\nPROBLEM. `task_claim`'s enum (apps/mcp-server/src/interface/mcp/tools/system/coordination/taskClaimTool.ts:60) is exactly [\"cowork-slot\",\"sprint-task\",\"dashboard-row\",\"commit-mutex\",\"intent\",\"orphan-signal\",\"session-presence\"]. It has NO member for a persistent guard/escalation/marker lock — a lock that is board-row-less and long-TTL BY DESIGN and is never adoptable work. So every agent minting one falls back to `sprint-task`. Live evidence 2026-08-15T05:54Z (task_list_held kind=sprint-task expired=false, 10 locks): `cron-registration:cowork-team`, `cron-registration:detect-loop`, `cron-registration:standalone-team`, `esc-datacov:HPG:Q1-2026:ESC-3`, `esc-datacov:FPT:Q1-2026:ESC-3`, `esc-deepdive:FPT:Q1-2026:ESC-5` — four different owner agents, all forced to `sprint-task`. bctc-analyst's `bctc-dataquality:*` locks (expired 08-14/15) are the same shape.\n\nWHY IT MATTERS. tasksMdJanitorJob's D4 Step R-1 scans `kind:\"sprint-task\"`, so its scan set is structurally polluted with non-tasks. That is the ONLY reason the D4-R1b name-prefix exclusion whitelist (KNOWN_LEGIT_PREFIXES) has to exist — and a static name list provably lags every new lock kind an agent mints later (that IS the parent row: authored 2026-07-08, missed the kind introduced 2026-07-19, then missed its rename to `bctc-dataquality:` before 2026-08-06). The parent row's fix (SSOT in system-map.json) makes the list cheaper to maintain but does not remove the need to maintain it. Telling detail: `session-presence`/`commit-mutex`/`intent:*` DO have their own enum members and are therefore already excluded structurally by the kind filter — the spec keeps them in the whitelist only as defense-in-depth (spec §287/§293). The enum-based filter already works for kinds that have a member; only the memberless kinds need prefix-matching.\n\nAC-1: add a task_kind enum member for persistent guard/escalation markers (working name `guard-marker`) in taskClaimTool.ts + the TaskKind type + the lock store, with the tool description explaining when to use it vs `sprint-task`.\nAC-2: migrate the known minting call sites to it — `cron-registration:*` (.claude/skills/cron-*/register.md), `po-triage-*` (po flows), `esc-datacov:*` (docs/agents/bctc-analyst/flow/esc-coverage-guard.md:43), `esc-deepdive:*` (docs/agents/bctc-analyst/flow/main.md:119), and bctc-analyst's `bctc-dataquality:*`. Migration must be additive/back-compatible: locks already held under `sprint-task` must not be orphaned mid-TTL.\nAC-3: once migrated, shrink KNOWN_LEGIT_PREFIXES to only what still needs it, and confirm D4 still trips on a genuinely orphaned `sprint-task` lock (the parent row's negative control must keep passing).\nAC-4 (second, related gap — folded here rather than a third row, same \"these marker locks have no owning contract\" cause): bctc-analyst's data-quality marker lock-kind is UNDOCUMENTED. A repo-wide grep of docs/agents/bctc-analyst/ finds task_claim call sites only for `esc-datacov:` and `esc-deepdive:`; NO flow doc documents a `data-quality-anomaly:*` or `bctc-dataquality:*` claim, and the name silently drifted between 2026-07-19 and 2026-08-06 with nothing to catch it. Document one canonical lock-kind name in the owning bctc-analyst flow doc and stop ad-hoc renaming — an undocumented lock kind cannot be whitelisted, migrated, or reasoned about by any other agent.\n\nZONE NOTE: spans apps/mcp-server (enum + D4 filter) and several agent flow docs (call sites), hence zone:multi and next_agent:architect to split. Parent row's spec §7 explicitly declined this as out of dev-mcp-server's zone."
+      },
+      {
+        "id": "FIX-PROSECEILING-SECONDARY-CLAIM-STAMP-FIELDS-MISSING-FROM-STRUCTURAL-EXCLUDE-SET",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "developer",
+        "baseline_pass": true,
+        "created_at": "2026-08-15T07:28:30Z",
+        "created_by": "po (dev-team Step 1 triage 2026-08-15T07:28Z)",
+        "origin_signal_id": "51361d0c1f644b1e5ee02ef0fea6b33d450e7448d2ac8240bb81226b694b13bb",
+        "title": "SAME-DAY REGRESSION from 4513c45df: orch-row-prose-ceiling-check.mjs STRUCTURAL_FIELDS excludes claimed_at/claimed_by but NOT the secondary_claimed_at/secondary_claimed_by/secondary_dispatch_target family, so SECONDARY-Drain's in-place claim stamp counts as PROSE GROWTH and hard-aborts every tick — Review-Lane SECONDARY-Drain is deterministically livelocked, 27 eligible rows starved behind one",
+        "files": [
+          "scripts/orch-row-prose-ceiling-check.mjs",
+          "scripts/devteam-review-claim-secondary-drain.jq"
+        ],
+        "related": [
+          "FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT",
+          "FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION",
+          "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD"
+        ],
+        "desc": "ROOT CAUSE (re-derived from source, NOT from the reporter's narration). scripts/orch-row-prose-ceiling-check.mjs:114-147 defines STRUCTURAL_FIELDS, the exclude-set of keys that do NOT count toward a row's 'prose bytes'. It already contains `claimed_at` and `claimed_by` — the author correctly understood that a claim stamp is coordination metadata, not prose. But scripts/devteam-review-claim-secondary-drain.jq:135-137 stamps the PREFIXED variants `secondary_claimed_at` / `secondary_claimed_by` / `secondary_dispatch_target`, and none of those three is in the set. They therefore count as prose, the row grows, and orch-row-prose-ceiling-check.mjs:251 (`if (candidateBytes > liveBytes)` on a row already past CEILING_BYTES) hard-rejects the write. orch-apply.sh Stage 2.5 aborts, the live file is untouched, the claim silently no-ops.\n\nWHY IT IS A DETERMINISTIC LIVELOCK, NOT A ONE-ROW PROBLEM. The picker (same file, lines 118-129) is `sort_by(.age) | .[0]` over `age_epoch = .updated_at // .reviewed_at // .created_at` — strictly OLDEST first, with no filter excluding a previously-claimed or previously-failed row. Normally a successful claim bumps the row's updated_at, rotating it to the back of the queue. Here the claim never lands, so updated_at is frozen and the SAME row is re-picked every tick, forever. Confirmed live: SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD, review[], updated_at frozen at 2026-08-11T17:36:34Z, 35966B (~3x the 12000B ceiling), no detail_ref. Behind it sit 26 more SECONDARY-eligible rows (27 total: status==REVIEW AND next_agent!=qa), 20 of them never claimed. The whole lane is starved, not just the blocking row.\n\nONSET IS TODAY, NOT PRE-EXISTING. The guard shipped in 4513c45df at 2026-08-15T04:05:33Z; dev-team reproduced the abort at 06:22:58Z, ~2h17m later. The lane demonstrably drained before that (secondary_claimed_at stamps present on rows dated 08-13 and 08-14, including one at 2026-08-15T05:50:27Z). This is a regression introduced by the guard itself, roughly 3h old at mint time.\n\nWHY THE SHIPPING VERIFICATION MISSED IT. 4513c45df's commit message asserts 'Verified against the real live orch-state.json (read-only + a throwaway copy) to confirm zero regression risk on the next production write: 42 pre-existing over-ceiling rows all resolve to non-blocking WARN, exit 0.' That verification only exercised the STATIC case — rows sitting still. Every over-ceiling row is a non-blocking WARN precisely while nothing writes to it. It never exercised the DYNAMIC case (a claim/drain script stamping an over-ceiling row), which is the only case a live fleet actually produces. Same shape as feedback_fleetwide_gate_validated_on_one_file_optout_allowlist: the gate was validated on the configuration in which it cannot fail.\n\nFIX (AC-1). Add `secondary_claimed_at`, `secondary_claimed_by`, `secondary_dispatch_target`, and `dispatch_target` to STRUCTURAL_FIELDS in scripts/orch-row-prose-ceiling-check.mjs. This is the root-cause fix and it is ~4 tokens: these are coordination/lifecycle fields by exactly the same argument that already admitted claimed_at/claimed_by, and the file's own comment calls the set a 'Superset of scripts/orch-backlog-stub.sh's STUB_FIELDS plus the lifecycle/provenance fields'. Do NOT instead relax the ceiling, add a bypass env var (the guard deliberately has none), or special-case the blocking row.\n\nAC-2 — REGRESSION TEST, the actual deliverable. Add a test that stamps a synthetic OVER-CEILING row with the SECONDARY-Drain field set and asserts exit 0. Without this, AC-1 is a one-line patch with no proof and the next claim script to invent a new stamp field re-opens the identical hole. The test must be dynamic (live-vs-candidate with a mutation), never a static scan.\n\nAC-3 — SCOPE CORRECTION, read before widening. dev-team's report proposed also hardening 'the sibling QA-Drain/BOUNDED-1/SLS/RLC/DRS claim scripts, same stamp-only-growth pattern'. That is an OVERREACH and must not be done: those five are structurally immune, for a reason worth stating so nobody re-widens later. PROSE_CEILING_LANES is exactly ['backlog','ready','review'], and the check only inspects rows present in those lanes in the CANDIDATE document. devteam-review-claim-qa-drain.jq:171-178 moves review[]->qa[]; devteam-backlog-claim-ready-lane-consumer.jq:142-150, devteam-backlog-claim-bounded1.jq:95-102, devteam-backlog-claim-design-router-sweep.jq:82-89, devteam-backlog-claim-supervised-lane-sweep.jq:148-191 and devteam-claim-backlog-task-by-id.jq:36-41 all move ready[]/backlog[]->in_progress[]. Neither qa[] nor in_progress[] is a guarded lane, so the claimed row leaves the measured set entirely and no violation can fire. devteam-review-claim-secondary-drain.jq is the ONLY claim script that stamps IN PLACE inside a guarded lane (its own header, line 65, says so explicitly: 'stamp ... on the row IN PLACE inside .task_board.review[]'), which is exactly why it is the only one deadlocked. Fixing the exclude-set covers all of them anyway; touching the other five scripts is unnecessary churn.\n\nAC-4 — do NOT adopt the reporter's remedy (a). It proposed migrating SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD's prose to detail_ref via scripts/orch-backlog-stub.sh to get it back under ceiling. That path is currently BLOCKED by P1 FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION (orch-backlog-stub.sh crashes on the real backlog-detail.json). It is also the wrong level: it unjams one row while leaving the trap armed for the other 45 over-ceiling rows across the guarded lanes (11 backlog + 16 ready + 19 review as of this mint).\n\nAC-5 — VERIFY LIVE, not by inspection. After the fix lands, confirm the next dev-team tick's SECONDARY-Drain actually stamps SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (secondary_claimed_at present AND updated_at moved off 2026-08-11T17:36:34Z). A green test with a still-frozen updated_at means the lane is still starved.\n\nSEPARATE, NOT IN SCOPE: SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD is also supervised:true with no po_goahead stamp, so it needs a PO ratification before it can dispatch even once this deadlock clears. That is PO's own follow-up, deliberately not folded into this developer row — and note it is currently a double gate, which is why ratifying it before this fix lands would have been inert.",
+        "updated_at": "2026-08-15T07:30:01Z"
+      },
+      {
+        "id": "FIX-NOTEBOOK-UUID-PROVENANCE-GUARD-STUCK-IN-WARN-MODE-3-NOTEBOOKS-LEAKED-AT-HEAD",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "developer",
+        "baseline_pass": true,
+        "created_at": "2026-08-15T07:28:30Z",
+        "created_by": "po (dev-team Step 1 triage 2026-08-15T07:28Z)",
+        "origin_signal_id": "3b33e2e779a4be5198d9ff16c177c11d57c769fca61fed33c46a6f493144296a",
+        "title": "notebook-uuid-provenance guard has sat in default mode=warn since 2026-08-05 — it fires, escalates to PO's inbox, and the UUID commits anyway: session 632721c2-... is live in HEAD across 3 notebooks (agent-father.md, dev-team.md, qa.md). Promote to reject, but scrub BEFORE flipping or the flip hard-blocks those 3 agents' next notebook commit",
+        "files": [
+          "scripts/git-hooks/pre-commit",
+          "scripts/audits/verify-notebook-uuid-provenance-gate.sh",
+          "docs/agent-memory/notebooks/agent-father.md",
+          "docs/agent-memory/notebooks/dev-team.md",
+          "docs/agent-memory/notebooks/qa.md"
+        ],
+        "related": [
+          "FIX-NOTEBOOK-IMMUTABILITY-ORPHANED-BODY-CHECK",
+          "FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS"
+        ],
+        "desc": "NOT AN OVERSIGHT — A STAGED ROLLOUT WHOSE PROMOTION STEP WAS NEVER TAKEN. scripts/git-hooks/pre-commit:556 reads `mode_uuid=\"${GIT_NOTEBOOK_UUID_PROVENANCE_MODE:-warn}\"`, and :604 (`[ \"$rc\" -eq 1 ] && [ \"$mode_uuid\" != \"reject\" ] && return 0`) converts the failure to a pass in every mode but reject. The hook's own message at :584 states the intended path verbatim: 'set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh'. That validator already exists. Nobody ever ran it and flipped the default, so the guard has been advisory for 10 days.\n\nOBSERVED COST. The guard is not silent — it escalates. One of the 16 durable-inbox envelopes PO triaged on 2026-08-15T07:28Z was this guard's WARN (envelope 3b33e2e7...). So each occurrence consumes a PO triage slot AND lands in HEAD regardless: an escalation treadmill where the detector works, the escalation is delivered, and the defect ships anyway. Confirmed live at HEAD, not merely staged: `git show HEAD:docs/agent-memory/notebooks/agent-father.md` has the full session UUID on lines 12 and 46, and `git grep -lE \"session .[0-9a-f]{8}-[0-9a-f]{4}-\" HEAD -- docs/agent-memory/notebooks/` returns agent-father.md, dev-team.md AND qa.md. Standing rule it violates: .claude/skills/notebook-write/SKILL.md AC-1 + feedback_agent_commits_session_uuid_into_notebook — a session id is a per-invocation coordination PARAMETER, never authored into a committed file.\n\nAC-1 ORDERING IS THE WHOLE RISK — DO NOT REORDER. Scrub the 3 committed notebooks FIRST, then flip the default. Flipping first converts a noisy-but-harmless WARN into a hard pre-commit failure for the next notebook commit of all three of those agents, at least two of which (agent-father, qa) have a documented history of losing notebook writes to commit-step failures. A guard that strands the fleet's own memory writes is strictly worse than the leak it prevents — same shape as feedback_red_prepush_strands_fleet and feedback_git_sweep_guard_bare_commit_escalates_hard_block. Replace each UUID with a c<NNN> cycle counter or a fixed source label per AC-1; do NOT use the `notebook-uuid-lint-allow:` escape hatch to paper over these three, it exists for genuine short-SHA source labels.\n\nAC-2. Run scripts/audits/verify-notebook-uuid-provenance-gate.sh and record its verdict on this row before flipping — the hook message names it as the explicit precondition, so flipping without it repeats the shipping-a-guard-without-the-dynamic-case mistake this fleet made the same week with the prose-ceiling guard (see FIX-PROSECEILING-SECONDARY-CLAIM-STAMP-FIELDS-MISSING-FROM-STRUCTURAL-EXCLUDE-SET).\n\nAC-3. Flip the DEFAULT at :556 (`:-warn` -> `:-reject`). Do NOT ship this as an env var that CI or a wrapper is expected to set: an enforcement mode that depends on every caller exporting a variable is the same latent no-op the guard is in today.\n\nAC-4. After the flip, sweep for the NEXT producer rather than assuming the 3 known files are the whole set — the guard only inspects ADDED heading lines in staged notebooks, so any agent that writes a UUID into a non-heading line, or into a file outside docs/agent-memory/notebooks/, is still unguarded. Report the residual surface on this row; widening the guard is explicitly out of scope here.\n\nWHY P3. Nothing is blocked and no data is lost — this is provenance hygiene plus recurring PO-inbox noise. It is worth doing because the detector, the validator and the escape hatch are all already built; the only missing step is a one-token default change plus a 3-file scrub.",
+        "updated_at": "2026-08-15T07:32:07Z"
       }
     ],
     "closed_sprints": [
@@ -18376,7 +18434,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-15T04:01:31Z",
+    "last_triaged_at": "2026-08-15T07:28:30Z",
     "last_triaged_by": "po",
     "in_progress": [
       {
@@ -18477,326 +18535,12 @@
         "last_served_tick": "2026-08-15T06:50:58Z"
       },
       "step1_triage": {
-        "last_served_tick": "2026-08-15T03:50:57Z"
+        "last_served_tick": "2026-08-15T07:20:46Z"
       }
     },
-    "_updated_at": "2026-08-15T06:50:58Z",
-    "_updated_by": "dev-team",
-    "pending_triage_inbox": [
-      {
-        "envelope_id": "314775ad248169d78cbf86a3e591192afc93bf04e4c25448d25a19e6b346c89f",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/agent-father.md — retained section '## EDIT 2026-08-14T23:03Z — task TASK_2008c (UC-CDC-P1 3-way split, agent-father slice),' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
-        "createdAt": "2026-08-15T04:47:23Z",
-        "drained_at": "2026-08-15T04:49:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "6e81e411768e21e7477d619a3125414b607f9f3f6d57b75635bc2581f80ec065",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/agent-father.md — retained section '## EDIT 2026-08-14T23:03Z — task TASK_2008c (UC-CDC-P1 3-way split, agent-father slice),' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
-        "createdAt": "2026-08-15T04:48:46Z",
-        "drained_at": "2026-08-15T04:49:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "3b33e2e779a4be5198d9ff16c177c11d57c769fca61fed33c46a6f493144296a",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[notebook-uuid-provenance-guard] WARN: docs/agent-memory/notebooks/agent-father.md — added heading line embeds a full session/coordination UUID: '## EDIT 2026-08-15T04:45Z — task FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW, router-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`'. Per .claude/skills/notebook-write/SKILL.md AC-1 and feedback_agent_commits_session_uuid_into_notebook, a session id is a per-invocation coordination PARAMETER ONLY, never authored into a committed file — use a c<NNN> counter or a fixed source label instead. mode=warn (default warn; set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh). Escape hatch: add 'notebook-uuid-lint-allow: <reason>' on this line if intentional.\n",
-        "createdAt": "2026-08-15T04:48:47Z",
-        "drained_at": "2026-08-15T04:49:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "dbfd8ba7a1324532f9064a277b406fb8a48ba6a20d07e5576fd2ebb6c23bf50b",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/code-janitor.md",
-          "line_count": 194,
-          "cap": 200,
-          "byte_count": 15662,
-          "byte_cap": 12000,
-          "class": "agent-notebook",
-          "reason": "byte-cap",
-          "overage": 0,
-          "byte_overage": 3662,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-15T04:32:08Z",
-        "drained_at": "2026-08-15T04:49:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "4b3519f65d4553ec6e28c1432d43826e218c54c870e1b98090b65c9d9c2f000b",
-        "source": "file",
-        "from": "code-janitor",
-        "to": "po",
-        "type": "system-issue",
-        "priority": "low",
-        "payload": {
-          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
-          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
-          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
-          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
-          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
-        },
-        "createdAt": "2026-08-15T04:30:04Z",
-        "drained_at": "2026-08-15T04:49:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "de9d57020dd8bfc1aa243f6a1d4b48f4813b84c76750dcefcf170f5631b5ae25",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_no_valid_drop_candidate_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/dev-team.md",
-          "line_count": 43,
-          "cap": 200,
-          "byte_count": 12851,
-          "byte_cap": 12000,
-          "section_count": 3,
-          "non_sentinel_section_count": 1,
-          "sentinel_section_count": 2,
-          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-15T04:30:05Z",
-        "drained_at": "2026-08-15T04:49:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "4def5e203514c122914346dd8daa2db34b72e98f967e2a792a6f1b2b7bc3986e",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_no_valid_drop_candidate_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/dev-team.md",
-          "line_count": 43,
-          "cap": 200,
-          "byte_count": 12851,
-          "byte_cap": 12000,
-          "section_count": 3,
-          "non_sentinel_section_count": 1,
-          "sentinel_section_count": 2,
-          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-15T04:31:22Z",
-        "drained_at": "2026-08-15T04:49:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "c9c410a9f19eb4310057bff8a18eed1e701dbf44f7e2faa418a7c07701489e23",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_single_section_overage_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/code-janitor.md",
-          "line_count": 177,
-          "cap": 200,
-          "byte_count": 14119,
-          "byte_cap": 12000,
-          "section_count": 1,
-          "reason": "only preamble+1 section remain; cannot prune further without data loss",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-15T04:30:04Z",
-        "drained_at": "2026-08-15T04:49:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "10a3d8beba5d2028f89c9906ee7a9a9c6303f9ec78eafee134bb234abb3b41ec",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_single_section_overage_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/code-janitor.md",
-          "line_count": 177,
-          "cap": 200,
-          "byte_count": 14119,
-          "byte_cap": 12000,
-          "section_count": 1,
-          "reason": "only preamble+1 section remain; cannot prune further without data loss",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-15T04:31:21Z",
-        "drained_at": "2026-08-15T04:49:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "d6d240be6eb0d4513cb380ab38734b3d41bb949274d223c3b36c278991073cd3",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_single_section_overage_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/code-janitor.md",
-          "line_count": 194,
-          "cap": 200,
-          "byte_count": 15662,
-          "byte_cap": 12000,
-          "section_count": 1,
-          "reason": "only preamble+1 section remain; cannot prune further without data loss",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-15T04:32:06Z",
-        "drained_at": "2026-08-15T04:49:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "1c482056f388067e795725c21df633aca3a146d7a674ab88fb9a14113c4be1ad",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_single_section_overage_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
-          "line_count": 127,
-          "cap": 200,
-          "byte_count": 23244,
-          "byte_cap": 12000,
-          "section_count": 1,
-          "reason": "only preamble+1 section remain; cannot prune further without data loss",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-15T04:30:05Z",
-        "drained_at": "2026-08-15T04:49:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "cbe608abcbd42d6d06f98b998f10bfbda90dd2fdaf8bea314f1277e034360f2e",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_single_section_overage_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
-          "line_count": 127,
-          "cap": 200,
-          "byte_count": 23244,
-          "byte_cap": 12000,
-          "section_count": 1,
-          "reason": "only preamble+1 section remain; cannot prune further without data loss",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-15T04:31:22Z",
-        "drained_at": "2026-08-15T04:49:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "da2351819ed05f21a657c88079197b28fae0be80a1562cb13912d3c605ecbc40",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_single_section_overage_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/digest-predict.md",
-          "line_count": 44,
-          "cap": 200,
-          "byte_count": 32387,
-          "byte_cap": 12000,
-          "section_count": 1,
-          "reason": "only preamble+1 section remain; cannot prune further without data loss",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-15T04:30:04Z",
-        "drained_at": "2026-08-15T04:49:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "636614851cd312212804668e6796ed33de9a491023c4a2a4f1c97d0a729fa406",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_single_section_overage_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/digest-predict.md",
-          "line_count": 44,
-          "cap": 200,
-          "byte_count": 32387,
-          "byte_cap": 12000,
-          "section_count": 1,
-          "reason": "only preamble+1 section remain; cannot prune further without data loss",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-15T04:31:21Z",
-        "drained_at": "2026-08-15T04:49:38Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "c6e0d4184d5797e8ca3cc4cf73d9360c943331b4e15e5df3716652fe27a2886a",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-24.md",
-          "line_count": 186,
-          "cap": 600,
-          "byte_count": 40859,
-          "byte_cap": 36000,
-          "class": "sprint-decision-journal",
-          "reason": "byte-cap",
-          "overage": 0,
-          "byte_overage": 4859,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-15T05:57:00Z",
-        "drained_at": "2026-08-15T06:20:32Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "51361d0c1f644b1e5ee02ef0fea6b33d450e7448d2ac8240bb81226b694b13bb",
-        "source": "file",
-        "from": "dev-team",
-        "to": "po",
-        "type": "repair_task_request",
-        "priority": "high",
-        "payload": {
-          "check_id": "SECONDARYDRAIN-PROSE-CEILING-DEADLOCK",
-          "summary": "Review-Lane SECONDARY-Drain permanently stalls when the OLDEST SECONDARY-eligible review[] row is already over ORCH_ROW_PROSE_CEILING_BYTES=12000 — scripts/devteam-review-claim-secondary-drain.jq's inline stamp (secondary_claimed_at/secondary_claimed_by/secondary_dispatch_target) grows the row's byte size, tripping orch-row-prose-ceiling-check's net-new-growth ABORT (grandfathered already-over-ceiling rows are only exempt when NOT growing). orch-apply.sh aborts, live file untouched, claim silently no-ops every tick — SECONDARY-Drain deterministically re-picks the SAME oldest row and re-fails, so no review[] row drains via this lane until this one is resolved, not just this row.",
-          "reproduced": "2026-08-15T06:22:58Z, dev-team idle-tick (rotation SELECTED=drs no-op -> unconditional SECONDARY-Drain call site) — jq --arg now ... -f scripts/devteam-review-claim-secondary-drain.jq | bash scripts/orch-apply.sh -> [orch-row-prose-ceiling-check] ABORTED, id=SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD live=34725B -> candidate=34880B",
-          "blocked_row": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (review[], next_agent=dev-mcp-server, updated_at=2026-08-11T17:36:34Z — oldest SECONDARY-eligible candidate)",
-          "suggested_remedy": "Either (a) route SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD's prose through detail_ref via scripts/orch-backlog-stub.sh (LANES=review) to bring it back under ceiling before SECONDARY-Drain next runs, unblocking this tick's deadlock immediately, and/or (b) harden devteam-review-claim-secondary-drain.jq (and the sibling QA-Drain/BOUNDED-1/SLS/RLC/DRS claim scripts, same stamp-only-growth pattern) to skip an over-ceiling row's own claim-stamp fields to detail_ref instead of inline, or to select the next-oldest eligible row on an abort instead of deterministically re-picking the same blocking one every tick.",
-          "suggested_sprint_class": "FIX",
-          "zone_owner": "dev-team / architect (claim-script hardening, scripts/ outside agent-father commit_zone)"
-        },
-        "createdAt": "2026-08-15T06:23:45Z",
-        "drained_at": "2026-08-15T06:49:32Z",
-        "routed_to": "PO Step 0-SIG"
-      }
-    ],
+    "_updated_at": "2026-08-15T07:32:50Z",
+    "_updated_by": "po (dev-team Step 1 triage)",
+    "pending_triage_inbox": [],
     "last_po_triage_at": "2026-08-14T04:11:35Z",
     "last_po_triage_note": "po/triage-20260814T0411Z (router-spawned after dev-team tick 2026-08-14T03:37Z could not nested-spawn). INPUTS: 18 durable-inbox envelopes. OUTPUT: 0 net-new mints from triage, 5 folds. DEDUP/FOLD: 2 ci_red (CI-RED-87a7a6d2 run 31758121017, CI-RED-9a9ad9bf run 31766602285) read at source via gh run view --log-failed — identical FAILED FILES (ALLZERO-OHLCV-FETCH.test.ts, FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts), both already carry open READY rows, file-scoped dedup HIT, SHAs appended; 3 sweep-guard bug-escalation escalated=true prior_warns=12/13/14 -> FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK occ 21->24; 2 notebook-immutability-guard on system-auditor.md sections c5/c6 -> FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS. NO MINT: 1 signal_feedback A-33 hook-liveness WARN (context-bloat-backstop.sh settings-file-missing) — PREMISE VERIFIED TRUE at source (0 matches for context-bloat-backstop in ~/.claude/settings.json, .claude/settings.json, .claude/settings.local.json — the hook is genuinely unregistered) but it is a first fire (1/1 in signal_queue) and the WARN single-fire rule forbids minting on one tick; carried to next tick for recurrence confirmation. 1 improvement_proposal is PO's OWN OUTBOUND (from=po to=agents-architect, IMP-20260814-system-auditor-notebook-compose-actuator-never-wired) misrouted into PO's own inbox by the drain — already board-backed by FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED (backlog, agents-architect); ACK only. 9 cowork-fire/tick-dispatch/cowork-tick-telemetry envelopes addressed to system/dev-team/cowork-team, not to po — informational, no defect, skipped. CONVERGENT FINDING: 3 of the 4 to=po defect classes this tick (3 sweep-guard + 2 notebook-immutability + the improvement proposal) all trace to ONE actor, system-auditor's unwired notebook-compose actuator. SEPARATELY: SPIKE-FRESHNESS-REMEDIATE-TRIAGE signed off APPROVED (review->done) and decomposed into 4 new backlog rows + 1 reprioritization. INBOX CLEAR NOT WRITTEN — owned by dev-team/flow/main.md Step 1 per triage-signals.md, PO does not write the subtractive clear.",
     "last_po_triage_consumed": 18,
