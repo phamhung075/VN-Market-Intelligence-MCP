@@ -92,11 +92,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-08-14T23:50:32Z",
-    "updated_by": "router (stale-head correction — QA-drain batch already flipped 6 rows incl. UC-CCA-P3-FR3-CHEF to done_verified[], .head never reset)"
+    "status": "in_progress",
+    "active_task_id": "UC-CCA-P3-FR3-SPAWN-FANOUT-CLEANUP",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 5 row(s), highest-ranked UC-CCA-P3-FR3-SPAWN-FANOUT-CLEANUP — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 5 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-14T23:53:56Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13707,6 +13708,86 @@
             "observed_at": "2026-08-14T18:03:45Z"
           }
         }
+      },
+      {
+        "id": "UC-CCA-P3-FR3-SPAWN-FANOUT-CLEANUP",
+        "title": "Trim spawn-fanout.md FR-P2-7 documentation block (Q-skill-siting cleanup)",
+        "priority": "P0",
+        "zone": "docs/agents/cowork-team/",
+        "next_agent": "pm",
+        "status": "DONE_VERIFIED",
+        "depends_on": "UC-CCA-P3-FR1-FR2-SKILL",
+        "blocked_by": null,
+        "created_at": "2026-08-08T00:00:00Z",
+        "created_by": "pm",
+        "note": "Doc-debt cleanup: trim spawn-fanout.md:84-121 (~35L) to 1-line pointer to .claude/skills/published-marker-gate/SKILL.md. Non-blocking, parallel with gate wiring.",
+        "updated_at": "2026-08-15T00:00:29Z",
+        "updated_by": "qa",
+        "agent_father_implementation_note": "Trimmed spawn-fanout.md's ~78L FR-P2-7 inline published-marker pattern block (task_claim/TTL/key prose, the original copy-paste source of the 4 EARLY-claim defect instances) to a 1-line pointer at .claude/skills/published-marker-gate/SKILL.md. Pure doc-debt reduction, no logic changed (dispatcher still never calls publish markers). qa to grep-verify: zero task_claim/task_id=\"published: literals remain in spawn-fanout.md, exactly one pointer to the skill.",
+        "commit_sha": "f1eb75143",
+        "claimed_at": "2026-08-14T23:53:55Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "status_note": " | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Commit f1eb75143 (full f1eb75143a0db1c9b2ce7fdea7df2ba088bad847) confirmed real, on main ancestry (git merge-base --is-ancestor); git show --stat touches exactly docs/agents/cowork-team/flow/spawn-fanout.md (1 file, +20/-79), matching the agent_father_implementation_note's ~78L FR-P2-7 block trim claim. Row's own grep-verify instruction independently re-run (not trusted from note prose): task_id=\"published:\" literal (old code block's key structure) = 0 hits, fully removed. task_claim string = 4 hits total, none functional: 2 are this task's own new comment prose describing what was removed, 2 (L233/236) are a pre-existing, diff-untouched Step 4.6 per-work-item-token cross-reference (slot-claim.md) unrelated to the FR-P2-7 published-marker block. Functional skill-pointer count = exactly 1 (.claude/skills/published-marker-gate/SKILL.md at the new 'Published marker gate:' line); a 2nd mention is inside the size-justification header's own historical delta commentary, not a 2nd agent-facing instruction. Cross-checked against handoff QA Gate (docs/handoffs/UC-CCA-P3-FR3-SPAWN-FANOUT-CLEANUP.md) + architecture brief 2026-08-08-uc-cca-p3-published-marker-gate-skill.md sec4: replacement prose (5L, keeps heading + \"publisher owns the marker\" + ops-runbook cross-ref carried over from the old block) diverges from the brief's literal proposed 1-line string but preserves the exact invariant named (\"dispatcher does NOT call publish markers, the spawned agent does\") and adds no new claim -- accepted as implementation latitude on a cosmetic/doc-debt task (handoff Notes: \"cosmetic/doc-debt cleanup, not a functional requirement\"), not a blocking deviation. No orphaned references: grepped removed-block identifiers (PUBLISHED_KEY/MARKER_CLAIM/publish_claim/WORK_DATE/100800/691200) -- 0 hits elsewhere in file. External cross-file pointers (digest-predict/main.md, chef.md, tran-ngoc-bau/main.md sec Published marker gate (FR-P2-7)) still resolve -- heading text survived the trim. Size-justification header gained its own dated delta note (established per-file convention). Zero production/test code touched (pure flow-doc, 1 .md file) -> bun test/tsc/mock-guard N/A, same precedent as sibling FR3 gate rows. process.env/secret/password/token greps clean (only pre-existing unrelated \"per-work-item token\" domain-term hits). Dependency UC-CCA-P3-FR1-FR2-SKILL confirmed DONE_VERIFIED on board. Zero blocking ISSUE. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-24.md STEP qa-S21.",
+        "qa_verified_at": "2026-08-15T00:00:28Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + grep (task_claim / task_id=\"published:\" literals / skill pointer / orphaned identifiers)",
+            "args": "commit f1eb75143 -- docs/agents/cowork-team/flow/spawn-fanout.md; grep -n task_claim; grep -n 'task_id.*published:'; grep -n published-marker-gate/SKILL.md; grep -n PUBLISHED_KEY|MARKER_CLAIM|publish_claim|WORK_DATE|100800|691200",
+            "live_value_observed": "git show --stat: 1 file changed, 20 insertions(+), 79 deletions(-) (spawn-fanout.md only, on main ancestry); task_id=\"published:\" literal: 0 hits; task_claim string: 4 hits, all non-functional (2 comment prose re this task, 2 pre-existing unrelated Step 4.6 cross-ref); functional skill-pointer count: 1; orphaned removed-block identifiers: 0 hits; process.env/secret/password/token: 0 blocking hits",
+            "observed_at": "2026-08-15T00:00:28Z",
+            "evidence_commit": "f1eb75143"
+          }
+        }
+      },
+      {
+        "id": "FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE",
+        "title": "FIX: system-auditor DOC-AUDIT memory-integrity check emits 'docs/agent-memory/MEMORY.md is MISSING' — that path NEVER existed (git diff-filter=D empty; project memory index is docs/agent-memory/INDEX.md, and the auditor spec main.md:445 names memory/MEMORY.md = the Claude auto-memory which is present+healthy). Recurring WARN false-positive from a drifted path predicate.",
+        "status": "DONE_VERIFIED",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "S",
+        "zone": "docs/agents/system-auditor/flow/",
+        "owner": "agent-father",
+        "next_agent": "pm",
+        "plan_only": false,
+        "supervised": true,
+        "created_at": "2026-07-22T00:49:21Z",
+        "created_by": "po/triage-20260722T0049",
+        "origin_signal_id": "sys-20260722T003235-52bb",
+        "root_cause": "DOC-AUDIT section (docs/agents/system-auditor/flow/main.md § 1 Memory integrity, :445) references memory/MEMORY.md; the implementation resolves this to docs/agent-memory/MEMORY.md, never a canonical project artifact (docs/agent-memory uses INDEX.md/README.md/AGENT_STARTUP.md + notebooks/). Missing-file check on a phantom path => WARN FP re-emitted each auditor tier cycle.",
+        "deliverable": "Point the DOC-AUDIT memory-integrity predicate at the REAL memory index (docs/agent-memory/INDEX.md) OR remove the phantom docs/agent-memory/MEMORY.md existence check; align main.md:445 wording so the checked artifact is unambiguous. Verify no other DOC-AUDIT sub-check hardcodes a non-existent canonical path.",
+        "acceptance": "One live DOC-AUDIT cycle emits ZERO 'MEMORY.md MISSING' signal against the current tree, and a deliberately-broken memory index still trips a real WARN (negative control).",
+        "related": [
+          "FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE"
+        ],
+        "note": "Auditor-FP family (feedback_auditor_predicate_drift_false_regression). Distinct from the A12/A20/A30 health-probe converge row (runtime health predicates vs this doc-integrity path predicate). PO source-verified path absence (ls + git log --diff-filter=D empty) before minting.",
+        "promoted_at": "2026-08-08T03:21:27Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "spec_doc": "docs/handoffs/FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE-spec.md",
+        "architect_review_note": "PLAN-ONLY (supervised+plan_only — main.md NOT edited). Re-verified stale main.md:445 citation live — real section is :720-722. Verbatim diff proposed (spec §1): repoint §1 Memory integrity from phantom `memory/MEMORY.md` (never existed, confirmed git diff-filter=D empty) at `docs/agent-memory/INDEX.md` (real repo-tracked memory index) ONLY — explicitly do NOT attempt to validate Claude Code's external per-session auto-memory file (no canonical repo-relative path, platform-managed, would require hardcoding a host-specific absolute path in violation of this repo's own no-hardcode convention). Sibling sweep of DOC-AUDIT items 2-6 (spec §2): zero other phantom paths found — all referenced docs/policies|protocols|standards|references dirs, tool-registry/cron-registry/stock-classification.json, .claude/agents/*.md, CLAUDE.md, project-stats.json + generator all confirmed present; DB-health container paths are runtime-resolved via docker exec, not static, so out of this defect class. ADJACENT FINDING flagged not fixed: docs/agent-memory/INDEX.md itself (the fix's new target) already has all 5 of its own listed session pointers dead (stale since commit ace28b78d, 2026-04-27) — this is a real, pre-existing doc-hygiene gap the phantom-path bug has been masking; serves as spec §3's natural negative control (first post-fix cycle should emit zero phantom-MISSING AND one new real INDEX.md broken-pointer WARN in the same cycle) but its cleanup is out of THIS task's scope — PO to decide on a follow-up row. Full verbatim diff + negative-control design + implementation notes in spec_doc.",
+        "updated_at": "2026-08-15T00:02:18Z",
+        "adjudicated_at": "2026-08-14T21:29:41Z",
+        "adjudicated_by": "po",
+        "status_note": "[agent-father 2026-08-14T21:38:16Z] Applied PO-ratified spec_doc §1 verbatim diff at system-auditor/flow/main.md's CURRENT live line 841-843 (spec's own :720-722 citation was stale, +121L drift — matched on quoted BEFORE text, byte-verified before editing). Repointed DOC-AUDIT §1 Memory integrity from phantom memory/MEMORY.md (never existed, zero repo-wide source hits) to docs/agent-memory/INDEX.md (real, git-tracked project memory index). Kept 2nd/3rd bullets intact per spec §3 anti-defang warning. Post-edit grep confirms zero remaining phantom-predicate hits (one intentional name-drop of the external Claude auto-memory file in the new scope note only). docs/agent-memory/INDEX.md confirmed exists (15L) as the new live target. Did NOT touch INDEX.md's own content (sequence-gated follow-up FIX-AGENTMEMORY-INDEX-DEAD-SESSION-POINTERS depends_on this row — must wait for one post-fix Tier-3 DOC-AUDIT cycle to emit a real broken-pointer WARN as negative-control proof first). Routing to qa: verify the diff landed as specced and confirm the next live Tier-3 DOC-AUDIT cycle emits zero phantom-MISSING signal + one new real INDEX.md broken-pointer WARN (spec §3 acceptance criterion).\n\n[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Commit bfd2acb55 confirmed real, ancestor of main (git merge-base --is-ancestor), touches exactly the 3 files status_note claims: docs/agents/system-auditor/flow/main.md (+9/-2, DOC-AUDIT §1 repointed live :841-846), docs/agent-memory/notebooks/agent-father.md, docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-3.md. Diff byte-matches PO-ratified spec_doc §1 verbatim (bullets 2/3 kept intact, anti-defang). Repo-wide grep confirms zero remaining phantom `memory/MEMORY.md` predicate hits in this file (1 intentional one-time name-drop inside the new scope-note only). Positive-control half of acceptance independently confirmed live (not trusted from prose): docs/agent-memory/INDEX.md exists (545B/15L, real git-tracked) — the new predicate, executed literally, resolves TRUE (zero MISSING) against the current tree. Negative-control half + the literal \"one live DOC-AUDIT cycle\" wording NOT yet observable: last Tier-3 cycle completed 2026-08-14T02:35:24Z (auditor-tier3-last-healthy.json), BEFORE this fix landed (21:38:52Z same day); next fire ~02:00Z. Not held pending it — architect_review_note explicitly ruled INDEX.md's own 5/5 dead-pointer negative-control OUT of this task's scope (sequence-gated follow-up FIX-AGENTMEMORY-INDEX-DEAD-SESSION-POINTERS, depends_on this row), PO ratified that same scope split (po_goahead_20260814T212941); QA holds no tool grant to trigger system-auditor's cron, and this row's own coarse acceptance text predates (minted 2026-07-22) the architect's 2026-08-08 scope ruling which supersedes it. Zero production/test source touched (pure .md, docs-only) → bun test/tsc --noEmit/mock-guard.sh N/A, same precedent as prior direct-commit-verify doc-only rows; process.env/secret/password/token greps clean on the touched file (generic \"token\" domain-term hits re audit-verdict grammar only, no real leak). DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-24.md STEP qa-S22. FOLLOW-UP (non-blocking, for the next live Tier-3 cycle / PO): confirm it emits zero phantom-MISSING signal (should hold, per this re-derivation) AND that the sequence-gated follow-up row's negative-control WARN fires against INDEX.md's own pre-existing dead session pointers.",
+        "po_goahead_20260814T212941": "PO ratified 2026-08-14 at source, not on relay: spec_doc present (13760B), its BEFORE block re-grepped live in main.md (now :841-843, matches verbatim), phantom docs/agent-memory/MEMORY.md re-confirmed absent, and the spec's load-bearing adjacent finding independently re-derived (cat docs/agent-memory/INDEX.md + ls docs/agent-memory/sessions/ -> all 5 listed pointers dead). Implementation authorized for agent-father.",
+        "claimed_at": "2026-08-14T23:53:55Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "commit_sha": "bfd2acb55",
+        "qa_verified_at": "2026-08-15T00:02:17Z",
+        "qa_verified_by": "qa",
+        "verified_at": "2026-08-15T00:02:17Z",
+        "verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + repo-wide grep + direct file-existence read",
+            "args": "commit=bfd2acb55; files=docs/agents/system-auditor/flow/main.md,docs/agent-memory/notebooks/agent-father.md,docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-3.md; grep -n memory/MEMORY.md docs/agents/system-auditor/flow/main.md; ls -la docs/agent-memory/INDEX.md",
+            "live_value_observed": "commit real + on main ancestry; diffstat matches exactly (9+/2-); zero remaining phantom-predicate hits (1 intentional name-drop only); docs/agent-memory/INDEX.md exists 545B/15L; no live Tier-3 DOC-AUDIT cycle has fired since fix landed (last completed 2026-08-14T02:35:24Z, fix landed 21:38:52Z) -- negative-control/live-cycle proof explicitly deferred to sequence-gated follow-up row per architect+PO scope ruling",
+            "observed_at": "2026-08-15T00:02:17Z"
+          }
+        },
+        "updated_by": "qa"
       }
     ],
     "head": {
@@ -17865,118 +17946,6 @@
         "po_goahead_20260814T203645": "Ratified at source 2026-08-14: read chef.md/chef-dish.md live (FR-0..7 present verbatim), bctc_signal_DXG_20260814_routine.json (valuation.verdict=AVOID confirmed), and all 4 synthesis JSONs (business_context_cited=null 3/3 post-fix dishes). Not a relayed verdict. Proceed with FR-8 widening.",
         "agent_father_fr8_completion_note": "FR-8 (PO 2026-08-14 scope-widening, po_goahead_20260814T203645) applied: chef.md Step 0 $BIZ_CTX_SIGNALS extended with valuation.verdict/valuation.note/kinhdich.note (schema byte-verified against live bctc_signal_DXG_20260814_routine.json before editing); chef-dish.md gains a new Step 4 Valuation-gate discipline sub-step + Step 7.5 sub-check (h) VALUATION_GATE_OK (8th ASSEMBLY-then-assert sub-check, same single-pass self-correct-before-write mechanism as (f) SCHEMA_OK/(g) DIRECTION_OK shipped this session in 5829a7ad2) + a valuation_gate field on conviction_calls[] (structured verdict/note/override_engaged/override_rationale, RAW-verifiable like FR-7 business_context_cited) + Step 7.6 post-write self-check #5. Enforcement: an AVOID-gated ticker self-corrects to HOLD before persistence unless the rationale carries a literal [override:valuation_avoid - <data-backed justification>] clause (T-45 adversarial-discipline convention reused verbatim from tran-ngoc-bau/flow/audit-methodology.md, per POs own instruction to check precedent before inventing new language). Files: chef.md 265->281L, chef-dish.md 914->1002L, both header size-justification comments updated with real deltas. Zero application code touched, zero apps/ blast radius (architects original zero-blast-radius ratification on this row still holds for FR-8). Cannot self-certify closure this cycle: this rows own history is FR-0..7 shipped-but-then-PO-verification-FAILED once already (po_verification_verdict field), so only another independent RAW-verify against a live post-fix chef dish cycle (morning/eod/evening) can close it - routed to po for that pass, not self-certified DONE_VERIFIED.",
         "po_triage_20260814T2300_verification_window": "NOT VERIFIABLE YET — do not burn a PO tick re-deriving this. agent-father landed FR-8 at 2026-08-14T21:16:01Z (valuation.verdict/valuation.note/kinhdich.note into $BIZ_CTX_SIGNALS; chef-dish.md Step 7.5 sub-check (h) VALUATION_GATE_OK; conviction_calls[].valuation_gate). ZERO chef dishes have fired since. The row's verification_gate demands a RAW post-fix synthesis JSON, so the earliest possible verdict is after the next guaranteed dish (chef-morning, ~05:2xZ). PREMISE CORRECTION for triage callers: BUG msg 4892 (tran-ngoc-bau CRITICAL, DXG ACCUMULATE against an explicit valuation AVOID gate, 2026-08-14T20:25:43Z) is described upstream as 'new evidence for the in-flight BA spec's scope' — it is not in-flight and it is not pending scoping. That exact report IS the evidence PO already converted into FR-8 (po_scope_widening_FR8, po_goahead_20260814T203645) and agent-father already shipped 51 minutes later. msg 4892 is CLOSED-BY-FR8, not actionable again. NEXT PO TICK: RAW-verify the next unified-agent-synthesis-*.json for (a) business_context_cited non-null on >=1 conviction_call, (b) no DXG-class direction in {BUY,ACCUMULATE} while its bctc_signal valuation.verdict==AVOID without a literal [override:valuation_avoid - ...] clause. Verdict FAILED once already on FR-0..7, so do not accept an agent self-report."
-      },
-      {
-        "id": "FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE",
-        "title": "FIX: system-auditor DOC-AUDIT memory-integrity check emits 'docs/agent-memory/MEMORY.md is MISSING' — that path NEVER existed (git diff-filter=D empty; project memory index is docs/agent-memory/INDEX.md, and the auditor spec main.md:445 names memory/MEMORY.md = the Claude auto-memory which is present+healthy). Recurring WARN false-positive from a drifted path predicate.",
-        "status": "REVIEW",
-        "type": "FIX",
-        "priority": "P2",
-        "size": "S",
-        "zone": "docs/agents/system-auditor/flow/",
-        "owner": "agent-father",
-        "next_agent": "qa",
-        "plan_only": false,
-        "supervised": true,
-        "created_at": "2026-07-22T00:49:21Z",
-        "created_by": "po/triage-20260722T0049",
-        "origin_signal_id": "sys-20260722T003235-52bb",
-        "root_cause": "DOC-AUDIT section (docs/agents/system-auditor/flow/main.md § 1 Memory integrity, :445) references memory/MEMORY.md; the implementation resolves this to docs/agent-memory/MEMORY.md, never a canonical project artifact (docs/agent-memory uses INDEX.md/README.md/AGENT_STARTUP.md + notebooks/). Missing-file check on a phantom path => WARN FP re-emitted each auditor tier cycle.",
-        "deliverable": "Point the DOC-AUDIT memory-integrity predicate at the REAL memory index (docs/agent-memory/INDEX.md) OR remove the phantom docs/agent-memory/MEMORY.md existence check; align main.md:445 wording so the checked artifact is unambiguous. Verify no other DOC-AUDIT sub-check hardcodes a non-existent canonical path.",
-        "acceptance": "One live DOC-AUDIT cycle emits ZERO 'MEMORY.md MISSING' signal against the current tree, and a deliberately-broken memory index still trips a real WARN (negative control).",
-        "related": [
-          "FIX-AUDITOR-A12A20A30-FP-REEMIT-CONVERGE"
-        ],
-        "note": "Auditor-FP family (feedback_auditor_predicate_drift_false_regression). Distinct from the A12/A20/A30 health-probe converge row (runtime health predicates vs this doc-integrity path predicate). PO source-verified path absence (ls + git log --diff-filter=D empty) before minting.",
-        "promoted_at": "2026-08-08T03:21:27Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "spec_doc": "docs/handoffs/FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE-spec.md",
-        "architect_review_note": "PLAN-ONLY (supervised+plan_only — main.md NOT edited). Re-verified stale main.md:445 citation live — real section is :720-722. Verbatim diff proposed (spec §1): repoint §1 Memory integrity from phantom `memory/MEMORY.md` (never existed, confirmed git diff-filter=D empty) at `docs/agent-memory/INDEX.md` (real repo-tracked memory index) ONLY — explicitly do NOT attempt to validate Claude Code's external per-session auto-memory file (no canonical repo-relative path, platform-managed, would require hardcoding a host-specific absolute path in violation of this repo's own no-hardcode convention). Sibling sweep of DOC-AUDIT items 2-6 (spec §2): zero other phantom paths found — all referenced docs/policies|protocols|standards|references dirs, tool-registry/cron-registry/stock-classification.json, .claude/agents/*.md, CLAUDE.md, project-stats.json + generator all confirmed present; DB-health container paths are runtime-resolved via docker exec, not static, so out of this defect class. ADJACENT FINDING flagged not fixed: docs/agent-memory/INDEX.md itself (the fix's new target) already has all 5 of its own listed session pointers dead (stale since commit ace28b78d, 2026-04-27) — this is a real, pre-existing doc-hygiene gap the phantom-path bug has been masking; serves as spec §3's natural negative control (first post-fix cycle should emit zero phantom-MISSING AND one new real INDEX.md broken-pointer WARN in the same cycle) but its cleanup is out of THIS task's scope — PO to decide on a follow-up row. Full verbatim diff + negative-control design + implementation notes in spec_doc.",
-        "updated_at": "2026-08-14T21:38:17Z",
-        "adjudicated_at": "2026-08-14T21:29:41Z",
-        "adjudicated_by": "po",
-        "status_note": "[agent-father 2026-08-14T21:38:16Z] Applied PO-ratified spec_doc §1 verbatim diff at system-auditor/flow/main.md's CURRENT live line 841-843 (spec's own :720-722 citation was stale, +121L drift — matched on quoted BEFORE text, byte-verified before editing). Repointed DOC-AUDIT §1 Memory integrity from phantom memory/MEMORY.md (never existed, zero repo-wide source hits) to docs/agent-memory/INDEX.md (real, git-tracked project memory index). Kept 2nd/3rd bullets intact per spec §3 anti-defang warning. Post-edit grep confirms zero remaining phantom-predicate hits (one intentional name-drop of the external Claude auto-memory file in the new scope note only). docs/agent-memory/INDEX.md confirmed exists (15L) as the new live target. Did NOT touch INDEX.md's own content (sequence-gated follow-up FIX-AGENTMEMORY-INDEX-DEAD-SESSION-POINTERS depends_on this row — must wait for one post-fix Tier-3 DOC-AUDIT cycle to emit a real broken-pointer WARN as negative-control proof first). Routing to qa: verify the diff landed as specced and confirm the next live Tier-3 DOC-AUDIT cycle emits zero phantom-MISSING signal + one new real INDEX.md broken-pointer WARN (spec §3 acceptance criterion).",
-        "po_goahead_20260814T212941": "PO ratified 2026-08-14 at source, not on relay: spec_doc present (13760B), its BEFORE block re-grepped live in main.md (now :841-843, matches verbatim), phantom docs/agent-memory/MEMORY.md re-confirmed absent, and the spec's load-bearing adjacent finding independently re-derived (cat docs/agent-memory/INDEX.md + ls docs/agent-memory/sessions/ -> all 5 listed pointers dead). Implementation authorized for agent-father."
-      },
-      {
-        "id": "UC-CCA-P3-FR3-SPAWN-FANOUT-CLEANUP",
-        "title": "Trim spawn-fanout.md FR-P2-7 documentation block (Q-skill-siting cleanup)",
-        "priority": "P0",
-        "zone": "docs/agents/cowork-team/",
-        "next_agent": "qa",
-        "status": "REVIEW",
-        "depends_on": "UC-CCA-P3-FR1-FR2-SKILL",
-        "blocked_by": null,
-        "created_at": "2026-08-08T00:00:00Z",
-        "created_by": "pm",
-        "note": "Doc-debt cleanup: trim spawn-fanout.md:84-121 (~35L) to 1-line pointer to .claude/skills/published-marker-gate/SKILL.md. Non-blocking, parallel with gate wiring.",
-        "updated_at": "2026-08-14T22:12:55Z",
-        "updated_by": "agent-father",
-        "agent_father_implementation_note": "Trimmed spawn-fanout.md's ~78L FR-P2-7 inline published-marker pattern block (task_claim/TTL/key prose, the original copy-paste source of the 4 EARLY-claim defect instances) to a 1-line pointer at .claude/skills/published-marker-gate/SKILL.md. Pure doc-debt reduction, no logic changed (dispatcher still never calls publish markers). qa to grep-verify: zero task_claim/task_id=\"published: literals remain in spawn-fanout.md, exactly one pointer to the skill.",
-        "commit_sha": "f1eb75143"
-      },
-      {
-        "id": "TASK_2008b",
-        "title": "Stop cowork-tick-preflight.sh recycling calendar_status (SILENT-path emit)",
-        "zone": "scripts/",
-        "status": "REVIEW",
-        "size": "S",
-        "priority": "P1",
-        "created_at": "2026-08-14T22:54:44Z",
-        "created_by": "pm",
-        "depends_on": [],
-        "parent_task": "UC-CDC-P1",
-        "note": "FR-A3: remove L150 calendar_status read, drop cal arg and key from L162-164 emit_args",
-        "files": [
-          "scripts/agents-flow/cowork-tick-preflight.sh",
-          "scripts/agents-flow/cowork-tick-preflight.test.sh"
-        ],
-        "updated_at": "2026-08-14T23:02:30Z",
-        "next_agent": "qa"
-      },
-      {
-        "id": "TASK_2008c",
-        "title": "Delete telemetry.md calendar arg + fail-loud in pressure-read.md (FR-A4/A5)",
-        "zone": "docs/agents/cowork-team/flow/",
-        "status": "REVIEW",
-        "size": "M",
-        "priority": "P1",
-        "created_at": "2026-08-14T22:54:44Z",
-        "created_by": "pm",
-        "depends_on": [],
-        "parent_task": "UC-CDC-P1",
-        "note": "FR-A4: delete telemetry.md L15; FR-A5: add fail-loud + send_telegram(bug) on out-of-domain calendar_status in pressure-read.md Step 4.3",
-        "files": [
-          "docs/agents/cowork-team/flow/telemetry.md",
-          "docs/agents/cowork-team/flow/pressure-read.md"
-        ],
-        "updated_at": "2026-08-14T23:03:02Z",
-        "next_agent": "qa",
-        "agent_father_implementation_note": "FR-A4: deleted telemetry.md Step 6.0 calendar_status arg line (self-recycling emitter arg — server now computes it, TASK_2008a). FR-A5: pressure-read.md Step 4.3 now enumerates CALENDAR_STATUS_DOMAIN={open,half_day,weekend,holiday,unknown} and fails loud (log + send_telegram(channel=\"bug\")) on any out-of-domain value before falling through to the unchanged conservative no-suppression path — no new blocking behavior, no rate-limit (self-heals within one tick once TASK_2008a lands). Both files size-justification headers refreshed to actual line counts (telemetry.md 163L, pressure-read.md 117L, cap 120L). No unit test twin (Step 4.3 is pure LLM-narrated prose) — verification is live-tick notebook observation per AC."
-      },
-      {
-        "id": "TASK_2008a",
-        "title": "Wire calendar_status through injectable-deps + enum gate (emitPressureStateTool/vnTradingCalendar)",
-        "zone": "apps/mcp-server/",
-        "status": "REVIEW",
-        "size": "M",
-        "priority": "P1",
-        "created_at": "2026-08-14T22:54:44Z",
-        "created_by": "pm",
-        "depends_on": [],
-        "parent_task": "UC-CDC-P1",
-        "note": "FR-A1 + FR-A2: wire server-side computation via injectable-deps, add SESSION_STATUSES const, implement WARN+recompute inside runEmitPressureState",
-        "files": [
-          "apps/mcp-server/src/domain/services/vnTradingCalendar.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts",
-          "apps/mcp-server/src/__tests__/emit-pressure-state.test.ts"
-        ],
-        "updated_at": "2026-08-14T23:15:04Z",
-        "claimed_at": "2026-08-14T23:00:07Z",
-        "claimed_by": "dev-mcp-server",
-        "next_agent": "qa",
-        "dispatch_note": "TASK_2008a DONE by dev-mcp-server 2026-08-14T23:15:04Z. FR-A1/FR-A2 calendar_status injectable-deps + enum gate implemented, tested, documented. bun test emit-pressure-state.test.ts 35/35, tsc clean, toolCount=183/cronJobCount=88 unchanged, full suite 15291 pass/51 fail (below noise band, zero fails touch this task). Commits: 75cc18eca (code+test), 994a2c117 (docs), 70bd7e7bd (memory)."
       }
     ],
     "qa": [
@@ -18124,6 +18093,72 @@
         "claimed_at": "2026-08-14T21:27:10Z",
         "claimed_by": "dev-team (review-lane qa-drain)",
         "updated_by": "agent-father"
+      },
+      {
+        "id": "TASK_2008b",
+        "title": "Stop cowork-tick-preflight.sh recycling calendar_status (SILENT-path emit)",
+        "zone": "scripts/",
+        "status": "QA",
+        "size": "S",
+        "priority": "P1",
+        "created_at": "2026-08-14T22:54:44Z",
+        "created_by": "pm",
+        "depends_on": [],
+        "parent_task": "UC-CDC-P1",
+        "note": "FR-A3: remove L150 calendar_status read, drop cal arg and key from L162-164 emit_args",
+        "files": [
+          "scripts/agents-flow/cowork-tick-preflight.sh",
+          "scripts/agents-flow/cowork-tick-preflight.test.sh"
+        ],
+        "updated_at": "2026-08-14T23:53:56Z",
+        "next_agent": "qa",
+        "claimed_at": "2026-08-14T23:53:55Z",
+        "claimed_by": "dev-team (review-lane qa-drain)"
+      },
+      {
+        "id": "TASK_2008c",
+        "title": "Delete telemetry.md calendar arg + fail-loud in pressure-read.md (FR-A4/A5)",
+        "zone": "docs/agents/cowork-team/flow/",
+        "status": "QA",
+        "size": "M",
+        "priority": "P1",
+        "created_at": "2026-08-14T22:54:44Z",
+        "created_by": "pm",
+        "depends_on": [],
+        "parent_task": "UC-CDC-P1",
+        "note": "FR-A4: delete telemetry.md L15; FR-A5: add fail-loud + send_telegram(bug) on out-of-domain calendar_status in pressure-read.md Step 4.3",
+        "files": [
+          "docs/agents/cowork-team/flow/telemetry.md",
+          "docs/agents/cowork-team/flow/pressure-read.md"
+        ],
+        "updated_at": "2026-08-14T23:53:56Z",
+        "next_agent": "qa",
+        "agent_father_implementation_note": "FR-A4: deleted telemetry.md Step 6.0 calendar_status arg line (self-recycling emitter arg — server now computes it, TASK_2008a). FR-A5: pressure-read.md Step 4.3 now enumerates CALENDAR_STATUS_DOMAIN={open,half_day,weekend,holiday,unknown} and fails loud (log + send_telegram(channel=\"bug\")) on any out-of-domain value before falling through to the unchanged conservative no-suppression path — no new blocking behavior, no rate-limit (self-heals within one tick once TASK_2008a lands). Both files size-justification headers refreshed to actual line counts (telemetry.md 163L, pressure-read.md 117L, cap 120L). No unit test twin (Step 4.3 is pure LLM-narrated prose) — verification is live-tick notebook observation per AC.",
+        "claimed_at": "2026-08-14T23:53:55Z",
+        "claimed_by": "dev-team (review-lane qa-drain)"
+      },
+      {
+        "id": "TASK_2008a",
+        "title": "Wire calendar_status through injectable-deps + enum gate (emitPressureStateTool/vnTradingCalendar)",
+        "zone": "apps/mcp-server/",
+        "status": "QA",
+        "size": "M",
+        "priority": "P1",
+        "created_at": "2026-08-14T22:54:44Z",
+        "created_by": "pm",
+        "depends_on": [],
+        "parent_task": "UC-CDC-P1",
+        "note": "FR-A1 + FR-A2: wire server-side computation via injectable-deps, add SESSION_STATUSES const, implement WARN+recompute inside runEmitPressureState",
+        "files": [
+          "apps/mcp-server/src/domain/services/vnTradingCalendar.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts",
+          "apps/mcp-server/src/__tests__/emit-pressure-state.test.ts"
+        ],
+        "updated_at": "2026-08-14T23:53:56Z",
+        "claimed_at": "2026-08-14T23:53:55Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "next_agent": "qa",
+        "dispatch_note": "TASK_2008a DONE by dev-mcp-server 2026-08-14T23:15:04Z. FR-A1/FR-A2 calendar_status injectable-deps + enum gate implemented, tested, documented. bun test emit-pressure-state.test.ts 35/35, tsc clean, toolCount=183/cronJobCount=88 unchanged, full suite 15291 pass/51 fail (below noise band, zero fails touch this task). Commits: 75cc18eca (code+test), 994a2c117 (docs), 70bd7e7bd (memory)."
       }
     ],
     "_closed_signals_20260614": {
@@ -18240,13 +18275,13 @@
         "last_served_tick": "2026-08-14T22:35:03Z"
       },
       "qa_drain": {
-        "last_served_tick": "2026-08-14T19:28:46Z"
+        "last_served_tick": "2026-08-14T23:53:44Z"
       },
       "step1_triage": {
         "last_served_tick": "2026-08-14T19:54:56Z"
       }
     },
-    "_updated_at": "2026-08-14T23:19:42Z",
+    "_updated_at": "2026-08-14T23:53:44Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
