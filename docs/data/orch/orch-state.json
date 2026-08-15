@@ -137,67 +137,6 @@
     "archive": [],
     "rows": [
       {
-        "id": "sys-20260814T035355-r16c",
-        "ts": "2026-08-14T03:53:55Z",
-        "from": "router",
-        "to": "po",
-        "type": "signal_feedback",
-        "summary": "16th occurrence: system-auditor T1 (a50b9fd0324963fd4) analysis-only-exit, resumed clean — see feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806",
-        "severity": "MED",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "router",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-14T03:30Z",
-        "dedup_key": "leaf-agent-analysis-only-exit:corroboration:2026-08-14T03:46Z:a50b9fd0324963fd4",
-        "detail": {
-          "class": "leaf-agent-analysis-only-exit",
-          "tracking_memory": "feedback_leaf_agent_analysis_only_exit_recurring_pattern_20260806",
-          "occurrence": 16,
-          "agent_type": "system-auditor",
-          "agent_id": "a50b9fd0324963fd4",
-          "first_turn_outcome": "correct A-30 analysis, zero writes (notebook/signal/commit all absent, RAW-verified)",
-          "mitigation": "resume-with-correction (SendMessage, EXECUTE-NOT-NARRATE directive)",
-          "resume_outcome": "CLEAN — notebook ## c89, signal sys-20260814T034703-c8e2, commit bfb93e450, RAW-verified matching",
-          "secondary_note": "commit was unpushed post-resume (ahead=2, within by-design PUSH_THRESHOLD=20 band per feedback_gatewayless_specialist_commits_but_never_pushes) — router pushed via commit-mutex push-only leg",
-          "running_tally": "resume-with-correction mitigation: 2 clean / 1 partial across 3 tries",
-          "disposition": "corroboration only, per standing occurrence-3+ precedent — no new board row minted"
-        },
-        "triaged_at": "2026-08-14T18:43:30Z",
-        "triaged_by": "po",
-        "disposition": "FOLD -> SPIKE-AUDITOR-WRITE-PLANE-DIVERGENCE-ROOT-CAUSE (backlog, P0, agents-architect), minted this tick and carrying this row as its origin_signal_id. This row's own detail block says 'corroboration only, per standing occurrence-3+ precedent — no new board row minted'; at occurrence 16 that precedent has become the problem, not the policy. The narrower system-auditor variant of the same class has now fired 10 times in 48h, so PO is escalating the class to a structural investigation rather than logging a 17th corroboration."
-      },
-      {
-        "id": "sys-20260814T041720-3a88",
-        "ts": "2026-08-14T04:17:20Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "microservice_degraded",
-        "summary": "rag-service memory pressure sustained >93% — loss of reclamation (A-30)",
-        "severity": "CRITICAL",
-        "status": "triaged",
-        "payload_ref": null,
-        "provenance": "detector",
-        "audit_cycle_tag": "cron:auditor-t1:2026-08-14T04:00Z",
-        "dedup_key": "microservice_degraded:vn-market-intelligence-mcp-rag-service-1:A-30:escalate-high-sustained",
-        "triaged_at": "2026-08-14T08:36:00Z",
-        "triaged_by": "po",
-        "disposition": "FOLD onto FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (REVIEW, next=qa) — covered by an open incident, no new mint. microservice_degraded CRITICAL 'rag-service memory pressure sustained >93% — loss of reclamation (A-30)'. PREMISE CROSS-CHECKED, not taken at face value: system-auditor tier-1 c97 (commit 99cb101ae, 2026-08-14T08:14Z) ran an A-30 deep-dive + STALE-ACK investigation on this exact symptom 3h57m after this row fired and returned verdict FOLD/PASS. The remediation (per-restart index rebuild, NOT the thread-pin originally suspected) landed 2026-08-14 and its durability window has not elapsed — a >93% reading inside the window is expected residue, not a fresh regression. RE-VERIFY GATE (do not close blind): if rag-service still shows sustained >93% with loss of reclamation after a full 24h dmesg durability window from the fix commit, that IS a genuine uncovered gap and must be escalated as a fresh FIX rather than folded again. Caution flagged for whoever re-verifies: A-30's crash-cliff branch is documented to fire on structurally non-crash drops, so do not score a reclamation dip as a crash."
-      },
-      {
-        "id": "sys-20260814T042152-5a45",
-        "ts": "2026-08-14T04:21:52Z",
-        "from": "system-auditor",
-        "to": "dev-team",
-        "type": "db_integrity_breach",
-        "summary": "vn_index_cache: Only 1 row (VNINDEX) present; typically should contain multiple index types. Expected 2+ index entries (",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": "docs/data/db-integrity-history.json",
-        "provenance": "detector",
-        "audit_cycle_tag": null,
-        "dedup_key": null
-      },
-      {
         "id": "cj-20260814T043238Z",
         "ts": "2026-08-14T04:32:38Z",
         "from": "code-janitor",
@@ -12160,6 +12099,26 @@
         "occurrence_count": 1,
         "verification_gate": "git worktree list == 1 entry AND git branch == main only",
         "updated_at": "2026-08-15T04:01:32Z"
+      },
+      {
+        "id": "FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION",
+        "type": "FIX",
+        "size": "S",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "developer",
+        "supervised": false,
+        "depends_on": [],
+        "blocks": [
+          "FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT"
+        ],
+        "created_at": "2026-08-15T04:19:48Z",
+        "created_by": "po (supervised-goahead ratification of FIX-ORCHSTATE-HOTFILE-BLOAT step 3)",
+        "updated_at": "2026-08-15T04:20:44Z",
+        "title": "orch-backlog-stub.sh cold-merge crashes on the REAL backlog-detail.json (.items is an ARRAY, not an id-keyed object) - blocks the LANES=backlog,ready,review migration",
+        "note": "BLOCKER for FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT step 3 (the supervised one-time LANES=backlog,ready,review migration). Found by PO during supervised-goahead ratification 2026-08-15 via end-to-end rehearsal against a byte-identical scratch copy of the live file — NOT caught by any of the 4 green suites (191/191). REPRO (read-only, safe, ~10s): cp docs/data/orch/orch-state.json + docs/data/orch/archive/backlog-detail.json into a scratch dir, then `LANES=backlog,ready,review ORCH_STATE=<scratch>/orch-state.json ARCHIVE_DIR=<scratch>/archive DETAIL_FILE=<scratch>/archive/backlog-detail.json bash scripts/orch-backlog-stub.sh` -> exit 5, `jq: error: array ([{\"baseline...) and object ({\"TASK_RUNI...) cannot be multiplied`. AC-1 (F-4, the crash): build_detail_temp merge branch assumes cold `.items` is an id-keyed OBJECT; the real docs/data/orch/archive/backlog-detail.json `.items` is an ARRAY of 442 id-bearing objects (top-level `.count` says 437 — already drifted, fix that too). Both merge forms break on it: post-F-3 `.items * $new_items` = array*object, and the pre-F-3 `($new_items + .items)` = object+array — i.e. PRE-EXISTING, the merge branch has never once worked against the live cold file, only against cold files this script itself created via its fresh-create/from_entries branch (which is why 25/25 stub assertions stay green). Normalize the shape at ingest exactly as the READER side already does — scripts/lib/devteam-eligibility.jq detail_items_from() (FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX, 2026-07-09) — and reuse that def rather than hand-rolling a second copy (this repo has already paid for hole-by-hole duplication of these predicates). Decide and document whether the cold file is rewritten to object shape or kept array-shaped for back-compat with every existing reader. AC-2 (F-5, silent ratification revocation): STUB_FIELDS is an unconditional whitelist, so build_hot_temp strips po_goahead_* from hot rows; WF-2 should_hold reads that key from HOT row keys UNION .head keys with NO cold fallback (unlike effective_supervised/plan_only/owner/next_agent). Live today: 5 ready[]+review[] rows carry a po_goahead stamp, 4 supervised:true — a migration would silently un-ratify them. Preserve any key matching ^po_goahead through the strip (simplest: whitelist-by-prefix in build_hot_temp, same defense-in-depth rationale that put depends_on/depends/blocked_by into STUB_FIELDS). AC-3: a regression test that runs the merge branch against an ARRAY-shaped cold fixture (the gap that hid F-4), and one asserting a po_goahead_* key survives a stub run. AC-4 (verification bar, do not skip): re-run the scratch rehearsal above end-to-end to exit 0 with reconciliation PASS BEFORE claiming done — the shipped fixture suites provably do not cover this path. Consider also is_non_dev_owner_unrouted() reading .next_agent inline-only (116 in-scope rows lose it -> predicate flips true -> newly gated); confirm intended or widen to effective_next_agent. Full evidence in the blocked rows po_review_20260815T041948 field."
       }
     ],
     "closed_sprints": [
@@ -17295,7 +17254,7 @@
         "id": "FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT",
         "type": "FIX",
         "size": "M",
-        "status": "REVIEW",
+        "status": "BLOCKED",
         "priority": "P1",
         "zone": "cross-service/",
         "next_agent": "po",
@@ -17306,8 +17265,8 @@
         "note": "MEASURED 2026-08-08T18:0xZ, contradicts the assumption both existing eviction rows rest on. Section bytes: task_board 3.13MB of 3.73MB total (84%), signal_queue 270KB. Lane bytes: review[] 1.19MB / 186 rows, backlog[] 1.04MB / 354 rows, ready[] 386KB / 75 rows. TERMINAL-STATUS ROWS IN THOSE LANES: ZERO (backlog = 331 BACKLOG + 23 BLOCKED; review = 186 REVIEW + 4 BLOCKED; ready = 67 READY + 8 TODO). So there is nothing for a terminal-status eviction pass to find. The bytes are legitimately-live rows carrying inline note/po_*/amendment prose: mean review row 6.3KB, top rows 49KB / 41KB / 39KB / 31KB. The schema's own detail_ref pointer field is the intended remedy and is largely unused on these rows. ARCHITECT OWNS: whether the fix is (a) enforce a per-row inline-byte ceiling at the orch-apply write gate with overflow forced to detail_ref, (b) a one-time prose->detail_ref migration of the top-N rows, or (c) both. supervised+plan_only: design first, no code, hot-file surgery on 517 live rows is not an autonomous-pickup class. Sequencing note for pm: this row must land BEFORE the hard ceiling half of FIX-ORCHAPPLY-NO-HOTFILE-SIZE-TELEMETRY-WARN.",
         "created_at": "2026-08-08T18:08:16Z",
         "created_by": "po (SYSREMAKE-8RC-RECHECK triage)",
-        "updated_at": "2026-08-15T04:10:00Z",
-        "updated_by": "architect",
+        "updated_at": "2026-08-15T04:20:44Z",
+        "updated_by": "po",
         "promoted_at": "2026-08-08T23:23:41Z",
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
@@ -17319,7 +17278,11 @@
         "secondary_claimed_at": "2026-08-15T03:51:14Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "developer",
-        "developer_review_note": "developer (2026-08-15): implemented steps 1/2/4/5 of the architect brief's 5-step decomposition (unblocked, non-supervised work). Step 1 (F-3 prereq): fixed orch-backlog-stub.sh cold-merge shallow-wholesale bug to per-field deep merge (commit 99a667542), RED-then-GREEN verified via git stash, new T3/T4 fixtures. Step 2: generalized orch-backlog-stub.sh with LANES config var + --lane CLI flag (commit 437314028), default byte-identical, 14 new T5-T7 assertions. Step 4: new scripts/orch-row-prose-ceiling-check.mjs (growth-only row ceiling, mirrors orch-conservation-check.mjs contract) wired into orch-apply.sh Stage 2.5 (commit 4513c45df), 18 new assertions, verified read-only against real live file (42 pre-existing over-ceiling rows all resolve WARN, zero regression risk). Step 5: dev-standards.md CANONICAL blocks + WORK.md updated (commit 17b9d9387). Full regression: orch-backlog-stub.test.sh 25/25, orch-row-prose-ceiling-check-tests.sh 18/18, orch-apply-wrapper-tests.sh 89/89, orch-cold-evict-tests.sh 59/59 — all green, real live file confirmed untouched throughout. REMAINING: step 3 (one-time live LANES=backlog,ready,review migration against the real orch-state.json, under commit-mutex) inherits supervised:true per the brief — deliberately NOT run this session; needs PO/architect go-ahead per docs/agents/po/flow/supervised-goahead.md before any developer resumes it. Row NOT auto-reassigned to a live pipeline lane (not currently .head-pinned) — routing to po for supervised ratification of step 3."
+        "developer_review_note": "developer (2026-08-15): implemented steps 1/2/4/5 of the architect brief's 5-step decomposition (unblocked, non-supervised work). Step 1 (F-3 prereq): fixed orch-backlog-stub.sh cold-merge shallow-wholesale bug to per-field deep merge (commit 99a667542), RED-then-GREEN verified via git stash, new T3/T4 fixtures. Step 2: generalized orch-backlog-stub.sh with LANES config var + --lane CLI flag (commit 437314028), default byte-identical, 14 new T5-T7 assertions. Step 4: new scripts/orch-row-prose-ceiling-check.mjs (growth-only row ceiling, mirrors orch-conservation-check.mjs contract) wired into orch-apply.sh Stage 2.5 (commit 4513c45df), 18 new assertions, verified read-only against real live file (42 pre-existing over-ceiling rows all resolve WARN, zero regression risk). Step 5: dev-standards.md CANONICAL blocks + WORK.md updated (commit 17b9d9387). Full regression: orch-backlog-stub.test.sh 25/25, orch-row-prose-ceiling-check-tests.sh 18/18, orch-apply-wrapper-tests.sh 89/89, orch-cold-evict-tests.sh 59/59 — all green, real live file confirmed untouched throughout. REMAINING: step 3 (one-time live LANES=backlog,ready,review migration against the real orch-state.json, under commit-mutex) inherits supervised:true per the brief — deliberately NOT run this session; needs PO/architect go-ahead per docs/agents/po/flow/supervised-goahead.md before any developer resumes it. Row NOT auto-reassigned to a live pipeline lane (not currently .head-pinned) — routing to po for supervised ratification of step 3.",
+        "blocked_by": [
+          "FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION"
+        ],
+        "po_review_20260815T041948": "po (2026-08-15T04:19Z): SUPERVISED GO-AHEAD **DECLINED** for step 3 (live LANES=backlog,ready,review migration) per docs/agents/po/flow/supervised-goahead.md Step 2 \"not ratified\" branch. NO po_goahead_* key written — step 3 remains unauthorized. Steps 1/2/4/5 RATIFIED: I re-ran all 4 suites myself rather than accept the self-report — orch-backlog-stub.test.sh 25/25, orch-row-prose-ceiling-check-tests.sh 18/18, orch-apply-wrapper-tests.sh 89/89, orch-cold-evict-tests.sh 59/59 (191/191 reproduced), all 6 commits confirmed on local HEAD and origin/main, live orch-state.json SHA256 byte-identical before/after the full test run. TWO BLOCKERS found by end-to-end REHEARSAL of step 3 against a byte-identical scratch copy of the live file (ORCH_STATE/ARCHIVE_DIR/DETAIL_FILE overrides, real code path incl. orch-apply Stage 2/2.5) — neither is visible to the shipped test suites. (F-4, HARD BLOCKER, step 3 is UNEXECUTABLE TODAY) build_detail_temp merge branch aborts exit 5: `jq: error: array ([{\"baseline...) and object ({\"TASK_RUNI...) cannot be multiplied`. The REAL docs/data/orch/archive/backlog-detail.json has `.items` as an ARRAY of 442 id-bearing objects, NOT the id-keyed object the script assumes; `.items * $new_items` is array*object. PRE-EXISTING, NOT developer-introduced — the pre-F-3 form `($new_items + .items)` is object+array and errors identically; the merge branch has never worked against the live cold file. Invisible to all 25 stub assertions because every fixture creates cold via the fresh-create branch, which emits from_entries object shape — the merge branch is only ever tested against cold files this script itself wrote. The READER side was explicitly hardened for this exact array shape on 2026-07-09 (FIX-DEVTEAM-BOUNDED1-DETAIL-ITEMS-ARRAY-INDEX, scripts/lib/devteam-eligibility.jq detail_items_from()); the WRITER never was. Data-safe abort held perfectly: cold-first ordering + set -e + trap cleanup left scratch hot AND cold byte-identical, zero temp leak. (F-5, CORRECTNESS, survives an F-4 fix) STUB_FIELDS is an unconditional whitelist — build_hot_temp strips EVERY field not in it, including po_goahead_*. WF-2 should_hold reads the goahead key from HOT row keys UNION .head keys ONLY, with no cold fallback (unlike effective_supervised/plan_only/owner/next_agent, which all have one). Measured live: 5 rows in ready[]+review[] carry a po_goahead stamp and 4 are supervised:true (FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM, FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE, FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE, FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING) — the migration would silently revoke 4 ratifications already granted and re-hold those rows. Same silent-loss shape as F-3, different field family. Self-defeating for THIS row too: it lives in review[], so any po_goahead I stamped would be stripped by the very migration it authorized. Secondary: is_non_dev_owner_unrouted() reads .next_agent inline-only (no effective_ wrapper) and 116 in-scope rows lose inline next_agent -> predicate flips true -> newly gated. ROOT CAUSE OF THE DESIGN MISS: brief §2.4 asserts the exclude-set is a \"superset of orch-backlog-stub.shs STUB_FIELDS plus the lifecycle/provenance fields STUB_FIELDS deliberately never strips\" — factually wrong, build_hot_temp strips all of them; that inaccuracy is what made F-5 invisible at design time. ALSO STALE: brief §0 measured 623 rows (backlog 361/ready 76/review 186) on 08-09; today is 546 (418/91/37) — review[] drained 186->37 by normal churn, so the review-lane bulk-paydown rationale is now much smaller and the 12KB p90 ceiling was tuned on a distribution that no longer exists (env-tunable, not a blocker). PAYOFF IS STILL REAL and worth unblocking: verified dry-run projects 3391728 -> 1114243 bytes, -2277485 (-67%), now mostly from backlog[]. DISPOSITION: status BLOCKED, blocked_by the newly-minted FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION; .head left untouched (was already idle, nothing held). Once that lands, PO re-runs this same scratch rehearsal and ratifies step 3 then — do NOT re-attempt step 3 before it is DONE_VERIFIED."
       },
       {
         "id": "FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS",
