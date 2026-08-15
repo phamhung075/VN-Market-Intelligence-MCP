@@ -1,6 +1,26 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-15T07:52:00Z | **Cycle:** FIX-NOTEBOOK-UUID-PROVENANCE-GUARD-STUCK-IN-WARN-MODE-3-NOTEBOOKS-LEAKED-AT-HEAD (P3 S, dev-team dispatch)
+**Last updated:** 2026-08-15T09:56:30Z | **Cycle:** FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION (P0 S, router-direct dispatch)
+
+## Session 2026-08-15T09:56:30Z — FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION (cross-service/, developer, P0 S, router-direct dispatch, PO priority-bump 09:15Z, session 632721c2)
+
+**Task:** `orch-backlog-stub.sh`'s `build_detail_temp()` merge branch crashed on the REAL live `backlog-detail.json` `.items` (a 442-element ARRAY, not the id-keyed object the merge assumed) — exit 5, `array (...) and object (...) cannot be multiplied`. Blocked the `FIX-ORCHSTATE-HOTFILE-BLOAT` LANES=backlog,ready,review migration entirely; PO bumped P1→P0 same-tick — 41 board rows over the prose-ceiling can't be `po_goahead`-ratified until this lands (PO's own janitor-triage write was itself rejected for the same reason).
+
+**AC-1:** normalized cold `.items` on ingest via `scripts/lib/devteam-eligibility.jq`'s `detail_items_from()` (reused via `jq -L "$REPO_ROOT" 'include ...'`, not hand-rolled) before the F-3 per-field merge. **Shape decision (documented in the script header + dev-standards.md):** `.items` now ALWAYS written back ARRAY-shaped — matches the live shape, matches `po-detail-resync-review-lifecycle-routing.sh`'s own read+write convention (the only other writer — would flip it back to array on its next run regardless), and is the only shape that round-trips the 1 pre-id-scheme legacy cold record without destroying it. Also fixed the adjacent reconciliation bug (`.items | keys` on an array yields indices, not ids — flagged but not repaired by an earlier PO row).
+
+**AC-2 (F-5):** preserved `^po_goahead` keys through `build_hot_temp()`'s `STUB_FIELDS` whitelist by prefix — WF-2 `should_hold` has no cold fallback for that key, so a stub re-run used to silently revoke a PO ratification; verified all 6 live `po_goahead_*` rows byte-preserved post-rehearsal.
+
+**AC-3:** new T8 (array-shaped cold input + id-less legacy record preservation, the exact gap that hid F-4) + T9 (`po_goahead_*` survival, prefix-scoped not blanket) in `orch-backlog-stub.test.sh`; T3-T7 assertions updated for the shape decision (`.items|keys` → `[.items[].id]`). 35/35 pass (was 25/25, all 6 new RED pre-fix).
+
+**AC-4 (mandatory, done before claiming this row done):** re-ran the exact PO-specified scratch rehearsal against a byte-identical read-only copy of the live `orch-state.json`+`backlog-detail.json` (`LANES=backlog,ready,review`) — pre-fix exit 5 (crash reproduced verbatim), post-fix exit 0, `Reconciliation PASS — all hot stub ids confirmed in cold detail`, hot file 3,455,546B→1,209,788B. Never written to the real files (scratch dir only, cleaned up after).
+
+**Structural gap (recurring, same class as the last 2 sessions):** graphify incremental step attempted (`graphify update docs`) but the CLI subcommand is AST/code-only (no LLM) and treats the target path as its OWN project root — created an unwanted nested `docs/graphify-out/` (72,579 nodes) instead of touching the canonical root-level graph; removed (was untracked, zero commit risk). No Skill-tool binding available to this spawned agent (Read/Edit/Write/Bash only) to run the real semantic-extraction pipeline. Documented as skipped rather than fabricated.
+
+**Regression:** `bash scripts/orch-backlog-stub.test.sh` 35/35. `shellcheck scripts/orch-backlog-stub.sh` clean. No `apps/` TS/Go touched — `bun test`/`tsc` N/A (pure bash/jq).
+
+**Closeout:** 3 commits, all pathspec-scoped — `b1aa63b7a` (fix + regression tests), `6f55a013e` (dev-standards.md CANONICAL block + WORK.md), `94b78d502` (board row `backlog[]→review[]` lane-move + status flip, same write per the status-flip=lane-move rule established last cycle). Decision-journal entry appended to `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` (S52). No handoff file (flat `backlog[]` row, PO-direct P0 mint, no PM decomposition — board row's own AC note is the spec, per `main.md`'s known-drift precedent). Router (session 632721c2) holds no per-task lock per INV-GATEWAY-1 (PRE-CLAIM was intent-level only, `intent:developer:<key>`) — this specialist did not attempt `task_claim`/`task_release`.
+
+---
 
 ## Session 2026-08-15T07:52:00Z — FIX-NOTEBOOK-UUID-PROVENANCE-GUARD-STUCK-IN-WARN-MODE-3-NOTEBOOKS-LEAKED-AT-HEAD (cross-service/, developer, P3 S, dev-team dispatch)
 
@@ -39,19 +59,5 @@
 **Structural gap (same class as prior sessions):** graphify incremental step skipped — no Skill-tool binding available to this spawned agent (Read/Edit/Write/Bash only).
 
 **Closeout:** 3 commits, all pathspec-scoped — `90e84270d` (fix + regression test), `59304db7d` (dev-standards.md CANONICAL block update + WORK.md), `c2e69375e` (board row `backlog[]→review[]` lane-move + status flip, same write per the status-flip=lane-move rule; this write also captured the concurrent SECONDARY-Drain stamp on `SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD` already sitting in the working tree). Decision-journal entry appended to `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` (S50). Router/dispatcher (dev-team) holds the outer `task:` sprint-task lock per INV-GATEWAY-1 — this specialist did not attempt `task_claim`/`task_release`.
-
----
-
-## Session 2026-08-15T04:58:06Z — FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS (apps/mcp-server/, developer, P0 M, review-lane secondary-drain owner-triage, session 632721c2)
-
-**Task:** Stale `review[]` row (`next_agent: developer`, so PRIMARY QA-Drain — which only fires on `next_agent=="qa"` — would never reach it). Row's own `dev_note` already recorded the code work complete (Zod schemas + handler pass-through for `task_heartbeat`/`task_release`, 13/13 new tests GREEN, 132/132 combined suite, tsc clean, commits `fb5207746`/`98259e871`/`80bda1800`) but flagged the NFR-3 rebuild gate as an open, separate step.
-
-**Verification performed this cycle:** confirmed `fb5207746` (feature commit) AND `1653cea0a` (same-day size-lint refactor that split `coordinationTools.ts` into 6 per-tool files, verbatim/zero-logic-change per its own commit message) are BOTH `git merge-base --is-ancestor` of the running `mcp-server` container's baked-in git sha (`vn.market.git_sha=78e4b06a...`, image built 2026-08-13T21:15:38+02:00). Container runs `bun run src/index.ts` directly from source (no `dist/` build step — confirmed via `package.json` + absence of `/app/dist`), so on-disk source IS live runtime behavior. `docker exec` into the running container confirmed `taskHeartbeatTool.ts`/`taskReleaseTool.ts` at their post-refactor live path (`src/interface/mcp/tools/system/coordination/`) contain `payload_patch`/`owner_agent`/`original_owner_client_session`. Re-ran the row's own test file locally (13/13 pass) plus the wider coordination suite (38/38 pass, 0 regressions). **NFR-3 rebuild gate: RESOLVED** — feature is live in production, not just committed.
-
-**Decision — reassigned rather than self-certified:** developer's own agent-identity `not_my_job` list names "Test pipeline and merge gate" as qa's job, and qa's flow already has a purpose-built Direct-Commit Verify entry point for exactly this `branch:null`/no-handoff row shape. Set `next_agent: developer → qa`, populated `commit`/`files[]`/`status_note` (rebuild-gate evidence + what was/wasn't re-run) on the board row via `orch-apply.sh` so qa's Direct-Commit Verify doesn't need to re-derive the rebuild-gate evidence — only its own re-run of `bun test`/`tsc`/`mock-guard.sh` remains. Row is NOT OOM-class (Zod schema/interface change only) — Durability Gate N/A. Left `status: REVIEW` unchanged (in-place stamp, no lane move — row already lives in `.task_board.review[]`).
-
-**Regression:** no production code touched this cycle (verification-only task) — `bun test`/`tsc` re-runs cited above were confirmatory, not new work. No `apps/` files modified.
-
-**Closeout:** board-row update via `orch-apply.sh` only (`docs/data/orch/orch-state.json`), decision-journal entry appended to `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` (S49). No handoff file (review-lane secondary-drain dispatch — board row's own fields are the spec). Router/dispatcher (dev-team) holds the outer `task:` sprint-task lock per INV-GATEWAY-1 — this specialist did not attempt `task_claim`/`task_release`.
 
 ---
