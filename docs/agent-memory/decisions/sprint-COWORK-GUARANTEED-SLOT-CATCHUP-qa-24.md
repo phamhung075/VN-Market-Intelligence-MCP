@@ -150,3 +150,14 @@
 - Zero production/test code touched (pure `.md`, 1 flow file + 2 memory files) → bun test/tsc/mock-guard N/A, same precedent as qa-S15-21; `process.env`/secret/password/token greps clean on touched file (only generic-word "token" hits re audit-verdict-token domain term, no real secret).
 **why-decision:** vc-approved, DONE_VERIFIED. Diff correctness + positive-control both independently confirmed live; negative-control/live-cycle proof is explicitly out-of-scope-here per architect+PO ruling, not a QA-side blocker — flagged in status_note as pending monitoring, not withheld.
 **why-change:** none — routing instruction matched row disposition exactly; first-pass clean verify.
+
+### STEP qa-S23 · qa · 2026-08-15T01:54:02Z
+**task-id:** FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK
+**what-done:** Direct-Commit Verify re-check on AC-3 only (AC-1/AC-2 already RAW-verified `a71cc0df1` prior cycle). Checked for ≥1 live `news-scout-offhours` self-commit landing cleanly since the hardened fix (`3d2ff4ee2`+`7a94f3dd5`) landed at 2026-08-15T00:25:23Z — found ZERO. Did NOT flip DONE_VERIFIED.
+**what-considered:**
+- `git log --since=2026-08-15T00:25:23Z -- docs/agent-memory/notebooks/news-scout.md`: only hit is `f795efe35`, explicitly labelled "catch-up, pre-fix straggler" — that commit's own notebook content (c269) is stamped `2026-08-15T00:13:00Z`, i.e. BEFORE the fix landed; it is the fix-landing session backfilling stale pre-fix work, not a live proof-fire of the hardened path.
+- `docs/data/cowork-schedule.json` slot `news-scout-offhours`: `last_fired: 2026-08-15T00:13:14Z` (matches c269, pre-fix), cron `0 */4 * * *` → next scheduled fire 04:00Z. Current wallclock (checked via `date -u`) = 01:54Z — window has not elapsed yet.
+- Searched for a BUG-channel telegram re: news-scout off-hours commit failure — none found (moot, since no fire has occurred to trigger either a clean-commit success or the false-positive this hardening targets).
+- This task's own AC-1/AC-2 precedent required 2 live weekday EOD fires before certifying (not a code read alone); the row's own `resume_note` explicitly says not to lower that bar for AC-3. Fabricating a live-fire PASS here would repeat this exact task's original defect shape (fix correct on paper, unproven live) in the opposite direction.
+**why-decision:** Left `status: QA` / lane `qa[]` unchanged (neither `vc-approved` nor `vc-changes` — no defect found, evidence window simply hasn't elapsed). Updated `review_note`/`resume_note`/`updated_at` with this check's findings; did not increment `redispatch_count` (that field is for defects requiring rework, not elapsed-time gating).
+**why-change:** none — followed dispatcher's explicit no-fabrication instruction; re-verify after next `news-scout-offhours` fire (ideally the 16:00Z weekday co-fire with market-watcher-eod, the scenario the hardening specifically targets).
