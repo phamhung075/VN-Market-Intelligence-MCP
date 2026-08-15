@@ -193,20 +193,6 @@
         "dedup_key": "vps_route_unhealthy:bctc-discover:B-06"
       },
       {
-        "id": "cj-20260814T103320Z",
-        "ts": "2026-08-14T10:33:20Z",
-        "from": "code-janitor",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
-        "severity": "LOW",
-        "status": "triaged",
-        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-14.json",
-        "triaged_at": "2026-08-14T18:43:30Z",
-        "triaged_by": "po",
-        "disposition": "PO RULING — RETIRE, do not replace in kind; and the signal itself is partly self-generated. (1) DECISION: the pre-2026-06-23 team-tool-recheck writer is RETIRED. Its function — comparing a DOCUMENTED tool param name against the LIVE MCP schema — is already owned by CHECK-TOOL-INTERFACE-SCHEMA-DRIFT-DOC-VS-LIVE (backlog, agent-father), which is the correct successor. Do not rebuild the old writer; land that row instead. (2) PREMISE CORRECTION: this signal is emitted by code-janitor's memory-prune-sweep.sh, which FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (backlog, developer) documents as carrying a HARDCODED 'writer silent since 2026-06-23' string with NO liveness predicate — so it will keep re-emitting on every sweep regardless of this ruling, and did: these two rows are byte-identical 6h apart. Fixing that row is what actually stops the resurface. Both rows closed together as one duplicate pair."
-      },
-      {
         "id": "cj-20260814T163219Z",
         "ts": "2026-08-14T16:32:19Z",
         "from": "code-janitor",
