@@ -9,7 +9,7 @@
      history. -->
 
 ## EDIT 2026-08-15T00:24Z — FIX-NEWSSCOUT-COMMIT-POLICY-NEVER-MECHANICALLY-WIRED,
-router-dispatched (intent=edit), session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`
+router-dispatched (intent=edit)
 - Bug: `docs/agents/news-scout/flow/stage-log-notify.md` L14 stated "Off-hours cycles retain
   their own per-cycle commit" but no step anywhere in news-scout's flow tree ever executed a
   git/commit-mutex call (`grep -rn "commit"` showed only that one prose line + unrelated
@@ -43,7 +43,7 @@ router-dispatched (intent=edit), session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`
   edit) per the dispatch instruction.
 
 ## EDIT 2026-08-14T23:03Z — task TASK_2008c (UC-CDC-P1 3-way split, agent-father slice),
-router-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`
+router-dispatched
 - Context: UC-CDC-P1 (compute `calendar_status` server-side, break the circular self-recycling
   loop) decomposed by PM into 3 tier-1/independent tasks — TASK_2008a (dev-mcp-server, FR-A1/A2),
   TASK_2008b (developer, FR-A3), TASK_2008c (this row, agent-father, FR-A4/A5,
