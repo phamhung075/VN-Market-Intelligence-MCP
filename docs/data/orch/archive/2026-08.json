@@ -15017,6 +15017,67 @@
           "observed_at": "2026-08-14T23:27:51Z"
         }
       }
+    },
+    {
+      "id": "UC-CCA-P3-FR1-FR2-SKILL",
+      "title": "Create published-marker-gate skill",
+      "priority": "P0",
+      "zone": "cross-service/",
+      "next_agent": "pm",
+      "status": "DONE_VERIFIED",
+      "depends_on": null,
+      "blocked_by": null,
+      "created_at": "2026-08-08T00:00:00Z",
+      "created_by": "pm",
+      "note": "FR-1/FR-2: Create .claude/skills/published-marker-gate/SKILL.md (two-phase gate). Blocking dependency for 7 follow-on FR-3 wiring tasks. || [developer 2026-08-12T14:35Z] Implemented directly (this flow's own known-drift precedent: zone cross-service/ unmapped in system-map.json, next_agent was non-specialist placeholder 'dev-team'; this session also has no Agent-tool binding to nest-spawn anyway). Created .claude/skills/published-marker-gate/SKILL.md (86L, commit 6d63b9cac) verbatim from architect brief §3 / this task's own handoff AC-1 (frontmatter name+description, Inputs MARKER_KEY/MARKER_TTL/OWNER_AGENT/OWNER_CLIENT_SESSION, Phase-1 probe pseudocode incl. task_list_held no-task_id-filter caveat, Phase-2 claim pseudocode incl. never-release+TTL-sole-expiry language, Design note on Phase-1-optional). AC-2 (valid markdown, YAML frontmatter parses) verified. AC-3 (no other files touched) held. Unblocks the 7 FR-3 wiring children once QA approves. || [QA] Review Record (direct-commit verify) 2026-08-12T16:37:00Z: APPROVED, DONE_VERIFIED. Commit 6d63b9cac confirmed on main ancestry via git merge-base --is-ancestor; git show --stat matches the sole claimed file exactly (.claude/skills/published-marker-gate/SKILL.md, new, 86L) -- AC-3 (no other files touched) confirmed, not just held. Line-by-line diff of the delivered body vs architect brief docs/architecture-briefs/2026-08-08-uc-cca-p3-published-marker-gate-skill.md section 3 draft: byte-identical except a 7-line additive header (title + Design-brief/Task/Wired-into pointers, all factually correct, cross-reference real files/task-id) and one clarifying word (\\\"brief section 7\\\" vs brief own \\\"section 7\\\") -- non-blocking, does not violate AC-1s literal bullet list (all 5 required sub-elements present verbatim: frontmatter name+description; 4 Inputs MARKER_KEY/MARKER_TTL/OWNER_AGENT/OWNER_CLIENT_SESSION no placeholders; Phase-1 pseudocode incl. task_list_held no-task_id-filter caveat; Phase-2 pseudocode incl. never-release + TTL-sole-expiry language; Design note on Phase-1-optional for alert-commander/bctc-analyst). AC-1 size-justification sub-bullet: file-size-caps.json caps .claude/skills/**/*.md at 200L, file is 86L -- size-lint-justification.sh --check does not flag it, header correctly omitted. AC-2: python3 yaml.safe_load parses frontmatter cleanly (name+description present); 4 code-fence markers = 2 balanced blocks, no dangling markdown; size-lint-justification.sh (closest existing flow-doc-adjacent lint tool, no dedicated skill-file structural linter exists) passes clean. bun test/tsc --noEmit independently confirmed N/A (not trusted from developer prose) -- git show --name-only proves zero .ts/.js/.go/.py files touched, no skill-file test suite exists in repo. mock-guard.sh --files: \\\"No production source files to scan. PASS\\\" (correctly scopes only real source extensions). DDD/security greps (infra/application imports, process.env, password/secret/token) on the file: zero hits, all clean. Unblocks the 7 FR-3 wiring follow-on tasks. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-18.md STEP qa-S91.",
+      "updated_at": "2026-08-12T16:27:26Z",
+      "updated_by": "qa",
+      "claimed_at": "2026-08-12T16:22:12Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "commit_sha": "6d63b9cac",
+      "qa_verified_at": "2026-08-12T16:37:00Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git (merge-base --is-ancestor / show --stat / show --name-only) + python3 yaml.safe_load + size-lint-justification.sh + mock-guard.sh + grep DDD/security",
+          "args": {
+            "commit_verified": "6d63b9cac"
+          },
+          "live_value_observed": "ancestor=yes; git show --stat = exactly 1 file (.claude/skills/published-marker-gate/SKILL.md, 86L new); YAML frontmatter parses (name+description present); 4 code-fence markers balanced; size-lint-justification.sh --check no flag; mock-guard.sh = no production source to scan, PASS; DDD/security greps zero hits",
+          "observed_at": "2026-08-12T16:37:00Z"
+        }
+      }
+    },
+    {
+      "id": "UC-CCA-P3-FR3-SPAWN-FANOUT-CLEANUP",
+      "title": "Trim spawn-fanout.md FR-P2-7 documentation block (Q-skill-siting cleanup)",
+      "priority": "P0",
+      "zone": "docs/agents/cowork-team/",
+      "next_agent": "pm",
+      "status": "DONE_VERIFIED",
+      "depends_on": "UC-CCA-P3-FR1-FR2-SKILL",
+      "blocked_by": null,
+      "created_at": "2026-08-08T00:00:00Z",
+      "created_by": "pm",
+      "note": "Doc-debt cleanup: trim spawn-fanout.md:84-121 (~35L) to 1-line pointer to .claude/skills/published-marker-gate/SKILL.md. Non-blocking, parallel with gate wiring.",
+      "updated_at": "2026-08-15T00:00:29Z",
+      "updated_by": "qa",
+      "agent_father_implementation_note": "Trimmed spawn-fanout.md's ~78L FR-P2-7 inline published-marker pattern block (task_claim/TTL/key prose, the original copy-paste source of the 4 EARLY-claim defect instances) to a 1-line pointer at .claude/skills/published-marker-gate/SKILL.md. Pure doc-debt reduction, no logic changed (dispatcher still never calls publish markers). qa to grep-verify: zero task_claim/task_id=\"published: literals remain in spawn-fanout.md, exactly one pointer to the skill.",
+      "commit_sha": "f1eb75143",
+      "claimed_at": "2026-08-14T23:53:55Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "status_note": " | [QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Commit f1eb75143 (full f1eb75143a0db1c9b2ce7fdea7df2ba088bad847) confirmed real, on main ancestry (git merge-base --is-ancestor); git show --stat touches exactly docs/agents/cowork-team/flow/spawn-fanout.md (1 file, +20/-79), matching the agent_father_implementation_note's ~78L FR-P2-7 block trim claim. Row's own grep-verify instruction independently re-run (not trusted from note prose): task_id=\"published:\" literal (old code block's key structure) = 0 hits, fully removed. task_claim string = 4 hits total, none functional: 2 are this task's own new comment prose describing what was removed, 2 (L233/236) are a pre-existing, diff-untouched Step 4.6 per-work-item-token cross-reference (slot-claim.md) unrelated to the FR-P2-7 published-marker block. Functional skill-pointer count = exactly 1 (.claude/skills/published-marker-gate/SKILL.md at the new 'Published marker gate:' line); a 2nd mention is inside the size-justification header's own historical delta commentary, not a 2nd agent-facing instruction. Cross-checked against handoff QA Gate (docs/handoffs/UC-CCA-P3-FR3-SPAWN-FANOUT-CLEANUP.md) + architecture brief 2026-08-08-uc-cca-p3-published-marker-gate-skill.md sec4: replacement prose (5L, keeps heading + \"publisher owns the marker\" + ops-runbook cross-ref carried over from the old block) diverges from the brief's literal proposed 1-line string but preserves the exact invariant named (\"dispatcher does NOT call publish markers, the spawned agent does\") and adds no new claim -- accepted as implementation latitude on a cosmetic/doc-debt task (handoff Notes: \"cosmetic/doc-debt cleanup, not a functional requirement\"), not a blocking deviation. No orphaned references: grepped removed-block identifiers (PUBLISHED_KEY/MARKER_CLAIM/publish_claim/WORK_DATE/100800/691200) -- 0 hits elsewhere in file. External cross-file pointers (digest-predict/main.md, chef.md, tran-ngoc-bau/main.md sec Published marker gate (FR-P2-7)) still resolve -- heading text survived the trim. Size-justification header gained its own dated delta note (established per-file convention). Zero production/test code touched (pure flow-doc, 1 .md file) -> bun test/tsc/mock-guard N/A, same precedent as sibling FR3 gate rows. process.env/secret/password/token greps clean (only pre-existing unrelated \"per-work-item token\" domain-term hits). Dependency UC-CCA-P3-FR1-FR2-SKILL confirmed DONE_VERIFIED on board. Zero blocking ISSUE. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-24.md STEP qa-S21.",
+      "qa_verified_at": "2026-08-15T00:00:28Z",
+      "qa_verified_by": "qa",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + grep (task_claim / task_id=\"published:\" literals / skill pointer / orphaned identifiers)",
+          "args": "commit f1eb75143 -- docs/agents/cowork-team/flow/spawn-fanout.md; grep -n task_claim; grep -n 'task_id.*published:'; grep -n published-marker-gate/SKILL.md; grep -n PUBLISHED_KEY|MARKER_CLAIM|publish_claim|WORK_DATE|100800|691200",
+          "live_value_observed": "git show --stat: 1 file changed, 20 insertions(+), 79 deletions(-) (spawn-fanout.md only, on main ancestry); task_id=\"published:\" literal: 0 hits; task_claim string: 4 hits, all non-functional (2 comment prose re this task, 2 pre-existing unrelated Step 4.6 cross-ref); functional skill-pointer count: 1; orphaned removed-block identifiers: 0 hits; process.env/secret/password/token: 0 blocking hits",
+          "observed_at": "2026-08-15T00:00:28Z",
+          "evidence_commit": "f1eb75143"
+        }
+      }
     }
   ],
   "closed_sprints": [
