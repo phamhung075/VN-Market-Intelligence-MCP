@@ -1,17 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-08-15 — SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD supervised-hold triage (P1, M, review-lane SECONDARY-Drain unstuck, no code work) → HELD, deferred to PO
-
-**Session:** 632721c2-41e4-4aff-8d06-a47cf80dc0d7. Row unfroze via dev-team's Review-Lane SECONDARY-Drain (`secondary_claimed_by="dev-team (review-lane secondary-drain)"`, updated_at 2026-08-15T07:40:55Z) after being pinned since 2026-08-11T17:36:34Z behind the same-day prose-ceiling bug (`FIX-PROSECEILING-SECONDARY-CLAIM-STAMP-FIELDS-MISSING-FROM-STRUCTURAL-EXCLUDE-SET`, dispatched elsewhere — not touched here).
-
-**Gate confirmed live:** row carries `supervised:true` + `plan_only:true` + NO `po_goahead_*` field. PO's own same-day note `docs/agent-memory/decisions/triage-20260815T0728Z-po.md` explicitly declined to ratify: "until the ceiling fix lands the drain cannot stamp it, so a ratification would have been inert ... Flagged on the row as PO's own follow-up." Held — did NOT start AC-1/AC-2/cap-enforcement investigative work; did NOT reassign `next_agent`; did NOT mark DONE_VERIFIED.
-
-**Compounding-gate finding (new):** attempted to write a hold-note back onto the row via the canonical `scripts/orch-apply.sh` path; `scripts/orch-row-prose-ceiling-check.mjs` Stage 2.5 hard-rejects it (probe-verified on a scratch candidate, live file untouched: row=34725B vs 12000B ceiling, ANY net-new field is an unbypassable exit-1 — no bypass env var by design). The row's sanctioned escape hatch (`scripts/orch-backlog-stub.sh` detail_ref migration) is itself blocked by `FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION` — same wall PO hit this morning. Net effect: this row cannot receive ANY inline board write right now, including PO's own eventual `po_goahead_*` stamp, until either the backlog-stub crash is fixed or the ceiling exclude-set is widened again.
-
-**Evidence:** DJ `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md` S6.
-
-Zone health: no code touched this cycle (supervised-hold triage only); hold correctly recorded in the decision journal (row-level write blocked by an independently-verified 2nd gate, not fabricated); escalated the write-blocker finding back to dispatcher | HELD.
-
 ## 2026-08-15 — FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW rework (P-medium, S, Review-Lane SECONDARY-Drain, QA CHANGES_REQUESTED) → qa[] for fresh QA pass
 
 **Session:** 632721c2-41e4-4aff-8d06-a47cf80dc0d7. Rework of prior fix (51f162829+e0ed0369e). QA RAW-verified the pagination/offset-walk mechanics (no data loss) but live-tested the deployed container against REAL production data and found MAX_LIMIT=100 reproduces/worsens the original 235K overflow (limit=100 → 565,285 chars, 2.4x the original bug).
@@ -25,6 +13,22 @@ Zone health: no code touched this cycle (supervised-hold triage only); hold corr
 **Evidence:** DJ `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md` S7. Docs: `docs/agents/tools/list/get_bctc_pending_refine.md` (guard behavior + example payload documented), tool docstring + MCP description string updated. Commit: `532fc71a0` (code+test+doc).
 
 Zone health: real-data size-bound gap closed with a dynamic per-call guard (not a point-in-time-average recalibration that would drift stale again — proven via a live 3-day re-measurement showing the same query already grew 22%), fleet-cron's real limit=1 usage pattern completely unaffected, zero regression across targeted/consumer/full-suite runs, tsc clean, toolCount/cronJobCount unchanged | HEALTHY.
+
+## 2026-08-15 — FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW deployment-durability rebuild (P-medium, S, CHANGES_REQUESTED round 3) → review[] next_agent=qa
+
+**Session:** 632721c2-41e4-4aff-8d06-a47cf80dc0d7 (router-held task_claim, TTL 3600s, router owns lock lifetime). QA round-2 independently re-verified commit `532fc71a0`'s guard logic/tests/losslessness/toolCount=183-drift as all correct (no code defect) but caught a real deployment gap: the "live-verified in the running container" claim from the rework round was tested against a HOT-PATCHED container (image `.Created`=2026-08-13T19:15/18:30Z, before commit 532fc71a0 @08:23:42Z UTC; touched file was uid 501:dialout with a post-image mtime, every sibling root-owned — classic out-of-band `docker cp`, no `src` bind-mount exists for this service). `rebuild_required:true` had never actually been resolved across either round.
+
+**Fix (pure ops, zero code changes):** genuine single-service rebuild — `docker compose build mcp-server && docker compose up -d mcp-server` (not `down && up`; memory headroom checked first: ~2.8GB in-use across the fleet vs. docker engine's 7.94GB cap, ample). Confirmed via `docker ps` before/after that all 12 sibling containers were untouched (uptimes unaffected by the recreate).
+
+**Durable proof:** new image `sha256:c8322d22bd...09abe`, `.Created`=2026-08-15T08:44:00Z — AFTER commit 532fc71a0 (08:23:42Z UTC), closing the exact gap QA flagged (prior image predated the fix commit). Container reached `health:healthy` within 5s. In-container re-check: `getBctcPendingRefineTool.ts` is now root:root owned with a build-consistent mtime (08:35:55Z, COPY-layer time) matching every sibling file — the uid 501:dialout hot-patch signature is gone.
+
+**Fresh live re-verification** (same DI-seam methodology as QA — `buildGetBctcPendingRefineHandler` against real production data via the mounted `/app/data/market.db`, now on the freshly rebuilt image): limit=1 → 7,562 chars inline (guard silent) | limit=20 → guard fires at 153,138 chars | limit=50 → guard fires at 373,767 chars | limit=100 → guard fires at 695,225 chars — all three exact-match QA's round-2 numbers (same source, now durably baked into the image, behavior reproduces identically as expected). All 3 guard-tripped payloads confirmed written losslessly to `data/exports/` (file byte sizes match `char_count` exactly; dir is gitignored, no cleanup needed).
+
+**Board write:** `rebuild_required` flipped `false`, `review_note` appended (not overwritten) with the above evidence, `next_agent` set to `qa`, routed through `scripts/orch-apply.sh` (validation + conservation checks all passed, `orch-apply OK`). Row left in `review[]` in place — did not self-mark DONE_VERIFIED (QA's call alone).
+
+**Evidence:** this notebook entry; board row `docs/data/orch/orch-state.json` (review[] id=FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW).
+
+Zone health: deployment-durability gap closed with genuine evidence (pre/post image `.Created` bracketing the commit timestamp, not file mtime/ownership which is exactly what fooled the prior round), no code changes needed, fresh live numbers exact-match QA's independently-reproduced figures, siblings unaffected by the single-service rebuild | HEALTHY.
 
 ## 2026-08-15 — FACTORY-APP-split-pollNews stage-1 (fetch/health) rework (P0, XL, Review-Lane SECONDARY-Drain, QA CHANGES_REQUESTED redispatch) → review[] for fresh QA pass
 
