@@ -3,26 +3,50 @@
 # scripts/orch-backlog-stub.sh
 # =============================================================================
 # ORCH-STATE-HOT-COLD-SPLIT — HSC-4 deliverable
+# Multi-lane extension (task: FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-
+# TERMINAL-DRIFT, architect brief 2026-08-09 §2.2): the NAME stays
+# "backlog-stub" for blast-radius reasons (10+ existing call sites reference
+# it by name: pm/flow/main.md, dev-team/flow/post-cycle.md, po/flow/*, 2 test
+# suites) even though it now covers `ready[]`/`review[]` too, not `backlog[]`
+# only — this header comment is the "now covers 3 lanes" note that decision
+# accepted in lieu of a rename.
 #
-# Strips prose from every backlog[] item in docs/data/orch/orch-state.json (HOT),
-# keeping only the hot-stub fields, and writes the FULL original item to the cold
-# detail store at docs/data/orch/archive/backlog-detail.json, keyed by id.
+# Strips prose from every item in the configured LANES (default: backlog[]
+# only, 100% backward-compatible) of docs/data/orch/orch-state.json (HOT),
+# keeping only the hot-stub fields, and writes the FULL original item to the
+# SAME cold detail store at docs/data/orch/archive/backlog-detail.json, keyed
+# by id (`items` is already a flat `id -> object` map, not lane-scoped —
+# reusing it for ready[]/review[] rows matches the live convention
+# po-detail-resync-review-lifecycle-routing.sh already depends on).
 #
 # Usage:
-#   scripts/orch-backlog-stub.sh [--dry-run]
+#   scripts/orch-backlog-stub.sh [--dry-run] [--lane=<comma-separated-lanes>]
+#   # --lane overrides LANES for this invocation only (does not merge with the
+#   # env default — e.g. --lane=review previews review[] ALONE, not
+#   # backlog[]+review[]). Omit --lane to use the LANES env var (or its
+#   # hardcoded default "backlog" if LANES is also unset).
 #
 # Contract:
 #   - MUST be called while commit-mutex:main is held by the caller (task_claim).
 #   - Cold detail file is written and jq-verified BEFORE the hot file is modified.
 #   - Atomic temp-then-rename for BOTH cold detail and hot orch-state.
 #   - mtime-CAS retry loop guards against concurrent writers.
-#   - Idempotent: items already in cold (by id key) are preserved at their FULL
-#     version even if the hot file only has a stub on re-run (existing cold wins).
+#   - Idempotent: items already in cold (by id key) are per-field DEEP MERGED
+#     with the current hot snapshot on every re-run (F-3 fix, see
+#     build_detail_temp() below) — hot wins on any field present in both
+#     sides, cold-exclusive prose survives, hot-exclusive fresh prose is
+#     picked up. NOT "existing cold wins wholesale" (that was the pre-F-3 bug).
 #   - Items lacking an `id` field are kept in hot with ALL their fields intact
 #     (cannot be cold-stored without an addressable key).
 #   - --dry-run: reports stub preview + projected hot-file size, no writes.
 #
 # Parameterisation:
+#   LANES        — comma-separated list of task_board lane names to process.
+#                  Default: backlog (byte-identical behavior to every existing
+#                  caller that does not set this). Allowed values: backlog,
+#                  ready, review (see brief §3 non-goals for why
+#                  active_sprints[]/in_progress[]/qa[]/done[]/done_verified[]
+#                  are deliberately out of scope for this mechanism).
 #   STUB_FIELDS  — comma-separated list of field names to KEEP in the hot stub.
 #                  Default: id,title,priority,size,type,zone,status,sprint,detail_ref
 #                  `detail_ref` is always added by this script before the strip.
@@ -32,12 +56,15 @@
 #   MTIME_CAS_RETRIES — concurrent-writer retry limit (default: 3)
 #
 # Lazy-load pattern for readers (HSC-4 §cold reader contract):
-#   # Load full detail for one backlog item by id:
+#   # Load full detail for one item (any of the 3 lanes) by id:
 #   jq '.items["<id>"]' docs/data/orch/archive/backlog-detail.json
 #
 # Owning brief:  docs/architecture-briefs/2026-06-26-orch-state-hot-cold-split.md §HSC-4
+#   Multi-lane extension: docs/architecture-briefs/2026-08-09-fix-orchstate-hotfile-inline-prose-ceiling.md §2.2
 # Canonical ref: docs/policies/dev-standards.md §Script Persistence
-# Called from:   HSC-4 one-time migration; pm/flow/main.md on new backlog item write
+# Called from:   HSC-4 one-time migration; pm/flow/main.md on new backlog item write;
+#   FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT one-time
+#   LANES=backlog,ready,review migration (supervised, run separately)
 # =============================================================================
 
 set -euo pipefail
@@ -63,6 +90,16 @@ DETAIL_FILE="${DETAIL_FILE:-${ARCHIVE_DIR}/backlog-detail.json}"
 # these 3 field names inline-first; they must never be strippable.
 STUB_FIELDS="${STUB_FIELDS:-id,title,priority,size,type,zone,status,sprint,detail_ref,depends_on,depends,blocked_by}"
 
+# Lanes to process (comma-separated). Default: backlog only — byte-identical
+# behavior for every existing caller that does not set this (see header
+# "Multi-lane extension" note). --lane=<...> on the CLI overrides this for a
+# single invocation (see arg parsing below).
+LANES="${LANES:-backlog}"
+
+# Allow-list — deliberately excludes active_sprints[]/in_progress[]/qa[]/
+# done[]/done_verified[] (see owning brief §3 non-goals).
+LANE_ALLOWED="backlog ready review"
+
 # CAS: abort after this many concurrent-writer detections
 MTIME_CAS_RETRIES="${MTIME_CAS_RETRIES:-3}"
 
@@ -73,8 +110,42 @@ DETAIL_SENTINEL="backlog-detail-v1"
 DETAIL_REF_BASE="docs/data/orch/archive/backlog-detail.json"
 # =============================================================================
 
+log() { echo "[orch-backlog-stub] $*" >&2; }
+
+# ─── arg parsing: --dry-run / --lane=<x> (repeatable-equivalent via comma) ───
 DRY_RUN=false
-[[ "${1:-}" == "--dry-run" ]] && DRY_RUN=true
+CLI_LANE=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run)
+      DRY_RUN=true
+      shift
+      ;;
+    --lane=*)
+      CLI_LANE="${1#--lane=}"
+      shift
+      ;;
+    --lane)
+      CLI_LANE="${2:-}"
+      shift 2
+      ;;
+    *)
+      log "ABORT: unrecognized argument: $1 (usage: scripts/orch-backlog-stub.sh [--dry-run] [--lane=<comma-separated-lanes>])"
+      exit 1
+      ;;
+  esac
+done
+[[ -n "${CLI_LANE}" ]] && LANES="${CLI_LANE}"
+
+# ─── validate LANES against the allow-list, build LANES_JSON for jq ─────────
+IFS=',' read -r -a LANE_ARR <<< "${LANES}"
+for l in "${LANE_ARR[@]}"; do
+  case " ${LANE_ALLOWED} " in
+    *" ${l} "*) ;;
+    *) log "ABORT: unsupported lane '${l}' (allowed: ${LANE_ALLOWED})"; exit 1 ;;
+  esac
+done
+LANES_JSON=$(printf '%s\n' "${LANE_ARR[@]}" | jq -R -s 'split("\n") | map(select(length > 0))')
 
 # Temp file handles — populated dynamically; cleaned up on EXIT
 DETAIL_TEMP=""
@@ -95,8 +166,6 @@ get_mtime() {
   fi
   stat -c "%Y" "$1"
 }
-
-log() { echo "[orch-backlog-stub] $*" >&2; }
 
 # =============================================================================
 # Step 1: Structural sentinel — abort early if hot file is malformed
@@ -148,16 +217,23 @@ build_detail_temp() {
     # Append / merge: existing cold items win for known ids.
     jq \
       --arg now          "${now}" \
+      --argjson lanes    "${LANES_JSON}" \
       --slurpfile hot    "${ORCH_STATE}" \
       '
-        ($hot[0].task_board.backlog // []) as $backlog |
+        ($hot[0].task_board) as $tb |
 
+        # Flatten EVERY configured lane into ONE new_items map (id -> full
+        # item). Multi-lane extension (LANES config var, default unchanged =
+        # ["backlog"]) — id -> object across backlog/ready/review is exactly
+        # the live "items" convention already assumed by
+        # po-detail-resync-review-lifecycle-routing.sh.
         # Build new_items: id -> full item (strip detail_ref — script-added field)
-        ([$backlog[]
-          | select(.id != null)
-          | del(.detail_ref)
-          | {key: .id, value: .}
-        ] | from_entries) as $new_items |
+        ([ $lanes[] as $lane
+           | (($tb[$lane] // [])[])
+           | select(.id != null)
+           | del(.detail_ref)
+           | {key: .id, value: .}
+         ] | from_entries) as $new_items |
 
         # Merge: .items * $new_items -> PER-FIELD deep merge (jq star operator
         # recurses on objects); hot ($new_items, right operand) wins per-field
@@ -176,14 +252,16 @@ build_detail_temp() {
       --arg sentinel        "${DETAIL_SENTINEL}" \
       --arg now             "${now}" \
       --arg detail_ref_base "${DETAIL_REF_BASE}" \
+      --argjson lanes       "${LANES_JSON}" \
       '
-        (.task_board.backlog // []) as $backlog |
+        (.task_board) as $tb |
 
-        ([$backlog[]
-          | select(.id != null)
-          | del(.detail_ref)
-          | {key: .id, value: .}
-        ] | from_entries) as $items |
+        ([ $lanes[] as $lane
+           | (($tb[$lane] // [])[])
+           | select(.id != null)
+           | del(.detail_ref)
+           | {key: .id, value: .}
+         ] | from_entries) as $items |
 
         {
           _sentinel:  $sentinel,
@@ -199,8 +277,11 @@ build_detail_temp() {
 # =============================================================================
 # build_hot_temp
 #
-# Strips each backlog item to the hot-stub field set, adding detail_ref first.
-# Items without 'id' are left untouched (kept with all fields — cannot key cold).
+# Strips each item in every configured LANE to the hot-stub field set, adding
+# detail_ref first. Items without 'id' are left untouched (kept with all
+# fields — cannot key cold). Lanes NOT in LANES are left completely untouched
+# (multi-lane extension, default LANES=["backlog"] — zero behavior change for
+# ready[]/review[] on every existing backlog-only caller).
 #
 # The jq `with_entries(select(...))` approach is fully parameterised:
 # STUB_FIELDS is passed as a comma-separated string and converted to a lookup set.
@@ -211,22 +292,28 @@ build_hot_temp() {
   jq \
     --arg stub_fields     "${STUB_FIELDS}" \
     --arg detail_ref_base "${DETAIL_REF_BASE}" \
+    --argjson lanes       "${LANES_JSON}" \
     '
       # Build stub field lookup set from comma-separated config string
       ($stub_fields | split(",") | map({key: ., value: true}) | from_entries) as $sf |
 
-      .task_board.backlog |= [
-        .[] |
-        if .id != null then
-          # 1. Add detail_ref pointer before strip (so it survives the field filter)
-          . + {detail_ref: ($detail_ref_base + "#" + .id)} |
-          # 2. Strip to stub fields only
-          with_entries(select(.key as $k | $sf[$k] == true))
-        else
-          # No id → cannot move to cold → keep all fields in hot
-          .
+      reduce $lanes[] as $lane (
+        .;
+        if (.task_board[$lane] == null) then . else
+          .task_board[$lane] |= [
+            .[] |
+            if .id != null then
+              # 1. Add detail_ref pointer before strip (so it survives the field filter)
+              . + {detail_ref: ($detail_ref_base + "#" + .id)} |
+              # 2. Strip to stub fields only
+              with_entries(select(.key as $k | $sf[$k] == true))
+            else
+              # No id → cannot move to cold → keep all fields in hot
+              .
+            end
+          ]
         end
-      ]
+      )
     ' "${ORCH_STATE}" > "${output}"
 }
 
@@ -237,14 +324,14 @@ if [[ "${DRY_RUN}" == "true" ]]; then
   log "DRY-RUN: computing stub preview — no writes"
 
   CURRENT_SIZE=$(wc -c < "${ORCH_STATE}" | tr -d ' ')
-  N_BACKLOG=$(jq '.task_board.backlog | length' "${ORCH_STATE}")
-  N_WITH_ID=$(jq '[.task_board.backlog[] | select(.id != null)] | length' "${ORCH_STATE}")
-  N_WITHOUT_ID=$((N_BACKLOG - N_WITH_ID))
+  N_TOTAL=$(jq --argjson lanes "${LANES_JSON}" '[ $lanes[] as $l | (.task_board[$l] // [])[] ] | length' "${ORCH_STATE}")
+  N_WITH_ID=$(jq --argjson lanes "${LANES_JSON}" '[ $lanes[] as $l | (.task_board[$l] // [])[] | select(.id != null) ] | length' "${ORCH_STATE}")
+  N_WITHOUT_ID=$((N_TOTAL - N_WITH_ID))
 
   # Count items that carry fields beyond the stub set (have prose to move)
-  N_HAS_PROSE=$(jq --arg sf "${STUB_FIELDS}" '
+  N_HAS_PROSE=$(jq --arg sf "${STUB_FIELDS}" --argjson lanes "${LANES_JSON}" '
     ($sf | split(",") | map({key: ., value: true}) | from_entries) as $sf_set |
-    [.task_board.backlog[] |
+    [ $lanes[] as $l | (.task_board[$l] // [])[] |
       select(.id != null) |
       select(
         keys | map(select($sf_set[.] != true and . != "detail_ref")) | length > 0
@@ -264,13 +351,18 @@ if [[ "${DRY_RUN}" == "true" ]]; then
 
   log "──────────────────────────────────────────────────────────────"
   log "Backlog stub preview"
+  log "  Lanes:                     ${LANES}"
   log "  Stub field set:            ${STUB_FIELDS}"
   log "  Cold detail file:          ${DETAIL_FILE}"
-  log "  Total backlog items:       ${N_BACKLOG}"
+  log "  Total items (all lanes):   ${N_TOTAL}"
   log "  Items with id (moveable):  ${N_WITH_ID}"
   log "  Items without id (kept):   ${N_WITHOUT_ID}"
   log "  Items with prose to move:  ${N_HAS_PROSE}"
   log "  Existing cold items:       ${EXISTING_COLD_N}"
+  for l in "${LANE_ARR[@]}"; do
+    lane_n=$(jq --arg l "${l}" '(.task_board[$l] // []) | length' "${ORCH_STATE}")
+    log "    ${l}: ${lane_n} items"
+  done
   log "  Current hot-file size:     ${CURRENT_SIZE} bytes"
   log "  Projected hot-file size:   ${PROJECTED_HOT_SIZE} bytes"
   log "  Byte reduction:            ${REDUCTION} bytes"
@@ -374,16 +466,19 @@ jq empty "${ORCH_STATE}" >/dev/null \
 jq empty "${DETAIL_FILE}" >/dev/null \
   || { log "ERROR: post-write detail file failed jq validation!"; exit 1; }
 
-HOT_N=$(jq '.task_board.backlog | length' "${ORCH_STATE}")
+HOT_N=$(jq --argjson lanes "${LANES_JSON}" '[ $lanes[] as $l | (.task_board[$l] // [])[] ] | length' "${ORCH_STATE}")
 COLD_N=$(jq '.count' "${DETAIL_FILE}")
 
-# Reconciliation: every hot-stub id must exist as a key in cold detail items.
-# Items without id (kept in hot) are excluded from this check.
+# Reconciliation: every hot-stub id (across ALL configured lanes) must exist
+# as a key in cold detail items. Items without id (kept in hot) are excluded
+# from this check.
 RECONCILE_RESULT=$(jq -n \
   --slurpfile hot    "${ORCH_STATE}" \
   --slurpfile cold   "${DETAIL_FILE}" \
+  --argjson lanes    "${LANES_JSON}" \
   '
-    ($hot[0].task_board.backlog | [.[] | select(.id != null) | .id]) as $hot_ids |
+    ($hot[0].task_board) as $tb |
+    ([ $lanes[] as $lane | (($tb[$lane] // [])[]) | select(.id != null) | .id ]) as $hot_ids |
     ($cold[0].items | keys) as $cold_keys |
     ([$cold_keys[]] | map({key: ., value: true}) | from_entries) as $cold_set |
 

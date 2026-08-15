@@ -296,6 +296,128 @@ T4B_COLD_REVIEW_NOTE=$(jq -r '.items["FIX-MERGETEST-ROW"].review_note' "$T3_DIR/
 check "T4b: HOT-exclusive field (review_note) is PICKED UP into cold — F-3 data-loss reproduction, GREEN post-fix" \
   "$( [ "$T4B_COLD_REVIEW_NOTE" = "fresh hot-only prose, added after the last stub run, no cold counterpart" ] && echo true || echo false )"
 
+# ═════════════════════════════════════════════════════════════════════════
+# T5/T6/T7 — LANES generalization (task: FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-
+# PROSE-NOT-TERMINAL-DRIFT, architect brief §2.2): additive `LANES` config
+# var / `--lane=<x>` CLI flag, mirrors the STUB_FIELDS idiom exactly.
+#
+# Fixture: one row in EACH of backlog[]/ready[]/review[].
+#
+# T5 (default, zero call-site churn) — no LANES env, no --lane flag: ONLY
+#   backlog[] is touched. ready[]/review[] rows are left completely
+#   byte-identical to their pre-run state — proves every one of the ~10
+#   existing backlog[]-only callers sees no behavior change.
+# T6 (--lane=review, single-invocation override) — processes review[] ALONE
+#   (NOT merged with the "backlog" default) — backlog[]/ready[] untouched.
+# T7 (LANES=backlog,ready,review, the one-time-migration invocation shape) —
+#   all 3 lanes stubbed in ONE run, all 3 land in the SAME cold detail file
+#   (id -> object map, matches the live po-detail-resync-review-lifecycle-
+#   routing.sh convention), reconciliation PASSes across all 3.
+# ═════════════════════════════════════════════════════════════════════════
+build_lane_scenario() {
+  local dir="$1"
+  mkdir -p "$dir/archive"
+  cat > "$dir/hot.json" <<'EOF'
+{
+  "_meta": { "schema": "v4" },
+  "head": { "status": "idle", "active_task_id": null },
+  "signal_queue": { "_updated_at": "2026-01-01T00:00:00Z", "_updated_by": "test", "rows": [] },
+  "task_board": {
+    "backlog": [
+      { "id": "LANE-BACKLOG-1", "title": "b1", "status": "BACKLOG", "priority": "P2", "size": "S", "type": "FIX", "zone": "test/", "sprint": null, "note": "backlog prose" }
+    ],
+    "ready": [
+      { "id": "LANE-READY-1", "title": "rd1", "status": "READY", "priority": "P2", "size": "S", "type": "FIX", "zone": "test/", "sprint": null, "note": "ready prose" }
+    ],
+    "review": [
+      { "id": "LANE-REVIEW-1", "title": "r1", "status": "REVIEW", "priority": "P2", "size": "S", "type": "FIX", "zone": "test/", "sprint": null, "note": "review prose" }
+    ],
+    "active_sprints": []
+  }
+}
+EOF
+}
+
+# ── T5: default invocation — backlog[] ONLY ─────────────────────────────────
+T5_DIR="$TMPDIR_TEST/t5-default-backlog-only"
+build_lane_scenario "$T5_DIR"
+
+ORCH_STATE="$T5_DIR/hot.json" \
+ARCHIVE_DIR="$T5_DIR/archive" \
+DETAIL_FILE="$T5_DIR/archive/backlog-detail.json" \
+  bash "$STUB_SH" >"$T5_DIR/run.log" 2>&1
+T5_EXIT=$?
+check "T5: orch-backlog-stub.sh exits 0 (default, no LANES/--lane)" "$( [ "$T5_EXIT" -eq 0 ] && echo true || echo false )"
+
+T5_BACKLOG_HAS_DETAIL_REF=$(jq -r '.task_board.backlog[0] | has("detail_ref")' "$T5_DIR/hot.json" 2>/dev/null)
+check "T5: backlog[0] WAS stubbed (has detail_ref)" \
+  "$( [ "$T5_BACKLOG_HAS_DETAIL_REF" = "true" ] && echo true || echo false )"
+
+T5_READY_UNTOUCHED=$(jq -r '.task_board.ready[0] | has("note") and (has("detail_ref") | not)' "$T5_DIR/hot.json" 2>/dev/null)
+check "T5: ready[0] left COMPLETELY untouched (default lane = backlog only)" \
+  "$( [ "$T5_READY_UNTOUCHED" = "true" ] && echo true || echo false )"
+
+T5_REVIEW_UNTOUCHED=$(jq -r '.task_board.review[0] | has("note") and (has("detail_ref") | not)' "$T5_DIR/hot.json" 2>/dev/null)
+check "T5: review[0] left COMPLETELY untouched (default lane = backlog only)" \
+  "$( [ "$T5_REVIEW_UNTOUCHED" = "true" ] && echo true || echo false )"
+
+T5_COLD_KEYS=$(jq -c '.items | keys' "$T5_DIR/archive/backlog-detail.json" 2>/dev/null)
+check "T5: cold detail contains ONLY the backlog[] id" \
+  "$( [ "$T5_COLD_KEYS" = '["LANE-BACKLOG-1"]' ] && echo true || echo false )"
+
+# ── T6: --lane=review — review[] ALONE, NOT merged with the backlog default ─
+T6_DIR="$TMPDIR_TEST/t6-lane-review-only"
+build_lane_scenario "$T6_DIR"
+
+ORCH_STATE="$T6_DIR/hot.json" \
+ARCHIVE_DIR="$T6_DIR/archive" \
+DETAIL_FILE="$T6_DIR/archive/backlog-detail.json" \
+  bash "$STUB_SH" --dry-run --lane=review >"$T6_DIR/dryrun.log" 2>&1
+T6_DRYRUN_EXIT=$?
+check "T6: --dry-run --lane=review exits 0, zero writes" "$( [ "$T6_DRYRUN_EXIT" -eq 0 ] && echo true || echo false )"
+
+T6_DRYRUN_UNCHANGED=$(jq -r '.task_board.review[0] | has("detail_ref") | not' "$T6_DIR/hot.json" 2>/dev/null)
+check "T6: --dry-run makes ZERO writes (review[0] still unstubbed after dry-run)" \
+  "$( [ "$T6_DRYRUN_UNCHANGED" = "true" ] && echo true || echo false )"
+
+ORCH_STATE="$T6_DIR/hot.json" \
+ARCHIVE_DIR="$T6_DIR/archive" \
+DETAIL_FILE="$T6_DIR/archive/backlog-detail.json" \
+  bash "$STUB_SH" --lane=review >"$T6_DIR/run.log" 2>&1
+T6_EXIT=$?
+check "T6: live --lane=review exits 0" "$( [ "$T6_EXIT" -eq 0 ] && echo true || echo false )"
+
+T6_REVIEW_STUBBED=$(jq -r '.task_board.review[0] | has("detail_ref")' "$T6_DIR/hot.json" 2>/dev/null)
+check "T6: review[0] WAS stubbed" "$( [ "$T6_REVIEW_STUBBED" = "true" ] && echo true || echo false )"
+
+T6_BACKLOG_UNTOUCHED=$(jq -r '.task_board.backlog[0] | has("note") and (has("detail_ref") | not)' "$T6_DIR/hot.json" 2>/dev/null)
+check "T6: backlog[0] left untouched — --lane OVERRIDES, does not merge with the default" \
+  "$( [ "$T6_BACKLOG_UNTOUCHED" = "true" ] && echo true || echo false )"
+
+T6_COLD_KEYS=$(jq -c '.items | keys' "$T6_DIR/archive/backlog-detail.json" 2>/dev/null)
+check "T6: cold detail contains ONLY the review[] id" \
+  "$( [ "$T6_COLD_KEYS" = '["LANE-REVIEW-1"]' ] && echo true || echo false )"
+
+# ── T7: LANES=backlog,ready,review — the one-time-migration invocation shape ─
+T7_DIR="$TMPDIR_TEST/t7-lanes-all-three"
+build_lane_scenario "$T7_DIR"
+
+LANES="backlog,ready,review" \
+ORCH_STATE="$T7_DIR/hot.json" \
+ARCHIVE_DIR="$T7_DIR/archive" \
+DETAIL_FILE="$T7_DIR/archive/backlog-detail.json" \
+  bash "$STUB_SH" >"$T7_DIR/run.log" 2>&1
+T7_EXIT=$?
+check "T7: LANES=backlog,ready,review exits 0 (reconciliation PASS across all 3)" \
+  "$( [ "$T7_EXIT" -eq 0 ] && echo true || echo false )"
+
+T7_ALL_STUBBED=$(jq -r '[.task_board.backlog[0], .task_board.ready[0], .task_board.review[0]] | map(has("detail_ref")) | all' "$T7_DIR/hot.json" 2>/dev/null)
+check "T7: ALL 3 lanes stubbed in ONE run" "$( [ "$T7_ALL_STUBBED" = "true" ] && echo true || echo false )"
+
+T7_COLD_KEYS=$(jq -c '.items | keys | sort' "$T7_DIR/archive/backlog-detail.json" 2>/dev/null)
+check "T7: SAME cold detail file holds all 3 ids (id -> object map, not lane-scoped)" \
+  "$( [ "$T7_COLD_KEYS" = '["LANE-BACKLOG-1","LANE-READY-1","LANE-REVIEW-1"]' ] && echo true || echo false )"
+
 echo "──────────────────────────────────────────────────────────────"
 echo "orch-backlog-stub.test.sh: ${PASS} pass / ${FAIL} fail"
 [ "$FAIL" -eq 0 ] && exit 0 || exit 1
