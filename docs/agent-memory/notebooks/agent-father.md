@@ -139,3 +139,25 @@ router-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`
   `next_agent: null → qa`, `agent_father_implementation_note` added, via `scripts/orch-apply.sh`
   (validate + conservation-check both PASS, `task_total` unchanged 695→695). Left UNCOMMITTED per
   `FU-AGENT-FATHER-ORCH-SCOPE` — write is on disk, ready for the next commit sweep.
+
+### Edit (qa) 04:45 — task FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW
+- Change: generalised RAG-MEM-DURABILITY-BAR v2 (D1-D5) fleet-wide — new SSOT
+  `docs/standards/oom-durability-verification-bar.md` (detection rule, D1-D5, §4 grandfather-
+  exemption/retraction guard, v1-failure rationale) + wired into `docs/agents/qa/flow/main.md`
+  (new "OOM-Class Durability Gate" in Pipeline + mandatory cross-ref in Direct-Commit Verify
+  gating `vc-approved`, the observed path for OOM-class rows).
+- Files modified: 2 (1 new: `docs/standards/oom-durability-verification-bar.md`; 1 edited:
+  `docs/agents/qa/flow/main.md`, 275L→~304L, size-justification header refreshed)
+- Cascade: none — no `.claude/agents/qa.md` frontmatter/routing change, no roster/CLAUDE.md impact
+- Validation: 5/5 passed (qa.md frontmatter intact; flow-catalog paths resolve; no inter_agent
+  routing touched; all cross-referenced paths in new doc exist; code-fence count in main.md even)
+- Decision: defect 5 (stale grandfather exemption on falsified rows) needs an
+  `orchStateSchema.ts` runtime guard to close in code — out of this row's `files` scope (`apps/`)
+  and agent-father's own `forbidden_outputs` (no production code); documented as a process-level
+  compensating control + flagged the open engineering gap for a future dev-mcp-server task instead
+  of minting one myself (orch-state.json excluded from my commit_zone).
+- Lock: no gateway binding this session (confirmed live — `mcp__gateway__call_tool` absent from
+  tool grant). Docker reachable → used the documented SQL-replication fallback
+  (`docker exec vn-market-intelligence-mcp-mcp-server-1 bun -e ...` against
+  `/app/data/coordination.db` `task_locks`) for claim (5a) + heartbeat (7b), live-verified no
+  conflicting row before INSERT OR IGNORE, per `edit-apply.md`'s Gateway-less exception ladder.
