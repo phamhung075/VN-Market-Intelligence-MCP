@@ -12099,34 +12099,6 @@
         "updated_at": "2026-08-15T06:03:27Z",
         "title": "task_claim enum has no guard/marker category, so every persistent escalation lock is minted as sprint-task - that pollution is the sole reason D4 needs a name-prefix whitelist at all",
         "note": "Split out of FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX by po 2026-08-15 during PLAN review. Do NOT block that row on this one — it should land its whitelist/SSOT fix as-is; this row removes the need for the whitelist to exist at all.\n\nPROBLEM. `task_claim`'s enum (apps/mcp-server/src/interface/mcp/tools/system/coordination/taskClaimTool.ts:60) is exactly [\"cowork-slot\",\"sprint-task\",\"dashboard-row\",\"commit-mutex\",\"intent\",\"orphan-signal\",\"session-presence\"]. It has NO member for a persistent guard/escalation/marker lock — a lock that is board-row-less and long-TTL BY DESIGN and is never adoptable work. So every agent minting one falls back to `sprint-task`. Live evidence 2026-08-15T05:54Z (task_list_held kind=sprint-task expired=false, 10 locks): `cron-registration:cowork-team`, `cron-registration:detect-loop`, `cron-registration:standalone-team`, `esc-datacov:HPG:Q1-2026:ESC-3`, `esc-datacov:FPT:Q1-2026:ESC-3`, `esc-deepdive:FPT:Q1-2026:ESC-5` — four different owner agents, all forced to `sprint-task`. bctc-analyst's `bctc-dataquality:*` locks (expired 08-14/15) are the same shape.\n\nWHY IT MATTERS. tasksMdJanitorJob's D4 Step R-1 scans `kind:\"sprint-task\"`, so its scan set is structurally polluted with non-tasks. That is the ONLY reason the D4-R1b name-prefix exclusion whitelist (KNOWN_LEGIT_PREFIXES) has to exist — and a static name list provably lags every new lock kind an agent mints later (that IS the parent row: authored 2026-07-08, missed the kind introduced 2026-07-19, then missed its rename to `bctc-dataquality:` before 2026-08-06). The parent row's fix (SSOT in system-map.json) makes the list cheaper to maintain but does not remove the need to maintain it. Telling detail: `session-presence`/`commit-mutex`/`intent:*` DO have their own enum members and are therefore already excluded structurally by the kind filter — the spec keeps them in the whitelist only as defense-in-depth (spec §287/§293). The enum-based filter already works for kinds that have a member; only the memberless kinds need prefix-matching.\n\nAC-1: add a task_kind enum member for persistent guard/escalation markers (working name `guard-marker`) in taskClaimTool.ts + the TaskKind type + the lock store, with the tool description explaining when to use it vs `sprint-task`.\nAC-2: migrate the known minting call sites to it — `cron-registration:*` (.claude/skills/cron-*/register.md), `po-triage-*` (po flows), `esc-datacov:*` (docs/agents/bctc-analyst/flow/esc-coverage-guard.md:43), `esc-deepdive:*` (docs/agents/bctc-analyst/flow/main.md:119), and bctc-analyst's `bctc-dataquality:*`. Migration must be additive/back-compatible: locks already held under `sprint-task` must not be orphaned mid-TTL.\nAC-3: once migrated, shrink KNOWN_LEGIT_PREFIXES to only what still needs it, and confirm D4 still trips on a genuinely orphaned `sprint-task` lock (the parent row's negative control must keep passing).\nAC-4 (second, related gap — folded here rather than a third row, same \"these marker locks have no owning contract\" cause): bctc-analyst's data-quality marker lock-kind is UNDOCUMENTED. A repo-wide grep of docs/agents/bctc-analyst/ finds task_claim call sites only for `esc-datacov:` and `esc-deepdive:`; NO flow doc documents a `data-quality-anomaly:*` or `bctc-dataquality:*` claim, and the name silently drifted between 2026-07-19 and 2026-08-06 with nothing to catch it. Document one canonical lock-kind name in the owning bctc-analyst flow doc and stop ad-hoc renaming — an undocumented lock kind cannot be whitelisted, migrated, or reasoned about by any other agent.\n\nZONE NOTE: spans apps/mcp-server (enum + D4 filter) and several agent flow docs (call sites), hence zone:multi and next_agent:architect to split. Parent row's spec §7 explicitly declined this as out of dev-mcp-server's zone."
-      },
-      {
-        "id": "FIX-NOTEBOOK-UUID-PROVENANCE-GUARD-STUCK-IN-WARN-MODE-3-NOTEBOOKS-LEAKED-AT-HEAD",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P3",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "owner": "developer",
-        "baseline_pass": true,
-        "created_at": "2026-08-15T07:28:30Z",
-        "created_by": "po (dev-team Step 1 triage 2026-08-15T07:28Z)",
-        "origin_signal_id": "3b33e2e779a4be5198d9ff16c177c11d57c769fca61fed33c46a6f493144296a",
-        "title": "notebook-uuid-provenance guard has sat in default mode=warn since 2026-08-05 — it fires, escalates to PO's inbox, and the UUID commits anyway: session 632721c2-... is live in HEAD across 3 notebooks (agent-father.md, dev-team.md, qa.md). Promote to reject, but scrub BEFORE flipping or the flip hard-blocks those 3 agents' next notebook commit",
-        "files": [
-          "scripts/git-hooks/pre-commit",
-          "scripts/audits/verify-notebook-uuid-provenance-gate.sh",
-          "docs/agent-memory/notebooks/agent-father.md",
-          "docs/agent-memory/notebooks/dev-team.md",
-          "docs/agent-memory/notebooks/qa.md"
-        ],
-        "related": [
-          "FIX-NOTEBOOK-IMMUTABILITY-ORPHANED-BODY-CHECK",
-          "FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS"
-        ],
-        "desc": "NOT AN OVERSIGHT — A STAGED ROLLOUT WHOSE PROMOTION STEP WAS NEVER TAKEN. scripts/git-hooks/pre-commit:556 reads `mode_uuid=\"${GIT_NOTEBOOK_UUID_PROVENANCE_MODE:-warn}\"`, and :604 (`[ \"$rc\" -eq 1 ] && [ \"$mode_uuid\" != \"reject\" ] && return 0`) converts the failure to a pass in every mode but reject. The hook's own message at :584 states the intended path verbatim: 'set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh'. That validator already exists. Nobody ever ran it and flipped the default, so the guard has been advisory for 10 days.\n\nOBSERVED COST. The guard is not silent — it escalates. One of the 16 durable-inbox envelopes PO triaged on 2026-08-15T07:28Z was this guard's WARN (envelope 3b33e2e7...). So each occurrence consumes a PO triage slot AND lands in HEAD regardless: an escalation treadmill where the detector works, the escalation is delivered, and the defect ships anyway. Confirmed live at HEAD, not merely staged: `git show HEAD:docs/agent-memory/notebooks/agent-father.md` has the full session UUID on lines 12 and 46, and `git grep -lE \"session .[0-9a-f]{8}-[0-9a-f]{4}-\" HEAD -- docs/agent-memory/notebooks/` returns agent-father.md, dev-team.md AND qa.md. Standing rule it violates: .claude/skills/notebook-write/SKILL.md AC-1 + feedback_agent_commits_session_uuid_into_notebook — a session id is a per-invocation coordination PARAMETER, never authored into a committed file.\n\nAC-1 ORDERING IS THE WHOLE RISK — DO NOT REORDER. Scrub the 3 committed notebooks FIRST, then flip the default. Flipping first converts a noisy-but-harmless WARN into a hard pre-commit failure for the next notebook commit of all three of those agents, at least two of which (agent-father, qa) have a documented history of losing notebook writes to commit-step failures. A guard that strands the fleet's own memory writes is strictly worse than the leak it prevents — same shape as feedback_red_prepush_strands_fleet and feedback_git_sweep_guard_bare_commit_escalates_hard_block. Replace each UUID with a c<NNN> cycle counter or a fixed source label per AC-1; do NOT use the `notebook-uuid-lint-allow:` escape hatch to paper over these three, it exists for genuine short-SHA source labels.\n\nAC-2. Run scripts/audits/verify-notebook-uuid-provenance-gate.sh and record its verdict on this row before flipping — the hook message names it as the explicit precondition, so flipping without it repeats the shipping-a-guard-without-the-dynamic-case mistake this fleet made the same week with the prose-ceiling guard (see FIX-PROSECEILING-SECONDARY-CLAIM-STAMP-FIELDS-MISSING-FROM-STRUCTURAL-EXCLUDE-SET).\n\nAC-3. Flip the DEFAULT at :556 (`:-warn` -> `:-reject`). Do NOT ship this as an env var that CI or a wrapper is expected to set: an enforcement mode that depends on every caller exporting a variable is the same latent no-op the guard is in today.\n\nAC-4. After the flip, sweep for the NEXT producer rather than assuming the 3 known files are the whole set — the guard only inspects ADDED heading lines in staged notebooks, so any agent that writes a UUID into a non-heading line, or into a file outside docs/agent-memory/notebooks/, is still unguarded. Report the residual surface on this row; widening the guard is explicitly out of scope here.\n\nWHY P3. Nothing is blocked and no data is lost — this is provenance hygiene plus recurring PO-inbox noise. It is worth doing because the detector, the validator and the escape hatch are all already built; the only missing step is a one-token default change plus a 3-file scrub.",
-        "updated_at": "2026-08-15T07:32:07Z"
       }
     ],
     "closed_sprints": [
@@ -18174,6 +18146,35 @@
         "updated_by": "developer",
         "status_note": "AC-1: added secondary_claimed_at/secondary_claimed_by/secondary_dispatch_target/dispatch_target to STRUCTURAL_FIELDS (orch-row-prose-ceiling-check.mjs). AC-2: new DYNAMIC regression test SECONDARY-DRAIN-STAMP — RED confirmed via git stash (18/19, exact livelock repro) then GREEN post-fix (19/19); orch-apply-wrapper-tests.sh 89/89 unaffected. AC-3: did NOT touch QA-Drain/BOUNDED-1/SLS/RLC/DRS (structurally immune, move rows out of guarded lanes on claim). AC-4: did NOT adopt detail_ref-migration workaround (blocked by separate P1). AC-5 VERIFIED LIVE: during this session a concurrent dev-team SECONDARY-Drain tick ran against the already-fixed (then-uncommitted) script and stamped SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD — updated_at moved off frozen 2026-08-11T17:36:34Z to 2026-08-15T07:40:55Z, secondary_claimed_at/secondary_claimed_by/secondary_dispatch_target all present (observed directly on live file, not executed by this specialist). Commits: 90e84270d (fix+test), 59304db7d (docs).",
         "commit_sha": "59304db7d"
+      },
+      {
+        "id": "FIX-NOTEBOOK-UUID-PROVENANCE-GUARD-STUCK-IN-WARN-MODE-3-NOTEBOOKS-LEAKED-AT-HEAD",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P3",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "po",
+        "owner": "developer",
+        "baseline_pass": true,
+        "created_at": "2026-08-15T07:28:30Z",
+        "created_by": "po (dev-team Step 1 triage 2026-08-15T07:28Z)",
+        "origin_signal_id": "3b33e2e779a4be5198d9ff16c177c11d57c769fca61fed33c46a6f493144296a",
+        "title": "notebook-uuid-provenance guard has sat in default mode=warn since 2026-08-05 — it fires, escalates to PO's inbox, and the UUID commits anyway: session 632721c2-... is live in HEAD across 3 notebooks (agent-father.md, dev-team.md, qa.md). Promote to reject, but scrub BEFORE flipping or the flip hard-blocks those 3 agents' next notebook commit",
+        "files": [
+          "scripts/git-hooks/pre-commit",
+          "scripts/audits/verify-notebook-uuid-provenance-gate.sh",
+          "docs/agent-memory/notebooks/agent-father.md",
+          "docs/agent-memory/notebooks/dev-team.md",
+          "docs/agent-memory/notebooks/qa.md"
+        ],
+        "related": [
+          "FIX-NOTEBOOK-IMMUTABILITY-ORPHANED-BODY-CHECK",
+          "FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS"
+        ],
+        "desc": "NOT AN OVERSIGHT — A STAGED ROLLOUT WHOSE PROMOTION STEP WAS NEVER TAKEN. scripts/git-hooks/pre-commit:556 reads `mode_uuid=\"${GIT_NOTEBOOK_UUID_PROVENANCE_MODE:-warn}\"`, and :604 (`[ \"$rc\" -eq 1 ] && [ \"$mode_uuid\" != \"reject\" ] && return 0`) converts the failure to a pass in every mode but reject. The hook's own message at :584 states the intended path verbatim: 'set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh'. That validator already exists. Nobody ever ran it and flipped the default, so the guard has been advisory for 10 days.\n\nOBSERVED COST. The guard is not silent — it escalates. One of the 16 durable-inbox envelopes PO triaged on 2026-08-15T07:28Z was this guard's WARN (envelope 3b33e2e7...). So each occurrence consumes a PO triage slot AND lands in HEAD regardless: an escalation treadmill where the detector works, the escalation is delivered, and the defect ships anyway. Confirmed live at HEAD, not merely staged: `git show HEAD:docs/agent-memory/notebooks/agent-father.md` has the full session UUID on lines 12 and 46, and `git grep -lE \"session .[0-9a-f]{8}-[0-9a-f]{4}-\" HEAD -- docs/agent-memory/notebooks/` returns agent-father.md, dev-team.md AND qa.md. Standing rule it violates: .claude/skills/notebook-write/SKILL.md AC-1 + feedback_agent_commits_session_uuid_into_notebook — a session id is a per-invocation coordination PARAMETER, never authored into a committed file.\n\nAC-1 ORDERING IS THE WHOLE RISK — DO NOT REORDER. Scrub the 3 committed notebooks FIRST, then flip the default. Flipping first converts a noisy-but-harmless WARN into a hard pre-commit failure for the next notebook commit of all three of those agents, at least two of which (agent-father, qa) have a documented history of losing notebook writes to commit-step failures. A guard that strands the fleet's own memory writes is strictly worse than the leak it prevents — same shape as feedback_red_prepush_strands_fleet and feedback_git_sweep_guard_bare_commit_escalates_hard_block. Replace each UUID with a c<NNN> cycle counter or a fixed source label per AC-1; do NOT use the `notebook-uuid-lint-allow:` escape hatch to paper over these three, it exists for genuine short-SHA source labels.\n\nAC-2. Run scripts/audits/verify-notebook-uuid-provenance-gate.sh and record its verdict on this row before flipping — the hook message names it as the explicit precondition, so flipping without it repeats the shipping-a-guard-without-the-dynamic-case mistake this fleet made the same week with the prose-ceiling guard (see FIX-PROSECEILING-SECONDARY-CLAIM-STAMP-FIELDS-MISSING-FROM-STRUCTURAL-EXCLUDE-SET).\n\nAC-3. Flip the DEFAULT at :556 (`:-warn` -> `:-reject`). Do NOT ship this as an env var that CI or a wrapper is expected to set: an enforcement mode that depends on every caller exporting a variable is the same latent no-op the guard is in today.\n\nAC-4. After the flip, sweep for the NEXT producer rather than assuming the 3 known files are the whole set — the guard only inspects ADDED heading lines in staged notebooks, so any agent that writes a UUID into a non-heading line, or into a file outside docs/agent-memory/notebooks/, is still unguarded. Report the residual surface on this row; widening the guard is explicitly out of scope here.\n\nWHY P3. Nothing is blocked and no data is lost — this is provenance hygiene plus recurring PO-inbox noise. It is worth doing because the detector, the validator and the escape hatch are all already built; the only missing step is a one-token default change plus a 3-file scrub.",
+        "updated_at": "2026-08-15T07:49:28Z",
+        "review_note": "developer: AC-1 scrubbed all 6 raw-UUID occurrences across the 3 named notebooks (agent-father.md L12/L46, dev-team.md L7/L13/L27, qa.md L5) — none sat on `## ` heading lines (all body prose, e.g. \"session `<uuid>`\"), matching AC-4's own residual-surface framing even before the flip; replaced with fixed descriptive labels (\"router-dispatched\", \"the dispatcher session\", \"a peer caller session\", etc.), zero escape-hatch comments used. Verified 0 residual full-UUID matches across the working tree of all 3 files.\n\nAC-2: ran scripts/audits/verify-notebook-uuid-provenance-gate.sh --all-history against each of the 3 named files (agent-father.md 212 commits, dev-team.md 59, qa.md 930) = 0/0 RULE1+RULE2 hits each — also surfaced that ONE historical RULE1 hit (commit 90268c5b5, agent-father.md) was already self-healed by a prior, unrelated cycle (commit 0ca3251f3, before this task started; guard is diff-scoped, never rescans history). Also ran the validator fleet-wide (default, last 8 commits/file, all 54 tracked notebooks): 0 hits everywhere EXCEPT docs/agent-memory/notebooks/tran-ngoc-bau.md — 4 RULE1 hits, including its 3 most-recent commits (headings c128/c130/c131, e.g. \"this session=632721c2-...\"), none carrying notebook-uuid-lint-allow.\n\nAC-3 DELIBERATELY NOT EXECUTED (:-warn kept, NOT flipped to :-reject). Reasoning: the hook's own header comment (pre-commit L519-522) states RULE1's explicit safe-flip precondition — \"once a caller has verified no legitimate full-UUID-on-heading-line convention (e.g. tran-ngoc-bau's own collision-note pattern) is still in active use\" — and the same comment (L470-476) already names tran-ngoc-bau.md by file. AC-2's own mandated validator run just directly falsified that precondition: the pattern is verifiably still active (3 most-recent commits, no escape hatch). Flipping today would immediately hard-block tran-ngoc-bau's next notebook commit — the exact stranding failure this row's own STRICT ORDERING section exists to prevent (same class as feedback_red_prepush_strands_fleet), just for a 4th agent outside this row's files[] scope. Re-ran pre-commit-notebook-uuid-provenance.test.sh (10/10 pass, unchanged — neither script was edited) confirming the mechanism understanding behind this call, esp. T2 (mode=reject DOES hard-block a full-UUID heading commit) and T7/T8 (body prose is never scanned, matching AC-1's own scrub targets here).\n\nAC-4 residual surface (as originally scoped): the guard only inspects ADDED `## ` heading lines inside docs/agent-memory/notebooks/ — a UUID in non-heading prose (all 6 scrubbed instances here, plus every other notebook's forensic prose) or in any file outside that directory stays permanently unguarded; widening the guard is out of scope per this row. NEW finding beyond original scope: tran-ngoc-bau.md is a currently-active, escape-hatch-less RULE1 producer (also a standing violation of SKILL.md AC-1's own \"FORBIDDEN, no exceptions\" text, independent of the guard) that must be resolved before AC-3 can be safely completed fleet-wide — recommend a narrow P3 follow-up scoped to docs/agent-memory/notebooks/tran-ngoc-bau.md + whichever flow step drives its heading composition. Routing this scope decision to po rather than unilaterally widening this row's files[] or silently forcing the flip.\n\nFiles touched: docs/agent-memory/notebooks/{agent-father,dev-team,qa}.md (scrub only). scripts/git-hooks/pre-commit and scripts/audits/verify-notebook-uuid-provenance-gate.sh UNCHANGED (AC-3 not executed). No apps/ code touched — bun test/tsc N/A. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md STEP developer-S51.\n"
       }
     ],
     "qa": [
@@ -18544,9 +18545,114 @@
         "last_served_tick": "2026-08-15T07:20:46Z"
       }
     },
-    "_updated_at": "2026-08-15T07:32:50Z",
-    "_updated_by": "po (dev-team Step 1 triage)",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-15T07:50:39Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "69d9cea435c9a83660b4d87477c6cde7629c34a10329b217a2c220594712cad1",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/agent-father.md — retained section '## EDIT 2026-08-15T00:24Z — FIX-NEWSSCOUT-COMMIT-POLICY-NEVER-MECHANICALLY-WIRED,' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/agent-father.md — retained section '## EDIT 2026-08-14T23:03Z — task TASK_2008c (UC-CDC-P1 3-way split, agent-father slice),' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/dev-team.md — retained section '## Session: 2026-08-08T22:07Z tick' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/dev-team.md — retained section '## Session: 2026-08-14T04:07Z tick' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/dev-team.md — retained section '## Session: 2026-08-13T06:07Z tick' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/qa.md — retained section '## cycle-789 · 2026-08-15T02:59:54Z · FIX-AUDITOR-DURABILITY-STEP0B-DETECTION (docs/agents/system-auditor/flow/main.md + scripts/auditor-durability-sweep.sh/.test.sh + scripts/audit-output-contract.sh/.test.sh + .gitignore, commits `fa02f6509`/`9b7a82074`/`a4a87ebbed`/`40d117576`) — Direct-Commit Verify, redispatch_count=1 resolution, APPROVED, DONE_VERIFIED' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-15T07:50:38Z",
+        "drained_at": "2026-08-15T07:50:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b29eebc7d838b42f9267bf3547a5d92a1b72cf8c1ddf8a61cb21c218a5e781dd",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 63,
+          "cap": 200,
+          "byte_count": 22589,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 10589,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-15T07:41:38Z",
+        "drained_at": "2026-08-15T07:50:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fa37f74f7ccf095b04f5214048d9f12b50455dd1c9e43b5de39720eb983332eb",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12851,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T07:41:36Z",
+        "drained_at": "2026-08-15T07:50:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "54887b30e2631c3f742505fccfff66827feee24270256d0952726d4191ecff28",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12837,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T07:41:38Z",
+        "drained_at": "2026-08-15T07:50:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "74a7bfe6a34d937c9222f4b5edf907c8bdcf88668875613cafa6eb05def01ab4",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12837,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T07:41:40Z",
+        "drained_at": "2026-08-15T07:50:39Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-14T04:11:35Z",
     "last_po_triage_note": "po/triage-20260814T0411Z (router-spawned after dev-team tick 2026-08-14T03:37Z could not nested-spawn). INPUTS: 18 durable-inbox envelopes. OUTPUT: 0 net-new mints from triage, 5 folds. DEDUP/FOLD: 2 ci_red (CI-RED-87a7a6d2 run 31758121017, CI-RED-9a9ad9bf run 31766602285) read at source via gh run view --log-failed — identical FAILED FILES (ALLZERO-OHLCV-FETCH.test.ts, FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts), both already carry open READY rows, file-scoped dedup HIT, SHAs appended; 3 sweep-guard bug-escalation escalated=true prior_warns=12/13/14 -> FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK occ 21->24; 2 notebook-immutability-guard on system-auditor.md sections c5/c6 -> FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS. NO MINT: 1 signal_feedback A-33 hook-liveness WARN (context-bloat-backstop.sh settings-file-missing) — PREMISE VERIFIED TRUE at source (0 matches for context-bloat-backstop in ~/.claude/settings.json, .claude/settings.json, .claude/settings.local.json — the hook is genuinely unregistered) but it is a first fire (1/1 in signal_queue) and the WARN single-fire rule forbids minting on one tick; carried to next tick for recurrence confirmation. 1 improvement_proposal is PO's OWN OUTBOUND (from=po to=agents-architect, IMP-20260814-system-auditor-notebook-compose-actuator-never-wired) misrouted into PO's own inbox by the drain — already board-backed by FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED (backlog, agents-architect); ACK only. 9 cowork-fire/tick-dispatch/cowork-tick-telemetry envelopes addressed to system/dev-team/cowork-team, not to po — informational, no defect, skipped. CONVERGENT FINDING: 3 of the 4 to=po defect classes this tick (3 sweep-guard + 2 notebook-immutability + the improvement proposal) all trace to ONE actor, system-auditor's unwired notebook-compose actuator. SEPARATELY: SPIKE-FRESHNESS-REMEDIATE-TRIAGE signed off APPROVED (review->done) and decomposed into 4 new backlog rows + 1 reprioritization. INBOX CLEAR NOT WRITTEN — owned by dev-team/flow/main.md Step 1 per triage-signals.md, PO does not write the subtractive clear.",
     "last_po_triage_consumed": 18,
