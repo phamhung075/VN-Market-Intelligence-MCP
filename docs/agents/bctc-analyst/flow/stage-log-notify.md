@@ -15,7 +15,11 @@
 - Use the returned value verbatim — NEVER speculate, NEVER round to a future minute
 - **No-Bash fallback (this agent has no Bash tool grant, per `project_bctc_analyst_no_bash_grant_perpetual_dirty_artifacts`):** use the `fetchedAt`/`computedAt` timestamp from the most recent live MCP tool response this cycle (e.g. `get_macro_snapshot`, `get_cycle_bootstrap`) instead of shelling out — established practice across prior cycles, now documented here.
 
-**5a. Notebook write** — APPEND class → skill: `.claude/skills/notebook-write/SKILL.md` (AC-3 settled-write; AC-5 gate)
+**5a. Notebook write** — APPEND class → skill: `.claude/skills/notebook-write/SKILL.md` (AC-2
+retention target: exactly 3 sections after this write, current+2 prior, NOT 2 — this agent has
+no Bash grant so there is no script actuator enforcing the count, see AC-2's worked example and
+confirmed-live off-by-one, FIX-NOTEBOOK-RETENTION-MANUAL-COMPOSE-DRIFT 2026-08-15; AC-3
+settled-write; AC-5 gate)
 
 Section template (≤10L):
 ```

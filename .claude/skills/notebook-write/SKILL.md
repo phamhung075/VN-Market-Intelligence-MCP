@@ -1,10 +1,16 @@
 ---
 name: notebook-write
-description: >
-  Section-overwrite agent notebook at end of cycle. Appends a new section,
-  retains last 3 sections, prunes older sections. Replaces full-overwrite pattern.
-  Used as end-of-cycle step in all dev-team and cowork flow files.
+description: "Section-overwrite agent notebook at end of cycle. Appends a new section, retains last 3 sections, prunes older sections. Replaces full-overwrite pattern. Used as end-of-cycle step in all dev-team and cowork flow files."
 ---
+<!-- size-justification: ~251L — AC-1 through AC-7 are the single authoritative notebook-write
+     contract (section anchors, c<NNN> provenance, retention WHILE-loop + worked example, AC-2a
+     immutability invariant, AC-3 atomic settled-write, AC-4 blank-state, AC-5 line-cap gate,
+     AC-6 two-class contract, AC-7 commit) read together by every APPEND/OVERWRITE agent at
+     end-of-cycle; splitting would force a 2-file load on the single hottest per-cycle path in
+     the fleet. Pre-existing overage (was 222L, uncaptured); grew to 251L
+     (FIX-NOTEBOOK-RETENTION-MANUAL-COMPOSE-DRIFT, 2026-08-15) adding the confirmed root-cause
+     note + worked example that closes the AC-2 off-by-one this justification's own history
+     documents. -->
 
 ## End-of-cycle notebook write — section-overwrite pattern
 
@@ -79,6 +85,29 @@ authoritative reconciliation with AC-3 Step 1d below — AC-2's steady state of
 drop, specifically so it can reach that steady state from any starting count.
 Never prune if the file already has ≤ 3 sections. Preamble (before first
 `## `) is never pruned.
+
+**Confirmed non-hook root cause, live incident (FIX-NOTEBOOK-RETENTION-
+MANUAL-COMPOSE-DRIFT, 2026-08-15) — read before blaming the PostToolUse hook:**
+`bctc-analyst.md` twice settled at 2 sections instead of 3 (2026-07-30 c131,
+2026-08-15 c170). Root-caused: NOT `notebook-auto-prune.sh` — it early-exits
+(`[ "$LINE_COUNT" -le "$LINE_CAP" ] && [ "$BYTE_COUNT" -le "$BYTE_CAP" ] &&
+exit 0`) before this ~33L/~10KB file ever nears the 200L/12000-byte cap; its
+drop-oldest loop never runs for this file. Not a stale doc either — the same
+file correctly settles at 3 across other consecutive cycles (e.g. commits
+`a9b5d818d`/`ab2739bd7`/`0c6a96749`). Actual cause: `bctc-analyst` has no
+Bash grant, so unlike `system-auditor`'s deterministic
+`scripts/notebook-compose.sh` actuator, it composes this WHILE loop from
+prose each cycle with no mechanical gate enforcing the count — pure
+execution variance (confirmed failure mode: applying the loop bound as
+`>= 3` instead of `> 3`). Same noisy section-count pattern spot-checked live
+on `news-scout`/`agents-architect`/`digest-predict` notebooks — this is a
+fleet-wide risk for any APPEND agent composing without a deterministic
+actuator, not a bctc-analyst- or hook-specific bug. Worked example: file has
+2 sections `[c168, c167]` at cycle start; new section `c169` is composed.
+Logical count once the new section is conceptually included = 2 + 1 = 3.
+3 is NOT `> 3`, so the WHILE loop body never executes — zero drops. Final
+file = `[c169, c168, c167]`, 3 sections. Settling at 2 here is the exact,
+confirmed-live off-by-one to avoid.
 
 ### IMMUTABILITY INVARIANT (AC-2a) — the data-loss fix
 

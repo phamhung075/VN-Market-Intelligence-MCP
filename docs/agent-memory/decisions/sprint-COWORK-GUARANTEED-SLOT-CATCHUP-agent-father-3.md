@@ -169,3 +169,24 @@ pressure-read.md Step 4.3; refreshed both size-justification headers to actual l
 **why-decision:** Architect-ratified BA spec (UC-CDC-P1-BA-spec.md) fully specified both FRs;
 implemented verbatim; matched channel="bug" to existing spawn-fanout.md IDENTITY_CHECK precedent.
 **why-change:** None — implemented as specced.
+
+### STEP agent-father-S51 · agent-father · 2026-08-15T00:30:01Z
+**task-id:** FIX-NOTEBOOK-RETENTION-MANUAL-COMPOSE-DRIFT
+**what-done:** Investigated bctc-analyst.md's 2-vs-3-section AC-2 contradiction. Confirmed BOTH
+hypotheses false: `notebook-auto-prune.sh` never fires (file ~33L/~10KB, cap 200L/12000B, early-exit)
+and AC-2's "keep 3" isn't stale (same file correctly hit 3 across other cycles). Root cause: no
+Bash grant → no deterministic actuator, LLM-narrated compose drifts (`>=3` vs `>3`). Added worked
+example to notebook-write/SKILL.md AC-2 + inline reminder to bctc-analyst's stage-log-notify.md.
+**what-considered:**
+- Fix hook off-by-one — rejected: hook code path never executes for this file, nothing to fix.
+- Rewrite AC-2 to "keep 2" — rejected: would codify the bug; disproven by 3-section cycles in git
+  history (a9b5d818d/ab2739bd7/0c6a96749).
+- Wire bctc-analyst to scripts/notebook-compose.sh (system-auditor's 2026-08-14 fix) — deferred:
+  requires a Bash grant, a tool-permission change outside agent-father's unilateral authority;
+  flagged as a follow-up for PO/architect, not actioned here.
+**why-decision:** Fleet spot-check (news-scout/agents-architect/digest-predict all show similarly
+noisy section counts; system-auditor itself only got a deterministic actuator 2026-08-14) confirms
+this is prose-execution variance on any manually-composing APPEND agent, not a bctc-analyst- or
+hook-specific defect — the doc fix (worked example) is the correctly-scoped remedy today.
+**why-change:** Router framed this as "which of (a)/(b) is true" — neither was; reported the actual
+third root cause instead of forcing a fix into a wrong hypothesis.
