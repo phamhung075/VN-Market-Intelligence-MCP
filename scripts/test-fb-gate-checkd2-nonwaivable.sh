@@ -37,10 +37,12 @@
 #            weekly-prediction.md (excluding the size-justification header
 #            comment, which documents the removal and legitimately still
 #            names the old phrase).
-#       (3b) main.md explicitly marks Check-D2 NON-WAIVABLE and carries the
+#       (3b) daily.md explicitly marks Check-D2 NON-WAIVABLE and carries the
 #            Check-D2 fix protocol (recompute baseline as PRIOR period close).
+#            (relocated from main.md by unrelated commit 8d165e8d6, agent-father
+#            main.md/daily.md split, 2026-08-06 — content unchanged, path only.)
 #       (3c) Check-C's own honest-gap-and-PROCEED waive language is still
-#            present in main.md — proves the fix narrowed waivability to
+#            present in daily.md — proves the fix narrowed waivability to
 #            Check-C without collaterally deleting Check-C's legitimate path.
 #       (3d) weekly-recap.md and weekly-prediction.md both point at the
 #            FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK marker.
@@ -54,7 +56,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 GATE="$REPO_ROOT/scripts/fb-data-integrity-gate.sh"
 LIVE_FIXTURE="$REPO_ROOT/docs/social/fb-post-2026-07-25.md"
-MAIN_FLOW="$REPO_ROOT/docs/agents/fb-market-poster/flow/main.md"
+MAIN_FLOW="$REPO_ROOT/docs/agents/fb-market-poster/flow/daily.md"
 WEEKLY_RECAP="$REPO_ROOT/docs/agents/fb-market-poster/flow/weekly-recap.md"
 WEEKLY_PREDICTION="$REPO_ROOT/docs/agents/fb-market-poster/flow/weekly-prediction.md"
 
@@ -166,15 +168,15 @@ for f in "$WEEKLY_RECAP" "$WEEKLY_PREDICTION"; do
 done
 
 if grep -q 'NON-WAIVABLE' "$MAIN_FLOW" && grep -q 'Check-D2 fix protocol' "$MAIN_FLOW"; then
-  ok "(3b) main.md: Check-D2 marked NON-WAIVABLE and fix protocol (recompute baseline as prior-period close) present"
+  ok "(3b) daily.md: Check-D2 marked NON-WAIVABLE and fix protocol (recompute baseline as prior-period close) present"
 else
-  bad "(3b) main.md: expected NON-WAIVABLE marker + Check-D2 fix protocol — not both found"
+  bad "(3b) daily.md: expected NON-WAIVABLE marker + Check-D2 fix protocol — not both found"
 fi
 
 if grep -q 'Check-C negation-blind pattern (described above) → write per-field honest gap + PROCEED' "$MAIN_FLOW"; then
-  ok "(3c) main.md: Check-C's own honest-gap-and-PROCEED waive path is still intact (fix narrowed waivability, did not delete it)"
+  ok "(3c) daily.md: Check-C's own honest-gap-and-PROCEED waive path is still intact (fix narrowed waivability, did not delete it)"
 else
-  bad "(3c) main.md: Check-C's honest-gap-and-PROCEED waive language not found — may have been collaterally removed"
+  bad "(3c) daily.md: Check-C's honest-gap-and-PROCEED waive language not found — may have been collaterally removed"
 fi
 
 for f in "$WEEKLY_RECAP" "$WEEKLY_PREDICTION"; do
