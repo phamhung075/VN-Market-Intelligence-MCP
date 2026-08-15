@@ -1,6 +1,30 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-15T01:32:00Z | **Cycle:** FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (S, review-lane secondary-drain — AC-3 same-tick false-positive guard)
+**Last updated:** 2026-08-15T02:25:00Z | **Cycle:** FIX-AUDITOR-DURABILITY-STEP0B-DETECTION redispatch 2 (S, review-lane secondary-drain — Step 0b.1/0b.2 never invoked, actuator script + V8 gate)
+
+## Session 2026-08-15T02:25:00Z — FIX-AUDITOR-DURABILITY-STEP0B-DETECTION redispatch 2 (cross-service/, developer, P1 M, review-lane secondary-drain, session 632721c2)
+
+**Task:** Stale `review[]` row, redispatch_count=1, QA CHANGES_REQUESTED. My own prior commits (92ef5b3a2/af9ad098c, 2026-08-06) added Step 0b.1 (D-CYCLE-1 stale-marker sweep) + Step 0b.2 (D-CYCLE-2 schedule-gap detection) as inline bash. QA found ZERO of either signal type ever fired live despite continuously-satisfied trigger conditions — same "narrates vs executes" class as the sibling FIX-LEAF-AGENT-ANALYSIS-ONLY-EXIT fix (whose own scope was OUTPUT-CONTRACT/RETURN only, never this Step 0b area).
+
+**RAW-verified baseline shift BEFORE touching anything (per dispatch instruction — this row's own history is exactly the "well-designed on paper, not executing" pattern):** the 2 specific orphaned markers QA cited were already gone — deleted by an UNRELATED manual housekeeping commit `75d51f17a` (2026-08-12), bypassing Step 0b.1 entirely (zero D-CYCLE-1 ledger entry for either). Tier-3's cited 52h35m gap was also already closed by an unrelated fix (`FIX-AUDITOR-T1-T3-CLEANEXIT-HEARTBEAT-STAMP-SKIPPED-T2-UNAFFECTED`, 2026-08-12) that made the heartbeat write actually reach disk. But 14 OTHER real orphaned marker files (2026-08-11 through 2026-08-14) were STILL unswept — even after the 2026-08-14 `FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED` commit upgraded Step 0b.1 from narrated-prose to syntactically-real bash. That fix closed prose→real-code but never the INVOCATION mechanism: an inline ~65-line bash block early in a 1400+ line flow doc has no forcing function compelling an LLM subagent to actually run it every cycle, and nothing downstream could notice a skipped one.
+
+**Fix:** extracted Step 0b.1+0b.2 into `scripts/auditor-durability-sweep.sh` (new, tested, sources `emit-audit-signal.sh` directly rather than subprocess-invoking it — a deliberate seam letting the test suite stub `mcp_call()` without forcing production onto `--e3-only`), one mandatory tool call replacing the inline bash — same call-once-not-narrate pattern already proven in this file for Notebook Write (`notebook-compose.sh`) and OUTPUT-CONTRACT (`audit-output-contract.sh`). New mandatory never-omit `[DURABILITY-SWEEP]` RETURN line (narration half) + new `scripts/audit-output-contract.sh --require-durability-sweep` (V8, purely additive/opt-in) checking `$MARKERS_FILE` for the mandatory summary line (enforcement half) close the invisibility gap for any FUTURE skipped cycle. Also found + fixed a SECOND independent latent bug while writing real tested code: `jq`'s `fromdateiso8601` cannot parse the notebook heading's minute-precision timestamp — the original spec's own "same fromdateiso8601 idiom" comment called for exactly this broken form, silently losing half the Tier-1 OR'd fallback check every run since 2026-08-06. Fixed with the same `to_epoch` idiom already established elsewhere in this codebase for this exact bug class.
+
+**Live-fire proof (not just "logic looks correct" — QA already found that insufficient once on this exact row):** ran the new script for real against the live repo. `found=14 swept=14 malformed=4 schedule_gap_t1=0 schedule_gap_t2=0 schedule_gap_t3=0`. 11 real D-CYCLE-1 signal_queue rows landed (ids `sys-20260815T021802-7b3a` .. `6e05`, confirmed present in `orch-state.json` + `auditor-dedup-ledger.json`), 11 marker files genuinely `rm -f`'d. 3 malformed-key files correctly left in place — the live mcp-server's OWN near-duplicate-payload dedup on `post_agent_signal` rejected 3 of 4 near-identical rapid calls (1st succeeded, next 3 `e1-not-written`), preserved for next-cycle retry per the sweep's own ABORT-preserves-evidence design (pre-existing server behavior, not a defect this fix introduced). Zero schedule-gap fire is correct — all 3 heartbeats genuinely fresh right now (baseline shift confirmed above); D-CYCLE-2 mechanism itself proven via T5/T6/T8 synthetic fixtures instead (both stale-trigger and fresh-suppress directions).
+
+**TDD:** `scripts/auditor-durability-sweep.test.sh` new, 29/29 passing, shellcheck clean. `scripts/audit-output-contract.test.sh` gains T28-T30 for V8, 94/94 total (91 pre-existing unaffected). `scripts/emit-audit-signal.test.sh` re-run unmodified, 123/123 — confirms zero regression on the reused script.
+
+**Cleanup (QA ask c):** `.gitignore` gains `docs/agent-memory/.auditor-cycle-markers-*.tmp` (mirrors sibling `cycle-snapshot-*.json.tmp` pattern); `git rm --cached` on all 7 then-tracked marker copies restores the "rm -f is a safe reclaim" invariant the source architecture brief specified. One follow-up commit (`9b7a82074`) needed — a pathspec-scoped commit re-added one marker file from its still-present working-tree copy (a legitimate ABORT-preserved retry scratch file), overriding the earlier `git rm --cached`; resolved by physically removing that redundant copy too (its finding was already durably recorded via a sibling malformed-key signal from the same run — no evidence lost).
+
+**Not self-certified DONE_VERIFIED:** hands back to `qa` (board `next_agent`) for independent re-verification — this exact row's own history is the narrates-vs-executes recurring-risk class, same reasoning as the original submission.
+
+**Docs updated:** `docs/agents/system-auditor/flow/main.md` (net -32L, 1409L total, header changelog appended).
+
+**Structural gap (same class as prior sessions):** graphify incremental step skipped — no Skill-tool binding available to this spawned agent. `task_release` for `task:FIX-AUDITOR-DURABILITY-STEP0B-DETECTION` could not be called — no `mcp__gateway__call_tool` function was present in this session's available tool set (Read/Edit/Write/Bash only); flagged to the dispatching agent to release or let TTL expiry reclaim it.
+
+**Closeout:** 3 commits, pathspec-scoped — `fa02f6509` (main.md + new/modified scripts + `.gitignore` + live-fire evidence in `orch-state.json`/`auditor-dedup-ledger.json` + 6 marker deletions), `9b7a82074` (7th marker untrack follow-up), `a4a87ebbe` (board row response, via `orch-apply.sh`). No handoff file existed for this row (review-lane secondary-drain dispatch, board row's own `review_note`/`status_note` fields are the spec) — none created, matching established precedent.
+
+---
 
 ## Session 2026-08-15T01:32:00Z — FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (cross-service/, developer, P1 S, review-lane secondary-drain, session 632721c2)
 
@@ -17,45 +41,5 @@
 **Structural gap (same class as prior sessions):** graphify incremental step skipped — no Skill-tool binding available to this spawned agent.
 
 **Closeout:** 2 commits, pathspec-scoped — `7a94f3dd5` (flow-doc guard), `f795efe35` (news-scout.md straggler catch-up). Board updated via `orch-apply.sh`. No handoff file for this row (review-lane secondary-drain dispatch, board row's own `review_note`/`status_note` fields are the spec) — none created, matching established precedent. Sprint-task lock `task:FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK` released in finally.
-
----
-
-## Session 2026-08-14T23:02:00Z — TASK_2008b FR-A3 (scripts/, developer, P1 S, UC-CDC-P1 3-way decomposition tier1/independent, session 632721c2)
-
-**Task:** `docs/handoffs/TASK_2008b.md` — `_step8_silent_release()` in `scripts/agents-flow/cowork-tick-preflight.sh` was reading `calendar_status` back out of `pressure-state.json` and writing that SAME value straight back in via the SILENT-path `emit_pressure_state` call — a closed self-recycling loop with no producer of truth. TASK_2008a (dev-mcp-server, parallel/independent, not a dependency) wires the real server-side producer; this task's scope was purely to stop the pass-through on the SILENT path.
-
-**Zone check:** `scripts/` → specialist `developer` (self, per `system-map.json`) — no dispatch needed, handled directly.
-
-**Shipped:** removed the L150 `calendar_status=$(jq -r '.calendar_status // empty' ...)` read and its `[ -z ... ] && ="unknown"` default, and dropped `--arg cal`/`calendar_status:$cal` from the `emit_args` `jq -n` build — SILENT-path emit is now shape-identical to the WORK path (both omit the key). `last_regime`/`last_volatility_level` recycling explicitly left untouched — no independent producer exists yet (UC-SDF-P2's scope), per the task's own AC.
-
-**TDD:** RED-first — new T2e in `cowork-tick-preflight.test.sh` (fixture pressure-state.json with `calendar_status:"open"`, new `EMIT_ARGS_CAPTURE_FILE` stub seam capturing the raw `emit_pressure_state` args) failed pre-fix (`grep calendar_status` matched), GREEN post-fix. Full suite 75/75 (was 74/74).
-
-**Board:** `.task_board.ready[]` → `review[]`, `status: TODO → REVIEW`, `next_agent: qa`, via `orch-apply.sh` (CANONICAL:SSOT-STATUSFLIP-LANEMOVE). `.head` untouched — it was pointing at sibling parallel task TASK_2008a (dev-mcp-server), not this row.
-
-**Regression check:** No `apps/` TS/Go touched (pure bash, `scripts/` zone) — `bun test`/`tsc` N/A. `bash -n` clean.
-
-**Docs updated:** `docs/handoffs/TASK_2008b.md` Implementation Record + `docs/WORK.md` one-liner.
-
-**Structural gap (same class as prior sessions):** graphify incremental step skipped — no Skill-tool binding available to this spawned agent, and no `docs/{policies,protocols,standards,references}/` domain doc changed anyway.
-
-**Closeout:** 2 commits, pathspec-scoped — `a860a5b9f` (script + test), `d234b485a` (handoff + WORK.md + orch-state.json board move). Decision journal STEP developer-S8 (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md`).
-
----
-
-## Session 2026-08-14T20:20:00Z — FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE (cross-service/, developer, P0 S, PO-split piece 1/2, session 632721c2)
-
-**Task:** Root cause per `docs/architecture-briefs/2026-08-14-auditor-write-plane-divergence-root-cause.md` §4 — `scripts/auditor-notebook-commit.sh`'s §2a AC-4 backstop scans the staged notebook diff for a literal `[OUTPUT-CONTRACT]` line the flow doc never actually writes INTO the notebook (only the RETURN block, computed by a different script call the 2026-08-06 durability reorder now runs AFTER the notebook commit lands) — structurally unreachable every cycle since. PO-split into 2 pieces; this session owns piece (1) ONLY: `scripts/auditor-notebook-commit.sh` + `scripts/lib/output-contract-invariant.sh`. Piece (2) — `docs/agents/system-auditor/flow/main.md:1173-1177`'s 2-arg call-site edit — is agent-father's zone, deliberately NOT touched this session (confirmed `git status --porcelain` on that path is empty).
-
-**Shipped (AC-1/AC-2):** new REACHABLE §2b gate in `auditor-notebook-commit.sh`, additive — §2a left untouched. New optional `--markers-file <path>` / `--cycle-tag <value>` args parsed out of `"$@"` (omitted ⇒ byte-identical no-op, every existing caller incl. orch-sentinel's own commit call unaffected). When `--markers-file` is supplied and the staged path is exactly `docs/agent-memory/notebooks/system-auditor.md`: cross-checks the notebook's already-mandatory "Anomalies: N new" line (declared_n) against the real `[emit-signal] OK...` count in `$MARKERS_FILE` (real_signals_n); mismatch (declared_n>0 AND real_signals_n==0) → `git restore --staged` + exit 1 (REFUSE — never rewrite-to-truth, never commit-plus-discrepancy-signal, per the brief's explicit AC-4 ruling). 3 new pure functions added to `scripts/lib/output-contract-invariant.sh` (`oc_extract_declared_anomaly_count_from_diff` / `oc_count_real_emit_signals` / `oc_check_emit_vs_claim_plane`).
-
-**AC-4 (synthetic replay, mandatory per the task — presence alone is not proof, feedback_fence_false_green):** new `scripts/auditor-notebook-commit.test.sh`, 24/24 — 11 unit tests on the 3 pure lib functions (no git/network) + 13 integration tests running the REAL script as a REAL subprocess against isolated tmp git repos, only `curl` (mcp-call.sh's transport) stubbed via a PATH-shadowing fake binary (mirrors `auditor-tier1-probe.test.sh`'s own CLI-level T22/T23 precedent — zero real network/mutex contention). The required before/after pair: I1 = declared=3/markers=0, `--markers-file` OMITTED → commit LANDS (today's real, reachable vulnerable shape, exact unmodified 2-arg call contract every live caller still uses); I2 = identical mismatch shape, `--markers-file` SUPPLIED → real ABORT `contract-plane-mismatch`, exit 1, zero new commit, notebook path un-staged, working-tree content SURVIVES (`git restore --staged` only unstages, per the brief's explicit resume-mitigation rationale).
-
-**Regression check:** existing consumers of the shared lib unaffected — `detect-analysis-only-exit.test.sh` 15/15, `audit-output-contract.test.sh` 87/87. `shellcheck -x` clean on all 3 touched/new files (1 reserved-`CYCLE_TAG_ARG` SC2034 silenced, same convention as `emit-audit-signal.sh:630`).
-
-**Docs updated:** `docs/policies/dev-standards.md` OUTPUT-CONTRACT CANONICAL block (new functions + superseded the stale "no persisted test harness" note) + `docs/WORK.md`.
-
-**Structural gap (same class as prior sessions):** graphify incremental step skipped — no Skill-tool binding available to this spawned agent.
-
-**Closeout:** commits pathspec-scoped (`scripts/auditor-notebook-commit.sh` + `scripts/lib/output-contract-invariant.sh` + `scripts/auditor-notebook-commit.test.sh`, then `docs/policies/dev-standards.md` + `docs/WORK.md` separately). Decision journal STEP developer-S7 (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md`). No handoff file existed for this row (PO-split board row, `status_note`/`acceptance` fields are the spec) — none created, matching established precedent. Board flip `in_progress[]`→`review[]`/`next_agent=qa` via `orch-apply.sh`. RETURN flags piece (2) explicitly so the dispatcher routes agent-father separately once this script change is confirmed landed — not silently implied.
 
 ---
