@@ -31,3 +31,23 @@
 **why-decision:** vc-changes (CHANGES_REQUESTED) — code/tests/logic all independently correct, but the deployment substrate backing the "live production verify" claim is not durable; requires a genuine `docker compose build mcp-server && up -d` (ops/PO, per feedback_rebuild_after_dev_change.md) + re-verify before DONE_VERIFIED.
 **why-change:** escalated beyond router's mandated checklist — router asked to independently confirm (a)-(d), all confirmed true, but I also independently caught a 5th gap (deployment durability) neither the router prompt nor the rework's own report raised.
 
+### STEP qa-S29 · qa · 2026-08-15T08:59:20Z
+**task-id:** FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW
+**what-done:** Direct-Commit Verify round 3 (rebuild claim re-check). Independently re-verified all 4 router-mandated crux points, none taken on report's word.
+**what-considered:**
+- (a) `docker inspect` on the RUNNING container myself: image `.Created`=2026-08-15T08:44:00Z genuinely postdates commit 532fc71a0 (08:23:42Z); no src bind-mount confirmed.
+- (b) in-container file re-check myself: root:root owned, mtime between commit-time and build-time, matches 19 siblings — hot-patch signature gone.
+- (c) re-ran guard live myself (own script via DI seam, real prod data): limit=1→7,562 | 20→153,138 | 50→373,767 | 100→695,225 — exact match, independently reproduced, not copy-pasted. 9/9 test pass live.
+- (d) jq-confirmed rebuild_required=false live; also independently caught that commit b4a810897 does NOT itself touch orch-state.json (only the notebook) — the actual board write landed in peer commit 5ea96f7b7 (unrelated FACTORY-APP-split-pollNews commit), confirmed via `git show`. Race is real, as the report itself flagged — no data loss, write content correct.
+**why-decision:** vc-approved, DONE_VERIFIED. Deployment-durability gap from round 2 is genuinely closed; all evidence independently reproducible, not narrated.
+**why-change:** none from plan — routine independent re-verify of a flagged rebuild claim, single pass.
+
+### STEP qa-S30 · qa · 2026-08-15T09:02:31Z
+**task-id:** FACTORY-APP-split-pollNews
+**what-done:** Direct-Commit Verify — rework round 2 of my own 2026-08-12 CHANGES_REQUESTED (0f23a703f). Commit `72bcaf940` on main ancestry, `git show --stat` matches all claimed files (pollNews.ts + 5 new pollNews/ siblings + usecases.md).
+**what-considered:**
+- Read source myself: pollNews.ts genuinely 670L (claimed 671, trivial off-by-1); all 5 new files (resolveFetchers 110L/teChromiumRetry 56L/sourceHealth 59L/fetchAndRecordHealth 91L/allSourcesDarkAlert 103L) confirmed <=120L with real distinct substantive logic (fetcher resolution, cold-start retry, health-name classification, allSettled fetch+CB recording, DB-backed dark-alert cooldown) — not line-padding. Remaining ~480L (steps 2-5: normalize/dedup/insert/RAG/deep-fetch-gate, cascade/alert-gen/mention-velocity) confirmed still fully inline in pollNews.ts, exactly as disclosed — no undisclosed gap.
+- Re-ran 16 targeted stage-1 pollNews test files myself: 84/84 pass, 209 expect() calls — exact match to claimed "209 pollNews-touching assertions", not re-trusted. tsc clean. mock-guard PASS. DDD/security greps clean (application-layer legitimately imports infra; no process.env/secrets in new files). size-lint --check: only 1 pre-existing unrelated offender (getBctcPendingRefineTool.ts, untouched here).
+- DoD call: backlog-detail.json's own `dod` field names "one-extraction-per-PR" as an accepted AC bullet alongside "thin orchestrator" — process sanctions staged extraction. Materially different from 0f23a703f (zero pipeline-body extraction that round) — this is a genuine, verified real stage-1 extraction, honestly disclosed as partial.
+**why-decision:** vc-changes (qa[]->review[]) — full DoD (<=120L) objectively still unmet at 670L so DONE_VERIFIED not warranted yet, but this is genuine verified PROGRESS matching the row's own documented ladder, not a quality failure. status_note framed as STAGE-1 VERIFIED/continue-ladder rather than defect-CHANGES_REQUESTED. redispatch_count 1->2, next_agent=dev-mcp-server, continue to stage 2 (dedup/insert).
+**why-change:** none — router's progress-vs-failure framing question resolved by reading the DoD text directly; verdict mechanics (vc-changes JUMP-TO) unchanged, flow has no separate "progress" terminal state.
