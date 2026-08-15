@@ -840,7 +840,7 @@
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
         "status": "READ",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-15.json"
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-15.json"
       },
       {
         "id": "sys-20260815T103724-4a02",
@@ -16969,7 +16969,7 @@
         "next_agent": "po",
         "updated_by": "qa",
         "po_escalation_20260728": "PO triage TNB-c119 — PRIORITY RAISED P2 -> P1, AND THE c110 COMPONENT-SPLIT IS PARTLY OVERTURNED. NEW EVIDENCE (c119, RAW-verified by TNB against both synthesis JSONs on disk): two independently-computed chef-evening dishes exist for the SAME real day 2026-07-28, 8 min apart — unified-agent-synthesis-2026-07-28-evening.json (cycle_id evening-2026-07-28T19:45Z, date_vn 2026-07-28, regime risk-on-consolidation, SSI/VCI/VND STRONG BUY) and unified-agent-synthesis-2026-07-29-evening.json (cycle_id evening-2026-07-28T19:53:00Z, date_vn 2026-07-29, regime risk-balanced_with_sector_rotation, VCI/VND/VHM/VIC all MEDIUM HOLD). Not a duplicate-message artifact: different live fetches, different regime conclusions, OPPOSITE conviction direction on overlapping tickers (VCI STRONG-BUY-2/4 vs MEDIUM-HOLD-1/4). Both self-certify 'Dish published: YES (MARKET plain-VI + WORK detail)'. PO ADJUDICATION: c110 folded Component 2 (dup-publish) to UC-CCA-P3 and left this row as 'Component 1 = cosmetic UTC-header/filepath fix'. That split is WRONG as of c119. The daily chef-evening publish mutex is KEYED ON date_vn (published:chef-evening:2026-07-28 vs published:chef-evening:2026-07-29) — so the very date derivation this row owns IS the mutex key, and its VN-local-rollover bug is what let the two sessions miss each other. Component 1 is therefore NOT cosmetic: it is the direct enabling cause of a confirmed double MARKET-channel publish. Severity upgraded cosmetic -> functional. SCOPE (widened a third time, same single defect): chef.md must derive ONE canonical UTC date once and use it for ALL THREE surfaces — (a) synthesis JSON filepath (c113 finding, Step 7.6 L631 CYCLE_DATE), (b) session/notebook headers (c109 finding), (c) the published:chef-evening:<date> marker key (c119 finding, NEW). AC: (1) single UTC date-derivation point in chef.md, no VN-local date reaches any of the 3 surfaces; (2) RAW-VERIFY on a subsequent evening dish — filepath date, notebook header date and the held marker key all equal the UTC date of execution; (3) exactly one published:chef-evening:<date> marker per real calendar day. DO NOT re-litigate marker RELEASE/IMMUNITY semantics — UC-CCA-P3 still owns those; this row owns key DERIVATION only (same orthogonality test used by FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON). Cross-ref FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (P0, occurrence_count 3 -> this is occurrence 4 of the double-dispatch class) — that row owns WHY two chef sessions spawned; THIS row owns WHY the daily mutex failed to catch them. Both are needed; neither subsumes the other. Reported BUG channel msg 4348.",
-        "updated_at": "2026-08-13T07:24:09Z",
+        "updated_at": "2026-08-15T10:51:16Z",
         "entered_review_at": "2026-07-28T23:57:07Z",
         "review_note": "[agent-father 2026-07-28T23:57:07Z] chef.md now derives ONE canonical UTC date (CYCLE_DATE_UTC, Step 0.5, pinned once) reused verbatim at all 3 surfaces: Step 0.5 single-fire published-marker key, Step 7.6 synthesis JSON filepath + metadata.date_vn, Step 8b notebook header. Root cause: chef-evening cron (19:45 UTC) fires after VN local midnight (17:00 UTC), so VN-local date was structurally +1 day vs the UTC fire day, letting two concurrently-dispatched sessions diverge on the marker key. Also updated cowork-schedule.json publish_date_basis for chef-morning/chef-eod/chef-evening (vn_date->utc_date) so the live catchup-predicate rollover check matches the new basis -- no-op for morning/eod (UTC date == VN date at their fire times), fixes evening. Did NOT touch marker release/immunity semantics (UC-CCA-P3 territory). AC(2) NOT verifiable this session -- requires a subsequent evening dish to confirm filepath/header/marker date all equal the UTC execution date. REVIEW not DONE_VERIFIED.",
         "status_note": " [router 2026-07-29T00:03:46Z] next_agent corrected agent-father->qa: QA-Drain requires status==REVIEW && next_agent==qa to pick a row; agent-father left self-reference, stranding this row from automated QA pickup. | [qa 2026-08-06T17:45:22Z] CHANGES_REQUESTED — Component 1 (VN-local date leak) durably fixed and verified across 9 post-fix dishes; AC(3) (exactly one marker/day) still failing via 2 new mechanisms (07-30 same-day double-dish, 08-06 retry wall-clock date-drift) — see qa_note for full evidence.",
@@ -16979,7 +16979,7 @@
         "qa_note": "CHANGES_REQUESTED (direct-commit verify, mode=verify-committed). Derived commit 8cb767471 (no .commit field on row) via git log on chef.md/cowork-schedule.json, cross-checked against review_note prose — matches: chef.md Step 0.5 now pins ONE canonical CYCLE_DATE_UTC (\"date -u +%Y-%m-%d\") reused verbatim (never recomputed) at Step 7.6 (synthesis JSON filepath + metadata.date_vn), Step 8b (notebook session header), and this step's single-fire published-marker key; cowork-schedule.json publish_date_basis flipped vn_date->utc_date for chef-morning/chef-eod/chef-evening. Commit confirmed on main ancestry.\n\nAC(1) + the literal wording of AC(2) — CONFIRMED, credit given. Sampled ALL 9 evening synthesis JSONs produced since the fix landed (07-29, 07-30 x2, 07-31, 08-04, 08-06, plus the 07-29 \"chef-evening\" variant): zero VN-local-date leaks in any of them; filepath date / metadata.date_vn / notebook header / marker key are always mutually consistent and always equal the UTC calendar date of actual execution, including today's 08-06T06:37Z dish. The Component-1 defect this row was originally opened for (VN-local date leaking into session headers) has NOT recurred.\n\nAC(3) \"exactly one published:chef-evening:<date> marker per real calendar day\" — NOT held, two independent pieces of live post-fix evidence:\n(a) docs/data/unified-agent-synthesis-2026-07-30-evening.json (cycle_id evening-2026-07-30T19:52:43Z, regime \"risk-on_with_caution\") and -2026-07-30-chef-evening.json (cycle_id evening-2026-07-30T19:59:12Z, regime \"bullish-micro-bearish-macro-divergence\") are two independently-computed FULL evening dishes, 6m29s apart, same real day, BOTH correctly UTC-dated (not the original mislabel mechanism). chef.md gates all of Step 0 GATHER behind the Step 0.5 marker claim (unclaimed -> immediate EXIT before any synthesis) — both reaching Step 7.6 persist is strong evidence both marker claims succeeded, i.e. two markers/two live dish computations for one day. Root cause is most likely SLOT_ID not being canonicalized at Step 0.5 (only the DATE component was fixed) — the divergent filenames (-evening.json vs -chef-evening.json, dish_type \"evening_preview\"/\"evening\") point at two dispatch paths passing different slot/dish_type framing into the SAME marker-key formula this row owns.\n(b) Fresh, independently-filed evidence in signal_queue today (id cowork-20260806T064440Z-chef-evening-retry-date-drift, ts 2026-08-06T06:44:40Z, HIGH, routed to po, RAW-verified via get_market_message_digest): pinning CYCLE_DATE_UTC to wall-clock-at-execution (this row's exact design choice) has no backfill-target-date concept, so a ~10h43m-delayed retry (originally for the missed 2026-08-05 evening slot) instead published under TODAY's date, permanently leaving 2026-08-05 evening unfilled and prematurely tombstoning 2026-08-06's marker 13h before tonight's real 19:45 UTC fire.\n\nNot held against this row / not re-litigated: the 07-29-evening.json artifact (cycle_id evening-2026-07-28T19:53:00Z) is the OLD pre-fix c119 artifact already documented in this row's own po_escalation_20260728, not new evidence. Marker release/immunity semantics (UC-CCA-P3) and the double-dispatch spawn cause (FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS) are correctly untouched by commit 8cb767471 and are not blamed on it here.\n\nbun test / tsc --noEmit / mock-guard: structurally N/A — commit touches only docs/agents/unified-agent/flow/chef.md + docs/data/cowork-schedule.json (flow-doc + config, zero .ts production source).\n\nDISPOSITION: held at REVIEW, not DONE_VERIFIED. Component 1 (VN-local leak) is durably fixed. Recommend po adjudicate: (i) whether SLOT_ID canonicalization belongs on THIS row (Step 0.5 marker-key derivation) or folds fully into FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS; (ii) mint/route a backfill-target-date parameter for chef.md retries (architect, per the 08-06 signal_queue filing) before this row can claim DONE_VERIFIED against its own AC(3).",
         "qa_reviewed_at": "2026-08-06T17:45:22Z",
         "redispatch_count": 1,
-        "secondary_claimed_at": "2026-08-13T07:24:08Z",
+        "secondary_claimed_at": "2026-08-15T10:51:15Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "po"
       },
@@ -18611,7 +18611,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-15T07:53:07Z"
+        "last_served_tick": "2026-08-15T10:50:42Z"
       },
       "sls": {
         "last_served_tick": "2026-08-15T08:23:02Z"
@@ -18629,9 +18629,230 @@
         "last_served_tick": "2026-08-15T10:22:28Z"
       }
     },
-    "_updated_at": "2026-08-15T10:40:00Z",
-    "_updated_by": "dev-team (S1 triage inbox clear — po triage a184c552bb39da38c consumed 12/12)",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-15T10:50:42Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "e607edc301fbb20fbeefb4003621ebc318179ad6673ee99e551769e1480f3f87",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-c29aab1b",
+          "head_sha": "c29aab1bfbad9abf354ebcd39130ad47ff73c802",
+          "run_id": 31879022690,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31879022690",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "size-lint",
+              "conclusion": "failure",
+              "jobId": 94998870535
+            }
+          ],
+          "fingerprint": "c4a6a5d9eeb7de0c3a2a9396b8c4a15d058f7724b824ec92e20d66f0ee480b33",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD c29aab1bfbad9abf354ebcd39130ad47ff73c802: size-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-15T10:21:45Z",
+        "drained_at": "2026-08-15T10:49:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d146e161a05a17ea615c2b6e1311982989ebfcac0764390744bd005b2e3bfa3c",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-15T10:30:04Z",
+        "drained_at": "2026-08-15T10:49:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8a423f404a22195cbf6bdc3112adf7522a3932d023b7b57c534e5b9e42d007f4",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12837,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T10:30:06Z",
+        "drained_at": "2026-08-15T10:49:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c2c75f142466ced83fcee73de3060d5a72b29416c196cab269fff6c75ccda3fd",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12837,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T10:31:28Z",
+        "drained_at": "2026-08-15T10:49:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e4ed82ef6f28e0316a4da113a5252a27f682ba7ce9caf598fba6a6d7b9795822",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/code-janitor.md",
+          "line_count": 194,
+          "cap": 200,
+          "byte_count": 15662,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T10:30:05Z",
+        "drained_at": "2026-08-15T10:49:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "22df953b8e4335fdb5bae9041a30b7f7dcf67720851f5c87f4e911a5681953b3",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/code-janitor.md",
+          "line_count": 194,
+          "cap": 200,
+          "byte_count": 15662,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T10:31:27Z",
+        "drained_at": "2026-08-15T10:49:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "66b87095c1a4c4917edd251e256b0cda1389079e9c597aea97d68695f2d97410",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T10:30:06Z",
+        "drained_at": "2026-08-15T10:49:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8bc814cb0c89367ce14243e86644175ebf8f330f8419ecea701ca053208ad9b3",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T10:31:29Z",
+        "drained_at": "2026-08-15T10:49:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cf151265b455ab16fddbef4cf17065442b7295793a2b9a79fea181f2b450a828",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 44,
+          "cap": 200,
+          "byte_count": 32387,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T10:30:05Z",
+        "drained_at": "2026-08-15T10:49:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c83d22cb8cd10136bc267bd4f8a7e41e72fd490588d9dbc47b112a1da3a45842",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 44,
+          "cap": 200,
+          "byte_count": 32387,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T10:31:28Z",
+        "drained_at": "2026-08-15T10:49:42Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-14T04:11:35Z",
     "last_po_triage_note": "po/triage-20260814T0411Z (router-spawned after dev-team tick 2026-08-14T03:37Z could not nested-spawn). INPUTS: 18 durable-inbox envelopes. OUTPUT: 0 net-new mints from triage, 5 folds. DEDUP/FOLD: 2 ci_red (CI-RED-87a7a6d2 run 31758121017, CI-RED-9a9ad9bf run 31766602285) read at source via gh run view --log-failed — identical FAILED FILES (ALLZERO-OHLCV-FETCH.test.ts, FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts), both already carry open READY rows, file-scoped dedup HIT, SHAs appended; 3 sweep-guard bug-escalation escalated=true prior_warns=12/13/14 -> FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK occ 21->24; 2 notebook-immutability-guard on system-auditor.md sections c5/c6 -> FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS. NO MINT: 1 signal_feedback A-33 hook-liveness WARN (context-bloat-backstop.sh settings-file-missing) — PREMISE VERIFIED TRUE at source (0 matches for context-bloat-backstop in ~/.claude/settings.json, .claude/settings.json, .claude/settings.local.json — the hook is genuinely unregistered) but it is a first fire (1/1 in signal_queue) and the WARN single-fire rule forbids minting on one tick; carried to next tick for recurrence confirmation. 1 improvement_proposal is PO's OWN OUTBOUND (from=po to=agents-architect, IMP-20260814-system-auditor-notebook-compose-actuator-never-wired) misrouted into PO's own inbox by the drain — already board-backed by FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED (backlog, agents-architect); ACK only. 9 cowork-fire/tick-dispatch/cowork-tick-telemetry envelopes addressed to system/dev-team/cowork-team, not to po — informational, no defect, skipped. CONVERGENT FINDING: 3 of the 4 to=po defect classes this tick (3 sweep-guard + 2 notebook-immutability + the improvement proposal) all trace to ONE actor, system-auditor's unwired notebook-compose actuator. SEPARATELY: SPIKE-FRESHNESS-REMEDIATE-TRIAGE signed off APPROVED (review->done) and decomposed into 4 new backlog rows + 1 reprioritization. INBOX CLEAR NOT WRITTEN — owned by dev-team/flow/main.md Step 1 per triage-signals.md, PO does not write the subtractive clear.",
     "last_po_triage_consumed": 18,
