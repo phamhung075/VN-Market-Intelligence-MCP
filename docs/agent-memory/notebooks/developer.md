@@ -1,6 +1,24 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-14T23:02:00Z | **Cycle:** TASK_2008b FR-A3 (S, UC-CDC-P1 tier1/independent — stop cowork-tick-preflight.sh SILENT-path calendar_status recycling)
+**Last updated:** 2026-08-15T01:32:00Z | **Cycle:** FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (S, review-lane secondary-drain — AC-3 same-tick false-positive guard)
+
+## Session 2026-08-15T01:32:00Z — FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (cross-service/, developer, P1 S, review-lane secondary-drain, session 632721c2)
+
+**Task:** Stale `review[]` row, redispatch_count=1. AC-1/AC-2 already QA-confirmed live (eod.md no-Bash caveat fix + market-watcher-notebook:main mutex). AC-3 (news-scout's L-7 off-hours commit dependency) was QA-falsified: `stage-log-notify.md` claimed off-hours cycles "retain their own per-cycle commit" but zero git instructions existed anywhere in news-scout's flow tree — 2 cycles already permanently lost.
+
+**Found:** the prescribed AC-3 fix had ALREADY landed this same coord-session via commit `3d2ff4ee2` under a differently-named task (`FIX-NEWSSCOUT-COMMIT-POLICY-NEVER-MECHANICALLY-WIRED`) — task_claim mutex `news-scout-notebook:main` + `git_commit_retry` + RULE 2.5 pathspec ported verbatim into `stage-log-notify.md`'s off-hours self-commit path, gated on `slot=news-scout-offhours`.
+
+**Rework shipped:** that landed fix used a mutex key deliberately DIFFERENT from `eod.md`'s own (`market-watcher-notebook:main`) — correct to avoid a cross-agent deadlock, but `eod.md` Step D ALSO commits `news-scout.md` in its own batch, and `news-scout-offhours`/`market-watcher-eod` share the identical 16:00 UTC Mon-Fri tick (same co-fire class AC-2 already fixed for `market-watcher.md`). If `eod.md`'s batch lands first, the off-hours self-commit's own `git add` finds nothing pending — previously fell through to `git_commit_retry` returning non-zero on a clean diff (non-lock failure, no retry) → false BUG-channel alert every co-firing weekday despite data already being safely committed. Added a `git diff --quiet` pre-check guard (commit `7a94f3dd5`) so the benign no-op is skipped, not escalated. Also committed the one pre-fix straggler cycle (c269, appended before the fix landed, sitting uncommitted) to close residual exposure (commit `f795efe35`).
+
+**Not closed:** zero live `news-scout-offhours` cycles have fired since the hardened fix landed — unlike AC-1/AC-2's 2-live-fire proof standard, AC-3 has zero live-fire confirmations yet. Board updated (`next_agent: developer → qa`, `status_note`/`resume_note` rewritten with exact verification steps), status stays `REVIEW` — NOT signed DONE_VERIFIED, since this task's own precedent requires live evidence, not code-read alone.
+
+**Docs updated:** `docs/agents/news-scout/flow/stage-log-notify.md` (size-justification 140L→145L).
+
+**Structural gap (same class as prior sessions):** graphify incremental step skipped — no Skill-tool binding available to this spawned agent.
+
+**Closeout:** 2 commits, pathspec-scoped — `7a94f3dd5` (flow-doc guard), `f795efe35` (news-scout.md straggler catch-up). Board updated via `orch-apply.sh`. No handoff file for this row (review-lane secondary-drain dispatch, board row's own `review_note`/`status_note` fields are the spec) — none created, matching established precedent. Sprint-task lock `task:FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK` released in finally.
+
+---
 
 ## Session 2026-08-14T23:02:00Z — TASK_2008b FR-A3 (scripts/, developer, P1 S, UC-CDC-P1 3-way decomposition tier1/independent, session 632721c2)
 
@@ -39,21 +57,5 @@
 **Structural gap (same class as prior sessions):** graphify incremental step skipped — no Skill-tool binding available to this spawned agent.
 
 **Closeout:** commits pathspec-scoped (`scripts/auditor-notebook-commit.sh` + `scripts/lib/output-contract-invariant.sh` + `scripts/auditor-notebook-commit.test.sh`, then `docs/policies/dev-standards.md` + `docs/WORK.md` separately). Decision journal STEP developer-S7 (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md`). No handoff file existed for this row (PO-split board row, `status_note`/`acceptance` fields are the spec) — none created, matching established precedent. Board flip `in_progress[]`→`review[]`/`next_agent=qa` via `orch-apply.sh`. RETURN flags piece (2) explicitly so the dispatcher routes agent-father separately once this script change is confirmed landed — not silently implied.
-
----
-
-## Session 2026-08-14T18:40:00Z — FIX-DEVTEAM-COLDEVICT-FAILURE-REPORT-SWALLOWS-STDERR (cross-service/, developer, P0 S, Ready-Lane Consumer dispatch, session 632721c2)
-
-**Task:** 23 occurrences of "orch-cold-evict.sh failed" with zero stderr — PO's own manual re-runs always exited 0 clean seconds later against the same file, proving the script itself was not the defect.
-
-**Found the real swallow point:** NOT `docs/agents/dev-team/flow/main.md` (no inline copy of this step exists there — confirmed via grep, zero hits). It is `scripts/agents-flow/dev-team-tick-preflight.sh` Step 5.5, the CANON-SCRIPT runtime for `post-cycle.md` § Step 4.2. `_step55_run_cold_evict()` already captured `orch-cold-evict.sh`'s combined stdout+stderr into a LOCAL var (printed to this script's own stderr for cron-log visibility per the earlier STDOUT-LEAK fix) but never exposed it past the function return — the caller (`_step55_cold_evict_and_commit`) only ever saw the exit code.
-
-**Shipped:** (1) stash captured output+rc into module globals (`_STEP55_COLD_EVICT_OUTPUT`/`_STEP55_COLD_EVICT_RC`, freshly overwritten every call); (2) new `_step55_is_benign_cas_loss()` matches the script's own definitive CAS-exhaustion line (`ABORT: CAS retry limit (N) exceeded ... concurrent writer`) — the ONLY message it emits when its mtime-CAS loop or `orch-apply.sh`'s downstream exit-2 CAS guard loses to a peer writer; (3) benign branch logs only, zero telegram; (4) genuine-failure branch keeps reporting, now with real exit code + `_trunc()`'d verbatim stderr (reused the file's own existing helper, no new truncation pattern). `post-cycle.md` § Step 4.2 updated in lockstep (its own header says "edit the spec first").
-
-**Test coverage:** 2 new cases in `dev-team-tick-preflight.test.sh` — T30b (synthetic CAS-exhaustion fixture → zero `send_telegram` calls, AC), T30c (synthetic genuine-failure fixture → telegram content asserted to contain both `exit 1` and the verbatim stderr snippet, AC). New `TELEGRAM_ARGS_LOG_FILE` capture seam added to the test harness's `mcp_call` stub (previously call-counted only, never content-asserted). Full suite 154/154 (146 pre-existing + 8 new), zero regressions. `shellcheck -S warning` clean on both touched scripts.
-
-**Structural gap (same class as prior sessions):** graphify incremental step skipped — no Skill-tool binding available to this spawned agent.
-
-**Closeout:** commit pending, pathspec-scoped (`scripts/agents-flow/dev-team-tick-preflight.sh` + `.test.sh` + `docs/agents/dev-team/flow/post-cycle.md`, then `docs/WORK.md` alone). Decision journal STEP developer-S27 (`sprint-ULTRACODE-AUDIT-FIXALL-developer.md`). No handoff file existed for this row (Ready-Lane Consumer direct dispatch, board row's own `status_note`/`evidence_20260814` fields are the spec) — none created, matching established precedent. Board flip `in_progress[]`→`review[]`/`status=REVIEW`/`next_agent=qa` via `orch-apply.sh`.
 
 ---
