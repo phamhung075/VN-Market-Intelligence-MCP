@@ -1,3 +1,4 @@
+<!-- size-justification: 140L — FIX-NEWSSCOUT-COMMIT-POLICY-NEVER-MECHANICALLY-WIRED 2026-08-15: ported market-watcher's working off-hours-self-commit block (task_claim mutex + git_commit_retry + RULE 2.5 pathspec + task_release + BUG fallback) verbatim, +26L; the block is non-factorizable without breaking the same mutex-guard/retry/pathspec contract market-watcher's identical fix already establishes as the correct pattern. Exceeds the 120L flow-file cap (pre-existing debt: file was already 113L before this fix). -->
 > Parent: [./cycle.md](./cycle.md)
 
 # News Scout — Stage 4–5: Session Log, WORK Notify, Batch 2
@@ -13,6 +14,33 @@ Section template (≤10L):
 
 > Notebook is written (appended) to disk every cycle. Git commit is deferred to market-watcher eod.md batch commit at market close (L-7, 1968b2). Off-hours cycles retain their own per-cycle commit.
 > Recovery if EOD missed: `docs/protocols/head-lock-self-cure.md`.
+
+**Off-hours self-commit** (`slot=news-scout-offhours` only — any other/no `slot=` value, e.g. `slot=news-scout-market` or `slot=news-scout-sentiment` or a manual/ad-hoc invocation, stays deferred to market-watcher's eod.md batch commit above) — FIX-NEWSSCOUT-COMMIT-POLICY-NEVER-MECHANICALLY-WIRED, 2026-08-15: the sentence above stated this policy since 1968b2 but no step anywhere in news-scout's flow tree ever executed a git/commit-mutex call (confirmed via RAW tool-call-log verification, tick 2026-08-15T00:00Z, `slot=news-scout-offhours` — zero git/commit-mutex invocations, notebook left genuinely modified-but-uncommitted every off-hours cycle). Ported verbatim from market-watcher's identical, working off-hours-self-commit fix (FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK, 2026-08-06 — `docs/agents/market-watcher/flow/cycle.md`), with a DIFFERENT mutex key so the two agents never collide when both fire in the same cowork batch:
+
+`slot=` is passed in the original invocation prompt (cowork dispatcher convention — `docs/agents/cowork-team/flow/spawn-fanout.md` Step 5: `"run <flow_path>  slot=<slot_id>"`, same mechanism market-watcher's `main.md` documents). News-scout's own `main.md`/`cycle.md` do not route sub-flows by slot (cycle.md is the single universal sub-flow for every news-scout slot) — check the literal `slot=` value from your invocation prompt directly at this step.
+
+```
+LOCK = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id: "news-scout-notebook:main", task_kind: "sprint-task",
+  owner_agent: "news-scout",
+  owner_client_session: "<resolved CLAUDE_CODE_SESSION_ID — REQUIRED, coordinationTools.ts:104-110;
+    substitute the real value from the spawn-prompt coordination line, NEVER write the literal
+    text "$CLAUDE_CODE_SESSION_ID" — a call_tool argument does not expand shell variables, it
+    sends the token literally>,
+  ttl_seconds: 60
+})
+```
+If `claimed:false`: retry up to 2 more times (5s apart, same bounded-retry style as `git_commit_retry`); if still held after 3 attempts, proceed unguarded and log `[news-scout] notebook-lock contended 3x — proceeding unguarded`.
+
+```bash
+git add docs/agent-memory/notebooks/news-scout.md
+git_commit_retry -m "chore(memory/news-scout): offhours cycle YYYY-MM-DD HH:MM UTC" \
+  -- docs/agent-memory/notebooks/news-scout.md
+```
+> **RULE 2.5 pathspec-scoped commit**: `git_commit_retry` passes `"$@"` straight to `git commit` (`docs/protocols/head-lock-self-cure.md` § F4) — a bare `git commit -m "..."` with no trailing pathspec commits whatever is currently staged in the shared index, not only the file this step's own `git add` named. The trailing `-- <path>` above closes that gap per `.claude/skills/commit-boundary/SKILL.md` RULE 2.5.
+
+`task_release(task_id="news-scout-notebook:main", owner_client_session="<same resolved value as the task_claim above>")` in a finally, regardless of commit outcome.
+> If commit fails after retries: log to BUG channel + `send_telegram(channel="bug", message="[news-scout] offhours notebook commit failed — manual recovery needed: docs/protocols/head-lock-self-cure.md")`.
 
 ---
 

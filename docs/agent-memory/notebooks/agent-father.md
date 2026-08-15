@@ -72,6 +72,40 @@
   Applied via `scripts/orch-apply.sh`, left UNCOMMITTED per `FU-AGENT-FATHER-ORCH-SCOPE` (matches
   S47/S48/S49/UC-CCA-P2 precedent above) — write is on disk, ready for the next commit sweep.
 
+## EDIT 2026-08-15T00:24Z — FIX-NEWSSCOUT-COMMIT-POLICY-NEVER-MECHANICALLY-WIRED,
+router-dispatched (intent=edit), session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`
+- Bug: `docs/agents/news-scout/flow/stage-log-notify.md` L14 stated "Off-hours cycles retain
+  their own per-cycle commit" but no step anywhere in news-scout's flow tree ever executed a
+  git/commit-mutex call (`grep -rn "commit"` showed only that one prose line + unrelated
+  dedup-log strings). Router's own RAW-verification confirmed it live: tick 2026-08-15T00:00Z,
+  `slot=news-scout-offhours` — agent's tool-call log had zero git/commit-mutex invocations, only
+  2 coverage-stamp.sh calls + a tmux check; `docs/agent-memory/notebooks/news-scout.md` genuinely
+  modified on disk (real c269 section) but left uncommitted after the run.
+- Fix: ported market-watcher's identical, working off-hours-self-commit block verbatim
+  (`docs/agents/market-watcher/flow/cycle.md` — FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-
+  SKIPS-COMMIT-LOSES-NOTEBOOK, 2026-08-06) into `stage-log-notify.md`: `task_claim` mutex guard
+  (bounded 2-retry, 5s apart, proceed-unguarded WARN on 3rd fail) → `git_commit_retry` with a
+  trailing RULE 2.5 pathspec (`-- docs/agent-memory/notebooks/news-scout.md`, per
+  `.claude/skills/commit-boundary/SKILL.md` — a bare commit sweeps whatever else is staged) →
+  `task_release` in a finally → BUG-channel fallback on exhausted retries. Used a DIFFERENT mutex
+  key (`news-scout-notebook:main`, confirmed no collision) from market-watcher's own
+  `market-watcher-notebook:main` since both agents can co-fire in the same cowork batch. Gated on
+  `slot=news-scout-offhours` (the invocation prompt's `slot=` param, per the same cowork-dispatcher
+  convention market-watcher's `main.md` already documents — news-scout's own `main.md`/`cycle.md`
+  don't route sub-flows by slot, so the check reads the literal invocation prompt directly at this
+  step); preserved the existing "deferred to market-watcher eod.md" sentence unchanged for
+  `slot=news-scout-market`/`slot=news-scout-sentiment`/manual invocations.
+- File grew 113L→140L, over the 120L flow-file cap — added a `size-justification` header (same
+  pattern as sibling `stage-signals.md` and market-watcher's own `cycle.md`, both already
+  over-cap for the identical non-factorizable-block reason).
+- Lock: no gateway binding (tool grant Read/Edit/Write/Glob/Grep/Bash only). orch-state
+  `.head.status=in_progress` but both `task_board.in_progress[]` rows (UC-CCA-P3 zone
+  `cross-service/`, UC-CDC-P1 zone `multi`) are unrelated to my zone (`docs/agents/news-scout/`,
+  `docs/agents/agent-father/`) and awaiting `next_agent` (qa/pm), not live concurrent writes here
+  — Solo operation exception applied per `commit-boundary/SKILL.md`, no lock claimed.
+- Scope respected: did not touch `docs/agent-memory/notebooks/news-scout.md` (not my notebook to
+  edit) per the dispatch instruction.
+
 ## EDIT 2026-08-14T23:03Z — task TASK_2008c (UC-CDC-P1 3-way split, agent-father slice),
 router-dispatched, session `632721c2-41e4-4aff-8d06-a47cf80dc0d7`
 - Context: UC-CDC-P1 (compute `calendar_status` server-side, break the circular self-recycling
