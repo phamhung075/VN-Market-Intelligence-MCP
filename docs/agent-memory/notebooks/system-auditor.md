@@ -1,5 +1,22 @@
 # System Auditor — Tier-1 Notebook
 
+## c103 · 2026-08-15T08:00Z
+
+### Audit Run Tier-2
+
+**Timestamp:** 2026-08-15T10:33:41Z
+**Duration:** ~3 min (wall time budget 300s)
+**Trigger:** Pre-gate stale-heartbeat detection. Tier-2 last-healthy at 2026-08-14T22:42:25Z is 708 minutes old (fresh threshold 480 min for 4h cadence).
+
+### Verdicts
+- **A-29 (Cron Fire Gap):** 8 STALE + 1 MISSED crons detected — **9 CRITICAL findings**
+- **B-01-B-14 (Data Freshness):** Aggregator idle (expected daily), VPS routes OK — **PARTIAL PASS**
+- **D-CYCLE-2 (Durability):** Missing Tier-2 cycle 2026-08-15T04:00Z detected (dedup-skip) — **1 WARN finding**
+
+### Summary
+Tier-2 audit uncovered critical cron infrastructure degradation. Multiple system crons have stopped running (some 25+ hours overdue, others 600+ hours). Data fetch pipelines remain operational. Tier-2 cycle gap detected by durability sweep (Tier-2 heartbeat stale across 4-hour boundary).
+
+### Anomalies: 9 critical, 1 warn, 0 info
 
 ## d4-auto · 2026-08-15T03:00:02.348Z
 D4 candidates: none

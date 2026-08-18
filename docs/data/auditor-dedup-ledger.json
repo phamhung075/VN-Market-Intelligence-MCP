@@ -1,24 +1,4 @@
 {
-  "microservice_memory_degraded:rag-service:A-30": {
-    "ts": "2026-08-08T06:05:41Z",
-    "sev": 2
-  },
-  "db_freshness_breach:market_messages:C-06": {
-    "ts": "2026-08-08T06:25:02Z",
-    "sev": 2
-  },
-  "microservice_degraded:rag-service:A-30-loss-of-reclamation": {
-    "ts": "2026-08-08T07:36:15Z",
-    "sev": 2
-  },
-  "memory_pressure:rag-service:A-30-post-fix-monitoring": {
-    "ts": "2026-08-08T08:34:45Z",
-    "sev": 1
-  },
-  "mem_pressure:rag-service:A-30-recurring-ceiling": {
-    "ts": "2026-08-08T09:35:29Z",
-    "sev": 2
-  },
   "microservice_degraded:rag-service:A-30:BELOW-FLOOR": {
     "ts": "2026-08-08T11:05:56Z",
     "sev": 2
@@ -254,5 +234,13 @@
   "auditor-cycle-loss:2026-08-13T20:00Z": {
     "ts": "2026-08-15T02:18:25Z",
     "sev": 2
+  },
+  "auditor-cycle-missing:tier2:2026-08-15T08:00Z": {
+    "ts": "2026-08-15T10:32:31Z",
+    "sev": 2
+  },
+  "auditor-a29-fire-gap:alertScanParallel": {
+    "ts": "2026-08-15T10:37:24Z",
+    "sev": 3
   }
 }
