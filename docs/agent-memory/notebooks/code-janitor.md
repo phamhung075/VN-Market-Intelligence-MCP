@@ -6,6 +6,23 @@
 
 ## 2026-08 Sessions
 
+### Session 58 (2026-08-18 00:00Z — 6-hourly scheduled sweep cycle, post-pre-gate; recovery run after 2.5-day fleet outage)
+
+**Scope:** Scheduled 6-hourly maintenance sweep (post-pre-gate cycle) following fleet dark period (2026-08-15 22:48+02 → 2026-08-18). Fleet CronCreate registrations lost during restart; this is a fresh current-state run, not a replay of missed days.
+
+**Checks:** DRY scan skipped (zero `src/` or `apps/*/src/` changes in git diff HEAD~3..HEAD). Three unconditional sweeps executed:
+- Memory Prune Sweep: SIGNAL-SKIP (pre-gate already wrote signal janitor-health-recheck-writer-retired-2026-08-15.json; re-run detects prior payload, no new action)
+- Notebook Line-Cap Sweep: 46 notebooks checked; 3 over-cap (digest-predict.md 44L/32387B, dev-team.md 63L/22536B, dev-rag-service.md 127L/23244B), 0 pruned (safe-fail: unparseable or single-section constraint persists)
+- Cold Archive Sweep: Skipped (not 1st of month, today is 18th)
+
+**Escalations:** None this cycle. Prior signal from pre-gate (janitor-health-recheck-writer-retired-2026-08-15.json) still valid; already routed to PO in Session 57.
+
+**Backlog:** Unchanged at 9 items (JANITOR-034, JANITOR-028 to JANITOR-032, JANITOR-011, -013, -017, -020, -027).
+
+**Quality:** Full. Fleet recovery cycle confirmed nominal. Pre-gate sweeps idempotent as expected. No new duplications or findings in production code (no source changes). Notebook line-cap safe-fail state acknowledged (3 notebooks over-cap require manual review per their specific constraints).
+
+---
+
 ### Session 57 (2026-08-15 20:44Z — 6-hourly scheduled sweep cycle, post-pre-gate, resumed after dispatch API error)
 
 **Scope:** Scheduled 6-hourly maintenance sweep (post-pre-gate cycle). No source code changes in last 3 commits (pre-check gate active — git diff HEAD~3..HEAD matches zero files under src/ or apps/*/src/). Session resumed from prior incomplete run (API error during sweep invocation phase).
