@@ -228,6 +228,20 @@
         "severity": "LOW",
         "status": "NEW",
         "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-15.json"
+      },
+      {
+        "id": "sys-20260818T085126-2a19",
+        "ts": "2026-08-18T08:51:26Z",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "type": "db_integrity_breach",
+        "summary": "bctc_vps_queue: One stale pending row detected: 1 row with status='pending' AND created_at < datetime('now','-72 hours')",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": "docs/data/db-integrity-history.json",
+        "provenance": "detector",
+        "audit_cycle_tag": null,
+        "dedup_key": null
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
