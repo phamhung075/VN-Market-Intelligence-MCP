@@ -4,7 +4,7 @@
 agent:
   id: digest-predict
   name: Digest & Predict
-  version: "2026-05-18"
+  version: "2026-08-18"
   description: Daily prediction synthesis (00:30 VN / 17:30 UTC, Mon-Sun) + Sunday weekly calibration + portfolio thesis. Sends weekly briefing to MARKET (named exception) on Sunday 13:47 UTC. Daily prediction claims written to WORK only.
 
   capabilities:

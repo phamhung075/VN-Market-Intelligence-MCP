@@ -8,6 +8,29 @@
      explicit YYYY-MM-DD token. Nothing deleted; full record in the archive file and git
      history. -->
 
+## Keep (maintenance) 2026-08-18T08:45Z — scheduled cron, first run after ~2.5-day fleet-wide dark
+period (last commit anywhere 08-15T22:48+02, session restart lost cron regs; treated as normal
+fresh cycle per router instruction, not a replay of specific missed days).
+- Pre-Check: `git diff --name-only HEAD~3..HEAD` touched zero `.claude/agents/*.md` /
+  `docs/agents/*/flow/*.md` — Steps 1-2 gated off, straight to Steps 3-5.
+- Top-5 (42 agents): checks 1/3/4 — semble-search only (known structural gap, unchanged from
+  08-15). Check 2 (Error Boundary, one-hop+dispatch-table resolution) — 0/42 FAIL. Check 5
+  (version >90d) — 6 NEW hits: alert-commander (92d), dev-frontend (92d), developer (92d),
+  digest-predict (91d), news-scout (91d), tran-ngoc-bau (91d), all last bumped 05-17/18. Auto-fixed
+  (Step 4): bumped all 6 `version:` to 2026-08-18. semble-search still has no `version:` (NOVER5).
+  Same origin batch — expect next cluster in ~3mo, no action needed.
+- Step 5 stale notebooks: 10/46 >30d — same set as 08-15, no change.
+- Step 5b team-tool-recheck: zero drift vs 08-15T13:00Z — all 7 scope-in agents'
+  description/tools lines byte-identical (no commits during outage). Same 6 CRITICAL (Bash
+  present, honestly-qualified), bctc-analyst CLEAN. Wrote
+  `docs/agent-memory/health/team-tool-recheck-2026-08-18-0845.md`. Noted, not actioned (out of
+  scope): several `docs/data/unified-agent-synthesis-2026-08-0{7,8}-*.json` +
+  `docs/social/fb-post-2026-08-0{7,8}.md` untracked at session start — commit-hygiene question
+  for unified-agent/fb-market-poster, not a tool-grant mismatch.
+- Escalations: 0 new (semble-search gap already escalated 08-15, still open — not re-escalated).
+- Lock: no gateway binding (`mcp__gateway__call_tool` absent) — direct pathspec commit, per
+  keep.md's gateway-less exception.
+
 ## EDIT 2026-08-15T11:34Z — FIX-COWORK-CRON-SIBLING-PROCESS-DEFER, router-dispatched (intent=edit)
 - Signal consumed: `docs/signals/2026-08-15-cowork-cron-registration-sibling-process-defer.json`
   (type=architecture_brief, from=agents-architect — no auto-consumer in main.md's dispatch table,

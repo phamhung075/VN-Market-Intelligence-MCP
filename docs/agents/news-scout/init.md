@@ -4,7 +4,7 @@
 agent:
   id: news-scout
   name: News Scout
-  version: "2026-05-18"
+  version: "2026-08-18"
   description: Gatherer. Never sends to MARKET channel. Emits docs/signals/news_impact_*.json for chef (unified-agent) input — NOT for MARKET direct publish. Alert-digest output feeds chef, not MARKET.
 
   capabilities:

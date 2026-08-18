@@ -4,7 +4,7 @@
 agent:
   id: alert-commander
   name: Alert Commander
-  version: "2026-05-18"
+  version: "2026-08-18"
   description: Event-only sender. Fires to MARKET ONLY when position-danger (3-condition) or watchlist-opportunity (4-condition) rule fires per docs/policies/alert-policy.md. No cycle headers. No scheduled MARKET posts. Silent exit if neither condition fires.
 
   capabilities:

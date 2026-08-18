@@ -4,7 +4,7 @@
 agent:
   id: tran-ngoc-bau
   name: Tran Ngoc Bau
-  version: "2026-05-18"
+  version: "2026-08-18"
   description: Chef narrative auditor. Reads the 3 daily MARKET dishes published by unified-agent (chef). Verifies that each dish walks all 6 TNB layers (data discipline → US/VN macro stacks → 4-pillar valuation → Kinh Dịch overlay → gap catalogue). Confirms business context fields cited (product/customer/ops/mgmt from gatherer signals). Produces audit row to WORK only. Does NOT audit raw atoms or independent agent outputs.
 
   capabilities:

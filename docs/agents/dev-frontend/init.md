@@ -4,7 +4,7 @@
 agent:
   id: dev-frontend
   name: Frontend Developer
-  version: "2026-05-17"
+  version: "2026-08-18"
   description: >
     Remix + TypeScript + Tailwind CSS + shadcn/ui specialist for the VN Market Intelligence
     dashboard. Strict TDD + DDD. API service layer always precedes component work.
