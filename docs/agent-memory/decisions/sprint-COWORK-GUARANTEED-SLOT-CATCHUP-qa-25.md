@@ -73,3 +73,14 @@
 - Intent: read backlog-detail.json DoD verbatim — "config-sourced" = named `CooldownConfig.DedupWindowMinutes` field (not env/file runtime load) — diff matches DoD exactly; re-ran `go build`/`go test ./pkg/domain/... ./pkg/module/alert_pipeline/...` (host, static Go binary, no image-vs-host drift risk) 10/10 pass, mock-guard PASS, ancestry confirmed.
 **why-decision:** vc-approved, DONE_VERIFIED — deployment gap from round 1 genuinely closed; code+deploy+intent all independently reproduced.
 **why-change:** none from plan — routine round-2 re-verify of a flagged rebuild claim.
+
+### STEP qa-S33 · qa · 2026-08-22T18:49:14Z
+**task-id:** FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE
+**what-done:** Re-verify (2nd bounce) of WF-3 lane-move fix in `main.md` (commits e6f4455a7 brief-correction, dc0f90334 agent-father re-apply). Did not trust agent-father's narration.
+**what-considered:**
+- Ancestry: both commits confirmed on main via `git merge-base --is-ancestor`. Diff isolated: `git show --stat dc0f90334` = 1 file, 29 ins/8 del, single hunk, no collateral change to WF-1/2/4/S2.
+- Structural match: extracted WF-3's jq verbatim (main.md:473-483), compared line-by-line against WF-1 (main.md:331-338) — identical shape (head-reset → if-in-in_progress guard → backlog append → in_progress removal → else no-op), WF-3's only addition is the BLOCKED-status merge it alone needs.
+- Own dry-run (not agent-father's): ran the extracted filter against a synthetic fixture — positive control moves row in_progress[]->backlog[] with status/hold_reason/resume_attempt_bound_exceeded_at/_by in the SAME write; negative control (sibling row) untouched; else-branch safe no-op.
+- Duration parenthetical: reproduced dur_text formula myself, rendered "(12h0m)" correctly, matches WF-4's identical computation.
+**why-decision:** vc-approved, DONE_VERIFIED — CANONICAL:SSOT-STATUSFLIP-LANEMOVE(c) now genuinely satisfied, duration parenthetical present, zero blocking issue.
+**why-change:** none from plan — straight re-verify, single pass. Task Report: `reports/TASK_REPORT_FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE.md`.
