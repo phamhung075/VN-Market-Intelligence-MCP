@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-08-14T19:01:07Z
-
-**Brief:** `docs/architecture-briefs/2026-08-14-auditor-write-plane-divergence-root-cause.md`
-
-SPIKE-AUDITOR-WRITE-PLANE-DIVERGENCE-ROOT-CAUSE (PO-triaged, 10 occurrences/6 sub-shapes). ROOT CAUSE confirmed file:line: `scripts/auditor-notebook-commit.sh`'s AC-4 pre-commit backstop, meant to catch a fabricated `[OUTPUT-CONTRACT]` line before it commits, is structurally unreachable dead code since the 2026-08-06 durability reorder made `flow/main.md` commit the notebook BEFORE that line is ever computed, and the line is only ever pasted into RETURN, never the notebook (live-confirmed: notebook HEAD has zero `OUTPUT-CONTRACT` occurrences). Independently forensically confirmed (new evidence) at least 4/10 occurrences are "emit script never invoked": `docs/data/auditor-output-contract-violations.json` (29 real entries, proves the script DOES catch this shape when run) has zero entries for 3 occurrences after its last 04:18:13Z entry; a surviving orphaned marker file (`.auditor-cycle-markers-2026-08-13T12:00Z.tmp`) matching a catalogued occurrence has bookkeeping lines but zero `[emit-signal]` lines. Fix: additive Step 2b in `auditor-notebook-commit.sh` (new optional `--markers-file`/`--cycle-tag` args, both already in scope at the flow's existing call site) cross-checks the notebook's own mandated "Anomalies: N new" line against a real markers-file emit count, REFUSES the commit on mismatch — reuses the proven 7/7 SendMessage-resume mitigation rather than trading for `FIX-AUDITOR-SELF-COMMIT-STEP-NEVER-FIRES`. Disposed all 9 adjacent open rows — none subsumed, none to close.
-
-**Signal dropped:** `docs/signals/2026-08-14-auditor-write-plane-divergence-root-cause.json` → agent-father
-
----
-
 ## 2026-08-14T19:09:30Z
 
 **Brief:** `docs/architecture-briefs/2026-08-14-wire-notebook-compose-actuator-system-auditor-pilot.md`
@@ -37,3 +27,13 @@ Router-dispatched: user's hand-authored defer note sat inert in the wrong file (
 User-requested observe-and-report review (not a fix cycle): mermaid diagram + per-agent mechanics for the cowork-team dispatch loop and the anomaly-detection→dev-team-planning loop, plus a live correctness check. Confirmed the `signal_queue` junction hypothesis but scoped it (only `to==po` rows cross loops; `to∈{tnb,unified-agent,alert-commander}` stay inside cowork). Live-verified a real multi-day host-suspension backlog (3 undrained signal_queue rows, 7d-stale `.head`, no cowork-schedule fire since 08-15 — corroborated by system-auditor's own c104 notebook entry) and freshly-reclaimed cron-registration markers (~9min old at read time) whose underlying `CronList` entries I could not independently verify (no tool route). Found the guaranteed-slot launchd backstop is real and bridged the outage but never stamps `cowork-schedule.json.last_fired`, desyncing that field from reality; found a stale `TODO`-vs-`BACKLOG` doc contradiction in `anomaly-task-bridge/SKILL.md`; found an 8-day-unread signal addressed to this agent's own id re: Step 2.4 TTL. No wiring defects — nothing fixed, 2 small doc/script follow-ups recommended to agent-father, 2 more flagged to PO for awareness.
 
 **Signal dropped:** `docs/signals/2026-08-22-cowork-detect-loop-flow-review.json` → agent-father
+
+---
+
+## 2026-08-22T16:47:41Z
+
+**Brief:** `docs/architecture-briefs/2026-08-22-agent-fabric-ddd-debug-logger-tool-optimization.md`
+
+3-part user-requested brief: (1) DDD review found no literal domain→infra import violation, but real drift — `orchStateSchema.ts`/`coordinationStore.ts` hold genuine business rules (task state machine, orphan-adoption allow-list) filed under `infrastructure/` with zero `domain/` counterpart, the same violation class `composition-root-logic-gate` already exists to catch on the Go side but has no TS equivalent; (2) designed a new file-based `docs/agent-memory/debug/<agent-id>.log` per-agent debug logger (deliberately not an MCP tool — dev-* agents lack gateway binding per F-8) since none of the 3 named log-shaped things fit, and found `log_agent_work` (7 lifetime calls) as a near-dead 4th candidate to reconcile; (3) tool-usage-stats.json shows tool utilization got worse in a month (43→30/183 tools ever called, 86.5%→89.8% top-5 concentration) and root-caused why: orch-sentinel's OH-4 capability-utilization dimension, commissioned 2026-07-21 for exactly this, has never run past its first LITE run — its FULL/LITE crons were never armed and are absent from all 3 router re-arm skills.
+
+**Signal dropped:** `docs/signals/2026-08-22-agent-fabric-ddd-debug-logger-tool-optimization.json` → agent-father

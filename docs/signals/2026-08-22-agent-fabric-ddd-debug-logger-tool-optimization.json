@@ -1,0 +1,15 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "architecture_brief",
+  "payload": "docs/architecture-briefs/2026-08-22-agent-fabric-ddd-debug-logger-tool-optimization.md",
+  "priority": "normal",
+  "createdAt": "2026-08-22T16:47:41Z",
+  "summary": "3-part brief: (1) DDD drift — business rules parked in infra with no domain/ counterpart in orchStateSchema.ts + coordinationStore.ts, plus ARCHITECTURE.md DDD-chain cross-ref gap; (2) new docs/agent-memory/debug/<agent-id>.log per-agent debug logger design (file-based, not MCP-tool-based — dev-* agents lack gateway binding per F-8); (3) orch-sentinel OH-4 capability-utilization dimension confirmed never armed/never run FULL since 2026-07-21 commissioning, absent from all 3 router re-arm skills — flag to PO as fast-follow.",
+  "actions": [
+    "ARCHITECTURE.md: add one-line cross-ref from ## DDD Layer Order to dev-standards.md's DDD Layer Rules table (missing infrastructure/ from the stated chain)",
+    "PO-ratify: relocate orchStateSchema.ts business-rule functions + coordinationStore.ts ORPHAN_EMIT_ALLOW_LIST/resume-contract logic into domain/services/, OR document as an explicit reviewed deviation (size/migration-risk tradeoff — architect flags both paths, does not choose)",
+    "Implement docs/agent-memory/debug/<agent-id>.log per brief Part 2 (format, write path, batch-sweep-not-per-line-commit) + reconcile log_agent_work's near-zero (7-call) adoption against the new convention",
+    "Signal PO separately (or via this same brief) re: orch-sentinel's FULL (weekly)/LITE (daily) crons never armed since 2026-07-21 + missing from /cron-cowork-team, /cron-detect-loop, /cron-standalone-team re-arm skills"
+  ]
+}
