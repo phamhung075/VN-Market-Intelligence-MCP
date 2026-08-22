@@ -147,3 +147,31 @@ Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=11.31% MemUsage=347.3M
 - **Fix Applied:** Removed duplicate row via orch-apply.sh; single correct row (to=po) retained.
 - **Lesson:** `emit-audit-signal.sh` already creates E-3 signal_queue rows. Do NOT manually create additional rows with the same ID. If routing to multiple recipients is needed, either call emit-audit-signal.sh multiple times with different --to-agent flags (creating separate rows with unique IDs) or generate unique IDs for each recipient row.
 
+
+### Audit Run Tier-2 — 2026-08-22T22:31:46Z
+
+```
+[FIRE_TICK] 2026-08-22T20:00Z
+[AUDIT_TIER] 2
+
+Freshness Sweep:
+- A-29: Cron fire check: 41/89 on-time
+- B-05: BCTC queue: 100 items
+- B-09: SSC URLs: 0
+- B-13: Stale pending: 0
+
+Markers: /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/agent-memory/.auditor-cycle-markers-2026-08-22T20:00Z.tmp
+```
+
+Cycle Markers:
+```
+[emit-signal] SKIP-dedup dedup_key=auditor-cycle-missing:tier3:2026-08-22T02:00Z last_sent=2026-08-22T16:37:59Z id=sys-20260822T223114-6ccc
+[durability-sweep] swept=0 malformed=0 found=0 schedule_gap_t1=0 schedule_gap_t2=0 schedule_gap_t3=1
+[A-29] cron fire-gap: 41 of ~89 spec'd crons on-time (PASS)
+[audit-output-contract] WARN independent-crosscheck-skipped (--cycle-start-ts or orch-state-file not resolvable) — V1 not run
+[OUTPUT-CONTRACT] VIOLATION: signals emitted but no dashboard rows written
+[audit-output-contract] INFO declared-no-machine-counterpart check=B-05 declared=PENDING (no raw verdict captured this cycle for this check — not a violation)
+[audit-output-contract] INFO declared-no-machine-counterpart check=B-09 declared=PASS (no raw verdict captured this cycle for this check — not a violation)
+[audit-output-contract] INFO declared-no-machine-counterpart check=B-13 declared=PASS (no raw verdict captured this cycle for this check — not a violation)
+[OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0 | dedup_skipped=1 | verdict=CLEAN
+```
