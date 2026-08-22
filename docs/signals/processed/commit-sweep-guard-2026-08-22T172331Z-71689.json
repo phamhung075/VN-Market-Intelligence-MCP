@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-22T17:23:31Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: apps/mcp-server/src/infrastructure/db/coordinationStore.ts apps/mcp-server/src/infrastructure/orchStateSchema.ts. actor=88555d2e-8fbc-4591-9164-20f6b54d475f mode=warn escalated=false prior_warns=0 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "0195f4e0ebfbd31f771729c6149a68c6c6edc6f6eb5490fdef56bdaada731d38",
+    "processedAt": "2026-08-22T17:47:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

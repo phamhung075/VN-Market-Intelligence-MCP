@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-22T17:38:14Z",
+    "matched_slots": [
+      "digest-daily"
+    ],
+    "won_slots": [
+      "digest-daily"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/digest-predict/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "weekend",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "digest-daily": "cron"
+    },
+    "cadence_minutes": {
+      "digest-daily": null
+    },
+    "last_fired_timestamp": "2026-08-22T17:37:58Z",
+    "last_fired_slots": [
+      "digest-daily"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "17:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": null,
+    "signal_backlog": 0,
+    "note": "guaranteed daily digest-predict slot fired on weekend; digest-daily is guaranteed so calendar suppression did not apply"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-22T17:38:14Z",
+  "_processed": {
+    "fingerprint": "f7d4e1262ace7b364a31209141ce68582986e4bfaf0dae2f48c4a7b4fd94ccff",
+    "processedAt": "2026-08-22T17:47:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

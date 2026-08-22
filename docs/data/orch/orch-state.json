@@ -132,8 +132,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-22T16:55:39Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-22T17:43:23Z",
+    "_updated_by": "narrative-truth-gate",
     "archive": [],
     "rows": [
       {
@@ -273,6 +273,46 @@
         "provenance": "detector",
         "audit_cycle_tag": null,
         "dedup_key": "auditor-cycle-missing:tier1:2026-08-22T16:30Z"
+      },
+      {
+        "id": "ntg-20260822T174250Z-financials-SHB-ec5d99",
+        "ts": "2026-08-22T17:42:50Z",
+        "from": "digest-predict",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: digest-predict claimed absence of financials data for SHB but compare_financials returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload": {
+          "agent_id": "digest-predict",
+          "claim": "Không có dữ liệu BCTC (get_bctc_full: \"Chưa có dữ liệu BCTC\", không phải lỗi corrupt).",
+          "tool": "compare_financials",
+          "ticker": "SHB",
+          "probe_ticker": "SHB",
+          "returned_value": "PDF downloaded but not yet extracted for SHB: 2026-Q2. Extraction runs automatically after the PDF is pulled — check back shortly.",
+          "cycle": "2026-08-22",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260822T174323Z-financials-SHB-6402ec",
+        "ts": "2026-08-22T17:43:23Z",
+        "from": "digest-predict",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: digest-predict claimed absence of financials data for SHB but compare_financials returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload": {
+          "agent_id": "digest-predict",
+          "claim": "BCTC SHB Q2/2026 đã tải PDF về nhưng chưa trích xuất xong (get_bctc_full hiện hiển thị \"Chưa có dữ liệu BCTC\" do trích xuất đang chờ xử lý, không phải lỗi corrupt).",
+          "tool": "compare_financials",
+          "ticker": "SHB",
+          "probe_ticker": "SHB",
+          "returned_value": "PDF downloaded but not yet extracted for SHB: 2026-Q2. Extraction runs automatically after the PDF is pulled — check back shortly.",
+          "cycle": "2026-08-22",
+          "gate_version": "1"
+        }
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -18403,7 +18443,7 @@
         "last_served_tick": "2026-08-15T13:20:13Z"
       }
     },
-    "_updated_at": "2026-08-22T17:18:34Z",
+    "_updated_at": "2026-08-22T17:47:42Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19174,6 +19214,116 @@
         },
         "createdAt": "2026-08-22T17:03:56Z",
         "drained_at": "2026-08-22T17:17:37Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0df1423c54fc1f2f57301ec92c19258fa8b713db074e934700447486ccfb16ce",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 5 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json docs/signals/processed/2026-08-22-agent-fabric-ddd-debug-logger-tool-optimization.json docs/signals/processed/ci-red-9d29dad8-20260822165713.json docs/signals/processed/commit-sweep-guard-2026-08-22T171258Z-64459.json docs/signals/processed/context-bloat-docs-agent-memory-decisions-sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-md-2026-08-22T170356Z.json. actor=02594cce-7946-4d62-8d2f-586b9b883695 mode=warn escalated=false prior_warns=1 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-22T17:20:28Z",
+        "drained_at": "2026-08-22T17:47:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0195f4e0ebfbd31f771729c6149a68c6c6edc6f6eb5490fdef56bdaada731d38",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: apps/mcp-server/src/infrastructure/db/coordinationStore.ts apps/mcp-server/src/infrastructure/orchStateSchema.ts. actor=88555d2e-8fbc-4591-9164-20f6b54d475f mode=warn escalated=false prior_warns=0 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-22T17:23:31Z",
+        "drained_at": "2026-08-22T17:47:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fef0d0877549f6f3d0cbea88c140a1f4cd2dc4873d1ae4539de91237bf827546",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 4 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/triage-20260822T1722Z-po.md docs/agent-memory/notebooks/po.md docs/data/orch/archive/backlog-detail.json docs/data/orch/orch-state.json. actor=02594cce-7946-4d62-8d2f-586b9b883695 mode=warn escalated=false prior_warns=2 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-22T17:32:06Z",
+        "drained_at": "2026-08-22T17:47:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f7d4e1262ace7b364a31209141ce68582986e4bfaf0dae2f48c4a7b4fd94ccff",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-22T17:38:14Z",
+          "matched_slots": [
+            "digest-daily"
+          ],
+          "won_slots": [
+            "digest-daily"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/digest-predict/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "weekend",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "digest-daily": "cron"
+          },
+          "cadence_minutes": {
+            "digest-daily": null
+          },
+          "last_fired_timestamp": "2026-08-22T17:37:58Z",
+          "last_fired_slots": [
+            "digest-daily"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "17:30",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": null,
+          "signal_backlog": 0,
+          "note": "guaranteed daily digest-predict slot fired on weekend; digest-daily is guaranteed so calendar suppression did not apply"
+        },
+        "createdAt": "2026-08-22T17:38:14Z",
+        "drained_at": "2026-08-22T17:47:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6673f457823d92df0fa443d7fcdc9be73ecfb53ae988940fd82f6312b201eb85",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 45,
+          "cap": 200,
+          "byte_count": 35214,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-22T17:47:40Z",
+        "drained_at": "2026-08-22T17:47:42Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
