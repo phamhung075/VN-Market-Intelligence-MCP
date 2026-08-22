@@ -97,7 +97,7 @@ GATE_EXIT = skill `.claude/skills/claim-truth-gate/SKILL.md`
   2. Rewrite `claim_text` using real returned values.
   3. Re-run this skill on the rewritten claim_text.
   4. Second-pass PASS → proceed to create_prediction_claim.
-  5. Second-pass FAIL (tool genuinely errors) → DROP this ticker from P-5 (do not file a claim built on a false negation); write honest gap note in digest and continue to next ticker.
+  5. Second-pass FAIL (rewritten `claim_text` still classified NON_NULL/contradiction by the gate — this covers BOTH a genuine tool error and a live tool response that simply doesn't match a `tool_null_markers` string, e.g. "PDF downloaded but not yet extracted" — confirmed live 2026-08-22, SHB/compare_financials) → DROP this ticker from P-5 (do not file a claim built on a false negation, and do not attempt a 3rd rewrite to dodge the negation-lexicon match); write honest gap note in digest and continue to next ticker.
 - `2` = config-error → fail-loud: `send_telegram(channel="bug", message="[digest-predict] claim-truth-gate CONFIG ERROR")` and EXIT.
 
 **Signal:** Script fires `narrative_contradiction` on FAIL. Do NOT suppress it.

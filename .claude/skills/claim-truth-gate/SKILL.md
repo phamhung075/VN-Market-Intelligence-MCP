@@ -65,7 +65,12 @@ Capture full stdout+stderr and paste it into the calling flow's cycle report
 2. Rewrite the offending sentence in `post_body` using the real returned values.
 3. Re-run this skill (Invocation steps above) with the corrected `post_body`.
 4. Second-pass PASS → continue to write/publish.
-   Second-pass FAIL (tool genuinely errors this time) → write the per-field honest gap per the calling flow's own existing no-data protocol instead of re-asserting the false claim.
+   Second-pass FAIL (rewritten `post_body` still classified NON_NULL by the gate — this includes
+   both a genuine tool error AND a live tool response that is real but simply absent from
+   `tool_null_markers`, e.g. a "PDF downloaded, extraction pending" state; confirmed live
+   2026-08-22, digest-predict/SHB/compare_financials) → write the per-field honest gap per the
+   calling flow's own existing no-data protocol instead of re-asserting the false claim. Do not
+   attempt a 3rd rewrite to dodge the negation-lexicon match — 2 passes is the limit.
 5. The signal already fired on the FIRST FAIL — do not suppress it even if self-correction succeeds; it records that in-cycle correction occurred.
 
 ## Time-sensitivity override (real-time agents ONLY)
