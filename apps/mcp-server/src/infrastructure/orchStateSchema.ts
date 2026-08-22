@@ -58,6 +58,26 @@
 import { z } from "zod";
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// ddd-deviation-allow: business rule embedded in infrastructure/, no domain/
+//   counterpart — StatusEnum/TERMINAL_SET (below), plus checkLaneCoherence()/
+//   checkDependsDivergence()/checkVerificationGate()/
+//   checkDecorativeSequencingFields() elsewhere in this file, encode genuine
+//   domain invariants ("what is a valid Task/Sprint state") per
+//   docs/policies/dev-standards.md § DDD Layer Rules ("Business rule / pure
+//   calculation -> domain/"), yet this whole file lives under infrastructure/
+//   and no domain/models or domain/services counterpart exists for
+//   Task/Sprint/orch-coordination entities. Ratified document-as-deviation
+//   (not relocate) — cheaper, lower-migration-risk on this hot-path,
+//   load-bearing, ~1300L file with existing test coverage than extracting to
+//   a new domain/services/orchestrationRules.ts; mirrors the existing
+//   size-justification:/composition-root-logic-allow: exemption convention.
+//   Finding: docs/architecture-briefs/2026-08-22-agent-fabric-ddd-debug-
+//   logger-tool-optimization.md § Part 1 (Finding 1). Ratification: STEP
+//   agent-father-S53, docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-
+//   SLOT-CATCHUP-agent-father-3.md (2026-08-22).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // § 1. STATUS ENUM — SINGLE SSOT (frozen 13-value set)
 //
 // Source: docs/architecture-briefs/2026-06-27-orch-state-schema-hardening.md §1.1

@@ -430,6 +430,25 @@ export interface ListResult {
 // GC helpers
 // ---------------------------------------------------------------------------
 
+// ddd-deviation-allow: business rule embedded in infrastructure/db, no
+//   domain/ counterpart — ORPHAN_EMIT_ALLOW_LIST (below) encodes a real
+//   business decision (which task_kinds are "adoptable work units" vs.
+//   silent-GC-only, plus the per-kind resume-contract eligibility it gates)
+//   per docs/policies/dev-standards.md § DDD Layer Rules ("Business rule /
+//   pure calculation -> domain/"), yet lives inside infrastructure/db/
+//   alongside the SQLite CRUD it decides against. Same violation class
+//   composition-root-logic-gate (scripts/audits/composition-root-logic-
+//   gate.go) was purpose-built to catch on the Go side — no TS-side
+//   equivalent exists yet (fast-follow tracked separately). Ratified
+//   document-as-deviation (not relocate) — cheaper, lower-migration-risk on
+//   this hot-path, load-bearing, ~1192L file with existing test coverage
+//   than extracting to a new domain/services/taskLockPolicy.ts; mirrors the
+//   existing size-justification:/composition-root-logic-allow: exemption
+//   convention. Finding: docs/architecture-briefs/2026-08-22-agent-fabric-
+//   ddd-debug-logger-tool-optimization.md § Part 1 (Finding 2). Ratification:
+//   STEP agent-father-S53, docs/agent-memory/decisions/sprint-COWORK-
+//   GUARANTEED-SLOT-CATCHUP-agent-father-3.md (2026-08-22).
+
 /**
  * ALLOW-LIST for orphan-signal emission (DoD-P15-4).
  *
