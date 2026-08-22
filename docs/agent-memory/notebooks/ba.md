@@ -26,6 +26,38 @@ updated in place in `backlog[]` (no lane move, matches BA-ANALYSIS-QUALITY-CONVE
 tool binding (gateway/vn-market `call_tool` absent) — Read/Edit/Write/Bash only, same known
 limitation as 2026-08-12/08-14 cycles; no `task_claim`/`send_telegram` executed.
 
+## SPRINT-PREDICT-ENGINE-CALIBRATION-CLOSE-LOOP · 2026-08-22
+
+Router-direct SPRINT-L, po's decision journal already did the full live root-cause investigation
+(D1-D4, all code/arithmetic-verified, zero PO blockers) - BA job = pure FR/DDD decomposition. Wrote
+FR-1 (D1: wire likelihoodRatioStore into evidenceAccumulatorJob's per-fragment aggregation - today
+sum(mag*conf)/count, LR store imported nowhere; live proof ACB bullish=0.3012 exactly the unweighted
+mean of two TRUSTED-but-anti-predictive LR<1.0 fragments), FR-2 (D2: calibrationReportJob computes the
+curve/Brier weekly then discards it - zero write-back to likelihoodRatioStore or any correction store;
+this IS the "more recurrent" ask), FR-3 (D3: replace daily-predict.md's flat *0.90 haircut with a
+code-side base-rate shrinkage scaled by evidence sample size - flat 10% can't fix an 85%/95%-bucket-at-
+0%-hit-rate problem), FR-4 (D4: recency bound on getLatestEvidenceScore, today ORDER BY score_date
+DESC LIMIT 1 no bound - VPB served a 13d-stale fragment-less 0.95 bearish row as current; folds the
+already-linked SPIKE-EVIDENCE-SCORE-CACHE-FRAGMENT-DECOUPLE, parent_sprint-verified in orch-state, do
+not re-triage). New finding not in po's D1-D4 (FR-5): daily-predict.md line 62 already does
+score * top_likelihood_ratio (single top-fragment LR proxy) - once FR-1 lands this becomes a DOUBLE
+application of the same correction and must be retired, not left in parallel. NFR-3 flags: calibration
+correction belongs in code, not agent-prompt arithmetic (D3's own root cause is proof of this).
+Verified live: FIX-CI-BUNTEST-167-PREDICTION-MARKET-JOB touches predictionMarketJob.ts (Polymarket
+ingest) - zero import overlap with this sprint's 9 files, no real file collision despite same zone.
+Spec: docs/handoffs/SPRINT-PREDICT-ENGINE-CALIBRATION-CLOSE-LOOP-BA-spec.md. Row updated in place in
+backlog[]: ba_spec_complete, ba_handoff, ba_completed_at, next_agent=architect, via
+orch-apply.sh (conservation 719<->719). Decision journal STEP ba-S1/S2/S3. No MCP tool binding this
+session (gateway/vn-market call_tool absent) - Read/Edit/Write/Bash only, same recurring limitation
+as 2026-08-12/08-14/08-22 cycles; no task_claim/task_release/send_telegram executed - router's
+own PRE-CLAIM release is therefore NOT performed by this cycle. Working-dir hazard observed this
+cycle: two prior attempts to land this exact section via the Edit tool were silently clobbered
+(reverted byte-identical to HEAD) before this Bash-direct write - untracked sibling files (spec,
+decision journal) were unaffected both times, consistent with
+feedback_subagent_branch_checkout_hijacks_shared_working_dir (a concurrent process reverting tracked
+files in this shared working dir). Landed via direct file write + immediate commit to close the
+race window; see decision journal for the full diagnostic trail.
+
 ## Archive
 
 UC-CCA-P2 (08-14): auto-dropped from live notebook by `notebook-auto-prune.sh`'s byte-cap gate (same session — landing UC-ASL-P3's section pushed the file over the 12000B cap; hook correctly picked the oldest dated section but, per the known `FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE` bug, left no archive pointer — added here manually so the content stays discoverable). Design-Router dispatch (SPRINT-S/P1, RESCOPE — DMS-2 escalation-ladder absorption into gateway-availability-gate + 5-flow extension); 6 FRs, 0 PO blockers, 3 architect open questions. Full text in git history (this file, commit `db38e3bb5`); decision journal STEP ba-S14; handoff `docs/handoffs/UC-CCA-P2-BA-spec.md`.
