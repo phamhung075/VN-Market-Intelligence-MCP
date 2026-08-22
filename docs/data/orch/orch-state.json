@@ -5608,7 +5608,9 @@
         "created_at": "2026-07-18T19:38:27Z",
         "created_by": "po",
         "next_agent": "ba",
-        "origin_signal_id": "t4p1-002"
+        "origin_signal_id": "t4p1-002",
+        "status_note": "\n\n[PO-FOLD 2026-08-22T16:41Z — triage of code-janitor 'optimize workflow tools' audit] ADD A PREREQUISITE AC TO THIS ROW: docs/agent-memory/modules/tool-usage-stats.json is a ROLLING WINDOW that RESETS, and carries NO field saying so. It has already caused one fleet-wide near-miss: code-janitor read the 2026-08-22T16:00Z snapshot (uniqueTools=30) as a cumulative usage ledger and recommended deleting 13 'unused' MCP tools. Measured refutation from git history of that same file: uniqueTools oscillates 0 -> 19 -> 0 -> 0 -> 0 -> 15 -> 68 -> 30 across revisions, and get_market_snapshot goes 700 -> 789 -> 48 -> 1994 -> 951 (NON-MONOTONIC, it drops). 8 of the 13 tools janitor called dead had real call counts in the 2026-08-12 snapshot 10 days earlier (get_bctc_full=12, get_bctc_report_id=9, get_breadth_thrust=3, get_foreign_room=39, get_insider_sentiment=10, get_market_sentiment_index=10, get_rate_limit_status=3, get_relative_strength=3). NEW AC: the file MUST emit self-describing window metadata (at minimum windowStartAt + windowEndAt + a _semantics string stating it is a non-cumulative rolling window and that absence of a tool means 'not called in this window', NEVER 'dead'). Per-agent attribution (this row's original scope) is strictly less valuable than making the file impossible to misread — do the semantics field FIRST, it is a few lines and it closes a live foot-gun that nearly deleted 8 working tools.",
+        "updated_at": "2026-08-22T16:49:02Z"
       },
       {
         "id": "FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING",
@@ -8014,8 +8016,8 @@
           "docs/agents/system-auditor/flow/audit-dimensions.md",
           "docs/agents/system-auditor/flow/main.md"
         ],
-        "status_note": "SPLIT OUT of CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON (now REVIEW/qa — its static half shipped). agent-father re-established the STATIC subset of the dead writer but structurally cannot run the LIVE-MCP-PROBE subset: .claude/agents/agent-father.md grants no mcp__gateway__call_tool. It asked PO to assign a gateway-bound owner instead of reviving the ~2h cloud-RemoteTrigger cadence. PO agrees and has narrowed the scope first.\n\nSCOPE NARROWED BY PO — most of the dead writer's live-probe surface is ALREADY COVERED and must NOT be rebuilt: get_cron_health, get_vps_proxy_health/get_vps_service_health and get_system_status all duplicate system-auditor Tier-1 (A-01..A-31 runtime health) and Tier-2 (B-01..B-13 freshness/VPS). Rebuilding them would add cost and a second, divergent source of truth for the same signal. The genuinely uncovered remainder is ONE axis: TOOL-INTERFACE SCHEMA DRIFT — a param name a flow doc / skill / agent-md tells an agent to send vs the param name the live tool actually requires.\n\nWHY THIS IS REAL AND NOT HYPOTHETICAL — three independent live instances:\n  (a) commit 06ade9683 TODAY, 'docs: self-heal kinh-dich-layer — get_kinhdich_reading param is code not ticker'. Caught by an agent tripping over it mid-flow, not by any check.\n  (b) FIX-MARKET-WATCHER-DOC-PARAM-DRIFT (backlog, unowned): 'market-watcher docs: 3 example params use ticker/tickers[] instead of live API code field'. Same defect, different agent, still open — evidence the class recurs and that per-agent point-fixes are not converging it.\n  (c) the ticker-vs-code pattern agent-father reconstructed from git history of the pre-2026-06-23 recheck files across get_technical_indicators / get_price_history / get_foreign_flow / get_ticker_intelligence.\nFailure mode is silent-at-write-time and only surfaces as a runtime tool error inside a live cycle, which is the worst place to find it.\n\nAC-1 A new lightweight system-auditor dimension (system-auditor HOLDS the gateway grant; agent-father authors the doc, which is why next_agent=agent-father) that, for a bounded set of tools, diffs the param NAMES named in the fleet's own docs against the live schema returned by the gateway (list_server_tools('vn-market') / search_tools), and emits a signal_queue row on mismatch. Note docs/agents/system-auditor/flow/audit-dimensions.md is AT its 200L hard cap — expect a sibling file, same pattern as data-writer-provenance.md; register it so it does not become another unregistered orphan.\nAC-2 POSITIVE CONTROL, MANDATORY: seed the check against instance (a) or (b) above at a commit BEFORE the fix and confirm it FAILS. A first run that reports the fleet clean is a false green and fails this AC — the same bar CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON was held to, and the same bar its own first run cleared.\nAC-3 NEGATIVE CONTROL: a tool whose doc and live schema agree must not fire. Do not ship a checker that flags every tool.\nAC-4 CADENCE — PO decision: do NOT restore ~2h. Start at the same daily cadence as the static recheck. Schema drift is introduced by commits, not by market hours; if AC-2's replay shows drift landing and biting inside one day, escalate to per-commit CI instead of a shorter poll — a cheap grep-class CI job is strictly better than a 2h poll for a commit-triggered defect.\nAC-5 DEDUP ON LANDING: fold FIX-MARKET-WATCHER-DOC-PARAM-DRIFT into this row's first run rather than fixing it separately — it is the natural first true positive.",
-        "updated_at": "2026-08-06T07:54:54Z"
+        "status_note": "SPLIT OUT of CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON (now REVIEW/qa — its static half shipped). agent-father re-established the STATIC subset of the dead writer but structurally cannot run the LIVE-MCP-PROBE subset: .claude/agents/agent-father.md grants no mcp__gateway__call_tool. It asked PO to assign a gateway-bound owner instead of reviving the ~2h cloud-RemoteTrigger cadence. PO agrees and has narrowed the scope first.\n\nSCOPE NARROWED BY PO — most of the dead writer's live-probe surface is ALREADY COVERED and must NOT be rebuilt: get_cron_health, get_vps_proxy_health/get_vps_service_health and get_system_status all duplicate system-auditor Tier-1 (A-01..A-31 runtime health) and Tier-2 (B-01..B-13 freshness/VPS). Rebuilding them would add cost and a second, divergent source of truth for the same signal. The genuinely uncovered remainder is ONE axis: TOOL-INTERFACE SCHEMA DRIFT — a param name a flow doc / skill / agent-md tells an agent to send vs the param name the live tool actually requires.\n\nWHY THIS IS REAL AND NOT HYPOTHETICAL — three independent live instances:\n  (a) commit 06ade9683 TODAY, 'docs: self-heal kinh-dich-layer — get_kinhdich_reading param is code not ticker'. Caught by an agent tripping over it mid-flow, not by any check.\n  (b) FIX-MARKET-WATCHER-DOC-PARAM-DRIFT (backlog, unowned): 'market-watcher docs: 3 example params use ticker/tickers[] instead of live API code field'. Same defect, different agent, still open — evidence the class recurs and that per-agent point-fixes are not converging it.\n  (c) the ticker-vs-code pattern agent-father reconstructed from git history of the pre-2026-06-23 recheck files across get_technical_indicators / get_price_history / get_foreign_flow / get_ticker_intelligence.\nFailure mode is silent-at-write-time and only surfaces as a runtime tool error inside a live cycle, which is the worst place to find it.\n\nAC-1 A new lightweight system-auditor dimension (system-auditor HOLDS the gateway grant; agent-father authors the doc, which is why next_agent=agent-father) that, for a bounded set of tools, diffs the param NAMES named in the fleet's own docs against the live schema returned by the gateway (list_server_tools('vn-market') / search_tools), and emits a signal_queue row on mismatch. Note docs/agents/system-auditor/flow/audit-dimensions.md is AT its 200L hard cap — expect a sibling file, same pattern as data-writer-provenance.md; register it so it does not become another unregistered orphan.\nAC-2 POSITIVE CONTROL, MANDATORY: seed the check against instance (a) or (b) above at a commit BEFORE the fix and confirm it FAILS. A first run that reports the fleet clean is a false green and fails this AC — the same bar CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON was held to, and the same bar its own first run cleared.\nAC-3 NEGATIVE CONTROL: a tool whose doc and live schema agree must not fire. Do not ship a checker that flags every tool.\nAC-4 CADENCE — PO decision: do NOT restore ~2h. Start at the same daily cadence as the static recheck. Schema drift is introduced by commits, not by market hours; if AC-2's replay shows drift landing and biting inside one day, escalate to per-commit CI instead of a shorter poll — a cheap grep-class CI job is strictly better than a 2h poll for a commit-triggered defect.\nAC-5 DEDUP ON LANDING: fold FIX-MARKET-WATCHER-DOC-PARAM-DRIFT into this row's first run rather than fixing it separately — it is the natural first true positive.\n\n[PO-FOLD 2026-08-22T16:41Z — triage of code-janitor audit] LIVE CORROBORATING INSTANCE, use as the fixture for this check: docs/agents/digest-predict/flow/main.md:50 references tool `get_current_date`, which does NOT exist on the live server — verified this tick via mcp__gateway__call_tool(server='vn-market', tool='get_current_date') -> 'MCP error -32602: Tool get_current_date not found'. It is also absent from docs/data/tool-registry.json (183 tools). MITIGATING: the call site is defensively worded ('call get_current_date if that tool is available'), so it is benign prose today, NOT a live breakage — do not P0 it. It is exactly the DOCUMENTED-vs-LIVE drift class this row exists to catch, and it is a ready-made positive test case. Counter-example for the same check: get_financial_summary IS registered and IS referenced (docs/agents/market-analyst/flow/main.md:106) yet shows zero calls in the current tool-usage-stats window — proving the check must key on the LIVE SCHEMA, never on usage stats.",
+        "updated_at": "2026-08-22T16:49:02Z"
       },
       {
         "id": "FIX-AUDITOR-DASHBOARD-MUTEX-RETRY-NEXT-TICK-NO-ACTUATOR",
@@ -11851,6 +11853,77 @@
         "status_note": "AC-1: the 4 po_manual_dispatch_* field names are present in STRUCTURAL_FIELDS in scripts/orch-row-prose-ceiling-check.mjs, with a header comment matching the existing secondary_claimed_* precedent (same rationale, same shape). AC-2: REPLAY THE ACTUAL FAILURE, do not assert by inspection — apply manual-dispatch-sweep.md Step 2's exact jq stamp to a fixture row carrying >12000B of prose and pipe it through the real scripts/orch-apply.sh; BEFORE the fix it must reproduce the live abort, AFTER it must pass and land. AC-3: a negative control proves the guard still bites — the same fixture with a genuine multi-KB prose field added must still ABORT, so the fix narrows the exclude-set gap without disarming the ceiling. AC-4: scripts/test/orch-row-prose-ceiling-check-tests.sh is extended with both controls. AC-5: audit the remaining in-place sweep stamp families for the same gap in one pass rather than waiting for a third same-day recurrence — this is now the SECOND instance, which makes the enumeration itself the durable fix.",
         "origin": "PO triage 2026-08-15T13:30Z, dev-team Step 1 — discovered by orch-apply.sh aborting this tick's own manual-dispatch-sweep Step 2 write",
         "updated_at": "2026-08-15T13:31:28Z"
+      },
+      {
+        "id": "FIX-JANITOR-DEADCODE-AUDIT-CALLER-SURFACE-TOO-NARROW-MASS-FALSE-POSITIVES",
+        "type": "FIX",
+        "title": "code-janitor dead-script audit resolves callers ONLY from docs/agents/*/flow/main.md, missing .claude/skills, .claude/commands/crons, apps/*/src/__tests__, docs/policies and every sub-flow *.md — produced a 619-orphan/84%-dead claim that is wrong by ~11x and a deletion list that would have broken two live crons plus CI",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "created_at": "2026-08-22T16:49:01Z",
+        "created_by": "po-triage-20260822T1641Z",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": false,
+        "files": [
+          "docs/agents/code-janitor/flow/main.md",
+          "scripts/audits/clean-obsolete-files.sh"
+        ],
+        "desc": "ROOT CAUSE of a user-requested audit that returned almost entirely false positives. code-janitor's 2026-08-22 'optimize workflow tools actual agent use' audit determined script liveness by grepping ONE surface: docs/agents/*/flow/main.md. That surface structurally excludes (a) every sub-flow doc — this fleet deliberately splits flows into po/sprint-kickoff.md, po/channel-audit.md, cowork-team/flow/pressure-cadence.md etc., which is where most invocations actually live; (b) .claude/skills/*/SKILL.md; (c) .claude/commands/crons/*.md — the actual cron call sites; (d) apps/*/src/__tests__/*.ts; (e) docs/policies/dev-standards.md CANONICAL pointers; (f) script-to-script calls.\n\nMEASURED, this tick, on the 268 non-jq scripts:\n  - janitor surface (flow/main.md only):                61 referenced\n  - flows + policies + skills + CI + git-hooks:        168 referenced  (2.75x more)\n  - full repo corpus, 11938 git-tracked regular files: only 54 of 908 script basenames are referenced NOWHERE at all (5.9%), and 51 of those 54 are one-shot dated .jq transforms, 2 are one-shot payload .json, 1 is a committed .pyc.\n  - .sh specifically: 174 of 177 are referenced. Shell scripts are essentially all live.\nSo 'about 619 scripts (84%) have no confirmed caller' overstates the real orphan set by roughly 11x.\n\nTHE DELETION LIST WAS ACTIVELY DANGEROUS — janitor's own recommendation (b) named cowork-*.js and cadence-policy/ci-health-probe for deletion. Verified live this tick:\n  - scripts/agents-flow/cowork-match-slots.js is invoked from .claude/skills/cron-cowork-team/SKILL.md AND .claude/commands/crons/cron-fb-market-poster.md — deleting it breaks the cowork master dispatcher fleet-wide.\n  - scripts/agents-flow/cowork-tick-preflight.sh is invoked from .claude/commands/crons/cron-code-janitor.md — code-janitor proposed deleting a script its OWN cron runs.\n  - scripts/agents-flow/cowork-supersede-mutex.js is wired in docs/agents/cowork-team/flow/pressure-cadence.md.\n  - scripts/agents-flow/cowork-tick-postflight.sh is a CANONICAL pointer in docs/policies/dev-standards.md.\n  - scripts/agents-flow/cadence-policy.js is under live test by apps/mcp-server/src/__tests__/DWF-phase1-cadence.test.ts — deleting it turns CI red.\nPO REJECTED recommendation (b) in full. No file from that list may be deleted.\n\nNOTE the identical mechanism produced the SECOND finding in the same audit: 3 of the 13 'documented but unused' MCP tools (get_agent, get_deficit, get_files) have ZERO exact-word matches in any flow doc — janitor's grep lacked word boundaries and was matching get_agent inside get_agent_signals. Unanchored substring matching and an under-scoped corpus are the same defect wearing two hats.",
+        "status_note": "AC-1: code-janitor's liveness/dead-code audit resolves callers from a DECLARED corpus that includes, at minimum: docs/agents/**/*.md (all sub-flows, not just main.md), .claude/skills/**/*.md, .claude/commands/crons/*.md, docs/policies/*.md, docs/standards/*.md, .github/workflows/*, package.json, scripts/git-hooks/*, apps/*/src/**/*.test.ts, and scripts/** for script-to-script calls. The corpus MUST be declared in the flow doc as a list, not left implicit in an ad-hoc grep. AC-2: all name matching is WORD-ANCHORED (grep -w or \\b...\\b) — a negative control must prove get_agent no longer matches get_agent_signals. AC-3: NEGATIVE CONTROL, mandatory, replay against real files — the corrected audit run against today's tree must report cowork-match-slots.js, cowork-tick-preflight.sh, cowork-supersede-mutex.js, cowork-tick-postflight.sh and cadence-policy.js as LIVE/referenced. If any still reports orphan, the fix is not done. AC-4: the audit's output must state its corpus and its match mode inline in the finding, so a reader can judge the claim without re-deriving it — the 619/84% figure was unfalsifiable as presented. AC-5: no deletion recommendation may be emitted for any path that any CI workflow, cron command file, or test file references, regardless of doc-surface result. AC-6: the flow-doc portion of this change is agent-father's zone (docs/agents/code-janitor/flow/main.md); the audit-script portion is developer's. Split at dispatch if needed.",
+        "origin": "PO triage 2026-08-22T16:41Z of code-janitor user-requested audit 'optimize workflow tools actual agent use' (janitor returned NEXT: po). Method defect found by re-running the audit with a widened corpus.",
+        "updated_at": "2026-08-22T16:49:02Z"
+      },
+      {
+        "id": "DEBT-SCRIPTS-ONESHOT-JQ-TRANSFORM-ACCUMULATION-NO-RETIREMENT-POLICY",
+        "type": "SPRINT-S",
+        "title": "626 of 908 files in scripts/ are single-use dated orch-state jq transforms (po-s108-*, router-d41-*-20260615, po-triage-20260808T1248Z-*) that are spent on first pipe and never re-run — 516 are >30d old, 0 touched in 7d — because Script Persistence policy has a save rule but no retirement rule",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "ba",
+        "created_at": "2026-08-22T16:49:01Z",
+        "created_by": "po-triage-20260822T1641Z",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": false,
+        "files": [
+          "docs/policies/dev-standards.md",
+          "docs/agents/po/flow/scripts-registry.md"
+        ],
+        "desc": "THE REAL DEBT behind code-janitor's (wrong) '84% of scripts/ is dead' claim. The orphan framing was incorrect, but the underlying mass is real and it has a clean root cause.\n\nCOMPOSITION of scripts/ (908 files): 626 .jq, 177 .sh, 50 .ts, 17 .js, 13 .py, 9 .mjs. The .jq class is 69% of the directory and is almost entirely SINGLE-USE by construction — names are per-tick and per-decision: po-s108-idle-wip-promote-groom-terminal-backlog.jq, router-d41-fbop-liveverify-partial-queryrecon-20260615.jq, po-triage-20260808T1248Z-auditor-verdict-transcription.jq, router-hnx-ssl-claim.jq. By prefix: 265 po-, 46 qa-, 16 devteam-, 15 dev-fix-, plus a large router- family. 516 of 626 are older than 30 days and ZERO have been modified in the last 7 days.\n\nWHY THEY EXIST: CLAUDE.md's Orch-State Hot File write contract requires every board mutation to be expressed as a jq transform piped through scripts/orch-apply.sh, and every PO/router/QA mutate sub-flow carries that pipe inline at the mutation point. Combined with the Script Persistence directive ('Any script useful for the work or reusable later MUST be saved to scripts/, NEVER left in /tmp'), agents persist their one-shot transform as a file. The policy has a SAVE rule and a location table but NO retirement rule and no reusable-vs-one-shot distinction, so the one-shots accumulate monotonically forever.\n\nTHIS IS NOT A DELETE-THEM JOB. Many are cited from decision journals and notebooks as the actuation record of a specific board decision, so blind deletion destroys audit trail. It is an ARCHIVE-BY-RULE job plus a policy amendment that stops the inflow.\n\nWHY BA-FIRST rather than a direct FIX: it needs a real decision on the reusable/one-shot boundary, on whether one-shots should go to scratchpad instead of scripts/ (which would put the Script Persistence directive and the orch-apply write contract in tension and needs an explicit ruling), on the archive destination and retention window, and on whether journal references must be rewritten to the archived path. That is spec work, not a patch. Note code-janitor's own recommendation (a) — 'canonicalize the 41-script active list into dev-standards.md as SSOT' — is REJECTED as specified: 41 is a wrong number derived from the too-narrow caller surface (see FIX-JANITOR-DEADCODE-AUDIT-CALLER-SURFACE-TOO-NARROW-MASS-FALSE-POSITIVES), and a hand-maintained list of live scripts would drift within days. If an active-script SSOT is wanted at all it must be GENERATED from the declared corpus, never hand-listed.",
+        "status_note": "AC-1: dev-standards.md § Script Persistence gains an explicit REUSABLE vs ONE-SHOT test, with the dated orch-state transform named as the canonical one-shot example and a stated destination for it. AC-2: a retirement/archive rule exists with a concrete age + non-reference predicate and a named archive destination (reuse the existing quarantine-first mechanism of scripts/audits/clean-obsolete-files.sh rather than inventing a second one). AC-3: archival preserves audit trail — any .jq cited from docs/agent-memory/decisions/** or a notebook must remain resolvable after archiving (either left in place or its citations rewritten). AC-4: the inflow actually stops — after the policy lands, a fresh mint by a PO/router tick must not add a new dated one-shot to scripts/. AC-5: measure before and after; report the .jq count. AC-6: explicitly reconcile the tension between CLAUDE.md 'Reusable scripts -> scripts/ NEVER /tmp' and one-shot transforms, so future agents get an unambiguous rule rather than defaulting to persist-everything.",
+        "origin": "PO triage 2026-08-22T16:41Z of code-janitor audit. Janitor's orphan magnitude was wrong; this is the corrected, genuinely-actionable core of its finding (1).",
+        "updated_at": "2026-08-22T16:49:02Z"
+      },
+      {
+        "id": "CLEAN-SCRIPTS-54-UNREFERENCED-QUARANTINE-FIRST",
+        "type": "CLEAN",
+        "title": "Quarantine the 54 script basenames referenced nowhere in the 11938-file repo corpus (51 one-shot .jq, 2 one-shot payload .json, 1 committed .pyc build artifact) using the existing quarantine-first cleaner",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "created_at": "2026-08-22T16:49:01Z",
+        "created_by": "po-triage-20260822T1641Z",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": false,
+        "files": [
+          "scripts/audits/clean-obsolete-files.sh"
+        ],
+        "desc": "The genuinely-safe residue of code-janitor's audit, after correcting its caller-detection surface. Of 908 script basenames, exactly 54 are referenced nowhere across all 11938 git-tracked regular files (docs, .claude skills and cron command files, CI workflows, package.json, app source and tests, and scripts/ itself). Breakdown: 51 one-shot dated .jq transforms (decompose-task-matrix.jq, po-s101-bctc-discover-reroute-mcp-enricher-attempts-guard.jq, pm-fix-w5-refine-blocker.jq, dev-team-flip-watchlist-drift-fix-in-progress-20260711.jq, ...), 2 one-shot payload files (po-s52-health-recheck-batch-payload.json, po-s96-newtask.json), and 1 clear build artifact that should never have been committed (probe-nso-sheet-names.cpython-313.pyc).\n\nDELIBERATELY SMALL AND BORING. This is 5.9% of scripts/, not the 84% claimed. Do not widen it. The remaining ~570 one-shot .jq files ARE cited from decision journals or notebooks and are handled by the policy work in DEBT-SCRIPTS-ONESHOT-JQ-TRANSFORM-ACCUMULATION-NO-RETIREMENT-POLICY, not here.\n\nSEQUENCING: this row is safe to run standalone because its predicate is 'referenced nowhere in the entire repo', which is strictly stronger than the corrected-surface predicate — it cannot be made wrong by fixing the audit method. But the operator MUST re-derive the 54-name set at execution time rather than trusting this row's snapshot, because ~74 files were in flight from concurrent agents when the set was computed.",
+        "status_note": "AC-1: re-derive the unreferenced set at execution time against the live tree; do not trust the counts frozen in this row. AC-2: use scripts/audits/clean-obsolete-files.sh --live, which quarantines to docs/data/.trash/<date>/ and never rm's — no bare deletion under any circumstance. AC-3: .pyc and any other compiled/build artifact under scripts/ is removed AND a .gitignore entry is added so it cannot return. AC-4: after quarantine, the full test suite and a cowork cron dry-run both still pass — proving nothing load-bearing was swept. AC-5: report the before/after script count and the exact quarantined list in the task report.",
+        "origin": "PO triage 2026-08-22T16:41Z of code-janitor audit — the safe residue after re-running orphan detection against the full repo corpus instead of flow/main.md alone.",
+        "updated_at": "2026-08-22T16:49:02Z"
       }
     ],
     "closed_sprints": [
@@ -18012,8 +18085,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-15T13:06:03Z",
-    "last_triaged_by": "po/triage-agentfather-20260815T1306Z",
+    "last_triaged_at": "2026-08-22T16:49:01Z",
+    "last_triaged_by": "po-triage-20260822T1641Z",
     "in_progress": [
       {
         "id": "UC-CCA-P3",
@@ -18093,7 +18166,7 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-15T12:57:00Z",
+  "_updated_at": "2026-08-22T16:49:01Z",
   "_updated_by": "po",
   "dev_team_idle_chain": {
     "rotation": {
@@ -18116,9 +18189,638 @@
         "last_served_tick": "2026-08-15T13:20:13Z"
       }
     },
-    "_updated_at": "2026-08-15T13:35:28Z",
+    "_updated_at": "2026-08-22T16:48:03Z",
     "_updated_by": "dev-team",
-    "pending_triage_inbox": [],
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "5231a5bf0f9834decd735b6a2766877a5c14ce9f402772ba965ee4ac9a977ada",
+        "source": "file",
+        "from": "agents-architect",
+        "to": "agent-father",
+        "type": "architecture_brief",
+        "priority": "normal",
+        "payload": "docs/architecture-briefs/2026-08-22-cowork-detect-loop-flow-review.md",
+        "createdAt": "2026-08-22T16:20:35Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3b451333d7b0285cb671420df024791e59c731c3c303b33fcc4c046e7bdb4afa",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-feb68920",
+          "head_sha": "feb6892035873b245603b4b4f7d9cfdd355610f8",
+          "run_id": 31886091545,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/31886091545",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "size-lint",
+              "conclusion": "failure",
+              "jobId": 95015494697
+            }
+          ],
+          "fingerprint": "8b8aa6498c396b2e5d920b4a7faf2b3207d57614aaa53ed2efa027f3aa8c6eee",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD feb6892035873b245603b4b4f7d9cfdd355610f8: size-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-15T13:19:36Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "03d403401b0dcdbbff398779cc26a082277d70e5c5a5ad594d78a0788b21c9d5",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/data/code-janitor-known-findings.json. actor=6194fe17-df8a-4b04-ad52-072efab100ee mode=warn escalated=false prior_warns=2 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-18T08:41:22Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fc092e13ae48484aa2bb5d82bc26e22850cccd4cdc99ef16cbca516342bce94e",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: .mcp.json. actor=0454e9d8-b475-4230-95c9-8b7d943aa8b3 mode=warn escalated=true prior_warns=31 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-18T08:49:09Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0ab3415dab9ba3d0b5d9d87122553c55aab5f0d095dffaecbb161cc2e23a6db6",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=6194fe17-df8a-4b04-ad52-072efab100ee mode=warn escalated=true prior_warns=3 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-22T12:42:44Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "69c9b9b1f543b51da13619ef4cda41766966c0c81c075348bcb651f6347205d7",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: .mcp.json launchd/com.vn-market.socat-tls-bridge.plist. actor=0454e9d8-b475-4230-95c9-8b7d943aa8b3 mode=warn escalated=true prior_warns=32 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-22T15:59:29Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "bf08d3f113480ca6da143b1f7e8988aa6d984549a38cab99c66cb16ac56060b1",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-15T20:36:25Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a980d3371ce9b5ba046152f440ce616d61a8dc609caebbfb71778f470691c1db",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12837,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T20:36:28Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b6245173ed42f617974f6d6cc04d49b3e6ae12f9e6cf42b42ee49feec5ef64d0",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12837,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T20:39:03Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "bc8b1f595dc70ee1b99906ac4faf2bf54cc0eb6d83701d9e432ae661c334b5fd",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12837,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-16T06:04:19Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1556282c2c83343d3b8c30ea241b6068f9a23f01e68ce64d45d9a5eaff25aac0",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12837,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-18T08:37:56Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "05047ba8edbcc1df8d4aeed9fac4e0895af650917ddf9f65582dfd748b7b3a18",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12837,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-18T08:40:09Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ffb6a27fc3085ac7ca5eda8c2b1d2f4ba382e2518250fa038b956f2ed4748ff4",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12837,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-18T11:40:09Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ac3ca7b493171976b4ad366a93f19434f83e13081e46e8753aa3ba5ec2d23b1c",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12837,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-22T12:38:58Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7462f3d83c8b0ff232e9c3024893e291e29c7fabc0d6235c41f9e0621392beb9",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-team.md",
+          "line_count": 43,
+          "cap": 200,
+          "byte_count": 12837,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-22T12:40:06Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "57ac182f10409f88530fbc81abe0c66252b5665c0a07551a188c7e135cb8ab89",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T20:36:29Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "10d299913ec4321dedfbafe57fd57ea972d75130bf00cbdcfdc52e03443ec780",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T20:39:04Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "358de1b106b4d7523c193086d1518f29ea7229c79a60191054eba858f90b6daa",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-16T06:04:20Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f055035080842b0263e472829742b1fedcd04eeadd80bd89ee090cf5359a884d",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-18T08:37:57Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3175fd9e9d7397c9dc1c43686586f9591cc52dbc7fbad0588ddcea71c9b0c705",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-18T08:40:09Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0dbc82de9952f2d53dcb7bd7107846c68b2194a856b54c94e368e9fc9a3b64ff",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-18T11:40:09Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "41d8ed8646a2b5c152256ebe5c731cc45cdbe0816416c56a5c046af8daa23d09",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-22T12:38:59Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6fdef1732c609803da2036443df3d778d470d07c73e411cc23bcefc03cd118af",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-22T12:40:07Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b2e42bc70bd8c82317c6560340b1b47ac427175c5ef9c67eaca2710a9e4fde07",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 44,
+          "cap": 200,
+          "byte_count": 32387,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T20:36:27Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1856ccd9c72fa68baa31517a835ce17e05e33b089298c0f82afdd725af5fba99",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 44,
+          "cap": 200,
+          "byte_count": 32387,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-15T20:39:02Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c5dd2342b0840544c76bb48519c992032eab2e91a5a52dd81b37cd64184dbd30",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 44,
+          "cap": 200,
+          "byte_count": 32387,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-16T06:04:16Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2dec9d36d889e7b400404d96f731a727c7b7d8838909b65aeb81cc4baee34c66",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 44,
+          "cap": 200,
+          "byte_count": 32387,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-18T08:37:55Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "31747d5915ce036e1aa3d5350b2ccefe3ef320e0b834d220cdceb307b8ff1e82",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 44,
+          "cap": 200,
+          "byte_count": 32387,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-18T08:40:08Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2d6d2275bd2f36c424a30757947747e267f614f21151e2887a7ff5cb9425a191",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 44,
+          "cap": 200,
+          "byte_count": 32387,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-18T11:40:08Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "111f18319c5e744c9cf72091d160c5070ebed5c0239665335be321a1c52f5cd7",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 44,
+          "cap": 200,
+          "byte_count": 32387,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-22T12:38:56Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7641491d718ab5f36251cd32f579cc344906de73c20b5ecb57ddbaaedf86f45c",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 44,
+          "cap": 200,
+          "byte_count": 32387,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-22T12:40:04Z",
+        "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-14T04:11:35Z",
     "last_po_triage_note": "po/triage-20260814T0411Z (router-spawned after dev-team tick 2026-08-14T03:37Z could not nested-spawn). INPUTS: 18 durable-inbox envelopes. OUTPUT: 0 net-new mints from triage, 5 folds. DEDUP/FOLD: 2 ci_red (CI-RED-87a7a6d2 run 31758121017, CI-RED-9a9ad9bf run 31766602285) read at source via gh run view --log-failed — identical FAILED FILES (ALLZERO-OHLCV-FETCH.test.ts, FIX-FOREIGN-FLOW-MISSING-TRADING-DAY-2026-08-06-NO-BACKFILL.test.ts), both already carry open READY rows, file-scoped dedup HIT, SHAs appended; 3 sweep-guard bug-escalation escalated=true prior_warns=12/13/14 -> FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT-CONTRADICTS-LIVE-SWEEPGUARD-HARDBLOCK occ 21->24; 2 notebook-immutability-guard on system-auditor.md sections c5/c6 -> FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS. NO MINT: 1 signal_feedback A-33 hook-liveness WARN (context-bloat-backstop.sh settings-file-missing) — PREMISE VERIFIED TRUE at source (0 matches for context-bloat-backstop in ~/.claude/settings.json, .claude/settings.json, .claude/settings.local.json — the hook is genuinely unregistered) but it is a first fire (1/1 in signal_queue) and the WARN single-fire rule forbids minting on one tick; carried to next tick for recurrence confirmation. 1 improvement_proposal is PO's OWN OUTBOUND (from=po to=agents-architect, IMP-20260814-system-auditor-notebook-compose-actuator-never-wired) misrouted into PO's own inbox by the drain — already board-backed by FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED (backlog, agents-architect); ACK only. 9 cowork-fire/tick-dispatch/cowork-tick-telemetry envelopes addressed to system/dev-team/cowork-team, not to po — informational, no defect, skipped. CONVERGENT FINDING: 3 of the 4 to=po defect classes this tick (3 sweep-guard + 2 notebook-immutability + the improvement proposal) all trace to ONE actor, system-auditor's unwired notebook-compose actuator. SEPARATELY: SPIKE-FRESHNESS-REMEDIATE-TRIAGE signed off APPROVED (review->done) and decomposed into 4 new backlog rows + 1 reprioritization. INBOX CLEAR NOT WRITTEN — owned by dev-team/flow/main.md Step 1 per triage-signals.md, PO does not write the subtractive clear.",
     "last_po_triage_consumed": 18,
