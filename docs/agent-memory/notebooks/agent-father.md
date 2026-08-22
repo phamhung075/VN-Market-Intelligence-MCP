@@ -64,49 +64,31 @@ per `commit-boundary/SKILL.md` § Commit-Mutex Gap).
   writing to `system-auditor.md` at all — lands with **developer** (`.claude/commands/` is out of
   every commit-boundary agent's zone listed in that SKILL.md, agent-father included).
 
-## EDIT 2026-08-22T16:59Z — DDD/debug-logger brief implementation, router-dispatched (intent=edit-adjacent, 3-part brief)
-- Signal consumed: `docs/signals/2026-08-22-agent-fabric-ddd-debug-logger-tool-optimization.json`
-  (type=architecture_brief, from=agents-architect). Brief:
-  `docs/architecture-briefs/2026-08-22-agent-fabric-ddd-debug-logger-tool-optimization.md`.
-- **Part 2 (debug logger) — implemented, in-zone:** new SSOT
-  `docs/agents/shared/debug-logger-protocol.md` (path/format/write-path/boundary-vs-3-existing-
-  mechanisms + explicit `log_agent_work` reconciliation — chose "document boundary" over "fold
-  status into level", different axes: severity vs lifecycle-phase). Dogfooded as first adopter:
-  `docs/agents/agent-father/init.md` `knowledge.lazy_load` pointer added (version bumped
-  2026-08-06→2026-08-22) + real entry appended to new `docs/agent-memory/debug/agent-father.log`
-  via the prescribed Bash `printf` append (not Edit/Write — proving the actual prescribed
-  mechanism, not a shortcut). Fleet rollout NOT done as a 36-agent mass edit this cycle (DRY/
-  lazy-load — one canonical doc + N pointers, not N inlined copies; blast-radius discipline) —
-  instead wired into the existing auto-fix-driven rollout mechanism: `sweep-fixes.md` Step 3/4 new
-  Check #6 (mirrors Check #1's `fail-loud-protocol` auto-fix pattern exactly), file renamed
-  Top-5→Top-6 (synced in `keep.md` too, size-justification delta noted). Sweep script (batch
-  age/line-count truncation) NOT built by me — flagged as claude-manager-helper's follow-up
-  (memory-hygiene is its mandate, not mine; scripts/ is outside my commit zone regardless).
-- **Part 1 (DDD drift) — ratified, routed, NOT implemented in apps/:** brief found
-  `orchStateSchema.ts`/`coordinationStore.ts` hold business rules with no `domain/` counterpart,
-  explicitly left relocate-vs-document-as-deviation "not architect's call... ratification belongs
-  to PO/agent-father." **Ratified: document-as-deviation** for both (cheaper, lower migration risk;
-  hot-path with 1192-1308L existing test coverage; `orchStateSchema.ts` already flagged "physical
-  split blocked" elsewhere) — mirrors the existing `size-justification:`/`composition-root-logic-
-  allow:` annotation convention. Did NOT touch either file myself (`apps/` is excluded from my
-  commit zone + "NEVER write production code" forbidden-output, applies to comment-only edits
-  too). Did NOT touch `docs/ARCHITECTURE.md` (out of zone — `architect`'s file per its own init.md
-  "Architecture SSOT (read + write authority)", confirmed via `commit-boundary/SKILL.md` RULE 2
-  zone table, which does not list agent-father for either path). Routed 3 concrete asks to the
-  router in RETURN (same precedent as keep.md Step 7 — no spawn capability, no gateway binding, no
-  `docs/signals/` write access per the 08-15 entry above): (a) architect — ARCHITECTURE.md
-  `## DDD Layer Order` one-line cross-ref to `dev-standards.md § DDD Layer Rules` (exact text
-  supplied); (b) dev-mcp-server — add the ratified document-as-deviation annotation comments to
-  both files; (c) dev-mcp-server — TS-side guardrail equivalent to
-  `composition-root-logic-gate.go`, flagged fast-follow not blocking.
-- **Part 3 (tool-usage/orch-sentinel) — confirmed already owned by PO, NOT duplicated:**
-  `docs/data/orch/orch-state.json` `.task_board.backlog` rows 186 (`CWO-T4-P0-TUSTATS-PERAGENT`,
-  PO-folded 2026-08-22T17:00Z with this exact brief's F3-4) and 434
-  (`FIX-ORCH-SENTINEL-OH4-CRONS-NEVER-ARMED-DEAD-OBSERVABILITY-MECHANISM`, independently
-  re-verified by PO, 2 premise corrections applied, sequenced behind row 186) both already
-  reference this brief. Zero new signal/backlog entries created for Part 3 — same brief/signal
-  path referenced everywhere above so nothing forks.
-- Lock: no gateway binding this session (confirmed — `mcp__gateway__call_tool` absent from tool
-  grant, `.claude/agents/agent-father.md` frontmatter). Direct pathspec commit, solo-operation path
-  (`commit-boundary/SKILL.md` § Commit-Mutex Gap). Signal file NOT moved to
-  `docs/signals/processed/` — same out-of-zone reasoning as the 08-15 entry above.
+## FIX 2026-08-22T18:40Z — FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE, WF-3 lane-move
+gap (router-dispatched directly, row's own `next_agent=agent-father`; architect had just completed
+diagnosis + brief correction, no task_claim — same no-gateway-binding condition, solo-operation).
+
+- Root cause (architect-diagnosed, not re-litigated here): `main.md` WF-3's escalation jq flipped a
+  bound-exceeded row to `status:BLOCKED` in place inside `.task_board.in_progress[]` without lane-
+  moving it into `backlog[]` in the same write — violates `execute-tier.md:116`
+  CANONICAL:SSOT-STATUSFLIP-LANEMOVE(c); traces to the architecture brief's own §5c code sample
+  (`2026-08-07-devteam-head-pin-stale-threshold-resume-bound.md`), which the 08-14 implementation
+  pass copied verbatim, not an implementation deviation.
+- Applied architect's corrected §5c verbatim to `docs/agents/dev-team/flow/main.md`'s WF-3 block
+  (the `resume_attempts>=3` branch): jq now conditionally appends the flagged row (with
+  `status:BLOCKED`/`hold_reason`/`resume_attempt_bound_exceeded_at`/`_by`) to `backlog[]` and
+  removes it from `in_progress[]` in the SAME write, mirroring WF-1's BLOCKED-task check
+  (`main.md:331-338`); also added the missing `(<Xh Ym>)` duration parenthetical to WF-3's BUG
+  telegram (WF-4's sibling message already had it, §4 spec always required it). +21L (1276→1297).
+  Dry-run verified the corrected jq against a synthetic in_progress[]-row fixture before landing —
+  row moved to `backlog[]` with `BLOCKED`/lane fields, `in_progress[]` emptied, as expected.
+  Dated entry appended to the file's own top size-justification comment (established convention).
+- Board row: near the 12000B prose-ceiling guard (measured 14968B, unchanged by this write —
+  ceiling check confirms 0 growth). Kept the row write minimal/structural only:
+  `next_agent: "agent-father" → "qa"` + `updated_at`/`updated_by` bump — net -10B, no new prose
+  field added (full narrative lives here instead) — routes back through Review-Lane QA-Drain
+  (`review[]`, `status==REVIEW`, `next_agent=="qa"` selector) for re-verification rather than
+  self-certifying DONE_VERIFIED on orchestration-core dispatch logic (same practice as the 08-14
+  original pass).
+- No MCP gateway tool binding this session — could not `send_telegram` a work-channel notice;
+  flagging in RETURN for the router to relay.
