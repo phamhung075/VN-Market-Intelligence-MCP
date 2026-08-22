@@ -84,3 +84,15 @@
 - Duration parenthetical: reproduced dur_text formula myself, rendered "(12h0m)" correctly, matches WF-4's identical computation.
 **why-decision:** vc-approved, DONE_VERIFIED — CANONICAL:SSOT-STATUSFLIP-LANEMOVE(c) now genuinely satisfied, duration parenthetical present, zero blocking issue.
 **why-change:** none from plan — straight re-verify, single pass. Task Report: `reports/TASK_REPORT_FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE.md`.
+
+### STEP qa-S34 · qa · 2026-08-22T21:58:00Z
+**task-id:** FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE
+**what-done:** Direct-Commit Verify (review[]->done_verified[]); independently re-ran every claim, did not trust developer narration.
+**what-considered:**
+- Live re-run verify-sprint-registry-referential-integrity.mjs: counted_violations=0, matches po_signoff table exactly (11 LIVE/2 RELABEL/3 STRIP applied, 8 PRE_SPRINT_LABEL exempt remain); zero rows still reference the 5 superseded ids.
+- Fresh smoke orch-apply.sh write (bumped _updated_at/_updated_by): exit 0, Stage1h ran clean — the reported bare-Set-arg fleet-wide crash is genuinely fixed, not narrated.
+- checkSprintRegistryReferentialIntegrity (orchStateSchema.ts:1765) confirmed to literally delegate to classifySprintRegistryDanglingIds — real, not re-derived.
+- Full bun test reproduced independently: 15334/51/40 (dev claimed 15335/50/40, 1-test flaky delta) — all 51 failures span 16 files last touched 2026-05/06, none overlapping this task's diff.
+- FOUND: the actual reconciliation write physically lives inside unrelated commit 986717b53 (architect, wrong Task: trailer) — shared-workdir collision, not in the 5 commits reported; content independently verified correct regardless.
+**why-decision:** APPROVED/DONE_VERIFIED — every checked claim held live; the commit-attribution gap is a non-blocking process finding, not a functional defect.
+**why-change:** none from plan — standard direct-commit-verify rigor, one extra independent discovery recorded.
