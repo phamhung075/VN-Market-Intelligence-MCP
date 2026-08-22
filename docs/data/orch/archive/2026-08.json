@@ -22848,6 +22848,17 @@
       "provenance": "detector",
       "audit_cycle_tag": "cron:auditor-t2:2026-08-15T08:00Z",
       "dedup_key": "auditor-a29-fire-gap:alertScanParallel"
+    },
+    {
+      "id": "cj-20260815T204446Z",
+      "ts": "2026-08-15T20:44:46Z",
+      "from": "code-janitor",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+      "severity": "LOW",
+      "status": "READ",
+      "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-15.json"
     }
   ],
   "backlog_detail": [],

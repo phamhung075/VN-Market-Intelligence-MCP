@@ -219,17 +219,6 @@
         "board_row": "FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE"
       },
       {
-        "id": "cj-20260815T204446Z",
-        "ts": "2026-08-15T20:44:46Z",
-        "from": "code-janitor",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
-        "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-15.json"
-      },
-      {
         "id": "sys-20260818T085126-2a19",
         "ts": "2026-08-18T08:51:26Z",
         "from": "system-auditor",
@@ -242,6 +231,62 @@
         "provenance": "detector",
         "audit_cycle_tag": null,
         "dedup_key": null
+      },
+      {
+        "id": "sys-20260822T163747-4dc2",
+        "ts": "2026-08-22T16:37:47Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_loss",
+        "summary": "auditor cycle lost tick=malformed-key — orphaned marker, mid-run death",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": null,
+        "dedup_key": "auditor-cycle-loss:malformed-key"
+      },
+      {
+        "id": "sys-20260822T163753-2ecc",
+        "ts": "2026-08-22T16:37:53Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_missing",
+        "summary": "auditor tier-2 cycle possibly missing — no completion evidence in 174h (cadence 4h)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": null,
+        "dedup_key": "auditor-cycle-missing:tier2:2026-08-22T16:00Z"
+      },
+      {
+        "id": "sys-20260822T163801-34fd",
+        "ts": "2026-08-22T16:38:01Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_missing",
+        "summary": "auditor tier-3 cycle possibly missing — no completion evidence in 206h (cadence 24h)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": null,
+        "dedup_key": "auditor-cycle-missing:tier3:2026-08-22T02:00Z"
+      },
+      {
+        "id": "sys-20260822T163808-040e",
+        "ts": "2026-08-22T16:38:08Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_missing",
+        "summary": "auditor tier-1 cycle possibly missing — no completion evidence in 103h (cadence 0.5h)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": null,
+        "dedup_key": "auditor-cycle-missing:tier1:2026-08-22T16:30Z"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
