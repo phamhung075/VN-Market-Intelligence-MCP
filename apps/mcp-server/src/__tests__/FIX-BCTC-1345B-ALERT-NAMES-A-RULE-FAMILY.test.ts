@@ -198,6 +198,64 @@ describe("FIX-BCTC-1345B-ALERT-NAMES — describeConfidenceFinancialReason", () 
     expect(detail).toContain("BCTC-VAL-05");
     expect(detail).not.toContain("VNM/VEA");
   });
+
+  it("REGRESSION (QA 2026-08-14, AC-2 gap): does NOT attach the VNM/VEA signature when BCTC-VAL-03 stacks with a second soft violation (confidence=0.6, outside {0.0,0.8})", async () => {
+    const { describeConfidenceFinancialReason } = await import(
+      "../application/usecases/parseBctcReport.js"
+    );
+
+    // Reproduces QA's live finding verbatim: BCTC-VAL-03 (margin outlier) +
+    // BCTC-VAL-05 (net_revenue<=0) co-fire -> confidence=0.6, a value the
+    // VNM/VEA rule family (0.0 hard-fail / 0.8 lone-soft-violation) can never
+    // produce. Rule-membership-only gating would wrongly attach the hint
+    // here because BCTC-VAL-03 is present among the violations.
+    const figures = {
+      totalAssets: 1000,
+      totalEquity: 500,
+      totalLiabilities: 400,
+      operatingMargin: 2.0,
+      netRevenue: -1,
+    };
+    const { confidence, violations } = validateFinancialFiguresDetailed(figures);
+    expect(confidence).toBeCloseTo(0.6, 5);
+    expect(violations.map((v) => v.rule).sort()).toEqual(["BCTC-VAL-03", "BCTC-VAL-05"]);
+
+    const detail = describeConfidenceFinancialReason({
+      crossStmtMismatch: false,
+      bsIntraStmtMismatch: false,
+      figures,
+    });
+
+    expect(detail).toContain("BCTC-VAL-03");
+    expect(detail).toContain("BCTC-VAL-05");
+    expect(detail).not.toContain("VNM/VEA");
+  });
+
+  it("REGRESSION (QA 2026-08-14, AC-2 gap): does NOT attach the VNM/VEA signature when BCTC-VAL-03 stacks with BCTC-VAL-01-SCALE (confidence=0.4, outside {0.0,0.8})", async () => {
+    const { describeConfidenceFinancialReason } = await import(
+      "../application/usecases/parseBctcReport.js"
+    );
+
+    const figures = {
+      totalAssets: 1000,
+      totalEquity: 600_000, // ratio 600 >= 500 -> VAL-01-SCALE soft +0.2
+      totalLiabilities: 100,
+      operatingMargin: 2.0, // outside (-5,1) -> VAL-03 soft +0.2
+      netRevenue: 100,
+    };
+    const { confidence, violations } = validateFinancialFiguresDetailed(figures);
+    expect(confidence).toBeCloseTo(0.6, 5);
+    expect(violations.map((v) => v.rule).sort()).toEqual(["BCTC-VAL-01-SCALE", "BCTC-VAL-03"]);
+
+    const detail = describeConfidenceFinancialReason({
+      crossStmtMismatch: false,
+      bsIntraStmtMismatch: false,
+      figures,
+    });
+
+    expect(detail).toContain("BCTC-VAL-03");
+    expect(detail).not.toContain("VNM/VEA");
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

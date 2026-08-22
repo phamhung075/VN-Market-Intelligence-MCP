@@ -26,11 +26,19 @@ import type { FinancialFiguresInput } from "./financialFiguresValidator.js";
  * AC-2: the VNM/VEA corruption-signature phrase may only be attached when
  * the value came from `validateFinancialFiguresDetailed` and the matched
  * rule is BCTC-VAL-01 (assets<equity) or BCTC-VAL-03/BCTC-VAL-10 (margin
- * outlier) — the two families the original hard-coded hint named — AND the
- * resulting confidence is a value that rule family can actually produce
- * (0.0 hard-fail / 0.8 single-soft-violation). This falls out of the
- * function's own structure (VAL-01 hard-fails to exactly 0.0; a lone
- * VAL-03 soft violation yields exactly 0.8) rather than a separate gate.
+ * outlier) — the two families the original hard-coded hint named — AND that
+ * rule fired ALONE (`violations.length === 1`), which is the ONLY way the
+ * resulting confidence can land on a value that rule family can actually
+ * produce (0.0 hard-fail for VAL-01/VAL-10, 0.8 single-soft-violation for
+ * VAL-03). Gating on rule-membership alone is NOT sufficient: BCTC-VAL-03
+ * is a soft, stacking violation (unlike VAL-01/VAL-10, which hard-fail and
+ * always return exactly 1 violation) — it can co-fire with BCTC-VAL-05,
+ * BCTC-VAL-06, or BCTC-VAL-01-SCALE/POSITION to land confidence on 0.4 or
+ * 0.6, values the VNM/VEA rule family cannot produce
+ * (FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY, 2026-08-14 QA finding:
+ * {totalAssets:1000, totalEquity:500, totalLiabilities:400,
+ * operatingMargin:2.0, netRevenue:-1} -> VAL-03+VAL-05 stack ->
+ * confidence=0.6, outside {0.0, 0.8}).
  *
  * When `crossStmtMismatch` or `bsIntraStmtMismatch` fired, `validateFinancialFigures()`
  * was NEVER called (parseBctcReport's short-circuit) — so this branch never
@@ -70,9 +78,14 @@ export function describeConfidenceFinancialReason(params: {
   }
 
   const ruleText = violations.map((v) => `${v.rule}: ${v.detail}`).join("; ");
-  const matchesVnmVeaSignature = violations.some(
-    (v) => v.rule === "BCTC-VAL-01" || v.rule === "BCTC-VAL-03" || v.rule === "BCTC-VAL-10",
-  );
+  // AC-2: the rule must have fired ALONE — a stacked soft violation (e.g.
+  // BCTC-VAL-03 + BCTC-VAL-05) lands confidence on 0.4/0.6, values this rule
+  // family can never actually produce (0.0/0.8 only).
+  const matchesVnmVeaSignature =
+    violations.length === 1 &&
+    (violations[0]!.rule === "BCTC-VAL-01" ||
+      violations[0]!.rule === "BCTC-VAL-03" ||
+      violations[0]!.rule === "BCTC-VAL-10");
   return matchesVnmVeaSignature
     ? `${ruleText} (matches the VNM/VEA OCR-corruption signature: assets<equity or margin>100%).`
     : `${ruleText}.`;
