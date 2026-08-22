@@ -1,18 +1,6 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-22T21:00:22Z | **Cycle:** TE-T23 (cross-service/, developer, P1 S, ready[] direct pickup, router-dispatched, session 02594cce)
-
-## Session 2026-08-22T21:00:22Z — TE-T23 CLAUDE.md step-2.5 pre-claim compression (cross-service/, developer, P1 S, ready[] direct pickup, session 02594cce)
-
-**Task:** PO ruling 2026-08-22T20:51:47Z upheld QA's CHANGES_REQUESTED (session 632721c2), overturning a prior BOUNDED-1 no-op claim, and wrote 8 explicit acceptance criteria (AC-1..AC-8) directly onto the board row. Gist: collapse CLAUDE.md step 2.5's full `task_claim(...)` call + 3-row outcome table, plus step 3's `finally: task_release(...)` line, into a pointer-only reference into `.claude/skills/dispatch-claim/CARD.md` (which already carries every argument/branch field-for-field at CARD.md:28-29/31/32-33/35). `po_scope_note`: CLAUDE.md ONLY — CARD.md/SKILL.md are agent-father's zone, untouched.
-
-**Fix:** CLAUDE.md:7-17 (11L: pointer + task_claim call + blank + 3-row table + 3-line step 3) replaced with a 4L block — step 2.5 now 2L (pointer-only to CARD.md, zero restated args/branches), step 3 now 2L (spawn instruction + session-id param, `finally: task_release(...)` line deleted). Step 2.4 (cowork-slot collision probe) breadcrumb preserved verbatim per AC-5 — it lives only in SKILL.md:601+, not in CARD.md at all, so CLAUDE.md:7 is the sole fleet-visible mention. Did not resurrect the brief's stale "Router never reverts uncommitted files" sentence (AC-6) — confirmed absent from live HEAD before and after.
-
-**Verify:** `wc -l CLAUDE.md` 64L → 57L, exact -7L delta per AC-7 (not the brief's stale absolute ~58L figure — this row is delta-scored). Re-read post-edit confirms steps 1/2/2.5/3 still read as a coherent numbered sequence (AC-8). Cross-checked CLAUDE.md:7-8 and CARD.md:26-36 side by side — zero duplication remains (task_claim call + outcome table both deleted, only present once in CARD.md). No CARD.md/SKILL.md edits made (po_scope_note honored) — the CARD.md `ttl=` vs `ttl_seconds=` shorthand drift PO flagged as a side-effect of this row is intentionally left to its own companion row `FIX-DISPATCHCLAIM-CARD-TTL-ARG-SHORTHAND` (next_agent=agent-father).
-
-**Closeout:** commit `63f71bf6e` (CLAUDE.md edit, direct to `main`, no task branch per row's `branch:null` + AC-8), commit `c959e78e6` (board `ready[]→review[]`, `next_agent=qa`, via `scripts/orch-apply.sh`). QA gate: re-verify AC-1..AC-8 against live HEAD, in particular the exact -7L delta and zero-duplication check against CARD.md. Graphify skipped — no docs outside CLAUDE.md itself were impacted (pure prose-compression task, no API/schema/behaviour change to document elsewhere).
-
----
+**Last updated:** 2026-08-22T21:26:47Z | **Cycle:** SPRINT-PREDICT-ENGINE-CALIBRATION-CLOSE-LOOP (apps/mcp-server/, developer, high, dev-team-lead triage — WIP-cap blocked, 0 tasks claimed, router-dispatched, session 88555d2e)
 
 ## Session 2026-08-22T23:00:00Z — FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE (cross-service/, developer, P1 M, review[] supervised row-level gate, router-dispatched, session 02594cce)
 
@@ -39,5 +27,17 @@
 **Deviation (tool-grant, documented not stalled on):** this spawn was router-direct (PO-minted P0 row, no dev-team dispatcher wrapping it) with Read/Edit/Write/Bash only — confirmed via the tool schema at session start, not assumed. No MCP/gateway tool grant means no `task_claim`/`task_heartbeat`/`send_telegram` calls were possible for this session's own sprint-task-lock wrap. Per this flow's own documented precedent for structural Agent/MCP-tool gaps (`developer/flow/main.md` known-drift note, 2026-08-09: "implement directly and document the deviation... do not stall on an unreachable dispatch"), proceeded directly. Router's own intent-level PRE-CLAIM (Phase A/B) had already ruled out a peer-session collision on this exact row before spawning. Did NOT touch `FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE` (separate parallel developer dispatch) and did NOT run the real `--all` backfill (AC-5, out of scope by design).
 
 **Closeout:** commits `9f4b0ede0` (script + test + dev-standards.md + WORK.md), `47c2841b4` (decision journal). No board-row `.task_board` write attempted from this notebook entry — see decision journal + final report for the `scripts/orch-apply.sh` move (same tool-grant gap: no MCP write needed for that, orch-apply.sh is pure bash/jq, done separately). QA/next-leg note: AC-1 leg (b) (corpus-replay auto-unlock) is a follow-up once the parent row's `verify-sprint-registry-referential-integrity.sh` ships — do not re-derive from scratch, this leg is explicitly deferred, not forgotten.
+
+---
+
+## Session 2026-08-22T21:26:47Z — SPRINT-PREDICT-ENGINE-CALIBRATION-CLOSE-LOOP dev-team-lead triage (apps/mcp-server/, developer, high, WIP-cap blocked, router-dispatched, session 88555d2e)
+
+**Task:** PM decomposed the calibration-close-loop sprint into 6 atomic `ready[]` tasks (PREP-FIXTURES, PREP-GETLR, FR4, FR1, FR3-FR5, FR2), all `owner:dev-mcp-server`, zone `apps/mcp-server/`. Router (chain: po→ba→architect→pm→developer) asked this session to dispatch the zone specialist per the normal chain, but flagged live `.task_board.in_progress` WIP already at 3 against the 2-max human/router-supervised cap and told me to respect it, not force-promote all 6.
+
+**Checked, not assumed:** live `wip_in_progress` (`scripts/lib/devteam-eligibility.jq` def — excludes BLOCKED/TERMINAL_SET) = 3 real, non-BLOCKED rows (`UC-CCA-P3`→qa, `UC-CDC-P1`→pm, `FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58`→pm), all updated within the last 8 days (one same-day) — genuinely live work, not stale zombies I could justify clearing. Also verified PM already encoded `depends_on` correctly on all 6 PEC rows (PREP-FIXTURES/PREP-GETLR/FR4=`[]`, FR1=`[PREP-GETLR,PREP-FIXTURES]`, FR2=`[PREP-FIXTURES]`, FR3-FR5=`[FR1]`) — matches the router's tier description exactly, no repair needed. Cross-checked the Dev Team Handoff Chain in `.claude/skills/dispatch/SKILL.md` (`PM→Developer`, `Developer→QA`) — confirms `dev-mcp-server` is the correct next zone specialist once a slot opens, no naming-collision risk this cycle.
+
+**Decision:** did not claim/dispatch any of the 6 tasks this cycle — `wip_in_progress`=3 already exceeds cap=2, so 0 fit under a strict read of "pick up what fits." A documented live incident (`FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS`) shows an over-cap WIP miscount froze the whole dispatch chain ~2.5h — not a theoretical risk. All 6 PEC rows left untouched in `ready[]`. `PREP-FIXTURES`, `PREP-GETLR`, and `FR4` (`depends_on:[]`) are the fully-unblocked candidates the instant a slot frees (PREP-FIXTURES + PREP-GETLR touch disjoint files — `__tests__/1118-*.test.ts`/`1128-*.test.ts` fixtures vs `likelihoodRatioStore.ts` — safe to parallel-dispatch together first).
+
+**Closeout:** commit `9396ccab2` (decision journal only — no code/board write this cycle, nothing to release into REVIEW). No `task_claim` was taken by this session for a specific task (only the router's own intent-level lock, released separately per the router's `finally` instruction). Next developer/dev-team cycle: re-check `wip_in_progress` first; if <2, dispatch `dev-mcp-server` on PREP-FIXTURES + PREP-GETLR (parallel, disjoint files), then FR4, before touching the FR1→FR3-FR5 chain or FR2.
 
 ---
