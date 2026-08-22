@@ -135,3 +135,15 @@ Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=11.31% MemUsage=347.3M
 **Cycle Tag:** cron:auditor-t1:2026-08-22T22:00Z
 
 **Status:** FAILURE (heartbeat updated to reflect actual verdict; launchd check failed due to STALE-ACK on fleet-push)
+
+#### Self-Correction (2026-08-23T00:17Z)
+
+**Issue Found:** Signal_queue row duplication detected by coordinator
+- **Root Cause:** Called `scripts/emit-audit-signal.sh` (which creates signal_queue row E-3) AND THEN manually created a duplicate row via jq + orch-apply.sh
+- **Duplicates:** Two rows with id=sys-20260822T221412-3c33 (same id, different to/type/status)
+  - Row 1 (CORRECT): to=po, type=signal_feedback, status=NEW, ts=22:14:12Z (from emit-audit-signal.sh)
+  - Row 2 (REMOVED): to=ops, type=microservice_degraded, status=OPEN, ts=22:14:30Z (my manual duplicate)
+- **Spec Check:** System-auditor sends WARN/CRITICAL findings to PO via signal_queue (init.md inter_agent.sends_to). Row 1 is correct; Row 2 was unintended duplication.
+- **Fix Applied:** Removed duplicate row via orch-apply.sh; single correct row (to=po) retained.
+- **Lesson:** `emit-audit-signal.sh` already creates E-3 signal_queue rows. Do NOT manually create additional rows with the same ID. If routing to multiple recipients is needed, either call emit-audit-signal.sh multiple times with different --to-agent flags (creating separate rows with unique IDs) or generate unique IDs for each recipient row.
+
