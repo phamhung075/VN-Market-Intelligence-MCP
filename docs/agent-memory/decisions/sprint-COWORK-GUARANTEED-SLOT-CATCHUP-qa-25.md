@@ -51,3 +51,25 @@
 - DoD call: backlog-detail.json's own `dod` field names "one-extraction-per-PR" as an accepted AC bullet alongside "thin orchestrator" — process sanctions staged extraction. Materially different from 0f23a703f (zero pipeline-body extraction that round) — this is a genuine, verified real stage-1 extraction, honestly disclosed as partial.
 **why-decision:** vc-changes (qa[]->review[]) — full DoD (<=120L) objectively still unmet at 670L so DONE_VERIFIED not warranted yet, but this is genuine verified PROGRESS matching the row's own documented ladder, not a quality failure. status_note framed as STAGE-1 VERIFIED/continue-ladder rather than defect-CHANGES_REQUESTED. redispatch_count 1->2, next_agent=dev-mcp-server, continue to stage 2 (dedup/insert).
 **why-change:** none — router's progress-vs-failure framing question resolved by reading the DoD text directly; verdict mechanics (vc-changes JUMP-TO) unchanged, flow has no separate "progress" terminal state.
+
+### STEP qa-S31 · qa · 2026-08-22T18:05:00Z
+**task-id:** FIX-AUDITOR-DATA-TIER-NOTEBOOK-WRITE-PATH-UNWIRED
+**what-done:** Direct-Commit Verify (no branch, direct-to-main FIX). Independently re-verified AC-1..4, did not trust developer's commit-message claims alone.
+**what-considered:**
+- AC-3 data repair (`35be008d0`): extracted `git show f25dc3d27^:...` parent blob myself, byte-diffed the restored `c103`/`d4-auto` sections against it (`diff` exit 0, only trailing-EOF-newline noise) — genuinely byte-identical, not fabricated. Diffed the surviving Tier-1 body (`f25dc3d27`'s `c104`, 177L) against the new `c105`'s first 150 lines after a `sed` renumber — exact match, confirms the 150L-cap trim paid out of the NEW section, never a restored one. File now 3 sections/172L, matches row's own `measured_evidence` replay exactly.
+- AC-1/AC-2 (`a7262f6e9`): read the real diff, not the message. `TIER=DATA` row added verbatim to §Tier Dispatch binding to `notebook (gated) → RETURN`; L130 bullet no longer says "falls through to default". New `elif AUDIT_TIER=="DATA"` in §Step 0d sets ONLY `FIRE_TICK`/`FIRE_TASK_ID` (same 2-var shape as the 1/2/3/5 branches beside it) consumed by the SAME downstream generic `task_claim` call — confirmed inert plumbing, zero new judgment/verdict logic, other tiers' own branches untouched by the diff (pure insertion). `notebook-compose.sh` confirmed untouched (0-line diff across both commits).
+- AC-4: `grep AUDIT_TIER= .claude/commands/crons/*.md` myself → {1,2,3,4,5,DATA}, all 6 now have a §Tier Dispatch row (live grep, not copy-pasted).
+- AC-5 explicitly left open by developer (needs 3 real post-ship cycles incl. 1 DATA fire) — not re-measured, per PO's own gating instruction.
+**why-decision:** vc-approved / DONE_VERIFIED — all 4 in-scope ACs independently reproduced from git history + live file reads, no narration-only trust; no regression found on any sibling tier.
+**why-change:** none from plan — straight verify-committed pass, single round.
+
+### STEP qa-S32 · qa · 2026-08-22T20:15:00Z
+**task-id:** FACTORY-ALERT-dedup-window-config
+**what-done:** Direct-Commit Verify round 2 (ops rebuild-redeploy re-check after my own 2026-08-06 vc-changes deployment-gap ruling). Independently RAW-re-verified, not trusted from ops's status_note prose.
+**what-considered:**
+- Image: `docker inspect` `.Created`=2026-08-22T17:56:29Z, container `StartedAt`=17:56:38Z, ContainerID `cd90ef25` new (RestartCount=0) — genuinely recreated, postdates commit 43f4e3add (2026-07-28T23:25:42+02:00).
+- Binary: `docker exec ... grep -a` myself — "seen within %dmin" present, "seen recently" absent (flip confirmed, not copy-pasted from ops report).
+- Peer isolation: enumerated all 12 running containers' `StartedAt` — only alert-engine-1 changed; no `depends_on: alert-engine` anywhere in compose — `--no-deps` recreate provably isolated.
+- Intent: read backlog-detail.json DoD verbatim — "config-sourced" = named `CooldownConfig.DedupWindowMinutes` field (not env/file runtime load) — diff matches DoD exactly; re-ran `go build`/`go test ./pkg/domain/... ./pkg/module/alert_pipeline/...` (host, static Go binary, no image-vs-host drift risk) 10/10 pass, mock-guard PASS, ancestry confirmed.
+**why-decision:** vc-approved, DONE_VERIFIED — deployment gap from round 1 genuinely closed; code+deploy+intent all independently reproduced.
+**why-change:** none from plan — routine round-2 re-verify of a flagged rebuild claim.
