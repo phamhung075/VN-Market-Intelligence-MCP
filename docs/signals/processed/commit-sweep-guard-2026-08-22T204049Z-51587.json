@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-22T20:40:49Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: apps/mcp-server/src/__tests__/FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY.test.ts apps/mcp-server/src/domain/services/financial-reports/confidenceFinancialReasonBuilder.ts. actor=02594cce-7946-4d62-8d2f-586b9b883695 mode=warn escalated=true prior_warns=8 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "db4521cfc229f8e332a9c9d3772ce4d0d9c2437934816263522167cf9d33301d",
+    "processedAt": "2026-08-22T20:47:26Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

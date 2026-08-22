@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-22T21:08:35Z",
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "weekend",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": "1440"
+    },
+    "last_fired_timestamp": "2026-08-22T21:08:05Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "21:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 29,
+    "note": "single non-guaranteed cadence-due slot (bctc-offmarket, weekend not suppressed by calendar step, resolved by 1440min cadence), single batch, MAX_PARALLEL=4 (headroom=2790MB load1m=1.67 cores=12, not degraded), Step 5.3 off-flow check deferred to completion notification"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-22T21:08:35Z",
+  "_processed": {
+    "fingerprint": "ed02ce3967c7403bf88aa40235e75e234dc59f3d7e32d01537fcd6fdb0f93361",
+    "processedAt": "2026-08-22T21:47:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -3,19 +3,33 @@
   "signal_type": "bctc_signal",
   "quarter": "Q1-2026",
   "mode": "routine",
-  "beat_miss": null,
-  "product": "Full-service commercial banking -- retail and corporate lending, trade finance, FX, wealth management (Joint Stock Commercial Bank for Foreign Trade of Vietnam)",
-  "customer": "Corporate/SOE lending relationships, retail deposit and loan customers, trade-finance corporates",
-  "ops": "Net interest income 17.42tn VND, operating margin 80.9% (typical bank cost structure), Net Profit 9.46tn VND. Quarterly (non-annualized) ROE 4.2% vs sector-comparison annualized ROE 16.7% -- use the annualized figure for valuation, the raw quarterly ratio understates true profitability. OCF/NI ratio 1.368 for Q1 -> ESC-3 divergence 0.368, below the 0.40 escalation threshold -- no forensic flag.",
-  "mgmt": "No adverse legal/regulatory findings this cycle. Balance-sheet check PASSED (imbalance 0.37%, within the 0.5% tolerance).",
+  "product": "State-owned commercial bank — corporate/retail lending, trade finance, bancassurance cross-sell",
+  "customer": "Large corporates, SOEs, retail/mass-affluent depositors, trade-finance importer/exporter clients",
+  "ops": "Operating margin 80.9% (net-interest-income basis), net profit margin 54.3%. ROE 4.2% on reported quarterly basis (16.7% sector-comparison annualized) vs sector median 17.6% — below peer median.",
+  "mgmt": "Sentiment trend improving (+0.15 slope, 30d window); no insider or legal-risk flags. Now QUÁ HẠN on Q2-2026 filing (deadline 14/08/2026 passed).",
+  "cycle_id": "20260822-2100",
+  "generated_at": "2026-08-22T21:08:29.701Z",
   "valuation": {
     "pe": 14.1,
     "sector_median_pe": 9,
+    "pb": 2.2,
+    "sector_median_pb": 1.5,
     "roe_pct": 16.7,
     "sector_median_roe_pct": 17.6,
-    "ey_spread_pp": 2.092,
+    "earning_yield_pct": 7.092,
     "max_deposit_rate_pct": 5,
-    "verdict": "FAIR"
+    "ey_spread_pp": 2.09,
+    "valuation_verdict": "FAIR",
+    "regime": "NEUTRAL",
+    "rate_sensitive_headwind": false
+  },
+  "balance_sheet_first_read": {
+    "asset_coverage": "DATA-GAP (no live price this cycle)",
+    "pb_ratio_sector_tool": 2.2,
+    "charter_capital_ratio": "DATA-GAP (charter_capital null — bank BCTC line-item mapping)",
+    "balance_flags": [],
+    "balance_verdict": "ACCEPTABLE",
+    "balance_check": "imbalance 0.37% (assets 2,550,963.3 tỷ vs liab+equity 2,541,490.7 tỷ) — within 0.5% ESC-2 tolerance"
   },
   "kinhdich": {
     "que": "Quan (20)",
@@ -23,40 +37,41 @@
     "tin_hieu": "GIU",
     "do_tin_cay_pct": 38
   },
+  "cash_flow_forensic": {
+    "ocf_ni_ratio_q1_2026": 1.368,
+    "divergence_ratio": 0.368,
+    "note": "quarters_returned=4/8 requested (>=4 threshold met) — divergence_ratio 0.368 < 0.40 → ESC-3 FALSE."
+  },
   "esc_gate": {
-    "esc1_accounting_manipulation": "unevaluable (no Bash/Glob grant on this agent -- standing capability gap)",
-    "esc2_balance_sheet": {
+    "esc_1": "unevaluable (E1 SCOPE-REDUCED — no Bash/Glob grant)",
+    "esc_2": {
       "result": false,
       "imbalance_pct": 0.37
     },
-    "esc3_ocf_np_divergence": {
+    "esc_3": {
       "result": false,
-      "quarters_returned": 4,
-      "quarters_required": 4,
       "divergence_ratio": 0.368,
-      "threshold": 0.4
+      "quarters_returned": 4
     },
-    "esc4_nonop_share": {
-      "result": "N/A",
-      "reason": "bank -- non_operating_share P&L structure does not map cleanly to this heuristic"
+    "esc_4": {
+      "result": "N/A (bank — non-operating-share heuristic not applicable to bank P&L structure)"
     },
-    "esc5_refine_confidence": {
+    "esc_5": {
       "result": false,
-      "reason": "get_bctc_report_id returned report_id=null (existing_refine_status=PARTIAL) -- refine not finished, skip"
+      "reason": "report_id=null, existing_refine_status=PARTIAL"
     }
   },
+  "insider": "no significant insider activity",
+  "legal_risk": "none reported",
   "data_quality": {
-    "bctc_period_latest_extracted": "2026-Q1",
-    "q2_2026_pdf_on_file_since": "2026-08-01",
-    "extraction_lag_days": 21,
-    "calendar_status": "QUA HAN (deadline 14/08/2026, now passed)"
+    "get_bctc_full_confidence_pct": 75,
+    "refine_status": "PARTIAL",
+    "note": "Q2-2026 filed PDF on disk since 2026-08-01 (VCB_2026_Q2.pdf), still not extracted 21+ days — figures byte-identical to prior cycle.",
+    "earnings_calendar_status": "QUÁ HẠN (Q2-2026 deadline 14/08/2026 passed)"
   },
-  "insider": "no significant insider signal",
-  "legal_risk": "none",
-  "generated_at": "2026-08-22T18:20:00Z",
   "_processed": {
-    "fingerprint": "e4c1d652c168a5c626f5c4a35301148a519b35cbe501178d81cf22ada09cf051",
-    "processedAt": "2026-08-22T18:17:51Z",
+    "fingerprint": "a95b54e1669cba8c6329cfa71d722a52448fc795d3f4299cd839565a5dceb4da",
+    "processedAt": "2026-08-22T21:47:07Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

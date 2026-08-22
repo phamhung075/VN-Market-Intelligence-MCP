@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-22T20:24:10Z",
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "won_slots": [
+      "tnb-audit"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "weekend",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "tnb-audit": "cron"
+    },
+    "cadence_minutes": {
+      "tnb-audit": null
+    },
+    "last_fired_timestamp": "2026-08-22T20:23:55Z",
+    "last_fired_slots": [
+      "tnb-audit"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 31,
+    "note": "Single guaranteed slot (tnb-audit, cron-due) — 1-slot single batch, MAX_PARALLEL=4 (non-degraded, headroom=3337MB, load=4/24), no inter-batch wait needed (only/last batch). Step 5.3 off-flow check deferred until spawn completion notification."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-22T20:24:10Z",
+  "_processed": {
+    "fingerprint": "e2bfdc4a050cac9eb91f2f85970363c9d543fb80875704f8d2efe0a93b6b5848",
+    "processedAt": "2026-08-22T20:47:26Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
