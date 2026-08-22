@@ -7,79 +7,86 @@
 
 ## A) Diagram — both loops + the shared junction
 
+Two independently-rendered diagrams (not one combined graph) — a single combined diagram put LOOP1/LOOP2 side-by-side and fanned one node into 10 parallel edges, which is what made the original render far wider than a normal screen. Each diagram below is a single narrow chain (max 2 nodes at any rank — verified by tracing dagre's rank assignment, not eyeballed). `SQ` (Loop 1) and `SQ2` (Loop 2) are the **same physical node** — `docs/data/orch/orch-state.json` `.signal_queue.rows[]` — split across the two blocks only because mermaid can't share a node across separate diagrams; that split is the one piece of topology worth re-stating in prose: Loop 1 *writes* to it, Loop 2 *reads from* it (`to==po` rows only) and also *writes* back to it (the anomaly-task-bridge's `repair_task_request`).
+
+### Loop 1 — cowork-team dispatch (session-scoped, every 15 min)
+
 ```mermaid
 flowchart TD
-    subgraph LOOP1["LOOP 1 — cowork-team dispatch (session-scoped, every 15 min)"]
-        direction TB
-        CRON1["CronCreate */15 * * * *<br/>armed by /cron-cowork-team"]
-        PRE1["cowork-tick-preflight.sh<br/>presence + fire-election(cron:cowork:TICK) +<br/>one-shots + blind-guard + slot-match"]
-        CRON1 --> PRE1
-        PRE1 -->|"SILENT / LOST_ELECTION /<br/>DEFER / TOMBSTONED"| EXIT1["EXIT — zero further reads<br/>(~80% of ticks)"]
-        PRE1 -->|ERROR| FALLBACK1["preflight-error-fallback.md<br/>full unabridged Steps 0a-6"]
-        PRE1 -->|"WORK, lock held"| MAIN1["cowork-team/flow/main.md<br/>§ WORK continuation"]
-        MAIN1 --> D0A["Step 0a: drain signal_queue<br/>to ∈ {po, tran-ngoc-bau,<br/>unified-agent, alert-commander}<br/>NEW→READ"]
-        MAIN1 --> MATCH1["4.2-4.6: pressure-read, cadence<br/>due-check, per-slot task_claim"]
-        MATCH1 --> FAN["spawn-fanout.md<br/>headroom-bounded parallel batches<br/>+ IDENTITY_PREAMBLE + SESSION_ID_LINE"]
-        FAN --> NEWS[news-scout]
-        FAN --> MW[market-watcher]
-        FAN --> AC[alert-commander]
-        FAN --> CHEF["unified-agent (CHEF)"]
-        FAN --> DIGEST[digest-predict]
-        FAN --> TNB[tran-ngoc-bau]
-        FAN --> FBP[fb-market-poster]
-        FAN --> BCTC[bctc-analyst]
-        FAN --> QAR["qa-responder<br/>(on-demand only)"]
-        FAN --> LASTFIRED["Step 5b: last-fired.md<br/>stamps cowork-schedule.json<br/>.slots[].last_fired"]
-    end
+    CRON1["CronCreate */15 * * * *<br/>armed by /cron-cowork-team"]
+    PRE1["cowork-tick-preflight.sh<br/>presence + fire-election(cron:cowork:TICK) +<br/>one-shots + blind-guard + slot-match"]
+    CRON1 --> PRE1
 
-    LAUNCHD["launchd: com.vn-market.<br/>cowork-guaranteed-slot-firer<br/>15-min poll, session-INDEPENDENT<br/>guaranteed:true slots ONLY (8 of 23)"]
-    LAUNCHD -.->|"claude -p 'slot=&lt;id&gt;'<br/>bypasses main.md — NEVER<br/>stamps last_fired"| CHEF
-    LAUNCHD -.-> DIGEST
-    LAUNCHD -.-> TNB
-    LAUNCHD -.-> FBP
+    OTHER1["SILENT/LOST_ELECTION/DEFER/TOMBSTONED → EXIT<br/>(~80% of ticks, zero further reads);<br/>ERROR → preflight-error-fallback.md<br/>(full unabridged Steps 0a-6)"]
+    MAIN1["cowork-team/flow/main.md<br/>§ WORK continuation"]
+    PRE1 -->|"non-WORK verdicts"| OTHER1
+    PRE1 -->|"WORK, lock held"| MAIN1
 
-    BCTC -->|"no Bash grant"| FILESIG["docs/signals/bctc-analyst-*.json<br/>to=dev-team, type=esc-deep-dive-request"]
-    TNB --> SQ
-    MW --> SQ
-    NEWS --> SQ
-    DIGEST --> SQ
+    D0A["Step 0a: drain signal_queue<br/>to ∈ {po, tran-ngoc-bau,<br/>unified-agent, alert-commander}<br/>NEW→READ"]
+    MAIN1 --> D0A
 
-    SQ[("signal_queue.rows[]<br/>docs/data/orch/orch-state.json<br/>★ SHARED JUNCTION ★")]
-    SQ -->|"to ∈ {tnb, unified-agent,<br/>alert-commander}: stays in Loop 1"| D0A
-    SQ -->|"to == po: crosses into Loop 2"| D0AD
+    MATCH1["4.2-4.6: pressure-read, cadence<br/>due-check, per-slot task_claim"]
+    D0A --> MATCH1
 
-    subgraph LOOP2["LOOP 2 — anomaly-detection → dev-team planning (4 session-scoped crons)"]
-        direction TB
-        CRON2["4x CronCreate, ONE cross-session<br/>marker, armed by /cron-detect-loop"]
-        CRON2 --> J1["Job1: dev-team<br/>7,37 * * * *"]
-        CRON2 --> J2["Job2: auditor Tier-1<br/>*/30 * * * *"]
-        CRON2 --> J3["Job3: auditor Tier-2<br/>0 */4 * * *"]
-        CRON2 --> J4["Job4: auditor Tier-3<br/>0 4 * * *"]
+    FAN["spawn-fanout.md<br/>headroom-bounded parallel batches<br/>+ IDENTITY_PREAMBLE + SESSION_ID_LINE"]
+    MATCH1 --> FAN
 
-        J2 --> T1P["auditor-tier1-probe.sh<br/>pure shell, no MCP"]
-        T1P -->|"non-ALL_GREEN OR<br/>heartbeat &gt;60min stale"| SA1["system-auditor<br/>AUDIT_TIER=1 (runtime ping)"]
-        J3 --> T2P["auditor-tier1-probe.sh --tier=2<br/>SKIP-SPAWN gate inside script"]
-        T2P -->|"exit 1/2/nonzero<br/>(fail-open)"| SA2["system-auditor<br/>AUDIT_TIER=2 (freshness sweep)"]
-        J4 --> T3P["auditor-tier1-probe.sh --tier=3"]
-        T3P -->|"exit 1/2/nonzero<br/>(fail-open)"| SA3["system-auditor<br/>AUDIT_TIER=3 (deep DB integrity)"]
+    AGENTS["9 spawned agents (one parallel batch):<br/>news-scout · market-watcher · alert-commander<br/>unified-agent(CHEF) · digest-predict · tran-ngoc-bau<br/>fb-market-poster · bctc-analyst · qa-responder(on-demand)<br/>— per-agent mechanics in §B below"]
+    FAN --> AGENTS
 
-        SA2 --> ATB["anomaly-task-bridge skill<br/>ATB-1..7, Tier-2/3 only"]
-        SA3 --> ATB
-        ATB -->|"scans to=po/status=NEW/<br/>age&gt;2h, dedups, mints<br/>repair_task_request"| SQ
+    LASTFIRED["Step 5b: last-fired.md<br/>stamps cowork-schedule.json<br/>.slots[].last_fired"]
+    AGENTS --> LASTFIRED
 
-        J1 --> DTP["dev-team-tick-preflight.sh<br/>SF-1 singleton +<br/>fire-election(cron:dev-team:TICK)"]
-        DTP -->|RUN| DTMAIN["dev-team/flow/main.md<br/>jump: gcc-preflight"]
-        DTP -->|RUN-IDLE| IDLE["release both locks<br/>ZERO commit, .head untouched"]
-        DTMAIN --> D0AD["Step 0a-D: drain signal_queue<br/>to=po or dev-team-addressed<br/>NEW→READ, batch-append"]
-        D0AD --> INBOX[".dev_team_idle_chain<br/>.pending_triage_inbox"]
-        FILEDRAIN["Step 0a-1: file-plane drain<br/>docs/signals/*.json<br/>fingerprint dedup"] --> INBOX
-        FILESIG --> FILEDRAIN
-        INBOX --> POTRIAGE["po Step 1: triage-signals.md<br/>dedup vs backlog/ready/<br/>in_progress/review/qa"]
-        POTRIAGE -->|novel| BACKLOG[".task_board.backlog[]<br/>status=BACKLOG,<br/>origin_signal_id"]
-        POTRIAGE -->|duplicate| FOLD["FOLD — disposition<br/>note only, no new mint"]
-        BACKLOG --> PIPE["ba → architect → pm →<br/>developer ∥ developer →<br/>qa ⟷ fixer"]
-        PIPE -->|DONE_VERIFIED| CLOSE["origin_signal_id row<br/>flips READ→RESOLVED"]
-    end
+    LAUNCHD["launchd: com.vn-market.cowork-guaranteed-slot-firer<br/>15-min poll, session-INDEPENDENT<br/>guaranteed:true slots only (8 of 23)"]
+    LAUNCHD -.->|"claude -p 'slot=&lt;id&gt;' direct invoke —<br/>bypasses main.md entirely, covers CHEF/<br/>digest-predict/tran-ngoc-bau/fb-market-poster,<br/>NEVER stamps last_fired (see Finding F4)"| AGENTS
+
+    SQ[("signal_queue.rows[]<br/>docs/data/orch/orch-state.json<br/>★ SHARED JUNCTION — see SQ2 in Loop 2 ★")]
+    AGENTS -->|"tnb/market-watcher/news-scout/digest-predict<br/>write rows (to∈tnb/unified-agent/alert-commander/po);<br/>bctc-analyst has no Bash → writes<br/>docs/signals/bctc-analyst-*.json instead"| SQ
+```
+
+### Loop 2 — anomaly-detection → dev-team planning (4 session-scoped crons)
+
+```mermaid
+flowchart TD
+    CRON2["4x CronCreate, ONE cross-session marker<br/>armed by /cron-detect-loop:<br/>Job1 dev-team 7,37 * * * *<br/>Job2 auditor-T1 */30 * * * *<br/>Job3 auditor-T2 0 */4 * * *<br/>Job4 auditor-T3 0 4 * * *"]
+
+    AUD["auditor pre-gates (3x tier-specific<br/>shell scripts, no MCP) — non-ALL_GREEN /<br/>stale-heartbeat / fail-open-on-error<br/>→ spawn system-auditor"]
+    DTP["dev-team-tick-preflight.sh<br/>SF-1 singleton + fire-election<br/>(cron:dev-team:TICK)"]
+    CRON2 --> AUD
+    CRON2 --> DTP
+
+    SATIERS["system-auditor spawned:<br/>Tier-1 runtime ping (no bridge)<br/>Tier-2 freshness sweep → bridge<br/>Tier-3 deep DB integrity → bridge"]
+    AUD --> SATIERS
+
+    ATB["anomaly-task-bridge skill (Tier-2/3 only)<br/>scans to=po/status=NEW/age&gt;2h,<br/>dedups, mints repair_task_request"]
+    SATIERS --> ATB
+
+    SQ2[("signal_queue.rows[]<br/>= SAME array as Loop 1's SQ<br/>★ SHARED JUNCTION ★")]
+    ATB --> SQ2
+
+    IDLE["RUN-IDLE: release both locks,<br/>ZERO commit, .head left untouched"]
+    DTP -->|RUN-IDLE| IDLE
+
+    DRAIN["dev-team drain: Step 0a-D signal_queue<br/>(to=po or dev-team-addressed) +<br/>Step 0a-1 docs/signals/*.json file-drops<br/>(incl. bctc-analyst's no-Bash path)<br/>NEW→READ, batch-appended durably"]
+    DTP -->|RUN| DRAIN
+    SQ2 -->|"to==po rows"| DRAIN
+
+    INBOX[".dev_team_idle_chain<br/>.pending_triage_inbox"]
+    DRAIN --> INBOX
+
+    POTRIAGE["po Step 1: triage-signals.md<br/>dedup vs backlog/ready/<br/>in_progress/review/qa"]
+    INBOX --> POTRIAGE
+
+    BACKLOG[".task_board.backlog[]<br/>status=BACKLOG, origin_signal_id"]
+    FOLD["FOLD — disposition note<br/>only, no new mint"]
+    POTRIAGE -->|novel| BACKLOG
+    POTRIAGE -->|duplicate| FOLD
+
+    PIPE["ba → architect → pm →<br/>developer ∥ developer →<br/>qa ⟷ fixer"]
+    BACKLOG --> PIPE
+
+    CLOSE["origin_signal_id row<br/>flips READ→RESOLVED"]
+    PIPE -->|DONE_VERIFIED| CLOSE
 ```
 
 ---

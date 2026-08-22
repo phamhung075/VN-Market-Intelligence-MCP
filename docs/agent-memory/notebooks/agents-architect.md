@@ -30,10 +30,10 @@ User-requested observe-and-report review (not a fix cycle): mermaid diagram + pe
 
 ---
 
-## 2026-08-22T16:47:41Z
+## 2026-08-22T19:08:49Z
 
-**Brief:** `docs/architecture-briefs/2026-08-22-agent-fabric-ddd-debug-logger-tool-optimization.md`
+**Brief:** `docs/architecture-briefs/2026-08-22-cowork-detect-loop-flow-review.md` (update)
 
-3-part user-requested brief: (1) DDD review found no literal domain→infra import violation, but real drift — `orchStateSchema.ts`/`coordinationStore.ts` hold genuine business rules (task state machine, orphan-adoption allow-list) filed under `infrastructure/` with zero `domain/` counterpart, the same violation class `composition-root-logic-gate` already exists to catch on the Go side but has no TS equivalent; (2) designed a new file-based `docs/agent-memory/debug/<agent-id>.log` per-agent debug logger (deliberately not an MCP tool — dev-* agents lack gateway binding per F-8) since none of the 3 named log-shaped things fit, and found `log_agent_work` (7 lifetime calls) as a near-dead 4th candidate to reconcile; (3) tool-usage-stats.json shows tool utilization got worse in a month (43→30/183 tools ever called, 86.5%→89.8% top-5 concentration) and root-caused why: orch-sentinel's OH-4 capability-utilization dimension, commissioned 2026-07-21 for exactly this, has never run past its first LITE run — its FULL/LITE crons were never armed and are absent from all 3 router re-arm skills.
+Restructured §A per coordinator feedback: the original single combined mermaid diagram placed Loop 1/Loop 2 as sibling subgraphs (renderer free to lay them side-by-side) and fanned one node into 10 parallel edges — rendered far wider than a normal screen despite `flowchart TD`. Split into two independent stacked diagrams; collapsed the 9-agent spawn fan-out and LAUNCHD's 4 dashed backstop targets into single grouped nodes (per-agent mechanics already live in §B prose); kept the `SQ`/`SQ2` signal_queue junction node in both, with a prose note that they're the same physical array. Verified narrow programmatically (wrote a dagre-style longest-path rank simulation over the parsed edge lists, not eyeballed): max width = 2 nodes at any rank in both diagrams (11 nodes/10 edges and 14 nodes/14 edges respectively). §B and §C untouched.
 
-**Signal dropped:** `docs/signals/2026-08-22-agent-fabric-ddd-debug-logger-tool-optimization.json` → agent-father
+**Signal dropped:** none new — prior entry's signal (`docs/signals/2026-08-22-cowork-detect-loop-flow-review.json`) still stands, payload unchanged.
