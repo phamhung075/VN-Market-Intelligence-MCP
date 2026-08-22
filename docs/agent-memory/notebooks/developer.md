@@ -1,6 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-22T22:00:00Z | **Cycle:** FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD (cross-service/, developer, P0 S, router-dispatched, session 02594cce)
+**Last updated:** 2026-08-22T23:00:00Z | **Cycle:** FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE (cross-service/, developer, P1 M, router-dispatched, session 02594cce)
+
+## Session 2026-08-22T23:00:00Z — FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE (cross-service/, developer, P1 M, review[] supervised row-level gate, router-dispatched, session 02594cce)
+
+**Task:** row's own `po_review_note` (2026-08-22 PO re-ratification) issued 3 BINDING corrections (B1/B2/B3) + a Q4 ruling over the architect brief's §11 amendment; router scoped this cycle to "code fix + regenerate classification, do NOT apply the live orch-state.json reconciliation write — leave that for PO sign-off."
+
+**Fix:** `classifySprintRegistryDanglingIds()` (`orchStateSchema.ts` §15) — pure, FS-free classification encoding B1 (STEP-0 RELABEL guarded by an existing `sprint_goal` entry; self-referential row STRIPs, never relabels), B2 (terminality checked before the non-backlog-lane LIVE branch), and Q4 (liveness = closed token set `{"active"}` ∪ TERMINAL_SET; every other token falls through to PRE_SPRINT_LABEL, never fabricates LIVE). `"BACKLOG"` sentinel special-cased NEVER_WAS/STRIP before the branch table. `scripts/audits/verify-sprint-registry-referential-integrity.mjs` is the read-only CLI wrapper (cold-archive fs reads + prints the table), mirroring `orch-validate.mjs`'s import-the-real-.ts-function convention.
+
+**Verify:** hand-derived the strict/broad known-id unions (57/100) directly against live `orch-state.json`+archive via jq BEFORE writing any code, matching PO's own re-verified figures exactly. TDD: 16 new fixture tests (RED→GREEN) in `apps/mcp-server/src/__tests__/FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE.test.ts`; existing `orchStateSchema.test.ts` 120/120 unchanged; `bun tsc --noEmit` clean; full suite 15323 pass/50 fail (pre-existing, unrelated subsystems — SLA-monitor simulated-alert fixture, OHLCV-aggregator missing-table fixture; confirmed via `git status` only 3 files touched). Live read-only run: `strict_dangling=23 LIVE=11 RELABEL=2 NEVER_WAS=3 PRE_SPRINT_LABEL=7` — reproduces the row's "23 not 22" ruling exactly (BACKLOG sentinel counted, correctly NEVER_WAS not misrouted LIVE) and both B1 live cases (`FIX-BCTC-BANK-SUMMARY-MAPPING`→LIVE via guarded branch table, `FIX-BCTC-CTG-BALANCE-SHEET-REFINE`→STRIP via self-ref). Simplicity gate: PASS (Q1 no excess flags, Q2 helper functions single-call-site but match the file's own existing `collectAllTaskIds`/`visitLane` decomposition precedent, Q3 no over-engineering, Q4 <50% overhead — nearly every line maps directly to a named branch of the corrected algorithm).
+
+**Scope boundary (deliberate, per B3):** did NOT implement the archiver closed-id-derivation correction, the AC-4 third-state branch, or Stage-1h validator wiring — PO's B3 ruling places all three AFTER the PO-approved data write ("build the classification/replay script -> run it -> PO signs its output -> data write -> archiver correction -> AC-4 -> Stage 1h -> ..."). Did NOT apply any `orch-state.json` reconciliation write — per the row's supervision note, that requires a separate PO sign-off on this regenerated table.
+
+**Closeout:** commits `efcb45ad8` (code+test+script), `f1ecb49cf` (this decision journal), `f2674b61c` (board row → `next_agent=po`, via `scripts/orch-apply.sh`, 0 net-new prose-ceiling growth). Row left in `review[]`, status unchanged, `supervised:true` retained. PO's next step: review the regenerated table (rerun `bun scripts/audits/verify-sprint-registry-referential-integrity.mjs` for a fresh read), sign off, then a future developer cycle applies the reconciliation writes.
+
+---
 
 ## Session 2026-08-22T22:00:00Z — FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD (cross-service/, developer, P0 S, router-dispatched — PO-minted, explicit dispatch, session 02594cce)
 
