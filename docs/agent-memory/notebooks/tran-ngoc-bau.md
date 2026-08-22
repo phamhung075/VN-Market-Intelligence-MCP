@@ -6,16 +6,6 @@
 
 ---
 
-## c130 · ~2026-08-14T20:22Z / VN-date 2026-08-15 (slot=tnb-audit; this session=632721c2-41e4-4aff-8d06-a47cf80dc0d7)
-
-**Gate:** `claimed:false` on `published:tnb-audit:2026-08-15` (VN-date derived live from `get_system_status` `Generated: 2026-08-14T20:21:59.424Z` UTC vs RECENT ERRORS block showing `2026-08-15 02:3x–03:0x` VN-local — UTC+7 confirmed, cron `13 20 * * *` fire window matches). `current_holder`: `owner_agent=tran-ngoc-bau`, `owner_client_session=5996f176-868d-4aa8-a9ef-2ed15f880fd8` (a peer tran-ngoc-bau session, not self). `claimed_at=1786738854` ≈ 2026-08-14T20:34:14Z (computed via delta from c128's anchor point `1786652223`=2026-08-13T20:30:23Z, Δ=86631s=24h03m51s — claimed only seconds/minutes before this gate check), `expires_at=1786839654` (=claimed_at+100800s/28h, not expired). Per main.md PUBLISHED MARKER GATE contract: `claimed != true` → log + EXIT, no dispatch. Consistent with the known peer-dispatcher-collision class (2026-08-01/08-08, c128 2026-08-13) — a concurrent tran-ngoc-bau invocation already owns today's slot; expected mutex behavior, not a defect. No Bootstrap/Dispatch phases run this cycle (blocked pre-dispatch by design). No BUG, no WORK report, no auto-cure this cycle — deferred entirely to the peer holder's cycle.
-
-**Step 0b2 (pre-gate context loaded, not acted on):** `docs/handoffs/tnb-audit-latest.md` carries PO's ACK (2026-08-14T00:36Z) on c128/c129's findings: 3 of 8 acted on (channel-param row re-diagnosed as RLC-starved at queue-position 51/88, not stranded; BIZCTX wiring dispatched with `next_agent` corrected `ba`→`architect`, BA spec already complete since 08-12; 3 new 1st-occurrence findings correctly held at N=1, not minted). PO separately flagged "no Bash/git tool this session" (3rd consecutive cycle) as a structural tool-grant gap needing direct escalation rather than continued per-cycle deferral — this session also has no Bash tool, same class, nothing to attach it to this cycle (gate-blocked pre-dispatch).
-
-**Routing this cycle:** 0 BUG sent, 0 WORK sent (gate blocked before any audit work). Notebook appended (this entry) via Edit. No handoff file write (nothing new to hand off). No git commit this session (no Bash/git tool granted — persisting, 4th consecutive cycle now).
-
----
-
 ## c132 · 2026-08-22T20:13-20:28Z (slot=tnb-audit; this session=90886cda-9a31-4300-a0dd-946ae1d57de7; VN-date=2026-08-23)
 
 **Gap since c131 (2026-08-14):** No tnb-audit cycle ran 2026-08-15..08-21 (notebook clean, no missed-cycle stub found) — Phase-1 probe this cycle found zero held `cowork-slot` locks (not a peer-collision defer, genuinely first run in 8 days). Cross-agent confirmation of a fleet-wide dark window: unified-agent notebook jumps 08-14→08-22(evening); news-scout c271(08-15T08:11Z)→c272(08-22T20:09Z); alert-commander c193(08-15T08:13Z)→c194(08-22T20:10Z); digest-predict self-flags "Gap notebook 08-15→08-21 không có entry" at its own 08-22 cycle. Zero `unified-agent-synthesis-*.json` files exist for 08-15..08-21 (only 08-13/08-14 then 08-22-chef-evening). This matches the already-tracked vacation/host-suspension resilience gap (project memory, same-day 2026-08-22) — not diagnosed further here (infra out of scope), but it means Phase 1's "last 3 dishes" target could not be met: only chef-evening (08-22, 19:48 UTC) is fresh; next-most-recent are the 08-14 eod/evening entries already audited at c131.
@@ -43,5 +33,21 @@
 **Routing this cycle:** 0 BUG sent (no data mismatch, no false-quality claim, weekend coverage threshold met — historical gap reported as WORK context instead of duplicate BUG). 1 WORK quality report sent (Overall: NEEDS_ATTENTION). `docs/handoffs/tnb-audit-latest.md` overwritten. `docs/signals/tnb-20260822T2028Z.json` dropped (priority=normal — NEEDS_ATTENTION, not high, given no active defect). Dashboard row appended to `.signal_queue` `to=po`.
 
 **Next Cycle Priorities (c133):** 1) Re-check PO's BIZCTX post-fix verification once a dish ships with ≥1 conviction_call. 2) Watch for 2nd occurrence of L6 gap-catalogue-vocabulary drift (ad-hoc `[gap:LX_...]` tags vs the 5-category catalogue). 3) Confirm chef-morning/chef-eod actually re-fire on the next business day (Mon 2026-08-24) — first real test that the fleet resumed cleanly post-gap. 4) If a 3rd fresh dish becomes available, re-run the full 3-dish layer-walk (this cycle only had 1). 5) Watch whether `get_alert_accuracy` 7d scored_pct recovers now that the gap window is rolling out of the 7d lookback.
+
+---
+
+## c132-peer · 2026-08-22T20:13-20:33Z (slot=tnb-audit; this session=2eaf4045-4099-4b03-a964-5bde7eb1b3d6; VN-date=2026-08-23)
+
+**Gate:** Phase-1 probe (main.md) found 0 held locks → ran the full audit independently, in parallel with the c132 session above. Phase-2 claim (auto-cure-and-handoff.md Step 7) → `claimed:false`, `current_holder=90886cda-9a31-4300-a0dd-946ae1d57de7` (c132, claimed_at=2026-08-22T20:28:20Z, ~4min before this probe). Per gate contract: peer holds publish marker → **0 WORK sent, 0 BUG sent, no handoff overwrite, no dashboard/signal write this cycle.** c132's handoff (already written) stands as this cycle's audit-of-record.
+
+**Independent cross-validation (useful signal on its own):** ran Phases 0.5-3 myself before hitting the gate — findings converged almost exactly with c132's: same weekend carve-out (starts=1/closes=1 guaranteed_ok=true), same L1-L6 layer scores on the 08-22 evening dish, same live cross-val EXACT MATCH (USD/VND 25930 / Gold 4680.60 / Oil 94.39, hexagram Khiêm(15)/THUAN_LOI/TIEU_CUC/64% confirmed live via `get_market_hexagram`), same `get_alert_accuracy(7d)` regression (N=57, 0 scored — corroborates a still-dark `signalOutcomeJob`/`alertOutcomeJob` per PO's same-day `FIX-CRON-NONRECOVERY-POST-HOST-SUSPENSION...` widen note), same USD/VND-threshold 3-way-mismatch finding, same stale `financial-analyst`/`report-analyzer` notebook-404.
+
+**Value-add beyond c132 (actually fixed, not just flagged) — committed `1c5f4aa81`, pushed to `main`:**
+1. USD/VND threshold 3-way mismatch (tool=25000 vs docs' 25500/26500) — c132 flagged LOW/doc-only, left unfixed. Root-caused to live classifier (`macro_usdvnd_direction_classifier.go:34`, `BearishThreshold=25000.0`) and corrected all 3 sites: `main.md` (L1+L3), `audit-methodology.md` (Step B), `docs/standards/tnb-methodology-layers.md` (L1+L3).
+2. `audit-market.md` Step 3 "Agents to audit" cited defunct `financial-analyst`/`report-analyzer` — c132 noted "notebooks absent, pre-existing, not re-diagnosed." Root-caused: both were merged into `bctc-analyst` by commit `3e90e27c6` (2026-05-29) — 3 months of TNB's own Phase-2 roster never including the live BIZCTX-signal producer. Corrected the list to `bctc-analyst`; spot-checked its notebook this cycle (c171, 2026-08-22) — same 7-day host-suspension gap as everyone else, business-context fields intact, no new defect.
+
+Both fixes are flow/doc self-cures under `can_modify_flow_md` — orthogonal to the publish-gate (Step 6 auto-cure runs before Step 7's claim), committed via commit-mutex regardless of which session wins the publish race.
+
+**Routing this cycle:** 0 BUG, 0 WORK (gate-blocked, by design — not a defect). 1 git commit (`1c5f4aa81`, 4 files, pushed). This notebook addendum via Edit + committed same mutex pattern.
 
 ---
