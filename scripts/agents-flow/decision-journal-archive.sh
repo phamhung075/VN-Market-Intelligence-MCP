@@ -54,15 +54,32 @@
 #                           (preserves rename history); set 0 to force plain `mv`
 #                           (required by the sandboxed test — fixture tree is not
 #                           part of this repo's git index).
+#   DJA_ALLOW_ALL_UNGATED  default: 0 — AC-1 leg(a) safety valve (see below).
 #
 # Usage:
 #   printf '%s\n' SPRINT-ID-1 SPRINT-ID-2 | scripts/agents-flow/decision-journal-archive.sh
 #   scripts/agents-flow/decision-journal-archive.sh --all
 #   scripts/agents-flow/decision-journal-archive.sh --all --dry-run   # preview counts only, no mv
 #
+# --- AC-1 leg(a) safety valve (FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD, 2026-08-22) ---
+# `--all` in LIVE (non-`--dry-run`) mode REFUSES by default: the closed-id derivation
+# below (CLOSED_IDS_FILE unions .done_tasks[].sprint, a per-TASK provenance tag, as if
+# it were a per-SPRINT closure record) can misclassify a sprint id as closed while it
+# still has open, non-terminal task rows — a live `--all` run then `git mv`s that
+# sprint's decision journals out from under active work with no undo path. Refuse
+# unless EITHER unlock leg is satisfied (only leg (a) ships here; leg (b) is a stub for
+# a corpus-replay script that does not exist yet — see architecture brief §11.5):
+#   (a) DJA_ALLOW_ALL_UNGATED=1 is set (explicit human/operator override), or
+#   (b) scripts/audits/verify-sprint-registry-referential-integrity.sh reports
+#       violations==0 (NOT YET IMPLEMENTED — wire this leg when that script lands;
+#       until then this leg can never satisfy the gate, only leg (a) can).
+# `--dry-run` and stdin mode are completely unaffected (AC-2) — the valve is scoped
+# to the live `--all` mutation path ONLY.
+#
 # Exit: 0 on a completed scan (including zero-eligible no-op); 1 only on setup/
-# config errors (missing orch-state.json or decisions dir) — per-file mv failures
-# are logged (ERROR-MOVE-FAILED) but never abort the remaining scan.
+# config errors (missing orch-state.json or decisions dir), or on an AC-1 leg(a)
+# safety-valve refusal (ungated live `--all`) — per-file mv failures are logged
+# (ERROR-MOVE-FAILED) but never abort the remaining scan.
 #
 # Owning flow: docs/agents/pm/flow/task-archive.md § Step 5.5
 # Policy SSOT: docs/policies/dev-standards.md § Script Persistence
@@ -82,6 +99,7 @@ ORCH_ARCHIVE_DIR="${ORCH_ARCHIVE_DIR:-$REPO_ROOT/docs/data/orch/archive}"
 DECISIONS_DIR="${DECISIONS_DIR:-$REPO_ROOT/docs/agent-memory/decisions}"
 ARCHIVE_DECISIONS_DIR="${ARCHIVE_DECISIONS_DIR:-$REPO_ROOT/docs/archive/decisions}"
 DJA_GIT_MV="${DJA_GIT_MV:-1}"
+DJA_ALLOW_ALL_UNGATED="${DJA_ALLOW_ALL_UNGATED:-0}"
 
 MODE="stdin"
 DRY_RUN=0
@@ -91,6 +109,17 @@ for arg in "$@"; do
     --dry-run) DRY_RUN=1 ;;
   esac
 done
+
+# AC-1 leg(a) safety valve — refuse an UNGATED live (non-dry-run) --all run.
+# Leg (b) (corpus-replay violations==0) is not wired yet (§11.5, not shipped this
+# pass); only leg (a) can satisfy the gate today. Force an internal dry-run pass
+# so the exact same scan/counting logic below computes the would-move count with
+# a hard mutation guarantee of zero — never duplicate the counting logic.
+GATE_REFUSED=0
+if [ "$MODE" = "all" ] && [ "$DRY_RUN" != "1" ] && [ "$DJA_ALLOW_ALL_UNGATED" != "1" ]; then
+  GATE_REFUSED=1
+  DRY_RUN=1
+fi
 
 if [ ! -f "$ORCH_STATE" ]; then
   echo "[decision-journal-archive] ERROR: orch-state not found at $ORCH_STATE" >&2
@@ -226,5 +255,10 @@ while IFS= read -r -d '' f; do
 done < <(find "$DECISIONS_DIR" -maxdepth 1 -type f -name "sprint-*.md" -print0 2>/dev/null)
 
 echo "[decision-journal-archive] SUMMARY mode=$MODE scanned=$scanned archived=$archived active_stay=$active_stay closed_not_in_scope=$closed_not_in_scope no_orch_record=$no_orch_record already_archived=$already_archived"
+
+if [ "$GATE_REFUSED" = "1" ]; then
+  echo "[decision-journal-archive] REFUSED: --all in LIVE (non-dry-run) mode is gated (AC-1 leg(a) safety valve, FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD) — $archived journal(s) would be archived this run, and some may belong to sprint ids with OPEN, non-terminal work (root cause: closed-id derivation unions per-task provenance, see script header). Set DJA_ALLOW_ALL_UNGATED=1 to override, or run with --dry-run to preview only. No files were moved." >&2
+  exit 1
+fi
 
 exit 0

@@ -59,6 +59,10 @@ comm -23 <(echo "$PRE_EVICT_ACTIVE_IDS") <(echo "$POST_EVICT_ACTIVE_IDS") \
 # one-time / occasional backfill:
 bash scripts/agents-flow/decision-journal-archive.sh --all
 ```
+**CAVEAT (FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD, 2026-08-22):** the `--all` line above is now
+GATED in live (non-`--dry-run`) mode — it refuses by default (147 journals belonging to 10 ids
+with open work were confirmed archivable-live 2026-08-22) unless `DJA_ALLOW_ALL_UNGATED=1` is
+set; see the script's own header for the full valve design and unlock legs before running it verbatim.
 Moves `docs/agent-memory/decisions/sprint-<id>.md` / `sprint-<id>-<agent>.md` journals whose
 sprint has CLOSED into `docs/archive/decisions/`. STATUS-based selection (closed vs still-active
 sprint id via LONGEST-match, never bare prefix glob — handles the live

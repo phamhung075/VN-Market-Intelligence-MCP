@@ -45,9 +45,13 @@ old_ts() { # $1 = days ago -> touch -t compatible timestamp
 run_dja() { # $1 = mode ("--all" or ""), $2 = stdin ids (newline-separated string or "")
   local mode="$1" ids="$2"
   if [ "$mode" = "--all" ]; then
+    # NOTE: these pre-existing runs exercise the ARCHIVING logic (longest-match,
+    # active-guard, idempotency), not the AC-1 leg(a) safety valve added below —
+    # DJA_ALLOW_ALL_UNGATED=1 keeps their pre-gate behavior/assertions intact.
+    # The valve itself is covered by dedicated Run 8/9/10 fixtures further down.
     ORCH_STATE="$ORCH_STATE" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR" \
       DECISIONS_DIR="$DECISIONS_DIR" ARCHIVE_DECISIONS_DIR="$ARCHIVE_DECISIONS_DIR" \
-      DJA_GIT_MV=0 bash "$SCRIPT" --all
+      DJA_GIT_MV=0 DJA_ALLOW_ALL_UNGATED=1 bash "$SCRIPT" --all
   else
     printf '%s\n' "$ids" | \
       ORCH_STATE="$ORCH_STATE" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR" \
@@ -312,6 +316,97 @@ if echo "$OUT7" | grep -q "WOULD-ARCHIVE file=sprint-CLOSED-BETA-dryagent.md"; t
   ok "run7-dry-run-reports-would-archive"
 else
   bad "run7-dry-run-reports-would-archive"
+fi
+
+# =============================================================================
+# Run 8 — AC-1 leg(a) safety valve: --all in LIVE (non-dry-run) mode with NO
+# override REFUSES (non-zero exit, zero files moved, refusal names the
+# would-move count + the override var). FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD.
+# =============================================================================
+echo "gate candidate" > "$DECISIONS_DIR/sprint-CLOSED-BETA-gate-agent.md"
+
+OUT8="$(ORCH_STATE="$ORCH_STATE" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR" \
+  DECISIONS_DIR="$DECISIONS_DIR" ARCHIVE_DECISIONS_DIR="$ARCHIVE_DECISIONS_DIR" \
+  DJA_GIT_MV=0 bash "$SCRIPT" --all 2>&1)"
+RC8=$?
+echo "$OUT8"
+
+if [ "$RC8" -ne 0 ]; then ok "run8-ungated-live-all-refuses-nonzero-exit"; else bad "run8-ungated-live-all-refuses-nonzero-exit (rc=$RC8)"; fi
+
+if [ -f "$DECISIONS_DIR/sprint-CLOSED-BETA-gate-agent.md" ]; then
+  ok "run8-ungated-live-all-source-untouched"
+else
+  bad "run8-ungated-live-all-source-untouched"
+fi
+
+if [ ! -e "$ARCHIVE_DECISIONS_DIR/sprint-CLOSED-BETA-gate-agent.md" ]; then
+  ok "run8-ungated-live-all-nothing-archived"
+else
+  bad "run8-ungated-live-all-nothing-archived"
+fi
+
+if echo "$OUT8" | grep -q "REFUSED"; then
+  ok "run8-ungated-live-all-refusal-message-present"
+else
+  bad "run8-ungated-live-all-refusal-message-present"
+fi
+
+if echo "$OUT8" | grep -Eq "REFUSED.*DJA_ALLOW_ALL_UNGATED"; then
+  ok "run8-refusal-message-names-override-var"
+else
+  bad "run8-refusal-message-names-override-var"
+fi
+
+if echo "$OUT8" | grep -Eq "REFUSED.*[0-9]+ journal"; then
+  ok "run8-refusal-message-names-wouldmove-count"
+else
+  bad "run8-refusal-message-names-wouldmove-count"
+fi
+
+# =============================================================================
+# Run 9 — override unlocks live mode (leg a) exactly as pre-gate behavior
+# =============================================================================
+OUT9="$(ORCH_STATE="$ORCH_STATE" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR" \
+  DECISIONS_DIR="$DECISIONS_DIR" ARCHIVE_DECISIONS_DIR="$ARCHIVE_DECISIONS_DIR" \
+  DJA_GIT_MV=0 DJA_ALLOW_ALL_UNGATED=1 bash "$SCRIPT" --all 2>&1)"
+RC9=$?
+echo "$OUT9"
+
+if [ "$RC9" -eq 0 ]; then ok "run9-override-live-all-succeeds"; else bad "run9-override-live-all-succeeds (rc=$RC9)"; fi
+
+if [ -f "$ARCHIVE_DECISIONS_DIR/sprint-CLOSED-BETA-gate-agent.md" ] && [ ! -f "$DECISIONS_DIR/sprint-CLOSED-BETA-gate-agent.md" ]; then
+  ok "run9-override-live-all-archives-eligible-file"
+else
+  bad "run9-override-live-all-archives-eligible-file"
+fi
+
+# =============================================================================
+# Run 10 — AC-2: --dry-run SUMMARY line is IDENTICAL with/without the override
+# (the valve gates ONLY the live-mode path, never the preview path)
+# =============================================================================
+echo "dry gate candidate" > "$DECISIONS_DIR/sprint-CLOSED-GAMMA-drygate-agent.md"
+
+OUT10_NOOVERRIDE_SUMMARY="$(ORCH_STATE="$ORCH_STATE" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR" \
+  DECISIONS_DIR="$DECISIONS_DIR" ARCHIVE_DECISIONS_DIR="$ARCHIVE_DECISIONS_DIR" \
+  DJA_GIT_MV=0 bash "$SCRIPT" --all --dry-run 2>&1 | grep '^\[decision-journal-archive\] SUMMARY')"
+
+OUT10_OVERRIDE_SUMMARY="$(ORCH_STATE="$ORCH_STATE" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR" \
+  DECISIONS_DIR="$DECISIONS_DIR" ARCHIVE_DECISIONS_DIR="$ARCHIVE_DECISIONS_DIR" \
+  DJA_GIT_MV=0 DJA_ALLOW_ALL_UNGATED=1 bash "$SCRIPT" --all --dry-run 2>&1 | grep '^\[decision-journal-archive\] SUMMARY')"
+
+echo "no-override: $OUT10_NOOVERRIDE_SUMMARY"
+echo "override:    $OUT10_OVERRIDE_SUMMARY"
+
+if [ "$OUT10_NOOVERRIDE_SUMMARY" = "$OUT10_OVERRIDE_SUMMARY" ] && [ -n "$OUT10_NOOVERRIDE_SUMMARY" ]; then
+  ok "run10-dryrun-summary-unchanged-regardless-of-override"
+else
+  bad "run10-dryrun-summary-unchanged-regardless-of-override"
+fi
+
+if [ -f "$DECISIONS_DIR/sprint-CLOSED-GAMMA-drygate-agent.md" ]; then
+  ok "run10-dryrun-still-mutates-nothing"
+else
+  bad "run10-dryrun-still-mutates-nothing"
 fi
 
 echo "========================================"
