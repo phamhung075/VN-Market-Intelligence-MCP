@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-08-22 16:53 UTC | **Sprint:** ULTRACODE-AUDIT-FIXALL
+**Last updated:** 2026-08-22 17:07 UTC | **Sprint:** ULTRACODE-AUDIT-FIXALL
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-08-22T17:07Z — UC-DDDFAB-ARCHDOC-XREF (router-dispatched 1-line follow-up, zone `docs`, no task_board row)
+
+**Task:** Router-routed follow-up from agent-father's implementation of `docs/architecture-briefs/2026-08-22-agent-fabric-ddd-debug-logger-tool-optimization.md` (agent-father commits `d65da8640`+`d6ccc5da4`) — agent-father has no `docs/ARCHITECTURE.md` write authority and no spawn capability, so routed the doc fix back to router → architect. Ask: `## DDD Layer Order` (lines 5-7) lists the layer chain `domain ← application ← interface ← scheduler` and omits `infrastructure/`, then asserts the golden rule (`domain/` never imports `infrastructure/`) one line later — a mini-SSOT gap. Fix: 1-line cross-reference to `docs/policies/dev-standards.md § DDD Layer Rules`, no table duplication.
+**Findings:** Confirmed both anchors live before editing — `docs/ARCHITECTURE.md:5-7` (the gap as described) and `docs/policies/dev-standards.md:1662` `## DDD Layer Rules` (fuller table incl. `infrastructure/` row + same golden rule). Kept the diff to exactly the requested 1 line — verified via `git diff --stat docs/ARCHITECTURE.md` → 1 insertion only. Did not re-open the broader DDD-risk review (already covered `docs/ARCHITECTURE.md` this same session via `UC-DDDRISK-P1`, prior cycle below).
+**Output:** `docs/ARCHITECTURE.md` § DDD Layer Order — added `Full layer-to-folder table (incl. infrastructure/) → docs/policies/dev-standards.md § DDD Layer Rules.` No task_board row minted — nothing left to hand off, fully resolved this cycle (ambient doc fix, decision-journal entry per flow's mandatory-journal rule regardless).
+**Next:** None — cycle closed.
 
 ## 2026-08-22T16:53Z — UC-DDDRISK-P1 (direct router dispatch, zone `multi`, no BA spec — brownfield DDD risk review of apps/**)
 

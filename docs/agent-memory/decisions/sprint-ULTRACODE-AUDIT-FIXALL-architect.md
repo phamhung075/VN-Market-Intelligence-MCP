@@ -85,3 +85,12 @@
 - VPS diagram: the most consequential single finding this cycle — verified against server.ts line-by-line rather than trusting the diagram's data-type-association framing; all 5 VPS services actually push into MCP Server alone (single ingress), not 4 different downstream services as previously drawn.
 **why-decision:** Direct ARCHITECTURE.md edits kept in scope because they are pure fact-correction (language/port/topology) with zero domain-judgment risk, unlike the 2 code findings which need a dev-* specialist's actual implementation call. Backlog-row minting (vs a bare brief with no board trace) chosen so the 2 findings are actually pickable by the dev-team idle-chain rather than only living in a brief no scheduled process reads.
 **why-change:** No BA/PM step preceded this cycle (direct dispatch) — used the flow's own Step-5 handoff-file convention with a fresh `UC-*` task id since no existing docs/handoffs/ file or task_board row existed for this scope.
+
+### STEP architect-S8 · architect · 2026-08-22T19:05:00Z
+**task-id:** UC-DDDFAB-ARCHDOC-XREF (recommendation (a), `docs/architecture-briefs/2026-08-22-agent-fabric-ddd-debug-logger-tool-optimization.md`; routed back to architect by agent-father, who lacks `docs/ARCHITECTURE.md` write authority + spawn capability)
+**what-done:** Added 1-line cross-reference in `docs/ARCHITECTURE.md` § DDD Layer Order → `docs/policies/dev-standards.md § DDD Layer Rules`, after confirming both anchors live (ARCHITECTURE.md:5-7 omits `infrastructure/` from the layer chain while asserting the golden rule; dev-standards.md:1662 `## DDD Layer Rules` carries the fuller table incl. `infrastructure/` + the same golden rule).
+**what-considered:**
+- Cross-reference line vs duplicating the full layer→folder table in ARCHITECTURE.md — router's dispatch explicitly scoped this to a pointer, not a table copy (avoids 2 tables drifting independently).
+- Broader ARCHITECTURE.md pass this cycle vs strict 1-line diff — kept to the 1-line diff; a separate broader DDD-risk review (`UC-DDDRISK-P1`, this same session/journal, STEP-S7) already covered the file this cycle, re-litigating would duplicate work.
+**why-decision:** Cheapest fix that closes the mini-SSOT gap (chain lists 4 layers, golden rule references a 5th) without creating a second maintained copy of the layer table.
+**why-change:** No change from the router's dispatch scope — verified diff is exactly `git diff --stat docs/ARCHITECTURE.md` → 1 insertion, no other lines touched.
