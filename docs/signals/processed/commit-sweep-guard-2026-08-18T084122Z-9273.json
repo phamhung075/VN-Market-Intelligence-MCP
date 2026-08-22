@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-18T08:41:22Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/data/code-janitor-known-findings.json. actor=6194fe17-df8a-4b04-ad52-072efab100ee mode=warn escalated=false prior_warns=2 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "03d403401b0dcdbbff398779cc26a082277d70e5c5a5ad594d78a0788b21c9d5",
+    "processedAt": "2026-08-22T16:48:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

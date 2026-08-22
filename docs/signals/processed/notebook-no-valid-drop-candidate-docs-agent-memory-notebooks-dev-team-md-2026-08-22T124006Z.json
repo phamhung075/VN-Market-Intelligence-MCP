@@ -1,0 +1,25 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_no_valid_drop_candidate_breach",
+  "priority": "high",
+  "createdAt": "2026-08-22T12:40:06Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/dev-team.md",
+    "line_count": 43,
+    "cap": 200,
+    "byte_count": 12837,
+    "byte_cap": 12000,
+    "section_count": 3,
+    "non_sentinel_section_count": 1,
+    "sentinel_section_count": 2,
+    "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+    "action_required": "manual_split_to_archive"
+  },
+  "_processed": {
+    "fingerprint": "7462f3d83c8b0ff232e9c3024893e291e29c7fabc0d6235c41f9e0621392beb9",
+    "processedAt": "2026-08-22T16:48:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

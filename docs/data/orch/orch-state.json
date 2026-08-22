@@ -1,12 +1,12 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1786749604,
-    "last_linecount": 38,
+    "last_mtime": 1787417761,
+    "last_linecount": 10,
     "po": {
       "section_name": "po",
-      "last_mtime": 1786749604,
-      "last_linecount": 38
+      "last_mtime": 1787417761,
+      "last_linecount": 10
     }
   },
   "decision_journal": [
@@ -132,7 +132,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-15T04:50:33Z",
+    "_updated_at": "2026-08-22T16:55:39Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -217,20 +217,6 @@
         "status": "NEW",
         "payload_ref": null,
         "board_row": "FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE"
-      },
-      {
-        "id": "sys-20260818T085126-2a19",
-        "ts": "2026-08-18T08:51:26Z",
-        "from": "system-auditor",
-        "to": "dev-team",
-        "type": "db_integrity_breach",
-        "summary": "bctc_vps_queue: One stale pending row detected: 1 row with status='pending' AND created_at < datetime('now','-72 hours')",
-        "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": "docs/data/db-integrity-history.json",
-        "provenance": "detector",
-        "audit_cycle_tag": null,
-        "dedup_key": null
       },
       {
         "id": "sys-20260822T163747-4dc2",
@@ -18253,7 +18239,7 @@
         "last_served_tick": "2026-08-15T13:20:13Z"
       }
     },
-    "_updated_at": "2026-08-22T16:48:03Z",
+    "_updated_at": "2026-08-22T16:55:39Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -18882,6 +18868,71 @@
         },
         "createdAt": "2026-08-22T12:40:04Z",
         "drained_at": "2026-08-22T16:48:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7fd26172a67d74cb6d06457fde3ddb2ae4dbbdc6cf555eb06e562c85c246cbcf",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "dev-team",
+        "type": "db_integrity_breach",
+        "priority": "WARN",
+        "payload": "bctc_vps_queue: One stale pending row detected: 1 row with status='pending' AND created_at < datetime('now','-72 hours')",
+        "payload_ref": "docs/data/db-integrity-history.json",
+        "createdAt": "2026-08-18T08:51:26Z",
+        "drained_at": "2026-08-22T16:55:21Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5c69cfb155067decde16aafb0e47dd49f3de7714ee341a28677d3383199a8f4d",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_loss",
+        "priority": "WARN",
+        "payload": "auditor cycle lost tick=malformed-key — orphaned marker, mid-run death",
+        "payload_ref": null,
+        "createdAt": "2026-08-22T16:37:47Z",
+        "drained_at": "2026-08-22T16:55:21Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c2d0959a242747c5d809bea6253d8f7c6ff205851c190524ee71b49d961fcf63",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_missing",
+        "priority": "WARN",
+        "payload": "auditor tier-2 cycle possibly missing — no completion evidence in 174h (cadence 4h)",
+        "payload_ref": null,
+        "createdAt": "2026-08-22T16:37:53Z",
+        "drained_at": "2026-08-22T16:55:21Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "46c75a9c0b428cc94acc81dacda32ef3416b6e5c7683df7b43bb764fe2621564",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_missing",
+        "priority": "WARN",
+        "payload": "auditor tier-3 cycle possibly missing — no completion evidence in 206h (cadence 24h)",
+        "payload_ref": null,
+        "createdAt": "2026-08-22T16:38:01Z",
+        "drained_at": "2026-08-22T16:55:21Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5b5cc257b1fe59b2a54c679c5e01257a4ee1e296edff7bf2111b7b398f690ce5",
+        "source": "dashboard",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "auditor_cycle_missing",
+        "priority": "WARN",
+        "payload": "auditor tier-1 cycle possibly missing — no completion evidence in 103h (cadence 0.5h)",
+        "payload_ref": null,
+        "createdAt": "2026-08-22T16:38:08Z",
+        "drained_at": "2026-08-22T16:55:21Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
