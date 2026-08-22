@@ -1,6 +1,6 @@
 /**
  * orchStateSchema.ts — Nested Zod SSOT schema for docs/data/orch/orch-state.json
- * size-justification: ~1300L — one Zod SSOT (§1-8: StatusEnum/Task/Sprint/
+ * size-justification: ~1797L — one Zod SSOT (§1-8: StatusEnum/Task/Sprint/
  *   SignalQueue/Head/Meta/TaskBoard/OrchState) plus 6 co-located write-time
  *   validation guards (§9-14) that scripts/orch-validate.mjs imports BY NAME
  *   from this exact file path. A physical split (even via re-export barrel)
@@ -31,6 +31,19 @@
  *   at implementation time, wider than the brief's own snapshot — see §8A
  *   header) — same one-file-per-guard co-location precedent, same physical-
  *   split blocker as §9-14 above (+217L).
+ *   FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE
+ *   2026-08-22 (commits efcb45ad8/1897ef6a2): added §15
+ *   classifySprintRegistryDanglingIds() (pure, read-only B1/B2/Q4-corrected
+ *   classification of every sprint id referenced by task_board.*[].sprint or
+ *   sprint_goal.entries[] against the strict known-id union) + §16
+ *   checkSprintRegistryReferentialIntegrity() (delegates to §15, wires Stage
+ *   1h of orch-validate.mjs) — same one-file-per-guard co-location precedent
+ *   as §9-14/§8A above, same physical-split blocker (+458L: 369 insertions
+ *   then 89 insertions/2 deletions — pushed this file from 1300L to its
+ *   actual 1784L; this line was the stale declaration that armed
+ *   UNBLOCK-FLEETPUSH-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER-BLOCKS-ALL-PUSHES,
+ *   a fleet-wide pre-push size-lint false-block — refreshed here, no code
+ *   change).
  *
  * Sprint: SSOT-INTEGRITY-PERIMETER  Task: SSOT-W1-ZOD-SCHEMA-MODEL
  *
