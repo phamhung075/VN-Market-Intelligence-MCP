@@ -8,62 +8,6 @@
      explicit YYYY-MM-DD token. Nothing deleted; full record in the archive file and git
      history. -->
 
-## REVIEW 2026-08-22T17:13Z — FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS re-dispatch
-(router-spawned via dev-team Review-Lane secondary-drain, `secondary_dispatch_target=agent-father`;
-task-level `task_claim` skipped — `mcp__gateway__call_tool` absent from this spawn's tool grant,
-same "no gateway binding" condition as the 08-15/08-22 entries below; solo-operation direct commit
-per `commit-boundary/SKILL.md` § Commit-Mutex Gap).
-
-- Re-read the row live (not the dispatch summary). AC(1)-(3) (prose: immutability invariant,
-  AC-2/AC-3 reconciliation, trim-first ladder) already QA-confirmed landed 2026-08-08. AC(4)
-  (mechanical HARD block) remains the open, load-bearing AC — explicitly gated on the
-  system-auditor-pilot row's (`FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED`,
-  owner=po) Success Signals 1-4 reading green first (fleet rollout is opt-in, not this row's call
-  to force).
-- Checked that pilot's own verification gate live (it was left "OUTSTANDING" 2026-08-14T20:22Z,
-  never re-checked): **FAILS.** `docs/agent-memory/notebooks/system-auditor.md` @ HEAD (212L) has
-  5 `## ` headings in NON-monotonic order (c103, d4-auto, c102, c101, c104 top-to-bottom — c104
-  dated 2026-08-22 sits BELOW 3 sections dated 08-14/08-15). Root cause confirmed, NOT the
-  Tier-1/2/3 pilot's own code: commit `22039783e` (2026-08-22, message "Audit TIER=DATA sweep")
-  raw-appended a `## c104` section at EOF — this write path is `.claude/commands/crons/
-  cron-db-data-integrity.md`, a STANDALONE cron prompt that never calls `scripts/notebook-compose.sh`
-  and carries **zero notebook-write instruction of its own** (grepped the file: "notebook" appears
-  once, in an unrelated historical citation). `docs/agents/system-auditor/flow/main.md:130` already
-  self-documents this AS a known gap ("AUDIT_TIER=DATA -> not yet a real branch of this table...
-  falls through to the default... Deeper integration (optional, later)") but nobody had connected
-  that deferred-as-optional gap to a live AC-2/AC-5 contract breach until this cycle.
-- **NEW guard blind spot** (beyond the already-known under-retention gap in `router_occurrence_
-  20260812T1638Z`): confirmed via `docs/signals/processed/commit-sweep-guard-2026-08-22T124244Z-
-  40748.json` that the ONLY guard that fired on commit `22039783e` was the unrelated bare-commit
-  peer-index sweep guard (wrong-actor-scope), not `_check_notebook_immutability` — that guard only
-  diffs BODY HASHES of headings retained across the commit boundary, so a pure append that skips
-  pruning entirely (no retained heading mutated) trips ZERO warns even while blowing the 200L/
-  3-section cap. Worth folding into AC-4's eventual mechanical check.
-- Separately observed, NOT touched: `docs/agent-memory/notebooks/system-auditor.md` currently
-  carries an UNCOMMITTED working-tree diff (+78L) appending a second, differently-malformed write
-  (a `### Audit Run Tier-1 c5` sub-heading plus a stray duplicate `# System Auditor Notebook` H1,
-  no `## ` boundary at all) on top of the c104 commit above. Left strictly alone per "silence≠dead"
-  — cannot tell live-in-progress from stranded from here, and it is not agent-father's notebook to
-  touch regardless.
-- Disposition: row stays REVIEW, cannot flip DONE/DONE_VERIFIED — QA's 2026-08-08 CHANGES_REQUESTED
-  still holds and this cycle adds a THIRD confirmed live recurrence since. Did NOT edit
-  `.claude/skills/notebook-write/SKILL.md` (already 251L/13-ish KB, over its own documented
-  200L/12000B cap per `CLEAN-CTXBLOAT-NOTEBOOK-WRITE-SKILL-215L-OVER-200L-CAP`, BACKLOG,
-  next_agent=claude-manager-helper — more prose there is exactly the debt that row exists to cut,
-  and this class has already had "more prose" tried and failed per this row's own history). Did NOT
-  edit `docs/agents/system-auditor/flow/main.md` either — the actual gap is in a file that dispatcher
-  never reaches (`cron-db-data-integrity.md`), so editing main.md's line 130 wording would not close
-  anything live.
-- Could NOT write the finding onto the board row itself: `docs/data/orch/orch-state.json` is
-  outside agent-father's commit zone per `commit-boundary/SKILL.md` zone table (no listed
-  exception for a `task_board` narrative note, only init.md's narrower "signal-queue DONE-mark"
-  carve-out); no `send_telegram`/signal-write capability this spawn either (same gap as 08-15/08-22
-  entries below). Routed via RETURN to router/PO instead: recommend the real fix — wire
-  `.claude/commands/crons/cron-db-data-integrity.md`'s notebook append (if one is even authorized;
-  consider forbidding it outright instead) to `scripts/notebook-compose.sh`, OR bar that cron from
-  writing to `system-auditor.md` at all — lands with **developer** (`.claude/commands/` is out of
-  every commit-boundary agent's zone listed in that SKILL.md, agent-father included).
-
 ## FIX 2026-08-22T18:40Z — FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE, WF-3 lane-move
 gap (router-dispatched directly, row's own `next_agent=agent-father`; architect had just completed
 diagnosis + brief correction, no task_claim — same no-gateway-binding condition, solo-operation).
@@ -92,3 +36,72 @@ diagnosis + brief correction, no task_claim — same no-gateway-binding conditio
   original pass).
 - No MCP gateway tool binding this session — could not `send_telegram` a work-channel notice;
   flagging in RETURN for the router to relay.
+
+## FIX 2026-08-22T19:43Z — FIX-TRIAGE-INBOX-CLEAR-OWNERSHIP-PO-SELF-READ, dev-team-vs-po CLEAR ownership contradiction
+
+Router-dispatched directly (no task-board row existed; router flagged the contradiction PO surfaced
+during today's triage and declined to arbitrate itself — correctly, per PO's own boundary_rules).
+
+- **Contradiction:** `docs/agents/po/flow/triage-signals.md:7` said the subtractive CLEAR on
+  `.dev_team_idle_chain.pending_triage_inbox[]` belongs to `docs/agents/dev-team/flow/main.md` §
+  Step 1, never PO. PO's own notebook (~90 min earlier, same session) cited that exact line to
+  decline the clear. 90 minutes later the router's own direct-to-PO dispatch prompt (per
+  `.claude/skills/dispatch/SKILL.md`'s "queue / triage" dispatch-table row) instructed PO to do the
+  clear instead — contradicting the doc. A 64-envelope backlog (including an already-correctly-
+  dispositioned 08-15 `ci_red`) had regrown because nothing reliably cleared it.
+- **Root cause, verified before picking a side (not just "router guessed wrong once"):** dev-team's
+  Step 1 CLEAR code (`main.md:1100-1129` before this fix) was well-formed and workable IN ISOLATION
+  — it ran, in-session, immediately after PO's spawn returned, using the SAME `pendingSignals` var
+  captured before spawn. But `.claude/skills/dispatch/SKILL.md:40` has a standing, sanctioned
+  dispatch-table row — "queue / triage — what should we work on? → po → main" — that spawns PO
+  DIRECTLY, bypassing `dev-team/flow/main.md` entirely. On that path, dev-team's Step 1 CLEAR
+  block is never reached — physically unreachable, not merely skipped. Confirmed live: today's
+  contradiction was exactly this — the router took the direct-dispatch path and had to improvise.
+  So dev-team-Step-1-owns-it was not survivable as written; the real question was which party is
+  present on BOTH invocation paths — that's PO (`docs/agents/po/flow/main.md`'s own "Called from"
+  line only ever named the dev-team path — also stale, also fixed here).
+- **Fix — ownership moved to PO, made self-sufficient on either invocation path:**
+  - `docs/agents/po/flow/triage-signals.md`: PO's Step 0-SIG now does its own fresh
+    `.dev_team_idle_chain.pending_triage_inbox` read as SSOT (never trusts a caller-supplied
+    array), and owns the CLEAR unconditionally as its own last step (new executable
+    `ORCH_APPLY_DECLARED_INBOX_TRIAGED`-guarded block, same shape dev-team used, `_updated_by:
+    "po"`). Framing/header rewritten to name both invocation paths explicitly.
+  - `docs/agents/dev-team/flow/main.md` § Step 1: removed the CLEAR write; its own durable-inbox
+    read is kept, re-scoped to the no-op short-circuit gate + convenience-pass only. History
+    comment appended (established convention).
+  - `docs/agents/po/flow/main.md`: "Called from: dev-team Step 1" / "Receives: pendingSignals[]
+    from Step 0a" lines corrected to name both paths + PO's self-read (this was flagged as a known
+    residual gap by `FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION` 2026-08-09 and left untouched then —
+    closed now, same task).
+  - `docs/agents/dev-team/flow/drain-signals.md`: cross-reference pointer that named
+    `dev-team/flow/main.md § Step 1` as the CLEAR site re-pointed to `po/flow/triage-signals.md §
+    Step 0-SIG` — no functional change to this file's own append-only logic.
+- **`docs/policies/dev-standards.md` — drafted then REVERTED, out of zone:** that file's own
+  "Inbox row-identity dimension" CANONICAL block (~L351-373) also names
+  `docs/agents/dev-team/flow/main.md § Step 1` as the CLEAR site and is now stale by the same
+  measure as drain-signals.md's pointer above. Drafted the identical pointer correction, then
+  reverted it (`git checkout -- docs/policies/dev-standards.md`) on re-checking
+  `commit-boundary/SKILL.md`'s per-agent zone table + my own init.md `commit_zone.allowed` — neither
+  lists `docs/policies/` for agent-father (allowlist model: `docs/agents/`, `docs/agent-memory/`,
+  `.claude/skills/`, `.claude/agents/` only). **Flagged via RETURN as a residual follow-up** for
+  whichever agent owns `docs/policies/` commits — exact before/after text: replace `` Wired ONLY
+  into `docs/agents/dev-team/flow/main.md` § Step 1 "Durable-inbox CLEAR" — the SOLE legitimate
+  remover of inbox entries `` with `` Wired ONLY into `docs/agents/po/flow/triage-signals.md` §
+  Step 0-SIG "Durable-inbox CLEAR" (moved off `docs/agents/dev-team/flow/main.md` § Step 1 by
+  `FIX-TRIAGE-INBOX-CLEAR-OWNERSHIP-PO-SELF-READ`, 2026-08-22 — that call site was unreachable
+  whenever PO is spawned directly by the router instead of via a dev-team tick) — the SOLE
+  legitimate remover of inbox entries `` (same section header + one earlier "Step-1 triage pass"
+  wording tweak a few lines above it) — mechanical text-only fix, no logic change, low risk to hand
+  off.
+- **Not touched (deliberate):** the architecture brief
+  `docs/architecture-briefs/2026-07-25-devteam-idle-chain-rotation-durable-inbox.md` and the closed
+  `docs/handoffs/TASK_FIX-DEVTEAM-IDLE-CHAIN-MAIN-COMPLETION.md` — historical design/handoff
+  records of what was implemented at the time, not live specs an agent re-reads each cycle; SUPERSEDED-
+  not-deleted convention applies. Did not edit PO's notebook or decision journal (another agent's
+  memory — out of scope; PO's own entry `docs/agent-memory/decisions/triage-20260822T1927Z-po.md`
+  already documents the incident from PO's side and was cross-checked, not modified).
+- No task-board row minted — pure flow-doc/spec-clarity correction across 4 docs (all within
+  agent-father's `docs/agents/` commit zone) + this notebook entry; no code/orch-state.json
+  touched, `docs/policies/dev-standards.md` handed off (see bullet above) rather than self-committed
+  out-of-zone. Committed directly per the task's own "lighter-weight, sufficient resolution"
+  allowance.
