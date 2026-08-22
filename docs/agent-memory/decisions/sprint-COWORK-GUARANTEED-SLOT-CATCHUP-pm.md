@@ -158,3 +158,15 @@ PIPELINE: continue (P0, decomposition-only, no code changes in this cycle)
 
 ---
 
+### STEP pm-S9 · GHOSTZONE P0 decomposition (2 dev tasks + 1 follow-up) · pm · 2026-08-22T19:13:31Z
+**task-id:** FIX-GHOSTZONE-CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST + FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD
+**what-done:** Both architect-ratified P0 fixes (zero blockers, zero file overlap, single-file+single-test-file changes each) moved backlog[]->ready[], status TODO, owner/next_agent=dev-mcp-server. Wrote PM work-orders (FIX-GHOSTZONE-CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST-PM-workorder.md, FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD-PM-workorder.md) embedding architect's exact binding SQL + test strategy + risk flags verbatim, no scope invented. Minted FOLLOWUP-CONVICTION-HISTORY-COVERAGE-FLOOR-CHECK (P2, backlog, next_agent=ba) for architect's NFR-2 recommendation (coverage-floor audit-check), NOT blocking either fix.
+**what-considered:**
+- Immediate developer dispatch (in_progress) vs TODO/ready hold — checked live WIP: in_progress[]=3 (UC-CCA-P3, UC-CDC-P1, FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58), already at/over the 2-max hard limit. Precedent (sprint-DASH-CRON-RECHECK-TABLE-pm.md): "WIP limit respected: added to ready[], not in_progress[]." Applied same pattern — decomposition/TODO-creation is not itself WIP-gated, only in_progress dispatch is.
+- Single combined task vs 2 atomic tasks vs further sub-splitting — architect's own RETURN on both rows already certifies "single-file, single-test-file change; safe to pair... zero file overlap" — kept as 2 atomic tasks (matches architect's granularity), did not merge or further split.
+- Mint follow-up now vs defer — router's dispatch note explicitly invited "mint that as a separate row if you agree, don't block this fix on it"; minted as backlog (not ready) since it has no BA spec yet, next_agent=ba to route through normal chain.
+**why-decision:** WIP is a hard limit (bundle-pm.md: "max 2 tasks In Progress at any time"); 3 already in_progress makes any further in_progress dispatch a violation regardless of these tasks' own low risk/size. ready[]+TODO satisfies "hand off per Dev Team Handoff Chain" without breaching WIP — dev-team's own bounded-pickup sweep will promote once a slot frees.
+**why-change:** No change from architect's design; PM added only the WIP-hold disposition and the follow-up-row minting, both explicitly invited by upstream (precedent + router note), not invented scope.
+
+---
+
