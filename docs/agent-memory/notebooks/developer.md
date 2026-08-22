@@ -1,6 +1,22 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-22T17:52:00Z | **Cycle:** FIX-AUDITOR-DATA-TIER-NOTEBOOK-WRITE-PATH-UNWIRED (P0 S, cross-service/, ready[] direct pickup, session 02594cce)
+**Last updated:** 2026-08-22T19:35:51Z | **Cycle:** FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER (P1 M, cross-service/, ready[] direct pickup, session 02594cce)
+
+## Session 2026-08-22T19:35:51Z — FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER (cross-service/, developer, P1 M, ready[] direct pickup per architect brief 2026-08-05, session 02594cce)
+
+**Task:** root-cause fix for 30 consecutive CI-red runs — `scripts/git-hooks/pre-push` ran only `tsc`+`rebuild-raw-verify-check.sh`, gated behind `CODE_TOUCHING_REGEX` which excludes `docs/`; 2 of 3 real CI-red incidents (`9af50bb26` CLAUDE.md, `3ce726a6e` docs/agents/po/flow/sprint-kickoff.md) landed on exactly the paths that regex excludes, so `size-lint`/`task-claim-owner-session-lint`/`tool-registry-parity` — all enforced separately in CI — never ran locally on a docs-only push. Architect brief (2026-08-05) pre-measured AC1 (~19.5-20s combined, well inside the 90s commit-mutex TTL) and specified the exact hook-diff shape; this cycle implemented it verbatim.
+
+**Fix:** added `run_doc_shaped_checks()` to `scripts/git-hooks/pre-push` — runs all 3 checks UNCONDITIONALLY, placed before `PRE_PUSH_SKIP_TSC` (correcting that guard's name — it now only skips tsc/rebuild-raw-verify, not the whole hook, closing a second unintended escape hatch). `tsc` + `rebuild-raw-verify-check.sh` untouched on the existing regex gate.
+
+**Tests:** new `scripts/git-hooks/pre-push.test.sh`, 4 scenarios (isolated mktemp scratch-repo idiom mirroring `pre-commit.test.sh`'s `new_repo()`, real audit scripts copied in so each resolves its own `git rev-parse --show-toplevel` correctly): T1 doc-only clean push runs+passes all 3, tsc skipped; T2 a failing task-claim-lint fixture (same shape as the real `3ce726a6e` incident) on an otherwise docs-only push still BLOCKS; T3 code-touching push still runs all 3 AND still invokes tsc (stub-pnpm sentinel); T4 bun-absent WARN+skip of parity only is fail-open (isolated from T2's failure since `run_doc_shaped_checks()`'s sequential `|| return 1` short-circuits before the bun branch on an earlier failure — noted in the test file, not overclaimed). 4/4 pass, `shellcheck` clean on the hook itself.
+
+**Live dry-run (AC4):** re-ran all 3 checks directly against repo HEAD — all PASS (~21s combined). The 3 symptom rows this row's own fence explicitly excludes credit for (`FIX-CI-SIZELINT-BCTC-1345B-...`/`FIX-CI-PARITY-CLAUDEMD-...`/`FIX-CI-TASKCLAIM-PO-FLOW-...`) had each independently landed by this cycle — confirms local/CI parity is restored, not that this row fixed those 3.
+
+**Docs:** `docs/policies/dev-standards.md` new CANONICAL entry (size-justification header note updated); `docs/WORK.md` one-liner. No handoff file — architect_brief substituted (PO-mint board row, architect designed direct-to-developer per the row's own routing note). Simplicity gate: PASS (Q1-Q4 clean, no excess vs the brief's own spec). Graphify skipped — no Skill-tool binding, same structural gap as prior sessions.
+
+**Closeout:** commits `23c97bbb3` (hook + test + dev-standards.md), `553496834` (WORK.md). No `apps/` TS/Go touched — pure bash, `bun test`/`tsc` N/A. Board `ready[]→review[]`, `next_agent: qa` — row's own `verification_gate` (`dry_run_measured_then_ci_green`) needs a subsequent green CI run on the push that ships this commit; push/commit-mutex is the dispatcher's job (INV-GATEWAY-1), not run by this specialist session (no MCP task_claim/commit-mutex tool grant either).
+
+---
 
 ## Session 2026-08-22T17:52:00Z — FIX-AUDITOR-DATA-TIER-NOTEBOOK-WRITE-PATH-UNWIRED (cross-service/, developer, P0 S, ready[] direct pickup, session 02594cce)
 
@@ -29,23 +45,5 @@
 **Regression:** `bash scripts/test/orch-apply-wrapper-tests.sh` 89/89. No `apps/` TS/Go touched, no code change this cycle — pure board-state closeout following the `FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE` (`7bdeb606e`) precedent for a review-lane SECONDARY-Drain row whose deliverable was found already-shipped.
 
 **Closeout:** board write only (this cycle), pathspec-scoped commit pending. Decision-journal entry appended to `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` (S55). No handoff file (flat `review[]` row, SECONDARY-Drain's own dispatch context is the spec). Router (session 632721c2) held `task:FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR` — released via `task_release` at session close per lock-lifetime convention.
-
----
-
-## Session 2026-08-15T10:30:00Z — FU-RAG-DEPLOY-MEMORY (docker-compose.yml root, developer, P0 M, PO re-scope + unblock dispatch, session 632721c2)
-
-**Task:** raise rag-service's `docker-compose.yml` memory cap per PO's D1-D5 capacity-sizing decision — measured flat-ceilinged ~1002 MiB peak (97.87% of the prior 1g cap, only 2.13% margin to OOMKill), host VM has ~5657 MiB available headroom. AC-1 raise limit >=2x peak, AC-2 single-service redeploy verified by image ID/`docker inspect` not restart alone; AC-3/AC-4/AC-5 (fresh RAG-MEM-DURABILITY-BAR v2 D1-D5 window, VM-internal dmesg, persisted sampler) explicitly out of this dispatch's scope — needs hours of post-redeploy accrual.
-
-**Fix:** `deploy.resources.limits.memory` 1g→2g, `reservations.memory` 512m→1g (kept the pre-existing 50% limit:reservation ratio — AC-1 only specified the limit figure). `docker compose build rag-service && docker compose up -d --no-deps rag-service`.
-
-**Verify:** RAW `docker inspect` post-deploy: `Memory=2147483648`, `MemoryReservation=1073741824`, `Status=running`, `Health=healthy`, `StartedAt=2026-08-15T10:16:22Z`. `docker compose ps`: all 12 peer containers' uptimes untouched (mcp-server 2h / pdf-extractor 28min / stock-price 8d etc. unchanged) — confirms `--no-deps` single-service safety. Logs clean, single startup, `/health 200 OK` x3, zero error/OOM signature.
-
-**Board write race (new pattern, worth flagging):** `git add`+`git commit -- docs/data/orch/orch-state.json` staged my `ready[]→review[]` lane-move cleanly, but between `add` and `commit` a concurrent peer's cold-evict cron process ran its own pathspec commit and swept my already-staged content into ITS commit (`d52087319`, "cold-evict terminal sprints/done lanes") instead of landing under my own message. Verified post-hoc the content survived correctly (exactly 1 `FU-RAG-DEPLOY-MEMORY` row, in `review[]`, all my field changes + note present, no duplication) — a live instance of the documented `feedback_concurrent_commit_race.md` class: commit-authorship mismatch, not data loss.
-
-**Row prose-ceiling gate note:** this board row is already ~45KB (~4x `ORCH_ROW_PROSE_CEILING_BYTES=12000`, grandfathered WARN). Appending to `status_note` would have tripped the GROWTH-ONLY hard-reject (Stage 2.5). Routed the delivery note into `verify_note` instead — that field is in `orch-row-prose-ceiling-check.mjs`'s `STRUCTURAL_FIELDS` exclude-set, so it never counts toward the ceiling measurement. Worth remembering for any future write to an already-oversized row.
-
-**Out of zone, not touched:** `docs/architecture/microservice/rag-service/infrastructure.md` still reads "currently `1g`" — that doc is dev-rag-service's sole-committer zone, left stale for that specialist to correct.
-
-**Closeout:** 3 commits — `4df192e05` (docker-compose.yml), `d52087319` (orch-state.json board move, authored by the peer cold-evict process per the race above, content mine), `e6c9d0b2b` (WORK.md one-liner). Decision journal S54 in `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md`. Graphify skipped — no Skill-tool binding this Task-tool spawn (structural gap, same class as prior sessions). No `apps/` TS/Go touched — `bun test`/`tsc` N/A. QA next (delivery-scope review only — AC-3/4/5 durability window is a separate future task).
 
 ---
