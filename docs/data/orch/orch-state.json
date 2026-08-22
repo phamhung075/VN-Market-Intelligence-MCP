@@ -12343,7 +12343,7 @@
         "size": "L",
         "zone": "apps/mcp-server/",
         "owner": "dev-mcp-server",
-        "next_agent": "pm",
+        "next_agent": "developer",
         "created_at": "2026-08-22T20:40:58Z",
         "created_by": "po/user-request-predict-engine-accuracy-20260822",
         "title": "Prediction engine is anti-calibrated (95% confidence -> 0% actual hit rate): the empirical likelihood-ratio table is computed but NEVER applied, and the weekly Brier measurement feeds back into NOTHING",
@@ -12359,14 +12359,15 @@
           "apps/mcp-server/src/domain/services/baseRateComputer.ts",
           "docs/agents/digest-predict/flow/daily-predict.md"
         ],
-        "updated_at": "2026-08-22T21:11:17Z",
+        "updated_at": "2026-08-22T21:19:35Z",
         "ba_spec_complete": true,
         "ba_handoff": "docs/handoffs/SPRINT-PREDICT-ENGINE-CALIBRATION-CLOSE-LOOP-BA-spec.md",
         "ba_completed_at": "2026-08-22T20:54:23Z",
         "architect_design_complete": true,
         "architect_completed_at": "2026-08-22T21:11:16Z",
         "architect_handoff": "docs/handoffs/SPRINT-PREDICT-ENGINE-CALIBRATION-CLOSE-LOOP-BA-spec.md",
-        "updated_by": "architect"
+        "updated_by": "architect",
+        "pm_completed_at": ""
       },
       {
         "id": "FIX-DISPATCHCLAIM-CARD-TTL-ARG-SHORTHAND",
@@ -17012,6 +17013,103 @@
         "pm_decomposed_by": "pm",
         "pm_handoff": "docs/handoffs/FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD-PM-workorder.md",
         "status_note": "PM work-order created; architect design already ratified verbatim (single-file, single-test-file change). Safe to pair with sibling GHOSTZONE fix, zero file overlap. Held in ready[] (not in_progress) — WIP already at 3/2 hard limit."
+      },
+      {
+        "id": "TASK-PEC-PREP-FIXTURES",
+        "title": "Add missing DDL tables to test fixtures (1118 + 1128)",
+        "owner": "dev-mcp-server",
+        "status": "READY",
+        "zone": "apps/mcp-server/",
+        "type": "SPRINT-SUB",
+        "size": "S",
+        "priority": "high",
+        "depends_on": [],
+        "created_at": "",
+        "created_by": "pm",
+        "sprint_id": "SPRINT-PREDICT-ENGINE-CALIBRATION-CLOSE-LOOP",
+        "updated_at": "2026-08-22T21:19:35Z"
+      },
+      {
+        "id": "TASK-PEC-PREP-GETLR",
+        "title": "Harden getLikelihoodRatios with defensive try/catch guard",
+        "owner": "dev-mcp-server",
+        "status": "READY",
+        "zone": "apps/mcp-server/",
+        "type": "SPRINT-SUB",
+        "size": "S",
+        "priority": "high",
+        "depends_on": [],
+        "created_at": "",
+        "created_by": "pm",
+        "sprint_id": "SPRINT-PREDICT-ENGINE-CALIBRATION-CLOSE-LOOP",
+        "updated_at": "2026-08-22T21:19:35Z"
+      },
+      {
+        "id": "TASK-PEC-FR4",
+        "title": "Evidence cache recency bound + honest degrade (FR-4)",
+        "owner": "dev-mcp-server",
+        "status": "READY",
+        "zone": "apps/mcp-server/",
+        "type": "SPRINT-SUB",
+        "size": "M",
+        "priority": "high",
+        "depends_on": [],
+        "created_at": "",
+        "created_by": "pm",
+        "sprint_id": "SPRINT-PREDICT-ENGINE-CALIBRATION-CLOSE-LOOP",
+        "updated_at": "2026-08-22T21:19:35Z"
+      },
+      {
+        "id": "TASK-PEC-FR1",
+        "title": "LR-weighted score aggregation + selectLikelihoodRatio helper (FR-1)",
+        "owner": "dev-mcp-server",
+        "status": "READY",
+        "zone": "apps/mcp-server/",
+        "type": "SPRINT-SUB",
+        "size": "M",
+        "priority": "high",
+        "depends_on": [
+          "TASK-PEC-PREP-GETLR",
+          "TASK-PEC-PREP-FIXTURES"
+        ],
+        "created_at": "",
+        "created_by": "pm",
+        "sprint_id": "SPRINT-PREDICT-ENGINE-CALIBRATION-CLOSE-LOOP",
+        "updated_at": "2026-08-22T21:19:35Z"
+      },
+      {
+        "id": "TASK-PEC-FR3-FR5",
+        "title": "Confidence shrinkage + retire flat multipliers (FR-3, FR-5)",
+        "owner": "dev-mcp-server",
+        "status": "READY",
+        "zone": "apps/mcp-server/",
+        "type": "SPRINT-SUB",
+        "size": "M",
+        "priority": "high",
+        "depends_on": [
+          "TASK-PEC-FR1"
+        ],
+        "created_at": "",
+        "created_by": "pm",
+        "sprint_id": "SPRINT-PREDICT-ENGINE-CALIBRATION-CLOSE-LOOP",
+        "updated_at": "2026-08-22T21:19:35Z"
+      },
+      {
+        "id": "TASK-PEC-FR2",
+        "title": "Calibration correction-factor feedback loop + new store (FR-2)",
+        "owner": "dev-mcp-server",
+        "status": "READY",
+        "zone": "apps/mcp-server/",
+        "type": "SPRINT-SUB",
+        "size": "M",
+        "priority": "high",
+        "depends_on": [
+          "TASK-PEC-PREP-FIXTURES"
+        ],
+        "created_at": "",
+        "created_by": "pm",
+        "sprint_id": "SPRINT-PREDICT-ENGINE-CALIBRATION-CLOSE-LOOP",
+        "updated_at": "2026-08-22T21:19:35Z"
       }
     ],
     "review": [

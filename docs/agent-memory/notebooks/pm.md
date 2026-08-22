@@ -1,5 +1,53 @@
 # PM — Notebook
 
+## c347 SPRINT-PREDICT-ENGINE-CALIBRATION-CLOSE-LOOP DECOMPOSITION (6 tasks, 2 prep + 4 FR tiers) · 2026-08-22T21:19Z
+
+**MANDATE:** Architect completed technical design for predict-engine calibration close-loop sprint. BA requirement spec (FR-1..5, NFR-1-3, 6 AC criteria, 0 blockers) from po's D1-D4 investigation (17 resolved predictions, n=17 sample too small for re-fitting but large enough for structural fixes).
+
+**SPRINT CONTEXT:**
+- Zone: `apps/mcp-server/` (single zone, Tier-1)
+- Owner: dev-mcp-server
+- Backlog status before: BACKLOG, next_agent=pm, architect_design_complete=true
+
+**DECOMPOSITION:** 6 atomic tasks created in ready[], owner dev-mcp-server, all status TODO (holding in ready due to WIP limit already at 3/2-max):
+
+**Tier 0 — Prep (independent, can parallel):**
+1. **TASK-PEC-PREP-FIXTURES** (S, ~45min): Add evidence_likelihood_ratios table DDL to 1118 test fixture + calibration_correction_factors table DDL to 1128 test fixture. Regression-risk prereq: test fixtures must have tables before code that writes/reads them.
+2. **TASK-PEC-PREP-GETLR** (S, ~45min): Add defensive `try { } catch { return [] }` guard to `getLikelihoodRatios()` (plural) in likelihoodRatioStore.ts, matching existing guard on singular `getLikelihoodRatio()`. Unguarded plural read would throw hard SQL error in FR-1 tests.
+
+**Tier 1 — Independent baseline:**
+3. **TASK-PEC-FR4** (M, ~2h): Evidence cache recency bound (MAX_SCORE_AGE_DAYS=30) + honest-degrade messaging in evidenceTools.ts. Absorbs SPIKE-EVIDENCE-SCORE-CACHE-FRAGMENT-DECOUPLE root-class finding (cache staleness, not fragment-pruning). Fixes D4: VPB served 13d-stale score with zero fragments.
+
+**Tier 2 — After Tier 1:**
+4. **TASK-PEC-FR1** (M, ~2.5h): LR-weighted evidence score aggregation in evidenceAccumulatorJob.ts. Extracts horizon-selection algorithm into shared `selectLikelihoodRatio()` helper (baseRateComputer.ts), consumed by both evidenceAccumulatorJob and evidenceTools. Each fragment contribution now weighted by likelihood_ratio before averaging. Fixes D1: LR table computed but never applied (ACB bullish 0.3012 identity must break once LR rows seeded).
+
+**Tier 3 — After Tier 2:**
+5. **TASK-PEC-FR3-FR5** (M, ~3h): Confidence shrinkage toward base rate (new `computeConfidenceShrinkage` in baseRateComputer.ts, wired to get_evidence_summary) + retire flat multipliers from daily-predict.md (both lines 25 TIGHTENING and 30 degrading haircuts removed). Shrinkage: weight = min(1, fragments/5) * min(1, lr_sampleSize/10); strong evidence → no shrinkage, thin evidence → full shrinkage to 0.5. Fixes D3 + FR-5 removes redundant prompt-layer LR multiply. Published probabilities returned by get_evidence_summary (MCP tool update: new `published_probability_{direction}` fields, regime param added).
+
+**Parallel with Tier 3:**
+6. **TASK-PEC-FR2** (M, ~3h): Calibration correction-factor feedback loop. New `calibrationCorrectionStore.ts` + schema table + `computeCorrectionFactor()` in baseRateComputer.ts. calibrationReportJob.ts Step 6.5 (between Step 6 compute-curve and Step 7 trend_delta) upserts per-bucket correction factors. get_evidence_summary reads factors before final clamp. Closes the loop: calibration_snapshots (weekly measurement) → correction_factors (write-back) → predictions (read on next cycle). Fixes D2 (the other dead loop).
+
+**WIP HOLD:** in_progress = 3 (UC-CCA-P3, UC-CDC-P1, FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58) already at/over 2-max limit. All 6 new tasks held in ready[], status TODO (matches precedent from c346). dev-team's bounded-pickup sweep promotes once a slot frees.
+
+**orch-state.json:** All 6 rows added to task_board.ready[], sprint in backlog[] updated next_agent="developer" + pm_completed_at stamped. Written via orch-apply.sh — validated Stage 0/1 PASS, task_total 716→725 (net +6 tasks +3 handoff files), conservation OK.
+
+**Decision journal:** sprint-PREDICT-ENGINE-CALIBRATION-CLOSE-LOOP-pm.md STEP pm-S1 (decomposition + orch-apply).
+
+**Dependency graph (ready[] eligible for pickup once prior tier completes):**
+```
+[Tier 0 prep]  TASK-PEC-PREP-FIXTURES, TASK-PEC-PREP-GETLR (parallel)
+     ↓
+[Tier 1 ind]   TASK-PEC-FR4 (parallel, no prep prereqs)
+     ↓
+[Tier 2]       TASK-PEC-FR1 (depends prep + fr4 independent)
+     ↓
+[Tier 3]       TASK-PEC-FR3-FR5 (depends fr1) | TASK-PEC-FR2 (parallel, depends prep only)
+```
+
+**Acceptance discipline:** NFR-1 binding — QA must verify via structural/code-level tests (unit tests on arithmetic/store contracts/recency bounds), never via Brier/hit-rate off n=17 sample. Re-run calibration report on 17 historical claims for directional sanity-check + no-regression gate.
+
+---
+
 ## c346 GHOSTZONE P0 DECOMPOSITION (2 dev tasks + 1 follow-up) · 2026-08-22T19:13Z
 
 **MANDATE:** Router dispatch — architect completed blueprints for 2 P0 GHOST-ZONE query-correctness fixes in `apps/mcp-server/`, both fully specified, zero blockers, zero file overlap between them.
