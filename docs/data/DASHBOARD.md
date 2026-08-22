@@ -1858,3 +1858,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · morningBriefing cron STALE 209.5h
+**Severity:** CRITICAL | **Date:** 2026-08-22 | **Status:** OPEN
+**Location:** cron-jobs/server
+**Details:** morningBriefing last fire: 2026-08-14 01:00:03, expected: 2026-08-21T08:00:00
+**Impact:** Morning briefing notifications not being sent
+**Root cause:** Cron job not firing
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-22T18:32:47Z (signal sys-20260822T183206-7f41, system-auditor -> po, dedup_key=auditor-a29-fire-gap:morningBriefing, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
