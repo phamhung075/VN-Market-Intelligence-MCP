@@ -152,3 +152,51 @@ not a feature-priority or business call.
 - what-considered: "naive ORDER BY date DESC flip (ticket's literal first phrasing) vs newest-N-select + ASC-rewrap (preserves handler's undocumented-but-load-bearing ASC dependency)"
 - why-decision: "verified live in convictionHistoryHandler.ts: buildSnapshot's per-symbol last-write-wins AND buildSeries' sparkline order both silently assume ASC input; a DESC flip passes no test today but corrupts every symbol's displayed conviction to its OLDEST score, worse than the current staleness bug"
 - why-change: "no change from PO's ticket direction; this spec adds the ASC-preservation constraint the ticket text did not fully specify"
+
+---
+
+## [Architect] Brownfield Findings
+
+- **Zone:** apps/mcp-server/
+- **Verified paths:**
+  - `apps/mcp-server/src/infrastructure/db/convictionHistoryStore.ts:58-71` — `getConvictionHistoryRows()`, confirmed live SQL `ORDER BY date ASC, symbol ASC LIMIT ?`; docstring L16-19 is the stale 2026-06-11 snapshot BA identified as the root enabler.
+  - `apps/mcp-server/src/interface/mcp/routes/convictionHistoryHandler.ts:155-170` (`buildSnapshot`) — confirmed `Map.set` last-write-wins per symbol (L159-165), depends 100% on ASC input; no internal sort.
+  - `apps/mcp-server/src/interface/mcp/routes/convictionHistoryHandler.ts:180-200` (`buildSeries`) — confirmed append-in-received-order, documented "full ASC history" (L36 response-shape docstring); no internal sort.
+  - `apps/mcp-server/src/interface/mcp/routes/convictionHistoryHandler.ts:284-289` — `tradingDate` = `rows.reduce(max)` over the RETURNED window only, not a table-wide query — confirms BA's root-cause chain end to end.
+  - `apps/mcp-server/src/__tests__/TASK17-CONVICTION-conviction-history-endpoint.test.ts` — 631L, AC-1..AC-15; new regression slots in as AC-16.
+- **Reuse patterns:** No new port/interface — `getConvictionHistoryRows(db, limit)` signature and `ConvictionRow[]` return type stay identical; pure adapter (SQL) swap.
+- **Design decisions:**
+  - **FR-1 exact SQL** (ratifies BA's two-stage shape verbatim, no deviation):
+    ```sql
+    SELECT symbol, date, peak_score, dominant_signal, created_at
+    FROM (
+      SELECT symbol, date, peak_score, dominant_signal, created_at
+      FROM conviction_history
+      ORDER BY date DESC, symbol ASC
+      LIMIT ?
+    )
+    ORDER BY date ASC, symbol ASC
+    ```
+    Inner query selects the newest `limit` rows; outer wrap restores the documented ASC-by-(date,symbol) contract before rows reach the handler — zero caller-side change (traced above).
+  - Layer: infrastructure/db only — zero domain/application/interface touch.
+  - **FR-2:** replace docstring L16-19's stale row-count snapshot with the real invariant (newest-N-by-date selection, ASC-return contract) + a note that growing the table does NOT require raising `LIMIT` — the window auto-tracks "now"; only the oldest edge moves.
+  - **NFR-2 decision (architect-owned):** REJECT option (a) calendar-day window; CHOOSE option (b) keep the absolute-row `LIMIT`. Reason: BA's own §6 Scope Out locks "no change to the `?limit=` clamp behavior `[1, 2000]`" — but that SAME client-facing `limit` value is passed straight through as the store's SQL row-count bound (handler L279-284). A calendar-day window would decouple rows-returned from the client's `?limit=` value (a client requesting `?limit=1` is entitled to ≤1 row today per AC-14) — incompatible with BA's own locked contract, not merely lower-priority. Residual risk (not actioned in this S-size task, flagged for PM): at ~34 rows/day growth, the newest-2000-row window covers ~59 days before the same defect class could recur as slow 1-day-at-a-time degradation with no hard error. Recommend a small follow-up backlog row wiring a coverage-floor check into the EXISTING audit-check convention (`apps/mcp-server/src/scheduler/news-analysis/audit-checks/checkConvictionHistoryGap.ts`'s sibling `AuditFinding`/`insertFeedbackIfNew` plumbing in `dataAuditShared.ts`) that fails loud once the LIMIT-derived day-coverage drops under ~30 days — reuses existing plumbing, no new monitoring machinery.
+- **Test strategy (NFR-1, new AC-16, same file):**
+  1. Seed ≥3 symbols across dates spanning MORE rows than a small test `limit`; assert HTTP `tradingDate` == true `MAX(date)` over the FULL seeded set (not just the queried window).
+  2. Anti-regression for the naive-DESC-flip trap BA flagged: pick a symbol whose peak_score differs between its oldest and newest seeded row; assert `snapshot` reports the NEWEST row's peakScore/signal. This is the exact check a raw `ORDER BY date DESC` flip would fail (passes #1, silently fails #2).
+  3. Assert `series[symbol]` for that symbol stays ASC (first date < last date) — catches an omitted outer-wrap.
+  4. Re-run existing AC-1..AC-15 unmodified — must all still pass.
+  5. Edge cases (BA §4): empty table (AC-11 path unmodified); table smaller than limit (AC-15 "production shape," 7 rows vs limit 2000 — no-op ASC path, all rows returned).
+- **Risk flags:**
+  - HIGH (BA-identified, ratified): a raw `ORDER BY date DESC` flip fixes staleness while silently corrupting every symbol's snapshot to its OLDEST score — no existing test catches this. The inner-DESC/outer-ASC wrap is non-negotiable; flag explicitly to developer.
+  - MEDIUM (accepted trade-off, not a new bug): a symbol whose most recent print falls outside the newest-N window disappears from snapshot+series until its next write. Expected post-fix behavior (BA §4) — QA must not re-file as regression.
+  - LOW (tech debt, no action this task): NFR-2 residual-risk note above, PM-scheduled follow-up only.
+- **Scan clean:** true ✓ (no DDD violations — infra-only touch, port signature preserved)
+- **BUILD-STANDARD:** not-applicable (BUG-FIX, in-zone, no new primitives)
+
+## RETURN (architect)
+DONE: Technical design complete — newest-N inner-DESC/outer-ASC SQL wrap ratified for `getConvictionHistoryRows()`, docstring fix specified, NFR-2 durable-freshness trade-off resolved (keep row LIMIT — calendar-day window is incompatible with BA's own locked `?limit=` contract), AC-16 regression test designed with an explicit anti-regression assertion against the naive-DESC-flip trap.
+ZONE: apps/mcp-server/
+NEXT: pm — create developer task (single-file, single-test-file change; safe to pair with sibling FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD, zero file overlap).
+HANDOFF: docs/handoffs/FIX-GHOSTZONE-CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST-BA-spec.md
+PIPELINE: continue

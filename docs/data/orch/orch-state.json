@@ -11637,23 +11637,6 @@
         "ops_new_image_sha": "sha256:4ee7f1c3598ed8508697a1db638e6f5a3ed2ef25b5e9c77e0b7e4a69565ac997"
       },
       {
-        "id": "FIX-CI-SIZELINT-GETBCTCPENDINGREFINETOOL-BASELINE-TOLERANCE-EXCEEDED",
-        "title": "CI-RED-c29aab1b-FIX — CI RED: size-lint — apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts (605L vs baseline 464L, upper 510L)",
-        "owner": "po",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "check_id": "CI-RED-c29aab1b",
-        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts",
-        "ci_fingerprint": "c4a6a5d9eeb7de0c3a2a9396b8c4a15d058f7724b824ec92e20d66f0ee480b33",
-        "created_at": "2026-08-15T10:31:00Z",
-        "verification_gate": "ci_green_on_subsequent_push",
-        "status_note": "AC: gh run view <databaseId with headSha AFTER c29aab1bfbad9abf354ebcd39130ad47ff73c802> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Priority: HIGH — main HEAD is RED right now. Failing job: size-lint. Failing file: apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts.\n\nMANDATORY PRE-DEDUP FAILING-FILE READ PERFORMED (not skipped): `gh run view 31879022690 --log-failed | grep -E 'pass / |FAILEDFILE'` returned EMPTY — size-lint is not the bun-test per-file-isolation runner, so FAILING_FILES was read verbatim from the failing step's own error line: `[size-lint] FAIL — 1 offending file(s) (scanned 1409): apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts — baseline-tolerance-exceeded (baseline=464L actual=605L upper=510L)`. Exactly one offending file, so exactly one row (no collapse, no split).\n\nDEDUP: file-scoped PRIMARY dedup on dedup_key found NO match in any non-terminal lane (backlog/ready/in_progress/review/qa scanned by lane name, never by status token). SECONDARY check_id/head_sha scan also clean. ANTI-AMNESTY FENCE OBSERVED: not deduped into FIX-MCP-SUITE-HEALTH-BASELINE or any LOCAL-full-suite row; the CI plane's known-green baseline is 0 fail so this is actionable by construction.\n\nROOT CAUSE ALREADY IDENTIFIED — this is a paperwork gap, not a logic bug, and should be a small task. The file grew 464L -> 605L across the FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW pagination work (commits 51f162829 paginate, 8b4f977fd ColumnLayout cross-window, 532fc71a0 response-size guard rework) and nobody updated its size-justification header or re-baselined it. NOTE THE SEQUENCING TRAP: c29aab1bf is a docs-only commit (PO caveat banner on the rag D1-D5 incident doc) and did NOT touch this file — it is merely the SHA at which CI happened to run. Do NOT investigate c29aab1bf. Fix is: add/refresh the size-justification header on getBctcPendingRefineTool.ts and re-baseline, OR split the tool if 605L is genuinely unjustified.\n\nCROSS-REF: the sibling READY row FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER is the STRUCTURAL reason this reached main at all — pre-push enforces only tsc + rebuild-raw-verify and its path filter skips docs-only commits, so size-lint is never run locally. That row is the durable fix; this row is the immediate red-to-green.",
-        "updated_at": "2026-08-15T13:31:28Z",
-        "next_agent": "dev-mcp-server",
-        "occurrence_count": 3,
-        "po_triage_fold_20260815T1330": "[po/triage 2026-08-15T13:29:00Z] FOLD +2 fires, file-scoped dedup_key matched on both. This row now covers THREE consecutive CI RED probes today, all on the SAME failing file:\n  - CI-RED-c29aab1b head c29aab1bfbad9abf354ebcd39130ad47ff73c802 run 31879022690 (10:21:45Z) — the mint SHA\n  - CI-RED-46f5c677 head 46f5c677c4d8eca6dc03c418c5d1b17f11d5f6e0 run 31880629878 (11:21:52Z)\n  - CI-RED-152f08a1 head 152f08a120d506cbfa56b0a17b68384ae15efbff run 31883061393 (12:20:56Z)\nMANDATORY PRE-DEDUP FAILING-FILE READ PERFORMED ON ALL THREE (not skipped, not inherited from the row): `gh run view <run_id> --log-failed` on each returned NO FAILEDFILE block (size-lint is not the bun-test per-file-isolation runner), so FAILING_FILES was read verbatim from each failing step's own error line. All three emit the byte-identical line: `[size-lint] FAIL — 1 offending file(s) (scanned 1409): apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts — baseline-tolerance-exceeded (baseline=464L actual=605L upper=510L)`. One offending file, one row, no split, no collapse.\nESCALATION — WHY THIS IS NOW BATCHED, NOT JUST FOLDED: main has been RED continuously for >2h across 3 probe cycles while this row sat unassigned in backlog[] with no next_agent. RAW-RE-VERIFIED LIVE, not read off the signal payload: `wc -l apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts` = 605 at HEAD right now, so the breach is still live and every further push to main inherits a RED CI. Setting next_agent=dev-mcp-server (zone apps/mcp-server/) and folding into this tick's BATCH as the rank-1 entry. The fix path is already fully written on this row and unchanged: refresh the size-justification header + re-baseline, OR split the tool if 605L is genuinely unjustified. Do NOT investigate any of the three SHAs — all three are docs/chore commits that never touched this file; they are merely the SHAs at which CI happened to run (the sequencing trap this row already warns about, now confirmed 3x)."
-      },
-      {
         "id": "FIX-NOTEBOOK-AUTOPRUNE-AC6-SAMEDAY-TIE-PROCEEDS-AND-DROPS-LOADBEARING-SECTION",
         "title": "CONFIRMED DATA LOSS: notebook-auto-prune AC-6 detects it has no ordering evidence and drops the section ANYWAY — date-only '## YYYY-MM-DD' headings all tie at day granularity, so drop-oldest is a coin flip",
         "owner": "po",
@@ -12140,16 +12123,19 @@
         "priority": "P0",
         "size": "S",
         "zone": "apps/mcp-server/",
-        "next_agent": "agents-architect",
+        "next_agent": "pm",
         "created_at": "2026-08-22T18:42:44Z",
         "created_by": "po",
         "source": "user-report-ghost-zones-2026-08-22",
         "title": "GHOST ZONE (1/4): /api/conviction-history frozen at 2026-06-17 (stale 64d) while conviction_history has data through 2026-08-21 — ORDER BY date ASC + LIMIT 2000 silently truncates the NEWEST 1907 rows (48% of table)",
         "note": "PROVEN root cause, apps/mcp-server/src/infrastructure/db/convictionHistoryStore.ts getConvictionHistoryRows(): `SELECT ... FROM conviction_history ORDER BY date ASC, symbol ASC LIMIT ?` with limit default 2000. Live probe 2026-08-22 through the running mcp-server container: full table = 3942 rows spanning 2026-04-01..2026-08-21; the LIMIT-2000 ASC window ends at MAX(date)=2026-06-17 — EXACTLY the tradingDate the endpoint reports, and staleByDays=64 matches. 1907 rows (all recent data) are invisible to the API. The file's own docstring says 'Live stats (probed 2026-06-11): 766 rows ... well within the default cap' — true when written, but the table grew 766 -> 3942 and the cap became a silent truncation of the newest data. This is NOT a data gap: the writer is healthy (33-34 rows/day, continuous through yesterday). Failure mode is monotonic — every additional day makes it staler. FIX DIRECTION (BA/architect to ratify): order DESC and/or select the newest N trading dates rather than the first N rows; guard with a regression test asserting MAX(date) returned == MAX(date) in table. Verify after fix: GET /api/conviction-history must report tradingDate within 1-2 trading days of today and stale=false. USER IMPACT: ConvictionHistoryZone on /dashboard/analysis + the /dashboard/conviction-history page both render 64-day-old data for every ticker.",
-        "updated_at": "2026-08-22T18:52:54Z",
+        "updated_at": "2026-08-22T19:02:21Z",
         "ba_spec_complete": true,
         "ba_handoff": "docs/handoffs/FIX-GHOSTZONE-CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST-BA-spec.md",
-        "ba_completed_at": "2026-08-22T18:52:53Z"
+        "ba_completed_at": "2026-08-22T18:52:53Z",
+        "architect_design_complete": true,
+        "architect_completed_at": "2026-08-22T19:02:20Z",
+        "architect_handoff": "docs/handoffs/FIX-GHOSTZONE-CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST-BA-spec.md"
       },
       {
         "id": "FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD",
@@ -12158,16 +12144,19 @@
         "priority": "P0",
         "size": "S",
         "zone": "apps/mcp-server/",
-        "next_agent": "agents-architect",
+        "next_agent": "pm",
         "created_at": "2026-08-22T18:42:44Z",
         "created_by": "po",
         "source": "user-report-ghost-zones-2026-08-22",
         "title": "GHOST ZONE (2/4): /api/foreign-flow returns items:[] + tradingDate:\"\" — MAX(date) subquery omits the `foreign_volume IS NOT NULL` guard its own docstring mandates, so a partial-write day blanks the entire page",
         "note": "PROVEN root cause, apps/mcp-server/src/interface/mcp/routes/foreignFlowHandler.ts queryForeignFlow(): `WHERE date = (SELECT MAX(date) FROM vnstock_trading_stats) AND foreign_volume IS NOT NULL`. The subquery picks the newest date WITHOUT the non-null guard, then the outer predicate filters every row of that date away. Live probe 2026-08-22 through the running container: MAX(date) overall = 2026-08-22 with 41 rows, ALL 41 foreign_volume NULL; MAX(date) WHERE foreign_volume IS NOT NULL = 2026-08-18 with 99 non-null rows. Result: 0 rows -> tradingDate:'' -> whole Foreign Flow page ghost. The handler docstring line 8 already states the intended contract verbatim — 'Latest trading day = MAX(date) with foreign_volume IS NOT NULL' — so implementation contradicts its own documented spec; this is a one-line divergence, not a design question. INTERMITTENT BY NATURE: only ghosts when a partial/NULL batch lands at the top (also observed 2026-08-16 n=4 nonnull=0 and 2026-08-15 n=34 nonnull=0), which is why it reads as 'sometimes ghost' to the user. FIX DIRECTION: move the guard into the subquery. Regression test: seed a NULL-only newest date + a populated older date, assert handler serves the older populated date. CASCADE: this same emptiness starves downstream consumers — /api/momentum-indicators foreign_accum returns null_reason 'Insufficient tickers with >=5 days of flow data', and /api/money-radar reports coverage_pct 0.83 with foreign components degraded. Fixing this row should be re-measured against both before opening separate rows for them.",
-        "updated_at": "2026-08-22T18:52:54Z",
+        "updated_at": "2026-08-22T19:02:21Z",
         "ba_spec_complete": true,
         "ba_handoff": "docs/handoffs/FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD-BA-spec.md",
-        "ba_completed_at": "2026-08-22T18:52:53Z"
+        "ba_completed_at": "2026-08-22T18:52:53Z",
+        "architect_design_complete": true,
+        "architect_completed_at": "2026-08-22T19:02:20Z",
+        "architect_handoff": "docs/handoffs/FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD-BA-spec.md"
       },
       {
         "id": "FIX-GHOSTZONE-MARKET-PRICES-DRAINED-TO-2-COMMODITY-ROWS",
@@ -12213,6 +12202,28 @@
         "title": "docs/data/frontend-data-coverage-map.json is 53 days stale (generated_at 2026-06-30) and now materially contradicts live: it claims 40 LIVE / 1 GAP, live sweep of all 28 dashboard endpoints found 3 hard-empty + 2 badly stale that it still marks LIVE",
         "note": "This is the DETECTION gap behind the user-reported ghost zones — the artifact that is supposed to be the freshness SSOT (its own update_mechanic.L4 says system-auditor Tier-2 should 'read THIS json as SSOT and emit signal_feedback on SLA breach') did not flag any of the four defects minted alongside this row, and the user found them by eye instead. Live sweep 2026-08-22 (PO, all 28 /api/* endpoints on the running frontend :3001): HARD-EMPTY -> foreign-flow (items:0), sector-cascade (sectors:0), sector-rotation (sectors:0). BADLY STALE -> conviction-history (stale=true 64d), corporate-events (stale=true 6d). DEGRADED/WARMUP (acceptable, self-healing, record but do NOT open rows) -> indicator-gauges sentiment z null '18 of 21 days required' + breadth 'sessions_below_21' WARMUP; money-radar coverage_pct 0.83 with carry_regime + credit_flow_direction null; macro-regime data_source 'unavailable' stale_served true. PARTIAL COVERAGE -> NewsBuzzZone is empty for 19 of 33 active watchlist tickers because /api/news-buzz's 7-day leaderboard only covers 17 codes; TechnicalZone empty for DAG only (0 candles). Scope: regenerate the map from a live sweep AND close the loop so the L4 SLA monitor actually fires — a coverage map that is regenerated but still unmonitored will silently rot again. Prefer a scripted sweep (scripts/, per Script Persistence) over a hand-edited JSON so the next regeneration is cheap.",
         "updated_at": "2026-08-22T18:43:52Z"
+      },
+      {
+        "id": "FIX-BA-AC-NAMES-PLANE-IMPLEMENTATION-NEVER-WRITES",
+        "type": "FIX",
+        "title": "BA acceptance criteria may name an evidence plane the implementation never writes to — makes the AC unfalsifiable and strands the row",
+        "owner": "po",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "ba",
+        "created_at": "2026-08-22T19:00:18Z",
+        "created_by": "po",
+        "updated_at": "2026-08-22T19:02:43Z",
+        "updated_by": "po",
+        "files": [
+          "docs/agents/ba/flow/",
+          "docs/handoffs/UC-CCA-P2-BA-spec.md"
+        ],
+        "depends": [],
+        "verification_gate": "ba_spec_ac_plane_check_documented_and_one_historical_spec_replayed",
+        "status_note": "CONFIRMED LIVE, cost measured: UC-CCA-P2-MARKET-WATCHER sat in review[] for 8 days (2026-08-14 -> 2026-08-22) on an acceptance criterion that could never be satisfied. docs/handoffs/UC-CCA-P2-BA-spec.md:418-419 wrote AC-3 as 'next live market-watcher cycle's WORK ping / notebook shows exactly one [GATEWAY] probe log line, not two'. The implementation it gates (.claude/skills/gateway-availability-gate/SKILL.md:30) emits that line to the TRANSCRIPT on the success path and writes the notebook ONLY on its DEFER/BLOCKED failure branches; the WORK ping is a fixed <=80-char ULTRA template (docs/agents/market-watcher/flow/cycle.md:328) with no gateway field. So on every healthy cycle both named planes read ZERO, forever. The row was re-reviewed, re-blamed on an unrelated dispatcher outage, claimed by a dev-team secondary-drain and re-spawned to PO before anyone read the skill and noticed the plane does not exist.\n\nCLASS, not an instance: this is the AC-authoring twin of the already-known agent-side failure in docs/protocols/fail-loud-protocol.md § Analysis-Only Exit Guard ('re-read the persistence layer before claiming it'). That rule tells the WRITER to verify the plane. Nothing tells the AC AUTHOR that the plane must exist and be written by the code under test in the first place. An AC whose evidence plane is never written is indistinguishable, to every downstream reviewer, from an AC that is failing.\n\nPROPOSED SCOPE (small — BA to confirm/adjust, not prescriptive):\n(1) BA spec-authoring rule: every AC MUST name a persistence plane (file path / DB table / signal row / commit / channel message) that the code or flow under test demonstrably writes on the PASS path, and the spec must cite where that write happens. 'Transcript log line' is NOT an acceptable AC plane — no reviewer can re-read a past transcript.\n(2) A reviewer-side escape hatch, so this never strands a row again: when an AC turns out to be unfalsifiable, the reviewing agent is explicitly authorised to substitute an equivalent falsifiable criterion, record the substitution + evidence on the row, and sign off — rather than blocking indefinitely or fabricating a pass. PO exercised exactly this on UC-CCA-P2-MARKET-WATCHER 2026-08-22 without a documented mandate; the mandate should exist.\n(3) OPTIONAL, flagged not proposed (avoid scope creep): a grep-based scripts/audits/ check over docs/handoffs/*-BA-spec.md for ACs whose evidence noun is 'log line'/'transcript'/'output' with no file path — opt-IN allowlist only per feedback_fleetwide_gate_validated_on_one_file_optout_allowlist.\n\nORIGIN: docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-po.md (2026-08-22 PO cycle)."
       }
     ],
     "closed_sprints": [
@@ -13149,6 +13160,34 @@
         "updated_by": "po/triage-20260815T1002 (measurement delivered + adjudicated; AC-5 routed)",
         "closed_at": "2026-08-15T10:02:53Z",
         "po_RULING_20260815T1002Z": "[po RULING 2026-08-15T10:02Z — ROW CLOSED. All five ACs resolved. Full adjudication of the measurement lives on FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED § po_RULING_20260815T1002Z, with the six D5 evidence fields attached there.]\n\nAC-1 PASS (image sha256:26e681b0ca != pre-fix sha256:4a955869f002). AC-2 PASS (malloc_trim present in the running image). Neither disputed.\nAC-3 FAIL — UPHELD, but re-reasoned: the failure is D3's CAP clause (338/799 samples above 85% of cap; 14 of 15 cycles peaking 83-98%; max 97.87% = ~1002 MiB of a 1073 MiB limit), NOT a persisting leak. Ops's \"memory leak persists\" root-cause line is REFUTED by ops's own dataset — peak-ceiling drift +0.048 pp/cycle over 14 cycles, trough floor flat at 32-48% for 10.5h, 47-55pp released per cycle, and the container's own logs name the mechanism (embedder idle-unload at threshold=900s). Details on the LANCECORE row.\nAC-4 ANSWERED — NOT INCONCLUSIVE. This row's own AC-4 was reported as \"not accessible from this host\". po read it directly this tick: `docker run --rm --privileged --pid=host justincormack/nsenter1 /bin/sh -c \"dmesg -T | grep -iE 'oom|killed process'\"` returns ZERO oom_memcg events for container 66656926d503 across the full 13.6h window.\nAC-5 fail-path ROUTED BY PO, overriding the row's own default: NOT to the LANCECORE re-diagnosis row (leak hunt, premise dead) but to FU-RAG-DEPLOY-MEMORY as a capacity-sizing task. Rationale on the LANCECORE row.\n\nTHE DELIVERY WAS SOUND — this is not a rejection of ops's work. The deploy, the 13.2h window, the sample extraction and the summary statistics are all real and correctly filtered; I reproduced them to within rounding (ops 781 samples/mean 63.02/max 97.87 at 09:35Z; po 799 samples/mean 63.52/max 97.87 at 09:54Z). What failed was the INFERENCE from those numbers and one wrong statistic. Two defects worth carrying forward, neither of them \"ops was careless\":\n\n(1) WRONG STATISTIC FOR D3. D3 says \"fit the growth rate over the final 12h\" — a regression. Ops computed adjacent-sample absolute deltas and reported \"volatility 2.368 pp/min avg, 93.120 pp/min max, 118x threshold\". On a sawtooth that measures tooth amplitude, not trend, and is large for a perfectly healthy process. This is partly MY defect as the bar's author: D3 says \"fit\" but never says \"and do not use adjacent-sample deltas\", and never says what a bounded-oscillating workload should look like. When RAG-MEM-DURABILITY-BAR reaches v3 it must (a) name linear regression explicitly, (b) add the peak-ceiling and trough-floor drift tests as the actual leak discriminators, and (c) state that a flat-ceilinged sawtooth over the cap is a CAPACITY finding, not a leak finding. I am not amending the bar mid-incident; filed as the follow-up above.\n\n(2) AC-4 TOOLING GAP IS REAL AND FIXABLE. The in-VM dmesg method is documented on the LANCECORE row and has been executed successfully at least three times in this incident, yet ops concluded the host cannot reach it. That is a runbook-reachability problem: the method exists in row prose but not anywhere ops routinely reads. It belongs in the rag-service ops runbook, not buried in a task row.\n\nEVIDENCE DURABILITY — HANDLED. Ops's raw series lived only at /tmp/rag-durability-measurement/memory-samples.csv and would not have survived. The cleaned 799-sample series is now committed at docs/incidents/data/rag-durability-2026-08-14T2015Z-66656926d503-samples.csv with container/image/StartedAt provenance in its header.\nRAW-FILE DEFECT FOUND WHILE DOING THAT (flagged, deliberately NOT fixed by po — killing a sampler mid-window is an ops call): THREE sampler processes are concurrently appending to that one CSV with TWO different schemas (/tmp/rag-durability-monitor.sh x2 and /tmp/rag-durability-monitor-v2.sh). Of 2391 raw lines only 799 are well-formed; 796 sample writes were split into `<ts>,` + `0,,1073741824,running` line pairs, and the v2 writer is emitting a zero percentage. Ops's filter correctly dropped the malformed rows so the statistics are unaffected — but the evidence file was being actively corrupted while it was being cited as the evidence chain, and the rogue samplers are still running. Whoever owns the next window: run ONE sampler, and write it under scripts/ per the Script Persistence rule rather than /tmp.\n"
+      },
+      {
+        "id": "UC-CCA-P2-MARKET-WATCHER",
+        "type": "TASK",
+        "title": "market-watcher: de-dup double probe (main.md + cycle.md)",
+        "status": "DONE",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cowork/market-watcher",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "owner": "market-watcher",
+        "parent_id": "UC-CCA-P2",
+        "depends": [],
+        "files": [
+          "docs/agents/market-watcher/flow/main.md",
+          "docs/agents/market-watcher/flow/cycle.md"
+        ],
+        "note": "FR-3: main.md—replace inline Step 3 corroboration block (current ~lines 61-99) with one-line pointer to gateway-availability-gate SKILL. cycle.md—delete Step 0-GW block (~lines 26-27), reword Execution-contract paragraph (~line 20) from 'Step 0-GW through Step 5b' to 'Step 0 through Step 5b', update terminal clause to reference 'explicit main.md Step 0-GW gateway-down EXIT'. Net: exactly ONE probe per invocation at dispatcher level. eod.md remains zero-gate, transitively covered only via main.md (no new gap).",
+        "created_at": "2026-08-14T12:22:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-22T19:02:43Z",
+        "updated_by": "po",
+        "commit": "3cfabaa28",
+        "agent_father_completed_at": "2026-08-14T12:35:16Z",
+        "agent_father_completion_note": "FR-3 applied per architect-ratified UC-CCA-P2-BA-spec.md. main.md: replaced inline Step 3 dual-probe/backoff/SIBLING_RECENT block (lines 61-99) with a one-line pointer to gateway-availability-gate/SKILL.md (agent-id=market-watcher; covers cycle.md AND eod.md). cycle.md: deleted its own Step 0-GW block (lines 26-27); Execution-contract paragraph reworded \"Step 0-GW through Step 5b\" -> \"Step 0 through Step 5b\"; terminal clause now reads \"an explicit main.md Step 0-GW gateway-down EXIT (per gateway-availability-gate skill)\". Post-edit grep confirms exactly ONE Step 0-GW probe pointer across both files (main.md:61) — double-probe defect eliminated. eod.md untouched (out of scope, remains zero-gate by design, unchanged transitively-only coverage via main.md). Committed 3cfabaa28 (explicit pathspec, INV-GATEWAY-1 gatewayless direct commit, not pushed — push-backstop/PO owns push per PUSH_THRESHOLD convention). Routed to po: AC-3 (dedup) needs live-cycle confirmation (next market-watcher WORK ping / notebook shows exactly one [GATEWAY] probe log line) — not self-testable this session, prose/flow-doc-only change.",
+        "po_note": "PO AC-3 SIGN-OFF 2026-08-22T19:00:18Z — DONE. Supersedes the 2026-08-14T12:47:50Z NOT-SIGNED-OFF note. The root blocker that note named (cowork master dispatcher silent since tick 06:45Z) RESOLVED on its own at 2026-08-14T16:11Z; 4 live cycles have run since.\n\nAC-3 AS WRITTEN IS UNFALSIFIABLE — that, not the dispatcher outage, is the real reason this row stalled 8 days. docs/handoffs/UC-CCA-P2-BA-spec.md:418-419 defines AC-3 as \"next live market-watcher cycle's WORK ping / notebook shows exactly one [GATEWAY] probe log line, not two\". NEITHER named plane can ever carry that line on a healthy cycle: .claude/skills/gateway-availability-gate/SKILL.md:30 emits `[GATEWAY] probe OK — proceed` as a TRANSCRIPT log line only, and writes the notebook solely on its DEFER/BLOCKED failure branches (SKILL.md:54); docs/agents/market-watcher/flow/cycle.md:328 fixes the Step 5b WORK ping to the ULTRA template `[mw] HH:MM — N stocks | anom:X vol:Y chain:Z | next:TIME` (<=80 chars, no gateway field). Zero [GATEWAY] lines on a gateway-UP cycle is the CORRECT output, not a miss. No amount of further waiting could ever have settled it.\n\nSUBSTITUTED CRITERION (equivalent, falsifiable) + EVIDENCE, re-verified live at HEAD 2026-08-22T19:00Z:\n(1) Exactly ONE probe INVOCATION site across all 3 market-watcher flow files — main.md:61, the one-line pointer to gateway-availability-gate/SKILL.md (agent-id=market-watcher, covers cycle.md AND eod.md). cycle.md's two surviving \"Step 0-GW\" hits are prose only (:20 execution-contract terminal clause, :22 narrate-not-execute guard text); eod.md zero. This is DISPOSITIVE for \"exactly one probe per invocation\": there is no second site left to invoke.\n(2) 4 post-commit live cycles all completed through that single site — 2026-08-14T16:11Z (23eed1755), 2026-08-15T00:14Z (5be446b8b), 2026-08-15T04:19Z (248ce4e42), 2026-08-15T08:11Z (55d939b98). Every one: items_fetched=34, exit_status=complete, zero [GATEWAY] DEFER/BLOCKED notebook entries, zero gateway bug escalation.\n(3) No regression vs the pre-change 2026-08-14T04:09Z baseline (34 tickers, 0 anomalies, complete): the 08-15T08:11Z cycle is exact parity (34/0/complete); 08-14T16:11Z is 34 tickers / 1 anomaly (DXG +5.99%) / 1 suppressed / complete — normal market variation, not regression.\ncommit 3cfabaa28 re-confirmed ancestor of HEAD.\n\nSPEC-QUALITY DEFECT SPUN OUT (do not re-litigate here): FIX-BA-AC-NAMES-PLANE-IMPLEMENTATION-NEVER-WRITES, backlog[], next_agent=ba. Full reasoning: docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-po.md.",
+        "ac3_status": "CONFIRMED_VIA_SUBSTITUTED_FALSIFIABLE_CRITERION",
+        "ac3_last_checked_at": "2026-08-22T19:00:18Z"
       }
     ],
     "done_verified": [
@@ -16873,6 +16912,25 @@
         "handoff": "docs/handoffs/TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX.md",
         "updated_at": "2026-08-22T17:24:54Z",
         "updated_by": "pm"
+      },
+      {
+        "id": "FIX-CI-SIZELINT-GETBCTCPENDINGREFINETOOL-BASELINE-TOLERANCE-EXCEEDED",
+        "title": "CI-RED-c29aab1b-FIX — CI RED: size-lint — apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts (605L vs baseline 464L, upper 510L)",
+        "owner": "po",
+        "status": "READY",
+        "zone": "apps/mcp-server/",
+        "check_id": "CI-RED-c29aab1b",
+        "dedup_key": "ci_job:size-lint|file:apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts",
+        "ci_fingerprint": "c4a6a5d9eeb7de0c3a2a9396b8c4a15d058f7724b824ec92e20d66f0ee480b33",
+        "created_at": "2026-08-15T10:31:00Z",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "status_note": "AC: gh run view <databaseId with headSha AFTER c29aab1bfbad9abf354ebcd39130ad47ff73c802> --json jobs -q '.jobs[]|select(.name==\"size-lint\")|.conclusion' == success (verification_gate=ci_green_on_subsequent_push). Priority: HIGH — main HEAD is RED right now. Failing job: size-lint. Failing file: apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts.\n\nMANDATORY PRE-DEDUP FAILING-FILE READ PERFORMED (not skipped): `gh run view 31879022690 --log-failed | grep -E 'pass / |FAILEDFILE'` returned EMPTY — size-lint is not the bun-test per-file-isolation runner, so FAILING_FILES was read verbatim from the failing step's own error line: `[size-lint] FAIL — 1 offending file(s) (scanned 1409): apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts — baseline-tolerance-exceeded (baseline=464L actual=605L upper=510L)`. Exactly one offending file, so exactly one row (no collapse, no split).\n\nDEDUP: file-scoped PRIMARY dedup on dedup_key found NO match in any non-terminal lane (backlog/ready/in_progress/review/qa scanned by lane name, never by status token). SECONDARY check_id/head_sha scan also clean. ANTI-AMNESTY FENCE OBSERVED: not deduped into FIX-MCP-SUITE-HEALTH-BASELINE or any LOCAL-full-suite row; the CI plane's known-green baseline is 0 fail so this is actionable by construction.\n\nROOT CAUSE ALREADY IDENTIFIED — this is a paperwork gap, not a logic bug, and should be a small task. The file grew 464L -> 605L across the FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW pagination work (commits 51f162829 paginate, 8b4f977fd ColumnLayout cross-window, 532fc71a0 response-size guard rework) and nobody updated its size-justification header or re-baselined it. NOTE THE SEQUENCING TRAP: c29aab1bf is a docs-only commit (PO caveat banner on the rag D1-D5 incident doc) and did NOT touch this file — it is merely the SHA at which CI happened to run. Do NOT investigate c29aab1bf. Fix is: add/refresh the size-justification header on getBctcPendingRefineTool.ts and re-baseline, OR split the tool if 605L is genuinely unjustified.\n\nCROSS-REF: the sibling READY row FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER is the STRUCTURAL reason this reached main at all — pre-push enforces only tsc + rebuild-raw-verify and its path filter skips docs-only commits, so size-lint is never run locally. That row is the durable fix; this row is the immediate red-to-green.",
+        "updated_at": "2026-08-22T19:02:43Z",
+        "next_agent": "dev-mcp-server",
+        "occurrence_count": 7,
+        "po_triage_fold_20260815T1330": "[po/triage 2026-08-15T13:29:00Z] FOLD +2 fires, file-scoped dedup_key matched on both. This row now covers THREE consecutive CI RED probes today, all on the SAME failing file:\n  - CI-RED-c29aab1b head c29aab1bfbad9abf354ebcd39130ad47ff73c802 run 31879022690 (10:21:45Z) — the mint SHA\n  - CI-RED-46f5c677 head 46f5c677c4d8eca6dc03c418c5d1b17f11d5f6e0 run 31880629878 (11:21:52Z)\n  - CI-RED-152f08a1 head 152f08a120d506cbfa56b0a17b68384ae15efbff run 31883061393 (12:20:56Z)\nMANDATORY PRE-DEDUP FAILING-FILE READ PERFORMED ON ALL THREE (not skipped, not inherited from the row): `gh run view <run_id> --log-failed` on each returned NO FAILEDFILE block (size-lint is not the bun-test per-file-isolation runner), so FAILING_FILES was read verbatim from each failing step's own error line. All three emit the byte-identical line: `[size-lint] FAIL — 1 offending file(s) (scanned 1409): apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts — baseline-tolerance-exceeded (baseline=464L actual=605L upper=510L)`. One offending file, one row, no split, no collapse.\nESCALATION — WHY THIS IS NOW BATCHED, NOT JUST FOLDED: main has been RED continuously for >2h across 3 probe cycles while this row sat unassigned in backlog[] with no next_agent. RAW-RE-VERIFIED LIVE, not read off the signal payload: `wc -l apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts` = 605 at HEAD right now, so the breach is still live and every further push to main inherits a RED CI. Setting next_agent=dev-mcp-server (zone apps/mcp-server/) and folding into this tick's BATCH as the rank-1 entry. The fix path is already fully written on this row and unchanged: refresh the size-justification header + re-baseline, OR split the tool if 605L is genuinely unjustified. Do NOT investigate any of the three SHAs — all three are docs/chore commits that never touched this file; they are merely the SHAs at which CI happened to run (the sequencing trap this row already warns about, now confirmed 3x).",
+        "updated_by": "po",
+        "po_triage_fold_20260822T1900": "[po/triage 2026-08-22T19:00:18Z] FOLD +4 fires (occurrence_count 3 -> 7) AND lane-promote backlog[] -> ready[]. This row now covers SEVEN CI RED probes on the SAME failing file.\n\nNEW FIRES FOLDED THIS PASS (none were ever folded before — the 2026-08-15T13:30Z fold covered runs at 10:21/11:21/12:20 only, and feb68920 landed at 13:19:36Z, ~10min before that fold, so it was missed):\n  - CI-RED-feb68920 head feb6892035873b245603b4b4f7d9cfdd355610f8 run 31886091545 (2026-08-15T13:01:39Z)\n  - CI-RED-9d29dad8 head 9d29dad8... run 32585964001 (2026-08-22T16:51:36Z)\n  - CI-RED-6bbc7e11 head 6bbc7e11... run 32588886623 (2026-08-22T17:49:43Z)\n  - CI-RED-dc0f9033 head dc0f90334e72fae38ce496df428ef7815233631e run 32591495299 (2026-08-22T18:42:01Z)\n\nMANDATORY PRE-DEDUP FAILING-FILE READ PERFORMED ON ALL FOUR (not skipped, not inherited from this row): `gh run view <run_id> --log-failed` on each. size-lint is not the bun-test per-file-isolation runner, so no FAILEDFILE block exists and FAILING_FILES was read verbatim from each failing step's own error line. All four emit the byte-identical pair:\n  `[size-lint] FAIL — 1 offending file(s) (scanned 1409):`\n  `apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts — baseline-tolerance-exceeded (baseline=464L actual=605L upper=510L)`\nOne offending file, one row, no split, no collapse. File-scoped dedup_key matched on all four.\n\nANSWERS THE dev-team-tick 18:37Z QUESTION (\"is PO's file-scoped dedup actually collapsing these into one FIX row rather than 4?\"): YES — file-scoped dedup is correct and collapses all of them onto THIS row. The 4 envelopes did not represent 4 defects. But the collapse is a PO-TRIAGE-TIME action, and no PO triage pass had run since 2026-08-15T13:30Z, so 4 fires sat unfolded in .dev_team_idle_chain.pending_triage_inbox[] / docs/signals/ looking like 4 independent problems. The ci-health-probe's OWN dedup cannot help here and is not the bug: scripts/agents-flow/ci-health-probe.js builds `dedup_key = \"ci_red:<full head_sha>:<job>\"`, which is HEAD-scoped by construction, so every advancing HEAD necessarily emits a fresh envelope — the probe never parses the failing file and structurally cannot dedup across SHAs. Same shape as feedback_ci_red_close_must_record_fingerprint_else_redrain.\n\nWHY PROMOTED TO ready[] RATHER THAN LEFT IN backlog[]: this row was triaged, root-caused and stamped next_agent=dev-mcp-server on 2026-08-15T13:31Z and then sat in backlog[] for 7 days with main CONTINUOUSLY RED. RAW-RE-VERIFIED LIVE at 2026-08-22T19:00Z, not read off any signal payload: `wc -l apps/mcp-server/src/interface/mcp/tools/financial-reports/getBctcPendingRefineTool.ts` = 605, and `git log --since=2026-08-15 -- <that file>` is EMPTY — the file has not been touched since the row was minted, so the breach is still live and every further push to main inherits a RED CI. backlog[] is not a dispatchable lane; ready[] is. Fix path unchanged and already fully written on this row: refresh the size-justification header + re-baseline, OR split the tool if 605L is genuinely unjustified. Do NOT investigate any of the seven SHAs — all are docs/chore commits that never touched this file (the sequencing trap this row already warns about, now confirmed 7x)."
       }
     ],
     "review": [
@@ -17674,39 +17732,6 @@
         "po_sequencing_gate_20260814T1952Z": "BLOCKING SEQUENCE RULING (po): do NOT land the QA-requested CARD.md Step-2.4 wiring until FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE ships. Rationale: QA CHANGES_REQUESTED is correct that CARD.md has zero Step-2.4 mention (re-verified 2026-08-14T19:5xZ, still 0 hits) — but Step 2.4 is ALREADY partially reachable because CLAUDE.md step 2.5 names it explicitly, which is how it blocked 2 real dispatches today. Wiring CARD.md closes the remaining reachability gap and would therefore AMPLIFY a known-broken gate from partial to fleet-wide: every router dispatch of every daily cowork slot would false-positive-block. Fix the TTL defect first, or land both in one commit. This does not dispute the QA finding; it orders it."
       },
       {
-        "id": "UC-CCA-P2-MARKET-WATCHER",
-        "type": "TASK",
-        "title": "market-watcher: de-dup double probe (main.md + cycle.md)",
-        "status": "REVIEW",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cowork/market-watcher",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "owner": "market-watcher",
-        "parent_id": "UC-CCA-P2",
-        "depends": [],
-        "files": [
-          "docs/agents/market-watcher/flow/main.md",
-          "docs/agents/market-watcher/flow/cycle.md"
-        ],
-        "note": "FR-3: main.md—replace inline Step 3 corroboration block (current ~lines 61-99) with one-line pointer to gateway-availability-gate SKILL. cycle.md—delete Step 0-GW block (~lines 26-27), reword Execution-contract paragraph (~line 20) from 'Step 0-GW through Step 5b' to 'Step 0 through Step 5b', update terminal clause to reference 'explicit main.md Step 0-GW gateway-down EXIT'. Net: exactly ONE probe per invocation at dispatcher level. eod.md remains zero-gate, transitively covered only via main.md (no new gap).",
-        "created_at": "2026-08-14T12:22:00Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-22T18:51:30Z",
-        "next_agent": "po",
-        "updated_by": "po",
-        "commit": "3cfabaa28",
-        "agent_father_completed_at": "2026-08-14T12:35:16Z",
-        "agent_father_completion_note": "FR-3 applied per architect-ratified UC-CCA-P2-BA-spec.md. main.md: replaced inline Step 3 dual-probe/backoff/SIBLING_RECENT block (lines 61-99) with a one-line pointer to gateway-availability-gate/SKILL.md (agent-id=market-watcher; covers cycle.md AND eod.md). cycle.md: deleted its own Step 0-GW block (lines 26-27); Execution-contract paragraph reworded \"Step 0-GW through Step 5b\" -> \"Step 0 through Step 5b\"; terminal clause now reads \"an explicit main.md Step 0-GW gateway-down EXIT (per gateway-availability-gate skill)\". Post-edit grep confirms exactly ONE Step 0-GW probe pointer across both files (main.md:61) — double-probe defect eliminated. eod.md untouched (out of scope, remains zero-gate by design, unchanged transitively-only coverage via main.md). Committed 3cfabaa28 (explicit pathspec, INV-GATEWAY-1 gatewayless direct commit, not pushed — push-backstop/PO owns push per PUSH_THRESHOLD convention). Routed to po: AC-3 (dedup) needs live-cycle confirmation (next market-watcher WORK ping / notebook shows exactly one [GATEWAY] probe log line) — not self-testable this session, prose/flow-doc-only change.",
-        "po_note": "PO AC-3 REVIEW 2026-08-14T12:47:50Z — NOT SIGNED OFF, row stays in review[]. Static half of the change is correct; AC-3 is a LIVE-cycle criterion and no live cycle has fired since the commit.\n\nVERIFIED OK (code-level dedup, FR-3): commit 3cfabaa28 is on main and HEAD-reachable. grep across all three market-watcher flow files shows exactly ONE Step 0-GW probe invocation — main.md:61, the one-line pointer to .claude/skills/gateway-availability-gate/SKILL.md (agent-id=market-watcher, covers cycle.md AND eod.md). cycle.md's two surviving \"Step 0-GW\" hits are prose references only, not probes: :20 Execution-contract terminal clause (\"an explicit main.md Step 0-GW gateway-down EXIT (per gateway-availability-gate skill)\") and :22 the narrate-not-execute guard's historical incident text. eod.md: zero, unchanged by design. agent-father's completion claim matches the tree.\n\nNOT VERIFIABLE YET (AC-3 proper): UC-CCA-P2-BA-spec.md:418-419 defines AC-3 as \"next live market-watcher cycle's WORK ping / notebook shows exactly one [GATEWAY] probe log line, not two\". Commit landed 2026-08-14T12:35:04Z. Three independent sources agree market-watcher's last activity is ~8.5h EARLIER, at 2026-08-14T04:08-04:09Z: (a) docs/agent-memory/notebooks/market-watcher.md last updated 2026-08-14 04:09 UTC, cycle 04:00-04:30, exit_status=complete; (b) docs/data/cowork-schedule.json market-watcher-offhours.last_fired = 2026-08-14T04:08:29Z; (c) agent_work_log's newest market-watcher row is id 1975, started_at 2026-08-13 16:13:28 (the 04:00Z run did not even emit a work-log row). Zero post-commit cycles. Signing off now would be fabricating a pass on the one criterion that was routed to PO precisely because it cannot be settled by static review.\n\nROOT BLOCKER — waiting will NOT resolve this on its own: the cowork MASTER dispatcher has been silent since tick 06:45Z (last tick commit a10c8e989, committed 2026-08-14T06:51Z; no \"chore(cowork): tick\" commit since). Both market-watcher slots carry _superseded_by=\"cowork-dispatcher\" + trigger_status=\"deleted\" — they have NO independent per-slot cron and fire ONLY via that master dispatcher. Consequence: the 08:00Z and 12:00Z market-watcher-offhours ticks were both silently missed, and the next scheduled firing (16:00Z today — offhours \"0 */4 * * *\" AND market-watcher-eod \"0 16 * * 1-5\", today Fri 2026-08-14 matches both) will ALSO not fire unless the dispatcher is re-armed. This is a dispatcher-availability gap, NOT a defect in 3cfabaa28 — no regression is attributable to the market-watcher change.\n\nWHAT IS NEEDED TO CLOSE, in order: (1) re-arm the cowork master dispatcher via /cron-cowork-team — router-owned, outside PO's flow and outside this task's scope; (2) let the first natural market-watcher cycle with started_at > 2026-08-14T12:35:04Z run; (3) confirm its WORK ping / notebook Step 5 entry shows exactly ONE [GATEWAY] probe log line and no regression vs the 04:09Z pre-change cycle (baseline for comparison: 34 tickers, 0 anomalies, exit_status=complete); (4) then lane-move review[] -> done[], status REVIEW -> DONE.\n\nDELIBERATELY NOT DONE: did not hand-spawn market-watcher to force a ping. PO's flow does not call for spawning cowork agents, a forced spawn is not the \"next live cycle\" AC-3 names, and it would race the cowork-slot mutex (Step 2.4 collision probe). next_agent stays \"po\" for the post-cycle re-check.\n",
-        "ac3_status": "UNCONFIRMED_BLOCKED_ON_LIVE_CYCLE",
-        "ac3_last_checked_at": "2026-08-14T12:47:50Z",
-        "ac3_evidence_cutoff": "no market-watcher cycle with started_at > 2026-08-14T12:35:04Z (commit 3cfabaa28) exists as of 2026-08-14T12:47:50Z",
-        "secondary_claimed_at": "2026-08-22T18:51:29Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "po"
-      },
-      {
         "id": "FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE",
         "type": "FIX",
         "title": "[BCTC-1345b] alert hard-codes 'Check for OCR corruption (VNM/VEA pattern: assets<equity or margin>100%)' but financial=0.10 is emitted ONLY by the unit-mismatch short-circuit that bypasses those rules entirely — 65 live rows (23 tickers) each send the triager to a rule family that provably cannot return 0.10",
@@ -18439,8 +18464,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-22T17:22:19Z",
-    "last_triaged_by": "po-triage-20260822T1722Z",
+    "last_triaged_at": "2026-08-22T19:00:18Z",
+    "last_triaged_by": "po",
     "in_progress": [
       {
         "id": "UC-CCA-P3",
@@ -18573,8 +18598,8 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-22T17:22:19Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-08-22T19:00:18Z",
+  "_updated_by": "po (UC-CCA-P2-MARKET-WATCHER AC-3 sign-off + ci_red size-lint fold x4 + BA-AC guardrail mint)",
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {

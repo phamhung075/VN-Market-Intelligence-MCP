@@ -137,3 +137,39 @@ verbatim; this is a one-line implementation correction, not an open design quest
 - what-considered: "only path: move the existing outer NOT NULL guard into the MAX(date) subquery; no alternative design — the file's own docstring already names the exact intended contract"
 - why-decision: "confirmed live probe pattern is recurring (2026-08-15/16/22) not a one-off, and the outer guard alone cannot fix it since it fires AFTER the wrong date is already locked in by the subquery"
 - why-change: "no change from plan; added NFR-2 cascade re-measurement per the ticket's own note so momentum-indicators/money-radar are not double-ticketed for a symptom this fix may already resolve"
+
+---
+
+## [Architect] Brownfield Findings
+
+- **Zone:** apps/mcp-server/
+- **Verified paths:**
+  - `apps/mcp-server/src/interface/mcp/routes/foreignFlowHandler.ts:164-190` — `queryForeignFlow()`, confirmed live SQL (L172-181): `WHERE date = (SELECT MAX(date) FROM vnstock_trading_stats) AND foreign_volume IS NOT NULL` — subquery has no guard; outer guard present but fires only after the wrong date is already locked in.
+  - Docstring L8 ("Latest trading day = MAX(date) with foreign_volume IS NOT NULL") already states the correct contract — confirms this is a pure implementation/docstring divergence; no docstring edit needed here (unlike the sibling conviction-history fix).
+  - `apps/mcp-server/src/__tests__/1986-foreign-flow-endpoint.test.ts` — 668L, AC-1..AC-14; AC-12 (L344, "only latest trading date rows returned — WHERE date = MAX(date)") is the closest existing coverage and does NOT seed a NULL-only newest date, confirming the gap. New regression slots in as AC-15.
+- **Reuse patterns:** none needed — single SQL string-literal edit, no new port/adapter, no new file. Concur with BA's §6 Scope Out declining to extract this into an `infrastructure/db` store as part of this fix — a one-line predicate fix does not justify a layering refactor mid-fix; the interface/infrastructure layering asymmetry vs the sibling conviction-history store is pre-existing, not introduced or worsened here.
+- **Design decisions (FR-1 exact SQL, per BA spec verbatim — no deviation):**
+  ```sql
+  WHERE date = (
+    SELECT MAX(date) FROM vnstock_trading_stats WHERE foreign_volume IS NOT NULL
+  )
+    AND foreign_volume IS NOT NULL
+  ```
+  Keep the outer guard (does independent real work stripping individual null rows on a partial day). Layer: interface (`queryForeignFlow()`, same file) — zero domain/application/infrastructure touch. Same regression-test shape as the sibling conviction-history fix: served date must match a (guarded) `MAX(date)` in the underlying table.
+- **Test strategy (NFR-1, new AC-15, adjacent to AC-12):**
+  1. Seed a NULL-only newest date (all rows `foreign_volume: null`) plus a populated older date (existing `PROD_DATE`/`insertRow` helpers). Assert `queryForeignFlow(db).tradingDate` == the OLDER populated date, `items.length > 0`.
+  2. Edge case (BA §4, "confirm via test," no special-case code needed): ALL dates NULL table-wide — subquery returns SQL NULL, outer `WHERE date = NULL` evaluates UNKNOWN (never true) → 0 rows → falls through to the EXISTING empty-response path (AC-6/AC-14), `tradingDate: ""`. This is a genuine SQLite three-valued-logic guarantee worth an explicit assertion, not defensive code.
+  3. Edge case: multiple CONSECUTIVE NULL-only days (today + yesterday NULL-only, day-before-yesterday populated) — assert the subquery walks back arbitrarily far with no date-arithmetic/fallback logic required.
+  4. Re-run existing AC-1..AC-14 unmodified — must all still pass, including AC-12/AC-13.
+  5. NFR-2 (verification only, no code): after landing, re-query `/api/momentum-indicators` `foreign_accum.null_reason` and `/api/money-radar` `coverage_pct`; record result on this row before opening any new backlog row for either symptom.
+- **Risk flags:**
+  - LOW — nothing functionally new. Only note is the pre-existing interface/infrastructure layering asymmetry (SQL embedded in the interface-layer route file, no dedicated store), already flagged by BA as observation-only, out of scope. Worth a name-check only if a future foreign-flow change needs more than a 1-line patch — not actionable now.
+- **Scan clean:** true ✓ (no DDD violations — layering asymmetry is pre-existing and explicitly scoped out, not introduced here)
+- **BUILD-STANDARD:** not-applicable (BUG-FIX, in-zone, no new primitives)
+
+## RETURN (architect)
+DONE: Technical design complete — subquery non-null guard ratified verbatim per BA's FR-1, AC-15 regression test designed (NULL-only-newest-date + all-NULL-table-wide + consecutive-NULL-days edge cases), NFR-2 cascade re-measurement confirmed as verification-only (no new code).
+ZONE: apps/mcp-server/
+NEXT: pm — create developer task (single-file, single-test-file change; safe to pair with sibling FIX-GHOSTZONE-CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST, zero file overlap).
+HANDOFF: docs/handoffs/FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD-BA-spec.md
+PIPELINE: continue
