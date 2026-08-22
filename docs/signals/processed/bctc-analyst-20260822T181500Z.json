@@ -1,0 +1,40 @@
+{
+  "id": "bca-20260822T181500Z",
+  "ts": "2026-08-22T18:15:00Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "esc-deep-dive-request",
+  "summary": "ESC deep-dive: FPT Q1-2026 ESC-5",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "trigger_id": "ESC-5",
+    "ticker": "FPT",
+    "quarter": "Q1-2026",
+    "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+    "context": {
+      "low_confidence_unit_ids": [
+        "unit-0008",
+        "unit-0009",
+        "unit-0010",
+        "unit-0011",
+        "unit-0012",
+        "unit-0013",
+        "unit-0014"
+      ],
+      "min_confidence": 0.45
+    },
+    "all_esc_fired": [
+      "ESC-5"
+    ],
+    "note": "Nth consecutive cycle FPT ESC-5 fires (c164/166/167/168/169/170 previously confirmed; this cycle follows a 7-day cron-silence gap 2026-08-15T00:20Z -> 2026-08-22T18:08Z UTC, consistent with the known host-suspension multiday-cron-silence pattern). Guard task_claim(esc-deepdive:FPT:Q1-2026:ESC-5) returned claimed:true on first probe. This is NOT a repeat of the c170-flagged early-clear anomaly (that finding required an intervening SHORT interval to be meaningful) -- c170's 2026-08-15T00:17:07Z re-arm (ttl=86400s) would have legitimately expired around 2026-08-16T00:17Z, many days before this probe, so a natural-expiry explanation fully accounts for claimed:true here. The anomaly test itself is inconclusive across a 7-day gap; visibility into whether dev-team completed any deep-dive pickup during the gap is not available from this agent. Re-armed fresh (ttl 86400s) this cycle."
+  },
+  "_processed": {
+    "fingerprint": "f7b49ec343ad5234780c2c12cbca7f0a451930ca04b5114a4c7fabeab2b4aee8",
+    "processedAt": "2026-08-22T18:17:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

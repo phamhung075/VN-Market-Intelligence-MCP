@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-22T18:07:44Z",
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "weekend",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-2": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-2": 1440
+    },
+    "last_fired_timestamp": "2026-08-22T18:07:36Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "18:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 0,
+    "note": "bctc-offmarket daily cadence slot, off-market weekend window"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-22T18:07:44Z",
+  "_processed": {
+    "fingerprint": "e59910b675d2fe5619403573403788d124e65c9b77ab9ad8118388e2a1eab2f7",
+    "processedAt": "2026-08-22T18:17:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

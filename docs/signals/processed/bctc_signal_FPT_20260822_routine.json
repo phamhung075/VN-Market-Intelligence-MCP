@@ -1,0 +1,76 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Software export & IT services (offshore development, system integration), telecom (FPT Telecom broadband/ISP), education (FPT Edu -- university, K-12, vocational)",
+  "customer": "Enterprise IT buyers in Japan/US/EU offshore markets (Europe segment +44.4% YoY per Q1 management commentary), domestic broadband/telecom subscribers, students and families (FPT Edu)",
+  "ops": "Gross margin 34.0%, operating margin 22.0%. Reported Q1-2026 revenue -22.3% YoY on an as-filed basis, but +8.7% YoY on management's restated basis (FTEL -- FPT Telecom -- moved from full consolidation to equity-method accounting 2026-01-01, distorting the headline YoY comparison; do not read the -22.3% figure as an operating decline). Q1 OCF -2.85tn VND (negative, working-capital-driven: receivables/payables swing) vs NI +2.48tn VND.",
+  "mgmt": "Consolidation-method change (FTEL) disclosed transparently in filing footnotes with a like-for-like restated table. Associate-company profit +36% YoY. No adverse legal/regulatory findings this cycle.",
+  "valuation": {
+    "pe": 13.8,
+    "sector_median_pe": 17.3,
+    "roe_pct": 28.3,
+    "sector_median_roe_pct": 10.6,
+    "ey_spread_pp": 2.246,
+    "max_deposit_rate_pct": 5,
+    "verdict": "FAIR"
+  },
+  "kinhdich": {
+    "que": "Hoan (59)",
+    "xu_huong": "THUAN LOI",
+    "tin_hieu": "GIU",
+    "do_tin_cay_pct": 100
+  },
+  "esc_gate": {
+    "esc1_accounting_manipulation": "unevaluable (no Bash/Glob grant on this agent -- standing capability gap)",
+    "esc2_balance_sheet": {
+      "result": false,
+      "imbalance_pct": 0,
+      "note": "balance_check:PASSED in source refine unit"
+    },
+    "esc3_ocf_np_divergence": {
+      "result": "DATA-COVERAGE-LIMITED",
+      "quarters_returned": 3,
+      "quarters_required": 4,
+      "guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+      "signal_emitted": "docs/signals/bctc-analyst-20260822T181501Z.json"
+    },
+    "esc4_nonop_share": {
+      "result": false,
+      "non_operating_share_pct": 2
+    },
+    "esc5_refine_confidence": {
+      "result": true,
+      "min_confidence": 0.45,
+      "low_confidence_units": [
+        "unit-0008",
+        "unit-0009",
+        "unit-0010",
+        "unit-0011",
+        "unit-0012",
+        "unit-0013",
+        "unit-0014"
+      ],
+      "escalation_status": "PENDING",
+      "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+      "signal_emitted": "docs/signals/bctc-analyst-20260822T181500Z.json"
+    }
+  },
+  "data_quality": {
+    "bctc_period_latest_extracted": "2026-Q1",
+    "q2_2026_pdf_on_file_since": "2026-08-01",
+    "extraction_lag_days": 21,
+    "calendar_status": "QUA HAN (deadline 30/07/2026)"
+  },
+  "insider": "no significant insider signal",
+  "legal_risk": "none",
+  "generated_at": "2026-08-22T18:20:00Z",
+  "_processed": {
+    "fingerprint": "832c95eb187d68190a49c2bbcac6688ed2c358d7f37646f2ef2ee7ce1d32223b",
+    "processedAt": "2026-08-22T18:17:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

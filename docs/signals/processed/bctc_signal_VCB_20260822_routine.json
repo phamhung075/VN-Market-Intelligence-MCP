@@ -1,0 +1,63 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Full-service commercial banking -- retail and corporate lending, trade finance, FX, wealth management (Joint Stock Commercial Bank for Foreign Trade of Vietnam)",
+  "customer": "Corporate/SOE lending relationships, retail deposit and loan customers, trade-finance corporates",
+  "ops": "Net interest income 17.42tn VND, operating margin 80.9% (typical bank cost structure), Net Profit 9.46tn VND. Quarterly (non-annualized) ROE 4.2% vs sector-comparison annualized ROE 16.7% -- use the annualized figure for valuation, the raw quarterly ratio understates true profitability. OCF/NI ratio 1.368 for Q1 -> ESC-3 divergence 0.368, below the 0.40 escalation threshold -- no forensic flag.",
+  "mgmt": "No adverse legal/regulatory findings this cycle. Balance-sheet check PASSED (imbalance 0.37%, within the 0.5% tolerance).",
+  "valuation": {
+    "pe": 14.1,
+    "sector_median_pe": 9,
+    "roe_pct": 16.7,
+    "sector_median_roe_pct": 17.6,
+    "ey_spread_pp": 2.092,
+    "max_deposit_rate_pct": 5,
+    "verdict": "FAIR"
+  },
+  "kinhdich": {
+    "que": "Quan (20)",
+    "xu_huong": "TRUNG TINH",
+    "tin_hieu": "GIU",
+    "do_tin_cay_pct": 38
+  },
+  "esc_gate": {
+    "esc1_accounting_manipulation": "unevaluable (no Bash/Glob grant on this agent -- standing capability gap)",
+    "esc2_balance_sheet": {
+      "result": false,
+      "imbalance_pct": 0.37
+    },
+    "esc3_ocf_np_divergence": {
+      "result": false,
+      "quarters_returned": 4,
+      "quarters_required": 4,
+      "divergence_ratio": 0.368,
+      "threshold": 0.4
+    },
+    "esc4_nonop_share": {
+      "result": "N/A",
+      "reason": "bank -- non_operating_share P&L structure does not map cleanly to this heuristic"
+    },
+    "esc5_refine_confidence": {
+      "result": false,
+      "reason": "get_bctc_report_id returned report_id=null (existing_refine_status=PARTIAL) -- refine not finished, skip"
+    }
+  },
+  "data_quality": {
+    "bctc_period_latest_extracted": "2026-Q1",
+    "q2_2026_pdf_on_file_since": "2026-08-01",
+    "extraction_lag_days": 21,
+    "calendar_status": "QUA HAN (deadline 14/08/2026, now passed)"
+  },
+  "insider": "no significant insider signal",
+  "legal_risk": "none",
+  "generated_at": "2026-08-22T18:20:00Z",
+  "_processed": {
+    "fingerprint": "e4c1d652c168a5c626f5c4a35301148a519b35cbe501178d81cf22ada09cf051",
+    "processedAt": "2026-08-22T18:17:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "ticker": "DXG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Residential real estate development (mid-market condominiums, mostly Southern Vietnam / HCMC region) -- Dat Xanh Group",
+  "customer": "Domestic homebuyers and investors in HCMC-region residential projects",
+  "ops": "No BCTC extraction on file this cycle ('Chua co du lieu BCTC' -- 30+ consecutive cycles unresolved) despite a Q2-2026 PDF confirmed present on the VPS store since 2026-08-01 (DXG_2026_Q2.pdf) -- an extraction-pipeline gap, not a filing gap. The valuation ratios below come from a separate sector-comparison dataset, not from a fresh BCTC line-item extraction, and should be read with that caveat.",
+  "mgmt": "Cannot assess management execution this cycle -- no income-statement/balance-sheet data available. A cash-flow-anomaly signal from 2026-08-13 (docs/signals/processed/... originally bctc-analyst-20260813T001500Z.json) remains PENDING dev-team pickup and unresolved.",
+  "valuation": {
+    "pe": 66.5,
+    "sector_median_pe": 16.1,
+    "roe_pct": 1.9,
+    "sector_median_roe_pct": 7.3,
+    "ey_spread_pp": -3.496,
+    "max_deposit_rate_pct": 5,
+    "verdict": "AVOID",
+    "note": "valuation_verdict=AVOID -- per flow rule, do NOT post a bullish signal for this ticker"
+  },
+  "kinhdich": {
+    "que": "Di (27)",
+    "xu_huong": "TRUNG TINH",
+    "tin_hieu": "BAN",
+    "do_tin_cay_pct": 29
+  },
+  "esc_gate": {
+    "esc1_accounting_manipulation": "unevaluable (no BCTC data + no Bash/Glob grant)",
+    "esc2_balance_sheet": "unevaluable (no BCTC data)",
+    "esc3_ocf_np_divergence": "unevaluable (no BCTC data)",
+    "esc4_nonop_share": "unevaluable (no BCTC data)",
+    "esc5_refine_confidence": "unevaluable (no BCTC data)"
+  },
+  "data_quality": {
+    "bctc_period_latest_extracted": "none -- Chua co du lieu BCTC",
+    "q2_2026_pdf_on_file_since": "2026-08-01",
+    "calendar_status": "QUA HAN (deadline 30/07/2026)",
+    "known_defect": "extraction pipeline has not processed the on-file PDF, 30+ cycle standing gap",
+    "pending_signal": "cash-flow-anomaly (2026-08-13) still PENDING dev-team pickup"
+  },
+  "insider": "no significant insider signal",
+  "legal_risk": "none",
+  "generated_at": "2026-08-22T18:20:00Z",
+  "_processed": {
+    "fingerprint": "1b5d5943cd86d3e9c0a0a6af411b28d6f7782757c2ca731eb278c2aad10630ac",
+    "processedAt": "2026-08-22T18:17:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

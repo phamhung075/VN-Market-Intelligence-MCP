@@ -1,0 +1,64 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Steel manufacturing -- long/flat steel, HRC (hot-rolled coil), construction materials",
+  "customer": "Domestic construction/infrastructure builders, export steel buyers; ~5% of revenue tied to Australia (iron-ore import trade per news alert this cycle)",
+  "ops": "Gross margin 15.8%. Reported Operating Profit = 0 tn VND against Pretax Profit = 10.76tn VND -- this is a KNOWN, STANDING data-extraction defect (25+ consecutive cycles), not a new operational finding; get_bctc_full itself flags 'Net profit exceeds gross profit -- possible non-operating income' as a validation warning on the same data. Q1 OCF also reported as 0, consistent with the same extraction gap rather than a genuine zero-cash-flow quarter.",
+  "mgmt": "No adverse legal/regulatory findings this cycle. The operating-profit=0 issue is a standing data-quality/extraction defect (root_task tracked separately), not treated as a governance or manipulation signal.",
+  "valuation": {
+    "pe": 14.2,
+    "sector_median_pe": 32.6,
+    "roe_pct": 12.7,
+    "sector_median_roe_pct": 2.9,
+    "ey_spread_pp": 2.042,
+    "max_deposit_rate_pct": 5,
+    "verdict": "FAIR"
+  },
+  "kinhdich": {
+    "que": "Tan (35)",
+    "xu_huong": "THUAN LOI",
+    "tin_hieu": "GIU",
+    "do_tin_cay_pct": 63
+  },
+  "esc_gate": {
+    "esc1_accounting_manipulation": "unevaluable (no Bash/Glob grant on this agent -- standing capability gap)",
+    "esc2_balance_sheet": {
+      "result": false,
+      "imbalance_pct": 0
+    },
+    "esc3_ocf_np_divergence": {
+      "result": "DATA-COVERAGE-LIMITED",
+      "quarters_returned": 3,
+      "quarters_required": 4,
+      "guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+      "signal_emitted": "docs/signals/bctc-analyst-20260822T181502Z.json"
+    },
+    "esc4_nonop_share": {
+      "result": "DISCARDED",
+      "reason": "operating_profit=0 is corrupt extraction data (25+ cycle known defect); non_operating_share formula is undefined/meaningless against a zero denominator input -- not evaluated as a genuine finding"
+    },
+    "esc5_refine_confidence": {
+      "result": false,
+      "reason": "get_bctc_report_id returned report_id=null (existing_refine_status=PARTIAL) -- refine not finished, skip"
+    }
+  },
+  "data_quality": {
+    "bctc_period_latest_extracted": "2026-Q1",
+    "q2_2026_pdf_on_file_since": "2026-08-01",
+    "extraction_lag_days": 21,
+    "calendar_status": "QUA HAN (deadline 30/07/2026)",
+    "known_defect": "operating_profit=0 in income-statement extraction, unresolved 25+ cycles"
+  },
+  "insider": "no significant insider signal",
+  "legal_risk": "none",
+  "generated_at": "2026-08-22T18:20:00Z",
+  "_processed": {
+    "fingerprint": "2593c277cff50d225ded4e528ef1a6e720ff333d5d191da440a8bce782c2c83c",
+    "processedAt": "2026-08-22T18:17:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

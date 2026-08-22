@@ -18458,7 +18458,7 @@
         "last_served_tick": "2026-08-15T13:20:13Z"
       }
     },
-    "_updated_at": "2026-08-22T17:50:32Z",
+    "_updated_at": "2026-08-22T18:17:51Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19339,6 +19339,477 @@
         },
         "createdAt": "2026-08-22T17:47:40Z",
         "drained_at": "2026-08-22T17:47:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f7b49ec343ad5234780c2c12cbca7f0a451930ca04b5114a4c7fabeab2b4aee8",
+        "source": "file",
+        "from": "bctc-analyst",
+        "to": "dev-team",
+        "type": "esc-deep-dive-request",
+        "priority": "HIGH",
+        "payload": {
+          "trigger_id": "ESC-5",
+          "ticker": "FPT",
+          "quarter": "Q1-2026",
+          "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+          "context": {
+            "low_confidence_unit_ids": [
+              "unit-0008",
+              "unit-0009",
+              "unit-0010",
+              "unit-0011",
+              "unit-0012",
+              "unit-0013",
+              "unit-0014"
+            ],
+            "min_confidence": 0.45
+          },
+          "all_esc_fired": [
+            "ESC-5"
+          ],
+          "note": "Nth consecutive cycle FPT ESC-5 fires (c164/166/167/168/169/170 previously confirmed; this cycle follows a 7-day cron-silence gap 2026-08-15T00:20Z -> 2026-08-22T18:08Z UTC, consistent with the known host-suspension multiday-cron-silence pattern). Guard task_claim(esc-deepdive:FPT:Q1-2026:ESC-5) returned claimed:true on first probe. This is NOT a repeat of the c170-flagged early-clear anomaly (that finding required an intervening SHORT interval to be meaningful) -- c170's 2026-08-15T00:17:07Z re-arm (ttl=86400s) would have legitimately expired around 2026-08-16T00:17Z, many days before this probe, so a natural-expiry explanation fully accounts for claimed:true here. The anomaly test itself is inconclusive across a 7-day gap; visibility into whether dev-team completed any deep-dive pickup during the gap is not available from this agent. Re-armed fresh (ttl 86400s) this cycle."
+        },
+        "createdAt": "2026-08-22T18:15:00Z",
+        "drained_at": "2026-08-22T18:17:51Z",
+        "routed_to": "ESC-DISPATCH"
+      },
+      {
+        "envelope_id": "756a7d98c2ca29b9a2ff570f9898acf9563ebf69490fb9b837bdf42ff289a014",
+        "source": "file",
+        "from": "bctc-analyst",
+        "to": "ops",
+        "type": "data-coverage-gap",
+        "priority": "LOW",
+        "payload": {
+          "trigger_id": "ESC-3",
+          "ticker": "FPT",
+          "quarter": "Q1-2026",
+          "quarters_returned": 3,
+          "quarters_required": 4,
+          "root_task": "BCTC-HIST-VPS-BACKFILL",
+          "note": "Multi-period accrual decomposition blocked by data coverage, not tool bug. No Opus deep-dive warranted. Re-check when quarters_returned >= 4. Prior 8-day guard (armed ~2026-08-14/15) has now naturally expired -- this re-emit reflects the same standing 3/4 coverage gap, not a new finding.",
+          "guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+          "guard_ttl_days": 8
+        },
+        "createdAt": "2026-08-22T18:15:01Z",
+        "drained_at": "2026-08-22T18:17:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8017866a413ac16d3cfd3eeb0547af95651f4b40ed4fb9dc53513af78feb8f49",
+        "source": "file",
+        "from": "bctc-analyst",
+        "to": "ops",
+        "type": "data-coverage-gap",
+        "priority": "LOW",
+        "payload": {
+          "trigger_id": "ESC-3",
+          "ticker": "HPG",
+          "quarter": "Q1-2026",
+          "quarters_returned": 3,
+          "quarters_required": 4,
+          "root_task": "BCTC-HIST-VPS-BACKFILL",
+          "note": "Multi-period accrual decomposition blocked by data coverage, not tool bug. No Opus deep-dive warranted. Re-check when quarters_returned >= 4. Prior 8-day guard (armed ~2026-08-14/15) has now naturally expired -- this re-emit reflects the same standing 3/4 coverage gap, not a new finding. Separately, HPG Q1/2026 operating_profit=0 (income-statement corruption, unresolved 25+ cycles as of the last confirmed check) means ESC-4's non_operating_share denominator/numerator pair is not usable for this ticker this cycle -- discarded, not escalated.",
+          "guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+          "guard_ttl_days": 8
+        },
+        "createdAt": "2026-08-22T18:15:02Z",
+        "drained_at": "2026-08-22T18:17:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1b5d5943cd86d3e9c0a0a6af411b28d6f7782757c2ca731eb278c2aad10630ac",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Residential real estate development (mid-market condominiums, mostly Southern Vietnam / HCMC region) -- Dat Xanh Group",
+          "customer": "Domestic homebuyers and investors in HCMC-region residential projects",
+          "ops": "No BCTC extraction on file this cycle ('Chua co du lieu BCTC' -- 30+ consecutive cycles unresolved) despite a Q2-2026 PDF confirmed present on the VPS store since 2026-08-01 (DXG_2026_Q2.pdf) -- an extraction-pipeline gap, not a filing gap. The valuation ratios below come from a separate sector-comparison dataset, not from a fresh BCTC line-item extraction, and should be read with that caveat.",
+          "mgmt": "Cannot assess management execution this cycle -- no income-statement/balance-sheet data available. A cash-flow-anomaly signal from 2026-08-13 (docs/signals/processed/... originally bctc-analyst-20260813T001500Z.json) remains PENDING dev-team pickup and unresolved.",
+          "valuation": {
+            "pe": 66.5,
+            "sector_median_pe": 16.1,
+            "roe_pct": 1.9,
+            "sector_median_roe_pct": 7.3,
+            "ey_spread_pp": -3.496,
+            "max_deposit_rate_pct": 5,
+            "verdict": "AVOID",
+            "note": "valuation_verdict=AVOID -- per flow rule, do NOT post a bullish signal for this ticker"
+          },
+          "kinhdich": {
+            "que": "Di (27)",
+            "xu_huong": "TRUNG TINH",
+            "tin_hieu": "BAN",
+            "do_tin_cay_pct": 29
+          },
+          "esc_gate": {
+            "esc1_accounting_manipulation": "unevaluable (no BCTC data + no Bash/Glob grant)",
+            "esc2_balance_sheet": "unevaluable (no BCTC data)",
+            "esc3_ocf_np_divergence": "unevaluable (no BCTC data)",
+            "esc4_nonop_share": "unevaluable (no BCTC data)",
+            "esc5_refine_confidence": "unevaluable (no BCTC data)"
+          },
+          "data_quality": {
+            "bctc_period_latest_extracted": "none -- Chua co du lieu BCTC",
+            "q2_2026_pdf_on_file_since": "2026-08-01",
+            "calendar_status": "QUA HAN (deadline 30/07/2026)",
+            "known_defect": "extraction pipeline has not processed the on-file PDF, 30+ cycle standing gap",
+            "pending_signal": "cash-flow-anomaly (2026-08-13) still PENDING dev-team pickup"
+          },
+          "insider": "no significant insider signal",
+          "legal_risk": "none",
+          "generated_at": "2026-08-22T18:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-22T18:17:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "832c95eb187d68190a49c2bbcac6688ed2c358d7f37646f2ef2ee7ce1d32223b",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Software export & IT services (offshore development, system integration), telecom (FPT Telecom broadband/ISP), education (FPT Edu -- university, K-12, vocational)",
+          "customer": "Enterprise IT buyers in Japan/US/EU offshore markets (Europe segment +44.4% YoY per Q1 management commentary), domestic broadband/telecom subscribers, students and families (FPT Edu)",
+          "ops": "Gross margin 34.0%, operating margin 22.0%. Reported Q1-2026 revenue -22.3% YoY on an as-filed basis, but +8.7% YoY on management's restated basis (FTEL -- FPT Telecom -- moved from full consolidation to equity-method accounting 2026-01-01, distorting the headline YoY comparison; do not read the -22.3% figure as an operating decline). Q1 OCF -2.85tn VND (negative, working-capital-driven: receivables/payables swing) vs NI +2.48tn VND.",
+          "mgmt": "Consolidation-method change (FTEL) disclosed transparently in filing footnotes with a like-for-like restated table. Associate-company profit +36% YoY. No adverse legal/regulatory findings this cycle.",
+          "valuation": {
+            "pe": 13.8,
+            "sector_median_pe": 17.3,
+            "roe_pct": 28.3,
+            "sector_median_roe_pct": 10.6,
+            "ey_spread_pp": 2.246,
+            "max_deposit_rate_pct": 5,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Hoan (59)",
+            "xu_huong": "THUAN LOI",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 100
+          },
+          "esc_gate": {
+            "esc1_accounting_manipulation": "unevaluable (no Bash/Glob grant on this agent -- standing capability gap)",
+            "esc2_balance_sheet": {
+              "result": false,
+              "imbalance_pct": 0,
+              "note": "balance_check:PASSED in source refine unit"
+            },
+            "esc3_ocf_np_divergence": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+              "signal_emitted": "docs/signals/bctc-analyst-20260822T181501Z.json"
+            },
+            "esc4_nonop_share": {
+              "result": false,
+              "non_operating_share_pct": 2
+            },
+            "esc5_refine_confidence": {
+              "result": true,
+              "min_confidence": 0.45,
+              "low_confidence_units": [
+                "unit-0008",
+                "unit-0009",
+                "unit-0010",
+                "unit-0011",
+                "unit-0012",
+                "unit-0013",
+                "unit-0014"
+              ],
+              "escalation_status": "PENDING",
+              "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+              "signal_emitted": "docs/signals/bctc-analyst-20260822T181500Z.json"
+            }
+          },
+          "data_quality": {
+            "bctc_period_latest_extracted": "2026-Q1",
+            "q2_2026_pdf_on_file_since": "2026-08-01",
+            "extraction_lag_days": 21,
+            "calendar_status": "QUA HAN (deadline 30/07/2026)"
+          },
+          "insider": "no significant insider signal",
+          "legal_risk": "none",
+          "generated_at": "2026-08-22T18:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-22T18:17:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2593c277cff50d225ded4e528ef1a6e720ff333d5d191da440a8bce782c2c83c",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Steel manufacturing -- long/flat steel, HRC (hot-rolled coil), construction materials",
+          "customer": "Domestic construction/infrastructure builders, export steel buyers; ~5% of revenue tied to Australia (iron-ore import trade per news alert this cycle)",
+          "ops": "Gross margin 15.8%. Reported Operating Profit = 0 tn VND against Pretax Profit = 10.76tn VND -- this is a KNOWN, STANDING data-extraction defect (25+ consecutive cycles), not a new operational finding; get_bctc_full itself flags 'Net profit exceeds gross profit -- possible non-operating income' as a validation warning on the same data. Q1 OCF also reported as 0, consistent with the same extraction gap rather than a genuine zero-cash-flow quarter.",
+          "mgmt": "No adverse legal/regulatory findings this cycle. The operating-profit=0 issue is a standing data-quality/extraction defect (root_task tracked separately), not treated as a governance or manipulation signal.",
+          "valuation": {
+            "pe": 14.2,
+            "sector_median_pe": 32.6,
+            "roe_pct": 12.7,
+            "sector_median_roe_pct": 2.9,
+            "ey_spread_pp": 2.042,
+            "max_deposit_rate_pct": 5,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Tan (35)",
+            "xu_huong": "THUAN LOI",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 63
+          },
+          "esc_gate": {
+            "esc1_accounting_manipulation": "unevaluable (no Bash/Glob grant on this agent -- standing capability gap)",
+            "esc2_balance_sheet": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "esc3_ocf_np_divergence": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "quarters_required": 4,
+              "guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+              "signal_emitted": "docs/signals/bctc-analyst-20260822T181502Z.json"
+            },
+            "esc4_nonop_share": {
+              "result": "DISCARDED",
+              "reason": "operating_profit=0 is corrupt extraction data (25+ cycle known defect); non_operating_share formula is undefined/meaningless against a zero denominator input -- not evaluated as a genuine finding"
+            },
+            "esc5_refine_confidence": {
+              "result": false,
+              "reason": "get_bctc_report_id returned report_id=null (existing_refine_status=PARTIAL) -- refine not finished, skip"
+            }
+          },
+          "data_quality": {
+            "bctc_period_latest_extracted": "2026-Q1",
+            "q2_2026_pdf_on_file_since": "2026-08-01",
+            "extraction_lag_days": 21,
+            "calendar_status": "QUA HAN (deadline 30/07/2026)",
+            "known_defect": "operating_profit=0 in income-statement extraction, unresolved 25+ cycles"
+          },
+          "insider": "no significant insider signal",
+          "legal_risk": "none",
+          "generated_at": "2026-08-22T18:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-22T18:17:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e4c1d652c168a5c626f5c4a35301148a519b35cbe501178d81cf22ada09cf051",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Full-service commercial banking -- retail and corporate lending, trade finance, FX, wealth management (Joint Stock Commercial Bank for Foreign Trade of Vietnam)",
+          "customer": "Corporate/SOE lending relationships, retail deposit and loan customers, trade-finance corporates",
+          "ops": "Net interest income 17.42tn VND, operating margin 80.9% (typical bank cost structure), Net Profit 9.46tn VND. Quarterly (non-annualized) ROE 4.2% vs sector-comparison annualized ROE 16.7% -- use the annualized figure for valuation, the raw quarterly ratio understates true profitability. OCF/NI ratio 1.368 for Q1 -> ESC-3 divergence 0.368, below the 0.40 escalation threshold -- no forensic flag.",
+          "mgmt": "No adverse legal/regulatory findings this cycle. Balance-sheet check PASSED (imbalance 0.37%, within the 0.5% tolerance).",
+          "valuation": {
+            "pe": 14.1,
+            "sector_median_pe": 9,
+            "roe_pct": 16.7,
+            "sector_median_roe_pct": 17.6,
+            "ey_spread_pp": 2.092,
+            "max_deposit_rate_pct": 5,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Quan (20)",
+            "xu_huong": "TRUNG TINH",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 38
+          },
+          "esc_gate": {
+            "esc1_accounting_manipulation": "unevaluable (no Bash/Glob grant on this agent -- standing capability gap)",
+            "esc2_balance_sheet": {
+              "result": false,
+              "imbalance_pct": 0.37
+            },
+            "esc3_ocf_np_divergence": {
+              "result": false,
+              "quarters_returned": 4,
+              "quarters_required": 4,
+              "divergence_ratio": 0.368,
+              "threshold": 0.4
+            },
+            "esc4_nonop_share": {
+              "result": "N/A",
+              "reason": "bank -- non_operating_share P&L structure does not map cleanly to this heuristic"
+            },
+            "esc5_refine_confidence": {
+              "result": false,
+              "reason": "get_bctc_report_id returned report_id=null (existing_refine_status=PARTIAL) -- refine not finished, skip"
+            }
+          },
+          "data_quality": {
+            "bctc_period_latest_extracted": "2026-Q1",
+            "q2_2026_pdf_on_file_since": "2026-08-01",
+            "extraction_lag_days": 21,
+            "calendar_status": "QUA HAN (deadline 14/08/2026, now passed)"
+          },
+          "insider": "no significant insider signal",
+          "legal_risk": "none",
+          "generated_at": "2026-08-22T18:20:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-22T18:17:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9f40b0962a28476b471b242e65f5a56cd3e5c00f0f2395932d4bee9b19ac8d9d",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md",
+          "line_count": 154,
+          "cap": 600,
+          "byte_count": 38945,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 2945,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-22T17:51:15Z",
+        "drained_at": "2026-08-22T18:17:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e79dc88de699c7857ef30b5c195ffc7e327a19729f0be3c6c6307817ca072866",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 45,
+          "cap": 200,
+          "byte_count": 35214,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 23214,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-22T17:47:42Z",
+        "drained_at": "2026-08-22T18:17:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e59910b675d2fe5619403573403788d124e65c9b77ab9ad8118388e2a1eab2f7",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-22T18:07:44Z",
+          "matched_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "weekend",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-2": "cadence"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-2": 1440
+          },
+          "last_fired_timestamp": "2026-08-22T18:07:36Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "18:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 0,
+          "signal_backlog": 0,
+          "note": "bctc-offmarket daily cadence slot, off-market weekend window"
+        },
+        "createdAt": "2026-08-22T18:07:44Z",
+        "drained_at": "2026-08-22T18:17:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "508cc29d5ec5d2b74c56ca558b0ed144327d887540e49003f4e9e8b20e3b55a6",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 45,
+          "cap": 200,
+          "byte_count": 35214,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-22T17:47:46Z",
+        "drained_at": "2026-08-22T18:17:51Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
