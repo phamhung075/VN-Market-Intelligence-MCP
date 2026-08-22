@@ -579,7 +579,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-22T19:27:15Z",
+    "_updated_at": "2026-08-22T20:51:47Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -12283,7 +12283,7 @@
         "size": "L",
         "zone": "apps/mcp-server/",
         "owner": "dev-mcp-server",
-        "next_agent": "ba",
+        "next_agent": "architect",
         "created_at": "2026-08-22T20:40:58Z",
         "created_by": "po/user-request-predict-engine-accuracy-20260822",
         "title": "Prediction engine is anti-calibrated (95% confidence -> 0% actual hit rate): the empirical likelihood-ratio table is computed but NEVER applied, and the weekly Brier measurement feeds back into NOTHING",
@@ -12299,7 +12299,30 @@
           "apps/mcp-server/src/domain/services/baseRateComputer.ts",
           "docs/agents/digest-predict/flow/daily-predict.md"
         ],
-        "updated_at": "2026-08-22T20:44:00Z"
+        "updated_at": "2026-08-22T20:54:24Z",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/SPRINT-PREDICT-ENGINE-CALIBRATION-CLOSE-LOOP-BA-spec.md",
+        "ba_completed_at": "2026-08-22T20:54:23Z"
+      },
+      {
+        "id": "FIX-DISPATCHCLAIM-CARD-TTL-ARG-SHORTHAND",
+        "title": "dispatch-claim CARD.md uses non-canonical `ttl=` shorthand; TE-T23 makes it the sole hot-path copy",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "low",
+        "size": "S",
+        "zone": "docs/agents/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "updated_at": "2026-08-22T20:52:59Z",
+        "updated_by": "po",
+        "note": "`.claude/skills/dispatch-claim/CARD.md` L17/L19/L29 write `ttl=3600` / `ttl=86400` / `ttl=600`. The canonical task_claim/task_heartbeat argument is `ttl_seconds` — SKILL.md:133/177/234 use it exclusively and SKILL.md:214 explicitly names `ttl_seconds`/`payload_patch`/`owner_agent` as the backend-landed schema fields. Today the divergence is harmless because CLAUDE.md:8 carries the correct `ttl_seconds=600` and routers read that first. TE-T23 deletes CLAUDE.md:8, which promotes CARD.md to the sole hot-path pre-claim reference and makes its wrong spelling load-bearing: a router following CARD.md verbatim would pass an unrecognized `ttl` and silently get the default TTL instead of 600s/3600s/86400s. Fix: rename all 3 to `ttl_seconds` (CARD.md is a hot-path card, so keep the rest of the pseudocode shorthand — `$SID`, `<role>` — untouched; only the real argument NAMES must be canonical). Found by PO while ruling TE-T23; concrete proof that the 3-copy pre-claim drift T-23 exists to kill has already materialized.",
+        "depends_on": [],
+        "related_to": [
+          "TE-T23",
+          "TE-T12"
+        ],
+        "discovered_by": "po (session 02594cce, TE-T23 review-lane ruling 2026-08-22)"
       }
     ],
     "closed_sprints": [
@@ -16925,6 +16948,47 @@
         "pm_decomposed_by": "pm",
         "pm_handoff": "docs/handoffs/FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD-PM-workorder.md",
         "status_note": "PM work-order created; architect design already ratified verbatim (single-file, single-test-file change). Safe to pair with sibling GHOSTZONE fix, zero file overlap. Held in ready[] (not in_progress) — WIP already at 3/2 hard limit."
+      },
+      {
+        "id": "TE-T23",
+        "title": "T-23 CLAUDE.md step-2.5 (21L): compress to ~5L (detail in dispatch-claim CARD) [~11k tok/day]",
+        "owner": "developer",
+        "status": "READY",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P1",
+        "wave": 2,
+        "est_saving": "~11k tok/day (rides every subagent context)",
+        "zone": "cross-service/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-23",
+        "note": "SEQUENCING: depends on TE-T12 (CARD.md must exist first). CLAUDE.md is injected into EVERY subagent system prompt, so 21 router-only lines are paid by every spawn. Compress to ~5L pointing at CARD. Net -16L from CLAUDE.md; kills 3-copy pre-claim drift.",
+        "depends_on": [
+          "TE-T12"
+        ],
+        "promoted_at": "2026-08-14T17:25:58Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "updated_at": "2026-08-22T20:52:59Z",
+        "next_agent": "developer",
+        "review_note": "[PO RULING 2026-08-22T20:51:47Z, session 02594cce] QA CHANGES_REQUESTED UPHELD — the prior BOUNDED-1 no-op claim is OVERTURNED and has been deleted from this field to stop it being re-read as authoritative. All 4 QA grounds re-verified against live HEAD by PO, plus 2 additional grounds QA did not raise. (1) step-2.5 spans CLAUDE.md:7-14 = 8L (pointer L7 + full task_claim call L8 + blank L9 + 3-row outcome table L10-14), not the claimed 2L. (2) CLAUDE.md is 64L live (QA said 63L, off by one; both are OVER the brief's ~58L target, so the review_note's \"63L, under 58L\" is an arithmetic error either way). (3) CLAUDE.md:8 is field-for-field identical to CARD.md:28-29 and CLAUDE.md:10-14's three outcomes map 1:1 onto CARD.md:31/32-33/35 — the 3-copy drift T-23 exists to kill is live. (4) commit 92ba46360 (TE-T12) body says verbatim \"Unblocks sibling row TE-T23 (CLAUDE.md step-2.5 prose compression, developer-owned, out of scope here)\". PO ADDS: (5) the current 8L shape was produced by commit aef457f38 (2026-07-15, UC-RDL-P5, \"shrink CLAUDE.md step 2.5 to pointer + 3-outcome table\") — a DIFFERENT task that did 21L->8L. That is why the no-op claim looked plausible; UC-RDL-P5 did part of T-23's work, not all of it. T-23 supersedes UC-RDL-P5's deliberate 3-outcome table with a pointer-only reference. (6) the drift is not hypothetical, it has already materialized: CLAUDE.md:8 uses the canonical arg name `ttl_seconds=600` (matches SKILL.md:133/177/234) while CARD.md:17/19/29 use the shorthand `ttl=`. Deleting CLAUDE.md's correct copy makes CARD.md's wrong spelling the sole hot-path reference — see companion row FIX-DISPATCHCLAIM-CARD-TTL-ARG-SHORTHAND, which SHOULD land alongside this one but does not block it.",
+        "status_note": "[QA 2026-08-14 session 632721c2 — RETAINED VERBATIM AS THE STANDING EVIDENCE BASE, upheld by PO 2026-08-22] [QA] Direct-Commit Verify (2026-08-14, qa, session 632721c2) — CHANGES_REQUESTED, review_note's no-op claim NOT confirmed. Evidence: (1) CLAUDE.md:7-14 'step 2.5' block (pointer+task_claim call+3-row outcome table) is 8L, not \"2 lines\" — review_note counted only CLAUDE.md:7-8, omitting the table at CLAUDE.md:10-14 which is structurally part of step 2.5's content; ~5L target still ~60% over (11L if step-3 finally block CLAUDE.md:15-17 is included, matching the brief's own original span measurement \"2.5 PRE-CLAIM through finally: task_release()\"). (2) Total CLAUDE.md is 63L — OVER (not \"under\" as review_note literally states) the brief's 58L target; 63>58 is an arithmetic error in the review_note. (3) CLAUDE.md:8,10-14 (task_claim call + 3-outcome table) duplicate .claude/skills/dispatch-claim/CARD.md:28-35 near-verbatim — the \"3-copy pre-claim drift\" T-23 exists to kill is still live, contradicting this row's own `note` field claim (\"kills 3-copy pre-claim drift\"). (4) Sibling commit 92ba46360 (TE-T12, 2026-07-31)'s own commit message states verbatim: \"Unblocks sibling row TE-T23 (CLAUDE.md step-2.5 prose compression, developer-owned, out of scope here)\" — direct contradicting evidence the AC remains undone (TE-T12 unblocked it via depends_on, did not do it). Remaining work: collapse CLAUDE.md:8 (full task_claim call) + CLAUDE.md:10-14 (3-row table) into a terse pointer-only reference to CARD.md's own Phase B section (CARD.md:26-36) — target ~5L for step 2.5, net CLAUDE.md ~58L. Route: owner (dev-team) — no task branch exists, apply a NEW direct commit.",
+        "redispatch_count": 1,
+        "updated_by": "po",
+        "po_ruling": "UPHELD_CHANGES_REQUESTED",
+        "po_ruled_at": "2026-08-22T20:51:47Z",
+        "po_ruled_by": "po (session 02594cce, dev-team review-lane SECONDARY-drain)",
+        "acceptance_criteria": [
+          "AC-1 — CLAUDE.md:8 (the full task_claim(...) call) is DELETED. CARD.md:28-29 already carries every argument field-for-field; do not restate any of them.",
+          "AC-2 — CLAUDE.md:10-14 (the 3-row Outcome/Condition/Action table) is DELETED. CARD.md:31/32-33/35 already carry all three branches (claimed / re-entrant same-session / peer collision).",
+          "AC-3 — CLAUDE.md:17 (`finally: task_release(...)`, currently under step 3) is DELETED TOO. It is the release half of the same try/finally CARD.md:31 owns; deleting the claim half while orphaning the release half would leave step 3 incoherent. The brief's own span measurement (\"2.5 PRE-CLAIM through finally: task_release()\" = 21 of 74L) always scoped this line in.",
+          "AC-4 — step 2.5 ends at <=5L and step 3 at ~2L. Whatever survives must be POINTER-ONLY into `.claude/skills/dispatch-claim/CARD.md` (Phase A / A.5 / Phase B) — zero restated arguments, zero restated branch conditions.",
+          "AC-5 — the existing CLAUDE.md:7 mention of Step 0a / Phase A / Phase A.5 / Step 2.4 / Phase B SURVIVES. Step 2.4 (cowork-slot collision probe) is NOT in CARD.md at all — it lives only in SKILL.md:601+ — so L7's naming of it is the sole fleet-visible breadcrumb. Do not drop it while compressing.",
+          "AC-6 — do NOT resurrect the brief's proposed sentence \"Router never reverts uncommitted files — tree-hygiene is dev-team Step 0a.\" It is absent from live CLAUDE.md (removed by later work). The brief's proposal text is from 2026-07-12 and is stale on that point; re-adding it is regrowth, not compression.",
+          "AC-7 (VERIFICATION TARGET — delta-based, NOT the brief's absolute 58L) — measure `wc -l CLAUDE.md` before and after; the diff must be -7L (64L -> ~57L). The brief's absolute ~58L figure is STALE: the file has since taken unrelated additions (f8d3891c6 Step 2.4, 5a6cd5216 gateway-URL paragraph, 9af50bb26 cron-standalone-team). Do not chase 58L by deleting unrelated lines. The real AC is the delta plus zero duplication of CARD.md:26-36.",
+          "AC-8 — direct commit to `main`, no task branch (row carries branch:null). This file governs every session's dispatch behavior including the committing one; re-read it after the edit and confirm steps 1/2/2.5/3 still read as a coherent numbered sequence."
+        ],
+        "po_scope_note": "SCOPE IS CLAUDE.md ONLY. Do not edit CARD.md or SKILL.md under this row — .claude/skills/ is agent-father's commit zone (agent-father init.md:63), and the CARD.md fix is carried by its own companion row."
       }
     ],
     "review": [
@@ -17764,35 +17828,6 @@
         "secondary_claimed_at": "2026-08-22T20:19:50Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "dev-mcp-server"
-      },
-      {
-        "id": "TE-T23",
-        "title": "T-23 CLAUDE.md step-2.5 (21L): compress to ~5L (detail in dispatch-claim CARD) [~11k tok/day]",
-        "owner": "dev-team",
-        "status": "REVIEW",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "wave": 2,
-        "est_saving": "~11k tok/day (rides every subagent context)",
-        "zone": "cross-service/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-23",
-        "note": "SEQUENCING: depends on TE-T12 (CARD.md must exist first). CLAUDE.md is injected into EVERY subagent system prompt, so 21 router-only lines are paid by every spawn. Compress to ~5L pointing at CARD. Net -16L from CLAUDE.md; kills 3-copy pre-claim drift.",
-        "depends_on": [
-          "TE-T12"
-        ],
-        "promoted_at": "2026-08-14T17:25:58Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-08-14T17:36:29Z",
-        "claimed_at": "2026-08-14T17:29:10Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "next_agent": "dev-team",
-        "review_note": "Router (BOUNDED-1 idle-pickup) claimed this row then found its acceptance criteria already satisfied by prior work before spawning a developer: CLAUDE.md step-2.5 (docs/agents/../CLAUDE.md, live HEAD) is already 2 lines (line 7-8) referencing .claude/skills/dispatch-claim/CARD.md for the full Phase A/A.5/B protocol, well under the briefs ~5L target (docs/architecture-briefs/2026-07-12-token-economy-lazyload-audit.md#T-23); CARD.md itself exists since 2026-07-31 (git log confirms, unrelated later commit f8d3891c6 touched CLAUDE.md 2026-08-14 for a different task, task-cowork-mutex-001, step 2.4). Total CLAUDE.md is 63L, under the briefs 58L target even. No code/doc change made — routing to qa for closure sign-off (DONE_VERIFIED, no-op-by-prior-completion) instead of dispatching a developer to redundantly redo already-shipped work.",
-        "status_note": "[QA] Direct-Commit Verify (2026-08-14, qa, session 632721c2) — CHANGES_REQUESTED, review_note's no-op claim NOT confirmed. Evidence: (1) CLAUDE.md:7-14 'step 2.5' block (pointer+task_claim call+3-row outcome table) is 8L, not \"2 lines\" — review_note counted only CLAUDE.md:7-8, omitting the table at CLAUDE.md:10-14 which is structurally part of step 2.5's content; ~5L target still ~60% over (11L if step-3 finally block CLAUDE.md:15-17 is included, matching the brief's own original span measurement \"2.5 PRE-CLAIM through finally: task_release()\"). (2) Total CLAUDE.md is 63L — OVER (not \"under\" as review_note literally states) the brief's 58L target; 63>58 is an arithmetic error in the review_note. (3) CLAUDE.md:8,10-14 (task_claim call + 3-outcome table) duplicate .claude/skills/dispatch-claim/CARD.md:28-35 near-verbatim — the \"3-copy pre-claim drift\" T-23 exists to kill is still live, contradicting this row's own `note` field claim (\"kills 3-copy pre-claim drift\"). (4) Sibling commit 92ba46360 (TE-T12, 2026-07-31)'s own commit message states verbatim: \"Unblocks sibling row TE-T23 (CLAUDE.md step-2.5 prose compression, developer-owned, out of scope here)\" — direct contradicting evidence the AC remains undone (TE-T12 unblocked it via depends_on, did not do it). Remaining work: collapse CLAUDE.md:8 (full task_claim call) + CLAUDE.md:10-14 (3-row table) into a terse pointer-only reference to CARD.md's own Phase B section (CARD.md:26-36) — target ~5L for step 2.5, net CLAUDE.md ~58L. Route: owner (dev-team) — no task branch exists, apply a NEW direct commit.",
-        "redispatch_count": 1,
-        "updated_by": "qa"
       },
       {
         "id": "FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED",
