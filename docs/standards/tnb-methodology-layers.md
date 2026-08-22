@@ -9,7 +9,7 @@ Báu strategic framework for auditing analytical quality. Enforces monthly>quart
 Three non-negotiable rules. Violations = methodology gap.
 
 1. **Monthly > Quarterly.** Prefer high-frequency monthly indicators (PMI, CPI, sentiment) over quarterly aggregates (GDP). GDP lags 1–2 quarters.
-2. **State transitions, not levels.** Score on threshold crossings (PMI ↔ 50, USD/VND ↔ 25500, US10Y ↔ 4.5%). Reporting "PMI = 50.3" without flagging the regime cross = gap.
+2. **State transitions, not levels.** Score on threshold crossings (PMI ↔ 50, USD/VND ↔ 25000, US10Y ↔ 4.5%). Reporting "PMI = 50.3" without flagging the regime cross = gap.
 3. **Cause-effect, not correlation.** Every observation needs a cause (nhân) attached. Saying "VHM up 5%" without naming the catalyst = gap.
 
 **Layer 2 — US economic health stack**
@@ -18,7 +18,16 @@ Audited indicators: manufacturing (PMI, orders, inventory, prices), consumer (se
 
 **Layer 3 — Vietnam economic health stack**
 
-Source hierarchy: VIRA (primary), NOT WiData (unavailable), avoid IMF/ADB/WB as primary. Variables: USD/VND (26500 break), CPI, FX reserves.
+Source hierarchy: VIRA (primary), NOT WiData (unavailable), avoid IMF/ADB/WB as primary. Variables: USD/VND (25000 break), CPI, FX reserves.
+
+<!-- SELF-CURE FIX-TNB-USDVND-THRESHOLD-STALE-26500-2026-08-23 (tran-ngoc-bau, c132): this file's
+     L1=25500 and L3=26500 were the root source of the "3-way mismatch" flagged by the parallel
+     tnb-audit c132 run (docs/handoffs/tnb-audit-latest.md, session 90886cda) — same drift had
+     already propagated into docs/agents/tran-ngoc-bau/flow/main.md (both layers) and
+     audit-methodology.md (Step B). Live classifier source (apps/macro-indicators/pkg/primitive/
+     macro_usdvnd_direction_classifier/macro_usdvnd_direction_classifier.go:34) confirms the only
+     real constant is BearishThreshold=25000.0 — all 3 files now corrected to 25000, closing the
+     mismatch at its origin rather than leaving it as a flagged-only LOW finding. -->
 
 ---
 

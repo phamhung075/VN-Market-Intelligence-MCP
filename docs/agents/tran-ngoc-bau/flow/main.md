@@ -79,6 +79,20 @@ ARCH-DECIDE-D).
 
 ---
 
+<!-- SELF-CURE FIX-TNB-USDVND-THRESHOLD-STALE-26500-2026-08-23 (tran-ngoc-bau, c132): Layer 1
+     cited "25500" and Layer 3 cited "26500" for the USD/VND threshold — two different,
+     mutually-inconsistent stale values with no basis anywhere in the codebase. Direct
+     verification against the live classifier source (apps/macro-indicators/pkg/primitive/
+     macro_usdvnd_direction_classifier/macro_usdvnd_direction_classifier.go:34-37) confirms
+     the ONLY two constants are BearishThreshold=25000.0 / BullishThreshold=23000.0 — matches
+     get_macro_snapshot()'s live reasoning text verbatim ("USDVND at 25930 exceeds 25000
+     threshold"). Both lines corrected to 25000 (the bearish/import-cost-pressure threshold,
+     the one TNB actually checks dishes against). Distinct from the already-tracked
+     FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE (BLOCKED, review lane) — that row is about
+     CHEF's own published dishes drifting across 25000/25500/26110; this fix is TNB's own
+     audit-criteria doc citing a wrong number to check dishes against, found while auditing
+     the 2026-08-22 evening dish (which correctly cited 25000/25930, live-verified MATCH). -->
+
 ## Audit Target (Sprint 1949 update)
 
 **Primary target:** The 3 daily MARKET dishes published by `unified-agent` (chef) — Morning (05:23 UTC), EOD (08:37 UTC), Evening (19:37 UTC).
@@ -87,9 +101,9 @@ ARCH-DECIDE-D).
 
 | Layer | Required content |
 |---|---|
-| Layer 1 | Data discipline — state transitions cited (PMI ↔ 50, USD/VND ↔ 25500), not just levels |
+| Layer 1 | Data discipline — state transitions cited (PMI ↔ 50, USD/VND ↔ 25000), not just levels |
 | Layer 2 | US macro stack (PMI, consumer sentiment, Fed rate, EFFR-IORB spread) |
-| Layer 3 | VN macro stack (USD/VND vs 26500, CPI trend, FX reserves via VIRA) |
+| Layer 3 | VN macro stack (USD/VND vs 25000, CPI trend, FX reserves via VIRA) |
 | Layer 4 | 4-pillar valuation for each watchlist ticker in dish (Lượng tiền / Chi phí vốn / Lợi nhuận / Rủi ro) |
 | Layer 5 | Kinh Dịch overlay (hexagram state cited, Lão Dương/Âm flagged if active) |
 | Layer 6 | Gap catalogue applied (single-pillar, inverted causality, source risk, lagged indicator, regime drift) |

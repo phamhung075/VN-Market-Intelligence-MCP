@@ -79,7 +79,15 @@ For each agent notebook (check the latest appended cycle entry — today's date 
 - Did agent attach regime caveat to MARKET output?
 - Did agent log signal outcomes?
 
-Agents to audit: news-scout, market-watcher, alert-commander, financial-analyst, report-analyzer, digest-predict, qa-responder, unified-agent
+Agents to audit: news-scout, market-watcher, alert-commander, bctc-analyst, digest-predict, qa-responder, unified-agent
+<!-- SELF-CURE FIX-TNB-AUDITMARKET-STALE-AGENT-NAMES-2026-08-23 (tran-ngoc-bau, c132): "financial-analyst"
+     and "report-analyzer" were merged into "bctc-analyst" by commit 3e90e27c6 (2026-05-29,
+     "merge financial-analyst + report-analyzer → bctc-analyst (MERGE-OK-v2)") — neither notebook
+     has existed since. This list has cited 2 defunct agent IDs for ~3 months, meaning bctc-analyst
+     (the live agent producing bctc_signal_* business-context signals central to Layer 4/BIZCTX
+     checks) was never on TNB's own Step 3 spot-check roster. Corrected to the live agent ID;
+     no output-shape change (still 7 names, was 8 minus the merge). -->
+
 
 **Step 4 — Validate agent flows**
 For agents with quality issues found in Step 3:

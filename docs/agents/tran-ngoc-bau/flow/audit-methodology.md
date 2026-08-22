@@ -9,7 +9,7 @@ For each agent notebook surveyed in Phase 2 + every MARKET investment thesis fro
 | Step | Check | Source |
 |------|-------|--------|
 | A | Highest-frequency indicator opens the analysis (monthly > quarterly) | Layer 1.1 |
-| B | Threshold crossings flagged (PMI ↔ 50, USD/VND ↔ 26500, US10Y ↔ 4.5%, FII carry ↔ 0) | Layer 1.2 |
+| B | Threshold crossings flagged (PMI ↔ 50, USD/VND ↔ 25000, US10Y ↔ 4.5%, FII carry ↔ 0) | Layer 1.2 | <!-- SELF-CURE FIX-TNB-USDVND-THRESHOLD-STALE-26500-2026-08-23 (c132): was 26500, no basis in codebase; corrected to match live classifier BearishThreshold=25000.0. Detail: main.md same fix. -->
 | C | Cause + transmission chain attached (Level 1 → Level 4 of `market-analysis.md`) | Layer 1.3 |
 | D | US calls: PMI (with sub-components) checked **before** consumer / services; Fed liquidity claims reference EFFR–IORB spread | Layer 2 |
 | E | VN calls: VIRA cited (or VIRA-absence noted while VPS scraper is pending), IMF/ADB/WB never primary, **no WiData** (paid, off-limits) | Layer 3 |
