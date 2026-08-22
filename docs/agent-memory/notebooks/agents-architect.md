@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-08-15T11:21:35Z
-
-**Brief:** `docs/architecture-briefs/2026-08-15-cowork-cron-registration-sibling-process-defer.md`
-
-Router-dispatched: user's hand-authored defer note sat inert in the wrong file (`cron-detect-loop/register.md`, governs a different skill's 4 jobs). Root-caused the real bug: `cron-cowork-team/SKILL.md` Step 1a's fast path keys only on `owner_client_session`; two OS processes sharing one `$CLAUDE_CODE_SESSION_ID` (4 distinct `claude` processes confirmed live on this host via `ps` this session) both pass it and each independently local-`CronCreate`s, invisible to each other. Corrected the router's own evidence: `owner_session` is the MCP **server's** own process/boot diagnostic (`taskClaimTool.ts:25-30`), not a client-terminal discriminator — cannot resolve this; session-presence's "1 live row" is equally uninformative (per-session singleton by construction). New finding, flagged not fixed here: the same shared-UUID gap also defeats the P3 fire-election's RE-ENTRANT branch (leader-lock.md + dev-team + auditor tiers + router's own dispatch-claim hot path) — a double-dispatch correctness bug, recommended to PO as a separate follow-up given blast radius. Fix designed (agent-father's own `.md` zone, no MCP schema change): client-side `$PPID`+`lstart` fingerprint (empirically verified stable this session) stored in the existing marker's free-form payload, compared on Step 1a; mismatch → defer + WORK telegram, with a `heartbeat_at`-based self-heal so a genuinely-dead sibling doesn't permanently block re-arm. Rejected reintroducing the retired human "defer" convention as primary (would silently reverse P3's rationale) — kept as an explicit, narrowly-scoped fallback subsection instead.
-
-**Signal dropped:** `docs/signals/2026-08-15-cowork-cron-registration-sibling-process-defer.json` → agent-father
-
----
-
 ## 2026-08-22T16:20:35Z
 
 **Brief:** `docs/architecture-briefs/2026-08-22-cowork-detect-loop-flow-review.md`
@@ -37,3 +27,13 @@ Restructured §A per coordinator feedback: the original single combined mermaid 
 One-off ad-hoc request (not a standing-convention change — engineering briefs stay English by default): full Vietnamese translation of the English brief, created as a NEW sibling file, original left untouched and still SSOT (linked back via a top-of-file note). Translated all prose (title, §A explanatory text + both mermaid diagrams' human-readable labels, §B per-agent mechanics, §C findings F1-F8 + legend + bottom line); left code-like tokens untranslated (file paths, cron expressions, tool/function names, JSON field/status values, agent ids, mermaid node IDs). Re-ran the same programmatic dagre-style rank-width check against the translated diagrams to confirm topology/narrowness parity with the English original (both diagrams: 11n/10e and 14n/14e, max width 2 — identical to source).
 
 **Signal dropped:** none new — same signal as prior entries, payload unchanged; this is a translation artifact, not a new architectural finding.
+
+---
+
+## 2026-08-22T19:50:40Z
+
+**Brief:** `docs/architecture-briefs/2026-08-22-cowork-detect-loop-flow-review.md` (update — new §D, English only, `.vi.md` sibling deliberately not touched)
+
+New operational fact from user: whole fleet runs on their personal PC, ~1 week vacation coming with sleep and/or full shutdown, exceeding the 2 confirmed sleep-outages (2.5d/4d) that self-healed. Added §D (F9-F12 + checklist): F9 only `com.vn-market.cowork-guaranteed-slot-firer` survives a full shutdown+reboot (real launchd LaunchAgent, confirmed via `~/Library/LaunchAgents/`); everything else in both loops is session-only `CronCreate`. F10 (new, significant): the designed guaranteed-slot catch-up module (`cowork-catchup-predicate.js`) is built and wired into `cowork-match-slots.js`'s output, but grep-confirmed zero live consumers reference `catchup_raw` — dispatcher's own planned Step 4.55 sub-flow was never created, preflight script's planned Step 6.5 never added, and the launchd firer itself never wired despite the original design brief naming it the most relevant plane. Consequence: guaranteed dishes missed during any host-down window (including possibly the return day itself, given re-arm is an unscheduled human action vs. the ±2min match window) are silently and permanently skipped, no catch-up, no miss-alert. F11: no duplicate-publish/stale-as-fresh risk either way (sleep self-heals via CronCreate's own native missed-fire replay through the real marker-gated flow, proven 2x; shutdown just resumes from "now" with no burst at all) — reassuring but for the wrong reason (silent loss, not correct recovery). F12: confirmed zero SessionStart hook or any automated long-gap→re-arm detection anywhere (checked both settings files) — 100% human/router-memory-dependent, no self-alert fallback even from system-auditor (which would itself be dark).
+
+**Signal dropped:** `docs/signals/2026-08-22-cowork-detect-loop-vacation-resilience-addendum.json` → agent-father (F10 + F12 follow-ups, P2/backlog, routed for PO prioritization — not implemented here)
