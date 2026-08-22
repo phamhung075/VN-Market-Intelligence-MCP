@@ -20,7 +20,21 @@ Journal = WHY (decision trail). Notebook = WHAT LEARNED. Handoff = WHAT TO DO.
 SPRINT_ID=$(jq -r '.sprint_goal.entries[] | select(.status == "active") | .sprint_id' \
   docs/data/orch/orch-state.json 2>/dev/null | tail -1)
 [ -z "$SPRINT_ID" ] && SPRINT_ID=$(date -u +"%Y-%m-%d")
-JOURNAL_PATH="docs/agent-memory/decisions/sprint-${SPRINT_ID}-${AGENT_ID}.md"
+BASE="docs/agent-memory/decisions/sprint-${SPRINT_ID}-${AGENT_ID}"
+# MANDATORY: a long-running sprint's journal may have already rolled to a numbered
+# continuation file (§ Cap Check below) — writing to the bare BASE.md unconditionally
+# here would silently overwrite that whole earlier history with a fresh Write() call
+# instead of appending (confirmed live incident, 2026-08-22: 21 STEP entries spanning
+# 9 days destroyed before being caught and restored from git). ALWAYS resolve the
+# HIGHEST existing numbered suffix first; only fall back to the bare BASE.md when none exists.
+HIGHEST_N=$(ls -1 "${BASE}"-*.md 2>/dev/null | sed -E "s#^${BASE}-([0-9]+)\.md\$#\1#" | sort -n | tail -1)
+if [ -n "$HIGHEST_N" ]; then
+  JOURNAL_PATH="${BASE}-${HIGHEST_N}.md"
+elif [ -f "${BASE}.md" ]; then
+  JOURNAL_PATH="${BASE}.md"
+else
+  JOURNAL_PATH="${BASE}.md"  # brand-new journal, no prior file at all
+fi
 ```
 
 ## § Init File
@@ -50,7 +64,8 @@ Write header once (if missing):
 ```
 
 **Rules:**
-- `step-id` = `<agent-id>-S<N>` (N increments per sprint).
+- `step-id` = `<agent-id>-S<N>` (N increments per sprint, continuing across the whole numbered-continuation chain — check `grep -o 'architect-S[0-9]*' "$JOURNAL_PATH" | sort -t S -k2 -n | tail -1`, not just the current file's own count, since a fresh continuation file starts at 0 STEPs but N must not reset).
+- **APPEND ONLY, never overwrite:** land the new STEP block via `Edit` (old_string = the last line of the existing file's final section, new_string = that same line + the new STEP block) — NEVER `Write` the whole file. A full `Write()` call risks silently destroying every prior STEP entry if `JOURNAL_PATH` was resolved incorrectly (this class of mistake already happened live once, see § Resolve Sprint ID's note).
 - `task-id` MANDATORY for task_board work (before REVIEW/DONE). Omit for ambient cycles.
 - 12L hardcap per STEP (task-id line counts).
 - Inject via flow: `Run skill: .claude/skills/decision-journal/SKILL.md § Write Entry [task_id: "..."]`
