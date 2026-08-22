@@ -111,6 +111,18 @@ loop does, fast. On the live 2026-07-25 incident shape (spawn dies before ever h
 `task:<id>`, so `outer_claim` succeeds every tick), this bound would have escalated at
 ~T+90min instead of leaving PO to catch it by hand at T+4h25m.
 
+**QA CHANGES_REQUESTED 2026-08-14, fixed 2026-08-22 (architect re-review):** the §5c code
+sample below originally flipped the row's `status` to `BLOCKED` in place inside
+`.task_board.in_progress[]` WITHOUT the lane-move this paragraph's own prose already promised
+— a gap in this blueprint itself (agent-father's 2026-08-14 implementation copied the sample
+verbatim, so the miss was not an implementation deviation). Live consequence: WF-3 idle-resets
+`.head` to `active_task_id:null` in the SAME write that sets `BLOCKED`, so WF-1's own
+BLOCKED-lane-move backstop (which only fires while `.head` still names the row) can never
+re-trigger for it — a resume_attempts>=3 row would strand in `in_progress[]` forever once hit.
+§5c below is now corrected to lane-move in the same write (mirrors WF-1 exactly, `main.md:331-338`)
+and to carry the "(<Xh Ym>)" duration parenthetical this section's own signal-shape spec (§4
+below) always specified but the code sample omitted.
+
 **Escalation, on bound exceeded — mirrors WF-1's own BLOCKED carve-out shape exactly (same
 idle-reset + lane-move-to-`backlog[]` pattern, same reason this repo reuses rather than
 invents a new escalation channel):** row status → `BLOCKED`, `hold_reason` set (reusing the
@@ -179,17 +191,37 @@ if [ "$resume_attempts" -ge 3 ]; then
     '((.task_board.in_progress // [])[] | select(.id == $tid or (.task_id // null) == $tid) | .claimed_at) // .head.updated_at // empty' \
     docs/data/orch/orch-state.json)
   reason="resume-attempt-bound-exceeded (resume_attempts=$resume_attempts/3)"
+  # 2026-08-22 fix (QA CHANGES_REQUESTED 2026-08-14): duration parenthetical, computed the
+  # SAME way WF-4 below computes it, so both BUG-channel signals for this head-pin surface
+  # read consistently (§4 always specified this, the original sample omitted it).
+  dur_text=""
+  if [ -n "$pin_claimed_at" ]; then
+    age_sec=$(jq -n --arg ts "$pin_claimed_at" \
+      'def to_epoch: if test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}Z$")
+         then (sub("Z$"; ":00Z") | fromdateiso8601) else fromdateiso8601 end;
+       (now | floor) - ($ts | to_epoch)')
+    hrs=$((age_sec/3600)); mins=$(((age_sec%3600)/60))
+    dur_text=" (${hrs}h${mins}m)"
+  fi
+  # 2026-08-22 fix (QA CHANGES_REQUESTED 2026-08-14): CANONICAL:SSOT-STATUSFLIP-LANEMOVE(c)
+  # (execute-tier.md:125) — an IN_PROGRESS -> BLOCKED flip MUST lane-move the row OUT of
+  # in_progress[] and INTO backlog[] in the SAME write, mirroring the WF-1 BLOCKED-task check
+  # (main.md:331-338) exactly. The original sample below set status:"BLOCKED" in place inside
+  # in_progress[] and never moved it — the gap this whole note documents.
   jq --arg s "idle" --arg t "$now" --arg u "dev-team" --arg tid "$head_active_task" --arg reason "$reason" \
     '.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}
-     | .task_board.in_progress = ((.task_board.in_progress // []) | map(
-         if (.id == $tid or (.task_id // null) == $tid)
-         then . + {status:"BLOCKED", hold_reason:$reason,
-                   resume_attempt_bound_exceeded_at:$t,
-                   resume_attempt_bound_exceeded_by:"dev-team (resume-attempt-bound)"}
-         else . end))' \
+     | if ((.task_board.in_progress // []) | any(.id == $tid or (.task_id // null) == $tid)) then
+         .task_board.backlog = ((.task_board.backlog // []) + [
+             (.task_board.in_progress // [])[] | select(.id == $tid or (.task_id // null) == $tid)
+             | . + {status:"BLOCKED", hold_reason:$reason,
+                    resume_attempt_bound_exceeded_at:$t,
+                    resume_attempt_bound_exceeded_by:"dev-team (resume-attempt-bound)"}
+           ])
+         | .task_board.in_progress = ((.task_board.in_progress // []) | map(select((.id != $tid) and ((.task_id // null) != $tid))))
+       else . end' \
     docs/data/orch/orch-state.json \
     | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || true
-  send_telegram(channel="bug", message="[dev-team] RESUME ATTEMPT BOUND EXCEEDED task=" + head_active_task + " resume_attempts=" + resume_attempts + "/3 pinned since " + pin_claimed_at + " — stopped re-spawning, marked BLOCKED for triage, head reset idle")
+  send_telegram(channel="bug", message="[dev-team] RESUME ATTEMPT BOUND EXCEEDED task=" + head_active_task + " resume_attempts=" + resume_attempts + "/3 pinned since " + pin_claimed_at + dur_text + " — stopped re-spawning, marked BLOCKED for triage, head reset idle, lane-moved in_progress[]→backlog[]")
   JUMP TO drain-signals
 fi
 ```
