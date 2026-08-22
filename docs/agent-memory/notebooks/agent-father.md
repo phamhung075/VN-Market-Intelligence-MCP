@@ -8,59 +8,61 @@
      explicit YYYY-MM-DD token. Nothing deleted; full record in the archive file and git
      history. -->
 
-## Keep (maintenance) 2026-08-22T12:45Z — router-dispatched fresh cycle, first run after ~4-day
-fleet-wide dark period (last commit anywhere 08-18, session started 08-22; same host-suspension
-pattern already root-caused; treated as normal fresh cycle per router instruction, not a replay of
-specific missed days).
-- Pre-Check: `git diff --name-only HEAD~3..HEAD` touched zero `.claude/agents/*.md` /
-  `docs/agents/*/flow/*.md` — Steps 1-2 gated off, straight to Steps 3-5.
-- Top-5 (42 agents): checks 1/2/3/4 — semble-search only (known structural gap, unchanged from
-  08-18; Check 2 dispatch-table/one-hop resolution re-verified live, 0/42 FAIL besides it). Check 5
-  (version >90d) — 3 NEW hits: dev-technical-analysis (92d), market-watcher (92d),
-  dev-macro-indicators (91d), all last bumped 05-21/23. Auto-fixed (Step 4): bumped all 3
-  `version:` to 2026-08-22. Borderline-not-yet-stale (exactly 90d, watch next cycle):
-  dev-stock-price, dev-rag-service, dev-kinh-dich, dev-api-gateway, claude-manager-helper.
-  semble-search still has no `version:` field (NOVER5).
-- Step 5 stale notebooks: 10/46 >30d — same set as 08-18, no change.
-- Step 5b team-tool-recheck: zero drift vs 08-18T08:45Z — all 7 scope-in agents'
-  description/tools lines byte-identical (no commits during the 4-day outage). Same 6 CRITICAL
-  (Bash present, honestly-qualified), bctc-analyst CLEAN (confirmed live: still
-  `FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH` BACKLOG/priority=low). Mechanical enforcement
-  (write_boundary/agent-write-boundary-guard) re-verified still absent. Wrote
-  `docs/agent-memory/health/team-tool-recheck-2026-08-22-1242.md`.
-- Escalations: 0 new (semble-search gap already escalated 08-15, still open — not re-escalated).
-- Noted, not actioned (out of scope): repo working tree carried a large volume of concurrent
-  peer-agent uncommitted work at session start (dozens of files across
-  docs/data/unified-agent-synthesis-*, docs/signals/*, docs/analysis-briefs/* etc.) — my own commit
-  below is pathspec-scoped to only the 4 files I wrote/edited this cycle.
-- Notebook retention (AC-2): file entered cycle at 4 sections (over 3-section steady state, prior
-  cycle under-pruned by 1) — pruned 2 oldest (`EDIT 2026-08-15T04:45Z`,
-  `Keep (maintenance) 13:00Z` undated-heading section) to converge on 3, full record in git history.
-- Lock: no gateway binding (`mcp__gateway__call_tool` absent) — direct pathspec commit, per
-  keep.md's gateway-less exception.
+## REVIEW 2026-08-22T17:13Z — FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS re-dispatch
+(router-spawned via dev-team Review-Lane secondary-drain, `secondary_dispatch_target=agent-father`;
+task-level `task_claim` skipped — `mcp__gateway__call_tool` absent from this spawn's tool grant,
+same "no gateway binding" condition as the 08-15/08-22 entries below; solo-operation direct commit
+per `commit-boundary/SKILL.md` § Commit-Mutex Gap).
 
-## Keep (maintenance) 2026-08-18T08:45Z — scheduled cron, first run after ~2.5-day fleet-wide dark
-period (last commit anywhere 08-15T22:48+02, session restart lost cron regs; treated as normal
-fresh cycle per router instruction, not a replay of specific missed days).
-- Pre-Check: `git diff --name-only HEAD~3..HEAD` touched zero `.claude/agents/*.md` /
-  `docs/agents/*/flow/*.md` — Steps 1-2 gated off, straight to Steps 3-5.
-- Top-5 (42 agents): checks 1/3/4 — semble-search only (known structural gap, unchanged from
-  08-15). Check 2 (Error Boundary, one-hop+dispatch-table resolution) — 0/42 FAIL. Check 5
-  (version >90d) — 6 NEW hits: alert-commander (92d), dev-frontend (92d), developer (92d),
-  digest-predict (91d), news-scout (91d), tran-ngoc-bau (91d), all last bumped 05-17/18. Auto-fixed
-  (Step 4): bumped all 6 `version:` to 2026-08-18. semble-search still has no `version:` (NOVER5).
-  Same origin batch — expect next cluster in ~3mo, no action needed.
-- Step 5 stale notebooks: 10/46 >30d — same set as 08-15, no change.
-- Step 5b team-tool-recheck: zero drift vs 08-15T13:00Z — all 7 scope-in agents'
-  description/tools lines byte-identical (no commits during outage). Same 6 CRITICAL (Bash
-  present, honestly-qualified), bctc-analyst CLEAN. Wrote
-  `docs/agent-memory/health/team-tool-recheck-2026-08-18-0845.md`. Noted, not actioned (out of
-  scope): several `docs/data/unified-agent-synthesis-2026-08-0{7,8}-*.json` +
-  `docs/social/fb-post-2026-08-0{7,8}.md` untracked at session start — commit-hygiene question
-  for unified-agent/fb-market-poster, not a tool-grant mismatch.
-- Escalations: 0 new (semble-search gap already escalated 08-15, still open — not re-escalated).
-- Lock: no gateway binding (`mcp__gateway__call_tool` absent) — direct pathspec commit, per
-  keep.md's gateway-less exception.
+- Re-read the row live (not the dispatch summary). AC(1)-(3) (prose: immutability invariant,
+  AC-2/AC-3 reconciliation, trim-first ladder) already QA-confirmed landed 2026-08-08. AC(4)
+  (mechanical HARD block) remains the open, load-bearing AC — explicitly gated on the
+  system-auditor-pilot row's (`FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED`,
+  owner=po) Success Signals 1-4 reading green first (fleet rollout is opt-in, not this row's call
+  to force).
+- Checked that pilot's own verification gate live (it was left "OUTSTANDING" 2026-08-14T20:22Z,
+  never re-checked): **FAILS.** `docs/agent-memory/notebooks/system-auditor.md` @ HEAD (212L) has
+  5 `## ` headings in NON-monotonic order (c103, d4-auto, c102, c101, c104 top-to-bottom — c104
+  dated 2026-08-22 sits BELOW 3 sections dated 08-14/08-15). Root cause confirmed, NOT the
+  Tier-1/2/3 pilot's own code: commit `22039783e` (2026-08-22, message "Audit TIER=DATA sweep")
+  raw-appended a `## c104` section at EOF — this write path is `.claude/commands/crons/
+  cron-db-data-integrity.md`, a STANDALONE cron prompt that never calls `scripts/notebook-compose.sh`
+  and carries **zero notebook-write instruction of its own** (grepped the file: "notebook" appears
+  once, in an unrelated historical citation). `docs/agents/system-auditor/flow/main.md:130` already
+  self-documents this AS a known gap ("AUDIT_TIER=DATA -> not yet a real branch of this table...
+  falls through to the default... Deeper integration (optional, later)") but nobody had connected
+  that deferred-as-optional gap to a live AC-2/AC-5 contract breach until this cycle.
+- **NEW guard blind spot** (beyond the already-known under-retention gap in `router_occurrence_
+  20260812T1638Z`): confirmed via `docs/signals/processed/commit-sweep-guard-2026-08-22T124244Z-
+  40748.json` that the ONLY guard that fired on commit `22039783e` was the unrelated bare-commit
+  peer-index sweep guard (wrong-actor-scope), not `_check_notebook_immutability` — that guard only
+  diffs BODY HASHES of headings retained across the commit boundary, so a pure append that skips
+  pruning entirely (no retained heading mutated) trips ZERO warns even while blowing the 200L/
+  3-section cap. Worth folding into AC-4's eventual mechanical check.
+- Separately observed, NOT touched: `docs/agent-memory/notebooks/system-auditor.md` currently
+  carries an UNCOMMITTED working-tree diff (+78L) appending a second, differently-malformed write
+  (a `### Audit Run Tier-1 c5` sub-heading plus a stray duplicate `# System Auditor Notebook` H1,
+  no `## ` boundary at all) on top of the c104 commit above. Left strictly alone per "silence≠dead"
+  — cannot tell live-in-progress from stranded from here, and it is not agent-father's notebook to
+  touch regardless.
+- Disposition: row stays REVIEW, cannot flip DONE/DONE_VERIFIED — QA's 2026-08-08 CHANGES_REQUESTED
+  still holds and this cycle adds a THIRD confirmed live recurrence since. Did NOT edit
+  `.claude/skills/notebook-write/SKILL.md` (already 251L/13-ish KB, over its own documented
+  200L/12000B cap per `CLEAN-CTXBLOAT-NOTEBOOK-WRITE-SKILL-215L-OVER-200L-CAP`, BACKLOG,
+  next_agent=claude-manager-helper — more prose there is exactly the debt that row exists to cut,
+  and this class has already had "more prose" tried and failed per this row's own history). Did NOT
+  edit `docs/agents/system-auditor/flow/main.md` either — the actual gap is in a file that dispatcher
+  never reaches (`cron-db-data-integrity.md`), so editing main.md's line 130 wording would not close
+  anything live.
+- Could NOT write the finding onto the board row itself: `docs/data/orch/orch-state.json` is
+  outside agent-father's commit zone per `commit-boundary/SKILL.md` zone table (no listed
+  exception for a `task_board` narrative note, only init.md's narrower "signal-queue DONE-mark"
+  carve-out); no `send_telegram`/signal-write capability this spawn either (same gap as 08-15/08-22
+  entries below). Routed via RETURN to router/PO instead: recommend the real fix — wire
+  `.claude/commands/crons/cron-db-data-integrity.md`'s notebook append (if one is even authorized;
+  consider forbidding it outright instead) to `scripts/notebook-compose.sh`, OR bar that cron from
+  writing to `system-auditor.md` at all — lands with **developer** (`.claude/commands/` is out of
+  every commit-boundary agent's zone listed in that SKILL.md, agent-father included).
 
 ## EDIT 2026-08-22T16:59Z — DDD/debug-logger brief implementation, router-dispatched (intent=edit-adjacent, 3-part brief)
 - Signal consumed: `docs/signals/2026-08-22-agent-fabric-ddd-debug-logger-tool-optimization.json`
