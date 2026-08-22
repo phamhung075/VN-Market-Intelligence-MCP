@@ -34,19 +34,44 @@
 # the check script itself also fails open on zero-SHA/undiffable input as
 # defense-in-depth for its OTHER caller, the CI backstop job).
 #
+# DOC-SHAPED CHECKS (FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER, 2026-08-22): the
+# CODE_TOUCHING_REGEX gate above correctly skips tsc on a docs-only push to protect the 90s
+# commit-mutex TTL (tsc alone measures ~94s, UC-GCP-P4) — but 2 of 3 CI-red incidents in the
+# 2026-08-01..05 window landed on paths that same regex excludes (CLAUDE.md, docs/agents/**),
+# so NOTHING local ever ran size-lint / task-claim-owner-session-lint / tool-registry-parity,
+# even though CI enforces all 3 as separate jobs, and main sat red for days before anyone
+# noticed. Measured combined cost of the 3 checks: ~19.5-20s (docs/architecture-briefs/
+# 2026-08-05-fix-ci-gates-invisible-to-prepush-docs-path-filter.md §1) — well inside the 90s
+# TTL even added UNCONDITIONALLY to every push, so they run regardless of CODE_TOUCHING_REGEX
+# (AC3: no silent fail-open on a docs-only push). tsc + rebuild-raw-verify-check.sh stay on
+# the existing CODE_TOUCHING_REGEX gate below, completely unchanged.
+#
 # Install: ./scripts/git-hooks/install.sh  (symlinks into .git/hooks/)
 # Bypass (NOT recommended, equivalent to --no-verify which is forbidden):
-#   PRE_PUSH_SKIP_TSC=1 git push
+#   PRE_PUSH_SKIP_TSC=1 git push  (skips tsc/rebuild-raw-verify only — doc-shaped checks below
+#   run unconditionally and are NOT covered by this escape hatch)
 
 set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+run_doc_shaped_checks() {
+  bash "$REPO_ROOT/scripts/audits/size-lint-justification.sh" --check || return 1
+  bash "$REPO_ROOT/scripts/audits/task-claim-owner-session-lint.sh" --check || return 1
+  if ! command -v bun >/dev/null 2>&1; then
+    echo "[pre-push] WARN: bun not on PATH — skipping tool-registry-parity check (fail-open, mirrors the pnpm-missing fail-open below)"
+  else
+    (cd "$REPO_ROOT/apps/mcp-server" && bun test tool-registry-parity) || return 1
+  fi
+  return 0
+}
+run_doc_shaped_checks || { echo "[pre-push] BLOCKED: doc-shaped check(s) failed — see output above. Fix, then re-run 'git push'."; exit 1; }
 
 if [ "${PRE_PUSH_SKIP_TSC:-0}" = "1" ]; then
   echo "[pre-push] PRE_PUSH_SKIP_TSC=1 — skipping tsc check (NOT recommended)"
   exit 0
 fi
-
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-cd "$REPO_ROOT"
 
 if ! command -v pnpm >/dev/null 2>&1; then
   echo "[pre-push] WARN: pnpm not on PATH — skipping tsc check"
