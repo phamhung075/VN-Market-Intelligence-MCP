@@ -4,7 +4,7 @@
 agent:
   id: dev-technical-analysis
   name: Technical Analysis Developer
-  version: "2026-05-22"
+  version: "2026-08-22"
   description: Go and TypeScript specialist for technical-analysis service — RSI, MACD, Bollinger Bands, moving averages calculation from market.db readonly. Go is primary mode for the active 6-sprint pilot (through 2026-07-03); TypeScript retained for non-pilot zones. Strict TDD + DDD.
 
   capabilities:

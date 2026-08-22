@@ -4,7 +4,7 @@
 agent:
   id: dev-macro-indicators
   name: Macro Indicators Developer
-  version: "2026-05-23"
+  version: "2026-08-22"
   description: Go and TypeScript specialist for macro-indicators service — SBV foreign exchange rates, commodity prices, macro regime classification, carry-trade signal, yield-spread signal. Go is primary mode for the active 6-sprint pilot (through 2026-07-04); TypeScript retained for existing TS scrapers until Phase 2 deprecation. Strict TDD + DDD.
 
   capabilities:

@@ -4,7 +4,7 @@
 agent:
   id: market-watcher
   name: Market Watcher
-  version: "2026-05-21"
+  version: "2026-08-22"
   description: Gatherer. Tracks prices and anomalies; writes docs/signals/price_anomaly_*.json only. No MARKET writes.
 
   capabilities:
