@@ -18593,7 +18593,7 @@
         "last_served_tick": "2026-08-15T13:20:13Z"
       }
     },
-    "_updated_at": "2026-08-22T18:50:58Z",
+    "_updated_at": "2026-08-22T19:17:45Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19999,6 +19999,95 @@
         "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/triage-20260822T1842Z-po.md docs/agent-memory/notebooks/po.md docs/data/orch/orch-state.json. actor=88555d2e-8fbc-4591-9164-20f6b54d475f mode=warn escalated=false prior_warns=1 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
         "createdAt": "2026-08-22T18:45:40Z",
         "drained_at": "2026-08-22T18:49:31Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "44e0f1786f245829c364dcfa8ccbc0a1ed8a72f6acaf8feff40b6de290f0cea2",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-dc0f9033",
+          "head_sha": "dc0f90334e72fae38ce496df428ef7815233631e",
+          "run_id": 32591495299,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/32591495299",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "size-lint",
+              "conclusion": "failure",
+              "jobId": 97075939017
+            }
+          ],
+          "fingerprint": "f5a1571af4f195ffaca01bea422c0d4b70d214ef1566b354dd11647a8f83603a",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD dc0f90334e72fae38ce496df428ef7815233631e: size-lint",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-22T18:50:15Z",
+        "drained_at": "2026-08-22T19:17:45Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5835520e09aa7a8f2a202ac6d3f5bd5a4660c8e95c639e6c3b9ad3c42693dbe9",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json. actor=02594cce-7946-4d62-8d2f-586b9b883695 mode=warn escalated=true prior_warns=3 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-22T18:52:56Z",
+        "drained_at": "2026-08-22T19:17:45Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8953be67e021e3d5c7931fc683be574e0faffb3f02e0f84b2e1ca5151ed5b02d",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/data/orch/orch-state.json' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/data/orch/orch-state.json' (3e4a572b6b9fb1114f5d9eb708d68ee493c47b9d) differs from what is about to land in this commit (193c4c50455292124912dc2214aa98f661f29a5c) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope (two-blob form takes NO pathspec — do not append '-- docs/data/orch/orch-state.json', that is a git usage error): git diff 3e4a572b6b9fb1114f5d9eb708d68ee493c47b9d 193c4c50455292124912dc2214aa98f661f29a5c",
+        "createdAt": "2026-08-22T18:53:02Z",
+        "drained_at": "2026-08-22T19:17:45Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d3c104c1008cf37e97e61c3196964deeb494e1d21453fbd1f24a43336cf0b4dd",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/pm.md. actor=02594cce-7946-4d62-8d2f-586b9b883695 mode=warn escalated=true prior_warns=4 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-22T18:55:24Z",
+        "drained_at": "2026-08-22T19:17:45Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7d1174e3b412e3909134d685d301d8aab508fbb95cffe5dbc06e726f94e84ccd",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect-5.md",
+          "line_count": 154,
+          "cap": 600,
+          "byte_count": 39110,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 3110,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-22T19:07:03Z",
+        "drained_at": "2026-08-22T19:17:45Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
