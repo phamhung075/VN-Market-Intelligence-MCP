@@ -342,3 +342,232 @@ Strict order — each step's precondition is the prior step's shipped-and-verifi
 3. Confirm `TASK-17`'s single backlog row (`TASK17-FOREIGN-FLOW`) should simply have `.sprint`
    stripped, not renamed to something else — recommendation is strip (no evidence a
    `TASK-17`-named sprint was ever real).
+
+---
+
+## 11. AMENDMENT (architect, 2026-08-22) — response to `po_verdict: AMEND-THEN-RESUBMIT` (2026-08-14T14:30:24Z)
+
+Still `supervised:true, plan_only:true`. Nothing below ships code, edits `dev-standards.md`/`WORK.md`,
+or touches `orch-state.json` — this section is a bounded design amendment addressing PO's 3 blocking
+items (A1, A2, A3), 1 non-blocking item (AC-0), and the Q1/Q2/Q3 open-question rulings, per the
+`po_goahead_20260814T143024` stamp. §1–§10 above are NOT retracted; each subsection below names the
+exact paragraph it supersedes. All numbers in this section are re-measured live 2026-08-22 against the
+current `orch-state.json` (3,466,105 bytes) and cross-checked against the real
+`scripts/agents-flow/decision-journal-archive.sh --all --dry-run` run (not a re-implementation guess) —
+see §11.1.
+
+### 11.1 Re-baseline (live, 2026-08-22) — supersedes §1's counts
+
+Re-ran the resolver two ways: the **broad union** (identical to the archiver script's own
+`KNOWN_IDS` — confirmed by running the real script: `START mode=all known_ids=100 ... SUMMARY
+scanned=641 archived=355 active_stay=26 closed_not_in_scope=0 no_orch_record=260`, `2026-08-22`), and
+the **strict/corrected union** that drops `.done_tasks[].sprint` per §2.3's already-flagged critical
+finding (§11.2 below makes this the new Stage-1h rule).
+
+- **Broad-union dangling: 11** (headline count unchanged from PO's own 08-14 re-measurement — but
+  the SET churned: `COWORK-GUARANTEED-SLOT-DURABILITY` genuinely resolved, now has a real
+  `closed_sprints[]` entry; `CHORE-COMMIT-OVERHEAD` is a brand-new mint, 08-11, never seen by the
+  brief; `UC-RDL-P4` is the §11.3/A2 task-id-collision case):
+  `BA-IND-P1-MOMENTUM-FRONTEND, BCTC-DATA-QUALITY, CHORE-COMMIT-OVERHEAD, CRON-WORKFLOW-OPTIMIZE,
+  FE-PAGE-REORG, FIX-BCTC-CTG-BALANCE-SHEET-REFINE, FIX-ERRAUDIT-WAVE-3, FOLLOW-UP-HARDENING,
+  TASK-17, TEST-HYGIENE, UC-RDL-P4`.
+- **Strict-union dangling: 22** — the +11 delta the broad union hides today:
+  `ANALYSIS-QUALITY-CONVERGENCE, COWORK-GUARANTEED-SLOT-CATCHUP, FIX-BCTC-BANK-SUMMARY-MAPPING,
+  FLOW-PRICE-ALPHA-LOOP, FRESHNESS-AUTO-REMEDIATE, INPUT-VALIDATION-COVERAGE,
+  PREDICTION-CLAIMS-DAILY-CADENCE, S2-DATA-HONESTY, SYSTEMIC-REMAKE-P1, TOKEN-ECONOMY-AUDIT,
+  ULTRACODE-AUDIT-FIXALL`.
+- Direct, timestamped reproduction of the live hazard: today's real (not simulated)
+  `--all --dry-run` output includes `WOULD-ARCHIVE file=sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-25.md
+  id=COWORK-GUARANTEED-SLOT-CATCHUP` — `sprint_goal` marks this id `active` and 10 task rows still
+  reference it in non-terminal lanes (§11.7). `archived(would)` has grown 299 (08-08) → 346 (08-14,
+  PO's number) → **355 (08-22, this run)** — the anti-correlation PO identified (dangling count
+  falling while archiver blast-radius rises) is continuing, not a one-time artifact.
+- `"BACKLOG"` sentinel: **22 refs today** (12 at brief-time, 24 at PO's 08-14 ruling) — still
+  unaddressed, still round-tripping through the cold archive.
+
+### 11.2 AMENDMENT A1 — Stage 1h's known-id union corrected (supersedes §3's "Known-id universe" paragraph)
+
+§3 (original) deliberately gave Stage 1h the SAME broad union as the archiver, reasoning "known" is a
+lower bar than "safe to archive." PO's A1 refutes this directly: under that broad union, ids can
+"resolve" (read clean, no Stage-1h violation) via `.done_tasks[].sprint` alone while remaining exactly
+the unregistered, sign-off-impossible state this whole row exists to catch — §11.1's 11-id delta is
+today's live instance of that same failure, 8 days after PO first found it.
+
+**Corrected rule:** Stage 1h's known-id universe for counted-violation resolution DROPS
+`.done_tasks[].sprint` entirely:
+```
+KNOWN(stage-1h) = active_sprints[].id (hot) ∪ closed_sprints[].id (hot)
+                ∪ closed_sprints[].id (cold archive) ∪ closed_sprint_goals sprint ids (cold archive)
+```
+`.done_tasks[].sprint` is demoted to a candidate/weak signal used ONLY inside
+`decision-journal-archive.sh`'s own internal bookkeeping (§5/AC-4's third-state branch, "have I ever
+heard of this id at all") — never as sole justification for Stage 1h to call an id resolved, and never
+as sole justification for §2.1 to skip registering it. Measured today: strict union = 57 ids vs.
+broad = 100; this is exactly why strict-dangling (22) exceeds broad-dangling (11) — the 43-id gap is
+made entirely of ids whose only registry-shaped evidence is a per-task provenance tag, not a closure
+record.
+
+### 11.3 AMENDMENT A2 — task-id resolution step, new STEP 0 before §2.1's branches
+
+New step, evaluated FIRST, before any of §2.1's/§11.4's branches:
+```
+STEP 0 — TASK-ID CHECK: is `id` itself a real task id anywhere in the known task-id universe
+(hot board, all lanes ∪ nested active_sprints[].tasks[]/closed_sprints[].tasks[] ∪ cold archive
+done_tasks[].id)? If YES → this is not a sprint id. New disposition RELABEL: every row currently
+carrying `.sprint == id` instead gets `.sprint == <that task's own .sprint value>` (one hop; if that
+value is itself unresolved, re-run this same id through step 0 + the branch table, capped at 3 hops
+to guard a cycle — none observed live today).
+```
+Two confirmed live instances (both unchanged since PO's 08-14 finding — neither has been touched):
+- **`UC-RDL-P4`** — the exact step-0 pattern. Verified live: `task_board.backlog[]` has
+  `id: "UC-RDL-P4", sprint: "ULTRACODE-AUDIT-FIXALL", status: "BLOCKED"` — a real task. `ready[]` row
+  `RDL-P4-DISPATCH-TOOL-DEV` (status `READY`) carries `.sprint: "UC-RDL-P4"` — a task id written into
+  a sprint field. Disposition: RELABEL `RDL-P4-DISPATCH-TOOL-DEV.sprint` → `"ULTRACODE-AUDIT-FIXALL"`
+  (itself classified LIVE, §11.7).
+- **`BA-IND-P1-MOMENTUM-FRONTEND`** — a sibling pattern, not literally step 0 (the id itself is not a
+  task id; the 2 rows referencing it, `TASK-501-MOMENTUM-API-HANDLER` / `TASK-502-MOMENTUM-FRONTEND`,
+  are nested inside the CLOSED `MARKET-INDICATOR-DEPTH-P0` sprint's own `.tasks[]`). Both end in the
+  same RELABEL disposition and both were caught by the same "why doesn't this id look like a real
+  sprint" scrutiny, so documented alongside step 0 for implementation convenience. Ratified by PO
+  ruling Q1 (§10 Q1 / §11.6): relabel to `MARKET-INDICATOR-DEPTH-P0`.
+
+### 11.4 AMENDMENT A3 — branch-table contradiction resolved (supersedes §2.1's branch table)
+
+Corrected table (STEP 0, §11.3, evaluated first):
+```
+0. id IS itself a real task id                         → RELABEL (§11.3)
+1. sprint_goal status == "active"  (EXACT literal
+   match — NOT "any non-terminal value")                → LIVE, register active_sprints[]
+2. ANY referencing task row sits in a non-backlog
+   lane (ready/in_progress/qa/review/done/
+   done_verified)                                       → LIVE, register active_sprints[]
+3. sprint_goal status is terminal (DONE/DONE_VERIFIED/
+   CANCELLED/DEFERRED/SKIPPED) AND every referencing
+   row (if any) is terminal-status                       → FINISHED, register closed_sprints[]
+4. ELSE — referencing rows exist only in backlog[],
+   AND goal entry is absent OR == "PLANNING"              → PRE-SPRINT LABEL, exempt
+5. ELSE — no referencing rows at all AND goal status is
+   neither "active" nor terminal nor "PLANNING"
+   (e.g. "OPEN")                                          → NEW Q4, not resolved here (§11.6)
+```
+The old branch 1 ("goal status == live, meaning any non-terminal value incl. `PLANNING`") is deleted —
+that was the exact self-contradiction PO's A3 identified against the old ELSE branch. `"active"` is
+now checked by EXACT STRING VALUE: live measurement today confirms `sprint_goal.entries[].status`
+carries exactly 3 non-terminal-shaped values in the corpus — `active` (9 entries, PO has run
+sprint-kickoff), `PLANNING` (5 entries, pre-kickoff), and `OPEN` (1 entry — a THIRD vocabulary word
+neither this brief nor PO's ruling anticipated; §11.6 Q4).
+
+PO's named live instance re-verified unchanged today: `CHORE-COMMIT-OVERHEAD` (goal `PLANNING`, 8
+refs, ALL `backlog[]`) → branch 4, PRE-SPRINT LABEL, exempt (matches PO's Q2 disposition-in-principle
+even though this specific id postdates the brief and was never in PO's named 5).
+
+### 11.5 AMENDMENT AC-0 — safety-valve design (non-blocking per PO, sequenced FIRST in §11.8)
+
+Hazard reconfirmed live and unchanged: `docs/policies/dev-standards.md:60` still reads
+```
+# one-time / occasional backfill:
+bash scripts/agents-flow/decision-journal-archive.sh --all
+```
+with no warning attached (verified 2026-08-22). Any agent running this literally, today, physically
+`git mv`s journals for at least `COWORK-GUARANTEED-SLOT-CATCHUP` / `TOKEN-ECONOMY-AUDIT` /
+`ULTRACODE-AUDIT-FIXALL` / `FLOW-PRICE-ALPHA-LOOP` (§11.1's real `--dry-run` proof) out from under
+open work. `docs/WORK.md` records the same unresolved backfill as a "follow-up PO-routed action" (PO
+cited line 339; in the current file that entry is at line 348 — WORK.md is append-only and line
+numbers drift, matched here by content, not position).
+
+**Design for developer** (not shipped here, plan_only):
+1. `decision-journal-archive.sh --all` (non-`--dry-run` only) refuses to run unless EITHER an
+   explicit override env (`DJA_ALLOW_ALL_UNGATED=1`) is set, OR the new corpus-replay script
+   (§3/§6, `verify-sprint-registry-referential-integrity.sh`) has just reported `violations==0`
+   under the §11.2-corrected rule (exact caching/marker mechanism is a developer implementation
+   detail — AC-0 only requires SOME valve exists before step 1 of §11.8, not a specific one).
+2. `--dry-run` is unaffected — already zero-mutation, already the sanctioned preview path.
+3. Same commit: 1-line caveat added at `dev-standards.md:60` pointing at the new gate; the
+   `WORK.md` "follow-up PO-routed action" note is left in place (append-only changelog convention)
+   but the new entry documenting this fix explicitly supersedes it.
+
+### 11.6 Updated open questions (supersedes §10)
+
+- **Q1/Q2/Q3 — RATIFIED** by PO 2026-08-14, folded into §11.3/§11.4. Re-verified live today: Q1
+  (`BA-IND-P1-MOMENTUM-FRONTEND`) unchanged, still exactly the 2 nested rows named in the ruling. Q2 —
+  the 5 named exempt ids (`BCTC-DATA-QUALITY, CRON-WORKFLOW-OPTIMIZE,
+  FIX-BCTC-CTG-BALANCE-SHEET-REFINE, FIX-ERRAUDIT-WAVE-3, FOLLOW-UP-HARDENING`) are all still
+  backlog-only/no-goal-entry today; `COWORK-GUARANTEED-SLOT-DURABILITY` correctly dropped off this
+  list (confirmed: it now has a real `closed_sprints[]` entry, zero dangling status). Q3 —
+  `TASK-17` unchanged (1 backlog ref, strip); `"BACKLOG"` sentinel now at 22 refs (was 12 at brief
+  time, 24 at PO's ruling — churned, not fixed, still unaddressed).
+- **NEW Q4** (blocking only for §11.4 branch 5, non-blocking for everything else): sprint_goal entry
+  `PREDICTION-CLAIMS-DAILY-CADENCE` carries `status: "OPEN"` — a value outside this design's 2-word
+  vocabulary (`active`/`PLANNING`), and it has ZERO referencing task rows anywhere (hot or nested).
+  Recommendation (not decided — PO owns sprint-goal vocabulary): treat `OPEN` as `PLANNING`-equivalent
+  for §11.4's predicate (its own `vision` text reads as "flagged problem, not yet decomposed into any
+  task" — functionally identical to `PLANNING`'s pre-kickoff meaning). With zero referencing rows it
+  then lands in branch 4 (PRE-SPRINT LABEL, exempt — nothing to register against regardless). PO may
+  instead prefer normalizing this one live entry's `status` to `PLANNING` directly (a data fix, not a
+  design fix) so the predicate's 2-value assumption stays true going forward. Either way: name the
+  literal explicitly in the Stage-1h implementation, never an "anything else" catch-all — that
+  catch-all is the exact class of bug A3 exists to close.
+
+### 11.7 Amended per-id classification (2026-08-22, supersedes §2.2 for every id that changed)
+
+All 22 strict-dangling ids (§11.1), classified under the corrected §11.4 table. This table is a
+**re-run of a script, not a hand-maintained list** — PO's own 08-14 instruction (§2.2's own churn,
+twice, proves the point) — and MUST be regenerated again at actual implementation time.
+
+| id | goal status | task-lane signal | classification | action |
+|---|---|---|---|---|
+| `ANALYSIS-QUALITY-CONVERGENCE` | active | `backlog` only (1) | **LIVE** (branch 1) | register `active_sprints[]` |
+| `BA-IND-P1-MOMENTUM-FRONTEND` | (none) | nested inside closed `MARKET-INDICATOR-DEPTH-P0` (2) | RELABEL (§11.3, Q1) | relabel 2 rows → `MARKET-INDICATOR-DEPTH-P0` |
+| `BCTC-DATA-QUALITY` | (none) | `backlog` only (1) | PRE-SPRINT LABEL (branch 4, Q2) | exempt |
+| `CHORE-COMMIT-OVERHEAD` | PLANNING | `backlog` only (8) | PRE-SPRINT LABEL (branch 4) | exempt |
+| `COWORK-GUARANTEED-SLOT-CATCHUP` | active | non-backlog present (`ready`×4, `done`×1) | **LIVE** (branch 1+2) | register `active_sprints[]` |
+| `CRON-WORKFLOW-OPTIMIZE` | (none) | `backlog` only (1) | PRE-SPRINT LABEL (branch 4, Q2) | exempt |
+| `FE-PAGE-REORG` | active | `backlog` only (1) | **LIVE** (branch 1) | register `active_sprints[]` |
+| `FIX-BCTC-BANK-SUMMARY-MAPPING` | active | non-backlog present (`review`×2, `BLOCKED`) | **LIVE** (branch 1+2) | register `active_sprints[]` |
+| `FIX-BCTC-CTG-BALANCE-SHEET-REFINE` | (none) | `backlog` only (1) | PRE-SPRINT LABEL (branch 4, Q2) | exempt |
+| `FIX-ERRAUDIT-WAVE-3` | (none) | `backlog` only (1) | PRE-SPRINT LABEL (branch 4, Q2) | exempt |
+| `FLOW-PRICE-ALPHA-LOOP` | active | non-backlog present (`review`×1) | **LIVE** (branch 1+2) | register `active_sprints[]` |
+| `FOLLOW-UP-HARDENING` | (none) | `backlog` only (1) | PRE-SPRINT LABEL (branch 4, Q2) | exempt |
+| `FRESHNESS-AUTO-REMEDIATE` | PLANNING | `backlog` only (4) — was `review` at brief-time, since moved back/closed | PRE-SPRINT LABEL (branch 4) — **reverses the original brief's LIVE call, see note below** | exempt |
+| `INPUT-VALIDATION-COVERAGE` | PLANNING | non-backlog present (`ready`×1) | **LIVE** (branch 2, goal alone insufficient but task-lane confirms) | register `active_sprints[]` |
+| `PREDICTION-CLAIMS-DAILY-CADENCE` | OPEN | none | branch 5 — **Q4, pending PO** | pending |
+| `S2-DATA-HONESTY` | active | `backlog` only (1) | **LIVE** (branch 1) | register `active_sprints[]` |
+| `SYSTEMIC-REMAKE-P1` | active | **none at all** | **LIVE** (branch 1 only — goal-status-alone case) | register `active_sprints[]` |
+| `TASK-17` | (none) | `backlog` only (1) | NEVER-WAS (Q3) | strip field |
+| `TEST-HYGIENE` | (none) | non-backlog present (`ready`×1) | **LIVE** (branch 2) | register `active_sprints[]` |
+| `TOKEN-ECONOMY-AUDIT` | active | non-backlog present (`review`×1, `done_verified`×1) | **LIVE** (branch 1+2) | register `active_sprints[]` |
+| `UC-RDL-P4` | (none) | is itself a task id | RELABEL (§11.3, step 0) | relabel `RDL-P4-DISPATCH-TOOL-DEV.sprint` → `ULTRACODE-AUDIT-FIXALL` |
+| `ULTRACODE-AUDIT-FIXALL` | (none — no `sprint_goal` entry exists for it at all, separate minor finding) | non-backlog present (`ready`×3, `in_progress`×1, `done`×6) | **LIVE** (branch 2) | register `active_sprints[]` |
+
+`FRESHNESS-AUTO-REMEDIATE` note: the 08-08 brief classified this LIVE because a `review`-lane row
+(`SPIKE-FRESHNESS-REMEDIATE-TRIAGE`) referenced it then. That row is no longer in `review[]` today (14
+days later); all 4 current referencing rows are `backlog[]`. This is expected churn, not a design bug —
+it demonstrates the algorithm converges correctly on whatever the live state actually is, rather than
+needing PO to force one static answer.
+
+`SYSTEMIC-REMAKE-P1` note: this is the exact case PO flagged ("reads clean while `sprint_goal` calls it
+`active`") — zero task rows reference it in any lane today, so the ONLY signal is the goal-status-active
+branch. Under the corrected rule it is still correctly caught as a counted violation (LIVE, needs
+registration) — the old broad-union Stage 1h would have let it resolve silently via a stale
+`done_tasks[].sprint` tag; A1 (§11.2) is what makes this case visible again.
+
+### 11.8 Amended sequencing (supersedes §8 — inserts AC-0 as new step 0)
+
+0. **AC-0 safety valve ships first** (§11.5) — independent of everything else below, since the hazard
+   is armed today, not latent (per PO's original AC-0 framing).
+1. **PO ratifies this amendment** (§11.1–§11.7) + rules on Q4.
+2. **Data reconciliation writes**, via `scripts/orch-apply.sh`: register `active_sprints[]` for the
+   LIVE rows (§11.7), strip `TASK-17`+the 22 `"BACKLOG"`-sentinel rows, relabel the 2
+   `BA-IND-P1-MOMENTUM-FRONTEND` rows and `RDL-P4-DISPATCH-TOOL-DEV` (§11.3). Leave PRE-SPRINT-LABEL
+   ids untouched. **Re-run the classification script fresh at this step** — do not reuse §11.7's
+   table verbatim, it will already be several days stale by implementation time (same instruction PO
+   gave for §2.2, now doubly proven necessary by §11.7's own churn vs. §2.2).
+3. `decision-journal-archive.sh` closed-id-derivation correction (§2.3) — now also backs Stage 1h's
+   known-id union per A1 (§11.2), a single shared implementation, not two.
+4. AC-4 third-state branch (§5), on top of step 3's corrected predicate.
+5. Stage 1h validator ships in `warn` mode (§3), using the A1-corrected known-id union (§11.2) and the
+   A2/A3-corrected branch table (§11.4) for its exemption logic.
+6. Corpus replay confirms `violations == 0` — under the NOW-STRICTER strict-union rule, a materially
+   higher bar than the original brief's step 6 (today's true count is 22, not 11).
+7. Flip `ORCH_SPRINT_REGISTRY_MODE` to `reject`, separate reviewed change.
+8. AC-5 evidence captured (§6).
