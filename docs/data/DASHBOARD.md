@@ -1870,3 +1870,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: C-06 · market_messages table no activity 3h
+**Severity:** CRITICAL | **Date:** 2026-08-22 | **Status:** OPEN
+**Location:** database/market.db
+**Details:** market_messages table has 0 entries in last 3 hours
+**Impact:** Market message pipeline may be stalled
+**Root cause:** No recent messages written to database
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-22T18:32:48Z (signal sys-20260822T183210-26d4, system-auditor -> po, dedup_key=db_freshness:market_messages:C-06, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
