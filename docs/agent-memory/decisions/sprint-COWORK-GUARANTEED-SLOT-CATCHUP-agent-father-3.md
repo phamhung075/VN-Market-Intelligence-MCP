@@ -200,3 +200,12 @@ third root cause instead of forcing a fix into a wrong hypothesis.
 - New standards file vs folding D1-D5 inline into qa/flow/main.md only — chose a dedicated SSOT (mirrors `gateway-call-contract.md` precedent) since the AC explicitly asks this bind "fleet-wide... not just the one row it was authored for", and qa's flow file is already over its 275L size-justification baseline.
 **why-decision:** All 5 defects from the AC-extension map onto explicit sections: (1)/(signal) → §2+D1, (2)/(unsettled window) → D1's window-length requirement + D3, (3)/(restart-laundering) → D2+D4, (4)/(negative-only) → D3, (5)/(grandfather exemption on falsified row) → §4. Verified qa.md frontmatter unaffected (no cascade), all cross-referenced paths resolve, code-fence count in main.md even (28, balanced) post-edit.
 **why-change:** Scope narrowed from "fix defect 5 fully" (would require a TS code change) to "document + process-guard defect 5, flag the code gap" — matches both the row's own `files` restriction and agent-father's `forbidden_outputs` (never write production code).
+
+### STEP agent-father-S53 · agent-father · 2026-08-22T17:05:00Z
+**task-id:** ambient (no task_board row — router-dispatched signal, agents-architect brief)
+**what-done:** Ratified DDD Part 1 (orchStateSchema.ts/coordinationStore.ts business-rule-in-infra drift): document-as-deviation, not relocate.
+**what-considered:**
+- Relocate: extract pure rules to domain/services/orchestrationRules.ts + taskLockPolicy.ts.
+- Document-as-deviation: annotate both files with a reviewed exemption comment (mirrors existing size-justification:/composition-root-logic-allow: convention).
+**why-decision:** Both files are hot-path, load-bearing, 1192-1308L with existing test coverage; orchStateSchema.ts already flagged "physical split blocked" elsewhere. Brief explicitly said "do NOT treat as urgent refactor" — cheaper option wins on migration-risk vs. benefit.
+**why-change:** no change — brief explicitly deferred this call to PO/agent-father, no prior plan existed.
