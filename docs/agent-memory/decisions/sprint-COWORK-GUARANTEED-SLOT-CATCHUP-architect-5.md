@@ -133,3 +133,22 @@
 - Minting a fresh `architect_review_note_20260822` field (this row's own established 2026-08-07 precedent) vs appending to `status_note` vs a bare `next_agent` flip with no new row prose — empirically tested all three against `scripts/orch-row-prose-ceiling-check.mjs`: the row is already 14968B against a 12000B ceiling, so ANY net-new inline growth on a non-structural field hard-rejects the whole write (verified: a ~1.5KB note append aborted with exit 1). Chose the bare flip (`next_agent`, `reviewed_at`, `reviewed_by` — all zero/free net growth, confirmed 0 violations post-apply) — the durable diagnosis lives in the brief (git-committed) instead, per the guard's own "detail_ref is the sanctioned escape hatch" design intent; did NOT run the `orch-backlog-stub.sh` LANES=review migration to make room (dev-standards.md flags that as a supervised, not-yet-run migration gated on a separate go-ahead — out of scope to trigger as a side effect of one row edit).
 **why-decision:** The brief's own code sample is the actual root cause (agent-father copied it verbatim) — fixing only main.md would leave the blueprint itself defective for the next reader/re-implementation. Bare field-flip is the only option that lands ANY write on this row today without either bricking the apply or silently reverting to the forbidden 24h-vs-cadence mismatch this whole task exists to close.
 **why-change:** No change to AC-1..AC-4 or the 2h/3-attempt thresholds (already QA-verified substantively met) — only the WF-3 lane-move + duration-text gap QA identified is fixed.
+
+### STEP architect-S31 · architect · 2026-08-22T19:02:00Z
+**task-id:** FIX-GHOSTZONE-CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST
+**what-done:** Ratified BA's two-stage inner-DESC/outer-ASC SQL wrap for `getConvictionHistoryRows()`; resolved NFR-2 durable-freshness trade-off.
+**what-considered:**
+- NFR-2 (a) calendar-day window vs (b) keep absolute-row LIMIT.
+- (a) would decouple rows-returned from client `?limit=` value — conflicts with BA's own §6 Scope Out lock on `?limit=[1,2000]` clamp semantics (store's `limit` param IS the client's limit, passed straight through).
+**why-decision:** (b) preserves the locked API contract with zero risk to AC-14; (a) is structurally incompatible with a constraint BA itself wrote into the same spec, not just a lower-priority option — recommended a follow-up monitoring row (reusing existing `checkConvictionHistoryGap.ts` audit-check plumbing) instead of building it into this S-size task.
+**why-change:** no change from BA's FR-1 SQL shape; NFR-2 resolved as BA explicitly deferred to architect.
+
+### STEP architect-S32 · architect · 2026-08-22T19:02:00Z
+**task-id:** FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD
+**what-done:** Ratified BA's one-line subquery non-null guard for `queryForeignFlow()` verbatim; designed AC-15 regression + 2 edge-case tests (all-NULL table-wide, consecutive NULL-only days).
+**what-considered:** only path — BA's spec already named the exact fix (file's own docstring states the intended contract); no alternative design considered.
+**why-decision:** confirmed live via code read: subquery lacks the guard, outer guard fires too late; verified SQLite three-valued-logic guarantees the all-NULL edge case degrades to the existing empty-response path with no special-case code.
+**why-change:** no change from BA's plan.
+
+### CAP-REACHED · 2026-08-22T19:05:00Z
+lines=137 bytes=37800+ > BYTE_CAP=36000 (retroactive: file was already over cap before this cycle's 2 entries, prior cycle's cap check did not fire — execution variance, not a script bug). Next architect write for this sprint rolls to `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect-6.md`.
