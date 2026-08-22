@@ -1,6 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-22T20:05:00Z | **Cycle:** CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (P2 S, docs/agent-memory/notebooks/, root-cause fix, session 02594cce)
+**Last updated:** 2026-08-22T21:00:00Z | **Cycle:** FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE (cross-service/, developer, P1 S, ready[] direct pickup, session 02594cce)
+
+## Session 2026-08-22T21:00:00Z — FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE (cross-service/, developer, P1 S, ready[] direct pickup, session 02594cce)
+
+**Task:** po's live triage (2026-08-22T19:27Z) proved `guard_signal_type_coverage` FAILS live — the 5 live `to=po` types (auditor_cycle_loss/auditor_cycle_missing/cron_fire_gap/db_freshness/narrative_contradiction) are 10/10 unrouted, and the guard itself was a bash function embedded in `triage-signals.md`, wired into NO CI/cron, last recorded PASS 2026-08-01. Row's own 5-point acceptance additionally demanded a route-by-`to` fallback replacing the Pipeline-A silent-drop catch-all, notebook-hygiene rows, a dedup guard, and a `signals_processed` measurement gate.
+
+**Fix:** `docs/agents/po/flow/triage-signals.md` — added the 5 Pipeline-B rows; fixed `brief_complete`/`architecture_brief` naming mismatch; added Pipeline-A rows for `context_bloat_breach`/`notebook_unparseable_breach`/`notebook_single_section_overage_breach`/`notebook_no_valid_drop_candidate_breach` (4th found live, not in the original 3-type ask) → claude-manager-helper, `data-coverage-gap`→ops, `deep_dive_result`/`esc-deep-dive-request`→po; replaced the terminal catch-all with a dedup-guarded route-by-`to` fallback (signal_queue row or backlog CHORE/FIX addressed to the signal's own `to`, dedup keyed on `(type, payload.file/subject)`, log-and-skip only if `to` unresolvable). Extracted `guard_signal_type_coverage` to `scripts/audits/guard-signal-type-coverage.sh` — derives its allowlist by PARSING the two triage docs' `type` columns directly rather than hand-maintaining a duplicate array (that hand-sync gap is exactly what caused the 3-week drift) — + paired `.test.sh` (11 assertions, fixture-isolated) + new CI job `signal-type-coverage-guard` in `.github/workflows/ci.yml`.
+
+**Verify:** BEFORE/AFTER reproduced live — unmodified docs → script FAILs naming exactly po's 5 types; fixed docs → PASS, 21 types known. `sqlite3 docs/signals/signals.db "SELECT type,COUNT(*) FROM signals_processed GROUP BY type"`: every live type with count≥3 (notebook_single_section_overage_breach 18, bug-escalation 12, notebook_no_valid_drop_candidate_breach 8, context_bloat_breach 4, ci_red 4, bctc_signal 4) now has an explicit row; count<3 types are explicit or fallback-covered. All 5 fast CI audit scripts (dead-code-gate/no-hardcode-allowlist-scan/size-lint-justification/task-claim-owner-session-lint/metric-mask-lint) still PASS. `python3 -c yaml.safe_load` confirms `ci.yml` parses. No `apps/` TS/Go touched — `bun test`/`tsc` N/A (flow-doc + bash + CI-yaml cycle).
+
+**Cross-attribution (shared-workdir hazard, not fixed here):** bulk of the doc content landed in peer commit `35282a670` (agent-father's own same-file, different-section edit on `triage-signals.md` absorbed this task's then-unstaged edits from the shared working directory when they ran `git add`) — verified byte-identical against my intended diff before proceeding; not rewritten/amended. Only the small remainder + all CI wiring landed in my own commit. Same hazard class as the sweep-guard SAME-FILE DIVERGENCE detector; worth a future architecture-brief item (worktree isolation for concurrent same-repo sessions), out of this row's scope.
+
+**Closeout:** commits `0724c3b75` (triage-signals.md/-longtail.md remainder + guard script + test + ci.yml), `b719e93a1` (decision journal, new continuation `-8.md`, `-7.md` hit byte CAP-REACHED), `96125a03d` (board `ready[]→review[]`, `next_agent: qa`). QA gate named on the board row: verify `signal-type-coverage-guard` goes green on the next CI push (cannot confirm GH Actions execution from a local session) + re-run both audit scripts independently. Graphify skipped — no Skill-tool binding, same structural gap as prior Task-tool-spawned cycles.
+
+---
 
 ## Session 2026-08-22T20:05:00Z — CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (docs/agent-memory/notebooks/, developer, P2 S, ready[] direct pickup, session 02594cce)
 
@@ -19,35 +33,5 @@
 **QA gate recommended:** after the next digest-predict `daily-predict` cron cycle (17:30 UTC) runs post-fix, verify `docs/agent-memory/notebooks/digest-predict.md` gained a real level-2 `## <ISO>Z Daily Predictions` section (not another bullet under `## Known patterns / preferences`) — name qa against board row `CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT`; a flow-doc prose fix followed by an LLM-executed cycle is not self-verifying the way a code change + unit test is.
 
 **Closeout:** board write attempted via `scripts/orch-apply.sh` was ABORTED by the row-prose-ceiling guard (row already 12585B live, over `ORCH_ROW_PROSE_CEILING_BYTES=12000`; any inline growth on an already-over-ceiling row hard-rejects) — did not force it via a whole-lane cold-store migration (too large/risky a side-op for this task's scope, would touch every `ready[]` row). Full reasoning recorded here + decision journal (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` S107, which also hit its own byte cap this same write — CAP-REACHED sentinel appended, continuation rolls to `-8.md` on the next entry). Commit pending (session has Bash/git).
-
----
-
-## Session 2026-08-22T19:35:51Z — FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER (cross-service/, developer, P1 M, ready[] direct pickup per architect brief 2026-08-05, session 02594cce)
-
-**Task:** root-cause fix for 30 consecutive CI-red runs — `scripts/git-hooks/pre-push` ran only `tsc`+`rebuild-raw-verify-check.sh`, gated behind `CODE_TOUCHING_REGEX` which excludes `docs/`; 2 of 3 real CI-red incidents (`9af50bb26` CLAUDE.md, `3ce726a6e` docs/agents/po/flow/sprint-kickoff.md) landed on exactly the paths that regex excludes, so `size-lint`/`task-claim-owner-session-lint`/`tool-registry-parity` — all enforced separately in CI — never ran locally on a docs-only push. Architect brief (2026-08-05) pre-measured AC1 (~19.5-20s combined, well inside the 90s commit-mutex TTL) and specified the exact hook-diff shape; this cycle implemented it verbatim.
-
-**Fix:** added `run_doc_shaped_checks()` to `scripts/git-hooks/pre-push` — runs all 3 checks UNCONDITIONALLY, placed before `PRE_PUSH_SKIP_TSC` (correcting that guard's name — it now only skips tsc/rebuild-raw-verify, not the whole hook, closing a second unintended escape hatch). `tsc` + `rebuild-raw-verify-check.sh` untouched on the existing regex gate.
-
-**Tests:** new `scripts/git-hooks/pre-push.test.sh`, 4 scenarios (isolated mktemp scratch-repo idiom mirroring `pre-commit.test.sh`'s `new_repo()`, real audit scripts copied in so each resolves its own `git rev-parse --show-toplevel` correctly): T1 doc-only clean push runs+passes all 3, tsc skipped; T2 a failing task-claim-lint fixture (same shape as the real `3ce726a6e` incident) on an otherwise docs-only push still BLOCKS; T3 code-touching push still runs all 3 AND still invokes tsc (stub-pnpm sentinel); T4 bun-absent WARN+skip of parity only is fail-open (isolated from T2's failure since `run_doc_shaped_checks()`'s sequential `|| return 1` short-circuits before the bun branch on an earlier failure — noted in the test file, not overclaimed). 4/4 pass, `shellcheck` clean on the hook itself.
-
-**Live dry-run (AC4):** re-ran all 3 checks directly against repo HEAD — all PASS (~21s combined). The 3 symptom rows this row's own fence explicitly excludes credit for (`FIX-CI-SIZELINT-BCTC-1345B-...`/`FIX-CI-PARITY-CLAUDEMD-...`/`FIX-CI-TASKCLAIM-PO-FLOW-...`) had each independently landed by this cycle — confirms local/CI parity is restored, not that this row fixed those 3.
-
-**Docs:** `docs/policies/dev-standards.md` new CANONICAL entry (size-justification header note updated); `docs/WORK.md` one-liner. No handoff file — architect_brief substituted (PO-mint board row, architect designed direct-to-developer per the row's own routing note). Simplicity gate: PASS (Q1-Q4 clean, no excess vs the brief's own spec). Graphify skipped — no Skill-tool binding, same structural gap as prior sessions.
-
-**Closeout:** commits `23c97bbb3` (hook + test + dev-standards.md), `553496834` (WORK.md). No `apps/` TS/Go touched — pure bash, `bun test`/`tsc` N/A. Board `ready[]→review[]`, `next_agent: qa` — row's own `verification_gate` (`dry_run_measured_then_ci_green`) needs a subsequent green CI run on the push that ships this commit; push/commit-mutex is the dispatcher's job (INV-GATEWAY-1), not run by this specialist session (no MCP task_claim/commit-mutex tool grant either).
-
----
-
-## Session 2026-08-22T17:52:00Z — FIX-AUDITOR-DATA-TIER-NOTEBOOK-WRITE-PATH-UNWIRED (cross-service/, developer, P0 S, ready[] direct pickup, session 02594cce)
-
-**Task:** AUDIT_TIER=DATA had no row in system-auditor's `main.md` §Tier Dispatch (L138-143) and was bound to no notebook-write actuator — DATA cycles hand-wrote the notebook freehand. Two live corrupting commits same day: `22039783e` (DATA sweep) EOF-appended its own section instead of prepending+pruning; `f25dc3d27` (Tier-1, inherited the corrupt file) then destroyed 4 retained sections and duplicated heading `c104`.
-
-**Fix:** (1) `main.md` — added a real `TIER=DATA` §Tier Dispatch row binding it to `notebook (gated) → RETURN`, matching every other tier; corrected the L130 extraction bullet. (2) Necessary corollary, same file: added `elif AUDIT_TIER == "DATA"` to §Step 0d (full-precision `FIRE_TICK`, no boundary — dedup is `db-integrity-probe.sh`'s own SKIP-SPAWN pre-gate) — without it a live DATA cycle would hit the Fail-loud FIRE_TICK guard's FATAL EXIT (regression, not a fix). (3) `cron-db-data-integrity.md` — one clause: notebook write is not hand-authored, main.md's gate/write run unchanged. `scripts/notebook-compose.sh` itself untouched (never the problem, 9/9 tested).
-
-**AC-3 data repair:** re-ran the real `scripts/notebook-compose.sh` actuator against `git show f25dc3d27^:...` (true pre-corruption parent) with the surviving Tier-1 section renumbered c104→c105, retention=3/cap=150 — reproduced this row's own `measured_evidence` replay exactly: `OK sections=3 dropped=3 lines=172`, retaining `c103`/`d4-auto` byte-identical.
-
-**AC-4** verified live: `grep AUDIT_TIER= .claude/commands/crons/*.md` → `{1,2,3,4,5,DATA}`, all now have a Tier Dispatch row. **AC-5** cannot close this cycle by construction (needs 3 real post-ship cycles incl. 1 DATA fire + a `git log --grep=notebook-compose` hit) — flagged on the board row for a later RAW-verify pass, not narrated as done.
-
-**Closeout:** 3 commits — `35be008d0` (notebook repair, separate+first per AC-3), `a7262f6e9` (main.md + cron doc), `cb255145d` (board `ready[]→review[]`, next_agent=qa). No `apps/` TS/Go touched — pure flow-doc + prompt-doc + notebook-data fix, `bun test`/`tsc` N/A. Graphify skipped (no Skill-tool binding, same structural gap as prior Task-tool-spawned cycles).
 
 ---
