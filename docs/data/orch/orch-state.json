@@ -382,6 +382,34 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-22T21:30Z",
         "dedup_key": "launchd_tracking_gap:fleet-push:ABSENT-TASK"
+      },
+      {
+        "id": "sys-20260822T221412-3c33",
+        "ts": "2026-08-22T22:14:12Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "signal_feedback",
+        "summary": "launchd agent(s) not loaded or unhealthy: com.vn-market.fleet-push STALE-ACK",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "2026-08-22T22:00Z",
+        "dedup_key": "microservice_degraded:launchd:fleet-push-stale-ack"
+      },
+      {
+        "id": "sys-20260822T221412-3c33",
+        "ts": "2026-08-22T22:14:30Z",
+        "from": "system-auditor",
+        "to": "ops",
+        "type": "microservice_degraded",
+        "summary": "launchd agent not loaded or unhealthy: com.vn-market.fleet-push STALE-ACK",
+        "severity": "CRITICAL",
+        "status": "OPEN",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "2026-08-22T22:00Z",
+        "dedup_key": "microservice_degraded:launchd:fleet-push-stale-ack"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",

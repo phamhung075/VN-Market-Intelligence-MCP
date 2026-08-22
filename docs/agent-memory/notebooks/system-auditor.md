@@ -76,3 +76,62 @@ No AC is unverified. No new join-misses or silent drops detected. The spec is pr
 
 **Signed:** system-auditor (plan_only, supervised=true)  
 **Date:** 2026-08-22T21:52:00Z
+
+## c108 · 2026-08-22T22:14Z
+
+### Audit Run Tier-1
+
+**Timestamp:** 2026-08-22T22:14:38Z  
+**Tier:** Tier-1 (30-min cadence, runtime ping)  
+**Verdict:** FAILURE  
+**Signal ID:** sys-20260822T221412-3c33
+
+### Probe Evidence
+
+```
+=== AUDITOR PROBE 2026-08-22T22:08:38Z ===
+
+--- docker ps -a ---
+All runtime services UP (13 services healthy)
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=11.31% MemUsage=347.3MiB / 3GiB
+[A-30] All containers SKIPped (baseline < 85% investigate-gate)
+
+--- disk df -h / ---
+/dev/disk1s4s1: Capacity 45% — PASS
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-*] pass_count=3/3 — PASS
+```
+
+### Findings
+
+**A-06 CRITICAL: Launchd Agents Unhealthy**
+- **Finding:** com.vn-market.fleet-push: exit-status:1 with STALE-ACK (tracked_by=FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD)
+- **Tracker Status:** ABSENT from orch-state.json (task does not exist) → ACK is STALE
+- **Action:** Cannot suppress this finding via stale tracker; check FAILS
+- **Acknowledged Degradation:** com.vn-market.docker-events (exit-status:143) with LIVE tracker (FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP = BACKLOG status) → correctly suppressed
+
+### Summary
+
+5 of 6 checks PASS (docker_ps, health_3000, health_3001, disk, mem_creep).  
+1 of 6 checks FAIL (launchd_agents — STALE-ACK on com.vn-market.fleet-push).
+
+**Signals Emitted:** 1 (A-06 CRITICAL)  
+**Signal ID:** sys-20260822T221412-3c33  
+**Signal Queue:** Added to orch-state.json.signal_queue.rows[]  
+**Dedup Key:** microservice_degraded:launchd:fleet-push-stale-ack  
+**Cycle Tag:** cron:auditor-t1:2026-08-22T22:00Z
+
+**Status:** FAILURE (heartbeat updated to reflect actual verdict; launchd check failed due to STALE-ACK on fleet-push)
