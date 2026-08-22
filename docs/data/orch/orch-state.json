@@ -18873,7 +18873,7 @@
         "last_served_tick": "2026-08-22T19:19:17Z"
       }
     },
-    "_updated_at": "2026-08-22T22:48:20Z",
+    "_updated_at": "2026-08-22T22:48:53Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20025,6 +20025,85 @@
         "payload": "auditor tier-3 cycle possibly missing — no completion evidence in 212h (cadence 24h)",
         "createdAt": "2026-08-22T22:37:59Z",
         "drained_at": "2026-08-22T22:48:20Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6512d51baef81645eb32fccc5239b32b1c81037836b3468ae7b26eac6d8e0bfa",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 7 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json docs/signals/processed/commit-sweep-guard-2026-08-22T215411Z-98766.json docs/signals/processed/commit-sweep-guard-2026-08-22T220146Z-1321.json docs/signals/processed/commit-sweep-guard-2026-08-22T221510Z-14868.json docs/signals/processed/commit-sweep-guard-2026-08-22T221527Z-15029.json docs/signals/processed/commit-sweep-guard-2026-08-22T221725Z-16564.json docs/signals/processed/fleet-push-abort-push-fail-20260822T220340Z.json. actor=02594cce-7946-4d62-8d2f-586b9b883695 mode=warn escalated=true prior_warns=12 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-22T22:18:47Z",
+        "drained_at": "2026-08-22T22:48:53Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "263ee37937d0bc2abb7f7efa65455b0ab07505881adf251168e843ab178257fa",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=02594cce-7946-4d62-8d2f-586b9b883695 mode=warn escalated=true prior_warns=13 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-22T22:32:41Z",
+        "drained_at": "2026-08-22T22:48:53Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7edfd37aff6ef8e398863ec367bc844bb2ca6c9b6beb9b9bcf1f0157938612dd",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c108 · 2026-08-22T22:14Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-22T22:33:02Z",
+        "drained_at": "2026-08-22T22:48:53Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b265bf5349af5dc09ac80a8ddf872fb5d274506d43427ff4894153d0b65c4a31",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c108 · 2026-08-22T22:14Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-22T22:35:45Z",
+        "drained_at": "2026-08-22T22:48:53Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2c9b832d2e3cee2d4456eaa4809045d8e36811f1be4a25829e2652fd128d01b6",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=02594cce-7946-4d62-8d2f-586b9b883695 mode=warn escalated=true prior_warns=14 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-22T22:41:21Z",
+        "drained_at": "2026-08-22T22:48:53Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "897afe3d9688d46c6b405b3e13ed4a01e03e99c9beddea0f9b6279877e2cf8de",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "36",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-22T22:34:30Z",
+        "drained_at": "2026-08-22T22:48:53Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
