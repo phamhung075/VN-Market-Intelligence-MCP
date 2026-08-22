@@ -1,33 +1,30 @@
 # BA — Notebook
 
-**Last updated:** 2026-08-14 | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-08-22 | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
-## UC-ASL-P3 · 2026-08-14
+## FIX-GHOSTZONE-P0-PAIR · 2026-08-22
 
-Design-Router dispatch (SPRINT-S/P1, RESCOPE — freeze Tier-2/3 auditor predicates C-01..C-16 +
-B-05/B-09/B-13 into `scripts/auditor-db-checks.sh`, extending `db-integrity-counts.sh` discipline).
-Found 4 sibling rows already carrying design work before writing anything new: C-04 has a full
-ready-made script skeleton (REVIEW/plan_only, `docs/handoffs/FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE-spec.md`
-§3) this task integrates rather than re-derives; C-06/C-11 need new threshold/severity design
-(BACKLOG); C-12's WAL-blinding half resolves for free once the DB-access-pattern decision lands.
-**Superseded the ticket's own dispatched text**: the 07-12 RESCOPE note mandates `docker exec`
-specifically to avoid `db-integrity-counts.sh`'s WAL-blind `file:?immutable=1` open — but that
-objection predates the 2026-08-06 `sqlite-wal-guard.sh` fix that made the open WAL-conditional; 3
-independent sources (C-04's own decision, C-12's own fix_spec "mirror db-integrity-counts.sh as
-shipped", and this ticket's own title) now converge on host-bind, so FR-2 adopts that instead of
-re-litigating it. Verified `docker-compose.yml`: every relevant service (mcp-server, pdf-extractor,
-stock-price, alert-engine) shares the identical `./data/live:/app/data` bind mount, confirming a
-uniform host-path substitution works for every DB the script needs (market.db + new
-`PDF_EXTRACTOR_DB_HOST_PATH` for C-10/C-11 + system-map-enumerated multi-DB loop for C-12).
-Explicitly carved OUT `FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY` (task_board jq count, not
-DB SQL) and `FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE` (file-existence check) — same "predicate-
-drift, architect-owned" family label but different technical content, per the 08-08 epic triage's
-own text. 13 FRs, 0 PO blockers, 7 architect ARCH-RATIFY notes (DB-access confirm, C-06/C-11 SLA-
-reuse design shared question, C-12 table-name re-verify carried forward, mount-drift-check
-extension, zone narrowing cross-service/→scripts/+docs/agents/system-auditor/, C-12 connection-
-reuse shape). Full spec: `docs/handoffs/UC-ASL-P3-BA-spec.md`; decision journal STEP ba-S15. Row
-`in_progress[]`→`ready[]`, next_agent=architect, `.head` resynced same write (conservation
-718↔718). No MCP tool binding this spawn (Read/Edit/Write/Bash only).
+po triage-dispatch: 2 of 5 minted "ghost zone" rows (P0, shared regression shape — "what the API
+serves must match MAX(date) in the table"), both `apps/mcp-server/`, zero file overlap. (1)
+CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST: `ORDER BY date ASC LIMIT 2000` on a 3942-row table keeps the
+OLDEST rows, not newest — 48% invisible, frozen 64d. Fix = newest-N select, but MUST re-wrap ASC
+before returning: `convictionHistoryHandler.ts`'s `buildSnapshot`/`buildSeries` silently assume ASC
+input (last-write-per-symbol-wins, full-ASC-series contract, AC-2/AC-5 in
+`TASK17-CONVICTION-conviction-history-endpoint.test.ts`) — a naive DESC flip ships correct freshness
+but corrupts every symbol's score to its OLDEST value, undetected by any existing test. (2)
+FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD: `MAX(date)` subquery in `foreignFlowHandler.ts` omits
+the `foreign_volume IS NOT NULL` guard its OWN docstring (line 8) mandates — a NULL-only day (e.g.
+41 rows all NULL 2026-08-22) gets picked as latest, then the outer guard wipes it to zero. One-line
+fix: push the guard into the subquery, keep the outer guard too (partial-null days still need it).
+Both specs written independently (no shared file, no conflict) — 0 PO blockers on either (fix
+directions already ratified in po's own ticket text; only open item is an architect-owned trade-off,
+not a business call). Specs: `docs/handoffs/FIX-GHOSTZONE-CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST-BA-spec.md`,
+`docs/handoffs/FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD-BA-spec.md`. Both rows
+updated in place in `backlog[]` (no lane move, matches BA-ANALYSIS-QUALITY-CONVERGENCE precedent):
+`ba_spec_complete`, `ba_handoff`, `ba_completed_at`, `next_agent=agents-architect`, via
+`orch-apply.sh` (conservation 715↔715). Decision journal STEP ba-S16/ba-S17. Session had no MCP
+tool binding (gateway/vn-market `call_tool` absent) — Read/Edit/Write/Bash only, same known
+limitation as 2026-08-12/08-14 cycles; no `task_claim`/`send_telegram` executed.
 
 ## Archive
 
