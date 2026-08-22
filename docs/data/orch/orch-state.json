@@ -240,7 +240,7 @@
         "type": "auditor_cycle_loss",
         "summary": "auditor cycle lost tick=malformed-key — orphaned marker, mid-run death",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -254,7 +254,7 @@
         "type": "auditor_cycle_missing",
         "summary": "auditor tier-2 cycle possibly missing — no completion evidence in 174h (cadence 4h)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -268,7 +268,7 @@
         "type": "auditor_cycle_missing",
         "summary": "auditor tier-3 cycle possibly missing — no completion evidence in 206h (cadence 24h)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -282,7 +282,7 @@
         "type": "auditor_cycle_missing",
         "summary": "auditor tier-1 cycle possibly missing — no completion evidence in 103h (cadence 0.5h)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
@@ -5609,8 +5609,8 @@
         "created_by": "po",
         "next_agent": "ba",
         "origin_signal_id": "t4p1-002",
-        "status_note": "\n\n[PO-FOLD 2026-08-22T16:41Z — triage of code-janitor 'optimize workflow tools' audit] ADD A PREREQUISITE AC TO THIS ROW: docs/agent-memory/modules/tool-usage-stats.json is a ROLLING WINDOW that RESETS, and carries NO field saying so. It has already caused one fleet-wide near-miss: code-janitor read the 2026-08-22T16:00Z snapshot (uniqueTools=30) as a cumulative usage ledger and recommended deleting 13 'unused' MCP tools. Measured refutation from git history of that same file: uniqueTools oscillates 0 -> 19 -> 0 -> 0 -> 0 -> 15 -> 68 -> 30 across revisions, and get_market_snapshot goes 700 -> 789 -> 48 -> 1994 -> 951 (NON-MONOTONIC, it drops). 8 of the 13 tools janitor called dead had real call counts in the 2026-08-12 snapshot 10 days earlier (get_bctc_full=12, get_bctc_report_id=9, get_breadth_thrust=3, get_foreign_room=39, get_insider_sentiment=10, get_market_sentiment_index=10, get_rate_limit_status=3, get_relative_strength=3). NEW AC: the file MUST emit self-describing window metadata (at minimum windowStartAt + windowEndAt + a _semantics string stating it is a non-cumulative rolling window and that absence of a tool means 'not called in this window', NEVER 'dead'). Per-agent attribution (this row's original scope) is strictly less valuable than making the file impossible to misread — do the semantics field FIRST, it is a few lines and it closes a live foot-gun that nearly deleted 8 working tools.",
-        "updated_at": "2026-08-22T16:49:02Z"
+        "status_note": "\n\n[PO-FOLD 2026-08-22T16:41Z — triage of code-janitor 'optimize workflow tools' audit] ADD A PREREQUISITE AC TO THIS ROW: docs/agent-memory/modules/tool-usage-stats.json is a ROLLING WINDOW that RESETS, and carries NO field saying so. It has already caused one fleet-wide near-miss: code-janitor read the 2026-08-22T16:00Z snapshot (uniqueTools=30) as a cumulative usage ledger and recommended deleting 13 'unused' MCP tools. Measured refutation from git history of that same file: uniqueTools oscillates 0 -> 19 -> 0 -> 0 -> 0 -> 15 -> 68 -> 30 across revisions, and get_market_snapshot goes 700 -> 789 -> 48 -> 1994 -> 951 (NON-MONOTONIC, it drops). 8 of the 13 tools janitor called dead had real call counts in the 2026-08-12 snapshot 10 days earlier (get_bctc_full=12, get_bctc_report_id=9, get_breadth_thrust=3, get_foreign_room=39, get_insider_sentiment=10, get_market_sentiment_index=10, get_rate_limit_status=3, get_relative_strength=3). NEW AC: the file MUST emit self-describing window metadata (at minimum windowStartAt + windowEndAt + a _semantics string stating it is a non-cumulative rolling window and that absence of a tool means 'not called in this window', NEVER 'dead'). Per-agent attribution (this row's original scope) is strictly less valuable than making the file impossible to misread — do the semantics field FIRST, it is a few lines and it closes a live foot-gun that nearly deleted 8 working tools.\n\n[PO-FOLD 2026-08-22T17:00Z — agents-architect brief 2026-08-22-agent-fabric-ddd-debug-logger-tool-optimization.md, F3-4] SECOND INDEPENDENT UNDERCOUNT MECHANISM, additive to the rolling-window one above: tools whose table is populated SERVER-SIDE, in-process, never through the MCP transport are structurally invisible to this telemetry. Architect's verified example: post_agent_signal shows 6 calls against get_agent_signals' 684, which looks like a dead writer until you find that freshnessSlaMonitorJob.ts writes agent_signals in-process — agents read it 684 times and write it 6 times BY DESIGN. So a low or zero count can mean (a) idle this window, (b) written by a server-internal path this telemetry cannot see, or (c) genuinely unused — and the file gives a reader no way to tell these apart. NEW AC: the emitted record must distinguish agent-invoked from server-internal population, or at minimum carry a documented caveat naming (b) as a known blind spot. THIS ROW IS NOW A HARD PREREQUISITE FOR A DOWNSTREAM CONSUMER, not just hygiene: docs/agents/orch-sentinel/flow/dim-oh4-capability-utilization.md:33 reads this exact file and treats 'absent from .toolCounts' as 'call count 0', then increments a persistent oh4_3_zero_streak counter per tool across runs. Arming OH-4 before this row lands would industrialise code-janitor's 2026-08-22 false positive on a weekly cadence and accumulate escalating dead-tool streaks against tools that are merely idle in a given window. See FIX-ORCH-SENTINEL-OH4-CRONS-NEVER-ARMED-DEAD-OBSERVABILITY-MECHANISM, which is explicitly sequenced behind this row.",
+        "updated_at": "2026-08-22T16:53:54Z"
       },
       {
         "id": "FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING",
@@ -11924,6 +11924,70 @@
         "status_note": "AC-1: re-derive the unreferenced set at execution time against the live tree; do not trust the counts frozen in this row. AC-2: use scripts/audits/clean-obsolete-files.sh --live, which quarantines to docs/data/.trash/<date>/ and never rm's — no bare deletion under any circumstance. AC-3: .pyc and any other compiled/build artifact under scripts/ is removed AND a .gitignore entry is added so it cannot return. AC-4: after quarantine, the full test suite and a cowork cron dry-run both still pass — proving nothing load-bearing was swept. AC-5: report the before/after script count and the exact quarantined list in the task report.",
         "origin": "PO triage 2026-08-22T16:41Z of code-janitor audit — the safe residue after re-running orphan detection against the full repo corpus instead of flow/main.md alone.",
         "updated_at": "2026-08-22T16:49:02Z"
+      },
+      {
+        "id": "UC-DDDRISK-F1-RAGSVC-IMPORTLINTER-CI",
+        "type": "FIX",
+        "title": "Wire rag-service import-linter DDD fence into CI (currently unenforced, py-lint job scopes to pdf-extractor only)",
+        "status": "BACKLOG",
+        "priority": "medium",
+        "size": "S",
+        "zone": "apps/rag-service/",
+        "owner": "dev-rag-service",
+        "next_agent": "dev-rag-service",
+        "created_at": "2026-08-22T16:52:50Z",
+        "created_by": "architect/UC-DDDRISK-P1",
+        "depends_on": [],
+        "blocks": [],
+        "supervised": false,
+        "detail_ref": "docs/architecture-briefs/2026-08-22-app-code-ddd-brownfield-risk-review.md#2-finding-1-actionable-codeci--rag-service-import-linter-fence-unenforced",
+        "updated_at": "2026-08-22T16:52:58Z"
+      },
+      {
+        "id": "UC-DDDRISK-F2-STOCKPRICE-DEAD-SCAFFOLD",
+        "type": "FIX",
+        "title": "Remove dead TS scaffold in apps/stock-price/ (package.json/tsconfig.json/bun.lock reference nonexistent src/, pre-dates Go rewrite)",
+        "status": "BACKLOG",
+        "priority": "low",
+        "size": "S",
+        "zone": "apps/stock-price/",
+        "owner": "dev-stock-price",
+        "next_agent": "dev-stock-price",
+        "created_at": "2026-08-22T16:52:50Z",
+        "created_by": "architect/UC-DDDRISK-P1",
+        "depends_on": [],
+        "blocks": [],
+        "supervised": false,
+        "detail_ref": "docs/architecture-briefs/2026-08-22-app-code-ddd-brownfield-risk-review.md#3-finding-2-actionable-code-cleanup--appsstock-price-dead-ts-scaffold",
+        "updated_at": "2026-08-22T16:52:58Z"
+      },
+      {
+        "id": "FIX-ORCH-SENTINEL-OH4-CRONS-NEVER-ARMED-DEAD-OBSERVABILITY-MECHANISM",
+        "type": "FIX",
+        "title": "orch-sentinel FULL/LITE crons were never armed, so the OH-4 Capability-Utilization dimension commissioned 2026-07-21 to own exactly this MCP tool-usage-decay metric has never run — scorecard frozen 31d at its first LITE run, OH-2/OH-3/OH-4 still read '(pending first FULL run)', and orch-sentinel is absent from all three router re-arm skills",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "agent-father",
+        "created_at": "2026-08-22T16:53:52Z",
+        "created_by": "po-triage-20260822T1700Z",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": false,
+        "depends_on": [
+          "CWO-T4-P0-TUSTATS-PERAGENT"
+        ],
+        "files": [
+          ".claude/commands/crons/cron-orch-sentinel.md",
+          ".claude/skills/cron-standalone-team/SKILL.md",
+          "docs/agents/orch-sentinel/flow/dim-oh4-capability-utilization.md"
+        ],
+        "desc": "Raised by agents-architect (brief docs/architecture-briefs/2026-08-22-agent-fabric-ddd-debug-logger-tool-optimization.md F3-2) during the same cycle as code-janitor's tool audit. PO INDEPENDENTLY RE-VERIFIED every claim rather than relaying:\n  - docs/data/orch-sentinel-scorecard.md: 'Last run: 2026-07-22T00:17:57Z (first live run) | Mode: LITE'; file mtime 22 Jul; OH-2.1/2.2/2.3/3.1/3.2 all literally read '(pending first FULL run)'. Frozen 31 days.\n  - docs/agents/orch-sentinel/flow/main.md:87 — OH-4 (dim-oh4-capability-utilization.md) runs ONLY under MODE=FULL; LITE runs OH-1 only. So OH-4 has never executed once.\n  - .claude/commands/crons/cron-orch-sentinel.md exists and states in its own text: 'agent-father does NOT arm/register any CronCreate itself' and 'Neither cron is armed yet.'\n  - Zero mentions of orch-sentinel in .claude/skills/cron-cowork-team, cron-detect-loop, or cron-standalone-team SKILL.md — confirmed, so no session-restart re-arm routine catches it.\n  - No existing row tracks arming. CLEAN-REGISTER-ORCH-SENTINEL-TREEMAP-SYSMAP is tree-map/system-map registration, a genuinely different concern — architect was right to distinguish them. Not a duplicate.\nThis is the 'built, tested, PO-approved, never wired' pattern this repo already has vocabulary for.\n\n*** SEQUENCING IS THE LOAD-BEARING PART OF THIS ROW — DO NOT ARM FIRST. ***\ndim-oh4-capability-utilization.md:33 reads docs/agent-memory/modules/tool-usage-stats.json and treats 'absent from .toolCounts' as 'call count 0', then increments a persistent oh4_3_zero_streak counter for that tool on every run. That file is a ROLLING WINDOW THAT RESETS with no window metadata (proven from its git history in triage-20260822T1641Z-po.md: uniqueTools 17->19->0 across five revisions->15->68->30). Arming OH-4 against it TODAY would not fix the blind spot — it would automate code-janitor's exact false positive on a weekly cadence and build escalating multi-week 'dead tool' streaks against tools that are simply idle in the sampled window. Hence depends_on CWO-T4-P0-TUSTATS-PERAGENT.\n\n*** TWO PREMISE CORRECTIONS, recorded so they are not re-inherited: ***\n(1) THE PROPOSED ACTUATOR DOES NOT EXIST. The dispatch asked to arm these 'via crons:cron-orch-sentinel skill'. There is NO .claude/skills/cron-orch-sentinel/ directory — only three cron skills exist (cron-cowork-team, cron-detect-loop, cron-standalone-team). What exists is a COMMAND file, .claude/commands/crons/cron-orch-sentinel.md, which documents the cron shape and explicitly disclaims arming. So 'arm it via the skill' is not executable as worded; arming means either a router CronCreate per that command file, or adding orch-sentinel to an existing re-arm skill (cron-standalone-team is the natural home — orch-sentinel is a standalone periodic auditor, same class as its existing four).\n(2) OH-4 BEING UNARMED IS NOT WHY THE JANITOR AUDIT WAS WRONG. The dispatch framed the '13 unused MCP tools' finding as 'partly a monitoring gap rather than genuinely dead'. Measured, it is not partly anything: 13/13 were false positives and ZERO tools are deletion candidates (8 had real call counts 10 days earlier; 3 have zero exact-word matches anywhere and were never documented; 1 is registered-and-referenced but idle; 1 does not exist server-side). Janitor's error came from reading a windowed file as cumulative plus unanchored substring greps — an unarmed OH-4 could not have prevented it, since OH-4 reads the SAME defective file with the SAME 'absent means zero' assumption. The two are independent gaps that happen to share a root input. Fixing the input helps both; arming OH-4 alone helps neither.\n\nALSO FLAG FOR WHOEVER RUNS OH-4 FIRST: the brief's own F3-1 trend ('43->30 of 183 tools ever called, concentration 86.5%->89.8%, trend moved the wrong direction') is computed by comparing two rolling-window snapshots and is very likely a window-width artifact rather than real decay — the 2026-08-12 snapshot of this same file recorded 68 unique tools, higher than both figures. 'Ever called' is the wrong reading of a file that resets; the honest statement is 'called during the sampled window'. OH-4's trend logic must not inherit this framing.",
+        "status_note": "AC-1: both crons armed and verifiably firing — FULL weekly + LITE daily per .claude/commands/crons/cron-orch-sentinel.md, honouring its own machine-local-time (France, not UTC) warning. AC-2: orch-sentinel added to .claude/skills/cron-standalone-team/SKILL.md so a session restart re-arms it; that skill's roster count and any '(4 standalone crons)' phrasing updated in the same edit, including the pointer in CLAUDE.md § Skills. AC-3: HARD GATE — do not arm until CWO-T4-P0-TUSTATS-PERAGENT has landed window metadata; a run before that produces false zero_streak escalations by construction. AC-4: dim-oh4-capability-utilization.md:33 is amended so 'absent from .toolCounts' is read as 'not called in this window', never 'call count 0', and zero_streak only increments when the window metadata confirms genuine non-invocation; the server-internal-writer blind spot from the brief's F3-4 is named in the doc. AC-5: PROVE IT RAN — docs/data/orch-sentinel-scorecard.md shows a FULL-mode run newer than 2026-07-22T00:17:57Z with OH-2/OH-3/OH-4 no longer reading '(pending first FULL run)'. Frozen-file evidence is the whole finding here, so a fresh scorecard is the only acceptable proof. AC-6: split by commit zone — .claude/** and docs/agents/orch-sentinel/** are agent-father's; the actual CronCreate is a router/session action and cannot be done by a subagent. Hand the arming step back to the router explicitly rather than narrating it as done.",
+        "origin": "agents-architect brief 2026-08-22-agent-fabric-ddd-debug-logger-tool-optimization.md F3-2, relayed mid-cycle by the coordinator; all claims independently re-verified by PO 2026-08-22T17:00Z, two premise corrections applied, sequencing dependency added.",
+        "updated_at": "2026-08-22T16:53:54Z"
       }
     ],
     "closed_sprints": [
@@ -18085,8 +18149,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-22T16:49:01Z",
-    "last_triaged_by": "po-triage-20260822T1641Z",
+    "last_triaged_at": "2026-08-22T16:53:52Z",
+    "last_triaged_by": "po-triage-20260822T1700Z",
     "in_progress": [
       {
         "id": "UC-CCA-P3",
@@ -18166,7 +18230,7 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-22T16:49:01Z",
+  "_updated_at": "2026-08-22T16:53:52Z",
   "_updated_by": "po",
   "dev_team_idle_chain": {
     "rotation": {

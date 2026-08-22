@@ -1,6 +1,6 @@
 # Architecture
 
-<!-- size-justification: 389L — top-level architecture index used as the canonical "monorepo + services + ports + DDD layers + cron + databases" reference (12+ callers across docs/policies, docs/references, TASKS, bundle-architect, signals, sessions). Splitting by section would force every caller to walk a children-tree just to answer "what port does service X run on" — defeating the purpose of a single-glance overview. Sections already self-describe; navigation is by heading anchor. -->
+<!-- size-justification: 389L — top-level architecture index used as the canonical "monorepo + services + ports + DDD layers + cron + databases" reference (12+ callers across docs/policies, docs/references, TASKS, bundle-architect, signals, sessions). Splitting by section would force every caller to walk a children-tree just to answer "what port does service X run on" — defeating the purpose of a single-glance overview. Sections already self-describe; navigation is by heading anchor. UC-DDDRISK-P1 2026-08-22 (architect, brownfield DDD risk review of apps/**): corrected 3 stale service-language entries (technical-analysis/macro-indicators/kinh-dich-service were documented as TypeScript/Bun, verified live as Go 1.22+CGO per docs/data/system-map.json SSOT + directory inspection — no src/, go.mod present), added the previously fully-undocumented frontend service + news-fetch's missing HTTP downstream edge, corrected the docker-compose service count (stale "10" → verified 12), and corrected the packages/ description from "active shared contracts" to "0-importer phantom packages, tracked BACKLOG"; also corrected the Microservices Communication diagram, which fanned all 5 VPS systemd services out to 4 different local services by data-type association — verified against server.ts, ALL 5 push into MCP Server alone, which then fans out internally (+~38L net). No DDD golden-rule (domain-never-imports-infrastructure) violations found live across any of the 11 apps/ services this cycle — see docs/architecture-briefs/2026-08-22-app-code-ddd-brownfield-risk-review.md for full findings incl. 2 actionable non-doc findings routed to pm/dev-rag-service/dev-stock-price via docs/handoffs/UC-DDDRISK-P1.md. -->
 
 ## DDD Layer Order
 
@@ -19,16 +19,41 @@ vn-market-intelligence/         ← pnpm workspace root
 │   ├── stock-price/            ← Go 1.22 (CGO) — price aggregation (port 5000, mapped 5010)
 │   ├── pdf-extractor/          ← Python/FastAPI — PDF parsing (port 5001)
 │   ├── rag-service/            ← Python/FastAPI — embeddings + search (port 5002)
-│   ├── technical-analysis/     ← TypeScript/Bun — TA indicators (port 5003)
-│   ├── macro-indicators/       ← TypeScript/Bun — macro snapshot (port 5004)
-│   ├── kinh-dich-service/      ← TypeScript/Bun — hexagram readings (port 5005)
+│   ├── technical-analysis/     ← Go 1.22 (CGO) — TA indicators (port 5003; rewritten from the
+│   │                              original TypeScript/Bun implementation, corrected 2026-08-22 —
+│   │                              see docs/data/system-map.json SSOT + UC-DDDRISK-P1)
+│   ├── macro-indicators/       ← Go 1.22 (CGO) — macro snapshot (port 5004; same TS→Go rewrite
+│   │                              as technical-analysis, corrected 2026-08-22)
+│   ├── kinh-dich-service/      ← Go 1.22 (CGO) — hexagram readings (port 5005; same TS→Go rewrite,
+│   │                              corrected 2026-08-22; `-service` suffix is a known naming drift
+│   │                              vs its bare-name siblings — see docs/references/agent-roster.md)
 │   ├── alert-engine/           ← Go 1.22 (CGO) — signal evaluation (port 5006)
-│   └── news-fetch/             ← TypeScript/Bun — Reuters + Bloomberg scrapers (port 5008)
-├── docker-compose.yml          ← All 10 services + shared /data volume
-├── packages/
-│   ├── shared-types/           ← Inter-service TS contracts
-│   ├── shared-db/              ← SQLite schema
-│   └── shared-config/          ← mcp.config.json loader
+│   ├── news-fetch/             ← TypeScript/Bun — Reuters + Bloomberg scrapers (port 5008; also
+│   │                              carries a parallel WIP Go port, see composition-root-logic-gate
+│   │                              CANONICAL entry in dev-standards.md — NOT the VPS-side
+│   │                              `vn-news-fetch.service` systemd scraper, a different pipeline,
+│   │                              see VPS Proxy section below)
+│   └── frontend/               ← TypeScript/Bun (Remix) — dashboard UI (port 3001; own DDD-style
+│                                  layer fence — formatter/domain/view-model/api-client via
+│                                  eslint-plugin-boundaries — added to this doc 2026-08-22, was
+│                                  previously undocumented here despite being live in
+│                                  docker-compose.yml/system-map.json since Phase 3)
+├── docker-compose.yml          ← 12 services (11 apps/ microservices + flaresolverr third-party
+│                                  CAPTCHA-bypass helper) + shared /data volume (corrected from a
+│                                  stale "10 services" count, 2026-08-22)
+├── packages/                   ← 3 workspace packages, ZERO importers anywhere in apps/ (verified
+│                                  live 2026-08-22 via scripts/audits/shared-package-import-check.sh
+│                                  --check) — every service independently duplicates its own
+│                                  types/config instead (confirmed collisions: McpConfig/
+│                                  loadMcpConfig, Alert, Signal, ExtractPDFRequest/Response,
+│                                  ComputeTARequest/Response, SearchRequest/Result, ServiceHealth).
+│                                  Tracked BACKLOG: FACTORY-SHARED-wire-or-prune-shared-packages
+│                                  (docs/architecture-briefs/2026-07-24-factory-guard-ci-shared-
+│                                  package-import-check.md). Descriptions below are the ORIGINAL
+│                                  INTENT, not current usage.
+│   ├── shared-types/           ← Inter-service TS contracts (intended; currently unused)
+│   ├── shared-db/              ← SQLite schema (intended; currently unused)
+│   └── shared-config/          ← mcp.config.json loader (intended; currently unused)
 └── vps-scripts/                ← 7 systemd services on Vinahost VPS
 ```
 
@@ -46,19 +71,28 @@ jq '[.project.microservices[] | {id, port, language, runtime}]' docs/data/system
 - `pdf_extractor.db` — WRITE: pdf-extractor only (isolated, no sharing)
 - `rag_service.db` — WRITE: rag-service only (isolated, no sharing)
 
-**Restart:** see `docs/policies/restart-policy.md` (SSOT — docker-compose only, 9 services)
+**Restart:** see `docs/policies/restart-policy.md` (SSOT — docker-compose only; service count is dynamic, query `jq '.project.microservices | length' docs/data/system-map.json` — corrected 2026-08-22 from a stale hardcoded "9 services", verified live count 11)
 
 ## Microservices Communication
+
+**Corrected 2026-08-22** (`UC-DDDRISK-P1`): the previous version of this diagram fanned VPS
+services out to 4 *different* local services (API Gateway / PDF Extractor / RAG Service / Macro
+Indicators) by data-type association — verified against `apps/mcp-server/src/interface/mcp/server.ts`,
+that is not what the code does. All 5 VPS systemd services push into the SAME single ingress point,
+**MCP Server (3000)** — `/api/watchlist`+`/api/push-prices` (line 680/708), `/api/bctc-fetch-queue`+
+`/api/push-bctc-pdf` (line 756/762), `/api/push-news` (pushNewsHandler.ts), `/api/push-sbv-rates`
+(line 750) all live there, matching the single `↓ (zenmidi.com bridge)` funnel already drawn below.
+MCP Server then fans out internally over its own HTTP clients to the 8 downstream microservices.
 
 ```
 VPS (Vinahost Vietnam)                  Local Docker
     │                                      │
-    ├─ vn-price-fetch.service       →   API Gateway (4000)
-    ├─ vn-bctc-fetch.service        →   PDF Extractor (5001)
-    ├─ vn-news-fetch.service        →   RAG Service (5002)
-    ├─ vn-sbv-fetch.service         →   Macro Indicators (5004)
-    └─ vn-foreign-flow.service      →   MCP Server (3000)
-                ↓ (zenmidi.com bridge)
+    ├─ vn-price-fetch.service       →   MCP Server (3000)   [/api/watchlist, /api/push-prices]
+    ├─ vn-bctc-fetch.service        →   MCP Server (3000)   [/api/bctc-fetch-queue, /api/push-bctc-pdf]
+    ├─ vn-news-fetch.service        →   MCP Server (3000)   [/api/push-news]
+    ├─ vn-sbv-fetch.service         →   MCP Server (3000)   [/api/push-sbv-rates]
+    └─ vn-foreign-flow.service      →   MCP Server (3000)   [/api/push-prices]
+                ↓ (zenmidi.com bridge — single funnel, confirms the topology above)
     MCP Server (3000)
         ├─ HTTP → Stock Price (5000)
         ├─ HTTP → Technical Analysis (5003)
@@ -66,7 +100,10 @@ VPS (Vinahost Vietnam)                  Local Docker
         ├─ HTTP → Kinh Dich (5005)
         ├─ HTTP → Alert Engine (5006)
         ├─ HTTP → PDF Extractor (5001)
-        └─ HTTP → RAG Service (5002)
+        ├─ HTTP → RAG Service (5002)
+        └─ HTTP → News Fetch (5008)   ← added 2026-08-22, was missing from this diagram despite
+                                         being a live downstream (see newsFetchDashboardHandler.ts /
+                                         newsFetchLiveHandler.ts / vpsProxyWatchdogJob.ts callers)
 ```
 
 ## Service Implementation Notes
@@ -80,6 +117,11 @@ VPS (Vinahost Vietnam)                  Local Docker
 - **Macro Indicators**: SBV FX rates, commodity prices, trend analysis
 - **Kinh Dich Service**: Hexagram readings, trading signals, confidence scoring
 - **Alert Engine**: Multi-source signal evaluation, verified chain synthesis
+- **News Fetch**: Reuters + Bloomberg RSS/stealth scrapers, pulled directly by MCP Server over HTTP
+  — a distinct pipeline from the VPS-side `vn-news-fetch.service` systemd scraper (9 VN RSS
+  sources, push-based) described in the VPS Proxy section below; both added to this section 2026-08-22
+- **Frontend**: Remix dashboard UI serving the read-only market-intelligence views; own
+  eslint-plugin-boundaries DDD-style fence (formatter/domain/view-model/api-client)
 
 Tests: run from `apps/mcp-server/` with `bun test`. Or from root: `pnpm test`.
 
