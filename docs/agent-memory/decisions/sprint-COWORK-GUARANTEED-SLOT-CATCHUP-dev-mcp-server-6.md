@@ -95,3 +95,12 @@
 - Build the TS guardrail (item 2) now vs. mint backlog — CHOSEN mint: explicitly flagged non-blocking/fast-follow by agent-father's RETURN; a rushed AST heuristic risks false positives (the Go gate needed live-scan threshold tuning to hit zero FPs before wiring to CI) — same risk class not worth taking under a comment-only task's time budget.
 **why-decision:** Zero existing repo precedent for a TS-side "business-rule-in-infra" annotation keyword, so minted one consistent with the existing `<scope>-allow:`/`<scope>-justification:` family rather than overloading the Go-specific marker.
 **why-change:** no change — brief explicitly deferred both the ratification (agent-father/PO) and the annotation mechanics (mirror the existing convention) to this point in the chain; no prior plan existed for the exact marker name.
+
+### STEP dev-mcp-server-S10 · dev-mcp-server · 2026-08-22T20:30:00Z
+**task-id:** FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE
+**what-done:** QA CHANGES_REQUESTED on commit 7ac55adc8 (AC-2 not met: matchesVnmVeaSignature gated on rule-membership alone, so BCTC-VAL-03 stacking with a 2nd soft violation still attached the VNM/VEA hint at confidence 0.4/0.6, outside the mandated {0.0,0.8}). Re-gated on `violations.length===1` (equivalently confidence in {0.0,0.8}) in confidenceFinancialReasonBuilder.ts; added 2 regression tests reproducing QA's live finding (VAL-03+VAL-05 stack ->0.6) plus a VAL-03+VAL-01-SCALE stack (->0.4).
+**what-considered:**
+- gate on `confidence===0.0||confidence===0.8` directly — REJECTED as primary check: equivalent in every reachable case but `violations.length===1` reads as the actual causal condition (QA's own fix recommendation phrased it as the primary form, confidence-equality as "equivalently").
+- gate on rule-membership AND confidence-equality (redundant double-check) — REJECTED: `violations.length===1` alone already implies the confidence lands correctly for VAL-01/03/10 given the validator's own short-circuit structure; a redundant confidence check adds no safety, only surface.
+**why-decision:** matches QA's specific, actionable finding exactly (direct-commit row, no branch, QA verdict already root-caused the gap) — smallest correct fix, no new abstraction needed.
+**why-change:** none — QA's fix recommendation was followed as specified; only decision was primary-condition phrasing (violations.length vs confidence-equality), functionally identical.
