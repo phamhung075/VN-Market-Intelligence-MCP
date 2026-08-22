@@ -1,8 +1,8 @@
-# Agent Father — Top-5 Checks + Auto-Fix Sweep
+# Agent Father — Top-6 Checks + Auto-Fix Sweep
 
 **Parent flow:** `docs/agents/agent-father/flow/keep.md` (Steps 3-5)
 
-## Step 3 — Top-5 Critical Checks Per Agent
+## Step 3 — Top-6 Critical Checks Per Agent
 
 Lightweight sweep — Grep-based, no full file reads:
 
@@ -22,6 +22,7 @@ correctly target `docs/agents/<agent-id>/flow/*.md` — unaffected by this note.
 | 3 | Has `boundary_rules` section | `Grep "boundary_rules" docs/agents/<agent-id>/init.md` | NO — needs manual authoring |
 | 4 | Flow path resolves | Verify `flow.default` path in `init.md` exists on disk | YES — fix path if obvious typo |
 | 5 | Version not >90 days stale | `Grep "version:" docs/agents/<agent-id>/init.md`, parse date | YES — update to today |
+| 6 | Has `debug-logger-protocol` reference | `Grep "debug-logger-protocol" docs/agents/<agent-id>/init.md` | YES — add to `knowledge.lazy_load` |
 
 ## Step 4 — Auto-Fix Safe Violations
 
@@ -31,6 +32,7 @@ Apply fixes ONLY for mechanical/cosmetic issues:
 |-----|--------|-----------|
 | Missing fail-loud reference | Add `- path: docs/protocols/fail-loud-protocol.md` to `always_load` | Check #1 FAIL |
 | Stale version date | Update `version: "YYYY-MM-DD"` to today | Check #5 FAIL, >90 days |
+| Missing debug-logger-protocol reference | Add `- path: docs/agents/shared/debug-logger-protocol.md` (trigger: `cycle_notable_event_or_debugging`) to `knowledge.lazy_load` | Check #6 FAIL |
 | Missing roster entry | Add row to appropriate team table | UNREGISTERED from scan-orphans Step 2 |
 | Missing notebook | Create scaffold from template | MISSING_NOTEBOOK from scan-orphans Step 1 |
 

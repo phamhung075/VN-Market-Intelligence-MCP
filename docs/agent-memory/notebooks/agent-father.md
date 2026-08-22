@@ -62,43 +62,49 @@ fresh cycle per router instruction, not a replay of specific missed days).
 - Lock: no gateway binding (`mcp__gateway__call_tool` absent) — direct pathspec commit, per
   keep.md's gateway-less exception.
 
-## EDIT 2026-08-15T11:34Z — FIX-COWORK-CRON-SIBLING-PROCESS-DEFER, router-dispatched (intent=edit)
-- Signal consumed: `docs/signals/2026-08-15-cowork-cron-registration-sibling-process-defer.json`
-  (type=architecture_brief, from=agents-architect — no auto-consumer in main.md's dispatch table,
-  router triggered me directly with intent=edit per the signal's own note).
-- Brief: `docs/architecture-briefs/2026-08-15-cowork-cron-registration-sibling-process-defer.md`.
-  2-file implementation contract, `.md`-only, own zone.
-- File 1 `.claude/skills/cron-detect-loop/register.md`: removed the user's uncommitted
-  "Block/Interdit" paragraph (misplaced — that file governs cron-detect-loop's own 4 jobs, not
-  the unrelated cowork-team `*/15` dispatcher). `git diff HEAD` post-removal = 0 lines — the
-  paragraph was never committed, so nothing to land for this file.
-- File 2 `.claude/skills/cron-cowork-team/SKILL.md`: Step 1a rewrite adds a client-side
-  `$PPID`+`lstart($PPID)` process fingerprint (`payload.registering_process`, Step 1c) compared on
-  the `hb.ok==true` fast path — closes the root-caused gap (two sibling OS processes sharing one
-  `$CLAUDE_CODE_SESSION_ID` both passed the old session-UUID-only check and independently
-  `CronCreate`'d a duplicate `*/15` entry). Mismatch → DEFER (WORK telegram, no local `CronCreate`)
-  with a `heartbeat_at`-based self-heal (age>1800s = presumed-dead sibling, steal+re-register).
-  New "Sibling-Process Defer — Fallback Only" subsection replaces the removed note's intent as an
-  explicitly-labeled fallback (not primary — brief rejected resurrecting the retired
-  `feedback_router_cowork_defer_to_live_leader` convention as primary).
-- Out of scope, not actioned (per signal's own `_note_to_agent_father`): brief §0.4's fire-election
-  RE-ENTRANT double-dispatch hole (`leader-lock.md`, dev-team Step[3], auditor tiers,
-  `dispatch-claim/CARD.md`) — flagged for PO scoping; architects-architect already dropped a
-  separate `brief_complete` signal to PO for it.
-- Size governance: file was already over the 200L skill-file cap pre-edit (242L, flagged
-  2026-08-11, routed-to-po, never remediated) — my edit (242L→283L) tightened the new prose after
-  the live `context-bloat-backstop` hook auto-fired a fresh breach signal
-  (`docs/signals/context-bloat--claude-skills-cron-cowork-team-SKILL-md-2026-08-15T112802Z.json`,
-  line+byte cap). Did NOT attempt a full split/prune — that's PO/claude-manager-helper territory
-  per the 08-11 precedent (`routed-to-po`), out of this task's bounded 2-file scope. Left the fresh
-  breach signal for dev-team's normal drain to route.
-- Signal file itself: NOT moved to `docs/signals/processed/` — `docs/signals/` is outside
-  agent-father's `commit_zone.allowed` list (`docs/agents/`, `docs/agent-memory/`,
-  `.claude/skills/`, `.claude/agents/` only); that drain/processed-move is dev-team's own
-  mechanism (`agent-chaining-protocol.md` § Cross-Team Signal Directory), out of scope here.
+## EDIT 2026-08-22T16:59Z — DDD/debug-logger brief implementation, router-dispatched (intent=edit-adjacent, 3-part brief)
+- Signal consumed: `docs/signals/2026-08-22-agent-fabric-ddd-debug-logger-tool-optimization.json`
+  (type=architecture_brief, from=agents-architect). Brief:
+  `docs/architecture-briefs/2026-08-22-agent-fabric-ddd-debug-logger-tool-optimization.md`.
+- **Part 2 (debug logger) — implemented, in-zone:** new SSOT
+  `docs/agents/shared/debug-logger-protocol.md` (path/format/write-path/boundary-vs-3-existing-
+  mechanisms + explicit `log_agent_work` reconciliation — chose "document boundary" over "fold
+  status into level", different axes: severity vs lifecycle-phase). Dogfooded as first adopter:
+  `docs/agents/agent-father/init.md` `knowledge.lazy_load` pointer added (version bumped
+  2026-08-06→2026-08-22) + real entry appended to new `docs/agent-memory/debug/agent-father.log`
+  via the prescribed Bash `printf` append (not Edit/Write — proving the actual prescribed
+  mechanism, not a shortcut). Fleet rollout NOT done as a 36-agent mass edit this cycle (DRY/
+  lazy-load — one canonical doc + N pointers, not N inlined copies; blast-radius discipline) —
+  instead wired into the existing auto-fix-driven rollout mechanism: `sweep-fixes.md` Step 3/4 new
+  Check #6 (mirrors Check #1's `fail-loud-protocol` auto-fix pattern exactly), file renamed
+  Top-5→Top-6 (synced in `keep.md` too, size-justification delta noted). Sweep script (batch
+  age/line-count truncation) NOT built by me — flagged as claude-manager-helper's follow-up
+  (memory-hygiene is its mandate, not mine; scripts/ is outside my commit zone regardless).
+- **Part 1 (DDD drift) — ratified, routed, NOT implemented in apps/:** brief found
+  `orchStateSchema.ts`/`coordinationStore.ts` hold business rules with no `domain/` counterpart,
+  explicitly left relocate-vs-document-as-deviation "not architect's call... ratification belongs
+  to PO/agent-father." **Ratified: document-as-deviation** for both (cheaper, lower migration risk;
+  hot-path with 1192-1308L existing test coverage; `orchStateSchema.ts` already flagged "physical
+  split blocked" elsewhere) — mirrors the existing `size-justification:`/`composition-root-logic-
+  allow:` annotation convention. Did NOT touch either file myself (`apps/` is excluded from my
+  commit zone + "NEVER write production code" forbidden-output, applies to comment-only edits
+  too). Did NOT touch `docs/ARCHITECTURE.md` (out of zone — `architect`'s file per its own init.md
+  "Architecture SSOT (read + write authority)", confirmed via `commit-boundary/SKILL.md` RULE 2
+  zone table, which does not list agent-father for either path). Routed 3 concrete asks to the
+  router in RETURN (same precedent as keep.md Step 7 — no spawn capability, no gateway binding, no
+  `docs/signals/` write access per the 08-15 entry above): (a) architect — ARCHITECTURE.md
+  `## DDD Layer Order` one-line cross-ref to `dev-standards.md § DDD Layer Rules` (exact text
+  supplied); (b) dev-mcp-server — add the ratified document-as-deviation annotation comments to
+  both files; (c) dev-mcp-server — TS-side guardrail equivalent to
+  `composition-root-logic-gate.go`, flagged fast-follow not blocking.
+- **Part 3 (tool-usage/orch-sentinel) — confirmed already owned by PO, NOT duplicated:**
+  `docs/data/orch/orch-state.json` `.task_board.backlog` rows 186 (`CWO-T4-P0-TUSTATS-PERAGENT`,
+  PO-folded 2026-08-22T17:00Z with this exact brief's F3-4) and 434
+  (`FIX-ORCH-SENTINEL-OH4-CRONS-NEVER-ARMED-DEAD-OBSERVABILITY-MECHANISM`, independently
+  re-verified by PO, 2 premise corrections applied, sequenced behind row 186) both already
+  reference this brief. Zero new signal/backlog entries created for Part 3 — same brief/signal
+  path referenced everywhere above so nothing forks.
 - Lock: no gateway binding this session (confirmed — `mcp__gateway__call_tool` absent from tool
-  grant). Docker reachable → SQL-replication fallback (`docker exec
-  vn-market-intelligence-mcp-mcp-server-1 bun -e ...` against `/app/data/coordination.db`
-  `task_locks`) for claim (`task:FIX-COWORK-CRON-SIBLING-PROCESS-DEFER`) + commit-mutex, both
-  live-verified no conflicting row before `INSERT OR IGNORE`, released after push. Commit
-  `0468c2821` pushed to `main`.
+  grant, `.claude/agents/agent-father.md` frontmatter). Direct pathspec commit, solo-operation path
+  (`commit-boundary/SKILL.md` § Commit-Mutex Gap). Signal file NOT moved to
+  `docs/signals/processed/` — same out-of-zone reasoning as the 08-15 entry above.
