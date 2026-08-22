@@ -31,7 +31,8 @@ DECISIONS_DIR="$SANDBOX/decisions"
 ARCHIVE_DECISIONS_DIR="$SANDBOX/archive-decisions"
 ORCH_STATE="$SANDBOX/orch-state.json"
 ORCH_ARCHIVE_DIR="$SANDBOX/orch-archive"
-mkdir -p "$DECISIONS_DIR" "$ORCH_ARCHIVE_DIR"
+SIGNALS_DIR="$SANDBOX/signals"
+mkdir -p "$DECISIONS_DIR" "$ORCH_ARCHIVE_DIR" "$SIGNALS_DIR"
 
 PASS_COUNT=0
 FAIL_COUNT=0
@@ -51,11 +52,13 @@ run_dja() { # $1 = mode ("--all" or ""), $2 = stdin ids (newline-separated strin
     # The valve itself is covered by dedicated Run 8/9/10 fixtures further down.
     ORCH_STATE="$ORCH_STATE" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR" \
       DECISIONS_DIR="$DECISIONS_DIR" ARCHIVE_DECISIONS_DIR="$ARCHIVE_DECISIONS_DIR" \
+      DJA_SIGNALS_DIR="$SIGNALS_DIR" \
       DJA_GIT_MV=0 DJA_ALLOW_ALL_UNGATED=1 bash "$SCRIPT" --all
   else
     printf '%s\n' "$ids" | \
       ORCH_STATE="$ORCH_STATE" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR" \
       DECISIONS_DIR="$DECISIONS_DIR" ARCHIVE_DECISIONS_DIR="$ARCHIVE_DECISIONS_DIR" \
+      DJA_SIGNALS_DIR="$SIGNALS_DIR" \
       DJA_GIT_MV=0 bash "$SCRIPT"
   fi
 }
@@ -126,7 +129,9 @@ OUT1="$(run_dja "" "$(printf 'CLOSED-ALPHA\nPREFIX-COLLIDE\n')" 2>&1)"
 RC1=$?
 echo "$OUT1"
 
-if [ "$RC1" -eq 0 ]; then ok "run1-exit-0"; else bad "run1-exit-0 (rc=$RC1)"; fi
+# AC-4: exit 2, not 0 — sprint-NOORCH-UNKNOWN.md is a genuine no_orch_record
+# this run (never resolves against any known id), so the third-state branch fires.
+if [ "$RC1" -eq 2 ]; then ok "run1-exit-2-ac4-third-state"; else bad "run1-exit-2-ac4-third-state (rc=$RC1)"; fi
 
 if [ -f "$ARCHIVE_DECISIONS_DIR/sprint-CLOSED-ALPHA-po.md" ] && [ ! -f "$DECISIONS_DIR/sprint-CLOSED-ALPHA-po.md" ]; then
   ok "run1-in-scope-closed-agent-suffixed-archived"
@@ -197,7 +202,8 @@ OUT2="$(run_dja "--all" "" 2>&1)"
 RC2=$?
 echo "$OUT2"
 
-if [ "$RC2" -eq 0 ]; then ok "run2-exit-0"; else bad "run2-exit-0 (rc=$RC2)"; fi
+# AC-4: exit 2 — same still-unresolved NOORCH-UNKNOWN fixture persists into --all mode.
+if [ "$RC2" -eq 2 ]; then ok "run2-exit-2-ac4-third-state"; else bad "run2-exit-2-ac4-third-state (rc=$RC2)"; fi
 
 if [ -f "$ARCHIVE_DECISIONS_DIR/sprint-CLOSED-BETA.md" ] && [ ! -f "$DECISIONS_DIR/sprint-CLOSED-BETA.md" ]; then
   ok "run2-all-mode-archived-hot-closed-stub-bare-form"
@@ -230,7 +236,9 @@ OUT3="$(run_dja "--all" "" 2>&1)"
 RC3=$?
 echo "$OUT3"
 
-if [ "$RC3" -eq 0 ]; then ok "run3-idempotent-rerun-exit-0"; else bad "run3-idempotent-rerun-exit-0 (rc=$RC3)"; fi
+# AC-4: exit 2 — NOORCH-UNKNOWN is still unresolved (idempotent no-op on the
+# archiving side does not change the third-state branch's own verdict).
+if [ "$RC3" -eq 2 ]; then ok "run3-idempotent-rerun-exit-2-ac4"; else bad "run3-idempotent-rerun-exit-2-ac4 (rc=$RC3)"; fi
 
 if echo "$OUT3" | grep -q "archived=0"; then
   ok "run3-idempotent-rerun-zero-new-archives"
@@ -271,6 +279,7 @@ fi
 MISSING_STATE="$SANDBOX/does-not-exist.json"
 ORCH_STATE="$MISSING_STATE" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR" \
   DECISIONS_DIR="$DECISIONS_DIR" ARCHIVE_DECISIONS_DIR="$ARCHIVE_DECISIONS_DIR" \
+  DJA_SIGNALS_DIR="$SIGNALS_DIR" \
   DJA_GIT_MV=0 bash "$SCRIPT" --all >/dev/null 2>&1
 RC5=$?
 if [ "$RC5" -eq 1 ]; then
@@ -282,6 +291,7 @@ fi
 MISSING_DECISIONS="$SANDBOX/does-not-exist-dir"
 ORCH_STATE="$ORCH_STATE" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR" \
   DECISIONS_DIR="$MISSING_DECISIONS" ARCHIVE_DECISIONS_DIR="$ARCHIVE_DECISIONS_DIR" \
+  DJA_SIGNALS_DIR="$SIGNALS_DIR" \
   DJA_GIT_MV=0 bash "$SCRIPT" --all >/dev/null 2>&1
 RC6=$?
 if [ "$RC6" -eq 1 ]; then
@@ -297,6 +307,7 @@ rm -rf "$ARCHIVE_DECISIONS_DIR"
 echo "dry candidate" > "$DECISIONS_DIR/sprint-CLOSED-BETA-dryagent.md"
 OUT7="$(ORCH_STATE="$ORCH_STATE" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR" \
   DECISIONS_DIR="$DECISIONS_DIR" ARCHIVE_DECISIONS_DIR="$ARCHIVE_DECISIONS_DIR" \
+  DJA_SIGNALS_DIR="$SIGNALS_DIR" \
   DJA_GIT_MV=0 bash "$SCRIPT" --all --dry-run 2>&1)"
 echo "$OUT7"
 
@@ -327,6 +338,7 @@ echo "gate candidate" > "$DECISIONS_DIR/sprint-CLOSED-BETA-gate-agent.md"
 
 OUT8="$(ORCH_STATE="$ORCH_STATE" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR" \
   DECISIONS_DIR="$DECISIONS_DIR" ARCHIVE_DECISIONS_DIR="$ARCHIVE_DECISIONS_DIR" \
+  DJA_SIGNALS_DIR="$SIGNALS_DIR" \
   DJA_GIT_MV=0 bash "$SCRIPT" --all 2>&1)"
 RC8=$?
 echo "$OUT8"
@@ -368,11 +380,14 @@ fi
 # =============================================================================
 OUT9="$(ORCH_STATE="$ORCH_STATE" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR" \
   DECISIONS_DIR="$DECISIONS_DIR" ARCHIVE_DECISIONS_DIR="$ARCHIVE_DECISIONS_DIR" \
+  DJA_SIGNALS_DIR="$SIGNALS_DIR" \
   DJA_GIT_MV=0 DJA_ALLOW_ALL_UNGATED=1 bash "$SCRIPT" --all 2>&1)"
 RC9=$?
 echo "$OUT9"
 
-if [ "$RC9" -eq 0 ]; then ok "run9-override-live-all-succeeds"; else bad "run9-override-live-all-succeeds (rc=$RC9)"; fi
+# AC-4: exit 2 — NOORCH-UNKNOWN is STILL unresolved at this point in the fixture
+# lifecycle; the override unlocks the AC-1 gate, it does not touch AC-4's verdict.
+if [ "$RC9" -eq 2 ]; then ok "run9-override-live-all-succeeds"; else bad "run9-override-live-all-succeeds (rc=$RC9)"; fi
 
 if [ -f "$ARCHIVE_DECISIONS_DIR/sprint-CLOSED-BETA-gate-agent.md" ] && [ ! -f "$DECISIONS_DIR/sprint-CLOSED-BETA-gate-agent.md" ]; then
   ok "run9-override-live-all-archives-eligible-file"
@@ -388,10 +403,12 @@ echo "dry gate candidate" > "$DECISIONS_DIR/sprint-CLOSED-GAMMA-drygate-agent.md
 
 OUT10_NOOVERRIDE_SUMMARY="$(ORCH_STATE="$ORCH_STATE" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR" \
   DECISIONS_DIR="$DECISIONS_DIR" ARCHIVE_DECISIONS_DIR="$ARCHIVE_DECISIONS_DIR" \
+  DJA_SIGNALS_DIR="$SIGNALS_DIR" \
   DJA_GIT_MV=0 bash "$SCRIPT" --all --dry-run 2>&1 | grep '^\[decision-journal-archive\] SUMMARY')"
 
 OUT10_OVERRIDE_SUMMARY="$(ORCH_STATE="$ORCH_STATE" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR" \
   DECISIONS_DIR="$DECISIONS_DIR" ARCHIVE_DECISIONS_DIR="$ARCHIVE_DECISIONS_DIR" \
+  DJA_SIGNALS_DIR="$SIGNALS_DIR" \
   DJA_GIT_MV=0 DJA_ALLOW_ALL_UNGATED=1 bash "$SCRIPT" --all --dry-run 2>&1 | grep '^\[decision-journal-archive\] SUMMARY')"
 
 echo "no-override: $OUT10_NOOVERRIDE_SUMMARY"
@@ -407,6 +424,198 @@ if [ -f "$DECISIONS_DIR/sprint-CLOSED-GAMMA-drygate-agent.md" ]; then
   ok "run10-dryrun-still-mutates-nothing"
 else
   bad "run10-dryrun-still-mutates-nothing"
+fi
+
+# =============================================================================
+# §2.3 CLOSED-ID-DERIVATION CORRECTION — dedicated isolated sandbox (SANDBOX2)
+# FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE
+# =============================================================================
+SANDBOX2="$(mktemp -d 2>/dev/null)"
+[ -z "$SANDBOX2" ] && { echo "FAIL: mktemp -d failed (SANDBOX2)"; exit 1; }
+trap 'rm -rf "$SANDBOX" "$SANDBOX2"' EXIT
+
+DECISIONS_DIR2="$SANDBOX2/decisions"
+ARCHIVE_DECISIONS_DIR2="$SANDBOX2/archive-decisions"
+ORCH_STATE2="$SANDBOX2/orch-state.json"
+ORCH_ARCHIVE_DIR2="$SANDBOX2/orch-archive"
+SIGNALS_DIR2="$SANDBOX2/signals"
+mkdir -p "$DECISIONS_DIR2" "$ORCH_ARCHIVE_DIR2" "$SIGNALS_DIR2"
+
+# Three ids resolvable ONLY via the weak `.done_tasks[].sprint` cold-archive
+# signal (never a genuine closed_sprints[]/closed_sprint_goals record):
+#   WEAK-CLOSED-BUT-OPEN  — blocked by §2.3(a): a hot READY (non-terminal) row
+#                           still references it.
+#   WEAK-CLOSED-GOAL-LIVE — blocked by §2.3(b): a hot sprint_goal entry status
+#                           "active" (non-terminal), zero task refs.
+#   WEAK-CLOSED-SAFE      — no blocking condition at all — regression baseline,
+#                           must still archive (unaffected behavior).
+cat > "$ORCH_STATE2" <<'EOF'
+{
+  "task_board": {
+    "active_sprints": [],
+    "closed_sprints": [],
+    "backlog": [],
+    "ready": [
+      { "id": "OPEN-TASK-BLOCKS-WEAK", "status": "READY", "sprint": "WEAK-CLOSED-BUT-OPEN" }
+    ]
+  },
+  "sprint_goal": {
+    "entries": [
+      { "sprint_id": "WEAK-CLOSED-GOAL-LIVE", "status": "active" }
+    ]
+  }
+}
+EOF
+
+cat > "$ORCH_ARCHIVE_DIR2/2026-07.json" <<'EOF'
+{
+  "done_tasks": [
+    { "task_id": "T-WEAK-1", "sprint": "WEAK-CLOSED-BUT-OPEN" },
+    { "task_id": "T-WEAK-2", "sprint": "WEAK-CLOSED-GOAL-LIVE" },
+    { "task_id": "T-WEAK-3", "sprint": "WEAK-CLOSED-SAFE" }
+  ]
+}
+EOF
+
+echo "weak-open journal"  > "$DECISIONS_DIR2/sprint-WEAK-CLOSED-BUT-OPEN-po.md"
+echo "weak-goal journal"  > "$DECISIONS_DIR2/sprint-WEAK-CLOSED-GOAL-LIVE-po.md"
+echo "weak-safe journal"  > "$DECISIONS_DIR2/sprint-WEAK-CLOSED-SAFE-po.md"
+
+OUT11="$(ORCH_STATE="$ORCH_STATE2" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR2" \
+  DECISIONS_DIR="$DECISIONS_DIR2" ARCHIVE_DECISIONS_DIR="$ARCHIVE_DECISIONS_DIR2" \
+  DJA_SIGNALS_DIR="$SIGNALS_DIR2" \
+  DJA_GIT_MV=0 DJA_ALLOW_ALL_UNGATED=1 bash "$SCRIPT" --all 2>&1)"
+echo "$OUT11"
+
+if [ -f "$DECISIONS_DIR2/sprint-WEAK-CLOSED-BUT-OPEN-po.md" ]; then
+  ok "run11-s2.3a-nonterminal-hot-ref-blocks-weak-signal-archive"
+else
+  bad "run11-s2.3a-nonterminal-hot-ref-blocks-weak-signal-archive (archived despite open READY row)"
+fi
+
+if [ -f "$DECISIONS_DIR2/sprint-WEAK-CLOSED-GOAL-LIVE-po.md" ]; then
+  ok "run11-s2.3b-nonterminal-goal-entry-blocks-weak-signal-archive"
+else
+  bad "run11-s2.3b-nonterminal-goal-entry-blocks-weak-signal-archive (archived despite active goal entry)"
+fi
+
+if [ -f "$ARCHIVE_DECISIONS_DIR2/sprint-WEAK-CLOSED-SAFE-po.md" ] && [ ! -f "$DECISIONS_DIR2/sprint-WEAK-CLOSED-SAFE-po.md" ]; then
+  ok "run11-s2.3-regression-baseline-genuinely-safe-id-still-archives"
+else
+  bad "run11-s2.3-regression-baseline-genuinely-safe-id-still-archives"
+fi
+
+if echo "$OUT11" | grep -q "reason=closed-not-in-scope-this-run id=WEAK-CLOSED-BUT-OPEN"; then
+  ok "run11-s2.3a-skip-reason-logged"
+else
+  bad "run11-s2.3a-skip-reason-logged"
+fi
+
+if echo "$OUT11" | grep -q "reason=closed-not-in-scope-this-run id=WEAK-CLOSED-GOAL-LIVE"; then
+  ok "run11-s2.3b-skip-reason-logged"
+else
+  bad "run11-s2.3b-skip-reason-logged"
+fi
+
+# =============================================================================
+# AC-4 THIRD-STATE BRANCH — aggregated signal, dedup by unresolved-id-set hash
+# =============================================================================
+echo "orphan journal" > "$DECISIONS_DIR2/sprint-TOTALLY-UNKNOWN-ID-po.md"
+
+OUT12="$(ORCH_STATE="$ORCH_STATE2" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR2" \
+  DECISIONS_DIR="$DECISIONS_DIR2" ARCHIVE_DECISIONS_DIR="$ARCHIVE_DECISIONS_DIR2" \
+  DJA_SIGNALS_DIR="$SIGNALS_DIR2" \
+  DJA_GIT_MV=0 DJA_ALLOW_ALL_UNGATED=1 bash "$SCRIPT" --all 2>&1)"
+RC12=$?
+echo "$OUT12"
+
+if [ "$RC12" -eq 2 ]; then ok "run12-ac4-exit-2-on-unresolved-id"; else bad "run12-ac4-exit-2-on-unresolved-id (rc=$RC12)"; fi
+
+SIGNAL_COUNT_1="$(find "$SIGNALS_DIR2" -maxdepth 1 -name 'sprint-registry-unresolved-ids-*.json' 2>/dev/null | wc -l | tr -d ' ')"
+if [ "$SIGNAL_COUNT_1" = "1" ]; then
+  ok "run12-ac4-writes-exactly-one-signal"
+else
+  bad "run12-ac4-writes-exactly-one-signal (found $SIGNAL_COUNT_1)"
+fi
+
+SIGNAL_FILE_1="$(find "$SIGNALS_DIR2" -maxdepth 1 -name 'sprint-registry-unresolved-ids-*.json' 2>/dev/null | head -1)"
+if [ -n "$SIGNAL_FILE_1" ] && grep -q "TOTALLY-UNKNOWN-ID" "$SIGNAL_FILE_1" 2>/dev/null; then
+  ok "run12-ac4-signal-payload-names-the-unresolved-id"
+else
+  bad "run12-ac4-signal-payload-names-the-unresolved-id"
+fi
+
+# Re-run with the SAME unresolved set — dedup, no second signal file, still exit 2.
+OUT13="$(ORCH_STATE="$ORCH_STATE2" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR2" \
+  DECISIONS_DIR="$DECISIONS_DIR2" ARCHIVE_DECISIONS_DIR="$ARCHIVE_DECISIONS_DIR2" \
+  DJA_SIGNALS_DIR="$SIGNALS_DIR2" \
+  DJA_GIT_MV=0 DJA_ALLOW_ALL_UNGATED=1 bash "$SCRIPT" --all 2>&1)"
+RC13=$?
+echo "$OUT13"
+
+if [ "$RC13" -eq 2 ]; then ok "run13-ac4-repeat-run-still-exit-2"; else bad "run13-ac4-repeat-run-still-exit-2 (rc=$RC13)"; fi
+
+SIGNAL_COUNT_2="$(find "$SIGNALS_DIR2" -maxdepth 1 -name 'sprint-registry-unresolved-ids-*.json' 2>/dev/null | wc -l | tr -d ' ')"
+if [ "$SIGNAL_COUNT_2" = "1" ]; then
+  ok "run13-ac4-dedup-no-second-signal-for-unchanged-set"
+else
+  bad "run13-ac4-dedup-no-second-signal-for-unchanged-set (found $SIGNAL_COUNT_2)"
+fi
+
+if echo "$OUT13" | grep -q "AC4-SIGNAL dedup-skip"; then
+  ok "run13-ac4-dedup-skip-message-logged"
+else
+  bad "run13-ac4-dedup-skip-message-logged"
+fi
+
+# A DIFFERENT unresolved set (second orphan added) must produce a NEW, distinct signal.
+echo "second orphan journal" > "$DECISIONS_DIR2/sprint-ANOTHER-UNKNOWN-ID-po.md"
+OUT14="$(ORCH_STATE="$ORCH_STATE2" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR2" \
+  DECISIONS_DIR="$DECISIONS_DIR2" ARCHIVE_DECISIONS_DIR="$ARCHIVE_DECISIONS_DIR2" \
+  DJA_SIGNALS_DIR="$SIGNALS_DIR2" \
+  DJA_GIT_MV=0 DJA_ALLOW_ALL_UNGATED=1 bash "$SCRIPT" --all 2>&1)"
+RC14=$?
+echo "$OUT14"
+
+if [ "$RC14" -eq 2 ]; then ok "run14-ac4-changed-set-still-exit-2"; else bad "run14-ac4-changed-set-still-exit-2 (rc=$RC14)"; fi
+
+SIGNAL_COUNT_3="$(find "$SIGNALS_DIR2" -maxdepth 1 -name 'sprint-registry-unresolved-ids-*.json' 2>/dev/null | wc -l | tr -d ' ')"
+if [ "$SIGNAL_COUNT_3" = "2" ]; then
+  ok "run14-ac4-changed-unresolved-set-writes-a-new-distinct-signal"
+else
+  bad "run14-ac4-changed-unresolved-set-writes-a-new-distinct-signal (found $SIGNAL_COUNT_3)"
+fi
+
+# =============================================================================
+# AC-4 clean path — zero no_orch_record this run — no signal, exit 0
+# =============================================================================
+SANDBOX3="$(mktemp -d 2>/dev/null)"
+[ -z "$SANDBOX3" ] && { echo "FAIL: mktemp -d failed (SANDBOX3)"; exit 1; }
+trap 'rm -rf "$SANDBOX" "$SANDBOX2" "$SANDBOX3"' EXIT
+DECISIONS_DIR3="$SANDBOX3/decisions"
+ORCH_ARCHIVE_DIR3="$SANDBOX3/orch-archive"
+SIGNALS_DIR3="$SANDBOX3/signals"
+ORCH_STATE3="$SANDBOX3/orch-state.json"
+mkdir -p "$DECISIONS_DIR3" "$ORCH_ARCHIVE_DIR3" "$SIGNALS_DIR3"
+cat > "$ORCH_STATE3" <<'EOF'
+{ "task_board": { "active_sprints": [{ "id": "CLEAN-ACTIVE", "tasks": [] }], "closed_sprints": [] } }
+EOF
+echo "clean journal" > "$DECISIONS_DIR3/sprint-CLEAN-ACTIVE-po.md"
+
+OUT15="$(ORCH_STATE="$ORCH_STATE3" ORCH_ARCHIVE_DIR="$ORCH_ARCHIVE_DIR3" \
+  DECISIONS_DIR="$DECISIONS_DIR3" ARCHIVE_DECISIONS_DIR="$SANDBOX3/archive-decisions" \
+  DJA_SIGNALS_DIR="$SIGNALS_DIR3" \
+  DJA_GIT_MV=0 DJA_ALLOW_ALL_UNGATED=1 bash "$SCRIPT" --all 2>&1)"
+RC15=$?
+echo "$OUT15"
+
+if [ "$RC15" -eq 0 ]; then ok "run15-ac4-clean-run-exit-0"; else bad "run15-ac4-clean-run-exit-0 (rc=$RC15)"; fi
+
+SIGNAL_COUNT_4="$(find "$SIGNALS_DIR3" -maxdepth 1 -name 'sprint-registry-unresolved-ids-*.json' 2>/dev/null | wc -l | tr -d ' ')"
+if [ "$SIGNAL_COUNT_4" = "0" ]; then
+  ok "run15-ac4-clean-run-no-signal-written"
+else
+  bad "run15-ac4-clean-run-no-signal-written (found $SIGNAL_COUNT_4)"
 fi
 
 echo "========================================"

@@ -71,6 +71,25 @@ supersedes the decisions/ leg of backlog row TE-T33. File-ops-only (jq reads orc
 writes it). Owning flow: `docs/agents/pm/flow/task-archive.md` § Step 5.5. Test:
 `scripts/agents-flow/decision-journal-archive.test.sh`.
 
+**CLOSED-ID-DERIVATION CORRECTION + AC-4 THIRD-STATE BRANCH (FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE, 2026-08-22):**
+the weak `.done_tasks[].sprint` closed-id signal (a per-TASK provenance tag, never a per-SPRINT
+closure record — root cause of the AC-1 valve hazard above) is now demoted from "sole
+justification to archive" to "candidate, gated": an id derived from it is only actually placed in
+`PROCESS_IDS` this run if BOTH (a) zero HOT task rows (any of the 8 flat lanes + both nested
+sprint-task locations) reference it via `.sprint` with a non-terminal `.status`
+(`TERMINAL_SET`-mirrored: `DONE`/`DONE_VERIFIED`/`CANCELLED`/`DEFERRED`/`SKIPPED`), AND (b) any
+`.sprint_goal.entries[]` entry for the id, if present, canonicalizes to a terminal status
+(`SPRINT_GOAL_TERMINAL_ALIASES`-mirrored). Shares the identical predicate with
+`orchStateSchema.ts` §16's Stage 1h validator (`checkSprintRegistryReferentialIntegrity` — see
+`scripts/orch-validate.mjs` below) by construction, not by convention. Separately, an id with NO
+match anywhere in the known-id universe now triggers the **AC-4 third-state branch**: exit code
+changes from always-0 to **2** when `no_orch_record > 0` this run (0 = ran clean, 1 = setup/config
+error or the AC-1 valve refusal above — both unchanged, take precedence over 2), and ONE
+aggregated `docs/signals/` entry is written (`sprint-registry-unresolved-ids-<hash>-<ts>.json`,
+deduped by a sha256 hash of the sorted unresolved-id set so an unchanged backlog never re-signals
+on every run). `DJA_SIGNALS_DIR` env override sandboxes the destination for tests, mirroring the
+existing 4 path overrides.
+
 **CANONICAL: Stranded machine-state sweep (UC-GCP-P8, git-ci-publish-P8)**
 ```bash
 bash scripts/agents-flow/stranded-state-sweep.sh --plan
@@ -476,10 +495,11 @@ Bash shell writes that bypass the Write/Edit tools (surfaces warning; non-blocki
 bun scripts/orch-validate.mjs
 # Validate a specific candidate file (e.g., before atomic rename):
 bun scripts/orch-validate.mjs path/to/candidate.json
-# Exit 0 = Stage 0 + Stage 1 PASS (0 coherence issues, 0 dangling refs). Stage 1g may still print a
-# non-fatal report on exit 0. Exit 1 = dup-key.
+# Exit 0 = Stage 0 + Stage 1 PASS (0 coherence issues, 0 dangling refs). Stage 1g/1h may still
+# print a non-fatal report (warn mode) on exit 0. Exit 1 = dup-key.
 # Exit 2 = schema/lane-coherence/ref/sprint-goal-status/decorative-blocks-co_edit-field/
-#   depends-divergence fail. Exit 3 = file-not-found.
+#   depends-divergence fail, OR Stage 1h in ORCH_SPRINT_REGISTRY_MODE=reject (not the default).
+#   Exit 3 = file-not-found.
 # Owning task: SSOT-W1-ZOD-VALIDATOR-CLI; directive: docs/architecture-briefs/SSOT-zod-validation-directive-2026-06-27.md § Step 3
 # Acceptance fixture: bun scripts/test-orch-validate-ac.mjs (exercises AC-1..AC-4)
 ```
@@ -505,6 +525,35 @@ the cold archive (`docs/data/orch/archive/YYYY-MM.json .done_tasks[]`) — delib
 never scans sprint-nested tasks at all) while including `closed_sprints[].tasks[]` (settled/frozen, a
 genuine cleanup signal). Does NOT change `deps_satisfied()` MISSING semantics — that stays the separate,
 explicitly-ratified territory of FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING.
+
+Stage 1h (FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE, §3/§4, A1-corrected
+per the board row's po_review_note): `checkSprintRegistryReferentialIntegrity()` — sprint-registry
+referential-integrity guard. Delegates to `classifySprintRegistryDanglingIds()` (§15) and counts
+every non-`PRE_SPRINT_LABEL` classification row as a violation (a narrower "no sprint_goal entry
+at all" exemption was tried first and rejected — it wrongly flagged genuinely-exempt ids forever,
+see the function's own header). Known-id union is STRICT (`active_sprints[].id` hot ∪
+`closed_sprints[].id` hot ∪ cold archive `closed_sprints[].id`/`closed_sprint_goals` sprint ids) —
+`.done_tasks[].sprint` is deliberately EXCLUDED (mirrors GIT_NOTEBOOK_IMMUTABILITY_MODE's model:
+default **warn**, env `ORCH_SPRINT_REGISTRY_MODE`, print + one deduped `docs/signals/` entry, exit
+0; `reject` = same detection, `process.exit(2)`). Do not flip the default to `reject` until
+`scripts/audits/verify-sprint-registry-referential-integrity.mjs` reads `violations==0` against the
+live file. Same predicate also backs the closed-id-derivation correction in
+`scripts/agents-flow/decision-journal-archive.sh` (see its own CANONICAL entry above) — one shared
+implementation, not two.
+
+**CANONICAL: Sprint-registry dangling-id classification/replay (FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE)**
+```bash
+bun scripts/audits/verify-sprint-registry-referential-integrity.mjs   # default: docs/data/orch/orch-state.json
+```
+READ-ONLY classification/replay tool — makes NO write. Thin CLI wrapper around
+`classifySprintRegistryDanglingIds()` (`orchStateSchema.ts` §15): resolves cold-archive inputs (fs
+reads) and prints the regenerated per-id table (LIVE/FINISHED/RELABEL/NEVER_WAS/PRE_SPRINT_LABEL) +
+a final `violations=N` line (counted = every row except `PRE_SPRINT_LABEL`, which is exempt by
+design — chasing `strict_dangling` to 0 instead would fabricate phantom sprints, PO Q2 ruling).
+PO sign-off on this table's output is required before `scripts/orch-apply.sh` applies any
+reconciliation write derived from it. Same script is Stage 1h's `reject`-mode arming gate (brief
+§3) and `decision-journal-archive.sh --all`'s AC-1 leg(b) (not yet wired — separate row
+FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD). Test: `apps/mcp-server/src/__tests__/FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE.test.ts`.
 
 **CANONICAL: Orch-state write-gate validator (ORCH-STATE-SCHEMA-HARDENING SHG-1 / SSOT-W1-BASH-SHIM)**
 ```bash
