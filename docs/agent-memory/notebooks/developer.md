@@ -1,6 +1,26 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-22T19:35:51Z | **Cycle:** FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER (P1 M, cross-service/, ready[] direct pickup, session 02594cce)
+**Last updated:** 2026-08-22T20:05:00Z | **Cycle:** CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (P2 S, docs/agent-memory/notebooks/, root-cause fix, session 02594cce)
+
+## Session 2026-08-22T20:05:00Z — CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (docs/agent-memory/notebooks/, developer, P2 S, ready[] direct pickup, session 02594cce)
+
+**Task:** row asked to diagnose the ACTUAL fix for digest-predict.md being structurally unprunable (section_count=1 forever): notebook authoring convention needs to split into sections, or the prune hook needs a single-section fallback. Explicitly not the manual split-to-archive (that stays owned by claude-manager-helper, this row's `next_agent`).
+
+**Root cause (confirmed, not relayed):** `docs/agents/digest-predict/flow/daily-predict.md` P-6 itself codified the anti-pattern as "live convention" — instructing every cycle to append a dated bullet into ONE permanent, undated `## Known patterns / preferences` heading (and its own template used a `### ` sub-heading, invisible to the prune hook's `^## ` parser, even if followed literally). An undated `## ` heading sorts to `notebook-auto-prune.sh`'s MAX sentinel key (`nso_ts_key`) — permanently exempt from drop-oldest selection while still byte-counted — so `section_count` was mechanically pinned at 1 forever; the hook's `notebook_single_section_overage_breach` safe-fail (no truncation) is correct, documented behavior for that shape, not a hook defect. This is the exact ratchet end-state `FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE` predicted and already caught live on this file (`po_terminal_state_evidence_20260807T0513`).
+
+**Fix:** rewrote P-6 — retired the rolling-heading instruction, new convention = one dated level-2 `## <YYYY-MM-DD>T<HH:MM>Z Daily Predictions` section per cycle (AC-1) + Edit-based 3-section retention loop (AC-2), staying inside `never_use_write_tool: true` (Edit only, never Write/`update_memory_file` — the latter writes to `docs/agent-memory/{issues,patterns,modules}/`, not the notebook path, confirmed by reading its tool spec). Did NOT touch `scripts/agents-flow/notebook-auto-prune.sh` — fixing the hook instead of the authoring convention would have duplicated/contradicted the already-ready `FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE` (P0, next_agent=developer, different files[]), which explicitly scopes the mixed dated+rolling shape as its own target and calls the single-section shape a different, already-excluded case.
+
+**Verify:** built a synthetic 5-section fixture (13169B, new heading format) at `docs/agent-memory/notebooks/.tmp-digestpredict-fixture-verify.md`, ran the live unmodified `notebook-auto-prune.sh` via its real PostToolUse stdin contract — it correctly dropped exactly the oldest dated section, retaining the 4 newer ones intact (10553B after, under the 12000B cap). Fixture deleted after; no live notebook touched. No `apps/` TS/Go touched — `bun test`/`tsc` N/A (flow-doc-only cycle).
+
+**Scope note:** this fix is going-forward only — `docs/agent-memory/notebooks/digest-predict.md`'s existing content is untouched; the manual split-to-archive (this row's AC-1..AC-5) is still required, owned by claude-manager-helper.
+
+**Follow-up flag (not fixed here, out of this row's digest-predict framing):** `code-janitor.md` and `dev-rag-service.md` — the other 2 files in this row's `files[]` — carry the identical structural defect via a different flavor of the same root cause: `docs/agents/code-janitor/flow/main.md`:183 explicitly labels its own notebook write "(OVERWRITE)" with a `### Scan NNN` template, contradicting `.claude/skills/notebook-write/SKILL.md` AC-6's canonical classification of code-janitor as APPEND class, and using an equally-invisible `### ` heading; `docs/agents/dev-rag-service/flow/main.md` has no notebook-write procedure at all. Recommend a follow-up row naming both flow docs before/alongside their manual splits, else both re-breach on their next write exactly as this row predicted for digest-predict.
+
+**QA gate recommended:** after the next digest-predict `daily-predict` cron cycle (17:30 UTC) runs post-fix, verify `docs/agent-memory/notebooks/digest-predict.md` gained a real level-2 `## <ISO>Z Daily Predictions` section (not another bullet under `## Known patterns / preferences`) — name qa against board row `CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT`; a flow-doc prose fix followed by an LLM-executed cycle is not self-verifying the way a code change + unit test is.
+
+**Closeout:** board write attempted via `scripts/orch-apply.sh` was ABORTED by the row-prose-ceiling guard (row already 12585B live, over `ORCH_ROW_PROSE_CEILING_BYTES=12000`; any inline growth on an already-over-ceiling row hard-rejects) — did not force it via a whole-lane cold-store migration (too large/risky a side-op for this task's scope, would touch every `ready[]` row). Full reasoning recorded here + decision journal (`sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` S107, which also hit its own byte cap this same write — CAP-REACHED sentinel appended, continuation rolls to `-8.md` on the next entry). Commit pending (session has Bash/git).
+
+---
 
 ## Session 2026-08-22T19:35:51Z — FIX-CI-GATES-INVISIBLE-TO-PREPUSH-DOCS-PATH-FILTER (cross-service/, developer, P1 M, ready[] direct pickup per architect brief 2026-08-05, session 02594cce)
 
@@ -29,21 +49,5 @@
 **AC-4** verified live: `grep AUDIT_TIER= .claude/commands/crons/*.md` → `{1,2,3,4,5,DATA}`, all now have a Tier Dispatch row. **AC-5** cannot close this cycle by construction (needs 3 real post-ship cycles incl. 1 DATA fire + a `git log --grep=notebook-compose` hit) — flagged on the board row for a later RAW-verify pass, not narrated as done.
 
 **Closeout:** 3 commits — `35be008d0` (notebook repair, separate+first per AC-3), `a7262f6e9` (main.md + cron doc), `cb255145d` (board `ready[]→review[]`, next_agent=qa). No `apps/` TS/Go touched — pure flow-doc + prompt-doc + notebook-data fix, `bun test`/`tsc` N/A. Graphify skipped (no Skill-tool binding, same structural gap as prior Task-tool-spawned cycles).
-
----
-
-## Session 2026-08-15T13:25:57Z — FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR (cross-service/, developer, P0 S, review[] SECONDARY-Drain sign-off triage, session 632721c2)
-
-**Task:** stale `review[]` row (branch:null, direct-commit, same precondition as PRIMARY QA-Drain, `next_agent=developer` so SECONDARY-Drain routed it here) — take next action per own judgment: DONE_VERIFIED / rework / reassign / BLOCKED. Router flagged an open question: RAW-check whether a companion `-2026-08-14`-suffixed id already implements this row's AC-1/AC-2/AC-3, do not assume duplication either way.
-
-**RAW-verified, not trusted from the row's own status_note prose:** searched orch-state.json (`jq .. | objects | select(.id?==...)`) and `git log --all` for the `-2026-08-14` suffix — it does not exist anywhere. The real fix landed under THIS EXACT task_id: commit `b27ba6507` (2026-08-14T04:17:20+02:00, tagged `Task: FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR` verbatim), 45s before `f08bb1c2d` moved this SAME row IN_PROGRESS→REVIEW. Not a duplicate — this review row IS the review checkpoint for that already-landed commit.
-
-**AC-1** (single-write full drain, no `ORCH_APPLY_ALLOW_SHRINK`): confirmed in code — `orch-conservation-check.mjs`'s `signalTotal()` dropped `pending_triage_inbox`, new `undeclaredInboxDrops()` + `ORCH_APPLY_DECLARED_INBOX_TRIAGED` guard it independently; `dev-team/flow/main.md` Step 1 passes `consumed_ids_csv` as the declaration. ALSO confirmed live in production: 8 real durable-inbox CLEAR commits landed 2026-08-14/08-15 post-fix (44/12/9/33/17/29 envelopes among them), every one a single write, no sub-batching, no bypass — sharp contrast to the pre-fix incidents (29 env/4 writes 08-11, 248 env/4 writes 08-14) this row itself documents. **AC-2** (abort message names the correct path): confirmed verbatim in `orch-conservation-check.mjs` — explicitly says do NOT set `ORCH_APPLY_ALLOW_SHRINK`, names `ORCH_APPLY_DECLARED_INBOX_TRIAGED`. **AC-3** (29-envelope regression, exit 0, no bypass): `INBOX-FULL-DRAIN-DECLARED` in `scripts/test/orch-apply-wrapper-tests.sh`, re-ran the FULL suite live — 89/89 PASS, including that test plus the negative controls (`INBOX-DROP-UNDECLARED-REJECTED` exit 1, `INBOX-DROP-ALLOW-SHRINK-NO-BYPASS` exit 1). All 4 files in the row's `files[]` list confirmed touched, none reverted.
-
-**Disposition:** DONE_VERIFIED. `review[] → done_verified[]` via `scripts/orch-apply.sh`.
-
-**Regression:** `bash scripts/test/orch-apply-wrapper-tests.sh` 89/89. No `apps/` TS/Go touched, no code change this cycle — pure board-state closeout following the `FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE` (`7bdeb606e`) precedent for a review-lane SECONDARY-Drain row whose deliverable was found already-shipped.
-
-**Closeout:** board write only (this cycle), pathspec-scoped commit pending. Decision-journal entry appended to `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` (S55). No handoff file (flat `review[]` row, SECONDARY-Drain's own dispatch context is the spec). Router (session 632721c2) held `task:FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR` — released via `task_release` at session close per lock-lifetime convention.
 
 ---

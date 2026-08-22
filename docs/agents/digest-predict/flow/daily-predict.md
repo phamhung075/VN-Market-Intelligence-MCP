@@ -150,25 +150,28 @@ For each qualifying ticker (bullish_score > 0.6 OR bearish_score > 0.6):
   If FAIL second-pass:
     Skip claim creation for this ticker; log as honest-gap in digest (e.g., "[SKIP] VCB claim contradicts 52w data — re-evaluated, unresolved")
 
-**P-6. Notebook write** — APPEND class → skill: `.claude/skills/notebook-write/SKILL.md` (AC-3 settled-write; AC-5 gate; AC-4 blank-state fallback)
+**P-6. Notebook write** — APPEND class → skill: `.claude/skills/notebook-write/SKILL.md` (AC-1 dated `## ` section; AC-2 3-section retention; AC-5 gate; AC-4 blank-state fallback)
 
-Section template (≤10L):
+Section template — level-2 `## ` heading, ≤10L (`### ` is INVISIBLE to
+`notebook-auto-prune.sh`'s `^## ` boundary parser — never use `### ` for this heading):
 ```
-### Daily Predictions (HH:MM UTC) YYYY-MM-DD
+## <YYYY-MM-DD>T<HH:MM>Z Daily Predictions
 - Calibration: [status], delta: [value] | Claims: N | Dampening: [yes/no]
 ```
-**Live convention note (observed 2026-08-13, consistent across ≥11 prior cycles 07-16→08-13):**
-`docs/agent-memory/notebooks/digest-predict.md` in practice uses ONE persistent rolling
-`## Known patterns / preferences` heading (no dated token — the notebook-write skill's
-own "rolling heading, intentionally rewritten every cycle" exception) with a new dated
-`- [MỚI MM-DD] ...` bullet appended each cycle, NOT a fresh `### Daily Predictions (HH:MM
-UTC)` sub-heading per cycle as this template literally shows. Follow the live file's
-established convention (append one dated bullet to the rolling heading), not this
-template, until/unless the file is deliberately migrated.
-**Tool constraint:** per `docs/agents/digest-predict/init.md` `never_use_write_tool: true`,
-land this append via `Edit` (old_string = current last line/bullet, new_string = same +
-new bullet appended) — never the raw `Write` tool, even though the generic
-`notebook-write` skill's Step 2 documents `Write` as its sole form for other agents.
+**RETIRED (root cause of CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT, do
+not reproduce):** cycles 07-12→08-22 appended a dated bullet to ONE permanent, undated
+`## Known patterns / preferences` heading instead of opening a `## ` section per cycle. An
+undated heading sorts to the pruner's MAX sentinel key — permanently exempt from
+drop-oldest selection yet still byte-counted, so `section_count` stayed pinned at 1 and the
+hook could only safe-fail (`notebook_single_section_overage_breach`, no truncation —
+correct hook behavior, not a hook defect). Every cycle forward opens its OWN `## ` section
+per the template above. Migrating existing history to
+`docs/agent-memory/notebooks/archive/digest-predict-*.md` is separate, tracked work on the
+same board row (next_agent=claude-manager-helper) — not done from this flow.
+**Tool constraint:** `never_use_write_tool: true` (init.md) → land via `Edit` only: (1)
+append — `Edit(old_string=<current last line>, new_string=<same>+"\n\n"+<new section>)`;
+(2) retention (AC-2) — WHILE `## ` count (post-append) > 3: `Edit(old_string=<exact oldest
+## block, heading→line-before-next-##-or-EOF>, new_string="")`, recount, repeat.
 
 **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
