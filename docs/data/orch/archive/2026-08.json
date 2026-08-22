@@ -22918,6 +22918,18 @@
       "provenance": "detector",
       "audit_cycle_tag": null,
       "dedup_key": null
+    },
+    {
+      "id": "po-20260814T195709",
+      "ts": "2026-08-14T19:57:09Z",
+      "from": "po",
+      "to": "agents-architect",
+      "type": "system-issue",
+      "summary": "Step 2.4 cowork probe: 28h marker TTL > 24h cadence blocks all 5 daily slots every day — 2 live blocks today",
+      "severity": "HIGH",
+      "status": "READ",
+      "payload_ref": null,
+      "board_row": "FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE"
     }
   ],
   "backlog_detail": [],
