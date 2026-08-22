@@ -282,7 +282,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: digest-predict claimed absence of financials data for SHB but compare_financials returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload": {
           "agent_id": "digest-predict",
           "claim": "Không có dữ liệu BCTC (get_bctc_full: \"Chưa có dữ liệu BCTC\", không phải lỗi corrupt).",
@@ -302,7 +302,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: digest-predict claimed absence of financials data for SHB but compare_financials returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload": {
           "agent_id": "digest-predict",
           "claim": "BCTC SHB Q2/2026 đã tải PDF về nhưng chưa trích xuất xong (get_bctc_full hiện hiển thị \"Chưa có dữ liệu BCTC\" do trích xuất đang chờ xử lý, không phải lỗi corrupt).",
@@ -17389,7 +17389,7 @@
         "promoted_at": "2026-07-28T21:17:15Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "updated_at": "2026-08-14T09:11:11Z",
+        "updated_at": "2026-08-22T17:51:20Z",
         "claimed_at": null,
         "claimed_by": null,
         "next_agent": "ops",
@@ -17401,7 +17401,7 @@
         "redispatch_count": 2,
         "updated_by": "po",
         "status_note": "[QA] Direct-Commit Verify (2026-08-06T17:45Z) — CODE INDEPENDENTLY RE-VERIFIED CORRECT, all checks re-run this tick, not trusted from review_note prose: commit 43f4e3add confirmed real, on main ancestry, touches exactly the claimed files (apps/alert-engine/pkg/domain/models.go, apps/alert-engine/pkg/module/alert_pipeline/pipeline.go) plus models_test.go/pipeline_test.go and 4 docs. Read the actual diff: CooldownConfig.DedupWindowMinutes (new named field, default 60) wired into pipeline.go's HasDuplicateFingerprint(fingerprint, p.cfg.DedupWindowMinutes) call (was p.cfg.CooldownMinutes=30), dedup reason string rebuilt via fmt.Sprintf(\"duplicate: fingerprint seen within %dmin\", ...). Default 60 cross-checked against mcp.config.json:215 alertQuality.dedupWindowMinutes=60 and apps/mcp-server/src/infrastructure/config.ts:663 numVal(aq,\"dedupWindowMinutes\",60) — matches, not invented. go build ./... clean, go vet ./... clean, go test ./... 8/8 packages pass (60 top-level RUN / 70 incl. subtests PASS — matches claimed count exactly), golangci-lint run ./... 0 issues, mock-guard.sh --files PASS, zero domain->infrastructure import / process.env / secret-literal hits in touched files. All 4 docs (domain-model.md/usecases.md/api-reference.md/testing.md) read and consistent with the code. DJ-GATE-1 satisfied (sprint-FACTORY-ALERT-dedup-window-config-dev-alert-engine.md carries task-id).\n\nCHANGES_REQUESTED anyway — NOT a code defect, a RUNTIME AC gap this row's own DoD explicitly names (\"RAW-verify the served suppression decision after rebuild uses the configured window\", rebuild_required:true in backlog-detail.json, never carried onto this board row). RAW-verified the LIVE SERVICE, not the source: `docker inspect vn-market-intelligence-mcp-alert-engine-1` -> image sha256:e24163c13428 created 2026-07-15T15:13:50Z, container StartedAt 2026-07-15T15:16:48Z — both 13 DAYS BEFORE this fix commit (2026-07-28T21:25:42+02:00). Binary marker check on the running container (`docker exec ... grep -a` on /app/server): 1 hit for the OLD pre-fix string \"duplicate: fingerprint seen recently\", 0 hits for the new \"duplicate: fingerprint seen within\" — definitive proof the deployed binary predates this fix (and also predates 4 sibling alert-engine FACTORY commits landed since 07-24: 314461cbd/9d91af5bb/0a961e255/fb5fc9d4c — same gap, not unique to this row). Live /health confirms the container is up and serving (port 5006, status ok) — it is simply running stale code. The suppression decision served today still passes CooldownMinutes=30 into the dedup check, not the new named DedupWindowMinutes=60 — exactly the defect this task exists to close, still live in production.\n\nThis is the same systemic defect class PO escalated TODAY P2->P1 as FIX-DEVTEAM-REBUILD-REQUIRED-MARKER-NO-CONSUMER (occurrence_count:3 per po_escalation_20260806T1732: mcp-server memleak / stock-price WAL / rag-embedder idle-unload) — \"qa live-verifies apps/<svc>/ code fixes against the un-rebuilt running image\"; that row's own AC-2 states the routing fix is \"ops first, then qa\". Applying that here rather than routing to developer — no code fix is needed, routing to developer/fixer for \"a new direct commit\" would misdirect (the defect is undeployed, not unwritten). rebuild_required:true added to this row (was missing), machine-readable per PO's own po_scope_note_20260806T1732 discriminant (image build/StartedAt ts vs commit committer-date).\n\nNEXT ACTION: ops rebuild+redeploy single-service alert-engine only (docker compose build alert-engine && docker compose up -d --no-deps alert-engine — no user gate per feedback_po_deploy_rebuild_full_autonomy_no_user_gate, single-service only, never down/stop/kill/rm/--force-recreate), then RAW re-verify (image build ts > 43f4e3add commit ts AND grep -a 'seen within' /app/server present, grep -a 'seen recently' absent) before re-submitting to qa. Held: .task_board.qa[] -> .task_board.review[], status QA -> REVIEW, owner/next_agent=ops, redispatch_count 0 -> 1, rebuild_required (missing) -> true.",
-        "secondary_claimed_at": "2026-08-13T11:59:22Z",
+        "secondary_claimed_at": "2026-08-22T17:51:20Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "ops",
         "po_qa_lane_stale_triage_20260814T0908Z": "[PO 2026-08-14T09:08Z QA-LANE-STALE TRIAGE] EXECUTING QA's own narrated-but-never-executed disposition. QA rendered vc-changes 2026-08-06T17:45Z (commit 6df088ee8, subject literally says 'CHANGES_REQUESTED (qa->review)') and wrote the intended write verbatim into this status_note: 'Held: .task_board.qa[] -> .task_board.review[], status QA -> REVIEW, owner/next_agent=ops, redispatch_count 0 -> 1, rebuild_required (missing) -> true'. NONE of it landed: 6df088ee8 touched ONLY docs/agent-memory/notebooks/qa.md (+report/journal), never docs/data/orch/orch-state.json. Row sat in qa[] 8 days consuming a QA_CAP=10 slot. Blocking issue is UNCHANGED and still valid: code fix 43f4e3add is correct but UNDEPLOYED — alert-engine needs a single-service rebuild+redeploy, then RAW re-verify (image build ts > 43f4e3add commit ts AND grep -a 'seen within' /app/server present, 'seen recently' absent) before re-submitting to qa. Routing to ops per QA's own ruling, NOT to fixer/developer (defect is undeployed, not unwritten)."
@@ -18434,7 +18434,7 @@
         "last_served_tick": "2026-08-22T17:18:34Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-15T11:51:18Z"
+        "last_served_tick": "2026-08-22T17:50:32Z"
       },
       "drs": {
         "last_served_tick": "2026-08-15T12:21:28Z"
@@ -18446,7 +18446,7 @@
         "last_served_tick": "2026-08-15T13:20:13Z"
       }
     },
-    "_updated_at": "2026-08-22T17:47:42Z",
+    "_updated_at": "2026-08-22T17:50:32Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
