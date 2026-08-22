@@ -1,21 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-08-15 — FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW deployment-durability rebuild (P-medium, S, CHANGES_REQUESTED round 3) → review[] next_agent=qa
-
-**Session:** 632721c2-41e4-4aff-8d06-a47cf80dc0d7 (router-held task_claim, TTL 3600s, router owns lock lifetime). QA round-2 independently re-verified commit `532fc71a0`'s guard logic/tests/losslessness/toolCount=183-drift as all correct (no code defect) but caught a real deployment gap: the "live-verified in the running container" claim from the rework round was tested against a HOT-PATCHED container (image `.Created`=2026-08-13T19:15/18:30Z, before commit 532fc71a0 @08:23:42Z UTC; touched file was uid 501:dialout with a post-image mtime, every sibling root-owned — classic out-of-band `docker cp`, no `src` bind-mount exists for this service). `rebuild_required:true` had never actually been resolved across either round.
-
-**Fix (pure ops, zero code changes):** genuine single-service rebuild — `docker compose build mcp-server && docker compose up -d mcp-server` (not `down && up`; memory headroom checked first: ~2.8GB in-use across the fleet vs. docker engine's 7.94GB cap, ample). Confirmed via `docker ps` before/after that all 12 sibling containers were untouched (uptimes unaffected by the recreate).
-
-**Durable proof:** new image `sha256:c8322d22bd...09abe`, `.Created`=2026-08-15T08:44:00Z — AFTER commit 532fc71a0 (08:23:42Z UTC), closing the exact gap QA flagged (prior image predated the fix commit). Container reached `health:healthy` within 5s. In-container re-check: `getBctcPendingRefineTool.ts` is now root:root owned with a build-consistent mtime (08:35:55Z, COPY-layer time) matching every sibling file — the uid 501:dialout hot-patch signature is gone.
-
-**Fresh live re-verification** (same DI-seam methodology as QA — `buildGetBctcPendingRefineHandler` against real production data via the mounted `/app/data/market.db`, now on the freshly rebuilt image): limit=1 → 7,562 chars inline (guard silent) | limit=20 → guard fires at 153,138 chars | limit=50 → guard fires at 373,767 chars | limit=100 → guard fires at 695,225 chars — all three exact-match QA's round-2 numbers (same source, now durably baked into the image, behavior reproduces identically as expected). All 3 guard-tripped payloads confirmed written losslessly to `data/exports/` (file byte sizes match `char_count` exactly; dir is gitignored, no cleanup needed).
-
-**Board write:** `rebuild_required` flipped `false`, `review_note` appended (not overwritten) with the above evidence, `next_agent` set to `qa`, routed through `scripts/orch-apply.sh` (validation + conservation checks all passed, `orch-apply OK`). Row left in `review[]` in place — did not self-mark DONE_VERIFIED (QA's call alone).
-
-**Evidence:** this notebook entry; board row `docs/data/orch/orch-state.json` (review[] id=FIX-PENDING-REFINE-OUTPUT-235K-OVERFLOW).
-
-Zone health: deployment-durability gap closed with genuine evidence (pre/post image `.Created` bracketing the commit timestamp, not file mtime/ownership which is exactly what fooled the prior round), no code changes needed, fresh live numbers exact-match QA's independently-reproduced figures, siblings unaffected by the single-service rebuild | HEALTHY.
-
 ## 2026-08-15 — FACTORY-APP-split-pollNews stage-1 (fetch/health) rework (P0, XL, Review-Lane SECONDARY-Drain, QA CHANGES_REQUESTED redispatch) → review[] for fresh QA pass
 
 **Session:** 632721c2-41e4-4aff-8d06-a47cf80dc0d7. QA CHANGES_REQUESTED on commit 0f23a703f (redispatch_count=1): only 5 peripheral helper clusters were extracted (types/insiderDetectors/signalDedup/defaultFetchers/dbHelpers); pollNews()'s own ~790L pipeline body (fetch/health → dedup/insert → cascade/alert-generation) was untouched, pollNews.ts stayed 923L against the task's own DoD (each module <=120L, thin ~120L orchestrator).
@@ -43,3 +27,19 @@ Zone health: real pipeline-body decomposition landed (not just a re-request-revi
 **Evidence:** DJ `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md` S9. No task_board row (ambient, comment-only — same as agent-father's own S53 cycle); backlog row `FIX-COMPROOT-LOGIC-GATE-TS-EQUIVALENT` is the one board write this cycle made.
 
 Zone health: comment-only DDD-deviation annotation landed with full G12 evidence (tsc clean, tool/cron counts unchanged, full-suite fail count within documented noise band), fast-follow guardrail honestly deferred to a tracked backlog row instead of skipped or rushed | HEALTHY.
+
+## 2026-08-22 — FIX-CI-SIZELINT-GETBCTCPENDINGREFINETOOL-BASELINE-TOLERANCE-EXCEEDED (P-high, S, PO-mint CI-red, main RED 7 occurrences/7d) → done_verified[]
+
+**Session:** 02594cce-7946-4d62-8d2f-586b9b883695 (router-held). PO had root-caused and stamped `next_agent=dev-mcp-server` on 2026-08-15 but the row sat in `backlog[]` (not dispatchable) for 7 days with main continuously RED on the `size-lint` CI job; promoted to `ready[]` 2026-08-22T19:00Z and dispatched.
+
+**Root cause:** `getBctcPendingRefineTool.ts` grew 464L → 605L across 3 tested/documented commits (`51f162829` pagination, `8b4f977fd` ColumnLayout cross-window pass-through, `532fc71a0` response-size guard rework, all landed 2026-08-08→08-15) but nobody re-ran `scripts/audits/size-lint-justification.sh --update` afterward, so `docs/data/size-lint-baseline.json`'s stale 464L entry kept failing `--check`'s tolerance test (upper=510L) on every push, independent of the actual commit's own content (each failing CI SHA was an unrelated docs/chore commit — the sequencing trap the row's own notes already flagged).
+
+**Investigated bloat-vs-legit before fixing (per the row's own instruction not to paper over unreviewed bloat):** all 3 growth commits are real, tested, documented feature work — `532fc71a0` in particular was RAW-verified live against the running container's real production data at the time (limit=100 measured 565,285→524 chars post-guard). Confirmed convention precedent: sibling files in the same `financial-reports/` directory (`bctcFullTools.ts` 1467L, `cashFlowTool.ts` 784L, `reports.ts` 672L) are baseline-grandfathered the same way with no inline `size-justification:` header — re-baselining matches established zone convention; splitting the file would deviate from it for no functional gain.
+
+**Fix:** ran `scripts/audits/size-lint-justification.sh --update` (the CANONICAL, documented mechanism) — wholesale-regenerated `docs/data/size-lint-baseline.json`. Diff scoped to exactly 9 files' line-count snapshots (my target 464→605, 2 already-shrunk unrelated files absorbed for free, 6 small in-tolerance drifts) + `generated_at` — no code touched. `--check` now PASS (0 unjustified offenders, 1409 scanned); `size-lint-justification.test.sh` 6/6 PASS. `tsc --noEmit` clean, toolCount=183/cronJobCount=88 unchanged (data-file-only change, G12 full-suite bun test not re-run — no code surface touched).
+
+**Landed + verified:** commit `5944172e0` pushed (`dc0f90334..5944172e0`). RAW-verified CI green on that exact new head SHA per the row's own stated `verification_gate` (`ci_green_on_subsequent_push`): `gh run view 32593075632` — `size-lint` job conclusion=success, overall run conclusion=success. Closed the row `ready[]` → `done_verified[]` myself (commit `73e43bb3f`) with `verification.raw_probe` attached (RC-VERIF gate requires it — this id is not grandfathered) since the row's AC is a single mechanical gh-CLI check I had already satisfied; no PM/QA pipeline was wired for this direct PO-mint CI-red row.
+
+**Evidence:** commits `5944172e0` (baseline fix), `73e43bb3f` (board close); `gh run 32593075632`.
+
+Zone health: CI RED on main closed (size-lint job green on new head), root cause confirmed legitimate reviewed growth not bloat (matches zone's own baseline-grandfather convention for financial-reports/ tool files), zero code touched, tool/scheduler counts unchanged | HEALTHY.
