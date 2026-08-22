@@ -17572,7 +17572,7 @@
         "priority": "P1",
         "size": "M",
         "zone": "cross-service/",
-        "next_agent": "developer",
+        "next_agent": "qa",
         "owner": "po",
         "supervised": true,
         "plan_only": false,
@@ -17586,7 +17586,7 @@
           "FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES",
           "FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE"
         ],
-        "updated_at": "2026-08-22T21:01:19Z",
+        "updated_at": "2026-08-22T21:34:48Z",
         "promoted_at": "2026-08-08T00:51:49Z",
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep 2026-08-08 (dispatch_lane now developer); full text in git.",
@@ -17606,7 +17606,7 @@
         "po_ruling_q3": "Q3 TASK-17 — RULED STRIP (omit .sprint), confirmed by measurement: zero TASK-17 hits across all 4 registry planes in all 4 files; sole ref TASK17-FOREIGN-FLOW echoes its own task number. Do not rename. Same disposition extends to the \"BACKLOG\" sentinel (12 refs at brief time -> 24 on 08-14 -> 22 today; 5 non-backlog = counted violation) and, per B1(b), to any self-referential row.id==row.sprint case. Accepted consequence: sprint-TASK-17-po.md enters the third state — surfaced by AC-4, no fabricated sprint. Folded into brief §11.6/§11.7; full 08-14 text in git.\n",
         "po_verdict": "SIGNED-OFF-CLASSIFICATION-APPLY-RECONCILIATION",
         "detail_ref": "docs/architecture-briefs/2026-08-08-fix-sprint-registry-dangling-ids-reconciliation-design.md#11-amendment-architect-2026-08-22",
-        "updated_by": "po",
+        "updated_by": "developer",
         "po_ruling_q4": "Q4 sprint_goal.status==\"OPEN\" (PREDICTION-CLAIMS-DAILY-CADENCE) — RULED: NEITHER special-case NOR data-normalize; both options refused on evidence. Option (b) \"normalize the entry to PLANNING\" is REFUTED at source: orchStateSchema.ts §11 (checkSprintGoalStatusCanonical / SPRINT_GOAL_TERMINAL_ALIASES, task FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT) already owns this exact field and states verbatim \"Non-terminal tokens (OPEN, ACTIVE, PLANNING, ...) are untouched by design (closing a sprint is a PO editorial act)\". OPEN is already-sanctioned vocabulary, not drift — architect did not check the guard that owns the field; rewriting my own 2026-06-24 editorial status to satisfy a design's 2-word assumption is a data mutation covering a predicate defect. Option (a) is directionally right but a special case that does not scale to the next token. RULING — invert the predicate's polarity: classify on a CLOSED set of LIVENESS-ASSERTING tokens (exactly \"active\") plus the CLOSED TERMINAL_SET; every other value — PLANNING, OPEN, anything minted later — is NON-ASSERTING and falls through to the task-lane signal, then to branch 4 PRE-SPRINT-LABEL/exempt. That satisfies §11.6's own \"name the literal explicitly, never an anything-else catch-all\" in the correct direction: the catch-all sits on the INERT side, where an unknown token can only under-classify (exempt, no write), never fabricate an active_sprints[] object. Zero data fix, zero vocabulary lock. Stage 1h MUST also emit ONE informational, NON-counted line naming any sprint_goal status outside {active} U TERMINAL_SET U {PLANNING}, so vocabulary growth stays visible. This id: OPEN + zero referencing rows -> branch 4, exempt, no registration, no data edit.\n",
         "po_goahead_20260822T201220Z": "IMPLEMENTATION AUTHORIZED 2026-08-22T20:12:20Z — brief §11 as corrected by po_review_note B1/B2/B3 + po_ruling_q4; plan_only cleared. Its PO GATE is now DISCHARGED by po_signoff_20260822T2100Z. AC-0 severed to FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD. Full text in git (69b3b30d2).",
         "po_signoff_20260822T2100Z": "PO SIGN-OFF 2026-08-22T21:00Z — table RATIFIED, PO GATE DISCHARGED, write AUTHORIZED, no further PO pass. Re-ran script vs live: 24 = LIVE 11 / FINISHED 0 / RELABEL 2 / NEVER_WAS 3 / PRE_SPRINT_LABEL 8, counted 16; md5 unchanged, 136/136 green, tsc clean, strict union 57. Dev's 23/7 is STALE not wrong: peer PO commit 20:46Z minted sprint_goal PREDICT-ENGINE-CALIBRATION-CLOSE-LOOP PLANNING/0-refs = +1 exempt; counted set identical. B1a/B1b/B2/Q4/BACKLOG/Q3 verified IN CODE. BINDING ON THE WRITE: W1 regenerate the table immediately before writing, act ONLY on counted rows, never write a PRE_SPRINT_LABEL id. W2 AC-5 gate is counted==0, never strict_dangling==0 — the exempt class never reaches 0 by design; chasing it fabricates sprints (Q2). W3 apply LIVE before/atomic-with RELABEL — UC-RDL-P4's target ULTRACODE-AUDIT-FIXALL is itself LIVE; relabel-first re-dangles. W4 LIVE = stub {id,status:'active',goal,opened_at,tasks:[]}; never a TERMINAL_SET status (cold-evict kills it), never migrate flat-lane rows into sprint.tasks."
