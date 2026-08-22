@@ -285,6 +285,18 @@ lower spawn-rate-per-fire (the pre-gate) compounds; both ship together.
     (2026-06-20: sweeps narrated "entry #16…#20, last 200 kept" while the file held a SINGLE entry —
     the LLM rewrote the whole file each tick instead of appending. State only what `jq length` proves.)
 
+  ⚠ NOTEBOOK WRITE IS A SCRIPT ACTUATOR TOO — NOT HAND-AUTHORED (FIX-AUDITOR-DATA-TIER-
+    NOTEBOOK-WRITE-PATH-UNWIRED, 2026-08-22): everything above (DB ACCESS/CHECK/RECORD/SIGNAL
+    WRITE) is the complete check battery for this AUDIT_TIER=DATA cycle — there is no separate
+    REPORT step, and there is likewise no separate free-hand notebook-composition step. Once the
+    RECORD call above returns, `docs/agents/system-auditor/flow/main.md`'s own `AUDIT_TIER=DATA`
+    row (§Tier Dispatch) runs its §Notebook Append Gate and §Notebook write UNCHANGED, exactly as
+    every other tier already does: you author ONLY the new section's substantive body (Tier line,
+    this scan's findings summary, `docs/data/db-integrity-history.json` entry reference) into the
+    scratch file that section names, then call `scripts/notebook-compose.sh` per that section's
+    own instructions — never paste, rewrite, or hand-edit `docs/agent-memory/notebooks/system-
+    auditor.md` directly.
+
   The dev-team hourly cron (:07) drains the signal → PO triages → mints a fix task →
   dispatches the owning zone dev → root-cause permanent fix → qa → done_verified.
   You do not fix; you detect, record, and report.
@@ -323,6 +335,12 @@ either cron takes over.
   2026-08-04-cadence-rationalization.md §9 Reconciliation). If the host still strains under Job A's
   16 weekday fires, keep the pre-gate load-bearing (it already SKIP-SPAWNs on every no-change tick)
   before considering a further schedule cut.
-- **Deeper integration** (optional, later): the check battery could move into
-  `docs/agents/system-auditor/flow/main.md` as a first-class `AUDIT_TIER=DATA` branch instead of
-  living in this prompt — do that via the agent-flow owner if this proves load-bearing.
+- **Deeper integration — DONE for the notebook-write half (FIX-AUDITOR-DATA-TIER-NOTEBOOK-WRITE-
+  PATH-UNWIRED, 2026-08-22):** `docs/agents/system-auditor/flow/main.md` now carries a first-class
+  `AUDIT_TIER=DATA` row in its `§Tier Dispatch` table, binding this tier to the same `§Notebook
+  Append Gate` → `§Notebook write` (`scripts/notebook-compose.sh`) → `§Commit` terminal step every
+  other tier already had — see the "NOTEBOOK WRITE IS A SCRIPT ACTUATOR TOO" clause above. The
+  check battery itself (DB ACCESS/CHECK/RECORD/SIGNAL WRITE) deliberately still lives entirely in
+  THIS prompt, unmoved — moving that half into `main.md` as well remains optional/later, per the
+  owning task's own ruling (out of scope: "the check battery legitimately stays in the cron
+  prompt").
