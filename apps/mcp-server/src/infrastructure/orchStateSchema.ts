@@ -1326,3 +1326,372 @@ export function checkMissingDependencyReport(
 
   return issues;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// § 15. SPRINT-REGISTRY DANGLING-ID CLASSIFICATION (reconciliation, read-only)
+// Task: FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE
+//
+// CLASSIFICATION ONLY. This function and every caller of it are read-only — no
+// orch-state.json write happens here or in its CLI wrapper
+// (scripts/audits/verify-sprint-registry-referential-integrity.mjs). Per the
+// board row's supervision note (po_goahead_20260822T201220Z): the actual
+// dangling-id/active-sprint reconciliation write to the LIVE file requires a
+// separate PO sign-off pass on this function's regenerated output first.
+//
+// Encodes the design brief's §11 amendment (docs/architecture-briefs/
+// 2026-08-08-fix-sprint-registry-dangling-ids-reconciliation-design.md) AS
+// CORRECTED by the board row's po_review_note (2026-08-22 PO re-ratification,
+// 3 BINDING corrections B1/B2/B3 + Q4 ruling) — those corrections supersede
+// §11.3/§11.4/§11.7/§11.8 wherever they conflict:
+//
+//   B1 — STEP 0 (a dangling id that is itself a real task id elsewhere → the
+//        id is not a sprint, RELABEL every referencing row to that task's own
+//        `.sprint`) is GUARDED: (a) an existing `sprint_goal.entries[]` entry
+//        for the id is authoritative evidence it WAS minted as a sprint id —
+//        STEP 0 must not relabel it (falls to the ordinary branch table
+//        instead); (b) a self-referential row (row.id === row.sprint === the
+//        dangling id) is a 1-hop RELABEL cycle — STRIP, never relabel. The
+//        collision set itself is derived by walking the real task-id universe
+//        every call (hot ∪ injected cold), never a hardcoded name list.
+//   B2 — the branch table checks TERMINALITY before LANE: a goal status
+//        terminal (TERMINAL_SET, canonicalized) with every referencing row
+//        also terminal-status is FINISHED, checked BEFORE the non-backlog-lane
+//        LIVE check. The old order let a lone DONE_VERIFIED row register a
+//        FINISHED sprint into active_sprints[] — which
+//        scripts/agents-flow/decision-journal-archive.sh then pins as
+//        permanently un-archivable (PROCESS_IDS = CLOSED_IDS − ACTIVE_IDS).
+//   Q4 — sprint_goal liveness is a CLOSED liveness-asserting-token set (the
+//        exact literal "active") union the CLOSED TERMINAL_SET; every other
+//        token (PLANNING, OPEN, any future vocabulary) is non-asserting and
+//        falls through to the task-lane signal, then to PRE_SPRINT_LABEL
+//        (exempt) by default — the catch-all sits on the INERT side, so an
+//        unknown token can only under-classify (exempt, no write), never
+//        fabricate a live sprint. `sprint_goal.entries[].status` is NEVER
+//        data-normalized by this function (OPEN is sanctioned vocabulary per
+//        § 11's own SPRINT_GOAL_TERMINAL_ALIASES comment, not drift).
+//   "BACKLOG" sentinel — the lane name reused as a "no sprint assigned"
+//        literal (12+ live refs) is NEVER a real sprint id — checked BEFORE
+//        STEP 0 and the branch table, so it can never accidentally resolve
+//        LIVE via an incidental non-backlog-lane reference.
+//
+// §11.2's A1 correction is encoded via the CALLER contract, not inside this
+// function: the strict known-id union this function treats as "resolved" is
+// active_sprints[].id (hot) ∪ closed_sprints[].id (hot) ∪ opts.coldClosedSprintIds
+// (cold archive closed_sprints[].id / closed_sprint_goals sprint ids) — it
+// deliberately EXCLUDES any `.done_tasks[].sprint` provenance-tag union (the
+// weak signal §2.3/§11.2 demote to "candidate, never sole justification for
+// resolved"). `opts.coldDoneTasks` is accepted ONLY for STEP 0's task-id-
+// universe / own-`.sprint` resolution (§11.3 A2) and the AC-4-adjacent
+// "have I ever heard of this id at all" bookkeeping — never as a source of
+// "known sprint id".
+//
+// DI pattern mirrors § 14's checkMissingDependencyReport(data, resolvedIds):
+// cold-archive reads happen in the CLI caller (fs access), this function stays
+// pure/FS-free and unit-testable against synthetic fixtures.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** A task row (hot or cold) whose own `.sprint` names a dangling id. */
+export interface SprintRegistryTaskRef {
+  path: string;
+  taskId: string;
+  lane: string;
+  status: string;
+}
+
+/** Cold-archive `done_tasks[]` entry — id + its own `.sprint` (or null). Never a "known sprint id" source (§11.2 A1) — used only for STEP 0 resolution. */
+export interface ColdArchiveDoneTaskRef {
+  id: string;
+  sprint: string | null;
+}
+
+export type SprintRegistryClassificationKind =
+  | "LIVE"
+  | "FINISHED"
+  | "RELABEL"
+  | "NEVER_WAS"
+  | "PRE_SPRINT_LABEL";
+
+export type SprintRegistryAction =
+  | "LIVE_REGISTER_ACTIVE"
+  | "FINISHED_REGISTER_CLOSED"
+  | "RELABEL"
+  | "STRIP"
+  | "PRE_SPRINT_LABEL_EXEMPT";
+
+export interface SprintRegistryClassificationRow {
+  id: string;
+  goalStatus: string | null;
+  taskRefs: SprintRegistryTaskRef[];
+  classification: SprintRegistryClassificationKind;
+  action: SprintRegistryAction;
+  detail: string;
+  relabelTarget?: string;
+}
+
+export interface SprintRegistryClassificationResult {
+  strictDanglingCount: number;
+  rows: SprintRegistryClassificationRow[];
+}
+
+const SPRINT_REGISTRY_BACKLOG_SENTINEL = "BACKLOG";
+
+/**
+ * Liveness-asserting token set (Q4 ruling) — deliberately ONLY the exact
+ * literal "active". Every other `sprint_goal.entries[].status` value
+ * (PLANNING, OPEN, DEGRADED-adjacent future tokens, ...) is non-asserting.
+ */
+export const SPRINT_GOAL_LIVENESS_TOKENS: ReadonlySet<string> = new Set(["active"]);
+
+/**
+ * NEVER-WAS-by-shape: a dangling id shaped like a bare task-number reference
+ * (e.g. "TASK-17") rather than a topic-slug sprint name. Derived by regex
+ * (script, never a named list — same B1(c) discipline applied uniformly),
+ * only consulted for ids that would otherwise land in PRE_SPRINT_LABEL
+ * (backlog-only/no-goal-or-non-asserting-goal) — ratified disposition for
+ * this shape is the board row's po_ruling_q3 (STRIP).
+ */
+const SPRINT_REGISTRY_BARE_TASK_NUMBER_SHAPE = /^TASK[-_]\d+$/;
+
+function sprintGoalStatusIsTerminal(status: string): boolean {
+  return SPRINT_GOAL_TERMINAL_ALIASES[status.toUpperCase()] != null;
+}
+
+/** Plane-1 walk: task_board.*[].sprint across all 8 flat lanes + both nested sprint-task locations (AC-3). */
+function collectSprintRegistryPlane1Refs(
+  tb: z.infer<typeof TaskBoardSchema>,
+): Map<string, SprintRegistryTaskRef[]> {
+  const refs = new Map<string, SprintRegistryTaskRef[]>();
+  const push = (sprintId: string, ref: SprintRegistryTaskRef) => {
+    const arr = refs.get(sprintId) ?? [];
+    arr.push(ref);
+    refs.set(sprintId, arr);
+  };
+
+  const visitLane = (tasks: TaskLane | undefined, laneLabel: string) => {
+    if (!tasks) return;
+    tasks.forEach((t, i) => {
+      const raw = t as Record<string, unknown>;
+      const sprint = raw["sprint"];
+      if (typeof sprint === "string" && sprint.length > 0) {
+        push(sprint, {
+          path: `task_board.${laneLabel}[${i}]`,
+          taskId: typeof raw["id"] === "string" ? (raw["id"] as string) : "(no-id)",
+          lane: laneLabel,
+          status: typeof raw["status"] === "string" ? (raw["status"] as string) : "(no-status)",
+        });
+      }
+    });
+  };
+
+  visitLane(tb.backlog, "backlog");
+  visitLane(tb.ready, "ready");
+  visitLane(tb.in_progress, "in_progress");
+  visitLane(tb.qa, "qa");
+  visitLane(tb.review, "review");
+  visitLane(tb.done, "done");
+  visitLane(tb.done_verified, "done_verified");
+  visitLane(tb.archive, "archive");
+  tb.active_sprints.forEach((sprint, si) => visitLane(sprint.tasks, `active_sprints[${si}].tasks`));
+  (tb.closed_sprints ?? []).forEach((sprint, si) => visitLane(sprint.tasks, `closed_sprints[${si}].tasks`));
+
+  return refs;
+}
+
+/** Plane-2 walk: `.sprint_goal.entries[].sprint_id` -> `.status` (loosely-typed field, mirrors § 11's own access pattern). */
+function collectSprintRegistryGoalEntries(doc: Record<string, unknown>): Map<string, string> {
+  const out = new Map<string, string>();
+  const sprintGoal = doc["sprint_goal"];
+  if (sprintGoal == null || typeof sprintGoal !== "object") return out;
+  const entries = (sprintGoal as Record<string, unknown>)["entries"];
+  if (!Array.isArray(entries)) return out;
+  for (const entry of entries) {
+    if (entry == null || typeof entry !== "object") continue;
+    const e = entry as Record<string, unknown>;
+    const sprintId = e["sprint_id"];
+    const status = e["status"];
+    if (typeof sprintId === "string" && sprintId.length > 0 && typeof status === "string") {
+      out.set(sprintId, status);
+    }
+  }
+  return out;
+}
+
+/** Every hot task id (+ legacy task_id alias) -> that row's own `.sprint` (or null). Used for STEP 0 resolution only. */
+function collectHotTaskOwnSprint(tb: z.infer<typeof TaskBoardSchema>): Map<string, string | null> {
+  const out = new Map<string, string | null>();
+  const visitLane = (tasks: TaskLane | undefined) => {
+    if (!tasks) return;
+    for (const t of tasks) {
+      const raw = t as Record<string, unknown>;
+      const sprint = typeof raw["sprint"] === "string" ? (raw["sprint"] as string) : null;
+      if (typeof raw["id"] === "string" && raw["id"]) out.set(raw["id"] as string, sprint);
+      if (typeof raw["task_id"] === "string" && raw["task_id"]) out.set(raw["task_id"] as string, sprint);
+    }
+  };
+  visitLane(tb.backlog);
+  visitLane(tb.done);
+  visitLane(tb.done_verified);
+  visitLane(tb.in_progress);
+  visitLane(tb.qa);
+  visitLane(tb.ready);
+  visitLane(tb.review);
+  visitLane(tb.archive);
+  for (const sprint of tb.active_sprints) visitLane(sprint.tasks);
+  for (const sprint of tb.closed_sprints ?? []) visitLane(sprint.tasks);
+  return out;
+}
+
+/**
+ * Classify every referenced sprint id that fails to resolve against the
+ * strict known-id union (§11.2 A1 — hot active/closed ∪ caller-injected cold
+ * closed ids, `.done_tasks[].sprint` EXCLUDED) into a proposed action.
+ * Pure/FS-free — see § 15 header for the DI contract.
+ */
+export function classifySprintRegistryDanglingIds(
+  data: OrchState,
+  opts: {
+    coldClosedSprintIds: Set<string>;
+    coldDoneTasks: ColdArchiveDoneTaskRef[];
+  },
+): SprintRegistryClassificationResult {
+  const tb = data.task_board;
+  const doc = data as unknown as Record<string, unknown>;
+
+  const knownStrict = new Set<string>(opts.coldClosedSprintIds);
+  for (const s of tb.active_sprints) knownStrict.add(s.id);
+  for (const s of tb.closed_sprints ?? []) knownStrict.add(s.id);
+
+  const plane1 = collectSprintRegistryPlane1Refs(tb);
+  const plane2 = collectSprintRegistryGoalEntries(doc);
+
+  const hotOwnSprint = collectHotTaskOwnSprint(tb);
+  const coldOwnSprint = new Map<string, string | null>(
+    opts.coldDoneTasks.map((t) => [t.id, t.sprint]),
+  );
+  // Task-id universe used ONLY for STEP 0 — hot takes precedence on conflict.
+  const taskIdOwnSprint = new Map<string, string | null>([...coldOwnSprint, ...hotOwnSprint]);
+
+  const allReferencedIds = new Set<string>([...plane1.keys(), ...plane2.keys()]);
+  const danglingIds = [...allReferencedIds].filter((id) => !knownStrict.has(id)).sort();
+
+  const rows: SprintRegistryClassificationRow[] = danglingIds.map((id) => {
+    const taskRefs = plane1.get(id) ?? [];
+    const goalStatus = plane2.get(id) ?? null;
+    const hasSprintGoalEntry = plane2.has(id);
+
+    // Special-case, evaluated before STEP 0 — "BACKLOG" lane-name-as-sentinel
+    // anti-pattern is NEVER a real sprint id regardless of what lane/status
+    // signals it happens to accumulate (PO ruling Q3 extension).
+    if (id === SPRINT_REGISTRY_BACKLOG_SENTINEL) {
+      return {
+        id,
+        goalStatus,
+        taskRefs,
+        classification: "NEVER_WAS",
+        action: "STRIP",
+        detail: `"${SPRINT_REGISTRY_BACKLOG_SENTINEL}" is the lane name reused as a "no sprint assigned" sentinel, never a real sprint id — strip .sprint on every referencing row (never write the literal back).`,
+      };
+    }
+
+    // STEP 0 (A2, guarded per B1): id is itself a real task id somewhere in
+    // the known task-id universe (hot ∪ injected cold done_tasks).
+    if (taskIdOwnSprint.has(id) && !hasSprintGoalEntry) {
+      const ownSprint = taskIdOwnSprint.get(id) ?? null;
+      if (ownSprint === id) {
+        // B1(b): self-referential row — a 1-hop RELABEL cycle. STRIP.
+        return {
+          id,
+          goalStatus,
+          taskRefs,
+          classification: "NEVER_WAS",
+          action: "STRIP",
+          detail: `${id} is itself a task row whose own .sprint equals its own id — a 1-hop RELABEL cycle. STRIP, never relabel (PO ruling B1(b)).`,
+        };
+      }
+      if (ownSprint) {
+        return {
+          id,
+          goalStatus,
+          taskRefs,
+          classification: "RELABEL",
+          action: "RELABEL",
+          detail: `${id} is itself a task id (not a sprint) whose own .sprint is "${ownSprint}" — relabel every row carrying .sprint === "${id}" to "${ownSprint}" (PO ruling A2 / §11.3 STEP 0).`,
+          relabelTarget: ownSprint,
+        };
+      }
+      // ownSprint is null (task row has no .sprint of its own) — nothing to
+      // relabel to; fall through to the ordinary branch table below.
+    }
+    // guarded (hasSprintGoalEntry true) or no resolvable ownSprint — B1(a):
+    // fall through to the ordinary branch table.
+
+    const goalIsLive = goalStatus != null && SPRINT_GOAL_LIVENESS_TOKENS.has(goalStatus);
+    const goalIsTerminal = goalStatus != null && sprintGoalStatusIsTerminal(goalStatus);
+    const allRefsTerminal = taskRefs.length > 0 && taskRefs.every((r) => TERMINAL_SET.has(r.status as Status));
+    const anyNonBacklogNonTerminal = taskRefs.some(
+      (r) => r.lane !== "backlog" && !TERMINAL_SET.has(r.status as Status),
+    );
+
+    // Branch 1 — exact "active" literal (Q4).
+    if (goalIsLive) {
+      return {
+        id,
+        goalStatus,
+        taskRefs,
+        classification: "LIVE",
+        action: "LIVE_REGISTER_ACTIVE",
+        detail: `sprint_goal status is exactly "active" — register active_sprints[] (branch 1).`,
+      };
+    }
+
+    // Branch 2 (B2: terminality BEFORE lane) — goal terminal AND every
+    // referencing row (if any) is terminal-status.
+    if (goalIsTerminal && (taskRefs.length === 0 || allRefsTerminal)) {
+      return {
+        id,
+        goalStatus,
+        taskRefs,
+        classification: "FINISHED",
+        action: "FINISHED_REGISTER_CLOSED",
+        detail: `sprint_goal status "${goalStatus}" is terminal and every referencing row is terminal-status — register closed_sprints[] (branch 2, B2-corrected order).`,
+      };
+    }
+
+    // Branch 3 (was branch 2 pre-B2) — any non-backlog lane row that is
+    // itself non-terminal-status.
+    if (anyNonBacklogNonTerminal) {
+      return {
+        id,
+        goalStatus,
+        taskRefs,
+        classification: "LIVE",
+        action: "LIVE_REGISTER_ACTIVE",
+        detail: `at least one referencing row sits in a non-backlog lane with non-terminal status — register active_sprints[] (branch 3).`,
+      };
+    }
+
+    // Branch 4 (default, absorbs Q4's old branch 5) — referencing rows only
+    // in backlog[] (or none at all) AND goal status is absent or
+    // non-asserting (PLANNING, OPEN, any future token).
+    if (SPRINT_REGISTRY_BARE_TASK_NUMBER_SHAPE.test(id)) {
+      return {
+        id,
+        goalStatus,
+        taskRefs,
+        classification: "NEVER_WAS",
+        action: "STRIP",
+        detail: `${id} is shaped like a bare task-number reference, not a topic-slug sprint name, and resolves nowhere as a real sprint — strip .sprint (PO ruling Q3).`,
+      };
+    }
+    return {
+      id,
+      goalStatus,
+      taskRefs,
+      classification: "PRE_SPRINT_LABEL",
+      action: "PRE_SPRINT_LABEL_EXEMPT",
+      detail: `referencing rows exist only in backlog[] (or none at all) and sprint_goal status is absent or non-asserting — pre-sprint label, exempt (branch 4; PO owns sprint-kickoff authority).`,
+    };
+  });
+
+  return { strictDanglingCount: rows.length, rows };
+}
