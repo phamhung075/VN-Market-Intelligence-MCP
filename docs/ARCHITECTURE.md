@@ -5,6 +5,7 @@
 ## DDD Layer Order
 
 `domain` ← `application` ← `interface` ← `scheduler`. Cross-layer: inward only. `domain/` never imports `infrastructure/`.
+Full layer-to-folder table (incl. `infrastructure/`) → `docs/policies/dev-standards.md` § DDD Layer Rules.
 
 ## Monorepo Structure (Phase 3 Complete, 2026-04-25)
 
