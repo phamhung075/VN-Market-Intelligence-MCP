@@ -17387,7 +17387,7 @@
         "priority": "P1",
         "size": "M",
         "zone": "cross-service/",
-        "next_agent": "developer",
+        "next_agent": "po",
         "owner": "po",
         "supervised": true,
         "plan_only": false,
@@ -17401,7 +17401,7 @@
           "FIX-NOTEBOOK-PRUNER-LINE-ONLY-SETPOINT-BYTE-CAP-NEVER-CONVERGES",
           "FU-ORCH-HOT-SUB150-SPRINT-LIFECYCLE"
         ],
-        "updated_at": "2026-08-22T20:17:41Z",
+        "updated_at": "2026-08-22T20:47:51Z",
         "promoted_at": "2026-08-08T00:51:49Z",
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=1); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
@@ -17421,7 +17421,7 @@
         "po_ruling_q3": "Q3 TASK-17 — RULED STRIP (omit .sprint), confirmed by measurement: zero TASK-17 hits across all 4 registry planes in all 4 files; sole ref TASK17-FOREIGN-FLOW echoes its own task number. Do not rename. Same disposition extends to the \"BACKLOG\" sentinel (12 refs at brief time -> 24 on 08-14 -> 22 today; 5 non-backlog = counted violation) and, per B1(b), to any self-referential row.id==row.sprint case. Accepted consequence: sprint-TASK-17-po.md enters the third state — surfaced by AC-4, no fabricated sprint. Folded into brief §11.6/§11.7; full 08-14 text in git.\n",
         "po_verdict": "RATIFIED-IMPLEMENT-WITH-BINDING-CORRECTIONS",
         "detail_ref": "docs/architecture-briefs/2026-08-08-fix-sprint-registry-dangling-ids-reconciliation-design.md#11-amendment-architect-2026-08-22",
-        "updated_by": "po",
+        "updated_by": "developer",
         "po_ruling_q4": "Q4 sprint_goal.status==\"OPEN\" (PREDICTION-CLAIMS-DAILY-CADENCE) — RULED: NEITHER special-case NOR data-normalize; both options refused on evidence. Option (b) \"normalize the entry to PLANNING\" is REFUTED at source: orchStateSchema.ts §11 (checkSprintGoalStatusCanonical / SPRINT_GOAL_TERMINAL_ALIASES, task FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT) already owns this exact field and states verbatim \"Non-terminal tokens (OPEN, ACTIVE, PLANNING, ...) are untouched by design (closing a sprint is a PO editorial act)\". OPEN is already-sanctioned vocabulary, not drift — architect did not check the guard that owns the field; rewriting my own 2026-06-24 editorial status to satisfy a design's 2-word assumption is a data mutation covering a predicate defect. Option (a) is directionally right but a special case that does not scale to the next token. RULING — invert the predicate's polarity: classify on a CLOSED set of LIVENESS-ASSERTING tokens (exactly \"active\") plus the CLOSED TERMINAL_SET; every other value — PLANNING, OPEN, anything minted later — is NON-ASSERTING and falls through to the task-lane signal, then to branch 4 PRE-SPRINT-LABEL/exempt. That satisfies §11.6's own \"name the literal explicitly, never an anything-else catch-all\" in the correct direction: the catch-all sits on the INERT side, where an unknown token can only under-classify (exempt, no write), never fabricate an active_sprints[] object. Zero data fix, zero vocabulary lock. Stage 1h MUST also emit ONE informational, NON-counted line naming any sprint_goal status outside {active} U TERMINAL_SET U {PLANNING}, so vocabulary growth stays visible. This id: OPEN + zero referencing rows -> branch 4, exempt, no registration, no data edit.\n",
         "po_goahead_20260822T201220Z": "IMPLEMENTATION AUTHORIZED 2026-08-22T20:12:20Z. Supersedes po_goahead_20260814T143024 (that stamp was design-amendment-only and said so). This one DOES authorize code + script work per the amended brief §11 as corrected by po_review_note's B1/B2/B3 and po_ruling_q4. plan_only cleared. supervised:true retained, but its meaning is now the explicit PO GATE in po_review_note, not the WF-2 hold (permanently spent by the 08-14 stamp): the §11.8-step-2 orch-state data write requires PO sign-off on the freshly regenerated classification output BEFORE it is applied. AC-0 is NOT in this row's scope — it was severed to FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD and dispatched independently.\n"
       },
@@ -18632,7 +18632,7 @@
         "last_served_tick": "2026-08-22T20:18:57Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-22T17:50:32Z"
+        "last_served_tick": "2026-08-22T20:48:05Z"
       },
       "drs": {
         "last_served_tick": "2026-08-22T18:22:00Z"
@@ -18644,7 +18644,7 @@
         "last_served_tick": "2026-08-22T19:19:17Z"
       }
     },
-    "_updated_at": "2026-08-22T20:18:57Z",
+    "_updated_at": "2026-08-22T20:48:05Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -18822,6 +18822,119 @@
         },
         "createdAt": "2026-08-22T20:08:30Z",
         "drained_at": "2026-08-22T20:18:07Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "09c5a4abe361e8be5cf7a153c690ab9451f47c06cdb7c6010dd72e6bf892d759",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-po-10.md docs/agent-memory/notebooks/po.md docs/data/orch/orch-state.json. actor=02594cce-7946-4d62-8d2f-586b9b883695 mode=warn escalated=true prior_warns=7 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-22T20:19:54Z",
+        "drained_at": "2026-08-22T20:47:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a412f981efa56c89dc3ad51339e0e244afcc428c3253ee899d497846ea1053fb",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/data/orch/orch-state.json' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/data/orch/orch-state.json' (620eb506f14d378e44f65e473c9e1b68366d6db6) differs from what is about to land in this commit (00952719465213e3cfcb5260ed0677cfb5925e34) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope (two-blob form takes NO pathspec — do not append '-- docs/data/orch/orch-state.json', that is a git usage error): git diff 620eb506f14d378e44f65e473c9e1b68366d6db6 00952719465213e3cfcb5260ed0677cfb5925e34",
+        "createdAt": "2026-08-22T20:20:07Z",
+        "drained_at": "2026-08-22T20:47:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e9a53010e38a4fba4f825e455107ef2ce485a0df3c26d747a57324e18c4437d1",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-uuid-provenance-guard] WARN: docs/agent-memory/notebooks/tran-ngoc-bau.md — added heading line embeds a full session/coordination UUID: '## c130 · ~2026-08-14T20:22Z / VN-date 2026-08-15 (slot=tnb-audit; this session=632721c2-41e4-4aff-8d06-a47cf80dc0d7)'. Per .claude/skills/notebook-write/SKILL.md AC-1 and feedback_agent_commits_session_uuid_into_notebook, a session id is a per-invocation coordination PARAMETER ONLY, never authored into a committed file — use a c<NNN> counter or a fixed source label instead. mode=warn (default warn; set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh). Escape hatch: add 'notebook-uuid-lint-allow: <reason>' on this line if intentional.\n[notebook-uuid-provenance-guard] WARN: docs/agent-memory/notebooks/tran-ngoc-bau.md — added heading line embeds a full session/coordination UUID: '## c132 · 2026-08-22T20:13-20:28Z (slot=tnb-audit; this session=90886cda-9a31-4300-a0dd-946ae1d57de7; VN-date=2026-08-23)'. Per .claude/skills/notebook-write/SKILL.md AC-1 and feedback_agent_commits_session_uuid_into_notebook, a session id is a per-invocation coordination PARAMETER ONLY, never authored into a committed file — use a c<NNN> counter or a fixed source label instead. mode=warn (default warn; set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh). Escape hatch: add 'notebook-uuid-lint-allow: <reason>' on this line if intentional.\n",
+        "createdAt": "2026-08-22T20:30:05Z",
+        "drained_at": "2026-08-22T20:47:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "cad8af3e88b344df84b0ccec27f86db9d178b2b8a0a9f0a35ead56718cd3873d",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-uuid-provenance-guard] WARN: docs/agent-memory/notebooks/tran-ngoc-bau.md — added heading line embeds a full session/coordination UUID: '## c132-peer · 2026-08-22T20:13-20:33Z (slot=tnb-audit; this session=2eaf4045-4099-4b03-a964-5bde7eb1b3d6; VN-date=2026-08-23)'. Per .claude/skills/notebook-write/SKILL.md AC-1 and feedback_agent_commits_session_uuid_into_notebook, a session id is a per-invocation coordination PARAMETER ONLY, never authored into a committed file — use a c<NNN> counter or a fixed source label instead. mode=warn (default warn; set GIT_NOTEBOOK_UUID_PROVENANCE_MODE=reject to hard-enforce once re-validated via scripts/audits/verify-notebook-uuid-provenance-gate.sh). Escape hatch: add 'notebook-uuid-lint-allow: <reason>' on this line if intentional.\n",
+        "createdAt": "2026-08-22T20:36:06Z",
+        "drained_at": "2026-08-22T20:47:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "db4521cfc229f8e332a9c9d3772ce4d0d9c2437934816263522167cf9d33301d",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: apps/mcp-server/src/__tests__/FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY.test.ts apps/mcp-server/src/domain/services/financial-reports/confidenceFinancialReasonBuilder.ts. actor=02594cce-7946-4d62-8d2f-586b9b883695 mode=warn escalated=true prior_warns=8 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-22T20:40:49Z",
+        "drained_at": "2026-08-22T20:47:26Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e2bfdc4a050cac9eb91f2f85970363c9d543fb80875704f8d2efe0a93b6b5848",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-22T20:24:10Z",
+          "matched_slots": [
+            "tnb-audit"
+          ],
+          "won_slots": [
+            "tnb-audit"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/tran-ngoc-bau/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "weekend",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "tnb-audit": "cron"
+          },
+          "cadence_minutes": {
+            "tnb-audit": null
+          },
+          "last_fired_timestamp": "2026-08-22T20:23:55Z",
+          "last_fired_slots": [
+            "tnb-audit"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "20:15",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 31,
+          "note": "Single guaranteed slot (tnb-audit, cron-due) — 1-slot single batch, MAX_PARALLEL=4 (non-degraded, headroom=3337MB, load=4/24), no inter-batch wait needed (only/last batch). Step 5.3 off-flow check deferred until spawn completion notification."
+        },
+        "createdAt": "2026-08-22T20:24:10Z",
+        "drained_at": "2026-08-22T20:47:26Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
