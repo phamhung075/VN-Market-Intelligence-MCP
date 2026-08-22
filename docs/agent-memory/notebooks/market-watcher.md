@@ -1,26 +1,25 @@
 # Market Watcher — Notebook
-**Last updated:** 2026-08-15 08:11 UTC | **Sprint:** market-watcher-offhours
+**Last updated:** 2026-08-22 20:09 UTC | **Sprint:** 1968c
 
 ## Carry-over
 None
 
-## Cycle (08:11 UTC — offhours)
-- Market: CLOSED (outside 02:00–08:59 UTC); prices stale from 2026-08-14 08:59 UTC (23h+ old)
-- Stocks monitored: 34 | Anomalies: 0 (2.5σ offhours floor) | Chain confirms: 0
-- Regime: NEUTRAL | DXY: USD STABLE (24500 within band) | Gold: BULLISH (safe-haven, $2350) | Vol: ELEVATED (79th %-ile, rv_20d=23.82%)
-- ADL: −468 (declining breadth) | New lows: 23 (market pressure) | New highs: 0
-- AutoCure guard: no duplicates to suppress (same-closing-price suppression applied; no new moves detected)
+## Cycle (20:09 UTC — offhours)
+- Market: CLOSED (offhours mode) | Sweep: 3 tickers (DBC, DPM, KDC) | Anomalies: 0
+- Regime: NEUTRAL | DXY: USD_STRENGTHENING | US10Y: RISK-OFF (gold $4680/oz +5.24%)
+- Vol: NORMAL (41st %-ile, rv_20d=17.78%) | Breadth: ADL=-507 (weak) | New lows: 20
+- AutoCure guard: sweep tickers priced, no anomalies to emit (2.5σ offhours floor)
 
 ## Market Summary
-VN-Index 1729.08 (−36.55 intraday, −2.07% w/w). Market closed off-hours; all 34 watchlist tickers unchanged from market close 2026-08-14 08:59 UTC. Volatility elevated (rv_20d=23.82%, 79th percentile); breadth deteriorating with ADL falling to −468 (3-week rolling weakness). Momentum consensus weak (RS composite 48.6, below neutral). 52-week proximity shows 23 tickers at/near 52w lows, zero new highs — indicative of sustained downside pressure without relief rallies. Macro regime neutral; gold pricing (safe-haven spike to $2350) signals latent risk-off sentiment despite NEUTRAL investment clock. No price anomalies detected above 2.5σ threshold (offhours floor). No open chain findings (15-min window).
+Market closed off-hours; all 34 watchlist tickers unchanged. Volatility regime NORMAL (41st percentile); breadth weak with ADL=-507. Price-momentum factors show mixed signals: VIC/VNM momentum leaders (+0.61 roc, +0.27 roc), but breadth deteriorating (20 new lows, zero new highs). 52-week proximity: most tickers clustering near/at 52w lows. Macro: gold $4680 (+5.24%) signals risk-off; oil neutral $94.39; USD/VND bearish (VND weakening at 25930). Investment clock CORE_VN tier; yield CHEAP (8.2% EY > 5% SBV rate). Sweep tickers DBC (+3.46%), DPM (+1.83%), KDC (flat) priced; no moves exceed 2.5σ floor. No anomalies to signal. Coverage rotation triggered for 3 agriculture/staple tickers.
 
-## Metrics (cycle 2026-08-15 08:11 UTC)
+## Metrics (cycle 2026-08-22 20:09 UTC)
 | Field | Value |
 |---|---|
 | cycles_run | 1 |
-| items_fetched | 34 |
+| items_fetched | 3 |
 | signals_emitted | 0 |
 | signals_suppressed | 0 |
-| sweep_tickers_forced | 0 |
-| coverage_state_updated | no |
+| sweep_tickers_forced | 3 |
+| coverage_state_updated | pending |
 | exit_status | complete |
