@@ -1,6 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-15T13:25:57Z | **Cycle:** FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR (P0 S, stale review[] SECONDARY-Drain sign-off, dev-team dispatch)
+**Last updated:** 2026-08-22T17:52:00Z | **Cycle:** FIX-AUDITOR-DATA-TIER-NOTEBOOK-WRITE-PATH-UNWIRED (P0 S, cross-service/, ready[] direct pickup, session 02594cce)
+
+## Session 2026-08-22T17:52:00Z — FIX-AUDITOR-DATA-TIER-NOTEBOOK-WRITE-PATH-UNWIRED (cross-service/, developer, P0 S, ready[] direct pickup, session 02594cce)
+
+**Task:** AUDIT_TIER=DATA had no row in system-auditor's `main.md` §Tier Dispatch (L138-143) and was bound to no notebook-write actuator — DATA cycles hand-wrote the notebook freehand. Two live corrupting commits same day: `22039783e` (DATA sweep) EOF-appended its own section instead of prepending+pruning; `f25dc3d27` (Tier-1, inherited the corrupt file) then destroyed 4 retained sections and duplicated heading `c104`.
+
+**Fix:** (1) `main.md` — added a real `TIER=DATA` §Tier Dispatch row binding it to `notebook (gated) → RETURN`, matching every other tier; corrected the L130 extraction bullet. (2) Necessary corollary, same file: added `elif AUDIT_TIER == "DATA"` to §Step 0d (full-precision `FIRE_TICK`, no boundary — dedup is `db-integrity-probe.sh`'s own SKIP-SPAWN pre-gate) — without it a live DATA cycle would hit the Fail-loud FIRE_TICK guard's FATAL EXIT (regression, not a fix). (3) `cron-db-data-integrity.md` — one clause: notebook write is not hand-authored, main.md's gate/write run unchanged. `scripts/notebook-compose.sh` itself untouched (never the problem, 9/9 tested).
+
+**AC-3 data repair:** re-ran the real `scripts/notebook-compose.sh` actuator against `git show f25dc3d27^:...` (true pre-corruption parent) with the surviving Tier-1 section renumbered c104→c105, retention=3/cap=150 — reproduced this row's own `measured_evidence` replay exactly: `OK sections=3 dropped=3 lines=172`, retaining `c103`/`d4-auto` byte-identical.
+
+**AC-4** verified live: `grep AUDIT_TIER= .claude/commands/crons/*.md` → `{1,2,3,4,5,DATA}`, all now have a Tier Dispatch row. **AC-5** cannot close this cycle by construction (needs 3 real post-ship cycles incl. 1 DATA fire + a `git log --grep=notebook-compose` hit) — flagged on the board row for a later RAW-verify pass, not narrated as done.
+
+**Closeout:** 3 commits — `35be008d0` (notebook repair, separate+first per AC-3), `a7262f6e9` (main.md + cron doc), `cb255145d` (board `ready[]→review[]`, next_agent=qa). No `apps/` TS/Go touched — pure flow-doc + prompt-doc + notebook-data fix, `bun test`/`tsc` N/A. Graphify skipped (no Skill-tool binding, same structural gap as prior Task-tool-spawned cycles).
+
+---
 
 ## Session 2026-08-15T13:25:57Z — FIX-ORCHAPPLY-CONSERVATION-FLOOR-BLOCKS-SANCTIONED-PO-INBOX-DRAIN-CLEAR (cross-service/, developer, P0 S, review[] SECONDARY-Drain sign-off triage, session 632721c2)
 
@@ -33,19 +47,5 @@
 **Out of zone, not touched:** `docs/architecture/microservice/rag-service/infrastructure.md` still reads "currently `1g`" — that doc is dev-rag-service's sole-committer zone, left stale for that specialist to correct.
 
 **Closeout:** 3 commits — `4df192e05` (docker-compose.yml), `d52087319` (orch-state.json board move, authored by the peer cold-evict process per the race above, content mine), `e6c9d0b2b` (WORK.md one-liner). Decision journal S54 in `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md`. Graphify skipped — no Skill-tool binding this Task-tool spawn (structural gap, same class as prior sessions). No `apps/` TS/Go touched — `bun test`/`tsc` N/A. QA next (delivery-scope review only — AC-3/4/5 durability window is a separate future task).
-
----
-
-## Session 2026-08-15T10:05:00Z — FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK (docs/agents/fb-market-poster/ + scripts/, developer, P1 S, stale review[] row triage, router-direct dispatch, session 632721c2)
-
-**Task:** stale `review[]` row, QA CHANGES_REQUESTED. Original substance fix (`1b506cbdd`, Check-D2 non-waivable) confirmed by QA still live/correct — the ONLY problem: unrelated LATER commit `8d165e8d6` (agent-father main.md/daily.md split, 2026-08-06) relocated the entire STEP 4b block, including the Check-D2 NON-WAIVABLE marker + fix protocol, from `flow/main.md` into `flow/daily.md` verbatim. This task's own regression harness (`scripts/test-fb-gate-checkd2-nonwaivable.sh`) still hardcoded `MAIN_FLOW` at the pre-split `main.md` path (assertions 3b/3c) — false-RED (8/10) against live HEAD despite the real fix being intact.
-
-**Fix (test-pointer-only, no flow-doc change):** re-verified via grep that `daily.md:649-650,686-687` carries the NON-WAIVABLE marker + Check-D2 fix protocol + Check-C's own honest-gap-and-PROCEED waive language verbatim, and that `weekly-recap.md`/`weekly-prediction.md` already correctly point at `daily.md STEP 4b`. Repointed `MAIN_FLOW` (line 57) + the 2 assertion labels/comments at `docs/agents/fb-market-poster/flow/daily.md`.
-
-**Verify:** `bash scripts/test-fb-gate-checkd2-nonwaivable.sh` → 10/10 GREEN against live HEAD. `bash scripts/test-fb-gate-checkc-negation.sh` (sibling harness) → 6/6, no collateral damage.
-
-**Structural gap (recurring, same class as prior sessions):** this Task-tool spawn has `Read/Edit/Write/Bash` only — no `mcp__gateway__call_tool`/`mcp__semble__search` (both probed directly, both `No such tool available`). Per `feedback_local_cowork_subagents_gateway_blind`, used the documented Bash-transport fallback `scripts/agents-flow/mcp-call.sh` (direct JSON-RPC-over-curl to the vn-market endpoint) to run `task_claim`/`task_release` for `commit-mutex:main` — this specialist DOES need the commit-mutex here (direct-commit row, branch:null, no outer dispatcher holding a per-commit lock for this triage path) and it worked cleanly both times (claim/critical-section/release).
-
-**Closeout:** 2 commits, both pathspec-scoped and pushed — `c678ef57e` (script fix only) and `007b30077` (`orch-state.json` board row `review[]→qa[]` lane-move: status REVIEW→QA, owner=developer, next_agent=qa, `commit_sha` recorded, `status_note` documents the fix). Decision-journal entry appended to `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-7.md` (S53). No handoff file (flat `review[]` row, no PM decomposition, no task branch — router's own triage instruction is the spec).
 
 ---
