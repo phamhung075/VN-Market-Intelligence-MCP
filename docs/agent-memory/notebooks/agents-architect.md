@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-08-14T16:25:04Z
-
-**Brief:** `docs/architecture-briefs/2026-08-14-market-watcher-eod-offhours-notebook-collision.md`
-
-Router-dispatched (RAW-verified, not self-reported): `market-watcher-offhours` (`0 */4 * * *`) and `market-watcher-eod` (`0 16 * * 1-5`) structurally collide every weekday 16:00 UTC, both full-overwriting `docs/agent-memory/notebooks/market-watcher.md`. Independently re-confirmed this cycle: EOD's own 2026-08-14 notebook entry is permanently lost (git log's latest entry is offhours' own commit `23eed1755`); commit `6cfdfb227` (claims "EOD notebook") actually touched only `news-scout.md` — a bare `git_commit_retry` with no trailing pathspec swept a concurrent peer's change (RULE 2.5 / commit-mutex Step 2c violation, confirmed live in both `eod.md` Step D and `cycle.md`'s offhours self-commit). The existing 2026-08-06 `market-watcher-notebook:main` mutex only guards the git-commit step, not the raw `Write()`, so it can't prevent this. PRIMARY fix: generalize the already-shipped, proven CHEF same-tick mutex (`applyChefMutex`/`cowork-chef-mutex.js`, live since 2026-06-30) into a new sibling `applySupersedeMutex`, driven by a declarative `supersedes` field on the `market-watcher-eod` slot, wired into `cowork-match-slots.js`'s `finish()` — eliminates the double-spawn in-script, deterministically. SECONDARY fast-follow (router-flagged): add the missing trailing pathspec to both bare commit call sites — independent defect, exposes market-watcher commits to any concurrent peer. Rejected a split-notebook-file option (breaks a real single-file consumer, `fb-market-poster/flow/daily.md`) and a write-level-mutex-only option (OVERWRITE-class semantics mean it still loses content, just deterministically). Flagged alert-commander-market/critical as a same-shape but lower-severity (APPEND-class notebook) residual risk — awareness only, no action requested.
-
-**Signal dropped:** `docs/signals/2026-08-14-market-watcher-eod-offhours-notebook-collision.json` → agent-father
-
----
-
 ## 2026-08-14T19:01:07Z
 
 **Brief:** `docs/architecture-briefs/2026-08-14-auditor-write-plane-divergence-root-cause.md`
@@ -37,3 +27,13 @@ FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED (P0, PILOT system
 Router-dispatched: user's hand-authored defer note sat inert in the wrong file (`cron-detect-loop/register.md`, governs a different skill's 4 jobs). Root-caused the real bug: `cron-cowork-team/SKILL.md` Step 1a's fast path keys only on `owner_client_session`; two OS processes sharing one `$CLAUDE_CODE_SESSION_ID` (4 distinct `claude` processes confirmed live on this host via `ps` this session) both pass it and each independently local-`CronCreate`s, invisible to each other. Corrected the router's own evidence: `owner_session` is the MCP **server's** own process/boot diagnostic (`taskClaimTool.ts:25-30`), not a client-terminal discriminator — cannot resolve this; session-presence's "1 live row" is equally uninformative (per-session singleton by construction). New finding, flagged not fixed here: the same shared-UUID gap also defeats the P3 fire-election's RE-ENTRANT branch (leader-lock.md + dev-team + auditor tiers + router's own dispatch-claim hot path) — a double-dispatch correctness bug, recommended to PO as a separate follow-up given blast radius. Fix designed (agent-father's own `.md` zone, no MCP schema change): client-side `$PPID`+`lstart` fingerprint (empirically verified stable this session) stored in the existing marker's free-form payload, compared on Step 1a; mismatch → defer + WORK telegram, with a `heartbeat_at`-based self-heal so a genuinely-dead sibling doesn't permanently block re-arm. Rejected reintroducing the retired human "defer" convention as primary (would silently reverse P3's rationale) — kept as an explicit, narrowly-scoped fallback subsection instead.
 
 **Signal dropped:** `docs/signals/2026-08-15-cowork-cron-registration-sibling-process-defer.json` → agent-father
+
+---
+
+## 2026-08-22T16:20:35Z
+
+**Brief:** `docs/architecture-briefs/2026-08-22-cowork-detect-loop-flow-review.md`
+
+User-requested observe-and-report review (not a fix cycle): mermaid diagram + per-agent mechanics for the cowork-team dispatch loop and the anomaly-detection→dev-team-planning loop, plus a live correctness check. Confirmed the `signal_queue` junction hypothesis but scoped it (only `to==po` rows cross loops; `to∈{tnb,unified-agent,alert-commander}` stay inside cowork). Live-verified a real multi-day host-suspension backlog (3 undrained signal_queue rows, 7d-stale `.head`, no cowork-schedule fire since 08-15 — corroborated by system-auditor's own c104 notebook entry) and freshly-reclaimed cron-registration markers (~9min old at read time) whose underlying `CronList` entries I could not independently verify (no tool route). Found the guaranteed-slot launchd backstop is real and bridged the outage but never stamps `cowork-schedule.json.last_fired`, desyncing that field from reality; found a stale `TODO`-vs-`BACKLOG` doc contradiction in `anomaly-task-bridge/SKILL.md`; found an 8-day-unread signal addressed to this agent's own id re: Step 2.4 TTL. No wiring defects — nothing fixed, 2 small doc/script follow-ups recommended to agent-father, 2 more flagged to PO for awareness.
+
+**Signal dropped:** `docs/signals/2026-08-22-cowork-detect-loop-flow-review.json` → agent-father
