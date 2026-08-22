@@ -1,4 +1,4 @@
-<!-- size-justification: 227L — cap 120; UC-MDH-P3 added the Memory Prune Sweep section (script invocation + FLOW-vs-script signal_queue boundary, ~35L) which is tightly coupled to the adjacent Memory + State section it precedes; splitting into a child doc would orphan a 6-step sequential procedure that must run in one pass every scan. TE-T17 2026-07-23: added Notebook Line-Cap Sweep (script pointer, ~20L) — same every-scan cadence, precedes Memory + State for the same reason. TE-T33 2026-07-23: added Cold Archive Sweep (script pointer, ~26L) — internally monthly-guarded, same every-scan cron invocation pattern, precedes Memory + State for the same reason. CADRAT-3 2026-08-04: added Pre-Check gate (git diff --name-only HEAD~3..HEAD, ~10L) between Step 0b and Decision Tree — skips the DRY scan on cycles with zero src/ or apps/*/src/ changes, mirroring claude-manager-helper/flow/main.md's precedent; the 3 every-scan sweeps stay unconditional. -->
+<!-- size-justification: 227L — cap 120; UC-MDH-P3 added the Memory Prune Sweep section (script invocation + FLOW-vs-script signal_queue boundary, ~35L) which is tightly coupled to the adjacent Memory + State section it precedes; splitting into a child doc would orphan a 6-step sequential procedure that must run in one pass every scan. TE-T17 2026-07-23: added Notebook Line-Cap Sweep (script pointer, ~20L) — same every-scan cadence, precedes Memory + State for the same reason. TE-T33 2026-07-23: added Cold Archive Sweep (script pointer, ~26L) — internally monthly-guarded, same every-scan cron invocation pattern, precedes Memory + State for the same reason. CADRAT-3 2026-08-04: added Pre-Check gate (git diff --name-only HEAD~3..HEAD, ~10L) between Step 0b and Decision Tree — skips the DRY scan on cycles with zero src/ or apps/*/src/ changes, mirroring claude-manager-helper/flow/main.md's precedent; the 3 every-scan sweeps stay unconditional. 2026-08-22 (router relay, same shape as CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT's digest-predict fix, commit 0225479e0): corrected Memory + State's notebook-write from mislabeled "(OVERWRITE)" + invisible `### Scan NNN` template to the AC-6-canonical APPEND class (dated `## ` section/cycle) + RETIRED note explaining the root cause (~21L net) — doc-fix only, notebook itself (`## 2026-08 Sessions` + `### Session N` history) not touched, archive-split tracked separately. -->
 
 # Code Janitor — Main Flow
 
@@ -180,11 +180,34 @@ the notebook commit below.
 ---
 
 ## Memory + State (every scan)
-- **Notebook write** → skill: `.claude/skills/notebook-write/SKILL.md` (OVERWRITE). Body template for this agent:
+- **Notebook write** — APPEND class (per AC-6 canonical table — `code-janitor` is NOT an
+  OVERWRITE agent) → skill: `.claude/skills/notebook-write/SKILL.md` (AC-1 dated `## `
+  section; AC-2 3-section retention; AC-3 settled-write; AC-5 gate; AC-4 blank-state
+  fallback). Body template for this agent — level-2 `## ` heading, ≤60L (`### Scan NNN`
+  used previously is INVISIBLE to `notebook-auto-prune.sh`'s `^## ` boundary parser —
+  never use `### ` for this heading):
 ```
-### Scan NNN (HH:MM–HH:MM)
+## <YYYY-MM-DD>T<HH:MM>Z Scan NNN
 - Checks: [which] | Findings: N new, M recurrent | Action: shipped X | backlog Y | clean
 ```
+**RETIRED (this was the flow-doc-contradiction root cause, same shape as
+CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT's digest-predict fix — do not
+reproduce):** this section previously said "(OVERWRITE)" and templated a `### Scan NNN`
+sub-heading, and cycles through 2026-08-22 in practice appended a `### Session NN (...)`
+sub-heading under ONE permanent, undated `## 2026-08 Sessions` heading instead of opening a
+`## ` section per cycle. An undated heading sorts to the pruner's MAX sentinel key —
+permanently exempt from drop-oldest selection yet still byte-counted, so `section_count`
+stayed pinned at 1 while the file kept growing byte-for-byte (confirmed live in this agent's
+own Notebook Line-Cap Sweep log above, e.g. Session 59: "dev-rag-service.md 127L/23244B ...
+0 pruned (safe-fail: unparseable or single-section constraint)" — `code-janitor.md` itself
+hit the same 194L/15662B-and-climbing state in the 2026-08-15 sweep before this fix).
+`notebook-linecap-sweep.sh` could only safe-fail (`notebook_single_section_overage_breach`,
+no truncation — correct hook behavior, not a hook defect) on a file shaped like this. Every
+cycle forward opens its OWN `## ` section per the template above. Migrating existing history
+(`## 2026-08 Sessions` + its `### Session N` sub-blocks) to
+`docs/agent-memory/notebooks/archive/code-janitor-*.md` is separate, tracked work — not done
+from this flow (see notebook-write SKILL AC-2a for the archive-then-drop pattern).
+
 - **Commit notebook**:
 **Commit (pathspec-scoped)** — code-janitor is invoked by cron (not dispatcher), so uses direct pathspec commit instead of commit-mutex (dispatcher-only per INV-GATEWAY-1):
 ```bash

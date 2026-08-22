@@ -1,4 +1,4 @@
-<!-- size-justification: 124L — thin pointer + pilot enforcement content (Language Mode, Smoke Checks, G12 DoD, Security Clause, Fence Rules, Pre-Revert Tag Protocol, References); identical structure to dev-macro-indicators — schedule for split when rag-service pilot reaches Phase 2 (same pass as macro/TA S4) -->
+<!-- size-justification: 152L (was 124L) — thin pointer + pilot enforcement content (Language Mode, Smoke Checks, G12 DoD, Security Clause, Fence Rules, Pre-Revert Tag Protocol, References); identical structure to dev-macro-indicators — schedule for split when rag-service pilot reaches Phase 2 (same pass as macro/TA S4). 2026-08-22 (router relay, same shape as CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT's digest-predict fix, commit 0225479e0): added "Notebook Write (override)" section (~28L) — the shared microservice-main.md pointer this agent inherits carries no per-agent section template, so this agent's notebook drifted to an OVERWRITE-shaped `## Working Memory` + dated `### ` sub-heading, pinning section_count at 1 forever; section makes the AC-6 APPEND-class dated-`## `-per-cycle convention explicit for this agent. Doc-fix only, notebook itself not touched. -->
 # dev-rag-service — Main (Pointer)
 
 **Zone:** `apps/rag-service/`
@@ -106,6 +106,34 @@ NOTE: SI-4 Python-fence design must land before G4 AC can be locked (mirrors SI-
 | Before bug injection commit (G10) | `rag-pre-inject` | P2-D2 commit |
 
 Create with: `git tag rag-pre-<name> HEAD` — NO `--force`, NO push.
+
+---
+
+## Notebook Write (override — AC-6 APPEND class)
+
+The shared flow (`docs/agents/developer/flow/microservice-main.md` "End-of-cycle notebook
+write") only points generically at `.claude/skills/notebook-write/SKILL.md` with
+`<agent-id>` substitution — it carries no per-agent section template. `dev-rag-service` is
+listed APPEND class in the notebook-write SKILL's AC-6 canonical table (not OVERWRITE), so
+every cycle MUST open its own dated level-2 `## ` section:
+```
+## <YYYY-MM-DD>T<HH:MM>Z <task-slug or "cycle">
+- Zone health: [metric/observation] | Files: [changed] | Tests: N pass | Notes: [summary]
+```
+**RETIRED (root cause of the recurring over-cap safe-fail on this notebook — same shape as
+CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT, do not reproduce):**
+`docs/agent-memory/notebooks/dev-rag-service.md` has in practice appended a dated
+`### YYYY-MM-DD — <slug>` sub-heading under ONE permanent, undated `## Working Memory`
+heading every cycle instead of opening a `## ` section per cycle. An undated heading sorts
+to `notebook-auto-prune.sh`'s MAX sentinel key — permanently exempt from drop-oldest
+selection yet still byte-counted, so `section_count` stayed pinned at 1 while the file kept
+growing (confirmed live: flagged over-cap at 127L/23244B in code-janitor's own Notebook
+Line-Cap Sweep, safe-fail `notebook_single_section_overage_breach` — no truncation, correct
+hook behavior given the shape, not a hook defect). Every cycle forward opens its OWN `## `
+section per the template above. Migrating existing history (`## Working Memory` + its
+`### ` sub-blocks) to `docs/agent-memory/notebooks/archive/dev-rag-service-*.md` is separate,
+tracked work — not done from this flow (see notebook-write SKILL AC-2a for the
+archive-then-drop pattern).
 
 ---
 

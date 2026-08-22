@@ -105,3 +105,40 @@ during today's triage and declined to arbitrate itself — correctly, per PO's o
   touched, `docs/policies/dev-standards.md` handed off (see bullet above) rather than self-committed
   out-of-zone. Committed directly per the task's own "lighter-weight, sufficient resolution"
   allowance.
+
+## FIX 2026-08-22T19:54Z — FIX-NOTEBOOKWRITE-AC6-FLOWDOC-CONTRADICTION-CODEJANITOR-DEVRAGSERVICE
+
+Router-dispatched directly (developer-surfaced finding during today's digest-predict fix, no
+board row; same flow-doc-contradiction pattern as the two prior entries above).
+
+- Read `.claude/skills/notebook-write/SKILL.md` AC-6 fresh: canonical table lists both
+  `code-janitor` and `dev-rag-service` under APPEND class (not OVERWRITE).
+- **`docs/agents/code-janitor/flow/main.md`:** its "Memory + State" section explicitly said
+  "(OVERWRITE)" and templated a `### Scan NNN` sub-heading — contradicts AC-6. Verified live in
+  `docs/agent-memory/notebooks/code-janitor.md`: exactly this shape, ONE permanent undated
+  `## 2026-08 Sessions` heading with `### Session N` sub-headings appended every cycle since at
+  least 2026-05-21 — same section_count-pinned-at-1 root cause as the digest-predict fix just
+  landed this session (commit 0225479e0). Corrected the section to APPEND class: dated `## `
+  heading per cycle template + RETIRED note. Notebook itself NOT touched (in scope per task —
+  manual archive-split is separate work, same as digest-predict's own RETIRED note says).
+- **`docs/agents/dev-rag-service/flow/main.md`:** pointer file carried no explicit section
+  template at all — inherits a generic notebook-write pointer from
+  `docs/agents/developer/flow/microservice-main.md` (shared by all 9 dev-* zone agents), which
+  itself has no per-agent template. Verified live in `docs/agent-memory/notebooks/dev-rag-service.md`:
+  same bug shape — ONE permanent undated `## Working Memory` heading with dated `### ` sub-blocks,
+  confirmed over-cap (127L/23244B) and safe-failing in code-janitor's own Notebook Line-Cap Sweep
+  log (`notebook_single_section_overage_breach`). Added a new "Notebook Write (override)" section
+  to the pointer file making the AC-6 APPEND-class dated-`## `-per-cycle convention explicit,
+  since the shared flow it inherits from doesn't carry one. Notebook itself NOT touched.
+- **Not fixed here (flagged, out of scope):** the other 7 thin-pointer dev-* agents sharing
+  `microservice-main.md` (dev-stock-price, dev-technical-analysis, dev-macro-indicators,
+  dev-mcp-server, dev-kinh-dich, dev-alert-engine, dev-api-gateway, dev-pdf-extractor) carry the
+  same generic-pointer gap as dev-rag-service did — none has been spot-checked for the same
+  single-section notebook shape; `dev-team.md` notebook was also flagged over-cap in the same
+  janitor sweep log line and is a candidate for the identical fix. Also noted but NOT touched
+  (out of my commit zone / not this task): `microservice-main.md:142` hardcodes
+  `docs/agent-memory/notebooks/developer.md` in its "Commit notebook" step for ALL 9 dev-*
+  consumers instead of the per-agent `<agent-id>` path — a separate latent bug, not part of this
+  AC-6 classification fix.
+- Both fixes are doc-only, within `docs/agents/` commit zone. No board row minted (router relay,
+  not a task-board dispatch). Committed directly.
