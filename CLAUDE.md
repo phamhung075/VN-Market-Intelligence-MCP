@@ -4,17 +4,10 @@ Main terminal = router only. Never implement directly. Always delegate.
 ## BEFORE spawning any agent — MANDATORY
 1. Read `.claude/skills/dispatch/SKILL.md` dispatch table
 2. Match user intent → correct agent type
-2.5 PRE-CLAIM — run Step 0a (session-presence) + Phase A (orphan-adoption, N_MAX configurable) + Phase A.5 (presence roster, advisory) + Step 2.4 (cowork-slot collision probe, cowork-slot agents only) + Phase B (claim gate) per `.claude/skills/dispatch-claim/CARD.md` (hot path; full spec in sibling SKILL.md).
-     Phase B claim: `task_claim(task_id="intent:<agent>:<intent-key>", task_kind="intent", owner_agent="<agent>", owner_client_session=$CLAUDE_CODE_SESSION_ID, ttl_seconds=600, payload='{"site":"router","intent":"<intent-key>"}')`
-
-     | Outcome | Condition | Action |
-     |---|---|---|
-     | Claimed | `claimed:true` | Spawn inside try/finally → `task_release` |
-     | Re-entrant (same session) | `claimed:false` + `current_holder.owner_client_session == $CLAUDE_CODE_SESSION_ID` | `task_heartbeat` → proceed to spawn (do NOT exit) |
-     | Peer collision | `claimed:false` + `current_holder.owner_client_session != $CLAUDE_CODE_SESSION_ID` | log `"[router] PRE-CLAIM collision <task_id> — held by peer session"` → `send_telegram(channel="work")` → EXIT |
+2.5 PRE-CLAIM — Step 0a (session-presence) + Phase A (orphan-adoption) + Phase A.5 (presence roster) + Step 2.4 (cowork-slot collision probe, cowork-slot agents only) + Phase B (claim gate) per `.claude/skills/dispatch-claim/CARD.md`.
+     Full claim call + claimed/re-entrant/peer-collision outcomes: CARD.md (hot path); full spec: sibling SKILL.md.
 3. Spawn that agent with `run docs/agents/<agent>/flow/main.md`
    (pass `$CLAUDE_CODE_SESSION_ID` in spawn prompt as coordination parameter)
-   `finally: task_release("intent:<agent>:<intent-key>")`
 
 **NEVER guess an agent type. NEVER spawn `general-purpose` or `claude` for dev intents.**
 **NEVER run a flow file yourself — spawn the correct agent to run it.**
