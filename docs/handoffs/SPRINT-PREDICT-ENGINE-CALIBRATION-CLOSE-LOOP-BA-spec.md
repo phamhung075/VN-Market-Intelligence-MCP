@@ -297,3 +297,160 @@ above — not a business decision requiring PO.
   reported alongside the old numbers as a directional sanity-check + no-regression gate — explicitly
   NOT a statistical certification (n=17 too small).
 - **AC-6** → NFR-2: 1121/1127/1128/1129/1173/1392 stay green (+ BA-added 1118/1116/1117/1124/1194 check).
+
+---
+
+## [Architect] Brownfield Findings
+
+**Zone:** `apps/mcp-server/` (single zone — confirmed Tier-1 explicit, `task_board` row already carries `zone: "apps/mcp-server/"` and a `files[]` list that is 100% inside this zone; no split needed).
+
+**BUILD-STANDARD:** `not-applicable` — bug-fix/refactor in an existing service, no new primitives, no new microservice.
+
+### Verified paths (read at source, 2026-08-22)
+
+- `apps/mcp-server/src/scheduler/news-analysis/evidenceAccumulatorJob.ts:18-27` (imports), `:94-119` (per-direction score loop + `avg()`) — confirmed D1: `likelihoodRatioStore` absent from import list, `avg(values) = sum/values.length` with raw `magnitude*confidence` only.
+- `apps/mcp-server/src/scheduler/macro/calibrationReportJob.ts:195-233` (`computeCalibrationCurve`, bucket formula `Math.min(9, Math.floor(c.confidence*10))` at `:208`, midpoint at `:224`), `:494-524` (steps 6-9, snapshot insert) — confirmed D2: zero `likelihood` references, terminates at `insertCalibrationSnapshot`/`sendCalibrationDigest`.
+- `apps/mcp-server/src/infrastructure/db/likelihoodRatioStore.ts:122-144` (`getLikelihoodRatios`, plural, **no try/catch**), `:161-185` (`getLikelihoodRatio`, singular, **has** a defensive `try { } catch { return 1.0 }` with the comment "never throw even if table is missing in some edge case") — asymmetry confirmed: the plural read (needed for FR-1/horizon-selection) has no such guard today.
+- `apps/mcp-server/src/infrastructure/db/evidenceFragmentStore.ts:269-291` (`getLatestEvidenceScore`, unbounded `ORDER BY score_date DESC LIMIT 1`) — **zero other callers** in the codebase besides `evidenceTools.ts:192` and its own test file (verified via grep) — safe to extend without a wider blast radius.
+- `apps/mcp-server/src/interface/mcp/tools/macro/evidenceTools.ts:174-182` (tool docstring, "at most 23 hours stale"), `:214-222` (live fragment SELECT), `:249-290` (inline horizon-selection duplicate of the algorithm BA wants shared).
+- `apps/mcp-server/src/domain/services/baseRateComputer.ts` (full file, 123L) — existing DDD-pure precedent: header docstring at `:6-9` states "MUST NOT import from src/infrastructure/... only non-domain import allowed is `bun:sqlite` (type-only)". Existing exports: `computeRollingBaseRate`, `computeBrierScore`, `clampLikelihoodRatio` (`:120-122`).
+- `apps/mcp-server/src/infrastructure/db/schema-system.ts:1-20` (table inventory header comment), `:170-183` (`evidence_likelihood_ratios` DDL — the shape to mirror), `:234-251` (`calibration_snapshots` DDL).
+- `docs/agents/digest-predict/flow/daily-predict.md:25` (unconditional TIGHTENING haircut), `:28-32` (P-0 self-assessment, conditional `*0.90`), `:50-51` (P-3 parses `bullish_score/bearish_score/neutral_score, likelihood ratios` as free text), `:60-72` (P-5, `score * top_likelihood_ratio`), `:192` (P-8 WORK narrative "-10%").
+- Test fixtures (own local DDL, do **not** import `schema-system.ts`): `apps/mcp-server/src/__tests__/1118-evidence-accumulator-job.test.ts:21-49` (`createEvidenceSchema()` creates `evidence_fragments`+`evidence_scores` only — **no `evidence_likelihood_ratios` table at all**), `apps/mcp-server/src/__tests__/1128-calibration-report-job.test.ts:49-101` (creates `prediction_claims`/`calibration_snapshots`/`cron_job_runs`/`market_messages` only — **no correction-factor table**).
+
+### Reuse patterns (extend, never duplicate)
+
+- `baseRateComputer.ts` is the ONE existing domain-pure module for this feature area (confirmed by its own docstring + BA's DDD table naming it as candidate location for FR-1's math AND FR-3's shrinkage). **Extend this single file** with 4 new pure functions rather than fragmenting into new domain files — consistent with "always_extend_not_duplicate."
+- `likelihoodRatioStore.ts`'s existing `clampLikelihoodRatio`-adjacent guard pattern (neutral-prior-below-min-sample, `[0.1, 5.0]` clamp) is reused **verbatim** for FR-2's new correction-factor store — same shape, same constants, not reinvented.
+- `evidenceFragmentStore.ts`'s `purgeExpiredFragments` already establishes the precedent of a "maintenance helper" pure-ish function living beside the CRUD helpers in the same infra file — FR-4's new `isScoreStale` helper follows that precedent rather than opening a new file.
+- The confidence-bucket formula (`Math.min(9, Math.floor(x*10))` → midpoint) exists today in exactly ONE place (`calibrationReportJob.ts`, confirmed via grep — no other copy). Extracting it now to a shared function *pre-empts* a second independently-drifting copy before FR-2/FR-3 would otherwise create one, applying the same "one shared helper" principle BA asked for on FR-1's horizon-selection algorithm.
+
+### Design decisions — the ONE pipeline (answers BA's "single most important design decision" ask)
+
+**Exact order of operations, single choke point at `get_evidence_summary`:**
+
+1. **Write time — nightly `evidenceAccumulatorJob`, FR-1.** Per fragment: `contribution = magnitude * confidence * likelihoodRatio`, where `likelihoodRatio` comes from the NEW shared `selectLikelihoodRatio()` (see below) fed by `getLikelihoodRatios(db, evidence_type, direction)` (existing, already horizon-ASC-ordered). `evidence_scores.{direction}_score = sum(contribution) / count` — same normalisation divisor as today, only the numerator changes. This is where the acceptance identity `(0.4224+0.1800)/2 == 0.3012` stops holding (a seeded LR row with `sample_size>=10` and `likelihood_ratio != 1.0` changes the numerator).
+2. **Read time — `get_evidence_summary`, on every call, FR-3 then FR-2:**
+   a. `rawScore` = `evidence_scores.{direction}` (already FR-1-weighted).
+   b. `minLrSampleSize` = the **minimum** `sampleSize` across the top-5 contributing fragments' own `selectLikelihoodRatio()` result for that direction (weakest-link, conservative — one untested fragment among several well-sampled ones still forces caution; this is reused from the SAME per-fragment selection call already made for the existing TRUSTED/UNTRUSTED display line — zero extra DB round-trips).
+   c. `shrunkScore = computeConfidenceShrinkage(rawScore, fragmentCount, minLrSampleSize, regime?)` — FR-3.
+   d. `bucketMidpoint = confidenceBucketMidpoint(shrunkScore)` — same shared formula as `calibrationReportJob`'s curve bucketing.
+   e. `correctionFactor = calibrationCorrectionStore.getCorrectionFactor(db, bucketMidpoint)` (defaults `1.0` if no row yet — cold start, zero regression) — FR-2.
+   f. `publishedProbability = clamp(shrunkScore * correctionFactor, 0.05, 0.95)` — **final clamp, last step, once.**
+3. `create_prediction_claim`'s `probability` param is unchanged code-wise — the AGENT now copies `published_probability_{direction}` verbatim from `get_evidence_summary`'s text output instead of computing `score * top_likelihood_ratio` itself (FR-5 retirement) or applying a flat `*0.90` (FR-3 retirement). No arithmetic left in the agent prompt — satisfies NFR-3.
+
+This composes each correction exactly once, in one place, in the order BA specified (`LR-weighted score → shrinkage → calibration correction → final clamp`), and gives QA one function call chain to unit-test instead of three independently-verified-but-possibly-compounding pieces.
+
+**FR-1 — shared LR-selection helper (new, domain-pure).**
+Add to `baseRateComputer.ts`:
+```ts
+export interface RatioCandidate {          // structural type — NOT imported from infra;
+  likelihood_ratio: number;                // LikelihoodRatioRow[] satisfies this by structural
+  sample_size: number;                     // typing (TS excess-property checks only apply to
+  horizon_days: number;                     // object literals, not passed variables) — zero infra coupling.
+}
+export function selectLikelihoodRatio(candidates: RatioCandidate[]): {
+  likelihoodRatio: number; trusted: boolean; sampleSize: number; horizonDays: number | null;
+}
+```
+Body = the EXACT selection algorithm already inlined at `evidenceTools.ts:249-290` (prefer shortest-horizon `sample_size>=10` row; else largest-`sample_size` honest-UNTRUSTED; never blend). Both `evidenceAccumulatorJob.ts` (new caller) and `evidenceTools.ts` (refactored existing caller) call this ONE function — no more risk of the two copies drifting. `evidenceAccumulatorJob.ts` fetches `getLikelihoodRatios(db, evidence_type, direction)` once per `(evidence_type,direction)` pair per stock (cache in a `Map` keyed by `${evidence_type}|${direction}` inside the per-stock fragment loop — avoids N redundant identical queries for repeated evidence types).
+
+**Regression-risk finding NOT flagged by BA (architect-found, sharper than BA's note):** BA's spec says the 1118 test's exact-value assertions "likely continue to pass unchanged" under the neutral-prior guard. That is only true if the LR read does not throw. `getLikelihoodRatios` (**plural**, no try/catch) will THROW `no such table: evidence_likelihood_ratios` against `1118-evidence-accumulator-job.test.ts`'s own `createEvidenceSchema()` fixture, which never creates that table (confirmed above) — this breaks **every** test in the file with a hard SQL error, not just the exact-value ones. **Fix (small, root-cause, benefits existing callers too):** add the SAME defensive `try { } catch { return [] }` to `getLikelihoodRatios` that `getLikelihoodRatio` (singular) already has — mirrors an established pattern in the same file, and also retroactively hardens `evidenceTools.ts`'s existing (currently unguarded) call site against the identical missing-table edge case in production. With this fix, the 1118 fixture's missing table degrades to "no rows → neutral 1.0" exactly as BA predicted, rather than crashing. dev-mcp-server should STILL update the 1118 fixture to create the real table and seed a `sample_size>=10, ratio!=1.0` row for a genuine positive-path test (BA's own ask, still needed) — the store-layer fix is a safety net, not a substitute for that test.
+
+**FR-2 — new store, direction-agnostic, confidence-bucket-keyed (architect's schema call, per BA's explicit delegation).**
+
+New file `apps/mcp-server/src/infrastructure/db/calibrationCorrectionStore.ts`, mirroring `likelihoodRatioStore.ts` 1:1 (upsert/get/getAll, same neutral-prior + clamp guard shape). New table in `schema-system.ts` (add to the header inventory comment too):
+```sql
+CREATE TABLE IF NOT EXISTS calibration_correction_factors (
+  id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+  confidence_bucket  REAL NOT NULL,             -- bucket_midpoint: 0.05..0.95, same 10 buckets as calibration_curve
+  correction_factor  REAL NOT NULL DEFAULT 1.0, -- multiplicative; 1.0 = neutral (cold start / sample_size<10)
+  sample_size        INTEGER NOT NULL DEFAULT 0,-- the calibration_curve bucket's own sample_size at write time
+  source_snapshot_id INTEGER NOT NULL,          -- calibration_snapshots.id that produced this row (traceability)
+  last_updated       TEXT NOT NULL,
+  UNIQUE(confidence_bucket)
+)
+```
+**Why direction is NOT part of the key (explicit design call, not an oversight):** BA's spec allows "keyed by direction and/or confidence bucket." Cross-tabbing by direction would split n=17 into even thinner per-(direction,bucket) cells than the already-thin n=3 extreme buckets po's Entry 7 explicitly warned against over-fitting. Keying by confidence-bucket ONLY reuses `computeCalibrationCurve`'s EXISTING output verbatim (zero new statistical surface, zero new query) and directly targets the artifact po's Entry 1 named as decisive ("the calibration curve... monotonically anti-calibrated"). Per-direction correction is left as a documented non-goal for this sprint, not silently dropped.
+
+`computeCorrectionFactor(actualHitRate, bucketMidpoint, sampleSize, minSample=10): number` (new, `baseRateComputer.ts`): `sampleSize < minSample → 1.0` (same `MIN_SAMPLE=10` constant reused system-wide, not a new invented number); else `clampLikelihoodRatio(actualHitRate / bucketMidpoint)` — **literal reuse** of the existing clamp function (same `[0.1, 5.0]` bounds already exported), not a new duplicate clamp. Given the current n=17/n=3-per-extreme-bucket reality, EVERY bucket ships `correction_factor=1.0` today (neutral) — the mechanism is wired, not pre-tuned, satisfying the no-backtest-certification constraint directly: nothing is "fit" off this sample, the pipe is simply open for when volume grows.
+
+**Write path (`calibrationReportJob.ts`), new Step 6.5** (between existing step 6 `computeCalibrationCurve` and step 7 `trend_delta`, same weekly cron, zero new schedule): for each `calibration_curve` bucket, `upsertCorrectionFactor(db, { confidence_bucket: bucket.bucket_midpoint, correction_factor: computeCorrectionFactor(bucket.actual_hit_rate, bucket.bucket_midpoint, bucket.sample_size), sample_size: bucket.sample_size, source_snapshot_id: snapshotId })`. **No change to `CalibrationJobResult`'s shape** — this is a pure side-effect write, keeping the blast radius on the 5 existing green suites (1127/1128/1129/1173/1392) to "one new table must exist in their fixtures," not "the return contract changed."
+
+**Regression-risk finding (architect-found):** `1128-calibration-report-job.test.ts` defines its OWN local schema (lines 49-101, confirmed above) — it does not import `schema-system.ts`. Step 6.5's new `upsertCorrectionFactor` write will throw `no such table` against this fixture the moment it lands. Unlike the FR-1 read-path case above, this is a WRITE — it must NOT be silently swallowed (that would hide a real regression), so the fix here is fixture-side only: dev-mcp-server MUST add the `calibration_correction_factors` DDL to this test file's local schema block. Flagging explicitly so it is not missed as "just a new file, no existing test touches it."
+
+**FR-3 — shrinkage function (new, domain-pure, `baseRateComputer.ts`).**
+```ts
+export function computeConfidenceShrinkage(
+  rawScore: number, fragmentCount: number, minLrSampleSize: number,
+  regime?: "TIGHTENING" | "EASING" | "NEUTRAL",
+): number {
+  const FULL_TRUST_FRAGMENTS = 5;   // reuses the existing "top 5 fragments" constant already
+                                     // surfaced by get_evidence_summary — not a new invented number
+  const FULL_TRUST_SAMPLE = 10;     // SAME MIN_SAMPLE constant used everywhere else in this system
+  let weight = Math.min(1, fragmentCount / FULL_TRUST_FRAGMENTS)
+             * Math.min(1, minLrSampleSize / FULL_TRUST_SAMPLE);
+  if (regime === "TIGHTENING") weight *= 0.9;  // relocates the EXISTING daily-predict.md:25
+                                                 // "-10%" constant into the one pipeline stage —
+                                                 // continuity of existing accepted behavior, not a new number
+  return 0.5 + (rawScore - 0.5) * weight;
+}
+```
+Multiplicative composition of "fragment count strength" × "LR sample-size strength" means BOTH must be adequate to escape shrinkage — directly satisfies "thin evidence in EITHER dimension ⇒ strong shrinkage." Worked example (po's VPB 2-fragment, untrusted-LR case): `fragmentCount=2, minLrSampleSize=0` → `weight = 0.4 * 0 = 0` → `shrunkScore = 0.5` exactly — a raw 0.95 score collapses fully to neutral, unconditionally satisfying AC-3 ("no bucket may ship at 95% off a 2-fragment score") regardless of how the calibration-factor step (2e above) subsequently behaves.
+
+**`regime` parameter — explicit scope-expansion flag for PM/QA visibility.** FR-3's spec text mandates retiring BOTH `daily-predict.md:25` (TIGHTENING) and `:30` (degrading-calibration) sites "once the code-side shrinkage function supplies its output." Line 30's function is a strict-superset replacement (evidence-based shrinkage + calibration correction do its job properly). Line 25's TIGHTENING signal is a DIFFERENT, macro-regime input, not derived from evidence/calibration data — retiring it without a replacement would silently drop an accepted existing behavior; leaving it as a bespoke agent-prompt multiplier re-opens the exact "parallel/duplicate correction" anti-pattern this sprint closes. Architect's call: fold `regime` as an OPTIONAL parameter into `get_evidence_summary`'s Zod schema (`z.enum(["TIGHTENING","EASING","NEUTRAL"]).optional()`), threaded straight through to `computeConfidenceShrinkage` — the agent still does zero arithmetic, only passes through a string it already parsed from `get_macro_snapshot` in its own bootstrap step. This is a genuine (small) MCP tool-contract change beyond the sprint's literal FR-1..5 text — called out here explicitly so PM/QA do not treat it as out-of-scope drift.
+
+**FR-4 — recency bound (new pure helper, `evidenceFragmentStore.ts`, matches BA's own DDD-layer assignment).**
+```ts
+export const MAX_SCORE_AGE_DAYS = 30;  // same 30-day window runEvidenceAccumulator/getEvidenceFragments
+                                          // already use — literal reuse, not a new invented bound, per BA's
+                                          // own recommendation + rationale
+export function isScoreStale(scoreDate: string, maxAgeDays = MAX_SCORE_AGE_DAYS, now = new Date()): boolean {
+  const ageMs = now.getTime() - new Date(scoreDate + "T00:00:00Z").getTime();
+  return ageMs > maxAgeDays * 24 * 60 * 60 * 1000;
+}
+```
+`getLatestEvidenceScore`'s own signature/query is UNCHANGED (zero blast radius on its 0-other-callers contract) — the caller (`get_evidence_summary`) checks `isScoreStale(scoreRow.score_date)` immediately after the fetch and, if true, returns the honest-degrade message EARLY (before the fragments SELECT / published-probability computation), e.g.: `"No fresh evidence for {ticker} — last score computed {score_date} ({ageDays}d ago), exceeds the {MAX_SCORE_AGE_DAYS}d freshness bound. Treat as unreliable."` — kept textually DISTINCT from the existing "(no fragments found)" (empty live-fragment SELECT, D4's other symptom) and "No evidence accumulated yet" (no `evidence_scores` row at all) messages, per BA's edge-case note — three distinguishable empty/degraded states, not collapsed into one. Docstring fix: replace "Data is at most 23 hours stale" with language describing the new honest-degrade behavior (no unconditional freshness guarantee).
+
+**SPIKE root-class verdict (folds `SPIKE-EVIDENCE-SCORE-CACHE-FRAGMENT-DECOUPLE`, per its own `question`):** root class is **(b) cache never recomputed/invalidated**, not (a) fragments-pruned-after-score-computed as a distinct failure. Mechanism: `runEvidenceAccumulator`'s stock enumeration (`SELECT DISTINCT stock FROM evidence_fragments WHERE timestamp >= 30d`) simply stops visiting a stock once ALL its fragments have expired — the `evidence_scores` row from the last day it WAS visited is never touched again, and `getLatestEvidenceScore`'s unbounded `ORDER BY ... LIMIT 1` then serves that frozen row forever. The recency bound above is the correct fix for this root class (an age-based reconciliation check against live fragment count, as the SPIKE's question posed as option "reconcile scoreRow.fragmentCount against the live SELECT," is a heavier alternative that would require a live COUNT query on every `get_evidence_summary` call — the age bound achieves the same honest-degrade outcome at zero extra query cost, reusing data already fetched).
+
+**FR-5 — retirement (docs-only, `daily-predict.md`).** Once `get_evidence_summary` returns `published_probability_{direction}` (step 2f above), P-5's `Probability: min(0.95, max(0.05, score * top_likelihood_ratio))` (line 62) is replaced by "read `published_probability_{direction}` directly — do not recompute." `top_likelihood_ratio` sourcing is dropped from the probability calculation (the per-fragment TRUSTED/UNTRUSTED display line stays — still useful diagnostic text, just no longer fed into a second manual multiply). P-0's `DAMPENING_ACTIVE` boolean is KEPT as a narrative/logging-only flag (still gates the P-8 WORK message text) but no longer performs its own arithmetic — both `daily-predict.md:25` and `:30` flat multipliers are deleted outright, not left dormant. P-8's "-10%" copy (`:192`) is corrected to describe server-side shrinkage instead of a fixed percentage (the actual shrink magnitude now varies per-ticker).
+
+### DDD layer assignment (final)
+
+| Component | Layer | File |
+|---|---|---|
+| `selectLikelihoodRatio`, `computeCorrectionFactor`, `computeConfidenceShrinkage`, `confidenceBucketMidpoint` | domain/services (pure, no infra imports) | `baseRateComputer.ts` (extended) |
+| LR-weighted score aggregation | scheduler | `evidenceAccumulatorJob.ts` |
+| Correction-factor write (Step 6.5) | scheduler | `calibrationReportJob.ts` |
+| `evidence_likelihood_ratios` plural-read hardening | infrastructure/db | `likelihoodRatioStore.ts` |
+| Recency-bound helper + constant | infrastructure/db | `evidenceFragmentStore.ts` |
+| New correction-factor store | infrastructure/db | `calibrationCorrectionStore.ts` (new) |
+| New table DDL | infrastructure/db | `schema-system.ts` |
+| Honest-degrade, published-probability assembly, `regime` param, docstring fix | interface/mcp | `evidenceTools.ts` |
+| Retire flat multipliers, consume `published_probability` | interface/agent-prompt | `docs/agents/digest-predict/flow/daily-predict.md` |
+
+### Test strategy (structural, per NFR-1 — no Brier/hit-rate certification)
+
+- **FR-1:** unit test on `selectLikelihoodRatio` (pure, table-free) covering TRUSTED/UNTRUSTED/no-rows cases (should be behaviorally IDENTICAL to the existing inline logic at `evidenceTools.ts:249-290` — the FR-1.1 regression tests at `1124-evidence-tools-phase-bc.test.ts:191-233` must still pass unchanged after the refactor, proving zero behavior drift from extraction). New `evidenceAccumulatorJob` test seeding a `sample_size>=10, ratio!=1.0` LR row to prove the weighted numerator changes (the arithmetic-identity assertion BA specified). Existing exact-value assertions (`toBeCloseTo(0.72,2)` etc.) stay green under the neutral-prior default, PROVIDED the `getLikelihoodRatios` hardening above lands first (or in the same commit).
+- **FR-2:** unit test on `computeCorrectionFactor` (pure): `sample_size<10→1.0`; `sample_size>=10` computes and clamps correctly. Integration test on `calibrationReportJob` confirming Step 6.5 upserts one row per non-empty curve bucket into the (fixture-added) `calibration_correction_factors` table, with `source_snapshot_id` matching the snapshot just inserted.
+- **FR-3:** unit tests on `computeConfidenceShrinkage` — the anti-DESC-flip-style explicit negative assertion here is: 2-fragment/untrusted-LR input MUST return exactly `0.5` (not merely "less than raw"), proving full shrinkage, not partial.
+- **FR-4:** unit tests on `isScoreStale` (boundary at exactly `MAX_SCORE_AGE_DAYS`, one day under/over). `get_evidence_summary` test: score older than bound → honest-degrade message, textually distinct from both the "(no fragments found)" and "No evidence accumulated yet" paths (3-way distinguishability assertion).
+- **FR-5:** no code test — verify via `daily-predict.md` diff review only (both flat-multiplier lines physically removed) at PM/QA review time.
+- **NFR-2 fixture updates required before FR-1/FR-2 land** (blocking, not optional): `1118-evidence-accumulator-job.test.ts`'s `createEvidenceSchema()` must gain the `evidence_likelihood_ratios` DDL; `1128-calibration-report-job.test.ts`'s local schema block must gain the `calibration_correction_factors` DDL. Both are hard prerequisites, not nice-to-haves — without them the respective job under test throws immediately on the new code path (mitigated for FR-1 only, by the `getLikelihoodRatios` hardening above; FR-2's write has no such safety net by design).
+
+### Risk flags
+
+- **Security/perf:** all new queries are parameterized (no string interpolation), consistent with existing store files. `evidenceAccumulatorJob`'s new per-fragment LR lookup is memoized per `(evidence_type,direction)` pair per stock to avoid N redundant identical queries — flagged so dev doesn't skip the cache and reintroduce an O(fragments) query-count regression on nightly cron duration.
+- **DDD violation avoided:** the 3 new domain functions use structural typing (`RatioCandidate` interface with only the 3 fields needed) specifically so `baseRateComputer.ts` does NOT gain an infra import even as a type — preserves the file's own documented invariant.
+- **Scope-expansion flag (surfaced, not hidden):** the `regime` parameter addition to `get_evidence_summary`'s MCP schema (FR-3's TIGHTENING-retirement requirement) is a genuine, small tool-contract change beyond the literal FR-1..5 file list — PM should note this when creating the dev-mcp-server task so QA's test plan includes it.
+- **No statistical refit performed or required** — `MIN_SAMPLE=10` gates BOTH FR-1's LR consumption and FR-2's correction factor identically, so at today's n=17 the system behaves IDENTICALLY to today except for the (already-required, sample-size-independent) FR-3 shrinkage and FR-4 recency bound — consistent with po's Entry 7 ruling and the sprint's no-backtest-certification constraint.
+
+**Scan clean:** true ✓
+
+## RETURN (architect)
+DONE: Technical design complete for FR-1..FR-5 (LR-weighted aggregation, weekly calibration→correction-factor feedback store, evidence-based confidence shrinkage replacing the flat multipliers, evidence-score recency bound + honest degrade, retirement of the redundant prompt-layer LR multiplier) — brownfield findings + full pipeline ordering + schema + 2 architect-found regression risks (missing `evidence_likelihood_ratios`/`calibration_correction_factors` tables in 2 test fixtures) written above.
+ZONE: apps/mcp-server/
+NEXT: pm | break design into atomic dev-mcp-server tasks per FR, in dependency order FR-4 (independent) → FR-1 (independent) → FR-3+FR-5 together (FR-5 depends on FR-1's `published_probability` existing) → FR-2 (independent of the others, but Step 6.5 lands alongside FR-3's `confidenceBucketMidpoint` extraction)
+HANDOFF: docs/handoffs/SPRINT-PREDICT-ENGINE-CALIBRATION-CLOSE-LOOP-BA-spec.md
+PIPELINE: continue
