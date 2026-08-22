@@ -1,6 +1,6 @@
 # System Auditor — Tier-1 Notebook
 
-## c104 · 2026-08-22T17:00Z
+## c105 · 2026-08-22T17:00Z
 
 ### Audit Run Tier-1 (Reactive spawn — A-30 discriminator re-verification)
 
@@ -150,30 +150,23 @@ Per tier1-probe.md §A-30 clause 4 (Verdict/reason mapping), the RAW-PROBE JSON 
 
 This shows **benign garbage collection sawtooth** — memory climbs to a peak (92.56%), reclamation dips bring it back down (to 78.58%), pattern repeats. This is normal, healthy behavior for a managed runtime (likely Python/Node.js GC cycles). The 91.47% baseline is high but within limits; the VmHWM pinned at cgroup limit is expected for a container using most of its allocated memory. No evidence of a crash-cliff (>40pp discontinuity), process death, or memory reclamation failure.
 
-**VERDICT: A-30 PASS** — System confirmed healthy. No memory pressure anomaly detected.
+## c103 · 2026-08-15T08:00Z
 
-**A-32 (Disk):** PASS — 45% capacity (< 85% threshold) [RAW-PROBE section]
+### Audit Run Tier-2
 
-**A-33 (Hook Enforcement Liveness):** PASS — assumed (no failures reported in Tier-1 scope)
+**Timestamp:** 2026-08-15T10:33:41Z
+**Duration:** ~3 min (wall time budget 300s)
+**Trigger:** Pre-gate stale-heartbeat detection. Tier-2 last-healthy at 2026-08-14T22:42:25Z is 708 minutes old (fresh threshold 480 min for 4h cadence).
 
-#### Overall Tier-1 Result: **ALL_GREEN**
+### Verdicts
+- **A-29 (Cron Fire Gap):** 8 STALE + 1 MISSED crons detected — **9 CRITICAL findings**
+- **B-01-B-14 (Data Freshness):** Aggregator idle (expected daily), VPS routes OK — **PARTIAL PASS**
+- **D-CYCLE-2 (Durability):** Missing Tier-2 cycle 2026-08-15T04:00Z detected (dedup-skip) — **1 WARN finding**
 
-System confirmed healthy this cycle. No anomalies. All 12 host_runtime_set services are UP, all health endpoints responding 200, no container restarts, memory pressure pattern is benign GC sawtooth (not crash-cliff), disk capacity normal.
+### Summary
+Tier-2 audit uncovered critical cron infrastructure degradation. Multiple system crons have stopped running (some 25+ hours overdue, others 600+ hours). Data fetch pipelines remain operational. Tier-2 cycle gap detected by durability sweep (Tier-2 heartbeat stale across 4-hour boundary).
 
-### Anomalies: 0 critical, 0 warn, 0 info
+### Anomalies: 9 critical, 1 warn, 0 info
 
-### RETURN
-
-- Tier-1 cycle completed 2026-08-22T17:11:41Z
-- AUDIT_TIER: 1 (runtime-ping probe only)
-- FIRE_TICK: 2026-08-22T17:00Z
-- Verdict: **ALL_GREEN** — System confirmed healthy
-- A-30 discriminator applied: **BENIGN SAWTOOTH** (not crash-cliff) — pre-gate mem_creep verdict corrected
-- Signals posted: 0
-- BUG channel alerts: 0
-- DASHBOARD rows: 0
-- Notebook: appended above
-- [DURABILITY-SWEEP] (stub — Tier-1 flow awaits implementation per FIX-AUDITOR-DURABILITY-STEP0B-DETECTION redispatch)
-- [HEARTBEAT] not written (Tier-1 subagent has no heartbeat-write path per CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER)
-- CONTRACT-CONTRADICTION: check=A-30 spec=tier1-probe.md:169-261=crash-cliff vs benign-sawtooth discriminator caller_value=mem_creep FAILURE resolution=SPEC_WINS
-- NEXT: system confirmed healthy; observation complete
+## d4-auto · 2026-08-15T03:00:02.348Z
+D4 candidates: none
