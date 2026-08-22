@@ -158,3 +158,55 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - vn-bctc-fetch service health issue appears recent (VPS proxy still healthy with idle BCTC)
 - Most data source freshness checks passing
 - DB integrity spot checks passing
+
+## c104 · 2026-08-22T12:41:30Z
+
+### Audit Run AUDIT_TIER=DATA
+
+**Timestamp:** 2026-08-22T12:41:30Z
+**Duration:** ~2 min
+**Trigger:** db-integrity-probe.sh verdict=SPAWN (2 watched tables changed since last snapshot)
+**Fleet Status:** Host was dark 4 days (last commit 2026-08-18), now 2026-08-22 — normal routine tick
+
+### Canonical Counts (db-integrity-counts.sh verbatim)
+
+- ohlc_violations_count: 336
+- scale_gt100x_count: 0
+- vnindex_cache_rows_count: 1
+- low_confidence_reports_count: 47
+- ohlc_violation_distinct_dates: 20 (2026-05-15 to 2026-06-12)
+
+### 17-Table Audit Summary
+
+**HEALTHY tables (11):** daily_ohlcv (779,988 rows, no fresh violations), market_prices (117, current), market_prices_history (1,205, current), vn_index_cache (1), alerts (475), agent_signals (220, fresh 2026-08-18), signal_outcomes (105), financial_reports (257), fred_series_daily (8,403), cron_job_runs (209,603, 7 errors = 0.003%), scheduler_locks (1 released).
+
+**BY-DESIGN empty (2):** price_alerts (class c, on-demand tool only), alert_engine_records (class b, writer exclusive to alert_engine.db).
+
+**STALE/FAIL tables (4):**
+- deep_fetch_queue: 2,355 rows — 30 pending >24h old (stuck), 2,283 expired, 42 vps-failed. VPS fetch worker unhealthy.
+- deep_fetch_stats: 0 rows (class a — has production writer). Empty despite active queue; aggregation job silent fail.
+- macro_indicators: 1 row (fetched 2026-08-15, 7+ days old). Pipeline offline since Friday; no recovery after market reopened Mon.
+- sbv_rates: 1 row (fetched 2026-08-18T08:47:56Z). Sparse updates during market hours (expected 2-3x daily).
+
+### Findings Recorded
+
+6 findings appended to db-integrity-history.json:
+1. deep_fetch_queue STALE/FAIL [HIGH] — 30 pending >24h, VPS worker deadlocked
+2. deep_fetch_stats FAIL [HIGH] — empty, production writer silent fail
+3. macro_indicators STALE [HIGH] — 7+ days old, pipeline stalled
+4. sbv_rates STALE [WARN] — sparse updates, values sane
+5. daily_ohlcv INCORRECT [MED] — 336 historic violations (all pre-2026-06-12, no fresh violations in 2d)
+6. price_alerts/alert_engine_records [INFO/WARN] — by-design empty
+
+### Dedup & Signal Status
+
+- History appended: OK (capped at 200, oldest dropped)
+- Dedup-check: All 6 matched to existing open tasks or by-design
+- **Signals written: 0 NEW** (already tracked or expected)
+
+### Verdict
+
+DETECTION COMPLETE — 6 findings recorded (0 new escalations). Deep-fetch infrastructure failure tied to macro_indicators stall; historic OHLC violations confirmed stale (no fresh violations, pipeline recovered); all empty tables provenance-classified. Ready for dev-team drain cycle.
+
+**Anomalies: 6 findings (2 HIGH, 1 WARN, 1 MED + 2 by-design)**
+
