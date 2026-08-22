@@ -553,6 +553,33 @@ jobs:
       - name: Run agent-bash-grant-coverage --check
         run: bash scripts/audits/agent-bash-grant-coverage.sh --check
 
+  signal-type-coverage-guard:
+    name: signal-type-coverage-guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pure bash/jq — no bun/go/python toolchain needed, cheapest job in
+      # the pipeline alongside size-lint/metric-mask-lint/dead-code-gate/
+      # task-claim-owner-session-lint/agent-bash-grant-coverage. Regression
+      # guard for docs/agents/po/flow/triage-signals.md's Pipeline-B signal-
+      # type coverage: every live `.signal_queue.rows[]` row with `to=="po"`
+      # must have a matching `type` row in that doc's Live-inbox table or its
+      # triage-signals-longtail.md sibling. Root cause this job fixes
+      # (FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE, 2026-08-22): the
+      # check previously existed ONLY as a bash function embedded in the
+      # flow-doc's markdown, wired into NO CI job and NO cron — its last
+      # recorded PASS was 2026-08-01, and by 2026-08-22 the live type
+      # namespace had fully rotated underneath it (10/10 hot to=po rows
+      # unrouted) with nobody noticing for 3 weeks because it never actually
+      # ran. See scripts/audits/guard-signal-type-coverage.sh for the full
+      # mechanism (it derives its allowlist by parsing the two docs directly
+      # — no separate hand-maintained array to drift out of sync).
+      - name: Run guard-signal-type-coverage --check
+        run: bash scripts/audits/guard-signal-type-coverage.sh --check
+
   rebuild-raw-verify-hook:
     name: rebuild-raw-verify-hook
     runs-on: ubuntu-latest

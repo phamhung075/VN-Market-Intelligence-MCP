@@ -84,7 +84,7 @@ The 5 highest-volume live types (covers 114/132 = 86% of the current hot `to=po`
 
 ### Regression verifier — signal-type coverage guard
 
-**Wired in, not just written down (FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE, 2026-08-22):** this guard previously existed ONLY as a bash function embedded here — wired into NO CI job and NO cron, so nothing ever executed it. Its last recorded PASS was 2026-08-01; by 2026-08-22 the live `to==po` type namespace had fully rotated underneath it (5 new detector types, none in the hardcoded array below, 10/10 hot rows unrouted) and that went undetected for 3 weeks because the "guard" never actually ran. It is now the canonical script `scripts/audits/guard-signal-type-coverage.sh`, wired into `.github/workflows/ci.yml` (`signal-type-coverage-guard` job — runs on every push/PR, since `docs/data/orch/orch-state.json` is git-tracked). Run it manually any time:
+**Wired in, not just written down (FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE, 2026-08-22):** this guard previously existed ONLY as a bash function embedded here — wired into NO CI job and NO cron, so nothing ever executed it. Its last recorded PASS was 2026-08-01; by 2026-08-22 the live `to==po` type namespace had fully rotated underneath it (5 new detector types, none in the then-hardcoded `$routed` array this function embedded, 10/10 hot rows unrouted) and that went undetected for 3 weeks because the "guard" never actually ran. It is now the canonical script `scripts/audits/guard-signal-type-coverage.sh`, wired into `.github/workflows/ci.yml` (`signal-type-coverage-guard` job — runs on every push/PR, since `docs/data/orch/orch-state.json` is git-tracked). Run it manually any time:
 
 ```bash
 bash scripts/audits/guard-signal-type-coverage.sh --check
