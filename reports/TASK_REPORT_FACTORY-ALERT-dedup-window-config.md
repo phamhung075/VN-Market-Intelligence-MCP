@@ -68,10 +68,65 @@ fixes against the un-rebuilt running image"*. That row's own stated fix routes t
 then qa**. Applying that here: routing to `developer`/`fixer` for "a new commit" would
 misdirect — no code fix is owed, the defect is *undeployed*, not unwritten.
 
-## Board action taken
+## Board action taken (round 1, 2026-08-06)
 
 `.task_board.qa[]` → `.task_board.review[]`, `status: QA → REVIEW`, `next_agent`/`owner: ops`,
 `rebuild_required: true` (added, was missing), `redispatch_count: 0 → 1`. Applied via
 `jq | scripts/orch-apply.sh` (conservation OK, `task_total` 791→791). Next action: ops
 single-service rebuild+redeploy `alert-engine` only, then RAW re-verify (image build ts >
 commit ts AND binary marker flip) before re-submitting to qa.
+
+---
+
+## Round 2 — 2026-08-22: ops redeploy independently re-verified
+
+date: 2026-08-22
+outcome: **APPROVED — DONE_VERIFIED**
+mode: verify-committed round 2 (ops rebuild/redeploy re-check)
+
+ops (this cycle) rebuilt+redeployed `alert-engine` only (`docker compose build alert-engine &&
+docker compose up -d --no-deps alert-engine`, no `--force-recreate`/`down`/`stop`) and reported
+RAW evidence in `status_note`. Independently re-ran every check myself, not trusted from prose:
+
+**Image / container (re-run myself):**
+```
+docker inspect vn-market-intelligence-mcp-alert-engine-1
+  → .Created (image)     = 2026-08-22T17:56:29.56Z   (> commit 43f4e3add, 2026-07-28T23:25:42+02:00) ✓
+  → .State.StartedAt     = 2026-08-22T17:56:38.47Z
+  → ContainerID           = cd90ef25d547 (new, RestartCount=0 — genuine recreate, not in-place restart)
+  → .State.Health.Status = healthy
+```
+
+**Binary marker (re-run myself, `docker exec ... grep -a /app/server`):**
+```
+grep -a "seen within"   → 1 hit: "duplicate: fingerprint seen within %dmin"   (NEW, present) ✓
+grep -a "seen recently" → 0 hits                                              (OLD, absent) ✓
+```
+Health endpoint `{"port":5006,"service":"alert-engine","status":"ok"}` — serving.
+
+**Peer-isolation check (new this round, not in ops's own claim):** enumerated `StartedAt` for
+all 12 running `vn-market-intelligence-mcp-*` containers — only `alert-engine-1` changed
+(2026-08-22T17:56:38Z); every other container's `StartedAt` is unchanged/older (rag-service
+8/15, mcp-server 8/15, stock-price 8/6, etc.). `grep depends_on` across `docker-compose.yml`
+confirms no service declares `depends_on: alert-engine` — `--no-deps` recreate is provably
+isolated, matching the "single-service, no peer disruption" claim.
+
+**Functional-intent check (new this round):** re-read `backlog-detail.json`'s own `dod` field —
+"config-sourced" means the value flows through a *named* `domain.CooldownConfig.DedupWindowMinutes`
+field (distinct from `CooldownMinutes` reuse), confirmed against the live TS
+`alertQuality.dedupWindowMinutes` default — NOT a runtime env/file load inside the Go binary
+(no such requirement in the DoD; `main.go` wires `domain.DefaultCooldownConfig` directly, by
+design for this task's scope). The served suppression decision now uses `DedupWindowMinutes=60`
+distinctly from `CooldownMinutes=30`, matching the original defect this task was scoped to close.
+
+**Code re-verify (host, static Go binary — no image/host dependency-drift risk unlike
+interpreted-language zones):** `go build ./...` exit 0; `go test ./pkg/domain/...
+./pkg/module/alert_pipeline/...` 10/10 pass (`TestDefaultCooldownConfig_DedupWindowMinutes` +
+9 pipeline tests incl. `TestRun_DedupHit_ShortCircuits`); `mock-guard.sh` PASS; commit ancestry
+`git merge-base --is-ancestor 43f4e3add main` confirmed.
+
+**Verdict: APPROVED.** Round-1 deployment gap is genuinely closed — code (verified 2026-08-06),
+deployment (verified 2026-08-22), and functional intent (verified 2026-08-22) all independently
+reproduced. `.task_board.review[]` → `.task_board.done_verified[]`, `status: REVIEW →
+DONE_VERIFIED`, `qa_verified_at`/`qa_verified_by: qa` stamped, `[QA] Review Record` appended to
+`status_note`.
