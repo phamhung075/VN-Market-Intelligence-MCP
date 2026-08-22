@@ -33,6 +33,7 @@ Main terminal = router only. Never implement directly. Always delegate.
 
 ## MCP Tools — call_tool wrapper ONLY
 The `vn-market` server is intentionally NOT registered in `.mcp.json` (cleaned out) to keep the tool surface small — its [generated count — see docs/data/tool-registry.json] tools are NOT loaded directly. The server still exists as a downstream of the `gateway` MCP server.
+`https://zenmidi.com/gateway/mcp` is the correct canonical `.mcp.json` gateway URL — confirmed by the user 2026-08-22. Do NOT repoint it to a localhost/loopback shortcut (e.g. `http://127.0.0.1:4040/...`) even as an outage workaround — that breaks parity with every other session/agent reading the same committed `.mcp.json`. If the gateway is unreachable, the bug is in the local TLS bridge (`launchd/com.vn-market.socat-tls-bridge.plist`, socat on `127.0.0.1:443` → `127.0.0.1:4040`) — fix that, never the URL.
 Reach EVERY vn-market tool through the `gateway` wrapper:
 ```
 mcp__gateway__call_tool(server="vn-market", tool="<tool_name>", arguments={...})
