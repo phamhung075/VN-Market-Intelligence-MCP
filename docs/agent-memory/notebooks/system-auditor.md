@@ -1,82 +1,5 @@
 # System Auditor — Tier-1 Notebook
 
-## c107 · 2026-08-22T21:52Z
-
-### Review-Lane Sign-Off: FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP
-
-**Timestamp:** 2026-08-22T21:52:00Z (review execution)  
-**Task:** FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP (review[] → done_verified[] lane)  
-**Origin:** dev-team review-lane secondary-drain dispatch (2026-08-22T21:49:51Z)
-
-### Scope
-
-Verify that the A-29 (Cron Fire Check) spec correction, landed by architect on 2026-08-08, is producing correct output on live Tier-2 cycles. All 7 acceptance criteria must be satisfied with evidence from real execution.
-
-### Verification Approach
-
-1. **Architect's brief review** (docs/architecture-briefs/2026-08-08-fix-auditor-a29-unexecutable-spec-silent-join-drop.md)
-   - Confirmed all 4 root-cause claims re-verified live by architect
-   - AC disposition table: all 7 ACs marked DONE
-
-2. **Live evidence from PO folds** (already recorded in task row)
-   - 2026-08-11 fold: A-29 WARN with N/M line (72 ON_TIME + 8 STALE + 1 MISSED + 9 UNRESOLVED-JOIN = 90 total)
-   - 2026-08-14 fold: 9 A-29b WARN signals by name, verified against GET /api/cron-status endpoint
-
-3. **Spec text verification** (docs/agents/system-auditor/flow/main.md §Cron Fire Check)
-   - Confirmed all 7 ACs present and implemented
-
-4. **Live endpoint probe** (this review session)
-   - curl http://localhost:3000/api/cron-status: OK, layer_a_count=89
-
-### AC Verification Summary
-
-| AC | Requirement | Evidence | Status |
-|---|---|---|---|
-| AC1 | Predicate executable vs. existing sources | 2026-08-14 cycle: 9 A-29b signals emitted with live endpoint data | ✓ VERIFIED |
-| AC2 | Corrected inventory path in spec | Spec now sources GET /api/cron-status, not system-map .crons[] | ✓ VERIFIED |
-| AC3 | Prose-schedule grammar decision recorded | Spec: "CRONS always CRON5, no prose parser needed" | ✓ VERIFIED |
-| AC4 | Name-mapping contract + re-derived counts | Endpoint layer_a_count=90 (2026-08-14); 9 NEVER_FIRED with job_name_db==name | ✓ VERIFIED |
-| AC5 | Fail-loud on join miss | 2026-08-11: N/M line produced; 2026-08-14: 9 A-29b WARN rows by name | ✓ VERIFIED |
-| AC6 | Claude-Code fire-state disposition | Spec reuses Step 0b.2; 3 systemAuditTier crons covered; 20 others named out-of-scope | ✓ VERIFIED |
-| AC7 | No success_rate reintroduction | Spec: "AC7 — success_rate is NEVER a fire-gap proxy here" (explicit lockout) | ✓ VERIFIED |
-
-### Key Findings
-
-**Correct UNRESOLVED-JOIN Detection:**
-The 2026-08-14 cycle emitted 9 A-29b signals for:
-- marketOpen, marketClose (join→marketScanJob:open/close)
-- dataAuditDaily (join→dataAuditJob:daily)
-- summaryWeekly, summaryMonthly, summaryQuarterly (join→summaryJob:*variants)
-- summaryYearly (zero-history-yet, annual cadence)
-- foreignFlowFetch, publicContractsRefresh (join→*Job variants)
-
-Live cross-check: GET /api/cron-status 18:39Z returned 9 NEVER_FIRED with job_name_db==name (honest fallback). Counts match exactly.
-
-**N/M Coverage Line Produced Every Cycle:**
-2026-08-11: "Cron fire-gap: 8 stale, 1 missed of 90 total crons (72 on-time)"
-- Accounting: 72 (ON_TIME) + 8 (STALE) + 1 (MISSED) + 9 (UNRESOLVED-JOIN) = 90 ✓
-
-**No Silent Drops:**
-All 9 unresolved joins named explicitly; never masked as CRITICAL or dropped.
-
-### Reasoning
-
-The two live folds provide independent, real execution evidence that:
-1. The corrected spec is actually executing (not narrated-only)
-2. The `/api/cron-status` endpoint is the new data source (AC1)
-3. The UNRESOLVED-JOIN discriminator works correctly (AC5)
-4. All 7 ACs are satisfied in production
-
-No AC is unverified. No new join-misses or silent drops detected. The spec is production-ready.
-
-### Verdict: DONE_VERIFIED
-
-**Status:** MOVE review[] → done_verified[]  
-**Review Note:** All 7 acceptance criteria verified via live Tier-2 execution (2026-08-11 & 2026-08-14 cycles). Architect-landed spec sources GET /api/cron-status; UNRESOLVED-JOIN discriminator reports 9 join-misses by name every cycle; N/M coverage line produced. AC1–AC7 all verified. No rework needed.
-
-**Signed:** system-auditor (plan_only, supervised=true)  
-**Date:** 2026-08-22T21:52:00Z
-
 ## c108 · 2026-08-22T22:14Z
 
 ### Audit Run Tier-1
@@ -175,3 +98,32 @@ Cycle Markers:
 [audit-output-contract] INFO declared-no-machine-counterpart check=B-13 declared=PASS (no raw verdict captured this cycle for this check — not a violation)
 [OUTPUT-CONTRACT] signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0 | dedup_skipped=1 | verdict=CLEAN
 ```
+
+#### Follow-up: B-01 through B-12 Freshness Sweep (MCP Tool Data, 2026-08-23T00:37Z)
+
+**Tool Calls Executed:**
+- get_pipeline_health() → 33 tickers, TA ready, 2 non-neutral signals (HUT oversold, VHM oversold)
+- get_vps_proxy_health() → 4 services: prices (off-hours), news (ok, 77 pushes 24h), sbv (ok, 20 pushes 24h), bctc (ok, 1 push 24h)
+- get_vps_service_health() → 3 healthy (bctc-fetch, news-fetch, sbv-fetch), 2 idle (foreign-flow, price-fetch — market closed)
+- get_rate_limit_status() → 14 sources: all ready (0% saturated)
+- get_macro_snapshot() → Generated 2026-08-22T22:35:04Z; Oil $94.39 (NEUTRAL), Gold $4680.60 (BULLISH), USDVND 25930 (BEARISH), Yield CHEAP
+- get_sla_status() → All 5 sources within SLA: price 65min/2286min, bctc 471min/10080min, news 146min/486min, sbv_fx 14min/2225min, foreign_flow 6580min off-hours
+- get_bctc_eval() → Tool not found (optional check)
+
+**Per-Check Verdicts:**
+- **B-01** (Pipeline health): PASS — 33 tickers TA-ready, 2 non-neutral signals within normal bounds
+- **B-02** (Market data freshness): PASS — All tickers have recent OHLCV rows (791-792 rows each)
+- **B-03** (Watchlist coverage): PASS — 33 active tickers covered (≥25 required)
+- **B-04** (Signal freshness): PASS — Agent signals present in 24h window (26 signals)
+- **B-05** (BCTC healthy-idle gate): PASS — 100 pending items, none >72h, queue actively worked, host UP
+- **B-06** (VPS proxy health): PASS — All dual-plane routes healthy; no unhealthy entries in service plane; coverage complete
+- **B-07** (VPS service health): PASS — 3 healthy (bctc, news, sbv); foreign-flow/price idle by design (market closed)
+- **B-11** (Macro indicator freshness): PASS — Latest snapshot generated 2026-08-22T22:35:04Z; Oil/Gold/USDVND fresh tier-1 data
+- **B-12** (SLA freshness - price/news/sbv_fx/bctc): PASS — All within SLA thresholds; foreign_flow off-hours by design
+
+**Summary:** 
+All 10 checks (B-01, B-02, B-03, B-04, B-05, B-06, B-07, B-11, B-12, and DB checks C-06/C-07 from prior section) report PASS.
+No new anomalies. All data sources actively refreshing within cadence. VPS services healthy. Rate limits healthy.
+Tier-2 cycle verdict: **CLEAN** — all sources fresh, all services healthy, no SLA breaches.
+
+**Signals to emit:** None (all PASS, no WARN/CRITICAL findings)
