@@ -51,15 +51,32 @@
  *       DEP-RESOLVES-MISSING already ratifies this as a separate, smaller
  *       class of genuine unknowns/free-text deps; this stage exists purely
  *       for live visibility.
+ *     Stage 1h: checkSprintRegistryReferentialIntegrity() — sprint-registry
+ *       dangling-id guard (task FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-
+ *       SIGNOFF-AND-JOURNAL-ARCHIVE, brief §3/§4, A1-corrected per the board
+ *       row's po_review_note). Known-id union is STRICT (active_sprints[].id
+ *       hot ∪ closed_sprints[].id hot ∪ cold closed_sprints[].id / closed_
+ *       sprint_goals sprint ids) — deliberately EXCLUDES `.done_tasks[].sprint`
+ *       (weak per-task provenance signal, see orchStateSchema.ts §16). Default
+ *       mode `warn` (env `ORCH_SPRINT_REGISTRY_MODE`, mirrors
+ *       `GIT_NOTEBOOK_IMMUTABILITY_MODE`): prints + writes one aggregated
+ *       docs/signals/ entry (deduped by violating-id-set hash), exits 0. Mode
+ *       `reject`: same detection, exit 2. Do NOT flip the default to `reject`
+ *       until `scripts/audits/verify-sprint-registry-referential-integrity.mjs`
+ *       reads `violations==0` against the live file (brief §3 arming gate /
+ *       §11.8 step 7).
  *
  * EXIT CODES:
  *   0  = Stage 0 + Stage 1 pass (zero coherence issues, zero dangling refs, canonical statuses)
- *        (Stage 1g may still print a non-fatal report — does not affect exit code)
+ *        (Stage 1g may still print a non-fatal report — does not affect exit code;
+ *        Stage 1h in the default `warn` mode may still print + signal — does not
+ *        affect exit code either)
  *   1  = Stage 0 failure (duplicate JSON keys detected in raw text)
  *   2  = Stage 1 failure (schema violation) OR Stage 1b (lane-coherence) OR
  *        Stage 1c (dangling refs) OR Stage 1d (sprint_goal status drift) OR
  *        Stage 1e (decorative blocks/co_edit field) OR Stage 1f
- *        (.depends/.depends_on divergence)
+ *        (.depends/.depends_on divergence) OR Stage 1h in `reject` mode
+ *        (ORCH_SPRINT_REGISTRY_MODE=reject, not the default)
  *   3  = file not found / unreadable
  *
  * AUTO-FIX ERROR CONTRACT (per directive § "Auto-fix error contract"):
@@ -71,9 +88,10 @@
  *   Demoted by: SSOT-W1-BASH-SHIM (SSOT-INTEGRITY-PERIMETER sprint, 2026-06-27).
  */
 
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 
 // Import TypeScript schema directly — bun transpiles .ts on the fly (no compile step).
 // Single source of truth: orchStateSchema.ts is the ONE enum + ONE schema.
@@ -87,6 +105,7 @@ import {
   checkDependsDivergence,
   checkMissingDependencyReport,
   collectHotDepStatusLaneIds,
+  checkSprintRegistryReferentialIntegrity,
 } from '../apps/mcp-server/src/infrastructure/orchStateSchema.ts';
 
 // ─── Paths ────────────────────────────────────────────────────────────────────
@@ -572,6 +591,122 @@ if (missingDepIssues.length > 0) {
   for (let i = 0; i < c; i++) {
     const mi = missingDepIssues[i];
     process.stdout.write(`  [${i + 1}] ${mi.path} (id=${mi.taskId}): ${JSON.stringify(mi.missingIds)}\n`);
+  }
+}
+
+// ── Stage 1h: sprint-registry referential-integrity guard (warn-first) ────────
+//
+// Strict known-id union (A1 correction, orchStateSchema.ts §16): cold archive
+// closed_sprints[].id + closed_sprint_goals sprint ids ONLY — deliberately a
+// SEPARATE set from Stage 1g's archiveIds (that one is done_tasks[].id, the
+// weak per-task provenance signal this stage must never treat as "known").
+// coldDoneTasks (id + own .sprint) is collected too — same § 15 DI contract —
+// used ONLY for STEP-0 task-id-collision resolution inside the delegated
+// classifySprintRegistryDanglingIds() call, never as a "known sprint id" source.
+
+const coldClosedSprintIds = new Set();
+const coldDoneTasks = [];
+try {
+  const archiveFiles = readdirSync(archiveDir).filter((f) => /^\d{4}-\d{2}\.json$/.test(f));
+  for (const af of archiveFiles) {
+    try {
+      const archiveDoc = JSON.parse(readFileSync(resolve(archiveDir, af), 'utf-8'));
+      for (const s of archiveDoc.closed_sprints ?? []) {
+        if (s && typeof s.id === 'string' && s.id) coldClosedSprintIds.add(s.id);
+      }
+      const goals = archiveDoc.closed_sprint_goals;
+      if (Array.isArray(goals)) {
+        for (const g of goals) {
+          const sid = g?.sprint_id;
+          if (typeof sid === 'string' && sid) coldClosedSprintIds.add(sid);
+        }
+      } else if (goals && typeof goals === 'object') {
+        for (const sid of Object.keys(goals)) coldClosedSprintIds.add(sid);
+      }
+      for (const t of archiveDoc.done_tasks ?? []) {
+        if (t && typeof t.id === 'string' && t.id) {
+          coldDoneTasks.push({ id: t.id, sprint: typeof t.sprint === 'string' ? t.sprint : null });
+        }
+      }
+    } catch {
+      // fail-soft: one unreadable/malformed monthly archive file must not
+      // block this write — smaller known-id set for that run only.
+    }
+  }
+} catch {
+  // fail-soft: archive dir missing entirely — Stage 1h runs hot-only known-ids.
+}
+
+const ORCH_SPRINT_REGISTRY_MODE = process.env.ORCH_SPRINT_REGISTRY_MODE === 'reject' ? 'reject' : 'warn';
+const registryResult = checkSprintRegistryReferentialIntegrity(result.data, {
+  coldClosedSprintIds,
+  coldDoneTasks,
+});
+
+if (registryResult.violations.length > 0) {
+  const c = registryResult.violations.length;
+  const label = ORCH_SPRINT_REGISTRY_MODE === 'reject' ? 'FAIL' : 'WARN';
+  process.stdout.write(
+    `\n[orch-validate] ${label} — Stage 1h (${c} sprint-registry referential-integrity ` +
+    `violation${c !== 1 ? 's' : ''}; ORCH_SPRINT_REGISTRY_MODE=${ORCH_SPRINT_REGISTRY_MODE}):\n`
+  );
+  registryResult.violations.forEach((v, i) => {
+    process.stdout.write(
+      `  [${i + 1}] id=${v.id} planes=${v.planes.join('+')}: ${v.detail}\n` +
+      `      expected: a real active_sprints[]/closed_sprints[] object for this id\n` +
+      `      fix: reconcile via scripts/audits/verify-sprint-registry-referential-integrity.mjs + PO sign-off, then scripts/orch-apply.sh\n`
+    );
+  });
+
+  // One aggregated docs/signals/ entry per distinct violating-id set (dedup —
+  // same discipline as scripts/agents-flow/context-bloat-backstop.sh / brief §3).
+  const idSetHash = createHash('sha256')
+    .update([...registryResult.violations.map((v) => v.id)].sort().join(','))
+    .digest('hex')
+    .slice(0, 16);
+  const signalsDir = resolve(PROJECT_ROOT, 'docs/signals');
+  const stemPrefix = `sprint-registry-integrity-${idSetHash}`;
+  let alreadySignaled = false;
+  try {
+    alreadySignaled = readdirSync(signalsDir).some((f) => f.startsWith(stemPrefix) && f.endsWith('.json'));
+  } catch {
+    // fail-soft: docs/signals/ missing/unreadable — skip signal emission, never block the write.
+    alreadySignaled = true;
+  }
+  if (!alreadySignaled) {
+    try {
+      const ts = new Date().toISOString().replace(/[:]/g, '');
+      const signalPath = resolve(signalsDir, `${stemPrefix}-${ts}.json`);
+      writeFileSync(
+        signalPath,
+        JSON.stringify(
+          {
+            from: 'orch-validate-stage1h',
+            to: 'po',
+            type: 'sprint_registry_dangling_ids',
+            priority: 'high',
+            createdAt: new Date().toISOString(),
+            payload: {
+              violation_count: registryResult.violations.length,
+              ids: registryResult.violations.map((v) => ({ id: v.id, planes: v.planes })),
+              action_required: 'reconcile_via_verify_sprint_registry_referential_integrity_script',
+            },
+          },
+          null,
+          2
+        ) + '\n'
+      );
+    } catch {
+      // fail-soft: signal write failure never blocks the underlying orch-state write.
+    }
+  }
+
+  if (ORCH_SPRINT_REGISTRY_MODE === 'reject') {
+    process.stderr.write(
+      `\nORCH-STATE VALIDATION FAILED — Stage 1h (${c} sprint-registry referential-integrity ` +
+      `violation${c !== 1 ? 's' : ''}, ORCH_SPRINT_REGISTRY_MODE=reject) — fix and retry:\n`
+    );
+    process.exit(2);
   }
 }
 

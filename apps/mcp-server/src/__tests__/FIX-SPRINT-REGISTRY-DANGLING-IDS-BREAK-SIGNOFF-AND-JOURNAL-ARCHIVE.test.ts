@@ -29,6 +29,7 @@ import { describe, it, expect } from "bun:test";
 import {
   OrchStateSchema,
   classifySprintRegistryDanglingIds,
+  checkSprintRegistryReferentialIntegrity,
   type ColdArchiveDoneTaskRef,
 } from "../infrastructure/orchStateSchema.js";
 
@@ -244,5 +245,139 @@ describe("classifySprintRegistryDanglingIds — §15 reconciliation classificati
     const result = classifySprintRegistryDanglingIds(state, noCold);
     expect(result.strictDanglingCount).toBe(result.rows.length);
     expect(result.strictDanglingCount).toBe(2);
+  });
+});
+
+describe("checkSprintRegistryReferentialIntegrity — Stage 1h validator (delegates to § 15 classification, §11.8 step 5)", () => {
+  it("known via hot active_sprints[].id — no violation", () => {
+    const state = baseState({
+      task_board: {
+        active_sprints: [{ id: "KNOWN-ACTIVE", tasks: [] }],
+        backlog: [{ id: "T-1", status: "BACKLOG", sprint: "KNOWN-ACTIVE" }],
+      },
+    });
+    const result = checkSprintRegistryReferentialIntegrity(state, noCold);
+    expect(result.violations.find((v) => v.id === "KNOWN-ACTIVE")).toBeUndefined();
+  });
+
+  it("known via hot closed_sprints[].id — no violation", () => {
+    const state = baseState({
+      task_board: {
+        closed_sprints: [{ id: "KNOWN-CLOSED" }],
+        done: [{ id: "T-2", status: "DONE", sprint: "KNOWN-CLOSED" }],
+      },
+    });
+    const result = checkSprintRegistryReferentialIntegrity(state, noCold);
+    expect(result.violations.find((v) => v.id === "KNOWN-CLOSED")).toBeUndefined();
+  });
+
+  it("known via caller-injected coldClosedSprintIds (cold closed_sprints/closed_sprint_goals) — no violation", () => {
+    const state = baseState({
+      task_board: { ready: [{ id: "T-3", status: "READY", sprint: "COLD-CLOSED" }] },
+    });
+    const result = checkSprintRegistryReferentialIntegrity(state, {
+      coldClosedSprintIds: new Set(["COLD-CLOSED"]),
+      coldDoneTasks: [],
+    });
+    expect(result.violations.find((v) => v.id === "COLD-CLOSED")).toBeUndefined();
+  });
+
+  it("A1: a done_tasks[].sprint-only provenance tag (not in coldClosedSprintIds) does NOT resolve the id — still a violation (LIVE via non-backlog lane)", () => {
+    const state = baseState({
+      task_board: { ready: [{ id: "T-4", status: "READY", sprint: "WEAK-SIGNAL-ONLY" }] },
+    });
+    const result = checkSprintRegistryReferentialIntegrity(state, noCold);
+    const v = result.violations.find((x) => x.id === "WEAK-SIGNAL-ONLY");
+    expect(v).toBeDefined();
+    expect(v?.classification).toBe("LIVE");
+    expect(v?.planes).toEqual(["task_board"]);
+  });
+
+  it("exemption parity: backlog[]-only ref with NO sprint_goal entry is NOT counted (PRE_SPRINT_LABEL)", () => {
+    const state = baseState({
+      task_board: { backlog: [{ id: "T-5", status: "BACKLOG", sprint: "PRE-SPRINT-ONLY" }] },
+    });
+    const result = checkSprintRegistryReferentialIntegrity(state, noCold);
+    expect(result.violations.find((v) => v.id === "PRE-SPRINT-ONLY")).toBeUndefined();
+  });
+
+  it("exemption parity (A2/A3-corrected branch table): backlog[]-only ref PLUS a non-asserting 'PLANNING' goal entry is STILL NOT counted — the pre-amendment '§3 literal: no goal entry at all' predicate would have wrongly flagged this forever (live case: CHORE-COMMIT-OVERHEAD)", () => {
+    const state = baseState({
+      task_board: { backlog: [{ id: "T-6", status: "BACKLOG", sprint: "PLANNING-BACKLOG-ONLY" }] },
+      sprint_goal: { entries: [{ sprint_id: "PLANNING-BACKLOG-ONLY", status: "PLANNING" }] },
+    });
+    const result = checkSprintRegistryReferentialIntegrity(state, noCold);
+    expect(result.violations.find((v) => v.id === "PLANNING-BACKLOG-ONLY")).toBeUndefined();
+  });
+
+  it("a non-backlog-lane reference to an unknown id IS counted, even alone (LIVE)", () => {
+    const state = baseState({
+      task_board: { ready: [{ id: "T-7", status: "READY", sprint: "LANE-ONLY-UNKNOWN" }] },
+    });
+    const result = checkSprintRegistryReferentialIntegrity(state, noCold);
+    const v = result.violations.find((x) => x.id === "LANE-ONLY-UNKNOWN");
+    expect(v).toBeDefined();
+    expect(v?.classification).toBe("LIVE");
+    expect(v?.planes).toEqual(["task_board"]);
+  });
+
+  it("sprint_goal status exactly 'active' alone (zero task refs) IS counted (AC-3 dual-plane, goal-plane-only; Q4 liveness token)", () => {
+    const state = baseState({
+      sprint_goal: { entries: [{ sprint_id: "GOAL-ONLY-LIVE", status: "active" }] },
+    });
+    const result = checkSprintRegistryReferentialIntegrity(state, noCold);
+    const v = result.violations.find((x) => x.id === "GOAL-ONLY-LIVE");
+    expect(v).toBeDefined();
+    expect(v?.classification).toBe("LIVE");
+    expect(v?.planes).toEqual(["sprint_goal"]);
+    expect(v?.goalStatus).toBe("active");
+  });
+
+  it("dual-plane: 'active' goal entry PLUS a backlog task ref for the same id IS counted on BOTH planes", () => {
+    const state = baseState({
+      task_board: { backlog: [{ id: "T-8", status: "BACKLOG", sprint: "BOTH-PLANES-LIVE" }] },
+      sprint_goal: { entries: [{ sprint_id: "BOTH-PLANES-LIVE", status: "active" }] },
+    });
+    const result = checkSprintRegistryReferentialIntegrity(state, noCold);
+    const v = result.violations.find((x) => x.id === "BOTH-PLANES-LIVE");
+    expect(v).toBeDefined();
+    expect([...(v?.planes ?? [])].sort()).toEqual(["sprint_goal", "task_board"]);
+  });
+
+  it("RELABEL classification (STEP 0 task-id collision) IS counted — a genuine registry defect, not exempt (live case: UC-RDL-P4)", () => {
+    const state = baseState({
+      task_board: {
+        backlog: [{ id: "TASK-ID-SPRINT", status: "BLOCKED", sprint: "REAL-SPRINT-TARGET" }],
+        ready: [{ id: "OTHER-ROW", status: "READY", sprint: "TASK-ID-SPRINT" }],
+      },
+    });
+    const result = checkSprintRegistryReferentialIntegrity(state, noCold);
+    const v = result.violations.find((x) => x.id === "TASK-ID-SPRINT");
+    expect(v).toBeDefined();
+    expect(v?.classification).toBe("RELABEL");
+  });
+
+  it("no referenced ids at all — empty violations array", () => {
+    const state = baseState({});
+    const result = checkSprintRegistryReferentialIntegrity(state, noCold);
+    expect(result.violations).toEqual([]);
+  });
+
+  it("parity guarantee: violations.length always equals classification.rows.filter(non-PRE_SPRINT_LABEL).length for a mixed fixture", () => {
+    const state = baseState({
+      task_board: {
+        backlog: [
+          { id: "T-9", status: "BACKLOG", sprint: "PLAN-ONLY" },
+          { id: "T-10", status: "BACKLOG", sprint: "GOAL-LIVE-ID" },
+        ],
+        ready: [{ id: "T-11", status: "READY", sprint: "LANE-LIVE-ID" }],
+      },
+      sprint_goal: { entries: [{ sprint_id: "GOAL-LIVE-ID", status: "active" }] },
+    });
+    const classification = classifySprintRegistryDanglingIds(state, noCold);
+    const expectedCount = classification.rows.filter((r) => r.classification !== "PRE_SPRINT_LABEL").length;
+    const result = checkSprintRegistryReferentialIntegrity(state, noCold);
+    expect(result.violations.length).toBe(expectedCount);
+    expect(expectedCount).toBe(2); // GOAL-LIVE-ID + LANE-LIVE-ID counted; PLAN-ONLY exempt
   });
 });

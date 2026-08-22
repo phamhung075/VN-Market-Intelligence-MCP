@@ -1457,7 +1457,7 @@ function sprintGoalStatusIsTerminal(status: string): boolean {
 }
 
 /** Plane-1 walk: task_board.*[].sprint across all 8 flat lanes + both nested sprint-task locations (AC-3). */
-function collectSprintRegistryPlane1Refs(
+export function collectSprintRegistryPlane1Refs(
   tb: z.infer<typeof TaskBoardSchema>,
 ): Map<string, SprintRegistryTaskRef[]> {
   const refs = new Map<string, SprintRegistryTaskRef[]>();
@@ -1498,7 +1498,7 @@ function collectSprintRegistryPlane1Refs(
 }
 
 /** Plane-2 walk: `.sprint_goal.entries[].sprint_id` -> `.status` (loosely-typed field, mirrors § 11's own access pattern). */
-function collectSprintRegistryGoalEntries(doc: Record<string, unknown>): Map<string, string> {
+export function collectSprintRegistryGoalEntries(doc: Record<string, unknown>): Map<string, string> {
   const out = new Map<string, string>();
   const sprintGoal = doc["sprint_goal"];
   if (sprintGoal == null || typeof sprintGoal !== "object") return out;
@@ -1694,4 +1694,91 @@ export function classifySprintRegistryDanglingIds(
   });
 
   return { strictDanglingCount: rows.length, rows };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// § 16. STAGE 1h — SPRINT-REGISTRY REFERENTIAL-INTEGRITY GUARD (warn-mode validator)
+// Task: FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE, §3/§4 of
+// the design brief, corrected per §11.8 step 5 ("Stage 1h validator ships in warn
+// mode (§3), using the A1-corrected known-id union (§11.2) and the A2/A3-corrected
+// branch table (§11.4) for its exemption logic").
+//
+// IMPLEMENTATION NOTE — this literally DELEGATES to § 15's
+// classifySprintRegistryDanglingIds() rather than re-deriving a second, narrower
+// exemption predicate. An earlier draft of this function re-implemented §3's
+// original (pre-amendment) exemption text verbatim ("backlog[]-only AND no
+// sprint_goal entry at all") — that is STRICTER than the corrected branch-4
+// PRE_SPRINT_LABEL rule (which also exempts a PLANNING/OPEN/other non-asserting
+// goal-entry, not only a wholly-absent one) and, live-measured against the real
+// file, wrongly flagged 4 genuinely-exempt ids (CHORE-COMMIT-OVERHEAD,
+// FRESHNESS-AUTO-REMEDIATE, PREDICT-ENGINE-CALIBRATION-CLOSE-LOOP,
+// PREDICTION-CLAIMS-DAILY-CADENCE) as permanent violations — which would have
+// made the `reject`-mode arming gate (§11.8 step 6/7, "violations==0") literally
+// unreachable forever, the exact fabricate-a-phantom-sprint failure mode Q2's
+// ruling exists to prevent. Delegating makes Stage 1h's "violations" and
+// scripts/audits/verify-sprint-registry-referential-integrity.mjs's
+// "counted_violations" the SAME number by construction — one predicate, not two
+// (B3) — so they can never silently drift apart again.
+//
+// KNOWN-ID UNION / STEP-0 TASK-ID RESOLUTION: identical DI contract to § 15 —
+// opts.coldClosedSprintIds (strict, done_tasks[].sprint excluded per A1) and
+// opts.coldDoneTasks (STEP-0 task-id-universe resolution only, never a "known
+// sprint id" source). Cold-archive fs reads happen in the CLI caller.
+//
+// Disposition (ORCH_SPRINT_REGISTRY_MODE, default "warn", read by the CLI caller —
+// this function itself never exits/throws, it only reports): warn = print + one
+// aggregated docs/signals/ entry, exit 0; reject = process.exit(2). Mirrors
+// GIT_NOTEBOOK_IMMUTABILITY_MODE's warn-first disposition. Do not flip the default
+// to reject until a corpus replay (scripts/audits/verify-sprint-registry-referential-
+// integrity.mjs) reads violations==0 against the live file (brief §3 arming gate).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface SprintRegistryIntegrityViolation {
+  id: string;
+  classification: SprintRegistryClassificationKind;
+  planes: Array<"task_board" | "sprint_goal">;
+  taskRefs: SprintRegistryTaskRef[];
+  goalStatus: string | null;
+  detail: string;
+}
+
+export interface SprintRegistryIntegrityResult {
+  violations: SprintRegistryIntegrityViolation[];
+}
+
+/**
+ * Stage 1h gate: every § 15 classification row whose disposition is NOT
+ * PRE_SPRINT_LABEL (i.e. LIVE/FINISHED/RELABEL/NEVER_WAS — anything that
+ * needs a real reconciliation action) is a counted violation. Pure/FS-free —
+ * cold-archive resolution happens in the CLI caller, mirroring § 15's DI
+ * contract exactly.
+ */
+export function checkSprintRegistryReferentialIntegrity(
+  data: OrchState,
+  opts: {
+    coldClosedSprintIds: Set<string>;
+    coldDoneTasks: ColdArchiveDoneTaskRef[];
+  },
+): SprintRegistryIntegrityResult {
+  const doc = data as unknown as Record<string, unknown>;
+  const plane2 = collectSprintRegistryGoalEntries(doc);
+  const classification = classifySprintRegistryDanglingIds(data, opts);
+
+  const violations: SprintRegistryIntegrityViolation[] = classification.rows
+    .filter((row) => row.classification !== "PRE_SPRINT_LABEL")
+    .map((row) => {
+      const planes: Array<"task_board" | "sprint_goal"> = [];
+      if (row.taskRefs.length > 0) planes.push("task_board");
+      if (plane2.has(row.id)) planes.push("sprint_goal");
+      return {
+        id: row.id,
+        classification: row.classification,
+        planes,
+        taskRefs: row.taskRefs,
+        goalStatus: row.goalStatus,
+        detail: row.detail,
+      };
+    });
+
+  return { violations };
 }
