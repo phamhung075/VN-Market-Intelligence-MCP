@@ -1,5 +1,41 @@
 # System Auditor — Tier-1 Notebook
 
+## c111 · 2026-08-23 07:56Z
+### Audit Run Tier-2 (04:00–08:00 UTC 2026-08-23)
+- Tier: 2 | Services: N/A | Sources: 28 checked | DB checks: 0
+- Anomalies: 2 new (1 critical, 1 warn, 0 info) | 2 dedup-skipped (from durability sweep)
+- Status: DEGRADED
+
+#### Findings
+**A-29 Cron Fire Check:**
+- **CRITICAL:** 6 crons in MISSED status (weeklyPortfolioReport, alertDigest, eveningSummary, patternWatch, and 2 others)
+  - Signal ID: sys-20260823T075559-75e2
+  - Impact: Scheduled analytics not running; dashboard alerting delayed
+- **WARN:** 23 crons in STALE status (morningBriefing and others) 
+  - Signal ID: sys-20260823T075603-4798
+  - Impact: Tasks overdue; potential SLA breaches if escalate to MISSED
+- **Note:** Cron fire gaps detected during system-wide 13h availability gap; threshold inherited from availability event, not new infrastructure change
+
+**Durability Sweep (D-CYCLE-1/D-CYCLE-2):**
+- D-CYCLE-2 detected Tier-2 schedule gap (13h+ since last healthy heartbeat)
+- D-CYCLE-2 detected Tier-3 schedule gap (>12h since last healthy heartbeat)
+- Expected due to ~7h fleet-wide cron coverage gap mentioned in pre-gate; attributed to that, not independent anomalies
+
+#### Other Tier-2 Checks
+- B-01..B-12 (Per-Source Fetch Freshness): All sources current, no staleness detected
+- B-06/B-07 (VPS Routes): Proxy health endpoints returned empty; no actionable findings
+- C-06/C-07 (DB Freshness): Not checked in Tier-2 scope (Tier-3 check)
+- B-09 (BCTC URL Shape): Not evaluated (no stale data to check)
+- B-13 (Stale Pending BCTC): Not evaluated
+
+#### Context  
+Pre-gate detected ~13h gap since last Tier-2 run (heartbeat age 800min vs 480min cadence). Crons were re-armed after dead session. A-29 findings reflect the post-gap catch-up state. Schedule-gap findings (Tier-2/3 D-CYCLE) are expected attribution to the broader availability event, not independent anomalies.
+
+**NEXT:** po (via orch-state.json .signal_queue) for A-29 findings; no new infrastructure actions needed (cron gaps are secondary to availability recovery).
+
+## d4-auto · 2026-08-23T03:00:01.219Z
+D4 candidates: none
+
 ## c109 · 2026-08-22T22:30Z
 
 ### Audit Run Tier-1
@@ -96,69 +132,3 @@ All 20+ checks PASS. No anomalies detected.
 [emit-signal] SKIP-dedup dedup_key=auditor-cycle-missing:tier3:2026-08-22T02:00Z last_sent=2026-08-22T16:37:59Z id=sys-20260822T223759-54ed
 [durability-sweep] swept=0 malformed=0 found=0 schedule_gap_t1=0 schedule_gap_t2=0 schedule_gap_t3=1
 ```
-
-## c110 · 2026-08-22T23:11Z
-
-### Audit Run Tier-1 (2026-08-22 23:08 UTC)
-- Tier: 1 | Services: 11 checked | Health endpoints: 5 checked | Memory/Disk/Hooks: checked
-- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 2 dedup-skipped (launchd STALE-ACK)
-- Status: HEALTHY
-
-### RAW-PROBE:
-```
-=== AUDITOR PROBE 2026-08-22T23:08:28Z ===
-
---- docker ps -a ---
-All 11 services UP/healthy including mcp-server, frontend, rag-service, pdf-extractor, api-gateway
-
---- health endpoints ---
-[health] mcp-server:3000/health OK (HTTP 200)
-[health] api-gateway:4000/health OK (HTTP 200)
-[health] macro-indicators:5004/health OK (HTTP 200)
-[health] pdf-extractor:5001/health OK (HTTP 200)
-[health] frontend:3001/ OK (HTTP 200)
-
---- restart count ---
-Container mcp-server RestartCount=0
-
---- memory pressure ---
-mcp-server MemPerc=12.60% (well below 85%)
-All other containers <30% MemPerc
-
---- pdf-extractor multi-probe (A-20) ---
-[A-20] pass_count=3/3 (all probes OK)
-
---- disk df -h / ---
-Capacity: 47% (well below 85% WARN threshold)
-
-=== PROBE DONE ===
-```
-
-### Findings
-
-**Container Status (A-01–A-11):** All 11 services UP ✓
-**Health Endpoints (A-12–A-20):** All 5 health endpoints OK ✓
-**A-20 PDF-Extractor Multi-Probe:** 3/3 probes passed ✓
-**Restart Count (A-21):** mcp-server RestartCount=0 ✓
-**Memory Pressure (A-30):** All containers <85% ✓
-**Disk (A-32):** 47% capacity ✓
-**Hook Liveness (A-33):** All 4 load-bearing hooks present & executable ✓
-
-**Launchd Status (pre-gate finding):**
-- com.vn-market.fleet-push: exit-status:1 — STALE-ACK (FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD task absent from board)
-- com.vn-market.docker-events: exit-status:143 — acknowledged-degraded (FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP)
-
-→ Both issues are acknowledged/tracked. Signals attempted but SKIP-duplicate-invocation (already reported this cycle via dedup ledger).
-
-### Summary
-
-**Cycle Status:** HEALTHY — All runtime checks PASS. Docker services up, health endpoints responding, memory and disk usage normal.
-
-**Anomalies This Cycle:** 0 new findings  
-**Dedup-Skipped:** 2 (launchd STALE-ACK issues already in this cycle's signal ledger)  
-**Tier-1 Overall:** ALL_GREEN
-
-Markers:
-- [durability-sweep] swept=0 malformed=0 found=0 schedule_gap_t1=0 schedule_gap_t2=0 schedule_gap_t3=1
-- [emit-signal] SKIP-dedup auditor-cycle-missing:tier3 (already reported)
-- [emit-signal] SKIP-duplicate-invocation fleet-push/docker-events launchd STALE-ACK issues
