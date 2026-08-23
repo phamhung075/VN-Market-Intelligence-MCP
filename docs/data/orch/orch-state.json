@@ -127,8 +127,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-23T10:35:00Z",
-    "_updated_by": "code-janitor",
+    "_updated_at": "2026-08-23T14:16:23Z",
+    "_updated_by": "cowork-team/step-0a-drain",
     "archive": [],
     "rows": [
       {
@@ -617,7 +617,7 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor memory sustained 98%+ (samples: 98.26-99.27%), vmhwm pinned at cgroup limit",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-23T14:07Z",
@@ -631,7 +631,7 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor event loop intermittently wedged (2/3 probes failed, HTTP 000)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-23T14:07Z",
@@ -645,7 +645,7 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor health endpoint timeout (CLIENT_TIMEOUT, curl_exit=28, 5s budget)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-23T14:07Z",
@@ -19479,7 +19479,7 @@
         "title": "QA verify-committed verdict paths state the qa[] lane-move in PROSE with no orch-apply.sh pipe — 4 confirmed strandings, permanently saturated QA_CAP=10 and froze the whole review->qa drain",
         "priority": "P0",
         "status": "REVIEW",
-        "next_agent": "agent-father",
+        "next_agent": "qa",
         "owner": "agent-father",
         "zone": "cross-service/",
         "size": "S",
@@ -19491,15 +19491,15 @@
         ],
         "desc": "ROOT CAUSE (read at source this tick, not inferred). docs/agents/qa/flow/main.md's two Direct-Commit-Verify verdict exits both describe the board mutation in prose and neither carries an executable write:\n  :189 vc-approved — 'Flip status: QA -> DONE_VERIFIED, move .task_board.qa[] -> .task_board.done_verified[], IN THE SAME orch-apply.sh write'. Names orch-apply.sh but supplies NO jq filter and NO pipe.\n  :198 vc-changes — 'Move .task_board.qa[] -> .task_board.review[] ... stamp redispatch_count += 1'. Does not mention orch-apply.sh AT ALL.\n`grep -rn orch-apply docs/agents/qa/` returns exactly 3 hits fleet-wide in QA's own flow dir: main.md:33 (WF-1 STOP-RELEASE head reset — a real pipe), and quality-audit.md:13/:65 (real pipes). The verdict paths, the single most load-bearing writes QA makes, have none.\n\nTHIS IS A KNOWN, ALREADY-FIXED DEFECT CLASS, NEVER PROPAGATED. Identical shape to FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR: PO's sub-flows had prose-only 'append to backlog[]' with no pipe; fixed 2026-08-05 by commit 3ce726a6e which inlined `jq ... | bash scripts/orch-apply.sh` AT EVERY MUTATION POINT in sprint-kickoff.md/channel-audit.md/market-group.md/telegram-reports.md. That patch shape is the template — replicate it verbatim on qa/flow/main.md's :189 and :198. (The PO row itself is one of the 4 rows this QA-side defect stranded.)\n\nLIVE EVIDENCE, 4 rows, all verified individually this tick — not inferred from a single sample:\n  1. FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR — vc-changes 2026-08-06T13:25Z; commit e6d5b87df touched notebook/journal ONLY, zero orch-state.json bytes. Stranded 8d.\n  2. FACTORY-ALERT-dedup-window-config — vc-changes 2026-08-06T17:45Z; commit 6df088ee8 subject literally reads 'CHANGES_REQUESTED (qa->review)' and touched ONLY docs/agent-memory/notebooks/qa.md. The intended write is spelled out verbatim in the row's status_note ('Held: .task_board.qa[] -> .task_board.review[], status QA -> REVIEW, owner/next_agent=ops, redispatch_count 0 -> 1') and none of it landed. Stranded 8d.\n  3. FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT... — CHANGES_REQUESTED 2026-08-11T15:30:54Z; commit 6b721b889 DID write orch-state.json but only appended the review record to status_note; row's own status stayed 'QA', lane unchanged. Stranded 3d. Proves the failure is not 'QA cannot write orch-state' (it can, and did in the same commit) — it is that the lane-move has no executable form to copy.\n  4. FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN... — partial verdict 2026-08-06T15:41Z held on AC-5; AC-5 later discharged; note ends 'ROUTED BACK TO QA' but the row was already IN qa[], which no drain reads. Stranded 8d.\nNON-DETERMINISM (why this was never caught): the same paths DO sometimes land — 977c533b3/f9e597a76/6245e116d/0fd243794/87755ab3a are real qa->done_verified writes, d146e96b5/0f1cbf920/cd3b7efec real qa->review writes. Success depends entirely on whether the spawned QA session improvises the jq itself. Prose-only = coin-flip, exactly the FIX-PO-BATCH-MINT finding.\n\nBLAST RADIUS: each miss permanently consumes one of QA-Drain's QA_CAP=10 slots (docs/agents/dev-team/flow/main.md § Review-Lane QA-Drain). Measured live 2026-08-14T08:37Z: qa[] 10/10, 9 of 10 stranded, so `QA_WIP -lt QA_CAP` was false and the ENTIRE review->qa pipeline had been dead for an unknown period while 54 review[] rows with next_agent=qa queued behind it, including 3 P0/P1-adjacent ones. The drain lane silently no-op'd — its own gate reports nothing when saturated.\n\nACCEPTANCE:\nAC-1 qa/flow/main.md:189 (vc-approved) carries a literal, copy-executable `jq --arg id ... '<transform>' docs/data/orch/orch-state.json | bash \"$PROJECT_ROOT/scripts/orch-apply.sh\"` performing status QA->DONE_VERIFIED + qa[]->done_verified[] in ONE write (CANONICAL:SSOT-STATUSFLIP-LANEMOVE).\nAC-2 qa/flow/main.md:198 (vc-changes) carries the same, performing status QA->REVIEW + qa[]->review[] + redispatch_count+=1 + next_agent/owner routing, in ONE write.\nAC-3 both blocks carry a post-write self-verification re-reading the file (same shape as po/flow/main.md's AC-3 persistence gate) — RETURN may not assert the lane-move without it.\nAC-4 opt-IN allowlist regression verifier (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist) asserting no verdict-exit step in docs/agents/qa/flow/*.md states a task_board lane mutation without an orch-apply.sh pipe in the same step. scripts/ is outside agent-father's commit_zone -> split to a developer row if needed, do NOT drop it silently.\nAC-5 negative control: a vc-approved fixture and a vc-changes fixture both land their lane-move; a prose-only fixture is rejected by AC-4's verifier.",
         "po_scope_note": "next_agent=agents-architect deliberately, NOT agent-father: agent-father is OFF the DRS ratified allowlist [architect,ba,pm,po,agents-architect] and a row pointed at it is unreachable by every automated dispatch lane (documented on FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT's own status_note). agents-architect designs then signals agent-father, which is the sanctioned and dispatchable chain for agent flow-doc edits. The design is already fully specified in desc above — no new architecture brief is needed, this should be a one-hop signal to agent-father, not a fresh design cycle.",
-        "updated_at": "2026-08-23T13:48:26Z",
-        "updated_by": "po/triage-20260823T1157Z",
+        "updated_at": "2026-08-23T14:23:15Z",
+        "updated_by": "agent-father",
         "promoted_at": "2026-08-14T11:51:23Z",
         "promoted_by": "dev-team (design-router sweep)",
         "promotion_note": "Design-Router Sweep — assigned dispatch_lane='agents-architect' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
         "dispatch_lane": "agents-architect",
         "claimed_at": "2026-08-23T10:53:01Z",
         "claimed_by": "dev-team (design-router sweep)",
-        "status_note": "agents-architect design-verified (2026-08-23T11:01:46Z, session 007e33e4): confirmed live at docs/agents/qa/flow/main.md :189/:198 (vc-approved / vc-changes) -- both still prose-only, no orch-apply.sh pipe, matches this row's own desc verbatim. Per po_scope_note: NO new architecture brief opened (design already fully specified in desc) -- this is the one-hop signal handoff, not a fresh design cycle. Signal dropped: docs/signals/2026-08-23-qa-vc-lanemove-orchapply-actuator.json -> agent-father, carrying copy-executable jq+orch-apply.sh patches for AC-1 (vc-approved, qa[]->done_verified[]) and AC-2 (vc-changes, qa[]->review[] + redispatch_count+=1 + route to row owner) plus AC-3 self-verify shape, mirroring the FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR template (commit 3ce726a6e). AC-4 regression verifier + AC-5 fixtures flagged in the signal as OUT of agent-father's commit_zone (docs/agents/agent-father/init.md excludes scripts/) -- same split agent-father already did for the 3ce726a6e precedent; agent-father should hand that half back via RETURN for a developer-owned follow-up row, not attempt it itself. CAVEAT flagged (not folded into this row, not silently dropped): AC-2's qa[]->review[] move lands IN a scripts/orch-row-prose-ceiling-check.mjs:105 PROSE_CEILING_LANES-guarded lane (review) FROM an unguarded one (qa) -- this is exactly D3 of FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS (already tracked, ready[], next_agent=developer, not re-designed here): any QA row over the 12000B ceiling could hard-reject on this specific move until D3 ships. AC-1's qa[]->done_verified[] move is unaffected (done_verified[] is not in PROSE_CEILING_LANES). ROUTING: next_agent/owner -> po, NOT agent-father directly -- agent-father is off the DRS ratified allowlist [architect,ba,pm,po,agents-architect] and unreachable by automated dispatch (same finding this row's own po_scope_note makes; precedent: FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT was only ever picked up via PO's manual-dispatch/batch-fold). PO: batch-fold or manual-dispatch agent-father with intent=edit, change_description = signal payload.\n[agent-father 2026-08-23T13:00:34Z] Applied agents-architect signal docs/signals/processed/2026-08-23-qa-vc-lanemove-orchapply-actuator.json verbatim: docs/agents/qa/flow/main.md vc-approved (AC-1) and vc-changes (AC-2) verdict exits both gained a literal jq+orch-apply.sh block + AC-3 self-verify re-read, replacing the pure-prose lane-move description. AC-4 (opt-in allowlist regression verifier) + AC-5 (approved/changes/prose-only fixtures) are OUT of agent-father commit_zone (scripts/) per the signal own out_of_zone note -- handed back via RETURN for a developer-owned follow-up row, NOT attempted, NOT silently dropped.\n[QA] CHANGES_REQUESTED 2026-08-23T13:45Z — BLOCKING; found by EXECUTING the actuator, not reading it. Commit 863a250e3 real+on main, AC-3 fine, but AC-1 hard-rejects at orch-apply.sh and can never land a lane move.\n[1] BLOCKER qa/flow/main.md:218 'next_agent: null' — done_verified[] uses orchStateSchema.ts:208 z.string().optional() = NOT nullable. Live repro: 'VALIDATION FAILED (10 issues) ... next_agent: expected string, received null' -> '[orch-apply] ABORTED: validator exit 2'. Of 30 live done_verified rows 27 hold a string, 3 OMIT the key, 0 hold null. Cause: copied the .head idiom (HeadSchema:324 IS nullable). Fix: del(.next_agent).\n[2] BLOCKER qa/flow/main.md:203-228 — block never writes verification.raw_probe, but RC-VERIF rejects DONE_VERIFIED without verification.raw_probe{tool,args,live_value_observed,observed_at}. Repro'd right after fixing [1]: 9 more errors, one per row.\n[3] LATENT qa/flow/main.md:252 — vc-changes 'next_agent: $t.owner' writes null when owner absent (true NOW for RAG-FTS-BUILD-MEMORY-BOUND and FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE in review[]). Guard ($t.owner // \"po\").\n[4] NON-BLOCKING — both blocks guard source lane qa[]/'QA', but all 13 rows in today's batch arrived review[]/REVIEW; refusal is correct fail-safe, but the ACs miss the real dispatch shape.\nKEEP: transform logic otherwise correct (fixture-verified; both refuse-guards fire; redispatch_count 0->1; empty-stdin safe).\nQA ENDORSES minting deferred AC-4/AC-5 (scripts/ verifier+fixtures, developer) — a fixture asserting output passes orch-validate.mjs catches [1]+[2]. Router to mint.\nD3 CAME TRUE ON THIS VERY REJECTION: inline append breached the review[] ceiling (9986B->13293B, limit 12000) exactly as this row's own note predicted for qa[]->review[]. Full verbatim issues -> detail_ref, field qa_changes_requested_20260823T1345Z.",
+        "status_note": "agents-architect design-verified (2026-08-23T11:01:46Z, session 007e33e4): confirmed live at docs/agents/qa/flow/main.md :189/:198 (vc-approved / vc-changes) -- both still prose-only, no orch-apply.sh pipe, matches this row's own desc verbatim. Per po_scope_note: NO new architecture brief opened (design already fully specified in desc) -- this is the one-hop signal handoff, not a fresh design cycle. Signal dropped: docs/signals/2026-08-23-qa-vc-lanemove-orchapply-actuator.json -> agent-father, carrying copy-executable jq+orch-apply.sh patches for AC-1 (vc-approved, qa[]->done_verified[]) and AC-2 (vc-changes, qa[]->review[] + redispatch_count+=1 + route to row owner) plus AC-3 self-verify shape, mirroring the FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR template (commit 3ce726a6e). AC-4 regression verifier + AC-5 fixtures flagged in the signal as OUT of agent-father's commit_zone (docs/agents/agent-father/init.md excludes scripts/) -- same split agent-father already did for the 3ce726a6e precedent; agent-father should hand that half back via RETURN for a developer-owned follow-up row, not attempt it itself. CAVEAT flagged (not folded into this row, not silently dropped): AC-2's qa[]->review[] move lands IN a scripts/orch-row-prose-ceiling-check.mjs:105 PROSE_CEILING_LANES-guarded lane (review) FROM an unguarded one (qa) -- this is exactly D3 of FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS (already tracked, ready[], next_agent=developer, not re-designed here): any QA row over the 12000B ceiling could hard-reject on this specific move until D3 ships. AC-1's qa[]->done_verified[] move is unaffected (done_verified[] is not in PROSE_CEILING_LANES). ROUTING: next_agent/owner -> po, NOT agent-father directly -- agent-father is off the DRS ratified allowlist [architect,ba,pm,po,agents-architect] and unreachable by automated dispatch (same finding this row's own po_scope_note makes; precedent: FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT was only ever picked up via PO's manual-dispatch/batch-fold). PO: batch-fold or manual-dispatch agent-father with intent=edit, change_description = signal payload.\n[agent-father 2026-08-23T14:25Z redispatch-1] AC-1/2/3 SHIPPED cf281daed (pushed). 3 QA blockers closed: del(.next_agent) NOT next_agent:null (TaskSchema:208 optional-not-nullable; the nullable one is HeadSchema:324, the bad-copy source); mandatory verification.raw_probe + fail-loud empty-probe refuse (RC-VERIF s8A); ($t.owner // $t.owner_agent // \"po\"). Both self-verifies widened. VERIFIED BY EXECUTION: harness replays the shipped doc own fenced blocks through real orch-apply.sh+orch-validate.mjs on a fixture -- 16/16, 3 neg controls re-prove each pre-fix form rejects, live sha256 unchanged. QA[4] left alone (correct fail-safe, dispatch-side). AC-4/5 out of zone -> developer row. Detail: notebook 14:20Z + journal S58.\n[QA] CHANGES_REQUESTED 2026-08-23T13:45Z — BLOCKING; found by EXECUTING the actuator, not reading it. Commit 863a250e3 real+on main, AC-3 fine, but AC-1 hard-rejects at orch-apply.sh and can never land a lane move.\n[1] BLOCKER qa/flow/main.md:218 'next_agent: null' — done_verified[] uses orchStateSchema.ts:208 z.string().optional() = NOT nullable. Live repro: 'VALIDATION FAILED (10 issues) ... next_agent: expected string, received null' -> '[orch-apply] ABORTED: validator exit 2'. Of 30 live done_verified rows 27 hold a string, 3 OMIT the key, 0 hold null. Cause: copied the .head idiom (HeadSchema:324 IS nullable). Fix: del(.next_agent).\n[2] BLOCKER qa/flow/main.md:203-228 — block never writes verification.raw_probe, but RC-VERIF rejects DONE_VERIFIED without verification.raw_probe{tool,args,live_value_observed,observed_at}. Repro'd right after fixing [1]: 9 more errors, one per row.\n[3] LATENT qa/flow/main.md:252 — vc-changes 'next_agent: $t.owner' writes null when owner absent (true NOW for RAG-FTS-BUILD-MEMORY-BOUND and FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE in review[]). Guard ($t.owner // \"po\").\n[4] NON-BLOCKING — both blocks guard source lane qa[]/'QA', but all 13 rows in today's batch arrived review[]/REVIEW; refusal is correct fail-safe, but the ACs miss the real dispatch shape.\nKEEP: transform logic otherwise correct (fixture-verified; both refuse-guards fire; redispatch_count 0->1; empty-stdin safe).\nQA ENDORSES minting deferred AC-4/AC-5 (scripts/ verifier+fixtures, developer) — a fixture asserting output passes orch-validate.mjs catches [1]+[2]. Router to mint.\nD3 CAME TRUE ON THIS VERY REJECTION: inline append breached the review[] ceiling (9986B->13293B, limit 12000) exactly as this row's own note predicted for qa[]->review[]. Full verbatim issues -> detail_ref, field qa_changes_requested_20260823T1345Z.",
         "agents_architect_reviewed_at": "2026-08-23T11:01:46Z",
         "agents_architect_signal": "docs/signals/2026-08-23-qa-vc-lanemove-orchapply-actuator.json",
         "po_manual_dispatch_flagged_at": "2026-08-23T11:57:00Z",
@@ -19579,7 +19579,7 @@
         "priority": "P0",
         "size": "M",
         "zone": "multi",
-        "owner": "agents-architect",
+        "owner": "po",
         "supervised": false,
         "plan_only": false,
         "created_at": "2026-08-14T12:35:41Z",
@@ -19599,12 +19599,12 @@
           "FIX-PM-DECOMPOSE-NO-PRIOR-ART-PROBE"
         ],
         "note": "DEDUP-CHECKED 2026-08-14T12:35Z against all task_board lanes — this shape is NOT already tracked. (a) FIX-DEVTEAM-HEAD-NEXTAGENT-RESYNC-ON-REASSIGN (ready[], agents-father, the WF-2b design row, '3 occurrences / 3 agent types') is ADJACENT BUT DISJOINT: it detects .head.next_agent disagreeing with the row's own next_agent; in occurrence 3 BOTH read 'pm', i.e. perfectly coherent, so that gate provably declines. (b) FIX-DEVTEAM-EPICWRAPPER-PARENTHOOD-FIELD-DRIFT-AUTOCLOSE-BLIND (backlog[], developer) already owns the COMPENSATING-SWEEP half of the stale-parent-row facet (is_epic_wrapper reads only .children while pm records parenthood in other shapes); this row owns the PM-MINT-SIDE half and must not duplicate it — cross-reference, do not re-implement. (c) FIX-ORCHSTATE-MINT-FLAGGED-ROW-WITHOUT-RESOLVABLE-HANDLER (ready[], architect) covers only rows where supervised/plan_only is set AND owner AND next_agent are BOTH null; occ-3's children had owner populated and no flags, so they fall outside it entirely — and that is precisely what makes them silently MIS-dispatchable rather than parked. (d) FIX-PM-DECOMPOSE-NO-PRIOR-ART-PROBE (backlog[], architect) is a different pm defect (re-minting already-shipped work), unrelated. Escalation threshold was explicitly declared hit after occurrence 2; occurrence 3 regressed further, and the occ-2 remediation is now proven to have failed on PLACEMENT rather than content — which is why this is routed to agents-architect for a design brief first rather than straight to agent-father for another appended step.",
-        "updated_at": "2026-08-23T13:54:29Z",
+        "updated_at": "2026-08-23T14:23:05Z",
         "detail_ref": "docs/architecture-briefs/2026-08-14-pm-decompose-closeout-reachability-and-nextagent-mint.md",
-        "status_note": "[QA] CHANGES_REQUESTED 2026-08-23T13:54:07Z — RETRACTS the DONE_VERIFIED this same cycle issued ~25min earlier (reachability half verified good; the LANE half I had not tested). Concurrent pm agent could not use the shipped Step 3e on 9 real parents; I re-tested rather than accepting, and claim 1 HOLDS.\n[1] BLOCKER pm/flow/main.md Step 3e — BOTH branches resolve $row from in_progress[] + active_sprints[].tasks[] ONLY. On a ready[] parent the CLOSEOUT branch appends an ID-LESS GHOST ROW to done[] (jq 'null + {...}') and leaves the parent in ready[]; orch-validate hard-rejects ('task_board.done[21].id: expected string, received undefined'), so the step is unusable — pm hit exactly this, 8 of 9 parents in ready[]. The PARTIAL branch is WORSE: silent no-op on ready[] parents, exits 0, guard never fires. Measured live, rows with children[] sit in backlog 10 / done 9 / ready 6 / in_progress 1 — backlog[] unhandled too; in_progress[] (the only handled lane) has 1. Dominant case, not an edge case; I under-sized this as 'non-blocking' on first pass. FIX: resolve across backlog/ready/in_progress/active_sprints, delete from the lane found, add 'if $row == null then error(...)' so a miss fails LOUD (mirror qa/flow/main.md's refuse-idiom).\n[2] pm's 'next_agent: null is schema-invalid' claim DOES NOT HOLD here — the only null is inside '.head = {...}', legal per HeadSchema orchStateSchema.ts:324 (.nullable()). The closeout preserves the row's next_agent. The real non-nullable :208 defect belongs to FIX-QA-VC-LANEMOVE-…, filed there. Do not 'fix' a null this file never writes.\nKEEP: reachability restructure (0 violations), DECOMPOSITION_COMPLETE split, children[] write, .head guard, Step-3 mint shape — all fixture-verified.\nFull text + archived prior status_note: docs/data/orch/archive/backlog-detail.json#FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT.",
-        "next_agent": "agents-architect",
+        "status_note": "[ARCHITECT] 2026-08-23T14:15:51Z — corrected design SHIPPED: docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md. qa blocker [1] CONFIRMED + reproduced on fixtures; qa note [2] honoured, next_agent:null NOT re-opened. qa's own fix list is REJECTED as another hand-list (omits review/qa/done_verified/archive/closed_sprints) — see brief §2 invariant LANE-SET-DERIVATION. NEXT = po: mint brief §6 rows 1-4 (agent-father XS hotfix ships now; developer script row M; agent-father flow-doc S dep-on-2; developer reachability checker S), then close this design row. agent-father fails is_dev_role → rows 1/3 need manual dispatch.\n[QA] CHANGES_REQUESTED 2026-08-23T13:54:07Z — RETRACTS the DONE_VERIFIED this same cycle issued ~25min earlier (reachability half verified good; the LANE half I had not tested). Concurrent pm agent could not use the shipped Step 3e on 9 real parents; I re-tested rather than accepting, and claim 1 HOLDS.\n[1] BLOCKER pm/flow/main.md Step 3e — BOTH branches resolve $row from in_progress[] + active_sprints[].tasks[] ONLY. On a ready[] parent the CLOSEOUT branch appends an ID-LESS GHOST ROW to done[] (jq 'null + {...}') and leaves the parent in ready[]; orch-validate hard-rejects ('task_board.done[21].id: expected string, received undefined'), so the step is unusable — pm hit exactly this, 8 of 9 parents in ready[]. The PARTIAL branch is WORSE: silent no-op on ready[] parents, exits 0, guard never fires. Measured live, rows with children[] sit in backlog 10 / done 9 / ready 6 / in_progress 1 — backlog[] unhandled too; in_progress[] (the only handled lane) has 1. Dominant case, not an edge case; I under-sized this as 'non-blocking' on first pass. FIX: resolve across backlog/ready/in_progress/active_sprints, delete from the lane found, add 'if $row == null then error(...)' so a miss fails LOUD (mirror qa/flow/main.md's refuse-idiom).\n[2] pm's 'next_agent: null is schema-invalid' claim DOES NOT HOLD here — the only null is inside '.head = {...}', legal per HeadSchema orchStateSchema.ts:324 (.nullable()). The closeout preserves the row's next_agent. The real non-nullable :208 defect belongs to FIX-QA-VC-LANEMOVE-…, filed there. Do not 'fix' a null this file never writes.\nKEEP: reachability restructure (0 violations), DECOMPOSITION_COMPLETE split, children[] write, .head guard, Step-3 mint shape — all fixture-verified.\nFull text + archived prior status_note: docs/data/orch/archive/backlog-detail.json#FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT.",
+        "next_agent": "po",
         "redispatch_count": 1,
-        "updated_by": "qa"
+        "updated_by": "agents-architect"
       },
       {
         "id": "FIX-CHEF-MARKER-KEY-ANCHOR-1",
@@ -20050,7 +20050,7 @@
         "last_served_tick": "2026-08-23T11:54:46Z"
       }
     },
-    "_updated_at": "2026-08-23T13:56:24Z",
+    "_updated_at": "2026-08-23T14:22:34Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20354,6 +20354,129 @@
         },
         "createdAt": "2026-08-23T13:44:51Z",
         "drained_at": "2026-08-23T13:55:20Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9fb87ab6771edf1628651b2dc578e406a643ece9a0dcd897f3d5db5a7ad66d65",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 6 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-26.md docs/agent-memory/notebooks/qa.md docs/data/orch/archive/2026-08.json docs/data/orch/archive/backlog-detail.json docs/data/orch/orch-state.json reports/TASK_REPORT_REVIEW-LANE-QA-DRAIN-20260823T1330Z.md. actor=7be6b4cd-057e-419b-a967-4810daf2b646 mode=warn escalated=false prior_warns=1 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-23T13:56:40Z",
+        "drained_at": "2026-08-23T14:22:34Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "af89e0643f1dc4cb4c4c1aeba24f5af04b15a8bfaca68a60f0dd1ea4a41e633e",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/ops.md. actor=669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3 mode=warn escalated=true prior_warns=4 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-23T13:58:15Z",
+        "drained_at": "2026-08-23T14:22:34Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "197f3573cc639a744fe37edd8c1cddcd25231f16661bc1d55155687100f4fb05",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agents/qa/flow/main.md docs/data/orch/archive/2026-08.json docs/handoffs/TASK-BCTC-INSPECT-UI-FILTERS-CLOSEOUT.md. actor=669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3 mode=warn escalated=true prior_warns=5 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-23T14:14:45Z",
+        "drained_at": "2026-08-23T14:22:34Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "98d8c6043ed8d30f98f6f76f5af18b3afffa4c40801e2a3d2b44c8f540b37c76",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 46,
+          "cap": 200,
+          "byte_count": 38160,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 26160,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-23T13:59:20Z",
+        "drained_at": "2026-08-23T14:22:34Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "404a5bea6846f5ca58398008c0611798c62e897b8cc04b4f395939d76aacef69",
+        "source": "file",
+        "from": "agents-architect",
+        "to": "pm",
+        "type": "brief_complete",
+        "priority": "high",
+        "payload": "docs/architecture-briefs/2026-08-23-fix-cowork-published-marker-ttl-cadence-mismatch-design.md",
+        "createdAt": "2026-08-23T14:04:55Z",
+        "drained_at": "2026-08-23T14:22:34Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "879fe50b6465f504468ed117ed7d895dcb5c6603c293af20c471b87e114192f2",
+        "source": "file",
+        "from": "agents-architect",
+        "to": "agent-father",
+        "type": "brief_complete",
+        "priority": "high",
+        "payload": "docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md",
+        "createdAt": "2026-08-23T14:15:51Z",
+        "drained_at": "2026-08-23T14:22:34Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d1c191bee2cfc9ac7d8f43d19aee8375a2bceb578740bd7d7ba5d28d906ee0c1",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "59",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-23T14:10:36Z",
+        "drained_at": "2026-08-23T14:22:34Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "11bc8b948aaf66129a48bd4ba842c9fbcc7bde832df08027712288128cd9e46e",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 46,
+          "cap": 200,
+          "byte_count": 38160,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-23T13:59:18Z",
+        "drained_at": "2026-08-23T14:22:34Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

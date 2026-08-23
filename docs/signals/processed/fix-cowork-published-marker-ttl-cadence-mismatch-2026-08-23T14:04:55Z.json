@@ -6,5 +6,11 @@
   "summary": "Ruling for FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE: defect is Step 2.4's prefix-only match in .claude/skills/dispatch-claim/SKILL.md (not chef.md's own exact-match gate, not any MARKER_TTL constant). Ruled Axis D (cadence-bounded prefix match, keyed on cowork-schedule.json's existing publish_date_basis field, zero date-basis duplication, zero apps/mcp-server change) landed together with Axis C (AC-3/AC-5 stale-owner presence check) in one Step 2.4 FR-3 revision. New finding: digest-sunday carries the identical latent overlap defect at weekly scale (691200s TTL vs 604800s cadence), closed for free by the same fix. Single-file design (SKILL.md logic + test fixture extension) — routed to developer directly, no PM decomposition needed.",
   "task_id": "FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE",
   "priority": "high",
-  "createdAt": "2026-08-23T14:04:55Z"
+  "createdAt": "2026-08-23T14:04:55Z",
+  "_processed": {
+    "fingerprint": "404a5bea6846f5ca58398008c0611798c62e897b8cc04b4f395939d76aacef69",
+    "processedAt": "2026-08-23T14:22:34Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
