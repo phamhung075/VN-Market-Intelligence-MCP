@@ -538,3 +538,51 @@ No stale cycle markers or schedule gaps detected.
 
 **NEXT:** None (dedup suppression in effect; awaiting developer to fix size-lint breach in pushBctcLayoutHandler.ts per PO assignment)
 
+### c1 · 2026-08-23T21:40Z
+
+**Tier-1 Audit Cycle**
+
+#### Summary
+- Verdict: FAILURE (launchd_agents check)
+- Duration: ~10 minutes
+- Anomalies: 2 findings (both dedup-suppressed)
+
+#### Findings
+
+##### A-32: launchd Agents Check — FAILURE
+
+Two launchd agent issues detected and logged (both dedup-suppressed, previously reported 2026-08-22T23:10Z):
+
+1. **fleet-push (STALE-ACK)**
+   - Service: com.vn-market.fleet-push
+   - Status: exit-status:1
+   - Classification: STALE-ACK
+   - Tracked by: FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH (P0, next_agent=dev-mcp-server)
+   - Last reported: 2026-08-22T23:10:41Z (within 7-day dedup window)
+
+2. **docker-events (acknowledged-degraded)**
+   - Service: com.vn-market.docker-events
+   - Status: exit-status:143
+   - Classification: acknowledged-degraded (tracked issue)
+   - Tracked by: FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP (backlog, next_agent=ops)
+   - Last reported: 2026-08-22T23:10:43Z (within 7-day dedup window)
+
+#### Probe Evidence
+
+All other Tier-1 checks PASSED:
+- docker_ps: PASS (all runtime_set services UP)
+- health_3000/3001: PASS (all health endpoints 200)
+- disk: PASS (49% utilization)
+- mem_creep: PASS (all containers <85% baseline)
+- A-20 (pdf-extractor): PASS (3/3 in-container probes successful)
+
+#### Dedup Status
+
+Both launchd findings suppressed by dedup:
+- Signal ID 1: sys-20260823T213727-1b29 (fleet-push)
+- Signal ID 2: sys-20260823T213728-21ce (docker-events)
+- Dashboard rows appended for tracking
+
+No new BUG Telegram sent (dedup-suppressed).
+
+
