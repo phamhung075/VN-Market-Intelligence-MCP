@@ -1978,3 +1978,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-32 · launchd fleet-push STALE-ACK (dedup-suppressed)
+**Severity:** WARN | **Date:** 2026-08-23 | **Status:** OPEN
+**Location:** com.vn-market.fleet-push
+**Details:** exit-status:1, launchd agent not responding
+**Impact:** Git push operations may be blocked or delayed
+**Root cause:** Push hook configuration issue, tracked at FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH
+**Zone owner:** ops
+**Last reported:** 2026-08-23T21:38:24Z (signal sys-20260823T213727-1b29, system-auditor -> po, dedup_key=launchd_agent_stale_ack:fleet-push:A-32)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
