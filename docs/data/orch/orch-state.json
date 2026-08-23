@@ -17008,6 +17008,34 @@
             "observed_at": "2026-08-06T15:35:12Z"
           }
         }
+      },
+      {
+        "id": "OPS-COWORK-GUARANTEED-SLOT-INSTALL",
+        "status": "DONE_VERIFIED",
+        "priority": "high",
+        "type": "FIX",
+        "zone": "cross-service",
+        "title": "Install generalized cowork guaranteed-slot firer LaunchAgent; unload retired fb-only one",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#OPS-COWORK-GUARANTEED-SLOT-INSTALL",
+        "status_note": "[ops-verify-20260806T180000Z] RAW VERIFICATION COMPLETE — Install CONFIRMED:\n✓ Plist symlink at ~/Library/LaunchAgents/com.vn-market.cowork-guaranteed-slot-firer.plist\n✓ LaunchAgent loaded and active (state=running, 2053 runs, interval=900s)\n✓ Script: /scripts/agents-flow/cowork-guaranteed-slot-firer.sh\n✓ Environment variables set correctly (PATH, CLAUDE_BIN, HOME)\n✓ Retired fb-only agent removed (not in launchctl list)\n✓ Working directory correct\nNOTE: exit_code=143 (SIGTERM) confirms truncation in po_note_20260722. FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION is separate. INSTALL IS CORRECT AND LIVE.",
+        "origin_signal_id": "cowork-recurring-guaranteed-miss-20260710T0847Z",
+        "updated_at": "2026-08-23T15:31:50Z",
+        "updated_by": "ops-verify-20260806T180000Z",
+        "next_agent": "ops",
+        "po_triage_20260722": "Owner assigned (was null next_agent) so no row is ownerless (PO AC1). Remains in REVIEW, deferred-behind the review-lane sweeper FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN + FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER (both activated -> backlog this tick). Not silently dropped; the sweeper routes it to next_agent once built.",
+        "po_note_20260722_live_fire_evidence": "PO cron-audit 2026-07-22: FIRE EVIDENCE NOW EXISTS but this row must NOT be closed on it. launchctl print gui/501/com.vn-market.cowork-guaranteed-slot-firer = 815 runs, last exit code 0, interval 900s; the firer demonstrably invoked chef-morning at 2026-07-22T05:28:17Z. HOWEVER that invocation was SIGTERMed at 05:58:17Z (exit_code=143, exactly the 1800s bound) — the slot fired and its work was truncated. Acceptance for an install row is a fire that PRODUCES ITS DELIVERABLE, not a fire that starts. Keep open pending FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION. Also note the tier-1 probe's launchd check is presence-only (FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN), so launchctl list shows entry in this row's status_note is a weaker verification than it appears.",
+        "secondary_claimed_at": "2026-08-06T17:01:37Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "ops",
+        "recovery_note": "[po 2026-08-23T15:04:02Z] RESTORED — same data-loss event as CCATO-MCP-T1/T2/T4 (commit 38c013342e, \"chore(tasks): cold-evict terminal done_verified + excess done tasks -> archive/2026-08.json\", 2026-08-06T19:52:34+02:00): deleted 290 lines / 9 DONE_VERIFIED rows from done_verified[] but touched ONLY orch-state.json (git show --stat: \"1 insertion(+), 290 deletions(-)\") -- zero archive write despite the commit message. Content restored byte-for-byte from `git show 38c013342e^:docs/data/orch/orch-state.json`. Restoring this row satisfies half of QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL's (ready[]) prose-only prerequisite (qa_not_actionable_20260823T1445Z) -- its sibling prerequisite FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED was independently confirmed genuinely DONE_VERIFIED in archive/2026-07.json (not a victim of this bug). Root-cause fix tracked by FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS (also owns auditing/restoring the remaining 5 non-CCATO victims of the same commit: FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE, FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW, FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK, FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL, FIX-FB-WEEKEND-DEDUP-GATE, FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0).",
+        "verification": {
+          "raw_probe": {
+            "tool": "launchctl print + launchctl list (ops RAW verify, historical, reconstructed from status_note at restore time)",
+            "args": "launchctl print gui/501/com.vn-market.cowork-guaranteed-slot-firer; launchctl list | grep vn-market; ls -la ~/Library/LaunchAgents/com.vn-market.cowork-guaranteed-slot-firer.plist",
+            "live_value_observed": "plist symlink present; LaunchAgent loaded+running (2053 runs, interval=900s); script path + env vars (PATH,CLAUDE_BIN,HOME) confirmed; retired fb-only agent absent from launchctl list; working directory correct",
+            "observed_at": "2026-08-06T18:00:00Z"
+          }
+        }
       }
     ],
     "head": {
@@ -17323,9 +17351,19 @@
         "next_agent": "po",
         "supervised": false,
         "note": "Standard merge gate, RAW-verify not badges.",
-        "updated_at": "2026-08-23T14:46:09Z",
+        "updated_at": "2026-08-23T15:31:50Z",
         "updated_by": "qa/ready-lane-triage-20260823T1445Z",
-        "qa_not_actionable_20260823T1445Z": "[QA 2026-08-23T14:45Z NOT ACTIONABLE — measured, not assumed] This row's own title is 'run T3/T5/T6 test suites + orch-validate AC-1..AC-5 + orch-apply wrapper tests'. Live board: SYSREMAKE-P2-T3-UNIT-TESTS, -T5-SERVER-PATH-PARITY-TEST and -T6-BUG-CLASS-LEDGER are ALL ready[]/READY with next_agent=developer and files=[] — none is built, so there are no T3/T5/T6 suites to run. Only T1 and T2 are DONE_VERIFIED. DEFECT IN THE ROW ITSELF: depends_on is [] — the gating exists only in the title prose, so deps_satisfied() sees an unblocked row and it presents as dispatchable to qa. Fix: declare depends_on = [SYSREMAKE-P2-T3-UNIT-TESTS, SYSREMAKE-P2-T5-SERVER-PATH-PARITY-TEST, SYSREMAKE-P2-T6-BUG-CLASS-LEDGER]. Routed to po. QA did NOT run a partial gate: running orch-validate/orch-apply alone and reporting a green would be the false-green shape this row exists to prevent."
+        "qa_not_actionable_20260823T1445Z": "[QA 2026-08-23T14:45Z NOT ACTIONABLE — measured, not assumed] This row's own title is 'run T3/T5/T6 test suites + orch-validate AC-1..AC-5 + orch-apply wrapper tests'. Live board: SYSREMAKE-P2-T3-UNIT-TESTS, -T5-SERVER-PATH-PARITY-TEST and -T6-BUG-CLASS-LEDGER are ALL ready[]/READY with next_agent=developer and files=[] — none is built, so there are no T3/T5/T6 suites to run. Only T1 and T2 are DONE_VERIFIED. DEFECT IN THE ROW ITSELF: depends_on is [] — the gating exists only in the title prose, so deps_satisfied() sees an unblocked row and it presents as dispatchable to qa. Fix: declare depends_on = [SYSREMAKE-P2-T3-UNIT-TESTS, SYSREMAKE-P2-T5-SERVER-PATH-PARITY-TEST, SYSREMAKE-P2-T6-BUG-CLASS-LEDGER]. Routed to po. QA did NOT run a partial gate: running orch-validate/orch-apply alone and reporting a green would be the false-green shape this row exists to prevent.",
+        "depends_on": [
+          "SYSREMAKE-P2-T1-GRANDFATHER-JQ-QUERY",
+          "SYSREMAKE-P2-T2-SCHEMA-ADDITIONS",
+          "SYSREMAKE-P2-T3-UNIT-TESTS",
+          "SYSREMAKE-P2-T4-ORCH-VALIDATE-DISPLAY",
+          "SYSREMAKE-P2-T5-SERVER-PATH-PARITY-TEST",
+          "SYSREMAKE-P2-T6-BUG-CLASS-LEDGER",
+          "SYSREMAKE-P2-T7-TASK-SCHEMA-DOC-SYNC",
+          "SYSREMAKE-P2-T8-FLOW-DOC-WIRING"
+        ]
       },
       {
         "id": "SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP",
@@ -17492,11 +17530,19 @@
           "DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING"
         ],
         "note": "QA: 9-point test strategy from brief §7. Tier 4 after T1, T2, T4, T6.",
-        "updated_at": "2026-08-23T14:46:09Z",
+        "updated_at": "2026-08-23T15:31:50Z",
         "owner": "qa",
         "next_agent": "po",
         "updated_by": "qa/ready-lane-triage-20260823T1445Z",
-        "qa_not_actionable_20260823T1445Z": "[QA 2026-08-23T14:45Z NOT ACTIONABLE — measured, not assumed] The row's own note says 'Tier 4 after T1, T2, T4, T6'. Live board: T6 is DONE_VERIFIED, but T1-TICK-SNAPSHOT-WON-SLOTS, T2-CYCLE-BOOTSTRAP-EXTRACTION and T4-ALERT-COMMANDER-RECHECK-LOGIC are all ready[]/TODO (next_agent=agent-father for T1/T2/T4). Its brief section-7 T-1..T-9 strategy tests behaviour that three of its four prerequisites have not yet produced. DEFECT IN THE ROW ITSELF: depends_on is [] — the tier ordering is prose-only, invisible to deps_satisfied(). Fix: declare depends_on = [DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS, DESIGN-COWORK-FANOUT-T2-CYCLE-BOOTSTRAP-EXTRACTION, DESIGN-COWORK-FANOUT-T4-ALERT-COMMANDER-RECHECK-LOGIC]. Routed to po."
+        "qa_not_actionable_20260823T1445Z": "[QA 2026-08-23T14:45Z NOT ACTIONABLE — measured, not assumed] The row's own note says 'Tier 4 after T1, T2, T4, T6'. Live board: T6 is DONE_VERIFIED, but T1-TICK-SNAPSHOT-WON-SLOTS, T2-CYCLE-BOOTSTRAP-EXTRACTION and T4-ALERT-COMMANDER-RECHECK-LOGIC are all ready[]/TODO (next_agent=agent-father for T1/T2/T4). Its brief section-7 T-1..T-9 strategy tests behaviour that three of its four prerequisites have not yet produced. DEFECT IN THE ROW ITSELF: depends_on is [] — the tier ordering is prose-only, invisible to deps_satisfied(). Fix: declare depends_on = [DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS, DESIGN-COWORK-FANOUT-T2-CYCLE-BOOTSTRAP-EXTRACTION, DESIGN-COWORK-FANOUT-T4-ALERT-COMMANDER-RECHECK-LOGIC]. Routed to po.",
+        "depends_on": [
+          "DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS",
+          "DESIGN-COWORK-FANOUT-T2-CYCLE-BOOTSTRAP-EXTRACTION",
+          "DESIGN-COWORK-FANOUT-T3-ALERT-COMMANDER-SCHEDULE-TASK-GRANT",
+          "DESIGN-COWORK-FANOUT-T4-ALERT-COMMANDER-RECHECK-LOGIC",
+          "DESIGN-COWORK-FANOUT-T5-COWORK-SCHEDULE-CONFIG",
+          "DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING"
+        ]
       },
       {
         "id": "FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL",
@@ -17766,13 +17812,17 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL",
         "owner": "qa",
         "next_agent": "po",
-        "depends_on": [],
+        "depends_on": [
+          "OPS-COWORK-GUARANTEED-SLOT-INSTALL",
+          "FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED"
+        ],
         "updated_by": "qa/ready-lane-triage-20260823T1445Z",
         "po_routing_20260728": "PO 2026-07-28T13Z. Was backlog[] with a detail-resolved non-dev next_agent (qa) — the documented NO-LANE hole (zone-routing.md Step A2): BOUNDED-1 gates it via is_non_dev_next_agent_unrouted, SLS needs supervised AND plan_only (both null here), RLC never reads backlog[]. Moved to ready[] with status READY and the next_agent/owner promoted INLINE, which is the only lane (RLC) that dispatches a non-dev handler.",
         "po_dep_repair_20260728": "DEP REPAIR, acute instance of FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING (minted this same write). Its backlog-detail `depends` was [OPS-COWORK-GUARANTEED-SLOT-INSTALL, FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED]. The second is DONE_VERIFIED (2026-07-08T05:22:59Z, by qa) but lives in docs/data/orch/archive/2026-07.json, which dep_status_map does not scan — so it resolved MISSING and blocked this row PERMANENTLY. Dropped it by installing an INLINE depends_on (inline wins over detail in effective_depends_on, same repair shape as UC-CDC-P5 2026-07-23). The row stays legitimately held on OPS-COWORK-GUARANTEED-SLOT-INSTALL, which is still REVIEW — see the consolidation ruling on that row.",
-        "updated_at": "2026-08-23T14:46:09Z",
+        "updated_at": "2026-08-23T15:31:50Z",
         "po_dep_resolution_20260823": "DANGLING DEP RESOLVED — REMOVED, NOT MINTED. PO verified the dependency OPS-COWORK-GUARANTEED-SLOT-INSTALL is already SATISFIED IN FACT on the live machine, so minting it would have created a no-op ops row and delayed this QA gate further. Corroboration of the dangle: scripts/orch-apply.sh Stage 1g listed it as item [11] of 16 dependencies resolving MISSING; PO located the only surviving record at docs/data/orch/archive/backlog-detail.json items[375], status BACKLOG, never present in any hot lane (live grep: 0 matching rows in the board). Its declared acceptance was: new LaunchAgent loaded and visible in launchctl list; old fb-daily-firer unloaded; no two overlapping 900s pollers. All three verified live 2026-08-23T09:45Z: (1) launchctl list shows `-\\t0\\tcom.vn-market.cowork-guaranteed-slot-firer`; (2) ~/Library/LaunchAgents/com.vn-market.cowork-guaranteed-slot-firer.plist is a symlink into the repo launchd/ dir, dated 10 jul; (3) no fb-daily-firer entry in launchctl list and no fb-daily-firer.plist anywhere in launchd/ — retired, and the generalized firer subsumes it per its own plist header. Its parent gate F1-LAUNCHD-COWORK-BACKSTOP also landed (firer script + plist both exist and the firer log shows real invocations, most recently 2026-08-22T20:32:48Z). This row is now DISPATCHABLE. NOTE FOR QA WHEN IT RUNS: point 7 of the 7-point spec (docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md section 6) — the injected-fault test for the Tier-1 extension — is testable TODAY: Check 6 _check_launchd_agents() at scripts/agents-flow/auditor-tier1-probe.sh:583-687 IS shipped and hardened twice. But scope point 7 to LOADEDNESS ONLY. It asserts the label is loaded at exit-status 0; it does NOT assert the firer is ticking, and it stayed ALL_GREEN through the 96.5h Standby outage of 2026-08-18 -> 08-22. That residual gap is tracked separately as FIX-LAYERC-FIRER-NO-TICK-LIVENESS-ORACLE-LOADED-ASSERTION-INVARIANT-UNDER-HOST-SLEEP — do NOT fail point 7 for it, and do NOT pass point 7 by claiming firing coverage.",
-        "qa_not_actionable_20260823T1445Z": "[QA 2026-08-23T14:45Z NOT ACTIONABLE — two independent reasons, both measured] (1) PREREQUISITES: its own detail_ref desc says 'Gated on OPS-COWORK-GUARANTEED-SLOT-INSTALL + FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED landing'; neither id is present in ANY hot lane (both survive only in archive/backlog-detail.json, and FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED also in archive/2026-07.json). depends_on is [] so this gating is prose-only. (2) DESTRUCTIVE AND UNSAFE RIGHT NOW, independent of (1): assertion 2 of the 7 requires forcing Layer B dead — ending the CLI session or CronDelete-ing the */15 cowork master. At the time of this check a live peer session was running dev-team plus agent-father, agents-architect, ops and developer agents in parallel; killing the master dispatcher would have taken all of them down. This test needs a supervised, quiet window, not an opportunistic qa slot. PARTIAL RESULT recorded so the next runner does not redo it: assertion 1 PASSES — launchctl list shows com.vn-market.cowork-guaranteed-slot-firer loaded with last exit status 0. Assertions 2-7 not attempted. Routed to po to schedule a supervised window and to declare the two prerequisites."
+        "qa_not_actionable_20260823T1445Z": "[QA 2026-08-23T14:45Z NOT ACTIONABLE — two independent reasons, both measured] (1) PREREQUISITES: its own detail_ref desc says 'Gated on OPS-COWORK-GUARANTEED-SLOT-INSTALL + FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED landing'; neither id is present in ANY hot lane (both survive only in archive/backlog-detail.json, and FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED also in archive/2026-07.json). depends_on is [] so this gating is prose-only. (2) DESTRUCTIVE AND UNSAFE RIGHT NOW, independent of (1): assertion 2 of the 7 requires forcing Layer B dead — ending the CLI session or CronDelete-ing the */15 cowork master. At the time of this check a live peer session was running dev-team plus agent-father, agents-architect, ops and developer agents in parallel; killing the master dispatcher would have taken all of them down. This test needs a supervised, quiet window, not an opportunistic qa slot. PARTIAL RESULT recorded so the next runner does not redo it: assertion 1 PASSES — launchctl list shows com.vn-market.cowork-guaranteed-slot-firer loaded with last exit status 0. Assertions 2-7 not attempted. Routed to po to schedule a supervised window and to declare the two prerequisites.",
+        "po_reapply_note_20260823": "[po 2026-08-23T15:30Z] Re-applied after this write was lost between two prior successful po writes (concurrency collision with a peer session, confirmed by direct board audit -- see notebook). Content identical to the original repair."
       },
       {
         "id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
