@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-23T18:44:02Z",
-    "updated_by": "developer",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-RAG-COMPACTION-DISK-AMPLIFICATION",
+    "next_agent": "dev-rag-service",
+    "next_action": "Supervised-Lane Sweep claim of FIX-RAG-COMPACTION-DISK-AMPLIFICATION — spawn dev-rag-service DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
+    "updated_at": "2026-08-23T18:55:32Z",
+    "updated_by": "dev-team (supervised-lane sweep)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -19422,44 +19423,6 @@
         "note": "Spec: docs/handoffs/TASK-PROSECEILING-VALUE-SHAPE-MEASURE.md. depends_on LIVE-BASELINE-ALL-LANES: same file, so sequential by construction. THIS IS TURN 4 OF A 3-TURN LOOP IF DONE AS A NAME-LIST PATCH — instance #1's own AC-5 already ordered the enumeration and it was never done; 846 field names live, 33 excluded, 813 counted as prose. Derive from value shape instead. MONOTONE BY CONSTRUCTION (exclusion set only grows), so no write that passes today can start failing — preserve that property. NOT IN SCOPE: --list-over-ceiling, orch-backlog-stub.sh, any paydown (all deferred to FOLLOWUP-PROSECEILING-TARGETED-COMPACTION-AND-FROZEN-COHORT-PAYDOWN); raising the ceiling; a bypass env var; removing STRUCTURAL_FIELDS; special-casing integer increments; orchStateSchema.ts; docs/agents/po/flow/manual-dispatch-sweep.md (needs NO edit under this design — scope reduction, drop it from the sibling row's file list)."
       },
       {
-        "id": "FIX-RAG-COMPACTION-DISK-AMPLIFICATION",
-        "type": "FIX",
-        "title": "rag-service LanceDB on-disk footprint is ~43x the live corpus (733 MB for ~11.2k rows / ~17 MB of vectors) — _COMPACT_EVERY=100 is sized for a '100 inserts/day' premise against ~3070/day live, and _indices/ is NOT pruned by cleanup_older_than while _versions/ demonstrably IS",
-        "status": "READY",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/rag-service/",
-        "plan_only": true,
-        "supervised": true,
-        "created_at": "2026-07-29T10:28:52Z",
-        "created_by": "po (spinoff from DIAGNOSE-RAG-SERVICE-RESTART-LOOP close; growth-trajectory axis, separate from the correctness defect)",
-        "updated_at": "2026-08-23T12:56:50Z",
-        "evidence": "MEASURED 2026-07-29T10:22Z on the host bind-mount data/live/lancedb/rag_entries.lance (733 MB total). data/ = 555 MB across 2927 files, of which 38 are >1 MB (5 largest all 19.4-20.0 MB, mtimes 08:40/08:49/10:49/11:02/12:06 local = roughly hourly FULL-TABLE rewrites) and 2878 are <100 KB. _versions/ = 30 MB / 2878 manifests. _indices/ = 136 MB / 735 dirs, of which 540 are EMPTY husks and only 195 hold data. RETENTION ASYMMETRY (this is the finding, and it is measured not inferred — `find -mtime +2` against _COMPACT_RETENTION=timedelta(days=2)): _versions has ZERO files older than the window (oldest manifest 27 jul 13:03); data/ has 33 of 2927 older; _indices has 352 of 735 older, OLDEST 18 jul = 11 DAYS. Same cleanup_older_than parameter, opposite outcomes => optimize(cleanup_older_than=) prunes versions and data fragments but does NOT reclaim _indices.",
-        "corrects": "This CORRECTS a framing in the originating spike, which read 2927 data files as 'compaction is not achieving its documented guarantee'. It is achieving it: the 38 large files ARE real compacted outputs and version pruning demonstrably works inside its 2-day window. The 555 MB is not fragment sprawl — it is 2 days of near-hourly full-table rewrites retained by design. The actual problem is the GROWTH TRAJECTORY, which is why this is a separate row from the correctness defect.",
-        "question": "Disk cost is O(compaction_cadence x retention_window x corpus_size) and all three are moving the wrong way. repositories.py:43 comments '100 inserts ~= one daily intelligence cycle' and docs/architecture/microservice/rag-service/infrastructure.md:37 assumes 'a 100-insert/day workload'; MEASURED live is 770 POST /index in 6h = ~128/h = ~3070/day, i.e. ~31x the design premise (independently: 94 POST /index in the 30 min before the 10:12Z restart). Corpus is ~11.2k rows growing ~103 rows/h toward the ~56k-row scale RAG-FTS-BUILD-MEMORY-BOUND is time-gated on. At 56k rows each full-table rewrite is ~5x today's ~20 MiB, so 2 days of near-hourly rewrites projects to multiple GB. DECIDE: (1) retune _COMPACT_EVERY / _COMPACT_RETENTION for real traffic, (2) whether _indices orphans need an explicit reclaim path, (3) whether a disk-growth guard belongs in the auditor. READ LanceDB source for the actual _indices retention semantics — do not guess.",
-        "depends_on": [
-          "FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP"
-        ],
-        "constraint": "Read-only investigation. Do NOT docker exec into rag-service (shares the cgroup; killed it at 10:12:00Z today). Do NOT hand-delete files under data/live/lancedb — that is live corpus.",
-        "related": [
-          "FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP",
-          "RAG-FTS-BUILD-MEMORY-BOUND",
-          "FU-RAG-DEPLOY-MEMORY",
-          "FIX-LANCEDB-INSERT-SEGFAULT"
-        ],
-        "po_evidence_and_priority_20260729T1140": "PRIORITY P3 -> P2 (PO decision 2026-07-29T11:40Z) ON NEW MEASURED EVIDENCE, and this row is now coupled to the memory problem rather than being a tidy-up. MEASURED on the host bind-mount, read-only: data/live/lancedb totals 785 MiB for a corpus of ~11243 rows (index_size measured 05:20Z on RAG-FTS-BUILD-MEMORY-BOUND). rag_entries.lance/data holds 3137 fragment files totalling 596 MiB — roughly one fragment per 3-4 rows, and each POST /index lands a NEW ~6.7-6.9 KiB fragment (the two newest, 11:29Z, correspond exactly to the two index calls logged at 11:29:50.44 and 11:29:51.09). _versions holds 3091 manifests / 32 MiB and _transactions another 3091 files / 12 MiB, so version metadata alone is 44 MiB and grows one pair per write. _indices is 145 MiB across 745 files. WHY THIS IS NO LONGER COSMETIC: 785 MiB on disk EXCEEDS the 768 MiB memory cap, so no read workload can ever have its working set resident, and every hybrid /search fans out across 3137 fragments plus the index set. Fragment count is therefore a direct multiplier on read cost and on cgroup-charged page cache — the thing that has rag-service pinned at 94-98% of its cap. This row and FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP are the same failure viewed from two ends: the compaction failure-path counter defect that row fixes is WHY 3137 fragments accumulated, and the fragment count is WHY reads are expensive. Neither row currently says that; both should. NOT RAISED FURTHER THAN P2: the corpus is still growing normally, nothing is broken right now, and the P0/P1 ready lane is already saturated. NOT FOLDED into the CLEAN-EXIT row: that row is a ~1-line counter-reset with a tight test plan and folding a compaction/retention redesign into it would destroy a small shippable fix.",
-        "updated_by": "po/triage-20260823T1232Z",
-        "po_priority_applied_20260729T1141": "PRIORITY FIELD ACTUALLY SET P3 -> P2 here. The reasoning is in po_evidence_and_priority_20260729T1140, which was written in the same tick and DESCRIBED this bump while failing to mutate the field — a narration-without-actuation defect in my own triage script, caught by reading the field back after apply instead of trusting the note. Recorded rather than silently patched: it is the same shape as the ACK STALENESS RULE finding this tick (a guarantee asserted in prose and executed by nothing) and the same shape as FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED. Read-back after write is the control; a jq transform that adds a key is not evidence that it also changed a sibling key.",
-        "po_UNCOUPLE_disk_from_memory_20260729T1148": "SCOPE UN-COUPLING — corrects po_evidence_and_priority_20260729T1140 on this row. That note justified the P3->P2 raise partly on the claim that 786 MiB of on-disk LanceDB exceeding a 768 MiB memory cap means no read workload can have its working set resident, so fragment count drives cgroup pressure. THE MEMORY HALF OF THAT ARGUMENT IS RETRACTED. The cgroup anon/file split measured at the 10:12Z restart reads ~726 MiB anon against at most ~40 MiB file-backed, so the corpus is NOT resident in this cgroup and fragment fan-out is NOT what pins it at 98%. That is the model singleton, owned by FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP and FU-RAG-DEPLOY-MEMORY. THE DISK FACTS ARE UNAFFECTED AND STILL CARRY THE RAISE ON THEIR OWN: du -sm data/live/lancedb = 786 MiB for a corpus of ~11243 rows; rag_entries.lance/data holds 3137 fragment files / 596 MiB (roughly one fragment per 3-4 rows, each POST /index landing a fresh ~6.7-6.9 KiB fragment); _versions 3091 manifests / 32 MiB and _transactions 3091 files / 12 MiB, so version metadata alone is 44 MiB and grows one pair per write; _indices 145 MiB / 745 files. Unbounded fragment and version accumulation is a real defect with real disk and real query-planning cost, and this repo has an ENOSPC incident on record. P2 STANDS. WHAT DOES NOT STAND is the causal link to the memory ceiling, and a future reader must not inherit it: fixing compaction will reclaim DISK and reduce fragment fan-out, and should NOT be expected to move the 98% memory figure. The still-true coupling to the sibling row is narrower and worth keeping: the compaction failure-path counter defect is WHY 3137 fragments accumulated, so that row is upstream of this one on cause. It is not upstream on the memory symptom.",
-        "next_agent": "dev-rag-service",
-        "owner": "dev-rag-service",
-        "po_lane_repair_20260814": "next_agent derived from own zone apps/rag-service/ per zone-routing.md Step A (NOT invented). Was owner:null+next_agent:null since mint 07-29 -> SLS would have fallen back to generic developer. Sole PRIMARY-gate failure of FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER. dep FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP is DONE_VERIFIED, so this is now workable. 2026-08-14T03:31:54Z",
-        "promoted_at": "2026-08-23T12:56:49Z",
-        "promoted_by": "dev-team (supervised-lane sweep)",
-        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='dev-rag-service' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": "dev-rag-service"
-      },
-      {
         "id": "IVC-C1",
         "title": "Generic registry-driven PreToolUse Write|Edit store-validation hook + shared store-validate.mjs CLI",
         "type": "TASK",
@@ -21039,6 +21002,46 @@
         "claimed_at": "2026-08-23T15:57:35Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "blocked_reason": "SLS claim reverted, 2026-08-23T15:37Z tick: the claim was not gate-satisfied. SLS PRIMARY selects purely on promoted_by == \"dev-team (supervised-lane sweep)\" and re-validates no gate. This row was stamped 2026-08-08T04:51:52Z and carries plan_only=false, so effective_plan_only is FALSE and the row is outside SLS's supervised-AND-plan_only quarantine class. Per main.md Lane x Gate matrix, ready[] with sup=T po=F resolves to READY-XOR-SUP-OR-PLANONLY, i.e. PO's human-gated manual-dispatch sweep, NOT auto-dispatch. Not spawned. The lane-move back to ready[] was attempted and HARD-REJECTED by the row-prose-ceiling guard (live=0B, candidate=26552B): that is defect D3 in scripts/architect-20260823-orch-prose-ceiling-row-handoff.jq, 2nd live instance after UC-CCA-P3. Marked BLOCKED rather than IN_PROGRESS so wip_in_progress excludes it and the four WIP pickers stay unblocked. Unblock path: PO manual-dispatch sweep, or land the D3 fix then lane-move to ready[]."
+      },
+      {
+        "id": "FIX-RAG-COMPACTION-DISK-AMPLIFICATION",
+        "type": "FIX",
+        "title": "rag-service LanceDB on-disk footprint is ~43x the live corpus (733 MB for ~11.2k rows / ~17 MB of vectors) — _COMPACT_EVERY=100 is sized for a '100 inserts/day' premise against ~3070/day live, and _indices/ is NOT pruned by cleanup_older_than while _versions/ demonstrably IS",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/rag-service/",
+        "plan_only": true,
+        "supervised": true,
+        "created_at": "2026-07-29T10:28:52Z",
+        "created_by": "po (spinoff from DIAGNOSE-RAG-SERVICE-RESTART-LOOP close; growth-trajectory axis, separate from the correctness defect)",
+        "updated_at": "2026-08-23T18:55:32Z",
+        "evidence": "MEASURED 2026-07-29T10:22Z on the host bind-mount data/live/lancedb/rag_entries.lance (733 MB total). data/ = 555 MB across 2927 files, of which 38 are >1 MB (5 largest all 19.4-20.0 MB, mtimes 08:40/08:49/10:49/11:02/12:06 local = roughly hourly FULL-TABLE rewrites) and 2878 are <100 KB. _versions/ = 30 MB / 2878 manifests. _indices/ = 136 MB / 735 dirs, of which 540 are EMPTY husks and only 195 hold data. RETENTION ASYMMETRY (this is the finding, and it is measured not inferred — `find -mtime +2` against _COMPACT_RETENTION=timedelta(days=2)): _versions has ZERO files older than the window (oldest manifest 27 jul 13:03); data/ has 33 of 2927 older; _indices has 352 of 735 older, OLDEST 18 jul = 11 DAYS. Same cleanup_older_than parameter, opposite outcomes => optimize(cleanup_older_than=) prunes versions and data fragments but does NOT reclaim _indices.",
+        "corrects": "This CORRECTS a framing in the originating spike, which read 2927 data files as 'compaction is not achieving its documented guarantee'. It is achieving it: the 38 large files ARE real compacted outputs and version pruning demonstrably works inside its 2-day window. The 555 MB is not fragment sprawl — it is 2 days of near-hourly full-table rewrites retained by design. The actual problem is the GROWTH TRAJECTORY, which is why this is a separate row from the correctness defect.",
+        "question": "Disk cost is O(compaction_cadence x retention_window x corpus_size) and all three are moving the wrong way. repositories.py:43 comments '100 inserts ~= one daily intelligence cycle' and docs/architecture/microservice/rag-service/infrastructure.md:37 assumes 'a 100-insert/day workload'; MEASURED live is 770 POST /index in 6h = ~128/h = ~3070/day, i.e. ~31x the design premise (independently: 94 POST /index in the 30 min before the 10:12Z restart). Corpus is ~11.2k rows growing ~103 rows/h toward the ~56k-row scale RAG-FTS-BUILD-MEMORY-BOUND is time-gated on. At 56k rows each full-table rewrite is ~5x today's ~20 MiB, so 2 days of near-hourly rewrites projects to multiple GB. DECIDE: (1) retune _COMPACT_EVERY / _COMPACT_RETENTION for real traffic, (2) whether _indices orphans need an explicit reclaim path, (3) whether a disk-growth guard belongs in the auditor. READ LanceDB source for the actual _indices retention semantics — do not guess.",
+        "depends_on": [
+          "FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP"
+        ],
+        "constraint": "Read-only investigation. Do NOT docker exec into rag-service (shares the cgroup; killed it at 10:12:00Z today). Do NOT hand-delete files under data/live/lancedb — that is live corpus.",
+        "related": [
+          "FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP",
+          "RAG-FTS-BUILD-MEMORY-BOUND",
+          "FU-RAG-DEPLOY-MEMORY",
+          "FIX-LANCEDB-INSERT-SEGFAULT"
+        ],
+        "po_evidence_and_priority_20260729T1140": "PRIORITY P3 -> P2 (PO decision 2026-07-29T11:40Z) ON NEW MEASURED EVIDENCE, and this row is now coupled to the memory problem rather than being a tidy-up. MEASURED on the host bind-mount, read-only: data/live/lancedb totals 785 MiB for a corpus of ~11243 rows (index_size measured 05:20Z on RAG-FTS-BUILD-MEMORY-BOUND). rag_entries.lance/data holds 3137 fragment files totalling 596 MiB — roughly one fragment per 3-4 rows, and each POST /index lands a NEW ~6.7-6.9 KiB fragment (the two newest, 11:29Z, correspond exactly to the two index calls logged at 11:29:50.44 and 11:29:51.09). _versions holds 3091 manifests / 32 MiB and _transactions another 3091 files / 12 MiB, so version metadata alone is 44 MiB and grows one pair per write. _indices is 145 MiB across 745 files. WHY THIS IS NO LONGER COSMETIC: 785 MiB on disk EXCEEDS the 768 MiB memory cap, so no read workload can ever have its working set resident, and every hybrid /search fans out across 3137 fragments plus the index set. Fragment count is therefore a direct multiplier on read cost and on cgroup-charged page cache — the thing that has rag-service pinned at 94-98% of its cap. This row and FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP are the same failure viewed from two ends: the compaction failure-path counter defect that row fixes is WHY 3137 fragments accumulated, and the fragment count is WHY reads are expensive. Neither row currently says that; both should. NOT RAISED FURTHER THAN P2: the corpus is still growing normally, nothing is broken right now, and the P0/P1 ready lane is already saturated. NOT FOLDED into the CLEAN-EXIT row: that row is a ~1-line counter-reset with a tight test plan and folding a compaction/retention redesign into it would destroy a small shippable fix.",
+        "updated_by": "po/triage-20260823T1232Z",
+        "po_priority_applied_20260729T1141": "PRIORITY FIELD ACTUALLY SET P3 -> P2 here. The reasoning is in po_evidence_and_priority_20260729T1140, which was written in the same tick and DESCRIBED this bump while failing to mutate the field — a narration-without-actuation defect in my own triage script, caught by reading the field back after apply instead of trusting the note. Recorded rather than silently patched: it is the same shape as the ACK STALENESS RULE finding this tick (a guarantee asserted in prose and executed by nothing) and the same shape as FIX-AUDITOR-DASHBOARD-APPEND-NO-ACTUATOR-CONTRACT-COUNT-NARRATED. Read-back after write is the control; a jq transform that adds a key is not evidence that it also changed a sibling key.",
+        "po_UNCOUPLE_disk_from_memory_20260729T1148": "SCOPE UN-COUPLING — corrects po_evidence_and_priority_20260729T1140 on this row. That note justified the P3->P2 raise partly on the claim that 786 MiB of on-disk LanceDB exceeding a 768 MiB memory cap means no read workload can have its working set resident, so fragment count drives cgroup pressure. THE MEMORY HALF OF THAT ARGUMENT IS RETRACTED. The cgroup anon/file split measured at the 10:12Z restart reads ~726 MiB anon against at most ~40 MiB file-backed, so the corpus is NOT resident in this cgroup and fragment fan-out is NOT what pins it at 98%. That is the model singleton, owned by FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP and FU-RAG-DEPLOY-MEMORY. THE DISK FACTS ARE UNAFFECTED AND STILL CARRY THE RAISE ON THEIR OWN: du -sm data/live/lancedb = 786 MiB for a corpus of ~11243 rows; rag_entries.lance/data holds 3137 fragment files / 596 MiB (roughly one fragment per 3-4 rows, each POST /index landing a fresh ~6.7-6.9 KiB fragment); _versions 3091 manifests / 32 MiB and _transactions 3091 files / 12 MiB, so version metadata alone is 44 MiB and grows one pair per write; _indices 145 MiB / 745 files. Unbounded fragment and version accumulation is a real defect with real disk and real query-planning cost, and this repo has an ENOSPC incident on record. P2 STANDS. WHAT DOES NOT STAND is the causal link to the memory ceiling, and a future reader must not inherit it: fixing compaction will reclaim DISK and reduce fragment fan-out, and should NOT be expected to move the 98% memory figure. The still-true coupling to the sibling row is narrower and worth keeping: the compaction failure-path counter defect is WHY 3137 fragments accumulated, so that row is upstream of this one on cause. It is not upstream on the memory symptom.",
+        "next_agent": "dev-rag-service",
+        "owner": "dev-rag-service",
+        "po_lane_repair_20260814": "next_agent derived from own zone apps/rag-service/ per zone-routing.md Step A (NOT invented). Was owner:null+next_agent:null since mint 07-29 -> SLS would have fallen back to generic developer. Sole PRIMARY-gate failure of FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER. dep FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP is DONE_VERIFIED, so this is now workable. 2026-08-14T03:31:54Z",
+        "promoted_at": "2026-08-23T12:56:49Z",
+        "promoted_by": "dev-team (supervised-lane sweep)",
+        "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='dev-rag-service' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
+        "dispatch_lane": "dev-rag-service",
+        "claimed_at": "2026-08-23T18:55:25Z",
+        "claimed_by": "dev-team (supervised-lane sweep)"
       }
     ]
   },
@@ -21057,7 +21060,7 @@
         "last_served_tick": "2026-08-23T18:23:26Z"
       },
       "sls": {
-        "last_served_tick": "2026-08-23T15:57:20Z"
+        "last_served_tick": "2026-08-23T18:55:13Z"
       },
       "rlc": {
         "last_served_tick": "2026-08-23T16:25:10Z"
@@ -21072,7 +21075,7 @@
         "last_served_tick": "2026-08-23T17:55:24Z"
       }
     },
-    "_updated_at": "2026-08-23T18:52:43Z",
+    "_updated_at": "2026-08-23T18:55:13Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
