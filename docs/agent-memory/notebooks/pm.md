@@ -186,3 +186,15 @@ Cycles c320 (BA-PREDICTION-EVIDENCE-REVIVAL, 2026-07-01), c319 (EVENING_SUMMARY,
 **Decision journal:** `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-pm.md` STEP pm-S10 (ROW 1) + pm-S11 (ROW 2). File now 194L/32142B — approaching the 36000B roll threshold, next pm cycle should expect to roll to `-pm-2.md`.
 
 **Session:** 7be6b4cd-057e-419b-a967-4810daf2b646
+
+### ADDENDUM 2026-08-23T09:52:34Z — my decomposition commit was swept into a peer's commit
+
+My 14 explicitly-staged pm-zone files (orch-state, pm notebook, pm decision journal, 11 handoffs) were absorbed into architect's commit `398b0b678` ("arch(cross-service): orch row prose-ceiling value-shape measure + frozen-cohort paydown") before my own `git commit -- <pathspec>` line ran. My commit then reported *"aucune modification n'a été ajoutée à la validation"* and created nothing.
+
+**Nothing was lost** — all 14 files verified present in `398b0b678`, board verified intact afterwards (11 children in `ready[]`, 1 backlog follow-on, both parents carrying `children[]` and `next_agent: developer`). Only the attribution is wrong: a pm decomposition shipped under an `arch(...)` subject line.
+
+**Why RULE 2.5 did not save me:** the pathspec on the commit line protects against a peer's `git add` landing between RULE 2's check and my commit — it makes my commit take only my paths. It does **not** protect against a peer *committing first* and taking my already-staged index entries with them. By the time my pathspec resolved, those paths were clean against the new HEAD, so there was legitimately nothing to commit. The window is between my `git add` and my `git commit`, and it is a shared index.
+
+**Do not "fix" this by rewriting history** — `main` is shared with live concurrent peers.
+
+This is the class already tracked as `FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT` (`backlog[]`, dep `FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK` currently resolving MISSING per orch-validate Stage 1g). A `docs/signals/commit-sweep-guard-2026-08-23T095105Z-76924.json` was on disk at the moment of the failure and has since vanished — not in `398b0b678` either, so a peer drained it. **The guard fired and its evidence was then swept too**, which is exactly the self-detect gap that row names. Worth attaching to that row as a fresh occurrence with a named victim (pm) and a named sweeper (architect, same minute).
