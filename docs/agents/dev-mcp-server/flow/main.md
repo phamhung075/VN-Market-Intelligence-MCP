@@ -1,4 +1,4 @@
-<!-- size-justification: 170L — zone-specialist flow overlay; G12 DoD Gate (two-gate evidence table, streak rule, tool-suite probe commands), RUN-SOLO/explicit-add/INV-GATEWAY-1 commit discipline, ESLint fence phase note, scheduler/dashboard circular-dep protocol pointers, and implementation record template are all zone-specific mandatory content with no factoring seam; +2L for DJ-GATE-1 pointer (2026-06-07) -->
+<!-- size-justification: 170L — zone-specialist flow overlay; G12 DoD Gate (two-gate evidence table, streak rule, tool-suite probe commands), RUN-SOLO/explicit-add/INV-GATEWAY-1 commit discipline, ESLint fence phase note, scheduler/dashboard circular-dep protocol pointers, and implementation record template are all zone-specific mandatory content with no factoring seam; +2L for DJ-GATE-1 pointer (2026-06-07). NOTE: this declared count was already massively stale pre-edit (file measured 511L before this edit) — not re-derived here, out of this task's scope. FIX-DEVFLOW-SELFCONTAINED-ZONE-FLOWS-SUCCESS-PATH-NO-HEAD-SYNC 2026-08-23 (agent-father): +9L (511→520 measured) — this file delegates to microservice-main.md for BASE steps only, then re-implements its own terminal block, so it never reaches that shared file's SUCCESS-path `.head` idle-reset (FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC); added the same guarded idiom here on its own success path, before RETURN. -->
 # dev-mcp-server — Main Flow
 
 **Zone:** `apps/mcp-server/`
@@ -496,7 +496,21 @@ bun scripts/migrations/reparse-bctc-reports.ts --tickers REE,CTG --dry-run
 Pre-conditions: container must be running; `VPS_PUSH_API_KEY` env in container; local PDFs in `data/pdfs/`.
 Mechanism: reset `bctc_vps_queue` row to `pending` → POST local PDF bytes to `/api/push-bctc-pdf` → pipeline runs in container. Precedent: FIX-BCTC-LOWCONF-REPARSE-BATCH (2026-06-08).
 
-**Update `docs/data/orch/orch-state.json` `.task_board`**: task status IN_PROGRESS → REVIEW (atomic write per §2.3) → return:
+**Update `docs/data/orch/orch-state.json` `.task_board`**: task status IN_PROGRESS → REVIEW (atomic write per §2.3).
+
+**`.head` idle-reset — SUCCESS path (FIX-DEVFLOW-SELFCONTAINED-ZONE-FLOWS-SUCCESS-PATH-NO-HEAD-SYNC, 2026-08-23 — same idiom as `docs/agents/developer/flow/microservice-main.md`'s own AC-1/AC-2/AC-3):** this file delegates to `microservice-main.md` for the BASE steps only, then re-implements its OWN terminal block here — the shared file's `.head` idle-reset step (at the very end of `microservice-main.md`, right before ITS return) is never reached. Run this block immediately after the task_board update above, before RETURN. **GUARD (mandatory, not optional):** reset ONLY when `.head.active_task_id` still names THIS task — never blind-null; a concurrent peer's head pin on a different task must survive.
+```bash
+head_active_task=$(jq -r '.head.active_task_id' docs/data/orch/orch-state.json)
+if [ "$head_active_task" = "$task_id" ]; then
+  now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  jq --arg s "idle" --arg t "$now" --arg u "dev-mcp-server" \
+    '.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}' \
+    docs/data/orch/orch-state.json \
+    | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || true
+fi
+```
+
+Return:
 ```
 ## RETURN
 DONE: Implementation complete — SERVICE=mcp-server, CHANGED=[...], NEW_PASS=N, tsc clean, tools=N, sched=N

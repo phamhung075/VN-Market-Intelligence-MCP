@@ -1,4 +1,4 @@
-<!-- size-justification: 213L — technique research (Step 3b) and inline code scaffolding extracted to technique-research.md; remaining content is the 8-step scraper orchestration (drain signal, recon check, technique select, implement, wire, verify, RAM check, signal QA) plus mandatory decision-journal step at QA signal gate; all are atomic sequential flow with no further factoring seam -->
+<!-- size-justification: 213L — technique research (Step 3b) and inline code scaffolding extracted to technique-research.md; remaining content is the 8-step scraper orchestration (drain signal, recon check, technique select, implement, wire, verify, RAM check, signal QA) plus mandatory decision-journal step at QA signal gate; all are atomic sequential flow with no further factoring seam. FIX-DEVFLOW-SELFCONTAINED-ZONE-FLOWS-SUCCESS-PATH-NO-HEAD-SYNC 2026-08-23 (agent-father): +13L (213→226) — this file is self-contained (does not delegate to microservice-main.md), so it never inherited that shared flow's SUCCESS-path `.head` idle-reset (FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC); added the same guarded idiom here on its own success path, before RETURN Block. -->
 # dev-mainserver-crawls — Main Flow
 
 **Tools:** `docs/agents/tools/package/developer.md`
@@ -155,6 +155,18 @@ Certify in handoff Implementation Record before proceeding to QA signal.
 Write at minimum ONE entry per task stamped with its task-id (record WHY this technique was chosen, not on terminal). Routine: `what-considered: "only path: <reason>"`, `why-change: "no change from plan"`.
 
 Update `docs/data/orch/orch-state.json .task_board` task status for QA review (standard dev chain: atomic write per §2.3).
+
+**`.head` idle-reset — SUCCESS path (FIX-DEVFLOW-SELFCONTAINED-ZONE-FLOWS-SUCCESS-PATH-NO-HEAD-SYNC, 2026-08-23 — same idiom as `docs/agents/developer/flow/microservice-main.md`'s own AC-1/AC-2/AC-3, applied here because this file carries its own self-contained success path and never reaches that shared file's step):** run immediately after the task_board update above, before RETURN. **GUARD (mandatory, not optional):** reset ONLY when `.head.active_task_id` still names THIS task — never blind-null; a concurrent peer's head pin on a different task must survive.
+```bash
+head_active_task=$(jq -r '.head.active_task_id' docs/data/orch/orch-state.json)
+if [ "$head_active_task" = "$task_id" ]; then
+  now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  jq --arg s "idle" --arg t "$now" --arg u "dev-mainserver-crawls" \
+    '.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}' \
+    docs/data/orch/orch-state.json \
+    | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || true
+fi
+```
 
 WORK channel notification:
 ```

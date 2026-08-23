@@ -1,4 +1,4 @@
-<!-- size-justification: 207L — zone-specialist flow; 4-tier build-order constraint table, TDD entry points per tier (3 variants), DDD layer rules table, gateway contract, G12 DoD Gate (MVR render-gate + streak rule, blocking from Day 0), ESLint fence Phase-2 note, INV-GATEWAY-1 comments, implementation record template, mandatory decision-journal step, and doc-self-heal chain are all zone-specific mandatory content with no factoring seam -->
+<!-- size-justification: 207L — zone-specialist flow; 4-tier build-order constraint table, TDD entry points per tier (3 variants), DDD layer rules table, gateway contract, G12 DoD Gate (MVR render-gate + streak rule, blocking from Day 0), ESLint fence Phase-2 note, INV-GATEWAY-1 comments, implementation record template, mandatory decision-journal step, and doc-self-heal chain are all zone-specific mandatory content with no factoring seam. FIX-DEVFLOW-SELFCONTAINED-ZONE-FLOWS-SUCCESS-PATH-NO-HEAD-SYNC 2026-08-23 (agent-father): +14L (207→221) — this file is self-contained (does not delegate to microservice-main.md), so it never inherited that shared flow's SUCCESS-path `.head` idle-reset (FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC); added the same guarded idiom here on its own success path, before RETURN. -->
 # dev-frontend — Main Flow
 
 **Zone:** `apps/frontend/`
@@ -197,7 +197,21 @@ git commit -m "chore(memory/dev-frontend): notebook YYYY-MM-DD" -- docs/agent-me
 → skill: `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<active task_id from task_board — e.g. TASK-NNN>"]
 Write at minimum ONE entry per task stamped with its task-id (record WHY implementation choices — build tier, approach). Routine: `what-considered: "only path: <reason>"`, `why-change: "no change from plan"`.
 
-**Update `docs/data/orch/orch-state.json` `.task_board`**: task status IN_PROGRESS → REVIEW (atomic write per §2.3) → return:
+**Update `docs/data/orch/orch-state.json` `.task_board`**: task status IN_PROGRESS → REVIEW (atomic write per §2.3).
+
+**`.head` idle-reset — SUCCESS path (FIX-DEVFLOW-SELFCONTAINED-ZONE-FLOWS-SUCCESS-PATH-NO-HEAD-SYNC, 2026-08-23 — same idiom as `docs/agents/developer/flow/microservice-main.md`'s own AC-1/AC-2/AC-3, applied here because this file carries its own self-contained success path and never reaches that shared file's step):** run immediately after the task_board update above, before RETURN. **GUARD (mandatory, not optional):** reset ONLY when `.head.active_task_id` still names THIS task — never blind-null; a concurrent peer's head pin on a different task must survive.
+```bash
+head_active_task=$(jq -r '.head.active_task_id' docs/data/orch/orch-state.json)
+if [ "$head_active_task" = "$task_id" ]; then
+  now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  jq --arg s "idle" --arg t "$now" --arg u "dev-frontend" \
+    '.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}' \
+    docs/data/orch/orch-state.json \
+    | bash "$PROJECT_ROOT/scripts/orch-apply.sh" || true
+fi
+```
+
+Return:
 ```
 ## RETURN
 DONE: Implementation complete — SERVICE=frontend, TIER=N, CHANGED=[...], NEW_PASS=N, tsc clean

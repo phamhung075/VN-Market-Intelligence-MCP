@@ -820,8 +820,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-23T13:15:40Z",
-    "_updated_by": "architect (FIX-NEWSSCOUT-OFFHOURS-SELFCOMMIT-PROSE-RECIPE-INTERMITTENT design)",
+    "_updated_at": "2026-08-23T13:18:07Z",
+    "_updated_by": "architect (FIX-USDVND-THRESHOLD-SSOT design)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -4546,12 +4546,12 @@
           "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P3"
         },
         "po_occurrence_20260729": "Re-fired as sys-20260729T183438-0c12 (WARN, 18:34Z). RAW-refuted by PO the same tick through the mcp-server runtime: market_messages n=1067, MAX(sent_at)=2026-07-29 15:32:13 — table healthy, ~3.8h since last post against a ~3x/day cadence. Confirms this row diagnosis verbatim. Raised low->P2: this FP now costs a full auditor+PO triage cycle per occurrence, and the fix is a size-S doc-only edit to docs/agents/system-auditor/flow/main.md.",
-        "updated_at": "2026-08-08T07:59:55Z",
+        "updated_at": "2026-08-23T13:17:16Z",
         "owner": "architect",
-        "next_agent": "architect",
-        "updated_by": "po (C-06 fold + weekday-blind scope correction)",
+        "updated_by": "architect",
         "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED architect. Stale-check: live docs/agents/system-auditor/flow/main.md confirms defect UNFIXED — the C-06 line still reads sent_at > datetime('now','-3 hours'), no age/SLA-based recalibration. Same predicate-drift family (feedback_auditor_predicate_drift_false_regression) as FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE / FIX-AUDITOR-DOCAUDIT-MEMORY-PATH-PREDICATE, both already owner=architect — routed consistently. Distinct from the B-05/B-11 layer-split subfamily (raw-fetch vs analysis-cadence), which PO explicitly routed to agent-father via the 2026-07-04 systemic-remake brief; this row is a within-layer threshold/recency defect, not a wrong-layer comparison, hence architect not agent-father.",
-        "status_note": "  || PO TRIAGE 2026-08-08T07:59:55Z — occurrence folded from Telegram report 4513 (system-auditor C-06 WARN at 2026-08-08T06:25:03Z, text: 'market_messages stale (0 in 3h, market hours)'), resolution=duplicate. PREMISE CORRECTION, and it WIDENS this row's scope: the WARN asserts 'market hours', but 2026-08-08 is a SATURDAY — the VN market is closed all day, so 0 market_messages in 3h is the correct and expected state, and the fire is a false positive. This row as written covers the off-HOURS case ('fixed 3h-count check fires HIGH during off-market'); this occurrence proves the calendar predicate is also WEEKDAY-blind, not merely hour-of-day-blind. Fix must gate on a full trading-calendar predicate (weekday AND session hours AND public holidays), not an hours-of-day window alone — an hours-only fix would still have fired this exact WARN today. Class: feedback_auditor_freshness_threshold_market_hours_blind."
+        "status_note": "  || PO TRIAGE 2026-08-08T07:59:55Z — occurrence folded from Telegram report 4513 (system-auditor C-06 WARN at 2026-08-08T06:25:03Z, text: 'market_messages stale (0 in 3h, market hours)'), resolution=duplicate. PREMISE CORRECTION, and it WIDENS this row's scope: the WARN asserts 'market hours', but 2026-08-08 is a SATURDAY — the VN market is closed all day, so 0 market_messages in 3h is the correct and expected state, and the fire is a false positive. This row as written covers the off-HOURS case ('fixed 3h-count check fires HIGH during off-market'); this occurrence proves the calendar predicate is also WEEKDAY-blind, not merely hour-of-day-blind. Fix must gate on a full trading-calendar predicate (weekday AND session hours AND public holidays), not an hours-of-day window alone — an hours-only fix would still have fired this exact WARN today. Class: feedback_auditor_freshness_threshold_market_hours_blind.",
+        "architect_disposition_20260823": "REPOINTED (not closed) by architect 2026-08-23 per UC-ASL-P3 BA spec FR-12: this predicate's corrected design (age-vs-SLA via reused vnTradingCalendar.ts/marketHours.ts, not the earnings-window SLA Resolver) now lands INSIDE scripts/auditor-db-checks.sh as part of UC-ASL-P3 FR-5 -- see docs/architecture-briefs/2026-08-23-uc-asl-p3-auditor-db-checks-freeze.md ARCH-RATIFY-2. Do not independently edit main.md's C-06 block. Close this row once UC-ASL-P3's FR-11 lands and the corrected predicate is confirmed live."
       },
       {
         "id": "FOLLOW-ON-CWKSCH-3",
@@ -4640,10 +4640,10 @@
           "ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#auditor-signal-loop-P3"
         },
         "owner": "architect",
-        "next_agent": "architect",
-        "updated_at": "2026-08-08T01:08:21Z",
-        "updated_by": "architect/EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
-        "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED architect. Stale-check: live docs/agents/system-auditor/flow/main.md still queries status='done' (a value that never exists in pdf_documents; the real terminal value is 'success') — UNFIXED. Same predicate-drift family as C-04/DOCAUDIT-MEMORY (both owner=architect); C-04's own related[] explicitly names this row as a sibling. sibling_of=FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE per its own detail-ref."
+        "updated_at": "2026-08-23T13:17:16Z",
+        "updated_by": "architect",
+        "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED architect. Stale-check: live docs/agents/system-auditor/flow/main.md still queries status='done' (a value that never exists in pdf_documents; the real terminal value is 'success') — UNFIXED. Same predicate-drift family as C-04/DOCAUDIT-MEMORY (both owner=architect); C-04's own related[] explicitly names this row as a sibling. sibling_of=FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE per its own detail-ref.",
+        "architect_disposition_20260823": "REPOINTED (not closed) by architect 2026-08-23 per UC-ASL-P3 BA spec FR-12: this predicate's corrected design (status='success', datetime()-wrap idiom, earnings-window off-season severity reusing the SLA Resolver's in-window arithmetic ported to bash) now lands INSIDE scripts/auditor-db-checks.sh as part of UC-ASL-P3 FR-6 -- see docs/architecture-briefs/2026-08-23-uc-asl-p3-auditor-db-checks-freeze.md ARCH-RATIFY-3. Do not independently edit main.md's C-11 block. Close this row once UC-ASL-P3's FR-11 lands and the corrected predicate is confirmed live."
       },
       {
         "id": "FIX-AUDITOR-C12-READONLY-BLINDED-AND-TABLENAME",
@@ -4655,10 +4655,10 @@
         "size": "S",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-C12-READONLY-BLINDED-AND-TABLENAME",
         "owner": "architect",
-        "next_agent": "architect",
-        "updated_at": "2026-08-08T01:08:21Z",
-        "updated_by": "architect/EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN",
-        "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED architect. Stale-check: docs/agents/system-auditor/flow/main.md still mandates {readonly:true} bun:sqlite handles throughout (no file:?immutable=1 anywhere) — the readonly-blinding half of this row's defect is UNFIXED. The wrong-table-name half (market_messages_price_history) is not found anywhere in the current repo (0 hits) — likely a dynamic-signal-payload artifact rather than a literal source string, so not independently confirmable as fixed or unfixed from a static read; flagged for architect to re-verify against a live C-12 emission before closing that half. Same predicate-drift family as C-06/C-11 (routed architect for consistency)."
+        "updated_at": "2026-08-23T13:17:16Z",
+        "updated_by": "architect",
+        "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED architect. Stale-check: docs/agents/system-auditor/flow/main.md still mandates {readonly:true} bun:sqlite handles throughout (no file:?immutable=1 anywhere) — the readonly-blinding half of this row's defect is UNFIXED. The wrong-table-name half (market_messages_price_history) is not found anywhere in the current repo (0 hits) — likely a dynamic-signal-payload artifact rather than a literal source string, so not independently confirmable as fixed or unfixed from a static read; flagged for architect to re-verify against a live C-12 emission before closing that half. Same predicate-drift family as C-06/C-11 (routed architect for consistency).",
+        "architect_disposition_20260823": "REPOINTED (not closed) by architect 2026-08-23 per UC-ASL-P3 BA spec FR-12: the readonly-blinding half is resolved automatically once C-12 moves onto UC-ASL-P3's FR-2 host-bind+wal-guard access pattern; the table-name half (market_messages_price_history) re-confirmed zero code hits (3rd confirmation, non-issue) -- see docs/architecture-briefs/2026-08-23-uc-asl-p3-auditor-db-checks-freeze.md ARCH-RATIFY-4/7. Do not independently edit main.md's C-12 block. Close this row once UC-ASL-P3's FR-11 lands and the corrected predicate is confirmed live."
       },
       {
         "id": "ADD-NEWS-SCOUT-INTRADAY-SLOT",
@@ -15562,31 +15562,6 @@
     },
     "ready": [
       {
-        "id": "FIX-DEVFLOW-SELFCONTAINED-ZONE-FLOWS-SUCCESS-PATH-NO-HEAD-SYNC",
-        "type": "FIX",
-        "title": "4 self-contained dev-* flow/main.md files have independent SUCCESS/RETURN paths that never reach microservice-main.md new .head idle-reset — blast-radius residue of FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC",
-        "desc": "FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC (commit 418fe33fb, now DONE_VERIFIED) added a guarded `.head` idle-reset to docs/agents/developer/flow/microservice-main.md on the SUCCESS path, immediately after the task_board IN_PROGRESS->REVIEW update and before RETURN. 8 dev-* zone agents are thin pointers to that shared flow and inherit the fix automatically. FOUR do not — each carries its own self-contained flow/main.md with an independent task_board-update + RETURN block that never executes the shared file's new step, so `.head` stays pinned in_progress after a successful completion. Apply the SAME guarded full-null idiom to each file's OWN success path, at its own `Update docs/data/orch/orch-state.json .task_board ... -> return:` site.",
-        "priority": "P1",
-        "size": "S",
-        "zone": "docs/agents/",
-        "owner": "agent-father",
-        "next_agent": "agent-father",
-        "status": "READY",
-        "files": [
-          "docs/agents/dev-frontend/flow/main.md",
-          "docs/agents/dev-mainserver-crawls/flow/main.md",
-          "docs/agents/dev-vps-crawls/flow/main.md",
-          "docs/agents/dev-mcp-server/flow/main.md"
-        ],
-        "detail_ref": "docs/agents/developer/flow/microservice-main.md",
-        "created_at": "2026-08-14T08:11:01Z",
-        "created_by": "po/triage-20260814T0811Z",
-        "verification_gate": "each of the 4 files contains a guarded `.head` full-null reset (guard: head.active_task_id == completing task_id) on its own success path, positioned after the task_board IN_PROGRESS->REVIEW update and before its own RETURN block",
-        "po_scope_note": "PO INDEPENDENTLY RE-VERIFIED agent-father's blast-radius flag rather than trusting the self-report — and WIDENED it from 3 files to 4. Live probe 2026-08-14T08:0xZ, per file: grep -c microservice-main + grep -n for `.head`/task_board/RETURN.\n  - dev-frontend/flow/main.md (207L): ZERO reference to microservice-main.md; own `Update ... task_board: IN_PROGRESS -> REVIEW ... -> return:` at L200, own `## RETURN` at L202. Its single `.head` mention (L17) is only an error-boundary POINTER, not a write. CONFIRMED IN GAP.\n  - dev-mainserver-crawls/flow/main.md (214L): ZERO microservice-main.md reference, ZERO `.head` occurrences anywhere in the file; own task_board update at L157, own `## RETURN Block` at L187. CONFIRMED IN GAP.\n  - dev-vps-crawls/flow/main.md (223L): ZERO microservice-main.md reference, ZERO `.head` occurrences; own task_board update at L174, own `## RETURN Block` at L203. CONFIRMED IN GAP.\n  - dev-mcp-server/flow/main.md (506L): agent-father hedged this one as `arguably out of the family` because it targets apps/mcp-server/ root rather than an apps/<service>/ zone. PO OVERRULES that hedge and includes it. Two decisive reasons: (i) STRUCTURAL — L26 delegates to microservice-main.md for the BASE steps only (Step 0a project-root, Step 0b notebook, pre-code checklist, TDD cycle, DDD layer rules), then the file re-implements its OWN terminal block at L499 (`Update ... task_board: IN_PROGRESS -> REVIEW ... -> return:`) with its OWN `## RETURN` at L501. The shared file's new step lives at the very END of microservice-main.md, right before ITS return — dev-mcp-server never reaches it. Partial delegation is exactly the trap here. (ii) EMPIRICAL AND DECISIVE — dev-mcp-server is one of the two LIVE occurrences cited in the WF-1d fix's own commit message (commit 95e07eca5, alongside 969acbcc7 dev-rag-service), both hand-corrected by the router. It is not a hypothetical member of this family; it is a measured offender. Excluding it on a zone-taxonomy technicality would leave the only empirically-proven source-side offender unfixed.\nDUAL-LAYER, NOT REDUNDANT: WF-1d (gate side, now DONE_VERIFIED) already catches this state on the NEXT dev-team tick. This row is the SOURCE side and still warranted for the reason the architect brief §5.4 states explicitly — a lane-visibility gap means the row leaves in_progress[] entirely and `.head` briefly points at a lane WF-1/1b/1c/1d must actively rediscover; a source fix removes that exposure window instead of merely surviving it.",
-        "updated_at": "2026-08-14T08:13:05Z",
-        "updated_by": "po/triage-20260814T0811Z"
-      },
-      {
         "id": "FIX-DEVTEAM-HEAD-NEXTAGENT-RESYNC-ON-REASSIGN",
         "type": "FIX",
         "status": "READY",
@@ -16792,13 +16767,17 @@
         "source": "router RAW-verify of chef-morning 2026-07-20 dish (docs/data/unified-agent-synthesis-2026-07-20-morning.json); PO triage 2026-07-20T05:26Z",
         "note": "CONFIRMED IN CODE, three planes: (1) 25000 — apps/macro-indicators/pkg/primitive/macro_usdvnd_direction_classifier/macro_usdvnd_direction_classifier.go:34 BearishThreshold=25000.0, drives the get_macro_snapshot usdvnd signal string 'exceeds 25000 threshold'. (2) 25500 — apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts:117-120 currencySignal, AND apps/mcp-server/src/domain/services/cascade/macroAdjustments.ts (8+ rules keyed on the label 'usdVnd>25500'). (3) 26500 — asserted as 'resistance' in unified-agent-synthesis-2026-07-20-morning.json vn_macro_layer; grep finds NO code or doc source, so it is agent-invented. A 4th value appears in the 07-19 notebook entry ('26110 > 25500'). IMPACT: at the live rate 26110 all three currently agree on direction, which is exactly why this has stayed invisible — the divergence only bites between 25000 and 26500. AC: one named constant, both zones read it, the narrative layer cites it rather than inventing one; add a test asserting Go and TS agree. NOTE the agent-facing half — 'USD/VND 26110 (+0.4% vs threshold)' in the 07-20 notebook — is UNSOURCED PRECISION: usdVndDelta is null and prevFetchedAt is null in the live payload, so no delta exists to quote. Covered by FIX-USDVND-FROZEN-26110 + FIX-COMMODITY-WTI-DELTA-CORRUPT I8; the narrative rule ('never quote a delta the payload does not carry') belongs here.",
         "po_saturation_evidence_20260725T1625": "po 2026-07-25T16:25:39Z — EVIDENCE FOLDED IN, NO NEW ROW MINTED. This annotation changes what \"done\" means for this row; read it before implementing.\n\nTHIS ROW'S OWN IMPACT ASSESSMENT IS NOW OBSOLETE AND MUST NOT BE ACTED ON AS WRITTEN. The note above says \"at the live rate 26110 all three currently agree on direction, which is exactly why this has stayed invisible — the divergence only bites between 25000 and 26500.\" That framing treats the defect as a LATENT disagreement. It is no longer latent, and the more serious problem is not the disagreement at all.\n\nMEASURED THIS TICK, AT SOURCE: apps/macro-indicators/pkg/primitive/macro_usdvnd_direction_classifier/macro_usdvnd_direction_classifier.go:34 BearishThreshold = 25000.0, line 37 BullishThreshold = 23000.0, so the NEUTRAL band is 23000-25000 and BULLISH requires < 23000. Live rate 26130. The rate has not been under 25000 in a long time and is not trending back. BEARISH IS THEREFORE THE ONLY REACHABLE OUTPUT OF THIS CLASSIFIER — it is SATURATED, not merely divergent. A three-valued direction classifier has silently become a constant that still reports a verdict on every call, and consumers cannot distinguish \"the model assessed the rate and found it bearish\" from \"the model can only say bearish\". news-scout emitted \"USDVND 26130 bearish >25000 threshold\" from it in both c199 and c200 today.\n\nCONSEQUENCE FOR THIS ROW'S ACCEPTANCE CRITERIA — THE STATED GOAL IS NECESSARY BUT NOT SUFFICIENT. \"Pick one SSOT\" does not fix saturation if the value picked is 25000, and 25000 is the most likely pick precisely because it is the one with a named exported constant in Go. Shipping a single-SSOT refactor on 25000 would close this row while leaving the classifier constant — and would additionally propagate the saturated threshold to the two planes (25500 in macroTools.ts / macroAdjustments.ts) that are currently, by accident, slightly less wrong. AC ADDITION, mandatory: whatever value is chosen, add a test asserting that BOTH the bullish and bearish branches remain reachable at the CURRENT live rate, not at a fixture rate. A classifier whose test suite only exercises synthetic inputs cannot detect that its live input has left the discriminating range.\n\nTHE DURABLE FIX IS A DIFFERENT SHAPE OF THRESHOLD, AND THAT DECISION BELONGS TO WHOEVER WORKS THIS ROW. A fixed absolute threshold on a drifting nominal exchange rate saturates eventually by construction — this is not a mis-set constant, it is a design that has a shelf life. Honest options: [a] make the threshold relative (z-score or percent deviation against a trailing window, so the discriminating range travels with the series); [b] keep absolute levels but bind them to a real policy anchor (e.g. the SBV reference-rate band) that is itself revised, and add a staleness alarm on the anchor; [c] keep 25000 as a deliberate permanent red-line and DELETE the NEUTRAL/BULLISH branches plus the \"direction classifier\" framing, so the output honestly reads as a single boolean threshold breach rather than an assessment. What is NOT acceptable is shipping one SSOT and leaving three branches of which two are unreachable. po did not choose among these.\n\nCATALOGUED AS INSTANCE 12 on SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP (ready/P1), which owns the class question — a new input family for that sweep, since instances 1-5 all had floors arising from immortal set members while this floor arises from secular drift of a continuous series. That SPIKE does NOT own this fix; this row does. Priority and scope otherwise unchanged.\n",
-        "updated_by": "po/review-20260808T1220Z",
-        "updated_at": "2026-08-08T12:20:32Z",
-        "next_agent": "architect",
+        "updated_by": "architect",
+        "updated_at": "2026-08-23T13:18:08Z",
+        "next_agent": "pm",
         "blocks": [
           "FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE"
         ],
-        "po_promotion_20260808T1220Z": "PROMOTED BACKLOG->READY by po 2026-08-08 review of FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE, which is now BLOCKED on this row. NEW EVIDENCE strengthening this row's own premise (found during that review, not previously recorded here): the Go plane does not merely HOLD a different constant — it EMITS it into narrative text. macro_usdvnd_direction_classifier.go:91 interpolates the threshold into \"USDVND at %.0f exceeds %.0f threshold — VND depreciation creates import cost pressure (BEARISH)\", rendering literally as \"exceeds 25000 threshold\", and is live-wired via macro_signals.go:144 uvnd.Classify() + usecases.go:194/295. This supplies the missing MECHANISM link for the recurring \"25,000\" citations in published CHEF dishes: they are plausibly faithful relays of this upstream string, NOT the LLM round-number drift previously assumed. Consequence: this row is no longer merely a tidy-up — it gates a supervised, user-facing MARKET-output fix; priority raised medium->high. SEMANTIC CAUTION for whoever takes it: Go 25000 is a DIRECTION-band bound (BEARISH/NEUTRAL/BULLISH, band 23000-25000) while TS 25500 is a CASCADE-IMPACT trigger and TS also carries a 24500 lower band; these may be legitimately distinct concepts rather than one drifted constant. Answer \"same concept or not?\" BEFORE unifying — a blind collapse would be a real regression. 26500 remains sourceless in both planes (0 hits *.ts and *.go)."
+        "po_promotion_20260808T1220Z": "PROMOTED BACKLOG->READY by po 2026-08-08 review of FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE, which is now BLOCKED on this row. NEW EVIDENCE strengthening this row's own premise (found during that review, not previously recorded here): the Go plane does not merely HOLD a different constant — it EMITS it into narrative text. macro_usdvnd_direction_classifier.go:91 interpolates the threshold into \"USDVND at %.0f exceeds %.0f threshold — VND depreciation creates import cost pressure (BEARISH)\", rendering literally as \"exceeds 25000 threshold\", and is live-wired via macro_signals.go:144 uvnd.Classify() + usecases.go:194/295. This supplies the missing MECHANISM link for the recurring \"25,000\" citations in published CHEF dishes: they are plausibly faithful relays of this upstream string, NOT the LLM round-number drift previously assumed. Consequence: this row is no longer merely a tidy-up — it gates a supervised, user-facing MARKET-output fix; priority raised medium->high. SEMANTIC CAUTION for whoever takes it: Go 25000 is a DIRECTION-band bound (BEARISH/NEUTRAL/BULLISH, band 23000-25000) while TS 25500 is a CASCADE-IMPACT trigger and TS also carries a 24500 lower band; these may be legitimately distinct concepts rather than one drifted constant. Answer \"same concept or not?\" BEFORE unifying — a blind collapse would be a real regression. 26500 remains sourceless in both planes (0 hits *.ts and *.go).",
+        "architect_design_complete": true,
+        "architect_completed_at": "2026-08-23T13:18:07Z",
+        "architect_handoff": "docs/architecture-briefs/2026-08-23-fix-usdvnd-threshold-ssot.md",
+        "architect_review_note": "DESIGN COMPLETE 2026-08-23 (architect). TWO NEW FINDINGS not in the row's own text: (A) the '25500 currencySignal' plane (macroTools.ts:124) is DEAD CODE -- zero callers repo-wide, confirmed by full grep (+3 sibling dead fns oilSignal/goldSignal/policySignal, same file) -- delete, do not unify. (B) cascadeEngine.ts runs the OLD fixed MACRO_ADJUSTMENTS (usdVnd>25500/<24500) AND the NEWER sigma-based DYNAMIC_MACRO_MAP additively on the IDENTICAL domain sets every cycle both have data -- a real double-counting bug, flagged fleet-wide (oil/gold too) but only the USD/VND static half is retired in this ticket. DECISION: option (a) relative/sigma threshold is the SSOT -- ALREADY SHIPPED, not new design: apps/mcp-server/.../macroThresholds.ts's classifyDeviation() (rolling mean+-Nsigma, 1/2/3sigma buckets) already carries a 50-VND absolute floor AND an FX_SLOW_MOVER_INDICATORS 0.5%-move floor that BY NAME lists usdVndRate + usdVndOfficial (the live SBV-anchored rate, already tracked via sbvRatesJob.ts -- option (b)'s policy anchor already exists too). FIX: migrate the Go classifier (apps/macro-indicators .../macro_usdvnd_direction_classifier.go, the actually-saturated plane) onto the SAME formula -- a mechanical cross-language port (DDD Fence-A forbids importing the TS module, precedent for Go-side rolling math already exists in services_vmt_omo.go), not a duplicate design decision; retire the TS static USD/VND rule (closes Finding B for this indicator); delete the 4 dead functions. Test: feed the SAME (current,mean,stdDev,sampleCount) tuple to both languages' classifiers and assert agreement -- stronger than comparing two hardcoded numbers. Full design, migration plan per-plane, risk flags, flagged-not-fixed items: see architect_handoff."
       },
       {
         "id": "FIX-ORCHAPPLY-SELECTOR-MISS-SILENT-NOOP",
@@ -17508,7 +17487,7 @@
         "size": "S",
         "zone": "cross-service/",
         "owner": "architect",
-        "next_agent": "architect",
+        "next_agent": "developer",
         "supervised": false,
         "plan_only": false,
         "created_at": "2026-08-14T03:33:52Z",
@@ -17528,7 +17507,12 @@
           "FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
           "FIX-PO-NO-PRODUCER-FOR-MANUAL-DISPATCH-ESCAPE-HATCH"
         ],
-        "updated_at": "2026-08-14T03:33:53Z"
+        "updated_at": "2026-08-23T13:17:42Z",
+        "architect_design_complete": true,
+        "architect_completed_at": "2026-08-23T13:17:41Z",
+        "architect_handoff": "docs/architecture-briefs/2026-08-23-fix-orchstate-mint-flagged-row-no-handler.md",
+        "architect_review_note": "DESIGN COMPLETE 2026-08-23 (architect). Decision: PHASED, not a single choice among the row's 3 options -- land (1) a non-fatal REPORT stage in scripts/orch-validate.mjs first (mirrors Stage 1g's own shape, AND orchStateSchema.ts:658-661's own in-file precedent: 'standalone function... so the validator CLI can call it... Promote to a superRefine once [gating conditions] land' -- the exact same migration pattern this codebase already uses for a related invariant). Predicate reused, not reinvented: scripts/audits/bounded1-supervised-lane-report.sh's inline dispatch_lane($detail_items;$roster_map) (itself built on scripts/lib/devteam-eligibility.jq's effective_supervised/effective_plan_only/effective_owner/effective_next_agent) is the SSOT -- port ONLY the 2-line detail-first/board-fallback owner/next_agent lookups into JS (not a new resolution algorithm), citing the jq file as the mirrored SSOT. Scope: backlog[]/ready[]/review[] (matches the live report script's own coverage exactly). Trigger: EITHER flag alone, not AND-only -- 3 of the row's own 4 live-repaired violators carried only ONE flag. Option 3 (auto-derive next_agent from zone at mint time) REJECTED: zone-detect's own Tier-2/3 fallback is not confident enough to silently auto-fill a DELIBERATE-dispatch-asserting row, and doing so would remove the only visible signal of a mint-time gap. Negative control required (row 4 Step A2, 'genuinely parked, no handler yet' with NEITHER flag set) must NOT be reported -- this is the row's own explicit non-goal. Promotion-to-fatal path specified as an explicit, gated follow-up (14 consecutive clean write cycles), not done now -- the baseline (0 violators) proves the REPLAY is clean, not that every future write-time position is. Full design + test cases + risk flags: see architect_handoff.",
+        "updated_by": "architect"
       },
       {
         "id": "FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS",
@@ -17625,7 +17609,7 @@
         "status": "READY",
         "priority": "P1",
         "size": "M",
-        "zone": "cross-service/",
+        "zone": "scripts/ + docs/agents/system-auditor/flow/",
         "sprint": "ULTRACODE-AUDIT-FIXALL",
         "source": "ultracode-audit-2026-07-12",
         "verdict": "RESCOPE",
@@ -17633,7 +17617,7 @@
         "note": "SCOPE=verifier Rescope note. New scripts/auditor-db-checks.sh mirroring db-integrity-counts.sh DISCIPLINE ONLY (NOT its WAL-blind immutable open — use docker exec bun {readonly:true}). Embed C-01..C-16 / B-05 gate / B-09 / B-13 SQL; fold in (do not copy) the two queued predicate corrections and REPOINT FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE + FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE at the script as SSOT. Must be standalone (P2 emit-script is a dependency only if it lands).",
         "created_at": "2026-07-13T19:31:11Z",
         "created_by": "po",
-        "next_agent": "architect",
+        "next_agent": "pm",
         "related": [
           "FIX-AUDITOR-C11-PDFX-STATUS-PREDICATE",
           "FIX-AUDITOR-C06-OFFMARKET-RECALIBRATE"
@@ -17645,13 +17629,20 @@
         "promoted_by": "dev-team (design-router sweep)",
         "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
         "dispatch_lane": "ba",
-        "updated_at": "2026-08-14T16:02:20Z",
+        "updated_at": "2026-08-23T13:17:16Z",
         "claimed_at": "2026-08-14T15:51:35Z",
         "claimed_by": "dev-team (design-router sweep)",
         "ba_spec_complete": true,
         "ba_handoff": "docs/handoffs/UC-ASL-P3-BA-spec.md",
         "ba_completed_at": "2026-08-14T18:20:00Z",
-        "updated_by": "ba"
+        "updated_by": "architect",
+        "architect_design_complete": true,
+        "architect_completed_at": "2026-08-23T13:17:15Z",
+        "architect_handoff": "docs/architecture-briefs/2026-08-23-uc-asl-p3-auditor-db-checks-freeze.md",
+        "architect_review_note": "DESIGN COMPLETE 2026-08-23 (architect). LIVE COLLISION FOUND: FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE (IN_PROGRESS, owner=developer, claimed 2026-08-23T12:56:49Z -- TODAY, this session) is building scripts/auditor-db-checks.sh RIGHT NOW with only checks.c04 populated -- added depends_on this row (was missing from the graph; both the C-04 row's own deliverable text and its own script skeleton header already say UC-ASL-P3 extends that file, but nothing encoded the dependency edge). Do not hand FR-1/FR-3..FR-10 to a developer until C-04 lands DONE/DONE_VERIFIED. ARCH-RATIFY-1..7 resolved (full rationale in architect_handoff): (1) host-bind+sqlite-wal-guard.sh ratified, 3 independent design passes converge. (2) C-06 calendar reuse OVERRULES BA's non-binding SLA-Resolver suggestion -- that resolver is BCTC-earnings-specific, wrong domain for market_messages freshness; found the correct existing reuse target instead: apps/mcp-server vnTradingCalendar.ts (isVnTradingDay, holiday-aware) + marketHours.ts (isMarketHours, session-hours-aware) composed via the SAME bun-e dynamic-import idiom scripts/check-foreign-flow-freshness.sh already established -- do not reimplement VN holidays in bash. (3) C-11 legitimately reuses the earnings-window arithmetic (different domain than C-06, correctly BCTC-seasonal) -- port to a small shared bash fn, used by both B-05 and C-11. (4) market_messages_price_history re-confirmed zero code hits, non-issue. (5) mount-drift-check extension for PDF_EXTRACTOR_DB_HOST_PATH deferred to a follow-up. (6) zone narrowed to scripts/ + docs/agents/system-auditor/flow/ per BA's own recommendation. (7) C-12 connection reuse: reuse already-open market.db/pdf_extractor.db connections, fresh open per remaining system-map.json DB. Two-owner split flagged for pm: developer (script+test, gated on C-04) then agent-father (main.md FR-11 repoint, gated on the script existing) -- same shape as the live C-04/C04-FLOWDOC-REPOINT precedent. Full design, file-by-file plan, DDD map, test strategy, risk flags: see architect_handoff.",
+        "depends_on": [
+          "FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE"
+        ]
       },
       {
         "id": "FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE",
@@ -19236,6 +19227,32 @@
         "created_by": "po/triage-20260823T1232Z",
         "verification_gate": "grep -c SUPERSEDED docs/agents/cowork-team/flow/pressure-read.md returns >0 and the marker sits on Step 4.3 naming cowork-match-slots.js; last-fired.md AC-P1-7-4 no longer presumes a synchronous return under BGFAN-1",
         "updated_at": "2026-08-23T13:16:12Z"
+      },
+      {
+        "id": "FIX-DEVFLOW-SELFCONTAINED-ZONE-FLOWS-SUCCESS-PATH-NO-HEAD-SYNC",
+        "type": "FIX",
+        "title": "4 self-contained dev-* flow/main.md files have independent SUCCESS/RETURN paths that never reach microservice-main.md new .head idle-reset — blast-radius residue of FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC",
+        "desc": "FIX-DEVFLOW-MICROSERVICE-SUCCESS-PATH-NO-HEAD-SYNC (commit 418fe33fb, now DONE_VERIFIED) added a guarded `.head` idle-reset to docs/agents/developer/flow/microservice-main.md on the SUCCESS path, immediately after the task_board IN_PROGRESS->REVIEW update and before RETURN. 8 dev-* zone agents are thin pointers to that shared flow and inherit the fix automatically. FOUR do not — each carries its own self-contained flow/main.md with an independent task_board-update + RETURN block that never executes the shared file's new step, so `.head` stays pinned in_progress after a successful completion. Apply the SAME guarded full-null idiom to each file's OWN success path, at its own `Update docs/data/orch/orch-state.json .task_board ... -> return:` site.",
+        "priority": "P1",
+        "size": "S",
+        "zone": "docs/agents/",
+        "owner": "agent-father",
+        "next_agent": "qa",
+        "status": "REVIEW",
+        "files": [
+          "docs/agents/dev-frontend/flow/main.md",
+          "docs/agents/dev-mainserver-crawls/flow/main.md",
+          "docs/agents/dev-vps-crawls/flow/main.md",
+          "docs/agents/dev-mcp-server/flow/main.md"
+        ],
+        "detail_ref": "docs/agents/developer/flow/microservice-main.md",
+        "created_at": "2026-08-14T08:11:01Z",
+        "created_by": "po/triage-20260814T0811Z",
+        "verification_gate": "each of the 4 files contains a guarded `.head` full-null reset (guard: head.active_task_id == completing task_id) on its own success path, positioned after the task_board IN_PROGRESS->REVIEW update and before its own RETURN block",
+        "po_scope_note": "PO INDEPENDENTLY RE-VERIFIED agent-father's blast-radius flag rather than trusting the self-report — and WIDENED it from 3 files to 4. Live probe 2026-08-14T08:0xZ, per file: grep -c microservice-main + grep -n for `.head`/task_board/RETURN.\n  - dev-frontend/flow/main.md (207L): ZERO reference to microservice-main.md; own `Update ... task_board: IN_PROGRESS -> REVIEW ... -> return:` at L200, own `## RETURN` at L202. Its single `.head` mention (L17) is only an error-boundary POINTER, not a write. CONFIRMED IN GAP.\n  - dev-mainserver-crawls/flow/main.md (214L): ZERO microservice-main.md reference, ZERO `.head` occurrences anywhere in the file; own task_board update at L157, own `## RETURN Block` at L187. CONFIRMED IN GAP.\n  - dev-vps-crawls/flow/main.md (223L): ZERO microservice-main.md reference, ZERO `.head` occurrences; own task_board update at L174, own `## RETURN Block` at L203. CONFIRMED IN GAP.\n  - dev-mcp-server/flow/main.md (506L): agent-father hedged this one as `arguably out of the family` because it targets apps/mcp-server/ root rather than an apps/<service>/ zone. PO OVERRULES that hedge and includes it. Two decisive reasons: (i) STRUCTURAL — L26 delegates to microservice-main.md for the BASE steps only (Step 0a project-root, Step 0b notebook, pre-code checklist, TDD cycle, DDD layer rules), then the file re-implements its OWN terminal block at L499 (`Update ... task_board: IN_PROGRESS -> REVIEW ... -> return:`) with its OWN `## RETURN` at L501. The shared file's new step lives at the very END of microservice-main.md, right before ITS return — dev-mcp-server never reaches it. Partial delegation is exactly the trap here. (ii) EMPIRICAL AND DECISIVE — dev-mcp-server is one of the two LIVE occurrences cited in the WF-1d fix's own commit message (commit 95e07eca5, alongside 969acbcc7 dev-rag-service), both hand-corrected by the router. It is not a hypothetical member of this family; it is a measured offender. Excluding it on a zone-taxonomy technicality would leave the only empirically-proven source-side offender unfixed.\nDUAL-LAYER, NOT REDUNDANT: WF-1d (gate side, now DONE_VERIFIED) already catches this state on the NEXT dev-team tick. This row is the SOURCE side and still warranted for the reason the architect brief §5.4 states explicitly — a lane-visibility gap means the row leaves in_progress[] entirely and `.head` briefly points at a lane WF-1/1b/1c/1d must actively rediscover; a source fix removes that exposure window instead of merely surviving it.",
+        "updated_at": "2026-08-23T13:19:48Z",
+        "updated_by": "po/triage-20260814T0811Z",
+        "status_note": "\n[agent-father 2026-08-23T13:19:47Z] Added the same guarded .head full-null idiom from microservice-main.md AC-1/AC-2/AC-3 to all 4 self-contained files, at each own success-path task_board-update site, before its own RETURN block: dev-frontend/flow/main.md, dev-mainserver-crawls/flow/main.md, dev-vps-crawls/flow/main.md, dev-mcp-server/flow/main.md (PO-overruled hedge, included per po_scope_note). Guard identical: reset ONLY when .head.active_task_id still names the completing task. jq syntax spot-verified standalone. All 4 files fence-balanced, size-justification headers updated with line deltas."
       }
     ],
     "qa": [
