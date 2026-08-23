@@ -89,9 +89,9 @@
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE",
-    "next_agent": null,
-    "next_action": "Supervised-Lane Sweep claim of FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE — spawn  DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
-    "updated_at": "2026-08-23T12:56:51Z",
+    "next_agent": "developer",
+    "next_action": "Supervised-Lane Sweep claim of FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE — spawn developer DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only preserved — do not clear.",
+    "updated_at": "2026-08-23T12:58:26Z",
     "updated_by": "dev-team (supervised-lane sweep)"
   },
   "narrative": {
@@ -19531,11 +19531,11 @@
           "UC-ASL-P3"
         ],
         "note": "Auditor-FP family (feedback_auditor_predicate_drift_false_regression), 4th sibling of the same species. The CURRENT alert is a FALSE POSITIVE and self-clears 2026-07-27 when the 7-day window rolls past 2026-07-20 — no data remediation needed, this row fixes the DETECTOR only. Per reference_low_confidence_handling.md low_confidence is a by-design flag (deliberate insert + WORK alert + filtered out of RAG/alerts/briefings), not corruption, so severity WARN db_integrity_breach was the wrong framing. Distinct from FIX-BCTC-BANK-SUMMARY-MAPPING (bank scalar-column data defect) and REVIEW-PPC-Q4-LOW-CONFIDENCE (per-ticker human review) — those remediate DATA, this fixes the CHECK. Only 1 of the 11 rows is a bank (MBB 2025-Q4) and it is a different period from REFLOW-MBB-Q1-2026.",
-        "updated_at": "2026-08-23T12:56:51Z",
+        "updated_at": "2026-08-23T12:58:26Z",
         "promoted_at": "2026-08-08T04:22:18Z",
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='architect' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
-        "dispatch_lane": null,
+        "dispatch_lane": "developer",
         "claimed_at": "2026-08-23T12:56:49Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "spec_doc": "docs/handoffs/FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE-spec.md",
