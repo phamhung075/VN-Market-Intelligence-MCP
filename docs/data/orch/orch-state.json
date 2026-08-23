@@ -128,8 +128,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-23T09:05:10Z",
-    "_updated_by": "push_bctc_refined_unit",
+    "_updated_at": "2026-08-23T10:35:00Z",
+    "_updated_by": "code-janitor",
     "archive": [],
     "rows": [
       {
@@ -595,6 +595,17 @@
         "disposition": "TRIAGED — duplicate of sys-20260823T075511-6cd0 (same tier, same window). Folded.",
         "triaged_at": "2026-08-23T08:20:49Z",
         "triaged_by": "po/triage-20260823T0820Z"
+      },
+      {
+        "id": "cj-20260823T103003Z",
+        "ts": "2026-08-23T10:30:03Z",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-23.json"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
