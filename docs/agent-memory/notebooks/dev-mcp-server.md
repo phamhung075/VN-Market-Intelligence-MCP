@@ -33,3 +33,19 @@ Zone health: split-table blind spot closed and verified in both directions (not 
 **Evidence:** DJ `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md` S13. Commit `237fa6e26` (code+test).
 
 Zone health: 268/268 live rows render clean labels post-fix (0 duplicated-quarter tokens, verified via direct API probe not assumption), 4 sibling test files stay green by construction (label-only change, no shared code path touched), parallel sibling task confirmed disjoint before commit | HEALTHY.
+
+## 2026-08-23 — TASK-BCTC-INSPECT-UI-FILTERS (quarter + ticker facet filters, decompose:FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER) → review[]
+
+**Session:** 669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3 (sibling task's session — resumed for the paired UI-filter deliverable). Added `#quarter-filter`/`#ticker-filter` selects to `bctc-inspector.html`'s `.controls` bar, module-scope `allDocs` cache, `normalizeQuarter()`/`renderDocOptions()`/`populateFilterOptions()`/`applyFilters()` per architect D-2/D-3/D-4/D-5 + BA FR-1..FR-8. `applyFilters()` mutates `select.value` directly with NO synthetic `change` event — the existing handler unconditionally refetches PDF/OCR/table/MD, which would defeat AC2's zero-network-call design.
+
+**Verified live:** 11 distinct quarter options, 50 distinct ticker options (AC3/AC4 exact match, 268-row live dataset). New `FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER.test.ts`: 18 pure-fn assertions GREEN, incl. the live HUT `period_quarter="Q1"` string quirk. 5 named regression files + new file: 145 pass/0 fail. `tsc --noEmit` clean. `PORT=3099` boot healthy (toolCount=183, `/api/bctc-inspect` served HTML confirmed containing both new `<select>` ids).
+
+**Full-suite honesty check:** `bun test` (whole repo) = 15359 pass/40 skip/50 fail. Every failing test name grepped and confirmed outside this task's files (backtest_runs, vps_push_log, insider_transactions, task_heartbeat/task_release Zod, get_foreign_flow, VPS-proxy-health, MCP SSE registration) — zero touch bctc-inspector/filter code; many carry 5000ms timeouts (shared-DB/network contention signature from concurrent live agents on this host), pre-existing and unrelated. Documented in the handoff's Implementation Record rather than silently claimed clean or silently left unmentioned.
+
+**REBUILD_REQUIRED:** `apps/mcp-server/src/` bakes into the Docker image at build time — live `:3000`/`:3001` container still serves pre-change HTML (confirmed: `quarter-filter` id absent there, present on local `:3099` build). Ops must rebuild before AC10's dual-origin manual verify shows real results.
+
+**Board:** `TASK-BCTC-INSPECT-UI-FILTERS` moved `ready[]→in_progress[]→review[]` via `orch-apply.sh`.
+
+**Evidence:** DJ `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md` S14. Commit `2e66153fd` (bctc-inspector.html + new test + financial-reports.md doc section).
+
+Zone health: filter feature verified end-to-end against live growing dataset (not fixture assumption), zero-refetch design structurally + functionally confirmed (5-file regression suite 0 fail), pre-existing full-suite red surfaced honestly with a fingerprint (test names) rather than hidden behind a scoped subset run | HEALTHY.
