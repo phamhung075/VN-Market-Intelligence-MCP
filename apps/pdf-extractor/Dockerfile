@@ -15,8 +15,12 @@
 FROM ubuntu:24.04
 
 # DRIFT-3 Phase B: capture build-time git SHA for deploy-sha verification
+# Label key MUST be vn.market.git_sha (fleet convention, all 10 sibling
+# Dockerfiles) — scripts/verify-deploy-sha.sh:64 reads that exact key and
+# reports "label absent" on anything else, making the gate permanently
+# unverifiable for this service (BUG found 2026-08-23).
 ARG GIT_SHA=unknown
-LABEL git_sha="${GIT_SHA}" service="pdf-extractor"
+LABEL vn.market.git_sha=$GIT_SHA
 
 # System dependencies via Ubuntu apt (archive.ubuntu.com accessible)
 # tesseract-ocr + language packs: OCR for Vietnamese/English PDFs.
