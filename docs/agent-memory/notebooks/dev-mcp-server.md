@@ -1,25 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-08-22/23 — UNBLOCK-FLEETPUSH-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER-BLOCKS-ALL-PUSHES (P0, fleet-wide push outage, direct S4-UNBLOCK dispatch) → review[]
-
-**Session:** 02594cce-7946-4d62-8d2f-586b9b883695 (router-held). Every `git push` off this host blocked since 2026-08-22T21:32Z (origin/main 40+ commits behind, climbing ~5/30min-cycle); dispatched directly outside normal rotation, claimed `ready[]→in_progress[]` myself via `scripts/orch-apply.sh` per the task's own instruction.
-
-**Root cause (verbatim from actuator log, confirmed live):** `apps/mcp-server/src/infrastructure/orchStateSchema.ts` grew 1300L→1784L (then 1797L after my own header-fix edit) across commits `efcb45ad8`/`1897ef6a2` (§15 `classifySprintRegistryDanglingIds()` + §16 `checkSprintRegistryReferentialIntegrity()` wiring — real, QA-approved DONE_VERIFIED work for `FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE`) without a header refresh. `scripts/audits/size-lint-justification.sh`'s ±10% tolerance on the stale `~1300L` declaration (upper=1430L) fell short of 1784L, so the file fell through to the baseline lookup (no entry) → scored `new-offender` → hard-blocked `scripts/git-hooks/pre-push`'s unconditional doc-shaped check on every push.
-
-**Investigated growth before fixing (not assumed legit):** `git show --stat` on both commits confirmed 369+89=458 real insertions, both QA-approved production code, not dead weight — task brief explicitly forbade trimming legitimate growth, so did not.
-
-**Fix:** header-only, zero code/logic change — declared size `~1300L`→`~1797L` (actual current, post-edit) + appended a growth-log bullet documenting the two commits, matching the file's own established header convention (mirrors 3 prior such bullets already in the same docblock).
-
-**Verified:** `bash scripts/audits/size-lint-justification.sh --check` PASS (0 unjustified offenders, scanned 1409 — was FAIL new-offender). `bun tsc --noEmit` clean. `task-claim-owner-session-lint.sh --check` PASS. `tool-registry-parity` 17/17. 5 directly-dependent test files (`orchStateSchema.test.ts` + FIX-SPRINT-REGISTRY-DANGLING-IDS/FIX-DEVTEAM-IDLE-CHAIN/FIX-ORCHSTATE-BLOCKS-FIELD/CCATO-MCP-T4-SIGNAL-WRITER/TASK-FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT) 67/67 pass. Full suite: 15335 pass/50 fail/40 skip across 1277 files — fail count matches the board row's own cited pre-existing baseline exactly (15335/50/40), zero new regressions.
-
-**Landed:** commit `92b3d8956` (header fix + ready→in_progress claim). Pushed via `git push origin HEAD:main` — pre-push gates (size-lint, task-claim-lint, tool-registry-parity, rebuild-raw-verify-check, tsc) all PASSED live in the hook output; `git fetch` + `git rev-list --count origin/main..HEAD` = 0 confirmed post-push (not just push exit code). Fleet unblocked. Lane-moved `in_progress[]→review[]` (commit `ee03452ce`, next_agent=qa) with full AC-1..AC-4 evidence in `review_note` (AC-3 self-diagnosing-abort-payload and AC-4 CI-coverage-gap flagged as follow-ups outside this specialist's `apps/mcp-server/` zone — `scripts/fleet-worktree-push.sh` abort-payload composition lives in cross-service/ops territory).
-
-**Additional finding, flagged not fixed (out of zone):** `com.vn-market.fleet-push` launchd agent independently confirmed (read-only `launchctl list`) loaded, `LastExitStatus=256` (=exit 1) — predates and is adjacent to, not caused by, this fix (size-lint blocked push *attempts*; did not crash the launchd agent). `docs/data/auditor-launchd-ack.json` still carries an ACK for this label pointing `tracked_by=FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD`, confirmed (via grep on archive, not inferred) DONE_VERIFIED and cold-evicted to `docs/data/orch/archive/2026-08.json` — per the ledger's own code-enforced staleness rule this ACK no longer suppresses. An existing OPEN signal (`sys-20260822T213754-audit-tracked-task-absent`, to:ops, dedup_key `launchd_tracking_gap:fleet-push:ABSENT-TASK`) already covers this exact gap — did not mint a duplicate. Did not hand-edit the ack ledger or run `launchctl kickstart` myself — both are ops/infra territory outside this agent's `apps/mcp-server/` zone_restricted boundary and explicit `not_my_job` list. Flagged in review_note for PO/ops: confirm next scheduled fleet-push run now succeeds, then retire/retarget the stale ack entry.
-
-**Evidence:** DJ `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md` S11. Commits: `92b3d8956` (fix+claim), `47ef05e5e` (journal), `ee03452ce` (review lane-move).
-
-Zone health: fleet-wide P0 push outage cleared at root (header-only fix, zero code/logic change), origin/main..HEAD independently confirmed 0 post-push (not trusted on exit code alone), zero test regressions (fail-count matches known baseline exactly), adjacent launchd/ack-ledger staleness found and flagged to the correct owner rather than fixed out-of-zone | HEALTHY.
-
 ## 2026-08-23 — TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY (scripts/audits/ zone, architect brief 2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md, direct dispatch) → review[]
 
 **Session:** 007e33e4-b453-4bb3-8ab1-ef31495906a3 (router-held). Task carried `next_agent: "developer"` on the board — a dead-end (Task-tool subagent, no nested `Agent()`, cannot spawn zone specialists); corrected to `qa` in the same lane-move write.
@@ -39,3 +19,17 @@ Zone health: fleet-wide P0 push outage cleared at root (header-only fix, zero co
 **Evidence:** DJ `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md` S12. Commit `4e7aa7eaf` (4 files: `guard-signal-type-coverage.sh`, `.test.sh`, `.github/workflows/ci.yml`, `docs/data/orch/orch-state.json`).
 
 Zone health: split-table blind spot closed and verified in both directions (not just today's specific `audit-handoff` instance), self-filing mint mechanism proven end-to-end against the real orch-apply.sh validation chain (not asserted), schema-untouched constraint independently confirmed via `git diff`, a second latent false-pass class (the CORRECTION stats table) caught and fixed during implementation rather than shipped | HEALTHY.
+
+## 2026-08-23 — TASK-BCTC-INSPECT-LABEL-FIX (AC9 buildLabel() quarter-dup fix + AC-14 test correction, decompose:FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER) → review[]
+
+**Session:** 669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3. Architect's D-1 corrected AC9's root cause beyond BA's initial 2-HUT-row framing: `period_type` already holds `'Q1'..'Q4'` on every live row, so buildLabel()'s unconditional quarter-append duplicated the token on all 255 normal rows, not just the 2 string-typed HUT rows.
+
+**Fix:** `bctcInspectHandler.ts` — added `QUARTERLY_PERIOD_TYPE_RE` + exported `normalizeQuarter()`; `buildLabel()` now skips the quarter suffix when `period_type` already matches `/^Q[1-4]$/`. Updated the AC-14 hardcoded assertion (`PI3-bctc-inspect.test.ts:361`, in-scope correction, not a preserved regression) `"VCB Q1 Q1 2025"` → `"VCB Q1 2025"`; added 6-case `normalizeQuarter()` unit-test block.
+
+**Verified:** 49/49 `PI3-bctc-inspect.test.ts` pass; 4 sibling regression files (reopen2/md/page-nav/overlay) 60/60 pass untouched; `tsc --noEmit` clean; `PORT=3099` boot healthy (toolCount=183, `/api/bctc-inspect` + `/dashboards/news-fetch/` both 200). Live-probed `:3099/api/bctc-inspect/docs`: 0/268 rows show a duplicated/garbled quarter token post-fix (was 255/257 pre-fix) — HUT rows now render `"HUT Q1 2024"` correctly.
+
+**Board:** claimed `ready[]→in_progress[]` via `orch-apply.sh` before starting (sole authority — sprint-task lock held by dispatcher per INV-GATEWAY-1, no `task_claim` MCP call from this specialist). Sibling `TASK-BCTC-INSPECT-UI-FILTERS` confirmed in `in_progress[]` (different dev-mcp-server session, disjoint files — `bctc-inspector.html` + new test file, zero overlap with my `bctcInspectHandler.ts`/`PI3-bctc-inspect.test.ts`).
+
+**Evidence:** DJ `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md` S13. Commit `237fa6e26` (code+test).
+
+Zone health: 268/268 live rows render clean labels post-fix (0 duplicated-quarter tokens, verified via direct API probe not assumption), 4 sibling test files stay green by construction (label-only change, no shared code path touched), parallel sibling task confirmed disjoint before commit | HEALTHY.
