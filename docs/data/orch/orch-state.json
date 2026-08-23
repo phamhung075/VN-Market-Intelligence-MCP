@@ -15514,34 +15514,6 @@
             "observed_at": "2026-08-23T11:27:03Z"
           }
         }
-      },
-      {
-        "id": "TASK-BCTC-INSPECT-LABEL-FIX",
-        "type": "TASK",
-        "title": "BCTC Inspector: fix buildLabel() quarter-duplication bug (AC9) + update PI3 test assertion (AC-14)",
-        "status": "DONE_VERIFIED",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "pm",
-        "source": "decompose:FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
-        "created_by": "pm",
-        "created_at": "2026-08-23T13:06:15Z",
-        "parent_id": "FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
-        "updated_at": "2026-08-23T13:22:13Z",
-        "dev_mcp_server_review_note": "dev-mcp-server COMPLETE (session 669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3): architect D-1 root-cause fix landed — added QUARTERLY_PERIOD_TYPE_RE + exported normalizeQuarter() to bctcInspectHandler.ts; buildLabel() now only appends a quarter suffix when period_type does NOT already match /^Q[1-4]$/, fixing all 255 normal rows (not just the 2 HUT string-typed rows BA originally flagged). AC-14 hardcoded assertion in PI3-bctc-inspect.test.ts:361 corrected VCB Q1 Q1 2025 -> VCB Q1 2025 in the same commit (in-scope test-value correction, not a preserved regression). Added 6-case normalizeQuarter() unit-test block. Verified: PI3-bctc-inspect.test.ts 49/49 pass (103 expect calls); 4 sibling regression files (PI3-bctc-inspect-reopen2, 1271-bctc-inspect-md, 1976-bctc-inspector-page-nav, 1273-bctc-inspect-overlay) 60/60 pass, untouched by construction; bun tsc --noEmit clean; PORT=3099 local boot healthy (toolCount=183 unchanged -- no tool file touched, cronJobCount=88 unchanged), /api/bctc-inspect + /dashboards/news-fetch/ both 200 (dashboard circular-dep check clean). Live-probed http://localhost:3099/api/bctc-inspect/docs post-fix against the real named-volume-shaped test boot: 0/268 rows show a duplicated/garbled quarter token (was 255/257 pre-fix per architects own live-tested finding); HUT rows now render \"HUT Q1 2024\" etc correctly. Simplicity gate PASS (Q1-Q4 all clean). Sibling task TASK-BCTC-INSPECT-UI-FILTERS confirmed in_progress under a different dev-mcp-server session -- disjoint files (bctc-inspector.html + its own new test file), zero overlap with bctcInspectHandler.ts/PI3-bctc-inspect.test.ts, verified via git diff --stat before commit. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md STEP dev-mcp-server-S13. Commits: 237fa6e26 (code+test), 9096281a2 (journal), 4a1e81a4e (handoff record), 22213b9b5 (notebook). No REBUILD_REQUIRED marker -- pure logic fix inside an existing handler function, same file already live in the running container image only after next routine rebuild; label display is read-path only, no data mutation, no schema change. Ready for qa.",
-        "qa_verified_at": "2026-08-23T13:22:12Z",
-        "qa_verified_by": "qa",
-        "status_note": "\n[QA] Review Record (direct-commit verify, sourced from review[] not qa[] -- see handoff § [QA] Review Record for full detail): APPROVED, DONE_VERIFIED. Commit 237fa6e26 confirmed on main ancestry, git show --numstat matches exactly the 2 claimed files (PI3-bctc-inspect.test.ts +33/-1, bctcInspectHandler.ts +24/-1). Independently re-ran: bun test src/__tests__/PI3-bctc-inspect.test.ts -> 49 pass/0 fail/103 expect (matches claim); 4 sibling regression files -> 60 pass/0 fail/154 expect (matches claim, untouched); bun tsc --noEmit clean 0 errors; mock-guard.sh PASS; DDD scan clean (sole flagged import is a pre-existing untouched interface->application line, not a domain->infrastructure golden-rule violation per dev-standards.md:1796); security scan clean. Diff read directly matches architect D-1 spec verbatim. BCTC Eval Gate + OOM Durability Gate both N/A. DJ: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-26.md STEP qa-S158.",
-        "verification": {
-          "raw_probe": {
-            "tool": "git merge-base --is-ancestor 237fa6e26 main; git show --numstat 237fa6e26; bun test src/__tests__/PI3-bctc-inspect.test.ts + 4 sibling regression files; bun tsc --noEmit; scripts/audits/mock-guard.sh",
-            "args": "commit=237fa6e26",
-            "live_value_observed": "ancestor OK; numstat matches claimed 2-file scope; 49 pass/0 fail (103 expect) + 60 pass/0 fail (154 expect); tsc 0 errors; mock-guard PASS",
-            "observed_at": "2026-08-23T13:22:12Z"
-          }
-        }
       }
     ],
     "head": {
