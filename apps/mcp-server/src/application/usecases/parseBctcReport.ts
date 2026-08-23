@@ -45,6 +45,10 @@ import {
   recordBctcSignalSent,
   BCTC_SIGNAL_DEBOUNCE_HOURS,
 } from "../../infrastructure/db/bctcSignalDebounce.js";
+import {
+  recordZeroExtractBlock,
+  BCTC_ZERO_EXTRACT_DEAD_AT_ATTEMPTS,
+} from "../../infrastructure/db/bctcZeroExtractBlocklist.js";
 import { checkPeriodContentConsistency, BctcPeriodContentMismatchError } from "../../domain/services/financial-reports/periodContentExtractor.js";
 import { logger } from "../../infrastructure/logger.js";
 
@@ -375,16 +379,40 @@ async function storeReport(
       existingGoodRow != null &&
       existingGoodRow.total_assets != null &&
       existingGoodRow.total_assets > 0;
+
+    // FIX-BCTC-ZEROEXTRACT-BLOCK-NO-FAILURE-RECORD-UNBOUNDED-REEXTRACT-LOOP:
+    // the guard above is correct and stays exactly as-is — this ONLY adds a
+    // durable record of the block so the enqueuer stops treating "no
+    // financial_reports row" as "never attempted". See
+    // infrastructure/db/bctcZeroExtractBlocklist.ts for the full writeup.
+    const blockReason = hadExistingGoodRow
+      ? `overwrite-blocked: new extraction total_assets=${report.balanceSheet.totalAssets} would replace previously-good stored report (total_assets=${existingGoodRow!.total_assets})`
+      : `create-blocked: total_assets=${report.balanceSheet.totalAssets} (failed/zero extraction), no prior stored report exists`;
+    const blockResult = recordZeroExtractBlock(db, report.actionCode, report.period.sortKey, blockReason);
+
+    // AC-4: never claim "flagged for manual review" unless the failure
+    // record was actually written — a DB write failure must be visible in
+    // the message text, not silently swallowed into a false claim.
+    const reviewClause = !blockResult.recorded
+      ? `NOT flagged for manual review — the failure-record write itself failed (see server logs); this attempt is UNRECORDED.`
+      : blockResult.deadLettered
+        ? `flagged for manual review — DEAD-LETTERED after ${blockResult.attemptCount} blocked attempts (threshold=${BCTC_ZERO_EXTRACT_DEAD_AT_ATTEMPTS}); no further automatic re-extraction for this pair.`
+        : `flagged for manual review (blocked attempt ${blockResult.attemptCount}/${BCTC_ZERO_EXTRACT_DEAD_AT_ATTEMPTS}).`;
+
     const blockMsg = hadExistingGoodRow
       ? `[BCTC] Reparse write BLOCKED for ${report.actionCode} ${report.period.sortKey}: ` +
         `new extraction total_assets=${report.balanceSheet.totalAssets} would overwrite a ` +
         `previously-good stored report (total_assets=${existingGoodRow!.total_assets}). ` +
-        `Existing row preserved untouched — flagged for manual review, NOT re-extracted.`
+        `Existing row preserved untouched — ${reviewClause}`
       : `[BCTC] Write BLOCKED for ${report.actionCode} ${report.period.sortKey}: ` +
         `extraction total_assets=${report.balanceSheet.totalAssets} (failed/zero extraction) and ` +
         `no prior stored report exists for this ticker — refusing to CREATE a new corrupt row. ` +
-        `Report stays ABSENT ("Chưa có dữ liệu BCTC") — flagged for manual review, NOT inserted.`;
-    logger.warn(blockMsg);
+        `Report stays ABSENT ("Chưa có dữ liệu BCTC") — ${reviewClause}`;
+    logger.warn(blockMsg, {
+      attemptCount: blockResult.attemptCount,
+      deadLettered: blockResult.deadLettered,
+      recorded: blockResult.recorded,
+    });
     if (telegramBugFn) {
       await telegramBugFn(blockMsg).catch(() => {});
     } else {

@@ -9,6 +9,9 @@
  *                            (FIX-BCTC-NEWSCHAIN-FALLBACK-ZEROS-WRITE-TARGET);
  *                            NEVER read by bctcIdentityGuard or any identity-
  *                            guarded serve path
+ *   - bctc_zero_extract_blocks — durable attempt-count/dead-letter record for
+ *                            blocked totalAssets<=0 writes (see
+ *                            infrastructure/db/bctcZeroExtractBlocklist.ts)
  *   - vnstock_financials  — vnstock income statement data
  *   - vnstock_balance_sheet
  *   - vnstock_cash_flow
@@ -365,6 +368,29 @@ export function initFinancialReportsTables(db: Database): void {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_bnfh_action    ON bctc_news_fallback_hints(action_code)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_bnfh_sort_key  ON bctc_news_fallback_hints(action_code, sort_key)`);
+
+  // ── FIX-BCTC-ZEROEXTRACT-BLOCK-NO-FAILURE-RECORD-UNBOUNDED-REEXTRACT-LOOP ──
+  // Durable failure record for parseBctcReport.ts::storeReport()'s
+  // totalAssets<=0 write-block guard. Written/read via
+  // infrastructure/db/bctcZeroExtractBlocklist.ts — never touched directly
+  // by callers. attempt_count is capped at BCTC_ZERO_EXTRACT_DEAD_AT_ATTEMPTS,
+  // at which point status flips to 'dead' and downstream enqueue-time checks
+  // (fetchParseAndStoreBctc.ts, pushBctcExtraction.ts) stop re-attempting
+  // extraction for the pair — see that module's doc comment for the full
+  // incident writeup.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bctc_zero_extract_blocks (
+      action_code       TEXT    NOT NULL,
+      sort_key          TEXT    NOT NULL,
+      attempt_count     INTEGER NOT NULL DEFAULT 1,
+      last_blocked_at   TEXT    NOT NULL DEFAULT (datetime('now')),
+      reason            TEXT    NOT NULL DEFAULT '',
+      status            TEXT    NOT NULL DEFAULT 'active' CHECK(status IN ('active','dead')),
+      first_blocked_at  TEXT    NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY (action_code, sort_key)
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_bzeb_status ON bctc_zero_extract_blocks(status)`);
 
   // ── vnstock tables (Task 1042) ────────────────────────────────────────────
   db.exec(`

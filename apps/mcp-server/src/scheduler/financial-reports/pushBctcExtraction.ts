@@ -166,6 +166,22 @@ export interface PushBctcExtractionDeps {
     reportId: string,
     pdfPath: string,
   ) => Promise<PekTriggerOutcome>;
+
+  /**
+   * FIX-BCTC-ZEROEXTRACT-BLOCK-NO-FAILURE-RECORD-UNBOUNDED-REEXTRACT-LOOP:
+   * check whether (actionCode, sortKey) was already dead-lettered by
+   * repeated totalAssets<=0 write-blocks (parseBctcReport.ts storeReport()).
+   * When true, triggerPushBctcExtraction short-circuits BEFORE any Tier 1-3
+   * extraction attempt — this is the actual loop-breaker for the
+   * pdf-extractor CPU burn: the OCR tiers below run BEFORE runPipeline (and
+   * therefore before parseBctcReport's own guard) ever sees the pair, so
+   * that guard cannot prevent the re-OCR cost by itself. Optional — when
+   * absent (pre-existing test fixtures), the check is skipped and behavior
+   * is unchanged. Maps to `isZeroExtractDeadLettered`
+   * (infrastructure/db/bctcZeroExtractBlocklist.js) bound to getDb() in
+   * production.
+   */
+  isDeadLettered?: (actionCode: string, sortKey: string) => boolean;
 }
 
 /**
@@ -261,7 +277,30 @@ async function makeProductionDeps(): Promise<PushBctcExtractionDeps> {
     },
     triggerPekExtraction: async (reportId: string, pdfPath: string) =>
       triggerPekExtractionForReport(reportId, pdfPath),
+    // FIX-BCTC-ZEROEXTRACT-BLOCK-NO-FAILURE-RECORD-UNBOUNDED-REEXTRACT-LOOP
+    isDeadLettered: (actionCode: string, sortKey: string) => {
+      // Lazy require avoided (this whole factory is already inside an async
+      // function reached only via dynamic import) — getDb()/isZeroExtractDeadLettered
+      // are both cheap sync SQLite reads, no LanceDB/network involved.
+      return isZeroExtractDeadLetteredSync(actionCode, sortKey);
+    },
   };
+}
+
+/**
+ * Sync wrapper so `isDeadLettered` (a sync dep, matching the rest of this
+ * file's mostly-sync confidence-gate checks) can call the DB without making
+ * makeProductionDeps' whole deps object async-only. getDb() and the
+ * bctc_zero_extract_blocks lookup are both already-sync bun:sqlite calls.
+ */
+function isZeroExtractDeadLetteredSync(actionCode: string, sortKey: string): boolean {
+  try {
+    const { getDb } = require("../../infrastructure/db/schema.js") as typeof import("../../infrastructure/db/schema.js");
+    const { isZeroExtractDeadLettered } = require("../../infrastructure/db/bctcZeroExtractBlocklist.js") as typeof import("../../infrastructure/db/bctcZeroExtractBlocklist.js");
+    return isZeroExtractDeadLettered(getDb(), actionCode, sortKey);
+  } catch {
+    return false;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -308,6 +347,22 @@ export async function triggerPushBctcExtraction(
 ): Promise<PushBctcExtractionOutcome> {
   const { actionCode, year, quarter, filePath, pdfUrl } = params;
   const deps = params.deps ?? (await makeProductionDeps());
+
+  // ── FIX-BCTC-ZEROEXTRACT-BLOCK-NO-FAILURE-RECORD-UNBOUNDED-REEXTRACT-LOOP ──
+  // Checked BEFORE the confidence pre-gate / any Tier 1-3 extraction call —
+  // once dead-lettered, spend zero further OCR cycles on this pair.
+  const sortKey = `${year}-${quarter}`;
+  if (deps.isDeadLettered?.(actionCode, sortKey)) {
+    logger.warn("[pushBctcExtraction] dead-lettered after repeated zero-extraction blocks — skipping re-attempt (no OCR, no pipeline)", {
+      ticker: actionCode,
+      year,
+      quarter,
+    });
+    return {
+      outcome: "failed",
+      reason: `${actionCode} ${sortKey} is dead-lettered after repeated zero-extraction blocks — not re-attempted`,
+    };
+  }
 
   // ── FIX-PDFEXTRACTOR-TIER1-OCR-TIMEOUT (AC2, Decision 2): confidence
   // pre-gate ahead of Tier 1 — reuses the EXISTING extractPdfText()/

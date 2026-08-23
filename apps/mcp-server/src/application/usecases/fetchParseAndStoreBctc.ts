@@ -41,6 +41,7 @@ import {
   recordBctcSignalSent,
   BCTC_SIGNAL_DEBOUNCE_HOURS,
 } from "../../infrastructure/db/bctcSignalDebounce.js";
+import { isZeroExtractDeadLettered } from "../../infrastructure/db/bctcZeroExtractBlocklist.js";
 
 import type { FinancialReport } from "../../../bctc-schema.js";
 import type { FetchParseAndStoreBctcParams } from "./bctc/types.js";
@@ -68,6 +69,19 @@ export async function fetchParseAndStoreBctc(
   // Computed once, up-front — Step 1 selection (below) and Step 3 parsing
   // (further down) both need the numeric quarter / sortKey.
   const period = buildFiscalPeriod(year, quarter);
+
+  // FIX-BCTC-ZEROEXTRACT-BLOCK-NO-FAILURE-RECORD-UNBOUNDED-REEXTRACT-LOOP:
+  // once (actionCode, sortKey) has been dead-lettered by repeated
+  // totalAssets<=0 write-blocks (parseBctcReport.ts storeReport()), stop
+  // re-attempting the pipeline entirely. This is the actual loop-breaker —
+  // storeReport's own guard only ever refused the INSERT; it never stopped
+  // this function (called by checkSscReports.ts nightly, bctcReparseJob.ts
+  // daily, and pushBctcExtraction.ts) from re-running SSC listing + PDF
+  // OCR + parsing on the same doomed pair on every cycle.
+  if (isZeroExtractDeadLettered(getDb(), actionCode, period.sortKey)) {
+    logger.warn(`${tag} dead-lettered after repeated zero-extraction blocks — skipping re-attempt`);
+    return null;
+  }
 
   // ── Step 1: Resolve SSC document URL ───────────────────────────────────────
   // Task 289: if caller supplied pdfUrl, skip the listing step entirely.
