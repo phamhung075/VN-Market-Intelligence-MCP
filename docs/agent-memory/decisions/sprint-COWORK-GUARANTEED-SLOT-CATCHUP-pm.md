@@ -170,3 +170,25 @@ PIPELINE: continue (P0, decomposition-only, no code changes in this cycle)
 
 ---
 
+### STEP pm-S10 · pm · 2026-08-23T09:48:56Z
+**task-id:** FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE
+**what-done:** Split the P0 row by owner into 4 children (developer: probe script, probe tests; agent-father: 3 SKILL.md; architect: amend the 2026-08-06 §1.3 spec SSOT) + 1 non-blocking backlog follow-on, and encoded the load-bearing developer→agent-father ordering as `depends_on`, not a note.
+**what-considered:**
+- One combined developer task (script+tests, matching the brief's "1+2") vs two — chose two: F1+F2 are the row's whole thesis, and folding them into the script task lets the script ship with the proof unwritten. Split also lets F5 (the grep gate, only satisfiable after the SKILL.md edits) sit where it can actually pass — as agent-father's AC, not developer's.
+- Whether to also gate agent-father behind TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY (ROW 2's #5) — yes: both edit `.claude/skills/cron-cowork-team/SKILL.md`, and the PM conflict-check matrix makes same-file sequential. Ordered doc-truth FIRST (it is dependency-free, dispatchable now, and removes a live wrong-diagnosis source) rather than blocking the P1 behind the P0 chain.
+- Retarget `FIX-CRONCREATE-CONTRACT-DIVERGENCE-…`'s dep from the parent row onto the child vs leaving it — chose ADD, not replace: the parent will become an epic wrapper, and I did not want the ordering to depend on how the wrapper closes. Additive is non-regressive.
+- Skipping the brief's item 6 (architect amendment) as "documentation" — rejected: §1.3 is the spec SSOT that *justifies* the broken guard, so leaving it makes the next reader re-derive the same design.
+**why-decision:** The brief's own §5 says the SKILL.md files citing a not-yet-existent probe reproduces the exact `FIX-CRONCREATE-CONTRACT-DIVERGENCE` failure class already dep-gated on these same three files. A prose note cannot enforce that; `depends_on` is read by `scripts/lib/devteam-eligibility.jq`'s `effective_depends_on()` and gates dispatch on DONE_VERIFIED, so the ordering is mechanical.
+**why-change:** No change from architect's owner split. PM added the fourth (architect) child, the same-file cross-row edge to ROW 2's doc-truth task, and the CronCreate dep precision — none of which alter the design.
+
+### STEP pm-S11 · pm · 2026-08-23T09:48:56Z
+**task-id:** FIX-COWORK-DAILY-SLOT-SILENT-SKIP-NO-CATCHUP-CATCHUPRAW-SCOPED-TO-GUARANTEED-ONLY
+**what-done:** Split the P1 row into 7 children across 4 owners (developer ×3, agent-father ×2, ops ×1, qa ×1), encoded #1→#2 as a real `depends_on`, and flagged two live `ready[]` rows that the brief contradicts or collides with instead of silently cancelling them.
+**what-considered:**
+- Keep the brief's #3 and #4 as separate tasks (its table lists #4 as "developer + agent-father") vs fold the schedule half of #4 into #3 — chose fold: both write `docs/data/cowork-schedule.json`, which is `_maintained_by: agent-father via architect brief only`. Two tasks on one agent-father-owned file is a lost-update hazard for zero parallelism gain. The predicate half stays with developer, gated before the data half so AC-3 is verifiable.
+- Leave the §7 verification gate unowned (implicit in the children's ACs) vs mint it as a qa task — chose mint: an 11-slot disposition table spanning four other tasks is exactly the artifact that gets narrated rather than produced (memory `feedback_auditor_fresh_pass_narrates_unrecorded_escalation`). Giving it an owner and `depends_on` makes it executable.
+- `TASK-COWORK-CATCHUP-3` (ready[], "new catchup-check.md dispatcher sub-flow") is precisely the Step 4.55 wiring the brief measured to recover zero slots, and `TASK-COWORK-CATCHUP-5` targets the same file as new #1. Cancelling both vs flagging — chose flag: disposition on rows minted from a *partially* superseded design is a PO scope call, not PM's. Wrote `status_note` on each naming the contradiction and the measurement, and surfaced both in RETURN.
+**why-decision:** Brief R1 is a measurement, not a style preference: a detector built on today's `last_fired` reports 4 false misses on the guaranteed set alone (chef-eod, digest-sunday, fb-daily, fb-weekend — `fb-weekend` ran 2026-08-22T13:29Z, not 14.8 d stale). #2 must not be dispatchable until #1 is DONE_VERIFIED, which `depends_on` enforces and a note does not.
+**why-change:** Reframed with the architect from catch-up to detection — no catch-up task was created at all, because `catchup_raw` measured 8 records / 0 eligible against a 4-day outage. The row's own `verification_gate` already permits "explicitly declared out of scope with a reason", so the qa child records that disposition rather than manufacturing a recovery.
+
+---

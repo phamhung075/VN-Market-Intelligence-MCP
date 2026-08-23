@@ -805,8 +805,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-23T09:11:31Z",
-    "_updated_by": "po (triage — cron re-arm guard cluster addendum 2: +1 row)",
+    "_updated_at": "2026-08-23T09:39:08Z",
+    "_updated_by": "router (agent-father P3 doc pair ready->review, next_agent=qa; commits b545a69cc+9c6ef1b76)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -12747,6 +12747,28 @@
         "created_at": "2026-08-23T09:25:41Z",
         "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=cowork-fire routed on Pipeline A (a matching table row exists in triage-signals.md's own Pipeline-A section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
         "updated_at": "2026-08-23T09:25:42Z"
+      },
+      {
+        "id": "FOLLOWUP-CRON-STANDALONE-PER-TICK-FIRE-ELECTION-MUTEX",
+        "title": "Give cron-standalone-team the per-tick cross-session fire-election mutex it lacks, so its on_unknown disposition can move from defer to steal like the other two families",
+        "owner": "architect",
+        "next_agent": "architect",
+        "status": "BACKLOG",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "depends_on": [
+          "TASK-CRON-SKILLMD-PROBE-WIRING"
+        ],
+        "files": [],
+        "parent": "FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE",
+        "note": "Verified absent: no task_claim / cron: mutex in cron-agent-father.md, cron-claude-manager-helper.md, cron-db-data-integrity.md; cron-code-janitor.md has only a local SKIP/SPAWN preflight, not a cross-session mutex. So a double-arm means two concurrent real runs. Brief R6: explicitly a known, accepted, NARROWED residual - today standalone is wrong in both directions, after the parent row it is wrong in at most one and loudly. MUST NOT block the parent row.",
+        "created_at": "2026-08-23T09:47:24Z",
+        "created_by": "pm",
+        "detail_ref": null,
+        "source": "docs/architecture-briefs/2026-08-23-cron-rearm-liveness-oracle-process-observation.md S4.2 + R6",
+        "updated_at": "2026-08-23T09:47:25Z"
       }
     ],
     "closed_sprints": [
@@ -15791,13 +15813,12 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL",
         "owner": "qa",
         "next_agent": "qa",
-        "depends_on": [
-          "OPS-COWORK-GUARANTEED-SLOT-INSTALL"
-        ],
-        "updated_by": "po/triage-20260728T13",
+        "depends_on": [],
+        "updated_by": "po",
         "po_routing_20260728": "PO 2026-07-28T13Z. Was backlog[] with a detail-resolved non-dev next_agent (qa) — the documented NO-LANE hole (zone-routing.md Step A2): BOUNDED-1 gates it via is_non_dev_next_agent_unrouted, SLS needs supervised AND plan_only (both null here), RLC never reads backlog[]. Moved to ready[] with status READY and the next_agent/owner promoted INLINE, which is the only lane (RLC) that dispatches a non-dev handler.",
         "po_dep_repair_20260728": "DEP REPAIR, acute instance of FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING (minted this same write). Its backlog-detail `depends` was [OPS-COWORK-GUARANTEED-SLOT-INSTALL, FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED]. The second is DONE_VERIFIED (2026-07-08T05:22:59Z, by qa) but lives in docs/data/orch/archive/2026-07.json, which dep_status_map does not scan — so it resolved MISSING and blocked this row PERMANENTLY. Dropped it by installing an INLINE depends_on (inline wins over detail in effective_depends_on, same repair shape as UC-CDC-P5 2026-07-23). The row stays legitimately held on OPS-COWORK-GUARANTEED-SLOT-INSTALL, which is still REVIEW — see the consolidation ruling on that row.",
-        "updated_at": "2026-07-28T13:24:57Z"
+        "updated_at": "2026-08-23T09:49:06Z",
+        "po_dep_resolution_20260823": "DANGLING DEP RESOLVED — REMOVED, NOT MINTED. PO verified the dependency OPS-COWORK-GUARANTEED-SLOT-INSTALL is already SATISFIED IN FACT on the live machine, so minting it would have created a no-op ops row and delayed this QA gate further. Corroboration of the dangle: scripts/orch-apply.sh Stage 1g listed it as item [11] of 16 dependencies resolving MISSING; PO located the only surviving record at docs/data/orch/archive/backlog-detail.json items[375], status BACKLOG, never present in any hot lane (live grep: 0 matching rows in the board). Its declared acceptance was: new LaunchAgent loaded and visible in launchctl list; old fb-daily-firer unloaded; no two overlapping 900s pollers. All three verified live 2026-08-23T09:45Z: (1) launchctl list shows `-\\t0\\tcom.vn-market.cowork-guaranteed-slot-firer`; (2) ~/Library/LaunchAgents/com.vn-market.cowork-guaranteed-slot-firer.plist is a symlink into the repo launchd/ dir, dated 10 jul; (3) no fb-daily-firer entry in launchctl list and no fb-daily-firer.plist anywhere in launchd/ — retired, and the generalized firer subsumes it per its own plist header. Its parent gate F1-LAUNCHD-COWORK-BACKSTOP also landed (firer script + plist both exist and the firer log shows real invocations, most recently 2026-08-22T20:32:48Z). This row is now DISPATCHABLE. NOTE FOR QA WHEN IT RUNS: point 7 of the 7-point spec (docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md section 6) — the injected-fault test for the Tier-1 extension — is testable TODAY: Check 6 _check_launchd_agents() at scripts/agents-flow/auditor-tier1-probe.sh:583-687 IS shipped and hardened twice. But scope point 7 to LOADEDNESS ONLY. It asserts the label is loaded at exit-status 0; it does NOT assert the firer is ticking, and it stayed ALL_GREEN through the 96.5h Standby outage of 2026-08-18 -> 08-22. That residual gap is tracked separately as FIX-LAYERC-FIRER-NO-TICK-LIVENESS-ORACLE-LOADED-ASSERTION-INVARIANT-UNDER-HOST-SLEEP — do NOT fail point 7 for it, and do NOT pass point 7 by claiming firing coverage."
       },
       {
         "id": "TASK-COWORK-CATCHUP-3",
@@ -15814,11 +15835,12 @@
         ],
         "created_at": "2026-07-22T22:12:59Z",
         "created_by": "pm",
-        "updated_at": "2026-08-06T07:00:36Z",
+        "updated_at": "2026-08-23T09:47:25Z",
         "next_agent": "developer",
         "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
         "updated_by": "po/chef-evening-retry-date-drift-20260806",
-        "po_note_20260806": "PO 2026-08-06T07:02Z -- LIVE COST EVIDENCE, plus one hypothesis I raised and then FALSIFIED myself. Read part (2) before spending any time on dependency plumbing.\n\n(1) COST, measured today: catchup_raw has been correctly computed since TASK-COWORK-CATCHUP-2 shipped and is consumed by NOTHING. docs/agents/cowork-team/flow/main.md's step table runs 0a -> 6 with no Step 4.55 / catchup-check stage, and match-slots.md:30 still reads \"Not yet consumed here\". Executed live 2026-08-06T06:52Z the predicate reported chef-morning catchup_eligible=true, scheduled_utc_time=2026-08-06T05:15:00.000Z, expected_publish_task_id=published:chef-morning:2026-08-06 -- today's morning dish was MISSED (host asleep, pmset MAGICWAKE 06:34Z) and is recoverable RIGHT NOW, and nothing will recover it. The same host-sleep window cost the 2026-08-05 evening dish and drove the FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR recurrence (degraded MARKET msg 1129, PO had to hand-release a tombstoned marker at 06:53Z to save tonight's dish). This is the producer-shipped / consumer-stranded half of a P0 fix, open since 2026-07-22. Host sleep is a routine nightly condition on this laptop, so this consumer is not a nice-to-have.\n\n(2) FALSIFIED HYPOTHESIS -- DO NOT CHASE IT. I first suspected the strand was a cold-archive dependency-visibility bug, because TASK-COWORK-CATCHUP-1 is DONE_VERIFIED but lives ONLY in docs/data/orch/archive/2026-07.json (the hot orch-state.json names that id 8 times as a dependency and contains it as a row 0 times). That hypothesis is WRONG. Checked directly: scripts/lib/devteam-eligibility.jq section \"cold-archive dep status ingest\" (FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING, landed 2026-07-28) already seeds dep_status_map from the archive; all 7 real callers thread --slurpfile archive via scripts/lib/archive-glob-cat.sh; and orch-validate Stage 1g -- which DOES resolve against the cold archive -- did not flag TASK-COWORK-CATCHUP-1 on this tick's write, while it did flag 8 genuinely-missing deps. Deps therefore resolve SATISFIED. Also checked and excluded: OPS-COWORK-GUARANTEED-SLOT-INSTALL (stale in REVIEW since 2026-07-22T16:02Z, next_agent=ops, and the work is demonstrably already done -- launchctl reports com.vn-market.cowork-guaranteed-slot-firer loaded with runs=2044) blocks only QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL, not this cluster.\n\n(3) SO THE STRAND CAUSE IS STILL UNKNOWN -- MEASURE IT, DO NOT GUESS. Against scripts/devteam-backlog-claim-ready-lane-consumer.jq:123-130 this row appears RLC-eligible on every clause: status READY, effective_supervised != true, effective_plan_only != true, not an epic-wrapper, deps satisfied, and an inline next_agent=\"developer\" which RLC explicitly accepts when the row itself asks for it (it only refuses the fabricated \"developer\" fallback). It is P0, so priority ordering should favour it. It still has not dispatched in 9 days. STARTING POINT for whoever takes this: run scripts/audits/devteam-dispatch-gate-satisfiability.sh -- on this tick it reported that BOUNDED-1 no-ops whenever in_progress>=1, and live in_progress=2. If developer-owned ready[] rows are in practice reachable only through BOUNDED-1, that WIP<1 cap starves them permanently, which fits the observed 9-day silence far better than anything in the dependency layer. Confirm that before changing code."
+        "po_note_20260806": "PO 2026-08-06T07:02Z -- LIVE COST EVIDENCE, plus one hypothesis I raised and then FALSIFIED myself. Read part (2) before spending any time on dependency plumbing.\n\n(1) COST, measured today: catchup_raw has been correctly computed since TASK-COWORK-CATCHUP-2 shipped and is consumed by NOTHING. docs/agents/cowork-team/flow/main.md's step table runs 0a -> 6 with no Step 4.55 / catchup-check stage, and match-slots.md:30 still reads \"Not yet consumed here\". Executed live 2026-08-06T06:52Z the predicate reported chef-morning catchup_eligible=true, scheduled_utc_time=2026-08-06T05:15:00.000Z, expected_publish_task_id=published:chef-morning:2026-08-06 -- today's morning dish was MISSED (host asleep, pmset MAGICWAKE 06:34Z) and is recoverable RIGHT NOW, and nothing will recover it. The same host-sleep window cost the 2026-08-05 evening dish and drove the FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR recurrence (degraded MARKET msg 1129, PO had to hand-release a tombstoned marker at 06:53Z to save tonight's dish). This is the producer-shipped / consumer-stranded half of a P0 fix, open since 2026-07-22. Host sleep is a routine nightly condition on this laptop, so this consumer is not a nice-to-have.\n\n(2) FALSIFIED HYPOTHESIS -- DO NOT CHASE IT. I first suspected the strand was a cold-archive dependency-visibility bug, because TASK-COWORK-CATCHUP-1 is DONE_VERIFIED but lives ONLY in docs/data/orch/archive/2026-07.json (the hot orch-state.json names that id 8 times as a dependency and contains it as a row 0 times). That hypothesis is WRONG. Checked directly: scripts/lib/devteam-eligibility.jq section \"cold-archive dep status ingest\" (FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING, landed 2026-07-28) already seeds dep_status_map from the archive; all 7 real callers thread --slurpfile archive via scripts/lib/archive-glob-cat.sh; and orch-validate Stage 1g -- which DOES resolve against the cold archive -- did not flag TASK-COWORK-CATCHUP-1 on this tick's write, while it did flag 8 genuinely-missing deps. Deps therefore resolve SATISFIED. Also checked and excluded: OPS-COWORK-GUARANTEED-SLOT-INSTALL (stale in REVIEW since 2026-07-22T16:02Z, next_agent=ops, and the work is demonstrably already done -- launchctl reports com.vn-market.cowork-guaranteed-slot-firer loaded with runs=2044) blocks only QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL, not this cluster.\n\n(3) SO THE STRAND CAUSE IS STILL UNKNOWN -- MEASURE IT, DO NOT GUESS. Against scripts/devteam-backlog-claim-ready-lane-consumer.jq:123-130 this row appears RLC-eligible on every clause: status READY, effective_supervised != true, effective_plan_only != true, not an epic-wrapper, deps satisfied, and an inline next_agent=\"developer\" which RLC explicitly accepts when the row itself asks for it (it only refuses the fabricated \"developer\" fallback). It is P0, so priority ordering should favour it. It still has not dispatched in 9 days. STARTING POINT for whoever takes this: run scripts/audits/devteam-dispatch-gate-satisfiability.sh -- on this tick it reported that BOUNDED-1 no-ops whenever in_progress>=1, and live in_progress=2. If developer-owned ready[] rows are in practice reachable only through BOUNDED-1, that WIP<1 cap starves them permanently, which fits the observed 9-day silence far better than anything in the dependency layer. Confirm that before changing code.",
+        "status_note": "CONTRADICTED 2026-08-23 by architect brief docs/architecture-briefs/2026-08-23-cowork-slot-durability-layer-inventory-and-miss-detection.md S4: live matcher returns catchup_raw 8 records / ZERO eligible; the 60-1440min bounds cap catch-up at one VN day against a measured 4-day outage, so wiring Step 4.55 / catchup-check.md recovers nothing for ANY slot. Brief says do NOT schedule this as the fix. Needs PO disposition (cancel vs rescope) - pm did not cancel unilaterally."
       },
       {
         "id": "TASK-COWORK-CATCHUP-4",
@@ -15855,10 +15877,11 @@
         ],
         "created_at": "2026-07-22T22:12:59Z",
         "created_by": "pm",
-        "updated_at": "2026-07-28T20:39:16Z",
+        "updated_at": "2026-08-23T09:47:25Z",
         "next_agent": "developer",
         "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "po/route-20260728T13"
+        "updated_by": "po/route-20260728T13",
+        "status_note": "FILE CONFLICT 2026-08-23: targets scripts/agents-flow/cowork-guaranteed-slot-firer.sh, the same file as new TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK (P1, parent FIX-COWORK-DAILY-SLOT-SILENT-SKIP-...). Sequential, not parallel. Also from the partially-superseded 2026-07-22 design - needs PO disposition alongside TASK-COWORK-CATCHUP-3."
       },
       {
         "id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
@@ -17582,13 +17605,17 @@
         "owner": "po",
         "status": "READY",
         "zone": "cross-service/",
-        "next_agent": "architect",
+        "next_agent": "pm",
         "created_at": "2026-08-15T10:31:00Z",
         "status_note": "REPRODUCED LIVE TWICE THIS TICK, exact bytes captured. PO attempted to record that FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE had recurred 4 more times, by incrementing ONLY its numeric occurrence_count field (5 -> 9). No prose was added. scripts/orch-apply.sh aborted:\n\n  [orch-row-prose-ceiling-check] ABORTED — 1 row(s) with net new inline growth past ORCH_ROW_PROSE_CEILING_BYTES=12000:\n    id=FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE live=24298B -> candidate=24319B\n\n21 bytes, entirely digits. Stage 0/1 validation PASSED and orch-conservation-check PASSED; only the prose ceiling refused, and it refused the whole write (live file untouched).\n\nTHE DEFECT: the check measures NET ROW BYTE GROWTH but is named and reasoned about as a PROSE ceiling. For a row already above the ceiling the predicate degenerates to 'no growth of any kind, ever' — which forbids the one class of update that is unambiguously bounded, non-prose, and exactly what an over-documented row most needs: incrementing its own recurrence counter. Consequence is silent and compounding: the more a defect recurs, the more prose its row accumulates, the sooner it crosses 12000B, and from that moment onward its occurrence_count FREEZES. Every downstream consumer that ranks or prioritises by occurrence_count then reads a stale low number for precisely the worst-offending rows — an inverted-priority failure. This is not hypothetical: FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE is stuck at 5 while PO measured occurrences 6-9 this tick alone, and FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (34589B) is equally frozen.\n\nNOT A DUPLICATE of the SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD blocker (telegram report 4911). That report describes the same check blocking a large PROSE write (the po_goahead_* stamp on a 34725B row) — the check behaving as designed on the case it was built for. This row is the case it was NOT built for: a zero-prose numeric field. Same check, different and clearly unintended branch.\n\nWHY detail_ref IS NOT THE ANSWER HERE (pre-empting the check's own suggested fix, which says 'route this row's new/updated prose through its detail_ref cold store'): occurrence_count is not prose and does not belong in a cold detail store. It is a hot, queryable ranking field — moving it cold would break every jq that reads it off the lane row, which is the whole point of it being inline. Running scripts/orch-backlog-stub.sh to cold-migrate a row purely to permit a counter increment is disproportionate and would itself rewrite the row.\n\nPROPOSED FIX (small, surgical): exempt a small allowlist of bounded NON-PROSE scalar fields from the growth predicate — occurrence_count, updated_at, and any other numeric/ISO-timestamp scalar. Compute the ceiling over PROSE fields only (status_note, title, description, and the detail blobs), which is what the check's own name, message and remediation text all already assume. Explicitly do NOT add a bypass env var — the check is right to have none, and this fix removes the need for one.\n\nAC: on a fixture row whose status_note alone exceeds 12000B, (a) incrementing occurrence_count by 1 LANDS; (b) appending 1 byte to status_note still ABORTS with the existing message. Both assertions required — (b) proves the fix did not defeat the check.\n\nORIGIN: PO Step 1 triage 2026-08-15T10:07Z, found while folding notebook-auto-prune recurrences. PO worked around it this tick by dropping the counter bumps entirely, so occurrences 6-9 of that row are recorded ONLY in PO's notebook and this row — they are NOT on the row that owns them.\n\n[po/triage 2026-08-22T22:58:36Z - LIVE REPRODUCTION + PROMOTED backlog[] -> ready[]] This row's thesis was reproduced end-to-end during this triage tick, unprompted, and it BLOCKED PRODUCTIVE TRIAGE WORK - which is the escalation trigger, not the reproduction itself.\n\nWHAT HAPPENED, verbatim: this tick's atomic 7-mutation triage write (scripts/po-triage-20260822T2258-fleetpush-sizelint-sweepguard-5folds.jq) included a routine +3 occurrence fold onto FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS (review[]). scripts/orch-apply.sh passed Stage 0, Stage 1, the updated_at stamper AND the conservation check, then aborted at the last gate:\n  `[orch-row-prose-ceiling-check] ABORTED - 1 row(s) with net new inline growth past ORCH_ROW_PROSE_CEILING_BYTES=12000:`\n  `  id=FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS live=34264B -> candidate=35778B`\n  `[orch-apply] ABORTED: row prose ceiling check exit 1 - live file untouched`\nSIX UNRELATED, LEGITIMATE MUTATIONS were rejected as collateral - including the P0 fleet-push UNBLOCK mint - because ONE co-mutated row is over ceiling. That blast radius is the part this row's current write-up does not yet capture: the failure is not merely `that row can never be bumped again`, it is `any atomic write that so much as touches that row is unlandable`, and PO triage batches its mutations into one atomic write BY DESIGN (never seven racing writes against a live peer-dirty file).\n\nSCOPE MEASURED LIVE, not estimated: 30 rows across backlog[]/ready[]/review[] currently exceed the 12000B prose ceiling and are therefore permanently unfoldable - worst offenders SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP (40494B, ready[]), SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (34725B, review[]), FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (34589B, backlog[]), FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS (34264B, review[]), FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING (32121B, backlog[]).\n\nORPHANED EVIDENCE THIS ROW NOW CARRIES ON BEHALF OF ITS OWN VICTIM (recorded here because the destination row is structurally unwritable): three `[notebook-immutability-guard] WARN` bug-escalation envelopes reached the PO durable inbox this tick, all naming the SAME agent+section pair - docs/agent-memory/notebooks/system-auditor.md, retained section `## c108 . 2026-08-22T22:14Z` - at 22:17:25Z, 22:33:02Z and 22:35:45Z. triage-signals.md's fourth-payload-class rule sets the mint threshold at `the SAME agent+section pair fires on >=2 separate cycles`; met three times over, so this is emphatically NOT interleaved-cycle noise, and no `git status`/worktree-diff refutation was attempted (the guard compares INDEX vs HEAD at fire time, unreconstructable afterwards - absence of a reproducible diff is INCONCLUSIVE, never benign). Temporal correlation worth carrying into the fix: all three land inside the window in which the same session was being hard-blocked by the sweep-guard (prior_warns 11 -> 14), i.e. the agent was repeatedly re-attempting a commit of the same notebook - a plausible amplifier for repeated retained-section rewrites. THESE THREE OCCURRENCES ARE NOT COUNTED ANYWHERE ON THEIR OWN ROW and will be silently lost from that row's occurrence history until this defect is fixed - which is the concrete, non-hypothetical data-loss cost of the current design.\n\nWHY ready[] NOW: backlog[] is not a dispatchable lane. This defect no longer merely bloats the hot file, it deterministically blocks the fleet's own triage actuator, and it will re-block the NEXT PO tick identically the moment any of those 30 rows needs a bump. Suggested minimal fix, consistent with the precedent already in the checker's own header comment (FIX-PROSECEILING-SECONDARY-CLAIM-STAMP-FIELDS-MISSING-FROM-STRUCTURAL-EXCLUDE-SET, 2026-08-15): add the numeric/coordination fields that are not author-written prose - `occurrence_count` first - to scripts/orch-row-prose-ceiling-check.mjs's STRUCTURAL_FIELDS set. That is the same class of field as claimed_at/claimed_by by construction and it converts this from a hard livelock into a warn on the rows that genuinely carry runaway prose.",
-        "updated_at": "2026-08-22T23:05:31Z",
+        "updated_at": "2026-08-23T09:50:13Z",
         "occurrence_count": 1,
         "updated_by": "po/triage-20260822T2258Z",
-        "priority": "P1"
+        "priority": "P1",
+        "architect_design_complete": true,
+        "architect_completed_at": "2026-08-23T09:47:00Z",
+        "architect_handoff": "docs/architecture-briefs/2026-08-23-orch-row-prose-ceiling-value-shape-measure-and-frozen-cohort-paydown.md",
+        "architect_review_note": "DESIGN COMPLETE 2026-08-23 -> brief (8 sections, all figures measured live, ACs replayed on a live-data prototype). FROZEN COHORT = 23, NOT 1 (backlog 11 / ready 12 / review 0 of 585); +15 MORE over-ceiling rows sit in UNGUARDED lanes. Cohort trend 33->35->38->38->36 over 08-09..08-22 while row count FELL 615->549; today's 23 is a review[] paydown, not decay. FOUR DEFECTS, not one. D1 STRUCTURAL_FIELDS is a closed name-allowlist over an open namespace (846 field names live, 33 excluded, 813 counted as prose) - 3rd identical instance in 8d, and instance #1's own AC-5 already ordered the enumeration. D2 predicate is byte-exact not information-aware. D3 NEW/UNREPORTED: live baseline is looked up only in the 3 guarded lanes, so a row arriving from in_progress[]/qa[]/active_sprints[] gets liveBytes=0 and a zero-change lane-move HARD-REJECTS (proven live: UC-CCA-P3 in_progress->review, 'live=0B -> candidate=12161B', exit 1); dev-standards.md over-claims lane-agnosticism and the LANE-AGNOSTIC-MOVE test only covers backlog->review. D4 ROOT CAUSE: the 2026-08-09 brief chose (c)=3 parts in dependency order and only part 3 (the gate) shipped - the §2.3 paydown never ran on backlog[]/ready[], so the guard has run 14d in the exact brick-mode its own author ruled out. DECISION: measure the ceiling over VALUE-SHAPE-derived prose (prose iff string >200B or non-empty container), UNION'd with the existing name set - monotone, so no write that passes today can start failing. Measured: 22/23 rows STAY over ceiling (guard not disarmed); short strings hold 43,875B vs 1,616,447B for long ones, so they are not the bloat channel. REJECTED: adding occurrence_count/po_manual_dispatch_* to the name list (turn #4 of a 3-turn loop), raising the ceiling, bypass env var, integer-increment special-case (measured: same-length increments ALREADY pass, so it fixes neither of PO's blocks). RETURN PATH: orch-backlog-stub.sh has NO id/threshold filter anywhere - it is a whole-lane bulk migrator, which is why PO correctly refused it twice; add --over-ceiling-only/--ids and align STUB_FIELDS to the complement of the new measure. Projected: 22 rows touched, 426KB cold, hot file -14.5%, largest surviving row 1839B, cohort -> 0. PAYDOWN LANDMINE FOUND: today's STUB_FIELDS would strip po_manual_dispatch_flagged_at, which manual-dispatch-sweep Step 1's flag_reentrant reads INLINE with no detail_ref fallback - alignment MUST land before any run. SCOPE REDUCTION: po/flow/manual-dispatch-sweep.md needs NO edit (the stamp just lands) - drop it from the sibling row's file list, no agent-father hop. Owner: developer (zone-detect Tier-1, scripts/ + docs/policies/). Ship §3 FIRST and ALONE - it is a read-only predicate change, unblocks PO's next tick, depends on nothing open."
       },
       {
         "id": "FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE",
@@ -17599,10 +17626,10 @@
         "priority": "P0",
         "size": "M",
         "zone": "cross-service/",
-        "next_agent": "pm",
+        "next_agent": "developer",
         "created_at": "2026-08-23T09:04:15Z",
         "created_by": "po",
-        "updated_at": "2026-08-23T09:31:22Z",
+        "updated_at": "2026-08-23T09:47:25Z",
         "updated_by": "architect",
         "files": [
           ".claude/skills/cron-cowork-team/SKILL.md",
@@ -17616,7 +17643,16 @@
         "architect_design_complete": true,
         "architect_completed_at": "2026-08-23T09:31:22Z",
         "architect_handoff": "docs/architecture-briefs/2026-08-23-cron-rearm-liveness-oracle-process-observation.md",
-        "architect_review_note": "DESIGN COMPLETE 2026-08-23 -> docs/architecture-briefs/2026-08-23-cron-rearm-liveness-oracle-process-observation.md (8 sections). PO correction VERIFIED at source (7200/7200/120, byte-identical branch text) and it UNDERSTATES the case. ROOT CAUSE restated: both oracles read bookkeeping the session wrote about ITSELF; neither observes the OS. presence-roster is a PARTICIPATION signal not a liveness signal (measured 09:18Z: 2 roster rows vs 5 live claude PIDs); force_release_orphan is NOT the independent 2nd check that brief 2026-08-06 1.3 claims - it reads heartbeat_at on the SAME marker, renewed only by the now-dead owner, so it evaluates was-alive-T-ago, not is-alive. That one defect yields false-LIVE at T=7200 (renewal hook present) and false-DEAD at T=120 (no hook). No threshold value can fix it. CORRECTED the dispatch brief oracle ranking: transcript-mtime must NOT be primary - at the incident instant the dead session transcript was 16s old, so any mtime threshold above 16s also returns LIVE. Only process-absence (O1) is sound at t+1s. New order: O1 process-absence proves DEAD, then O2 transcript-mtime proves LIVE, then O3 heartbeat/presence corroborates only - plus an explicit third UNKNOWN branch (today only LIVE/DEAD exist, so the spec MUST guess, and it guesses the branch that caused the outage). UNKNOWN resolves by a measured property has_fire_election_mutex (cowork+detect-loop have one -> steal; standalone has none -> defer+alarm), held in ONE shared table in the probe, NOT three numbers in three docs. orphan_threshold demoted to a write-side CAS guard: uniform 120 everywhere. NO branch may terminate silently. registering_process becomes a structured fp_version:2 object on ALL THREE markers (today only cowork has one, and its value embeds French locale month names - a latent Step-1a false-DEFER bug). NEW LIVE FINDING: the standalone false-DEAD is firing RIGHT NOW (heartbeat_age 30948s vs T=120, holder 88555d2e absent from roster but transcript 16s old = alive) - promoted to mandatory fixture F2 alongside the F1 corpse replay; both must pass under ONE spec, which is the whole thesis of this row. Sequencing LOAD-BEARING: probe script (developer) lands BEFORE the 3 SKILL.md edits (agent-father), else the docs cite a script that does not exist."
+        "architect_review_note": "DESIGN COMPLETE 2026-08-23 -> docs/architecture-briefs/2026-08-23-cron-rearm-liveness-oracle-process-observation.md (8 sections). PO correction VERIFIED at source (7200/7200/120, byte-identical branch text) and it UNDERSTATES the case. ROOT CAUSE restated: both oracles read bookkeeping the session wrote about ITSELF; neither observes the OS. presence-roster is a PARTICIPATION signal not a liveness signal (measured 09:18Z: 2 roster rows vs 5 live claude PIDs); force_release_orphan is NOT the independent 2nd check that brief 2026-08-06 1.3 claims - it reads heartbeat_at on the SAME marker, renewed only by the now-dead owner, so it evaluates was-alive-T-ago, not is-alive. That one defect yields false-LIVE at T=7200 (renewal hook present) and false-DEAD at T=120 (no hook). No threshold value can fix it. CORRECTED the dispatch brief oracle ranking: transcript-mtime must NOT be primary - at the incident instant the dead session transcript was 16s old, so any mtime threshold above 16s also returns LIVE. Only process-absence (O1) is sound at t+1s. New order: O1 process-absence proves DEAD, then O2 transcript-mtime proves LIVE, then O3 heartbeat/presence corroborates only - plus an explicit third UNKNOWN branch (today only LIVE/DEAD exist, so the spec MUST guess, and it guesses the branch that caused the outage). UNKNOWN resolves by a measured property has_fire_election_mutex (cowork+detect-loop have one -> steal; standalone has none -> defer+alarm), held in ONE shared table in the probe, NOT three numbers in three docs. orphan_threshold demoted to a write-side CAS guard: uniform 120 everywhere. NO branch may terminate silently. registering_process becomes a structured fp_version:2 object on ALL THREE markers (today only cowork has one, and its value embeds French locale month names - a latent Step-1a false-DEFER bug). NEW LIVE FINDING: the standalone false-DEAD is firing RIGHT NOW (heartbeat_age 30948s vs T=120, holder 88555d2e absent from roster but transcript 16s old = alive) - promoted to mandatory fixture F2 alongside the F1 corpse replay; both must pass under ONE spec, which is the whole thesis of this row. Sequencing LOAD-BEARING: probe script (developer) lands BEFORE the 3 SKILL.md edits (agent-father), else the docs cite a script that does not exist.",
+        "children": [
+          "TASK-CRON-LIVENESS-PROBE-SCRIPT",
+          "TASK-CRON-LIVENESS-PROBE-TESTS",
+          "TASK-CRON-SKILLMD-PROBE-WIRING",
+          "TASK-CRON-AMEND-DEDUP-BRIEF-S13"
+        ],
+        "pm_decomposed_at": "2026-08-23T09:47:24Z",
+        "pm_decomposed_by": "pm",
+        "pm_decomposition_note": "Split by owner per brief S5: developer (probe script + F1-F4 tests) -> agent-father (3 SKILL.md). Ordering encoded as depends_on, not a note. F5 (grep gate) is agent-father AC. Follow-on FOLLOWUP-CRON-STANDALONE-PER-TICK-FIRE-ELECTION-MUTEX minted to backlog, non-blocking per brief R6."
       },
       {
         "id": "FIX-CRONCREATE-CONTRACT-DIVERGENCE-DURABLE-NOOP-AND-NO-DESCRIPTION-PARAM",
@@ -17630,7 +17666,7 @@
         "next_agent": "agent-father",
         "created_at": "2026-08-23T09:04:15Z",
         "created_by": "po",
-        "updated_at": "2026-08-23T09:04:38Z",
+        "updated_at": "2026-08-23T09:47:25Z",
         "updated_by": "po",
         "files": [
           ".claude/skills/cron-cowork-team/SKILL.md",
@@ -17638,10 +17674,12 @@
           ".claude/skills/cron-detect-loop/SKILL.md"
         ],
         "depends_on": [
-          "FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE"
+          "FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE",
+          "TASK-CRON-SKILLMD-PROBE-WIRING"
         ],
         "verification_gate": "both_claims_reconciled_against_a_freshly_captured_CronCreate_response_pasted_into_the_doc_not_asserted_from_memory",
-        "status_note": "SURFACED 2026-08-23 during the cowork dispatcher recovery (real CronCreate call, id=120913a5). Two independent doc-vs-runtime divergences in the same skill family.\n\n(a) durable:true IS A NO-OP IN THIS BUILD.\n  Skill Step 2 passes durable: true (.claude/skills/cron-cowork-team/SKILL.md:156 and :186).\n  Runtime response verbatim: 'Session-only (not written to disk, dies when Claude exits). Auto-expires after 7 days.'\n  But .claude/skills/cron-cowork-team/SKILL.md:207 asserts 'durable: true makes the cron persist across CLI process restarts within the same session' and .claude/skills/cron-standalone-team/SKILL.md:190 makes the same claim.\n  DECIDE ONE: correct the doc to match runtime, or stop passing a dead flag. Do NOT leave both. Capture a fresh CronCreate response and paste it into the doc as the evidence — do not re-assert from memory.\n\n(b) CronCreate HAS NO `description` PARAMETER, BUT THE IDENTITY GUARD KEYS OFF IT.\n  Available schema: cron / prompt / recurring / durable. No description.\n  .claude/skills/cron-cowork-team/SKILL.md:121 Phase 1 IDENTITY matching: 'find any live entry whose description contains ...'. :153 passes description inside the CronCreate call. :184 lists description as a field of the registered job.\n  LIVE WORKAROUND USED 2026-08-23, currently UNDOCUMENTED: the identity string was prepended into the PROMPT text — 'cowork-team master dispatcher - fires every 15 min, fans out to schedule SSOT (agents spawned run_in_background=true per BGFAN-1). ' — which preserves BOTH Phase 1 (identity findable) and Phase 2 (TOMBSTONED fragment intact).\n  RISK IF LEFT UNDOCUMENTED: anyone arming without the prefix silently breaks Phase 1 classify on the NEXT run, which re-opens the exact stale-vs-missing bug Step 1d exists to close (fixed in 9c509d295).\n  Same Phase 1 / description shape must be checked in cron-detect-loop and cron-standalone-team, not cowork alone.\n\nSEQUENCING: depends_on FIX-CRON-REARM-STEP1B1-... because that row rewrites Step 1b.1/Step 1d in the SAME three files. Serialise to avoid a same-file collision — zone isolation rule, docs/agents/po/flow/zone-routing.md Step A2.\n\nOWNER NOTE: .claude/skills/ is inside agent-father's commit_zone (docs/agents/agent-father/init.md:62-64). This row is doc-truth only — no scripts/, no apps/ — so agent-father can land it whole."
+        "status_note": "SURFACED 2026-08-23 during the cowork dispatcher recovery (real CronCreate call, id=120913a5). Two independent doc-vs-runtime divergences in the same skill family.\n\n(a) durable:true IS A NO-OP IN THIS BUILD.\n  Skill Step 2 passes durable: true (.claude/skills/cron-cowork-team/SKILL.md:156 and :186).\n  Runtime response verbatim: 'Session-only (not written to disk, dies when Claude exits). Auto-expires after 7 days.'\n  But .claude/skills/cron-cowork-team/SKILL.md:207 asserts 'durable: true makes the cron persist across CLI process restarts within the same session' and .claude/skills/cron-standalone-team/SKILL.md:190 makes the same claim.\n  DECIDE ONE: correct the doc to match runtime, or stop passing a dead flag. Do NOT leave both. Capture a fresh CronCreate response and paste it into the doc as the evidence — do not re-assert from memory.\n\n(b) CronCreate HAS NO `description` PARAMETER, BUT THE IDENTITY GUARD KEYS OFF IT.\n  Available schema: cron / prompt / recurring / durable. No description.\n  .claude/skills/cron-cowork-team/SKILL.md:121 Phase 1 IDENTITY matching: 'find any live entry whose description contains ...'. :153 passes description inside the CronCreate call. :184 lists description as a field of the registered job.\n  LIVE WORKAROUND USED 2026-08-23, currently UNDOCUMENTED: the identity string was prepended into the PROMPT text — 'cowork-team master dispatcher - fires every 15 min, fans out to schedule SSOT (agents spawned run_in_background=true per BGFAN-1). ' — which preserves BOTH Phase 1 (identity findable) and Phase 2 (TOMBSTONED fragment intact).\n  RISK IF LEFT UNDOCUMENTED: anyone arming without the prefix silently breaks Phase 1 classify on the NEXT run, which re-opens the exact stale-vs-missing bug Step 1d exists to close (fixed in 9c509d295).\n  Same Phase 1 / description shape must be checked in cron-detect-loop and cron-standalone-team, not cowork alone.\n\nSEQUENCING: depends_on FIX-CRON-REARM-STEP1B1-... because that row rewrites Step 1b.1/Step 1d in the SAME three files. Serialise to avoid a same-file collision — zone isolation rule, docs/agents/po/flow/zone-routing.md Step A2.\n\nOWNER NOTE: .claude/skills/ is inside agent-father's commit_zone (docs/agents/agent-father/init.md:62-64). This row is doc-truth only — no scripts/, no apps/ — so agent-father can land it whole.",
+        "pm_dep_precision_note": "pm 2026-08-23: dep retargeted onto the concrete blocking child (agent-father edits the same 3 SKILL.md files) in addition to the parent row, so the ordering survives however the epic wrapper closes."
       },
       {
         "id": "FIX-COWORK-DAILY-SLOT-SILENT-SKIP-NO-CATCHUP-CATCHUPRAW-SCOPED-TO-GUARANTEED-ONLY",
@@ -17652,10 +17690,10 @@
         "priority": "P1",
         "size": "M",
         "zone": "cross-service/",
-        "next_agent": "pm",
+        "next_agent": "developer",
         "created_at": "2026-08-23T09:08:12Z",
         "created_by": "po",
-        "updated_at": "2026-08-23T09:31:22Z",
+        "updated_at": "2026-08-23T09:47:25Z",
         "updated_by": "architect",
         "files": [
           "scripts/agents-flow/cowork-match-slots.js",
@@ -17669,49 +17707,335 @@
         "architect_design_complete": true,
         "architect_completed_at": "2026-08-23T09:31:22Z",
         "architect_handoff": "docs/architecture-briefs/2026-08-23-cowork-slot-durability-layer-inventory-and-miss-detection.md",
-        "architect_review_note": "DESIGN COMPLETE 2026-08-23 -> docs/architecture-briefs/2026-08-23-cowork-slot-durability-layer-inventory-and-miss-detection.md (8 sections). PO question (b) RESOLVED EMPIRICALLY - the answer is NEITHER option offered. (1) Layer A (12 RemoteTriggers) has been RETIRED since 2026-06-22 (cowork-schedule.json _notes.layer_a_deletion_gate; live count of trigger_status=active is 0). cron-cowork-team/SKILL.md still asserts they provide persistence, and that stale sentence was quoted verbatim into the P0 row status_note - a 2-month-stale doc is manufacturing wrong incident diagnoses. (2) Layer C (launchd com.vn-market.cowork-guaranteed-slot-firer) IS loaded and IS firing, but 4 of 8 guaranteed slots have a Layer-C fire NEWER than last_fired: fb-weekend actually ran 2026-08-22T13:29Z, it is not 14.8d stale. Cause: last_fired is written by cowork-tick-postflight.sh, which is Layer B only; Layer C never calls it. Part of the staleness table is an OBSERVABILITY artifact. (3) DOMINANT root cause is host sleep: pmset shows 96.5h continuous Standby 2026-08-18T12:00Z to 2026-08-22T12:35Z, and the Layer-C log gap matches both edges exactly. launchd StartInterval does not replay missed intervals across sleep. So B and C are down SIMULTANEOUSLY and neither catches up. Staleness tracks HOUR OF DAY, not guaranteed: all 10 fresh slots fire UTC 17:30-00:10 (the operator awake window), all 11 stale fire UTC 01:30-16:35; 3/8 guaranteed are fresh vs 7/13 non-guaranteed. The guaranteed split is NOT load-bearing - PO suspicion confirmed. (4) STRONGER THAN PO CORRECTION (A): ran the live matcher - catchup_raw returns 8 records, ZERO eligible (6 rolled_past_vn_date, 2 freshness_window_exceeded). Wiring Step 4.55 as specced recovers NOTHING, for ANY slot, guaranteed or not - its 60-1440min bounds cap catch-up at one VN day against a 4-DAY outage. Do not schedule it as the fix. Reframed to detection, not catch-up. 6 changes; #1 (Layer C calls the EXISTING monotonic cowork-write-last-fired.js) must precede #2 (miss detector), because a detector run on today last_fired reports 4 false misses."
+        "architect_review_note": "DESIGN COMPLETE 2026-08-23 -> docs/architecture-briefs/2026-08-23-cowork-slot-durability-layer-inventory-and-miss-detection.md (8 sections). PO question (b) RESOLVED EMPIRICALLY - the answer is NEITHER option offered. (1) Layer A (12 RemoteTriggers) has been RETIRED since 2026-06-22 (cowork-schedule.json _notes.layer_a_deletion_gate; live count of trigger_status=active is 0). cron-cowork-team/SKILL.md still asserts they provide persistence, and that stale sentence was quoted verbatim into the P0 row status_note - a 2-month-stale doc is manufacturing wrong incident diagnoses. (2) Layer C (launchd com.vn-market.cowork-guaranteed-slot-firer) IS loaded and IS firing, but 4 of 8 guaranteed slots have a Layer-C fire NEWER than last_fired: fb-weekend actually ran 2026-08-22T13:29Z, it is not 14.8d stale. Cause: last_fired is written by cowork-tick-postflight.sh, which is Layer B only; Layer C never calls it. Part of the staleness table is an OBSERVABILITY artifact. (3) DOMINANT root cause is host sleep: pmset shows 96.5h continuous Standby 2026-08-18T12:00Z to 2026-08-22T12:35Z, and the Layer-C log gap matches both edges exactly. launchd StartInterval does not replay missed intervals across sleep. So B and C are down SIMULTANEOUSLY and neither catches up. Staleness tracks HOUR OF DAY, not guaranteed: all 10 fresh slots fire UTC 17:30-00:10 (the operator awake window), all 11 stale fire UTC 01:30-16:35; 3/8 guaranteed are fresh vs 7/13 non-guaranteed. The guaranteed split is NOT load-bearing - PO suspicion confirmed. (4) STRONGER THAN PO CORRECTION (A): ran the live matcher - catchup_raw returns 8 records, ZERO eligible (6 rolled_past_vn_date, 2 freshness_window_exceeded). Wiring Step 4.55 as specced recovers NOTHING, for ANY slot, guaranteed or not - its 60-1440min bounds cap catch-up at one VN day against a 4-DAY outage. Do not schedule it as the fix. Reframed to detection, not catch-up. 6 changes; #1 (Layer C calls the EXISTING monotonic cowork-write-last-fired.js) must precede #2 (miss detector), because a detector run on today last_fired reports 4 false misses.",
+        "children": [
+          "TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK",
+          "TASK-COWORK-MISSED-FIRE-AUDIT",
+          "TASK-COWORK-CATCHUP-SCOPE-PREDICATE",
+          "TASK-COWORK-SCHEDULE-ONMISS-AND-SCOPE",
+          "TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY",
+          "TASK-COWORK-PMSET-WAKE-ADJUNCT",
+          "TASK-COWORK-STALE-SLOT-DISPOSITION-TABLE"
+        ],
+        "pm_decomposed_at": "2026-08-23T09:47:24Z",
+        "pm_decomposed_by": "pm",
+        "pm_decomposition_note": "Split by owner per brief S6: developer (#1 last_fired write-back, #2 miss detector, #4 predicate code), agent-father (#3 on_miss + #4 schedule data folded - same file, #5 doc-truth), ops (#6 pmset), qa (S7 disposition table = the row verification_gate, given an owner). #1->#2 encoded as depends_on per R1 (detector on today last_fired reports 4 false misses)."
       },
       {
-        "id": "FIX-COWORK-TICKSNAPSHOT-STEP47-FALSE-PREMISE-PURE-BASH-CANNOT-CALL-MCP",
+        "id": "TASK-CRON-LIVENESS-PROBE-SCRIPT",
+        "title": "Build scripts/agents-flow/cron-marker-liveness-probe.sh - one script, three cron families, OS-observing liveness oracle (O1 process-absence proves DEAD, O2 transcript-mtime proves LIVE, O3 corroborates) with an explicit UNKNOWN third branch",
+        "owner": "developer",
+        "next_agent": "developer",
+        "status": "TODO",
         "type": "FIX",
-        "title": "tick-snapshot.md Step 4.7 mandates an agent-interpreted MCP pre-step on the false premise that 'pure bash cannot call MCP' — scripts/agents-flow/mcp-call.sh has done exactly that since 2026-07-30 and the same flow already uses it one step earlier; the stale premise burns ~20KB of dispatcher context on every non-silent tick",
+        "size": "M",
+        "priority": "P0",
+        "zone": "scripts/agents-flow/",
+        "depends_on": [],
+        "files": [
+          "scripts/agents-flow/cron-marker-liveness-probe.sh"
+        ],
+        "parent": "FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE",
+        "note": "Root cause: both existing oracles read bookkeeping the dying session wrote about itself - no threshold value fixes it. has_fire_election_mutex table lives in THIS script (one place, not three docs). 6 measured traps mandatory: LC_ALL=C on ps AND date, no macOS etimes, ps rc=0 through a pipe, stat %m not %Sm, full (pid,start_epoch,comm) triple vs PID reuse, read transcript path never re-derive it.",
+        "created_at": "2026-08-23T09:47:24Z",
+        "created_by": "pm",
+        "handoff": "docs/handoffs/TASK-CRON-LIVENESS-PROBE-SCRIPT.md",
+        "updated_at": "2026-08-23T09:47:25Z"
+      },
+      {
+        "id": "TASK-CRON-LIVENESS-PROBE-TESTS",
+        "title": "Build scripts/agents-flow/cron-marker-liveness-probe.test.sh - fixtures F1 (2026-08-23 corpse, false-LIVE direction) and F2 (live standalone false-DEAD) must BOTH pass under one spec; plus F3 pre-v2 UNKNOWN, F4 locale, PID-reuse and unreadable-transcript negative controls",
+        "owner": "developer",
+        "next_agent": "developer",
+        "status": "TODO",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P0",
+        "zone": "scripts/agents-flow/",
+        "depends_on": [
+          "TASK-CRON-LIVENESS-PROBE-SCRIPT"
+        ],
+        "files": [
+          "scripts/agents-flow/cron-marker-liveness-probe.test.sh"
+        ],
+        "parent": "FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE",
+        "note": "F1+F2 passing under ONE spec is the whole thesis of the parent row. F1 fixture has a FRESH 16s transcript on purpose - it fails against any implementation ranking O2 above O1. Fully mocked ps/stat/mcp_call, zero real invocations, mirror auditor-tier1-probe.test.sh. F5 is NOT here - it needs the SKILL.md edits.",
+        "created_at": "2026-08-23T09:47:24Z",
+        "created_by": "pm",
+        "handoff": "docs/handoffs/TASK-CRON-LIVENESS-PROBE-TESTS.md",
+        "updated_at": "2026-08-23T09:47:25Z"
+      },
+      {
+        "id": "TASK-CRON-SKILLMD-PROBE-WIRING",
+        "title": "Rewrite Step 1b.1 in all three cron SKILL.md to invoke the probe, add the v2 registering_process fingerprint to Step 1c in all three, demote orphan_threshold_seconds to a uniform 120 write-side CAS guard, rewrite standalone S1.4 rationale",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "status": "TODO",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P0",
+        "zone": ".claude/skills/",
+        "depends_on": [
+          "TASK-CRON-LIVENESS-PROBE-SCRIPT",
+          "TASK-CRON-LIVENESS-PROBE-TESTS",
+          "TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY"
+        ],
+        "files": [
+          ".claude/skills/cron-cowork-team/SKILL.md",
+          ".claude/skills/cron-detect-loop/SKILL.md",
+          ".claude/skills/cron-standalone-team/SKILL.md"
+        ],
+        "parent": "FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE",
+        "note": "MUST land after the probe script + tests - docs citing a script that does not exist is the exact FIX-CRONCREATE-CONTRACT-DIVERGENCE failure class already dep-gated behind this row on these same 3 files. Also depends on TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY (same file cron-cowork-team/SKILL.md, different section, sequential per conflict-check matrix). AC F5: grep -c 'orphan_threshold_seconds: 7200' across .claude/skills/cron-*/SKILL.md returns 0. Do not fix one family and leave two divergent.",
+        "created_at": "2026-08-23T09:47:24Z",
+        "created_by": "pm",
+        "handoff": "docs/handoffs/TASK-CRON-SKILLMD-PROBE-WIRING.md",
+        "updated_at": "2026-08-23T09:47:25Z"
+      },
+      {
+        "id": "TASK-CRON-AMEND-DEDUP-BRIEF-S13",
+        "title": "Amend docs/architecture-briefs/2026-08-06-cron-rearm-cross-session-dedup.md S1.3 - both load-bearing claims are measurably false (presence is a participation signal; force_release_orphan is not an independent liveness check)",
+        "owner": "architect",
+        "next_agent": "architect",
+        "status": "TODO",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "zone": "docs/architecture-briefs/",
+        "depends_on": [],
+        "files": [
+          "docs/architecture-briefs/2026-08-06-cron-rearm-cross-session-dedup.md"
+        ],
+        "parent": "FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE",
+        "note": "S1.3 is the spec SSOT that JUSTIFIES the broken guard - until amended, the next reader re-derives the same wrong design. Measured 2026-08-23T09:18Z: 2 presence roster rows vs 5 live claude PIDs. Amend in place with a numbered section naming what it supersedes; do not fork a v2 file.",
+        "created_at": "2026-08-23T09:47:24Z",
+        "created_by": "pm",
+        "handoff": "docs/handoffs/TASK-CRON-AMEND-DEDUP-BRIEF-S13.md",
+        "updated_at": "2026-08-23T09:47:25Z"
+      },
+      {
+        "id": "TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK",
+        "title": "Layer C writes last_fired - cowork-guaranteed-slot-firer.sh calls node scripts/agents-flow/cowork-write-last-fired.js <slot_id> after an exit-0 claude -p invocation, plus tests",
+        "owner": "developer",
+        "next_agent": "developer",
+        "status": "TODO",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "zone": "scripts/agents-flow/",
+        "depends_on": [],
+        "files": [
+          "scripts/agents-flow/cowork-guaranteed-slot-firer.sh",
+          "scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh"
+        ],
+        "parent": "FIX-COWORK-DAILY-SLOT-SILENT-SKIP-NO-CATCHUP-CATCHUPRAW-SCOPED-TO-GUARANTEED-ONLY",
+        "note": "Highest leverage, smallest diff. 4 of 8 guaranteed slots show a Layer-C fire NEWER than last_fired (fb-weekend ran 2026-08-22T13:29Z, not 14.8d stale) - part of the staleness table is an observability artifact. Pure reuse: the writer exists, takes slot ids as argv, and is monotonic forward-only with a parse-back guard, so a flow+firer double-write is safe by construction. FILE CONFLICT with TASK-COWORK-CATCHUP-5.",
+        "created_at": "2026-08-23T09:47:24Z",
+        "created_by": "pm",
+        "handoff": "docs/handoffs/TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK.md",
+        "updated_at": "2026-08-23T09:47:25Z"
+      },
+      {
+        "id": "TASK-COWORK-MISSED-FIRE-AUDIT",
+        "title": "Build scripts/agents-flow/cowork-missed-fire-audit.js - per slot compute expected fire count over a bounded window from the cron expression, compare to actual, file ONE signal row per (slot_id, window) carrying the count",
+        "owner": "developer",
+        "next_agent": "developer",
+        "status": "TODO",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P1",
+        "zone": "scripts/agents-flow/",
+        "depends_on": [
+          "TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK"
+        ],
+        "files": [
+          "scripts/agents-flow/cowork-missed-fire-audit.js",
+          "scripts/agents-flow/cowork-missed-fire-audit.test.js"
+        ],
+        "parent": "FIX-COWORK-DAILY-SLOT-SILENT-SKIP-NO-CATCHUP-CATCHUPRAW-SCOPED-TO-GUARANTEED-ONLY",
+        "note": "Detection is the deliverable, NOT catch-up: live matcher returns 8 catchup_raw records with ZERO eligible against a measured 4-day outage. Root cause is host sleep (pmset: 96.5h Standby 08-18T12:00Z->08-22T12:35Z, firer log gap matches both edges) - Layer C is awake-scoped not host-scoped. Do NOT key on guaranteed: staleness tracks hour-of-day (10 fresh all UTC 17:30-00:10, 11 stale all UTC 01:30-16:35). Reuse cronMatches() from cowork-match-slots.js, no new cron parser.",
+        "created_at": "2026-08-23T09:47:24Z",
+        "created_by": "pm",
+        "handoff": "docs/handoffs/TASK-COWORK-MISSED-FIRE-AUDIT.md",
+        "updated_at": "2026-08-23T09:47:25Z"
+      },
+      {
+        "id": "TASK-COWORK-CATCHUP-SCOPE-PREDICATE",
+        "title": "Replace cowork-catchup-predicate.js:209 'if (!sl.guaranteed) continue;' with a catchup_scope field check defaulting to the slot current guaranteed value - narrow principled widening, not a blanket removal of the guard",
+        "owner": "developer",
+        "next_agent": "developer",
+        "status": "TODO",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "zone": "scripts/agents-flow/",
+        "depends_on": [],
+        "files": [
+          "scripts/agents-flow/cowork-catchup-predicate.js"
+        ],
+        "parent": "FIX-COWORK-DAILY-SLOT-SILENT-SKIP-NO-CATCHUP-CATCHUPRAW-SCOPED-TO-GUARANTEED-ONLY",
+        "note": "Code half only - setting catchup_scope true on refine-bctc-*/bctc-analyst-* is TASK-COWORK-SCHEDULE-ONMISS-AND-SCOPE (agent-father owns cowork-schedule.json). R5: this predicate returns zero-eligible on EVERY path in production today, so the true branch is effectively untested - tests must drive it end-to-end. AC-3 falsification: catchup_raw must NOT become uniformly non-empty.",
+        "created_at": "2026-08-23T09:47:24Z",
+        "created_by": "pm",
+        "handoff": "docs/handoffs/TASK-COWORK-CATCHUP-SCOPE-PREDICATE.md",
+        "updated_at": "2026-08-23T09:47:25Z"
+      },
+      {
+        "id": "TASK-COWORK-SCHEDULE-ONMISS-AND-SCOPE",
+        "title": "cowork-schedule.json: add on_miss (catchup | skip_and_record) per dish type in _dish_type_catchup_config, and add the catchup_scope slot field defaulting to guaranteed, set true only for refine-bctc-* and bctc-analyst-*",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "status": "TODO",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "zone": "docs/data/",
+        "depends_on": [
+          "TASK-COWORK-CATCHUP-SCOPE-PREDICATE"
+        ],
+        "files": [
+          "docs/data/cowork-schedule.json"
+        ],
+        "parent": "FIX-COWORK-DAILY-SLOT-SILENT-SKIP-NO-CATCHUP-CATCHUPRAW-SCOPED-TO-GUARANTEED-ONLY",
+        "note": "Brief items 3 and 4 folded into ONE task because both edit the same agent-father-maintained file. Turns an accidental 1440-minute constant into a declared reviewable policy. R2: reuse the existing published-marker task_claim gate (FR-P2-7), never add a competing dedup. Sub-hourly market slots stay out (2026-07-07 brief S3.5).",
+        "created_at": "2026-08-23T09:47:24Z",
+        "created_by": "pm",
+        "handoff": "docs/handoffs/TASK-COWORK-SCHEDULE-ONMISS-AND-SCOPE.md",
+        "updated_at": "2026-08-23T09:47:25Z"
+      },
+      {
+        "id": "TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY",
+        "title": "Doc-truth: Layer A RemoteTriggers were retired 2026-06-22 (0 slots with trigger_status active) yet cron-cowork-team/SKILL.md still claims they provide persistence - fix that plus match-slots.md:40 catchup_raw scope and the cowork-master-cron-runbook",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "status": "TODO",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "zone": "docs/",
+        "depends_on": [],
+        "files": [
+          ".claude/skills/cron-cowork-team/SKILL.md",
+          "docs/agents/cowork-team/flow/match-slots.md",
+          "docs/protocols/cowork-master-cron-runbook.md"
+        ],
+        "parent": "FIX-COWORK-DAILY-SLOT-SILENT-SKIP-NO-CATCHUP-CATCHUPRAW-SCOPED-TO-GUARANTEED-ONLY",
+        "note": "Dispatchable NOW - the stale sentence was quoted verbatim into the P0 row own status_note as the explanation for the 8h outage, so a two-month-stale doc is actively manufacturing wrong incident diagnoses. Blocks TASK-CRON-SKILLMD-PROBE-WIRING (same file, different section). Touch only the 'Why this skill exists' section of the SKILL.md. Closes 2026-07-07 brief S5 item 5, ordered and never done.",
+        "created_at": "2026-08-23T09:47:24Z",
+        "created_by": "pm",
+        "handoff": "docs/handoffs/TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY.md",
+        "updated_at": "2026-08-23T09:47:25Z"
+      },
+      {
+        "id": "TASK-COWORK-PMSET-WAKE-ADJUNCT",
+        "title": "Ops adjunct: configure pmset repeat wakeorpoweron over the union of the 8 guaranteed slots scheduled minutes so the host is awake when Layer C StartInterval is due - host state, no repo file changes",
+        "owner": "ops",
+        "next_agent": "ops",
+        "status": "TODO",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P2",
+        "zone": "infra",
+        "depends_on": [],
+        "files": [],
+        "parent": "FIX-COWORK-DAILY-SLOT-SILENT-SKIP-NO-CATCHUP-CATCHUPRAW-SCOPED-TO-GUARANTEED-ONLY",
+        "note": "Cheap, reversible, PARTIAL - does not survive lid-closed-in-a-bag or power-off. Adjunct to TASK-COWORK-MISSED-FIRE-AUDIT, never a substitute; that detector is what notices this mitigation having failed (R4: pmset is host state invisible to the repo). Record the applied command + pmset -g sched output in the RETURN and the ops notebook. Do NOT reopen the VPS option (2026-07-07 brief S3 rejection still holds).",
+        "created_at": "2026-08-23T09:47:24Z",
+        "created_by": "pm",
+        "handoff": "docs/handoffs/TASK-COWORK-PMSET-WAKE-ADJUNCT.md",
+        "updated_at": "2026-08-23T09:47:25Z"
+      },
+      {
+        "id": "TASK-COWORK-STALE-SLOT-DISPOSITION-TABLE",
+        "title": "Produce the per-slot disposition table against the frozen 2026-08-23T09:00Z schedule snapshot - all 11 stale slots, each in exactly one bucket (recorded-late | genuinely-missed no-catchup-possible | catchup-eligible under widened scope) - and independently re-verify brief AC-1..AC-4",
+        "owner": "qa",
+        "next_agent": "qa",
+        "status": "TODO",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "zone": "cross-service/",
+        "depends_on": [
+          "TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK",
+          "TASK-COWORK-MISSED-FIRE-AUDIT",
+          "TASK-COWORK-CATCHUP-SCOPE-PREDICATE",
+          "TASK-COWORK-SCHEDULE-ONMISS-AND-SCOPE"
+        ],
+        "files": [],
+        "parent": "FIX-COWORK-DAILY-SLOT-SILENT-SKIP-NO-CATCHUP-CATCHUPRAW-SCOPED-TO-GUARANTEED-ONLY",
+        "note": "This IS the parent row verification_gate, given an owner so it cannot be narrated instead of executed. Architect bucket predictions are hypotheses - measure, then escalate divergence loudly rather than adjusting the number. AC-5 is a falsification check: catchup_raw uniformly non-empty means the guard was removed, not narrowed. Every PASS must cite the command and its output.",
+        "created_at": "2026-08-23T09:47:24Z",
+        "created_by": "pm",
+        "handoff": "docs/handoffs/TASK-COWORK-STALE-SLOT-DISPOSITION-TABLE.md",
+        "updated_at": "2026-08-23T09:47:25Z"
+      },
+      {
+        "id": "FIX-FILESIZECAPS-FLOWFILE-GLOB-NESTED-DIR-ONLY-173-FLOW-FILES-UNGOVERNED",
+        "type": "FIX",
+        "title": "the flow-file line cap governs ZERO of the 173 flow files: pattern docs/agents/*/flow/**/*.md is matched with bash `case`, where ** collapses to * and the trailing /*.md forces a directory BELOW flow/ — no such directory exists, so the cap is inert and correcting the glob would breach 62 files at once",
         "owner": "po",
         "status": "READY",
-        "priority": "P3",
+        "priority": "P2",
         "size": "S",
-        "zone": "docs/agents/",
-        "next_agent": "agent-father",
-        "created_at": "2026-08-23T09:08:12Z",
+        "zone": "cross-service/",
+        "next_agent": "agents-architect",
+        "created_at": "2026-08-23T09:47:00Z",
         "created_by": "po",
-        "updated_at": "2026-08-23T09:08:31Z",
-        "updated_by": "po",
         "files": [
-          "docs/agents/cowork-team/flow/tick-snapshot.md"
+          "docs/data/file-size-caps.json",
+          "scripts/agents-flow/context-bloat-backstop.sh"
         ],
         "depends_on": [],
-        "verification_gate": "step47_rewritten_to_source_mcp_call_sh_and_one_live_tick_produces_a_byte_comparable_cycle_snapshot_with_no_payload_in_agent_context",
-        "status_note": "TOKEN-ECONOMY CLASS. Verified at source by PO 2026-08-23, all four claims independently:\n\n  1. THE FALSE PREMISE. docs/agents/cowork-team/flow/tick-snapshot.md:2 (size-justification header) states verbatim: 'FU-TICK-SNAPSHOT-EMIT-DARK hardening: both gateway calls lifted OUT of bash fence (pure bash cannot call MCP)'. On that premise Step 4.7 mandates an agent-interpreted pre-step — the LLM calls get_cycle_bootstrap + get_macro_snapshot, holds both payloads in context, writes them to stage files, and only THEN runs a pure-bash assembly block.\n\n  2. THE PREMISE IS FALSE. scripts/agents-flow/mcp-call.sh exists, 14218 bytes, executable, dated 2026-07-30 — a sourced bash helper doing JSON-RPC-over-curl against the same gateway.\n\n  3. THE TRANSPORT IS ALREADY PROVEN ONE STEP EARLIER IN THE SAME FLOW. scripts/agents-flow/cowork-tick-preflight.sh:70-71 does `source \"$SCRIPT_DIR/mcp-call.sh\"` and calls mcp_call at :175 (emit_pressure_state), :184 (task_release), :217 (task_claim). So the dispatcher has a working bash MCP transport in hand at the exact dispatch step that later hits Step 4.7's 'cannot'.\n\n  4. LIVE PROOF, NOT ARGUMENT. Step 4.7 was run via mcp_call in bash on the 2026-08-23 09:00Z tick. Output identical: docs/data/cycle-snapshot-09:03.json, 20190 bytes, market_context + 4 macro keys present. ~20KB of payload never entered the dispatcher's context. That cost is paid on EVERY non-silent tick on the WORK path.\n\nFIX: rewrite Step 4.7 to `source scripts/agents-flow/mcp-call.sh` and delete the agent-interpreted pre-step; optionally lift the whole assembly block into a script under scripts/agents-flow/ per CLAUDE.md Script Persistence. Also delete/correct the ':2 pure bash cannot call MCP' size-justification claim so the false premise does not get re-propagated by the next size audit.\n\nOWNER: the cowork FLOW-DOC owner (docs/agents/ is inside agent-father's commit_zone per docs/agents/agent-father/init.md:62-64), NOT dev-mcp-server — no MCP server code changes. If the optional script-lift is taken up, that half is scripts/ and must be handed to developer; keep the doc edit landable alone.\n\nFAMILY: 'documented consumer, no documented producer' — but INVERTED. Here a producer shipped (mcp-call.sh, 2026-07-30) and the consumer doc was never told. Same file's own header repeatedly cites the forward version of this family. Worth a one-line generic rule somewhere: when a new shared transport/helper lands, grep for docs asserting the capability does not exist."
+        "verification_gate": "a_rollout_decision_is_recorded_AND_the_corrected_glob_is_validated_against_the_full_173_file_cohort_not_a_single_file",
+        "status_note": "WHY agents-architect AND NOT A ONE-LINE PATCH: file-size-caps.json is _maintained_by 'agents-architect (policy) / agent-father (implementation)'. Correcting the glob is one character; deciding what happens to the 62 files it newly breaches is policy, and that decision must exist BEFORE the fix lands.\n\nDEFECT, verified at source 2026-08-23. docs/data/file-size-caps.json carries {pattern: 'docs/agents/*/flow/**/*.md', cap: 120, class: 'flow-file'}. Its only consumer, scripts/agents-flow/context-bloat-backstop.sh:119, matches with `case \"$REL_PATH\" in $pattern)`. bash `case` has no recursive-globstar: ** is just two adjacent *, and the literal / that follows it forces at least one path component below flow/. Executed live:\n  case docs/agents/system-auditor/flow/main.md in docs/agents/*/flow/**/*.md) -> NO-MATCH\n  case docs/agents/x/flow/sub/y.md         in docs/agents/*/flow/**/*.md) -> MATCH\nCounted: `find docs/agents -path '*/flow/*.md'` = 173; `find docs/agents -path '*/flow/*/*.md'` = 0. Every real flow file sits directly in flow/, so 173/173 match no pattern at all, MATCHED_CAP stays empty, and the script exits 0 at line 132 on the non-governed hot path — before it ever calls wc. Confirmed on the worst offender: system-auditor/flow/main.md is 1425L and the backstop exits 0.\n\nBLAST RADIUS — MEASURED, NOT ESTIMATED (all 173 files, cap 120L and the script's own BC-1 byte cap of cap*60 = 7200B):\n  98  within both caps       -> unaffected\n  63  over the 120L line cap\n  59  over the 7200B byte cap\n  13  line-only breaches absorbed by an existing <!-- size-justification: --> header\n  62  WOULD EMIT A BREACH on their very next edit\nThe load-bearing number is 59. scripts/agents-flow/context-bloat-backstop.sh's own TE-T24 note states a size-justification comment declares a LINE count only and NEVER honors a byte-cap breach. So 59 of the 62 breaches have NO existing escape hatch, including every high-traffic flow doc in the fleet: dev-team/flow/main.md 1279L/192014B (26.7x the byte cap), system-auditor/flow/main.md 1425L/153599B (21.3x), unified-agent/flow/chef-dish.md 1040L/75862B, fb-market-poster/flow/daily.md 942L/65718B, cowork-team/flow/spawn-fanout.md 506L/36055B. Correcting the glob with no rollout decision turns the fleet's most-edited documents into permanent every-edit breach emitters.\n\nDECISION REQUIRED (pick one and record the reasoning): (a) grandfather the 62 with a dated, expiring allowlist; (b) stage the tightening — land the glob with a flow-file-specific byte budget calibrated to the live distribution, then ratchet; (c) per-file caps for the structural outliers; (d) split class 'flow-file' into 'flow-dispatcher' and 'flow-body' with different budgets. Whatever is chosen must state what happens to the 59 byte-cap breaches, since size-justification cannot cover them.\n\nFENCE — feedback_fleetwide_gate_validated_on_one_file_optout_allowlist: do NOT validate the corrected glob on one file. Re-run the full 173-file cohort before and after and diff the emit set. Any allowlist MUST be opt-IN and dated, never opt-out.\n\nPROVENANCE: found by agent-father while validating its own INV-GATEWAY-1 work. agent-father correctly declined to ship a spawn-fanout.md header note asserting the backstop 'emits on every edit' — it could not verify that claim because the claim is false — and corrected the note instead. Deliberately kept out of agent-father's own row and routed here for a policy ruling.\n\nHISTORY TO READ FIRST: project_context_bloat_governance, feedback_ctxbloat_breach_on_live_sprint_file_defer (a breach fired on a live in-flight sprint file must DEFER, not block), and the 2026-06-14 RECALIBRATE precedent already recorded inline in file-size-caps.json for the .claude/skills/**/*.md cap (120 -> 200 against the measured live distribution) — that is the closest prior art for the calibration this row needs.",
+        "updated_at": "2026-08-23T09:49:06Z"
       },
       {
-        "id": "FIX-COWORK-SPAWNFANOUT-STEP53-OFFFLOW-DETECTOR-UNSPECIFIED-SURFACE-AND-SELF-INJECTED-MARKERS",
+        "id": "FIX-LAYERC-FIRER-NO-TICK-LIVENESS-ORACLE-LOADED-ASSERTION-INVARIANT-UNDER-HOST-SLEEP",
         "type": "FIX",
-        "title": "spawn-fanout.md Step 5.3 off-flow detector leaves RETURN_TEXT's extraction surface undefined and greps for six markers that the same file injects into every spawn prompt itself — any scripted implementation scores 6/6 on every spawn and suppresses every last_fired stamp fleet-wide",
+        "title": "Layer C (launchd guaranteed-slot firer) is the only session-independent firing path and has no tick-liveness oracle: the shipped Tier-1 loaded-assertion stayed ALL_GREEN through the entire 96.5h Standby firing outage, because loadedness is invariant under host sleep and the firer logs nothing on a no-match tick",
         "owner": "po",
         "status": "READY",
-        "priority": "P3",
+        "priority": "P2",
         "size": "S",
-        "zone": "docs/agents/",
-        "next_agent": "agent-father",
-        "created_at": "2026-08-23T09:11:31Z",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "created_at": "2026-08-23T09:47:00Z",
         "created_by": "po",
-        "updated_at": "2026-08-23T09:11:32Z",
-        "updated_by": "po",
         "files": [
+          "scripts/agents-flow/auditor-tier1-probe.sh",
+          "scripts/agents-flow/auditor-tier1-probe.test.sh",
+          "scripts/agents-flow/cowork-guaranteed-slot-firer.sh",
+          "scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh",
+          "launchd/com.vn-market.cowork-guaranteed-slot-firer.plist"
+        ],
+        "depends_on": [],
+        "verification_gate": "an_injected_fault_that_stops_the_firer_from_ticking_while_leaving_it_loaded_at_exit_status_0_is_detected_within_two_cadence_periods",
+        "status_note": "PREMISE CORRECTION — READ THIS BEFORE TOUCHING ANYTHING. The escalation that produced this row asserted that the 2026-07-07 brief section 3.8 ordered a Tier-1 loaded-assertion that 'was never shipped'. That is FALSE and PO verified it at source. Check 6, _check_launchd_agents() at scripts/agents-flow/auditor-tier1-probe.sh:583-687, IS shipped. It reads every launchd/*.plist's own <key>Label</key> off the file (no hardcoded label list), requires an EXACT field-3 label match in `launchctl list` AND field-2 status == 0, and honors an ack ledger with a tracked_by-liveness resolution against orch-state. It has been hardened twice since: FIX-LAUNCHD-PROBE-PRESENCE-ONLY-FALSE-GREEN (2026-07-23, presence -> presence+exit-status) and FIX-AUDITOR-TIER1-PROBE-ACKED-LAUNCHD-DEATH-SUPPRESSION (2026-07-23). The 2026-07-01 -> 07-04 silent-unload class that motivated section 3.8 IS covered. Do not re-implement it. Architect's own brief section 8 R6 says only 'it is loaded today'; 'never shipped' was added in relay.\n\nTHE ACTUAL RESIDUAL DEFECT — different failure mode, and the one that cost 4 days. Check 6 asserts LOADEDNESS. Loadedness is INVARIANT under host Standby. Live right now: `launchctl list` prints `-\\t0\\tcom.vn-market.cowork-guaranteed-slot-firer` — PID '-', status 0 — which is byte-identical to what it printed throughout the 96.5h continuous Standby of 2026-08-18T12:00Z -> 2026-08-22T12:35Z (confirmed in `pmset -g log`, cited in docs/architecture-briefs/2026-08-23-cowork-slot-durability-layer-inventory-and-miss-detection.md section 3). Check 6 was therefore ALL_GREEN for the whole of a total Layer-C firing outage. launchd StartInterval does not replay intervals missed across sleep, so the job is awake-scoped, not host-scoped.\n\nNO FALLBACK ORACLE EXISTS EITHER — verified, do not reach for the log. log() is defined at scripts/agents-flow/cowork-guaranteed-slot-firer.sh:97 and is called only from inside the fire path (invocation + error sites). On a no-match tick the script exits with zero log output BY DESIGN, and per the plist's own header most of the ~96 daily ticks are no-match. So log silence is the expected steady state and cannot discriminate 'ticking, nothing due' from 'asleep, not ticking'. Log mtime is currently 2026-08-22T20:32:48Z and that is a perfectly healthy reading. There is presently NO observable anywhere in the system that distinguishes those two states.\n\nTHIRD CO-DEPENDENCY: the Tier-1 probe is itself cron/session-scoped, so during the same Standby it did not run at all. A self-check whose own liveness depends on the liveness it polices cannot close this class on its own — whatever heartbeat is written must be evaluable retroactively from its timestamp, not only live.\n\nDESIGN IS FORCED, NOT OPEN (this is why the row goes straight to developer, no architect hop): write an unconditional per-tick heartbeat from the firer BEFORE the match gate — cheapest correct form is a timestamp file written on entry, ~0 cost on the ~90% no-match ticks — and add a Tier-1 freshness assertion on it at roughly 2x the 900s cadence, mirroring the existing 2x-cadence freshness convention already used for the probe's own heartbeat (auditor-tier1-probe.sh header, 'Freshness threshold = 2x each tier's own cron cadence'). Retroactive-evaluable by construction. Do NOT build a second miss detector.\n\nANTI-DUPLICATION FENCE — MANDATORY READ BEFORE IMPLEMENTING. docs/architecture-briefs/2026-08-23-cowork-slot-durability-layer-inventory-and-miss-detection.md section 6 change #1 (Layer C calls cowork-write-last-fired.js) and change #2 (new scripts/agents-flow/cowork-missed-fire-audit.js) are being decomposed by pm RIGHT NOW under FIX-COWORK-DAILY-SLOT-SILENT-SKIP-NO-CATCHUP-CATCHUPRAW-SCOPED-TO-GUARANTEED-ONLY. Those build a per-SLOT missed-fire detector. THIS row is per-PROCESS tick liveness — a different observable at a different layer, and it still fires when no guaranteed slot happened to be due. Read section 6 #1/#2 and section 8 R3 (alarm volume) first. If after reading you conclude the two genuinely collapse into one mechanism, CLOSE THIS ROW AS A DUPLICATE and say so — do not build a second detector alongside theirs.\n\nSEQUENCING: no hard depends_on, but do not land before brief change #1, or a heartbeat and a last_fired writer land in the same file in two uncoordinated diffs.\n\nSCOPE FENCE: the plist's SELF-CHECK header comment is ACCURATE as written (it claims the probe asserts the label 'stays loaded' — it does). Do not widen that sentence to claim the probe verifies firing unless and until this row actually ships that.\n\nPROVENANCE: architect flagged as brief section 8 R6 and explicitly asked for a candidate row rather than a fold ('Out of scope for this row — flag to PO as a candidate row rather than folding it in'). PO ruled NEW ROW: architect asked for one, pm is mid-decomposition on the sibling and folding would race a live decomposition (feedback_pm_decomposition_races_live_parallel_terminal), the file surfaces are disjoint, and a fold would have carried the false 'never shipped' premise into pm's decomposition.",
+        "updated_at": "2026-08-23T09:49:06Z"
+      },
+      {
+        "id": "FIX-SIGNAL-INBOX-NON-DRAINABLE-ENVELOPE-50-OF-51-FILES-SILENTLY-CLASSED-LITTER",
+        "type": "FIX",
+        "title": "50 of the 51 files in docs/signals/ are structurally undrainable — they carry none of from/source/type/signal_type, so isDrainableShape() silently skips them: never enveloped, never routed to PO, never fingerprinted, never pruned. Measured drainable_count=1. Oldest has sat 25 days",
+        "owner": "po",
+        "status": "READY",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "next_agent": "architect",
+        "created_at": "2026-08-23T09:47:00Z",
+        "created_by": "po",
+        "files": [
+          "scripts/agents-flow/drain-signals.js",
+          "docs/agents/dev-team/flow/drain-signals.md",
+          "docs/standards/mcp-tools.md",
           "docs/agents/cowork-team/flow/spawn-fanout.md"
         ],
         "depends_on": [],
-        "verification_gate": "step53_names_the_exact_extraction_surface_and_the_marker_set_is_re_derived_from_a_measured_source_not_asserted",
-        "status_note": "LATENT, NOT SHIPPED — the defect is in the spec, and Step 5.3 is still LLM-interpreted per tick, so today it depends entirely on the dispatcher picking the right surface by judgment. Confirmed not scripted: grep -rlniE 'offflow|off-flow' scripts/ returns only scripts/po-detail-resync-review-lifecycle-routing.sh and scripts/po-eligibility-clause-d-detail-first-lifecycle-20260808.jq, both unrelated po-lifecycle files; no script reads a .output path.\n\nDEFECT (a) — UNSPECIFIED SURFACE. docs/agents/cowork-team/flow/spawn-fanout.md:372 defines the detector's input as literally 'RETURN_TEXT = <the Agent tool's own returned result text for this spawn>'. That names no concrete surface. Router reported (2026-08-23 09:00Z tick, refine_bctc_md slot) that the obvious reading — the harness's <session>/tasks/<task-id>.output path — is a SYMLINK to the full subagent JSONL transcript (187-byte symlink -> 246939-byte transcript), and that grepping it scored 6/6 markers -> STEP_5.3=FAIL; re-running against the final assistant text turn only (2166 bytes) scored 0/6 -> PASS, and the slot's stamp correctly stood. NOTE FOR THE IMPLEMENTER: PO could NOT independently reproduce the symlink observation — no *.output file exists anywhere under ~/.claude at triage time, so that specific artifact shape is ROUTER-REPORTED, not PO-verified. Re-confirm it live before writing it into the doc as fact.\n\nDEFECT (b) — THE MARKERS ARE SELF-INJECTED, AND THE SPEC'S OWN JUSTIFICATION FOR THEM IS FACTUALLY WRONG. This part IS PO-verified by measurement and does not depend on (a). spawn-fanout.md:374-375 sets OFFFLOW_MARKERS = ['Coordination Results','Dispatch Routing','PRE-CLAIM','session-presence','orphan-adoption','Expected Behavior'] and :376 justifies them as 'Verbatim section headings / terms from the project-root CLAUDE.md router dispatch protocol.' Measured occurrence counts:\n  project CLAUDE.md  : PRE-CLAIM=1, session-presence=1, orphan-adoption=1, Coordination Results=0, Dispatch Routing=0, Expected Behavior=0\n  global  CLAUDE.md  : all six = 0\nSo only 3 of 6 come from where the comment says. The other 3 come from spawn-fanout.md ITSELF — lines 200-201, inside IDENTITY_PREAMBLE, which instructs every spawned agent: \"do NOT produce a 'Coordination Results / Dispatch Routing / Expected Behavior' summary\". That preamble is prepended to EVERY spawn's entry prompt. The detector therefore greps for a string list that the dispatcher guarantees is present in every spawn's own prompt, by construction. Combined with the 3 markers CLAUDE.md injects into every agent's context, ANY extraction surface that includes the prompt or the transcript matches 6/6 unconditionally — the symlink in (a) is one such surface, not the root cause.\n\nBLAST RADIUS IF SCRIPTED AS WRITTEN: every cowork spawn classified as a fabricated off-flow latch -> WON_SLOTS emptied at :391 -> no last_fired stamped for any slot -> every slot re-fires every tick forever, plus a send_telegram(bug) per slot per tick. Fleet-wide stamp-suppression outage from a one-line ambiguity.\n\nFIX (cheap, doc-precision): (1) amend :372 to name the exact extraction surface — final assistant text turn / the task-notification <result> block — and warn explicitly that the .output path is a transcript symlink that will false-positive 100% of the time; (2) correct the :376 provenance comment, which is measurably wrong; (3) re-derive the marker set from a surface the dispatcher does NOT itself inject, or make the detector surface-scoped so self-injected prompt text is structurally out of range. (3) is the load-bearing one — fixing only (1) leaves a detector whose markers still come from its own prompt.\n\nCLASS: identical to FIX-COWORK-TICKSNAPSHOT-STEP47-FALSE-PREMISE-PURE-BASH-CANNOT-CALL-MCP (same triage batch, same file family, same owner) — a spec written against an assumed runtime surface that the runtime does not actually provide. Minted separately rather than folded: different file, different defect, and a compound verification_gate would let one half ship green while the other rots. Both are P3 agent-father doc edits in docs/agents/cowork-team/flow/ and can be dispatched together."
+        "verification_gate": "no_file_can_sit_in_docs_signals_beyond_a_declared_age_without_either_being_drained_or_raising_a_loud_escalation_that_names_it",
+        "status_note": "MEASURED AT SOURCE BY PO 2026-08-23T09:45Z, this is a count not an impression. `node scripts/agents-flow/drain-signals.js --count-drainable` prints drainable_count=1 while `ls docs/signals/*.json | wc -l` = 51. Re-derived independently with the script's own predicate: 50 of 51 files have from, source, type AND signal_type all null.\n\nMECHANISM. isDrainableShape() at scripts/agents-flow/drain-signals.js:84-88 returns false when all four of those fields are null. A file that fails it is skipped by the drain loop's 'SKIP non-signal shape' guard, which means it is NEVER enveloped, NEVER appended to .dev_team_idle_chain.pending_triage_inbox, NEVER moved to docs/signals/processed/, NEVER fingerprinted, NEVER DB-inserted, and NEVER pruned — the 7-day prune in section 0a-2 only walks processed/. There is no age check, no floor, no escalation. The file simply accumulates in perpetuity and no agent ever reads it. Oldest currently stuck: docs/signals/cowork-signal-2026-07-29T0722Z-chef-intraday-tokenbudget-marker-leak.json, 25 days.\n\nCONCRETE COST, PROVEN THIS TICK. docs/signals/cowork-team-2026-07-30T001827Z-alertcmd-session-id-gap.json carried two recommendations. Both have since shipped — SESSION_ID_LINE on 2026-07-31 (spawn-fanout.md:292) and the >=2-DISTINCT-marker threshold on 2026-08-23 (spawn-fanout.md:460-472, commit b545a69cc) — and the signal was never drained on either occasion, because it is one of the 50. Both fixes reached production by a route that bypassed the inbox entirely. A signal whose asks are fully satisfied and whose file is still sitting unread in the inbox 24 days later is proof the inbox is not a queue, it is a write-only directory.\n\nWRITER SIDE. The dominant emitter is cowork-team, writing a bare finding object — {event, discovered_during, evidence, recommendation, action_taken_by_dispatcher, ts} — with no envelope at all. Note the writer is not obviously wrong: docs/agents/po/flow/main.md's own 'Signal write rule' specifies only the FILENAME contract and says nothing about a required body envelope, so the envelope requirement is enforced by a reader-side predicate that no writer-side doc states. That asymmetry is the root cause, not a careless emitter.\n\nDISTINCT FROM THE KNOWN TYPE-NAMESPACE ROW. project_signalrow_type_open_namespace_vs_closed_allowlist_20260813 and docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md are about a type VALUE that no routing row matches, inside an otherwise valid envelope. This is envelope ABSENCE — the file never reaches the type table at all. Different layer, different fix.\n\nDECISION FOR ARCHITECT (three options, they are not exclusive): (i) enforce the envelope at write time and state the body contract in the writer-side docs, so a bare finding cannot be emitted; (ii) widen the reader to synthesize an envelope from filename + mtime; (iii) at minimum, make non-drainable LOUD — any file in docs/signals/ older than a declared age that is neither drainable nor a sanctioned by-path family must raise an escalation that names it, instead of being counted as litter forever.\n\nDO NOT BLANKET-WIDEN THE READER. BY_PATH_CONSUMER_FAMILIES at scripts/agents-flow/drain-signals.js:102 already establishes that some non-envelope files in this directory are LEGITIMATE by-path dish inputs (price_anomaly_*, glob-read by chef) that must never be drained, and the script's own comment records that this family has been misdiagnosed as stuck inbox litter FOUR times already. Any fix must discriminate sanctioned by-path families from unsanctioned bare findings, and must read docs/standards/mcp-tools.md section 'price_anomaly — DUAL-PLANE CONTRACT' before touching that list.\n\nPROVENANCE: PO's own drain-coverage process review this tick, prompted by the 24-day sit of the signal drained above. Not an escalation from another agent — this is the root cause behind that sit, and it is systemic, not one file.",
+        "updated_at": "2026-08-23T09:49:06Z"
       }
     ],
     "review": [
@@ -18095,6 +18419,48 @@
         "po_triage_20260823T0907Z": "PO TRIAGE 2026-08-23T09:07Z — PRIORITISED P0 AND FOLDED INTO THIS TICK'S BATCH, deliberately NOT parked. RAW-verified on the live tree this tick (not taken on report): `bash scripts/audits/guard-signal-type-coverage.sh` exits 1 with `FAIL — unrouted Pipeline-B to=po types: [\"bctc_image_fetch_degraded\"]`, and its third line confirms this very row deduped the mint ('backlog row already tracks type=bctc_image_fetch_degraded ... no duplicate minted'). The producing signal is live and NEW: signal_queue row bctc-imgdeg-69fcd047-20260823T090510Z, from=mcp-server, severity=HIGH. WHY P0 RATHER THAN THE DEFAULT BACKLOG PARK: this row is the sole remaining cause of CI red. The earlier signal-type-coverage-guard red (audit-handoff, Pipeline B) was genuinely fixed by 735dfa815; PO independently confirmed the HEAD-committed guard PASSES against the pre-peer docs tree, and confirmed from run 32629387939 (head_sha 85384b32e) that signal-type-coverage-guard was the ONLY failing job of 23 — no second failure hiding underneath. CI has still never run on a commit at or after 735dfa815, so no green has been observed; the red simply changed cause mid-morning when dev-mcp-server's dual-pipeline guard (4e7aa7eaf) caught this genuinely new type. Parking a P-unset row in a 449-deep backlog[] against an RLC that dispatches ~1 row/tick means CI stays red indefinitely — the exact starvation that stranded FIX-PO-TRIAGE-SIGNALS-TABLE-MATCHES-ZERO-LIVE-SIGNAL-TYPES for 10 days. FIELDS SET BY PO, all previously unset: priority=P0, size=S, next_agent=agent-father, zone cross-service/ (was 'docs/agents/po/flow/', which is not one of dev-team Step 3's three accepted zone values apps/<service>/ | multi | cross-service/, so the row was not dispatchable as minted — worth feeding back to the auto-filer in scripts/audits/guard-signal-type-coverage.sh). next_agent=agent-father because docs/agents/po/flow/triage-signals.md is an agent flow doc: PO's own boundary_rules forbid PO editing it, and agent-father made its last edit (735dfa815). NOT SILENCED: guard-signal-type-coverage.test.sh TEST10's 23/24 failure is the guard correctly biting, per that test's own inline comment — do not neutralise the test to green CI.",
         "ci_dedup_key": "ci_job:signal-type-coverage-guard|file:docs/agents/po/flow/triage-signals.md",
         "verification_gate": "ci_green_on_subsequent_push"
+      },
+      {
+        "id": "FIX-COWORK-TICKSNAPSHOT-STEP47-FALSE-PREMISE-PURE-BASH-CANNOT-CALL-MCP",
+        "type": "FIX",
+        "title": "tick-snapshot.md Step 4.7 mandates an agent-interpreted MCP pre-step on the false premise that 'pure bash cannot call MCP' — scripts/agents-flow/mcp-call.sh has done exactly that since 2026-07-30 and the same flow already uses it one step earlier; the stale premise burns ~20KB of dispatcher context on every non-silent tick",
+        "owner": "po",
+        "status": "REVIEW",
+        "priority": "P3",
+        "size": "S",
+        "zone": "docs/agents/",
+        "next_agent": "qa",
+        "created_at": "2026-08-23T09:08:12Z",
+        "created_by": "po",
+        "updated_at": "2026-08-23T09:39:08Z",
+        "updated_by": "router/agent-father-closeout-20260823T0950Z",
+        "files": [
+          "docs/agents/cowork-team/flow/tick-snapshot.md"
+        ],
+        "depends_on": [],
+        "verification_gate": "step47_rewritten_to_source_mcp_call_sh_and_one_live_tick_produces_a_byte_comparable_cycle_snapshot_with_no_payload_in_agent_context",
+        "status_note": "TOKEN-ECONOMY CLASS. Verified at source by PO 2026-08-23, all four claims independently:\n\n  1. THE FALSE PREMISE. docs/agents/cowork-team/flow/tick-snapshot.md:2 (size-justification header) states verbatim: 'FU-TICK-SNAPSHOT-EMIT-DARK hardening: both gateway calls lifted OUT of bash fence (pure bash cannot call MCP)'. On that premise Step 4.7 mandates an agent-interpreted pre-step — the LLM calls get_cycle_bootstrap + get_macro_snapshot, holds both payloads in context, writes them to stage files, and only THEN runs a pure-bash assembly block.\n\n  2. THE PREMISE IS FALSE. scripts/agents-flow/mcp-call.sh exists, 14218 bytes, executable, dated 2026-07-30 — a sourced bash helper doing JSON-RPC-over-curl against the same gateway.\n\n  3. THE TRANSPORT IS ALREADY PROVEN ONE STEP EARLIER IN THE SAME FLOW. scripts/agents-flow/cowork-tick-preflight.sh:70-71 does `source \"$SCRIPT_DIR/mcp-call.sh\"` and calls mcp_call at :175 (emit_pressure_state), :184 (task_release), :217 (task_claim). So the dispatcher has a working bash MCP transport in hand at the exact dispatch step that later hits Step 4.7's 'cannot'.\n\n  4. LIVE PROOF, NOT ARGUMENT. Step 4.7 was run via mcp_call in bash on the 2026-08-23 09:00Z tick. Output identical: docs/data/cycle-snapshot-09:03.json, 20190 bytes, market_context + 4 macro keys present. ~20KB of payload never entered the dispatcher's context. That cost is paid on EVERY non-silent tick on the WORK path.\n\nFIX: rewrite Step 4.7 to `source scripts/agents-flow/mcp-call.sh` and delete the agent-interpreted pre-step; optionally lift the whole assembly block into a script under scripts/agents-flow/ per CLAUDE.md Script Persistence. Also delete/correct the ':2 pure bash cannot call MCP' size-justification claim so the false premise does not get re-propagated by the next size audit.\n\nOWNER: the cowork FLOW-DOC owner (docs/agents/ is inside agent-father's commit_zone per docs/agents/agent-father/init.md:62-64), NOT dev-mcp-server — no MCP server code changes. If the optional script-lift is taken up, that half is scripts/ and must be handed to developer; keep the doc edit landable alone.\n\nFAMILY: 'documented consumer, no documented producer' — but INVERTED. Here a producer shipped (mcp-call.sh, 2026-07-30) and the consumer doc was never told. Same file's own header repeatedly cites the forward version of this family. Worth a one-line generic rule somewhere: when a new shared transport/helper lands, grep for docs asserting the capability does not exist."
+      },
+      {
+        "id": "FIX-COWORK-SPAWNFANOUT-STEP53-OFFFLOW-DETECTOR-UNSPECIFIED-SURFACE-AND-SELF-INJECTED-MARKERS",
+        "type": "FIX",
+        "title": "spawn-fanout.md Step 5.3 off-flow detector leaves RETURN_TEXT's extraction surface undefined and greps for six markers that the same file injects into every spawn prompt itself — any scripted implementation scores 6/6 on every spawn and suppresses every last_fired stamp fleet-wide",
+        "owner": "po",
+        "status": "REVIEW",
+        "priority": "P3",
+        "size": "S",
+        "zone": "docs/agents/",
+        "next_agent": "qa",
+        "created_at": "2026-08-23T09:11:31Z",
+        "created_by": "po",
+        "updated_at": "2026-08-23T09:39:08Z",
+        "updated_by": "router/agent-father-closeout-20260823T0950Z",
+        "files": [
+          "docs/agents/cowork-team/flow/spawn-fanout.md"
+        ],
+        "depends_on": [],
+        "verification_gate": "step53_names_the_exact_extraction_surface_and_the_marker_set_is_re_derived_from_a_measured_source_not_asserted",
+        "status_note": "LATENT, NOT SHIPPED — the defect is in the spec, and Step 5.3 is still LLM-interpreted per tick, so today it depends entirely on the dispatcher picking the right surface by judgment. Confirmed not scripted: grep -rlniE 'offflow|off-flow' scripts/ returns only scripts/po-detail-resync-review-lifecycle-routing.sh and scripts/po-eligibility-clause-d-detail-first-lifecycle-20260808.jq, both unrelated po-lifecycle files; no script reads a .output path.\n\nDEFECT (a) — UNSPECIFIED SURFACE. docs/agents/cowork-team/flow/spawn-fanout.md:372 defines the detector's input as literally 'RETURN_TEXT = <the Agent tool's own returned result text for this spawn>'. That names no concrete surface. Router reported (2026-08-23 09:00Z tick, refine_bctc_md slot) that the obvious reading — the harness's <session>/tasks/<task-id>.output path — is a SYMLINK to the full subagent JSONL transcript (187-byte symlink -> 246939-byte transcript), and that grepping it scored 6/6 markers -> STEP_5.3=FAIL; re-running against the final assistant text turn only (2166 bytes) scored 0/6 -> PASS, and the slot's stamp correctly stood. NOTE FOR THE IMPLEMENTER: PO could NOT independently reproduce the symlink observation — no *.output file exists anywhere under ~/.claude at triage time, so that specific artifact shape is ROUTER-REPORTED, not PO-verified. Re-confirm it live before writing it into the doc as fact.\n\nDEFECT (b) — THE MARKERS ARE SELF-INJECTED, AND THE SPEC'S OWN JUSTIFICATION FOR THEM IS FACTUALLY WRONG. This part IS PO-verified by measurement and does not depend on (a). spawn-fanout.md:374-375 sets OFFFLOW_MARKERS = ['Coordination Results','Dispatch Routing','PRE-CLAIM','session-presence','orphan-adoption','Expected Behavior'] and :376 justifies them as 'Verbatim section headings / terms from the project-root CLAUDE.md router dispatch protocol.' Measured occurrence counts:\n  project CLAUDE.md  : PRE-CLAIM=1, session-presence=1, orphan-adoption=1, Coordination Results=0, Dispatch Routing=0, Expected Behavior=0\n  global  CLAUDE.md  : all six = 0\nSo only 3 of 6 come from where the comment says. The other 3 come from spawn-fanout.md ITSELF — lines 200-201, inside IDENTITY_PREAMBLE, which instructs every spawned agent: \"do NOT produce a 'Coordination Results / Dispatch Routing / Expected Behavior' summary\". That preamble is prepended to EVERY spawn's entry prompt. The detector therefore greps for a string list that the dispatcher guarantees is present in every spawn's own prompt, by construction. Combined with the 3 markers CLAUDE.md injects into every agent's context, ANY extraction surface that includes the prompt or the transcript matches 6/6 unconditionally — the symlink in (a) is one such surface, not the root cause.\n\nBLAST RADIUS IF SCRIPTED AS WRITTEN: every cowork spawn classified as a fabricated off-flow latch -> WON_SLOTS emptied at :391 -> no last_fired stamped for any slot -> every slot re-fires every tick forever, plus a send_telegram(bug) per slot per tick. Fleet-wide stamp-suppression outage from a one-line ambiguity.\n\nFIX (cheap, doc-precision): (1) amend :372 to name the exact extraction surface — final assistant text turn / the task-notification <result> block — and warn explicitly that the .output path is a transcript symlink that will false-positive 100% of the time; (2) correct the :376 provenance comment, which is measurably wrong; (3) re-derive the marker set from a surface the dispatcher does NOT itself inject, or make the detector surface-scoped so self-injected prompt text is structurally out of range. (3) is the load-bearing one — fixing only (1) leaves a detector whose markers still come from its own prompt.\n\nCLASS: identical to FIX-COWORK-TICKSNAPSHOT-STEP47-FALSE-PREMISE-PURE-BASH-CANNOT-CALL-MCP (same triage batch, same file family, same owner) — a spec written against an assumed runtime surface that the runtime does not actually provide. Minted separately rather than folded: different file, different defect, and a compound verification_gate would let one half ship green while the other rots. Both are P3 agent-father doc edits in docs/agents/cowork-team/flow/ and can be dispatched together."
       }
     ],
     "qa": [
@@ -18400,8 +18766,8 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-22T21:44:48Z",
-  "_updated_by": "qa-smoke-test",
+  "_updated_at": "2026-08-23T09:49:05Z",
+  "_updated_by": "po",
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
