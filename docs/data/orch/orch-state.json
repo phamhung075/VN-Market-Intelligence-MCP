@@ -820,8 +820,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-23T09:39:08Z",
-    "_updated_by": "router (agent-father P3 doc pair ready->review, next_agent=qa; commits b545a69cc+9c6ef1b76)",
+    "_updated_at": "2026-08-23T13:15:40Z",
+    "_updated_by": "architect (FIX-NEWSSCOUT-OFFHOURS-SELFCOMMIT-PROSE-RECIPE-INTERMITTENT design)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -18601,7 +18601,7 @@
         "status": "READY",
         "zone": "multi",
         "owner": "architect",
-        "next_agent": "architect",
+        "next_agent": "pm",
         "supervised": false,
         "plan_only": false,
         "baseline_pass": false,
@@ -18614,31 +18614,12 @@
         "created_at": "2026-08-23T12:44:58Z",
         "created_by": "po/triage-20260823T1232Z",
         "verification_gate": "the off-hours commit path is a single script invocation, not inline prose; three consecutive news-scout-offhours ticks leave docs/agent-memory/notebooks/news-scout.md clean in git status",
-        "updated_at": "2026-08-23T12:44:59Z"
-      },
-      {
-        "id": "FIX-COWORK-FLOWDOC-STALE-WEEKEND-SUPPRESSION-AND-BGFAN1-RETURN-PRESUMPTION",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "status": "READY",
-        "zone": "docs/agents/",
-        "owner": "agent-father",
-        "next_agent": "agent-father",
-        "supervised": false,
-        "plan_only": false,
-        "baseline_pass": false,
-        "files": [
-          "docs/agents/cowork-team/flow/pressure-read.md",
-          "docs/agents/cowork-team/flow/spawn-fanout.md",
-          "docs/agents/cowork-team/flow/last-fired.md"
-        ],
-        "title": "Two cowork flow-doc defects found while executing the 2026-08-23T12:00Z tick — pressure-read.md Step 4.3 mandates blanket weekend suppression that would silently kill every weekend fan-out, and spawn-fanout.md Step 5.3 + last-fired.md AC-P1-7-4 both presume a spawn return that BGFAN-1 guarantees does not exist yet",
-        "status_note": "DEFECT A — docs/agents/cowork-team/flow/pressure-read.md Step 4.3 (lines 52-100): 'All other non-guaranteed slots: suppress on holiday OR weekend'. Applied literally by an operator following main.md this kills every weekend fan-out and the tick looks merely quiet — there is no error. It is stale, four ways, all verified live 2026-08-23: (i) docs/data/cadence-policy.json:20 grants gatherer-standard an explicit weekend interval_minutes 480; (ii) every alert-commander-market/-critical weekend row is interval_minutes null WITH _cron_fallback true, which scripts/agents-flow/cowork-match-slots.js:316-317 handles as 'cron governs', NOT as suppress; (iii) that same script already implements the whole calendar gate via evaluateCadence and returned suppressed_cadence [] on this tick; (iv) the gatherers demonstrably fired Saturday 2026-08-22T20:08:12Z. Sibling Steps 4.4/4.5/4.5c/4.5d were all marked SUPERSEDED under UC-CDC-P7 Phase 2a when their logic moved into that script (see docs/agents/cowork-team/flow/pressure-cadence.md:74,134,196); Step 4.3 moved with them but never got the marker — `grep -c SUPERSEDED docs/agents/cowork-team/flow/pressure-read.md` returns 0. AC-A: mark Step 4.3 SUPERSEDED with the same pointer form pressure-cadence.md uses, naming cowork-match-slots.js evaluateCadence as the live owner. Keep the body as historical record; do not delete. DEFECT B — docs/agents/cowork-team/flow/spawn-fanout.md Step 5.3 and docs/agents/cowork-team/flow/last-fired.md AC-P1-7-4 (line 13-16) both operate on a spawn's RETURNED TEXT and both are specified to run before last_fired is stamped in Step 5b. BGFAN-1 (spawn-fanout.md:71, 329) backgrounds every cowork spawn, so Step 5b necessarily executes before any return exists. The de-stamp path AC-P1-7-4 describes is therefore unreachable as written. AC-B: re-specify the off-flow detector as a POST-RETURN reconciliation pass that can de-stamp last_fired after the fact, or state explicitly that under BGFAN-1 it is operator-deferred and name where. Do not leave it reading as an in-line gate. OPERATIONAL NOTE: the router ran Step 5.3 by hand against all three returns once they landed on this tick — 0/6 markers on each, clean, stamps stand. That manual pass is the workaround, not the contract.",
-        "created_at": "2026-08-23T12:44:58Z",
-        "created_by": "po/triage-20260823T1232Z",
-        "verification_gate": "grep -c SUPERSEDED docs/agents/cowork-team/flow/pressure-read.md returns >0 and the marker sits on Step 4.3 naming cowork-match-slots.js; last-fired.md AC-P1-7-4 no longer presumes a synchronous return under BGFAN-1",
-        "updated_at": "2026-08-23T12:44:59Z"
+        "updated_at": "2026-08-23T13:15:40Z",
+        "architect_design_complete": true,
+        "architect_completed_at": "2026-08-23T13:15:40Z",
+        "architect_handoff": "docs/architecture-briefs/2026-08-23-newsscout-marketwatcher-offhours-selfcommit-mechanize.md",
+        "architect_review_note": "DESIGN COMPLETE 2026-08-23 (architect). Root cause: the 26-line prose recipe (task_claim mutex + same-tick clean-diff guard + git_commit_retry w/ RULE-2.5 pathspec + task_release + BUG escalation) is not deterministically executable by an LLM every cycle -- same class scripts/agents-flow/coverage-stamp.sh already solved (sources mcp-call.sh for the MCP mutex calls, not requiring the calling agent to issue call_tool itself). FIX: one new script scripts/agents-flow/offhours-notebook-self-commit.sh --agent <news-scout|market-watcher>, mechanizing every branch including the BUG-channel send_telegram escalation (the LAST prose-interpreted surface); both docs/agents/news-scout/flow/stage-log-notify.md and docs/agents/market-watcher/flow/cycle.md collapse their block to one Bash call (AC1+AC2, same script prevents re-divergence). AC3 (stale notebook header) + AC4 (recover uncommitted c273): explicitly NOT actioned this session -- the uncommitted c273 section is this row's own live evidence and must not be hand-committed; both auto-resolve on the cutover's first real off-hours tick via the new script's own clean-diff guard, header bump bundled into that same commit. Full design + test strategy + risk flags: see architect_handoff.",
+        "updated_by": "architect"
       },
       {
         "id": "FIX-RAG-COMPACTION-DISK-AMPLIFICATION",
@@ -19231,6 +19212,30 @@
         "parent_id": "FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
         "updated_at": "2026-08-23T13:14:58Z",
         "dev_mcp_server_review_note": "dev-mcp-server COMPLETE (session 669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3): architect D-1 root-cause fix landed — added QUARTERLY_PERIOD_TYPE_RE + exported normalizeQuarter() to bctcInspectHandler.ts; buildLabel() now only appends a quarter suffix when period_type does NOT already match /^Q[1-4]$/, fixing all 255 normal rows (not just the 2 HUT string-typed rows BA originally flagged). AC-14 hardcoded assertion in PI3-bctc-inspect.test.ts:361 corrected VCB Q1 Q1 2025 -> VCB Q1 2025 in the same commit (in-scope test-value correction, not a preserved regression). Added 6-case normalizeQuarter() unit-test block. Verified: PI3-bctc-inspect.test.ts 49/49 pass (103 expect calls); 4 sibling regression files (PI3-bctc-inspect-reopen2, 1271-bctc-inspect-md, 1976-bctc-inspector-page-nav, 1273-bctc-inspect-overlay) 60/60 pass, untouched by construction; bun tsc --noEmit clean; PORT=3099 local boot healthy (toolCount=183 unchanged -- no tool file touched, cronJobCount=88 unchanged), /api/bctc-inspect + /dashboards/news-fetch/ both 200 (dashboard circular-dep check clean). Live-probed http://localhost:3099/api/bctc-inspect/docs post-fix against the real named-volume-shaped test boot: 0/268 rows show a duplicated/garbled quarter token (was 255/257 pre-fix per architects own live-tested finding); HUT rows now render \"HUT Q1 2024\" etc correctly. Simplicity gate PASS (Q1-Q4 all clean). Sibling task TASK-BCTC-INSPECT-UI-FILTERS confirmed in_progress under a different dev-mcp-server session -- disjoint files (bctc-inspector.html + its own new test file), zero overlap with bctcInspectHandler.ts/PI3-bctc-inspect.test.ts, verified via git diff --stat before commit. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md STEP dev-mcp-server-S13. Commits: 237fa6e26 (code+test), 9096281a2 (journal), 4a1e81a4e (handoff record), 22213b9b5 (notebook). No REBUILD_REQUIRED marker -- pure logic fix inside an existing handler function, same file already live in the running container image only after next routine rebuild; label display is read-path only, no data mutation, no schema change. Ready for qa."
+      },
+      {
+        "id": "FIX-COWORK-FLOWDOC-STALE-WEEKEND-SUPPRESSION-AND-BGFAN1-RETURN-PRESUMPTION",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "REVIEW",
+        "zone": "docs/agents/",
+        "owner": "agent-father",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": false,
+        "files": [
+          "docs/agents/cowork-team/flow/pressure-read.md",
+          "docs/agents/cowork-team/flow/spawn-fanout.md",
+          "docs/agents/cowork-team/flow/last-fired.md"
+        ],
+        "title": "Two cowork flow-doc defects found while executing the 2026-08-23T12:00Z tick — pressure-read.md Step 4.3 mandates blanket weekend suppression that would silently kill every weekend fan-out, and spawn-fanout.md Step 5.3 + last-fired.md AC-P1-7-4 both presume a spawn return that BGFAN-1 guarantees does not exist yet",
+        "status_note": "DEFECT A — docs/agents/cowork-team/flow/pressure-read.md Step 4.3 (lines 52-100): 'All other non-guaranteed slots: suppress on holiday OR weekend'. Applied literally by an operator following main.md this kills every weekend fan-out and the tick looks merely quiet — there is no error. It is stale, four ways, all verified live 2026-08-23: (i) docs/data/cadence-policy.json:20 grants gatherer-standard an explicit weekend interval_minutes 480; (ii) every alert-commander-market/-critical weekend row is interval_minutes null WITH _cron_fallback true, which scripts/agents-flow/cowork-match-slots.js:316-317 handles as 'cron governs', NOT as suppress; (iii) that same script already implements the whole calendar gate via evaluateCadence and returned suppressed_cadence [] on this tick; (iv) the gatherers demonstrably fired Saturday 2026-08-22T20:08:12Z. Sibling Steps 4.4/4.5/4.5c/4.5d were all marked SUPERSEDED under UC-CDC-P7 Phase 2a when their logic moved into that script (see docs/agents/cowork-team/flow/pressure-cadence.md:74,134,196); Step 4.3 moved with them but never got the marker — `grep -c SUPERSEDED docs/agents/cowork-team/flow/pressure-read.md` returns 0. AC-A: mark Step 4.3 SUPERSEDED with the same pointer form pressure-cadence.md uses, naming cowork-match-slots.js evaluateCadence as the live owner. Keep the body as historical record; do not delete. DEFECT B — docs/agents/cowork-team/flow/spawn-fanout.md Step 5.3 and docs/agents/cowork-team/flow/last-fired.md AC-P1-7-4 (line 13-16) both operate on a spawn's RETURNED TEXT and both are specified to run before last_fired is stamped in Step 5b. BGFAN-1 (spawn-fanout.md:71, 329) backgrounds every cowork spawn, so Step 5b necessarily executes before any return exists. The de-stamp path AC-P1-7-4 describes is therefore unreachable as written. AC-B: re-specify the off-flow detector as a POST-RETURN reconciliation pass that can de-stamp last_fired after the fact, or state explicitly that under BGFAN-1 it is operator-deferred and name where. Do not leave it reading as an in-line gate. OPERATIONAL NOTE: the router ran Step 5.3 by hand against all three returns once they landed on this tick — 0/6 markers on each, clean, stamps stand. That manual pass is the workaround, not the contract.\n[agent-father 2026-08-23T13:16:12Z] DEFECT A: pressure-read.md Step 4.3 marked SUPERSEDED (verified at source: cadence-policy.json gatherer-standard weekend=480min throttle not suppress; cadence-policy.js evaluateCadence per-policy resolution; grep -c SUPERSEDED now 3>0). DEFECT B: spawn-fanout.md Step 5.3 gained a TIMING CONTRACT (SAME-TICK vs DEFERRED reconciliation) -- under BGFAN-1 Step 5b ordinarily stamps last_fired BEFORE any return text exists, so a genuine off-flow detection found later is a DE-STAMP correction, not a pre-write filter; last-fired.md AC-P1-7-4 rewritten to match. Detector match logic (>=2-marker threshold, fail-open negative control) UNCHANGED per instruction -- only WHEN/WHO applies the result changed. Scripting the de-stamp write flagged as a developer follow-up (scripts/ out of commit_zone), not attempted. All 3 files fence-balanced, size-justification headers updated.",
+        "created_at": "2026-08-23T12:44:58Z",
+        "created_by": "po/triage-20260823T1232Z",
+        "verification_gate": "grep -c SUPERSEDED docs/agents/cowork-team/flow/pressure-read.md returns >0 and the marker sits on Step 4.3 naming cowork-match-slots.js; last-fired.md AC-P1-7-4 no longer presumes a synchronous return under BGFAN-1",
+        "updated_at": "2026-08-23T13:16:12Z"
       }
     ],
     "qa": [

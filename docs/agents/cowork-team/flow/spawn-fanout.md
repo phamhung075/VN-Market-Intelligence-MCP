@@ -67,7 +67,17 @@
      bash `case`, where `**` is plain `*`, so it only matches files one level BELOW flow/. All 173
      real flow files sit directly in flow/ and match no pattern at all; context-bloat-backstop.sh
      exits 0 on this file and on the 1425L system-auditor/flow/main.md alike. Reported separately
-     (agents-architect owns the glob policy — widening it governs 173 files at once). -->
+     (agents-architect owns the glob policy — widening it governs 173 files at once).
+     FIX-COWORK-FLOWDOC-STALE-WEEKEND-SUPPRESSION-AND-BGFAN1-RETURN-PRESUMPTION (agent-father,
+     2026-08-23): +28L (506→534) — Step 5.3 gained an explicit TIMING CONTRACT distinguishing the rare
+     SAME-TICK path (Step 5.2's wait genuinely observed a real return within
+     batch_wait_max_seconds) from the ordinary DEFERRED path under BGFAN-1 (the batch's task
+     notification lands after this dispatcher's own turn has already reached Step 5b) — confirmed
+     live 2026-08-23, a 3-slot batch's returns all landed after this session's turn ended, router
+     re-ran Step 5.3 by hand once they arrived. Detector match logic (>=2-DISTINCT-marker
+     threshold, fail-open negative control) is UNCHANGED — only WHEN its result is applied
+     (pre-write WON_SLOTS filter vs. post-write last_fired de-stamp, last-fired.md AC-P1-7-4)
+     and WHO applies it changes. -->
 <!-- BGFAN-1: every Agent spawn in this file MUST use run_in_background=true; UC-CDC-P4 bounds
      CONCURRENCY ACROSS batches via Step 5.1/5.2, it does not relax background=true within a
      batch. Canonical rule + batcher carve-out → docs/protocols/agent-chaining-protocol.md
@@ -388,8 +398,14 @@ tick with room to spare. Step 5.0 blind guard above is unchanged.
 
 ## Step 5.3 — Off-flow router-latch detector (exogenous check, FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW)
 
-Runs once per batch, immediately after that batch's inter-batch wait resolves — the earliest
-point the spawn's own return text becomes available to this dispatcher session. **Exogenous only
+**TIMING CONTRACT — SAME-TICK vs. DEFERRED reconciliation (FIX-COWORK-FLOWDOC-STALE-WEEKEND-SUPPRESSION-AND-BGFAN1-RETURN-PRESUMPTION, 2026-08-23).** BGFAN-1 (every spawn in this file uses `run_in_background=true`) means the `Agent` tool call itself returns control to this dispatcher IMMEDIATELY, before the spawned session has done any work — Step 5.2's own comment already says as much ("naive back-to-back batching... is a no-op, since each spawn call returns immediately"). The Step 5.2 inter-batch wait loop's poll condition ("every spawn in this batch has returned its task notification") is therefore a BEST-EFFORT short window (`batch_wait_max_seconds`, default 120s), not a guarantee — a spawned cowork leaf agent routinely takes longer than that to complete its own flow. **Confirmed live 2026-08-23:** none of a 3-slot batch's task notifications had landed by the time this dispatcher's own turn needed to proceed to Step 5b; a separate, later pass (the router, in a different turn) had to re-run this exact Step 5.3 match logic by hand once the three returns actually arrived, and found 0/6 markers on each (stamps correctly left standing). That manual pass is the OPERATOR-DEFERRED RECONCILIATION contract this step now documents explicitly — it is not a one-off workaround, it is the NORMAL path for any slot whose spawn is still in-flight when the wait window elapses:
+
+- **SAME-TICK path (uncommon — only when the wait genuinely observes real completion within `batch_wait_max_seconds`):** run the detector below BEFORE Step 5b as originally specified; a `MARKER_HITS >= 2` result removes the slot from `WON_SLOTS` and Step 5b never stamps `last_fired` for it — unchanged, PRE-write gate.
+- **DEFERRED path (the common case under BGFAN-1 — any slot still in-flight when the wait window elapses):** Step 5b proceeds and stamps `last_fired` for that slot as scheduled (skipping it would silently starve every genuinely-fast, genuinely-successful spawn of its stamp, which is a worse outcome than the rare off-flow latch this detector exists to catch). This step's own match logic is re-run LATER, against the real return text, by whichever session next observes this batch's task notification — ordinarily the SAME cowork-team session if the notification lands before it ends its turn, otherwise the router or the next cowork-team tick's bootstrap step (`bootstrap.md`), whichever first has the returned text in hand. On a deferred `MARKER_HITS >= 2` result, that session performs a **DE-STAMP**: re-read `docs/data/cowork-schedule.json`, and if the slot's `last_fired` still equals the `FIRED_AT` value Step 5b wrote THIS tick (i.e. no later, genuine fire has since superseded it — never revert a fresher stamp), revert it to whatever value it held immediately before this tick's Step 5b write (never to `null` — Step 5b's own BLOCKER-3 monotonic-forward-only invariant is preserved, this is a correction, not a reset), making the slot due again on its normal cadence. **Scripting this de-stamp write is out of agent-father's `commit_zone` (`scripts/`) — a developer-owned follow-up row should add it to `scripts/agents-flow/cowork-write-last-fired.js` as a `--destamp <slot_id> <prior_value>` mode mirroring the existing script's atomic-write contract; until that ships, the reconciling session performs the equivalent jq-based read→compare→atomic-write by hand, same shape as `cowork-write-last-fired.js`'s own pseudocode in `last-fired.md`.**
+
+**None of the above touches the detector's own match logic — same threshold, same fail-open posture, same marker list.** Only WHEN the result is applied (pre-write gate vs. post-write de-stamp) and WHO applies it changes; see FAILURE POSTURE below, unchanged.
+
+Runs once per batch, either immediately after that batch's inter-batch wait resolves (SAME-TICK path) or later against the batch's eventual return text (DEFERRED path, above) — whichever is the earliest point the spawn's own return text becomes available. **Exogenous only
 under the SURFACE CONTRACT below:** evaluated by cowork-team on the returned text of each
 completed spawn, never self-reported by the spawned agent (a compromised spawn's own
 IDENTITY_CHECK is a vacuous reader-is-writer check — see the Step 5.2 comment above). "Raw
@@ -400,9 +416,15 @@ distinct from Step 5.0's gateway-blind guard and the plain spawn-tool-error hand
 Agent tool call itself succeeded and returned cleanly, but the returned content proves the
 spawned session never entered its own flow file.
 
-For each slot in this batch whose spawn returned its task notification this wait (skip any slot
-still in-flight after a wait timeout — nothing to inspect yet; it is picked up by the normal
-next-tick due-check like any other unconfirmed spawn):
+For each slot in this batch whose spawn returned its task notification — either within this
+wait (SAME-TICK) or later once the return becomes available for reconciliation (DEFERRED, see
+TIMING CONTRACT above): evaluate below. A slot with NO return available yet, at ANY evaluation
+attempt, has nothing to inspect — its `last_fired` stamp (already written by Step 5b under the
+ordinary DEFERRED default, per the TIMING CONTRACT above) stands until a later attempt has real
+return text to evaluate; this is not "picked up by the normal next-tick due-check" — the stamp
+means the slot will NOT look due again until its normal cadence elapses, which is exactly why the
+DEFERRED de-stamp correction exists for the case where that stamp turns out be wrong (a genuine
+off-flow latch, not a merely-slow-to-return legitimate spawn):
 
 **SURFACE CONTRACT (read this before evaluating — a wrong surface makes the detector fire 6/6 on
 every spawn, forever).** `RETURN_TEXT` is EXACTLY the spawn's **final assistant text turn** — the
@@ -472,18 +494,21 @@ MARKER_HITS = count of DISTINCT markers in OFFFLOW_MARKERS present in RETURN_TEX
 if MARKER_HITS >= 2:
   log "[cowork-team] OFF-FLOW DETECTED: " + slot.slot_id + " (" + slot.agent + ") returned
     router-dispatch-shaped prose instead of executing its own flow — treating as fabricated
-    success, last_fired will NOT be stamped"
+    success"
   send_telegram(channel="bug", message="[cowork-team] IDENTITY_CHECK=FAIL (exogenous) — " +
     slot.agent + " spawn (" + slot.slot_id + ") latched onto router protocol instead of its own
-    flow; last_fired NOT stamped, will retry next due tick")
+    flow; will retry next due tick")
   add to errors[]: { slot_id: slot.slot_id, error: "offflow_router_latch_detected",
                      marker_hits: MARKER_HITS, markers: <the distinct markers that matched> }
     # Record WHICH markers fired. The 2026-07-30 FP was only diagnosable because the dispatcher
     # wrote the matched marker into the signal by hand; make that structural, not discretionary.
-  WON_SLOTS = WON_SLOTS.filter(s => s.slot_id != slot.slot_id)   # exclude from Step 5b's write —
-    # conservative under-suppress (retries next due tick), same posture last-fired.md already
-    # applies on write failure (AC-P1-7-3) and TICK-SNAPSHOT's own held/won bookkeeping.
-# else: no signature hit — slot stays in WON_SLOTS, proceeds to Step 5b unchanged.
+  if this is the SAME-TICK path (Step 5b has not run yet for this batch):
+    WON_SLOTS = WON_SLOTS.filter(s => s.slot_id != slot.slot_id)   # exclude from Step 5b's write —
+      # conservative under-suppress (retries next due tick), same posture last-fired.md already
+      # applies on write failure (AC-P1-7-3) and TICK-SNAPSHOT's own held/won bookkeeping.
+  else:   # DEFERRED path — Step 5b already stamped last_fired for this slot earlier this tick
+    perform the DE-STAMP correction described in the TIMING CONTRACT above (last-fired.md AC-P1-7-4)
+# else: no signature hit — slot stays in WON_SLOTS (SAME-TICK) / stamp stands, nothing to correct (DEFERRED).
 ```
 
 This does not replace or weaken Step 5.0 (gateway-blind) or the plain spawn-failure handling
@@ -494,7 +519,10 @@ the one class neither of them can see: a spawn that returned successfully but ne
 fire, recovered next due tick. A false positive empties `WON_SLOTS`, stamps no `last_fired` for
 ANY slot, and re-fires every slot every tick forever plus one bug-telegram per slot per tick — a
 fleet-wide stamp-suppression outage. So the negative control FAILS OPEN (stamp stands, detector
-skipped, operator alerted) while a clean-surface marker hit fails closed. Never invert this.
+skipped, operator alerted) while a clean-surface marker hit fails closed. Never invert this. The
+DEFERRED de-stamp path (TIMING CONTRACT above) does not change this posture: a de-stamp only ever
+fires on a genuine `MARKER_HITS >= 2` match, same threshold, same negative control — it is a LATER
+application of the identical fail-closed/fail-open rule, never a separate, looser one.
 
 **BEFORE SCRIPTING THIS STEP.** Step 5.3 is LLM-interpreted today — confirmed 2026-08-23,
 `grep -rlniE 'offflow|off-flow' scripts/` returns only two unrelated po-lifecycle files and no
