@@ -128,7 +128,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-23T14:16:23Z",
+    "_updated_at": "2026-08-23T14:47:01Z",
     "_updated_by": "cowork-team/step-0a-drain",
     "archive": [],
     "rows": [
@@ -651,6 +651,90 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t1:2026-08-23T14:07Z",
         "dedup_key": "microservice_degraded:pdf-extractor:A-12"
+      },
+      {
+        "id": "sys-20260823T144144-0baf",
+        "ts": "2026-08-23T14:41:44Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "summary": "morningBriefing stale 229.7h (check A-29)",
+        "severity": "CRITICAL",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-23T12:00Z",
+        "dedup_key": "auditor-a29-fire-gap:morningBriefing:A-29"
+      },
+      {
+        "id": "sys-20260823T144151-19bb",
+        "ts": "2026-08-23T14:41:51Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "summary": "alertDigest stale 216.7h (check A-29)",
+        "severity": "CRITICAL",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-23T12:00Z",
+        "dedup_key": "auditor-a29-fire-gap:alertDigest:A-29"
+      },
+      {
+        "id": "sys-20260823T144158-1208",
+        "ts": "2026-08-23T14:41:58Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "summary": "marketOpen unresolved-join (check A-29b)",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-23T12:00Z",
+        "dedup_key": "auditor-a29-unresolved-join:marketOpen:A-29b"
+      },
+      {
+        "id": "sys-20260823T144205-2c29",
+        "ts": "2026-08-23T14:42:05Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "summary": "marketClose unresolved-join (check A-29b)",
+        "severity": "WARN",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-23T12:00Z",
+        "dedup_key": "auditor-a29-unresolved-join:marketClose:A-29b"
+      },
+      {
+        "id": "sys-20260823T144239-603e",
+        "ts": "2026-08-23T14:42:39Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "vn-bctc-fetch unhealthy (check B-06/B-07)",
+        "severity": "CRITICAL",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-23T12:00Z",
+        "dedup_key": "vps_route_unhealthy:bctc-discover:B-06"
+      },
+      {
+        "id": "sys-20260823T144251-2cd3",
+        "ts": "2026-08-23T14:42:51Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "news stale 61min (SLA 30min, check B-12)",
+        "severity": "CRITICAL",
+        "status": "READ",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-23T12:00Z",
+        "dedup_key": "data_stale:news:B-12"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -12515,8 +12599,12 @@
         "title": "Watchlist divergence audit script + cron wiring",
         "handoff": "docs/handoffs/TASK_002-WATCHLIST-DIVERGENCE-AUDIT-CRON.md",
         "blocked_reason": "Depends on TASK_001 landing first",
-        "updated_at": "2026-08-22T17:24:54Z",
-        "updated_by": "pm"
+        "updated_at": "2026-08-23T14:48:03Z",
+        "updated_by": "po/watchlist-dep-wiring",
+        "depends_on": [
+          "TASK_001-WATCHLIST-WRITE-THROUGH-INFRA"
+        ],
+        "status_note": "PO 2026-08-23T14:52Z — depends_on WIRED. This row carried its block ONLY as prose (blocked_reason: 'Depends on TASK_001 landing first') with depends_on=null and blocked_by absent, so deps_satisfied had nothing to evaluate and NOTHING would ever have auto-unblocked it when TASK_001 reached DONE_VERIFIED — it would have sat BLOCKED indefinitely until a human noticed. Same class as feedback_pickers_blind_to_prose_status_note, inverted: there the gates could not see a prose STOP, here they could not see a prose GO. Prose retained in blocked_reason for readers; depends_on is now the machine-readable SSOT. No scope change."
       },
       {
         "id": "FIX-WATCHLIST-ROSTER-RESTORE-23-LOST-TO-CORRUPTION-RESEED",
@@ -13468,6 +13556,116 @@
         "title": "Signal type namespace is OPEN but signal-type-coverage-guard enforces a hand-maintained CLOSED allowlist — 5th CI red of this shape",
         "dedup_key": "signaltype-open-namespace-vs-closed-allowlist",
         "status_note": "ROOT CAUSE of a recurring CI red, filed by po 2026-08-23T14:42Z after closing the 5th instance. Design question, plan_only — architect rules, does not implement.\n\nTHE SHAPE: any producer may emit a docs/signals/*.json with an arbitrary `type` string (open namespace, no registry, no producer-side validation). scripts/audits/guard-signal-type-coverage.sh then fails CI if a type present in dev_team_idle_chain.pending_triage_inbox[] has no matching row in the Pipeline-A table of docs/agents/po/flow/triage-signals.md (closed allowlist, hand-maintained, in a PO flow doc). So every NEW producer type reds main exactly once, costs one hand-minted FIX row, one agent-father dispatch, and one table-row edit. This is not a bug in any single producer; it is a missing contract between the producer side and the guard.\n\nEVIDENCE OF RECURRENCE (5 rows, all identical in shape, all minted by the guard itself): flow_actuator_fix, system-issue, sprint_registry_unresolved_journal_ids, notebook_prune_dropped_newest_dated_section (all four now satisfied and archived by po 2026-08-23), plus auto-push-abort (live, currently reddening main — FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort). Prior analysis: project_signalrow_type_open_namespace_vs_closed_allowlist_20260813 already recorded 4x redispatch to architect without a design landing.\n\nSECOND, INDEPENDENT DEFECT IN THE SAME GUARD — the measurement is queue-shaped, not coverage-shaped. The guard's input is the CONTENTS of pending_triage_inbox[], but PO's Step 0-SIG owns an unconditional CLEAR of that same inbox as its last action every cycle (docs/agents/po/flow/triage-signals.md, FIX-TRIAGE-INBOX-CLEAR-OWNERSHIP-PO-SELF-READ). Therefore PO doing its job turns the guard green with the routing table unchanged, and the gap silently persists until the next envelope of that type arrives. That is the mechanism behind feedback_devteam_drain_step_can_itself_turn_signal_type_guard_red (recorded there as CI-green/local-red divergence; the inverse — coverage-red masked as green — is the same root and is worse, because nothing reports it). A coverage guard must measure the doc against a type REGISTRY, never against whatever happens to be sitting in a transient queue.\n\nDIRECTIONS TO EVALUATE (architect picks, do not treat as a spec): (1) a committed signal-type registry (docs/data/signal-type-registry.json) that producers validate against at emit time and the guard reads as its input instead of the inbox — closes both defects at once; (2) keep the open namespace but make an unknown type a non-fatal WARN plus an auto-minted row, so a new producer never reds main; (3) generate the Pipeline-A table from the registry so the doc cannot drift. Also settle the ownership question: the allowlist currently lives in a PO flow doc, which makes every occurrence agent-father-dispatched (agent-father fails is_dev_role, so these rows are never auto-dispatchable — a structural cost of the current placement).\n\nDELIVERABLE: architecture brief with a rows-to-mint section. Do not implement from this row."
+      },
+      {
+        "id": "FIX-PM-3E-FLOWDOC-REPOINT-3WAY-DISPOSITION",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "BLOCKED",
+        "zone": "docs/agents/pm/flow/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "parent_task_id": "FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-23T14:45:00Z",
+        "created_by": "po",
+        "updated_at": "2026-08-23T14:43:28Z",
+        "updated_by": "po",
+        "detail_ref": "docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md",
+        "depends_on": [
+          "FIX-PM-3E-CLOSEOUT-SCRIPT-LANE-AGNOSTIC",
+          "FIX-PM-3E-FAILLOUD-HOTFIX"
+        ],
+        "title": "pm Step 3e flow-doc repoint — 3-way disposition table + script call site, block must SHRINK",
+        "hold_reason": "BLOCKED on FIX-PM-3E-CLOSEOUT-SCRIPT-LANE-AGNOSTIC: this row's whole job is to point Step 3e at scripts/pm-decompose-closeout.sh, which does not exist until row 2 lands. Also supersedes FIX-PM-3E-FAILLOUD-HOTFIX and edits the same block, so it must land after it.",
+        "status_note": "Brief row 3 of 4 (§6). Step 3e becomes: the 3-way disposition table (§4.4), the DECOMPOSITION_DISPOSITION=A|B|C decision rule, the script call site, the mandatory post-write probe assertions (§4.5), the ceiling pre-flight branch (§4.7), and the § Script Persistence pointer.\nHARD CONSTRAINT: the block MUST SHRINK, NOT GROW — the inline jq leaves the file. docs/agents/pm/flow/main.md is already 275 L and is named in the sibling filesizecaps brief §7.2 as a file that will land in the doc-plane baseline; growing it here makes that baseline stale on arrival.\nPRESERVE EXACTLY AS-IS: the reachability invariant note and the `## Task Lifecycle` segment marker.\nOPTIONAL FOLD-IN (architect, §7.5, third cycle unchanged): Step 3b still mandates `branch: task/NNN-kebab`, which contradicts the project NO-BRANCHES rule. Same file, same owner — fix it here if convenient.\nNOT AUTO-DISPATCHABLE: agent-father fails is_dev_role. Needs router/PO manual dispatch once unblocked."
+      },
+      {
+        "id": "FIX-CTXBLOAT-DOCPLANE-BASELINE-RATCHET",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P1",
+        "status": "BLOCKED",
+        "zone": "scripts/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "parent_task_id": "FIX-FILESIZECAPS-FLOWFILE-GLOB-NESTED-DIR-ONLY-173-FLOW-FILES-UNGOVERNED",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-23T14:48:00Z",
+        "created_by": "po",
+        "updated_at": "2026-08-23T14:45:16Z",
+        "updated_by": "po",
+        "detail_ref": "docs/architecture-briefs/2026-08-23-flow-file-cap-glob-fix-and-doc-plane-baseline-ratchet.md",
+        "depends_on": [
+          "FIX-CTXBLOAT-SIZEJUSTIFICATION-BYTE-DIMENSION",
+          "FIX-PM-3E-FLOWDOC-REPOINT-3WAY-DISPOSITION"
+        ],
+        "title": "R2 — generate docs/data/context-bloat-baseline.json (both dimensions) BEFORE flipping the glob",
+        "hold_reason": "TWO blockers, both load-bearing. (1) FIX-CTXBLOAT-SIZEJUSTIFICATION-BYTE-DIMENSION (R1): §4.2 — generating the baseline before R1 bakes 26 files into it that should instead have been resolved by their own now-byte-capable headers. (2) FIX-PM-3E-FLOWDOC-REPOINT-3WAY-DISPOSITION — CROSS-BRIEF dependency wired by po 2026-08-23, flagged in this brief's own §7.2: docs/agents/pm/flow/main.md is 275 L today, is one of the 63 baseline entries, and is about to be rewritten by that row. Snapshot before it settles and the baseline is stale on arrival.",
+        "status_note": "Brief row 2 of 3 (§6, R2 in §4.1). PORT THE LIVE CODE-PLANE SIBLING, DO NOT INVENT A MECHANISM (§4): scripts/audits/size-lint-justification.sh + docs/data/size-lint-baseline.json (648 entries, live since 2026-07-24, brief docs/architecture-briefs/2026-07-24-factory-guard-ci-size-lint-justification.md §2). Reviewers should DIFF against it rather than re-derive.\nDELIVERABLE: docs/data/context-bloat-baseline.json — same shape and same --update wholesale-regeneration semantics as size-lint-baseline.json, but recording BOTH dimensions per path: {\"<path>\": {\"lines\": N, \"bytes\": M}}, plus _generated_by, generated_at, threshold, tolerance_note. Seed = the 63 emitters measured in §2, dated 2026-08-23.\nSEMANTICS in context-bloat-backstop.sh, consulted AFTER the justification check and BEFORE emitting: in-baseline AND within ±10 %/min-5 tolerance on BOTH dimensions -> silent; grown past tolerance on EITHER -> emit (this is the ratchet — a grandfathered file that gets worse is exactly what the gate is for); not in baseline -> emit (new offenders, zero tolerance).\nFENCE (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist, §4.2 — carried forward, must be satisfied again by the implementer): the baseline is opt-IN and DATED, a generated snapshot of measured state, NEVER an opt-out allowlist an author can append to by hand. Entries must drop out automatically once a file shrinks under cap or gains a current header.\nAC-4 (ratchet), AC-5 (--update idempotency: re-run on unchanged state reproduces a byte-identical baseline)."
+      },
+      {
+        "id": "FIX-FILESIZECAPS-FLOWFILE-GLOB-CORRECT",
+        "type": "FIX",
+        "size": "XS",
+        "priority": "P1",
+        "status": "BLOCKED",
+        "zone": "docs/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "parent_task_id": "FIX-FILESIZECAPS-FLOWFILE-GLOB-NESTED-DIR-ONLY-173-FLOW-FILES-UNGOVERNED",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-23T14:48:00Z",
+        "created_by": "po",
+        "updated_at": "2026-08-23T14:45:16Z",
+        "updated_by": "po",
+        "detail_ref": "docs/architecture-briefs/2026-08-23-flow-file-cap-glob-fix-and-doc-plane-baseline-ratchet.md",
+        "depends_on": [
+          "FIX-CTXBLOAT-DOCPLANE-BASELINE-RATCHET"
+        ],
+        "title": "R3 — the one-character glob fix in docs/data/file-size-caps.json, MUST land LAST",
+        "hold_reason": "BLOCKED on FIX-CTXBLOAT-DOCPLANE-BASELINE-RATCHET (R2), which is itself blocked on R1. §4.2: flipping R3 first produces the 63-signal burst this entire brief exists to prevent. This row is one character of work and is deliberately sequenced last.",
+        "status_note": "Brief row 3 of 3 (§6, R3 in §4.1). THE FIX: in docs/data/file-size-caps.json, `docs/agents/*/flow/**/*.md` -> `docs/agents/*/flow/*.md`, plus an inline `_note` recording the case-has-no-globstar reason so a future reader does not 'correct' it back.\nREAD THIS BEFORE YOU THINK §4.1 R3 AND §5 AC-1 CONTRADICT EACH OTHER — THEY DO NOT. AC-1 demands the corrected pattern MATCH BOTH docs/agents/<a>/flow/main.md AND docs/agents/<a>/flow/sub/y.md. It does: in a bash `case` pattern, `*` matches ANY characters INCLUDING `/`, so the trailing `*` in `.../flow/*.md` spans `sub/y`. That same property is the original bug — `**` in `case` is just `*`, making `.../flow/**/*.md` behave as `.../flow/*/*.md`, which REQUIRES at least one intermediate directory and is why 173 flat flow files were ungoverned. Do not 'fix' the apparent inconsistency by reverting the pattern.\nAC-1 needs POSITIVE AND NEGATIVE fixtures: NOMATCHES docs/agents/<a>/handlers.md and docs/flow/x.md.\nZONE: docs/data/file-size-caps.json is agent-father's implementation zone per its own _maintained_by field.\nNOT AUTO-DISPATCHABLE: agent-father fails is_dev_role (^dev(-|$)|^developer$). Needs router/PO manual dispatch once unblocked.\nGATE ON LANDING (AC-2, non-negotiable): re-run the FULL 173-file cohort before and after; emit_before == 63, emit_after == 0, and the diff must account for every one of the 63 as either header-resolved (R1) or baseline-grandfathered (R2) — NEVER as 'no longer matched'. Cohort is reproducible via: find docs/agents -path '*/flow/*.md'."
+      },
+      {
+        "id": "FIX-FILESIZECAPS-FLOWFILE-GLOB-NESTED-DIR-ONLY-173-FLOW-FILES-UNGOVERNED",
+        "type": "FIX",
+        "title": "the flow-file line cap governs ZERO of the 173 flow files: pattern docs/agents/*/flow/**/*.md is matched with bash `case`, where ** collapses to * and the trailing /*.md forces a directory BELOW flow/ — no such directory exists, so the cap is inert and correcting the glob would breach 62 files at once",
+        "owner": "po",
+        "status": "BLOCKED",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "po",
+        "created_at": "2026-08-23T09:47:00Z",
+        "created_by": "po",
+        "files": [
+          "docs/data/file-size-caps.json",
+          "scripts/agents-flow/context-bloat-backstop.sh"
+        ],
+        "depends_on": [],
+        "verification_gate": "a_rollout_decision_is_recorded_AND_the_corrected_glob_is_validated_against_the_full_173_file_cohort_not_a_single_file",
+        "status_note": "[ARCHITECT] 2026-08-23T14:28:14Z — verification_gate ROLLOUT DECISION RECORDED: docs/architecture-briefs/2026-08-23-flow-file-cap-glob-fix-and-doc-plane-baseline-ratchet.md. Glob defect re-executed, corrected pattern docs/agents/*/flow/*.md validated on positive+negative fixtures. Full 173-file cohort measured independently (FENCE honoured): 98 clean / 12 absorbed / 3 line-only / 60 byte-cap = 63 emitters (row estimated 62/59/13); 26 files carry a CURRENT header that TE-T24 structurally cannot honor. Risk reframed: hook always exits 0, no CI gate, dedups per file — one-shot <=63-signal inbox burst, not an every-edit emitter. RULED (a)+(b), ported from the live 648-entry code-plane baseline/ratchet, NOT a new mechanism; (c)/(d) rejected; cap:120 left alone (p50=102L), BC-1 60 B/line is the wrong knob. NEXT = po: mint brief §6 rows R1->R2->R3 (order load-bearing, glob flips LAST): FIX-CTXBLOAT-SIZEJUSTIFICATION-BYTE-DIMENSION developer S / FIX-CTXBLOAT-DOCPLANE-BASELINE-RATCHET developer M dep-on-R1 / FIX-FILESIZECAPS-FLOWFILE-GLOB-CORRECT agent-father XS dep-on-R2 (manual dispatch — fails is_dev_role). Brief §7: 272 of 445 docs/agents/**/*.md match no cap pattern at all.\n\nWHY agents-architect AND NOT A ONE-LINE PATCH: file-size-caps.json is _maintained_by 'agents-architect (policy) / agent-father (implementation)'. Correcting the glob is one character; deciding what happens to the 62 files it newly breaches is policy, and that decision must exist BEFORE the fix lands.\n\nDEFECT, verified at source 2026-08-23. docs/data/file-size-caps.json carries {pattern: 'docs/agents/*/flow/**/*.md', cap: 120, class: 'flow-file'}. Its only consumer, scripts/agents-flow/context-bloat-backstop.sh:119, matches with `case \"$REL_PATH\" in $pattern)`. bash `case` has no recursive-globstar: ** is just two adjacent *, and the literal / that follows it forces at least one path component below flow/. Executed live:\n  case docs/agents/system-auditor/flow/main.md in docs/agents/*/flow/**/*.md) -> NO-MATCH\n  case docs/agents/x/flow/sub/y.md         in docs/agents/*/flow/**/*.md) -> MATCH\nCounted: `find docs/agents -path '*/flow/*.md'` = 173; `find docs/agents -path '*/flow/*/*.md'` = 0. Every real flow file sits directly in flow/, so 173/173 match no pattern at all, MATCHED_CAP stays empty, and the script exits 0 at line 132 on the non-governed hot path — before it ever calls wc. Confirmed on the worst offender: system-auditor/flow/main.md is 1425L and the backstop exits 0.\n\nBLAST RADIUS — MEASURED, NOT ESTIMATED (all 173 files, cap 120L and the script's own BC-1 byte cap of cap*60 = 7200B):\n  98  within both caps       -> unaffected\n  63  over the 120L line cap\n  59  over the 7200B byte cap\n  13  line-only breaches absorbed by an existing <!-- size-justification: --> header\n  62  WOULD EMIT A BREACH on their very next edit\nThe load-bearing number is 59. scripts/agents-flow/context-bloat-backstop.sh's own TE-T24 note states a size-justification comment declares a LINE count only and NEVER honors a byte-cap breach. So 59 of the 62 breaches have NO existing escape hatch, including every high-traffic flow doc in the fleet: dev-team/flow/main.md 1279L/192014B (26.7x the byte cap), system-auditor/flow/main.md 1425L/153599B (21.3x), unified-agent/flow/chef-dish.md 1040L/75862B, fb-market-poster/flow/daily.md 942L/65718B, cowork-team/flow/spawn-fanout.md 506L/36055B. Correcting the glob with no rollout decision turns the fleet's most-edited documents into permanent every-edit breach emitters.\n\nDECISION REQUIRED (pick one and record the reasoning): (a) grandfather the 62 with a dated, expiring allowlist; (b) stage the tightening — land the glob with a flow-file-specific byte budget calibrated to the live distribution, then ratchet; (c) per-file caps for the structural outliers; (d) split class 'flow-file' into 'flow-dispatcher' and 'flow-body' with different budgets. Whatever is chosen must state what happens to the 59 byte-cap breaches, since size-justification cannot cover them.\n\nFENCE — feedback_fleetwide_gate_validated_on_one_file_optout_allowlist: do NOT validate the corrected glob on one file. Re-run the full 173-file cohort before and after and diff the emit set. Any allowlist MUST be opt-IN and dated, never opt-out.\n\nPROVENANCE: found by agent-father while validating its own INV-GATEWAY-1 work. agent-father correctly declined to ship a spawn-fanout.md header note asserting the backstop 'emits on every edit' — it could not verify that claim because the claim is false — and corrected the note instead. Deliberately kept out of agent-father's own row and routed here for a policy ruling.\n\nHISTORY TO READ FIRST: project_context_bloat_governance, feedback_ctxbloat_breach_on_live_sprint_file_defer (a breach fired on a live in-flight sprint file must DEFER, not block), and the 2026-06-14 RECALIBRATE precedent already recorded inline in file-size-caps.json for the .claude/skills/**/*.md cap (120 -> 200 against the measured live distribution) — that is the closest prior art for the calibration this row needs.",
+        "updated_at": "2026-08-23T14:45:16Z",
+        "detail_ref": "docs/architecture-briefs/2026-08-23-flow-file-cap-glob-fix-and-doc-plane-baseline-ratchet.md",
+        "updated_by": "po/brief-0823-filesizecaps",
+        "children": [
+          "FIX-CTXBLOAT-SIZEJUSTIFICATION-BYTE-DIMENSION",
+          "FIX-CTXBLOAT-DOCPLANE-BASELINE-RATCHET",
+          "FIX-FILESIZECAPS-FLOWFILE-GLOB-CORRECT"
+        ],
+        "pm_decomposition_complete": true,
+        "superseded_by_rows": [
+          "FIX-CTXBLOAT-SIZEJUSTIFICATION-BYTE-DIMENSION",
+          "FIX-CTXBLOAT-DOCPLANE-BASELINE-RATCHET",
+          "FIX-FILESIZECAPS-FLOWFILE-GLOB-CORRECT"
+        ],
+        "hold_reason": "EPIC WRAPPER — decomposed 2026-08-23T14:48Z into 3 children per brief §6; holds until all 3 reach DONE_VERIFIED. Moved ready[] -> backlog[] in the same write so a decomposed wrapper stops occupying a dispatch lane. Explicit hold_reason set because the sibling pm-decompose brief §7.1 flags 8 live wrapper rows carrying children[] with NO hold_reason, armed for premature autoclose-to-review[].",
+        "po_disposition_20260823": "PO 2026-08-23T14:48Z. Brief accepted as written, all 3 rows minted, no scope change. WHAT architect CORRECTED versus this row's original framing — reviewers should read the brief, not the row's older prose: (1) architect RE-MEASURED the cohort itself instead of trusting this row's estimate — 98 clean / 12 absorbed / 3 line-only / 60 byte-cap = 63 emitters, against the row's stated 62/59/13; and 26 files carry a current header that BC-1 structurally cannot honor. (2) The risk framing was wrong in BOTH directions: the hook always exits 0, sits on NO CI gate, and dedups per file, so this is a ONE-SHOT burst of at most 63 signals into the drain lane — not an every-edit emitter and not a write blocker. It is a drain-lane flood, nothing more. (3) Options (c) per-file caps and (d) split the flow-file class were both REJECTED with reasons (§4); the ruling is (a)+(b) ported verbatim from the live 648-entry code-plane sibling. Do not re-litigate.\nSTILL OPEN, REPORTED-NOT-FIXED (§7, owned by NONE of the 3 children — needs separate triage, do not assume this parent covers it): 272 of 445 docs/agents/**/*.md match no cap pattern at all (every init.md, handlers.md, audit-dimensions.md, handoff/*.md), 68 of them over 120 L — system-auditor/handlers.md is 342 L / 26803 B. Flow files are the SMALLER ungoverned half, so 'fix the flow glob' does NOT mean agent docs are governed. Also: the `**` idiom appears in TWO patterns and .claude/skills/**/*.md currently works only by corpus accident."
       }
     ],
     "closed_sprints": [
@@ -16131,7 +16329,7 @@
         ],
         "architect_review_note": "Design (not code, per architect scope): after run_firer()'s per-slot loop (scripts/agents-flow/cowork-guaranteed-slot-firer.sh) returns overall_rc != 0, POST directly to the BUG channel via curl -X POST https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage using TELEGRAM_BUG_CHAT_ID (already loaded by the script's own _load_env from .env) — exact pattern already live at scripts/maybe-deploy-vps.sh:35-41, reuse verbatim, do not invent a second mechanism. This bypasses MCP/claude entirely, which is mandatory here: the script explicitly has no gateway/MCP access of its own (its own header, line 75), and the flow-level send_telegram escalation never runs because the claude CLI process dies (exit_code=1, weekly-limit message) before Step 0 of any flow executes. Gate the alert with a simple cooldown (e.g. a marker file with a 6h TTL, or only re-alert when the printed error message text changes) so an ongoing multi-day outage does not spam the BUG channel every 900s tick — one alert per distinct failure episode, matching the existing 'one BUG Telegram alert per job run' fail-loud convention (docs/policies/alert-policy.md verdictResolutionJob precedent). Test strategy: cowork-guaranteed-slot-firer.test.sh already stubs CLAUDE_BIN as a fake executable and overrides LOG_FILE_PATH/LOG_ERR_FILE_PATH env seams — add a matching TELEGRAM_BOT_TOKEN/TELEGRAM_BUG_CHAT_ID stub + a curl-call-recording fake to assert the alert fires on overall_rc!=0 and does NOT fire on the common no-op/all-success tick. BUILD-STANDARD: not-applicable (bug-fix/maintenance, no apps/<svc> touched, bash-only).",
         "note": "Minted by architect while executing SPIKE-COWORK-GUARANTEED-SLOT-DIAGNOSTIC-WIRING — see that row's architect_review_note for full reasoning. NOT the original wiring-trace premise (which was refuted); this is a genuinely new, in-scope gap the trace surfaced as a byproduct.",
-        "updated_at": "2026-08-23T14:33:06Z",
+        "updated_at": "2026-08-23T14:47:28Z",
         "updated_by": "developer",
         "selfheal_note": "PM retargeted next_agent=developer (commit d70b7d4e1) but left status=BACKLOG in backlog[] lane — undispatchable by developer pickup gates (require status=READY). Self-healed lane+status to match stated intent.",
         "po_evidence_20260811": "PO 2026-08-11T18:35Z — INDEPENDENT CONFIRMATION + PRIORITY RAISE P1->P0. Reached this same file from the opposite direction (user report 'fb post today is miss', router escalation) and re-derived the identical root cause, which is the strongest possible argument for this row: the outage was invisible to every automated surface and was ultimately detected by a HUMAN NOTICING A MISSING FACEBOOK POST, two days late. Blast radius measured: 8 guaranteed slots x 3 days silent (chef-morning, chef-eod, chef-evening, tnb-audit, digest-daily, digest-sunday, fb-daily x2, fb-weekend), 14 consecutive exit_code=1 invocations, zero BUG alerts, zero signals, zero board rows. launchctl still reported the job healthy throughout (runs=2463, state=running) — the JOB was fine, the WORK was 100% failing, which is the same 'healthy job / truncated work' shape already called out in FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION. Raising to P0: this is the detection layer for every other guaranteed-slot defect on the board, and without it each one is found only by a user complaint.",
@@ -16160,8 +16358,8 @@
             "observed_at": "2026-08-23T14:28:53Z"
           }
         },
-        "status_note": "\n[QA] Review Record (direct-commit verify): APPROVED (direct-commit verify). Commit e806bcda1 verified ancestor-of-main; git show --stat confirms all 6 claimed files touched (cowork-guaranteed-slot-firer.sh, .test.sh, cron-jobs.md, dev-standards.md, TASK-FIX-COWORK-FIRER-ESCALATION.md, WORK.md). bash scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh re-run live: 53/53 GREEN, matches row's claimed RED baseline 38/15 -> 53/0. bash -n syntax OK. mock-guard.sh --files: PASS (no TS/JS production source, bash-only zone per row scope note; bun test/tsc N/A). Manual grep confirms _bug_chat_id() fallback chain FIRER_ALERT_CHAT_ID -> TELEGRAM_REPORT_BUG_CHANNEL_ID -> TELEGRAM_BUG_CHAT_ID as claimed (NAMING-DRIFT correction verified correct — TELEGRAM_BUG_CHAT_ID does not exist in .env, live key is TELEGRAM_REPORT_BUG_CHANNEL_ID); no hardcoded secrets found. Not OOM/durability-class (alerting-gap fix) — Durability Gate N/A. No ISSUE.\n[QA] INDEPENDENT POST-HOC CONFIRMATION 2026-08-23T14:33:04Z (row was flipped to DONE_VERIFIED at 14:28:53Z by updated_by=developer, i.e. the row's OWN owner, with qa_verified_by absent -- a self-certification that never passed the qa gate; QA re-ran it rather than accept it, and CONFIRMS the substance). Re-verified: e806bcda1 on main ancestry, touches 6/6 claimed files; cowork-guaranteed-slot-firer.test.sh 53 passed 0 failed exit 0. STRONGER PROOF THAN THE PEER RAW_PROBE, which only ran the suite's self-stubbed curl: QA exercised the escalation END-TO-END IN THE REAL ENVIRONMENT (no FIRER_ALERT_CHAT_ID override, no .env stub; only SLOT_MATCHER_CMD forced to exit 7, with CURL_BIN pointed at a capture stub so no network hit). Result: zero ESCALATION-BLOCKED lines, the script's own .env loader resolved TELEGRAM_BOT_TOKEN, _bug_chat_id() resolved a NON-EMPTY chat id, and a fully-formed POST to api.telegram.org/sendMessage was constructed carrying the correct BUG text. Both .env keys confirmed present (TELEGRAM_BOT_TOKEN, TELEGRAM_REPORT_BUG_CHANNEL_ID); the dual-name fallback in _bug_chat_id is load-bearing against the live system-map.json naming drift and is correct. launchd job com.vn-market.cowork-guaranteed-slot-firer is loaded, last exit 0. SCOPE CLARIFICATION, measured not assumed -- this fix does NOT and should NOT address the live 9-stale-slot condition: grep-verified the script reads last_fired ZERO times, so it cannot emit a staleness-driven false escalation against agents that ARE delivering (market-watcher and alert-commander both committed today against 8-9d stale stamps, because last_fired tracks the cowork invocation path only, not delivery). Escalation fires only on a per-tick invocation failure (matcher non-zero exit, matcher non-JSON, or >=1 failed slot invocation). Corollary the next reader must not miss: if the firer never RUNS at all (launchd unloaded / host suspended) nothing escalates -- that gap belongs to TASK-CRON-LIVENESS-PROBE-SCRIPT, not here. LIVE FLEET MEASUREMENT this cycle (21 enabled slots): exactly 9 at >=8d stale -- fb-daily 10d(guaranteed), chef-eod 10d(guaranteed), chef-morning 9d(guaranteed), news-scout-sentiment 9d, chef-intraday 9d, alert-commander-market 9d, refine-bctc-slot-4 8d, market-watcher-eod 8d, bctc-analyst-slot-1 8d; 3 of 9 guaranteed, matching the dispatch brief. CORRECTION TO THE DISPATCH BRIEF: digest-sunday is NOT dark -- its live last_fired is 2026-08-23T13:47:27Z (today, 0d). fb-daily IS the one genuinely-suspect guaranteed slot: 08-14(Fri) and 08-17(Mon) are missed weekday fires that the 2026-08-18..08-22 scheduler outage does not explain. Not this row's defect; belongs to TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK / TASK-COWORK-MISSED-FIRE-AUDIT.",
-        "qa_verified_by": "qa"
+        "status_note": "\n[QA] Review Record (direct-commit verify): APPROVED (direct-commit verify). Commit e806bcda1 verified ancestor-of-main; git show --stat confirms all 6 claimed files touched (cowork-guaranteed-slot-firer.sh, .test.sh, cron-jobs.md, dev-standards.md, TASK-FIX-COWORK-FIRER-ESCALATION.md, WORK.md). bash scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh re-run live: 53/53 GREEN, matches row's claimed RED baseline 38/15 -> 53/0. bash -n syntax OK. mock-guard.sh --files: PASS (no TS/JS production source, bash-only zone per row scope note; bun test/tsc N/A). Manual grep confirms _bug_chat_id() fallback chain FIRER_ALERT_CHAT_ID -> TELEGRAM_REPORT_BUG_CHANNEL_ID -> TELEGRAM_BUG_CHAT_ID as claimed (NAMING-DRIFT correction verified correct — TELEGRAM_BUG_CHAT_ID does not exist in .env, live key is TELEGRAM_REPORT_BUG_CHANNEL_ID); no hardcoded secrets found. Not OOM/durability-class (alerting-gap fix) — Durability Gate N/A. No ISSUE.\n[QA] INDEPENDENT POST-HOC CONFIRMATION 2026-08-23T14:33:04Z (row was flipped to DONE_VERIFIED at 14:28:53Z by updated_by=developer, i.e. the row's OWN owner, with qa_verified_by absent -- a self-certification that never passed the qa gate; QA re-ran it rather than accept it, and CONFIRMS the substance). Re-verified: e806bcda1 on main ancestry, touches 6/6 claimed files; cowork-guaranteed-slot-firer.test.sh 53 passed 0 failed exit 0. STRONGER PROOF THAN THE PEER RAW_PROBE, which only ran the suite's self-stubbed curl: QA exercised the escalation END-TO-END IN THE REAL ENVIRONMENT (no FIRER_ALERT_CHAT_ID override, no .env stub; only SLOT_MATCHER_CMD forced to exit 7, with CURL_BIN pointed at a capture stub so no network hit). Result: zero ESCALATION-BLOCKED lines, the script's own .env loader resolved TELEGRAM_BOT_TOKEN, _bug_chat_id() resolved a NON-EMPTY chat id, and a fully-formed POST to api.telegram.org/sendMessage was constructed carrying the correct BUG text. Both .env keys confirmed present (TELEGRAM_BOT_TOKEN, TELEGRAM_REPORT_BUG_CHANNEL_ID); the dual-name fallback in _bug_chat_id is load-bearing against the live system-map.json naming drift and is correct. launchd job com.vn-market.cowork-guaranteed-slot-firer is loaded, last exit 0. SCOPE CLARIFICATION, measured not assumed -- this fix does NOT and should NOT address the live 9-stale-slot condition: grep-verified the script reads last_fired ZERO times, so it cannot emit a staleness-driven false escalation against agents that ARE delivering (market-watcher and alert-commander both committed today against 8-9d stale stamps, because last_fired tracks the cowork invocation path only, not delivery). Escalation fires only on a per-tick invocation failure (matcher non-zero exit, matcher non-JSON, or >=1 failed slot invocation). Corollary the next reader must not miss: if the firer never RUNS at all (launchd unloaded / host suspended) nothing escalates -- that gap belongs to TASK-CRON-LIVENESS-PROBE-SCRIPT, not here. LIVE FLEET MEASUREMENT this cycle (21 enabled slots): exactly 9 at >=8d stale -- fb-daily 10d(guaranteed), chef-eod 10d(guaranteed), chef-morning 9d(guaranteed), news-scout-sentiment 9d, chef-intraday 9d, alert-commander-market 9d, refine-bctc-slot-4 8d, market-watcher-eod 8d, bctc-analyst-slot-1 8d; 3 of 9 guaranteed, matching the dispatch brief. CORRECTION TO THE DISPATCH BRIEF: digest-sunday is NOT dark -- its live last_fired is 2026-08-23T13:47:27Z (today, 0d). fb-daily IS the one genuinely-suspect guaranteed slot: 08-14(Fri) and 08-17(Mon) are missed weekday fires that the 2026-08-18..08-22 scheduler outage does not explain. Not this row's defect; belongs to TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK / TASK-COWORK-MISSED-FIRE-AUDIT.\n[QA SELF-CORRECTION 2026-08-23T14:50Z — RETRACTING A CLAIM I MADE ~10 MINUTES AGO IN THE NOTE ABOVE.] I wrote that this row was \"self-certified\" by its own owner and \"never passed the qa gate\", inferring that from two row fields alone: updated_by=developer and an absent qa_verified_by. THAT INFERENCE WAS WRONG. A concurrent peer qa session DID perform a full Direct-Commit Verify on this row and journaled it — docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-26.md STEP qa-S162, 2026-08-23T14:29Z — re-running the suite live (53/53, and matching the 38/15 RED baseline), checking all 6 files against git show --stat, confirming ancestry, mock-guard, and independently grep-confirming the TELEGRAM_BUG_CHAT_ID -> TELEGRAM_REPORT_BUG_CHANNEL_ID naming-drift correction. The gate ran. I did not check the decision journal before asserting it had not.\nWHAT IS ACTUALLY TRUE, narrowed to what the evidence supports: this is a PROVENANCE-STAMPING defect, not a governance bypass. The row records updated_by=developer and carries no qa_verified_by, so from the board alone a qa verdict is indistinguishable from an owner self-flip. That is worth fixing — the decision journal should not be the only place the gate's execution is recorded — but it is a much smaller finding than the one I asserted, and the two are not interchangeable. qa_verified_by=qa has now been set on this row, which is the actual remedy.\nThe technical CONFIRMATION in the note above stands unchanged and was independently derived: the live no-network reachability smoke test of the escalation path (real .env, real _bug_chat_id resolution, capture CURL_BIN, zero ESCALATION-BLOCKED) is additional evidence the peer pass did not run, and it holds. So does the scope clarification (the script reads last_fired zero times) and the fleet measurement (9 slots >=8d, 3 guaranteed; digest-sunday NOT dark).\nMETHOD NOTE FOR MY OWN FUTURE PASSES: absence of a field is not evidence of absence of the work. Before asserting that a gate did not run, grep docs/agent-memory/decisions/ for the task-id. This is the second time in two cycles I have had to walk back a verdict reached by reasoning from a signal instead of executing a check against it.\n",
+        "qa_verified_by": "qa (peer session, STEP qa-S162) + independent post-hoc re-check (this session)"
       },
       {
         "id": "FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION",
@@ -16362,6 +16560,51 @@
         "status_note": "\n[QA] Review Record (direct-commit verify): verify-committed PASS. Row .commit=777ec912f was the PRE-AMEND hash — amended 26s later (reflog: main@{15:58:08+0200} commit (amend)) to e315472b7cec, content-identical (empty diff on both touched files) — row .commit corrected to the real ancestor here. All checks green on main HEAD via e315472b7: own suite node scripts/agents-flow/cowork-match-slots.test.js 90/90; siblings cowork-catchup-predicate.test.js 34/34, cowork-guaranteed-slot-firer.test.sh 53/53, cowork-tick-preflight.test.sh 75/75; mock-guard PASS; no DDD infra/application imports; no process.env/secrets. docs/WORK.md entry present, Task:/AC: trailers on commit. ANCHOR-2/3/4 confirmed re-routed next_agent=agent-father, status TODO (scope claim verified). Not BCTC-report-class (eval gate N/A), not OOM/crash-durability-class (durability gate N/A).\n[QA] INDEPENDENT POST-HOC CONFIRMATION — row was flipped to DONE_VERIFIED at 2026-08-23T14:33:50Z by updated_by=developer (the row's OWN owner) with qa_verified_by absent; that flip never passed the qa gate. QA re-ran it rather than accept it and CONFIRMS the substance. The peer's own commit-field correction 777ec912f -> e315472b7 is CORRECT and QA independently re-derived it: 777ec912f is NOT on main ancestry (git merge-base --is-ancestor false) and survives only as a dangling object, so a naive \"git cat-file -t\" existence check passes while ancestry fails. Content integrity proved by byte identity, not assumed: shasum of \"git show 777ec912f:<f>\" vs \"git show e315472b7:<f>\" MATCHES for all three claimed files (scripts/agents-flow/cowork-match-slots.js, scripts/agents-flow/cowork-match-slots.test.js, docs/WORK.md); the only delta between the two commits is an absorbed peer stage of orch-state.json + archive/2026-08.json + archive/backlog-detail.json. Disclosed, not buried: the amend was performed by a prior qa pass.\nVERIFIED BY EXECUTION: node cowork-match-slots.test.js 90/90 pass 0 fail; siblings unregressed — cowork-catchup-predicate.test.js 34/34, cowork-tick-preflight.test.sh 75/75, cowork-guaranteed-slot-firer.test.sh 53/53; mock-guard PASS on both .js files.\nPRODUCER CONTRACT PROVEN LIVE, not inferred from the test seam: cowork-match-slots.js line 534 emits the CLI field \"slots\" from hitsAnchored (so live MATCHES, not only catchup_raw, carry the anchor) and line 505 anchors them via annotateScheduledUtc. QA called the real exported function against the REAL docs/data/cowork-schedule.json entry and the REAL cowork-catchup-predicate module: digest-sunday, cron \"47 13 * * 0\", nowUnix 2026-08-23T13:50:00Z -> scheduled_utc_time \"2026-08-23T13:47:00.000Z\", reproducing the review_note's figure exactly. NFR-2 non-mutation confirmed by execution (the input slot object gained no scheduled_utc_time key). Malformed cron degrades to null and does not throw. Shared-derivation claim holds: annotateScheduledUtc delegates to cowork-catchup-predicate.mostRecentCronFireBefore at line 183 rather than re-walking the cron, so the live and catch-up paths cannot diverge.\nHONEST CAVEAT: the CLI's live MATCHES array was EMPTY at verification time (no cron matched that instant), so the field was exercised through a direct call at a matching instant rather than being declared verified off an empty array. SCOPE respected: this row is the PRODUCER only; consumers ANCHOR-2/3/4 live under docs/agents/ (agent-father commit_zone) and were correctly not implemented here.\n",
         "qa_verified_by": "qa",
         "qa_independent_confirmed_at": "2026-08-23T14:35:45Z"
+      },
+      {
+        "id": "FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK",
+        "type": "FIX",
+        "title": "eod.md:78 still carries the pre-2026-07-31 no-Bash caveat that cycle.md already fixed -- market-watcher-eod skips its notebook commit every fire, loses the EOD cycle entry to the next same-agent overwrite, and strands news-scouts L-7-deferred commit",
+        "desc": "VERIFIED live 2026-08-05T16:00Z EOD fire (agent a0df2bd1afc971ce7). Chain: (1) .claude/agents/market-watcher.md granted Bash 2026-07-31 commit 610110e16b. (2) cycle.md carried an identical no-Bash transport-gap caveat and was fixed 2026-08-01 (FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT, see cycle.md own header comment) -- caveat demoted to a genuine invocation-error fallback only. (3) eod.md:78 was never touched by that fix -- still reads verbatim this agent holds no Bash and cannot run git add/git_commit_retry directly ... SKIP this step entirely. (4) Todays EOD fire followed eod.md literally: wrote all 4 ledger entries (analysis-briefs DGC/DPM/DBC/VNM) + docs/signals/price_anomaly_20260805T1605.json correctly (Steps A/B unaffected per the docs own text) but skipped Step D (notebook write/commit), citing the docs own stale line as its reason -- not a fabrication, a propagated stale doc. (5) DISPROOF same day, same batch: market-watcher-offhours fired 2 min later (a1f7356854a55a25f) and committed cleanly with Bash (09beb0997) -- direct proof the grant is live and eod.md is simply wrong. (6) Net effect: market-watcher.md notebook has NO Cycle (EOD) section anywhere post-16:06Z -- the EOD narrative was never durably captured, either never written or clobbered when the offhours slot did its own full-overwrite write+commit right after. (7) news-scout.md c233 entry was left dangling uncommitted -- its own flow (docs/agents/news-scout/flow/stage-log-notify.md:14, L-7) explicitly defers its git commit to market-watchers EOD batch commit at market close; that EOD-side half of the contract never fires while eod.md:78 stands. Router committed the stranded news-scout.md manually this cycle as a workaround; the underlying skip will repeat every weekday 16:00 UTC fire until eod.md is fixed.",
+        "ac": "1. Update docs/agents/market-watcher/flow/eod.md:78 to match cycle.mds already-fixed prose (Bash grant live since 2026-07-31 commit 610110e16b -- demote to a genuine invocation-error fallback, not an unconditional skip). 2. Separately decide and fix the lost-update exposure: the per-cycle full-overwrite notebook model has no protection when EOD and a same-agent sibling slot (e.g. offhours) both match in the same cowork-tick batch and fire minutes apart -- either preserve/merge the EOD section across the next overwrite, or serialize same-agent multi-slot fires so one cannot clobber the others uncommitted work. 3. Confirm news-scouts L-7 dependency (stage-log-notify.md:14) resumes working end-to-end on the next weekday EOD fire (its notebook commits without router intervention).",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "status": "DONE_VERIFIED",
+        "created_at": "2026-08-05T16:10:00Z",
+        "created_by": "router",
+        "updated_at": "2026-08-23T14:42:48Z",
+        "updated_by": "qa",
+        "related": [
+          "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT"
+        ],
+        "not_duplicate_of": "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT -- that row is a contention HYPOTHESIS on coverage-state:main mutex; this row is a DIRECTLY VERIFIED stale-doc root cause, distinct mechanism, same symptom family.",
+        "promoted_at": "2026-08-06T12:27:24Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
+        "claimed_at": "2026-08-15T01:51:51Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "commit_sha": "a71cc0df1,3d2ff4ee2,7a94f3dd5,f795efe35",
+        "review_note": "RAW-verified developer completion for a71cc0df1: commit confirmed ancestor of HEAD, diff read in full — eod.md:78 caveat replaced with cycle.mds already-fixed genuine-invocation-error prose (verbatim mirror, not invented); market-watcher-notebook:main task_claim mutex added to BOTH eod.md Step D and a new explicit offhours self-commit block in cycle.md, correctly closing the same-16:00Z-tick clobber race (AC-2); AC-3 confirmed as a real no-op — news-scout git add line was already present, L-7 resumes automatically. cycle.md size-justification header updated 309L->332L, exact match to new line count. Decision journal entry (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-3.md STEP developer-S65) present and substantive (what-considered includes 2 rejected alternatives with reasons, why-decision, why-change, verify). mock-guard.sh PASS noted (doc-only). Board lane-move + head-sync had been skipped by the agent itself -- performed here by the RAW-verifying router session, consistent with prior sessions self-closeout convention for this exact gap shape. | 2026-08-15T01:54Z QA re-check (AC-3 only): checked git log docs/agent-memory/notebooks/news-scout.md --since=2026-08-15T00:25:23Z (fix landed) — only hit is f795efe35, but that commit's own c269 content is timestamped 00:13Z, i.e. the pre-fix catch-up straggler explicitly called out in status_note, NOT a live fire of the hardened path. cowork-schedule.json news-scout-offhours.last_fired = 2026-08-15T00:13:14Z (same pre-fix event, cron 0 */4 * * * -> next scheduled fire 04:00Z). Current wallclock 01:54Z -- window has not elapsed. No BUG-channel telegram found (moot, no fire occurred). Verdict: NOT flipping DONE_VERIFIED -- zero live-fire evidence exists yet, matching this task's own resume_note prediction. Holding status QA / lane qa[] unchanged pending >=1 clean self-commit after a real news-scout-offhours fire (ideally the 16:00Z weekday co-fire with market-watcher-eod).",
+        "status_note": "developer secondary-drain rework 2026-08-15: AC-3 wiring was already landed via commit 3d2ff4ee2 (same coord-session, prior task FIX-NEWSSCOUT-COMMIT-POLICY-NEVER-MECHANICALLY-WIRED) -- task_claim mutex news-scout-notebook:main + git_commit_retry + RULE 2.5 pathspec ported into stage-log-notify.md's off-hours self-commit path, gated on slot=news-scout-offhours. Verified a same-tick false-positive gap in that landed fix: news-scout-offhours (0 */4 * * *) and market-watcher-eod (0 16 * * 1-5) co-fire every weekday at 16:00 UTC; eod.md Step D also commits news-scout.md in its own batch under a DIFFERENT mutex key (market-watcher-notebook:main) -- if eod.md lands first, the off-hours self-commit git add finds nothing pending and git_commit_retry returns non-zero on a clean diff (non-lock failure, no retry) -> false BUG-channel alert every co-firing weekday despite data already being safely committed. Fixed with a git diff --quiet pre-check guard (commit 7a94f3dd5) that skips the benign no-op instead of escalating. Also committed the one pre-fix straggler cycle (c269, appended 00:13Z before the fix landed at 00:25:23Z, was sitting uncommitted) to close residual exposure (commit f795efe35). NOT yet empirically proven end-to-end: zero news-scout-offhours cycles have fired since the hardened fix landed, so unlike AC-1/AC-2's 2-live-fire proof standard, AC-3 has zero live-fire confirmations. Reassigning to qa for RAW-verify once >=1 offhours cycle (ideally a 16:00 UTC weekday co-fire with eod.md) has self-committed cleanly with no BUG-channel alert.\n[QA] Review Record (direct-commit verify, 2026-08-23T14:42:46Z): APPROVED, DONE_VERIFIED. The 2026-08-15T01:54Z QA hold was correct at the time and its release condition is now MET BY LIVE EVIDENCE, not by elapsed time. That hold said: \"pending >=1 clean self-commit after a real news-scout-offhours fire\". THREE have occurred since the fix landed, all post-dating BOTH the wiring commit 3d2ff4ee2 (2026-08-15T00:25:23Z) and the false-positive guard 7a94f3dd5 (2026-08-15T01:31:24Z): c61f190e4 (cycle 2026-08-15 04:18 UTC), 541146148 (cycle 2026-08-15 08:11 UTC), cea834da2 (cycle 2026-08-22 20:09 UTC). The prior hold's blocker -- \"zero news-scout-offhours cycles have fired since the hardened fix landed\" -- is simply no longer true.\nBEST AVAILABLE CO-FIRE EVIDENCE, found by measuring rather than waiting: at the 2026-08-22T20:09Z tick BOTH notebook-commit paths ran within 37 seconds of each other -- market-watcher 57854975d (20:10:16Z) and news-scout cea834da2 (20:10:53Z) -- and BOTH landed clean, well-formed, distinct cycle sections. That is a genuine same-tick exercise of the two-different-mutex-keys design, and nothing was lost.\nNO CONTENT LOSS ANYWHERE POST-FIX, verified per-commit rather than asserted: git numstat over every commit touching either notebook since 2026-08-15T00:25:23Z shows only incremental add-newest/drop-oldest shapes (news-scout +7-7, +7-7, +8-15, +7-0; market-watcher +9-9, +11-12, +9-9, +9-8). Those are the notebook autoprune rolling window, not clobbers; a clobber of the class this row exists to close would present as a wholesale overwrite (large deletion with a small insertion), and none appears.\nALL THREE ACs RE-CONFIRMED IN THE SHIPPED FILES, not from the review_note: AC-1 -- zero occurrences of the stale no-Bash caveat remain in docs/agents/market-watcher/flow/eod.md. AC-2 -- the task_claim mutex block is live at eod.md lines 86-98 with key \"market-watcher-notebook:main\", bounded 3-attempt retry, proceed-unguarded-and-log fallback, and task_release in a finally. AC-3 -- docs/agents/news-scout/flow/stage-log-notify.md carries the distinct key \"news-scout-notebook:main\" (line 24), the same-tick clean-diff guard \"git diff --quiet HEAD -- docs/agent-memory/notebooks/news-scout.md\" (line 37), and a task_release in finally that explicitly covers the clean-diff skip branch (line 47). All four cited commits are on main ancestry (a71cc0df1, 3d2ff4ee2, 7a94f3dd5, f795efe35).\nRESIDUAL, STATED RATHER THAN GLOSSED: the specific case guard 7a94f3dd5 was written for -- eod.md Step D committing news-scout.md under ITS key on the shared 16:00 UTC Mon-Fri tick -- has NOT occurred since the fix, because market-watcher-eod is itself one of the fleet's currently-stale slots (last_fired 2026-08-14T16:10:51Z, 8 days, i.e. pre-fix). So that guard is code-correct and unit-reasoned but not live-exercised. This does not block approval: its failure direction is a spurious BUG-channel alert on a benign no-op, never data loss, and the row's own release condition named the co-fire as \"ideally\", not as required. Whoever fixes market-watcher-eod's staleness should re-check for a false BUG alert on the first post-fix weekday 16:00Z co-fire.\nNOT VERIFIABLE THIS SESSION, declared instead of assumed: \"no BUG-channel telegram fired\" could not be checked -- this sub-session holds no MCP gateway binding (INV-GATEWAY-1), so the Telegram BUG channel was not read. The claim rests on the code path plus the absence of any local escalation trace, not on channel inspection.\n",
+        "redispatch_count": 1,
+        "resume_note": "AC-3 code fix + same-tick guard landed (3d2ff4ee2, 7a94f3dd5, f795efe35) -- STILL zero live-fire confirmations as of 2026-08-15T01:54Z re-check (only post-fix notebook commit is the pre-fix c269 catch-up straggler). Next scheduled news-scout-offhours fire = 2026-08-15T04:00Z (cron 0 */4 * * *; ideally wait for the 16:00Z weekday co-fire with market-watcher-eod, the exact race the 7a94f3dd5 guard targets). Re-check: git log --since=2026-08-15T00:25:23Z -- docs/agent-memory/notebooks/news-scout.md for a NEW commit (not f795efe35) whose cycle timestamp is AFTER 00:25:23Z, cross-check cowork-schedule.json news-scout-offhours.last_fired advanced past 00:13:14Z, and confirm no BUG-channel telegram fired that tick. Do not flip DONE_VERIFIED until that lands, per this task's own AC-1/AC-2 2-live-fire precedent.",
+        "owner": "developer",
+        "secondary_claimed_at": "2026-08-15T01:23:41Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "developer",
+        "qa_verify_20260823": "[QA] Re-check 2026-08-23, HELD (no lane move). AC-1/AC-2 (stale caveat + same-tick clobber mutex) are now solidly proven — 4 separate real weekday 16:0xZ co-fires (08-06/07/12/13) all show BOTH eod and offhours notebook commits landing cleanly same-tick, no clobber, no stale-caveat skip. AC-3 (news-scout L-7 dependency resumes on next weekday EOD fire) code landed (3d2ff4ee2/7a94f3dd5/f795efe35) but remains genuinely unexercised: cowork-schedule.json shows market-watcher-eod.last_fired stuck at 2026-08-14T16:10:51Z, 5+ weekdays elapsed with zero EOD fire since — consistent with the separately-tracked host-suspension gap (08-18->08-22), not a defect in this fix. Not flipping DONE_VERIFIED per this row's own prior AC-1/AC-2 2-live-fire precedent; re-check when market-watcher-eod actually fires on a weekday post-outage. DJ qa-25 STEP qa-S41.",
+        "commit": "3d2ff4ee2",
+        "qa_verified_at": "2026-08-23T14:42:46Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git log --since + git show --numstat + grep over shipped flow docs + docs/data/cowork-schedule.json read",
+            "args": "commits=a71cc0df1,3d2ff4ee2,7a94f3dd5,f795efe35; notebooks=docs/agent-memory/notebooks/news-scout.md,market-watcher.md since 2026-08-15T00:25:23Z",
+            "live_value_observed": "ancestor=yes 4/4; 3 post-fix news-scout offhours self-commits (c61f190e4, 541146148, cea834da2); 2026-08-22T20:09Z co-fire both notebooks committed 37s apart and clean; numstat shows zero clobber-shaped commits; eod.md:86-98 mutex present, stale caveat 0 hits; stage-log-notify.md:24/37/47 key+clean-diff-guard+finally-release present; market-watcher-eod last_fired 2026-08-14T16:10:51Z so the weekday 16:00Z co-fire guard is not live-exercised",
+            "observed_at": "2026-08-23T14:42:46Z"
+          }
+        }
       }
     ],
     "head": {
@@ -16674,11 +16917,12 @@
           "SYSREMAKE-P2-T7-TASK-SCHEMA-DOC-SYNC",
           "SYSREMAKE-P2-T8-FLOW-DOC-WIRING"
         ],
-        "next_agent": "qa",
+        "next_agent": "po",
         "supervised": false,
         "note": "Standard merge gate, RAW-verify not badges.",
-        "updated_at": "2026-07-17T12:00:00Z",
-        "updated_by": "pm (decompose SYSREMAKE-P2 Leg-1, session e417ef1f)"
+        "updated_at": "2026-08-23T14:46:09Z",
+        "updated_by": "qa/ready-lane-triage-20260823T1445Z",
+        "qa_not_actionable_20260823T1445Z": "[QA 2026-08-23T14:45Z NOT ACTIONABLE — measured, not assumed] This row's own title is 'run T3/T5/T6 test suites + orch-validate AC-1..AC-5 + orch-apply wrapper tests'. Live board: SYSREMAKE-P2-T3-UNIT-TESTS, -T5-SERVER-PATH-PARITY-TEST and -T6-BUG-CLASS-LEDGER are ALL ready[]/READY with next_agent=developer and files=[] — none is built, so there are no T3/T5/T6 suites to run. Only T1 and T2 are DONE_VERIFIED. DEFECT IN THE ROW ITSELF: depends_on is [] — the gating exists only in the title prose, so deps_satisfied() sees an unblocked row and it presents as dispatchable to qa. Fix: declare depends_on = [SYSREMAKE-P2-T3-UNIT-TESTS, SYSREMAKE-P2-T5-SERVER-PATH-PARITY-TEST, SYSREMAKE-P2-T6-BUG-CLASS-LEDGER]. Routed to po. QA did NOT run a partial gate: running orch-validate/orch-apply alone and reporting a green would be the false-green shape this row exists to prevent."
       },
       {
         "id": "SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP",
@@ -16845,9 +17089,11 @@
           "DESIGN-COWORK-FANOUT-T6-MARKET-WATCHER-SLOT-ROUTING"
         ],
         "note": "QA: 9-point test strategy from brief §7. Tier 4 after T1, T2, T4, T6.",
-        "updated_at": "2026-07-22T01:52:02Z",
+        "updated_at": "2026-08-23T14:46:09Z",
         "owner": "qa",
-        "next_agent": "qa"
+        "next_agent": "po",
+        "updated_by": "qa/ready-lane-triage-20260823T1445Z",
+        "qa_not_actionable_20260823T1445Z": "[QA 2026-08-23T14:45Z NOT ACTIONABLE — measured, not assumed] The row's own note says 'Tier 4 after T1, T2, T4, T6'. Live board: T6 is DONE_VERIFIED, but T1-TICK-SNAPSHOT-WON-SLOTS, T2-CYCLE-BOOTSTRAP-EXTRACTION and T4-ALERT-COMMANDER-RECHECK-LOGIC are all ready[]/TODO (next_agent=agent-father for T1/T2/T4). Its brief section-7 T-1..T-9 strategy tests behaviour that three of its four prerequisites have not yet produced. DEFECT IN THE ROW ITSELF: depends_on is [] — the tier ordering is prose-only, invisible to deps_satisfied(). Fix: declare depends_on = [DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS, DESIGN-COWORK-FANOUT-T2-CYCLE-BOOTSTRAP-EXTRACTION, DESIGN-COWORK-FANOUT-T4-ALERT-COMMANDER-RECHECK-LOGIC]. Routed to po."
       },
       {
         "id": "FIX-AUDITOR-TIER1-FRESHNESS-CHECK-RELOCATE-TO-SENTINEL",
@@ -17116,13 +17362,14 @@
         "title": "QA: 7-point session-down survival test — DoD gate before signal atb-cowork-...203223Z resolves",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL",
         "owner": "qa",
-        "next_agent": "qa",
+        "next_agent": "po",
         "depends_on": [],
-        "updated_by": "po",
+        "updated_by": "qa/ready-lane-triage-20260823T1445Z",
         "po_routing_20260728": "PO 2026-07-28T13Z. Was backlog[] with a detail-resolved non-dev next_agent (qa) — the documented NO-LANE hole (zone-routing.md Step A2): BOUNDED-1 gates it via is_non_dev_next_agent_unrouted, SLS needs supervised AND plan_only (both null here), RLC never reads backlog[]. Moved to ready[] with status READY and the next_agent/owner promoted INLINE, which is the only lane (RLC) that dispatches a non-dev handler.",
         "po_dep_repair_20260728": "DEP REPAIR, acute instance of FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING (minted this same write). Its backlog-detail `depends` was [OPS-COWORK-GUARANTEED-SLOT-INSTALL, FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED]. The second is DONE_VERIFIED (2026-07-08T05:22:59Z, by qa) but lives in docs/data/orch/archive/2026-07.json, which dep_status_map does not scan — so it resolved MISSING and blocked this row PERMANENTLY. Dropped it by installing an INLINE depends_on (inline wins over detail in effective_depends_on, same repair shape as UC-CDC-P5 2026-07-23). The row stays legitimately held on OPS-COWORK-GUARANTEED-SLOT-INSTALL, which is still REVIEW — see the consolidation ruling on that row.",
-        "updated_at": "2026-08-23T09:49:06Z",
-        "po_dep_resolution_20260823": "DANGLING DEP RESOLVED — REMOVED, NOT MINTED. PO verified the dependency OPS-COWORK-GUARANTEED-SLOT-INSTALL is already SATISFIED IN FACT on the live machine, so minting it would have created a no-op ops row and delayed this QA gate further. Corroboration of the dangle: scripts/orch-apply.sh Stage 1g listed it as item [11] of 16 dependencies resolving MISSING; PO located the only surviving record at docs/data/orch/archive/backlog-detail.json items[375], status BACKLOG, never present in any hot lane (live grep: 0 matching rows in the board). Its declared acceptance was: new LaunchAgent loaded and visible in launchctl list; old fb-daily-firer unloaded; no two overlapping 900s pollers. All three verified live 2026-08-23T09:45Z: (1) launchctl list shows `-\\t0\\tcom.vn-market.cowork-guaranteed-slot-firer`; (2) ~/Library/LaunchAgents/com.vn-market.cowork-guaranteed-slot-firer.plist is a symlink into the repo launchd/ dir, dated 10 jul; (3) no fb-daily-firer entry in launchctl list and no fb-daily-firer.plist anywhere in launchd/ — retired, and the generalized firer subsumes it per its own plist header. Its parent gate F1-LAUNCHD-COWORK-BACKSTOP also landed (firer script + plist both exist and the firer log shows real invocations, most recently 2026-08-22T20:32:48Z). This row is now DISPATCHABLE. NOTE FOR QA WHEN IT RUNS: point 7 of the 7-point spec (docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md section 6) — the injected-fault test for the Tier-1 extension — is testable TODAY: Check 6 _check_launchd_agents() at scripts/agents-flow/auditor-tier1-probe.sh:583-687 IS shipped and hardened twice. But scope point 7 to LOADEDNESS ONLY. It asserts the label is loaded at exit-status 0; it does NOT assert the firer is ticking, and it stayed ALL_GREEN through the 96.5h Standby outage of 2026-08-18 -> 08-22. That residual gap is tracked separately as FIX-LAYERC-FIRER-NO-TICK-LIVENESS-ORACLE-LOADED-ASSERTION-INVARIANT-UNDER-HOST-SLEEP — do NOT fail point 7 for it, and do NOT pass point 7 by claiming firing coverage."
+        "updated_at": "2026-08-23T14:46:09Z",
+        "po_dep_resolution_20260823": "DANGLING DEP RESOLVED — REMOVED, NOT MINTED. PO verified the dependency OPS-COWORK-GUARANTEED-SLOT-INSTALL is already SATISFIED IN FACT on the live machine, so minting it would have created a no-op ops row and delayed this QA gate further. Corroboration of the dangle: scripts/orch-apply.sh Stage 1g listed it as item [11] of 16 dependencies resolving MISSING; PO located the only surviving record at docs/data/orch/archive/backlog-detail.json items[375], status BACKLOG, never present in any hot lane (live grep: 0 matching rows in the board). Its declared acceptance was: new LaunchAgent loaded and visible in launchctl list; old fb-daily-firer unloaded; no two overlapping 900s pollers. All three verified live 2026-08-23T09:45Z: (1) launchctl list shows `-\\t0\\tcom.vn-market.cowork-guaranteed-slot-firer`; (2) ~/Library/LaunchAgents/com.vn-market.cowork-guaranteed-slot-firer.plist is a symlink into the repo launchd/ dir, dated 10 jul; (3) no fb-daily-firer entry in launchctl list and no fb-daily-firer.plist anywhere in launchd/ — retired, and the generalized firer subsumes it per its own plist header. Its parent gate F1-LAUNCHD-COWORK-BACKSTOP also landed (firer script + plist both exist and the firer log shows real invocations, most recently 2026-08-22T20:32:48Z). This row is now DISPATCHABLE. NOTE FOR QA WHEN IT RUNS: point 7 of the 7-point spec (docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md section 6) — the injected-fault test for the Tier-1 extension — is testable TODAY: Check 6 _check_launchd_agents() at scripts/agents-flow/auditor-tier1-probe.sh:583-687 IS shipped and hardened twice. But scope point 7 to LOADEDNESS ONLY. It asserts the label is loaded at exit-status 0; it does NOT assert the firer is ticking, and it stayed ALL_GREEN through the 96.5h Standby outage of 2026-08-18 -> 08-22. That residual gap is tracked separately as FIX-LAYERC-FIRER-NO-TICK-LIVENESS-ORACLE-LOADED-ASSERTION-INVARIANT-UNDER-HOST-SLEEP — do NOT fail point 7 for it, and do NOT pass point 7 by claiming firing coverage.",
+        "qa_not_actionable_20260823T1445Z": "[QA 2026-08-23T14:45Z NOT ACTIONABLE — two independent reasons, both measured] (1) PREREQUISITES: its own detail_ref desc says 'Gated on OPS-COWORK-GUARANTEED-SLOT-INSTALL + FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED landing'; neither id is present in ANY hot lane (both survive only in archive/backlog-detail.json, and FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED also in archive/2026-07.json). depends_on is [] so this gating is prose-only. (2) DESTRUCTIVE AND UNSAFE RIGHT NOW, independent of (1): assertion 2 of the 7 requires forcing Layer B dead — ending the CLI session or CronDelete-ing the */15 cowork master. At the time of this check a live peer session was running dev-team plus agent-father, agents-architect, ops and developer agents in parallel; killing the master dispatcher would have taken all of them down. This test needs a supervised, quiet window, not an opportunistic qa slot. PARTIAL RESULT recorded so the next runner does not redo it: assertion 1 PASSES — launchctl list shows com.vn-market.cowork-guaranteed-slot-firer loaded with last exit status 0. Assertions 2-7 not attempted. Routed to po to schedule a supervised window and to declare the two prerequisites."
       },
       {
         "id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
@@ -17735,83 +17982,6 @@
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "architect",
         "architect_review_note": "[architect 2026-08-12T10:5xZ DISPOSITION — no new code, execution gap only] ROOT CAUSE (RAW-verified): see .detail for the full evidence trail. Summary — all 12 cohort tickers bctc_vps_queue rows are stuck url_not_found/last_attempt=NULL/attempts=6-7 since 2026-04-28/30, pre-dating the FIX-BCTC-ENRICHER-STUCK-BACKLOG last_attempt fix (d92801332, 2026-07-02), permanently excluded from every retry arm in bctcQueueEnricherJob.ts. The fix already exists and was committed in the SAME commit as the last_attempt fix: apps/mcp-server/src/migrations/reset-bctc-enricher-stuck-backlog-2026-04.ts — allowlist verified to cover all 12 of this cohorts tickers. Never invoked (live probe confirms pre-fix state unchanged today).\nOPS ACTION PLAN (no code to write):\n1. docker exec <mcp-server container> bun run apps/mcp-server/src/migrations/reset-bctc-enricher-stuck-backlog-2026-04.ts --dry-run -- confirm ~21 matches incl. this cohorts 12.\n2. Re-run WITHOUT --dry-run to apply (resets matched rows to pending/attempts=0/last_attempt=NULL).\n3. RAW re-probe bctc_table_rows/bctc_layout_units for the 12 report_ids over the following 1-2 reconcile cycles (~30min-4h) -- the bctcQueueEnricherJob -> bctcPdfPullJob -> bctcExtractReconcileJob pipeline is independently proven live-healthy (1865 layout_units written 2026-08-03 alone), no further code intervention expected.\nEXPECTED SPLIT:\n- GVR/MBB/D2D/NKG/SSI (real UUID, no fallback-id blocker): should genuinely resolve to real table_rows via the healthy pipeline. Ds pdf_path (NULL again) gets freshly re-set by the normal pull step once its queue row is re-admitted -- no separate fix needed.\n- GAS (no financial_reports row at all): ensureFinancialReportShellRow (already wired into bctcPdfPullJob step 4b) auto-creates the shell row on re-pull -- no manual insert needed this time (unlike the 07-10 one-off).\n- ACB/BID/EIB/HCM/HSG/POW (fallback-id cohort, Track1): will re-pull and re-fire PEK but the write still HTTP-400s at the isValidUuid() gate until FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE (owner architect, currently BLOCKED on its own -write/-READ-SIDE-FAST-FOLLOW children) ships -- harmless no-op, NOT a regression; sequencing after Track1 ships is preferable but not required for safety.\nDo NOT re-litigate dormancy/PPC/fallback hypotheses -- independently closed by prior rounds on this row + the Track1 row.\nOPTIONAL P2 (not required to close this row): the migration existing-but-never-auto-run is itself enricher-liveness.md doc own flagged \"recurring bug class (2nd occurrence)\" concern -- a startup-safe generic reset (mirroring server-startup.ts pdf-poison-cleanup precedent) would close a 3rd occurrence pre-emptively. POs call whether to mint separately.\nROUTING: next_agent=ops (execution + RAW-verify only -- zero new code/design needed, the fix already exists). Zone unchanged apps/mcp-server/. BUILD-STANDARD: not-applicable (data-repair execution of an already-authored migration)."
-      },
-      {
-        "id": "FIX-CHEF-MARKER-KEY-ANCHOR-2",
-        "type": "FIX",
-        "size": "S",
-        "title": "Document scheduled_utc_time in match-slots.md",
-        "status": "TODO",
-        "priority": "P0",
-        "zone": "docs/agents/cowork-team/",
-        "owner": "developer",
-        "next_agent": "agent-father",
-        "sprint": "COWORK-RELIABILITY",
-        "parent": "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR",
-        "created_at": "2026-08-12T11:29:41Z",
-        "created_by": "pm",
-        "depends_on": [
-          "FIX-CHEF-MARKER-KEY-ANCHOR-1"
-        ],
-        "files": [
-          "docs/agents/cowork-team/flow/match-slots.md"
-        ],
-        "note": "Add field to MATCHES output schema documentation; cross-reference catchup_raw equivalent",
-        "updated_at": "2026-08-23T13:58:10Z",
-        "updated_by": "developer",
-        "routing_correction_20260823": "next_agent developer -> agent-father. Every file in this row files[] is under docs/agents/, which is agent-father EXCLUSIVE commit_zone (docs/agents/agent-father/init.md commit_zone.allowed = [docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/]). A developer picking this up must either breach that zone or stall; the identical breach happened on this repo earlier TODAY (see docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-8.md STEP developer-S113, where a developer edit to a flow doc had to be reverted for exactly this reason). Producer half ANCHOR-1 shipped in 777ec912f; depends_on ANCHOR-1 still gates these until QA promotes it to DONE_VERIFIED, which is correct and deliberately not forced."
-      },
-      {
-        "id": "FIX-CHEF-MARKER-KEY-ANCHOR-3",
-        "type": "FIX",
-        "size": "S",
-        "title": "Append scheduled_utc= to spawn-fanout.md trigger_prompt Step 5.2",
-        "status": "TODO",
-        "priority": "P0",
-        "zone": "docs/agents/cowork-team/",
-        "owner": "developer",
-        "next_agent": "agent-father",
-        "sprint": "COWORK-RELIABILITY",
-        "parent": "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR",
-        "created_at": "2026-08-12T11:29:41Z",
-        "created_by": "pm",
-        "depends_on": [
-          "FIX-CHEF-MARKER-KEY-ANCHOR-1"
-        ],
-        "files": [
-          "docs/agents/cowork-team/flow/spawn-fanout.md"
-        ],
-        "note": "Append scheduled_utc=<slot.scheduled_utc_time> to ENTRY_PROMPT; symmetric for live+catchup paths",
-        "updated_at": "2026-08-23T13:58:10Z",
-        "updated_by": "developer",
-        "routing_correction_20260823": "next_agent developer -> agent-father. Every file in this row files[] is under docs/agents/, which is agent-father EXCLUSIVE commit_zone (docs/agents/agent-father/init.md commit_zone.allowed = [docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/]). A developer picking this up must either breach that zone or stall; the identical breach happened on this repo earlier TODAY (see docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-8.md STEP developer-S113, where a developer edit to a flow doc had to be reverted for exactly this reason). Producer half ANCHOR-1 shipped in 777ec912f; depends_on ANCHOR-1 still gates these until QA promotes it to DONE_VERIFIED, which is correct and deliberately not forced."
-      },
-      {
-        "id": "FIX-CHEF-MARKER-KEY-ANCHOR-4",
-        "type": "FIX",
-        "size": "M",
-        "title": "Parse scheduled_utc= in chef.md Step 0.5; derive CYCLE_DATE_UTC",
-        "status": "TODO",
-        "priority": "P0",
-        "zone": "docs/agents/unified-agent/",
-        "owner": "developer",
-        "next_agent": "agent-father",
-        "sprint": "COWORK-RELIABILITY",
-        "parent": "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR",
-        "created_at": "2026-08-12T11:29:41Z",
-        "created_by": "pm",
-        "depends_on": [
-          "FIX-CHEF-MARKER-KEY-ANCHOR-1",
-          "FIX-CHEF-MARKER-KEY-ANCHOR-3"
-        ],
-        "files": [
-          "docs/agents/unified-agent/flow/chef.md",
-          "docs/agents/digest-predict/flow/main.md"
-        ],
-        "note": "Parse scheduled_utc parameter; derive CYCLE_DATE_UTC from it (fallback: date -u). Apply pattern to all guaranteed slots per AC5",
-        "updated_at": "2026-08-23T13:58:10Z",
-        "updated_by": "developer",
-        "routing_correction_20260823": "next_agent developer -> agent-father. Every file in this row files[] is under docs/agents/, which is agent-father EXCLUSIVE commit_zone (docs/agents/agent-father/init.md commit_zone.allowed = [docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/]). A developer picking this up must either breach that zone or stall; the identical breach happened on this repo earlier TODAY (see docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-8.md STEP developer-S113, where a developer edit to a flow doc had to be reverted for exactly this reason). Producer half ANCHOR-1 shipped in 777ec912f; depends_on ANCHOR-1 still gates these until QA promotes it to DONE_VERIFIED, which is correct and deliberately not forced."
       },
       {
         "id": "FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE",
@@ -18649,7 +18819,7 @@
         "id": "TASK-COWORK-STALE-SLOT-DISPOSITION-TABLE",
         "title": "Produce the per-slot disposition table against the frozen 2026-08-23T09:00Z schedule snapshot - all 11 stale slots, each in exactly one bucket (recorded-late | genuinely-missed no-catchup-possible | catchup-eligible under widened scope) - and independently re-verify brief AC-1..AC-4",
         "owner": "qa",
-        "next_agent": "qa",
+        "next_agent": "po",
         "status": "TODO",
         "type": "FIX",
         "size": "S",
@@ -18667,30 +18837,9 @@
         "created_at": "2026-08-23T09:47:24Z",
         "created_by": "pm",
         "handoff": "docs/handoffs/TASK-COWORK-STALE-SLOT-DISPOSITION-TABLE.md",
-        "updated_at": "2026-08-23T09:47:25Z"
-      },
-      {
-        "id": "FIX-FILESIZECAPS-FLOWFILE-GLOB-NESTED-DIR-ONLY-173-FLOW-FILES-UNGOVERNED",
-        "type": "FIX",
-        "title": "the flow-file line cap governs ZERO of the 173 flow files: pattern docs/agents/*/flow/**/*.md is matched with bash `case`, where ** collapses to * and the trailing /*.md forces a directory BELOW flow/ — no such directory exists, so the cap is inert and correcting the glob would breach 62 files at once",
-        "owner": "po",
-        "status": "READY",
-        "priority": "P2",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "po",
-        "created_at": "2026-08-23T09:47:00Z",
-        "created_by": "po",
-        "files": [
-          "docs/data/file-size-caps.json",
-          "scripts/agents-flow/context-bloat-backstop.sh"
-        ],
-        "depends_on": [],
-        "verification_gate": "a_rollout_decision_is_recorded_AND_the_corrected_glob_is_validated_against_the_full_173_file_cohort_not_a_single_file",
-        "status_note": "[ARCHITECT] 2026-08-23T14:28:14Z — verification_gate ROLLOUT DECISION RECORDED: docs/architecture-briefs/2026-08-23-flow-file-cap-glob-fix-and-doc-plane-baseline-ratchet.md. Glob defect re-executed, corrected pattern docs/agents/*/flow/*.md validated on positive+negative fixtures. Full 173-file cohort measured independently (FENCE honoured): 98 clean / 12 absorbed / 3 line-only / 60 byte-cap = 63 emitters (row estimated 62/59/13); 26 files carry a CURRENT header that TE-T24 structurally cannot honor. Risk reframed: hook always exits 0, no CI gate, dedups per file — one-shot <=63-signal inbox burst, not an every-edit emitter. RULED (a)+(b), ported from the live 648-entry code-plane baseline/ratchet, NOT a new mechanism; (c)/(d) rejected; cap:120 left alone (p50=102L), BC-1 60 B/line is the wrong knob. NEXT = po: mint brief §6 rows R1->R2->R3 (order load-bearing, glob flips LAST): FIX-CTXBLOAT-SIZEJUSTIFICATION-BYTE-DIMENSION developer S / FIX-CTXBLOAT-DOCPLANE-BASELINE-RATCHET developer M dep-on-R1 / FIX-FILESIZECAPS-FLOWFILE-GLOB-CORRECT agent-father XS dep-on-R2 (manual dispatch — fails is_dev_role). Brief §7: 272 of 445 docs/agents/**/*.md match no cap pattern at all.\n\nWHY agents-architect AND NOT A ONE-LINE PATCH: file-size-caps.json is _maintained_by 'agents-architect (policy) / agent-father (implementation)'. Correcting the glob is one character; deciding what happens to the 62 files it newly breaches is policy, and that decision must exist BEFORE the fix lands.\n\nDEFECT, verified at source 2026-08-23. docs/data/file-size-caps.json carries {pattern: 'docs/agents/*/flow/**/*.md', cap: 120, class: 'flow-file'}. Its only consumer, scripts/agents-flow/context-bloat-backstop.sh:119, matches with `case \"$REL_PATH\" in $pattern)`. bash `case` has no recursive-globstar: ** is just two adjacent *, and the literal / that follows it forces at least one path component below flow/. Executed live:\n  case docs/agents/system-auditor/flow/main.md in docs/agents/*/flow/**/*.md) -> NO-MATCH\n  case docs/agents/x/flow/sub/y.md         in docs/agents/*/flow/**/*.md) -> MATCH\nCounted: `find docs/agents -path '*/flow/*.md'` = 173; `find docs/agents -path '*/flow/*/*.md'` = 0. Every real flow file sits directly in flow/, so 173/173 match no pattern at all, MATCHED_CAP stays empty, and the script exits 0 at line 132 on the non-governed hot path — before it ever calls wc. Confirmed on the worst offender: system-auditor/flow/main.md is 1425L and the backstop exits 0.\n\nBLAST RADIUS — MEASURED, NOT ESTIMATED (all 173 files, cap 120L and the script's own BC-1 byte cap of cap*60 = 7200B):\n  98  within both caps       -> unaffected\n  63  over the 120L line cap\n  59  over the 7200B byte cap\n  13  line-only breaches absorbed by an existing <!-- size-justification: --> header\n  62  WOULD EMIT A BREACH on their very next edit\nThe load-bearing number is 59. scripts/agents-flow/context-bloat-backstop.sh's own TE-T24 note states a size-justification comment declares a LINE count only and NEVER honors a byte-cap breach. So 59 of the 62 breaches have NO existing escape hatch, including every high-traffic flow doc in the fleet: dev-team/flow/main.md 1279L/192014B (26.7x the byte cap), system-auditor/flow/main.md 1425L/153599B (21.3x), unified-agent/flow/chef-dish.md 1040L/75862B, fb-market-poster/flow/daily.md 942L/65718B, cowork-team/flow/spawn-fanout.md 506L/36055B. Correcting the glob with no rollout decision turns the fleet's most-edited documents into permanent every-edit breach emitters.\n\nDECISION REQUIRED (pick one and record the reasoning): (a) grandfather the 62 with a dated, expiring allowlist; (b) stage the tightening — land the glob with a flow-file-specific byte budget calibrated to the live distribution, then ratchet; (c) per-file caps for the structural outliers; (d) split class 'flow-file' into 'flow-dispatcher' and 'flow-body' with different budgets. Whatever is chosen must state what happens to the 59 byte-cap breaches, since size-justification cannot cover them.\n\nFENCE — feedback_fleetwide_gate_validated_on_one_file_optout_allowlist: do NOT validate the corrected glob on one file. Re-run the full 173-file cohort before and after and diff the emit set. Any allowlist MUST be opt-IN and dated, never opt-out.\n\nPROVENANCE: found by agent-father while validating its own INV-GATEWAY-1 work. agent-father correctly declined to ship a spawn-fanout.md header note asserting the backstop 'emits on every edit' — it could not verify that claim because the claim is false — and corrected the note instead. Deliberately kept out of agent-father's own row and routed here for a policy ruling.\n\nHISTORY TO READ FIRST: project_context_bloat_governance, feedback_ctxbloat_breach_on_live_sprint_file_defer (a breach fired on a live in-flight sprint file must DEFER, not block), and the 2026-06-14 RECALIBRATE precedent already recorded inline in file-size-caps.json for the .claude/skills/**/*.md cap (120 -> 200 against the measured live distribution) — that is the closest prior art for the calibration this row needs.",
-        "updated_at": "2026-08-23T14:29:10Z",
-        "detail_ref": "docs/architecture-briefs/2026-08-23-flow-file-cap-glob-fix-and-doc-plane-baseline-ratchet.md",
-        "updated_by": "agents-architect"
+        "updated_at": "2026-08-23T14:46:09Z",
+        "updated_by": "qa/ready-lane-triage-20260823T1445Z",
+        "qa_not_actionable_20260823T1445Z": "[QA 2026-08-23T14:45Z NOT ACTIONABLE — but this row is correctly declared, unlike its three siblings] All FOUR declared depends_on are ready[]/TODO and unbuilt: TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK (next=developer), TASK-COWORK-MISSED-FIRE-AUDIT (next=developer), TASK-COWORK-CATCHUP-SCOPE-PREDICATE (next=developer), TASK-COWORK-SCHEDULE-ONMISS-AND-SCOPE (next=agent-father). The row asks for a disposition table bucketing stale slots as 'catchup-eligible under widened scope' — that widened scope is precisely what TASK-COWORK-CATCHUP-SCOPE-PREDICATE would build and it does not exist yet, so any table produced today would describe the PRE-fix state while reading as the parent's verification_gate. Its own note warns against exactly this ('cannot be narrated instead of executed'); producing it early would be the same failure in the opposite direction. Also unresolvable: the 'frozen 2026-08-23T09:00Z schedule snapshot' the title names does not exist on disk (searched docs/ for any cowork-schedule snapshot; only docs/signals/cowork-tick-snapshot-regime-mismatch-20260813T083022Z.json, a different artefact from 2026-08-13). USEFUL DATA MEASURED THIS CYCLE, hand it to whoever runs this later rather than re-deriving: against the LIVE schedule at 2026-08-23T14:2xZ there are 21 enabled slots, of which 9 sit at >=8d since last_fired — fb-daily 10d (guaranteed), chef-eod 10d (guaranteed), chef-morning 9d (guaranteed), news-scout-sentiment 9d, chef-intraday 9d, alert-commander-market 9d, refine-bctc-slot-4 8d, market-watcher-eod 8d, bctc-analyst-slot-1 8d. That is 9, not the 11 the title asserts — REMEASURE at run time, do not carry either integer. CRITICAL BUCKETING CAVEAT the architect's hypotheses must be tested against: last_fired tracks the cowork invocation path ONLY, not delivery. market-watcher and alert-commander both committed notebooks TODAY against 8-9d stale stamps, so a stale stamp is NOT evidence of a missed fire and the 'genuinely-missed' bucket cannot be populated from last_fired alone — it needs per-agent delivery evidence (notebook/artifact commits) as a second axis. Routed to po."
       },
       {
         "id": "FIX-LAYERC-FIRER-NO-TICK-LIVENESS-ORACLE-LOADED-ASSERTION-INVARIANT-UNDER-HOST-SLEEP",
@@ -18813,12 +18962,12 @@
         "priority": "P1",
         "size": "S",
         "zone": "cross-service/",
-        "next_agent": "qa",
+        "next_agent": "po",
         "parent": "FIX-SIGNAL-INBOX-NON-DRAINABLE-ENVELOPE-50-OF-51-FILES-SILENTLY-CLASSED-LITTER",
         "created_at": "2026-08-23T10:45:00Z",
         "created_by": "pm",
-        "updated_at": "2026-08-23T10:47:21Z",
-        "updated_by": "pm",
+        "updated_at": "2026-08-23T14:46:09Z",
+        "updated_by": "qa/ready-lane-triage-20260823T1445Z",
         "depends_on": [
           "TASK-SIGINBOX-ORPHAN-ESCALATION-CORE"
         ],
@@ -18828,7 +18977,8 @@
           "scripts/agents-flow/drain-signals.js"
         ],
         "verification_gate": "no_file_can_sit_in_docs_signals_beyond_a_declared_age_without_either_being_drained_or_raising_a_loud_escalation_that_names_it",
-        "note": "Spec: docs/handoffs/TASK-SIGINBOX-LIVE-FIRST-RUN-GATE.md. Separate task because (a) the parent's verification_gate is a statement about the LIVE inbox that fixture tests cannot prove, and (b) the first real run emits one escalation per stuck file in a single tick straight into PO's Step 0-SIG queue — a one-time blast that deserves supervised observation, not a side effect of a developer's last test run. RE-MEASURE the population at run time; do NOT carry any integer from the brief. If the one-shot property fails on live data (escalations re-fire every tick) that is WORSE than the silence it replaced — escalate and recommend revert."
+        "note": "Spec: docs/handoffs/TASK-SIGINBOX-LIVE-FIRST-RUN-GATE.md. Separate task because (a) the parent's verification_gate is a statement about the LIVE inbox that fixture tests cannot prove, and (b) the first real run emits one escalation per stuck file in a single tick straight into PO's Step 0-SIG queue — a one-time blast that deserves supervised observation, not a side effect of a developer's last test run. RE-MEASURE the population at run time; do NOT carry any integer from the brief. If the one-shot property fails on live data (escalations re-fire every tick) that is WORSE than the silence it replaced — escalate and recommend revert.",
+        "qa_not_actionable_20260823T1445Z": "[QA 2026-08-23T14:45Z NOT ACTIONABLE — correctly declared] Its single declared dependency TASK-SIGINBOX-ORPHAN-ESCALATION-CORE is ready[]/READY, i.e. not yet implemented. This row's whole purpose is to observe the FIRST post-fix live drain tick; with no fix deployed there is no post-fix tick to observe, and running it now would measure pre-fix behaviour. Its own note is explicit that the population must be re-measured at run time and that no integer may be carried from the brief — both only meaningful after the core lands. Routed to po; should be BLOCKED-on-dep rather than presented in ready[] with next_agent=qa."
       },
       {
         "id": "TASK-PROSECEILING-LIVE-BASELINE-ALL-LANES",
@@ -19374,8 +19524,8 @@
           "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR"
         ],
         "consumer_impact": "Affects router-manual dispatch of every cowork-slot agent. Cron path uses a separate fire-election and is unaffected. Already blocked one legitimate fb-market-poster dispatch on 2026-08-14.",
-        "updated_at": "2026-08-23T14:07:44Z",
-        "updated_by": "agents-architect",
+        "updated_at": "2026-08-23T14:48:03Z",
+        "updated_by": "po/brief-complete-triage",
         "occurrence_2_20260814T1952Z": "SECOND live block, 10h29m after occurrence 1 (fb-daily). Router probe at 2026-08-14T19:52:07Z on slot chef-evening (cron `45 19 * * *`) matched published:chef-evening:2026-08-13 (owner_client_session 0454e9d8-b475-4230-95c9-8b7d943aa8b3, claimed_at 2026-08-13T19:53:37Z, ttl 100800, expires 2026-08-14T23:53:37Z). PO re-verified live via task_list_held: (a) published:chef-evening:2026-08-14 ABSENT -> today genuinely unpublished, (b) NO session-presence row for 0454e9d8 -> holder session dead, exactly the AC-3 stale-owner shape, (c) no cowork-slot:chef-evening and no intent:unified-agent:* held -> no live peer. Same dead session 0454e9d8 also holds published:chef-morning:2026-08-14, so one dead session is now blocking two slots.",
         "blast_radius_20260814": "NOT slot-specific and NOT probabilistic — DETERMINISTIC for every daily-cadence slot, computable from config alone. Live 100800s markers confirmed on 5 slots: chef-evening, chef-eod, chef-morning, tnb-audit, fb-daily. Blocked window per slot = 28h TTL minus 24h cadence = 4h, positioned to START at the slot fire time, i.e. the prior marker is ALWAYS live at the exact moment the next fire dispatches. chef-evening blocked window = 19:45Z fire vs 23:53Z expiry = 100% of every fire, every day, forever. digest-daily (ttl 86400 = cadence exactly) is marginal-not-safe: it blocks whenever today fire is even one second earlier than yesterday claim.",
         "po_ruling_20260814T1952Z": "P1 -> P0 and next_agent developer -> agents-architect. P0 because this is now a confirmed-recurring DAILY availability defect on the guaranteed-slot publish path with 2 live blocks in one day, not a latent design smell. Routed to agents-architect (not developer) because the prefix match is a DELIBERATE ruling from docs/architecture-briefs/2026-07-29-fix-cowork-dispatch-router-intent-mutex-bypass-design.md (Candidate A refined, zero date-basis duplication) — the brief author must re-rule the axis, since the three candidate axes trade off against each other and two of them regress something. Developer implements AFTER the ruling. Reference: PO already rejected the naive one-line fix in po_rescope_note; that rejection STANDS.",
@@ -19388,7 +19538,9 @@
         "claimed_at": "2026-08-23T13:56:39Z",
         "claimed_by": "dev-team (design-router sweep)",
         "architecture_brief": "docs/architecture-briefs/2026-08-23-fix-cowork-published-marker-ttl-cadence-mismatch-design.md",
-        "architect_ruling_20260823": "Design complete — root cause is Step 2.4's prefix-only match in dispatch-claim/SKILL.md (not chef.md's own exact-match gate, not any MARKER_TTL constant). Ruled Axis D (cadence-bounded prefix match keyed on cowork-schedule.json's live publish_date_basis field) landed together with Axis C (AC-3/AC-5 stale-owner check) in one Step 2.4 FR-3 revision — full pseudocode + fixture design in brief. Zero apps/mcp-server change, zero MARKER_TTL shortening (preserves catch-up flow). New finding: digest-sunday carries the identical latent overlap defect at weekly scale, closed for free by the same fix. Single-file design (SKILL.md logic + test fixture) — routed directly to developer, no PM decomposition needed."
+        "architect_ruling_20260823": "Design complete — root cause is Step 2.4's prefix-only match in dispatch-claim/SKILL.md (not chef.md's own exact-match gate, not any MARKER_TTL constant). Ruled Axis D (cadence-bounded prefix match keyed on cowork-schedule.json's live publish_date_basis field) landed together with Axis C (AC-3/AC-5 stale-owner check) in one Step 2.4 FR-3 revision — full pseudocode + fixture design in brief. Zero apps/mcp-server change, zero MARKER_TTL shortening (preserves catch-up flow). New finding: digest-sunday carries the identical latent overlap defect at weekly scale, closed for free by the same fix. Single-file design (SKILL.md logic + test fixture) — routed directly to developer, no PM decomposition needed.",
+        "detail_ref": "docs/architecture-briefs/2026-08-23-fix-cowork-published-marker-ttl-cadence-mismatch-design.md",
+        "po_brief_link_20260823": "PO 2026-08-23T14:52Z — detail_ref BACK-FILLED. agents-architect emitted a brief_complete signal at 14:04:55Z naming docs/architecture-briefs/2026-08-23-fix-cowork-published-marker-ttl-cadence-mismatch-design.md for this row, but the row's detail_ref was null, so the design was invisible from the board and the assignee would have started from the row prose alone. Read the brief before implementing. Same defect class as the STALE detail_ref just corrected on FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT — briefs are landing without their rows being re-pointed at them. Two occurrences in one triage cycle; if a third appears, mint a systemic row for the brief->row link step in the agents-architect flow."
       },
       {
         "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort",
@@ -19426,6 +19578,90 @@
         "detail_ref": "docs/signals/processed/ci-red-83ab26dc-20260823142350.json",
         "dedup_key": "bashgrant-gate-negated-phrase-fp",
         "status_note": "P0 CI-BLOCKING. Second of the two jobs red on origin/main 429dcf8fa (run 32645643303, job agent-bash-grant-coverage 97209377297). Reproduced locally on this HEAD — genuinely red, not stale.\n\nDEFECT (measured, not inferred): scripts/audits/agent-bash-grant-coverage.sh:103 sets DEMAND_ERE='bash scripts/|git add|git commit|git push|commit-mutex|commit-boundary' and greps it over the agent's whole flow corpus with no negation handling. Commit baa91292c ('chore(agents): fleet-wide debug-logger-protocol rollout (Check #6)') added this boilerplate note to agent init.md knowledge blocks fleet-wide:\n  note: \"Per-agent debug logger convention. Append one line to docs/agent-memory/debug/<id>.log per notable step/error (Read-then-Write append, no MCP tool, no per-line git commit).\"\nThe substring 'git commit' inside 'no per-line git commit' matches DEMAND_ERE. The sentence says the OPPOSITE of a Bash demand — it explicitly prescribes Read-then-Write and forbids per-line git commit.\n\nEVIDENCE THIS IS A PURE FP, NOT REAL DEBT: ran `find docs/agents/refine_bctc_md -name '*.md' | xargs grep -niE '<DEMAND_ERE>'` — EXACTLY ONE match across the entire corpus (init.md:80), and it is that negated sentence. refine_bctc_md's corpus references one skill (.claude/skills/bctc-gate-vision/SKILL.md) with no match either. There is no real Bash-only step anywhere in this agent's flow.\n\nDO NOT FIX BY GRANTING BASH. Granting Bash to refine_bctc_md would silence CI by laundering a detector bug into a genuine privilege escalation on a deliberately Bash-less agent. DO NOT FIX BY BASELINING EITHER: docs/data/agent-bash-grant-coverage-baseline.json is documented in-script as a ledger of real-but-separately-owned debt, explicitly NOT an opt-out allowlist, and requires a non-null owning_task — there is no real debt here to own.\n\nCORRECT FIX (developer's call between these): (a) make the demand match negation-aware — reject a DEMAND_ERE hit preceded on the same line by 'no ' / 'never ' / 'without ' / 'not '; or (b) exclude YAML `note:`/`description:` scalar values inside the frontmatter knowledge block from the corpus scan, since those are prose-about-tooling not flow steps; or (c) require the match to be in an executable position (fenced code block or a step line), not inside a quoted YAML string. (a) is narrowest, (c) is most durable. Whichever is chosen, add a regression fixture containing the exact debug-logger boilerplate string.\n\nBLAST RADIUS — this will recur: the boilerplate is fleet-wide, so EVERY Bash-less agent that receives it reds this gate. Only refine_bctc_md trips today (bctc-analyst is already baselined under FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH — check whether that baseline entry is the same FP and should be retired by this fix rather than left as fake debt). Any future Bash-less agent onboarded with the standard note reds CI on arrival.\n\nSHAPE PRECEDENT: feedback_codejanitor_deadcode_toolusage_audit_mass_false_positive_20260822 — same class, a narrow textual detector surface producing mass FPs; and feedback_fleetwide_gate_validated_on_one_file_optout_allowlist on why the allowlist route is wrong.\n\nAC-1: scripts/audits/agent-bash-grant-coverage.sh --check exits 0 on current HEAD with refine_bctc_md showing bash_demand=no-demand. AC-2: a synthetic fixture agent with a REAL 'git commit' flow step and no Bash grant still FAILS (the fix must not blunt the gate). AC-3: CI job agent-bash-grant-coverage green on the push that lands this."
+      },
+      {
+        "id": "FIX-PM-3E-FAILLOUD-HOTFIX",
+        "type": "FIX",
+        "size": "XS",
+        "priority": "P0",
+        "status": "READY",
+        "zone": "docs/agents/pm/flow/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "parent_task_id": "FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-23T14:45:00Z",
+        "created_by": "po",
+        "updated_at": "2026-08-23T14:43:28Z",
+        "updated_by": "po",
+        "detail_ref": "docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md",
+        "depends_on": [],
+        "title": "pm Step 3e: stop the bleed — null/duplicate row guard + non-zero exit on orch-apply failure",
+        "status_note": "Brief row 1 of 4 (§6). SHIP IMMEDIATELY, independent of every other row in this set. Two edits inside the EXISTING inline Step 3e of docs/agents/pm/flow/main.md — do NOT restructure the step here, row 3 does that.\n(a) Insert the `$row == null` / duplicate `error(...)` guard from §4.2 L1 into BOTH branches.\n(b) Change BOTH `|| echo \"...\"` tails to `|| { echo \"...\" >&2; exit 1; }` per §4.2 L2 — architect measured `wrapped exit=0` today, i.e. an orch-apply rejection is currently swallowed and the step reports success.\nThis does NOT make Step 3e work on ready[]/backlog[] parents; it converts a silent corruption/no-op into a visible refusal while row 2 lands.\nSEQUENCING: rows 1 and 3 touch the same block and row 3 SUPERSEDES row 1 — land 1 now, 3 after 2.\nNOT AUTO-DISPATCHABLE: agent-father fails is_dev_role (^dev(-|$)|^developer$, scripts/lib/devteam-eligibility.jq:306-307). Needs router/PO manual dispatch — do not wait for RLC/BOUNDED-1 to pick it up.\nAC: §5 AC-4 (miss / cross-lane duplicate / terminal-lane-with-open-disposition each refuse with a distinct non-zero exit, live file byte-identical afterwards) and AC-5 (shell wrapper propagates failure; the `|| echo` form must FAIL this AC)."
+      },
+      {
+        "id": "FIX-PM-3E-CLOSEOUT-SCRIPT-LANE-AGNOSTIC",
+        "type": "FIX",
+        "size": "M",
+        "priority": "P1",
+        "status": "READY",
+        "zone": "scripts/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "parent_task_id": "FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-23T14:45:00Z",
+        "created_by": "po",
+        "updated_at": "2026-08-23T14:43:28Z",
+        "updated_by": "po",
+        "detail_ref": "docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md",
+        "depends_on": [],
+        "title": "Extract pm decompose-closeout transform out of the flow doc into scripts/, lane-agnostic + 3-way disposition",
+        "status_note": "Brief row 2 of 4 (§6) — the substantive fix. Deliverables: scripts/pm-decompose-closeout.jq + scripts/pm-decompose-closeout.sh + scripts/audits/pm-decompose-closeout-replay-verify.sh.\nROOT CAUSE being fixed (§2): a HAND-NAMED LANE SUBSET was substituted for the schema's lane set — in the transform AND in agents-architect's own 08-14 acceptance fixture. architect explicitly REJECTED qa's proposed fix list because it was another hand-enumerated subset (it omitted review, qa, done_verified, archive, closed_sprints). Do not re-enumerate lanes by hand; derive them.\nCOPY THE BRIEF'S JQ — every jq block in §4.1/§4.3/§4.4b/§4.5/§4.6/§4.7 was fixture-executed and is copy-runnable: §4.1 shared resolution prologue, §4.3 disposition A (CLOSEOUT-TERMINAL), §4.4b dispositions B/C shared transform, §4.5 mandatory post-write probe, §4.6 dependents retarget, §4.7 prose-ceiling pre-flight.\nTHREE THINGS THAT ARE NOT OBVIOUS: (1) the disposition is 3-WAY not 2-way (§4.4) — A=closeout-terminal, B=decomposed-and-complete, C=decomposed-and-held; the shipped binary mislabels C as B. (2) Closing a decomposed parent to DONE STRANDS ITS DEPENDENTS FOREVER because deps_satisfied demands DONE_VERIFIED — hence §4.6 dependents-retarget is a MANDATORY PRE-STEP of disposition A, not an optional extra. (3) An in-place patch on an over-ceiling guarded-lane row rejects at +34 bytes and 21 such rows are live (§4.7) — the ceiling pre-flight must run BEFORE attempting B/C, and refuse loudly rather than let orch-apply reject silently.\nVERIFIER: schema-derived lane matrix per §5 — read lane keys out of orchStateSchema.ts TaskBoardSchema (or a full synthetic board with one row per lane) and run EVERY disposition against EVERY lane. Adding a lane to the schema without adding a fixture MUST fail the verifier. Covers AC-1/2/2b/4/5/6/7/8.\nAll fixtures synthetic via ORCH_APPLY_LIVE_FILE_OVERRIDE — ZERO live orch-state.json I/O. Mirror scripts/audits/devteam-pipeline-resume-terminal-lane-verify.sh.\nRegister the two new scripts per docs/policies/dev-standards.md § Script Persistence."
+      },
+      {
+        "id": "FIX-FLOWDOC-RETURN-REACHABILITY-CHECKER",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P2",
+        "status": "READY",
+        "zone": "scripts/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "parent_task_id": "FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-23T14:45:00Z",
+        "created_by": "po",
+        "updated_at": "2026-08-23T14:43:28Z",
+        "updated_by": "po",
+        "detail_ref": "docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md",
+        "depends_on": [],
+        "title": "scripts/audits/flow-doc-return-reachability-verify.sh — flag numbered steps emitted after a ## RETURN",
+        "status_note": "Brief row 4 of 4 (§6), mechanizes AC-3 (§5), which is currently 'NOT BUILT — still only manual'. Independent of rows 1-3; can land in parallel.\nBEHAVIOUR: for each docs/agents/*/flow/**/*.md, within each `## `-bounded segment, flag any numbered-step line occurring AFTER an emitted `## RETURN`. That is the original defect class this whole parent row was opened for — an unreachable Step 3e sitting past a RETURN.\nFIXTURES: positive = pre-e6a4858ae docs/agents/pm/flow/main.md (must FAIL); negative = current pm/flow/main.md + dev-team/flow/main.md + qa/flow/main.md (must PASS).\nEXPLICIT TRAP called out by architect: the glob MUST be a real recursive walk, NOT a bash `case` pattern. See sibling row FIX-FILESIZECAPS-FLOWFILE-GLOB-NESTED-DIR-ONLY-173-FLOW-FILES-UNGOVERNED — a `**` idiom in a non-globstar context matched only one nested directory level and left 173 flow files ungoverned. Do not reproduce that bug in a new script.\nRegister per docs/policies/dev-standards.md § Script Persistence."
+      },
+      {
+        "id": "FIX-CTXBLOAT-SIZEJUSTIFICATION-BYTE-DIMENSION",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "READY",
+        "zone": "scripts/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "parent_task_id": "FIX-FILESIZECAPS-FLOWFILE-GLOB-NESTED-DIR-ONLY-173-FLOW-FILES-UNGOVERNED",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-23T14:48:00Z",
+        "created_by": "po",
+        "updated_at": "2026-08-23T14:45:16Z",
+        "updated_by": "po",
+        "detail_ref": "docs/architecture-briefs/2026-08-23-flow-file-cap-glob-fix-and-doc-plane-baseline-ratchet.md",
+        "depends_on": [],
+        "title": "R1 — size-justification header gains an optional byte declaration (MUST land before R3)",
+        "status_note": "Brief row 1 of 3 (§6, R1 in §4.1). FIRST of a strictly ordered R1 -> R2 -> R3 chain; ordering is load-bearing (§4.2).\nCHANGE: `scripts/agents-flow/context-bloat-backstop.sh` accepts an optional byte term in the size-justification header:  <!-- size-justification: 1279L/192014B — reason -->  and honors a BYTE-cap breach only when the header declares an explicit byte figure AND the live byte count is within the same ±10 %/min-5 tolerance already applied to lines.\nBACKWARD COMPATIBLE, ASSERT IT: a header with NO /NNNNB term must behave exactly as today, byte-for-byte (AC-3).\nWHY THIS IS NOT A LOOSENING (pre-empting the TE-T24 objection, §4.1): TE-T24's point is that a LINE declaration cannot speak to bytes and a mega-line file would evade the byte dimension for free. An explicit, reviewable, staleness-checked byte number is the opposite of a free pass — po/flow/scripts-registry.md would have to publish 74L/88023B in its own header, which is precisely the visibility BC-1 wants.\nDO NOT instead retune cap:120 (§4.1 R4) — measured p50 is 102 L, the LINE cap is correctly calibrated; the BC-1 ×60 byte budget is the miscalibrated knob and R1+R2 address it per-file rather than loosening the global multiplier for everyone.\nAC-3. Extend the EXISTING harness scripts/agents-flow/context-bloat-backstop.test.sh — do not replace it."
       }
     ],
     "review": [
@@ -19741,20 +19977,19 @@
       {
         "id": "FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT",
         "type": "FIX",
-        "status": "REVIEW",
-        "priority": "P0",
         "size": "M",
+        "priority": "P0",
+        "status": "REVIEW",
         "zone": "multi",
         "owner": "po",
-        "supervised": false,
+        "next_agent": "po",
         "plan_only": false,
+        "supervised": false,
         "created_at": "2026-08-14T12:35:41Z",
         "created_by": "po (triage: 3rd occurrence pm-decomposition stale-head/stale-parent-row)",
-        "title": "3rd occurrence, REGRESSED not converged: pm's post-decomposition board-closeout contract (Step 4c) is physically unreachable — it sits AFTER the flow's own inlined RETURN block at Step 3c — and pm's task-mint shape omits next_agent entirely, so decomposed children fall back to RLC's effective_owner and would spawn the SUBJECT agent instead of the editor",
-        "evidence": "RAW-verified 2026-08-14T12:35Z. THREE occurrences of pm leaving .head + parent row stale after decomposition (feedback_pm_midsprint_decomposition_leaves_head_stale_not_closeout): (1) UC-RDL-P4 2026-08-11, .head untouched, router repair 6912272e1; (2) FIX-BCTC-FALLBACK-SHELL 2026-08-11T19:27Z, pm flipped ONLY .head.status, left active_task_id/next_agent dangling (95540b50d), router repair 82ec1f018; (3) UC-CCA-P2 2026-08-14T12:29Z, ZERO .head write attempt — WORSE than occ 2 — plus parent left in in_progress[]/IN_PROGRESS/next_agent=pm and all 7 minted children with next_agent absent; router repair 090bc6a14. ROOT CAUSE (new, explains why occ-2's fix did not prevent occ-3): docs/agents/pm/flow/main.md ALREADY contains the correct occ-2 fix as Step 4c 'Non-closeout head release' (FIX-PM-HEAD-RESET-SHAPE, full .head null-out matching dev-team WF-1c byte-for-byte) — but the flow inlines its own '## RETURN ... PIPELINE: continue' template at Step 3c, so a decomposition invocation emits RETURN and terminates at 3c; Steps 3d/4/4b/4c are monitor-phase steps a pure-decomposition tick never reaches. Occ-3's board row proves pm reached 3/3b/3c and stopped: it wrote the 7 child rows plus pm_decomposed_at=2026-08-14T12:28:00Z and decomposition_note, and wrote nothing from 4c. The occ-2 fix was appended BELOW the exit point — content correct, placement unreachable. SECOND DEFECT: pm Step 3's canonical task JSON shape lists {id,title,owner,status,zone,created_at} + optionals and NEVER mentions next_agent; docs/standards/task-schema.md (the SSOT it copies) has ZERO occurrences of next_agent in either its Mandatory or Optional field tables, while apps/mcp-server/src/infrastructure/orchStateSchema.ts:175 defines next_agent as z.string().optional() — non-nullable, so an explicit null is REJECTED by orch-apply.sh (router hit this twice repairing occ 3) while omission passes silently. pm minting children without next_agent is therefore DOC-COMPLIANT behaviour, not agent error. THIRD DEFECT (severity amplifier, not previously identified): omission is not merely 'unroutable'. scripts/devteam-backlog-claim-ready-lane-consumer.jq:129-134 gates candidates on (effective_next_agent OR effective_owner) with NO is_non_dev_owner_unrouted / is_non_dev_next_agent_unrouted gate, and scripts/lib/devteam-eligibility.jq resolved_dispatch_lane falls back to effective_owner when next_agent is empty. pm set owner = the SUBJECT agent family being edited (market-watcher, alert-commander, unified-agent, digest-predict, bctc-analyst, fb-market-poster). RLC would therefore have set .head.next_agent to those values and spawned six cowork MARKET agents — none of which hold agent-md edit authority, and one of which (fb-market-poster) publishes externally — to edit their own flow docs, instead of agent-father as architect's own review_note on the parent explicitly specified. The router's manual repair pre-empted this by timing, not by design. FOURTH DEFECT: pm's flow has NO step at all that gives a fully-decomposed parent row a terminal disposition; §5 Sprint closeout operates on active_sprints[].tasks[] and the sprint's own .status, never on a flat-lane parent row, and pm recorded parenthood as decomposition_note prose + pm_decomposed_at rather than .children. LIVE ARMED: IVC-PM-DECOMPOSE sits in ready[] right now (next_agent=pm, 'mint IVC-C1..C6 + IVC-A1 + IVC-A2') — an 8-row decomposition that is RLC-eligible today, so occurrence 4 is pre-loaded.",
-        "question": "DESIGN, do not pre-select. (Q1) Step 4c is correct content in an unreachable position. Decide whether the fix is to MOVE the decomposition-closeout block above the Step-3c RETURN, or to delete the mid-flow RETURN template and give the flow a single terminal exit — and state the reachability INVARIANT that makes 'appended a step below the RETURN' detectable next time. Appending another step is exactly what failed between occ 2 and occ 3; do not repeat it. (Q2) Is 'RETURN template inlined mid-flow with live steps below it' present in OTHER agent flow docs? Scope the sweep; do NOT validate the gate on pm/flow/main.md alone (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist). (Q3) next_agent is absent from docs/standards/task-schema.md but REQUIRED in practice by every dispatch lane. Decide whether it becomes a documented mandatory-at-mint field in the SSOT (fleet blast radius: every minting agent copies that table) and whether the omission case is caught at the write gate, at mint, or both — noting explicit null is already fatal in orchStateSchema.ts:175 but omission is silently legal. (Q4) Decide the parent-row terminal disposition rule pm must apply: closeout-shaped (all scope delegated -> done[]/DONE/closed_at, per the FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0 precedent commit 86b7a6264) vs mid-sprint-partial (stays in_progress[] with a corrected non-stale next_agent) — and whether pm must ALSO write .children so the existing sweep can see the relationship. (Q5) Rule on whether a dev-team-side gate is warranted AT ALL given the dedup analysis in refs — a WF-1e keyed on .head/row next_agent coherence provably CANNOT fire on occ 3 (both were 'pm', coherent), and any parenthood-keyed gate is blocked behind the .children field drift already tracked elsewhere.",
-        "deliverable": "AC-1: a decomposition-shaped pm invocation, replayed against a synthetic board, leaves .head idle AND the parent row in its correct terminal-or-corrected lane AND every minted child carrying a non-empty next_agent — proven by executable replay, not by prose in the flow doc. AC-2: a negative control — a genuine mid-sprint-partial decomposition must NOT terminally close its parent. AC-3: an executable reachability check proving no live step in pm/flow/main.md sits below an emitted RETURN, with a positive AND a negative fixture. AC-4: the routing intent for each child comes from the architect review_note on the parent (occ-3's note already specified 1 shared-skill-file subtask -> developer, 6 agent-family-flow-edit subtasks -> agent-father because agent-father/flow/edit-prepare.md Step 1 is single-agent-scoped) — the design must state where pm reads that intent from, since only pm holds it and no orch-state schema or dev-team gate can infer it. Implementation is expected to split by zone: docs/agents/pm/flow/main.md -> agent-father; docs/standards/task-schema.md + any scripts/ or schema work -> developer/architect. Mint those rows from the brief; do not bundle.",
-        "baseline_pass": "Board is CLEAN as of 090bc6a14 (router hand-repair): jq '.head' -> status=idle/active_task_id=null/next_agent=null; UC-CCA-P2 resident in done[] with status=DONE + closed_at=2026-08-14T12:29:39Z; all 7 UC-CCA-P2-* children in ready[] with next_agent populated (SKILL-GW-GATE=developer, other 6=agent-father). That hand-repaired state is the target this row must make self-sustaining. Do NOT re-touch UC-CCA-P2 or its children — already corrected and committed, out of scope.",
+        "updated_at": "2026-08-23T14:43:28Z",
+        "updated_by": "po/brief-0823-decompose",
+        "redispatch_count": 1,
         "files": [
           "docs/agents/pm/flow/main.md"
         ],
@@ -19764,13 +19999,24 @@
           "FIX-ORCHSTATE-MINT-FLAGGED-ROW-WITHOUT-RESOLVABLE-HANDLER",
           "FIX-PM-DECOMPOSE-NO-PRIOR-ART-PROBE"
         ],
-        "note": "DEDUP-CHECKED 2026-08-14T12:35Z against all task_board lanes — this shape is NOT already tracked. (a) FIX-DEVTEAM-HEAD-NEXTAGENT-RESYNC-ON-REASSIGN (ready[], agents-father, the WF-2b design row, '3 occurrences / 3 agent types') is ADJACENT BUT DISJOINT: it detects .head.next_agent disagreeing with the row's own next_agent; in occurrence 3 BOTH read 'pm', i.e. perfectly coherent, so that gate provably declines. (b) FIX-DEVTEAM-EPICWRAPPER-PARENTHOOD-FIELD-DRIFT-AUTOCLOSE-BLIND (backlog[], developer) already owns the COMPENSATING-SWEEP half of the stale-parent-row facet (is_epic_wrapper reads only .children while pm records parenthood in other shapes); this row owns the PM-MINT-SIDE half and must not duplicate it — cross-reference, do not re-implement. (c) FIX-ORCHSTATE-MINT-FLAGGED-ROW-WITHOUT-RESOLVABLE-HANDLER (ready[], architect) covers only rows where supervised/plan_only is set AND owner AND next_agent are BOTH null; occ-3's children had owner populated and no flags, so they fall outside it entirely — and that is precisely what makes them silently MIS-dispatchable rather than parked. (d) FIX-PM-DECOMPOSE-NO-PRIOR-ART-PROBE (backlog[], architect) is a different pm defect (re-minting already-shipped work), unrelated. Escalation threshold was explicitly declared hit after occurrence 2; occurrence 3 regressed further, and the occ-2 remediation is now proven to have failed on PLACEMENT rather than content — which is why this is routed to agents-architect for a design brief first rather than straight to agent-father for another appended step.",
-        "updated_at": "2026-08-23T14:23:05Z",
-        "detail_ref": "docs/architecture-briefs/2026-08-14-pm-decompose-closeout-reachability-and-nextagent-mint.md",
-        "status_note": "[ARCHITECT] 2026-08-23T14:15:51Z — corrected design SHIPPED: docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md. qa blocker [1] CONFIRMED + reproduced on fixtures; qa note [2] honoured, next_agent:null NOT re-opened. qa's own fix list is REJECTED as another hand-list (omits review/qa/done_verified/archive/closed_sprints) — see brief §2 invariant LANE-SET-DERIVATION. NEXT = po: mint brief §6 rows 1-4 (agent-father XS hotfix ships now; developer script row M; agent-father flow-doc S dep-on-2; developer reachability checker S), then close this design row. agent-father fails is_dev_role → rows 1/3 need manual dispatch.\n[QA] CHANGES_REQUESTED 2026-08-23T13:54:07Z — RETRACTS the DONE_VERIFIED this same cycle issued ~25min earlier (reachability half verified good; the LANE half I had not tested). Concurrent pm agent could not use the shipped Step 3e on 9 real parents; I re-tested rather than accepting, and claim 1 HOLDS.\n[1] BLOCKER pm/flow/main.md Step 3e — BOTH branches resolve $row from in_progress[] + active_sprints[].tasks[] ONLY. On a ready[] parent the CLOSEOUT branch appends an ID-LESS GHOST ROW to done[] (jq 'null + {...}') and leaves the parent in ready[]; orch-validate hard-rejects ('task_board.done[21].id: expected string, received undefined'), so the step is unusable — pm hit exactly this, 8 of 9 parents in ready[]. The PARTIAL branch is WORSE: silent no-op on ready[] parents, exits 0, guard never fires. Measured live, rows with children[] sit in backlog 10 / done 9 / ready 6 / in_progress 1 — backlog[] unhandled too; in_progress[] (the only handled lane) has 1. Dominant case, not an edge case; I under-sized this as 'non-blocking' on first pass. FIX: resolve across backlog/ready/in_progress/active_sprints, delete from the lane found, add 'if $row == null then error(...)' so a miss fails LOUD (mirror qa/flow/main.md's refuse-idiom).\n[2] pm's 'next_agent: null is schema-invalid' claim DOES NOT HOLD here — the only null is inside '.head = {...}', legal per HeadSchema orchStateSchema.ts:324 (.nullable()). The closeout preserves the row's next_agent. The real non-nullable :208 defect belongs to FIX-QA-VC-LANEMOVE-…, filed there. Do not 'fix' a null this file never writes.\nKEEP: reachability restructure (0 violations), DECOMPOSITION_COMPLETE split, children[] write, .head guard, Step-3 mint shape — all fixture-verified.\nFull text + archived prior status_note: docs/data/orch/archive/backlog-detail.json#FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT.",
-        "next_agent": "po",
-        "redispatch_count": 1,
-        "updated_by": "agents-architect"
+        "title": "3rd occurrence, REGRESSED not converged: pm's post-decomposition board-closeout contract (Step 4c) is physically unreachable — it sits AFTER the flow's own inlined RETURN block at Step 3c — and pm's task-mint shape omits next_agent entirely, so decomposed children fall back to RLC's effective_owner and would spawn the SUBJECT agent instead of the editor",
+        "detail_ref": "docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md",
+        "children": [
+          "FIX-PM-3E-FAILLOUD-HOTFIX",
+          "FIX-PM-3E-CLOSEOUT-SCRIPT-LANE-AGNOSTIC",
+          "FIX-PM-3E-FLOWDOC-REPOINT-3WAY-DISPOSITION",
+          "FIX-FLOWDOC-RETURN-REACHABILITY-CHECKER"
+        ],
+        "pm_decomposition_complete": true,
+        "superseded_by_brief": "docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md",
+        "superseded_by_rows": [
+          "FIX-PM-3E-FAILLOUD-HOTFIX",
+          "FIX-PM-3E-CLOSEOUT-SCRIPT-LANE-AGNOSTIC",
+          "FIX-PM-3E-FLOWDOC-REPOINT-3WAY-DISPOSITION",
+          "FIX-FLOWDOC-RETURN-REACHABILITY-CHECKER"
+        ],
+        "hold_reason": "EPIC WRAPPER — holds until all 4 children reach DONE_VERIFIED. Explicit hold_reason set by po 2026-08-23T14:45Z precisely because brief §7.1 flags 8 live wrapper rows that carry children[] with NO hold_reason and are therefore armed for premature autoclose-to-review[]; this row will not become the 9th.",
+        "status_note": "PO DISPOSITION 2026-08-23T14:45Z — decomposed, 4 children minted per brief §6. Design phase closed; implementation lives in the children.\nDETAIL_REF CORRECTED: previously pointed at docs/architecture-briefs/2026-08-14-pm-decompose-closeout-reachability-and-nextagent-mint.md, which is SUPERSEDED. The live brief is the 08-23 one now referenced. The 08-14 brief is not merely older — its own §8 acceptance fixture contains the SAME hand-enumerated-lane-subset mistake as the shipped transform (brief §2), so following it reproduces the defect. Do not read it as guidance.\nPROSE FIELDS DELIBERATELY DROPPED in this same write (evidence 3464 B, question 1815 B, note 1566 B, deliverable 1176 B, prior status_note 2565 B): all of it is superseded verbatim by the 29 KB brief, and the row was 12332 B — OVER the 12000 B orch-apply ceiling, so any in-place growth would have hard-rejected. That is brief §4.7's own failure mode (21 such rows live) hit while patching the row that fixes it; shrinking to the brief pointer was the only way to land the detail_ref correction at all. Nothing unique was lost — the brief is the SSOT.\nHEADLINE FOR REVIEWERS: architect REPRODUCED qa's blocker on synthetic fixtures rather than reading it, then REJECTED qa's proposed fix list as another hand-enumerated lane subset (it omitted review, qa, done_verified, archive, closed_sprints). Root cause is one level up — a hand-named lane subset substituted for the schema's lane set, in the transform AND in the 08-14 acceptance fixture.\nCLOSE CONDITION: all 4 children DONE_VERIFIED. Do NOT close this parent to DONE while children are open — brief §4.6 proves closing a decomposed parent strands its dependents forever, since deps_satisfied demands DONE_VERIFIED. (Checked at mint time: nothing currently depends_on this row, so the hazard is latent, not live.)\nSTILL OPEN, REPORTED-NOT-FIXED (brief §7, NOT owned by any of the 4 children — needs separate triage): 8 wrapper rows with children[] and no hold_reason armed for premature autoclose (IVC-PM-DECOMPOSE is the one confirmed disposition-C victim); 2 rows with pm_decomposition_complete:true sitting open in ready[] with no closed_at; 21 rows over the prose ceiling in guarded lanes."
       },
       {
         "id": "FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS",
@@ -19868,6 +20114,98 @@
         "drain_source_lane": "review",
         "redispatch_count": 1,
         "qa_changes_requested_at": "2026-08-23T14:31:56Z"
+      },
+      {
+        "id": "FIX-CHEF-MARKER-KEY-ANCHOR-2",
+        "type": "FIX",
+        "size": "S",
+        "title": "Document scheduled_utc_time in match-slots.md",
+        "status": "REVIEW",
+        "priority": "P0",
+        "zone": "docs/agents/cowork-team/",
+        "owner": "agent-father",
+        "next_agent": "qa",
+        "sprint": "COWORK-RELIABILITY",
+        "parent": "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR",
+        "created_at": "2026-08-12T11:29:41Z",
+        "created_by": "pm",
+        "depends_on": [
+          "FIX-CHEF-MARKER-KEY-ANCHOR-1"
+        ],
+        "files": [
+          "docs/agents/cowork-team/flow/match-slots.md"
+        ],
+        "note": "Add field to MATCHES output schema documentation; cross-reference catchup_raw equivalent",
+        "updated_at": "2026-08-23T14:47:58Z",
+        "updated_by": "agent-father",
+        "routing_correction_20260823": "next_agent developer -> agent-father. Every file in this row files[] is under docs/agents/, which is agent-father EXCLUSIVE commit_zone (docs/agents/agent-father/init.md commit_zone.allowed = [docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/]). A developer picking this up must either breach that zone or stall; the identical breach happened on this repo earlier TODAY (see docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-8.md STEP developer-S113, where a developer edit to a flow doc had to be reverted for exactly this reason). Producer half ANCHOR-1 shipped in 777ec912f; depends_on ANCHOR-1 still gates these until QA promotes it to DONE_VERIFIED, which is correct and deliberately not forced.",
+        "commit": "df08ec793",
+        "branch": null,
+        "completed_at": "2026-08-23T14:47:57Z",
+        "completed_by": "agent-father",
+        "status_note": "\n[agent-father 2026-08-23T15:10Z] SHIPPED df08ec793 (pushed). match-slots.md now documents scheduled_utc_time on slots[] (was documented only on catchup_raw[]): nominal fire instant not wall clock; ONE derivation shared with catchup_raw (cowork-catchup-predicate.mostRecentCronFireBefore); degrades to null, never throws; and the deliberate asymmetry -- slots[] carry scheduled_utc_time ONLY, catchup_raw[] additionally carry scheduled_key_part + expected_publish_task_id, so a live consumer slices the date off the ISO string. Producer re-verified by EXECUTION, not from ANCHOR-1's review_note: called the exported annotateScheduledUtc() against the real schedule at 2026-08-23T13:50:00Z -> digest-sunday, cron '47 13 * * 0' -> '2026-08-23T13:47:00.000Z'; input object not mutated. That execution is how the scheduled_key_part asymmetry was found. -> qa."
+      },
+      {
+        "id": "FIX-CHEF-MARKER-KEY-ANCHOR-3",
+        "type": "FIX",
+        "size": "S",
+        "title": "Append scheduled_utc= to spawn-fanout.md trigger_prompt Step 5.2",
+        "status": "REVIEW",
+        "priority": "P0",
+        "zone": "docs/agents/cowork-team/",
+        "owner": "agent-father",
+        "next_agent": "qa",
+        "sprint": "COWORK-RELIABILITY",
+        "parent": "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR",
+        "created_at": "2026-08-12T11:29:41Z",
+        "created_by": "pm",
+        "depends_on": [
+          "FIX-CHEF-MARKER-KEY-ANCHOR-1"
+        ],
+        "files": [
+          "docs/agents/cowork-team/flow/spawn-fanout.md"
+        ],
+        "note": "Append scheduled_utc=<slot.scheduled_utc_time> to ENTRY_PROMPT; symmetric for live+catchup paths",
+        "updated_at": "2026-08-23T14:47:58Z",
+        "updated_by": "agent-father",
+        "routing_correction_20260823": "next_agent developer -> agent-father. Every file in this row files[] is under docs/agents/, which is agent-father EXCLUSIVE commit_zone (docs/agents/agent-father/init.md commit_zone.allowed = [docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/]). A developer picking this up must either breach that zone or stall; the identical breach happened on this repo earlier TODAY (see docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-8.md STEP developer-S113, where a developer edit to a flow doc had to be reverted for exactly this reason). Producer half ANCHOR-1 shipped in 777ec912f; depends_on ANCHOR-1 still gates these until QA promotes it to DONE_VERIFIED, which is correct and deliberately not forced.",
+        "commit": "df08ec793",
+        "branch": null,
+        "completed_at": "2026-08-23T14:47:57Z",
+        "completed_by": "agent-father",
+        "status_note": "\n[agent-father 2026-08-23T15:10Z] SHIPPED df08ec793 (pushed). spawn-fanout.md Step 5.2 gains SCHEDULED_UTC_LINE, appended to BOTH ENTRY_PROMPT branches beside SESSION_ID_LINE. ONE site, NO is_catchup branch per the brief, so chef-morning/eod/evening, digest-daily, digest-sunday, fb-daily and tnb-audit all inherit the token with no further edit here. Appended at the END, after the trigger_prompt FIRST-LINE consistency check, so extractPromptFlowPath() and the schedule-consistency test are unaffected; slot.trigger_prompt in cowork-schedule.json stays byte-identical. DEGRADATION: the token is OMITTED, never emitted as 'scheduled_utc=null' -- a null would read as present-but-garbage to a parser, while absence lets each worker's pre-existing date -u fallback fire unchanged. Added a consumer-contract paragraph naming the wired consumers. -> qa."
+      },
+      {
+        "id": "FIX-CHEF-MARKER-KEY-ANCHOR-4",
+        "type": "FIX",
+        "size": "M",
+        "title": "Parse scheduled_utc= in chef.md Step 0.5; derive CYCLE_DATE_UTC",
+        "status": "REVIEW",
+        "priority": "P0",
+        "zone": "docs/agents/unified-agent/",
+        "owner": "agent-father",
+        "next_agent": "qa",
+        "sprint": "COWORK-RELIABILITY",
+        "parent": "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR",
+        "created_at": "2026-08-12T11:29:41Z",
+        "created_by": "pm",
+        "depends_on": [
+          "FIX-CHEF-MARKER-KEY-ANCHOR-1",
+          "FIX-CHEF-MARKER-KEY-ANCHOR-3"
+        ],
+        "files": [
+          "docs/agents/unified-agent/flow/chef.md",
+          "docs/agents/digest-predict/flow/main.md"
+        ],
+        "note": "Parse scheduled_utc parameter; derive CYCLE_DATE_UTC from it (fallback: date -u). Apply pattern to all guaranteed slots per AC5",
+        "updated_at": "2026-08-23T14:47:58Z",
+        "updated_by": "agent-father",
+        "routing_correction_20260823": "next_agent developer -> agent-father. Every file in this row files[] is under docs/agents/, which is agent-father EXCLUSIVE commit_zone (docs/agents/agent-father/init.md commit_zone.allowed = [docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/]). A developer picking this up must either breach that zone or stall; the identical breach happened on this repo earlier TODAY (see docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-8.md STEP developer-S113, where a developer edit to a flow doc had to be reverted for exactly this reason). Producer half ANCHOR-1 shipped in 777ec912f; depends_on ANCHOR-1 still gates these until QA promotes it to DONE_VERIFIED, which is correct and deliberately not forced.",
+        "commit": "df08ec793",
+        "branch": null,
+        "completed_at": "2026-08-23T14:47:57Z",
+        "completed_by": "agent-father",
+        "status_note": "\n[agent-father 2026-08-23T15:10Z] SHIPPED df08ec793 (pushed). chef.md Step 0.5 parses scheduled_utc= (same technique as slot=) and sets CYCLE_DATE_UTC = token[0:10]; the unconditional date -u becomes the else-branch, retained for genuine ad-hoc/manual invocations with no scheduler tick. AC5 pattern applied to digest-predict/flow/main.md's DAILY gate (UTC_DATE primary source = the token, cycle-bootstrap UTC-now demoted to secondary). NOT applied to digest-predict's SUNDAY gate, deliberate and documented inline: it keys on server-side get_week_period().periodKey and its own block forbids computing the week locally -- agent-side arithmetic there would trade a server SSOT for the exact local-derivation class this chain removes. RESIDUAL left open, not assumed away: a retry crossing the WEEK boundary still gets the new week's periodKey; closing it needs get_week_period to accept an as_of instant, a server change, not a flow-doc change. -> qa."
       }
     ],
     "qa": [
@@ -19989,41 +20327,6 @@
         "qa_verify_20260823T1440Z": "[QA 2026-08-23T14:40Z | verify-committed, OOM-class, RE-ASSESSED AT THE MATURED FLOOR — HELD, no lane move. Gated behind blocked_by FU-RAG-DEPLOY-MEMORY, whose D3/D5 are unmet for the elapsed window.]\nCURRENT-CONTAINER STATE, measured live this cycle (not carried from the row's own fields): container 16c59b5e929fcd2fe22889f072edbc2b669318059bde0a2aa93b41cf776bfa08, StartedAt 2026-08-15T10:16:22.548533876Z, RestartCount 0, running, HostConfig.Memory 2147483648 (2 GiB). D1 PASS: zero OOM-class kernel events in the in-VM dmesg ring buffer, which spans 2026-08-20T11:53:13Z..2026-08-23T14:20:33Z (2114 lines) and is provably non-vacuous (901 docker0 hits in the same buffer). D2 PASS: identity unbroken. D4 PASS: no rag-service mitigation in the period (the only compose commit since 2026-08-22T12:00Z, 3db7a8dc8, touches pdf-extractor env only).\nTHE RECORDED D3 FAIL ON THIS ROW MUST NOT BE CARRIED FORWARD AS A STANDING FAILURE. durability_verdict records \"D3 FAIL on the CAP clause (338/799 samples >85%, peak 97.87%)\". That was measured on a DIFFERENT, now-retired container — durability_window_container_id 66656926d503..., and its own sample CSV header (docs/incidents/data/rag-durability-2026-08-14T2015Z-66656926d503-samples.csv) records mem_limit_bytes=1073741824, i.e. the OLD 1 GiB cap. 97.87% of 1 GiB is ~1002 MiB, which is precisely the peak the cap-raise was sized against. Against the live 2 GiB cap that same 1002 MiB is 48.9%, comfortably inside the D3 <=85% clause. The FAIL is an artifact of the superseded configuration and is not evidence against the current one; equally, it is NOT a pass — it simply does not apply, and a fresh D3 must be fitted on the current container.\nQUANTIFIED CONCERN CARRIED FORWARD (raised by the 11:36Z cycle, now measured harder and NOT dismissed): the workload's peak has grown well past the figure the 2 GiB cap was sized against. Observed peak this cycle is 73.03% of 2 GiB = ~1496 MiB (po, 14:03Z), versus the ~1002 MiB peak that justified \">=2x headroom\". Actual headroom is therefore ~552 MiB, a factor of ~1.37x, not the 2.04x the deploy-half certification claims. Still inside D3's 85% ceiling, so not a fail — but the \">=2x the observed peak\" premise in FU-RAG-DEPLOY-MEMORY's own title no longer holds against today's workload, and whoever closes that row should say so explicitly rather than restate the 2.04x figure.\nGRANDFATHER-EXEMPTION GUARD (bar section 4) APPLIED TO THIS ROW: this id is NOT in RC_VERIF_GRANDFATHERED_IDS (grep-verified, 0 hits in orchStateSchema.ts), so the schema will hard-reject any DONE_VERIFIED flip here that lacks verification.raw_probe. That protection is real for this row. It is NOT real for its blocker — see the escalation recorded on FU-RAG-DEPLOY-MEMORY.\nDISPOSITION: HELD at qa[]. Neither vc-approved (the shared durability evidence does not exist yet) nor vc-changes (no code or config defect is in evidence; the thread-pin/lance-core question is not re-opened by anything measured this cycle). ONE shared instrumented window now serves BOTH rows — opened 2026-08-23T14:36:47Z on container 16c59b5e929f, 60s sampling to docs/incidents/data/rag-durability-2026-08-23T1423Z-16c59b5e929f-window.csv, earliest legitimate D1 close 2026-08-24T14:37Z. Do not open a second window against the same container; a concurrent sampler is what corrupted the 2026-08-14 series, and scripts/durability-mem-sample.sh now refuses to start if one is already running.\n"
       },
       {
-        "id": "FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK",
-        "type": "FIX",
-        "title": "eod.md:78 still carries the pre-2026-07-31 no-Bash caveat that cycle.md already fixed -- market-watcher-eod skips its notebook commit every fire, loses the EOD cycle entry to the next same-agent overwrite, and strands news-scouts L-7-deferred commit",
-        "desc": "VERIFIED live 2026-08-05T16:00Z EOD fire (agent a0df2bd1afc971ce7). Chain: (1) .claude/agents/market-watcher.md granted Bash 2026-07-31 commit 610110e16b. (2) cycle.md carried an identical no-Bash transport-gap caveat and was fixed 2026-08-01 (FIX-COWORK-FLOWDOC-STALE-TRANSPORT-GAP-CAVEAT, see cycle.md own header comment) -- caveat demoted to a genuine invocation-error fallback only. (3) eod.md:78 was never touched by that fix -- still reads verbatim this agent holds no Bash and cannot run git add/git_commit_retry directly ... SKIP this step entirely. (4) Todays EOD fire followed eod.md literally: wrote all 4 ledger entries (analysis-briefs DGC/DPM/DBC/VNM) + docs/signals/price_anomaly_20260805T1605.json correctly (Steps A/B unaffected per the docs own text) but skipped Step D (notebook write/commit), citing the docs own stale line as its reason -- not a fabrication, a propagated stale doc. (5) DISPROOF same day, same batch: market-watcher-offhours fired 2 min later (a1f7356854a55a25f) and committed cleanly with Bash (09beb0997) -- direct proof the grant is live and eod.md is simply wrong. (6) Net effect: market-watcher.md notebook has NO Cycle (EOD) section anywhere post-16:06Z -- the EOD narrative was never durably captured, either never written or clobbered when the offhours slot did its own full-overwrite write+commit right after. (7) news-scout.md c233 entry was left dangling uncommitted -- its own flow (docs/agents/news-scout/flow/stage-log-notify.md:14, L-7) explicitly defers its git commit to market-watchers EOD batch commit at market close; that EOD-side half of the contract never fires while eod.md:78 stands. Router committed the stranded news-scout.md manually this cycle as a workaround; the underlying skip will repeat every weekday 16:00 UTC fire until eod.md is fixed.",
-        "ac": "1. Update docs/agents/market-watcher/flow/eod.md:78 to match cycle.mds already-fixed prose (Bash grant live since 2026-07-31 commit 610110e16b -- demote to a genuine invocation-error fallback, not an unconditional skip). 2. Separately decide and fix the lost-update exposure: the per-cycle full-overwrite notebook model has no protection when EOD and a same-agent sibling slot (e.g. offhours) both match in the same cowork-tick batch and fire minutes apart -- either preserve/merge the EOD section across the next overwrite, or serialize same-agent multi-slot fires so one cannot clobber the others uncommitted work. 3. Confirm news-scouts L-7 dependency (stage-log-notify.md:14) resumes working end-to-end on the next weekday EOD fire (its notebook commits without router intervention).",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "qa",
-        "status": "QA",
-        "created_at": "2026-08-05T16:10:00Z",
-        "created_by": "router",
-        "updated_at": "2026-08-23T08:46:47Z",
-        "updated_by": "qa",
-        "related": [
-          "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT"
-        ],
-        "not_duplicate_of": "FIX-COWORK-BATCH-COVERAGESTATE-CONTENTION-CORRELATES-WITH-MISSED-NOTEBOOK-COMMIT -- that row is a contention HYPOTHESIS on coverage-state:main mutex; this row is a DIRECTLY VERIFIED stale-doc root cause, distinct mechanism, same symptom family.",
-        "promoted_at": "2026-08-06T12:27:24Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=1)",
-        "claimed_at": "2026-08-15T01:51:51Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "commit_sha": "a71cc0df1,3d2ff4ee2,7a94f3dd5,f795efe35",
-        "review_note": "RAW-verified developer completion for a71cc0df1: commit confirmed ancestor of HEAD, diff read in full — eod.md:78 caveat replaced with cycle.mds already-fixed genuine-invocation-error prose (verbatim mirror, not invented); market-watcher-notebook:main task_claim mutex added to BOTH eod.md Step D and a new explicit offhours self-commit block in cycle.md, correctly closing the same-16:00Z-tick clobber race (AC-2); AC-3 confirmed as a real no-op — news-scout git add line was already present, L-7 resumes automatically. cycle.md size-justification header updated 309L->332L, exact match to new line count. Decision journal entry (sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-3.md STEP developer-S65) present and substantive (what-considered includes 2 rejected alternatives with reasons, why-decision, why-change, verify). mock-guard.sh PASS noted (doc-only). Board lane-move + head-sync had been skipped by the agent itself -- performed here by the RAW-verifying router session, consistent with prior sessions self-closeout convention for this exact gap shape. | 2026-08-15T01:54Z QA re-check (AC-3 only): checked git log docs/agent-memory/notebooks/news-scout.md --since=2026-08-15T00:25:23Z (fix landed) — only hit is f795efe35, but that commit's own c269 content is timestamped 00:13Z, i.e. the pre-fix catch-up straggler explicitly called out in status_note, NOT a live fire of the hardened path. cowork-schedule.json news-scout-offhours.last_fired = 2026-08-15T00:13:14Z (same pre-fix event, cron 0 */4 * * * -> next scheduled fire 04:00Z). Current wallclock 01:54Z -- window has not elapsed. No BUG-channel telegram found (moot, no fire occurred). Verdict: NOT flipping DONE_VERIFIED -- zero live-fire evidence exists yet, matching this task's own resume_note prediction. Holding status QA / lane qa[] unchanged pending >=1 clean self-commit after a real news-scout-offhours fire (ideally the 16:00Z weekday co-fire with market-watcher-eod).",
-        "status_note": "developer secondary-drain rework 2026-08-15: AC-3 wiring was already landed via commit 3d2ff4ee2 (same coord-session, prior task FIX-NEWSSCOUT-COMMIT-POLICY-NEVER-MECHANICALLY-WIRED) -- task_claim mutex news-scout-notebook:main + git_commit_retry + RULE 2.5 pathspec ported into stage-log-notify.md's off-hours self-commit path, gated on slot=news-scout-offhours. Verified a same-tick false-positive gap in that landed fix: news-scout-offhours (0 */4 * * *) and market-watcher-eod (0 16 * * 1-5) co-fire every weekday at 16:00 UTC; eod.md Step D also commits news-scout.md in its own batch under a DIFFERENT mutex key (market-watcher-notebook:main) -- if eod.md lands first, the off-hours self-commit git add finds nothing pending and git_commit_retry returns non-zero on a clean diff (non-lock failure, no retry) -> false BUG-channel alert every co-firing weekday despite data already being safely committed. Fixed with a git diff --quiet pre-check guard (commit 7a94f3dd5) that skips the benign no-op instead of escalating. Also committed the one pre-fix straggler cycle (c269, appended 00:13Z before the fix landed at 00:25:23Z, was sitting uncommitted) to close residual exposure (commit f795efe35). NOT yet empirically proven end-to-end: zero news-scout-offhours cycles have fired since the hardened fix landed, so unlike AC-1/AC-2's 2-live-fire proof standard, AC-3 has zero live-fire confirmations. Reassigning to qa for RAW-verify once >=1 offhours cycle (ideally a 16:00 UTC weekday co-fire with eod.md) has self-committed cleanly with no BUG-channel alert.",
-        "redispatch_count": 1,
-        "resume_note": "AC-3 code fix + same-tick guard landed (3d2ff4ee2, 7a94f3dd5, f795efe35) -- STILL zero live-fire confirmations as of 2026-08-15T01:54Z re-check (only post-fix notebook commit is the pre-fix c269 catch-up straggler). Next scheduled news-scout-offhours fire = 2026-08-15T04:00Z (cron 0 */4 * * *; ideally wait for the 16:00Z weekday co-fire with market-watcher-eod, the exact race the 7a94f3dd5 guard targets). Re-check: git log --since=2026-08-15T00:25:23Z -- docs/agent-memory/notebooks/news-scout.md for a NEW commit (not f795efe35) whose cycle timestamp is AFTER 00:25:23Z, cross-check cowork-schedule.json news-scout-offhours.last_fired advanced past 00:13:14Z, and confirm no BUG-channel telegram fired that tick. Do not flip DONE_VERIFIED until that lands, per this task's own AC-1/AC-2 2-live-fire precedent.",
-        "owner": "developer",
-        "secondary_claimed_at": "2026-08-15T01:23:41Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "developer",
-        "qa_verify_20260823": "[QA] Re-check 2026-08-23, HELD (no lane move). AC-1/AC-2 (stale caveat + same-tick clobber mutex) are now solidly proven — 4 separate real weekday 16:0xZ co-fires (08-06/07/12/13) all show BOTH eod and offhours notebook commits landing cleanly same-tick, no clobber, no stale-caveat skip. AC-3 (news-scout L-7 dependency resumes on next weekday EOD fire) code landed (3d2ff4ee2/7a94f3dd5/f795efe35) but remains genuinely unexercised: cowork-schedule.json shows market-watcher-eod.last_fired stuck at 2026-08-14T16:10:51Z, 5+ weekdays elapsed with zero EOD fire since — consistent with the separately-tracked host-suspension gap (08-18->08-22), not a defect in this fix. Not flipping DONE_VERIFIED per this row's own prior AC-1/AC-2 2-live-fire precedent; re-check when market-watcher-eod actually fires on a weekday post-outage. DJ qa-25 STEP qa-S41."
-      },
-      {
         "id": "FU-RAG-DEPLOY-MEMORY",
         "size": "M",
         "sprint": "RAPID-DATA-LAYER",
@@ -20034,7 +20337,7 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-RAG-DEPLOY-MEMORY",
         "priority": "P0",
         "blocked_by": null,
-        "updated_at": "2026-08-23T14:40:27Z",
+        "updated_at": "2026-08-23T14:48:12Z",
         "next_agent": "qa",
         "updated_by": "qa/verify-committed-20260823T1437Z",
         "po_secondary_drain_20260823T0820Z": "PO 2026-08-23T08:20Z: deploy half RAW-VERIFIED DONE (MemLimit=2GiB live = 2.04x the 1002MiB peak, image 2026-08-14T20:12:15Z, container Up 7d RestartCount=0 OOMKilled=false at 38.05%). Durability half (RAG-MEM-DURABILITY-BAR v2 D1-D5) NOT run and PO explicitly declines to self-certify it. The 7-day window is CONTAMINATED - ~99.7h of it (2026-08-18T09:00Z..2026-08-22T12:40Z) the whole scheduler was dead, so the service was not under real load. qa: run D1-D5 on a window starting AFTER 2026-08-22T12:40Z. Full detail: detail_ref .po_secondary_drain_20260823T0818Z.",
@@ -20065,7 +20368,7 @@
           "new_instrumented_window_csv": "docs/incidents/data/rag-durability-2026-08-23T1423Z-16c59b5e929f-window.csv",
           "collector": "scripts/durability-mem-sample.sh (new this cycle, closes the missing-instrumentation root cause)"
         },
-        "qa_rcverif_grandfather_escalation_20260823T1441Z": "[QA ESCALATION 2026-08-23T14:41Z — RC-VERIF GRANDFATHER FALSE-GREEN HAZARD ON THIS EXACT ROW. Not a defect in the fix under review; a defect in the gate that is supposed to protect it. Bar section 4 (\"Grandfather-exemption guard\") names this as a known open engineering gap with process-control-only mitigation; this note is the live proof that it is exploitable on the single highest-pressure row in the fleet.]\nFACT, PROVEN BY EXECUTION NOT BY READING: \"FU-RAG-DEPLOY-MEMORY\" is a member of RC_VERIF_GRANDFATHERED_IDS (apps/mcp-server/src/infrastructure/orchStateSchema.ts line 569). checkVerificationGate() guards with a bare `row.status === \"DONE_VERIFIED\" && !RC_VERIF_GRANDFATHERED_IDS.has(id)`, with no awareness of retraction or void markers. Consequence: this row can be flipped to DONE_VERIFIED carrying NO verification.raw_probe at all, and orch-apply.sh will accept the write.\nLIVE REPRO WITH A CONTROL, run against a fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE (hot file never touched, override unset afterwards). Identical transform, two ids: FU-RAG-DEPLOY-MEMORY flipped to DONE_VERIFIED with `del(.verification)` -> \"Stage 0 + Stage 1 PASS\", write APPLIED. The same transform on the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK -> \"ORCH-STATE VALIDATION FAILED (1 issue) ... set to DONE_VERIFIED without verification.raw_probe\" -> \"ABORTED: validator exit 2 -- live file untouched\". So the exemption, not any property of the evidence, is what decides.\nWHY THIS ROW IS THE WORST POSSIBLE MEMBER OF THAT LIST. (1) It is OOM-class, and its own family has produced THREE recorded false certifications on this one incident (bar section 5). (2) It carries contamination/void language already (its po ruling calls the 7-day window CONTAMINATED; its sibling holds an explicit qa_durability_window_status VOID), which under bar section 4's retraction rule means the exemption must not be relied on for it -- but nothing in code enforces that. (3) It is under active unblock pressure: RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE ships BLOCKED on this row reaching DONE_VERIFIED, so there is a standing incentive to flip it. (4) The incentive is not hypothetical -- TWO rows were flipped to DONE_VERIFIED in this very cycle by updated_by=developer with qa_verified_by absent (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION at 14:28:53Z, FIX-CHEF-MARKER-KEY-ANCHOR-1 at 14:33:50Z). Both happened to be substantively correct on QA re-check, but they establish that self-certification without the qa gate is a live behaviour, not a theoretical one. On this row that behaviour would meet no schema resistance whatsoever.\nASK (out of qa's zone -- apps/mcp-server code change, needs a minted row; qa is reporting, not patching): make checkVerificationGate() refuse the exemption for any RC_VERIF_GRANDFATHERED_IDS member whose row text carries a retraction/void/contamination marker, exactly as bar section 4 already specifies in prose. Cheapest correct alternative if that is too broad: remove this single id from the frozen list, since the row has never actually been certified and therefore has nothing to grandfather -- the list exists to spare genuinely-pre-existing certified rows a retroactive probe requirement, and this row is not one.\nINTERIM PROCESS CONTROL, binding until that lands: NO agent may flip FU-RAG-DEPLOY-MEMORY to DONE_VERIFIED without the six canonical D5 fields AND a verification.raw_probe, exemption notwithstanding. The schema will not stop you. This note is the record that you were told.\n"
+        "qa_rcverif_grandfather_escalation_20260823T1441Z": "[QA ESCALATION 2026-08-23T14:41Z — RC-VERIF GRANDFATHER FALSE-GREEN HAZARD ON THIS EXACT ROW. Not a defect in the fix under review; a defect in the gate that is supposed to protect it. Bar section 4 (\"Grandfather-exemption guard\") names this as a known open engineering gap with process-control-only mitigation; this note is the live proof that it is exploitable on the single highest-pressure row in the fleet.]\nFACT, PROVEN BY EXECUTION NOT BY READING: \"FU-RAG-DEPLOY-MEMORY\" is a member of RC_VERIF_GRANDFATHERED_IDS (apps/mcp-server/src/infrastructure/orchStateSchema.ts line 569). checkVerificationGate() guards with a bare `row.status === \"DONE_VERIFIED\" && !RC_VERIF_GRANDFATHERED_IDS.has(id)`, with no awareness of retraction or void markers. Consequence: this row can be flipped to DONE_VERIFIED carrying NO verification.raw_probe at all, and orch-apply.sh will accept the write.\nLIVE REPRO WITH A CONTROL, run against a fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE (hot file never touched, override unset afterwards). Identical transform, two ids: FU-RAG-DEPLOY-MEMORY flipped to DONE_VERIFIED with `del(.verification)` -> \"Stage 0 + Stage 1 PASS\", write APPLIED. The same transform on the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK -> \"ORCH-STATE VALIDATION FAILED (1 issue) ... set to DONE_VERIFIED without verification.raw_probe\" -> \"ABORTED: validator exit 2 -- live file untouched\". So the exemption, not any property of the evidence, is what decides.\nWHY THIS ROW IS THE WORST POSSIBLE MEMBER OF THAT LIST. (1) It is OOM-class, and its own family has produced THREE recorded false certifications on this one incident (bar section 5). (2) It carries contamination/void language already (its po ruling calls the 7-day window CONTAMINATED; its sibling holds an explicit qa_durability_window_status VOID), which under bar section 4's retraction rule means the exemption must not be relied on for it -- but nothing in code enforces that. (3) It is under active unblock pressure: RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE ships BLOCKED on this row reaching DONE_VERIFIED, so there is a standing incentive to flip it. (4) The incentive is not hypothetical -- TWO rows were flipped to DONE_VERIFIED in this very cycle by updated_by=developer with qa_verified_by absent (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION at 14:28:53Z, FIX-CHEF-MARKER-KEY-ANCHOR-1 at 14:33:50Z). Both happened to be substantively correct on QA re-check, but they establish that self-certification without the qa gate is a live behaviour, not a theoretical one. On this row that behaviour would meet no schema resistance whatsoever.\nASK (out of qa's zone -- apps/mcp-server code change, needs a minted row; qa is reporting, not patching): make checkVerificationGate() refuse the exemption for any RC_VERIF_GRANDFATHERED_IDS member whose row text carries a retraction/void/contamination marker, exactly as bar section 4 already specifies in prose. Cheapest correct alternative if that is too broad: remove this single id from the frozen list, since the row has never actually been certified and therefore has nothing to grandfather -- the list exists to spare genuinely-pre-existing certified rows a retroactive probe requirement, and this row is not one.\nINTERIM PROCESS CONTROL, binding until that lands: NO agent may flip FU-RAG-DEPLOY-MEMORY to DONE_VERIFIED without the six canonical D5 fields AND a verification.raw_probe, exemption notwithstanding. The schema will not stop you. This note is the record that you were told.\n\n[QA CORRECTION 2026-08-23T14:51Z to the escalation above.] Point (4) of that escalation cited two rows flipped this cycle \"by updated_by=developer with qa_verified_by absent\" as proof that self-certification without the qa gate is live behaviour. THAT SUPPORTING CLAIM IS WITHDRAWN. Both rows were in fact fully verified by a concurrent peer qa session and journaled — sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-26.md STEP qa-S162 (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION) and STEP qa-S167 (FIX-CHEF-MARKER-KEY-ANCHOR-1, which independently traced the same amended-commit hazard via git reflog). The qa gate ran on both. What those rows actually show is a provenance-stamping gap (updated_by names the wrong actor and qa_verified_by is left unset, so a board reader cannot distinguish a qa verdict from an owner self-flip) — a real but much smaller finding, and NOT evidence of gate bypass.\nTHE ESCALATION ITSELF IS UNAFFECTED AND STANDS. Its load-bearing evidence was never those two rows; it is the live paired repro with a control, run against a fixture: the identical no-raw_probe DONE_VERIFIED transform PASSES validation for FU-RAG-DEPLOY-MEMORY (grandfathered) and ABORTS with \"set to DONE_VERIFIED without verification.raw_probe\" for the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK. Points (1) membership at orchStateSchema.ts line 569, (2) the OOM-class family's three recorded false certifications, and (3) the live unblock pressure from RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE are all independently verified and unchanged. The ask and the interim process control stand exactly as written.\n"
       }
     ],
     "_closed_signals_20260614": {
@@ -20239,271 +20542,6 @@
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
-        "envelope_id": "f2d50e1f0f07e654f7944896e8a48e991ebcca3109d2a789e99527b78fc247ce",
-        "source": "file",
-        "from": "ci-health-probe",
-        "to": "po",
-        "type": "ci_red",
-        "priority": "high",
-        "payload": {
-          "check_id": "CI-RED-28c3c296",
-          "head_sha": "28c3c2962e0bbc219495619454962af5a14eab28",
-          "run_id": 32638567966,
-          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/32638567966",
-          "conclusion": "failure",
-          "failing_jobs": [
-            {
-              "name": "signal-type-coverage-guard",
-              "conclusion": "failure",
-              "jobId": 97191952913
-            }
-          ],
-          "fingerprint": "7e028218ce0bfd7c5417d5d493933c51aefdbd0c6aa6b944df442e92a9b735be",
-          "zone_owner": "dev-team (CI fix)",
-          "summary": "CI RED on main HEAD 28c3c2962e0bbc219495619454962af5a14eab28: signal-type-coverage-guard",
-          "suggested_sprint_class": "FIX",
-          "verification_gate": "ci_green_on_subsequent_push"
-        },
-        "createdAt": "2026-08-23T12:23:04Z",
-        "drained_at": "2026-08-23T12:53:06Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "1bad61b39a222a4201d11eb2c4e1ae6031e7f8f12810b78d1c22f0f404d15d0f",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/scope-20260823T1241Z-po.md docs/agent-memory/notebooks/po.md docs/data/orch/orch-state.json. actor=669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3 mode=warn escalated=false prior_warns=0 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-23T12:43:37Z",
-        "drained_at": "2026-08-23T12:53:06Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "f75d8c9fa71fdb48627207caa80377c4060b6c2a63ab1d0026e6eb3e14d13ca5",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-ba.md docs/agent-memory/notebooks/ba.md docs/handoffs/FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER-BA-spec.md. actor=669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3 mode=warn escalated=false prior_warns=1 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-23T12:53:01Z",
-        "drained_at": "2026-08-23T12:53:06Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "61df4c3cbf2df015582d7619562739e576f2cc35021ee272d3564b8251e67a34",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/ba.md",
-          "line_count": 59,
-          "cap": 200,
-          "byte_count": 12711,
-          "byte_cap": 12000,
-          "class": "agent-notebook",
-          "reason": "byte-cap",
-          "overage": 0,
-          "byte_overage": 711,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-23T12:51:27Z",
-        "drained_at": "2026-08-23T12:53:06Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "93cf79decf9b6c0e24285d92c98ff216d627cfb19f7414dbc45d48011b494a5d",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_no_valid_drop_candidate_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/ba.md",
-          "line_count": 59,
-          "cap": 200,
-          "byte_count": 12711,
-          "byte_cap": 12000,
-          "section_count": 3,
-          "non_sentinel_section_count": 1,
-          "sentinel_section_count": 2,
-          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-23T12:51:25Z",
-        "drained_at": "2026-08-23T12:53:06Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "b57389ec33c3ee5fd5b8f268bc7c326c141383cb7babc7bd70ebcaa4fd82326b",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 4 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-SPRINT-S-pm.md docs/data/orch/orch-state.json docs/handoffs/TASK-BCTC-INSPECT-LABEL-FIX.md docs/handoffs/TASK-BCTC-INSPECT-UI-FILTERS.md. actor=669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3 mode=warn escalated=false prior_warns=2 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-23T13:07:06Z",
-        "drained_at": "2026-08-23T13:24:50Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "e2cf8f0bb8dab9ebce5fe3cd3fa1f41bf1256464cc11a83399b8f67e7d833f28",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-25.md",
-          "line_count": 291,
-          "cap": 600,
-          "byte_count": 44587,
-          "byte_cap": 36000,
-          "class": "sprint-decision-journal",
-          "reason": "byte-cap",
-          "overage": 0,
-          "byte_overage": 8587,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-23T13:21:33Z",
-        "drained_at": "2026-08-23T13:24:50Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "eca8e52260b8da2dd6a2875db49f8db19decfd9ef720146e7a07fd0eeda6ff37",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-23T13:19:56Z",
-          "matched_slots": [
-            "fb-weekend"
-          ],
-          "won_slots": [
-            "fb-weekend"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/fb-market-poster/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 0,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "weekend",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "fb-weekend": "cron"
-          },
-          "cadence_minutes": {
-            "fb-weekend": "null"
-          },
-          "last_fired_timestamp": "2026-08-23T13:18:35Z",
-          "last_fired_slots": [
-            "fb-weekend"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "13:15",
-          "leader_lock": "acquired",
-          "dev_head": "unknown",
-          "devq": 5,
-          "signal_backlog": 30,
-          "note": "fb-weekend (guaranteed, cron 13 13 * * 6,0) fired on Sunday 2026-08-23; agent returned same-tick with dedup no-op — published:fb-weekend:2026-08-22 marker already held (expires 2026-08-23T17:33:44Z), correct under publish_date_basis=vn_date_saturday_anchor (Sat 08-22 anchors the weekend post; the Sunday fire is the redundant second chance). Step 5.3 off-flow detector ran SAME-TICK: negative control passed, 0/6 distinct markers, slot retained in WON_SLOTS, stamp stands (no de-stamp). Prior last_fired was 2026-08-08T13:24:06Z — cowork's fb-weekend slot had not fired for 15d across 3 weekends; Saturday's actual post came from a non-cowork path (standalone launchd cron), so the 08-08 stamp was accurate, not a lost write. OBSERVED DEFECT (non-blocking, not fixed here): spawn-fanout.md Step 5.1's LOAD_1MIN awk parser is locale-fragile — this host's uptime emits comma decimals (load averages: 6,68 4,60 3,81) and the documented pipeline yields '4' instead of 6.68, under-reporting load and biasing the DEGRADED gate toward false. Same class as the LC_ALL=C pin already noted in pressure-read.md's A-30 helper comment. Harmless this tick (6.68 << 24 threshold)."
-        },
-        "createdAt": "2026-08-23T13:19:56Z",
-        "drained_at": "2026-08-23T13:24:50Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "86b26e931fe8730dbace0120ff41b368c62020d7ca22573241cec20189007358",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/pm.md. actor=669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3 mode=warn escalated=true prior_warns=3 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-23T13:26:42Z",
-        "drained_at": "2026-08-23T13:55:20Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "1a34f4299dae5424b8160b540f43be9c6b080ee84350ce088d52482f285349c1",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/agent-memory/notebooks/po.md' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/agent-memory/notebooks/po.md' (8c2a0f404131dd644f8f0862c04af78a520a7a4a) differs from what is about to land in this commit (e42ae87885b58d3537cb6877b2cd874540fe278d) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope (two-blob form takes NO pathspec — do not append '-- docs/agent-memory/notebooks/po.md', that is a git usage error): git diff 8c2a0f404131dd644f8f0862c04af78a520a7a4a e42ae87885b58d3537cb6877b2cd874540fe278d",
-        "createdAt": "2026-08-23T13:47:00Z",
-        "drained_at": "2026-08-23T13:55:20Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "20a43c2ff145dedecddc340f008a0970799c762da3ac1d2a8fcaff3fa49e41aa",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "2026-08-23T13:48:25Z",
-          "matched_slots": [
-            "digest-sunday"
-          ],
-          "won_slots": [
-            "digest-sunday"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/digest-predict/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 0,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "weekend",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "digest-sunday": "cron"
-          },
-          "cadence_minutes": {
-            "digest-sunday": null
-          },
-          "last_fired_timestamp": "2026-08-23T13:47:27Z",
-          "last_fired_slots": [
-            "digest-sunday"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "13:45",
-          "leader_lock": "acquired",
-          "dev_head": "unknown",
-          "devq": 5,
-          "signal_backlog": 33,
-          "note": "digest-sunday (guaranteed, cron 47 13 * * 0) spawned run_in_background per BGFAN-1. Step 5.3 off-flow detector is DEFERRED — agent had not returned at telemetry-write time; if a later return scores >=2 distinct OFFFLOW_MARKERS on the contract surface (final assistant text only, never the .output transcript symlink), apply the AC-P1-7-4 de-stamp: re-read cowork-schedule.json and revert last_fired to 2026-07-19T13:49:28.199Z ONLY if it still equals 2026-08-23T13:47:27Z. GAP: prior last_fired was 2026-07-19T13:49:28.199Z — 35 days / 5 missed Sundays via the cowork path; needs the same non-cowork-publisher check that explained the fb-weekend 15-day gap, not assumed to be a lost write. DEFECT (2nd observation, same tick class): spawn-fanout.md Step 5.1 load parser (uptime piped to awk -F\"load average\" then gsub of non-numerics) is locale-fragile — this host emits comma decimals (\"load averages: 5,37 5,67 5,34\") so it yielded 5 instead of 5.37, under-reporting load and biasing the DEGRADED gate toward false. Harmless here (5.37 vs threshold 24) but wrong by construction. Needs an LC_ALL=C pin, same class as the pressure-read.md A-30 helper comment."
-        },
-        "createdAt": "2026-08-23T13:48:25Z",
-        "drained_at": "2026-08-23T13:55:20Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
         "envelope_id": "5744c697774e89fb1d2ecc172f261b13840b4eeb0e22d41999001f306c355d15",
         "source": "file",
         "from": "fleet-worktree-push",
@@ -20520,7 +20558,8 @@
         },
         "createdAt": "2026-08-23T13:35:47Z",
         "drained_at": "2026-08-23T13:55:20Z",
-        "routed_to": "PO Step 0-SIG"
+        "routed_to": "PO Step 0-SIG",
+        "po_hold_20260823": "HELD DELIBERATELY by po 2026-08-23T14:52Z — NOT cleared, NOT lost. Step 0-SIG's CLEAR contract permits clearing only entries that have been ROUTED, and type `auto-push-abort` has NO row in the Pipeline-A routing table of docs/agents/po/flow/triage-signals.md, so these three are by definition unrouted. Clearing them would be a silent loss AND would flip scripts/audits/guard-signal-type-coverage.sh green while the coverage gap it is reporting is still real — the guard reads this inbox as its input, so PO's own CLEAR is capable of gaming it. Deliberately not gaming it. Tracked by FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort (ready[], P0, agent-father). CLEAR CONDITION: once that row lands the table entry, PO routes these three per the new rule and clears them in the same cycle. PREMISE FOR WHOEVER ROUTES THEM: all three report `git push origin HEAD:main returned non-zero` with ahead=35/42/49 during the 13:35-14:10Z window. That premise is now RESOLVED — the LINE-MOVED task-claim-lint gate that was blocking pushes was fixed by 83ab26dc, the backlog drained, and origin/main measured behind=0 at 14:34Z. So the correct disposition for these three specific envelopes is ACK-and-drop with no task minted; the routing-table row is still required so the NEXT occurrence is not another CI red."
       },
       {
         "envelope_id": "0d2b16522661eb9de82165631d17aa15b991001ef5666ba8cb7c5ca36370e525",
@@ -20539,90 +20578,8 @@
         },
         "createdAt": "2026-08-23T13:44:51Z",
         "drained_at": "2026-08-23T13:55:20Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "9fb87ab6771edf1628651b2dc578e406a643ece9a0dcd897f3d5db5a7ad66d65",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 6 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-26.md docs/agent-memory/notebooks/qa.md docs/data/orch/archive/2026-08.json docs/data/orch/archive/backlog-detail.json docs/data/orch/orch-state.json reports/TASK_REPORT_REVIEW-LANE-QA-DRAIN-20260823T1330Z.md. actor=7be6b4cd-057e-419b-a967-4810daf2b646 mode=warn escalated=false prior_warns=1 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-23T13:56:40Z",
-        "drained_at": "2026-08-23T14:22:34Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "af89e0643f1dc4cb4c4c1aeba24f5af04b15a8bfaca68a60f0dd1ea4a41e633e",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/ops.md. actor=669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3 mode=warn escalated=true prior_warns=4 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-23T13:58:15Z",
-        "drained_at": "2026-08-23T14:22:34Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "197f3573cc639a744fe37edd8c1cddcd25231f16661bc1d55155687100f4fb05",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agents/qa/flow/main.md docs/data/orch/archive/2026-08.json docs/handoffs/TASK-BCTC-INSPECT-UI-FILTERS-CLOSEOUT.md. actor=669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3 mode=warn escalated=true prior_warns=5 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-23T14:14:45Z",
-        "drained_at": "2026-08-23T14:22:34Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "98d8c6043ed8d30f98f6f76f5af18b3afffa4c40801e2a3d2b44c8f540b37c76",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/digest-predict.md",
-          "line_count": 46,
-          "cap": 200,
-          "byte_count": 38160,
-          "byte_cap": 12000,
-          "class": "agent-notebook",
-          "reason": "byte-cap",
-          "overage": 0,
-          "byte_overage": 26160,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-23T13:59:20Z",
-        "drained_at": "2026-08-23T14:22:34Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "404a5bea6846f5ca58398008c0611798c62e897b8cc04b4f395939d76aacef69",
-        "source": "file",
-        "from": "agents-architect",
-        "to": "pm",
-        "type": "brief_complete",
-        "priority": "high",
-        "payload": "docs/architecture-briefs/2026-08-23-fix-cowork-published-marker-ttl-cadence-mismatch-design.md",
-        "createdAt": "2026-08-23T14:04:55Z",
-        "drained_at": "2026-08-23T14:22:34Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "879fe50b6465f504468ed117ed7d895dcb5c6603c293af20c471b87e114192f2",
-        "source": "file",
-        "from": "agents-architect",
-        "to": "agent-father",
-        "type": "brief_complete",
-        "priority": "high",
-        "payload": "docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md",
-        "createdAt": "2026-08-23T14:15:51Z",
-        "drained_at": "2026-08-23T14:22:34Z",
-        "routed_to": "PO Step 0-SIG"
+        "routed_to": "PO Step 0-SIG",
+        "po_hold_20260823": "HELD DELIBERATELY by po 2026-08-23T14:52Z — NOT cleared, NOT lost. Step 0-SIG's CLEAR contract permits clearing only entries that have been ROUTED, and type `auto-push-abort` has NO row in the Pipeline-A routing table of docs/agents/po/flow/triage-signals.md, so these three are by definition unrouted. Clearing them would be a silent loss AND would flip scripts/audits/guard-signal-type-coverage.sh green while the coverage gap it is reporting is still real — the guard reads this inbox as its input, so PO's own CLEAR is capable of gaming it. Deliberately not gaming it. Tracked by FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort (ready[], P0, agent-father). CLEAR CONDITION: once that row lands the table entry, PO routes these three per the new rule and clears them in the same cycle. PREMISE FOR WHOEVER ROUTES THEM: all three report `git push origin HEAD:main returned non-zero` with ahead=35/42/49 during the 13:35-14:10Z window. That premise is now RESOLVED — the LINE-MOVED task-claim-lint gate that was blocking pushes was fixed by 83ab26dc, the backlog drained, and origin/main measured behind=0 at 14:34Z. So the correct disposition for these three specific envelopes is ACK-and-drop with no task minted; the routing-table row is still required so the NEXT occurrence is not another CI red."
       },
       {
         "envelope_id": "d1c191bee2cfc9ac7d8f43d19aee8375a2bceb578740bd7d7ba5d28d906ee0c1",
@@ -20641,28 +20598,8 @@
         },
         "createdAt": "2026-08-23T14:10:36Z",
         "drained_at": "2026-08-23T14:22:34Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "11bc8b948aaf66129a48bd4ba842c9fbcc7bde832df08027712288128cd9e46e",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_single_section_overage_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/digest-predict.md",
-          "line_count": 46,
-          "cap": 200,
-          "byte_count": 38160,
-          "byte_cap": 12000,
-          "section_count": 1,
-          "reason": "only preamble+1 section remain; cannot prune further without data loss",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-23T13:59:18Z",
-        "drained_at": "2026-08-23T14:22:34Z",
-        "routed_to": "PO Step 0-SIG"
+        "routed_to": "PO Step 0-SIG",
+        "po_hold_20260823": "HELD DELIBERATELY by po 2026-08-23T14:52Z — NOT cleared, NOT lost. Step 0-SIG's CLEAR contract permits clearing only entries that have been ROUTED, and type `auto-push-abort` has NO row in the Pipeline-A routing table of docs/agents/po/flow/triage-signals.md, so these three are by definition unrouted. Clearing them would be a silent loss AND would flip scripts/audits/guard-signal-type-coverage.sh green while the coverage gap it is reporting is still real — the guard reads this inbox as its input, so PO's own CLEAR is capable of gaming it. Deliberately not gaming it. Tracked by FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort (ready[], P0, agent-father). CLEAR CONDITION: once that row lands the table entry, PO routes these three per the new rule and clears them in the same cycle. PREMISE FOR WHOEVER ROUTES THEM: all three report `git push origin HEAD:main returned non-zero` with ahead=35/42/49 during the 13:35-14:10Z window. That premise is now RESOLVED — the LINE-MOVED task-claim-lint gate that was blocking pushes was fixed by 83ab26dc, the backlog drained, and origin/main measured behind=0 at 14:34Z. So the correct disposition for these three specific envelopes is ACK-and-drop with no task minted; the routing-table row is still required so the NEXT occurrence is not another CI red."
       }
     ],
     "last_po_triage_at": "2026-08-23T12:48:03Z",

@@ -1,0 +1,62 @@
+{
+  "from": "ci-health-probe",
+  "to": "po",
+  "type": "ci_red",
+  "priority": "high",
+  "createdAt": "2026-08-23T14:23:50Z",
+  "dedup_key": "ci_red:83ab26dc08cb4e5a756a182c5f8dd5467b0609d5:agent-bash-grant-coverage,signal-type-coverage-guard",
+  "payload": {
+    "check_id": "CI-RED-83ab26dc",
+    "head_sha": "83ab26dc08cb4e5a756a182c5f8dd5467b0609d5",
+    "run_id": 32645140310,
+    "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/32645140310",
+    "conclusion": "failure",
+    "failing_jobs": [
+      {
+        "name": "signal-type-coverage-guard",
+        "conclusion": "failure",
+        "jobId": 97208146272
+      },
+      {
+        "name": "agent-bash-grant-coverage",
+        "conclusion": "failure",
+        "jobId": 97208146399
+      }
+    ],
+    "fingerprint": "ef76ba2e27fa24ce702f183fce77d1cf27085e1ea2c2b76a6fc34399bdfcdcfb",
+    "zone_owner": "dev-team (CI fix)",
+    "summary": "CI RED on main HEAD 83ab26dc08cb4e5a756a182c5f8dd5467b0609d5: agent-bash-grant-coverage,signal-type-coverage-guard",
+    "suggested_sprint_class": "FIX",
+    "verification_gate": "ci_green_on_subsequent_push"
+  },
+  "po_disposition": {
+    "disposition": "ROUTED",
+    "disposed_by": "po",
+    "disposed_at": "2026-08-23T14:40:00Z",
+    "fingerprint": "ef76ba2e27fa24ce702f183fce77d1cf27085e1ea2c2b76a6fc34399bdfcdcfb",
+    "dedup_key": "ci_red:83ab26dc08cb4e5a756a182c5f8dd5467b0609d5:agent-bash-grant-coverage,signal-type-coverage-guard",
+    "signal_head_sha": "83ab26dc08cb4e5a756a182c5f8dd5467b0609d5",
+    "revalidated_head_sha": "429dcf8faf7b220de06afafc6b03e49ce8014ca0",
+    "revalidated_run_id": 32645643303,
+    "stale": false,
+    "note": "NOT stale. main moved 83ab26dc -> 429dcf8fa; CI run 32645643303 on 429dcf8fa is ALSO failure with the SAME two jobs (signal-type-coverage-guard 97209377287, agent-bash-grant-coverage 97209377297). Both reproduce locally on this working HEAD, so this is NOT the known signal-type-coverage-guard CI-green/local-red divergence mode - CI and local agree RED. Two independent root causes, split into two rows.",
+    "routed_to_rows": [
+      {
+        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort",
+        "job": "signal-type-coverage-guard",
+        "lane": "ready",
+        "next_agent": "agent-father",
+        "cause": "Pipeline-A routing table in docs/agents/po/flow/triage-signals.md has no row for signal type 'auto-push-abort'; 3 such envelopes sit in dev_team_idle_chain.pending_triage_inbox[] from fleet-worktree-push. Pre-existing backlog row promoted, no duplicate minted."
+      },
+      {
+        "id": "FIX-BASHGRANT-GATE-NEGATED-GIT-COMMIT-PHRASE-FALSE-POSITIVE",
+        "job": "agent-bash-grant-coverage",
+        "lane": "ready",
+        "next_agent": "developer",
+        "cause": "Detector false positive. DEMAND_ERE in scripts/audits/agent-bash-grant-coverage.sh:103 substring-matches 'git commit' inside the NEGATED phrase 'no per-line git commit' in the fleet-wide debug-logger-protocol boilerplate landed by commit baa91292c. refine_bctc_md's whole flow corpus contains exactly ONE DEMAND_ERE match and it is that negated sentence. Granting Bash would launder a detector bug into a real privilege grant - do not."
+      }
+    ],
+    "verification_gate": "ci_green_on_subsequent_push",
+    "verification_note": "Gate is ci_green_on_subsequent_push, but signal-type-coverage-guard reads dev_team_idle_chain.pending_triage_inbox[] as its input, and PO's Step 0-SIG CLEAR empties that inbox every cycle. A green run after an inbox clear does NOT prove the routing-table row was added. Close the auto-push-abort row only on a grep of the Pipeline-A table for the type, never on guard exit code alone."
+  }
+}
