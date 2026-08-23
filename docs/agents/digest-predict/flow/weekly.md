@@ -27,7 +27,7 @@ CARRY_REGIME = "VND Carry Spread" line → HOT_MONEY_INFLOW | NEUTRAL | FII_OUTF
 US10Y_SIGNAL = "US 10Y Yield" line     → RISK-OFF | RISK-ON | NEUTRAL
 DXY_SIGNAL   = "DXY" line             → USD STRENGTHENING | USD WEAKENING | USD STABLE
 ```
-`get_macro_calendar(days=14)` → `upcoming_events`, `pivot_window_active`
+`get_macro_calendar(days_ahead=14)` → `upcoming_events`, `pivot_window_active` (real param is `days_ahead`, NOT `days` — verified live 2026-08-23)
 
 `generate_market_summary(period="weekly")`
 
@@ -46,9 +46,9 @@ Include:
 - `get_alert_accuracy()` accurate vs noisy
 - `get_signal_effectiveness(days=7)` precision < 60% = flag
 - `get_cascade_metrics(days=7)` high-activity or dead rules
-- `run_hexagram_backtest(days=7)` prediction accuracy
+- `run_hexagram_backtest(start_date=<YYYY-MM-DD, 7d ago>)` prediction accuracy (real param is `start_date`, NOT `days` — verified live 2026-08-23)
 - `get_transition_probabilities(hexagram_number)` key stocks
-- `get_prediction_accuracy(days=7)` claim resolution rate
+- `get_prediction_accuracy(lookback=7)` claim resolution rate (real param is `lookback`, NOT `days` — verified live 2026-08-23)
 - Calibration: skip — already sent by server `calibrationReportJob` (Sun 13:00 UTC → MARKET + WORK)
 - All domain tools: legal/policy/bond/contracts/credit/insider/supply chain/climate/energy/crisis/pharma
 

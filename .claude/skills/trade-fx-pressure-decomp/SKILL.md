@@ -4,8 +4,10 @@ description: >
   Thành's BOP/trade-deficit decomposition (T-26, T-33..T-36, T-38, T-40, T-42).
   Invoke when: monthly trade-balance release; any month VN prints a goods deficit;
   or when usdVnd direction=BEARISH while reserves/flows look benign (the "mysterious stability" case).
-  Explains WHY a record deficit does or does not move FX. Runs in DEGRADED mode off
-  get_macro_snapshot until get_vn_trade_balance and get_vn_bop are live.
+  Explains WHY a record deficit does or does not move FX. `get_vn_trade_balance` and
+  `get_vn_bop` are LIVE (verified digest-predict 2026-08-23, live T8/2026 + BOP Q4/2025 data
+  returned) — use them as primary source; fall back to get_macro_snapshot only if either
+  tool errors in-session.
   Outputs deficit anatomy, FX-incidence verdict, NEGATIVE-MARGIN-TRAP flag, and cycle_stage.
 version: "2026-06-14"
 ---

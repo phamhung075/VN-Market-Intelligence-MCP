@@ -2,7 +2,7 @@
 
 **Location:** `docs/agents/tools/package/digest-predict.md`
 **Load when:** Agent starts, before first MCP call
-**Last Updated:** 2026-05-15
+**Last Updated:** 2026-08-23
 
 Invoke via gateway: call_tool(server="vn-market", tool="<name>", arguments={...}) — grammar SSOT: project CLAUDE.md § MCP Tools. Wrong: tool_name/input/vnmarket-mcp.
 
@@ -41,6 +41,12 @@ Invoke via gateway: call_tool(server="vn-market", tool="<name>", arguments={...}
 | `get_supply_chain_exposure` | Supply chain risk scores and concentration | — |
 | `get_climate_risk_signals` | Climate-related risks by sector and ticker | — |
 | `get_energy_grid_signals` | Power supply/demand, stability, import dependence | — |
+| `get_bond_maturity_calendar` | Bond maturity schedule by sector (seed/illustrative data, not verified live market — verified live 2026-08-23) | `sector?: string` |
+| `get_credit_flow_signal` | Credit aggregates + direction signal (mostly hardcoded estimate — verified live 2026-08-23) | — |
+| `get_public_contracts` | Public government contract data | `sector?: string` |
+| `get_pharma_signals` | Pharma sector signals: approvals/tenders/regulations/outbreaks/fdi | `stock?, days?, signalType?` |
+| `get_vn_trade_balance` | VN monthly trade balance + HS breakdown + FDI/domestic bloc split (T-42 input, LIVE as of 2026-08-23) | — |
+| `get_vn_bop` | VN Balance of Payments incl. fx_incidence verdict (T-42 input, LIVE as of 2026-08-23) | — |
 
 ### Risk & Signal Processing
 | Tool | Purpose | Key Params |
@@ -88,6 +94,7 @@ Invoke via gateway: call_tool(server="vn-market", tool="<name>", arguments={...}
 | `get_watchlist` | Current watchlist tickers and metadata | — |
 | `get_user_positions_for_analysis` | Positions formatted for financial analysis | — |
 | `get_insider_signals` | Insider trading activity and positions | `code: string` (req) |
+| `get_insider_sentiment` | Insider net-sentiment suite; omit `code` for market-wide aggregate (verified live 2026-08-23) | `code?: string` |
 
 ### Memory & Session
 | Tool | Purpose | Key Params |
