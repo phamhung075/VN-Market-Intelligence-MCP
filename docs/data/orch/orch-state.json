@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "CCATO-MCP-T5-USECASE",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Ready-Lane Consumer claim of CCATO-MCP-T5-USECASE — spawn dev-mcp-server DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
-    "updated_at": "2026-08-23T22:30:15Z",
-    "updated_by": "dev-team (ready-lane consumer)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-08-23T22:49:54Z",
+    "updated_by": "orch-apply (Stage 1.5 auto-stamp — caller omitted updated_by)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -21119,6 +21118,28 @@
             "observed_at": "2026-08-23T21:45:00Z"
           }
         }
+      },
+      {
+        "id": "CCATO-MCP-T5-USECASE",
+        "type": "IMPL-XS",
+        "status": "REVIEW",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "application/usecases/runNarrativeTruthGate.ts orchestration",
+        "depends": [
+          "CCATO-MCP-T1-DOMAIN-ENGINE",
+          "CCATO-MCP-T2-CLAIM-MAP-LOADER",
+          "CCATO-MCP-T3-PROBE-ADAPTERS",
+          "CCATO-MCP-T4-SIGNAL-WRITER"
+        ],
+        "next_agent": "qa",
+        "supervised": false,
+        "updated_at": "2026-08-23T22:49:54Z",
+        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)",
+        "claimed_at": "2026-08-23T22:30:15Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "dev-mcp-server"
       }
     ],
     "qa": [
@@ -21456,28 +21477,6 @@
         "claimed_at": "2026-08-23T15:57:35Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "blocked_reason": "SLS claim reverted, 2026-08-23T15:37Z tick: the claim was not gate-satisfied. SLS PRIMARY selects purely on promoted_by == \"dev-team (supervised-lane sweep)\" and re-validates no gate. This row was stamped 2026-08-08T04:51:52Z and carries plan_only=false, so effective_plan_only is FALSE and the row is outside SLS's supervised-AND-plan_only quarantine class. Per main.md Lane x Gate matrix, ready[] with sup=T po=F resolves to READY-XOR-SUP-OR-PLANONLY, i.e. PO's human-gated manual-dispatch sweep, NOT auto-dispatch. Not spawned. The lane-move back to ready[] was attempted and HARD-REJECTED by the row-prose-ceiling guard (live=0B, candidate=26552B): that is defect D3 in scripts/architect-20260823-orch-prose-ceiling-row-handoff.jq, 2nd live instance after UC-CCA-P3. Marked BLOCKED rather than IN_PROGRESS so wip_in_progress excludes it and the four WIP pickers stay unblocked. Unblock path: PO manual-dispatch sweep, or land the D3 fix then lane-move to ready[]."
-      },
-      {
-        "id": "CCATO-MCP-T5-USECASE",
-        "type": "IMPL-XS",
-        "status": "IN_PROGRESS",
-        "size": "XS",
-        "zone": "mcp-server",
-        "priority": "P0",
-        "title": "application/usecases/runNarrativeTruthGate.ts orchestration",
-        "depends": [
-          "CCATO-MCP-T1-DOMAIN-ENGINE",
-          "CCATO-MCP-T2-CLAIM-MAP-LOADER",
-          "CCATO-MCP-T3-PROBE-ADAPTERS",
-          "CCATO-MCP-T4-SIGNAL-WRITER"
-        ],
-        "next_agent": "dev-mcp-server",
-        "supervised": false,
-        "updated_at": "2026-08-23T22:30:15Z",
-        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)",
-        "claimed_at": "2026-08-23T22:30:15Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "dev-mcp-server"
       }
     ]
   },
