@@ -1,35 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-08-23 — TASK-BCTC-INSPECT-LABEL-FIX (AC9 buildLabel() quarter-dup fix + AC-14 test correction, decompose:FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER) → review[]
-
-**Session:** 669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3. Architect's D-1 corrected AC9's root cause beyond BA's initial 2-HUT-row framing: `period_type` already holds `'Q1'..'Q4'` on every live row, so buildLabel()'s unconditional quarter-append duplicated the token on all 255 normal rows, not just the 2 string-typed HUT rows.
-
-**Fix:** `bctcInspectHandler.ts` — added `QUARTERLY_PERIOD_TYPE_RE` + exported `normalizeQuarter()`; `buildLabel()` now skips the quarter suffix when `period_type` already matches `/^Q[1-4]$/`. Updated the AC-14 hardcoded assertion (`PI3-bctc-inspect.test.ts:361`, in-scope correction, not a preserved regression) `"VCB Q1 Q1 2025"` → `"VCB Q1 2025"`; added 6-case `normalizeQuarter()` unit-test block.
-
-**Verified:** 49/49 `PI3-bctc-inspect.test.ts` pass; 4 sibling regression files (reopen2/md/page-nav/overlay) 60/60 pass untouched; `tsc --noEmit` clean; `PORT=3099` boot healthy (toolCount=183, `/api/bctc-inspect` + `/dashboards/news-fetch/` both 200). Live-probed `:3099/api/bctc-inspect/docs`: 0/268 rows show a duplicated/garbled quarter token post-fix (was 255/257 pre-fix) — HUT rows now render `"HUT Q1 2024"` correctly.
-
-**Board:** claimed `ready[]→in_progress[]` via `orch-apply.sh` before starting (sole authority — sprint-task lock held by dispatcher per INV-GATEWAY-1, no `task_claim` MCP call from this specialist). Sibling `TASK-BCTC-INSPECT-UI-FILTERS` confirmed in `in_progress[]` (different dev-mcp-server session, disjoint files — `bctc-inspector.html` + new test file, zero overlap with my `bctcInspectHandler.ts`/`PI3-bctc-inspect.test.ts`).
-
-**Evidence:** DJ `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md` S13. Commit `237fa6e26` (code+test).
-
-Zone health: 268/268 live rows render clean labels post-fix (0 duplicated-quarter tokens, verified via direct API probe not assumption), 4 sibling test files stay green by construction (label-only change, no shared code path touched), parallel sibling task confirmed disjoint before commit | HEALTHY.
-
-## 2026-08-23 — TASK-BCTC-INSPECT-UI-FILTERS (quarter + ticker facet filters, decompose:FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER) → review[]
-
-**Session:** 669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3 (sibling task's session — resumed for the paired UI-filter deliverable). Added `#quarter-filter`/`#ticker-filter` selects to `bctc-inspector.html`'s `.controls` bar, module-scope `allDocs` cache, `normalizeQuarter()`/`renderDocOptions()`/`populateFilterOptions()`/`applyFilters()` per architect D-2/D-3/D-4/D-5 + BA FR-1..FR-8. `applyFilters()` mutates `select.value` directly with NO synthetic `change` event — the existing handler unconditionally refetches PDF/OCR/table/MD, which would defeat AC2's zero-network-call design.
-
-**Verified live:** 11 distinct quarter options, 50 distinct ticker options (AC3/AC4 exact match, 268-row live dataset). New `FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER.test.ts`: 18 pure-fn assertions GREEN, incl. the live HUT `period_quarter="Q1"` string quirk. 5 named regression files + new file: 145 pass/0 fail. `tsc --noEmit` clean. `PORT=3099` boot healthy (toolCount=183, `/api/bctc-inspect` served HTML confirmed containing both new `<select>` ids).
-
-**Full-suite honesty check:** `bun test` (whole repo) = 15359 pass/40 skip/50 fail. Every failing test name grepped and confirmed outside this task's files (backtest_runs, vps_push_log, insider_transactions, task_heartbeat/task_release Zod, get_foreign_flow, VPS-proxy-health, MCP SSE registration) — zero touch bctc-inspector/filter code; many carry 5000ms timeouts (shared-DB/network contention signature from concurrent live agents on this host), pre-existing and unrelated. Documented in the handoff's Implementation Record rather than silently claimed clean or silently left unmentioned.
-
-**REBUILD_REQUIRED:** `apps/mcp-server/src/` bakes into the Docker image at build time — live `:3000`/`:3001` container still serves pre-change HTML (confirmed: `quarter-filter` id absent there, present on local `:3099` build). Ops must rebuild before AC10's dual-origin manual verify shows real results.
-
-**Board:** `TASK-BCTC-INSPECT-UI-FILTERS` moved `ready[]→in_progress[]→review[]` via `orch-apply.sh`.
-
-**Evidence:** DJ `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md` S14. Commit `2e66153fd` (bctc-inspector.html + new test + financial-reports.md doc section).
-
-Zone health: filter feature verified end-to-end against live growing dataset (not fixture assumption), zero-refetch design structurally + functionally confirmed (5-file regression suite 0 fail), pre-existing full-suite red surfaced honestly with a fingerprint (test names) rather than hidden behind a scoped subset run | HEALTHY.
-
 ## 2026-08-23 — 4 rows landed (2 ghost-zone P0 fixes, watchlist write-through infra, usdVnd static-rule retirement) → review[]; CCATO-MCP-T3..T8 correctly NOT built
 
 **Session:** 7be6b4cd-057e-419b-a967-4810daf2b646. Router's initial dispatch named CCATO-MCP-T3..T8 as Priority 1 with `deps` read as empty; mid-task the router corrected itself (real field is `depends`, and prerequisites T1/T2/T4 have no board rows). I had already written T3's probe adapters (`narrativeTruthProbeAdapters.ts` + a reports.ts `fetchFinancialReportRow` extraction) before the correction landed — **reverted both uncommitted, zero trace left**. Verified independently: T1/T2/T4's actual deliverables (domain/services/narrativeTruthGate/*, infrastructure/fileStore/claimToolMapLoader.ts, infrastructure/signals/narrativeContradictionSignalWriter.ts) DO exist, are tested (`CCATO-MCP-T1/T2/T4*.test.ts`, committed), and ARE documented in architecture.md + this agent's own decision journal (S1 2026-07-30, S2 2026-08-06) — but no board row was ever minted for any of the three, so `depends_on` resolves to MISSING (confirmed live: `orch-apply.sh` Stage 1g flags exactly these as unresolvable, non-fatal, which is why the 5-row chain sat in `ready[]` looking dispatchable for 5+ weeks). Reported to po/architect rather than inventing rows myself.
@@ -47,3 +17,21 @@ Zone health: filter feature verified end-to-end against live growing dataset (no
 **Evidence:** 4 commits above + 3 `orch-apply.sh` board writes (ready[]→review[]) with matching orch-state commits. `bun tsc --noEmit` clean and `PORT=<alt>` boot health OK (toolCount=183) after every change-set. `cronJobCount=88` unchanged throughout.
 
 Zone health: 4 independently-verified fixes landed with real regression tests (not just "tests pass," each new test proves the specific bug class it targets), one CI-red investigated honestly to its evidentiary limit rather than blind-patched, a phantom 5-task dependency chain caught and reverted before it shipped on a false premise | HEALTHY.
+
+## 2026-08-23 — FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write (RLC dispatch, write-side only) → review[]
+
+**Session:** 007e33e4-b453-4bb3-8ab1-ef31495906a3. RLC-claimed row, dispatched directly with the handoff already spelling out the exact code-change pattern for all 3 call sites — no ambiguity to resolve.
+
+**Fix:** `pushBctcLayoutHandler.ts` / `pushBctcTableHandler.ts` / `pushBctcMdTablesHandler.ts` all rejected `report_id` with an `isValidUuid()` format regex. Producers legitimately mint non-UUID ids for fallback-shell reports (`fallback-<TICKER>-<SORTKEY>`, `composition-root.ts:213` / `bctcReparseJob.ts` `insertFallbackRecord`), so every such push 400'd — measured live 2026-08-23T16:05Z at 11x full OCR/layout extraction runs (~15-24 min CPU each) discarded at the push, 100% loss on that cohort, plus 66 stranded shell reports. Replaced the format check with `SELECT 1 FROM financial_reports WHERE id = ?` (existence, not format). `isValidUuid()` itself untouched — still correct for its ~14 read-side call sites (this row's `blocks` sibling, READ-SIDE-FAST-FOLLOW, is a separate row — not touched this cycle per dispatch constraint).
+
+**Tests:** all 3 handler suites updated — financial_reports fixture seeding added (`beforeEach`), the old "invalid UUID → 400" case relabeled to the new existence-based rejection reason, + 2 new cases each per handoff spec (fallback-id happy-path 200 + data lands; well-formed-but-unseeded UUID still 400, proving the gate is tightened not relaxed). Also had to fix 2 downstream consumer suites whose fixtures pushed through these handlers without a seeded `financial_reports` row (`bctcInspectHandler.test.ts`, `1273-bctc-inspect-overlay.test.ts`) — found via full-repo grep on all 3 handler names, not left to chance.
+
+**Verified:** `bun tsc --noEmit` clean. Full `apps/mcp-server` `bun test` run TWICE for stability: 15411 pass / 40 skip / 50 fail across 1281 files both times, identical failing-file set (insider-transactions timeouts, vps-proxy-health, backtest-retrieval, foreign-flow, market-cap-tool, telegram, push-prices-persist, mcp-tools registry) — grepped the full log for `financial_reports`/`push-bctc`/`isValidUuid`, zero hits in any failure context, pre-existing and unrelated. All 8 touched files + both downstream consumers individually 100% green (76/76).
+
+**NOT verified this session (explicit dispatch constraint):** AC-2 72h live-durability probe (`bctc_layout_units`/`bctc_table_rows` COUNT for `fallback-%` ids + 72h docker-logs scan). Recorded PENDING on the board row, earliest valid check-time = dispatch+72h (2026-08-26T19:07Z+). Did not certify a window that hasn't elapsed — precedent: `feedback_ac3_durability_certified_on_window_that_ended_before_metric_settled`.
+
+**Board:** `in_progress[]` → `review[]` (`status:REVIEW`, `next_agent:qa`) via `orch-apply.sh`, `.head` reset idle in the same write.
+
+**Evidence:** Commit `2f27fb335` (3 handlers + 5 test files, explicit pathspec, `apps/mcp-server/` only — no commit-mutex claim, per INV-GATEWAY-1).
+
+Zone health: root-cause fix (format→existence gate) not a symptom patch, stopped active CPU burn (11x live full-extraction discards/day at time of dispatch), all consumers of the 3 changed handlers found via grep and verified — not just the 3 named suites, durability claim explicitly deferred rather than fabricated | HEALTHY.
