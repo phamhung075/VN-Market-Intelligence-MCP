@@ -87,12 +87,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Ready-Lane Consumer claim of FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write — spawn dev-mcp-server DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
-    "updated_at": "2026-08-23T19:24:01Z",
-    "updated_by": "dev-team (ready-lane consumer)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "dev-mcp-server completed FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write -> review[] (next_agent=qa); .head reset idle in same write.",
+    "updated_at": "2026-08-23T19:48:41Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -20682,6 +20682,33 @@
         "claimed_by": "dev-team (supervised-lane sweep)",
         "status_note": "2026-08-23T19:06Z dev-rag-service: plan_only/supervised design deliverable produced — docs/architecture-briefs/2026-08-23-fix-rag-compaction-disk-amplification-design.md. Fresh read-only measurement (data/live/lancedb now 366MB, down from 733-785MB via two unrelated 2026-08-14 fixes) revises the row own evidence: dominant remaining cost is 44 orphaned .tmp* staging files (292164KB, 84% of data/) from documented past OOM-kills, invisible to cleanup_older_than by design (LanceDB delete_unverified param, separate knob, defaults False, never passed by this codebase compact() call) - confirmed against installed lancedb==0.25.3 optimize() docstring, not guessed. Secondary: 1602/1647 _indices/<uuid>/ dirs now empty shells, ongoing under healthy operation (Index-optimize step leaves empty dir after file-level cleanup). Ruled out: compact() does NOT re-fire on every restart (per-process in-memory counter) - that mechanism belongs to the already-fixed vector-index defect, not this row. _COMPACT_EVERY retuning not recommended - current cadence already matched to measured traffic. Brief proposes staged Phase1 (isolated repro + one-off manual admin-triggered reclaim, new POST /admin/compact-reclaim-unverified, not cron-wired) -> Phase2 (evidence-gated automatic wiring decision) -> Phase3 (opportunistic empty-dir sweep), with an explicit durability criterion (fast-settling disk metric: re-measure du/find twice >=15min apart post-sweep; Phase2 needs >=24h dmesg-in-VM). No code changed, no table written, no data/live/lancedb/ file touched - read-only throughout per row constraint. Routed to po next (mirrors sibling design-only row RAG-FTS-BUILD-MEMORY-BOUND) to decide whether/how to authorize the phased implementation.",
         "design_brief": "docs/architecture-briefs/2026-08-23-fix-rag-compaction-disk-amplification-design.md"
+      },
+      {
+        "id": "FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write",
+        "type": "FIX",
+        "title": "Swap isValidUuid format gate for DB existence check in 3 async PEK extraction callback handlers (pushBctcLayoutHandler, pushBctcTableHandler, pushBctcMdTablesHandler)",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "unassigned",
+        "next_agent": "qa",
+        "created_at": "2026-08-05T09:40:15Z",
+        "created_by": "pm",
+        "depends": [],
+        "blocks": [
+          "FIX-BCTC-FALLBACK-SHELL-REPORTS-READ-SIDE-FAST-FOLLOW"
+        ],
+        "parent": "FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE",
+        "handoff": "docs/handoffs/FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write.md",
+        "updated_at": "2026-08-23T19:48:41Z",
+        "updated_by": "dev-mcp-server",
+        "claimed_at": "2026-08-23T19:24:01Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "po_adjudication_20260812T0542Z": "[po/escalation-adjudication 2026-08-12T05:42Z] RULING (c) + DIRECT CORRECTION OF THE ESCALATION'S INVERTED GUESS. The router asked whether this row's null claimed_at meant it was 'likely excluded from the wip_in_progress count already'. It is the exact opposite: wip_in_progress (scripts/lib/devteam-eligibility.jq:115-118) filters ONLY on .status (BLOCKED or TERMINAL_SET); claimed_at is never read. This row's status is IN_PROGRESS, so it consumed a full, real concurrency slot — while claimed_at=null and owner='unassigned' prove no agent ever claimed it. It is a pm decomposition CHILD written straight into in_progress[] instead of the ready[] staging queue that dev-team/flow/main.md:475's own WIP FORMULA note designates for 'PM/architect decomposition' output. Re-laned to ready[] with status READY: it keeps next_agent=dev-mcp-server, becomes visible to the Ready-Lane Consumer, and stops charging a budget slot for work nobody is doing. This was the one unambiguously false slot on the board.",
+        "status_note": " || CORROBORATION (po triage 2026-08-23T17:37Z, bug-escalation envelope 8c6c11e7 - folded onto this row, no duplicate minted): the PRODUCER half is now measured live. bctcReparseJob/composition-root mint report_id as `fallback-<TICKER>-<SORTKEY>` at apps/mcp-server/src/composition-root.ts:213 and apps/mcp-server/src/scheduler/financial-reports/bctcReparseJob.ts:672. All THREE push handlers reject non-UUID report_id with HTTP 400 invalid_report_id (pushBctcLayoutHandler.ts:111, pushBctcTableHandler.ts:106, pushBctcMdTablesHandler.ts:92) - this row already owns those 3 call sites. Live 2026-08-23T16:05:02Z: mcp-server (172.18.0.12) fired 11x POST /pek-extract under fallback-* ids. Every such job runs FULL OCR/layout extraction to completion (~15-24 min CPU each) and is discarded at the push. Deterministic, not a flake => 100% loss on that cohort. Raises this row's value: it is not only unblocking 66 shells, it is stopping active CPU burn.",
+        "dispatch_lane": "dev-mcp-server",
+        "dev_mcp_server_completion_20260823T1952Z": "[dev-mcp-server 2026-08-23T19:52Z] Write-side fix shipped, commit 2f27fb335 (apps/mcp-server/ only, explicit pathspec, no commit-mutex per INV-GATEWAY-1). Replaced isValidUuid() format gate with `SELECT 1 FROM financial_reports WHERE id = ?` existence check in pushBctcLayoutHandler.ts / pushBctcTableHandler.ts / pushBctcMdTablesHandler.ts (all 3 call sites this row owns). isValidUuid() itself untouched, still correct for its ~14 read-side call sites (blocks-row fast-follow). All 3 handler test suites updated: financial_reports fixture seeding added, old \"invalid UUID\" case relabeled to the new existence-based rejection reason, + 2 new cases each (fallback-<TICKER>-<SORTKEY> id happy-path 200, well-formed-but-unseeded UUID still 400 -- proves gate tightened not relaxed). 2 downstream consumer test suites also fixed (bctcInspectHandler.test.ts, 1273-bctc-inspect-overlay.test.ts) whose fixtures pushed through these handlers without a seeded financial_reports row -- found via full-repo grep for all handler import sites, zero missed. VERIFIED: bun tsc --noEmit clean; full apps/mcp-server bun test suite 15411 pass / 40 skip / 50 fail across 1281 files, run twice for stability -- the 50 failures are pre-existing/unrelated (insider-transactions timeouts, vps-proxy-health, backtest-retrieval, foreign-flow, market-cap-tool, telegram, push-prices-persist, mcp-tools registry; zero mention of financial_reports/push-bctc/isValidUuid in the full log); all 8 touched files + both downstream consumers individually 100% green (76/76 tests). NOT VERIFIED THIS SESSION (per dispatch constraint #4, do not certify): AC-2 72h live-durability probe (bctc_layout_units / bctc_table_rows COUNT(*) for fallback-% ids + 72h docker-logs scan for HTTP 400 invalid_report_id on fallback- ids) -- earliest valid check-time is dispatch+72h = 2026-08-26T19:07Z or later. QA: please run that probe no earlier than that timestamp; do not certify AC-2 on a shorter window (see project_ac3_durability_certified_on_window_that_ended_before_metric_settled precedent)."
       }
     ],
     "qa": [
@@ -21019,32 +21046,6 @@
         "claimed_at": "2026-08-23T15:57:35Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "blocked_reason": "SLS claim reverted, 2026-08-23T15:37Z tick: the claim was not gate-satisfied. SLS PRIMARY selects purely on promoted_by == \"dev-team (supervised-lane sweep)\" and re-validates no gate. This row was stamped 2026-08-08T04:51:52Z and carries plan_only=false, so effective_plan_only is FALSE and the row is outside SLS's supervised-AND-plan_only quarantine class. Per main.md Lane x Gate matrix, ready[] with sup=T po=F resolves to READY-XOR-SUP-OR-PLANONLY, i.e. PO's human-gated manual-dispatch sweep, NOT auto-dispatch. Not spawned. The lane-move back to ready[] was attempted and HARD-REJECTED by the row-prose-ceiling guard (live=0B, candidate=26552B): that is defect D3 in scripts/architect-20260823-orch-prose-ceiling-row-handoff.jq, 2nd live instance after UC-CCA-P3. Marked BLOCKED rather than IN_PROGRESS so wip_in_progress excludes it and the four WIP pickers stay unblocked. Unblock path: PO manual-dispatch sweep, or land the D3 fix then lane-move to ready[]."
-      },
-      {
-        "id": "FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write",
-        "type": "FIX",
-        "title": "Swap isValidUuid format gate for DB existence check in 3 async PEK extraction callback handlers (pushBctcLayoutHandler, pushBctcTableHandler, pushBctcMdTablesHandler)",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "unassigned",
-        "next_agent": "dev-mcp-server",
-        "created_at": "2026-08-05T09:40:15Z",
-        "created_by": "pm",
-        "depends": [],
-        "blocks": [
-          "FIX-BCTC-FALLBACK-SHELL-REPORTS-READ-SIDE-FAST-FOLLOW"
-        ],
-        "parent": "FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE",
-        "handoff": "docs/handoffs/FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write.md",
-        "updated_at": "2026-08-23T19:24:01Z",
-        "updated_by": "po",
-        "claimed_at": "2026-08-23T19:24:01Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "po_adjudication_20260812T0542Z": "[po/escalation-adjudication 2026-08-12T05:42Z] RULING (c) + DIRECT CORRECTION OF THE ESCALATION'S INVERTED GUESS. The router asked whether this row's null claimed_at meant it was 'likely excluded from the wip_in_progress count already'. It is the exact opposite: wip_in_progress (scripts/lib/devteam-eligibility.jq:115-118) filters ONLY on .status (BLOCKED or TERMINAL_SET); claimed_at is never read. This row's status is IN_PROGRESS, so it consumed a full, real concurrency slot — while claimed_at=null and owner='unassigned' prove no agent ever claimed it. It is a pm decomposition CHILD written straight into in_progress[] instead of the ready[] staging queue that dev-team/flow/main.md:475's own WIP FORMULA note designates for 'PM/architect decomposition' output. Re-laned to ready[] with status READY: it keeps next_agent=dev-mcp-server, becomes visible to the Ready-Lane Consumer, and stops charging a budget slot for work nobody is doing. This was the one unambiguously false slot on the board.",
-        "status_note": " || CORROBORATION (po triage 2026-08-23T17:37Z, bug-escalation envelope 8c6c11e7 - folded onto this row, no duplicate minted): the PRODUCER half is now measured live. bctcReparseJob/composition-root mint report_id as `fallback-<TICKER>-<SORTKEY>` at apps/mcp-server/src/composition-root.ts:213 and apps/mcp-server/src/scheduler/financial-reports/bctcReparseJob.ts:672. All THREE push handlers reject non-UUID report_id with HTTP 400 invalid_report_id (pushBctcLayoutHandler.ts:111, pushBctcTableHandler.ts:106, pushBctcMdTablesHandler.ts:92) - this row already owns those 3 call sites. Live 2026-08-23T16:05:02Z: mcp-server (172.18.0.12) fired 11x POST /pek-extract under fallback-* ids. Every such job runs FULL OCR/layout extraction to completion (~15-24 min CPU each) and is discarded at the push. Deterministic, not a flake => 100% loss on that cohort. Raises this row's value: it is not only unblocking 66 shells, it is stopping active CPU burn.",
-        "dispatch_lane": "dev-mcp-server"
       }
     ]
   },
@@ -21078,7 +21079,7 @@
         "last_served_tick": "2026-08-23T17:55:24Z"
       }
     },
-    "_updated_at": "2026-08-23T19:23:53Z",
+    "_updated_at": "2026-08-23T19:55:09Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -21505,6 +21506,59 @@
         },
         "createdAt": "2026-08-23T19:07:18Z",
         "drained_at": "2026-08-23T19:22:39Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "006573c269735da326f762d3e3d8d3b4f62ce52fbc2c9bbc7c6daf4dbcdf681a",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-23T19:50:08Z",
+          "matched_slots": [
+            "chef-evening"
+          ],
+          "won_slots": [
+            "chef-evening"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/unified-agent/flow/chef.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "chef-evening": "cron"
+          },
+          "cadence_minutes": {
+            "chef-evening": null
+          },
+          "last_fired_timestamp": "2026-08-23T19:49:26Z",
+          "last_fired_slots": [
+            "chef-evening"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "19:45",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 31,
+          "note": "guaranteed CHEF slot, single-slot batch (MAX_PARALLEL=4, headroom 3981MB > 1500 floor, DEGRADED=false). Step 5.3 off-flow detector DEFERRED per BGFAN-1 — router applies de-stamp reconciliation against last_fired=2026-08-23T19:49:26Z (pre-write value 2026-08-22T19:52:31Z) if MARKER_HITS>=2 on arrival. emit_pressure_state returned cycle_snapshot_promoted=false (known wallclock-vs-nominal naming defect: snapshot written as cycle-snapshot-19:47.json, promotion looks up nominal 19:45). cross-plane check clean: no intent-kind locks held by the launchd guaranteed-slot-firer for this slot, and no published:chef-evening:2026-08-23 marker at dispatch time."
+        },
+        "createdAt": "2026-08-23T19:50:08Z",
+        "drained_at": "2026-08-23T19:55:09Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

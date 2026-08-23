@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-23T19:50:08Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "last_fired_timestamp": "2026-08-23T19:49:26Z",
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "19:45",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 31,
+    "note": "guaranteed CHEF slot, single-slot batch (MAX_PARALLEL=4, headroom 3981MB > 1500 floor, DEGRADED=false). Step 5.3 off-flow detector DEFERRED per BGFAN-1 — router applies de-stamp reconciliation against last_fired=2026-08-23T19:49:26Z (pre-write value 2026-08-22T19:52:31Z) if MARKER_HITS>=2 on arrival. emit_pressure_state returned cycle_snapshot_promoted=false (known wallclock-vs-nominal naming defect: snapshot written as cycle-snapshot-19:47.json, promotion looks up nominal 19:45). cross-plane check clean: no intent-kind locks held by the launchd guaranteed-slot-firer for this slot, and no published:chef-evening:2026-08-23 marker at dispatch time."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-23T19:50:08Z",
+  "_processed": {
+    "fingerprint": "006573c269735da326f762d3e3d8d3b4f62ce52fbc2c9bbc7c6daf4dbcdf681a",
+    "processedAt": "2026-08-23T19:55:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
