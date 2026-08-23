@@ -1000,7 +1000,7 @@ describe("RCV-2 — checkVerificationGate: valid raw_probe accepted", () => {
 
 describe("RCV-3 — checkVerificationGate: grandfathered id exempted (regression guard)", () => {
   it("RCV-3-a: known-live grandfathered id, DONE_VERIFIED, no verification field → still accepted", () => {
-    // "HSC-1" is one of the 51 ids frozen into RC_VERIF_GRANDFATHERED_IDS (§ 8A) —
+    // "HSC-1" is one of the 50 ids frozen into RC_VERIF_GRANDFATHERED_IDS (§ 8A) —
     // proves pre-existing live rows keep parsing without retroactive fabrication.
     const state = makeNullHeadState({
       backlog: [],
@@ -1095,6 +1095,51 @@ describe("RCV-8 — Live file regression: RC-VERIF gate does not brick the hot f
       );
     }
     expect(result.success).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RCV-9 — FIX-RCVERIF-GRANDFATHER-EXEMPTION-IGNORES-RETRACTION-VOID-MARKERS
+//
+// QA's live control (2026-08-23, recorded on FU-RAG-DEPLOY-MEMORY's own
+// qa_rcverif_grandfather_escalation_20260823T1441Z field): the identical
+// `del(.verification)` + `status=DONE_VERIFIED` transform run through the real
+// Stage-1 schema validator (this describe block's runCliValidator harness, same
+// path scripts/orch-validate.mjs uses) —
+//   FU-RAG-DEPLOY-MEMORY (was grandfathered, never actually certified) → PASS
+//     (the bug)
+//   a non-grandfathered id → exit 2, aborted (the correct behavior)
+// FU-RAG-DEPLOY-MEMORY has since been removed from RC_VERIF_GRANDFATHERED_IDS
+// (§ 8A above) — this locks in that the repro now aborts like the control did.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("RCV-9 — grandfather exemption no longer covers never-certified FU-RAG-DEPLOY-MEMORY", () => {
+  it("RCV-9-a: exact QA repro — FU-RAG-DEPLOY-MEMORY + del(.verification) + DONE_VERIFIED → exit 2, aborted", () => {
+    const bad = {
+      ...makeValidBase(),
+      task_board: {
+        backlog: [],
+        done_verified: [{ id: "FU-RAG-DEPLOY-MEMORY", status: "DONE_VERIFIED", title: "RAG deploy memory" }],
+        active_sprints: [],
+      },
+    };
+    const r = runCliValidator(bad);
+    expect(r.exitCode).toBe(2);
+    expect(r.stderr).toContain("FU-RAG-DEPLOY-MEMORY");
+    expect(r.stderr).toContain("raw_probe");
+  });
+
+  it("RCV-9-b: control — a genuinely-frozen grandfathered id (HSC-1) with the same transform still passes", () => {
+    const ok = {
+      ...makeValidBase(),
+      task_board: {
+        backlog: [],
+        done_verified: [{ id: "HSC-1", status: "DONE_VERIFIED", title: "pre-RC-VERIF completion" }],
+        active_sprints: [],
+      },
+    };
+    const r = runCliValidator(ok);
+    expect(r.exitCode).toBe(0);
   });
 });
 

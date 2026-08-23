@@ -27,7 +27,9 @@
  *   (RawProbeSchema/VerificationSchema — must precede §2 TaskSchema, which
  *   references them at module-eval time, not §4/§5 as the source brief's
  *   prose literally said) + §8A (checkVerificationGate() write-time gate +
- *   the frozen 51-id RC_VERIF_GRANDFATHERED_IDS allowlist, re-derived live
+ *   the frozen 50-id RC_VERIF_GRANDFATHERED_IDS allowlist (51→50 2026-08-23,
+ *   FIX-RCVERIF-GRANDFATHER-EXEMPTION-IGNORES-RETRACTION-VOID-MARKERS —
+ *   removed FU-RAG-DEPLOY-MEMORY, never certified), re-derived live
  *   at implementation time, wider than the brief's own snapshot — see §8A
  *   header) — same one-file-per-guard co-location precedent, same physical-
  *   split blocker as §9-14 above (+217L).
@@ -536,6 +538,16 @@ export type OrchState = z.infer<typeof OrchStateSchema>;
 // New rows can NEVER enter this set — the gate applies unconditionally to any id
 // not already listed. As grandfathered rows get cold-evicted, they leave this
 // schema's purview entirely and the list becomes silently inert (§2.5).
+//
+// AMENDMENT (FIX-RCVERIF-GRANDFATHER-EXEMPTION-IGNORES-RETRACTION-VOID-MARKERS,
+// 2026-08-23): "FROZEN and CLOSED — must NEVER grow" governs additions, not
+// mistaken entries. QA proved live that "FU-RAG-DEPLOY-MEMORY" (a still-`QA`-
+// lane, never-certified P0 with an active blocked chain) was wrongly present —
+// the exemption is meant only for genuinely pre-existing *certified* rows that
+// predate this gate, and a row that has never been certified has nothing
+// legitimate to grandfather. Removed below (allowlist count 51→50). Do NOT
+// blindly re-add it on a future re-derivation of this list without re-checking
+// that the row has since been legitimately certified.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const RC_VERIF_GRANDFATHERED_IDS: ReadonlySet<string> = new Set([
@@ -566,7 +578,9 @@ const RC_VERIF_GRANDFATHERED_IDS: ReadonlySet<string> = new Set([
   "FU-BCTC-TOOL-PARAMS",
   "FU-DE-321-VAY-GUARD",
   "FU-DE-SERVE-HONEST",
-  "FU-RAG-DEPLOY-MEMORY",
+  // "FU-RAG-DEPLOY-MEMORY" REMOVED 2026-08-23 — see AMENDMENT note in the § 8A
+  // block comment above (task FIX-RCVERIF-GRANDFATHER-EXEMPTION-IGNORES-
+  // RETRACTION-VOID-MARKERS). Never-certified, still-QA-lane row; do not re-add.
   "HSC-1",
   "HSC-2",
   "HSC-3",

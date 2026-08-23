@@ -142,3 +142,12 @@
 - 3-way branch (keep/reset/no-op-when-nothing-selected) for resolveSelectionAfterFilter — REJECTED in favor of the BA-specified 2-action `{action:"keep"|"reset"}` contract; resetPanes() is already idempotent so the no-op case collapses safely into "reset" with zero observable difference.
 **why-decision:** matches architect D-2/D-3/D-4/D-5 and BA FR-1..FR-8 verbatim; zero-refetch design verified structurally (grep confirms `select.value =` never followed by a dispatched event) and functionally (5-file regression suite unchanged, 0 fail).
 **why-change:** none — implementation follows the handoff's pseudocode and file/line pointers as given.
+
+### STEP dev-mcp-server-S15 · dev-mcp-server · 2026-08-23T21:40:00Z
+**task-id:** FIX-RCVERIF-GRANDFATHER-EXEMPTION-IGNORES-RETRACTION-VOID-MARKERS
+**what-done:** Removed `"FU-RAG-DEPLOY-MEMORY"` from `RC_VERIF_GRANDFATHERED_IDS` (orchStateSchema.ts §8A, 51→50) with a cross-referencing comment at the removal site + an AMENDMENT paragraph in the block comment. Added RCV-9 regression (CLI-level, via existing `runCliValidator` harness): the exact QA repro (grandfathered id + no `verification` + `DONE_VERIFIED`) now exits 2/aborted, control `HSC-1` still exits 0. Full test file (122 tests) green; live `orch-validate.mjs` still exits 0 (row is `status:QA`, not `DONE_VERIFIED`, so trim is safe).
+**what-considered:**
+- AC-1(a) code a retraction/void/contamination-marker scan inside `checkVerificationGate()` — REJECTED: task explicitly names (b) as QA-recommended/cheaper, and the grandfather list's purpose (spare pre-existing *certified* rows) never applied to this never-certified row; a scan would add permanent complexity to guard against a one-off list-authoring mistake.
+- (b) alone, per AC-1's own fallback instruction — CHOSEN.
+**why-decision:** (b) is the minimal, root-cause fix: the row never qualified for grandfathering in the first place (never certified, live `status:QA`); no code path needed, just correcting a stale-data entry, with a durable comment so a future re-derivation of the frozen list doesn't blindly re-add it.
+**why-change:** none — implementation follows AC-1(b) verbatim.
