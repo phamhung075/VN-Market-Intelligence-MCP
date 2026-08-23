@@ -167,3 +167,23 @@ VERDICT: `DONE_VERIFIED`. Appended `[QA] Review Record (direct-commit verify)` t
 - change lane to BLOCKED myself — declined; re-declaring dependencies and re-laning is po/pm's call, so I routed rather than re-laned.
 **why-decision:** measured each: T9 needs T3/T5/T6, all `ready`/READY with `files=[]`; FANOUT-T8 needs T1/T2/T4, all `ready`/TODO; SESSION-DOWN names two gates (`OPS-COWORK-GUARANTEED-SLOT-INSTALL`, `FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED`) absent from every hot lane; STALE-SLOT-DISPOSITION-TABLE's 4 declared deps are all TODO *and* its named "frozen 2026-08-23T09:00Z snapshot" does not exist on disk; SIGINBOX-LIVE-FIRST-RUN-GATE's dep is READY, unbuilt. **Systemic finding: 4 of the 5 carry `depends_on: []` while naming their prerequisites in prose only** — so the gating is invisible to `deps_satisfied()` and the rows present as dispatchable to qa. Same class as the pickers-blind-to-prose defect.
 **why-change:** no change from plan; the `depends_on: []` pattern was an unplanned finding from checking all five instead of starting the first one.
+
+### STEP qa-S173 · qa · 2026-08-23T17:35Z
+**task-id:** FIX-CHEF-MARKER-KEY-ANCHOR-2
+**what-done:** Direct-Commit Verify (branch:null, mode=verify-committed). Confirmed `df08ec793` is a main-ancestor, touches the row's own `match-slots.md`, and its doc claims are real — not just committed.
+**what-considered:**
+- trust `status_note`'s prose claim of a live-verified sample alone — refused; re-executed `annotateScheduledUtc()` myself against the same inputs (`digest-sunday`, `47 13 * * 0`, as-of `2026-08-23T13:50:00Z`) and got the identical `2026-08-23T13:47:00.000Z`, so the doc's worked example is real, not fabricated.
+- targeted-zone test choice: ran `bun test scripts/agents-flow/cowork-match-slots.test.js` (90/90 pass incl. TC-33 `slots[0] carries scheduled_utc_time`) since the file is pure documentation of that script's CLI contract, no `.ts` touched — full `bun tsc --noEmit` still run (apps/mcp-server, 0 errors) per never-skip-tsc.
+- checked a later unrelated commit (`f4e944454`, TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY) also touched this file post-df08ec793 — confirmed additive only, my row's content intact, size-justification correctly chained (98→107→115L), not a collision.
+**why-decision:** all gates green (merge-base ancestor, stat match, DDD/security/mock-guard clean, targeted suite 90/90, tsc 0 errors, live sample reproduced byte-identical) and doc content verified against actual source (`annotateScheduledUtc` wired into `slots: hitsAnchored` at cowork-match-slots.js:504-505) → JUMP TO vc-approved.
+**why-change:** no change from plan.
+
+### STEP qa-S173 · qa · 2026-08-23T17:35Z
+**task-id:** FIX-CHEF-MARKER-KEY-ANCHOR-3
+**what-done:** Direct-Commit Verify (branch:null) of `df08ec793` on `main`; touches row's own `spawn-fanout.md` (534→585L, verified via `git show <parent>:<file> | wc -l` vs live). APPROVED.
+**what-considered:**
+- run full `apps/mcp-server` bun test suite (1281 `.test.ts` files) — scoped OUT: zero `.ts`/`.js` files in this row's `files[]` or in the commit's 5-file diff, all `docs/agents/*.md`; the suite cannot exercise a markdown-only change and its runtime is disproportionate to the diff.
+- DDD-import-grep / security-grep / mock-guard on `spawn-fanout.md` — ran `mock-guard.sh --files` anyway: explicit `"No production source files to scan. PASS."` (exit 0), confirming N/A is the tool's own classification, not my assumption.
+- targeted zone suite instead: the two node scripts purpose-built for this exact file+schedule pair (`cowork-spawn-entry-prompt-session-id.test.js`, `cowork-schedule-consistency.test.js`) — ran both to completion, 7/7 and 13/13 pass.
+**why-decision:** diff confirmed both AC clauses live: `SCHEDULED_UTC_LINE` appended symmetrically to BOTH `ENTRY_PROMPT` branches (trigger_prompt + legacy flow_path), degrades to `""` never `"scheduled_utc=null"`. `depends_on: [ANCHOR-1]` confirmed `DONE_VERIFIED` (commit `e315472b7`) before approving. Not OOM/BCTC-class — those gates N/A.
+**why-change:** no change from plan; scope-narrowed bun-test/tsc/DDD/security to the row's actual file-type (docs, not TS) per Direct-Commit Verify's "targeted zone suite" clause, disclosed explicitly rather than run-anyway or silently skip.
