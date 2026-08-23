@@ -1,0 +1,14 @@
+{
+  "from": "alert-commander",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[alert-commander] commit-mutex: git push origin main BLOCKED by pre-push size-lint gate — apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts baseline-tolerance-exceeded (baseline=228L actual=252L upper=250L). Not a non-fast-forward conflict (local HEAD is a strict 24-commit fast-forward ahead of origin/main, merge-base=origin/main). This is a NEW size-lint offender distinct from the already-resolved FIX-CI-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER row — no existing tracked row found for pushBctcLayoutHandler.ts (grep-checked orch-state.json + backlog-detail.json, zero hits). Notebook commit 31bb74c01 (chore(memory/alert-commander): notebook 2026-08-23 c198 silent-exit) landed local-only; fleet-wide: ALL pushes to main are blocked until this offender is fixed/re-baselined.",
+  "priority": "high",
+  "createdAt": "2026-08-23T20:10:16Z",
+  "_processed": {
+    "fingerprint": "9c2495174f575da3d75d925d97c2cf3ecfcfc83da889cb7e8ba0196a6e5f49ad",
+    "processedAt": "2026-08-23T20:23:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

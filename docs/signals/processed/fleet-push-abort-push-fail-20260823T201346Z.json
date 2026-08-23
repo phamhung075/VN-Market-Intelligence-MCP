@@ -1,0 +1,21 @@
+{
+  "from": "fleet-worktree-push",
+  "to": "po",
+  "type": "auto-push-abort",
+  "priority": "high",
+  "payload": {
+    "reason": "push-fail",
+    "detail": "git push origin HEAD:main returned non-zero",
+    "ahead": "24",
+    "behind": "0",
+    "threshold": "20",
+    "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+  },
+  "createdAt": "2026-08-23T20:13:46Z",
+  "_processed": {
+    "fingerprint": "dfbe8379ae632b95b47653aa9f21ffe4eb6b7ac6afe6b846f1541fcbada9d631",
+    "processedAt": "2026-08-23T20:23:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

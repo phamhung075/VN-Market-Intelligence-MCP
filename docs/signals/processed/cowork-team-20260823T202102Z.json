@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260823T202102Z",
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "won_slots": [
+      "tnb-audit"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 2,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "tnb-audit": "cron"
+    },
+    "cadence_minutes": {
+      "tnb-audit": null
+    },
+    "last_fired_timestamp": "2026-08-23T20:19:57Z",
+    "last_fired_slots": [
+      "tnb-audit"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 108,
+    "signal_backlog": 0,
+    "note": "single guaranteed slot (tnb-audit, due_reason=cron, 24h since prior fire). MAX_PARALLEL=4 (headroom 4492MB, load 5.42/12 cores, degraded=false), one batch. cycle_snapshot_promoted=false again — Step 4.7 named snapshot by wall-clock 20:18 while emit looks up nominal 20:15 (3rd consecutive instance). last_regime/last_volatility_level sent as unknown: documented keys regime_status/volatility_level absent at every path in cycle-snapshot-latest.json (itself 20h stale, tick 00:00)."
+  },
+  "priority": "low",
+  "createdAt": "20260823T202102Z",
+  "_processed": {
+    "fingerprint": "d4078b5bad79a3268a5ae3554cb319a22334181da2c8cd40ebc877b67429ad03",
+    "processedAt": "2026-08-23T20:23:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

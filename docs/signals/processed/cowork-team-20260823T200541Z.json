@@ -1,0 +1,67 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260823T200541Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": "30",
+      "market-watcher-offhours": "30",
+      "alert-commander-critical": "null"
+    },
+    "last_fired_timestamp": "2026-08-23T20:04:38Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 108,
+    "signal_backlog": 0,
+    "note": "3-slot fan-out, MAX_PARALLEL=4 (headroom 3912MB, load 1.91, cores 12, degraded=false), single batch. Step 5.3 off-flow detector DEFERRED to return-notification per BGFAN-1; last_fired stamped pre-verification, de-stamp if any spawn trips the detector. emit_pressure_state cycle_snapshot_promoted=false AGAIN (Step 4.7 wrote cycle-snapshot-20:02.json by wall-clock minute; emit looks up nominal tick 20:00) — cycle-snapshot-latest.json is now 20h stale (tick 00:00, created 2026-08-23T00:07:50Z), which forced last_regime/last_volatility_level to degrade to unknown in this tick emit args. Phase A saw orphan-signal:esc-deepdive:FPT:Q1-2026:ESC-5 (bctc-analyst, redispatch_count=1, orphaned 18:21:28Z, expires 20:21:28Z) — out of scope for this tick roles; it will expire ~39min before bctc-analyst next fires at 21:00Z, so no dispatcher can adopt it."
+  },
+  "priority": "low",
+  "createdAt": "20260823T200541Z",
+  "_processed": {
+    "fingerprint": "bff3383d9a31b7fda0a1ccaca36cfbe763b60621fb10e7dbab5b3942956ce8a6",
+    "processedAt": "2026-08-23T20:23:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

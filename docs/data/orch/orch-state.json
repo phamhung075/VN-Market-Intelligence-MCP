@@ -21090,7 +21090,7 @@
         "last_served_tick": "2026-08-23T17:55:24Z"
       }
     },
-    "_updated_at": "2026-08-23T19:56:14Z",
+    "_updated_at": "2026-08-23T20:23:03Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -21570,6 +21570,263 @@
         },
         "createdAt": "2026-08-23T19:50:08Z",
         "drained_at": "2026-08-23T19:55:09Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9c2495174f575da3d75d925d97c2cf3ecfcfc83da889cb7e8ba0196a6e5f49ad",
+        "source": "file",
+        "from": "alert-commander",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[alert-commander] commit-mutex: git push origin main BLOCKED by pre-push size-lint gate — apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts baseline-tolerance-exceeded (baseline=228L actual=252L upper=250L). Not a non-fast-forward conflict (local HEAD is a strict 24-commit fast-forward ahead of origin/main, merge-base=origin/main). This is a NEW size-lint offender distinct from the already-resolved FIX-CI-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER row — no existing tracked row found for pushBctcLayoutHandler.ts (grep-checked orch-state.json + backlog-detail.json, zero hits). Notebook commit 31bb74c01 (chore(memory/alert-commander): notebook 2026-08-23 c198 silent-exit) landed local-only; fleet-wide: ALL pushes to main are blocked until this offender is fixed/re-baselined.",
+        "createdAt": "2026-08-23T20:10:16Z",
+        "drained_at": "2026-08-23T20:23:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c132334d9b4202e791016a815b3ed656e03472546e49ac709b7561ccec9bd8de",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-ba.md",
+          "line_count": 179,
+          "cap": 600,
+          "byte_count": 36640,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 640,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-23T20:06:17Z",
+        "drained_at": "2026-08-23T20:23:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e2a07f2ec8f7c3cc465beefa2e53880c6073a5b02e43f902bb727cc0aa1287aa",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 104,
+          "cap": 200,
+          "byte_count": 16210,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 4210,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-23T20:06:46Z",
+        "drained_at": "2026-08-23T20:23:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "bff3383d9a31b7fda0a1ccaca36cfbe763b60621fb10e7dbab5b3942956ce8a6",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "20260823T200541Z",
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "news-scout-offhours": "30",
+            "market-watcher-offhours": "30",
+            "alert-commander-critical": "null"
+          },
+          "last_fired_timestamp": "2026-08-23T20:04:38Z",
+          "last_fired_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "20:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 108,
+          "signal_backlog": 0,
+          "note": "3-slot fan-out, MAX_PARALLEL=4 (headroom 3912MB, load 1.91, cores 12, degraded=false), single batch. Step 5.3 off-flow detector DEFERRED to return-notification per BGFAN-1; last_fired stamped pre-verification, de-stamp if any spawn trips the detector. emit_pressure_state cycle_snapshot_promoted=false AGAIN (Step 4.7 wrote cycle-snapshot-20:02.json by wall-clock minute; emit looks up nominal tick 20:00) — cycle-snapshot-latest.json is now 20h stale (tick 00:00, created 2026-08-23T00:07:50Z), which forced last_regime/last_volatility_level to degrade to unknown in this tick emit args. Phase A saw orphan-signal:esc-deepdive:FPT:Q1-2026:ESC-5 (bctc-analyst, redispatch_count=1, orphaned 18:21:28Z, expires 20:21:28Z) — out of scope for this tick roles; it will expire ~39min before bctc-analyst next fires at 21:00Z, so no dispatcher can adopt it."
+        },
+        "createdAt": "20260823T200541Z",
+        "drained_at": "2026-08-23T20:23:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d4078b5bad79a3268a5ae3554cb319a22334181da2c8cd40ebc877b67429ad03",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "20260823T202102Z",
+          "matched_slots": [
+            "tnb-audit"
+          ],
+          "won_slots": [
+            "tnb-audit"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/tran-ngoc-bau/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 2,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "tnb-audit": "cron"
+          },
+          "cadence_minutes": {
+            "tnb-audit": null
+          },
+          "last_fired_timestamp": "2026-08-23T20:19:57Z",
+          "last_fired_slots": [
+            "tnb-audit"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "20:15",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 108,
+          "signal_backlog": 0,
+          "note": "single guaranteed slot (tnb-audit, due_reason=cron, 24h since prior fire). MAX_PARALLEL=4 (headroom 4492MB, load 5.42/12 cores, degraded=false), one batch. cycle_snapshot_promoted=false again — Step 4.7 named snapshot by wall-clock 20:18 while emit looks up nominal 20:15 (3rd consecutive instance). last_regime/last_volatility_level sent as unknown: documented keys regime_status/volatility_level absent at every path in cycle-snapshot-latest.json (itself 20h stale, tick 00:00)."
+        },
+        "createdAt": "20260823T202102Z",
+        "drained_at": "2026-08-23T20:23:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "dfbe8379ae632b95b47653aa9f21ffe4eb6b7ac6afe6b846f1541fcbada9d631",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "24",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-23T20:13:46Z",
+        "drained_at": "2026-08-23T20:23:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7381301585bbe08b4066baf892d7a8b3f03ac33092c63b0243ceb609ff4f3d07",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_tiebreak_direction_defaulted",
+        "priority": "normal",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "tied_sections": "5:20260823000000000:## UC-MDH-P2 · 2026-08-23\n27:20260823000000000:## FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER · 2026-08-23",
+          "direction_applied": "newest_first",
+          "reason": "every retained ## section in this file lacks a parseable timestamp (non-chronological/rolling sections, e.g. 'Known patterns / preferences') so neither this file's own headings nor docs/data/notebook-section-order.json can ever give a direction signal — the documented default (newest_first: drop the physically-LAST tied section) was applied and the prune proceeded. Informational only, not a blocking breach (FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS).",
+          "action_required": "informational_no_action_needed"
+        },
+        "createdAt": "2026-08-23T20:06:44Z",
+        "drained_at": "2026-08-23T20:23:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "30c5828c60e32a094260a6ad2141e68a2c564216fb31fd2fa871be924f0bab44",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 58,
+          "cap": 200,
+          "byte_count": 12439,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-23T20:06:44Z",
+        "drained_at": "2026-08-23T20:23:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "351b53b340e735a67870f5a890df65114b7dbf43cda7c3150f37b80941ad21f9",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_prune_dropped_newest_dated_section",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line": 27,
+          "heading": "## FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER · 2026-08-23",
+          "section_count": 4,
+          "non_sentinel_section_count": 2,
+          "sentinel_section_count": 2,
+          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+          "action_required": "review_dropped_section"
+        },
+        "createdAt": "2026-08-23T20:06:44Z",
+        "drained_at": "2026-08-23T20:23:03Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
