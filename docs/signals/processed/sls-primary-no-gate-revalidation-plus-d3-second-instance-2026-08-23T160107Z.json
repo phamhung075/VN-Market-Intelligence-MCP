@@ -1,0 +1,31 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "bug-escalation",
+  "created_at": "2026-08-23T16:01:07Z",
+  "payload": {
+    "summary": "Two defects hit live on the 2026-08-23T15:37Z dev-team tick, SLS lane. (1) SLS claim PRIMARY re-validates no gate, so it auto-claimed a row outside its quarantine class. (2) The row-prose-ceiling guard then made the correct revert impossible - 2nd live instance of an already-designed defect.",
+    "defect_1": {
+      "id_suggestion": "FIX-SLS-PRIMARY-CLAIM-NO-GATE-REVALIDATION-STALE-STAMP",
+      "module": "scripts/devteam-backlog-claim-supervised-lane-sweep.jq:126",
+      "detail": "PRIMARY selects rows purely on promoted_by == \"dev-team (supervised-lane sweep)\" and re-checks NONE of the gates the promote script applied. FIX-AUDITOR-NOTEBOOK-APPEND-GATE-BYPASSED-ALL-GREEN-WRITE was stamped 2026-08-08T04:51:52Z and has since sat in ready[] carrying plan_only=false. effective_plan_only is FALSE (verified: absent from backlog-detail.json AND from every archive shard, board field false), so the row is outside SLS's supervised-AND-plan_only class - yet PRIMARY claimed it 15 days later on the stamp alone.",
+      "why_it_matters": "main.md's own Lane x Gate matrix routes ready[] sup=T po=F to READY-XOR-SUP-OR-PLANONLY, i.e. PO's HUMAN-GATED manual-dispatch sweep, and states the rationale explicitly: auto-dispatching a supervised:true dev-role row would defeat the reason the flag exists. PRIMARY's stamp-only selector silently bypasses that human gate. A stamp is a historical fact; eligibility is a current one. Any row ever stamped by SLS is permanently auto-claimable regardless of how its flags change afterwards.",
+      "sibling": "Same selector, same root cause as the already-recorded null-dispatch_lane defect (PRIMARY reads $picked.dispatch_lane verbatim with no null-guard). That one is the LANE half; this is the GATE half. A single re-validation pass in PRIMARY closes both.",
+      "suggested_fix": "PRIMARY must re-apply the promote script's own gates (effective_supervised, effective_plan_only, NOT is_epic_wrapper, deps_satisfied, NOT detail-DEFERRED) against CURRENT state before claiming, and re-resolve dispatch_lane via resolved_dispatch_lane($detail_items). FALLBACK already does exactly this - PRIMARY is the odd one out."
+    },
+    "defect_2": {
+      "existing_design": "scripts/architect-20260823-orch-prose-ceiling-row-handoff.jq, defect D3 (labelled NEW/UNREPORTED in that brief, dated today)",
+      "detail": "The correct remediation for the bad claim was a lane-move in_progress[] -> ready[]. It was HARD-REJECTED: the guard looks up the live baseline ONLY in the 3 guarded lanes (backlog/ready/review), so a row arriving from in_progress[] gets liveBytes=0 and a zero-content-change lane-move reads as pure net-new growth (live=0B, candidate=26552B, exit 1).",
+      "significance": "This is the SECOND live instance, after the UC-CCA-P3 in_progress->review case the brief itself cites. It confirms D3 is a live generator, not a one-off: ANY over-ceiling row in in_progress[]/qa[]/active_sprints[] is permanently unmovable, and the affected rows are precisely the biggest ones. It also blocks the documented remediation for defect 1 above, so the two compound.",
+      "workaround_used_this_tick": "Marked the row BLOCKED with a populated blocked_reason IN PLACE. wip_in_progress excludes BLOCKED, so the WIP slot is freed and all four pickers stay unblocked. This works only because the guard does not inspect in_progress[] at all - the same blind spot that caused the rejection. Explicitly a workaround, not a fix: the row is still in the wrong lane.",
+      "note": "The brief's own RETURN PATH says to ship its section 3 FIRST and ALONE as a read-only predicate change. This tick is live evidence for that sequencing."
+    },
+    "action_required": "mint_fix_task"
+  },
+  "_processed": {
+    "fingerprint": "b7dca9474fdb9c59d5e81731b3f255de2223862a53efbd9232b6bd88ef2c1d4e",
+    "processedAt": "2026-08-23T16:01:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
