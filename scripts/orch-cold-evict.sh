@@ -74,6 +74,21 @@
 # docs/agent-memory/decisions/ (decision-journal skill, task_id FIX-COLD-
 # EVICT-EXCLUDE-IDS-VS-HARD-COHERENCE).
 #
+# FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION (2026-08-23, Component 6
+# of docs/architecture-briefs/2026-08-08-donelane-doneverified-producer.md §2):
+# the done[] age/count eviction pass no longer evicts rows at status DONE — only
+# DONE_VERIFIED rows parked in done[] remain evictable there. A DONE row in
+# done[] is UNVERIFIED and is precisely what the Done-Lane Drain (this same
+# task's widening of scripts/devteam-review-claim-qa-drain.jq and
+# -secondary-drain.jq from review[] to review[] UNION done[]) exists to reach;
+# cold-evicting it puts it out of reach of every hot-file-scoped mechanism
+# forever and permanently starves the deps_satisfied() check of every live
+# successor. Two real casualties already exist in cold at status DONE
+# (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT, FIX-CYCLEJOB-1294-MACRO-TEST-UNMOCKED-
+# LIVE-FETCH). Narrow, additive predicate change only — done_verified[], the
+# flat task lanes, sprints, signals and decision_journal passes are untouched.
+# Gate: scripts/test-devteam-donelane-drain.sh CASE 8.
+#
 # Usage:
 #   scripts/orch-cold-evict.sh [--dry-run] [--exclude-ids ID1,ID2 [--exclude-ids ID3]]
 #
@@ -452,8 +467,26 @@ compute_id_maps() {
       ) as $done_ranked |
 
       # ALL terminal done IDs (remove from hot regardless of cold status)
+      #
+      # FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION Component 6
+      # (architect brief docs/architecture-briefs/2026-08-08-donelane-
+      # doneverified-producer.md §2): `.status == "DONE"` rows in done[] are
+      # UNVERIFIED — they are exactly the rows the Done-Lane Drain
+      # (scripts/devteam-review-claim-qa-drain.jq /
+      # -secondary-drain.jq, widened to review[] UNION done[] by this same
+      # task) exists to reach. Evicting one on age/rank alone puts it out of
+      # reach of every hot-file-scoped mechanism forever: two real casualties
+      # (FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT, FIX-CYCLEJOB-1294-MACRO-TEST-
+      # UNMOCKED-LIVE-FETCH) are already cold-archived at status DONE and
+      # permanently starve the deps_satisfied() check of every live successor.
+      # The pre-existing referential-integrity guard below only protects a
+      # DONE row that still has a LIVE dependent naming it; this guard closes
+      # the general case. Only a DONE_VERIFIED row parked in done[] (a legacy
+      # lane placement — already verified, nothing left to produce) stays
+      # eligible for age/count eviction here. done_verified[] is unaffected.
       [$done_ranked[] | select(
           .key >= $keep_n and
+          (.value.status != "DONE") and
           (.value.created_at == null or
            (try (.value.created_at | fromdateiso8601) catch 0) < $cutoff)
         ) | (.value.id // "")

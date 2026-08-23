@@ -25,10 +25,21 @@
 # Selection (age-ordered, mirrors devteam-review-claim-qa-drain.jq's own
 # age key EXACTLY — same `updated_at // reviewed_at // created_at`
 # precedence, missing timestamp treated as oldest):
-#   - candidate lane: .task_board.review[]
-#   - status == "REVIEW" (excludes BLOCKED rows — same negative control as
+#   - candidate lanes: .task_board.review[] UNION .task_board.done[]
+#     (FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION, architect brief
+#     docs/architecture-briefs/2026-08-08-donelane-doneverified-producer.md
+#     §2 Component 2). done[]'s non-qa/null-next_agent subset is the exact
+#     same owner-triage class this lane already owns for review[]: a row that
+#     finished, landed in a terminal-LOOKING lane, and has no reader — so it
+#     never gets the independent sign-off that would produce DONE_VERIFIED.
+#     resolved_secondary_dispatch_target's existing null/absent/"dev-team" ->
+#     "po" fallback covers the task's AC(4) ("a done[] row with NO next_agent
+#     is not silently invisible") for free, with no PO flow change.
+#   - status == "REVIEW" for review[]-origin rows, status == "DONE" for
+#     done[]-origin rows (excludes BLOCKED rows — same negative control as
 #     PRIMARY QA-Drain, PO AC(4): a BLOCKED review row is not ready for
-#     triage by construction)
+#     triage by construction; also excludes an already-DONE_VERIFIED row
+#     parked in done[], which needs no triage)
 #   - effective_next_agent($detail_items) != "qa" (single predicate covers
 #     null/absent AND every other non-qa value — identical partition
 #     scripts/audits/devteam-review-lane-drain-report.sh already uses for
@@ -54,7 +65,9 @@
 # claimed-but-refused forever, re-picked every tick.
 #
 # Mutation — DELIBERATELY DOES NOT move the row to a new board lane (brief
-# §2b): TaskBoardSchema (apps/mcp-server/src/infrastructure/
+# §2b), and stamps IN PLACE on whichever source lane the picked row lives in
+# (review[] or done[]) — the array index is only unique within one lane.
+# Rationale for never moving lanes: TaskBoardSchema (apps/mcp-server/src/infrastructure/
 # orchStateSchema.ts) is `.strict()` with exactly the 9 enumerated lanes —
 # adding a 10th (e.g. triage[]) is a real schema change (TypeScript +
 # validator + coherence-map updates), out of this task's scope, and the
@@ -63,7 +76,8 @@
 # orchStateSchema.ts:136) — arbitrary new fields on a row are schema-safe.
 # So: stamp secondary_claimed_at/secondary_claimed_by/
 # secondary_dispatch_target on the row IN PLACE inside .task_board.review[]
-# — no lane move, no .status change, no schema change.
+# (or .task_board.done[], for a done[]-origin pick) — no lane move, no
+# .status change, no schema change.
 #
 # NEVER writes .head — the load-bearing design choice (brief §2b): because
 # this mechanism never touches the single-slot resume pointer, it carries
@@ -88,9 +102,9 @@
 # already applies elsewhere; fast-follow if observed live: reuse the
 # existing task:on-demand:<agent>:<date> mutex pattern).
 #
-# If review[] has no eligible row (nothing REVIEW + next_agent != "qa")
-# this script is a NO-OP (outputs the input document unchanged) — safe to
-# re-run every tick without side effects.
+# If NEITHER lane has an eligible row (nothing REVIEW/DONE with next_agent
+# != "qa") this script is a NO-OP (outputs the input document unchanged) —
+# safe to re-run every tick without side effects.
 #
 # NO hardcoded task-id literals anywhere in this file (grep-verified).
 #
@@ -115,28 +129,54 @@ def age_epoch:
     end;
 
 (detail_items_from($detail)) as $detail_items
-| ( [ .task_board.review
-    | to_entries[]
-    | select(.value.status == "REVIEW")
-    | select((.value | effective_next_agent($detail_items)) != "qa")
-    | { idx: .key, row: .value, age: (.value | age_epoch),
-        dispatch_target: (.value | resolved_secondary_dispatch_target($detail_items)) }
-  ] | sort_by(.age)
+| ( [ ( (.task_board.review // [])
+        | to_entries[]
+        | select(.value.status == "REVIEW")
+        | { idx: .key, row: .value, lane: "review" }
+      ),
+      ( (.task_board.done // [])
+        | to_entries[]
+        | select(.value.status == "DONE")
+        | { idx: .key, row: .value, lane: "done" }
+      )
+    ]
+    | map(select((.row | effective_next_agent($detail_items)) != "qa"))
+    | map(. + { age: (.row | age_epoch),
+                dispatch_target: (.row | resolved_secondary_dispatch_target($detail_items)) })
+    | sort_by(.age)
 ) as $candidates
 | if ($candidates | length) == 0 then
-    .   # nothing REVIEW + next_agent != "qa" waiting — no-op
+    .   # nothing REVIEW/DONE + next_agent != "qa" waiting — no-op
   else
     ($candidates[0]) as $picked
-    | .task_board.review = [
-        .task_board.review
-        | to_entries[]
-        | if .key == $picked.idx then
-            (.value + {
-              secondary_claimed_at: $now,
-              secondary_claimed_by: "dev-team (review-lane secondary-drain)",
-              secondary_dispatch_target: $picked.dispatch_target
-            })
-          else .value end
-      ]
+    # Stamp IN PLACE on whichever source lane the picked row lives in — no
+    # lane move, no status change (identical to the review[]-only behaviour).
+    # `idx` is only unique WITHIN one array, so the stamp MUST be applied to
+    # $picked.lane and nowhere else.
+    | ( if $picked.lane == "review" then
+          .task_board.review = [
+            (.task_board.review // [])
+            | to_entries[]
+            | if .key == $picked.idx then
+                (.value + {
+                  secondary_claimed_at: $now,
+                  secondary_claimed_by: "dev-team (review-lane secondary-drain)",
+                  secondary_dispatch_target: $picked.dispatch_target
+                })
+              else .value end
+          ]
+        else
+          .task_board.done = [
+            (.task_board.done // [])
+            | to_entries[]
+            | if .key == $picked.idx then
+                (.value + {
+                  secondary_claimed_at: $now,
+                  secondary_claimed_by: "dev-team (review-lane secondary-drain)",
+                  secondary_dispatch_target: $picked.dispatch_target
+                })
+              else .value end
+          ]
+        end )
     # .head deliberately untouched — see header "NEVER writes .head"
   end
