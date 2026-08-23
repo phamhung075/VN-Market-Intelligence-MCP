@@ -17357,6 +17357,43 @@
             "observed_at": "2026-08-24T00:00:00Z"
           }
         }
+      },
+      {
+        "id": "TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY",
+        "title": "Doc-truth: Layer A RemoteTriggers were retired 2026-06-22 (0 slots with trigger_status active) yet cron-cowork-team/SKILL.md still claims they provide persistence - fix that plus match-slots.md:40 catchup_raw scope and the cowork-master-cron-runbook",
+        "owner": "agent-father",
+        "status": "DONE_VERIFIED",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "zone": "docs/",
+        "depends_on": [],
+        "files": [
+          ".claude/skills/cron-cowork-team/SKILL.md",
+          "docs/agents/cowork-team/flow/match-slots.md",
+          "docs/protocols/cowork-master-cron-runbook.md"
+        ],
+        "parent": "FIX-COWORK-DAILY-SLOT-SILENT-SKIP-NO-CATCHUP-CATCHUPRAW-SCOPED-TO-GUARANTEED-ONLY",
+        "note": "Dispatchable NOW - the stale sentence was quoted verbatim into the P0 row own status_note as the explanation for the 8h outage, so a two-month-stale doc is actively manufacturing wrong incident diagnoses. Blocks TASK-CRON-SKILLMD-PROBE-WIRING (same file, different section). Touch only the 'Why this skill exists' section of the SKILL.md. Closes 2026-07-07 brief S5 item 5, ordered and never done.",
+        "created_at": "2026-08-23T09:47:24Z",
+        "created_by": "pm",
+        "handoff": "docs/handoffs/TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY.md",
+        "updated_at": "2026-08-23T22:08:36Z",
+        "commit": "f4e944454",
+        "branch": null,
+        "completed_at": "2026-08-23T15:09:30Z",
+        "completed_by": "agent-father",
+        "updated_by": "agent-father",
+        "status_note": "\n[agent-father 2026-08-23T16:20Z] AC-1/2/4/5/6 SHIPPED f4e944454 (committed; push blocked fleet-wide, see below). AC-3 NOT DONE -- docs/protocols/cowork-master-cron-runbook.md is OUTSIDE agent-father commit_zone (allowed: docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/); needs a split row. Its stale spot is now specific: it still calls the launchd backstop \"in flight\" and recovery test T5 \"NOT YET APPLICABLE\", while launchctl list shows com.vn-market.cowork-guaranteed-slot-firer LOADED, last exit 0. AC-4 was NOT satisfied by the handoff scoped section rewrite alone: two more copies of the identical RemoteTrigger-persistence claim sat in the SKILL.md Warning and Notes sections (neither in Step 1a/1b.1/1c, so no collision with TASK-CRON-SKILLMD-PROBE-WIRING). AC-6 forced two corrections to the handoff own figures: trigger_status absent was 11, is now 13; catchup_raw was \"8 records ZERO eligible\", a later same-day run gives 8 records / 2 eligible -- so the eligible count is written as a timestamped observation with re-run-before-quoting, not a standing property. Structural claim kept: catchup_max_lateness_minutes (live 60/120/180/360/1440) caps recovery at ONE VN day, so wiring the missing catchup-check.md consumer alone recovers nothing against a multi-day outage. This row BLOCKS TASK-CRON-SKILLMD-PROBE-WIRING (P0) on the same SKILL.md -- that dep is now clear. PUSH BLOCKED: f4e944454 is committed local-only; size-lint pre-push scans the WORKING TREE, and a live peer uncommitted edit (apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts 475->582L, tolerance 522) reds it for every agent -- 6 commits stranded incl. 2 peers. apps/ is outside my zone. Filed signal_queue row sizelint-worktree-block-20260823T150720Z (type system-issue, to po). -> qa.\n[QA] Review Record (direct-commit verify): APPROVED (direct-commit verify). PROCESS NOTE: the dev-team tick's review[]->qa[] drain-claim promotion for this row was never durably committed and was lost to a concurrent-write race before QA could act on it (confirmed: re-read at verify time found the row still in review[]/REVIEW with claimed_at/claimed_by/drain_source_lane absent, and none of the last 5 orch-state.json commits touch this id) -- a known class, see scripts/orch-apply.sh header UNCOMMITTED-ROWS-LOST-TO-PEER-FULLDOC-WRITE. Completing the verified lane-move directly review[]->done_verified[] rather than re-staging the lost qa[] claim and re-exposing it to the same race. Substance verified: commit f4e944454 on main ancestry, touches 2/3 claimed files (.claude/skills/cron-cowork-team/SKILL.md, docs/agents/cowork-team/flow/match-slots.md). AC-1: RemoteTrigger persistence claim replaced with 3-layer table -- live cross-checked against docs/data/cowork-schedule.json: trigger_status tally 0 active/5 superseded/5 deleted/13 absent across 23 slots matches doc exactly; 8 guaranteed/21 enabled slots also matches. AC-4 grep gate: re-grepped SKILL.md, remaining 4 RemoteTrigger mentions are all correctly framed as retired/not-persistence (Warning + Notes sections corrected too, no surviving false claim). AC-2: match-slots.md catchup_raw scope corrected to guaranteed-only + REACH limit recorded (catchup-check.md absent, catchup_max_lateness_minutes 60-1440 caps at 1 VN day); size-justification header updated 107->115L, matches wc -l. AC-3 (docs/protocols/cowork-master-cron-runbook.md) explicitly NOT shipped in this commit -- confirmed legitimate, not a silent drop: outside agent-father commit_zone, and independently confirmed a new BACKLOG row FIX-COWORK-RUNBOOK-DOC-STALE-LAUNCHD-BACKSTOP-STATUS (created by po 2026-08-23T15:27Z, owner developer, files=[docs/protocols/cowork-master-cron-runbook.md]) already carries that exact scope forward. No production code touched (docs-only) so bun test/tsc/mock-guard N/A. OOM-Class Durability Gate N/A (topic is cron-scheduling durability, not memory/OOM). Row's own files[] is stale (still lists the runbook file though split out) -- flagging for next editor, not blocking.",
+        "qa_verified_at": "2026-08-23T22:08:35Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + jq cross-check vs docs/data/cowork-schedule.json + grep -i RemoteTrigger + wc -l",
+            "args": "commit=f4e944454; files=.claude/skills/cron-cowork-team/SKILL.md,docs/agents/cowork-team/flow/match-slots.md,docs/protocols/cowork-master-cron-runbook.md(not touched, split to FIX-COWORK-RUNBOOK-DOC-STALE-LAUNCHD-BACKSTOP-STATUS)",
+            "live_value_observed": "ancestor=yes; stat touches 2/2 delivered files; live trigger_status tally=0 active/5 superseded/5 deleted/13 absent (23 slots) matches doc table exactly; guaranteed=8, enabled=21 matches doc; grep RemoteTrigger in SKILL.md returns 4 hits all correctly-framed-as-retired, zero surviving false-persistence claims; match-slots.md wc -l=115 matches its own size-justification header; backlog split-row FIX-COWORK-RUNBOOK-DOC-STALE-LAUNCHD-BACKSTOP-STATUS confirmed present in .task_board.backlog",
+            "observed_at": "2026-08-23T22:08:35Z"
+          }
+        }
       }
     ],
     "head": {
@@ -20479,35 +20516,6 @@
         "commit": "1d6cad4f5",
         "branch": null,
         "review_note": "IMPLEMENTED, commit 1d6cad4f5 on main (direct-commit row, branch:null - qa verify-committed mode). Brief phase (1) ONLY, per its own instruction: new NON-FATAL Stage 1i in scripts/orch-validate.mjs. apps/mcp-server/src/infrastructure/orchStateSchema.ts DELIBERATELY UNTOUCHED (brief S4 makes the superRefine promotion a separate gated follow-up), and neither bounded1-supervised-lane-report.sh nor docs/agents/po/flow/zone-routing.md needed a change - the row files[] list was a superset of the phase-1 scope. Trigger is (effective_supervised OR effective_plan_only) AND dispatch_lane==none, scoped to backlog[]/ready[]/review[], epic wrappers excluded. Predicate MIRRORED not reinvented - only the 2-line detail-first/board-fallback lookups from scripts/lib/devteam-eligibility.jq are ported, jq cited in-code as SSOT, coupling flagged. Placed physically BEFORE Stage 1h despite the later number because 1h can exit(2) and would swallow a downstream non-fatal report. THE BRIEF MANDATED CROSS-CHECK CAUGHT A FALSE POSITIVE IN MY OWN PORT BEFORE IT SHIPPED - worth QA re-running rather than trusting: v1 reported FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (supervised+plan_only, 38d, lane none) while bounded1-supervised-lane-report.sh correctly counted 0, because that row is an EPIC WRAPPER, which the report own READY-WRAPPER section documents as a NO-PICKER-BY-DESIGN class closed out by post-cycle.md Step 4.4, hence its gating class is scoped non-wrapper. isEpicWrapper added; both implementations now agree at 0 on the live board. VERIFICATION: node scripts/test-orch-validate-ac.mjs = 41/41 (29 baseline + 12 new AC-5) covering supervised-alone, plan_only-alone, empty-string-vs-absent handler shapes, detail-only flag, and SIX negative/scope controls (unflagged parked row = the row own explicit non-goal, detail-only owner override, detail-only next_agent override, epic wrapper inline, epic wrapper via detail, in_progress[] exclusion). node scripts/orch-validate.mjs docs/data/orch/orch-state.json exits 0 with Stage 1i reporting 0. New ORCH_VALIDATE_DETAIL_PATH env seam makes the detail-override branch provable without touching the real detail file. No apps/ code touched - tsc N/A this phase. FOLLOW-UP the brief asks for and I did NOT create (PO/architect call, not mine): FIX-ORCHSTATE-SUPERVISED-LANE-REPORT-PROMOTE-TO-FATAL, gated on N consecutive clean write cycles with zero Stage-1i hits (brief suggests 14 days), then promote the SAME predicate into a superRefine. Explicitly NOT blocking and NOT urgent."
-      },
-      {
-        "id": "TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY",
-        "title": "Doc-truth: Layer A RemoteTriggers were retired 2026-06-22 (0 slots with trigger_status active) yet cron-cowork-team/SKILL.md still claims they provide persistence - fix that plus match-slots.md:40 catchup_raw scope and the cowork-master-cron-runbook",
-        "owner": "agent-father",
-        "next_agent": "qa",
-        "status": "REVIEW",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P1",
-        "zone": "docs/",
-        "depends_on": [],
-        "files": [
-          ".claude/skills/cron-cowork-team/SKILL.md",
-          "docs/agents/cowork-team/flow/match-slots.md",
-          "docs/protocols/cowork-master-cron-runbook.md"
-        ],
-        "parent": "FIX-COWORK-DAILY-SLOT-SILENT-SKIP-NO-CATCHUP-CATCHUPRAW-SCOPED-TO-GUARANTEED-ONLY",
-        "note": "Dispatchable NOW - the stale sentence was quoted verbatim into the P0 row own status_note as the explanation for the 8h outage, so a two-month-stale doc is actively manufacturing wrong incident diagnoses. Blocks TASK-CRON-SKILLMD-PROBE-WIRING (same file, different section). Touch only the 'Why this skill exists' section of the SKILL.md. Closes 2026-07-07 brief S5 item 5, ordered and never done.",
-        "created_at": "2026-08-23T09:47:24Z",
-        "created_by": "pm",
-        "handoff": "docs/handoffs/TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY.md",
-        "updated_at": "2026-08-23T15:09:30Z",
-        "commit": "f4e944454",
-        "branch": null,
-        "completed_at": "2026-08-23T15:09:30Z",
-        "completed_by": "agent-father",
-        "updated_by": "agent-father",
-        "status_note": "\n[agent-father 2026-08-23T16:20Z] AC-1/2/4/5/6 SHIPPED f4e944454 (committed; push blocked fleet-wide, see below). AC-3 NOT DONE -- docs/protocols/cowork-master-cron-runbook.md is OUTSIDE agent-father commit_zone (allowed: docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/); needs a split row. Its stale spot is now specific: it still calls the launchd backstop \"in flight\" and recovery test T5 \"NOT YET APPLICABLE\", while launchctl list shows com.vn-market.cowork-guaranteed-slot-firer LOADED, last exit 0. AC-4 was NOT satisfied by the handoff scoped section rewrite alone: two more copies of the identical RemoteTrigger-persistence claim sat in the SKILL.md Warning and Notes sections (neither in Step 1a/1b.1/1c, so no collision with TASK-CRON-SKILLMD-PROBE-WIRING). AC-6 forced two corrections to the handoff own figures: trigger_status absent was 11, is now 13; catchup_raw was \"8 records ZERO eligible\", a later same-day run gives 8 records / 2 eligible -- so the eligible count is written as a timestamped observation with re-run-before-quoting, not a standing property. Structural claim kept: catchup_max_lateness_minutes (live 60/120/180/360/1440) caps recovery at ONE VN day, so wiring the missing catchup-check.md consumer alone recovers nothing against a multi-day outage. This row BLOCKS TASK-CRON-SKILLMD-PROBE-WIRING (P0) on the same SKILL.md -- that dep is now clear. PUSH BLOCKED: f4e944454 is committed local-only; size-lint pre-push scans the WORKING TREE, and a live peer uncommitted edit (apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts 475->582L, tolerance 522) reds it for every agent -- 6 commits stranded incl. 2 peers. apps/ is outside my zone. Filed signal_queue row sizelint-worktree-block-20260823T150720Z (type system-issue, to po). -> qa."
       },
       {
         "id": "TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX",
