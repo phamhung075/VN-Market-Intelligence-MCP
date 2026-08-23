@@ -16956,6 +16956,77 @@
           "observed_at": "2026-08-23T14:42:46Z"
         }
       }
+    },
+    {
+      "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort",
+      "type": "routing-gap",
+      "status": "DONE_VERIFIED",
+      "owner": "agent-father",
+      "zone": "docs/agents/po/flow/",
+      "title": "Unrouted signal type 'auto-push-abort' (Pipeline A) — no table row in docs/agents/po/flow/triage-signals.md",
+      "dedup_key": "signal-type-registry-gap:auto-push-abort",
+      "created_at": "2026-08-23T14:00:30Z",
+      "status_note": "P0 CI-BLOCKING, promoted from backlog[] by po 2026-08-23T14:40Z. This row is the ONLY live cause of the signal-type-coverage-guard CI failure on origin/main 429dcf8fa (run 32645643303, job 97209377287) — reproduced locally on HEAD, so it is NOT the known CI-green/local-red divergence mode. Guard output: unrouted Pipeline-A type [\"auto-push-abort\"], 3 envelopes in dev_team_idle_chain.pending_triage_inbox[] from fleet-worktree-push (push-fail, ahead 35/42/49). FIX = add ONE row for type `auto-push-abort` to the Pipeline-A table in docs/agents/po/flow/triage-signals.md (the table under \"For each signal in `pendingSignals[]` (Pipeline A):\"). Suggested disposition for that row: producer=fleet-worktree-push; PO verifies the push-backstop premise (git rev-list --count origin/main..HEAD) before acting — if the backlog has since drained, ACK-and-drop, no task minted; if origin/main is genuinely diverging, mint FIX zone=scripts/ owner=developer. TRAP — DO NOT close this row by clearing the inbox: the guard reads pending_triage_inbox[] as its input, so PO's own mandated Step 0-SIG CLEAR turns the guard green WITHOUT the table row ever being written, and the next auto-push-abort envelope re-reds CI. Verify the fix by grepping the table for the type, never by re-running the guard against an emptied inbox. NOT auto-dispatchable: agent-father fails is_dev_role (^dev(-|$)|^developer$, scripts/lib/devteam-eligibility.jq:306-307) — needs router/PO manual dispatch.\n[agent-father 2026-08-23T16:05Z] SHIPPED 3cef7c30e (pushed). ONE Pipeline-A table row for `auto-push-abort`, inserted directly above the ROUTE-BY-to catch-all in docs/agents/po/flow/triage-signals.md. No duplicate row minted. The row DISCRIMINATES on payload.reason because scripts/fleet-worktree-push.sh emit_abort_signal() has SIX call sites (push-fail, behind-set-code, merge-conflict, merge-continue-fail, tsc-red, tsc-gate-timeout-skipped) and they are not one failure: push/behind -> re-measure the premise then ACK-and-drop or mint FIX zone=scripts/ owner=developer; tsc-red/merge-* -> FIX P0 developer; timeout-skipped -> informational. Pins dedup_key=\"auto-push-abort:{payload.reason}\" since the backstop re-fires every 15min while the condition holds. Also tells the router NOT to trust the envelope's own `ahead` count -- it is a snapshot from the aborted run; these 3 envelopes all cite ahead=35/42/49 and the premise was already resolved by 83ab26dc (the LINE-MOVED task-claim-lint gate, fixed earlier this session), leaving behind=0. VERIFIED BY GREP, NOT BY THE GUARD, as the row's own TRAP warns: guard-signal-type-coverage.sh is not read-only (writes live orch-state at line 258 via ORCH_APPLY_LIVE_FILE_OVERRIDE; --check is an alias, not a dry-run). Instead I replayed the guard's OWN extractors read-only -- pipeline_a_section | extract_type_column now yields 28 types including auto-push-abort; pipeline_b_section unchanged at 14. The 3 pending_triage_inbox[] envelopes are UNTOUCHED (re-counted =3 after the edit) so the gate stays honest. Root cause one level up (open producer namespace vs closed allowlist, 5th instance) NOT attempted -- architect's. -> qa.\n[QA] Review Record (direct-commit verify): verify-committed PASS. commit 3cef7c30e is ancestor of main, touches only docs/agents/po/flow/triage-signals.md (1 line add). Grepped literal row: line 43 '| `auto-push-abort` | `fleet-worktree-push` (`scripts/fleet-worktree-push.sh` `emit_abort_signal()`, line 93) | ...'. Cross-checked emitter source scripts/fleet-worktree-push.sh:110 literally emits \"type\": \"auto-push-abort\" -- exact string match, no typo/case-drift. Replayed guard's own read-only extractors (pipeline_a_section|extract_type_column) by hand -- auto-push-abort present, 28/28 Pipeline-A types, zero duplicates via sort|uniq -d. Did NOT run guard-signal-type-coverage.sh itself (it writes live orch-state.json, not read-only, per row's own TRAP). bun tsc --noEmit (apps/mcp-server): 0 errors. mock-guard N/A -- no production source touched, docs-only. Confirmed no duplicate table row (grep -c =1). NOTE: live pending_triage_inbox[] now shows 0 auto-push-abort envelopes (was 3 at commit time per commit msg) -- consistent with normal PO Step 0-SIG processing having since routed them via the new row, not a defect in this fix; disclosed not asserted, not independently re-checkable post-hoc.",
+      "updated_at": "2026-08-23T17:27:46Z",
+      "priority": "P0",
+      "size": "XS",
+      "updated_by": "agent-father",
+      "detail_ref": "docs/signals/processed/ci-red-83ab26dc-20260823142350.json",
+      "commit": "3cef7c30e",
+      "branch": null,
+      "completed_at": "2026-08-23T15:03:55Z",
+      "completed_by": "agent-father",
+      "claimed_at": "2026-08-23T17:22:30Z",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "drain_source_lane": "review",
+      "qa_verified_at": "2026-08-23T17:27:46Z",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat + literal grep + emitter cross-check + guard-extractor-replay(read-only) + bun tsc --noEmit",
+          "args": "commit=3cef7c30e; files=docs/agents/po/flow/triage-signals.md; emitter=scripts/fleet-worktree-push.sh:110",
+          "live_value_observed": "ancestor=yes; stat touches 1/1 file (triage-signals.md, +1/-0); grep line 43 matches '| `auto-push-abort` |'; emitter literal 'type': 'auto-push-abort' at fleet-worktree-push.sh:110 matches exactly; guard-extractor-replay ROUTED_A=28 types incl auto-push-abort, uniq -d empty (no dup); bun tsc --noEmit apps/mcp-server 0 errors",
+          "observed_at": "2026-08-23T17:27:46Z"
+        }
+      }
+    },
+    {
+      "id": "FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION",
+      "type": "FIX",
+      "status": "DONE_VERIFIED",
+      "priority": "P0",
+      "size": "S",
+      "zone": "docs/agents/unified-agent/",
+      "title": "chef 07-21 morning dish self-certifies quality_verdict=full / layers 1-6 while its own persisted us_macro_layer has no PMI and no EFFR-IORB and known_gaps carries zero L2 token — the verdict gate is a narrative self-judgement, not an assertion over the payload it just wrote; FALSE certification, worse than an honest degraded",
+      "created_at": "2026-07-21T21:03:15Z",
+      "created_by": "po",
+      "source": "tnb-c115-F-CHEF-MORNING-FALSE-FULL-VERDICT",
+      "verdict": "CONFIRMED-AT-SOURCE-BY-PO-WITH-EVIDENCE-CORRECTION",
+      "occurrence_count": 3,
+      "sibling_row": "FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING",
+      "note": "PO TRIAGE 2026-07-21 (TNB c115 finding F-CHEF-MORNING-FALSE-FULL-VERDICT). VERDICT: CONFIRMED AT SOURCE by PO — with ONE correction to TNB's evidence chain (below). This is a FALSE CERTIFICATION, which is a strictly worse failure mode than every previously-tracked chef finding: all prior ones were HONEST degraded self-reports.\n\nRAW EVIDENCE (PO read docs/data/unified-agent-synthesis-2026-07-21-morning.json directly; note the fields are NESTED — metadata.* and tnb_synthesis.* — a top-level jq query returns null and will look like a missing field):\n- metadata.cycle_id = \"morning-2026-07-21T05:20:19Z\"\n- metadata.quality_verdict = \"full\"\n- metadata.layers_walked_summary = \"1-6 (full)\"\n- tnb_synthesis.us_macro_layer = \"Fed funds rate 3.63% with risk-off sentiment signaled by gold spike +$24.1 to $4053/oz. Safe-haven demand reflects caution amid margin debt expansion.\"  -> Fed funds ONLY. NO PMI. NO EFFR-IORB spread. Both are mandatory Layer-2 content per tnb-methodology.md / the main.md Layer table.\n- known_gaps = [\"[gap:business_context_sparse] ...\", \"[gap:gold_4300_active] ...\"] -> ZERO L2 gap token.\nSo the dish certifies 6/6 layers walked while its own persisted payload shows Layer 2 is not walked, and emits no gap token to compensate. The quality signal is not merely wrong, it is confidently wrong — downstream consumers that trust quality_verdict to gate use have no way to detect this.\n\n*** CORRECTION TO TNB'S EVIDENCE (PO re-verified; do not carry TNB's version forward) ***\nTNB's finding argues the self-scoring gate CAN work by contrasting the SAME-DAY eod dish, which it says \"explicitly tokens [gap:L2_US_macro_absent]\". That contrast is NOT RAW-verifiable: docs/data/unified-agent-synthesis-2026-07-21-eod.json DOES NOT EXIST (PO ls-confirmed; TNB's OWN other finding, GAP-CHEF-SYNTHESIS-A-FLOW-PERSIST, states the same file is Glob-confirmed absent). TNB therefore cited the eod NOTEBOOK claim as if it were persisted-JSON evidence, in the same handoff where it correctly reports that JSON never landed — an internal contradiction.\nThe proof leg SURVIVES, but must be re-anchored to the EVENING dish, which PO verified RAW: unified-agent-synthesis-2026-07-21-evening.json has metadata.quality_verdict=\"degraded\" AND tnb_synthesis.us_macro_layer=\"EFFR-IORB spread 1.64pp NEUTRAL. Brent +2.31% ... Gold +1.97% ...\" — i.e. genuine L2 content and an honest verdict, same agent, same day. That is a sound same-day control and it establishes the same point: the defect is isolated to the morning cycle, not universal.\nCONSEQUENCE FOR WHOEVER FIXES THIS: do not build the fix around a comparison with the eod JSON. It is not there.\n\nOCCURRENCE COUNT = 1 (first live-verified). Below the 3-cycle auto-cure threshold, and PO agrees auto-cure is the WRONG instrument here regardless of count — see the sibling row below.\n\nFIX SHAPE (PO directive): the verdict gate must be a DETERMINISTIC ASSERTION, not a narrative self-judgement. Before writing metadata.quality_verdict=\"full\", the agent must assert per-layer that the layer's own payload field is non-empty AND contains its mandatory tokens (L2: PMI and/or EFFR-IORB). If an assertion fails, \"full\" is not writable — the verdict must downgrade to \"degraded\" and a [gap:L<N>_...] token must be appended to known_gaps. Verdict and gap-token must be derived from ONE evaluation so they cannot disagree.\n\nAC: (1) quality_verdict=\"full\" is unwritable when any mandatory layer field lacks its required tokens; (2) verdict and known_gaps are computed from a single pass (no independent second judgement); (3) negative control — a synthetic dish with L2 stripped must produce degraded + an L2 gap token, proving the assertion fires (without this the fix is indistinguishable from always writing degraded); (4) RAW-verify on the next morning fire by reading metadata.quality_verdict + tnb_synthesis.us_macro_layer from the persisted JSON — an agent self-report or notebook line is NOT acceptable evidence (the 07-21 morning notebook line matched the false \"full\" verbatim, so the notebook faithfully reproduces the bad verdict and cannot detect it).\n\nSIBLING / DO NOT MERGE: FIX-CHEF-L6-TOKEN-PERSISTENCE-RECURRING (P3, BLOCKED) is the nearest prior art and is RELATED BUT DISTINCT. That row = a token WAS generated and then dropped on JSON write (persist-step vs narrative-gen, isolation-first, 3 manifestations despite 2 auto-cures). THIS row = no token was ever generated AND the verdict was affirmatively certified \"full\". Different mechanism, opposite end of the pipeline. They share the family \"chef self-scoring integrity\" and should be looked at together, but merging them would bury a false-certification bug inside a persistence bug. The L6 row's own lesson applies here though: more same-shape auto-cure is the wrong move; this needs a deterministic assertion.\n",
+      "updated_at": "2026-08-23T17:29:27Z",
+      "po_recurrence_20260801T0125": "3rd live-confirmed occurrence, fresh RAW evidence from TNB audit cycle 121 (docs/handoffs/tnb-audit-latest.md, ~2026-07-31T20:23Z) — the 07-31 morning dish. unified-agent notebook self-reports Layers walked: 1-6 (full) and QUALITY: full, while the persisted docs/data/unified-agent-synthesis-2026-07-31-morning.json for the SAME cycle carries quality_verdict: degraded plus four explicit gap tokens ([gap:L2_US_macro_carry_only], [gap:L3_VN_macro_incomplete], [gap:L4_partial_pillar_coverage], [gap:business_context_absent]). TNB independently re-scored the dish at 5/8 = NEEDS_ATTENTION on its own 9-step methodology, corroborating the JSON and not the notebook prose. occurrence_count raised 1 -> 3 (was stale at 1 since 2026-07-21; c118 had already measured 2). Row remains READY/next_agent=agent-father, unshipped for 10 days. NOT dispatched this tick — it was the runner-up manual-dispatch candidate behind FIX-DEVTEAM-REVIEW-LANE-QA-DRAIN, which was picked because it unblocks the lane this row is also waiting on. Carry to next tick as the leading candidate if the drain row is in flight.",
+      "po_scope_widened_at": "2026-08-14T20:36:45Z",
+      "po_scope_widened_by": "po",
+      "po_scope_widening": "PROMOTED P1->P0 and widened. This row is the deterministic-assertion mechanism three separate live defects now all require (BA spec NFR-4 of FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING already flagged the convergence). Assertion over the persisted synthesis JSON MUST also cover: (a) business_context_cited non-null for >=1 conviction_call whenever $BIZ_CTX_SIGNALS was non-empty that cycle - 3/3 dishes on 2026-08-14 failed this post-fix; (b) SCHEMA CONFORMANCE - chef-dish.md:643-699 mandates ONE schema for ALL dish_type values, yet unified-agent-synthesis-2026-08-14-eod.json emitted a wholly different shape (tnb_layers/clustering/signals/thesis_summary, zero conviction_calls key). TNB c130 framed this as -EOD schema lacks a business-context field-; at source it is EOD not emitting the mandated schema at all; (c) DIRECTION ENUM - schema pins direction to BUY|HOLD|SELL|NEUTRAL, evening emitted ACCUMULATE and RISK_OFF, and MACRO_BRENT in the ticker field.",
+      "po_evidence_ref": "docs/handoffs/tnb-audit-latest.md (c130) + docs/data/unified-agent-synthesis-2026-08-14-{morning,eod,evening}.json",
+      "claimed_by": "dev-team (review-lane qa-drain)",
+      "updated_by": "agent-father",
+      "status_note": "agent-father 2026-08-14T21:01Z: flow-doc-only fix landed in chef-dish.md Step 7.5/7.6 (chef.md untouched — no L1-L6 layer content lives there). Step 7.5 rewritten from a narrative \"evaluate against work performed in Steps 2-6\" gate into an ASSEMBLY-then-assert mechanism: assembles the literal field text/objects ($US_MACRO_LAYER_TEXT/$VN_MACRO_LAYER_TEXT/$VALUATION_LAYER_TEXT/$CONVICTION_CALLS/$KNOWN_GAPS_SO_FAR) Step 7.6 persists, then scores 7 sub-checks (5 existing L2/L3/L4/BizCtx/gap-catalogue + 2 new widened-scope: SCHEMA_OK, DIRECTION_OK) as literal substring/key/enum tests against that assembly — single pass, verdict+known_gaps cannot disagree (AC-1/AC-2). Step 7.6 trimmed to pure write + mandatory post-write Read-back self-check (parses JSON, quality_verdict matches, top-level keys match schema, every direction in enum) — closes AC-4 mechanically inside the flow itself. AC-3 negative control (synthetic L2-stripped dish -> degraded + L2 gap token) walked manually and documented inline as an Illustrative example plus in the decision journal (flow-doc has no test runner to execute this against). BIZ_CTX_OK (widened scope a) now null-scans $CONVICTION_CALLS[].business_context_cited literally and requires a MECHANICAL empty-dict check on $BIZ_CTX_SIGNALS before the gap-token branch is legitimate — closes tnb-audit c130 Headline #1's exact failure mode (gap-token claimed while DXG bctc_signal was genuinely in-window) without touching the BIZCTX row's own wiring (REVIEW lane, untouched, not mine). SCHEMA_OK (b) checks top-level+tnb_synthesis key conformance for every dish_type incl. eod, forcing self-correction before write (not a disclosed gap) — targets c130 Headline #2 (eod tnb_layers/clustering/signals/thesis_summary shape). DIRECTION_OK (c) checks literal BUY|HOLD|SELL|NEUTRAL enum membership + ticker-is-a-real-symbol — targets evening ACCUMULATE/RISK_OFF/MACRO_BRENT findings. Decision journal: docs/agent-memory/decisions/sprint-FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION-agent-father.md. HANDOFF TO QA (AC-4 external leg): RAW-verify on the NEXT live chef fire by jq-ing metadata.quality_verdict + tnb_synthesis.us_macro_layer + conviction_calls[].direction + top-level/tnb_synthesis keys directly from docs/data/unified-agent-synthesis-<date>-<slot>.json — notebook/self-report text is not acceptable evidence, exact jq commands in the decision journal. NOT in scope (explicitly excluded, documented inline): c130 Headline #1's deeper AVOID-gate-reversal defect (different defect class, tracked on the BIZCTX row).\n[agent-father 2026-08-23T14:45Z redispatch-1] AC-4 gap CLOSED, 772d9f014 pushed. Root cause: the 08-14 fix swapped a narrative VERDICT for a narrative ASSERTION. Measured all 69 live dishes: 19 non-conformant, 5 shapes. chef-dish.md now: Step 7.6 checklist -> ONE executable jq command, exit code IS the verdict (unified-agent has Bash, runs haiku); SCHEMA_OK covers metadata keys + dish_type enum; new SLOT->dish_type table (8 failures write init.md schedule keys). Replay over all 69: 50 pass/19 fail + 2 neg controls. NEW unfixed, own row: chef.md:135 vs chef-dish.md:858 disagree on SLOT_ID. Detail: notebook + journal S59. -> qa.\n[QA] Review Record (direct-commit verify): qa 2026-08-23T17:4xZ (redispatch-1 re-verify, Direct-Commit Verify): commit 772d9f014b5055ca5be2f214ebeb92a8ce592b61 (main ancestor, sole file docs/agents/unified-agent/flow/chef-dish.md matches git show --stat). AC-4 SCHEMA_OK gap from my own prior CHANGES_REQUESTED is CLOSED: extracted the shipped SCHEMA_OK jq program verbatim and replayed it against all 69 live docs/data/unified-agent-synthesis-*.json -- reproduced the commit's own calibration claim EXACTLY (50 PASS/19 FAIL/0 exit-code inconsistency), including re-confirming the 08-22-chef-evening dish that triggered my prior CHANGES_REQUESTED still (correctly) fails top_keys/meta_keys/dish_type (pre-fix artifact, not retroactively rewritten). Independently reproduced 2 negative controls (verdict-mismatch -> SCHEMA_FAIL:verdict exit 1; malformed JSON -> parse error exit 5) and the jq -er footgun the commit describes (confirmed real; shipped halt_error(1) correctly avoids it). AC-1/AC-2 single-pass verdict computation unchanged (chef-dish.md:840, ALL EIGHT sub-checks). Flagged-not-fixed SLOT_ID naming conflict (chef.md:167 chef-prefixed vs chef-dish.md bare form) confirmed real AND already tracked on a new BACKLOG row (FIX-CHEF-EVENING-SLOTID-FORM-CONFLICT-CHEFDASH-VS-EVENING), not silently dropped. bun test/tsc/mock-guard/DDD: structurally N/A, doc-only diff, zero .ts/.py touched. DISCLOSED GAP (not blocking): no live chef fire has occurred since this commit landed (16:33Z) as of this verify -- newest dish on disk is still pre-fix (2026-08-22-chef-evening.json) -- whether the live haiku-run agent actually executes the new Bash gate on its next real cycle remains unobserved and is the next thing a future verify-committed pass on the NEXT live dish must check. APPROVED.",
+      "claimed_at": "2026-08-23T17:22:30Z",
+      "redispatch_count": 1,
+      "qa_verify_20260823": "[QA] CHANGES_REQUESTED 2026-08-23 (Direct-Commit Verify). AC-4 mandated a RAW-verify on the next live chef fire's persisted JSON. Only 1 dish carries a cycle_id after the fix commit (5829a7ad2, 2026-08-14T21:04Z): docs/data/unified-agent-synthesis-2026-08-22-chef-evening.json (confirmed genuine, TNB c115.5 independently cites the same cycle_id). It VIOLATES the fix's own newly-added SCHEMA_OK sub-check: top-level keys = 9 (extra execution_notes/signals_consumed) vs the mandated 7 (chef-dish.md:864-914); metadata sub-object also reshaped (missing timestamp_utc/layers_walked_summary). No [gap:schema_nonconformant_corrected] token present, no self-correction applied, despite chef-dish.md:964's mandatory post-write self-check requiring exactly this catch. Cross-checked 2 pre-fix committed dishes (07-29/07-30 chef-evening) — both match the 7-key schema exactly, confirming this is live drift, not a pre-existing undocumented shape. Routed to agent-father (row has no .owner field; agent-father authored the fix) — apply a new direct commit closing the SCHEMA_OK gap (or determine why the live agent execution diverged from documented schema) before AC-4 can be certified. Full evidence: decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-25.md STEP qa-S35.",
+      "owner": "agent-father",
+      "drain_source_lane": "review",
+      "qa_verified_at": "2026-08-23T17:29:26Z",
+      "verification": {
+        "raw_probe": {
+          "tool": "git merge-base --is-ancestor + git show --stat/diff + jq -f (extracted shipped SCHEMA_OK program) replay over 69 live dishes + 2 negative controls + grep verdict-computation invariance",
+          "args": "commit=772d9f014b5055ca5be2f214ebeb92a8ce592b61; files=docs/agents/unified-agent/flow/chef-dish.md",
+          "live_value_observed": "ancestor=yes; stat/diff matches commit msg exactly; independent replay of extracted jq over 69 live docs/data/unified-agent-synthesis-*.json = 50 PASS/19 FAIL/0 exit-code inconsistency (exact match to commit's own calibration claim); neg controls: verdict-mismatch->exit1 SCHEMA_FAIL:verdict, malformed-json->exit5 parse error, jq -er footgun repro confirmed exit0-on-truthy-string (shipped halt_error(1) avoids it); verdict AND-of-8 unchanged at chef-dish.md:840; SLOT_ID conflict confirmed real + tracked on new row FIX-CHEF-EVENING-SLOTID-FORM-CONFLICT-CHEFDASH-VS-EVENING",
+          "observed_at": "2026-08-23T17:29:26Z"
+        }
+      }
     }
   ],
   "closed_sprints": [
@@ -24223,6 +24294,46 @@
       "provenance": "detector",
       "audit_cycle_tag": null,
       "dedup_key": "auditor-cycle-missing:tier1:2026-08-22T16:30Z"
+    },
+    {
+      "id": "ntg-20260822T174250Z-financials-SHB-ec5d99",
+      "ts": "2026-08-22T17:42:50Z",
+      "from": "digest-predict",
+      "to": "po",
+      "type": "narrative_contradiction",
+      "summary": "CCATO: digest-predict claimed absence of financials data for SHB but compare_financials returned non-null data",
+      "severity": "MED",
+      "status": "READ",
+      "payload": {
+        "agent_id": "digest-predict",
+        "claim": "Không có dữ liệu BCTC (get_bctc_full: \"Chưa có dữ liệu BCTC\", không phải lỗi corrupt).",
+        "tool": "compare_financials",
+        "ticker": "SHB",
+        "probe_ticker": "SHB",
+        "returned_value": "PDF downloaded but not yet extracted for SHB: 2026-Q2. Extraction runs automatically after the PDF is pulled — check back shortly.",
+        "cycle": "2026-08-22",
+        "gate_version": "1"
+      }
+    },
+    {
+      "id": "ntg-20260822T174323Z-financials-SHB-6402ec",
+      "ts": "2026-08-22T17:43:23Z",
+      "from": "digest-predict",
+      "to": "po",
+      "type": "narrative_contradiction",
+      "summary": "CCATO: digest-predict claimed absence of financials data for SHB but compare_financials returned non-null data",
+      "severity": "MED",
+      "status": "READ",
+      "payload": {
+        "agent_id": "digest-predict",
+        "claim": "BCTC SHB Q2/2026 đã tải PDF về nhưng chưa trích xuất xong (get_bctc_full hiện hiển thị \"Chưa có dữ liệu BCTC\" do trích xuất đang chờ xử lý, không phải lỗi corrupt).",
+        "tool": "compare_financials",
+        "ticker": "SHB",
+        "probe_ticker": "SHB",
+        "returned_value": "PDF downloaded but not yet extracted for SHB: 2026-Q2. Extraction runs automatically after the PDF is pulled — check back shortly.",
+        "cycle": "2026-08-22",
+        "gate_version": "1"
+      }
     }
   ],
   "backlog_detail": [],
