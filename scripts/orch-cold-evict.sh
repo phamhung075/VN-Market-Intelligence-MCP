@@ -89,12 +89,28 @@
 # flat task lanes, sprints, signals and decision_journal passes are untouched.
 # Gate: scripts/test-devteam-donelane-drain.sh CASE 8.
 #
+# FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS (2026-08-23):
+# commit 38c013342e (2026-08-06) removed 10 terminal rows from the hot file
+# while the corresponding archive/2026-08.json write silently never landed —
+# the evictor's row SELECTION was correct, only the persistence step no-op'd,
+# and nothing failed loud when it didn't. The "cold written before hot" claim
+# below was true in NARRATION only at that time; it is now ENFORCED by
+# verify_cold_archive_write() (called on the temp file pre-rename AND again
+# on the real on-disk archive file post-rename — see that function's header)
+# — any mismatch between what the ID maps say should be in cold and what is
+# actually, durably on disk aborts the WHOLE run before the hot-side
+# delete/write is ever reached. A partial hot-delete-only outcome is no
+# longer reachable through this script's own control flow. Regression gate:
+# scripts/test/orch-cold-evict-tests.sh TEST 12.
+#
 # Usage:
 #   scripts/orch-cold-evict.sh [--dry-run] [--exclude-ids ID1,ID2 [--exclude-ids ID3]]
 #
 # Contract:
 #   - MUST be called while commit-mutex:main is held by the caller (task_claim).
-#   - Cold file is written and jq-verified BEFORE the hot file is modified.
+#   - Cold file is written, jq-verified, AND symmetry-verified (per-id
+#     presence + exact row-count growth, re-read fresh from disk) BEFORE the
+#     hot file is modified. A failed verification aborts before any hot write.
 #   - Atomic temp-then-rename for both cold and hot files.
 #   - mtime-CAS retry loop guards against concurrent writers.
 #   - Idempotent: items already in cold are not re-added; they are still removed
@@ -660,7 +676,25 @@ compute_id_maps() {
       ($dj_evict_candidates | map({key: (._src_idx | tostring), value: true}) | from_entries)
         as $rm_decision_journal_idx |
       ([$dj_evict_candidates[] | del(._src_idx)]) as $dj_evict_clean |
-      ([$dj_evict_clean[] | select(($cold_dj_strs | index(tostring)) == null)])
+      # FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS
+      # (2026-08-23): `$cold_dj_strs | index(tostring)` is a jq gotcha —
+      # for `index(f)`, the argument filter `f` runs with `.` bound to the
+      # input of index() itself (here `$cold_dj_strs`, the whole array), NOT
+      # to the element being tested by the outer `select`. `tostring`
+      # therefore stringifies the ARRAY, then searches for that array-string
+      # inside itself — always null, so this dedup check was a silent
+      # permanent no-op (every candidate always looked "new"). Harmless in
+      # every path exercised by the pre-existing test suite (a retry only
+      # ever re-evaluates this once the source rows are already gone from
+      # hot, so there was nothing left to re-add) but a genuine latent bug on
+      # the documented cold-write-succeeded/hot-rename-failed retry path this
+      # script exists to support: a retry would have silently DUPLICATED
+      # decision_journal entries in cold instead of skipping already-archived
+      # ones. Fixed by binding the candidate stringified form to a variable
+      # BEFORE piping into index(), so `.` inside the index() argument is
+      # never reached at all.
+      ([$dj_evict_clean[] | . as $dj_item | ($dj_item | tostring) as $dj_str
+        | select(($cold_dj_strs | index($dj_str)) == null)])
         as $new_dj_entries |
 
       # ── output: IDs and lookup maps only (NOT full objects) ──────────────
@@ -927,6 +961,139 @@ read_cold_ids() {
 }
 
 # =============================================================================
+# Helper: total row count across every cold-target array in a given cold file.
+# Missing file == 0 (never errors — used as both a "before" and "after"
+# snapshot around the atomic cold-file rename in the LIVE path below).
+# =============================================================================
+count_cold_rows() {
+  local f="$1"
+  if [[ ! -f "${f}" ]]; then echo 0; return; fi
+  jq '
+    ((.done_tasks // [])          | length) +
+    ((.closed_sprints // [])      | length) +
+    ((.closed_sprint_goals // []) | length) +
+    ((.signal_rows // [])         | length) +
+    ((.backlog_detail // [])      | length) +
+    ((.decision_journal // [])    | length)
+  ' "${f}"
+}
+
+# =============================================================================
+# Hot/cold symmetry self-check (FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-
+# EXECUTED-DATA-LOSS): verifies a candidate cold-archive file genuinely
+# contains every row this pass's ID maps say it is adding — both by per-id
+# presence (done_tasks/closed_sprints/closed_sprint_goals/signal_rows/
+# backlog_detail matched by id; decision_journal matched by content-equality,
+# it has no stable id) AND by an independent row-COUNT-growth check (the
+# archive's total row count across all six cold arrays must have grown by
+# EXACTLY n_new_cold — the maps' own count of rows genuinely new to cold this
+# pass, relative to the $before_total snapshot the caller took immediately
+# before this pass began writing).
+#
+# Root-cause context: commit 38c013342e (2026-08-06) removed 10 terminal rows
+# from the hot file with ZERO corresponding write ever landing in
+# archive/2026-08.json, despite this script's own header comment and the
+# commit message narrating an atomic hot-delete+cold-write pair — the
+# evictor's SELECTION was correct, only the persistence step silently no-op'd
+# (see docs/data/orch/orch-state.json row FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-
+# WRITE-NEVER-EXECUTED-DATA-LOSS for the full forensic trail). This check
+# makes that outcome structurally unreachable: called BOTH on the temp file
+# (before the hot file is ever touched) and again on the REAL on-disk archive
+# path immediately after the rename — a temp-only check cannot detect the
+# rename silently not landing, or a concurrent writer racing it; only a fresh
+# re-read of the real target path after the fact can. Either call site
+# failing aborts the WHOLE run before the hot-side delete/rename ever
+# executes (see call sites below) — a partial hot-delete-only outcome is no
+# longer reachable through this script's own control flow.
+#
+# NOTE on the growth invariant: this deliberately checks growth against
+# n_new_cold, NOT against "rows removed from hot" — those two counts are
+# identical for a normal (first-time) eviction pass, which is exactly the
+# shape 38c013342e was, but they intentionally DIVERGE during the idempotent
+# partial-failure-recovery path this script's own header already documents
+# ("items already in cold are not re-added; they are still removed from
+# hot"). Asserting growth == removed-from-hot unconditionally would make that
+# documented recovery path permanently unable to complete (TEST 4 in
+# scripts/test/orch-cold-evict-tests.sh exercises exactly this — a second,
+# idempotent run correctly produces ZERO cold growth while still removing
+# from hot). n_new_cold is the correct invariant in both cases.
+#
+# Returns 0 (ok, silent) on success. Returns 1 + logs a diagnostic on any
+# mismatch. Never mutates anything itself.
+# =============================================================================
+verify_cold_archive_write() {
+  local maps="$1"
+  local target="$2"
+  local before_total="$3"
+  local label="$4"
+
+  if [[ ! -f "${target}" ]]; then
+    log "SYMMETRY-CHECK FAILED (${label}): target file does not exist: ${target}"
+    return 1
+  fi
+
+  local result ok
+  result=$(jq --argjson maps "${maps}" '
+    ($maps.new_cold_done_set // {})            as $cd   |
+    ($maps.new_cold_sprint_set // {})          as $cs   |
+    ($maps.new_cold_sprint_goal_set // {})     as $csg  |
+    ($maps.new_cold_signal_set // {})          as $csig |
+    ($maps.new_cold_backlog_detail_set // {})  as $cbd  |
+    ($maps.new_cold_decision_journal // [])    as $cdj  |
+
+    ((.done_tasks // [])          | map(.id // ""))          as $have_done |
+    ((.closed_sprints // [])      | map(.id // ""))          as $have_sprint |
+    ((.closed_sprint_goals // []) | map(.sprint_id // ""))   as $have_sprint_goal |
+    ((.signal_rows // [])         | map(.id // ""))          as $have_signal |
+    ((.backlog_detail // [])      | map(.id // ""))          as $have_backlog |
+    ((.decision_journal // [])    | map(tostring))           as $have_dj_strs |
+
+    (($cd | keys)  - $have_done)          as $missing_done |
+    (($cs | keys)  - $have_sprint)        as $missing_sprint |
+    (($csg | keys) - $have_sprint_goal)   as $missing_sprint_goal |
+    (($csig | keys) - $have_signal)       as $missing_signal |
+    (($cbd | keys) - $have_backlog)       as $missing_backlog |
+    # NOTE: bind the candidate tostring BEFORE piping into index() — see the
+    # jq `index(f)` dot-binding gotcha explained at compute_id_maps
+    # $new_dj_entries above (piping straight into index(tostring) stringifies
+    # the ARRAY being searched, not the element — always null, false-negative
+    # "missing").
+    ([$cdj[] | . as $dj_item | ($dj_item | tostring) as $dj_str
+      | select(($have_dj_strs | index($dj_str)) == null)]) as $missing_dj |
+
+    ($missing_done + $missing_sprint + $missing_sprint_goal + $missing_signal + $missing_backlog)
+      as $missing_ids |
+
+    {
+      ok: (($missing_ids | length) == 0 and ($missing_dj | length) == 0),
+      missing_ids: $missing_ids,
+      missing_decision_journal_count: ($missing_dj | length)
+    }
+  ' "${target}")
+  ok=$(echo "${result}" | jq -r '.ok')
+
+  if [[ "${ok}" != "true" ]]; then
+    log "SYMMETRY-CHECK FAILED (${label}): rows expected in cold archive but missing:"
+    log "  missing ids: $(echo "${result}" | jq -c '.missing_ids')"
+    log "  missing decision_journal entries: $(echo "${result}" | jq -r '.missing_decision_journal_count')"
+    return 1
+  fi
+
+  local expected_growth actual_total actual_growth
+  expected_growth=$(echo "${maps}" | jq -r '.n_new_cold')
+  actual_total=$(count_cold_rows "${target}")
+  actual_growth=$((actual_total - before_total))
+
+  if [[ "${actual_growth}" -ne "${expected_growth}" ]]; then
+    log "SYMMETRY-CHECK FAILED (${label}): archive row count grew by ${actual_growth}, expected exactly ${expected_growth} (n_new_cold)"
+    return 1
+  fi
+
+  log "SYMMETRY-CHECK OK (${label}): archive grew by ${actual_growth} row(s) (before=${before_total}), all expected ids present"
+  return 0
+}
+
+# =============================================================================
 # DRY-RUN path — report preview + projected size, exit 0, no writes
 # =============================================================================
 if [[ "${DRY_RUN}" == "true" ]]; then
@@ -990,6 +1157,11 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
   # still removing them from hot.
   read_cold_ids
 
+  # ── Snapshot cold row-count BEFORE this pass writes anything (FIX-ORCH-
+  # COLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS) — baseline for
+  # verify_cold_archive_write()'s growth-delta assertion below.
+  COLD_TOTAL_BEFORE=$(count_cold_rows "${COLD_FILE}")
+
   # ── Pass 1: compute ID maps (small output, safe for --argjson) ────────────
   MAPS=$(compute_id_maps "${ORCH_STATE}" "${COLD_DONE_IDS}" "${COLD_SPRINT_IDS}" "${COLD_SIGNAL_IDS}" "${COLD_SPRINT_GOAL_IDS}" "${COLD_BACKLOG_DETAIL_IDS}" "${DETAIL_FILE}" "${COLD_DECISION_JOURNAL}")
 
@@ -1014,6 +1186,12 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
     || { log "ABORT: cold temp sentinel failed — hot file NOT modified"; exit 1; }
   jq '.' "${COLD_TEMP}" >/dev/null \
     || { log "ABORT: cold temp invalid JSON — hot file NOT modified"; exit 1; }
+
+  # Symmetry self-check (pre-rename, temp file) — catches a build_cold_temp()
+  # selection bug (wrong/missing rows in the candidate) before it ever gets
+  # anywhere near the real archive path or the hot file.
+  verify_cold_archive_write "${MAPS}" "${COLD_TEMP}" "${COLD_TOTAL_BEFORE}" "pre-rename cold temp" \
+    || { log "ABORT: cold temp failed symmetry self-check — hot file NOT modified"; exit 1; }
 
   # ── Pass 2b: Build hot temp ───────────────────────────────────────────────
   HOT_TEMP=$(mktemp "${REPO_ROOT}/docs/data/orch/.hot-evict-XXXXXXXX.tmp")
@@ -1047,7 +1225,19 @@ while [[ ${ATTEMPT} -lt ${MTIME_CAS_RETRIES} ]]; do
   mv "${COLD_TEMP}" "${COLD_FILE}"
   COLD_TEMP=""
 
-  # Cold is confirmed written — now safely write hot via gated wrapper.
+  # ── Post-rename readback (FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-
+  # EXECUTED-DATA-LOSS) — re-read the REAL on-disk archive file fresh (never
+  # trust the temp we already validated pre-rename; only a fresh read of the
+  # actual target path proves the write durably landed) and re-run the same
+  # symmetry assertion. THIS is the check that would have caught 38c013342e:
+  # a partial/failed/raced archive write is now impossible to follow with the
+  # hot-side delete below — any mismatch here aborts the ENTIRE run before
+  # orch-apply.sh (the hot write) is ever invoked, so the two files can never
+  # again diverge the way they did on 2026-08-06.
+  verify_cold_archive_write "${MAPS}" "${COLD_FILE}" "${COLD_TOTAL_BEFORE}" "post-rename real archive file" \
+    || { log "ABORT: FATAL — cold archive write did not durably land on disk; hot file NOT modified. Manual investigation required: ${COLD_FILE}"; exit 1; }
+
+  # Cold is confirmed written AND verified on disk — now safely write hot via gated wrapper.
   #
   # ORCH_APPLY_LIVE_FILE_OVERRIDE="${ORCH_STATE}": explicitly propagates this
   # script's own ORCH_STATE override into orch-apply.sh's LIVE_FILE

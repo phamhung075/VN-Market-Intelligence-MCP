@@ -787,6 +787,114 @@ fi
 assert_real_live_unchanged "T11"
 
 # =============================================================================
+# TEST 12 — FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS
+#   regression: reproduces the exact commit-38c013342e failure mode (10
+#   terminal rows deleted from hot with ZERO corresponding archive write
+#   ever landing) via a PATH-shadowed `mv` that intercepts ONLY the cold-
+#   archive rename call and makes it silently fail to deliver the new rows
+#   — everything else (mktemp, the hot-file write via orch-apply.sh, any
+#   other `mv` invocation) passes through to the real binary untouched.
+#   Proves the hot/cold symmetry self-check (verify_cold_archive_write,
+#   wired in BOTH pre-rename-on-temp and post-rename-on-the-real-file) makes
+#   a hot-delete-without-archive-write outcome structurally unreachable: the
+#   run must abort non-zero and the hot file must stay BYTE-IDENTICAL to its
+#   pre-run state, in every sub-case below.
+#     (a) rename call reports success but the target file is never created.
+#     (b) rename call reports success and the target file DOES exist and IS
+#         valid JSON — the closer analog to the real incident — but it is
+#         empty (missing every row this pass should have added).
+#     (c) control: the identical fixture with the REAL mv (no fault
+#         injection) must still succeed normally, proving (a)/(b) failures
+#         come from the injected fault, not from the fixture itself.
+# =============================================================================
+FAKE_BIN_T12="$FIXTURE_ROOT/fake-bin-t12"
+mkdir -p "$FAKE_BIN_T12"
+
+# --- (a) total write failure: rename call succeeds but target never appears
+cat > "$FAKE_BIN_T12/mv" <<'EOS'
+#!/usr/bin/env bash
+dest="${@: -1}"
+case "$dest" in
+  *"/archive/"*.json) exit 0 ;;   # simulate: reported success, nothing landed
+  *) exec /bin/mv "$@" ;;
+esac
+EOS
+chmod +x "$FAKE_BIN_T12/mv"
+
+new_fixture "t12a-archive-write-total-failure" "$BASE_FIXTURE"
+HASH_HOT_BEFORE_T12A=$(file_hash "$HOT_PATH")
+EXIT_T12A=0
+PATH="$FAKE_BIN_T12:$PATH" run_cold_evict || EXIT_T12A=$?
+if [ "$EXIT_T12A" -ne 0 ]; then
+  pass "T12a — archive write total failure: script exits non-zero (pre-fix: silent exit 0)"
+else
+  fail "T12a — expected non-zero exit when archive write silently no-ops, got 0"
+fi
+HASH_HOT_AFTER_T12A=$(file_hash "$HOT_PATH")
+if [ "$HASH_HOT_BEFORE_T12A" = "$HASH_HOT_AFTER_T12A" ]; then
+  pass "T12a — hot file BYTE-IDENTICAL after aborted run (no hot-delete-without-archive-write)"
+else
+  fail "T12a — hot file CHANGED despite archive write failing (CRITICAL — reproduces 38c013342e)"
+fi
+if grep -q "SYMMETRY-CHECK FAILED" "$FIXTURE_ROOT/.last-stderr"; then
+  pass "T12a — symmetry self-check reported the failure (not a silent abort)"
+else
+  fail "T12a — expected SYMMETRY-CHECK FAILED in stderr, got: $(tail -5 "$FIXTURE_ROOT/.last-stderr")"
+fi
+assert_real_live_unchanged "T12a"
+
+# --- (b) partial/corrupted write: target exists + valid schema but EMPTY —
+#     this is the closer analog of the real incident (archive/2026-08.json
+#     continued to exist and validate; it just never received the new rows).
+cat > "$FAKE_BIN_T12/mv" <<'EOS'
+#!/usr/bin/env bash
+dest="${@: -1}"
+case "$dest" in
+  *"/archive/"*.json)
+    printf '{"month":"1970-01","created_at":"1970-01-01T00:00:00Z","done_tasks":[],"closed_sprints":[],"closed_sprint_goals":[],"signal_rows":[],"backlog_detail":[],"decision_journal":[]}' > "$dest"
+    rm -f "$1"
+    exit 0
+    ;;
+  *) exec /bin/mv "$@" ;;
+esac
+EOS
+chmod +x "$FAKE_BIN_T12/mv"
+
+new_fixture "t12b-archive-write-corrupted-empty" "$BASE_FIXTURE"
+HASH_HOT_BEFORE_T12B=$(file_hash "$HOT_PATH")
+EXIT_T12B=0
+PATH="$FAKE_BIN_T12:$PATH" run_cold_evict || EXIT_T12B=$?
+if [ "$EXIT_T12B" -ne 0 ]; then
+  pass "T12b — archive write lands valid-but-empty file: script exits non-zero"
+else
+  fail "T12b — expected non-zero exit when archive write drops the new rows, got 0"
+fi
+HASH_HOT_AFTER_T12B=$(file_hash "$HOT_PATH")
+if [ "$HASH_HOT_BEFORE_T12B" = "$HASH_HOT_AFTER_T12B" ]; then
+  pass "T12b — hot file BYTE-IDENTICAL after aborted run (this IS the exact 38c013342e shape)"
+else
+  fail "T12b — hot file CHANGED despite archive missing the new rows (CRITICAL — reproduces 38c013342e)"
+fi
+if grep -q "SYMMETRY-CHECK FAILED" "$FIXTURE_ROOT/.last-stderr"; then
+  pass "T12b — symmetry self-check reported the failure (not a silent abort)"
+else
+  fail "T12b — expected SYMMETRY-CHECK FAILED in stderr, got: $(tail -5 "$FIXTURE_ROOT/.last-stderr")"
+fi
+assert_real_live_unchanged "T12b"
+
+# --- (c) control: WITHOUT the fake mv, the identical fixture must still
+#     succeed normally.
+new_fixture "t12c-control-real-mv" "$BASE_FIXTURE"
+EXIT_T12C=0
+run_cold_evict || EXIT_T12C=$?
+if [ "$EXIT_T12C" -eq 0 ]; then
+  pass "T12c — control (real mv, same fixture): exits 0 normally"
+else
+  fail "T12c — control expected exit 0, got $EXIT_T12C (fixture itself broken, not the fault injection) — $(tail -5 "$FIXTURE_ROOT/.last-stderr")"
+fi
+assert_real_live_unchanged "T12c"
+
+# =============================================================================
 # Summary
 # =============================================================================
 TOTAL=$((PASS+FAIL))
