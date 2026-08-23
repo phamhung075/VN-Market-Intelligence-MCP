@@ -118,3 +118,52 @@ VERDICT: `DONE_VERIFIED`. Appended `[QA] Review Record (direct-commit verify)` t
 - treat as OOM/BCTC-class (extra gates) — neither applies (no memory/crash/report_id in scope).
 **why-decision:** e315472b7 is a real ancestor-of-main `git commit --amend` of 777ec912f (reflog: `main@{15:58:08+0200}: commit (amend)`), all 3 claimed files present in its stat, all tests green re-run live (own suite 90/90, 3 siblings 34/34+53/53+75/75), mock-guard PASS, no DDD/secret hits, docs/WORK.md entry present with Task:/AC: trailers, ANCHOR-2/3/4 scope-correction claim independently confirmed on the live board (next_agent=agent-father, status=TODO).
 **why-change:** no change from plan; the stale-commit-hash finding was unplanned (surfaced only by literally running the ancestor check rather than trusting the row's own field).
+
+### STEP qa-S168 · qa · 2026-08-23T14:38Z
+**task-id:** FU-RAG-DEPLOY-MEMORY
+**what-done:** Re-assessed at the matured ≥24h floor. D1/D2/D4 PASS on live evidence; D3/D5 NOT SATISFIED and NOT reconstructible. HELD at `qa[]` (no lane move), root cause fixed by shipping `scripts/durability-mem-sample.sh` and opening a real instrumented window.
+**what-considered:**
+- flip DONE_VERIFIED because the wall clock matured and the downstream `RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE` chain is blocked on it — refused; the AC is D1-D5, not "24h elapsed", and this family has three recorded false certifications.
+- route `vc-changes` to force movement — refused; zero evidence of a code/config defect (`4df192e05` verified, 1g→2g diff intact), so CHANGES_REQUESTED would be a fabricated finding.
+- hold again with "recheck after N hours" (the prior three cycles' disposition) — rejected as *the* recurring defect: the blocker was never patience, it was that nobody was sampling, so a fourth deferral guarantees a fourth identical note.
+- fit D3 on the six existing ad-hoc point reads — refused after computing it: they are sawtooth phase samples (73.03%→54.10% in 17 min), and a controlled 26-sample/13.1-min series fits to +0.129 pp/min, which would "FAIL" D3 on pure short-window noise. Both certifying and rejecting on that number would be wrong.
+**why-decision:** D1 window 2026-08-22T12:40:04Z→14:21Z = 25h41m, zero kernel OOM in a dmesg buffer spanning 2026-08-20T11:53:13Z→2026-08-23T14:20:33Z, negative proved non-vacuous (901 `docker0` hits, same buffer) and VM clock confirmed UTC. D2 identity unbroken (`16c59b5e929f`, StartedAt `2026-08-15T10:16:22.548533876Z`, RestartCount 0). Cap read LIVE = 2147483648, not from the thrice-stale AC prose. D4 clean (only in-window compose commit `3db7a8dc8` touches pdf-extractor env). D3/D5 impossible: rag-service logs 0 memory lines in 10630 since window open, no metrics endpoint, no sampler, `docker stats` has no history. Parked the measured values under `qa_durability_probe_20260823T1437Z` — deliberately NOT the six canonical D5 field names — so no later reader mistakes a partial result for a satisfied D5.
+**why-change:** changed the *class* of disposition from "too early" to "structurally unmeasurable, instrumentation now installed"; new window open 14:36:47Z, earliest legit close 2026-08-24T14:37Z.
+
+### STEP qa-S169 · qa · 2026-08-23T14:41Z
+**task-id:** FU-RAG-DEPLOY-MEMORY
+**what-done:** Found and proved by execution that this row is exempt from the only automated DONE_VERIFIED evidence gate. Escalated on-row; did not patch (apps/mcp-server is out of qa's zone).
+**what-considered:**
+- report the code reading alone (`checkVerificationGate` guards on `!RC_VERIF_GRANDFATHERED_IDS.has(id)`) — insufficient; my own last cycle's retraction came from reasoning about a failure mode instead of firing it.
+- run the repro on the live file — refused; used `ORCH_APPLY_LIVE_FILE_OVERRIDE` against a fixture and unset it after, verified UNSET.
+**why-decision:** paired repro with a control. Identical `del(.verification)` + `status:"DONE_VERIFIED"` transform: `FU-RAG-DEPLOY-MEMORY` (member, orchStateSchema.ts:569) → "Stage 0 + Stage 1 PASS", write applied; `FIX-MARKETWATCHER-EODMD-…` (non-member) → "VALIDATION FAILED (1 issue) … without verification.raw_probe" → "ABORTED: validator exit 2". So the exemption, not the evidence, decides — on an OOM-class P0 with 3 prior false greens in-family and a downstream row pressuring it toward DONE_VERIFIED. Bar §4 already documents this as a known open gap with process-control-only mitigation; this is the live proof it is exploitable on the worst possible member.
+**why-change:** unplanned finding, surfaced only because the OOM gate told me to check the grandfather list.
+
+### STEP qa-S170 · qa · 2026-08-23T14:20Z
+**task-id:** FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION
+**what-done:** `vc-approved`/DONE_VERIFIED (adapted source lane: row sat `review[]`/REVIEW, so the shipped actuator's `status=="QA"` guard does not match). Also flipped `FACTORY-APP-split-assembleBriefing` first, which completes this row's own verification_gate end-to-end.
+**what-considered:**
+- accept the `review_note`'s AC coverage — refused for AC-5, which the note simply omits; ran `devteam-deps-satisfied-sole-failure-report.sh` myself.
+- treat the note's "KNOWN BLOCKING CROSS-DEPENDENCY" (Component 3 / raw_probe) as a blocker — checked: `cf281daed` shipped it, and I exercised it live this cycle; also brief §6 never assigned Component 3 to this row.
+- count `DONE_VERIFIED` occurrences in the two `.jq` files (3 and 2) as AC-3 violations — read every line instead: all five are comments, zero writes.
+**why-decision:** 4/4 commits ancestor-of-main; harness 42/42 exit 0; tsc 0; AC-2 and AC-4 demonstrated on the *real* board (`drain_source_lane=done` on FACTORY-APP…, `secondary_dispatch_target=po` with status still DONE on FIX-PO-TRIAGE-SIGNALS-TABLE…); AC-5 re-measured with named reasons for every remaining member (2 depend on cold-evicted rows — brief §0/§5 out of scope; 2 depend on `TASK_RUNIDLE-1-AUDIT`, hot in `done[]` with next_agent=pm, i.e. inside SECONDARY-drain's eligible set awaiting 1-row/tick throughput); sole-deps_satisfied starved count moved 59→58 and `FACTORY-APP-split-assembleEveningSummary` left the starved set after the demonstration flip.
+**why-change:** ordering change from plan — verified the child (`FACTORY-APP-split-assembleBriefing`) *before* the parent, because the parent's verification_gate literally requires "a done[] row transitioning to DONE_VERIFIED through the new producer with real command output".
+
+### STEP qa-S171 · qa · 2026-08-23T14:34Z
+**task-id:** FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION
+**what-done:** Independent post-hoc re-verification of a row a peer had already flipped. CONFIRMED. Then RETRACTED my own governance claim about it ~10 min later.
+**what-considered:**
+- accept the peer's `raw_probe` (suite 53/53) — insufficient: that suite stubs `CURL_BIN`, so it cannot prove the escalation is reachable in production. Ran a real-environment no-network smoke test instead.
+- read the row's fields and conclude "self-certified, gate bypassed" — I DID this and it was WRONG (see why-change).
+**why-decision:** escalation proved reachable end-to-end: real `.env`, no `FIRER_ALERT_CHAT_ID` override, only `SLOT_MATCHER_CMD` forced to exit 7, `CURL_BIN` a capture stub → zero `ESCALATION-BLOCKED`, `_bug_chat_id()` resolved non-empty, well-formed sendMessage POST constructed. Scope verified by grep, not assumption: the script reads `last_fired` ZERO times, so it cannot false-escalate against the 9 stale slots — and `market-watcher`/`alert-commander` committed today against 8-9d stale stamps, confirming `last_fired` tracks the cowork path, not delivery.
+**why-change:** **RETRACTED** the "self-certification that never passed the qa gate" claim. I inferred it from `updated_by=developer` + absent `qa_verified_by` without checking the decision journal — where peer STEP qa-S162 records a full verify. Corrected on-row to what the evidence supports: a provenance-stamping gap, not a gate bypass. Also corrected point (4) of the qa-S169 escalation, which had cited the same two rows. **Absence of a field is not evidence of absence of the work.**
+
+### STEP qa-S172 · qa · 2026-08-23T14:45Z
+**task-id:** SYSREMAKE-P2-T9-QA-GATE
+**what-done:** Triaged all five `ready[]` rows carrying `next_agent=qa`; found every one non-executable; recorded the measured blocker on each and routed to `po`.
+**what-considered:**
+- run the executable fraction of each (e.g. T9's orch-validate/orch-apply legs without T3/T5/T6) and report a partial green — refused; a partial gate reported as a gate is the exact false-green shape these rows exist to prevent.
+- run `QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL` assertion 2 (force Layer B dead) — refused on safety: a live peer session was running dev-team plus agent-father/agents-architect/ops/developer in parallel; CronDelete-ing the master would have killed them. Recorded assertion 1 as PASS (plist loaded, last exit 0) so it is not redone.
+- change lane to BLOCKED myself — declined; re-declaring dependencies and re-laning is po/pm's call, so I routed rather than re-laned.
+**why-decision:** measured each: T9 needs T3/T5/T6, all `ready`/READY with `files=[]`; FANOUT-T8 needs T1/T2/T4, all `ready`/TODO; SESSION-DOWN names two gates (`OPS-COWORK-GUARANTEED-SLOT-INSTALL`, `FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED`) absent from every hot lane; STALE-SLOT-DISPOSITION-TABLE's 4 declared deps are all TODO *and* its named "frozen 2026-08-23T09:00Z snapshot" does not exist on disk; SIGINBOX-LIVE-FIRST-RUN-GATE's dep is READY, unbuilt. **Systemic finding: 4 of the 5 carry `depends_on: []` while naming their prerequisites in prose only** — so the gating is invisible to `deps_satisfied()` and the rows present as dispatchable to qa. Same class as the pickers-blind-to-prose defect.
+**why-change:** no change from plan; the `depends_on: []` pattern was an unplanned finding from checking all five instead of starting the first one.
