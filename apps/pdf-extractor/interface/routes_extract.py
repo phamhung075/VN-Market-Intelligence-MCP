@@ -3,19 +3,13 @@ Interface — POST /extract route.
 
 FACTORY-PDF-split-handlers: extracted from interface/handlers.py.
 
-FIX-PDFX-LEGACY-EXTRACT-MEMORY-BURST-HEADROOM (2026-08-23): this synchronous
-handler runs pdfplumber + pdf2image + pytesseract in-process on every call
-(unlike /pek-extract, which is a fire-and-forget BackgroundTask). The
-2026-08-15 FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM fix proved this
-class of native/glibc-arena allocation is invisible to gc.collect() and
-recoverable via malloc_trim(0), but wired the trim call only into the PEK
-background-task path (interface/pek_run_helper._run_pek_extract). Root cause
-of the 2026-08-23 silent memcg-OOM restart loop (confirmed via kernel dmesg:
-memcg OOM kill of the single long-lived main python3 process at the
-container's 2.5GiB limit, twice, ~31 min apart, both during windows where
-/extract traffic dominated and /pek-extract volume was ~0): this path never
-returned its native allocations to the OS. Reusing the same
-_malloc_trim_or_noop() helper here closes that gap.
+FIX-PDFX-LEGACY-EXTRACT-MEMORY-BURST-HEADROOM (2026-08-23): synchronous
+pdfplumber/pdf2image/pytesseract work here leaks native/glibc-arena memory
+(gc.collect() can't reclaim it — see FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-
+HEADROOM, 2026-08-15) that /pek-extract already trims but this path never
+did — root cause of the 2026-08-23 memcg-OOM restart loop (confirmed via
+kernel dmesg, not docker inspect). Reuses pek_run_helper's malloc_trim(0)
+helper in the finally block below.
 """
 
 import asyncio
@@ -112,12 +106,8 @@ def register_extract_routes(
                 detail={"status": "failed", "error": str(exc)},
             ) from exc
         finally:
-            # FIX-PDFX-LEGACY-EXTRACT-MEMORY-BURST-HEADROOM: return freed
-            # native-allocator memory (pdfplumber/pdf2image/PIL/tesseract
-            # buffers) to the OS on every /extract call, success or failure —
-            # this is the request/response-cycle equivalent of /pek-extract's
-            # own finally-block trim (interface/pek_run_helper._run_pek_extract).
-            # A trim failure must never mask the real response/exception.
+            # FIX-PDFX-LEGACY-EXTRACT-MEMORY-BURST-HEADROOM: trim native
+            # allocations on every call, success or failure (module docstring).
             try:
                 await asyncio.to_thread(_malloc_trim_or_noop)
             except Exception:
