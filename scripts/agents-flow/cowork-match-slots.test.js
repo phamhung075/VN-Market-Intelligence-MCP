@@ -639,6 +639,139 @@ console.log('\nTC-36: CLI stdout JSON contract gains pressure_mode/downgraded/su
 }
 
 // ---------------------------------------------------------------------------
+// TC-28..TC-34: window-anchor field on live MATCHES
+// FIX-CHEF-MARKER-KEY-ANCHOR-1 (P0), parent FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR.
+// Architecture brief: docs/architecture-briefs/2026-08-06-cowork-marker-lifecycle-anchor-
+// and-release.md §2 Component A, bullet 1.
+//
+// ROOT CAUSE UNDER TEST: every guaranteed-slot flow derives its published-marker dedup key
+// from a `date` call the EXECUTING AGENT makes at whatever instant it happens to run. Two
+// peers executing the SAME scheduled window therefore derive DIFFERENT keys, and one late
+// retry re-targets an entirely different day. Confirmed live twice: 2026-07-22 chef-evening
+// double-published on keys :2026-07-22 and :2026-07-23 derived from one instant; 2026-08-05
+// chef-evening was retried after a 10h42m host sleep and keyed :2026-08-06, permanently
+// missing the 08-05 dish and mislabelling a degraded one. `catchup_raw` entries already carry
+// the correct anchor (`scheduled_utc_time`), live `slots[]` entries did not — so the live
+// path and the catch-up path could never agree on a key. This exposes the SAME field, from
+// the SAME derivation, on the live path.
+// ---------------------------------------------------------------------------
+const { annotateScheduledUtc, field: mField, dowMatch: mDowMatch } =
+  require(path.join(process.cwd(), 'scripts/agents-flow/cowork-match-slots.js'));
+const { mostRecentCronFireBefore } =
+  require(path.join(process.cwd(), 'scripts/agents-flow/cowork-catchup-predicate.js'));
+
+console.log('\nTC-28: annotateScheduledUtc is exported as a pure, injectable helper');
+{
+  assert('annotateScheduledUtc exported', typeof annotateScheduledUtc, 'function');
+}
+
+console.log('\nTC-29: the nominal fire instant is the CRON window, not the run instant');
+{
+  // The real 2026-08-05 chef-evening incident: cron 45 19 * * *, run started 19:55:41Z.
+  const runInstant = Date.parse('2026-08-05T19:55:41Z') / 1000;
+  const out = annotateScheduledUtc(
+    [{ slot_id: 'chef-evening', cron: '45 19 * * *', agent: 'unified-agent' }], runInstant, {});
+  assert('scheduled_utc_time is the 19:45Z window, not the 19:55Z run instant',
+    out[0].scheduled_utc_time, '2026-08-05T19:45:00.000Z');
+  assert('pre-existing fields survive untouched', out[0].slot_id, 'chef-evening');
+  assert('pre-existing fields survive untouched (agent)', out[0].agent, 'unified-agent');
+}
+
+console.log('\nTC-30: KEY AGREEMENT — two peers in the SAME window derive the SAME anchor');
+{
+  // The exact 2026-07-22 double-publish pair: 19:55:41Z and 20:01:30Z straddle VN midnight
+  // and produced keys :2026-07-22 vs :2026-07-23 from a wall-clock read. Anchored on the
+  // window they must be byte-identical.
+  const slot = [{ slot_id: 'chef-evening', cron: '45 19 * * *' }];
+  const peerA = annotateScheduledUtc(slot, Date.parse('2026-07-22T19:55:41Z') / 1000, {});
+  const peerB = annotateScheduledUtc(slot, Date.parse('2026-07-22T20:01:30Z') / 1000, {});
+  assert('two peers, one window, byte-identical anchor',
+    peerA[0].scheduled_utc_time === peerB[0].scheduled_utc_time, true);
+  assert('and the anchor is the scheduled window itself',
+    peerA[0].scheduled_utc_time, '2026-07-22T19:45:00.000Z');
+
+  // A retry arriving 10h42m late after host sleep (the 2026-08-06T06:34Z MAGICWAKE) must
+  // still anchor on the MISSED window, never on the day it woke up.
+  const lateRetry = annotateScheduledUtc(
+    [{ slot_id: 'chef-evening', cron: '45 19 * * *' }],
+    Date.parse('2026-08-06T06:37:39Z') / 1000, {});
+  assert('a post-sleep retry anchors on the missed window, not the wake day',
+    lateRetry[0].scheduled_utc_time, '2026-08-05T19:45:00.000Z');
+}
+
+console.log('\nTC-31: live path and catch-up path share ONE derivation, not two copies');
+{
+  const nowUnix = Date.parse('2026-08-05T19:55:41Z') / 1000;
+  const cron = '45 19 * * *';
+  const viaMatcher = annotateScheduledUtc([{ slot_id: 'chef-evening', cron }], nowUnix, {})[0].scheduled_utc_time;
+  const viaPredicate = new Date(
+    mostRecentCronFireBefore(cron, nowUnix, { field: mField, dowMatch: mDowMatch }) * 1000).toISOString();
+  assert('matcher anchor === cowork-catchup-predicate.mostRecentCronFireBefore anchor',
+    viaMatcher, viaPredicate);
+}
+
+console.log('\nTC-32: unresolvable / malformed cron degrades to null, never throws');
+{
+  let threw = false;
+  let out = [];
+  try {
+    out = annotateScheduledUtc([
+      { slot_id: 'malformed', cron: 'not a cron' },
+      { slot_id: 'missing-cron' },
+      { slot_id: 'ok', cron: '45 19 * * *' }
+    ], Date.parse('2026-08-05T19:55:41Z') / 1000, {});
+  } catch (e) { threw = true; }
+  assert('no throw on malformed input', threw, false);
+  assert('malformed cron -> null anchor', out[0].scheduled_utc_time, null);
+  assert('absent cron -> null anchor', out[1].scheduled_utc_time, null);
+  assert('a good sibling in the same batch is still anchored', out[2].scheduled_utc_time, '2026-08-05T19:45:00.000Z');
+}
+
+console.log('\nTC-33: CLI stdout contract — every live slots[] entry carries the anchor');
+{
+  const h = makeCliHarness();
+  const sched = {
+    slots: [{
+      slot_id: 'cli-test-anchor-live', cron: '* * * * *', agent: 'test-agent',
+      flow_path: 'docs/agents/test/flow/main.md', trigger_prompt: 'run test  slot=cli-test-anchor-live',
+      guaranteed: true, enabled: true, last_fired: null
+    }]
+  };
+  fs.writeFileSync(path.join(h, 'docs/data/cowork-schedule.json'), JSON.stringify(sched));
+  const run = spawnSync('node', [path.join(h, 'scripts/agents-flow/cowork-match-slots.js')], { cwd: h, encoding: 'utf8' });
+  assert('CLI exits 0', run.status, 0);
+  const out = JSON.parse(run.stdout);
+  assert('the fixture slot is live-matched', out.slots.length >= 1, true);
+  assert('slots[0] carries scheduled_utc_time', typeof out.slots[0].scheduled_utc_time, 'string');
+  assert('anchor is ISO8601 Zulu',
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(out.slots[0].scheduled_utc_time), true);
+  assert('pre-existing per-slot fields still present (NFR-2 superset)', out.slots[0].slot_id, 'cli-test-anchor-live');
+  assert('trigger_prompt still present', typeof out.slots[0].trigger_prompt, 'string');
+  cleanup(h);
+}
+
+console.log('\nTC-34: CLI degrades gracefully when the predicate module is unavailable');
+{
+  const h = makeCliHarness();
+  fs.rmSync(path.join(h, 'scripts/agents-flow/cowork-catchup-predicate.js'), { force: true });
+  const sched = {
+    slots: [{
+      slot_id: 'cli-test-anchor-nopredicate', cron: '* * * * *', agent: 'test-agent',
+      flow_path: 'docs/agents/test/flow/main.md', trigger_prompt: 'run test',
+      guaranteed: true, enabled: true, last_fired: null
+    }]
+  };
+  fs.writeFileSync(path.join(h, 'docs/data/cowork-schedule.json'), JSON.stringify(sched));
+  const run = spawnSync('node', [path.join(h, 'scripts/agents-flow/cowork-match-slots.js')], { cwd: h, encoding: 'utf8' });
+  assert('CLI still exits 0 with the predicate module missing', run.status, 0);
+  const out = JSON.parse(run.stdout);
+  assert('slots[] still emitted', Array.isArray(out.slots), true);
+  assert('anchor degrades to null rather than crashing the tick',
+    out.slots.length > 0 ? out.slots[0].scheduled_utc_time : null, null);
+  cleanup(h);
+}
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 const total = passed + failed;

@@ -19412,6 +19412,10 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR"
       },
       {
+        "next_agent": "ops",
+        "updated_at": "2026-08-23T13:41:02Z",
+        "updated_by": "po",
+        "status_note": "PO DEPLOY-GATE 2026-08-23T13:41:01Z — DO NOT CLAIM AS QA YET. Code landed on main (2e66153fd) but apps/mcp-server/src is baked into the Docker image at build time; running image sha256:c8322d2 was built 2026-08-15T08:44Z and is 8 mcp-server/src commits behind. Live probe 2026-08-23T13:39Z: :3000/api/bctc-inspect AND :3001/dashboard/bctc-inspect both HTTP 200, 103876B, ZERO occurrences of id=quarter-filter — pre-change HTML. Working tree has 3. Chain: (1) ops rebuild single service `docker compose up -d --build mcp-server` (NEVER down&&up — kills peers; verify new image ID differs from c8322d2), (2) qa live dual-origin verify AC1-AC10 in a real browser, (3) then done_verified. AC10 is unfalsifiable until step 1 lands.",
         "id": "TASK-BCTC-INSPECT-UI-FILTERS",
         "type": "TASK",
         "title": "BCTC Inspector: add 2 client-side facet filters (quarter + ticker) on doc dropdown",
@@ -19420,20 +19424,16 @@
         "size": "M",
         "zone": "apps/mcp-server/",
         "owner": "dev-mcp-server",
-        "next_agent": "ops",
         "source": "decompose:FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
         "created_by": "pm",
         "created_at": "2026-08-23T13:06:15Z",
         "parent_id": "FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
-        "updated_at": "2026-08-23T13:41:02Z",
         "rebuild_required": true,
-        "status_note": "PO DEPLOY-GATE 2026-08-23T13:41:01Z — DO NOT CLAIM AS QA YET. Code landed on main (2e66153fd) but apps/mcp-server/src is baked into the Docker image at build time; running image sha256:c8322d2 was built 2026-08-15T08:44Z and is 8 mcp-server/src commits behind. Live probe 2026-08-23T13:39Z: :3000/api/bctc-inspect AND :3001/dashboard/bctc-inspect both HTTP 200, 103876B, ZERO occurrences of id=quarter-filter — pre-change HTML. Working tree has 3. Chain: (1) ops rebuild single service `docker compose up -d --build mcp-server` (NEVER down&&up — kills peers; verify new image ID differs from c8322d2), (2) qa live dual-origin verify AC1-AC10 in a real browser, (3) then done_verified. AC10 is unfalsifiable until step 1 lands.",
         "po_verify_chain": [
           "ops:rebuild-mcp-server",
           "qa:live-dual-origin-AC1-AC10",
           "close:done_verified"
-        ],
-        "updated_by": "po"
+        ]
       },
       {
         "id": "FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION",

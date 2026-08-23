@@ -139,6 +139,65 @@ function legacyCandidates(candidates, nowUnix) {
     }));
 }
 
+// annotateScheduledUtc: FIX-CHEF-MARKER-KEY-ANCHOR-1, architecture brief
+// docs/architecture-briefs/2026-08-06-cowork-marker-lifecycle-anchor-and-release.md §2
+// Component A bullet 1. Decorates each live-matched slot with `scheduled_utc_time` — the
+// cron's own NOMINAL fire instant (ISO8601 Zulu), timezone-free.
+//
+// WHY THIS FIELD EXISTS. Every guaranteed-slot flow derives its published-marker dedup key
+// from a `date` call made by the EXECUTING AGENT at whatever instant it happens to run.
+// Two peers executing the SAME scheduled window therefore derive DIFFERENT keys, and a
+// retry arriving hours late re-targets an entirely different day. Both failure modes are
+// confirmed live: 2026-07-22 chef-evening double-published on keys :2026-07-22 and
+// :2026-07-23 derived from ONE instant straddling VN midnight; 2026-08-05 chef-evening was
+// retried after a 10h42m macOS host sleep and keyed :2026-08-06, permanently missing the
+// 08-05 dish and mislabelling a degraded one as "evening" at 13:37 VN. A mutex whose key
+// depends on when the reader happens to look is not a mutex.
+//
+// ONE DERIVATION, NOT TWO. `catchup_raw` entries have carried the correct anchor since
+// TASK-COWORK-CATCHUP-2 — this reuses the SAME exported
+// `cowork-catchup-predicate.mostRecentCronFireBefore`, fed the SAME `field`/`dowMatch`
+// helpers, so the live path and the catch-up path cannot drift apart. Re-implementing the
+// reverse-cron walk here would recreate exactly the two-derivations-one-window bug class
+// this field exists to close.
+//
+// SHAPE: pure and injectable — `deps.mostRecentCronFireBefore` may be supplied by a caller
+// (tests); otherwise the predicate module is required lazily, mirroring the conditional
+// require the CLI already uses for `catchup_raw`. Returns NEW objects (never mutates the
+// input) and is a pure superset of the pre-existing per-slot shape.
+//
+// NULL CASES (degrade, never throw — a broken anchor must not kill the whole tick):
+//   - predicate module unavailable  -> every entry gets scheduled_utc_time: null
+//   - cron absent / malformed / no fire within the predicate's 8-day bounded lookback
+//                                   -> that entry gets null, siblings are still anchored
+//
+// CAVEAT for consumers: the value is the most recent CRON-nominal instant. For an adaptive
+// cadence-driven fire (`due_reason: "cadence"`) that instant is not the cadence trigger, so
+// only cron-due slots — which is every `guaranteed:true` published-marker slot — should key
+// a mutex off it. exported for testing.
+function annotateScheduledUtc(slots, nowUnix, deps) {
+  const d = deps || {};
+  let fireBefore = d.mostRecentCronFireBefore;
+  if (typeof fireBefore !== 'function') {
+    try {
+      fireBefore = require('./cowork-catchup-predicate.js').mostRecentCronFireBefore;
+    } catch (e) {
+      console.warn('[cowork-match-slots] WARN: cowork-catchup-predicate.js unavailable, scheduled_utc_time=null:', e.message);
+      return (slots || []).map(sl => Object.assign({}, sl, { scheduled_utc_time: null }));
+    }
+  }
+  return (slots || []).map(sl => {
+    let iso = null;
+    try {
+      const unix = fireBefore(sl.cron, nowUnix, { field, dowMatch });
+      if (unix != null && !isNaN(unix)) iso = new Date(unix * 1000).toISOString();
+    } catch (e) {
+      iso = null; // malformed cron / bad deps — conservative, sibling slots unaffected
+    }
+    return Object.assign({}, sl, { scheduled_utc_time: iso });
+  });
+}
+
 // applyFreshnessDowngrade: Step 4.5 (DWF-PHASE1 FR-P1-5, moved in-script UC-CDC-P7 Phase 2a).
 // Silently drops non-guaranteed gatherer slots when nothing has changed AND the market is
 // closed: last_regime=="unknown" AND signal_backlog==0 AND calendar_status in
@@ -433,6 +492,17 @@ if (require.main === module) {
   const meta     = {};
   const hits     = matchSlots(sched, undefined, { mode, pressureState, policyObj, meta });
   const driftMin = actualM - M; // always 0–14; negative drift impossible given floor()
+  const nowUnix  = now.getTime() / 1000;
+
+  // FIX-CHEF-MARKER-KEY-ANCHOR-1: decorate live matches with the cron's NOMINAL fire instant
+  // so a downstream published-marker key is anchored on the WINDOW, never on the instant the
+  // executing agent happens to read the clock. Same field name and same derivation as
+  // catchup_raw below — one shared contract for the live and catch-up paths. Applied here in
+  // the CLI (not inside matchSlots()) for the same reason catchup_raw is: matchSlots()'s test
+  // seam is a `{actualM,H,DOM,MON,DOW}` ctx with no absolute instant, and every real consumer
+  // (spawn-fanout.md, cowork-tick-preflight.sh, cowork-guaranteed-slot-firer.sh) reads this
+  // CLI's stdout. See annotateScheduledUtc()'s own header for the incident record.
+  const hitsAnchored = annotateScheduledUtc(hits, nowUnix, {});
 
   // catchup_raw (FR-9a, TASK-COWORK-CATCHUP-2): guaranteed-slot catch-up candidates,
   // additive to the CLI JSON stdout contract ONLY — matchSlots() itself (the exported
@@ -445,7 +515,6 @@ if (require.main === module) {
   let catchupRaw = [];
   try {
     const catchupPredicate = require('./cowork-catchup-predicate.js');
-    const nowUnix = now.getTime() / 1000;
     // Live-matched slots this tick (hits) are excluded so an on-time fire is never
     // double-counted as its own catch-up candidate (cowork-catchup-predicate.js JSDoc).
     const excludeSlotIds = hits.map(sl => sl.slot_id);
@@ -462,7 +531,7 @@ if (require.main === module) {
   // undefined) so this is a pure superset of the pre-existing {slots, drift_min, catchup_raw}
   // contract (NFR-2).
   process.stdout.write(JSON.stringify(Object.assign(
-    { slots: hits, drift_min: driftMin, catchup_raw: catchupRaw },
+    { slots: hitsAnchored, drift_min: driftMin, catchup_raw: catchupRaw },
     {
       pressure_mode:           meta.pressure_mode || 'legacy',
       downgraded:              meta.downgraded || [],
@@ -475,4 +544,4 @@ if (require.main === module) {
   )));
 }
 
-module.exports = { cronMatches, matchSlots, field, dowMatch, snapToCronBoundary, isSuppressedByBoundaryDedup, extractPromptFlowPath, slotEntryPathsAgree, applyFreshnessDowngrade };
+module.exports = { cronMatches, matchSlots, field, dowMatch, snapToCronBoundary, isSuppressedByBoundaryDedup, extractPromptFlowPath, slotEntryPathsAgree, applyFreshnessDowngrade, annotateScheduledUtc };
