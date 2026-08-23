@@ -1990,3 +1990,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-32 · launchd docker-events acknowledged-degraded (dedup-suppressed)
+**Severity:** WARN | **Date:** 2026-08-23 | **Status:** OPEN
+**Location:** com.vn-market.docker-events
+**Details:** exit-status:143, docker events service not running
+**Impact:** Container event monitoring may be degraded
+**Root cause:** Known issue, tracked at FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP
+**Zone owner:** ops
+**Last reported:** 2026-08-23T21:38:25Z (signal sys-20260823T213728-21ce, system-auditor -> po, dedup_key=launchd_agent_stale_ack:docker-events:A-32)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
