@@ -87,12 +87,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "UC-SDF-P6",
-    "next_agent": "ba",
-    "next_action": "Design-Router Sweep claim of UC-SDF-P6 — spawn ba DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only (if either was set) preserved — do not clear.",
-    "updated_at": "2026-08-23T19:56:29Z",
-    "updated_by": "dev-team (design-router sweep)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "ba completed UC-SDF-P6 spec (RESCOPE+SPLIT recommended, 4 PO blockers Q1-Q4) -> in_progress[]->backlog[]/next_agent=po; .head reset idle in same write.",
+    "updated_at": "2026-08-23T20:05:37Z",
+    "updated_by": "ba"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13971,6 +13971,39 @@
         "dedup_key": "data-coverage-gap:get_vn_liquidity_state|missing-as-zero",
         "origin_signal_id": "a9172c72547fe9ebd86aa67044cef90367cfc12fcfc7595e626b5220347a0b72",
         "status_note": "get_vn_liquidity_state returns top-level status=\"ok\" while publishing an affirmatively FALSE zero for the SJC gold gap and four null/zero sub-blocks. Consumers cannot distinguish \"no premium\" from \"no data\" - the tool asserts a measured value where it has none. Reported by router 2026-08-23T16:11:33Z (data-coverage-gap envelope a9172c72), observed 2026-08-23T16:10:05Z via mcp__gateway__call_tool server=vn-market.\n\nEVIDENCE AS RETURNED BY THE LIVE TOOL: top_level_status=\"ok\"; sjc_price_mn_vnd=0, sjc_gap_mn_vnd=0 with note \"SJC price absent from DB (no SJC crawler row); gap = 0\" - the tool's OWN note admits the price is MISSING while the numeric field publishes a COMPUTED ZERO PREMIUM; fx_coupling usd_vnd_buy=0, usd_vnd_sell=0, cny_vnd_rate zeroed.\n\nWHY THIS IS P1 AND NOT COSMETIC: a zero gold premium is a materially different market claim from an absent one, and downstream consumers (chef dish composition, digest-predict, alert thresholds) read the numeric field, not the prose note. This is the same defect class the fleet has already been burned by twice - feedback_usdvnd_frozen_value_labelled_tier1_not_estimate (a stale value published under a tier-1 freshness label) and feedback_nonzero_values_need_plausibility_check. The standing rule is that a missing input must surface as null/unavailable with a degraded status, never as a computed 0 under status=ok.\n\nAC-1 get_vn_liquidity_state MUST NOT return status=\"ok\" when any constituent input is absent; emit a degraded/partial status naming the missing input(s).\nAC-2 Missing SJC price MUST yield sjc_price_mn_vnd=null and sjc_gap_mn_vnd=null, never 0. Same for usd_vnd_buy/usd_vnd_sell/cny_vnd_rate.\nAC-3 Live re-probe after the fix: call get_vn_liquidity_state through the gateway wrapper with the SJC crawler row still absent and confirm status!=\"ok\" and the gold/fx fields are null rather than 0. Record the raw returned payload.\nAC-4 Grep the tool's siblings in the same module for the identical missing-as-zero pattern and list them; fix in the same pass if in-zone, else file follow-ups.\n\nDEDUP CHECKED (po 2026-08-23T18:05Z, NON-TERMINAL LANES backlog+ready+in_progress+review+qa): no existing row covers get_vn_liquidity_state's missing-as-zero contract. Nearest neighbours are DIFFERENT defects and must not absorb this: FIX-USDVND-FROZEN-26110 (a FROZEN non-zero value, not a missing-as-zero), FIX-MACRO-SNAPSHOT-REGIME-PARSE-DRIFT (output shape drift on a different tool), FIX-SBVOMO-LIQUIDITY-CRON-ERROR-STRING-CONFLATES-TIMEOUT-AND-UNREACHABLE (error-string conflation in the cron, upstream of this). AC-4 above is where those overlap gets reconciled."
+      },
+      {
+        "id": "UC-SDF-P6",
+        "type": "FIX",
+        "title": "Collapse the scheduler-count triplication: generate cron-registry.json (tool-registry precedent) + repoint consumers",
+        "status": "BLOCKED",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P6",
+        "note": "SCOPE=verifier Rescope note. New scripts/gen-cron-registry.ts enumerating jobs from schedulerJobTable.ts + summaryJobs.ts cross-checked vs CRONS keys (NOT cronConfig scheduleCron sites — none exist); writes cron-registry.json#jobs+schedulerFileCount atomically + surgical-patches system-map crons (never full-doc overwrite). Re-baseline the 66-entry lists to code-derived count. Update pipeline-watchdog test to structural assert; keep schedulerFileCount for dailyDashboardJob; fix gen-project-stats stale probe; auditor verifies generated-vs-code.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "po",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "po_scope_expansion_20260722": "SCOPE EXPANDED by PO cron-audit triage 2026-07-22. The generated cron-registry.json must ALSO cover the session-scoped CronCreate plane, not only the mcp-server scheduler + launchd planes. Rationale: crons currently live inside 5 separate CLI sessions (dev-team, cowork, system-audit, claude-heler, workflows-fix); CronList in one session cannot see another's, there is NO on-disk persistence under ~/.claude (verified 2026-07-22 — no crons dir; ~/.claude/jobs/ holds two stale June background-job dirs, unrelated), and when a session dies its whole loop vanishes with zero trace. This row is now PART 1 of the three-part ruling recorded in ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG.po_design_ruling, and it GATES both that row (part 2, the watchdog consumes this registry) and ARCH-CRON-THREE-TIME-BASES-UNIFY (which needs each job's declared time base recorded here). The registry is an INVENTORY so that absence becomes detectable — it is explicitly NOT a new scheduler and must not grow into one. Registry entries should also record the declared time base per job (UTC / Asia/Ho_Chi_Minh / machine-local France), since three coexist today.",
+        "updated_at": "2026-08-23T20:05:37Z",
+        "promoted_at": "2026-08-23T13:56:39Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "ba",
+        "claimed_at": "2026-08-23T19:56:29Z",
+        "claimed_by": "dev-team (design-router sweep)",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/UC-SDF-P6-BA-spec.md",
+        "ba_completed_at": "2026-08-23T20:05:36Z",
+        "updated_by": "ba",
+        "status_note": "BA RESCOPE+SPLIT recommended 2026-08-23. cron-registry.json already exists (self-demoted _ssot to system-map.json) but has 3 live test consumers vs system-map crons[] 0 test consumers — contradicts its own demotion (Q1, blocks FR-5/FR-6). 88 (project-stats.json call-sites, live re-derived) vs 70 (cron-registry/system-map distinct-job-names) is a genuine counting-unit divergence, not drift (Q2, blocks FR-1). cron-registry.json vs system-map.json both len=70 today but DIFFERENT CONTENT (6 name-level divergences + 1 stray null entry) — not interchangeable, any repoint-as-rename plan is wrong. Root cause of internal 69-vs-70 self-contradiction found: 1190-pipeline-watchdog.test.ts:301 hardcodes ==69 (FR-2). gen-project-stats stale-probe line item already shipped (c9e7ed717) — dropped from scope. Recommend PO split po_scope_expansion_20260722 (session-CronCreate liveness plane) into its own row (Q3) — structurally different open-design problem, sibling to 2 still-BACKLOG parts of the same 3-part ruling; do not bundle into this mechanical M-fix. FR-7 (system-auditor doc fix) blocked — docs/agents/** is agent-father exclusive zone (Q4). Full spec + FR-1..FR-7 + edge cases: docs/handoffs/UC-SDF-P6-BA-spec.md"
       }
     ],
     "closed_sprints": [
@@ -21024,34 +21057,6 @@
         "claimed_at": "2026-08-23T15:57:35Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "blocked_reason": "SLS claim reverted, 2026-08-23T15:37Z tick: the claim was not gate-satisfied. SLS PRIMARY selects purely on promoted_by == \"dev-team (supervised-lane sweep)\" and re-validates no gate. This row was stamped 2026-08-08T04:51:52Z and carries plan_only=false, so effective_plan_only is FALSE and the row is outside SLS's supervised-AND-plan_only quarantine class. Per main.md Lane x Gate matrix, ready[] with sup=T po=F resolves to READY-XOR-SUP-OR-PLANONLY, i.e. PO's human-gated manual-dispatch sweep, NOT auto-dispatch. Not spawned. The lane-move back to ready[] was attempted and HARD-REJECTED by the row-prose-ceiling guard (live=0B, candidate=26552B): that is defect D3 in scripts/architect-20260823-orch-prose-ceiling-row-handoff.jq, 2nd live instance after UC-CCA-P3. Marked BLOCKED rather than IN_PROGRESS so wip_in_progress excludes it and the four WIP pickers stay unblocked. Unblock path: PO manual-dispatch sweep, or land the D3 fix then lane-move to ready[]."
-      },
-      {
-        "id": "UC-SDF-P6",
-        "type": "FIX",
-        "title": "Collapse the scheduler-count triplication: generate cron-registry.json (tool-registry precedent) + repoint consumers",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P6",
-        "note": "SCOPE=verifier Rescope note. New scripts/gen-cron-registry.ts enumerating jobs from schedulerJobTable.ts + summaryJobs.ts cross-checked vs CRONS keys (NOT cronConfig scheduleCron sites — none exist); writes cron-registry.json#jobs+schedulerFileCount atomically + surgical-patches system-map crons (never full-doc overwrite). Re-baseline the 66-entry lists to code-derived count. Update pipeline-watchdog test to structural assert; keep schedulerFileCount for dailyDashboardJob; fix gen-project-stats stale probe; auditor verifies generated-vs-code.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "ba",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "po_scope_expansion_20260722": "SCOPE EXPANDED by PO cron-audit triage 2026-07-22. The generated cron-registry.json must ALSO cover the session-scoped CronCreate plane, not only the mcp-server scheduler + launchd planes. Rationale: crons currently live inside 5 separate CLI sessions (dev-team, cowork, system-audit, claude-heler, workflows-fix); CronList in one session cannot see another's, there is NO on-disk persistence under ~/.claude (verified 2026-07-22 — no crons dir; ~/.claude/jobs/ holds two stale June background-job dirs, unrelated), and when a session dies its whole loop vanishes with zero trace. This row is now PART 1 of the three-part ruling recorded in ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG.po_design_ruling, and it GATES both that row (part 2, the watchdog consumes this registry) and ARCH-CRON-THREE-TIME-BASES-UNIFY (which needs each job's declared time base recorded here). The registry is an INVENTORY so that absence becomes detectable — it is explicitly NOT a new scheduler and must not grow into one. Registry entries should also record the declared time base per job (UTC / Asia/Ho_Chi_Minh / machine-local France), since three coexist today.",
-        "updated_at": "2026-08-23T19:56:29Z",
-        "promoted_at": "2026-08-23T13:56:39Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "ba",
-        "claimed_at": "2026-08-23T19:56:29Z",
-        "claimed_by": "dev-team (design-router sweep)"
       }
     ]
   },
