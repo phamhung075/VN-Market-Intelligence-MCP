@@ -18,9 +18,19 @@ description: >
 
 ## Why this skill exists
 
-The `cowork-team` master CronCreate dispatcher is **session-scoped** in Claude Code CLI. When the CLI session ends, the dispatcher evaporates. The 12 RemoteTriggers (sprint 1957a stopgap) provide persistence for the 12 guaranteed/hourly slots, but the `*/15` dispatcher covers sub-hourly market-hours slots (news-scout-market, market-watcher-market, alert-commander-market) and the general fan-out logic.
+The `cowork-team` master CronCreate dispatcher is **session-scoped** in Claude Code CLI. When the CLI session ends, the dispatcher evaporates. Invoking `/cron-cowork-team` at session start ensures it is live again within one cron tick (≤15 min).
 
-Invoking `/cron-cowork-team` at session start ensures the dispatcher is always live within one cron tick (≤15 min).
+**Durability layer inventory** (TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY, agent-father 2026-08-23; every figure re-measured on that date, not copied forward):
+
+| Layer | Mechanism | Scope | State |
+|---|---|---|---|
+| **A** | 12 cloud RemoteTriggers | was: 12 guaranteed/hourly slots | **RETIRED 2026-06-22.** Not paused — the mechanism itself is gone (`docs/data/cowork-schedule.json` `._notes.layer_a_deletion_gate`, STANDING `feedback_no_remote_trigger_all_local`). Live `trigger_status` tally across all 23 slots: **0 `active`**, 5 `superseded`, 5 `deleted`, 13 absent. |
+| **B** | this skill's `*/15 * * * *` CronCreate dispatcher | all 21 enabled slots | **Session-scoped.** Evaporates on CLI exit. |
+| **C** | launchd `com.vn-market.cowork-guaranteed-slot-firer`, `StartInterval=900` | the 8 `guaranteed:true` slots | **Loaded and working** (`launchctl list` shows it, last exit `0`). Session-independent but **awake-scoped**: a `StartInterval` job does not run while the host sleeps, and on wake macOS **coalesces the missed intervals into one fire — it does not replay them**. |
+
+**The consequence this inventory exists to stop being rediscovered:** during a host-sleep window Layers B and C are down **simultaneously**, and neither has catch-up. There is no layer that survives a sleeping host. Do not describe Layer C as "durable" — it is *awake*-durable, and Layer A cannot be cited as a fallback for anything.
+
+**`guaranteed` is NOT the durability discriminator.** Measured 2026-08-23: of 21 enabled slots, 12 had fired within 48h and 9 had not — **5/8 guaranteed fresh vs 7/13 non-guaranteed**, i.e. essentially the same rate. The load-bearing variable is whether the host was awake and/or a CLI session was up at the scheduled minute, not whether the slot carries `guaranteed:true`. A reader who infers "guaranteed slots are covered" from this skill will mis-diagnose the next outage — which is exactly what happened: the deleted RemoteTrigger sentence was quoted verbatim into a live P0 row's `status_note` as the explanation for an 8-hour miss.
 
 ---
 
@@ -197,7 +207,7 @@ CronDelete(id="<cron-id-from-CronList>")
 CronList
 ```
 
-**Warning:** deleting the master dispatcher silences all sub-hourly cowork slots (news-scout-market, market-watcher-market, alert-commander-market). The 12 RemoteTriggers continue to fire their hourly/guaranteed slots independently. Only delete if replacing with a new registration immediately.
+**Warning:** deleting the master dispatcher silences all sub-hourly cowork slots (news-scout-market, market-watcher-market, alert-commander-market) — and, unlike what this warning used to claim, there is no RemoteTrigger layer still firing the hourly/guaranteed ones (Layer A retired 2026-06-22, see § Why this skill exists). The only thing left is launchd Layer C, which covers **8 guaranteed slots only** and is awake-scoped. Only delete if replacing with a new registration immediately.
 
 ---
 
@@ -205,7 +215,7 @@ CronList
 
 - The dispatcher reads `docs/data/cowork-schedule.json` at each tick and fans out only to slots whose `next_fire_at ≤ now` (±2 min window via `scripts/agents-flow/cowork-match-slots.js`).
 - `durable: true` makes the cron persist across CLI process restarts within the same session. It does NOT survive session-end (CLI exit / restart). That is why this skill exists.
-- The 12 RemoteTriggers (registered in claude.ai, not CLI) are the session-independent backstop for guaranteed slots. They fire independently of this dispatcher.
+- The session-independent backstop is launchd **Layer C** (`com.vn-market.cowork-guaranteed-slot-firer`, `StartInterval=900`), covering the 8 `guaranteed:true` slots and **only while the host is awake** — missed intervals are coalesced on wake, not replayed. It is NOT the 12 RemoteTriggers: that layer was retired 2026-06-22 and 0 slots carry `trigger_status:"active"` (see § Why this skill exists for the full three-layer inventory and the measurements behind it).
 - Full silence-detection + recovery procedure: `docs/protocols/cowork-master-cron-runbook.md`.
 - **TOKEN-ECONOMY-TICK-PREFLIGHT WU-1 (2026-07-02) → superseded by WU-2 (2026-07-13, TE-T01):**
   WU-1 shipped the deterministic `scripts/agents-flow/cowork-tick-preflight.sh` script and wired
