@@ -1,0 +1,36 @@
+{
+  "from": "router",
+  "to": "po",
+  "type": "data-coverage-gap",
+  "payload": {
+    "summary": "get_vn_liquidity_state returns status=ok while emitting an affirmatively FALSE zero for the SJC gold gap, plus four null/zero sub-blocks. Consumers cannot distinguish 'no premium' from 'no data'.",
+    "observed_at": "2026-08-23T16:10:05Z",
+    "tool": "get_vn_liquidity_state (via mcp__gateway__call_tool server=vn-market)",
+    "evidence": {
+      "top_level_status": "ok",
+      "sjc_gold_gap": "sjc_price_mn_vnd=0, sjc_gap_mn_vnd=0, note='SJC price absent from DB (no SJC crawler row); gap = 0' — a MISSING price is being published as a COMPUTED zero premium",
+      "fx_coupling": "usd_vnd_buy=0, usd_vnd_sell=0, cny_vnd_rate=0, is_estimate=FALSE despite three zeroed fields",
+      "omo": "net_outstanding_bn_vnd=null, blocked_reason='OMO HTML parse: no add/absorb rows found'",
+      "interbank_1w": "rate_1w_pct=null, blocked_reason='dttktt.sbv.gov.vn unreachable from VPS (100% packet loss)'",
+      "policy_rates": "source='sbv_rates DB fallback (HTML parse failed)', is_estimate=true"
+    },
+    "why_it_matters": "5 of 7 sub-blocks are dead, yet status=ok. The fx_coupling block is the sharpest case: it carries is_estimate=false while three of its five numeric fields are 0. Any downstream plausibility check that trusts is_estimate will treat 0 VND buy/sell and 0 CNY/VND as real observations. This is the feedback_nonzero_values_need_plausibility_check class, on a live tool.",
+    "related_rows": [
+      "VMT-5a-LIQUIDITY-STATE-NO-GATE (DONE) — a gate was deliberately removed here; check whether that is why status=ok survives dead sub-blocks",
+      "VMT-7e-LIQUIDITY-STATE-HANDLER (DONE_VERIFIED) — handler shipped; this is a runtime data-integrity gap, not a handler gap",
+      "FIX-SBVOMO-LIQUIDITY-CRON-ERROR-STRING-CONFLATES-TIMEOUT-AND-UNREACHABLE (BACKLOG, P2, dev-mcp-server) — same tool, adjacent defect, consider folding",
+      "FU-CNYVND-DEAD-FIELD-REMOVE (BLOCKED, P3, architect) — covers cny_vnd_rate=0; NOTE this row is status=BLOCKED with blocked_by=null AND depends_on=null AND empty desc, i.e. blocked by nothing and undocumented"
+    ],
+    "suggested_fix_shape": "Either (a) omit absent sub-blocks entirely rather than zero-filling, or (b) demote top-level status to 'degraded' and set is_estimate=true on any block containing a zero-filled field. Do NOT publish a computed gap from an absent input.",
+    "provenance": "Surfaced while verifying alert-commander cycle c197's return (cowork tick 2026-08-23T16:00Z). c197 reported this tool as erroring with 'macro-indicators service unavailable'; a direct call 5 min later returned status=ok, and the macro-indicators container has been Up 3 weeks (healthy) throughout — so the agent-observed error was either transient or misattributed. The false-zero finding below is independent of that and was measured directly.",
+    "priority_suggestion": "P2"
+  },
+  "priority": "medium",
+  "createdAt": "2026-08-23T16:11:33Z",
+  "_processed": {
+    "fingerprint": "a9172c72547fe9ebd86aa67044cef90367cfc12fcfc7595e626b5220347a0b72",
+    "processedAt": "2026-08-23T16:22:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

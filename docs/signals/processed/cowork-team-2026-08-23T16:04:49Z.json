@@ -1,0 +1,58 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-23T16:04:49Z",
+    "matched_slots": [
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "weekend",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "alert-commander-critical": "cron"
+    },
+    "cadence_minutes": {
+      "alert-commander-critical": null
+    },
+    "last_fired_timestamp": "2026-08-23T16:04:33Z",
+    "last_fired_slots": [
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 0,
+    "note": "Step 4.7 wrote cycle-snapshot-16:02.json (wall clock) but emit_pressure_state looked up the nominal 16:00 tick — cycle_snapshot_promoted=false, 3rd live confirmation of the wall-clock-vs-nominal promotion defect. Step 5.3 off-flow detector DEFERRED (BGFAN-1, spawn in flight); prior last_fired 2026-08-23T12:05:09Z retained for de-stamp if the return scores >=2 markers."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-23T16:04:49Z",
+  "_processed": {
+    "fingerprint": "c784fdcc3047cdb316721eff4d85801193cfc4307ece92ca1871a2060879b7d0",
+    "processedAt": "2026-08-23T16:22:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
