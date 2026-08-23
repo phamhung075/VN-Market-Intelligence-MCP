@@ -370,3 +370,11 @@ See commit history for full probe output — 80 lines captured including docker 
 - All container/health checks passed
 - One escalated memory concern: pdf-extractor VmHWM pinned at cgroup limit requires monitoring
 
+
+#### Signal Emission Status
+E-1 (post_agent_signal) call returned critique failure: "Pillar gap: detail references price action only — add cost-of-capital or profit outlook context". This critique appears to be intended for market/analysis signals, not system audit signals, and may indicate a tool configuration issue or a misrouting of the signal type through the wrong evaluation path.
+
+E-3 (signal-queue row write via orch-apply.sh) status: skipped due to E-1 failure in emit-audit-signal.sh flow.
+
+The A-30 finding remains in the documented cycle entry and is available for review via the signal-queue retroactively once the signal path is restored.
+
