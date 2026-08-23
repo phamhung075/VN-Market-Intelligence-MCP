@@ -15385,6 +15385,79 @@
           }
         },
         "po_status_desync_ruling_20260823": "RULED by po 2026-08-23T10:17:06Z. THIS ROW WAS NEVER UNVERIFIED. It carries qa_verified_at=2026-07-28T20:35:33Z, qa_verified_by=qa, updated_by=qa, and a full '[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED' in review_note describing independent re-verification of all 4 commits on local main AND origin/main, a literal MD5 byte-identity diff for NFR-2, a self-run 43/43 test pass, an independently reproduced RED, and a live fallback-path exercise. Only the machine-readable `status` field was left at DONE. updated_at=2026-07-28T20:39:16Z is 3m43s AFTER qa_verified_at, so a later write did touch the row and still did not advance status — a partial application, not an interrupted one. IMPACT MEASURED, NOT INFERRED: deps_satisfied() (scripts/lib/devteam-eligibility.jq:278-281) requires every dep to string-equal 'DONE_VERIFIED'; plain DONE is explicitly insufficient. Running the real predicate against the live board this tick returned deps_satisfied=false for TASK-COWORK-CATCHUP-3/4/5 with depmap 'TASK-COWORK-CATCHUP-1=DONE_VERIFIED, TASK-COWORK-CATCHUP-2=DONE' — CATCHUP-2 was the SOLE unsatisfied dep on all three. 6/7/8/9 cascade behind 3/4/5, and 10 behind 9. Nine rows were dammed for 26 days by one field that disagreed with its own QA record. CATCHUP-1 was NOT missing — it resolves DONE_VERIFIED from cold archive 2026-07.json via archive_status_map(), so the cold-archive fallback is working correctly and is not implicated. Advancing status to DONE_VERIFIED ratifies QA's existing verdict; it does not manufacture a new one."
+      },
+      {
+        "id": "FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION",
+        "type": "FIX",
+        "size": "S",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "zone": "cross-service/",
+        "depends_on": [],
+        "title": "orch-backlog-stub.sh cold-merge crashes on the REAL backlog-detail.json (.items is an ARRAY, not an id-keyed object) - blocks the LANES=backlog,ready,review migration",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION",
+        "updated_at": "2026-08-23T11:28:48Z",
+        "claimed_at": "2026-08-23T11:25:00Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "status_note": "[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Verified commits b1aa63b7a,6f55a013e on main ancestry -- git show --stat confirms all 4 claimed files touched (scripts/orch-backlog-stub.sh, scripts/orch-backlog-stub.test.sh, docs/policies/dev-standards.md, docs/WORK.md). Independently re-ran: bash scripts/orch-backlog-stub.test.sh 35/35 pass (incl. T8 array-shaped cold-input, T9 po_goahead survival); shellcheck clean on both scripts; mock-guard.sh PASS (no apps/ src touched, bun test/tsc correctly N/A -- pure bash/jq); DDD/secret greps clean. Went beyond replaying status_note's AC-4 claim: re-ran the scratch rehearsal MYSELF against TODAY's live orch-state.json + backlog-detail.json (LANES=backlog,ready,review, byte-identical scratch copy) -- exit 0, Reconciliation PASS (606 hot stub ids / 910 cold detail items, 0 missing), confirms the fix still holds against the live file as it stands today, not just the 08-15 snapshot; live files confirmed untouched after (empty git diff). Spot-checked F-5 source fix: ^po_goahead prefix preserved through STUB_FIELDS strip. Not OOM-class (bash/jq array-shape crash fix, no memory/durability claim) -- OOM-Class Durability Gate N/A. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-25.md STEP qa-S45.",
+        "qa_verified_at": "2026-08-23T11:28:08Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bash scripts/orch-backlog-stub.test.sh (fixture regression) + live scratch rehearsal (real orch-backlog-stub.sh binary) against a byte-identical scratch copy of the LIVE docs/data/orch/orch-state.json + docs/data/orch/archive/backlog-detail.json",
+            "args": "bash scripts/orch-backlog-stub.test.sh; LANES=backlog,ready,review ORCH_STATE=<scratch>/orch-state.json ARCHIVE_DIR=<scratch>/archive DETAIL_FILE=<scratch>/archive/backlog-detail.json bash scripts/orch-backlog-stub.sh",
+            "live_value_observed": "orch-backlog-stub.test.sh: 35 pass / 0 fail (T8 array-shape crash repro fixed, T9 po_goahead survival). Live-shaped scratch rehearsal (real ARRAY .items, 442+ elements, the exact shape that crashed pre-fix): exit 0, Reconciliation PASS (hot_stub_ids_with_id=606, cold_detail_count=910, missing_from_cold=0). shellcheck clean. mock-guard PASS. Live orch-state.json + backlog-detail.json confirmed byte-untouched post-run (empty git diff).",
+            "observed_at": "2026-08-23T11:27:03Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD",
+        "status": "DONE_VERIFIED",
+        "type": "FIX",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "title": "decision-journal-archive.sh --all is an ARMED, DOCUMENTED-AS-SANCTIONED command that today git-mv's 147 journals belonging to 10 sprint ids with open work (6 of them sprint_goal:active) — ship the AC-0 safety valve",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD",
+        "updated_at": "2026-08-23T11:29:27Z",
+        "claimed_at": "2026-08-23T11:25:00Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "status_note": "[QA] Review Record (direct-commit verify): re-verified commits 9f4b0ede0/47c2841b4/e9c58a744 (all ancestor-confirmed on main, touch all 4 claimed files). Independently re-ran decision-journal-archive.test.sh myself: 51/51 PASS (36 base+this-rows-own-run8-10 valve assertions, +15 run11-15 from later peer commit bdc0dc10c reconciled by real commit timestamps, no regression). Confirmed script diff matches AC-1 leg(a) exactly: GATE_REFUSED forces internal DRY_RUN=1 on ungated live --all (exit 1, zero mv, names would-move count + DJA_ALLOW_ALL_UNGATED). Ran my OWN independent sandboxed fixture (never touching live docs/agent-memory/decisions or docs/archive/decisions): (i) ungated live --all -> exit 1 REFUSED, zero files moved; (ii) dry-run SUMMARY byte-identical with/without override (AC-2); (iii) override unlocks past AC-1 gate. AC-3 caveat confirmed verbatim on dev-standards.md. AC-5 confirmed: git status --porcelain on live decisions/archive dirs shows only my own unrelated in-session journal file dirty, zero real-backfill artifacts. mock-guard PASS (shell-only, 0 apps/ files touched, bun test/tsc correctly N/A). Not OOM-class. DJ-GATE-1: developer notebook STEP developer-S109 carries task-id. No blocking issue. VERDICT: DONE_VERIFIED.",
+        "updated_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bash scripts/agents-flow/decision-journal-archive.test.sh + independent sandboxed fixture re-probe of decision-journal-archive.sh",
+            "args": "commits 9f4b0ede0/47c2841b4/e9c58a744 ancestor+stat check; full re-run of decision-journal-archive.test.sh (51 assertions); scratchpad fixture: ORCH_STATE/DECISIONS_DIR/ARCHIVE_DECISIONS_DIR pointed at /private/tmp scratch dirs (never live docs/agent-memory/decisions), --all ungated vs DJA_ALLOW_ALL_UNGATED=1 --all --dry-run vs --all",
+            "live_value_observed": "51/51 PASS (0 FAIL); ungated live --all -> exit 1, REFUSED message, zero files moved; dry-run SUMMARY byte-identical with/without override; override unlocks past AC-1 gate (exit 2 from separate AC-4 gate, proving archiving logic reached); git status --porcelain docs/agent-memory/decisions docs/archive/decisions clean except unrelated in-session qa journal file",
+            "observed_at": "2026-08-23T11:29:26Z"
+          }
+        }
+      },
+      {
+        "id": "UNBLOCK-FLEETPUSH-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER-BLOCKS-ALL-PUSHES",
+        "type": "UNBLOCK",
+        "title": "FLEET-WIDE PUSH OUTAGE: pre-push size-lint fails orchStateSchema.ts as a new-offender (1784L, header still declares ~1300L), so EVERY push has been blocked since 21:32Z and origin/main is 40 commits behind and growing",
+        "priority": "P0",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "status": "DONE_VERIFIED",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#UNBLOCK-FLEETPUSH-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER-BLOCKS-ALL-PUSHES",
+        "updated_at": "2026-08-23T11:30:46Z",
+        "claimed_at": "2026-08-23T11:25:00Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "updated_by": "qa",
+        "status_note": "[QA] Review Record (direct-commit verify): APPROVED, DONE_VERIFIED. Commit 92b3d8956 ancestor-confirmed on main AND origin/main; git show --stat confirms it touches apps/mcp-server/src/infrastructure/orchStateSchema.ts (header-only: stale ~1300L size-justification corrected to ~1797L + growth-log bullet, zero code/logic change). AC-1 re-verified live: bash scripts/audits/size-lint-justification.sh --check -> PASS 0 offenders (scanned 1409), wc -l confirms file genuinely 1797L. AC-2 re-verified live, not prose-trusted: docs/agent-memory/sessions/fleet-push.log tail shows the 4 pre-fix [size-lint] FAIL/ABORT entries (ahead=22/31/36/40) followed immediately by ahead=0 then ~15 further cycles of clean \"ahead<=threshold -- nothing to do\", zero FAIL/ABORT recurrence since -- durable, not one-shot; origin/main confirmed caught up (git rev-list ahead=0 vs 92b3d8956). bun tsc --noEmit clean; orchStateSchema.test.ts 120/120 pass; the 5 directly-dependent test files named in the row own review_note re-run fresh: 67/67 pass, exact match to claimed count; mock-guard.sh PASS. AC-3 (self-diagnosing abort payload on scripts/fleet-worktree-push.sh) confirmed genuinely NOT implemented -- commit does not touch that file, matches review_note own honest disclosure (outside this row apps/mcp-server/ zone_restricted boundary). Judged non-blocking: recurrence-hardening enhancement, not part of the P0 root-cause fix itself which is fully and durably resolved per AC-1/AC-2 above; no duplicate follow-up row exists yet in backlog-detail.json or board -- left as a disclosed gap on this status_note, not self-minted as new backlog scope (outside QA mandate). AC-4 (CI coverage) confirmed by developer, not independently re-run here (non-blocking doc/tooling cross-check, out of critical path). Not OOM-class -- OOM-Class Durability Gate N/A. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-25.md STEP qa-S47 (task-id stamped, note: concurrent peer session also wrote STEP qa-S47 same journal same tick -- step-id label collision only, content of both entries intact, no data loss).",
+        "qa_verified_at": "2026-08-23T11:29:16Z",
+        "qa_verified_by": "qa",
+        "verification": {
+          "raw_probe": {
+            "tool": "bash scripts/audits/size-lint-justification.sh --check; bun tsc --noEmit (apps/mcp-server); bun test orchStateSchema.test.ts + 5 dependent test files; docs/agent-memory/sessions/fleet-push.log tail; git merge-base --is-ancestor 92b3d8956 origin/main",
+            "args": "size-lint-justification.sh --check (repo root); apps/mcp-server: bunx tsc --noEmit; bun test apps/mcp-server/src/infrastructure/__tests__/orchStateSchema.test.ts + apps/mcp-server/src/__tests__/{FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-SIGNOFF-AND-JOURNAL-ARCHIVE,FIX-DEVTEAM-IDLE-CHAIN-DANGLING-DEPS-STRAND-5-P0-ROWS,FIX-ORCHSTATE-BLOCKS-FIELD-WRITE-ONLY-DECORATIVE,CCATO-MCP-T4-SIGNAL-WRITER,TASK-FIX-SPRINT-GOAL-STATUS-DRIFT-EVICT}.test.ts",
+            "live_value_observed": "size-lint: PASS 0 unjustified offenders (scanned 1409); tsc: 0 errors; orchStateSchema.test.ts 120/120 pass; 5 dependent files 67/67 pass; mock-guard PASS; fleet-push.log: 4 pre-fix FAIL/ABORT entries (ahead=22/31/36/40) then ahead=0 then ~15 clean nothing-to-do cycles, zero recurrence; origin/main ancestor of 92b3d8956 = true",
+            "observed_at": "2026-08-23T11:29:16Z"
+          }
+        }
       }
     ],
     "head": {
@@ -18843,6 +18916,45 @@
         "depends_on": [],
         "verification_gate": "step53_names_the_exact_extraction_surface_and_the_marker_set_is_re_derived_from_a_measured_source_not_asserted",
         "status_note": "LATENT, NOT SHIPPED — the defect is in the spec, and Step 5.3 is still LLM-interpreted per tick, so today it depends entirely on the dispatcher picking the right surface by judgment. Confirmed not scripted: grep -rlniE 'offflow|off-flow' scripts/ returns only scripts/po-detail-resync-review-lifecycle-routing.sh and scripts/po-eligibility-clause-d-detail-first-lifecycle-20260808.jq, both unrelated po-lifecycle files; no script reads a .output path.\n\nDEFECT (a) — UNSPECIFIED SURFACE. docs/agents/cowork-team/flow/spawn-fanout.md:372 defines the detector's input as literally 'RETURN_TEXT = <the Agent tool's own returned result text for this spawn>'. That names no concrete surface. Router reported (2026-08-23 09:00Z tick, refine_bctc_md slot) that the obvious reading — the harness's <session>/tasks/<task-id>.output path — is a SYMLINK to the full subagent JSONL transcript (187-byte symlink -> 246939-byte transcript), and that grepping it scored 6/6 markers -> STEP_5.3=FAIL; re-running against the final assistant text turn only (2166 bytes) scored 0/6 -> PASS, and the slot's stamp correctly stood. NOTE FOR THE IMPLEMENTER: PO could NOT independently reproduce the symlink observation — no *.output file exists anywhere under ~/.claude at triage time, so that specific artifact shape is ROUTER-REPORTED, not PO-verified. Re-confirm it live before writing it into the doc as fact.\n\nDEFECT (b) — THE MARKERS ARE SELF-INJECTED, AND THE SPEC'S OWN JUSTIFICATION FOR THEM IS FACTUALLY WRONG. This part IS PO-verified by measurement and does not depend on (a). spawn-fanout.md:374-375 sets OFFFLOW_MARKERS = ['Coordination Results','Dispatch Routing','PRE-CLAIM','session-presence','orphan-adoption','Expected Behavior'] and :376 justifies them as 'Verbatim section headings / terms from the project-root CLAUDE.md router dispatch protocol.' Measured occurrence counts:\n  project CLAUDE.md  : PRE-CLAIM=1, session-presence=1, orphan-adoption=1, Coordination Results=0, Dispatch Routing=0, Expected Behavior=0\n  global  CLAUDE.md  : all six = 0\nSo only 3 of 6 come from where the comment says. The other 3 come from spawn-fanout.md ITSELF — lines 200-201, inside IDENTITY_PREAMBLE, which instructs every spawned agent: \"do NOT produce a 'Coordination Results / Dispatch Routing / Expected Behavior' summary\". That preamble is prepended to EVERY spawn's entry prompt. The detector therefore greps for a string list that the dispatcher guarantees is present in every spawn's own prompt, by construction. Combined with the 3 markers CLAUDE.md injects into every agent's context, ANY extraction surface that includes the prompt or the transcript matches 6/6 unconditionally — the symlink in (a) is one such surface, not the root cause.\n\nBLAST RADIUS IF SCRIPTED AS WRITTEN: every cowork spawn classified as a fabricated off-flow latch -> WON_SLOTS emptied at :391 -> no last_fired stamped for any slot -> every slot re-fires every tick forever, plus a send_telegram(bug) per slot per tick. Fleet-wide stamp-suppression outage from a one-line ambiguity.\n\nFIX (cheap, doc-precision): (1) amend :372 to name the exact extraction surface — final assistant text turn / the task-notification <result> block — and warn explicitly that the .output path is a transcript symlink that will false-positive 100% of the time; (2) correct the :376 provenance comment, which is measurably wrong; (3) re-derive the marker set from a surface the dispatcher does NOT itself inject, or make the detector surface-scoped so self-injected prompt text is structurally out of range. (3) is the load-bearing one — fixing only (1) leaves a detector whose markers still come from its own prompt.\n\nCLASS: identical to FIX-COWORK-TICKSNAPSHOT-STEP47-FALSE-PREMISE-PURE-BASH-CANNOT-CALL-MCP (same triage batch, same file family, same owner) — a spec written against an assumed runtime surface that the runtime does not actually provide. Minted separately rather than folded: different file, different defect, and a compound verification_gate would let one half ship green while the other rots. Both are P3 agent-father doc edits in docs/agents/cowork-team/flow/ and can be dispatched together."
+      },
+      {
+        "id": "TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY",
+        "type": "TASK",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "S",
+        "zone": "scripts/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "supervised": false,
+        "plan_only": false,
+        "title": "Extend guard-signal-type-coverage.sh: parse both pipelines + self-filing unrouted-type fallback",
+        "desc": "Part 1 + Part 2 of architect brief (2026-08-23): extend scripts/audits/guard-signal-type-coverage.sh to parse BOTH Pipeline-A (pending_triage_inbox[]) and Pipeline-B (signal_queue.rows[]) tables from triage-signals.md + triage-signals-longtail.md, tag each parsed rule by pipeline, and on unrouted type mint/update a task_board.backlog[] row via orch-apply.sh (dedup-keyed on type string, using routing-gap type-vocabulary slot) instead of CI-log-only output. This closes the split-table blind spot (a type can no longer be considered covered by a rule that structurally cannot fire for the pipeline it arrived on) and the unrouted-type-as-nonactionable-log-line defect that has fired 7 times with manual intervention required on each.",
+        "files": [
+          "scripts/audits/guard-signal-type-coverage.sh",
+          ".github/workflows/ci.yml"
+        ],
+        "ac": [
+          "guard parses BOTH Pipeline-A table (from pending_triage_inbox[] in orch-state.json) and Pipeline-B table (from signal_queue.rows[])",
+          "each rule is tagged by source pipeline (A or B) in the derived registry",
+          "cross-pipeline blind spot is mechanically closed: a type is routed only if it has a rule for the PIPELINE it arrived on",
+          "unrouted type produces a task_board.backlog[] row (dedup-keyed on type string) via orch-apply.sh in addition to CI exit 1",
+          "AC-5 from brief: orchStateSchema.ts diff is empty (no schema change, all via orch-apply.sh gate)",
+          "synthetic new type on Pipeline-A (not B) is caught by the extended guard — proves cross-pipeline check works"
+        ],
+        "acceptance_notes": "Verify: (1) `guard-signal-type-coverage.sh --check` PASSes against live orch-state.json after tactical audit-handoff rule lands; (2) synthetic Pipeline-A-only type is caught; (3) unrouted-type failure produces real backlog[] row with type-based dedup",
+        "related": [
+          "TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION"
+        ],
+        "created_at": "2026-08-23T09:00:00Z",
+        "created_by": "pm",
+        "handoff_ref": "docs/handoffs/TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY.md",
+        "updated_at": "2026-08-23T11:30:11Z",
+        "status_note": "dev-mcp-server DONE: scripts/audits/guard-signal-type-coverage.sh extended to parse BOTH Pipeline-A (triage-signals.md pendingSignals[] table vs .dev_team_idle_chain.pending_triage_inbox[]) and Pipeline-B (existing .signal_queue.rows[] table+longtail), each tagged by source pipeline so a rule from ONE pipeline never false-passes coverage for the OTHER (verified both directions live). On any unrouted type (either pipeline), in addition to the pre-existing exit 1, mints a dedup-keyed task_board.backlog[] row (type=routing-gap) via the real scripts/orch-apply.sh -- verified end-to-end against disposable fixtures (mint succeeds, repeat detection dedup-skips, no duplicate row). guard-signal-type-coverage.test.sh expanded 7->24 assertions, all GREEN; real-doc/live-orch-state.json integration smoke test also GREEN. orchStateSchema.ts diff confirmed empty (git diff, 0 lines) -- schema-untouched constraint held. .github/workflows/ci.yml job comment amended to describe dual-pipeline scope + honest note that the mint substep needs bun (not installed in that job; degrades to a logged non-fatal skip there, exit-1 gate unaffected). next_agent corrected from dead-end \"developer\" (Task-tool subagent, cannot spawn zone specialists) to \"qa\".\n\n[QA] Review Record (direct-commit verify, commit 4e7aa7eaf) — CHANGES_REQUESTED. Detection/dedup half of AC-4 verified live (guard --check FAIL correctly names unrouted Pipeline-A types flow_actuator_fix/system-issue; dedup-skip confirmed on repeat). ISSUE: scripts/audits/guard-signal-type-coverage.sh:249-250 mint_routing_gap_row() hardcodes owner=\"po\", zone=\"docs/agents/po/flow/\", and never sets next_agent on the minted task_board.backlog[] row -- undispatchable by any picker. Live-verified 3-for-3: FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire, -flow-actuator-fix, -system-issue all minted with next_agent absent. PO's own manual disposition of the cowork-fire row (status_note 10:33Z) independently confirms this exact defect -- had to hand-patch next_agent=agent-father because \"no dispatch lane resolves\" on next_agent UNSET, and had to move off owner=po because po \"may not edit its own agent flow files per its own boundary_rules\". This contradicts this task's own stated purpose (desc: close \"manual intervention required on each, 7x\") -- as committed, self-filed rows still require manual next_agent/owner patching before actionable, same defect class relocated not closed. Other checks: mock-guard PASS, orchStateSchema.ts diff=0 (AC-5 held), .test.sh 23/24 (TEST10 fails only due to the 2 new live unrouted types, test's own comment says this is expected/correct guard behavior, not a regression). FIX: mint template must set a resolvable next_agent (e.g. agent-father, matching POs own manual correction) and an owner/zone combo PO can actually act on, or route directly to agent-father like PO did by hand.",
+        "claimed_at": "2026-08-23T11:25:00Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "updated_by": "qa",
+        "redispatch_count": 1
       }
     ],
     "qa": [
@@ -18998,46 +19110,6 @@
         "qa_verify_20260823": "[QA] Re-check 2026-08-23, HELD (no lane move). AC-1/AC-2 (stale caveat + same-tick clobber mutex) are now solidly proven — 4 separate real weekday 16:0xZ co-fires (08-06/07/12/13) all show BOTH eod and offhours notebook commits landing cleanly same-tick, no clobber, no stale-caveat skip. AC-3 (news-scout L-7 dependency resumes on next weekday EOD fire) code landed (3d2ff4ee2/7a94f3dd5/f795efe35) but remains genuinely unexercised: cowork-schedule.json shows market-watcher-eod.last_fired stuck at 2026-08-14T16:10:51Z, 5+ weekdays elapsed with zero EOD fire since — consistent with the separately-tracked host-suspension gap (08-18->08-22), not a defect in this fix. Not flipping DONE_VERIFIED per this row's own prior AC-1/AC-2 2-live-fire precedent; re-check when market-watcher-eod actually fires on a weekday post-outage. DJ qa-25 STEP qa-S41."
       },
       {
-        "id": "FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION",
-        "type": "FIX",
-        "size": "S",
-        "status": "QA",
-        "priority": "P0",
-        "zone": "cross-service/",
-        "depends_on": [],
-        "title": "orch-backlog-stub.sh cold-merge crashes on the REAL backlog-detail.json (.items is an ARRAY, not an id-keyed object) - blocks the LANES=backlog,ready,review migration",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION",
-        "updated_at": "2026-08-23T11:25:01Z",
-        "claimed_at": "2026-08-23T11:25:00Z",
-        "claimed_by": "dev-team (review-lane qa-drain)"
-      },
-      {
-        "id": "FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD",
-        "status": "QA",
-        "type": "FIX",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "title": "decision-journal-archive.sh --all is an ARMED, DOCUMENTED-AS-SANCTIONED command that today git-mv's 147 journals belonging to 10 sprint ids with open work (6 of them sprint_goal:active) — ship the AC-0 safety valve",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD",
-        "updated_at": "2026-08-23T11:25:01Z",
-        "claimed_at": "2026-08-23T11:25:00Z",
-        "claimed_by": "dev-team (review-lane qa-drain)"
-      },
-      {
-        "id": "UNBLOCK-FLEETPUSH-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER-BLOCKS-ALL-PUSHES",
-        "type": "UNBLOCK",
-        "title": "FLEET-WIDE PUSH OUTAGE: pre-push size-lint fails orchStateSchema.ts as a new-offender (1784L, header still declares ~1300L), so EVERY push has been blocked since 21:32Z and origin/main is 40 commits behind and growing",
-        "priority": "P0",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "status": "QA",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#UNBLOCK-FLEETPUSH-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER-BLOCKS-ALL-PUSHES",
-        "updated_at": "2026-08-23T11:25:01Z",
-        "claimed_at": "2026-08-23T11:25:00Z",
-        "claimed_by": "dev-team (review-lane qa-drain)"
-      },
-      {
         "id": "FU-RAG-DEPLOY-MEMORY",
         "size": "M",
         "sprint": "RAPID-DATA-LAYER",
@@ -19052,43 +19124,6 @@
         "next_agent": "qa",
         "updated_by": "po/secondary-drain-20260823T0820Z",
         "po_secondary_drain_20260823T0820Z": "PO 2026-08-23T08:20Z: deploy half RAW-VERIFIED DONE (MemLimit=2GiB live = 2.04x the 1002MiB peak, image 2026-08-14T20:12:15Z, container Up 7d RestartCount=0 OOMKilled=false at 38.05%). Durability half (RAG-MEM-DURABILITY-BAR v2 D1-D5) NOT run and PO explicitly declines to self-certify it. The 7-day window is CONTAMINATED - ~99.7h of it (2026-08-18T09:00Z..2026-08-22T12:40Z) the whole scheduler was dead, so the service was not under real load. qa: run D1-D5 on a window starting AFTER 2026-08-22T12:40Z. Full detail: detail_ref .po_secondary_drain_20260823T0818Z.",
-        "claimed_at": "2026-08-23T11:25:00Z",
-        "claimed_by": "dev-team (review-lane qa-drain)"
-      },
-      {
-        "id": "TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY",
-        "type": "TASK",
-        "status": "QA",
-        "priority": "P0",
-        "size": "S",
-        "zone": "scripts/",
-        "owner": "dev-mcp-server",
-        "next_agent": "qa",
-        "supervised": false,
-        "plan_only": false,
-        "title": "Extend guard-signal-type-coverage.sh: parse both pipelines + self-filing unrouted-type fallback",
-        "desc": "Part 1 + Part 2 of architect brief (2026-08-23): extend scripts/audits/guard-signal-type-coverage.sh to parse BOTH Pipeline-A (pending_triage_inbox[]) and Pipeline-B (signal_queue.rows[]) tables from triage-signals.md + triage-signals-longtail.md, tag each parsed rule by pipeline, and on unrouted type mint/update a task_board.backlog[] row via orch-apply.sh (dedup-keyed on type string, using routing-gap type-vocabulary slot) instead of CI-log-only output. This closes the split-table blind spot (a type can no longer be considered covered by a rule that structurally cannot fire for the pipeline it arrived on) and the unrouted-type-as-nonactionable-log-line defect that has fired 7 times with manual intervention required on each.",
-        "files": [
-          "scripts/audits/guard-signal-type-coverage.sh",
-          ".github/workflows/ci.yml"
-        ],
-        "ac": [
-          "guard parses BOTH Pipeline-A table (from pending_triage_inbox[] in orch-state.json) and Pipeline-B table (from signal_queue.rows[])",
-          "each rule is tagged by source pipeline (A or B) in the derived registry",
-          "cross-pipeline blind spot is mechanically closed: a type is routed only if it has a rule for the PIPELINE it arrived on",
-          "unrouted type produces a task_board.backlog[] row (dedup-keyed on type string) via orch-apply.sh in addition to CI exit 1",
-          "AC-5 from brief: orchStateSchema.ts diff is empty (no schema change, all via orch-apply.sh gate)",
-          "synthetic new type on Pipeline-A (not B) is caught by the extended guard — proves cross-pipeline check works"
-        ],
-        "acceptance_notes": "Verify: (1) `guard-signal-type-coverage.sh --check` PASSes against live orch-state.json after tactical audit-handoff rule lands; (2) synthetic Pipeline-A-only type is caught; (3) unrouted-type failure produces real backlog[] row with type-based dedup",
-        "related": [
-          "TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION"
-        ],
-        "created_at": "2026-08-23T09:00:00Z",
-        "created_by": "pm",
-        "handoff_ref": "docs/handoffs/TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY.md",
-        "updated_at": "2026-08-23T11:25:01Z",
-        "status_note": "dev-mcp-server DONE: scripts/audits/guard-signal-type-coverage.sh extended to parse BOTH Pipeline-A (triage-signals.md pendingSignals[] table vs .dev_team_idle_chain.pending_triage_inbox[]) and Pipeline-B (existing .signal_queue.rows[] table+longtail), each tagged by source pipeline so a rule from ONE pipeline never false-passes coverage for the OTHER (verified both directions live). On any unrouted type (either pipeline), in addition to the pre-existing exit 1, mints a dedup-keyed task_board.backlog[] row (type=routing-gap) via the real scripts/orch-apply.sh -- verified end-to-end against disposable fixtures (mint succeeds, repeat detection dedup-skips, no duplicate row). guard-signal-type-coverage.test.sh expanded 7->24 assertions, all GREEN; real-doc/live-orch-state.json integration smoke test also GREEN. orchStateSchema.ts diff confirmed empty (git diff, 0 lines) -- schema-untouched constraint held. .github/workflows/ci.yml job comment amended to describe dual-pipeline scope + honest note that the mint substep needs bun (not installed in that job; degrades to a logged non-fatal skip there, exit-1 gate unaffected). next_agent corrected from dead-end \"developer\" (Task-tool subagent, cannot spawn zone specialists) to \"qa\".",
         "claimed_at": "2026-08-23T11:25:00Z",
         "claimed_by": "dev-team (review-lane qa-drain)"
       },
