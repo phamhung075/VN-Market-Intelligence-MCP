@@ -92,3 +92,32 @@ Weights are present (39M `doclayout_yolo_ft.pt`, dated 2026-07-17 03:01Z). Dorma
 - Only: single-service rebuild with docker compose build + up -d --no-deps
 **why-decision:** Fix code exists in source but stale Docker image predates it by ~24h; strict single-service rebuild isolates the reclamation code path and limits blast radius per standing policy.
 **why-change:** No change from plan; task specification mandated AC-1/AC-2/AC-3 verification and all three passed; idle-unload is now active in production.
+
+### STEP ops-S23 · ops · 2026-08-23T14:15:02Z
+**task-id:** FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE
+**what-done:** Rebuilt pdf-extractor (image 4ee7f1c3→e5d36a38, StartedAt 14:15:02Z) and proved the running PROCESS carries the fix by live module introspection, not by file grep: loaded PekEngineAdapter.extract_layout_and_tables has wait_s param + acquire(blocking=True, timeout=wait), _SEMAPHORE_WAIT_SECONDS=1800 from env.
+**what-considered:**
+- Trust `docker exec grep` on /app source (REJECTED: file-on-disk ≠ module loaded by the running interpreter)
+- Plain restart (REJECTED: cannot pick up baked-in source; has masked Bun JIT corruption before)
+- Only: scoped `build --build-arg GIT_SHA` + `up -d --no-deps`, then introspect the live module
+**why-decision:** qa held the row precisely because REBUILD_REQUIRED was TRUE; only runtime evidence clears that, and image-ID change alone proves a swap, not that the fix is loaded.
+**why-change:** No change from plan.
+
+### STEP ops-S24 · ops · 2026-08-23T14:51:00Z
+**task-id:** FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE
+**what-done:** Generated the AC-8 traffic qa named as blocker (b) by running the already-authored reset migration (21/21 rows url_not_found→pending), then measured: 6 /pek-extract 202s, 0 SemaphoreContendedError, 0 _run_pek_extract FAILED vs a pre-fix baseline of 30 raises / 39 FAILED.
+**what-considered:**
+- Hand-craft a synthetic requeue UPDATE (REJECTED: out_of_scope (c), and an ad-hoc write is exactly the falsification class BUG 3550 punished)
+- Wait for organic pek_triggered traffic (REJECTED: histogram had pek_triggered=0 and 56 enrich_failed at/over cap — organically unreachable)
+- Only: run reset-bctc-enricher-stuck-backlog-2026-04.ts, which the architect brief already authorised for my other ready row
+**why-decision:** One action discharges both blocker (b) for AC-8 and the OPS-BCTC-BANK-2025Q4 row's own action plan; it is an existing reviewed migration, not new code.
+**why-change:** Sequenced AFTER the rebuild deliberately, so the batch would hit the post-fix image; firing it first would have burned the traffic window on the stale image.
+
+### STEP ops-S25 · ops · 2026-08-23T14:50:00Z
+**task-id:** FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE
+**what-done:** Recorded AC-9 as REFUTED-NOT-CONFIRMED: pdf-extractor memory re-pinned at 99.99% of its 2.5GiB cap and silently exited (code 0, OOMKilled=false, RestartCount 0→1 at 14:27:10Z) on the POST-fix image, in a window where /pek-extract count was ~0 and /extract carried 127 posts.
+**what-considered:**
+- Report A-30 as resolved on the healthy post-rebuild sample (REJECTED: fabrication; the 18.89% reading was a 2-minute-old cold container)
+- Stay silent and let qa discover it (REJECTED: AC-9 explicitly demands a plain statement if A-30 does not quiet)
+**why-decision:** The worst memory episode preceded PEK traffic entirely, so the architect's "A-30 is downstream of the semaphore burst" read does not survive measurement; the live driver is the /extract OCR path.
+**why-change:** AC-9 anticipated only confirm/deny; the evidence instead re-attributes the symptom to a different code path, which needs a new row rather than a verdict on this one.

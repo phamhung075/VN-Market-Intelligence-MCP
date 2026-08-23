@@ -106,3 +106,67 @@ Image: sha256:de8e753cb52dd62eef768c85d9c6d17892574fd8518cb4be6c7abe4b1f63d4ed
 
 **Session**: 669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3 (ops agent, docker rebuild dispatch)
 
+
+---
+
+## Cycle 2026-08-23T14:15Z — PDFX REBUILD (PEK semaphore fix) + A-30 REFUTATION
+
+Full verified record → `docs/incidents/ops-20260823-pdfx-rebuild-and-a30-refutation.md`
+
+**Rebuild (qa blocker (a) cleared):** image `4ee7f1c3598e` → `e5d36a387b74`, container StartedAt
+2026-08-23T14:15:02Z, single-service `build --build-arg GIT_SHA` + `up -d --no-deps`, peers
+untouched (12/12 Up), builder prune run.
+
+**LESSON — image-ID change is necessary but NOT sufficient.** What actually cleared qa's hold was
+introspecting the LOADED module inside the container (`python3 -c "import …; inspect.signature/
+getsource"`), which showed `acquire(blocking=True, timeout=wait)` + the `wait_s` param +
+`_SEMAPHORE_WAIT_SECONDS=1800`. A `docker exec grep` of `/app/…py` only proves the file on disk,
+not what the interpreter loaded. Use introspection whenever a row asks "is the fix RUNNING".
+
+**AC-8 traffic (blocker (b)) had to be manufactured legitimately.** `pek_triggered` was 0 and all
+56 `enrich_failed` were at/over the retry cap, so no organic traffic existed. Ran the already-
+authored `reset-bctc-enricher-stuck-backlog-2026-04.ts` (which is the OPS-BCTC row's own action
+plan) → 21/21 `url_not_found`→`pending`. One action, two rows. Sequenced AFTER the rebuild on
+purpose — firing first would have burned the window on the stale image.
+Result: 6× `/pek-extract` 202, **SemaphoreContendedError=0, `_run_pek_extract: FAILED`=0**
+(pre-fix baseline 30/39).
+
+**LESSON — a fresh container's healthy numbers prove nothing.** At 14:17Z (2 min old) pdf-extractor
+read 18.89 % memory; by 14:25Z it was at 100 % and at 14:27:10Z it **silently exited (ExitCode 0,
+OOMKilled=false)** and restarted. Reporting the 18.89 % as "A-30 resolved" would have been
+fabrication. Always load the service and re-measure before certifying a memory/reclamation claim.
+
+**AC-9 REFUTED (reported plainly, as the AC itself demands).** The 100 % pin + silent exit happened
+in the 14:15–14:39Z window where `/pek-extract` was ~0 and `/extract` carried 127 posts, so
+sustained-memory is NOT downstream of PEK semaphore contention — it tracks the legacy `/extract` +
+`ocr_gateway` path. Needs its own row.
+
+**LESSON — check signal timestamps against the swap time before accepting blame.** The 3 auditor
+CRITICAL/WARN signals at 14:12:28/38/45Z predate the container swap at 14:15:02Z, so they describe
+the OLD image, not a regression from the rebuild.
+
+**Three new defects filed to BUG (msg 5466), none owned by a row:** (1) A-30 re-attribution above;
+(2) `ocr_gateway.inflight: semaphore=1 != os_children=0` self-declared fail-loud, 59 hits since
+rebuild, 90/199 `/extract` posts 429'd — prime suspect for (1); (3) `scripts/verify-deploy-sha.sh
+pdf-extractor` can NEVER pass — `apps/pdf-extractor/Dockerfile:19` emits `LABEL git_sha=` while the
+gate reads `vn.market.git_sha`, the name all 10 sibling Dockerfiles use.
+
+**LESSON — two false-read traps, both hit live, now encoded in `scripts/ops-bctc-2025q4-cohort-probe.sh`:**
+`financial_reports.period_quarter` is INTEGER `4` but `bctc_vps_queue.period_quarter` is STRING
+`"Q4"` (matching "Q4" against financial_reports returned NO_FR_ROW for all 12 — a clean false
+negative that looked like a finding); and an inlined SQL string literal inside a single-quoted
+`bun -e` shell string truncates the program to a silent zero-row exit-0 run.
+
+**Also:** `docker.md`'s health recipe curls `.project.microservices[].port`; for `stock-price` that
+is the CONTAINER port 5000, whose host publish is **5010** — host :5000 is macOS ControlCenter and
+answers 403. Not a service failure. `frontend` 404s on `/health`, 200s on `/`.
+
+**TASK-COWORK-PMSET-WAKE-ADJUNCT: BLOCKED, not done.** `sudo -n true` → "a password is required";
+pmset repeat needs root and an agent shell cannot supply it. Derived (AC-1) from
+`cowork-schedule.json`: 8 guaranteed slots span 05:15→20:13, 3 are daily ⇒ day-set MTWRFSU.
+Command to run: `sudo pmset repeat wakeorpoweron MTWRFSU 05:10:00`; revert `sudo pmset repeat cancel`;
+pre-state `pmset -g sched` was EMPTY. **AC-1/AC-2 conflict found:** `pmset repeat` takes exactly ONE
+event, so it cannot cover a union of 8 times; and slot times carry no `tz` field while pmset uses
+local — confirm the dispatcher's TZ basis before applying or the wake lands 2h off.
+
+**Session:** 7be6b4cd-057e-419b-a967-4810daf2b646 (ops)
