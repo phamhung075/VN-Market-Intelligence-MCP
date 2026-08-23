@@ -17394,6 +17394,36 @@
             "observed_at": "2026-08-23T22:08:35Z"
           }
         }
+      },
+      {
+        "id": "TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX",
+        "type": "SUBTASK",
+        "size": "XS",
+        "priority": "P1",
+        "status": "DONE_VERIFIED",
+        "zone": "docs/",
+        "owner": "qa",
+        "parent_task_id": "FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58",
+        "plan_only": false,
+        "supervised": false,
+        "sprint": "COWORK-RELIABILITY",
+        "created_at": "2026-08-22T17:45:00Z",
+        "created_by": "pm",
+        "title": "One-line doc fix: domain-model.md watchlist count",
+        "handoff": "docs/handoffs/TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX.md",
+        "updated_at": "2026-08-23T22:09:29Z",
+        "updated_by": "developer",
+        "review_note": "[developer 2026-08-23T15:10:30Z] Fixed docs/architecture/microservice/frontend/domain-model.md:72 stale watchlist count 33->34 (30 active+3 inactive -> 33 active+1 inactive=VEA). Verified raw (not from handoff's stated numbers): system-map.json project.watchlist = 34 total/33 active/1 inactive=VEA; apps/frontend/app/domain/market.ts WATCHLIST_STOCKS = 34 { ticker: ... } entries, VEA sole active:false. Exactly 1 line changed in 1 file (AC-4). Commit 59dd37152. Found but NOT fixed (scope fence, needs its own row): line 74 \"Active tickers (30): ...\" is ALSO stale (32 tickers listed, PLX missing, mislabeled count) — flagging for po/architect, same parent FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58 territory.",
+        "qa_verified_at": "2026-08-23T22:09:28Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + jq (system-map.json) + grep/awk (market.ts) + sed (domain-model.md live read)",
+            "args": "commit=59dd37152; files=[docs/architecture/microservice/frontend/domain-model.md]; cross-checked docs/data/system-map.json .project.watchlist and apps/frontend/app/domain/market.ts WATCHLIST_STOCKS",
+            "live_value_observed": "ancestor=yes; stat touches 1/1 claimed file (+1/-1 lines); domain-model.md:72 = '34 entries (33 active + 1 inactive -- VEA)'; system-map.json watchlist total=34 active=33 inactive=1(VEA); market.ts WATCHLIST_STOCKS=34 entries (33 active:true, 1 active:false=VEA)",
+            "observed_at": "2026-08-23T22:09:28Z"
+          }
+        },
+        "status_note": "\n[QA] Review Record (direct-commit verify, 2026-08-24): row was found in review[]/status=REVIEW, NOT qa[]/QA as the dispatch claimed (no orch-apply commit ever promoted it -- confirmed via git log -S on orch-state.json, only 06a392dc9 READY->REVIEW exists). Verified on merits per docs/handoffs/TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX.md. Commit 59dd37152 real, on main, touches exactly domain-model.md (1 file/1 line). Re-read file live: line 72 = '34 entries (33 active + 1 inactive -- VEA)'. Re-ran jq against system-map.json live: total=34, active=33, inactive=1(VEA) -- all match AC-2. Counted market.ts WATCHLIST_STOCKS live: 34 entries, 33 active:true, 1 active:false(VEA) -- matches AC-3. Docs-only change, zero production/test files touched -- bun test/tsc/mock-guard/DDD/security out of scope. Verdict: DONE_VERIFIED."
       }
     ],
     "head": {
@@ -20516,27 +20546,6 @@
         "commit": "1d6cad4f5",
         "branch": null,
         "review_note": "IMPLEMENTED, commit 1d6cad4f5 on main (direct-commit row, branch:null - qa verify-committed mode). Brief phase (1) ONLY, per its own instruction: new NON-FATAL Stage 1i in scripts/orch-validate.mjs. apps/mcp-server/src/infrastructure/orchStateSchema.ts DELIBERATELY UNTOUCHED (brief S4 makes the superRefine promotion a separate gated follow-up), and neither bounded1-supervised-lane-report.sh nor docs/agents/po/flow/zone-routing.md needed a change - the row files[] list was a superset of the phase-1 scope. Trigger is (effective_supervised OR effective_plan_only) AND dispatch_lane==none, scoped to backlog[]/ready[]/review[], epic wrappers excluded. Predicate MIRRORED not reinvented - only the 2-line detail-first/board-fallback lookups from scripts/lib/devteam-eligibility.jq are ported, jq cited in-code as SSOT, coupling flagged. Placed physically BEFORE Stage 1h despite the later number because 1h can exit(2) and would swallow a downstream non-fatal report. THE BRIEF MANDATED CROSS-CHECK CAUGHT A FALSE POSITIVE IN MY OWN PORT BEFORE IT SHIPPED - worth QA re-running rather than trusting: v1 reported FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (supervised+plan_only, 38d, lane none) while bounded1-supervised-lane-report.sh correctly counted 0, because that row is an EPIC WRAPPER, which the report own READY-WRAPPER section documents as a NO-PICKER-BY-DESIGN class closed out by post-cycle.md Step 4.4, hence its gating class is scoped non-wrapper. isEpicWrapper added; both implementations now agree at 0 on the live board. VERIFICATION: node scripts/test-orch-validate-ac.mjs = 41/41 (29 baseline + 12 new AC-5) covering supervised-alone, plan_only-alone, empty-string-vs-absent handler shapes, detail-only flag, and SIX negative/scope controls (unflagged parked row = the row own explicit non-goal, detail-only owner override, detail-only next_agent override, epic wrapper inline, epic wrapper via detail, in_progress[] exclusion). node scripts/orch-validate.mjs docs/data/orch/orch-state.json exits 0 with Stage 1i reporting 0. New ORCH_VALIDATE_DETAIL_PATH env seam makes the detail-override branch provable without touching the real detail file. No apps/ code touched - tsc N/A this phase. FOLLOW-UP the brief asks for and I did NOT create (PO/architect call, not mine): FIX-ORCHSTATE-SUPERVISED-LANE-REPORT-PROMOTE-TO-FATAL, gated on N consecutive clean write cycles with zero Stage-1i hits (brief suggests 14 days), then promote the SAME predicate into a superRefine. Explicitly NOT blocking and NOT urgent."
-      },
-      {
-        "id": "TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX",
-        "type": "SUBTASK",
-        "size": "XS",
-        "priority": "P1",
-        "status": "REVIEW",
-        "zone": "docs/",
-        "owner": "qa",
-        "next_agent": "qa",
-        "parent_task_id": "FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58",
-        "plan_only": false,
-        "supervised": false,
-        "sprint": "COWORK-RELIABILITY",
-        "created_at": "2026-08-22T17:45:00Z",
-        "created_by": "pm",
-        "title": "One-line doc fix: domain-model.md watchlist count",
-        "handoff": "docs/handoffs/TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX.md",
-        "updated_at": "2026-08-23T15:10:31Z",
-        "updated_by": "developer",
-        "review_note": "[developer 2026-08-23T15:10:30Z] Fixed docs/architecture/microservice/frontend/domain-model.md:72 stale watchlist count 33->34 (30 active+3 inactive -> 33 active+1 inactive=VEA). Verified raw (not from handoff's stated numbers): system-map.json project.watchlist = 34 total/33 active/1 inactive=VEA; apps/frontend/app/domain/market.ts WATCHLIST_STOCKS = 34 { ticker: ... } entries, VEA sole active:false. Exactly 1 line changed in 1 file (AC-4). Commit 59dd37152. Found but NOT fixed (scope fence, needs its own row): line 74 \"Active tickers (30): ...\" is ALSO stale (32 tickers listed, PLX missing, mislabeled count) — flagging for po/architect, same parent FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58 territory."
       },
       {
         "id": "TASK_001-WATCHLIST-WRITE-THROUGH-INFRA",

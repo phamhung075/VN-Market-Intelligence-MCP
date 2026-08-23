@@ -135,3 +135,41 @@ Before marking this task DONE:
 Then:
 - Update orch-state.json: `status: DONE_VERIFIED`, `verified_at: <timestamp>`, `verified_by: generic-developer`
 - No pairing with other tasks needed
+
+---
+
+## [QA] Review Record (direct-commit verify, 2026-08-24)
+
+**Row found in `task_board.review[]`, `status: "REVIEW"`** — NOT in `qa[]`/`status: "QA"` as the
+dispatching dev-team tick's spawn prompt claimed ("promoted review[] -> qa[] this tick"). Checked
+`git log --oneline -S`/`git show` on `docs/data/orch/orch-state.json`: the only commit that ever
+touched this row's status is `06a392dc9` (17:11:59+0200), which moved it `READY -> REVIEW` (owner
+`developer` -> `qa`) at the same time it recorded the developer's `review_note`. No later commit
+promotes it into `qa[]`. Treated as a false/stale dispatch claim (same class already flagged by a
+peer QA run on sibling row TASK_001 this cycle) — verified the row on its merits instead of refusing.
+
+**Commit checked:** `59dd37152` — `git merge-base --is-ancestor 59dd37152 main` = ancestor (real, on
+`main`). `git show --stat` touches exactly 1 file, `docs/architecture/microservice/frontend/domain-model.md`
+(1 insertion / 1 deletion), matching AC-4 and the "Files Changed" section above.
+
+**AC-1 (line correction) — re-read file directly, not from commit-message prose:**
+`sed -n '72p' docs/architecture/microservice/frontend/domain-model.md` =
+`Compiled constant array of 34 entries (33 active + 1 inactive — VEA). Mirrors ...` — matches the
+AC-1 target text exactly.
+
+**AC-2 (system-map.json cross-check) — re-ran the handoff's own jq commands live:**
+`jq '.project.watchlist | length'` = 34; `[.project.watchlist[] | select(.active == false)] | length`
+= 1; `[.project.watchlist[] | select(.active != false)] | length` = 33; the sole inactive ticker =
+`VEA`. All 4 match AC-2's asserted values.
+
+**AC-3 (frontend constant cross-check) — counted `apps/frontend/app/domain/market.ts` directly:**
+`WATCHLIST_STOCKS` array = 34 `{ ticker: ... }` entries, 33 with `active: true`, 1 with `active: false`
+(VEA). Matches AC-3.
+
+**No `bun test`/`tsc`/mock-guard/DDD/security scan run** — commit touches zero production or test
+source (markdown-only, docs/ zone); nothing in Smart-Skip's scope applies. `mock-guard.sh` was not
+invoked (no production files in the diff to pass it).
+
+**Verdict: DONE_VERIFIED.** `task_board.qa[]`/`done_verified[]` lane-move executed via
+`scripts/orch-apply.sh` (adapted from `review[]`, since the row was never actually in `qa[]`),
+`verification.raw_probe` written per RC-VERIF gate.
