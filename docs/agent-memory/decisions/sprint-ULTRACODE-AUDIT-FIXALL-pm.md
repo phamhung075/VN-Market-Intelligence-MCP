@@ -75,3 +75,23 @@ Only decomposition path: UC-ASL-P5 rescope (architect-approved) → single FR-1/
 
 No change from plan. Architect (via brownfield findings) explicitly recommended keeping both FRs in one task and cleared all gates (supervised/deploy_gate→false/null). Straight decomposition follow-through.
 
+
+### STEP pm-S1 · pm · 2026-08-23T13:42:14Z
+task_id: UC-ASL-P3
+**what-considered:** (a) hold undecomposed until its `depends_on` clears — rejected: the dep gate is mechanical (`deps_satisfied()` needs DONE_VERIFIED), so minting dep-carrying children cannot race it; (b) one combined task — rejected, crosses two commit zones; (c) two-owner split per architect brief — chosen.
+**why-change:** no change from plan. Architect's brief §2 names the split verbatim (developer: FR-1/FR-3..FR-10 script+test gated on C-04; agent-father: FR-11 main.md repoint gated on the script), mirroring the live C-04/C04-FLOWDOC-REPOINT precedent.
+**children minted:** TASK-ASLP3-DB-CHECKS-SCRIPT (depends_on FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE) → TASK-ASLP3-MAINMD-FR11-REPOINT (depends_on the script).
+**parent:** ready[] → done[], children[], pm_decomposition_complete=true.
+
+### STEP pm-S2 · pm · 2026-08-23T13:42:14Z
+task_id: UC-ASL-P5
+**what-considered:** (a) split FR-1/FR-2 per zone — rejected, the BA spec § Zone instructs pm verbatim NOT to; (b) routing correction to agent-father — ATTEMPTED, then REVERTED as wrong; (c) close as already-decomposed — chosen.
+**why-change:** CHANGED FROM PLAN, and the reason matters. I read the row as undecomposed because it carried no `children[]`. It was decomposed 2026-08-11 into TASK_2007 (commit 9ea1bc910, journalled in THIS file above) and TASK_2007 is live in ready[]. Re-routing the parent would have aimed a second implementer at owned work.
+**lesson:** a decomposed parent is invisible from the board row alone when `children[]` was never written — check the sprint journal + git log before concluding a row is undecomposed. The missing marker, not the routing, is why it kept returning to pm.
+**parent:** ready[] → done[], children=["TASK_2007"].
+
+### STEP pm-S3 · pm · 2026-08-23T13:42:14Z
+task_id: UC-CDC-P1
+**what-considered:** (a) move out of in_progress[] to backlog/ready — rejected as mechanically impossible; (b) move to done[] — rejected, would falsely assert delivery; (c) leave in place, assessed — chosen.
+**why-change:** no change from po_wip_ruling_20260823, but independently re-verified rather than relayed. WP-A children TASK_2008a/b/c are all DONE_VERIFIED in archive/2026-08.json; WP-B is genuinely blocked on UC-SDF-P2 (still backlog/plan_only/next_agent=ba). Read `scripts/orch-row-prose-ceiling-check.mjs` directly: PROSE_CEILING_LANES=['backlog','ready','review'], so any move from unguarded in_progress[] into a guarded lane sets liveBytes=0 and a >12000B row hard-rejects even byte-identical. No legal truth-preserving destination exists until D3 of FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS ships. next_agent=pm is correct, not stale — WP-B needs a pm hop once unblocked.
+**WIP impact:** none. status=BLOCKED is excluded from wip_in_progress (devteam-eligibility.jq:115-118).
