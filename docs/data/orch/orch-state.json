@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-23T17:54:58Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS",
+    "next_agent": "developer",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-23T18:24:13Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13692,31 +13693,6 @@
         "updated_by": "po"
       },
       {
-        "id": "FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "M",
-        "zone": "cross-service/",
-        "next_agent": "developer",
-        "owner": "developer",
-        "title": "Cold-evict commit 38c013342e (2026-08-06) deleted 9 DONE_VERIFIED rows from done_verified[] without writing them to the monthly archive despite its own commit message -- board history silently destroyed, dependency chains broken",
-        "desc": "git show --stat 38c013342e (\"chore(tasks): cold-evict terminal done_verified + excess done tasks -> archive/2026-08.json\") = \"1 file changed, 1 insertion(+), 290 deletions(-)\" -- ONLY docs/data/orch/orch-state.json touched, docs/data/orch/archive/2026-08.json untouched, despite the commit message and the header comment of scripts/orch-cold-evict.sh both describing an atomic hot-delete+cold-write pair. Contrast the CORRECT shape at commit d4e038c7ae (2026-08-23), symmetric +171 archive / -171 hot across 2 files. CORRECTED TALLY (coordinator cross-check 2026-08-23T15:3xZ against the full 38c013342e^ vs 38c013342e diff): 10 rows destroyed, not 9. THE EVICTOR'S SELECTION WAS CORRECT -- all 10 were genuinely terminal (9 DONE_VERIFIED + 1 DONE: FIX-FB-WEEKEND-DEDUP-GATE, verified by status field in the parent commit). The defect is PURELY the unexecuted archive-write persistence step, not the eviction predicate. 6 of 10 now restored to done_verified[] verbatim from git show 38c013342e^:docs/data/orch/orch-state.json, each with a reconstructed verification.raw_probe honestly derived from its own historical status_note/review_note evidence -- see each row's recovery_note: CCATO-MCP-T1-DOMAIN-ENGINE, CCATO-MCP-T2-CLAIM-MAP-LOADER, CCATO-MCP-T4-SIGNAL-WRITER, OPS-COWORK-GUARANTEED-SLOT-INSTALL, FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK, FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW (the last two restored specifically because they stranded live rows -- see below). 4 NOT yet restored: FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE, FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL, FIX-FB-WEEKEND-DEDUP-GATE, FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0. Live fallout at time of mint: FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS (backlog) depends=[FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW] and FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT (backlog) depends=[FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK,...] BOTH NOW RESOLVE (both prerequisites restored above). FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED (done_verified) depends=[FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL] still resolves MISSING but is itself already terminal so carries no live dispatch risk. This is the root cause the CCATO-MCP-T3/T5/T6/T7/T8 P0 block (5 ready[] rows) was misreported as 'phantom prerequisites, possibly never scoped' -- they were fully specified, implemented, and QA-verified; the eviction actuator destroyed the evidence, not the work.",
-        "generic_mandate": "scripts/orch-cold-evict.sh's build_hot_temp()/build_cold_temp() (or equivalent write path) must NEVER report success or emit a narrating commit message unless the archive write actually landed. Add a hard post-write self-check: after any eviction pass, re-read the target archive/YYYY-MM.json and assert every evicted id is present with matching content BEFORE the hot-file rename commits, and BEFORE any commit message narrates '-> archive/YYYY-MM.json'. If the archive write fails for any reason, the hot-side deletion must also abort (all-or-nothing, matching orch-apply.sh's own atomic temp-then-rename discipline) -- a partial hot-delete-only outcome must be structurally impossible, not just detected after the fact.",
-        "ac": "AC-1 Root-cause WHY 38c013342e's archive-write half silently no-op'd (script bug, wrong invocation, manual bypass of the script, or a since-fixed regression) -- read the script's git history across 2026-08-06..2026-08-23 to see if this was already patched (d4e038c7ae's correct shape suggests it may have been) and if so pin the fixing commit; if NOT already fixed, that IS this row's fix. Note: the fix targets ONLY the persistence step -- the eviction SELECTION predicate (which rows qualify as terminal) was independently confirmed correct on all 10 destroyed rows, do not touch it. AC-2 Add the hot/cold symmetry self-check described above with a regression test (fixture eviction where the archive write is made to fail -> hot file must remain unchanged, non-zero exit). AC-3 Audit + restore (or explicitly retire, if genuinely obsolete) the remaining 4 victims listed above. AC-4 Re-run scripts/orch-cold-evict.sh's own test suite if one exists; if none, add one covering this exact failure mode.",
-        "files": [
-          "scripts/orch-cold-evict.sh"
-        ],
-        "reference_only_files": [
-          "docs/data/orch/archive/2026-08.json",
-          "docs/data/orch/orch-state.json"
-        ],
-        "not_duplicate_of": "Checked live 2026-08-23 across backlog[]/ready[] for COLDEVICT/COLD-EVICT/ARCHIVE-WRITE/DATA-LOSS -- nearest neighbour FIX-COLDEVICT-WITHIN-FILE-PEER-CONTENT-CAPTURE is a different failure mode (peer-write capture within one file, not hot/archive split-write asymmetry). No duplicate found.",
-        "created_by": "po (triage 2026-08-23, router-forwarded item A forensics)",
-        "created_at": "2026-08-23T15:04:02Z",
-        "updated_at": "2026-08-23T15:41:20Z"
-      },
-      {
         "id": "FIX-DEVTEAM-MANUAL-DISPATCH-BYPASSES-DEPS-SATISFIED-GATE",
         "type": "FIX",
         "status": "BACKLOG",
@@ -20932,8 +20908,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-23T16:55:26Z",
-    "last_triaged_by": "dev-team (design-router sweep)",
+    "last_triaged_at": "2026-08-23T18:23:56Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": [
       {
         "id": "UC-CDC-P1",
@@ -21088,6 +21064,36 @@
         "claimed_at": "2026-08-23T15:57:35Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "blocked_reason": "SLS claim reverted, 2026-08-23T15:37Z tick: the claim was not gate-satisfied. SLS PRIMARY selects purely on promoted_by == \"dev-team (supervised-lane sweep)\" and re-validates no gate. This row was stamped 2026-08-08T04:51:52Z and carries plan_only=false, so effective_plan_only is FALSE and the row is outside SLS's supervised-AND-plan_only quarantine class. Per main.md Lane x Gate matrix, ready[] with sup=T po=F resolves to READY-XOR-SUP-OR-PLANONLY, i.e. PO's human-gated manual-dispatch sweep, NOT auto-dispatch. Not spawned. The lane-move back to ready[] was attempted and HARD-REJECTED by the row-prose-ceiling guard (live=0B, candidate=26552B): that is defect D3 in scripts/architect-20260823-orch-prose-ceiling-row-handoff.jq, 2nd live instance after UC-CCA-P3. Marked BLOCKED rather than IN_PROGRESS so wip_in_progress excludes it and the four WIP pickers stay unblocked. Unblock path: PO manual-dispatch sweep, or land the D3 fix then lane-move to ready[]."
+      },
+      {
+        "id": "FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "M",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "developer",
+        "title": "Cold-evict commit 38c013342e (2026-08-06) deleted 9 DONE_VERIFIED rows from done_verified[] without writing them to the monthly archive despite its own commit message -- board history silently destroyed, dependency chains broken",
+        "desc": "git show --stat 38c013342e (\"chore(tasks): cold-evict terminal done_verified + excess done tasks -> archive/2026-08.json\") = \"1 file changed, 1 insertion(+), 290 deletions(-)\" -- ONLY docs/data/orch/orch-state.json touched, docs/data/orch/archive/2026-08.json untouched, despite the commit message and the header comment of scripts/orch-cold-evict.sh both describing an atomic hot-delete+cold-write pair. Contrast the CORRECT shape at commit d4e038c7ae (2026-08-23), symmetric +171 archive / -171 hot across 2 files. CORRECTED TALLY (coordinator cross-check 2026-08-23T15:3xZ against the full 38c013342e^ vs 38c013342e diff): 10 rows destroyed, not 9. THE EVICTOR'S SELECTION WAS CORRECT -- all 10 were genuinely terminal (9 DONE_VERIFIED + 1 DONE: FIX-FB-WEEKEND-DEDUP-GATE, verified by status field in the parent commit). The defect is PURELY the unexecuted archive-write persistence step, not the eviction predicate. 6 of 10 now restored to done_verified[] verbatim from git show 38c013342e^:docs/data/orch/orch-state.json, each with a reconstructed verification.raw_probe honestly derived from its own historical status_note/review_note evidence -- see each row's recovery_note: CCATO-MCP-T1-DOMAIN-ENGINE, CCATO-MCP-T2-CLAIM-MAP-LOADER, CCATO-MCP-T4-SIGNAL-WRITER, OPS-COWORK-GUARANTEED-SLOT-INSTALL, FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK, FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW (the last two restored specifically because they stranded live rows -- see below). 4 NOT yet restored: FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE, FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL, FIX-FB-WEEKEND-DEDUP-GATE, FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0. Live fallout at time of mint: FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS (backlog) depends=[FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW] and FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT (backlog) depends=[FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK,...] BOTH NOW RESOLVE (both prerequisites restored above). FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED (done_verified) depends=[FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL] still resolves MISSING but is itself already terminal so carries no live dispatch risk. This is the root cause the CCATO-MCP-T3/T5/T6/T7/T8 P0 block (5 ready[] rows) was misreported as 'phantom prerequisites, possibly never scoped' -- they were fully specified, implemented, and QA-verified; the eviction actuator destroyed the evidence, not the work.",
+        "generic_mandate": "scripts/orch-cold-evict.sh's build_hot_temp()/build_cold_temp() (or equivalent write path) must NEVER report success or emit a narrating commit message unless the archive write actually landed. Add a hard post-write self-check: after any eviction pass, re-read the target archive/YYYY-MM.json and assert every evicted id is present with matching content BEFORE the hot-file rename commits, and BEFORE any commit message narrates '-> archive/YYYY-MM.json'. If the archive write fails for any reason, the hot-side deletion must also abort (all-or-nothing, matching orch-apply.sh's own atomic temp-then-rename discipline) -- a partial hot-delete-only outcome must be structurally impossible, not just detected after the fact.",
+        "ac": "AC-1 Root-cause WHY 38c013342e's archive-write half silently no-op'd (script bug, wrong invocation, manual bypass of the script, or a since-fixed regression) -- read the script's git history across 2026-08-06..2026-08-23 to see if this was already patched (d4e038c7ae's correct shape suggests it may have been) and if so pin the fixing commit; if NOT already fixed, that IS this row's fix. Note: the fix targets ONLY the persistence step -- the eviction SELECTION predicate (which rows qualify as terminal) was independently confirmed correct on all 10 destroyed rows, do not touch it. AC-2 Add the hot/cold symmetry self-check described above with a regression test (fixture eviction where the archive write is made to fail -> hot file must remain unchanged, non-zero exit). AC-3 Audit + restore (or explicitly retire, if genuinely obsolete) the remaining 4 victims listed above. AC-4 Re-run scripts/orch-cold-evict.sh's own test suite if one exists; if none, add one covering this exact failure mode.",
+        "files": [
+          "scripts/orch-cold-evict.sh"
+        ],
+        "reference_only_files": [
+          "docs/data/orch/archive/2026-08.json",
+          "docs/data/orch/orch-state.json"
+        ],
+        "not_duplicate_of": "Checked live 2026-08-23 across backlog[]/ready[] for COLDEVICT/COLD-EVICT/ARCHIVE-WRITE/DATA-LOSS -- nearest neighbour FIX-COLDEVICT-WITHIN-FILE-PEER-CONTENT-CAPTURE is a different failure mode (peer-write capture within one file, not hot/archive split-write asymmetry). No duplicate found.",
+        "created_by": "po (triage 2026-08-23, router-forwarded item A forensics)",
+        "created_at": "2026-08-23T15:04:02Z",
+        "updated_at": "2026-08-23T18:24:13Z",
+        "promoted_at": "2026-08-23T18:23:56Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-23T18:24:12Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ]
   },
@@ -21103,7 +21109,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-23T15:23:50Z"
+        "last_served_tick": "2026-08-23T18:23:26Z"
       },
       "sls": {
         "last_served_tick": "2026-08-23T15:57:20Z"
@@ -21121,7 +21127,7 @@
         "last_served_tick": "2026-08-23T17:55:24Z"
       }
     },
-    "_updated_at": "2026-08-23T18:22:22Z",
+    "_updated_at": "2026-08-23T18:23:26Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
