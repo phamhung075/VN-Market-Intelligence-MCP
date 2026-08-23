@@ -39,9 +39,15 @@ For each of the 7:
 
 ## 3. Positive control (mandatory — this row's own AC)
 
-This cycle's run MUST find alert-commander CRITICAL (Bash + unqualified "no other writes" claim,
-both true as of 2026-08-06). If a run reports zero findings, the check itself regressed — FAIL LOUD
-(`send_telegram(channel="bug", message="[agent-father] team-tool-recheck: 0 findings — expected
+This cycle's run MUST find alert-commander CRITICAL (Bash present — per §2 step 2, CRITICAL is
+Bash-presence-by-construction, independent of description wording). Note: `476646c4e` (2026-08-14)
+fixed alert-commander's description to honestly qualify the Bash scope (was: unqualified "no other
+writes" claim, true only as of 2026-08-06) — this does NOT downgrade the finding, since the
+underlying gap (no mechanism scopes Bash to specific files) is unchanged; description honesty is
+recorded as a per-row annotation only (established convention since the 2026-08-15 report, confirmed
+through 2026-08-23). If a run reports ZERO Bash-present rows across the scope-in set (not just a
+zero-CRITICAL-count after downgrading for honest descriptions), the check itself regressed — FAIL
+LOUD (`send_telegram(channel="bug", message="[agent-father] team-tool-recheck: 0 findings — expected
 alert-commander CRITICAL, check regressed")`), do not write a "clean" report.
 
 ## 4. Output
