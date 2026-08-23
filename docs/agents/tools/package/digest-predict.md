@@ -32,6 +32,7 @@ Invoke via gateway: call_tool(server="vn-market", tool="<name>", arguments={...}
 |------|---------|-----------|
 | `get_earnings_calendar` | Filing deadlines and status for all watchlist stocks | — |
 | `get_bctc_full` | Comprehensive BCTC snapshot + comparison + sentiment trend | `code: string` (req, NOT `ticker`) |
+| `compare_financials` | YoY financial comparison — used by claim-truth-gate's `financials` dimension re-probe (self-correct step) | `actionCode: string, period1: {year:number,quarter:"Q1".."Q4"}, period2: {year:number,quarter} (req, NOT stocks/metric/periods — see docs/agents/tools/list/compare_financials.md drift note) |
 | `get_sector_comparison` | Detailed metrics and rankings by sector | `metric?: string` |
 
 ### Market Rotation & Risk

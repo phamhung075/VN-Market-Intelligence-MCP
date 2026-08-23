@@ -10,6 +10,23 @@ Deep BCTC (Financial Report) comparison across multiple stocks. Shows revenue tr
 
 ## Parameters
 
+**DRIFT NOTE (verified live 2026-08-23, digest-predict/claim-truth-gate self-correct
+probe on SHB/VHM/VIX):** the table below (`stocks`/`metric`/`periods`) does NOT match
+the live MCP tool's actual Zod schema. The live tool is a single-ticker YoY comparator,
+not a 2-5 stock peer comparison:
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `actionCode` | string | Yes | Single stock ticker (e.g. "SHB") — NOT `stocks` array |
+| `period1` | object `{year:number, quarter:"Q1"\|"Q2"\|"Q3"\|"Q4"}` | Yes | Latest fully-elapsed quarter |
+| `period2` | object `{year:number, quarter}` | Yes | Same quarter, prior year — YoY comparison base |
+
+Matches `docs/data/claim-tool-map.json`'s `financials` dimension `arg_style:
+"ticker_actionCode_yoy"` (the CCATO gate's own SSOT for this call shape). Calling with
+`stocks`/`metric`/`periods` returns a Zod `invalid_type` error (missing `actionCode`/
+`period1`/`period2`) — confirmed live. Original table below retained for reference only
+(may describe a planned/superseded design, not the live endpoint):
+
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
 | `stocks` | array | Yes | — | List of 2-5 stock codes for comparison |

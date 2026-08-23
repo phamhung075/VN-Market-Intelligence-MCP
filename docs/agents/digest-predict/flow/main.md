@@ -27,8 +27,19 @@ Universal entry. Picks the right sub-flow based on current time. Crons and ad-ho
      TTL: 86400 seconds (24h)
      Pattern mirrors the Sunday Published Marker Gate below but is keyed on the calendar day
      (not week period) and uses a 24h TTL (not 8d).
-     The gate is ONLY evaluated on non-Sunday paths; Sunday falls straight through to its own
-     Published Marker Gate (unchanged).
+     FIX-DIGESTPREDICT-SUNDAY-DAILY-GATE-SKIP (2026-08-23, digest-predict live cycle,
+     slot=digest-daily 17:30 UTC on a Sunday): this gate used to be wrapped in an
+     `IF weekday != Sunday:` guard, on the (incorrect) assumption that "Sunday" implies
+     "we are in the 13:47 UTC weekly window". That is false — `daily_predict`'s cron
+     (`30 17 * * *`) fires all 7 days including Sunday, at a DIFFERENT time than the
+     13:47 UTC weekly slot. The Steps dispatch table below already scopes correctly
+     (Step 2 = Sunday 13:47 weekly window, never calls this gate; Step 3 = any-day 17:30
+     daily window, always calls this gate) — an internal weekday check duplicating and
+     contradicting that external dispatch was redundant at best and, on a Sunday 17:30
+     fire, a live bug: it skipped UTC_DATE/MARKER_KEY computation entirely, leaving
+     daily-predict.md's P-5a with no MARKER_KEY to claim against. Removed; this block now
+     always executes whenever Step 3 invokes it (i.e. on every calendar day the daily
+     17:30 UTC window fires, Sunday included).
      UC-CCA-P3-FR3-DIGEST-PREDICT (agent-father, 2026-08-14): converted from an EARLY task_claim
      to a Phase-1 read-only probe per .claude/skills/published-marker-gate/SKILL.md. Phase-2
      claim now happens in daily-predict.md immediately before its P-5 create_prediction_claim
@@ -41,46 +52,48 @@ Universal entry. Picks the right sub-flow based on current time. Crons and ad-ho
      left untouched, flagged for a future code-janitor pass. -->
 
 ```
-# Only execute this gate if NOT Sunday (Sunday path has its own Published Marker Gate below)
-IF weekday != Sunday:
+# Runs whenever Step 3 (below) invokes this block — i.e. every day the 17:30 UTC daily
+# window fires, Sunday included. Step 2 (Sunday 13:47 weekly window) never calls this
+# block at all, so no weekday check is needed here (see FIX-DIGESTPREDICT-SUNDAY-DAILY-
+# GATE-SKIP note above).
 
-  # UTC_DATE = the YYYY-MM-DD the marker key is anchored to.
-  # PRIMARY source (FIX-CHEF-MARKER-KEY-ANCHOR-4, 2026-08-23): the `scheduled_utc=<ISO8601>`
-  #   token in this invocation's own prompt — take its leading 10 characters. cowork-team's
-  #   spawn-fanout.md Step 5.2 appends it to EVERY spawn, live or catch-up, and it carries the
-  #   cron's NOMINAL fire instant, so a retry that crosses midnight UTC still mints the SAME
-  #   MARKER_KEY as its on-time peer instead of silently retargeting to "today" and double-
-  #   publishing. Parse it the same way the slot id is parsed.
-  # SECONDARY source (token absent — genuine ad-hoc/manual invocation with no scheduler tick, or
-  #   a degraded producer; spawn-fanout OMITS the token rather than emitting `scheduled_utc=null`):
-  #   cycle-bootstrap UTC-now timestamp (the "now" field / current UTC datetime recorded at the
-  #   top of this session) — take only the date part (before the 'T').
-  # TERTIARY source: call get_current_date if that tool is available and returns today's date.
-  # FORBIDDEN: do NOT use get_week_period.periodStart — that is the Sunday week-anchor and is
-  #   the same value Mon–Sat, which would produce duplicate keys across the whole week.
-  # Each calendar day MUST yield a distinct UTC_DATE (e.g. Mon=2026-06-23, Tue=2026-06-24 …).
-  SCHEDULED_UTC = <ISO8601 from prompt token `scheduled_utc=`, or null if the token is absent>
-  if SCHEDULED_UTC is present and non-empty:
-    UTC_DATE = SCHEDULED_UTC[0:10]                 # window-anchored — retry-safe
-  else:
-    UTC_DATE = <YYYY-MM-DD from UTC-now, e.g. "2026-06-24">
+# UTC_DATE = the YYYY-MM-DD the marker key is anchored to.
+# PRIMARY source (FIX-CHEF-MARKER-KEY-ANCHOR-4, 2026-08-23): the `scheduled_utc=<ISO8601>`
+#   token in this invocation's own prompt — take its leading 10 characters. cowork-team's
+#   spawn-fanout.md Step 5.2 appends it to EVERY spawn, live or catch-up, and it carries the
+#   cron's NOMINAL fire instant, so a retry that crosses midnight UTC still mints the SAME
+#   MARKER_KEY as its on-time peer instead of silently retargeting to "today" and double-
+#   publishing. Parse it the same way the slot id is parsed.
+# SECONDARY source (token absent — genuine ad-hoc/manual invocation with no scheduler tick, or
+#   a degraded producer; spawn-fanout OMITS the token rather than emitting `scheduled_utc=null`):
+#   cycle-bootstrap UTC-now timestamp (the "now" field / current UTC datetime recorded at the
+#   top of this session) — take only the date part (before the 'T').
+# TERTIARY source: call get_current_date if that tool is available and returns today's date.
+# FORBIDDEN: do NOT use get_week_period.periodStart — that is the Sunday week-anchor and is
+#   the same value Mon–Sat, which would produce duplicate keys across the whole week.
+# Each calendar day MUST yield a distinct UTC_DATE (e.g. Mon=2026-06-23, Tue=2026-06-24 …).
+SCHEDULED_UTC = <ISO8601 from prompt token `scheduled_utc=`, or null if the token is absent>
+if SCHEDULED_UTC is present and non-empty:
+  UTC_DATE = SCHEDULED_UTC[0:10]                 # window-anchored — retry-safe
+else:
+  UTC_DATE = <YYYY-MM-DD from UTC-now, e.g. "2026-06-24">
 
-  MARKER_KEY = "published:digest-daily:" + UTC_DATE
+MARKER_KEY = "published:digest-daily:" + UTC_DATE
 
-  # Phase 1 — cheap read-only probe (per .claude/skills/published-marker-gate/SKILL.md).
-  # task_list_held has NO task_id filter — scan client-side for MARKER_KEY.
-  PROBE = call_tool(server="vn-market", tool="task_list_held",
-                     arguments={ kind: "cowork-slot", owner_agent: "digest-predict" })
-  HELD  = PROBE.locks contains an entry where task_id == MARKER_KEY AND expires_at > now
+# Phase 1 — cheap read-only probe (per .claude/skills/published-marker-gate/SKILL.md).
+# task_list_held has NO task_id filter — scan client-side for MARKER_KEY.
+PROBE = call_tool(server="vn-market", tool="task_list_held",
+                   arguments={ kind: "cowork-slot", owner_agent: "digest-predict" })
+HELD  = PROBE.locks contains an entry where task_id == MARKER_KEY AND expires_at > now
 
-  if HELD:
-    log "[digest-predict] daily-predict dedup blocked (Phase-1 probe) — already held date=" + UTC_DATE
-    EXIT with: "DONE: duplicate-daily-predict blocked | PIPELINE: complete"
-    # claims NOTHING — a leak from this call is structurally impossible.
+if HELD:
+  log "[digest-predict] daily-predict dedup blocked (Phase-1 probe) — already held date=" + UTC_DATE
+  EXIT with: "DONE: duplicate-daily-predict blocked | PIPELINE: complete"
+  # claims NOTHING — a leak from this call is structurally impossible.
 
-  # not held → proceed to Dispatch table; MARKER_KEY carried forward as session state to
-  # daily-predict.md, which performs the mandatory Phase-2 claim (ttl_seconds=86400,
-  # owner_client_session REQUIRED there) immediately before its P-5 claim-creation loop.
+# not held → proceed to Dispatch table; MARKER_KEY carried forward as session state to
+# daily-predict.md, which performs the mandatory Phase-2 claim (ttl_seconds=86400,
+# owner_client_session REQUIRED there) immediately before its P-5 claim-creation loop.
 ```
 
 ---
