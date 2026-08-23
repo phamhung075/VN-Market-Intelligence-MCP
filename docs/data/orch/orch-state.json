@@ -14707,33 +14707,6 @@
         "secondary_dispatch_target": "po"
       },
       {
-        "id": "TASK_RUNIDLE-1-AUDIT",
-        "type": "AUDIT",
-        "title": "Audit active_sprints accumulation: document missing closeout producer",
-        "status": "DONE",
-        "priority": "high",
-        "size": "S",
-        "zone": "cross-service/dev-flow/",
-        "owner": "developer",
-        "next_agent": "pm",
-        "created_at": "2026-08-09T00:00:00Z",
-        "created_by": "pm/decompose-runidle-predicate-d-20260809T0000Z",
-        "depends_on": [],
-        "blocks": [
-          "TASK_RUNIDLE-2-REDESIGN",
-          "TASK_RUNIDLE-3-STALENESS"
-        ],
-        "supervised": false,
-        "updated_at": "2026-08-23T21:58:22Z",
-        "updated_by": "qa/round-1-approved",
-        "deliverable": "docs/architecture-briefs/2026-08-09-active-sprints-accumulator-gap.md",
-        "qa_verified_at": "2026-08-08T23:10:08Z",
-        "qa_verified_by": "qa",
-        "secondary_claimed_at": "2026-08-23T21:58:22Z",
-        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "pm"
-      },
-      {
         "id": "FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT",
         "title": "PLAN-ONLY: signal-queue receiver-delivery contract (architect-ruled, decomposed by PM)",
         "status": "DONE",
@@ -17334,6 +17307,54 @@
             "args": "commit=845fd1aa8; files=apps/mcp-server/src/__tests__/CCATO-MCP-T3-PROBE-ADAPTERS.test.ts,apps/mcp-server/src/infrastructure/probes/narrativeTruthProbeAdapters.ts,apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts",
             "live_value_observed": "ancestor=yes; stat touches 3/3 claimed files (749+/20-); CCATO-MCP-T3-PROBE-ADAPTERS.test.ts 23 pass/0 fail; tsc 0 errors; 085-tool-reports.test.ts 5 pass/2 skip/0 fail; mock-guard PASS; DDD/secret greps clean; exports verified (5 adapters+probeDimension, fetchFinancialReportRow/ReportRow/rowToMetrics); full suite 15401 pass/40 skip/51 fail/1281 files (569s), 16 failing files vs baseline 15 (+1, 081-bun-mcp-server.test.ts unrelated SSE flake), zero identifier hits in failure context",
             "observed_at": "2026-08-23T20:43:21Z"
+          }
+        }
+      },
+      {
+        "id": "TASK_RUNIDLE-1-AUDIT",
+        "type": "AUDIT",
+        "title": "Audit active_sprints accumulation: document missing closeout producer",
+        "status": "DONE_VERIFIED",
+        "priority": "high",
+        "size": "S",
+        "zone": "cross-service/dev-flow/",
+        "owner": "developer",
+        "next_agent": "pm",
+        "created_at": "2026-08-09T00:00:00Z",
+        "created_by": "pm/decompose-runidle-predicate-d-20260809T0000Z",
+        "depends_on": [],
+        "blocks": [
+          "TASK_RUNIDLE-2-REDESIGN",
+          "TASK_RUNIDLE-3-STALENESS"
+        ],
+        "supervised": false,
+        "updated_at": "2026-08-23T22:04:01Z",
+        "updated_by": "qa/round-1-approved",
+        "deliverable": "docs/architecture-briefs/2026-08-09-active-sprints-accumulator-gap.md",
+        "qa_verified_at": "2026-08-08T23:10:08Z",
+        "qa_verified_by": "qa",
+        "secondary_claimed_at": "2026-08-23T21:58:22Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "pm",
+        "verification": {
+          "raw_probe": {
+            "tool": "verify-audit-deliverable",
+            "args": {
+              "file_path": "docs/architecture-briefs/2026-08-09-active-sprints-accumulator-gap.md"
+            },
+            "live_value_observed": {
+              "exists": true,
+              "size_bytes": 25650,
+              "commits_touched": [
+                "7e253e0f0",
+                "541282b0f"
+              ],
+              "qa_approved": true,
+              "qa_verdict": "APPROVED, no residual factual error found",
+              "handoff_path": "docs/handoffs/TASK_RUNIDLE-1-AUDIT.md",
+              "qa_verified_sections": "all GAP-2 subtasks[] resolved & corrected, byte-diff confirmed unchanged sections"
+            },
+            "observed_at": "2026-08-24T00:00:00Z"
           }
         }
       }
