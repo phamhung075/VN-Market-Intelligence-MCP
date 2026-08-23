@@ -4,10 +4,13 @@
 
 ## Phase 1: Audit MARKET Messages
 
-**Step 1a — Read MARKET channel (plain-language check)**
-`read_telegram_reports(channel="market", limit=10)` → last 10 MARKET messages
+**Step 1a — MARKET plain-language check (file-proxy — PRIMARY method)**
 
-> **KNOWN DEFECT (confirmed c115, 2026-07-21 — F-TNB-READTELEGRAMREPORTS-CHANNEL-PARAM-NOOP):** `read_telegram_reports` has no `channel` parameter — it silently ignores the argument and always returns the BUG-only `telegram_reports` backlog, regardless of value passed. MARKET dish content is not retrievable this way (chef's MARKET send never sets the internal `persist` param `get_unreviewed_market_messages` would need). Skip straight to file-proxy (`unified-agent.md` notebook + `unified-agent-synthesis-*.json`) — do not retry this call expecting different results. See `docs/handoffs/tnb-audit-latest.md` c115.
+`read_telegram_reports` has NO `channel` parameter — it silently ignores the argument and always returns the BUG-only `telegram_reports` backlog, regardless of value passed (confirmed c115, 2026-07-21, `F-TNB-READTELEGRAMREPORTS-CHANNEL-PARAM-NOOP`). MARKET dish content is not retrievable this way (chef's MARKET send never sets the internal `persist` param `get_unreviewed_market_messages` would need). **`read_telegram_reports` is NEVER called for MARKET content** — it is not the source for this check.
+
+**Primary method:** read the file-proxy directly — `docs/agent-memory/notebooks/unified-agent.md` (chef's own cycle notes) + `docs/data/unified-agent-synthesis-<DATE_VN>-<SLOT>.json` (per-slot RAW content) — extract the last 10 MARKET-dish message bodies from these.
+
+**Degrade LOUD if absent (mandatory):** if the expected `unified-agent-synthesis-<DATE_VN>-<SLOT>.json` for the audit window's slot does not exist on disk, do not silently skip — log `"[tnb-audit] MARKET proxy file absent for slot={SLOT} date={DATE_VN} — cannot audit plain-language check this cycle"` and set `pipeline_degraded=true` for Phase 7 (this file WAS observed genuinely absent live, 2026-07-21 eod — a confirmed live case, not hypothetical).
 
 For each MARKET message check:
 - [ ] Vietnamese diacritics present (no mojibake, no missing marks)
@@ -16,12 +19,15 @@ For each MARKET message check:
 - [ ] Ticker direction + delta % visible (not σ notation)
 - [ ] No bullet-point ticker dumps (narrative only)
 
-**Step 1b — Read WORK channel for analyst detail (layer-walk audit)**
-`read_telegram_reports(channel="work", limit=20)` → filter messages starting with `[CHEF-DETAIL]`
+**Step 1b — WORK layer-walk audit (file-proxy — PRIMARY method)**
 
-> **KNOWN DEFECT (confirmed c115, same as Step 1a above):** WORK-channel messages are explicitly "Not persisted (ephemeral)" per `send_telegram.md` — this call structurally cannot retrieve `[CHEF-DETAIL]` content. Use `unified-agent-synthesis-*.json` (Step 6.5/7 RAW content) as the substitute source for the layer-walk checks below.
+WORK-channel messages are explicitly "Not persisted (ephemeral status updates)" per `docs/agents/tools/list/send_telegram.md` — `read_telegram_reports` structurally CANNOT retrieve `[CHEF-DETAIL]` content, with or without a `channel` argument (confirmed c115, same root cause as Step 1a). **`read_telegram_reports` is NEVER called for WORK content** — it is not the source for this check.
 
-For each `[CHEF-DETAIL]` message (one per dish — Morning / EOD / Evening), check:
+**Primary method:** `docs/data/unified-agent-synthesis-<DATE_VN>-<SLOT>.json` (Step 6.5/7 RAW content) is the substitute source for every layer-walk check below — it carries the same per-dish detail the ephemeral `[CHEF-DETAIL]` WORK send would have, captured before that send ever fires.
+
+**Degrade LOUD if absent (mandatory):** same rule as Step 1a — an absent synthesis file for a guaranteed slot in the audit window is a genuine coverage gap, not a skip condition; log and set `pipeline_degraded=true`.
+
+For each `[CHEF-DETAIL]`-equivalent entry (one per dish — Morning / EOD / Evening), check:
 - [ ] Message structure follows `docs/standards/alert-message-format.md`
 - [ ] Confidence displayed as 0–1 decimal (not percentage, not raw integer)
 - [ ] Regime caveat appended when required (TIGHTENING + bullish must have caveat)

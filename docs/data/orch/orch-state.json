@@ -16230,22 +16230,6 @@
         "po_correction_premise_git_rm_20260721T2056": "PREMISE CORRECTION, RECORDED SO IT IS NOT RE-DERIVED — TWO ACTORS WERE WRONG, INCLUDING PO. The PO-authored scope for the sibling step-3 close instructed git rm on the two 0-byte artifacts. It failed with exit 128 because NEITHER FILE WAS EVER GIT-TRACKED (git log --all --diff-filter=A empty for both; they are not gitignored either). developer correctly fell back to plain rm and FLAGGED the deviation rather than silently absorbing it — that disclosure is the only reason the wrong premise surfaced at all, and it is the behaviour to reinforce. Router premise was worse than PO: router had earlier characterised these files as durable forensic evidence WITHOUT ever running git ls-files, which means a routine git clean -fd would have destroyed the entire evidentiary basis for this row silently and with no error. Standing lesson this instantiates: file existence on disk is not durability, and untracked-plus-unignored is the most fragile state a piece of evidence can be in. Any future row that treats an on-disk artifact as evidence MUST establish its tracking status before relying on it."
       },
       {
-        "id": "FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM",
-        "type": "FIX",
-        "status": "READY",
-        "priority": "P1",
-        "size": "S",
-        "zone": "docs/agents/tran-ngoc-bau/flow/",
-        "next_agent": "agent-father",
-        "title": "TNB audit Steps 0.5/1a/1b call read_telegram_reports with a channel arg that does not exist in its zod schema (status/limit/unclaimed_only only) — the arg is silently ignored and the steps have never executed against WORK/MARKET content; WORK is not persisted at all, so rewrite to file-proxy-primary",
-        "created_at": "2026-07-21T21:02:37Z",
-        "created_by": "po",
-        "source": "tnb-c115-F-TNB-READTELEGRAMREPORTS-CHANNEL-PARAM-NOOP",
-        "verdict": "CONFIRMED-AT-SOURCE-BY-PO",
-        "note": "PO TRIAGE 2026-07-21 (TNB c115 finding F-TNB-READTELEGRAMREPORTS-CHANNEL-PARAM-NOOP). VERDICT: CONFIRMED AT SOURCE by PO, independently of TNB's report.\n\nRAW EVIDENCE (PO read the zod schema directly, apps/mcp-server/src/interface/mcp/tools/briefings/telegramReportTools.ts registerTelegramReportTools): the read_telegram_reports input schema declares EXACTLY three keys — status (enum new/processed/all, default \"new\"), limit (1-50, default 20), unclaimed_only (bool, default true). There is NO channel parameter. PO also re-ran the tool live this tick with no channel arg and received only telegram_reports DB rows (BCTC-1345b / bctcExtractReconcile / market-watcher entries from analysis-agent) — i.e. the BUG-report table, consistent with TNB's byte-identical-results test across channel=\"work\"/\"market\"/absent.\n\nWHY NO CHANNEL PARAM CAN BE ADDED CHEAPLY (this is the part that decides the fix): the tool is not merely missing an argument — the DATA IT WOULD READ DOES NOT EXIST. Per docs/agents/tools/list/send_telegram.md, WORK-channel messages are explicitly \"Not persisted (ephemeral status updates)\", and MARKET-channel messages persist only when an internal persist param is supplied, which chef.md's send_telegram(channel=\"market\", ...) never supplies. So adding a channel arg would require first adding channel persistence — a far larger change than the audit steps need.\n\nIMPACT: three TNB audit steps are structurally non-functional as written and have been on EVERY cycle since they were added — audit-chef-coverage.md Step 0.5 ([chef] START/SENT/SILENT/FAILED telemetry), audit-market.md Step 1a (MARKET plain-language check), Step 1b ([CHEF-DETAIL] WORK layer-walk audit). This was masked for 20+ consecutive cycles (c095-c114) because F-MCP-SUBAGENT-SYSTEMIC blocked TNB's MCP access before it ever reached these steps; c115 is the first cycle with mcp__gateway__call_tool confirmed live, which is why it surfaced now. Not a regression — a latent defect newly observable.\n\nFIX (adopt TNB's recommendation — PO concurs): rewrite Step 0.5 / 1a / 1b to use the file-proxy as the PRIMARY method, not a degraded fallback: unified-agent.md notebook + docs/data/unified-agent-synthesis-<DATE_VN>-<SLOT>.json + docs/data/cowork-schedule.json. This is already what recent TNB cycles do in practice (correctly, via their error-boundary clause) — this row formalises practice into the flow doc.\n\nAC: (1) Steps 0.5/1a/1b name file-proxy sources as primary and no longer call read_telegram_reports for WORK/MARKET content; (2) the flow doc STOPS claiming a tool capability that does not exist — no residual \"read the WORK channel\" language; (3) any remaining read_telegram_reports call is documented as BUG-report-table-only; (4) the steps degrade LOUD when a proxy file is absent (do not silently pass) — the 07-21 eod synthesis JSON is genuinely absent, so absent-file is a live case, not hypothetical; (5) record the general invariant where the next flow author will see it: an audit step must be written against a verified tool schema, not an assumed one.\n\nCLASS NOTE: this is contract-drift (flow doc assumes a tool contract that never existed), the same family as the memory lesson feedback_wrong_arg_type_silently_disables_a_verification_predicate — an unrecognised argument silently disables the predicate rather than erroring. DISTINCT from FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE (that row = tracked-but-deferred reports re-surfacing as \"new\"; this row = a parameter that does not exist).\n",
-        "updated_at": "2026-07-21T21:02:38Z"
-      },
-      {
         "id": "FIX-ORPHAN-FR4-FR5-FLOW-DEVTEAM-ADOPTION-GUARD",
         "type": "FEATURE",
         "title": "Create resolve-task-lane-by-id.jq; implement FR-4 read-guard + FR-5 board-flip write in dev-team/flow/main.md Step 0a-B",
@@ -18693,38 +18677,6 @@
         "promoted_by": "dev-team (supervised-lane sweep)",
         "promotion_note": "Supervised-Lane Sweep — assigned dispatch_lane='dev-rag-service' (priority_rank=2); supervised/plan_only flags preserved, gate NOT disabled — see FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER",
         "dispatch_lane": "dev-rag-service"
-      },
-      {
-        "id": "TASK-BCTC-INSPECT-UI-FILTERS",
-        "type": "TASK",
-        "title": "BCTC Inspector: add 2 client-side facet filters (quarter + ticker) on doc dropdown",
-        "status": "TODO",
-        "priority": "P1",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "developer",
-        "source": "decompose:FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
-        "created_by": "pm",
-        "created_at": "2026-08-23T13:06:15Z",
-        "parent_id": "FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
-        "updated_at": "2026-08-23T13:06:16Z"
-      },
-      {
-        "id": "TASK-BCTC-INSPECT-LABEL-FIX",
-        "type": "TASK",
-        "title": "BCTC Inspector: fix buildLabel() quarter-duplication bug (AC9) + update PI3 test assertion (AC-14)",
-        "status": "TODO",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "developer",
-        "source": "decompose:FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
-        "created_by": "pm",
-        "created_at": "2026-08-23T13:06:15Z",
-        "parent_id": "FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
-        "updated_at": "2026-08-23T13:06:16Z"
       }
     ],
     "review": [
@@ -19245,6 +19197,23 @@
         "note": "Ordering: this row is the fast blast-radius limiter (minutes, one agent, one commit zone) and should land BEFORE FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE ships. It is deliberately NOT a substitute for that row — every other notebook that mixes dated and undated headings stays armed until the hook itself is fixed. PO chose next_agent=agent-father over claude-manager-helper (the owner of the sibling per-file CLEAN rows) because docs/agent-memory/ is agent-father's own commit zone and AC-2 requires changing the heading convention agent-father itself writes.",
         "dedup_checked": "Scanned backlog+ready+in_progress+review+qa for rows naming agent-father.md or a notebook cap trim. CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (ready) names only code-janitor/digest-predict. CLEAN-NOTEBOOK-BYTECAP-3-FILES-UNPRUNABLE-SINGLE-SECTION (backlog) is the single-section shape, not the mixed-convention shape. CLEAN-CONTEXT-BLOAT-NOTEBOOKS-20260614 names agent-father.md at 303L but its own AC was already met (the file measured 113L/9703B on 2026-08-06) and PO flagged it as a closure candidate — it does not cover today's re-breach nor AC-2's heading-convention requirement. No open row covers this file's current state.",
         "status_note": "\n\n[po/triage 2026-08-15T10:31:00Z — FOLD — AC-2a per-occurrence MINT BAR MET, re-scope recommended] notebook-immutability-guard WARN batch (6 stacked warnings) reached PO triage. Per docs/agents/po/flow/triage-signals.md the mint bar for this payload class is the SAME agent+section pair firing on >=2 SEPARATE cycles. BAR IS MET, 3 cycles: docs/agent-memory/notebooks/agent-father.md section '## EDIT 2026-08-14T23:03Z — task TASK_2008c (UC-CDC-P1 3-way split, agent-father slice),' fired at 2026-08-15T04:47:23Z (signal commit-sweep-guard-2026-08-15T044723Z-9217.json), 04:48:46Z (…044846Z-9929.json) and 07:50:38Z (…075038Z-82243.json). Also in the same batch: agent-father.md '## EDIT 2026-08-15T00:24Z — FIX-NEWSSCOUT-COMMIT-POLICY-NEVER-MECHANICALLY-WIRED,' and dev-team.md '## Session: 2026-08-08T22:07Z tick' + qa.md. FOLDED HERE rather than minted as a 419th row because it is the same FILE and the same ROOT PRESSURE this row already owns (agent-father.md over byte cap -> writer shrinks RETAINED sections instead of dropping whole ones, which is precisely the AC-2a violation). DISPOSITION DISCIPLINE OBSERVED: not marked benign. The index state at fire time is unreconstructable post-commit so the byte-level finding is INCONCLUSIVE, never refuted — but the MECHANISM is independently corroborated: agent-father.md has shrunk 15376B -> 8255B, a large cap-pressure restructure, and the correct AC-2a-compliant way to shed those bytes is DROP-whole-section + new marker section, not rewrite-in-place of retained sections. RE-SCOPE RECOMMENDED for whoever takes this row: the DISARM half is now SELF-RESOLVED (file is 8255B live, under the 12000B cap, 3 uniformly-dated '## EDIT <ISO>' headings, mixed-heading trap no longer armed). The remaining live defect is the AUTHORING DISCIPLINE one: agent-father's notebook-write rewrites retained sections under cap pressure. AC should be: agent-father completes 2 consecutive cap-pressure cycles with zero notebook-immutability-guard WARN on a retained section.\n[agent-father 2026-08-23T13:07:32Z] RE-VERIFIED, no new edit needed -- DISARM already shipped 2026-08-12 commit 2c46efece (split archive/agent-father-archive-20260812.md, dated remaining heading). Live re-check today: agent-father.md 99L/9179B (AC-1 PASS, well under 200L/12000B), 3/3 headings carry a YYYY-MM-DD token (AC-2 PASS: grep -c ^## = grep -cE date-token = 3), section_count=3>=2 (AC-3 PASS), commit diff shows section1 MOVE-only to archive, sections2/3 byte-identical (AC-4 PASS at landing time). AC-5s named EDIT-2026-08-12T03:23:52Z section has since rolled off via 11 days of normal rolling-section churn -- expected, not data loss (git history preserves it). PO 2026-08-15 re-scope note asked for a NEW behavioral AC (2 consecutive cap-pressure cycles w/ zero notebook-immutability-guard WARN) -- spot-checked docs/signals/processed/ for any notebook-immutability-guard WARN naming agent-father.md: 0 hits found. Closing the DISARM scope this row actually names; the authoring-discipline behavioral AC is an ongoing self-monitoring concern, not a one-time doc edit -- flagged for PO in RETURN, not silently dropped."
+      },
+      {
+        "id": "FIX-TNB-AUDIT-STEPS-ASSUME-NONEXISTENT-CHANNEL-PARAM",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "docs/agents/tran-ngoc-bau/flow/",
+        "next_agent": "qa",
+        "title": "TNB audit Steps 0.5/1a/1b call read_telegram_reports with a channel arg that does not exist in its zod schema (status/limit/unclaimed_only only) — the arg is silently ignored and the steps have never executed against WORK/MARKET content; WORK is not persisted at all, so rewrite to file-proxy-primary",
+        "created_at": "2026-07-21T21:02:37Z",
+        "created_by": "po",
+        "source": "tnb-c115-F-TNB-READTELEGRAMREPORTS-CHANNEL-PARAM-NOOP",
+        "verdict": "CONFIRMED-AT-SOURCE-BY-PO",
+        "note": "PO TRIAGE 2026-07-21 (TNB c115 finding F-TNB-READTELEGRAMREPORTS-CHANNEL-PARAM-NOOP). VERDICT: CONFIRMED AT SOURCE by PO, independently of TNB's report.\n\nRAW EVIDENCE (PO read the zod schema directly, apps/mcp-server/src/interface/mcp/tools/briefings/telegramReportTools.ts registerTelegramReportTools): the read_telegram_reports input schema declares EXACTLY three keys — status (enum new/processed/all, default \"new\"), limit (1-50, default 20), unclaimed_only (bool, default true). There is NO channel parameter. PO also re-ran the tool live this tick with no channel arg and received only telegram_reports DB rows (BCTC-1345b / bctcExtractReconcile / market-watcher entries from analysis-agent) — i.e. the BUG-report table, consistent with TNB's byte-identical-results test across channel=\"work\"/\"market\"/absent.\n\nWHY NO CHANNEL PARAM CAN BE ADDED CHEAPLY (this is the part that decides the fix): the tool is not merely missing an argument — the DATA IT WOULD READ DOES NOT EXIST. Per docs/agents/tools/list/send_telegram.md, WORK-channel messages are explicitly \"Not persisted (ephemeral status updates)\", and MARKET-channel messages persist only when an internal persist param is supplied, which chef.md's send_telegram(channel=\"market\", ...) never supplies. So adding a channel arg would require first adding channel persistence — a far larger change than the audit steps need.\n\nIMPACT: three TNB audit steps are structurally non-functional as written and have been on EVERY cycle since they were added — audit-chef-coverage.md Step 0.5 ([chef] START/SENT/SILENT/FAILED telemetry), audit-market.md Step 1a (MARKET plain-language check), Step 1b ([CHEF-DETAIL] WORK layer-walk audit). This was masked for 20+ consecutive cycles (c095-c114) because F-MCP-SUBAGENT-SYSTEMIC blocked TNB's MCP access before it ever reached these steps; c115 is the first cycle with mcp__gateway__call_tool confirmed live, which is why it surfaced now. Not a regression — a latent defect newly observable.\n\nFIX (adopt TNB's recommendation — PO concurs): rewrite Step 0.5 / 1a / 1b to use the file-proxy as the PRIMARY method, not a degraded fallback: unified-agent.md notebook + docs/data/unified-agent-synthesis-<DATE_VN>-<SLOT>.json + docs/data/cowork-schedule.json. This is already what recent TNB cycles do in practice (correctly, via their error-boundary clause) — this row formalises practice into the flow doc.\n\nAC: (1) Steps 0.5/1a/1b name file-proxy sources as primary and no longer call read_telegram_reports for WORK/MARKET content; (2) the flow doc STOPS claiming a tool capability that does not exist — no residual \"read the WORK channel\" language; (3) any remaining read_telegram_reports call is documented as BUG-report-table-only; (4) the steps degrade LOUD when a proxy file is absent (do not silently pass) — the 07-21 eod synthesis JSON is genuinely absent, so absent-file is a live case, not hypothetical; (5) record the general invariant where the next flow author will see it: an audit step must be written against a verified tool schema, not an assumed one.\n\nCLASS NOTE: this is contract-drift (flow doc assumes a tool contract that never existed), the same family as the memory lesson feedback_wrong_arg_type_silently_disables_a_verification_predicate — an unrecognised argument silently disables the predicate rather than erroring. DISTINCT from FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE (that row = tracked-but-deferred reports re-surfacing as \"new\"; this row = a parameter that does not exist).\n",
+        "updated_at": "2026-08-23T13:10:18Z",
+        "status_note": "\n[agent-father 2026-08-23T13:10:17Z] Rewrote audit-chef-coverage.md Step 0.5 + audit-market.md Steps 1a/1b: file-proxy (cowork-schedule.json + unified-agent.md notebook + unified-agent-synthesis-<DATE_VN>-<SLOT>.json) is now the PRIMARY method, read_telegram_reports is never called for WORK/MARKET content in any of the 3 steps (only remaining valid use documented as BUG-report-table-only). Error boundary in audit-chef-coverage.md rewritten off read_telegram_reports retry onto file-proxy-source availability. Degrade-LOUD added to all 3 steps (absent synthesis file = genuine coverage gap, not skip -- 07-21 eod absence cited as the live precedent). Authoring invariant recorded in main.md Dispatch section (AC-5). grep -rn read_telegram_reports docs/agents/tran-ngoc-bau/flow/*.md re-checked: 0 remaining calls, only explanatory non-use mentions."
       }
     ],
     "qa": [
@@ -19589,6 +19558,38 @@
         "po_ratified_by": "po (review-lane SECONDARY-drain single-row dispatch)",
         "po_review_note": "PLAN RATIFIED 2026-08-15 by po. Ratification was independent, not a relayed verdict (supervised-goahead.md Step 2): spec_doc verified committed at c84cc13d5, tracked, clean, 395L/34804B; the single load-bearing implementability claim (D1 — published_at survives reparse while parsed_at is re-stamped) re-derived AT SOURCE in apps/mcp-server/src/application/usecases/parseBctcReport.ts ON CONFLICT(action_code,sort_key) DO UPDATE SET, which carries 'parsed_at = excluded.parsed_at' and a verbatim comment that published_at is deliberately NOT in the SET clause (FIX-BCTC-REPARSE-BATCH-CORRUPTION-NGAYNOP-FLIP); the COALESCE fallback mirrors that file's own line 834 'const publishedAt = callerPublishedAt ?? parsedAt'; ensureFinancialReportShellRow.ts line 119 confirmed binding 'pending_extraction', 0. Fixture seam MARKET_DB_HOST_PATH and scripts/lib/sqlite-wal-guard.sh both confirmed to exist. supervised+plan_only CLEARED (not merely stamped): is_bounded1_eligible and the RLC claim predicate both exclude supervised/plan_only outright with no po_goahead escape hatch, so a stamped-but-still-supervised row would have been stranded in the READY-XOR-SUP-OR-PLANONLY manual-dispatch-only class — the exact FIX-BOUNDED1-SUPERVISED-LANE-NO-SWEEPER shape that idled a P0 for 6+ days. po_goahead key retained as the durable audit trail. Stale dispatch_lane='architect' and the 2026-08-08 architect claimed_at/by CLEARED — resolved_dispatch_lane() recomputes from next_agent, and a stale denormalised lane field has already caused one near-miss mis-dispatch. Re-zoned docs/agents/system-auditor/flow/ -> cross-service/ because the actual deliverable is two new scripts/ files; the one-line flow-doc edit is agent-father's zone and was split out to FIX-AUDITOR-C04-FLOWDOC-REPOINT (depends_on this row) so that a developer never makes a cross-zone edit and the doc never points at a script that does not exist yet.",
         "po_goahead_20260815T010235": "PO ratified the PLAN-ONLY C-04 design 2026-08-15. Verified at source, not on relay: spec_doc committed c84cc13d5 (395L/34804B, tracked, clean); D1 re-derived from parseBctcReport.ts ON CONFLICT DO UPDATE SET (parsed_at re-stamped, published_at verbatim excluded); D2 re-derived from ensureFinancialReportShellRow.ts:119 ('pending_extraction', 0); MARKET_DB_HOST_PATH fixture seam and scripts/lib/sqlite-wal-guard.sh both exist. Implementation authorised — see po_review_note."
+      },
+      {
+        "id": "TASK-BCTC-INSPECT-UI-FILTERS",
+        "type": "TASK",
+        "title": "BCTC Inspector: add 2 client-side facet filters (quarter + ticker) on doc dropdown",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "developer",
+        "source": "decompose:FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
+        "created_by": "pm",
+        "created_at": "2026-08-23T13:06:15Z",
+        "parent_id": "FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
+        "updated_at": "2026-08-23T13:09:12Z"
+      },
+      {
+        "id": "TASK-BCTC-INSPECT-LABEL-FIX",
+        "type": "TASK",
+        "title": "BCTC Inspector: fix buildLabel() quarter-duplication bug (AC9) + update PI3 test assertion (AC-14)",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "developer",
+        "source": "decompose:FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
+        "created_by": "pm",
+        "created_at": "2026-08-23T13:06:15Z",
+        "parent_id": "FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
+        "updated_at": "2026-08-23T13:09:36Z"
       }
     ]
   },

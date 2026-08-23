@@ -8,15 +8,21 @@
 
 ---
 
-## Step 0.5 — Read WORK channel telemetry (last 24h)
+## Step 0.5 — Chef pipeline telemetry (file-proxy — PRIMARY method, last 24h)
 
+`read_telegram_reports` has NO `channel` parameter (zod: `status`/`limit`/`unclaimed_only` only, `limit` capped at 50 not 200 — confirmed c115, 2026-07-21, `F-TNB-READTELEGRAMREPORTS-CHANNEL-PARAM-NOOP`) — any `channel=` value is silently ignored and the tool only ever returns rows from the BUG-only `telegram_reports` table. `[chef]` telemetry is WORK-channel-only and never persisted (per `docs/agents/tools/list/send_telegram.md`), so this call structurally CANNOT surface it, MCP-available or not. **`read_telegram_reports` is NEVER called in this step** — its only valid remaining use fleet-wide is the BUG-report table (`status`/`limit`/`unclaimed_only`), not WORK/MARKET content.
+
+**Primary method — read the file-proxy directly:**
 ```
-read_telegram_reports(channel="work", limit=200)
+docs/data/cowork-schedule.json                          — last_fired timestamps per cron slot
+docs/agent-memory/notebooks/unified-agent.md             — chef's own per-cycle notes
+docs/data/unified-agent-synthesis-<DATE_VN>-<SLOT>.json  — per-slot RAW synthesis (Step 6.5/7 content)
 ```
+Extract the `[chef] START` / `[chef] SENT` / `[chef] SILENT` / `[chef] FAILED` equivalents from these files (cycle_id, dish_type, slot_utc, reason) the same way Set A/B/F below expect.
 
-> **KNOWN DEFECT (confirmed c115, 2026-07-21 — F-TNB-READTELEGRAMREPORTS-CHANNEL-PARAM-NOOP):** `read_telegram_reports` has no `channel` parameter (zod: `status`/`limit`/`unclaimed_only` only, `limit` capped at 50 not 200) — any `channel=` value is silently ignored and the tool only ever returns rows from the BUG-only `telegram_reports` table. `[chef]` telemetry is WORK-channel-only and never persisted (per `send_telegram.md`), so this call will NEVER surface it, MCP-available or not. **Do not spend a retry on this** — go straight to the Error boundary's file-proxy fallback (`cowork-schedule.json` + `unified-agent.md` notebook + `unified-agent-synthesis-*.json`) as the primary method until this step is redesigned (routed to agent-father/architect, see `docs/handoffs/tnb-audit-latest.md` c115).
+**Degrade LOUD if absent (mandatory — do not silently pass):** if the expected `unified-agent-synthesis-<DATE_VN>-<SLOT>.json` for a guaranteed slot in the last-24h window does not exist on disk, treat it as a genuine coverage gap for that slot (same disposition as a missing CLOSE, Rule 2 below) — do NOT assume "not run yet, skip." This file WAS observed genuinely absent live (2026-07-21 eod synthesis) — absent-file is a confirmed live case, not a hypothetical one.
 
-Filter to messages containing `[chef]`. Extract into two sets:
+Filter to messages/entries containing `[chef]`. Extract into two sets:
 
 **Set A — START lines** (`[chef] START`):
 - Parse: `dish_type`, `slot_utc`, `cycle_id`
@@ -96,10 +102,10 @@ If `guaranteed_ok=false`, tag this audit cycle as `pipeline_degraded=true` — t
 
 ## Error boundary
 
-If `read_telegram_reports` fails or returns empty after 1 retry:
+If ANY of the Step 0.5 file-proxy sources (`cowork-schedule.json` / `unified-agent.md` notebook / the expected `unified-agent-synthesis-<DATE_VN>-<SLOT>.json`) is missing, unreadable, or empty after 1 re-read:
 ```
-send_telegram(channel="bug", message="[tnb-audit] chef-coverage-check BLOCKED — cannot read WORK channel | reason={error}")
+send_telegram(channel="bug", message="[tnb-audit] chef-coverage-check BLOCKED — file-proxy source unavailable | file={path} | reason={error}")
 ```
-Set `pipeline_degraded=true`. Proceed to Phase 1 layer-walk audit (do not EXIT — dish content may still be auditable via MARKET channel reads).
+Set `pipeline_degraded=true`. Proceed to Phase 1 layer-walk audit (do not EXIT — dish content may still be auditable via the MARKET-side file-proxy in `audit-market.md`). Do NOT retry `read_telegram_reports` here — it is not the source for this check (see Step 0.5 above), so its own success/failure is not the error boundary's condition.
 
 → Error boundary pattern: `.claude/skills/cowork-boundary/SKILL.md`
