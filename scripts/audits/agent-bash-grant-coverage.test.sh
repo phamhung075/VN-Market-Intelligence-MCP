@@ -286,6 +286,66 @@ else
   bad "Case 9: --update did not mint the expected placeholder entry — see $FIXTURE_ROOT/baseline.json"
 fi
 
+# ---------------------------------------------------------------------------
+# Case 10: negation guard — a NEGATED demand phrase ("no per-line git commit")
+# with NO other demand anywhere in the corpus, no Bash grant -> PASS (not a
+# mismatch). Regression fixture for FIX-BASHGRANT-GATE-NEGATED-GIT-COMMIT-
+# PHRASE-FALSE-POSITIVE (root-caused on refine_bctc_md: fleet-wide debug-
+# logger-protocol boilerplate landed by baa91292c).
+# ---------------------------------------------------------------------------
+reset_fixture
+cat > "$FIXTURE_ROOT/agents/fixture-negated-only.md" <<'EOF'
+---
+name: fixture-negated-only
+tools: Read, Write, mcp__gateway__call_tool
+model: haiku
+---
+fixture
+EOF
+mkdir -p "$FIXTURE_ROOT/flow/fixture-negated-only/flow"
+cat > "$FIXTURE_ROOT/flow/fixture-negated-only/init.md" <<'EOF'
+note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/fixture-negated-only.log per notable step/error (Read-then-Write append, no MCP tool, no per-line git commit)."
+EOF
+run_gate --check > /tmp/agent-bash-grant-coverage-test-c10.txt 2>&1
+RC10=$?
+if [ "$RC10" -eq 0 ] && ! grep -q "fixture-negated-only: flow demands Bash" /tmp/agent-bash-grant-coverage-test-c10.txt; then
+  ok "Case 10: negated-only demand phrase ('no per-line git commit') -> no mismatch, --check exits 0"
+else
+  bad "Case 10: negated-only phrase incorrectly counted as a Bash demand — see /tmp/agent-bash-grant-coverage-test-c10.txt"
+fi
+
+# ---------------------------------------------------------------------------
+# Case 11: negation guard does NOT mask a REAL demand elsewhere in the same
+# corpus (a negated line + a genuine, un-negated git-commit step) -> still
+# FAIL (missing grant). Proves the guard is per-occurrence, not per-agent.
+# ---------------------------------------------------------------------------
+reset_fixture
+cat > "$FIXTURE_ROOT/agents/fixture-negated-plus-real.md" <<'EOF'
+---
+name: fixture-negated-plus-real
+tools: Read, Write, mcp__gateway__call_tool
+model: haiku
+---
+fixture
+EOF
+mkdir -p "$FIXTURE_ROOT/flow/fixture-negated-plus-real/flow"
+cat > "$FIXTURE_ROOT/flow/fixture-negated-plus-real/init.md" <<'EOF'
+note: "Bash printf, no MCP tool, no per-line git commit."
+EOF
+cat > "$FIXTURE_ROOT/flow/fixture-negated-plus-real/flow/main.md" <<'EOF'
+**Commit (mutex-guarded)**
+```bash
+git add docs/agent-memory/notebooks/fixture-negated-plus-real.md
+git commit -m "chore(memory/fixture-negated-plus-real): notebook"
+```
+EOF
+run_gate --check > /tmp/agent-bash-grant-coverage-test-c11.txt 2>&1
+if grep -q "fixture-negated-plus-real: flow demands Bash" /tmp/agent-bash-grant-coverage-test-c11.txt; then
+  ok "Case 11: real demand elsewhere in corpus still detected despite a negated line"
+else
+  bad "Case 11: negation guard over-suppressed a real demand — see /tmp/agent-bash-grant-coverage-test-c11.txt"
+fi
+
 echo
 echo "agent-bash-grant-coverage.test.sh: ${PASS_COUNT} passed, ${FAIL_COUNT} failed"
 [ "$FAIL_COUNT" -eq 0 ]

@@ -94,6 +94,7 @@ PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJ
 cd "$PROJECT_ROOT" || exit 2
 
 command -v jq >/dev/null 2>&1 || { echo "[bash-grant-gate] ERROR jq not found on PATH"; exit 2; }
+command -v perl >/dev/null 2>&1 || { echo "[bash-grant-gate] ERROR perl not found on PATH (required for negation-aware demand detection)"; exit 2; }
 
 AGENTS_DIR="${AGENT_BASH_GATE_AGENTS_DIR_OVERRIDE:-$PROJECT_ROOT/.claude/agents}"
 FLOW_ROOT="${AGENT_BASH_GATE_FLOW_ROOT_OVERRIDE:-$PROJECT_ROOT/docs/agents}"
@@ -102,6 +103,26 @@ BASELINE_FILE="${AGENT_BASH_GATE_BASELINE_OVERRIDE:-$PROJECT_ROOT/docs/data/agen
 
 DEMAND_ERE='bash scripts/|git add|git commit|git push|commit-mutex|commit-boundary'
 DESC_CLAIM_ERE='No other filesystem writes permitted'
+
+# NEGATION GUARD (FIX-BASHGRANT-GATE-NEGATED-GIT-COMMIT-PHRASE-FALSE-POSITIVE)
+# ---------------------------------------------------------------------------
+# DEMAND_ERE is a bare substring match — it fires identically whether a line
+# DEMANDS an action ("git commit -m ...") or explicitly asserts its ABSENCE
+# ("no per-line git commit"). Root-caused on refine_bctc_md: the fleet-wide
+# debug-logger-protocol boilerplate (commit baa91292c) landed the phrase
+# "no per-line git commit" in every agent's init.md, and it was refine_bctc_md's
+# ONLY corpus hit — a pure false positive (the agent genuinely demands no
+# Bash; every other agent's identical phrase is masked by a real, separate
+# Bash grant so it never surfaced as a mismatch there).
+# demand_is_negated() below is a GENERAL guard for the whole class, not a
+# one-off exclusion for this exact string: it strips any DEMAND_ERE
+# occurrence that is immediately preceded (within up to 2 short filler
+# tokens — enough for "no per-line git commit" or "No commit-mutex", not
+# enough for e.g. "not only the two files this step's own `git add`") by a
+# negation trigger (no/not/never/without/none). A line with even ONE
+# un-negated occurrence still counts as real demand evidence — e.g. "RULE 1:
+# git add <named files only> — NEVER git add -A or git add ." still demands
+# git add via its first, un-negated clause.
 
 usage() { echo "Usage: $0 --check | --update"; }
 
@@ -162,13 +183,48 @@ flow_corpus_files() {
   done <<< "$skill_names"
 }
 
+# demand_is_negated <line_content> — 0 (true) iff EVERY DEMAND_ERE occurrence
+# in <line_content> is negated (see NEGATION GUARD note above). 1 (false) if
+# the line has no demand occurrences at all, OR at least one is un-negated.
+demand_is_negated() {
+  perl -e '
+    my $line = shift // "";
+    my @demand_res = (
+      qr/bash scripts\//i, qr/git add/i, qr/git commit/i,
+      qr/git push/i, qr/commit-mutex/i, qr/commit-boundary/i,
+    );
+    my ($found_any, $found_unnegated) = (0, 0);
+    for my $re (@demand_res) {
+      while ($line =~ /$re/g) {
+        $found_any = 1;
+        my $prefix = substr($line, 0, pos($line) - length($&));
+        if ($prefix !~ /\b(?:no|not|never|without|none)\b(?:[ \t]+[A-Za-z0-9][A-Za-z0-9-]{0,14}){0,2}[ \t]*$/i) {
+          $found_unnegated = 1;
+        }
+      }
+    }
+    exit(($found_any && !$found_unnegated) ? 0 : 1);
+  ' "$1"
+}
+
 # bash_demand_evidence <id> — prints "file:line: snippet" for the FIRST
-# DEMAND_ERE match across the agent's flow corpus, or nothing if none.
+# UN-NEGATED DEMAND_ERE match across the agent's flow corpus (skipping any
+# match line whose only occurrences are negated — see NEGATION GUARD), or
+# nothing if none.
 bash_demand_evidence() {
-  local id="$1" files
+  local id="$1" files raw line content
   files="$(flow_corpus_files "$id" | sort -u)"
   [ -z "$files" ] && return 0
-  printf '%s\n' "$files" | xargs grep -niE "$DEMAND_ERE" 2>/dev/null | head -1 | sed "s|^${PROJECT_ROOT}/||"
+  raw="$(printf '%s\n' "$files" | xargs grep -niE "$DEMAND_ERE" 2>/dev/null)"
+  [ -z "$raw" ] && return 0
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    content="$(printf '%s' "$line" | cut -d: -f3-)"
+    if ! demand_is_negated "$content"; then
+      printf '%s\n' "$line" | sed "s|^${PROJECT_ROOT}/||"
+      return 0
+    fi
+  done <<< "$raw"
 }
 
 has_bash_demand() {
