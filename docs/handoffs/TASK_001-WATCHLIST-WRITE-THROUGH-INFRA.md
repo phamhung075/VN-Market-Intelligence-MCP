@@ -153,3 +153,38 @@ Before marking this task DONE:
 Then:
 - Update orch-state.json: `status: DONE_VERIFIED`, `verified_at: <timestamp>`, `verified_by: dev-mcp-server`
 - Move TASK_002 to READY (it was waiting on this)
+
+---
+
+## [QA] Verification Note (partial — 2026-08-23T22:xx Z, direct-commit verify entry point)
+
+**This file was found UNTRACKED on disk** despite already being referenced by the row's own
+`.handoff` field in `docs/data/orch/orch-state.json` — committing it now purely to close that gap
+(no content changes made). This is NOT a `vc-approved`/`vc-changes` lane-move — see below.
+
+**Commit checked:** `ce1f52127` — real, on `main` ancestry, touches exactly the 3 files the
+`dev_note` claims (`systemMapWatchlistWriter.ts`, `watchlist.ts`, the new test file at the
+repo-convention path, not the handoff's originally-specified path).
+
+**Independently re-run (host, bun zone — no container substitution needed):**
+- `bun test src/__tests__/TASK_001-watchlist-write-through-infra.test.ts` → 10 pass / 0 fail (matches claim).
+- `bun test` on all 14 `*watchlist*.test.ts` files (187 tests, incl. `WATCHLIST-DB-SYSMAP-DRIFT-FIX.test.ts`) → 187 pass / 0 fail, no regressions.
+- `bun tsc --noEmit` → clean.
+- Code inspection: `upsertSystemMapWatchlistEntry`/`removeSystemMapWatchlistEntry` wired into both
+  handlers in `watchlist.ts`; optional `sector` Zod param present with `titleCaseDomain` fallback.
+- `docs/data/system-map.json` `.project.watchlist` still 34 entries (unchanged by this test run).
+
+**AC-5 / AC-7 confirmed NOT done (matches the row's own admission, independently corroborated):**
+the live `mcp-server` container image (`docker inspect` `.Created` = `2026-08-23T13:52:50Z`) predates
+this commit (author date `2026-08-23 17:11:08 +0200` = `2026-08-23T15:11:08Z`) — the deployed runtime
+does not yet contain this code, so AC-7's "verify through a live container" cannot have happened and
+has not happened. No sign-off issued on AC-7.
+
+**No orch-state.json write performed.** The row is `task_board.review[]`, `status: "REVIEW"` (verified
+directly, `git diff HEAD -- docs/data/orch/orch-state.json` is empty — no pending write either) — it
+was never actually present in `task_board.qa[]`, contradicting the dispatch claim that it had been
+"promoted review[] → qa[] this tick." `qa[].status` on both live `qa[]` rows is `"QA"`; this row's is
+`"REVIEW"`, so the flow's own `vc-approved`/`vc-changes` jq guards (`elif ($t.status // null) != "QA"
+then error(...)`) would abort against it — correctly, since the row's own AC-5/AC-7 gaps mean it was
+not actually ready for a QA verdict regardless of lane. Declining to force either lane-move or
+fabricate a DONE_VERIFIED. Reported upstream to the dispatching tick as a promotion-actuation gap.
