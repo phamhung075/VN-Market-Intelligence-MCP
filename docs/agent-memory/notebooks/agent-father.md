@@ -97,3 +97,36 @@ CADRAT-3 routing. Steps 3-5 (sweep-fixes) + 5b (team-tool-recheck) ran unconditi
   its very first live sweep without that being a bug — the guide's own rollout design anticipates
   exactly this ("auto-fix-driven, not mass edit" = the sweep mechanism itself IS the rollout
   vehicle, and it fires in full on the first cycle it's reachable, not spread thin on purpose).
+
+## FIX 2026-08-23T14:20Z — FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR (QA CHANGES_REQUESTED, redispatch 1)
+
+- My own 863a250e3 replaced prose with jq — but the jq could never pass `orch-validate.mjs`. QA found
+  it by EXECUTING; I had shipped it by reading. Three defects, all now closed in
+  `docs/agents/qa/flow/main.md`: vc-approved `next_agent: null` → `del(.next_agent)`; vc-approved
+  gained the mandatory RC-VERIF `verification.raw_probe{tool,args,live_value_observed,observed_at}`
+  + a fail-loud refuse when any probe field is empty; vc-changes `$t.owner` →
+  `($t.owner // $t.owner_agent // "po")`. Both self-verify greps widened past the bare
+  `.status ==` check that let all three through.
+- **Lesson (repeat offence, 2nd time on the same row):** `next_agent` has TWO different contracts in
+  one schema file — `TaskSchema:208` is `z.string().optional()` (NOT nullable), `HeadSchema:324` is
+  `z.string().nullable().optional()`. I copied the `.head` idiom onto a task row. When an idiom is
+  lifted from elsewhere in the same file, re-read the schema for the NEW target, not the source.
+- **Lesson (method):** blocker [2] is structurally unreachable until [1] is fixed — the validator
+  stops at the first class of error. Any "fix the one thing QA named" pass ships a second dead
+  actuator. Fix-then-rerun until green, never fix-then-reason.
+- Verified by executing the SHIPPED doc text, not a hand-copy: harness extracts the fenced blocks
+  straight out of `qa/flow/main.md` and replays them against a fixture via
+  `ORCH_APPLY_LIVE_FILE_OVERRIDE` (the escape hatch `orch-apply.sh` already provides). 16/16 PASS —
+  incl. 3 negative controls re-proving each pre-fix form still rejects, and a sha256 check that the
+  live hot file was untouched throughout.
+- Also added, evidence-forced, beyond the ACs: a `del`-vs-`.head` disambiguation note so the next
+  editor does not "fix" the legal line 32, and a `review[]` prose-ceiling warning on vc-changes —
+  QA's own rejection breached that ceiling (9986B→13293B, limit 12000) while writing itself.
+- **Handed back, NOT attempted:** AC-4 opt-in allowlist regression verifier + AC-5 fixtures belong in
+  `scripts/`, outside my commit zone. The harness above is the working prototype; it needs a
+  developer row to become durable. Same split as the 3ce726a6e precedent.
+- **Not fixed (QA's non-blocking [4]):** both blocks guard source lane `qa[]`/`QA`, but today's batch
+  arrived in `review[]`/`REVIEW`. QA called the refusal correct fail-safe behaviour — the real defect
+  is dispatch-side (drain not moving rows into `qa[]` before spawning QA). Left alone deliberately;
+  a peer session is running dev-team concurrently and weakening a fail-safe mid-flight is the wrong
+  trade.
