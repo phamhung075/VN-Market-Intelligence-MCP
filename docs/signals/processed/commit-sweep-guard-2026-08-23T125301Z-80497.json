@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-23T12:53:01Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-ba.md docs/agent-memory/notebooks/ba.md docs/handoffs/FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER-BA-spec.md. actor=669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3 mode=warn escalated=false prior_warns=1 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "f75d8c9fa71fdb48627207caa80377c4060b6c2a63ab1d0026e6eb3e14d13ca5",
+    "processedAt": "2026-08-23T12:53:06Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

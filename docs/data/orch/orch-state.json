@@ -19575,9 +19575,110 @@
         "last_served_tick": "2026-08-23T11:54:46Z"
       }
     },
-    "_updated_at": "2026-08-23T12:48:03Z",
-    "_updated_by": "po",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-23T12:53:06Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "f2d50e1f0f07e654f7944896e8a48e991ebcca3109d2a789e99527b78fc247ce",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-28c3c296",
+          "head_sha": "28c3c2962e0bbc219495619454962af5a14eab28",
+          "run_id": 32638567966,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/32638567966",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "signal-type-coverage-guard",
+              "conclusion": "failure",
+              "jobId": 97191952913
+            }
+          ],
+          "fingerprint": "7e028218ce0bfd7c5417d5d493933c51aefdbd0c6aa6b944df442e92a9b735be",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 28c3c2962e0bbc219495619454962af5a14eab28: signal-type-coverage-guard",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-23T12:23:04Z",
+        "drained_at": "2026-08-23T12:53:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1bad61b39a222a4201d11eb2c4e1ae6031e7f8f12810b78d1c22f0f404d15d0f",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/scope-20260823T1241Z-po.md docs/agent-memory/notebooks/po.md docs/data/orch/orch-state.json. actor=669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3 mode=warn escalated=false prior_warns=0 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-23T12:43:37Z",
+        "drained_at": "2026-08-23T12:53:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f75d8c9fa71fdb48627207caa80377c4060b6c2a63ab1d0026e6eb3e14d13ca5",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-ba.md docs/agent-memory/notebooks/ba.md docs/handoffs/FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER-BA-spec.md. actor=669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3 mode=warn escalated=false prior_warns=1 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-23T12:53:01Z",
+        "drained_at": "2026-08-23T12:53:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "61df4c3cbf2df015582d7619562739e576f2cc35021ee272d3564b8251e67a34",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 59,
+          "cap": 200,
+          "byte_count": 12711,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 711,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-23T12:51:27Z",
+        "drained_at": "2026-08-23T12:53:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "93cf79decf9b6c0e24285d92c98ff216d627cfb19f7414dbc45d48011b494a5d",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 59,
+          "cap": 200,
+          "byte_count": 12711,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-23T12:51:25Z",
+        "drained_at": "2026-08-23T12:53:06Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-23T12:48:03Z",
     "last_po_triage_note": "po Step 0-SIG 2026-08-23T12:47Z — 4 envelopes triaged, 0 mints (all DEDUP HIT against rows already on the board). 1x ci_red CI-RED-4b6f60ea (run 32637153628, head 4b6f60ea, failing job signal-type-coverage-guard): DEDUP HIT — FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire (ready, READY) and FIX-SIGNAL-TYPE-ROUTING-GAP-notebook-prune-dropped-newest-dated-section (backlog, auto-filed 12:23Z by the guard itself) together own both unrouted types this job is red on. 1x cowork-fire 20260823T120552Z: same routing-gap row owns the type; the tick's own execution findings were NOT dropped with the envelope — both flow-doc defects carried in its payload.note are minted as FIX-COWORK-FLOWDOC-STALE-WEEKEND-SUPPRESSION-AND-BGFAN1-RETURN-PRESUMPTION (ready, agent-father). 2x notebook_prune_dropped_newest_dated_section (both docs/agent-memory/notebooks/dev-mcp-server.md line 3, AC-6 same-day-tie class): DEDUP HIT — FIX-NOTEBOOK-AUTOPRUNE-AC6-SAMEDAY-TIE-PROCEEDS-AND-DROPS-LOADBEARING-SECTION (backlog) is the exact owner, and FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (ready) is the parent. SAME CAVEAT AS THE 10:33Z CLEAR: this write removes the cowork-fire envelope that scripts/audits/guard-signal-type-coverage.sh:198 reads, so CI can go green next run with the routing table still unfixed — that green is an artifact of the drain, not a fix.",
     "last_po_triage_consumed": 4,
