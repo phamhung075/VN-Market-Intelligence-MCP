@@ -378,3 +378,93 @@ E-3 (signal-queue row write via orch-apply.sh) status: skipped due to E-1 failur
 
 The A-30 finding remains in the documented cycle entry and is available for review via the signal-queue retroactively once the signal path is restored.
 
+
+### Audit Run c2 — Tier-1 Verification Pass 2026-08-23T20:32Z+08:53
+
+**Cycle Meta:** FIRE_TASK_ID=cron:auditor-t1:2026-08-23T20:30Z, spawned to verify fleet-push exit-status:1 root cause
+
+#### Summary
+Pre-gate verdict returned FAILURE: launchd health probe detected `com.vn-market.fleet-push` stale ACK (last_healthy_at=2026-08-23T20:03:15Z, age 29.4 min at time of spawn). **Audit objective:** Verify the true root cause and assess whether existing tracking rows are mis-rooted.
+
+#### Root Cause Verification — COMPLETED
+
+**Evidence collected (read-only probes only, no infrastructure modifications):**
+
+1. **Fleet-push logs analysis:**
+   - `docs/agent-memory/sessions/fleet-push.log` [tail -50]: Shows successful pushes followed by a 24-commit push attempt that FAILED
+   - Root cause visible in log: `[size-lint] FAIL — 1 offending file(s) (scanned 1412): apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts — baseline-tolerance-exceeded (baseline=228L actual=252L upper=250L)`
+   - Pre-push hook blocked the push: `[pre-push] BLOCKED: doc-shaped check(s) failed`
+
+2. **Error log pattern analysis:**
+   - `docs/agent-memory/sessions/fleet-push-error.log`: 7 consecutive identical ABORT lines: `[fleet-push] ABORT: git push origin HEAD:main failed (non-zero exit). Check git output above.`
+   - Confirms repeated retry-and-fail cycle (all 7 failures identical — same root cause)
+
+3. **Git status verification:**
+   - `git rev-list --count origin/main..HEAD` = 38 commits ahead, 0 behind
+   - Brief stated "ahead=33 at spawn time"; now 38 confirms continuous backlog growth (fleet-push keeps making commits, each blocked by the same breach)
+
+4. **File size verification:**
+   - `wc -l apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts` = 252
+   - Size-lint limit = 250, baseline = 228 → breach of 2 lines
+
+#### Root Cause Assessment — CRITICAL FINDING
+
+**ACTUAL ROOT CAUSE: LOCAL pre-push hook size-lint violation (NOT launchd/log-rotation)**
+
+The fleet-push exit-status:1 is REAL. But it is NOT caused by:
+- Launchd ExConfig silent death (claimed in FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD)
+- Log rotation issues (claimed in FIX-FLEET-PUSH-LOG-NO-ROTATION-UNPROVEN-ROOTCAUSE)
+
+**PROVEN root cause from live log evidence:** The local pre-push hook runs a size-lint check before attempting git push. The file `pushBctcLayoutHandler.ts` exceeds its size limit by 2 lines, causing the hook to block the push. This is not an infrastructure issue; it is a code-size constraint violation in a developer-controlled file.
+
+#### Assessment of Existing Tracking Rows — MIS-ROOTED
+
+1. **FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD** 
+   - Status: Already triaged by PO on 2026-08-23T08:20:49Z as TRUE POSITIVE for stale ACK (correct detector), but **root cause statement is falsified**
+   - Claimed root cause: launchd ExConfig silent dead
+   - Actual root cause: pre-push hook size-lint violation
+   - **Verdict: MIS-ROOTED — root cause statement is incorrect**
+
+2. **FIX-FLEET-PUSH-LOG-NO-ROTATION-UNPROVEN-ROOTCAUSE** (backlog)
+   - Claimed root cause: log rotation issue (unproven)
+   - Actual root cause: pre-push hook size-lint violation (proven from logs)
+   - **Verdict: MIS-ROOTED — root cause statement is incorrect**
+
+#### Signal Output
+
+**Signal Posted:** sys-20260823T20:32Z-11205 (via post_agent_signal)
+- Type: signal_feedback
+- To: po (for root cause correction and tracking row reassessment)
+- Severity: CRITICAL
+- Check ID: FLEET-PUSH-ROOT-CAUSE
+- Dedup key: fleet_push_size_lint_root_cause_2026_08_23
+- Content: Full root cause assessment with mis-rooted tracking rows identified
+- Status: Success (critic_pass=true, signal_id=11205)
+
+#### Disposition
+
+**What I did NOT do (per hard constraints):**
+- Did NOT fix the size-lint breach in pushBctcLayoutHandler.ts (detect-only agent)
+- Did NOT modify any code files
+- Did NOT run any destructive or infrastructure-modifying commands
+- Did NOT hand-write auditor heartbeat file
+
+**What I did:**
+- Verified root cause from read-only log sources (fleet-push.log, error.log, git status, file size)
+- Assessed existing tracking rows against evidence (found mis-rooted root causes)
+- Emitted signal to PO with full evidence and assessment
+- Documented all findings in notebook
+
+**Next steps (NOT my job):**
+- PO/developer: Review root cause assessment and reassign/correct the two existing tracking rows
+- Developer: Reduce pushBctcLayoutHandler.ts by 2 lines to satisfy size-lint constraint
+- Fleet: Resume normal push operations once size-lint breach is fixed
+
+#### Findings Summary
+- **True Positive:** fleet-push stale ACK is real (job IS failing)
+- **Root Cause Verified:** pre-push hook size-lint violation (252L vs 250L limit)
+- **Tracking Row Assessment:** 2 existing rows mis-rooted (blamed launchd/log-rotation, actual cause is code size)
+- **Audit Status:** ✓ Complete
+- **Anomalies Found:** 1 CRITICAL (root cause misidentification in existing tracking)
+- **Signals Posted:** 1 (sys-11205 to PO)
+
