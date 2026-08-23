@@ -17313,27 +17313,6 @@
         "architect_review_note": "[architect 2026-08-12T10:5xZ DISPOSITION — no new code, execution gap only] ROOT CAUSE (RAW-verified): see .detail for the full evidence trail. Summary — all 12 cohort tickers bctc_vps_queue rows are stuck url_not_found/last_attempt=NULL/attempts=6-7 since 2026-04-28/30, pre-dating the FIX-BCTC-ENRICHER-STUCK-BACKLOG last_attempt fix (d92801332, 2026-07-02), permanently excluded from every retry arm in bctcQueueEnricherJob.ts. The fix already exists and was committed in the SAME commit as the last_attempt fix: apps/mcp-server/src/migrations/reset-bctc-enricher-stuck-backlog-2026-04.ts — allowlist verified to cover all 12 of this cohorts tickers. Never invoked (live probe confirms pre-fix state unchanged today).\nOPS ACTION PLAN (no code to write):\n1. docker exec <mcp-server container> bun run apps/mcp-server/src/migrations/reset-bctc-enricher-stuck-backlog-2026-04.ts --dry-run -- confirm ~21 matches incl. this cohorts 12.\n2. Re-run WITHOUT --dry-run to apply (resets matched rows to pending/attempts=0/last_attempt=NULL).\n3. RAW re-probe bctc_table_rows/bctc_layout_units for the 12 report_ids over the following 1-2 reconcile cycles (~30min-4h) -- the bctcQueueEnricherJob -> bctcPdfPullJob -> bctcExtractReconcileJob pipeline is independently proven live-healthy (1865 layout_units written 2026-08-03 alone), no further code intervention expected.\nEXPECTED SPLIT:\n- GVR/MBB/D2D/NKG/SSI (real UUID, no fallback-id blocker): should genuinely resolve to real table_rows via the healthy pipeline. Ds pdf_path (NULL again) gets freshly re-set by the normal pull step once its queue row is re-admitted -- no separate fix needed.\n- GAS (no financial_reports row at all): ensureFinancialReportShellRow (already wired into bctcPdfPullJob step 4b) auto-creates the shell row on re-pull -- no manual insert needed this time (unlike the 07-10 one-off).\n- ACB/BID/EIB/HCM/HSG/POW (fallback-id cohort, Track1): will re-pull and re-fire PEK but the write still HTTP-400s at the isValidUuid() gate until FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE (owner architect, currently BLOCKED on its own -write/-READ-SIDE-FAST-FOLLOW children) ships -- harmless no-op, NOT a regression; sequencing after Track1 ships is preferable but not required for safety.\nDo NOT re-litigate dormancy/PPC/fallback hypotheses -- independently closed by prior rounds on this row + the Track1 row.\nOPTIONAL P2 (not required to close this row): the migration existing-but-never-auto-run is itself enricher-liveness.md doc own flagged \"recurring bug class (2nd occurrence)\" concern -- a startup-safe generic reset (mirroring server-startup.ts pdf-poison-cleanup precedent) would close a 3rd occurrence pre-emptively. POs call whether to mint separately.\nROUTING: next_agent=ops (execution + RAW-verify only -- zero new code/design needed, the fix already exists). Zone unchanged apps/mcp-server/. BUILD-STANDARD: not-applicable (data-repair execution of an already-authored migration)."
       },
       {
-        "id": "FIX-CHEF-MARKER-KEY-ANCHOR-1",
-        "type": "FIX",
-        "size": "S",
-        "title": "Expose scheduled_utc_time in cowork-match-slots.js for live MATCHES",
-        "status": "TODO",
-        "priority": "P0",
-        "zone": "cross-service/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "sprint": "COWORK-RELIABILITY",
-        "parent": "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR",
-        "created_at": "2026-08-12T11:29:41Z",
-        "created_by": "pm",
-        "depends_on": [],
-        "files": [
-          "scripts/agents-flow/cowork-match-slots.js"
-        ],
-        "note": "Compute nominal scheduled UTC time for each matched slot; add scheduled_utc_time field mirroring cowork-catchup-predicate.js",
-        "updated_at": "2026-08-12T11:29:41Z"
-      },
-      {
         "id": "FIX-CHEF-MARKER-KEY-ANCHOR-2",
         "type": "FIX",
         "size": "S",
@@ -17342,7 +17321,7 @@
         "priority": "P0",
         "zone": "docs/agents/cowork-team/",
         "owner": "developer",
-        "next_agent": "developer",
+        "next_agent": "agent-father",
         "sprint": "COWORK-RELIABILITY",
         "parent": "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR",
         "created_at": "2026-08-12T11:29:41Z",
@@ -17354,7 +17333,9 @@
           "docs/agents/cowork-team/flow/match-slots.md"
         ],
         "note": "Add field to MATCHES output schema documentation; cross-reference catchup_raw equivalent",
-        "updated_at": "2026-08-12T11:29:41Z"
+        "updated_at": "2026-08-23T13:58:10Z",
+        "updated_by": "developer",
+        "routing_correction_20260823": "next_agent developer -> agent-father. Every file in this row files[] is under docs/agents/, which is agent-father EXCLUSIVE commit_zone (docs/agents/agent-father/init.md commit_zone.allowed = [docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/]). A developer picking this up must either breach that zone or stall; the identical breach happened on this repo earlier TODAY (see docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-8.md STEP developer-S113, where a developer edit to a flow doc had to be reverted for exactly this reason). Producer half ANCHOR-1 shipped in 777ec912f; depends_on ANCHOR-1 still gates these until QA promotes it to DONE_VERIFIED, which is correct and deliberately not forced."
       },
       {
         "id": "FIX-CHEF-MARKER-KEY-ANCHOR-3",
@@ -17365,7 +17346,7 @@
         "priority": "P0",
         "zone": "docs/agents/cowork-team/",
         "owner": "developer",
-        "next_agent": "developer",
+        "next_agent": "agent-father",
         "sprint": "COWORK-RELIABILITY",
         "parent": "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR",
         "created_at": "2026-08-12T11:29:41Z",
@@ -17377,7 +17358,9 @@
           "docs/agents/cowork-team/flow/spawn-fanout.md"
         ],
         "note": "Append scheduled_utc=<slot.scheduled_utc_time> to ENTRY_PROMPT; symmetric for live+catchup paths",
-        "updated_at": "2026-08-12T11:29:41Z"
+        "updated_at": "2026-08-23T13:58:10Z",
+        "updated_by": "developer",
+        "routing_correction_20260823": "next_agent developer -> agent-father. Every file in this row files[] is under docs/agents/, which is agent-father EXCLUSIVE commit_zone (docs/agents/agent-father/init.md commit_zone.allowed = [docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/]). A developer picking this up must either breach that zone or stall; the identical breach happened on this repo earlier TODAY (see docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-8.md STEP developer-S113, where a developer edit to a flow doc had to be reverted for exactly this reason). Producer half ANCHOR-1 shipped in 777ec912f; depends_on ANCHOR-1 still gates these until QA promotes it to DONE_VERIFIED, which is correct and deliberately not forced."
       },
       {
         "id": "FIX-CHEF-MARKER-KEY-ANCHOR-4",
@@ -17388,7 +17371,7 @@
         "priority": "P0",
         "zone": "docs/agents/unified-agent/",
         "owner": "developer",
-        "next_agent": "developer",
+        "next_agent": "agent-father",
         "sprint": "COWORK-RELIABILITY",
         "parent": "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR",
         "created_at": "2026-08-12T11:29:41Z",
@@ -17402,7 +17385,9 @@
           "docs/agents/digest-predict/flow/main.md"
         ],
         "note": "Parse scheduled_utc parameter; derive CYCLE_DATE_UTC from it (fallback: date -u). Apply pattern to all guaranteed slots per AC5",
-        "updated_at": "2026-08-12T11:29:41Z"
+        "updated_at": "2026-08-23T13:58:10Z",
+        "updated_by": "developer",
+        "routing_correction_20260823": "next_agent developer -> agent-father. Every file in this row files[] is under docs/agents/, which is agent-father EXCLUSIVE commit_zone (docs/agents/agent-father/init.md commit_zone.allowed = [docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/]). A developer picking this up must either breach that zone or stall; the identical breach happened on this repo earlier TODAY (see docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-8.md STEP developer-S113, where a developer edit to a flow doc had to be reverted for exactly this reason). Producer half ANCHOR-1 shipped in 777ec912f; depends_on ANCHOR-1 still gates these until QA promotes it to DONE_VERIFIED, which is correct and deliberately not forced."
       },
       {
         "id": "FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE",
@@ -19528,6 +19513,34 @@
         "next_agent": "agents-architect",
         "redispatch_count": 1,
         "updated_by": "qa"
+      },
+      {
+        "id": "FIX-CHEF-MARKER-KEY-ANCHOR-1",
+        "type": "FIX",
+        "size": "S",
+        "title": "Expose scheduled_utc_time in cowork-match-slots.js for live MATCHES",
+        "status": "REVIEW",
+        "priority": "P0",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "sprint": "COWORK-RELIABILITY",
+        "parent": "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR",
+        "created_at": "2026-08-12T11:29:41Z",
+        "created_by": "pm",
+        "depends_on": [],
+        "files": [
+          "scripts/agents-flow/cowork-match-slots.js",
+          "scripts/agents-flow/cowork-match-slots.test.js",
+          "docs/WORK.md"
+        ],
+        "note": "Compute nominal scheduled UTC time for each matched slot; add scheduled_utc_time field mirroring cowork-catchup-predicate.js",
+        "updated_at": "2026-08-23T13:58:10Z",
+        "updated_by": "developer",
+        "reviewed_at": "2026-08-23T13:58:07Z",
+        "commit": "777ec912f",
+        "branch": null,
+        "review_note": "IMPLEMENTED, commit 777ec912f on main (direct-commit row, branch:null - qa verify-committed mode, NOT the normal pipeline JUMP-TO). Live MATCHES entries from scripts/agents-flow/cowork-match-slots.js now carry scheduled_utc_time (ISO8601 Zulu, the cron nominal fire instant, timezone-free), per architect brief docs/architecture-briefs/2026-08-06-cowork-marker-lifecycle-anchor-and-release.md S2 Component A bullet 1. New exported annotateScheduledUtc(slots, nowUnix, deps) REUSES cowork-catchup-predicate.mostRecentCronFireBefore fed the matcher own field/dowMatch - ONE derivation shared by the live and catch-up paths; re-implementing the reverse-cron walk would recreate the two-derivations-one-window bug class this field exists to close. Applied at the CLI (same precedent as catchup_raw) because matchSlots() test seam is a {actualM,H,DOM,MON,DOW} ctx with no absolute instant and every real consumer reads CLI stdout. Degrades to null and never throws on: predicate module unavailable, absent/malformed cron, or no fire within the 8-day bounded lookback - a sibling slot in the same batch is still anchored. Pure superset of the per-slot shape (NFR-2), input objects never mutated. VERIFICATION: node scripts/agents-flow/cowork-match-slots.test.js = 90/90 GREEN (69 baseline + 21 new, TC-28..TC-34) covering both REAL incident windows (2026-07-22 19:55:41Z vs 20:01:30Z two-peer straddle; 2026-08-06T06:37:39Z post-host-sleep retry anchoring back to the missed 2026-08-05T19:45Z window), the two-peers-one-key invariant, live-vs-catchup derivation equality, malformed-cron degradation, and the CLI contract with AND without the predicate module present. Siblings unregressed: cowork-catchup-predicate.test.js 34/34, cowork-guaranteed-slot-firer.test.sh 53/53, cowork-tick-preflight.test.sh 75/75. Live CLI against the REAL schedule and REAL clock emitted slot_id=digest-sunday cron=\"47 13 * * 0\" scheduled_utc_time=\"2026-08-23T13:47:00.000Z\". SCOPE: this row is the PRODUCER only. The three consumers (ANCHOR-2 match-slots.md schema doc, ANCHOR-3 spawn-fanout.md prompt token, ANCHOR-4 chef.md parse) all live under docs/agents/, which is agent-father exclusive commit_zone per its own frontmatter (docs/agents/agent-father/init.md commit_zone.allowed) - they were NOT implemented here and their next_agent has been corrected developer -> agent-father in this same write."
       }
     ],
     "qa": [
