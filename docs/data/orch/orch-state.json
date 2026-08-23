@@ -21064,7 +21064,7 @@
         "last_served_tick": "2026-08-23T14:55:52Z"
       }
     },
-    "_updated_at": "2026-08-23T17:22:14Z",
+    "_updated_at": "2026-08-23T17:52:27Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -22092,6 +22092,249 @@
         },
         "createdAt": "2026-08-23T17:07:22Z",
         "drained_at": "2026-08-23T17:21:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a2db51e00e51ccf23aba00525d11933ade8395d28decb3cce0cb4d31076f7b3d",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-26.md",
+          "line_count": 189,
+          "cap": 600,
+          "byte_count": 37327,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 1327,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-23T17:26:50Z",
+        "drained_at": "2026-08-23T17:52:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f51da45874f8a773c6b289e76e2c3ad3b46404b58f6927a718455b903001d76c",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 46,
+          "cap": 200,
+          "byte_count": 38160,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 26160,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-23T17:42:07Z",
+        "drained_at": "2026-08-23T17:52:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f7b40ab862c45f9f189a956756f0e08f007d73ebca95b45b8b10f066d8ce3af0",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/qa.md",
+          "line_count": 27,
+          "cap": 200,
+          "byte_count": 12159,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 159,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-23T17:38:00Z",
+        "drained_at": "2026-08-23T17:52:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5c91dc1831a62107a5e8631f635484adecac5a57f787a9f657df5d21acc3c876",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-23T17:34:51Z",
+          "matched_slots": [
+            "digest-daily"
+          ],
+          "won_slots": [
+            "digest-daily"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/digest-predict/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "digest-daily": "cron"
+          },
+          "cadence_minutes": {
+            "digest-daily": null
+          },
+          "last_fired_timestamp": "2026-08-23T17:33:38Z",
+          "last_fired_slots": [
+            "digest-daily"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "17:30",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 607,
+          "signal_backlog": 0,
+          "note": "Step 4.2 real isStale() age=15.65min < 20min threshold -> adaptive (contrast: 16:30Z tick was 21.16min -> legacy; drift_min was 4 there, 0 here). Step 4.7 run BEFORE spawn in documented order this tick; snapshot still named by wall clock 17:31 vs nominal 17:30, and emit_pressure_state returned cycle_snapshot_promoted:false — 5th consecutive confirmation, and the first observed with drift 0 AND correct step ordering, which rules out slow dispatch and rules out last tick's ordering slip as the cause. cycle-snapshot-latest.json still frozen at 2026-08-23T00:07:50Z (~17.4h). Minor unrelated observation, not filed: Step 5.1's LOAD_1MIN parse (awk -F',') splits inside the number under a comma-decimal locale (host uptime prints 'load averages: 4,17') and silently yields the integer part only; harmless at the 2*CORES=24 threshold, fragile in principle. digest-daily prior last_fired 2026-08-22T17:37:58Z — healthy ~23h56m daily cadence, unlike refine-bctc-slot-4's 9-day gap last tick. Step 5.3 DEFERRED per BGFAN-1: stamp 2026-08-23T17:33:38Z stands pending background return; de-stamp target 2026-08-22T17:37:58Z if MARKER_HITS>=2."
+        },
+        "createdAt": "2026-08-23T17:34:51Z",
+        "drained_at": "2026-08-23T17:52:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e65c213793e1d5db44a011a8b1945bf6569317d42334cf8f318be2ca7bb24cb0",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 55,
+          "cap": 200,
+          "byte_count": 39056,
+          "byte_cap": 12000,
+          "section_count": 2,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 1,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-23T17:42:19Z",
+        "drained_at": "2026-08-23T17:52:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "31aed4f9f134e9dfa9454f8778da1c8d36794e50d931e2f948aff1481dd50b2e",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 46,
+          "cap": 200,
+          "byte_count": 38160,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-23T17:42:05Z",
+        "drained_at": "2026-08-23T17:52:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b2b9977068665e40a2fb5909c15c8f91a1519b1dd4bd1cdf361aa060a50186aa",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/qa.md",
+          "line_count": 27,
+          "cap": 200,
+          "byte_count": 12159,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-23T17:37:58Z",
+        "drained_at": "2026-08-23T17:52:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c514036536a43b2ddf75d97415c6d75ef05e792e527b14ceb3fbff0d9d985fa3",
+        "source": "file",
+        "from": "router",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "medium",
+        "payload": {
+          "title": "CORRECTION to my own 16:41Z cycle-snapshot signal: it IS already tracked (UC-SDF-P2, READY, dispatchable) — plus new evidence that sharpens the diagnosis",
+          "corrects_envelope_id": "c4bcd32dded6ef4316b21c006c345eb176b70a633b16aab49a2b678d3f184761",
+          "corrects_file": "docs/signals/processed/router-2026-08-23T164159Z-cyclesnapshot-promote-tickkey-mismatch.json",
+          "what_i_got_wrong": {
+            "false_claim": "That signal's `not_already_tracked` field asserted: 'Checked orch-state before filing. Nearest existing rows are DESIGN-COWORK-FANOUT-T1/T2 and a CANCELLED SPIKE — none of them is this key-mismatch defect.' That is WRONG.",
+            "why_i_missed_it": "I grepped orch-state for rows matching the SYMPTOM words (tick-snapshot, cycle-snapshot, promote) and checked only .task_board. I did not search docs/handoffs/ or docs/agent-memory/decisions/, and I did not match on the defect's own established name, 'FILE_TICK'. One grep for FILE_TICK would have surfaced all of it immediately.",
+            "the_row_that_already_exists": {
+              "id": "UC-SDF-P2",
+              "status": "READY",
+              "zone": "multi",
+              "next_agent": "ba",
+              "title": "Diagnose+FIX: cycle-snapshot promotion dead since 07-07 (tickHHMM-vs-FILE_TICK filename divergence) + WIDEN to restore r...",
+              "note": "Its title names the exact mechanism I 'discovered'. It is DRS-stamped and currently sits in .task_board.ready[] at index [2] with lane=ba — i.e. already dispatchable, not blocked."
+            },
+            "prior_documentation_i_missed": [
+              "docs/handoffs/2026-07-15-cycle-snapshot-latest-promotion-dark.md — names FILE_TICK=$(date -u +%H:%M) -> cycle-snapshot-19:50.json as the cause",
+              "docs/handoffs/2026-07-16-cycle-snapshot-promotion-dark-9-days-adaptive-cadence-never-runs.md — same defect, and already drew the adaptive-cadence consequence",
+              "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md:619 — flagged the consumer-side minute mismatch",
+              "docs/agent-memory/decisions/triage-20260725T0948Z-po.md:14 — PO already triaged it: 'Fold into UC-SDF-P2 (title already names tickHHMM-vs-FILE_TICK filename divergence)'"
+            ],
+            "revised_ask": "Do NOT mint a new row. The actionable fact is that UC-SDF-P2 has been READY and dispatchable since the 2026-07-25 fold decision, and the defect is dead-since-07-07 per its own title — roughly 7 weeks, with the promotion dark that entire time. The question for PO is why a READY, lane-assigned row on a known-dark feature has not been picked up, not what the bug is."
+          },
+          "new_evidence_worth_keeping": {
+            "fifth_live_confirmation_rules_out_two_candidate_causes": {
+              "tick": "2026-08-23T17:30Z",
+              "drift_min": 0,
+              "step_ordering": "Step 4.7 run BEFORE the spawn, in documented order (the 16:30Z tick had it after — that ordering slip was mine)",
+              "result": "file written as docs/data/cycle-snapshot-17:31.json against nominal 17:30; emit_pressure_state returned cycle_snapshot_promoted:false",
+              "why_this_matters": "Previous observations were all confounded by nonzero drift or by my ordering slip. This one has neither, so 'slow dispatch' and 'dispatcher ran the steps out of order' are both eliminated. The wall clock rolls past the nominal minute on even the fastest possible path, because the tick fires at :30:00 at the earliest and the preflight + drain + cadence gates + slot claim all precede Step 4.7."
+            },
+            "my_never_promoted_claim_was_too_strong": {
+              "correction": "Promotion is not structurally impossible. It works whenever the filename happens to match the nominal tick — there are TWO producers with different naming conventions, and only one is broken.",
+              "producer_A_broken": "docs/agents/cowork-team/flow/tick-snapshot.md:34 — inline fence, FILE_TICK=$(date -u +%H:%M). Never matches nominal on a WORK tick.",
+              "producer_B_already_correct_capable": "scripts/agents-flow/cowork-tick-postflight.sh:92 — file_tick=\"${FILE_TICK:-$(date -u +%H:%M)}\". It ALREADY accepts a FILE_TICK env override (documented at line 42); a caller that passes the nominal tick gets a correctly-named file.",
+              "on_disk_proof": "Every producer-A file has tick == created_at's HH:MM (09:03/09:03:12Z, 12:03/12:03:46Z, 16:39/16:39:04Z, 17:31/17:31:58Z). Two files break that pattern and are named on exact boundaries with created_at 7-8 min later: cycle-snapshot-00:00.json (created_at 00:07:50Z) and cycle-snapshot-21:00.json (created_at 21:07:37Z). cycle-snapshot-latest.json is a byte-identical copy of the 00:00 one — so producer B's output DID promote successfully.",
+              "consequence_for_the_fix": "Cheaper and lower-risk than I originally described. The override mechanism already exists and is already tested (cowork-tick-postflight.test.sh:99,113 exercise FILE_TICK=09:15 and 23:45). Step 4.7 only needs to adopt the same convention, taking HH:MM from the preflight verdict's .tick. No new mechanism, no consumer change."
+            },
+            "freshness_gate_constrains_any_fix": "apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts:57 — SNAPSHOT_MAX_STALENESS_MS = 4h, and promote() treats a missing/unparseable timestamp as infinitely stale. A correctly-named but stale file is still refused. Fine on a live tick; relevant if anyone tries to fix this by back-naming old files.",
+            "incidental_two_malformed_snapshots": "docs/data/cycle-snapshot-18:06.json (1018 B) and cycle-snapshot-19:52.json (1684 B) both parse with tick:null and created_at:null — wrong shape for the documented {tick, created_at, market_context, macro_snapshot} contract. The freshness gate fail-safes them correctly (treated as infinitely stale), so they cause no harm today, but some producer path emitted a malformed file. Worth a glance while UC-SDF-P2 is open; not filed separately."
+          },
+          "impact_restated": "telemetry.md Step 6.0's contract reads last_regime and last_volatility_level from cycle-snapshot-latest.json. That file is frozen at 2026-08-23T00:07:50Z (~17.5h as of this filing), and its market_context carries regime:UNKNOWN. I passed 'unknown' for both arguments on this tick, as every WORK tick has been doing. That is the live consequence, beyond the unrealized per-agent bootstrap saving.",
+          "also_still_worth_checking": "My earlier note stands unchanged: SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED is CANCELLED, and may have been cancelled on the false premise that Step 4.7 is dead code. It is not dead — it runs and writes on every WORK tick (5 files written today). Its output is simply never consumed.",
+          "process_note": "Filing this as a correction rather than editing the original, because that signal was already drained to docs/signals/processed/ and routed to PO Step 0-SIG at 16:53:57Z. Editing a processed artifact would hide the error rather than record it."
+        },
+        "createdAt": "2026-08-23T17:39:07Z",
+        "drained_at": "2026-08-23T17:52:27Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-23T17:34:51Z",
+    "matched_slots": [
+      "digest-daily"
+    ],
+    "won_slots": [
+      "digest-daily"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/digest-predict/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "digest-daily": "cron"
+    },
+    "cadence_minutes": {
+      "digest-daily": null
+    },
+    "last_fired_timestamp": "2026-08-23T17:33:38Z",
+    "last_fired_slots": [
+      "digest-daily"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "17:30",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 607,
+    "signal_backlog": 0,
+    "note": "Step 4.2 real isStale() age=15.65min < 20min threshold -> adaptive (contrast: 16:30Z tick was 21.16min -> legacy; drift_min was 4 there, 0 here). Step 4.7 run BEFORE spawn in documented order this tick; snapshot still named by wall clock 17:31 vs nominal 17:30, and emit_pressure_state returned cycle_snapshot_promoted:false — 5th consecutive confirmation, and the first observed with drift 0 AND correct step ordering, which rules out slow dispatch and rules out last tick's ordering slip as the cause. cycle-snapshot-latest.json still frozen at 2026-08-23T00:07:50Z (~17.4h). Minor unrelated observation, not filed: Step 5.1's LOAD_1MIN parse (awk -F',') splits inside the number under a comma-decimal locale (host uptime prints 'load averages: 4,17') and silently yields the integer part only; harmless at the 2*CORES=24 threshold, fragile in principle. digest-daily prior last_fired 2026-08-22T17:37:58Z — healthy ~23h56m daily cadence, unlike refine-bctc-slot-4's 9-day gap last tick. Step 5.3 DEFERRED per BGFAN-1: stamp 2026-08-23T17:33:38Z stands pending background return; de-stamp target 2026-08-22T17:37:58Z if MARKER_HITS>=2."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-23T17:34:51Z",
+  "_processed": {
+    "fingerprint": "5c91dc1831a62107a5e8631f635484adecac5a57f787a9f657df5d21acc3c876",
+    "processedAt": "2026-08-23T17:52:27Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
