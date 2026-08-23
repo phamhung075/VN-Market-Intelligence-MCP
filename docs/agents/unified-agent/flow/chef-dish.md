@@ -41,7 +41,26 @@
      `[override:valuation_avoid — ...]` clause (T-45 adversarial-discipline convention, same as
      `tran-ngoc-bau/flow/audit-methodology.md`'s adversarial gate). New Step 4 sub-step, new
      `valuation_gate` field on `$CONVICTION_CALLS`/`conviction_calls[]`, new Step 7.6 post-write
-     self-check #5. No new section, no split — same single-enforcement-point guarantee. -->
+     self-check #5. No new section, no split — same single-enforcement-point guarantee.
+     FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION, redispatch 1 (qa CHANGES_REQUESTED
+     2026-08-23 on the 2026-08-14 fix's own AC-4 RAW-verify, agent-father 2026-08-23): +87L
+     (1040→1127, incl. this header note; the "1002" baseline above had drifted to 1040 from untouched
+     interim edits, not corrected here). The 2026-08-14 fix replaced a narrative VERDICT with a
+     narrative ASSERTION — still narrative, and it stopped none of the 19 non-conformant dishes in the
+     live 69-dish corpus, including the one written after it landed
+     (unified-agent-synthesis-2026-08-22-chef-evening.json: 9 top-level keys, reshaped metadata, no
+     [gap:schema_nonconformant_corrected] token). Three changes: (1) Step 7.6's 5-item narrative
+     post-write checklist becomes ONE literal copy-executable `jq` command whose exit code is the
+     verdict — unified-agent HAS the Bash grant, so this is executable, not aspirational; (2)
+     SCHEMA_OK widens to metadata's own key-set and the dish_type enum, the exact two gaps qa proved;
+     (3) new SLOT → dish_type mapping table in Step 7.6 — three different names exist for the same
+     four slots (init.md schedule keys, chef.md:135 SLOT_ID, the dish_type enum) and copying the
+     schedule key into the payload is the root cause of 8 live off-enum dish_type values. Calibrated
+     by replaying the shipped command over all 69 live dishes: 50 pass, 19 fail, zero exit-code
+     inconsistency. Flagged NOT fixed (needs its own row, changes the on-disk naming contract every
+     consumer globs): chef.md:135 and .claude/agents/unified-agent.md define FILEPATH's SLOT_ID as
+     `chef-evening` while this file defines it as `evening`; both forms exist on disk for the same
+     slot on the same day. -->
 > Parent: [./chef.md](./chef.md)
 
 # Unified Agent — Chef Dish Body (Steps 1.5-8, TNB 6-Layer Recipe)
@@ -699,10 +718,21 @@ GAP_CATALOGUE_OK = (NOT ANY_LAYER_PARTIAL)
 SCHEMA_OK = (the assembled payload's top-level keys are EXACTLY {metadata, tnb_synthesis,
              conviction_calls, sector_phases, known_gaps, causal_chains, clusters_summary} — the ONE
              schema in Step 7.6, identical for every $DISH_TYPE, no dish-type-specific exception)
+        AND (metadata's OWN keys are EXACTLY {cycle_id, dish_type, date_vn, timestamp_utc,
+             quality_verdict, layers_walked_summary} — no extras, none missing)
+        AND (metadata.dish_type is EXACTLY one of morning|intraday|eod|evening — the SCHEDULE-ENTRY
+             name is NOT the dish_type, see Step 7.6's slot mapping table)
         AND (tnb_synthesis has exactly {clock_phase, regime_state, regime_confidence, us_macro_layer,
              vn_macro_layer, valuation_layer})
         AND (conviction_calls is present as a top-level array — even [] — never renamed, omitted, or
              replaced by a differently-shaped field)
+# DO NOT self-adjudicate the four clauses above by eyeballing the payload. They are the SAME clauses
+# Step 7.6's mandatory post-write `jq` command executes, and that command's exit code is the only
+# verdict that counts. Scoring SCHEMA_OK "by reading" is what shipped 19 non-conformant dishes out of
+# 69 in the live corpus (measured 2026-08-23), including the one dish written AFTER the 2026-08-14
+# assertion fix landed: top-level keys 4x, metadata keys 1x, dish_type enum 6x, tnb_synthesis keys 3x,
+# direction enum 7x. A narrative assertion over a payload is still a narrative — the defect this whole
+# row exists to close, one level down.
 
 # Sub-check (g) — DIRECTION ENUM CONFORMANCE (widened scope 2026-08-14, PO — evening dish emitted
 # ACCUMULATE/RISK_OFF as direction and MACRO_BRENT as a ticker)
@@ -861,6 +891,30 @@ FILEPATH   = docs/data/unified-agent-synthesis-{CYCLE_DATE}-{SLOT_ID}.json
 
 Example: `docs/data/unified-agent-synthesis-2026-07-03-eod.json`
 
+**SLOT → `dish_type` MAPPING (mandatory — FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION,
+agent-father 2026-08-23):** three different names exist for the same four slots and this step is where
+they collide. `metadata.dish_type` takes the RIGHTMOST column and nothing else — never the cron
+schedule-entry key, never `chef.md`'s prefixed `SLOT_ID`:
+
+| `init.md` schedule key | `chef.md:135` `SLOT_ID` | → `metadata.dish_type` (the ONLY legal value) |
+|---|---|---|
+| `morning_dish` | `chef-morning` | `morning` |
+| `intraday_scan` | `chef-intraday` | `intraday` |
+| `eod_dish` | `chef-eod` | `eod` |
+| `evening_preview` | `chef-evening` | `evening` |
+
+Root cause of 8 live off-enum `dish_type` values (`evening_preview` x6, `eod_dish` x1,
+`convergence_scan` x1, measured across the 69-dish corpus 2026-08-23): the schedule-entry key was
+copied straight into the payload field. The enum at line ~890 below is the contract; this table is
+how you reach it.
+
+> **Open conflict, deliberately NOT resolved here (needs its own row — changes the on-disk naming
+> contract that TNB audit / QA AC-4 probes / every consumer globs):** the FILEPATH above resolves
+> `SLOT_ID` via `chef-dish.md`'s definition (`evening`), while `chef.md:135` and
+> `.claude/agents/unified-agent.md`'s own description both define `SLOT_ID` as `chef-evening`. Both
+> forms exist on disk for the same slot on the same day (`...-2026-07-30-evening.json` AND
+> `...-2026-07-30-chef-evening.json`). Do not silently pick one while working this step.
+
 **JSON schema — synthesized 6-layer delivery (this is the ONE schema Step 7.5 sub-check (f) SCHEMA_OK
 asserts against — identical for every `$DISH_TYPE` including `eod`, no dish-type exception):**
 ```json
@@ -955,20 +1009,53 @@ exact two-independent-judgements defect this fix closes):**
 Write(path=FILEPATH, content=<JSON content, all fields per the mapping above>)
 ```
 
-**Post-write RAW self-check (mandatory — AC-4, closes the "assert over the payload it just wrote" gap
-at the source rather than deferring entirely to the next audit cycle):** Immediately after the Write
-call, Read the file back from FILEPATH. Confirm, against the literal bytes just read (not memory of
-what was intended):
-1. It parses as valid JSON.
-2. `metadata.quality_verdict` equals the exact value Step 7.5 computed.
-3. Top-level keys match Step 7.5 sub-check (f) SCHEMA_OK's mandated set.
-4. Every `conviction_calls[].direction` is in `{BUY, HOLD, SELL, NEUTRAL}` (Step 7.5 sub-check (g)).
-5. No `conviction_calls[]` entry has `valuation_gate.verdict == "AVOID"` AND `direction` in
-   `{BUY, ACCUMULATE}` AND `valuation_gate.override_engaged != true` (Step 7.5 sub-check (h)).
-If any of these 5 checks fails, re-Write once with the corrected object and Read back again. If the
-second attempt also fails, treat as `tool-error` per `chef-telemetry.md`'s Try/Catch Boundary →
-Degraded-Floor Recovery — do not silently continue with an unverified persisted file. (Skipped entirely
-on the intraday-silent path — see the exception immediately below.)
+**Post-write RAW self-check (mandatory — AC-4).** Immediately after the Write call, run the command
+below. **You have the Bash tool** (`.claude/agents/unified-agent.md` `tools:` grants it) — RUN it, do
+not re-implement it by Reading the file and reasoning about the bytes. Its exit code is the verdict;
+your own reading of the payload is not.
+
+```bash
+# FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION, agent-father 2026-08-23.
+# Substitute FILEPATH and Step 7.5's computed $QUALITY_VERDICT. Prints SCHEMA_OK or the exact
+# failing clause names, and exits non-zero on failure.
+jq -r --arg qv "<Step 7.5's $QUALITY_VERDICT verbatim>" '
+  . as $d
+  | {
+    top_keys:  (($d | keys) == ["causal_chains","clusters_summary","conviction_calls","known_gaps","metadata","sector_phases","tnb_synthesis"]),
+    meta_keys: ((($d.metadata // {}) | keys) == ["cycle_id","date_vn","dish_type","layers_walked_summary","quality_verdict","timestamp_utc"]),
+    dish_type: (["morning","intraday","eod","evening"] | index($d.metadata.dish_type) != null),
+    verdict:   ($d.metadata.quality_verdict == $qv),
+    tnb_keys:  ((($d.tnb_synthesis // {}) | keys) == ["clock_phase","regime_confidence","regime_state","us_macro_layer","valuation_layer","vn_macro_layer"]),
+    cc_array:  (($d.conviction_calls | type) == "array"),
+    dir_enum:  (all(($d.conviction_calls // [])[]; . as $c | ["BUY","HOLD","SELL","NEUTRAL"] | index($c.direction) != null)),
+    val_gate:  (all(($d.conviction_calls // [])[]; . as $c
+                 | ($c.valuation_gate == null) or ($c.valuation_gate.verdict != "AVOID")
+                   or (($c.direction != "BUY") and ($c.valuation_gate.override_engaged == true)
+                       and (($c.valuation_gate.override_rationale // "") != ""))))
+  }
+  | (to_entries | map(select(.value == false) | .key)) as $failed
+  | if ($failed | length) == 0 then "SCHEMA_OK"
+    else ("SCHEMA_FAIL: " + ($failed | join(",")) + "\n") | halt_error(1) end
+' "<FILEPATH>"
+```
+
+Clause → meaning: `top_keys`/`meta_keys`/`tnb_keys` = exact key-set conformance (extras fail too, not
+just omissions); `dish_type` = the enum, via the slot mapping table above; `verdict` =
+`metadata.quality_verdict` equals what Step 7.5 actually computed; `cc_array` = `conviction_calls` is
+a top-level array; `dir_enum` = sub-check (g); `val_gate` = sub-check (h).
+
+Non-zero exit (or any `SCHEMA_FAIL:` line) → re-Write ONCE with the listed clauses corrected, then run
+the SAME command again. If the second run also fails, treat as `tool-error` per `chef-telemetry.md`'s
+Try/Catch Boundary → Degraded-Floor Recovery — do not silently continue with an unverified persisted
+file. (Skipped entirely on the intraday-silent path — see the exception immediately below.)
+
+**Why a command and not a checklist:** the previous version of this step was a 5-item narrative
+checklist and it did not stop a single one of the 19 non-conformant dishes in the live 69-dish corpus,
+including `unified-agent-synthesis-2026-08-22-chef-evening.json`, written after the assertion fix
+landed, which shipped 9 top-level keys and a reshaped `metadata` with no
+`[gap:schema_nonconformant_corrected]` token. Re-running the command above over that whole corpus
+reproduces every one of those 19 failures and passes the other 50 — so the clauses are calibrated
+against real data, not invented.
 
 **Intraday silent-exit exception:**
 If the cycle exited silently in Step 1 (0 clusters, intraday slot), skip Step 7.6 entirely — no JSON file is written for silent cycles. The exit in Step 1 already returned early before reaching Step 7.
