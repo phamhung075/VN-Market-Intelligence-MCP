@@ -42,7 +42,15 @@ def register_pek_routes(
             No model loaded. No inference. RSS stays at cold-start baseline (~80MB).
 
         Sequential guard (REQ-PEK-4d):
-            PekEngineAdapter uses threading.Semaphore(1). Contention → HTTP 429.
+            PekEngineAdapter uses threading.Semaphore(1) — one extraction at a
+            time. A contended request QUEUES for the slot (bounded by
+            PEK_SEMAPHORE_WAIT_SECONDS, default 30 min) rather than failing.
+            NO HTTP code is involved: this route has already returned 202 by the
+            time the background task acquires, so a queue-wait exhaustion
+            surfaces only as a logged '_run_pek_extract: FAILED' trace, never as
+            a 429 response. (Corrected by
+            FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE — the previous
+            '→ HTTP 429' claim here was never reachable on this path.)
 
         Accepts:  { report_id: str, pdf_path: str }
         Returns:  { status: "accepted", report_id: str }  (HTTP 202)

@@ -262,7 +262,9 @@ class PekEngineAdapterPort(Protocol):
       - PaddleOCR PP-StructureV2 table mode (paddleocr package) — direct, NOT via PEK task
 
     Lazy singleton pattern: models load on first call (_pek_models_cache).
-    Sequential guard: threading.Semaphore(1) — one extraction at a time; HTTP 429 on contention.
+    Sequential guard: threading.Semaphore(1) — one extraction at a time. Contended
+    callers QUEUE for the slot (bounded wait, PEK_SEMAPHORE_WAIT_SECONDS); no HTTP
+    code is involved on the /pek-extract background-task path.
 
     DDD layer: domain port — zero infrastructure imports, zero I/O, pure Protocol.
 
@@ -305,6 +307,9 @@ class PekEngineAdapterPort(Protocol):
                 pass_rate_report: dict — quarantine stats
 
         Raises:
-            RuntimeError: if models cannot be loaded or semaphore times out (→ HTTP 429).
+            RuntimeError: if models cannot be loaded, if extraction exceeds
+                PEK_EXTRACTION_TIMEOUT_SECONDS, or (as SemaphoreContendedError)
+                if the bounded semaphore queue wait elapses with the slot still
+                held. No HTTP status code is involved on the /pek-extract path.
         """
         ...

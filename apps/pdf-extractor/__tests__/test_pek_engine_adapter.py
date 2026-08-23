@@ -21,9 +21,63 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import threading
+import time
+from contextlib import contextmanager
+
 import pytest
 from unittest.mock import MagicMock, patch
 from typing import Dict, List, Optional, Any
+
+
+# ---------------------------------------------------------------------------
+# Shared helper — re-import the adapter module under a patched env
+# ---------------------------------------------------------------------------
+#
+# Module-level constants (_EXTRACTION_TIMEOUT_SECONDS, _SEMAPHORE_WAIT_SECONDS)
+# are read from os.environ at import time, so testing their env plumbing needs a
+# genuine re-import rather than an attribute poke.
+#
+# WHY THIS IS A HELPER AND NOT INLINE (test-pollution root cause, fixed here):
+# popping "infrastructure.pek_engine_adapter" out of sys.modules and re-importing
+# rebinds the PARENT PACKAGE attribute `infrastructure.pek_engine_adapter` to the
+# throwaway fresh module. Restoring only sys.modules leaves that attribute stale,
+# and the two lookups then disagree for the REST of the session:
+#     import infrastructure.pek_engine_adapter as m   -> getattr(pkg, name) -> FRESH
+#     from infrastructure.pek_engine_adapter import X -> sys.modules[...]   -> ORIGINAL
+# (`import a.b as c` resolves via getattr with a sys.modules fallback since
+# Python 3.7 / bpo-30024.) Any later test that monkeypatches a module global via
+# `m` then silently mutates a module the adapter never reads — which is exactly
+# how test_extract_layout_and_tables_raises_on_timeout intermittently failed with
+# "DID NOT RAISE" depending on pytest-randomly's ordering. Restore BOTH.
+@contextmanager
+def reimported_adapter(**env_overrides):
+    """Yield a freshly-imported adapter module built under env_overrides."""
+    import importlib
+    import infrastructure as _pkg
+
+    saved_env = {k: os.environ.get(k) for k in env_overrides}
+    saved_module = sys.modules.pop("infrastructure.pek_engine_adapter", None)
+    saved_attr = getattr(_pkg, "pek_engine_adapter", None)
+    try:
+        for k, v in env_overrides.items():
+            os.environ[k] = v
+        fresh = importlib.import_module("infrastructure.pek_engine_adapter")
+        yield fresh
+    finally:
+        for k, v in saved_env.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+        if saved_module is not None:
+            sys.modules["infrastructure.pek_engine_adapter"] = saved_module
+        else:
+            sys.modules.pop("infrastructure.pek_engine_adapter", None)
+        # Parent-package attribute MUST be restored in lockstep with sys.modules.
+        if saved_attr is not None:
+            setattr(_pkg, "pek_engine_adapter", saved_attr)
+        elif hasattr(_pkg, "pek_engine_adapter"):
+            delattr(_pkg, "pek_engine_adapter")
 
 
 # ---------------------------------------------------------------------------
@@ -351,10 +405,24 @@ class TestCellsToRowBandsScoreHandling:
 class TestSemaphoreGuard:
     """REQ-PEK-4d / AC-PEK-4d — sequential extraction enforced."""
 
-    def test_semaphore_contention_raises_error(self):
+    def test_semaphore_contention_waits_then_raises_after_bound(self):
         """
-        While one extraction holds the semaphore, a second attempt raises
-        SemaphoreContendedError (→ HTTP 429 at the handler level).
+        AC-5 (FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE).
+
+        While one extraction holds the semaphore, a second attempt must QUEUE for
+        `wait_s` and only then raise SemaphoreContendedError.
+
+        This test previously asserted an INSTANT raise — that non-blocking acquire
+        is exactly the defect this row removes: it silently dropped 19 of every
+        20 reconcile re-fires (129 of 183 observed FAILED traces), each of which
+        still burned one of MAX_RECONCILE_ATTEMPTS=8.
+
+        Two assertions, both load-bearing:
+          (a) it STILL raises once the bound elapses (pathological queue depth
+              must stay fail-loud — it must not hang forever), and
+          (b) elapsed wall-clock is >= the bound and bounded above, i.e. it
+              genuinely waited. Mirrors the `elapsed < 3.0` idiom in
+              test_ocr_concurrency_invariant.py.
         """
         from infrastructure.pek_engine_adapter import (
             PekEngineAdapter,
@@ -362,18 +430,202 @@ class TestSemaphoreGuard:
             _extraction_semaphore,
         )
 
+        wait_s = 0.2
+
         acquired = _extraction_semaphore.acquire(blocking=False)
         assert acquired, "Could not acquire semaphore for test setup"
 
         try:
             adapter = PekEngineAdapter()
-            with pytest.raises(SemaphoreContendedError):
+            start = time.monotonic()
+            with pytest.raises(SemaphoreContendedError) as exc_info:
                 adapter.extract_layout_and_tables(
                     pdf_path="/fake/path.pdf",
                     report_id="test-report-id",
+                    wait_s=wait_s,
                 )
+            elapsed = time.monotonic() - start
         finally:
             _extraction_semaphore.release()
+
+        # (b) It waited — not the instant reject this fix removes.
+        # 0.9x tolerates coarse monotonic-clock granularity; the real assertion
+        # is "not ~0s". Upper bound keeps it honest: bounded, not open-ended.
+        assert elapsed >= wait_s * 0.9, (
+            f"acquire returned after only {elapsed:.3f}s for a {wait_s}s bound — "
+            f"this looks like the old non-blocking instant reject, not a queue"
+        )
+        assert elapsed < 3.0, (
+            f"contended acquire took {elapsed:.2f}s — must be bounded by wait_s, "
+            f"not open-ended"
+        )
+        # Message must describe the queue wait, not the old 'in progress' reject.
+        assert "queue wait" in str(exc_info.value), (
+            f"error message should describe the elapsed queue wait, got: "
+            f"{exc_info.value}"
+        )
+
+    def test_semaphore_waiter_acquires_when_slot_freed_before_bound(self):
+        """
+        AC-6 — proves this is a real QUEUE, not sleep-then-fail.
+
+        A holder releases the slot BEFORE the wait bound elapses; the waiting
+        call must then acquire and complete successfully instead of raising.
+        """
+        from infrastructure.pek_engine_adapter import (
+            PekEngineAdapter,
+            _extraction_semaphore,
+        )
+
+        release_after_s = 0.3
+        wait_s = 10.0  # generously longer than release_after_s
+
+        acquired = _extraction_semaphore.acquire(blocking=False)
+        assert acquired, "Could not acquire semaphore for test setup"
+
+        released = threading.Event()
+
+        def _release_soon():
+            time.sleep(release_after_s)
+            _extraction_semaphore.release()
+            released.set()
+
+        releaser = threading.Thread(target=_release_soon, daemon=True)
+        adapter = PekEngineAdapter()
+
+        start = time.monotonic()
+        releaser.start()
+        try:
+            with patch.object(adapter, "_run_extraction", return_value={
+            "document_map": {"total_pages": 0, "units": []},
+            "units": [],
+            "page_zones": [],
+            "pass_rate_report": {"units_total": 0, "units_passing": 0, "units_quarantined": 0, "quarantine_breakdown": {}},
+        }):
+                result = adapter.extract_layout_and_tables(
+                    pdf_path="/fake/queued.pdf",
+                    report_id="queued-report-id",
+                    wait_s=wait_s,
+                )
+        finally:
+            releaser.join(timeout=5.0)
+            if not released.is_set():
+                # setup never handed the slot back — release it ourselves so we
+                # do not poison the module-global semaphore for later tests
+                _extraction_semaphore.release()
+        elapsed = time.monotonic() - start
+
+        assert result["document_map"]["total_pages"] == 0, (
+            "queued call did not run the extraction after acquiring the slot"
+        )
+        assert elapsed >= release_after_s * 0.9, (
+            f"call returned in {elapsed:.3f}s — it cannot have waited for the "
+            f"holder to release at {release_after_s}s"
+        )
+        assert elapsed < wait_s, (
+            f"call took {elapsed:.2f}s — it should have acquired as soon as the "
+            f"slot was freed, well before the {wait_s}s bound"
+        )
+
+        # Slot must be back after the adapter's finally-release.
+        can_acquire = _extraction_semaphore.acquire(blocking=False)
+        if can_acquire:
+            _extraction_semaphore.release()
+        assert can_acquire, "semaphore not released after the queued extraction"
+
+    def test_contended_batch_loses_no_members(self):
+        """
+        AC-7 — the row's actual real-world claim, batch-realistic.
+
+        N=3 threads call extract_layout_and_tables concurrently against the ONE
+        slot (exactly what a bctcExtractReconcileJob re-fire batch does, at
+        DEFAULT_BATCH_SIZE=20). With a wait bound large enough to cover
+        serialized execution, ALL 3 must return successfully and NONE may raise.
+
+        Under the old non-blocking acquire this test would have failed with 2 of
+        3 raising SemaphoreContendedError — the silent-drop defect itself.
+
+        Also asserts observed concurrency never exceeded 1, so the fix does not
+        accidentally weaken the REQ-PEK-4d sequential guarantee it queues for.
+        """
+        from infrastructure.pek_engine_adapter import (
+            PekEngineAdapter,
+            _extraction_semaphore,
+        )
+
+        n_threads = 3
+        wait_s = 30.0
+
+        adapter = PekEngineAdapter()
+
+        concurrency_lock = threading.Lock()
+        in_flight = 0
+        max_in_flight = 0
+
+        def _fake_extraction(**kwargs):
+            nonlocal in_flight, max_in_flight
+            with concurrency_lock:
+                in_flight += 1
+                max_in_flight = max(max_in_flight, in_flight)
+            try:
+                time.sleep(0.05)  # long enough that a broken guard overlaps
+                return {
+            "document_map": {"total_pages": 0, "units": []},
+            "units": [],
+            "page_zones": [],
+            "pass_rate_report": {"units_total": 0, "units_passing": 0, "units_quarantined": 0, "quarantine_breakdown": {}},
+        }
+            finally:
+                with concurrency_lock:
+                    in_flight -= 1
+
+        results = {}
+        errors = {}
+        start_gate = threading.Barrier(n_threads)
+
+        def _worker(idx):
+            try:
+                start_gate.wait(timeout=5.0)  # fire all N at once
+                results[idx] = adapter.extract_layout_and_tables(
+                    pdf_path=f"/fake/batch-{idx}.pdf",
+                    report_id=f"batch-report-{idx}",
+                    wait_s=wait_s,
+                )
+            except Exception as exc:  # noqa: BLE001 — the assertion IS "none raised"
+                errors[idx] = exc
+
+        with patch.object(adapter, "_run_extraction", side_effect=_fake_extraction):
+            threads = [
+                threading.Thread(target=_worker, args=(i,), daemon=True)
+                for i in range(n_threads)
+            ]
+            for t in threads:
+                t.start()
+            for t in threads:
+                t.join(timeout=60.0)
+
+        assert not any(t.is_alive() for t in threads), (
+            "a contending extraction thread never finished — bounded wait did "
+            "not bound"
+        )
+        assert errors == {}, (
+            f"contended batch LOST {len(errors)} of {n_threads} members: "
+            f"{ {i: repr(e) for i, e in errors.items()} } — this is the exact "
+            f"silent-drop defect this row closes"
+        )
+        assert len(results) == n_threads, (
+            f"expected {n_threads} successful extractions, got {len(results)}"
+        )
+        assert max_in_flight == 1, (
+            f"observed {max_in_flight} concurrent extractions — the bounded wait "
+            f"must still enforce REQ-PEK-4d one-at-a-time"
+        )
+
+        # No slot leaked across the batch.
+        can_acquire = _extraction_semaphore.acquire(blocking=False)
+        if can_acquire:
+            _extraction_semaphore.release()
+        assert can_acquire, "semaphore leaked after the contended batch"
 
     def test_semaphore_released_after_extraction(self):
         """
@@ -1198,33 +1450,47 @@ class TestFailLoudAndTimeout:
         Note: because the constant is set at module import time, we test the
         parse logic (int coercion) rather than live hot-reload.
         """
-        import importlib
-        import sys
-        import os
-
-        # Save original
-        original_env = os.environ.get("PEK_EXTRACTION_TIMEOUT_SECONDS")
-        original_module = sys.modules.pop("infrastructure.pek_engine_adapter", None)
-
-        try:
-            os.environ["PEK_EXTRACTION_TIMEOUT_SECONDS"] = "999"
-            # Re-import fresh to pick up env
-            import infrastructure.pek_engine_adapter as m_fresh
+        with reimported_adapter(PEK_EXTRACTION_TIMEOUT_SECONDS="999") as m_fresh:
             assert m_fresh._EXTRACTION_TIMEOUT_SECONDS == 999, (
                 f"_EXTRACTION_TIMEOUT_SECONDS should be 999 when env is '999', "
                 f"got {m_fresh._EXTRACTION_TIMEOUT_SECONDS}"
             )
-        finally:
-            # Restore
-            if original_env is None:
-                os.environ.pop("PEK_EXTRACTION_TIMEOUT_SECONDS", None)
-            else:
-                os.environ["PEK_EXTRACTION_TIMEOUT_SECONDS"] = original_env
-            # Restore original module if it was cached
-            if original_module is not None:
-                sys.modules["infrastructure.pek_engine_adapter"] = original_module
-            else:
-                sys.modules.pop("infrastructure.pek_engine_adapter", None)
+
+    # -----------------------------------------------------------------------
+    # AC-1: queue wait bound configurable via PEK_SEMAPHORE_WAIT_SECONDS
+    # -----------------------------------------------------------------------
+
+    def test_semaphore_wait_reads_from_env(self):
+        """
+        AC-1 — _SEMAPHORE_WAIT_SECONDS must be configurable via
+        PEK_SEMAPHORE_WAIT_SECONDS, same convention as the sibling
+        PEK_EXTRACTION_TIMEOUT_SECONDS / PDFX_OCR_QUEUE_WAIT_S knobs, so the
+        bound can be retuned without a code change.
+        """
+        with reimported_adapter(PEK_SEMAPHORE_WAIT_SECONDS="123") as m_fresh:
+            assert m_fresh._SEMAPHORE_WAIT_SECONDS == 123, (
+                f"_SEMAPHORE_WAIT_SECONDS should be 123 when env is '123', "
+                f"got {m_fresh._SEMAPHORE_WAIT_SECONDS}"
+            )
+
+    def test_default_semaphore_wait_is_30_minutes(self):
+        """
+        AC-1 — the DEFAULT queue wait must be 30 min, i.e. the same order as one
+        extraction's own budget (_DEFAULT_EXTRACTION_TIMEOUT_SECONDS). A bound
+        materially shorter than one extraction would re-open the silent-drop
+        defect: a caller queued behind a single normal in-flight extraction would
+        time out before that extraction finished.
+        """
+        from infrastructure.pek_engine_adapter import (
+            _DEFAULT_SEMAPHORE_WAIT_SECONDS,
+            _DEFAULT_EXTRACTION_TIMEOUT_SECONDS,
+        )
+
+        assert _DEFAULT_SEMAPHORE_WAIT_SECONDS == 30 * 60
+        assert _DEFAULT_SEMAPHORE_WAIT_SECONDS >= _DEFAULT_EXTRACTION_TIMEOUT_SECONDS, (
+            "queue wait shorter than one extraction's own timeout would drop a "
+            "caller queued behind a single normal extraction"
+        )
 
     def test_default_timeout_is_at_least_30_minutes(self):
         """

@@ -21,7 +21,14 @@ Lazy-load singleton (REQ-PEK-4):
     _pek_models_cache is None at import time → cold-start RSS ~80MB.
     Models load on first extraction request.
     threading.Semaphore(1): one extraction at a time.
-    Non-blocking acquire: contention → SemaphoreContendedError (→ HTTP 429 at handler).
+    BOUNDED-QUEUE acquire (FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE):
+    a contended caller WAITS up to PEK_SEMAPHORE_WAIT_SECONDS for the slot and
+    only raises SemaphoreContendedError if that bound elapses first.
+    There is NO HTTP status code involved on the real path: /pek-extract
+    (interface/routes_pek.py) hands the work to a FastAPI BackgroundTask and has
+    already returned 202 Accepted before extraction starts, so this exception is
+    caught by interface/pek_run_helper.py's except-Exception and surfaces only as
+    a logged '_run_pek_extract: FAILED' trace — never as a response to a caller.
 
 DDD layer: infrastructure — imports pdf_extract_kit, paddleocr.
     NEVER imported from domain/ or application/ (only injected via composition root).
@@ -87,8 +94,31 @@ _EXTRACTION_TIMEOUT_SECONDS: int = int(
 _pek_models_cache: Optional[Dict[str, Any]] = None
 _pek_models_lock = threading.Lock()
 
+# ---------------------------------------------------------------------------
+# FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE: bounded queue wait
+# ---------------------------------------------------------------------------
+# How long a contended extraction WAITS for the single slot before giving up.
+# Default 30 min — same order as one extraction's own budget
+# (_EXTRACTION_TIMEOUT_SECONDS), so a caller that queues behind exactly one
+# in-flight extraction always outlasts it instead of being dropped.
+# Override via env: PEK_SEMAPHORE_WAIT_SECONDS (integer seconds).
+#
+# WHY this exists: bctcExtractReconcileJob.ts (mcp-server) re-fires its whole
+# still-pek_triggered batch (DEFAULT_BATCH_SIZE=20) every 30-min tick with no
+# pacing. Each trigger returns 202 immediately and runs detached, so one tick
+# races up to 20 background threads for this one slot. With the previous
+# non-blocking acquire, 19 of them raised instantly inside a detached task,
+# were swallowed by pek_run_helper.py's except-Exception, and were counted as
+# `refired` by the reconcile job — burning one of MAX_RECONCILE_ATTEMPTS=8 for
+# a run that never happened. Reports marched to enrich_failed having never had
+# a single genuine extraction attempt.
+_DEFAULT_SEMAPHORE_WAIT_SECONDS = 30 * 60  # 30 minutes
+_SEMAPHORE_WAIT_SECONDS: int = int(
+    os.environ.get("PEK_SEMAPHORE_WAIT_SECONDS", _DEFAULT_SEMAPHORE_WAIT_SECONDS)
+)
+
 # Sequential guard — one extraction at a time (REQ-PEK-4d / AC-PEK-4d).
-# Non-blocking: if semaphore already held → caller gets HTTP 429.
+# Bounded-blocking: a contended caller queues for up to _SEMAPHORE_WAIT_SECONDS.
 _extraction_semaphore = threading.Semaphore(1)
 
 # PEK config directory — configs/*.yaml live here
@@ -97,12 +127,20 @@ _PEK_CONFIG_DIR = os.path.join(
 )
 
 # ---------------------------------------------------------------------------
-# Custom exception for semaphore contention (→ HTTP 429)
+# Custom exception for semaphore contention (queue wait exhausted — no HTTP code)
 # ---------------------------------------------------------------------------
 
 
 class SemaphoreContendedError(RuntimeError):
-    """Raised when a second concurrent extraction attempts to acquire the semaphore."""
+    """
+    Raised when a concurrent extraction could not get the single extraction slot
+    within the bounded queue wait (_SEMAPHORE_WAIT_SECONDS).
+
+    NOT raised on ordinary contention — a contended caller queues first. This
+    fires only in the genuinely pathological case: the queue is deeper than the
+    wait bound. On the /pek-extract path it never reaches an HTTP response
+    (see the module docstring); it surfaces as a logged FAILED trace.
+    """
     pass
 
 
@@ -643,22 +681,52 @@ class PekEngineAdapter:
         self,
         pdf_path: str,
         report_id: str,
+        wait_s: Optional[float] = None,
     ) -> Dict:
         """
         Run PEK layout+table extraction for one PDF document.
 
+        Only ONE extraction runs at a time (REQ-PEK-4d). A caller that arrives
+        while the slot is busy QUEUES for it — it does not fail immediately.
+
+        Args:
+            pdf_path:  Absolute path to the PDF file (already stored locally).
+            report_id: UUID string matching financial_reports.id on mcp-server.
+            wait_s:    Optional override for the bounded queue wait, in seconds.
+                       None → _SEMAPHORE_WAIT_SECONDS (env PEK_SEMAPHORE_WAIT_SECONDS,
+                       default 30 min). Mirrors ocr_gateway.slot(timeout_s=None);
+                       exists so tests can inject a short bound instead of
+                       monkeypatching a module constant.
+
         Returns LF-OVERLAY-compatible payload dict (brief §7 pipeline).
 
         Raises:
-            SemaphoreContendedError: if semaphore already held (→ HTTP 429).
-            RuntimeError: on model load failure.
+            SemaphoreContendedError: only if the queue wait elapses with the slot
+                still held. NOTE: no HTTP status code is involved on the real
+                /pek-extract path — that route returns 202 Accepted before this
+                code runs (FastAPI BackgroundTask), so this exception is caught
+                by interface/pek_run_helper.py's except-Exception and surfaces
+                purely as a logged '_run_pek_extract: FAILED' trace.
+            RuntimeError: on model load failure, or on extraction timeout.
         """
-        # Sequential guard — non-blocking acquire (R-LOW-1: return 429 immediately)
-        acquired = _extraction_semaphore.acquire(blocking=False)
+        # Sequential guard — BOUNDED-BLOCKING acquire.
+        # Reuses the shape already shipped in infrastructure/ocr_gateway.py
+        # (_OCR_SLOTS / _acquire_slot_blocking) — no new concurrency primitive.
+        #
+        # Blocking here is safe and is not a new risk: this method is always
+        # invoked via asyncio.to_thread(...) from _run_pek_extract
+        # (interface/pek_run_helper.py, PDF-AVAIL-02-FIX), so the caller already
+        # expects this call to occupy a worker thread — never the event loop —
+        # for up to _EXTRACTION_TIMEOUT_SECONDS. Queueing first extends that
+        # existing expected-block window; it does not introduce a new one.
+        wait = _SEMAPHORE_WAIT_SECONDS if wait_s is None else wait_s
+        acquired = _extraction_semaphore.acquire(blocking=True, timeout=wait)
         if not acquired:
             raise SemaphoreContendedError(
-                "PEK extraction in progress (semaphore held). "
-                "Retry after current extraction completes."
+                f"PEK extraction queue wait of {wait}s elapsed without a free slot "
+                f"(semaphore held by another extraction) for report_id={report_id}. "
+                "Raise PEK_SEMAPHORE_WAIT_SECONDS if batches are legitimately "
+                "deeper than this bound."
             )
 
         try:

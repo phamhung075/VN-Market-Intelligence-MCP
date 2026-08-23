@@ -110,6 +110,18 @@ services:
       PDFX_OCR_MAX_CONCURRENCY: '1'
       PDFX_OCR_QUEUE_WAIT_S: '5'
       PDFX_OCR_PAGE_TIMEOUT_S: '600'
+      # FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE: how long a contended
+      # PEK extraction QUEUES for the single extraction slot
+      # (infrastructure/pek_engine_adapter.py _extraction_semaphore) before
+      # failing loud. Previously the acquire was non-blocking, so a reconcile
+      # re-fire batch (bctcExtractReconcileJob DEFAULT_BATCH_SIZE=20, no pacing)
+      # silently dropped 19 of every 20 members inside detached background tasks
+      # — each drop still burned one of MAX_RECONCILE_ATTEMPTS=8. 1800s = 30 min
+      # = same order as PEK_EXTRACTION_TIMEOUT_SECONDS, so a caller queued behind
+      # one normal in-flight extraction outlasts it. Env-driven so retuning never
+      # needs a rebuild (docs/architecture-briefs/
+      # 2026-08-13-fix-pek-extract-semaphore-contention-silent-drop.md §2).
+      PEK_SEMAPHORE_WAIT_SECONDS: '1800'
     restart: unless-stopped
     healthcheck:
       test:
