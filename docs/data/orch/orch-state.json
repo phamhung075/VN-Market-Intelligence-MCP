@@ -13116,6 +13116,30 @@
         ],
         "verification_gate": "A pm cycle that measures the lanes as structurally unevictable records that verdict somewhere durable and does NOT re-run the same investigation next cycle. Prove it by showing two consecutive pm cycles where the second one reads the first one's verdict instead of re-deriving it.",
         "note": "MEASURED BY PM 2026-08-23T10:40Z, read-only, not inferred. Gate state: done[]=14 (threshold 10), done_verified[]=30 (threshold 0), and the flow's own HSC-6 invariant says done_verified[] must never exceed 5. Ran the remediation tool: `bash scripts/orch-cold-evict.sh --dry-run` -> every category 0, 'Byte reduction: 0 bytes', projected hot file byte-identical at 3,203,251 B. ROOT CAUSE, verified in code: the FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING referential eviction guard (orch-cold-evict.sh:214-229, applied at :467 and :491) holds any terminal row whose id is still named in a live row's effective_depends_on across TASK_LANES plus backlog-detail.json. Recomputed independently: 30 of 30 done_verified ids and 4 of 4 rank-eligible done ids (KEEP_RECENT_DONE=10 makes only the oldest 4 rank-eligible) are held. Zero evictable is therefore STRUCTURAL, not transient. SECOND-ORDER ROOT CAUSE, already owned, DO NOT DUPLICATE: FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION (ready[], P0, developer) — nothing systematically produces the DONE_VERIFIED token, so successors never drain, so their depends_on keeps naming terminal rows forever, so the guard holds those rows forever, so terminal lanes only grow. That row already lists scripts/orch-cold-evict.sh in its files[]. THIS row is the narrower flow defect: pm's gate has no unclearable branch and no state, so every pm either re-derives this whole investigation or logs 'deferred' — 3 consecutive cycles read as skipped when at least this one was impossible. WHY THIS EVIDENCE IS NOT ON THE P0 ROW WHERE IT BELONGS: that row measures 11732B of prose against a 12000B ceiling, so appending this measurement to it would have crossed the ceiling and hard-rejected pm's entire 7-mint decomposition write. That is a live instance of the exact defect TASK-PROSECEILING-VALUE-SHAPE-MEASURE fixes, observed while working around it. ALSO NOT DONE, DELIBERATELY: pm did not run the live eviction — it would have been a no-op write taken under commit-mutex with ORCH_APPLY_ALLOW_SHRINK set against a live peer, for zero byte reduction."
+      },
+      {
+        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-flow-actuator-fix",
+        "type": "routing-gap",
+        "status": "BACKLOG",
+        "owner": "po",
+        "zone": "docs/agents/po/flow/",
+        "title": "Unrouted signal type 'flow_actuator_fix' (Pipeline A) — no table row in docs/agents/po/flow/triage-signals.md",
+        "dedup_key": "signal-type-registry-gap:flow_actuator_fix",
+        "created_at": "2026-08-23T11:23:10Z",
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=flow_actuator_fix routed on Pipeline A (a matching table row exists in triage-signals.md's own Pipeline-A section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
+        "updated_at": "2026-08-23T11:23:10Z"
+      },
+      {
+        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-system-issue",
+        "type": "routing-gap",
+        "status": "BACKLOG",
+        "owner": "po",
+        "zone": "docs/agents/po/flow/",
+        "title": "Unrouted signal type 'system-issue' (Pipeline A) — no table row in docs/agents/po/flow/triage-signals.md",
+        "dedup_key": "signal-type-registry-gap:system-issue",
+        "created_at": "2026-08-23T11:23:11Z",
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=system-issue routed on Pipeline A (a matching table row exists in triage-signals.md's own Pipeline-A section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
+        "updated_at": "2026-08-23T11:23:11Z"
       }
     ],
     "closed_sprints": [
