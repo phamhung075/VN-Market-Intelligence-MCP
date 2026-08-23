@@ -193,3 +193,86 @@
 - ANOMALY (flagged, not resolved, out of this row's scope): dmesg -T shows 2 fresh oom-kill events (Aug 19/20) on container id 92e6017318e4 — the OLD rag-service container believed retired since 08-14, absent from `docker ps -a` today. Either a zombie cgroup lingered or dmesg timestamp translation is unreliable across this host's suspend/resume boundary; does not implicate the current container/fix either way.
 **why-decision:** HELD, no lane move — dispatcher explicitly flagged this as a "say plainly if too early" case; the data confirms it is.
 **why-change:** none.
+
+### STEP qa-S45 · qa · 2026-08-23T11:35:00Z
+**task-id:** FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION
+**what-done:** verify-committed (branch:null) — commits b1aa63b7a,6f55a013e ancestor-confirmed on main, touch all 4 claimed files. Independently re-ran orch-backlog-stub.test.sh (35/35 green), shellcheck clean, mock-guard PASS (no src/ touched, N/A confirmed correct), security scan clean.
+**what-considered:**
+- Went further than replaying status_note's AC-4 claim: re-ran the scratch rehearsal MYSELF against TODAY's live orch-state.json + backlog-detail.json (not the 08-15 snapshot) — exit 0, "Reconciliation PASS", live files confirmed untouched (empty git diff) after.
+- Spot-checked F-5 fix in script source: `^po_goahead` prefix preserved through STUB_FIELDS strip, matches status_note claim.
+- Confirmed docs (dev-standards.md, WORK.md) actually document the F-4/F-5 fix + shape decision as claimed, not just prose-asserted.
+**why-decision:** All checks pass, no ISSUE, not OOM-class (bash/jq array-shape crash fix, unrelated to memory/durability) → vc-approved.
+**why-change:** none.
+
+### STEP qa-S46 · qa · 2026-08-23T11:40:00Z
+**task-id:** FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD
+**what-done:** verify-committed (branch:null) — commits `9f4b0ede0` (script+test+dev-standards.md+WORK.md), `47c2841b4` (decision journal), `e9c58a744` (notebook), all ancestor-confirmed on main, `git show --stat` confirms all 4 claimed files (`docs/WORK.md`, `docs/policies/dev-standards.md`, `scripts/agents-flow/decision-journal-archive.sh`, `.test.sh`) touched.
+**what-considered:**
+- Re-read the shipped script diff line-by-line: `GATE_REFUSED` logic forces `DRY_RUN=1` internally on an ungated live `--all` call (reuses the already-safe dry-run scan path rather than a second hand-written counter) — exit 1, refusal names both the would-move count and `DJA_ALLOW_ALL_UNGATED`. Matches AC-1 leg(a) exactly; leg(b) correctly left unwired (script doesn't exist yet, explicitly out of scope).
+- Re-ran `decision-journal-archive.test.sh` myself, not trusted the row's "36/36" prose: got 51/51 PASS. Reconciled the discrepancy rather than treating it as a red flag — `git log` on the test file shows this row's commit (`9f4b0ede0`, 22:31:48+02) predates the parent-row's own later commit `bdc0dc10c` (23:33:43+02, §2.3/AC-4, +15 assertions: run11-15) despite the QA notebook's cycle-799 entry mislabeling its own timestamp as 21:58 (earlier) — real commit timestamps confirm ordering: this row shipped 36 (21 pre-existing + this row's own 15 new run8-10 valve assertions), the peer row's later commit added 15 more (run11-15) → 51 today. No regression, math reconciles exactly.
+- Ran my OWN independent sandboxed fixture (scratchpad, never touching live `docs/agent-memory/decisions`/`docs/archive/decisions`) rather than only replaying the existing suite: (i) ungated live `--all` → exit 1, `REFUSED:` message, zero files moved; (ii) dry-run SUMMARY byte-identical with/without `DJA_ALLOW_ALL_UNGATED=1` (AC-2 confirmed); (iii) override unlocks past the AC-1 gate (proceeds into real archiving/AC-4 logic, confirmed via distinct exit code 2 from the *different*, unrelated AC-4 unresolved-id gate — proves the AC-1 refusal path was bypassed, not merely re-triggered).
+- Confirmed AC-3 caveat present verbatim at `dev-standards.md`'s `--all` CANONICAL example, pointing at the new gate.
+- Confirmed AC-5: `git status --porcelain docs/agent-memory/decisions docs/archive/decisions` shows only my own live in-session journal file dirty (expected, unrelated) — zero real backfill artifacts from this row's commits.
+- `mock-guard.sh --files scripts/agents-flow/decision-journal-archive.sh` → PASS (no scannable production source class, shell-only row, `bun test`/`tsc` correctly N/A — 0 `apps/` files touched per `git show --stat`).
+- Not OOM/crash-durability-class (safety-valve gate on a bash archival script, no memory/crash claim) — OOM-Class Durability Gate does not apply.
+- Journal DJ-GATE-1: `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-8.md` STEP developer-S109 carries `task-id: FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD` — present, gate satisfied.
+**why-decision:** No `ISSUE`, all checks pass, AC-1 through AC-5 all independently confirmed on live artifacts (not prose-trusted) → `vc-approved`.
+**why-change:** none — router's own dispatch matched the board row's AC text exactly.
+
+### STEP qa-S47 · qa · 2026-08-23T11:29:00Z
+**task-id:** UNBLOCK-FLEETPUSH-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER-BLOCKS-ALL-PUSHES
+**what-done:** verify-committed (branch:null) — commit `92b3d8956` ancestor-confirmed on main AND origin/main, `git show --stat` confirms it touches `apps/mcp-server/src/infrastructure/orchStateSchema.ts` (header-only: stale `~1300L` size-justification declaration corrected to `~1797L` + growth-log bullet, zero code/logic change).
+**what-considered:**
+- AC-1 re-verified live myself: `bash scripts/audits/size-lint-justification.sh --check` → PASS 0 offenders (was FAIL new-offender pre-fix); `wc -l` confirms file is genuinely 1797L, matching the corrected header.
+- AC-2 re-verified live, not prose-trusted: `git merge-base --is-ancestor 92b3d8956 origin/main` → true (landed on remote); `docs/agent-memory/sessions/fleet-push.log` tail shows the 4 pre-fix `[size-lint] FAIL`/ABORT entries (ahead=22/31/36/40) followed immediately by `ahead=0` then ~15 further cycles of clean `ahead<=threshold — nothing to do`, zero FAIL/ABORT recurrence since — durable, not a one-shot.
+- `bun tsc --noEmit` clean (0 errors); targeted `orchStateSchema.test.ts` 120/120 pass; the 5 directly-dependent test files named in the row's own review_note re-run fresh: 67/67 pass (exact match to claimed count); `mock-guard.sh --files orchStateSchema.ts` PASS.
+- AC-3 (self-diagnosing abort payload on `scripts/fleet-worktree-push.sh`) confirmed genuinely NOT implemented — `git show --stat 92b3d8956` does not touch that file, matches the review_note's own honest disclosure (out of this row's `apps/mcp-server/` zone_restricted boundary). Judged non-blocking: it is a recurrence-hardening enhancement, not part of the P0 root-cause fix itself (already fully resolved and independently verified per AC-1/AC-2 above); no duplicate follow-up row exists yet (checked `backlog-detail.json` + board titles) — left as a disclosed gap on the row's own status_note rather than self-minting new backlog scope outside QA's mandate.
+- Not OOM/crash-durability-class (doc-header size-declaration fix, no memory/crash claim) — OOM-Class Durability Gate does not apply.
+**why-decision:** No `ISSUE`, all re-run checks pass, root-cause P0 fully and durably resolved on live evidence → `vc-approved`. AC-3 gap disclosed on the row, not treated as a redo trigger (mirrors cycle-799 precedent for honestly-disclosed out-of-zone findings).
+**why-change:** none.
+
+### STEP qa-S47 · qa · 2026-08-23T13:35:00Z
+**task-id:** TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY
+**what-done:** verify-committed — commit `4e7aa7eaf` (main ancestry confirmed), touches both claimed files + test + orch-state.json. Re-ran guard live: FAIL exit 1 (unrouted Pipeline-A `flow_actuator_fix`,`system-issue` — matches dispatcher's LIVE EVIDENCE exactly). Re-ran `.test.sh`: 23/24 (TEST10 live-integration fails for the same reason, test's own comment says this is "the guard doing its job, do not silence" — not a regression). `mock-guard.sh` PASS (no production TS source). `orchStateSchema.ts` diff = 0 lines (AC-5 held).
+**what-considered:**
+- AC-1/2/3/6 (dual-pipeline parse+tag+cross-check+synthetic-catch): TEST3/8/9 + live FAIL output all confirm — genuinely closes the split-table blind spot.
+- AC-4 (self-filing mint, dedup-keyed, routing-gap slot): dedup confirmed live (2 "already tracks" skip lines). BUT read `mint_routing_gap_row()` (scripts/audits/guard-signal-type-coverage.sh:220-266): the jq template at lines 249-250 hardcodes `owner:"po"`, `zone:"docs/agents/po/flow/"`, and never sets `next_agent`. Cross-checked all 3 live self-filed rows (`FIX-SIGNAL-TYPE-ROUTING-GAP-{cowork-fire,flow-actuator-fix,system-issue}`) — 3-for-3 minted with `next_agent` absent, undispatchable by any picker.
+- PO's OWN manual disposition on the cowork-fire row (status_note, 10:33Z) independently confirms this exact defect: had to hand-patch `next_agent=agent-father` because "no dispatch lane resolves" on next_agent UNSET, AND had to move off `owner:po` because po "may not edit its own agent flow files per its own boundary_rules" — the hardcoded owner/zone combo is self-contradictory for PO's own boundary rules.
+- Task's own `desc` states the goal: close "unrouted-type-as-nonactionable-log-line ... manual intervention required on each (7x)". As committed, the mint still requires manual intervention (next_agent/owner patch) before a row is actionable — same defect class, relocated one step, not closed. This is a functional gap inside AC-4 itself, not a scope dispute.
+**why-decision:** Real, live, reproducible defect (3/3 self-filed rows) directly contradicting the task's own stated purpose → `vc-changes`, routed to owner `dev-mcp-server` (fix: template must set `next_agent` and use a dispatchable owner/zone, or route routing-gap rows to `agent-father` like PO's own manual correction did).
+**why-change:** none — dispatcher explicitly asked me to weigh whether committed scope covers the defect; it partially does (detection+dedup solid) but not the actionability half.
+
+### STEP qa-S48 · qa · 2026-08-23T14:10:00Z
+**task-id:** TE-T23
+**what-done:** verify-committed — commit `63f71bf6e` (main ancestry confirmed), touches CLAUDE.md only (1 file, 2 ins/9 del) matching `developer_note`'s claimed shape exactly.
+**what-considered:**
+- AC-1/2/3 re-verified live: `grep -n "task_claim("/"Re-entrant"/"Peer collision"/"finally.*task_release"` on live CLAUDE.md → zero matches, all three deleted as claimed.
+- AC-4: step 2.5 now CLAUDE.md:7-8 (2L, <=5L target); step 3 now :9-10 (2L, ~2L target); both pointer-only into CARD.md, zero restated args/branches.
+- AC-5: Step 2.4 breadcrumb verbatim at CLAUDE.md:7 — confirmed present, not dropped.
+- AC-6: stale "Router never reverts uncommitted files" sentence — grep confirms absent.
+- AC-7: `git show 63f71bf6e~1:CLAUDE.md | wc -l` = 64 (parent), live `wc -l CLAUDE.md` = 57 — exact -7L delta, matches claim precisely (not the stale 58L absolute figure).
+- AC-8: single-file commit on main, no branch; steps 1/2/2.5/3 read coherent (checked live 4-10).
+- po_scope_note (CLAUDE.md only, no CARD.md/SKILL.md edit): `git show --stat` confirms 1 file changed, CLAUDE.md only.
+- Ran targeted zone suite (no dedicated test file for a root .md, so targeted the 3 test files that assert against CLAUDE.md content: `tool-registry-parity.test.ts`, `DWF-routing-policy-fence.test.ts`, `317-telegram-routing-bugs.test.ts`) → 31/31 pass. `bun tsc --noEmit` (apps/mcp-server) clean, 0 errors. No production (non-doc) files touched → mock-guard N/A. Not OOM/crash-class → Durability Gate N/A.
+**why-decision:** No `ISSUE`, all 8 ACs independently re-verified against live file + git history (not review_note/developer_note prose alone), targeted tests green, tsc clean → `vc-approved`.
+**why-change:** none.
+
+### STEP qa-S48 · qa · 2026-08-23T13:55:00Z
+**task-id:** FIX-SIGNAL-TYPE-ROUTING-GAP-bctc-image-fetch-degraded
+**what-done:** verify-committed — commit `a309c9334` on main ancestry, touches exactly the 1 claimed file (`triage-signals-longtail.md`). Guard re-run live PASSes for Pipeline-B (no `unrouted Pipeline-B` line emitted); CI run `32630904807` on this exact headSha independently confirmed `signal-type-coverage-guard`=success via `gh run view --json`. `mock-guard` PASS (doc-only, no production source). `bun tsc --noEmit` clean.
+**what-considered:**
+- Dispatcher's scoping note: guard is red RIGHT NOW but on Pipeline-A types `flow_actuator_fix`/`system-issue`, not this row's Pipeline-B type — verified independently, not taken on trust: `.test.sh` TEST10 fails today for that exact reason (both types are already separately backlog-tracked, dedup_key confirmed live), and current `pending_triage_inbox[]` genuinely still carries both types post-a309c9334.
+- Cross-checked commit boundary: current HEAD `e5c44e23f` is many commits ahead of `a309c9334`; the 2 Pipeline-A gaps trace to unrelated later work (dev-mcp-server's dual-pipeline guard `4e7aa7eaf`, see qa-S47 above), not to this row.
+- OOM-Class Durability Gate: N/A — doc-only routing-table row, no memory/crash claim.
+**why-decision:** No `ISSUE`, all checks pass, live CI green independently confirmed on the exact fix commit, redness attributed correctly to a different pipeline+type out of scope → `vc-approved`.
+**why-change:** none — matches dispatcher's own pre-scoped verification note exactly.
+
+### STEP qa-S156 · qa · 2026-08-23T11:35:00Z
+**task-id:** FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE
+**what-done:** verify-committed, round 2 (redispatch after my own 2026-08-14 CHANGES_REQUESTED on `7ac55adc8`). Commit `1854156a6` on main ancestry; row's `files[]` is stale (predates intermediate size-lint extraction `b56dc6cc2` moving the reason-builder to `confidenceFinancialReasonBuilder.ts`) — traced full provenance via `git log --oneline --all` on that path instead of blind file-list match. Re-gate now `violations.length===1 && rule∈{VAL-01,VAL-03,VAL-10}` — closes exactly the AC-2 gap I flagged (VAL-03 stacking with VAL-05/VAL-01-SCALE landing confidence on 0.4/0.6, outside {0.0,0.8}). Traced rule cascade by hand in `financialFiguresRules.ts` to confirm `violations.length===1` structurally guarantees confidence∈{0.0,0.8} (hard-fail returns immediately w/ 1 violation; only 1 soft violation possible when length===1) — logic is sound, not just test-shaped.
+**what-considered:**
+- Commit message / status_note narrate the 2nd new regression test as landing confidence=0.4 (VAL-03+VAL-01-SCALE); hand-traced + live-ran it — actual is confidence=0.6 (VAL-01-SCALE 0.2 + VAL-03 0.2). Narrative-only mismatch, not a functional defect: both 0.4 and 0.6 are outside the AC-2-mandated {0.0,0.8} set, and the test's own assertions (`toBeCloseTo(0.6,5)`, hint absent) are internally consistent and pass — not a blocking issue, noted here only.
+- Ran targeted `FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY.test.ts` (11/11 pass, 40 expect()) + wider BCTC/DDD suite (132-bctc-validator, 1345b-bctc-financial-validation, 1424a-bctc-unit-scale-mismatch, 1815-bctc-confidence-vnm, FIX-BCTC-1345B-REPORT-BATCH, FIX-BCTC-MAGNITUDE-NORMALIZE, bctcMagnitudeValidator, 1813-bctc-ddd = 83/83 pass) — confirms no regression on adjacent BCTC confidence/validator paths QA round-1 didn't directly touch.
+- `bun tsc --noEmit` clean. `mock-guard --files confidenceFinancialReasonBuilder.ts` PASS. DDD grep clean (only a docstring mentions "infrastructure", no real import). Not OOM/crash-class — Durability Gate N/A.
+**why-decision:** No `ISSUE`, all checks pass, AC-2 gap from round 1 verifiably closed by direct code trace (not developer-note prose alone) → `vc-approved`.
+**why-change:** none.
