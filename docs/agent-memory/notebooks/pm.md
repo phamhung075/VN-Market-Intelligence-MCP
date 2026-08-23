@@ -105,3 +105,32 @@
 ## Archive
 
 Cycles c320 (BA-PREDICTION-EVIDENCE-REVIVAL, 2026-07-01), c319 (EVENING_SUMMARY, 2026-06-21), c327 (P1-MOMENTUM-RS, 2026-06-30), c318 (ARCH-AUTO-PUSH, 2026-06-18), c317 (OHLCV-WRITER, 2026-06-17), c316 (ERRAUDIT-W2, 2026-06-16), and c315 (BCTC-ENRICH, 2026-06-15) archived — see git history (this file, pre-2026-07-10T20:00Z) and commits 675891163d...5d121989 / c06b09a1 for full sprint records. Older cycles (c299–c189) archived to [pm-20260611.md](../../archive/notebooks/pm-20260611.md).
+
+## Session 2026-08-23T09:00Z — Decompose signal-type-registry fix
+
+**Context:** Architect completed P0 pass on FIX-PO-TRIAGE-SIGNALS-TABLE-MATCHES-ZERO-LIVE-SIGNAL-TYPES, decided (b) registry-derived routing + self-filing fallback. Routed to PM for decomposition into exactly two per-owner subtasks.
+
+**Decomposition completed:**
+
+1. **TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY** (owner: dev-mcp-server, SPRINT-S)
+   - Extend guard-signal-type-coverage.sh: parse both Pipeline-A (pending_triage_inbox[]) and Pipeline-B (signal_queue.rows[])
+   - Add self-filing mint to task_board.backlog[] on unrouted type (dedup-keyed)
+   - Proof: synthetic Pipeline-A-only type is caught by cross-pipeline check
+   - Status: READY, zone: scripts/
+
+2. **TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION** (owner: agent-father/po, SPRINT-S)
+   - Fix AC-2 falsified claims: system_issue/system-issue are "≤1-2 fires" (FALSE: 112/109 fires, concurrently live)
+   - Add tactical Pipeline-B audit-handoff rule to unblock CI red
+   - Replace frozen prose with instruction to consult derived registry
+   - Status: READY, zone: docs/agents/po/flow/
+
+**Board state:** ready+=2 (104→106), WIP unchanged (36 within limit), backlog+=0 (companion row already exists)
+
+**Handoff files created:**
+- docs/handoffs/TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY.md
+- docs/handoffs/TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION.md
+
+**Sequence:** Tasks can run in parallel (different zones, no file overlap). Audit-handoff rule from task 2 unblocks CI; guard extension from task 1 prevents recurrence.
+
+**Session:** 007e33e4-b453-4bb3-8ab1-ef31495906a3
+
