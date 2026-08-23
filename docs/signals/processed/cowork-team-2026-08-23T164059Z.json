@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-23T16:40:59Z",
+    "matched_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 4,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "weekend",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "refine-bctc-slot-4": "cadence"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-4": "1440"
+    },
+    "last_fired_timestamp": "2026-08-23T16:39:25Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 604,
+    "signal_backlog": 0,
+    "note": "Step 4.2 isStale=true (age 21.16min > threshold 20) -> PRESSURE_MODE=legacy, Steps 4.3-4.5 skipped. Slot last fired 2026-08-14T16:35:56Z, 9d overdue on a 1440min cadence. Step 5.3 ran SAME-TICK-late (return landed after Step 5b): NEGCTL=CLEAN, LEN=1010, MARKER_HITS=0/6 -> stamp stands, no de-stamp. Step 4.7 wrote cycle-snapshot-16:39.json (wall clock) while emit_pressure_state looked up nominal 16:30 -> cycle_snapshot_promoted=false, 4th live confirmation. Dispatcher ran Step 5 spawn before Step 4.7 (ordering slip, flow-doc order is 4.7 then 5); get_cycle_bootstrap fallback covers it, zero blocker. Agent result: NKG_2026_Q1.pdf 37/37 windows pushed, report_status=PARTIAL (36 DONE + 4 FAILED)."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-23T16:40:59Z",
+  "_processed": {
+    "fingerprint": "de972dccc28fd67fe9d53540d20dd1d19e70133015290ee4ec8d695818793652",
+    "processedAt": "2026-08-23T16:53:57Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

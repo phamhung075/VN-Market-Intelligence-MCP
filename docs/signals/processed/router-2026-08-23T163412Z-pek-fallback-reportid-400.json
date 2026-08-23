@@ -1,0 +1,48 @@
+{
+  "from": "router",
+  "to": "dev-mcp-server",
+  "type": "bug-escalation",
+  "priority": "high",
+  "payload": {
+    "title": "mcp-server dispatches pek-extract under a report_id its own push endpoints are hardcoded to reject (100% loss, ~15-24 min wasted CPU per job)",
+    "summary": "bctcReparseJob/composition-root mint report_id as `fallback-<TICKER>-<SORTKEY>`. All three BCTC push handlers reject any non-UUID report_id with HTTP 400 `invalid_report_id: must be UUID`. Every fallback-* job therefore runs full OCR/layout extraction to completion and is then discarded at the push. Deterministic, not a flake.",
+    "producer_sites": [
+      "apps/mcp-server/src/composition-root.ts:213  ->  `fallback-${fp.ticker}-${sortKey}`",
+      "apps/mcp-server/src/scheduler/financial-reports/bctcReparseJob.ts:672  ->  const fallbackId = `fallback-${payload.ticker}-${sortKey}`"
+    ],
+    "consumer_sites_that_reject_it": [
+      "apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts:111",
+      "apps/mcp-server/src/interface/mcp/routes/pushBctcTableHandler.ts:106",
+      "apps/mcp-server/src/interface/mcp/routes/pushBctcMdTablesHandler.ts:92"
+    ],
+    "live_evidence_2026_08_23": {
+      "dispatch_burst": "16:05:02Z — mcp-server (172.18.0.12) fired 11x POST /pek-extract -> 202 Accepted in ~300ms",
+      "resolved_by_1631Z": 3,
+      "still_running_at_1631Z": 8,
+      "outcomes": [
+        "fallback-HCM-2025-Q4  push@16:13:13Z units=60 pages=60  -> HTTP 400 invalid_report_id: must be UUID  (FAILED, work discarded)",
+        "fallback-VCI-2025-Q4  push@16:21:19Z units=48 pages=48  -> HTTP 400 invalid_report_id: must be UUID  (FAILED, work discarded)",
+        "e72a8203-f454-400c-a59d-49246d75da8c  push@16:28:59Z units=61 pages=61  -> 200 OK, units_stored=61 pages_stored=61 (DONE)"
+      ],
+      "correlation": "3/3 — the only job that succeeded is the only one whose report_id is a UUID",
+      "response_body_verbatim": "{\"error\":\"invalid_report_id: must be UUID\",\"report_id\":\"fallback-HCM-2025-Q4\"}"
+    },
+    "secondary_finding_executor_starvation": {
+      "observation": "push_layout logs its INFO start line immediately before asyncio.to_thread(_do_request), yet the HTTP 400 for HCM landed 15m46s later (start 16:13:13Z, error 16:28:59Z). urlopen timeout is 30s, so the delay is NOT network.",
+      "likely_mechanism": "layout_first_push_client.py:155 and pek_run_helper.py:88 both use asyncio.to_thread(), which shares the default ThreadPoolExecutor (min(32, cpu+4) = 6 workers on this 2-core container). 11 concurrent CPU-bound extractions occupy the pool, so the push thread queues behind them.",
+      "confidence": "inferred from timing + shared-executor code path, NOT directly instrumented — verify before fixing",
+      "impact_if_true": "pek concurrency is unbounded at the dispatch site (11 accepted in 300ms), so pushes for early-finishing jobs starve behind later-started extractions"
+    },
+    "suggested_fix_direction": "Decide one owner for report_id identity. Either mint a UUID at the fallback site (and keep the ticker/quarter as metadata), or relax the three push handlers to accept the documented fallback form. Do NOT fix only one side. Also consider bounding pek dispatch concurrency and giving push its own executor.",
+    "explicitly_NOT_claimed": "This is NOT a regression of the 2026-08-23 malloc_trim memcg-OOM fix (6f3577b9f / f68b43652 / 40e5416db). That fix is independently verified holding: RestartCount=0, healthy at 46min, kernel dmesg oom-kill count unchanged at 4, deploy-SHA gate OK.",
+    "supersedes": "docs/signals/router-2026-08-23T162520Z-pdfx-live-extract-stall.json — filed by router 16:25Z, WITHDRAWN. That signal attributed sustained 200%+ CPU to a hung POST /extract on 000000013984462_..._MSN_...pdf. That attribution was wrong: the last POST /extract returned 200 OK at 16:28:59.254Z and 21 completions are logged. The load is the 8 outstanding fire-and-forget /pek-extract background tasks documented here, which by design have no attached client — which is what the 'no curl but still 200% CPU' observation actually meant.",
+    "relates_to": "commit d548bbc9f — BCTC Q1-2026 stored-PDF stall cohort {HUT,PLX,BID,DAG}, 0/4 pass. Worth checking whether those four also ran under fallback-* report_ids, in which case that cohort is the SAME defect and not a stall at all."
+  },
+  "createdAt": "2026-08-23T16:34:12Z",
+  "_processed": {
+    "fingerprint": "8c6c11e7e38a74e5edec7bfd1c4f691b9bdb1a3bf80e83c90875acf5e991cf2c",
+    "processedAt": "2026-08-23T16:53:57Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

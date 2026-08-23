@@ -727,7 +727,7 @@
         "summary": "team-tool-recheck writer dead since 06-23 - replace-vs-retire decision needed",
         "severity": "LOW",
         "status": "READ",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-23.json"
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-23.json"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -21096,7 +21096,7 @@
         "last_served_tick": "2026-08-23T14:55:52Z"
       }
     },
-    "_updated_at": "2026-08-23T16:25:10Z",
+    "_updated_at": "2026-08-23T16:53:57Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -21688,6 +21688,340 @@
         },
         "createdAt": "2026-08-23T16:11:33Z",
         "drained_at": "2026-08-23T16:22:10Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "de972dccc28fd67fe9d53540d20dd1d19e70133015290ee4ec8d695818793652",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-23T16:40:59Z",
+          "matched_slots": [
+            "refine-bctc-slot-4"
+          ],
+          "won_slots": [
+            "refine-bctc-slot-4"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/refine_bctc_md/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 4,
+          "errors": [],
+          "pressure_mode": "legacy",
+          "calendar_status": "weekend",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "refine-bctc-slot-4": "cadence"
+          },
+          "cadence_minutes": {
+            "refine-bctc-slot-4": "1440"
+          },
+          "last_fired_timestamp": "2026-08-23T16:39:25Z",
+          "last_fired_slots": [
+            "refine-bctc-slot-4"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "16:30",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 604,
+          "signal_backlog": 0,
+          "note": "Step 4.2 isStale=true (age 21.16min > threshold 20) -> PRESSURE_MODE=legacy, Steps 4.3-4.5 skipped. Slot last fired 2026-08-14T16:35:56Z, 9d overdue on a 1440min cadence. Step 5.3 ran SAME-TICK-late (return landed after Step 5b): NEGCTL=CLEAN, LEN=1010, MARKER_HITS=0/6 -> stamp stands, no de-stamp. Step 4.7 wrote cycle-snapshot-16:39.json (wall clock) while emit_pressure_state looked up nominal 16:30 -> cycle_snapshot_promoted=false, 4th live confirmation. Dispatcher ran Step 5 spawn before Step 4.7 (ordering slip, flow-doc order is 4.7 then 5); get_cycle_bootstrap fallback covers it, zero blocker. Agent result: NKG_2026_Q1.pdf 37/37 windows pushed, report_status=PARTIAL (36 DONE + 4 FAILED)."
+        },
+        "createdAt": "2026-08-23T16:40:59Z",
+        "drained_at": "2026-08-23T16:53:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1420283f6042ea29db2b3f0a49e57efbf7d46e8b254d731325920bc3d07fbbfd",
+        "source": "file",
+        "from": "dev-team",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "P2",
+        "payload": {
+          "module": "docs/agents/po/flow/triage-signals.md",
+          "detail": "Two Pipeline-A types are unrouted and CI stays red, but the fix row for one of them was CANCELLED as satisfied. Root cause is the VERIFICATION METHOD, not a missing table row.\n\n(1) sprint_registry_dangling_ids -- NAMING MISMATCH. Emitter scripts/orch-validate.mjs (stage1h) emits the literal type \"sprint_registry_dangling_ids\". The routing table docs/agents/po/flow/triage-signals.md contains \"sprint_registry_unresolved_journal_ids\" -- grep for the EMITTED string returns 0 hits. PO cancelled FIX-SIGNAL-TYPE-ROUTING-GAP-sprint-registry-unresolved-journal-ids (archive, CANCELLED, 2026-08-23T14:40Z) with note \"verified already satisfied, not abandoned ... confirmed by grep on the live doc\". The grep was run against the name PO chose for the row, not the literal the emitter produces. Re-adding a row will fail again unless it uses the emitter's exact string.\n\n(2) recurring-bug -- 0 routing hits. Source is docs/agents/dev-team/flow/main.md HEAD.lock-recurrence example, which templates type: \"recurring-bug\". Any reader following the template emits an unrouted type. Self-inflicted by this router on the 15:37Z tick and re-confirmed present this tick.\n\nCORROBORATION DEFECT: PO's cancellation note also cites guard-signal-type-coverage.sh reporting auto-push-abort as \"the sole remaining unrouted type\". That reading was taken immediately after PO's own Step 0-SIG inbox CLEAR. The guard derives its Pipeline-A set from pending_triage_inbox[], so a just-cleared inbox yields a near-green guard regardless of table state. Green-because-input-was-deleted, already documented as the inverse failure mode.\n\nASK: (a) add routing rows keyed on the EXACT emitted literals -- sprint_registry_dangling_ids and recurring-bug -- verified by grepping the emitter source, not the row title; (b) fix the main.md template to use a routed type; (c) when verifying any signal-type routing fix, grep the emitter for the literal and never use the guard's exit code in either direction.\n\nMEASURED 2026-08-23T16:2xZ, dev-team 16:07Z tick. Live inbox depth 18: bug-escalation 5, bctc_signal 4, recurring-bug 2, cowork-fire 2, context_bloat_breach 2, sprint_registry_dangling_ids 1, data-coverage-gap 1, ci_red 1. cowork-fire is now ROUTED (earlier gap did land).\n"
+        },
+        "createdAt": "2026-08-23T16:23:58Z",
+        "drained_at": "2026-08-23T16:53:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1d6846a074115d4c7de40f5086c09e91494887beaa0af0697ba86efde6a7dff0",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-23T16:30:04Z",
+        "drained_at": "2026-08-23T16:53:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1ef585d0e5e2b1361a6e152da454a2dff377c27fb8a7585853a62c9222058a0e",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 59,
+          "cap": 200,
+          "byte_count": 12711,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-23T16:30:06Z",
+        "drained_at": "2026-08-23T16:53:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "dddc63d20e1bded227f40f274c38d5c130cc500e05ce3dfa8a15c21d94cf6a7b",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_no_valid_drop_candidate_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/ba.md",
+          "line_count": 59,
+          "cap": 200,
+          "byte_count": 12711,
+          "byte_cap": 12000,
+          "section_count": 3,
+          "non_sentinel_section_count": 1,
+          "sentinel_section_count": 2,
+          "reason": "exactly one section in this file carries a parseable timestamp while >=1 other section is a permanently-undroppable rolling/sentinel heading (e.g. 'Known patterns', 'Keep (maintenance)') -- one real timestamp is a sample size of one, not a chronological ordering, so ranking it as the file minimum against MAX sentinels would manufacture a false 'oldest' and risk dropping the file's NEWEST content (AC-5, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5, docs/agent-memory/notebooks/agent-father.md 2026-08-12). No section in this file is currently a safe, evidence-backed drop candidate; cannot prune further without risking data loss.",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-23T16:31:21Z",
+        "drained_at": "2026-08-23T16:53:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2ca6116c267d0feda902b86d3361f02b64d8e3ed799852884cef2a8d114538d8",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-23T16:30:07Z",
+        "drained_at": "2026-08-23T16:53:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5d461851ccda6c1d28cbaa7a22339472aa4b584ed41ef6dfb03c53fbc109838a",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-23T16:31:21Z",
+        "drained_at": "2026-08-23T16:53:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a8512ec03d5ffaf2c7b21b2c8cbb9a5bea641b5537062eaf8832ffa5a936e4ea",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 46,
+          "cap": 200,
+          "byte_count": 38160,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-23T16:30:06Z",
+        "drained_at": "2026-08-23T16:53:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5fadc29301a2bc2286b0c8857c99fd9895712e3faa0c339798f15cb3fac403a9",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 46,
+          "cap": 200,
+          "byte_count": 38160,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-23T16:31:21Z",
+        "drained_at": "2026-08-23T16:53:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "020862e595e3275ca8a6d136a2dbbb3f7ea8aff44d80ced6239d71e74ca198c1",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/system-auditor.md",
+          "line_count": 188,
+          "cap": 200,
+          "byte_count": 12505,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-23T16:30:04Z",
+        "drained_at": "2026-08-23T16:53:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "91a817025266c9d3f269271f6c87bcd955f7678cd57e523de647d099b0bc90c3",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/system-auditor.md",
+          "line_count": 188,
+          "cap": 200,
+          "byte_count": 12505,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-23T16:31:19Z",
+        "drained_at": "2026-08-23T16:53:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8c6c11e7e38a74e5edec7bfd1c4f691b9bdb1a3bf80e83c90875acf5e991cf2c",
+        "source": "file",
+        "from": "router",
+        "to": "dev-mcp-server",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": {
+          "title": "mcp-server dispatches pek-extract under a report_id its own push endpoints are hardcoded to reject (100% loss, ~15-24 min wasted CPU per job)",
+          "summary": "bctcReparseJob/composition-root mint report_id as `fallback-<TICKER>-<SORTKEY>`. All three BCTC push handlers reject any non-UUID report_id with HTTP 400 `invalid_report_id: must be UUID`. Every fallback-* job therefore runs full OCR/layout extraction to completion and is then discarded at the push. Deterministic, not a flake.",
+          "producer_sites": [
+            "apps/mcp-server/src/composition-root.ts:213  ->  `fallback-${fp.ticker}-${sortKey}`",
+            "apps/mcp-server/src/scheduler/financial-reports/bctcReparseJob.ts:672  ->  const fallbackId = `fallback-${payload.ticker}-${sortKey}`"
+          ],
+          "consumer_sites_that_reject_it": [
+            "apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts:111",
+            "apps/mcp-server/src/interface/mcp/routes/pushBctcTableHandler.ts:106",
+            "apps/mcp-server/src/interface/mcp/routes/pushBctcMdTablesHandler.ts:92"
+          ],
+          "live_evidence_2026_08_23": {
+            "dispatch_burst": "16:05:02Z — mcp-server (172.18.0.12) fired 11x POST /pek-extract -> 202 Accepted in ~300ms",
+            "resolved_by_1631Z": 3,
+            "still_running_at_1631Z": 8,
+            "outcomes": [
+              "fallback-HCM-2025-Q4  push@16:13:13Z units=60 pages=60  -> HTTP 400 invalid_report_id: must be UUID  (FAILED, work discarded)",
+              "fallback-VCI-2025-Q4  push@16:21:19Z units=48 pages=48  -> HTTP 400 invalid_report_id: must be UUID  (FAILED, work discarded)",
+              "e72a8203-f454-400c-a59d-49246d75da8c  push@16:28:59Z units=61 pages=61  -> 200 OK, units_stored=61 pages_stored=61 (DONE)"
+            ],
+            "correlation": "3/3 — the only job that succeeded is the only one whose report_id is a UUID",
+            "response_body_verbatim": "{\"error\":\"invalid_report_id: must be UUID\",\"report_id\":\"fallback-HCM-2025-Q4\"}"
+          },
+          "secondary_finding_executor_starvation": {
+            "observation": "push_layout logs its INFO start line immediately before asyncio.to_thread(_do_request), yet the HTTP 400 for HCM landed 15m46s later (start 16:13:13Z, error 16:28:59Z). urlopen timeout is 30s, so the delay is NOT network.",
+            "likely_mechanism": "layout_first_push_client.py:155 and pek_run_helper.py:88 both use asyncio.to_thread(), which shares the default ThreadPoolExecutor (min(32, cpu+4) = 6 workers on this 2-core container). 11 concurrent CPU-bound extractions occupy the pool, so the push thread queues behind them.",
+            "confidence": "inferred from timing + shared-executor code path, NOT directly instrumented — verify before fixing",
+            "impact_if_true": "pek concurrency is unbounded at the dispatch site (11 accepted in 300ms), so pushes for early-finishing jobs starve behind later-started extractions"
+          },
+          "suggested_fix_direction": "Decide one owner for report_id identity. Either mint a UUID at the fallback site (and keep the ticker/quarter as metadata), or relax the three push handlers to accept the documented fallback form. Do NOT fix only one side. Also consider bounding pek dispatch concurrency and giving push its own executor.",
+          "explicitly_NOT_claimed": "This is NOT a regression of the 2026-08-23 malloc_trim memcg-OOM fix (6f3577b9f / f68b43652 / 40e5416db). That fix is independently verified holding: RestartCount=0, healthy at 46min, kernel dmesg oom-kill count unchanged at 4, deploy-SHA gate OK.",
+          "supersedes": "docs/signals/router-2026-08-23T162520Z-pdfx-live-extract-stall.json — filed by router 16:25Z, WITHDRAWN. That signal attributed sustained 200%+ CPU to a hung POST /extract on 000000013984462_..._MSN_...pdf. That attribution was wrong: the last POST /extract returned 200 OK at 16:28:59.254Z and 21 completions are logged. The load is the 8 outstanding fire-and-forget /pek-extract background tasks documented here, which by design have no attached client — which is what the 'no curl but still 200% CPU' observation actually meant.",
+          "relates_to": "commit d548bbc9f — BCTC Q1-2026 stored-PDF stall cohort {HUT,PLX,BID,DAG}, 0/4 pass. Worth checking whether those four also ran under fallback-* report_ids, in which case that cohort is the SAME defect and not a stall at all."
+        },
+        "createdAt": "2026-08-23T16:34:12Z",
+        "drained_at": "2026-08-23T16:53:57Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c4bcd32dded6ef4316b21c006c345eb176b70a633b16aab49a2b678d3f184761",
+        "source": "file",
+        "from": "router",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "medium",
+        "payload": {
+          "title": "cycle-snapshot-latest.json is never promoted: Step 4.7 names the file by WALL CLOCK, emit_pressure_state looks it up by NOMINAL TICK",
+          "summary": "Producer and consumer disagree on the filename key, so the promotion silently no-ops on every tick. cycle-snapshot-latest.json has been frozen since 2026-08-23T00:07:50Z (tick=00:00) — 16.5h stale as of this filing.",
+          "producer": "docs/agents/cowork-team/flow/tick-snapshot.md:34 — FILE_TICK=$(date -u +%H:%M), i.e. the wall clock at the moment Step 4.7 runs. Writes docs/data/cycle-snapshot-<FILE_TICK>.json.",
+          "consumer": "apps/mcp-server/src/.../emitPressureStateTool.ts:397 — derives HH:MM from the tick_id argument (the NOMINAL cron tick) and looks up docs/data/cycle-snapshot-<HH:MM>.json to promote it to cycle-snapshot-latest.json.",
+          "why_they_diverge": "Step 4.7 runs after the preflight, signal drain, cadence gates and slot claim. Any dispatch that takes longer than the drift already present pushes the wall clock past the nominal tick's HH:MM. The two only agree when Step 4.7 happens to execute inside the same clock minute as the nominal tick, which in practice never happens on a WORK tick.",
+          "live_confirmations": [
+            "2026-08-23T16:39Z (this tick) — nominal 16:30, file written as cycle-snapshot-16:39.json, emit_pressure_state returned cycle_snapshot_promoted:false. 4th observation.",
+            "3 prior observations this session, same shape, all cycle_snapshot_promoted:false"
+          ],
+          "verbatim_emit_response": "{\"success\":true,\"emitted_at\":\"2026-08-23T16:39:44.722Z\",\"pressure_state_path\":\"/app/docs/data/pressure-state.json\",\"cycle_snapshot_promoted\":false}",
+          "impact": [
+            "The per-agent bootstrap saving this snapshot exists to deliver is never realized — every spawned agent falls through to its own get_cycle_bootstrap call (the documented Step -1 miss path). Not a blocker, but the whole feature is dark.",
+            "Worse: any consumer that DOES read cycle-snapshot-latest.json gets 16.5h-old data. telemetry.md Step 6.0's own contract reads last_regime / last_volatility_level from this file — so those two arguments have been degrading to 'unknown' on every tick rather than carrying real state forward."
+          ],
+          "recommended_fix": "Single-line, producer side: tick-snapshot.md's FILE_TICK should derive from the NOMINAL tick, which the dispatcher already has in hand — cowork-tick-preflight.sh's verdict JSON carries it as .tick (e.g. \"2026-08-23T16:30Z\"). Take its HH:MM instead of calling date -u. Fixing the consumer instead would mean guessing which wall-clock file belongs to which tick, which is strictly worse.",
+          "ownership_note": "Crosses two zones — the producer is a cowork flow doc (agent-father) and the consumer is TypeScript in mcp-server (dev-mcp-server). Routed to po to decompose rather than to either zone directly. The recommended fix touches only the flow doc.",
+          "not_already_tracked": "Checked orch-state before filing. Nearest existing rows are DESIGN-COWORK-FANOUT-T1-TICK-SNAPSHOT-WON-SLOTS (TODO, agent-father), DESIGN-COWORK-FANOUT-T2-CYCLE-BOOTSTRAP-EXTRACTION (TODO, agent-father) and SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED (CANCELLED) — none of them is this key-mismatch defect. Worth checking whether the CANCELLED spike was cancelled on the false premise that the step was dead code; it is not dead, it runs and writes every WORK tick, its output is just never consumed."
+        },
+        "createdAt": "2026-08-23T16:41:59Z",
+        "drained_at": "2026-08-23T16:53:57Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
