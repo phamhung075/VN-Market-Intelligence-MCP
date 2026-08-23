@@ -1,0 +1,51 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260823T090450Z",
+    "matched_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "weekend",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {},
+    "cadence_minutes": {},
+    "last_fired_timestamp": "2026-08-23T09:03:59Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "09:00",
+    "leader_lock": "acquired",
+    "dev_head": "deprecated",
+    "devq": 5,
+    "signal_backlog": 32,
+    "note": "first tick after 8h10m dispatcher outage (00:36Z-08:47Z, stale cron-registration marker inside orphan_threshold blind window); refine-bctc-slot-1 last_fired was 2026-08-15T09:04:34Z (8d stale)"
+  },
+  "priority": "low",
+  "createdAt": "20260823T090450Z",
+  "_processed": {
+    "fingerprint": "672882c2d4ab4ce5adea7dc706e130e7c4f606b58213f1aa2b7f22363599009b",
+    "processedAt": "2026-08-23T09:24:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
