@@ -8,35 +8,6 @@
      explicit YYYY-MM-DD token. Nothing deleted; full record in the archive file and git
      history. -->
 
-## FIX 2026-08-22T18:40Z — FIX-DEVTEAM-HEAD-PIN-STALE-THRESHOLD-24H-VS-TICK-CADENCE, WF-3 lane-move
-gap (router-dispatched directly, row's own `next_agent=agent-father`; architect had just completed
-diagnosis + brief correction, no task_claim — same no-gateway-binding condition, solo-operation).
-
-- Root cause (architect-diagnosed, not re-litigated here): `main.md` WF-3's escalation jq flipped a
-  bound-exceeded row to `status:BLOCKED` in place inside `.task_board.in_progress[]` without lane-
-  moving it into `backlog[]` in the same write — violates `execute-tier.md:116`
-  CANONICAL:SSOT-STATUSFLIP-LANEMOVE(c); traces to the architecture brief's own §5c code sample
-  (`2026-08-07-devteam-head-pin-stale-threshold-resume-bound.md`), which the 08-14 implementation
-  pass copied verbatim, not an implementation deviation.
-- Applied architect's corrected §5c verbatim to `docs/agents/dev-team/flow/main.md`'s WF-3 block
-  (the `resume_attempts>=3` branch): jq now conditionally appends the flagged row (with
-  `status:BLOCKED`/`hold_reason`/`resume_attempt_bound_exceeded_at`/`_by`) to `backlog[]` and
-  removes it from `in_progress[]` in the SAME write, mirroring WF-1's BLOCKED-task check
-  (`main.md:331-338`); also added the missing `(<Xh Ym>)` duration parenthetical to WF-3's BUG
-  telegram (WF-4's sibling message already had it, §4 spec always required it). +21L (1276→1297).
-  Dry-run verified the corrected jq against a synthetic in_progress[]-row fixture before landing —
-  row moved to `backlog[]` with `BLOCKED`/lane fields, `in_progress[]` emptied, as expected.
-  Dated entry appended to the file's own top size-justification comment (established convention).
-- Board row: near the 12000B prose-ceiling guard (measured 14968B, unchanged by this write —
-  ceiling check confirms 0 growth). Kept the row write minimal/structural only:
-  `next_agent: "agent-father" → "qa"` + `updated_at`/`updated_by` bump — net -10B, no new prose
-  field added (full narrative lives here instead) — routes back through Review-Lane QA-Drain
-  (`review[]`, `status==REVIEW`, `next_agent=="qa"` selector) for re-verification rather than
-  self-certifying DONE_VERIFIED on orchestration-core dispatch logic (same practice as the 08-14
-  original pass).
-- No MCP gateway tool binding this session — could not `send_telegram` a work-channel notice;
-  flagging in RETURN for the router to relay.
-
 ## FIX 2026-08-22T19:43Z — FIX-TRIAGE-INBOX-CLEAR-OWNERSHIP-PO-SELF-READ, dev-team-vs-po CLEAR ownership contradiction
 
 Router-dispatched directly (no task-board row existed; router flagged the contradiction PO surfaced
@@ -142,3 +113,9 @@ board row; same flow-doc-contradiction pattern as the two prior entries above).
   AC-6 classification fix.
 - Both fixes are doc-only, within `docs/agents/` commit zone. No board row minted (router relay,
   not a task-board dispatch). Committed directly.
+
+## FIX 2026-08-23T09:30Z — FIX-SIGNAL-TYPE-ROUTING-GAP-bctc-image-fetch-degraded, P0 CI-red fix
+- Added 1 Pipeline-B routing row (`bctc_image_fetch_degraded`) to `docs/agents/po/flow/triage-signals-longtail.md` — mcp-server `push_bctc_refined_unit`/`bctcImageFetchDegradedSignalWriter.ts`, dedup on `dedup_key`, mint FIX zone `cross-service/` next_agent `developer`. Placed in the longtail sibling (single-fire-so-far type, matches existing `bctc-data-quality-anomaly` precedent), not the hot-path main table.
+- Guard `guard-signal-type-coverage.sh --check`: FAIL (`unrouted Pipeline-B to=po types: ["bctc_image_fetch_degraded"]`) → PASS, reproduced. Paired suite: 23/24 → 24/24, reproduced once (TEST10 live-files smoke).
+- Committed `a309c9334` (file alone, pushed clean to origin/main, no rebase). Board write via `orch-apply.sh` moved the FIX row `backlog[]→review[]` (`next_agent: qa`; `ci_green_on_subsequent_push` gate not yet independently observed) — lands UNCOMMITTED, `docs/data/orch/orch-state.json` is outside agent-father's commit zone (FU-AGENT-FATHER-ORCH-SCOPE).
+- **Not fixed here (flagged, out of scope):** a genuinely new, unrelated Pipeline-A type `cowork-fire` appeared live mid-task and re-trips the guard/TEST10 post-fix — different pipeline, different subject, no claim held. Guard's own self-filing fallback already auto-tracked it (`FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire`, backlog, owner po). Needs its own fresh triage/dispatch, not folded into this task.
