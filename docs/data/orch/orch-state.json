@@ -605,7 +605,7 @@
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
         "status": "READ",
-        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-23.json"
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-23.json"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -19282,9 +19282,142 @@
         "last_served_tick": "2026-08-23T08:55:59Z"
       }
     },
-    "_updated_at": "2026-08-23T10:33:27Z",
-    "_updated_by": "po/catchup3-disposition-20260823T1033Z",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-23T10:51:47Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "9d6879095a12451ba3f7b3f4e71cebec4e710141a5647d7145d925e691c47797",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-990054cd",
+          "head_sha": "990054cd62db0ac95a7876e65209090321901738",
+          "run_id": 32632247996,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/32632247996",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "signal-type-coverage-guard",
+              "conclusion": "failure",
+              "jobId": 97176676269
+            }
+          ],
+          "fingerprint": "027d583f7a472ed7f007b2ab8b8958d59c83999dba7d2c2a46b33d2dbf2c4332",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 990054cd62db0ac95a7876e65209090321901738: signal-type-coverage-guard",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-23T10:23:43Z",
+        "drained_at": "2026-08-23T10:51:47Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "75c83afaabfd160ab3154a6ee2f251cef58aa9f97ffc78430f2184324a15a8e4",
+        "source": "file",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "priority": "low",
+        "payload": {
+          "finding": "docs/agent-memory/health/team-tool-recheck-*.md writer has been silent since 2026-06-23; memory-prune-sweep.sh now deletes files in this family older than 30d as routine hygiene",
+          "known_cause": "writer = cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed by the 2026-06-22 standing no-RemoteTrigger directive (feedback_no_remote_trigger_all_local.md)",
+          "decision_needed": "replace the recheck job with a local cron per that directive's migration rule, OR retire the team-tool-recheck permanently and let this sweep's 30d rule drain the directory to empty",
+          "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#memory-docs-hygiene-P3",
+          "idempotency_note": "written once — re-runs of memory-prune-sweep.sh skip this write once any janitor-health-recheck-writer-retired-*.json exists in docs/signals/"
+        },
+        "createdAt": "2026-08-23T10:30:03Z",
+        "drained_at": "2026-08-23T10:51:47Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "76a042f84c7068181775027605cdd089e75d9277214715bac00d027b662d8ef9",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-23T10:30:04Z",
+        "drained_at": "2026-08-23T10:51:47Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1b9ffcc22ab0522a8895aebe2cfe5000a0eb0274f2b8a181743cbc14e9c6d903",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+          "line_count": 127,
+          "cap": 200,
+          "byte_count": 23244,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-23T10:30:45Z",
+        "drained_at": "2026-08-23T10:51:47Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "21712270f8f037870644bdf8f9a66518fc2a291f3ea442b339f07e16a45dac05",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 45,
+          "cap": 200,
+          "byte_count": 35214,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-23T10:30:03Z",
+        "drained_at": "2026-08-23T10:51:47Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "12b487858f34ed071cc59219789fd9122f36cd696507defd4b976842db3072ce",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/digest-predict.md",
+          "line_count": 45,
+          "cap": 200,
+          "byte_count": 35214,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-23T10:30:44Z",
+        "drained_at": "2026-08-23T10:51:47Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-23T10:33:27Z",
     "last_po_triage_note": "po Step 0-SIG 2026-08-23T10:33Z — 6 envelopes triaged (router announced 2 fresh; 4 were carry-over from prior ticks that never cleared). 3x ci_red: run 32630904807 file-scoped DEDUP HIT on FIX-CI-BUNTEST-167-PREDICTION-MARKET-JOB (FAILEDFILE src/__tests__/167-prediction-market-job.test.ts, exact dedup_key match, SHA appended); runs 32629387939 + 32631502135 both job signal-type-coverage-guard, DEDUP HIT on FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire per the guard's own log line, that row ROUTED (next_agent was unset -> agent-father, P1). 1x cowork-fire (to:dev-team, refine-bctc-slot-1 fire after the 8h10m dispatcher outage) — this is the unrouted Pipeline-A type the guard is red on; routed via the row above, no separate mint. 2x bug-escalation: sweep-guard BARE escalated=false prior_warns=0 -> confirmed true positive, pendingObservations only, no mint per spec; notebook-immutability-guard on pm.md -> first fire for that agent+section pair, pendingObservations only, mint threshold is 2 cycles. CAVEAT RECORDED ON THE ROUTING ROW: this CLEAR removes the cowork-fire envelope from the array guard-signal-type-coverage.sh:198 reads, so CI can go green next run with the routing table still unfixed — that green is an artifact, not a fix.",
     "last_po_triage_consumed": 6,
