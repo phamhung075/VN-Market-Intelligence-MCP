@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-RCVERIF-GRANDFATHER-EXEMPTION-IGNORES-RETRACTION-VOID-MARKERS",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-RCVERIF-GRANDFATHER-EXEMPTION-IGNORES-RETRACTION-VOID-MARKERS — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-23T21:26:36Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "updated_at": "2026-08-23T21:35:11Z",
+    "updated_by": "dev-mcp-server"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -20676,6 +20675,42 @@
             "observed_at": "2026-08-23T20:33:35Z"
           }
         }
+      },
+      {
+        "id": "FIX-RCVERIF-GRANDFATHER-EXEMPTION-IGNORES-RETRACTION-VOID-MARKERS",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "owner": "dev-mcp-server",
+        "title": "checkVerificationGate() (orchStateSchema.ts:612) skips the raw_probe requirement for ANY id in the frozen RC_VERIF_GRANDFATHERED_IDS set with a bare set-membership check, no awareness of retraction/void/contamination markers on the row -- FU-RAG-DEPLOY-MEMORY (a live P0 with an active blocked chain) is a member and has never actually been certified",
+        "desc": "QA proved this live with a control 2026-08-23 (recorded verbatim on FU-RAG-DEPLOY-MEMORY's own qa_rcverif_grandfather_escalation_20260823T1441Z field, orch-state.json): identical `del(.verification)` + status=DONE_VERIFIED transform against a fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE -- FU-RAG-DEPLOY-MEMORY (grandfathered, orchStateSchema.ts:569) -> Stage0+1 PASS, write applied; the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK -> validator exit 2, aborted. FU-RAG-DEPLOY-MEMORY's own row already carries contamination language (po's ruling calls its 7-day durability window CONTAMINATED) and is under live unblock pressure (RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE + FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED both reference it). Live board check 2026-08-23T15:xxZ: row is currently status=QA, NOT flipped -- this is a live exploitable vulnerability, not yet an executed false-certification.",
+        "generic_mandate": "Two options, QA's own framing (pick one, or combine): (a) make checkVerificationGate() refuse the RC_VERIF_GRANDFATHERED_IDS exemption for any row whose text carries a retraction/void/contamination marker (bar section 4 of the RAG durability bar already specifies this in prose; make it code). (b) CHEAPER, QA-recommended: remove FU-RAG-DEPLOY-MEMORY from RC_VERIF_GRANDFATHERED_IDS -- it has never actually been DONE_VERIFIED (currently status=QA) so it has nothing legitimate to grandfather; the list exists to spare genuinely-pre-existing certified rows a retroactive probe, and removing a never-certified entry does not violate the list's own 'must never GROW' invariant (shrinking is strictly safer, not the prohibited direction).",
+        "ac": "AC-1 Implement (a) and/or (b) per architect/dev-mcp-server judgement; if (b) alone, add a code comment at the removal site cross-referencing this task-id so a future re-derivation of the frozen list does not re-add it blind. AC-2 Regression test: the exact QA repro (grandfathered id + del(.verification) + DONE_VERIFIED transform) must now ABORT like the non-grandfathered control did. AC-3 Until this lands, the INTERIM PROCESS CONTROL QA already wrote on the row stands: no agent may flip FU-RAG-DEPLOY-MEMORY to DONE_VERIFIED without the six canonical D5 fields AND a real verification.raw_probe.",
+        "files": [
+          "apps/mcp-server/src/infrastructure/orchStateSchema.ts"
+        ],
+        "not_duplicate_of": "This IS the row QA's escalation asked po to mint ('ASK -- out of qa's zone ... needs a minted row'); checked live for RCVERIF/GRANDFATHER -- no existing row found.",
+        "created_by": "po (triage 2026-08-23, from qa escalation qa_rcverif_grandfather_escalation_20260823T1441Z on FU-RAG-DEPLOY-MEMORY)",
+        "created_at": "2026-08-23T15:04:02Z",
+        "updated_at": "2026-08-23T21:35:11Z",
+        "promoted_at": "2026-08-23T21:26:02Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-23T21:26:35Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "commit": "d569db23a",
+        "review_note": "[dev-mcp-server] AC-1(b) executed (QA-recommended, cheaper): removed \"FU-RAG-DEPLOY-MEMORY\" from RC_VERIF_GRANDFATHERED_IDS in orchStateSchema.ts (51->50), with a cross-referencing comment at the removal site + an AMENDMENT paragraph in the sec8A block comment naming this task-id, so a future re-derivation of the frozen list does not blindly re-add it. AC-1(a) (retraction/void/contamination-marker scan) NOT implemented -- task named (b) as sufficient/cheaper and the fix is root-cause: the row never qualified for grandfathering (never certified, live status=QA). AC-2: added RCV-9 regression (CLI-level, via the pre-existing runCliValidator harness in orchStateSchema.test.ts) reproducing QA exact repro -- grandfathered id + del(.verification) + DONE_VERIFIED via scripts/orch-validate.mjs now exits 2/aborted (RCV-9-a); a genuinely-frozen grandfathered id (HSC-1) with the same transform still exits 0 (RCV-9-b, control). Full orchStateSchema.test.ts: 122/122 pass. bun tsc --noEmit: clean. Live docs/data/orch/orch-state.json still validates exit 0 post-trim (FU-RAG-DEPLOY-MEMORY row is status=QA, not DONE_VERIFIED, so the removal is safe against the live file). AC-3 untouched (interim process control on FU-RAG-DEPLOY-MEMORY row stands, not this task's to change). Commit d569db23a, apps/mcp-server/ only, explicit pathspec, no commit-mutex (INV-GATEWAY-1).",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun test (scoped file) + bun tsc --noEmit + node scripts/orch-validate.mjs (live file)",
+            "args": "file=apps/mcp-server/src/infrastructure/__tests__/orchStateSchema.test.ts",
+            "live_value_observed": "122 pass/0 fail (incl. new RCV-9-a/RCV-9-b); tsc 0 errors; orch-validate.mjs exit 0 on live orch-state.json post-trim",
+            "observed_at": "2026-08-23T21:45:00Z"
+          }
+        }
       }
     ],
     "qa": [
@@ -21013,32 +21048,6 @@
         "claimed_at": "2026-08-23T15:57:35Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "blocked_reason": "SLS claim reverted, 2026-08-23T15:37Z tick: the claim was not gate-satisfied. SLS PRIMARY selects purely on promoted_by == \"dev-team (supervised-lane sweep)\" and re-validates no gate. This row was stamped 2026-08-08T04:51:52Z and carries plan_only=false, so effective_plan_only is FALSE and the row is outside SLS's supervised-AND-plan_only quarantine class. Per main.md Lane x Gate matrix, ready[] with sup=T po=F resolves to READY-XOR-SUP-OR-PLANONLY, i.e. PO's human-gated manual-dispatch sweep, NOT auto-dispatch. Not spawned. The lane-move back to ready[] was attempted and HARD-REJECTED by the row-prose-ceiling guard (live=0B, candidate=26552B): that is defect D3 in scripts/architect-20260823-orch-prose-ceiling-row-handoff.jq, 2nd live instance after UC-CCA-P3. Marked BLOCKED rather than IN_PROGRESS so wip_in_progress excludes it and the four WIP pickers stay unblocked. Unblock path: PO manual-dispatch sweep, or land the D3 fix then lane-move to ready[]."
-      },
-      {
-        "id": "FIX-RCVERIF-GRANDFATHER-EXEMPTION-IGNORES-RETRACTION-VOID-MARKERS",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
-        "owner": "dev-mcp-server",
-        "title": "checkVerificationGate() (orchStateSchema.ts:612) skips the raw_probe requirement for ANY id in the frozen RC_VERIF_GRANDFATHERED_IDS set with a bare set-membership check, no awareness of retraction/void/contamination markers on the row -- FU-RAG-DEPLOY-MEMORY (a live P0 with an active blocked chain) is a member and has never actually been certified",
-        "desc": "QA proved this live with a control 2026-08-23 (recorded verbatim on FU-RAG-DEPLOY-MEMORY's own qa_rcverif_grandfather_escalation_20260823T1441Z field, orch-state.json): identical `del(.verification)` + status=DONE_VERIFIED transform against a fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE -- FU-RAG-DEPLOY-MEMORY (grandfathered, orchStateSchema.ts:569) -> Stage0+1 PASS, write applied; the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK -> validator exit 2, aborted. FU-RAG-DEPLOY-MEMORY's own row already carries contamination language (po's ruling calls its 7-day durability window CONTAMINATED) and is under live unblock pressure (RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE + FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED both reference it). Live board check 2026-08-23T15:xxZ: row is currently status=QA, NOT flipped -- this is a live exploitable vulnerability, not yet an executed false-certification.",
-        "generic_mandate": "Two options, QA's own framing (pick one, or combine): (a) make checkVerificationGate() refuse the RC_VERIF_GRANDFATHERED_IDS exemption for any row whose text carries a retraction/void/contamination marker (bar section 4 of the RAG durability bar already specifies this in prose; make it code). (b) CHEAPER, QA-recommended: remove FU-RAG-DEPLOY-MEMORY from RC_VERIF_GRANDFATHERED_IDS -- it has never actually been DONE_VERIFIED (currently status=QA) so it has nothing legitimate to grandfather; the list exists to spare genuinely-pre-existing certified rows a retroactive probe, and removing a never-certified entry does not violate the list's own 'must never GROW' invariant (shrinking is strictly safer, not the prohibited direction).",
-        "ac": "AC-1 Implement (a) and/or (b) per architect/dev-mcp-server judgement; if (b) alone, add a code comment at the removal site cross-referencing this task-id so a future re-derivation of the frozen list does not re-add it blind. AC-2 Regression test: the exact QA repro (grandfathered id + del(.verification) + DONE_VERIFIED transform) must now ABORT like the non-grandfathered control did. AC-3 Until this lands, the INTERIM PROCESS CONTROL QA already wrote on the row stands: no agent may flip FU-RAG-DEPLOY-MEMORY to DONE_VERIFIED without the six canonical D5 fields AND a real verification.raw_probe.",
-        "files": [
-          "apps/mcp-server/src/infrastructure/orchStateSchema.ts"
-        ],
-        "not_duplicate_of": "This IS the row QA's escalation asked po to mint ('ASK -- out of qa's zone ... needs a minted row'); checked live for RCVERIF/GRANDFATHER -- no existing row found.",
-        "created_by": "po (triage 2026-08-23, from qa escalation qa_rcverif_grandfather_escalation_20260823T1441Z on FU-RAG-DEPLOY-MEMORY)",
-        "created_at": "2026-08-23T15:04:02Z",
-        "updated_at": "2026-08-23T21:26:36Z",
-        "promoted_at": "2026-08-23T21:26:02Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-23T21:26:35Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ]
   },
