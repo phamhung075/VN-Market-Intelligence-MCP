@@ -1,0 +1,67 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260823T120552Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "weekend",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": "480",
+      "market-watcher-offhours": "480",
+      "alert-commander-critical": null
+    },
+    "last_fired_timestamp": "2026-08-23T12:05:09Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "12:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 34,
+    "note": "First non-silent fan-out of this session. Fan-out gate: headroom_mb=2990 load1m=2 cores=12 degraded=false max_parallel=4 — all 3 slots in one batch. Gatherers were 16h past their 480min weekend cadence (last_fired 2026-08-22T20:08:12Z). DOC DEFECT observed, not acted on: pressure-read.md Step 4.3 would blanket-suppress every non-guaranteed slot on calendar_status=weekend, which contradicts cadence-policy.json's explicit gatherer-standard/weekend interval_minutes=480 row and alert-commander-critical's _cron_fallback=true rows; applying it literally would kill all weekend cowork fan-out. Live counter-evidence: gatherers fired Saturday 2026-08-22T20:08:12Z. Step 4.3 carries no SUPERSEDED marker although sibling Steps 4.4/4.5/4.5c/4.5d in pressure-cadence.md were all marked so under UC-CDC-P7 Phase 2a. Second observation: Step 5.3 off-flow detector + last-fired.md AC-P1-7-4 assume a synchronous spawn return, but BGFAN-1 backgrounds every spawn, so 5b necessarily stamps last_fired before 5.3 can evaluate any return."
+  },
+  "priority": "low",
+  "createdAt": "20260823T120552Z",
+  "_processed": {
+    "fingerprint": "35c3408cb312b4edde5a91a069fb86eb345766afb21ac849f093d2608319997e",
+    "processedAt": "2026-08-23T12:22:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

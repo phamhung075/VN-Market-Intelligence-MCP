@@ -1,0 +1,23 @@
+{
+  "from": "notebook-auto-prune-hook",
+  "to": "claude-manager-helper",
+  "type": "notebook_prune_dropped_newest_dated_section",
+  "priority": "high",
+  "createdAt": "2026-08-22T23:25:35Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/dev-mcp-server.md",
+    "line": 3,
+    "heading": "## 2026-08-22 — FIX-CI-SIZELINT-GETBCTCPENDINGREFINETOOL-BASELINE-TOLERANCE-EXCEEDED (P-high, S, PO-mint CI-red, main RED 7 occurrences/7d) → done_verified[]",
+    "section_count": 3,
+    "non_sentinel_section_count": 3,
+    "sentinel_section_count": 0,
+    "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+    "action_required": "review_dropped_section"
+  },
+  "_processed": {
+    "fingerprint": "672ba0f07ce160176dc02eaf13125944b418cc8a27ba6746479fad3c6e719f35",
+    "processedAt": "2026-08-23T12:22:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

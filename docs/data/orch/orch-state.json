@@ -19468,9 +19468,147 @@
         "last_served_tick": "2026-08-23T11:54:46Z"
       }
     },
-    "_updated_at": "2026-08-23T12:09:55Z",
-    "_updated_by": "po",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-23T12:22:07Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "145f9dcaf02e732a6d676c01045bda0cd36e6e9ad1093d1dbc7106fb0e0e5b02",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-4b6f60ea",
+          "head_sha": "4b6f60eaab9dfdba0dc24f2bdd1f76dd829af697",
+          "run_id": 32637153628,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/32637153628",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "signal-type-coverage-guard",
+              "conclusion": "failure",
+              "jobId": 97188528150
+            }
+          ],
+          "fingerprint": "bb2e2e11083d4bea309f5655c97b97a0ab3fdb95c58801be3b76f5fbb8f99938",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 4b6f60eaab9dfdba0dc24f2bdd1f76dd829af697: signal-type-coverage-guard",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-23T11:53:03Z",
+        "drained_at": "2026-08-23T12:22:07Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "35c3408cb312b4edde5a91a069fb86eb345766afb21ac849f093d2608319997e",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "20260823T120552Z",
+          "matched_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md",
+            "docs/agents/market-watcher/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "weekend",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-offhours": "cadence",
+            "market-watcher-offhours": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "news-scout-offhours": "480",
+            "market-watcher-offhours": "480",
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-23T12:05:09Z",
+          "last_fired_slots": [
+            "news-scout-offhours",
+            "market-watcher-offhours",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "12:00",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 34,
+          "note": "First non-silent fan-out of this session. Fan-out gate: headroom_mb=2990 load1m=2 cores=12 degraded=false max_parallel=4 — all 3 slots in one batch. Gatherers were 16h past their 480min weekend cadence (last_fired 2026-08-22T20:08:12Z). DOC DEFECT observed, not acted on: pressure-read.md Step 4.3 would blanket-suppress every non-guaranteed slot on calendar_status=weekend, which contradicts cadence-policy.json's explicit gatherer-standard/weekend interval_minutes=480 row and alert-commander-critical's _cron_fallback=true rows; applying it literally would kill all weekend cowork fan-out. Live counter-evidence: gatherers fired Saturday 2026-08-22T20:08:12Z. Step 4.3 carries no SUPERSEDED marker although sibling Steps 4.4/4.5/4.5c/4.5d in pressure-cadence.md were all marked so under UC-CDC-P7 Phase 2a. Second observation: Step 5.3 off-flow detector + last-fired.md AC-P1-7-4 assume a synchronous spawn return, but BGFAN-1 backgrounds every spawn, so 5b necessarily stamps last_fired before 5.3 can evaluate any return."
+        },
+        "createdAt": "20260823T120552Z",
+        "drained_at": "2026-08-23T12:22:07Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fee147f605d97e3469da0880438c75775890c6cb564e9ebf6b27edde305fc8b2",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_prune_dropped_newest_dated_section",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-mcp-server.md",
+          "line": 3,
+          "heading": "## 2026-08-22 — DDD document-as-deviation annotations (router-dispatched follow-up on agents-architect brief; agent-father ratified, routed writes to me) → comment-only, no board row",
+          "section_count": 4,
+          "non_sentinel_section_count": 4,
+          "sentinel_section_count": 0,
+          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+          "action_required": "review_dropped_section"
+        },
+        "createdAt": "2026-08-22T23:25:34Z",
+        "drained_at": "2026-08-23T12:22:07Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "672ba0f07ce160176dc02eaf13125944b418cc8a27ba6746479fad3c6e719f35",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_prune_dropped_newest_dated_section",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/dev-mcp-server.md",
+          "line": 3,
+          "heading": "## 2026-08-22 — FIX-CI-SIZELINT-GETBCTCPENDINGREFINETOOL-BASELINE-TOLERANCE-EXCEEDED (P-high, S, PO-mint CI-red, main RED 7 occurrences/7d) → done_verified[]",
+          "section_count": 3,
+          "non_sentinel_section_count": 3,
+          "sentinel_section_count": 0,
+          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
+          "action_required": "review_dropped_section"
+        },
+        "createdAt": "2026-08-22T23:25:35Z",
+        "drained_at": "2026-08-23T12:22:07Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-23T10:33:27Z",
     "last_po_triage_note": "po Step 0-SIG 2026-08-23T10:33Z — 6 envelopes triaged (router announced 2 fresh; 4 were carry-over from prior ticks that never cleared). 3x ci_red: run 32630904807 file-scoped DEDUP HIT on FIX-CI-BUNTEST-167-PREDICTION-MARKET-JOB (FAILEDFILE src/__tests__/167-prediction-market-job.test.ts, exact dedup_key match, SHA appended); runs 32629387939 + 32631502135 both job signal-type-coverage-guard, DEDUP HIT on FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire per the guard's own log line, that row ROUTED (next_agent was unset -> agent-father, P1). 1x cowork-fire (to:dev-team, refine-bctc-slot-1 fire after the 8h10m dispatcher outage) — this is the unrouted Pipeline-A type the guard is red on; routed via the row above, no separate mint. 2x bug-escalation: sweep-guard BARE escalated=false prior_warns=0 -> confirmed true positive, pendingObservations only, no mint per spec; notebook-immutability-guard on pm.md -> first fire for that agent+section pair, pendingObservations only, mint threshold is 2 cycles. CAVEAT RECORDED ON THE ROUTING ROW: this CLEAR removes the cowork-fire envelope from the array guard-signal-type-coverage.sh:198 reads, so CI can go green next run with the routing table still unfixed — that green is an artifact, not a fix.",
     "last_po_triage_consumed": 6,
