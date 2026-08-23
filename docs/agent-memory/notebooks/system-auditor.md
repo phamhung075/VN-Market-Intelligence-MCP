@@ -147,3 +147,32 @@ No new BUG Telegram sent (dedup-suppressed).
 Checks: A-01–A-11 (containers), A-12–A-19 (health), A-20 (pdf multi-probe), A-21 (crashes), A-30 (memory), A-32 (disk), A-33 (hooks) — all PASS.
 
 Findings: None.
+
+### Audit Run Tier-2 2026-08-24T00:49Z
+
+**Verdict:** FINDINGS (auditor blind-spot meta-check filed)
+
+**Summary:** Tier-2 freshness audit skipped due to discovery of structural auditor blind-spot that must be resolved first. Single finding filed about auditor's inability to detect launchd failures that tier-1 probe checks for, creating an unconvertible spawn loop.
+
+**Finding:** AUDITOR-BLINDSPOT-001
+
+The tier-1 probe (`scripts/agents-flow/auditor-tier1-probe.sh`) performs launchd health checks (A-32, A-33) that are not implemented in the system-auditor LLM agent. This creates a loop:
+1. Tier-1 probe fails on launchd dimension
+2. Probe spawns system-auditor subagent
+3. Auditor correctly returns ALL_GREEN (structurally cannot see launchd checks)
+4. Probe re-fires 30min later on same launchd failure
+5. Cycle repeats indefinitely
+
+Secondary issue: Check-ID namespace drift between audit-dimensions.md (declares A-01-A-31) and probe.sh (uses A-32 for disk, A-33 for hooks, undocumented).
+
+Signal: sys-20260823T224924-0b1c
+Dedup key: auditor_coverage_gap:launchd_dimension:tier1
+Routed to: po
+Suggested owner: orch-sentinel (per OH-3 dimension — auditor blind-spot meta-check)
+
+**Anomalies:** 1 finding (structural auditor coverage gap)
+
+**Status:** AWAITING PO TRIAGE (auditor blind-spot meta-check routed for owner assignment)
+
+**NEXT:** PO assigns owner (suggested: orch-sentinel OH-3 dimension) to determine whether launchd should be formally excluded from tier-1 scope or added to auditor checks.
+
