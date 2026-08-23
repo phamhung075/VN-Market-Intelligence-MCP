@@ -608,6 +608,48 @@
         "disposition": "TRIAGED — no mint, no PO ruling owed. The decision_needed this payload asks for was settled 2026-08-06 (DECISION=REPLACE) and the replacement is LIVE: docs/agents/agent-father/flow/team-tool-recheck.md on agent-father's existing 23 14 * * * cron, 12 reports in docs/agent-memory/health/, newest team-tool-recheck-2026-08-22-1242.md. The signal itself is a known false emission — memory-prune-sweep.sh hardcodes the string 'silent since 2026-06-23' with no liveness predicate, and its idempotency guard (line 109, find SIGNALS_DIR -maxdepth 1) cannot see docs/signals/processed/ where the drain puts prior emissions, so it re-emits every cycle. 11th distinct emission date. Owner: FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (backlog, P1, occurrence_count 11) + sibling FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR (ready). CORRECTION SHIPPED THIS TICK: CLEAN-RETIRE-TEAM-TOOL-RECHECK-WRITER, cited by the 08:20Z triage of the sibling signal as authority to retire, is RETRACTED and set BLOCKED — implementing it would have killed a live job.",
         "triaged_at": "2026-08-23T12:47:31Z",
         "triaged_by": "po/triage-20260823T1232Z"
+      },
+      {
+        "id": "sys-20260823T141228-5fd3",
+        "ts": "2026-08-23T14:12:28Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor memory sustained 98%+ (samples: 98.26-99.27%), vmhwm pinned at cgroup limit",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-23T14:07Z",
+        "dedup_key": "microservice_degraded:pdf-extractor:A-30"
+      },
+      {
+        "id": "sys-20260823T141238-772a",
+        "ts": "2026-08-23T14:12:38Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor event loop intermittently wedged (2/3 probes failed, HTTP 000)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-23T14:07Z",
+        "dedup_key": "microservice_degraded:pdf-extractor:A-20"
+      },
+      {
+        "id": "sys-20260823T141245-1960",
+        "ts": "2026-08-23T14:12:45Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor health endpoint timeout (CLIENT_TIMEOUT, curl_exit=28, 5s budget)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-23T14:07Z",
+        "dedup_key": "microservice_degraded:pdf-extractor:A-12"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -16010,53 +16052,6 @@
           }
         },
         "status_note": "\n[QA] Review Record (direct-commit verify, 2026-08-23T13:48:23Z): STATUS_NOTE lane prose was stale; the implementation record lives in verify_note. Verified commit d05864c40 (main-ancestor). AC-1 PASS: scripts/auditor-db-checks.sh exists, executable (7029B). AC-2..AC-7 re-run independently, NOT taken on the developer's claim: bash scripts/auditor-db-checks.test.sh -> 29 passed, 0 failed, 0 skipped, matching the claimed 29/29, and including T10 executed against the LIVE data/live/market.db (exit 0, valid JSON, verdict in {PASS,WARN}) plus T8/T9 fail-loud negative controls. MUST-NOT-SHIP conditions checked and NOT violated: T7 asserts the failed/conf=0.0 row still counts in BOTH numerator and denominator (i.e. population is NOT filtered by extraction_confidence > 0), and the volume floor is exercised. ZONE-REVERT CLAIM VERIFIED BYTE-EXACTLY: d05864c40 did touch the out-of-zone docs/agents/system-auditor/flow/main.md (22 lines); revert 70b3867d8 restores it to sha256 f1a8ee92b7d08755 / 153599B, identical to d05864c40^, and live main.md still equals that state with no later drift."
-      },
-      {
-        "updated_at": "2026-08-23T14:08:56Z",
-        "updated_by": "ops",
-        "status_note": "OPS REBUILD COMPLETE 2026-08-23T13:55Z — mcp-server Docker image rebuilt (new image sha256:de8e753... differs from old c8322d2...). Verified via curl: localhost:3000/api/bctc-inspect now serves HTML containing id=\"quarter-filter\" and id=\"ticker-filter\". All 12 containers healthy post-rebuild. Docker builder cache pruned (15.13GB reclaimed). Ready for QA live dual-origin AC1-AC10 verification on localhost:3000 (direct mcp-server) and localhost:3001 (frontend proxy).\n[QA] Review Record (direct-commit verify) 2026-08-23T14:08:53Z: Live dual-origin browser verification (real headless Chromium via Playwright, both :3000 direct + :3001 frontend proxy, identical results). Quarter facet=11 options (not 13 -- HUT string-quarter landmine correctly normalized), ticker facet=50, both with live-count placeholder. AC5 AND-compose confirmed (HUT+2024-Q1 -> exactly 1 doc, zero network calls). AC7 zero-match confirmed (disabled+selected placeholder, correct Vietnamese status text, zero console errors, screenshotted both origins -- pixel identical). AC9 label 'HUT Q1 2024' not duplicated (paired commit 237fa6e26). FR-7 selection-preservation confirmed: select.value mutation on a still-matching filter fired ZERO network requests (no synthetic change event), total /docs fetch count=1 across the whole multi-filter run (AC2). Independently re-ran: 18/18 new unit tests, 109/109 five named regression files, tsc clean, DDD/security grep clean, mock-guard N/A (.html extension gap, hand-verified diff instead -- zero fabricated data). Commits 2e66153fd/cab92d7c5 confirmed ancestor of local main. Blast-radius: /health toolCount=183 matches; /api/bctc-inspect 200 both origins; /dashboards/news-fetch/ 200 on :3000 (no such route exists on :3001, pre-existing/structural, not a regression). BCTC-Eval/OOM gates N/A (UI-only feature). VERDICT: DONE_VERIFIED, zero blocking issues.",
-        "id": "TASK-BCTC-INSPECT-UI-FILTERS",
-        "type": "TASK",
-        "title": "BCTC Inspector: add 2 client-side facet filters (quarter + ticker) on doc dropdown",
-        "status": "DONE_VERIFIED",
-        "priority": "P1",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "source": "decompose:FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
-        "created_by": "pm",
-        "created_at": "2026-08-23T13:06:15Z",
-        "parent_id": "FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
-        "rebuild_required": true,
-        "po_verify_chain": [
-          "ops:rebuild-mcp-server",
-          "qa:live-dual-origin-AC1-AC10",
-          "close:done_verified"
-        ],
-        "qa_verified_at": "2026-08-23T14:08:53Z",
-        "verification": {
-          "raw_probe": {
-            "tool": "playwright-chromium-live-browser + bun-test",
-            "args": {
-              "origins": [
-                "http://localhost:3000/api/bctc-inspect",
-                "http://localhost:3001/dashboard/bctc-inspect"
-              ],
-              "checks": "AC1-AC10 dual-origin DOM interaction + unit/tsc/ddd/security scans"
-            },
-            "live_value_observed": {
-              "quarter_options": 11,
-              "ticker_options": 50,
-              "and_filter_match_count": 1,
-              "zero_match_confirmed": true,
-              "selection_preserved_zero_network": true,
-              "unit_tests": "18/18 new + 109/109 regression",
-              "tsc_errors": 0,
-              "health_toolCount": 183
-            },
-            "observed_at": "2026-08-23T14:08:53Z"
-          }
-        }
       }
     ],
     "head": {
