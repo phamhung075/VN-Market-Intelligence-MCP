@@ -1,13 +1,8 @@
 {
   "dashboard_section_cache": {
     "section_name": "po",
-    "last_mtime": 1787471765,
-    "last_linecount": 28,
-    "po": {
-      "section_name": "po",
-      "last_mtime": 1787440737,
-      "last_linecount": 23
-    }
+    "last_mtime": 1787475204,
+    "last_linecount": 29
   },
   "decision_journal": [
     {
@@ -132,7 +127,7 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-22T23:18:30Z",
+    "_updated_at": "2026-08-23T08:53:35Z",
     "_updated_by": "dev-team",
     "archive": [],
     "rows": [
@@ -18220,7 +18215,7 @@
         "last_served_tick": "2026-08-22T22:52:42Z"
       }
     },
-    "_updated_at": "2026-08-23T08:27:58Z",
+    "_updated_at": "2026-08-23T08:53:12Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -18281,6 +18276,42 @@
         "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md docs/data/auditor-tier3-last-healthy.json. actor=007e33e4-b453-4bb3-8ab1-ef31495906a3 mode=warn escalated=true prior_warns=3 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
         "createdAt": "2026-08-23T08:01:54Z",
         "drained_at": "2026-08-23T08:23:42Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "dcff1bd59351d3f697201e1170377a08f4e5db2a13b84a1222cfff268e1f6886",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/data/orch/orch-state.json' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/data/orch/orch-state.json' (cf3023a5bd1f9ad33029e6adf450ff51dc80d851) differs from what is about to land in this commit (42771857af55437531c2f6cd043478b46b606fd2) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope (two-blob form takes NO pathspec — do not append '-- docs/data/orch/orch-state.json', that is a git usage error): git diff cf3023a5bd1f9ad33029e6adf450ff51dc80d851 42771857af55437531c2f6cd043478b46b606fd2",
+        "createdAt": "2026-08-23T08:23:52Z",
+        "drained_at": "2026-08-23T08:53:12Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d7920b4d9716bb70a6fdbf702923e72475d9fd16c3af20c8d54e86d7306b9301",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 4 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/pm.md docs/data/orch/orch-state.json docs/handoffs/TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY.md docs/handoffs/TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION.md. actor=007e33e4-b453-4bb3-8ab1-ef31495906a3 mode=warn escalated=true prior_warns=4 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-23T08:46:37Z",
+        "drained_at": "2026-08-23T08:53:12Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e870fafc93fb5a7abfadc8e0e7fcd308ca7cad733c9404813addb5563333d221",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-25.md docs/data/orch/orch-state.json. actor=007e33e4-b453-4bb3-8ab1-ef31495906a3 mode=warn escalated=true prior_warns=5 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-23T08:47:22Z",
+        "drained_at": "2026-08-23T08:53:12Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
