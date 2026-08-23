@@ -1882,3 +1882,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · 6 crons MISSED (e.g., weeklyPortfolioReport)
+**Severity:** CRITICAL | **Date:** 2026-08-23 | **Status:** OPEN
+**Location:** scheduler
+**Details:** Six cron jobs have MISSED status (failed to fire within expected cadence): weeklyPortfolioReport, alertDigest, eveningSummary, patternWatch, and others
+**Impact:** Scheduled analytics and reports not running; dashboard alerting delayed
+**Root cause:** Cron scheduler gaps or job hangs preventing fire
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-23T07:56:36Z (signal sys-20260823T075559-75e2, system-auditor -> po, dedup_key=auditor-a29-fire-gap:missed-crons, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
