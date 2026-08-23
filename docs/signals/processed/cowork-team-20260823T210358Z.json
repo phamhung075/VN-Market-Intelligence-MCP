@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260823T210358Z",
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": null
+    },
+    "last_fired_timestamp": "2026-08-23T21:02:45Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "21:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 31,
+    "note": "Single-slot FIRE. Step 4.7 wrote cycle-snapshot-21:01.json (wall-clock) while emit_pressure_state looks up nominal 21:00 -> cycle_snapshot_promoted=false, 4th consecutive instance of the wall-clock-vs-nominal naming mismatch; latest still tick=00:00 (21h stale). Latent hazard observed this tick: a stale cycle-snapshot-21:00.json from the PRIOR day (age 1434min, 6min short of the 1440min prune) was co-present, so an aligned lookup could have promoted a 24h-old snapshot. emit returned stale_warning=true (first occurrence in this session; absent from the 20:45Z and 20:47Z emits) -> next tick Step 4.2 AC-P1-6-3 will downgrade PRESSURE_MODE to legacy. Step 5.3 DEFERRED per BGFAN-1: last_fired stamped, prior value 2026-08-22T21:08:05Z retained for de-stamp if the return scores >=2/6."
+  },
+  "priority": "low",
+  "createdAt": "20260823T210358Z",
+  "_processed": {
+    "fingerprint": "6871544fd1e3621060ef8d8cb312f528010d354814cae1e401c7384956b8f3e9",
+    "processedAt": "2026-08-23T21:23:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

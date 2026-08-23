@@ -1,38 +1,18 @@
 {
   "ticker": "DXG",
   "signal_type": "bctc_signal",
-  "quarter": "unavailable",
+  "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Real estate development (residential/urban projects), brokerage (DXG homebrand network).",
-  "customer": "Retail homebuyers, investors in residential/urban development projects.",
-  "ops": "DATA GAP: get_bctc_full returns 'Chua co du lieu BCTC' — no quarterly financials extractable this cycle (34th+ consecutive cycle unresolved). Sector-comparison-only fallback: PE 66.5x vs sector median 16.1x (premium +312%); ROE 1.9% (below sector median 7.3%).",
-  "mgmt": "EY_SPREAD -3.50pp = AVOID (do not post bullish signal per valuation_verdict=AVOID gate); Kinh Dich que Di(27) TRUNG TINH, BAN, do tin cay 29%.",
-  "ey_spread_pct": -3.5,
-  "valuation_verdict": "AVOID",
-  "roe_pct": 1.9,
-  "kinhdich": {
-    "que": "Di (27)",
-    "xu_huong": "TRUNG TINH",
-    "tin_hieu": "BAN",
-    "do_tin_cay_pct": 29
-  },
-  "esc_results": {
-    "ESC-1": "UNEVALUABLE_NO_DATA",
-    "ESC-2": "UNEVALUABLE_NO_DATA",
-    "ESC-3": "UNEVALUABLE_NO_DATA",
-    "ESC-4": "UNEVALUABLE_NO_DATA",
-    "ESC-5": "UNEVALUABLE_NO_DATA"
-  },
-  "escalation_status": "NONE",
-  "trick_summary": null,
-  "trick_confidence": "none",
-  "data_quality_note": "get_bctc_full 'Chua co du lieu' persists 34th+ consecutive cycle despite DXG_2026_Q2.pdf on stored-PDF list since 2026-08-01 (open bctc-data-quality-anomaly, bctc-analyst-20260813T001500Z.json, still pending dev-team pickup)",
-  "cycle_id": "20260823-1800",
-  "generated_at": "2026-08-23T18:10:00Z",
+  "product": "Real estate development (residential projects, land bank)",
+  "customer": "Homebuyers/investors in DXG's residential project pipeline",
+  "ops": "DATA GAP — get_bctc_full returns 'Chưa có dữ liệu' (no BCTC data extracted), 35th+ consecutive cycle unresolved. Sector-comparison only: ROE 1.9% vs sector median 7.3% (below median), PE 66.5 vs sector 16.1 (premium +312%); EY_SPREAD -3.50pp AVOID — do NOT post bullish signal per valuation_verdict=AVOID rule",
+  "mgmt": "No BCTC extraction possible to assess management track record this cycle; prior cash-flow-anomaly signal (c162, bctc-analyst-20260813T001500Z.json) still pending dev-team pickup",
+  "data_quality_flag": "CHUA_CO_DU_LIEU",
+  "cycles_unresolved": "35+",
   "_processed": {
-    "fingerprint": "37247edfbb3dbadb07986156309b00928e044d9603812f8a2c33ee8e36596344",
-    "processedAt": "2026-08-23T18:22:22Z",
+    "fingerprint": "ccec8aa965aecc3fe1321394f3c12ad4d7ae1f2e80288882e29ad084665cfdb8",
+    "processedAt": "2026-08-23T21:23:50Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

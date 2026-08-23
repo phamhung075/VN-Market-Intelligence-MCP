@@ -1,0 +1,40 @@
+{
+  "id": "bca-20260823T211000Z",
+  "ts": "2026-08-23T21:10:00Z",
+  "from": "bctc-analyst",
+  "to": "dev-team",
+  "type": "esc-deep-dive-request",
+  "summary": "ESC deep-dive: FPT Q1-2026 ESC-5",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": null,
+  "payload": {
+    "trigger_id": "ESC-5",
+    "ticker": "FPT",
+    "quarter": "Q1-2026",
+    "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+    "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+    "context": {
+      "low_confidence_unit_ids": [
+        "unit-0008",
+        "unit-0009",
+        "unit-0010",
+        "unit-0011",
+        "unit-0012",
+        "unit-0013",
+        "unit-0014"
+      ],
+      "min_confidence": 0.45
+    },
+    "all_esc_fired": [
+      "ESC-5"
+    ],
+    "note": "24h idempotency guard from prior cycle (c171-c175 chain, first armed ~2026-08-22T18:15Z) expired ~2026-08-23T18:15Z with no recorded Opus deep-dive completion in this agent's notebook. This c176/21:00Z-slot probe found the guard cleared (claimed:true on fresh claim) — re-emitting per Escalation Decision logic (guard.claimed==TRUE branch). Same 7 units (unit-0008..0014, confidence=0.45) re-confirmed via full 226-line/15-unit re-read this cycle, byte-identical to every prior cycle since first ESC-5 fire."
+  },
+  "_processed": {
+    "fingerprint": "e5896cb43cb88043b2a1d49d532bc7a99db0732a87b5a921790ac46548cbf592",
+    "processedAt": "2026-08-23T21:23:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -21066,8 +21066,8 @@
         "last_served_tick": "2026-08-23T20:56:57Z"
       }
     },
-    "_updated_at": "2026-08-23T21:08:48Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-08-23T21:23:50Z",
+    "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
         "envelope_id": "9fbfb401a5cc9bf6b6f101f29d6b3e107aaf709f396985e161a457defac1553a",
@@ -21144,6 +21144,212 @@
         },
         "createdAt": "",
         "drained_at": "2026-08-23T15:54:07Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e5896cb43cb88043b2a1d49d532bc7a99db0732a87b5a921790ac46548cbf592",
+        "source": "file",
+        "from": "bctc-analyst",
+        "to": "dev-team",
+        "type": "esc-deep-dive-request",
+        "priority": "HIGH",
+        "payload": {
+          "trigger_id": "ESC-5",
+          "ticker": "FPT",
+          "quarter": "Q1-2026",
+          "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+          "context": {
+            "low_confidence_unit_ids": [
+              "unit-0008",
+              "unit-0009",
+              "unit-0010",
+              "unit-0011",
+              "unit-0012",
+              "unit-0013",
+              "unit-0014"
+            ],
+            "min_confidence": 0.45
+          },
+          "all_esc_fired": [
+            "ESC-5"
+          ],
+          "note": "24h idempotency guard from prior cycle (c171-c175 chain, first armed ~2026-08-22T18:15Z) expired ~2026-08-23T18:15Z with no recorded Opus deep-dive completion in this agent's notebook. This c176/21:00Z-slot probe found the guard cleared (claimed:true on fresh claim) — re-emitting per Escalation Decision logic (guard.claimed==TRUE branch). Same 7 units (unit-0008..0014, confidence=0.45) re-confirmed via full 226-line/15-unit re-read this cycle, byte-identical to every prior cycle since first ESC-5 fire."
+        },
+        "createdAt": "2026-08-23T21:10:00Z",
+        "drained_at": "2026-08-23T21:23:50Z",
+        "routed_to": "ESC-DISPATCH"
+      },
+      {
+        "envelope_id": "ccec8aa965aecc3fe1321394f3c12ad4d7ae1f2e80288882e29ad084665cfdb8",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Real estate development (residential projects, land bank)",
+          "customer": "Homebuyers/investors in DXG's residential project pipeline",
+          "ops": "DATA GAP — get_bctc_full returns 'Chưa có dữ liệu' (no BCTC data extracted), 35th+ consecutive cycle unresolved. Sector-comparison only: ROE 1.9% vs sector median 7.3% (below median), PE 66.5 vs sector 16.1 (premium +312%); EY_SPREAD -3.50pp AVOID — do NOT post bullish signal per valuation_verdict=AVOID rule",
+          "mgmt": "No BCTC extraction possible to assess management track record this cycle; prior cash-flow-anomaly signal (c162, bctc-analyst-20260813T001500Z.json) still pending dev-team pickup",
+          "data_quality_flag": "CHUA_CO_DU_LIEU",
+          "cycles_unresolved": "35+"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T21:23:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "69bd7419ef88d0b93ac7d13fad8b67a410ee26ac9a25138efd7b2ec2cb233ee9",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "IT services, software exports, telecom (FPT Telecom equity-method since Q1-2026), education (FPT Edu)",
+          "customer": "Enterprise IT buyers (VN + offshore Japan/EU/APAC), SME telecom subscribers, students",
+          "ops": "Gross margin 34.0%, operating margin 22.0%; ROE 28.3% (sector median 10.6%), PE 13.8 vs sector 17.3 (discount -20%); EY_SPREAD +2.25pp FAIR",
+          "mgmt": "FTEL deconsolidation to equity-method from Q1-2026 distorts YoY revenue optics (-22.3% headline, +8.7% like-for-like); ESC-5 fired again this cycle — 7 of 15 refine units confidence=0.45 (footnotes 26-46), re-escalated to dev-team after 24h guard expired unclaimed",
+          "esc3_status": "DATA-COVERAGE-LIMITED",
+          "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+          "quarters_returned": 3,
+          "escalation_status": "PENDING",
+          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T21:23:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "37e8dc69cfde03b2220a9c9ee24db97c1abb2c4d8b453771fd7b15bb0122af81",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Steel production (construction steel, HRC), Dung Quat integrated complex",
+          "customer": "Domestic construction/infrastructure contractors, export steel buyers",
+          "ops": "Gross margin 15.8%; operating_profit reported as 0 (corrupt field, 31st+ consecutive cycle unresolved) while net_profit 9,055.9 tỷ exceeds gross_profit 8,365.1 tỷ — non-operating income flagged by validator; ROE 12.7% vs sector median 2.9%; PE 14.2 vs sector 32.6 (discount -57%); EY_SPREAD +2.04pp FAIR",
+          "mgmt": "Data-quality gap (operating_profit=0) persists unresolved across 31+ cycles; ESC-4 discarded on this ticker due to corrupt operating-profit field; ESC-3 DATA-COVERAGE-LIMITED (3/4 quarters, guard held, no re-emit — root cause BCTC-HIST-VPS-BACKFILL)",
+          "esc3_status": "DATA-COVERAGE-LIMITED",
+          "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3",
+          "quarters_returned": 3
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T21:23:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "78820ed7d450b96cc2b508433c60733942eae369bf0d71773580321b70842990",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Retail and corporate lending, deposit-taking, bancassurance cross-sell (state-owned commercial bank)",
+          "customer": "Urban/corporate borrowers, retail depositors, SOE-linked institutional clients",
+          "ops": "Net interest income 17,421 tỷ; operating margin 80.9%; ROE 16.7% vs sector median 17.6% (below median); OCF/NI ratio 1.368 (divergence 0.368 < 0.40 threshold, ESC-3 FALSE); PE 14.1 vs sector 9.0 (premium +57%); EY_SPREAD +2.09pp FAIR",
+          "mgmt": "Balance-sheet check passed (imbalance 0.37% < 0.5% threshold); ESC-5 not evaluable — refine_status PARTIAL, no report_id resolved",
+          "esc2_result": "FALSE",
+          "esc3_result": "FALSE"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T21:23:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6871544fd1e3621060ef8d8cb312f528010d354814cae1e401c7384956b8f3e9",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "20260823T210358Z",
+          "matched_slots": [
+            "bctc-analyst-slot-3"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-3"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-3": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-3": null
+          },
+          "last_fired_timestamp": "2026-08-23T21:02:45Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-3"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "21:00",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 31,
+          "note": "Single-slot FIRE. Step 4.7 wrote cycle-snapshot-21:01.json (wall-clock) while emit_pressure_state looks up nominal 21:00 -> cycle_snapshot_promoted=false, 4th consecutive instance of the wall-clock-vs-nominal naming mismatch; latest still tick=00:00 (21h stale). Latent hazard observed this tick: a stale cycle-snapshot-21:00.json from the PRIOR day (age 1434min, 6min short of the 1440min prune) was co-present, so an aligned lookup could have promoted a 24h-old snapshot. emit returned stale_warning=true (first occurrence in this session; absent from the 20:45Z and 20:47Z emits) -> next tick Step 4.2 AC-P1-6-3 will downgrade PRESSURE_MODE to legacy. Step 5.3 DEFERRED per BGFAN-1: last_fired stamped, prior value 2026-08-22T21:08:05Z retained for de-stamp if the return scores >=2/6."
+        },
+        "createdAt": "20260823T210358Z",
+        "drained_at": "2026-08-23T21:23:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "418c7c98765486eb33356a491c4a5ec83ac687a2a7d326f5166f7614e26ac8de",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "49",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-23T21:15:56Z",
+        "drained_at": "2026-08-23T21:23:50Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
