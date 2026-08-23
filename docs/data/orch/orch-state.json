@@ -17362,6 +17362,49 @@
             "observed_at": "2026-08-23T20:37:10Z"
           }
         }
+      },
+      {
+        "id": "FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD",
+        "type": "FIX",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "created_at": "2026-08-22T18:42:44Z",
+        "created_by": "po",
+        "source": "user-report-ghost-zones-2026-08-22",
+        "title": "GHOST ZONE (2/4): /api/foreign-flow returns items:[] + tradingDate:\"\" — MAX(date) subquery omits the `foreign_volume IS NOT NULL` guard its own docstring mandates, so a partial-write day blanks the entire page",
+        "note": "PROVEN root cause, apps/mcp-server/src/interface/mcp/routes/foreignFlowHandler.ts queryForeignFlow(): `WHERE date = (SELECT MAX(date) FROM vnstock_trading_stats) AND foreign_volume IS NOT NULL`. The subquery picks the newest date WITHOUT the non-null guard, then the outer predicate filters every row of that date away. Live probe 2026-08-22 through the running container: MAX(date) overall = 2026-08-22 with 41 rows, ALL 41 foreign_volume NULL; MAX(date) WHERE foreign_volume IS NOT NULL = 2026-08-18 with 99 non-null rows. Result: 0 rows -> tradingDate:'' -> whole Foreign Flow page ghost. The handler docstring line 8 already states the intended contract verbatim — 'Latest trading day = MAX(date) with foreign_volume IS NOT NULL' — so implementation contradicts its own documented spec; this is a one-line divergence, not a design question. INTERMITTENT BY NATURE: only ghosts when a partial/NULL batch lands at the top (also observed 2026-08-16 n=4 nonnull=0 and 2026-08-15 n=34 nonnull=0), which is why it reads as 'sometimes ghost' to the user. FIX DIRECTION: move the guard into the subquery. Regression test: seed a NULL-only newest date + a populated older date, assert handler serves the older populated date. CASCADE: this same emptiness starves downstream consumers — /api/momentum-indicators foreign_accum returns null_reason 'Insufficient tickers with >=5 days of flow data', and /api/money-radar reports coverage_pct 0.83 with foreign components degraded. Fixing this row should be re-measured against both before opening separate rows for them.",
+        "updated_at": "2026-08-23T20:39:29Z",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD-BA-spec.md",
+        "ba_completed_at": "2026-08-22T18:52:53Z",
+        "architect_design_complete": true,
+        "architect_completed_at": "2026-08-22T19:02:20Z",
+        "architect_handoff": "docs/handoffs/FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD-BA-spec.md",
+        "owner": "qa",
+        "depends": [],
+        "pm_decomposed_at": "2026-08-22T19:13:45Z",
+        "pm_decomposed_by": "pm",
+        "pm_handoff": "docs/handoffs/FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD-PM-workorder.md",
+        "status_note": "PM work-order created; architect design already ratified verbatim (single-file, single-test-file change). Safe to pair with sibling GHOSTZONE fix, zero file overlap. Held in ready[] (not in_progress) — WIP already at 3/2 hard limit.\n[QA] Review Record (direct-commit verify): Code verified: commit b0d84233d ancestor-OK, touches foreignFlowHandler.ts + 1986-foreign-flow-endpoint.test.ts (matches dev claim, 2/2 files). 34/0 bun test pass (128 expect calls, incl. new AC-15 x3: NULL-only-newest skip, all-NULL-table-wide edge case, consecutive-NULL-days walk-back), tsc clean, mock-guard PASS, DDD/secret greps clean. Subquery fix matches file docstring contract (L8) verbatim and the architect-ratified SQL exactly; outer guard kept. Full mcp-server suite (589s, 15501 tests): 15408 pass/40 skip/53 fail/1 error across 17 files, all 17 pre-existing and unrelated (touch foreignFlowTools.js / other unrelated subsystems, NOT foreignFlowHandler.ts or the target test file which stayed 0-fail) -- drift from the documented 15411/40/50/15-file baseline is the known order-dependent flake, not a regression from this commit. CAVEAT: live prod probe (read-only) shows mcp-server container image built 2026-08-23T13:53:58Z PREDATES this commit (14:55:11Z) -- GET /api/foreign-flow still returns tradingDate='' items:[] count:0 (pre-fix ghosted state, code fix correct on main just not deployed). Per dev-standards.md:2076, po must mint VERIFY-<id>-REALDATA to trigger single-service rebuild+deploy of apps/mcp-server and confirm live endpoint + NFR-2 cascade re-measure (foreign_accum/money-radar) before user-closed. Same staleness situation independently confirmed on sibling row FIX-GHOSTZONE-CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST this same cycle.",
+        "dev_completed_at": "2026-08-23T14:56:04Z",
+        "dev_completed_by": "dev-mcp-server",
+        "dev_commit": "b0d84233d",
+        "dev_note": "Moved foreign_volume IS NOT NULL guard into the MAX(date) subquery per architect design (verbatim). AC-15 regression tests added (1986-foreign-flow-endpoint.test.ts): NULL-only-newest-date skip, all-NULL-table-wide edge case (falls through to existing empty-response path via SQLite 3-valued logic, no special-case code), consecutive-NULL-days walk-back. bun test 34 pass/0 fail. tsc clean. NFR-2 cascade re-measurement (foreign_accum/money-radar) NOT performed — requires live deployed container post-rebuild, out of this dev-agent session scope; flag to qa/ops for post-deploy re-measure.",
+        "updated_by": "dev-mcp-server/next-agent-fix",
+        "claimed_at": "2026-08-23T20:24:30Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "drain_source_lane": "review",
+        "qa_verified_at": "2026-08-23T20:39:28Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun test (targeted + full suite) + bun tsc --noEmit + bash scripts/audits/mock-guard.sh + live curl GET /api/foreign-flow + docker inspect image Created",
+            "args": "commit=b0d84233d; files=apps/mcp-server/src/interface/mcp/routes/foreignFlowHandler.ts,apps/mcp-server/src/__tests__/1986-foreign-flow-endpoint.test.ts; live_container=vn-market-intelligence-mcp-mcp-server-1",
+            "live_value_observed": "ancestor=yes; stat touches 2/2 claimed files; targeted bun test 34 pass 0 fail 128 expect(); full suite 15408 pass/40 skip/53 fail/1 error across 15501 tests, none of the 17 failing files touch foreignFlowHandler.ts or the target test file; tsc 0 errors; mock-guard PASS; LIVE PROBE (prod, read-only): image Created=2026-08-23T13:53:58Z < commit=2026-08-23T14:55:11Z (container NOT rebuilt since fix); curl /api/foreign-flow returns tradingDate='' items:[] count:0 (code fix correct on main, not yet deployed to running container)",
+            "observed_at": "2026-08-23T20:39:28Z"
+          }
+        }
       }
     ],
     "head": {
@@ -20895,41 +20938,6 @@
           "collector": "scripts/durability-mem-sample.sh (new this cycle, closes the missing-instrumentation root cause)"
         },
         "qa_rcverif_grandfather_escalation_20260823T1441Z": "[QA ESCALATION 2026-08-23T14:41Z — RC-VERIF GRANDFATHER FALSE-GREEN HAZARD ON THIS EXACT ROW. Not a defect in the fix under review; a defect in the gate that is supposed to protect it. Bar section 4 (\"Grandfather-exemption guard\") names this as a known open engineering gap with process-control-only mitigation; this note is the live proof that it is exploitable on the single highest-pressure row in the fleet.]\nFACT, PROVEN BY EXECUTION NOT BY READING: \"FU-RAG-DEPLOY-MEMORY\" is a member of RC_VERIF_GRANDFATHERED_IDS (apps/mcp-server/src/infrastructure/orchStateSchema.ts line 569). checkVerificationGate() guards with a bare `row.status === \"DONE_VERIFIED\" && !RC_VERIF_GRANDFATHERED_IDS.has(id)`, with no awareness of retraction or void markers. Consequence: this row can be flipped to DONE_VERIFIED carrying NO verification.raw_probe at all, and orch-apply.sh will accept the write.\nLIVE REPRO WITH A CONTROL, run against a fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE (hot file never touched, override unset afterwards). Identical transform, two ids: FU-RAG-DEPLOY-MEMORY flipped to DONE_VERIFIED with `del(.verification)` -> \"Stage 0 + Stage 1 PASS\", write APPLIED. The same transform on the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK -> \"ORCH-STATE VALIDATION FAILED (1 issue) ... set to DONE_VERIFIED without verification.raw_probe\" -> \"ABORTED: validator exit 2 -- live file untouched\". So the exemption, not any property of the evidence, is what decides.\nWHY THIS ROW IS THE WORST POSSIBLE MEMBER OF THAT LIST. (1) It is OOM-class, and its own family has produced THREE recorded false certifications on this one incident (bar section 5). (2) It carries contamination/void language already (its po ruling calls the 7-day window CONTAMINATED; its sibling holds an explicit qa_durability_window_status VOID), which under bar section 4's retraction rule means the exemption must not be relied on for it -- but nothing in code enforces that. (3) It is under active unblock pressure: RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE ships BLOCKED on this row reaching DONE_VERIFIED, so there is a standing incentive to flip it. (4) The incentive is not hypothetical -- TWO rows were flipped to DONE_VERIFIED in this very cycle by updated_by=developer with qa_verified_by absent (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION at 14:28:53Z, FIX-CHEF-MARKER-KEY-ANCHOR-1 at 14:33:50Z). Both happened to be substantively correct on QA re-check, but they establish that self-certification without the qa gate is a live behaviour, not a theoretical one. On this row that behaviour would meet no schema resistance whatsoever.\nASK (out of qa's zone -- apps/mcp-server code change, needs a minted row; qa is reporting, not patching): make checkVerificationGate() refuse the exemption for any RC_VERIF_GRANDFATHERED_IDS member whose row text carries a retraction/void/contamination marker, exactly as bar section 4 already specifies in prose. Cheapest correct alternative if that is too broad: remove this single id from the frozen list, since the row has never actually been certified and therefore has nothing to grandfather -- the list exists to spare genuinely-pre-existing certified rows a retroactive probe requirement, and this row is not one.\nINTERIM PROCESS CONTROL, binding until that lands: NO agent may flip FU-RAG-DEPLOY-MEMORY to DONE_VERIFIED without the six canonical D5 fields AND a verification.raw_probe, exemption notwithstanding. The schema will not stop you. This note is the record that you were told.\n\n[QA CORRECTION 2026-08-23T14:51Z to the escalation above.] Point (4) of that escalation cited two rows flipped this cycle \"by updated_by=developer with qa_verified_by absent\" as proof that self-certification without the qa gate is live behaviour. THAT SUPPORTING CLAIM IS WITHDRAWN. Both rows were in fact fully verified by a concurrent peer qa session and journaled — sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-26.md STEP qa-S162 (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION) and STEP qa-S167 (FIX-CHEF-MARKER-KEY-ANCHOR-1, which independently traced the same amended-commit hazard via git reflog). The qa gate ran on both. What those rows actually show is a provenance-stamping gap (updated_by names the wrong actor and qa_verified_by is left unset, so a board reader cannot distinguish a qa verdict from an owner self-flip) — a real but much smaller finding, and NOT evidence of gate bypass.\nTHE ESCALATION ITSELF IS UNAFFECTED AND STANDS. Its load-bearing evidence was never those two rows; it is the live paired repro with a control, run against a fixture: the identical no-raw_probe DONE_VERIFIED transform PASSES validation for FU-RAG-DEPLOY-MEMORY (grandfathered) and ABORTS with \"set to DONE_VERIFIED without verification.raw_probe\" for the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK. Points (1) membership at orchStateSchema.ts line 569, (2) the OOM-class family's three recorded false certifications, and (3) the live unblock pressure from RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE are all independently verified and unchanged. The ask and the interim process control stand exactly as written.\n"
-      },
-      {
-        "id": "FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD",
-        "type": "FIX",
-        "status": "QA",
-        "priority": "P0",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "next_agent": "qa",
-        "created_at": "2026-08-22T18:42:44Z",
-        "created_by": "po",
-        "source": "user-report-ghost-zones-2026-08-22",
-        "title": "GHOST ZONE (2/4): /api/foreign-flow returns items:[] + tradingDate:\"\" — MAX(date) subquery omits the `foreign_volume IS NOT NULL` guard its own docstring mandates, so a partial-write day blanks the entire page",
-        "note": "PROVEN root cause, apps/mcp-server/src/interface/mcp/routes/foreignFlowHandler.ts queryForeignFlow(): `WHERE date = (SELECT MAX(date) FROM vnstock_trading_stats) AND foreign_volume IS NOT NULL`. The subquery picks the newest date WITHOUT the non-null guard, then the outer predicate filters every row of that date away. Live probe 2026-08-22 through the running container: MAX(date) overall = 2026-08-22 with 41 rows, ALL 41 foreign_volume NULL; MAX(date) WHERE foreign_volume IS NOT NULL = 2026-08-18 with 99 non-null rows. Result: 0 rows -> tradingDate:'' -> whole Foreign Flow page ghost. The handler docstring line 8 already states the intended contract verbatim — 'Latest trading day = MAX(date) with foreign_volume IS NOT NULL' — so implementation contradicts its own documented spec; this is a one-line divergence, not a design question. INTERMITTENT BY NATURE: only ghosts when a partial/NULL batch lands at the top (also observed 2026-08-16 n=4 nonnull=0 and 2026-08-15 n=34 nonnull=0), which is why it reads as 'sometimes ghost' to the user. FIX DIRECTION: move the guard into the subquery. Regression test: seed a NULL-only newest date + a populated older date, assert handler serves the older populated date. CASCADE: this same emptiness starves downstream consumers — /api/momentum-indicators foreign_accum returns null_reason 'Insufficient tickers with >=5 days of flow data', and /api/money-radar reports coverage_pct 0.83 with foreign components degraded. Fixing this row should be re-measured against both before opening separate rows for them.",
-        "updated_at": "2026-08-23T20:24:31Z",
-        "ba_spec_complete": true,
-        "ba_handoff": "docs/handoffs/FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD-BA-spec.md",
-        "ba_completed_at": "2026-08-22T18:52:53Z",
-        "architect_design_complete": true,
-        "architect_completed_at": "2026-08-22T19:02:20Z",
-        "architect_handoff": "docs/handoffs/FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD-BA-spec.md",
-        "owner": "qa",
-        "depends": [],
-        "pm_decomposed_at": "2026-08-22T19:13:45Z",
-        "pm_decomposed_by": "pm",
-        "pm_handoff": "docs/handoffs/FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD-PM-workorder.md",
-        "status_note": "PM work-order created; architect design already ratified verbatim (single-file, single-test-file change). Safe to pair with sibling GHOSTZONE fix, zero file overlap. Held in ready[] (not in_progress) — WIP already at 3/2 hard limit.",
-        "dev_completed_at": "2026-08-23T14:56:04Z",
-        "dev_completed_by": "dev-mcp-server",
-        "dev_commit": "b0d84233d",
-        "dev_note": "Moved foreign_volume IS NOT NULL guard into the MAX(date) subquery per architect design (verbatim). AC-15 regression tests added (1986-foreign-flow-endpoint.test.ts): NULL-only-newest-date skip, all-NULL-table-wide edge case (falls through to existing empty-response path via SQLite 3-valued logic, no special-case code), consecutive-NULL-days walk-back. bun test 34 pass/0 fail. tsc clean. NFR-2 cascade re-measurement (foreign_accum/money-radar) NOT performed — requires live deployed container post-rebuild, out of this dev-agent session scope; flag to qa/ops for post-deploy re-measure.",
-        "updated_by": "dev-mcp-server/next-agent-fix",
-        "claimed_at": "2026-08-23T20:24:30Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "drain_source_lane": "review"
       },
       {
         "id": "CCATO-MCP-T3-PROBE-ADAPTERS",
