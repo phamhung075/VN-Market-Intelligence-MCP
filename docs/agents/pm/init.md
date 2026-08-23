@@ -129,6 +129,11 @@ agent:
         outer_claim = call_tool(server="vn-market", tool="task_claim", arguments={
           task_id: "task:" + task_id, task_kind: "sprint-task",
           owner_agent: "pm", ttl_seconds: 3600,
+          # REQUIRED, no default — coordinationTools.ts:104-110 declares it z.string()
+          # with no .optional(); omit it and the server rejects the call, so the claim
+          # silently never engages. Substitute the real session id, NEVER this literal text.
+          # Same contract pm/flow/main.md:114 and task-archive.md:92 already spell out.
+          owner_client_session: "<resolved CLAUDE_CODE_SESSION_ID>",
           payload: '{"site":"S7","spawning":"' + dev_agent + '"}'
         })
         if not outer_claim.claimed:
@@ -140,7 +145,8 @@ agent:
       # (only tasks that passed claim check above are included)
       # After all spawns return, release outer claims:
       for each (dev_agent, task_id) in spawned_tasks:
-        call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id })
+        call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id,
+          owner_client_session: "<same resolved value used in the claim above — also REQUIRED here>" })
     return_schema: |
       ## RETURN
       ASSIGNED: [agent: TASK_NNN, ...]

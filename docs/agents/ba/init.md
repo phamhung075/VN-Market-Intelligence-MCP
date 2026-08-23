@@ -117,6 +117,10 @@ agent:
         outer_claim = call_tool(server="vn-market", tool="task_claim", arguments={
           task_id: "task:" + req_id, task_kind: "sprint-task",
           owner_agent: "ba", ttl_seconds: 3600,
+          # REQUIRED, no default — coordinationTools.ts:104-110 declares it z.string()
+          # with no .optional(); omit it and the server rejects the call, so the claim
+          # silently never engages. Substitute the real session id, NEVER this literal text.
+          owner_client_session: "<resolved CLAUDE_CODE_SESSION_ID>",
           payload: '{"site":"S6","spawning":"architect"}'
         })
         if not outer_claim.claimed:
@@ -128,7 +132,8 @@ agent:
       → Agent(architect, REQ_NNN) + Agent(architect, REQ_MMM)
       # After all spawns return, release outer claims:
       for each (req_id) in spawned_specs:
-        call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + req_id })
+        call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + req_id,
+          owner_client_session: "<same resolved value used in the claim above — also REQUIRED here>" })
     return_schema: |
       ## RETURN
       SPECS_READY: [REQ_NNN, REQ_MMM, ...]
