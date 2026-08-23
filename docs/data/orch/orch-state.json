@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-23T11:01:47Z",
-    "updated_by": "agents-architect",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 8 row(s), highest-ranked FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 8 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-23T11:25:01Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -18726,17 +18727,6 @@
         "updated_at": "2026-08-23T00:21:38Z"
       },
       {
-        "id": "FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE",
-        "type": "FIX",
-        "title": "[BCTC-1345b] alert hard-codes 'Check for OCR corruption (VNM/VEA pattern: assets<equity or margin>100%)' but financial=0.10 is emitted ONLY by the unit-mismatch short-circuit that bypasses those rules entirely — 65 live rows (23 tickers) each send the triager to a rule family that provably cannot return 0.10",
-        "status": "REVIEW",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE",
-        "updated_at": "2026-08-23T00:21:38Z"
-      },
-      {
         "id": "FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED",
         "type": "FIX",
         "title": "system-auditor cycle-header numbering/ordering is corrupt (c84>c83>c85>c73>c5, newest-at-BOTTOM, 426L vs 200L cap, 5 sections vs 3 cap, stray '## RETURN' heading) because the ONE blessed compose actuator scripts/notebook-compose.sh was BUILT and TESTED 9/9 on 2026-08-06 (7552421bc) and has ZERO callers 8 days later — 2 handoff signals to agent-father were both filed to docs/signals/processed/ without the rewire ever landing, and no board row ever existed",
@@ -18784,71 +18774,6 @@
         "updated_at": "2026-08-23T00:21:38Z"
       },
       {
-        "id": "FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION",
-        "type": "FIX",
-        "size": "S",
-        "status": "REVIEW",
-        "priority": "P0",
-        "zone": "cross-service/",
-        "depends_on": [],
-        "title": "orch-backlog-stub.sh cold-merge crashes on the REAL backlog-detail.json (.items is an ARRAY, not an id-keyed object) - blocks the LANES=backlog,ready,review migration",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION",
-        "updated_at": "2026-08-23T00:21:38Z"
-      },
-      {
-        "id": "FU-RAG-DEPLOY-MEMORY",
-        "size": "M",
-        "sprint": "RAPID-DATA-LAYER",
-        "status": "REVIEW",
-        "title": "rag-service memory cap is undersized for a now-MEASURED bounded workload — raise the docker-compose limit to >=2x the observed ~1002MiB peak, redeploy single-service, then run a fresh RAG-MEM-DURABILITY-BAR v2 D1-D5 window",
-        "type": "INFRA",
-        "zone": "ops/infra",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-RAG-DEPLOY-MEMORY",
-        "priority": "P0",
-        "blocked_by": null,
-        "updated_at": "2026-08-23T08:19:46Z",
-        "next_agent": "qa",
-        "updated_by": "po/secondary-drain-20260823T0820Z",
-        "po_secondary_drain_20260823T0820Z": "PO 2026-08-23T08:20Z: deploy half RAW-VERIFIED DONE (MemLimit=2GiB live = 2.04x the 1002MiB peak, image 2026-08-14T20:12:15Z, container Up 7d RestartCount=0 OOMKilled=false at 38.05%). Durability half (RAG-MEM-DURABILITY-BAR v2 D1-D5) NOT run and PO explicitly declines to self-certify it. The 7-day window is CONTAMINATED - ~99.7h of it (2026-08-18T09:00Z..2026-08-22T12:40Z) the whole scheduler was dead, so the service was not under real load. qa: run D1-D5 on a window starting AFTER 2026-08-22T12:40Z. Full detail: detail_ref .po_secondary_drain_20260823T0818Z."
-      },
-      {
-        "id": "FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD",
-        "status": "REVIEW",
-        "type": "FIX",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "title": "decision-journal-archive.sh --all is an ARMED, DOCUMENTED-AS-SANCTIONED command that today git-mv's 147 journals belonging to 10 sprint ids with open work (6 of them sprint_goal:active) — ship the AC-0 safety valve",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD",
-        "updated_at": "2026-08-23T00:21:38Z"
-      },
-      {
-        "id": "TE-T23",
-        "title": "T-23 CLAUDE.md step-2.5 (21L): compress to ~5L (detail in dispatch-claim CARD) [~11k tok/day]",
-        "status": "REVIEW",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "zone": "cross-service/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#TE-T23",
-        "depends_on": [
-          "TE-T12"
-        ],
-        "updated_at": "2026-08-23T00:21:38Z"
-      },
-      {
-        "id": "UNBLOCK-FLEETPUSH-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER-BLOCKS-ALL-PUSHES",
-        "type": "UNBLOCK",
-        "title": "FLEET-WIDE PUSH OUTAGE: pre-push size-lint fails orchStateSchema.ts as a new-offender (1784L, header still declares ~1300L), so EVERY push has been blocked since 21:32Z and origin/main is 40 commits behind and growing",
-        "priority": "P0",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "status": "REVIEW",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#UNBLOCK-FLEETPUSH-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER-BLOCKS-ALL-PUSHES",
-        "updated_at": "2026-08-23T00:21:38Z"
-      },
-      {
         "id": "FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION",
         "type": "FIX",
         "status": "REVIEW",
@@ -18876,59 +18801,6 @@
         "claimed_at": "2026-08-14T21:27:10Z",
         "redispatch_count": 1,
         "qa_verify_20260823": "[QA] CHANGES_REQUESTED 2026-08-23 (Direct-Commit Verify). AC-4 mandated a RAW-verify on the next live chef fire's persisted JSON. Only 1 dish carries a cycle_id after the fix commit (5829a7ad2, 2026-08-14T21:04Z): docs/data/unified-agent-synthesis-2026-08-22-chef-evening.json (confirmed genuine, TNB c115.5 independently cites the same cycle_id). It VIOLATES the fix's own newly-added SCHEMA_OK sub-check: top-level keys = 9 (extra execution_notes/signals_consumed) vs the mandated 7 (chef-dish.md:864-914); metadata sub-object also reshaped (missing timestamp_utc/layers_walked_summary). No [gap:schema_nonconformant_corrected] token present, no self-correction applied, despite chef-dish.md:964's mandatory post-write self-check requiring exactly this catch. Cross-checked 2 pre-fix committed dishes (07-29/07-30 chef-evening) — both match the 7-key schema exactly, confirming this is live drift, not a pre-existing undocumented shape. Routed to agent-father (row has no .owner field; agent-father authored the fix) — apply a new direct commit closing the SCHEMA_OK gap (or determine why the live agent execution diverged from documented schema) before AC-4 can be certified. Full evidence: decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-25.md STEP qa-S35."
-      },
-      {
-        "id": "TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY",
-        "type": "TASK",
-        "status": "REVIEW",
-        "priority": "P0",
-        "size": "S",
-        "zone": "scripts/",
-        "owner": "dev-mcp-server",
-        "next_agent": "qa",
-        "supervised": false,
-        "plan_only": false,
-        "title": "Extend guard-signal-type-coverage.sh: parse both pipelines + self-filing unrouted-type fallback",
-        "desc": "Part 1 + Part 2 of architect brief (2026-08-23): extend scripts/audits/guard-signal-type-coverage.sh to parse BOTH Pipeline-A (pending_triage_inbox[]) and Pipeline-B (signal_queue.rows[]) tables from triage-signals.md + triage-signals-longtail.md, tag each parsed rule by pipeline, and on unrouted type mint/update a task_board.backlog[] row via orch-apply.sh (dedup-keyed on type string, using routing-gap type-vocabulary slot) instead of CI-log-only output. This closes the split-table blind spot (a type can no longer be considered covered by a rule that structurally cannot fire for the pipeline it arrived on) and the unrouted-type-as-nonactionable-log-line defect that has fired 7 times with manual intervention required on each.",
-        "files": [
-          "scripts/audits/guard-signal-type-coverage.sh",
-          ".github/workflows/ci.yml"
-        ],
-        "ac": [
-          "guard parses BOTH Pipeline-A table (from pending_triage_inbox[] in orch-state.json) and Pipeline-B table (from signal_queue.rows[])",
-          "each rule is tagged by source pipeline (A or B) in the derived registry",
-          "cross-pipeline blind spot is mechanically closed: a type is routed only if it has a rule for the PIPELINE it arrived on",
-          "unrouted type produces a task_board.backlog[] row (dedup-keyed on type string) via orch-apply.sh in addition to CI exit 1",
-          "AC-5 from brief: orchStateSchema.ts diff is empty (no schema change, all via orch-apply.sh gate)",
-          "synthetic new type on Pipeline-A (not B) is caught by the extended guard — proves cross-pipeline check works"
-        ],
-        "acceptance_notes": "Verify: (1) `guard-signal-type-coverage.sh --check` PASSes against live orch-state.json after tactical audit-handoff rule lands; (2) synthetic Pipeline-A-only type is caught; (3) unrouted-type failure produces real backlog[] row with type-based dedup",
-        "related": [
-          "TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION"
-        ],
-        "created_at": "2026-08-23T09:00:00Z",
-        "created_by": "pm",
-        "handoff_ref": "docs/handoffs/TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY.md",
-        "updated_at": "2026-08-23T09:04:04Z",
-        "status_note": "dev-mcp-server DONE: scripts/audits/guard-signal-type-coverage.sh extended to parse BOTH Pipeline-A (triage-signals.md pendingSignals[] table vs .dev_team_idle_chain.pending_triage_inbox[]) and Pipeline-B (existing .signal_queue.rows[] table+longtail), each tagged by source pipeline so a rule from ONE pipeline never false-passes coverage for the OTHER (verified both directions live). On any unrouted type (either pipeline), in addition to the pre-existing exit 1, mints a dedup-keyed task_board.backlog[] row (type=routing-gap) via the real scripts/orch-apply.sh -- verified end-to-end against disposable fixtures (mint succeeds, repeat detection dedup-skips, no duplicate row). guard-signal-type-coverage.test.sh expanded 7->24 assertions, all GREEN; real-doc/live-orch-state.json integration smoke test also GREEN. orchStateSchema.ts diff confirmed empty (git diff, 0 lines) -- schema-untouched constraint held. .github/workflows/ci.yml job comment amended to describe dual-pipeline scope + honest note that the mint substep needs bun (not installed in that job; degrades to a logged non-fatal skip there, exit-1 gate unaffected). next_agent corrected from dead-end \"developer\" (Task-tool subagent, cannot spawn zone specialists) to \"qa\"."
-      },
-      {
-        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-bctc-image-fetch-degraded",
-        "type": "routing-gap",
-        "status": "REVIEW",
-        "owner": "po",
-        "zone": "cross-service/",
-        "title": "Unrouted signal type 'bctc_image_fetch_degraded' (Pipeline B) — no table row in docs/agents/po/flow/triage-signals.md",
-        "dedup_key": "signal-type-registry-gap:bctc_image_fetch_degraded",
-        "created_at": "2026-08-23T09:06:13Z",
-        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=bctc_image_fetch_degraded routed on Pipeline B (a matching table row exists in triage-signals.md's own Pipeline-B section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.\n\n[po/triage 2026-08-23T09:07Z — CI-RED DEDUP PRE-ARM, no new row minted] docs/signals/ci-red-85384b32-20260823085450.json is still UNDRAINED on disk and will reach a future PO inbox. Its FILE-SCOPED dedup key is ci_job:signal-type-coverage-guard|file:docs/agents/po/flow/triage-signals.md — stamped on this row as ci_dedup_key so the next drain FOLDS instead of minting a duplicate {check_id}-FIX. MANDATORY PRE-DEDUP FAILING-FILE READ was performed, not skipped: gh run view 32629387939 --log-failed emits no FAILEDFILE block (the failing job is not the bun-test isolation runner), so FAILING_FILES is the single most specific path in the failing step's own error line, read verbatim: '[guard-signal-type-coverage] add a table row to docs/agents/po/flow/triage-signals.md'. OBSERVED SHAs/CHECK_IDs FOR THIS JOB+FILE: check_id=CI-RED-85384b32, head_sha=85384b32e1eca24f1e162516ebb0e3f649afbdd0, run_id=32629387939, ci_fingerprint=976ea7b1d2d7c2702b1c4296ad5cda2a48d7d695673a062ad05e86ed064aaff2. IMPORTANT CAUSE CHANGE, do not conflate: that run's verbatim failure line is 'FAIL - unrouted to=po types: [\"audit-handoff\"]' - the OLD cause, which 735dfa815 already fixed. The CURRENT cause of red is this row's own bctc_image_fetch_degraded. Same job, same file, so one row correctly serves both; but any reader comparing CI logs to this row must know the failing type changed at ~09:06Z. NOT CLOSED, and no fingerprint recorded as resolved: CI has still never run on a commit at or after 735dfa815, so no green has EVER been observed - closing on the reasoning alone would be exactly the fabricated disposition feedback_ci_red_close_must_record_fingerprint_else_redrain warns about. verification_gate stays ci_green_on_subsequent_push.\n\n[agent-father 2026-08-23T09:25:31Z] FIX APPLIED — added Pipeline-B routing row for type=bctc_image_fetch_degraded to docs/agents/po/flow/triage-signals-longtail.md (longtail sibling chosen: low-volume/single-fire type, matches existing bctc-data-quality-anomaly precedent already living there). BEFORE: `bash scripts/audits/guard-signal-type-coverage.sh --check` exit 1, output 'FAIL — unrouted Pipeline-B to=po types: [\"bctc_image_fetch_degraded\"]'. AFTER (same command, same live file): exit 0, output 'PASS — Pipeline A: 0 live type(s) routed (21 known) | Pipeline B: 9 live to=po type(s) routed (23 known)'. Paired suite `bash scripts/audits/guard-signal-type-coverage.test.sh`: 24/24 (was 23/24 — TEST10 live-files integration smoke test now PASS). Did NOT touch scripts/audits/guard-signal-type-coverage.sh or its .test.sh (dev-mcp-server's in-review rewrite, commit 4e7aa7eaf — left untouched, out of my scope). Also bumped this file's own stale '11 types' count to '12' in the 2 non-table prose lines referencing it (same file, same edit). Committed a309c9334 (docs/agents/po/flow/triage-signals-longtail.md ONLY — RULE1-4 verified: git show --name-only HEAD showed exactly 1 file), pushed clean to origin/main (5f845aca6..a309c9334, no rebase needed). Moving backlog->review; verification_gate=ci_green_on_subsequent_push is NOT yet independently observed by me this session (no gh CLI CI-run check performed) — next agent (qa/po) must RAW-verify a green signal-type-coverage-guard CI run on a309c9334 or a descendant before flipping to done_verified, per feedback_ci_red_close_must_record_fingerprint_else_redrain. This board write goes via scripts/orch-apply.sh — agent-father's commit zone excludes orch-state.json (FU-AGENT-FATHER-ORCH-SCOPE), so this JSON write lands UNCOMMITTED; router/next committer must git add -- docs/data/orch/orch-state.json and commit it.",
-        "updated_at": "2026-08-23T09:25:32Z",
-        "priority": "P0",
-        "size": "S",
-        "next_agent": "qa",
-        "po_triage_20260823T0907Z": "PO TRIAGE 2026-08-23T09:07Z — PRIORITISED P0 AND FOLDED INTO THIS TICK'S BATCH, deliberately NOT parked. RAW-verified on the live tree this tick (not taken on report): `bash scripts/audits/guard-signal-type-coverage.sh` exits 1 with `FAIL — unrouted Pipeline-B to=po types: [\"bctc_image_fetch_degraded\"]`, and its third line confirms this very row deduped the mint ('backlog row already tracks type=bctc_image_fetch_degraded ... no duplicate minted'). The producing signal is live and NEW: signal_queue row bctc-imgdeg-69fcd047-20260823T090510Z, from=mcp-server, severity=HIGH. WHY P0 RATHER THAN THE DEFAULT BACKLOG PARK: this row is the sole remaining cause of CI red. The earlier signal-type-coverage-guard red (audit-handoff, Pipeline B) was genuinely fixed by 735dfa815; PO independently confirmed the HEAD-committed guard PASSES against the pre-peer docs tree, and confirmed from run 32629387939 (head_sha 85384b32e) that signal-type-coverage-guard was the ONLY failing job of 23 — no second failure hiding underneath. CI has still never run on a commit at or after 735dfa815, so no green has been observed; the red simply changed cause mid-morning when dev-mcp-server's dual-pipeline guard (4e7aa7eaf) caught this genuinely new type. Parking a P-unset row in a 449-deep backlog[] against an RLC that dispatches ~1 row/tick means CI stays red indefinitely — the exact starvation that stranded FIX-PO-TRIAGE-SIGNALS-TABLE-MATCHES-ZERO-LIVE-SIGNAL-TYPES for 10 days. FIELDS SET BY PO, all previously unset: priority=P0, size=S, next_agent=agent-father, zone cross-service/ (was 'docs/agents/po/flow/', which is not one of dev-team Step 3's three accepted zone values apps/<service>/ | multi | cross-service/, so the row was not dispatchable as minted — worth feeding back to the auto-filer in scripts/audits/guard-signal-type-coverage.sh). next_agent=agent-father because docs/agents/po/flow/triage-signals.md is an agent flow doc: PO's own boundary_rules forbid PO editing it, and agent-father made its last edit (735dfa815). NOT SILENCED: guard-signal-type-coverage.test.sh TEST10's 23/24 failure is the guard correctly biting, per that test's own inline comment — do not neutralise the test to green CI.",
-        "ci_dedup_key": "ci_job:signal-type-coverage-guard|file:docs/agents/po/flow/triage-signals.md",
-        "verification_gate": "ci_green_on_subsequent_push"
       },
       {
         "id": "FIX-COWORK-TICKSNAPSHOT-STEP47-FALSE-PREMISE-PURE-BASH-CANNOT-CALL-MCP",
@@ -19124,6 +18996,151 @@
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
         "secondary_dispatch_target": "developer",
         "qa_verify_20260823": "[QA] Re-check 2026-08-23, HELD (no lane move). AC-1/AC-2 (stale caveat + same-tick clobber mutex) are now solidly proven — 4 separate real weekday 16:0xZ co-fires (08-06/07/12/13) all show BOTH eod and offhours notebook commits landing cleanly same-tick, no clobber, no stale-caveat skip. AC-3 (news-scout L-7 dependency resumes on next weekday EOD fire) code landed (3d2ff4ee2/7a94f3dd5/f795efe35) but remains genuinely unexercised: cowork-schedule.json shows market-watcher-eod.last_fired stuck at 2026-08-14T16:10:51Z, 5+ weekdays elapsed with zero EOD fire since — consistent with the separately-tracked host-suspension gap (08-18->08-22), not a defect in this fix. Not flipping DONE_VERIFIED per this row's own prior AC-1/AC-2 2-live-fire precedent; re-check when market-watcher-eod actually fires on a weekday post-outage. DJ qa-25 STEP qa-S41."
+      },
+      {
+        "id": "FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION",
+        "type": "FIX",
+        "size": "S",
+        "status": "QA",
+        "priority": "P0",
+        "zone": "cross-service/",
+        "depends_on": [],
+        "title": "orch-backlog-stub.sh cold-merge crashes on the REAL backlog-detail.json (.items is an ARRAY, not an id-keyed object) - blocks the LANES=backlog,ready,review migration",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION",
+        "updated_at": "2026-08-23T11:25:01Z",
+        "claimed_at": "2026-08-23T11:25:00Z",
+        "claimed_by": "dev-team (review-lane qa-drain)"
+      },
+      {
+        "id": "FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD",
+        "status": "QA",
+        "type": "FIX",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "title": "decision-journal-archive.sh --all is an ARMED, DOCUMENTED-AS-SANCTIONED command that today git-mv's 147 journals belonging to 10 sprint ids with open work (6 of them sprint_goal:active) — ship the AC-0 safety valve",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DJA-ALL-SAFETY-VALVE-ARMED-HAZARD",
+        "updated_at": "2026-08-23T11:25:01Z",
+        "claimed_at": "2026-08-23T11:25:00Z",
+        "claimed_by": "dev-team (review-lane qa-drain)"
+      },
+      {
+        "id": "UNBLOCK-FLEETPUSH-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER-BLOCKS-ALL-PUSHES",
+        "type": "UNBLOCK",
+        "title": "FLEET-WIDE PUSH OUTAGE: pre-push size-lint fails orchStateSchema.ts as a new-offender (1784L, header still declares ~1300L), so EVERY push has been blocked since 21:32Z and origin/main is 40 commits behind and growing",
+        "priority": "P0",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "status": "QA",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#UNBLOCK-FLEETPUSH-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER-BLOCKS-ALL-PUSHES",
+        "updated_at": "2026-08-23T11:25:01Z",
+        "claimed_at": "2026-08-23T11:25:00Z",
+        "claimed_by": "dev-team (review-lane qa-drain)"
+      },
+      {
+        "id": "FU-RAG-DEPLOY-MEMORY",
+        "size": "M",
+        "sprint": "RAPID-DATA-LAYER",
+        "status": "QA",
+        "title": "rag-service memory cap is undersized for a now-MEASURED bounded workload — raise the docker-compose limit to >=2x the observed ~1002MiB peak, redeploy single-service, then run a fresh RAG-MEM-DURABILITY-BAR v2 D1-D5 window",
+        "type": "INFRA",
+        "zone": "ops/infra",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FU-RAG-DEPLOY-MEMORY",
+        "priority": "P0",
+        "blocked_by": null,
+        "updated_at": "2026-08-23T11:25:01Z",
+        "next_agent": "qa",
+        "updated_by": "po/secondary-drain-20260823T0820Z",
+        "po_secondary_drain_20260823T0820Z": "PO 2026-08-23T08:20Z: deploy half RAW-VERIFIED DONE (MemLimit=2GiB live = 2.04x the 1002MiB peak, image 2026-08-14T20:12:15Z, container Up 7d RestartCount=0 OOMKilled=false at 38.05%). Durability half (RAG-MEM-DURABILITY-BAR v2 D1-D5) NOT run and PO explicitly declines to self-certify it. The 7-day window is CONTAMINATED - ~99.7h of it (2026-08-18T09:00Z..2026-08-22T12:40Z) the whole scheduler was dead, so the service was not under real load. qa: run D1-D5 on a window starting AFTER 2026-08-22T12:40Z. Full detail: detail_ref .po_secondary_drain_20260823T0818Z.",
+        "claimed_at": "2026-08-23T11:25:00Z",
+        "claimed_by": "dev-team (review-lane qa-drain)"
+      },
+      {
+        "id": "TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY",
+        "type": "TASK",
+        "status": "QA",
+        "priority": "P0",
+        "size": "S",
+        "zone": "scripts/",
+        "owner": "dev-mcp-server",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "title": "Extend guard-signal-type-coverage.sh: parse both pipelines + self-filing unrouted-type fallback",
+        "desc": "Part 1 + Part 2 of architect brief (2026-08-23): extend scripts/audits/guard-signal-type-coverage.sh to parse BOTH Pipeline-A (pending_triage_inbox[]) and Pipeline-B (signal_queue.rows[]) tables from triage-signals.md + triage-signals-longtail.md, tag each parsed rule by pipeline, and on unrouted type mint/update a task_board.backlog[] row via orch-apply.sh (dedup-keyed on type string, using routing-gap type-vocabulary slot) instead of CI-log-only output. This closes the split-table blind spot (a type can no longer be considered covered by a rule that structurally cannot fire for the pipeline it arrived on) and the unrouted-type-as-nonactionable-log-line defect that has fired 7 times with manual intervention required on each.",
+        "files": [
+          "scripts/audits/guard-signal-type-coverage.sh",
+          ".github/workflows/ci.yml"
+        ],
+        "ac": [
+          "guard parses BOTH Pipeline-A table (from pending_triage_inbox[] in orch-state.json) and Pipeline-B table (from signal_queue.rows[])",
+          "each rule is tagged by source pipeline (A or B) in the derived registry",
+          "cross-pipeline blind spot is mechanically closed: a type is routed only if it has a rule for the PIPELINE it arrived on",
+          "unrouted type produces a task_board.backlog[] row (dedup-keyed on type string) via orch-apply.sh in addition to CI exit 1",
+          "AC-5 from brief: orchStateSchema.ts diff is empty (no schema change, all via orch-apply.sh gate)",
+          "synthetic new type on Pipeline-A (not B) is caught by the extended guard — proves cross-pipeline check works"
+        ],
+        "acceptance_notes": "Verify: (1) `guard-signal-type-coverage.sh --check` PASSes against live orch-state.json after tactical audit-handoff rule lands; (2) synthetic Pipeline-A-only type is caught; (3) unrouted-type failure produces real backlog[] row with type-based dedup",
+        "related": [
+          "TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION"
+        ],
+        "created_at": "2026-08-23T09:00:00Z",
+        "created_by": "pm",
+        "handoff_ref": "docs/handoffs/TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY.md",
+        "updated_at": "2026-08-23T11:25:01Z",
+        "status_note": "dev-mcp-server DONE: scripts/audits/guard-signal-type-coverage.sh extended to parse BOTH Pipeline-A (triage-signals.md pendingSignals[] table vs .dev_team_idle_chain.pending_triage_inbox[]) and Pipeline-B (existing .signal_queue.rows[] table+longtail), each tagged by source pipeline so a rule from ONE pipeline never false-passes coverage for the OTHER (verified both directions live). On any unrouted type (either pipeline), in addition to the pre-existing exit 1, mints a dedup-keyed task_board.backlog[] row (type=routing-gap) via the real scripts/orch-apply.sh -- verified end-to-end against disposable fixtures (mint succeeds, repeat detection dedup-skips, no duplicate row). guard-signal-type-coverage.test.sh expanded 7->24 assertions, all GREEN; real-doc/live-orch-state.json integration smoke test also GREEN. orchStateSchema.ts diff confirmed empty (git diff, 0 lines) -- schema-untouched constraint held. .github/workflows/ci.yml job comment amended to describe dual-pipeline scope + honest note that the mint substep needs bun (not installed in that job; degrades to a logged non-fatal skip there, exit-1 gate unaffected). next_agent corrected from dead-end \"developer\" (Task-tool subagent, cannot spawn zone specialists) to \"qa\".",
+        "claimed_at": "2026-08-23T11:25:00Z",
+        "claimed_by": "dev-team (review-lane qa-drain)"
+      },
+      {
+        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-bctc-image-fetch-degraded",
+        "type": "routing-gap",
+        "status": "QA",
+        "owner": "po",
+        "zone": "cross-service/",
+        "title": "Unrouted signal type 'bctc_image_fetch_degraded' (Pipeline B) — no table row in docs/agents/po/flow/triage-signals.md",
+        "dedup_key": "signal-type-registry-gap:bctc_image_fetch_degraded",
+        "created_at": "2026-08-23T09:06:13Z",
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=bctc_image_fetch_degraded routed on Pipeline B (a matching table row exists in triage-signals.md's own Pipeline-B section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.\n\n[po/triage 2026-08-23T09:07Z — CI-RED DEDUP PRE-ARM, no new row minted] docs/signals/ci-red-85384b32-20260823085450.json is still UNDRAINED on disk and will reach a future PO inbox. Its FILE-SCOPED dedup key is ci_job:signal-type-coverage-guard|file:docs/agents/po/flow/triage-signals.md — stamped on this row as ci_dedup_key so the next drain FOLDS instead of minting a duplicate {check_id}-FIX. MANDATORY PRE-DEDUP FAILING-FILE READ was performed, not skipped: gh run view 32629387939 --log-failed emits no FAILEDFILE block (the failing job is not the bun-test isolation runner), so FAILING_FILES is the single most specific path in the failing step's own error line, read verbatim: '[guard-signal-type-coverage] add a table row to docs/agents/po/flow/triage-signals.md'. OBSERVED SHAs/CHECK_IDs FOR THIS JOB+FILE: check_id=CI-RED-85384b32, head_sha=85384b32e1eca24f1e162516ebb0e3f649afbdd0, run_id=32629387939, ci_fingerprint=976ea7b1d2d7c2702b1c4296ad5cda2a48d7d695673a062ad05e86ed064aaff2. IMPORTANT CAUSE CHANGE, do not conflate: that run's verbatim failure line is 'FAIL - unrouted to=po types: [\"audit-handoff\"]' - the OLD cause, which 735dfa815 already fixed. The CURRENT cause of red is this row's own bctc_image_fetch_degraded. Same job, same file, so one row correctly serves both; but any reader comparing CI logs to this row must know the failing type changed at ~09:06Z. NOT CLOSED, and no fingerprint recorded as resolved: CI has still never run on a commit at or after 735dfa815, so no green has EVER been observed - closing on the reasoning alone would be exactly the fabricated disposition feedback_ci_red_close_must_record_fingerprint_else_redrain warns about. verification_gate stays ci_green_on_subsequent_push.\n\n[agent-father 2026-08-23T09:25:31Z] FIX APPLIED — added Pipeline-B routing row for type=bctc_image_fetch_degraded to docs/agents/po/flow/triage-signals-longtail.md (longtail sibling chosen: low-volume/single-fire type, matches existing bctc-data-quality-anomaly precedent already living there). BEFORE: `bash scripts/audits/guard-signal-type-coverage.sh --check` exit 1, output 'FAIL — unrouted Pipeline-B to=po types: [\"bctc_image_fetch_degraded\"]'. AFTER (same command, same live file): exit 0, output 'PASS — Pipeline A: 0 live type(s) routed (21 known) | Pipeline B: 9 live to=po type(s) routed (23 known)'. Paired suite `bash scripts/audits/guard-signal-type-coverage.test.sh`: 24/24 (was 23/24 — TEST10 live-files integration smoke test now PASS). Did NOT touch scripts/audits/guard-signal-type-coverage.sh or its .test.sh (dev-mcp-server's in-review rewrite, commit 4e7aa7eaf — left untouched, out of my scope). Also bumped this file's own stale '11 types' count to '12' in the 2 non-table prose lines referencing it (same file, same edit). Committed a309c9334 (docs/agents/po/flow/triage-signals-longtail.md ONLY — RULE1-4 verified: git show --name-only HEAD showed exactly 1 file), pushed clean to origin/main (5f845aca6..a309c9334, no rebase needed). Moving backlog->review; verification_gate=ci_green_on_subsequent_push is NOT yet independently observed by me this session (no gh CLI CI-run check performed) — next agent (qa/po) must RAW-verify a green signal-type-coverage-guard CI run on a309c9334 or a descendant before flipping to done_verified, per feedback_ci_red_close_must_record_fingerprint_else_redrain. This board write goes via scripts/orch-apply.sh — agent-father's commit zone excludes orch-state.json (FU-AGENT-FATHER-ORCH-SCOPE), so this JSON write lands UNCOMMITTED; router/next committer must git add -- docs/data/orch/orch-state.json and commit it.",
+        "updated_at": "2026-08-23T11:25:01Z",
+        "priority": "P0",
+        "size": "S",
+        "next_agent": "qa",
+        "po_triage_20260823T0907Z": "PO TRIAGE 2026-08-23T09:07Z — PRIORITISED P0 AND FOLDED INTO THIS TICK'S BATCH, deliberately NOT parked. RAW-verified on the live tree this tick (not taken on report): `bash scripts/audits/guard-signal-type-coverage.sh` exits 1 with `FAIL — unrouted Pipeline-B to=po types: [\"bctc_image_fetch_degraded\"]`, and its third line confirms this very row deduped the mint ('backlog row already tracks type=bctc_image_fetch_degraded ... no duplicate minted'). The producing signal is live and NEW: signal_queue row bctc-imgdeg-69fcd047-20260823T090510Z, from=mcp-server, severity=HIGH. WHY P0 RATHER THAN THE DEFAULT BACKLOG PARK: this row is the sole remaining cause of CI red. The earlier signal-type-coverage-guard red (audit-handoff, Pipeline B) was genuinely fixed by 735dfa815; PO independently confirmed the HEAD-committed guard PASSES against the pre-peer docs tree, and confirmed from run 32629387939 (head_sha 85384b32e) that signal-type-coverage-guard was the ONLY failing job of 23 — no second failure hiding underneath. CI has still never run on a commit at or after 735dfa815, so no green has been observed; the red simply changed cause mid-morning when dev-mcp-server's dual-pipeline guard (4e7aa7eaf) caught this genuinely new type. Parking a P-unset row in a 449-deep backlog[] against an RLC that dispatches ~1 row/tick means CI stays red indefinitely — the exact starvation that stranded FIX-PO-TRIAGE-SIGNALS-TABLE-MATCHES-ZERO-LIVE-SIGNAL-TYPES for 10 days. FIELDS SET BY PO, all previously unset: priority=P0, size=S, next_agent=agent-father, zone cross-service/ (was 'docs/agents/po/flow/', which is not one of dev-team Step 3's three accepted zone values apps/<service>/ | multi | cross-service/, so the row was not dispatchable as minted — worth feeding back to the auto-filer in scripts/audits/guard-signal-type-coverage.sh). next_agent=agent-father because docs/agents/po/flow/triage-signals.md is an agent flow doc: PO's own boundary_rules forbid PO editing it, and agent-father made its last edit (735dfa815). NOT SILENCED: guard-signal-type-coverage.test.sh TEST10's 23/24 failure is the guard correctly biting, per that test's own inline comment — do not neutralise the test to green CI.",
+        "ci_dedup_key": "ci_job:signal-type-coverage-guard|file:docs/agents/po/flow/triage-signals.md",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "claimed_at": "2026-08-23T11:25:00Z",
+        "claimed_by": "dev-team (review-lane qa-drain)"
+      },
+      {
+        "id": "TE-T23",
+        "title": "T-23 CLAUDE.md step-2.5 (21L): compress to ~5L (detail in dispatch-claim CARD) [~11k tok/day]",
+        "status": "QA",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P1",
+        "zone": "cross-service/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#TE-T23",
+        "depends_on": [
+          "TE-T12"
+        ],
+        "updated_at": "2026-08-23T11:25:01Z",
+        "claimed_at": "2026-08-23T11:25:00Z",
+        "claimed_by": "dev-team (review-lane qa-drain)"
+      },
+      {
+        "id": "FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE",
+        "type": "FIX",
+        "title": "[BCTC-1345b] alert hard-codes 'Check for OCR corruption (VNM/VEA pattern: assets<equity or margin>100%)' but financial=0.10 is emitted ONLY by the unit-mismatch short-circuit that bypasses those rules entirely — 65 live rows (23 tickers) each send the triager to a rule family that provably cannot return 0.10",
+        "status": "QA",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE",
+        "updated_at": "2026-08-23T11:25:01Z",
+        "claimed_at": "2026-08-23T11:25:00Z",
+        "claimed_by": "dev-team (review-lane qa-drain)"
       }
     ],
     "_closed_signals_20260614": {
@@ -19309,13 +19326,13 @@
         "last_served_tick": "2026-08-23T10:52:46Z"
       },
       "qa_drain": {
-        "last_served_tick": "2026-08-23T08:27:58Z"
+        "last_served_tick": "2026-08-23T11:24:39Z"
       },
       "step1_triage": {
         "last_served_tick": "2026-08-23T08:55:59Z"
       }
     },
-    "_updated_at": "2026-08-23T11:22:10Z",
+    "_updated_at": "2026-08-23T11:24:39Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
