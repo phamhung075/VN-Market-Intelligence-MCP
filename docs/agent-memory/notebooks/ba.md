@@ -47,6 +47,29 @@ forecloses backend work/deep-linking/WRITE-path fix as explicit out-of-scope. Sp
 `ba_spec_complete`, `ba_handoff`, `ba_completed_at`, `next_agent=architect` via `orch-apply.sh`
 (conservation 767↔767). Decision journal STEP ba-S18.
 
+## UC-SDF-P6 · 2026-08-23
+
+Design-Router dispatch (P1, cross-service/): router's own note already flagged the title
+("generate cron-registry.json") as stale (file exists since 07-15, self-demoted to
+system-map.json via its own `_ssot`); re-verified live and found 4 NEW findings beyond the
+note. Root cause of the 69-vs-70 internal self-contradiction: `1190-pipeline-watchdog.
+test.ts:301` hardcodes `expect(schedulerFileCount).toBe(69)`. cron-registry.json/system-
+map.json share length=70 today by COINCIDENCE — content diff shows 6 name-level divergences
++1 stray null entry, not interchangeable. Live-recomputed project-stats.json's 88
+(61 table-driven + 22 bespoke + 5 summaryJobs call-sites) matches `gen-project-stats.ts`'s
+own generator exactly — confirms 88-vs-70 is a genuine counting-UNIT divergence (call-sites
+vs distinct-job-names), not drift. "fix gen-project-stats stale probe" (row's own note) already
+shipped (c9e7ed717) — dropped from scope. Consumer-footprint check inverts the file's own
+`_ssot` claim: cron-registry.json has 3 live test consumers, system-map.json's crons[] has 0.
+Wrote FR-1..FR-7 (all infrastructure/tooling layer) + 4 PO blockers (Q1 canonical direction,
+Q2 counting-unit ruling, Q3 recommend splitting `po_scope_expansion_20260722`'s session-
+CronCreate liveness-plane content into its own row — sibling to 2 still-BACKLOG parts of the
+same 3-part ruling, structurally different open-design problem — Q4 FR-7 sits in agent-father's
+exclusive `docs/agents/**` zone). Spec: `docs/handoffs/UC-SDF-P6-BA-spec.md`. Row moved
+`in_progress[]`→`backlog[]` (status BLOCKED, next_agent=po), `.head` reset idle, same
+`orch-apply.sh` write per router's explicit terminal-shape constraint. Decision journal STEP
+ba-S19.
+
 ## Archive
 
 FIX-GHOSTZONE-P0-PAIR (08-22): auto-dropped from live notebook by `notebook-auto-prune.sh`'s byte-cap gate (same session — landing FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER's section pushed the file over cap; hook correctly picked the oldest dated section but, per the known `FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE` bug, left no archive pointer — added here manually so the content stays discoverable). PO triage-dispatch: 2 of 5 minted "ghost zone" rows (P0, shared regression shape — "what the API serves must match MAX(date) in the table"), both `apps/mcp-server/`, zero file overlap — (1) CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST (newest-N select + ASC-rewrap, avoids corrupting `buildSnapshot`/`buildSeries`), (2) FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD (push `NOT NULL` guard into the `MAX(date)` subquery). 0 PO blockers on either. Full text in git history (this file, commit `7df31bd34` and earlier); specs still live at `docs/handoffs/FIX-GHOSTZONE-CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST-BA-spec.md` and `docs/handoffs/FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD-BA-spec.md`; decision journal STEP ba-S16/ba-S17.
