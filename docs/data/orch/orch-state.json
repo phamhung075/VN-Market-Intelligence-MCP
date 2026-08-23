@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-23T11:54:19Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE",
+    "next_agent": "dev-pdf-extractor",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-23T12:24:13Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12128,56 +12129,6 @@
         "priority_rationale": "P2 not P1: the parent was P1 because 8 agents had NO on-failure contract in their entire resolved chain. These 3 do reach a boundary contract — dev-team a real one missing only the .head reset; the 2 crawls agents a target with none, but they are lower-traffic and not part of the microservice-main.md fan-out. Real exposure, smaller blast radius."
       },
       {
-        "id": "FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE",
-        "type": "FIX",
-        "title": "pdf-extractor drops contended PEK extractions silently: non-blocking Semaphore(1) acquire raises instantly while bctcExtractReconcileJob re-fires a 20-wide batch of 202-fire-and-forget triggers every 30min",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "M",
-        "zone": "apps/pdf-extractor/",
-        "next_agent": "dev-pdf-extractor",
-        "supervised": false,
-        "plan_only": false,
-        "dispatch_lane": null,
-        "created_at": "2026-08-15T12:57:00Z",
-        "created_by": "po (close-out of SPIKE-BCTC-RECONCILE-EXHAUSTED-REAL-UUID-SUBSET, 2026-08-15 Review-Lane SECONDARY-Drain)",
-        "updated_at": "2026-08-15T12:58:59Z",
-        "updated_by": "po",
-        "parent": "SPIKE-BCTC-RECONCILE-EXHAUSTED-REAL-UUID-SUBSET",
-        "depends": [],
-        "blocks": [],
-        "source": "Architect root-cause brief docs/architecture-briefs/2026-08-13-fix-pek-extract-semaphore-contention-silent-drop.md (2026-08-13T23:39:24Z), PO-ratified 2026-08-15 after independent source RAW-verification of all 5 links of the causal chain (see the parent row's po_verification_note). Architect explicitly did not mint this row (task-breakdown is PM/PO job); PO minted it directly rather than routing to pm because the brief already carries a complete fix design + test strategy and a further decomposition hop would only add latency to a P0.",
-        "desc": "apps/pdf-extractor/infrastructure/pek_engine_adapter.py:90-92 declares `_extraction_semaphore = threading.Semaphore(1)` and :656 acquires it with `acquire(blocking=False)`, raising SemaphoreContendedError the instant the slot is held. Upstream, apps/mcp-server/src/scheduler/financial-reports/bctcExtractReconcileJob.ts (DEFAULT_BATCH_SIZE=20, loop 420-527) re-fires every still-pek_triggered row back-to-back with no pacing. The per-row `await` does NOT serialize anything: pekExtractTrigger.ts treats HTTP 202 as success and routes_pek.py returns 202 immediately via FastAPI BackgroundTasks — so one tick launches up to 20 CONCURRENT background extractions against a 1-slot semaphore. The 19 losers raise SemaphoreContendedError inside the detached background task, where pek_run_helper.py's bare `except Exception` logs '_run_pek_extract: FAILED' and returns. Nothing requeues, nothing reaches the caller (it already has its 202), and the reconcile job records `refired++` for a request that never ran — burning one of MAX_RECONCILE_ATTEMPTS=8. Net effect: real-UUID reports with a valid pdf_path and text_status=COMPLETE march to reconcile_attempts=8 with 0 rows in bctc_layout_units/bctc_table_rows/bctc_md_tables and terminate as enrich_failed, emitting the RECONCILE EXHAUSTED alerts this SPIKE was opened on (HUT 2025-Q3, BSR 2024-Q1, FRT 2024-Q1). Architect measured 129 of 183 FAILED traces as SemaphoreContendedError and reproduced FRT 2024-Q1 losing 8/8 passes; malformed-PDF was ruled out because BSR/FRT 2025-Q1 filings extracted fine (34/27 layout units) once they won the race. This is NOT the fallback-shell defect — none of these ids is a fallback- shell and none reaches that write gate.",
-        "acceptance": [
-          "AC-1 pek_engine_adapter.py gains an env-configurable wait bound in the same style as the existing _EXTRACTION_TIMEOUT_SECONDS: _DEFAULT_SEMAPHORE_WAIT_SECONDS = 30*60 and _SEMAPHORE_WAIT_SECONDS = int(os.environ.get('PEK_SEMAPHORE_WAIT_SECONDS', _DEFAULT_SEMAPHORE_WAIT_SECONDS)). Confirm PEK_SEMAPHORE_WAIT_SECONDS is genuinely new: PO grepped the repo 2026-08-15 and found zero occurrences, so it must also be plumbed wherever pdf-extractor env is declared (compose/env file) if that is how the sibling PDFX_OCR_QUEUE_WAIT_S is surfaced.",
-          "AC-2 extract_layout_and_tables() acquires with `acquire(blocking=True, timeout=wait)` and accepts an optional `wait_s: Optional[float] = None` override (mirrors ocr_gateway.slot(timeout_s=None)) so tests inject a short bound instead of monkeypatching a module constant. SemaphoreContendedError class name and the existing try/finally release stay UNCHANGED — only the message changes (from 'instant reject' to 'waited Ns, still no slot').",
-          "AC-3 Reuse only — no new concurrency primitive. The shape is already shipped at apps/pdf-extractor/infrastructure/ocr_gateway.py:140 (_OCR_SLOTS) and :382-383 (_acquire_slot_blocking -> acquire(blocking=True, timeout=timeout_s)). PO verified both exist as described.",
-          "AC-4 Stale doc-comment correction (in scope, do not defer): the module docstring at pek_engine_adapter.py:24 and the method docstring at :653 both claim contention maps to 'HTTP 429 at the handler level'. That is FALSE on the real /pek-extract path — routes_pek.py returns 202 before the background task starts and SemaphoreContendedError is swallowed by pek_run_helper.py's except-Exception, never reaching an HTTP response. Rewrite both to describe the actual behavior (bounded wait, then a logged FAILED trace, no HTTP code involved).",
-          "AC-5 Tests: MODIFY apps/pdf-extractor/__tests__/test_pek_engine_adapter.py::TestSemaphoreGuard::test_semaphore_contention_raises_error (it currently asserts the IMMEDIATE raise this fix removes) to pass wait_s=0.2 and assert both that it still raises after the bound elapses AND that elapsed wall-clock is close to wait_s, not instant — mirror the `elapsed < 3.0` idiom in test_ocr_concurrency_invariant.py:384-392. KEEP test_semaphore_released_after_extraction as-is.",
-          "AC-6 NEW test: a second thread releases the semaphore BEFORE the wait bound elapses -> the waiting call acquires and succeeds instead of raising. Proves this is a real queue, not sleep-then-fail.",
-          "AC-7 NEW batch-realistic test: N=3 threads call extract_layout_and_tables concurrently (mocked fast _run_extraction) with wait_s large enough to cover serialized execution -> ALL 3 return successfully, none raises. This is the row's actual real-world claim: a contended batch of re-fires loses no members.",
-          "AC-8 Live post-deploy verification (REQUIRED, not optional): after deploy, re-probe bctc_layout_units/bctc_table_rows counts for HUT 2025-Q3 (dab264ae-9702-4045-b488-bbf5d13f97fc), BSR 2024-Q1 (d332bf35-d989-4dcc-a180-48c07369ea01), FRT 2024-Q1 (268f4544-d66b-42cd-b37e-18ff7b17d55f) after their next reconcile pass, and re-check pdf-extractor logs for SemaphoreContendedError falling to ~zero across a 24h window that CONTAINS a live reconcile batch. CAVEAT from PO: these 3 rows are already terminal enrich_failed with reconcile_attempts at/over cap, so the reconcile job will NOT re-select them (it queries status='pek_triggered' only) — AC-8 requires either a deliberate requeue or substituting 3 currently-live pek_triggered rows. Do not report AC-8 PASS on a window with zero extraction traffic; PO hit exactly that false-read (1068 log lines, zero pek-extract requests) on 2026-08-15.",
-          "AC-9 Test the A-30 correlation claim empirically over the same window: architect read system-auditor's pdf-extractor sustained-memory signal (telegram 4648, 94.07% loss of reclamation) as a DOWNSTREAM symptom of the same burst (thread-pool churn from N simultaneous asyncio.to_thread calls), not an independent leak — the burst at 12:35:03-04Z preceded the A-30 alert at 12:36:20Z by ~1min. Record whether A-30 quiets post-fix. If it does NOT, say so plainly rather than closing the row silently — that would refute the correlation-not-causation read and needs a follow-up row."
-        ],
-        "files": [
-          "apps/pdf-extractor/infrastructure/pek_engine_adapter.py",
-          "apps/pdf-extractor/__tests__/test_pek_engine_adapter.py"
-        ],
-        "out_of_scope": "(a) Do NOT build reconcile-job pacing/throttling in this row — architect explicitly scoped it as a NON-mandatory P2 follow-up to size only if post-fix telemetry still shows a meaningful backlog; post-fix it is a throughput concern, not a correctness bug, and it lives in a different zone (apps/mcp-server/). Do not pre-build speculatively. (b) Do NOT touch the fallback-shell write-gate work (FIX-BCTC-FALLBACK-SHELL-REPORTS-*) — different code path, no shared files, architect confirmed structurally disjoint. (c) Do NOT fix the reconcile_attempts counter-reset defect here — it is apps/mcp-server/ zone and has its own row, FIX-BCTC-VPSINGEST-REQUEUE-NO-RECONCILE-COUNTER-RESET. (d) Do NOT design container log persistence here (infra, flagged separately).",
-        "not_duplicate_of": "Board probed across backlog/ready/in_progress/review/qa/done/done_verified/archive 2026-08-15T12:55Z for PEK|SEMAPHORE|RECONCILE-ATTEMPT|COUNTER|REQUEUE id patterns — 3 hits, all disjoint: FIX-ERRAUDIT-W3-PEK-P2 (validate_or_unknown/parse_or_raise error-handling audit, different files), PERF-PEK-PER-PAGE-LATENCY (per-page OCR latency + checkpoint/resume, different defect), FIX-COWORK-TICK-MIDWRITE-DEATH-DURABLE-FAILURE-COUNTER (unrelated zone).",
-        "related": [
-          "SPIKE-BCTC-RECONCILE-EXHAUSTED-REAL-UUID-SUBSET",
-          "FIX-BCTC-VPSINGEST-REQUEUE-NO-RECONCILE-COUNTER-RESET",
-          "FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE",
-          "telegram-report:4648"
-        ],
-        "architect_brief": "docs/architecture-briefs/2026-08-13-fix-pek-extract-semaphore-contention-silent-drop.md",
-        "build_standard": "not-applicable",
-        "build_standard_rationale": "Bug-fix, in-zone (infrastructure layer, file already at apps/pdf-extractor/infrastructure/), no new port, no new file, no shared-helper duplication — extends an existing guard by reusing a pattern already shipped in the same service. Architect ruled BUILD-STANDARD not-applicable per the flow's Standard Detection matrix; PO concurs.",
-        "priority_rationale": "P0 inherited from the parent SPIKE: this is an ACTIVE, GROWING, fail-loud alert class (RECONCILE EXHAUSTED telegrams still arriving) that silently destroys real financial-report extractions — 129 of 183 observed FAILED traces. Not latent.",
-        "dispatch_note": "Zone corrected by architect: the parent SPIKE inherited apps/mcp-server/ from its fallback-shell sibling, but every file this fix touches is apps/pdf-extractor/ -> specialist dev-pdf-extractor. A design brief already exists, so this needs no architect hop — dispatch straight to the specialist."
-      },
-      {
         "id": "FIX-BCTC-VPSINGEST-REQUEUE-NO-RECONCILE-COUNTER-RESET",
         "type": "FIX",
         "title": "Re-queueing a BCTC report to pek_triggered via applyPushBctcExtractionOutcome leaves reconcile_attempts stale (14 rows already over the cap-8), so the documented post-fix recovery path gets zero effective retries",
@@ -13304,6 +13255,18 @@
         ],
         "status_note": "SAME FILE as the umbrella row FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire (docs/agents/po/flow/triage-signals.md) and the same owner (agent-father) — dispatch both in ONE agent-father hop, they do not conflict (routing table vs the CLEAR block, different sections). PO worked around it this tick by reading ids directly from the file, so the 10 envelopes DID clear (verified inbox_len 10 -> 0, _updated_by=po); the doc, however, is still wrong and the next agent to follow it verbatim will silently fail again. Sibling in kind, not in cause: FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR is prose-with-no-actuator; this one is an actuator that EXISTS, looks executable, and lies about its exit status — arguably worse, because a reviewer greps for the orch-apply.sh pipe, finds it, and moves on.",
         "updated_at": "2026-08-23T12:11:39Z"
+      },
+      {
+        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-notebook-prune-dropped-newest-dated-section",
+        "type": "routing-gap",
+        "status": "BACKLOG",
+        "owner": "po",
+        "zone": "docs/agents/po/flow/",
+        "title": "Unrouted signal type 'notebook_prune_dropped_newest_dated_section' (Pipeline A) — no table row in docs/agents/po/flow/triage-signals.md",
+        "dedup_key": "signal-type-registry-gap:notebook_prune_dropped_newest_dated_section",
+        "created_at": "2026-08-23T12:23:17Z",
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=notebook_prune_dropped_newest_dated_section routed on Pipeline A (a matching table row exists in triage-signals.md's own Pipeline-A section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
+        "updated_at": "2026-08-23T12:23:18Z"
       }
     ],
     "closed_sprints": [
@@ -19325,8 +19288,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-23T10:53:01Z",
-    "last_triaged_by": "dev-team (design-router sweep)",
+    "last_triaged_at": "2026-08-23T12:24:12Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": [
       {
         "id": "UC-CDC-P1",
@@ -19435,6 +19398,61 @@
           "TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX"
         ],
         "po_wip_ruling_20260823": "RULED BLOCKED by po 2026-08-23T10:17:06Z, in place in in_progress[]. THE HOP THIS ROW WAS WAITING FOR HAS ALREADY HAPPENED. next_agent read 'pm', but the row's own pm_decomposition_note records 'PM decomposed into 3 subtasks (2026-08-22T17:45Z)' and all three children are live on the board right now, measured this tick: TASK_001-WATCHLIST-WRITE-THROUGH-INFRA (ready[], READY, next_agent=dev-mcp-server), TASK_002-WATCHLIST-DIVERGENCE-AUDIT-CRON (backlog[], BLOCKED on TASK_001, next_agent=developer), TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX (ready[], READY, next_agent=generic-developer). The parent therefore had no pm work left and was holding a WIP slot on a stale field. next_agent pm->qa: the only remaining parent-level action is final sign-off against AC-1..AC-4 once the children land. blocked_by set to the three children so the block is machine-readable rather than prose. SIDE FINDING, NOT FIXED HERE (outside decision scope, routed instead): the three handoff files docs/handoffs/TASK_001-WATCHLIST-WRITE-THROUGH-INFRA.md, TASK_002-WATCHLIST-DIVERGENCE-AUDIT-CRON.md and TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX.md exist on disk but are UNTRACKED in git — pm authored the decomposition and never committed the artefacts, so the specs the children point at are absent from HEAD and would vanish on any clean checkout. WHY status=BLOCKED IN PLACE RATHER THAN A LANE MOVE: identical D3 constraint to UC-CDC-P1 — this row measures 17859B prose, the largest of the three in_progress[] rows, so a move into guarded backlog[] hard-rejects at orch-row-prose-ceiling-check.mjs:267-269 with liveBytes=0. BLOCKED status alone removes it from wip_in_progress (devteam-eligibility.jq:115-118), which is the outcome that matters. Lane move deferred to after D3 ships."
+      },
+      {
+        "id": "FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE",
+        "type": "FIX",
+        "title": "pdf-extractor drops contended PEK extractions silently: non-blocking Semaphore(1) acquire raises instantly while bctcExtractReconcileJob re-fires a 20-wide batch of 202-fire-and-forget triggers every 30min",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/pdf-extractor/",
+        "next_agent": "dev-pdf-extractor",
+        "supervised": false,
+        "plan_only": false,
+        "dispatch_lane": null,
+        "created_at": "2026-08-15T12:57:00Z",
+        "created_by": "po (close-out of SPIKE-BCTC-RECONCILE-EXHAUSTED-REAL-UUID-SUBSET, 2026-08-15 Review-Lane SECONDARY-Drain)",
+        "updated_at": "2026-08-23T12:24:13Z",
+        "updated_by": "po",
+        "parent": "SPIKE-BCTC-RECONCILE-EXHAUSTED-REAL-UUID-SUBSET",
+        "depends": [],
+        "blocks": [],
+        "source": "Architect root-cause brief docs/architecture-briefs/2026-08-13-fix-pek-extract-semaphore-contention-silent-drop.md (2026-08-13T23:39:24Z), PO-ratified 2026-08-15 after independent source RAW-verification of all 5 links of the causal chain (see the parent row's po_verification_note). Architect explicitly did not mint this row (task-breakdown is PM/PO job); PO minted it directly rather than routing to pm because the brief already carries a complete fix design + test strategy and a further decomposition hop would only add latency to a P0.",
+        "desc": "apps/pdf-extractor/infrastructure/pek_engine_adapter.py:90-92 declares `_extraction_semaphore = threading.Semaphore(1)` and :656 acquires it with `acquire(blocking=False)`, raising SemaphoreContendedError the instant the slot is held. Upstream, apps/mcp-server/src/scheduler/financial-reports/bctcExtractReconcileJob.ts (DEFAULT_BATCH_SIZE=20, loop 420-527) re-fires every still-pek_triggered row back-to-back with no pacing. The per-row `await` does NOT serialize anything: pekExtractTrigger.ts treats HTTP 202 as success and routes_pek.py returns 202 immediately via FastAPI BackgroundTasks — so one tick launches up to 20 CONCURRENT background extractions against a 1-slot semaphore. The 19 losers raise SemaphoreContendedError inside the detached background task, where pek_run_helper.py's bare `except Exception` logs '_run_pek_extract: FAILED' and returns. Nothing requeues, nothing reaches the caller (it already has its 202), and the reconcile job records `refired++` for a request that never ran — burning one of MAX_RECONCILE_ATTEMPTS=8. Net effect: real-UUID reports with a valid pdf_path and text_status=COMPLETE march to reconcile_attempts=8 with 0 rows in bctc_layout_units/bctc_table_rows/bctc_md_tables and terminate as enrich_failed, emitting the RECONCILE EXHAUSTED alerts this SPIKE was opened on (HUT 2025-Q3, BSR 2024-Q1, FRT 2024-Q1). Architect measured 129 of 183 FAILED traces as SemaphoreContendedError and reproduced FRT 2024-Q1 losing 8/8 passes; malformed-PDF was ruled out because BSR/FRT 2025-Q1 filings extracted fine (34/27 layout units) once they won the race. This is NOT the fallback-shell defect — none of these ids is a fallback- shell and none reaches that write gate.",
+        "acceptance": [
+          "AC-1 pek_engine_adapter.py gains an env-configurable wait bound in the same style as the existing _EXTRACTION_TIMEOUT_SECONDS: _DEFAULT_SEMAPHORE_WAIT_SECONDS = 30*60 and _SEMAPHORE_WAIT_SECONDS = int(os.environ.get('PEK_SEMAPHORE_WAIT_SECONDS', _DEFAULT_SEMAPHORE_WAIT_SECONDS)). Confirm PEK_SEMAPHORE_WAIT_SECONDS is genuinely new: PO grepped the repo 2026-08-15 and found zero occurrences, so it must also be plumbed wherever pdf-extractor env is declared (compose/env file) if that is how the sibling PDFX_OCR_QUEUE_WAIT_S is surfaced.",
+          "AC-2 extract_layout_and_tables() acquires with `acquire(blocking=True, timeout=wait)` and accepts an optional `wait_s: Optional[float] = None` override (mirrors ocr_gateway.slot(timeout_s=None)) so tests inject a short bound instead of monkeypatching a module constant. SemaphoreContendedError class name and the existing try/finally release stay UNCHANGED — only the message changes (from 'instant reject' to 'waited Ns, still no slot').",
+          "AC-3 Reuse only — no new concurrency primitive. The shape is already shipped at apps/pdf-extractor/infrastructure/ocr_gateway.py:140 (_OCR_SLOTS) and :382-383 (_acquire_slot_blocking -> acquire(blocking=True, timeout=timeout_s)). PO verified both exist as described.",
+          "AC-4 Stale doc-comment correction (in scope, do not defer): the module docstring at pek_engine_adapter.py:24 and the method docstring at :653 both claim contention maps to 'HTTP 429 at the handler level'. That is FALSE on the real /pek-extract path — routes_pek.py returns 202 before the background task starts and SemaphoreContendedError is swallowed by pek_run_helper.py's except-Exception, never reaching an HTTP response. Rewrite both to describe the actual behavior (bounded wait, then a logged FAILED trace, no HTTP code involved).",
+          "AC-5 Tests: MODIFY apps/pdf-extractor/__tests__/test_pek_engine_adapter.py::TestSemaphoreGuard::test_semaphore_contention_raises_error (it currently asserts the IMMEDIATE raise this fix removes) to pass wait_s=0.2 and assert both that it still raises after the bound elapses AND that elapsed wall-clock is close to wait_s, not instant — mirror the `elapsed < 3.0` idiom in test_ocr_concurrency_invariant.py:384-392. KEEP test_semaphore_released_after_extraction as-is.",
+          "AC-6 NEW test: a second thread releases the semaphore BEFORE the wait bound elapses -> the waiting call acquires and succeeds instead of raising. Proves this is a real queue, not sleep-then-fail.",
+          "AC-7 NEW batch-realistic test: N=3 threads call extract_layout_and_tables concurrently (mocked fast _run_extraction) with wait_s large enough to cover serialized execution -> ALL 3 return successfully, none raises. This is the row's actual real-world claim: a contended batch of re-fires loses no members.",
+          "AC-8 Live post-deploy verification (REQUIRED, not optional): after deploy, re-probe bctc_layout_units/bctc_table_rows counts for HUT 2025-Q3 (dab264ae-9702-4045-b488-bbf5d13f97fc), BSR 2024-Q1 (d332bf35-d989-4dcc-a180-48c07369ea01), FRT 2024-Q1 (268f4544-d66b-42cd-b37e-18ff7b17d55f) after their next reconcile pass, and re-check pdf-extractor logs for SemaphoreContendedError falling to ~zero across a 24h window that CONTAINS a live reconcile batch. CAVEAT from PO: these 3 rows are already terminal enrich_failed with reconcile_attempts at/over cap, so the reconcile job will NOT re-select them (it queries status='pek_triggered' only) — AC-8 requires either a deliberate requeue or substituting 3 currently-live pek_triggered rows. Do not report AC-8 PASS on a window with zero extraction traffic; PO hit exactly that false-read (1068 log lines, zero pek-extract requests) on 2026-08-15.",
+          "AC-9 Test the A-30 correlation claim empirically over the same window: architect read system-auditor's pdf-extractor sustained-memory signal (telegram 4648, 94.07% loss of reclamation) as a DOWNSTREAM symptom of the same burst (thread-pool churn from N simultaneous asyncio.to_thread calls), not an independent leak — the burst at 12:35:03-04Z preceded the A-30 alert at 12:36:20Z by ~1min. Record whether A-30 quiets post-fix. If it does NOT, say so plainly rather than closing the row silently — that would refute the correlation-not-causation read and needs a follow-up row."
+        ],
+        "files": [
+          "apps/pdf-extractor/infrastructure/pek_engine_adapter.py",
+          "apps/pdf-extractor/__tests__/test_pek_engine_adapter.py"
+        ],
+        "out_of_scope": "(a) Do NOT build reconcile-job pacing/throttling in this row — architect explicitly scoped it as a NON-mandatory P2 follow-up to size only if post-fix telemetry still shows a meaningful backlog; post-fix it is a throughput concern, not a correctness bug, and it lives in a different zone (apps/mcp-server/). Do not pre-build speculatively. (b) Do NOT touch the fallback-shell write-gate work (FIX-BCTC-FALLBACK-SHELL-REPORTS-*) — different code path, no shared files, architect confirmed structurally disjoint. (c) Do NOT fix the reconcile_attempts counter-reset defect here — it is apps/mcp-server/ zone and has its own row, FIX-BCTC-VPSINGEST-REQUEUE-NO-RECONCILE-COUNTER-RESET. (d) Do NOT design container log persistence here (infra, flagged separately).",
+        "not_duplicate_of": "Board probed across backlog/ready/in_progress/review/qa/done/done_verified/archive 2026-08-15T12:55Z for PEK|SEMAPHORE|RECONCILE-ATTEMPT|COUNTER|REQUEUE id patterns — 3 hits, all disjoint: FIX-ERRAUDIT-W3-PEK-P2 (validate_or_unknown/parse_or_raise error-handling audit, different files), PERF-PEK-PER-PAGE-LATENCY (per-page OCR latency + checkpoint/resume, different defect), FIX-COWORK-TICK-MIDWRITE-DEATH-DURABLE-FAILURE-COUNTER (unrelated zone).",
+        "related": [
+          "SPIKE-BCTC-RECONCILE-EXHAUSTED-REAL-UUID-SUBSET",
+          "FIX-BCTC-VPSINGEST-REQUEUE-NO-RECONCILE-COUNTER-RESET",
+          "FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE",
+          "telegram-report:4648"
+        ],
+        "architect_brief": "docs/architecture-briefs/2026-08-13-fix-pek-extract-semaphore-contention-silent-drop.md",
+        "build_standard": "not-applicable",
+        "build_standard_rationale": "Bug-fix, in-zone (infrastructure layer, file already at apps/pdf-extractor/infrastructure/), no new port, no new file, no shared-helper duplication — extends an existing guard by reusing a pattern already shipped in the same service. Architect ruled BUILD-STANDARD not-applicable per the flow's Standard Detection matrix; PO concurs.",
+        "priority_rationale": "P0 inherited from the parent SPIKE: this is an ACTIVE, GROWING, fail-loud alert class (RECONCILE EXHAUSTED telegrams still arriving) that silently destroys real financial-report extractions — 129 of 183 observed FAILED traces. Not latent.",
+        "dispatch_note": "Zone corrected by architect: the parent SPIKE inherited apps/mcp-server/ from its fallback-shell sibling, but every file this fix touches is apps/pdf-extractor/ -> specialist dev-pdf-extractor. A design brief already exists, so this needs no architect hop — dispatch straight to the specialist.",
+        "promoted_at": "2026-08-23T12:24:12Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-23T12:24:12Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ]
   },
@@ -19450,7 +19468,7 @@
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-23T09:29:30Z"
+        "last_served_tick": "2026-08-23T12:24:02Z"
       },
       "sls": {
         "last_served_tick": "2026-08-23T09:53:20Z"
@@ -19468,7 +19486,7 @@
         "last_served_tick": "2026-08-23T11:54:46Z"
       }
     },
-    "_updated_at": "2026-08-23T12:22:07Z",
+    "_updated_at": "2026-08-23T12:24:02Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
