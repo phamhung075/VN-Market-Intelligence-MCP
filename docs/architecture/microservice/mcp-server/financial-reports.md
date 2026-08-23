@@ -220,3 +220,49 @@ The BCTC inspector OCR Text and structured-table panels were reading from stale 
 - (d) Table: has_pek:true + units array for PEK reports
 - (e) Table: has_pek:false + rows for non-PEK reports
 - (f) financial_reports pdf_path DB verification (trigger endpoint contract)
+
+---
+
+## FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER: Client-Side Facet Filters (quarter + ticker)
+
+Two `<select>` facet filters (`#quarter-filter` "Quý", `#ticker-filter` "Mã CK") added to the
+`.controls` bar of `src/interface/bctc-inspector.html`, before `#doc-select`. 100% client-side —
+zero additional network calls (all options derived from the doc list already fetched by
+`loadDocList()`).
+
+### State
+
+- `allDocs` (module-scope `let`) — full `DocListItem[]` cache populated once by `loadDocList()`,
+  never refetched by the filters.
+- `#doc-select`'s options are rebuilt in-memory by `renderDocOptions(items)` (extracted from
+  `loadDocList()`'s original option-loop, reused by `applyFilters()`).
+
+### Functions
+
+- `normalizeQuarter(val)` — coerces `DocListItem.period_quarter` (`number | "Q1"-shaped string |
+  null`) to a plain number or `null`. Handles the live-data quirk (2/257 rows, both ticker HUT)
+  where `period_quarter` holds the string `"Q1"` instead of the typed `number|null`.
+- `populateFilterOptions()` — derives distinct quarter options (`"YYYY-Q"`, year DESC then
+  quarter DESC — 11 options on live data) and distinct ticker options (`action_code` A-Z — 50
+  options on live data) from `allDocs`; renders the default all-option with a live distinct count
+  (e.g. `— tất cả (11) —`).
+- `renderDocOptions(items)` — renders `#doc-select`'s options from a (possibly filtered) array.
+  Zero-match: single `<option value="" disabled selected>— no document matches —</option>` — both
+  `disabled` AND `selected` are required or the closed `<select>` renders blank.
+- `applyFilters()` — AND-composes the two active filters against `allDocs`, calls
+  `renderDocOptions(filtered)`. Selection survival: if `currentDocId` is still in the filtered
+  set, re-selects it via `select.value = currentDocId` directly (**no synthetic `change` event
+  dispatch** — the existing `select.addEventListener("change", …)` handler unconditionally
+  refetches PDF/OCR/table/MD, which would defeat the zero-refetch design). Otherwise calls the
+  existing idempotent `resetPanes()`.
+
+### Tests
+
+`src/__tests__/FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER.test.ts` — 18 tests, 0 fail (pure-function
+mirrors, no jsdom — same convention as `1976-bctc-inspector-page-nav.test.ts`):
+- `normalizeQuarter`: number passthrough, `"Q1"`-shaped string coercion (incl. case-insensitivity),
+  `null`/`undefined` → `null`, malformed strings → `null`
+- AND-filter predicate: quarter-only / ticker-only / both / neither match, incl. the live HUT
+  string-quarter quirk
+- `resolveSelectionAfterFilter(currentDocId, filteredIds)`: keep vs reset resolution
+- (f) financial_reports pdf_path DB verification (trigger endpoint contract)

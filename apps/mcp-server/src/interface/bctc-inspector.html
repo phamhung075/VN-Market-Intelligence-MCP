@@ -89,6 +89,9 @@
       cursor: pointer;
     }
     select:focus { outline: 2px solid #4a9eff; }
+    /* FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER D-5: narrower than the generic
+       320px select so the two facet filters don't stretch unnecessarily. */
+    .filter-select { min-width: 140px; }
 
     /* ── Main split ── */
     .split {
@@ -867,6 +870,15 @@
 </header>
 
 <div class="controls">
+  <!-- FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER FR-1: client-side facet filters, before #doc-select -->
+  <label for="quarter-filter">Quý:</label>
+  <select id="quarter-filter" class="filter-select">
+    <option value="">— tất cả (0) —</option>
+  </select>
+  <label for="ticker-filter">Mã CK:</label>
+  <select id="ticker-filter" class="filter-select">
+    <option value="">— tất cả (0) —</option>
+  </select>
   <label for="doc-select">Document:</label>
   <select id="doc-select">
     <option value="">— select a document —</option>
@@ -1059,6 +1071,11 @@
   // AIT: last OCR response cached by renderOcr() — reused by renderAiInputTab()
   let lastOcrData = null;
 
+  // FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER D-2: module-scope cache of the
+  // full doc list, populated once by loadDocList() — lets applyFilters()
+  // rebuild #doc-select in-memory with ZERO additional network calls (AC2).
+  let allDocs = [];
+
   // ── Eval view state (M-6: dual-view toggle) ──────────────────────────────
   // "user" (default) | "agent" — persisted to localStorage
   let evalViewMode = localStorage.getItem("bctcEvalViewMode") || "user";
@@ -1072,6 +1089,9 @@
 
   // ── DOM refs ─────────────────────────────────────────────────────────────
   const select        = document.getElementById("doc-select");
+  // FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER FR-2: facet filter refs
+  const quarterFilter = document.getElementById("quarter-filter");
+  const tickerFilter  = document.getElementById("ticker-filter");
   const statusBar     = document.getElementById("status-bar");
   const pdfContainer  = document.getElementById("pdf-container");
   const pdfIframe     = document.getElementById("pdf-iframe");
@@ -1114,6 +1134,123 @@
     console.warn("pdf.js CDN failed — using iframe fallback.", e);
   }
 
+  // ── FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER: quarter/ticker facet filters ──
+  //
+  // D-2: allDocs (module-scope, declared in ── State ── above) is the sole
+  // cache — populateFilterOptions()/applyFilters() derive everything from it,
+  // never refetching (AC2).
+
+  /**
+   * Coerce a DocListItem.period_quarter value (number | "Q1"-shaped string |
+   * null) into a plain number, or null when it cannot be resolved.
+   * Live-data quirk (2/257 rows, both ticker HUT): period_quarter holds the
+   * string "Q1" instead of the typed `number|null`. FR-3a.
+   */
+  function normalizeQuarter(val) {
+    if (typeof val === "number") return val;
+    if (val === null || val === undefined) return null;
+    if (typeof val === "string") {
+      const m = /^Q([1-4])$/i.exec(val.trim());
+      return m ? Number(m[1]) : null;
+    }
+    return null;
+  }
+
+  /**
+   * Render #doc-select's <option> list from a (possibly filtered) items
+   * array. FR-8: an empty array renders a single disabled+selected
+   * placeholder — both attrs are required or the closed <select> renders
+   * blank (D-4).
+   */
+  function renderDocOptions(items) {
+    if (items.length === 0) {
+      select.innerHTML = `<option value="" disabled selected>— no document matches —</option>`;
+      return;
+    }
+    select.innerHTML = `<option value="">— select a document (${items.length}) —</option>`;
+    for (const item of items) {
+      const opt = document.createElement("option");
+      opt.value = item.doc_id;
+      const pdfFlag   = item.has_pdf ? "✓PDF" : "✗PDF";
+      const ocrFlag   = item.has_ocr ? "✓OCR" : "✗OCR";
+      const anomFlag  = item.anomaly_decimal_shift ? " ⚠ANOMALY" : "";
+      opt.textContent = `${item.label} [${pdfFlag} ${ocrFlag}]${anomFlag}`;
+      // Attach full item data for quick access
+      opt.dataset.item = JSON.stringify(item);
+      select.appendChild(opt);
+    }
+  }
+
+  /**
+   * Derive distinct quarter ("YYYY-Q", year DESC then quarter DESC) and
+   * ticker (action_code A-Z) options from allDocs, render into the two
+   * filter dropdowns. FR-4/FR-5. Each default option carries the live
+   * distinct count (AC1).
+   */
+  function populateFilterOptions() {
+    const quarterMap = new Map(); // "YYYY-Q" -> { year, quarter }
+    for (const item of allDocs) {
+      const q = normalizeQuarter(item.period_quarter);
+      if (q === null) continue;
+      const key = `${item.period_year}-${q}`;
+      if (!quarterMap.has(key)) quarterMap.set(key, { year: item.period_year, quarter: q });
+    }
+    const quarterOptions = [...quarterMap.values()]
+      .sort((a, b) => b.year - a.year || b.quarter - a.quarter);
+
+    quarterFilter.innerHTML = `<option value="">— tất cả (${quarterOptions.length}) —</option>`;
+    for (const { year, quarter } of quarterOptions) {
+      const opt = document.createElement("option");
+      opt.value = `${year}-${quarter}`;
+      opt.textContent = `Q${quarter} ${year}`;
+      quarterFilter.appendChild(opt);
+    }
+
+    const tickers = [...new Set(allDocs.map((item) => item.action_code))].sort();
+    tickerFilter.innerHTML = `<option value="">— tất cả (${tickers.length}) —</option>`;
+    for (const code of tickers) {
+      const opt = document.createElement("option");
+      opt.value = code;
+      opt.textContent = code;
+      tickerFilter.appendChild(opt);
+    }
+  }
+
+  /**
+   * AND-compose the two active facet filters against allDocs, rebuild
+   * #doc-select in-memory (FR-6). FR-7: current selection is preserved via
+   * direct select.value mutation (NO synthetic "change" event — the
+   * existing handler below unconditionally refetches); when the selection
+   * does not survive, resetPanes() clears stale panes (idempotent — safe to
+   * call unconditionally, mirrors architect D-3 pseudocode).
+   */
+  function applyFilters() {
+    const qVal = quarterFilter.value; // "" | "YYYY-Q"
+    const tVal = tickerFilter.value;  // "" | action_code
+    const filtered = allDocs.filter((item) => {
+      if (qVal) {
+        const q = normalizeQuarter(item.period_quarter);
+        if (q === null || `${item.period_year}-${q}` !== qVal) return false;
+      }
+      return !tVal || item.action_code === tVal;
+    });
+
+    renderDocOptions(filtered); // browser defaults selectedIndex to option 0 (placeholder)
+
+    if (currentDocId && filtered.some((item) => item.doc_id === currentDocId)) {
+      select.value = currentDocId; // re-select WITHOUT dispatching "change" — no refetch (FR-7)
+    } else {
+      resetPanes(); // idempotent — safe even when nothing was selected
+    }
+
+    statusBar.textContent = filtered.length === 0
+      ? `${[qVal && `Quý ${qVal.split("-")[1]} ${qVal.split("-")[0]}`, tVal].filter(Boolean).join(" × ")}: không có tài liệu khớp`
+      : `${filtered.length} document(s) loaded.`;
+  }
+
+  quarterFilter.addEventListener("change", applyFilters);
+  tickerFilter.addEventListener("change", applyFilters);
+
   // ── Load document list ───────────────────────────────────────────────────
   async function loadDocList() {
     statusBar.textContent = "Loading documents...";
@@ -1121,21 +1258,11 @@
       const resp = await fetch(`${BASE}/api/bctc-inspect/docs`);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
-      const items = data.items || [];
+      allDocs = data.items || [];
 
-      select.innerHTML = `<option value="">— select a document (${items.length}) —</option>`;
-      for (const item of items) {
-        const opt = document.createElement("option");
-        opt.value = item.doc_id;
-        const pdfFlag   = item.has_pdf ? "✓PDF" : "✗PDF";
-        const ocrFlag   = item.has_ocr ? "✓OCR" : "✗OCR";
-        const anomFlag  = item.anomaly_decimal_shift ? " ⚠ANOMALY" : "";
-        opt.textContent = `${item.label} [${pdfFlag} ${ocrFlag}]${anomFlag}`;
-        // Attach full item data for quick access
-        opt.dataset.item = JSON.stringify(item);
-        select.appendChild(opt);
-      }
-      statusBar.textContent = `${items.length} document(s) loaded.`;
+      populateFilterOptions();
+      renderDocOptions(allDocs);
+      statusBar.textContent = `${allDocs.length} document(s) loaded.`;
     } catch (err) {
       statusBar.textContent = `Error loading list: ${err.message}`;
       console.error(err);
