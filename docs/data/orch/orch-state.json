@@ -17424,6 +17424,40 @@
           }
         },
         "status_note": "\n[QA] Review Record (direct-commit verify, 2026-08-24): row was found in review[]/status=REVIEW, NOT qa[]/QA as the dispatch claimed (no orch-apply commit ever promoted it -- confirmed via git log -S on orch-state.json, only 06a392dc9 READY->REVIEW exists). Verified on merits per docs/handoffs/TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX.md. Commit 59dd37152 real, on main, touches exactly domain-model.md (1 file/1 line). Re-read file live: line 72 = '34 entries (33 active + 1 inactive -- VEA)'. Re-ran jq against system-map.json live: total=34, active=33, inactive=1(VEA) -- all match AC-2. Counted market.ts WATCHLIST_STOCKS live: 34 entries, 33 active:true, 1 active:false(VEA) -- matches AC-3. Docs-only change, zero production/test files touched -- bun test/tsc/mock-guard/DDD/security out of scope. Verdict: DONE_VERIFIED."
+      },
+      {
+        "id": "TASK-USDVND-TS-STATIC-RETIRE",
+        "title": "TS track: delete 4 dead macroTools.ts signal fns + retire the static usdVnd>25500/<24500 cascade rules",
+        "type": "TASK",
+        "status": "DONE_VERIFIED",
+        "priority": "high",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "qa",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts",
+          "apps/mcp-server/src/domain/services/cascade/macroAdjustments.ts",
+          "apps/mcp-server/src/domain/services/cascade/cascadeEngine.ts"
+        ],
+        "note": "Parent FIX-USDVND-THRESHOLD-SSOT. Design: docs/architecture-briefs/2026-08-23-fix-usdvnd-threshold-ssot.md, Planes 1+2. Finding A: currencySignal (macroTools.ts:117-124) has ZERO callers repo-wide — DELETE, do not unify; same for its 3 siblings oilSignal/goldSignal/policySignal in the identical file. Finding B (USD/VND half only): cascadeEngine.ts applies the OLD fixed MACRO_ADJUSTMENTS *and* the sigma-based DYNAMIC_MACRO_MAP additively on identical domain sets — real double-counting. Retire ONLY the static USD/VND rule here; the oil/gold general form is flagged-not-fixed and needs its own row. Test: negative control asserting the dynamic rule alone yields equivalent-or-better confidence delta on a live-shaped fixture.",
+        "created_at": "2026-08-23T13:38:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-23T22:11:35Z",
+        "updated_by": "dev-mcp-server/next-agent-fix",
+        "dev_completed_at": "2026-08-23T15:24:21Z",
+        "dev_completed_by": "dev-mcp-server",
+        "dev_commit": "e6842463e",
+        "dev_note": "Plane 1 DONE: deleted currencySignal/oilSignal/goldSignal/policySignal from macroTools.ts (0 callers repo-wide, confirmed via grep + green tsc). Plane 2 DONE: retired the 6 static usdVnd>25500/usdVnd<24500 rules from MACRO_ADJUSTMENTS (macroAdjustments.ts) that were double-counting against DYNAMIC_MACRO_MAPs sigma-based usdVndRate/usdVndOfficial path on the identical aviation/steel/agriculture/automotive domain sets; also removed the now-dead label.startsWith(usdVnd) branch in deriveDisplayValue(). Left the 4 macroDualPressure(brent+usd) compound rules untouched per brief section 4 explicit scope fence (different label, out of this tickets scope). Replaced MC-09 (asserted the exact static-rule effect, would have failed) with 3 tests: negative control, dynamic-alone equivalent-or-better delta, and a no-double-counting test with both paths present simultaneously. bun test 118 pass/0 fail across touched+adjacent macro suites, tsc clean, tools=183 cron=88 baseline match, server boot health OK. FLAG for architect/PM: the brief text says retire the 8 usdVnd entries but its own cited line ranges span 10 distinct MacroRule objects touching usdVndMarket (6 pure usdVnd-labeled + 4 macroDualPressure compound) -- neither 6 nor 10 matches 8 exactly. Retired only the 6 unambiguously usdVnd-labeled rules matching this tasks own title verbatim; left the 4 differently-labeled compound rules alone. Worth a brief correction if architect wants the compound rules touched too -- did not guess wider scope.",
+        "qa_verified_at": "2026-08-23T22:11:35Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + grep(repo-wide caller check) + bun test + bun tsc --noEmit + sqlite3(live market.db provenance probe)",
+            "args": "commit=e6842463e; files=apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts,apps/mcp-server/src/domain/services/cascade/macroAdjustments.ts; db=data/live/market.db tables=commodity_prices_history,sbv_rates_history",
+            "live_value_observed": "ancestor=yes; stat touches macroTools.ts+macroAdjustments.ts (cascadeEngine.ts unchanged, explained -- calls only, both fns live in macroAdjustments.ts); grep 0 remaining callers of 4 deleted fns repo-wide; bun test 126-macro-cascade.test.ts 17 pass/0 fail + 4 adjacent macro/cascade suites 73 pass/0 fail = 90/90; bun tsc --noEmit 0 errors; sqlite3 live market.db commodity_prices_history/sbv_rates_history both fetched_at within last 24h, source=yahoo (not static literal)",
+            "observed_at": "2026-08-23T22:11:35Z"
+          }
+        },
+        "status_note": "\n[QA] Review Record (direct-commit verify): Direct-commit verify PASS. Plane 1: grep-confirmed zero remaining callers of currencySignal/oilSignal/goldSignal/policySignal repo-wide post-commit (only self-referential comment mentions); dxyLabel/us10yLabel correctly kept (3/2 live callers). Plane 2: diff-confirmed the 6 usdVnd>25500/<24500 rules removed from MACRO_ADJUSTMENTS + dead label.startsWith(usdVnd) branch removed from deriveDisplayValue; the 4 macroDualPressure(brent+usd) compound rules correctly untouched (still reference ctx.usdVndMarket). cascadeEngine.ts (listed in row.files[]) needed NO edit -- it only re-exports/calls applyMacroAdjustments+applyDynamicMacroAdjustments, both defined+fixed in macroAdjustments.ts; files[] scope was aspirational not literal, not a fabrication. usdVnd known-trap check: probed live data/live/market.db directly -- commodity_prices_history.usd_vnd_rate (source=yahoo) and sbv_rates_history.usd_vnd_official both carry fetched_at within the last day (2026-08-23T21:30Z / 21:21Z), i.e. genuinely live-fetched, correctly source-labelled, not a hardcoded/static literal; the observed flat run of identical values across ~20 consecutive fetches is consistent with weekend FX/commodity market closure (brent+gold+usdVnd all froze in lockstep at the same timestamps), not a frozen-constant bug -- this is NOT the same defect class as feedback_usdvnd_frozen_value_labelled_tier1_not_estimate.md, which concerns a different display path. Ran bun test on 126-macro-cascade.test.ts (17/17 pass, the 3 new MC-09a/b/c tests included) + 062-cascade-engine/1307a-macro-thresholds/1287-cascade-rule-drift/089-tool-macro (73/73 pass) = 90/90 locally reproduced, matching dev's claimed 118 pass/0 fail across a wider set. bun tsc --noEmit clean (0 errors). DDD: macroAdjustments.ts domain file imports only domain-level/type symbols, no infra import. Security: no process.env/secrets in touched files. NOTE: dispatch tick claimed this row was already promoted review[]->qa[] this tick -- FALSE, live file showed it still sitting in review[] status REVIEW at verify time (same prose-only-lane-move defect class as FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR, on the dispatcher side not qa's); this write sources directly from review[] rather than qa[] to match ground truth."
       }
     ],
     "head": {
@@ -20570,31 +20604,6 @@
         "dev_completed_by": "dev-mcp-server",
         "dev_commit": "ce1f52127",
         "dev_note": "AC-1 (systemMapWatchlistWriter.ts: upsert/remove, atomic tmp+rename, fail-open, active-default), AC-2 (write-through hooks in add_to_watchlist/remove_from_watchlist, soft warning suffix on failure, DB mutation never blocked), AC-3 (optional sector param + titleCaseDomain fallback), AC-4 (10 unit tests incl. a real-fs tmpdir round-trip — NOT at the handoff's specified path apps/mcp-server/__tests__/unit/test_systemMapWatchlistWriter.ts, which does not exist in this repo and would not be discovered by bun test's default *.test.ts pattern; placed at apps/mcp-server/src/__tests__/TASK_001-watchlist-write-through-infra.test.ts matching this repo convention), AC-6 (119 pass/0 fail across touched suites, tsc clean, tools=183) ALL DONE. Added a test-isolation guard (skip write-through when DB_PATH=\":memory:\" unless _testSystemMapPath injected) that was NOT in the original AC list but was necessary — without it every existing watchlist test would have written real/fake tickers into the live docs/data/system-map.json SSOT on every CI run. Live system-map.json verified byte-identical (md5) before/after this work, still 34 entries, zero drift. NOT DONE this session: AC-5 (integration test paired with TASK_002 — cannot be written before TASK_002s audit script exists, per the ACs own sequencing) and AC-7 (Docker bind-mount round-trip from a live container — requires a running container + external MCP client, out of a code-only dev session; verified the equivalent production codepath instead via a real temp-file round-trip + a direct call against a throwaway copy of the live file, both confirmed working). Status held at REVIEW not DONE_VERIFIED because the closure checklist is not fully satisfied — do not auto-unblock TASK_002 off this row yet."
-      },
-      {
-        "id": "TASK-USDVND-TS-STATIC-RETIRE",
-        "title": "TS track: delete 4 dead macroTools.ts signal fns + retire the static usdVnd>25500/<24500 cascade rules",
-        "type": "TASK",
-        "status": "REVIEW",
-        "priority": "high",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "qa",
-        "next_agent": "qa",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts",
-          "apps/mcp-server/src/domain/services/cascade/macroAdjustments.ts",
-          "apps/mcp-server/src/domain/services/cascade/cascadeEngine.ts"
-        ],
-        "note": "Parent FIX-USDVND-THRESHOLD-SSOT. Design: docs/architecture-briefs/2026-08-23-fix-usdvnd-threshold-ssot.md, Planes 1+2. Finding A: currencySignal (macroTools.ts:117-124) has ZERO callers repo-wide — DELETE, do not unify; same for its 3 siblings oilSignal/goldSignal/policySignal in the identical file. Finding B (USD/VND half only): cascadeEngine.ts applies the OLD fixed MACRO_ADJUSTMENTS *and* the sigma-based DYNAMIC_MACRO_MAP additively on identical domain sets — real double-counting. Retire ONLY the static USD/VND rule here; the oil/gold general form is flagged-not-fixed and needs its own row. Test: negative control asserting the dynamic rule alone yields equivalent-or-better confidence delta on a live-shaped fixture.",
-        "created_at": "2026-08-23T13:38:00Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-23T15:28:56Z",
-        "updated_by": "dev-mcp-server/next-agent-fix",
-        "dev_completed_at": "2026-08-23T15:24:21Z",
-        "dev_completed_by": "dev-mcp-server",
-        "dev_commit": "e6842463e",
-        "dev_note": "Plane 1 DONE: deleted currencySignal/oilSignal/goldSignal/policySignal from macroTools.ts (0 callers repo-wide, confirmed via grep + green tsc). Plane 2 DONE: retired the 6 static usdVnd>25500/usdVnd<24500 rules from MACRO_ADJUSTMENTS (macroAdjustments.ts) that were double-counting against DYNAMIC_MACRO_MAPs sigma-based usdVndRate/usdVndOfficial path on the identical aviation/steel/agriculture/automotive domain sets; also removed the now-dead label.startsWith(usdVnd) branch in deriveDisplayValue(). Left the 4 macroDualPressure(brent+usd) compound rules untouched per brief section 4 explicit scope fence (different label, out of this tickets scope). Replaced MC-09 (asserted the exact static-rule effect, would have failed) with 3 tests: negative control, dynamic-alone equivalent-or-better delta, and a no-double-counting test with both paths present simultaneously. bun test 118 pass/0 fail across touched+adjacent macro suites, tsc clean, tools=183 cron=88 baseline match, server boot health OK. FLAG for architect/PM: the brief text says retire the 8 usdVnd entries but its own cited line ranges span 10 distinct MacroRule objects touching usdVndMarket (6 pure usdVnd-labeled + 4 macroDualPressure compound) -- neither 6 nor 10 matches 8 exactly. Retired only the 6 unambiguously usdVnd-labeled rules matching this tasks own title verbatim; left the 4 differently-labeled compound rules alone. Worth a brief correction if architect wants the compound rules touched too -- did not guess wider scope."
       },
       {
         "id": "FIX-PM-3E-FAILLOUD-HOTFIX",
