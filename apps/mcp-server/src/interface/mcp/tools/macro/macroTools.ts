@@ -92,41 +92,17 @@ export interface DinhGiaInputs {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal helpers — signal rules (presentation layer, inlined)
+//
+// TASK-USDVND-TS-STATIC-RETIRE (Plane 1, 2026-08-23): oilSignal()/goldSignal()/
+// policySignal()/currencySignal() DELETED — confirmed zero callers repo-wide
+// (each was a single occurrence = its own definition). Pure debt removal per
+// docs/architecture-briefs/2026-08-23-fix-usdvnd-threshold-ssot.md §0 Finding A
+// / §2 Plane 1. currencySignal() was also the dead-code twin of the static
+// `usdVnd>25500`/`<25500` narrative label this brief's Plane 2 retires from
+// the LIVE cascade rule set (macroAdjustments.ts) — deleting both closes the
+// SSOT conflict's dead-code third of the story, not just the live two-thirds.
+// dxyLabel()/us10yLabel() below ARE live (3/2 real callers) — kept unchanged.
 // ─────────────────────────────────────────────────────────────────────────────
-
-function oilSignal(brent: number): string {
-  if (brent > 90) {
-    return `CAO ($${brent.toFixed(0)}/bbl >$90) — tích cực dầu khí (GAS/PVD), áp lực hàng không (HVN/VJC) & logistics`;
-  }
-  if (brent < 70) {
-    return `THẤP ($${brent.toFixed(0)}/bbl <$70) — tiêu cực dầu khí, tích cực hàng không & logistics`;
-  }
-  return `bình thường ($${brent.toFixed(0)}/bbl)`;
-}
-
-function goldSignal(gold: number): string {
-  if (gold > 2000) {
-    return `CAO ($${gold.toFixed(0)}/oz) — tích cực vàng (PNJ), tín hiệu risk-off nếu quá cao`;
-  }
-  return `bình thường ($${gold.toFixed(0)}/oz)`;
-}
-
-function policySignal(refi: number): string {
-  if (refi > 6) {
-    return `THẮT CHẶT (${refi.toFixed(1)}% >6%) — áp lực ngân hàng (VCB) & bất động sản`;
-  }
-  if (refi < 4) {
-    return `NỚI LỎNG (${refi.toFixed(1)}% <4%) — tích cực ngân hàng & bất động sản`;
-  }
-  return `bình thường (${refi.toFixed(1)}%)`;
-}
-
-function currencySignal(usdVnd: number): string {
-  if (usdVnd > 25500) {
-    return `HIGH (USD/VND ${Math.round(usdVnd).toLocaleString("en-US")} — trên 25500) — áp lực: hàng không (HVN/VJC), ô tô nhập khẩu (VEA) | tích cực: thép xuất khẩu (HPG), nông sản (VHC)`;
-  }
-  return `LOW (USD/VND ${Math.round(usdVnd).toLocaleString("en-US")} — below 25500 threshold)`;
-}
 
 function dxyLabel(dxy: number, mean30d: number): string {
   if (mean30d === 0) return "USD STABLE";

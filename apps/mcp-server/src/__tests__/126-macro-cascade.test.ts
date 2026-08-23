@@ -20,6 +20,7 @@ import {
 import { runImpactChain } from "../application/usecases/runImpactChain.js";
 import type { AnalysisEntry } from "../domain/services/newsNormalizer.js";
 import type { DomainType } from "../../bctc-schema.js";
+import type { MacroStats } from "../domain/services/macroThresholds.js";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -291,8 +292,12 @@ describe("Task 126 — Macro Cascade Integration", () => {
     expect(macroRE.confidence).toBeCloseTo(baseRE.confidence + 0.08, 5);
   });
 
-  // ── MC-09: High USD/VND penalizes aviation -0.07, boosts steel +0.05 ─────
-  it("MC-09: high USD/VND (26000) penalizes aviation by -0.07 and boosts steel by +0.05", () => {
+  // ── MC-09: TASK-USDVND-TS-STATIC-RETIRE — static usdVnd rule retired,
+  // dynamic σ-based rule is now the SOLE source of a USD/VND cascade
+  // adjustment, and applying both a MacroContext AND MacroStats simultaneously
+  // no longer double-counts (architect brief docs/architecture-briefs/
+  // 2026-08-23-fix-usdvnd-threshold-ssot.md §0 Finding B, §2 Plane 2). ─────
+  it("MC-09a: static usdVnd rule negative control — usdVndMarket alone (no macroStats) no longer adjusts confidence", () => {
     const seed = makeNeutralSeed("aviation");
     seed.affectedDomains = ["aviation", "steel"];
     const watchlist = makeWatchlist(
@@ -300,6 +305,9 @@ describe("Task 126 — Macro Cascade Integration", () => {
       { code: "HPG", domain: "steel" },
     );
 
+    // Same usdVndMarket value the RETIRED static rule used to key off
+    // (>25500 threshold) — passed WITHOUT macroStats, i.e. the legacy
+    // applyMacroAdjustments-only path.
     const macro: MacroContext = {
       brentCrudeUSD: null,
       goldUSDPerOz: null,
@@ -315,11 +323,75 @@ describe("Task 126 — Macro Cascade Integration", () => {
 
     const baseAv = findDomainEntry(baseChain, "aviation")!;
     const macroAv = findDomainEntry(macroChain, "aviation")!;
-    expect(macroAv.confidence).toBeCloseTo(baseAv.confidence - 0.07, 5);
+    expect(macroAv.confidence).toBeCloseTo(baseAv.confidence, 5); // unchanged — rule retired
 
     const baseSteel = findDomainEntry(baseChain, "steel")!;
     const macroSteel = findDomainEntry(macroChain, "steel")!;
-    expect(macroSteel.confidence).toBeCloseTo(baseSteel.confidence + 0.05, 5);
+    expect(macroSteel.confidence).toBeCloseTo(baseSteel.confidence, 5); // unchanged — rule retired
+  });
+
+  it("MC-09b: dynamic σ-based usdVndRate rule alone produces the confidence delta (equivalent-or-better than the retired static rule)", () => {
+    const seed = makeNeutralSeed("aviation");
+    seed.affectedDomains = ["aviation", "steel"];
+    const watchlist = makeWatchlist(
+      { code: "HVN", domain: "aviation" },
+      { code: "HPG", domain: "steel" },
+    );
+
+    // 5σ above a tight 100-VND-stdDev mean → "extreme" deviation, "above" direction.
+    const macroStats: MacroStats[] = [
+      { name: "usdVndRate", current: 26500, mean: 26000, stdDev: 100, sampleCount: 30 },
+    ];
+
+    const baseChain = buildCausalChain(seed, watchlist);
+    const dynamicChain = buildCausalChain(seed, watchlist, undefined, undefined, macroStats);
+
+    const baseAv = findDomainEntry(baseChain, "aviation")!;
+    const dynamicAv = findDomainEntry(dynamicChain, "aviation")!;
+    // aviation is in usdVndRate's aboveBearish set — "above" direction hurts it.
+    expect(dynamicAv.confidence).toBeCloseTo(baseAv.confidence - 0.15, 5);
+    // Equivalent-or-better than the retired static rule's -0.07.
+    expect(baseAv.confidence - dynamicAv.confidence).toBeGreaterThanOrEqual(0.07);
+
+    const baseSteel = findDomainEntry(baseChain, "steel")!;
+    const dynamicSteel = findDomainEntry(dynamicChain, "steel")!;
+    // steel is in usdVndRate's aboveBullish set — "above" direction benefits it.
+    expect(dynamicSteel.confidence).toBeCloseTo(baseSteel.confidence + 0.15, 5);
+    expect(dynamicSteel.confidence - baseSteel.confidence).toBeGreaterThanOrEqual(0.05);
+  });
+
+  it("MC-09c: NO double-counting — MacroContext (usdVndMarket) + MacroStats (usdVndRate) together match the dynamic-only delta, not the sum of both paths", () => {
+    const seed = makeNeutralSeed("aviation");
+    seed.affectedDomains = ["aviation", "steel"];
+    const watchlist = makeWatchlist(
+      { code: "HVN", domain: "aviation" },
+      { code: "HPG", domain: "steel" },
+    );
+
+    const macro: MacroContext = {
+      brentCrudeUSD: null,
+      goldUSDPerOz: null,
+      usdVndMarket: 26000, // would have ALSO fired the retired static rule pre-fix
+      refinancingRatePct: null,
+      overnightRatePct: null,
+      usdVndOfficial: null,
+      vix: null, sp500: null, dxy: null, hangSeng: null,
+    };
+    const macroStats: MacroStats[] = [
+      { name: "usdVndRate", current: 26500, mean: 26000, stdDev: 100, sampleCount: 30 },
+    ];
+
+    const baseChain = buildCausalChain(seed, watchlist);
+    const bothChain = buildCausalChain(seed, watchlist, undefined, macro, macroStats);
+
+    const baseAv = findDomainEntry(baseChain, "aviation")!;
+    const bothAv = findDomainEntry(bothChain, "aviation")!;
+    // Exactly the dynamic-path delta (-0.15), NOT -0.07 (static) + -0.15 (dynamic) = -0.22.
+    expect(bothAv.confidence).toBeCloseTo(baseAv.confidence - 0.15, 5);
+
+    const baseSteel = findDomainEntry(baseChain, "steel")!;
+    const bothSteel = findDomainEntry(bothChain, "steel")!;
+    expect(bothSteel.confidence).toBeCloseTo(baseSteel.confidence + 0.15, 5);
   });
 
   // ── MC-10: Confidence is clamped to [0.05, 0.99] ─────────────────────────

@@ -108,46 +108,23 @@ const MACRO_ADJUSTMENTS: MacroRule[] = [
     domain: "real_estate",
     delta: +0.08,
   },
-  // USD/VND > 25500 (using market rate; official rate is secondary)
-  {
-    label: "usdVnd>25500",
-    condition: (ctx) => ctx.usdVndMarket !== null && ctx.usdVndMarket > 25500,
-    domain: "aviation",
-    delta: -0.07,
-  },
-  {
-    label: "usdVnd>25500",
-    condition: (ctx) => ctx.usdVndMarket !== null && ctx.usdVndMarket > 25500,
-    domain: "steel",
-    delta: +0.05,
-  },
-  // USD/VND > 25500 → export agriculture benefits
-  {
-    label: "usdVnd>25500",
-    condition: (ctx) => ctx.usdVndMarket !== null && ctx.usdVndMarket > 25500,
-    domain: "agriculture",
-    delta: +0.06,
-  },
-  // USD/VND > 25500 → automotive (import parts cost up)
-  {
-    label: "usdVnd>25500",
-    condition: (ctx) => ctx.usdVndMarket !== null && ctx.usdVndMarket > 25500,
-    domain: "automotive",
-    delta: -0.05,
-  },
-  // USD/VND < 24500 → reverse effects
-  {
-    label: "usdVnd<24500",
-    condition: (ctx) => ctx.usdVndMarket !== null && ctx.usdVndMarket < 24500,
-    domain: "agriculture",
-    delta: -0.05,
-  },
-  {
-    label: "usdVnd<24500",
-    condition: (ctx) => ctx.usdVndMarket !== null && ctx.usdVndMarket < 24500,
-    domain: "securities",
-    delta: +0.06,
-  },
+  // TASK-USDVND-TS-STATIC-RETIRE (Plane 2, 2026-08-23): the 6 static
+  // usdVnd>25500/usdVnd<24500 rules that lived here (aviation/steel/
+  // agriculture/automotive for >25500, agriculture/securities for <24500)
+  // are RETIRED — DYNAMIC_MACRO_MAP's usdVndRate/usdVndOfficial mapping
+  // below already covers the identical aviation/automotive/agriculture/steel
+  // domain sets via the σ-based path (applyDynamicMacroAdjustments), and
+  // both paths were firing additively every cycle real macroStats were
+  // available — a genuine double-count, not a hypothetical one (architect
+  // brief docs/architecture-briefs/2026-08-23-fix-usdvnd-threshold-ssot.md
+  // §0 Finding B, §2 Plane 2). The `securities` <24500 rule had no dynamic-
+  // map counterpart but is retired with the rest of this block per the same
+  // brief's directive to retire "the static USD/VND rule" as one unit, not
+  // rule-by-rule. The 4 `macroDualPressure(brent+usd)` rules below are
+  // DELIBERATELY NOT touched — their label/identity is the compound
+  // brent+usd stress signal, not a pure usdVnd rule, and the brief's §4
+  // explicitly scopes any oil/gold static-vs-dynamic overlap to a separate,
+  // not-yet-filed follow-up (Finding B's general form).
   // Brent crude > 100 → severe oil crisis
   {
     label: "brentCrudeUSD>100",
@@ -420,7 +397,11 @@ export function applyMacroAdjustments(
 function deriveDisplayValue(label: string, ctx: MacroContext): string {
   if (label.startsWith("brentCrudeUSD")) return String(ctx.brentCrudeUSD ?? "?");
   if (label.startsWith("goldUSDPerOz")) return String(ctx.goldUSDPerOz ?? "?");
-  if (label.startsWith("usdVnd")) return String(ctx.usdVndMarket ?? ctx.usdVndOfficial ?? "?");
+  // TASK-USDVND-TS-STATIC-RETIRE: the only MACRO_ADJUSTMENTS labels that
+  // started with "usdVnd" were the 6 static rules retired above — this
+  // branch is now unreachable (no remaining rule.label starts with
+  // "usdVnd"; macroDualPressure(brent+usd) does not) and is removed rather
+  // than left as dead code.
   if (label.startsWith("refinancingRatePct")) return String(ctx.refinancingRatePct ?? "?");
   if (label.startsWith("overnightRatePct")) return String(ctx.overnightRatePct ?? "?");
   return "?";
