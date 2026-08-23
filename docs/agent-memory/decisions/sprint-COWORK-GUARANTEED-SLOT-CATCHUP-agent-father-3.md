@@ -227,3 +227,21 @@ third root cause instead of forcing a fix into a wrong hypothesis.
 - Close row to DONE vs. move backlog→review — chose review (`next_agent: qa`): row's own `verification_gate: ci_green_on_subsequent_push` is not yet independently observed on a live CI run this session.
 **why-decision:** Matches the router's exact AC (guard `--check` PASS, paired suite 24/24) without touching the guard/test files (dev-mcp-server's in-review rewrite) or the over-ceiling `FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED` row (34589B, confirmed byte-identical post-write).
 **why-change:** none — matched the dispatch brief exactly; the post-fix `cowork-fire` drift is a new, separate finding, not a change to this task's plan.
+
+### STEP agent-father-S56 · agent-father · 2026-08-23T09:40:00Z
+**task-id:** FIX-COWORK-TICKSNAPSHOT-STEP47-FALSE-PREMISE-PURE-BASH-CANNOT-CALL-MCP
+**what-done:** Deleted `tick-snapshot.md` Step 4.7's agent-interpreted pre-step; both gateway calls now run in-fence via `source scripts/agents-flow/mcp-call.sh`, and the `:2` "pure bash cannot call MCP" premise is marked SUPERSEDED with the evidence inline.
+**what-considered:**
+- Doc-only fix vs. also lifting the fence into `scripts/agents-flow/` — chose doc-only: `scripts/` is outside my commit zone, the row itself scopes the lift to developer, and the fence needs no new file to work.
+- Trust the row's four claims vs. re-run them — re-ran all four. Found the row's "added 2026-07-30" is mtime; first commit is f7d34918d 2026-07-02, so the doc was stale ~7 weeks longer than reported. Wrote the commit date, not the mtime.
+**why-decision:** Verification gate demanded a live byte-comparable snapshot, so I executed the rewritten fence verbatim rather than reasoning about it: exit 0, `cycle-snapshot-09:23.json` 20199B vs the 09:03 reference 20190B, `market_context` length identical at 13245, same 4 macro keys, staging cleaned by trap. ~20KB/tick stays out of dispatcher context.
+**why-change:** none — scope matched the row.
+
+### STEP agent-father-S57 · agent-father · 2026-08-23T09:45:00Z
+**task-id:** FIX-COWORK-SPAWNFANOUT-STEP53-OFFFLOW-DETECTOR-UNSPECIFIED-SURFACE-AND-SELF-INJECTED-MARKERS
+**what-done:** Step 5.3 gained an explicit extraction-surface contract (final assistant text turn; `.output` named as a transcript symlink), corrected marker provenance, a fail-open negative control, a >=2-distinct-marker threshold, and a before-scripting fixture requirement; Step 5.2's exogeneity comment was qualified to match.
+**what-considered:**
+- Fix only the two halves the row names vs. also raising the match threshold — chose both. The cascade grep surfaced `docs/signals/cowork-team-2026-07-30T001827Z-alertcmd-session-id-gap.json`: a THIRD, already-confirmed FP that fired 1/6 on a compliance disclaimer on the *correct* surface, which the surface contract alone cannot close. Adopted that signal's own recommendation.
+- Drop the self-injected markers vs. scope the surface — scoping wins: all six markers are in IDENTITY_PREAMBLE, so a "not-self-injected" list would be empty, and the preamble naming them is load-bearing for the spawn.
+**why-decision:** Re-measured both defects rather than trusting the row. DEFECT A reproduced exactly (187B symlink → 246939B transcript, 6/6). DEFECT B proved stronger than written: the 1515B dispatcher-authored prompt alone scores 6/6, so the prompt is sufficient on its own. Fail-open posture chosen because a FP is a fleet-wide stamp-suppression outage while a miss costs one slot fire.
+**why-change:** Widened beyond the row's literal (1)(2)(3) by adding the threshold — the row's own item (3) asks for a marker set that is not dispatcher-injected, and on-surface disclaimers are the same defect the row describes.
