@@ -48,6 +48,8 @@ For each MARKET alert about a specific ticker:
 
 Log: `"[Verify] [TICKER] claim={X} actual={Y} → MATCH|MISMATCH"`
 
+**Step 2c — Existing-row check (before any BUG send, mandatory):** for any MISMATCH/gap found in Step 2, grep `docs/data/orch/orch-state.json` `.task_board` (all lanes) for an existing row on the same topic before framing it as a new finding — `jq -r '.. | objects | select(.id? and (.title? // "" | test("<keyword>"; "i"))) | {id,status,priority,owner}' docs/data/orch/orch-state.json`. If a row already exists, the BUG/WORK text and notebook/handoff entry must name it explicitly ("evidence for existing row X, not a new mint") instead of implying a fresh defect. Added 2026-08-23 (c133) after a live miss: BUG 5475 was sent before this check found `FIX-CHEF-EVENING-L5-KINHDICH-SILENT-OMISSION` already open — content was still valid evidence, but the framing needed a same-cycle correction.
+
 **Step 2 Backstop — CLAIM-TRUTH GATE (flag MISMATCH via TNB emit path)**
 
 → skill: `.claude/skills/claim-truth-gate/SKILL.md`
