@@ -57,6 +57,18 @@ The certifying agent MUST write these six fields onto the row before any DONE/DO
 
 A prose assertion without all six fields is NOT a certification, and any lane-move it would have justified is void.
 
+**Collector (use this, do not hand-roll):** `scripts/durability-mem-sample.sh <container> <interval_s> <duration_s> <out.csv>`
+produces a D5-shaped series and must be started at window OPEN — D3's fitted rate and D5's `durability_samples[]`
+are **not reconstructible after the fact**. `docker stats` keeps no history, no service in this fleet logs RSS,
+and there is no metrics endpoint carrying it; verified live 2026-08-23 (0 memory lines in 10630 rag-service log
+lines across a 25h window). Three consecutive qa cycles on `FU-RAG-DEPLOY-MEMORY` reached a mature D1 wall clock
+and then could not certify for exactly this reason — the blocker was never elapsed time, it was that nobody was
+sampling. The script is read-only w.r.t. the target (`docker stats` only, so it is **not** a D4 mitigation), takes
+a lock (three concurrent samplers writing two schemas is what corrupted the 2026-08-14 series), refuses a container
+with `HostConfig.Memory=0`, and writes the D2 identity + the **live** cap into the CSV header at open, re-reading
+identity at close so a moved `StartedAt` is self-evident. Never take the cap from a row's prose: the rag-service
+AC text named a stale cap three times in five weeks (768m, then 1g, while the live value was 2 GiB).
+
 ## 4. Grandfather-exemption guard (defect 5)
 
 `apps/mcp-server/src/infrastructure/orchStateSchema.ts` `RC_VERIF_GRANDFATHERED_IDS` exempts a fixed, frozen list of pre-existing ids from the schema's `verification.raw_probe{}` requirement on `DONE_VERIFIED`. D5's six fields independently satisfy that same intent — never rely on a grandfather exemption to skip D1-D5 for an OOM-class row; write the D5 fields regardless of whether the schema would otherwise require them.
