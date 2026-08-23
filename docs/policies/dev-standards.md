@@ -16,6 +16,61 @@ Any script useful for the work or reusable later MUST be saved to `scripts/` —
 
 After saving: **update the owning flow/skill doc with a canonical pointer** (`node scripts/...` usage line) so future agents discover it instead of rewriting it. Pattern: `docs/agents/dev-team/flow/drain-signals.md` §0a-1 "CANONICAL SCRIPT".
 
+**CANONICAL: Cron-marker liveness probe (TASK-CRON-LIVENESS-PROBE-SCRIPT / FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE)**
+```bash
+bash scripts/agents-flow/cron-marker-liveness-probe.sh --family cowork-team|detect-loop|standalone-team
+# One line of JSON on stdout: {verdict, family, marker_owner_session, evidence:{o1,o2,o3}, recommended_action}
+#   verdict ∈ DEAD | LIVE | UNKNOWN | NO_MARKER | SELF | ERROR
+# Exit code follows the tick-preflight idiom: 0 = terminal (LIVE/SELF, no LLM read needed);
+#   1 = LLM continues (DEAD/UNKNOWN/NO_MARKER/ERROR).
+# Owning flow docs (agent-father's zone, wired by TASK-CRON-SKILLMD-PROBE-WIRING):
+#   .claude/skills/cron-cowork-team/SKILL.md, cron-detect-loop/SKILL.md, cron-standalone-team/SKILL.md — Step 1b.1
+# Brief: docs/architecture-briefs/2026-08-23-cron-rearm-liveness-oracle-process-observation.md
+# Gate:  bash scripts/agents-flow/cron-marker-liveness-probe.test.sh  (87 checks, fully mocked)
+```
+WHY IT EXISTS: the three `/cron-*` re-arm skills share one Step 1b.1 guard shape with three
+different arbitrary `orphan_threshold_seconds`, and BOTH of its oracles read bookkeeping the dying
+session wrote about itself — `session-presence` is a participation signal (measured 2 roster rows vs
+5 live `claude` PIDs) and `task_force_release_orphan` reads `heartbeat_at` on the same marker row.
+It answers "was alive T ago", never "is alive". One defect, two faces: false-LIVE at T=7200
+(8 h 10 m cowork-dispatcher outage, 2026-08-23) and false-DEAD at T=120 (standalone double-arm,
+confirmed 2x). **No threshold value fixes this** — do not "fix" it by tuning a number.
+
+ORACLE RANKING, DO NOT REORDER: **O1** recorded PID absent from `ps`, or present with a different
+`(pid, start_epoch, comm)` triple → soundly proves DEAD, no blind window. **O2** transcript `.jsonl`
+mtime inside the window → proves LIVE only. **O3** `heartbeat_age`/presence-roster → proves neither,
+emitted as corroboration and never allowed to decide. O1 is first because the dead session's
+transcript was 16 s old at the incident instant, so any O2-primary design returns LIVE and
+reproduces the outage with a smaller constant. The `UNKNOWN` third branch is mandatory: a two-branch
+LIVE/DEAD shape must guess on ambiguity, and it guesses LIVE.
+
+`has_fire_election_mutex` is ONE table inside the probe script, not three numbers in three docs —
+`cowork-team`/`detect-loop` `true` (both tick-preflights claim a per-tick `cron:` lock, so a second
+armed copy loses the election and fans out nothing) → `on_unknown=steal`; `standalone-team` `false`
+(verified: no cross-session mutex in any of its four crons) → `on_unknown=defer` + alarm. Standalone's
+`defer` is a narrowed temporary residual, not a resting state — the durable fix is
+`FOLLOWUP-CRON-STANDALONE-PER-TICK-FIRE-ELECTION-MUTEX`, deliberately not a blocker.
+
+NO BRANCH TERMINATES SILENTLY: `UNKNOWN`/`DEFER` emit a BUG telegram **and** a `docs/signals/` row
+(`type: cron_marker_liveness_unknown`, `to: claude-manager-helper`), deduped on
+`(family, marker_owner_session)` via the existing open-signal convention plus a
+`PROBE_ALARM_COOLDOWN_S` (default 6 h) processed-signal cooldown. The 8 h 10 m cost came from the
+wrong answer being *unobservable*, not only from it being wrong.
+
+SIX MEASURED TRAPS, each named in a comment at its own site and each covered by a static assertion in
+the gate: (1) `LC_ALL=C` on BOTH `ps -o lstart=` and `date -j -f` — this host is CEST with
+`LC_TIME=fr_FR.UTF-8` and prints `Dim 23 aoû …`; (2) macOS `ps` has no `etimes`; (3) never test `ps`
+by exit code through a pipe — capture stdout first and test for empty; (4) `stat -f '%m'`, never
+`%Sm`; (5) PID reuse — compare the full `(pid, start_epoch, comm)` triple, never pid alone;
+(6) read the transcript path from the marker, never re-derive the cwd encoding.
+
+Env seams (tests override these; production uses the defaults): `PROBE_ROOT`,
+`PROBE_TRANSCRIPT_MAX_AGE_S` (default 300), `PROBE_ALARM_COOLDOWN_S` (default 21600),
+`PROBE_SIGNALS_DIR`, `PROBE_HOME`, `CLAUDE_CODE_SESSION_ID` (SELF branch). Tests additionally
+override the shell functions `probe_ps_lstart` / `probe_ps_comm` / `probe_stat_mtime` /
+`probe_now_epoch` / `probe_send_telegram` / `mcp_call` after sourcing — same function-override
+harness convention as `auditor-tier1-probe.test.sh`, zero real `ps`/`stat`/network invocations.
+
 **CANONICAL: Obsolete-file cleanup (FIX-CMH-OBSOLETE-FILE-CLEANUP)**
 ```bash
 scripts/audits/clean-obsolete-files.sh              # --dry-run default, no deletes
