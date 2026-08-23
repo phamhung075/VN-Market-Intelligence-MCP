@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-08-22T19:08:49Z
-
-**Brief:** `docs/architecture-briefs/2026-08-22-cowork-detect-loop-flow-review.md` (update)
-
-Restructured §A per coordinator feedback: the original single combined mermaid diagram placed Loop 1/Loop 2 as sibling subgraphs (renderer free to lay them side-by-side) and fanned one node into 10 parallel edges — rendered far wider than a normal screen despite `flowchart TD`. Split into two independent stacked diagrams; collapsed the 9-agent spawn fan-out and LAUNCHD's 4 dashed backstop targets into single grouped nodes (per-agent mechanics already live in §B prose); kept the `SQ`/`SQ2` signal_queue junction node in both, with a prose note that they're the same physical array. Verified narrow programmatically (wrote a dagre-style longest-path rank simulation over the parsed edge lists, not eyeballed): max width = 2 nodes at any rank in both diagrams (11 nodes/10 edges and 14 nodes/14 edges respectively). §B and §C untouched.
-
-**Signal dropped:** none new — prior entry's signal (`docs/signals/2026-08-22-cowork-detect-loop-flow-review.json`) still stands, payload unchanged.
-
----
-
 ## 2026-08-22T19:19:23Z
 
 **Brief:** `docs/architecture-briefs/2026-08-22-cowork-detect-loop-flow-review.vi.md` (new — Vietnamese translation)
@@ -37,3 +27,13 @@ New operational fact from user: whole fleet runs on their personal PC, ~1 week v
 Re-verified live at source: `docs/agents/qa/flow/main.md` vc-approved/vc-changes Direct-Commit-Verify exits (L189/L198 per the row, L205/L214 in current file) are both still prose-only board mutations, no `orch-apply.sh` pipe — matches desc verbatim, in-file WF-1 block (L30-33) already shows a working local precedent. Dropped signal `docs/signals/2026-08-23-qa-vc-lanemove-orchapply-actuator.json` → agent-father with copy-executable jq+orch-apply.sh patches for AC-1/AC-2 (test-executed against synthetic fixtures, both pass) + AC-3 self-verify shape, mirroring the FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR template (commit 3ce726a6e); flagged AC-4/AC-5 as outside agent-father's commit_zone (`scripts/`) — same split as that precedent, hand to a developer-owned row. Flagged, not folded in: AC-2's qa[]→review[] move crosses into a `scripts/orch-row-prose-ceiling-check.mjs` guarded lane from an unguarded one — same D3 defect already tracked separately (`FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS`, ready[], next_agent=developer). Routed the task_board row `next_agent`/`owner` → `po` (not `agent-father` directly — off the DRS allowlist, unreachable by automated dispatch, precedent `FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT`); `.head` idle-reset in the same write.
 
 **Signal dropped:** `docs/signals/2026-08-23-qa-vc-lanemove-orchapply-actuator.json` → agent-father
+
+---
+
+## 2026-08-23T14:04:55Z
+
+**Brief:** `docs/architecture-briefs/2026-08-23-fix-cowork-published-marker-ttl-cadence-mismatch-design.md`
+
+Row `FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE`: root-caused to Step 2.4's prefix-only match in `dispatch-claim/SKILL.md` (not chef.md's own exact-match gate, not any `MARKER_TTL` constant — that gate compares exact per-period strings and never collides). Ruled Axis D (cadence-bounded prefix match, keyed on `cowork-schedule.json`'s already-live `publish_date_basis` field, zero date-basis duplication, zero `apps/mcp-server` change) landed together with Axis C (AC-3/AC-5 stale-owner presence check) in one Step 2.4 revision — Axis D closes AC-1 deterministically where presence-only would only close it contingent on the claiming dispatcher session having died. New finding: `digest-sunday` carries the identical latent overlap defect at weekly scale (691200s TTL vs 604800s cadence = 86400s/week window), closed for free by the same fix.
+
+**Signal dropped:** `docs/signals/fix-cowork-published-marker-ttl-cadence-mismatch-2026-08-23T14:04:55Z.json` → pm
