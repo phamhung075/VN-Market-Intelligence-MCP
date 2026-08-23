@@ -630,6 +630,17 @@
         "severity": "LOW",
         "status": "READ",
         "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-23.json"
+      },
+      {
+        "id": "tnb-20260823T203146",
+        "ts": "2026-08-23T20:31:46Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "Overall: CRITICAL - L5 false-gap-claim, causal_chains regression, qa-responder orphaned ~89d, fleet push blocked",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
