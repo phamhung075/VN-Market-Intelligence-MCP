@@ -1,0 +1,98 @@
+# PO triage 2026-08-23T11:57Z — INPUT 4 scope amendment + INPUT 6a/6b + INPUT 7
+# root cause + Telegram/list_unresolved_reports folds. All dedup-checked against
+# the NON-TERMINAL LANES (backlog+ready+in_progress+review+qa) before minting;
+# only 2 of the candidates had no covering row and were minted.
+def NOW: "2026-08-23T11:57:00Z";
+def BY: "po/triage-20260823T1157Z";
+
+# ── (a) INPUT 4 — explicit fix scope on the row that already owns it. No 5th
+#        tracker minted. QA's existing CHANGES_REQUESTED note named next_agent
+#        + owner/zone but NOT priority, and predates the 4th live instance.
+  (.task_board.review[] | select(.id == "TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY"))
+  |= (. + {
+      updated_at: NOW, updated_by: BY,
+      po_scope_amendment_20260823T1157Z: "PO SCOPE AMENDMENT (explicit, so the redispatch does not land half the fix). mint_routing_gap_row() at scripts/audits/guard-signal-type-coverage.sh:249-250 must set FOUR things the current template omits or hardcodes wrong: (1) next_agent — currently NEVER set, so no dispatch lane resolves the row; (2) priority — currently NEVER set, not mentioned in QA's earlier note, and BOUNDED-1/RLC rank on it; (3) owner — hardcoded \"po\", but PO's own commit surface (po/flow/main.md commit-mutex own_paths) is notebook+journal+orch-state.json only and excludes its own flow docs, so owner=po is structurally unactionable for a docs/agents/po/flow/ fix; (4) zone — hardcoded \"docs/agents/po/flow/\", a PATH, which is not one of dev-team Step 3's three accepted zone values {apps/<service>/, multi, cross-service/} and is therefore rejected at batch build. Correct target for all four: owner/next_agent=agent-father (evidence: agent-father shipped the identical fix on this exact file under TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION, commit 735dfa815, and agent-father/init.md commit_zone.allowed contains docs/agents/), priority P1 default, zone cross-service/. FOURTH LIVE INSTANCE this tick: FIX-SIGNAL-TYPE-ROUTING-GAP-sprint-registry-unresolved-journal-ids minted 11:53Z with next_agent=null, joining -flow-actuator-fix and -system-issue (11:23Z) and -cowork-fire (09:25Z). PO hand-corrected all four this tick (see their folded_into/po_fold_note fields) — that is remediation of the OUTPUT, not the defect, and PO will not keep doing it. ADD AN AC: a minted row must be dispatchable with zero manual patching, asserted by the paired .test.sh reading the minted row back out of the fixture and checking next_agent/priority/owner/zone are all populated and zone is in the accepted set."
+    })
+
+# ── (b) INPUT 6a — the existing worktree CLEAN row's PREMISE IS FALSE and
+#        actioning it as written risks destroying 11 days of real work.
+| (.task_board.backlog[] | select(.id == "CLEAN-STALE-WORKTREE-AGENT-AE9ED2CD-FULLY-MERGED-3D-IDLE"))
+  |= (. + {
+      priority: "P1", occurrence_count: 2, updated_at: NOW, updated_by: BY,
+      po_premise_correction_20260823T1157Z: "PREMISE CORRECTED — DO NOT ACT ON THIS ROW'S TITLE. Title/evidence say \"0 unmerged commits, tip is an ancestor of main, idle 3d\" and rank it P3. Re-probed live 2026-08-23T11:57Z: all three staleness probes still say \"retired\" (main git status clean; git log main..worktree-agent-ae9ed2cd6f04b3686 empty; merge-base --is-ancestor 4a6d2174c main = YES) and ALL THREE ARE MISLEADING. `git -C .claude/worktrees/agent-ae9ed2cd6f04b3686 status --porcelain` shows 7 dirty paths: M apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts, M .../bctcSectionCompleteness.ts, M apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts, M apps/mcp-server/src/__tests__/BEQ-SECTION-GUARD.test.ts, M .../LF-SERVE-REFLOW.test.ts, M docs/agent-memory/modules/tool-usage-stats.json, D apps/mcp-server/data, PLUS an UNTRACKED test file apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts that does not exist on main. Idle is 11 days (tip 2026-08-12), not 3. The worktree survived the harness's own auto-remove precisely BECAUSE it is dirty — dirtiness is what earns the reprieve, so 'still present' is evidence of unsaved work, not of neglect. P3 -> P1 and the row is now RESCUE-FIRST: AC-1 (rescue before removal) was always present and is now the whole point. Rescue target row: FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG (ready[], READY, next_agent=ba, untouched since 2026-08-14T20:02Z) — whoever picks that row today redoes work already sitting on disk. SYSTEMIC GAP, deliberately named and NOT separately minted: nothing sweeps agent worktrees and nothing maps a worktree to its owning board row; `git worktree prune -v` is empty this tick and structurally cannot help (it only reaps worktrees whose directory is gone).",
+      related_rescue_row: "FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG"
+    })
+
+# ── (c) INPUT 6a — stamp the pointer on the OWNING row so the next picker
+#        does not redo work already on disk. Kept short: ready[] ceiling lane.
+| (.task_board.ready[] | select(.id == "FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG"))
+  |= (. + {
+      updated_at: NOW, updated_by: BY,
+      po_wip_on_disk_20260823T1157Z: "READ BEFORE STARTING — PARTIAL WORK ALREADY EXISTS ON DISK, UNCOMMITTED, 11 DAYS OLD. Worktree .claude/worktrees/agent-ae9ed2cd6f04b3686 (branch worktree-agent-ae9ed2cd6f04b3686, tip 4a6d2174c) holds modified bctcScalarAggregator.ts, bctcSectionCompleteness.ts, backfillBctcScalarsTool.ts, 2 modified tests, and an untracked test file named after THIS row that does not exist on main. Diff/rescue it before writing anything new. Tracked on CLEAN-STALE-WORKTREE-AGENT-AE9ED2CD-FULLY-MERGED-3D-IDLE (P1, rescue-first)."
+    })
+
+# ── (d) SPIKE row was next_agent=null in review[] = undispatchable; also the
+#        correct fold target for today's whole BCTC telegram cluster.
+| (.task_board.review[] | select(.id == "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD"))
+  |= (. + {
+      next_agent: "architect", owner: "po", updated_at: NOW, updated_by: BY,
+      po_fold_20260823T1157Z: "DISPATCHABILITY FIX (next_agent was null in review[] — no drain resolves that) + FOLD of the entire 2026-08-22 BCTC telegram cluster; no new row minted for any of it. Folded evidence, all from read_telegram_reports/list_unresolved_reports this tick: (1) 11x [BCTC] write/reparse BLOCKED on total_assets=0 — FRT 2024-Q4/2025-Q4/2026-Q1, KDH 2025-Q4/2026-Q1, SHB 2025-Q4, VJC 2025-Q1, GEX 2025-Q3. The guard is behaving correctly (refusing to overwrite good rows and refusing to create corrupt ones); the unaddressed defect is the zero-extraction upstream. (2) [bctcExtractReconcile] CIRCUIT BREAKER TRIPPED 2026-08-22T17:05Z — 4 rows exhausted to enrich_failed in one run (VIX 2024-Q2, BSR 2024-Q1, DGC 2024-Q1, VIX 2024-Q1) >= dormancy threshold 3, shared symptom 0 rows across bctc_layout_units/bctc_table_rows/bctc_md_tables after cap-8 passes; its own text says treat as a SYSTEMIC incident and do NOT triage row-by-row. (3) 2 further RECONCILE EXHAUSTED: HUT 2025-Q3 (report_id dab264ae-9702-4045-b488-bbf5d13f97fc, 12 passes vs cap 8) and SHB 2023-Q4 (fallback-SHB-2023-Q4). Common denominator across all three groups is the pdf-extractor/PEK pipeline producing zero extractable rows. Sibling rows already open, do not duplicate: FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write (ready, P0, dev-mcp-server), FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE (blocked, P0), FIX-BCTC-Q1-2026-STORED-PDF-INGEST-STALL-15T (blocked), FIX-BCTC-VPSINGEST-REQUEUE-NO-RECONCILE-COUNTER-RESET.",
+      occurrence_count: 2
+    })
+
+# ── (e) 4x BCTC-1345b OCR-corruption fold. Row exists, bump priority.
+| (.task_board.backlog[] | select(.id == "FIX-BCTC-VALIDATION-GATE-NONBANK-ZERO-SCALE"))
+  |= (. + {
+      priority: "P1", occurrence_count: 4, updated_at: NOW, updated_by: BY,
+      po_fold_20260823T1157Z: "FOLD x4, priority medium -> P1. Four [BCTC-1345b] low-confidence fires on 2026-08-22, all matching the documented VNM/VEA OCR-corruption signature and all skipping the conviction signal: PDR 2025-Q4 cross-statement unit mismatch, assets/revenue ratio 2727025x (total_assets=27270246.564755 vs net_revenue=10 — one statement in raw VND, the other in trieu; validateFinancialFigures() was NOT evaluated at all for this record); HPG 2025-Q4 BCTC-VAL-01 total_assets=98670778.69 < total_equity=3101380352.22, accounting identity A=L+E broken; VJC 2025-Q1 BCTC-VAL-10 operating_margin=45970432% beyond the +/-500% bound; SAB 2025-Q4 composite=0.25/financial=1.00 where validateFinancialFigures() found NO rule violation — i.e. the alert fired from extraction confidence, not the figure rules, which is a separate sub-case worth an explicit AC. The PDR case is the sharpest: a unit-normalisation defect bypasses the figure validator entirely rather than tripping it."
+    })
+
+# ── (f) backtest_runs SLA fold. Row is 11503B, close to the 12000 ceiling —
+#        numeric bump + a deliberately short note, no prose growth beyond it.
+| (.task_board.backlog[] | select(.id == "FIX-CRON-NONRECOVERY-POST-HOST-SUSPENSION-TIER3-MORNINGBRIEFING-BACKTESTRUNS"))
+  |= (. + { occurrence_count: 2, updated_at: NOW, updated_by: BY,
+      po_fold_20260823T1157Z: "FOLD (note kept short: row is 11503B, near the 12000B prose ceiling). backtest_runs now stale 10072min vs threshold 2160min (~7d, still climbing across 2026-08-22 sla-monitor fires); tier-1/2/3 auditor cycles all reported missing (103h/174h/206h vs cadences 0.5h/4h/24h); cron weeklyPortfolioReport MISSED +5 more, morningBriefing STALE +22 more (A-29). Same non-recovery-after-host-suspension shape this row already owns." })
+
+# ── (g) SLA bond_maturity fold + priority bump.
+| (.task_board.backlog[] | select(.id == "FIX-SLA-BOND-MATURITY-STALE-13D-ZERO-BOARD-COVERAGE"))
+  |= (. + { priority: "P1", occurrence_count: 2, updated_at: NOW, updated_by: BY,
+      po_fold_20260823T1157Z: "FOLD, P2 -> P1. bond_maturity stale has advanced from the 13d in this row's title to 20099min (~13.96d) at the last 2026-08-23T01:30Z sla-monitor fire, against a 10080min threshold — i.e. ~2x the SLA and monotonically increasing across every fire on 2026-08-22 (19349 -> 19439 -> 19499 -> 19589 -> 19649 -> 19739 -> 19799 -> 19859 -> 19949 -> 20009 -> 20099). Not a blip; the feed has not written once in the whole observation window." })
+
+# ── (h) MINT 1 — INPUT 6b. Dedup-checked: no non-terminal row covers the
+#        SIGABRT/exit-134 crash class (FIX-TASKCLAIM-REENTRANCY-DISCRIMINATOR-
+#        UNSOUND-FOR-SAME-SESSION-SUBAGENTS is a different, logic defect).
+| .task_board.backlog += [{
+    id: "FIX-TASKCLAIM-LINT-SIGABRT-EXIT134-REJECTS-TENTH-OF-FLEET-PUSHES",
+    type: "FIX", status: "BACKLOG", priority: "P1", size: "S",
+    zone: "cross-service/", owner: "developer", next_agent: "developer",
+    title: "task-claim-owner-session-lint.sh --check SIGABRTs (exit 134) on ~10% of runs with ZERO output — pre-push treats the crash as 'violations found' and rejects ~1 in 10 of ALL fleet pushes",
+    created_at: NOW, created_by: BY,
+    dedup_key: "prepush-gate-crash:scripts/audits/task-claim-owner-session-lint.sh|exit134",
+    dedup_checked: "backlog+ready+in_progress+review+qa scanned for /TASKCLAIM|TASK-CLAIM.*LINT|PREPUSH|PRE-PUSH/. Only FIX-TASKCLAIM-REENTRANCY-DISCRIMINATOR-UNSOUND-FOR-SAME-SESSION-SUBAGENTS matched and it is a DIFFERENT defect (re-entrancy discriminator logic, not a process crash). No row covers exit 134. Minted.",
+    files: ["scripts/audits/task-claim-owner-session-lint.sh", "scripts/git-hooks/pre-push"],
+    desc: "MEASURED, not inferred. `bash scripts/audits/task-claim-owner-session-lint.sh --check` exits 134 (SIGABRT / 'Abort trap: 6') on roughly 1 run in 10, emitting ZERO stdout and ZERO stderr — indistinguishable from a clean pass unless the caller inspects $?. Measured ~4 failures in 42 SEQUENTIAL runs, including 1 failure in 12 runs on a deliberately quiet machine, which falsifies the standing attribution. TWO separate qa agents previously wrote this off as 'transient under heavy concurrent load'; that attribution is WRONG — it reproduces standalone with no concurrency, so load is a correlate at most, not the cause. BLAST RADIUS: scripts/git-hooks/pre-push:61 invokes it unconditionally as `|| return 1`, so ~a tenth of ALL fleet pushes are rejected by a gate that found nothing, on every agent, silently. SUSPECTED SITE: the per-file fork fan-out inside find_violations() — roughly 4 forks x 276 files, 1100+ subprocesses per run — which is both the crash surface and pure waste. Cf. feedback_taskclaim_lint_prepush_gate_aborts_intermittently_not_load_dependent, feedback_red_prepush_strands_fleet.",
+    ac: ["AC-1 REPRODUCE FIRST: a harness runs --check N>=50 times sequentially on an idle machine and records the exit-code histogram; the pre-fix run must show >=1 exit 134 or the premise is not reproduced and the row must be re-scoped, not closed.", "AC-2 ROOT CAUSE NAMED at file:line inside find_violations() — not 'made it more robust'. A retry wrapper is explicitly NOT an acceptable fix: it hides the crash rather than removing it.", "AC-3 find_violations() replaced with a single `grep -rn` style pass over the file set instead of forking per file; fork count per run drops from 1100+ to O(1) and is asserted by the harness.", "AC-4 scripts/git-hooks/pre-push MUST distinguish 'gate found violations' (exit 1 -> block, correct) from 'gate crashed' (exit >=128 -> fail LOUD with the exit code and the script name, never a silent `return 1`). A crashing gate must never again be reported to the pushing agent as a policy violation.", "AC-5 post-fix the same N>=50 harness shows 0 exit-134 across the run, and the lint still correctly FAILs on a synthetic seeded violation (negative control — the fix must not have made the gate vacuous)."],
+    baseline_pass: "for i in $(seq 50); do bash scripts/audits/task-claim-owner-session-lint.sh --check >/dev/null 2>&1; echo $?; done | sort | uniq -c  # post-fix: only 0 (and 1 when a real violation is seeded), never 134",
+    status_note: "Surfaced by router session 007e33e4 on 2026-08-23 and independently reproduced standalone. High leverage for its size: every agent in the fleet pays this tax on every push, and the failure mode is silent (zero output), so it is consistently misattributed to load instead of being fixed."
+  }]
+
+# ── (i) MINT 2 — INPUT 7 root cause, read at source this tick.
+#        Cannot fold into FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-
+#        BUT-UNDROPPABLE: that row is 24959B, already over the 12000B prose
+#        ceiling and grandfathered, so ANY growth on it is a net-new-growth
+#        violation and the write would be rejected. Separate row is forced.
+| .task_board.backlog += [{
+    id: "FIX-NOTEBOOK-PRUNE-AC6-SIGNAL-HEREDOC-EMITS-UNPARSEABLE-JSON-UNDRAINABLE-FOREVER",
+    type: "FIX", status: "BACKLOG", priority: "P1", size: "S",
+    zone: "cross-service/", owner: "developer", next_agent: "developer",
+    title: "notebook-auto-prune.sh AC-6 signal heredoc interpolates unsanitised shell numerics into JSON — emits unparseable signals that no drain can ever consume, silently inverting the 'the drop is NEVER silent' guarantee",
+    created_at: NOW, created_by: BY,
+    dedup_key: "unparseable-signal-emitter:scripts/agents-flow/notebook-auto-prune.sh|emit_dropped_newest_dated_section_signal",
+    dedup_checked: "backlog+ready+in_progress+review+qa scanned for /SIGNAL.*(UNPARSEABLE|MALFORMED|DRAIN)/ and for the owning AC-6 row. FIX-SIGNAL-INBOX-NON-DRAINABLE-ENVELOPE-50-OF-51-FILES-SILENTLY-CLASSED-LITTER (ready, P1) is the CONSUMER-side row and does not cover the emitter. FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE owns AC-6 but is 24959B, over the grandfathered prose ceiling and cannot be grown. Minted separately, cross-linked both ways.",
+    files: ["scripts/agents-flow/notebook-auto-prune.sh", "scripts/agents-flow/notebook-auto-prune.test.sh"],
+    desc: "ROOT CAUSE READ AT SOURCE 2026-08-23T11:57Z, not inferred. scripts/agents-flow/notebook-auto-prune.sh emit_dropped_newest_dated_section_signal() (~line 358-386) builds the signal JSON with a bare `cat > \"$sig_file\" <<EOF` heredoc and interpolates FOUR shell variables directly into JSON *numeric* slots with no quoting and no numeric coercion: $drop_line, $SECTION_COUNT, $NON_SENTINEL_SECTION_COUNT, $SENTINEL_SECTION_COUNT. When any of them holds a multi-line or non-numeric value the emitted file is invalid JSON. LIVE PROOF, two files, both still on disk: docs/signals/notebook-prune-dropped-newest-docs-agent-memory-notebooks-dev-mcp-server-md-2026-08-22T232534Z.json and ...232535Z.json. Both render `\"sentinel_section_count\": 0` followed on the NEXT LINE by a stray `0,` — i.e. $SENTINEL_SECTION_COUNT contained the two-line value '0\\n0'. jq reports 'Expected separator between values at line 14'. Every drain pass skips them; this tick was the 5th consecutive skip. They will never self-drain and will never stop being retried. SECOND, COMPOUNDING DEFECT: the emitter never validates its own output — no `jq . \"$sig_file\"` after the write, and the heredoc is `|| true`, so a malformed or failed write is indistinguishable from success. WHY THIS MATTERS MORE THAN TWO STRAY FILES: this emitter exists solely to satisfy AC-6 of FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE, whose stated purpose is 'the drop is NEVER silent' after occurrences 1/3/5 were caught only by luck. An unparseable signal is functionally identical to no signal, so on this path the guarantee is inverted while appearing to hold — and it leaves permanent undrainable litter as the only trace.",
+    ac: ["AC-1 REGRESSION (must FAIL before, PASS after): a fixture invocation with a multi-line SENTINEL_SECTION_COUNT reproduces an unparseable emitted signal on the HEAD version.", "AC-2 the signal is built with `jq -n --arg/--argjson` (or equivalent), never a raw heredoc; every numeric field is coerced to an integer at the boundary and every string field passes through jq -Rs.", "AC-3 the emitter validates its own output — `jq . \"$sig_file\" >/dev/null` after the write — and fails LOUD (per docs/protocols/fail-loud-protocol.md) if the file it just wrote is unparseable. It must not `|| true` a malformed write.", "AC-4 the two live corrupt files above are repaired or quarantined so the drain stops retrying them (PO repaired them in-place on 2026-08-23T11:57Z as an interim measure — re-verify they parse and drained; if a drain has since consumed them this AC is satisfied by evidence, not by re-creating them).", "AC-5 audit the SAME heredoc pattern across every other signal emitter in scripts/agents-flow/ and scripts/ — this is a shared idiom and the fix must not be validated on one file only (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist); report the audited set explicitly, opt-IN allowlist.", "AC-6 scripts/agents-flow/notebook-auto-prune.test.sh stays green (currently asserts T10 on this exact signal type)."],
+    baseline_pass: "for f in docs/signals/*.json; do jq . \"$f\" >/dev/null 2>&1 || echo \"UNPARSEABLE: $f\"; done  # must print nothing",
+    related: ["FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE", "FIX-SIGNAL-INBOX-NON-DRAINABLE-ENVELOPE-50-OF-51-FILES-SILENTLY-CLASSED-LITTER"],
+    status_note: "Emitter-side root cause for the drain-skip class. The consumer-side row (FIX-SIGNAL-INBOX-NON-DRAINABLE-ENVELOPE...) can make the drain report skipped files loudly, but only this row stops them being produced."
+  }]
