@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-23T23:05:26Z",
-    "updated_by": "dev-team (DRS claim reverted — gate not satisfied)",
-    "active_task_id": null,
-    "next_agent": "router"
+    "status": "in_progress",
+    "active_task_id": "CCATO-MCP-T5-USECASE",
+    "next_agent": "qa",
+    "next_action": "Review-Lane QA-Drain claim of 2 row(s) (2 from review[], 0 from done[]), highest-ranked CCATO-MCP-T5-USECASE — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 2 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
+    "updated_at": "2026-08-23T23:29:49Z",
+    "updated_by": "dev-team (review-lane qa-drain)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -15007,9 +15008,12 @@
         "plan_only": true,
         "created_at": "2026-07-21T15:28:00Z",
         "created_by": "po-signalqueue-triage-20260721",
-        "updated_at": "2026-08-14T01:34:10Z",
+        "updated_at": "2026-08-23T23:26:17Z",
         "updated_by": "pm",
-        "status_note": "Decomposed into 4 atomic implementation subtasks: FIX-SIGNALQUEUE-PUSH-SPAWN-FANOUT-MECHANISM (tier1), FIX-SIGNALQUEUE-SIGNAL-DASHBOARD-DOCS (tier1), FIX-SIGNALQUEUE-UNIFIED-AGENT-CONSUMER (tier2), FIX-SIGNALQUEUE-ALERT-COMMANDER-CONSUMER (tier2)"
+        "status_note": "Decomposed into 4 atomic implementation subtasks: FIX-SIGNALQUEUE-PUSH-SPAWN-FANOUT-MECHANISM (tier1), FIX-SIGNALQUEUE-SIGNAL-DASHBOARD-DOCS (tier1), FIX-SIGNALQUEUE-UNIFIED-AGENT-CONSUMER (tier2), FIX-SIGNALQUEUE-ALERT-COMMANDER-CONSUMER (tier2)",
+        "secondary_claimed_at": "2026-08-23T23:26:16Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po"
       },
       {
         "id": "UC-CCA-P2-SKILL-GW-GATE",
@@ -20840,30 +20844,6 @@
         "status_note": "PO DISPOSITION 2026-08-23T14:45Z — decomposed, 4 children minted per brief §6. Design phase closed; implementation lives in the children.\nDETAIL_REF CORRECTED: previously pointed at docs/architecture-briefs/2026-08-14-pm-decompose-closeout-reachability-and-nextagent-mint.md, which is SUPERSEDED. The live brief is the 08-23 one now referenced. The 08-14 brief is not merely older — its own §8 acceptance fixture contains the SAME hand-enumerated-lane-subset mistake as the shipped transform (brief §2), so following it reproduces the defect. Do not read it as guidance.\nPROSE FIELDS DELIBERATELY DROPPED in this same write (evidence 3464 B, question 1815 B, note 1566 B, deliverable 1176 B, prior status_note 2565 B): all of it is superseded verbatim by the 29 KB brief, and the row was 12332 B — OVER the 12000 B orch-apply ceiling, so any in-place growth would have hard-rejected. That is brief §4.7's own failure mode (21 such rows live) hit while patching the row that fixes it; shrinking to the brief pointer was the only way to land the detail_ref correction at all. Nothing unique was lost — the brief is the SSOT.\nHEADLINE FOR REVIEWERS: architect REPRODUCED qa's blocker on synthetic fixtures rather than reading it, then REJECTED qa's proposed fix list as another hand-enumerated lane subset (it omitted review, qa, done_verified, archive, closed_sprints). Root cause is one level up — a hand-named lane subset substituted for the schema's lane set, in the transform AND in the 08-14 acceptance fixture.\nCLOSE CONDITION: all 4 children DONE_VERIFIED. Do NOT close this parent to DONE while children are open — brief §4.6 proves closing a decomposed parent strands its dependents forever, since deps_satisfied demands DONE_VERIFIED. (Checked at mint time: nothing currently depends_on this row, so the hazard is latent, not live.)\nSTILL OPEN, REPORTED-NOT-FIXED (brief §7, NOT owned by any of the 4 children — needs separate triage): 8 wrapper rows with children[] and no hold_reason armed for premature autoclose (IVC-PM-DECOMPOSE is the one confirmed disposition-C victim); 2 rows with pm_decomposition_complete:true sitting open in ready[] with no closed_at; 21 rows over the prose ceiling in guarded lanes."
       },
       {
-        "id": "TASK_001-WATCHLIST-WRITE-THROUGH-INFRA",
-        "type": "SUBTASK",
-        "size": "M",
-        "priority": "P1",
-        "status": "REVIEW",
-        "zone": "apps/mcp-server/",
-        "owner": "qa",
-        "next_agent": "qa",
-        "parent_task_id": "FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58",
-        "plan_only": false,
-        "supervised": false,
-        "sprint": "COWORK-RELIABILITY",
-        "created_at": "2026-08-22T17:45:00Z",
-        "created_by": "pm",
-        "title": "Watchlist write-through infrastructure adapter",
-        "handoff": "docs/handoffs/TASK_001-WATCHLIST-WRITE-THROUGH-INFRA.md",
-        "updated_at": "2026-08-23T15:28:56Z",
-        "updated_by": "dev-mcp-server/next-agent-fix",
-        "dev_completed_at": "2026-08-23T15:11:47Z",
-        "dev_completed_by": "dev-mcp-server",
-        "dev_commit": "ce1f52127",
-        "dev_note": "AC-1 (systemMapWatchlistWriter.ts: upsert/remove, atomic tmp+rename, fail-open, active-default), AC-2 (write-through hooks in add_to_watchlist/remove_from_watchlist, soft warning suffix on failure, DB mutation never blocked), AC-3 (optional sector param + titleCaseDomain fallback), AC-4 (10 unit tests incl. a real-fs tmpdir round-trip — NOT at the handoff's specified path apps/mcp-server/__tests__/unit/test_systemMapWatchlistWriter.ts, which does not exist in this repo and would not be discovered by bun test's default *.test.ts pattern; placed at apps/mcp-server/src/__tests__/TASK_001-watchlist-write-through-infra.test.ts matching this repo convention), AC-6 (119 pass/0 fail across touched suites, tsc clean, tools=183) ALL DONE. Added a test-isolation guard (skip write-through when DB_PATH=\":memory:\" unless _testSystemMapPath injected) that was NOT in the original AC list but was necessary — without it every existing watchlist test would have written real/fake tickers into the live docs/data/system-map.json SSOT on every CI run. Live system-map.json verified byte-identical (md5) before/after this work, still 34 entries, zero drift. NOT DONE this session: AC-5 (integration test paired with TASK_002 — cannot be written before TASK_002s audit script exists, per the ACs own sequencing) and AC-7 (Docker bind-mount round-trip from a live container — requires a running container + external MCP client, out of a code-only dev session; verified the equivalent production codepath instead via a real temp-file round-trip + a direct call against a throwaway copy of the live file, both confirmed working). Status held at REVIEW not DONE_VERIFIED because the closure checklist is not fully satisfied — do not auto-unblock TASK_002 off this row yet."
-      },
-      {
         "id": "FIX-PM-3E-FAILLOUD-HOTFIX",
         "type": "FIX",
         "size": "XS",
@@ -21051,28 +21031,6 @@
         "adopted_at": "2026-08-23T23:01:30Z",
         "tree_hygiene_note": "tree-hygiene: reverted 0 file(s) (apps/mcp-server/ clean at adoption)",
         "status_note": "Orphan-adopted 2026-08-23T23:01:30Z by dev-team tick 2026-08-23T22:37Z from reaped session 007e33e4. Work is COMPLETE and committed (d569db23a fix + f0ee4481f lane-move); no resume-spawn issued — checkpoint carried no git_sha and board state shows the fix already landed. Row parked at REVIEW awaiting its reviewer. redispatch_count=1."
-      },
-      {
-        "id": "CCATO-MCP-T5-USECASE",
-        "type": "IMPL-XS",
-        "status": "REVIEW",
-        "size": "XS",
-        "zone": "mcp-server",
-        "priority": "P0",
-        "title": "application/usecases/runNarrativeTruthGate.ts orchestration",
-        "depends": [
-          "CCATO-MCP-T1-DOMAIN-ENGINE",
-          "CCATO-MCP-T2-CLAIM-MAP-LOADER",
-          "CCATO-MCP-T3-PROBE-ADAPTERS",
-          "CCATO-MCP-T4-SIGNAL-WRITER"
-        ],
-        "next_agent": "qa",
-        "supervised": false,
-        "updated_at": "2026-08-23T22:49:54Z",
-        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)",
-        "claimed_at": "2026-08-23T22:30:15Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "dev-mcp-server"
       }
     ],
     "qa": [
@@ -21236,6 +21194,56 @@
           "collector": "scripts/durability-mem-sample.sh (new this cycle, closes the missing-instrumentation root cause)"
         },
         "qa_rcverif_grandfather_escalation_20260823T1441Z": "[QA ESCALATION 2026-08-23T14:41Z — RC-VERIF GRANDFATHER FALSE-GREEN HAZARD ON THIS EXACT ROW. Not a defect in the fix under review; a defect in the gate that is supposed to protect it. Bar section 4 (\"Grandfather-exemption guard\") names this as a known open engineering gap with process-control-only mitigation; this note is the live proof that it is exploitable on the single highest-pressure row in the fleet.]\nFACT, PROVEN BY EXECUTION NOT BY READING: \"FU-RAG-DEPLOY-MEMORY\" is a member of RC_VERIF_GRANDFATHERED_IDS (apps/mcp-server/src/infrastructure/orchStateSchema.ts line 569). checkVerificationGate() guards with a bare `row.status === \"DONE_VERIFIED\" && !RC_VERIF_GRANDFATHERED_IDS.has(id)`, with no awareness of retraction or void markers. Consequence: this row can be flipped to DONE_VERIFIED carrying NO verification.raw_probe at all, and orch-apply.sh will accept the write.\nLIVE REPRO WITH A CONTROL, run against a fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE (hot file never touched, override unset afterwards). Identical transform, two ids: FU-RAG-DEPLOY-MEMORY flipped to DONE_VERIFIED with `del(.verification)` -> \"Stage 0 + Stage 1 PASS\", write APPLIED. The same transform on the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK -> \"ORCH-STATE VALIDATION FAILED (1 issue) ... set to DONE_VERIFIED without verification.raw_probe\" -> \"ABORTED: validator exit 2 -- live file untouched\". So the exemption, not any property of the evidence, is what decides.\nWHY THIS ROW IS THE WORST POSSIBLE MEMBER OF THAT LIST. (1) It is OOM-class, and its own family has produced THREE recorded false certifications on this one incident (bar section 5). (2) It carries contamination/void language already (its po ruling calls the 7-day window CONTAMINATED; its sibling holds an explicit qa_durability_window_status VOID), which under bar section 4's retraction rule means the exemption must not be relied on for it -- but nothing in code enforces that. (3) It is under active unblock pressure: RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE ships BLOCKED on this row reaching DONE_VERIFIED, so there is a standing incentive to flip it. (4) The incentive is not hypothetical -- TWO rows were flipped to DONE_VERIFIED in this very cycle by updated_by=developer with qa_verified_by absent (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION at 14:28:53Z, FIX-CHEF-MARKER-KEY-ANCHOR-1 at 14:33:50Z). Both happened to be substantively correct on QA re-check, but they establish that self-certification without the qa gate is a live behaviour, not a theoretical one. On this row that behaviour would meet no schema resistance whatsoever.\nASK (out of qa's zone -- apps/mcp-server code change, needs a minted row; qa is reporting, not patching): make checkVerificationGate() refuse the exemption for any RC_VERIF_GRANDFATHERED_IDS member whose row text carries a retraction/void/contamination marker, exactly as bar section 4 already specifies in prose. Cheapest correct alternative if that is too broad: remove this single id from the frozen list, since the row has never actually been certified and therefore has nothing to grandfather -- the list exists to spare genuinely-pre-existing certified rows a retroactive probe requirement, and this row is not one.\nINTERIM PROCESS CONTROL, binding until that lands: NO agent may flip FU-RAG-DEPLOY-MEMORY to DONE_VERIFIED without the six canonical D5 fields AND a verification.raw_probe, exemption notwithstanding. The schema will not stop you. This note is the record that you were told.\n\n[QA CORRECTION 2026-08-23T14:51Z to the escalation above.] Point (4) of that escalation cited two rows flipped this cycle \"by updated_by=developer with qa_verified_by absent\" as proof that self-certification without the qa gate is live behaviour. THAT SUPPORTING CLAIM IS WITHDRAWN. Both rows were in fact fully verified by a concurrent peer qa session and journaled — sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-26.md STEP qa-S162 (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION) and STEP qa-S167 (FIX-CHEF-MARKER-KEY-ANCHOR-1, which independently traced the same amended-commit hazard via git reflog). The qa gate ran on both. What those rows actually show is a provenance-stamping gap (updated_by names the wrong actor and qa_verified_by is left unset, so a board reader cannot distinguish a qa verdict from an owner self-flip) — a real but much smaller finding, and NOT evidence of gate bypass.\nTHE ESCALATION ITSELF IS UNAFFECTED AND STANDS. Its load-bearing evidence was never those two rows; it is the live paired repro with a control, run against a fixture: the identical no-raw_probe DONE_VERIFIED transform PASSES validation for FU-RAG-DEPLOY-MEMORY (grandfathered) and ABORTS with \"set to DONE_VERIFIED without verification.raw_probe\" for the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK. Points (1) membership at orchStateSchema.ts line 569, (2) the OOM-class family's three recorded false certifications, and (3) the live unblock pressure from RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE are all independently verified and unchanged. The ask and the interim process control stand exactly as written.\n"
+      },
+      {
+        "id": "CCATO-MCP-T5-USECASE",
+        "type": "IMPL-XS",
+        "status": "QA",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "application/usecases/runNarrativeTruthGate.ts orchestration",
+        "depends": [
+          "CCATO-MCP-T1-DOMAIN-ENGINE",
+          "CCATO-MCP-T2-CLAIM-MAP-LOADER",
+          "CCATO-MCP-T3-PROBE-ADAPTERS",
+          "CCATO-MCP-T4-SIGNAL-WRITER"
+        ],
+        "next_agent": "qa",
+        "supervised": false,
+        "updated_at": "2026-08-23T23:29:49Z",
+        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)",
+        "claimed_at": "2026-08-23T23:29:49Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "dispatch_lane": "dev-mcp-server",
+        "drain_source_lane": "review"
+      },
+      {
+        "id": "TASK_001-WATCHLIST-WRITE-THROUGH-INFRA",
+        "type": "SUBTASK",
+        "size": "M",
+        "priority": "P1",
+        "status": "QA",
+        "zone": "apps/mcp-server/",
+        "owner": "qa",
+        "next_agent": "qa",
+        "parent_task_id": "FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58",
+        "plan_only": false,
+        "supervised": false,
+        "sprint": "COWORK-RELIABILITY",
+        "created_at": "2026-08-22T17:45:00Z",
+        "created_by": "pm",
+        "title": "Watchlist write-through infrastructure adapter",
+        "handoff": "docs/handoffs/TASK_001-WATCHLIST-WRITE-THROUGH-INFRA.md",
+        "updated_at": "2026-08-23T23:29:49Z",
+        "updated_by": "dev-mcp-server/next-agent-fix",
+        "dev_completed_at": "2026-08-23T15:11:47Z",
+        "dev_completed_by": "dev-mcp-server",
+        "dev_commit": "ce1f52127",
+        "dev_note": "AC-1 (systemMapWatchlistWriter.ts: upsert/remove, atomic tmp+rename, fail-open, active-default), AC-2 (write-through hooks in add_to_watchlist/remove_from_watchlist, soft warning suffix on failure, DB mutation never blocked), AC-3 (optional sector param + titleCaseDomain fallback), AC-4 (10 unit tests incl. a real-fs tmpdir round-trip — NOT at the handoff's specified path apps/mcp-server/__tests__/unit/test_systemMapWatchlistWriter.ts, which does not exist in this repo and would not be discovered by bun test's default *.test.ts pattern; placed at apps/mcp-server/src/__tests__/TASK_001-watchlist-write-through-infra.test.ts matching this repo convention), AC-6 (119 pass/0 fail across touched suites, tsc clean, tools=183) ALL DONE. Added a test-isolation guard (skip write-through when DB_PATH=\":memory:\" unless _testSystemMapPath injected) that was NOT in the original AC list but was necessary — without it every existing watchlist test would have written real/fake tickers into the live docs/data/system-map.json SSOT on every CI run. Live system-map.json verified byte-identical (md5) before/after this work, still 34 entries, zero drift. NOT DONE this session: AC-5 (integration test paired with TASK_002 — cannot be written before TASK_002s audit script exists, per the ACs own sequencing) and AC-7 (Docker bind-mount round-trip from a live container — requires a running container + external MCP client, out of a code-only dev session; verified the equivalent production codepath instead via a real temp-file round-trip + a direct call against a throwaway copy of the live file, both confirmed working). Status held at REVIEW not DONE_VERIFIED because the closure checklist is not fully satisfied — do not auto-unblock TASK_002 off this row yet.",
+        "claimed_at": "2026-08-23T23:29:49Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "drain_source_lane": "review"
       }
     ],
     "_closed_signals_20260614": {
