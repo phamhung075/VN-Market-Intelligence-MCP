@@ -1954,3 +1954,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-06 · vn-bctc-fetch unhealthy
+**Severity:** CRITICAL | **Date:** 2026-08-23 | **Status:** OPEN
+**Location:** vps/services
+**Details:** vn-bctc-fetch service unhealthy
+**Impact:** BCTC data fetch pipeline blocked
+**Root cause:** VPS service failure or network issue
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-23T14:43:28Z (signal sys-20260823T144239-603e, system-auditor -> po, dedup_key=vps_route_unhealthy:bctc-discover:B-06, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
