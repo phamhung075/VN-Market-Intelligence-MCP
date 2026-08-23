@@ -628,4 +628,79 @@ describe("TASK17-CONVICTION — handleGetConvictionHistory HTTP handler", () => 
     expect(body.summary.topBullish).toHaveLength(5);
     expect(body.summary.topBearish).toHaveLength(5);
   });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // AC-16 — FIX-GHOSTZONE-CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST
+  //
+  // Root cause: `ORDER BY date ASC LIMIT ?` keeps the OLDEST `limit` rows once
+  // the table outgrows `limit` — freezing tradingDate at a stale date forever
+  // (live: 3942 rows, cap 2000, tradingDate frozen 64 days stale). Fix: inner
+  // `ORDER BY date DESC LIMIT ?` selects the newest rows, outer
+  // `ORDER BY date ASC` restores the documented return contract
+  // (buildSnapshot/buildSeries both silently depend on ASC input — see
+  // architect brownfield findings, FIX-GHOSTZONE-CONVICTION-ASC-LIMIT-
+  // TRUNCATES-NEWEST-BA-spec.md §2 FR-1).
+  //
+  // 9 rows seeded: 3 dates (D1 oldest, D2, D3 newest) x 3 symbols each.
+  // limit=6 selects the newest 6 rows (D2+D3), excluding D1 (3 rows) — the
+  // exact truncation-from-the-wrong-end shape of the live bug.
+  // ───────────────────────────────────────────────────────────────────────────
+  it("AC-16: newest-N window selection with ASC-contract preserved (anti naive-DESC-flip)", () => {
+    const D1 = "2026-01-01"; // oldest — must be excluded by limit=6
+    const D2 = "2026-02-01";
+    const D3 = "2026-03-01"; // newest — true MAX(date) over the FULL seeded set
+
+    // D1 — oldest, low scores, EXCLUDED by limit=6
+    insertConvictionRow("ACB", D1, 0.30, "bearish");
+    insertConvictionRow("PLX", D1, 0.31, "bearish");
+    insertConvictionRow("VCB", D1, 0.32, "bearish");
+    // D2 — middle, INCLUDED (within newest-6 window)
+    insertConvictionRow("ACB", D2, 0.40, "neutral");
+    insertConvictionRow("PLX", D2, 0.41, "neutral");
+    insertConvictionRow("VCB", D2, 0.42, "neutral");
+    // D3 — newest, INCLUDED, highest scores
+    insertConvictionRow("ACB", D3, 0.90, "bullish");
+    insertConvictionRow("PLX", D3, 0.91, "bullish");
+    insertConvictionRow("VCB", D3, 0.92, "bullish");
+
+    const res = makeMockRes();
+    handleGetConvictionHistory(
+      makeFakeReq("/api/conviction-history?limit=6"),
+      res as unknown as import("node:http").ServerResponse,
+      getDb(),
+      new Date(NOW),
+    );
+
+    const body = JSON.parse(res.body) as ConvictionHistoryResponse;
+
+    // Point 1: tradingDate == true MAX(date) over the FULL seeded set (D3),
+    // not the stale date a naive ASC-LIMIT (or an unbounded window) would
+    // otherwise serve.
+    expect(body.tradingDate).toBe(D3);
+
+    // Point 2 (anti naive-DESC-flip trap): ACB appears at BOTH D2 (0.40,
+    // neutral) and D3 (0.90, bullish) inside the selected newest-6 window. A
+    // raw `ORDER BY date DESC LIMIT 6` with NO outer ASC re-wrap would return
+    // D3's rows first then D2's — buildSnapshot's "last row written per
+    // symbol wins" would then pick D2 (WRONG: older, lower score) as ACB's
+    // snapshot entry. The correct (outer-ASC-restored) result reports D3.
+    const acb = body.snapshot.find((s) => s.symbol === "ACB");
+    expect(acb?.date).toBe(D3);
+    expect(acb?.peakScore).toBe(0.90);
+    expect(acb?.signal).toBe("bullish");
+
+    // Point 3: series[symbol] stays ASC — first date strictly before last
+    // date. Catches an omitted outer-wrap even if point 2 were somehow
+    // missed (buildSeries appends in received order with no internal sort).
+    const acbSeries = body.series["ACB"]!;
+    expect(acbSeries.length).toBe(2); // D1 excluded by limit=6
+    expect(acbSeries[0]!.date).toBe(D2);
+    expect(acbSeries[acbSeries.length - 1]!.date).toBe(D3);
+    expect(acbSeries[0]!.date < acbSeries[acbSeries.length - 1]!.date).toBe(true);
+
+    // D1 (oldest) must be fully excluded — confirms the window is newest-N,
+    // not simply "all rows, correctly ordered."
+    const allDates = Object.values(body.series).flatMap((pts) => pts.map((p) => p.date));
+    expect(allDates).not.toContain(D1);
+  });
 });
