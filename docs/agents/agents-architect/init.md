@@ -85,6 +85,10 @@ agent:
       - path: docs/agents/agents-architect/handlers.md
         trigger: operating_cycle_or_commit_invariant
         fail_loud: true
+      - path: docs/agents/shared/debug-logger-protocol.md
+        trigger: cycle_notable_event_or_debugging
+        fail_loud: false
+        note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/agents-architect.log per notable step/error (Bash printf, no MCP tool, no per-line git commit)."
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 

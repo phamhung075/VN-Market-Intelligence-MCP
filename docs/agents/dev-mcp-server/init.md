@@ -82,6 +82,10 @@ agent:
         trigger: domain_work_or_doc_maintenance_or_bootstrap_error
         fail_loud: false
         note: "Full lazy_load table + Step 0-b bootstrap handler + doc_maintenance rules"
+      - path: docs/agents/shared/debug-logger-protocol.md
+        trigger: cycle_notable_event_or_debugging
+        fail_loud: false
+        note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/dev-mcp-server.log per notable step/error (Bash printf, no MCP tool, no per-line git commit)."
 
   flow:
     default: docs/agents/dev-mcp-server/flow/main.md  # Thin pointer → developer/microservice-main.md (shared impl)

@@ -90,6 +90,10 @@ agent:
       - path: docs/references/tree-map.md
         trigger: document_registry_check
         fail_loud: false
+      - path: docs/agents/shared/debug-logger-protocol.md
+        trigger: cycle_notable_event_or_debugging
+        fail_loud: false
+        note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/digest-predict.log per notable step/error (Bash printf, no MCP tool, no per-line git commit)."
 
   signals:
     consumes:

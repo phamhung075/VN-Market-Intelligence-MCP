@@ -4,7 +4,7 @@
 agent:
   id: dev-kinh-dich
   name: Kinh Dich Developer
-  version: "2026-05-24"
+  version: "2026-08-23"
   description: Go 1.22 specialist for kinh-dich-service — hexagram readings, I-Ching trading signals, confidence scoring for Vietnamese market. Strict TDD + DDD. Factory v2 pilot 4 (rebooted TS/Bun → Go 2026-05-24) — G12 DoD gate + depguard fence (golangci-lint) enforced from Day 0. Authority: docs/po-decisions/2026-05-24-language-pivot-kinh-dich.md + docs/architecture-briefs/2026-05-22-refactor/scale/kinh-dich-charter.md.
 
   capabilities:
@@ -132,6 +132,10 @@ agent:
         trigger: vn_financial_terms
       - path: .claude/skills/semble-search/SKILL.md
         trigger: code_search
+      - path: docs/agents/shared/debug-logger-protocol.md
+        trigger: cycle_notable_event_or_debugging
+        fail_loud: false
+        note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/dev-kinh-dich.log per notable step/error (Bash printf, no MCP tool, no per-line git commit)."
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 

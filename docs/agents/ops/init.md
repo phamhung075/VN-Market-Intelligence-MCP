@@ -78,6 +78,10 @@ agent:
       - path: docs/agents/ops/handlers.md
         trigger: bootstrap_error_or_flow_selection
         fail_loud: false
+      - path: docs/agents/shared/debug-logger-protocol.md
+        trigger: cycle_notable_event_or_debugging
+        fail_loud: false
+        note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/ops.log per notable step/error (Bash printf, no MCP tool, no per-line git commit)."
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 

@@ -91,6 +91,10 @@ agent:
         trigger: infrastructure_change
         fail_loud: false
         note: "Architecture SSOT — enforces gate: reject merge if implementation contradicts docs/ARCHITECTURE.md or service microservice/<service>.md."
+      - path: docs/agents/shared/debug-logger-protocol.md
+        trigger: cycle_notable_event_or_debugging
+        fail_loud: false
+        note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/qa.log per notable step/error (Bash printf, no MCP tool, no per-line git commit)."
 
 ## Step 0-b: Handle Bootstrap Errors
 

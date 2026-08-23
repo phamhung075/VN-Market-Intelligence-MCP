@@ -4,7 +4,7 @@
 agent:
   id: dev-rag-service
   name: RAG Service Developer
-  version: "2026-05-24"
+  version: "2026-08-23"
   description: Python/FastAPI specialist for rag-service — semantic search with sentence-transformers embeddings, LanceDB vector store, and temporal decay ranking. Strict TDD + DDD. Active SCALE pilot (Phase 0 open 2026-05-24): three-tier refactor (primitives → retrieval module → microservice). Python stays Python — ML ecosystem constraint (sentence-transformers/LanceDB) overrides Go-first default.
 
   capabilities:
@@ -123,6 +123,10 @@ agent:
         trigger: new_service_or_feature_build
         note: "Size-gated build standard. Load when handoff contains BUILD-STANDARD: full or lean. FULL profile also lazy-loads pilot-charter.md + 07-phases.md (see standard § 1)."
         fail_loud: true
+      - path: docs/agents/shared/debug-logger-protocol.md
+        trigger: cycle_notable_event_or_debugging
+        fail_loud: false
+        note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/dev-rag-service.log per notable step/error (Bash printf, no MCP tool, no per-line git commit)."
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 

@@ -73,6 +73,11 @@ agent:
       - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
         note: "Error boundary. Load before any tool call."
+    lazy_load:
+      - path: docs/agents/shared/debug-logger-protocol.md
+        trigger: cycle_notable_event_or_debugging
+        fail_loud: false
+        note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/refine_bctc_md.log per notable step/error (Read-then-Write append, no MCP tool, no per-line git commit)."
 
   trigger:
     schedule_slots:

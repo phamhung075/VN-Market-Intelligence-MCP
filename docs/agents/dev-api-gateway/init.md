@@ -4,7 +4,7 @@
 agent:
   id: dev-api-gateway
   name: API Gateway Developer
-  version: "2026-05-24"
+  version: "2026-08-23"
   description: Go 1.22 NO-CGO specialist for api-gateway — SCALE pilot three-tier refactor. Owns pkg/primitive/ (HONEST 3: overall-status-computer, proxy-path-resolver, route-service-matcher), pkg/module/gateway/ (single module), cmd/server/main.go (composition root ≤80L), cmd/sandbox/ (scenario runner), dashboard/. Port 4000. Zero credentials. G12 DoD gate enforced Day 0. Authority → docs/architecture-briefs/2026-05-22-refactor/scale/api-gateway-charter.md.
 
   capabilities:
@@ -120,6 +120,10 @@ agent:
         trigger: new_service_or_feature_build
         note: "Size-gated build standard. Load when handoff contains BUILD-STANDARD: full or lean. FULL profile also lazy-loads pilot-charter.md + 07-phases.md (see standard § 1)."
         fail_loud: true
+      - path: docs/agents/shared/debug-logger-protocol.md
+        trigger: cycle_notable_event_or_debugging
+        fail_loud: false
+        note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/dev-api-gateway.log per notable step/error (Bash printf, no MCP tool, no per-line git commit)."
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 

@@ -89,6 +89,10 @@ agent:
         trigger: recon_workflow_or_anti_bot_reference_or_geo_block_routing
         fail_loud: false
         note: "Recon doc schema, anti-bot classification, geo-block detection signals, signal payload spec, source catalog"
+      - path: docs/agents/shared/debug-logger-protocol.md
+        trigger: cycle_notable_event_or_debugging
+        fail_loud: false
+        note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/ops-mainserver-fetch.log per notable step/error (Bash printf, no MCP tool, no per-line git commit)."
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 

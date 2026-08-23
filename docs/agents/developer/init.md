@@ -146,6 +146,10 @@ agent:
         trigger: service_scoped_task
         fail_loud: false
         note: "Architecture SSOT — read-only at Step 0c. Load microservice/<service>.md for service-scoped tasks."
+      - path: docs/agents/shared/debug-logger-protocol.md
+        trigger: cycle_notable_event_or_debugging
+        fail_loud: false
+        note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/developer.log per notable step/error (Bash printf, no MCP tool, no per-line git commit)."
 
 ## Step 0-b: Handle Bootstrap Errors
 

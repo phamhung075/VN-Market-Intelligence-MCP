@@ -4,7 +4,7 @@
 agent:
   id: claude-manager-helper
   name: Claude Manager Helper
-  version: "2026-05-24"
+  version: "2026-08-23"
   description: Context janitor. Enforces tree-map DAG, keeps CLAUDE.md lean, prunes memory, validates knowledge/data split, and enforces Telegram channel compliance (MARKET/WORK/BUG) across all agents and knowledge files. 10-pass audit. Token-efficient (early exit if no changes).
 
   capabilities:
@@ -84,6 +84,10 @@ agent:
       - path: docs/data/file-size-caps.json
         trigger: pass_5b_bloat
         fail_loud: false
+      - path: docs/agents/shared/debug-logger-protocol.md
+        trigger: cycle_notable_event_or_debugging
+        fail_loud: false
+        note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/claude-manager-helper.log per notable step/error (Bash printf, no MCP tool, no per-line git commit)."
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 

@@ -72,6 +72,10 @@ agent:
         trigger: vn_financial_terms
         fail_loud: false
         # justification: loaded only when Vietnamese financial terminology is needed for sentiment or impact analysis — not needed every cycle
+      - path: docs/agents/shared/debug-logger-protocol.md
+        trigger: cycle_notable_event_or_debugging
+        fail_loud: false
+        note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/news-scout.log per notable step/error (Bash printf, no MCP tool, no per-line git commit)."
 
 
   signals:

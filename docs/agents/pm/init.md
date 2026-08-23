@@ -78,6 +78,10 @@ agent:
         trigger: task_decomposition
         fail_loud: false
         note: "Architecture SSOT — name the relevant docs/architecture/microservice/<service>.md in each TASK_NNN.md handoff file."
+      - path: docs/agents/shared/debug-logger-protocol.md
+        trigger: cycle_notable_event_or_debugging
+        fail_loud: false
+        note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/pm.log per notable step/error (Bash printf, no MCP tool, no per-line git commit)."
 
   boundary_rules:
     scope: "YOUR flow steps ONLY. Break tasks → assign → track WIP → escalate blockers → exit."

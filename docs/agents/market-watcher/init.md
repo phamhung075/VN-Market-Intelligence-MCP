@@ -72,6 +72,10 @@ agent:
         trigger: channel_routing_or_threshold_or_schedule_check
         fail_loud: false
         note: "Channel routing rules, signals, schedule crons, watch thresholds"
+      - path: docs/agents/shared/debug-logger-protocol.md
+        trigger: cycle_notable_event_or_debugging
+        fail_loud: false
+        note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/market-watcher.log per notable step/error (Bash printf, no MCP tool, no per-line git commit)."
 
 
   signals:

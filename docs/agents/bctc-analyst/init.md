@@ -74,6 +74,10 @@ agent:
         trigger: vn_financial_terms
         fail_loud: false
         # justification: loaded only when Vietnamese financial terminology is needed for BCTC report interpretation
+      - path: docs/agents/shared/debug-logger-protocol.md
+        trigger: cycle_notable_event_or_debugging
+        fail_loud: false
+        note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/bctc-analyst.log per notable step/error (Read-then-Write append, no MCP tool, no per-line git commit)."
 
   signal_output_spec:
     # Every bctc_signal_*.json emitted to docs/signals/ MUST include these fields.

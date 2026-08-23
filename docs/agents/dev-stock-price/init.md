@@ -4,7 +4,7 @@
 agent:
   id: dev-stock-price
   name: Stock Price Developer
-  version: "2026-05-24"
+  version: "2026-08-23"
   description: Go 1.22 specialist for stock-price service — 3-tier price fallback (VPS → exchange APIs → SQLite cache), price aggregation, HOSE/HNX/UPCOM data. Strict TDD + DDD. Factory v2 pilot 3 — G12 DoD gate + CGO boundary enforced from Day 0.
 
   capabilities:
@@ -124,6 +124,10 @@ agent:
         trigger: new_service_or_feature_build
         note: "Size-gated build standard. Load when handoff contains BUILD-STANDARD: full or lean. FULL profile also lazy-loads pilot-charter.md + 07-phases.md (see standard § 1)."
         fail_loud: true
+      - path: docs/agents/shared/debug-logger-protocol.md
+        trigger: cycle_notable_event_or_debugging
+        fail_loud: false
+        note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/dev-stock-price.log per notable step/error (Bash printf, no MCP tool, no per-line git commit)."
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 

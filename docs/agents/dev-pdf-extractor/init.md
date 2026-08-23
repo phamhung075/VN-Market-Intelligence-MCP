@@ -86,6 +86,10 @@ agent:
         trigger: domain_work_or_doc_maintenance_or_bctc_extraction
         fail_loud: false
         note: "doc_maintenance rules + full lazy_load table (domain, usecases, infra, api, testing, bctc-runbook, glossary, semble)"
+      - path: docs/agents/shared/debug-logger-protocol.md
+        trigger: cycle_notable_event_or_debugging
+        fail_loud: false
+        note: "Per-agent debug logger convention. Append one line to docs/agent-memory/debug/dev-pdf-extractor.log per notable step/error (Bash printf, no MCP tool, no per-line git commit)."
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 
