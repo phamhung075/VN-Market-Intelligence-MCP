@@ -13802,6 +13802,115 @@
         ],
         "status_note": "MEASURED 2026-08-23: docs/signals/ holds 47 top-level *.json (the clean-obsolete-files report of 76 dated 2026-08-22T12:40Z is stale — drains have since caught up). Of those 47, three are permanent residue dated 2026-07-28 and 2026-08-06, skipped by every drain pass as 'non-signal shape (no from/type)': stranded-state-sweep-unknown-20260728T171505Z.json (1329B), stranded-state-sweep-scripts-pointer-20260806T105540Z.json (466B), stranded-state-sweep-unknown-20260806T105540Z.json (341B). They can never drain and can never be re-read, so they are a fixed +3 floor on the drain-behind metric that the >50 DRAIN-BEHIND alert measures against. AC-1: read each of the three for any finding not already on the board; fold anything live onto an existing row before removal (do not discard unread). AC-2: quarantine to docs/data/.trash/<date>/ per docs/policies/obsolete-file-cleanup.md, not `rm`. AC-3: the emitter that wrote them is identified and either fixed to emit the {from,type,payload} contract or confirmed retired, so the class does not re-accumulate. AC-4: docs/agents/dev-team/flow/drain-signals.md gains an explicit disposition for a file that fails shape validation, so a malformed signal is quarantined on first sight instead of being re-skipped forever.",
         "updated_at": "2026-08-23T15:06:54Z"
+      },
+      {
+        "id": "FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "M",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "developer",
+        "title": "Cold-evict commit 38c013342e (2026-08-06) deleted 9 DONE_VERIFIED rows from done_verified[] without writing them to the monthly archive despite its own commit message -- board history silently destroyed, dependency chains broken",
+        "desc": "git show --stat 38c013342e (\"chore(tasks): cold-evict terminal done_verified + excess done tasks -> archive/2026-08.json\") = \"1 file changed, 1 insertion(+), 290 deletions(-)\" -- ONLY docs/data/orch/orch-state.json touched, docs/data/orch/archive/2026-08.json untouched, despite the commit message and the header comment of scripts/orch-cold-evict.sh both describing an atomic hot-delete+cold-write pair. Contrast the CORRECT shape at commit d4e038c7ae (2026-08-23), symmetric +171 archive / -171 hot across 2 files. 9 rows vaporized: CCATO-MCP-T1-DOMAIN-ENGINE, CCATO-MCP-T2-CLAIM-MAP-LOADER, CCATO-MCP-T4-SIGNAL-WRITER, OPS-COWORK-GUARANTEED-SLOT-INSTALL (all 4 already restored to done_verified[] this cycle by po, verbatim from git show 38c013342e^:docs/data/orch/orch-state.json, with a reconstructed verification.raw_probe honestly derived from each row's own historical status_note evidence -- see each row's recovery_note), plus 5 NOT yet restored: FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE, FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW, FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK, FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL, FIX-FB-WEEKEND-DEDUP-GATE, FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0. Live fallout confirmed: FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS (backlog) depends=[FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW], FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT (backlog) depends=[FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK,...], FIX-DEVTEAM-QADRAIN-INVOCATION-HEAD-DECOUPLED (done_verified) depends=[FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL] -- all resolve MISSING under deps_satisfied()/orch-validate Stage 1g. This is the root cause the CCATO-MCP-T3/T5/T6/T7/T8 P0 block (5 ready[] rows) was misreported as 'phantom prerequisites, possibly never scoped' -- they were fully specified, implemented, and QA-verified; the eviction actuator destroyed the evidence, not the work.",
+        "generic_mandate": "scripts/orch-cold-evict.sh's build_hot_temp()/build_cold_temp() (or equivalent write path) must NEVER report success or emit a narrating commit message unless the archive write actually landed. Add a hard post-write self-check: after any eviction pass, re-read the target archive/YYYY-MM.json and assert every evicted id is present with matching content BEFORE the hot-file rename commits, and BEFORE any commit message narrates '-> archive/YYYY-MM.json'. If the archive write fails for any reason, the hot-side deletion must also abort (all-or-nothing, matching orch-apply.sh's own atomic temp-then-rename discipline) -- a partial hot-delete-only outcome must be structurally impossible, not just detected after the fact.",
+        "ac": "AC-1 Root-cause WHY 38c013342e's archive-write half silently no-op'd (script bug, wrong invocation, manual bypass of the script, or a since-since-fixed regression) -- read the script's git history across 2026-08-06..2026-08-23 to see if this was already patched (d4e038c7ae's correct shape suggests it may have been) and if so pin the fixing commit; if NOT already fixed, that IS this row's fix. AC-2 Add the hot/cold symmetry self-check described above with a regression test (fixture eviction where the archive write is made to fail -> hot file must remain unchanged, non-zero exit). AC-3 Audit + restore (or explicitly retire, if genuinely obsolete) the remaining 5 non-CCATO/non-OPS-COWORK victims listed above, and the 3 live rows currently naming a still-missing dependency. AC-4 Re-run scripts/orch-cold-evict.sh's own test suite if one exists; if none, add one covering this exact failure mode.",
+        "files": [
+          "scripts/orch-cold-evict.sh"
+        ],
+        "reference_only_files": [
+          "docs/data/orch/archive/2026-08.json",
+          "docs/data/orch/orch-state.json"
+        ],
+        "not_duplicate_of": "Checked live 2026-08-23 across backlog[]/ready[] for COLDEVICT/COLD-EVICT/ARCHIVE-WRITE/DATA-LOSS -- nearest neighbour FIX-COLDEVICT-WITHIN-FILE-PEER-CONTENT-CAPTURE is a different failure mode (peer-write capture within one file, not hot/archive split-write asymmetry). No duplicate found.",
+        "created_by": "po (triage 2026-08-23, router-forwarded item A forensics)",
+        "created_at": "2026-08-23T15:04:02Z",
+        "updated_at": "2026-08-23T15:17:57Z"
+      },
+      {
+        "id": "FIX-DEVTEAM-MANUAL-DISPATCH-BYPASSES-DEPS-SATISFIED-GATE",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "developer",
+        "title": "scripts/lib/devteam-eligibility.jq's deps_satisfied()/effective_depends_on() correctly refuses unbuilt-dependency rows for the auto-pickers (BOUNDED-1/SLS/RLC/DRS), but ANY manual/router/PO hand-dispatch of a ready[] row runs zero dependency check -- the guard exists but the human-driven path around it is the one actually taken",
+        "desc": "Root cause exposed by the CCATO-MCP-T3..T8 P0 block 2026-08-23: the auto-picker would correctly have refused all 5 ready[] rows (deps_satisfied() treats a MISSING dependency target as unsatisfied, verified live in scripts/lib/devteam-eligibility.jq:231-236/322-325), but the router hand-dispatched dev-mcp-server directly, which runs no deps_satisfied() call at all. Compounding risk: the codebase carries a dual dependency-field naming convention (.depends vs .depends_on, both unioned by effective_depends_on()) -- 103 rows use .depends, 79 use .depends_on in orch-state.json alone (37/32 more in archive/backlog-detail.json), 1 row (OPS-BCTC-REFINE-REPASS-NONBANK-5T) sets both identically, and 1 row (IVC-PM-DECOMPOSE) sets them DIVERGENTLY (depends:[] but depends_on:[IVC-A1]) -- verified live. Any ad-hoc one-shot script (or manual reviewer) that reads only one field will silently disagree with the real eligibility library on that exact row.",
+        "generic_mandate": "Extract scripts/lib/devteam-eligibility.jq's effective_depends_on()/deps_satisfied() into a small standalone, directly-callable check (e.g. scripts/check-task-deps-satisfied.sh <task-id> [orch-state-path]) that the router/PO/any manual dispatcher can invoke as a mandatory pre-flight before spawning an implementer against a specific ready[]/backlog[] row id -- reusing the exact same jq functions already proven correct by the auto-pickers, not a re-derivation. Do NOT duplicate the union/satisfaction logic a second time.",
+        "ac": "AC-1 New callable script wraps the existing jq functions verbatim (import, do not re-write). AC-2 Wired into at least the manual-dispatch-sweep.md sub-flow (docs/agents/po/flow/manual-dispatch-sweep.md) and documented as a MANDATORY step in the dispatch skill (.claude/skills/dispatch/SKILL.md or dispatch-claim/CARD.md, whichever owns manual-spawn preflight) so a human-driven dispatch cannot skip it by construction. AC-3 Regression test: a fixture row with an unsatisfied MISSING dependency must FAIL the new check (non-zero exit / clear message), matching what the auto-picker would have done. AC-4 As a byproduct, flag (do not auto-fix) the one confirmed divergent row IVC-PM-DECOMPOSE for pm/po disposition.",
+        "files": [
+          "scripts/lib/devteam-eligibility.jq"
+        ],
+        "not_duplicate_of": "Checked live 2026-08-23 for DEPS-SATISFIED/MANUAL-DISPATCH/PRE-DISPATCH-GATE -- no existing row found.",
+        "created_by": "po (triage 2026-08-23, router-forwarded item B)",
+        "created_at": "2026-08-23T15:04:02Z",
+        "updated_at": "2026-08-23T15:17:57Z"
+      },
+      {
+        "id": "FIX-RCVERIF-GRANDFATHER-EXEMPTION-IGNORES-RETRACTION-VOID-MARKERS",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "owner": "dev-mcp-server",
+        "title": "checkVerificationGate() (orchStateSchema.ts:612) skips the raw_probe requirement for ANY id in the frozen RC_VERIF_GRANDFATHERED_IDS set with a bare set-membership check, no awareness of retraction/void/contamination markers on the row -- FU-RAG-DEPLOY-MEMORY (a live P0 with an active blocked chain) is a member and has never actually been certified",
+        "desc": "QA proved this live with a control 2026-08-23 (recorded verbatim on FU-RAG-DEPLOY-MEMORY's own qa_rcverif_grandfather_escalation_20260823T1441Z field, orch-state.json): identical `del(.verification)` + status=DONE_VERIFIED transform against a fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE -- FU-RAG-DEPLOY-MEMORY (grandfathered, orchStateSchema.ts:569) -> Stage0+1 PASS, write applied; the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK -> validator exit 2, aborted. FU-RAG-DEPLOY-MEMORY's own row already carries contamination language (po's ruling calls its 7-day durability window CONTAMINATED) and is under live unblock pressure (RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE + FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED both reference it). Live board check 2026-08-23T15:xxZ: row is currently status=QA, NOT flipped -- this is a live exploitable vulnerability, not yet an executed false-certification.",
+        "generic_mandate": "Two options, QA's own framing (pick one, or combine): (a) make checkVerificationGate() refuse the RC_VERIF_GRANDFATHERED_IDS exemption for any row whose text carries a retraction/void/contamination marker (bar section 4 of the RAG durability bar already specifies this in prose; make it code). (b) CHEAPER, QA-recommended: remove FU-RAG-DEPLOY-MEMORY from RC_VERIF_GRANDFATHERED_IDS -- it has never actually been DONE_VERIFIED (currently status=QA) so it has nothing legitimate to grandfather; the list exists to spare genuinely-pre-existing certified rows a retroactive probe, and removing a never-certified entry does not violate the list's own 'must never GROW' invariant (shrinking is strictly safer, not the prohibited direction).",
+        "ac": "AC-1 Implement (a) and/or (b) per architect/dev-mcp-server judgement; if (b) alone, add a code comment at the removal site cross-referencing this task-id so a future re-derivation of the frozen list does not re-add it blind. AC-2 Regression test: the exact QA repro (grandfathered id + del(.verification) + DONE_VERIFIED transform) must now ABORT like the non-grandfathered control did. AC-3 Until this lands, the INTERIM PROCESS CONTROL QA already wrote on the row stands: no agent may flip FU-RAG-DEPLOY-MEMORY to DONE_VERIFIED without the six canonical D5 fields AND a real verification.raw_probe.",
+        "files": [
+          "apps/mcp-server/src/infrastructure/orchStateSchema.ts"
+        ],
+        "not_duplicate_of": "This IS the row QA's escalation asked po to mint ('ASK -- out of qa's zone ... needs a minted row'); checked live for RCVERIF/GRANDFATHER -- no existing row found.",
+        "created_by": "po (triage 2026-08-23, from qa escalation qa_rcverif_grandfather_escalation_20260823T1441Z on FU-RAG-DEPLOY-MEMORY)",
+        "created_at": "2026-08-23T15:04:02Z",
+        "updated_at": "2026-08-23T15:17:57Z"
+      },
+      {
+        "id": "FIX-SYSTEMMAP-TELEGRAM-ENVVAR-NAMES-WRONG",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "XS",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "developer",
+        "title": "docs/data/system-map.json's 3 telegram channel env_var fields name variables that do not exist in .env: TELEGRAM_MARKET_CHAT_ID / TELEGRAM_WORK_CHAT_ID / TELEGRAM_BUG_CHAT_ID vs the real TELEGRAM_INFO_MARKET_GROUP_ID / TELEGRAM_INFO_WORK_CHANNEL_ID / TELEGRAM_REPORT_BUG_CHANNEL_ID",
+        "desc": "Verified live: grep .env shows the real names; system-map.json lines 1335/1357/1366 (channel entries market/work/bug) show the wrong names. Verified low CURRENT blast radius but real structural risk: the production send_telegram path (apps/mcp-server/src/interface/mcp/tools/briefings/telegramTools.ts + composition-root.ts) reads process.env with the CORRECT real names directly, not via system-map.json, so telegram sending is not currently broken. scripts/agents-flow/cowork-guaranteed-slot-firer.sh:189 already defensively falls back through BOTH names (${TELEGRAM_REPORT_BUG_CHANNEL_ID:-${TELEGRAM_BUG_CHAT_ID:-}}), correct-first, so it is also not currently broken. The risk is CLAUDE.md's explicit no-hardcode convention: system-map.json is the designated SSOT everyone is told to `jq` query for exactly this kind of value (.claude/skills/system-map-query/SKILL.md) -- any NEW agent/script/cron that trusts it for the env var NAME (not just the channel id/purpose) will resolve an undefined variable and silently fail to send.",
+        "generic_mandate": "Correct the 3 env_var field values in docs/data/system-map.json to match .env exactly. Grep-confirm zero other system-map.json fields carry the same drift (env_var is used for other services too -- check all of them while in the file, not just telegram).",
+        "ac": "AC-1 jq '.channels[] | .env_var' docs/data/system-map.json (or wherever the 3 telegram entries live) matches .env's real names exactly for market/work/bug. AC-2 Full-file sweep: confirm no other env_var entry in system-map.json has the same drift.",
+        "files": [
+          "docs/data/system-map.json"
+        ],
+        "not_duplicate_of": "Checked live 2026-08-23 for SYSTEMMAP/ENVVAR/TELEGRAM-NAME -- no existing row found.",
+        "created_by": "po (triage 2026-08-23, from developer finding D1, router-verified)",
+        "created_at": "2026-08-23T15:04:02Z",
+        "updated_at": "2026-08-23T15:17:57Z"
+      },
+      {
+        "id": "FIX-GUARD-SIGNAL-TYPE-COVERAGE-CHECK-FLAG-MISLEADING-NOT-DRYRUN",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "developer",
+        "title": "scripts/audits/guard-signal-type-coverage.sh's --check flag is a documented no-op alias (its own header, lines 79-80: 'same behaviour, --check optional'), not a dry-run -- every invocation that finds an unrouted type mints a backlog row AND writes the live board via orch-apply.sh (line ~258, ORCH_APPLY_LIVE_FILE_OVERRIDE), with no read-only mode at all",
+        "desc": "Verified by reading the script only, per this cycle's fence (script NOT executed). Usage comment explicitly states `--check` and no-flag have identical behaviour. The mint+write path at the bottom of the file (mint_routing_gap_row or equivalent, ~line 245-262) runs unconditionally on an unrouted-type finding regardless of how the script was invoked. This is a real footgun: any CI job, cron, or manual auditor invocation expecting `--check` to mean 'read-only probe' (the conventional meaning of that flag name across this codebase's other audit scripts, e.g. size-lint-justification.sh --check) will instead silently mutate docs/data/orch/orch-state.json and commit a new backlog row as a side effect of what looks like a status query. This is the exact script po's own signal-type-coverage inbox-hold (3 auto-push-abort envelopes, held pending FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort) interacts with.",
+        "generic_mandate": "Either (a) implement a REAL dry-run behind --check (report unrouted types, exit non-zero, but skip the mint+orch-apply.sh call entirely), matching the conventional meaning other --check flags in this repo already have, or (b) if the mint-on-detect behaviour is deliberate and load-bearing, rename/remove the misleading --check flag and update the header comment + all callers so nothing in the codebase can mistake this for a safe read-only probe.",
+        "ac": "AC-1 `bash scripts/audits/guard-signal-type-coverage.sh --check` no longer writes docs/data/orch/orch-state.json under any circumstance (verify via a fixture ORCH_STATE override, not the live file). AC-2 grep all callers (CI workflows, cron, other scripts) for `guard-signal-type-coverage.sh --check` and confirm none of them relied on the old mutating behaviour before landing (b), or none needs updating for (a).",
+        "files": [
+          "scripts/audits/guard-signal-type-coverage.sh"
+        ],
+        "not_duplicate_of": "Checked live 2026-08-23 for GUARD-SIGNAL-TYPE-COVERAGE/CHECK-FLAG -- no existing row found. Distinct from the already-dispatched FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort (that row is about a missing Pipeline-A routing table entry; this row is about the --check flag's own semantics being misleading, orthogonal defect in the same script).",
+        "created_by": "po (triage 2026-08-23, from developer finding D2, router-verified)",
+        "created_at": "2026-08-23T15:04:02Z",
+        "updated_at": "2026-08-23T15:17:57Z"
       }
     ],
     "closed_sprints": [
@@ -17577,29 +17686,6 @@
         "po_corroboration_20260808T1137": "LIVE CORROBORATION — this row's thesis ('dev-* writes rebuild_required into a prose note that no gate reads') just cost ~82k tokens and 72 tool calls on a single P2 refactor. FACTORY-PDF-split-handlers (review[], zone pdf-extractor) carries rebuild_required:true, set by dev-pdf-extractor at 2026-08-08T11:29:28Z, and its sibling FACTORY-PDF-extract-tesseract-config carries the same intent as free prose ('Code-only -- rebuild_required:true DEFERRED (user-gated, no container touched this cycle)') since 2026-07-24. Because no gate consumes the marker, the deploy step fell to an ad-hoc ops spawn that returned non-convergent twice without a disposition. MEASURED READ-ONLY THIS TICK: pdf-extractor :latest image sha256:b5db1296ae85 built 2026-08-08T11:34:24Z, while container vn-market-intelligence-mcp-pdf-extractor-1 still runs image sha256:a75ddd7336f0 with StartedAt 2026-08-04T14:23:22Z — built but never deployed. THIS IS THE THIRD LIVE SERVICE IN THE SAME SHAPE, which upgrades the row from a process gap to a measured fleet pattern: OPS-ALERT-ENGINE-REBUILD-STALE-IMAGE-5-COMMITS-BEHIND (backlog[]) and OPS-NEWS-FETCH-REBUILD-STALE-IMAGE-3-COMMITS-BEHIND (backlog[]) are the same defect on two other services, both also unconsumed. DESIGN INPUT FOR THE IMPLEMENTER (agent-father), from the concrete failure mode observed here: the consumer gate must discriminate on IMAGE ID — compare the running container's `.Image` against the `:latest` image id — and NOT on health status, build-log text, or tag equality. Health is the trap: the pdf-extractor container reports health=healthy while running a 3.9-day-old image, so a health-based gate returns green on exactly the state the marker exists to catch. A freshness precheck of that shape would also have short-circuited the ops agent's rebuild-on-every-resume loop, whose root cause was the absence of precisely this comparison. NO NEW ROW MINTED — this row already owns the mechanism; the two OPS-*-STALE-IMAGE rows are its per-service instances."
       },
       {
-        "id": "FIX-ACTIVE-READPATH-LIVENESS-PROBE-NO-DETECTOR",
-        "title": "No detector exercises actual data-serving read path - services can fail silently",
-        "type": "FIX",
-        "size": "M",
-        "priority": "P1",
-        "zone": "cross-service/",
-        "status": "READY",
-        "created_at": "2026-08-06T00:00:00Z",
-        "note": "NEW MINT. 2 live occurrences: kinh-dich dark 6d, news 663m. AC-3 requires probe RED against pre-fix state."
-      },
-      {
-        "id": "FIX-NEWSVPS-OVERNIGHT-PUSH-OUTAGE-663M-SILENT",
-        "title": "Harden mcp-server /api/push-news against ~11h silent hang",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "status": "READY",
-        "created_at": "2026-08-06T00:00:00Z",
-        "note": "UNBLOCKED this tick. Detection split to FIX-ACTIVE-READPATH-LIVENESS-PROBE-NO-DETECTOR.",
-        "updated_at": "2026-08-06T17:58:36Z"
-      },
-      {
         "id": "FIX-NEWSVPS-OVERNIGHT-PUSH-OUTAGE-663M-SILENT",
         "title": "news-vps push transport went silent 663 min overnight (2026-08-05T19:38:29Z -> 2026-08-06T06:42:25Z), self-recovered with a 50-item backlog flush; alarm (B-01) fired 11h into the outage, ~1 min before recovery",
         "owner": "dev-mcp-server",
@@ -17618,7 +17704,7 @@
           "docs/data/system-map.json",
           "docs/agents/system-auditor/flow/main.md"
         ],
-        "updated_at": "2026-08-06T17:39:34Z",
+        "updated_at": "2026-08-23T15:16:07Z",
         "router_restore_note": "Restored by router 2026-08-06T08:51Z — ops's commit edeba6cd9 deleted this row from backlog[] instead of updating it to BLOCKED (confirmed via git show --stat/full-diff, no re-addition anywhere in the commit or the live file). This is the only textual/status change from the original row; ops's diagnostic findings are folded into status_note above, unaltered in substance.",
         "po_disposition_20260806T1732": "PO DISPOSITION of the status_note OPEN item ('harden mcp-server push-endpoint ... / independent health probe ... own FIX row or fold?'). SPLIT, and this row is UNBLOCKED to carry half (a) only. (a) STAYS HERE — harden the mcp-server-side /api/push-news endpoint so an ~11h silent hang cannot recur: this is a code fix in apps/mcp-server/, so next_agent flips po -> dev-mcp-server and zone cross-service/ -> apps/mcp-server/ (ops's AC-1 recon already pinned the endpoint as root cause; recon is COMPLETE, nothing further is owed by ops or PO). (b) MOVES OUT — 'independent health probe so it cannot recur UNDETECTED in real time' is a detector-plane gap, not an mcp-server code change, and it is the SAME gap that let kinh-dich sit dark 6 days (telegram 4461 OPEN item: 'no detector fired for 6 days ... needs an active read-path probe, not a DB-file probe'). Folding (b) into this mcp-server row would bury a cross-service detector defect inside a single-service hardening task. (b) is now tracked as FIX-ACTIVE-READPATH-LIVENESS-PROBE-NO-DETECTOR (minted this tick). NOTE ops's AC-2 finding is accepted verbatim and NOT reopened: Tier-1/Tier-2 auditor cadence behaved as designed here; the gap is the ABSENCE of an active probe class, not a mis-tuned existing one.",
         "po_ac_scope_20260806T1732": "AC for this row, post-split: (AC-1) reproduce or characterise the /api/push-news unresponsiveness mode from the 2026-08-05T19:38Z->2026-08-06T06:42Z window (VPS cycles 2377-2416 hung with no log output, cycle 2417 recovered with items_count=50). (AC-2) add server-side bounded timeout + connection handling so a hung push returns/errors rather than hanging the caller for hours. (AC-3) RAW-verify with a fault-injected slow/hung backend that the endpoint now fails fast instead of hanging. Detection/alerting is explicitly OUT of scope — owned by FIX-ACTIVE-READPATH-LIVENESS-PROBE-NO-DETECTOR.",
