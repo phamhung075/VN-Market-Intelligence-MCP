@@ -305,3 +305,6 @@ third root cause instead of forcing a fix into a wrong hypothesis.
 - Invent distinct exit codes for AC-4's three refusal cases — no. All jq errors exit 5 and the brief's own evidence column says so; they are distinguished by message, and I wrote that down so the next reader does not "fix" it.
 **why-decision:** Why the pre-fix form read as healthy through three occurrences is the whole point, so I proved it rather than asserted it: `... | .[0]` is null on a miss, `null + {status:"DONE"}` is VALID jq, so branch A appended a synthetic id-less row to `done[]` and the write SUCCEEDED. Branch B's `map(if .id == $sid ...)` is a no-op with exit 0. 22/22 on a fixture replay of the literal shipped block, including AC-5's control showing the pre-fix `|| echo` tail exits 0 on a rejected write.
 **why-change:** Stayed inside hotfix scope — the step is not restructured and still cannot dispose of a `ready[]`/`backlog[]` parent; brief row 3 supersedes this block after row 2 ships the script.
+
+### CAP-REACHED · 2026-08-23T15:07:40Z
+Byte cap breached (lines=307/600 bytes=37804/36000). Rolled to `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-4.md` — new STEP entries go there; this file is closed to appends. No send_telegram: agent-father holds no gateway binding (docs/agents/agent-father/init.md permissions).
