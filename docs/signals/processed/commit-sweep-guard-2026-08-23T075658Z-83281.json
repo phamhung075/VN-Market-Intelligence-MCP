@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-23T07:56:58Z",
+  "payload": "[heartbeat-guard] REJECT: docs/data/auditor-tier2-last-healthy.json staged content must stay bare {last_healthy_at} — a tier-2/3 'audit completed' marker, never the tier-1 'checks{}' shape. See docs/policies/dev-standards.md CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER. Commit BLOCKED.",
+  "_processed": {
+    "fingerprint": "129aa648f26db276ff33bde7822baa3bbfaf1e5729583f4ed33f06a7b797eff6",
+    "processedAt": "2026-08-23T08:23:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
