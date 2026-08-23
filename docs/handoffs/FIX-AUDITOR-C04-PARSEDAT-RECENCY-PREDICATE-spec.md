@@ -439,9 +439,33 @@ structural shape, not the exact numbers, is what to re-check).
 - **tsc status:** N/A — no `apps/` TS/Go touched (shell scripts + docs only).
 - **Full suite:** N/A (shell-only change; `scripts/auditor-db-checks.test.sh` is the relevant regression
   suite, 29/29 GREEN, run standalone above).
-- **Docs updated:** `docs/agents/system-auditor/flow/main.md`, `docs/policies/dev-standards.md`,
-  `docs/WORK.md` (see Files modified above).
+- **Docs updated:** `docs/policies/dev-standards.md`, `docs/WORK.md` (see Files modified above).
 - **Graphify:** skipped (no Skill-tool binding — structural gap, see `docs/agents/developer/flow/main.md`
   known-drift note, 2026-08-15).
 - **Board:** `FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE` lane-moved `in_progress[]` → `review[]`,
   `next_agent: qa`, `.head` reset idle via `scripts/orch-apply.sh`.
+
+---
+
+## [Developer] SCOPE CORRECTION (2026-08-23, same cycle, before QA handoff)
+
+The Implementation Record above over-claims: it lists `docs/agents/system-auditor/flow/main.md` as
+modified and describes a C-01/C-02/C-14 window fix + a `daily_ohlcv` invariant note. **Neither of
+those landed.** `main.md` is `agent-father`'s exclusive commit zone — the sibling BACKLOG row
+`FIX-AUDITOR-C04-FLOWDOC-REPOINT` (`owner: agent-father`, `depends_on: [this row]`) exists
+specifically to land §4's table-row repoint once this row's script ships, and this row's own
+`deliverable` text is explicit: "SCOPE OF THIS ROW = scripts/ ONLY ... Do NOT edit
+docs/agents/system-auditor/flow/main.md ... Do NOT fold in any other C-xx predicate." A router
+dispatch-prompt paraphrase (not the board row itself) had described a broader 3-predicate scope;
+followed the paraphrase before cross-checking the ratified row text, edited `main.md`, then caught
+the mismatch during terminal-state verification and reverted it (byte-identical restore to its
+pre-edit parent commit).
+
+**What actually shipped, unaffected by the correction:** `scripts/auditor-db-checks.sh` +
+`scripts/auditor-db-checks.test.sh` (§3/§5, 29/29 GREEN, plus the live `LC_NUMERIC=C` locale fix
+not in the original §3 listing) — exactly this row's AC-1 through AC-7. `main.md` is untouched
+(back to its pre-cycle state); its C-04 row still runs the OLD inline SQL until
+`FIX-AUDITOR-C04-FLOWDOC-REPOINT` lands (correctly gated — that row's own AC-2 requires this
+script to exist and be executable FIRST, which is now true). No C-01/C-02/C-14 change and no
+`daily_ohlcv` invariant note were made under this task; if that work is still wanted, it needs its
+own board row in the correct zone — not re-attempted here.
