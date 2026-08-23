@@ -17321,6 +17321,47 @@
             "observed_at": "2026-08-23T20:31:12Z"
           }
         }
+      },
+      {
+        "id": "FIX-BCTC-ZEROEXTRACT-BLOCK-NO-FAILURE-RECORD-UNBOUNDED-REEXTRACT-LOOP",
+        "type": "FIX",
+        "title": "BCTC zero-extraction write-block returns with NO durable failure record, so the same (ticker,sort_key) is re-fetched+re-OCR'd indefinitely — 41 telegram BUG reports in 26h, 8/8 identical pairs on both 08-22 and 08-23",
+        "status": "DONE_VERIFIED",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "supervised": false,
+        "baseline_pass": true,
+        "created_at": "2026-08-23T15:06:54Z",
+        "created_by": "po/triage-20260823T1500Z",
+        "dedup_key": "bctc:zeroextract-block-no-failure-record-unbounded-reextract-loop",
+        "files": [
+          "apps/mcp-server/src/application/usecases/parseBctcReport.ts",
+          "apps/mcp-server/src/application/usecases/fetchParseAndStoreBctc.ts",
+          "apps/mcp-server/src/scheduler/financial-reports/pushBctcExtraction.ts"
+        ],
+        "status_note": "MEASURED AT SOURCE, not inferred. apps/mcp-server/src/application/usecases/parseBctcReport.ts:373-396 — when report.balanceSheet.totalAssets <= 0 the guard emits `logger.warn(blockMsg)` + one sendTelegramBug(blockMsg) and then `return;` BEFORE any INSERT. No row, no queue marker, no attempt counter, no dead-letter entry is persisted anywhere. The message text itself claims 'flagged for manual review' — nothing is flagged in any durable store; the ONLY artifact is a Telegram message. Consequence: whatever enqueues the extraction cannot learn the attempt failed, so it re-enqueues the same pair on the next pass. EVIDENCE (list_unresolved_reports, 117 rows, 2026-08-22T12:40Z..2026-08-23T14:55Z): 41 BCTC-class reports. 8 of 8 distinct (ticker,quarter) pairs blocked on 08-22 reappear blocked on 08-23 — FRT 2024-Q4, FRT 2025-Q4, FRT 2026-Q1, KDH 2025-Q4, KDH 2026-Q1, SHB 2025-Q4, VJC 2025-Q1, GEX 2025-Q3. Within the 08-23 13:58-14:55Z window alone each pair re-fires 2-4x (GEX 2025-Q4 4x at 14:16/14:17/14:41/14:52; GVR 2025-Q4 3x at 14:43/14:45/14:55). COST: pdf-extractor measured at 119-206% CPU continuously re-OCRing the same PDFs (5 samples over 20s, 2026-08-23T15:0xZ). NOT A MEMORY DEFECT — the same 5 samples show 377-428 MiB / 2.5GiB = 14.7-16.7%, State.OOMKilled=false, ExitCode=0; a 99.28% reading taken earlier this tick was transient and is not reproducible. THE GUARD ITSELF IS CORRECT AND MUST STAY — zero rows were corrupted, which is the guard working as designed. Fix the absence of the failure record, never the block. AC-1: a blocked zero-extraction persists a durable failure record keyed on (action_code, sort_key) carrying attempt_count + last_blocked_at + reason. AC-2: attempt_count past a bounded threshold dead-letters the pair out of the enqueue set (mirror bctcReparseJob.ts:776-803, which already implements exactly this on agent_feedback). AC-3: replay the 8 pairs above — each is attempted at most N times, then stops; telegram volume for the cohort drops to <=8 messages per cycle, not 41 per day. AC-4: the block message stops claiming 'flagged for manual review' unless a record is actually written.\n[QA] Review Record (direct-commit verify): Direct-commit verify PASS on ce63b70ca. All 4 ACs re-verified against the actual diff (not prose): AC-1 bctc_zero_extract_blocks table (PK action_code+sort_key) persists attempt_count/last_blocked_at/reason on every block. AC-2 dead-letters at BCTC_ZERO_EXTRACT_DEAD_AT_ATTEMPTS=5, mirrors bctcReparseJob.ts shape. AC-3 fetchParseAndStoreBctc.ts + pushBctcExtraction.ts both short-circuit BEFORE any OCR tier once dead-lettered (test-proven ocrTierCalls=0). AC-4 'flagged for manual review' text gated on blockResult.recorded===true, else explicit UNRECORDED (test-proven via dropped-table failure injection). Guard itself unchanged. Own test 7/7 pass (isolated). tsc 0 errors. mock-guard PASS. DDD/secret greps clean (no domain/ files touched; application-layer infra imports are this codebase's documented existing convention). Downstream consumer suites re-run isolated: pushBctcExtraction 5 files/68 pass, parseBctcReport+fetchParseAndStoreBctc 5 files/43 pass. sortKey/actionCode key format confirmed identical across write+read paths. A 124-file bctc-glob batch run showed 5 failures traced to pre-existing cross-file :memory:-DB contamination (confirmed worse, 58 fail, on parent commit ce63b70ca^ via scratch worktree) -- not a regression. OOM-gate N/A (row disclaims memory defect). BCTC-eval-gate N/A (no single report_id in scope).",
+        "updated_at": "2026-08-23T20:37:11Z",
+        "promoted_at": "2026-08-23T15:24:07Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-23T20:24:30Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "updated_by": "dev-mcp-server",
+        "dev_completed_at": "2026-08-23T15:44:21Z",
+        "dev_completed_by": "dev-mcp-server",
+        "dev_summary": "dev-mcp-server: all 4 ACs implemented+tested. New table bctc_zero_extract_blocks (schema-financial-reports.ts) + infrastructure/db/bctcZeroExtractBlocklist.ts persist attempt_count/last_blocked_at/reason on every blocked totalAssets<=0 write (AC-1), dead-letter at BCTC_ZERO_EXTRACT_DEAD_AT_ATTEMPTS=5 mirroring bctcReparseJob.ts:776-803 (AC-2). fetchParseAndStoreBctc.ts + pushBctcExtraction.ts (new isDeadLettered dep, checked before any OCR tier) short-circuit once dead-lettered, replayed for all 8 named pairs (AC-3). Block message text only claims 'flagged for manual review' when the durable write actually succeeded (AC-4). New test FIX-BCTC-ZEROEXTRACT-BLOCK-NO-FAILURE-RECORD-UNBOUNDED-REEXTRACT-LOOP.test.ts 7/7 pass. tsc clean, eslint clean, targeted BCTC suite 267 pass/0 fail/2 pre-existing skip. NOT COMMITTED: this session has no MCP tool grant (mcp__gateway__call_tool unavailable) so commit-mutex:main could not be claimed per router instructions (skip-if-claim-fails); diff left uncommitted in the working tree for dispatcher/PO to commit.",
+        "drain_source_lane": "review",
+        "qa_verified_at": "2026-08-23T20:37:10Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun test (isolated) + bun tsc --noEmit + mock-guard.sh + git show/diff-read + scratch-worktree parent-commit comparison",
+            "args": "commit=ce63b70ca; files=apps/mcp-server/src/application/usecases/parseBctcReport.ts,apps/mcp-server/src/application/usecases/fetchParseAndStoreBctc.ts,apps/mcp-server/src/scheduler/financial-reports/pushBctcExtraction.ts,apps/mcp-server/src/infrastructure/db/bctcZeroExtractBlocklist.ts,apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts",
+            "live_value_observed": "own test FIX-BCTC-ZEROEXTRACT-BLOCK...test.ts: 7 pass/0 fail; tsc: 0 errors; mock-guard: PASS; downstream consumer suites (10 files): 111 pass/0 fail; 124-file bctc-glob batch: 5 fail traced to pre-existing shared-DB contamination (parent commit shows 58 fail on same glob, worse) -- not attributable to this commit",
+            "observed_at": "2026-08-23T20:37:10Z"
+          }
+        }
       }
     ],
     "head": {
@@ -20888,39 +20929,6 @@
         "updated_by": "dev-mcp-server/next-agent-fix",
         "claimed_at": "2026-08-23T20:24:30Z",
         "claimed_by": "dev-team (review-lane qa-drain)",
-        "drain_source_lane": "review"
-      },
-      {
-        "id": "FIX-BCTC-ZEROEXTRACT-BLOCK-NO-FAILURE-RECORD-UNBOUNDED-REEXTRACT-LOOP",
-        "type": "FIX",
-        "title": "BCTC zero-extraction write-block returns with NO durable failure record, so the same (ticker,sort_key) is re-fetched+re-OCR'd indefinitely — 41 telegram BUG reports in 26h, 8/8 identical pairs on both 08-22 and 08-23",
-        "status": "QA",
-        "priority": "P0",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "po",
-        "next_agent": "qa",
-        "supervised": false,
-        "baseline_pass": true,
-        "created_at": "2026-08-23T15:06:54Z",
-        "created_by": "po/triage-20260823T1500Z",
-        "dedup_key": "bctc:zeroextract-block-no-failure-record-unbounded-reextract-loop",
-        "files": [
-          "apps/mcp-server/src/application/usecases/parseBctcReport.ts",
-          "apps/mcp-server/src/application/usecases/fetchParseAndStoreBctc.ts",
-          "apps/mcp-server/src/scheduler/financial-reports/pushBctcExtraction.ts"
-        ],
-        "status_note": "MEASURED AT SOURCE, not inferred. apps/mcp-server/src/application/usecases/parseBctcReport.ts:373-396 — when report.balanceSheet.totalAssets <= 0 the guard emits `logger.warn(blockMsg)` + one sendTelegramBug(blockMsg) and then `return;` BEFORE any INSERT. No row, no queue marker, no attempt counter, no dead-letter entry is persisted anywhere. The message text itself claims 'flagged for manual review' — nothing is flagged in any durable store; the ONLY artifact is a Telegram message. Consequence: whatever enqueues the extraction cannot learn the attempt failed, so it re-enqueues the same pair on the next pass. EVIDENCE (list_unresolved_reports, 117 rows, 2026-08-22T12:40Z..2026-08-23T14:55Z): 41 BCTC-class reports. 8 of 8 distinct (ticker,quarter) pairs blocked on 08-22 reappear blocked on 08-23 — FRT 2024-Q4, FRT 2025-Q4, FRT 2026-Q1, KDH 2025-Q4, KDH 2026-Q1, SHB 2025-Q4, VJC 2025-Q1, GEX 2025-Q3. Within the 08-23 13:58-14:55Z window alone each pair re-fires 2-4x (GEX 2025-Q4 4x at 14:16/14:17/14:41/14:52; GVR 2025-Q4 3x at 14:43/14:45/14:55). COST: pdf-extractor measured at 119-206% CPU continuously re-OCRing the same PDFs (5 samples over 20s, 2026-08-23T15:0xZ). NOT A MEMORY DEFECT — the same 5 samples show 377-428 MiB / 2.5GiB = 14.7-16.7%, State.OOMKilled=false, ExitCode=0; a 99.28% reading taken earlier this tick was transient and is not reproducible. THE GUARD ITSELF IS CORRECT AND MUST STAY — zero rows were corrupted, which is the guard working as designed. Fix the absence of the failure record, never the block. AC-1: a blocked zero-extraction persists a durable failure record keyed on (action_code, sort_key) carrying attempt_count + last_blocked_at + reason. AC-2: attempt_count past a bounded threshold dead-letters the pair out of the enqueue set (mirror bctcReparseJob.ts:776-803, which already implements exactly this on agent_feedback). AC-3: replay the 8 pairs above — each is attempted at most N times, then stops; telegram volume for the cohort drops to <=8 messages per cycle, not 41 per day. AC-4: the block message stops claiming 'flagged for manual review' unless a record is actually written.",
-        "updated_at": "2026-08-23T20:24:31Z",
-        "promoted_at": "2026-08-23T15:24:07Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-23T20:24:30Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "updated_by": "dev-mcp-server",
-        "dev_completed_at": "2026-08-23T15:44:21Z",
-        "dev_completed_by": "dev-mcp-server",
-        "dev_summary": "dev-mcp-server: all 4 ACs implemented+tested. New table bctc_zero_extract_blocks (schema-financial-reports.ts) + infrastructure/db/bctcZeroExtractBlocklist.ts persist attempt_count/last_blocked_at/reason on every blocked totalAssets<=0 write (AC-1), dead-letter at BCTC_ZERO_EXTRACT_DEAD_AT_ATTEMPTS=5 mirroring bctcReparseJob.ts:776-803 (AC-2). fetchParseAndStoreBctc.ts + pushBctcExtraction.ts (new isDeadLettered dep, checked before any OCR tier) short-circuit once dead-lettered, replayed for all 8 named pairs (AC-3). Block message text only claims 'flagged for manual review' when the durable write actually succeeded (AC-4). New test FIX-BCTC-ZEROEXTRACT-BLOCK-NO-FAILURE-RECORD-UNBOUNDED-REEXTRACT-LOOP.test.ts 7/7 pass. tsc clean, eslint clean, targeted BCTC suite 267 pass/0 fail/2 pre-existing skip. NOT COMMITTED: this session has no MCP tool grant (mcp__gateway__call_tool unavailable) so commit-mutex:main could not be claimed per router instructions (skip-if-claim-fails); diff left uncommitted in the working tree for dispatcher/PO to commit.",
         "drain_source_lane": "review"
       },
       {
