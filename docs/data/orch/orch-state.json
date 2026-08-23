@@ -87,12 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "dev-mcp-server completed FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write -> review[] (next_agent=qa); .head reset idle in same write.",
-    "updated_at": "2026-08-23T19:48:41Z",
-    "updated_by": "dev-mcp-server"
+    "status": "in_progress",
+    "active_task_id": "UC-SDF-P6",
+    "next_agent": "ba",
+    "next_action": "Design-Router Sweep claim of UC-SDF-P6 — spawn ba DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only (if either was set) preserved — do not clear.",
+    "updated_at": "2026-08-23T19:56:29Z",
+    "updated_by": "dev-team (design-router sweep)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -4114,21 +4114,6 @@
         "zone": "cross-service/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#CLEAN-HOST-DB-DECOYS",
         "verify_note": "prior_status=TODO"
-      },
-      {
-        "id": "FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
-        "priority": "high",
-        "status": "BACKLOG",
-        "title": "PLAN-ONLY: market-watcher double-fire at 16:00 weekday (offhours 0 */4 + eod 0 16 * * 1-5 overlap) — architect cadence-dedup brief → agent-father (cowork-schedule.json _maintained_by agent-father via brief only)",
-        "type": "SPRINT-S",
-        "zone": "cross-service/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
-        "verify_note": "prior_status=TODO",
-        "next_agent": "agents-architect",
-        "owner": "agents-architect",
-        "updated_by": "po",
-        "po_promote_20260815T0040": "PROMOTED low->high + next_agent null->agents-architect (was structurally undispatchable: no next_agent, no supervised/plan_only flag, so invisible to BOUNDED-1, SLS, DRS, READY-XOR and BACKLOG-XOR-GAP alike). Basis = telegram report 4887, 2026-08-14T16:17:29Z: the collision is no longer PLAN-ONLY theory, it is CONFIRMED DATA LOSS. At the 2026-08-14T16:00Z tick both market-watcher-eod (cron '0 16 * * 1-5') and market-watcher-offhours (cron '0 */4 * * *') fired and both full-overwrite the SAME docs/agent-memory/notebooks/market-watcher.md; the EOD cycle-log content is GONE — not in git history, not in the working tree, clobbered before either slot could commit. Secondary symptom of the same race: EOD's commit-mutex critical section (6cfdfb227) swept in news-scout's unrelated c268 write instead of its own notebook content. Surviving uncommitted artifacts on disk: docs/signals/price_anomaly_20260814T1600.json, docs/analysis-briefs/{DXG,VIC,VHM}.md. RECURS EVERY TRADING DAY AT 16:00Z until fixed. Scope for agents-architect: schedule de-overlap AND/OR per-slot notebook target (the two slots must not share one full-overwrite file) — NOT a commit-mutex patch, the mutex is downstream of the clobber. Related but distinct: FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (review[]) is the eod.md caveat defect, not the schedule collision.",
-        "updated_at": "2026-08-15T00:43:00Z"
       },
       {
         "id": "CLEAN-NB-TRIM-PDFX-2",
@@ -19748,32 +19733,6 @@
         ]
       },
       {
-        "id": "UC-SDF-P6",
-        "type": "FIX",
-        "title": "Collapse the scheduler-count triplication: generate cron-registry.json (tool-registry precedent) + repoint consumers",
-        "status": "READY",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P6",
-        "note": "SCOPE=verifier Rescope note. New scripts/gen-cron-registry.ts enumerating jobs from schedulerJobTable.ts + summaryJobs.ts cross-checked vs CRONS keys (NOT cronConfig scheduleCron sites — none exist); writes cron-registry.json#jobs+schedulerFileCount atomically + surgical-patches system-map crons (never full-doc overwrite). Re-baseline the 66-entry lists to code-derived count. Update pipeline-watchdog test to structural assert; keep schedulerFileCount for dailyDashboardJob; fix gen-project-stats stale probe; auditor verifies generated-vs-code.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "ba",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "po_scope_expansion_20260722": "SCOPE EXPANDED by PO cron-audit triage 2026-07-22. The generated cron-registry.json must ALSO cover the session-scoped CronCreate plane, not only the mcp-server scheduler + launchd planes. Rationale: crons currently live inside 5 separate CLI sessions (dev-team, cowork, system-audit, claude-heler, workflows-fix); CronList in one session cannot see another's, there is NO on-disk persistence under ~/.claude (verified 2026-07-22 — no crons dir; ~/.claude/jobs/ holds two stale June background-job dirs, unrelated), and when a session dies its whole loop vanishes with zero trace. This row is now PART 1 of the three-part ruling recorded in ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG.po_design_ruling, and it GATES both that row (part 2, the watchdog consumes this registry) and ARCH-CRON-THREE-TIME-BASES-UNIFY (which needs each job's declared time base recorded here). The registry is an INVENTORY so that absence becomes detectable — it is explicitly NOT a new scheduler and must not grow into one. Registry entries should also record the declared time base per job (UTC / Asia/Ho_Chi_Minh / machine-local France), since three coexist today.",
-        "updated_at": "2026-08-23T13:56:42Z",
-        "promoted_at": "2026-08-23T13:56:39Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "ba"
-      },
-      {
         "id": "FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE",
         "type": "FIX",
         "title": "cowork-slot collision probe FR-3: published:<kind>:<period> TTL=100800s (28h) exceeds the 24h daily cadence, so yesterday's still-live marker prefix-matches and blocks today's dispatch for 4h every single day",
@@ -19945,6 +19904,25 @@
         "claimed_by": "dev-team (design-router sweep)",
         "owner": "architect",
         "status_note": "BA spec DONE 2026-08-23T17:0xZ (dev-team DRS tick 16:37Z). Deliverable: docs/handoffs/UC-MDH-P2-BA-spec.md (commit 5e1015444, 98L) — FR-1..FR-7 + NFR-1..NFR-3 + DDD-layer table. Journal/notebook: 16879b851. Router re-verified at source: both commits landed, exact file sets, orch-state.json untouched (0 hits). LIVE-CONSUMER COUNT CORRECTED 9 -> 13 (classified subset of 34 raw grep hits); router independently confirmed the 4 newly-found consumers at their stated lines: docs/standards/mcp-tools.md:103, docs/protocols/smart-compact-protocol.md:31, docs/protocols/smart-compact-protocol-offload.md:16/18/25, docs/data/system-map.json:29 (the latter is the 3-way count-sync source). Also confirmed: docs/agents/digest-predict/flow/ and docs/agents/market-analyst/flow/ have ZERO hits — both already migrated to end-0-cowork/notebook-write post-TE-T05; only their init.md + tools/package docs are stale. TE-T05 DE-CONFLICTION IS MOOT, not deferred: TE-T05 landed DONE_VERIFIED 2026-08-08 and a full per-lane jq scan returns ZERO board matches for that id — there is no live deletion clause to drop, so the row scope-note item (b) is closed with no orch-apply needed. ZERO FRs IMPLEMENTED, and NOT (only) because of deploy_gate: every FR target file (agent init.md, tools/package grant docs, skill dir, guides, protocols, briefings) falls under BA forbidden_outputs docs/agents/ba/init.md:59 NEVER modify agent files, flow files, or knowledge files — router verified that line is real and structural, and ba/init.md:61 token_rule Blocked = report + EXIT, so the agent honoured its own contract exactly. FR split per spec: FR-1/2/5/7 need NO rebuild; FR-3/4/6 are deploy-gated and must land atomically in one user-approved off-market window. DISPATCH_LANE UPDATED ba -> architect IN THIS WRITE: the row still carries promoted_by=dev-team (design-router sweep), so leaving the stale lane would have let a future DRS turn re-dispatch to ba — the exact stale-cache defect tracked by FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT. OPEN BLOCKERS: B1 (-> po, PARALLEL, does not block architect) does deploy_gate=user-approved-off-market cover the whole row or only the rebuild-requiring FRs? B2 (-> architect to adjudicate) do digest-predict/init.md, market-analyst/init.md, tools/package/digest-predict.md fall in agent-father exclusive lane, splitting FR-5 across two owners? NEXT: architect designs the atomic FR-3/4/6 deploy-gated bundle + adjudicates B2, then pm decomposes per-owner."
+      },
+      {
+        "id": "FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
+        "priority": "high",
+        "status": "READY",
+        "title": "PLAN-ONLY: market-watcher double-fire at 16:00 weekday (offhours 0 */4 + eod 0 16 * * 1-5 overlap) — architect cadence-dedup brief → agent-father (cowork-schedule.json _maintained_by agent-father via brief only)",
+        "type": "SPRINT-S",
+        "zone": "cross-service/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CADENCE-COWORK-DUP-MARKET-WATCHER",
+        "verify_note": "prior_status=TODO",
+        "next_agent": "agents-architect",
+        "owner": "agents-architect",
+        "updated_by": "po",
+        "po_promote_20260815T0040": "PROMOTED low->high + next_agent null->agents-architect (was structurally undispatchable: no next_agent, no supervised/plan_only flag, so invisible to BOUNDED-1, SLS, DRS, READY-XOR and BACKLOG-XOR-GAP alike). Basis = telegram report 4887, 2026-08-14T16:17:29Z: the collision is no longer PLAN-ONLY theory, it is CONFIRMED DATA LOSS. At the 2026-08-14T16:00Z tick both market-watcher-eod (cron '0 16 * * 1-5') and market-watcher-offhours (cron '0 */4 * * *') fired and both full-overwrite the SAME docs/agent-memory/notebooks/market-watcher.md; the EOD cycle-log content is GONE — not in git history, not in the working tree, clobbered before either slot could commit. Secondary symptom of the same race: EOD's commit-mutex critical section (6cfdfb227) swept in news-scout's unrelated c268 write instead of its own notebook content. Surviving uncommitted artifacts on disk: docs/signals/price_anomaly_20260814T1600.json, docs/analysis-briefs/{DXG,VIC,VHM}.md. RECURS EVERY TRADING DAY AT 16:00Z until fixed. Scope for agents-architect: schedule de-overlap AND/OR per-slot notebook target (the two slots must not share one full-overwrite file) — NOT a commit-mutex patch, the mutex is downstream of the clobber. Related but distinct: FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK (review[]) is the eod.md caveat defect, not the schedule collision.",
+        "updated_at": "2026-08-23T19:56:23Z",
+        "promoted_at": "2026-08-23T19:56:22Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='agents-architect' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "agents-architect"
       }
     ],
     "review": [
@@ -20890,8 +20868,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-23T18:23:56Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-08-23T19:56:22Z",
+    "last_triaged_by": "dev-team (design-router sweep)",
     "in_progress": [
       {
         "id": "UC-CDC-P1",
@@ -21046,6 +21024,34 @@
         "claimed_at": "2026-08-23T15:57:35Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "blocked_reason": "SLS claim reverted, 2026-08-23T15:37Z tick: the claim was not gate-satisfied. SLS PRIMARY selects purely on promoted_by == \"dev-team (supervised-lane sweep)\" and re-validates no gate. This row was stamped 2026-08-08T04:51:52Z and carries plan_only=false, so effective_plan_only is FALSE and the row is outside SLS's supervised-AND-plan_only quarantine class. Per main.md Lane x Gate matrix, ready[] with sup=T po=F resolves to READY-XOR-SUP-OR-PLANONLY, i.e. PO's human-gated manual-dispatch sweep, NOT auto-dispatch. Not spawned. The lane-move back to ready[] was attempted and HARD-REJECTED by the row-prose-ceiling guard (live=0B, candidate=26552B): that is defect D3 in scripts/architect-20260823-orch-prose-ceiling-row-handoff.jq, 2nd live instance after UC-CCA-P3. Marked BLOCKED rather than IN_PROGRESS so wip_in_progress excludes it and the four WIP pickers stay unblocked. Unblock path: PO manual-dispatch sweep, or land the D3 fix then lane-move to ready[]."
+      },
+      {
+        "id": "UC-SDF-P6",
+        "type": "FIX",
+        "title": "Collapse the scheduler-count triplication: generate cron-registry.json (tool-registry precedent) + repoint consumers",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P6",
+        "note": "SCOPE=verifier Rescope note. New scripts/gen-cron-registry.ts enumerating jobs from schedulerJobTable.ts + summaryJobs.ts cross-checked vs CRONS keys (NOT cronConfig scheduleCron sites — none exist); writes cron-registry.json#jobs+schedulerFileCount atomically + surgical-patches system-map crons (never full-doc overwrite). Re-baseline the 66-entry lists to code-derived count. Update pipeline-watchdog test to structural assert; keep schedulerFileCount for dailyDashboardJob; fix gen-project-stats stale probe; auditor verifies generated-vs-code.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "ba",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "po_scope_expansion_20260722": "SCOPE EXPANDED by PO cron-audit triage 2026-07-22. The generated cron-registry.json must ALSO cover the session-scoped CronCreate plane, not only the mcp-server scheduler + launchd planes. Rationale: crons currently live inside 5 separate CLI sessions (dev-team, cowork, system-audit, claude-heler, workflows-fix); CronList in one session cannot see another's, there is NO on-disk persistence under ~/.claude (verified 2026-07-22 — no crons dir; ~/.claude/jobs/ holds two stale June background-job dirs, unrelated), and when a session dies its whole loop vanishes with zero trace. This row is now PART 1 of the three-part ruling recorded in ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG.po_design_ruling, and it GATES both that row (part 2, the watchdog consumes this registry) and ARCH-CRON-THREE-TIME-BASES-UNIFY (which needs each job's declared time base recorded here). The registry is an INVENTORY so that absence becomes detectable — it is explicitly NOT a new scheduler and must not grow into one. Registry entries should also record the declared time base per job (UTC / Asia/Ho_Chi_Minh / machine-local France), since three coexist today.",
+        "updated_at": "2026-08-23T19:56:29Z",
+        "promoted_at": "2026-08-23T13:56:39Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "ba",
+        "claimed_at": "2026-08-23T19:56:29Z",
+        "claimed_by": "dev-team (design-router sweep)"
       }
     ]
   },
@@ -21070,7 +21076,7 @@
         "last_served_tick": "2026-08-23T19:23:53Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-23T16:55:19Z"
+        "last_served_tick": "2026-08-23T19:56:14Z"
       },
       "qa_drain": {
         "last_served_tick": "2026-08-23T17:22:14Z"
@@ -21079,7 +21085,7 @@
         "last_served_tick": "2026-08-23T17:55:24Z"
       }
     },
-    "_updated_at": "2026-08-23T19:55:09Z",
+    "_updated_at": "2026-08-23T19:56:14Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
