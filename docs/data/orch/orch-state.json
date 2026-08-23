@@ -17447,7 +17447,10 @@
         "sprint": "FLOW-PRICE-ALPHA-LOOP",
         "depends": [],
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#RAG-FTS-BUILD-MEMORY-BOUND",
-        "updated_at": "2026-08-23T00:21:38Z"
+        "updated_at": "2026-08-23T07:58:05Z",
+        "secondary_claimed_at": "2026-08-23T07:58:04Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "po"
       },
       {
         "id": "SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD",
@@ -18266,7 +18269,7 @@
         "last_served_tick": "2026-08-23T00:18:58Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-22T21:48:55Z"
+        "last_served_tick": "2026-08-23T07:57:32Z"
       },
       "qa_drain": {
         "last_served_tick": "2026-08-22T22:22:20Z"
@@ -18275,7 +18278,7 @@
         "last_served_tick": "2026-08-22T22:52:42Z"
       }
     },
-    "_updated_at": "2026-08-23T07:54:59Z",
+    "_updated_at": "2026-08-23T07:57:32Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
