@@ -19397,10 +19397,10 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR"
       },
       {
-        "next_agent": "ops",
-        "updated_at": "2026-08-23T13:41:02Z",
-        "updated_by": "po",
-        "status_note": "PO DEPLOY-GATE 2026-08-23T13:41:01Z — DO NOT CLAIM AS QA YET. Code landed on main (2e66153fd) but apps/mcp-server/src is baked into the Docker image at build time; running image sha256:c8322d2 was built 2026-08-15T08:44Z and is 8 mcp-server/src commits behind. Live probe 2026-08-23T13:39Z: :3000/api/bctc-inspect AND :3001/dashboard/bctc-inspect both HTTP 200, 103876B, ZERO occurrences of id=quarter-filter — pre-change HTML. Working tree has 3. Chain: (1) ops rebuild single service `docker compose up -d --build mcp-server` (NEVER down&&up — kills peers; verify new image ID differs from c8322d2), (2) qa live dual-origin verify AC1-AC10 in a real browser, (3) then done_verified. AC10 is unfalsifiable until step 1 lands.",
+        "next_agent": "qa",
+        "updated_at": "2026-08-23T13:58:40Z",
+        "updated_by": "ops",
+        "status_note": "OPS REBUILD COMPLETE 2026-08-23T13:55Z — mcp-server Docker image rebuilt (new image sha256:de8e753... differs from old c8322d2...). Verified via curl: localhost:3000/api/bctc-inspect now serves HTML containing id=\"quarter-filter\" and id=\"ticker-filter\". All 12 containers healthy post-rebuild. Docker builder cache pruned (15.13GB reclaimed). Ready for QA live dual-origin AC1-AC10 verification on localhost:3000 (direct mcp-server) and localhost:3001 (frontend proxy).",
         "id": "TASK-BCTC-INSPECT-UI-FILTERS",
         "type": "TASK",
         "title": "BCTC Inspector: add 2 client-side facet filters (quarter + ticker) on doc dropdown",
