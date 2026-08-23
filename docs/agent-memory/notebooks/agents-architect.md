@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-08-22T19:19:23Z
-
-**Brief:** `docs/architecture-briefs/2026-08-22-cowork-detect-loop-flow-review.vi.md` (new — Vietnamese translation)
-
-One-off ad-hoc request (not a standing-convention change — engineering briefs stay English by default): full Vietnamese translation of the English brief, created as a NEW sibling file, original left untouched and still SSOT (linked back via a top-of-file note). Translated all prose (title, §A explanatory text + both mermaid diagrams' human-readable labels, §B per-agent mechanics, §C findings F1-F8 + legend + bottom line); left code-like tokens untranslated (file paths, cron expressions, tool/function names, JSON field/status values, agent ids, mermaid node IDs). Re-ran the same programmatic dagre-style rank-width check against the translated diagrams to confirm topology/narrowness parity with the English original (both diagrams: 11n/10e and 14n/14e, max width 2 — identical to source).
-
-**Signal dropped:** none new — same signal as prior entries, payload unchanged; this is a translation artifact, not a new architectural finding.
-
----
-
 ## 2026-08-22T19:50:40Z
 
 **Brief:** `docs/architecture-briefs/2026-08-22-cowork-detect-loop-flow-review.md` (update — new §D, English only, `.vi.md` sibling deliberately not touched)
@@ -37,3 +27,19 @@ Re-verified live at source: `docs/agents/qa/flow/main.md` vc-approved/vc-changes
 Row `FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE`: root-caused to Step 2.4's prefix-only match in `dispatch-claim/SKILL.md` (not chef.md's own exact-match gate, not any `MARKER_TTL` constant — that gate compares exact per-period strings and never collides). Ruled Axis D (cadence-bounded prefix match, keyed on `cowork-schedule.json`'s already-live `publish_date_basis` field, zero date-basis duplication, zero `apps/mcp-server` change) landed together with Axis C (AC-3/AC-5 stale-owner presence check) in one Step 2.4 revision — Axis D closes AC-1 deterministically where presence-only would only close it contingent on the claiming dispatcher session having died. New finding: `digest-sunday` carries the identical latent overlap defect at weekly scale (691200s TTL vs 604800s cadence = 86400s/week window), closed for free by the same fix.
 
 **Signal dropped:** `docs/signals/fix-cowork-published-marker-ttl-cadence-mismatch-2026-08-23T14:04:55Z.json` → pm
+
+---
+
+## 2026-08-23T14:15:51Z
+
+**Brief:** `docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md`
+
+Row `FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT` (P0, review[], qa CHANGES_REQUESTED retracting its own DONE_VERIFIED 25min earlier). qa's blocker is real and it is **my own 08-14 brief's illustrative jq** that shipped it, not agent-father's implementation (`e6a4858ae` is faithful to §5 verbatim). Reproduced end-to-end on synthetic fixtures via `ORCH_APPLY_LIVE_FILE_OVERRIDE`: on a `ready[]` parent the closeout branch's `null + {...}` yields an id-less ghost row (validator string reproduced exactly) **and** the `|| echo` tail swallows it to shell exit 0; the partial branch is a schema-valid identity write that still resets `.head`, so it applies, exits 0, and leaves the parent stale — worse than the closeout branch, and byte-for-byte the occ-1/2/3 symptom. Live census matches qa's: children[]-bearing rows backlog 10 / done 9 / ready 6 / in_progress 1.
+
+Root cause named one level up from the lane list: **a hand-enumerated lane subset substituted for the schema's lane set — in the transform AND in the 08-14 acceptance fixture that was supposed to catch it** (§8 enumerated the branch matrix, never the lane matrix; the commit's own AC says "replayed manually", and `scripts/audits/` has no pm-decompose or reachability verifier at all). So I explicitly **rejected qa's proposed fix list** (`backlog/ready/in_progress/active_sprints`) as another hand-list — it still omits `review`/`qa`/`done_verified`/`archive`/`closed_sprints`. Adopted invariant LANE-SET-DERIVATION: discover lanes structurally from `.task_board`, hand-name only the TERMINAL set, apply it as an exclusion from a live default so a future lane is searched, not skipped.
+
+Did NOT re-open the `next_agent: null` claim — independently re-verified qa's non-confirmation (`HeadSchema:324` is `.nullable()`). Separately ruled `del(.next_agent)` on the terminal row shape, and said in the brief why that is a different thing, so nobody reads it as re-litigating.
+
+Beyond the lane fix, five things the live pm cycle proved that the shipped binary cannot express: the disposition is **3-way not 2-way** (pm wrote both open states today — B DELEGATED-HELD vs C PARTIAL differ only by `hold_reason`, and C without it gets its pm re-entry hop stolen by `devteam-wrapper-autoclose.jq`, which is armed on 8 live rows incl. `IVC-PM-DECOMPOSE`); `children[]` must be the **union** with pre-existing children (4 of pm's 10 rows needed only that); closing a decomposed parent to `DONE` **strands its dependents forever** because `deps_satisfied` demands `DONE_VERIFIED`; an in-place disposition on an over-ceiling guarded-lane row hard-rejects at **+34 bytes** (21 such rows live); and the fail-loud needs 3 layers because an LLM executor ignores exit codes. Ruled the transform out of the flow doc into `scripts/pm-decompose-closeout.jq` — an inline heredoc cannot be unit-tested, which is exactly why the ACs were only ever replayed by hand and why pm hand-rolled two variants in one day. All replacement jq is fixture-executed, copy-runnable. 4 rows specified, zone-split, sequenced (agent-father XS hotfix ships now, independent of the developer script row).
+
+**Signal dropped:** `docs/signals/fix-pm-3e-closeout-lane-resolution-2026-08-23T14:15:51Z.json` → agent-father
