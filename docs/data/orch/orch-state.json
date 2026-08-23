@@ -21443,7 +21443,7 @@
         "last_served_tick": "2026-08-23T20:56:57Z"
       }
     },
-    "_updated_at": "2026-08-23T23:03:48Z",
+    "_updated_at": "2026-08-23T23:23:16Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -22137,6 +22137,49 @@
         },
         "createdAt": "2026-08-23T22:31:29Z",
         "drained_at": "2026-08-23T22:59:12Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "43e35b3a5988d3dde81b119db507660f408bead5a42a679a90ecee5b9b75a1af",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=007e33e4-b453-4bb3-8ab1-ef31495906a3 mode=warn escalated=true prior_warns=10 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-23T23:16:19Z",
+        "drained_at": "2026-08-23T23:23:16Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3502b3803ccb623d999d49abc23da236daee452cb27bc1c318d2189ae8ba6121",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c114 · 2026-08-23T21:03Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-23T23:16:23Z",
+        "drained_at": "2026-08-23T23:23:16Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "95bafa33a2a6bd4a0d144c5b4e3caa6314ee9aca1fedb68e673ba5541cbf9cf2",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "92",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-23T23:19:36Z",
+        "drained_at": "2026-08-23T23:23:16Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
