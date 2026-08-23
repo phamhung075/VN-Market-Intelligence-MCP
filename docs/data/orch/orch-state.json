@@ -18970,7 +18970,7 @@
         "last_served_tick": "2026-08-22T23:21:25Z"
       },
       "sls": {
-        "last_served_tick": "2026-08-22T20:18:57Z"
+        "last_served_tick": "2026-08-22T23:49:07Z"
       },
       "rlc": {
         "last_served_tick": "2026-08-22T20:48:05Z"
@@ -18985,7 +18985,7 @@
         "last_served_tick": "2026-08-22T22:52:42Z"
       }
     },
-    "_updated_at": "2026-08-22T23:21:25Z",
+    "_updated_at": "2026-08-23T00:17:27Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19041,6 +19041,355 @@
         "payload": "A-32-launchd FAIL: com.vn-market.docker-events STALE-ACK (tracking task absent)",
         "createdAt": "2026-08-22T23:10:43Z",
         "drained_at": "2026-08-22T23:18:30Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e9fd0b202d48423891a64acc9cdf463f4aa94c85a98492008688fad7d36febac",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "N/A",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Real estate development (residential projects, land-bank monetization) — Dat Xanh Group",
+          "customer": "Retail homebuyers, institutional JV partners for project co-development",
+          "ops": "No BCTC data available this cycle — get_bctc_full(DXG) returns \"Chua co du lieu BCTC\" despite DXG_2026_Q2.pdf and DXG_2026_Q1.pdf both on file since early Aug/mid-June respectively. 32nd+ consecutive cycle with no extraction. Sector-comparison shows DXG PE=66.5 (vs sector median 16.1, +312% premium), ROE=1.9% (below sector median 7.3%)",
+          "mgmt": "Cannot assess management track record this cycle — no fresh BCTC data. Q2-2026 filing overdue since 30/07/2026",
+          "valuation": {
+            "pe": 66.5,
+            "sector_median_pe": 16.1,
+            "pb": 1.2,
+            "sector_median_pb": 1.3,
+            "roe_sector_comp_pct": 1.9,
+            "earning_yield_pct": 1.5,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": -3.5,
+            "verdict": "AVOID"
+          },
+          "kinhdich": {
+            "que": "Di (27)",
+            "trend": "TRUNG TINH",
+            "signal": "BAN",
+            "confidence_pct": 29
+          },
+          "esc_gate": {
+            "esc_note": "ESC gate unevaluable — no BCTC extraction data (get_bctc_full returns empty). No new escalation raised; prior cash-flow-anomaly finding (bctc-analyst-20260813T001500Z.json, c162) remains PENDING dev-team pickup, not re-emitted this cycle (no guard mechanism defined for this finding type)."
+          },
+          "data_quality": {
+            "confidence_pct": 0,
+            "refine_status": "NO_DATA",
+            "known_defect": "DXG BCTC extraction returns empty despite PDF on file — standing unresolved defect, 32nd+ cycle"
+          },
+          "insider": {
+            "signal": "no significant insider activity detected"
+          },
+          "legal_risk": {
+            "findings": 0
+          },
+          "evidence_fragments_recorded": [
+            "bctc_valuation_premium(id=1376)",
+            "bctc_roe_ratio(id=1377)",
+            "bctc_report_overdue(id=1378)"
+          ],
+          "generated_at": "2026-08-23T00:20:00Z",
+          "cycle_id": "20260823-0000",
+          "slot": "bctc-analyst-slot-4"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T00:17:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fad6e041b4a61f513f14b163cc66b67b7e04c5f9abfddb388883955409c32d61",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "IT services, software exports (offshore dev for Japan/US/EU), telecom (FPT Telecom — deconsolidated to equity-method JV from 2026), education (FPT Edu)",
+          "customer": "Enterprise IT buyers (VN + offshore, Europe +44.4% growth this quarter), telecom subscribers via FTEL JV, university/K-12 students",
+          "ops": "Q1-2026 net revenue 12,480bn VND, gross margin 34.0%, operating margin 22.0%. Headline revenue -22.3% YoY is an FTEL-deconsolidation optic; like-for-like (restated) revenue +8.7% YoY, PBT +16.3% YoY, NPAT +13.8% YoY",
+          "mgmt": "EPS 1,460 VND/share (adjusted for stock-dividend split); Q2-2026 BCTC filing overdue since 30/07/2026 (24d+ lag), PDF on file since 2026-08-01 but not yet extracted (22d extraction lag)",
+          "valuation": {
+            "pe": 13.8,
+            "sector_median_pe": 17.3,
+            "pb": 3.6,
+            "sector_median_pb": 1.5,
+            "roe_sector_comp_pct": 28.3,
+            "earning_yield_pct": 7.25,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": 2.25,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Hoan (59)",
+            "trend": "THUAN LOI",
+            "signal": "GIU",
+            "confidence_pct": 100
+          },
+          "esc_gate": {
+            "esc1_trick_detection": "SCOPE-REDUCED (no Bash/Glob grant, E1 6-pass pipeline unevaluable)",
+            "esc2_balance_check": "FALSE (imbalance=0.00%)",
+            "esc3_ocf_divergence": "DATA-COVERAGE-LIMITED (3/4 quarters returned) — coverage guard held (esc-datacov:FPT:Q1-2026:ESC-3), no re-emit",
+            "esc4_nonop_share": "FALSE (non_operating_share=2.00%, threshold 15%)",
+            "esc5_refine_confidence": "TRUE (7/15 refine units confidence<0.50, min=0.45, units 0008-0014) — guard held (esc-deepdive:FPT:Q1-2026:ESC-5, expires ~2026-08-23T18:15Z)",
+            "escalation_status": "GUARD-HELD",
+            "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
+          },
+          "data_quality": {
+            "confidence_pct": 81,
+            "refine_status": "DONE",
+            "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+            "period_basis_note": "PUB-7: Q1-2026 standalone vs Q4-2025 FY-cumulative — YoY delta withheld; used pre-computed restated YoY from filing's own MD&A section instead"
+          },
+          "insider": {
+            "signal": "no significant insider activity detected"
+          },
+          "legal_risk": {
+            "findings": 0
+          },
+          "evidence_fragments_recorded": [
+            "bctc_roe_strong(id=1370)",
+            "bctc_report_overdue(id=1371)"
+          ],
+          "generated_at": "2026-08-23T00:20:00Z",
+          "cycle_id": "20260823-0000",
+          "slot": "bctc-analyst-slot-4"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T00:17:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4097f9884528c463f0e02d957ea59a6770a9096dfe7aea4e6106276774c803c6",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Steel production (construction rebar, HRC/CRC flat steel, steel pipe), agriculture (feed/livestock ancillary segment)",
+          "customer": "Domestic construction contractors, downstream steel fabricators, export buyers (HRC)",
+          "ops": "Q1-2026 net revenue 52,901bn VND, gross margin 15.8%. Operating profit line reported as 0 (0.0%) — DATA-CORRUPT, 28th+ consecutive cycle; net profit (9,056bn, 17.1% margin) exceeds gross profit, flagged passed_with_warnings by source (non-operating income likely misclassified)",
+          "mgmt": "ROE 6.5% single-quarter (12.7% sector-comp annualized) vs sector median 2.9%; Q2-2026 filing overdue since 30/07/2026 (24d+ lag), PDF on file since 2026-08-01 but not yet extracted",
+          "valuation": {
+            "pe": 14.2,
+            "sector_median_pe": 32.6,
+            "pb": 1.7,
+            "sector_median_pb": 0.9,
+            "roe_sector_comp_pct": 12.7,
+            "earning_yield_pct": 7.04,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": 2.04,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Tan (35)",
+            "trend": "THUAN LOI",
+            "signal": "GIU",
+            "confidence_pct": 63
+          },
+          "esc_gate": {
+            "esc1_trick_detection": "SCOPE-REDUCED (no Bash/Glob grant)",
+            "esc2_balance_check": "FALSE (imbalance=0.00%)",
+            "esc3_ocf_divergence": "DATA-COVERAGE-LIMITED (3/4 quarters returned) — coverage guard held (esc-datacov:HPG:Q1-2026:ESC-3), no re-emit",
+            "esc4_nonop_share": "DISCARDED (operating_profit=0, corrupt source field — ratio not computable, not a genuine 100% non-operating signal)",
+            "esc5_refine_confidence": "FALSE (report_id=null, existing_refine_status=PARTIAL, refine not DONE)",
+            "escalation_status": "NONE"
+          },
+          "data_quality": {
+            "confidence_pct": 80,
+            "refine_status": "PARTIAL",
+            "known_defect": "operating_profit / EBITDA fields report as 0 — standing corrupt-field defect, unresolved 28th+ cycle, no new dev-team pickup observed"
+          },
+          "insider": {
+            "signal": "no significant insider activity detected"
+          },
+          "legal_risk": {
+            "findings": 0
+          },
+          "evidence_fragments_recorded": [
+            "bctc_roe_ratio(id=1372)",
+            "bctc_report_overdue(id=1373)"
+          ],
+          "generated_at": "2026-08-23T00:20:00Z",
+          "cycle_id": "20260823-0000",
+          "slot": "bctc-analyst-slot-4"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T00:17:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "58542c49ef1a7f341c7072df88dac595d6815391ecc2afefc270ebd0f705f980",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "State-owned commercial banking — corporate + retail lending, trade finance, FX/treasury",
+          "customer": "Large corporate borrowers, SOEs, retail depositors/borrowers, trade-finance importers/exporters",
+          "ops": "Q1-2026 net interest income 17,421bn VND; operating profit margin 80.9%, net profit margin 54.3%. Cash and equivalents reported as 0 (bank-specific line-item quirk, not a solvency signal)",
+          "mgmt": "EPS 15 VND; ROE 4.2% single-quarter (16.7% sector-comp annualized, below sector median 17.6%); Q2-2026 filing overdue since 14/08/2026 (9d+ lag), PDF on file since 2026-08-01",
+          "valuation": {
+            "pe": 14.1,
+            "sector_median_pe": 9,
+            "pb": 2.2,
+            "sector_median_pb": 1.5,
+            "roe_sector_comp_pct": 16.7,
+            "earning_yield_pct": 7.09,
+            "max_deposit_rate_pct": 5,
+            "ey_spread_pp": 2.09,
+            "verdict": "FAIR"
+          },
+          "kinhdich": {
+            "que": "Quan (20)",
+            "trend": "TRUNG TINH",
+            "signal": "GIU",
+            "confidence_pct": 38
+          },
+          "esc_gate": {
+            "esc1_trick_detection": "SCOPE-REDUCED (no Bash/Glob grant)",
+            "esc2_balance_check": "FALSE (imbalance=0.37%, threshold 0.5%)",
+            "esc3_ocf_divergence": "FALSE (divergence_ratio=0.368 from latest-quarter ocf/ni ratio 1.368, threshold 0.40; 4/4 quarters returned)",
+            "esc4_nonop_share": "N/A (bank — non-operating-share heuristic not applicable to banking P&L structure)",
+            "esc5_refine_confidence": "FALSE (report_id=null, existing_refine_status=PARTIAL, refine not DONE)",
+            "escalation_status": "NONE"
+          },
+          "data_quality": {
+            "confidence_pct": 75,
+            "refine_status": "PARTIAL"
+          },
+          "insider": {
+            "signal": "no significant insider activity detected"
+          },
+          "legal_risk": {
+            "findings": 0
+          },
+          "evidence_fragments_recorded": [
+            "bctc_roe_strong(id=1374)",
+            "bctc_report_overdue(id=1375)"
+          ],
+          "generated_at": "2026-08-23T00:20:00Z",
+          "cycle_id": "20260823-0000",
+          "slot": "bctc-analyst-slot-4"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T00:17:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fdf71cbfe4e61f43fcc025266da488f68dbd15dcb22d75e0ff41c73dd1ed170f",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-3dc53eb7",
+          "head_sha": "3dc53eb71140018740ac13c291b0a2696500c74d",
+          "run_id": 32605399628,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/32605399628",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "signal-type-coverage-guard",
+              "conclusion": "failure",
+              "jobId": 97109603385
+            }
+          ],
+          "fingerprint": "bdd6e4a0e2898683fb89b8304d12ee3774fee4f30ed694423d7a7706999f9c2f",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 3dc53eb71140018740ac13c291b0a2696500c74d: signal-type-coverage-guard",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-22T23:48:25Z",
+        "drained_at": "2026-08-23T00:17:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "22c4ba86b7c99408d9250c01f164188bff8d817d7d108c7d543d2ca5192e2770",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-23T00:09:26Z",
+          "matched_slots": [
+            "bctc-analyst-slot-4",
+            "alert-commander-critical"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-4",
+            "alert-commander-critical"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md",
+            "docs/agents/alert-commander/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 6,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "weekend",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [
+            "news-scout-offhours",
+            "market-watcher-offhours"
+          ],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-4": "cadence",
+            "alert-commander-critical": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-4": 1440,
+            "alert-commander-critical": null
+          },
+          "last_fired_timestamp": "2026-08-23T00:09:20Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-4",
+            "alert-commander-critical"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "00:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 32,
+          "note": "bctc-analyst-slot-4 (cadence 1440m, bctc-offmarket) + alert-commander-critical (cron 0 */4) both spawned; no signal drain, no one-shots this tick"
+        },
+        "createdAt": "2026-08-23T00:09:26Z",
+        "drained_at": "2026-08-23T00:17:27Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

@@ -1,0 +1,64 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-23T00:09:26Z",
+    "matched_slots": [
+      "bctc-analyst-slot-4",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-4",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "weekend",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-4": "cadence",
+      "alert-commander-critical": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-4": 1440,
+      "alert-commander-critical": null
+    },
+    "last_fired_timestamp": "2026-08-23T00:09:20Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-4",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "00:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 32,
+    "note": "bctc-analyst-slot-4 (cadence 1440m, bctc-offmarket) + alert-commander-critical (cron 0 */4) both spawned; no signal drain, no one-shots this tick"
+  },
+  "priority": "low",
+  "createdAt": "2026-08-23T00:09:26Z",
+  "_processed": {
+    "fingerprint": "22c4ba86b7c99408d9250c01f164188bff8d817d7d108c7d543d2ca5192e2770",
+    "processedAt": "2026-08-23T00:17:27Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

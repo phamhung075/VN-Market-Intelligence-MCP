@@ -1,0 +1,59 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "State-owned commercial banking — corporate + retail lending, trade finance, FX/treasury",
+  "customer": "Large corporate borrowers, SOEs, retail depositors/borrowers, trade-finance importers/exporters",
+  "ops": "Q1-2026 net interest income 17,421bn VND; operating profit margin 80.9%, net profit margin 54.3%. Cash and equivalents reported as 0 (bank-specific line-item quirk, not a solvency signal)",
+  "mgmt": "EPS 15 VND; ROE 4.2% single-quarter (16.7% sector-comp annualized, below sector median 17.6%); Q2-2026 filing overdue since 14/08/2026 (9d+ lag), PDF on file since 2026-08-01",
+  "valuation": {
+    "pe": 14.1,
+    "sector_median_pe": 9,
+    "pb": 2.2,
+    "sector_median_pb": 1.5,
+    "roe_sector_comp_pct": 16.7,
+    "earning_yield_pct": 7.09,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pp": 2.09,
+    "verdict": "FAIR"
+  },
+  "kinhdich": {
+    "que": "Quan (20)",
+    "trend": "TRUNG TINH",
+    "signal": "GIU",
+    "confidence_pct": 38
+  },
+  "esc_gate": {
+    "esc1_trick_detection": "SCOPE-REDUCED (no Bash/Glob grant)",
+    "esc2_balance_check": "FALSE (imbalance=0.37%, threshold 0.5%)",
+    "esc3_ocf_divergence": "FALSE (divergence_ratio=0.368 from latest-quarter ocf/ni ratio 1.368, threshold 0.40; 4/4 quarters returned)",
+    "esc4_nonop_share": "N/A (bank — non-operating-share heuristic not applicable to banking P&L structure)",
+    "esc5_refine_confidence": "FALSE (report_id=null, existing_refine_status=PARTIAL, refine not DONE)",
+    "escalation_status": "NONE"
+  },
+  "data_quality": {
+    "confidence_pct": 75,
+    "refine_status": "PARTIAL"
+  },
+  "insider": {
+    "signal": "no significant insider activity detected"
+  },
+  "legal_risk": {
+    "findings": 0
+  },
+  "evidence_fragments_recorded": [
+    "bctc_roe_strong(id=1374)",
+    "bctc_report_overdue(id=1375)"
+  ],
+  "generated_at": "2026-08-23T00:20:00Z",
+  "cycle_id": "20260823-0000",
+  "slot": "bctc-analyst-slot-4",
+  "_processed": {
+    "fingerprint": "58542c49ef1a7f341c7072df88dac595d6815391ecc2afefc270ebd0f705f980",
+    "processedAt": "2026-08-23T00:17:27Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

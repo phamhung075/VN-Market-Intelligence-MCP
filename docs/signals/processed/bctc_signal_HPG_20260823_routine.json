@@ -1,0 +1,60 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Steel production (construction rebar, HRC/CRC flat steel, steel pipe), agriculture (feed/livestock ancillary segment)",
+  "customer": "Domestic construction contractors, downstream steel fabricators, export buyers (HRC)",
+  "ops": "Q1-2026 net revenue 52,901bn VND, gross margin 15.8%. Operating profit line reported as 0 (0.0%) — DATA-CORRUPT, 28th+ consecutive cycle; net profit (9,056bn, 17.1% margin) exceeds gross profit, flagged passed_with_warnings by source (non-operating income likely misclassified)",
+  "mgmt": "ROE 6.5% single-quarter (12.7% sector-comp annualized) vs sector median 2.9%; Q2-2026 filing overdue since 30/07/2026 (24d+ lag), PDF on file since 2026-08-01 but not yet extracted",
+  "valuation": {
+    "pe": 14.2,
+    "sector_median_pe": 32.6,
+    "pb": 1.7,
+    "sector_median_pb": 0.9,
+    "roe_sector_comp_pct": 12.7,
+    "earning_yield_pct": 7.04,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pp": 2.04,
+    "verdict": "FAIR"
+  },
+  "kinhdich": {
+    "que": "Tan (35)",
+    "trend": "THUAN LOI",
+    "signal": "GIU",
+    "confidence_pct": 63
+  },
+  "esc_gate": {
+    "esc1_trick_detection": "SCOPE-REDUCED (no Bash/Glob grant)",
+    "esc2_balance_check": "FALSE (imbalance=0.00%)",
+    "esc3_ocf_divergence": "DATA-COVERAGE-LIMITED (3/4 quarters returned) — coverage guard held (esc-datacov:HPG:Q1-2026:ESC-3), no re-emit",
+    "esc4_nonop_share": "DISCARDED (operating_profit=0, corrupt source field — ratio not computable, not a genuine 100% non-operating signal)",
+    "esc5_refine_confidence": "FALSE (report_id=null, existing_refine_status=PARTIAL, refine not DONE)",
+    "escalation_status": "NONE"
+  },
+  "data_quality": {
+    "confidence_pct": 80,
+    "refine_status": "PARTIAL",
+    "known_defect": "operating_profit / EBITDA fields report as 0 — standing corrupt-field defect, unresolved 28th+ cycle, no new dev-team pickup observed"
+  },
+  "insider": {
+    "signal": "no significant insider activity detected"
+  },
+  "legal_risk": {
+    "findings": 0
+  },
+  "evidence_fragments_recorded": [
+    "bctc_roe_ratio(id=1372)",
+    "bctc_report_overdue(id=1373)"
+  ],
+  "generated_at": "2026-08-23T00:20:00Z",
+  "cycle_id": "20260823-0000",
+  "slot": "bctc-analyst-slot-4",
+  "_processed": {
+    "fingerprint": "4097f9884528c463f0e02d957ea59a6770a9096dfe7aea4e6106276774c803c6",
+    "processedAt": "2026-08-23T00:17:27Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
