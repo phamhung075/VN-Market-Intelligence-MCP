@@ -1966,3 +1966,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: B-12 · news stale 61min (SLA 30min)
+**Severity:** CRITICAL | **Date:** 2026-08-23 | **Status:** OPEN
+**Location:** data/fetch
+**Details:** News data freshness exceeded SLA
+**Impact:** News data unavailable to dashboard
+**Root cause:** News fetch pipeline delay
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-23T14:43:29Z (signal sys-20260823T144251-2cd3, system-auditor -> po, dedup_key=data_stale:news:B-12, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
