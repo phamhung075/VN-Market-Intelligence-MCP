@@ -1,4 +1,4 @@
-<!-- size-justification: 275L (corrected from stale 227L claim, drift undocumented pre-2026-07-25) — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate + mock-production guard (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval/mock-guard checklist steps are tightly sequential and cannot decompose without losing gate ordering; mandatory decision-journal per-task step at verdict routing. +11L: WF-1 error-boundary STOP-RELEASE block (AC-WF1-3). +4L: WF-3 INV-GATEWAY-1 annotations. +1L: FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L APPEND class annotation. UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK 2026-07-22: +42L — Direct-Commit Verify entry point (verify-committed/-approved/-changes), the hard qa-side prerequisite for dev-team's Review-Lane QA-Drain (every one of its 32 live source rows has branch:null, incompatible with the `pipeline` JUMP-TO's git-checkout precondition); additive only, `pipeline`/`approved`/`changes-requested` unchanged. QA-FLOW-QUALITY-AUDIT-CHECKLIST-FRESHNESS 2026-07-25: +1L — thin dispatch row to new sub-flow `./quality-audit.md` (checklist-demand sourcing + freshness verification + gap-escalation now durable, was ephemeral router-prompt-only; lazy-load pattern, no logic inlined here). 2026-08-12 doc-self-heal (FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS verify-committed cycle): +2L — Direct-Commit Verify step 4 gained a non-bun-zone substitution note (pytest/mypy for Python microservices, run inside the zone's actual deployed image, never host/sandbox — host dependency drift silently produced a false 195/195-green claim on rag-service). FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW 2026-08-15 (agent-father): +~30L — new "OOM-Class Durability Gate" section in Pipeline (detection rule + D1-D5 summary, full spec delegated to new SSOT `docs/standards/oom-durability-verification-bar.md`, generalised fleet-wide from RAG-MEM-DURABILITY-BAR v2) + a cross-reference paragraph in Direct-Commit Verify (the observed path for every OOM-class row so far) gating `vc-approved`; closes 5 defects (docker-inspect-only signal, unsettled window, restart-laundering, negative-only criterion, stale grandfather-exemption) proven live on the rag-service OOM incident. -->
+<!-- size-justification: 275L (corrected from stale 227L claim, drift undocumented pre-2026-07-25) — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate + mock-production guard (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval/mock-guard checklist steps are tightly sequential and cannot decompose without losing gate ordering; mandatory decision-journal per-task step at verdict routing. +11L: WF-1 error-boundary STOP-RELEASE block (AC-WF1-3). +4L: WF-3 INV-GATEWAY-1 annotations. +1L: FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L APPEND class annotation. UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK 2026-07-22: +42L — Direct-Commit Verify entry point (verify-committed/-approved/-changes), the hard qa-side prerequisite for dev-team's Review-Lane QA-Drain (every one of its 32 live source rows has branch:null, incompatible with the `pipeline` JUMP-TO's git-checkout precondition); additive only, `pipeline`/`approved`/`changes-requested` unchanged. QA-FLOW-QUALITY-AUDIT-CHECKLIST-FRESHNESS 2026-07-25: +1L — thin dispatch row to new sub-flow `./quality-audit.md` (checklist-demand sourcing + freshness verification + gap-escalation now durable, was ephemeral router-prompt-only; lazy-load pattern, no logic inlined here). 2026-08-12 doc-self-heal (FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS verify-committed cycle): +2L — Direct-Commit Verify step 4 gained a non-bun-zone substitution note (pytest/mypy for Python microservices, run inside the zone's actual deployed image, never host/sandbox — host dependency drift silently produced a false 195/195-green claim on rag-service). FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW 2026-08-15 (agent-father): +~30L — new "OOM-Class Durability Gate" section in Pipeline (detection rule + D1-D5 summary, full spec delegated to new SSOT `docs/standards/oom-durability-verification-bar.md`, generalised fleet-wide from RAG-MEM-DURABILITY-BAR v2) + a cross-reference paragraph in Direct-Commit Verify (the observed path for every OOM-class row so far) gating `vc-approved`; closes 5 defects (docker-inspect-only signal, unsettled window, restart-laundering, negative-only criterion, stale grandfather-exemption) proven live on the rag-service OOM incident. FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR 2026-08-23 (agent-father): +50L — `vc-approved`/`vc-changes` verdict exits gained literal `jq | orch-apply.sh` executable blocks (both previously prose-only, no write actuator at all — 4 confirmed stranded rows permanently consumed `qa[]` `QA_CAP=10` slots) + a self-verify re-read on each, matching the `FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR` template (commit `3ce726a6e`). -->
 
 # QA — Main Flow
 
@@ -200,7 +200,32 @@ No `ISSUE` set AND all checks pass AND (if OOM-class) the Durability Gate D1-D5 
 → journal (MANDATORY): skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<id>"]
 
 <!-- jump:vc-approved -->
-**verify-committed-approved:** append `[QA] Review Record (direct-commit verify)` — since there is no handoff file, append to the row's own `status_note` field instead of `docs/handoffs/TASK_NNN.md`. Flip `status: QA -> DONE_VERIFIED`, move `.task_board.qa[] -> .task_board.done_verified[]`, IN THE SAME `orch-apply.sh` write (status-flip = lane-move MUST, `execute-tier.md` § MUST — CANONICAL:SSOT-STATUSFLIP-LANEMOVE). No merge/push/branch-delete step — the work is already on `main`.
+**verify-committed-approved:** append `[QA] Review Record (direct-commit verify)` — since there is no handoff file, append to the row's own `status_note` field instead of `docs/handoffs/TASK_NNN.md`. Flip `status: QA -> DONE_VERIFIED`, move `.task_board.qa[] -> .task_board.done_verified[]`, IN THE SAME `orch-apply.sh` write (status-flip = lane-move MUST, `execute-tier.md` § MUST — CANONICAL:SSOT-STATUSFLIP-LANEMOVE). No merge/push/branch-delete step — the work is already on `main`. **Executable form (FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR, 2026-08-23 — the prose above states intent, this is the literal mechanism; NEVER treat the prose as self-actuating):**
+```bash
+task_id="<id>"                                   # the row's own id
+REVIEW_RECORD_NOTE="<the Review Record text described above>"
+NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+jq --arg id "$task_id" --arg now "$NOW" --arg note "$REVIEW_RECORD_NOTE" '
+  (.task_board.qa // []) as $q
+  | ([$q[] | select(.id == $id)][0]) as $t
+  | if $t == null then error("id not in qa[] -- refuse")
+    elif ($t.status // null) != "QA" then error("status != QA (\($t.status)) -- refuse")
+    else . end
+  | .task_board.qa = [$q[] | select(.id != $id)]
+  | .task_board.done_verified = ((.task_board.done_verified // []) + [
+      ($t + {
+        status: "DONE_VERIFIED",
+        next_agent: null,
+        qa_verified_at: $now,
+        status_note: (($t.status_note // "") + "\n[QA] Review Record (direct-commit verify): " + $note)
+      })
+    ])
+' "$PROJECT_ROOT/docs/data/orch/orch-state.json" | bash "$PROJECT_ROOT/scripts/orch-apply.sh"
+
+# Self-verify (mandatory — RETURN may not assert the lane-move without this passing):
+jq -e --arg id "$task_id" '.task_board.done_verified[] | select(.id == $id) | .status == "DONE_VERIFIED"' \
+  "$PROJECT_ROOT/docs/data/orch/orch-state.json" || { echo "LANE-MOVE NOT PERSISTED"; exit 1; }
+```
 ```
 ## RETURN
 DONE: Task <id> verified against main HEAD commit <commit> — no branch/merge needed (already on main)
@@ -209,7 +234,32 @@ PIPELINE: continue
 ```
 
 <!-- jump:vc-changes -->
-**verify-committed-changes:** append the failing check(s)/`ISSUE` to the row's `status_note` (file:line where applicable). Move `.task_board.qa[] -> .task_board.review[]` (back to review, status `QA -> REVIEW`), stamp `redispatch_count += 1` (mirrors the dead-worker resume convention already live on board rows, e.g. `UC-SDF-P4`'s `redispatch_count`/`resume_note`). Route to the row's own `owner` field, NOT `fixer` — there is no task branch for a fixer to work on; the owner must apply a NEW direct commit.
+**verify-committed-changes:** append the failing check(s)/`ISSUE` to the row's `status_note` (file:line where applicable). Move `.task_board.qa[] -> .task_board.review[]` (back to review, status `QA -> REVIEW`), stamp `redispatch_count += 1` (mirrors the dead-worker resume convention already live on board rows, e.g. `UC-SDF-P4`'s `redispatch_count`/`resume_note`). Route to the row's own `owner` field, NOT `fixer` — there is no task branch for a fixer to work on; the owner must apply a NEW direct commit. **Executable form (FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR, 2026-08-23 — same mechanism requirement as `vc-approved` above, this path previously had ZERO `orch-apply.sh` mention at all):**
+```bash
+task_id="<id>"                                   # the row's own id
+ISSUE_NOTE="<the failing check(s)/ISSUE text described above>"
+NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+jq --arg id "$task_id" --arg now "$NOW" --arg note "$ISSUE_NOTE" '
+  (.task_board.qa // []) as $q
+  | ([$q[] | select(.id == $id)][0]) as $t
+  | if $t == null then error("id not in qa[] -- refuse")
+    elif ($t.status // null) != "QA" then error("status != QA (\($t.status)) -- refuse")
+    else . end
+  | .task_board.qa = [$q[] | select(.id != $id)]
+  | .task_board.review = ((.task_board.review // []) + [
+      ($t + {
+        status: "REVIEW",
+        next_agent: $t.owner,
+        redispatch_count: (($t.redispatch_count // 0) + 1),
+        status_note: (($t.status_note // "") + "\n[QA] CHANGES_REQUESTED (direct-commit verify): " + $note)
+      })
+    ])
+' "$PROJECT_ROOT/docs/data/orch/orch-state.json" | bash "$PROJECT_ROOT/scripts/orch-apply.sh"
+
+# Self-verify (mandatory — RETURN may not assert the lane-move without this passing):
+jq -e --arg id "$task_id" '.task_board.review[] | select(.id == $id) | .status == "REVIEW"' \
+  "$PROJECT_ROOT/docs/data/orch/orch-state.json" || { echo "LANE-MOVE NOT PERSISTED"; exit 1; }
+```
 ```
 ## RETURN
 DONE: Direct-commit verify failed for <id> — see status_note for issues
