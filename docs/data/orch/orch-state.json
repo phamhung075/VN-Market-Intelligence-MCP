@@ -14101,6 +14101,31 @@
         "created_by": "po (triage 2026-08-23, from bctc-analyst self-report, router item 9)",
         "created_at": "2026-08-23T15:20:00Z",
         "updated_at": "2026-08-23T15:27:20Z"
+      },
+      {
+        "id": "FIX-DONELANE-SECONDARY-DRAIN-BLIND-TO-ACTIVE-SPRINTS-NESTED-DONE-TASKS",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "developer",
+        "title": "SECONDARY drain's DONE->QA-verify candidate set is flat review[]+done[] only -- 4 DONE-status tasks nested in active_sprints[].tasks[] can never reach DONE_VERIFIED, permanently stalling 3 live sprint rows",
+        "desc": "deps_satisfied() (scripts/lib/devteam-eligibility.jq:320-325) requires exactly DONE_VERIFIED -- plain DONE never satisfies. scripts/devteam-review-claim-secondary-drain.jq:130-142 is the one producer that promotes DONE rows toward DONE_VERIFIED, and its candidate set is literally `[(.task_board.review // [])... , (.task_board.done // [])...]` -- active_sprints is not referenced anywhere in the file. FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION (archived DONE_VERIFIED, archive/2026-08.json) closed only this flat-lane half of the class; the live FIX-DONELANE-DEVTEAM-FLOWDOC-PROSE-SYNC is a docs-prose-sync companion, not a coverage fix, and does not touch this gap either. VERIFIED LIVE 2026-08-23: 8 rows total block on a DONE (not DONE_VERIFIED) dependency. 4 are reachable (flat done[], self-heal one per SECONDARY-drain invocation): FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS (done.0) -> blocks FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT; TASK_RUNIDLE-1-AUDIT (done.1) -> blocks TASK_RUNIDLE-2-REDESIGN + TASK_RUNIDLE-3-STALENESS; FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT (done.2) -> blocks FIX-COWORK-STEP0A-TOPO-DRAIN-STATUS-CONTRACT; FIX-USDVND-THRESHOLD-SSOT (done.16) -> blocks FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE. 4 are UNREACHABLE, nested in active_sprints[].tasks[], and will never be picked by any existing drain: VMT-D-VPSFETCH (VN-MACRO-TOOLING sprint, active_sprints.1.tasks.4) -> blocks VMT-3a-MACRO-INDICATORS-PMI [BLOCKED]; SSOT-W1-ZOD-VALIDATOR-CLI (SSOT-INTEGRITY-PERIMETER sprint, active_sprints.3.tasks.1) -> blocks SSOT-W1-BASH-SHIM [TODO]; BCTC-REFINE-T1-CHUNKSIZE + BCTC-REFINE-T2-SLOTS (BCTC-REFINE-STALL-RETRIGGER sprint, active_sprints.4.tasks.6/.7) -> blocks BCTC-REFINE-T3-WATCHDOG [BACKLOG]. This class is INVISIBLE to orch-validate.mjs Stage 1g by construction -- the dependency IDs all resolve to a real row (no MISSING), just to a non-satisfying status, so Stage 1g's dangling-ref report never flags it. All 4 unreachable blockers sit inside ACTIVE (not dormant/closed) sprints, which is the opposite of the stale-work pattern most eviction/drain gaps target.",
+        "generic_mandate": "Extend the SAME SECONDARY-drain mechanism (scripts/devteam-review-claim-secondary-drain.jq candidate-set construction, ~line 130-142) to also walk active_sprints[].tasks[] entries with status==\"DONE\", using the identical QA-verify promotion path already built for the flat review[]/done[] lanes -- do NOT design a new drain script or a parallel mechanism. The sprint-task nesting (task belongs to a parent sprint id, lives in a .tasks[] array instead of a flat lane) is the only structural difference; the QA-claim/promote/lane-move semantics should be reusable as-is or with minimal adaptation.",
+        "ac": "AC-1 A DONE-status task nested in any active_sprints[].tasks[] array is included in the SECONDARY drain's candidate set exactly like a flat done[] row, and is eligible for the same one-per-invocation QA-verify promotion. AC-2 Regression test: a fixture active_sprints entry with one DONE nested task must produce a candidate identical in shape to a flat done[] DONE row feeding the same downstream promotion logic. AC-3 Live check after landing: the 4 named unreachable blockers above (VMT-D-VPSFETCH, SSOT-W1-ZOD-VALIDATOR-CLI, BCTC-REFINE-T1-CHUNKSIZE, BCTC-REFINE-T2-SLOTS) become drain-eligible; re-verify their 3 dependent rows (VMT-3a-MACRO-INDICATORS-PMI, SSOT-W1-BASH-SHIM, BCTC-REFINE-T3-WATCHDOG) reach deps_satisfied()==true once their respective blockers land DONE_VERIFIED. AC-4 No regression to the existing flat review[]/done[] candidate set or its `effective_next_agent(...) != \"qa\"` exclusion filter.",
+        "files": [
+          "scripts/devteam-review-claim-secondary-drain.jq"
+        ],
+        "reference_only_files": [
+          "scripts/lib/devteam-eligibility.jq",
+          "docs/data/orch/orch-state.json"
+        ],
+        "not_duplicate_of": "FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION closed only the flat-done[] half (archived DONE_VERIFIED, archive/2026-08.json) -- explicitly does not cover active_sprints nesting. FIX-DONELANE-DEVTEAM-FLOWDOC-PROSE-SYNC is a docs-prose-sync companion row, not a coverage fix. Checked live 2026-08-23 for DONELANE/ACTIVE-SPRINT/NESTED-DONE -- no existing row covers this gap.",
+        "created_by": "po (coordinator-directed mint 2026-08-23, generalized from FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT incidental finding)",
+        "created_at": "2026-08-23T15:50:00Z",
+        "updated_at": "2026-08-23T15:47:50Z"
       }
     ],
     "closed_sprints": [
