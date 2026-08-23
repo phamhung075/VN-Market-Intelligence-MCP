@@ -1,4 +1,4 @@
-<!-- size-justification: 210L — single PM orchestration flow; TASKS.md gate, handoff template, multi-zone handling, DASHBOARD CAS guard, heartbeat lock protocol, commit convention, pre-commit mutex gate, mandatory decision-journal step, and HSC-3 terminal-lane bloat gate + HSC-6 done_verified eviction hook are all non-separable PM responsibilities executed in sequence. UC-DTL-P9 2026-07-23: Sprint closeout step — atomic sprint-terminal-flip + guarded head-idle via scripts/pm-closeout-head-idle.jq, replaces the old two-write flip+idle sequence (+11L). FIX-PM-HEAD-RESET-SHAPE 2026-08-11: +18L (229→247, live line-count at edit time; the "210L" figure above was already stale pre-edit, not corrected here — out of this task's scope) — new Step 4c (Non-closeout head release), inserted after Step 4b, before the Signal Queue Write Guard section: full `.head =` null-out (status/active_task_id/next_agent/updated_at/updated_by) whenever a mid-sprint decomposition mints child task(s) without triggering §5's Sprint closeout, matching `docs/agents/dev-team/flow/main.md`'s WF-1c ready-lane convention byte-for-byte instead of the previous undocumented partial status-only flip (2 confirmed occurrences, `feedback_pm_midsprint_decomposition_leaves_head_stale_not_closeout`: UC-RDL-P4 — head left fully untouched; FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE commit `95540b50d` — status flipped, active_task_id/next_agent left dangling, router repair `82ec1f018`). Inlined directly in this file (no new scripts/ file — agent-father's commit_zone excludes scripts/, TE-T02 precedent). FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT 2026-08-23 (agent-father, per architecture brief `docs/architecture-briefs/2026-08-14-pm-decompose-closeout-reachability-and-nextagent-mint.md`): +28L (247→275) — Steps 3d + old-4c relocated to BEFORE the decomposition-mint invocation's own `## RETURN` (previously the RETURN sat between 3c and 3d, leaving 3d/4/4b/4c all textually unreachable — 3 confirmed occurrences of stale `.head`/parent-row/child-`next_agent`); old-4c renamed 3e and gained a `DECOMPOSITION_COMPLETE` closeout-vs-partial branch (parent → `done[]` + `.children` write, or row-level `next_agent` correction) folding in the write-side half of `FIX-DEVTEAM-EPICWRAPPER-PARENTHOOD-FIELD-DRIFT-AUTOCLOSE-BLIND`; Steps 4/4b relocated under a new `## Task Lifecycle — Later-Cycle Steps` heading (bounds the later, separate re-invocation segment); Step 3's canonical task-JSON shape note gained `next_agent` as conditionally-mandatory-at-mint with a routing-intent-source order. -->
+<!-- size-justification: 210L — single PM orchestration flow; TASKS.md gate, handoff template, multi-zone handling, DASHBOARD CAS guard, heartbeat lock protocol, commit convention, pre-commit mutex gate, mandatory decision-journal step, and HSC-3 terminal-lane bloat gate + HSC-6 done_verified eviction hook are all non-separable PM responsibilities executed in sequence. UC-DTL-P9 2026-07-23: Sprint closeout step — atomic sprint-terminal-flip + guarded head-idle via scripts/pm-closeout-head-idle.jq, replaces the old two-write flip+idle sequence (+11L). FIX-PM-HEAD-RESET-SHAPE 2026-08-11: +18L (229→247, live line-count at edit time; the "210L" figure above was already stale pre-edit, not corrected here — out of this task's scope) — new Step 4c (Non-closeout head release), inserted after Step 4b, before the Signal Queue Write Guard section: full `.head =` null-out (status/active_task_id/next_agent/updated_at/updated_by) whenever a mid-sprint decomposition mints child task(s) without triggering §5's Sprint closeout, matching `docs/agents/dev-team/flow/main.md`'s WF-1c ready-lane convention byte-for-byte instead of the previous undocumented partial status-only flip (2 confirmed occurrences, `feedback_pm_midsprint_decomposition_leaves_head_stale_not_closeout`: UC-RDL-P4 — head left fully untouched; FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE commit `95540b50d` — status flipped, active_task_id/next_agent left dangling, router repair `82ec1f018`). Inlined directly in this file (no new scripts/ file — agent-father's commit_zone excludes scripts/, TE-T02 precedent). FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT 2026-08-23 (agent-father, per architecture brief `docs/architecture-briefs/2026-08-14-pm-decompose-closeout-reachability-and-nextagent-mint.md`): +28L (247→275) — Steps 3d + old-4c relocated to BEFORE the decomposition-mint invocation's own `## RETURN` (previously the RETURN sat between 3c and 3d, leaving 3d/4/4b/4c all textually unreachable — 3 confirmed occurrences of stale `.head`/parent-row/child-`next_agent`); old-4c renamed 3e and gained a `DECOMPOSITION_COMPLETE` closeout-vs-partial branch (parent → `done[]` + `.children` write, or row-level `next_agent` correction) folding in the write-side half of `FIX-DEVTEAM-EPICWRAPPER-PARENTHOOD-FIELD-DRIFT-AUTOCLOSE-BLIND`; Steps 4/4b relocated under a new `## Task Lifecycle — Later-Cycle Steps` heading (bounds the later, separate re-invocation segment); Step 3's canonical task-JSON shape note gained `next_agent` as conditionally-mandatory-at-mint with a routing-intent-source order. FIX-PM-3E-FAILLOUD-HOTFIX 2026-08-23 (agent-father, architecture brief `docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md` §4.2 L1+L2, brief §6 row 1): +66L (275→341, mostly the inline rationale comment) — Step 3e's two branches gain jq refuse-guards (parent missing / cross-lane duplicate / already terminal / empty CORRECTED_NEXT_AGENT) and their bare `|| echo` tails become `|| { echo >&2; exit 1; }`, matching Step 3c's own idiom in this same file. Also fixes a THIRD defect the brief did not have, found by executing the block against a live-shaped fixture: both branches iterated `.tasks` unguarded while 2 of 19 live `active_sprints[]` carry no `tasks` key, so jq died with "Cannot iterate over null" and the SUCCESS path was unrunnable in both branches. HOTFIX ONLY — the step is NOT restructured and still cannot dispose of a `ready[]`/`backlog[]` parent; brief row 3 supersedes this block once row 2 ships `scripts/pm-decompose-closeout.jq`. -->
 # Project Manager — Main Flow
 
 **Tools:** `docs/agents/tools/package/pm.md`
@@ -127,6 +127,44 @@ pm decides, explicitly, whether Steps 2/3/3c above delegated ALL of the dispatch
 Both branches ALSO perform the `.head` full null-out inherited from the old Step 4c guard (content unchanged) — fires ONLY if `.head.active_task_id` (freshly re-read, never cached) still names `$SPRINT_ID`, and ONLY if §5's Sprint closeout has not already written `.head` this same cycle (never write `.head` twice in one cycle). Two confirmed occurrences pre-dated this guard (`feedback_pm_midsprint_decomposition_leaves_head_stale_not_closeout`): UC-RDL-P4 2026-08-11 — `.head` left fully untouched; FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE 2026-08-11T19:27Z, commit `95540b50d` — only `.head.status` flipped, `active_task_id`/`next_agent` left dangling, forcing router repair `82ec1f018`. A THIRD occurrence (UC-CCA-P2, 2026-08-14) additionally left the parent row itself stale with ZERO 4c write attempt and all 7 minted children `next_agent`-omitted — the reachability defect this Step 3e relocation exists to close.
 
 ONE `orch-apply.sh` write, same shape both branches:
+
+<!-- FIX-PM-3E-FAILLOUD-HOTFIX (2026-08-23, agent-father; architecture brief
+     docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md
+     §4.2 rows L1+L2, brief §6 row 1). HOTFIX SCOPE ONLY — this converts a SILENT corruption/no-op
+     into a VISIBLE refusal. It deliberately does NOT make Step 3e work on a parent sitting in
+     `ready[]`/`backlog[]`; that is brief row 3 (`FIX-PM-3E-FLOWDOC-REPOINT-3WAY-DISPOSITION`),
+     which supersedes this block once row 2 ships `scripts/pm-decompose-closeout.jq`. Do not
+     restructure the step here.
+
+     WHAT WAS BROKEN, both measured on the live doc:
+     L1 — the `true` branch resolved `$row` with `... | .[0]`, which yields `null` when the parent
+     is in NEITHER `in_progress[]` NOR `active_sprints[].tasks[]`. `null + {status:"DONE", ...}`
+     is a VALID jq expression, so the branch happily appended a synthetic id-less row to `done[]`
+     and the write went through. The `false` branch was worse: its two `map(if .id == $sid ...)`
+     calls are a silent no-op on a miss — nothing written, exit 0, step reports success. Three
+     confirmed occurrences (UC-RDL-P4, FIX-BCTC-FALLBACK-SHELL-..., UC-CCA-P2) all read as clean
+     cycles for exactly this reason.
+     L2 — both tails were bare `|| echo "..."`. `echo` exits 0, so an `orch-apply.sh` rejection
+     (validator / CAS mismatch / prose-ceiling) was swallowed and the step still reported success;
+     architect measured `wrapped exit=0` today. Step 3c in THIS SAME FILE already uses the correct
+     `|| { echo "..." >&2; exit 1; }` idiom — 3e had diverged from its own neighbour.
+
+     THIRD DEFECT, NOT IN THE BRIEF, found only by EXECUTING this block against a live-shaped
+     fixture: both branches iterated `.tasks` unguarded (`.tasks |= map(...)`), and 2 of the 19 live
+     `active_sprints[]` entries (`SPRINT-CCATO-TRUTHGATE-MCP-NATIVE`, `SYSREMAKE-P2-STRUCTURAL-
+     REMAKE-ROUTE`) have NO `tasks` key at all. jq raised "Cannot iterate over null" and exited 5
+     BEFORE producing any candidate — i.e. Step 3e's SUCCESS path was structurally unrunnable on
+     today's board, in both branches. Now guarded with `if (.tasks|type)=="array" ... else . end`,
+     which also leaves those two tasks-less sprints byte-identical rather than materialising an
+     empty `tasks: []` on them. Shipping the fail-loud tails without this would have converted a
+     silent no-op into a loud refusal on EVERY invocation — visible, but still never working.
+
+     ON "DISTINCT EXITS" (brief AC-4): all three refusals exit 5 (jq's error code), and the brief's
+     own evidence column says so. They are distinguished by MESSAGE, not by code — do not invent
+     per-case exit codes here. The pipeline still ends non-zero on every one of them: jq exits 5
+     having written nothing, `orch-apply.sh` receives empty stdin and exits 3, and the pipeline's
+     status is the last command's, so L2's `exit 1` fires without needing `pipefail`. -->
+
 ```bash
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 head_active=$(jq -r '.head.active_task_id' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
@@ -135,25 +173,53 @@ if [ "$DECOMPOSITION_COMPLETE" = "true" ]; then
      --argjson children "$CHILD_IDS_JSON" \
      '(.task_board.in_progress // []) as $ip
       | (.task_board.active_sprints // []) as $as
-      | ( [$ip[], ($as[]?.tasks[]?)] | map(select(.id == $sid)) | .[0] ) as $row
+      | ( [$ip[], ($as[]?.tasks[]?)] | map(select(.id == $sid)) ) as $hits
+      | ( [ (.task_board.done // [])[], (.task_board.done_verified // [])[] ]
+          | map(select(.id == $sid)) ) as $terminal_hits
+      | if ($hits | length) > 1 then
+          error("[pm 3e] parent \($sid) resolves in \($hits|length) places across in_progress[]/active_sprints[].tasks[] -- ambiguous, refuse")
+        elif ($hits | length) == 0 and ($terminal_hits | length) > 0 then
+          error("[pm 3e] parent \($sid) is already in a TERMINAL lane (done[]/done_verified[]) but Step 3e was invoked with an open disposition -- refuse, do not re-close")
+        elif ($hits | length) == 0 then
+          error("[pm 3e] parent \($sid) NOT FOUND in in_progress[] or active_sprints[].tasks[] -- refuse. This step cannot dispose of a ready[]/backlog[] parent; see FIX-PM-3E-CLOSEOUT-SCRIPT-LANE-AGNOSTIC")
+        else . end
+      | ( $hits[0] ) as $row
       | .task_board.done = ((.task_board.done // []) + [ $row + {
             status: "DONE", closed_at: $t, children: $children } ])
       | .task_board.in_progress = [ $ip[] | select(.id != $sid) ]
-      | .task_board.active_sprints = [ $as[] | .tasks |= map(select(.id != $sid)) ]
+      | .task_board.active_sprints = [ $as[]
+          | if (.tasks | type) == "array" then .tasks |= map(select(.id != $sid)) else . end ]
       | (if $head_active == $sid then
            .head = {status:$s, active_task_id:null, next_agent:null, updated_at:$t, updated_by:$u}
          else . end)' \
     "$PROJECT_ROOT/docs/data/orch/orch-state.json" | bash "$PROJECT_ROOT/scripts/orch-apply.sh" \
-    || echo "[pm] decomposition-closeout ABORTED for ${SPRINT_ID} — orch-apply.sh failed, live SSOT untouched"
+    || { echo "[pm] decomposition-closeout ABORTED for ${SPRINT_ID} — refused above or orch-apply.sh rejected; live SSOT untouched" >&2; exit 1; }
 else
   jq --arg s "idle" --arg t "$NOW" --arg u "pm" --arg sid "$SPRINT_ID" --arg na "$CORRECTED_NEXT_AGENT" --arg head_active "$head_active" \
-     '(.task_board.in_progress // []) |= map(if .id == $sid then .next_agent = $na else . end)
-      | (.task_board.active_sprints // []) |= map(.tasks |= map(if .id == $sid then .next_agent = $na else . end))
+     '(.task_board.in_progress // []) as $ip
+      | (.task_board.active_sprints // []) as $as
+      | ( [$ip[], ($as[]?.tasks[]?)] | map(select(.id == $sid)) ) as $hits
+      | ( [ (.task_board.done // [])[], (.task_board.done_verified // [])[] ]
+          | map(select(.id == $sid)) ) as $terminal_hits
+      | if ($hits | length) > 1 then
+          error("[pm 3e] parent \($sid) resolves in \($hits|length) places across in_progress[]/active_sprints[].tasks[] -- ambiguous, refuse")
+        elif ($hits | length) == 0 and ($terminal_hits | length) > 0 then
+          error("[pm 3e] parent \($sid) is already in a TERMINAL lane (done[]/done_verified[]) but Step 3e was invoked with an open disposition -- refuse, do not reopen")
+        elif ($hits | length) == 0 then
+          error("[pm 3e] parent \($sid) NOT FOUND in in_progress[] or active_sprints[].tasks[] -- refuse. The old form silently no-op'd here and reported success; see FIX-PM-3E-CLOSEOUT-SCRIPT-LANE-AGNOSTIC")
+        elif (($na // "") | length) == 0 then
+          error("[pm 3e] CORRECTED_NEXT_AGENT is empty for \($sid) -- refuse. TaskSchema.next_agent is z.string().optional(), NOT nullable; writing null aborts the whole write at the validator")
+        else . end
+      | (.task_board.in_progress // []) |= map(if .id == $sid then .next_agent = $na else . end)
+      | (.task_board.active_sprints // []) |= map(
+          if (.tasks | type) == "array"
+          then .tasks |= map(if .id == $sid then .next_agent = $na else . end)
+          else . end)
       | (if $head_active == $sid then
            .head = {status:$s, active_task_id:null, next_agent:null, updated_at:$t, updated_by:$u}
          else . end)' \
     "$PROJECT_ROOT/docs/data/orch/orch-state.json" | bash "$PROJECT_ROOT/scripts/orch-apply.sh" \
-    || echo "[pm] non-closeout head+next_agent correction ABORTED for ${SPRINT_ID} — orch-apply.sh failed, live SSOT untouched"
+    || { echo "[pm] non-closeout head+next_agent correction ABORTED for ${SPRINT_ID} — refused above or orch-apply.sh rejected; live SSOT untouched" >&2; exit 1; }
 fi
 ```
 FULL null-out ONLY on `.head` (whole-object `.head =` replace) — matches `docs/agents/dev-team/flow/main.md`'s WF-1c ready-lane convention byte-for-byte, never a partial field-wise status-only flip. Do NOT reuse `scripts/pm-closeout-head-idle.jq` here — that script ALSO flips the sprint's own `.status` to `"DONE"` unconditionally, which is wrong for the `DECOMPOSITION_COMPLETE=false` branch (the row legitimately stays `IN_PROGRESS` — only children moved). No-op-safe by construction: if `.head.active_task_id` no longer matches `$SPRINT_ID` (a concurrent write already moved it on), the `.head` branch is simply skipped — safe to run unconditionally at the end of every planning cycle.
