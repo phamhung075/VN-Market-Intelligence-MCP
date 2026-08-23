@@ -77,7 +77,16 @@
      re-ran Step 5.3 by hand once they arrived. Detector match logic (>=2-DISTINCT-marker
      threshold, fail-open negative control) is UNCHANGED — only WHEN its result is applied
      (pre-write WON_SLOTS filter vs. post-write last_fired de-stamp, last-fired.md AC-P1-7-4)
-     and WHO applies it changes. -->
+     and WHO applies it changes.
+     FIX-CHEF-MARKER-KEY-ANCHOR-3 2026-08-23 (agent-father, architect brief
+     2026-08-06-cowork-marker-lifecycle-anchor-and-release.md §2 Component A bullet 2): +51L
+     (534→585) — Step 5.2's ENTRY_PROMPT composition gains SCHEDULED_UTC_LINE, appended to BOTH branches
+     alongside SESSION_ID_LINE, propagating the tick's NOMINAL cron fire instant
+     (`slot.scheduled_utc_time`, produced by ANCHOR-1) so no spawned worker re-derives its
+     published-marker window from its own wall clock. ONE site, no is_catchup branch — every
+     guaranteed slot inherits the token. Omitted (not nulled) when the producer degrades. Plus a
+     consumer-contract paragraph naming the wired consumers. In-place growth in the existing
+     Step 5.2 block, no new section. -->
 <!-- BGFAN-1: every Agent spawn in this file MUST use run_in_background=true; UC-CDC-P4 bounds
      CONCURRENCY ACROSS batches via Step 5.1/5.2, it does not relax background=true within a
      batch. Canonical rule + batcher carve-out → docs/protocols/agent-chaining-protocol.md
@@ -298,10 +307,37 @@ two divergent copies):**
      never read it — no behavioral risk, since IDENTITY_PREAMBLE already established the same
      unconditional-injection precedent for the off-flow guard. -->
 
+<!-- FIX-CHEF-MARKER-KEY-ANCHOR-3 (2026-08-23, agent-father; architect brief
+     docs/architecture-briefs/2026-08-06-cowork-marker-lifecycle-anchor-and-release.md §2
+     Component A bullet 2): SCHEDULED_UTC_LINE propagates the tick's NOMINAL cron fire instant to
+     the spawned worker so the worker never re-reads the wall clock to derive its own published-
+     marker window. Root defect: a retry that lands after midnight UTC derives a DIFFERENT
+     MARKER_KEY than the on-time peer for the SAME window — the 2026-07-22 19:55:41Z / 20:01:30Z
+     two-peer straddle, and the 2026-08-06T06:37:39Z post-host-sleep retry that re-anchored to
+     "today" instead of the missed 2026-08-05T19:45Z window.
+
+     SINGLE SITE, NO is_catchup BRANCH — deliberate, per the brief. This is the ONE place the
+     spawn prompt is composed, so adding the token here reaches chef-morning/eod/evening,
+     digest-daily, digest-sunday, fb-daily and tnb-audit identically; a per-agent opt-in would be
+     the same "documented consumer, no documented producer" class that SESSION_ID_LINE's own scope
+     decision above rejects. Live and catch-up slots share the field AND the derivation
+     (`cowork-catchup-predicate.mostRecentCronFireBefore`) — see match-slots.md.
+
+     OMITTED, NOT NULLED, when the producer degrades: `slot.scheduled_utc_time` is null on a
+     malformed/absent cron, an unavailable predicate module, or no fire inside the bounded 8-day
+     lookback. Emitting the literal "scheduled_utc=null" would hand the worker a value that parses
+     as present-but-garbage; emitting nothing lets each worker's own absent-branch fall back to
+     `date -u` exactly as it did before this token existed. -->
+
 ```
 SESSION_ID_LINE = "\n\nCoordination: owner_client_session=" + $CLAUDE_CODE_SESSION_ID
 # ^ $CLAUDE_CODE_SESSION_ID here = cowork-team's own resolved value (see comment above) —
 #   NEVER emit the literal unresolved token text into ENTRY_PROMPT.
+
+if slot.scheduled_utc_time is present and non-null and non-empty:
+  SCHEDULED_UTC_LINE = "\nscheduled_utc=" + slot.scheduled_utc_time
+else:
+  SCHEDULED_UTC_LINE = ""     # producer degraded — say nothing, never "scheduled_utc=null"
 
 if slot.trigger_prompt is present and non-empty:
   PROMPT_FILE = match slot.trigger_prompt's FIRST LINE against /^run\s+(\S+)/, capture group 1
@@ -315,20 +351,35 @@ if slot.trigger_prompt is present and non-empty:
     })   # per-work-item token was already claimed in Step 4.6 — release it since no spawn occurs
     continue to next slot in batch — do NOT spawn
 
-  ENTRY_PROMPT = IDENTITY_PREAMBLE + slot.trigger_prompt + SESSION_ID_LINE
+  ENTRY_PROMPT = IDENTITY_PREAMBLE + slot.trigger_prompt + SESSION_ID_LINE + SCHEDULED_UTC_LINE
 else:
   # No trigger_prompt on this slot — compose from flow_path (legacy fallback; every live
   # slot as of this fix carries trigger_prompt, so this branch is defensive only)
-  ENTRY_PROMPT = IDENTITY_PREAMBLE + "run " + slot.flow_path + "  slot=" + slot.slot_id + SESSION_ID_LINE
+  ENTRY_PROMPT = IDENTITY_PREAMBLE + "run " + slot.flow_path + "  slot=" + slot.slot_id + SESSION_ID_LINE + SCHEDULED_UTC_LINE
 ```
 
-Note: `IDENTITY_PREAMBLE` is prepended and `SESSION_ID_LINE` is appended to BOTH branches (never
-written into `slot.trigger_prompt` stored in `cowork-schedule.json` itself — that field stays
-untouched so the consistency check above and `scripts/agents-flow/cowork-match-slots.js`'s
-`extractPromptFlowPath()` keep matching its literal first line unmodified; appending
-`SESSION_ID_LINE` at the END of `ENTRY_PROMPT`, after the consistency check already ran against
-`slot.trigger_prompt`'s own first line, keeps that FIRST-LINE match unaffected too). Both the
-preamble and the session-id line are composed into `ENTRY_PROMPT` only, at spawn time.
+Note: `IDENTITY_PREAMBLE` is prepended and `SESSION_ID_LINE` + `SCHEDULED_UTC_LINE` are appended to
+BOTH branches (never written into `slot.trigger_prompt` stored in `cowork-schedule.json` itself — that
+field stays untouched so the consistency check above and `scripts/agents-flow/cowork-match-slots.js`'s
+`extractPromptFlowPath()` keep matching its literal first line unmodified; appending both lines at the
+END of `ENTRY_PROMPT`, after the consistency check already ran against `slot.trigger_prompt`'s own first
+line, keeps that FIRST-LINE match unaffected too). The preamble, the session-id line and the
+scheduled-utc line are composed into `ENTRY_PROMPT` only, at spawn time.
+
+Resulting tail of every spawn prompt (live and catch-up alike):
+
+```
+Coordination: owner_client_session=<resolved session id>
+scheduled_utc=2026-08-23T13:47:00.000Z
+```
+
+**Consumer contract:** a worker parses `scheduled_utc=<ISO8601>` with the same technique it already uses
+for `slot=<slot_id>`, and derives its window key from the token's leading 10 characters — NOT from its
+own `date -u` call. If the token is absent (genuine ad-hoc/manual invocation with no scheduler tick, or
+a degraded producer), the worker falls back to `date -u +%Y-%m-%d` unchanged. Live consumers wired so
+far: `docs/agents/unified-agent/flow/chef.md` Step 0.5, `docs/agents/digest-predict/flow/main.md`
+(FIX-CHEF-MARKER-KEY-ANCHOR-4). Every other guaranteed slot receives the token today and can adopt it
+with a two-line change to its own Step-0.5-equivalent — nothing here needs editing again to enable one.
 
 **Spawn:**
 

@@ -23,7 +23,16 @@
      product/customer/ops/mgmt/source_file/ts only), so downstream steps can bind conviction direction
      to bctc-analyst's own machine-readable "do NOT post bullish signal" gate. The enforcement
      mechanism (new chef-dish.md Step 7.5 sub-check (h) VALUATION_GATE_OK) lives in that file, not
-     here — see its own header note, same date. No logic changed elsewhere in this file. -->
+     here — see its own header note, same date. No logic changed elsewhere in this file.
+     FIX-CHEF-MARKER-KEY-ANCHOR-4 2026-08-23 (agent-father, architect brief
+     2026-08-06-cowork-marker-lifecycle-anchor-and-release.md §2 Component A bullet 3): +37L
+     (307→344; the "224L" baseline above had drifted to 307 from untouched interim edits, not
+     corrected here). Step 0.5 parses the `scheduled_utc=<ISO8601>` prompt token that ANCHOR-3 now
+     appends to every spawn, and derives CYCLE_DATE_UTC from its date portion instead of an
+     unconditional `date -u`. The `date -u` branch is RETAINED for genuine ad-hoc/manual invocations
+     that carry no token. Closes the retry-drift half of the marker-key defect: a fire that crosses
+     midnight UTC now mints the SAME MARKER_KEY as its on-time peer, so the Phase-1 dedup probe can
+     actually see it. Parsing reuses the existing `slot=<slot_id>` technique — no new machinery. -->
 > Parent: [./main.md](./main.md)
 
 # Unified Agent — Chef Flow (TNB 6-Layer Recipe) — Gate Phase
@@ -129,16 +138,44 @@ Replace `<agent-id>` with `unified-agent`. On gateway dead: write signal file + 
      actual marker-key basis (same invariant as FIX-CADENCE-TNB-AUDIT-WEEKLY-MARKER-BLOCKS-DAILY-CRON:
      the config declaring the key basis must never drift from the code deriving the key). -->
 
-Determine the slot being executed from the invocation prompt (`slot=<slot_id>`).
+Determine the slot being executed from the invocation prompt (`slot=<slot_id>`) and the tick's nominal
+fire instant from the same prompt (`scheduled_utc=<ISO8601>`).
+
+<!-- FIX-CHEF-MARKER-KEY-ANCHOR-4 (2026-08-23, agent-father; architect brief
+     docs/architecture-briefs/2026-08-06-cowork-marker-lifecycle-anchor-and-release.md §2
+     Component A bullet 3): CYCLE_DATE_UTC must be ANCHORED to the window this fire belongs to, not
+     to whatever instant the executing agent happens to be running at. `date -u` alone is correct on
+     an on-time fire and WRONG on every retry that crosses midnight UTC: the retry mints a different
+     MARKER_KEY than its on-time peer for the SAME window, so the duplicate-publish gate cannot see
+     the peer and both publish. Two live incidents: the 2026-07-22 19:55:41Z / 20:01:30Z two-peer
+     straddle, and the 2026-08-06T06:37:39Z post-host-sleep retry that re-anchored to "today" instead
+     of the missed 2026-08-05T19:45Z window.
+
+     `scheduled_utc` is supplied by cowork-team's spawn-fanout.md Step 5.2 (SCHEDULED_UTC_LINE) for
+     EVERY guaranteed slot, live or catch-up, and traces back to ONE derivation shared with
+     `catchup_raw` (`cowork-catchup-predicate.mostRecentCronFireBefore`) — so a retry and its on-time
+     peer cannot disagree. Parsed with the SAME technique already used for `slot=<slot_id>` one line
+     above; no new parsing machinery.
+
+     The `date -u` fallback is RETAINED and is not dead code: a genuine ad-hoc/manual/pilot
+     invocation has no scheduler tick and therefore no token (the chef equivalent of
+     system-auditor's AUDIT_TIER=4 manual path), and spawn-fanout OMITS the token rather than
+     emitting `scheduled_utc=null` when its producer degrades. Absent token → behave exactly as
+     before this fix. -->
 
 ```
 SLOT_ID        = <slot_id from prompt>   # e.g. chef-morning | chef-eod | chef-evening | chef-intraday
+SCHEDULED_UTC  = <ISO8601 from prompt token `scheduled_utc=`, or null if the token is absent>
 WORK_DATE      = TZ="Asia/Ho_Chi_Minh" date +%Y-%m-%d   # VN date GMT+7 — intraday multi-fire keying ONLY
 VN_HOUR        = TZ="Asia/Ho_Chi_Minh" date +%H          # VN hour (00-23) — intraday multi-fire keying ONLY
-CYCLE_DATE_UTC = date -u +%Y-%m-%d   # UTC calendar date of the current tick — CANONICAL, pinned once.
-                                      # Reused verbatim (never recomputed) at Step 7.6 (filepath +
-                                      # metadata.date_vn), Step 8b (notebook header), and the
-                                      # single-fire MARKER_KEY below. See fix comment above.
+
+# CYCLE_DATE_UTC — CANONICAL, pinned ONCE here. Reused verbatim (never recomputed) at Step 7.6
+# (filepath + metadata.date_vn), Step 8b (notebook header), and the single-fire MARKER_KEY below.
+if SCHEDULED_UTC is present and non-empty:
+  CYCLE_DATE_UTC = SCHEDULED_UTC[0:10]     # date portion of the NOMINAL fire instant — window-anchored,
+                                            # identical for an on-time fire and its late retry
+else:
+  CYCLE_DATE_UTC = date -u +%Y-%m-%d       # no scheduler tick (ad-hoc/manual) — unchanged legacy path
 
 # Derive cadence from cowork-schedule.json
 SLOT_RECORD   = jq --arg s "$SLOT_ID" '.slots[] | select(.slot_id == $s)' docs/data/cowork-schedule.json

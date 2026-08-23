@@ -44,14 +44,26 @@ Universal entry. Picks the right sub-flow based on current time. Crons and ad-ho
 # Only execute this gate if NOT Sunday (Sunday path has its own Published Marker Gate below)
 IF weekday != Sunday:
 
-  # UTC_DATE = the YYYY-MM-DD portion of the actual current UTC instant.
-  # PRIMARY source: cycle-bootstrap UTC-now timestamp (the "now" field / current UTC datetime
-  #   recorded at the top of this session) — take only the date part (before the 'T').
-  # SECONDARY source: call get_current_date if that tool is available and returns today's date.
+  # UTC_DATE = the YYYY-MM-DD the marker key is anchored to.
+  # PRIMARY source (FIX-CHEF-MARKER-KEY-ANCHOR-4, 2026-08-23): the `scheduled_utc=<ISO8601>`
+  #   token in this invocation's own prompt — take its leading 10 characters. cowork-team's
+  #   spawn-fanout.md Step 5.2 appends it to EVERY spawn, live or catch-up, and it carries the
+  #   cron's NOMINAL fire instant, so a retry that crosses midnight UTC still mints the SAME
+  #   MARKER_KEY as its on-time peer instead of silently retargeting to "today" and double-
+  #   publishing. Parse it the same way the slot id is parsed.
+  # SECONDARY source (token absent — genuine ad-hoc/manual invocation with no scheduler tick, or
+  #   a degraded producer; spawn-fanout OMITS the token rather than emitting `scheduled_utc=null`):
+  #   cycle-bootstrap UTC-now timestamp (the "now" field / current UTC datetime recorded at the
+  #   top of this session) — take only the date part (before the 'T').
+  # TERTIARY source: call get_current_date if that tool is available and returns today's date.
   # FORBIDDEN: do NOT use get_week_period.periodStart — that is the Sunday week-anchor and is
   #   the same value Mon–Sat, which would produce duplicate keys across the whole week.
   # Each calendar day MUST yield a distinct UTC_DATE (e.g. Mon=2026-06-23, Tue=2026-06-24 …).
-  UTC_DATE = <YYYY-MM-DD from UTC-now, e.g. "2026-06-24">
+  SCHEDULED_UTC = <ISO8601 from prompt token `scheduled_utc=`, or null if the token is absent>
+  if SCHEDULED_UTC is present and non-empty:
+    UTC_DATE = SCHEDULED_UTC[0:10]                 # window-anchored — retry-safe
+  else:
+    UTC_DATE = <YYYY-MM-DD from UTC-now, e.g. "2026-06-24">
 
   MARKER_KEY = "published:digest-daily:" + UTC_DATE
 
@@ -101,7 +113,20 @@ IF weekday != Sunday:
      Weekly slot: ttl_seconds ~8d (691200) per spawn-fanout.md
 
      IMPORTANT: do NOT call `date +%G-W%V` or any local shell date to compute the week key.
-     Always use get_week_period and key on periodKey. -->
+     Always use get_week_period and key on periodKey.
+
+     FIX-CHEF-MARKER-KEY-ANCHOR-4 (2026-08-23, agent-father) — DELIBERATELY NOT APPLIED HERE, and
+     that is not an oversight. The daily gate above now anchors on the `scheduled_utc=` prompt
+     token because it was reading a wall clock. This weekly gate never was: it keys on
+     `get_week_period().periodKey`, a SERVER-side week anchor, which is already the "own the window
+     value, don't re-derive it" property the token exists to provide. Swapping in a locally-derived
+     week from `scheduled_utc` would replace a server SSOT with agent-side arithmetic and directly
+     contradict the IMPORTANT directive immediately above. Residual, explicitly out of scope for
+     ANCHOR-4 and NOT silently assumed away: a catch-up retry that lands after the week boundary
+     still gets the NEW week's periodKey from the server, so the cross-week retry case remains open
+     — it needs `get_week_period` to accept an `as_of` instant, which is a server change, not a
+     flow-doc change. -->
+
 
 ```
 SLOT_ID = "digest-sunday"

@@ -54,11 +54,11 @@
      verdict — unified-agent HAS the Bash grant, so this is executable, not aspirational; (2)
      SCHEMA_OK widens to metadata's own key-set and the dish_type enum, the exact two gaps qa proved;
      (3) new SLOT → dish_type mapping table in Step 7.6 — three different names exist for the same
-     four slots (init.md schedule keys, chef.md:135 SLOT_ID, the dish_type enum) and copying the
+     four slots (init.md schedule keys, chef.md Step 0.5 SLOT_ID, the dish_type enum) and copying the
      schedule key into the payload is the root cause of 8 live off-enum dish_type values. Calibrated
      by replaying the shipped command over all 69 live dishes: 50 pass, 19 fail, zero exit-code
      inconsistency. Flagged NOT fixed (needs its own row, changes the on-disk naming contract every
-     consumer globs): chef.md:135 and .claude/agents/unified-agent.md define FILEPATH's SLOT_ID as
+     consumer globs): chef.md Step 0.5 and .claude/agents/unified-agent.md define FILEPATH's SLOT_ID as
      `chef-evening` while this file defines it as `evening`; both forms exist on disk for the same
      slot on the same day. -->
 > Parent: [./chef.md](./chef.md)
@@ -896,7 +896,7 @@ agent-father 2026-08-23):** three different names exist for the same four slots 
 they collide. `metadata.dish_type` takes the RIGHTMOST column and nothing else — never the cron
 schedule-entry key, never `chef.md`'s prefixed `SLOT_ID`:
 
-| `init.md` schedule key | `chef.md:135` `SLOT_ID` | → `metadata.dish_type` (the ONLY legal value) |
+| `init.md` schedule key | `chef.md` Step 0.5 `SLOT_ID` | → `metadata.dish_type` (the ONLY legal value) |
 |---|---|---|
 | `morning_dish` | `chef-morning` | `morning` |
 | `intraday_scan` | `chef-intraday` | `intraday` |
@@ -910,7 +910,7 @@ how you reach it.
 
 > **Open conflict, deliberately NOT resolved here (needs its own row — changes the on-disk naming
 > contract that TNB audit / QA AC-4 probes / every consumer globs):** the FILEPATH above resolves
-> `SLOT_ID` via `chef-dish.md`'s definition (`evening`), while `chef.md:135` and
+> `SLOT_ID` via `chef-dish.md`'s definition (`evening`), while `chef.md` Step 0.5 and
 > `.claude/agents/unified-agent.md`'s own description both define `SLOT_ID` as `chef-evening`. Both
 > forms exist on disk for the same slot on the same day (`...-2026-07-30-evening.json` AND
 > `...-2026-07-30-chef-evening.json`). Do not silently pick one while working this step.
