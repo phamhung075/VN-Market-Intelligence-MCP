@@ -1,6 +1,22 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-23T15:30:00Z | **Cycle:** bashgrant-gate negation fix + TASK_003 watchlist count (session 7be6b4cd, router-dispatched)
+**Last updated:** 2026-08-23T18:40:00Z | **Cycle:** FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS (session 007e33e4, router-dispatched)
+
+## Session 2026-08-23T18:40:00Z — FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS (scripts/, developer, P0 M, session 007e33e4, router-dispatched)
+
+**Root cause was NOT ordering.** `scripts/orch-cold-evict.sh` already wrote cold-archive-before-hot-delete at commit 38c013342e (verified against the live script version that day via `git show f0644c14a:scripts/orch-cold-evict.sh`). The actual defect: a real `mv` to the real archive path was never followed by any check that the write durably landed — a completed-but-empty/wrong archive write could silently precede the hot delete and nothing detected it. 10 terminal rows were destroyed 2026-08-06 with zero corresponding archive write, later misdiagnosed as "phantom prerequisites" for 5 downstream P0 rows.
+
+**Fix:** added `verify_cold_archive_write()` — per-id presence across all 6 cold-target arrays + exact row-count-growth assertion against `n_new_cold` — called TWICE: on the temp file pre-rename (catches a build_cold_temp selection bug) AND again on the real on-disk archive file post-rename (catches the rename silently not landing or a concurrent writer racing it — the actual historical shape). Either failing aborts the WHOLE run before `orch-apply.sh` (the hot write) is ever invoked. A hot-delete-without-archive-write outcome is now structurally unreachable through this script's own control flow, not just narrated-safe.
+
+**Found and fixed a genuine pre-existing bug while building the check:** `$cold_dj_strs | index(tostring)` (decision_journal dedup in `compute_id_maps`) is a jq gotcha — `index(f)`'s argument runs with `.` bound to `index()`'s own input (the array being searched), not the piped element, so the dedup was a silent permanent no-op (every retry would have duplicated decision_journal entries in cold). Fixed both that occurrence and the identical pattern in my own new check.
+
+**Regression test (TEST 12 a/b/c, `scripts/test/orch-cold-evict-tests.sh`):** PATH-shadowed `mv` reproduces 38c013342e exactly — rename call reports success but the target either never appears (a) or appears valid-but-empty (b, the closer real-incident analog). **Mutation-tested, not assumed:** reverted to the pre-fix script and re-ran — T12a/b correctly go RED (hot file changes despite archive write failing), confirming the test is non-vacuous. Full suite: 67/69 PASS — the 2 remaining failures are pre-existing and unrelated (TEST 7's fixture predates a same-day-earlier commit, `407afb6a4`, that changed done[] eviction semantics; flagged, not fixed, out of this row's scope).
+
+**AC-3 (optional — recover the 4 remaining victim rows) explicitly NOT attempted.** Each requires honestly reconstructing a per-row `verification.raw_probe` from dense (1000+ line) historical `status_note` records — the schema hard-rejects a `DONE_VERIFIED` write without one (`orchStateSchema.ts checkVerificationGate`), and the task itself says to restore without it (with an honest note) rather than fabricate. Skipped under P0 time/token budget rather than rushed; said so explicitly instead of narrating completion.
+
+**Journal note:** `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-8.md` was already past its byte cap (38254B/36000B) before this cycle touched it — rolled to `-9.md` per the decision-journal skill's cap-check rather than appending further; no bug telegram sent (no MCP/gateway tool grant on this router-direct spawn, same structural gap as a prior same-file cycle).
+
+---
 
 ## Session 2026-08-23T15:30:00Z — FIX-BASHGRANT-GATE-NEGATED-GIT-COMMIT-PHRASE-FALSE-POSITIVE + TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX (scripts/, docs/, developer, P0 S + P1 XS, session 7be6b4cd, router-dispatched)
 
@@ -29,21 +45,5 @@
 **DIAGNOSE A RED GATE BEFORE ADDING TO IT.** `devteam-dispatch-gate-satisfiability.sh` was exit-1 at baseline, 4 failures, none mine, each root cause verified not assumed: fixture rot vs a validator gate added AFTER the fixture (proved by replaying against the pre-change script); a branch testing RAW lane length while the gate uses the BLOCKED-excluding `wip_in_progress`; live-board contamination of a fixture that should have been isolated. Now 116/0.
 
 **Zone discipline, 4×:** ANCHOR-2/3/4 and the ILC/probe call sites are under `docs/agents/`|`.claude/skills/` = agent-father's `commit_zone`. Re-routed ANCHOR-2/3/4's `next_agent` rather than breach; named the rest in each `review_note`. Net: ILC and the cron probe are shipped+tested but invoked on NO tick until agent-father lands their call sites — said explicitly so nobody reads REVIEW as "live".
-
----
-
-## Session 2026-08-23T13:48:00Z — FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION (cross-service/scripts/, developer, P0 M, session 007e33e4)
-
-**Task:** `task_board.done[]` had zero consumers — nothing ever produced the `DONE_VERIFIED` token `deps_satisfied()` requires (rejects plain `DONE`), permanently starving successors of finished-but-unverified rows. Architect brief (`docs/architecture-briefs/2026-08-08-donelane-doneverified-producer.md`) decision: widen the two pre-existing Review-Lane drains from `review[]` alone to `review[] ∪ done[]`.
-
-**Concurrency (worth recording — no prior lesson covers this exact shape):** found `scripts/devteam-review-claim-qa-drain.jq`/`-secondary-drain.jq`/`orch-cold-evict.sh` being actively rewritten in the working tree by another writer mid-cycle (md5 changing under me across 3 polls, no commit yet) before I touched them. Waited for it to go quiet, verified against the pre-existing hermetic test (`scripts/test-devteam-donelane-drain.sh`, already on disk, RED at 25/42), then built only the untouched pieces (Component 4: `devteam-review-lane-drain-report.sh` DONE-LANE sections; Component 5, new: `devteam-deps-satisfied-sole-failure-report.sh`) plus doc updates, and committed everything together in one pathspec-scoped commit once the full 42/42 suite passed. No file was reverted or re-authored; no work was lost or duplicated (see decision journal S114/S115 for the two-sided account).
-
-**Fix (all 6 files in commit `407afb6a4`):** `devteam-review-claim-qa-drain.jq` — PRIMARY (qa-routed) subset now also drains `done[]`; independent per-lane picked-index sets (a shared list would delete the wrong row out of the other lane); `claimed_by` stays the exact-match literal the dispatch loop depends on, additive `drain_source_lane` field for audit trail only. `devteam-review-claim-secondary-drain.jq` — non-qa/null subset stamped in place via the pre-existing `resolved_secondary_dispatch_target` (`po` fallback). Neither script ever writes `DONE_VERIFIED` (AC-3) — promotion stays QA's own independent judgment. `devteam-review-lane-drain-report.sh` — new DONE-LANE PRIMARY/SECONDARY sections, staleness gate extended to both source lanes. `devteam-deps-satisfied-sole-failure-report.sh` (new) — AC-6 regression instrument, read-only, `--json` mode, threads the real `devteam-eligibility.jq` predicates verbatim. `orch-cold-evict.sh` — `done[]` eviction pass no longer evicts a `status=="DONE"` row (only `DONE_VERIFIED` remains evictable there), closing the exact failure mode that already lost 2 rows to cold-archive pre-guard.
-
-**Verify:** `bash scripts/test-devteam-donelane-drain.sh` 42/42 GREEN (I1-I8 hard invariants). Live demonstration against the real board via `orch-apply.sh` (not dry-run — this row's own `verification_gate` explicitly requires real command output): qa-drain moved `FACTORY-APP-split-assembleBriefing` (`done[]`, next_agent=qa) into `qa[]` with `drain_source_lane:"done"` — its own `review_note` already carries a full prior QA "APPROVED, DONE_VERIFIED" record, previously unreachable, now queued for QA to actually promote; secondary-drain stamped `FIX-PO-TRIAGE-SIGNALS-TABLE-MATCHES-ZERO-LIVE-SIGNAL-TYPES` (`done[]`, next_agent=null) with `secondary_dispatch_target:"po"` in place. `.head` verified byte-identical (mine) after both writes. No `apps/` TS/Go touched — jq/bash only, `bun test`/`tsc` N/A.
-
-**Known cross-dependency, not this row's defect (architect brief §3, Component 3):** `orchStateSchema.ts` `checkVerificationGate` hard-rejects any `DONE_VERIFIED` write without `verification.raw_probe`; QA's `verify-committed-approved` doesn't populate that field yet (`SYSREMAKE-P2-T8-FLOW-DOC-WIRING`, agent-father, READY) — flagged for whoever runs QA verification on the rows this drain now routes.
-
-**Closeout:** commits `407afb6a4` (fix), `c467fa641` (docs — `dev-standards.md` CANONICAL entry + `WORK.md`), `7e8f306d4` (decision journal). Row lane-moved `in_progress[]`→`review[]`, `next_agent=qa`, `.head` reset idle, via `scripts/orch-apply.sh`.
 
 ---
