@@ -1906,3 +1906,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-30 · pdf-extractor memory sustained 98–99% (critical)
+**Severity:** CRITICAL | **Date:** 2026-08-23 | **Status:** OPEN
+**Location:** pdf-extractor container
+**Details:** Memory pressure sustained 98–99% over 65s. VmHWM pinned at cgroup limit (2.6GB). All 6 samples >93%. Verdict: ESCALATE.
+**Impact:** Container unable to handle load. PDF processing stalling or failing. May trigger OOMKill if demand increases.
+**Root cause:** Tesseract/PDF processing contention under high concurrent load (known P0: FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT)
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-23T14:13:42Z (signal sys-20260823T141228-5fd3, system-auditor -> po, dedup_key=microservice_degraded:pdf-extractor:A-30, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
