@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-23T13:19:56Z",
+    "matched_slots": [
+      "fb-weekend"
+    ],
+    "won_slots": [
+      "fb-weekend"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/fb-market-poster/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "weekend",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "fb-weekend": "cron"
+    },
+    "cadence_minutes": {
+      "fb-weekend": "null"
+    },
+    "last_fired_timestamp": "2026-08-23T13:18:35Z",
+    "last_fired_slots": [
+      "fb-weekend"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "13:15",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 30,
+    "note": "fb-weekend (guaranteed, cron 13 13 * * 6,0) fired on Sunday 2026-08-23; agent returned same-tick with dedup no-op — published:fb-weekend:2026-08-22 marker already held (expires 2026-08-23T17:33:44Z), correct under publish_date_basis=vn_date_saturday_anchor (Sat 08-22 anchors the weekend post; the Sunday fire is the redundant second chance). Step 5.3 off-flow detector ran SAME-TICK: negative control passed, 0/6 distinct markers, slot retained in WON_SLOTS, stamp stands (no de-stamp). Prior last_fired was 2026-08-08T13:24:06Z — cowork's fb-weekend slot had not fired for 15d across 3 weekends; Saturday's actual post came from a non-cowork path (standalone launchd cron), so the 08-08 stamp was accurate, not a lost write. OBSERVED DEFECT (non-blocking, not fixed here): spawn-fanout.md Step 5.1's LOAD_1MIN awk parser is locale-fragile — this host's uptime emits comma decimals (load averages: 6,68 4,60 3,81) and the documented pipeline yields '4' instead of 6.68, under-reporting load and biasing the DEGRADED gate toward false. Same class as the LC_ALL=C pin already noted in pressure-read.md's A-30 helper comment. Harmless this tick (6.68 << 24 threshold)."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-23T13:19:56Z",
+  "_processed": {
+    "fingerprint": "eca8e52260b8da2dd6a2875db49f8db19decfd9ef720146e7a07fd0eeda6ff37",
+    "processedAt": "2026-08-23T13:24:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

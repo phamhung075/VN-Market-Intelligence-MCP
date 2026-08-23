@@ -19620,7 +19620,7 @@
         "last_served_tick": "2026-08-23T11:54:46Z"
       }
     },
-    "_updated_at": "2026-08-23T12:56:35Z",
+    "_updated_at": "2026-08-23T13:24:50Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19721,6 +19721,94 @@
         },
         "createdAt": "2026-08-23T12:51:25Z",
         "drained_at": "2026-08-23T12:53:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b57389ec33c3ee5fd5b8f268bc7c326c141383cb7babc7bd70ebcaa4fd82326b",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 4 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-SPRINT-S-pm.md docs/data/orch/orch-state.json docs/handoffs/TASK-BCTC-INSPECT-LABEL-FIX.md docs/handoffs/TASK-BCTC-INSPECT-UI-FILTERS.md. actor=669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3 mode=warn escalated=false prior_warns=2 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-23T13:07:06Z",
+        "drained_at": "2026-08-23T13:24:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e2cf8f0bb8dab9ebce5fe3cd3fa1f41bf1256464cc11a83399b8f67e7d833f28",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-25.md",
+          "line_count": 291,
+          "cap": 600,
+          "byte_count": 44587,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 8587,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-23T13:21:33Z",
+        "drained_at": "2026-08-23T13:24:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "eca8e52260b8da2dd6a2875db49f8db19decfd9ef720146e7a07fd0eeda6ff37",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-23T13:19:56Z",
+          "matched_slots": [
+            "fb-weekend"
+          ],
+          "won_slots": [
+            "fb-weekend"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/fb-market-poster/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "weekend",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "fb-weekend": "cron"
+          },
+          "cadence_minutes": {
+            "fb-weekend": "null"
+          },
+          "last_fired_timestamp": "2026-08-23T13:18:35Z",
+          "last_fired_slots": [
+            "fb-weekend"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "13:15",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 30,
+          "note": "fb-weekend (guaranteed, cron 13 13 * * 6,0) fired on Sunday 2026-08-23; agent returned same-tick with dedup no-op — published:fb-weekend:2026-08-22 marker already held (expires 2026-08-23T17:33:44Z), correct under publish_date_basis=vn_date_saturday_anchor (Sat 08-22 anchors the weekend post; the Sunday fire is the redundant second chance). Step 5.3 off-flow detector ran SAME-TICK: negative control passed, 0/6 distinct markers, slot retained in WON_SLOTS, stamp stands (no de-stamp). Prior last_fired was 2026-08-08T13:24:06Z — cowork's fb-weekend slot had not fired for 15d across 3 weekends; Saturday's actual post came from a non-cowork path (standalone launchd cron), so the 08-08 stamp was accurate, not a lost write. OBSERVED DEFECT (non-blocking, not fixed here): spawn-fanout.md Step 5.1's LOAD_1MIN awk parser is locale-fragile — this host's uptime emits comma decimals (load averages: 6,68 4,60 3,81) and the documented pipeline yields '4' instead of 6.68, under-reporting load and biasing the DEGRADED gate toward false. Same class as the LC_ALL=C pin already noted in pressure-read.md's A-30 helper comment. Harmless this tick (6.68 << 24 threshold)."
+        },
+        "createdAt": "2026-08-23T13:19:56Z",
+        "drained_at": "2026-08-23T13:24:50Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
