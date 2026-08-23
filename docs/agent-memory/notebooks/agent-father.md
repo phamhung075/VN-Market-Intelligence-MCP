@@ -161,3 +161,28 @@ CADRAT-3 routing. Steps 3-5 (sweep-fixes) + 5b (team-tool-recheck) ran unconditi
   on disk for the SAME slot on the SAME day (`...-2026-07-30-evening.json` and
   `...-2026-07-30-chef-evening.json`). Resolving it changes the on-disk naming contract every consumer
   globs — not a unilateral call.
+
+## FIX 2026-08-23T15:10Z — FIX-CHEF-MARKER-KEY-ANCHOR-2/-3/-4 (3 P0 rows, one chain)
+
+- ANCHOR-1 (developer, DONE_VERIFIED) produced `scheduled_utc_time`; all three consumers live under
+  `docs/agents/` so the whole tail was mine. Shipped as one commit: match-slots.md documents the field
+  on `slots[]`, spawn-fanout.md Step 5.2 appends `scheduled_utc=<ISO8601>` to BOTH ENTRY_PROMPT
+  branches, chef.md Step 0.5 + digest-predict daily gate derive their window date from it.
+- **Verified the producer myself before documenting it** rather than copying ANCHOR-1's review_note:
+  called the exported `annotateScheduledUtc()` against the real schedule at 2026-08-23T13:50:00Z →
+  `digest-sunday` / `47 13 * * 0` → `2026-08-23T13:47:00.000Z`. That is also how I found the thing the
+  prose does not say: live `slots[]` get `scheduled_utc_time` ONLY, while `catchup_raw[]` also carry
+  `scheduled_key_part` + `expected_publish_task_id`. A consumer expecting `scheduled_key_part` on a live
+  slot gets undefined. Documented the asymmetry explicitly.
+- **Lesson:** the degradation contract is the load-bearing half of a propagated field. `scheduled_utc_time`
+  is null on malformed cron / missing predicate module / no fire in the 8-day lookback. Emitting
+  `scheduled_utc=null` into a prompt would hand every worker a present-but-garbage value; OMITTING the
+  token keeps each worker's pre-existing `date -u` fallback alive untouched. Chose omission and said so
+  at all three sites, because a future editor will otherwise "helpfully" emit the null.
+- **Refused a tempting over-reach:** digest-predict's SUNDAY gate also drifts across a week boundary, but
+  it keys on server-side `get_week_period().periodKey` and its own block says never compute the week
+  locally. Swapping in agent-side arithmetic from `scheduled_utc` would trade a server SSOT for exactly
+  the class of local derivation this whole chain exists to remove. Left it, documented the residual
+  (needs `get_week_period` to accept an `as_of` — a server change).
+- Housekeeping: de-referenced 4 `chef.md:135` line citations in chef-dish.md → `chef.md Step 0.5`. My own
+  ANCHOR-4 edit moved that line to 167, so those citations were stale the moment I wrote them.
