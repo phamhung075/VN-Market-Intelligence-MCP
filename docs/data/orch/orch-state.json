@@ -604,8 +604,11 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "READ",
-        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-23.json"
+        "status": "triaged",
+        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-23.json",
+        "disposition": "TRIAGED — no mint, no PO ruling owed. The decision_needed this payload asks for was settled 2026-08-06 (DECISION=REPLACE) and the replacement is LIVE: docs/agents/agent-father/flow/team-tool-recheck.md on agent-father's existing 23 14 * * * cron, 12 reports in docs/agent-memory/health/, newest team-tool-recheck-2026-08-22-1242.md. The signal itself is a known false emission — memory-prune-sweep.sh hardcodes the string 'silent since 2026-06-23' with no liveness predicate, and its idempotency guard (line 109, find SIGNALS_DIR -maxdepth 1) cannot see docs/signals/processed/ where the drain puts prior emissions, so it re-emits every cycle. 11th distinct emission date. Owner: FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (backlog, P1, occurrence_count 11) + sibling FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR (ready). CORRECTION SHIPPED THIS TICK: CLEAN-RETIRE-TEAM-TOOL-RECHECK-WRITER, cited by the 08:20Z triage of the sibling signal as authority to retire, is RETRACTED and set BLOCKED — implementing it would have killed a live job.",
+        "triaged_at": "2026-08-23T12:47:31Z",
+        "triaged_by": "po/triage-20260823T1232Z"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -5471,7 +5474,7 @@
         "status": "BACKLOG",
         "title": "CTG balance-sheet section missing from carried-forward bctc_table_rows — needs fresh agentic-refine pass against CTG's source report",
         "type": "FIX",
-        "zone": "apps/pdf-extractor",
+        "zone": "apps/pdf-extractor/",
         "priority": "high",
         "blocked_on": "gateway-blind defect resolution (docs/architecture-briefs/2026-07-08-gateway-blind-cli-handshake-spike.md) — fresh agentic-refine pass requires mcp__gateway__call_tool to be reliably available",
         "depends_on": [
@@ -5488,8 +5491,10 @@
         ],
         "detail_ref": "docs/handoffs/TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD.md",
         "notes": "Not a defect in the carry-forward script; the script correctly refused to promote PARTIAL status because the source rows lack balance-sheet data. This is a genuine data-completeness gap requiring re-extraction from the original CTG report source. Escalated by QA 2026-07-10 per the task's own AC-TRACK1-3 clause (if source rows are still corrupted / incomplete, escalate — found incomplete). Mint timing: after gateway-blind defect resolves (blocker confirmed live as of 2026-07-10T01:24Z). QA Review Record indicates the AC-TRACK1-3 escalation is legitimate and correctly routed to backlog.",
-        "updated_at": "2026-08-23T12:42:46Z",
-        "updated_by": "po/triage-20260823T1232Z"
+        "updated_at": "2026-08-23T12:44:59Z",
+        "updated_by": "po/triage-20260823T1232Z",
+        "owner": "dev-pdf-extractor",
+        "next_agent": "dev-pdf-extractor"
       },
       {
         "id": "FIX-VERIFY-DEPLOY-SHA-BENIGN-DOC-DRIFT",
@@ -11814,12 +11819,11 @@
       {
         "id": "CLEAN-RETIRE-TEAM-TOOL-RECHECK-WRITER",
         "type": "CLEAN",
-        "title": "PO DECISION: RETIRE team-tool-recheck permanently (do NOT replace with a local cron) — drop the retirement marker so memory-prune-sweep.sh stops re-emitting the decision-needed signal every janitor session",
-        "status": "BACKLOG",
+        "title": "RETRACTED (premise falsified) — PO DECISION: RETIRE team-tool-recheck permanently (do NOT replace with a local cron) — drop the retirement marker so memory-prune-sweep.sh stops re-emitting the decision-needed signal every janitor session",
+        "status": "BLOCKED",
         "priority": "P3",
         "zone": "cross-service/",
         "owner": "po",
-        "next_agent": "developer",
         "size": "S",
         "created_at": "2026-08-14T23:00:56Z",
         "created_by": "po-triage-20260814T2300Z",
@@ -11830,10 +11834,11 @@
           "docs/signals/",
           "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md"
         ],
-        "status_note": "AC: a docs/signals/janitor-health-recheck-writer-retired-<ISO>.json marker exists (the exact idempotency key code-janitor's own payload names), the next memory-prune-sweep.sh run emits NO team-tool-recheck system-issue signal, and the ultracode-audit brief's #memory-docs-hygiene-P3 section is amended to record RETIRED rather than decision-pending. DECISION RATIONALE (this is the deliverable code-janitor asked PO for, twice — cj-20260814T163219Z and cj-20260814T223258Z): the writer was cloud RemoteTrigger trig_019Q8D5xttjZn6iytx2Ld9dW, killed 2026-06-22 by the standing no-RemoteTrigger directive. Option A (replace with a local cron) adds a 5th standalone cron to a host already under documented memory pressure, to restore a health report that has been absent 7+ weeks with zero observed downstream consumer and zero incident attributable to its absence — its coverage is already subsumed by system-auditor's tier sweeps and the 4 existing standalone crons. Option B (retire) costs one marker file. Choosing B. The 30d rule in memory-prune-sweep.sh drains the directory as designed; that is correct behaviour, not data loss.",
-        "updated_at": "2026-08-15T13:31:28Z",
+        "status_note": "RETRACTED BY PO 2026-08-23T12:32Z — DO NOT IMPLEMENT. This row was minted 2026-08-14T23:00Z on the ruling 'RETIRE team-tool-recheck permanently, do NOT replace with a local cron'. That ruling rested on two premises that were already false when written: 'the writer is dead' and 'nothing has consumed it in 7 weeks'. Verified live this tick: team-tool-recheck was REPLACED on 2026-08-06 (CHORE-TEAM-TOOL-RECHECK-LOCAL-CRON), the replacement is docs/agents/agent-father/flow/team-tool-recheck.md running the static file-based subset on agent-father's existing daily cron (23 14 * * *), and docs/agent-memory/health/ holds 12 live reports, newest team-tool-recheck-2026-08-22-1242.md. Implementing this row would drop a retirement marker for, and stop, a job that is running and producing daily. Status set BLOCKED so no picker can promote it; kept on the board rather than deleted because two PO ticks (2026-08-12, 2026-08-14) and one signal triage (2026-08-23T08:20Z) all cited it as authority, and a silent deletion would let that citation chain re-form. Surviving owner of the real problem: FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE, whose AC1 gates the escalation on measured writer liveness. Full reasoning: docs/agent-memory/decisions/triage-20260823T1232Z-po.md.",
+        "updated_at": "2026-08-23T12:47:32Z",
         "occurrence_count": 3,
-        "po_triage_fold_20260815T1330": "[po/triage 2026-08-15T13:29:00Z] FOLD +1 fire — envelope d146e161 (2026-08-15T10:30:04Z, code-janitor). THIRD time code-janitor has asked PO for this same decision (cj-20260814T163219Z, cj-20260814T223258Z, now this one). The decision was already made and written onto this row on 2026-08-14T23:00Z: RETIRE, Option B. Re-asking is not the agent misbehaving — the decision was recorded ONLY in board prose and never reached the mechanism that would silence the emitter.\nPREMISE RE-VERIFIED THIS TICK, NOT ASSUMED (the system-issue rule requires verifying the cited evidence before dispositioning): the signal's own idempotency_note states re-runs of memory-prune-sweep.sh skip this write once ANY docs/signals/janitor-health-recheck-writer-retired-*.json exists. Checked docs/signals/ directly — NO SUCH MARKER EXISTS. So the emitter is correct to keep firing and will fire again every janitor session until the marker lands. The recurrence is fully explained by the AC of this row being unexecuted; it is not new information and no new row is warranted.\nFOLDED INTO THIS TICK'S BATCH as a CLEAN. Cost is one marker file plus a one-line brief amendment; payoff is permanently silencing a recurring signal that has now consumed PO triage attention three times. AC unchanged and already written on this row."
+        "po_triage_fold_20260815T1330": "[po/triage 2026-08-15T13:29:00Z] FOLD +1 fire — envelope d146e161 (2026-08-15T10:30:04Z, code-janitor). THIRD time code-janitor has asked PO for this same decision (cj-20260814T163219Z, cj-20260814T223258Z, now this one). The decision was already made and written onto this row on 2026-08-14T23:00Z: RETIRE, Option B. Re-asking is not the agent misbehaving — the decision was recorded ONLY in board prose and never reached the mechanism that would silence the emitter.\nPREMISE RE-VERIFIED THIS TICK, NOT ASSUMED (the system-issue rule requires verifying the cited evidence before dispositioning): the signal's own idempotency_note states re-runs of memory-prune-sweep.sh skip this write once ANY docs/signals/janitor-health-recheck-writer-retired-*.json exists. Checked docs/signals/ directly — NO SUCH MARKER EXISTS. So the emitter is correct to keep firing and will fire again every janitor session until the marker lands. The recurrence is fully explained by the AC of this row being unexecuted; it is not new information and no new row is warranted.\nFOLDED INTO THIS TICK'S BATCH as a CLEAN. Cost is one marker file plus a one-line brief amendment; payoff is permanently silencing a recurring signal that has now consumed PO triage attention three times. AC unchanged and already written on this row.",
+        "updated_by": "po/triage-20260823T1232Z"
       },
       {
         "id": "FIX-AUDITOR-C04-FLOWDOC-REPOINT",
@@ -13282,13 +13287,58 @@
         "size": "S",
         "zone": "apps/mcp-server/",
         "owner": "ba",
-        "next_agent": "ba",
+        "next_agent": "architect",
         "source": "user-request-2026-08-23",
         "created_by": "po",
         "dedup_key": "bctc-inspect-ui:facet-filter|controls:quarter+ticker",
         "note": "USER REQUEST 2026-08-23: /dashboard/bctc-inspect needs 2 dropdowns — pick reporting quarter + pick stock ticker. Today there is no way to filter which quarter / which stock's BCTC is inspected.\n\n★ STACK CORRECTION — NOT a Remix/Tailwind/shadcn task. apps/frontend/app/routes/dashboard.bctc-inspect.tsx is a RESOURCE route (returns a raw Response, renders no JSX) that proxies GET {MCP_SERVER_BASE_URL}/api/bctc-inspect. The real UI is apps/mcp-server/src/interface/bctc-inspector.html — a 2692L self-contained vanilla-JS/CSS page with const BASE=\"\". zone=apps/mcp-server/, dev=dev-mcp-server. Do NOT route to dev-frontend; do NOT add a shadcn <Select>.\n\n★ NO BACKEND WORK NEEDED. GET /api/bctc-inspect/docs already returns per item: action_code, company_name, period_type, period_year, period_quarter (DocListItem, bctcInspectHandler.ts:141-165). This is a pure client-side facet filter over the items[] that loadDocList() already fetches (bctc-inspector.html:1118-1143). No new endpoint, no new SQL, no server-side pagination.\n\nLIVE BASELINE (probed http://localhost:3000/api/bctc-inspect/docs 2026-08-23T12:38Z — HTTP 200, 112669B): 257 docs / 50 tickers / 11 real quarters, all crammed into ONE flat <select id=doc-select> (bctc-inspector.html:871, inside .controls at :869-881). That is the whole complaint.\n\n★ DATA LANDMINE the filter MUST normalise: period_quarter is a number on 255 items but a STRING on 2 (both HUT). buildLabel() does `Q${period_quarter}`, so those render literally 'HUT Q1 QQ1 2024' and 'HUT Q1 QQ1 2026'. Unnormalised, the quarter facet yields 13 options instead of 11 (duplicate Q1-2024 and Q1-2026). Also: period_type does NOT hold QUARTERLY/ANNUAL — it holds 'Q1'..'Q4' (81/65/33/78, zero annual rows). Derive the quarter facet from period_year + normalised period_quarter, NEVER from period_type.\n\nAC1 Two <select> in the existing .controls bar, placed before #doc-select: #quarter-filter (label 'Quý') and #ticker-filter (label 'Mã CK'), each with a default all-option carrying the live count.\nAC2 Options derived from the already-fetched items[] — zero additional network calls.\nAC3 Quarter options = distinct 'Qn YYYY', sorted year desc then quarter desc. Normaliser coerces 'Q1'->1 so today's data yields exactly 11 options, not 13.\nAC4 Ticker options = distinct action_code sorted A-Z; 50 for today's data.\nAC5 Filters AND-compose. Changing either re-renders #doc-select from the filtered subset and updates the '— select a document (N) —' placeholder count.\nAC6 Selection preservation: if the currently-selected doc survives the filter, keep it selected and leave all panes untouched (no refetch, no flicker). If it does NOT survive, reset #doc-select to the placeholder AND call resetPanes() — never leave a stale PDF/OCR/table on screen for a doc no longer listed.\nAC7 Zero-match state: a single disabled '— no document matches —' option plus status-bar text naming the active filters. No console error.\nAC8 No regression: doc-select change handler, header page-nav, zone-overlay toggle and all 6 right-pane tabs unchanged. Existing tests stay green — apps/mcp-server/src/__tests__/: 1976-bctc-inspector-page-nav, 1273-bctc-inspect-overlay, PI3-bctc-inspect, PI3-bctc-inspect-reopen2, 1271-bctc-inspect-md.\nAC9 Root cause, same zone, ~3L: buildLabel() (bctcInspectHandler.ts:167-171) applies the same coercion so the option label reads 'HUT Q1 2024'.\nAC10 Verified through http://localhost:3001/dashboard/bctc-inspect (the frontend proxy — the user's actual entry point), not only :3000.\n\nOUT OF SCOPE: new or changed API endpoints; server-side filtering/pagination; URL query-param deep-linking (deferred — record as follow-up); porting this page to Remix/shadcn; fixing the WRITE path that stores a string into financial_reports.period_quarter (AC9 is display-side only — separate follow-up candidate, do NOT absorb).\n\nSIZE: ~80-100 net lines across 2 files (bctc-inspector.html + one __tests__ file), 1 domain. Line budget exceeds the nominal SPRINT-S 30L but the SPRINT-S->M escalation trigger (crosses domain boundaries) is NOT met. Architect may rescope.\n\nPO NOTE: deliberately did NOT append a .sprint_goal.entries[] vision entry — entries=16 already breaches the documented cap of 15, and a 2-dropdown facet filter is not vision-scale. Chain: ba -> architect -> pm -> dev-mcp-server -> qa.",
         "created_at": "2026-08-23T12:41:38Z",
-        "updated_at": "2026-08-23T12:41:40Z"
+        "updated_at": "2026-08-23T12:49:10Z",
+        "ba_spec_complete": true,
+        "ba_handoff": "docs/handoffs/FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER-BA-spec.md",
+        "ba_completed_at": "2026-08-23T12:49:05Z"
+      },
+      {
+        "id": "FIX-ORCHSTATE-DEPSFIELD-ACCEPTS-PROSE-SENTENCE-AS-DEP-ID",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "baseline_pass": false,
+        "files": [
+          "apps/mcp-server/src/infrastructure/orchStateSchema.ts",
+          "scripts/orch-validate.mjs"
+        ],
+        "title": "depends_on/depends/blocked_by accept a free-form prose sentence as a dependency id — the whole sentence becomes ONE dep id that resolves MISSING forever, and Stage 1g reports it as merely NON-FATAL, so 2 live rows sat permanently undispatchable and read as legitimately blocked from every angle",
+        "status_note": "ROOT CAUSE: as_dep_array (scripts/lib/devteam-eligibility.jq:133-137) normalizes a bare string to a 1-element array — correct for a single id, catastrophic for a sentence. Nothing at write time rejects a dep element that cannot possibly be an id, and orch-validate.mjs Stage 1g classifies every unresolvable dep as NON-FATAL 'MISSING' regardless of whether it is a plausible-but-absent id or an obvious prose sentence. The two failure modes are indistinguishable on the board: a prose-glued dep looks exactly like a real block. MEASURED LIVE 2026-08-23T12:3xZ across all 7 lanes: 212 dep ids on 127 rows, exactly 3 contain whitespace, and whitespace is a perfect discriminator (zero false positives on the other 209). AC1: TaskSchema must reject any depends_on/depends/blocked_by element matching /\\s/ — a dep id never contains whitespace. AC2: promote that specific class from Stage 1g NON-FATAL to a Stage 1 FATAL abort in scripts/orch-validate.mjs; genuine MISSING-but-well-formed ids stay NON-FATAL (they are a legitimate transient state — 12 such rows live today). AC3: migrate the one remaining live offender, HOLD-CRON-MARKETWATCHER-NEWSSCOUT-MARKETHOURS-MODES-PRODUCT-DECISION, whose blocked_by holds a deliberate 380-char DO-NOT-DISPATCH paragraph — move that prose to status_note; the row already carries status BLOCKED, which is the real schema-enforced parking brake, so nothing mechanical is lost. VERIFICATION GATE: a candidate doc carrying a whitespace-bearing dep element is REJECTED by scripts/orch-apply.sh (live file untouched); a candidate carrying a well-formed but absent dep id still passes with the existing Stage 1g NON-FATAL report line.",
+        "note": "PO FIXED THE TWO LIVE VICTIMS IN THIS SAME TICK — this row is the write-time guard so the class cannot recur, not the data repair. (1) FIX-RAG-COMPACTION-DISK-AMPLIFICATION carried depends_on = 'FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP — retuning cadence on top of the unreset-counter defect would measure the defect, not the tuning. Land that first, re-measure, then size this.' (2) FIX-BCTC-CTG-BALANCE-SHEET-REFINE carried depends_on = 'TASK-W5-FIX-BCTC-BANK-SUMMARY-MAPPING-CTG-CARRY-FORWARD (prior carry-forward work exposed this data-completeness gap)'. Both dep targets were ALREADY DONE_VERIFIED in cold archive (2026-08.json and 2026-07.json respectively) — so both rows were blocked on work that had been finished for weeks, purely by a formatting error at write time. Both depends_on fields were rewritten to clean 1-element arrays and both now return deps_satisfied=true, verified by executing scripts/lib/devteam-eligibility.jq against the live file with the cold-archive layer threaded, not by reading the row. The discarded prose was pure historical sequencing rationale and is preserved in docs/agent-memory/decisions/triage-20260823T1232Z-po.md rather than re-inlined (the fields it would land in are prose-measured by scripts/orch-row-prose-ceiling-check.mjs; depends_on is not).",
+        "created_at": "2026-08-23T12:44:58Z",
+        "created_by": "po/triage-20260823T1232Z",
+        "verification_gate": "scripts/orch-apply.sh rejects a candidate whose depends_on/depends/blocked_by contains a whitespace-bearing element; well-formed-but-absent dep ids still pass as Stage 1g NON-FATAL",
+        "updated_at": "2026-08-23T12:44:59Z"
+      },
+      {
+        "id": "FIX-COLDEVICT-REFERENTIAL-GUARD-PINS-EVERY-TERMINAL-ROW-ZERO-RECLAIM",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "baseline_pass": false,
+        "files": [
+          "scripts/orch-cold-evict.sh"
+        ],
+        "title": "orch-cold-evict.sh previews 0 bytes reclaimable on a 3.29 MB hot file — its referential guard pins 23/30 done_verified rows, and the guard-held count it computes is never printed, so the operator sees an unexplained zero and the orch-state bloat gate is unclearable by its own remediation tool",
+        "status_note": "MEASURED LIVE 2026-08-23T12:3xZ: `bash scripts/orch-cold-evict.sh --dry-run` reports 0 items in every category and 'Byte reduction: 0 bytes' against a 3289023-byte hot file. Cause, computed directly: the FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING referential guard (scripts/orch-cold-evict.sh:413-428) builds $referenced_dep_ids as the union of effective_depends_on across all 5 live lanes — 140 distinct ids — and holds every terminal-status candidate named there out of eviction. That pins 23 of 30 done_verified[] rows and 3 of 14 done[] rows. AC1: the guard is now redundant AND is the binding constraint. Its stated purpose is preventing a live row's dep from resolving MISSING after eviction, but dep_status_map($archive) (scripts/lib/devteam-eligibility.jq:197-245) already resolves cold-archived deps correctly — verified live this tick: FIX-RAG-SERVICE-CLEAN-EXIT-RESTART-LOOP resolves MISSING hot-only and DONE_VERIFIED once scripts/lib/archive-glob-cat.sh is threaded. Either drop the guard, or narrow it to ids a consumer genuinely cannot resolve from cold. Do NOT simply delete it without a negative control proving the archive fallback covers the case. AC2: n_guard_ref_held and guard_ref_held_ids ARE already computed (scripts/orch-cold-evict.sh:692-701) and are never emitted by the dry-run report — print them, so a 0-byte preview is never unexplained again. AC3: while auditing that report, note the same guard interacts with the row-prose ceiling: FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT's remediation path assumes eviction can drain terminal rows, and today it cannot. VERIFICATION GATE: `bash scripts/orch-cold-evict.sh --dry-run` on the live file previews a NON-ZERO byte reduction AND prints the guard-held count; a fixture where a live row's only dep is a cold-archived DONE_VERIFIED id still resolves deps_satisfied=true after that dep is evicted.",
+        "created_at": "2026-08-23T12:44:58Z",
+        "created_by": "po/triage-20260823T1232Z",
+        "verification_gate": "dry-run previews non-zero byte reduction and prints n_guard_ref_held; post-eviction deps_satisfied still true for a row whose dep was cold-archived DONE_VERIFIED",
+        "updated_at": "2026-08-23T12:44:59Z"
       }
     ],
     "closed_sprints": [
@@ -18779,6 +18829,53 @@
         "po_dispatch_target": "agent-father",
         "po_dispatch_intent": "edit",
         "po_dispatch_signal": "docs/signals/2026-08-23-qa-vc-lanemove-orchapply-actuator.json"
+      },
+      {
+        "id": "FIX-NEWSSCOUT-OFFHOURS-SELFCOMMIT-PROSE-RECIPE-INTERMITTENT",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "READY",
+        "zone": "multi",
+        "owner": "architect",
+        "next_agent": "architect",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": false,
+        "files": [
+          "docs/agents/news-scout/flow/stage-log-notify.md",
+          "scripts/agents-flow/"
+        ],
+        "title": "news-scout off-hours notebook self-commit is INTERMITTENT, not unwired — the 2026-08-15 fix ported a 26-line prose commit recipe that the agent complies with probabilistically; mechanize it into a script the way cowork-write-last-fired.js already solved the identical class",
+        "status_note": "THIS IS A RECURRENCE OF A DIFFERENT SHAPE, not a reopen. FIX-NEWSSCOUT-COMMIT-POLICY-NEVER-MECHANICALLY-WIRED (2026-08-15) fixed 'no step anywhere executes a commit' by porting market-watcher's working block verbatim into docs/agents/news-scout/flow/stage-log-notify.md:18-48, and that port demonstrably worked on the 2026-08-22T20:09Z off-hours cycle (commit cea834da2, c272). MEASURED 2026-08-23T12:3xZ: the 12:05Z cowork fire genuinely executed — signals 11184 (gold +4.85 sigma), 11185 (oil/Iran +4.37 sigma), 11186 (FTSE Russell inclusion) all live in the DB at critic=0.8 impact 9/10, and a substantive c273 section was written to the notebook — but docs/agent-memory/notebooks/news-scout.md is still `M` and the newest commit touching it is yesterday's cea834da2. Not a shared-resource outage: sibling market-watcher (6034efc1f) and alert-commander (28c3c2962) both committed on the same tick under their own mutex keys. Not a slot-gate miss: the c273 header itself records slot=news-scout-offhours, which is exactly the value the block gates on. AC1 (architect to split, zone=multi): the durable fix is mechanization — extract the whole block (task_claim mutex on news-scout-notebook:main, same-tick clean-diff guard, git add, git_commit_retry with RULE 2.5 trailing pathspec, task_release in finally, BUG-channel fallback) into ONE script under scripts/agents-flow/ invoked by a single Bash call, exactly as cowork-write-last-fired.js replaced last-fired.md's inline version after two silent corruptions. A 26-line conditional prose recipe cannot be complied with deterministically; that is the whole root cause. AC2: apply the same treatment to market-watcher's cycle.md source block so the two do not re-diverge — it is the origin of the ported text. AC3 (trivial, fold in): docs/agent-memory/notebooks/news-scout.md line 3 still reads '212 cycles complete (c270 shipped)' while the body is at c273 — stale header. AC4: recover the currently-uncommitted c273 section as part of shipping. SPLIT NOTE FOR ARCHITECT: scripts/ is outside agent-father's commit zone and docs/agents/ is outside a developer's, so this needs a two-owner split — developer authors the script, agent-father rewires the two flow docs to call it.",
+        "created_at": "2026-08-23T12:44:58Z",
+        "created_by": "po/triage-20260823T1232Z",
+        "verification_gate": "the off-hours commit path is a single script invocation, not inline prose; three consecutive news-scout-offhours ticks leave docs/agent-memory/notebooks/news-scout.md clean in git status",
+        "updated_at": "2026-08-23T12:44:59Z"
+      },
+      {
+        "id": "FIX-COWORK-FLOWDOC-STALE-WEEKEND-SUPPRESSION-AND-BGFAN1-RETURN-PRESUMPTION",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "READY",
+        "zone": "docs/agents/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": false,
+        "files": [
+          "docs/agents/cowork-team/flow/pressure-read.md",
+          "docs/agents/cowork-team/flow/spawn-fanout.md",
+          "docs/agents/cowork-team/flow/last-fired.md"
+        ],
+        "title": "Two cowork flow-doc defects found while executing the 2026-08-23T12:00Z tick — pressure-read.md Step 4.3 mandates blanket weekend suppression that would silently kill every weekend fan-out, and spawn-fanout.md Step 5.3 + last-fired.md AC-P1-7-4 both presume a spawn return that BGFAN-1 guarantees does not exist yet",
+        "status_note": "DEFECT A — docs/agents/cowork-team/flow/pressure-read.md Step 4.3 (lines 52-100): 'All other non-guaranteed slots: suppress on holiday OR weekend'. Applied literally by an operator following main.md this kills every weekend fan-out and the tick looks merely quiet — there is no error. It is stale, four ways, all verified live 2026-08-23: (i) docs/data/cadence-policy.json:20 grants gatherer-standard an explicit weekend interval_minutes 480; (ii) every alert-commander-market/-critical weekend row is interval_minutes null WITH _cron_fallback true, which scripts/agents-flow/cowork-match-slots.js:316-317 handles as 'cron governs', NOT as suppress; (iii) that same script already implements the whole calendar gate via evaluateCadence and returned suppressed_cadence [] on this tick; (iv) the gatherers demonstrably fired Saturday 2026-08-22T20:08:12Z. Sibling Steps 4.4/4.5/4.5c/4.5d were all marked SUPERSEDED under UC-CDC-P7 Phase 2a when their logic moved into that script (see docs/agents/cowork-team/flow/pressure-cadence.md:74,134,196); Step 4.3 moved with them but never got the marker — `grep -c SUPERSEDED docs/agents/cowork-team/flow/pressure-read.md` returns 0. AC-A: mark Step 4.3 SUPERSEDED with the same pointer form pressure-cadence.md uses, naming cowork-match-slots.js evaluateCadence as the live owner. Keep the body as historical record; do not delete. DEFECT B — docs/agents/cowork-team/flow/spawn-fanout.md Step 5.3 and docs/agents/cowork-team/flow/last-fired.md AC-P1-7-4 (line 13-16) both operate on a spawn's RETURNED TEXT and both are specified to run before last_fired is stamped in Step 5b. BGFAN-1 (spawn-fanout.md:71, 329) backgrounds every cowork spawn, so Step 5b necessarily executes before any return exists. The de-stamp path AC-P1-7-4 describes is therefore unreachable as written. AC-B: re-specify the off-flow detector as a POST-RETURN reconciliation pass that can de-stamp last_fired after the fact, or state explicitly that under BGFAN-1 it is operator-deferred and name where. Do not leave it reading as an in-line gate. OPERATIONAL NOTE: the router ran Step 5.3 by hand against all three returns once they landed on this tick — 0/6 markers on each, clean, stamps stand. That manual pass is the workaround, not the contract.",
+        "created_at": "2026-08-23T12:44:58Z",
+        "created_by": "po/triage-20260823T1232Z",
+        "verification_gate": "grep -c SUPERSEDED docs/agents/cowork-team/flow/pressure-read.md returns >0 and the marker sits on Step 4.3 naming cowork-match-slots.js; last-fired.md AC-P1-7-4 no longer presumes a synchronous return under BGFAN-1",
+        "updated_at": "2026-08-23T12:44:59Z"
       }
     ],
     "review": [
@@ -19508,156 +19605,18 @@
         "last_served_tick": "2026-08-23T11:54:46Z"
       }
     },
-    "_updated_at": "2026-08-23T12:24:02Z",
-    "_updated_by": "dev-team",
-    "pending_triage_inbox": [
-      {
-        "envelope_id": "145f9dcaf02e732a6d676c01045bda0cd36e6e9ad1093d1dbc7106fb0e0e5b02",
-        "source": "file",
-        "from": "ci-health-probe",
-        "to": "po",
-        "type": "ci_red",
-        "priority": "high",
-        "payload": {
-          "check_id": "CI-RED-4b6f60ea",
-          "head_sha": "4b6f60eaab9dfdba0dc24f2bdd1f76dd829af697",
-          "run_id": 32637153628,
-          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/32637153628",
-          "conclusion": "failure",
-          "failing_jobs": [
-            {
-              "name": "signal-type-coverage-guard",
-              "conclusion": "failure",
-              "jobId": 97188528150
-            }
-          ],
-          "fingerprint": "bb2e2e11083d4bea309f5655c97b97a0ab3fdb95c58801be3b76f5fbb8f99938",
-          "zone_owner": "dev-team (CI fix)",
-          "summary": "CI RED on main HEAD 4b6f60eaab9dfdba0dc24f2bdd1f76dd829af697: signal-type-coverage-guard",
-          "suggested_sprint_class": "FIX",
-          "verification_gate": "ci_green_on_subsequent_push"
-        },
-        "createdAt": "2026-08-23T11:53:03Z",
-        "drained_at": "2026-08-23T12:22:07Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "35c3408cb312b4edde5a91a069fb86eb345766afb21ac849f093d2608319997e",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "20260823T120552Z",
-          "matched_slots": [
-            "news-scout-offhours",
-            "market-watcher-offhours",
-            "alert-commander-critical"
-          ],
-          "won_slots": [
-            "news-scout-offhours",
-            "market-watcher-offhours",
-            "alert-commander-critical"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/news-scout/flow/main.md",
-            "docs/agents/market-watcher/flow/main.md",
-            "docs/agents/alert-commander/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 0,
-          "errors": [],
-          "pressure_mode": "adaptive",
-          "calendar_status": "weekend",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {
-            "news-scout-offhours": "cadence",
-            "market-watcher-offhours": "cadence",
-            "alert-commander-critical": "cron"
-          },
-          "cadence_minutes": {
-            "news-scout-offhours": "480",
-            "market-watcher-offhours": "480",
-            "alert-commander-critical": null
-          },
-          "last_fired_timestamp": "2026-08-23T12:05:09Z",
-          "last_fired_slots": [
-            "news-scout-offhours",
-            "market-watcher-offhours",
-            "alert-commander-critical"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "12:00",
-          "leader_lock": "acquired",
-          "dev_head": "idle",
-          "devq": 5,
-          "signal_backlog": 34,
-          "note": "First non-silent fan-out of this session. Fan-out gate: headroom_mb=2990 load1m=2 cores=12 degraded=false max_parallel=4 — all 3 slots in one batch. Gatherers were 16h past their 480min weekend cadence (last_fired 2026-08-22T20:08:12Z). DOC DEFECT observed, not acted on: pressure-read.md Step 4.3 would blanket-suppress every non-guaranteed slot on calendar_status=weekend, which contradicts cadence-policy.json's explicit gatherer-standard/weekend interval_minutes=480 row and alert-commander-critical's _cron_fallback=true rows; applying it literally would kill all weekend cowork fan-out. Live counter-evidence: gatherers fired Saturday 2026-08-22T20:08:12Z. Step 4.3 carries no SUPERSEDED marker although sibling Steps 4.4/4.5/4.5c/4.5d in pressure-cadence.md were all marked so under UC-CDC-P7 Phase 2a. Second observation: Step 5.3 off-flow detector + last-fired.md AC-P1-7-4 assume a synchronous spawn return, but BGFAN-1 backgrounds every spawn, so 5b necessarily stamps last_fired before 5.3 can evaluate any return."
-        },
-        "createdAt": "20260823T120552Z",
-        "drained_at": "2026-08-23T12:22:07Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "fee147f605d97e3469da0880438c75775890c6cb564e9ebf6b27edde305fc8b2",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_prune_dropped_newest_dated_section",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/dev-mcp-server.md",
-          "line": 3,
-          "heading": "## 2026-08-22 — DDD document-as-deviation annotations (router-dispatched follow-up on agents-architect brief; agent-father ratified, routed writes to me) → comment-only, no board row",
-          "section_count": 4,
-          "non_sentinel_section_count": 4,
-          "sentinel_section_count": 0,
-          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
-          "action_required": "review_dropped_section"
-        },
-        "createdAt": "2026-08-22T23:25:34Z",
-        "drained_at": "2026-08-23T12:22:07Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "672ba0f07ce160176dc02eaf13125944b418cc8a27ba6746479fad3c6e719f35",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_prune_dropped_newest_dated_section",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/dev-mcp-server.md",
-          "line": 3,
-          "heading": "## 2026-08-22 — FIX-CI-SIZELINT-GETBCTCPENDINGREFINETOOL-BASELINE-TOLERANCE-EXCEEDED (P-high, S, PO-mint CI-red, main RED 7 occurrences/7d) → done_verified[]",
-          "section_count": 3,
-          "non_sentinel_section_count": 3,
-          "sentinel_section_count": 0,
-          "reason": "the section chosen as drop-oldest carries the MAXIMUM non-sentinel timestamp key found anywhere in this file -- every dated section present (one, or several tied at an identical key) shares that same value, so ranking it as 'oldest' is not backed by any within-file ordering evidence and may be dropping the NEWEST real content instead (AC-6, FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE occurrence 5). Non-blocking -- the prune proceeds; this signal exists so the drop is never silent.",
-          "action_required": "review_dropped_section"
-        },
-        "createdAt": "2026-08-22T23:25:35Z",
-        "drained_at": "2026-08-23T12:22:07Z",
-        "routed_to": "PO Step 0-SIG"
-      }
-    ],
-    "last_po_triage_at": "2026-08-23T10:33:27Z",
-    "last_po_triage_note": "po Step 0-SIG 2026-08-23T10:33Z — 6 envelopes triaged (router announced 2 fresh; 4 were carry-over from prior ticks that never cleared). 3x ci_red: run 32630904807 file-scoped DEDUP HIT on FIX-CI-BUNTEST-167-PREDICTION-MARKET-JOB (FAILEDFILE src/__tests__/167-prediction-market-job.test.ts, exact dedup_key match, SHA appended); runs 32629387939 + 32631502135 both job signal-type-coverage-guard, DEDUP HIT on FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire per the guard's own log line, that row ROUTED (next_agent was unset -> agent-father, P1). 1x cowork-fire (to:dev-team, refine-bctc-slot-1 fire after the 8h10m dispatcher outage) — this is the unrouted Pipeline-A type the guard is red on; routed via the row above, no separate mint. 2x bug-escalation: sweep-guard BARE escalated=false prior_warns=0 -> confirmed true positive, pendingObservations only, no mint per spec; notebook-immutability-guard on pm.md -> first fire for that agent+section pair, pendingObservations only, mint threshold is 2 cycles. CAVEAT RECORDED ON THE ROUTING ROW: this CLEAR removes the cowork-fire envelope from the array guard-signal-type-coverage.sh:198 reads, so CI can go green next run with the routing table still unfixed — that green is an artifact, not a fix.",
-    "last_po_triage_consumed": 6,
+    "_updated_at": "2026-08-23T12:48:03Z",
+    "_updated_by": "po",
+    "pending_triage_inbox": [],
+    "last_po_triage_at": "2026-08-23T12:48:03Z",
+    "last_po_triage_note": "po Step 0-SIG 2026-08-23T12:47Z — 4 envelopes triaged, 0 mints (all DEDUP HIT against rows already on the board). 1x ci_red CI-RED-4b6f60ea (run 32637153628, head 4b6f60ea, failing job signal-type-coverage-guard): DEDUP HIT — FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire (ready, READY) and FIX-SIGNAL-TYPE-ROUTING-GAP-notebook-prune-dropped-newest-dated-section (backlog, auto-filed 12:23Z by the guard itself) together own both unrouted types this job is red on. 1x cowork-fire 20260823T120552Z: same routing-gap row owns the type; the tick's own execution findings were NOT dropped with the envelope — both flow-doc defects carried in its payload.note are minted as FIX-COWORK-FLOWDOC-STALE-WEEKEND-SUPPRESSION-AND-BGFAN1-RETURN-PRESUMPTION (ready, agent-father). 2x notebook_prune_dropped_newest_dated_section (both docs/agent-memory/notebooks/dev-mcp-server.md line 3, AC-6 same-day-tie class): DEDUP HIT — FIX-NOTEBOOK-AUTOPRUNE-AC6-SAMEDAY-TIE-PROCEEDS-AND-DROPS-LOADBEARING-SECTION (backlog) is the exact owner, and FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (ready) is the parent. SAME CAVEAT AS THE 10:33Z CLEAR: this write removes the cowork-fire envelope that scripts/audits/guard-signal-type-coverage.sh:198 reads, so CI can go green next run with the routing table still unfixed — that green is an artifact of the drain, not a fix.",
+    "last_po_triage_consumed": 4,
     "last_triage_clear": {
       "ts": "2026-08-23T09:07:20Z",
       "consumed_count": 8,
       "triaged_by": "po (router-direct triage, session 007e33e4-b453-4bb3-8ab1-ef31495906a3)",
       "note": "8 envelopes, all bug-escalation/commit-sweep-guard. Cleared by envelope_id subtraction, never a blind = []."
     },
-    "pending_triage_inbox_cleared_at": "2026-08-23T10:33:27Z"
+    "pending_triage_inbox_cleared_at": "2026-08-23T12:48:03Z"
   }
 }
