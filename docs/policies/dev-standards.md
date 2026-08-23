@@ -618,6 +618,55 @@ Test coverage: `bash scripts/test/orch-cold-evict-tests.sh` (evict-correctness /
 --exclude-ids / idempotent-rerun / conservation-guard-still-fires / --dry-run-no-mutation / signal_queue
 age-gate fresh-vs-aged-vs-NEW-vs-null-ts (TEST 9) — mirrors `orch-apply-wrapper-tests.sh`'s fixture +
 real-live-hash-unchanged safety pattern; never run against the live `docs/data/orch/orch-state.json` file).
+**FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION Component 6 (2026-08-23):** the `done[]`
+age/count eviction pass no longer evicts a candidate whose `.status == "DONE"` — only a
+`DONE_VERIFIED` row parked in `done[]` (legacy placement, already verified) remains evictable there.
+An unverified `DONE` row is exactly what the Done-Lane Drain (below) exists to reach; cold-evicting
+it on age/rank alone put it permanently out of reach of every hot-file-scoped mechanism (2 real
+casualties already: `FIX-BCTC-TABLE-COLUMN-FPT-OVERFIT`, `FIX-CYCLEJOB-1294-MACRO-TEST-UNMOCKED-
+LIVE-FETCH`). `done_verified[]` and every other pass are unaffected. Test coverage (CASE 8):
+`bash scripts/test-devteam-donelane-drain.sh`.
+
+**CANONICAL: Done-Lane Drain (FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION, architect brief
+`docs/architecture-briefs/2026-08-08-donelane-doneverified-producer.md`)**
+`task_board.done[]` had zero consumers — nothing ever produced the `DONE_VERIFIED` token a finished
+row needs before `deps_satisfied()` (this same file, above) will unblock any successor naming it as a
+dep. Fix: widen the candidate-gathering of the two pre-existing Review-Lane drains from `review[]`
+alone to `review[] ∪ done[]` (status `REVIEW`/`DONE` respectively) — zero new dev-team/flow/main.md
+section, zero new call site, zero new `.head` coordination path; the mechanism inherits the SAME
+already-reachability-proven idle-chain rotation the review[]-only drains already had.
+- `scripts/devteam-review-claim-qa-drain.jq` — PRIMARY (qa-routed) subset. A `done[]`-origin pick
+  gets an additive, non-load-bearing `drain_source_lane: "done"` field (never `claimed_by`, which
+  MUST stay the literal `"dev-team (review-lane qa-drain)"` — the dispatch-loop's own exact-match
+  query on that field would silently drop a source-tagged row from the spawn fan-out). The two source
+  lanes' index sets are independent (`idx` is only unique within one array) — a mixed batch removes
+  the picked review-origin rows from `review[]` and the picked done-origin rows from `done[]`
+  separately, never a shared index list.
+- `scripts/devteam-review-claim-secondary-drain.jq` — non-qa/null subset, stamped IN PLACE on
+  whichever source lane the picked row lives in (no lane move, no status change) via the pre-existing
+  `resolved_secondary_dispatch_target` (`po` fallback for null/absent/`dev-team` next_agent) — for
+  free, satisfies "a `done[]` row with no next_agent must not be silently invisible."
+- Neither script writes `DONE_VERIFIED` under any condition — the producer only ever moves
+  `DONE -> QA` or stamps in place; promotion stays QA's own independent `verify-committed` judgment
+  (`docs/agents/qa/flow/main.md` § Direct-Commit Verify), by construction, not by an added check.
+- `scripts/audits/devteam-review-lane-drain-report.sh` — extended with DONE-LANE PRIMARY/SECONDARY
+  sections mirroring REVIEW PRIMARY/SECONDARY exactly; the staleness FAIL predicate (`[STALE_DAYS]`
+  arg) now also fails if DONE-LANE PRIMARY is non-empty and every row in it is `>= STALE_DAYS` old.
+- `scripts/audits/devteam-deps-satisfied-sole-failure-report.sh` (NEW, AC-6 regression instrument) —
+  read-only, live board, exit 0 always. Mechanizes the "leg 1" hand-derivation from
+  `scripts/po-triage-20260730T2148-donelane-doneverified-producer-starvation.jq`'s own header: reuses
+  `is_bounded1_eligible`'s 7 sub-gates + `deps_satisfied`/`dep_status_map` from
+  `scripts/lib/devteam-eligibility.jq` verbatim (no reimplementation) over `backlog[] + ready[]`,
+  reports every row whose SOLE failing gate is `deps_satisfied` with each unmet dep's raw status
+  (`DONE`, `MISSING`, or any other non-`DONE_VERIFIED` value).
+  ```bash
+  bash scripts/audits/devteam-deps-satisfied-sole-failure-report.sh          # human table
+  bash scripts/audits/devteam-deps-satisfied-sole-failure-report.sh --json   # {"starved": [...]}
+  ```
+Test coverage: `bash scripts/test-devteam-donelane-drain.sh` (10 cases, I1-I8 hard invariants — done-
+origin reach/claimed_by-exact-match/independent-index-sets/never-writes-DONE_VERIFIED/null-next_agent-
+po-fallback/DONE_VERIFIED-and-BLOCKED-rows-never-picked/review[]-origin-byte-unchanged/cold-evict-
+DONE-status-guard — plus the report + regression-instrument existence/live-run checks).
 
 **CANONICAL: Backlog stub migration + cold detail writer (ORCH-STATE-HOT-COLD-SPLIT HSC-4; multi-lane extension FIX-ORCHSTATE-HOTFILE-BLOAT-INLINE-PROSE-NOT-TERMINAL-DRIFT)**
 ```bash
