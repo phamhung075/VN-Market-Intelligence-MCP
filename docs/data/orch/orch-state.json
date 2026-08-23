@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-23T13:46:24Z",
-    "updated_by": "developer",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE",
+    "next_agent": "agents-architect",
+    "next_action": "Design-Router Sweep claim of FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE — spawn agents-architect DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only (if either was set) preserved — do not clear.",
+    "updated_at": "2026-08-23T13:56:45Z",
+    "updated_by": "dev-team (design-router sweep)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3327,28 +3328,6 @@
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-DEPTHTHIN-A-PRICE-HISTORY-RETENTION-10D",
         "updated_at": "2026-07-29T03:22:34Z",
         "blocked_reason": "ZONE-MISMATCH: task was assigned to apps/stock-price/ but market_prices_history table and writer (24h rolling cutoff at pushPricesHandler.ts:224-236) are in apps/mcp-server/. Re-route to dev-mcp-server required."
-      },
-      {
-        "id": "UC-SDF-P6",
-        "type": "FIX",
-        "title": "Collapse the scheduler-count triplication: generate cron-registry.json (tool-registry precedent) + repoint consumers",
-        "status": "BACKLOG",
-        "priority": "P1",
-        "size": "M",
-        "zone": "cross-service/",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P6",
-        "note": "SCOPE=verifier Rescope note. New scripts/gen-cron-registry.ts enumerating jobs from schedulerJobTable.ts + summaryJobs.ts cross-checked vs CRONS keys (NOT cronConfig scheduleCron sites — none exist); writes cron-registry.json#jobs+schedulerFileCount atomically + surgical-patches system-map crons (never full-doc overwrite). Re-baseline the 66-entry lists to code-derived count. Update pipeline-watchdog test to structural assert; keep schedulerFileCount for dailyDashboardJob; fix gen-project-stats stale probe; auditor verifies generated-vs-code.",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "next_agent": "ba",
-        "priority_bumped_from": "P2",
-        "priority_bumped_at": "2026-07-17T04:54:03Z",
-        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
-        "po_scope_expansion_20260722": "SCOPE EXPANDED by PO cron-audit triage 2026-07-22. The generated cron-registry.json must ALSO cover the session-scoped CronCreate plane, not only the mcp-server scheduler + launchd planes. Rationale: crons currently live inside 5 separate CLI sessions (dev-team, cowork, system-audit, claude-heler, workflows-fix); CronList in one session cannot see another's, there is NO on-disk persistence under ~/.claude (verified 2026-07-22 — no crons dir; ~/.claude/jobs/ holds two stale June background-job dirs, unrelated), and when a session dies its whole loop vanishes with zero trace. This row is now PART 1 of the three-part ruling recorded in ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG.po_design_ruling, and it GATES both that row (part 2, the watchdog consumes this registry) and ARCH-CRON-THREE-TIME-BASES-UNIFY (which needs each job's declared time base recorded here). The registry is an INVENTORY so that absence becomes detectable — it is explicitly NOT a new scheduler and must not grow into one. Registry entries should also record the declared time base per job (UTC / Asia/Ho_Chi_Minh / machine-local France), since three coexist today.",
-        "updated_at": "2026-07-22T16:02:26Z"
       },
       {
         "id": "UC-SDF-P2",
@@ -17724,43 +17703,6 @@
         "updated_by": "pm"
       },
       {
-        "id": "FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE",
-        "type": "FIX",
-        "title": "cowork-slot collision probe FR-3: published:<kind>:<period> TTL=100800s (28h) exceeds the 24h daily cadence, so yesterday's still-live marker prefix-matches and blocks today's dispatch for 4h every single day",
-        "status": "READY",
-        "priority": "P0",
-        "size": "S",
-        "zone": "cross-service/",
-        "next_agent": "agents-architect",
-        "owner": "po",
-        "created_at": "2026-08-14T13:37:19Z",
-        "created_by": "po",
-        "source": "telegram report 4861 (router, 2026-08-14T09:23:09Z) - reported as 'suspected false-positive', PO re-classified as CONFIRMED TRUE DEFECT",
-        "dedup_key": "cowork-slot-collision-probe|fr3|defect:marker-ttl-exceeds-cadence-period",
-        "dedup_checked": "backlog+ready+in_progress+review+qa scanned. TASK-COWORK-MUTEX-001 (review/REVIEW/developer, P0) SHIPPED FR-3 and is the parent - see related; its status_note is EMPTY and its QA CHANGES_REQUESTED record was destroyed (see FIX-NSO-TS-KEY-...), so it cannot be confirmed whether QA already flagged this. TASK-COWORK-MUTEX-002/003 are the test harness and cross-ref annotation. FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR (ready/pm) is the ADJACENT and highly relevant row - it mandates deriving the published-marker dedup key from the scheduled UTC fire-window rather than a wall-clock date read; this row is the TTL half of the same agreement and the two should be designed together.",
-        "evidence": "PO read the source rather than trusting the report. .claude/skills/dispatch-claim/SKILL.md:647-648 reads: `if row.task_id starts_with \"published:\" + slot_id + \":\": collision = row; break` / `# prefix match, NOT exact period-key — catches daily AND weekly published: keys without the`. The prefix match is DELIBERATE and documented (cadence-agnostic so the prober need not know daily-vs-weekly). Live observation from report 4861: published:fb-daily:2026-08-13 still TTL-live (expires 2026-08-14T13:25:39Z, TTL=100800s), no fb-post-2026-08-14.md exists (today genuinely unpublished), and the session-presence roster shows no live session for the claimed owner 0454e9d8-b475-4230-95c9-8b7d943aa8b3 (stale claim, not an active peer).",
-        "root_cause": "TWO-SIDED, and the reporter's recommended fix addresses only one side. 28h TTL against a 24h period guarantees a 4h window EVERY day in which the prior period's marker is simultaneously live and prefix-matching. Switching FR-3 to exact period-key match as recommended would break the weekly case the prefix match was explicitly written for.",
-        "po_rescope_note": "EXPLICIT CORRECTION TO THE REPORTER: report 4861's recommendation ('FR-3 should exact-match the period key') is INSUFFICIENT on its own and would regress weekly slots. Any fix must reconcile both axes - either TTL <= cadence period (so a prior-period marker cannot outlive its period), or caller-computed exact period key PLUS a separate cadence-resolution step that preserves weekly coverage. Do not implement the one-line change.",
-        "acceptance": "AC-1 a stale prior-period marker can never block the current period's manual dispatch, for BOTH daily and weekly slots. AC-2 a genuinely-live current-period marker still blocks (no regression of the double-publish guard TASK-COWORK-MUTEX-001 exists to provide). AC-3 stale-owner detection: a marker whose owner session is absent from the presence roster should not block. AC-4 fixture in cowork-dispatch-collision-probe.test.sh covering the daily 4h-overlap window and the weekly case. AC-5 (INTERIM, ship first and separately if the full fix needs a design cycle): the Step 2.4 probe must not block on a marker whose owner_client_session has no live session-presence row — this is one extra read the router already makes at Phase A.5, needs no date logic, and unblocks all 5 daily slots today. AC-6: whichever axis is chosen, a fixture must assert chef-evening dispatch succeeds at 19:45Z with yesterday marker still TTL-live, since that is the exact production-blocked case.",
-        "related": [
-          "TASK-COWORK-MUTEX-001",
-          "TASK-COWORK-MUTEX-002",
-          "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR"
-        ],
-        "consumer_impact": "Affects router-manual dispatch of every cowork-slot agent. Cron path uses a separate fire-election and is unaffected. Already blocked one legitimate fb-market-poster dispatch on 2026-08-14.",
-        "updated_at": "2026-08-15T00:43:00Z",
-        "updated_by": "po",
-        "occurrence_2_20260814T1952Z": "SECOND live block, 10h29m after occurrence 1 (fb-daily). Router probe at 2026-08-14T19:52:07Z on slot chef-evening (cron `45 19 * * *`) matched published:chef-evening:2026-08-13 (owner_client_session 0454e9d8-b475-4230-95c9-8b7d943aa8b3, claimed_at 2026-08-13T19:53:37Z, ttl 100800, expires 2026-08-14T23:53:37Z). PO re-verified live via task_list_held: (a) published:chef-evening:2026-08-14 ABSENT -> today genuinely unpublished, (b) NO session-presence row for 0454e9d8 -> holder session dead, exactly the AC-3 stale-owner shape, (c) no cowork-slot:chef-evening and no intent:unified-agent:* held -> no live peer. Same dead session 0454e9d8 also holds published:chef-morning:2026-08-14, so one dead session is now blocking two slots.",
-        "blast_radius_20260814": "NOT slot-specific and NOT probabilistic — DETERMINISTIC for every daily-cadence slot, computable from config alone. Live 100800s markers confirmed on 5 slots: chef-evening, chef-eod, chef-morning, tnb-audit, fb-daily. Blocked window per slot = 28h TTL minus 24h cadence = 4h, positioned to START at the slot fire time, i.e. the prior marker is ALWAYS live at the exact moment the next fire dispatches. chef-evening blocked window = 19:45Z fire vs 23:53Z expiry = 100% of every fire, every day, forever. digest-daily (ttl 86400 = cadence exactly) is marginal-not-safe: it blocks whenever today fire is even one second earlier than yesterday claim.",
-        "po_ruling_20260814T1952Z": "P1 -> P0 and next_agent developer -> agents-architect. P0 because this is now a confirmed-recurring DAILY availability defect on the guaranteed-slot publish path with 2 live blocks in one day, not a latent design smell. Routed to agents-architect (not developer) because the prefix match is a DELIBERATE ruling from docs/architecture-briefs/2026-07-29-fix-cowork-dispatch-router-intent-mutex-bypass-design.md (Candidate A refined, zero date-basis duplication) — the brief author must re-rule the axis, since the three candidate axes trade off against each other and two of them regress something. Developer implements AFTER the ruling. Reference: PO already rejected the naive one-line fix in po_rescope_note; that rejection STANDS.",
-        "axis_analysis_po_20260814": "Three axes, none free. (A) exact period-key match: regresses weekly slots and re-introduces the date-basis duplication the brief eliminated — already rejected, see po_rescope_note. (B) TTL <= cadence: cheap and correct in isolation, BUT the 28h was chosen deliberately (ARCH-DECIDE-D, spawn-fanout.md:150 `covers the full 24h content cycle`) and the guaranteed-slot CATCHUP flow can legitimately re-run a missed slot using the PRIOR period key — shortening TTL may re-open the double-publish window that catch-up specifically needs closed. Architect must confirm against the catch-up flow before picking B. (C) stale-owner / presence-roster check (already written as AC-3): cleanest fit for BOTH observed occurrences (both blocking holders were dead sessions absent from the roster), cadence-agnostic, and preserves the weekly prefix match untouched. PO does not choose the axis — but records that C is the only one that fits both live occurrences without regressing a documented behaviour.",
-        "promoted_at": "2026-08-14T22:35:15Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='agents-architect' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "agents-architect",
-        "po_fold_20260815T0040": "FOLD of telegram report 4861 (2026-08-14T09:23:09Z) — independent router-side confirmation, no new row. fb-market-poster slot=fb-daily manual dispatch was BLOCKED by published:fb-daily:2026-08-13 still TTL-live (expiry 2026-08-14T13:25:39Z, TTL=100800s/28h vs 24h daily cadence). Report adds two facts this row did not have: (a) the false positive is a PREFIX match (published:fb-daily:*) rather than an exact period-key match, so it is the FR-3 comparison shape that is wrong, not only the TTL constant — a fix that only shortens TTL would leave a narrower but non-zero overlap window; (b) blast radius is bounded to router-MANUAL dispatch of cowork-slot agents, because the cron path uses a separate fire-election and is unaffected. Verified at source by the reporter: no fb-post-2026-08-14.md existed (that day genuinely unpublished) and the session-presence roster showed no live session for holder 0454e9d8-b475-4230-95c9-8b7d943aa8b3, i.e. a stale claim not an active peer. Recommend the AC assert exact period-key equality AND that the router compute today's period key for comparison; TTL shortening alone is insufficient."
-      },
-      {
         "id": "FIX-AUDITOR-NOTEBOOK-APPEND-GATE-BYPASSED-ALL-GREEN-WRITE",
         "type": "FIX",
         "status": "READY",
@@ -19071,6 +19013,32 @@
         "depends_on": [
           "FIX-CHEF-MARKER-KEY-ANCHOR-3"
         ]
+      },
+      {
+        "id": "UC-SDF-P6",
+        "type": "FIX",
+        "title": "Collapse the scheduler-count triplication: generate cron-registry.json (tool-registry precedent) + repoint consumers",
+        "status": "READY",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P6",
+        "note": "SCOPE=verifier Rescope note. New scripts/gen-cron-registry.ts enumerating jobs from schedulerJobTable.ts + summaryJobs.ts cross-checked vs CRONS keys (NOT cronConfig scheduleCron sites — none exist); writes cron-registry.json#jobs+schedulerFileCount atomically + surgical-patches system-map crons (never full-doc overwrite). Re-baseline the 66-entry lists to code-derived count. Update pipeline-watchdog test to structural assert; keep schedulerFileCount for dailyDashboardJob; fix gen-project-stats stale probe; auditor verifies generated-vs-code.",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "next_agent": "ba",
+        "priority_bumped_from": "P2",
+        "priority_bumped_at": "2026-07-17T04:54:03Z",
+        "priority_bumped_by": "po/uc-audit-priority-bump 2026-07-17",
+        "po_scope_expansion_20260722": "SCOPE EXPANDED by PO cron-audit triage 2026-07-22. The generated cron-registry.json must ALSO cover the session-scoped CronCreate plane, not only the mcp-server scheduler + launchd planes. Rationale: crons currently live inside 5 separate CLI sessions (dev-team, cowork, system-audit, claude-heler, workflows-fix); CronList in one session cannot see another's, there is NO on-disk persistence under ~/.claude (verified 2026-07-22 — no crons dir; ~/.claude/jobs/ holds two stale June background-job dirs, unrelated), and when a session dies its whole loop vanishes with zero trace. This row is now PART 1 of the three-part ruling recorded in ARCH-SESSION-CRON-PLANE-LIVENESS-WATCHDOG.po_design_ruling, and it GATES both that row (part 2, the watchdog consumes this registry) and ARCH-CRON-THREE-TIME-BASES-UNIFY (which needs each job's declared time base recorded here). The registry is an INVENTORY so that absence becomes detectable — it is explicitly NOT a new scheduler and must not grow into one. Registry entries should also record the declared time base per job (UTC / Asia/Ho_Chi_Minh / machine-local France), since three coexist today.",
+        "updated_at": "2026-08-23T13:56:42Z",
+        "promoted_at": "2026-08-23T13:56:39Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "ba"
       }
     ],
     "review": [
@@ -19772,8 +19740,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-23T12:56:49Z",
-    "last_triaged_by": "dev-team (supervised-lane sweep)",
+    "last_triaged_at": "2026-08-23T13:56:39Z",
+    "last_triaged_by": "dev-team (design-router sweep)",
     "in_progress": [
       {
         "id": "UC-CDC-P1",
@@ -19884,6 +19852,45 @@
         ],
         "po_wip_ruling_20260823": "RULED BLOCKED by po 2026-08-23T10:17:06Z, in place in in_progress[]. THE HOP THIS ROW WAS WAITING FOR HAS ALREADY HAPPENED. next_agent read 'pm', but the row's own pm_decomposition_note records 'PM decomposed into 3 subtasks (2026-08-22T17:45Z)' and all three children are live on the board right now, measured this tick: TASK_001-WATCHLIST-WRITE-THROUGH-INFRA (ready[], READY, next_agent=dev-mcp-server), TASK_002-WATCHLIST-DIVERGENCE-AUDIT-CRON (backlog[], BLOCKED on TASK_001, next_agent=developer), TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX (ready[], READY, next_agent=generic-developer). The parent therefore had no pm work left and was holding a WIP slot on a stale field. next_agent pm->qa: the only remaining parent-level action is final sign-off against AC-1..AC-4 once the children land. blocked_by set to the three children so the block is machine-readable rather than prose. SIDE FINDING, NOT FIXED HERE (outside decision scope, routed instead): the three handoff files docs/handoffs/TASK_001-WATCHLIST-WRITE-THROUGH-INFRA.md, TASK_002-WATCHLIST-DIVERGENCE-AUDIT-CRON.md and TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX.md exist on disk but are UNTRACKED in git — pm authored the decomposition and never committed the artefacts, so the specs the children point at are absent from HEAD and would vanish on any clean checkout. WHY status=BLOCKED IN PLACE RATHER THAN A LANE MOVE: identical D3 constraint to UC-CDC-P1 — this row measures 17859B prose, the largest of the three in_progress[] rows, so a move into guarded backlog[] hard-rejects at orch-row-prose-ceiling-check.mjs:267-269 with liveBytes=0. BLOCKED status alone removes it from wip_in_progress (devteam-eligibility.jq:115-118), which is the outcome that matters. Lane move deferred to after D3 ships.",
         "status_note": "\n[QA] ASSESSED 2026-08-23T13:50Z, NOT VERIFIABLE - recorded rather than silently skipped. This row is NOT QA work and next_agent=qa is a mis-route. Evidence, all from the row itself: status=BLOCKED, plan_only=true, supervised=true, no commit field, and blocked_reason says verbatim 'Decomposition complete; parent awaits its three children. Not dispatchable work.' There is nothing to verify - the defect is still live (docs/data/system-map.json .project.watchlist is still 34 entries against the 58-ticker runtime roster, re-measured this cycle). Its three children exist and are where the actual work sits: TASK_001-WATCHLIST-WRITE-THROUGH-INFRA (ready[], dev-mcp-server), TASK_002-WATCHLIST-DIVERGENCE-AUDIT-CRON (backlog[], BLOCKED, developer), TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX (ready[], generic-developer). SECONDARY FINDING worth carrying: this parent has NO children[] field ('ABSENT') despite a completed decomposition - it is a live instance of exactly the parenthood-field-drift that FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT's new Step 3e closeout branch (DONE_VERIFIED this same cycle) exists to prevent going forward; back-filling children[] here would make effective_children sweeps see the relationship. Meanwhile the row sits in in_progress[] consuming a WIP slot while being explicitly non-dispatchable. Routing next_agent qa->po (its owner) so it stops being re-presented to QA every cycle; status and lane left untouched - it is legitimately blocked awaiting its children."
+      },
+      {
+        "id": "FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE",
+        "type": "FIX",
+        "title": "cowork-slot collision probe FR-3: published:<kind>:<period> TTL=100800s (28h) exceeds the 24h daily cadence, so yesterday's still-live marker prefix-matches and blocks today's dispatch for 4h every single day",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "agents-architect",
+        "owner": "po",
+        "created_at": "2026-08-14T13:37:19Z",
+        "created_by": "po",
+        "source": "telegram report 4861 (router, 2026-08-14T09:23:09Z) - reported as 'suspected false-positive', PO re-classified as CONFIRMED TRUE DEFECT",
+        "dedup_key": "cowork-slot-collision-probe|fr3|defect:marker-ttl-exceeds-cadence-period",
+        "dedup_checked": "backlog+ready+in_progress+review+qa scanned. TASK-COWORK-MUTEX-001 (review/REVIEW/developer, P0) SHIPPED FR-3 and is the parent - see related; its status_note is EMPTY and its QA CHANGES_REQUESTED record was destroyed (see FIX-NSO-TS-KEY-...), so it cannot be confirmed whether QA already flagged this. TASK-COWORK-MUTEX-002/003 are the test harness and cross-ref annotation. FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR (ready/pm) is the ADJACENT and highly relevant row - it mandates deriving the published-marker dedup key from the scheduled UTC fire-window rather than a wall-clock date read; this row is the TTL half of the same agreement and the two should be designed together.",
+        "evidence": "PO read the source rather than trusting the report. .claude/skills/dispatch-claim/SKILL.md:647-648 reads: `if row.task_id starts_with \"published:\" + slot_id + \":\": collision = row; break` / `# prefix match, NOT exact period-key — catches daily AND weekly published: keys without the`. The prefix match is DELIBERATE and documented (cadence-agnostic so the prober need not know daily-vs-weekly). Live observation from report 4861: published:fb-daily:2026-08-13 still TTL-live (expires 2026-08-14T13:25:39Z, TTL=100800s), no fb-post-2026-08-14.md exists (today genuinely unpublished), and the session-presence roster shows no live session for the claimed owner 0454e9d8-b475-4230-95c9-8b7d943aa8b3 (stale claim, not an active peer).",
+        "root_cause": "TWO-SIDED, and the reporter's recommended fix addresses only one side. 28h TTL against a 24h period guarantees a 4h window EVERY day in which the prior period's marker is simultaneously live and prefix-matching. Switching FR-3 to exact period-key match as recommended would break the weekly case the prefix match was explicitly written for.",
+        "po_rescope_note": "EXPLICIT CORRECTION TO THE REPORTER: report 4861's recommendation ('FR-3 should exact-match the period key') is INSUFFICIENT on its own and would regress weekly slots. Any fix must reconcile both axes - either TTL <= cadence period (so a prior-period marker cannot outlive its period), or caller-computed exact period key PLUS a separate cadence-resolution step that preserves weekly coverage. Do not implement the one-line change.",
+        "acceptance": "AC-1 a stale prior-period marker can never block the current period's manual dispatch, for BOTH daily and weekly slots. AC-2 a genuinely-live current-period marker still blocks (no regression of the double-publish guard TASK-COWORK-MUTEX-001 exists to provide). AC-3 stale-owner detection: a marker whose owner session is absent from the presence roster should not block. AC-4 fixture in cowork-dispatch-collision-probe.test.sh covering the daily 4h-overlap window and the weekly case. AC-5 (INTERIM, ship first and separately if the full fix needs a design cycle): the Step 2.4 probe must not block on a marker whose owner_client_session has no live session-presence row — this is one extra read the router already makes at Phase A.5, needs no date logic, and unblocks all 5 daily slots today. AC-6: whichever axis is chosen, a fixture must assert chef-evening dispatch succeeds at 19:45Z with yesterday marker still TTL-live, since that is the exact production-blocked case.",
+        "related": [
+          "TASK-COWORK-MUTEX-001",
+          "TASK-COWORK-MUTEX-002",
+          "FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR"
+        ],
+        "consumer_impact": "Affects router-manual dispatch of every cowork-slot agent. Cron path uses a separate fire-election and is unaffected. Already blocked one legitimate fb-market-poster dispatch on 2026-08-14.",
+        "updated_at": "2026-08-23T13:56:45Z",
+        "updated_by": "po",
+        "occurrence_2_20260814T1952Z": "SECOND live block, 10h29m after occurrence 1 (fb-daily). Router probe at 2026-08-14T19:52:07Z on slot chef-evening (cron `45 19 * * *`) matched published:chef-evening:2026-08-13 (owner_client_session 0454e9d8-b475-4230-95c9-8b7d943aa8b3, claimed_at 2026-08-13T19:53:37Z, ttl 100800, expires 2026-08-14T23:53:37Z). PO re-verified live via task_list_held: (a) published:chef-evening:2026-08-14 ABSENT -> today genuinely unpublished, (b) NO session-presence row for 0454e9d8 -> holder session dead, exactly the AC-3 stale-owner shape, (c) no cowork-slot:chef-evening and no intent:unified-agent:* held -> no live peer. Same dead session 0454e9d8 also holds published:chef-morning:2026-08-14, so one dead session is now blocking two slots.",
+        "blast_radius_20260814": "NOT slot-specific and NOT probabilistic — DETERMINISTIC for every daily-cadence slot, computable from config alone. Live 100800s markers confirmed on 5 slots: chef-evening, chef-eod, chef-morning, tnb-audit, fb-daily. Blocked window per slot = 28h TTL minus 24h cadence = 4h, positioned to START at the slot fire time, i.e. the prior marker is ALWAYS live at the exact moment the next fire dispatches. chef-evening blocked window = 19:45Z fire vs 23:53Z expiry = 100% of every fire, every day, forever. digest-daily (ttl 86400 = cadence exactly) is marginal-not-safe: it blocks whenever today fire is even one second earlier than yesterday claim.",
+        "po_ruling_20260814T1952Z": "P1 -> P0 and next_agent developer -> agents-architect. P0 because this is now a confirmed-recurring DAILY availability defect on the guaranteed-slot publish path with 2 live blocks in one day, not a latent design smell. Routed to agents-architect (not developer) because the prefix match is a DELIBERATE ruling from docs/architecture-briefs/2026-07-29-fix-cowork-dispatch-router-intent-mutex-bypass-design.md (Candidate A refined, zero date-basis duplication) — the brief author must re-rule the axis, since the three candidate axes trade off against each other and two of them regress something. Developer implements AFTER the ruling. Reference: PO already rejected the naive one-line fix in po_rescope_note; that rejection STANDS.",
+        "axis_analysis_po_20260814": "Three axes, none free. (A) exact period-key match: regresses weekly slots and re-introduces the date-basis duplication the brief eliminated — already rejected, see po_rescope_note. (B) TTL <= cadence: cheap and correct in isolation, BUT the 28h was chosen deliberately (ARCH-DECIDE-D, spawn-fanout.md:150 `covers the full 24h content cycle`) and the guaranteed-slot CATCHUP flow can legitimately re-run a missed slot using the PRIOR period key — shortening TTL may re-open the double-publish window that catch-up specifically needs closed. Architect must confirm against the catch-up flow before picking B. (C) stale-owner / presence-roster check (already written as AC-3): cleanest fit for BOTH observed occurrences (both blocking holders were dead sessions absent from the roster), cadence-agnostic, and preserves the weekly prefix match untouched. PO does not choose the axis — but records that C is the only one that fits both live occurrences without regressing a documented behaviour.",
+        "promoted_at": "2026-08-14T22:35:15Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='agents-architect' (priority_rank=0); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "agents-architect",
+        "po_fold_20260815T0040": "FOLD of telegram report 4861 (2026-08-14T09:23:09Z) — independent router-side confirmation, no new row. fb-market-poster slot=fb-daily manual dispatch was BLOCKED by published:fb-daily:2026-08-13 still TTL-live (expiry 2026-08-14T13:25:39Z, TTL=100800s/28h vs 24h daily cadence). Report adds two facts this row did not have: (a) the false positive is a PREFIX match (published:fb-daily:*) rather than an exact period-key match, so it is the FR-3 comparison shape that is wrong, not only the TTL constant — a fix that only shortens TTL would leave a narrower but non-zero overlap window; (b) blast radius is bounded to router-MANUAL dispatch of cowork-slot agents, because the cron path uses a separate fire-election and is unaffected. Verified at source by the reporter: no fb-post-2026-08-14.md existed (that day genuinely unpublished) and the session-presence roster showed no live session for holder 0454e9d8-b475-4230-95c9-8b7d943aa8b3, i.e. a stale claim not an active peer. Recommend the AC assert exact period-key equality AND that the router compute today's period key for comparison; TTL shortening alone is insufficient.",
+        "claimed_at": "2026-08-23T13:56:39Z",
+        "claimed_by": "dev-team (design-router sweep)"
       }
     ]
   },
