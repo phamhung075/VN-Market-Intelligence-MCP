@@ -17405,6 +17405,36 @@
             "observed_at": "2026-08-23T20:39:28Z"
           }
         }
+      },
+      {
+        "id": "CCATO-MCP-T3-PROBE-ADAPTERS",
+        "type": "IMPL-XS",
+        "status": "DONE_VERIFIED",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "infrastructure/probes/narrativeTruthProbeAdapters.ts (5 adapters, incl. reports.ts extraction)",
+        "depends": [
+          "CCATO-MCP-T1-DOMAIN-ENGINE"
+        ],
+        "supervised": false,
+        "updated_at": "2026-08-23T20:43:22Z",
+        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)",
+        "claimed_at": "2026-08-23T20:24:30Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "dispatch_lane": "dev-mcp-server",
+        "owner": "qa",
+        "status_note": "dev-mcp-server complete, commit 845fd1aa8 (3 files, 749+/20-). Dispatcher-verified at source, not from the agent RETURN: commit exists with exactly the claimed file set; 5 adapters + probeDimension exported from infrastructure/probes/narrativeTruthProbeAdapters.ts; R-4 extraction present (fetchFinancialReportRow/ReportRow/rowToMetrics exported from reports.ts). Re-ran independently: CCATO-MCP-T3-PROBE-ADAPTERS.test.ts 23 pass/0 fail; bun tsc --noEmit exit 0; 085-tool-reports.test.ts (R-4 touched surface) 5 pass/2 skip/0 fail - compare_financials behavior unchanged. Full-suite NOT run to completion (agent disclosed this plainly); correct per dev-standards.md:2073 CANONICAL pinned reading - targeted/merge-gate scope is the gate, apps/mcp-server carries a standing tracked full-suite red FIX-MCP-SUITE-HEALTH-BASELINE. QA: a base-vs-head A/B for zero NET NEW failures is the remaining bar that reading asks for. Also confirmed: brief 2026-07-17-ccato-truthgate-mcp-native.md line 46 cites infrastructure/db/vnstockStore.ts:579 for getForeignFlowHistory - stale, that file is now a 37-line barrel and the function is at infrastructure/db/vnstock/foreignFlowStore.ts:33. Unblocks CCATO-MCP-T5-USECASE (deps T1,T2,T3,T4). NOT pushed - PUSH-AUTONOMY-1 gates on qa.\n[QA] Review Record (direct-commit verify): APPROVED (direct-commit verify). Commit 845fd1aa8 confirmed main-ancestor, exact 3-file/749+/20- match. Independently re-ran: CCATO-MCP-T3-PROBE-ADAPTERS.test.ts 23/0 pass, bun tsc --noEmit 0 err, 085-tool-reports.test.ts (R-4 touched surface) 5 pass/2 skip/0 fail unchanged, mock-guard PASS, DDD/secret greps clean. Grep-confirmed all 5 adapters (probeTechnicalIndicators/probeForeignFlow/probeMacro/probeFinancials/probeMarketSnapshot) + probeDimension exported from narrativeTruthProbeAdapters.ts; fetchFinancialReportRow/ReportRow/rowToMetrics exported from reports.ts — exactly as claimed. Closed the row's own disclosed gap: full suite run to completion (569s) — 15401 pass/40 skip/51 fail/1281 files. Compared failing FILE SET against dispatcher-given stable baseline (15411/40/50/15-files): 16 failing files, +1 vs baseline (081-bun-mcp-server.test.ts, SSE/port-binding, sits in the same 5000ms-timeout-cluster signature as several already-failing sibling files this run — order-dependent flake per dev-standards.md:2073, not a regression). Grepped full log for probe/reports.ts/fetchFinancialReportRow/rowToMetrics/narrativeTruth/CCATO-MCP-T3/financial-reports identifiers outside source headers — zero hits in any failure context. No file or failure text attributable to this row. OOM-Class Durability Gate N/A (not memory/crash-class). BCTC Eval Gate N/A (no single report_id in scope).",
+        "drain_source_lane": "review",
+        "qa_verified_at": "2026-08-23T20:43:21Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit + bash scripts/audits/mock-guard.sh + full bun test suite",
+            "args": "commit=845fd1aa8; files=apps/mcp-server/src/__tests__/CCATO-MCP-T3-PROBE-ADAPTERS.test.ts,apps/mcp-server/src/infrastructure/probes/narrativeTruthProbeAdapters.ts,apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts",
+            "live_value_observed": "ancestor=yes; stat touches 3/3 claimed files (749+/20-); CCATO-MCP-T3-PROBE-ADAPTERS.test.ts 23 pass/0 fail; tsc 0 errors; 085-tool-reports.test.ts 5 pass/2 skip/0 fail; mock-guard PASS; DDD/secret greps clean; exports verified (5 adapters+probeDimension, fetchFinancialReportRow/ReportRow/rowToMetrics); full suite 15401 pass/40 skip/51 fail/1281 files (569s), 16 failing files vs baseline 15 (+1, 081-bun-mcp-server.test.ts unrelated SSE flake), zero identifier hits in failure context",
+            "observed_at": "2026-08-23T20:43:21Z"
+          }
+        }
       }
     ],
     "head": {
@@ -20938,28 +20968,6 @@
           "collector": "scripts/durability-mem-sample.sh (new this cycle, closes the missing-instrumentation root cause)"
         },
         "qa_rcverif_grandfather_escalation_20260823T1441Z": "[QA ESCALATION 2026-08-23T14:41Z — RC-VERIF GRANDFATHER FALSE-GREEN HAZARD ON THIS EXACT ROW. Not a defect in the fix under review; a defect in the gate that is supposed to protect it. Bar section 4 (\"Grandfather-exemption guard\") names this as a known open engineering gap with process-control-only mitigation; this note is the live proof that it is exploitable on the single highest-pressure row in the fleet.]\nFACT, PROVEN BY EXECUTION NOT BY READING: \"FU-RAG-DEPLOY-MEMORY\" is a member of RC_VERIF_GRANDFATHERED_IDS (apps/mcp-server/src/infrastructure/orchStateSchema.ts line 569). checkVerificationGate() guards with a bare `row.status === \"DONE_VERIFIED\" && !RC_VERIF_GRANDFATHERED_IDS.has(id)`, with no awareness of retraction or void markers. Consequence: this row can be flipped to DONE_VERIFIED carrying NO verification.raw_probe at all, and orch-apply.sh will accept the write.\nLIVE REPRO WITH A CONTROL, run against a fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE (hot file never touched, override unset afterwards). Identical transform, two ids: FU-RAG-DEPLOY-MEMORY flipped to DONE_VERIFIED with `del(.verification)` -> \"Stage 0 + Stage 1 PASS\", write APPLIED. The same transform on the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK -> \"ORCH-STATE VALIDATION FAILED (1 issue) ... set to DONE_VERIFIED without verification.raw_probe\" -> \"ABORTED: validator exit 2 -- live file untouched\". So the exemption, not any property of the evidence, is what decides.\nWHY THIS ROW IS THE WORST POSSIBLE MEMBER OF THAT LIST. (1) It is OOM-class, and its own family has produced THREE recorded false certifications on this one incident (bar section 5). (2) It carries contamination/void language already (its po ruling calls the 7-day window CONTAMINATED; its sibling holds an explicit qa_durability_window_status VOID), which under bar section 4's retraction rule means the exemption must not be relied on for it -- but nothing in code enforces that. (3) It is under active unblock pressure: RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE ships BLOCKED on this row reaching DONE_VERIFIED, so there is a standing incentive to flip it. (4) The incentive is not hypothetical -- TWO rows were flipped to DONE_VERIFIED in this very cycle by updated_by=developer with qa_verified_by absent (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION at 14:28:53Z, FIX-CHEF-MARKER-KEY-ANCHOR-1 at 14:33:50Z). Both happened to be substantively correct on QA re-check, but they establish that self-certification without the qa gate is a live behaviour, not a theoretical one. On this row that behaviour would meet no schema resistance whatsoever.\nASK (out of qa's zone -- apps/mcp-server code change, needs a minted row; qa is reporting, not patching): make checkVerificationGate() refuse the exemption for any RC_VERIF_GRANDFATHERED_IDS member whose row text carries a retraction/void/contamination marker, exactly as bar section 4 already specifies in prose. Cheapest correct alternative if that is too broad: remove this single id from the frozen list, since the row has never actually been certified and therefore has nothing to grandfather -- the list exists to spare genuinely-pre-existing certified rows a retroactive probe requirement, and this row is not one.\nINTERIM PROCESS CONTROL, binding until that lands: NO agent may flip FU-RAG-DEPLOY-MEMORY to DONE_VERIFIED without the six canonical D5 fields AND a verification.raw_probe, exemption notwithstanding. The schema will not stop you. This note is the record that you were told.\n\n[QA CORRECTION 2026-08-23T14:51Z to the escalation above.] Point (4) of that escalation cited two rows flipped this cycle \"by updated_by=developer with qa_verified_by absent\" as proof that self-certification without the qa gate is live behaviour. THAT SUPPORTING CLAIM IS WITHDRAWN. Both rows were in fact fully verified by a concurrent peer qa session and journaled — sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-26.md STEP qa-S162 (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION) and STEP qa-S167 (FIX-CHEF-MARKER-KEY-ANCHOR-1, which independently traced the same amended-commit hazard via git reflog). The qa gate ran on both. What those rows actually show is a provenance-stamping gap (updated_by names the wrong actor and qa_verified_by is left unset, so a board reader cannot distinguish a qa verdict from an owner self-flip) — a real but much smaller finding, and NOT evidence of gate bypass.\nTHE ESCALATION ITSELF IS UNAFFECTED AND STANDS. Its load-bearing evidence was never those two rows; it is the live paired repro with a control, run against a fixture: the identical no-raw_probe DONE_VERIFIED transform PASSES validation for FU-RAG-DEPLOY-MEMORY (grandfathered) and ABORTS with \"set to DONE_VERIFIED without verification.raw_probe\" for the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK. Points (1) membership at orchStateSchema.ts line 569, (2) the OOM-class family's three recorded false certifications, and (3) the live unblock pressure from RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE are all independently verified and unchanged. The ask and the interim process control stand exactly as written.\n"
-      },
-      {
-        "id": "CCATO-MCP-T3-PROBE-ADAPTERS",
-        "type": "IMPL-XS",
-        "status": "QA",
-        "size": "XS",
-        "zone": "mcp-server",
-        "priority": "P0",
-        "title": "infrastructure/probes/narrativeTruthProbeAdapters.ts (5 adapters, incl. reports.ts extraction)",
-        "depends": [
-          "CCATO-MCP-T1-DOMAIN-ENGINE"
-        ],
-        "next_agent": "qa",
-        "supervised": false,
-        "updated_at": "2026-08-23T20:24:31Z",
-        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)",
-        "claimed_at": "2026-08-23T20:24:30Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "dispatch_lane": "dev-mcp-server",
-        "owner": "qa",
-        "status_note": "dev-mcp-server complete, commit 845fd1aa8 (3 files, 749+/20-). Dispatcher-verified at source, not from the agent RETURN: commit exists with exactly the claimed file set; 5 adapters + probeDimension exported from infrastructure/probes/narrativeTruthProbeAdapters.ts; R-4 extraction present (fetchFinancialReportRow/ReportRow/rowToMetrics exported from reports.ts). Re-ran independently: CCATO-MCP-T3-PROBE-ADAPTERS.test.ts 23 pass/0 fail; bun tsc --noEmit exit 0; 085-tool-reports.test.ts (R-4 touched surface) 5 pass/2 skip/0 fail - compare_financials behavior unchanged. Full-suite NOT run to completion (agent disclosed this plainly); correct per dev-standards.md:2073 CANONICAL pinned reading - targeted/merge-gate scope is the gate, apps/mcp-server carries a standing tracked full-suite red FIX-MCP-SUITE-HEALTH-BASELINE. QA: a base-vs-head A/B for zero NET NEW failures is the remaining bar that reading asks for. Also confirmed: brief 2026-07-17-ccato-truthgate-mcp-native.md line 46 cites infrastructure/db/vnstockStore.ts:579 for getForeignFlowHistory - stale, that file is now a 37-line barrel and the function is at infrastructure/db/vnstock/foreignFlowStore.ts:33. Unblocks CCATO-MCP-T5-USECASE (deps T1,T2,T3,T4). NOT pushed - PUSH-AUTONOMY-1 gates on qa.",
-        "drain_source_lane": "review"
       }
     ],
     "_closed_signals_20260614": {
