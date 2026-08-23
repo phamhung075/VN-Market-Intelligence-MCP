@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260823T150515Z",
+    "matched_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "weekend",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-1": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-1": "1440"
+    },
+    "last_fired_timestamp": "2026-08-23T15:03:34Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "15:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 119,
+    "signal_backlog": 0,
+    "note": "Slot last fired 2026-08-14T15:03:39Z (9d gap, host-suspension cohort). Step 4.7 snapshot written as cycle-snapshot-15:02.json but emit_pressure_state looked for cycle-snapshot-15:00.json (tick_id-derived HH:MM, emitPressureStateTool.ts:397) -> cycle_snapshot_promoted=false; cycle-snapshot-latest.json still stamped tick 00:00 / 2026-08-23T00:07:50Z. Producer uses wall-clock date -u +%H:%M, consumer uses nominal tick. Step 5.3 off-flow detector DEFERRED per BGFAN-1 timing contract (spawn in flight, no return text yet); prior last_fired 2026-08-14T15:03:39Z retained for any de-stamp reconciliation."
+  },
+  "priority": "low",
+  "createdAt": "20260823T150515Z",
+  "_processed": {
+    "fingerprint": "acda156da0536b054fd6eff9b9cc04824b61ac5f2a70b3c27be144f113726e9f",
+    "processedAt": "2026-08-23T15:22:23Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

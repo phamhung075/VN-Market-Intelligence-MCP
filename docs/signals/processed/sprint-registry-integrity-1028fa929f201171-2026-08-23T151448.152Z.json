@@ -1,0 +1,26 @@
+{
+  "from": "orch-validate-stage1h",
+  "to": "po",
+  "type": "sprint_registry_dangling_ids",
+  "priority": "high",
+  "createdAt": "2026-08-23T15:14:48.153Z",
+  "payload": {
+    "violation_count": 1,
+    "ids": [
+      {
+        "id": "FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "planes": [
+          "task_board",
+          "sprint_goal"
+        ]
+      }
+    ],
+    "action_required": "reconcile_via_verify_sprint_registry_referential_integrity_script"
+  },
+  "_processed": {
+    "fingerprint": "9fbfb401a5cc9bf6b6f101f29d6b3e107aaf709f396985e161a457defac1553a",
+    "processedAt": "2026-08-23T15:22:23Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

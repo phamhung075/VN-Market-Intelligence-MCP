@@ -20760,9 +20760,345 @@
         "last_served_tick": "2026-08-23T14:55:52Z"
       }
     },
-    "_updated_at": "2026-08-23T15:07:24Z",
-    "_updated_by": "po",
-    "pending_triage_inbox": [],
+    "_updated_at": "2026-08-23T15:22:23Z",
+    "_updated_by": "dev-team",
+    "pending_triage_inbox": [
+      {
+        "envelope_id": "549177c70b2259b1038e039371cac4fc9f3c8a9fb561ae2bc3da8449707512b7",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Residential real-estate development (Dat Xanh Group) -- apartment/township projects",
+          "customer": "Retail homebuyers and investors in HCMC-region + southern-province residential projects",
+          "ops": "DATA GAP -- get_bctc_full(DXG) returns 'Chua co du lieu BCTC' for the 33rd+ consecutive routine cycle despite Q2-2026 PDF on file since 2026-08-01 (list_stored_pdfs confirms DXG_2026_Q2.pdf present, extraction pipeline stalled). Sector-comparison-only fallback used below; no income-statement/balance-sheet figures available this cycle.",
+          "mgmt": "Sector-comparison only: ROE 1.9% vs sector median 7.3% (below median). PE 66.5x vs sector median 16.1x (premium +312%), PB 1.2x (in line with sector). EY_SPREAD -3.50pp vs 5% deposit rate -> AVOID valuation; no bullish signal posted per valuation_verdict=AVOID gate.",
+          "esc_results": {
+            "ESC-1": "UNEVALUABLE -- no BCTC data this cycle",
+            "ESC-2": "UNEVALUABLE -- no BCTC data this cycle",
+            "ESC-3": "UNEVALUABLE -- no BCTC data this cycle",
+            "ESC-4": "UNEVALUABLE -- no BCTC data this cycle",
+            "ESC-5": "UNEVALUABLE -- no BCTC data this cycle"
+          },
+          "kinhdich": {
+            "que": "Di (27)",
+            "xu_huong": "TRUNG TINH",
+            "tin_hieu": "BAN",
+            "do_tin_cay_pct": 29
+          },
+          "insider_signal": "no significant activity",
+          "legal_risk": "none flagged",
+          "carry_over_note": "cash-flow-anomaly signal from c162 (bctc-analyst-20260813T001500Z.json) still pending dev-team pickup; DXG BCTC extraction stall (33rd+ cycle) still unresolved.",
+          "cycle_ts": "2026-08-23T15:00:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T15:22:23Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9f9167581b72c83aa02b326fc2a9e546a173e47ac7b616c77744e5fe59aa3b71",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "IT services, software exports, telecom (FPT Telecom, deconsolidated to equity-method 2026), education (FPT Edu)",
+          "customer": "Enterprise IT buyers (VN + offshore, Europe +44.4% YoY / Japan growth), broadband subscribers via FTEL associate, students across FPT school network",
+          "ops": "Gross margin 34.0%, operating margin 22.0%. Q1-2026 net revenue 12,480 ty VND, reported -22.3% YoY due to FTEL consolidation-method change; like-for-like restated basis +8.7% revenue / +13.8% NI YoY. OCF -2,848 ty VND vs NI +2,477 ty VND this quarter (working-capital drag from AR/inventory build, not a going-concern signal — Q4-2025 OCF was positive +4,108 ty VND).",
+          "mgmt": "ROE 6.2% raw-quarter / 28.3% sector-comparison annualized (well above sector median 10.6%). PE 13.8x vs sector median 17.3x (discount -20%), PB 3.6x (premium +136%). EY_SPREAD +2.25pp vs 5% deposit rate -> FAIR valuation.",
+          "esc_results": {
+            "ESC-1": "SCOPE-REDUCED (no bctc_table_rows/bctc_balance_checks tool access)",
+            "ESC-2": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "ESC-3": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "coverage_guard_held": true,
+              "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3"
+            },
+            "ESC-4": {
+              "result": false,
+              "non_operating_share_pct": 2
+            },
+            "ESC-5": {
+              "result": true,
+              "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+              "low_confidence_unit_count": 7,
+              "min_confidence": 0.45,
+              "escalation_status": "GUARD-HELD",
+              "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
+            }
+          },
+          "kinhdich": {
+            "que": "Hoan (59)",
+            "xu_huong": "THUAN LOI",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 100
+          },
+          "insider_signal": "no significant activity",
+          "legal_risk": "none flagged",
+          "cycle_ts": "2026-08-23T15:00:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T15:22:23Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "eefd05664baadd538f2f8a3b535acd0bd242b4304596e7da63db078bdc6538aa",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Steel production (construction steel, HRC, billet), building materials",
+          "customer": "Domestic construction/infrastructure buyers, export steel markets, downstream fabricators",
+          "ops": "Gross margin 15.8%. Data-quality flag: reported Operating Profit = 0 ty VND (0.0%) while Net Profit = 9,055.9 ty VND (17.1%) and Gross Profit = 8,365.1 ty VND -- internally inconsistent extraction (net profit exceeds gross profit per tool's own validation warning), 29th+ consecutive routine cycle unresolved. Operating-margin and EBITDA fields DISCARDED as corrupt; do not cite.",
+          "mgmt": "ROE 6.5% raw-quarter / 12.7% sector-comparison annualized (above sector median 2.9%, sector itself depressed). PE 14.2x vs sector median 32.6x (discount -57%), PB 1.7x (premium +93%). EY_SPREAD +2.04pp vs 5% deposit rate -> FAIR valuation.",
+          "esc_results": {
+            "ESC-1": "SCOPE-REDUCED (no bctc_table_rows/bctc_balance_checks tool access)",
+            "ESC-2": {
+              "result": false,
+              "imbalance_pct": 0
+            },
+            "ESC-3": {
+              "result": "DATA-COVERAGE-LIMITED",
+              "quarters_returned": 3,
+              "coverage_guard_held": true,
+              "coverage_guard_key": "esc-datacov:HPG:Q1-2026:ESC-3"
+            },
+            "ESC-4": {
+              "result": "DISCARDED",
+              "note": "operating_profit=0 corrupt extraction -- non_operating_share formula unevaluable"
+            },
+            "ESC-5": {
+              "result": false,
+              "report_id": null,
+              "existing_refine_status": "PARTIAL"
+            }
+          },
+          "kinhdich": {
+            "que": "Tan (35)",
+            "xu_huong": "THUAN LOI",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 63
+          },
+          "insider_signal": "no significant activity",
+          "legal_risk": "none flagged",
+          "cycle_ts": "2026-08-23T15:00:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T15:22:23Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9623eaf9ea8e4b517028b82e2a20c1535a19bd4bba1ed101f20d40852d6f6565",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "State-owned commercial banking: retail/corporate lending, deposits, bancassurance, trade finance",
+          "customer": "Broad retail depositor/borrower base plus large corporate and SOE clients; FDI trade-finance relationships",
+          "ops": "Net interest income 17,421 ty VND; operating profit margin 80.9%. Net profit 9,462.1 ty VND (54.3% margin). OCF/NI ratio 1.37x (Q1-2026, OCF 12,945 ty vs NI 9,462 ty) -- no accrual-divergence concern.",
+          "mgmt": "ROE 4.2% raw-quarter / 16.7% sector-comparison annualized (below sector median 17.6% -- large-bank scale effect). PE 14.1x vs sector median 9.0x (premium +57%), PB 2.2x (premium +45%). EY_SPREAD +2.09pp vs 5% deposit rate -> FAIR valuation.",
+          "esc_results": {
+            "ESC-1": "SCOPE-REDUCED (no bctc_table_rows/bctc_balance_checks tool access)",
+            "ESC-2": {
+              "result": false,
+              "imbalance_pct": 0.37
+            },
+            "ESC-3": {
+              "result": false,
+              "quarters_returned": 4,
+              "divergence_ratio": 0.368
+            },
+            "ESC-4": {
+              "result": "N/A",
+              "note": "bank -- non-operating-share formula not applicable to interest-income structure"
+            },
+            "ESC-5": {
+              "result": false,
+              "report_id": null,
+              "existing_refine_status": "PARTIAL"
+            }
+          },
+          "kinhdich": {
+            "que": "Quan (20)",
+            "xu_huong": "TRUNG TINH",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 38
+          },
+          "insider_signal": "no significant activity",
+          "legal_risk": "none flagged",
+          "cycle_ts": "2026-08-23T15:00:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T15:22:23Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "37e85803e978c3bbdab5521d3497b7cde11287481010247b290c06f1ff06a712",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/triage-20260823T1504Z-po.md docs/agent-memory/notebooks/po.md docs/data/orch/orch-state.json. actor=7be6b4cd-057e-419b-a967-4810daf2b646 mode=warn escalated=false prior_warns=2 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-23T15:21:03Z",
+        "drained_at": "2026-08-23T15:22:23Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "279e7cdf3dde7e01a7746d5c25a47cb60cda3cecb8f676499192a180f79c93e4",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-agent-father-3.md",
+          "line_count": 307,
+          "cap": 600,
+          "byte_count": 37804,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 1804,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-23T15:05:02Z",
+        "drained_at": "2026-08-23T15:22:23Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c6283308ee0215529af83d12cbe546f395ddcf8dcf16e43672118de0b5906429",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-8.md",
+          "line_count": 134,
+          "cap": 600,
+          "byte_count": 38254,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 2254,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-23T15:05:37Z",
+        "drained_at": "2026-08-23T15:22:23Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "acda156da0536b054fd6eff9b9cc04824b61ac5f2a70b3c27be144f113726e9f",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "20260823T150515Z",
+          "matched_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "weekend",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-1": "cadence"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-1": "1440"
+          },
+          "last_fired_timestamp": "2026-08-23T15:03:34Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-1"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "15:00",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 119,
+          "signal_backlog": 0,
+          "note": "Slot last fired 2026-08-14T15:03:39Z (9d gap, host-suspension cohort). Step 4.7 snapshot written as cycle-snapshot-15:02.json but emit_pressure_state looked for cycle-snapshot-15:00.json (tick_id-derived HH:MM, emitPressureStateTool.ts:397) -> cycle_snapshot_promoted=false; cycle-snapshot-latest.json still stamped tick 00:00 / 2026-08-23T00:07:50Z. Producer uses wall-clock date -u +%H:%M, consumer uses nominal tick. Step 5.3 off-flow detector DEFERRED per BGFAN-1 timing contract (spawn in flight, no return text yet); prior last_fired 2026-08-14T15:03:39Z retained for any de-stamp reconciliation."
+        },
+        "createdAt": "20260823T150515Z",
+        "drained_at": "2026-08-23T15:22:23Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9fbfb401a5cc9bf6b6f101f29d6b3e107aaf709f396985e161a457defac1553a",
+        "source": "file",
+        "from": "orch-validate-stage1h",
+        "to": "po",
+        "type": "sprint_registry_dangling_ids",
+        "priority": "high",
+        "payload": {
+          "violation_count": 1,
+          "ids": [
+            {
+              "id": "FIX-BCTC-BANK-SUMMARY-MAPPING",
+              "planes": [
+                "task_board",
+                "sprint_goal"
+              ]
+            }
+          ],
+          "action_required": "reconcile_via_verify_sprint_registry_referential_integrity_script"
+        },
+        "createdAt": "2026-08-23T15:14:48.153Z",
+        "drained_at": "2026-08-23T15:22:23Z",
+        "routed_to": "PO Step 0-SIG"
+      }
+    ],
     "last_po_triage_at": "2026-08-23T12:48:03Z",
     "last_po_triage_note": "po Step 0-SIG 2026-08-23T12:47Z — 4 envelopes triaged, 0 mints (all DEDUP HIT against rows already on the board). 1x ci_red CI-RED-4b6f60ea (run 32637153628, head 4b6f60ea, failing job signal-type-coverage-guard): DEDUP HIT — FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire (ready, READY) and FIX-SIGNAL-TYPE-ROUTING-GAP-notebook-prune-dropped-newest-dated-section (backlog, auto-filed 12:23Z by the guard itself) together own both unrouted types this job is red on. 1x cowork-fire 20260823T120552Z: same routing-gap row owns the type; the tick's own execution findings were NOT dropped with the envelope — both flow-doc defects carried in its payload.note are minted as FIX-COWORK-FLOWDOC-STALE-WEEKEND-SUPPRESSION-AND-BGFAN1-RETURN-PRESUMPTION (ready, agent-father). 2x notebook_prune_dropped_newest_dated_section (both docs/agent-memory/notebooks/dev-mcp-server.md line 3, AC-6 same-day-tie class): DEDUP HIT — FIX-NOTEBOOK-AUTOPRUNE-AC6-SAMEDAY-TIE-PROCEEDS-AND-DROPS-LOADBEARING-SECTION (backlog) is the exact owner, and FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (ready) is the parent. SAME CAVEAT AS THE 10:33Z CLEAR: this write removes the cowork-fire envelope that scripts/audits/guard-signal-type-coverage.sh:198 reads, so CI can go green next run with the routing table still unfixed — that green is an artifact of the drain, not a fix.",
     "last_po_triage_consumed": 4,

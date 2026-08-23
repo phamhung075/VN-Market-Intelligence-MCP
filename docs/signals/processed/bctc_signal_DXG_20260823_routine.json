@@ -1,55 +1,33 @@
 {
   "ticker": "DXG",
   "signal_type": "bctc_signal",
-  "quarter": "N/A",
+  "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Real estate development (residential projects, land-bank monetization) — Dat Xanh Group",
-  "customer": "Retail homebuyers, institutional JV partners for project co-development",
-  "ops": "No BCTC data available this cycle — get_bctc_full(DXG) returns \"Chua co du lieu BCTC\" despite DXG_2026_Q2.pdf and DXG_2026_Q1.pdf both on file since early Aug/mid-June respectively. 32nd+ consecutive cycle with no extraction. Sector-comparison shows DXG PE=66.5 (vs sector median 16.1, +312% premium), ROE=1.9% (below sector median 7.3%)",
-  "mgmt": "Cannot assess management track record this cycle — no fresh BCTC data. Q2-2026 filing overdue since 30/07/2026",
-  "valuation": {
-    "pe": 66.5,
-    "sector_median_pe": 16.1,
-    "pb": 1.2,
-    "sector_median_pb": 1.3,
-    "roe_sector_comp_pct": 1.9,
-    "earning_yield_pct": 1.5,
-    "max_deposit_rate_pct": 5,
-    "ey_spread_pp": -3.5,
-    "verdict": "AVOID"
+  "product": "Residential real-estate development (Dat Xanh Group) -- apartment/township projects",
+  "customer": "Retail homebuyers and investors in HCMC-region + southern-province residential projects",
+  "ops": "DATA GAP -- get_bctc_full(DXG) returns 'Chua co du lieu BCTC' for the 33rd+ consecutive routine cycle despite Q2-2026 PDF on file since 2026-08-01 (list_stored_pdfs confirms DXG_2026_Q2.pdf present, extraction pipeline stalled). Sector-comparison-only fallback used below; no income-statement/balance-sheet figures available this cycle.",
+  "mgmt": "Sector-comparison only: ROE 1.9% vs sector median 7.3% (below median). PE 66.5x vs sector median 16.1x (premium +312%), PB 1.2x (in line with sector). EY_SPREAD -3.50pp vs 5% deposit rate -> AVOID valuation; no bullish signal posted per valuation_verdict=AVOID gate.",
+  "esc_results": {
+    "ESC-1": "UNEVALUABLE -- no BCTC data this cycle",
+    "ESC-2": "UNEVALUABLE -- no BCTC data this cycle",
+    "ESC-3": "UNEVALUABLE -- no BCTC data this cycle",
+    "ESC-4": "UNEVALUABLE -- no BCTC data this cycle",
+    "ESC-5": "UNEVALUABLE -- no BCTC data this cycle"
   },
   "kinhdich": {
     "que": "Di (27)",
-    "trend": "TRUNG TINH",
-    "signal": "BAN",
-    "confidence_pct": 29
+    "xu_huong": "TRUNG TINH",
+    "tin_hieu": "BAN",
+    "do_tin_cay_pct": 29
   },
-  "esc_gate": {
-    "esc_note": "ESC gate unevaluable — no BCTC extraction data (get_bctc_full returns empty). No new escalation raised; prior cash-flow-anomaly finding (bctc-analyst-20260813T001500Z.json, c162) remains PENDING dev-team pickup, not re-emitted this cycle (no guard mechanism defined for this finding type)."
-  },
-  "data_quality": {
-    "confidence_pct": 0,
-    "refine_status": "NO_DATA",
-    "known_defect": "DXG BCTC extraction returns empty despite PDF on file — standing unresolved defect, 32nd+ cycle"
-  },
-  "insider": {
-    "signal": "no significant insider activity detected"
-  },
-  "legal_risk": {
-    "findings": 0
-  },
-  "evidence_fragments_recorded": [
-    "bctc_valuation_premium(id=1376)",
-    "bctc_roe_ratio(id=1377)",
-    "bctc_report_overdue(id=1378)"
-  ],
-  "generated_at": "2026-08-23T00:20:00Z",
-  "cycle_id": "20260823-0000",
-  "slot": "bctc-analyst-slot-4",
+  "insider_signal": "no significant activity",
+  "legal_risk": "none flagged",
+  "carry_over_note": "cash-flow-anomaly signal from c162 (bctc-analyst-20260813T001500Z.json) still pending dev-team pickup; DXG BCTC extraction stall (33rd+ cycle) still unresolved.",
+  "cycle_ts": "2026-08-23T15:00:00Z",
   "_processed": {
-    "fingerprint": "e9fd0b202d48423891a64acc9cdf463f4aa94c85a98492008688fad7d36febac",
-    "processedAt": "2026-08-23T00:17:27Z",
+    "fingerprint": "549177c70b2259b1038e039371cac4fc9f3c8a9fb561ae2bc3da8449707512b7",
+    "processedAt": "2026-08-23T15:22:23Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
