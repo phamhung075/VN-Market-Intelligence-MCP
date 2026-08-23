@@ -1942,3 +1942,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · alertDigest stale 216.7h
+**Severity:** CRITICAL | **Date:** 2026-08-23 | **Status:** OPEN
+**Location:** mcp-server
+**Details:** Cron alertDigest overdue by 216.7h
+**Impact:** Alert digest notifications not sent
+**Root cause:** Cron daemon or scheduler issue
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-23T14:43:26Z (signal sys-20260823T144151-19bb, system-auditor -> po, dedup_key=auditor-a29-fire-gap:alertDigest:A-29, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
