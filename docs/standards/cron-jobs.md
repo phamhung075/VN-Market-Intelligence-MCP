@@ -386,6 +386,18 @@ tick) but are NO LONGER the primary trigger — the launchd timer is authoritati
 
 **Self-check:** `scripts/agents-flow/auditor-tier1-probe.sh` asserts every repo-tracked `launchd/*.plist` label (including this one) is present in `launchctl list` output — catches a silent unload before it causes another multi-day outage (FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED; root cause of THIS outage was the old fb-daily-firer plist silently unloading 2026-07-04 with nothing detecting it).
 
+**Failure escalation** (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION, 2026-08-23). The self-check above proves the JOB is loaded; it says nothing about whether the WORK succeeded. Measured 2026-08-11: 8 guaranteed slots × 3 days, 14 consecutive `exit_code=1` claude-CLI invocations, ZERO BUG alerts — `launchctl` reported `runs=2463, state=running` throughout (healthy JOB / 100%-failing WORK) and the outage was found by a human noticing a missing Facebook post two days late. The script now POSTs once per failing tick to the Telegram BUG channel:
+
+| Aspect | Behaviour |
+|-------|-----------|
+| Trigger | matcher command failure **or** unparseable matcher output **or** ≥1 failing slot invocation. Exactly ONE post per tick, never one per slot. |
+| Transport | direct `curl -X POST https://api.telegram.org/bot<token>/sendMessage`, pattern reused from `scripts/maybe-deploy-vps.sh`. MANDATORY, not a shortcut: the script has no gateway/MCP access, and the flow-level `send_telegram` never runs because the CLI process dies before Step 0 of any flow. |
+| Cooldown | time **and** content based, state in `ALERT_STATE_FILE` (2 lines: epoch, fingerprint). Unchanged fingerprint re-alerts at most once per `ALERT_COOLDOWN_SECONDS` (default 21600 = 6h) so a multi-day outage does not spam every 900s; a NEW fingerprint alerts immediately, so a cooldown can never blind the channel to a new episode. |
+| `--dry-run` | never escalates (manual diagnostic, not an incident). |
+| Fail-loud | missing credentials → `ESCALATION-BLOCKED`; non-zero curl → `ESCALATION-SEND-FAILED`. Both go to the error log; a silently-dropped alert would be indistinguishable from the pre-fix behaviour. |
+| BUG chat id | resolves `FIRER_ALERT_CHAT_ID` → `TELEGRAM_REPORT_BUG_CHANNEL_ID` (the real `.env` key) → `TELEGRAM_BUG_CHAT_ID`. **Known drift:** `docs/data/system-map.json` `.telegram_channels[]` names all three channels with keys that do not exist in `.env` (`TELEGRAM_BUG_CHAT_ID` / `TELEGRAM_WORK_CHAT_ID` / `TELEGRAM_MARKET_CHAT_ID` vs the live `TELEGRAM_REPORT_BUG_CHANNEL_ID` / `TELEGRAM_INFO_WORK_CHANNEL_ID` / `TELEGRAM_INFO_MARKET_GROUP_ID`), which is why both names are accepted here. |
+| Gate | `bash scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh` — 53 hermetic checks (fake `CLAUDE_BIN` + fake `CURL_BIN`, zero real CLI invocations, zero network). |
+
 **Install / re-arm** (OPS task OPS-COWORK-GUARANTEED-SLOT-INSTALL): `launchctl unload ~/Library/LaunchAgents/com.vn-market.fb-daily-firer.plist` (old, retired) then `launchctl load ~/Library/LaunchAgents/com.vn-market.cowork-guaranteed-slot-firer.plist`.
 **Verify:** `launchctl list | grep cowork-guaranteed-slot-firer` → entry present; PID column non-zero at each guaranteed slot's UTC due time.
 **Flow pointer:** `docs/agents/cowork-team/flow/main.md` Step 5 (`spawn-fanout.md`) — launchd is the OS-level backstop that reproduces the same `Agent(<agent>, ...)` spawn when no CLI session is live.

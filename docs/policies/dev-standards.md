@@ -921,6 +921,26 @@ CLAUDE_BIN=/path/to/claude bash scripts/agents-flow/cowork-guaranteed-slot-firer
 # OPS install: launchctl load ~/Library/LaunchAgents/com.vn-market.cowork-guaranteed-slot-firer.plist
 # Self-check: scripts/agents-flow/auditor-tier1-probe.sh asserts this label (and every
 #   other repo-tracked launchd/*.plist Label) stays loaded (FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED)
+#
+# FAILURE ESCALATION (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION, 2026-08-23):
+#   every non-zero outcome (matcher command failure / unparseable matcher output / >=1
+#   failing slot invocation) POSTs ONCE per tick to the Telegram BUG channel via a direct
+#   curl. Direct curl is mandatory, not a shortcut: this script has no gateway/MCP access,
+#   and the flow-level send_telegram never runs because the claude CLI dies before Step 0
+#   of any flow. Pre-fix, 67h of 100% exit_code=1 invocations produced ZERO alerts while
+#   launchctl reported the job healthy; the outage was found by a human noticing a missing
+#   Facebook post two days later.
+#   Cooldown is time AND content based: an UNCHANGED failure fingerprint re-alerts at most
+#   once per ALERT_COOLDOWN_SECONDS (default 21600 = 6h); a NEW fingerprint alerts at once.
+#   --dry-run never escalates. Missing credentials / a failed POST are logged as
+#   ESCALATION-BLOCKED / ESCALATION-SEND-FAILED — never silently swallowed.
+#   Env seams: CURL_BIN, ALERT_STATE_FILE, ALERT_COOLDOWN_SECONDS, FIRER_ALERT_CHAT_ID.
+#   BUG chat id resolves FIRST from the real .env key TELEGRAM_REPORT_BUG_CHANNEL_ID, then
+#   from TELEGRAM_BUG_CHAT_ID — docs/data/system-map.json .telegram_channels[] still carries
+#   the latter (drift: no such key exists in .env), so binding to either name alone would
+#   silently disable the escalation.
+# Gate: bash scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh (53 checks, hermetic —
+#   fake CLAUDE_BIN + fake CURL_BIN, zero real CLI invocations, zero network)
 ```
 
 **CANONICAL: Dev-team idle-capacity backlog pickup (SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1)**

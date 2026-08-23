@@ -69,16 +69,57 @@ exit 0
 STUBEOF
 chmod +x "$SLEEPER_CLAUDE"
 
+# ── Fake CURL_BIN — records every escalation POST, never hits the network ────
+# FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION: the escalation path
+# posts DIRECTLY to the Telegram API (the script has no gateway/MCP access of
+# its own — see its header INVARIANTS). ZERO real network calls in these tests.
+CURL_RECORD_FILE="$TMPDIR_TEST/curl-calls.log"
+export CURL_RECORD_FILE
+: > "$CURL_RECORD_FILE"
+FAKE_CURL="$TMPDIR_TEST/fake-curl.sh"
+cat > "$FAKE_CURL" <<'STUBEOF'
+#!/usr/bin/env bash
+echo "CURL: $*" >> "$CURL_RECORD_FILE"
+exit 0
+STUBEOF
+chmod +x "$FAKE_CURL"
+
+# Failing curl stub — proves a send failure is itself logged loudly, never swallowed.
+FAILING_CURL="$TMPDIR_TEST/failing-curl.sh"
+cat > "$FAILING_CURL" <<'STUBEOF'
+#!/usr/bin/env bash
+echo "CURL: $*" >> "$CURL_RECORD_FILE"
+exit 7
+STUBEOF
+chmod +x "$FAILING_CURL"
+
+export ALERT_STATE_FILE="$TMPDIR_TEST/alert-state"
+
 # ── Source the script under test (guard prevents auto-exec: $0 != BASH_SOURCE) ──
 # shellcheck source=./cowork-guaranteed-slot-firer.sh
 source "$FIRER_SH"
 
 reset_case() {
   : > "$RECORD_FILE"
-  rm -f "$LOG_FILE_PATH" "$LOG_ERR_FILE_PATH"
+  : > "$CURL_RECORD_FILE"
+  rm -f "$LOG_FILE_PATH" "$LOG_ERR_FILE_PATH" "$ALERT_STATE_FILE"
   export CLAUDE_BIN="$FAKE_CLAUDE"
   export FIRE_TIMEOUT_SECONDS=30
+  export CURL_BIN="$FAKE_CURL"
+  export ALERT_COOLDOWN_SECONDS=21600
+  export TELEGRAM_BOT_TOKEN="stub-bot-token"
+  export TELEGRAM_REPORT_BUG_CHANNEL_ID="-1009999999999"
+  unset TELEGRAM_BUG_CHAT_ID
   unset SLOT_MATCHER_CMD
+}
+
+# NOTE: `grep -c` prints 0 AND exits 1 on no-match, so a `|| echo 0` fallback
+# would emit "0\n0" and break every numeric comparison — capture, then default.
+curl_call_count() {
+  local n
+  n=$(grep -c '^CURL:' "$CURL_RECORD_FILE" 2>/dev/null)
+  case "$n" in ''|*[!0-9]*) n=0 ;; esac
+  printf '%s' "$n"
 }
 
 call_count() { wc -l < "$RECORD_FILE" | tr -d ' '; }
@@ -216,6 +257,154 @@ run_firer false; RC=$?
 check "T13 stderr-noise + valid stdout JSON — exit=0" "$([ "$RC" -eq 0 ] && echo true || echo false)"
 check "T13 stderr-noise — guaranteed slot still fires (stderr did not corrupt the JSON parse)" "$(grep -q 'slot=chef-eod' "$RECORD_FILE" && echo true || echo false)"
 check "T13 stderr-noise — no false 'non-JSON output' ERROR logged" "$(! grep -q 'non-JSON output' "$LOG_FILE_PATH" 2>/dev/null && echo true || echo false)"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION (P0)
+#
+# ROOT CAUSE UNDER TEST: run_firer() correctly returned non-zero for 67h of
+# 100% exit_code=1 claude-CLI failures and NOTHING consumed that return code.
+# The script has no gateway/MCP access, and the flow-level send_telegram
+# escalation never runs because the CLI process dies before Step 0 of any
+# flow executes. Net effect: 8 guaranteed slots x 3 days silent, zero BUG
+# alerts, zero signals, zero board rows — detected only by a human noticing a
+# missing Facebook post, two days late. launchctl reported the job healthy
+# throughout (healthy JOB / 100%-failing WORK).
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ── T14: all-success guaranteed tick — escalation must NOT fire (no false alarm) ──
+reset_case
+export SLOT_MATCHER_CMD='echo "{\"slots\":[{\"slot_id\":\"chef-morning\",\"trigger_prompt\":\"run docs/agents/unified-agent/flow/chef.md  slot=chef-morning\",\"guaranteed\":true}],\"drift_min\":0}"'
+run_firer false; RC=$?
+check "T14 all-success tick exit=0" "$([ "$RC" -eq 0 ] && echo true || echo false)"
+check "T14 all-success tick — NO escalation POST" "$([ "$(curl_call_count)" -eq 0 ] && echo true || echo false)"
+
+# ── T15: no-op tick (the ~90% common case) — escalation must NOT fire ──────────
+reset_case
+export SLOT_MATCHER_CMD='echo "{\"slots\":[],\"drift_min\":1}"'
+run_firer false; RC=$?
+check "T15 no-op tick — NO escalation POST" "$([ "$(curl_call_count)" -eq 0 ] && echo true || echo false)"
+
+# ── T16: a guaranteed slot invocation FAILS — escalation fires exactly once,
+# to the Telegram sendMessage endpoint, with the failing slot named ──────────
+reset_case
+export SLOT_MATCHER_CMD='echo "{\"slots\":[{\"slot_id\":\"fb-daily\",\"trigger_prompt\":\"run docs/agents/fb-market-poster/flow/main.md  slot=fb-daily\",\"guaranteed\":true}],\"drift_min\":0}"'
+export CLAUDE_BIN="$TMPDIR_TEST/does-not-exist-claude-binary"
+run_firer false; RC=$?
+check "T16 failing slot — run_firer still returns non-zero" "$([ "$RC" -ne 0 ] && echo true || echo false)"
+check "T16 failing slot — exactly ONE escalation POST" "$([ "$(curl_call_count)" -eq 1 ] && echo true || echo false)"
+check "T16 escalation targets the Telegram sendMessage endpoint" "$(grep -q 'api.telegram.org/botstub-bot-token/sendMessage' "$CURL_RECORD_FILE" && echo true || echo false)"
+check "T16 escalation carries the BUG chat id from .env key TELEGRAM_REPORT_BUG_CHANNEL_ID" "$(grep -q 'chat_id=-1009999999999' "$CURL_RECORD_FILE" && echo true || echo false)"
+check "T16 escalation names the failing slot" "$(grep -q 'fb-daily' "$CURL_RECORD_FILE" && echo true || echo false)"
+
+# ── T17: cooldown — the SAME failure on the next tick does NOT re-alert.
+# This is the 900s-tick spam guard: a 67h outage must produce one alert per
+# distinct episode, not 268 alerts. ─────────────────────────────────────────
+export SLOT_MATCHER_CMD='echo "{\"slots\":[{\"slot_id\":\"fb-daily\",\"trigger_prompt\":\"run docs/agents/fb-market-poster/flow/main.md  slot=fb-daily\",\"guaranteed\":true}],\"drift_min\":0}"'
+export CLAUDE_BIN="$TMPDIR_TEST/does-not-exist-claude-binary"
+: > "$CURL_RECORD_FILE"
+run_firer false >/dev/null 2>&1
+check "T17 repeat of the SAME failure inside the cooldown — suppressed" "$([ "$(curl_call_count)" -eq 0 ] && echo true || echo false)"
+
+# ── T18: a DIFFERENT failure signature inside the same cooldown window still
+# alerts — a cooldown must not blind the channel to a NEW episode. ──────────
+export SLOT_MATCHER_CMD='echo "{\"slots\":[{\"slot_id\":\"chef-evening\",\"trigger_prompt\":\"run docs/agents/unified-agent/flow/chef.md  slot=chef-evening\",\"guaranteed\":true}],\"drift_min\":0}"'
+: > "$CURL_RECORD_FILE"
+run_firer false >/dev/null 2>&1
+check "T18 NEW failure signature inside the cooldown — still alerts" "$([ "$(curl_call_count)" -eq 1 ] && echo true || echo false)"
+check "T18 the new alert names the newly failing slot" "$(grep -q 'chef-evening' "$CURL_RECORD_FILE" && echo true || echo false)"
+
+# ── T19: cooldown EXPIRY — same signature, but the state stamp is older than
+# the TTL, so the episode re-alerts (an ongoing outage is re-surfaced, not
+# silently forgotten forever). ──────────────────────────────────────────────
+: > "$CURL_RECORD_FILE"
+export ALERT_COOLDOWN_SECONDS=1
+sleep 2
+run_firer false >/dev/null 2>&1
+check "T19 cooldown expired — same signature re-alerts" "$([ "$(curl_call_count)" -eq 1 ] && echo true || echo false)"
+
+# ── T20: token / chat-id unset — must FAIL LOUD into the error log, never
+# silently swallow the escalation (that is the exact defect class this row
+# exists to close, one level up). ───────────────────────────────────────────
+reset_case
+unset TELEGRAM_BOT_TOKEN
+unset TELEGRAM_REPORT_BUG_CHANNEL_ID
+export SLOT_MATCHER_CMD='echo "{\"slots\":[{\"slot_id\":\"tnb-audit\",\"trigger_prompt\":\"run docs/agents/tran-ngoc-bau/flow/main.md  slot=tnb-audit\",\"guaranteed\":true}],\"drift_min\":0}"'
+export CLAUDE_BIN="$TMPDIR_TEST/does-not-exist-claude-binary"
+run_firer false >/dev/null 2>&1
+check "T20 missing telegram creds — no POST attempted" "$([ "$(curl_call_count)" -eq 0 ] && echo true || echo false)"
+check "T20 missing telegram creds — logged LOUD in the error log" "$(grep -q 'ESCALATION-BLOCKED' "$LOG_ERR_FILE_PATH" 2>/dev/null && echo true || echo false)"
+
+# ── T20b: the send itself failing must also be logged, never swallowed ───────
+reset_case
+export CURL_BIN="$FAILING_CURL"
+export SLOT_MATCHER_CMD='echo "{\"slots\":[{\"slot_id\":\"digest-daily\",\"trigger_prompt\":\"run docs/agents/digest-predict/flow/main.md  slot=digest-daily\",\"guaranteed\":true}],\"drift_min\":0}"'
+export CLAUDE_BIN="$TMPDIR_TEST/does-not-exist-claude-binary"
+run_firer false >/dev/null 2>&1
+check "T20b escalation send failure logged (never swallowed)" "$(grep -q 'ESCALATION-SEND-FAILED' "$LOG_ERR_FILE_PATH" 2>/dev/null && echo true || echo false)"
+
+# ── T21: the matcher itself failing means NO guaranteed slot can fire at all —
+# strictly worse than one slot failing, so it must escalate too. ────────────
+reset_case
+export SLOT_MATCHER_CMD='false'
+run_firer false >/dev/null 2>&1
+check "T21 matcher command failure — escalation POST fired" "$([ "$(curl_call_count)" -eq 1 ] && echo true || echo false)"
+
+reset_case
+export SLOT_MATCHER_CMD='echo "not valid json at all"'
+run_firer false >/dev/null 2>&1
+check "T21b matcher non-JSON output — escalation POST fired" "$([ "$(curl_call_count)" -eq 1 ] && echo true || echo false)"
+
+# ── T22: --dry-run must never escalate (manual diagnostic, not an incident) ──
+reset_case
+export SLOT_MATCHER_CMD='false'
+run_firer true >/dev/null 2>&1
+check "T22 dry-run never escalates" "$([ "$(curl_call_count)" -eq 0 ] && echo true || echo false)"
+
+# ── T23 (AC-4 regression): one slot failing must NOT stop the next slot from
+# firing, and the single escalation must name BOTH the failure and the tick. ──
+reset_case
+BAD_THEN_GOOD="$TMPDIR_TEST/bad-then-good-claude.sh"
+cat > "$BAD_THEN_GOOD" <<'STUBEOF'
+#!/usr/bin/env bash
+echo "CALLED: $*" >> "$RECORD_FILE"
+case "$*" in *chef-eod*) exit 1 ;; esac
+exit 0
+STUBEOF
+chmod +x "$BAD_THEN_GOOD"
+export CLAUDE_BIN="$BAD_THEN_GOOD"
+export SLOT_MATCHER_CMD='echo "{\"slots\":[{\"slot_id\":\"chef-eod\",\"trigger_prompt\":\"run docs/agents/unified-agent/flow/chef.md  slot=chef-eod\",\"guaranteed\":true},{\"slot_id\":\"digest-daily\",\"trigger_prompt\":\"run docs/agents/digest-predict/flow/main.md  slot=digest-daily\",\"guaranteed\":true}],\"drift_min\":0}"'
+run_firer false; RC=$?
+check "T23 AC-4 — the healthy sibling slot still fired after the failure" "$(grep -q 'slot=digest-daily' "$RECORD_FILE" && echo true || echo false)"
+check "T23 AC-4 — both slots were attempted" "$([ "$(call_count)" -eq 2 ] && echo true || echo false)"
+check "T23 exactly ONE escalation for the whole tick (not one per slot)" "$([ "$(curl_call_count)" -eq 1 ] && echo true || echo false)"
+check "T23 the escalation names the slot that actually failed" "$(grep -q 'chef-eod' "$CURL_RECORD_FILE" && echo true || echo false)"
+
+# ── T24 (FOLDED log-fidelity item): the invocation log line must print the
+# REAL trigger_prompt that was executed, not a synthesised "slot=<id>" string.
+# The old line logged `-p 'slot=fb-daily'` while actually executing
+# `-p 'run docs/agents/fb-market-poster/flow/main.md  slot=fb-daily'` — it
+# reads like the firer dropped the flow path from the prompt, which is a
+# plausible and entirely wrong root cause for a triager to chase. ───────────
+reset_case
+export SLOT_MATCHER_CMD='echo "{\"slots\":[{\"slot_id\":\"fb-daily\",\"trigger_prompt\":\"run docs/agents/fb-market-poster/flow/main.md  slot=fb-daily\",\"guaranteed\":true}],\"drift_min\":0}"'
+run_firer false >/dev/null 2>&1
+check "T24 invocation log prints the REAL trigger_prompt" "$(grep -q "invoking .*-p 'run docs/agents/fb-market-poster/flow/main.md  slot=fb-daily'" "$LOG_FILE_PATH" && echo true || echo false)"
+
+# ── T25 (FOLDED item 7a of FIX-GUARANTEED-SLOT-FIRER-FANOUT-TRUNCATION):
+# every log line was written TWICE in production — once by log()'s `tee -a
+# "$LOG_FILE"`, once by launchd, whose StandardOutPath for this job IS that
+# same file (verified in launchd/com.vn-market.cowork-guaranteed-slot-firer.
+# plist). log() must therefore not emit to stdout on a non-TTY run. ─────────
+reset_case
+CLI_OUT=$(SLOT_MATCHER_CMD='echo "{\"slots\":[{\"slot_id\":\"fb-weekend\",\"trigger_prompt\":\"run docs/agents/fb-market-poster/flow/main.md  slot=fb-weekend\",\"guaranteed\":true}],\"drift_min\":0}"' \
+  FIRER_ROOT="$TMPDIR_TEST" LOG_FILE_PATH="$LOG_FILE_PATH" LOG_ERR_FILE_PATH="$LOG_ERR_FILE_PATH" \
+  CLAUDE_BIN="$FAKE_CLAUDE" RECORD_FILE="$RECORD_FILE" FIRE_TIMEOUT_SECONDS=30 \
+  CURL_BIN="$FAKE_CURL" CURL_RECORD_FILE="$CURL_RECORD_FILE" ALERT_STATE_FILE="$ALERT_STATE_FILE" \
+  bash "$FIRER_SH" 2>&1)
+check "T25 non-TTY run emits NO log lines on stdout (launchd would duplicate them into the same file)" \
+  "$(printf '%s' "$CLI_OUT" | grep -q '^\[20' && echo false || echo true)"
+check "T25 the log line is still written exactly once to LOG_FILE" \
+  "$([ "$(grep -c 'guaranteed-slot-firer: slot=fb-weekend' "$LOG_FILE_PATH")" -eq 1 ] && echo true || echo false)"
 
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""
