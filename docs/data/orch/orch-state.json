@@ -12801,11 +12801,29 @@
         "title": "Unrouted signal type 'cowork-fire' (Pipeline A) — no table row in docs/agents/po/flow/triage-signals.md",
         "dedup_key": "signal-type-registry-gap:cowork-fire",
         "created_at": "2026-08-23T09:25:41Z",
-        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=cowork-fire routed on Pipeline A (a matching table row exists in triage-signals.md's own Pipeline-A section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md. [po/triage 2026-08-23T10:33Z] ROUTED — row was auto-filed by the guard at 09:25:41Z with next_agent UNSET, which no dispatch lane resolves, so it could never move while the CI job it tracks stayed red. Set next_agent=agent-father (zone docs/agents/po/flow/ is a flow doc; po may not edit its own agent flow files per its own boundary_rules) and priority P1. THIS ROW IS THE TRACKED CAUSE OF 2 OF THE 3 ci_red SIGNALS PO TRIAGED THIS TICK: runs 32629387939 (HEAD 85384b32) and 32631502135 (HEAD 9c6ef1b7), both job signal-type-coverage-guard, whose failing log reads verbatim 'FAIL — unrouted Pipeline-A types (dev_team_idle_chain.pending_triage_inbox[]): [\"cowork-fire\"]' and then 'backlog row already tracks type=cowork-fire (dedup_key=signal-type-registry-gap:cowork-fire) — no duplicate minted'. WARNING FOR WHOEVER PICKS THIS UP — CI MAY LOOK GREEN WITHOUT THE FIX: guard-signal-type-coverage.sh:198 reads its input from the LIVE .dev_team_idle_chain.pending_triage_inbox[] in orch-state.json. PO's own Step 0-SIG inbox CLEAR this tick removes the cowork-fire envelope from that array, so the very next CI run can pass with the routing table still unfixed. That green is an artifact of draining the guard's input, not evidence of a fix; the next cowork tick appends a fresh cowork-fire envelope and the guard goes red again. Cf. feedback_devteam_drain_step_can_itself_turn_signal_type_guard_red. AC is unchanged and is the only valid gate: a matching cowork-fire table row must exist in triage-signals.md's Pipeline-A section.",
-        "updated_at": "2026-08-23T10:37:46Z",
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=cowork-fire routed on Pipeline A (a matching table row exists in triage-signals.md's own Pipeline-A section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md. [po/triage 2026-08-23T10:33Z] ROUTED — row was auto-filed by the guard at 09:25:41Z with next_agent UNSET, which no dispatch lane resolves, so it could never move while the CI job it tracks stayed red. Set next_agent=agent-father (zone docs/agents/po/flow/ is a flow doc; po may not edit its own agent flow files per its own boundary_rules) and priority P1. THIS ROW IS THE TRACKED CAUSE OF 2 OF THE 3 ci_red SIGNALS PO TRIAGED THIS TICK: runs 32629387939 (HEAD 85384b32) and 32631502135 (HEAD 9c6ef1b7), both job signal-type-coverage-guard, whose failing log reads verbatim 'FAIL — unrouted Pipeline-A types (dev_team_idle_chain.pending_triage_inbox[]): [\"cowork-fire\"]' and then 'backlog row already tracks type=cowork-fire (dedup_key=signal-type-registry-gap:cowork-fire) — no duplicate minted'. WARNING FOR WHOEVER PICKS THIS UP — CI MAY LOOK GREEN WITHOUT THE FIX: guard-signal-type-coverage.sh:198 reads its input from the LIVE .dev_team_idle_chain.pending_triage_inbox[] in orch-state.json. PO's own Step 0-SIG inbox CLEAR this tick removes the cowork-fire envelope from that array, so the very next CI run can pass with the routing table still unfixed. That green is an artifact of draining the guard's input, not evidence of a fix; the next cowork tick appends a fresh cowork-fire envelope and the guard goes red again. Cf. feedback_devteam_drain_step_can_itself_turn_signal_type_guard_red. AC is unchanged and is the only valid gate: a matching cowork-fire table row must exist in triage-signals.md's Pipeline-A section. [po 2026-08-23T10:45Z] OCCURRENCE COUNT MADE MACHINE-READABLE. A 4th fire arrived after the inbox CLEAR above, as an undrained file-plane signal docs/signals/ci-red-990054cd-20260823102343.json (run 32632247996, HEAD 990054cd, 10:23:43Z) that had not yet reached pending_triage_inbox[]. Failing-file read performed: identical cause, the guard log reads verbatim FAIL - unrouted Pipeline-A types (dev_team_idle_chain.pending_triage_inbox[]): cowork-fire. Dedup hit on this row, no new mint; left on the file plane for dev-team Step 0a-D, which will dedup into this same row. RECURRENCE IS THE POINT: 3 of the 4 CI runs on main today were red on this single unrouted type, and the one exception (run 32630904807) was red on an unrelated standing test failure. Every CI run on main today was red. This is not intermittent - it fires on every push until the Pipeline-A table row exists.",
+        "updated_at": "2026-08-23T10:42:14Z",
         "next_agent": "agent-father",
         "priority": "P1",
-        "updated_by": "po/catchup3-disposition-20260823T1033Z"
+        "updated_by": "po/catchup3-disposition-20260823T1033Z",
+        "occurrence_count": 4,
+        "observed_ci_runs": [
+          {
+            "run_id": 32629387939,
+            "head_sha": "85384b32",
+            "at": "2026-08-23T08:54:50Z"
+          },
+          {
+            "run_id": 32631502135,
+            "head_sha": "9c6ef1b7",
+            "at": "2026-08-23T09:52:51Z"
+          },
+          {
+            "run_id": 32632247996,
+            "head_sha": "990054cd",
+            "at": "2026-08-23T10:23:43Z"
+          }
+        ]
       },
       {
         "id": "FOLLOWUP-CRON-STANDALONE-PER-TICK-FIRE-ELECTION-MUTEX",
