@@ -17,6 +17,7 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Database } from "bun:sqlite";
 import { z } from "zod";
 import { readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -136,7 +137,7 @@ function buildReportSummary(report: FinancialReport): string {
 // SQLite row type (subset of financial_reports columns used here)
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface ReportRow {
+export interface ReportRow {
   id: string;
   action_code: string;
   company_name: string | null;
@@ -192,10 +193,53 @@ interface ReportRow {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// financial_reports row fetch — extracted from compare_financials's inline
+// closure (R-4, CCATO-MCP-T3-PROBE-ADAPTERS architecture brief
+// docs/architecture-briefs/2026-07-17-ccato-truthgate-mcp-native.md §2.2/§6):
+// the CCATO `financials` probe adapter needs the IDENTICAL query (same DB,
+// same shape, same honest-NULL semantics — claim-tool-map.json's
+// `tool_null_markers` "period(s) not found" literal was authored against
+// this exact query's caller message below) so both callers share one
+// definition instead of two independently-drifting copies. Pure extraction:
+// same SQL, same param binding, same return shape — zero behavior change at
+// the compare_financials call site.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Fetch one `financial_reports` row for a ticker/period, or null if absent.
+ *
+ * @param actionCode - Stock ticker code (caller's responsibility to uppercase;
+ *                     matches the pre-existing inline closure's behavior).
+ * @param year        - Period year.
+ * @param quarter     - Period quarter string ("Q1".."Q4").
+ * @param db          - Optional db injection (test isolation); defaults to getDb().
+ */
+export function fetchFinancialReportRow(
+  actionCode: string,
+  year: number,
+  quarter: string,
+  db: Database = getDb(),
+): ReportRow | null {
+  return db
+    .prepare(
+      `SELECT * FROM financial_reports
+       WHERE action_code = $actionCode
+         AND period_year = $year
+         AND period_type = $quarter
+       ORDER BY sort_key DESC LIMIT 1`,
+    )
+    .get({
+      $actionCode: actionCode,
+      $year: year,
+      $quarter: quarter,
+    }) as ReportRow | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Row → FinancialMetrics (for computePeriodDelta)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function rowToMetrics(row: ReportRow): FinancialMetrics {
+export function rowToMetrics(row: ReportRow): FinancialMetrics {
   return {
     netRevenue: row.net_revenue,
     grossProfit: row.gross_profit,
@@ -420,24 +464,12 @@ export function registerReportTools(
         await initDatabase();
         const db = getDb();
 
-        const fetchRow = (year: number, quarter: string): ReportRow | null => {
-          return db
-            .prepare(
-              `SELECT * FROM financial_reports
-               WHERE action_code = $actionCode
-                 AND period_year = $year
-                 AND period_type = $quarter
-               ORDER BY sort_key DESC LIMIT 1`,
-            )
-            .get({
-              $actionCode: actionCode,
-              $year: year,
-              $quarter: quarter,
-            }) as ReportRow | null;
-        };
-
-        const row1 = fetchRow(period1.year, period1.quarter);
-        const row2 = fetchRow(period2.year, period2.quarter);
+        // R-4 extraction (CCATO-MCP-T3-PROBE-ADAPTERS): fetchRow moved to the
+        // standalone exported fetchFinancialReportRow() above so the CCATO
+        // `financials` probe adapter can reuse the identical query. Behavior
+        // unchanged — same SQL, same params, same return shape.
+        const row1 = fetchFinancialReportRow(actionCode, period1.year, period1.quarter, db);
+        const row2 = fetchFinancialReportRow(actionCode, period2.year, period2.quarter, db);
 
         if (!row1 || !row2) {
           const missing: string[] = [];
