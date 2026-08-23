@@ -127,8 +127,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-23T14:47:01Z",
-    "_updated_by": "cowork-team/step-0a-drain",
+    "_updated_at": "2026-08-23T15:07:20Z",
+    "_updated_by": "agent-father",
     "archive": [],
     "rows": [
       {
@@ -734,6 +734,27 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-23T12:00Z",
         "dedup_key": "data_stale:news:B-12"
+      },
+      {
+        "id": "sizelint-worktree-block-20260823T150720Z",
+        "ts": "2026-08-23T15:07:20Z",
+        "from": "agent-father",
+        "to": "po",
+        "type": "system-issue",
+        "severity": "HIGH",
+        "status": "new",
+        "payload_ref": null,
+        "dedup_key": "system-issue:sizelint-prepush-scans-worktree-not-pushrange",
+        "summary": "size-lint pre-push gate scans the WORKING TREE, so a live peer's UNCOMMITTED edit blocks every agent's push. Reproduced deterministically twice at 2026-08-23T16:1xZ: apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts baseline=475L actual=582L upper=522L, uncommitted (git status ' M'), owned by the in-flight developer watchlist write-through work. Same shape 20min earlier on the untracked apps/mcp-server/src/infrastructure/db/systemMapWatchlistWriter.ts (202L, new-offender). Neither is in any commit, so no commit is actually red -- the push range is clean. agent-father cannot fix either (apps/ is explicitly excluded from its commit_zone), so a doc-only memory commit is stranded local-only behind another agent's mid-edit buffer. Third distinct pre-push gate to strand the fleet today, after task-claim-lint LINE-MOVED (fixed, 83ab26dc) and this one twice. REQUEST: scope the gate to the push range (git diff --name-only @{u}..HEAD) or to committed content, not `git ls-files --cached --others`.",
+        "payload": {
+          "offenders_observed": [
+            "apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts (tracked, uncommitted, 475->582L, tolerance 522L)",
+            "apps/mcp-server/src/infrastructure/db/systemMapWatchlistWriter.ts (untracked, 202L, no baseline)"
+          ],
+          "gate": "scripts/audits/size-lint-justification.sh --check via pre-push",
+          "blocked_commit": "9b77424e6 (agent-father notebook+journal, doc-only)",
+          "zone_note": "apps/ is excluded by docs/agents/agent-father/init.md commit_zone.excluded"
+        }
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -13665,6 +13686,122 @@
         ],
         "hold_reason": "EPIC WRAPPER — decomposed 2026-08-23T14:48Z into 3 children per brief §6; holds until all 3 reach DONE_VERIFIED. Moved ready[] -> backlog[] in the same write so a decomposed wrapper stops occupying a dispatch lane. Explicit hold_reason set because the sibling pm-decompose brief §7.1 flags 8 live wrapper rows carrying children[] with NO hold_reason, armed for premature autoclose-to-review[].",
         "po_disposition_20260823": "PO 2026-08-23T14:48Z. Brief accepted as written, all 3 rows minted, no scope change. WHAT architect CORRECTED versus this row's original framing — reviewers should read the brief, not the row's older prose: (1) architect RE-MEASURED the cohort itself instead of trusting this row's estimate — 98 clean / 12 absorbed / 3 line-only / 60 byte-cap = 63 emitters, against the row's stated 62/59/13; and 26 files carry a current header that BC-1 structurally cannot honor. (2) The risk framing was wrong in BOTH directions: the hook always exits 0, sits on NO CI gate, and dedups per file, so this is a ONE-SHOT burst of at most 63 signals into the drain lane — not an every-edit emitter and not a write blocker. It is a drain-lane flood, nothing more. (3) Options (c) per-file caps and (d) split the flow-file class were both REJECTED with reasons (§4); the ruling is (a)+(b) ported verbatim from the live 648-entry code-plane sibling. Do not re-litigate.\nSTILL OPEN, REPORTED-NOT-FIXED (§7, owned by NONE of the 3 children — needs separate triage, do not assume this parent covers it): 272 of 445 docs/agents/**/*.md match no cap pattern at all (every init.md, handlers.md, audit-dimensions.md, handoff/*.md), 68 of them over 120 L — system-auditor/handlers.md is 342 L / 26803 B. Flow files are the SMALLER ungoverned half, so 'fix the flow glob' does NOT mean agent docs are governed. Also: the `**` idiom appears in TWO patterns and .claude/skills/**/*.md currently works only by corpus accident."
+      },
+      {
+        "id": "FIX-BCTC-ZEROEXTRACT-BLOCK-NO-FAILURE-RECORD-UNBOUNDED-REEXTRACT-LOOP",
+        "type": "FIX",
+        "title": "BCTC zero-extraction write-block returns with NO durable failure record, so the same (ticker,sort_key) is re-fetched+re-OCR'd indefinitely — 41 telegram BUG reports in 26h, 8/8 identical pairs on both 08-22 and 08-23",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "dev-mcp-server",
+        "supervised": false,
+        "baseline_pass": true,
+        "created_at": "2026-08-23T15:06:54Z",
+        "created_by": "po/triage-20260823T1500Z",
+        "dedup_key": "bctc:zeroextract-block-no-failure-record-unbounded-reextract-loop",
+        "files": [
+          "apps/mcp-server/src/application/usecases/parseBctcReport.ts",
+          "apps/mcp-server/src/application/usecases/fetchParseAndStoreBctc.ts",
+          "apps/mcp-server/src/scheduler/financial-reports/pushBctcExtraction.ts"
+        ],
+        "status_note": "MEASURED AT SOURCE, not inferred. apps/mcp-server/src/application/usecases/parseBctcReport.ts:373-396 — when report.balanceSheet.totalAssets <= 0 the guard emits `logger.warn(blockMsg)` + one sendTelegramBug(blockMsg) and then `return;` BEFORE any INSERT. No row, no queue marker, no attempt counter, no dead-letter entry is persisted anywhere. The message text itself claims 'flagged for manual review' — nothing is flagged in any durable store; the ONLY artifact is a Telegram message. Consequence: whatever enqueues the extraction cannot learn the attempt failed, so it re-enqueues the same pair on the next pass. EVIDENCE (list_unresolved_reports, 117 rows, 2026-08-22T12:40Z..2026-08-23T14:55Z): 41 BCTC-class reports. 8 of 8 distinct (ticker,quarter) pairs blocked on 08-22 reappear blocked on 08-23 — FRT 2024-Q4, FRT 2025-Q4, FRT 2026-Q1, KDH 2025-Q4, KDH 2026-Q1, SHB 2025-Q4, VJC 2025-Q1, GEX 2025-Q3. Within the 08-23 13:58-14:55Z window alone each pair re-fires 2-4x (GEX 2025-Q4 4x at 14:16/14:17/14:41/14:52; GVR 2025-Q4 3x at 14:43/14:45/14:55). COST: pdf-extractor measured at 119-206% CPU continuously re-OCRing the same PDFs (5 samples over 20s, 2026-08-23T15:0xZ). NOT A MEMORY DEFECT — the same 5 samples show 377-428 MiB / 2.5GiB = 14.7-16.7%, State.OOMKilled=false, ExitCode=0; a 99.28% reading taken earlier this tick was transient and is not reproducible. THE GUARD ITSELF IS CORRECT AND MUST STAY — zero rows were corrupted, which is the guard working as designed. Fix the absence of the failure record, never the block. AC-1: a blocked zero-extraction persists a durable failure record keyed on (action_code, sort_key) carrying attempt_count + last_blocked_at + reason. AC-2: attempt_count past a bounded threshold dead-letters the pair out of the enqueue set (mirror bctcReparseJob.ts:776-803, which already implements exactly this on agent_feedback). AC-3: replay the 8 pairs above — each is attempted at most N times, then stops; telegram volume for the cohort drops to <=8 messages per cycle, not 41 per day. AC-4: the block message stops claiming 'flagged for manual review' unless a record is actually written.",
+        "updated_at": "2026-08-23T15:06:54Z"
+      },
+      {
+        "id": "FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-NEXTAGENT-DETAIL-FIRST-NO-RECENCY-COMPARE",
+        "type": "FIX",
+        "title": "effective_next_agent/effective_owner prefer archive/backlog-detail.json unconditionally over the hot board row, with no updated_at comparison — a hot-row reroute is silently reverted and the row re-claims into the stale lane",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "supervised": false,
+        "baseline_pass": true,
+        "created_at": "2026-08-23T15:06:54Z",
+        "created_by": "po/triage-20260823T1500Z",
+        "dedup_key": "devteam-eligibility:effective-nextagent-detail-first-no-recency",
+        "files": [
+          "scripts/lib/devteam-eligibility.jq"
+        ],
+        "status_note": "CONFIRMED IN CODE. scripts/lib/devteam-eligibility.jq def effective_next_agent($detail_items) (~line 342) and its twin def effective_owner (~line 331) both resolve detail-FIRST: if the backlog-detail.json copy has a non-empty string they return it and never look at the board row. Neither compares the two updated_at stamps, even though BOTH planes carry one. Comment cites FIX-DEVTEAM-BOUNDED1-EFFECTIVE-DISPOSITION-BOARD-FALLBACK-GATE (2026-07-16) as the origin of detail-first. LIVE INSTANCE (FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE): hot review[] row was rerouted qa->ops at 13:50Z; docs/data/orch/archive/backlog-detail.json still said qa, stamped 12:51:27Z (~1h older). The resolver returned the stale qa, QA-Drain re-claimed, a third qa pass re-derived the same HELD verdict, redispatch_count=1. As of 2026-08-23T15:0xZ both planes read next_agent=qa again (hot updated 14:53:08Z, cold 12:51:27Z) so this specific row has converged, but the resolver defect is structural and re-fires on every hot-row reroute. SCOPE NOTE: this is NOT FIX-DRS-CLAIM-TRUSTS-CACHED-DISPATCH-LANE-NOT-EFFECTIVE-NEXT-AGENT (BACKLOG, developer) — that row is about the CLAIM script reading a cached dispatch_lane. The claim script is correct as written; the defect is in the resolver. AC-1: when both planes carry updated_at, the more recent wins; detail-first is retained ONLY as the tie-break/when-one-side-is-absent rule, preserving the 2026-07-16 intent. AC-2: fixture replay of the PEK divergence (hot=ops@13:50Z, cold=qa@12:51Z) resolves to ops BEFORE the fix and qa AFTER on the reversed fixture. AC-3: effective_owner gets the identical treatment in the same change — same defect shape, same file. AC-4: no regression in scripts/audits/bounded1-supervised-lane-report.sh output on the live board.",
+        "updated_at": "2026-08-23T15:06:54Z"
+      },
+      {
+        "id": "CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS",
+        "type": "CLEAN",
+        "title": "Orphaned agent worktree .claude/worktrees/agent-ae9ed2cd6f04b3686 hides 11 days of uncommitted production code for a board row that is still READY — salvage the diff, then remove the worktree",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "developer",
+        "supervised": false,
+        "baseline_pass": true,
+        "created_at": "2026-08-23T15:06:54Z",
+        "created_by": "po/triage-20260823T1500Z",
+        "dedup_key": "worktree-salvage:agent-ae9ed2cd6f04b3686",
+        "files": [
+          "apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts",
+          "apps/mcp-server/src/domain/services/financial-reports/bctcSectionCompleteness.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts",
+          "apps/mcp-server/src/__tests__/BEQ-SECTION-GUARD.test.ts",
+          "apps/mcp-server/src/__tests__/LF-SERVE-REFLOW.test.ts",
+          "apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts"
+        ],
+        "status_note": "SALVAGE, DO NOT DISCARD — decision made on inspection, per hard constraint. Worktree branch worktree-agent-ae9ed2cd6f04b3686 @ 4a6d2174c, last commit 2026-08-12T19:11:59+0200, `git log main..HEAD` EMPTY (0 unmerged commits, already merged) — so every main-tree probe reports it clean/stale and safe to prune. It is not: `git status --porcelain` in the worktree shows 6 modified tracked files + 1 untracked, `git diff --stat HEAD` = 231 insertions / 28 deletions. WHY IT MUST NOT BE DISCARDED: the untracked file is apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts and 4a6d2174c's own message is 'claim FIX-CI-BUNTEST-1108 + FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG — backlog to in_progress'. FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is LIVE ON THE BOARD RIGHT NOW in ready[] (status READY, owner po, next_agent ba, updated 2026-08-23T12:05:15Z) — i.e. it is queued to be re-planned from scratch by ba while +114 lines of bctcScalarAggregator.ts, +29 of bctcSectionCompleteness.ts, +19 of backfillBctcScalarsTool.ts and 2 test files implementing it sit invisible. The other claimed id, FIX-CI-BUNTEST-1108-AGENT-WORK-LOG-STORE, is no longer present in ANY task_board lane. EXCLUDE FROM SALVAGE: (a) the ` D apps/mcp-server/data` deletion — that path is a tracked SYMLINK (mode 120000, blob e67b4559) which the agent replaced with a real local directory; it is a local runtime artifact, never commit the deletion (see feedback_live_db_is_named_volume_not_host_data); (b) docs/agent-memory/modules/tool-usage-stats.json (-22 lines) — a shared rolling telemetry file, 11 days stale, would clobber peer writes. AC-1: the 6 code/test files are rebased onto current main and land with tests run. AC-2: FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is advanced to review/qa rather than re-planned by ba, or explicitly re-scoped if the salvaged diff is judged incomplete. AC-3: only after AC-1 lands, `git worktree remove` + branch delete. AC-4: report whether any OTHER worktree carries the same hidden-diff shape (`git worktree list` currently shows exactly one).",
+        "updated_at": "2026-08-23T15:06:54Z"
+      },
+      {
+        "id": "CLEAN-ORCHSTATE-DUP-ROWS-NULL-NEXTAGENT-UNSPAWNABLE-READY-SLOTS",
+        "type": "CLEAN",
+        "title": "Two task ids are duplicated across non-terminal lanes and the duplicate copies carry owner=null/next_agent=null, so they hold ready[] slots no picker can ever dispatch",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "XS",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "supervised": false,
+        "baseline_pass": true,
+        "created_at": "2026-08-23T15:06:54Z",
+        "created_by": "po/triage-20260823T1500Z",
+        "dedup_key": "orchstate:duplicate-id-null-nextagent-unspawnable-ready",
+        "files": [
+          "docs/data/orch/orch-state.json",
+          "scripts/orch-validate.mjs"
+        ],
+        "status_note": "MEASURED 2026-08-23. Grouping ids across backlog[]+ready[]+in_progress[]+review[]+qa[] yields exactly 2 ids with count>1. (1) FIX-ACTIVE-READPATH-LIVENESS-PROBE-NO-DETECTOR: backlog[] copy is real (owner=developer, next_agent=developer, updated 2026-08-06T17:39:34Z); ready[] copy has owner=null, next_agent=null, updated_at=null. (2) FIX-NEWSVPS-OVERNIGHT-PUSH-OUTAGE-663M-SILENT: TWO copies both in ready[] — one owner=dev-mcp-server/next_agent=dev-mcp-server (updated 2026-08-06T17:39:34Z), one owner=null/next_agent=null (updated 2026-08-06T17:58:36Z) with a different title. A null next_agent yields head.next_agent=null and therefore an unspawnable head (see feedback_sls_primary_claim_null_dispatch_lane_yields_unspawnable_head), so these copies consume ready-lane capacity permanently. AC-1: the 2 null-next_agent duplicates are removed via scripts/orch-apply.sh and the surviving copy of each id keeps its populated owner/next_agent. AC-2: whatever distinct content the second FIX-NEWSVPS title carries ('Harden mcp-server /api/push-news against ~11h silent hang') is merged into the survivor's status_note before removal, not silently dropped. AC-3: scripts/orch-validate.mjs gains (or is confirmed to already have and is wired for) a cross-lane duplicate-id check so this cannot re-accumulate — the existing dup-key scan is raw-text and did not catch these.",
+        "updated_at": "2026-08-23T15:06:54Z"
+      },
+      {
+        "id": "CLEAN-SIGNALS-STRANDED-STATE-SWEEP-FILES-PERMANENT-DRAIN-LITTER",
+        "type": "CLEAN",
+        "title": "Three stranded-state-sweep-*.json files sit permanently in docs/signals/ and are re-skipped by every drain as non-signal shape, inflating the drain-behind count forever",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "XS",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "supervised": false,
+        "baseline_pass": true,
+        "created_at": "2026-08-23T15:06:54Z",
+        "created_by": "po/triage-20260823T1500Z",
+        "dedup_key": "signals:stranded-state-sweep-nonsignal-shape-permanent-litter",
+        "files": [
+          "docs/signals/stranded-state-sweep-unknown-20260728T171505Z.json",
+          "docs/signals/stranded-state-sweep-scripts-pointer-20260806T105540Z.json",
+          "docs/signals/stranded-state-sweep-unknown-20260806T105540Z.json",
+          "docs/agents/dev-team/flow/drain-signals.md"
+        ],
+        "status_note": "MEASURED 2026-08-23: docs/signals/ holds 47 top-level *.json (the clean-obsolete-files report of 76 dated 2026-08-22T12:40Z is stale — drains have since caught up). Of those 47, three are permanent residue dated 2026-07-28 and 2026-08-06, skipped by every drain pass as 'non-signal shape (no from/type)': stranded-state-sweep-unknown-20260728T171505Z.json (1329B), stranded-state-sweep-scripts-pointer-20260806T105540Z.json (466B), stranded-state-sweep-unknown-20260806T105540Z.json (341B). They can never drain and can never be re-read, so they are a fixed +3 floor on the drain-behind metric that the >50 DRAIN-BEHIND alert measures against. AC-1: read each of the three for any finding not already on the board; fold anything live onto an existing row before removal (do not discard unread). AC-2: quarantine to docs/data/.trash/<date>/ per docs/policies/obsolete-file-cleanup.md, not `rm`. AC-3: the emitter that wrote them is identified and either fixed to emit the {from,type,payload} contract or confirmed retired, so the class does not re-accumulate. AC-4: docs/agents/dev-team/flow/drain-signals.md gains an explicit disposition for a file that fails shape validation, so a malformed signal is quarantined on first sight instead of being re-skipped forever.",
+        "updated_at": "2026-08-23T15:06:54Z"
       }
     ],
     "closed_sprints": [
@@ -16476,6 +16613,101 @@
         "status_note": "\n[QA] Review Record (direct-commit verify): verify-committed PASS. Row .commit=777ec912f was the PRE-AMEND hash — amended 26s later (reflog: main@{15:58:08+0200} commit (amend)) to e315472b7cec, content-identical (empty diff on both touched files) — row .commit corrected to the real ancestor here. All checks green on main HEAD via e315472b7: own suite node scripts/agents-flow/cowork-match-slots.test.js 90/90; siblings cowork-catchup-predicate.test.js 34/34, cowork-guaranteed-slot-firer.test.sh 53/53, cowork-tick-preflight.test.sh 75/75; mock-guard PASS; no DDD infra/application imports; no process.env/secrets. docs/WORK.md entry present, Task:/AC: trailers on commit. ANCHOR-2/3/4 confirmed re-routed next_agent=agent-father, status TODO (scope claim verified). Not BCTC-report-class (eval gate N/A), not OOM/crash-durability-class (durability gate N/A).\n[QA] INDEPENDENT POST-HOC CONFIRMATION — row was flipped to DONE_VERIFIED at 2026-08-23T14:33:50Z by updated_by=developer (the row's OWN owner) with qa_verified_by absent; that flip never passed the qa gate. QA re-ran it rather than accept it and CONFIRMS the substance. The peer's own commit-field correction 777ec912f -> e315472b7 is CORRECT and QA independently re-derived it: 777ec912f is NOT on main ancestry (git merge-base --is-ancestor false) and survives only as a dangling object, so a naive \"git cat-file -t\" existence check passes while ancestry fails. Content integrity proved by byte identity, not assumed: shasum of \"git show 777ec912f:<f>\" vs \"git show e315472b7:<f>\" MATCHES for all three claimed files (scripts/agents-flow/cowork-match-slots.js, scripts/agents-flow/cowork-match-slots.test.js, docs/WORK.md); the only delta between the two commits is an absorbed peer stage of orch-state.json + archive/2026-08.json + archive/backlog-detail.json. Disclosed, not buried: the amend was performed by a prior qa pass.\nVERIFIED BY EXECUTION: node cowork-match-slots.test.js 90/90 pass 0 fail; siblings unregressed — cowork-catchup-predicate.test.js 34/34, cowork-tick-preflight.test.sh 75/75, cowork-guaranteed-slot-firer.test.sh 53/53; mock-guard PASS on both .js files.\nPRODUCER CONTRACT PROVEN LIVE, not inferred from the test seam: cowork-match-slots.js line 534 emits the CLI field \"slots\" from hitsAnchored (so live MATCHES, not only catchup_raw, carry the anchor) and line 505 anchors them via annotateScheduledUtc. QA called the real exported function against the REAL docs/data/cowork-schedule.json entry and the REAL cowork-catchup-predicate module: digest-sunday, cron \"47 13 * * 0\", nowUnix 2026-08-23T13:50:00Z -> scheduled_utc_time \"2026-08-23T13:47:00.000Z\", reproducing the review_note's figure exactly. NFR-2 non-mutation confirmed by execution (the input slot object gained no scheduled_utc_time key). Malformed cron degrades to null and does not throw. Shared-derivation claim holds: annotateScheduledUtc delegates to cowork-catchup-predicate.mostRecentCronFireBefore at line 183 rather than re-walking the cron, so the live and catch-up paths cannot diverge.\nHONEST CAVEAT: the CLI's live MATCHES array was EMPTY at verification time (no cron matched that instant), so the field was exercised through a direct call at a matching instant rather than being declared verified off an empty array. SCOPE respected: this row is the PRODUCER only; consumers ANCHOR-2/3/4 live under docs/agents/ (agent-father commit_zone) and were correctly not implemented here.\n",
         "qa_verified_by": "qa",
         "qa_independent_confirmed_at": "2026-08-23T14:35:45Z"
+      },
+      {
+        "id": "CCATO-MCP-T1-DOMAIN-ENGINE",
+        "type": "IMPL-XS",
+        "status": "DONE_VERIFIED",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "Port pure scan/classify/quarter-resolver to domain/services/narrativeTruthGate/* + unit tests",
+        "depends": [],
+        "next_agent": "qa",
+        "supervised": false,
+        "updated_at": "2026-08-23T15:04:57Z",
+        "updated_by": "qa",
+        "claimed_at": "2026-08-06T09:50:24Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "dispatch_lane": "dev-mcp-server",
+        "owner": "dev-mcp-server",
+        "entered_review_at": "2026-07-30T19:25:33Z",
+        "branch": null,
+        "review_note": "T1 of 8 (SPRINT-CCATO-TRUTHGATE-MCP-NATIVE, architect brief docs/architecture-briefs/2026-07-17-ccato-truthgate-mcp-native.md). Ported pure scan/classify/quarter-resolve engine from scripts/narrative-truth-gate.sh into apps/mcp-server/src/domain/services/narrativeTruthGate/{claimCandidateScanner,verdictClassifier,quarterResolver}.ts (zero I/O, byte-faithful port of script L144-163+236-278+280-323). New CCATO-MCP-T1-DOMAIN-ENGINE.test.ts (28 tests) incl. the architecture brief S5.1 hard AC: side-by-side fixture parity vs. the REAL unmodified bash engine (Bun.serve stub gateway forces FAIL classification so claim_text is recoverable from stdout; NTG_SKIP_SIGNAL_EMIT=1, no orch-state write) against docs/social/fb-post-2026-06-30.md + docs/data/claim-tool-map.json -- byte-identical candidate sets, R-1 regex-divergence risk closed empirically. Evidence: bun tsc --noEmit clean; new test file 28/28 pass; full bun test 14946-14947 pass/40 skip/52-53 fail (within standing pre-existing-flake band 52-59, grep-confirmed zero named fails touch new code, zero existing files modified so regression is structurally impossible); tool/scheduler counts unchanged 184/88 (T1 registers no MCP tool -- thats T6); server boot log confirmed clean import + toolCount:184. Doc-review: domain-model.md + testing.md updated. Decision journal: docs/agent-memory/decisions/sprint-SPRINT-CCATO-TRUTHGATE-MCP-NATIVE-dev-mcp-server.md. QA: verify the 4 new files + re-run CCATO-MCP-T1-DOMAIN-ENGINE.test.ts; downstream tasks T2-T8 are separate not-yet-landed board rows of the same sprint.",
+        "status_note": "[QA] Review Record (direct-commit verify): Verified commit 4d20a76a2 on main ancestry (git merge-base --is-ancestor). git show --stat matches claimed file set exactly (apps/mcp-server/src/domain/services/narrativeTruthGate/{claimCandidateScanner,verdictClassifier,quarterResolver}.ts + apps/mcp-server/src/__tests__/CCATO-MCP-T1-DOMAIN-ENGINE.test.ts), pure addition — zero existing files modified, full-suite regression structurally impossible. Independently re-ran, not trusted from prose (feedback_router_verify_raw_not_badges): bun test src/__tests__/CCATO-MCP-T1-DOMAIN-ENGINE.test.ts -- 28 pass / 0 fail (matches claim). bun tsc --noEmit (whole zone) -- 0 errors. DDD grep on the 3 ported files -- zero infrastructure/application imports (domain-pure). Security grep -- zero process.env, zero real secrets (token hits are var-name substrings only, e.g. nonTickerTokens). bash scripts/audits/mock-guard.sh --files on the 3 production files -- PASS exit 0. Read quarterResolver.ts + verdictClassifier.ts directly: pure functions, zero I/O, injectable clock, no hardcoded literals. VERDICT: APPROVED, DONE_VERIFIED.",
+        "qa_verified_at": "2026-08-06T09:56:19Z",
+        "qa_verified_by": "qa",
+        "recovery_note": "[po 2026-08-23T15:04:02Z] RESTORED — silently destroyed (never archived) by commit 38c013342e (\"chore(tasks): cold-evict terminal done_verified + excess done tasks -> archive/2026-08.json\", 2026-08-06T19:52:34+02:00), which deleted 290 lines / 9 DONE_VERIFIED rows from done_verified[] (this row + CCATO-MCP-T2/T4-siblings + FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE + FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW + FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK + FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL + FIX-FB-WEEKEND-DEDUP-GATE + FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 + OPS-COWORK-GUARANTEED-SLOT-INSTALL), but touched ONLY orch-state.json (git show --stat 38c013342e: \"1 file changed, 1 insertion(+), 290 deletions(-)\") -- zero write to archive/2026-08.json despite the commit message claiming one (contrast the CORRECT cold-evict shape at d4e038c7ae, 2026-08-23, symmetric +171/-171 across both files). Content restored byte-for-byte from `git show 38c013342e^:docs/data/orch/orch-state.json`. Root-cause fix tracked by FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS (also owns auditing the other 6 non-CCATO victims + the 2 still-BACKLOG rows now depending on one of them: FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS depends=[FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW], FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT depends=[FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK, ...] -- NOT restored this cycle, no live ready[] dispatch pressure on those two yet, unlike CCATO). Restoring this row unblocks deps_satisfied() for CCATO-MCP-T3/T5/T6/T7/T8 (ready[], next_agent=dev-mcp-server, P0) whose depends[] correctly name this task -- do NOT re-dispatch dev-mcp-server to rebuild it: apps/mcp-server/src/domain/services/narrativeTruthGate/{claimCandidateScanner,verdictClassifier,quarterResolver}.ts is confirmed present on disk at HEAD and its landing commit 4d20a76a2 confirmed ancestor of HEAD via git merge-base --is-ancestor.",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun test + bun tsc --noEmit + scripts/audits/mock-guard.sh + DDD/security grep (QA direct-commit verify, historical, reconstructed from status_note at restore time)",
+            "args": "bun test apps/mcp-server/src/__tests__/CCATO-MCP-T1-DOMAIN-ENGINE.test.ts; bun tsc --noEmit (apps/mcp-server); mock-guard.sh --files on claimCandidateScanner.ts,verdictClassifier.ts,quarterResolver.ts; git merge-base --is-ancestor 4d20a76a2 main",
+            "live_value_observed": "28 pass/0 fail; tsc 0 errors; mock-guard PASS exit 0; DDD grep zero infra/application imports (domain-pure); security grep zero secrets; 4d20a76a2 confirmed main ancestor",
+            "observed_at": "2026-08-06T09:56:19Z"
+          }
+        }
+      },
+      {
+        "id": "CCATO-MCP-T2-CLAIM-MAP-LOADER",
+        "type": "IMPL-XS",
+        "status": "DONE_VERIFIED",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "infrastructure/fileStore/claimToolMapLoader.ts",
+        "depends": [],
+        "next_agent": "qa",
+        "supervised": false,
+        "updated_at": "2026-08-23T15:04:57Z",
+        "updated_by": "qa",
+        "claimed_at": "2026-08-06T12:45:45Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "dispatch_lane": "dev-mcp-server",
+        "owner": "dev-mcp-server",
+        "entered_review_at": "2026-08-05T17:40:15Z",
+        "branch": null,
+        "review_note": "T2 of 8 (SPRINT-CCATO-TRUTHGATE-MCP-NATIVE, architect brief docs/architecture-briefs/2026-07-17-ccato-truthgate-mcp-native.md). New infrastructure/fileStore/claimToolMapLoader.ts (loadClaimToolMap(filePath?), CLAIM_TOOL_MAP_PATH) + claimToolMapValidator.ts (shape assertion, split <=120L each -- size-lint, matching T1's own precedent): reads+validates docs/data/claim-tool-map.json, fail-loud ClaimToolMapLoadError on missing/unreadable/unparsable/shape-mismatched input, tolerates additive SSOT fields. Returns T1's ClaimToolMap type with zero transformation. Deviation from brief's literal spec (flagged, not silent): improvementSignalWriter.ts's fixed __dirname hop-count REPO_ROOT pattern verified empirically to resolve wrong in both local-dev and the deployed container -- used the already-correct getProjectRoot() helper instead for the NEW path constant; improvementSignalWriter.ts itself untouched (out of zone/scope). Evidence: new CCATO-MCP-T2-CLAIM-MAP-LOADER.test.ts 14/14 pass (25 expect()); bun tsc --noEmit clean; size-lint-justification.sh --check: 2 pre-existing unrelated offenders only; tool/scheduler counts unchanged 183/88 (T2 registers no MCP tool/cron); fresh boot health+dashboard probes clean; full bun test 15085 pass/40 skip/54 fail/47837 expect() -- improved vs same-day baseline (15070/55fail/1err), and structurally provable zero-regression since grep confirms the only consumer of the 2 new modules is this task's own new test file (no production code imports them yet -- T5-USECASE not landed). Doc-review: infrastructure.md + testing.md + domain-model.md updated. Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-3.md S63. Commits: f79019f9b (impl), 533a745d3 (memory). QA: verify the 3 new files + re-run CCATO-MCP-T2-CLAIM-MAP-LOADER.test.ts; downstream T3/T5-T8 depend on this landing.",
+        "status_note": "\n\n[QA] Review Record (direct-commit verify, 2026-08-06T12:55:28Z): RAW-verified commits f79019f9b (impl) + 533a745d3 (memory) — both confirmed on main ancestry via git merge-base --is-ancestor. git show --stat f79019f9b matches all claimed files exactly (claimToolMapLoader.ts 104L, claimToolMapValidator.ts 90L, both <=120L; new test file; 3 doc files, zero existing production files touched). Re-ran independently (not trusting review_note prose): bun test CCATO-MCP-T2-CLAIM-MAP-LOADER.test.ts -> 14 pass/0 fail/25 expect() exact match to claim. bun tsc --noEmit (whole apps/mcp-server) -> 0 errors. DDD grep on both new files -> zero infrastructure/application imports (only a type-only import of ClaimToolMap from domain, correct DDD direction). Security grep -> zero process.env, zero real secrets (non_ticker_tokens field-name substring hits only, not literal tokens). mock-guard.sh --files on both production files -> PASS exit 0. size-lint-justification.sh --check -> PASS 0 offenders (row claimed 2 pre-existing unrelated offenders at commit time; since resolved by later unrelated size-lint fix tasks on main -- not a regression, corroborated by independent live re-run). Read both new files' full diff directly: fail-loud ClaimToolMapLoadError on all 4 malformed-shape paths (missing file, unparsable JSON, non-object body, missing/mistyped required fields), additive top-level SSOT fields (tool_null_markers/_meta/version) tolerated not rejected, zero coercion -- validated body returned as-is. getProjectRoot() used for CLAIM_TOOL_MAP_PATH (not the brief's literal unsafe __dirname hop-count pattern) -- flagged deviation independently verified as the correct call (analogous existing readers use the same helper). Grep-confirmed zero production consumers of the 2 new modules repo-wide (only the new test file imports them; one unrelated comment-only string match) -- full 15085-test suite regression structurally impossible for this pure-addition commit, same class as sibling CCATO-MCP-T1-DOMAIN-ENGINE verify; skipped full run, targeted file + whole-project tsc sufficient. Doc updates (domain-model.md/infrastructure.md/testing.md) read directly -- accurate, describe the landed loader/validator faithfully. VERDICT: APPROVED, DONE_VERIFIED.",
+        "recovery_note": "[po 2026-08-23T15:04:02Z] RESTORED — silently destroyed (never archived) by commit 38c013342e (\"chore(tasks): cold-evict terminal done_verified + excess done tasks -> archive/2026-08.json\", 2026-08-06T19:52:34+02:00), which deleted 290 lines / 9 DONE_VERIFIED rows from done_verified[] (this row + CCATO-MCP-T2/T4-siblings + FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE + FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW + FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK + FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL + FIX-FB-WEEKEND-DEDUP-GATE + FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 + OPS-COWORK-GUARANTEED-SLOT-INSTALL), but touched ONLY orch-state.json (git show --stat 38c013342e: \"1 file changed, 1 insertion(+), 290 deletions(-)\") -- zero write to archive/2026-08.json despite the commit message claiming one (contrast the CORRECT cold-evict shape at d4e038c7ae, 2026-08-23, symmetric +171/-171 across both files). Content restored byte-for-byte from `git show 38c013342e^:docs/data/orch/orch-state.json`. Root-cause fix tracked by FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS (also owns auditing the other 6 non-CCATO victims + the 2 still-BACKLOG rows now depending on one of them: FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS depends=[FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW], FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT depends=[FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK, ...] -- NOT restored this cycle, no live ready[] dispatch pressure on those two yet, unlike CCATO). Restoring this row unblocks deps_satisfied() for CCATO-MCP-T3/T5/T6/T7/T8 (ready[], next_agent=dev-mcp-server, P0) whose depends[] correctly name this task -- do NOT re-dispatch dev-mcp-server to rebuild it: apps/mcp-server/src/infrastructure/fileStore/claimToolMapLoader.ts is confirmed present on disk at HEAD and its landing commit f79019f9b confirmed ancestor of HEAD via git merge-base --is-ancestor.",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun test + bun tsc --noEmit + scripts/audits/{mock-guard.sh,size-lint-justification.sh} + DDD/security grep (QA direct-commit verify, historical, reconstructed from status_note at restore time)",
+            "args": "bun test CCATO-MCP-T2-CLAIM-MAP-LOADER.test.ts; bun tsc --noEmit (apps/mcp-server); mock-guard.sh --files on claimToolMapLoader.ts,claimToolMapValidator.ts; size-lint-justification.sh --check; git merge-base --is-ancestor f79019f9b main",
+            "live_value_observed": "14 pass/0 fail/25 expect(); tsc 0 errors; mock-guard PASS; size-lint PASS 0 offenders; DDD grep type-only domain import (correct direction); f79019f9b confirmed main ancestor",
+            "observed_at": "2026-08-06T12:55:28Z"
+          }
+        }
+      },
+      {
+        "id": "CCATO-MCP-T4-SIGNAL-WRITER",
+        "type": "IMPL-XS",
+        "status": "DONE_VERIFIED",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "infrastructure/signals/narrativeContradictionSignalWriter.ts",
+        "depends": [],
+        "next_agent": "qa",
+        "supervised": false,
+        "updated_at": "2026-08-23T15:04:57Z",
+        "updated_by": "qa",
+        "claimed_at": "2026-08-06T15:28:46Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "dispatch_lane": "dev-mcp-server",
+        "owner": "dev-mcp-server",
+        "entered_review_at": "2026-08-06T08:33:13Z",
+        "branch": null,
+        "review_note": "T4 of 8 (SPRINT-CCATO-TRUTHGATE-MCP-NATIVE, architect brief docs/architecture-briefs/2026-07-17-ccato-truthgate-mcp-native.md). New infrastructure/signals/narrativeContradictionSignalWriter.ts (writeNarrativeContradictionSignals(findings[], agentId, orchStatePath?, now?), buildNarrativeContradictionRow/buildNarrativeContradictionId) + split-out narrativeContradictionSignalTypes.ts (<=120L each, size-lint, same T1/T2 precedent for new files): thin wrapper over orchStateStore.appendSignalQueueRow(), byte-faithful port of scripts/narrative-truth-gate.sh's FAIL-path signal-emit row dict (script L417-437). Server-side write is structurally required (cowork-boundary/SKILL.md forbids cowork agents from writing orch-state.json themselves). Deviation flagged, not silent: OrchStateSignalRow's TS param type only declares payload_ref:string|null (file-ref convention); extended the interface (NarrativeContradictionSignalRow extends OrchStateSignalRow{payload:{...}}, payload_ref forced null) rather than modifying orchStateStore.ts (out of file list) -- SignalRowSchema is .passthrough() so the extra payload object key validates cleanly (confirmed via OrchStateSchema.safeParse in tests, not just inspection). .signal_queue._updated_by set to fixed writer identity 'narrative-truth-gate' (script L445 --arg who), NOT the calling agent -- explicitly asserted !== callingAgentId in a dedicated test. Evidence: new CCATO-MCP-T4-SIGNAL-WRITER.test.ts 9/9 pass, 26 expect() (id/row byte-shape vs bash engine, injectable-clock+injectable-suffix determinism, fixture-orch-state fan-out N findings, empty-array no-op, missing-file no-op never-throws, OrchStateSchema.safeParse acceptance, _updated_by writer-identity assertion, DEFAULT_ORCH_STATE_PATH resolves to real repo-root file). bun tsc --noEmit clean. size-lint --check: 1 pre-existing unrelated offender only (schema.ts, baseline-tolerance-exceeded, not touched). gen-project-stats.ts --dry-run: toolCount=183, cronJobCount=88 unchanged (T4 registers no MCP tool/cron). Fresh boot PORT=3198: /health toolCount=183, /api/bctc-inspect + /dashboards/news-fetch/ both valid HTML (dashboard circular-dep check clean). Full bun test: first run showed an anomalous 69 fail/6 errors under sustained high system load (uptime load avg ~12, concurrent peer agent sessions active) -- re-ran clean for reliable evidence: 15094 pass/40 skip/56 fail/0 errors, 47890 expect(), 543.48s, within the documented 52-60 pre-existing flaky band. grep-confirmed zero (fail) lines reference narrativeContradiction/CCATO-MCP-T4/signals -- every failing name matches the already-documented flaky-timeout class (VPS Proxy Health, vnstock stores, insider-transactions/1146, get_backtest_runs/1844a, foreign-flow/1518, TSU-DEV-U5, get_market_cap/FIX-B-2, MCP SSE/Task 251, telegram/Task 235, push-news/vps_push_log, search_similar_context/083, FIX-1267 PDF-timeout). Structural proof independent of the count: grep confirms the only consumer of the 2 new modules is this task's own new test file (T5-USECASE not landed yet), so this change structurally cannot have caused any pre-existing failure. Docs updated: docs/architecture/microservice/mcp-server/{infrastructure,testing,domain-model}.md. Decision journal: docs/agent-memory/decisions/sprint-SPRINT-CCATO-TRUTHGATE-MCP-NATIVE-dev-mcp-server.md S2. Commit: 154180ebd. QA: verify the 2 new files + re-run CCATO-MCP-T4-SIGNAL-WRITER.test.ts; downstream T3/T5-T8 depend on this landing (T5-USECASE also depends on T1/T2/T3).",
+        "status_note": "\n\n[QA] Review Record (direct-commit verify, 2026-08-06T15:35:12Z): RAW-verified commit 154180ebd (derived from review_note prose — row had no top-level commit/files[]) — confirmed on main ancestry via git merge-base --is-ancestor. git show --stat 154180ebd matches all 6 claimed files exactly (narrativeContradictionSignalWriter.ts 114L, narrativeContradictionSignalTypes.ts 60L, both <=120L; new test file; 3 doc files — domain-model.md/infrastructure.md/testing.md; zero existing production files touched). Re-ran independently (not trusting review_note prose): bun test CCATO-MCP-T4-SIGNAL-WRITER.test.ts -> 9 pass/0 fail/26 expect() exact match to claim. bun tsc --noEmit (whole apps/mcp-server) -> 0 errors. DDD grep on both new files -> zero infrastructure/application imports (correct DDD direction, infrastructure/signals importing only orchStateStore.ts + projectRoot.ts). Security grep -> zero process.env, zero real secrets. mock-guard.sh --files on both production files -> PASS exit 0. size-lint-justification.sh --check -> PASS 0 offenders (row claimed 1 pre-existing unrelated offender at commit time; since resolved on main — not a regression). Cross-checked buildNarrativeContradictionRow's field-by-field output against scripts/narrative-truth-gate.sh L417-437's row dict directly (read both) — byte-faithful: id/ts/from/to/type/summary/severity/status/payload{agent_id,claim,tool,ticker,probe_ticker,returned_value,cycle,gate_version} all match. Verified the flagged deviation (payload_ref:null added, not in the bash row) is schema-safe: SignalRowSchema.passthrough() tolerates the extra payload key, and checkRefIntegrity's payload_ref check only fires on typeof===\"string\" so the null value is correctly skipped (read orchStateSchema.ts + orchStateStore.ts source directly, not just review_note's claim). Confirmed .signal_queue._updated_by writer-identity claim (\"narrative-truth-gate\", not calling agent) matches script L445's --arg who literal. Grep-confirmed zero production consumers of the 2 new modules repo-wide (only the new test file imports them — T5-USECASE not landed) -- full ~15k-test suite regression structurally impossible for this pure-addition commit, same class as sibling T1/T2 verifies; skipped full run, targeted file + whole-project tsc sufficient. Re-ran gen-project-stats.ts --dry-run live -> toolCount=183/cronJobCount=88 exact match to claim (no MCP tool/cron registered). Doc updates (domain-model.md/infrastructure.md/testing.md) read directly -- accurate, describe the landed writer faithfully. VERDICT: APPROVED, DONE_VERIFIED.\n",
+        "recovery_note": "[po 2026-08-23T15:04:02Z] RESTORED — silently destroyed (never archived) by commit 38c013342e (\"chore(tasks): cold-evict terminal done_verified + excess done tasks -> archive/2026-08.json\", 2026-08-06T19:52:34+02:00), which deleted 290 lines / 9 DONE_VERIFIED rows from done_verified[] (this row + CCATO-MCP-T2/T4-siblings + FIX-AUDITOR-A30-VMHWM-VETO-TAUTOLOGY-FALSE-NEGATIVE + FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW + FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK + FIX-DEVTEAM-QADRAIN-HEAD-WRITE-CONDITIONAL + FIX-FB-WEEKEND-DEDUP-GATE + FIX-OHLCV-WRITER-INTEGRITY-CONSTRAINT-SCALE-P0 + OPS-COWORK-GUARANTEED-SLOT-INSTALL), but touched ONLY orch-state.json (git show --stat 38c013342e: \"1 file changed, 1 insertion(+), 290 deletions(-)\") -- zero write to archive/2026-08.json despite the commit message claiming one (contrast the CORRECT cold-evict shape at d4e038c7ae, 2026-08-23, symmetric +171/-171 across both files). Content restored byte-for-byte from `git show 38c013342e^:docs/data/orch/orch-state.json`. Root-cause fix tracked by FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS (also owns auditing the other 6 non-CCATO victims + the 2 still-BACKLOG rows now depending on one of them: FIX-BCTC-REFINE-RESOURCE-EXCEEDED-STATUS depends=[FIX-BCTC-PENDING-REFINE-HEAD-OF-LINE-FAILED-ROW], FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT depends=[FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK, ...] -- NOT restored this cycle, no live ready[] dispatch pressure on those two yet, unlike CCATO). Restoring this row unblocks deps_satisfied() for CCATO-MCP-T3/T5/T6/T7/T8 (ready[], next_agent=dev-mcp-server, P0) whose depends[] correctly name this task -- do NOT re-dispatch dev-mcp-server to rebuild it: apps/mcp-server/src/infrastructure/signals/narrativeContradictionSignalWriter.ts is confirmed present on disk at HEAD and its landing commit 154180ebd confirmed ancestor of HEAD via git merge-base --is-ancestor.",
+        "verification": {
+          "raw_probe": {
+            "tool": "bun test + bun tsc --noEmit + scripts/audits/{mock-guard.sh,size-lint-justification.sh} + DDD/security grep (QA direct-commit verify, historical, reconstructed from status_note at restore time)",
+            "args": "bun test CCATO-MCP-T4-SIGNAL-WRITER.test.ts; bun tsc --noEmit (apps/mcp-server); mock-guard.sh --files on narrativeContradictionSignalWriter.ts,narrativeContradictionSignalTypes.ts; size-lint-justification.sh --check; git merge-base --is-ancestor 154180ebd main",
+            "live_value_observed": "9 pass/0 fail/26 expect(); tsc 0 errors; mock-guard PASS; size-lint PASS 0 offenders; DDD grep zero infra/application imports beyond orchStateStore.ts+projectRoot.ts; 154180ebd confirmed main ancestor",
+            "observed_at": "2026-08-06T15:35:12Z"
+          }
+        }
       }
     ],
     "head": {
@@ -19363,23 +19595,6 @@
         "po_brief_link_20260823": "PO 2026-08-23T14:52Z — detail_ref BACK-FILLED. agents-architect emitted a brief_complete signal at 14:04:55Z naming docs/architecture-briefs/2026-08-23-fix-cowork-published-marker-ttl-cadence-mismatch-design.md for this row, but the row's detail_ref was null, so the design was invisible from the board and the assignee would have started from the row prose alone. Read the brief before implementing. Same defect class as the STALE detail_ref just corrected on FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT — briefs are landing without their rows being re-pointed at them. Two occurrences in one triage cycle; if a third appears, mint a systemic row for the brief->row link step in the agents-architect flow."
       },
       {
-        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort",
-        "type": "routing-gap",
-        "status": "READY",
-        "owner": "agent-father",
-        "zone": "docs/agents/po/flow/",
-        "title": "Unrouted signal type 'auto-push-abort' (Pipeline A) — no table row in docs/agents/po/flow/triage-signals.md",
-        "dedup_key": "signal-type-registry-gap:auto-push-abort",
-        "created_at": "2026-08-23T14:00:30Z",
-        "status_note": "P0 CI-BLOCKING, promoted from backlog[] by po 2026-08-23T14:40Z. This row is the ONLY live cause of the signal-type-coverage-guard CI failure on origin/main 429dcf8fa (run 32645643303, job 97209377287) — reproduced locally on HEAD, so it is NOT the known CI-green/local-red divergence mode. Guard output: unrouted Pipeline-A type [\"auto-push-abort\"], 3 envelopes in dev_team_idle_chain.pending_triage_inbox[] from fleet-worktree-push (push-fail, ahead 35/42/49). FIX = add ONE row for type `auto-push-abort` to the Pipeline-A table in docs/agents/po/flow/triage-signals.md (the table under \"For each signal in `pendingSignals[]` (Pipeline A):\"). Suggested disposition for that row: producer=fleet-worktree-push; PO verifies the push-backstop premise (git rev-list --count origin/main..HEAD) before acting — if the backlog has since drained, ACK-and-drop, no task minted; if origin/main is genuinely diverging, mint FIX zone=scripts/ owner=developer. TRAP — DO NOT close this row by clearing the inbox: the guard reads pending_triage_inbox[] as its input, so PO's own mandated Step 0-SIG CLEAR turns the guard green WITHOUT the table row ever being written, and the next auto-push-abort envelope re-reds CI. Verify the fix by grepping the table for the type, never by re-running the guard against an emptied inbox. NOT auto-dispatchable: agent-father fails is_dev_role (^dev(-|$)|^developer$, scripts/lib/devteam-eligibility.jq:306-307) — needs router/PO manual dispatch.",
-        "updated_at": "2026-08-23T14:40:04Z",
-        "priority": "P0",
-        "size": "XS",
-        "next_agent": "agent-father",
-        "updated_by": "po/ci-red-83ab26dc-triage",
-        "detail_ref": "docs/signals/processed/ci-red-83ab26dc-20260823142350.json"
-      },
-      {
         "id": "FIX-BASHGRANT-GATE-NEGATED-GIT-COMMIT-PHRASE-FALSE-POSITIVE",
         "type": "FIX",
         "size": "S",
@@ -19398,27 +19613,6 @@
         "detail_ref": "docs/signals/processed/ci-red-83ab26dc-20260823142350.json",
         "dedup_key": "bashgrant-gate-negated-phrase-fp",
         "status_note": "P0 CI-BLOCKING. Second of the two jobs red on origin/main 429dcf8fa (run 32645643303, job agent-bash-grant-coverage 97209377297). Reproduced locally on this HEAD — genuinely red, not stale.\n\nDEFECT (measured, not inferred): scripts/audits/agent-bash-grant-coverage.sh:103 sets DEMAND_ERE='bash scripts/|git add|git commit|git push|commit-mutex|commit-boundary' and greps it over the agent's whole flow corpus with no negation handling. Commit baa91292c ('chore(agents): fleet-wide debug-logger-protocol rollout (Check #6)') added this boilerplate note to agent init.md knowledge blocks fleet-wide:\n  note: \"Per-agent debug logger convention. Append one line to docs/agent-memory/debug/<id>.log per notable step/error (Read-then-Write append, no MCP tool, no per-line git commit).\"\nThe substring 'git commit' inside 'no per-line git commit' matches DEMAND_ERE. The sentence says the OPPOSITE of a Bash demand — it explicitly prescribes Read-then-Write and forbids per-line git commit.\n\nEVIDENCE THIS IS A PURE FP, NOT REAL DEBT: ran `find docs/agents/refine_bctc_md -name '*.md' | xargs grep -niE '<DEMAND_ERE>'` — EXACTLY ONE match across the entire corpus (init.md:80), and it is that negated sentence. refine_bctc_md's corpus references one skill (.claude/skills/bctc-gate-vision/SKILL.md) with no match either. There is no real Bash-only step anywhere in this agent's flow.\n\nDO NOT FIX BY GRANTING BASH. Granting Bash to refine_bctc_md would silence CI by laundering a detector bug into a genuine privilege escalation on a deliberately Bash-less agent. DO NOT FIX BY BASELINING EITHER: docs/data/agent-bash-grant-coverage-baseline.json is documented in-script as a ledger of real-but-separately-owned debt, explicitly NOT an opt-out allowlist, and requires a non-null owning_task — there is no real debt here to own.\n\nCORRECT FIX (developer's call between these): (a) make the demand match negation-aware — reject a DEMAND_ERE hit preceded on the same line by 'no ' / 'never ' / 'without ' / 'not '; or (b) exclude YAML `note:`/`description:` scalar values inside the frontmatter knowledge block from the corpus scan, since those are prose-about-tooling not flow steps; or (c) require the match to be in an executable position (fenced code block or a step line), not inside a quoted YAML string. (a) is narrowest, (c) is most durable. Whichever is chosen, add a regression fixture containing the exact debug-logger boilerplate string.\n\nBLAST RADIUS — this will recur: the boilerplate is fleet-wide, so EVERY Bash-less agent that receives it reds this gate. Only refine_bctc_md trips today (bctc-analyst is already baselined under FIX-BCTC-ANALYST-STAGELOG-NOTIFY-NO-BASH — check whether that baseline entry is the same FP and should be retired by this fix rather than left as fake debt). Any future Bash-less agent onboarded with the standard note reds CI on arrival.\n\nSHAPE PRECEDENT: feedback_codejanitor_deadcode_toolusage_audit_mass_false_positive_20260822 — same class, a narrow textual detector surface producing mass FPs; and feedback_fleetwide_gate_validated_on_one_file_optout_allowlist on why the allowlist route is wrong.\n\nAC-1: scripts/audits/agent-bash-grant-coverage.sh --check exits 0 on current HEAD with refine_bctc_md showing bash_demand=no-demand. AC-2: a synthetic fixture agent with a REAL 'git commit' flow step and no Bash grant still FAILS (the fix must not blunt the gate). AC-3: CI job agent-bash-grant-coverage green on the push that lands this."
-      },
-      {
-        "id": "FIX-PM-3E-FAILLOUD-HOTFIX",
-        "type": "FIX",
-        "size": "XS",
-        "priority": "P0",
-        "status": "READY",
-        "zone": "docs/agents/pm/flow/",
-        "owner": "agent-father",
-        "next_agent": "agent-father",
-        "parent_task_id": "FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT",
-        "plan_only": false,
-        "supervised": false,
-        "created_at": "2026-08-23T14:45:00Z",
-        "created_by": "po",
-        "updated_at": "2026-08-23T14:43:28Z",
-        "updated_by": "po",
-        "detail_ref": "docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md",
-        "depends_on": [],
-        "title": "pm Step 3e: stop the bleed — null/duplicate row guard + non-zero exit on orch-apply failure",
-        "status_note": "Brief row 1 of 4 (§6). SHIP IMMEDIATELY, independent of every other row in this set. Two edits inside the EXISTING inline Step 3e of docs/agents/pm/flow/main.md — do NOT restructure the step here, row 3 does that.\n(a) Insert the `$row == null` / duplicate `error(...)` guard from §4.2 L1 into BOTH branches.\n(b) Change BOTH `|| echo \"...\"` tails to `|| { echo \"...\" >&2; exit 1; }` per §4.2 L2 — architect measured `wrapped exit=0` today, i.e. an orch-apply rejection is currently swallowed and the step reports success.\nThis does NOT make Step 3e work on ready[]/backlog[] parents; it converts a silent corruption/no-op into a visible refusal while row 2 lands.\nSEQUENCING: rows 1 and 3 touch the same block and row 3 SUPERSEDES row 1 — land 1 now, 3 after 2.\nNOT AUTO-DISPATCHABLE: agent-father fails is_dev_role (^dev(-|$)|^developer$, scripts/lib/devteam-eligibility.jq:306-307). Needs router/PO manual dispatch — do not wait for RLC/BOUNDED-1 to pick it up.\nAC: §5 AC-4 (miss / cross-lane duplicate / terminal-lane-with-open-disposition each refuse with a distinct non-zero exit, live file byte-identical afterwards) and AC-5 (shell wrapper propagates failure; the `|| echo` form must FAIL this AC)."
       },
       {
         "id": "FIX-PM-3E-CLOSEOUT-SCRIPT-LANE-AGNOSTIC",
@@ -20090,6 +20284,52 @@
         "dev_commit": "b0d84233d",
         "dev_note": "Moved foreign_volume IS NOT NULL guard into the MAX(date) subquery per architect design (verbatim). AC-15 regression tests added (1986-foreign-flow-endpoint.test.ts): NULL-only-newest-date skip, all-NULL-table-wide edge case (falls through to existing empty-response path via SQLite 3-valued logic, no special-case code), consecutive-NULL-days walk-back. bun test 34 pass/0 fail. tsc clean. NFR-2 cascade re-measurement (foreign_accum/money-radar) NOT performed — requires live deployed container post-rebuild, out of this dev-agent session scope; flag to qa/ops for post-deploy re-measure.",
         "updated_by": "dev-mcp-server"
+      },
+      {
+        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort",
+        "type": "routing-gap",
+        "status": "REVIEW",
+        "owner": "agent-father",
+        "zone": "docs/agents/po/flow/",
+        "title": "Unrouted signal type 'auto-push-abort' (Pipeline A) — no table row in docs/agents/po/flow/triage-signals.md",
+        "dedup_key": "signal-type-registry-gap:auto-push-abort",
+        "created_at": "2026-08-23T14:00:30Z",
+        "status_note": "P0 CI-BLOCKING, promoted from backlog[] by po 2026-08-23T14:40Z. This row is the ONLY live cause of the signal-type-coverage-guard CI failure on origin/main 429dcf8fa (run 32645643303, job 97209377287) — reproduced locally on HEAD, so it is NOT the known CI-green/local-red divergence mode. Guard output: unrouted Pipeline-A type [\"auto-push-abort\"], 3 envelopes in dev_team_idle_chain.pending_triage_inbox[] from fleet-worktree-push (push-fail, ahead 35/42/49). FIX = add ONE row for type `auto-push-abort` to the Pipeline-A table in docs/agents/po/flow/triage-signals.md (the table under \"For each signal in `pendingSignals[]` (Pipeline A):\"). Suggested disposition for that row: producer=fleet-worktree-push; PO verifies the push-backstop premise (git rev-list --count origin/main..HEAD) before acting — if the backlog has since drained, ACK-and-drop, no task minted; if origin/main is genuinely diverging, mint FIX zone=scripts/ owner=developer. TRAP — DO NOT close this row by clearing the inbox: the guard reads pending_triage_inbox[] as its input, so PO's own mandated Step 0-SIG CLEAR turns the guard green WITHOUT the table row ever being written, and the next auto-push-abort envelope re-reds CI. Verify the fix by grepping the table for the type, never by re-running the guard against an emptied inbox. NOT auto-dispatchable: agent-father fails is_dev_role (^dev(-|$)|^developer$, scripts/lib/devteam-eligibility.jq:306-307) — needs router/PO manual dispatch.\n[agent-father 2026-08-23T16:05Z] SHIPPED 3cef7c30e (pushed). ONE Pipeline-A table row for `auto-push-abort`, inserted directly above the ROUTE-BY-to catch-all in docs/agents/po/flow/triage-signals.md. No duplicate row minted. The row DISCRIMINATES on payload.reason because scripts/fleet-worktree-push.sh emit_abort_signal() has SIX call sites (push-fail, behind-set-code, merge-conflict, merge-continue-fail, tsc-red, tsc-gate-timeout-skipped) and they are not one failure: push/behind -> re-measure the premise then ACK-and-drop or mint FIX zone=scripts/ owner=developer; tsc-red/merge-* -> FIX P0 developer; timeout-skipped -> informational. Pins dedup_key=\"auto-push-abort:{payload.reason}\" since the backstop re-fires every 15min while the condition holds. Also tells the router NOT to trust the envelope's own `ahead` count -- it is a snapshot from the aborted run; these 3 envelopes all cite ahead=35/42/49 and the premise was already resolved by 83ab26dc (the LINE-MOVED task-claim-lint gate, fixed earlier this session), leaving behind=0. VERIFIED BY GREP, NOT BY THE GUARD, as the row's own TRAP warns: guard-signal-type-coverage.sh is not read-only (writes live orch-state at line 258 via ORCH_APPLY_LIVE_FILE_OVERRIDE; --check is an alias, not a dry-run). Instead I replayed the guard's OWN extractors read-only -- pipeline_a_section | extract_type_column now yields 28 types including auto-push-abort; pipeline_b_section unchanged at 14. The 3 pending_triage_inbox[] envelopes are UNTOUCHED (re-counted =3 after the edit) so the gate stays honest. Root cause one level up (open producer namespace vs closed allowlist, 5th instance) NOT attempted -- architect's. -> qa.",
+        "updated_at": "2026-08-23T15:03:55Z",
+        "priority": "P0",
+        "size": "XS",
+        "next_agent": "qa",
+        "updated_by": "agent-father",
+        "detail_ref": "docs/signals/processed/ci-red-83ab26dc-20260823142350.json",
+        "commit": "3cef7c30e",
+        "branch": null,
+        "completed_at": "2026-08-23T15:03:55Z",
+        "completed_by": "agent-father"
+      },
+      {
+        "id": "FIX-PM-3E-FAILLOUD-HOTFIX",
+        "type": "FIX",
+        "size": "XS",
+        "priority": "P0",
+        "status": "REVIEW",
+        "zone": "docs/agents/pm/flow/",
+        "owner": "agent-father",
+        "next_agent": "qa",
+        "parent_task_id": "FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT",
+        "plan_only": false,
+        "supervised": false,
+        "created_at": "2026-08-23T14:45:00Z",
+        "created_by": "po",
+        "updated_at": "2026-08-23T15:03:55Z",
+        "updated_by": "agent-father",
+        "detail_ref": "docs/architecture-briefs/2026-08-23-pm-decompose-closeout-lane-resolution-and-fail-loud.md",
+        "depends_on": [],
+        "title": "pm Step 3e: stop the bleed — null/duplicate row guard + non-zero exit on orch-apply failure",
+        "status_note": "Brief row 1 of 4 (§6). SHIP IMMEDIATELY, independent of every other row in this set. Two edits inside the EXISTING inline Step 3e of docs/agents/pm/flow/main.md — do NOT restructure the step here, row 3 does that.\n(a) Insert the `$row == null` / duplicate `error(...)` guard from §4.2 L1 into BOTH branches.\n(b) Change BOTH `|| echo \"...\"` tails to `|| { echo \"...\" >&2; exit 1; }` per §4.2 L2 — architect measured `wrapped exit=0` today, i.e. an orch-apply rejection is currently swallowed and the step reports success.\nThis does NOT make Step 3e work on ready[]/backlog[] parents; it converts a silent corruption/no-op into a visible refusal while row 2 lands.\nSEQUENCING: rows 1 and 3 touch the same block and row 3 SUPERSEDES row 1 — land 1 now, 3 after 2.\nNOT AUTO-DISPATCHABLE: agent-father fails is_dev_role (^dev(-|$)|^developer$, scripts/lib/devteam-eligibility.jq:306-307). Needs router/PO manual dispatch — do not wait for RLC/BOUNDED-1 to pick it up.\nAC: §5 AC-4 (miss / cross-lane duplicate / terminal-lane-with-open-disposition each refuse with a distinct non-zero exit, live file byte-identical afterwards) and AC-5 (shell wrapper propagates failure; the `|| echo` form must FAIL this AC).\n[agent-father 2026-08-23T16:05Z] SHIPPED 04ee05faa (pushed). Brief row 1 only; Step 3e NOT restructured, still cannot dispose of a ready[]/backlog[] parent -- row 3 supersedes this block after row 2. (a) L1 jq guards in BOTH branches: parent-missing / cross-lane-duplicate / already-terminal / empty CORRECTED_NEXT_AGENT, four distinct messages. The `true` branch's `... | .[0]` yielded null on a miss and `null + {status:\"DONE\"}` is valid jq, so it appended a synthetic id-less row to done[] and the write SUCCEEDED; the `false` branch's two map() calls were a silent no-op, exit 0, success reported. (b) L2: both bare `|| echo` tails -> `|| { echo >&2; exit 1; }`, matching Step 3c's idiom in the same file. THIRD DEFECT not in the brief, found only by EXECUTING: both branches iterated `.tasks` unguarded while 2 of 19 live active_sprints[] (SPRINT-CCATO-TRUTHGATE-MCP-NATIVE, SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE) have no `tasks` key -- jq died \"Cannot iterate over null\", exit 5, so the SUCCESS path was structurally unrunnable in BOTH branches; shipping the fail-loud tails alone would have made every invocation refuse loudly and still never work. Guarded, and the 2 tasks-less sprints stay byte-identical (no materialised `tasks: []`). AC-4 + AC-5 verified by replaying the LITERAL shipped block against a live-shaped fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE: 22/22 -- both happy paths land, all four refusals exit non-zero and leave the fixture byte-identical, AC-5's negative control confirms the pre-fix `|| echo` exits 0 on a rejected write while the shipped tail exits 1, live orch-state.json sha256 unchanged throughout. NOTE on AC-4's \"distinct exit\": all jq refusals exit 5 (the brief's own evidence column says so) -- distinguished by message, no invented per-case codes. -> qa.",
+        "commit": "04ee05faa",
+        "branch": null,
+        "completed_at": "2026-08-23T15:03:55Z",
+        "completed_by": "agent-father"
       }
     ],
     "qa": [
@@ -20422,188 +20662,9 @@
         "last_served_tick": "2026-08-23T14:55:52Z"
       }
     },
-    "_updated_at": "2026-08-23T14:55:52Z",
-    "_updated_by": "dev-team",
-    "pending_triage_inbox": [
-      {
-        "envelope_id": "5744c697774e89fb1d2ecc172f261b13840b4eeb0e22d41999001f306c355d15",
-        "source": "file",
-        "from": "fleet-worktree-push",
-        "to": "po",
-        "type": "auto-push-abort",
-        "priority": "high",
-        "payload": {
-          "reason": "push-fail",
-          "detail": "git push origin HEAD:main returned non-zero",
-          "ahead": "35",
-          "behind": "0",
-          "threshold": "20",
-          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
-        },
-        "createdAt": "2026-08-23T13:35:47Z",
-        "drained_at": "2026-08-23T13:55:20Z",
-        "routed_to": "PO Step 0-SIG",
-        "po_hold_20260823": "HELD DELIBERATELY by po 2026-08-23T14:52Z — NOT cleared, NOT lost. Step 0-SIG's CLEAR contract permits clearing only entries that have been ROUTED, and type `auto-push-abort` has NO row in the Pipeline-A routing table of docs/agents/po/flow/triage-signals.md, so these three are by definition unrouted. Clearing them would be a silent loss AND would flip scripts/audits/guard-signal-type-coverage.sh green while the coverage gap it is reporting is still real — the guard reads this inbox as its input, so PO's own CLEAR is capable of gaming it. Deliberately not gaming it. Tracked by FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort (ready[], P0, agent-father). CLEAR CONDITION: once that row lands the table entry, PO routes these three per the new rule and clears them in the same cycle. PREMISE FOR WHOEVER ROUTES THEM: all three report `git push origin HEAD:main returned non-zero` with ahead=35/42/49 during the 13:35-14:10Z window. That premise is now RESOLVED — the LINE-MOVED task-claim-lint gate that was blocking pushes was fixed by 83ab26dc, the backlog drained, and origin/main measured behind=0 at 14:34Z. So the correct disposition for these three specific envelopes is ACK-and-drop with no task minted; the routing-table row is still required so the NEXT occurrence is not another CI red."
-      },
-      {
-        "envelope_id": "0d2b16522661eb9de82165631d17aa15b991001ef5666ba8cb7c5ca36370e525",
-        "source": "file",
-        "from": "fleet-worktree-push",
-        "to": "po",
-        "type": "auto-push-abort",
-        "priority": "high",
-        "payload": {
-          "reason": "push-fail",
-          "detail": "git push origin HEAD:main returned non-zero",
-          "ahead": "42",
-          "behind": "0",
-          "threshold": "20",
-          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
-        },
-        "createdAt": "2026-08-23T13:44:51Z",
-        "drained_at": "2026-08-23T13:55:20Z",
-        "routed_to": "PO Step 0-SIG",
-        "po_hold_20260823": "HELD DELIBERATELY by po 2026-08-23T14:52Z — NOT cleared, NOT lost. Step 0-SIG's CLEAR contract permits clearing only entries that have been ROUTED, and type `auto-push-abort` has NO row in the Pipeline-A routing table of docs/agents/po/flow/triage-signals.md, so these three are by definition unrouted. Clearing them would be a silent loss AND would flip scripts/audits/guard-signal-type-coverage.sh green while the coverage gap it is reporting is still real — the guard reads this inbox as its input, so PO's own CLEAR is capable of gaming it. Deliberately not gaming it. Tracked by FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort (ready[], P0, agent-father). CLEAR CONDITION: once that row lands the table entry, PO routes these three per the new rule and clears them in the same cycle. PREMISE FOR WHOEVER ROUTES THEM: all three report `git push origin HEAD:main returned non-zero` with ahead=35/42/49 during the 13:35-14:10Z window. That premise is now RESOLVED — the LINE-MOVED task-claim-lint gate that was blocking pushes was fixed by 83ab26dc, the backlog drained, and origin/main measured behind=0 at 14:34Z. So the correct disposition for these three specific envelopes is ACK-and-drop with no task minted; the routing-table row is still required so the NEXT occurrence is not another CI red."
-      },
-      {
-        "envelope_id": "d1c191bee2cfc9ac7d8f43d19aee8375a2bceb578740bd7d7ba5d28d906ee0c1",
-        "source": "file",
-        "from": "fleet-worktree-push",
-        "to": "po",
-        "type": "auto-push-abort",
-        "priority": "high",
-        "payload": {
-          "reason": "push-fail",
-          "detail": "git push origin HEAD:main returned non-zero",
-          "ahead": "59",
-          "behind": "0",
-          "threshold": "20",
-          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
-        },
-        "createdAt": "2026-08-23T14:10:36Z",
-        "drained_at": "2026-08-23T14:22:34Z",
-        "routed_to": "PO Step 0-SIG",
-        "po_hold_20260823": "HELD DELIBERATELY by po 2026-08-23T14:52Z — NOT cleared, NOT lost. Step 0-SIG's CLEAR contract permits clearing only entries that have been ROUTED, and type `auto-push-abort` has NO row in the Pipeline-A routing table of docs/agents/po/flow/triage-signals.md, so these three are by definition unrouted. Clearing them would be a silent loss AND would flip scripts/audits/guard-signal-type-coverage.sh green while the coverage gap it is reporting is still real — the guard reads this inbox as its input, so PO's own CLEAR is capable of gaming it. Deliberately not gaming it. Tracked by FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort (ready[], P0, agent-father). CLEAR CONDITION: once that row lands the table entry, PO routes these three per the new rule and clears them in the same cycle. PREMISE FOR WHOEVER ROUTES THEM: all three report `git push origin HEAD:main returned non-zero` with ahead=35/42/49 during the 13:35-14:10Z window. That premise is now RESOLVED — the LINE-MOVED task-claim-lint gate that was blocking pushes was fixed by 83ab26dc, the backlog drained, and origin/main measured behind=0 at 14:34Z. So the correct disposition for these three specific envelopes is ACK-and-drop with no task minted; the routing-table row is still required so the NEXT occurrence is not another CI red."
-      },
-      {
-        "envelope_id": "c76009dbaf385699de8037b6e7c7fd3521859cecb91f7794f0c17bbe2d3cb48d",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/developer.md — retained section '## Session 2026-08-23T13:45:00Z — FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE, SCOPE CORRECTION to the section below (cross-service/, developer, P2 S, session 007e33e4)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
-        "createdAt": "2026-08-23T14:34:44Z",
-        "drained_at": "2026-08-23T14:53:09Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "a6ab7ac87df46d2c00cfb004b5b3e7081626759089206ba31de56145d2f64d19",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=007e33e4-b453-4bb3-8ab1-ef31495906a3 mode=warn escalated=true prior_warns=7 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-23T14:44:33Z",
-        "drained_at": "2026-08-23T14:53:09Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "aece92d95842d77f14e3a98cbb7bf414141acbf036e2d0d846a741a356db4f88",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c113 · 2026-08-23T14:07Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
-        "createdAt": "2026-08-23T14:44:42Z",
-        "drained_at": "2026-08-23T14:53:09Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "9e19a74923ee1591470c702730c153a11a1a576c20216d258e673131b4d83fee",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/incidents/data/rag-durability-2026-08-23T1423Z-16c59b5e929f-window.csv' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/incidents/data/rag-durability-2026-08-23T1423Z-16c59b5e929f-window.csv' (5a334ee33fed4fbb1b91c6ae845364d98daa9b6b) differs from what is about to land in this commit (b615c2452b69d4345aec88a4710d423283281dd8) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope (two-blob form takes NO pathspec — do not append '-- docs/incidents/data/rag-durability-2026-08-23T1423Z-16c59b5e929f-window.csv', that is a git usage error): git diff 5a334ee33fed4fbb1b91c6ae845364d98daa9b6b b615c2452b69d4345aec88a4710d423283281dd8",
-        "createdAt": "2026-08-23T14:52:38Z",
-        "drained_at": "2026-08-23T14:53:09Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "fa6ff18562f3af02fe35af77b008d053ddf1200191e3ba9c9684fb10944667eb",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": ".claude/skills/cron-cowork-team/SKILL.md",
-          "line_count": 293,
-          "cap": 200,
-          "byte_count": 18844,
-          "byte_cap": 12000,
-          "class": "skill-file",
-          "reason": "line-cap,byte-cap",
-          "overage": 93,
-          "byte_overage": 6844,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-23T14:50:03Z",
-        "drained_at": "2026-08-23T14:53:09Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "187ff2219ee1fc44a73222312e09dc8f03b999caa715c88319cf8b74fe9ef8d7",
-        "source": "file",
-        "from": "agents-architect",
-        "to": "po",
-        "type": "brief_complete",
-        "priority": "normal",
-        "payload": "docs/architecture-briefs/2026-08-23-flow-file-cap-glob-fix-and-doc-plane-baseline-ratchet.md",
-        "createdAt": "2026-08-23T14:30:00Z",
-        "drained_at": "2026-08-23T14:53:09Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "dfc1f7e0a03bab760bce3505141cb64c669fe36de5657e12608c65b1d8ad9eda",
-        "source": "file",
-        "from": "ci-health-probe",
-        "to": "po",
-        "type": "ci_red",
-        "priority": "high",
-        "payload": {
-          "check_id": "CI-RED-8c45e320",
-          "head_sha": "8c45e320aea3f59da396f17a7258bc1018c8d05d",
-          "run_id": 32646497517,
-          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/32646497517",
-          "conclusion": "failure",
-          "failing_jobs": [
-            {
-              "name": "agent-bash-grant-coverage",
-              "conclusion": "failure",
-              "jobId": 97211449061
-            },
-            {
-              "name": "signal-type-coverage-guard",
-              "conclusion": "failure",
-              "jobId": 97211449097
-            }
-          ],
-          "fingerprint": "b7990d4f44b283a5ac760d2da82a855ed46284e0d1cf264e1abdaa0bf3d24fe5",
-          "zone_owner": "dev-team (CI fix)",
-          "summary": "CI RED on main HEAD 8c45e320aea3f59da396f17a7258bc1018c8d05d: agent-bash-grant-coverage,signal-type-coverage-guard",
-          "suggested_sprint_class": "FIX",
-          "verification_gate": "ci_green_on_subsequent_push"
-        },
-        "createdAt": "2026-08-23T14:54:04Z",
-        "drained_at": "2026-08-23T14:54:55Z",
-        "routed_to": "PO Step 0-SIG"
-      }
-    ],
+    "_updated_at": "2026-08-23T15:07:24Z",
+    "_updated_by": "po",
+    "pending_triage_inbox": [],
     "last_po_triage_at": "2026-08-23T12:48:03Z",
     "last_po_triage_note": "po Step 0-SIG 2026-08-23T12:47Z — 4 envelopes triaged, 0 mints (all DEDUP HIT against rows already on the board). 1x ci_red CI-RED-4b6f60ea (run 32637153628, head 4b6f60ea, failing job signal-type-coverage-guard): DEDUP HIT — FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire (ready, READY) and FIX-SIGNAL-TYPE-ROUTING-GAP-notebook-prune-dropped-newest-dated-section (backlog, auto-filed 12:23Z by the guard itself) together own both unrouted types this job is red on. 1x cowork-fire 20260823T120552Z: same routing-gap row owns the type; the tick's own execution findings were NOT dropped with the envelope — both flow-doc defects carried in its payload.note are minted as FIX-COWORK-FLOWDOC-STALE-WEEKEND-SUPPRESSION-AND-BGFAN1-RETURN-PRESUMPTION (ready, agent-father). 2x notebook_prune_dropped_newest_dated_section (both docs/agent-memory/notebooks/dev-mcp-server.md line 3, AC-6 same-day-tie class): DEDUP HIT — FIX-NOTEBOOK-AUTOPRUNE-AC6-SAMEDAY-TIE-PROCEEDS-AND-DROPS-LOADBEARING-SECTION (backlog) is the exact owner, and FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (ready) is the parent. SAME CAVEAT AS THE 10:33Z CLEAR: this write removes the cowork-fire envelope that scripts/audits/guard-signal-type-coverage.sh:198 reads, so CI can go green next run with the routing table still unfixed — that green is an artifact of the drain, not a fix.",
     "last_po_triage_consumed": 4,
