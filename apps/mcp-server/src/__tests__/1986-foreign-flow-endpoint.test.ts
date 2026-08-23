@@ -360,6 +360,67 @@ describe("TASK17-FOREIGN-FLOW — queryForeignFlow", () => {
     expect(codes).not.toContain("OLD2");
   });
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // AC-15 — FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD
+  //
+  // Root cause: `WHERE date = (SELECT MAX(date) FROM vnstock_trading_stats)
+  // AND foreign_volume IS NOT NULL` resolves "latest date" WITHOUT excluding
+  // NULL-only days — a partial/NULL batch landing on top blanks the whole
+  // page (live: 2026-08-22 MAX(date)=2026-08-22, all 41 rows NULL; MAX(date)
+  // WITH the guard = 2026-08-18, 99 non-null rows). Fix: push the
+  // `foreign_volume IS NOT NULL` guard INTO the MAX(date) subquery so "latest
+  // day" and "day must have data" are the SAME predicate — matches this
+  // file's own docstring contract verbatim ("Latest trading day = MAX(date)
+  // with foreign_volume IS NOT NULL").
+  // ───────────────────────────────────────────────────────────────────────────
+  it("AC-15: NULL-only newest date is skipped in favor of the older populated date", () => {
+    const db = getDb();
+    // Newest date — NULL-only batch (the exact live-observed failure shape)
+    insertRow(db, { code: "N1", date: "2026-06-12", foreign_volume: null as unknown as number });
+    insertRow(db, { code: "N2", date: "2026-06-12", foreign_volume: null as unknown as number });
+    // Older date — populated
+    insertRow(db, { code: "OLD1", date: PROD_DATE, foreign_volume: 50000 });
+    insertRow(db, { code: "OLD2", date: PROD_DATE, foreign_volume: -10000 });
+
+    const { tradingDate, items } = queryForeignFlow(db);
+
+    // Point: served date is the OLDER populated date, never empty/the NULL-only newest date.
+    expect(tradingDate).toBe(PROD_DATE);
+    expect(items).toHaveLength(2);
+    const codes = items.map((i) => i.code);
+    expect(codes).not.toContain("N1");
+    expect(codes).not.toContain("N2");
+  });
+
+  it("AC-15 edge case: ALL dates NULL table-wide → falls through to the existing empty-response path", () => {
+    const db = getDb();
+    insertRow(db, { code: "N1", date: PROD_DATE, foreign_volume: null as unknown as number });
+    insertRow(db, { code: "N2", date: "2026-06-10", foreign_volume: null as unknown as number });
+
+    const { tradingDate, items } = queryForeignFlow(db);
+
+    // Subquery MAX(date) WHERE foreign_volume IS NOT NULL returns SQL NULL when
+    // every row is NULL; outer `WHERE date = NULL` is UNKNOWN (never true) in
+    // SQLite three-valued logic → 0 rows, same as the pre-existing AC-14 path.
+    expect(tradingDate).toBe("");
+    expect(items).toHaveLength(0);
+  });
+
+  it("AC-15 edge case: multiple consecutive NULL-only days walk back to the most recent populated day", () => {
+    const db = getDb();
+    // Two consecutive NULL-only days (writer degraded >1 day, not just a single blip)
+    insertRow(db, { code: "N1", date: "2026-06-13", foreign_volume: null as unknown as number });
+    insertRow(db, { code: "N2", date: "2026-06-12", foreign_volume: null as unknown as number });
+    // Populated day, older still
+    insertRow(db, { code: "OLD1", date: PROD_DATE, foreign_volume: 12345 });
+
+    const { tradingDate, items } = queryForeignFlow(db);
+
+    expect(tradingDate).toBe(PROD_DATE);
+    expect(items).toHaveLength(1);
+    expect(items[0]!.code).toBe("OLD1");
+  });
+
   it("AC-13: zero foreignVolume row → FLAT direction", () => {
     const db = getDb();
     insertRow(db, { code: "FLAT", date: PROD_DATE, foreign_volume: 0 });

@@ -169,12 +169,23 @@ export function queryForeignFlow(
 
   // Fetch the full latest-day set (capped at MAX_LIMIT — well above real row count ~103).
   // Summary is computed over allItems; display items are sliced after.
+  // FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD (2026-08-23): the
+  // MAX(date) subquery must itself exclude NULL-only days so "latest day" and
+  // "day must have data" are the SAME predicate (matches this file's own
+  // docstring contract, line 8, verbatim). Without the subquery guard, a
+  // partial/NULL batch landing on top of vnstock_trading_stats locks in a
+  // NULL-only date as "latest," then the outer guard below filters every row
+  // of that date away — 0 rows served, whole page ghosts (live 2026-08-15/16/
+  // 22). The outer guard stays too: it does independent real work stripping
+  // individual NULL rows on a genuinely partial (mixed null/non-null) day.
   const sql = `
     SELECT code, foreign_volume, foreign_room,
            current_holding_ratio, max_holding_ratio, market_cap_bn,
            date, fetched_at
     FROM vnstock_trading_stats
-    WHERE date = (SELECT MAX(date) FROM vnstock_trading_stats)
+    WHERE date = (
+      SELECT MAX(date) FROM vnstock_trading_stats WHERE foreign_volume IS NOT NULL
+    )
       AND foreign_volume IS NOT NULL
     ORDER BY foreign_volume DESC
     LIMIT ?
