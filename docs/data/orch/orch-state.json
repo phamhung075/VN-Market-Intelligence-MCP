@@ -18789,7 +18789,7 @@
         "last_served_tick": "2026-08-23T08:55:59Z"
       }
     },
-    "_updated_at": "2026-08-23T09:29:30Z",
+    "_updated_at": "2026-08-23T09:51:36Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -18869,6 +18869,48 @@
         },
         "createdAt": "20260823T090450Z",
         "drained_at": "2026-08-23T09:24:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7a58a379bf00bc67278f5ffce332419cc3bbc16fff7e54ad105e7a4f707900c0",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-a309c933",
+          "head_sha": "a309c933463772440ad996d59a8f81506457331b",
+          "run_id": 32630904807,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/32630904807",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "bun test",
+              "conclusion": "failure",
+              "jobId": 97173462868
+            }
+          ],
+          "fingerprint": "c43e1a55f018a43e9bc0e9b53264bdc8061f968930627dbf7f405bdfef0694b5",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD a309c933463772440ad996d59a8f81506457331b: bun test",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-23T09:27:33Z",
+        "drained_at": "2026-08-23T09:51:36Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9da864c74f70d1153f7883d228791325fc46fce9360faf29c7bd0083a9c75569",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 18 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect-6.md docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-pm.md docs/agent-memory/notebooks/architect.md docs/agent-memory/notebooks/pm.md docs/architecture-briefs/2026-08-23-orch-row-prose-ceiling-value-shape-measure-and-frozen-cohort-paydown.md docs/data/orch/orch-state.json docs/handoffs/TASK-COWORK-CATCHUP-SCOPE-PREDICATE.md docs/handoffs/TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY.md docs/handoffs/TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK.md docs/handoffs/TASK-COWORK-MISSED-FIRE-AUDIT.md docs/handoffs/TASK-COWORK-PMSET-WAKE-ADJUNCT.md docs/handoffs/TASK-COWORK-SCHEDULE-ONMISS-AND-SCOPE.md docs/handoffs/TASK-COWORK-STALE-SLOT-DISPOSITION-TABLE.md docs/handoffs/TASK-CRON-AMEND-DEDUP-BRIEF-S13.md docs/handoffs/TASK-CRON-LIVENESS-PROBE-SCRIPT.md docs/handoffs/TASK-CRON-LIVENESS-PROBE-TESTS.md docs/handoffs/TASK-CRON-SKILLMD-PROBE-WIRING.md scripts/architect-20260823-orch-prose-ceiling-row-handoff.jq. actor=7be6b4cd-057e-419b-a967-4810daf2b646 mode=warn escalated=false prior_warns=0 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-23T09:51:05Z",
+        "drained_at": "2026-08-23T09:51:36Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-23T09:51:05Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 18 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect-6.md docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-pm.md docs/agent-memory/notebooks/architect.md docs/agent-memory/notebooks/pm.md docs/architecture-briefs/2026-08-23-orch-row-prose-ceiling-value-shape-measure-and-frozen-cohort-paydown.md docs/data/orch/orch-state.json docs/handoffs/TASK-COWORK-CATCHUP-SCOPE-PREDICATE.md docs/handoffs/TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY.md docs/handoffs/TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK.md docs/handoffs/TASK-COWORK-MISSED-FIRE-AUDIT.md docs/handoffs/TASK-COWORK-PMSET-WAKE-ADJUNCT.md docs/handoffs/TASK-COWORK-SCHEDULE-ONMISS-AND-SCOPE.md docs/handoffs/TASK-COWORK-STALE-SLOT-DISPOSITION-TABLE.md docs/handoffs/TASK-CRON-AMEND-DEDUP-BRIEF-S13.md docs/handoffs/TASK-CRON-LIVENESS-PROBE-SCRIPT.md docs/handoffs/TASK-CRON-LIVENESS-PROBE-TESTS.md docs/handoffs/TASK-CRON-SKILLMD-PROBE-WIRING.md scripts/architect-20260823-orch-prose-ceiling-row-handoff.jq. actor=7be6b4cd-057e-419b-a967-4810daf2b646 mode=warn escalated=false prior_warns=0 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "9da864c74f70d1153f7883d228791325fc46fce9360faf29c7bd0083a9c75569",
+    "processedAt": "2026-08-23T09:51:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
