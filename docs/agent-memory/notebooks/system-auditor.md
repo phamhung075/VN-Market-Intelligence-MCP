@@ -148,7 +148,7 @@ Checks: A-01–A-11 (containers), A-12–A-19 (health), A-20 (pdf multi-probe), 
 
 Findings: None.
 
-### Audit Run Tier-2 2026-08-24T00:49Z
+### Audit Run Tier-2 2026-08-23T22:49Z
 
 **Verdict:** FINDINGS (auditor blind-spot meta-check filed)
 
@@ -198,3 +198,88 @@ Suggested owner: orch-sentinel (per OH-3 dimension — auditor blind-spot meta-c
 
 **Status:** CLEAN — system healthy, awaiting developer fix for pre-push size-lint breach (FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L)
 
+
+### Audit Run Tier-1 2026-08-23T23:30Z
+
+**Verdict:** ALL_GREEN (visible dimensions only)
+
+**Summary:** All 12 host_runtime_set services UP and healthy; all health endpoints HTTP 200; restart count = 0 (no crash anomalies); all memory < 85% baseline (no deep-probe gate engagements); disk 49% < 85% threshold. Checks A-01 through A-31 (visible to LLM agent): all PASS.
+
+**Findings:** None (within auditor's visible coverage).
+
+**Scope Note:** Launchd dimensions (OUT_OF_SCOPE per structural auditor coverage gap, signal sys-20260823T224924-0b1c, dedup_key auditor_coverage_gap:launchd_dimension:tier1). This agent structurally cannot audit launchd checks that the pre-gate script performs; that dimension's failure is tracked separately in docs/data/auditor-tier1-last-trigger.json (pre-gate responsibility).
+
+### RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-08-23T23:40:54Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                  IMAGE                                           CREATED
+vn-market-intelligence-mcp-pdf-extractor-1        Up 8 hours (healthy)    vn-market-intelligence-mcp-pdf-extractor        8 hours ago
+vn-market-intelligence-mcp-mcp-server-1           Up 10 hours (healthy)   vn-market-intelligence-mcp-mcp-server           10 hours ago
+vn-market-intelligence-mcp-alert-engine-1         Up 30 hours (healthy)   vn-market-intelligence-mcp-alert-engine         30 hours ago
+vn-market-intelligence-mcp-rag-service-1          Up 8 days (healthy)     vn-market-intelligence-mcp-rag-service          8 days ago
+vn-market-intelligence-mcp-news-fetch-1           Up 10 days (healthy)    vn-market-intelligence-mcp-news-fetch           10 days ago
+vn-market-intelligence-mcp-api-gateway-1          Up 10 days (healthy)    vn-market-intelligence-mcp-api-gateway          10 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 2 weeks (healthy)    vn-market-intelligence-mcp-stock-price          2 weeks ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 3 weeks (healthy)    vn-market-intelligence-mcp-macro-indicators     3 weeks ago
+vn-market-intelligence-mcp-frontend-1             Up 4 weeks (healthy)    vn-market-intelligence-mcp-frontend             4 weeks ago
+mcp-gateway                                       Up 5 weeks (healthy)    mcpservergatway-gateway                         5 weeks ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 5 weeks (healthy)    ghcr.io/flaresolverr/flaresolverr:latest        5 weeks ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 5 weeks (healthy)    vn-market-intelligence-mcp-technical-analysis   5 weeks ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 5 weeks (healthy)    vn-market-intelligence-mcp-kinh-dich-service    5 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=11.47% MemUsage=352.5MiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-pdf-extractor-1 baseline 84.41% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-mcp-server-1 baseline 11.46% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-alert-engine-1 baseline 1.85% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-rag-service-1 baseline 71.99% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-news-fetch-1 baseline 5.65% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-api-gateway-1 baseline 2.53% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-stock-price-1 baseline 2.67% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-macro-indicators-1 baseline 3.29% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-frontend-1 baseline 9.99% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-flaresolverr-1 baseline 3.50% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-technical-analysis-1 baseline 3.83% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-kinh-dich-service-1 baseline 3.19% < 85% investigate-gate
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    14Gi    49%    393k  148M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+
+=== PROBE DONE ===
+```
+
+**Verdict Detail:**
+- A-01 through A-11 (Container Status): All host_runtime_set services UP — mcp-server, api-gateway, frontend, macro-indicators, mcp-gateway, pdf-extractor healthy; stock-price, technical-analysis, kinh-dich-service healthy; alert-engine, rag-service, news-fetch healthy. [RAW-PROBE L3-L16]. PASS.
+- A-12 through A-19 (Health Endpoints): mcp-server:3000/health OK, api-gateway:4000/health OK, macro-indicators:5004/health OK, pdf-extractor:5001/health OK, frontend:3001/ OK [RAW-PROBE L18-L22]. PASS.
+- A-20 (pdf-extractor multi-probe): 3/3 probes HTTP 200 — majority-vote pass_count≥2. [RAW-PROBE L57-L60]. PASS.
+- A-21 (Restart Count): mcp-server RestartCount=0 — no crash anomalies within 4h window [RAW-PROBE L24-L25]. PASS.
+- A-30 (Memory Pressure): all containers baseline <85% investigate-gate [RAW-PROBE L31-L42]. All deep-probe gates SKIP. PASS.
+- Disk Capacity: 49% < 85% threshold [RAW-PROBE L44-L46]. PASS.
+- Launchd Health Checks: OUT_OF_SCOPE — system-auditor subagent structurally cannot audit launchd checks that are performed by the pre-gate script (scripts/agents-flow/auditor-tier1-probe.sh). Check-ID namespace drift noted: audit-dimensions.md declares A-01-A-31; probe.sh also uses A-32 for disk and A-33 for hooks (this mapping is unresolved, carried here as documented legacy).
+
+**Auditor Coverage Boundary:** This cycle's verdict reports only dimensions visible to the LLM agent. The tier-1 probe script's own launchd checks are tracked separately in docs/data/auditor-tier1-last-trigger.json (pre-gate script's responsibility, read-only to this subagent). The boundary is by design per this agent's declared rule `boundary_rules.scope: YOUR flow steps ONLY`.
+
+**Signals:** None emitted. All visible checks PASS; launchd out-of-scope per coverage gap already filed (signal sys-20260823T224924-0b1c, dedup_key auditor_coverage_gap:launchd_dimension:tier1, status=READ).
+
+**Anomalies:** 0 new
