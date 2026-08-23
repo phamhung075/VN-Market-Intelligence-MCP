@@ -21074,7 +21074,7 @@
         "not_duplicate_of": "This IS the row QA's escalation asked po to mint ('ASK -- out of qa's zone ... needs a minted row'); checked live for RCVERIF/GRANDFATHER -- no existing row found.",
         "created_by": "po (triage 2026-08-23, from qa escalation qa_rcverif_grandfather_escalation_20260823T1441Z on FU-RAG-DEPLOY-MEMORY)",
         "created_at": "2026-08-23T15:04:02Z",
-        "updated_at": "2026-08-23T21:35:11Z",
+        "updated_at": "2026-08-23T23:01:30Z",
         "promoted_at": "2026-08-23T21:26:02Z",
         "promoted_by": "dev-team (bounded-1 auto-pickup)",
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
@@ -21089,7 +21089,11 @@
             "live_value_observed": "122 pass/0 fail (incl. new RCV-9-a/RCV-9-b); tsc 0 errors; orch-validate.mjs exit 0 on live orch-state.json post-trim",
             "observed_at": "2026-08-23T21:45:00Z"
           }
-        }
+        },
+        "assigned_to": "007e33e4-b453-4bb3-8ab1-ef31495906a3",
+        "adopted_at": "2026-08-23T23:01:30Z",
+        "tree_hygiene_note": "tree-hygiene: reverted 0 file(s) (apps/mcp-server/ clean at adoption)",
+        "status_note": "Orphan-adopted 2026-08-23T23:01:30Z by dev-team tick 2026-08-23T22:37Z from reaped session 007e33e4. Work is COMPLETE and committed (d569db23a fix + f0ee4481f lane-move); no resume-spawn issued — checkpoint carried no git_sha and board state shows the fix already landed. Row parked at REVIEW awaiting its reviewer. redispatch_count=1."
       },
       {
         "id": "CCATO-MCP-T5-USECASE",
