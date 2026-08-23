@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-08-22T19:50:40Z
-
-**Brief:** `docs/architecture-briefs/2026-08-22-cowork-detect-loop-flow-review.md` (update — new §D, English only, `.vi.md` sibling deliberately not touched)
-
-New operational fact from user: whole fleet runs on their personal PC, ~1 week vacation coming with sleep and/or full shutdown, exceeding the 2 confirmed sleep-outages (2.5d/4d) that self-healed. Added §D (F9-F12 + checklist): F9 only `com.vn-market.cowork-guaranteed-slot-firer` survives a full shutdown+reboot (real launchd LaunchAgent, confirmed via `~/Library/LaunchAgents/`); everything else in both loops is session-only `CronCreate`. F10 (new, significant): the designed guaranteed-slot catch-up module (`cowork-catchup-predicate.js`) is built and wired into `cowork-match-slots.js`'s output, but grep-confirmed zero live consumers reference `catchup_raw` — dispatcher's own planned Step 4.55 sub-flow was never created, preflight script's planned Step 6.5 never added, and the launchd firer itself never wired despite the original design brief naming it the most relevant plane. Consequence: guaranteed dishes missed during any host-down window (including possibly the return day itself, given re-arm is an unscheduled human action vs. the ±2min match window) are silently and permanently skipped, no catch-up, no miss-alert. F11: no duplicate-publish/stale-as-fresh risk either way (sleep self-heals via CronCreate's own native missed-fire replay through the real marker-gated flow, proven 2x; shutdown just resumes from "now" with no burst at all) — reassuring but for the wrong reason (silent loss, not correct recovery). F12: confirmed zero SessionStart hook or any automated long-gap→re-arm detection anywhere (checked both settings files) — 100% human/router-memory-dependent, no self-alert fallback even from system-auditor (which would itself be dark).
-
-**Signal dropped:** `docs/signals/2026-08-22-cowork-detect-loop-vacation-resilience-addendum.json` → agent-father (F10 + F12 follow-ups, P2/backlog, routed for PO prioritization — not implemented here)
-
----
-
 ## 2026-08-23T11:01:46Z
 
 **Task:** `FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR` (P0, dev-team Design-Router Sweep dispatch) — no new brief authored (`po_scope_note` on the row: design already fully specified in `desc`, one-hop signal only; independently re-verified before honoring that ruling).
@@ -43,3 +33,19 @@ Did NOT re-open the `next_agent: null` claim — independently re-verified qa's 
 Beyond the lane fix, five things the live pm cycle proved that the shipped binary cannot express: the disposition is **3-way not 2-way** (pm wrote both open states today — B DELEGATED-HELD vs C PARTIAL differ only by `hold_reason`, and C without it gets its pm re-entry hop stolen by `devteam-wrapper-autoclose.jq`, which is armed on 8 live rows incl. `IVC-PM-DECOMPOSE`); `children[]` must be the **union** with pre-existing children (4 of pm's 10 rows needed only that); closing a decomposed parent to `DONE` **strands its dependents forever** because `deps_satisfied` demands `DONE_VERIFIED`; an in-place disposition on an over-ceiling guarded-lane row hard-rejects at **+34 bytes** (21 such rows live); and the fail-loud needs 3 layers because an LLM executor ignores exit codes. Ruled the transform out of the flow doc into `scripts/pm-decompose-closeout.jq` — an inline heredoc cannot be unit-tested, which is exactly why the ACs were only ever replayed by hand and why pm hand-rolled two variants in one day. All replacement jq is fixture-executed, copy-runnable. 4 rows specified, zone-split, sequenced (agent-father XS hotfix ships now, independent of the developer script row).
 
 **Signal dropped:** `docs/signals/fix-pm-3e-closeout-lane-resolution-2026-08-23T14:15:51Z.json` → agent-father
+
+---
+
+## 2026-08-23T14:28:14Z
+
+**Brief:** `docs/architecture-briefs/2026-08-23-flow-file-cap-glob-fix-and-doc-plane-baseline-ratchet.md`
+
+Row `FIX-FILESIZECAPS-FLOWFILE-GLOB-NESTED-DIR-ONLY-173-FLOW-FILES-UNGOVERNED` (P2) — its `verification_gate` required a recorded rollout decision *before* the one-character glob fix may land, so this is a policy brief, not a patch. Re-executed the defect: bash `case` has no globstar, so `docs/agents/*/flow/**/*.md` demands a directory below `flow/` and 173/173 real flow files match nothing. Corrected pattern `docs/agents/*/flow/*.md` verified against positive and negative fixtures. Noted that the sibling `.claude/skills/**/*.md` works only by corpus accident — same broken idiom, opposite outcome — so it is not evidence the flow cap should work.
+
+Measured the full 173-file cohort myself rather than trusting the row (FENCE `feedback_fleetwide_gate_validated_on_one_file_optout_allowlist`): 98 clean / 12 line-over absorbed by a current header / 3 line-only unjustified / 60 byte-cap = **63 emitters** (row estimated 62/59/13). Sharpest number is **26** — files carrying a current, in-tolerance `size-justification` header that would emit anyway, because TE-T24 rules a header declares LINES only and never honors bytes. The existing escape hatch structurally cannot cover this cohort's dominant breach dimension; any rollout ignoring that asks 26 authors to re-justify into a mechanism that cannot accept it.
+
+Corrected the row's risk framing in both directions: the hook always `exit 0`, is not wired to any CI gate (`size-lint` is code-plane only and never reads the pattern table), and dedups per file — so it is a one-shot ≤63-signal burst into an already drain-behind inbox at `priority:high`, **not** "permanent every-edit breach emitters". The risk is inbox flooding, not blocked work.
+
+Ruled (a)+(b) and explicitly **not a new mechanism**: port the live code-plane sibling (`size-lint-justification.sh` + `size-lint-baseline.json`, 648 grandfathered entries, ±10%/min-5 tolerance, wholesale `--update`, zero tolerance for new offenders). Rejected (c) and (d) with reasons. Did **not** retune `cap:120` — measured p50=102L, the line cap is right; the miscalibrated knob is BC-1's hardcoded 60 B/line (measured p50=54, p90=88, max=1190). 3 rows, order load-bearing R1→R2→R3 so the glob flips last: byte-dimension header (preserves TE-T24's intent rather than reversing it — an explicit reviewable byte figure is not a free pass), then the doc-plane baseline seeded from the 63, then the one-character glob. Reported not fixed: **272 of 445** `docs/agents/**/*.md` match no cap pattern at all (68 over 120L) — flow files are the smaller ungoverned half.
+
+**Signal dropped:** `docs/signals/fix-filesizecaps-flowfile-glob-rollout-2026-08-23T14:30:00Z.json` → po
