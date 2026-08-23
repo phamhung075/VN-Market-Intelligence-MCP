@@ -998,6 +998,50 @@ CLAUDE_BIN=/path/to/claude bash scripts/agents-flow/cowork-guaranteed-slot-firer
 #   fake CLAUDE_BIN + fake CURL_BIN, zero real CLI invocations, zero network)
 ```
 
+**CANONICAL: Incident-Lane Consumer — ILC (FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS)**
+```bash
+INCIDENT_CAP=2   # named constant, main.md-local — same convention as QA_CAP
+INCIDENT_WIP=$(jq 'include "scripts/lib/devteam-eligibility"; incident_wip_in_progress' docs/data/orch/orch-state.json)
+if [ "$INCIDENT_WIP" -lt "$INCIDENT_CAP" ]; then
+  NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  jq --arg now "$NOW" --argjson take_budget "$((INCIDENT_CAP - INCIDENT_WIP))" \
+    --slurpfile detail docs/data/orch/archive/backlog-detail.json \
+    --slurpfile archive <(bash scripts/lib/archive-glob-cat.sh) \
+    -f scripts/devteam-backlog-claim-incident-lane-consumer.jq \
+    docs/data/orch/orch-state.json | bash scripts/orch-apply.sh
+  # correlate the batch by the PAIR (claimed_at == $NOW, claimed_by == "dev-team (incident-lane consumer)"),
+  # never by .head.next_action
+fi
+# Brief: docs/architecture-briefs/2026-08-14-readylane-incident-lane-throughput.md §4a-§4c
+# Owning flow doc (agent-father's zone, lands AFTER this row):
+#   docs/agents/dev-team/flow/main.md § Incident-Lane Consumer (ILC) — Head-Decoupled Invocation,
+#   inserted after the Session Gate and BEFORE § Review-Lane SECONDARY-Drain
+#   (FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW)
+# Gate: bash scripts/audits/devteam-dispatch-gate-satisfiability.sh  § INCIDENT-LANE CONSUMER (13 assertions)
+```
+WHY: `ready[]` had exactly ONE generic consumer (RLC), claiming ONE row per invocation and only on
+its ~1-in-6 rotation turn. Against a 68-row queue that is a throughput ceiling, so an urgent row is
+buried behind whatever precedes it no matter how it is labelled — the architect measured that
+ORDERING-ONLY fixes cannot move a BINDING THROUGHPUT constraint. ILC reuses QA-Drain's proven
+throughput shape (batch claim + dedicated budget; 226→56 on the structurally identical problem).
+
+Selector is PO's already-live `po_expedited_at` field (5 live rows, 0 code consumers before this) —
+extend, don't duplicate. Sort is `[rank, po_expedited_at, idx]`: priority first (a stray P1-expedited
+row never jumps a P0-expedited one), then OLDEST-expedite-first so a freshly-marked incident cannot
+perpetually cut ahead inside the pool. **Severity changes throughput priority, never safety gating** —
+the supervised / plan_only / epic-wrapper / deps_satisfied gates are all kept unrelaxed; PO's manual
+dispatch remains the path for that rare intersection.
+
+Budget: rows land in the SAME `in_progress[]` lane (a 10th `TaskBoardSchema.strict()` lane would be a
+real schema change) but carry the DISTINCT `claimed_by: "dev-team (incident-lane consumer)"` marker
+that `incident_wip_in_progress` counts — so they consume neither the shared `WIP<=2` slot nor compete
+for it. `INCIDENT_CAP=2` is the entire answer to "must not become a 4th priority tier": however many
+rows PO ever expedites, at most 2 are in flight at once and the rest queue, capped, inside the
+incident pool. Known deliberate asymmetry (documented at the predicate): incident rows ARE still
+counted by `wip_in_progress` — the conservative direction; correcting it would touch every sibling
+gate. `.head` uses the same `$head_free` conditional guard as every sibling — no new write pattern,
+so the single-linear head-writer collision-freedom proof is untouched.
+
 **CANONICAL: Dev-team idle-capacity backlog pickup (SYSREMAKE-P2-DEVTEAM-BACKLOG-PICKUP-BOUNDED1)**
 ```bash
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)

@@ -117,6 +117,50 @@ def wip_in_progress:
     | select( (is_terminal_task_status(.status) or (normalize_task_status(.status) == "BLOCKED")) | not )
   ] | length;
 
+# ---- incident lane (FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS, architect
+# brief docs/architecture-briefs/2026-08-14-readylane-incident-lane-
+# throughput.md §4a/§4b) ----
+#
+# `.` = candidate ROW. Reuses PO's ALREADY-LIVE `po_expedited_at` convention
+# (5 live rows, 0 code consumers before this predicate) instead of minting a
+# new `expedite_at`/`incident_ref` field name — `always_extend_not_duplicate`,
+# and it makes an existing PO triage habit load-bearing rather than orphaned.
+# TaskSchema is `.passthrough()` so either choice was schema-free; this one is
+# the discipline call.
+#
+# BOARD-ONLY on purpose — no `$detail_items` fallback, unlike every
+# `effective_*` predicate above. All 5 live examples are board-inline and no
+# detail_ref'd `po_expedited_at` has ever been observed. This is a DOCUMENTED
+# SIMPLIFICATION, not a silent gap: widen it to the detail-first/board-fallback
+# shape the moment a detail-authored expedite is seen live.
+def is_po_expedited:
+  ((.po_expedited_at // "") | tostring) != "";
+
+# `.` = the WHOLE orch-state document (same shape as `wip_in_progress` above,
+# whose exclusion rules this mirrors exactly). Counts ONLY rows this lane
+# itself claimed, keyed on the incident consumer's DISTINCT `claimed_by`
+# marker.
+#
+# WHY A SEPARATE COUNTER: incident rows land in the SAME `in_progress[]` lane
+# every sibling consumer uses (a 10th `TaskBoardSchema.strict()` lane would be
+# a real schema change), but they must NOT consume the shared `WIP<=2` slot
+# that BOUNDED-1/SLS/RLC/DRS compete for — otherwise a P0 incident and ordinary
+# throughput starve each other, which is the whole defect the incident lane
+# exists to remove. `wip_in_progress` therefore ignores them (it has no
+# `claimed_by` filter and counts every non-terminal row — including these), and
+# this counter is what bounds them, against the caller's own `INCIDENT_CAP=2`.
+#
+# NOTE the deliberate asymmetry: incident rows ARE counted by
+# `wip_in_progress`. That is the conservative direction (the shared budget sees
+# MORE load, never less), and correcting it would require every sibling gate to
+# subtract this counter — a wider change than this row's scope. Flagged here so
+# a future reader does not mistake it for an oversight.
+def incident_wip_in_progress:
+  [ (.task_board.in_progress // [])[]
+    | select( (is_terminal_task_status(.status) or (normalize_task_status(.status) == "BLOCKED")) | not )
+    | select( (.claimed_by // "") == "dev-team (incident-lane consumer)" )
+  ] | length;
+
 # ---- priority ordering (shared FIFO-proxy tiebreak convention) ----
 def priority_rank:
   ((.priority // "") | ascii_downcase) as $p

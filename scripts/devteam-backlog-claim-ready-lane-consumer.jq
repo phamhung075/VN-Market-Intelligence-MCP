@@ -110,6 +110,20 @@
 # MISSING, 2026-07-28): same cold-archive dep_status_map($archive) fallback
 # as BOUNDED-1/SLS — see scripts/lib/devteam-eligibility.jq header.
 #
+# NOT THE SOLE ready[] CONSUMER ANY MORE (FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-
+# SCRIPTS, architect brief docs/architecture-briefs/2026-08-14-readylane-
+# incident-lane-throughput.md §4c): scripts/devteam-backlog-claim-incident-
+# lane-consumer.jq (ILC) also reads ready[]. It adds ONE filter to this
+# script's own eligibility chain — `is_po_expedited` — and otherwise batches
+# up to INCIDENT_CAP=2 rows against a budget (incident_wip_in_progress) that is
+# independent of the shared WIP<=2 slot. THIS FILE NEEDS NO LOGIC CHANGE: the
+# overlap is harmless by construction (§4e) because ILC runs FIRST each tick
+# and physically removes whatever it claims from ready[] in the same
+# orch-apply.sh write, so this script simply never sees those rows; and if ILC
+# is capped out, an expedited row remaining in ready[] is still legitimately
+# claimable here — just at RLC's own one-row-per-turn rate, which is exactly
+# the pre-ILC behaviour. Do not add a `po_expedited_at` special case here.
+#
 # Pointer: docs/agents/dev-team/flow/main.md § Ready-Lane Consumer (RLC),
 # inserted immediately after the Supervised-Lane Sweep block, on the same
 # head-idle fall-through, before Step 1 PO triage.

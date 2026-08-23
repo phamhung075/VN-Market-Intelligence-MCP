@@ -196,10 +196,22 @@ B1_MOVED=$([ "$(jq '.task_board.in_progress|length' "$WORK/t1c.json")" -gt "$INP
 # BOUNDED-1's OWN gate is in_progress<1 (independent, stricter cap) — with
 # INPROG_N=1 live it will legitimately no-op (already at its own cap). Only
 # assert it FIRES when in_progress==0; otherwise assert the documented no-op.
-if [ "$INPROG_N" -eq 0 ]; then
-  assert "BOUNDED-1 fires when in_progress==0 (its own WIP<1 cap)" "$B1_MOVED"
+#
+# FALSE-RED FIXED IN PASSING (FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS,
+# 2026-08-23): this branch used to test the RAW `in_progress[]` array length
+# ($INPROG_N) while the gate under test uses `wip_in_progress`, which EXCLUDES
+# BLOCKED rows (FIX-DEVTEAM-WIP-BUDGET-COUNTS-BLOCKED-INPROGRESS-ROWS — the
+# very distinction this file's own "WIP EFFECTIVE COUNT" section below exists to
+# prove). The `[0:1]` slice above keeps whatever the live board's FIRST
+# in_progress row happens to be; on 2026-08-23 that was a BLOCKED row, so
+# effective WIP was 0, BOUNDED-1 CORRECTLY fired, and the assertion CORRECTLY
+# reported a failure of its own wrong expectation. Branch on the same effective
+# count the gate does.
+B1_EFFECTIVE_WIP=$(jq 'include "scripts/lib/devteam-eligibility"; wip_in_progress' "$WORK/t1.json")
+if [ "$B1_EFFECTIVE_WIP" -eq 0 ]; then
+  assert "BOUNDED-1 fires when effective WIP==0 (its own WIP<1 cap; raw in_progress[] length is $INPROG_N, BLOCKED rows excluded)" "$B1_MOVED"
 else
-  assert "BOUNDED-1 correctly no-ops when in_progress>=1 (own WIP<1 cap, independent of ready[] depth)" "$([ "$B1_MOVED" = "false" ] && echo true || echo false)"
+  assert "BOUNDED-1 correctly no-ops when effective WIP>=1 (own WIP<1 cap, independent of ready[] depth; effective=$B1_EFFECTIVE_WIP, raw=$INPROG_N)" "$([ "$B1_MOVED" = "false" ] && echo true || echo false)"
 fi
 
 # ---- BOUNDED-1 OWN-WIP-RECHECK + PRIORITY-ORDERED PICK + STALE-STAMP DRAIN
@@ -491,14 +503,29 @@ assert "AC-DRS-SUPERVISED-ONLY-ELIGIBLE: a supervised:true (plan_only NOT true) 
 # script — `.head` must come out byte-identical, even though the row still
 # legitimately moves ready[]->in_progress[] underneath it. Mechanizes the
 # exact defect class the qadrain-head-slot-decouple sibling precedent found.
+#
+# FALSE-RED FIXED IN PASSING (FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS,
+# 2026-08-23): this fixture used to be built by APPENDING to the shared
+# live-derived padded fixture. But the DRS claim script takes `$swept[0]` — the
+# FIRST ready[] row already stamped `promoted_by: "dev-team (design-router
+# sweep)"` — and the live board routinely carries several (3 on 2026-08-23:
+# UC-MDH-P2, UC-SDF-P6, FIX-COWORK-PUBLISHED-MARKER-TTL-...). Those sort ahead
+# of the appended synthetic row, so DRS claimed a LIVE row and the positive-half
+# assertion looked for a move that had (correctly) not happened to its own row.
+# Live-board contamination, not a script defect. Rebuilt as an ISOLATED
+# single-row fixture, matching the discipline this file's own header states and
+# every sibling HEAD-GUARD block below already follows.
 DRS_BUSY_HEAD_FIXTURE="$WORK/drs-busy-head.json"
-jq --arg now "$NOW" '
-  .task_board.ready += [ { id: "GATESAT-DRS-HEADGUARD", status: "READY", priority: "P1",
-    type: "FIX", zone: "cross-service/", next_agent: "ba", dispatch_lane: "ba",
-    promoted_by: "dev-team (design-router sweep)", promoted_at: $now } ]
-  | .head = { status: "in_progress", active_task_id: "GATESAT-UNRELATED-BUSY-TASK",
-              next_agent: "developer", updated_at: $now, updated_by: "test" }
-' "$WORK/fixture.json" > "$DRS_BUSY_HEAD_FIXTURE"
+jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], in_progress: [], qa: [], review: [], done: [], done_verified: [],
+      ready: [ { id: "GATESAT-DRS-HEADGUARD", status: "READY", priority: "P1",
+        type: "FIX", zone: "cross-service/", next_agent: "ba", dispatch_lane: "ba",
+        promoted_by: "dev-team (design-router sweep)", promoted_at: $now } ]
+    },
+    head: { status: "in_progress", active_task_id: "GATESAT-UNRELATED-BUSY-TASK",
+            next_agent: "developer", updated_at: $now, updated_by: "test" }
+  }' > "$DRS_BUSY_HEAD_FIXTURE"
 HEAD_BEFORE=$(jq -c '.head' "$DRS_BUSY_HEAD_FIXTURE")
 jq --arg now "$NOW" -f scripts/devteam-backlog-claim-design-router-sweep.jq "$DRS_BUSY_HEAD_FIXTURE" > "$WORK/drs-busy-head-after.json"
 HEAD_AFTER=$(jq -c '.head' "$WORK/drs-busy-head-after.json")
@@ -936,6 +963,20 @@ assert "AC-DEP-NEG-B: dep-id cold-archived with NON-terminal status (IN_PROGRESS
 echo ""
 echo "=== EVICTION REFERENTIAL GUARD (scripts/orch-cold-evict.sh) ==="
 
+# FIXTURE ROT FIXED IN PASSING (FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS,
+# 2026-08-23): these two synthetic rows used to be written as bare
+# `status: DONE_VERIFIED` with no `verification.raw_probe`. That was valid when
+# this section was authored, but SYSREMAKE-P2-T2-SCHEMA-ADDITIONS (2026-08-08)
+# added `checkVerificationGate`, which HARD-REJECTS any non-grandfathered
+# DONE_VERIFIED row lacking `verification.raw_probe{tool,args,
+# live_value_observed,observed_at}`. The fixture therefore aborted
+# orch-cold-evict.sh at its own write gate and AC-EVICT-1/AC-EVICT-3 had been
+# failing for the wrong reason ever since — the eviction guard under test was
+# never actually reached. Reproduced against BOTH the current and the
+# pre-Component-6 orch-cold-evict.sh, identical abort in each, confirming the
+# rot is in this fixture and not in the script. A compliant synthetic probe
+# object is attached below; it is self-labelling so nobody mistakes it for a
+# real verification record.
 EVICT_WORK="$WORK/coldevict"
 mkdir -p "$EVICT_WORK/archive"
 cp "$STATE" "$EVICT_WORK/fixture.json"
@@ -946,8 +987,12 @@ jq --arg now "$NOW" '
      "type": "FIX", "zone": "cross-service/", "created_at": $now}
   ]
   | .task_board.done_verified += [
-    {"id": "GATESAT-REFGUARD-DEP-REFERENCED", "status": "DONE_VERIFIED", "created_at": "2026-01-01T00:00:00Z"},
-    {"id": "GATESAT-REFGUARD-DEP-UNREFERENCED", "status": "DONE_VERIFIED", "created_at": "2026-01-01T00:00:00Z"}
+    {"id": "GATESAT-REFGUARD-DEP-REFERENCED", "status": "DONE_VERIFIED", "created_at": "2026-01-01T00:00:00Z",
+     "verification": {"raw_probe": {"tool": "gate-satisfiability-fixture", "args": "synthetic",
+       "live_value_observed": "synthetic fixture row, never a real task", "observed_at": "2026-01-01T00:00:00Z"}}},
+    {"id": "GATESAT-REFGUARD-DEP-UNREFERENCED", "status": "DONE_VERIFIED", "created_at": "2026-01-01T00:00:00Z",
+     "verification": {"raw_probe": {"tool": "gate-satisfiability-fixture", "args": "synthetic",
+       "live_value_observed": "synthetic fixture row, never a real task", "observed_at": "2026-01-01T00:00:00Z"}}}
   ]
 ' "$EVICT_WORK/fixture.json" > "$EVICT_WORK/fixture2.json"
 mv "$EVICT_WORK/fixture2.json" "$EVICT_WORK/fixture.json"
@@ -970,6 +1015,201 @@ assert "AC-EVICT-2 (guard REFUSAL proven): still-referenced row GATESAT-REFGUARD
 assert "AC-EVICT-3 (positive control — guard does not over-hold): unreferenced row GATESAT-REFGUARD-DEP-UNREFERENCED WAS evicted normally" \
   "$([ "$UNREFERENCED_STILL_HOT" -eq 0 ] && echo true || echo false)"
 
+# ---- INCIDENT-LANE CONSUMER (ILC) — FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-
+# SCRIPTS (2026-08-14 brief §4a-§4c) ----
+#
+# Same satisfiability question as every section above, for the newest ready[]
+# consumer: given a board shaped the way the incident path actually arrives,
+# does scripts/devteam-backlog-claim-incident-lane-consumer.jq FIRE and DRAIN,
+# and does it stay INSIDE its own bounds? ISOLATED single-purpose fixtures
+# throughout (never the shared padded fixture), so these assertions are
+# deterministic regardless of live-board drift — same discipline as the DRS and
+# SLS-FALLBACK sections above.
+#
+# The four properties under test are exactly the four this lane could plausibly
+# get wrong, and each one has a named failure mode:
+#   POSITIVE      an expedited row BURIED deep in ready[] is claimed anyway —
+#                 if it were not, the lane would be a relabelled FIFO and the
+#                 whole row is a no-op.
+#   NEGATIVE      a non-expedited P0 is NOT claimed — if it were, ILC would be
+#                 a second general consumer racing RLC, not an incident lane.
+#   CAP           a 3rd simultaneously-expedited row is NOT claimed while 2 are
+#                 already in flight — this is the ENTIRE answer to "must not
+#                 saturate like a 4th priority tier".
+#   WIP-INDEP.    ILC still fires when the shared WIP<=2 budget is saturated —
+#                 if it did not, the independent budget would be decorative and
+#                 an incident would still queue behind ordinary throughput.
+# Plus the mandatory head-busy negative control every sibling consumer carries.
+echo ""
+echo "=== INCIDENT-LANE CONSUMER (ILC): expedite selection, cap, budget independence ==="
+
+ILC_CLAIM="scripts/devteam-backlog-claim-incident-lane-consumer.jq"
+ILC_BY="dev-team (incident-lane consumer)"
+
+# run_ilc <fixture> <take_budget> <outfile>
+run_ilc() {
+  jq --arg now "$NOW" --argjson take_budget "$2" \
+    --slurpfile detail "$DETAIL" --slurpfile archive "$ARCHIVE" \
+    -f "$ILC_CLAIM" "$1" > "$3"
+}
+
+# POSITIVE: the expedited row sits at ready[] index 40, behind 40 plain P0s.
+# A FIFO/priority-only consumer reaches it 40 turns from now; ILC must take it
+# on this turn.
+ILC_BURIED="$WORK/ilc-buried.json"
+jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], in_progress: [], qa: [], review: [], done: [], done_verified: [],
+      ready: ( [ range(0;40) | { id: ("GATESAT-ILC-PLAIN-" + (.|tostring)), status: "READY",
+                                 priority: "P0", type: "FIX", zone: "cross-service/",
+                                 next_agent: "developer" } ]
+               + [ { id: "GATESAT-ILC-BURIED-EXPEDITED", status: "READY", priority: "P0",
+                     type: "FIX", zone: "cross-service/", next_agent: "developer",
+                     po_expedited_at: "2026-08-14T00:00:00Z", po_expedited_by: "po" } ] )
+    },
+    head: { status: "idle", active_task_id: null, next_agent: null }
+  }' > "$ILC_BURIED"
+run_ilc "$ILC_BURIED" 2 "$WORK/ilc-buried-after.json"
+ILC_CLAIMED_IDS=$(jq -r --arg by "$ILC_BY" '[.task_board.in_progress[] | select(.claimed_by==$by) | .id] | join(",")' "$WORK/ilc-buried-after.json")
+assert "AC-ILC-POSITIVE: a po_expedited_at row buried at ready[] index 40 behind 40 plain P0s IS claimed on this turn (claimed='"'"'${ILC_CLAIMED_IDS:-<none>}'"'"')" \
+  "$([ "$ILC_CLAIMED_IDS" = "GATESAT-ILC-BURIED-EXPEDITED" ] && echo true || echo false)"
+ILC_PLAIN_UNTOUCHED=$(jq '[.task_board.ready[] | select(.id|startswith("GATESAT-ILC-PLAIN-"))] | length' "$WORK/ilc-buried-after.json")
+assert "AC-ILC-NEGATIVE: all 40 non-expedited P0 rows are left untouched in ready[] (RLC territory — ILC is not a second general consumer)" \
+  "$([ "$ILC_PLAIN_UNTOUCHED" -eq 40 ] && echo true || echo false)"
+ILC_STAMP_OK=$(jq -r --arg by "$ILC_BY" --arg t "$NOW" '[.task_board.in_progress[] | select(.claimed_by==$by and .claimed_at==$t and .status=="IN_PROGRESS" and .po_expedited_at=="2026-08-14T00:00:00Z" and .po_expedited_by=="po")] | length' "$WORK/ilc-buried-after.json")
+assert "AC-ILC-STAMP: claimed row carries the DISTINCT claimed_by marker, the batch claimed_at, status IN_PROGRESS, and its po_expedited_at/by provenance UNCHANGED" \
+  "$([ "$ILC_STAMP_OK" -eq 1 ] && echo true || echo false)"
+
+# ORDERING: priority first, then oldest-expedite-first inside the pool.
+ILC_ORDER="$WORK/ilc-order.json"
+jq -n '
+  { task_board: {
+      backlog: [], in_progress: [], qa: [], review: [], done: [], done_verified: [],
+      ready: [
+        { id: "GATESAT-ILC-P1-OLDEST", status: "READY", priority: "P1", type: "FIX",
+          zone: "cross-service/", next_agent: "developer", po_expedited_at: "2026-08-01T00:00:00Z" },
+        { id: "GATESAT-ILC-P0-NEWER",  status: "READY", priority: "P0", type: "FIX",
+          zone: "cross-service/", next_agent: "developer", po_expedited_at: "2026-08-14T00:00:00Z" },
+        { id: "GATESAT-ILC-P0-OLDER",  status: "READY", priority: "P0", type: "FIX",
+          zone: "cross-service/", next_agent: "developer", po_expedited_at: "2026-08-02T00:00:00Z" }
+      ]
+    },
+    head: { status: "idle", active_task_id: null, next_agent: null }
+  }' > "$ILC_ORDER"
+run_ilc "$ILC_ORDER" 1 "$WORK/ilc-order-after.json"
+ILC_FIRST=$(jq -r --arg by "$ILC_BY" 'first(.task_board.in_progress[] | select(.claimed_by==$by) | .id) // ""' "$WORK/ilc-order-after.json")
+assert "AC-ILC-ORDER: priority outranks expedite age — the OLDER-expedited P0 wins, never the older-expedited P1 (first='"'"'${ILC_FIRST:-<none>}'"'"')" \
+  "$([ "$ILC_FIRST" = "GATESAT-ILC-P0-OLDER" ] && echo true || echo false)"
+
+# SAFETY GATING IS NOT RELAXED BY SEVERITY (brief §4c, explicit).
+ILC_SUPERVISED="$WORK/ilc-supervised.json"
+jq -n '
+  { task_board: {
+      backlog: [], in_progress: [], qa: [], review: [], done: [], done_verified: [],
+      ready: [
+        { id: "GATESAT-ILC-SUPERVISED", status: "READY", priority: "P0", type: "FIX",
+          zone: "cross-service/", next_agent: "developer", supervised: true,
+          po_expedited_at: "2026-07-01T00:00:00Z" },
+        { id: "GATESAT-ILC-PLANONLY", status: "READY", priority: "P0", type: "FIX",
+          zone: "cross-service/", next_agent: "developer", plan_only: true,
+          po_expedited_at: "2026-07-01T00:00:00Z" },
+        { id: "GATESAT-ILC-EPIC", status: "READY", priority: "P0", type: "FIX",
+          zone: "cross-service/", next_agent: "developer", children: ["A","B"],
+          po_expedited_at: "2026-07-01T00:00:00Z" }
+      ]
+    },
+    head: { status: "idle", active_task_id: null, next_agent: null }
+  }' > "$ILC_SUPERVISED"
+run_ilc "$ILC_SUPERVISED" 2 "$WORK/ilc-supervised-after.json"
+ILC_SAFETY=$(jq '(.task_board.in_progress // []) | length' "$WORK/ilc-supervised-after.json")
+assert "AC-ILC-SAFETY: expedite does NOT relax the supervised / plan_only / epic-wrapper gates — 0 of 3 expedited-but-gated P0 rows claimed (severity changes throughput priority, never safety gating)" \
+  "$([ "$ILC_SAFETY" -eq 0 ] && echo true || echo false)"
+
+# CAP: 2 already in flight through THIS lane -> take_budget is 0 -> nothing more.
+ILC_CAP="$WORK/ilc-cap.json"
+jq -n --arg by "$ILC_BY" --arg now "$NOW" '
+  { task_board: {
+      backlog: [], qa: [], review: [], done: [], done_verified: [],
+      in_progress: [
+        { id: "GATESAT-ILC-INFLIGHT-1", status: "IN_PROGRESS", claimed_by: $by, claimed_at: $now },
+        { id: "GATESAT-ILC-INFLIGHT-2", status: "IN_PROGRESS", claimed_by: $by, claimed_at: $now }
+      ],
+      ready: [ { id: "GATESAT-ILC-THIRD-EXPEDITED", status: "READY", priority: "P0", type: "FIX",
+                 zone: "cross-service/", next_agent: "developer",
+                 po_expedited_at: "2026-08-14T00:00:00Z" } ]
+    },
+    head: { status: "idle", active_task_id: null, next_agent: null }
+  }' > "$ILC_CAP"
+ILC_INCIDENT_WIP=$(jq 'include "scripts/lib/devteam-eligibility"; incident_wip_in_progress' "$ILC_CAP")
+assert "AC-ILC-CAP (counter): incident_wip_in_progress sees exactly the 2 rows this lane claimed" \
+  "$([ "$ILC_INCIDENT_WIP" -eq 2 ] && echo true || echo false)"
+# The caller computes TAKE_BUDGET = INCIDENT_CAP - INCIDENT_WIP = 0 and skips
+# the invocation entirely; replay that arithmetic here rather than asserting on
+# a number the script never receives.
+ILC_TAKE=$(( 2 - ILC_INCIDENT_WIP ))
+assert "AC-ILC-CAP (gate): TAKE_BUDGET = INCIDENT_CAP(2) - INCIDENT_WIP($ILC_INCIDENT_WIP) = $ILC_TAKE, so the 3rd simultaneously-expedited row is NOT claimed while 2 are in flight" \
+  "$([ "$ILC_TAKE" -le 0 ] && echo true || echo false)"
+ILC_THIRD_STILL_READY=$(jq '[.task_board.ready[] | select(.id=="GATESAT-ILC-THIRD-EXPEDITED")] | length' "$ILC_CAP")
+assert "AC-ILC-CAP (queue, not drop): the capped-out 3rd row stays in ready[] — bounded, never discarded" \
+  "$([ "$ILC_THIRD_STILL_READY" -eq 1 ] && echo true || echo false)"
+
+# WIP-INDEPENDENCE: shared WIP<=2 saturated by OTHER lanes, incident budget free.
+ILC_WIPINDEP="$WORK/ilc-wipindep.json"
+jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], qa: [], review: [], done: [], done_verified: [],
+      in_progress: [
+        { id: "GATESAT-ILC-SHARED-1", status: "IN_PROGRESS", claimed_by: "dev-team (ready-lane consumer)", claimed_at: $now },
+        { id: "GATESAT-ILC-SHARED-2", status: "IN_PROGRESS", claimed_by: "dev-team (bounded-1 auto-pickup)", claimed_at: $now }
+      ],
+      ready: [ { id: "GATESAT-ILC-UNDER-SATURATION", status: "READY", priority: "P0", type: "FIX",
+                 zone: "cross-service/", next_agent: "developer",
+                 po_expedited_at: "2026-08-14T00:00:00Z" } ]
+    },
+    head: { status: "idle", active_task_id: null, next_agent: null }
+  }' > "$ILC_WIPINDEP"
+ILC_SHARED_WIP=$(jq 'include "scripts/lib/devteam-eligibility"; wip_in_progress' "$ILC_WIPINDEP")
+ILC_OWN_WIP=$(jq 'include "scripts/lib/devteam-eligibility"; incident_wip_in_progress' "$ILC_WIPINDEP")
+assert "AC-ILC-WIP-INDEP (precondition): shared wip_in_progress=$ILC_SHARED_WIP is saturated at the <=2 cap while incident_wip_in_progress=$ILC_OWN_WIP is free" \
+  "$([ "$ILC_SHARED_WIP" -ge 2 ] && [ "$ILC_OWN_WIP" -eq 0 ] && echo true || echo false)"
+run_ilc "$ILC_WIPINDEP" 2 "$WORK/ilc-wipindep-after.json"
+ILC_FIRED_UNDER_SAT=$(jq -r --arg by "$ILC_BY" '[.task_board.in_progress[] | select(.claimed_by==$by and .id=="GATESAT-ILC-UNDER-SATURATION")] | length' "$WORK/ilc-wipindep-after.json")
+assert "AC-ILC-WIP-INDEP: ILC still claims the expedited row while the shared WIP<=2 budget is fully saturated by other lanes (the independent budget is real, not decorative)" \
+  "$([ "$ILC_FIRED_UNDER_SAT" -eq 1 ] && echo true || echo false)"
+
+# HEAD-BUSY NEGATIVE CONTROL — same mandatory guard every sibling carries.
+ILC_HEADGUARD="$WORK/ilc-headguard.json"
+jq -n --arg now "$NOW" '
+  { task_board: {
+      backlog: [], in_progress: [], qa: [], review: [], done: [], done_verified: [],
+      ready: [ { id: "GATESAT-ILC-HEADGUARD", status: "READY", priority: "P0", type: "FIX",
+                 zone: "cross-service/", next_agent: "developer",
+                 po_expedited_at: "2026-08-14T00:00:00Z" } ]
+    },
+    head: { status: "in_progress", active_task_id: "GATESAT-UNRELATED-BUSY-TASK-ILC",
+            next_agent: "developer", updated_at: $now, updated_by: "test" }
+  }' > "$ILC_HEADGUARD"
+ILC_HEAD_BEFORE=$(jq -c '.head' "$ILC_HEADGUARD")
+run_ilc "$ILC_HEADGUARD" 2 "$WORK/ilc-headguard-after.json"
+ILC_HEAD_AFTER=$(jq -c '.head' "$WORK/ilc-headguard-after.json")
+assert "AC-ILC-HEAD-GUARD: .head is byte-identical after an ILC claim when a DIFFERENT task is genuinely busy in it (never clobbers a live resume pointer)" \
+  "$([ "$ILC_HEAD_BEFORE" = "$ILC_HEAD_AFTER" ] && echo true || echo false)"
+ILC_HEADGUARD_CLAIMED=$(jq -r --arg by "$ILC_BY" '[.task_board.in_progress[] | select(.claimed_by==$by)] | length' "$WORK/ilc-headguard-after.json")
+assert "AC-ILC-HEAD-GUARD (positive half): the row still moves ready[]->in_progress[] while .head stays untouched (only .head is guarded, not the lane move)" \
+  "$([ "$ILC_HEADGUARD_CLAIMED" -eq 1 ] && echo true || echo false)"
+
+# NO-OP: nothing expedited anywhere -> byte-identical document, re-run safe.
+ILC_NOOP="$WORK/ilc-noop.json"
+jq -n '
+  { task_board: { backlog: [], in_progress: [], qa: [], review: [], done: [], done_verified: [],
+      ready: [ { id: "GATESAT-ILC-NOTHING-EXPEDITED", status: "READY", priority: "P0",
+                 type: "FIX", zone: "cross-service/", next_agent: "developer" } ] },
+    head: { status: "idle", active_task_id: null, next_agent: null } }' > "$ILC_NOOP"
+run_ilc "$ILC_NOOP" 2 "$WORK/ilc-noop-after.json"
+assert "AC-ILC-NOOP: nothing po_expedited_at-marked anywhere -> the document is unchanged (true no-op, safe to run every tick)" \
+  "$([ "$(jq -S -c . "$ILC_NOOP")" = "$(jq -S -c . "$WORK/ilc-noop-after.json")" ] && echo true || echo false)"
+
+# =============================================================================
 # =============================================================================
 # ---- ROTATION FAIRNESS BOUND + $SELECTED-DRIVEN GATE-FIRING PROOF (AC-1/
 # AC-4, FIX-DEVTEAM-IDLE-CHAIN-TEST-FAIRNESS) ----
