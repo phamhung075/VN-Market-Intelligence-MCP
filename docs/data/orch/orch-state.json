@@ -19239,7 +19239,7 @@
         "last_served_tick": "2026-08-23T08:55:59Z"
       }
     },
-    "_updated_at": "2026-08-23T11:24:39Z",
+    "_updated_at": "2026-08-23T11:52:19Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19429,6 +19429,60 @@
         },
         "createdAt": "2026-08-23T11:01:46Z",
         "drained_at": "2026-08-23T11:22:10Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0e80f98ccaadd2e4d280d0cbcbf6b9bd7fa945a758846037754b3adec1f43f3a",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json docs/signals/processed/2026-08-23-qa-vc-lanemove-orchapply-actuator.json. actor=007e33e4-b453-4bb3-8ab1-ef31495906a3 mode=warn escalated=true prior_warns=6 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-23T11:22:32Z",
+        "drained_at": "2026-08-23T11:52:19Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ba9001496e018b4a56517a3b356fd5df8b52bbb0b200fa61be53dec1ea184e95",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-25.md",
+          "line_count": 253,
+          "cap": 600,
+          "byte_count": 36217,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 217,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-23T11:29:55Z",
+        "drained_at": "2026-08-23T11:52:19Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "419af067d017b23982c644080fae2aee98bae6f657b567ff4cb65036a85d4f53",
+        "source": "file",
+        "from": "decision-journal-archive",
+        "to": "po",
+        "type": "sprint_registry_unresolved_journal_ids",
+        "priority": "medium",
+        "payload": {
+          "unresolved_count": 2,
+          "ids": [
+            "ACTIVE-ONE-agent",
+            "CLOSED-ONE-agent"
+          ],
+          "action_required": "triage_derived_ids_with_no_orch_record"
+        },
+        "createdAt": "2026-08-23T11:27:58Z",
+        "drained_at": "2026-08-23T11:52:19Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

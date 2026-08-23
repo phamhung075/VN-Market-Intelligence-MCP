@@ -1,0 +1,21 @@
+{
+  "from": "decision-journal-archive",
+  "to": "po",
+  "type": "sprint_registry_unresolved_journal_ids",
+  "priority": "medium",
+  "createdAt": "2026-08-23T11:27:58Z",
+  "payload": {
+    "unresolved_count": 2,
+    "ids": [
+      "ACTIVE-ONE-agent",
+      "CLOSED-ONE-agent"
+    ],
+    "action_required": "triage_derived_ids_with_no_orch_record"
+  },
+  "_processed": {
+    "fingerprint": "419af067d017b23982c644080fae2aee98bae6f657b567ff4cb65036a85d4f53",
+    "processedAt": "2026-08-23T11:52:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
