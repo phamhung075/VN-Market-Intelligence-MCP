@@ -1,32 +1,33 @@
 # BA — Notebook
 
-**Last updated:** 2026-08-22 | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-08-23 | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
-## FIX-GHOSTZONE-P0-PAIR · 2026-08-22
+## FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER · 2026-08-23
 
-po triage-dispatch: 2 of 5 minted "ghost zone" rows (P0, shared regression shape — "what the API
-serves must match MAX(date) in the table"), both `apps/mcp-server/`, zero file overlap. (1)
-CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST: `ORDER BY date ASC LIMIT 2000` on a 3942-row table keeps the
-OLDEST rows, not newest — 48% invisible, frozen 64d. Fix = newest-N select, but MUST re-wrap ASC
-before returning: `convictionHistoryHandler.ts`'s `buildSnapshot`/`buildSeries` silently assume ASC
-input (last-write-per-symbol-wins, full-ASC-series contract, AC-2/AC-5 in
-`TASK17-CONVICTION-conviction-history-endpoint.test.ts`) — a naive DESC flip ships correct freshness
-but corrupts every symbol's score to its OLDEST value, undetected by any existing test. (2)
-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD: `MAX(date)` subquery in `foreignFlowHandler.ts` omits
-the `foreign_volume IS NOT NULL` guard its OWN docstring (line 8) mandates — a NULL-only day (e.g.
-41 rows all NULL 2026-08-22) gets picked as latest, then the outer guard wipes it to zero. One-line
-fix: push the guard into the subquery, keep the outer guard too (partial-null days still need it).
-Both specs written independently (no shared file, no conflict) — 0 PO blockers on either (fix
-directions already ratified in po's own ticket text; only open item is an architect-owned trade-off,
-not a business call). Specs: `docs/handoffs/FIX-GHOSTZONE-CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST-BA-spec.md`,
-`docs/handoffs/FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD-BA-spec.md`. Both rows
-updated in place in `backlog[]` (no lane move, matches BA-ANALYSIS-QUALITY-CONVERGENCE precedent):
-`ba_spec_complete`, `ba_handoff`, `ba_completed_at`, `next_agent=agents-architect`, via
-`orch-apply.sh` (conservation 715↔715). Decision journal STEP ba-S16/ba-S17. Session had no MCP
-tool binding (gateway/vn-market `call_tool` absent) — Read/Edit/Write/Bash only, same known
-limitation as 2026-08-12/08-14 cycles; no `task_claim`/`send_telegram` executed.
+po dispatch: bctc-inspect page (`apps/mcp-server/src/interface/bctc-inspector.html`, 2692L vanilla-JS,
+NOT Remix — `apps/frontend`'s `dashboard.bctc-inspect.tsx` is a pure resource-route proxy) has one flat
+257-option doc-select; add 2 client-side facet dropdowns (quarter, ticker) over `items[]` already
+fetched by `loadDocList()` — zero backend change, `GET /api/bctc-inspect/docs` already serves
+`action_code`/`period_type`/`period_year`/`period_quarter` per item. Decomposed into 8 FRs + 4 NFRs,
+all interface-layer (zero domain/application/infra touch — a pure client facet filter + one cosmetic
+server-side label fix collapse the whole feature into 1 layer). Live-verified landmine:
+`DocListItem.period_quarter` (typed `number|null`) is the STRING `"Q1"` on 2/257 rows (both HUT) —
+`buildLabel()` (`bctcInspectHandler.ts:167-171`) renders "HUT Q1 QQ1 2024"/"...2026" today; unnormalized
+this ALSO inflates the quarter-facet option count 13→11 (not label-only, as PO's note first framed it).
+Flagged FR-2 (module-level `allDocs` cache does not exist today — `loadDocList()`'s `items` is
+function-local, needed for AC2's zero-network-call constraint) and FR-7 (selection-preservation on
+filter change must NOT route through the existing doc-select change handler, which unconditionally
+refetches PDF/OCR/table/MD — would break "no refetch, no flicker"). `period_type` holds `'Q1'..'Q4'`
+per-row (never `QUARTERLY`/`ANNUAL` literal, 0 annual rows live) — quarter facet must derive from
+`period_year`+normalized `period_quarter`, never `period_type`. 0 PO blockers — PO's own note already
+forecloses backend work/deep-linking/WRITE-path fix as explicit out-of-scope. Spec:
+`docs/handoffs/FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER-BA-spec.md`. Row updated in place (`backlog[]`):
+`ba_spec_complete`, `ba_handoff`, `ba_completed_at`, `next_agent=architect` via `orch-apply.sh`
+(conservation 767↔767). Decision journal STEP ba-S18.
 
 ## Archive
+
+FIX-GHOSTZONE-P0-PAIR (08-22): auto-dropped from live notebook by `notebook-auto-prune.sh`'s byte-cap gate (same session — landing FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER's section pushed the file over cap; hook correctly picked the oldest dated section but, per the known `FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE` bug, left no archive pointer — added here manually so the content stays discoverable). PO triage-dispatch: 2 of 5 minted "ghost zone" rows (P0, shared regression shape — "what the API serves must match MAX(date) in the table"), both `apps/mcp-server/`, zero file overlap — (1) CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST (newest-N select + ASC-rewrap, avoids corrupting `buildSnapshot`/`buildSeries`), (2) FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD (push `NOT NULL` guard into the `MAX(date)` subquery). 0 PO blockers on either. Full text in git history (this file, commit `7df31bd34` and earlier); specs still live at `docs/handoffs/FIX-GHOSTZONE-CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST-BA-spec.md` and `docs/handoffs/FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD-BA-spec.md`; decision journal STEP ba-S16/ba-S17.
 
 UC-CCA-P2 (08-14): auto-dropped from live notebook by `notebook-auto-prune.sh`'s byte-cap gate (same session — landing UC-ASL-P3's section pushed the file over the 12000B cap; hook correctly picked the oldest dated section but, per the known `FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE` bug, left no archive pointer — added here manually so the content stays discoverable). Design-Router dispatch (SPRINT-S/P1, RESCOPE — DMS-2 escalation-ladder absorption into gateway-availability-gate + 5-flow extension); 6 FRs, 0 PO blockers, 3 architect open questions. Full text in git history (this file, commit `db38e3bb5`); decision journal STEP ba-S14; handoff `docs/handoffs/UC-CCA-P2-BA-spec.md`.
 
