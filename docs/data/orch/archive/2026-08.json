@@ -24665,6 +24665,34 @@
       "disposition": "TRIAGED — same fleet-push STALE-ACK signature as sys-20260822T231041-4277, earlier fire at CRITICAL. Folded into FIX-LAUNCHD-ACK-LEDGER-DEAD-TRACKEDBY-AND-LANE-RESOLUTION-FP. The underlying launchd agent failure itself stays on its own rows and was not re-opened.",
       "triaged_at": "2026-08-23T08:20:49Z",
       "triaged_by": "po/triage-20260823T0820Z"
+    },
+    {
+      "id": "sys-20260822T223114-6ccc",
+      "ts": "2026-08-22T22:31:14Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "auditor_cycle_missing",
+      "summary": "auditor tier-3 cycle possibly missing — no completion evidence in 211h (cadence 24h)",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null,
+      "provenance": "detector",
+      "audit_cycle_tag": null,
+      "dedup_key": "auditor-cycle-missing:tier3:2026-08-22T02:00Z"
+    },
+    {
+      "id": "sys-20260822T223759-54ed",
+      "ts": "2026-08-22T22:37:59Z",
+      "from": "system-auditor",
+      "to": "po",
+      "type": "auditor_cycle_missing",
+      "summary": "auditor tier-3 cycle possibly missing — no completion evidence in 212h (cadence 24h)",
+      "severity": "WARN",
+      "status": "READ",
+      "payload_ref": null,
+      "provenance": "detector",
+      "audit_cycle_tag": null,
+      "dedup_key": "auditor-cycle-missing:tier3:2026-08-22T02:00Z"
     }
   ],
   "backlog_detail": [],
