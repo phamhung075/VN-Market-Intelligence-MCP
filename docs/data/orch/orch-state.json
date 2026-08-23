@@ -87,12 +87,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "TASK-COWORK-CATCHUP-3",
-    "next_agent": "developer",
-    "next_action": "Ready-Lane Consumer claim of TASK-COWORK-CATCHUP-3 — spawn developer DIRECTLY (no zone-detect indirection; row already carried a resolved next_agent/owner).",
-    "updated_at": "2026-08-23T10:24:38Z",
-    "updated_by": "dev-team (ready-lane consumer)"
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "idle — TASK-COWORK-CATCHUP-3 CANCELLED by po (superseded by 2026-08-23 durability brief); head released so dev-team WF-1..WF-4 resume gates cannot re-spawn developer on it",
+    "updated_at": "2026-08-23T10:37:46Z",
+    "updated_by": "po/catchup3-disposition-20260823T1033Z"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -3152,6 +3152,43 @@
         "updated_at": "2026-08-23T08:19:46Z",
         "updated_by": "po/secondary-drain-20260823T0820Z",
         "po_cancel_reason": "CANCELLED by PO 2026-08-23T08:20Z as SELF-DECLARED SUPERSEDED, not as fixed. This row's own desc carries a [FALSIFIED 2026-08-14] banner stating that AC-4 is DISCHARGED and that FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED (currently qa[]) is THE LIVE TRACKING ROW which SUPERSEDES this one, ending with the instruction: Do not open a third row - attach evidence there. Separately, this row's single stated blocking action (rebuild THIS ONE service) is RAW-VERIFIED COMPLETE: the running image was built 2026-08-14T20:12:15Z, which post-dates the LanceDB IvfPq + malloc_trim fix commit 4c8c601e6 of 2026-08-12T06:16:02Z that the row said had never been deployed. The container has since held 7 days at RestartCount=0, OOMKilled=false, 779.2MiB of a 2GiB cap. Leaving a BLOCKED, superseded, already-actioned row parked in review[] was pure board rot. All further evidence goes to FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED."
+      },
+      {
+        "id": "TASK-COWORK-CATCHUP-3",
+        "title": "FR-9b + FR-3 + FR-5: New catchup-check.md dispatcher sub-flow",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P0",
+        "zone": "docs/agents/cowork-team/flow/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "CANCELLED",
+        "depends_on": [
+          "TASK-COWORK-CATCHUP-1",
+          "TASK-COWORK-CATCHUP-2"
+        ],
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-23T10:37:46Z",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/catchup3-disposition-20260823T1033Z",
+        "po_note_20260806": "PO 2026-08-06T07:02Z -- LIVE COST EVIDENCE, plus one hypothesis I raised and then FALSIFIED myself. Read part (2) before spending any time on dependency plumbing.\n\n(1) COST, measured today: catchup_raw has been correctly computed since TASK-COWORK-CATCHUP-2 shipped and is consumed by NOTHING. docs/agents/cowork-team/flow/main.md's step table runs 0a -> 6 with no Step 4.55 / catchup-check stage, and match-slots.md:30 still reads \"Not yet consumed here\". Executed live 2026-08-06T06:52Z the predicate reported chef-morning catchup_eligible=true, scheduled_utc_time=2026-08-06T05:15:00.000Z, expected_publish_task_id=published:chef-morning:2026-08-06 -- today's morning dish was MISSED (host asleep, pmset MAGICWAKE 06:34Z) and is recoverable RIGHT NOW, and nothing will recover it. The same host-sleep window cost the 2026-08-05 evening dish and drove the FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR recurrence (degraded MARKET msg 1129, PO had to hand-release a tombstoned marker at 06:53Z to save tonight's dish). This is the producer-shipped / consumer-stranded half of a P0 fix, open since 2026-07-22. Host sleep is a routine nightly condition on this laptop, so this consumer is not a nice-to-have.\n\n(2) FALSIFIED HYPOTHESIS -- DO NOT CHASE IT. I first suspected the strand was a cold-archive dependency-visibility bug, because TASK-COWORK-CATCHUP-1 is DONE_VERIFIED but lives ONLY in docs/data/orch/archive/2026-07.json (the hot orch-state.json names that id 8 times as a dependency and contains it as a row 0 times). That hypothesis is WRONG. Checked directly: scripts/lib/devteam-eligibility.jq section \"cold-archive dep status ingest\" (FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING, landed 2026-07-28) already seeds dep_status_map from the archive; all 7 real callers thread --slurpfile archive via scripts/lib/archive-glob-cat.sh; and orch-validate Stage 1g -- which DOES resolve against the cold archive -- did not flag TASK-COWORK-CATCHUP-1 on this tick's write, while it did flag 8 genuinely-missing deps. Deps therefore resolve SATISFIED. Also checked and excluded: OPS-COWORK-GUARANTEED-SLOT-INSTALL (stale in REVIEW since 2026-07-22T16:02Z, next_agent=ops, and the work is demonstrably already done -- launchctl reports com.vn-market.cowork-guaranteed-slot-firer loaded with runs=2044) blocks only QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL, not this cluster.\n\n(3) SO THE STRAND CAUSE IS STILL UNKNOWN -- MEASURE IT, DO NOT GUESS. Against scripts/devteam-backlog-claim-ready-lane-consumer.jq:123-130 this row appears RLC-eligible on every clause: status READY, effective_supervised != true, effective_plan_only != true, not an epic-wrapper, deps satisfied, and an inline next_agent=\"developer\" which RLC explicitly accepts when the row itself asks for it (it only refuses the fabricated \"developer\" fallback). It is P0, so priority ordering should favour it. It still has not dispatched in 9 days. STARTING POINT for whoever takes this: run scripts/audits/devteam-dispatch-gate-satisfiability.sh -- on this tick it reported that BOUNDED-1 no-ops whenever in_progress>=1, and live in_progress=2. If developer-owned ready[] rows are in practice reachable only through BOUNDED-1, that WIP<1 cap starves them permanently, which fits the observed 9-day silence far better than anything in the dependency layer. Confirm that before changing code.",
+        "status_note": "CONTRADICTED 2026-08-23 by architect brief docs/architecture-briefs/2026-08-23-cowork-slot-durability-layer-inventory-and-miss-detection.md S4: live matcher returns catchup_raw 8 records / ZERO eligible; the 60-1440min bounds cap catch-up at one VN day against a measured 4-day outage, so wiring Step 4.55 / catchup-check.md recovers nothing for ANY slot. Brief says do NOT schedule this as the fix. Needs PO disposition (cancel vs rescope) - pm did not cancel unilaterally.",
+        "disposition": "CANCELLED",
+        "disposition_reason_code": "SUPERSEDED_BY_BRIEF",
+        "disposition_by": "po",
+        "disposition_at": "2026-08-23T10:33:27Z",
+        "superseded_by_brief": "docs/architecture-briefs/2026-08-23-cowork-slot-durability-layer-inventory-and-miss-detection.md",
+        "superseded_by_rows": [
+          "TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK",
+          "TASK-COWORK-MISSED-FIRE-AUDIT",
+          "TASK-COWORK-SCHEDULE-ONMISS-AND-SCOPE",
+          "TASK-COWORK-CATCHUP-SCOPE-PREDICATE",
+          "TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY",
+          "TASK-COWORK-PMSET-WAKE-ADJUNCT",
+          "TASK-COWORK-STALE-SLOT-DISPOSITION-TABLE"
+        ],
+        "do_not_reopen": true,
+        "po_cancel_ruling_20260823": "CANCELLED by po 2026-08-23T10:33Z. Four independent legs, any one sufficient. (1) MEASURED ZERO VALUE: brief S4 ran the live matcher — catchup_raw returns 8 records, catchup_eligible=true on ZERO of them (6 rolled_past_vn_date, 2 freshness_window_exceeded). catchup_max_lateness_minutes (60-1440min per _dish_type_catchup_config) bounds catch-up to within one VN calendar day; the measured outage was 96.5h continuous Standby (pmset 2026-08-18T12:00Z->2026-08-22T12:35Z). A fully-wired Step 4.55 catches up zero slots, including zero guaranteed slots. (2) ARCHITECT EXPLICIT VETO: brief S4 verbatim — 'Do not schedule wire Step 4.55 as the fix. It is not a fix for this failure at all.' The brief formally supersedes the 2026-07-22 design S2.1/S2.3, which are the exact sections this row implements (FR-9b consumer + FR-3 delivery-evidence + FR-5 miss record). (3) STRUCTURAL — stronger than the brief's own argument, added by po: the deliverable is a DISPATCHER sub-flow, i.e. Layer B. Brief S1 measures Layer B as session-scoped, evaporating on CLI exit. During every outage window this catch-up exists to cover, the dispatcher is itself down; it can only run after a session returns, by which time the predicate has already refused with rolled_past_vn_date. A Layer-B catch-up consumer is absent exactly when needed and useless exactly when present. That failure is independent of the lateness bound, so widening the bound would not rescue this row either. (4) RESCOPE UNAVAILABLE — SUCCESSOR WORK ALREADY EXISTS: all six brief-S6 items plus the S7 verification gate are already minted as live rows under parent FIX-COWORK-DAILY-SLOT-SILENT-SKIP-NO-CATCHUP-CATCHUPRAW-SCOPED-TO-GUARANTEED-ONLY (see superseded_by_rows). Rescoping this row toward S6 would mint an eighth duplicate of work already owned by named agents. Cancel is the only non-duplicating disposition. NOTHING OF VALUE IS LOST: the one genuinely useful half of this row, FR-5's structured miss record, is superseded by brief item 2's miss detector (TASK-COWORK-MISSED-FIRE-AUDIT), which is strictly better — cron-derived expected-vs-actual fire count, one signal row per (slot_id, window) with a bounded look-back per brief R3, and it runs from a script rather than a session-scoped dispatcher step. WHY THIS ROW AUTO-CLAIMED AT 10:24:37Z DESPITE A status_note SAYING 'do not build': the peer po session at 10:17Z correctly ratified TASK-COWORK-CATCHUP-2 DONE->DONE_VERIFIED, which flipped deps_satisfied false->true for CATCHUP-3/4/5. The Ready-Lane Consumer then read status=READY + deps_satisfied + inline next_agent=developer + P0 and claimed it. Every field RLC read was accurate; the contradiction lived only in free prose. That is the defect now tracked as FIX-DISPATCH-GATES-BLIND-TO-PROSE-DISPOSITION, and this row's disposition/do_not_reopen/disposition_reason_code fields above are written machine-readable deliberately, so the same gate cannot re-claim it."
       }
     ],
     "backlog": [
@@ -7358,17 +7395,21 @@
         "priority": "P0",
         "zone": "docs/agents/cowork-team/flow/",
         "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "BACKLOG",
+        "status": "BLOCKED",
         "depends_on": [
-          "TASK-COWORK-CATCHUP-1",
-          "TASK-COWORK-CATCHUP-3"
+          "TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK"
         ],
         "created_at": "2026-07-22T22:12:59Z",
         "created_by": "pm",
-        "updated_at": "2026-07-28T20:45:02Z",
+        "updated_at": "2026-08-23T10:37:46Z",
         "next_agent": "developer",
         "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "pm/correction-S4"
+        "updated_by": "po/catchup3-disposition-20260823T1033Z",
+        "blocked_by": [
+          "TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK"
+        ],
+        "blocked_at": "2026-08-23T10:33:27Z",
+        "blocked_reason": "DEPENDENCY REPOINTED + PREMISE SUPERSEDED. depends_on previously named TASK-COWORK-CATCHUP-3, which po CANCELLED this tick; because CANCELLED is a TERMINAL_SET member that devteam-eligibility.jq is_terminal_task_status counts as SATISFYING a dep, leaving that edge in place would have silently flipped this row deps-satisfied and dispatchable — the cancel would have created its own hazard. Repointed to the successor. ON THE MERITS: this row is FR-7, a Layer-B reconciler rewrite of last-fired.md Step 5b. Brief 2026-08-23 S2 measured the ACTUAL mechanism behind last_fired under-reporting and it is not Layer B at all — Layer C (launchd cowork-guaranteed-slot-firer.sh) invokes claude -p and never calls cowork-tick-postflight.sh, so slots whose own flow does not self-write (fb-weekend, fb-daily, chef-eod, digest-sunday) are never recorded. A Layer-B reconciler cannot see those fires. TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK is the correct, smaller fix and must land first; re-evaluate whether FR-7 retains any residual scope afterwards. po 2026-08-23T10:33Z."
       },
       {
         "id": "TASK-COWORK-CATCHUP-7",
@@ -7420,18 +7461,21 @@
         "priority": "P0",
         "zone": "docs/",
         "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "BACKLOG",
+        "status": "BLOCKED",
         "depends_on": [
-          "TASK-COWORK-CATCHUP-1",
-          "TASK-COWORK-CATCHUP-3",
-          "TASK-COWORK-CATCHUP-6"
+          "TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY"
         ],
         "created_at": "2026-07-22T22:12:59Z",
         "created_by": "pm",
-        "updated_at": "2026-07-28T20:45:02Z",
+        "updated_at": "2026-08-23T10:37:46Z",
         "next_agent": "developer",
         "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "pm/correction-S4"
+        "updated_by": "po/catchup3-disposition-20260823T1033Z",
+        "blocked_by": [
+          "TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY"
+        ],
+        "blocked_at": "2026-08-23T10:33:27Z",
+        "blocked_reason": "DEPENDENCY REPOINTED + CONTENT CONTRADICTED. Same CANCELLED-satisfies-dep hazard as TASK-COWORK-CATCHUP-6 (depends_on named CATCHUP-3, cancelled this tick). ON THE MERITS: this row is FR-10 doc updates, and its handoff docs/handoffs/TASK-COWORK-CATCHUP-9.md Step (4) instructs the writer to record, as shipped, 'per-caller wiring (dispatcher catchup-check.md, tick-preflight.sh Step 6.5, firer.sh; FR-9)'. Two of those three consumers are now BLOCKED pending re-spec and the third is CANCELLED, so executing this row as written would publish a durability-brief addendum asserting a design that was measured not to work — the exact doc-truth failure mode brief S1 documents, where a two-month-stale sentence in cron-cowork-team/SKILL.md manufactured a wrong incident diagnosis that was then quoted verbatim into a live P0 row's status_note. TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY (brief item 5, agent-father) now owns match-slots.md and the cron runbook; re-scope whatever residue remains here against that row's outcome. po 2026-08-23T10:33Z."
       },
       {
         "id": "TASK-DEVTEAM-IDLE-CHAIN-2-MAIN-FLOW",
@@ -12757,8 +12801,11 @@
         "title": "Unrouted signal type 'cowork-fire' (Pipeline A) — no table row in docs/agents/po/flow/triage-signals.md",
         "dedup_key": "signal-type-registry-gap:cowork-fire",
         "created_at": "2026-08-23T09:25:41Z",
-        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=cowork-fire routed on Pipeline A (a matching table row exists in triage-signals.md's own Pipeline-A section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
-        "updated_at": "2026-08-23T09:25:42Z"
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=cowork-fire routed on Pipeline A (a matching table row exists in triage-signals.md's own Pipeline-A section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md. [po/triage 2026-08-23T10:33Z] ROUTED — row was auto-filed by the guard at 09:25:41Z with next_agent UNSET, which no dispatch lane resolves, so it could never move while the CI job it tracks stayed red. Set next_agent=agent-father (zone docs/agents/po/flow/ is a flow doc; po may not edit its own agent flow files per its own boundary_rules) and priority P1. THIS ROW IS THE TRACKED CAUSE OF 2 OF THE 3 ci_red SIGNALS PO TRIAGED THIS TICK: runs 32629387939 (HEAD 85384b32) and 32631502135 (HEAD 9c6ef1b7), both job signal-type-coverage-guard, whose failing log reads verbatim 'FAIL — unrouted Pipeline-A types (dev_team_idle_chain.pending_triage_inbox[]): [\"cowork-fire\"]' and then 'backlog row already tracks type=cowork-fire (dedup_key=signal-type-registry-gap:cowork-fire) — no duplicate minted'. WARNING FOR WHOEVER PICKS THIS UP — CI MAY LOOK GREEN WITHOUT THE FIX: guard-signal-type-coverage.sh:198 reads its input from the LIVE .dev_team_idle_chain.pending_triage_inbox[] in orch-state.json. PO's own Step 0-SIG inbox CLEAR this tick removes the cowork-fire envelope from that array, so the very next CI run can pass with the routing table still unfixed. That green is an artifact of draining the guard's input, not evidence of a fix; the next cowork tick appends a fresh cowork-fire envelope and the guard goes red again. Cf. feedback_devteam_drain_step_can_itself_turn_signal_type_guard_red. AC is unchanged and is the only valid gate: a matching cowork-fire table row must exist in triage-signals.md's Pipeline-A section.",
+        "updated_at": "2026-08-23T10:37:46Z",
+        "next_agent": "agent-father",
+        "priority": "P1",
+        "updated_by": "po/catchup3-disposition-20260823T1033Z"
       },
       {
         "id": "FOLLOWUP-CRON-STANDALONE-PER-TICK-FIRE-ELECTION-MUTEX",
@@ -12914,6 +12961,121 @@
           "Do not touch isDrainableShape() or the 26 unenveloped-litter files — owned by FIX-SIGNAL-INBOX-NON-DRAINABLE-ENVELOPE-50-OF-51-FILES-SILENTLY-CLASSED-LITTER."
         ],
         "status_note": "MINTED by po 2026-08-23T10:17:06Z. P2 rather than P1: unlike the malformed-JSON writer defect this corrupts nothing and blocks nothing today, it just grows. Routed straight to developer — scope is small, fully measured, and the desc is self-sufficient for the direct-execute path."
+      },
+      {
+        "id": "TASK-COWORK-CATCHUP-4",
+        "title": "FR-9c: Extend cowork-tick-preflight.sh Step 6.5",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P0",
+        "zone": "scripts/agents-flow/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "BLOCKED",
+        "depends_on": [
+          "TASK-COWORK-CATCHUP-1",
+          "TASK-COWORK-CATCHUP-2"
+        ],
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-23T10:37:46Z",
+        "next_agent": "architect",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/catchup3-disposition-20260823T1033Z",
+        "blocked_by": [
+          "FIX-COWORK-CATCHUP-ELIGIBLE-HAS-NO-ACTUATOR",
+          "TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK",
+          "TASK-COWORK-CATCHUP-SCOPE-PREDICATE",
+          "TASK-COWORK-SCHEDULE-ONMISS-AND-SCOPE"
+        ],
+        "blocked_reason": "SPEC STALE — re-spec by architect before any dispatch. This is the second of the three catchup_raw consumers specced by the 2026-07-22 design S2.3 (dispatcher catchup-check.md = CATCHUP-3 CANCELLED; this row = cowork-tick-preflight.sh Step 6.5; firer = CATCHUP-5). It sits on the same zero-eligible predicate that brief 2026-08-23 S4 measured (8 records, 0 eligible) and it is P0/READY, so the next Ready-Lane Consumer tick would have claimed it exactly as it claimed CATCHUP-3 at 10:24Z. NOT cancelled, unlike CATCHUP-3, because after brief item 4 (TASK-COWORK-CATCHUP-SCOPE-PREDICATE) lands, catchup_raw WILL start emitting catchup_eligible:true for refine-bctc-*/bctc-analyst-*, and this row plus CATCHUP-5 are the only actuator candidates on the board — see FIX-COWORK-CATCHUP-ELIGIBLE-HAS-NO-ACTUATOR. THREE SPECIFIC WAYS THE CURRENT SPEC IS STALE: (a) it carries FR-3's per-caller task_list_held delivery-evidence check and FR-5's per-file miss record, both now owned by TASK-COWORK-MISSED-FIRE-AUDIT — keeping them double-writes miss records and adds the competing-dedup hazard brief R2 forbids; (b) it predates brief S2's finding that last_fired under-reports for 4 of 8 guaranteed slots, so acting before TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK lands makes it fire on false misses (brief R1: 'the 1->2 order is not stylistic'); (c) its guaranteed-scoped filter is the exact line brief item 4 replaces with catchup_scope. po 2026-08-23T10:33Z.",
+        "blocked_at": "2026-08-23T10:33:27Z",
+        "blocked_by_ruling": "po/catchup3-disposition-20260823T1033Z"
+      },
+      {
+        "id": "TASK-COWORK-CATCHUP-5",
+        "title": "FR-9d: Extend cowork-guaranteed-slot-firer.sh with MCP access",
+        "type": "SPRINT-M",
+        "size": "M",
+        "priority": "P0",
+        "zone": "scripts/agents-flow/",
+        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
+        "status": "BLOCKED",
+        "depends_on": [
+          "TASK-COWORK-CATCHUP-1",
+          "TASK-COWORK-CATCHUP-2"
+        ],
+        "created_at": "2026-07-22T22:12:59Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-23T10:37:46Z",
+        "next_agent": "architect",
+        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
+        "updated_by": "po/catchup3-disposition-20260823T1033Z",
+        "status_note": "FILE CONFLICT 2026-08-23: targets scripts/agents-flow/cowork-guaranteed-slot-firer.sh, the same file as new TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK (P1, parent FIX-COWORK-DAILY-SLOT-SILENT-SKIP-...). Sequential, not parallel. Also from the partially-superseded 2026-07-22 design - needs PO disposition alongside TASK-COWORK-CATCHUP-3.",
+        "blocked_by": [
+          "FIX-COWORK-CATCHUP-ELIGIBLE-HAS-NO-ACTUATOR",
+          "TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK",
+          "TASK-COWORK-CATCHUP-SCOPE-PREDICATE",
+          "TASK-COWORK-SCHEDULE-ONMISS-AND-SCOPE"
+        ],
+        "blocked_reason": "SPEC STALE — re-spec by architect before any dispatch. Third of the three catchup_raw consumers specced by 2026-07-22 design S2.3. Same four-part rationale as TASK-COWORK-CATCHUP-4 (read that row's blocked_reason). ADDITIONALLY, and specific to this row: its handoff docs/handoffs/TASK-COWORK-CATCHUP-5.md builds the fire-list as '(.slots + .catchup_raw_eligible)[] | select(.guaranteed==true)' — that guaranteed filter is literally the predicate brief item 4 replaces with catchup_scope, so shipping this row as written would re-hardcode the guard the successor row exists to narrow. Its own status_note already recorded the FILE CONFLICT with TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK (both target scripts/agents-flow/cowork-guaranteed-slot-firer.sh); blocking here also resolves that conflict by sequencing, since the writeback row is now a declared blocker rather than a same-time peer. po 2026-08-23T10:33Z.",
+        "blocked_at": "2026-08-23T10:33:27Z",
+        "blocked_by_ruling": "po/catchup3-disposition-20260823T1033Z"
+      },
+      {
+        "id": "FIX-COWORK-CATCHUP-ELIGIBLE-HAS-NO-ACTUATOR",
+        "type": "FIX",
+        "title": "Brief 2026-08-23 S6 is producer-only: items 3+4 will start emitting catchup_eligible:true for refine-bctc-*/bctc-analyst-* and NOTHING in the repo consumes that field — same producer-shipped/consumer-stranded shape CATCHUP-2 created in July",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "architect",
+        "created_at": "2026-08-23T10:33:27Z",
+        "created_by": "po/catchup3-disposition-20260823T1033Z",
+        "updated_at": "2026-08-23T10:37:46Z",
+        "updated_by": "po/catchup3-disposition-20260823T1033Z",
+        "parent_row": "FIX-COWORK-DAILY-SLOT-SILENT-SKIP-NO-CATCHUP-CATCHUPRAW-SCOPED-TO-GUARANTEED-ONLY",
+        "blocks": [
+          "TASK-COWORK-CATCHUP-4",
+          "TASK-COWORK-CATCHUP-5"
+        ],
+        "verification_gate": "A named, existing consumer reads catchup_eligible:true and fires the slot — or the brief is amended to state in writing that catchup_scope is diagnostic-only and no slot is ever auto-fired from it.",
+        "note": "FOUND BY PO 2026-08-23 while dispositioning TASK-COWORK-CATCHUP-3. This is a gap in the architect brief docs/architecture-briefs/2026-08-23-cowork-slot-durability-layer-inventory-and-miss-detection.md itself, not in any row it minted. MEASURED, NOT INFERRED: grepped the whole repo for catchup_raw / catchup_eligible / catchup-check across *.sh *.js *.md *.ts. Every hit is a PRODUCER, a spec, or a doc. docs/agents/cowork-team/flow/catchup-check.md does not exist (brief S4 says so and ls confirms). cowork-tick-preflight.sh Step 6.5 and cowork-guaranteed-slot-firer.sh were never wired (they were CATCHUP-4 and CATCHUP-5, both BLOCKED by po this tick). There is no consumer of catchup_eligible anywhere in the codebase. THE GAP: brief item 4 (TASK-COWORK-CATCHUP-SCOPE-PREDICATE) replaces cowork-catchup-predicate.js:209 'if (!sl.guaranteed) continue;' with a catchup_scope check and sets it true for refine-bctc-*/bctc-analyst-*, on the correct reasoning that data-refinement jobs have no publish-date semantics so a late run is a correct run. Brief item 3 (TASK-COWORK-SCHEDULE-ONMISS-AND-SCOPE) adds on_miss: 'catchup' | 'skip_and_record'. Both are policy declarations. Neither mints an actuator, and the brief's AC-3 asserts only that the predicate's OUTPUT is right — 'the live matcher's catchup_raw contains the refine-bctc-* / bctc-analyst-* slots with catchup_eligible:true when late' — never that anything fires. So on the day item 4 ships, the system will correctly compute that refine-bctc-slot-1 is catch-up-eligible, declare on_miss:'catchup' for it, and then do nothing, forever, silently. WHY THIS MATTERS BEYOND TIDINESS: that is precisely the failure this whole cluster exists to fix. TASK-COWORK-CATCHUP-2 shipped catchup_raw on 2026-07-28 and PO's own note on CATCHUP-3 dated 2026-08-06 records the cost — 'catchup_raw has been correctly computed since CATCHUP-2 shipped and is consumed by NOTHING' — with a live example of a recoverable missed chef-morning dish that nothing recovered. Repeating the shape one layer up, with a widened scope, would be the second occurrence of the same defect inside the same sprint cluster. ALSO NOTE the originating row FIX-COWORK-DAILY-SLOT-SILENT-SKIP-... was surfaced by refine-bctc-slot-1 sitting 8 days stale on a '0 9 * * *' cron. refine-bctc-slot-1 is exactly one of the slots item 4 makes eligible. If no actuator exists, the widening does not fix the symptom that raised the row. ARCHITECT DECIDES WHICH: (i) name a minimal actuator and scope it — plausibly a narrow extension of TASK-COWORK-CATCHUP-4/5 restricted to catchup_scope slots, with no publish-date dishes and no FR-5 miss-record layer (that is now TASK-COWORK-MISSED-FIRE-AUDIT's job), which is why those two rows are BLOCKED-pending-re-spec rather than cancelled; or (ii) rule explicitly that catchup_scope is diagnostic-only, feeding TASK-COWORK-MISSED-FIRE-AUDIT's counts and nothing else, and amend the brief to say so — a legitimate answer, but it must be WRITTEN DOWN, because on_miss:'catchup' as a config value that fires nothing is a false promise of exactly the kind brief S3 blames for 'guaranteed' predicting nothing. Do not let this be settled by silence. CONSTRAINT IF (i): brief R2 — every guaranteed-slot flow already has a published-marker task_claim gate (FR-P2-7); reuse it, never add a second competing dedup. And brief R5 — the eligible branch of this predicate has never executed in production, so any actuator's tests must cover it end-to-end."
+      },
+      {
+        "id": "FIX-DISPATCH-GATES-BLIND-TO-PROSE-DISPOSITION",
+        "type": "FIX",
+        "title": "RLC/BOUNDED-1/SLS/DRS read only machine-readable fields, so a 'do not build this' disposition living in free-prose status_note is invisible to every dispatch gate — auto-claimed a P0 row 2026-08-23 whose own status_note said the deliverable was contraindicated",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "architect",
+        "created_at": "2026-08-23T10:33:27Z",
+        "created_by": "po/catchup3-disposition-20260823T1033Z",
+        "updated_at": "2026-08-23T10:37:46Z",
+        "updated_by": "po/catchup3-disposition-20260823T1033Z",
+        "verification_gate": "A row carrying the disposition flag is refused by scripts/devteam-backlog-claim-ready-lane-consumer.jq and by the BOUNDED-1/SLS/DRS predicates, proven by executing those predicates against a fixture — not by reading them.",
+        "note": "LIVE INCIDENT, 2026-08-23, full causal chain measured. 10:17Z a po session correctly ratified TASK-COWORK-CATCHUP-2 DONE -> DONE_VERIFIED (it already carried qa_verified_at=2026-07-28T20:35:33Z; only .status had lagged). That correctly flipped deps_satisfied false->true for TASK-COWORK-CATCHUP-3/4/5. 10:24:37Z the dev-team tick's Ready-Lane Consumer claimed TASK-COWORK-CATCHUP-3 and pinned .head to it with next_agent=developer. Every field RLC evaluated was accurate: status READY, deps satisfied, not supervised, not plan_only, not an epic wrapper, inline next_agent=developer, priority P0. RLC did nothing wrong. But that row's own status_note, written earlier the same day, read 'CONTRADICTED 2026-08-23 by architect brief ... Brief says do NOT schedule this as the fix. Needs PO disposition (cancel vs rescope) - pm did not cancel unilaterally.' The disposition existed, was correct, and was structurally invisible. Only the router declining to spawn developer stopped a developer from building a deliverable measured to recover zero slots. ROOT CAUSE: there is no machine-readable way to say 'do not dispatch this, a human/PO decision is pending or has been made'. status BLOCKED is the closest primitive but it overloads 'waiting on a dependency' with 'ruled out on the merits', and pm deliberately declined to use it here precisely because cancelling unilaterally was not pm's call. So the only place left to put the ruling was prose. THIS IS A KNOWN FAMILY, NOT A ONE-OFF: the same shape already produced the PROSE-SEQUENCING and DETAIL-DEFERRED gates, and the same underlying pathology (a decision recorded in prose that no predicate reads) is separately tracked as FIX-ARCHITECTHANDOFF-DEAD-FIELD-ZERO-READERS-STRANDS-EVERY-ARCHITECT-BRIEF, where grep found the architect_handoff field has zero readers fleet-wide and only the jq that writes it. The correct fix is a machine-readable disposition flag honoured by all four gates, NOT another hand-correction. DESIGN INPUT, ALREADY EXERCISED THIS TICK: po stamped disposition / disposition_reason_code / do_not_reopen / superseded_by_brief / superseded_by_rows onto the cancelled TASK-COWORK-CATCHUP-3 (now in archive[]) as a straw-man shape. Treat those as a proposal to critique, not a standard — nothing reads them yet, which is exactly the dead-field trap this row exists to close. Whatever shape is chosen must be READ by scripts/devteam-backlog-claim-ready-lane-consumer.jq and the BOUNDED-1/SLS/DRS predicates in scripts/lib/devteam-eligibility.jq, and the gate must be proven by executing the predicates against a fixture, never by reading them (cf. feedback_flow_doc_veto_manufactures_pass_read_spec_before_blaming_script). SCOPE NOTE: a 'pending PO disposition' state is worth distinguishing from a 'ruled out' state — the first should park a row and surface it in PO's own tick, the second should refuse dispatch permanently. CATCHUP-3 spent hours in the first state with no surfacing mechanism at all, which is why a dev-team tick found it before PO did."
+      },
+      {
+        "id": "FIX-SIGNALQUEUE-OPEN-STATUS-DRAINED-BY-NOTHING-EVICTED-BY-NOTHING",
+        "type": "FIX",
+        "title": "signal_queue.rows[] status=OPEN is a black hole — 6 rows, all to:ops, oldest 9 days: dev-team 0a-D drains status=NEW only and orch-cold-evict's TERMINAL_SIGNAL_STATUSES does not list OPEN, so nothing reads them and nothing ever removes them",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "architect",
+        "created_at": "2026-08-23T10:33:27Z",
+        "created_by": "po/catchup3-disposition-20260823T1033Z",
+        "updated_at": "2026-08-23T10:37:46Z",
+        "updated_by": "po/catchup3-disposition-20260823T1033Z",
+        "verification_gate": "Every one of the 6 OPEN rows reaches a terminal status via a named, executable consumer path — and a newly written OPEN row is demonstrated to be picked up by it. Hand-flipping the 6 to READ closes the symptom and leaves the mechanism armed; that is not a fix.",
+        "note": "MEASURED AT SOURCE 2026-08-23T10:30Z, three independent probes, no inference. (1) LIVE POPULATION — jq over .signal_queue.rows[] gives status distribution OPEN=6, READ=13, triaged=11. There are ZERO rows at status NEW. The six OPEN rows, all to:ops: sys-20260814T064300-a29m (cron_fire_gap), sys-20260814T064301-a29s1 (cron_fire_gap), sys-20260814T064302-a29s2 (cron_fire_gap), sys-20260814T064303-b06 (vps_route_unhealthy), sys-20260814T160010-b06 (signal_feedback), sys-20260822T213754-audit-tracked-task-absent (launchd_tracking_gap). Oldest is 2026-08-14T06:43:00Z — 9 days. (2) NOT EVICTED — scripts/orch-cold-evict.sh:150 sets TERMINAL_SIGNAL_STATUSES=READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED,triaged,TRIAGED,RETRACTED. OPEN is absent, so the eviction predicate never matches them and they accumulate in the hot file indefinitely. (3) NOT DRAINED — the router independently searched docs/agents/ops/flow/ and .claude/skills/signal-dashboard/ and found no OPEN-row consumer; the live status distribution corroborates it from the other direction, since if a NEW-only drain were the sole consumer it would find nothing to do here. TWO DISTINCT DEFECTS, DO NOT CONFLATE: (a) a WRITE-side producer is emitting status=OPEN when the consumer contract expects NEW — find that producer, since which one it is determines whether the fix is at the writer or the reader; (b) a LIFECYCLE hole where OPEN is terminal-for-eviction-purposes-but-not-terminal-in-meaning, so even a correctly-written OPEN row can never leave the hot file. Fixing only (a) leaves today's 6 stranded; fixing only (b) evicts unread work, which is worse than leaving it. WHY P1 AND NOT COSMETIC: these are not notifications, they are unread ops findings. cron_fire_gap x3 and launchd_tracking_gap sit in exactly the subject area of the 96.5h Layer-C firing outage that brief docs/architecture-briefs/2026-08-23-cowork-slot-durability-layer-inventory-and-miss-detection.md S3 measured, and the 2026-08-22 launchd_tracking_gap row was written the day the host woke from that Standby window. Evidence bearing on a live P1 incident has been sitting unread for up to 9 days in a queue everyone believes is drained. CROSS-REF: project_host_suspension_causes_multiday_cron_silence_backlog_flush (confirmed 2x) and reference_agent_signals_is_a_rolling_2h_ttl_window_not_an_accumulating_log — the latter is the inverse failure (a store people think accumulates but does not), and the pair suggests signal-store lifecycle semantics are not written down anywhere consumers actually read. Surfaced by the router during the 2026-08-23T10:07Z dev-team tick; po verified all three probes independently before minting."
       }
     ],
     "closed_sprints": [
@@ -15989,9 +16151,10 @@
         "next_agent": "agent-father",
         "created_at": "2026-07-22T22:12:59Z",
         "created_by": "pm",
-        "updated_at": "2026-07-28T13:16:19Z",
+        "updated_at": "2026-08-23T10:37:46Z",
         "po_lane_move_20260728": "MOVED backlog[] -> ready[] by PO. next_agent=agent-father is non-dev: backlog + non-dev next_agent + no plan_only is the documented NO-LANE hole (zone-routing.md Step A2) -- BOUNDED-1 gates it via is_non_dev_next_agent_unrouted and SLS needs supervised AND plan_only, neither of which apply. ready[] + status READY is the only lane with a consumer for a non-dev handler (Ready-Lane Consumer). depends_on [TASK-COWORK-CATCHUP-9] is still enforced there by RLC's deps_satisfied gate.",
-        "updated_by": "po/route-20260728T13"
+        "updated_by": "po/catchup3-disposition-20260823T1033Z",
+        "status_note": "[po 2026-08-23T10:33Z] DUPLICATE TARGET + STALE PREMISE — do not dispatch without reading this. This row is FR-10 doc-only 'cron runbook update', owner agent-father, target docs/protocols/cowork-master-cron-runbook.md. TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY (brief 2026-08-23 item 5, ALSO agent-father) names that identical file in its own files[] alongside .claude/skills/cron-cowork-team/SKILL.md and docs/agents/cowork-team/flow/match-slots.md, and its AC-2/AC-4 are strictly stronger. Two rows, one owner, one file. Not cancelled here only because its dep chain already holds it (depends_on TASK-COWORK-CATCHUP-9, now BLOCKED) so it is not dispatchable today; fold it into DOC-TRUTH-LAYER-INVENTORY or cancel it when that row is worked. Its 2026-07-22 premise is also stale in the same way CATCHUP-9's is."
       },
       {
         "id": "QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL",
@@ -16009,47 +16172,6 @@
         "po_dep_repair_20260728": "DEP REPAIR, acute instance of FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING (minted this same write). Its backlog-detail `depends` was [OPS-COWORK-GUARANTEED-SLOT-INSTALL, FIX-AUDITOR-T1-PEER-FIRER-HEALTH-DEGRADED]. The second is DONE_VERIFIED (2026-07-08T05:22:59Z, by qa) but lives in docs/data/orch/archive/2026-07.json, which dep_status_map does not scan — so it resolved MISSING and blocked this row PERMANENTLY. Dropped it by installing an INLINE depends_on (inline wins over detail in effective_depends_on, same repair shape as UC-CDC-P5 2026-07-23). The row stays legitimately held on OPS-COWORK-GUARANTEED-SLOT-INSTALL, which is still REVIEW — see the consolidation ruling on that row.",
         "updated_at": "2026-08-23T09:49:06Z",
         "po_dep_resolution_20260823": "DANGLING DEP RESOLVED — REMOVED, NOT MINTED. PO verified the dependency OPS-COWORK-GUARANTEED-SLOT-INSTALL is already SATISFIED IN FACT on the live machine, so minting it would have created a no-op ops row and delayed this QA gate further. Corroboration of the dangle: scripts/orch-apply.sh Stage 1g listed it as item [11] of 16 dependencies resolving MISSING; PO located the only surviving record at docs/data/orch/archive/backlog-detail.json items[375], status BACKLOG, never present in any hot lane (live grep: 0 matching rows in the board). Its declared acceptance was: new LaunchAgent loaded and visible in launchctl list; old fb-daily-firer unloaded; no two overlapping 900s pollers. All three verified live 2026-08-23T09:45Z: (1) launchctl list shows `-\\t0\\tcom.vn-market.cowork-guaranteed-slot-firer`; (2) ~/Library/LaunchAgents/com.vn-market.cowork-guaranteed-slot-firer.plist is a symlink into the repo launchd/ dir, dated 10 jul; (3) no fb-daily-firer entry in launchctl list and no fb-daily-firer.plist anywhere in launchd/ — retired, and the generalized firer subsumes it per its own plist header. Its parent gate F1-LAUNCHD-COWORK-BACKSTOP also landed (firer script + plist both exist and the firer log shows real invocations, most recently 2026-08-22T20:32:48Z). This row is now DISPATCHABLE. NOTE FOR QA WHEN IT RUNS: point 7 of the 7-point spec (docs/architecture-briefs/2026-07-07-cowork-guaranteed-slot-durability.md section 6) — the injected-fault test for the Tier-1 extension — is testable TODAY: Check 6 _check_launchd_agents() at scripts/agents-flow/auditor-tier1-probe.sh:583-687 IS shipped and hardened twice. But scope point 7 to LOADEDNESS ONLY. It asserts the label is loaded at exit-status 0; it does NOT assert the firer is ticking, and it stayed ALL_GREEN through the 96.5h Standby outage of 2026-08-18 -> 08-22. That residual gap is tracked separately as FIX-LAYERC-FIRER-NO-TICK-LIVENESS-ORACLE-LOADED-ASSERTION-INVARIANT-UNDER-HOST-SLEEP — do NOT fail point 7 for it, and do NOT pass point 7 by claiming firing coverage."
-      },
-      {
-        "id": "TASK-COWORK-CATCHUP-4",
-        "title": "FR-9c: Extend cowork-tick-preflight.sh Step 6.5",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P0",
-        "zone": "scripts/agents-flow/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "READY",
-        "depends_on": [
-          "TASK-COWORK-CATCHUP-1",
-          "TASK-COWORK-CATCHUP-2"
-        ],
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-07-28T20:39:16Z",
-        "next_agent": "developer",
-        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "po/route-20260728T13"
-      },
-      {
-        "id": "TASK-COWORK-CATCHUP-5",
-        "title": "FR-9d: Extend cowork-guaranteed-slot-firer.sh with MCP access",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P0",
-        "zone": "scripts/agents-flow/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "READY",
-        "depends_on": [
-          "TASK-COWORK-CATCHUP-1",
-          "TASK-COWORK-CATCHUP-2"
-        ],
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-23T09:47:25Z",
-        "next_agent": "developer",
-        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "po/route-20260728T13",
-        "status_note": "FILE CONFLICT 2026-08-23: targets scripts/agents-flow/cowork-guaranteed-slot-firer.sh, the same file as new TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK (P1, parent FIX-COWORK-DAILY-SLOT-SILENT-SKIP-...). Sequential, not parallel. Also from the partially-superseded 2026-07-22 design - needs PO disposition alongside TASK-COWORK-CATCHUP-3."
       },
       {
         "id": "FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS",
@@ -16759,9 +16881,9 @@
         "owner": "po",
         "created_at": "2026-08-12T08:38:17Z",
         "created_by": "po",
-        "updated_at": "2026-08-22T21:09:05Z",
-        "updated_by": "po",
-        "status_note": "[po/triage 2026-08-14T13:37Z] FILE-SCOPED DEDUP HIT — additional observed SHA. ci_red signal CI-RED-39692ca5 (head_sha 39692ca5c6c8123b94176b76b629f1cf4c29edca, run_id 31798007816, 2026-08-14T12:19:44Z). MANDATORY pre-dedup failing-file read performed: `gh run view 31798007816 --log-failed` -> '15119 pass / 40 skip / 1 fail', '=== FAILED FILES (1) ===', 'FAILEDFILE: src/__tests__/167-prediction-market-job.test.ts'. Exact match on this row's dedup_key. No new row minted. Row remains READY/next_agent=dev-mcp-server and is dispatchable now."
+        "updated_at": "2026-08-23T10:37:46Z",
+        "updated_by": "po/catchup3-disposition-20260823T1033Z",
+        "status_note": "[po/triage 2026-08-14T13:37Z] FILE-SCOPED DEDUP HIT — additional observed SHA. ci_red signal CI-RED-39692ca5 (head_sha 39692ca5c6c8123b94176b76b629f1cf4c29edca, run_id 31798007816, 2026-08-14T12:19:44Z). MANDATORY pre-dedup failing-file read performed: `gh run view 31798007816 --log-failed` -> '15119 pass / 40 skip / 1 fail', '=== FAILED FILES (1) ===', 'FAILEDFILE: src/__tests__/167-prediction-market-job.test.ts'. Exact match on this row's dedup_key. No new row minted. Row remains READY/next_agent=dev-mcp-server and is dispatchable now. || [po/triage 2026-08-23T10:33Z] FILE-SCOPED DEDUP HIT — additional observed SHA, 2nd recurrence. ci_red CI-RED-a309c933 (head_sha a309c933463772440ad996d59a8f81506457331b, run_id 32630904807, 2026-08-23T09:27:33Z). MANDATORY pre-dedup failing-file read performed: gh run view 32630904807 --log-failed -> '15159 pass / 40 skip / 1 fail', '=== FAILED FILES (1) ===', 'FAILEDFILE: src/__tests__/167-prediction-market-job.test.ts'. Exact match on this row's dedup_key. No new row minted. Note the pass count moved 15119 -> 15159 between the 2026-08-14 observation and this one while the SAME single file kept failing: the suite grew by 40 tests and this failure survived both, so it is not flaky-under-load, it is a standing single-file failure. Row remains READY / next_agent=dev-mcp-server."
       },
       {
         "id": "OPS-BCTC-BANK-2025Q4-ENRICH-0ROW-REPARSE",
@@ -18916,31 +19038,6 @@
           "TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX"
         ],
         "po_wip_ruling_20260823": "RULED BLOCKED by po 2026-08-23T10:17:06Z, in place in in_progress[]. THE HOP THIS ROW WAS WAITING FOR HAS ALREADY HAPPENED. next_agent read 'pm', but the row's own pm_decomposition_note records 'PM decomposed into 3 subtasks (2026-08-22T17:45Z)' and all three children are live on the board right now, measured this tick: TASK_001-WATCHLIST-WRITE-THROUGH-INFRA (ready[], READY, next_agent=dev-mcp-server), TASK_002-WATCHLIST-DIVERGENCE-AUDIT-CRON (backlog[], BLOCKED on TASK_001, next_agent=developer), TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX (ready[], READY, next_agent=generic-developer). The parent therefore had no pm work left and was holding a WIP slot on a stale field. next_agent pm->qa: the only remaining parent-level action is final sign-off against AC-1..AC-4 once the children land. blocked_by set to the three children so the block is machine-readable rather than prose. SIDE FINDING, NOT FIXED HERE (outside decision scope, routed instead): the three handoff files docs/handoffs/TASK_001-WATCHLIST-WRITE-THROUGH-INFRA.md, TASK_002-WATCHLIST-DIVERGENCE-AUDIT-CRON.md and TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX.md exist on disk but are UNTRACKED in git — pm authored the decomposition and never committed the artefacts, so the specs the children point at are absent from HEAD and would vanish on any clean checkout. WHY status=BLOCKED IN PLACE RATHER THAN A LANE MOVE: identical D3 constraint to UC-CDC-P1 — this row measures 17859B prose, the largest of the three in_progress[] rows, so a move into guarded backlog[] hard-rejects at orch-row-prose-ceiling-check.mjs:267-269 with liveBytes=0. BLOCKED status alone removes it from wip_in_progress (devteam-eligibility.jq:115-118), which is the outcome that matters. Lane move deferred to after D3 ships."
-      },
-      {
-        "id": "TASK-COWORK-CATCHUP-3",
-        "title": "FR-9b + FR-3 + FR-5: New catchup-check.md dispatcher sub-flow",
-        "type": "SPRINT-M",
-        "size": "M",
-        "priority": "P0",
-        "zone": "docs/agents/cowork-team/flow/",
-        "sprint": "COWORK-GUARANTEED-SLOT-CATCHUP",
-        "status": "IN_PROGRESS",
-        "depends_on": [
-          "TASK-COWORK-CATCHUP-1",
-          "TASK-COWORK-CATCHUP-2"
-        ],
-        "created_at": "2026-07-22T22:12:59Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-23T10:24:38Z",
-        "next_agent": "developer",
-        "po_routing_20260728": "PO 2026-07-28T13Z lane routing. pm's decomposition minted this row with next_agent unset, which no dispatch lane resolves (verified by executing scripts/lib/devteam-eligibility.jq predicates, not by reading the row). Handler = developer per docs/handoffs/TASK-COWORK-CATCHUP-10.md ('developer completes code TASK-1..9, then agent-father integrates this doc-only subtask') + docs/data/system-map.json scripts/ zone. dev-role next_agent + backlog lane = BOUNDED-1, per docs/agents/po/flow/zone-routing.md Step A2.",
-        "updated_by": "po/chef-evening-retry-date-drift-20260806",
-        "po_note_20260806": "PO 2026-08-06T07:02Z -- LIVE COST EVIDENCE, plus one hypothesis I raised and then FALSIFIED myself. Read part (2) before spending any time on dependency plumbing.\n\n(1) COST, measured today: catchup_raw has been correctly computed since TASK-COWORK-CATCHUP-2 shipped and is consumed by NOTHING. docs/agents/cowork-team/flow/main.md's step table runs 0a -> 6 with no Step 4.55 / catchup-check stage, and match-slots.md:30 still reads \"Not yet consumed here\". Executed live 2026-08-06T06:52Z the predicate reported chef-morning catchup_eligible=true, scheduled_utc_time=2026-08-06T05:15:00.000Z, expected_publish_task_id=published:chef-morning:2026-08-06 -- today's morning dish was MISSED (host asleep, pmset MAGICWAKE 06:34Z) and is recoverable RIGHT NOW, and nothing will recover it. The same host-sleep window cost the 2026-08-05 evening dish and drove the FIX-CHEF-MARKER-KEY-WINDOW-ANCHOR recurrence (degraded MARKET msg 1129, PO had to hand-release a tombstoned marker at 06:53Z to save tonight's dish). This is the producer-shipped / consumer-stranded half of a P0 fix, open since 2026-07-22. Host sleep is a routine nightly condition on this laptop, so this consumer is not a nice-to-have.\n\n(2) FALSIFIED HYPOTHESIS -- DO NOT CHASE IT. I first suspected the strand was a cold-archive dependency-visibility bug, because TASK-COWORK-CATCHUP-1 is DONE_VERIFIED but lives ONLY in docs/data/orch/archive/2026-07.json (the hot orch-state.json names that id 8 times as a dependency and contains it as a row 0 times). That hypothesis is WRONG. Checked directly: scripts/lib/devteam-eligibility.jq section \"cold-archive dep status ingest\" (FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING, landed 2026-07-28) already seeds dep_status_map from the archive; all 7 real callers thread --slurpfile archive via scripts/lib/archive-glob-cat.sh; and orch-validate Stage 1g -- which DOES resolve against the cold archive -- did not flag TASK-COWORK-CATCHUP-1 on this tick's write, while it did flag 8 genuinely-missing deps. Deps therefore resolve SATISFIED. Also checked and excluded: OPS-COWORK-GUARANTEED-SLOT-INSTALL (stale in REVIEW since 2026-07-22T16:02Z, next_agent=ops, and the work is demonstrably already done -- launchctl reports com.vn-market.cowork-guaranteed-slot-firer loaded with runs=2044) blocks only QA-COWORK-SLOT-SESSION-DOWN-SURVIVAL, not this cluster.\n\n(3) SO THE STRAND CAUSE IS STILL UNKNOWN -- MEASURE IT, DO NOT GUESS. Against scripts/devteam-backlog-claim-ready-lane-consumer.jq:123-130 this row appears RLC-eligible on every clause: status READY, effective_supervised != true, effective_plan_only != true, not an epic-wrapper, deps satisfied, and an inline next_agent=\"developer\" which RLC explicitly accepts when the row itself asks for it (it only refuses the fabricated \"developer\" fallback). It is P0, so priority ordering should favour it. It still has not dispatched in 9 days. STARTING POINT for whoever takes this: run scripts/audits/devteam-dispatch-gate-satisfiability.sh -- on this tick it reported that BOUNDED-1 no-ops whenever in_progress>=1, and live in_progress=2. If developer-owned ready[] rows are in practice reachable only through BOUNDED-1, that WIP<1 cap starves them permanently, which fits the observed 9-day silence far better than anything in the dependency layer. Confirm that before changing code.",
-        "status_note": "CONTRADICTED 2026-08-23 by architect brief docs/architecture-briefs/2026-08-23-cowork-slot-durability-layer-inventory-and-miss-detection.md S4: live matcher returns catchup_raw 8 records / ZERO eligible; the 60-1440min bounds cap catch-up at one VN day against a measured 4-day outage, so wiring Step 4.55 / catchup-check.md recovers nothing for ANY slot. Brief says do NOT schedule this as the fix. Needs PO disposition (cancel vs rescope) - pm did not cancel unilaterally.",
-        "claimed_at": "2026-08-23T10:24:37Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "developer"
       }
     ]
   },
@@ -18974,182 +19071,18 @@
         "last_served_tick": "2026-08-23T08:55:59Z"
       }
     },
-    "_updated_at": "2026-08-23T10:24:14Z",
-    "_updated_by": "dev-team",
-    "pending_triage_inbox": [
-      {
-        "envelope_id": "5f41c595ea6f088944bbe8edaccf90e6f55aa68c37bafcd1a0d4c83bf24cb481",
-        "source": "file",
-        "from": "ci-health-probe",
-        "to": "po",
-        "type": "ci_red",
-        "priority": "high",
-        "payload": {
-          "check_id": "CI-RED-85384b32",
-          "head_sha": "85384b32e1eca24f1e162516ebb0e3f649afbdd0",
-          "run_id": 32629387939,
-          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/32629387939",
-          "conclusion": "failure",
-          "failing_jobs": [
-            {
-              "name": "signal-type-coverage-guard",
-              "conclusion": "failure",
-              "jobId": 97169675686
-            }
-          ],
-          "fingerprint": "976ea7b1d2d7c2702b1c4296ad5cda2a48d7d695673a062ad05e86ed064aaff2",
-          "zone_owner": "dev-team (CI fix)",
-          "summary": "CI RED on main HEAD 85384b32e1eca24f1e162516ebb0e3f649afbdd0: signal-type-coverage-guard",
-          "suggested_sprint_class": "FIX",
-          "verification_gate": "ci_green_on_subsequent_push"
-        },
-        "createdAt": "2026-08-23T08:54:50Z",
-        "drained_at": "2026-08-23T09:24:51Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "672882c2d4ab4ce5adea7dc706e130e7c4f606b58213f1aa2b7f22363599009b",
-        "source": "file",
-        "from": "cowork-team",
-        "to": "dev-team",
-        "type": "cowork-fire",
-        "priority": "low",
-        "payload": {
-          "fire_time": "20260823T090450Z",
-          "matched_slots": [
-            "refine-bctc-slot-1"
-          ],
-          "won_slots": [
-            "refine-bctc-slot-1"
-          ],
-          "held_by_other": [],
-          "all_held": false,
-          "spawned": [
-            "docs/agents/refine_bctc_md/flow/main.md"
-          ],
-          "silent": false,
-          "drift_min": 0,
-          "errors": [],
-          "pressure_mode": "legacy",
-          "calendar_status": "weekend",
-          "suppressed_calendar": [],
-          "suppressed_cadence": [],
-          "downgraded": [],
-          "chef_mutex_applied": false,
-          "due_reasons": {},
-          "cadence_minutes": {},
-          "last_fired_timestamp": "2026-08-23T09:03:59Z",
-          "last_fired_slots": [
-            "refine-bctc-slot-1"
-          ],
-          "last_fired_write_errors": null,
-          "classification": "FIRE",
-          "reason": "spawned",
-          "nominal_tick": "09:00",
-          "leader_lock": "acquired",
-          "dev_head": "deprecated",
-          "devq": 5,
-          "signal_backlog": 32,
-          "note": "first tick after 8h10m dispatcher outage (00:36Z-08:47Z, stale cron-registration marker inside orphan_threshold blind window); refine-bctc-slot-1 last_fired was 2026-08-15T09:04:34Z (8d stale)"
-        },
-        "createdAt": "20260823T090450Z",
-        "drained_at": "2026-08-23T09:24:51Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "7a58a379bf00bc67278f5ffce332419cc3bbc16fff7e54ad105e7a4f707900c0",
-        "source": "file",
-        "from": "ci-health-probe",
-        "to": "po",
-        "type": "ci_red",
-        "priority": "high",
-        "payload": {
-          "check_id": "CI-RED-a309c933",
-          "head_sha": "a309c933463772440ad996d59a8f81506457331b",
-          "run_id": 32630904807,
-          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/32630904807",
-          "conclusion": "failure",
-          "failing_jobs": [
-            {
-              "name": "bun test",
-              "conclusion": "failure",
-              "jobId": 97173462868
-            }
-          ],
-          "fingerprint": "c43e1a55f018a43e9bc0e9b53264bdc8061f968930627dbf7f405bdfef0694b5",
-          "zone_owner": "dev-team (CI fix)",
-          "summary": "CI RED on main HEAD a309c933463772440ad996d59a8f81506457331b: bun test",
-          "suggested_sprint_class": "FIX",
-          "verification_gate": "ci_green_on_subsequent_push"
-        },
-        "createdAt": "2026-08-23T09:27:33Z",
-        "drained_at": "2026-08-23T09:51:36Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "9da864c74f70d1153f7883d228791325fc46fce9360faf29c7bd0083a9c75569",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 18 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-architect-6.md docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-pm.md docs/agent-memory/notebooks/architect.md docs/agent-memory/notebooks/pm.md docs/architecture-briefs/2026-08-23-orch-row-prose-ceiling-value-shape-measure-and-frozen-cohort-paydown.md docs/data/orch/orch-state.json docs/handoffs/TASK-COWORK-CATCHUP-SCOPE-PREDICATE.md docs/handoffs/TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY.md docs/handoffs/TASK-COWORK-LAYERC-LASTFIRED-WRITEBACK.md docs/handoffs/TASK-COWORK-MISSED-FIRE-AUDIT.md docs/handoffs/TASK-COWORK-PMSET-WAKE-ADJUNCT.md docs/handoffs/TASK-COWORK-SCHEDULE-ONMISS-AND-SCOPE.md docs/handoffs/TASK-COWORK-STALE-SLOT-DISPOSITION-TABLE.md docs/handoffs/TASK-CRON-AMEND-DEDUP-BRIEF-S13.md docs/handoffs/TASK-CRON-LIVENESS-PROBE-SCRIPT.md docs/handoffs/TASK-CRON-LIVENESS-PROBE-TESTS.md docs/handoffs/TASK-CRON-SKILLMD-PROBE-WIRING.md scripts/architect-20260823-orch-prose-ceiling-row-handoff.jq. actor=7be6b4cd-057e-419b-a967-4810daf2b646 mode=warn escalated=false prior_warns=0 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-23T09:51:05Z",
-        "drained_at": "2026-08-23T09:51:36Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "e3a946e472c3faf990b5de31256cfd45571798251b0333960fe083a460c926d6",
-        "source": "file",
-        "from": "ci-health-probe",
-        "to": "po",
-        "type": "ci_red",
-        "priority": "high",
-        "payload": {
-          "check_id": "CI-RED-9c6ef1b7",
-          "head_sha": "9c6ef1b7693ff51da5d1d35fe7d6a86a71b46f4e",
-          "run_id": 32631502135,
-          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/32631502135",
-          "conclusion": "failure",
-          "failing_jobs": [
-            {
-              "name": "signal-type-coverage-guard",
-              "conclusion": "failure",
-              "jobId": 97174899763
-            }
-          ],
-          "fingerprint": "62f116273759fcd43e65ed025b29dd6b79d049839956c6a900a36ec72568c3b7",
-          "zone_owner": "dev-team (CI fix)",
-          "summary": "CI RED on main HEAD 9c6ef1b7693ff51da5d1d35fe7d6a86a71b46f4e: signal-type-coverage-guard",
-          "suggested_sprint_class": "FIX",
-          "verification_gate": "ci_green_on_subsequent_push"
-        },
-        "createdAt": "2026-08-23T09:52:51Z",
-        "drained_at": "2026-08-23T10:23:09Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "0cf950a4731a8ead7a93213511e5437c1f36824d44b7dd9482e3ce95d1833a60",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/pm.md — retained section '## Session 2026-08-23T09:49:54Z — Decompose the paired cron-liveness / cowork-durability rows (11 tasks, 4 owners)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
-        "createdAt": "2026-08-23T09:52:45Z",
-        "drained_at": "2026-08-23T10:23:09Z",
-        "routed_to": "PO Step 0-SIG"
-      }
-    ],
-    "last_po_triage_at": "2026-08-23T09:07:20Z",
-    "last_po_triage_note": "po/triage-20260823T0907Z (router-spawned; the 08:37Z dev-team tick selected step1_triage but its terminal step is \"Spawn po\" and a Task-tool subagent cannot spawn, so it returned NEXT: po without claiming triage_key). INPUTS: 8 durable-inbox envelopes, all type=bug-escalation from commit-sweep-guard, all actor=007e33e4. OUTPUT: 0 net-new mints FROM THE INBOX, 4 folds. DISPOSITIONS: 3x [sweep-guard] BARE escalated=true (prior_warns 3/4/5, outcome=blocked) -> dedup hit on FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS, occurrence_count 21->24, no new row per the rule; 3x BARE escalated=false (prior_warns 0/1/2, outcome=proceeded) -> CONFIRMED true positives, volume-tracked only, never \"benign\"; 1x [sweep-guard] SAME-FILE DIVERGENCE -> its known-FP root cause FIX-SWEEPGUARD-SAMEFILE-DETECTOR-UNSTAGED-PATH-FALSE-POSITIVE is DONE_VERIFIED/cold-archived, so the second branch applied and PO ran the SS2.7 two-blob diff for the first time successfully (both blobs cf3023a5/42771857 still in the object store 44min after the fire): the divergence is 64 inserted lines, ALL of them dev-team draining 5 envelopes into .dev_team_idle_chain.pending_triage_inbox, i.e. a legitimate concurrent writer of a DIFFERENT subtree, no unreviewed peer content -> no escalation. This refutes the \"undispositionable-by-construction\" claim recorded on FIX-COLDEVICT-WITHIN-FILE-PEER-CONTENT-CAPTURE on 2026-08-14: the class IS dispositionable when triage runs inside the gc window; that correction could NOT be written to its own row (12328B, 328B over the prose ceiling) and lives in the po notebook instead; 1x [heartbeat-guard] REJECT on docs/data/auditor-tier2-last-healthy.json -> folded onto FIX-AUDITOR-TIER1-HEARTBEAT-HANDWRITE-RECURS-SAME-DAY-AS-ITS-OWN-FLOW-FIX (occ 1->2) with two new facts: the hand-write has WIDENED from tier-1 to tier-2 (tier-1 checks{} shape copied into a tier-2 file), and \"heartbeat-guard\" appears ZERO times in triage-signals.md or its longtail sibling, so this payload class has been routed purely by PO improvisation since 2026-08-11. SEPARATELY (Pipeline B, not from the inbox): routed the 1 NEW signal_queue row bctc-imgdeg-69fcd047-20260823T090510Z via the ROUTE-BY-to fallback -> minted FIX-BCTC-PAGE-IMAGE-FETCH-DEGRADED-CONFIDENCE-CAP; and prioritised dev-mcp-server guard auto-mint FIX-SIGNAL-TYPE-ROUTING-GAP-bctc-image-fetch-degraded to P0 (sole remaining cause of CI red).",
-    "last_po_triage_consumed": 8,
+    "_updated_at": "2026-08-23T10:33:27Z",
+    "_updated_by": "po/catchup3-disposition-20260823T1033Z",
+    "pending_triage_inbox": [],
+    "last_po_triage_at": "2026-08-23T10:33:27Z",
+    "last_po_triage_note": "po Step 0-SIG 2026-08-23T10:33Z — 6 envelopes triaged (router announced 2 fresh; 4 were carry-over from prior ticks that never cleared). 3x ci_red: run 32630904807 file-scoped DEDUP HIT on FIX-CI-BUNTEST-167-PREDICTION-MARKET-JOB (FAILEDFILE src/__tests__/167-prediction-market-job.test.ts, exact dedup_key match, SHA appended); runs 32629387939 + 32631502135 both job signal-type-coverage-guard, DEDUP HIT on FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire per the guard's own log line, that row ROUTED (next_agent was unset -> agent-father, P1). 1x cowork-fire (to:dev-team, refine-bctc-slot-1 fire after the 8h10m dispatcher outage) — this is the unrouted Pipeline-A type the guard is red on; routed via the row above, no separate mint. 2x bug-escalation: sweep-guard BARE escalated=false prior_warns=0 -> confirmed true positive, pendingObservations only, no mint per spec; notebook-immutability-guard on pm.md -> first fire for that agent+section pair, pendingObservations only, mint threshold is 2 cycles. CAVEAT RECORDED ON THE ROUTING ROW: this CLEAR removes the cowork-fire envelope from the array guard-signal-type-coverage.sh:198 reads, so CI can go green next run with the routing table still unfixed — that green is an artifact, not a fix.",
+    "last_po_triage_consumed": 6,
     "last_triage_clear": {
       "ts": "2026-08-23T09:07:20Z",
       "consumed_count": 8,
       "triaged_by": "po (router-direct triage, session 007e33e4-b453-4bb3-8ab1-ef31495906a3)",
       "note": "8 envelopes, all bug-escalation/commit-sweep-guard. Cleared by envelope_id subtraction, never a blind = []."
     },
-    "pending_triage_inbox_cleared_at": "2026-08-23T09:07:20Z"
+    "pending_triage_inbox_cleared_at": "2026-08-23T10:33:27Z"
   }
 }
