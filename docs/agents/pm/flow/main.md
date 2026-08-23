@@ -1,4 +1,4 @@
-<!-- size-justification: 210L — single PM orchestration flow; TASKS.md gate, handoff template, multi-zone handling, DASHBOARD CAS guard, heartbeat lock protocol, commit convention, pre-commit mutex gate, mandatory decision-journal step, and HSC-3 terminal-lane bloat gate + HSC-6 done_verified eviction hook are all non-separable PM responsibilities executed in sequence. UC-DTL-P9 2026-07-23: Sprint closeout step — atomic sprint-terminal-flip + guarded head-idle via scripts/pm-closeout-head-idle.jq, replaces the old two-write flip+idle sequence (+11L). FIX-PM-HEAD-RESET-SHAPE 2026-08-11: +18L (229→247, live line-count at edit time; the "210L" figure above was already stale pre-edit, not corrected here — out of this task's scope) — new Step 4c (Non-closeout head release), inserted after Step 4b, before the Signal Queue Write Guard section: full `.head =` null-out (status/active_task_id/next_agent/updated_at/updated_by) whenever a mid-sprint decomposition mints child task(s) without triggering §5's Sprint closeout, matching `docs/agents/dev-team/flow/main.md`'s WF-1c ready-lane convention byte-for-byte instead of the previous undocumented partial status-only flip (2 confirmed occurrences, `feedback_pm_midsprint_decomposition_leaves_head_stale_not_closeout`: UC-RDL-P4 — head left fully untouched; FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE commit `95540b50d` — status flipped, active_task_id/next_agent left dangling, router repair `82ec1f018`). Inlined directly in this file (no new scripts/ file — agent-father's commit_zone excludes scripts/, TE-T02 precedent). -->
+<!-- size-justification: 210L — single PM orchestration flow; TASKS.md gate, handoff template, multi-zone handling, DASHBOARD CAS guard, heartbeat lock protocol, commit convention, pre-commit mutex gate, mandatory decision-journal step, and HSC-3 terminal-lane bloat gate + HSC-6 done_verified eviction hook are all non-separable PM responsibilities executed in sequence. UC-DTL-P9 2026-07-23: Sprint closeout step — atomic sprint-terminal-flip + guarded head-idle via scripts/pm-closeout-head-idle.jq, replaces the old two-write flip+idle sequence (+11L). FIX-PM-HEAD-RESET-SHAPE 2026-08-11: +18L (229→247, live line-count at edit time; the "210L" figure above was already stale pre-edit, not corrected here — out of this task's scope) — new Step 4c (Non-closeout head release), inserted after Step 4b, before the Signal Queue Write Guard section: full `.head =` null-out (status/active_task_id/next_agent/updated_at/updated_by) whenever a mid-sprint decomposition mints child task(s) without triggering §5's Sprint closeout, matching `docs/agents/dev-team/flow/main.md`'s WF-1c ready-lane convention byte-for-byte instead of the previous undocumented partial status-only flip (2 confirmed occurrences, `feedback_pm_midsprint_decomposition_leaves_head_stale_not_closeout`: UC-RDL-P4 — head left fully untouched; FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE commit `95540b50d` — status flipped, active_task_id/next_agent left dangling, router repair `82ec1f018`). Inlined directly in this file (no new scripts/ file — agent-father's commit_zone excludes scripts/, TE-T02 precedent). FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT 2026-08-23 (agent-father, per architecture brief `docs/architecture-briefs/2026-08-14-pm-decompose-closeout-reachability-and-nextagent-mint.md`): +28L (247→275) — Steps 3d + old-4c relocated to BEFORE the decomposition-mint invocation's own `## RETURN` (previously the RETURN sat between 3c and 3d, leaving 3d/4/4b/4c all textually unreachable — 3 confirmed occurrences of stale `.head`/parent-row/child-`next_agent`); old-4c renamed 3e and gained a `DECOMPOSITION_COMPLETE` closeout-vs-partial branch (parent → `done[]` + `.children` write, or row-level `next_agent` correction) folding in the write-side half of `FIX-DEVTEAM-EPICWRAPPER-PARENTHOOD-FIELD-DRIFT-AUTOCLOSE-BLIND`; Steps 4/4b relocated under a new `## Task Lifecycle — Later-Cycle Steps` heading (bounds the later, separate re-invocation segment); Step 3's canonical task-JSON shape note gained `next_agent` as conditionally-mandatory-at-mint with a routing-intent-source order. -->
 # Project Manager — Main Flow
 
 **Tools:** `docs/agents/tools/package/pm.md`
@@ -66,7 +66,7 @@ If the architect handoff explicitly names another agent's notebook, read that on
 
 **3. Update `docs/data/orch/orch-state.json` `.task_board`** (atomic write per §2.3: read full → modify `.task_board` section only → write atomically)
 - Deps Done → status: **TODO** | Deps In Progress → type: **backlog**
-- Task JSON shape — canonical per `docs/standards/task-schema.md`: `{id, title, owner, status, zone, created_at}` + optional `{type, size, priority, depends, note, files, status_note}`. NEVER use banned fields: `task_id` (write), `desc`, `label`, `summary`, `resolvedId`, `resolved_id`.
+- Task JSON shape — canonical per `docs/standards/task-schema.md`: `{id, title, owner, status, zone, created_at}` + optional `{type, size, priority, depends, note, files, status_note}`. **`next_agent` (FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT, 2026-08-14): mandatory at mint time whenever the resolved `owner` is NOT a dev-role (`scripts/lib/devteam-eligibility.jq:is_dev_role`)** — omission silently defeats the Ready-Lane Consumer's dispatch resolution (falls back to `owner`, which may be the SUBJECT agent being edited, not the editor that should apply the change). Routing-intent source, in priority order: (1) the architect design handoff's own per-subtask assignment — a `review_note`/`note` field on the PARENT row or its `docs/handoffs/<parent>.md` enumerating per-subtask owning agents (e.g. "1 shared-skill-file subtask → developer, 6 agent-family-flow-edit subtasks → agent-father"); (2) if the architect design is silent for a given child, `next_agent := owner` ONLY IF `owner` is a dev-role; (3) otherwise HOLD AND ESCALATE — never mint with `next_agent` silently omitted: write `status_note: "next_agent unresolved — architect design silent on per-child routing, owner is non-dev"` and `send_telegram(channel="work")`. NEVER use banned fields: `task_id` (write), `desc`, `label`, `summary`, `resolvedId`, `resolved_id`.
 
 **3b. Create handoff file** `docs/handoffs/TASK_NNN.md` — AC listed here will also be written as the `AC:` trailer in the developer's commit (`docs/policies/commit-convention.md`), making git the second copy:
 ```markdown
@@ -105,19 +105,6 @@ jq '...' "$PROJECT_ROOT/docs/data/orch/orch-state.json" \
   | bash "$PROJECT_ROOT/scripts/orch-apply.sh" \
   || { echo "[pm] ABORTED: orch-apply.sh validation/CAS failed" >&2; exit 1; }
 ```
-Return task list with dependency tiers and zone per task:
-```
-## RETURN
-DONE: Tasks broken down, handoffs created for NNN-a, NNN-b, NNN-c
-TASKS:
-  tier1 (parallel):
-    - NNN-a [zone: apps/stock-price/, files: apps/stock-price/src/foo.ts]
-    - NNN-b [zone: apps/alert-engine/, files: apps/alert-engine/src/bar.ts]
-  tier2 (after tier1):
-    - NNN-c [zone: apps/stock-price/, depends_on: NNN-a, files: apps/stock-price/src/baz.ts]
-HANDOFF: docs/handoffs/TASK_NNN-a.md, docs/handoffs/TASK_NNN-b.md, docs/handoffs/TASK_NNN-c.md
-PIPELINE: continue
-```
 `zone:` on every task is mandatory — dev-team Step 3 reads this field to pick the right dev-* specialist.
 
 **3d.** Heartbeat umbrella lock → load skill: `.claude/skills/task-lock/SKILL.md`
@@ -130,6 +117,65 @@ call_tool(server="vn-market", tool="task_heartbeat", arguments={
 // ok=false here = sprint umbrella expired or stolen; log only, do not abort planning
 ```
 
+**3e. Decomposition-closeout disposition** (FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT, 2026-08-14 — renamed + relocated from the old Step 4c so it sits BEFORE this invocation's own `## RETURN` below and is therefore always reached; absorbs the write-side half of `FIX-DEVTEAM-EPICWRAPPER-PARENTHOOD-FIELD-DRIFT-AUTOCLOSE-BLIND` per architecture brief `docs/architecture-briefs/2026-08-14-pm-decompose-closeout-reachability-and-nextagent-mint.md` §5/§6):
+
+pm decides, explicitly, whether Steps 2/3/3c above delegated ALL of the dispatched row's (`$SPRINT_ID`'s) scope to the minted children this cycle — encode the decision as `DECOMPOSITION_COMPLETE=true|false`, never left implicit in prose (`decomposition_note`). This determines the parent row's terminal disposition; §5 Monitor's Sprint closeout (below) is a SEPARATE, later-cycle write over `active_sprints[].tasks[]` and does not substitute for this step, which must fire on every decomposition-mint invocation regardless of sprint-closeout status.
+
+- `DECOMPOSITION_COMPLETE=true` (this invocation is pm's LAST touch on `$SPRINT_ID` — all scope now delegated) → **closeout-shaped**, matching the `FIX-READYLANE-...` precedent (commit `86b7a6264`) formally instead of ad hoc: parent row moves `in_progress[]`/`active_sprints[].tasks[]` → `done[]`, `status: "DONE"`, `closed_at: $now`, **`children: [<minted child ids>]`** (closes the write-side half of the parenthood-field-drift gap — `effective_children` sweeps can now see the relationship).
+- `DECOMPOSITION_COMPLETE=false` (mid-sprint-partial — more decomposition or pm oversight remains on this row) → parent row **stays** in its current lane, row-level `next_agent` corrected to a non-stale value (often `"pm"` again if more decomposition is pending — never left pointing at a stage that already finished).
+
+Both branches ALSO perform the `.head` full null-out inherited from the old Step 4c guard (content unchanged) — fires ONLY if `.head.active_task_id` (freshly re-read, never cached) still names `$SPRINT_ID`, and ONLY if §5's Sprint closeout has not already written `.head` this same cycle (never write `.head` twice in one cycle). Two confirmed occurrences pre-dated this guard (`feedback_pm_midsprint_decomposition_leaves_head_stale_not_closeout`): UC-RDL-P4 2026-08-11 — `.head` left fully untouched; FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE 2026-08-11T19:27Z, commit `95540b50d` — only `.head.status` flipped, `active_task_id`/`next_agent` left dangling, forcing router repair `82ec1f018`. A THIRD occurrence (UC-CCA-P2, 2026-08-14) additionally left the parent row itself stale with ZERO 4c write attempt and all 7 minted children `next_agent`-omitted — the reachability defect this Step 3e relocation exists to close.
+
+ONE `orch-apply.sh` write, same shape both branches:
+```bash
+NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+head_active=$(jq -r '.head.active_task_id' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
+if [ "$DECOMPOSITION_COMPLETE" = "true" ]; then
+  jq --arg s "idle" --arg t "$NOW" --arg u "pm" --arg sid "$SPRINT_ID" --arg head_active "$head_active" \
+     --argjson children "$CHILD_IDS_JSON" \
+     '(.task_board.in_progress // []) as $ip
+      | (.task_board.active_sprints // []) as $as
+      | ( [$ip[], ($as[]?.tasks[]?)] | map(select(.id == $sid)) | .[0] ) as $row
+      | .task_board.done = ((.task_board.done // []) + [ $row + {
+            status: "DONE", closed_at: $t, children: $children } ])
+      | .task_board.in_progress = [ $ip[] | select(.id != $sid) ]
+      | .task_board.active_sprints = [ $as[] | .tasks |= map(select(.id != $sid)) ]
+      | (if $head_active == $sid then
+           .head = {status:$s, active_task_id:null, next_agent:null, updated_at:$t, updated_by:$u}
+         else . end)' \
+    "$PROJECT_ROOT/docs/data/orch/orch-state.json" | bash "$PROJECT_ROOT/scripts/orch-apply.sh" \
+    || echo "[pm] decomposition-closeout ABORTED for ${SPRINT_ID} — orch-apply.sh failed, live SSOT untouched"
+else
+  jq --arg s "idle" --arg t "$NOW" --arg u "pm" --arg sid "$SPRINT_ID" --arg na "$CORRECTED_NEXT_AGENT" --arg head_active "$head_active" \
+     '(.task_board.in_progress // []) |= map(if .id == $sid then .next_agent = $na else . end)
+      | (.task_board.active_sprints // []) |= map(.tasks |= map(if .id == $sid then .next_agent = $na else . end))
+      | (if $head_active == $sid then
+           .head = {status:$s, active_task_id:null, next_agent:null, updated_at:$t, updated_by:$u}
+         else . end)' \
+    "$PROJECT_ROOT/docs/data/orch/orch-state.json" | bash "$PROJECT_ROOT/scripts/orch-apply.sh" \
+    || echo "[pm] non-closeout head+next_agent correction ABORTED for ${SPRINT_ID} — orch-apply.sh failed, live SSOT untouched"
+fi
+```
+FULL null-out ONLY on `.head` (whole-object `.head =` replace) — matches `docs/agents/dev-team/flow/main.md`'s WF-1c ready-lane convention byte-for-byte, never a partial field-wise status-only flip. Do NOT reuse `scripts/pm-closeout-head-idle.jq` here — that script ALSO flips the sprint's own `.status` to `"DONE"` unconditionally, which is wrong for the `DECOMPOSITION_COMPLETE=false` branch (the row legitimately stays `IN_PROGRESS` — only children moved). No-op-safe by construction: if `.head.active_task_id` no longer matches `$SPRINT_ID` (a concurrent write already moved it on), the `.head` branch is simply skipped — safe to run unconditionally at the end of every planning cycle.
+
+Return task list with dependency tiers and zone per task — this is the TRUE last reachable element of the decomposition-mint invocation (Steps 1-3e). **Reachability invariant: no numbered step may be added below this RETURN in this same document segment** — that is the exact defect this relocation fixes; a new step belongs either before this RETURN (same invocation) or under `## Task Lifecycle — Later-Cycle Steps` below (a bounded, separate segment for the later, separate invocation):
+```
+## RETURN
+DONE: Tasks broken down, handoffs created for NNN-a, NNN-b, NNN-c
+TASKS:
+  tier1 (parallel):
+    - NNN-a [zone: apps/stock-price/, files: apps/stock-price/src/foo.ts]
+    - NNN-b [zone: apps/alert-engine/, files: apps/alert-engine/src/bar.ts]
+  tier2 (after tier1):
+    - NNN-c [zone: apps/stock-price/, depends_on: NNN-a, files: apps/stock-price/src/baz.ts]
+HANDOFF: docs/handoffs/TASK_NNN-a.md, docs/handoffs/TASK_NNN-b.md, docs/handoffs/TASK_NNN-c.md
+PIPELINE: continue
+```
+
+## Task Lifecycle — Later-Cycle Steps
+
+Reached only on a SEPARATE pm re-invocation AFTER the decomposition-mint pass above (Steps 1-3e) has already returned — dev-team Step 3, "after each tier completes." This `## `-bounded heading is the segment marker the reachability invariant above needs: NOT part of the same invocation as Steps 1-3e, and no future edit near Steps 4/4b can accidentally land them back in the decomposition-mint segment.
+
 **4.** Set task status → `in_progress` when developer picks up
 
 **4b.** Heartbeat developer's task lock if pre-existing:
@@ -140,24 +186,6 @@ call_tool(server="vn-market", tool="task_heartbeat", arguments={
 })
 // silent on ok=false — developer will (re)claim on entry
 ```
-
-**4c. Non-closeout head release (FIX-PM-HEAD-RESET-SHAPE — mid-sprint decomposition, NOT sprint closeout):**
-
-If Steps 2/3/3c above minted child task(s) into `ready[]`/`backlog[]`/`in_progress[]` this cycle WITHOUT triggering §5 Monitor's Sprint closeout write (i.e., this row's sprint/tasks did NOT all reach terminal status — the sprint legitimately stays `IN_PROGRESS`), pm's own phase on the row it was dispatched for (`$SPRINT_ID`) is done, but `.head` may still name that row with `next_agent:"pm"`. Leaving it stale risks a later dispatcher-wrap re-spawning pm on an already-decomposed row — 2 confirmed occurrences (`feedback_pm_midsprint_decomposition_leaves_head_stale_not_closeout`): UC-RDL-P4 2026-08-11 — pm left `.head` fully untouched (contract had no non-closeout case at all); FIX-BCTC-FALLBACK-SHELL-REPORTS-STRUCTURALLY-UNEXTRACTABLE 2026-08-11T19:27Z, commit `95540b50d` — pm flipped ONLY `.head.status` to `idle`, left `active_task_id`/`next_agent` dangling at the stale pre-decomposition values, forcing a router repair pass (commit `82ec1f018`).
-
-Guard — only fires if `.head` (freshly re-read, never cached) still names the row this pm invocation was dispatched for, and only if §5's Sprint closeout did NOT already write `.head` this same cycle (never write `.head` twice in one cycle):
-```bash
-NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-head_active=$(jq -r '.head.active_task_id' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
-if [ "$head_active" = "$SPRINT_ID" ]; then
-  jq --arg s "idle" --arg t "$NOW" --arg u "pm" \
-    '.head = {status:$s, active_task_id:null, next_agent:null, updated_at:$t, updated_by:$u}' \
-    "$PROJECT_ROOT/docs/data/orch/orch-state.json" \
-    | bash "$PROJECT_ROOT/scripts/orch-apply.sh" \
-    || echo "[pm] non-closeout head release ABORTED — orch-apply.sh failed, live SSOT untouched"
-fi
-```
-FULL null-out ONLY (whole-object `.head =` replace) — matches `docs/agents/dev-team/flow/main.md`'s WF-1c ready-lane convention byte-for-byte (`.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}`), never a partial field-wise status-only flip. Do NOT reuse `scripts/pm-closeout-head-idle.jq` here — that script ALSO flips the sprint's own `.status` to `"DONE"`, which would be wrong mid-decomposition (the sprint/task legitimately stays `IN_PROGRESS` — only children moved). No-op by construction if `.head.active_task_id` no longer matches `$SPRINT_ID` (a concurrent write already moved it on) — safe to run unconditionally at the end of every planning cycle.
 
 ## Signal Queue Write Guard — CAS on orch-state.json (TASK_1967-03 fix)
 
