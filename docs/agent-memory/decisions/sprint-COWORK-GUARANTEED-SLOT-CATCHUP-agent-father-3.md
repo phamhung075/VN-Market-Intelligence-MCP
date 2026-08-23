@@ -285,3 +285,23 @@ third root cause instead of forcing a fix into a wrong hypothesis.
 - Write AC-3's runbook anyway since PM set the row's zone to `docs/` — refused. `docs/protocols/` is not in agent-father's commit_zone.
 **why-decision:** The volatile figure got a timestamp and a "re-run before quoting" instruction rather than a number, because this row exists precisely because a point-in-time measurement was frozen into prose and later read as a standing fact. What I asserted flatly is only what is structural: the 60/120/180/360/1440-minute lateness bounds cap recovery at one VN day, so the missing `catchup-check.md` consumer was never going to recover a multi-day outage.
 **why-change:** Self-pruned the notebook to `archive/agent-father-archive-20260823.md` before writing (188L/16787B against a 200L cap) — not part of the row, but the alternative was a silently dropped entry.
+
+### STEP agent-father-S62 · agent-father · 2026-08-23T16:05:00Z
+**task-id:** FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort
+**what-done:** Added the single Pipeline-A routing row for `auto-push-abort` to `po/flow/triage-signals.md` (commit 3cef7c30e), discriminating on `payload.reason` across the producer's six emit sites, with `dedup_key = "auto-push-abort:{payload.reason}"`.
+**what-considered:**
+- Verify with `guard-signal-type-coverage.sh` vs. by grep — grep, as the row instructed. Confirmed why: the guard writes live orch-state at line 258 via `ORCH_APPLY_LIVE_FILE_OVERRIDE` and its `--check` is an alias, not a dry-run. Replayed the guard's own `pipeline_a_section | extract_type_column` read-only instead: 28 routed types including the new one, Pipeline-B unchanged at 14.
+- One blanket disposition vs. per-`reason` branching — per-reason. `emit_abort_signal()` has six call sites (push-fail, behind-set-code, merge-conflict, merge-continue-fail, tsc-red, tsc-gate-timeout-skipped); a single rule would route a tsc break on main identically to an informational timeout-skip.
+- Clear the 3 held envelopes so the job goes green — refused. The guard reads that inbox as its input, so clearing is capable of gaming it; PO held them deliberately and I left them (re-counted =3 after the edit).
+**why-decision:** The row's own note said the obvious check is the wrong one and was right, so the verification had to be the guard's algorithm without the guard's side effects. The `ahead` counts in all three envelopes were already stale — 83ab26dc, my own earlier fix this session, resolved their premise — so the table row explicitly tells the router to re-measure rather than trust the envelope.
+**why-change:** Did not attempt the root cause (open producer namespace vs hand-maintained closed allowlist, 5th instance) — that is architect's redesign, tracked separately.
+
+### STEP agent-father-S63 · agent-father · 2026-08-23T16:05:00Z
+**task-id:** FIX-PM-3E-FAILLOUD-HOTFIX
+**what-done:** pm Step 3e's two branches gained four distinct jq refuse-guards and real `|| { echo >&2; exit 1; }` tails (commit 04ee05faa), plus a `.tasks` type guard the brief did not specify.
+**what-considered:**
+- Ship exactly the brief's two edits vs. execute the block first — executed it, and the happy path failed immediately: 2 of 19 live `active_sprints[]` carry no `tasks` key, so both branches died on "Cannot iterate over null" before producing a candidate. Shipping only the brief's edits would have converted a silent no-op into a loud refusal on every single invocation.
+- Materialise `tasks: []` on those two sprints vs. skip them — skip (`if (.tasks|type)=="array" ... else . end`), so a disposition write never mutates unrelated sprint records.
+- Invent distinct exit codes for AC-4's three refusal cases — no. All jq errors exit 5 and the brief's own evidence column says so; they are distinguished by message, and I wrote that down so the next reader does not "fix" it.
+**why-decision:** Why the pre-fix form read as healthy through three occurrences is the whole point, so I proved it rather than asserted it: `... | .[0]` is null on a miss, `null + {status:"DONE"}` is VALID jq, so branch A appended a synthetic id-less row to `done[]` and the write SUCCEEDED. Branch B's `map(if .id == $sid ...)` is a no-op with exit 0. 22/22 on a fixture replay of the literal shipped block, including AC-5's control showing the pre-fix `|| echo` tail exits 0 on a rejected write.
+**why-change:** Stayed inside hotfix scope — the step is not restructured and still cannot dispose of a `ready[]`/`backlog[]` parent; brief row 3 supersedes this block after row 2 ships the script.
