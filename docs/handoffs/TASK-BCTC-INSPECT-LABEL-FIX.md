@@ -100,3 +100,20 @@ AC-14 (`PI3-bctc-inspect.test.ts:361`) is the ONLY assertion in the entire test 
 
 - **Paired task:** TASK-BCTC-INSPECT-UI-FILTERS (client-side facet filter feature)
 - **Parent:** FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER (decomposed from this parent, sibling of TASK-BCTC-INSPECT-UI-FILTERS)
+
+## [Developer] Implementation Record
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/routes/bctcInspectHandler.ts:167-190` — added `QUARTERLY_PERIOD_TYPE_RE` module-scope regex + exported `normalizeQuarter()` (defensive number|string coercion); `buildLabel()` now only appends a ` Q${n}` suffix when `period_type` does NOT already match `/^Q[1-4]$/`, per architect D-1
+  - `apps/mcp-server/src/__tests__/PI3-bctc-inspect.test.ts` — AC-14 assertion at (former) line 361 corrected `"VCB Q1 Q1 2025"` → `"VCB Q1 2025"`; new `describe("TASK-BCTC-INSPECT-LABEL-FIX AC9 — normalizeQuarter()")` block (6 cases: number passthrough, `"Qn"` string coercion, null, undefined, malformed string, `"Q0"` edge case)
+- **Tests written:** `apps/mcp-server/src/__tests__/PI3-bctc-inspect.test.ts` — 49 assertions total in file, 103 `expect()` calls, GREEN
+- **Git commits:** `237fa6e26` fix(mcp-server/bctc-inspect): stop buildLabel() double-appending quarter token
+- **Type check:** clean (`bun tsc --noEmit`, 0 errors)
+- **bun test:** `PI3-bctc-inspect.test.ts` 49 pass / 0 fail; sibling regression files (`PI3-bctc-inspect-reopen2`, `1271-bctc-inspect-md`, `1976-bctc-inspector-page-nav`, `1273-bctc-inspect-overlay`) 60 pass / 0 fail, untouched
+- **Tool count:** 183 tools — server boot healthy (`PORT=3099`, `/health` toolCount=183), no tool registration file touched by this change
+- **Scheduler count:** 88 cron jobs (`gen-project-stats --dry-run`) — unchanged, no scheduler file touched
+- **Live verification:** `curl :3099/api/bctc-inspect/docs` post-fix — 0/268 rows show a duplicated/garbled quarter token (was 255/257 rows pre-fix per architect's live-tested finding); HUT rows now render `"HUT Q1 2024"` etc. correctly. `/api/bctc-inspect` and `/dashboards/news-fetch/` both returned HTML (dashboard circular-dep check clean).
+- **Docs updated:** NONE — pure interface-layer bug fix, no new endpoint/schema/domain concept; existing `docs/architecture/microservice/mcp-server/financial-reports.md` API description of `/api/bctc-inspect/docs` is unaffected by the label-value fix
+- **Graphify:** skipped (no docs impacted)
+- **Simplicity gate:** PASS — Q1 scope clean (regex + normalizer both explicitly required by AC9/D-1 spec), Q2 no single-use abstractions (`normalizeQuarter()` mirrors the existing exported-pure-function test pattern `isDecimalShiftAnomaly`/`isValidUuid`), Q3 senior-test clean (one guard + one helper, no indirection), Q4 ratio <50% overhead (all added lines directly satisfy AC9/AC-14)
