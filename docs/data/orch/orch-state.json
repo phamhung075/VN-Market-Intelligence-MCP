@@ -15494,6 +15494,62 @@
             "observed_at": "2026-08-23T13:56:00Z"
           }
         }
+      },
+      {
+        "id": "TE-T23",
+        "title": "T-23 CLAUDE.md step-2.5 (21L): compress to ~5L (detail in dispatch-claim CARD) [~11k tok/day]",
+        "status": "DONE_VERIFIED",
+        "type": "CLEAN",
+        "size": "S",
+        "priority": "P1",
+        "zone": "cross-service/",
+        "sprint": "TOKEN-ECONOMY-AUDIT",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#TE-T23",
+        "depends_on": [
+          "TE-T12"
+        ],
+        "updated_at": "2026-08-23T11:31:16Z",
+        "claimed_at": "2026-08-23T11:25:00Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "updated_by": "qa",
+        "status_note": "[QA] Review Record (direct-commit verify): commit 63f71bf6e (ancestor-confirmed on main, 1 file changed CLAUDE.md only, 2 ins/9 del) matches developer_note exactly. AC-1/2/3 re-verified live: grep for task_claim(/Re-entrant/Peer collision/finally task_release on live CLAUDE.md -> zero matches, all deleted. AC-4: step 2.5 = CLAUDE.md:7-8 (2L, target <=5L); step 3 = CLAUDE.md:9-10 (2L, target ~2L); both pointer-only into CARD.md, zero restated args/branches. AC-5: Step 2.4 breadcrumb verbatim at CLAUDE.md:7, confirmed present. AC-6: stale \"Router never reverts uncommitted files\" sentence confirmed absent. AC-7: git show 63f71bf6e~1:CLAUDE.md | wc -l = 64 (parent); live wc -l CLAUDE.md = 57 -- exact -7L delta, matches claim precisely. AC-8: single-file commit on main, no branch; steps 1/2/2.5/3 read as coherent numbered sequence. po_scope_note (CLAUDE.md only): git show --stat confirms 1 file changed. Ran targeted zone suite: the 3 test files that assert against CLAUDE.md content (tool-registry-parity.test.ts, DWF-routing-policy-fence.test.ts, 317-telegram-routing-bugs.test.ts) -> 31/31 pass. bun tsc --noEmit (apps/mcp-server) clean, 0 errors. No production non-doc files touched -> mock-guard N/A. Not OOM/crash-class -> Durability Gate N/A. VERDICT: DONE_VERIFIED, zero blocking issue.",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + git show <parent>:CLAUDE.md | wc -l + grep + bun test (targeted) + bun tsc --noEmit",
+            "args": "commit 63f71bf6e ancestor+stat check on CLAUDE.md; parent-vs-live wc -l delta (64->57); grep for deleted task_claim/outcome-table/finally-task_release strings; targeted test files tool-registry-parity.test.ts/DWF-routing-policy-fence.test.ts/317-telegram-routing-bugs.test.ts; apps/mcp-server bun tsc --noEmit",
+            "live_value_observed": "31/31 targeted tests pass; tsc 0 errors; live CLAUDE.md 57L (parent 64L, exact -7L per AC-7); AC-1/2/3/5/6 grep checks all confirm claimed deletions/retentions; AC-8 single-file commit confirmed via git show --stat",
+            "observed_at": "2026-08-23T11:31:15Z"
+          }
+        }
+      },
+      {
+        "id": "FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE",
+        "type": "FIX",
+        "title": "[BCTC-1345b] alert hard-codes 'Check for OCR corruption (VNM/VEA pattern: assets<equity or margin>100%)' but financial=0.10 is emitted ONLY by the unit-mismatch short-circuit that bypasses those rules entirely — 65 live rows (23 tickers) each send the triager to a rule family that provably cannot return 0.10",
+        "status": "DONE_VERIFIED",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE",
+        "updated_at": "2026-08-23T11:31:59Z",
+        "claimed_at": "2026-08-23T11:25:00Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "updated_by": "qa",
+        "qa_verified_at": "2026-08-23T11:31:58Z",
+        "qa_verified_by": "qa",
+        "status_note": "[QA] Review Record (direct-commit verify) 2026-08-23T11:35:00Z -- APPROVED, DONE_VERIFIED. Round 2 (redispatch after my own 2026-08-14 CHANGES_REQUESTED on 7ac55adc8, recorded on this task's detail_ref history in backlog-detail.json). Row's own task_board.qa[] entry was thin (no .commit/.files[]/.owner) -- fell back to detail_ref (docs/data/orch/archive/backlog-detail.json#FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE) for commit_sha=1854156a6, owner=dev-mcp-server.\n\nCommit 1854156a6 ancestor-confirmed on main (git merge-base --is-ancestor). Row's stale files[] (parseBctcReport.ts, financialFiguresValidator.ts) predates an intermediate size-lint extraction (b56dc6cc2, 2026-08-05) that moved the reason-builder into a new file confidenceFinancialReasonBuilder.ts -- traced full provenance via git log --oneline --all on that path (not a blind files[] string match) before accepting the commit as legitimate for this task.\n\nAC-2 gap fix verified by hand-tracing financialFiguresRules.ts's rule cascade: violations.length===1 structurally guarantees confidence in {0.0,0.8} (every hard-fail branch returns immediately with exactly 1 violation and confidence=0.0; when length===1 only one soft violation contributed, giving exactly 0.8) -- the new gate (violations.length===1 && rule in {BCTC-VAL-01,BCTC-VAL-03,BCTC-VAL-10}) in confidenceFinancialReasonBuilder.ts:84-88 is logically sound, not just test-shaped. Confirmed the exact live repro I filed in round 1 (VAL-03+VAL-05 stack -> confidence=0.6) now correctly omits the VNM/VEA hint (new regression test, line ~199-231), and a second stack shape (VAL-03+VAL-01-SCALE -> confidence=0.6, hand-verified -- commit message/status_note narrate this as 0.4, which is a narrative-only mismatch not a functional defect: the test's own assertions (toBeCloseTo(0.6,5), hint absent) are internally consistent and pass, and both 0.4/0.6 are equally outside the AC-2-mandated {0.0,0.8} set). Positive-path regressions (lone VAL-01/VAL-03 still attach the hint) re-confirmed still present and passing (lines ~148, ~173).\n\nVerified live, not trusted from prose: targeted suite FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY.test.ts 11/11 pass (40 expect()). Wider adjacent BCTC/confidence/DDD suite re-run fresh (132-bctc-validator, 1345b-bctc-financial-validation, 1424a-bctc-unit-scale-mismatch, 1815-bctc-confidence-vnm, FIX-BCTC-1345B-REPORT-BATCH, FIX-BCTC-MAGNITUDE-NORMALIZE, bctcMagnitudeValidator, 1813-bctc-ddd): 83/83 pass -- zero regression on adjacent confidence/validator paths this round did not directly touch. bun tsc --noEmit clean, 0 errors. mock-guard.sh --files confidenceFinancialReasonBuilder.ts PASS (no fabricated-data pattern). DDD grep clean: only a docstring line mentions the word \"infrastructure\", zero real domain-to-infrastructure import. Not OOM/crash-durability-class -- OOM-Class Durability Gate N/A.\n\nAC-1 (name real detector) and AC-3 (dead 0.1 floor deleted, docstrings corrected) were already confirmed met in round 1 and untouched by this commit. AC-2 (hint gated to {0.0,0.8}-reachable values) and AC-4 (regression coverage for the stacking case) are now both met. AC-5 (non-goal: no unit-normalisation fix, no repair of the 65 existing rows) respected -- commit touches only confidenceFinancialReasonBuilder.ts + its test file. No blocking issue. VERDICT: DONE_VERIFIED.\n\nDecision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-25.md STEP qa-S156 (task-id stamped).",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun test (targeted+wider BCTC suite) + bun tsc --noEmit + mock-guard.sh + hand-trace of financialFiguresRules.ts cascade",
+            "args": {
+              "commit_verified": "1854156a6",
+              "targeted_test": "FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY.test.ts",
+              "wider_suite": "132-bctc-validator,1345b-bctc-financial-validation,1424a-bctc-unit-scale-mismatch,1815-bctc-confidence-vnm,FIX-BCTC-1345B-REPORT-BATCH,FIX-BCTC-MAGNITUDE-NORMALIZE,bctcMagnitudeValidator,1813-bctc-ddd"
+            },
+            "live_value_observed": "targeted 11/11 pass (40 expect()); wider suite 83/83 pass; tsc 0 errors; mock-guard PASS; violations.length===1 gate confirmed to structurally guarantee confidence in {0.0,0.8}",
+            "observed_at": "2026-08-23T11:31:58Z"
+          }
+        }
       }
     ],
     "head": {
@@ -19160,36 +19216,6 @@
         "next_agent": "qa",
         "updated_by": "po/secondary-drain-20260823T0820Z",
         "po_secondary_drain_20260823T0820Z": "PO 2026-08-23T08:20Z: deploy half RAW-VERIFIED DONE (MemLimit=2GiB live = 2.04x the 1002MiB peak, image 2026-08-14T20:12:15Z, container Up 7d RestartCount=0 OOMKilled=false at 38.05%). Durability half (RAG-MEM-DURABILITY-BAR v2 D1-D5) NOT run and PO explicitly declines to self-certify it. The 7-day window is CONTAMINATED - ~99.7h of it (2026-08-18T09:00Z..2026-08-22T12:40Z) the whole scheduler was dead, so the service was not under real load. qa: run D1-D5 on a window starting AFTER 2026-08-22T12:40Z. Full detail: detail_ref .po_secondary_drain_20260823T0818Z.",
-        "claimed_at": "2026-08-23T11:25:00Z",
-        "claimed_by": "dev-team (review-lane qa-drain)"
-      },
-      {
-        "id": "TE-T23",
-        "title": "T-23 CLAUDE.md step-2.5 (21L): compress to ~5L (detail in dispatch-claim CARD) [~11k tok/day]",
-        "status": "QA",
-        "type": "CLEAN",
-        "size": "S",
-        "priority": "P1",
-        "zone": "cross-service/",
-        "sprint": "TOKEN-ECONOMY-AUDIT",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#TE-T23",
-        "depends_on": [
-          "TE-T12"
-        ],
-        "updated_at": "2026-08-23T11:25:01Z",
-        "claimed_at": "2026-08-23T11:25:00Z",
-        "claimed_by": "dev-team (review-lane qa-drain)"
-      },
-      {
-        "id": "FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE",
-        "type": "FIX",
-        "title": "[BCTC-1345b] alert hard-codes 'Check for OCR corruption (VNM/VEA pattern: assets<equity or margin>100%)' but financial=0.10 is emitted ONLY by the unit-mismatch short-circuit that bypasses those rules entirely — 65 live rows (23 tickers) each send the triager to a rule family that provably cannot return 0.10",
-        "status": "QA",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-BCTC-1345B-ALERT-NAMES-A-RULE-FAMILY-THAT-CANNOT-PRODUCE-ITS-OWN-VALUE",
-        "updated_at": "2026-08-23T11:25:01Z",
         "claimed_at": "2026-08-23T11:25:00Z",
         "claimed_by": "dev-team (review-lane qa-drain)"
       }
