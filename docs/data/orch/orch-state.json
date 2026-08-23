@@ -19965,14 +19965,14 @@
         "priority": "P0",
         "size": "M",
         "zone": "apps/pdf-extractor/",
-        "next_agent": "ops",
+        "next_agent": "qa",
         "supervised": false,
         "plan_only": false,
         "dispatch_lane": null,
         "created_at": "2026-08-15T12:57:00Z",
         "created_by": "po (close-out of SPIKE-BCTC-RECONCILE-EXHAUSTED-REAL-UUID-SUBSET, 2026-08-15 Review-Lane SECONDARY-Drain)",
-        "updated_at": "2026-08-23T14:31:57Z",
-        "updated_by": "dev-pdf-extractor",
+        "updated_at": "2026-08-23T14:53:08Z",
+        "updated_by": "ops",
         "parent": "SPIKE-BCTC-RECONCILE-EXHAUSTED-REAL-UUID-SUBSET",
         "depends": [],
         "blocks": [],
@@ -19982,7 +19982,7 @@
         "claimed_by": "dev-team (review-lane qa-drain)",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE",
         "verify_note": "[dev-pdf-extractor 2026-08-23] IMPLEMENTED, commits 3db7a8dc8 (code) + e97236042 (memory). AC-1..AC-7 PASS; AC-8/AC-9 NOT-RUN (blocked, not skipped). REBUILD_REQUIRED. Full implementation record, per-AC evidence, the out-of-row files touched, the incidental test-flake root cause, and the AC-8/AC-9 blocker analysis + pre-fix telemetry baseline are in the detail_ref cold store (fields implementation_note / ac_verification / ac8_ac9_blocker / files_touched_beyond_row / incidental_fix_note / next_agent_note). QA: AC-8 needs (a) ops rebuild, (b) a deliberate requeue to status=pek_triggered by mcp-server zone (bctc_vps_queue currently has ZERO pek_triggered rows), (c) a 24h window containing that batch. Do NOT certify AC-8 on a zero-traffic window.",
-        "status_note": "\n[QA] HELD at review[] 2026-08-23T13:50Z - partially verified, cannot certify. WHAT PASSES: commit 3db7a8dc8 is real and on main ancestry, touches the row's claimed files, and the core fix is present at apps/pdf-extractor/infrastructure/pek_engine_adapter.py:723 - 'acquire(blocking=True, timeout=wait)', replacing the non-blocking acquire that dropped contended extractions. WHAT BLOCKS CERTIFICATION: the implementer's REBUILD_REQUIRED flag is verified TRUE at source, not taken on trust - the running container vn-market-intelligence-mcp-pdf-extractor-1 was created 2026-08-15T11:47:36+0200 and is 'Up 8 days', so it PREDATES the 2026-08-23T14:42 fix commit and does not contain this code. AC-8/AC-9 are therefore not merely NOT-RUN but structurally uncertifiable right now: the fix is not deployed, and per the row's own note bctc_vps_queue has zero pek_triggered rows, so there is no traffic to observe either. Honouring the implementer's explicit instruction 'Do NOT certify AC-8 on a zero-traffic window.' NOT routed to vc-changes: there is no evidence of a code defect, so forcing rework would violate fix-root-cause discipline. Routing next_agent qa->ops for the rebuild named as blocker (a) in the row's own verify_note; after rebuild + a deliberate requeue to status=pek_triggered + a 24h window containing that batch, re-dispatch to qa.\n[QA] HELD (direct-commit verify, re-check): AC-8/AC-9 still NOT-RUN, re-verified 2026-08-23T14:31Z. Blocker(1) NOT-DEPLOYED now RESOLVED: container recreated 14:14:48Z/started 14:27:12Z, in-container grep confirms acquire(blocking=True, timeout=wait) at pek_engine_adapter.py:723 + env PEK_SEMAPHORE_WAIT_SECONDS=1800 present -- ops rebuild landed since the 13:50Z HELD note. Blocker(2) ZERO-TRAFFIC still UNRESOLVED: live query of market.db bctc_vps_queue shows pek_triggered=0 (deferred_infra 328/done 186/enrich_failed 56/url_not_found 23/pending 21); pdf-extractor logs since container start show 0 pek_extract/SemaphoreContendedError lines; container up only ~15min, nowhere near the required >=24h window containing a batch. AC-1..AC-7 independently re-verified this cycle (not on trust): commit 3db7a8dc8 real+main-ancestor+touches claimed files; 49/49 pytest pass INSIDE the actual deployed pdf-extractor image (docker exec, not host); mock-guard PASS. No code defect -- NOT routing to fixer/developer (fix-root-cause discipline). Re-routing next_agent to ops explicitly (not owner-fallback, owner is null on this row) for step(b) a deliberate requeue of >=3 real UUIDs to status=pek_triggered (dev-mcp-server/ops zone per row's own out_of_scope(c)) + step(c) a >=24h window containing that batch, then re-dispatch qa. DISPATCHER NOTE: docs/data/orch/archive/backlog-detail.json's copy of this row is STALE (next_agent:qa, updated_at 12:51Z, predates the 13:50Z HELD routing decision) -- resolve effective_next_agent from the HOT board row for this id, not the cold copy.",
+        "status_note": "\n[QA] HELD at review[] 2026-08-23T13:50Z - partially verified, cannot certify. WHAT PASSES: commit 3db7a8dc8 is real and on main ancestry, touches the row's claimed files, and the core fix is present at apps/pdf-extractor/infrastructure/pek_engine_adapter.py:723 - 'acquire(blocking=True, timeout=wait)', replacing the non-blocking acquire that dropped contended extractions. WHAT BLOCKS CERTIFICATION: the implementer's REBUILD_REQUIRED flag is verified TRUE at source, not taken on trust - the running container vn-market-intelligence-mcp-pdf-extractor-1 was created 2026-08-15T11:47:36+0200 and is 'Up 8 days', so it PREDATES the 2026-08-23T14:42 fix commit and does not contain this code. AC-8/AC-9 are therefore not merely NOT-RUN but structurally uncertifiable right now: the fix is not deployed, and per the row's own note bctc_vps_queue has zero pek_triggered rows, so there is no traffic to observe either. Honouring the implementer's explicit instruction 'Do NOT certify AC-8 on a zero-traffic window.' NOT routed to vc-changes: there is no evidence of a code defect, so forcing rework would violate fix-root-cause discipline. Routing next_agent qa->ops for the rebuild named as blocker (a) in the row's own verify_note; after rebuild + a deliberate requeue to status=pek_triggered + a 24h window containing that batch, re-dispatch to qa.\n[QA] HELD (direct-commit verify, re-check): AC-8/AC-9 still NOT-RUN, re-verified 2026-08-23T14:31Z. Blocker(1) NOT-DEPLOYED now RESOLVED: container recreated 14:14:48Z/started 14:27:12Z, in-container grep confirms acquire(blocking=True, timeout=wait) at pek_engine_adapter.py:723 + env PEK_SEMAPHORE_WAIT_SECONDS=1800 present -- ops rebuild landed since the 13:50Z HELD note. Blocker(2) ZERO-TRAFFIC still UNRESOLVED: live query of market.db bctc_vps_queue shows pek_triggered=0 (deferred_infra 328/done 186/enrich_failed 56/url_not_found 23/pending 21); pdf-extractor logs since container start show 0 pek_extract/SemaphoreContendedError lines; container up only ~15min, nowhere near the required >=24h window containing a batch. AC-1..AC-7 independently re-verified this cycle (not on trust): commit 3db7a8dc8 real+main-ancestor+touches claimed files; 49/49 pytest pass INSIDE the actual deployed pdf-extractor image (docker exec, not host); mock-guard PASS. No code defect -- NOT routing to fixer/developer (fix-root-cause discipline). Re-routing next_agent to ops explicitly (not owner-fallback, owner is null on this row) for step(b) a deliberate requeue of >=3 real UUIDs to status=pek_triggered (dev-mcp-server/ops zone per row's own out_of_scope(c)) + step(c) a >=24h window containing that batch, then re-dispatch qa. DISPATCHER NOTE: docs/data/orch/archive/backlog-detail.json's copy of this row is STALE (next_agent:qa, updated_at 12:51Z, predates the 13:50Z HELD routing decision) -- resolve effective_next_agent from the HOT board row for this id, not the cold copy.\n[ops 2026-08-23T14:15Z] REBUILD DONE — qa's blocker (a) is CLEARED. Image ID changed 4ee7f1c3598e -> e5d36a387b74 (built 14:10:42Z with --build-arg GIT_SHA=5a7a873cc, container recreated, StartedAt 2026-08-23T14:15:02Z, i.e. AFTER the fix commit and after dispatch). Not a restart: `docker compose build pdf-extractor` + `up -d --no-deps pdf-extractor`, single service, peers untouched (all 12 host_runtime_set containers Up after; builder prune run).\nPROOF THE RUNNING PROCESS CARRIES THE FIX (runtime, not file-on-disk): python3 introspection of the LOADED module inside the container returns PekEngineAdapter.extract_layout_and_tables(self, pdf_path, report_id, wait_s: Optional[float] = None) with body line `acquired = _extraction_semaphore.acquire(blocking=True, timeout=wait)` and `wait = _SEMAPHORE_WAIT_SECONDS if wait_s is None else wait_s`; module-level _SEMAPHORE_WAIT_SECONDS = 1800, container env PEK_SEMAPHORE_WAIT_SECONDS=1800 (compose plumbing live). Pre-rebuild the same probe showed acquire(blocking=False) at line 657 and zero occurrences of the env knob — REBUILD_REQUIRED was correctly assessed TRUE by both dev and qa.\nBLOCKER (b) ALSO CLEARED BY OPS: bctc_vps_queue had pek_triggered=0, so ops ran the already-authored migration reset-bctc-enricher-stuck-backlog-2026-04.ts (the action plan of ops other ready row, same DB) — 21/21 rows url_not_found -> pending, RAW-verified (histogram url_not_found 44->23, pending 0->21). The pipeline then fired organically: by 14:51Z pending=13, pek_triggered=6, 6x POST /pek-extract 202 Accepted against the NEW image.\nAC-8 EARLY EVIDENCE (qa to certify, ops does not self-certify): in the post-rebuild window 14:39-14:51Z with 6 concurrent PEK extractions queued — SemaphoreContendedError = 0 and `_run_pek_extract: FAILED` = 0. Pre-fix baseline recorded by dev for a comparable batch: 30 raises / 39 FAILED traces. No contended drops observed. NOT yet certifiable: bctc_layout_units (5905) and bctc_table_rows (4940) are UNCHANGED — the 6 extractions are still in flight, so extraction OUTPUT has not yet landed. qa should re-probe after the 15:05/15:35 reconcile ticks with scripts/ops-bctc-2025q4-cohort-probe.sh.\nAC-9 — REFUTED, NOT CONFIRMED. Report this plainly per the AC own instruction. A-30 did NOT quiet. On the POST-fix image, pdf-extractor memory climbed to 99.99% of its 2.5GiB cgroup cap and the process silently exited (ExitCode=0, OOMKilled=false) at 14:27:10Z, RestartCount 0->1; 7 health probes returned HTTP 000 during the pin. DECISIVE ATTRIBUTION: that episode occurred in the 14:15-14:39Z window, where /pek-extract count was ~0 while POST /extract carried 127 requests and ocr_gateway logged 41 errors. The burst the architect blamed had not started yet. So the sustained-memory/A-30 signal is NOT a downstream symptom of PEK semaphore contention; it tracks the legacy scalar /extract + ocr_gateway path. Per AC-9 this needs a FOLLOW-UP ROW, not a silent close.\nTHIRD FINDING (new, not in any row): ocr_gateway emits its own fail-loud 59 times since rebuild — \"ocr_gateway.inflight: semaphore=1 != os_children=0 — bookkeeping disagrees with OS ground truth (this mismatch is, by definition, a bug)\". Slot accounting leaks against OS truth; 90 of 199 /extract posts got 429. Prime suspect for the A-30 memory/wedge behaviour above. Needs its own row (apps/pdf-extractor/infrastructure/ocr_gateway.py).\nFOURTH FINDING (deploy-gate defect): scripts/verify-deploy-sha.sh pdf-extractor can NEVER pass. apps/pdf-extractor/Dockerfile:19 emits `LABEL git_sha=` while all 10 sibling Dockerfiles emit `LABEL vn.market.git_sha=`, which is the label the gate reads — so it always reports \"label absent. Rebuild required.\" even on a correctly deployed image. Ops verified the deploy via image-ID + runtime introspection instead. One-line Dockerfile fix, dev-pdf-extractor zone.\nROUTING: next_agent ops -> qa. Blockers (a) and (b) are both discharged and the traffic window is OPEN and live.",
         "drain_source_lane": "review",
         "redispatch_count": 1,
         "qa_changes_requested_at": "2026-08-23T14:31:56Z"
@@ -20410,7 +20410,7 @@
         "last_served_tick": "2026-08-23T11:54:46Z"
       }
     },
-    "_updated_at": "2026-08-23T14:25:37Z",
+    "_updated_at": "2026-08-23T14:53:10Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20472,6 +20472,89 @@
         "drained_at": "2026-08-23T14:22:34Z",
         "routed_to": "PO Step 0-SIG",
         "po_hold_20260823": "HELD DELIBERATELY by po 2026-08-23T14:52Z — NOT cleared, NOT lost. Step 0-SIG's CLEAR contract permits clearing only entries that have been ROUTED, and type `auto-push-abort` has NO row in the Pipeline-A routing table of docs/agents/po/flow/triage-signals.md, so these three are by definition unrouted. Clearing them would be a silent loss AND would flip scripts/audits/guard-signal-type-coverage.sh green while the coverage gap it is reporting is still real — the guard reads this inbox as its input, so PO's own CLEAR is capable of gaming it. Deliberately not gaming it. Tracked by FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort (ready[], P0, agent-father). CLEAR CONDITION: once that row lands the table entry, PO routes these three per the new rule and clears them in the same cycle. PREMISE FOR WHOEVER ROUTES THEM: all three report `git push origin HEAD:main returned non-zero` with ahead=35/42/49 during the 13:35-14:10Z window. That premise is now RESOLVED — the LINE-MOVED task-claim-lint gate that was blocking pushes was fixed by 83ab26dc, the backlog drained, and origin/main measured behind=0 at 14:34Z. So the correct disposition for these three specific envelopes is ACK-and-drop with no task minted; the routing-table row is still required so the NEXT occurrence is not another CI red."
+      },
+      {
+        "envelope_id": "c76009dbaf385699de8037b6e7c7fd3521859cecb91f7794f0c17bbe2d3cb48d",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/developer.md — retained section '## Session 2026-08-23T13:45:00Z — FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE, SCOPE CORRECTION to the section below (cross-service/, developer, P2 S, session 007e33e4)' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-23T14:34:44Z",
+        "drained_at": "2026-08-23T14:53:09Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "a6ab7ac87df46d2c00cfb004b5b3e7081626759089206ba31de56145d2f64d19",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=007e33e4-b453-4bb3-8ab1-ef31495906a3 mode=warn escalated=true prior_warns=7 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-23T14:44:33Z",
+        "drained_at": "2026-08-23T14:53:09Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "aece92d95842d77f14e3a98cbb7bf414141acbf036e2d0d846a741a356db4f88",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c113 · 2026-08-23T14:07Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-23T14:44:42Z",
+        "drained_at": "2026-08-23T14:53:09Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9e19a74923ee1591470c702730c153a11a1a576c20216d258e673131b4d83fee",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/incidents/data/rag-durability-2026-08-23T1423Z-16c59b5e929f-window.csv' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/incidents/data/rag-durability-2026-08-23T1423Z-16c59b5e929f-window.csv' (5a334ee33fed4fbb1b91c6ae845364d98daa9b6b) differs from what is about to land in this commit (b615c2452b69d4345aec88a4710d423283281dd8) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope (two-blob form takes NO pathspec — do not append '-- docs/incidents/data/rag-durability-2026-08-23T1423Z-16c59b5e929f-window.csv', that is a git usage error): git diff 5a334ee33fed4fbb1b91c6ae845364d98daa9b6b b615c2452b69d4345aec88a4710d423283281dd8",
+        "createdAt": "2026-08-23T14:52:38Z",
+        "drained_at": "2026-08-23T14:53:09Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fa6ff18562f3af02fe35af77b008d053ddf1200191e3ba9c9684fb10944667eb",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": ".claude/skills/cron-cowork-team/SKILL.md",
+          "line_count": 293,
+          "cap": 200,
+          "byte_count": 18844,
+          "byte_cap": 12000,
+          "class": "skill-file",
+          "reason": "line-cap,byte-cap",
+          "overage": 93,
+          "byte_overage": 6844,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-23T14:50:03Z",
+        "drained_at": "2026-08-23T14:53:09Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "187ff2219ee1fc44a73222312e09dc8f03b999caa715c88319cf8b74fe9ef8d7",
+        "source": "file",
+        "from": "agents-architect",
+        "to": "po",
+        "type": "brief_complete",
+        "priority": "normal",
+        "payload": "docs/architecture-briefs/2026-08-23-flow-file-cap-glob-fix-and-doc-plane-baseline-ratchet.md",
+        "createdAt": "2026-08-23T14:30:00Z",
+        "drained_at": "2026-08-23T14:53:09Z",
+        "routed_to": "PO Step 0-SIG"
       }
     ],
     "last_po_triage_at": "2026-08-23T12:48:03Z",
