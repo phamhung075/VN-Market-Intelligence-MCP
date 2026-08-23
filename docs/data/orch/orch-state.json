@@ -19291,7 +19291,7 @@
         "last_served_tick": "2026-08-23T08:55:59Z"
       }
     },
-    "_updated_at": "2026-08-23T10:52:46Z",
+    "_updated_at": "2026-08-23T11:22:10Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -19424,6 +19424,63 @@
         },
         "createdAt": "2026-08-23T10:30:44Z",
         "drained_at": "2026-08-23T10:51:47Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2f8d21037ace92df638b779b197762a7fd6707c6ab4c8a5b6d9ecb41901af64b",
+        "source": "file",
+        "from": "agents-architect",
+        "to": "agent-father",
+        "type": "flow_actuator_fix",
+        "priority": "P0",
+        "payload": {
+          "from": "agents-architect",
+          "to": "agent-father",
+          "type": "flow_actuator_fix",
+          "task_id": "FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR",
+          "priority": "P0",
+          "target_files": [
+            "docs/agents/qa/flow/main.md"
+          ],
+          "no_new_brief": true,
+          "no_new_brief_reason": "PO's own po_scope_note on the task_board row states the design is already fully specified in the row's desc and explicitly instructs a one-hop signal, not a fresh design cycle. agents-architect independently re-verified the desc against live source (both prose gaps confirmed exactly as described, at the stated line numbers) before dropping this signal — see design_verification below.",
+          "createdAt": "2026-08-23T11:01:46Z",
+          "summary": "docs/agents/qa/flow/main.md's two Direct-Commit-Verify verdict exits (vc-approved ~L189/202, vc-changes ~L198/211) describe the .task_board.qa[] lane-move in PROSE ONLY, with no jq+orch-apply.sh pipe. 4 rows confirmed stranded by this (FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR, FACTORY-ALERT-dedup-window-config, FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT..., FIX-STOCKPRICE-PRICEHISTORY-RO-WAL-DSN...), each permanently consuming a QA-Drain QA_CAP=10 slot. Live-measured 2026-08-23T08:30Z (router, corroborated): qa[] sits at exactly 10/10, review[] holds 23 unable to enter, dev-team's Review-Lane QA-Drain gate (`QA_WIP < QA_CAP`) evaluates 10>=10 and no-ops. Template precedent for the fix shape: commit 3ce726a6e (FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR) — replaced identical prose-only board-mutation prose with inline `jq ... | bash scripts/orch-apply.sh` pipes at every mutation point in po/flow/*.md.",
+          "design_verification": {
+            "verified_by": "agents-architect",
+            "verified_at": "2026-08-23T11:00Z",
+            "method": "Read live docs/agents/qa/flow/main.md directly (not the row's paraphrase) — confirmed vc-approved (line 205 in current file) reads 'Flip status: QA -> DONE_VERIFIED, move .task_board.qa[] -> .task_board.done_verified[], IN THE SAME orch-apply.sh write' with no jq filter/pipe attached, and vc-changes (line 214) reads 'Move .task_board.qa[] -> .task_board.review[] ... stamp redispatch_count += 1' with zero orch-apply mention. Both match the row's desc verbatim. Also confirmed the neighbouring WF-1 STOP-RELEASE block (line 30-33) and quality-audit.md:13/65 ARE real, working orch-apply.sh pipes already in this same file/dir — i.e. the fix shape only needs to be replicated locally, a working style precedent already exists in-file.",
+            "verdict": "Design in the row's desc is correct and complete for AC-1/AC-2/AC-3. Not overriding po_scope_note — no new brief authored."
+          },
+          "proposed_patch": {
+            "AC-1_vc-approved": {
+              "location": "docs/agents/qa/flow/main.md, <!-- jump:vc-approved --> block (currently prose-only, ends '...IN THE SAME orch-apply.sh write').",
+              "instruction": "Insert an executable jq+orch-apply.sh block immediately after the existing prose sentence (keep the prose — it explains intent; add the pipe as the literal mechanism), following the file's own WF-1 STOP-RELEASE style (line 30-33: --arg flags, .head-shape jq filter, $PROJECT_ROOT).",
+              "code": "NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)\njq --arg id \"$task_id\" --arg now \"$NOW\" --arg note \"$REVIEW_RECORD_NOTE\" '\n  (.task_board.qa // []) as $q\n  | ([$q[] | select(.id == $id)][0]) as $t\n  | if $t == null then error(\"id not in qa[] -- refuse\")\n    elif ($t.status // null) != \"QA\" then error(\"status != QA (\\($t.status)) -- refuse\")\n    else . end\n  | .task_board.qa = [$q[] | select(.id != $id)]\n  | .task_board.done_verified = ((.task_board.done_verified // []) + [\n      ($t + {\n        status: \"DONE_VERIFIED\",\n        next_agent: null,\n        qa_verified_at: $now,\n        status_note: (($t.status_note // \"\") + \"\\n[QA] Review Record (direct-commit verify): \" + $note)\n      })\n    ])\n' \"$PROJECT_ROOT/docs/data/orch/orch-state.json\" | bash \"$PROJECT_ROOT/scripts/orch-apply.sh\"",
+              "ac3_self_verify": "jq -e --arg id \"$task_id\" '.task_board.done_verified[] | select(.id == $id) | .status == \"DONE_VERIFIED\"' \"$PROJECT_ROOT/docs/data/orch/orch-state.json\" || { echo \"LANE-MOVE NOT PERSISTED\"; exit 1; }  # RETURN may not assert the lane-move without this passing"
+            },
+            "AC-2_vc-changes": {
+              "location": "docs/agents/qa/flow/main.md, <!-- jump:vc-changes --> block (currently 100% prose, zero orch-apply mention).",
+              "instruction": "Same pattern, target lane review[], flip status QA->REVIEW, stamp redispatch_count+=1, route next_agent/owner to the row's OWN .owner field per the existing prose ('NOT fixer -- there is no task branch for a fixer to work on').",
+              "code": "NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)\njq --arg id \"$task_id\" --arg now \"$NOW\" --arg note \"$ISSUE_NOTE\" '\n  (.task_board.qa // []) as $q\n  | ([$q[] | select(.id == $id)][0]) as $t\n  | if $t == null then error(\"id not in qa[] -- refuse\")\n    elif ($t.status // null) != \"QA\" then error(\"status != QA (\\($t.status)) -- refuse\")\n    else . end\n  | .task_board.qa = [$q[] | select(.id != $id)]\n  | .task_board.review = ((.task_board.review // []) + [\n      ($t + {\n        status: \"REVIEW\",\n        next_agent: $t.owner,\n        redispatch_count: (($t.redispatch_count // 0) + 1),\n        status_note: (($t.status_note // \"\") + \"\\n[QA] CHANGES_REQUESTED (direct-commit verify): \" + $note)\n      })\n    ])\n' \"$PROJECT_ROOT/docs/data/orch/orch-state.json\" | bash \"$PROJECT_ROOT/scripts/orch-apply.sh\"",
+              "ac3_self_verify": "jq -e --arg id \"$task_id\" '.task_board.review[] | select(.id == $id) | .status == \"REVIEW\"' \"$PROJECT_ROOT/docs/data/orch/orch-state.json\" || { echo \"LANE-MOVE NOT PERSISTED\"; exit 1; }"
+            },
+            "AC-4_AC-5_out_of_zone": {
+              "finding": "docs/agents/agent-father/init.md commit_zone.allowed = [docs/agents/, docs/agent-memory/, .claude/skills/, .claude/agents/]; commit_zone.excluded explicitly lists apps/ and orch-state.json; scripts/ is in neither list, i.e. also out of zone.",
+              "instruction": "Do NOT author the AC-4 regression verifier (opt-in allowlist checker over docs/agents/qa/flow/*.md verdict exits) or the AC-5 fixtures yourself. Per the FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR precedent (commit 3ce726a6e's own message: 'Regression verifier ... spec'd inline but not authored -- scripts/ is outside agent-father's commit_zone; handed off via RETURN'), spec AC-4/AC-5 inline in your RETURN and hand off to a developer-owned follow-up board row (mint via po, do not silently drop)."
+            }
+          },
+          "caveat_flagged_not_folded_in": "AC-2's qa[]->review[] move lands the row IN a scripts/orch-row-prose-ceiling-check.mjs:105 PROSE_CEILING_LANES-guarded lane (review) FROM an unguarded one (qa). scripts/orch-row-prose-ceiling-check.mjs's collectRowsById() only scans backlog|ready|review on BOTH the live and candidate side (verified at source, line ~105 + the D3 finding in docs/architecture-briefs/2026-08-23-orch-row-prose-ceiling-value-shape-measure-and-frozen-cohort-paydown.md), so a row arriving in review[] from qa[] measures live=0B and is treated as a brand-new mint -- any QA row already over the 12000B ceiling would hard-reject this exact move until D3 ships. D3 is ALREADY tracked and decomposed (FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS + TASK-PROSECEILING-LIVE-BASELINE-ALL-LANES + TASK-PROSECEILING-VALUE-SHAPE-MEASURE, all ready[]/next_agent=developer) -- not re-designed here, not folded into this task's scope. AC-1's qa[]->done_verified[] move is unaffected (done_verified[] is not in PROSE_CEILING_LANES). Recommend the AC-4 regression-verifier follow-up row (see above) note this interaction so its fixtures don't accidentally exercise an over-ceiling row.",
+          "routing_note": "This signal, not a task_board next_agent flip, is the dispatch path: agent-father is off the DRS ratified allowlist [architect,ba,pm,po,agents-architect] and unreachable by automated dispatch (same finding this row's own po_scope_note makes; precedent FIX-COMMITCONVENTION-MANDATES-BARE-COMMIT was only ever picked up via PO's manual-dispatch/batch-fold). The task_board row itself has been routed next_agent=po/owner=po (not agent-father) to avoid stranding it a 5th time -- PO should batch-fold or manually dispatch agent-father with intent=edit, change_description=this signal's proposed_patch.",
+          "actions": [
+            "edit docs/agents/qa/flow/main.md vc-approved block: add the AC-1 jq+orch-apply.sh pipe + AC-3 self-verify, keep existing prose",
+            "edit docs/agents/qa/flow/main.md vc-changes block: add the AC-2 jq+orch-apply.sh pipe + AC-3 self-verify, keep existing prose",
+            "RETURN handoff: mint a developer-owned follow-up row for AC-4 (opt-in allowlist regression verifier) + AC-5 (approved/changes/prose-only fixtures) -- scripts/ is outside your commit_zone",
+            "do NOT touch the 4 already-stranded rows named in the task desc -- that is data remediation, separately PO's/dev-team's call, out of this design's scope"
+          ]
+        },
+        "createdAt": "2026-08-23T11:01:46Z",
+        "drained_at": "2026-08-23T11:22:10Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

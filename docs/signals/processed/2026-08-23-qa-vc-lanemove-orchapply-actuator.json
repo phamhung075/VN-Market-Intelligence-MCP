@@ -42,5 +42,11 @@
     "edit docs/agents/qa/flow/main.md vc-changes block: add the AC-2 jq+orch-apply.sh pipe + AC-3 self-verify, keep existing prose",
     "RETURN handoff: mint a developer-owned follow-up row for AC-4 (opt-in allowlist regression verifier) + AC-5 (approved/changes/prose-only fixtures) -- scripts/ is outside your commit_zone",
     "do NOT touch the 4 already-stranded rows named in the task desc -- that is data remediation, separately PO's/dev-team's call, out of this design's scope"
-  ]
+  ],
+  "_processed": {
+    "fingerprint": "2f8d21037ace92df638b779b197762a7fd6707c6ab4c8a5b6d9ecb41901af64b",
+    "processedAt": "2026-08-23T11:22:10Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
