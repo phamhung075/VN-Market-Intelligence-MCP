@@ -80,3 +80,13 @@
 - OOM-Class gate applicability — N/A, row makes no crash/memory/durability claim.
 **why-decision:** every AC (AC-1/2/3) independently re-verified against live artifacts (repo re-run + real GitHub Actions job, not the row's own prose) with zero ISSUE found → JUMP TO vc-approved.
 **why-change:** no change from plan; added the live-CI-job cross-check as the one gap the developer explicitly flagged as unverified.
+
+### STEP qa-S179 · qa · 2026-08-23T20:35Z
+**task-id:** FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE
+**what-done:** Re-verify vs AC-8a ONLY (PO split ruling 18:05Z; AC-8b moved to FOLLOWUP-PEK-EXTRACT-CONTENTION-PACING-CAPACITY-24H-WINDOW). Prior HELD note (13:50Z, "container predates fix") is stale — confirmed stale myself: current container Created=2026-08-23T15:44:11Z, image git_sha=`0c9380859` is-ancestor-descendant of fix `3db7a8dc8` (12:42:04Z), in-container source read shows live `acquire(blocking=True, timeout=wait)` at pek_engine_adapter.py:723, env `PEK_SEMAPHORE_WAIT_SECONDS=1800`.
+**what-considered:**
+- trust PO's "SATISFIED" ruling on trust vs independently re-probe the CURRENT (post-15:44Z) container — re-probed: all 33 SemaphoreContendedError raises across this container's whole lifetime say "1800s elapsed" (zero near-instant/anomalous), and one concrete id (`fallback-POW-2025-Q4`) queued through 2 full 1800s cycles then WON the slot at 18:47:57Z and completed (units=38) — direct proof of queue-not-drop behaviour.
+- DB corroboration read-only (no live-extraction trigger, per hard runtime constraint): `bctc_layout_units` 6142->6193 (+51) with `MAX(extracted_at)`=18:32:21, exactly matching a real DONE log line (`push_echo_units=51`, same report_id, same second) — landing is genuine, not log-only.
+- redispatch_count: PO explicitly ruled NOT to increment for the split — honoured (left untouched in the jq transform).
+**why-decision:** AC-8a text ("contended PEK extractions are no longer SILENTLY INSTANT-DROPPED") is satisfied on fresh, current-container, read-only evidence — code path, timing, and DB landing all independently corroborate. AC-8b/AC-9 out of this row's re-verify scope per explicit dispatch instruction → JUMP TO vc-approved.
+**why-change:** no change from PO's ruling; this entry supplies the independent re-derivation the dispatcher asked for instead of trusting the stale note or the PO ruling on trust alone.
