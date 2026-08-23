@@ -88,10 +88,10 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-08-23T16:00:38Z",
-    "updated_by": "dev-team (SLS claim reverted - gate not satisfied)",
     "active_task_id": null,
-    "next_agent": null
+    "next_agent": null,
+    "updated_at": "2026-08-23T16:48:50Z",
+    "updated_by": "dev-team (RLC completion — CCATO-MCP-T3 verified, moved to review/qa)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -127,8 +127,8 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-23T15:07:20Z",
-    "_updated_by": "agent-father",
+    "_updated_at": "2026-08-23T16:31:58Z",
+    "_updated_by": "code-janitor",
     "archive": [],
     "rows": [
       {
@@ -773,6 +773,17 @@
           "related_incident": "docs/incidents/ops-20260823-pdfx-rebuild-and-a30-refutation.md",
           "commit": "23486b9cb"
         }
+      },
+      {
+        "id": "cj-20260823T163141",
+        "ts": "2026-08-23T16:31:41Z",
+        "from": "code-janitor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "team-tool-recheck writer dead since 06-23 - replace-vs-retire decision needed",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-23.json"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -17264,22 +17275,6 @@
         }
       },
       {
-        "id": "CCATO-MCP-T3-PROBE-ADAPTERS",
-        "type": "IMPL-XS",
-        "status": "READY",
-        "size": "XS",
-        "zone": "mcp-server",
-        "priority": "P0",
-        "title": "infrastructure/probes/narrativeTruthProbeAdapters.ts (5 adapters, incl. reports.ts extraction)",
-        "depends": [
-          "CCATO-MCP-T1-DOMAIN-ENGINE"
-        ],
-        "next_agent": "dev-mcp-server",
-        "supervised": false,
-        "updated_at": "2026-07-17T04:53:14ZZ",
-        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)"
-      },
-      {
         "id": "CCATO-MCP-T5-USECASE",
         "type": "IMPL-XS",
         "status": "READY",
@@ -20766,6 +20761,27 @@
         "dev_completed_at": "2026-08-23T15:44:21Z",
         "dev_completed_by": "dev-mcp-server",
         "dev_summary": "dev-mcp-server: all 4 ACs implemented+tested. New table bctc_zero_extract_blocks (schema-financial-reports.ts) + infrastructure/db/bctcZeroExtractBlocklist.ts persist attempt_count/last_blocked_at/reason on every blocked totalAssets<=0 write (AC-1), dead-letter at BCTC_ZERO_EXTRACT_DEAD_AT_ATTEMPTS=5 mirroring bctcReparseJob.ts:776-803 (AC-2). fetchParseAndStoreBctc.ts + pushBctcExtraction.ts (new isDeadLettered dep, checked before any OCR tier) short-circuit once dead-lettered, replayed for all 8 named pairs (AC-3). Block message text only claims 'flagged for manual review' when the durable write actually succeeded (AC-4). New test FIX-BCTC-ZEROEXTRACT-BLOCK-NO-FAILURE-RECORD-UNBOUNDED-REEXTRACT-LOOP.test.ts 7/7 pass. tsc clean, eslint clean, targeted BCTC suite 267 pass/0 fail/2 pre-existing skip. NOT COMMITTED: this session has no MCP tool grant (mcp__gateway__call_tool unavailable) so commit-mutex:main could not be claimed per router instructions (skip-if-claim-fails); diff left uncommitted in the working tree for dispatcher/PO to commit."
+      },
+      {
+        "id": "CCATO-MCP-T3-PROBE-ADAPTERS",
+        "type": "IMPL-XS",
+        "status": "REVIEW",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "infrastructure/probes/narrativeTruthProbeAdapters.ts (5 adapters, incl. reports.ts extraction)",
+        "depends": [
+          "CCATO-MCP-T1-DOMAIN-ENGINE"
+        ],
+        "next_agent": "qa",
+        "supervised": false,
+        "updated_at": "2026-08-23T16:48:50Z",
+        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)",
+        "claimed_at": "2026-08-23T16:25:20Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "dev-mcp-server",
+        "owner": "qa",
+        "status_note": "dev-mcp-server complete, commit 845fd1aa8 (3 files, 749+/20-). Dispatcher-verified at source, not from the agent RETURN: commit exists with exactly the claimed file set; 5 adapters + probeDimension exported from infrastructure/probes/narrativeTruthProbeAdapters.ts; R-4 extraction present (fetchFinancialReportRow/ReportRow/rowToMetrics exported from reports.ts). Re-ran independently: CCATO-MCP-T3-PROBE-ADAPTERS.test.ts 23 pass/0 fail; bun tsc --noEmit exit 0; 085-tool-reports.test.ts (R-4 touched surface) 5 pass/2 skip/0 fail - compare_financials behavior unchanged. Full-suite NOT run to completion (agent disclosed this plainly); correct per dev-standards.md:2073 CANONICAL pinned reading - targeted/merge-gate scope is the gate, apps/mcp-server carries a standing tracked full-suite red FIX-MCP-SUITE-HEALTH-BASELINE. QA: a base-vs-head A/B for zero NET NEW failures is the remaining bar that reading asks for. Also confirmed: brief 2026-07-17-ccato-truthgate-mcp-native.md line 46 cites infrastructure/db/vnstockStore.ts:579 for getForeignFlowHistory - stale, that file is now a 37-line barrel and the function is at infrastructure/db/vnstock/foreignFlowStore.ts:33. Unblocks CCATO-MCP-T5-USECASE (deps T1,T2,T3,T4). NOT pushed - PUSH-AUTONOMY-1 gates on qa."
       }
     ],
     "qa": [
@@ -21124,7 +21140,7 @@
         "last_served_tick": "2026-08-23T15:57:20Z"
       },
       "rlc": {
-        "last_served_tick": "2026-08-23T13:27:54Z"
+        "last_served_tick": "2026-08-23T16:25:10Z"
       },
       "drs": {
         "last_served_tick": "2026-08-23T13:56:24Z"
@@ -21136,7 +21152,7 @@
         "last_served_tick": "2026-08-23T14:55:52Z"
       }
     },
-    "_updated_at": "2026-08-23T16:22:10Z",
+    "_updated_at": "2026-08-23T16:25:10Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
