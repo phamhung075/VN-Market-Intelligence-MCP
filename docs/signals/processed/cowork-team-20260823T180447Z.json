@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260823T180447Z",
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "bctc-analyst-slot-2": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-2": null
+    },
+    "last_fired_timestamp": "2026-08-23T18:03:49Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "18:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 31,
+    "note": "single-slot tick; Step 5.3 off-flow detector DEFERRED per BGFAN-1 (background spawn, return not yet available) — router applies de-stamp reconciliation against last_fired=2026-08-23T18:03:49Z (pre-write value 2026-08-22T18:07:36Z) if MARKER_HITS>=2 on arrival. emit_pressure_state returned cycle_snapshot_promoted=false: Step 4.7 wrote cycle-snapshot-18:01.json by wall-clock minute while promotion looks up nominal tick 18:00 — known tracked wallclock-vs-nominal defect, not new."
+  },
+  "priority": "low",
+  "createdAt": "20260823T180447Z",
+  "_processed": {
+    "fingerprint": "acb722e23814578f105c912994ca33e736480d143995e4f3dfd13e87d3585fdb",
+    "processedAt": "2026-08-23T18:22:22Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

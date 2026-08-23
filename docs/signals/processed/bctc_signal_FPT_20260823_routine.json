@@ -4,47 +4,38 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "IT services, software exports, telecom (FPT Telecom, deconsolidated to equity-method 2026), education (FPT Edu)",
-  "customer": "Enterprise IT buyers (VN + offshore, Europe +44.4% YoY / Japan growth), broadband subscribers via FTEL associate, students across FPT school network",
-  "ops": "Gross margin 34.0%, operating margin 22.0%. Q1-2026 net revenue 12,480 ty VND, reported -22.3% YoY due to FTEL consolidation-method change; like-for-like restated basis +8.7% revenue / +13.8% NI YoY. OCF -2,848 ty VND vs NI +2,477 ty VND this quarter (working-capital drag from AR/inventory build, not a going-concern signal — Q4-2025 OCF was positive +4,108 ty VND).",
-  "mgmt": "ROE 6.2% raw-quarter / 28.3% sector-comparison annualized (well above sector median 10.6%). PE 13.8x vs sector median 17.3x (discount -20%), PB 3.6x (premium +136%). EY_SPREAD +2.25pp vs 5% deposit rate -> FAIR valuation.",
-  "esc_results": {
-    "ESC-1": "SCOPE-REDUCED (no bctc_table_rows/bctc_balance_checks tool access)",
-    "ESC-2": {
-      "result": false,
-      "imbalance_pct": 0
-    },
-    "ESC-3": {
-      "result": "DATA-COVERAGE-LIMITED",
-      "quarters_returned": 3,
-      "coverage_guard_held": true,
-      "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3"
-    },
-    "ESC-4": {
-      "result": false,
-      "non_operating_share_pct": 2
-    },
-    "ESC-5": {
-      "result": true,
-      "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
-      "low_confidence_unit_count": 7,
-      "min_confidence": 0.45,
-      "escalation_status": "GUARD-HELD",
-      "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
-    }
-  },
+  "product": "IT services, software exports (Japan/US/Europe), telecom (FPT Telecom, equity-method since 2026), IT education (FPT Edu).",
+  "customer": "Enterprise IT buyers VN + offshore, broadband/telecom subscribers, university/vocational students.",
+  "ops": "Q1-2026 revenue 12,480 ty VND (+8.7% YoY on equity-method-adjusted comparable basis after FTEL deconsolidation); gross margin 34.0%; operating margin 22.0%; ROE 28.3% (sector-comparison, above sector median 10.6%); PE 13.8x vs sector 17.3x (discount -20%).",
+  "mgmt": "EY_SPREAD +2.25pp = FAIR; Kinh Dich que Hoan(59) THUAN LOI, GIU, do tin cay 100%; refine confidence <0.50 on 7/15 footnote units (min 0.45, subsidiary-list/related-party notes only, not core P&L/BS lines) triggers ESC-5.",
+  "ey_spread_pct": 2.25,
+  "valuation_verdict": "FAIR",
+  "roe_pct": 28.3,
   "kinhdich": {
     "que": "Hoan (59)",
     "xu_huong": "THUAN LOI",
     "tin_hieu": "GIU",
     "do_tin_cay_pct": 100
   },
-  "insider_signal": "no significant activity",
-  "legal_risk": "none flagged",
-  "cycle_ts": "2026-08-23T15:00:00Z",
+  "esc_results": {
+    "ESC-1": "UNEVALUABLE_SCOPE_REDUCED",
+    "ESC-2": false,
+    "ESC-3": "DATA-COVERAGE-LIMITED",
+    "ESC-4": false,
+    "ESC-5": true
+  },
+  "esc3_status": "DATA-COVERAGE-LIMITED",
+  "esc3_quarters_returned": 3,
+  "escalation_status": "GUARD-HELD",
+  "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "sentiment_30d": "GIAM (tieu cuc, slope -0.22)",
+  "cycle_id": "20260823-1800",
+  "generated_at": "2026-08-23T18:10:00Z",
   "_processed": {
-    "fingerprint": "9f9167581b72c83aa02b326fc2a9e546a173e47ac7b616c77744e5fe59aa3b71",
-    "processedAt": "2026-08-23T15:22:23Z",
+    "fingerprint": "03670a1a10644072a7f8e9e836899657daa9531a74a33a0b6041948641adc84c",
+    "processedAt": "2026-08-23T18:22:22Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

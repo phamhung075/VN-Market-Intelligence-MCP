@@ -21121,8 +21121,8 @@
         "last_served_tick": "2026-08-23T17:55:24Z"
       }
     },
-    "_updated_at": "2026-08-23T18:07:56Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-08-23T18:22:22Z",
+    "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
         "envelope_id": "9fbfb401a5cc9bf6b6f101f29d6b3e107aaf709f396985e161a457defac1553a",
@@ -21199,6 +21199,286 @@
         },
         "createdAt": "",
         "drained_at": "2026-08-23T15:54:07Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "37247edfbb3dbadb07986156309b00928e044d9603812f8a2c33ee8e36596344",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "unavailable",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Real estate development (residential/urban projects), brokerage (DXG homebrand network).",
+          "customer": "Retail homebuyers, investors in residential/urban development projects.",
+          "ops": "DATA GAP: get_bctc_full returns 'Chua co du lieu BCTC' — no quarterly financials extractable this cycle (34th+ consecutive cycle unresolved). Sector-comparison-only fallback: PE 66.5x vs sector median 16.1x (premium +312%); ROE 1.9% (below sector median 7.3%).",
+          "mgmt": "EY_SPREAD -3.50pp = AVOID (do not post bullish signal per valuation_verdict=AVOID gate); Kinh Dich que Di(27) TRUNG TINH, BAN, do tin cay 29%.",
+          "ey_spread_pct": -3.5,
+          "valuation_verdict": "AVOID",
+          "roe_pct": 1.9,
+          "kinhdich": {
+            "que": "Di (27)",
+            "xu_huong": "TRUNG TINH",
+            "tin_hieu": "BAN",
+            "do_tin_cay_pct": 29
+          },
+          "esc_results": {
+            "ESC-1": "UNEVALUABLE_NO_DATA",
+            "ESC-2": "UNEVALUABLE_NO_DATA",
+            "ESC-3": "UNEVALUABLE_NO_DATA",
+            "ESC-4": "UNEVALUABLE_NO_DATA",
+            "ESC-5": "UNEVALUABLE_NO_DATA"
+          },
+          "escalation_status": "NONE",
+          "trick_summary": null,
+          "trick_confidence": "none",
+          "data_quality_note": "get_bctc_full 'Chua co du lieu' persists 34th+ consecutive cycle despite DXG_2026_Q2.pdf on stored-PDF list since 2026-08-01 (open bctc-data-quality-anomaly, bctc-analyst-20260813T001500Z.json, still pending dev-team pickup)",
+          "cycle_id": "20260823-1800",
+          "generated_at": "2026-08-23T18:10:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T18:22:22Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "03670a1a10644072a7f8e9e836899657daa9531a74a33a0b6041948641adc84c",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "IT services, software exports (Japan/US/Europe), telecom (FPT Telecom, equity-method since 2026), IT education (FPT Edu).",
+          "customer": "Enterprise IT buyers VN + offshore, broadband/telecom subscribers, university/vocational students.",
+          "ops": "Q1-2026 revenue 12,480 ty VND (+8.7% YoY on equity-method-adjusted comparable basis after FTEL deconsolidation); gross margin 34.0%; operating margin 22.0%; ROE 28.3% (sector-comparison, above sector median 10.6%); PE 13.8x vs sector 17.3x (discount -20%).",
+          "mgmt": "EY_SPREAD +2.25pp = FAIR; Kinh Dich que Hoan(59) THUAN LOI, GIU, do tin cay 100%; refine confidence <0.50 on 7/15 footnote units (min 0.45, subsidiary-list/related-party notes only, not core P&L/BS lines) triggers ESC-5.",
+          "ey_spread_pct": 2.25,
+          "valuation_verdict": "FAIR",
+          "roe_pct": 28.3,
+          "kinhdich": {
+            "que": "Hoan (59)",
+            "xu_huong": "THUAN LOI",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 100
+          },
+          "esc_results": {
+            "ESC-1": "UNEVALUABLE_SCOPE_REDUCED",
+            "ESC-2": false,
+            "ESC-3": "DATA-COVERAGE-LIMITED",
+            "ESC-4": false,
+            "ESC-5": true
+          },
+          "esc3_status": "DATA-COVERAGE-LIMITED",
+          "esc3_quarters_returned": 3,
+          "escalation_status": "GUARD-HELD",
+          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+          "trick_summary": null,
+          "trick_confidence": "none",
+          "sentiment_30d": "GIAM (tieu cuc, slope -0.22)",
+          "cycle_id": "20260823-1800",
+          "generated_at": "2026-08-23T18:10:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T18:22:22Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "54960048f135cb584c9d5bf31bf9b56d589c274acccc4200ae4807f7978ef00f",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Flat/long steel manufacturing (Hoa Phat integrated mills), construction steel, steel pipe, agriculture and container sidelines.",
+          "customer": "Domestic construction/infrastructure contractors, export steel buyers, industrial fabricators.",
+          "ops": "Q1-2026 revenue 52,901 ty VND, gross margin 15.8%; PE 14.2x vs sector median 32.6x (discount -57%); ROE 12.7% (sector-comparison, above sector median 2.9%). DATA-QUALITY FLAG: get_bctc_full operating_profit/EBITDA report 0 (corrupt extraction, 30th+ consecutive cycle).",
+          "mgmt": "EY_SPREAD +2.04pp = FAIR; Kinh Dich que Tan(35) THUAN LOI, GIU, do tin cay 63%; ESC-4 discarded this cycle (operating_profit=0 corrupt input, non_operating_share unevaluable).",
+          "ey_spread_pct": 2.04,
+          "valuation_verdict": "FAIR",
+          "roe_pct": 12.7,
+          "kinhdich": {
+            "que": "Tan (35)",
+            "xu_huong": "THUAN LOI",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 63
+          },
+          "esc_results": {
+            "ESC-1": "UNEVALUABLE_SCOPE_REDUCED",
+            "ESC-2": false,
+            "ESC-3": "DATA-COVERAGE-LIMITED",
+            "ESC-4": "DISCARDED_CORRUPT_INPUT",
+            "ESC-5": false
+          },
+          "esc3_status": "DATA-COVERAGE-LIMITED",
+          "esc3_quarters_returned": 3,
+          "escalation_status": "NONE",
+          "trick_summary": null,
+          "trick_confidence": "none",
+          "sentiment_30d": "ON DINH (slope -0.04)",
+          "data_quality_note": "operating_profit=0 / EBITDA=0 corrupt extraction, unresolved 30th+ cycle",
+          "cycle_id": "20260823-1800",
+          "generated_at": "2026-08-23T18:10:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T18:22:22Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ef58101fdf883b4cfa872eec5f1b9e44ffa31c3263339935c0bf661e39fd2f25",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "State-owned commercial bank: corporate + retail lending, trade finance, bancassurance, FX/treasury.",
+          "customer": "Large corporate borrowers, SOE clients, retail depositors/borrowers, FX/trade-finance clients.",
+          "ops": "Q1-2026 net interest income 17,421 ty VND; operating margin 80.9%; ROE 16.7% (sector-comparison, below sector median 17.6%); PE 14.1x vs sector median 9.0x (premium +57%); OCF/NI ratio ~1.37x (Q1-2026), no forensic divergence.",
+          "mgmt": "EY_SPREAD +2.09pp = FAIR; Kinh Dich que Quan(20) TRUNG TINH, GIU, do tin cay 38%; ESC-3 evaluated on full 4/4 quarters, divergence_ratio 0.368 < 0.40 threshold -> no escalation.",
+          "ey_spread_pct": 2.09,
+          "valuation_verdict": "FAIR",
+          "roe_pct": 16.7,
+          "kinhdich": {
+            "que": "Quan (20)",
+            "xu_huong": "TRUNG TINH",
+            "tin_hieu": "GIU",
+            "do_tin_cay_pct": 38
+          },
+          "esc_results": {
+            "ESC-1": "UNEVALUABLE_SCOPE_REDUCED",
+            "ESC-2": false,
+            "ESC-3": false,
+            "ESC-4": "NOT_APPLICABLE_BANK",
+            "ESC-5": false
+          },
+          "esc3_status": false,
+          "esc3_divergence_ratio": 0.368,
+          "esc3_quarters_returned": 4,
+          "escalation_status": "NONE",
+          "trick_summary": null,
+          "trick_confidence": "none",
+          "sentiment_30d": "TANG (tich cuc, slope +0.05)",
+          "cycle_id": "20260823-1800",
+          "generated_at": "2026-08-23T18:10:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T18:22:22Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "701c157cdbcb4d0e6e8e08004e1cd3c3aa2e9afa716f9ece91176d5f5e5b900d",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-ab508729",
+          "head_sha": "ab50872961c786bab709e2227e7f4c03d8b3ae71",
+          "run_id": 32655888564,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/32655888564",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "signal-type-coverage-guard",
+              "conclusion": "failure",
+              "jobId": 97234445657
+            }
+          ],
+          "fingerprint": "4b51aba16eb169d195931ee378e117d9e0b9861c1293daa8272f85f24487ac03",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD ab50872961c786bab709e2227e7f4c03d8b3ae71: signal-type-coverage-guard",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-23T17:53:28Z",
+        "drained_at": "2026-08-23T18:22:22Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "79dc6194e5d003b53ebaa14c74ee2035763426b3587bd8f9bbdf3b8f29f01ace",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/triage-20260823T1810Z-po.md docs/agent-memory/notebooks/po.md docs/data/orch/orch-state.json. actor=007e33e4-b453-4bb3-8ab1-ef31495906a3 mode=warn escalated=true prior_warns=8 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-23T18:10:17Z",
+        "drained_at": "2026-08-23T18:22:22Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "acb722e23814578f105c912994ca33e736480d143995e4f3dfd13e87d3585fdb",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "20260823T180447Z",
+          "matched_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-2": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-2": null
+          },
+          "last_fired_timestamp": "2026-08-23T18:03:49Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-2"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "18:00",
+          "leader_lock": "acquired",
+          "dev_head": "idle",
+          "devq": 5,
+          "signal_backlog": 31,
+          "note": "single-slot tick; Step 5.3 off-flow detector DEFERRED per BGFAN-1 (background spawn, return not yet available) — router applies de-stamp reconciliation against last_fired=2026-08-23T18:03:49Z (pre-write value 2026-08-22T18:07:36Z) if MARKER_HITS>=2 on arrival. emit_pressure_state returned cycle_snapshot_promoted=false: Step 4.7 wrote cycle-snapshot-18:01.json by wall-clock minute while promotion looks up nominal tick 18:00 — known tracked wallclock-vs-nominal defect, not new."
+        },
+        "createdAt": "20260823T180447Z",
+        "drained_at": "2026-08-23T18:22:22Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

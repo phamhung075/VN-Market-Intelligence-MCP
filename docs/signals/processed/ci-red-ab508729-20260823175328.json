@@ -23,5 +23,11 @@
     "summary": "CI RED on main HEAD ab50872961c786bab709e2227e7f4c03d8b3ae71: signal-type-coverage-guard",
     "suggested_sprint_class": "FIX",
     "verification_gate": "ci_green_on_subsequent_push"
+  },
+  "_processed": {
+    "fingerprint": "701c157cdbcb4d0e6e8e08004e1cd3c3aa2e9afa716f9ece91176d5f5e5b900d",
+    "processedAt": "2026-08-23T18:22:22Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

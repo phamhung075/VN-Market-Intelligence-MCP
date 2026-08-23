@@ -1,33 +1,38 @@
 {
   "ticker": "DXG",
   "signal_type": "bctc_signal",
-  "quarter": "Q1-2026",
+  "quarter": "unavailable",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Residential real-estate development (Dat Xanh Group) -- apartment/township projects",
-  "customer": "Retail homebuyers and investors in HCMC-region + southern-province residential projects",
-  "ops": "DATA GAP -- get_bctc_full(DXG) returns 'Chua co du lieu BCTC' for the 33rd+ consecutive routine cycle despite Q2-2026 PDF on file since 2026-08-01 (list_stored_pdfs confirms DXG_2026_Q2.pdf present, extraction pipeline stalled). Sector-comparison-only fallback used below; no income-statement/balance-sheet figures available this cycle.",
-  "mgmt": "Sector-comparison only: ROE 1.9% vs sector median 7.3% (below median). PE 66.5x vs sector median 16.1x (premium +312%), PB 1.2x (in line with sector). EY_SPREAD -3.50pp vs 5% deposit rate -> AVOID valuation; no bullish signal posted per valuation_verdict=AVOID gate.",
-  "esc_results": {
-    "ESC-1": "UNEVALUABLE -- no BCTC data this cycle",
-    "ESC-2": "UNEVALUABLE -- no BCTC data this cycle",
-    "ESC-3": "UNEVALUABLE -- no BCTC data this cycle",
-    "ESC-4": "UNEVALUABLE -- no BCTC data this cycle",
-    "ESC-5": "UNEVALUABLE -- no BCTC data this cycle"
-  },
+  "product": "Real estate development (residential/urban projects), brokerage (DXG homebrand network).",
+  "customer": "Retail homebuyers, investors in residential/urban development projects.",
+  "ops": "DATA GAP: get_bctc_full returns 'Chua co du lieu BCTC' — no quarterly financials extractable this cycle (34th+ consecutive cycle unresolved). Sector-comparison-only fallback: PE 66.5x vs sector median 16.1x (premium +312%); ROE 1.9% (below sector median 7.3%).",
+  "mgmt": "EY_SPREAD -3.50pp = AVOID (do not post bullish signal per valuation_verdict=AVOID gate); Kinh Dich que Di(27) TRUNG TINH, BAN, do tin cay 29%.",
+  "ey_spread_pct": -3.5,
+  "valuation_verdict": "AVOID",
+  "roe_pct": 1.9,
   "kinhdich": {
     "que": "Di (27)",
     "xu_huong": "TRUNG TINH",
     "tin_hieu": "BAN",
     "do_tin_cay_pct": 29
   },
-  "insider_signal": "no significant activity",
-  "legal_risk": "none flagged",
-  "carry_over_note": "cash-flow-anomaly signal from c162 (bctc-analyst-20260813T001500Z.json) still pending dev-team pickup; DXG BCTC extraction stall (33rd+ cycle) still unresolved.",
-  "cycle_ts": "2026-08-23T15:00:00Z",
+  "esc_results": {
+    "ESC-1": "UNEVALUABLE_NO_DATA",
+    "ESC-2": "UNEVALUABLE_NO_DATA",
+    "ESC-3": "UNEVALUABLE_NO_DATA",
+    "ESC-4": "UNEVALUABLE_NO_DATA",
+    "ESC-5": "UNEVALUABLE_NO_DATA"
+  },
+  "escalation_status": "NONE",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "data_quality_note": "get_bctc_full 'Chua co du lieu' persists 34th+ consecutive cycle despite DXG_2026_Q2.pdf on stored-PDF list since 2026-08-01 (open bctc-data-quality-anomaly, bctc-analyst-20260813T001500Z.json, still pending dev-team pickup)",
+  "cycle_id": "20260823-1800",
+  "generated_at": "2026-08-23T18:10:00Z",
   "_processed": {
-    "fingerprint": "549177c70b2259b1038e039371cac4fc9f3c8a9fb561ae2bc3da8449707512b7",
-    "processedAt": "2026-08-23T15:22:23Z",
+    "fingerprint": "37247edfbb3dbadb07986156309b00928e044d9603812f8a2c33ee8e36596344",
+    "processedAt": "2026-08-23T18:22:22Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }
