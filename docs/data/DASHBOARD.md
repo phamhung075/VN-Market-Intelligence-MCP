@@ -1930,3 +1930,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · morningBriefing stale 229.7h
+**Severity:** CRITICAL | **Date:** 2026-08-23 | **Status:** OPEN
+**Location:** mcp-server
+**Details:** Cron morningBriefing overdue by 229.7h
+**Impact:** Business intelligence briefing not running
+**Root cause:** Cron daemon or scheduler issue
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-23T14:43:19Z (signal sys-20260823T144144-0baf, system-auditor -> po, dedup_key=auditor-a29-fire-gap:morningBriefing:A-29, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
