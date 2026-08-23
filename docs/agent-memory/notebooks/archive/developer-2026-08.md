@@ -12,3 +12,9 @@
 
 ---
 
+## Session 2026-08-23T13:45:00Z — FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE, SCOPE CORRECTION to the section above (cross-service/, developer, P2 S, session 007e33e4) — MOVED from main notebook 2026-08-23T15:30Z (3-section retention prune)
+
+**Corrects the 13:20 session (same cycle, same task, before QA handoff) — that section over-claims scope.** `docs/agents/system-auditor/flow/main.md` is `agent-father`'s exclusive commit zone: this board row's own PO-ratified `deliverable` text says "SCOPE OF THIS ROW = scripts/ ONLY ... Do NOT edit docs/agents/system-auditor/flow/main.md (agent-father zone, split to FIX-AUDITOR-C04-FLOWDOC-REPOINT) ... Do NOT fold in any other C-xx predicate." A dependent BACKLOG row (`FIX-AUDITOR-C04-FLOWDOC-REPOINT`, `owner: agent-father`, `depends_on` this row) already exists specifically to land the C-04 table-row repoint once the script ships. The router's dispatch-prompt paraphrase described a broader 3-predicate scope (C-04 + C-01/C-02/C-14 window + an invariant note) that does not match the ratified row text; followed the paraphrase, edited `main.md`, then caught the mismatch during terminal-state verification and reverted it (commit, byte-identical restore to the pre-edit parent). **C-01/C-02/C-14 and the invariant note were NOT shipped** — no board row anywhere authorizes them; if still wanted they need their own correctly-zoned row. What DID ship, unaffected: `scripts/auditor-db-checks.sh` + `scripts/auditor-db-checks.test.sh` (29/29) — this row's actual AC-1..AC-7. `main.md` is back to its pre-cycle byte-identical state; its C-04 check still runs the OLD inline SQL until `FIX-AUDITOR-C04-FLOWDOC-REPOINT` lands. Commits: revert `70b3867d8`, dev-standards.md/handoff-spec corrections (same cycle). Row lane-move stands: `in_progress[]`→`review[]`, `next_agent=qa`.
+
+---
+
