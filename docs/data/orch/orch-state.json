@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 6 row(s) (6 from review[], 0 from done[]), highest-ranked FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 6 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-23T14:25:59Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "updated_at": "2026-08-23T14:54:45Z",
+    "updated_by": "dev-team",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -20410,7 +20409,7 @@
         "last_served_tick": "2026-08-23T11:54:46Z"
       }
     },
-    "_updated_at": "2026-08-23T14:53:10Z",
+    "_updated_at": "2026-08-23T14:54:55Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20554,6 +20553,41 @@
         "payload": "docs/architecture-briefs/2026-08-23-flow-file-cap-glob-fix-and-doc-plane-baseline-ratchet.md",
         "createdAt": "2026-08-23T14:30:00Z",
         "drained_at": "2026-08-23T14:53:09Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "dfc1f7e0a03bab760bce3505141cb64c669fe36de5657e12608c65b1d8ad9eda",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-8c45e320",
+          "head_sha": "8c45e320aea3f59da396f17a7258bc1018c8d05d",
+          "run_id": 32646497517,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/32646497517",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "agent-bash-grant-coverage",
+              "conclusion": "failure",
+              "jobId": 97211449061
+            },
+            {
+              "name": "signal-type-coverage-guard",
+              "conclusion": "failure",
+              "jobId": 97211449097
+            }
+          ],
+          "fingerprint": "b7990d4f44b283a5ac760d2da82a855ed46284e0d1cf264e1abdaa0bf3d24fe5",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 8c45e320aea3f59da396f17a7258bc1018c8d05d: agent-bash-grant-coverage,signal-type-coverage-guard",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-23T14:54:04Z",
+        "drained_at": "2026-08-23T14:54:55Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
