@@ -187,3 +187,5 @@ VERDICT: `DONE_VERIFIED`. Appended `[QA] Review Record (direct-commit verify)` t
 - targeted zone suite instead: the two node scripts purpose-built for this exact file+schedule pair (`cowork-spawn-entry-prompt-session-id.test.js`, `cowork-schedule-consistency.test.js`) — ran both to completion, 7/7 and 13/13 pass.
 **why-decision:** diff confirmed both AC clauses live: `SCHEDULED_UTC_LINE` appended symmetrically to BOTH `ENTRY_PROMPT` branches (trigger_prompt + legacy flow_path), degrades to `""` never `"scheduled_utc=null"`. `depends_on: [ANCHOR-1]` confirmed `DONE_VERIFIED` (commit `e315472b7`) before approving. Not OOM/BCTC-class — those gates N/A.
 **why-change:** no change from plan; scope-narrowed bun-test/tsc/DDD/security to the row's actual file-type (docs, not TS) per Direct-Commit Verify's "targeted zone suite" clause, disclosed explicitly rather than run-anyway or silently skip.
+
+### CAP-REACHED · 2026-08-23T17:27:23Z
