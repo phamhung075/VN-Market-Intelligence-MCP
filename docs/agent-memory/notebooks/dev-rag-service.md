@@ -2,6 +2,65 @@
 
 Zone: `apps/rag-service/` | Stack: Python/FastAPI | DB: rag_service.db (write)
 
+## 2026-08-23T19:06Z FIX-RAG-COMPACTION-DISK-AMPLIFICATION
+
+**Task:** `plan_only: true` / `supervised: true` design/analysis row (SLS dispatch, tick
+2026-08-23T18:37Z) — produce a design artifact, no code shipped, flags untouched. Row's own
+2026-07-29 evidence (733-785 MB, `_indices` not pruned while `_versions` is) — re-measured live,
+read-only, before trusting it.
+
+**Fresh measurement:** `data/live/lancedb` now 366 MB (was 733-785 MB) — already shrunk from two
+unrelated 2026-08-14 fixes (`LANCEDB_COMPACT_RETENTION_HOURS` 2d→1h; memory-oscillation session-
+cache/vector-index fixes). Root cause the row's own evidence pointed at (`_indices` retention
+asymmetry) no longer explains the majority of what's left. Found instead: **44 orphaned `.tmp*`
+staging files in `rag_entries.lance/data/` = 292 164 KB = 84% of that directory's bytes** — mtimes
+cluster exactly on this service's documented 2026-07-18→08-12 OOM-kill dates, zero new ones since
+(consistent with the crash-loop fix holding). Root-caused via the INSTALLED `lancedb==0.25.3`
+package's own `optimize()` docstring (`lancedb/table.py:4306-4358`): `delete_unverified` (default
+`False`) is a SEPARATE parameter from `cleanup_older_than` — files leftover from a failed
+transaction are invisible to `cleanup_older_than` entirely. `infrastructure/repositories.py:523`'s
+`compact()` call never passes it. Secondary finding: 1,602 of 1,647 `_indices/<uuid>/` dirs are now
+empty shells (23 MB, was 136-145 MB) — `optimize()`'s Index-optimize step creates a new UUID dir per
+generation; cleanup deletes the superseded generation's FILES but not the now-empty directory —
+ongoing under fully healthy operation (new empty dirs dated through 08-22/08-23 today), not crash-
+correlated like the `.tmp*` finding.
+
+**Ruled out** (corrects the dispatch's own "context worth having" hint): compact() does NOT re-fire
+on every restart — `_insert_count` is a per-process in-memory counter, nothing calls `compact()` at
+startup. That per-restart-rebuild mechanism is real for the vector ANN index (different, already-
+fixed defect, `list_indices()` skip-check, commit `82216e291`) but doesn't apply here. Also not
+recommended: retuning `_COMPACT_EVERY` — current cadence + 1h retention already reasonably matched
+to measured traffic (90 manifests / 12.7 days).
+
+**Deliverable:** `docs/architecture-briefs/2026-08-23-fix-rag-compaction-disk-amplification-design.md`
+— staged, risk-aware design for a follow-up (non-`plan_only`) implementation row: Phase 1 (isolated
+repro against the exact deployed image to resolve whether `delete_unverified=True` is safe under
+concurrent writers — the existing `_compact_lock` only serializes `compact()` calls against each
+other, not against a concurrent `insert()`'s own `table.add()`) + one-off manual admin-triggered
+sweep (new `POST /admin/compact-reclaim-unverified`, mirrors the existing `/admin/rebuild-fts` /
+`/admin/rebuild-vector-index` pattern, deliberately not wired to any cron); Phase 2 (evidence-gated
+decision on whether to wire `delete_unverified=True` into the automatic per-100-insert cycle, new
+`Config.lancedb_compact_delete_unverified` env knob, default stays `False` until Phase 1 justifies
+flipping it); Phase 3 (lower-priority opportunistic empty-dir `rmdir` sweep for `_indices/`).
+Durability criterion stated explicitly per this task's own mandate and the
+`feedback_ac3_durability_certified_on_window_that_ended_before_metric_settled` lesson: disk-bytes-
+reclaimed settles fast (not a multi-hour climb like the prior memory metric) — re-measure `du`/`find`
+twice, ≥15min apart, post-sweep; if Phase 2 ships, ≥24h dmesg-in-VM (never `docker inspect`) before
+any durability certification.
+
+**No code changed, no table written to, no `data/live/lancedb/` file touched** — read-only
+investigation throughout, per the row's own constraint. Smoke checks not applicable (no Python/
+scenario files touched).
+
+**Board write:** row moved `in_progress[]` → `review[]`, `status: REVIEW`, `next_agent: po` (PO
+decides whether/how to authorize the phased implementation — same shape as sibling design-only row
+`RAG-FTS-BUILD-MEMORY-BOUND`). `.head` reset to idle in the same `orch-apply.sh` write.
+`supervised`/`plan_only` flags preserved unchanged throughout, per the row's hard constraint.
+
+Zone health: HEALTHY (no code touched this cycle) | FIX-RAG-COMPACTION-DISK-AMPLIFICATION → REVIEW (next_agent: po)
+
+---
+
 ## Working Memory
 
 ### 2026-08-14 (later cycle) — FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS (P0, PO critical-path ruling, in-process attribution mandated)
