@@ -561,13 +561,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Pure bash/jq — no bun/go/python toolchain needed, cheapest job in
-      # the pipeline alongside size-lint/metric-mask-lint/dead-code-gate/
-      # task-claim-owner-session-lint/agent-bash-grant-coverage. Regression
-      # guard for docs/agents/po/flow/triage-signals.md's Pipeline-B signal-
-      # type coverage: every live `.signal_queue.rows[]` row with `to=="po"`
-      # must have a matching `type` row in that doc's Live-inbox table or its
-      # triage-signals-longtail.md sibling. Root cause this job fixes
+      # Bash/jq for the check itself — cheap, alongside size-lint/
+      # metric-mask-lint/dead-code-gate/task-claim-owner-session-lint/
+      # agent-bash-grant-coverage. Regression guard for docs/agents/po/flow/
+      # triage-signals.md's DUAL-PIPELINE signal-type coverage (extended
+      # TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY, 2026-08-23 — architect brief
+      # docs/architecture-briefs/2026-08-23-signal-type-registry-open-
+      # namespace-vs-closed-allowlist.md): every live Pipeline-A row
+      # (`.dev_team_idle_chain.pending_triage_inbox[]`) AND every live
+      # Pipeline-B row (`.signal_queue.rows[]` with `to=="po"`) must have a
+      # matching `type` row in that doc's OWN pipeline section (Pipeline-B
+      # additionally checks its triage-signals-longtail.md sibling) — a rule
+      # that only exists for the OTHER pipeline no longer counts as
+      # coverage (closes the split-table blind spot that caused the
+      # 2026-08-23 CI red: `audit-handoff` had a Pipeline-A-only rule but no
+      # Pipeline-B rule). Root cause this job originally fixed
       # (FIX-SIGNAL-ROUTING-ROWS-COVERAGE-GAP-DEEPDIVE, 2026-08-22): the
       # check previously existed ONLY as a bash function embedded in the
       # flow-doc's markdown, wired into NO CI job and NO cron — its last
@@ -575,8 +583,21 @@ jobs:
       # namespace had fully rotated underneath it (10/10 hot to=po rows
       # unrouted) with nobody noticing for 3 weeks because it never actually
       # ran. See scripts/audits/guard-signal-type-coverage.sh for the full
-      # mechanism (it derives its allowlist by parsing the two docs directly
-      # — no separate hand-maintained array to drift out of sync).
+      # mechanism (it derives its allowlist by parsing the docs directly —
+      # no separate hand-maintained array to drift out of sync).
+      #
+      # SELF-FILING FALLBACK NOTE: on an unrouted type, the script also
+      # attempts to mint a `.task_board.backlog[]` row via `scripts/
+      # orch-apply.sh`, which needs `bun` in PATH (not installed in THIS
+      # job — deliberately kept off this job's cheap bash/jq-only cost
+      # profile). In this specific CI environment a mint attempt degrades
+      # gracefully to a logged "mint FAILED" line (see the script's own
+      # comments) — the job's actual gate, `exit 1` on any unrouted type, is
+      # unaffected either way. The mint is a real, tested mechanism (see
+      # scripts/audits/guard-signal-type-coverage.test.sh) that lands when
+      # an agent/cron runs this guard against the live local checkout, where
+      # bun is already present — an ephemeral, no-push-back CI checkout is
+      # not somewhere a minted row could persist regardless.
       - name: Run guard-signal-type-coverage --check
         run: bash scripts/audits/guard-signal-type-coverage.sh --check
 

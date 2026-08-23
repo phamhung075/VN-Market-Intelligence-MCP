@@ -17527,40 +17527,6 @@
         "occurrence_count": 1,
         "updated_by": "po/triage-20260822T2258Z",
         "priority": "P1"
-      },
-      {
-        "id": "TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY",
-        "type": "TASK",
-        "status": "READY",
-        "priority": "P0",
-        "size": "S",
-        "zone": "scripts/",
-        "owner": "dev-mcp-server",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "title": "Extend guard-signal-type-coverage.sh: parse both pipelines + self-filing unrouted-type fallback",
-        "desc": "Part 1 + Part 2 of architect brief (2026-08-23): extend scripts/audits/guard-signal-type-coverage.sh to parse BOTH Pipeline-A (pending_triage_inbox[]) and Pipeline-B (signal_queue.rows[]) tables from triage-signals.md + triage-signals-longtail.md, tag each parsed rule by pipeline, and on unrouted type mint/update a task_board.backlog[] row via orch-apply.sh (dedup-keyed on type string, using routing-gap type-vocabulary slot) instead of CI-log-only output. This closes the split-table blind spot (a type can no longer be considered covered by a rule that structurally cannot fire for the pipeline it arrived on) and the unrouted-type-as-nonactionable-log-line defect that has fired 7 times with manual intervention required on each.",
-        "files": [
-          "scripts/audits/guard-signal-type-coverage.sh",
-          ".github/workflows/ci.yml"
-        ],
-        "ac": [
-          "guard parses BOTH Pipeline-A table (from pending_triage_inbox[] in orch-state.json) and Pipeline-B table (from signal_queue.rows[])",
-          "each rule is tagged by source pipeline (A or B) in the derived registry",
-          "cross-pipeline blind spot is mechanically closed: a type is routed only if it has a rule for the PIPELINE it arrived on",
-          "unrouted type produces a task_board.backlog[] row (dedup-keyed on type string) via orch-apply.sh in addition to CI exit 1",
-          "AC-5 from brief: orchStateSchema.ts diff is empty (no schema change, all via orch-apply.sh gate)",
-          "synthetic new type on Pipeline-A (not B) is caught by the extended guard — proves cross-pipeline check works"
-        ],
-        "acceptance_notes": "Verify: (1) `guard-signal-type-coverage.sh --check` PASSes against live orch-state.json after tactical audit-handoff rule lands; (2) synthetic Pipeline-A-only type is caught; (3) unrouted-type failure produces real backlog[] row with type-based dedup",
-        "related": [
-          "TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION"
-        ],
-        "created_at": "2026-08-23T09:00:00Z",
-        "created_by": "pm",
-        "handoff_ref": "docs/handoffs/TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY.md",
-        "updated_at": "2026-08-23T08:45:15Z"
       }
     ],
     "review": [
@@ -17891,6 +17857,41 @@
         "claimed_at": "2026-08-14T21:27:10Z",
         "redispatch_count": 1,
         "qa_verify_20260823": "[QA] CHANGES_REQUESTED 2026-08-23 (Direct-Commit Verify). AC-4 mandated a RAW-verify on the next live chef fire's persisted JSON. Only 1 dish carries a cycle_id after the fix commit (5829a7ad2, 2026-08-14T21:04Z): docs/data/unified-agent-synthesis-2026-08-22-chef-evening.json (confirmed genuine, TNB c115.5 independently cites the same cycle_id). It VIOLATES the fix's own newly-added SCHEMA_OK sub-check: top-level keys = 9 (extra execution_notes/signals_consumed) vs the mandated 7 (chef-dish.md:864-914); metadata sub-object also reshaped (missing timestamp_utc/layers_walked_summary). No [gap:schema_nonconformant_corrected] token present, no self-correction applied, despite chef-dish.md:964's mandatory post-write self-check requiring exactly this catch. Cross-checked 2 pre-fix committed dishes (07-29/07-30 chef-evening) — both match the 7-key schema exactly, confirming this is live drift, not a pre-existing undocumented shape. Routed to agent-father (row has no .owner field; agent-father authored the fix) — apply a new direct commit closing the SCHEMA_OK gap (or determine why the live agent execution diverged from documented schema) before AC-4 can be certified. Full evidence: decision journal sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-25.md STEP qa-S35."
+      },
+      {
+        "id": "TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY",
+        "type": "TASK",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "S",
+        "zone": "scripts/",
+        "owner": "dev-mcp-server",
+        "next_agent": "qa",
+        "supervised": false,
+        "plan_only": false,
+        "title": "Extend guard-signal-type-coverage.sh: parse both pipelines + self-filing unrouted-type fallback",
+        "desc": "Part 1 + Part 2 of architect brief (2026-08-23): extend scripts/audits/guard-signal-type-coverage.sh to parse BOTH Pipeline-A (pending_triage_inbox[]) and Pipeline-B (signal_queue.rows[]) tables from triage-signals.md + triage-signals-longtail.md, tag each parsed rule by pipeline, and on unrouted type mint/update a task_board.backlog[] row via orch-apply.sh (dedup-keyed on type string, using routing-gap type-vocabulary slot) instead of CI-log-only output. This closes the split-table blind spot (a type can no longer be considered covered by a rule that structurally cannot fire for the pipeline it arrived on) and the unrouted-type-as-nonactionable-log-line defect that has fired 7 times with manual intervention required on each.",
+        "files": [
+          "scripts/audits/guard-signal-type-coverage.sh",
+          ".github/workflows/ci.yml"
+        ],
+        "ac": [
+          "guard parses BOTH Pipeline-A table (from pending_triage_inbox[] in orch-state.json) and Pipeline-B table (from signal_queue.rows[])",
+          "each rule is tagged by source pipeline (A or B) in the derived registry",
+          "cross-pipeline blind spot is mechanically closed: a type is routed only if it has a rule for the PIPELINE it arrived on",
+          "unrouted type produces a task_board.backlog[] row (dedup-keyed on type string) via orch-apply.sh in addition to CI exit 1",
+          "AC-5 from brief: orchStateSchema.ts diff is empty (no schema change, all via orch-apply.sh gate)",
+          "synthetic new type on Pipeline-A (not B) is caught by the extended guard — proves cross-pipeline check works"
+        ],
+        "acceptance_notes": "Verify: (1) `guard-signal-type-coverage.sh --check` PASSes against live orch-state.json after tactical audit-handoff rule lands; (2) synthetic Pipeline-A-only type is caught; (3) unrouted-type failure produces real backlog[] row with type-based dedup",
+        "related": [
+          "TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION"
+        ],
+        "created_at": "2026-08-23T09:00:00Z",
+        "created_by": "pm",
+        "handoff_ref": "docs/handoffs/TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY.md",
+        "updated_at": "2026-08-23T09:04:04Z",
+        "status_note": "dev-mcp-server DONE: scripts/audits/guard-signal-type-coverage.sh extended to parse BOTH Pipeline-A (triage-signals.md pendingSignals[] table vs .dev_team_idle_chain.pending_triage_inbox[]) and Pipeline-B (existing .signal_queue.rows[] table+longtail), each tagged by source pipeline so a rule from ONE pipeline never false-passes coverage for the OTHER (verified both directions live). On any unrouted type (either pipeline), in addition to the pre-existing exit 1, mints a dedup-keyed task_board.backlog[] row (type=routing-gap) via the real scripts/orch-apply.sh -- verified end-to-end against disposable fixtures (mint succeeds, repeat detection dedup-skips, no duplicate row). guard-signal-type-coverage.test.sh expanded 7->24 assertions, all GREEN; real-doc/live-orch-state.json integration smoke test also GREEN. orchStateSchema.ts diff confirmed empty (git diff, 0 lines) -- schema-untouched constraint held. .github/workflows/ci.yml job comment amended to describe dual-pipeline scope + honest note that the mint substep needs bun (not installed in that job; degrades to a logged non-fatal skip there, exit-1 gate unaffected). next_agent corrected from dead-end \"developer\" (Task-tool subagent, cannot spawn zone specialists) to \"qa\"."
       }
     ],
     "qa": [
