@@ -96,3 +96,100 @@
 - FOUND: the actual reconciliation write physically lives inside unrelated commit 986717b53 (architect, wrong Task: trailer) — shared-workdir collision, not in the 5 commits reported; content independently verified correct regardless.
 **why-decision:** APPROVED/DONE_VERIFIED — every checked claim held live; the commit-attribution gap is a non-blocking process finding, not a functional defect.
 **why-change:** none from plan — standard direct-commit-verify rigor, one extra independent discovery recorded.
+
+### STEP qa-S35 · qa · 2026-08-23T09:00:00Z
+**task-id:** FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION
+**what-done:** qa[]-lane oldest-first drain. RAW-verified AC-4's mandated "next live chef fire" check against the persisted JSON, per the row's own handoff instruction — not trusted from status_note prose.
+**what-considered:**
+- Only 1 dish carries a cycle_id after the fix commit (5829a7ad2, landed 2026-08-14T21:04Z): docs/data/unified-agent-synthesis-2026-08-22-chef-evening.json. Confirmed genuine (TNB c115.5 independently cites the same cycle_id/fire-time, not fabricated).
+- jq'd its top-level + metadata keys against chef-dish.md's mandated 7-key SCHEMA_OK spec (:864-914): file carries 9 keys (extra execution_notes/signals_consumed) and a reshaped metadata block (no timestamp_utc/layers_walked_summary) — a live SCHEMA_OK violation with NO [gap:schema_nonconformant_corrected] token and no self-correction, despite the post-write self-check (chef-dish.md:964) mandating exactly this catch.
+- Cross-checked 2 pre-fix committed dishes (07-29/07-30 chef-evening) — both match the 7-key schema exactly, confirming this is drift, not a pre-existing/undocumented shape.
+**why-decision:** CHANGES_REQUESTED — the fix's own newly-added enforcement mechanism did not fire on its first live opportunity; AC-4's external leg is unmet. Routed to agent-father (no .owner field on row; agent-father authored the fix).
+**why-change:** none — hard rule requires verifying against real artifacts over status_note narrative; this is exactly that.
+
+### STEP qa-S36 · qa · 2026-08-23T09:05:00Z
+**task-id:** FIX-AGENT-BASH-GRANT-COVERAGE-GATE-FLOW-DEMANDS-VS-FRONTMATTER
+**what-done:** Direct-Commit Verify. Re-ran gate + tests myself, did not trust the 42-agent table in status_note.
+**what-considered:**
+- `bash scripts/audits/agent-bash-grant-coverage.sh --check` live: exit 0, 42/42 agents, table matches status_note verbatim.
+- `agent-bash-grant-coverage.test.sh`: 10/10 pass. CI wiring confirmed live at .github/workflows/ci.yml:529-554.
+- AC-6 (the hard bar — a live digest-predict cycle must self-commit via the new grant): grant landed 476646c4e (2026-08-14T21:11Z UTC); `git log` shows commit c4fc71708 (digest-predict notebook, 2026-08-22T17:48Z UTC) — real, after the grant, not a narrated claim.
+- AC-8 spot-check: alert-commander/market-watcher/news-scout/fb-market-poster/orch-sentinel descriptions all now read "Bash is scoped to..." — self-contradiction resolved.
+**why-decision:** APPROVED/DONE_VERIFIED — every AC (1,3,4,6,8) independently reproduced against live artifacts.
+**why-change:** none.
+
+### STEP qa-S37 · qa · 2026-08-23T09:08:00Z
+**task-id:** FIX-AUDITOR-NOTEBOOK-COMMIT-PLANE-CROSSCHECK-GATE
+**what-done:** Direct-Commit Verify of piece 2 (agent-father's main.md call-site edit) — piece 1 was already QA-approved in a prior cycle; re-verified it stayed intact.
+**what-considered:**
+- `bash scripts/auditor-notebook-commit.test.sh`: 24/24 pass, matches piece-1's prior record, unregressed.
+- Read main.md:1148-1151 directly: notebook-commit call site now carries `--markers-file "$MARKERS_FILE" --cycle-tag "$FIRE_TASK_ID"`; ABORT bullet (:1177) names contract-plane-mismatch explicitly.
+- Read the sibling heartbeat call site (~:1339): confirmed still the bare 2-arg form, deliberately untouched — matches the row's own AC-3 scoping.
+**why-decision:** APPROVED/DONE_VERIFIED — both pieces of this PO-split row now confirmed end-to-end against live file content, not narration.
+**why-change:** none.
+
+### STEP qa-S38 · qa · 2026-08-23T09:11:00Z
+**task-id:** TASK_2008a
+**what-done:** No status_note existed — derived verification from files[]/dispatch_note's 3 cited commits + re-ran tests myself.
+**what-considered:**
+- Commits 75cc18eca/994a2c117/70bd7e7bd all confirmed ancestors of main; diff matches title (calendar_status via injectable-deps + SESSION_STATUSES enum gate).
+- `bun test emit-pressure-state.test.ts`: 35/35 pass. `bun tsc --noEmit`: clean. mock-guard PASS. DDD: only interface-layer file imports infrastructure (architecturally correct); domain file (vnTradingCalendar.ts) has zero infra imports.
+**why-decision:** APPROVED/DONE_VERIFIED.
+**why-change:** none — empty status_note required deriving evidence from files[]/commits instead of trusting prose (none existed to trust).
+
+### STEP qa-S39 · qa · 2026-08-23T09:13:00Z
+**task-id:** TASK_2008b
+**what-done:** No status_note existed. Located commit via `git log` on files[], verified content + tests myself.
+**what-considered:**
+- Commit a860a5b9f (real, on main): diff removes L150 calendar_status read + drops it from Step-8-SILENT emit_args, matches AC (FR-A3) exactly.
+- `cowork-tick-preflight.test.sh`: 75/75 pass, incl. T2e which directly asserts emit args carry no calendar_status key.
+**why-decision:** APPROVED/DONE_VERIFIED.
+**why-change:** none.
+
+### STEP qa-S40 · qa · 2026-08-23T09:15:00Z
+**task-id:** TASK_2008c
+**what-done:** Verified agent_father_implementation_note against the actual commit (none cited by id — found via git log on files[]).
+**what-considered:**
+- Commit 7beb78e07 (real, on main): telemetry.md L15 calendar_status arg deleted (FR-A4); pressure-read.md gains CALENDAR_STATUS_DOMAIN 5-value enum + fail-loud (FR-A5) — diff matches claim exactly, incl. correct non-touch of telemetry.md:63's distinct Step-6.1 payload field.
+- Line counts refreshed headers (163L/117L) match `wc -l` exactly. No unit-test twin (documented, Step 4.3 is pure prose) — accepted given TASK_2008a/b's own code+tests independently close the mechanism this doc wires into, and live pressure-state.json shows a valid domain value ("weekend") flowing through end-to-end.
+**why-decision:** APPROVED/DONE_VERIFIED.
+**why-change:** none.
+
+### STEP qa-S41 · qa · 2026-08-23T09:20:00Z
+**task-id:** FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK
+**what-done:** Re-ran the prior QA re-check's own prescribed command (git log since AC-3 fix landed) rather than trusting elapsed time alone.
+**what-considered:**
+- AC-1/AC-2 (stale caveat + same-tick clobber mutex): now solidly proven — 4 separate real weekday 16:0xZ co-fires (08-06/07/12/13) all show BOTH eod and offhours notebook commits landing cleanly same-tick, no clobber, no stale-caveat skip.
+- AC-3 (news-scout L-7 on next weekday EOD fire): code landed (3d2ff4ee2/7a94f3dd5/f795efe35) but genuinely unexercised — `cowork-schedule.json` shows market-watcher-eod.last_fired stuck at 2026-08-14T16:10:51Z, 5+ weekdays with zero EOD fire since (consistent with the separately-tracked host-suspension gap, not a fix defect).
+**why-decision:** HELD, no lane move — AC-3's specific proof bar (a real weekday EOD fire) still has zero opportunity to have occurred; flipping now would repeat the exact "certify on an unsettled/absent window" pattern this fleet is trying to stop.
+**why-change:** none — matches the prior QA re-check's own standard, reapplied.
+
+### STEP qa-S42 · qa · 2026-08-23T09:23:00Z
+**task-id:** FIX-COVERAGE-SWEEP-BLANKET-STAMP-DEAD-TRIGGER
+**what-done:** Re-ran the row's own 2026-08-06 QA CLOSE-GATE (G1/G2/G3) live, 18 days after that CHANGES_REQUESTED froze it.
+**what-considered:**
+- G1 (transport): still holds. G2 (live invocation): now holds — coverage-state.json `_updated_at` moved to 2026-08-22T20:11Z (was frozen since 07-25), per-ticker stamp groups are no longer a single blanket group (news_scout [23,34], market_watcher [23,31,3]).
+- G3 (sweep_config): now holds — key present with correct defaults {48h,3}, not clobbered. market-watcher's own notebook shows `sweep_tickers_forced=3`, matching config — the rotation is actively firing, not just structurally present.
+- `coverage-stamp.test.sh`: 29/29 pass; flow-doc wiring in all 4 sites confirmed present.
+**why-decision:** APPROVED/DONE_VERIFIED — all 3 gates that failed in Aug-06 now independently hold on fresh live evidence.
+**why-change:** none.
+
+### STEP qa-S43 · qa · 2026-08-23T09:26:00Z
+**task-id:** FIX-FB-GATE-CHECKD2-NONWAIVABLE-NUMERIC-BLOCK
+**what-done:** Re-ran the test-pointer-only fix's own claim (10/10 GREEN against live HEAD) rather than trusting the prose.
+**what-considered:**
+- `test-fb-gate-checkd2-nonwaivable.sh`: 10/10 pass live. `test-fb-gate-checkc-negation.sh`: 6/6, no collateral.
+- Read daily.md:649-687 directly: Check-D2 marked NON-WAIVABLE with the recompute-baseline fix protocol present; Check-C's own waiver path intact (narrowed, not deleted).
+- Both commits (1b506cbdd, c678ef57e) confirmed on `origin/main` via fetch — not just local.
+**why-decision:** APPROVED/DONE_VERIFIED.
+**why-change:** none.
+
+### STEP qa-S44 · qa · 2026-08-23T09:32:00Z
+**task-id:** FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED
+**what-done:** Live docker/dmesg probe of the current container, cross-checked against blocked_by row FU-RAG-DEPLOY-MEMORY's own certification floor (po ruling: window must start after 2026-08-22T12:40Z, run >=24h).
+**what-considered:**
+- Current container 16c59b5e929f: MemLimit=2GiB (matches dispatcher briefing, not stale 768m/1g AC text), StartedAt=2026-08-15T10:16:22Z, RestartCount=0, mem 70.57% now. Zero dmesg oom-kill events attributable to this container or its immediate predecessor (66656926d503) across the whole span.
+- Current wallclock 2026-08-23T08:4xZ is only ~20h past the 2026-08-22T12:40Z floor — short of the required 24h; too early to certify either this row or its blocker.
+- ANOMALY (flagged, not resolved, out of this row's scope): dmesg -T shows 2 fresh oom-kill events (Aug 19/20) on container id 92e6017318e4 — the OLD rag-service container believed retired since 08-14, absent from `docker ps -a` today. Either a zombie cgroup lingered or dmesg timestamp translation is unreliable across this host's suspend/resume boundary; does not implicate the current container/fix either way.
+**why-decision:** HELD, no lane move — dispatcher explicitly flagged this as a "say plainly if too early" case; the data confirms it is.
+**why-change:** none.
