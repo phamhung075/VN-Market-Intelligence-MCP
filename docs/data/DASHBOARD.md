@@ -1918,3 +1918,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-20 · pdf-extractor event loop intermittently wedged
+**Severity:** WARN | **Date:** 2026-08-23 | **Status:** OPEN
+**Location:** pdf-extractor container
+**Details:** In-container health probes: 2 of 3 returned HTTP 000 (event loop unresponsive). Probe 1: 000, Probe 2: 000, Probe 3: 200 (recovered). Verdict: FAIL (majority-fail).
+**Impact:** Container event loop stalling intermittently. HTTP health checks timing out. May cause request failures or high latency.
+**Root cause:** Memory pressure + Tesseract processing contention causing event loop blocking (correlated with A-30 CRITICAL finding)
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-23T14:13:47Z (signal sys-20260823T141238-772a, system-auditor -> po, dedup_key=microservice_degraded:pdf-extractor:A-20, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
