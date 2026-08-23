@@ -124,3 +124,12 @@
 - add `oven-sh/setup-bun` to the CI job so mint always succeeds there too — REJECTED: CI never persists a mint (ephemeral checkout, no push-back step) and the job's actual gate (exit 1) is unaffected by mint failure; adding bun+install would add real per-push cost to the "cheapest job" for a path that degrades gracefully without it — documented honestly in the job comment instead.
 **why-decision:** matches the architect brief's decision (b) and every AC in the handoff; verified end-to-end (both pipelines, both directions of the cross-pipeline blind spot, mint success + dedup-skip) against real orch-apply.sh, not asserted.
 **why-change:** none — implementation follows the brief's §3 design as specified.
+
+### STEP dev-mcp-server-S13 · dev-mcp-server · 2026-08-23T13:11:00Z
+**task-id:** TASK-BCTC-INSPECT-LABEL-FIX
+**what-done:** Added `QUARTERLY_PERIOD_TYPE_RE` + exported `normalizeQuarter()` to bctcInspectHandler.ts; buildLabel() now only appends a quarter suffix when period_type does NOT already match `/^Q[1-4]$/`. Updated PI3-bctc-inspect.test.ts:361 AC-14 assertion + added 6-case normalizeQuarter() describe block. Live-probed :3099/api/bctc-inspect/docs post-fix: 0/268 rows show a duplicated/garbled quarter token (was 255/257 pre-fix per architect's live-tested finding).
+**what-considered:**
+- BA's original narrower fix (parseInt-coerce period_quarter only) — REJECTED: architect's D-1 finding proved this only fixes the 2 HUT string rows, leaves all 255 normal rows still duplicated ("VCB Q1 Q1 2025") since period_type already holds 'Q1'..'Q4' and the unconditional append is the real defect.
+- add a 1-4 range check inside normalizeQuarter() for the "Q0" edge case — REJECTED (for now): handoff's own reference implementation (verbatim, architect D-1) has no range check and explicitly frames it as an open question ("verify this is intended or add a range check"); not an AC, added scope the brief didn't ask for. Test documents the actual 0-return behavior rather than silently asserting an un-mandated null.
+**why-decision:** architect D-1 spec is the corrected root-cause fix (verified live against all 255+2 rows), matches AC9/AC-14 exactly; normalizeQuarter() mirrors the file's existing exported-pure-function test pattern (isDecimalShiftAnomaly/isValidUuid).
+**why-change:** none — implementation follows the handoff's D-1 code verbatim.
