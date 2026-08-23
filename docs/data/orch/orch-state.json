@@ -128,10 +128,136 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-24T00:00:00Z",
-    "_updated_by": "narrative-truth-gate",
+    "_updated_at": "2026-08-23T23:56:56Z",
+    "_updated_by": "dev-team",
     "archive": [],
     "rows": [
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-9e3dad",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "not found in database",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-decbd5",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-940abc",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-8fbb88",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-23c346",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-d6df42",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "60",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
       {
         "id": "ntg-20260824T000000Z-technical_indicators-VNM-2813a2",
         "ts": "2026-08-24T00:00:00Z",
@@ -140,7 +266,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -161,7 +287,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -182,7 +308,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -203,7 +329,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -224,7 +350,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -245,7 +371,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -266,7 +392,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -287,7 +413,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -308,7 +434,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -329,7 +455,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -350,7 +476,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -371,7 +497,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -392,7 +518,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -413,7 +539,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -434,7 +560,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -455,7 +581,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -476,7 +602,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -497,7 +623,7 @@
         "type": "narrative_contradiction",
         "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent_id": "chef",
@@ -21990,8 +22116,8 @@
         "last_served_tick": "2026-08-23T20:56:57Z"
       }
     },
-    "_updated_at": "2026-08-23T23:41:53Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-08-23T23:57:28Z",
+    "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
         "envelope_id": "9fbfb401a5cc9bf6b6f101f29d6b3e107aaf709f396985e161a457defac1553a",
@@ -22080,6 +22206,163 @@
         "payload": "Auditor blind-spot: cannot detect launchd failures tier-1 probe checks for",
         "createdAt": "2026-08-23T22:49:24Z",
         "drained_at": "2026-08-23T22:58:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6eca2782657f817eaf338a9525a0f750346add0186bf2eb89e6c6c6834c73941",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "not found in database",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-23T23:56:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f5a48a3a90eb2067935bffeb2c64fd3c8d9f94f4cd0e3aa0d07b92a083a3dfb3",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-23T23:56:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f5a48a3a90eb2067935bffeb2c64fd3c8d9f94f4cd0e3aa0d07b92a083a3dfb3",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-23T23:56:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9717a5dc444dc55ceaec813e0cf643876f78b9d3a8fc49f93799b330576a523f",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-23T23:56:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9717a5dc444dc55ceaec813e0cf643876f78b9d3a8fc49f93799b330576a523f",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-23T23:56:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b4de6e3531f0e73a475b8366b2467874d7de621008239b79398cfcfaa331deb2",
+        "source": "dashboard",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "priority": "MED",
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "60",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        },
+        "createdAt": "2026-08-24T00:00:00Z",
+        "drained_at": "2026-08-23T23:56:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "4bf8d7167a38cf24d0c71f30e328a19118671fd529bd5b66f3a8df9ded555d86",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c114 · 2026-08-23T21:03Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-23T23:46:32Z",
+        "drained_at": "2026-08-23T23:57:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c733a9e1c79c4e322acc16b617b427be6662334a79a7887c32b693f453d8aca4",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "97",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-23T23:50:44Z",
+        "drained_at": "2026-08-23T23:57:27Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
