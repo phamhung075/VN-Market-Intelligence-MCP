@@ -50,10 +50,13 @@ function isDimension(v: unknown): v is ClaimToolMapDimension {
 /**
  * Validate the parsed JSON body against the minimal shape the domain layer
  * (ClaimToolMap, claimCandidateScanner.ts) requires. Extra top-level fields
- * (e.g. `tool_null_markers`, `_meta`, `version`) are ignored — this only
- * asserts presence/shape of the fields ClaimToolMap declares; it does not
- * fail closed on additive SSOT extensions other consumers may read directly
- * from the same file.
+ * (e.g. `_meta`, `version`) are ignored — this only asserts presence/shape
+ * of the fields ClaimToolMap declares; it does not fail closed on additive
+ * SSOT extensions other consumers may read directly from the same file.
+ * `tool_null_markers` is the one additive field ClaimToolMap DOES declare
+ * (optional, CCATO-MCP-T5-USECASE) — captured below when present and
+ * shaped correctly, defaulted to `[]` otherwise; never required, so this
+ * stays backward-compatible with every existing caller/fixture.
  *
  * @throws ClaimToolMapLoadError - shape mismatch, with `sourcePath` in the message.
  */
@@ -82,9 +85,14 @@ export function assertClaimToolMapShape(body: unknown, sourcePath: string): Clai
     );
   }
 
+  // tool_null_markers (CCATO-MCP-T5-USECASE): additive, never required — the
+  // bash engine itself defaults to [] when absent (`claim_map.get(..., [])`).
+  // Malformed values default to [] rather than throwing; downstream
+  // classifyVerdict() degrades gracefully to zero NULL-marker matches.
   return {
     negation_lexicon: b.negation_lexicon,
     non_ticker_tokens: b.non_ticker_tokens,
     dimensions: b.dimensions,
+    tool_null_markers: isStringArray(b.tool_null_markers) ? b.tool_null_markers : [],
   };
 }

@@ -33,6 +33,16 @@ export interface ClaimToolMap {
   negation_lexicon: string[];
   non_ticker_tokens: string[];
   dimensions: ClaimToolMapDimension[];
+  /**
+   * Additive field (CCATO-MCP-T5-USECASE) — optional so this stays a
+   * backward-compatible addition to a DONE_VERIFIED interface (no existing
+   * fixture/caller that omits it breaks). claimCandidateScanner.ts (this
+   * file's original T1 consumer) never reads it; verdictClassifier.ts's
+   * classifyVerdict() does, and runNarrativeTruthGate.ts (T5) is the first
+   * caller to thread it through. Defaults to `[]` when absent, mirroring
+   * the bash engine's own `claim_map.get("tool_null_markers", [])` leniency.
+   */
+  tool_null_markers?: string[];
 }
 
 /** One CCATO candidate claim awaiting live re-probe + verdict classification. */

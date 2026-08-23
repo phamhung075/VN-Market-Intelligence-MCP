@@ -121,15 +121,21 @@ TS port of `scripts/narrative-truth-gate.sh`'s python scan/classify/quarter-reso
 
 Input SSOT (loaded by the caller, not this layer): `docs/data/claim-tool-map.json` (`negation_lexicon`,
 `dimensions[]`, `non_ticker_tokens`, `tool_null_markers`) — schema mirrored by `ClaimToolMap` in
-`claimCandidateScanner.ts` (re-exported from `claimToolMapTypes.ts`). SSOT loader landed:
+`claimCandidateScanner.ts` (re-exported from `claimToolMapTypes.ts`). `tool_null_markers` is an
+OPTIONAL field on `ClaimToolMap` (`string[] | undefined`, added by CCATO-MCP-T5-USECASE) — the
+original T1 shape omitted it since `claimCandidateScanner.ts` never reads it; `verdictClassifier.ts`'s
+`classifyVerdict()` does, and T5's `runNarrativeTruthGate.ts` is the caller that threads it through
+(`claimMap.tool_null_markers ?? []`). SSOT loader landed:
 `infrastructure/fileStore/claimToolMapLoader.ts`'s `loadClaimToolMap()` — see
 `docs/architecture/microservice/mcp-server/infrastructure.md` § File Store Readers
 (CCATO-MCP-T2-CLAIM-MAP-LOADER). Signal-emit writer also landed:
 `infrastructure/signals/narrativeContradictionSignalWriter.ts` — see
 `docs/architecture/microservice/mcp-server/infrastructure.md` § Signal Writers
-(CCATO-MCP-T4-SIGNAL-WRITER). Live re-probe adapters, use-case orchestration, and MCP tool
-registration are separate, not-yet-landed sub-tasks (CCATO-MCP-T3, T5-T8) of the same sprint
-(`SPRINT-CCATO-TRUTHGATE-MCP-NATIVE`).
+(CCATO-MCP-T4-SIGNAL-WRITER). Live re-probe adapters (`infrastructure/probes/narrativeTruthProbeAdapters.ts`,
+CCATO-MCP-T3-PROBE-ADAPTERS) and use-case orchestration (`application/usecases/runNarrativeTruthGate.ts`,
+CCATO-MCP-T5-USECASE — see `docs/architecture/microservice/mcp-server/usecases.md` § Narrative Truth
+Gate) are also landed. MCP tool registration + skill dual-path + integration DoD harness remain
+separate, not-yet-landed sub-tasks (CCATO-MCP-T6-T8) of the same sprint (`SPRINT-CCATO-TRUTHGATE-MCP-NATIVE`).
 
 ## Repository Interfaces
 - `IWatchlistRepository`, `IMarketPriceRepository`

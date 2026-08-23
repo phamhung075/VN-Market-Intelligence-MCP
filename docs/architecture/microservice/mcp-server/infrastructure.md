@@ -598,9 +598,11 @@ confirmed byte-identical.
   throws `ClaimToolMapLoadError` (never coerces/defaults) on a missing file, unreadable
   file, unparsable JSON, or a body missing/mistyping `negation_lexicon`/`non_ticker_tokens`/
   `dimensions[].{id,keywords,tool,requires_ticker,arg_style}` — the caller
-  (`application/usecases/runNarrativeTruthGate.ts`, CCATO-MCP-T5, not yet landed) maps this
+  (`application/usecases/runNarrativeTruthGate.ts`, CCATO-MCP-T5-USECASE, landed) maps this
   to the tool's `GATE_VERDICT: CONFIG_ERROR: <message>` response. Additive top-level SSOT
-  fields (`tool_null_markers`, `_meta`, `version`) are tolerated, not rejected. Default path
+  field `tool_null_markers` is captured (optional on `ClaimToolMap`, defaults to `[]` when
+  absent/malformed — T5 needs it for `classifyVerdict()`); `_meta`/`version` stay tolerated
+  and ignored. Default path
   constant `CLAIM_TOOL_MAP_PATH` resolves via `getProjectRoot()` (`infrastructure/
   projectRoot.ts`) rather than a hardcoded `__dirname`-relative hop-count — verified
   empirically that the sibling `improvementSignalWriter.ts`'s fixed
@@ -635,7 +637,11 @@ confirmed byte-identical.
   NOT the calling agent's id, which only appears in the row's own `from`/`payload.agent_id`.
   Types split to sibling `narrativeContradictionSignalTypes.ts` (size-lint <=120L, same
   new-file-prefers-split precedent T1/T2 established this sprint). Consumed by
-  `application/usecases/runNarrativeTruthGate.ts` (CCATO-MCP-T5, not yet landed).
+  `application/usecases/runNarrativeTruthGate.ts` (CCATO-MCP-T5-USECASE, landed) — the
+  use case fans out ONE `writeNarrativeContradictionSignals()` call carrying the full
+  FAIL-finding array per gate run (not one call per finding), maps each `GateFinding` onto
+  `NarrativeContradictionFinding` via a 1:1 field rename (`runNarrativeTruthGateFindings.ts`
+  `toContradictionFinding()`), and skips the call entirely when there are zero FAIL findings.
 
 ## Key Infrastructure Patterns
 - **`initDatabase()` identity-keyed init guard (FIX-MCP-MEMORY-CODE-LEAK, 2026-08-05;

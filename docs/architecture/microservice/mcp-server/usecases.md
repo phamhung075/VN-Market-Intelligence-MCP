@@ -516,6 +516,56 @@ System component health snapshot
 ### computeMarketEarningYield.ts
 Market valuation metric (1/PE ratio)
 
+## Narrative Truth Gate (CCATO-MCP-T5-USECASE)
+
+### application/usecases/runNarrativeTruthGate.ts — `runNarrativeTruthGate(input, deps?)`
+CCATO (Claim Contradicts Authorized Tool Output) composition root — the MCP-native port of
+`scripts/narrative-truth-gate.sh` (spec: `docs/architecture-briefs/2026-07-17-ccato-truthgate-mcp-native.md`
+§3.1-3.2). Not yet wired to an MCP tool — `interface/mcp/tools/system/narrativeTruthGateTool.ts` +
+`registry.ts` (CCATO-MCP-T6-TOOL-REGISTRATION) is a separate, not-yet-landed row.
+
+**Input DTO** (`RunNarrativeTruthGateInput`, `application/usecases/runNarrativeTruthGateTypes.ts`):
+`post_body: string`, `agent_id: string`, `cache?: Record<string, Record<string, unknown>>` (optional
+pre-fetched `{TICKER: {dimension_id: non-null value}}` working-memory cache — mirrors the tool's future
+`call_tool` argument shape 1:1, brief §3.1).
+
+**Output DTO** (`GateResult`): `verdict: "PASS" | "FAIL" | "CONFIG_ERROR"`, `findings: GateFinding[]`
+(one entry per scanned candidate — `dimension`, `tool`, `ticker_or_dim`, `probe_ticker`, `claim_text`,
+`matched_negation`, `source: "cache" | "live"`, `classification: "NON_NULL" | "NULL" | "ERROR"`,
+`result: "FAIL" | "PASS" | "WARN"`, `returned_summary`), `config_error_reason?: string` (present only
+on `CONFIG_ERROR`).
+
+**Orchestration logic** (`runNarrativeTruthGate.ts:69-105`):
+1. Guard: empty `agent_id`/`post_body` (after `.trim()`) → `CONFIG_ERROR`, claim-map never loaded.
+2. `loadClaimToolMap()` (CCATO-MCP-T2) — a thrown `ClaimToolMapLoadError` surfaces its `.message`
+   verbatim as `config_error_reason`; any other thrown value falls back to `String(err)`.
+3. `scanClaimCandidates(post_body, claimMap)` (CCATO-MCP-T1, domain, pure).
+4. Per candidate: `cacheLookup()` (`runNarrativeTruthGateFindings.ts`) — a non-null
+   `cache[ticker][dimension.id]` value short-circuits the live probe (byte-faithful to the bash
+   engine's `cache_hit is not None` guard: an explicit `null` cache entry does NOT short-circuit,
+   it still re-probes live). Cache miss → `probeDimension(candidate, now, adapters)` (CCATO-MCP-T3).
+5. `classifyVerdict(probe.raw, claimMap.tool_null_markers ?? [])` (CCATO-MCP-T1) maps
+   `NON_NULL → FAIL`, `NULL → PASS`, `ERROR → WARN`.
+6. `verdict` is `FAIL` iff `findings.some(f => f.result === "FAIL")`; a `WARN`-only run (probe error,
+   no contradiction) still reports overall `PASS`.
+
+**Side effects:** on ≥1 FAIL finding, calls `writeNarrativeContradictionSignals()` (CCATO-MCP-T4)
+exactly ONCE per gate run with the FULL array of FAIL findings (fan-out happens inside T4, one
+`.signal_queue.rows[]` append per finding — not one `writeNarrativeContradictionSignals()` call per
+finding). Zero FAIL findings → the signal writer is never called. No other side effects; this file
+does zero fs/network I/O of its own — every T2/T3/T4 dependency is an injectable trailing-deps-bag
+field (`RunNarrativeTruthGateDeps`) defaulting to the real implementation.
+
+**Companion files:** `runNarrativeTruthGateTypes.ts` (DTOs, size-lint split), `runNarrativeTruthGateFindings.ts`
+(`cacheLookup`/`toGateFinding`/`toContradictionFinding` per-candidate helpers, size-lint split).
+
+**Additive dependency fix (CCATO-MCP-T5):** `ClaimToolMap.tool_null_markers?: string[]`
+(`domain/services/narrativeTruthGate/claimToolMapTypes.ts`) and its population in
+`assertClaimToolMapShape()` (`infrastructure/fileStore/claimToolMapValidator.ts`) were added — T2's
+original loader parsed but dropped this field, leaving no way for T5 to reach `classifyVerdict()`'s
+`tool_null_markers` parameter. Purely additive/optional; defaults to `[]` when absent or malformed,
+verified non-breaking against all pre-existing T1/T2 fixtures and tests.
+
 ## Cron Status Compute (DASH-CRON-RECHECK-TABLE, TASK-DASH-CRON-1)
 
 ### apps/mcp-server/src/application/cron/cronStatusCompute.ts
