@@ -159,3 +159,117 @@ NONE. PO's row note already resolves feature priority (P1), VN labels ("Quý"/"M
 - what-considered: "only path: pure client-side facet filter over already-fetched items[], no new endpoint — PO's note already forecloses server-side filtering/pagination as out of scope, and BA's own live verification (LIST_SQL, DocListItem, buildLabel()) confirms all needed fields are already served"
 - why-decision: "FR-7 selection-preservation is the one nontrivial design risk — flagged explicitly (do not conflate filter-triggered doc-select rebuild with the user-driven change-handler that unconditionally refetches PDF/OCR/table/MD) so architect/developer do not ship a naive re-render that flickers or double-fetches on every filter change"
 - why-change: "no change from PO's ticket direction; this spec adds FR-2 (module-level allDocs cache, does not exist today — required to satisfy AC2's zero-network-call constraint) and FR-7's implementation-risk detail, which PO's note did not fully specify at the code level"
+
+---
+
+## [Architect] Brownfield Findings
+
+**Scope correction (found this cycle, widens AC9's fix surface — same 2 files, no new files):** BA's FR-3/AC9 framing ("2/257 rows, HUT, type coercion") understates the bug. `buildLabel()` was executed live (`node -e`) before designing, not just read:
+```
+buildLabel({action_code:"VCB", period_type:"Q1", period_quarter:1, period_year:2025})  →  "VCB Q1 Q1 2025"   (duplicate — ALL 255 normal rows, today)
+buildLabel({action_code:"HUT", period_type:"Q1", period_quarter:"Q1", period_year:2024}) →  "HUT Q1 QQ1 2024"  (the 2 rows BA flagged)
+```
+Root cause: `period_type` already holds `'Q1'..'Q4'` on every live row (BA's own FR-4 finding), but `buildLabel()`'s comment (`// e.g. "VCB Q1 2025"`) assumes `period_type` would be a `QUARTERLY`/`ANNUAL` literal and unconditionally appends a 2nd `` ` Q${period_quarter}` `` token. BA's literal FR-3b prescription (parseInt-coerce `period_quarter` only) does NOT reach AC9's own stated target — it only turns `"QQ1"` into a 2nd `"Q1"`, still `"HUT Q1 Q1 2024"`, not `"HUT Q1 2024"`. Fix scope stays inside `buildLabel()` (`bctcInspectHandler.ts:167-171`) — no new file, no wider blast radius, ~8 net lines.
+
+- **Zone:** `apps/mcp-server/`
+
+- **Verified paths (read this cycle):**
+  - `apps/mcp-server/src/interface/bctc-inspector.html:869-881` — `.controls` bar; flat `select { min-width: 320px; }` CSS rule (line 81-90) applies to ALL selects incl. the 2 new ones.
+  - `apps/mcp-server/src/interface/bctc-inspector.html:1050-1071` — module-level state block (`let currentDocId = null; ...`) — FR-2's `allDocs` and the 2 new DOM refs land here.
+  - `apps/mcp-server/src/interface/bctc-inspector.html:1118-1143` — `loadDocList()`; option-building loop (1127-1137) is the exact body to extract into `renderDocOptions(items)`.
+  - `apps/mcp-server/src/interface/bctc-inspector.html:1146-1170` — `select.addEventListener("change", …)` — unconditionally calls `renderPdf`/`navigateToPage`/`renderTable`/`renderMdTables` on every fire (lines 1163-1169). Confirmed: FR-7 MUST NOT route through this listener or dispatch a synthetic `change` event — mutate `select.value` directly.
+  - `apps/mcp-server/src/interface/bctc-inspector.html:2120-2153` — `resetPanes()` — no `select` element touch inside it; safe to call unconditionally on the "did not survive" branch (idempotent even if nothing was selected).
+  - `apps/mcp-server/src/interface/bctc-inspector.html:2689` — `await loadDocList();` sole init call, bottom of `<script type="module">` — confirms `resetPanes` (declared later, line 2120) is safely callable earlier via function-hoisting (module-scope `function` statements).
+  - `apps/mcp-server/src/interface/mcp/routes/bctcInspectHandler.ts:83-102` (`FinancialReportRow`), `:125-139` (`LIST_SQL`, unchanged), `:141-165` (`DocListItem`), `:167-171` (`buildLabel()`) — confirmed zero SQL/type-shape change needed; `period_quarter` stays `number | null` in the type (the 2/257 string-runtime rows are a pre-existing, BA-declared-out-of-scope type/runtime mismatch — `normalizeQuarter()` below is defensive regardless of the declared type).
+  - `apps/mcp-server/src/__tests__/PI3-bctc-inspect.test.ts:19,223-256,348-362` — `isDecimalShiftAnomaly`/`isValidUuid` are real EXPORTED-function unit tests (not mirrored) — the precedent for testing `normalizeQuarter()` the same way. **Line 361 hardcodes `expect(body.items[0]!.label).toBe("VCB Q1 Q1 2025")` — the CURRENT BUGGY value.** This assertion MUST change to `"VCB Q1 2025"` in the same commit as the `buildLabel()` fix — an in-scope correction, not a regression to preserve (NFR-2's "stay green" reading only holds once this one line is updated to match AC9's own target).
+  - `apps/mcp-server/src/__tests__/1976-bctc-inspector-page-nav.test.ts:1-42` — confirmed the "mirrored pure function, no jsdom" convention (docstring + `clampPage`/`navLabel`/`shouldSkipKeyboard`) for the client-side HTML logic this feature adds.
+  - `apps/mcp-server/src/__tests__/1273-bctc-inspect-overlay.test.ts`, `PI3-bctc-inspect-reopen2.test.ts`, `1271-bctc-inspect-md.test.ts` — grepped for `label`/`period_quarter`/`period_type`: no other assertion on the label string; only `PI3-bctc-inspect.test.ts:361` needs the AC9-driven update.
+
+- **Reuse patterns:**
+  - `renderDocOptions(items)` — extract from `loadDocList()`'s existing loop, called from BOTH the initial full load and every filter re-render (closes BA's edge-case row "dataset.item payload drift between filtered vs. unfiltered render paths").
+  - `normalizeQuarter()` — one new EXPORTED function in `bctcInspectHandler.ts` (same pattern as `isDecimalShiftAnomaly`/`isValidUuid`), reused by `buildLabel()`; a SEPARATE, mirrored (not imported — NFR-4, no build step) copy inside `bctc-inspector.html` for the client-side facet derivation. Accepted duplication per BA.
+  - Placeholder-with-count pattern already live on `#doc-select` (`— select a document (N) —`) reused verbatim for `#quarter-filter`/`#ticker-filter` (AC1).
+
+- **Design decisions:**
+  - **D-1 (`buildLabel()` fix — corrects FR-3b's mechanism, not its file/line target):**
+    ```ts
+    export function normalizeQuarter(periodQuarter: number | string | null): number | null {
+      if (periodQuarter === null || periodQuarter === undefined) return null;
+      const n = typeof periodQuarter === "number"
+        ? periodQuarter
+        : Number.parseInt(String(periodQuarter).replace(/^Q/i, ""), 10);
+      return Number.isFinite(n) ? n : null;
+    }
+    const QUARTERLY_PERIOD_TYPE_RE = /^Q[1-4]$/i;
+    function buildLabel(row: FinancialReportRow): string {
+      // period_type already holds 'Q1'..'Q4' for every live quarterly row (verified — never
+      // the 'QUARTERLY'/'ANNUAL' literal this fn's original comment assumed). Only append a
+      // quarter suffix when period_type does NOT already encode it (reserved for a future
+      // ANNUAL row that also carries a period_quarter) — prevents the duplicate/garbled token.
+      const q = QUARTERLY_PERIOD_TYPE_RE.test(row.period_type) ? null : normalizeQuarter(row.period_quarter);
+      const quarter = q !== null ? ` Q${q}` : "";
+      return `${row.action_code} ${row.period_type}${quarter} ${row.period_year}`;
+    }
+    ```
+    Verified output: normal row → `"VCB Q1 2025"`; the 2 HUT string rows → `"HUT Q1 2024"` (AC9's exact literal target); a hypothetical future `ANNUAL`+quarter row → unchanged null-safe branch preserved.
+  - **D-2 (FR-2 cache placement):** `let allDocs = [];` declared in the existing state block (`:1050-1071`), NOT inside `loadDocList()` — must survive across calls per FR-2/AC2.
+  - **D-3 (FR-6/FR-7 merge — one `applyFilters()` function, no synthetic event):**
+    ```js
+    function applyFilters() {
+      const qVal = quarterFilter.value;  // "" | "YYYY-Q"
+      const tVal = tickerFilter.value;   // "" | action_code
+      const filtered = allDocs.filter((item) => {
+        if (qVal) {
+          const q = normalizeQuarter(item.period_quarter);
+          if (q === null || `${item.period_year}-${q}` !== qVal) return false;
+        }
+        return !tVal || item.action_code === tVal;
+      });
+      renderDocOptions(filtered);  // rebuilds <select>; browser defaults selectedIndex to the new option 0 (placeholder) — this IS the "reset to placeholder" FR-7 wants, for free
+      if (currentDocId && filtered.some((i) => i.doc_id === currentDocId)) {
+        select.value = currentDocId;   // re-select WITHOUT dispatching "change" — no refetch, no flicker (FR-7)
+      } else if (currentDocId) {
+        resetPanes();                  // does not touch `select` itself — safe alongside the fresh placeholder render
+      }
+      statusBar.textContent = filtered.length === 0
+        ? `${[qVal && `Quý ${qVal.split("-")[1]} ${qVal.split("-")[0]}`, tVal].filter(Boolean).join(" × ")}: không có tài liệu khớp`
+        : `${filtered.length} document(s) loaded.`;
+    }
+    quarterFilter.addEventListener("change", applyFilters);
+    tickerFilter.addEventListener("change", applyFilters);
+    ```
+    Never calls `select.dispatchEvent(...)` — the existing `select.addEventListener("change", …)` handler (`:1146-1170`) is untouched, closing AC8/AC6's highest-risk item exactly as BA flagged it.
+  - **D-4 (FR-8 zero-match option MUST carry `selected`, not just `disabled`):** `<option value="" disabled>` alone risks the closed `<select>` rendering BLANK — HTML's default-selection algorithm skips disabled options when picking the initially-selected one, and with only one (disabled) option present, no option becomes selected (`selectedIndex=-1`). Use `<option value="" disabled selected>— no document matches —</option>` — the explicit `selected` attribute is honored at parse/innerHTML-assignment time regardless of `disabled`. Flag for QA visual verification (AC7/AC10) either way.
+  - **D-5 (cosmetic, non-blocking):** the generic `select { min-width: 320px; }` rule will make the 2 new small filters unnecessarily wide. Suggest `.filter-select { min-width: 140px; }` on `#quarter-filter`/`#ticker-filter`. Developer discretion — not an AC.
+
+- **Files to create/modify:**
+  | # | File | Layer | Change |
+  |---|------|-------|--------|
+  | 1 | `apps/mcp-server/src/interface/bctc-inspector.html` (EDIT) | interface | FR-1 (`.controls` 2 new `<select>` before `#doc-select`, `.filter-select` CSS per D-5), FR-2 (`allDocs` state + DOM refs), FR-2/refactor (`renderDocOptions()` extracted from `loadDocList()`), FR-3a/FR-4/FR-5 (mirrored `normalizeQuarter()` + `populateFilterOptions()`), FR-6/FR-7 (`applyFilters()` per D-3), FR-8 (zero-match branch in `renderDocOptions()` per D-4) |
+  | 2 | `apps/mcp-server/src/interface/mcp/routes/bctcInspectHandler.ts` (EDIT) | interface | FR-3b/AC9 — new exported `normalizeQuarter()` + corrected `buildLabel()` per D-1, `:167-171` |
+  | 3 | `apps/mcp-server/src/__tests__/PI3-bctc-inspect.test.ts` (EDIT) | test | Update AC-14 (`:361`) `"VCB Q1 Q1 2025"` → `"VCB Q1 2025"`; add a new `normalizeQuarter()` unit-test block next to the existing `isDecimalShiftAnomaly`/`isValidUuid` blocks (real import, not mirrored) |
+  | 4 | `apps/mcp-server/src/__tests__/FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER.test.ts` (NEW) | test | NFR-2 — mirrored pure-function tests for the client-side `normalizeQuarter()`, the AND-filter predicate, and the selection-preservation resolver, same convention as `1976-bctc-inspector-page-nav.test.ts` |
+
+- **DDD layer assignment:** 100% interface layer, matches BA's own map exactly — confirmed independently this cycle (LIST_SQL untouched, `DocListItem`/`FinancialReportRow` shapes untouched, no new SQL, no new endpoint, no new usecase). Zero domain/application/infrastructure files touched.
+
+- **Test strategy:**
+  - `PI3-bctc-inspect.test.ts` — extend (server-side, real imports): fix AC-14's frozen value, add `describe("normalizeQuarter()")` covering `number` passthrough, `"Q1"`-shaped string coercion, `null`, and a malformed-string defensive case (e.g. `"ABC"` → `null`, never `NaN` leaking into a label).
+  - `FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER.test.ts` — new (client-side, mirrored per NFR-2/1976's convention): `normalizeQuarter()` (mirror of the same cases), the AND-filter predicate (quarter-only / ticker-only / both / neither match), and a `resolveSelectionAfterFilter(currentDocId, filteredIds)` pure resolver mirroring D-3's branch (returns `{action:"keep"}` vs `{action:"reset"}` — extract this decision as its own named pure function so it's independently testable without DOM).
+  - AC8 regression: existing 5 named test files require no code change (confirmed — `select.addEventListener("change", …)` untouched); AC10 dual-origin (`:3000` direct + `:3001` proxy) stays a manual QA verification step, not unit-testable.
+
+- **Standard Detection:** `BUILD-STANDARD: lean` (`apps/mcp-server/` already exists; this is a NEW FEATURE — 2 facet filters — within an existing service, not a new service). Ref: `docs/standards/microservice-build-standard.md`.
+
+- **Risk flags:**
+  1. **AC9 fix-surface correction (D-1, above)** — the single highest-value finding: implementing BA's FR-3b literally (type coercion only) would ship code that still fails AC9's own stated acceptance value for every non-HUT row. Any implementer working from the BA spec section alone (without this Architect section) would under-scope the fix.
+  2. **PI3-bctc-inspect.test.ts:361 must be edited, not merely "kept green"** — flagged so the developer doesn't (a) skip the `buildLabel()` fix to avoid touching a "must stay green" test, or (b) get a red suite and assume a regression.
+  3. **FR-8's `disabled`-without-`selected` footgun (D-4)** — a plausible naive implementation of BA's literal FR-8 text renders a blank closed `<select>` instead of the intended message; verify visually.
+  4. **No security/DDD violations found** — pure client-side filter over already-served data + one cosmetic server-side label fix; no new SQL, no new auth surface, no new writer.
+  5. **`DocListItem.period_quarter: number | null` still does not match the 2/257 live string-runtime rows** — pre-existing, BA-declared out of scope (write-path fix is a separate follow-up); `normalizeQuarter()` is defensive regardless, so this is safe to leave as-is. Not re-flagging as new scope.
+- **Scan clean:** true ✓
+
+## RETURN (architect)
+DONE: Technical design complete — FR-1..FR-8/NFR-1..NFR-4 fully designed against live-read code (2 files: `bctc-inspector.html`, `bctcInspectHandler.ts`) + 1 existing test file's frozen assertion identified as needing an in-scope update + 1 new test file. Corrected AC9's fix mechanism (D-1: BA's literal type-coercion prescription does not reach AC9's own target; root cause is `buildLabel()` unconditionally double-appending a quarter token onto a `period_type` that already encodes it, affecting all 255 normal rows, not just the 2 HUT rows) — same 2 files, no scope/file-count change. FR-7 selection-preservation designed with zero synthetic-event risk (D-3). FR-8 zero-match option needs `selected` alongside `disabled` (D-4) — flagged for developer + QA.
+ZONE: apps/mcp-server/
+NEXT: pm — break FR-1..FR-8 into dev-mcp-server task(s) per the file table above; BA's own SPRINT-S sizing (~80-100 net lines, 1 domain, no domain-boundary crossing) still holds despite the widened AC9 root-cause fix (same file/line target, not a bigger diff) — PM's call on 1 vs 2 atomic tasks (html file vs handler+tests).
+HANDOFF: docs/handoffs/FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER-BA-spec.md
+PIPELINE: continue

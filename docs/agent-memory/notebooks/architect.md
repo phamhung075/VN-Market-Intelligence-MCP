@@ -1,8 +1,15 @@
 # Architect — Notebook
 
-**Last updated:** 2026-08-23 10:05 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
+**Last updated:** 2026-08-23 13:00 UTC | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-08-23T13:00Z — FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER (SPRINT-S ready[]→pm, ba-pipeline, zone apps/mcp-server/)
+
+**Task:** BA spec (docs/handoffs/FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER-BA-spec.md) — 2 facet `<select>` (quarter, ticker) over the existing flat 257-doc `#doc-select` in bctc-inspector.html, pure client-side filter (no backend change), plus buildLabel()'s AC9 display fix in bctcInspectHandler.ts. BA characterized AC9 as a 2/257-row (HUT) type-coercion fix only.
+**Findings:** Ran `buildLabel()` live (`node -e`) before designing — the "2/257" framing understates the bug. `period_type` already holds `'Q1'..'Q4'` on every row (BA's own FR-4 finding); `buildLabel()`'s stale comment assumed `'QUARTERLY'`/`'ANNUAL'` and unconditionally appends a 2nd `` Q${period_quarter}` `` token, so ALL 255 normal numeric rows already render `"VCB Q1 Q1 2025"` (duplicate), not just the 2 HUT string rows (`"HUT Q1 QQ1 2024"`). BA's literal FR-3b prescription (parseInt-only coercion) would NOT reach AC9's own stated target — it only turns `"QQ1"` into a 2nd `"Q1"`, still duplicated. Real fix: skip the appended quarter token whenever `period_type` is already `/^Q[1-4]$/`-shaped (new exported `normalizeQuarter()`). Also found `apps/mcp-server/src/__tests__/PI3-bctc-inspect.test.ts:361` (AC-14) hardcodes the CURRENT BUGGY `"VCB Q1 Q1 2025"` as expected — must be corrected to `"VCB Q1 2025"` in the same commit (in-scope test fix, not a regression to preserve). Confirmed zero domain/application/infra touch (BA's DDD map upheld). FR-7 selection-preservation designed via direct `select.value =` mutation (no synthetic `change` dispatch) — avoids the existing change-handler's unconditional PDF/OCR/table/MD refetch (lines 1146-1170). FR-8's `<option disabled>` needs `selected` too, or the closed `<select>` renders blank (HTML default-selection algorithm skips disabled-only option lists) — flagged for developer.
+**Output:** `[Architect] Brownfield Findings` appended to docs/handoffs/FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER-BA-spec.md. Test strategy: extend PI3-bctc-inspect.test.ts (server-side `normalizeQuarter()` + corrected AC-14) + new FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER.test.ts (client-side mirrored pure functions, same convention as 1976-bctc-inspector-page-nav.test.ts). BUILD-STANDARD: lean. Board row moved backlog→ready via orch-apply.sh, owner=architect, next_agent=pm. Journal STEP architect-S39.
+**Next:** pm — break into dev-mcp-server task(s): (1) bctcInspectHandler.ts buildLabel/normalizeQuarter fix + PI3-bctc-inspect.test.ts update, (2) bctc-inspector.html FR-1/2/4-8, (3) new client-side pure-function test file. Single zone, BA's own S-size framing still holds (same 2 files, no new-file scope growth from the AC9 correction) — PM's call on task count.
 
 ## 2026-08-23T10:05Z — FIX-SIGNAL-INBOX-NON-DRAINABLE-ENVELOPE-50-OF-51-FILES-SILENTLY-CLASSED-LITTER (P1 ready[]→developer, PO-mint, zone cross-service/, router-direct)
 
