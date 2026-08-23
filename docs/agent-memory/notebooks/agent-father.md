@@ -8,24 +8,12 @@
      explicit YYYY-MM-DD token. Nothing deleted; full record in the archive file and git
      history. -->
 
-## FIX 2026-08-23T09:30Z — FIX-SIGNAL-TYPE-ROUTING-GAP-bctc-image-fetch-degraded, P0 CI-red fix
-- Added 1 Pipeline-B routing row (`bctc_image_fetch_degraded`) to `docs/agents/po/flow/triage-signals-longtail.md` — mcp-server `push_bctc_refined_unit`/`bctcImageFetchDegradedSignalWriter.ts`, dedup on `dedup_key`, mint FIX zone `cross-service/` next_agent `developer`. Placed in the longtail sibling (single-fire-so-far type, matches existing `bctc-data-quality-anomaly` precedent), not the hot-path main table.
-- Guard `guard-signal-type-coverage.sh --check`: FAIL (`unrouted Pipeline-B to=po types: ["bctc_image_fetch_degraded"]`) → PASS, reproduced. Paired suite: 23/24 → 24/24, reproduced once (TEST10 live-files smoke).
-- Committed `a309c9334` (file alone, pushed clean to origin/main, no rebase). Board write via `orch-apply.sh` moved the FIX row `backlog[]→review[]` (`next_agent: qa`; `ci_green_on_subsequent_push` gate not yet independently observed) — lands UNCOMMITTED, `docs/data/orch/orch-state.json` is outside agent-father's commit zone (FU-AGENT-FATHER-ORCH-SCOPE).
-- **Not fixed here (flagged, out of scope):** a genuinely new, unrelated Pipeline-A type `cowork-fire` appeared live mid-task and re-trips the guard/TEST10 post-fix — different pipeline, different subject, no claim held. Guard's own self-filing fallback already auto-tracked it (`FIX-SIGNAL-TYPE-ROUTING-GAP-cowork-fire`, backlog, owner po). Needs its own fresh triage/dispatch, not folded into this task.
-
-## FIX 2026-08-23T09:45Z — cowork-team Step 4.7 + 5.3 doc-truth pair (2 P3 rows)
-
-- 4.7 `tick-snapshot.md`: "pure bash cannot call MCP" false since `mcp-call.sh` f7d34918d
-  2026-07-02 (row said 07-30 = mtime). Folded in-fence; ran verbatim, 20199B vs 20190B ref.
-- 5.3 `spawn-fanout.md`: surface contract + provenance fix + fail-open negative control +
-  >=2-distinct-marker threshold. `.output` = 187B symlink → 246939B transcript; the 1515B
-  dispatcher-authored prompt ALONE scores 6/6.
-- **LESSON: a detector whose markers come from its own prompt is not exogenous — grep
-  `docs/signals/` before calling one fixed.** That grep found an unprocessed 2026-07-30
-  signal: a 3rd FP, 1/6 on a disclaimer, on the CORRECT surface — scoping alone misses it.
-- Out of zone → agents-architect: caps pattern `docs/agents/*/flow/**/*.md` matches nothing
-  (bash `case` `**`==`*`); 173 flow files ungoverned. Rows NOT flipped (orch-state).
+<!-- Entries 2026-08-23 09:30Z (FIX-SIGNAL-TYPE-ROUTING-GAP-bctc-image-fetch-degraded) and
+     09:45Z (cowork-team Step 4.7 + 5.3 doc-truth pair) split to
+     docs/agent-memory/notebooks/archive/agent-father-archive-20260823.md on 2026-08-23
+     (self-prune: 188L/16787B against the 200L line cap and the 12000B byte cap). Nothing
+     deleted; full record in the archive file and git history. Same convention as the
+     2026-08-12 prune noted above. -->
 
 ## Keep (maintenance) 2026-08-23T14:23 — CHECK6-FLEET-ROLLOUT-DEBUG-LOGGER-PROTOCOL
 
@@ -186,3 +174,25 @@ CADRAT-3 routing. Steps 3-5 (sweep-fixes) + 5b (team-tool-recheck) ran unconditi
   (needs `get_week_period` to accept an `as_of` — a server change).
 - Housekeeping: de-referenced 4 `chef.md:135` line citations in chef-dish.md → `chef.md Step 0.5`. My own
   ANCHOR-4 edit moved that line to 167, so those citations were stale the moment I wrote them.
+
+## FIX 2026-08-23T15:25Z — TASK-COWORK-DOC-TRUTH-LAYER-INVENTORY (P1, unblocks a P0)
+
+- A "the 12 RemoteTriggers provide persistence" sentence outlived that mechanism's retirement by two
+  months and got quoted verbatim into a live P0 status_note as the cause of an 8h miss. Replaced with a
+  measured three-layer table in `cron-cowork-team/SKILL.md` + a `catchup_raw` scope/reach correction in
+  `match-slots.md`.
+- **Lesson: a section-scoped instruction does not satisfy a file-scoped AC.** The handoff said "touch
+  only the 'Why this skill exists' section"; AC-4 was a grep gate over the whole file. Two more copies of
+  the identical false claim sat in the Warning and Notes sections. Rewriting only the named section would
+  have passed my own reading and failed the AC. Run the gate, don't infer it.
+- **Lesson: re-measure the handoff's numbers.** Two did not reproduce — `trigger_status` absent was 11,
+  is now 13; `catchup_raw` "8 records, ZERO eligible" became 8 records / 2 eligible on a later same-day
+  run. So the eligible count is written as a timestamped observation with "re-run before quoting", not as
+  a standing property. AC-6 forbade unmeasured claims; copying the brief forward would have violated it.
+- Kept the structural claim that survives measurement drift: `catchup_max_lateness_minutes` (live
+  60/120/180/360/1440) caps recovery at ONE VN day, so wiring the missing `catchup-check.md` consumer
+  would still not have recovered the multi-day outage the parent row is about.
+- **AC-3 handed back:** `docs/protocols/cowork-master-cron-runbook.md` is outside my commit_zone. Its
+  stale spot is now specific: it calls the launchd backstop "in flight" and test T5 "NOT YET APPLICABLE",
+  while `launchctl list` shows the job loaded, last exit 0.
+- Self-pruned this notebook first (188L/16787B → 176L) to `archive/agent-father-archive-20260823.md`.
