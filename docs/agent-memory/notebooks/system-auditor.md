@@ -176,3 +176,25 @@ Suggested owner: orch-sentinel (per OH-3 dimension — auditor blind-spot meta-c
 
 **NEXT:** PO assigns owner (suggested: orch-sentinel OH-3 dimension) to determine whether launchd should be formally excluded from tier-1 scope or added to auditor checks.
 
+
+### Audit Run Tier-1 2026-08-23T23:16Z
+
+**Verdict:** ALL_GREEN (0 anomalies)
+
+**Summary:** Tier-1 runtime health check — all host_runtime_set services UP with healthy status, all health endpoints responding HTTP 200, no memory pressure, no restart crashes, all multi-probe checks passing.
+
+**Checks Executed (A-01 through A-31):**
+- A-01 through A-11 (Container Status): All 13 containers UP/healthy ✓
+- A-12 through A-19 (Health Endpoints): All 5 services responding 200 ✓
+- A-20 (pdf-extractor Multi-Probe): 3/3 probes passed ✓
+- A-21 (Windowed Crash-Only): RestartCount=0, <2 crashes ✓
+- A-30 (Memory Pressure & Reclamation): All containers <85% baseline, SKIP deep-probe ✓
+
+**A-32 (launchd) Status:** OUT_OF_SCOPE — no coverage, not audited
+
+**Findings:** None (0 new anomalies, all prior launchd issues remain dedup-suppressed from 2026-08-22T23:10Z)
+
+**Probe Timestamp:** 2026-08-23T23:16:01Z
+
+**Status:** CLEAN — system healthy, awaiting developer fix for pre-push size-lint breach (FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L)
+
