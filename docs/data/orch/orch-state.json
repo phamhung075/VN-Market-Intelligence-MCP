@@ -14724,11 +14724,14 @@
           "TASK_RUNIDLE-3-STALENESS"
         ],
         "supervised": false,
-        "updated_at": "2026-08-08T23:10:09Z",
+        "updated_at": "2026-08-23T21:58:22Z",
         "updated_by": "qa/round-1-approved",
         "deliverable": "docs/architecture-briefs/2026-08-09-active-sprints-accumulator-gap.md",
         "qa_verified_at": "2026-08-08T23:10:08Z",
-        "qa_verified_by": "qa"
+        "qa_verified_by": "qa",
+        "secondary_claimed_at": "2026-08-23T21:58:22Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "pm"
       },
       {
         "id": "FIX-SIGNALQUEUE-RECEIVER-DELIVERY-CONTRACT",
@@ -21094,7 +21097,7 @@
         "last_served_tick": "2026-08-23T21:25:28Z"
       },
       "sls": {
-        "last_served_tick": "2026-08-23T18:55:13Z"
+        "last_served_tick": "2026-08-23T21:57:27Z"
       },
       "rlc": {
         "last_served_tick": "2026-08-23T19:23:53Z"
@@ -21109,7 +21112,7 @@
         "last_served_tick": "2026-08-23T20:56:57Z"
       }
     },
-    "_updated_at": "2026-08-23T21:55:49Z",
+    "_updated_at": "2026-08-23T21:57:27Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
