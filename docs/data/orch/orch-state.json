@@ -19214,6 +19214,23 @@
         "note": "PO TRIAGE 2026-07-21 (TNB c115 finding F-TNB-READTELEGRAMREPORTS-CHANNEL-PARAM-NOOP). VERDICT: CONFIRMED AT SOURCE by PO, independently of TNB's report.\n\nRAW EVIDENCE (PO read the zod schema directly, apps/mcp-server/src/interface/mcp/tools/briefings/telegramReportTools.ts registerTelegramReportTools): the read_telegram_reports input schema declares EXACTLY three keys — status (enum new/processed/all, default \"new\"), limit (1-50, default 20), unclaimed_only (bool, default true). There is NO channel parameter. PO also re-ran the tool live this tick with no channel arg and received only telegram_reports DB rows (BCTC-1345b / bctcExtractReconcile / market-watcher entries from analysis-agent) — i.e. the BUG-report table, consistent with TNB's byte-identical-results test across channel=\"work\"/\"market\"/absent.\n\nWHY NO CHANNEL PARAM CAN BE ADDED CHEAPLY (this is the part that decides the fix): the tool is not merely missing an argument — the DATA IT WOULD READ DOES NOT EXIST. Per docs/agents/tools/list/send_telegram.md, WORK-channel messages are explicitly \"Not persisted (ephemeral status updates)\", and MARKET-channel messages persist only when an internal persist param is supplied, which chef.md's send_telegram(channel=\"market\", ...) never supplies. So adding a channel arg would require first adding channel persistence — a far larger change than the audit steps need.\n\nIMPACT: three TNB audit steps are structurally non-functional as written and have been on EVERY cycle since they were added — audit-chef-coverage.md Step 0.5 ([chef] START/SENT/SILENT/FAILED telemetry), audit-market.md Step 1a (MARKET plain-language check), Step 1b ([CHEF-DETAIL] WORK layer-walk audit). This was masked for 20+ consecutive cycles (c095-c114) because F-MCP-SUBAGENT-SYSTEMIC blocked TNB's MCP access before it ever reached these steps; c115 is the first cycle with mcp__gateway__call_tool confirmed live, which is why it surfaced now. Not a regression — a latent defect newly observable.\n\nFIX (adopt TNB's recommendation — PO concurs): rewrite Step 0.5 / 1a / 1b to use the file-proxy as the PRIMARY method, not a degraded fallback: unified-agent.md notebook + docs/data/unified-agent-synthesis-<DATE_VN>-<SLOT>.json + docs/data/cowork-schedule.json. This is already what recent TNB cycles do in practice (correctly, via their error-boundary clause) — this row formalises practice into the flow doc.\n\nAC: (1) Steps 0.5/1a/1b name file-proxy sources as primary and no longer call read_telegram_reports for WORK/MARKET content; (2) the flow doc STOPS claiming a tool capability that does not exist — no residual \"read the WORK channel\" language; (3) any remaining read_telegram_reports call is documented as BUG-report-table-only; (4) the steps degrade LOUD when a proxy file is absent (do not silently pass) — the 07-21 eod synthesis JSON is genuinely absent, so absent-file is a live case, not hypothetical; (5) record the general invariant where the next flow author will see it: an audit step must be written against a verified tool schema, not an assumed one.\n\nCLASS NOTE: this is contract-drift (flow doc assumes a tool contract that never existed), the same family as the memory lesson feedback_wrong_arg_type_silently_disables_a_verification_predicate — an unrecognised argument silently disables the predicate rather than erroring. DISTINCT from FIX-TELEGRAM-REPORT-ACK-STATUS-STOP-RESURFACE (that row = tracked-but-deferred reports re-surfacing as \"new\"; this row = a parameter that does not exist).\n",
         "updated_at": "2026-08-23T13:10:18Z",
         "status_note": "\n[agent-father 2026-08-23T13:10:17Z] Rewrote audit-chef-coverage.md Step 0.5 + audit-market.md Steps 1a/1b: file-proxy (cowork-schedule.json + unified-agent.md notebook + unified-agent-synthesis-<DATE_VN>-<SLOT>.json) is now the PRIMARY method, read_telegram_reports is never called for WORK/MARKET content in any of the 3 steps (only remaining valid use documented as BUG-report-table-only). Error boundary in audit-chef-coverage.md rewritten off read_telegram_reports retry onto file-proxy-source availability. Degrade-LOUD added to all 3 steps (absent synthesis file = genuine coverage gap, not skip -- 07-21 eod absence cited as the live precedent). Authoring invariant recorded in main.md Dispatch section (AC-5). grep -rn read_telegram_reports docs/agents/tran-ngoc-bau/flow/*.md re-checked: 0 remaining calls, only explanatory non-use mentions."
+      },
+      {
+        "id": "TASK-BCTC-INSPECT-LABEL-FIX",
+        "type": "TASK",
+        "title": "BCTC Inspector: fix buildLabel() quarter-duplication bug (AC9) + update PI3 test assertion (AC-14)",
+        "status": "REVIEW",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "next_agent": "qa",
+        "source": "decompose:FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
+        "created_by": "pm",
+        "created_at": "2026-08-23T13:06:15Z",
+        "parent_id": "FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
+        "updated_at": "2026-08-23T13:14:58Z",
+        "dev_mcp_server_review_note": "dev-mcp-server COMPLETE (session 669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3): architect D-1 root-cause fix landed — added QUARTERLY_PERIOD_TYPE_RE + exported normalizeQuarter() to bctcInspectHandler.ts; buildLabel() now only appends a quarter suffix when period_type does NOT already match /^Q[1-4]$/, fixing all 255 normal rows (not just the 2 HUT string-typed rows BA originally flagged). AC-14 hardcoded assertion in PI3-bctc-inspect.test.ts:361 corrected VCB Q1 Q1 2025 -> VCB Q1 2025 in the same commit (in-scope test-value correction, not a preserved regression). Added 6-case normalizeQuarter() unit-test block. Verified: PI3-bctc-inspect.test.ts 49/49 pass (103 expect calls); 4 sibling regression files (PI3-bctc-inspect-reopen2, 1271-bctc-inspect-md, 1976-bctc-inspector-page-nav, 1273-bctc-inspect-overlay) 60/60 pass, untouched by construction; bun tsc --noEmit clean; PORT=3099 local boot healthy (toolCount=183 unchanged -- no tool file touched, cronJobCount=88 unchanged), /api/bctc-inspect + /dashboards/news-fetch/ both 200 (dashboard circular-dep check clean). Live-probed http://localhost:3099/api/bctc-inspect/docs post-fix against the real named-volume-shaped test boot: 0/268 rows show a duplicated/garbled quarter token (was 255/257 pre-fix per architects own live-tested finding); HUT rows now render \"HUT Q1 2024\" etc correctly. Simplicity gate PASS (Q1-Q4 all clean). Sibling task TASK-BCTC-INSPECT-UI-FILTERS confirmed in_progress under a different dev-mcp-server session -- disjoint files (bctc-inspector.html + its own new test file), zero overlap with bctcInspectHandler.ts/PI3-bctc-inspect.test.ts, verified via git diff --stat before commit. Decision journal: sprint-COWORK-GUARANTEED-SLOT-CATCHUP-dev-mcp-server-6.md STEP dev-mcp-server-S13. Commits: 237fa6e26 (code+test), 9096281a2 (journal), 4a1e81a4e (handoff record), 22213b9b5 (notebook). No REBUILD_REQUIRED marker -- pure logic fix inside an existing handler function, same file already live in the running container image only after next routine rebuild; label display is read-path only, no data mutation, no schema change. Ready for qa."
       }
     ],
     "qa": [
@@ -19574,22 +19591,6 @@
         "created_at": "2026-08-23T13:06:15Z",
         "parent_id": "FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
         "updated_at": "2026-08-23T13:09:12Z"
-      },
-      {
-        "id": "TASK-BCTC-INSPECT-LABEL-FIX",
-        "type": "TASK",
-        "title": "BCTC Inspector: fix buildLabel() quarter-duplication bug (AC9) + update PI3 test assertion (AC-14)",
-        "status": "IN_PROGRESS",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "developer",
-        "source": "decompose:FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
-        "created_by": "pm",
-        "created_at": "2026-08-23T13:06:15Z",
-        "parent_id": "FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
-        "updated_at": "2026-08-23T13:09:36Z"
       }
     ]
   },
