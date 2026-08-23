@@ -90,8 +90,8 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "updated_at": "2026-08-15T09:25:10Z",
-    "updated_by": "dev-team (WF-1d review-lane idle-reset)"
+    "updated_at": "2026-08-23T08:54:35Z",
+    "updated_by": "agent-father (TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION lane move — stale idle head refreshed, no dev-team WIP entanglement, this task never occupied head)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13633,6 +13633,44 @@
         "po_note": "PO AC-3 SIGN-OFF 2026-08-22T19:00:18Z — DONE. Supersedes the 2026-08-14T12:47:50Z NOT-SIGNED-OFF note. The root blocker that note named (cowork master dispatcher silent since tick 06:45Z) RESOLVED on its own at 2026-08-14T16:11Z; 4 live cycles have run since.\n\nAC-3 AS WRITTEN IS UNFALSIFIABLE — that, not the dispatcher outage, is the real reason this row stalled 8 days. docs/handoffs/UC-CCA-P2-BA-spec.md:418-419 defines AC-3 as \"next live market-watcher cycle's WORK ping / notebook shows exactly one [GATEWAY] probe log line, not two\". NEITHER named plane can ever carry that line on a healthy cycle: .claude/skills/gateway-availability-gate/SKILL.md:30 emits `[GATEWAY] probe OK — proceed` as a TRANSCRIPT log line only, and writes the notebook solely on its DEFER/BLOCKED failure branches (SKILL.md:54); docs/agents/market-watcher/flow/cycle.md:328 fixes the Step 5b WORK ping to the ULTRA template `[mw] HH:MM — N stocks | anom:X vol:Y chain:Z | next:TIME` (<=80 chars, no gateway field). Zero [GATEWAY] lines on a gateway-UP cycle is the CORRECT output, not a miss. No amount of further waiting could ever have settled it.\n\nSUBSTITUTED CRITERION (equivalent, falsifiable) + EVIDENCE, re-verified live at HEAD 2026-08-22T19:00Z:\n(1) Exactly ONE probe INVOCATION site across all 3 market-watcher flow files — main.md:61, the one-line pointer to gateway-availability-gate/SKILL.md (agent-id=market-watcher, covers cycle.md AND eod.md). cycle.md's two surviving \"Step 0-GW\" hits are prose only (:20 execution-contract terminal clause, :22 narrate-not-execute guard text); eod.md zero. This is DISPOSITIVE for \"exactly one probe per invocation\": there is no second site left to invoke.\n(2) 4 post-commit live cycles all completed through that single site — 2026-08-14T16:11Z (23eed1755), 2026-08-15T00:14Z (5be446b8b), 2026-08-15T04:19Z (248ce4e42), 2026-08-15T08:11Z (55d939b98). Every one: items_fetched=34, exit_status=complete, zero [GATEWAY] DEFER/BLOCKED notebook entries, zero gateway bug escalation.\n(3) No regression vs the pre-change 2026-08-14T04:09Z baseline (34 tickers, 0 anomalies, complete): the 08-15T08:11Z cycle is exact parity (34/0/complete); 08-14T16:11Z is 34 tickers / 1 anomaly (DXG +5.99%) / 1 suppressed / complete — normal market variation, not regression.\ncommit 3cfabaa28 re-confirmed ancestor of HEAD.\n\nSPEC-QUALITY DEFECT SPUN OUT (do not re-litigate here): FIX-BA-AC-NAMES-PLANE-IMPLEMENTATION-NEVER-WRITES, backlog[], next_agent=ba. Full reasoning: docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-po.md.",
         "ac3_status": "CONFIRMED_VIA_SUBSTITUTED_FALSIFIABLE_CRITERION",
         "ac3_last_checked_at": "2026-08-22T19:00:18Z"
+      },
+      {
+        "id": "TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION",
+        "type": "TASK",
+        "status": "DONE",
+        "priority": "P0",
+        "size": "S",
+        "zone": "docs/agents/po/flow/",
+        "owner": "agent-father",
+        "next_agent": "",
+        "supervised": false,
+        "plan_only": false,
+        "title": "Correct AC-2 falsified claims in triage-signals.md + add audit-handoff Pipeline-B rule",
+        "desc": "Part 3 (doc-accuracy, AC-2 correction) of architect brief (2026-08-23) + tactical bridge to unblock CI red. Two changes: (1) Replace the Cold-archive cross-check section's frozen 'system_issue/system-issue ≤1-2 fires each' and inverted-precedence claims with measured figures (both have 112/109 fires respectively, both concurrently live through Aug, both in the two largest type classes — see brief § 1 for full measurement). Replace the 'historical artifact, not a live routing gap' framing with instruction to consult the derived registry output rather than a frozen prose claim. (2) Add Pipeline-B routing rule for audit-handoff type (currently routed in Pipeline-A only, causing CI red when Pipeline-B signal arrives). Both edits land in this single pass.",
+        "files": [
+          "docs/agents/po/flow/triage-signals.md"
+        ],
+        "ac": [
+          "system_issue underscore and system-issue hyphen both appear in the measured counts, not inverted precedence claim",
+          "system_issue: 112 fires (20 2026-06, 86 2026-07, 6 2026-08)",
+          "system-issue: 109 fires (0 2026-06, 51 2026-07, 57 2026-08)",
+          "both are currently the two largest type classes (top 2 of ~100+ historical)",
+          "Cold-archive section no longer asserts frozen '≤1-2 fires each' — instructs reader to consult the derived registry from TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY instead",
+          "Pipeline-B audit-handoff routing rule added (matches Pipeline-A rule, keyed on sender=tran-ngoc-bau or routed via unknown-type fallback with type match)",
+          "row tra-20260822T203234 is triaged through the normal rule once it lands (not closed beforehand)"
+        ],
+        "acceptance_notes": "Verify: triage-signals.md prose no longer contains '≤1-2 fires each' or inverted underscore/hyphen claims; audit-handoff appears in Pipeline-B routing table; row tra-20260822T203234 routes normally once rule exists",
+        "related": [
+          "TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY"
+        ],
+        "created_at": "2026-08-23T09:00:00Z",
+        "created_by": "pm",
+        "handoff_ref": "docs/handoffs/TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION.md",
+        "updated_at": "2026-08-23T08:54:35Z",
+        "commit_sha": "735dfa815cb1e97864498877c968674bb7bff159",
+        "agent_father_completed_at": "2026-08-23T08:54:35Z",
+        "agent_father_completed_by": "agent-father",
+        "review_note": "Part 3 (doc-accuracy, AC-2 correction) + tactical bridge, per architect brief docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md. Two edits to docs/agents/po/flow/triage-signals.md: (1) replaced the falsified Cold-archive claim (system_issue/system-issue \"≤1-2 fires each\", inverted underscore/hyphen precedence, \"historical artifact\" framing) with a dated CORRECTION block carrying the measured 112/109 month-by-month counts PLUS an explicit instruction not to treat those counts as current — re-derive via `bash scripts/audits/guard-signal-type-coverage.sh --check` instead, so this does not become the same frozen-claim defect one measurement later. (2) Added a Pipeline-B `audit-handoff` table row (Pipeline-A already had one; Pipeline-B did not) inside the guard-parsed section (between \"## Live .signal_queue.rows[] inbox\" and \"### Regression verifier\") — verified live: `guard-signal-type-coverage.sh --check` reproduced FAIL pre-edit and PASS post-edit (8/8 live to=po types routed). Signal row tra-20260822T203234 deliberately left OPEN/status=READ — not closed by this task, per architect instruction (evidence must survive until the guard fix lands). owner corrected from the undispatchable `agent-father/po` slash-string to `agent-father` (actual implementer); next_agent corrected from `developer` (dead-end — Task-tool subagent cannot spawn zone specialists) to empty string (task fully self-verified, no further specialist needed). Structural registry work (TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY, dev-mcp-server) is separate, running in parallel, not touched by this row. No MCP tool available in this agent-father session (frontmatter grants Read/Edit/Write/Glob/Grep/Bash only) — task_claim/heartbeat/release on this task_id were not callable; board write went through the Bash-permitted orch-apply.sh path instead, flagged as a tool-grant gap."
       }
     ],
     "done_verified": [
@@ -17523,40 +17561,6 @@
         "created_by": "pm",
         "handoff_ref": "docs/handoffs/TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY.md",
         "updated_at": "2026-08-23T08:45:15Z"
-      },
-      {
-        "id": "TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION",
-        "type": "TASK",
-        "status": "READY",
-        "priority": "P0",
-        "size": "S",
-        "zone": "docs/agents/po/flow/",
-        "owner": "agent-father/po",
-        "next_agent": "developer",
-        "supervised": false,
-        "plan_only": false,
-        "title": "Correct AC-2 falsified claims in triage-signals.md + add audit-handoff Pipeline-B rule",
-        "desc": "Part 3 (doc-accuracy, AC-2 correction) of architect brief (2026-08-23) + tactical bridge to unblock CI red. Two changes: (1) Replace the Cold-archive cross-check section's frozen 'system_issue/system-issue ≤1-2 fires each' and inverted-precedence claims with measured figures (both have 112/109 fires respectively, both concurrently live through Aug, both in the two largest type classes — see brief § 1 for full measurement). Replace the 'historical artifact, not a live routing gap' framing with instruction to consult the derived registry output rather than a frozen prose claim. (2) Add Pipeline-B routing rule for audit-handoff type (currently routed in Pipeline-A only, causing CI red when Pipeline-B signal arrives). Both edits land in this single pass.",
-        "files": [
-          "docs/agents/po/flow/triage-signals.md"
-        ],
-        "ac": [
-          "system_issue underscore and system-issue hyphen both appear in the measured counts, not inverted precedence claim",
-          "system_issue: 112 fires (20 2026-06, 86 2026-07, 6 2026-08)",
-          "system-issue: 109 fires (0 2026-06, 51 2026-07, 57 2026-08)",
-          "both are currently the two largest type classes (top 2 of ~100+ historical)",
-          "Cold-archive section no longer asserts frozen '≤1-2 fires each' — instructs reader to consult the derived registry from TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY instead",
-          "Pipeline-B audit-handoff routing rule added (matches Pipeline-A rule, keyed on sender=tran-ngoc-bau or routed via unknown-type fallback with type match)",
-          "row tra-20260822T203234 is triaged through the normal rule once it lands (not closed beforehand)"
-        ],
-        "acceptance_notes": "Verify: triage-signals.md prose no longer contains '≤1-2 fires each' or inverted underscore/hyphen claims; audit-handoff appears in Pipeline-B routing table; row tra-20260822T203234 routes normally once rule exists",
-        "related": [
-          "TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY"
-        ],
-        "created_at": "2026-08-23T09:00:00Z",
-        "created_by": "pm",
-        "handoff_ref": "docs/handoffs/TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION.md",
-        "updated_at": "2026-08-23T08:45:15Z"
       }
     ],
     "review": [
@@ -18212,10 +18216,10 @@
         "last_served_tick": "2026-08-23T08:27:58Z"
       },
       "step1_triage": {
-        "last_served_tick": "2026-08-22T22:52:42Z"
+        "last_served_tick": "2026-08-23T08:55:59Z"
       }
     },
-    "_updated_at": "2026-08-23T08:53:12Z",
+    "_updated_at": "2026-08-23T08:55:59Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
