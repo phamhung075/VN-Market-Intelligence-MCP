@@ -1,4 +1,4 @@
-<!-- size-justification: 309L — Step 5: blind guard, published-marker gate contract, and the
+<!-- size-justification: 506L — Step 5: blind guard, published-marker gate contract, and the
      UC-CDC-P4 headroom-gated bounded batcher (Step 5.1 MAX_PARALLEL computation + Step 5.2
      batch fan-out with inter-batch wait) are one tightly sequential dispatch unit, child of
      main.md. UC-CDC-P4 QA AC1 fix 2026-07-23 (+21L): replaced the inline `_fanout` shadow-copy
@@ -41,7 +41,33 @@
      source of the 4 EARLY-claim defect instances) to a 1-line pointer at .claude/skills/
      published-marker-gate/SKILL.md, now the single documented source for the Phase-1/Phase-2
      pattern across all 6 cowork guaranteed-slot gates. No logic changed — pure doc-debt
-     reduction, architecture brief 2026-08-08-uc-cca-p3-published-marker-gate-skill.md §4. -->
+     reduction, architecture brief 2026-08-08-uc-cca-p3-published-marker-gate-skill.md §4.
+     FIX-COWORK-SPAWNFANOUT-STEP53-OFFFLOW-DETECTOR-UNSPECIFIED-SURFACE-AND-SELF-INJECTED-MARKERS
+     (agent-father, 2026-08-23): +107L (25L of it this header entry) — Step 5.3 gained an
+     explicit extraction-surface contract (final assistant text turn; the `.output` transcript-
+     symlink trap named with measurements), a corrected marker-provenance comment (the old one
+     attributed the six markers to CLAUDE.md; only 3 of 6 appear there at all, and all 6 are
+     injected by IDENTITY_PREAMBLE in THIS file), a mandatory fail-open negative control, a
+     before-scripting fixture requirement, and a >=2-DISTINCT-marker threshold replacing the old
+     match-ANY rule; the Step 5.2 comment gained the matching exogeneity caveat. The threshold is
+     not new analysis — it closes a SECOND, independently-confirmed false positive that the
+     surface contract alone does not reach (a 1/6 bare-'PRE-CLAIM' hit on a compliance disclaimer,
+     docs/signals/cowork-team-2026-07-30T001827Z-alertcmd-session-id-gap.json, whose own
+     recommendation this adopts; that signal's other recommendation was already implemented as the
+     2026-07-31 SESSION_ID_LINE entry above, this half was never actioned and the signal is still
+     unprocessed in docs/signals/).
+     Doc-only, no runtime change — Step 5.3 is still LLM-interpreted. Declared count also
+     re-synced 309L→506L (stale since the 2026-07-29 +41L entry; the honor-tolerance is ±10%, so
+     the old figure had stopped covering the file).
+     KNOWN, NOT FIXED HERE (two separate things): (1) this file is ~29KB against the flow-file
+     class's 7200B byte cap, and a size-justification header can only ever honor the LINE
+     predicate (TE-T24) — splitting Step 5 into siblings is a structural task, not a doc-accuracy
+     fix; (2) measured 2026-08-23 while validating this edit, NOTHING currently enforces either
+     cap on this path — file-size-caps.json's `docs/agents/*/flow/**/*.md` pattern is matched with
+     bash `case`, where `**` is plain `*`, so it only matches files one level BELOW flow/. All 173
+     real flow files sit directly in flow/ and match no pattern at all; context-bloat-backstop.sh
+     exits 0 on this file and on the 1425L system-auditor/flow/main.md alike. Reported separately
+     (agents-architect owns the glob policy — widening it governs 173 files at once). -->
 <!-- BGFAN-1: every Agent spawn in this file MUST use run_in_background=true; UC-CDC-P4 bounds
      CONCURRENCY ACROSS batches via Step 5.1/5.2, it does not relax background=true within a
      batch. Canonical rule + batcher carve-out → docs/protocols/agent-chaining-protocol.md
@@ -187,9 +213,16 @@ For each slot in the current batch, resolve the entry prompt BEFORE spawning:
      through the same bare "run <path> slot=<id>" composition, so the fix applies fleet-wide, not
      just to market-watcher. Self-report from a possibly-already-displaced agent is a vacuous
      check (the compromised reader is also the writer of its own IDENTITY_CHECK) — this preamble
-     is belt-and-suspenders only; the load-bearing gate is the exogenous Step 5.3 detector below,
-     which cowork-team (never displaced — it composed the prompt and observes the raw return)
-     evaluates independently of anything the spawn itself reports. -->
+     is belt-and-suspenders only; the load-bearing gate is the Step 5.3 detector below, which
+     cowork-team (never displaced — it composed the prompt and observes the raw return) evaluates
+     independently of anything the spawn itself reports.
+     CAVEAT (FIX-COWORK-SPAWNFANOUT-STEP53-OFFFLOW-DETECTOR-UNSPECIFIED-SURFACE-AND-SELF-INJECTED-
+     MARKERS, 2026-08-23): "exogenous" holds ONLY under Step 5.3's surface contract. The preamble
+     below names all six OFFFLOW_MARKERS verbatim — in the NEGATIVE, which a substring detector
+     cannot see — so on any surface that includes the spawn prompt the detector reads dispatcher-
+     authored text and the exogeneity argument above collapses. Measured 2026-08-23: the 1515-byte
+     prompt for refine-bctc-slot-1 scores 6/6 on its own. Step 5.3's surface scoping is what keeps
+     this comment true; do not weaken one without the other. -->
 
 ```
 IDENTITY_PREAMBLE =
@@ -356,10 +389,13 @@ tick with room to spare. Step 5.0 blind guard above is unchanged.
 ## Step 5.3 — Off-flow router-latch detector (exogenous check, FIX-COWORK-SPAWN-IDENTITY-PREAMBLE-OFFFLOW)
 
 Runs once per batch, immediately after that batch's inter-batch wait resolves — the earliest
-point the spawn's own return text becomes available to this dispatcher session. **Exogenous by
-design:** evaluated by cowork-team on the raw returned text of each completed spawn, never
-self-reported by the spawned agent (a compromised spawn's own IDENTITY_CHECK is a vacuous
-reader-is-writer check — see the Step 5.2 comment above). This is a THIRD failure class,
+point the spawn's own return text becomes available to this dispatcher session. **Exogenous only
+under the SURFACE CONTRACT below:** evaluated by cowork-team on the returned text of each
+completed spawn, never self-reported by the spawned agent (a compromised spawn's own
+IDENTITY_CHECK is a vacuous reader-is-writer check — see the Step 5.2 comment above). "Raw
+returned text" used to be the wording here and it was too loose — the markers are dispatcher-
+authored (see PROVENANCE below), so a surface that includes the prompt makes this check read its
+own output and stop being exogenous at all. This is a THIRD failure class,
 distinct from Step 5.0's gateway-blind guard and the plain spawn-tool-error handling above: the
 Agent tool call itself succeeded and returned cleanly, but the returned content proves the
 spawned session never entered its own flow file.
@@ -368,26 +404,82 @@ For each slot in this batch whose spawn returned its task notification this wait
 still in-flight after a wait timeout — nothing to inspect yet; it is picked up by the normal
 next-tick due-check like any other unconfirmed spawn):
 
+**SURFACE CONTRACT (read this before evaluating — a wrong surface makes the detector fire 6/6 on
+every spawn, forever).** `RETURN_TEXT` is EXACTLY the spawn's **final assistant text turn** — the
+`<result>` block of the task-completion notification this dispatcher receives. Nothing else.
+
+- **NEVER** read `<session-scratch>/tasks/<task-id>.output` for a `local_agent` spawn. Measured
+  2026-08-23: that path is a **187-byte symlink** into
+  `~/.claude/projects/<encoded-cwd>/<session>/subagents/agent-<id>.jsonl` — the FULL transcript
+  (246939 B for refine-bctc-slot-1; 748849 B for a longer peer). All 5 `local_agent` `.output`
+  entries in that session were such symlinks. Plain Bash-task `.output` files ARE real files,
+  which is exactly what makes the trap easy to miss. The transcript's FIRST record is the spawn
+  prompt this file composed, so grepping it scores **6/6 unconditionally**. Same run, final
+  assistant text turn only (1155 B): **0/6**. Both numbers re-measured at fix time.
+- The prompt, the IDENTITY_PREAMBLE, tool-call logs, thinking blocks and any CLAUDE.md text pulled
+  into the spawn's context are all OUT of range by construction.
+
 ```
-RETURN_TEXT = <the Agent tool's own returned result text for this spawn>
+RETURN_TEXT = <final assistant text turn of this spawn — the task-notification <result> block>
 
 OFFFLOW_MARKERS = ["Coordination Results", "Dispatch Routing", "PRE-CLAIM", "session-presence",
                     "orphan-adoption", "Expected Behavior"]
-  # Verbatim section headings / terms from the project-root CLAUDE.md router dispatch protocol.
+  # PROVENANCE (corrected 2026-08-23 — the previous comment here claimed these were "verbatim
+  # section headings / terms from the project-root CLAUDE.md router dispatch protocol", which is
+  # measurably false). They are the observed vocabulary of the 2026-07-29T04:00Z off-flow return
+  # described in the FIX- header above. Occurrence counts measured 2026-08-23:
+  #   project-root CLAUDE.md : PRE-CLAIM 1, session-presence 1, orphan-adoption 1, other three 0
+  #   global ~/.claude/CLAUDE.md : all six 0
+  #   THIS FILE : all six present, incl. inside IDENTITY_PREAMBLE above — which is prepended to
+  #     EVERY spawn prompt, so the dispatcher plants all six in every spawn's context by design.
+  #     (Do not turn this into a fixed occurrence count: this comment block itself contains the
+  #      strings, so any count written here changes the thing it measures. Re-grep, don't quote.)
+  # So the marker set is NOT exogenous to the dispatcher; only the SURFACE CONTRACT above makes
+  # the detector exogenous. Anyone re-deriving this list must re-measure all three files, and
+  # must not assume CLAUDE.md is the source.
   # A genuinely-executing gatherer's own RETURN/WORK-ping vocabulary (DONE:/PIPELINE:/WORK ping,
   # defined in each agent's own cycle/eod flow) never contains these strings — positive-match on
   # the KNOWN BAD shape, not absence of a good one, so legitimate quiet EXIT paths (Step -0
   # identity-fail, Step 0-GW sibling-corroborated gateway skip — neither of which touches the
-  # notebook or emits this vocabulary) are never mistaken for an off-flow latch.
+  # notebook or emits this vocabulary) are never mistaken for an off-flow latch. That argument
+  # holds for the SHAPE but not for any SINGLE string — see the THRESHOLD note below.
 
-if RETURN_TEXT contains ANY marker in OFFFLOW_MARKERS (case-insensitive):
+# NEGATIVE CONTROL (mandatory, runs BEFORE the match — this is the guard that would have caught
+# the 09:00Z false positive). The extracted surface must not contain the text this dispatcher
+# itself wrote. Cheapest sufficient probe: the first 60 chars of IDENTITY_PREAMBLE, which every
+# spawn prompt starts with and no legitimate return ever reproduces.
+if RETURN_TEXT contains first_60_chars_of(IDENTITY_PREAMBLE) OR len(RETURN_TEXT) > 20000:
+  log "[cowork-team] Step 5.3 ABORT: extraction surface includes the spawn prompt (or is
+    transcript-sized) — detector result is not trustworthy; slot_id=" + slot.slot_id
+  send_telegram(channel="bug", message="[cowork-team] Step 5.3 surface-contract violation — " +
+    slot.slot_id + " RETURN_TEXT contains dispatcher-authored prompt text; detector SKIPPED,
+    last_fired stamped normally. Fix the extraction surface, not the marker list.")
+  → skip the detector for this slot; leave it in WON_SLOTS   # FAIL-OPEN, see posture note below
+  → continue to the next slot
+
+# THRESHOLD: >=2 DISTINCT markers, not ANY. A single bare marker in an otherwise-clean return is
+# a compliance disclaimer, not a latch — IDENTITY_PREAMBLE literally invites the spawn to say it
+# did NOT run PRE-CLAIM/session-presence/orphan-adoption, and a substring test cannot see that
+# negation. CONFIRMED LIVE, on the correct surface, so the SURFACE CONTRACT above does not close
+# this on its own: docs/signals/cowork-team-2026-07-30T001827Z-alertcmd-session-id-gap.json
+# § related_off_flow_detector_false_positive — alert-commander's self-report "identity confirmed,
+# no router-dispatch prose, no PRE-CLAIM steps applied to myself as instructed" hit 1/6 while the
+# agent had genuinely executed its own flow; that signal's own recommendation was this threshold.
+# Sensitivity is retained: the real 2026-07-29T04:00Z off-flow return that motivated Step 5.3
+# carried THREE distinct markers (Coordination Results, Dispatch Routing, Expected Behavior).
+MARKER_HITS = count of DISTINCT markers in OFFFLOW_MARKERS present in RETURN_TEXT (case-insensitive)
+
+if MARKER_HITS >= 2:
   log "[cowork-team] OFF-FLOW DETECTED: " + slot.slot_id + " (" + slot.agent + ") returned
     router-dispatch-shaped prose instead of executing its own flow — treating as fabricated
     success, last_fired will NOT be stamped"
   send_telegram(channel="bug", message="[cowork-team] IDENTITY_CHECK=FAIL (exogenous) — " +
     slot.agent + " spawn (" + slot.slot_id + ") latched onto router protocol instead of its own
     flow; last_fired NOT stamped, will retry next due tick")
-  add to errors[]: { slot_id: slot.slot_id, error: "offflow_router_latch_detected" }
+  add to errors[]: { slot_id: slot.slot_id, error: "offflow_router_latch_detected",
+                     marker_hits: MARKER_HITS, markers: <the distinct markers that matched> }
+    # Record WHICH markers fired. The 2026-07-30 FP was only diagnosable because the dispatcher
+    # wrote the matched marker into the signal by hand; make that structural, not discretionary.
   WON_SLOTS = WON_SLOTS.filter(s => s.slot_id != slot.slot_id)   # exclude from Step 5b's write —
     # conservative under-suppress (retries next due tick), same posture last-fired.md already
     # applies on write failure (AC-P1-7-3) and TICK-SNAPSHOT's own held/won bookkeeping.
@@ -397,3 +489,18 @@ if RETURN_TEXT contains ANY marker in OFFFLOW_MARKERS (case-insensitive):
 This does not replace or weaken Step 5.0 (gateway-blind) or the plain spawn-failure handling
 above — those gate distinct failure classes before or at the spawn call itself. Step 5.3 gates
 the one class neither of them can see: a spawn that returned successfully but never ran.
+
+**FAILURE POSTURE — asymmetric, deliberately.** A missed off-flow latch costs one wasted slot
+fire, recovered next due tick. A false positive empties `WON_SLOTS`, stamps no `last_fired` for
+ANY slot, and re-fires every slot every tick forever plus one bug-telegram per slot per tick — a
+fleet-wide stamp-suppression outage. So the negative control FAILS OPEN (stamp stands, detector
+skipped, operator alerted) while a clean-surface marker hit fails closed. Never invert this.
+
+**BEFORE SCRIPTING THIS STEP.** Step 5.3 is LLM-interpreted today — confirmed 2026-08-23,
+`grep -rlniE 'offflow|off-flow' scripts/` returns only two unrelated po-lifecycle files and no
+script reads a `.output` path — so it currently survives on the dispatcher picking the right
+surface by judgment, which is exactly why the surface contract above had to be written down
+first. Any implementer MUST ship these two regression fixtures together with the code:
+`(1)` a recorded spawn prompt alone → detector ABORTs on the negative control, never matches;
+`(2)` a recorded genuine final assistant turn → 0/6, stamp stands. A run of the real 2026-07-29
+off-flow return is the positive control for the match path itself.

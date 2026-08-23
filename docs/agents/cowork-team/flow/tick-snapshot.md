@@ -1,6 +1,10 @@
-<!-- size-justification: 59L — Step 4.7: shared tick snapshot write. Child of main.md.
-     FU-TICK-SNAPSHOT-EMIT-DARK hardening: both gateway calls lifted OUT of bash fence (pure bash cannot call MCP).
-     Agent pre-computes BOOTSTRAP_RESULT + MACRO_RESULT then writes stage files; bash block is pure bash.
+<!-- size-justification: 61L — Step 4.7: shared tick snapshot write. Child of main.md.
+     FU-TICK-SNAPSHOT-EMIT-DARK hardening: both gateway calls were lifted OUT of the bash fence on the
+     premise that "pure bash cannot call MCP". SUPERSEDED — that premise was false when written and is
+     false now: scripts/agents-flow/mcp-call.sh (first committed f7d34918d, 2026-07-02) is a sourceable
+     bash JSON-RPC-over-curl transport, and scripts/agents-flow/cowork-tick-preflight.sh:71 — the script
+     the cron prompt runs ONE STEP EARLIER in this same tick — already sources it. Both calls are back
+     inside the fence (FIX-COWORK-TICKSNAPSHOT-STEP47-FALSE-PREMISE-PURE-BASH-CANNOT-CALL-MCP, 2026-08-23).
      EMIT-DARK-RECURRING 2026-06-05: cycle-snapshot-latest.json promotion moved to telemetry.md Step 6. -->
 
 ## Step 4.7 — Write shared tick snapshot (L-6, 1968c-P01)
@@ -16,27 +20,17 @@ Only execute if WON_SLOTS is non-empty (skip on silent-exit path).
 
 **STAGING FILE LOCATIONS (critical hardening):** All scratch must land under `docs/data/`. Never use `/tmp` or paths outside the repo.
 
-**Pre-step (agent-interpreted, before bash):** call the gateway to get both payloads, then write stage files:
-
-```
-FILE_TICK_PRE = shell: date -u +%H:%M
-MC_STAGE_PRE  = "docs/data/.cycle-snapshot-" + FILE_TICK_PRE + ".mc.stage"
-MACRO_STAGE_PRE = "docs/data/.cycle-snapshot-" + FILE_TICK_PRE + ".macro.stage"
-
-BOOTSTRAP_RESULT = call_tool(server="vn-market", tool="get_cycle_bootstrap",
-  arguments={"agent_name": "unified-agent"})
-# Write raw JSON string to MC_STAGE_PRE (agent writes file directly)
-write_file(MC_STAGE_PRE, BOOTSTRAP_RESULT)
-
-MACRO_RESULT = call_tool(server="vn-market", tool="get_macro_snapshot", arguments={})
-# Write raw JSON string to MACRO_STAGE_PRE (agent writes file directly)
-write_file(MACRO_STAGE_PRE, MACRO_RESULT)
-# On any tool failure or write failure: log "[cowork-team] tick-snapshot pre-step failed: <error>" and skip bash block entirely → continue to Step 4.8.
-```
+**NO AGENT-INTERPRETED PRE-STEP.** Both gateway calls run inside the bash fence below via
+`scripts/agents-flow/mcp-call.sh` (contract: `mcp_call <tool_name> <json_args>`, emits
+`.result.content[0].text` on stdout, non-zero exit on isError/transport failure). Neither payload
+enters the dispatcher's context — only the byte counts do. Measured 2026-08-23: the two payloads are
+~15.9KB + ~4.4KB, so the deleted pre-step was burning ~20KB of context on EVERY non-silent tick.
+Run from the project root — the fence uses repo-relative paths, same as the preflight script that
+already sourced this helper one step earlier in the same tick.
 
 ```bash
-# Step 4.7 — Assemble cycle snapshot from pre-staged files
-# MC_STAGE and MACRO_STAGE were written by the agent pre-step above (never inline MCP call)
+# Step 4.7 — Fetch both payloads and assemble the cycle snapshot. Pure bash end-to-end.
+source scripts/agents-flow/mcp-call.sh   # provides mcp_call(); do NOT reinvent the transport
 FILE_TICK=$(date -u +%H:%M)
 MC_STAGE="docs/data/.cycle-snapshot-${FILE_TICK}.mc.stage"
 MACRO_STAGE="docs/data/.cycle-snapshot-${FILE_TICK}.macro.stage"
@@ -44,7 +38,13 @@ SNAPSHOT_FILE="docs/data/cycle-snapshot-${FILE_TICK}.json"
 TMPFILE="${SNAPSHOT_FILE}.tmp"
 
 # Clean up any stale staging files (success or failure)
-trap "rm -f \"$MC_STAGE\" \"$MACRO_STAGE\"" EXIT
+trap 'rm -f "$MC_STAGE" "$MACRO_STAGE" "$TMPFILE"' EXIT
+
+# Fetch both payloads straight to disk — stdout is redirected, never captured into a shell var
+mcp_call get_cycle_bootstrap '{"agent_name":"unified-agent"}' > "$MC_STAGE" \
+  || { echo "[cowork-team] tick-snapshot: get_cycle_bootstrap failed — skipping snapshot"; exit 0; }
+mcp_call get_macro_snapshot '{}' > "$MACRO_STAGE" \
+  || { echo "[cowork-team] tick-snapshot: get_macro_snapshot failed — skipping snapshot"; exit 0; }
 
 # Assemble final snapshot from staged files
 # jq --rawfile reads MC_STAGE as a raw string, --slurpfile reads MACRO_STAGE as JSON array
