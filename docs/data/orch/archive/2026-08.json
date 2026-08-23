@@ -16781,6 +16781,53 @@
           "observed_at": "2026-08-23T13:45:36Z"
         }
       }
+    },
+    {
+      "updated_at": "2026-08-23T14:08:56Z",
+      "updated_by": "ops",
+      "status_note": "OPS REBUILD COMPLETE 2026-08-23T13:55Z — mcp-server Docker image rebuilt (new image sha256:de8e753... differs from old c8322d2...). Verified via curl: localhost:3000/api/bctc-inspect now serves HTML containing id=\"quarter-filter\" and id=\"ticker-filter\". All 12 containers healthy post-rebuild. Docker builder cache pruned (15.13GB reclaimed). Ready for QA live dual-origin AC1-AC10 verification on localhost:3000 (direct mcp-server) and localhost:3001 (frontend proxy).\n[QA] Review Record (direct-commit verify) 2026-08-23T14:08:53Z: Live dual-origin browser verification (real headless Chromium via Playwright, both :3000 direct + :3001 frontend proxy, identical results). Quarter facet=11 options (not 13 -- HUT string-quarter landmine correctly normalized), ticker facet=50, both with live-count placeholder. AC5 AND-compose confirmed (HUT+2024-Q1 -> exactly 1 doc, zero network calls). AC7 zero-match confirmed (disabled+selected placeholder, correct Vietnamese status text, zero console errors, screenshotted both origins -- pixel identical). AC9 label 'HUT Q1 2024' not duplicated (paired commit 237fa6e26). FR-7 selection-preservation confirmed: select.value mutation on a still-matching filter fired ZERO network requests (no synthetic change event), total /docs fetch count=1 across the whole multi-filter run (AC2). Independently re-ran: 18/18 new unit tests, 109/109 five named regression files, tsc clean, DDD/security grep clean, mock-guard N/A (.html extension gap, hand-verified diff instead -- zero fabricated data). Commits 2e66153fd/cab92d7c5 confirmed ancestor of local main. Blast-radius: /health toolCount=183 matches; /api/bctc-inspect 200 both origins; /dashboards/news-fetch/ 200 on :3000 (no such route exists on :3001, pre-existing/structural, not a regression). BCTC-Eval/OOM gates N/A (UI-only feature). VERDICT: DONE_VERIFIED, zero blocking issues.",
+      "id": "TASK-BCTC-INSPECT-UI-FILTERS",
+      "type": "TASK",
+      "title": "BCTC Inspector: add 2 client-side facet filters (quarter + ticker) on doc dropdown",
+      "status": "DONE_VERIFIED",
+      "priority": "P1",
+      "size": "M",
+      "zone": "apps/mcp-server/",
+      "owner": "dev-mcp-server",
+      "source": "decompose:FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
+      "created_by": "pm",
+      "created_at": "2026-08-23T13:06:15Z",
+      "parent_id": "FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER",
+      "rebuild_required": true,
+      "po_verify_chain": [
+        "ops:rebuild-mcp-server",
+        "qa:live-dual-origin-AC1-AC10",
+        "close:done_verified"
+      ],
+      "qa_verified_at": "2026-08-23T14:08:53Z",
+      "verification": {
+        "raw_probe": {
+          "tool": "playwright-chromium-live-browser + bun-test",
+          "args": {
+            "origins": [
+              "http://localhost:3000/api/bctc-inspect",
+              "http://localhost:3001/dashboard/bctc-inspect"
+            ],
+            "checks": "AC1-AC10 dual-origin DOM interaction + unit/tsc/ddd/security scans"
+          },
+          "live_value_observed": {
+            "quarter_options": 11,
+            "ticker_options": 50,
+            "and_filter_match_count": 1,
+            "zero_match_confirmed": true,
+            "selection_preserved_zero_network": true,
+            "unit_tests": "18/18 new + 109/109 regression",
+            "tsc_errors": 0,
+            "health_toolCount": 183
+          },
+          "observed_at": "2026-08-23T14:08:53Z"
+        }
+      }
     }
   ],
   "closed_sprints": [
