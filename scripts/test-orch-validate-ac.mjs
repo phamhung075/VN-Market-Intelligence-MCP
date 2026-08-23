@@ -296,6 +296,133 @@ console.log('\n─── AC-4: Dangling refs → Stage-1c rejects with hint ─�
 
 // ─── Summary ──────────────────────────────────────────────────────────────────
 
+// ─── AC-5: Stage 1i — supervised/plan_only row with no resolvable handler ────
+//
+// FIX-ORCHSTATE-MINT-FLAGGED-ROW-WITHOUT-RESOLVABLE-HANDLER, brief §2
+// (docs/architecture-briefs/2026-08-23-fix-orchstate-mint-flagged-row-no-handler.md).
+//
+// The invariant is NOT "every row needs a handler" — `owner: null` +
+// `next_agent: null` is a LEGITIMATE documented parked state. The invariant is
+// "a row that ASSERTS deliberate dispatch (supervised and/or plan_only) must
+// have someone to deliberately dispatch it to". The negative controls below are
+// what keep those two apart, and they are mandatory per the row's own AC.
+
+console.log('\n─── AC-5: Stage 1i flagged-row-without-resolvable-handler REPORT ───');
+
+const STAGE_1I = 'Stage 1i';
+
+function flaggedRow(extra) {
+  return Object.assign(
+    { id: 'AC5-ROW', status: 'READY', priority: 'P1', type: 'FIX', zone: 'cross-service/' },
+    extra
+  );
+}
+
+function runWithDetail(doc, detailItems) {
+  const detailFile = `/tmp/orch-ac-detail-${process.pid}-${++tmpCounter}.json`;
+  writeFileSync(detailFile, JSON.stringify({ items: detailItems ?? {} }), 'utf-8');
+  const prev = process.env.ORCH_VALIDATE_DETAIL_PATH;
+  process.env.ORCH_VALIDATE_DETAIL_PATH = detailFile;
+  try {
+    return runValidator(doc);
+  } finally {
+    if (prev === undefined) delete process.env.ORCH_VALIDATE_DETAIL_PATH;
+    else process.env.ORCH_VALIDATE_DETAIL_PATH = prev;
+    try { unlinkSync(detailFile); } catch { /* ignore */ }
+  }
+}
+
+// (a) POSITIVE — supervised:true, owner+next_agent both empty → reported.
+{
+  const doc = makeBase();
+  doc.task_board.ready.push(flaggedRow({ supervised: true }));
+  const r = runWithDetail(doc, {});
+  assert('AC-5a supervised:true + no handler is REPORTED', r.stdout.includes(STAGE_1I), r.stdout.slice(0, 300));
+  assert('AC-5a the offending row id is named', r.stdout.includes('AC5-ROW'));
+  assert('AC-5a the report is NON-FATAL (exit unchanged)', r.exitCode === 0, `exit=${r.exitCode}`);
+}
+
+// (a2) plan_only ALONE also trips it — 3 of the 4 live violators carried only
+// ONE flag, so an AND-only predicate would have missed three quarters of them.
+{
+  const doc = makeBase();
+  doc.task_board.ready.push(flaggedRow({ plan_only: true }));
+  const r = runWithDetail(doc, {});
+  assert('AC-5a2 plan_only ALONE (no supervised) is REPORTED — OR, never AND', r.stdout.includes(STAGE_1I));
+}
+
+// (a3) EMPTY-STRING shape. TaskSchema declares owner/next_agent as
+// `z.string().optional()`, so a literal `null` is schema-INVALID and the two
+// real "no handler" shapes on the live board are ABSENT (16 live ready rows) or
+// "". Both must trip — a port that only tested `=== undefined` would miss half.
+{
+  const doc = makeBase();
+  doc.task_board.ready.push(flaggedRow({ id: 'AC5-EMPTYSTR', supervised: true, owner: '', next_agent: '' }));
+  const r = runWithDetail(doc, {});
+  assert('AC-5a3 empty-string owner/next_agent (not just absent) is REPORTED', r.stdout.includes(STAGE_1I));
+}
+
+// (b) NEGATIVE CONTROL — the row's own explicit non-goal. Neither flag set,
+// both handler fields empty: a genuinely parked row, LEGAL, must be silent.
+{
+  const doc = makeBase();
+  doc.task_board.ready.push(flaggedRow({ id: 'AC5-PARKED', supervised: false, plan_only: false }));
+  const r = runWithDetail(doc, {});
+  assert('AC-5b unflagged parked row (owner+next_agent absent, NEITHER flag) is NOT reported', !r.stdout.includes(STAGE_1I), r.stdout.slice(0, 300));
+}
+
+// (c) NEGATIVE CONTROL — resolved ONLY through backlog-detail.json's override.
+// Inline board fields are both empty; the detail entry carries the real owner.
+// Proves the detail-first port did not regress into a false positive on a
+// legitimately cold-stubbed row (the orch-backlog-stub.sh migration class).
+{
+  const doc = makeBase();
+  doc.task_board.ready.push(flaggedRow({ id: 'AC5-DETAIL-ONLY', supervised: true }));
+  const r = runWithDetail(doc, { 'AC5-DETAIL-ONLY': { id: 'AC5-DETAIL-ONLY', owner: 'architect' } });
+  assert('AC-5c handler resolved ONLY via backlog-detail.json owner override is NOT reported', !r.stdout.includes(STAGE_1I), r.stdout.slice(0, 300));
+}
+{
+  const doc = makeBase();
+  doc.task_board.ready.push(flaggedRow({ id: 'AC5-DETAIL-NA', plan_only: true }));
+  const r = runWithDetail(doc, { 'AC5-DETAIL-NA': { id: 'AC5-DETAIL-NA', next_agent: 'qa' } });
+  assert('AC-5c2 handler resolved ONLY via backlog-detail.json next_agent override is NOT reported', !r.stdout.includes(STAGE_1I));
+}
+// ...and the detail file can ALSO be the source of the FLAG (effective_supervised
+// is EITHER location), so a detail-only flag with no handler anywhere still trips.
+{
+  const doc = makeBase();
+  doc.task_board.ready.push(flaggedRow({ id: 'AC5-DETAIL-FLAG' }));
+  const r = runWithDetail(doc, { 'AC5-DETAIL-FLAG': { id: 'AC5-DETAIL-FLAG', supervised: true } });
+  assert('AC-5c3 flag carried ONLY in backlog-detail.json still trips the report', r.stdout.includes(STAGE_1I));
+}
+
+// (d) NEGATIVE CONTROL — epic wrapper. Handler-less BY DESIGN: closed out by
+// post-cycle.md § Step 4.4 Epic-Wrapper Autoclose Sweep, which is why
+// bounded1-supervised-lane-report.sh scopes its GATING class `non-wrapper`.
+// This case was found by the brief's own mandated cross-check against that
+// script — before the exclusion existed, Stage 1i reported a live wrapper the
+// jq SSOT correctly counted as 0.
+{
+  const doc = makeBase();
+  doc.task_board.ready.push(flaggedRow({ id: 'AC5-WRAPPER', supervised: true, plan_only: true, children: ['C1', 'C2'] }));
+  const r = runWithDetail(doc, {});
+  assert('AC-5d epic wrapper (children[] inline) is NOT reported — handler-less by design', !r.stdout.includes(STAGE_1I), r.stdout.slice(0, 300));
+}
+{
+  const doc = makeBase();
+  doc.task_board.ready.push(flaggedRow({ id: 'AC5-WRAPPER-DETAIL', supervised: true }));
+  const r = runWithDetail(doc, { 'AC5-WRAPPER-DETAIL': { id: 'AC5-WRAPPER-DETAIL', children: ['C1'] } });
+  assert('AC-5d2 epic wrapper via backlog-detail.json children[] is NOT reported', !r.stdout.includes(STAGE_1I));
+}
+
+// (e) SCOPE — in_progress[]/qa[]/done[] are out of scope by construction.
+{
+  const doc = makeBase();
+  doc.task_board.in_progress.push(flaggedRow({ id: 'AC5-INPROGRESS', status: 'IN_PROGRESS', supervised: true }));
+  const r = runWithDetail(doc, {});
+  assert('AC-5e in_progress[] is out of scope (an owner is a structural precondition of being there)', !r.stdout.includes(STAGE_1I));
+}
+
 const total = passed + failed;
 console.log(`\n${'─'.repeat(60)}`);
 console.log(`AC fixture results: ${passed}/${total} passed, ${failed} failed`);
@@ -304,10 +431,11 @@ if (failed > 0) {
   console.error(`\nAC FIXTURE FAILED — ${failed} assertion(s) did not pass.`);
   process.exit(1);
 } else {
-  console.log(`\nAC FIXTURE PASSED — AC-1..AC-4 all assertions green.`);
+  console.log(`\nAC FIXTURE PASSED — AC-1..AC-5 all assertions green.`);
   console.log('  AC-1: 9-lane non-enum status detection — PROVEN (3-of-9 bash-gate gap closed)');
   console.log('  AC-2: Stage-0 duplicate key rejection — PROVEN');
   console.log('  AC-3: Stage-1 .strict() unknown key rejection — PROVEN');
   console.log('  AC-4: Stage-1c dangling ref rejection with fix hint — PROVEN');
+  console.log('  AC-5: Stage-1i flagged-row-without-resolvable-handler REPORT + 6 negative controls — PROVEN');
   process.exit(0);
 }

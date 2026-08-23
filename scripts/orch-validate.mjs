@@ -51,6 +51,13 @@
  *       DEP-RESOLVES-MISSING already ratifies this as a separate, smaller
  *       class of genuine unknowns/free-text deps; this stage exists purely
  *       for live visibility.
+ *     Stage 1i: flagged-row-without-resolvable-handler — NON-FATAL report
+ *       (supervised and/or plan_only set while next_agent AND owner are both
+ *       empty in BOTH the board row and backlog-detail.json; epic wrappers
+ *       excluded — handler-less by design). Predicate mirrors
+ *       scripts/lib/devteam-eligibility.jq as composed by
+ *       scripts/audits/bounded1-supervised-lane-report.sh; runs BEFORE Stage 1h
+ *       because 1h can exit(2) and would otherwise swallow this report.
  *     Stage 1h: checkSprintRegistryReferentialIntegrity() — sprint-registry
  *       dangling-id guard (task FIX-SPRINT-REGISTRY-DANGLING-IDS-BREAK-
  *       SIGNOFF-AND-JOURNAL-ARCHIVE, brief §3/§4, A1-corrected per the board
@@ -68,7 +75,7 @@
  *
  * EXIT CODES:
  *   0  = Stage 0 + Stage 1 pass (zero coherence issues, zero dangling refs, canonical statuses)
- *        (Stage 1g may still print a non-fatal report — does not affect exit code;
+ *        (Stage 1g and Stage 1i may still print non-fatal reports — neither affects exit code;
  *        Stage 1h in the default `warn` mode may still print + signal — does not
  *        affect exit code either)
  *   1  = Stage 0 failure (duplicate JSON keys detected in raw text)
@@ -591,6 +598,175 @@ if (missingDepIssues.length > 0) {
   for (let i = 0; i < c; i++) {
     const mi = missingDepIssues[i];
     process.stdout.write(`  [${i + 1}] ${mi.path} (id=${mi.taskId}): ${JSON.stringify(mi.missingIds)}\n`);
+  }
+}
+
+// ── Stage 1i: supervised/plan_only row with NO resolvable dispatch lane ───────
+// (FIX-ORCHSTATE-MINT-FLAGGED-ROW-WITHOUT-RESOLVABLE-HANDLER, architect brief
+//  docs/architecture-briefs/2026-08-23-fix-orchstate-mint-flagged-row-no-handler.md)
+//
+// DEFECT: `supervised: true` / `plan_only: true` assert "this row needs a
+// DELIBERATE dispatch decision". If the row ALSO has no resolvable handler
+// (`next_agent` and `owner` both empty, inline and in backlog-detail.json),
+// it claims a lane no mechanism can route it through — every picker skips it,
+// and it ages silently. 4 live rows aged 15-58 days before being hand-repaired
+// on 2026-08-14; nothing prevented the next one.
+//
+// NOT the invariant "every row needs a handler": `owner: null` +
+// `next_agent: null` with NEITHER flag set is a LEGITIMATE, documented parked
+// state and must never be reported. The flag is what turns it into a
+// contradiction. Both flags are checked with OR, not AND — 3 of the 4 live
+// violators carried only ONE flag, so a both-flags predicate would have missed
+// three quarters of the very cohort this exists to catch.
+//
+// NON-FATAL BY DESIGN, with a dated promotion path. The brief's §4 chose
+// report-first over a fatal `superRefine` because the 0-violator baseline
+// proves the read-only REPLAY is clean, not that every future write-time
+// position is; `orchStateSchema.ts:658-661` already documents this exact
+// "standalone function now, superRefine once the gating conditions land"
+// migration as this codebase's own pattern. Promotion is a separate, gated
+// follow-up (N consecutive clean write cycles) — deliberately not done here.
+//
+// PLACEMENT: physically BEFORE Stage 1h even though it is numbered after it.
+// Stage 1h can `process.exit(2)` in reject mode, and a non-fatal report placed
+// downstream of that would be silently skipped on exactly the runs where board
+// health matters most.
+//
+// PREDICATE IS MIRRORED, NOT REINVENTED. SSOT is
+// `scripts/lib/devteam-eligibility.jq` (`effective_supervised`,
+// `effective_plan_only`, `effective_owner`, `effective_next_agent`) as composed
+// by `scripts/audits/bounded1-supervised-lane-report.sh`'s own
+// `dispatch_lane($detail_items; $roster_map)`. Only the two-line
+// detail-first/board-fallback lookups are ported; the resolution ALGORITHM is
+// not forked. KNOWN COUPLING (brief risk flag): two implementations of one
+// rule can silently diverge — the cross-check is to re-run
+// `bounded1-supervised-lane-report.sh` against the same board snapshot and
+// confirm the counts agree. Do that whenever EITHER file changes.
+
+const detailItemsById = (() => {
+  // Fail-soft, exactly like Stage 1g's archive read: an unreadable or
+  // malformed detail file must never block a non-fatal report or the write.
+  try {
+    // Test seam: ORCH_VALIDATE_DETAIL_PATH lets the AC fixture suite inject a
+    // scratch detail file so the detail-first override branch is provable
+    // without touching the real one. Production leaves it unset.
+    const detailPath = process.env.ORCH_VALIDATE_DETAIL_PATH
+      ? resolve(process.env.ORCH_VALIDATE_DETAIL_PATH)
+      : resolve(PROJECT_ROOT, 'docs/data/orch/archive/backlog-detail.json');
+    const raw = JSON.parse(readFileSync(detailPath, 'utf-8'));
+    const items = raw?.items ?? [];
+    if (Array.isArray(items)) {
+      // Real-data drift: `.items` is an ARRAY in some snapshots and an OBJECT
+      // in others — `detail_items_from` in the jq SSOT normalizes both, so this
+      // port must too (see FIX-DEVTEAM-BOUNDED1-DEPENDS-ON-GATE Case 1c).
+      const out = Object.create(null);
+      for (const it of items) if (it && typeof it.id === 'string' && it.id) out[it.id] = it;
+      return out;
+    }
+    return items && typeof items === 'object' ? items : Object.create(null);
+  } catch {
+    return Object.create(null);
+  }
+})();
+
+// Mirrors effective_supervised / effective_plan_only: EITHER location true.
+// Conservative default — absent in both means NOT flagged.
+function flaggedEitherWay(row) {
+  const d = (row && typeof row.id === 'string' && detailItemsById[row.id]) || null;
+  const sup = row?.supervised === true || d?.supervised === true;
+  const plan = row?.plan_only === true || d?.plan_only === true;
+  return sup || plan;
+}
+
+// Mirrors effective_owner / effective_next_agent: detail-FIRST, board-FALLBACK,
+// a non-empty STRING in either position wins.
+function detailFirstString(row, field) {
+  const d = (row && typeof row.id === 'string' && detailItemsById[row.id]) || null;
+  const fromDetail = d ? d[field] : null;
+  if (typeof fromDetail === 'string' && fromDetail !== '') return fromDetail;
+  const inline = row?.[field];
+  return typeof inline === 'string' ? inline : '';
+}
+
+// Mirrors effective_children / is_epic_wrapper: a non-empty children[] in
+// EITHER location makes the row a decomposition container, not a dispatchable
+// atomic task. `as_dep_array` in the jq SSOT also normalizes the bare-string
+// real-data drift (~7/321 backlog-detail rows), so this port does too.
+//
+// WRAPPERS MUST BE EXCLUDED, and this is not an optimisation — it is the
+// difference between a true and a false positive. An epic wrapper legitimately
+// has no dispatch lane: bounded1-supervised-lane-report.sh's own READY-WRAPPER
+// section documents it as a "NO-PICKER-BY-DESIGN class ... closed out instead
+// by docs/agents/dev-team/flow/post-cycle.md § Step 4.4 Epic-Wrapper Autoclose
+// Sweep once all_children_terminal", which is why the report's GATING class is
+// scoped `non-wrapper`. Caught by the brief's own mandated cross-check against
+// that script: without this filter Stage 1i reported
+// FIX-COWORK-DISPATCH-ROUTER-INTENT-MUTEX-BYPASS (supervised+plan_only, 38 d,
+// lane none) while the jq SSOT correctly counted 0 — the port, not the board,
+// was wrong.
+function isEpicWrapper(row) {
+  const asArray = (v) => (v == null ? [] : typeof v === 'string' ? [v] : Array.isArray(v) ? v : []);
+  const inline = asArray(row?.children);
+  if (inline.length > 0) return true;
+  const d = (row && typeof row.id === 'string' && detailItemsById[row.id]) || null;
+  return asArray(d?.children).length > 0;
+}
+
+// Mirrors dispatch_lane's own precedence: next_agent wins, then owner, else
+// "none". The roster-membership branch of the jq original is deliberately NOT
+// ported — it distinguishes on-roster from off-roster lanes, and this report
+// only cares about the "no lane at all" case.
+function resolvedDispatchLane(row) {
+  const na = detailFirstString(row, 'next_agent');
+  if (na !== '') return na;
+  const ow = detailFirstString(row, 'owner');
+  if (ow !== '') return ow;
+  return 'none';
+}
+
+// Scope matches bounded1-supervised-lane-report.sh's own coverage EXACTLY (it
+// grew from backlog-only to also ready/review in the 2026-07-30 AC-5
+// extension). in_progress[]/qa[] are excluded — an owner is a structural
+// precondition of being in either. active_sprints[] excluded for Stage 1g's own
+// reason (WIP-normal intra-sprint noise); done[]/done_verified[] are terminal.
+// Epic wrappers are excluded per-row (see isEpicWrapper above), matching the
+// report script's own `non-wrapper` scoping of its GATING class.
+const FLAGGED_NO_HANDLER_LANES = ['backlog', 'ready', 'review'];
+
+const flaggedNoHandlerIssues = [];
+for (const lane of FLAGGED_NO_HANDLER_LANES) {
+  const rows = result.data?.task_board?.[lane] ?? [];
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || typeof row !== 'object') continue;
+    if (!flaggedEitherWay(row)) continue;              // unflagged parked row — LEGAL, never reported
+    if (isEpicWrapper(row)) continue;                  // decomposition container — handler-less BY DESIGN
+    if (resolvedDispatchLane(row) !== 'none') continue; // has a handler — nothing to report
+    flaggedNoHandlerIssues.push({
+      path: `task_board.${lane}[${i}]`,
+      taskId: row.id ?? '(no id)',
+      supervised: row.supervised === true || detailItemsById[row.id]?.supervised === true,
+      plan_only: row.plan_only === true || detailItemsById[row.id]?.plan_only === true,
+    });
+  }
+}
+
+if (flaggedNoHandlerIssues.length > 0) {
+  const c = flaggedNoHandlerIssues.length;
+  process.stdout.write(
+    `\n[orch-validate] REPORT — Stage 1i (${c} row${c !== 1 ? 's' : ''} flagged supervised/plan_only with NO resolvable dispatch lane; NON-FATAL, see docs/architecture-briefs/2026-08-23-fix-orchstate-mint-flagged-row-no-handler.md):\n`
+  );
+  for (let i = 0; i < c; i++) {
+    const fi = flaggedNoHandlerIssues[i];
+    const flags = [fi.supervised ? 'supervised' : null, fi.plan_only ? 'plan_only' : null]
+      .filter(Boolean)
+      .join('+');
+    process.stdout.write(
+      `  [${i + 1}] ${fi.path} (id=${fi.taskId}): ${flags} set but next_agent AND owner are both empty (inline and in backlog-detail.json) — no picker can route it\n`
+    );
+    process.stdout.write(
+      `      fix: set next_agent (or owner) to the deliberate handler this flag is asserting, or clear the flag if the row is genuinely parked\n`
+    );
   }
 }
 
