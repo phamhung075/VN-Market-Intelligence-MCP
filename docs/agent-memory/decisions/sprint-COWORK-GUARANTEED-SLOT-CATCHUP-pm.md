@@ -192,3 +192,5 @@ PIPELINE: continue (P0, decomposition-only, no code changes in this cycle)
 **why-change:** Reframed with the architect from catch-up to detection — no catch-up task was created at all, because `catchup_raw` measured 8 records / 0 eligible against a 4-day outage. The row's own `verification_gate` already permits "explicitly declared out of scope with a reason", so the qa child records that disposition rather than manufacturing a recovery.
 
 ---
+
+> **ROLLED 2026-08-23T10:47:21Z** — this file reached 32142 B of a 36000 B BYTE_CAP; entries from `pm-S12` onward continue in `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-pm-2.md`.

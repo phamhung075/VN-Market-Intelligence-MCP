@@ -604,7 +604,7 @@
         "type": "system-issue",
         "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/janitor-health-recheck-writer-retired-2026-08-23.json"
       }
     ],
@@ -13094,6 +13094,54 @@
         "updated_by": "po/catchup3-disposition-20260823T1033Z",
         "verification_gate": "Every one of the 6 OPEN rows reaches a terminal status via a named, executable consumer path — and a newly written OPEN row is demonstrated to be picked up by it. Hand-flipping the 6 to READ closes the symptom and leaves the mechanism armed; that is not a fix.",
         "note": "MEASURED AT SOURCE 2026-08-23T10:30Z, three independent probes, no inference. (1) LIVE POPULATION — jq over .signal_queue.rows[] gives status distribution OPEN=6, READ=13, triaged=11. There are ZERO rows at status NEW. The six OPEN rows, all to:ops: sys-20260814T064300-a29m (cron_fire_gap), sys-20260814T064301-a29s1 (cron_fire_gap), sys-20260814T064302-a29s2 (cron_fire_gap), sys-20260814T064303-b06 (vps_route_unhealthy), sys-20260814T160010-b06 (signal_feedback), sys-20260822T213754-audit-tracked-task-absent (launchd_tracking_gap). Oldest is 2026-08-14T06:43:00Z — 9 days. (2) NOT EVICTED — scripts/orch-cold-evict.sh:150 sets TERMINAL_SIGNAL_STATUSES=READ,RESOLVED,SUPERSEDED,ACUTE-RESOLVED-ROOT-TRACKED,triaged,TRIAGED,RETRACTED. OPEN is absent, so the eviction predicate never matches them and they accumulate in the hot file indefinitely. (3) NOT DRAINED — the router independently searched docs/agents/ops/flow/ and .claude/skills/signal-dashboard/ and found no OPEN-row consumer; the live status distribution corroborates it from the other direction, since if a NEW-only drain were the sole consumer it would find nothing to do here. TWO DISTINCT DEFECTS, DO NOT CONFLATE: (a) a WRITE-side producer is emitting status=OPEN when the consumer contract expects NEW — find that producer, since which one it is determines whether the fix is at the writer or the reader; (b) a LIFECYCLE hole where OPEN is terminal-for-eviction-purposes-but-not-terminal-in-meaning, so even a correctly-written OPEN row can never leave the hot file. Fixing only (a) leaves today's 6 stranded; fixing only (b) evicts unread work, which is worse than leaving it. WHY P1 AND NOT COSMETIC: these are not notifications, they are unread ops findings. cron_fire_gap x3 and launchd_tracking_gap sit in exactly the subject area of the 96.5h Layer-C firing outage that brief docs/architecture-briefs/2026-08-23-cowork-slot-durability-layer-inventory-and-miss-detection.md S3 measured, and the 2026-08-22 launchd_tracking_gap row was written the day the host woke from that Standby window. Evidence bearing on a live P1 incident has been sitting unread for up to 9 days in a queue everyone believes is drained. CROSS-REF: project_host_suspension_causes_multiday_cron_silence_backlog_flush (confirmed 2x) and reference_agent_signals_is_a_rolling_2h_ttl_window_not_an_accumulating_log — the latter is the inverse failure (a store people think accumulates but does not), and the pair suggests signal-store lifecycle semantics are not written down anywhere consumers actually read. Surfaced by the router during the 2026-08-23T10:07Z dev-team tick; po verified all three probes independently before minting."
+      },
+      {
+        "id": "FOLLOWUP-PROSECEILING-TARGETED-COMPACTION-AND-FROZEN-COHORT-PAYDOWN",
+        "type": "FIX",
+        "title": "orch-backlog-stub.sh has no id filter, no threshold filter and no per-row mode — it is a whole-lane bulk migrator, which is why the frozen over-ceiling cohort has had no return path for 14 days. Add --ids/--over-ceiling-only + --list-over-ceiling, align STUB_FIELDS to the complement of the new measure, then run a supervised targeted paydown",
+        "owner": "developer",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "M",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "parent": "FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS",
+        "created_at": "2026-08-23T10:45:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-23T10:47:21Z",
+        "updated_by": "pm",
+        "depends_on": [
+          "TASK-PROSECEILING-VALUE-SHAPE-MEASURE",
+          "FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION"
+        ],
+        "files": [
+          "scripts/orch-backlog-stub.sh",
+          "scripts/orch-row-prose-ceiling-check.mjs"
+        ],
+        "verification_gate": "AC-7 of the brief: after an --over-ceiling-only stub run, manual-dispatch-sweep.md Step 1's flag_reentrant still reads a NON-EMPTY po_manual_dispatch_flagged_at off the HOT row. STUB_FIELDS alignment must land BEFORE any run, not after.",
+        "note": "Brief §4 + §8 steps 2-4: docs/architecture-briefs/2026-08-23-orch-row-prose-ceiling-value-shape-measure-and-frozen-cohort-paydown.md. DELIBERATELY DEFERRED out of the §3 decomposition — §3 is a read-only predicate change and must ship first and alone. TWO HARD GATES, both HIGH severity in the brief's own risk register: (1) the paydown is data-destructive if run before FIX-ORCHBACKLOGSTUB-COLD-ITEMS-ARRAY-SHAPE-CRASH-BLOCKS-LANES-MIGRATION (review[], P0) is VERIFIED — that reproduction is in the 2026-08-09 brief's F-3; (2) today's 12-name STUB_FIELDS would strip po_manual_dispatch_flagged_at, occurrence_count, owner, next_agent, supervised and plan_only, and manual-dispatch-sweep.md Step 1 reads the first of those INLINE with no detail_ref fallback — a ready[] stub run under today's field set would silently clear every idempotency flag and re-surface the whole candidate set. --dry-run first, always. PROJECTED (modelled read-only against the live file): 22 rows touched, 426,251 bytes to cold, hot file -14.5%, largest surviving hot row 1839B, frozen cohort 23 -> 0."
+      },
+      {
+        "id": "FIX-PM-BLOAT-GATE-NO-UNCLEARABLE-BRANCH-REFIRES-ON-STRUCTURALLY-UNEVICTABLE-LANES",
+        "type": "FIX",
+        "title": "pm flow Step 1's terminal-lane bloat gate fires every cycle on done[]>10 / done_verified[]>0 and dispatches a remediation sub-flow that can evict nothing — measured 2026-08-23: orch-cold-evict.sh --dry-run reports 0 evictable in every category, projected byte reduction 0, because the referential guard holds 30/30 done_verified ids and 4/4 rank-eligible done ids",
+        "owner": "agent-father",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "docs/agents/pm/",
+        "next_agent": "agent-father",
+        "created_at": "2026-08-23T10:45:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-23T10:47:21Z",
+        "updated_by": "pm",
+        "depends_on": [],
+        "files": [
+          "docs/agents/pm/flow/main.md",
+          "docs/agents/pm/flow/task-archive.md"
+        ],
+        "verification_gate": "A pm cycle that measures the lanes as structurally unevictable records that verdict somewhere durable and does NOT re-run the same investigation next cycle. Prove it by showing two consecutive pm cycles where the second one reads the first one's verdict instead of re-deriving it.",
+        "note": "MEASURED BY PM 2026-08-23T10:40Z, read-only, not inferred. Gate state: done[]=14 (threshold 10), done_verified[]=30 (threshold 0), and the flow's own HSC-6 invariant says done_verified[] must never exceed 5. Ran the remediation tool: `bash scripts/orch-cold-evict.sh --dry-run` -> every category 0, 'Byte reduction: 0 bytes', projected hot file byte-identical at 3,203,251 B. ROOT CAUSE, verified in code: the FIX-DEPSSATISFIED-COLD-ARCHIVED-DEP-RESOLVES-MISSING referential eviction guard (orch-cold-evict.sh:214-229, applied at :467 and :491) holds any terminal row whose id is still named in a live row's effective_depends_on across TASK_LANES plus backlog-detail.json. Recomputed independently: 30 of 30 done_verified ids and 4 of 4 rank-eligible done ids (KEEP_RECENT_DONE=10 makes only the oldest 4 rank-eligible) are held. Zero evictable is therefore STRUCTURAL, not transient. SECOND-ORDER ROOT CAUSE, already owned, DO NOT DUPLICATE: FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION (ready[], P0, developer) — nothing systematically produces the DONE_VERIFIED token, so successors never drain, so their depends_on keeps naming terminal rows forever, so the guard holds those rows forever, so terminal lanes only grow. That row already lists scripts/orch-cold-evict.sh in its files[]. THIS row is the narrower flow defect: pm's gate has no unclearable branch and no state, so every pm either re-derives this whole investigation or logs 'deferred' — 3 consecutive cycles read as skipped when at least this one was impossible. WHY THIS EVIDENCE IS NOT ON THE P0 ROW WHERE IT BELONGS: that row measures 11732B of prose against a 12000B ceiling, so appending this measurement to it would have crossed the ceiling and hard-rejected pm's entire 7-mint decomposition write. That is a live instance of the exact defect TASK-PROSECEILING-VALUE-SHAPE-MEASURE fixes, observed while working around it. ALSO NOT DONE, DELIBERATELY: pm did not run the live eviction — it would have been a no-op write taken under commit-mutex with ORCH_APPLY_ALLOW_SHRINK set against a live peer, for zero byte reduction."
       }
     ],
     "closed_sprints": [
@@ -17913,17 +17961,24 @@
         "owner": "po",
         "status": "READY",
         "zone": "cross-service/",
-        "next_agent": "pm",
+        "next_agent": "developer",
         "created_at": "2026-08-15T10:31:00Z",
         "status_note": "REPRODUCED LIVE TWICE THIS TICK, exact bytes captured. PO attempted to record that FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE had recurred 4 more times, by incrementing ONLY its numeric occurrence_count field (5 -> 9). No prose was added. scripts/orch-apply.sh aborted:\n\n  [orch-row-prose-ceiling-check] ABORTED — 1 row(s) with net new inline growth past ORCH_ROW_PROSE_CEILING_BYTES=12000:\n    id=FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE live=24298B -> candidate=24319B\n\n21 bytes, entirely digits. Stage 0/1 validation PASSED and orch-conservation-check PASSED; only the prose ceiling refused, and it refused the whole write (live file untouched).\n\nTHE DEFECT: the check measures NET ROW BYTE GROWTH but is named and reasoned about as a PROSE ceiling. For a row already above the ceiling the predicate degenerates to 'no growth of any kind, ever' — which forbids the one class of update that is unambiguously bounded, non-prose, and exactly what an over-documented row most needs: incrementing its own recurrence counter. Consequence is silent and compounding: the more a defect recurs, the more prose its row accumulates, the sooner it crosses 12000B, and from that moment onward its occurrence_count FREEZES. Every downstream consumer that ranks or prioritises by occurrence_count then reads a stale low number for precisely the worst-offending rows — an inverted-priority failure. This is not hypothetical: FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE is stuck at 5 while PO measured occurrences 6-9 this tick alone, and FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (34589B) is equally frozen.\n\nNOT A DUPLICATE of the SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD blocker (telegram report 4911). That report describes the same check blocking a large PROSE write (the po_goahead_* stamp on a 34725B row) — the check behaving as designed on the case it was built for. This row is the case it was NOT built for: a zero-prose numeric field. Same check, different and clearly unintended branch.\n\nWHY detail_ref IS NOT THE ANSWER HERE (pre-empting the check's own suggested fix, which says 'route this row's new/updated prose through its detail_ref cold store'): occurrence_count is not prose and does not belong in a cold detail store. It is a hot, queryable ranking field — moving it cold would break every jq that reads it off the lane row, which is the whole point of it being inline. Running scripts/orch-backlog-stub.sh to cold-migrate a row purely to permit a counter increment is disproportionate and would itself rewrite the row.\n\nPROPOSED FIX (small, surgical): exempt a small allowlist of bounded NON-PROSE scalar fields from the growth predicate — occurrence_count, updated_at, and any other numeric/ISO-timestamp scalar. Compute the ceiling over PROSE fields only (status_note, title, description, and the detail blobs), which is what the check's own name, message and remediation text all already assume. Explicitly do NOT add a bypass env var — the check is right to have none, and this fix removes the need for one.\n\nAC: on a fixture row whose status_note alone exceeds 12000B, (a) incrementing occurrence_count by 1 LANDS; (b) appending 1 byte to status_note still ABORTS with the existing message. Both assertions required — (b) proves the fix did not defeat the check.\n\nORIGIN: PO Step 1 triage 2026-08-15T10:07Z, found while folding notebook-auto-prune recurrences. PO worked around it this tick by dropping the counter bumps entirely, so occurrences 6-9 of that row are recorded ONLY in PO's notebook and this row — they are NOT on the row that owns them.\n\n[po/triage 2026-08-22T22:58:36Z - LIVE REPRODUCTION + PROMOTED backlog[] -> ready[]] This row's thesis was reproduced end-to-end during this triage tick, unprompted, and it BLOCKED PRODUCTIVE TRIAGE WORK - which is the escalation trigger, not the reproduction itself.\n\nWHAT HAPPENED, verbatim: this tick's atomic 7-mutation triage write (scripts/po-triage-20260822T2258-fleetpush-sizelint-sweepguard-5folds.jq) included a routine +3 occurrence fold onto FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS (review[]). scripts/orch-apply.sh passed Stage 0, Stage 1, the updated_at stamper AND the conservation check, then aborted at the last gate:\n  `[orch-row-prose-ceiling-check] ABORTED - 1 row(s) with net new inline growth past ORCH_ROW_PROSE_CEILING_BYTES=12000:`\n  `  id=FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS live=34264B -> candidate=35778B`\n  `[orch-apply] ABORTED: row prose ceiling check exit 1 - live file untouched`\nSIX UNRELATED, LEGITIMATE MUTATIONS were rejected as collateral - including the P0 fleet-push UNBLOCK mint - because ONE co-mutated row is over ceiling. That blast radius is the part this row's current write-up does not yet capture: the failure is not merely `that row can never be bumped again`, it is `any atomic write that so much as touches that row is unlandable`, and PO triage batches its mutations into one atomic write BY DESIGN (never seven racing writes against a live peer-dirty file).\n\nSCOPE MEASURED LIVE, not estimated: 30 rows across backlog[]/ready[]/review[] currently exceed the 12000B prose ceiling and are therefore permanently unfoldable - worst offenders SPIKE-SATURATED-COUNT-THRESHOLD-GATES-SWEEP (40494B, ready[]), SPIKE-BCTC-EXTRACTION-DORMANT-MASS-ENRICHFAIL-FLOOD (34725B, review[]), FIX-PO-TRIAGE-SIGNALS-AGENT-FLOW-DEFECT-TYPE-UNROUTED (34589B, backlog[]), FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS (34264B, review[]), FIX-COWORK-SIGNAL-FILENAME-CYCLEID-KEYING (32121B, backlog[]).\n\nORPHANED EVIDENCE THIS ROW NOW CARRIES ON BEHALF OF ITS OWN VICTIM (recorded here because the destination row is structurally unwritable): three `[notebook-immutability-guard] WARN` bug-escalation envelopes reached the PO durable inbox this tick, all naming the SAME agent+section pair - docs/agent-memory/notebooks/system-auditor.md, retained section `## c108 . 2026-08-22T22:14Z` - at 22:17:25Z, 22:33:02Z and 22:35:45Z. triage-signals.md's fourth-payload-class rule sets the mint threshold at `the SAME agent+section pair fires on >=2 separate cycles`; met three times over, so this is emphatically NOT interleaved-cycle noise, and no `git status`/worktree-diff refutation was attempted (the guard compares INDEX vs HEAD at fire time, unreconstructable afterwards - absence of a reproducible diff is INCONCLUSIVE, never benign). Temporal correlation worth carrying into the fix: all three land inside the window in which the same session was being hard-blocked by the sweep-guard (prior_warns 11 -> 14), i.e. the agent was repeatedly re-attempting a commit of the same notebook - a plausible amplifier for repeated retained-section rewrites. THESE THREE OCCURRENCES ARE NOT COUNTED ANYWHERE ON THEIR OWN ROW and will be silently lost from that row's occurrence history until this defect is fixed - which is the concrete, non-hypothetical data-loss cost of the current design.\n\nWHY ready[] NOW: backlog[] is not a dispatchable lane. This defect no longer merely bloats the hot file, it deterministically blocks the fleet's own triage actuator, and it will re-block the NEXT PO tick identically the moment any of those 30 rows needs a bump. Suggested minimal fix, consistent with the precedent already in the checker's own header comment (FIX-PROSECEILING-SECONDARY-CLAIM-STAMP-FIELDS-MISSING-FROM-STRUCTURAL-EXCLUDE-SET, 2026-08-15): add the numeric/coordination fields that are not author-written prose - `occurrence_count` first - to scripts/orch-row-prose-ceiling-check.mjs's STRUCTURAL_FIELDS set. That is the same class of field as claimed_at/claimed_by by construction and it converts this from a hard livelock into a warn on the rows that genuinely carry runaway prose.",
-        "updated_at": "2026-08-23T09:50:13Z",
+        "updated_at": "2026-08-23T10:47:21Z",
         "occurrence_count": 1,
-        "updated_by": "po/triage-20260822T2258Z",
+        "updated_by": "pm",
         "priority": "P1",
         "architect_design_complete": true,
         "architect_completed_at": "2026-08-23T09:47:00Z",
         "architect_handoff": "docs/architecture-briefs/2026-08-23-orch-row-prose-ceiling-value-shape-measure-and-frozen-cohort-paydown.md",
-        "architect_review_note": "DESIGN COMPLETE 2026-08-23 -> brief (8 sections, all figures measured live, ACs replayed on a live-data prototype). FROZEN COHORT = 23, NOT 1 (backlog 11 / ready 12 / review 0 of 585); +15 MORE over-ceiling rows sit in UNGUARDED lanes. Cohort trend 33->35->38->38->36 over 08-09..08-22 while row count FELL 615->549; today's 23 is a review[] paydown, not decay. FOUR DEFECTS, not one. D1 STRUCTURAL_FIELDS is a closed name-allowlist over an open namespace (846 field names live, 33 excluded, 813 counted as prose) - 3rd identical instance in 8d, and instance #1's own AC-5 already ordered the enumeration. D2 predicate is byte-exact not information-aware. D3 NEW/UNREPORTED: live baseline is looked up only in the 3 guarded lanes, so a row arriving from in_progress[]/qa[]/active_sprints[] gets liveBytes=0 and a zero-change lane-move HARD-REJECTS (proven live: UC-CCA-P3 in_progress->review, 'live=0B -> candidate=12161B', exit 1); dev-standards.md over-claims lane-agnosticism and the LANE-AGNOSTIC-MOVE test only covers backlog->review. D4 ROOT CAUSE: the 2026-08-09 brief chose (c)=3 parts in dependency order and only part 3 (the gate) shipped - the §2.3 paydown never ran on backlog[]/ready[], so the guard has run 14d in the exact brick-mode its own author ruled out. DECISION: measure the ceiling over VALUE-SHAPE-derived prose (prose iff string >200B or non-empty container), UNION'd with the existing name set - monotone, so no write that passes today can start failing. Measured: 22/23 rows STAY over ceiling (guard not disarmed); short strings hold 43,875B vs 1,616,447B for long ones, so they are not the bloat channel. REJECTED: adding occurrence_count/po_manual_dispatch_* to the name list (turn #4 of a 3-turn loop), raising the ceiling, bypass env var, integer-increment special-case (measured: same-length increments ALREADY pass, so it fixes neither of PO's blocks). RETURN PATH: orch-backlog-stub.sh has NO id/threshold filter anywhere - it is a whole-lane bulk migrator, which is why PO correctly refused it twice; add --over-ceiling-only/--ids and align STUB_FIELDS to the complement of the new measure. Projected: 22 rows touched, 426KB cold, hot file -14.5%, largest surviving row 1839B, cohort -> 0. PAYDOWN LANDMINE FOUND: today's STUB_FIELDS would strip po_manual_dispatch_flagged_at, which manual-dispatch-sweep Step 1's flag_reentrant reads INLINE with no detail_ref fallback - alignment MUST land before any run. SCOPE REDUCTION: po/flow/manual-dispatch-sweep.md needs NO edit (the stamp just lands) - drop it from the sibling row's file list, no agent-father hop. Owner: developer (zone-detect Tier-1, scripts/ + docs/policies/). Ship §3 FIRST and ALONE - it is a read-only predicate change, unblocks PO's next tick, depends on nothing open."
+        "architect_review_note": "DESIGN COMPLETE 2026-08-23 -> brief (8 sections, all figures measured live, ACs replayed on a live-data prototype). FROZEN COHORT = 23, NOT 1 (backlog 11 / ready 12 / review 0 of 585); +15 MORE over-ceiling rows sit in UNGUARDED lanes. Cohort trend 33->35->38->38->36 over 08-09..08-22 while row count FELL 615->549; today's 23 is a review[] paydown, not decay. FOUR DEFECTS, not one. D1 STRUCTURAL_FIELDS is a closed name-allowlist over an open namespace (846 field names live, 33 excluded, 813 counted as prose) - 3rd identical instance in 8d, and instance #1's own AC-5 already ordered the enumeration. D2 predicate is byte-exact not information-aware. D3 NEW/UNREPORTED: live baseline is looked up only in the 3 guarded lanes, so a row arriving from in_progress[]/qa[]/active_sprints[] gets liveBytes=0 and a zero-change lane-move HARD-REJECTS (proven live: UC-CCA-P3 in_progress->review, 'live=0B -> candidate=12161B', exit 1); dev-standards.md over-claims lane-agnosticism and the LANE-AGNOSTIC-MOVE test only covers backlog->review. D4 ROOT CAUSE: the 2026-08-09 brief chose (c)=3 parts in dependency order and only part 3 (the gate) shipped - the §2.3 paydown never ran on backlog[]/ready[], so the guard has run 14d in the exact brick-mode its own author ruled out. DECISION: measure the ceiling over VALUE-SHAPE-derived prose (prose iff string >200B or non-empty container), UNION'd with the existing name set - monotone, so no write that passes today can start failing. Measured: 22/23 rows STAY over ceiling (guard not disarmed); short strings hold 43,875B vs 1,616,447B for long ones, so they are not the bloat channel. REJECTED: adding occurrence_count/po_manual_dispatch_* to the name list (turn #4 of a 3-turn loop), raising the ceiling, bypass env var, integer-increment special-case (measured: same-length increments ALREADY pass, so it fixes neither of PO's blocks). RETURN PATH: orch-backlog-stub.sh has NO id/threshold filter anywhere - it is a whole-lane bulk migrator, which is why PO correctly refused it twice; add --over-ceiling-only/--ids and align STUB_FIELDS to the complement of the new measure. Projected: 22 rows touched, 426KB cold, hot file -14.5%, largest surviving row 1839B, cohort -> 0. PAYDOWN LANDMINE FOUND: today's STUB_FIELDS would strip po_manual_dispatch_flagged_at, which manual-dispatch-sweep Step 1's flag_reentrant reads INLINE with no detail_ref fallback - alignment MUST land before any run. SCOPE REDUCTION: po/flow/manual-dispatch-sweep.md needs NO edit (the stamp just lands) - drop it from the sibling row's file list, no agent-father hop. Owner: developer (zone-detect Tier-1, scripts/ + docs/policies/). Ship §3 FIRST and ALONE - it is a read-only predicate change, unblocks PO's next tick, depends on nothing open.",
+        "children": [
+          "TASK-PROSECEILING-LIVE-BASELINE-ALL-LANES",
+          "TASK-PROSECEILING-VALUE-SHAPE-MEASURE"
+        ],
+        "pm_decomposition_complete": true,
+        "pm_completed_at": "2026-08-23T10:45:00Z",
+        "pm_note_20260823": "DECOMPOSED by pm 2026-08-23T10:45Z, brief §3 ONLY, shipped first and alone per §8 step 1. §4 deferred to FOLLOWUP-PROSECEILING-TARGETED-COMPACTION-AND-FROZEN-COHORT-PAYDOWN (backlog[]); §8 step 5 (PO closes the two name-list sibling rows as superseded-by-construction) is carried as AC-9 of the second child's RETURN, not as a row. Handoffs: docs/handoffs/TASK-PROSECEILING-{LIVE-BASELINE-ALL-LANES,VALUE-SHAPE-MEASURE}.md."
       },
       {
         "id": "FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE",
@@ -18331,7 +18386,7 @@
         "priority": "P1",
         "size": "M",
         "zone": "cross-service/",
-        "next_agent": "pm",
+        "next_agent": "developer",
         "created_at": "2026-08-23T09:47:00Z",
         "created_by": "po",
         "files": [
@@ -18343,13 +18398,151 @@
         "depends_on": [],
         "verification_gate": "no_file_can_sit_in_docs_signals_beyond_a_declared_age_without_either_being_drained_or_raising_a_loud_escalation_that_names_it",
         "status_note": "MEASURED AT SOURCE BY PO 2026-08-23T09:45Z, this is a count not an impression. `node scripts/agents-flow/drain-signals.js --count-drainable` prints drainable_count=1 while `ls docs/signals/*.json | wc -l` = 51. Re-derived independently with the script's own predicate: 50 of 51 files have from, source, type AND signal_type all null.\n\nMECHANISM. isDrainableShape() at scripts/agents-flow/drain-signals.js:84-88 returns false when all four of those fields are null. A file that fails it is skipped by the drain loop's 'SKIP non-signal shape' guard, which means it is NEVER enveloped, NEVER appended to .dev_team_idle_chain.pending_triage_inbox, NEVER moved to docs/signals/processed/, NEVER fingerprinted, NEVER DB-inserted, and NEVER pruned — the 7-day prune in section 0a-2 only walks processed/. There is no age check, no floor, no escalation. The file simply accumulates in perpetuity and no agent ever reads it. Oldest currently stuck: docs/signals/cowork-signal-2026-07-29T0722Z-chef-intraday-tokenbudget-marker-leak.json, 25 days.\n\nCONCRETE COST, PROVEN THIS TICK. docs/signals/cowork-team-2026-07-30T001827Z-alertcmd-session-id-gap.json carried two recommendations. Both have since shipped — SESSION_ID_LINE on 2026-07-31 (spawn-fanout.md:292) and the >=2-DISTINCT-marker threshold on 2026-08-23 (spawn-fanout.md:460-472, commit b545a69cc) — and the signal was never drained on either occasion, because it is one of the 50. Both fixes reached production by a route that bypassed the inbox entirely. A signal whose asks are fully satisfied and whose file is still sitting unread in the inbox 24 days later is proof the inbox is not a queue, it is a write-only directory.\n\nWRITER SIDE. The dominant emitter is cowork-team, writing a bare finding object — {event, discovered_during, evidence, recommendation, action_taken_by_dispatcher, ts} — with no envelope at all. Note the writer is not obviously wrong: docs/agents/po/flow/main.md's own 'Signal write rule' specifies only the FILENAME contract and says nothing about a required body envelope, so the envelope requirement is enforced by a reader-side predicate that no writer-side doc states. That asymmetry is the root cause, not a careless emitter.\n\nDISTINCT FROM THE KNOWN TYPE-NAMESPACE ROW. project_signalrow_type_open_namespace_vs_closed_allowlist_20260813 and docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md are about a type VALUE that no routing row matches, inside an otherwise valid envelope. This is envelope ABSENCE — the file never reaches the type table at all. Different layer, different fix.\n\nDECISION FOR ARCHITECT (three options, they are not exclusive): (i) enforce the envelope at write time and state the body contract in the writer-side docs, so a bare finding cannot be emitted; (ii) widen the reader to synthesize an envelope from filename + mtime; (iii) at minimum, make non-drainable LOUD — any file in docs/signals/ older than a declared age that is neither drainable nor a sanctioned by-path family must raise an escalation that names it, instead of being counted as litter forever.\n\nDO NOT BLANKET-WIDEN THE READER. BY_PATH_CONSUMER_FAMILIES at scripts/agents-flow/drain-signals.js:102 already establishes that some non-envelope files in this directory are LEGITIMATE by-path dish inputs (price_anomaly_*, glob-read by chef) that must never be drained, and the script's own comment records that this family has been misdiagnosed as stuck inbox litter FOUR times already. Any fix must discriminate sanctioned by-path families from unsanctioned bare findings, and must read docs/standards/mcp-tools.md section 'price_anomaly — DUAL-PLANE CONTRACT' before touching that list.\n\nPROVENANCE: PO's own drain-coverage process review this tick, prompted by the 24-day sit of the signal drained above. Not an escalation from another agent — this is the root cause behind that sit, and it is systemic, not one file.",
-        "updated_at": "2026-08-23T10:23:31Z",
+        "updated_at": "2026-08-23T10:47:21Z",
         "architect_design_complete": true,
         "architect_handoff": "docs/architecture-briefs/2026-08-23-signal-inbox-orphan-escalation-discriminator.md",
         "architect_review_note": "Architect brief: docs/architecture-briefs/2026-08-23-signal-inbox-orphan-escalation-discriminator.md. Re-measured live: drainable_count 1->2 (inbox moved between PO's measurement and mine). The 49 non-drainable are NOT one population: 21 price_anomaly_* by-path (correctly exempt, do not touch -- this would be the 5th misdiagnosis of that family), 26 well-formed-unenveloped litter, 2 malformed JSON -- a THIRD failure mode PO's row didn't name, from a live uncovered bug (notebook-auto-prune.sh:574-575 grep -c ... || echo 0 double-emit). Design: age-bounded one-shot escalation (ledger table in signals.db + a normal enveloped signal drain-signals.js emits itself, routed to PO like any other) for the 26+2 only -- isDrainableShape()/isByPathConsumerFamilies() left byte-for-byte unchanged, rejects reader-widening (PO's option ii). Floors from existing constants, not new hardcodes: 30min (2x fastest cowork cadence) for malformed, 7d (drain's own existing prune cutoff) for orphan-shape. Flagged, not fixed here: price_anomaly_* has no age ceiling anywhere (oldest 52d, unbounded growth) and the live notebook-auto-prune.sh bug is not in PO's files[] scope -- both candidate follow-up rows for PO/PM. Route to developer (cross-service tooling, no single apps/<service>).",
-        "updated_by": "po (Item 3 ruling — next_agent corrected to the decomposition hop)",
+        "updated_by": "pm",
         "po_next_agent_ruling_20260823": "RULED by po 2026-08-23T10:17:06Z: next_agent developer -> pm. The board field disagreed with its own author's RETURN ('NEXT: pm'). ROOT CAUSE MEASURED, not stylistic: docs/agents/developer/flow/main.md declares its Input as 'docs/handoffs/TASK_NNN.md with [Architect] Brownfield Findings' (line 12) and both Step 0c (delta-read handoff, path docs/handoffs/TASK_NNN.md) and Step 3 ('Read docs/handoffs/TASK_NNN.md first') hard-require that file. No handoff file exists for this row — `ls docs/handoffs/ | grep -i signal-inbox` returns zero matches this tick. Worse, `architect_handoff` is a WRITE-ONLY field: grepping architect_handoff across docs/agents/, scripts/ and .claude/ returns only scripts/architect-20260823-orch-prose-ceiling-row-handoff.jq, the jq that WRITES it, plus stale worktree copies of orch-state itself. Zero flow doc and zero dispatch script READS it. So a developer dispatched on this row would arrive with no readable spec at all and the 18530B brief would simply never be opened. CONFIRMED DISPATCHABLE BEFORE THE FIX: running the live predicate returned effective_next_agent=developer, deps_ok=true, supervised=false, plan_only=false — the misroute was armed, not theoretical. WHAT I DID NOT CHANGE, AND WHY: the sibling row FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS keeps next_agent=pm — already correct. The two rows are now consistent at pm, but NOT because consistency was the goal: they are consistent because both independently need a decomposition hop. Note both briefs' own §5/§6 name `developer` as the eventual ZONE OWNER (cross-service/), and that remains right — 'who ultimately implements' and 'what is the next hop' are different questions, and the architect answered the first while the board field must answer the second. pm decomposes, emits docs/handoffs/TASK_*.md, then a developer is correctly dispatchable.",
-        "po_next_agent_ruling_addendum_20260823": "ADDENDUM (same ruling, sharper evidence). An earlier draft of this ruling rested on 'no docs/handoffs/TASK_*.md exists'. That alone is NOT disqualifying: docs/agents/dev-team/flow/execute-tier.md:123 documents a sanctioned direct-execute / self-closeout path explicitly described as having 'no task branch/handoff', used for small FIX rows whose OWN `note` carries the spec. So the absence of a handoff file does not by itself make a developer route wrong. THE DECISIVE MEASUREMENT IS DIFFERENT: this row's `note` field is literally null — 0 bytes. The row carries exactly four things a developer could read: files[] (4 paths), title, zone, and architect_handoff. architect_handoff has zero readers fleet-wide. So the direct-execute escape hatch does NOT rescue this row — a developer dispatched today would receive four file paths and no design, no acceptance criteria, and no rationale, while the brief's §2 decision (age-bounded loud escalation; blanket envelope-synthesis explicitly REJECTED) and its six ACs stayed invisible. The realistic failure is not a stall but a plausible WRONG implementation: with only the file list visible, the obvious-looking fix is exactly the reader-widening the brief rejects. next_agent=pm stands."
+        "po_next_agent_ruling_addendum_20260823": "ADDENDUM (same ruling, sharper evidence). An earlier draft of this ruling rested on 'no docs/handoffs/TASK_*.md exists'. That alone is NOT disqualifying: docs/agents/dev-team/flow/execute-tier.md:123 documents a sanctioned direct-execute / self-closeout path explicitly described as having 'no task branch/handoff', used for small FIX rows whose OWN `note` carries the spec. So the absence of a handoff file does not by itself make a developer route wrong. THE DECISIVE MEASUREMENT IS DIFFERENT: this row's `note` field is literally null — 0 bytes. The row carries exactly four things a developer could read: files[] (4 paths), title, zone, and architect_handoff. architect_handoff has zero readers fleet-wide. So the direct-execute escape hatch does NOT rescue this row — a developer dispatched today would receive four file paths and no design, no acceptance criteria, and no rationale, while the brief's §2 decision (age-bounded loud escalation; blanket envelope-synthesis explicitly REJECTED) and its six ACs stayed invisible. The realistic failure is not a stall but a plausible WRONG implementation: with only the file list visible, the obvious-looking fix is exactly the reader-widening the brief rejects. next_agent=pm stands.",
+        "children": [
+          "TASK-SIGINBOX-ORPHAN-ESCALATION-CORE",
+          "TASK-SIGINBOX-WRITER-CONTRACT-DOC-POINTER",
+          "TASK-SIGINBOX-LIVE-FIRST-RUN-GATE"
+        ],
+        "pm_decomposition_complete": true,
+        "pm_completed_at": "2026-08-23T10:45:00Z",
+        "pm_note_20260823": "DECOMPOSED by pm 2026-08-23T10:45Z into 3 children. Epic wrapper — non-dispatchable while children[] is non-empty (is_epic_wrapper). Handoffs: docs/handoffs/TASK-SIGINBOX-{ORPHAN-ESCALATION-CORE,WRITER-CONTRACT-DOC-POINTER,LIVE-FIRST-RUN-GATE}.md — the SUBSTANCE is in those files, not a pointer to the brief, because architect_handoff has zero readers fleet-wide (FIX-ARCHITECTHANDOFF-DEAD-FIELD-ZERO-READERS-STRANDS-EVERY-ARCHITECT-BRIEF). Brief §3's two deferred items were NOT pulled in — they are already minted as FIX-NOTEBOOKAUTOPRUNE-GREPC-DOUBLE-EMIT-WRITES-MALFORMED-SIGNAL-JSON and CLEAN-PRICEANOMALY-SIGNAL-FILES-UNBOUNDED-NO-AGE-CEILING-ANYWHERE. Close this row only after TASK-SIGINBOX-LIVE-FIRST-RUN-GATE passes — it owns this row's verification_gate."
+      },
+      {
+        "id": "TASK-SIGINBOX-ORPHAN-ESCALATION-CORE",
+        "type": "FIX",
+        "title": "drain-signals.js: age-bounded one-shot dedup'd escalation for genuinely orphaned inbox files — ledger table in signals.db, escalation emitted as a normal enveloped signal in the existing pass-2 write loop, one ROUTING_TABLE row, spec-first in drain-signals.md",
+        "owner": "developer",
+        "status": "READY",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "parent": "FIX-SIGNAL-INBOX-NON-DRAINABLE-ENVELOPE-50-OF-51-FILES-SILENTLY-CLASSED-LITTER",
+        "created_at": "2026-08-23T10:45:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-23T10:47:21Z",
+        "updated_by": "pm",
+        "depends_on": [],
+        "handoff": "docs/handoffs/TASK-SIGINBOX-ORPHAN-ESCALATION-CORE.md",
+        "files": [
+          "docs/agents/dev-team/flow/drain-signals.md",
+          "scripts/agents-flow/drain-signals.js",
+          "scripts/agents-flow/drain-signals.test.js",
+          "docs/standards/mcp-tools.md"
+        ],
+        "verification_gate": "AC-4 proves the discriminator: a 90-day-old price_anomaly_ file, well-formed and unenveloped, produces ZERO ledger rows and ZERO escalations. Without that test the task is not done.",
+        "note": "SPEC IS IN THE HANDOFF FILE, NOT ON THIS ROW: docs/handoffs/TASK-SIGINBOX-ORPHAN-ESCALATION-CORE.md (read it FIRST — architect_handoff has zero readers fleet-wide, so a pointer to the brief would strand you). HARD CONSTRAINT, NON-NEGOTIABLE: isDrainableShape() (drain-signals.js:84-88) and isByPathConsumerFile()/BY_PATH_CONSUMER_FAMILIES (:101-107) stay BYTE-FOR-BYTE UNCHANGED, and the 21 price_anomaly_* files are a sanctioned by-path family that must NOT be folded in — that family has already been misdiagnosed as inbox litter 4 times and reader-widening is the fix the brief explicitly REJECTS. WHY drain-signals.md AND drain-signals.js ARE ONE TASK: drain-signals.js:183-188 declares ROUTING_TABLE a hand-kept mirror of the spec table and requires both be changed in the SAME commit (precedent 5ad4a3f92). Do NOT touch docs/agents/dev-team/flow/main.md, market-watcher/flow/eod.md, or notebook-auto-prune.sh. Do NOT hardcode 51/49/26/21/2 anywhere — the inbox moved between two measurements 8 minutes apart during design."
+      },
+      {
+        "id": "TASK-SIGINBOX-WRITER-CONTRACT-DOC-POINTER",
+        "type": "FIX",
+        "title": "spawn-fanout.md:55,464 cite a signal file at a path that no longer exists (pm re-verified: file is in docs/signals/processed/) + add the one writer-side sentence stating the envelope-or-by-path contract that only a reader-side predicate enforces today",
+        "owner": "agent-father",
+        "status": "READY",
+        "priority": "P1",
+        "size": "S",
+        "zone": "docs/agents/cowork-team/",
+        "next_agent": "agent-father",
+        "parent": "FIX-SIGNAL-INBOX-NON-DRAINABLE-ENVELOPE-50-OF-51-FILES-SILENTLY-CLASSED-LITTER",
+        "created_at": "2026-08-23T10:45:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-23T10:47:21Z",
+        "updated_by": "pm",
+        "depends_on": [
+          "TASK-SIGINBOX-ORPHAN-ESCALATION-CORE"
+        ],
+        "handoff": "docs/handoffs/TASK-SIGINBOX-WRITER-CONTRACT-DOC-POINTER.md",
+        "files": [
+          "docs/agents/cowork-team/flow/spawn-fanout.md"
+        ],
+        "note": "Spec: docs/handoffs/TASK-SIGINBOX-WRITER-CONTRACT-DOC-POINTER.md. Split from the core task ONLY because spawn-fanout.md is a cowork-team agent flow doc (agent-father commit zone). One file, three lines. depends_on the core task because AC-3's pointer target (the escalation write-up in docs/standards/mcp-tools.md section 'price_anomaly - DUAL-PLANE CONTRACT') is written by that task — do not write a pointer to content that does not exist yet."
+      },
+      {
+        "id": "TASK-SIGINBOX-LIVE-FIRST-RUN-GATE",
+        "type": "QA",
+        "title": "Own the parent row's verification_gate: on the first real post-fix drain tick, every genuinely-orphaned file escalates exactly once, zero by-path files escalate, and a second tick emits zero repeats",
+        "owner": "qa",
+        "status": "READY",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "qa",
+        "parent": "FIX-SIGNAL-INBOX-NON-DRAINABLE-ENVELOPE-50-OF-51-FILES-SILENTLY-CLASSED-LITTER",
+        "created_at": "2026-08-23T10:45:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-23T10:47:21Z",
+        "updated_by": "pm",
+        "depends_on": [
+          "TASK-SIGINBOX-ORPHAN-ESCALATION-CORE"
+        ],
+        "handoff": "docs/handoffs/TASK-SIGINBOX-LIVE-FIRST-RUN-GATE.md",
+        "files": [
+          "docs/signals/",
+          "scripts/agents-flow/drain-signals.js"
+        ],
+        "verification_gate": "no_file_can_sit_in_docs_signals_beyond_a_declared_age_without_either_being_drained_or_raising_a_loud_escalation_that_names_it",
+        "note": "Spec: docs/handoffs/TASK-SIGINBOX-LIVE-FIRST-RUN-GATE.md. Separate task because (a) the parent's verification_gate is a statement about the LIVE inbox that fixture tests cannot prove, and (b) the first real run emits one escalation per stuck file in a single tick straight into PO's Step 0-SIG queue — a one-time blast that deserves supervised observation, not a side effect of a developer's last test run. RE-MEASURE the population at run time; do NOT carry any integer from the brief. If the one-shot property fails on live data (escalations re-fire every tick) that is WORSE than the silence it replaced — escalate and recommend revert."
+      },
+      {
+        "id": "TASK-PROSECEILING-LIVE-BASELINE-ALL-LANES",
+        "type": "FIX",
+        "title": "orch-row-prose-ceiling-check.mjs looks up a row's live baseline in only backlog/ready/review, so a byte-identical lane move out of in_progress[]/qa[]/active_sprints[] gets liveBytes=0 and hard-rejects with a false net-new-growth message (brief D3)",
+        "owner": "developer",
+        "status": "READY",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "parent": "FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS",
+        "created_at": "2026-08-23T10:45:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-23T10:47:21Z",
+        "updated_by": "pm",
+        "depends_on": [],
+        "handoff": "docs/handoffs/TASK-PROSECEILING-LIVE-BASELINE-ALL-LANES.md",
+        "files": [
+          "scripts/orch-row-prose-ceiling-check.mjs",
+          "scripts/test/orch-row-prose-ceiling-check-tests.sh",
+          "docs/policies/dev-standards.md"
+        ],
+        "verification_gate": "AC-1: UC-CCA-P3 moved in_progress[]->review[] byte-identical exits 0 (today: exit 1, live=0B -> candidate=12161B). AC-4: duplicate-id max() rule holds with EITHER copy larger.",
+        "note": "Spec: docs/handoffs/TASK-PROSECEILING-LIVE-BASELINE-ALL-LANES.md. SHIP FIRST AND ALONE (brief §8 step 1) — read-only predicate change, depends on nothing open, unblocks a live defect. MECHANISM CONFIRMED IN CODE: PROSE_CEILING_LANES at :105 omits in_progress[], so collectRowsById() misses the live row, liveBytes falls to 0 at :267, and :269 hard-rejects. Two rows are parked BLOCKED-in-place right now instead of lane-moved because of this. KEEP THE GATED SET AT backlog|ready|review — widen ONLY the live baseline lookup, with max(proseBytes) across duplicate ids (3 duplicate ids exist live; last-wins could pick the smaller copy and manufacture a false reject). CORRECTION TO CARRY: 'numeric occurrence bump is rejected' is FALSE — occurrence_count 1->2 already passes (same digit count, zero delta). A fix scoped to integer increments fixes NONE of the live blocks."
+      },
+      {
+        "id": "TASK-PROSECEILING-VALUE-SHAPE-MEASURE",
+        "type": "FIX",
+        "title": "Measure the row prose ceiling over VALUE SHAPE (string >200B or non-empty container) union'd with STRUCTURAL_FIELDS, extracted into a shared scripts/lib/orch-row-prose-measure.mjs, plus an over-ceiling-only scalar-delta cap — replaces a closed name-allowlist over an open 846-name namespace",
+        "owner": "developer",
+        "status": "READY",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "parent": "FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS",
+        "created_at": "2026-08-23T10:45:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-23T10:47:21Z",
+        "updated_by": "pm",
+        "depends_on": [
+          "TASK-PROSECEILING-LIVE-BASELINE-ALL-LANES"
+        ],
+        "handoff": "docs/handoffs/TASK-PROSECEILING-VALUE-SHAPE-MEASURE.md",
+        "files": [
+          "scripts/lib/orch-row-prose-measure.mjs",
+          "scripts/orch-row-prose-ceiling-check.mjs",
+          "scripts/test/orch-row-prose-ceiling-check-tests.sh",
+          "scripts/orch-apply.sh",
+          "docs/policies/dev-standards.md"
+        ],
+        "verification_gate": "AC-2 is load-bearing and must FAIL-CLOSED: +1 byte appended to a >200B prose field on a frozen row still ABORTS. Without it the fix cannot be distinguished from disarming the ceiling.",
+        "note": "Spec: docs/handoffs/TASK-PROSECEILING-VALUE-SHAPE-MEASURE.md. depends_on LIVE-BASELINE-ALL-LANES: same file, so sequential by construction. THIS IS TURN 4 OF A 3-TURN LOOP IF DONE AS A NAME-LIST PATCH — instance #1's own AC-5 already ordered the enumeration and it was never done; 846 field names live, 33 excluded, 813 counted as prose. Derive from value shape instead. MONOTONE BY CONSTRUCTION (exclusion set only grows), so no write that passes today can start failing — preserve that property. NOT IN SCOPE: --list-over-ceiling, orch-backlog-stub.sh, any paydown (all deferred to FOLLOWUP-PROSECEILING-TARGETED-COMPACTION-AND-FROZEN-COHORT-PAYDOWN); raising the ceiling; a bypass env var; removing STRUCTURAL_FIELDS; special-casing integer increments; orchStateSchema.ts; docs/agents/po/flow/manual-dispatch-sweep.md (needs NO edit under this design — scope reduction, drop it from the sibling row's file list)."
       }
     ],
     "review": [
