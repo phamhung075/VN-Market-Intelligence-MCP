@@ -69,7 +69,7 @@ Source: `apps/frontend/app/domain/market.ts` (WatchlistStock section)
 
 ### `WATCHLIST_STOCKS`
 
-Compiled constant array of 33 entries (30 active + 3 inactive). Mirrors `docs/data/system-map.json project.watchlist` exactly. Must be kept in sync when the watchlist is updated.
+Compiled constant array of 34 entries (33 active + 1 inactive — VEA). Mirrors `docs/data/system-map.json project.watchlist` exactly. Must be kept in sync when the watchlist is updated.
 
 Active tickers (30): VNM, FPT, VCB, HPG, BID, SHB, EIB, VHM, VIC, KBC, HUT, DIG, DXG, KDH, PDR, NVL, VRE, MSN, FRT, KDC, SAB, DPM, SSI, VIX, VND, VCI, DGC, VJC, GEX, BSR, DAG, DBC
 
