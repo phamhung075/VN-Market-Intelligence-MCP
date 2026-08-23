@@ -1,0 +1,82 @@
+{
+  "schema": "price_anomaly_v1",
+  "generated_at": "2026-08-14T16:00:00Z",
+  "dish_window": "eod",
+  "tickers": [
+    {
+      "code": "DXG",
+      "price": 11.5,
+      "daily_change_pct": 5.99,
+      "yoy_change_pct": null,
+      "volume": 2771700,
+      "vs_avg_pct": 231,
+      "rsi": 53.6,
+      "sentiment": "Bullish",
+      "insider_activity": "no activity",
+      "brief_action": "Watch for sector reversal",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "Volume spike 2.3x average, price surge +5.99%, outperforming real estate sector weakness"
+    },
+    {
+      "code": "VIC",
+      "price": 200.4,
+      "daily_change_pct": -3.61,
+      "yoy_change_pct": null,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "Bearish",
+      "insider_activity": "no activity",
+      "brief_action": "Reduce on foreign selling",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "Continued decline -3.61%, foreign institutional selling pressure on Vingroup complex"
+    },
+    {
+      "code": "VHM",
+      "price": 68.2,
+      "daily_change_pct": -5.01,
+      "yoy_change_pct": null,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "Bearish",
+      "insider_activity": "no activity",
+      "brief_action": "Reduce on sector weakness",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "Accelerating decline -5.01%, part of Vingroup sector correction"
+    },
+    {
+      "code": "BSR",
+      "price": 25.35,
+      "daily_change_pct": -4.34,
+      "yoy_change_pct": null,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "Neutral",
+      "insider_activity": "no activity",
+      "brief_action": "Monitor oil sector pressure",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "Sharp decline -4.34%, oil sector pressure amid Brent crude range"
+    },
+    {
+      "code": "FPT",
+      "price": 68.3,
+      "daily_change_pct": -1.30,
+      "yoy_change_pct": null,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "Neutral",
+      "insider_activity": "Domestic selling activity",
+      "brief_action": "Hold on dip",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": null
+    }
+  ]
+}

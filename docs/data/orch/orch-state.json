@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 8 row(s) (8 from review[], 0 from done[]), highest-ranked FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 8 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-23T17:22:30Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "updated_at": "2026-08-23T17:54:58Z",
+    "updated_by": "dev-team",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -21061,10 +21060,10 @@
         "last_served_tick": "2026-08-23T17:22:14Z"
       },
       "step1_triage": {
-        "last_served_tick": "2026-08-23T14:55:52Z"
+        "last_served_tick": "2026-08-23T17:55:24Z"
       }
     },
-    "_updated_at": "2026-08-23T17:52:27Z",
+    "_updated_at": "2026-08-23T17:55:24Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
