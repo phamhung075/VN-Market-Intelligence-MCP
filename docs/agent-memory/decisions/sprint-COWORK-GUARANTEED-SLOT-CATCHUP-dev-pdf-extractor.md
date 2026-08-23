@@ -29,3 +29,24 @@
 **why-change:** No change from plan.
 
 ---
+### STEP dev-pdf-extractor-S3 · dev-pdf-extractor · 2026-08-23T12:50:00Z
+**task-id:** FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE
+**what-done:** Replaced `_extraction_semaphore.acquire(blocking=False)` with `acquire(blocking=True, timeout=wait)` + `wait_s: Optional[float] = None` override and a new `PEK_SEMAPHORE_WAIT_SECONDS` env knob (default 30min), plumbed into `docker-compose.yml` beside the sibling `PDFX_OCR_QUEUE_WAIT_S`; rewrote 4 docstrings/comments that claimed contention maps to HTTP 429. Commit `3db7a8dc8`.
+**what-considered:**
+- Reuse `ocr_gateway._acquire_slot_blocking`'s shape in place (chosen) — AC-3 mandates reuse-only; the shape is already shipped and proven in the same service.
+- Extract a shared bounded-acquire helper used by both `_OCR_SLOTS` and `_extraction_semaphore` — rejected: AC-3 says reuse, not refactor; the two guards have different exception types/telemetry and a shared helper is a new abstraction the row does not authorise.
+- Add reconcile-job pacing so the batch never contends — rejected: explicitly `out_of_scope` (a), different zone (`apps/mcp-server/`), P2 follow-up only if post-fix telemetry still shows backlog.
+**why-decision:** Bounded-blocking is the minimal change that converts a silent drop into either a success or a genuinely-rare loud failure, and blocking is free of new risk because the method is only ever reached via `asyncio.to_thread` from `pek_run_helper.py` — the worker thread is already expected to block for up to `_EXTRACTION_TIMEOUT_SECONDS`, so queueing extends an existing window rather than introducing one. Default wait == extraction timeout so a caller queued behind exactly one normal extraction always outlasts it.
+**why-change:** No change from the architect brief's §2 design.
+
+### STEP dev-pdf-extractor-S4 · dev-pdf-extractor · 2026-08-23T13:05:00Z
+**task-id:** FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE
+**what-done:** Proved the tests are honest-RED against the old acquire (AC-7 reported "contended batch LOST 2 of 3 members"); then established that AC-8/AC-9 are structurally unverifiable now — container is 8d old and still runs `blocking=False` at :657 with no `PEK_SEMAPHORE_WAIT_SECONDS` in env, AND `bctc_vps_queue` has ZERO `pek_triggered` rows (histogram: deferred_infra 328 / done 186 / enrich_failed 56 / url_not_found 44; all 56 enrich_failed are at reconcile_attempts>=8).
+**what-considered:**
+- Report AC-8 PASS on the quiet 08-23 log window — rejected: that is exactly the false-read PO recorded on 2026-08-15 (1068 lines, zero pek-extract requests); absence of the error where there is no traffic is not evidence.
+- `docker cp` the fixed file into the live container for an authentic probe (the precedent this agent set in sprint-FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK S3) — rejected here: it would prove the code loads but still cannot produce a reconcile batch, because the selection query has zero eligible rows. The blocker is queue state, not deployment.
+- Requeue rows myself to manufacture traffic — rejected: `bctc_vps_queue` is `apps/mcp-server/` zone, and out_of_scope (c) fences the counter-reset defect that a requeue would collide with.
+**why-decision:** Reported AC-8/AC-9 as NOT-RUN with the mechanism named, rather than closing quietly on absent evidence. Captured a hard pre-fix baseline instead (30 distinct SemaphoreContendedError raises on 2026-08-22, all in 30-min tick bursts of 3-4; HUT `dab264ae` lost at 14:38:19Z and BSR `d332bf35` at 13:14:03Z, both to SemaphoreContendedError) so QA has a real before-side to diff against.
+**why-change:** PO's AC-8 caveat assumed the 3 named ids would never be re-selected; the live log refutes that for 2 of 3 — they WERE re-fired on 08-22 and lost the race again. The real blocker is different (queue now fully drained to zero `pek_triggered`), so the caveat's remedy ("substitute currently-live pek_triggered rows") is also unavailable.
+
+---

@@ -123,3 +123,75 @@ Zone health: no drift detected.
 
 ### Status
 REVIEW → next_agent=qa
+
+---
+
+## Cycle 2026-08-23 — FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE
+
+**Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP (BOUNDED-1 auto-pickup) | **Zone:** apps/pdf-extractor/ | **Size:** M | P0
+
+### Defect
+`_extraction_semaphore.acquire(blocking=False)` raised `SemaphoreContendedError`
+the instant the single extraction slot was held. `bctcExtractReconcileJob.ts`
+re-fires its whole `pek_triggered` batch (DEFAULT_BATCH_SIZE=20) per 30-min tick
+with no pacing, and `/pek-extract` returns 202 before the BackgroundTask starts —
+so one tick raced up to 20 detached threads for one slot. The 19 losers raised
+inside the detached task, were swallowed by `pek_run_helper.py`'s bare
+`except Exception`, and were still counted `refired`, burning one of
+MAX_RECONCILE_ATTEMPTS=8 for a run that never happened.
+
+### Fix
+Bounded-blocking acquire — `acquire(blocking=True, timeout=wait)` — reusing the
+shape already shipped at `ocr_gateway.py` `_OCR_SLOTS`/`_acquire_slot_blocking`.
+New `PEK_SEMAPHORE_WAIT_SECONDS` env knob (default 30min = same order as
+`PEK_EXTRACTION_TIMEOUT_SECONDS`) + `wait_s` per-call override for tests.
+Exception class and `try/finally` release unchanged; only the message and the
+trigger condition change, so pathological queue depth still fails loud.
+Also corrected the "contention → HTTP 429" claim in 4 docstrings/comments — it
+was never reachable on the 202/BackgroundTask path and is what sent the first
+investigation down the wrong branch.
+
+### Verify
+Honest-RED first: with the old acquire restored, AC-5/AC-6/AC-7 all fail and
+AC-7 reports *"contended batch LOST 2 of 3 members"* — the defect itself,
+reproduced in a test. After fix: 1062 passed / 0 failed (full non-slow suite,
+also green under 3 randomized orderings). Sandbox G12 gate: 30 scenarios green,
+0 red, 6 negative fixtures correctly red. import-linter 3/3 contracts KEPT.
+mypy strict: 41 errors before AND after (git-show A/B) — zero new.
+
+**AC-8/AC-9 NOT-RUN — structural, not skipped.** Container is 8d old and still
+runs `blocking=False` at :657 with no `PEK_SEMAPHORE_WAIT_SECONDS` in env, and
+`bctc_vps_queue` now holds ZERO `pek_triggered` rows (all 56 `enrich_failed` are
+at reconcile_attempts>=8), so no reconcile batch can fire even after rebuild.
+
+### Learned
+1. **A quiet log is not a fixed system.** The 08-23 window has zero
+   `SemaphoreContendedError` — because the queue drained to zero eligible rows on
+   08-22, not because anything improved. Always check the *traffic* denominator
+   before reading an error count as an improvement. (PO hit this exact false-read
+   on 2026-08-15.)
+2. **PO's AC-8 caveat was half wrong, in the useful direction.** It assumed the 3
+   named ids would never be re-selected. The live log refutes that for 2 of 3 —
+   HUT `dab264ae` was re-fired 2026-08-22T14:38:19Z and BSR `d332bf35` at
+   13:14:03Z, and *both lost to `SemaphoreContendedError` again*. The real blocker
+   is that the queue has since drained completely.
+3. **Direct proof the PDFs are innocent:** KDC 2023-Q4 (`5b94f8c5`) lost the race
+   at 13:34:51Z, then won at 13:39:55Z and produced 50 layout units. Same file,
+   same engine — only the race differed.
+4. **Order-dependent `sys.modules` leak, 2nd occurrence in this zone.** Found and
+   fixed a pre-existing flake (`test_extract_layout_and_tables_raises_on_timeout`,
+   ~40% of seeds): `test_extraction_timeout_reads_from_env` restored `sys.modules`
+   but not the *parent-package attribute*, so afterwards
+   `import infrastructure.pek_engine_adapter as m` (getattr path) and
+   `from ... import X` (sys.modules path) returned **different module objects** —
+   every later monkeypatch via `m` silently mutated a module the adapter never
+   reads. Same defect class as FIX-PDF-EXTRACTOR-TEST-SYS-MODULES-LEAK, different
+   file. Restore BOTH, always.
+
+### Commit
+`3db7a8dc8` fix(pdf-extractor): bound the PEK extraction semaphore wait
+
+Zone health: pytest 1062 pass / 0 fail (was 1062 pass with ~40%-of-seeds flake, now deterministic); sandbox G12 30/30 green; import-linter 3/3 KEPT; mypy strict 41 pre-existing errors in pek_engine_adapter.py (bare `Dict` type-args + unused-ignores) — untouched debt, flagged not fixed. `python -m mypy . --ignore-missing-imports` (the agent-def documented command) is BROKEN repo-wide: fails "pdf-extractor is not a valid Python package name" — pre-existing tooling drift. Flow doc's `sandbox_runner.py --scenario=all` also does not exist (real path `sandbox/runner.py`, one scenario file per invocation). | HEALTHY
+
+### Status
+REVIEW → next_agent=qa (REBUILD_REQUIRED — AC-8/AC-9 blocked on deploy + a live pek_triggered cohort)
