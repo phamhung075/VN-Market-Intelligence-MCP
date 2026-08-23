@@ -393,3 +393,55 @@ structural shape, not the exact numbers, is what to re-check).
   fixed by this task** (different script, different consumer — the `cron-db-data-integrity` sweep, not
   system-auditor) — flagging for PO to consider a follow-up row if that metric's own false-positive risk
   ever fires in practice; out of this task's zone (`docs/agents/system-auditor/flow/`).
+
+---
+
+## [Developer] Implementation Record (2026-08-23 — plan implemented as-designed, no deviations)
+
+- **Files created:**
+  - `scripts/auditor-db-checks.sh` — §3's verbatim design (recency `COALESCE(published_at, parsed_at)`,
+    population `validation_status NOT IN ('pending','pending_extraction')`, rate-with-volume-floor
+    threshold `extracted_total_window>=20 AND lowconf_rate_pct>15`). One deviation from the verbatim §3
+    listing, found live while smoke-testing (not narrated, actually reproduced): both `awk printf "%.2f"`
+    calls needed `LC_NUMERIC=C` — this host's `LC_NUMERIC=fr_FR.UTF-8` default makes `awk` emit a comma
+    decimal separator (`"0,00"`), which is invalid JSON and would have silently broken every downstream
+    JSON consumer of this script's stdout. Fixed in the same file, documented inline.
+  - `scripts/auditor-db-checks.test.sh` — 10 scenarios / 29 assertions: §5's negative-control fixture (T1,
+    20 rows/4 low-conf → WARN), the two companion checks (T2 pending-flood non-dilution, T3 10%-rate →
+    PASS), the volume-floor check (T4, 10 rows 100% low-conf → PASS), a direct replay of §1.2's real
+    2026-07-19/20 89-row/6.74% historical incident (T5 → PASS, proving the exact batch that minted this
+    task is healthy under the new predicate), a D1 recency check (T6, stale `published_at` + fresh
+    `parsed_at` → excluded), the D2/§1.5 `failed`+`0.0` boundary (T7 → counts, not excluded), 2 PROBE
+    FAILURE fail-loud checks (T8/T9, parity with `db-integrity-counts.test.sh`), and a LIVE replay against
+    the real `data/live/market.db` (T10, graceful SKIP if absent).
+- **Files modified:** `docs/agents/system-auditor/flow/main.md` — C-04 table row (§4's diff, verbatim
+  intent: points at `bash scripts/auditor-db-checks.sh` / `.checks.c04.verdict`, no more inline SQL) +
+  the ISO8601-format-safety table's `financial_reports.parsed_at` row (marked moot for this file's inline
+  convention, since C-04 moved out of it) + a new C-04 emit-block mapping paragraph before the EMIT
+  SEQUENCE section (§4's "Emit-block actual/expected mapping" verbatim). `docs/policies/dev-standards.md`
+  — new CANONICAL block under § Script Persistence. `docs/WORK.md` — one-liner summary appended.
+  **Also in the same task, NOT part of this spec (separate router-dispatched defects in the same file,
+  same "timestamp/window doesn't mean what it assumes" family):** C-01/C-02/C-14 `date >= date('now',...)`
+  → `date = date('now',...)` (the open-ended bound spanned every date from the anchor day through today
+  instead of the single intended trading day) + a related weekend-guard Sat/Sun day-offset fix (`-3 day`
+  never resolves to Friday for either day; split into `-1 day` Sat / `-2 day` Sun) + a new invariant note
+  documenting that `daily_ohlcv` same-day coverage (~130) is by design, not a regression, and warning
+  against a same-day-vs-trailing-median alarm on `updated_at`.
+- **Tests written:** `scripts/auditor-db-checks.test.sh` — 29/29 GREEN.
+- **Live verification (not narrated — actually executed against `data/live/market.db` via
+  `docker exec vn-market-intelligence-mcp-mcp-server-1 bun -e ...` / direct host-bind `sqlite3`):**
+  `bash scripts/auditor-db-checks.sh` → `extracted_total_window=1, lowconf_count_window=0, verdict=PASS`
+  (2026-08-23 — below §3's dry-run's own `0`, drift is expected/healthy per §6's post-landing note); C-04
+  all-time baseline (no window) `validation_status NOT IN ('pending','pending_extraction') AND
+  extraction_confidence<0.2` = 10/221 = 4.5%, still comfortably under 15%. C-01/C-02 isolated-operator
+  proof (weekday-shape replay, anchor=2026-08-19): `>=` (spans 2 days) = 1015 codes/1796 rows vs `=`
+  (single day) = 904/904.
+- **tsc status:** N/A — no `apps/` TS/Go touched (shell scripts + docs only).
+- **Full suite:** N/A (shell-only change; `scripts/auditor-db-checks.test.sh` is the relevant regression
+  suite, 29/29 GREEN, run standalone above).
+- **Docs updated:** `docs/agents/system-auditor/flow/main.md`, `docs/policies/dev-standards.md`,
+  `docs/WORK.md` (see Files modified above).
+- **Graphify:** skipped (no Skill-tool binding — structural gap, see `docs/agents/developer/flow/main.md`
+  known-drift note, 2026-08-15).
+- **Board:** `FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE` lane-moved `in_progress[]` → `review[]`,
+  `next_agent: qa`, `.head` reset idle via `scripts/orch-apply.sh`.

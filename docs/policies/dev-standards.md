@@ -1742,6 +1742,27 @@ hardcoded literal.
 
 `/tmp` is allowed ONLY for throwaway run-scoped DATA (payload json, stderr capture, session-id cache) — never for executable logic.
 
+**CANONICAL: system-auditor C-04 DB predicate (FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE)**
+```bash
+bash scripts/auditor-db-checks.sh          # JSON stdout, .checks.c04.verdict = PASS|WARN
+bash scripts/auditor-db-checks.test.sh     # regression suite, 29 assertions
+```
+Extends `scripts/db-integrity-counts.sh`'s host-bind/WAL-guard discipline (own file, `checks.c04`
+key, room for future Tier-2/3 predicates per UC-ASL-P3). Replaces the old inline-SQL C-04 row in
+`docs/agents/system-auditor/flow/main.md` (`datetime(parsed_at) > datetime('now','-7 days') AND
+extraction_confidence < 0.2`, absolute `≤5` threshold) with `COALESCE(published_at, parsed_at)`
+recency (`published_at` is immutable — frozen at first insert, excluded from the reparse
+`ON CONFLICT DO UPDATE` clause — `parsed_at` is a mutation timestamp re-stamped on every reparse)
++ `validation_status NOT IN ('pending','pending_extraction')` population filter (excludes
+never-extracted shell rows without excluding genuine zero-confidence extraction failures) + a
+RATE-with-volume-floor threshold (`extracted_total_window >= 20 AND lowconf_rate_pct > 15` → WARN)
+replacing the absolute count, which could not stay sensitive on small batches while staying silent
+on large healthy ones. Full derivation: `docs/handoffs/FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE-spec.md`.
+Owning flow doc pointer: `docs/agents/system-auditor/flow/main.md` Tier-3 DB Write Integrity Checks
+table, C-04 row. Locale note: both `awk printf "%.2f"` calls MUST use `LC_NUMERIC=C` — this host's
+`fr_FR.UTF-8` default emits a comma decimal separator (`"0,00"`), which is invalid JSON; caught live
+while implementing this fix, fixed in the same commit.
+
 **Maintenance (user directive 2026-06-07):** agents MAY update/upgrade an existing `scripts/` script to work better or optimize (fix bugs, harden, speed up, extend) — improving the shared script beats writing a parallel one-off. Rules: (1) if the script implements a flow spec, edit the spec first, then the script — they MUST stay in sync; (2) smoke-test after the change (clean no-op run at minimum); (3) keep the usage contract (CLI args/env/stdout) backward-compatible or update every caller + flow pointer in the same commit; (4) commit under commit-mutex.
 
 ## Code Search — Preferred Tools
