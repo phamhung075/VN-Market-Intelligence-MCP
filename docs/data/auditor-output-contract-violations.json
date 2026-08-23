@@ -142,5 +142,209 @@
     "cycle_tag": "cron:auditor-t1:2026-08-12T17:30Z",
     "from": "system-auditor",
     "detail": "V4 RETURN headline anomalies=0 but signals_posted=2"
+  },
+  {
+    "ts": "2026-08-14T01:47:00Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-14T01:30Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=mem_creep dimension=A-30 trigger_verdict=FAILURE declared=<none>"
+  },
+  {
+    "ts": "2026-08-14T02:35:52Z",
+    "cycle_tag": "cron:auditor-t2:2026-08-14T00:00Z",
+    "from": "system-auditor",
+    "detail": "V1 signal_queue_rows_written mismatch narrated=1 independent=0"
+  },
+  {
+    "ts": "2026-08-14T02:48:53Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-14T02:30Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=mem_creep dimension=A-30 trigger_verdict=FAILURE declared=<none>"
+  },
+  {
+    "ts": "2026-08-14T03:20:36Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-14T03:00Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=mem_creep dimension=A-30 trigger_verdict=FAILURE declared=PASS"
+  },
+  {
+    "ts": "2026-08-14T04:18:13Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-14T04:00Z",
+    "from": "system-auditor",
+    "detail": "V3 signals emitted but no dashboard rows written (signals_posted=1)"
+  },
+  {
+    "ts": "2026-08-22T18:32:38Z",
+    "cycle_tag": "cron:auditor-t2:2026-08-22T16:00Z",
+    "from": "system-auditor",
+    "detail": "V3 signals emitted but no dashboard rows written (signals_posted=4)"
+  },
+  {
+    "ts": "2026-08-22T22:31:46Z",
+    "cycle_tag": "cron:auditor-t2:2026-08-22T20:00Z",
+    "from": "system-auditor",
+    "detail": "V3 signals emitted but no dashboard rows written (signals_posted=1)"
+  },
+  {
+    "ts": "2026-08-22T22:39:48Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-22T22:30Z",
+    "from": "system-auditor",
+    "detail": "V3 signals emitted but no dashboard rows written (signals_posted=1)"
+  },
+  {
+    "ts": "2026-08-22T23:11:30Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-22T23:00Z",
+    "from": "system-auditor",
+    "detail": "V1 signal_queue_rows_written mismatch narrated=1 independent=2"
+  },
+  {
+    "ts": "2026-08-22T23:11:30Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-22T23:00Z",
+    "from": "system-auditor",
+    "detail": "V3 signals emitted but no dashboard rows written (signals_posted=1)"
+  },
+  {
+    "ts": "2026-08-22T23:11:30Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-22T23:00Z",
+    "from": "system-auditor",
+    "detail": "V4 RETURN headline anomalies=0 but signals_posted=1"
+  },
+  {
+    "ts": "2026-08-22T23:11:30Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-22T23:00Z",
+    "from": "system-auditor",
+    "detail": "V5 RETURN NEXT=clean but signals_posted=1"
+  },
+  {
+    "ts": "2026-08-23T07:56:24Z",
+    "cycle_tag": "cron:auditor-t2:2026-08-23T04:00Z",
+    "from": "system-auditor",
+    "detail": "V1 signal_queue_rows_written mismatch narrated=4 independent=2"
+  },
+  {
+    "ts": "2026-08-23T07:56:25Z",
+    "cycle_tag": "cron:auditor-t2:2026-08-23T04:00Z",
+    "from": "system-auditor",
+    "detail": "V3 signals emitted but no dashboard rows written (signals_posted=4)"
+  },
+  {
+    "ts": "2026-08-23T07:57:08Z",
+    "cycle_tag": "cron:auditor-t2:2026-08-23T04:00Z",
+    "from": "system-auditor",
+    "detail": "V1 signal_queue_rows_written mismatch narrated=4 independent=2"
+  },
+  {
+    "ts": "2026-08-23T14:13:36Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-23T14:07Z",
+    "from": "system-auditor",
+    "detail": "V3 signals emitted but no dashboard rows written (signals_posted=3)"
+  },
+  {
+    "ts": "2026-08-23T14:43:08Z",
+    "cycle_tag": "cron:auditor-t2:2026-08-23T12:00Z",
+    "from": "system-auditor",
+    "detail": "V3 signals emitted but no dashboard rows written (signals_posted=6)"
+  },
+  {
+    "ts": "2026-08-23T14:43:12Z",
+    "cycle_tag": "cron:auditor-t2:2026-08-23T12:00Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=launchd_agents dimension=D-LAUNCHD trigger_verdict=FAILURE declared=<none>"
+  },
+  {
+    "ts": "2026-08-23T14:43:37Z",
+    "cycle_tag": "cron:auditor-t2:2026-08-23T12:00Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=launchd_agents dimension=D-LAUNCHD trigger_verdict=FAILURE declared=<none>"
+  },
+  {
+    "ts": "2026-08-23T14:43:55Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-23T14:30Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=launchd_agents dimension=D-LAUNCHD trigger_verdict=FAILURE declared=<none>"
+  },
+  {
+    "ts": "2026-08-23T21:07:43Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-23T21:00Z",
+    "from": "system-auditor",
+    "detail": "V8 durability-sweep marker missing (scripts/auditor-durability-sweep.sh never invoked this cycle)"
+  },
+  {
+    "ts": "2026-08-23T21:37:37Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-23T21:30Z",
+    "from": "system-auditor",
+    "detail": "V3 signals emitted but no dashboard rows written (signals_posted=2)"
+  },
+  {
+    "ts": "2026-08-23T21:37:38Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-23T21:30Z",
+    "from": "system-auditor",
+    "detail": "V5 RETURN NEXT=clean but signals_posted=2"
+  },
+  {
+    "ts": "2026-08-23T21:37:38Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-23T21:30Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=launchd_agents dimension=D-LAUNCHD trigger_verdict=FAILURE declared=<none>"
+  },
+  {
+    "ts": "2026-08-23T21:37:51Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-23T21:30Z",
+    "from": "system-auditor",
+    "detail": "V1 signal_queue_rows_written mismatch narrated=0 independent=2"
+  },
+  {
+    "ts": "2026-08-23T21:37:51Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-23T21:30Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=launchd_agents dimension=D-LAUNCHD trigger_verdict=FAILURE declared=<none>"
+  },
+  {
+    "ts": "2026-08-23T21:38:32Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-23T21:30Z",
+    "from": "system-auditor",
+    "detail": "V1 signal_queue_rows_written mismatch narrated=0 independent=2"
+  },
+  {
+    "ts": "2026-08-23T21:38:33Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-23T21:30Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=launchd_agents dimension=D-LAUNCHD trigger_verdict=FAILURE declared=<none>"
+  },
+  {
+    "ts": "2026-08-23T21:38:39Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-23T21:30Z",
+    "from": "system-auditor",
+    "detail": "V1 signal_queue_rows_written mismatch narrated=0 independent=2"
+  },
+  {
+    "ts": "2026-08-23T21:38:40Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-23T21:30Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=launchd_agents dimension=D-LAUNCHD trigger_verdict=FAILURE declared=<none>"
+  },
+  {
+    "ts": "2026-08-23T21:38:46Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-23T21:30Z",
+    "from": "system-auditor",
+    "detail": "V1 signal_queue_rows_written mismatch narrated=0 independent=2"
+  },
+  {
+    "ts": "2026-08-23T21:38:47Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-23T21:30Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=launchd_agents dimension=D-LAUNCHD trigger_verdict=FAILURE declared=<none>"
+  },
+  {
+    "ts": "2026-08-23T21:39:11Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-23T21:30Z",
+    "from": "system-auditor",
+    "detail": "V1 signal_queue_rows_written mismatch narrated=0 independent=2"
+  },
+  {
+    "ts": "2026-08-23T21:39:11Z",
+    "cycle_tag": "cron:auditor-t1:2026-08-23T21:30Z",
+    "from": "system-auditor",
+    "detail": "V7 DIVERGENCE trigger_check=launchd_agents dimension=D-LAUNCHD trigger_verdict=FAILURE declared=<none>"
   }
 ]

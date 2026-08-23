@@ -629,6 +629,34 @@
         "severity": "HIGH",
         "status": "READ",
         "payload_ref": "docs/handoffs/tnb-audit-latest.md"
+      },
+      {
+        "id": "sys-20260823T213727-1b29",
+        "ts": "2026-08-23T21:37:27Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "launchd_tracking_gap",
+        "summary": "A-32: fleet-push STALE-ACK",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-23T21:30Z",
+        "dedup_key": "launchd_agent_stale_ack:fleet-push:A-32"
+      },
+      {
+        "id": "sys-20260823T213728-21ce",
+        "ts": "2026-08-23T21:37:28Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "launchd_tracking_gap",
+        "summary": "A-32: docker-events acknowledged-degraded",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t1:2026-08-23T21:30Z",
+        "dedup_key": "launchd_agent_stale_ack:docker-events:A-32"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
