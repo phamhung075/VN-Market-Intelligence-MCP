@@ -743,7 +743,7 @@
         "to": "po",
         "type": "system-issue",
         "severity": "HIGH",
-        "status": "new",
+        "status": "triaged",
         "payload_ref": null,
         "dedup_key": "system-issue:sizelint-prepush-scans-worktree-not-pushrange",
         "summary": "size-lint pre-push gate scans the WORKING TREE, so a live peer's UNCOMMITTED edit blocks every agent's push. Reproduced deterministically twice at 2026-08-23T16:1xZ: apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts baseline=475L actual=582L upper=522L, uncommitted (git status ' M'), owned by the in-flight developer watchlist write-through work. Same shape 20min earlier on the untracked apps/mcp-server/src/infrastructure/db/systemMapWatchlistWriter.ts (202L, new-offender). Neither is in any commit, so no commit is actually red -- the push range is clean. agent-father cannot fix either (apps/ is explicitly excluded from its commit_zone), so a doc-only memory commit is stranded local-only behind another agent's mid-edit buffer. Third distinct pre-push gate to strand the fleet today, after task-claim-lint LINE-MOVED (fixed, 83ab26dc) and this one twice. REQUEST: scope the gate to the push range (git diff --name-only @{u}..HEAD) or to committed content, not `git ls-files --cached --others`.",
@@ -755,6 +755,24 @@
           "gate": "scripts/audits/size-lint-justification.sh --check via pre-push",
           "blocked_commit": "9b77424e6 (agent-father notebook+journal, doc-only)",
           "zone_note": "apps/ is excluded by docs/agents/agent-father/init.md commit_zone.excluded"
+        },
+        "routed_to": "FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE"
+      },
+      {
+        "id": "po-decision-bug5468-2026-08-23T15:27:38Z",
+        "ts": "2026-08-23T15:27:38Z",
+        "from": "po",
+        "to": "ops",
+        "type": "system-issue",
+        "severity": "INFO",
+        "status": "new",
+        "payload_ref": null,
+        "dedup_key": "po-decision:bug5468:pdfx-reconcile-pause",
+        "summary": "PO DECISION on BUG 5468 pause question: do NOT pause bctcPdfPullJob/bctcExtractReconcileJob. No safe fast toggle exists (no env-gate found; a code change would need a rebuild racing the same clock as the actual fix). Reverting the 21-row requeue is already correctly vetoed by ops (destroys P0 evidence, re-sticks cohort). dev-pdf-extractor is already dispatched at the real root cause (restart loop / ocr_gateway inflight bookkeeping, tracked FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH). Accepted risk: some of the 21 rows may burn reconcile_attempts toward the cap-8 terminal-fail while the fix lands. MITIGATION for whoever monitors this: if any row in the cohort approaches reconcile_attempts>=6-7 before the restart-loop fix lands, apply a targeted reconcile_attempts reset (same safe idempotent UPDATE pattern already used for the url_not_found->pending reset) rather than let it terminalise to enrich_failed -- cheaper and faster than pausing the scheduler, and does not require a redeploy. qa correctly continues withholding certification on FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE until real extraction output lands, independent of this decision.",
+        "payload": {
+          "related_row": "FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE",
+          "related_incident": "docs/incidents/ops-20260823-pdfx-rebuild-and-a30-refutation.md",
+          "commit": "23486b9cb"
         }
       }
     ],
@@ -13525,21 +13543,20 @@
         "type": "FIX",
         "size": "S",
         "priority": "P1",
-        "status": "BLOCKED",
+        "status": "BACKLOG",
         "zone": "cross-service/",
         "owner": "developer",
         "next_agent": "developer",
         "sprint": "COWORK-RELIABILITY",
-        "blocked_by": [
-          "FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR"
-        ],
+        "blocked_by": [],
         "created_at": "2026-08-23T14:10:00Z",
         "created_by": "po/qa-drain-disposition-20260823T1410Z",
-        "updated_at": "2026-08-23T14:10:30Z",
+        "updated_at": "2026-08-23T15:27:20Z",
         "updated_by": "po/qa-drain-disposition-20260823T1410Z",
         "baseline_pass": true,
         "title": "Regression verifier + fixtures for qa's vc-approved / vc-changes orch-apply actuators (AC-4 + AC-5 of FIX-QA-VC-LANEMOVE-*, orphaned because scripts/ is outside agent-father's commit_zone)",
-        "note": "MINTED by po 2026-08-23T14:10Z. This is AC-4 (regression verifier) + AC-5 (fixtures) of FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR. agents-architect explicitly carved them out of that row because docs/agents/agent-father/init.md excludes scripts/ from agent-father's commit_zone - the same split agent-father already made on the FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR precedent (commit 3ce726a6e). Without an owning row that half evaporates, exactly as the AC#2 half of RAG-FTS-BUILD-MEMORY-BOUND did.\n\nTHE ARGUMENT FOR BUILDING IT, which is stronger than 'more test coverage': qa found TWO blockers in the actuator patch during pre-ship review. A fixture that feeds the actuator's own output to scripts/orch-validate.mjs and asserts exit 0 would have caught BOTH before ship. That is not a hypothetical - it is a measured hit rate of 2/2 on the one change this guard would have covered.\n\nSCOPE: the two verdict paths at docs/agents/qa/flow/main.md :189 (vc-approved, qa[] -> done_verified[]) and :198 (vc-changes, qa[] -> review[] + redispatch_count += 1 + route to row owner).\n\nACCEPTANCE:\n  1. Fixtures: a minimal orch-state document per verdict path, small enough to read in one screen, committed under scripts/ (or scripts/fixtures/) - NOT /tmp.\n  2. The verifier applies each actuator's jq to its fixture and asserts the RESULT passes scripts/orch-validate.mjs (exit 0). That single assertion is what would have caught both of qa's blockers.\n  3. Assert the actual state transition, not just validity: vc-approved must land the row in done_verified[] and remove it from qa[]; vc-changes must land it in review[] with redispatch_count incremented by exactly 1 and next_agent set to the row's owner.\n  4. NEGATIVE CONTROL, mandatory: deliberately break one actuator (e.g. drop the qa[] removal so the row exists in two lanes) and demonstrate the verifier goes RED. A verifier never observed failing is not evidence of anything - see feedback_janitor_false_green_verify.\n  5. Opt-IN scope only. Do NOT wire this as a fleet-wide gate off one validated file (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist).\n  6. Register the script in its owning flow doc per docs/policies/dev-standards.md § Script Persistence.\n\nBLOCKED ON: FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR - the actuator has to exist before a fixture can assert on its output. agent-father is landing it now (review[], next_agent=agent-father).\n\nKNOWN INTERACTION, flag not scope: the vc-changes qa[] -> review[] move targets a PROSE_CEILING_LANES-guarded lane from an unguarded one, so any over-ceiling qa row can hard-reject on that specific transition until FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS (D3, ready[]) ships. A fixture SHOULD cover this case, but do not re-design D3 here."
+        "note": "MINTED by po 2026-08-23T14:10Z. This is AC-4 (regression verifier) + AC-5 (fixtures) of FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR. agents-architect explicitly carved them out of that row because docs/agents/agent-father/init.md excludes scripts/ from agent-father's commit_zone - the same split agent-father already made on the FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR precedent (commit 3ce726a6e). Without an owning row that half evaporates, exactly as the AC#2 half of RAG-FTS-BUILD-MEMORY-BOUND did.\n\nTHE ARGUMENT FOR BUILDING IT, which is stronger than 'more test coverage': qa found TWO blockers in the actuator patch during pre-ship review. A fixture that feeds the actuator's own output to scripts/orch-validate.mjs and asserts exit 0 would have caught BOTH before ship. That is not a hypothetical - it is a measured hit rate of 2/2 on the one change this guard would have covered.\n\nSCOPE: the two verdict paths at docs/agents/qa/flow/main.md :189 (vc-approved, qa[] -> done_verified[]) and :198 (vc-changes, qa[] -> review[] + redispatch_count += 1 + route to row owner).\n\nACCEPTANCE:\n  1. Fixtures: a minimal orch-state document per verdict path, small enough to read in one screen, committed under scripts/ (or scripts/fixtures/) - NOT /tmp.\n  2. The verifier applies each actuator's jq to its fixture and asserts the RESULT passes scripts/orch-validate.mjs (exit 0). That single assertion is what would have caught both of qa's blockers.\n  3. Assert the actual state transition, not just validity: vc-approved must land the row in done_verified[] and remove it from qa[]; vc-changes must land it in review[] with redispatch_count incremented by exactly 1 and next_agent set to the row's owner.\n  4. NEGATIVE CONTROL, mandatory: deliberately break one actuator (e.g. drop the qa[] removal so the row exists in two lanes) and demonstrate the verifier goes RED. A verifier never observed failing is not evidence of anything - see feedback_janitor_false_green_verify.\n  5. Opt-IN scope only. Do NOT wire this as a fleet-wide gate off one validated file (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist).\n  6. Register the script in its owning flow doc per docs/policies/dev-standards.md § Script Persistence.\n\nBLOCKED ON: FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR - the actuator has to exist before a fixture can assert on its output. agent-father is landing it now (review[], next_agent=agent-father).\n\nKNOWN INTERACTION, flag not scope: the vc-changes qa[] -> review[] move targets a PROSE_CEILING_LANES-guarded lane from an unguarded one, so any over-ceiling qa row can hard-reject on that specific transition until FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS (D3, ready[]) ships. A fixture SHOULD cover this case, but do not re-design D3 here.",
+        "po_unblock_note_20260823": "[po 2026-08-23T15:27:19Z] Unblocked -- parent FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR confirmed DONE_VERIFIED live. status BLOCKED->BACKLOG, blocked_by cleared."
       },
       {
         "id": "FEAT-COWORK-WRITE-LAST-FIRED-DESTAMP-MODE",
@@ -13889,6 +13906,202 @@
         "created_by": "po (triage 2026-08-23, from developer finding D2, router-verified)",
         "created_at": "2026-08-23T15:04:02Z",
         "updated_at": "2026-08-23T15:17:57Z"
+      },
+      {
+        "id": "TASK-COWORK-PMSET-WAKE-ADJUNCT",
+        "title": "Ops adjunct: pmset repeat wakeorpoweron at the SINGLE EARLIEST guaranteed slot (05:15, wake 05:10) -- NOT a union of all 8 slots, AC re-scoped 2026-08-23 (pmset repeat supports exactly one event)",
+        "owner": "ops",
+        "next_agent": "ops",
+        "status": "BLOCKED",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P3",
+        "zone": "infra",
+        "depends_on": [],
+        "files": [],
+        "parent": "FIX-COWORK-DAILY-SLOT-SILENT-SKIP-NO-CATCHUP-CATCHUPRAW-SCOPED-TO-GUARANTEED-ONLY",
+        "note": "Cheap, reversible, PARTIAL - does not survive lid-closed-in-a-bag or power-off. Adjunct to TASK-COWORK-MISSED-FIRE-AUDIT, never a substitute; that detector is what notices this mitigation having failed (R4: pmset is host state invisible to the repo). Record the applied command + pmset -g sched output in the RETURN and the ops notebook. Do NOT reopen the VPS option (2026-07-07 brief S3 rejection still holds).",
+        "created_at": "2026-08-23T09:47:24Z",
+        "created_by": "pm",
+        "handoff": "docs/handoffs/TASK-COWORK-PMSET-WAKE-ADJUNCT.md",
+        "updated_at": "2026-08-23T15:25:34Z",
+        "verify_note": "[ops 2026-08-23T14:58Z] BLOCKED ON ROOT CREDENTIALS — NOT APPLIED. (Lane status left TODO because the validator only permits READY|TODO in ready[]; the real state is blocked, described here.)\nAC-1 DONE (schedule derived from data, not guessed). Union of the 8 guaranteed:true slots in docs/data/cowork-schedule.json, read via jq, verbatim cron -> local clock:\n  05:15 Mon-Fri (chef-morning) | 08:45 Mon-Fri (chef-eod) | 09:15 Mon-Fri (fb-daily) | 13:13 Sat+Sun (fb-weekend) | 13:47 Sun (digest-sunday) | 17:30 DAILY (digest-daily) | 19:45 DAILY (chef-evening) | 20:13 DAILY (tnb-audit)\n  Union spans 05:15 -> 20:13; because 3 slots are daily the day-set must be all 7 = MTWRFSU.\nAC-2 BLOCKED (structural, not a skill gap): pmset repeat requires root and this host has NO passwordless sudo — `sudo -n true` returns \"sudo: a password is required\". An agent shell cannot supply it. Nothing in the ops tool grant can apply this; it needs a human at the keyboard or an authorised sudoers entry.\nEXACT COMMAND TO RUN (derived, ready to paste):\n  sudo pmset repeat wakeorpoweron MTWRFSU 05:10:00\nAC-3 REVERT COMMAND: sudo pmset repeat cancel\nAC-2 VERIFY AFTER APPLYING: pmset -g sched   (must list a \"Repeating power events\" wake line; it is EMPTY right now — captured as the pre-state baseline at 2026-08-23T14:05Z, output was zero lines).\n*** AC-1 vs AC-2 DESIGN CONFLICT FOUND — the task as written cannot be fully satisfied, flagging instead of quietly shipping a partial. *** `pmset repeat` accepts exactly ONE repeating wake event (one time + one day-set). It therefore CANNOT cover a union of 8 distinct times; AC-1 asks for the union, AC-2 asks for a single repeat entry. 05:10:00 is the defensible choice (5 min before the EARLIEST slot 05:15) but it only guarantees wakefulness for that first slot. Measured host state makes the residual gap concrete: pmset -g custom shows standby=1 with standbydelaylow=10800 (3h) and standbydelayhigh=86400, so the host can re-enter standby between 05:15 and the 20:13 slot and miss everything after the first. Options for whoever picks this up: (i) accept single-wake-at-earliest as a partial (cheapest, current recommendation); (ii) a launchd-owned re-arm that rewrites the single pmset repeat forward to the next slot after each fire; (iii) caffeinate/assertion held across 05:15-20:13. (ii) and (iii) are design calls above ops pay grade -> route to architect if partial is not acceptable.\nSECOND FINDING — TIMEZONE UNVERIFIED: every guaranteed slot in cowork-schedule.json carries NO tz/timezone field (all UNSPECIFIED). Host is CEST (UTC+2) and pmset schedules in LOCAL time, so the numbers above are only correct if the dispatcher also interprets them as local. If the dispatcher treats them as UTC the wake lands 2h off and the mitigation silently does nothing. Confirm the dispatcher TZ basis BEFORE applying — this is cheap to check and expensive to get wrong.\nAC-5 HONEST SCOPING (restated): partial mitigation only — does not survive lid-closed-in-a-bag or full power-off, and is an ADJUNCT to TASK-COWORK-MISSED-FIRE-AUDIT, never a substitute; that detector is what notices this mitigation having failed.\nAC-4 VISIBILITY: pre-state (pmset -g sched empty) recorded here and in the ops notebook. Once applied, the applied command + pmset -g sched output must be pasted back here — host state is invisible to the repo, exactly the R4 risk.\nROUTING: do NOT re-dispatch to ops expecting a different outcome — the blocker is the sudo grant and it reproduces every time. Needs a user/root action, or an architect ruling on the AC-1/AC-2 conflict above.",
+        "updated_by": "ops",
+        "blocked_reason": "TWO independent blockers, both confirmed by ops execution, neither closeable by any agent: (1) host has no passwordless sudo -- sudo -n true requires a password, so applying 'sudo pmset repeat wakeorpoweron MTWRFSU 05:10:00' needs a human at the keyboard or a sudoers NOPASSWD grant (a security-sensitive host action, correctly outside PO deploy-autonomy scope -- that autonomy covers docker rebuild/redeploy, not root credential grants). (2) AC-1 ('union of the 8 guaranteed slots') and AC-2 (pmset repeat accepts exactly ONE event) were mutually unsatisfiable as originally written.",
+        "po_spec_decision_20260823": "[po 2026-08-23T15:25:32Z] AC-1/AC-2 conflict resolved per ops's own recommended option (i), the cheapest: SINGLE wake at the earliest slot (05:10, 5min before 05:15 chef-morning), covering only that first slot. Consistent with the task's own pre-existing framing (note: 'Cheap, reversible, PARTIAL... ADJUNCT to TASK-COWORK-MISSED-FIRE-AUDIT, never a substitute') -- it was already scoped as partial, the title just overclaimed union-of-8 coverage. Options (ii) launchd-owned re-arm-forward-after-each-fire and (iii) caffeinate-held-assertion 05:15-20:13 are real alternatives for FULL coverage but are net-new design work (architect-scoped), not this adjunct -- NOT pursued now; if the missed-fire audit (its real detector) shows the partial-coverage gap actually costing missed slots in practice, promote a new SPRINT for (ii)/(iii) then, evidence-first. TIMEZONE: host is CEST/UTC+2, cowork-schedule.json slot times carry no tz field -- MUST be confirmed local-time-equivalent before the human applies the command (cheap check, ops flagged, still open). Moved ready[]->backlog[] (BLOCKED is not a LANE_ALLOWED_STATUSES member of ready[]) to make the true blocked state legible on the board instead of the misleading TODO the lane forced."
+      },
+      {
+        "id": "FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "S",
+        "zone": "apps/pdf-extractor/",
+        "next_agent": "dev-pdf-extractor",
+        "owner": "dev-pdf-extractor",
+        "title": "ocr_gateway self-declares a bookkeeping bug 59 times since the PEK-semaphore rebuild: inflight semaphore=1 != os_children=0 -- prime suspect for the pdf-extractor memory-driven silent-restart loop (BUG 5466/5468)",
+        "desc": "ops measured live 2026-08-23: log line 'ocr_gateway.inflight: semaphore=1 != os_children=0 -- bookkeeping disagrees with OS ground truth (this mismatch is, by definition, a bug)' fired 59 times post-rebuild; 90/199 /extract posts got 429. This is the leading suspect for the two silent ExitCode=0/OOMKilled=false exits (14:27:10Z, 14:58:52Z) that killed in-flight PEK extractions and left 21 reconcile-queue rows unable to produce output despite the semaphore-contention fix (FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE) working correctly on its own terms. dev-pdf-extractor is already investigating this as part of its restart-loop dispatch -- this row is a tracking mint only, do NOT dispatch a second agent at it.",
+        "generic_mandate": "Fix ocr_gateway.py's inflight accounting so the semaphore counter and the real OS child-process count (/proc-derived) never diverge; root-cause WHY they diverge (leaked acquire without matching release on an unusual exit path is the leading hypothesis, not yet confirmed).",
+        "ac": "AC-1 the self-declared bookkeeping-mismatch log line no longer fires under the same load pattern that produced it 59 times. AC-2 confirm/refute the causal link to the memory-pinning restart loop with a live measurement, not inference.",
+        "files": [
+          "apps/pdf-extractor/infrastructure/ocr_gateway.py"
+        ],
+        "not_duplicate_of": "Checked live 2026-08-23 -- no existing row for OCR-GATEWAY-INFLIGHT/bookkeeping. Distinct from FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE (that row's fix is proven correct and unrelated to this counter).",
+        "created_by": "po (triage 2026-08-23, ops finding, router item 3)",
+        "created_at": "2026-08-23T15:20:00Z",
+        "updated_at": "2026-08-23T15:27:20Z"
+      },
+      {
+        "id": "FIX-PDFX-DOCKERFILE-DEPLOY-SHA-LABEL-KEY-MISMATCH",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "XS",
+        "zone": "apps/pdf-extractor/",
+        "next_agent": "dev-pdf-extractor",
+        "owner": "dev-pdf-extractor",
+        "title": "scripts/verify-deploy-sha.sh pdf-extractor can never pass: apps/pdf-extractor/Dockerfile:19 emits LABEL git_sha= but the gate reads vn.market.git_sha -- sole outlier vs all 10 sibling Dockerfiles",
+        "desc": "Router-verified 2026-08-23: every other service's Dockerfile uses LABEL vn.market.git_sha=, matching what scripts/verify-deploy-sha.sh reads; pdf-extractor alone uses a bare git_sha= key, so every deploy-sha verification for this service has been silently unverifiable (always reports 'label absent, rebuild required' even on a correctly deployed image -- ops had to fall back to manual image-ID + runtime introspection to prove the 2026-08-23 rebuild landed). One-line Dockerfile key rename fixes it; no scripts/ change needed.",
+        "generic_mandate": "Rename the LABEL key in apps/pdf-extractor/Dockerfile:19 from git_sha= to vn.market.git_sha=, matching the 10 sibling services exactly.",
+        "ac": "AC-1 scripts/verify-deploy-sha.sh pdf-extractor passes on the next real rebuild without a manual introspection fallback.",
+        "files": [
+          "apps/pdf-extractor/Dockerfile"
+        ],
+        "not_duplicate_of": "Checked live 2026-08-23 -- no existing row for DEPLOY-SHA/git_sha label mismatch.",
+        "created_by": "po (triage 2026-08-23, router-verified item 3)",
+        "created_at": "2026-08-23T15:20:00Z",
+        "updated_at": "2026-08-23T15:27:20Z"
+      },
+      {
+        "id": "FIX-BCTCPDFPULLJOB-DONE-STATUS-NOT-GATED-ON-TABLE-EXTRACTION-LEG",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "owner": "dev-mcp-server",
+        "title": "Two live false-DONE anomalies (GAS, GVR) both terminalised off-cadence at :40:3x, not a :05/:35 reconcile minute -- ops hypothesis: bctcPdfPullJob marks queue rows done on the scalar /extract leg without awaiting the async table-extraction leg",
+        "desc": "ops measured live 2026-08-23 (docs/incidents, migration reset-bctc-enricher-stuck-backlog-2026-04.ts verify_note): GAS queue row 255878 status=done, attempts=2, source_url resolved -- yet financial_reports has ZERO rows for GAS 2025 (ensureFinancialReportShellRow did not fire). GVR row b1cd4d07 status=done, FR row present with text_status=COMPLETE -- yet net_revenue=0/total_assets=0/bctc_layout_units=0/bctc_table_rows=0/bctc_md_tables=0, i.e. done with zero extracted content. Both terminalised at 14:40:3x/4x, off the job's own :05/:35 reconcile cadence, meaning bctcPdfPullJob itself (not bctcExtractReconcileJob) wrote the done status, on the scalar/pull leg succeeding while the async table-extraction leg produced nothing.",
+        "generic_mandate": "bctcPdfPullJob must not mark a bctc_vps_queue row done until BOTH the scalar/pull leg AND the async table-extraction leg have genuinely produced content (or an honest terminal failure on the table leg), not just the scalar leg succeeding.",
+        "ac": "AC-1 root-cause confirm (or refute) ops's off-cadence-timestamp hypothesis by reading the actual bctcPdfPullJob code path for the done-status write. AC-2 a done queue row must always correspond to non-zero table_rows/layout_units OR an explicit honest-failure marker on the table leg -- never silent done-with-nothing. AC-3 regression test reproducing the GAS/GVR shape.",
+        "files": [
+          "apps/mcp-server/src/scheduler/financial-reports/bctcPdfPullJob.ts"
+        ],
+        "not_duplicate_of": "Checked live 2026-08-23 -- no existing row for this scalar-leg/table-leg await gap. Distinct from FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE (that is the extraction-service-side contention fix; this is the queue-lifecycle-side done-status gating).",
+        "created_by": "po (triage 2026-08-23, ops finding, router item 4)",
+        "created_at": "2026-08-23T15:20:00Z",
+        "updated_at": "2026-08-23T15:27:20Z"
+      },
+      {
+        "id": "FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "developer",
+        "title": "size-lint pre-push gate scans the working tree (git ls-files --cached --others), so a live peer's uncommitted mid-edit blocks every other agent's push -- 3rd distinct pre-push-gate fleet-strand today",
+        "desc": "agent-father measured live 2026-08-23 (signal sizelint-worktree-block-20260823T150720Z, dedup_key system-issue:sizelint-prepush-scans-worktree-not-pushrange): apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts (baseline=475L actual=582L upper=522L) was UNCOMMITTED (owned by an in-flight developer watchlist write-through task) and reds size-lint for every agent's push, including a doc-only agent-father commit (9b77424e6, apps/ explicitly outside its commit_zone so it cannot fix the offender itself). Same shape 20min earlier on an untracked new file. Neither offender is in any commit -- the actual push range is clean; the gate is measuring the wrong thing.",
+        "generic_mandate": "Scope the pre-push size-lint gate to the actual push range (git diff --name-only @{u}..HEAD, or equivalent committed-content diff) instead of the full working tree (git ls-files --cached --others) so an unrelated peer's uncommitted mid-edit cannot strand other agents' pushes.",
+        "ac": "AC-1 a fixture reproducing today's exact shape (an oversized file staged/modified but NOT in the commit being pushed) must PASS the gate after the fix. AC-2 a genuinely oversized file THAT IS in the push range must still FAIL (no loss of real coverage).",
+        "files": [
+          "scripts/audits/size-lint-justification.sh"
+        ],
+        "not_duplicate_of": "Checked live 2026-08-23 -- distinct from the two other pre-push-gate strands today (task-claim-lint LINE-MOVED, already fixed 83ab26dc; and this exact class occurring twice). No existing row for the worktree-vs-push-range scoping defect.",
+        "created_by": "po (triage 2026-08-23, from agent-father signal sizelint-worktree-block-20260823T150720Z, router item 6)",
+        "created_at": "2026-08-23T15:20:00Z",
+        "updated_at": "2026-08-23T15:27:20Z"
+      },
+      {
+        "id": "FIX-TASKCLAIMLINT-BASELINE-REKEY-FILE-PLUS-SNIPPET",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "developer",
+        "title": "task-claim-lint grandfathered-baseline key needs re-keying on file+snippet, not file alone -- 17 remaining grandfathered sites will recur on the next edit above any of them",
+        "desc": "agent-father AC-2 finding (out of its commit_zone, needs a scripts/+docs/data/ row): the task-claim-lint baseline currently keys grandfathered exceptions by file path alone, so any edit above a grandfathered site (even unrelated) re-triggers a false-positive lint failure -- exactly the LINE-MOVED class already fixed once today (83ab26dc) for one instance, with 17 more sites carrying the same latent risk.",
+        "generic_mandate": "Re-key the grandfather baseline entries on (file, snippet-or-content-hash) instead of file path alone, so the baseline tracks the actual flagged content regardless of its line offset.",
+        "ac": "AC-1 all 17 remaining grandfathered sites migrated to the new key shape. AC-2 regression test: inserting unrelated lines above a grandfathered site must NOT re-trigger a false lint failure.",
+        "files": [
+          "docs/data/task-claim-lint-baseline.json"
+        ],
+        "reference_only_files": [
+          "scripts/audits/task-claim-lint.sh"
+        ],
+        "not_duplicate_of": "Checked live 2026-08-23 -- no existing row for TASK-CLAIM-LINT baseline rekey.",
+        "created_by": "po (triage 2026-08-23, from agent-father, router item 7)",
+        "created_at": "2026-08-23T15:20:00Z",
+        "updated_at": "2026-08-23T15:27:20Z"
+      },
+      {
+        "id": "FIX-COWORK-RUNBOOK-DOC-STALE-LAUNCHD-BACKSTOP-STATUS",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "XS",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "developer",
+        "title": "docs/protocols/cowork-master-cron-runbook.md still calls the launchd backstop 'in flight' and T5 'NOT YET APPLICABLE' while launchctl shows it loaded, exit 0 -- doc-reality drift",
+        "desc": "agent-father AC-3 finding: the runbook's own status language predates the launchd backstop actually landing and running successfully. Doc-only correction.",
+        "generic_mandate": "Update the runbook's status section to reflect the launchd backstop as loaded/live (per launchctl evidence) and re-evaluate whether T5 is now applicable.",
+        "ac": "AC-1 runbook status language matches live launchctl state.",
+        "files": [
+          "docs/protocols/cowork-master-cron-runbook.md"
+        ],
+        "not_duplicate_of": "Checked live 2026-08-23 -- no existing row for this doc drift.",
+        "created_by": "po (triage 2026-08-23, from agent-father, router item 7)",
+        "created_at": "2026-08-23T15:20:00Z",
+        "updated_at": "2026-08-23T15:27:20Z"
+      },
+      {
+        "id": "FIX-CHEF-EVENING-SLOTID-FORM-CONFLICT-CHEFDASH-VS-EVENING",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "developer",
+        "owner": "developer",
+        "title": "chef evening slot id is spelled two different ways across owning docs (chef.md/unified-agent.md say 'chef-evening', chef-dish.md says 'evening'), and BOTH forms exist on disk for the same slot on the same day",
+        "desc": "agent-father finding: chef.md and .claude/agents/unified-agent.md use SLOT_ID='chef-evening' while chef-dish.md uses SLOT_ID='evening' for the identical daily slot -- both forms have produced real on-disk artifacts today, meaning downstream consumers keyed on one spelling can silently miss the other's output (or double-count/double-publish).",
+        "generic_mandate": "Pick ONE canonical SLOT_ID spelling for the evening chef slot and make all 3 files + any downstream consumer agree; verify no consumer (dedup guard, publish marker, dashboard) is keyed on the now-retired spelling.",
+        "ac": "AC-1 grep all 3 named files + docs/social/ + any dedup/publish-marker consumer for both spellings, confirm single canonical form after the fix. AC-2 confirm no duplicate/missed publish results from the historical split (audit, do not necessarily backfill).",
+        "files": [
+          "chef.md",
+          ".claude/agents/unified-agent.md",
+          "chef-dish.md"
+        ],
+        "not_duplicate_of": "Checked live 2026-08-23 -- no existing row for this SLOT_ID spelling conflict.",
+        "created_by": "po (triage 2026-08-23, from agent-father, router item 7)",
+        "created_at": "2026-08-23T15:20:00Z",
+        "updated_at": "2026-08-23T15:27:20Z"
+      },
+      {
+        "id": "FIX-BCTCANALYST-MISSING-TABLEROWS-BALANCECHECKS-TOOL-GRANT",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "XS",
+        "zone": "cross-service/",
+        "next_agent": "agent-father",
+        "owner": "agent-father",
+        "title": "bctc-analyst has no bctc_table_rows / bctc_balance_checks tool access, verified by reading stage-pass-balance-sheet.md not assumed -- ESC-1 gate has been silently no-op for as long as it has existed",
+        "desc": "bctc-analyst confirmed (2026-08-23, carry-over from cycles 29/33) this is a real grant gap, not an assumption: it read stage-pass-balance-sheet.md directly and has no tool_packages entry granting bctc_table_rows/bctc_balance_checks. ESC-1's whole gate depends on that access and has therefore been structurally unevaluable since inception -- a silent no-op, not a recent regression.",
+        "generic_mandate": "Grant bctc-analyst the bctc_table_rows/bctc_balance_checks tool access per its own documented ESC-1 requirement (stage-pass-balance-sheet.md); this is a frontmatter/tools_package change (agent-father's zone), not a code change.",
+        "ac": "AC-1 bctc-analyst's tools_package includes both tools. AC-2 re-run ESC-1 once on a real ticker and confirm it now actually evaluates instead of silently skipping.",
+        "files": [
+          "docs/agents/tools/package/bctc-analyst.md"
+        ],
+        "not_duplicate_of": "Checked live 2026-08-23 -- no existing row for this specific tool-grant gap.",
+        "created_by": "po (triage 2026-08-23, from bctc-analyst self-report, router item 9)",
+        "created_at": "2026-08-23T15:20:00Z",
+        "updated_at": "2026-08-23T15:27:20Z"
       }
     ],
     "closed_sprints": [
@@ -18848,27 +19061,6 @@
         "updated_at": "2026-08-23T09:47:25Z"
       },
       {
-        "id": "TASK-COWORK-PMSET-WAKE-ADJUNCT",
-        "title": "Ops adjunct: configure pmset repeat wakeorpoweron over the union of the 8 guaranteed slots scheduled minutes so the host is awake when Layer C StartInterval is due - host state, no repo file changes",
-        "owner": "ops",
-        "next_agent": "ops",
-        "status": "TODO",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P2",
-        "zone": "infra",
-        "depends_on": [],
-        "files": [],
-        "parent": "FIX-COWORK-DAILY-SLOT-SILENT-SKIP-NO-CATCHUP-CATCHUPRAW-SCOPED-TO-GUARANTEED-ONLY",
-        "note": "Cheap, reversible, PARTIAL - does not survive lid-closed-in-a-bag or power-off. Adjunct to TASK-COWORK-MISSED-FIRE-AUDIT, never a substitute; that detector is what notices this mitigation having failed (R4: pmset is host state invisible to the repo). Record the applied command + pmset -g sched output in the RETURN and the ops notebook. Do NOT reopen the VPS option (2026-07-07 brief S3 rejection still holds).",
-        "created_at": "2026-08-23T09:47:24Z",
-        "created_by": "pm",
-        "handoff": "docs/handoffs/TASK-COWORK-PMSET-WAKE-ADJUNCT.md",
-        "updated_at": "2026-08-23T14:57:35Z",
-        "verify_note": "[ops 2026-08-23T14:58Z] BLOCKED ON ROOT CREDENTIALS — NOT APPLIED. (Lane status left TODO because the validator only permits READY|TODO in ready[]; the real state is blocked, described here.)\nAC-1 DONE (schedule derived from data, not guessed). Union of the 8 guaranteed:true slots in docs/data/cowork-schedule.json, read via jq, verbatim cron -> local clock:\n  05:15 Mon-Fri (chef-morning) | 08:45 Mon-Fri (chef-eod) | 09:15 Mon-Fri (fb-daily) | 13:13 Sat+Sun (fb-weekend) | 13:47 Sun (digest-sunday) | 17:30 DAILY (digest-daily) | 19:45 DAILY (chef-evening) | 20:13 DAILY (tnb-audit)\n  Union spans 05:15 -> 20:13; because 3 slots are daily the day-set must be all 7 = MTWRFSU.\nAC-2 BLOCKED (structural, not a skill gap): pmset repeat requires root and this host has NO passwordless sudo — `sudo -n true` returns \"sudo: a password is required\". An agent shell cannot supply it. Nothing in the ops tool grant can apply this; it needs a human at the keyboard or an authorised sudoers entry.\nEXACT COMMAND TO RUN (derived, ready to paste):\n  sudo pmset repeat wakeorpoweron MTWRFSU 05:10:00\nAC-3 REVERT COMMAND: sudo pmset repeat cancel\nAC-2 VERIFY AFTER APPLYING: pmset -g sched   (must list a \"Repeating power events\" wake line; it is EMPTY right now — captured as the pre-state baseline at 2026-08-23T14:05Z, output was zero lines).\n*** AC-1 vs AC-2 DESIGN CONFLICT FOUND — the task as written cannot be fully satisfied, flagging instead of quietly shipping a partial. *** `pmset repeat` accepts exactly ONE repeating wake event (one time + one day-set). It therefore CANNOT cover a union of 8 distinct times; AC-1 asks for the union, AC-2 asks for a single repeat entry. 05:10:00 is the defensible choice (5 min before the EARLIEST slot 05:15) but it only guarantees wakefulness for that first slot. Measured host state makes the residual gap concrete: pmset -g custom shows standby=1 with standbydelaylow=10800 (3h) and standbydelayhigh=86400, so the host can re-enter standby between 05:15 and the 20:13 slot and miss everything after the first. Options for whoever picks this up: (i) accept single-wake-at-earliest as a partial (cheapest, current recommendation); (ii) a launchd-owned re-arm that rewrites the single pmset repeat forward to the next slot after each fire; (iii) caffeinate/assertion held across 05:15-20:13. (ii) and (iii) are design calls above ops pay grade -> route to architect if partial is not acceptable.\nSECOND FINDING — TIMEZONE UNVERIFIED: every guaranteed slot in cowork-schedule.json carries NO tz/timezone field (all UNSPECIFIED). Host is CEST (UTC+2) and pmset schedules in LOCAL time, so the numbers above are only correct if the dispatcher also interprets them as local. If the dispatcher treats them as UTC the wake lands 2h off and the mitigation silently does nothing. Confirm the dispatcher TZ basis BEFORE applying — this is cheap to check and expensive to get wrong.\nAC-5 HONEST SCOPING (restated): partial mitigation only — does not survive lid-closed-in-a-bag or full power-off, and is an ADJUNCT to TASK-COWORK-MISSED-FIRE-AUDIT, never a substitute; that detector is what notices this mitigation having failed.\nAC-4 VISIBILITY: pre-state (pmset -g sched empty) recorded here and in the ops notebook. Once applied, the applied command + pmset -g sched output must be pasted back here — host state is invisible to the repo, exactly the R4 risk.\nROUTING: do NOT re-dispatch to ops expecting a different outcome — the blocker is the sudo grant and it reproduces every time. Needs a user/root action, or an architect ruling on the AC-1/AC-2 conflict above.",
-        "updated_by": "ops"
-      },
-      {
         "id": "TASK-COWORK-STALE-SLOT-DISPOSITION-TABLE",
         "title": "Produce the per-slot disposition table against the frozen 2026-08-23T09:00Z schedule snapshot - all 11 stale slots, each in exactly one bucket (recorded-late | genuinely-missed no-catchup-possible | catchup-eligible under widened scope) - and independently re-verify brief AC-1..AC-4",
         "owner": "qa",
@@ -20188,13 +20380,13 @@
         "priority": "P0",
         "size": "S",
         "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
+        "next_agent": "qa",
         "created_at": "2026-08-22T18:42:44Z",
         "created_by": "po",
         "source": "user-report-ghost-zones-2026-08-22",
         "title": "GHOST ZONE (1/4): /api/conviction-history frozen at 2026-06-17 (stale 64d) while conviction_history has data through 2026-08-21 — ORDER BY date ASC + LIMIT 2000 silently truncates the NEWEST 1907 rows (48% of table)",
         "note": "PROVEN root cause, apps/mcp-server/src/infrastructure/db/convictionHistoryStore.ts getConvictionHistoryRows(): `SELECT ... FROM conviction_history ORDER BY date ASC, symbol ASC LIMIT ?` with limit default 2000. Live probe 2026-08-22 through the running mcp-server container: full table = 3942 rows spanning 2026-04-01..2026-08-21; the LIMIT-2000 ASC window ends at MAX(date)=2026-06-17 — EXACTLY the tradingDate the endpoint reports, and staleByDays=64 matches. 1907 rows (all recent data) are invisible to the API. The file's own docstring says 'Live stats (probed 2026-06-11): 766 rows ... well within the default cap' — true when written, but the table grew 766 -> 3942 and the cap became a silent truncation of the newest data. This is NOT a data gap: the writer is healthy (33-34 rows/day, continuous through yesterday). Failure mode is monotonic — every additional day makes it staler. FIX DIRECTION (BA/architect to ratify): order DESC and/or select the newest N trading dates rather than the first N rows; guard with a regression test asserting MAX(date) returned == MAX(date) in table. Verify after fix: GET /api/conviction-history must report tradingDate within 1-2 trading days of today and stale=false. USER IMPACT: ConvictionHistoryZone on /dashboard/analysis + the /dashboard/conviction-history page both render 64-day-old data for every ticker.",
-        "updated_at": "2026-08-23T14:55:52Z",
+        "updated_at": "2026-08-23T15:28:56Z",
         "ba_spec_complete": true,
         "ba_handoff": "docs/handoffs/FIX-GHOSTZONE-CONVICTION-ASC-LIMIT-TRUNCATES-NEWEST-BA-spec.md",
         "ba_completed_at": "2026-08-22T18:52:53Z",
@@ -20211,7 +20403,7 @@
         "dev_completed_by": "dev-mcp-server",
         "dev_commit": "620a299ed",
         "dev_note": "Two-stage SQL wrap shipped verbatim per architect design: inner ORDER BY date DESC LIMIT ? selects newest rows, outer ORDER BY date ASC restores documented return contract. AC-16 regression test added (TASK17-CONVICTION-conviction-history-endpoint.test.ts) incl. anti naive-DESC-flip assertion. bun test 33 pass/0 fail. tsc clean. tools=183 cron=88 (baseline match). Server boot probe: /health 200 toolCount=183.",
-        "updated_by": "dev-mcp-server"
+        "updated_by": "dev-mcp-server/next-agent-fix"
       },
       {
         "id": "FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD",
@@ -20220,13 +20412,13 @@
         "priority": "P0",
         "size": "S",
         "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
+        "next_agent": "qa",
         "created_at": "2026-08-22T18:42:44Z",
         "created_by": "po",
         "source": "user-report-ghost-zones-2026-08-22",
         "title": "GHOST ZONE (2/4): /api/foreign-flow returns items:[] + tradingDate:\"\" — MAX(date) subquery omits the `foreign_volume IS NOT NULL` guard its own docstring mandates, so a partial-write day blanks the entire page",
         "note": "PROVEN root cause, apps/mcp-server/src/interface/mcp/routes/foreignFlowHandler.ts queryForeignFlow(): `WHERE date = (SELECT MAX(date) FROM vnstock_trading_stats) AND foreign_volume IS NOT NULL`. The subquery picks the newest date WITHOUT the non-null guard, then the outer predicate filters every row of that date away. Live probe 2026-08-22 through the running container: MAX(date) overall = 2026-08-22 with 41 rows, ALL 41 foreign_volume NULL; MAX(date) WHERE foreign_volume IS NOT NULL = 2026-08-18 with 99 non-null rows. Result: 0 rows -> tradingDate:'' -> whole Foreign Flow page ghost. The handler docstring line 8 already states the intended contract verbatim — 'Latest trading day = MAX(date) with foreign_volume IS NOT NULL' — so implementation contradicts its own documented spec; this is a one-line divergence, not a design question. INTERMITTENT BY NATURE: only ghosts when a partial/NULL batch lands at the top (also observed 2026-08-16 n=4 nonnull=0 and 2026-08-15 n=34 nonnull=0), which is why it reads as 'sometimes ghost' to the user. FIX DIRECTION: move the guard into the subquery. Regression test: seed a NULL-only newest date + a populated older date, assert handler serves the older populated date. CASCADE: this same emptiness starves downstream consumers — /api/momentum-indicators foreign_accum returns null_reason 'Insufficient tickers with >=5 days of flow data', and /api/money-radar reports coverage_pct 0.83 with foreign components degraded. Fixing this row should be re-measured against both before opening separate rows for them.",
-        "updated_at": "2026-08-23T14:56:05Z",
+        "updated_at": "2026-08-23T15:28:56Z",
         "ba_spec_complete": true,
         "ba_handoff": "docs/handoffs/FIX-GHOSTZONE-FOREIGN-FLOW-MAXDATE-MISSING-NONNULL-GUARD-BA-spec.md",
         "ba_completed_at": "2026-08-22T18:52:53Z",
@@ -20243,7 +20435,7 @@
         "dev_completed_by": "dev-mcp-server",
         "dev_commit": "b0d84233d",
         "dev_note": "Moved foreign_volume IS NOT NULL guard into the MAX(date) subquery per architect design (verbatim). AC-15 regression tests added (1986-foreign-flow-endpoint.test.ts): NULL-only-newest-date skip, all-NULL-table-wide edge case (falls through to existing empty-response path via SQLite 3-valued logic, no special-case code), consecutive-NULL-days walk-back. bun test 34 pass/0 fail. tsc clean. NFR-2 cascade re-measurement (foreign_accum/money-radar) NOT performed — requires live deployed container post-rebuild, out of this dev-agent session scope; flag to qa/ops for post-deploy re-measure.",
-        "updated_by": "dev-mcp-server"
+        "updated_by": "dev-mcp-server/next-agent-fix"
       },
       {
         "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort",
@@ -20370,7 +20562,7 @@
         "status": "REVIEW",
         "zone": "apps/mcp-server/",
         "owner": "qa",
-        "next_agent": "dev-mcp-server",
+        "next_agent": "qa",
         "parent_task_id": "FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58",
         "plan_only": false,
         "supervised": false,
@@ -20379,8 +20571,8 @@
         "created_by": "pm",
         "title": "Watchlist write-through infrastructure adapter",
         "handoff": "docs/handoffs/TASK_001-WATCHLIST-WRITE-THROUGH-INFRA.md",
-        "updated_at": "2026-08-23T15:11:47Z",
-        "updated_by": "dev-mcp-server",
+        "updated_at": "2026-08-23T15:28:56Z",
+        "updated_by": "dev-mcp-server/next-agent-fix",
         "dev_completed_at": "2026-08-23T15:11:47Z",
         "dev_completed_by": "dev-mcp-server",
         "dev_commit": "ce1f52127",
@@ -20395,7 +20587,7 @@
         "size": "S",
         "zone": "apps/mcp-server/",
         "owner": "qa",
-        "next_agent": "dev-mcp-server",
+        "next_agent": "qa",
         "files": [
           "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts",
           "apps/mcp-server/src/domain/services/cascade/macroAdjustments.ts",
@@ -20404,8 +20596,8 @@
         "note": "Parent FIX-USDVND-THRESHOLD-SSOT. Design: docs/architecture-briefs/2026-08-23-fix-usdvnd-threshold-ssot.md, Planes 1+2. Finding A: currencySignal (macroTools.ts:117-124) has ZERO callers repo-wide — DELETE, do not unify; same for its 3 siblings oilSignal/goldSignal/policySignal in the identical file. Finding B (USD/VND half only): cascadeEngine.ts applies the OLD fixed MACRO_ADJUSTMENTS *and* the sigma-based DYNAMIC_MACRO_MAP additively on identical domain sets — real double-counting. Retire ONLY the static USD/VND rule here; the oil/gold general form is flagged-not-fixed and needs its own row. Test: negative control asserting the dynamic rule alone yields equivalent-or-better confidence delta on a live-shaped fixture.",
         "created_at": "2026-08-23T13:38:00Z",
         "created_by": "pm",
-        "updated_at": "2026-08-23T15:24:21Z",
-        "updated_by": "dev-mcp-server",
+        "updated_at": "2026-08-23T15:28:56Z",
+        "updated_by": "dev-mcp-server/next-agent-fix",
         "dev_completed_at": "2026-08-23T15:24:21Z",
         "dev_completed_by": "dev-mcp-server",
         "dev_commit": "e6842463e",
@@ -20747,7 +20939,7 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-23T15:24:21Z",
+  "_updated_at": "2026-08-23T15:28:55Z",
   "_updated_by": "dev-mcp-server",
   "dev_team_idle_chain": {
     "rotation": {
