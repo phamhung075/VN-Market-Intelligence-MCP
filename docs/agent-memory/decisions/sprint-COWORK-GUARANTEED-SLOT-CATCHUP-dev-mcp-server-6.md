@@ -114,3 +114,13 @@
 - Header-only refresh declaring actual current size — CHOSEN: the checker's own tolerance design (declared-size ± 10%) exists precisely for this case; mechanical 1-line-class fix, zero code/logic change, matches the file's own established growth-log header convention.
 **why-decision:** smallest correct fix matching the checker's designed escape hatch; fleet-wide P0 (40+ commits stuck off-host) makes minimal-risk speed the deciding factor over any code-restructuring option.
 **why-change:** none — this is exactly the mechanical fix the dispatching task brief specified.
+
+### STEP dev-mcp-server-S12 · dev-mcp-server · 2026-08-23T09:04:00Z
+**task-id:** TASK-DEV-MCP-SIGNAL-TYPE-REGISTRY
+**what-done:** Extended guard-signal-type-coverage.sh to parse Pipeline-A (`pending_triage_inbox[]`) in addition to Pipeline-B, tagged both rule sets by pipeline so a rule from one never covers the other, and added a mint_routing_gap_row() self-filing fallback (dedup-keyed on type, via real orch-apply.sh) on any unrouted type. orchStateSchema.ts untouched (verified 0-line diff). Test suite 7->24 assertions, all GREEN against disposable fixtures; live orch-state.json smoke test GREEN.
+**what-considered:**
+- add a wildcard/glob matcher for Pipeline-A's "fundamental_*" alias cell — REJECTED: no live type literally matches that placeholder pattern; out of AC scope, would add untestable surface.
+- mint the backlog row's `type` field as "FIX" (matching other canonical templates) — REJECTED: AC-4 explicitly names the existing `routing-gap` vocabulary slot; reusing it is the whole open-namespace point of the brief.
+- add `oven-sh/setup-bun` to the CI job so mint always succeeds there too — REJECTED: CI never persists a mint (ephemeral checkout, no push-back step) and the job's actual gate (exit 1) is unaffected by mint failure; adding bun+install would add real per-push cost to the "cheapest job" for a path that degrades gracefully without it — documented honestly in the job comment instead.
+**why-decision:** matches the architect brief's decision (b) and every AC in the handoff; verified end-to-end (both pipelines, both directions of the cross-pipeline blind spot, mint success + dedup-skip) against real orch-apply.sh, not asserted.
+**why-change:** none — implementation follows the brief's §3 design as specified.
