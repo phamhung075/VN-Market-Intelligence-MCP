@@ -17757,29 +17757,6 @@
         "updated_by": "architect"
       },
       {
-        "id": "FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS",
-        "type": "FIX",
-        "priority": "P0",
-        "status": "TODO",
-        "size": "M",
-        "zone": "scripts/",
-        "owner": "developer",
-        "next_agent": "developer",
-        "created_at": "2026-08-14T11:23:11Z",
-        "created_by": "pm",
-        "title": "Incident-Lane Consumer: scripts + eligibility + satisfiability instrumentation",
-        "files": [
-          "scripts/lib/devteam-eligibility.jq",
-          "scripts/devteam-backlog-claim-incident-lane-consumer.jq",
-          "scripts/devteam-backlog-claim-ready-lane-consumer.jq",
-          "scripts/audits/devteam-dispatch-gate-satisfiability.sh"
-        ],
-        "depends": [],
-        "verification_gate": "incident-lane-consumer-scripts-v1",
-        "updated_at": "2026-08-14T11:23:11Z",
-        "updated_by": "pm"
-      },
-      {
         "id": "FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW",
         "type": "FIX",
         "priority": "P0",
@@ -19687,6 +19664,35 @@
         "commit": "2c9998018",
         "branch": null,
         "review_note": "IMPLEMENTED, commit 2c9998018 on main (direct-commit row, branch:null - qa verify-committed mode, NOT the normal pipeline JUMP-TO). Both rows shipped together in one commit: scripts/agents-flow/cron-marker-liveness-probe.sh + .test.sh, plus a CANONICAL pointer block in docs/policies/dev-standards.md and a docs/WORK.md entry. MECHANISM: the probe decides DEAD/LIVE/UNKNOWN by OBSERVING THE OS, never by reading bookkeeping the dying session wrote about itself. O1 (recorded PID absent from ps, or present with a different (pid,start_epoch,comm) triple) soundly proves DEAD with no blind window; O2 (transcript mtime inside the window) proves LIVE only; O3 (heartbeat_age / presence roster) proves NEITHER and is emitted as corroboration that can never decide. O1 OUTRANKS O2 and that ordering is load-bearing: at the 2026-08-23 incident instant the corpse transcript was 16s old, so any O2-primary design returns LIVE and reproduces the 8h10m outage with a smaller constant. UNKNOWN is a mandatory third branch (a two-branch LIVE/DEAD shape must guess on ambiguity, and it guesses LIVE - that is the branch that cost 8h10m), resolved by the measured has_fire_election_mutex property held in ONE table inside the probe (cowork/detect-loop steal, standalone defer+alarm). No branch terminates silently. VERIFICATION QA SHOULD RE-RUN, NOT TRUST: (1) bash scripts/agents-flow/cron-marker-liveness-probe.test.sh = 87/87 GREEN, fully mocked (ps/stat/mcp_call/send_telegram all overridden, zero real process/network calls), running under LC_TIME=fr_FR.UTF-8 so every case doubles as a locale regression. (2) F1 (2026-08-23 corpse: heartbeat 328s FRESH, transcript 16s FRESH, pid absent -> DEAD) and F2 (live standalone: heartbeat 30948s stale, pid present with matching triple -> LIVE) pass under ONE spec - that pair is the parent row whole thesis and a run proving only one direction re-proves nothing. (3) MUTATION TEST, the strongest evidence F1 is not vacuous: hoisting the O2 check above the O1 check on a scratch copy makes the mutant answer LIVE for the corpse and flips 3 F1 assertions red; restoring gives 87/87 again. (4) Live-verified against the REAL lock plane via mcp-call.sh: family=cowork-team -> SELF exit 0 (marker owned by this session); detect-loop -> LIVE via O2 (that marker carries NO registering_process at all, independently confirming the brief claim that O1 has zero wiring for 2 of 3 families); standalone-team -> UNKNOWN + alarm (pre-v2 fingerprint, 5434s-stale transcript). The live cowork marker still carries the broken v1 string ppid-42648-start-Dim_23_aou_02:40:51_2026_-host-admins-MBP.lan exactly as the brief documented. SCOPE / KNOWN RESIDUAL, both deliberate: (a) the three .claude/skills/cron-*/SKILL.md Step 1b.1 + Step 1c payload edits are agent-father EXCLUSIVE commit_zone and are sequenced AFTER these two rows per the brief S5 - tracked as TASK-CRON-SKILLMD-PROBE-WIRING. Until that lands the probe is shipped and tested but NOT YET INVOKED by any skill, so the parent row FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE is NOT closed by these two rows. (b) F5 (assert all three SKILL.md Step 1b.1 blocks invoke the probe and that grep -c orphan_threshold_seconds:7200 returns 0) is deliberately that task AC, not this one - it cannot pass before the SKILL.md edits exist. (c) standalone on_unknown=defer is a NARROWED temporary residual, not a resting state; the durable fix is FOLLOWUP-CRON-STANDALONE-PER-TICK-FIRE-ELECTION-MUTEX and is explicitly not a blocker."
+      },
+      {
+        "id": "FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-SCRIPTS",
+        "type": "FIX",
+        "priority": "P0",
+        "status": "REVIEW",
+        "size": "M",
+        "zone": "scripts/",
+        "owner": "developer",
+        "next_agent": "qa",
+        "created_at": "2026-08-14T11:23:11Z",
+        "created_by": "pm",
+        "title": "Incident-Lane Consumer: scripts + eligibility + satisfiability instrumentation",
+        "files": [
+          "scripts/devteam-backlog-claim-incident-lane-consumer.jq",
+          "scripts/lib/devteam-eligibility.jq",
+          "scripts/devteam-backlog-claim-ready-lane-consumer.jq",
+          "scripts/audits/devteam-dispatch-gate-satisfiability.sh",
+          "docs/policies/dev-standards.md",
+          "docs/WORK.md"
+        ],
+        "depends": [],
+        "verification_gate": "incident-lane-consumer-scripts-v1",
+        "updated_at": "2026-08-23T14:24:07Z",
+        "updated_by": "developer",
+        "reviewed_at": "2026-08-23T14:24:06Z",
+        "commit": "cd0039432",
+        "branch": null,
+        "review_note": "IMPLEMENTED, commit cd0039432 on main (direct-commit row, branch:null - qa verify-committed mode, NOT the normal pipeline JUMP-TO). All four handoff ACs met per architect brief docs/architecture-briefs/2026-08-14-readylane-incident-lane-throughput.md S4a-S4c, followed verbatim rather than re-derived. (1) scripts/lib/devteam-eligibility.jq gains is_po_expedited (board-only - documented simplification, no detail-authored expedite has ever been observed) and incident_wip_in_progress (counts ONLY rows carrying the DISTINCT claimed_by marker), both placed next to wip_in_progress for the defn-order constraint. (2) NEW scripts/devteam-backlog-claim-incident-lane-consumer.jq: full RLC eligibility chain UNRELAXED plus is_po_expedited, sort_by([rank, po_expedited_at, idx]), batch take = min(take_budget, candidates), stamps claimed_by=dev-team (incident-lane consumer), carries po_expedited_at/by through unchanged, same $head_free conditional guard as every sibling, narrates only the batch top row. (3) RLC header cross-reference only, zero logic change. (4) satisfiability instrument gains a 13-assertion ILC section. VERIFICATION QA SHOULD RE-RUN, NOT TRUST: bash scripts/audits/devteam-dispatch-gate-satisfiability.sh = 116 PASS / 0 FAIL, exit 0. THAT SUITE WAS RED AT BASELINE (exit 1, 4 failures) AND NONE OF THE 4 WAS CAUSED BY THIS ROW - each root cause was verified, not guessed, and three are fixed in passing: (a) AC-EVICT-1/3, the fixture wrote synthetic DONE_VERIFIED rows with no verification.raw_probe, which checkVerificationGate (added 2026-08-08, AFTER the fixture was authored) hard-rejects, so orch-cold-evict.sh aborted at its own write gate and the eviction guard under test was never reached - reproduced identically against BOTH the current and the pre-Component-6 cold-evict, proving the rot is in the fixture; (b) BOUNDED-1 branched on the RAW in_progress[] length while the gate under test uses wip_in_progress which EXCLUDES BLOCKED rows, and the live board first in_progress row was BLOCKED, so effective WIP was 0 and BOUNDED-1 correctly fired against an expectation that was itself wrong; (c) AC-DRS-HEAD-GUARD appended its synthetic row to the shared live-derived fixture while the DRS claim takes $swept[0] and the live board carried 3 earlier design-router-sweep-promoted rows, so DRS claimed a LIVE row - live-board contamination, rebuilt isolated like every sibling HEAD-GUARD block. Siblings unregressed: devteam-eligibility-resolved-secondary-dispatch-target.test.sh 5/5, test-devteam-donelane-drain.sh 42/42. The shared eligibility lib was re-verified compiling against the live board IMMEDIATELY after the edit because a peer dev-team dispatcher reads it every tick. SCOPE / RESIDUALS, deliberate: (a) the docs/agents/dev-team/flow/main.md call site is agent-father EXCLUSIVE commit_zone and is the separate blocked row FIX-DEVTEAM-INCIDENT-LANE-CONSUMER-MAINFLOW - until that lands the ILC is shipped and tested but INVOKED ON NO TICK, so this row does not by itself close the sprint. (b) Known asymmetry documented at the predicate: incident rows ARE still counted by wip_in_progress. That is the conservative direction (the shared budget sees more load, never less); correcting it would require every sibling gate to subtract the new counter, wider than this row scope. (c) No live po_expedited_at row exists on the board right now, so the positive path is proven on fixtures and on the buried-at-index-40 satisfiability case, not on live data."
       }
     ],
     "qa": [
