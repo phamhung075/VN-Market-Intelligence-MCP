@@ -127,10 +127,28 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-23T08:53:35Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-23T09:05:10Z",
+    "_updated_by": "push_bctc_refined_unit",
     "archive": [],
     "rows": [
+      {
+        "id": "bctc-imgdeg-69fcd047-20260823T090510Z",
+        "ts": "2026-08-23T09:05:10Z",
+        "from": "mcp-server",
+        "to": "po",
+        "type": "bctc_image_fetch_degraded",
+        "summary": "BCTC report 69fcd047: 2 refined units capped <=0.6 confidence (image_unavailable) — investigate get_bctc_page_image/p...",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "report_id": "69fcd047-a358-4067-a34c-af727617c473",
+          "affected_unit_ids": [
+            "unit-0024",
+            "unit-0025"
+          ]
+        }
+      },
       {
         "id": "sys-20260814T064300-a29m",
         "ts": "2026-08-14T06:43:00Z",
@@ -783,8 +801,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-23T08:46:38Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-08-23T09:04:37Z",
+    "_updated_by": "po (triage — cron re-arm guard defect cluster, 3 rows minted)",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -12667,6 +12685,40 @@
         "discovered_by": "user (2026-08-23 dashboard read) + router session 72a0d0d9 root-cause derivation; provenance chain (BA AC-20 layer qualifier dropped by architect brief L127) re-derived at source by po",
         "updated_at": "2026-08-23T07:51:38Z",
         "updated_by": "po"
+      },
+      {
+        "id": "SPIKE-SESSION-PRESENCE-ROSTER-UNDERCOUNTS-LIVE-SESSIONS",
+        "type": "SPIKE",
+        "title": "task_list_held(kind=session-presence) returns 1 row while >=3 live sessions are demonstrably active — root cause UNKNOWN, measure the three candidate planes before proposing any fix",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "created_at": "2026-08-23T09:04:15Z",
+        "created_by": "po",
+        "updated_at": "2026-08-23T09:04:38Z",
+        "updated_by": "po",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/coordination/",
+          ".claude/skills/dispatch-claim/CARD.md"
+        ],
+        "depends_on": [],
+        "verification_gate": "root_cause_named_with_a_measurement_not_a_hypothesis_then_one_followup_FIX_row_minted",
+        "status_note": "OBSERVED 2026-08-23 by router during cron re-arm recovery. Measurement, not inference: task_list_held(kind='session-presence') returned exactly 1 row while >=3 distinct live owner_client_session values were demonstrably active. Re-probed ~08:5xZ the same morning: STILL exactly 1 row (007e33e4-b453-4bb3-8ab1-ef31495906a3, dev-team, current_task=preflight). The router's own session was absent from the roster until hand-registered seconds later.\n\nWHY THIS IS NOT COSMETIC:\n  - .claude/skills/dispatch-claim/CARD.md Phase A.5 presence roster is near-useless at this fidelity.\n  - Every cron re-arm skill (cron-cowork-team / cron-detect-loop / cron-standalone-team, Step 1b.1) names session-presence as its PRIMARY staleness oracle. An undercounting roster makes a LIVE peer read as DEAD -> double-arm. That is exactly the already-CONFIRMED-2x failure in memory feedback_cron_standalone_step1b1_presence_absence_false_dead_double_arm.md.\n  - Sibling of the recorded dashboard 'Chua tung chay' gap.\n\nROOT CAUSE IS UNKNOWN — DO NOT GUESS, DO NOT SHIP A FIX ON A HYPOTHESIS. Three candidate planes, measure each:\n  (a) agents skipping Step 0a self-registration — countable: grep the flow docs for the Step 0a call, then diff against which agent ids ever appear as owner_agent on a session-presence row over a 24h window.\n  (b) ttl_seconds 1800 expiring with no renewal hook on most families — countable: compare row created_at/heartbeat_at against 1800s for every family; cowork has a renewal hook (scripts/agents-flow/cowork-tick-preflight.sh Step 2), most do not.\n  (c) a write-path defect in the coordination store — countable: issue N known-distinct task_claim(kind='session-presence') calls and read back the row count.\nDeliverable: name the plane WITH the measurement that proves it, then mint ONE follow-up FIX row. Do not fold the fix into this SPIKE.\n\nBLOCKS-BY-COUPLING (not a hard dep): FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE's architect brief needs the answer to decide whether the presence roster is repaired or removed from the cron-guard decision path entirely. Deliberately NOT wired as depends_on so the architect brief is not stalled — the architect may proceed with 'remove from decision path' and this SPIKE then only governs Phase A.5."
+      },
+      {
+        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-bctc-image-fetch-degraded",
+        "type": "routing-gap",
+        "status": "BACKLOG",
+        "owner": "po",
+        "zone": "docs/agents/po/flow/",
+        "title": "Unrouted signal type 'bctc_image_fetch_degraded' (Pipeline B) — no table row in docs/agents/po/flow/triage-signals.md",
+        "dedup_key": "signal-type-registry-gap:bctc_image_fetch_degraded",
+        "created_at": "2026-08-23T09:06:13Z",
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=bctc_image_fetch_degraded routed on Pipeline B (a matching table row exists in triage-signals.md's own Pipeline-B section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
+        "updated_at": "2026-08-23T09:06:14Z"
       }
     ],
     "closed_sprints": [
@@ -17527,6 +17579,55 @@
         "occurrence_count": 1,
         "updated_by": "po/triage-20260822T2258Z",
         "priority": "P1"
+      },
+      {
+        "id": "FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE",
+        "type": "FIX",
+        "title": "cron re-arm Step 1b.1 has no real liveness oracle: presence-roster (broken, see sibling row) then a force_release_orphan threshold whose blind window makes a seconds-old corpse indistinguishable from a live holder — cost 8h10m dispatcher outage on 2026-08-23",
+        "owner": "po",
+        "status": "READY",
+        "priority": "P1",
+        "size": "M",
+        "zone": "cross-service/",
+        "next_agent": "architect",
+        "created_at": "2026-08-23T09:04:15Z",
+        "created_by": "po",
+        "updated_at": "2026-08-23T09:04:38Z",
+        "updated_by": "po",
+        "files": [
+          ".claude/skills/cron-cowork-team/SKILL.md",
+          ".claude/skills/cron-standalone-team/SKILL.md",
+          ".claude/skills/cron-detect-loop/SKILL.md",
+          "scripts/agents-flow/cron-marker-liveness-probe.sh"
+        ],
+        "depends_on": [],
+        "verification_gate": "probe_script_exists_and_replays_the_20260823_corpse_case_as_DEAD_plus_all_three_SKILL_md_step1b1_cite_it",
+        "status_note": "CONFIRMED AT SOURCE 2026-08-23 by PO (read all three SKILL.md verbatim, not inferred).\n\nSCOPE — 3 families, one shared broken guard shape, three DIFFERENT arbitrary thresholds:\n  cron-cowork-team/SKILL.md:82-103    orphan_threshold_seconds: 7200\n  cron-detect-loop/SKILL.md:51-72     orphan_threshold_seconds: 7200\n  cron-standalone-team/SKILL.md:68-91 orphan_threshold_seconds: 120 (tool minimum)\nAll three carry the identical branch text 'released:false (fresh heartbeat - race) -> treat conservatively as LIVE -> STOP, no-op.' and all three name session-presence as the PRIMARY staleness oracle.\n\nTWO ORACLES, BOTH BROKEN, FAILING IN SERIES:\n  (1) PRIMARY = task_list_held(kind=session-presence). Measured undercount -> see sibling row SPIKE-SESSION-PRESENCE-ROSTER-UNDERCOUNTS-LIVE-SESSIONS. Yields false-DEAD.\n  (2) FALLBACK = task_force_release_orphan threshold. Nothing renews a marker heartbeat after its owner session dies, so for up to T seconds post-mortem the call returns released:false/heartbeat_fresh -> the branch text mandates STOP. Yields false-LIVE.\nAt T=7200 the blind window is 2h; at T=120 it is 2min but the same shape is used to justify the opposite (false-DEAD -> double-arm, already CONFIRMED 2x in memory feedback_cron_standalone_step1b1_presence_absence_false_dead_double_arm.md). The two families fail in OPPOSITE directions from the SAME spec — that is the proof this is a spec bug in the shared guard shape, not per-family operator error.\n\nWHY IT FIRES EXACTLY WHEN IT MATTERS: operators run /cron-* seconds after relaunching the CLI. The predecessor session died seconds ago, so its heartbeat is maximally fresh. The guard is least reliable precisely at its ONLY real use site — session restart. Modal path, not edge case.\n\nMEASURED INCIDENT 2026-08-23 (cowork-team, forensic timeline in memory feedback_router_almost_rearmed_live_peer_cron_markers_20260822.md CORRECTION block appended 08:47Z):\n  marker cron-registration:cowork-team last renewal 00:36:42Z by session 2eaf4045-4099-4b03-a964-5bde7eb1b3d6\n  that session's transcript froze                  00:40:50Z\n  replacement process PID 42648 started            00:40:51Z (+1s)\n  /cron-cowork-team ran                            00:41:06Z, heartbeat_age=328s\n    -> task_force_release_orphan -> released:false, heartbeat_fresh -> STOP, no-op\n  dispatcher dead 00:36Z -> 08:47Z = 8h10m\n  Blast radius: docs/data/pressure-state.json frozen at 00:36Z (matches final heartbeat exactly); ZERO docs/data/unified-agent-synthesis-2026-08-23-*.json produced; sub-hourly slots silent (news-scout-market, market-watcher-market, alert-commander-market). The 12 RemoteTriggers are session-independent so guaranteed/hourly slots kept running — which is WHY nobody noticed for 8h.\n  LATENCY AMPLIFIER: marker ttl_seconds=691200 (8 days) and nothing renews it after death. Absent manual intervention the stale lock would have blocked re-arm until 2026-08-31.\n  Manual recovery 08:46Z: heartbeat_age 29405s -> released:true 'orphan_released' -> task_claim -> CronCreate id=120913a5 verified live.\n\nWHY cowork's heartbeat IS meaningful outside the window but standalone's is NEVER: cowork has a renewal hook (scripts/agents-flow/cowork-tick-preflight.sh Step 2). standalone-team has NO heartbeat-renewal hook at all per its own SKILL.md 1.4 T=120 rationale, so its marker heartbeat is meaningless in BOTH directions.\n\nPROPOSED DIRECTION (architect decides — NOT settled, PO is not designing this):\n  Make transcript-mtime the PRIMARY liveness oracle: stat ~/.claude/projects/<encoded-cwd>/<owner_client_session>.jsonl — recent mtime = LIVE, full stop, no blind window.\n  Cross-check with ps -eo pid,etime,lstart,command | grep '[c]laude': a marker whose payload.registering_process PID is absent from ps is dead regardless of heartbeat.\n  Demote heartbeat_age AND session-presence to corroboration only — never deciding.\n  Reusable probe belongs at scripts/agents-flow/cron-marker-liveness-probe.sh per CLAUDE.md Script Persistence (scripts/, never /tmp) with a pointer added to each of the three owning SKILL.md files.\n\nMUST BE ENCODED IN WHATEVER SHIPS — TIMEZONE TRAP (hit live during this investigation): stat -f '%Sm' prints LOCAL time; markers carry epoch/UTC. This host runs CEST (UTC+2) with French locale ('Dim', 'aou'), despite memory user_location recording GMT+7. Mixing the two invents or hides multi-hour gaps. Any probe script MUST normalise to UTC explicitly and MUST NOT parse locale month names.\n\nCOUPLING: fixing oracle (2) alone still leaves oracle (1) wrong. Architect must decide whether the presence roster is repaired (sibling SPIKE row) or removed from the decision path entirely. Row FIX-CRONCREATE-CONTRACT-DIVERGENCE-DURABLE-NOOP-AND-NO-DESCRIPTION-PARAM edits the SAME three files and is depends_on-gated behind this row to avoid a same-file collision."
+      },
+      {
+        "id": "FIX-CRONCREATE-CONTRACT-DIVERGENCE-DURABLE-NOOP-AND-NO-DESCRIPTION-PARAM",
+        "type": "FIX",
+        "title": "cron SKILL.md docs contradict the live CronCreate runtime on two axes: durable:true is asserted to persist but the runtime says session-only, and Step 1d Phase 1 IDENTITY matching keys off a `description` parameter the schema does not have",
+        "owner": "po",
+        "status": "READY",
+        "priority": "P3",
+        "size": "S",
+        "zone": "cross-service/",
+        "next_agent": "agent-father",
+        "created_at": "2026-08-23T09:04:15Z",
+        "created_by": "po",
+        "updated_at": "2026-08-23T09:04:38Z",
+        "updated_by": "po",
+        "files": [
+          ".claude/skills/cron-cowork-team/SKILL.md",
+          ".claude/skills/cron-standalone-team/SKILL.md",
+          ".claude/skills/cron-detect-loop/SKILL.md"
+        ],
+        "depends_on": [
+          "FIX-CRON-REARM-STEP1B1-LIVENESS-ORACLE-BLIND-WINDOW-FALSE-LIVE"
+        ],
+        "verification_gate": "both_claims_reconciled_against_a_freshly_captured_CronCreate_response_pasted_into_the_doc_not_asserted_from_memory",
+        "status_note": "SURFACED 2026-08-23 during the cowork dispatcher recovery (real CronCreate call, id=120913a5). Two independent doc-vs-runtime divergences in the same skill family.\n\n(a) durable:true IS A NO-OP IN THIS BUILD.\n  Skill Step 2 passes durable: true (.claude/skills/cron-cowork-team/SKILL.md:156 and :186).\n  Runtime response verbatim: 'Session-only (not written to disk, dies when Claude exits). Auto-expires after 7 days.'\n  But .claude/skills/cron-cowork-team/SKILL.md:207 asserts 'durable: true makes the cron persist across CLI process restarts within the same session' and .claude/skills/cron-standalone-team/SKILL.md:190 makes the same claim.\n  DECIDE ONE: correct the doc to match runtime, or stop passing a dead flag. Do NOT leave both. Capture a fresh CronCreate response and paste it into the doc as the evidence — do not re-assert from memory.\n\n(b) CronCreate HAS NO `description` PARAMETER, BUT THE IDENTITY GUARD KEYS OFF IT.\n  Available schema: cron / prompt / recurring / durable. No description.\n  .claude/skills/cron-cowork-team/SKILL.md:121 Phase 1 IDENTITY matching: 'find any live entry whose description contains ...'. :153 passes description inside the CronCreate call. :184 lists description as a field of the registered job.\n  LIVE WORKAROUND USED 2026-08-23, currently UNDOCUMENTED: the identity string was prepended into the PROMPT text — 'cowork-team master dispatcher - fires every 15 min, fans out to schedule SSOT (agents spawned run_in_background=true per BGFAN-1). ' — which preserves BOTH Phase 1 (identity findable) and Phase 2 (TOMBSTONED fragment intact).\n  RISK IF LEFT UNDOCUMENTED: anyone arming without the prefix silently breaks Phase 1 classify on the NEXT run, which re-opens the exact stale-vs-missing bug Step 1d exists to close (fixed in 9c509d295).\n  Same Phase 1 / description shape must be checked in cron-detect-loop and cron-standalone-team, not cowork alone.\n\nSEQUENCING: depends_on FIX-CRON-REARM-STEP1B1-... because that row rewrites Step 1b.1/Step 1d in the SAME three files. Serialise to avoid a same-file collision — zone isolation rule, docs/agents/po/flow/zone-routing.md Step A2.\n\nOWNER NOTE: .claude/skills/ is inside agent-father's commit_zone (docs/agents/agent-father/init.md:62-64). This row is doc-truth only — no scripts/, no apps/ — so agent-father can land it whole."
       }
     ],
     "review": [
