@@ -77,3 +77,43 @@
 - Server-side/client-side dedup module for the quarter normalizer — REJECTED per BA's own NFR-4 (no build step on the HTML page); kept as accepted, flagged duplication.
 **why-decision:** Fixing only the type-mismatch (as literally spec'd) would ship a design that fails its own acceptance criterion on delivery — the wider duplicate-quarter bug had to be traced to design the fix BA's AC9 actually needs.
 **why-change:** Widened AC9's fix surface from "2/257 rows" to "buildLabel() itself, all rows" (one function, `bctcInspectHandler.ts:167-171`, ~8L incl. new exported `normalizeQuarter()`) — no scope change to the 2 target files, PM/dev-mcp-server routing unaffected.
+
+### STEP architect-S40 · architect · 2026-08-23T13:15:40Z
+**task-id:** FIX-NEWSSCOUT-OFFHOURS-SELFCOMMIT-PROSE-RECIPE-INTERMITTENT
+**what-done:** Designed mechanization of the 26-line off-hours self-commit prose (news-scout + market-watcher) into one shared script; brief at `docs/architecture-briefs/2026-08-23-newsscout-marketwatcher-offhours-selfcommit-mechanize.md`.
+**what-considered:**
+- `cowork-write-last-fired.js` as the precedent — REJECTED as the primary model: it has no MCP-call step, so it doesn't cover the `task_claim`/`task_release` mutex half.
+- `coverage-stamp.sh` — CHOSEN: identical class already solved (MCP mutex via `mcp-call.sh` + deterministic file mutation), reused verbatim as the transport, not reinvented.
+- Fix AC3 (stale header)/AC4 (recover c273) directly this session — REJECTED: the uncommitted c273 section is the dispatch brief's own designated live evidence; touching it would destroy the proof before the mechanized fix ships.
+**why-decision:** A 26-line multi-branch conditional recipe cannot be complied with deterministically by construction; only a single mandatory tool call removes the probabilistic-compliance failure mode, matching the exact fix shape this codebase already used twice (`coverage-stamp.sh`, `cowork-write-last-fired.js`).
+**why-change:** No change from plan — `next_agent=pm` for the two-owner split (developer script, agent-father flow-doc rewire), same shape as the live `FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE`/`FIX-AUDITOR-C04-FLOWDOC-REPOINT` precedent found mid-session.
+
+### STEP architect-S41 · architect · 2026-08-23T13:15:40Z
+**task-id:** UC-ASL-P3
+**what-done:** Resolved BA's 7 ARCH-RATIFY questions, found and closed a missing `depends_on` edge against a peer session's live in-progress work on the same target file, wrote `docs/architecture-briefs/2026-08-23-uc-asl-p3-auditor-db-checks-freeze.md`, repointed 3 sibling predicate rows.
+**what-considered:**
+- BA's non-binding ARCH-RATIFY-2 suggestion (reuse the BCTC SLA Resolver for C-06) — REJECTED: that resolver is earnings-window-specific, wrong domain for a `market_messages` intraday-freshness check.
+- Reimplementing VN holiday/session-hours logic in bash for C-06 — REJECTED: duplicates `vnHolidayData.ts`, the exact class `always_extend_not_duplicate` forbids; found the already-existing, already-hardened reuse target (`vnTradingCalendar.ts`+`marketHours.ts` via `check-foreign-flow-freshness.sh`'s own `bun -e` idiom) instead.
+- Proceeding with FR-1 design as a fresh-build script — REJECTED after discovering `FIX-AUDITOR-C04-PARSEDAT-RECENCY-PREDICATE` was claimed by a peer dev-team session at 12:56:49Z TODAY and is actively creating the same target file with only `checks.c04` — added the missing `depends_on` edge instead of designing a collision.
+**why-decision:** Verifying live board state before designing (not trusting the BA spec's 08-14 snapshot) caught a same-file two-writer race in progress; verifying the actual calendar-reuse domain (not just accepting BA's suggestion) avoided force-fitting an earnings-window model onto an intraday check.
+**why-change:** Zone narrowed per BA's own ARCH-RATIFY-6 recommendation; 3 sibling rows (C-06/C-11/C-12) repointed (next_agent cleared, not closed) rather than left independently editable, closing a latent two-owner-edits-same-file risk on `main.md` too.
+
+### STEP architect-S42 · architect · 2026-08-23T13:15:40Z
+**task-id:** FIX-ORCHSTATE-MINT-FLAGGED-ROW-WITHOUT-RESOLVABLE-HANDLER
+**what-done:** Decided enforcement point (non-fatal REPORT first, fatal later) and predicate reuse; wrote `docs/architecture-briefs/2026-08-23-fix-orchstate-mint-flagged-row-no-handler.md`.
+**what-considered:**
+- Fatal `superRefine` now (option 2) — REJECTED even though the baseline reads 0 live violators: the baseline is a read-only replay, not proof of every future write-time position; found this exact codebase already has a named "standalone-report-first, superRefine-later" migration precedent (`orchStateSchema.ts:658-661`) for the identical class.
+- Auto-derive `next_agent` from zone at mint time (option 3) — REJECTED: would silently defeat the deliberate-dispatch signal a `supervised`/`plan_only` flag exists to create, and zone-detect's own fallback isn't confident enough for a silent auto-fill.
+- Trigger on `supervised AND plan_only` only (mirroring PRIMARY) — REJECTED: 3 of the row's own 4 live-repaired violators carried only one flag; widened to EITHER flag (SECONDARY-shaped).
+**why-decision:** Phased landing gets real, safe visibility immediately with zero regression risk, and the promotion criterion (14 clean days) is evidence-based rather than baseline-based.
+**why-change:** No change from plan — `next_agent=developer`, single-owner (`scripts/orch-validate.mjs` only), no split needed unlike the session's other two rows.
+
+### STEP architect-S43 · architect · 2026-08-23T13:15:40Z
+**task-id:** FIX-USDVND-THRESHOLD-SSOT
+**what-done:** Found the row's own "three live planes" framing was stale (one plane is dead code), found a second, unreported double-counting bug, and designed the SSOT migration onto an already-shipped relative-threshold system; wrote `docs/architecture-briefs/2026-08-23-fix-usdvnd-threshold-ssot.md`.
+**what-considered:**
+- Picking among po's options (a)/(b)/(c) as a blank-slate design choice — REJECTED as the framing: repo-wide grep found `currencySignal()` (plane 2) has zero callers anywhere, so it isn't a live conflict source at all; and `macroThresholds.ts`'s header comment explicitly names replacing "25500 VND" as its own stated purpose — option (a) is already built, not a choice to make from scratch.
+- Scoping the fix to only the Go/TS constant mismatch — REJECTED: reading `cascadeEngine.ts`'s call sequence found `applyMacroAdjustments` (static) and `applyDynamicMacroAdjustments` (σ-based) both fire additively on the identical domain sets, a real double-counting bug the row's text never named.
+- Fixing the double-counting bug fleet-wide (oil/gold too) in this ticket — REJECTED (scope discipline): flagged as a follow-up; only the USD/VND static rule is retired here, as a direct consequence of "pick one SSOT," not a separate fix.
+**why-decision:** A Go-side port of the already-battle-tested TS formula (including its 50-VND and 0.5%-FX-floor phantom-spike guards) resolves the classifier saturation structurally — the discriminating band travels with the rolling mean instead of sitting at a fixed level VND's secular drift has permanently cleared.
+**why-change:** Widened from "pick a threshold value" to "delete dead code + retire a redundant static rule + port an existing formula across a language boundary" — no change to `next_agent=pm` (multi-zone split, Go + TS tracks).
