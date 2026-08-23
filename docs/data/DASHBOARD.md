@@ -1894,3 +1894,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · 23 crons STALE (e.g., morningBriefing)
+**Severity:** WARN | **Date:** 2026-08-23 | **Status:** OPEN
+**Location:** scheduler
+**Details:** Twenty-three cron jobs have STALE status (overdue but not yet missed): morningBriefing, eveningSummary, and others
+**Impact:** Scheduled tasks running behind schedule; potential SLA breaches if they miss next deadline
+**Root cause:** Cron scheduler resource contention or delayed execution
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-23T07:56:37Z (signal sys-20260823T075603-4798, system-auditor -> po, dedup_key=auditor-a29-fire-gap:stale-crons, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
