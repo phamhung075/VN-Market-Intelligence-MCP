@@ -1,6 +1,6 @@
 {
-  "written_at": "2026-08-23T21:03:16Z",
-  "fire_tick": "2026-08-23T21:00Z",
+  "written_at": "2026-08-23T21:32:19Z",
+  "fire_tick": "2026-08-23T21:30Z",
   "verdict": "FAILURE",
   "detail": "launchd_agents: launchd not loaded/unhealthy: com.vn-market.fleet-push(exit-status:1, STALE-ACK(tracked_by=FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD,status=ABSENT)) (also acknowledged-degraded, tracked: com.vn-market.docker-events(exit-status:143) ); ",
   "checks": {
