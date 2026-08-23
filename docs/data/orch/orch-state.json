@@ -13325,6 +13325,18 @@
         "dedup_key": "prepush:task-claim-lint|linemoved-grandfather-miss",
         "note": "PO PUSH-BACKSTOP 2026-08-23T13:44Z: ran scripts/fleet-worktree-push.sh (ahead=42 > threshold 20, behind=0, tsc GREEN). Push rejected by the pre-push doc-shaped gate. NOT the known intermittent SIGABRT class (FIX-TASKCLAIM-LINT-SIGABRT-EXIT134-REJECTS-TENTH-OF-FLEET-PUSHES) — this is a DETERMINISTIC lint FAIL with full output, reproducing on consecutive runs (abort signals 13:35:47Z and 13:44:51Z).\n\nFAILING SITES (4, all pre-existing debt, none introduced by the pushed commits):\n  docs/agents/ba/init.md:117 task_claim  (baseline line 113)\n  docs/agents/ba/init.md:131 task_release (baseline line 127)\n  docs/agents/pm/init.md:129 task_claim  (baseline line 125)\n  docs/agents/pm/init.md:143 task_release (baseline line 139)\nEach reports LINE-MOVED: same file + same snippet, grandfathered in docs/data/task-claim-owner-session-baseline.json at a line 4 lower. The linter grandfathers by file+LINE, so any unrelated edit above these blocks silently un-grandfathers them and reds the gate for the whole fleet.\n\nAC1 Add owner_client_session to all 4 call sites (pay the debt) — the lint output explicitly directs this and forbids re-running --update to relabel the line.\nAC2 Do NOT re-baseline as the fix. Grandfathering by line number is the root cause; AC2 is to make the baseline key on file+snippet (or a content hash), so a line shift can never re-red a grandfathered site.\nAC3 After the fix, `bash scripts/fleet-worktree-push.sh` completes and origin/main receives the backlog (42+ commits at time of filing).\n\nIMPACT: every fleet push is blocked, so all agent work since the last successful push exists only on this host — feedback_red_prepush_strands_fleet. Zone is docs/agents/ (agent-father) for AC1; AC2 touches scripts/ + docs/data/ and may need a split to developer.",
         "status_note": "Filed by PO push-backstop, not by triage. AC1 is a 4-line edit and unblocks the fleet immediately; AC2 is the durable fix. Split if the zones conflict."
+      },
+      {
+        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort",
+        "type": "routing-gap",
+        "status": "BACKLOG",
+        "owner": "po",
+        "zone": "docs/agents/po/flow/",
+        "title": "Unrouted signal type 'auto-push-abort' (Pipeline A) — no table row in docs/agents/po/flow/triage-signals.md",
+        "dedup_key": "signal-type-registry-gap:auto-push-abort",
+        "created_at": "2026-08-23T14:00:30Z",
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=auto-push-abort routed on Pipeline A (a matching table row exists in triage-signals.md's own Pipeline-A section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
+        "updated_at": "2026-08-23T14:00:32Z"
       }
     ],
     "closed_sprints": [
