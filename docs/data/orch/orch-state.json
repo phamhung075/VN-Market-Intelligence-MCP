@@ -21133,7 +21133,7 @@
         "last_served_tick": "2026-08-23T14:55:52Z"
       }
     },
-    "_updated_at": "2026-08-23T15:54:07Z",
+    "_updated_at": "2026-08-23T15:56:38Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -21546,6 +21546,65 @@
         },
         "createdAt": "",
         "drained_at": "2026-08-23T15:54:07Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "fbf3660850e1a7911e902b232089df71c71580e3157ee5907d38d513792cf378",
+        "source": "file",
+        "from": "ci-health-probe",
+        "to": "po",
+        "type": "ci_red",
+        "priority": "high",
+        "payload": {
+          "check_id": "CI-RED-0c938085",
+          "head_sha": "0c9380859c4e6348f3494a7d3b9f96a7775fac43",
+          "run_id": 32649080081,
+          "run_url": "https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/32649080081",
+          "conclusion": "failure",
+          "failing_jobs": [
+            {
+              "name": "signal-type-coverage-guard",
+              "conclusion": "failure",
+              "jobId": 97217759964
+            }
+          ],
+          "fingerprint": "9f49eab404c32ca36d2b453cecd3fa51b7a875a9680f3ba14b402eca36fefb80",
+          "zone_owner": "dev-team (CI fix)",
+          "summary": "CI RED on main HEAD 0c9380859c4e6348f3494a7d3b9f96a7775fac43: signal-type-coverage-guard",
+          "suggested_sprint_class": "FIX",
+          "verification_gate": "ci_green_on_subsequent_push"
+        },
+        "createdAt": "2026-08-23T15:54:43Z",
+        "drained_at": "2026-08-23T15:56:38Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b4e5ec27e18e56cc7660bb57571acc54c5eff7b78c4bdc88bacd0c919ae6f16c",
+        "source": "file",
+        "from": "dev-team",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "low",
+        "payload": {
+          "module": "docs/agents/po/flow/triage-signals.md Pipeline-A routing table",
+          "summary": "Two unrouted Pipeline-A signal types now sit in pending_triage_inbox[]: sprint_registry_dangling_ids (pre-existing) and recurring-bug (introduced by this tick, 2 rows). Routing rows live in agent-father's exclusive zone, so dev-team cannot add them.",
+          "owner_zone_note": "docs/agents/** is agent-father's exclusive zone. Route the table edit there; dev-team and the router must not write it.",
+          "self_reported": "The 2 recurring-bug rows were emitted by THIS dev-team tick (2026-08-23T15:37Z) while reporting two genuine Step 0a findings. Verified at source that recurring-bug was absent from the inbox at commit 0c9380859 (the SHA CI tested) and present afterwards -- so the next CI run will report BOTH types, and the second one is self-inflicted. Recording it rather than letting it look pre-existing.",
+          "root_cause_of_the_self_inflicted_half": "docs/agents/dev-team/flow/main.md's HEAD.lock-recurrence example hands the author a ready-made signal envelope using type 'recurring-bug'. That literal appears ZERO times in either docs/agents/po/flow/triage-signals.md or triage-signals-longtail.md, so the flow doc's own copy-paste template emits a type the Pipeline-A guard treats as unrouted. Any agent following that example reds signal-type-coverage-guard. This is a template defect, not a one-off author error -- it will recur for every future reader of that section.",
+          "evidence": {
+            "ci_run": "32649080081",
+            "ci_head": "0c9380859c4e6348f3494a7d3b9f96a7775fac43",
+            "failing_job": "signal-type-coverage-guard",
+            "guard_verdict": "FAIL — unrouted Pipeline-A types (dev_team_idle_chain.pending_triage_inbox[]): [\"sprint_registry_dangling_ids\"]",
+            "routed_types_appear_literally": "bctc_signal(1), bug-escalation(2), context_bloat_breach(4+2), cowork-fire(1)",
+            "unrouted_types_appear_literally": "recurring-bug(0), sprint_registry_dangling_ids(0)"
+          },
+          "requested_fix": "Add Pipeline-A routing rows for sprint_registry_dangling_ids and recurring-bug, AND correct the dev-team flow doc's HEAD.lock example to template a routed type (or add recurring-bug to the table so the example becomes valid). Fixing only the table leaves the template correct-by-accident; fixing only the doc leaves the 2 live rows unrouted.",
+          "guard_caution": "Do NOT invoke scripts/audits/guard-signal-type-coverage.sh to verify: it is not read-only (writes live orch-state.json via ORCH_APPLY_LIVE_FILE_OVERRIDE) and its documented --check flag is a no-op alias, not a dry-run. Verify by grepping the Pipeline-A table for the type instead.",
+          "action_required": "mint_fix_task"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T15:56:38Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
