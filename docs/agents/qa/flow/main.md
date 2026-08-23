@@ -1,4 +1,4 @@
-<!-- size-justification: 275L (corrected from stale 227L claim, drift undocumented pre-2026-07-25) — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate + mock-production guard (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval/mock-guard checklist steps are tightly sequential and cannot decompose without losing gate ordering; mandatory decision-journal per-task step at verdict routing. +11L: WF-1 error-boundary STOP-RELEASE block (AC-WF1-3). +4L: WF-3 INV-GATEWAY-1 annotations. +1L: FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L APPEND class annotation. UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK 2026-07-22: +42L — Direct-Commit Verify entry point (verify-committed/-approved/-changes), the hard qa-side prerequisite for dev-team's Review-Lane QA-Drain (every one of its 32 live source rows has branch:null, incompatible with the `pipeline` JUMP-TO's git-checkout precondition); additive only, `pipeline`/`approved`/`changes-requested` unchanged. QA-FLOW-QUALITY-AUDIT-CHECKLIST-FRESHNESS 2026-07-25: +1L — thin dispatch row to new sub-flow `./quality-audit.md` (checklist-demand sourcing + freshness verification + gap-escalation now durable, was ephemeral router-prompt-only; lazy-load pattern, no logic inlined here). 2026-08-12 doc-self-heal (FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS verify-committed cycle): +2L — Direct-Commit Verify step 4 gained a non-bun-zone substitution note (pytest/mypy for Python microservices, run inside the zone's actual deployed image, never host/sandbox — host dependency drift silently produced a false 195/195-green claim on rag-service). FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW 2026-08-15 (agent-father): +~30L — new "OOM-Class Durability Gate" section in Pipeline (detection rule + D1-D5 summary, full spec delegated to new SSOT `docs/standards/oom-durability-verification-bar.md`, generalised fleet-wide from RAG-MEM-DURABILITY-BAR v2) + a cross-reference paragraph in Direct-Commit Verify (the observed path for every OOM-class row so far) gating `vc-approved`; closes 5 defects (docker-inspect-only signal, unsettled window, restart-laundering, negative-only criterion, stale grandfather-exemption) proven live on the rag-service OOM incident. FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR 2026-08-23 (agent-father): +50L — `vc-approved`/`vc-changes` verdict exits gained literal `jq | orch-apply.sh` executable blocks (both previously prose-only, no write actuator at all — 4 confirmed stranded rows permanently consumed `qa[]` `QA_CAP=10` slots) + a self-verify re-read on each, matching the `FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR` template (commit `3ce726a6e`). -->
+<!-- size-justification: 275L (corrected from stale 227L claim, drift undocumented pre-2026-07-25) — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate + mock-production guard (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval/mock-guard checklist steps are tightly sequential and cannot decompose without losing gate ordering; mandatory decision-journal per-task step at verdict routing. +11L: WF-1 error-boundary STOP-RELEASE block (AC-WF1-3). +4L: WF-3 INV-GATEWAY-1 annotations. +1L: FIX-QA-NOTEBOOK-WRITE-SELFCAP-200L APPEND class annotation. UNBLOCK-DEVTEAM-DISPATCH-GATE-STAGING-DEADLOCK 2026-07-22: +42L — Direct-Commit Verify entry point (verify-committed/-approved/-changes), the hard qa-side prerequisite for dev-team's Review-Lane QA-Drain (every one of its 32 live source rows has branch:null, incompatible with the `pipeline` JUMP-TO's git-checkout precondition); additive only, `pipeline`/`approved`/`changes-requested` unchanged. QA-FLOW-QUALITY-AUDIT-CHECKLIST-FRESHNESS 2026-07-25: +1L — thin dispatch row to new sub-flow `./quality-audit.md` (checklist-demand sourcing + freshness verification + gap-escalation now durable, was ephemeral router-prompt-only; lazy-load pattern, no logic inlined here). 2026-08-12 doc-self-heal (FIX-RAG-EMBEDDER-IDLE-UNLOAD-ALLOCATOR-PAGES-NOT-RETURNED-TO-OS verify-committed cycle): +2L — Direct-Commit Verify step 4 gained a non-bun-zone substitution note (pytest/mypy for Python microservices, run inside the zone's actual deployed image, never host/sandbox — host dependency drift silently produced a false 195/195-green claim on rag-service). FIX-QA-OOM-CLASS-AC3-CERTIFIES-ON-UNRELIABLE-SIGNAL-AND-UNSETTLED-WINDOW 2026-08-15 (agent-father): +~30L — new "OOM-Class Durability Gate" section in Pipeline (detection rule + D1-D5 summary, full spec delegated to new SSOT `docs/standards/oom-durability-verification-bar.md`, generalised fleet-wide from RAG-MEM-DURABILITY-BAR v2) + a cross-reference paragraph in Direct-Commit Verify (the observed path for every OOM-class row so far) gating `vc-approved`; closes 5 defects (docker-inspect-only signal, unsettled window, restart-laundering, negative-only criterion, stale grandfather-exemption) proven live on the rag-service OOM incident. FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR 2026-08-23 (agent-father): +50L — `vc-approved`/`vc-changes` verdict exits gained literal `jq | orch-apply.sh` executable blocks (both previously prose-only, no write actuator at all — 4 confirmed stranded rows permanently consumed `qa[]` `QA_CAP=10` slots) + a self-verify re-read on each, matching the `FIX-PO-BATCH-MINT-NO-WRITE-ACTUATOR` template (commit `3ce726a6e`). SAME ROW, redispatch 1 (agent-father, 2026-08-23T14:20Z, after qa CHANGES_REQUESTED on commit `863a250e3`): +24L (366→390L actual; the "275L" claim at the head of this justification has been stale since at least the 2026-08-15 edit and is NOT corrected here — out of this row's scope) — the shipped jq could not pass `orch-validate.mjs` at all, so all three of qa's findings are closed here: `del(.next_agent)` replacing `next_agent: null` (TaskSchema:208 is optional-NOT-nullable, unlike HeadSchema:324), a mandatory RC-VERIF `verification.raw_probe` block with a fail-loud empty-field refuse (§ 8A `checkVerificationGate` hard-rejects DONE_VERIFIED without it), `($t.owner // $t.owner_agent // "po")` replacing the null-emitting `$t.owner`, widened self-verify predicates on both blocks, and a `ORCH_APPLY_LIVE_FILE_OVERRIDE` dry-run recipe so the next editor verifies by executing rather than reading. -->
 
 # QA — Main Flow
 
@@ -205,27 +205,45 @@ No `ISSUE` set AND all checks pass AND (if OOM-class) the Durability Gate D1-D5 
 task_id="<id>"                                   # the row's own id
 REVIEW_RECORD_NOTE="<the Review Record text described above>"
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-jq --arg id "$task_id" --arg now "$NOW" --arg note "$REVIEW_RECORD_NOTE" '
+# ── RC-VERIF raw_probe (MANDATORY — orchStateSchema.ts § 8A `checkVerificationGate`) ──
+# A row flipped to DONE_VERIFIED is HARD-REJECTED by orch-validate.mjs unless it carries
+# verification.raw_probe{tool,args,live_value_observed,observed_at}. Fill these three from
+# the checks you ACTUALLY ran in § Verify above — never from the row's own prose. Leaving
+# any of them empty makes the jq below refuse (fail-loud) rather than emit a bad candidate.
+PROBE_TOOL="git merge-base --is-ancestor + git show --stat + bun test + bun tsc --noEmit"
+PROBE_ARGS="commit=$COMMIT; files=<the row's .files[] joined>"
+PROBE_OBSERVED="<literal observed result, e.g. 'ancestor=yes; stat touches 2/2 claimed files; bun test 41 pass 0 fail; tsc 0 errors'>"
+jq --arg id "$task_id" --arg now "$NOW" --arg note "$REVIEW_RECORD_NOTE" \
+   --arg ptool "$PROBE_TOOL" --arg pargs "$PROBE_ARGS" --arg pobs "$PROBE_OBSERVED" '
   (.task_board.qa // []) as $q
   | ([$q[] | select(.id == $id)][0]) as $t
   | if $t == null then error("id not in qa[] -- refuse")
     elif ($t.status // null) != "QA" then error("status != QA (\($t.status)) -- refuse")
+    elif (($ptool | length) == 0 or ($pargs | length) == 0 or ($pobs | length) == 0)
+      then error("RC-VERIF: raw_probe tool/args/live_value_observed empty -- refuse")
     else . end
   | .task_board.qa = [$q[] | select(.id != $id)]
   | .task_board.done_verified = ((.task_board.done_verified // []) + [
-      ($t + {
+      (($t + {
         status: "DONE_VERIFIED",
-        next_agent: null,
         qa_verified_at: $now,
+        verification: (($t.verification // {}) + {
+          raw_probe: { tool: $ptool, args: $pargs, live_value_observed: $pobs, observed_at: $now }
+        }),
         status_note: (($t.status_note // "") + "\n[QA] Review Record (direct-commit verify): " + $note)
-      })
+      }) | del(.next_agent))
     ])
 ' "$PROJECT_ROOT/docs/data/orch/orch-state.json" | bash "$PROJECT_ROOT/scripts/orch-apply.sh"
 
 # Self-verify (mandatory — RETURN may not assert the lane-move without this passing):
-jq -e --arg id "$task_id" '.task_board.done_verified[] | select(.id == $id) | .status == "DONE_VERIFIED"' \
-  "$PROJECT_ROOT/docs/data/orch/orch-state.json" || { echo "LANE-MOVE NOT PERSISTED"; exit 1; }
+jq -e --arg id "$task_id" '.task_board.done_verified[]
+  | select(.id == $id)
+  | (.status == "DONE_VERIFIED") and (has("next_agent") | not) and (.verification.raw_probe.tool != null)' \
+  "$PROJECT_ROOT/docs/data/orch/orch-state.json" >/dev/null \
+  || { echo "LANE-MOVE NOT PERSISTED (or next_agent still present / raw_probe missing)"; exit 1; }
 ```
+
+**TaskSchema `next_agent` is `z.string().optional()` — OPTIONAL, NOT NULLABLE** (`orchStateSchema.ts:208`). Emitting `next_agent: null` on a `task_board` row aborts the write with `expected string, received null` → `[orch-apply] ABORTED: validator exit 2`, so the whole lane-move silently fails to land (live repro 2026-08-23; of 31 live `done_verified[]` rows 27 hold a string and 4 OMIT the key — zero hold null). Hence `del(.next_agent)`, never `next_agent: null`. Do NOT copy the `.head` idiom at the top of this file (`.head = {... next_agent:null}`): `HeadSchema.next_agent` IS `z.string().nullable().optional()` (`orchStateSchema.ts:324`), a genuinely different contract — that line is correct and must stay.
 ```
 ## RETURN
 DONE: Task <id> verified against main HEAD commit <commit> — no branch/merge needed (already on main)
@@ -237,7 +255,11 @@ PIPELINE: continue
 **verify-committed-changes:** append the failing check(s)/`ISSUE` to the row's `status_note` (file:line where applicable). Move `.task_board.qa[] -> .task_board.review[]` (back to review, status `QA -> REVIEW`), stamp `redispatch_count += 1` (mirrors the dead-worker resume convention already live on board rows, e.g. `UC-SDF-P4`'s `redispatch_count`/`resume_note`). Route to the row's own `owner` field, NOT `fixer` — there is no task branch for a fixer to work on; the owner must apply a NEW direct commit. **Executable form (FIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR, 2026-08-23 — same mechanism requirement as `vc-approved` above, this path previously had ZERO `orch-apply.sh` mention at all):**
 ```bash
 task_id="<id>"                                   # the row's own id
-ISSUE_NOTE="<the failing check(s)/ISSUE text described above>"
+# CEILING (live 2026-08-23): review[] IS in orch-row-prose-ceiling-check.mjs PROSE_CEILING_LANES.
+# A long $ISSUE_NOTE appended to an already-large row hard-rejects at orch-apply Stage 2.5
+# (ORCH_ROW_PROSE_CEILING_BYTES, default 12000) and the lane-move does not land. Keep this
+# inline note a SHORT summary and put the verbatim issue list behind the row's `detail_ref`.
+ISSUE_NOTE="<short summary of the failing check(s)/ISSUE — verbatim detail goes to detail_ref>"
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 jq --arg id "$task_id" --arg now "$NOW" --arg note "$ISSUE_NOTE" '
   (.task_board.qa // []) as $q
@@ -249,16 +271,30 @@ jq --arg id "$task_id" --arg now "$NOW" --arg note "$ISSUE_NOTE" '
   | .task_board.review = ((.task_board.review // []) + [
       ($t + {
         status: "REVIEW",
-        next_agent: $t.owner,
+        next_agent: ($t.owner // $t.owner_agent // "po"),
         redispatch_count: (($t.redispatch_count // 0) + 1),
+        qa_changes_requested_at: $now,
         status_note: (($t.status_note // "") + "\n[QA] CHANGES_REQUESTED (direct-commit verify): " + $note)
       })
     ])
 ' "$PROJECT_ROOT/docs/data/orch/orch-state.json" | bash "$PROJECT_ROOT/scripts/orch-apply.sh"
 
 # Self-verify (mandatory — RETURN may not assert the lane-move without this passing):
-jq -e --arg id "$task_id" '.task_board.review[] | select(.id == $id) | .status == "REVIEW"' \
-  "$PROJECT_ROOT/docs/data/orch/orch-state.json" || { echo "LANE-MOVE NOT PERSISTED"; exit 1; }
+jq -e --arg id "$task_id" '.task_board.review[]
+  | select(.id == $id)
+  | (.status == "REVIEW") and ((.next_agent | type) == "string")' \
+  "$PROJECT_ROOT/docs/data/orch/orch-state.json" >/dev/null \
+  || { echo "LANE-MOVE NOT PERSISTED (or next_agent not a string)"; exit 1; }
+```
+
+**`next_agent` must resolve to a STRING, never null** — same `orchStateSchema.ts:208` contract as `vc-approved` above. A bare `next_agent: $t.owner` emits null whenever `.owner` is absent, which aborts the write; `.owner` IS absent on live `review[]` rows today (`RAG-FTS-BUILD-MEMORY-BOUND`, `FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE`, both confirmed 2026-08-23), so the `// $t.owner_agent // "po"` fallback chain is load-bearing, not defensive padding. When it falls through to `po`, say so in `$ISSUE_NOTE` so PO knows it must re-route.
+
+**Dry-run either block before trusting it on a real row** (both were shipped once as prose, then once as jq that could not pass the validator — read-only inspection missed both). `orch-apply.sh` honours `ORCH_APPLY_LIVE_FILE_OVERRIDE`, so a full end-to-end rehearsal never touches the hot file:
+```bash
+FX=$(mktemp -d)/orch-state.json && cp "$PROJECT_ROOT/docs/data/orch/orch-state.json" "$FX"
+export ORCH_APPLY_LIVE_FILE_OVERRIDE="$FX"     # orch-apply.sh writes here instead
+# ...run the block above with "$FX" substituted for the jq input path; exit 0 == it will land.
+unset ORCH_APPLY_LIVE_FILE_OVERRIDE            # MANDATORY — a leaked export sends real writes to the fixture
 ```
 ```
 ## RETURN
