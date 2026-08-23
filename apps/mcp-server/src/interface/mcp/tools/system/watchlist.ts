@@ -1,5 +1,14 @@
 /**
  * Task 082 — Watchlist MCP Tools
+ * size-justification: 591L — TASK_001-WATCHLIST-WRITE-THROUGH-INFRA (2026-08-23) added
+ * the system-map.json write-through hooks to add_to_watchlist/remove_from_watchlist
+ * (fail-open try/catch + test-isolation guard at each call site, per-tool test-only
+ * `_testSystemMapPath`/`_testSystemMapDeps` injection params, optional `sector` schema
+ * field + titleCaseDomain() fallback) — grew baseline 475L -> 582L. Extracting the
+ * write-through call sites into a shared helper was considered and rejected: each
+ * call site's guard differs (add always attempts; remove only when `result.changes >
+ * 0`) and the two response-text join points differ, so a shared helper would need as
+ * many parameters as the inline block has lines.
  *
  * Interface layer: registers four MCP tools on a McpServer instance.
  *
@@ -23,7 +32,24 @@ import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import { getSectorPeers, SECTOR_NAME_VI } from "../../../../domain/services/sectorPeers.js";
 import { getCompanyName } from "../../../../domain/services/stockAliases.js";
 import { tradingWindowLabel } from "../../../../domain/services/tradingWindow.js";
+import {
+  upsertSystemMapWatchlistEntry,
+  removeSystemMapWatchlistEntry,
+  DEFAULT_SYSTEM_MAP_PATH,
+} from "../../../../infrastructure/db/systemMapWatchlistWriter.js";
 import type { DomainType } from "../../../../../bctc-schema.js";
+
+/**
+ * Title-Case a DomainType enum value for the write-through `sector` fallback
+ * (TASK_001-WATCHLIST-WRITE-THROUGH-INFRA AC-3) — e.g. "real_estate" ->
+ * "Real Estate". Used only when the caller omits the optional `sector` param.
+ */
+function titleCaseDomain(domain: DomainType): string {
+  return domain
+    .split("_")
+    .map((word) => (word.length > 0 ? word[0]!.toUpperCase() + word.slice(1) : word))
+    .join(" ");
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Zod schemas
@@ -178,6 +204,16 @@ export function registerWatchlistTools(server: McpServer): void {
         .describe("Stock ticker code (e.g. VCB, HPG, GAS)"),
       exchange: ExchangeEnum.describe("Vietnamese stock exchange"),
       domain: DomainTypeEnum.optional().describe("Business sector / industry"),
+      sector: z
+        .string()
+        .max(100)
+        .optional()
+        .describe(
+          "Free-text sector description for the system-map.json write-through mirror " +
+            "(e.g. \"Real Estate / Property Development\") — richer than the closed `domain` " +
+            "enum. Falls back to a Title-Case rendering of `domain` when omitted " +
+            "(TASK_001-WATCHLIST-WRITE-THROUGH-INFRA AC-3).",
+        ),
       notes: z
         .string()
         .max(500)
@@ -186,8 +222,13 @@ export function registerWatchlistTools(server: McpServer): void {
       thresholds: ThresholdsSchema.optional().describe(
         "Custom alert thresholds — defaults used if omitted",
       ),
+      // Test-only injection (ignored in production — unknown keys stripped by Zod at
+      // the transport boundary; only reachable via direct in-process handler calls,
+      // same convention as marketTools.ts's _testHoseClient).
+      _testSystemMapPath: z.string().optional(),
+      _testSystemMapDeps: z.any().optional(),
     },
-    async ({ actionCode, exchange, domain, notes, thresholds }) => {
+    async ({ actionCode, exchange, domain, sector, notes, thresholds, _testSystemMapPath, _testSystemMapDeps }) => {
       try {
         await initDatabase();
         const db = getDb();
@@ -223,6 +264,51 @@ export function registerWatchlistTools(server: McpServer): void {
           1,
         );
 
+        // ── Write-through to system-map.json (TASK_001-WATCHLIST-WRITE-
+        // THROUGH-INFRA AC-2) ────────────────────────────────────────────
+        // Fail-open discipline: the DB INSERT above has already committed.
+        // A file-write failure must never undo it or fail this tool call —
+        // only append a soft warning suffix to the response. The writer
+        // itself never throws (see systemMapWatchlistWriter.ts docblock);
+        // the outer try/catch here is defense-in-depth for anything
+        // unexpected between construction and the call.
+        //
+        // Test isolation: `bun test` runs with DB_PATH=":memory:" fleet-wide
+        // (every test file in this repo). Without a guard, EVERY existing
+        // add_to_watchlist/remove_from_watchlist test (082/084/087/123/1414/
+        // 220) would write real/fake tickers straight into the live
+        // docs/data/system-map.json SSOT on every CI run — the exact
+        // "phantom ticker" corruption this write-through exists to PREVENT
+        // for the parent FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58 row. Skip
+        // silently (not a failure — no warning suffix) in test mode unless a
+        // test explicitly injects `_testSystemMapPath` to exercise this path
+        // against a fixture.
+        const isTestDb = Bun.env["DB_PATH"] === ":memory:";
+        let systemMapWriteWarning = "";
+        if (_testSystemMapPath !== undefined || !isTestDb) {
+          try {
+            await upsertSystemMapWatchlistEntry(
+              _testSystemMapPath ?? DEFAULT_SYSTEM_MAP_PATH,
+              {
+                ticker: actionCode,
+                sector: sector ?? titleCaseDomain((domain ?? "other") as DomainType),
+                exchange,
+                active: true,
+              },
+              {
+                deps: _testSystemMapDeps as never,
+                onError: (err) => {
+                  systemMapWriteWarning =
+                    `\n[Cảnh báo] Đã lưu vào database, nhưng ghi system-map.json thất bại: ${err.message}`;
+                },
+              },
+            );
+          } catch (err) {
+            systemMapWriteWarning =
+              `\n[Cảnh báo] Đã lưu vào database, nhưng ghi system-map.json thất bại: ${(err as Error).message}`;
+          }
+        }
+
         // Fetch current watchlist codes for peer suggestion (excluding just-added stock)
         const existingRows = db
           .prepare("SELECT code FROM watchlist WHERE code != ?")
@@ -242,7 +328,8 @@ export function registerWatchlistTools(server: McpServer): void {
               text:
                 `Đã thêm ${actionCode} (${exchange}) vào danh sách theo dõi.\n` +
                 `Cảnh báo: giảm ${dropPct}% | tăng +${risePct}% | impact >= ${impactScore}/10` +
-                suggestion,
+                suggestion +
+                systemMapWriteWarning,
             },
           ],
         };
@@ -271,8 +358,11 @@ export function registerWatchlistTools(server: McpServer): void {
         .max(10)
         .toUpperCase()
         .describe("Stock ticker code to remove"),
+      // Test-only injection — see add_to_watchlist's matching params above.
+      _testSystemMapPath: z.string().optional(),
+      _testSystemMapDeps: z.any().optional(),
     },
-    async ({ actionCode }) => {
+    async ({ actionCode, _testSystemMapPath, _testSystemMapDeps }) => {
       try {
         await initDatabase();
         const db = getDb();
@@ -280,14 +370,40 @@ export function registerWatchlistTools(server: McpServer): void {
           .prepare("DELETE FROM watchlist WHERE code = ?")
           .run(actionCode);
 
+        // ── Write-through to system-map.json (TASK_001-WATCHLIST-WRITE-
+        // THROUGH-INFRA AC-2) — only when the DB row actually existed;
+        // fail-open + test-isolation guard, same discipline as
+        // add_to_watchlist above (see that handler's comment for why the
+        // isTestDb guard is mandatory, not optional).
+        const isTestDb = Bun.env["DB_PATH"] === ":memory:";
+        let systemMapWriteWarning = "";
+        if (result.changes > 0 && (_testSystemMapPath !== undefined || !isTestDb)) {
+          try {
+            await removeSystemMapWatchlistEntry(
+              _testSystemMapPath ?? DEFAULT_SYSTEM_MAP_PATH,
+              actionCode,
+              {
+                deps: _testSystemMapDeps as never,
+                onError: (err) => {
+                  systemMapWriteWarning =
+                    `\n[Cảnh báo] Đã xoá khỏi database, nhưng ghi system-map.json thất bại: ${err.message}`;
+                },
+              },
+            );
+          } catch (err) {
+            systemMapWriteWarning =
+              `\n[Cảnh báo] Đã xoá khỏi database, nhưng ghi system-map.json thất bại: ${(err as Error).message}`;
+          }
+        }
+
         return {
           content: [
             {
               type: "text" as const,
               text:
-                result.changes > 0
+                (result.changes > 0
                   ? `${actionCode} removed from watchlist.`
-                  : `${actionCode} was not found in the watchlist.`,
+                  : `${actionCode} was not found in the watchlist.`) + systemMapWriteWarning,
             },
           ],
         };
