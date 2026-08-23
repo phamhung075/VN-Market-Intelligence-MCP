@@ -1,0 +1,25 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-08-23T19:07:20Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/dev-rag-service.md",
+    "line_count": 186,
+    "cap": 200,
+    "byte_count": 27694,
+    "byte_cap": 12000,
+    "class": "agent-notebook",
+    "reason": "byte-cap",
+    "overage": 0,
+    "byte_overage": 15694,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "bbbb020a8cb1ce284003e9aefb43ee1f397a25ab57ee751ab3a65d05030f10ab",
+    "processedAt": "2026-08-23T19:22:39Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
