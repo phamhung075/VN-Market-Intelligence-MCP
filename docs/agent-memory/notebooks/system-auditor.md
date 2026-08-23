@@ -1,5 +1,27 @@
 # System Auditor — Tier-1 Notebook
 
+## c115 · 2026-08-23T22:31Z
+### Audit Run Tier-DATA (DB Data-Anomaly Sweep)
+- Tier: DATA | Tables checked: 17 | Findings: 1 (dedup'd)
+- Anomalies: 0 new (all dedup'd) | Status: HEALTHY
+- Scan timestamp: 2026-08-23T22:32:26Z
+
+### Key Counts
+- OHLC violations: 336 (unchanged, baseline residue)
+- Scale anomalies (100x+): 0
+- VNINDEX cache rows: 1
+- Low-confidence reports: 52 (baseline 47, +5 new)
+
+### Finding: financial_reports
+- Table: financial_reports
+- Class: INCORRECT (extraction_confidence < 0.2)
+- Detail: 52 rows with low-confidence extraction flags. Count increased by 5 from baseline (47 → 52).
+- Verdict: REAL finding, but DEDUP-SKIPPED (already-open task: FIX-BCTC-BANK-SUMMARY-MAPPING)
+- Root cause: PDF OCR extraction quality variance; new document batch processed.
+
+### Summary
+DB data-integrity sweep detected one real anomaly (low-confidence financial_reports +5), but it matches an existing board task (FIX-BCTC-BANK-SUMMARY-MAPPING) tracked for resolution. No new signals written (dedup'd). All other canonical counts stable (OHLC violations, scale anomalies, VNINDEX cache unchanged). No fresh OHLC violations in last 2 days. Overall system status: HEALTHY.
+
 ## c114 · 2026-08-23T21:03Z
 
 ### Audit Run Tier-1 (2026-08-23 21:00Z — Runtime Ping)
