@@ -13,7 +13,8 @@
  * Response:  { ok: true, units_stored: N, pages_stored: M }
  *            { error: string }  on 400/500
  *
- * Security: report_id validated as UUID before any DB write. Parameterized SQL only.
+ * Security: report_id validated against financial_reports (existence, not UUID
+ * format — fallback-shell ids are non-UUID by design). Parameterized SQL only.
  * DI contract: db injected by caller (server.ts). No getDb() here.
  * Persistence guard: rows_stored / pages_stored reflect DB-verified COUNT after
  * write — never echo input length (write-wedge detection).
@@ -21,7 +22,6 @@
 
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Database } from "bun:sqlite";
-import { isValidUuid } from "./bctcInspectHandler.js";
 
 // ── Types (§3.2 contract) ──────────────────────────────────────────────────────
 
@@ -105,10 +105,34 @@ export async function handlePushBctcLayout(
     }
 
     // ── Validate report_id ─────────────────────────────────────────────────
+    // FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write: existence check,
+    // NOT UUID-format check. Producers legitimately mint non-UUID ids for
+    // fallback-shell reports (`fallback-<TICKER>-<SORTKEY>` — see
+    // composition-root.ts, bctcReparseJob.ts insertFallbackRecord). The old
+    // format-only gate accepted any syntactically-valid-but-nonexistent UUID
+    // (a real orphan-write risk) while rejecting every genuine fallback-shell
+    // id. isValidUuid() stays correct for its ~14 OTHER call sites (read
+    // side) — untouched by this fix.
     const reportId = parsed.report_id;
-    if (typeof reportId !== "string" || !isValidUuid(reportId)) {
+    if (typeof reportId !== "string" || reportId.length === 0) {
       res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "invalid_report_id: must be UUID", report_id: reportId }));
+      res.end(
+        JSON.stringify({
+          error: "invalid_report_id: must be a non-empty string",
+          report_id: reportId,
+        }),
+      );
+      return;
+    }
+    const knownReport = db.prepare("SELECT 1 FROM financial_reports WHERE id = ?").get(reportId);
+    if (!knownReport) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          error: "invalid_report_id: no matching financial_reports row",
+          report_id: reportId,
+        }),
+      );
       return;
     }
 

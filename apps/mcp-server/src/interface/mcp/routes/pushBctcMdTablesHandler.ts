@@ -19,7 +19,8 @@
  *   500: { error: string }
  *
  * Security:
- *   - report_id validated as UUID before any DB write.
+ *   - report_id validated against financial_reports (existence, not UUID
+ *     format — fallback-shell ids are non-UUID by design).
  *   - Parameterized SQL only — zero string interpolation.
  *
  * Idempotency:
@@ -36,7 +37,6 @@
 
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Database } from "bun:sqlite";
-import { isValidUuid } from "./bctcInspectHandler.js";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -84,12 +84,25 @@ export async function handlePushBctcMdTables(
     }
 
     // ── Validate report_id ───────────────────────────────────────────────────
+    // FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write: existence check,
+    // NOT UUID-format check. See pushBctcLayoutHandler.ts for full rationale.
     const reportId = parsed.report_id;
-    if (typeof reportId !== "string" || !isValidUuid(reportId)) {
+    if (typeof reportId !== "string" || reportId.length === 0) {
       res.writeHead(400, { "Content-Type": "application/json" });
       res.end(
         JSON.stringify({
-          error: "invalid_report_id: must be UUID",
+          error: "invalid_report_id: must be a non-empty string",
+          report_id: reportId,
+        }),
+      );
+      return;
+    }
+    const knownReport = db.prepare("SELECT 1 FROM financial_reports WHERE id = ?").get(reportId);
+    if (!knownReport) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          error: "invalid_report_id: no matching financial_reports row",
           report_id: reportId,
         }),
       );

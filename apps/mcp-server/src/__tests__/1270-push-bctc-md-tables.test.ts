@@ -19,7 +19,14 @@ import { handlePushBctcMdTables } from "../interface/mcp/routes/pushBctcMdTables
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Build a minimal in-memory DB with the bctc_md_tables schema. */
+/**
+ * Build a minimal in-memory DB with the bctc_md_tables schema PLUS a minimal
+ * financial_reports stub (id-only — just enough for the handler's existence
+ * check; FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write). Deliberately
+ * does NOT create bctc_table_rows / bctc_balance_checks — the "does not
+ * touch bctc_table_rows or bctc_balance_checks (Decision A)" test below
+ * depends on those tables being absent from this DB.
+ */
 function makeTestDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
@@ -34,7 +41,13 @@ function makeTestDb(): Database {
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_bmt_report ON bctc_md_tables(report_id)`);
+  db.exec(`CREATE TABLE IF NOT EXISTS financial_reports (id TEXT PRIMARY KEY)`);
   return db;
+}
+
+/** Seed a bare financial_reports row so the handler's existence check passes. */
+function seedFinancialReport(db: Database, id: string): void {
+  db.prepare("INSERT OR IGNORE INTO financial_reports (id) VALUES (?)").run(id);
 }
 
 /** Minimal mock IncomingMessage (body injection path — req body unused). */
@@ -84,6 +97,8 @@ describe("pushBctcMdTablesHandler", () => {
 
   beforeEach(() => {
     db = makeTestDb();
+    seedFinancialReport(db, VALID_UUID);
+    seedFinancialReport(db, ANOTHER_UUID);
   });
 
   it("AC-I-0a: valid payload → 200 + ok:true + tables_stored=1 (DB-verified)", async () => {
@@ -153,7 +168,11 @@ describe("pushBctcMdTablesHandler", () => {
     expect(row.page_count).toBe(3);
   });
 
-  it("AC-I-0c: invalid UUID → 400", async () => {
+  it("AC-I-0c: unknown report_id (not seeded in financial_reports) → 400 — existence gate, not format", async () => {
+    // FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write: "not-a-uuid" is a
+    // syntactically-fine non-empty string; rejected because no
+    // financial_reports row exists for it, NOT because it fails a UUID
+    // regex (that gate was removed; see (NEW) tests below for proof).
     const res = makeRes();
     const badBody = { ...VALID_BODY, report_id: "not-a-uuid" };
     await handlePushBctcMdTables(mockReq, res, db, badBody);
@@ -161,6 +180,41 @@ describe("pushBctcMdTablesHandler", () => {
     expect(res.statusCode).toBe(400);
     const parsed = res.parsedBody as { error: string };
     expect(parsed.error).toMatch(/invalid_report_id/);
+    expect(parsed.error).toContain("no matching financial_reports row");
+  });
+
+  // ── (NEW) FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write ─────────────
+
+  it("(NEW) fallback-shell report_id (non-UUID, seeded): push succeeds 200 + tables land", async () => {
+    const fallbackId = "fallback-FPT-2025-Q4";
+    seedFinancialReport(db, fallbackId);
+    const payload = { ...VALID_BODY, report_id: fallbackId };
+
+    const res = makeRes();
+    await handlePushBctcMdTables(mockReq, res, db, payload);
+
+    expect(res.statusCode).toBe(200);
+    const parsed = res.parsedBody as { ok: boolean; tables_stored: number };
+    expect(parsed.ok).toBe(true);
+    expect(parsed.tables_stored).toBe(1);
+
+    const row = db
+      .prepare("SELECT * FROM bctc_md_tables WHERE report_id = ?")
+      .get(fallbackId) as { table_count: number } | null;
+    expect(row).not.toBeNull();
+    expect(row!.table_count).toBe(2);
+  });
+
+  it("(NEW) syntactically valid but UNSEEDED UUID returns 400 (proves gate is tightened, not relaxed)", async () => {
+    const unknownButWellFormedUuid = "ffffffff-ffff-ffff-ffff-ffffffffffff";
+    const payload = { ...VALID_BODY, report_id: unknownButWellFormedUuid };
+
+    const res = makeRes();
+    await handlePushBctcMdTables(mockReq, res, db, payload);
+
+    expect(res.statusCode).toBe(400);
+    const parsed = res.parsedBody as { error: string };
+    expect(parsed.error).toContain("no matching financial_reports row");
   });
 
   it("AC-I-0d: non-string report_id → 400", async () => {

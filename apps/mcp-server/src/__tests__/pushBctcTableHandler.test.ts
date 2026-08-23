@@ -34,6 +34,31 @@ function openTestDb(): Database {
   return db;
 }
 
+/**
+ * Seed a minimal financial_reports row (FIX-BCTC-FALLBACK-SHELL-REPORTS-
+ * UNEXTRACTABLE-write: handlers now gate report_id on EXISTENCE in
+ * financial_reports, not UUID format). Shape mirrors the production
+ * fallback-shell insert (bctcReparseJob.ts insertFallbackRecord /
+ * composition-root.ts:213).
+ */
+function seedFinancialReport(db: Database, id: string, ticker = "TST"): void {
+  db.prepare(`
+    INSERT OR IGNORE INTO financial_reports (
+      id, action_code, company_name, exchange, domain,
+      period_year, period_quarter, period_type,
+      period_start, period_end, sort_key, parsed_at,
+      extraction_confidence, data_env,
+      balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    id, ticker, ticker, "HOSE", "other",
+    2025, 4, "Q4",
+    "2025-01-01", "2025-12-31",
+    "2025-Q4", new Date().toISOString(), 0, "production",
+    "{}", "{}", "{}", "{}",
+  );
+}
+
 interface CapturedResponse {
   statusCode: number;
   body: string;
@@ -142,6 +167,10 @@ describe("BT-3i-A — handlePushBctcTable", () => {
 
   beforeEach(() => {
     db = openTestDb();
+    // Ticker "TST" (default) — distinct from "FPTX" ticker used by the (NEW)
+    // fallback-shell test below (financial_reports has UNIQUE(action_code,
+    // sort_key); both fixtures share sort_key "2025-Q4").
+    seedFinancialReport(db, FPT_UUID);
   });
 
   afterEach(() => {
@@ -278,14 +307,53 @@ describe("BT-3i-A — handlePushBctcTable", () => {
 
   // ── UUID validation ────────────────────────────────────────────────────────
 
-  it("invalid UUID returns 400", async () => {
+  it("unknown report_id (not seeded in financial_reports) returns 400 — existence gate, not format", async () => {
+    // FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write: "not-a-uuid" is a
+    // syntactically-fine non-empty string; rejected because no
+    // financial_reports row exists for it, NOT because it fails a UUID
+    // regex (that gate was removed; see (NEW) tests below for proof).
     const { res, captured } = mockRes();
     const badPayload = { ...VALID_PAYLOAD, report_id: "not-a-uuid" };
     await handlePushBctcTable(mockReq(badPayload), res, db, badPayload);
 
     expect(captured.statusCode).toBe(400);
     const respObj = JSON.parse(captured.body) as { error: string };
-    expect(respObj.error).toContain("invalid");
+    expect(respObj.error).toContain("invalid_report_id: no matching financial_reports row");
+  });
+
+  // ── (NEW) FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write ─────────────
+
+  it("(NEW) fallback-shell report_id (non-UUID, seeded): push succeeds 200 + rows land", async () => {
+    const fallbackId = "fallback-FPTX-2025-Q4";
+    seedFinancialReport(db, fallbackId, "FPTX");
+    const payload = { ...VALID_PAYLOAD, report_id: fallbackId };
+
+    const { res, captured } = mockRes();
+    await handlePushBctcTable(mockReq(payload), res, db, payload);
+
+    expect(captured.statusCode).toBe(200);
+    const respObj = JSON.parse(captured.body) as { ok: boolean; rows_stored: number };
+    expect(respObj.ok).toBe(true);
+    expect(respObj.rows_stored).toBe(10);
+
+    const count = db
+      .prepare<{ cnt: number }, [string]>(
+        "SELECT COUNT(*) as cnt FROM bctc_table_rows WHERE report_id = ?",
+      )
+      .get(fallbackId);
+    expect(count?.cnt).toBe(10);
+  });
+
+  it("(NEW) syntactically valid but UNSEEDED UUID returns 400 (proves gate is tightened, not relaxed)", async () => {
+    const unknownButWellFormedUuid = "ffffffff-ffff-ffff-ffff-ffffffffffff";
+    const payload = { ...VALID_PAYLOAD, report_id: unknownButWellFormedUuid };
+
+    const { res, captured } = mockRes();
+    await handlePushBctcTable(mockReq(payload), res, db, payload);
+
+    expect(captured.statusCode).toBe(400);
+    const respObj = JSON.parse(captured.body) as { error: string };
+    expect(respObj.error).toContain("invalid_report_id: no matching financial_reports row");
   });
 
   it("missing rows array returns 400", async () => {
@@ -311,6 +379,12 @@ describe("BT-3i-A — handlePushBctcTable", () => {
         return () => fn(); // execute fn synchronously — but inserts are no-ops
       },
       prepare: (sql: string) => {
+        // Existence-check gate (FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write)
+        // runs BEFORE the transaction — must resolve truthy or the handler
+        // 400s before ever reaching the silent-noop write path under test.
+        if (sql.includes("SELECT 1 FROM financial_reports")) {
+          return { get: (..._args: unknown[]) => ({ 1: 1 }) };
+        }
         // DELETE + INSERT are no-ops (return without error)
         if (sql.trim().startsWith("DELETE") || sql.trim().startsWith("INSERT")) {
           return {

@@ -47,6 +47,29 @@ function openTestDb(): Database {
   return db;
 }
 
+/**
+ * FIX-BCTC-FALLBACK-SHELL-REPORTS-UNEXTRACTABLE-write: handlePushBctcLayout
+ * now gates report_id on EXISTENCE in financial_reports (not UUID format).
+ * Seed a bare row so SEED_PAYLOAD's push in beforeEach keeps working.
+ */
+function seedFinancialReportStub(db: Database, id: string): void {
+  db.prepare(`
+    INSERT OR IGNORE INTO financial_reports (
+      id, action_code, company_name, exchange, domain,
+      period_year, period_quarter, period_type,
+      period_start, period_end, sort_key, parsed_at,
+      extraction_confidence, data_env,
+      balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    id, "FPT", "FPT", "HOSE", "other",
+    2025, 4, "Q4",
+    "2025-01-01", "2025-12-31",
+    "2025-Q4", new Date().toISOString(), 0, "production",
+    "{}", "{}", "{}", "{}",
+  );
+}
+
 interface CapturedResponse {
   statusCode: number;
   body: string;
@@ -147,6 +170,7 @@ describe("1273 — handleBctcInspectZones", () => {
 
   beforeEach(async () => {
     db = openTestDb();
+    seedFinancialReportStub(db, REPORT_UUID);
     // Seed zone data via the push handler (tests the read side against real DB state)
     const { res } = mockRes();
     await handlePushBctcLayout({} as IncomingMessage, res, db, SEED_PAYLOAD);
