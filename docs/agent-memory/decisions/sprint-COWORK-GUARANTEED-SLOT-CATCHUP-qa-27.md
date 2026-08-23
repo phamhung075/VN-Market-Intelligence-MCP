@@ -70,3 +70,13 @@
 - lane-move mechanics: default jq blew the review[] prose ceiling (candidate 12105B > 12000B, live=0B since row not currently in review[]) — trimmed the new note (not historical prose) to land under ceiling rather than invoking the mutex-gated `orch-backlog-stub.sh` migration script (out of scope/toolset for an ad-hoc mid-task call).
 **why-decision:** AC-8's own explicit, PO-ratified text (24h window + falling-to-~zero) is unmet by measured evidence, not by assumption; no code rework is warranted (fix is correct on its own terms) so routing is a PO time/scope decision, not a fixer redo → JUMP TO vc-changes, routed to `po` (owner/owner_agent absent), redispatch_count incremented, actual `orch-apply.sh` lane-move executed qa[]->review[] and re-read to confirm.
 **why-change:** no change from plan; disclosed the residual 44% post-wait timeout rate as new telemetry matching out_of_scope(a)'s own predicted P2-pacing trigger, not a defect of this row.
+
+### STEP qa-S178 · qa · 2026-08-23T20:35Z
+**task-id:** FIX-BASHGRANT-GATE-NEGATED-GIT-COMMIT-PHRASE-FALSE-POSITIVE
+**what-done:** Direct-Commit Verify. Commit `7da51975a` main-ancestor, touches claimed file `scripts/audits/agent-bash-grant-coverage.sh` (+ test file). Re-ran `--check` live (0 offenders, `refine_bctc_md bash_demand=no-demand check1=OK` — AC-1) and `agent-bash-grant-coverage.test.sh` (12/12, incl. new Case 10/11 negation-specific). `bctc-analyst` still `demand`+`GRANDFATHERED` (AC-2 unaffected). mock-guard PASS (scripts/, no production src).
+**what-considered:**
+- trust dev's own "NOT independently observed: live CI job status" caveat vs close the gap — closed it: `gh run view` on the first completed CI run after the fix landed (headSha `558065e30`, run 32647702278) shows job `agent-bash-grant-coverage` status=completed conclusion=success; checked 4 more subsequent runs (some overall-red for unrelated reasons) — that job stays green in every one, so this isn't a coincidental one-off pass.
+- re-derive demand_is_negated() logic vs trust prose — read the perl guard directly (scripts/audits/agent-bash-grant-coverage.sh:186-206): negation trigger within 0-2 filler tokens before the match strips it; a line needs ALL occurrences negated to count negated. Matches the described fix precisely, no gap between doc claim and code.
+- OOM-Class gate applicability — N/A, row makes no crash/memory/durability claim.
+**why-decision:** every AC (AC-1/2/3) independently re-verified against live artifacts (repo re-run + real GitHub Actions job, not the row's own prose) with zero ISSUE found → JUMP TO vc-approved.
+**why-change:** no change from plan; added the live-CI-job cross-check as the one gap the developer explicitly flagged as unverified.
