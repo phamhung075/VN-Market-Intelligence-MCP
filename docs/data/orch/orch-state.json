@@ -21133,7 +21133,7 @@
         "last_served_tick": "2026-08-23T14:55:52Z"
       }
     },
-    "_updated_at": "2026-08-23T15:23:50Z",
+    "_updated_at": "2026-08-23T15:54:07Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -21469,6 +21469,83 @@
         },
         "createdAt": "2026-08-23T15:14:48.153Z",
         "drained_at": "2026-08-23T15:22:23Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7aa038a7a99b48dd734feb024c86f2b16c3fd7e2065f4fa50e86f52aa3baae96",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 3 staged file(s) not necessarily this actor's own: docs/agent-memory/decisions/triage-20260823T1504Z-po.md docs/agent-memory/notebooks/po.md docs/data/orch/orch-state.json. actor=7be6b4cd-057e-419b-a967-4810daf2b646 mode=warn escalated=true prior_warns=3 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-23T15:28:48Z",
+        "drained_at": "2026-08-23T15:51:58Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "529ad53206be0ada10773739f04f9cd7e0af94eceeb49181f13aa0edfceb31e5",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/data/orch/orch-state.json' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/data/orch/orch-state.json' (ed0f7d509412b4da0423de71773fb3565042a8df) differs from what is about to land in this commit (dea9b5c473bf2d9c6ae9a764da76428a554cdc94) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope (two-blob form takes NO pathspec — do not append '-- docs/data/orch/orch-state.json', that is a git usage error): git diff ed0f7d509412b4da0423de71773fb3565042a8df dea9b5c473bf2d9c6ae9a764da76428a554cdc94",
+        "createdAt": "2026-08-23T15:29:04Z",
+        "drained_at": "2026-08-23T15:51:58Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "bd05e4172de591c67507e8dbd3c4a3f41ccdbc1afb42c87de9feb361cf7e2d73",
+        "source": "file",
+        "from": "dev-team",
+        "to": "po",
+        "type": "recurring-bug",
+        "priority": "low",
+        "payload": {
+          "module": "notebook autoprune signal emitter",
+          "summary": "The notebook-autoprune 'dropped-newest' signal emitter writes structurally invalid JSON, so its own warning signals can never be drained or routed.",
+          "evidence": "docs/signals/notebook-prune-dropped-newest-docs-agent-memory-notebooks-dev-mcp-server-md-2026-08-23T152548Z.json (1170B) fails JSON.parse at position 581: a bare '0,' token appears on its own line immediately after \"sentinel_section_count\": 0, indicating a lost field name / split value during serialization. drain-signals.js reports 'SKIP unparseable' and the file stays resident in docs/signals/ forever.",
+          "why_it_matters": "The signal's own stated purpose is 'this signal exists so the drop is never silent'. A malformed emitter makes the drop exactly silent: the autoprune proceeds, potentially dropping the NEWEST notebook section, and no consumer ever learns of it. Detection was written and then defeated by its own serializer.",
+          "scope_note": "Distinct from FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (the drop-ranking defect this signal was reporting, already tracked, occurrence 5). This row is about the emitter producing invalid JSON, not about which section gets dropped.",
+          "observed_at_tick": "2026-08-23T15:37Z",
+          "action_required": "mint_fix_task"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T15:52:44Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ba1ec99c9b79b3c93203a6dd802c4807447861ab761ed625cee4f4dbf721e87f",
+        "source": "file",
+        "from": "dev-team",
+        "to": "po",
+        "type": "recurring-bug",
+        "priority": "low",
+        "payload": {
+          "module": "docs/signals/ drain shape-validation",
+          "summary": "CLEAN-SIGNALS-STRANDED-STATE-SWEEP-FILES-PERMANENT-DRAIN-LITTER (P3, backlog) is understated: its status_note enumerates 3 residue files, but the same never-drains class now has at least 7 members. Fold, do not mint a duplicate.",
+          "row_to_amend": "CLEAN-SIGNALS-STRANDED-STATE-SWEEP-FILES-PERMANENT-DRAIN-LITTER",
+          "measured_at_tick": "2026-08-23T15:37Z",
+          "new_evidence": {
+            "row_says": "47 top-level *.json, 3 permanent residue (stranded-state-sweep-* dated 2026-07-28, 2026-08-06)",
+            "now_measured": "50 top-level *.json; residue is at least 7",
+            "newly_identified_shape_invalid": [
+              "price_anomaly_20260812T1607.json",
+              "price_anomaly_202608131600.json",
+              "price_anomaly_20260814T1600.json"
+            ],
+            "newly_identified_parse_invalid": [
+              "notebook-prune-dropped-newest-docs-agent-memory-notebooks-dev-mcp-server-md-2026-08-23T152548Z.json"
+            ]
+          },
+          "diagnosis": "The three price_anomaly_* files are VALID JSON but carry no signal envelope: keys are {schema, generated_at, dish_window, tickers}, schema=price_anomaly_v1, dish_window=eod, ~34 tickers each. They are data artifacts written into the signal DROP directory, not signals. Because they parse, drain-signals.js emits no diagnostic at all for them -- unlike the parse-invalid file, which at least logs 'SKIP unparseable'. Silent-skip is the more dangerous of the two failure modes: zero operator signal, indefinite accumulation.",
+          "producer_lead": "price_anomaly_v1 with dish_window=eod points at a chef/market EOD producer, not at an agent signal emitter. Dated 2026-08-12, 08-13, 08-14 on consecutive days then stopping suggests a short-lived misconfiguration rather than a still-active writer -- confirm before fixing, the emitter may already be retired (row AC-3 allows 'confirmed retired' as a valid outcome).",
+          "why_it_matters": "Row AC-4 already asks for an explicit disposition for shape-invalid files so they are quarantined on first sight instead of re-skipped forever. That AC is the structural fix for this whole class; the price_anomaly trio is evidence the class keeps growing while the row sits in backlog at P3. The residue is also a fixed floor under the >50 DRAIN-BEHIND alert the row itself cites -- at 50 top-level files that floor is now materially close to the alert threshold.",
+          "action_required": "amend_existing_row"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-23T15:54:07Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

@@ -1,0 +1,34 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "recurring-bug",
+  "created_at": "2026-08-23T15:54:02Z",
+  "payload": {
+    "module": "docs/signals/ drain shape-validation",
+    "summary": "CLEAN-SIGNALS-STRANDED-STATE-SWEEP-FILES-PERMANENT-DRAIN-LITTER (P3, backlog) is understated: its status_note enumerates 3 residue files, but the same never-drains class now has at least 7 members. Fold, do not mint a duplicate.",
+    "row_to_amend": "CLEAN-SIGNALS-STRANDED-STATE-SWEEP-FILES-PERMANENT-DRAIN-LITTER",
+    "measured_at_tick": "2026-08-23T15:37Z",
+    "new_evidence": {
+      "row_says": "47 top-level *.json, 3 permanent residue (stranded-state-sweep-* dated 2026-07-28, 2026-08-06)",
+      "now_measured": "50 top-level *.json; residue is at least 7",
+      "newly_identified_shape_invalid": [
+        "price_anomaly_20260812T1607.json",
+        "price_anomaly_202608131600.json",
+        "price_anomaly_20260814T1600.json"
+      ],
+      "newly_identified_parse_invalid": [
+        "notebook-prune-dropped-newest-docs-agent-memory-notebooks-dev-mcp-server-md-2026-08-23T152548Z.json"
+      ]
+    },
+    "diagnosis": "The three price_anomaly_* files are VALID JSON but carry no signal envelope: keys are {schema, generated_at, dish_window, tickers}, schema=price_anomaly_v1, dish_window=eod, ~34 tickers each. They are data artifacts written into the signal DROP directory, not signals. Because they parse, drain-signals.js emits no diagnostic at all for them -- unlike the parse-invalid file, which at least logs 'SKIP unparseable'. Silent-skip is the more dangerous of the two failure modes: zero operator signal, indefinite accumulation.",
+    "producer_lead": "price_anomaly_v1 with dish_window=eod points at a chef/market EOD producer, not at an agent signal emitter. Dated 2026-08-12, 08-13, 08-14 on consecutive days then stopping suggests a short-lived misconfiguration rather than a still-active writer -- confirm before fixing, the emitter may already be retired (row AC-3 allows 'confirmed retired' as a valid outcome).",
+    "why_it_matters": "Row AC-4 already asks for an explicit disposition for shape-invalid files so they are quarantined on first sight instead of re-skipped forever. That AC is the structural fix for this whole class; the price_anomaly trio is evidence the class keeps growing while the row sits in backlog at P3. The residue is also a fixed floor under the >50 DRAIN-BEHIND alert the row itself cites -- at 50 top-level files that floor is now materially close to the alert threshold.",
+    "action_required": "amend_existing_row"
+  },
+  "_processed": {
+    "fingerprint": "ba1ec99c9b79b3c93203a6dd802c4807447861ab761ed625cee4f4dbf721e87f",
+    "processedAt": "2026-08-23T15:54:07Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

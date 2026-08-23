@@ -1,0 +1,21 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "recurring-bug",
+  "created_at": "2026-08-23T15:52:38Z",
+  "payload": {
+    "module": "notebook autoprune signal emitter",
+    "summary": "The notebook-autoprune 'dropped-newest' signal emitter writes structurally invalid JSON, so its own warning signals can never be drained or routed.",
+    "evidence": "docs/signals/notebook-prune-dropped-newest-docs-agent-memory-notebooks-dev-mcp-server-md-2026-08-23T152548Z.json (1170B) fails JSON.parse at position 581: a bare '0,' token appears on its own line immediately after \"sentinel_section_count\": 0, indicating a lost field name / split value during serialization. drain-signals.js reports 'SKIP unparseable' and the file stays resident in docs/signals/ forever.",
+    "why_it_matters": "The signal's own stated purpose is 'this signal exists so the drop is never silent'. A malformed emitter makes the drop exactly silent: the autoprune proceeds, potentially dropping the NEWEST notebook section, and no consumer ever learns of it. Detection was written and then defeated by its own serializer.",
+    "scope_note": "Distinct from FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (the drop-ranking defect this signal was reporting, already tracked, occurrence 5). This row is about the emitter producing invalid JSON, not about which section gets dropped.",
+    "observed_at_tick": "2026-08-23T15:37Z",
+    "action_required": "mint_fix_task"
+  },
+  "_processed": {
+    "fingerprint": "bd05e4172de591c67507e8dbd3c4a3f41ccdbc1afb42c87de9feb361cf7e2d73",
+    "processedAt": "2026-08-23T15:52:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
