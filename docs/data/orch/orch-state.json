@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-23T14:54:45Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "FIX-BCTC-ZEROEXTRACT-BLOCK-NO-FAILURE-RECORD-UNBOUNDED-REEXTRACT-LOOP",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BOUNDED-1 auto-pickup claim of FIX-BCTC-ZEROEXTRACT-BLOCK-NO-FAILURE-RECORD-UNBOUNDED-REEXTRACT-LOOP — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
+    "updated_at": "2026-08-23T15:24:09Z",
+    "updated_by": "dev-team (bounded-1 auto-pickup)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -13688,29 +13689,6 @@
         "po_disposition_20260823": "PO 2026-08-23T14:48Z. Brief accepted as written, all 3 rows minted, no scope change. WHAT architect CORRECTED versus this row's original framing — reviewers should read the brief, not the row's older prose: (1) architect RE-MEASURED the cohort itself instead of trusting this row's estimate — 98 clean / 12 absorbed / 3 line-only / 60 byte-cap = 63 emitters, against the row's stated 62/59/13; and 26 files carry a current header that BC-1 structurally cannot honor. (2) The risk framing was wrong in BOTH directions: the hook always exits 0, sits on NO CI gate, and dedups per file, so this is a ONE-SHOT burst of at most 63 signals into the drain lane — not an every-edit emitter and not a write blocker. It is a drain-lane flood, nothing more. (3) Options (c) per-file caps and (d) split the flow-file class were both REJECTED with reasons (§4); the ruling is (a)+(b) ported verbatim from the live 648-entry code-plane sibling. Do not re-litigate.\nSTILL OPEN, REPORTED-NOT-FIXED (§7, owned by NONE of the 3 children — needs separate triage, do not assume this parent covers it): 272 of 445 docs/agents/**/*.md match no cap pattern at all (every init.md, handlers.md, audit-dimensions.md, handoff/*.md), 68 of them over 120 L — system-auditor/handlers.md is 342 L / 26803 B. Flow files are the SMALLER ungoverned half, so 'fix the flow glob' does NOT mean agent docs are governed. Also: the `**` idiom appears in TWO patterns and .claude/skills/**/*.md currently works only by corpus accident."
       },
       {
-        "id": "FIX-BCTC-ZEROEXTRACT-BLOCK-NO-FAILURE-RECORD-UNBOUNDED-REEXTRACT-LOOP",
-        "type": "FIX",
-        "title": "BCTC zero-extraction write-block returns with NO durable failure record, so the same (ticker,sort_key) is re-fetched+re-OCR'd indefinitely — 41 telegram BUG reports in 26h, 8/8 identical pairs on both 08-22 and 08-23",
-        "status": "BACKLOG",
-        "priority": "P0",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "owner": "po",
-        "next_agent": "dev-mcp-server",
-        "supervised": false,
-        "baseline_pass": true,
-        "created_at": "2026-08-23T15:06:54Z",
-        "created_by": "po/triage-20260823T1500Z",
-        "dedup_key": "bctc:zeroextract-block-no-failure-record-unbounded-reextract-loop",
-        "files": [
-          "apps/mcp-server/src/application/usecases/parseBctcReport.ts",
-          "apps/mcp-server/src/application/usecases/fetchParseAndStoreBctc.ts",
-          "apps/mcp-server/src/scheduler/financial-reports/pushBctcExtraction.ts"
-        ],
-        "status_note": "MEASURED AT SOURCE, not inferred. apps/mcp-server/src/application/usecases/parseBctcReport.ts:373-396 — when report.balanceSheet.totalAssets <= 0 the guard emits `logger.warn(blockMsg)` + one sendTelegramBug(blockMsg) and then `return;` BEFORE any INSERT. No row, no queue marker, no attempt counter, no dead-letter entry is persisted anywhere. The message text itself claims 'flagged for manual review' — nothing is flagged in any durable store; the ONLY artifact is a Telegram message. Consequence: whatever enqueues the extraction cannot learn the attempt failed, so it re-enqueues the same pair on the next pass. EVIDENCE (list_unresolved_reports, 117 rows, 2026-08-22T12:40Z..2026-08-23T14:55Z): 41 BCTC-class reports. 8 of 8 distinct (ticker,quarter) pairs blocked on 08-22 reappear blocked on 08-23 — FRT 2024-Q4, FRT 2025-Q4, FRT 2026-Q1, KDH 2025-Q4, KDH 2026-Q1, SHB 2025-Q4, VJC 2025-Q1, GEX 2025-Q3. Within the 08-23 13:58-14:55Z window alone each pair re-fires 2-4x (GEX 2025-Q4 4x at 14:16/14:17/14:41/14:52; GVR 2025-Q4 3x at 14:43/14:45/14:55). COST: pdf-extractor measured at 119-206% CPU continuously re-OCRing the same PDFs (5 samples over 20s, 2026-08-23T15:0xZ). NOT A MEMORY DEFECT — the same 5 samples show 377-428 MiB / 2.5GiB = 14.7-16.7%, State.OOMKilled=false, ExitCode=0; a 99.28% reading taken earlier this tick was transient and is not reproducible. THE GUARD ITSELF IS CORRECT AND MUST STAY — zero rows were corrupted, which is the guard working as designed. Fix the absence of the failure record, never the block. AC-1: a blocked zero-extraction persists a durable failure record keyed on (action_code, sort_key) carrying attempt_count + last_blocked_at + reason. AC-2: attempt_count past a bounded threshold dead-letters the pair out of the enqueue set (mirror bctcReparseJob.ts:776-803, which already implements exactly this on agent_feedback). AC-3: replay the 8 pairs above — each is attempted at most N times, then stops; telegram volume for the cohort drops to <=8 messages per cycle, not 41 per day. AC-4: the block message stops claiming 'flagged for manual review' unless a record is actually written.",
-        "updated_at": "2026-08-23T15:06:54Z"
-      },
-      {
         "id": "FIX-DEVTEAM-ELIGIBILITY-EFFECTIVE-NEXTAGENT-DETAIL-FIRST-NO-RECENCY-COMPARE",
         "type": "FIX",
         "title": "effective_next_agent/effective_owner prefer archive/backlog-detail.json unconditionally over the hot board row, with no updated_at comparison — a hot-row reroute is silently reverted and the row re-claims into the stale lane",
@@ -19394,27 +19372,6 @@
         ]
       },
       {
-        "id": "TASK-USDVND-TS-STATIC-RETIRE",
-        "title": "TS track: delete 4 dead macroTools.ts signal fns + retire the static usdVnd>25500/<24500 cascade rules",
-        "type": "TASK",
-        "status": "TODO",
-        "priority": "high",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts",
-          "apps/mcp-server/src/domain/services/cascade/macroAdjustments.ts",
-          "apps/mcp-server/src/domain/services/cascade/cascadeEngine.ts"
-        ],
-        "note": "Parent FIX-USDVND-THRESHOLD-SSOT. Design: docs/architecture-briefs/2026-08-23-fix-usdvnd-threshold-ssot.md, Planes 1+2. Finding A: currencySignal (macroTools.ts:117-124) has ZERO callers repo-wide — DELETE, do not unify; same for its 3 siblings oilSignal/goldSignal/policySignal in the identical file. Finding B (USD/VND half only): cascadeEngine.ts applies the OLD fixed MACRO_ADJUSTMENTS *and* the sigma-based DYNAMIC_MACRO_MAP additively on identical domain sets — real double-counting. Retire ONLY the static USD/VND rule here; the oil/gold general form is flagged-not-fixed and needs its own row. Test: negative control asserting the dynamic rule alone yields equivalent-or-better confidence delta on a live-shaped fixture.",
-        "created_at": "2026-08-23T13:38:00Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-23T13:38:01Z",
-        "updated_by": "pm"
-      },
-      {
         "id": "TASK-USDVND-GO-SIGMA-PORT",
         "title": "Go track: port classifyDeviation sigma formula into macro_usdvnd_direction_classifier + cross-language agreement test",
         "type": "TASK",
@@ -20428,6 +20385,31 @@
         "dev_completed_by": "dev-mcp-server",
         "dev_commit": "ce1f52127",
         "dev_note": "AC-1 (systemMapWatchlistWriter.ts: upsert/remove, atomic tmp+rename, fail-open, active-default), AC-2 (write-through hooks in add_to_watchlist/remove_from_watchlist, soft warning suffix on failure, DB mutation never blocked), AC-3 (optional sector param + titleCaseDomain fallback), AC-4 (10 unit tests incl. a real-fs tmpdir round-trip — NOT at the handoff's specified path apps/mcp-server/__tests__/unit/test_systemMapWatchlistWriter.ts, which does not exist in this repo and would not be discovered by bun test's default *.test.ts pattern; placed at apps/mcp-server/src/__tests__/TASK_001-watchlist-write-through-infra.test.ts matching this repo convention), AC-6 (119 pass/0 fail across touched suites, tsc clean, tools=183) ALL DONE. Added a test-isolation guard (skip write-through when DB_PATH=\":memory:\" unless _testSystemMapPath injected) that was NOT in the original AC list but was necessary — without it every existing watchlist test would have written real/fake tickers into the live docs/data/system-map.json SSOT on every CI run. Live system-map.json verified byte-identical (md5) before/after this work, still 34 entries, zero drift. NOT DONE this session: AC-5 (integration test paired with TASK_002 — cannot be written before TASK_002s audit script exists, per the ACs own sequencing) and AC-7 (Docker bind-mount round-trip from a live container — requires a running container + external MCP client, out of a code-only dev session; verified the equivalent production codepath instead via a real temp-file round-trip + a direct call against a throwaway copy of the live file, both confirmed working). Status held at REVIEW not DONE_VERIFIED because the closure checklist is not fully satisfied — do not auto-unblock TASK_002 off this row yet."
+      },
+      {
+        "id": "TASK-USDVND-TS-STATIC-RETIRE",
+        "title": "TS track: delete 4 dead macroTools.ts signal fns + retire the static usdVnd>25500/<24500 cascade rules",
+        "type": "TASK",
+        "status": "REVIEW",
+        "priority": "high",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "qa",
+        "next_agent": "dev-mcp-server",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts",
+          "apps/mcp-server/src/domain/services/cascade/macroAdjustments.ts",
+          "apps/mcp-server/src/domain/services/cascade/cascadeEngine.ts"
+        ],
+        "note": "Parent FIX-USDVND-THRESHOLD-SSOT. Design: docs/architecture-briefs/2026-08-23-fix-usdvnd-threshold-ssot.md, Planes 1+2. Finding A: currencySignal (macroTools.ts:117-124) has ZERO callers repo-wide — DELETE, do not unify; same for its 3 siblings oilSignal/goldSignal/policySignal in the identical file. Finding B (USD/VND half only): cascadeEngine.ts applies the OLD fixed MACRO_ADJUSTMENTS *and* the sigma-based DYNAMIC_MACRO_MAP additively on identical domain sets — real double-counting. Retire ONLY the static USD/VND rule here; the oil/gold general form is flagged-not-fixed and needs its own row. Test: negative control asserting the dynamic rule alone yields equivalent-or-better confidence delta on a live-shaped fixture.",
+        "created_at": "2026-08-23T13:38:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-23T15:24:21Z",
+        "updated_by": "dev-mcp-server",
+        "dev_completed_at": "2026-08-23T15:24:21Z",
+        "dev_completed_by": "dev-mcp-server",
+        "dev_commit": "e6842463e",
+        "dev_note": "Plane 1 DONE: deleted currencySignal/oilSignal/goldSignal/policySignal from macroTools.ts (0 callers repo-wide, confirmed via grep + green tsc). Plane 2 DONE: retired the 6 static usdVnd>25500/usdVnd<24500 rules from MACRO_ADJUSTMENTS (macroAdjustments.ts) that were double-counting against DYNAMIC_MACRO_MAPs sigma-based usdVndRate/usdVndOfficial path on the identical aviation/steel/agriculture/automotive domain sets; also removed the now-dead label.startsWith(usdVnd) branch in deriveDisplayValue(). Left the 4 macroDualPressure(brent+usd) compound rules untouched per brief section 4 explicit scope fence (different label, out of this tickets scope). Replaced MC-09 (asserted the exact static-rule effect, would have failed) with 3 tests: negative control, dynamic-alone equivalent-or-better delta, and a no-double-counting test with both paths present simultaneously. bun test 118 pass/0 fail across touched+adjacent macro suites, tsc clean, tools=183 cron=88 baseline match, server boot health OK. FLAG for architect/PM: the brief text says retire the 8 usdVnd entries but its own cited line ranges span 10 distinct MacroRule objects touching usdVndMarket (6 pure usdVnd-labeled + 4 macroDualPressure compound) -- neither 6 nor 10 matches 8 exactly. Retired only the 6 unambiguously usdVnd-labeled rules matching this tasks own title verbatim; left the 4 differently-labeled compound rules alone. Worth a brief correction if architect wants the compound rules touched too -- did not guess wider scope."
       }
     ],
     "qa": [
@@ -20609,8 +20591,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-23T13:56:39Z",
-    "last_triaged_by": "dev-team (design-router sweep)",
+    "last_triaged_at": "2026-08-23T15:24:07Z",
+    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
     "in_progress": [
       {
         "id": "UC-CDC-P1",
@@ -20727,6 +20709,34 @@
           "TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX"
         ],
         "po_ruling_20260823T1410Z": "[po RULING 2026-08-23T14:10Z] qa returned this as 'NOT VERIFIABLE'. The REFUSAL was correct - this is not qa work - but BOTH factual premises qa attached to it are wrong, and po is recording that rather than inheriting them.\n\nPREMISE 1 REFUTED - 'the defect is still live (system-map .project.watchlist is still 34 entries against the 58-ticker runtime roster, re-measured this cycle)'. There is no 58-ticker runtime roster. po measured BOTH planes this tick, 2026-08-23T14:0xZ: mcp__gateway__call_tool(server=vn-market, tool=get_watchlist) returns 34 tickers; jq '[.project.watchlist[].ticker]' docs/data/system-map.json returns 34; the two sets are IDENTICAL, zero diff in either direction. qa appears to have re-measured only the file and taken '58' from this row's TITLE, which the row's own po_rescope_note (2026-08-22, gateway-verified) and architect_review_note (2026-08-14, docker exec + bun:sqlite) already refuted independently. This tick is the fourth confirmation by the third method. AC-1 as written (SET EQUALITY, deliberately not the number 58) is SATISFIED TODAY.\n\nPREMISE 2 REFUTED - 'it sits in in_progress[] consuming a WIP slot'. It does not. scripts/lib/devteam-eligibility.jq:115-118 defines wip_in_progress as in_progress[] rows whose status is NEITHER terminal NOR BLOCKED; this row is BLOCKED, so it is excluded by construction. Measured live: wip_in_progress = 1 (only FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE, which is genuinely IN_PROGRESS). UC-CDC-P1 is excluded the same way. There is no WIP pressure to relieve here, so the 'close it or move it' urgency does not apply.\n\nNO LANE MOVE - and this is a guard interaction, not inertia. Moving this row to backlog[] hard-rejects: scripts/orch-row-prose-ceiling-check.mjs:105 scopes PROSE_CEILING_LANES to [backlog, ready, review] only, so an in_progress[] source row is invisible to the live-side lookup (liveBytes=0), and this row's ~17.9kB of prose lands as net-new growth past the 12000B ceiling. It stays in place until FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS (D3, ready[]) ships. BLOCKED status alone already delivers the outcome a move would have bought.\n\nWHAT WAS ACTUALLY ACTIONABLE, AND IS NOW DONE: qa's SECONDARY finding was the real one. children[] was absent despite a completed decomposition - back-filled in this same write with the three child ids, so effective_children sweeps see the relationship from the parent side. Partial mitigation already existed and qa did not mention it: all three children carry parent_task_id=FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58, so the child->parent edge was never lost, only the parent->child one.\n\nWHY THE PARENT IS NOT CLOSED even though AC-1 passes today: AC-3 is the negative control - 'add a ticker to the runtime watchlist, then demonstrate the divergence is CAUGHT'. Nothing catches it today. add_to_watchlist still writes SQLite with zero write-back to system-map.json, and there is no audit. Today's zero-diff is a coincidence of a 2026-07-31 bulk reseed, not a mechanism. Closing on AC-1 alone would ratify exactly the drift that SPIKE_1946 already cost one missed crisis detection. The parent stays open until TASK_001 (write-through) and TASK_002 (divergence audit) land.\n\nSIDE FINDING FROM THE PRIOR RULING, NOW CLOSED: the three TASK_00x handoff specs were untracked in git. They were committed at fe7e4c790 and are in HEAD. No action needed.\n\nSIDE FINDING FIXED IN THIS SAME WRITE: TASK_003 carried owner/next_agent='generic-developer'. No such agent exists - no docs/agents/generic-developer/ directory, absent from .claude/skills/dispatch/SKILL.md, one single occurrence on the entire board. A READY row pointing at a non-existent agent is unspawnable. Corrected to 'developer'."
+      },
+      {
+        "id": "FIX-BCTC-ZEROEXTRACT-BLOCK-NO-FAILURE-RECORD-UNBOUNDED-REEXTRACT-LOOP",
+        "type": "FIX",
+        "title": "BCTC zero-extraction write-block returns with NO durable failure record, so the same (ticker,sort_key) is re-fetched+re-OCR'd indefinitely — 41 telegram BUG reports in 26h, 8/8 identical pairs on both 08-22 and 08-23",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "dev-mcp-server",
+        "supervised": false,
+        "baseline_pass": true,
+        "created_at": "2026-08-23T15:06:54Z",
+        "created_by": "po/triage-20260823T1500Z",
+        "dedup_key": "bctc:zeroextract-block-no-failure-record-unbounded-reextract-loop",
+        "files": [
+          "apps/mcp-server/src/application/usecases/parseBctcReport.ts",
+          "apps/mcp-server/src/application/usecases/fetchParseAndStoreBctc.ts",
+          "apps/mcp-server/src/scheduler/financial-reports/pushBctcExtraction.ts"
+        ],
+        "status_note": "MEASURED AT SOURCE, not inferred. apps/mcp-server/src/application/usecases/parseBctcReport.ts:373-396 — when report.balanceSheet.totalAssets <= 0 the guard emits `logger.warn(blockMsg)` + one sendTelegramBug(blockMsg) and then `return;` BEFORE any INSERT. No row, no queue marker, no attempt counter, no dead-letter entry is persisted anywhere. The message text itself claims 'flagged for manual review' — nothing is flagged in any durable store; the ONLY artifact is a Telegram message. Consequence: whatever enqueues the extraction cannot learn the attempt failed, so it re-enqueues the same pair on the next pass. EVIDENCE (list_unresolved_reports, 117 rows, 2026-08-22T12:40Z..2026-08-23T14:55Z): 41 BCTC-class reports. 8 of 8 distinct (ticker,quarter) pairs blocked on 08-22 reappear blocked on 08-23 — FRT 2024-Q4, FRT 2025-Q4, FRT 2026-Q1, KDH 2025-Q4, KDH 2026-Q1, SHB 2025-Q4, VJC 2025-Q1, GEX 2025-Q3. Within the 08-23 13:58-14:55Z window alone each pair re-fires 2-4x (GEX 2025-Q4 4x at 14:16/14:17/14:41/14:52; GVR 2025-Q4 3x at 14:43/14:45/14:55). COST: pdf-extractor measured at 119-206% CPU continuously re-OCRing the same PDFs (5 samples over 20s, 2026-08-23T15:0xZ). NOT A MEMORY DEFECT — the same 5 samples show 377-428 MiB / 2.5GiB = 14.7-16.7%, State.OOMKilled=false, ExitCode=0; a 99.28% reading taken earlier this tick was transient and is not reproducible. THE GUARD ITSELF IS CORRECT AND MUST STAY — zero rows were corrupted, which is the guard working as designed. Fix the absence of the failure record, never the block. AC-1: a blocked zero-extraction persists a durable failure record keyed on (action_code, sort_key) carrying attempt_count + last_blocked_at + reason. AC-2: attempt_count past a bounded threshold dead-letters the pair out of the enqueue set (mirror bctcReparseJob.ts:776-803, which already implements exactly this on agent_feedback). AC-3: replay the 8 pairs above — each is attempted at most N times, then stops; telegram volume for the cohort drops to <=8 messages per cycle, not 41 per day. AC-4: the block message stops claiming 'flagged for manual review' unless a record is actually written.",
+        "updated_at": "2026-08-23T15:24:09Z",
+        "promoted_at": "2026-08-23T15:24:07Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-23T15:24:07Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)"
       }
     ]
   },
@@ -20737,12 +20747,12 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-23T15:11:47Z",
+  "_updated_at": "2026-08-23T15:24:21Z",
   "_updated_by": "dev-mcp-server",
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
-        "last_served_tick": "2026-08-23T12:24:02Z"
+        "last_served_tick": "2026-08-23T15:23:50Z"
       },
       "sls": {
         "last_served_tick": "2026-08-23T12:56:35Z"
@@ -20760,7 +20770,7 @@
         "last_served_tick": "2026-08-23T14:55:52Z"
       }
     },
-    "_updated_at": "2026-08-23T15:22:23Z",
+    "_updated_at": "2026-08-23T15:23:50Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
