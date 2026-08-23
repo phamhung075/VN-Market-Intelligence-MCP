@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-23T13:48:25Z",
+    "matched_slots": [
+      "digest-sunday"
+    ],
+    "won_slots": [
+      "digest-sunday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/digest-predict/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "weekend",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "digest-sunday": "cron"
+    },
+    "cadence_minutes": {
+      "digest-sunday": null
+    },
+    "last_fired_timestamp": "2026-08-23T13:47:27Z",
+    "last_fired_slots": [
+      "digest-sunday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "13:45",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 33,
+    "note": "digest-sunday (guaranteed, cron 47 13 * * 0) spawned run_in_background per BGFAN-1. Step 5.3 off-flow detector is DEFERRED — agent had not returned at telemetry-write time; if a later return scores >=2 distinct OFFFLOW_MARKERS on the contract surface (final assistant text only, never the .output transcript symlink), apply the AC-P1-7-4 de-stamp: re-read cowork-schedule.json and revert last_fired to 2026-07-19T13:49:28.199Z ONLY if it still equals 2026-08-23T13:47:27Z. GAP: prior last_fired was 2026-07-19T13:49:28.199Z — 35 days / 5 missed Sundays via the cowork path; needs the same non-cowork-publisher check that explained the fb-weekend 15-day gap, not assumed to be a lost write. DEFECT (2nd observation, same tick class): spawn-fanout.md Step 5.1 load parser (uptime piped to awk -F\"load average\" then gsub of non-numerics) is locale-fragile — this host emits comma decimals (\"load averages: 5,37 5,67 5,34\") so it yielded 5 instead of 5.37, under-reporting load and biasing the DEGRADED gate toward false. Harmless here (5.37 vs threshold 24) but wrong by construction. Needs an LC_ALL=C pin, same class as the pressure-read.md A-30 helper comment."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-23T13:48:25Z",
+  "_processed": {
+    "fingerprint": "20a43c2ff145dedecddc340f008a0970799c762da3ac1d2a8fcaff3fa49e41aa",
+    "processedAt": "2026-08-23T13:55:20Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

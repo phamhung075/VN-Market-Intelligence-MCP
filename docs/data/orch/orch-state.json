@@ -19526,6 +19526,40 @@
           "docs/WORK.md"
         ],
         "review_note": "IMPLEMENTED, commit e806bcda1 on main (direct-commit row, branch:null - verify via qa verify-committed mode, NOT the normal pipeline JUMP-TO). Added _escalate_failure() to scripts/agents-flow/cowork-guaranteed-slot-firer.sh: a direct curl POST to the Telegram BUG channel on ALL THREE non-zero outcomes (matcher command failure, unparseable matcher output, >=1 failing slot invocation), exactly ONCE per tick. Direct curl is mandatory, not a shortcut - the script has no gateway/MCP access and the flow-level send_telegram never runs because the claude CLI dies before Step 0 of any flow. Cooldown is time AND content based (ALERT_STATE_FILE = 2 lines epoch+fingerprint, ALERT_COOLDOWN_SECONDS default 21600): unchanged fingerprint suppressed, NEW fingerprint alerts immediately, expired stamp re-alerts. --dry-run never escalates. Missing creds -> ESCALATION-BLOCKED, non-zero curl -> ESCALATION-SEND-FAILED, never swallowed. AC-1 CORRECTED IN FLIGHT - the row architect_review_note, the handoff AC-1 and docs/data/system-map.json all name TELEGRAM_BUG_CHAT_ID; NO SUCH KEY EXISTS IN .env (live key is TELEGRAM_REPORT_BUG_CHANNEL_ID, grep-verified). Implementing AC-1 literally would have shipped an escalation that silently never fires, i.e. the exact defect class this row exists to close. _bug_chat_id() resolves FIRER_ALERT_CHAT_ID -> TELEGRAM_REPORT_BUG_CHANNEL_ID -> TELEGRAM_BUG_CHAT_ID. QA should verify this deviation is correct, not treat it as scope drift. FOLDED items closed per the row own instruction: (a) the invocation log printed -p slot=<id> while executing -p \"$trigger_prompt\"; (b) every log line was written twice because log() teed to $LOG_FILE while launchd StandardOutPath for this job IS that same file - log() now appends directly and echoes to stdout only on an interactive TTY. VERIFICATION: bash scripts/agents-flow/cowork-guaranteed-slot-firer.test.sh = 53/53 GREEN (RED baseline before the fix: 38 pass / 15 fail); hermetic, fake CLAUDE_BIN + fake CURL_BIN, zero real CLI invocations, zero network. Live: real --dry-run matched the genuinely-due digest-sunday slot, exit 0, ZERO stdout on a non-TTY run, log printed the real trigger_prompt. Controlled failure against the REAL .env with a token-masking recording curl: one POST to sendMessage with the real BUG chat id and text 1 of 1 guaranteed slot invocation(s) FAILED this tick - fb-daily=exit1; the immediately-following identical tick emitted 0 POSTs and logged escalation suppressed by cooldown. No apps/ TS/Go touched - bash only, bun test/tsc N/A. FLAGGED NOT FIXED (outside this row file scope, needs its own board row): docs/data/system-map.json .telegram_channels[].env_var names three keys that do not exist in .env - TELEGRAM_BUG_CHAT_ID / TELEGRAM_WORK_CHAT_ID / TELEGRAM_MARKET_CHAT_ID vs live TELEGRAM_REPORT_BUG_CHANNEL_ID / TELEGRAM_INFO_WORK_CHANNEL_ID / TELEGRAM_INFO_MARKET_GROUP_ID. CLAUDE.md names system-map.json the no-hardcode SSOT, so any future consumer reading env_var from it resolves nothing."
+      },
+      {
+        "id": "FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "M",
+        "zone": "multi",
+        "owner": "agents-architect",
+        "supervised": false,
+        "plan_only": false,
+        "created_at": "2026-08-14T12:35:41Z",
+        "created_by": "po (triage: 3rd occurrence pm-decomposition stale-head/stale-parent-row)",
+        "title": "3rd occurrence, REGRESSED not converged: pm's post-decomposition board-closeout contract (Step 4c) is physically unreachable — it sits AFTER the flow's own inlined RETURN block at Step 3c — and pm's task-mint shape omits next_agent entirely, so decomposed children fall back to RLC's effective_owner and would spawn the SUBJECT agent instead of the editor",
+        "evidence": "RAW-verified 2026-08-14T12:35Z. THREE occurrences of pm leaving .head + parent row stale after decomposition (feedback_pm_midsprint_decomposition_leaves_head_stale_not_closeout): (1) UC-RDL-P4 2026-08-11, .head untouched, router repair 6912272e1; (2) FIX-BCTC-FALLBACK-SHELL 2026-08-11T19:27Z, pm flipped ONLY .head.status, left active_task_id/next_agent dangling (95540b50d), router repair 82ec1f018; (3) UC-CCA-P2 2026-08-14T12:29Z, ZERO .head write attempt — WORSE than occ 2 — plus parent left in in_progress[]/IN_PROGRESS/next_agent=pm and all 7 minted children with next_agent absent; router repair 090bc6a14. ROOT CAUSE (new, explains why occ-2's fix did not prevent occ-3): docs/agents/pm/flow/main.md ALREADY contains the correct occ-2 fix as Step 4c 'Non-closeout head release' (FIX-PM-HEAD-RESET-SHAPE, full .head null-out matching dev-team WF-1c byte-for-byte) — but the flow inlines its own '## RETURN ... PIPELINE: continue' template at Step 3c, so a decomposition invocation emits RETURN and terminates at 3c; Steps 3d/4/4b/4c are monitor-phase steps a pure-decomposition tick never reaches. Occ-3's board row proves pm reached 3/3b/3c and stopped: it wrote the 7 child rows plus pm_decomposed_at=2026-08-14T12:28:00Z and decomposition_note, and wrote nothing from 4c. The occ-2 fix was appended BELOW the exit point — content correct, placement unreachable. SECOND DEFECT: pm Step 3's canonical task JSON shape lists {id,title,owner,status,zone,created_at} + optionals and NEVER mentions next_agent; docs/standards/task-schema.md (the SSOT it copies) has ZERO occurrences of next_agent in either its Mandatory or Optional field tables, while apps/mcp-server/src/infrastructure/orchStateSchema.ts:175 defines next_agent as z.string().optional() — non-nullable, so an explicit null is REJECTED by orch-apply.sh (router hit this twice repairing occ 3) while omission passes silently. pm minting children without next_agent is therefore DOC-COMPLIANT behaviour, not agent error. THIRD DEFECT (severity amplifier, not previously identified): omission is not merely 'unroutable'. scripts/devteam-backlog-claim-ready-lane-consumer.jq:129-134 gates candidates on (effective_next_agent OR effective_owner) with NO is_non_dev_owner_unrouted / is_non_dev_next_agent_unrouted gate, and scripts/lib/devteam-eligibility.jq resolved_dispatch_lane falls back to effective_owner when next_agent is empty. pm set owner = the SUBJECT agent family being edited (market-watcher, alert-commander, unified-agent, digest-predict, bctc-analyst, fb-market-poster). RLC would therefore have set .head.next_agent to those values and spawned six cowork MARKET agents — none of which hold agent-md edit authority, and one of which (fb-market-poster) publishes externally — to edit their own flow docs, instead of agent-father as architect's own review_note on the parent explicitly specified. The router's manual repair pre-empted this by timing, not by design. FOURTH DEFECT: pm's flow has NO step at all that gives a fully-decomposed parent row a terminal disposition; §5 Sprint closeout operates on active_sprints[].tasks[] and the sprint's own .status, never on a flat-lane parent row, and pm recorded parenthood as decomposition_note prose + pm_decomposed_at rather than .children. LIVE ARMED: IVC-PM-DECOMPOSE sits in ready[] right now (next_agent=pm, 'mint IVC-C1..C6 + IVC-A1 + IVC-A2') — an 8-row decomposition that is RLC-eligible today, so occurrence 4 is pre-loaded.",
+        "question": "DESIGN, do not pre-select. (Q1) Step 4c is correct content in an unreachable position. Decide whether the fix is to MOVE the decomposition-closeout block above the Step-3c RETURN, or to delete the mid-flow RETURN template and give the flow a single terminal exit — and state the reachability INVARIANT that makes 'appended a step below the RETURN' detectable next time. Appending another step is exactly what failed between occ 2 and occ 3; do not repeat it. (Q2) Is 'RETURN template inlined mid-flow with live steps below it' present in OTHER agent flow docs? Scope the sweep; do NOT validate the gate on pm/flow/main.md alone (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist). (Q3) next_agent is absent from docs/standards/task-schema.md but REQUIRED in practice by every dispatch lane. Decide whether it becomes a documented mandatory-at-mint field in the SSOT (fleet blast radius: every minting agent copies that table) and whether the omission case is caught at the write gate, at mint, or both — noting explicit null is already fatal in orchStateSchema.ts:175 but omission is silently legal. (Q4) Decide the parent-row terminal disposition rule pm must apply: closeout-shaped (all scope delegated -> done[]/DONE/closed_at, per the FIX-READYLANE-NO-SEVERITY-EXPEDITE-FIFO-BURIES-INCIDENT-P0 precedent commit 86b7a6264) vs mid-sprint-partial (stays in_progress[] with a corrected non-stale next_agent) — and whether pm must ALSO write .children so the existing sweep can see the relationship. (Q5) Rule on whether a dev-team-side gate is warranted AT ALL given the dedup analysis in refs — a WF-1e keyed on .head/row next_agent coherence provably CANNOT fire on occ 3 (both were 'pm', coherent), and any parenthood-keyed gate is blocked behind the .children field drift already tracked elsewhere.",
+        "deliverable": "AC-1: a decomposition-shaped pm invocation, replayed against a synthetic board, leaves .head idle AND the parent row in its correct terminal-or-corrected lane AND every minted child carrying a non-empty next_agent — proven by executable replay, not by prose in the flow doc. AC-2: a negative control — a genuine mid-sprint-partial decomposition must NOT terminally close its parent. AC-3: an executable reachability check proving no live step in pm/flow/main.md sits below an emitted RETURN, with a positive AND a negative fixture. AC-4: the routing intent for each child comes from the architect review_note on the parent (occ-3's note already specified 1 shared-skill-file subtask -> developer, 6 agent-family-flow-edit subtasks -> agent-father because agent-father/flow/edit-prepare.md Step 1 is single-agent-scoped) — the design must state where pm reads that intent from, since only pm holds it and no orch-state schema or dev-team gate can infer it. Implementation is expected to split by zone: docs/agents/pm/flow/main.md -> agent-father; docs/standards/task-schema.md + any scripts/ or schema work -> developer/architect. Mint those rows from the brief; do not bundle.",
+        "baseline_pass": "Board is CLEAN as of 090bc6a14 (router hand-repair): jq '.head' -> status=idle/active_task_id=null/next_agent=null; UC-CCA-P2 resident in done[] with status=DONE + closed_at=2026-08-14T12:29:39Z; all 7 UC-CCA-P2-* children in ready[] with next_agent populated (SKILL-GW-GATE=developer, other 6=agent-father). That hand-repaired state is the target this row must make self-sustaining. Do NOT re-touch UC-CCA-P2 or its children — already corrected and committed, out of scope.",
+        "files": [
+          "docs/agents/pm/flow/main.md"
+        ],
+        "refs": [
+          "FIX-DEVTEAM-HEAD-NEXTAGENT-RESYNC-ON-REASSIGN",
+          "FIX-DEVTEAM-EPICWRAPPER-PARENTHOOD-FIELD-DRIFT-AUTOCLOSE-BLIND",
+          "FIX-ORCHSTATE-MINT-FLAGGED-ROW-WITHOUT-RESOLVABLE-HANDLER",
+          "FIX-PM-DECOMPOSE-NO-PRIOR-ART-PROBE"
+        ],
+        "note": "DEDUP-CHECKED 2026-08-14T12:35Z against all task_board lanes — this shape is NOT already tracked. (a) FIX-DEVTEAM-HEAD-NEXTAGENT-RESYNC-ON-REASSIGN (ready[], agents-father, the WF-2b design row, '3 occurrences / 3 agent types') is ADJACENT BUT DISJOINT: it detects .head.next_agent disagreeing with the row's own next_agent; in occurrence 3 BOTH read 'pm', i.e. perfectly coherent, so that gate provably declines. (b) FIX-DEVTEAM-EPICWRAPPER-PARENTHOOD-FIELD-DRIFT-AUTOCLOSE-BLIND (backlog[], developer) already owns the COMPENSATING-SWEEP half of the stale-parent-row facet (is_epic_wrapper reads only .children while pm records parenthood in other shapes); this row owns the PM-MINT-SIDE half and must not duplicate it — cross-reference, do not re-implement. (c) FIX-ORCHSTATE-MINT-FLAGGED-ROW-WITHOUT-RESOLVABLE-HANDLER (ready[], architect) covers only rows where supervised/plan_only is set AND owner AND next_agent are BOTH null; occ-3's children had owner populated and no flags, so they fall outside it entirely — and that is precisely what makes them silently MIS-dispatchable rather than parked. (d) FIX-PM-DECOMPOSE-NO-PRIOR-ART-PROBE (backlog[], architect) is a different pm defect (re-minting already-shipped work), unrelated. Escalation threshold was explicitly declared hit after occurrence 2; occurrence 3 regressed further, and the occ-2 remediation is now proven to have failed on PLACEMENT rather than content — which is why this is routed to agents-architect for a design brief first rather than straight to agent-father for another appended step.",
+        "updated_at": "2026-08-23T13:54:29Z",
+        "detail_ref": "docs/architecture-briefs/2026-08-14-pm-decompose-closeout-reachability-and-nextagent-mint.md",
+        "status_note": "[QA] CHANGES_REQUESTED 2026-08-23T13:54:07Z — RETRACTS the DONE_VERIFIED this same cycle issued ~25min earlier (reachability half verified good; the LANE half I had not tested). Concurrent pm agent could not use the shipped Step 3e on 9 real parents; I re-tested rather than accepting, and claim 1 HOLDS.\n[1] BLOCKER pm/flow/main.md Step 3e — BOTH branches resolve $row from in_progress[] + active_sprints[].tasks[] ONLY. On a ready[] parent the CLOSEOUT branch appends an ID-LESS GHOST ROW to done[] (jq 'null + {...}') and leaves the parent in ready[]; orch-validate hard-rejects ('task_board.done[21].id: expected string, received undefined'), so the step is unusable — pm hit exactly this, 8 of 9 parents in ready[]. The PARTIAL branch is WORSE: silent no-op on ready[] parents, exits 0, guard never fires. Measured live, rows with children[] sit in backlog 10 / done 9 / ready 6 / in_progress 1 — backlog[] unhandled too; in_progress[] (the only handled lane) has 1. Dominant case, not an edge case; I under-sized this as 'non-blocking' on first pass. FIX: resolve across backlog/ready/in_progress/active_sprints, delete from the lane found, add 'if $row == null then error(...)' so a miss fails LOUD (mirror qa/flow/main.md's refuse-idiom).\n[2] pm's 'next_agent: null is schema-invalid' claim DOES NOT HOLD here — the only null is inside '.head = {...}', legal per HeadSchema orchStateSchema.ts:324 (.nullable()). The closeout preserves the row's next_agent. The real non-nullable :208 defect belongs to FIX-QA-VC-LANEMOVE-…, filed there. Do not 'fix' a null this file never writes.\nKEEP: reachability restructure (0 violations), DECOMPOSITION_COMPLETE split, children[] write, .head guard, Step-3 mint shape — all fixture-verified.\nFull text + archived prior status_note: docs/data/orch/archive/backlog-detail.json#FIX-PM-DECOMPOSE-CLOSEOUT-STEP-UNREACHABLE-PAST-RETURN-AND-MINT-OMITS-NEXTAGENT.",
+        "next_agent": "agents-architect",
+        "redispatch_count": 1,
+        "updated_by": "qa"
       }
     ],
     "qa": [
@@ -19883,7 +19917,7 @@
         "last_served_tick": "2026-08-23T11:54:46Z"
       }
     },
-    "_updated_at": "2026-08-23T13:27:54Z",
+    "_updated_at": "2026-08-23T13:55:20Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -20072,6 +20106,121 @@
         },
         "createdAt": "2026-08-23T13:19:56Z",
         "drained_at": "2026-08-23T13:24:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "86b26e931fe8730dbace0120ff41b368c62020d7ca22573241cec20189007358",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/pm.md. actor=669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3 mode=warn escalated=true prior_warns=3 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-23T13:26:42Z",
+        "drained_at": "2026-08-23T13:55:20Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1a34f4299dae5424b8160b540f43be9c6b080ee84350ce088d52482f285349c1",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] SAME-FILE DIVERGENCE (non-blocking, AC-3 detector): 'docs/agent-memory/notebooks/po.md' is being committed via a pathspec-SCOPED commit line, which takes its WORKING TREE content (git's --only semantics) — NOT the subset already staged in the shared index for this exact path. The shared index's staged blob for 'docs/agent-memory/notebooks/po.md' (8c2a0f404131dd644f8f0862c04af78a520a7a4a) differs from what is about to land in this commit (e42ae87885b58d3537cb6877b2cd874540fe278d) — a peer's differently-staged hunk (or your own further, unreviewed edit) in this SAME file may be about to be swept in. Documented NON-GOAL of the pathspec-commit mandate, see docs/architecture-briefs/2026-07-21-commit-path-peer-index-sweep-guard.md §2.7 — detector only, never blocked. Inspect before trusting this commit's scope (two-blob form takes NO pathspec — do not append '-- docs/agent-memory/notebooks/po.md', that is a git usage error): git diff 8c2a0f404131dd644f8f0862c04af78a520a7a4a e42ae87885b58d3537cb6877b2cd874540fe278d",
+        "createdAt": "2026-08-23T13:47:00Z",
+        "drained_at": "2026-08-23T13:55:20Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "20a43c2ff145dedecddc340f008a0970799c762da3ac1d2a8fcaff3fa49e41aa",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "2026-08-23T13:48:25Z",
+          "matched_slots": [
+            "digest-sunday"
+          ],
+          "won_slots": [
+            "digest-sunday"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/digest-predict/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "weekend",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "digest-sunday": "cron"
+          },
+          "cadence_minutes": {
+            "digest-sunday": null
+          },
+          "last_fired_timestamp": "2026-08-23T13:47:27Z",
+          "last_fired_slots": [
+            "digest-sunday"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "13:45",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 33,
+          "note": "digest-sunday (guaranteed, cron 47 13 * * 0) spawned run_in_background per BGFAN-1. Step 5.3 off-flow detector is DEFERRED — agent had not returned at telemetry-write time; if a later return scores >=2 distinct OFFFLOW_MARKERS on the contract surface (final assistant text only, never the .output transcript symlink), apply the AC-P1-7-4 de-stamp: re-read cowork-schedule.json and revert last_fired to 2026-07-19T13:49:28.199Z ONLY if it still equals 2026-08-23T13:47:27Z. GAP: prior last_fired was 2026-07-19T13:49:28.199Z — 35 days / 5 missed Sundays via the cowork path; needs the same non-cowork-publisher check that explained the fb-weekend 15-day gap, not assumed to be a lost write. DEFECT (2nd observation, same tick class): spawn-fanout.md Step 5.1 load parser (uptime piped to awk -F\"load average\" then gsub of non-numerics) is locale-fragile — this host emits comma decimals (\"load averages: 5,37 5,67 5,34\") so it yielded 5 instead of 5.37, under-reporting load and biasing the DEGRADED gate toward false. Harmless here (5.37 vs threshold 24) but wrong by construction. Needs an LC_ALL=C pin, same class as the pressure-read.md A-30 helper comment."
+        },
+        "createdAt": "2026-08-23T13:48:25Z",
+        "drained_at": "2026-08-23T13:55:20Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5744c697774e89fb1d2ecc172f261b13840b4eeb0e22d41999001f306c355d15",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "35",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-23T13:35:47Z",
+        "drained_at": "2026-08-23T13:55:20Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0d2b16522661eb9de82165631d17aa15b991001ef5666ba8cb7c5ca36370e525",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "42",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-23T13:44:51Z",
+        "drained_at": "2026-08-23T13:55:20Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
