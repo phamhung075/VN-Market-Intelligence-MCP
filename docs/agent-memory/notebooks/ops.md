@@ -65,3 +65,44 @@ AC-4/AC-5/AC-6 (Burst measurement): **PENDING**
 - Container is healthy and ready for POST /pek-extract burst testing
 - Measure and hand off to PO with findings
 
+
+---
+
+## Cycle 2026-08-23T13:55Z — TASK-BCTC-INSPECT-UI-FILTERS MCP-SERVER REBUILD
+
+**Task:** Rebuild mcp-server Docker image to deploy BCTC inspector quarter+ticker filter UI enhancements (code landed on main commit 2e66153fd).
+
+**Root Cause:** apps/mcp-server/src is baked into Docker image at build time. Running image sha256:c8322d2 (built 2026-08-15T08:44Z) was 8 commits behind main.
+
+**Action:**
+```bash
+# Build: docker compose build mcp-server (138.6s, succeeded)
+# Deploy: docker compose up -d --no-deps mcp-server (no bare down/up — killed peers guard)
+# Prune: docker builder prune -f (reclaimed 15.13GB)
+```
+
+**Verification:**
+- ✅ Image changed: old sha256:c8322d2 → new sha256:de8e753...
+- ✅ Container healthy: StartedAt 2026-08-23T13:55:15Z (post-dispatch)
+- ✅ Port 3000 /health: 200
+- ✅ Port 3000 /api/bctc-inspect: 200, HTML contains id="quarter-filter" and id="ticker-filter"
+- ✅ Port 4004 /api/bctc-inspect: 200, same new HTML
+- ✅ All 12 containers Up (post-rebuild health check per docker.md § MANDATORY)
+
+**Deployment Evidence:**
+```
+date -u: 2026-08-23 13:55:24 UTC
+StartedAt: 2026-08-23T13:55:15.509066584Z
+Image: sha256:de8e753cb52dd62eef768c85d9c6d17892574fd8518cb4be6c7abe4b1f63d4ed
+```
+
+**Orch Update:**
+- Row: task_board.review[21] id=TASK-BCTC-INSPECT-UI-FILTERS
+- next_agent: ops → qa
+- status_note: Updated with rebuild completion details and endpoint verification
+- Applied via: scripts/orch-apply.sh (validation OK)
+
+**Result:** ✅ REBUILD VERIFIED. Ready for QA live dual-origin AC1-AC10 verification.
+
+**Session**: 669e1d9f-6aa0-49b5-bbf3-5aa3f92f55e3 (ops agent, docker rebuild dispatch)
+
