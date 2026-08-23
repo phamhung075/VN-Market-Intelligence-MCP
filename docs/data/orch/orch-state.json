@@ -18023,7 +18023,7 @@
         "priority": "P1",
         "size": "M",
         "zone": "cross-service/",
-        "next_agent": "architect",
+        "next_agent": "developer",
         "created_at": "2026-08-23T09:47:00Z",
         "created_by": "po",
         "files": [
@@ -18035,7 +18035,11 @@
         "depends_on": [],
         "verification_gate": "no_file_can_sit_in_docs_signals_beyond_a_declared_age_without_either_being_drained_or_raising_a_loud_escalation_that_names_it",
         "status_note": "MEASURED AT SOURCE BY PO 2026-08-23T09:45Z, this is a count not an impression. `node scripts/agents-flow/drain-signals.js --count-drainable` prints drainable_count=1 while `ls docs/signals/*.json | wc -l` = 51. Re-derived independently with the script's own predicate: 50 of 51 files have from, source, type AND signal_type all null.\n\nMECHANISM. isDrainableShape() at scripts/agents-flow/drain-signals.js:84-88 returns false when all four of those fields are null. A file that fails it is skipped by the drain loop's 'SKIP non-signal shape' guard, which means it is NEVER enveloped, NEVER appended to .dev_team_idle_chain.pending_triage_inbox, NEVER moved to docs/signals/processed/, NEVER fingerprinted, NEVER DB-inserted, and NEVER pruned — the 7-day prune in section 0a-2 only walks processed/. There is no age check, no floor, no escalation. The file simply accumulates in perpetuity and no agent ever reads it. Oldest currently stuck: docs/signals/cowork-signal-2026-07-29T0722Z-chef-intraday-tokenbudget-marker-leak.json, 25 days.\n\nCONCRETE COST, PROVEN THIS TICK. docs/signals/cowork-team-2026-07-30T001827Z-alertcmd-session-id-gap.json carried two recommendations. Both have since shipped — SESSION_ID_LINE on 2026-07-31 (spawn-fanout.md:292) and the >=2-DISTINCT-marker threshold on 2026-08-23 (spawn-fanout.md:460-472, commit b545a69cc) — and the signal was never drained on either occasion, because it is one of the 50. Both fixes reached production by a route that bypassed the inbox entirely. A signal whose asks are fully satisfied and whose file is still sitting unread in the inbox 24 days later is proof the inbox is not a queue, it is a write-only directory.\n\nWRITER SIDE. The dominant emitter is cowork-team, writing a bare finding object — {event, discovered_during, evidence, recommendation, action_taken_by_dispatcher, ts} — with no envelope at all. Note the writer is not obviously wrong: docs/agents/po/flow/main.md's own 'Signal write rule' specifies only the FILENAME contract and says nothing about a required body envelope, so the envelope requirement is enforced by a reader-side predicate that no writer-side doc states. That asymmetry is the root cause, not a careless emitter.\n\nDISTINCT FROM THE KNOWN TYPE-NAMESPACE ROW. project_signalrow_type_open_namespace_vs_closed_allowlist_20260813 and docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md are about a type VALUE that no routing row matches, inside an otherwise valid envelope. This is envelope ABSENCE — the file never reaches the type table at all. Different layer, different fix.\n\nDECISION FOR ARCHITECT (three options, they are not exclusive): (i) enforce the envelope at write time and state the body contract in the writer-side docs, so a bare finding cannot be emitted; (ii) widen the reader to synthesize an envelope from filename + mtime; (iii) at minimum, make non-drainable LOUD — any file in docs/signals/ older than a declared age that is neither drainable nor a sanctioned by-path family must raise an escalation that names it, instead of being counted as litter forever.\n\nDO NOT BLANKET-WIDEN THE READER. BY_PATH_CONSUMER_FAMILIES at scripts/agents-flow/drain-signals.js:102 already establishes that some non-envelope files in this directory are LEGITIMATE by-path dish inputs (price_anomaly_*, glob-read by chef) that must never be drained, and the script's own comment records that this family has been misdiagnosed as stuck inbox litter FOUR times already. Any fix must discriminate sanctioned by-path families from unsanctioned bare findings, and must read docs/standards/mcp-tools.md section 'price_anomaly — DUAL-PLANE CONTRACT' before touching that list.\n\nPROVENANCE: PO's own drain-coverage process review this tick, prompted by the 24-day sit of the signal drained above. Not an escalation from another agent — this is the root cause behind that sit, and it is systemic, not one file.",
-        "updated_at": "2026-08-23T09:49:06Z"
+        "updated_at": "2026-08-23T10:05:22Z",
+        "architect_design_complete": true,
+        "architect_handoff": "docs/architecture-briefs/2026-08-23-signal-inbox-orphan-escalation-discriminator.md",
+        "architect_review_note": "Architect brief: docs/architecture-briefs/2026-08-23-signal-inbox-orphan-escalation-discriminator.md. Re-measured live: drainable_count 1->2 (inbox moved between PO's measurement and mine). The 49 non-drainable are NOT one population: 21 price_anomaly_* by-path (correctly exempt, do not touch -- this would be the 5th misdiagnosis of that family), 26 well-formed-unenveloped litter, 2 malformed JSON -- a THIRD failure mode PO's row didn't name, from a live uncovered bug (notebook-auto-prune.sh:574-575 grep -c ... || echo 0 double-emit). Design: age-bounded one-shot escalation (ledger table in signals.db + a normal enveloped signal drain-signals.js emits itself, routed to PO like any other) for the 26+2 only -- isDrainableShape()/isByPathConsumerFamilies() left byte-for-byte unchanged, rejects reader-widening (PO's option ii). Floors from existing constants, not new hardcodes: 30min (2x fastest cowork cadence) for malformed, 7d (drain's own existing prune cutoff) for orphan-shape. Flagged, not fixed here: price_anomaly_* has no age ceiling anywhere (oldest 52d, unbounded growth) and the live notebook-auto-prune.sh bug is not in PO's files[] scope -- both candidate follow-up rows for PO/PM. Route to developer (cross-service tooling, no single apps/<service>).",
+        "updated_by": "architect"
       }
     ],
     "review": [
@@ -18774,7 +18778,7 @@
         "last_served_tick": "2026-08-23T09:29:30Z"
       },
       "sls": {
-        "last_served_tick": "2026-08-22T23:49:07Z"
+        "last_served_tick": "2026-08-23T09:53:20Z"
       },
       "rlc": {
         "last_served_tick": "2026-08-23T00:18:58Z"
@@ -18789,7 +18793,7 @@
         "last_served_tick": "2026-08-23T08:55:59Z"
       }
     },
-    "_updated_at": "2026-08-23T09:51:36Z",
+    "_updated_at": "2026-08-23T09:53:20Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
