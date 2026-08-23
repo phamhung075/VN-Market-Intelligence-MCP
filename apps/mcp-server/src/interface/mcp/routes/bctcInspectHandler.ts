@@ -164,9 +164,32 @@ export interface DocListItem {
   refine_status: string;
 }
 
+// AC9 fix (TASK-BCTC-INSPECT-LABEL-FIX, architect D-1): period_type already holds 'Q1'..'Q4'
+// on every live quarterly row (verified — never the 'QUARTERLY'/'ANNUAL' literal buildLabel()'s
+// original comment assumed). QUARTERLY_PERIOD_TYPE_RE detects that case so buildLabel() only
+// appends a quarter suffix when period_type does NOT already encode one (reserved for a future
+// ANNUAL row that also carries a period_quarter) — this is what prevents the duplicate/garbled
+// "VCB Q1 Q1 2025" token that the unconditional-append version produced for all 255 rows.
+const QUARTERLY_PERIOD_TYPE_RE = /^Q[1-4]$/i;
+
+// Defensive coercion: period_quarter is typed number|null but 2/257 live rows (HUT) carry a
+// string "Q1" instead — pre-existing type/runtime mismatch, out of scope per BA. Handles both
+// shapes plus malformed/absent input without ever returning NaN.
+export function normalizeQuarter(periodQuarter: number | string | null): number | null {
+  if (periodQuarter === null || periodQuarter === undefined) return null;
+  const n =
+    typeof periodQuarter === "number"
+      ? periodQuarter
+      : Number.parseInt(String(periodQuarter).replace(/^Q/i, ""), 10);
+  return Number.isFinite(n) ? n : null;
+}
+
 function buildLabel(row: FinancialReportRow): string {
   // e.g. "VCB Q1 2025" or "VNM ANNUAL 2024"
-  const quarter = row.period_quarter ? ` Q${row.period_quarter}` : "";
+  const q = QUARTERLY_PERIOD_TYPE_RE.test(row.period_type)
+    ? null
+    : normalizeQuarter(row.period_quarter);
+  const quarter = q !== null ? ` Q${q}` : "";
   return `${row.action_code} ${row.period_type}${quarter} ${row.period_year}`;
 }
 

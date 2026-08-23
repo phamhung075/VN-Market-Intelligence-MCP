@@ -30,6 +30,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import {
   isValidUuid,
   isDecimalShiftAnomaly,
+  normalizeQuarter,
   handleBctcInspectDocs,
   handleBctcInspectPdf,
   handleBctcInspectOcr,
@@ -283,6 +284,34 @@ describe("PI-3 AC-13 — isValidUuid()", () => {
   });
 });
 
+describe("TASK-BCTC-INSPECT-LABEL-FIX AC9 — normalizeQuarter()", () => {
+  test("number passthrough", () => {
+    expect(normalizeQuarter(1)).toBe(1);
+  });
+
+  test("'Qn'-shaped string coercion", () => {
+    expect(normalizeQuarter("Q1")).toBe(1);
+    expect(normalizeQuarter("Q4")).toBe(4);
+  });
+
+  test("null handling", () => {
+    expect(normalizeQuarter(null)).toBe(null);
+  });
+
+  test("undefined handling", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- exercising defensive branch for a runtime-only shape
+    expect(normalizeQuarter(undefined as any)).toBe(null);
+  });
+
+  test("malformed string defensive — never NaN", () => {
+    expect(normalizeQuarter("ABC")).toBe(null);
+  });
+
+  test("edge case 'Q0' — parseInt yields 0, Number.isFinite(0) is true, so this returns 0 (not null)", () => {
+    expect(normalizeQuarter("Q0")).toBe(0);
+  });
+});
+
 // ═════════════════════════════════════════════════════════════════════════════
 // Handler tests — GET /api/bctc-inspect/docs
 // ═════════════════════════════════════════════════════════════════════════════
@@ -358,7 +387,10 @@ describe("PI-3 AC-1/2 — GET /api/bctc-inspect/docs — list shape", () => {
     const { res, getBody } = mockRes();
     handleBctcInspectDocs(mockReq("/api/bctc-inspect/docs"), res, db);
     const body = getBody() as { items: DocListItem[] };
-    expect(body.items[0]!.label).toBe("VCB Q1 Q1 2025");
+    // TASK-BCTC-INSPECT-LABEL-FIX AC-14: in-scope correction — the buggy value ("VCB Q1 Q1
+    // 2025") was hardcoded here before AC9's buildLabel() fix; period_type already encodes
+    // 'Q1' so no quarter suffix is appended a 2nd time.
+    expect(body.items[0]!.label).toBe("VCB Q1 2025");
   });
 
   test("AC-16: excludes action_code containing 'example'", () => {
