@@ -21104,7 +21104,7 @@
         "last_served_tick": "2026-08-23T20:56:57Z"
       }
     },
-    "_updated_at": "2026-08-23T21:57:27Z",
+    "_updated_at": "2026-08-23T22:26:27Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -21419,6 +21419,96 @@
         },
         "createdAt": "2026-08-23T21:46:53Z",
         "drained_at": "2026-08-23T21:55:49Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "e646e53b40728e0fbe1de3cc7f7156e69ec6e16341bb59973ffedca8e5370f02",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/qa.md — retained section '## cycle-825 · 2026-08-24T00:14Z · FIX-ORCHSTATE-MINT-FLAGGED-ROW-WITHOUT-RESOLVABLE-HANDLER, direct-commit verify — APPROVED, review[] -> done_verified[]' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-23T22:18:42Z",
+        "drained_at": "2026-08-23T22:26:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "711f8317dc4f6e625b9a637f709c8e3d9739df1c60e460fe62f324f09a5a7235",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/qa.md — retained section '## cycle-825 · 2026-08-24T00:14Z · FIX-ORCHSTATE-MINT-FLAGGED-ROW-WITHOUT-RESOLVABLE-HANDLER, direct-commit verify — APPROVED, review[] -> done_verified[]' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-23T22:19:06Z",
+        "drained_at": "2026-08-23T22:26:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "c7f7129aed246f5a14f387f8029fe161c6520db4380c6e92bd8476727edb4ea9",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-27.md",
+          "line_count": 163,
+          "cap": 600,
+          "byte_count": 36063,
+          "byte_cap": 36000,
+          "class": "sprint-decision-journal",
+          "reason": "byte-cap",
+          "overage": 0,
+          "byte_overage": 63,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-23T22:08:11Z",
+        "drained_at": "2026-08-23T22:26:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5f66e56e99191bf3d5afb0213be082b9abac1887693b0fbe3308084a48c34d52",
+        "source": "file",
+        "from": "dev-team",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[dev-team SECONDARY-drain] done[]-origin claims are stamped but STRUCTURALLY NEVER DISPATCHED.\n\nDEFECT: scripts/devteam-review-claim-secondary-drain.jq was widened 2026-08-08 (FIX-DONELANE-NO-DONEVERIFIED-PRODUCER-DEP-STARVATION, brief docs/architecture-briefs/2026-08-08-donelane-doneverified-producer.md §2 Component 2) to select candidates from .task_board.review[] UNION .task_board.done[], and it stamps secondary_claimed_at/_by/_dispatch_target in whichever lane the picked row lives in.\n\nThe read-back query in docs/agents/dev-team/flow/main.md § Review-Lane SECONDARY-Drain was NOT widened. It still reads:\n  picked=$(jq -c --arg t \"$NOW\" --arg by \"dev-team (review-lane secondary-drain)\" '[.task_board.review[] | select(.secondary_claimed_at == $t and .secondary_claimed_by == $by)] | first // empty' ...)\n\nreview[] only. So whenever the oldest eligible candidate lives in done[], the script claims it, the flow reads picked=empty, and the dispatch block is skipped entirely. The row is left claim-stamped and never spawned. Silent — no log line, no telegram, indistinguishable from \"nothing eligible\".\n\nLIVE EVIDENCE (2026-08-23T21:58Z tick, verified at source):\n  - review[] had 16 status=REVIEW rows with next_agent != \"qa\" (8 null, 3 po, 2 dev-mcp-server, 1 developer, 1 architect, 1 agent-father) yet 0 review[] stamps existed.\n  - Running the claim script standalone produced 4 stamps across both lanes; the live board carried 3, ALL in done[]:\n      FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-SKILLS   target=po  stamped 2026-08-23T13:39:19Z\n      FIX-PO-TRIAGE-SIGNALS-TABLE-MATCHES-ZERO-LIVE-SIGNAL-TYPES  target=po  stamped 2026-08-13T16:23:30Z\n      TASK_RUNIDLE-1-AUDIT                            target=pm  stamped 2026-08-23T21:58:22Z (this tick)\n  - The 2026-08-13 stamp has sat undispatched for 10 days.\n\nSECONDARY EFFECT (unverified mechanism, worth checking during the fix): the picked row's updated_at appears to be bumped to the stamp time by orch-apply's row stamper. age_epoch sorts on `updated_at // reviewed_at // created_at`, so a stamped-but-undispatched done[] row is rotated to the BACK of the age queue. That would make this leak touch a DIFFERENT row each tick rather than re-picking the same one, which matches the three distinct stamp timestamps above and explains why it never produced a visible stuck-row symptom.\n\nFIX (owner: agent-father — docs/agents/** is its exclusive zone): widen the picked= query to union done[], mirroring the script it reads back from. Suggested:\n  '[ (.task_board.review[]?), (.task_board.done[]?) ] | map(select(.secondary_claimed_at == $t and .secondary_claimed_by == $by)) | first // empty'\nAlso consider whether the selection should exclude already-stamped rows, and whether age_epoch should ignore secondary_claimed_at-driven updated_at bumps.\n\nNOT FIXED THIS TICK: the router hand-dispatched pm for TASK_RUNIDLE-1-AUDIT (outer claim task:TASK_RUNIDLE-1-AUDIT held, ttl 3600) to avoid stranding the claim that had already actuated. The two older done[] stamps were left untouched and still need routing to po.",
+        "createdAt": "2026-08-23T22:02:02Z",
+        "drained_at": "2026-08-23T22:26:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "546f5f6850c668ba8f6f146f76ff165d0b4f0fd6fcd8610714fcfb0c2c6fb275",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "73",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-23T22:17:44Z",
+        "drained_at": "2026-08-23T22:26:27Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "68531dca05f022a240858d2fc6ced44f863ba60e567587c38722304aa1e5d8dc",
+        "source": "file",
+        "from": "dev-team",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "CORRECTION — do NOT mint a \"dev-team Review-Lane QA-Drain PRIMARY-claim actuation defect\" row.\n\nThree qa sessions on tick 2026-08-23T21:37Z (TASK_001-WATCHLIST-WRITE-THROUGH-INFRA,\nTASK-COWORK-DOC-TRUTH-LAYER-INVENTORY, TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX) each independently\nreported that the dispatch's \"promoted review[] -> qa[] this tick\" claim was false, and each\nrecommended minting a FIX row for a dispatcher-side actuation gap (sibling to\nFIX-QA-VC-LANEMOVE-PROSE-ONLY-NO-ORCHAPPLY-ACTUATOR). Their VERDICTS were correct and their writes\nwere correct. Their ROOT-CAUSE INFERENCE is wrong. Acting on it sends a developer to fix a script\nthat works.\n\nWHAT THEY TESTED: \"no commit in orch-state.json history moves these ids into qa[]\" — true, and\nverified independently 3x. But that test cannot distinguish \"never actuated\" from \"actuated, then\nreverted before commit\". Both leave identical evidence: no commit, no surviving claimed_at /\nclaimed_by / drain_source_lane stamps.\n\nWHAT ACTUALLY HAPPENED — the promotion DID actuate. docs/agents/dev-team/flow/main.md\n(jump:qa-drain-headdecoupled) has a real actuator, not prose:\n    jq ... -f scripts/devteam-review-claim-qa-drain.jq orch-state.json | bash scripts/orch-apply.sh || true\n    picked_batch=$(jq -c '[.task_board.qa[] | select(.claimed_at==$t and .claimed_by==$by)]' orch-state.json)\npicked_batch is read back FROM THE LIVE FILE after the write. It returned 5 rows; the router built\nthe 5-way BGFAN-1 fan-out from those row ids. Non-empty picked_batch is only reachable if those rows\nwere in .task_board.qa[] with a matching claimed_at at that instant. qa[] read 2 -> 7.\n\nTHE REVERT: a concurrently-running pm subagent's own unrelated done[] -> done_verified[] write\n(commit 54f0cf9b4) carried a FULL-DOCUMENT candidate built from a jq read taken minutes earlier,\nbefore the QA-drain write. It restored the stale qa[]/review[] arrays wholesale. Signature:\n`git show 54f0cf9b4 -- docs/data/orch/orch-state.json | grep <row-id>` is EMPTY for all 5 ids — pm\nnever mentioned them, it just carried a stale copy of the whole array. pm's own work is genuine and\ncorrect; it committed the reverted state, so the QA-drain change never reached any commit.\n\nROOT CAUSE 1 (real, structural) — scripts/orch-apply.sh CAS window is narrower than the operation\nit guards. It captures MTIME_BEFORE at line 116, when orch-apply STARTS — i.e. AFTER the caller's\n`jq` already read the file. The caller pipeline is `jq '<transform>' orch-state.json | orch-apply.sh`,\nso a candidate built from a stale read applies with no mismatch:\n    T0 peer jq reads (qa=2) | T1 our orch-apply writes (qa=7) | T2 peer orch-apply starts,\n    MTIME_BEFORE=T1 | T3 peer renames, MTIME_AFTER=T1 -> MATCH -> applies, qa back to 2\nNothing downstream catches it: orch-conservation-check.mjs compares MAGNITUDES (task_total 769=769),\nand a lane REVERT preserves every count. Zod passes. Dup-key passes. There is NO lane-placement\ninvariant anywhere in the write path.\nFIX: caller passes the mtime/hash it read at jq time into orch-apply.sh so CAS compares against the\nCALLER's snapshot, not orch-apply's own start. Retry-on-exit-2 already exists; it never fires for\nthis shape.\n\nROOT CAUSE 2 (real, separate, same line) — the `|| true` on the QA-drain orch-apply pipe silently\nswallows a nonzero exit, INCLUDING a genuine CAS exit-2 abort. There is no retry at this call site.\nEven once RC-1 is fixed and CAS starts firing correctly, this line would discard the abort and the\nsubsequent picked_batch read would just come back empty, producing a silent no-op tick.\n\nBLAST RADIUS — smaller than it looks, and the tick still succeeded. 4 of the 5 dispatched qa\nsessions ran CONCURRENTLY after the revert, each writing full-document candidates to the same board,\nwith ZERO mutual clobbering: task_total 769, pending_triage_inbox 12, signal_queue.rows 35 held\nbyte-stable across all 6 commits of the tick; review[] membership diff shows only intended departures\nand nothing re-entering. The hazard is the WIDTH OF THE CALLER'S read->transform gap, not the number\nof concurrent writers — pm carried a whole array across minutes of reasoning; the qa agents each\nre-derived a single-row move seconds before their pipe. Do not \"fix\" this by banning concurrent\nboard writers.\n\nOutcome despite the revert: 3 rows verified through to done_verified[] (428372bd7, 285978c79,\n4af44ac60), 1 correctly REFUSED on merits (TASK_001 — AC-5 blocked on a nonexistent TASK_002, AC-7\nunverifiable because the deployed mcp-server image 2026-08-23T13:52:50Z predates commit 15:11:08Z),\n1 still running at time of filing. All 5 workers re-read state, found the rows in review[], and none\nfabricated. A dispatch prompt whose lane premise has gone stale is recoverable when the worker\nverifies at source.\n\nALSO NOTE: those 3 rows went review[] -> done_verified[] DIRECTLY, never entering qa[], so they\nconsumed no QA_CAP slot. Same cap-bypass shape already recorded for direct review -> qa lane-moves.\nCap-based reasoning about qa throughput undercounts real work in both directions.\n\nACTION REQUESTED: (a) do not mint the PRIMARY-claim actuation row the 3 qa notebooks/journals\nrecommend — their journals (qa-S185, qa-S187, sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-27) carry the\nwrong attribution and should be annotated; (b) mint instead against scripts/orch-apply.sh for RC-1\n(caller-supplied CAS baseline) and against docs/agents/dev-team/flow/main.md for RC-2 (drop `|| true`,\nadd retry-on-exit-2 at jump:qa-drain-headdecoupled); (c) both are zone dev-mcp-server / cross-service.\n",
+        "createdAt": "2026-08-23T22:15:33Z",
+        "drained_at": "2026-08-23T22:26:27Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
