@@ -2,6 +2,28 @@
 
 **Last updated:** 2026-08-23 | **Sprint:** COWORK-GUARANTEED-SLOT-CATCHUP
 
+## UC-MDH-P2 · 2026-08-23
+
+Design-Router dispatch (SPRINT-S, but routed to ba anyway per promotion_note): remove dead
+append-session-record skill+tool, full consumer sweep + TE-T05 de-confliction. Re-verified the
+"9+ consumers" claim at source instead of trusting the note: real count is **13** live files
+(4 more than named — mcp-tools.md, both smart-compact-protocol docs, system-map.json). Found
+digest-predict/market-analyst's actual FLOW files already don't call the tool (post-TE-T05
+migration to end-0-cowork/notebook-write) — only their init.md/tools-package docs are stale, but
+a genuine fresh stub (`sessions/archive/2026-08-07-developer.md`, non-test md5) proves that stale
+instruction still fires occasionally. TE-T05 de-confliction is MOOT: it's DONE_VERIFIED
+2026-08-08 and gone from the live board entirely (0 matches, full lane scan) — its own commit
+already excluded append-session-record from scope, nothing left to orch-apply. Also found the
+1300b test sandbox fix (AGENT_MEMORY_ROOT) already landed 2026-07-16 (commit 11c35c0a8),
+pre-dating this dispatch — only the test-case deletion (deploy-coupled) remains. Wrote FR-1..FR-7
+splitting safe-now doc work (skill delete, catalog fix, 13-file consumer sweep, stub cleanup)
+from deploy-gated code work (MCP deregistration, registry regen, 1300b case delete — must land
+atomically). 3 PO blockers (doc/deploy-gate split reading, agent-father file-ownership split,
+deploy-window executor). Spec-only pass — every target file is agent/flow/knowledge-file class,
+outside ba's forbidden_outputs; no code/docs/orch-state touched. Spec:
+`docs/handoffs/UC-MDH-P2-BA-spec.md`. Recommended next_agent=architect (B1 to po in parallel).
+Decision journal STEP ba-S7.
+
 ## FEAT-BCTC-INSPECT-QUARTER-TICKER-FILTER · 2026-08-23
 
 po dispatch: bctc-inspect page (`apps/mcp-server/src/interface/bctc-inspector.html`, 2692L vanilla-JS,
