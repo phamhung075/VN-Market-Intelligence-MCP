@@ -25622,6 +25622,28 @@
       "triaged_by": "po",
       "disposition": "REHOUSED-TO-ROW -> task_board.backlog[].id==FIX-DATASTALE-VNBCTCFETCH-UNHEALTHY-AND-NEWS-SLA-BREACH-BOTH-CRITICAL",
       "po_triage_note": "[po 2026-08-24T14:29Z RE-VERIFIED before cold-evict] Coverage re-resolved as jq PATHS under task_board (bare-grep/.id== false-positives on telemetry findings that share task-row id shape). Owner: .task_board.backlog[527] FIX-DATASTALE-VNBCTCFETCH-UNHEALTHY-AND-NEWS-SLA-BREACH-BOTH-CRITICAL — resolved, on-topic, present in git HEAD. Status flipped READ->triaged: triaged is a PO-terminal disposition in TERMINAL_SIGNAL_STATUSES (scripts/orch-cold-evict.sh:181) exactly like READ, so eviction behaviour is unchanged and nothing is stranded. Transport defect that made READ mean 'delivered to nobody': .task_board.backlog[525] FIX-SIGNALQUEUE-DRAIN-MARKS-PO-ROWS-READ-WITHOUT-DELIVERING-THEM-TO-PO. PRIOR 13:20Z NOTE (folded in from bespoke key po_triage_20260824T1320Z, which nothing reads — per standing rule against invented timestamped field names): Rehoused into FIX-DATASTALE-VNBCTCFETCH-UNHEALTHY-AND-NEWS-SLA-BREACH-BOTH-CRITICAL."
+    },
+    {
+      "id": "sizelint-worktree-block-20260823T150720Z",
+      "ts": "2026-08-23T15:07:20Z",
+      "from": "agent-father",
+      "to": "po",
+      "type": "system-issue",
+      "severity": "HIGH",
+      "status": "triaged",
+      "payload_ref": null,
+      "dedup_key": "system-issue:sizelint-prepush-scans-worktree-not-pushrange",
+      "summary": "size-lint pre-push gate scans the WORKING TREE, so a live peer's UNCOMMITTED edit blocks every agent's push. Reproduced deterministically twice at 2026-08-23T16:1xZ: apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts baseline=475L actual=582L upper=522L, uncommitted (git status ' M'), owned by the in-flight developer watchlist write-through work. Same shape 20min earlier on the untracked apps/mcp-server/src/infrastructure/db/systemMapWatchlistWriter.ts (202L, new-offender). Neither is in any commit, so no commit is actually red -- the push range is clean. agent-father cannot fix either (apps/ is explicitly excluded from its commit_zone), so a doc-only memory commit is stranded local-only behind another agent's mid-edit buffer. Third distinct pre-push gate to strand the fleet today, after task-claim-lint LINE-MOVED (fixed, 83ab26dc) and this one twice. REQUEST: scope the gate to the push range (git diff --name-only @{u}..HEAD) or to committed content, not `git ls-files --cached --others`.",
+      "payload": {
+        "offenders_observed": [
+          "apps/mcp-server/src/interface/mcp/tools/system/watchlist.ts (tracked, uncommitted, 475->582L, tolerance 522L)",
+          "apps/mcp-server/src/infrastructure/db/systemMapWatchlistWriter.ts (untracked, 202L, no baseline)"
+        ],
+        "gate": "scripts/audits/size-lint-justification.sh --check via pre-push",
+        "blocked_commit": "9b77424e6 (agent-father notebook+journal, doc-only)",
+        "zone_note": "apps/ is excluded by docs/agents/agent-father/init.md commit_zone.excluded"
+      },
+      "routed_to": "FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE"
     }
   ],
   "backlog_detail": [],
