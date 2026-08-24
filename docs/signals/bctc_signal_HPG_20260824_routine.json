@@ -1,0 +1,41 @@
+{
+  "ticker": "HPG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "Steel production (long + flat products), construction materials, agriculture (feed/livestock)",
+  "customer": "Construction contractors, infrastructure/property developers, domestic + export steel buyers",
+  "ops": "Gross margin 15.8%; operating_profit reported as 0 tỷ VND — known data-quality anomaly (34th+ consecutive cycle, op_profit=0 corrupt while net profit 9,056 tỷ VND remains positive)",
+  "mgmt": "ROE 6.5% (raw quarter, non-annualized) / 12.7% sector-comparison annualized; steel-cycle sensitive, foreign flow +480K cp net (stronger than sector)",
+  "valuation": {
+    "pe": 14.2,
+    "pe_sector_median": 32.6,
+    "earning_yield_pct": 7.04,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pp": 2.04,
+    "valuation_verdict": "FAIR",
+    "roe_pct_sector_annualized": 12.7
+  },
+  "kinhdich_reading": {"que": "Tiem (53)", "xu_huong": "THUAN LOI", "tin_hieu": "GIU", "do_tin_cay_pct": 100},
+  "sentiment_trend": {"window_days": 30, "direction": "ỔN ĐỊNH", "slope": -0.02, "entries": 25},
+  "esc_gate": {
+    "ESC-1": "unevaluable (E1 SCOPE-REDUCED, no bctc_table_rows tool grant)",
+    "ESC-2": {"result": false, "imbalance_pct": 0.0},
+    "ESC-3": {"result": "DATA-COVERAGE-LIMITED", "quarters_returned": 3, "quarters_required": 4, "coverage_guard_held": true},
+    "ESC-4": {"result": "DISCARDED", "reason": "operating_profit=0 corrupt — non_operating_share calc undefined"},
+    "ESC-5": {"result": false, "reason": "report_id null (refine_status=PARTIAL, not DONE)"}
+  },
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": [],
+  "insider_signals": "no significant insider activity",
+  "legal_risk": "none",
+  "evidence_fragments": [
+    {"id": 1467, "evidence_type": "bctc_roe_ratio", "direction": "bullish", "magnitude": 0.508, "confidence": 0.6},
+    {"id": 1468, "evidence_type": "bctc_report_overdue", "direction": "bearish", "magnitude": 0.5, "confidence": 0.55}
+  ],
+  "earnings_calendar_status": "QUÁ HẠN (Q2-2026, hạn 30/07/2026; Q2 PDF on file since 2026-08-01, still unextracted)",
+  "fetchedAt": "2026-06-07T11:12:22.298Z",
+  "cycle_id": "20260824-1800"
+}

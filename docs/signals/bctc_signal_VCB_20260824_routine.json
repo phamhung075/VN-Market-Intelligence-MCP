@@ -1,0 +1,41 @@
+{
+  "ticker": "VCB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "product": "State-owned commercial bank — corporate + retail lending, trade finance, treasury operations",
+  "customer": "Corporate borrowers, retail depositors, government-linked entities",
+  "ops": "Operating profit 80.9% of net revenue (bank cost structure); ROA 0.4%; foreign flow -97K cp net (weaker than sector)",
+  "mgmt": "ROE 16.7% sector-annualized, below 17.6% sector median; largest SOE bank by market cap, stable profitability",
+  "valuation": {
+    "pe": 14.1,
+    "pe_sector_median": 9.0,
+    "earning_yield_pct": 7.09,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pp": 2.09,
+    "valuation_verdict": "FAIR",
+    "roe_pct_sector_annualized": 16.7
+  },
+  "kinhdich_reading": {"que": "Tuy (45)", "xu_huong": "THUAN LOI", "tin_hieu": "GIU", "do_tin_cay_pct": 63},
+  "sentiment_trend": {"window_days": 30, "direction": "TĂNG", "slope": 0.10, "entries": 15},
+  "esc_gate": {
+    "ESC-1": "unevaluable (E1 SCOPE-REDUCED, no bctc_table_rows tool grant)",
+    "ESC-2": {"result": false, "imbalance_pct": 0.37},
+    "ESC-3": {"result": false, "quarters_returned": 4, "divergence_ratio": 0.368, "threshold": 0.40},
+    "ESC-4": {"result": "N/A", "reason": "bank — non_operating_share calc not applicable"},
+    "ESC-5": {"result": false, "reason": "report_id null (refine_status=PARTIAL, not DONE)"}
+  },
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": [],
+  "insider_signals": "no significant insider activity",
+  "legal_risk": "none",
+  "evidence_fragments": [
+    {"id": 1469, "evidence_type": "bctc_roe_strong", "direction": "bullish", "magnitude": 0.668, "confidence": 0.6},
+    {"id": 1470, "evidence_type": "bctc_report_overdue", "direction": "bearish", "magnitude": 0.5, "confidence": 0.55}
+  ],
+  "earnings_calendar_status": "QUÁ HẠN (Q2-2026, hạn 14/08/2026; Q2 PDF on file since 2026-08-01, still unextracted)",
+  "fetchedAt": "2026-07-19T12:43:43.098Z",
+  "cycle_id": "20260824-1800"
+}
