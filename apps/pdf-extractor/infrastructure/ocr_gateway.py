@@ -72,6 +72,16 @@ Scope note (honesty — see task close-out report for the full accounting):
             __tests__/unit/test_generic_md_table_extractor.py. Rewiring it
             safely is a real, separate follow-up (recommend PO mint it) —
             not done here to keep this P0 fix's blast radius bounded.
+
+Follow-up (2026-08-24, FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH):
+    inflight()'s ERROR-level mismatch alarm was firing on an expected,
+    momentary setup/teardown skew (not a leak — refuted by code inspection
+    + live traffic evidence, see PDFX_OCR_INFLIGHT_MISMATCH_GRACE_S and
+    inflight() below). A persistence grace window now gates the ERROR level;
+    the dangerous direction (an untracked OS child, held=0) still gets zero
+    grace. reap_orphans()/_reap_oldest_tesseract_child_best_effort() and the
+    acquire/release bracketing in run_image()/run_image_sync() are
+    unchanged — this fix is scoped to the observability/alarm layer only.
 """
 
 from __future__ import annotations
@@ -119,6 +129,38 @@ def _read_float_env(name: str, default: float) -> float:
 PDFX_OCR_MAX_CONCURRENCY: int = _read_int_env("PDFX_OCR_MAX_CONCURRENCY", 1)
 PDFX_OCR_QUEUE_WAIT_S: float = _read_float_env("PDFX_OCR_QUEUE_WAIT_S", 5.0)
 PDFX_OCR_PAGE_TIMEOUT_S: int = _read_int_env("PDFX_OCR_PAGE_TIMEOUT_S", 600)
+
+# FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH (2026-08-24): grace
+# window before a semaphore/os_children mismatch is logged as an ERROR.
+#
+# Root-caused live (task close-out): NOT a leaked acquire — every acquire in
+# run_image()/run_image_sync() is unconditionally released in a `finally`
+# (confirmed by code inspection of both), and this refutation is corroborated
+# by 24h of live traffic: a real leak would permanently wedge the semaphore
+# at capacity (every subsequent call 429s forever); instead traffic kept
+# flowing normally after each mismatch. The mismatch is instead an EXPECTED,
+# momentary skew: `held` (semaphore + _inflight_calls) spans the FULL
+# Python-level OCR call — image serialization to a temp file BEFORE
+# pytesseract spawns the tesseract subprocess, and output-file parsing/
+# cleanup AFTER it exits — while `os_children` is a single-instant /proc
+# snapshot of only the subprocess-alive sub-window strictly inside that
+# span. A frequent /health poller (measured live: ~4490 polls/24h, ~1 every
+# 19s combined across 2 poll sources) samples that narrow setup/teardown gap
+# often enough to explain the observed count with NO leak required — and
+# live evidence backs this directly: all 20 mismatches in a 24h capture
+# landed in the container's first ~5h15m (cold disk cache + concurrent PEK
+# model-loading CPU contention slow the non-subprocess I/O around each
+# tesseract call), then ZERO in the following ~7.5h at unchanged /extract
+# traffic. A leak does not self-heal like that; a sampling artifact does.
+#
+# This grace window keeps the alarm for what actually matters — a mismatch
+# that PERSISTS past the time a call should reasonably have shown (or
+# cleared) its OS child — while dropping the false alarm for a normal,
+# short-lived setup/teardown gap. The dangerous direction (an OS child with
+# NO tracked call at all, held=0) gets ZERO grace: see inflight() below.
+PDFX_OCR_INFLIGHT_MISMATCH_GRACE_S: float = _read_float_env(
+    "PDFX_OCR_INFLIGHT_MISMATCH_GRACE_S", 5.0
+)
 
 # Grace added on top of PDFX_OCR_PAGE_TIMEOUT_S for the OUTER backstop wait
 # (future.result(timeout=...)). Normally pytesseract's OWN internal
@@ -280,8 +322,13 @@ def inflight() -> Dict[str, Any]:
     """
     Observability (brief §5.2 / AC-6): publish bookkeeping ALONGSIDE OS ground
     truth so a counter that disagrees with reality is visible, not asserted
-    away. `semaphore != os_children` is logged at ERROR — that mismatch is,
-    by definition, a bug.
+    away. `semaphore != os_children` is logged at ERROR once it has persisted
+    past PDFX_OCR_INFLIGHT_MISMATCH_GRACE_S — see the grace-window rationale
+    on that constant's definition above (FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-
+    DIVERGES-OS-TRUTH). A mismatch still inside grace is expected (the
+    normal setup/teardown skew around each tesseract subprocess call) and is
+    logged at DEBUG instead — bookkeeping is still published unchanged either
+    way, only the alarm level is gated on persistence.
     """
     with _inflight_lock:
         held = len(_inflight_calls)
@@ -301,12 +348,32 @@ def inflight() -> Dict[str, Any]:
         # Only compare against OS ground truth when /proc is actually
         # available (Linux/container) — on macOS os_children is always 0 by
         # construction and would falsely flag every held call.
-        logger.error(
-            "ocr_gateway.inflight: semaphore=%d != os_children=%d — bookkeeping "
-            "disagrees with OS ground truth (this mismatch is, by definition, a bug)",
-            held,
-            os_children,
+        #
+        # mismatch_age_s is None exactly when held==0 (no tracked call at
+        # all) — an OS child with zero bookkeeping to explain it is the
+        # dangerous direction, so it gets ZERO grace (treated as already
+        # past grace below, no legitimate call to attribute the delay to).
+        mismatch_age_s = (
+            time.monotonic() - oldest_started if oldest_started is not None else None
         )
+        if mismatch_age_s is None or mismatch_age_s >= PDFX_OCR_INFLIGHT_MISMATCH_GRACE_S:
+            logger.error(
+                "ocr_gateway.inflight: semaphore=%d != os_children=%d — bookkeeping "
+                "disagrees with OS ground truth for >=%.1fs (grace=%.1fs) — this is a bug",
+                held,
+                os_children,
+                mismatch_age_s if mismatch_age_s is not None else 0.0,
+                PDFX_OCR_INFLIGHT_MISMATCH_GRACE_S,
+            )
+        else:
+            logger.debug(
+                "ocr_gateway.inflight: semaphore=%d != os_children=%d within "
+                "%.2fs/%.1fs setup/teardown grace — expected transient, not logged as a bug",
+                held,
+                os_children,
+                mismatch_age_s,
+                PDFX_OCR_INFLIGHT_MISMATCH_GRACE_S,
+            )
 
     return {"max": PDFX_OCR_MAX_CONCURRENCY, "semaphore": held, "os_children": os_children,
             "oldest_child_s": oldest_child_s}

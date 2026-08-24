@@ -245,6 +245,21 @@ make that disagreement visible, not assert it away.
 This satisfies AC-6 and makes the class permanently diagnosable without
 `docker exec ps`.
 
+**CORRECTION (2026-08-24, FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH):**
+the "by definition a bug" line above is only true once the mismatch
+*persists* — it fired live 59 times (then 20 more post-rebuild) on an
+expected, momentary skew: `held` spans the full Python-level OCR call
+(image serialization before the subprocess spawns, output-parsing/cleanup
+after it exits) while `os_children` is a single-instant `/proc` snapshot of
+only the subprocess-alive sub-window strictly inside that span. Confirmed
+NOT a leaked acquire (every acquire is unconditionally released in a
+`finally`; live traffic kept flowing normally after each mismatch instead
+of permanently wedging, which a real leak would cause) — see
+`infrastructure/ocr_gateway.py`'s `PDFX_OCR_INFLIGHT_MISMATCH_GRACE_S` and
+the reworked `inflight()` for the persistence-gated fix. The dangerous
+direction (an OS child with zero tracked call) still logs at ERROR
+immediately, zero grace.
+
 ### 5.3 Call-site rewiring — all six
 
 | File:line | Today | After |

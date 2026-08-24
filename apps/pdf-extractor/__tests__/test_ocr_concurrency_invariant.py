@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import ast
 import asyncio
+import os
 import threading
 import time
 from pathlib import Path
@@ -485,3 +486,103 @@ class TestProcScanningPortable:
     def test_returns_empty_when_proc_root_absent(self, monkeypatch, tmp_path):
         monkeypatch.setattr(ocr_gateway, "_PROC_ROOT", str(tmp_path / "does-not-exist"))
         assert ocr_gateway._find_tesseract_child_pids() == []
+
+
+# ---------------------------------------------------------------------------
+# FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH
+#
+# Root-caused live (task close-out, 2026-08-24): NOT a leaked acquire — every
+# acquire in run_image/run_image_sync is unconditionally released in a
+# `finally` (confirmed by code inspection), and 24h of live container traffic
+# kept flowing normally after each mismatch instead of permanently wedging at
+# capacity, which a real leak would cause. The mismatch is an EXPECTED,
+# momentary skew: `held` spans the full Python-level OCR call (image
+# serialization BEFORE the tesseract subprocess spawns, output-parsing/
+# cleanup AFTER it exits) while `os_children` is a single-instant /proc
+# snapshot of only the subprocess-alive sub-window strictly inside that span.
+# A frequent /health poller (measured live: ~4490 polls/24h) samples that
+# narrow setup/teardown gap often enough to explain the observed count with
+# no leak required — and live evidence backs this: all 20 mismatches in a
+# 24h capture landed in the container's first ~5h15m (cold disk cache +
+# concurrent PEK model-loading CPU contention slow the non-subprocess I/O),
+# then ZERO in the following ~7.5h at unchanged traffic. A leak would not
+# self-heal like that; a sampling artifact would.
+#
+# This portable suite proves the grace-window fix on BOTH axes without a
+# real Tesseract binary or a live container: (1) a momentary mismatch within
+# grace does NOT log at ERROR: (2) a mismatch that PERSISTS past grace still
+# DOES — the alarm is preserved for what actually matters; (3) the
+# genuinely dangerous direction (an OS child with NO tracked call at all)
+# gets ZERO grace — there is no legitimate call to attribute the delay to.
+# ---------------------------------------------------------------------------
+
+
+class TestInflightMismatchGrace:
+    def _write_tesseract_stat(self, proc_root: Path, pid: int, ppid: int) -> None:
+        pid_dir = proc_root / str(pid)
+        pid_dir.mkdir(parents=True, exist_ok=True)
+        fields = [str(pid), "(tesseract)", "R", str(ppid)] + ["0"] * 20
+        (pid_dir / "stat").write_text(" ".join(fields))
+
+    def test_recent_mismatch_within_grace_does_not_log_error(self, tmp_path, monkeypatch, caplog):
+        """held=1, os_children=0, call started JUST now (well inside grace) —
+        the expected transient setup/teardown window. Must NOT log ERROR."""
+        monkeypatch.setattr(ocr_gateway, "_PROC_ROOT", str(tmp_path))  # real dir, 0 children
+        monkeypatch.setattr(ocr_gateway, "PDFX_OCR_INFLIGHT_MISMATCH_GRACE_S", 5.0)
+
+        with ocr_gateway._inflight_lock:
+            ocr_gateway._inflight_calls["recent-call"] = time.monotonic()
+        try:
+            with caplog.at_level("ERROR", logger="infrastructure.ocr_gateway"):
+                result = ocr_gateway.inflight()
+        finally:
+            with ocr_gateway._inflight_lock:
+                ocr_gateway._inflight_calls.pop("recent-call", None)
+
+        assert result["semaphore"] == 1
+        assert result["os_children"] == 0
+        assert not any(
+            "bookkeeping disagrees with OS ground truth" in r.message for r in caplog.records
+        ), f"expected no ERROR for a recent, in-grace mismatch; got: {caplog.text}"
+
+    def test_sustained_mismatch_beyond_grace_still_logs_error(self, tmp_path, monkeypatch, caplog):
+        """held=1, os_children=0, call started WAY before grace elapsed — a
+        genuinely stuck state. Must still log ERROR (the alarm is preserved)."""
+        monkeypatch.setattr(ocr_gateway, "_PROC_ROOT", str(tmp_path))  # real dir, 0 children
+        monkeypatch.setattr(ocr_gateway, "PDFX_OCR_INFLIGHT_MISMATCH_GRACE_S", 5.0)
+
+        with ocr_gateway._inflight_lock:
+            ocr_gateway._inflight_calls["stuck-call"] = time.monotonic() - 60.0
+        try:
+            with caplog.at_level("ERROR", logger="infrastructure.ocr_gateway"):
+                result = ocr_gateway.inflight()
+        finally:
+            with ocr_gateway._inflight_lock:
+                ocr_gateway._inflight_calls.pop("stuck-call", None)
+
+        assert result["semaphore"] == 1
+        assert result["os_children"] == 0
+        assert any(
+            "bookkeeping disagrees with OS ground truth" in r.message for r in caplog.records
+        ), f"expected an ERROR for a sustained mismatch beyond grace; got: {caplog.text}"
+
+    def test_untracked_orphan_child_logs_error_immediately_zero_grace(
+        self, tmp_path, monkeypatch, caplog
+    ):
+        """held=0 (no tracked call at all), os_children=1 — an OS child with
+        NO bookkeeping entry to explain it. The dangerous direction: must log
+        ERROR immediately, regardless of grace (there is no legitimate call
+        the delay could be attributed to)."""
+        monkeypatch.setattr(ocr_gateway, "_PROC_ROOT", str(tmp_path))
+        monkeypatch.setattr(ocr_gateway, "PDFX_OCR_INFLIGHT_MISMATCH_GRACE_S", 5.0)
+        self._write_tesseract_stat(tmp_path, pid=999, ppid=os.getpid())
+
+        assert ocr_gateway._inflight_calls == {}
+        with caplog.at_level("ERROR", logger="infrastructure.ocr_gateway"):
+            result = ocr_gateway.inflight()
+
+        assert result["semaphore"] == 0
+        assert result["os_children"] == 1
+        assert any(
+            "bookkeeping disagrees with OS ground truth" in r.message for r in caplog.records
+        ), f"expected an immediate ERROR for an untracked orphan child; got: {caplog.text}"
