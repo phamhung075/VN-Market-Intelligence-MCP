@@ -56,7 +56,7 @@ Invoke via gateway: call_tool(server="vn-market", tool="<name>", arguments={...}
 ### Logging & Feedback
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
-| `log_agent_work` | Log cycle lifecycle — **two-call pattern required** (see recipe below) | Call 1: `agent_name, status: "running"` → `{ id }`. Call 2: `agent_name, id, status: "completed"\|"error", summary?, findings?, actions?` |
+| `log_agent_work` | Log cycle lifecycle — **two-call pattern required** (see recipe below) | Call 1: `agent_name, status: "running"` → `{ id }`. Call 2: `agent_name, id, status: "completed"\|"error", summary?: string, findings?: string, actions?: array\|object` (actions is NOT a string — pass an array, e.g. `["did X", "did Y"]`) |
 | `send_telegram` | Send message to Telegram channel | `message: string, channel: "market" \| "work" \| "bug"` |
 | `submit_feedback` | Submit feature request or bug report | `severity: "critical" \| "high" \| "medium" \| "low", title: string` |
 
