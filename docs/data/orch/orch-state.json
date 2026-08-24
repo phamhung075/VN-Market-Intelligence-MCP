@@ -2368,6 +2368,32 @@
         "triaged_by": null,
         "disposition": null,
         "related": []
+      },
+      {
+        "id": "sys-20260824T125127-cap-pdf",
+        "ts": "2026-08-24T12:51:27Z",
+        "from": "system-auditor",
+        "to": "ops",
+        "type": "container_capacity_pressure",
+        "summary": "pdf-extractor capacity: 97% peak (2.424GiB / 2.5GiB) — only 76MiB headroom under concurrent load",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "container": "vn-market-intelligence-mcp-pdf-extractor-1",
+          "peak_usage": "2.424GiB",
+          "cap": "2.5GiB",
+          "peak_percentage": 96.95,
+          "headroom_mib": 76,
+          "incident_lineage": "ops 2026-08-23 rebuild (FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE); previous image also peaked at 99.99% against same 2.5GiB cap",
+          "risk": "Concurrent OCR tests + /extract requests + OCR gateway errors brought container to 97% ceiling; same concurrent mix during ops incident suggests pre-existing thin headroom, not new regression",
+          "note": "Concurrent test run successfully triggered GC and recovered to 76.75% in 5 min. Thin headroom remains a capacity risk for burst workloads. Ops incident AC-9 noted A-30 refutation 'REFUTED, not confirmed', so open question whether post-rebuild memory behavior improves over pre-fix."
+        },
+        "dedup_key": "auditor-capacity-pdf-extractor-thin-headroom-76mib",
+        "triaged_at": null,
+        "triaged_by": null,
+        "disposition": null,
+        "related": []
       }
     ],
     "last_triaged_at": "2026-08-24T10:56:41Z",

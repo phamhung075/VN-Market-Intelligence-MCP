@@ -528,3 +528,45 @@ Pre-gate returned FAILURE with `mem_creep: mem >= 85% threshold (A-30 WARN bound
 - caller_quote="mem_creep: mem >= 85% threshold... pdf-extractor-1(96.95%)"
 - resolution=SPEC_WINS — documented discriminator overrides simple threshold; multi-probe shows benign sawtooth under concurrent test load
 
+
+**ADDENDUM — Recovery Evidence & Capacity Finding:**
+
+**Memory recovery verified (provided by router):**
+- 12:45:14Z: 92.55% (probe trigger)
+- 12:45:31Z: 96.95% peak (2.424GiB / 2.5GiB)
+- 12:50:00Z: 76.75% (recovered in 5 min, 20pp drop)
+- Mechanism: NOT crash-cliff (no restart, no OOMKilled), genuine in-process GC reclamation under receding concurrent test load
+
+**Restart discriminator (docker inspect 12:50:11Z confirms):**
+- StartedAt: 2026-08-23T15:44:17Z (21h continuous uptime, no breaks)
+- RestartCount: 0 (no crash during climb)
+- OOMKilled: false (no memory death signal)
+- ExitCode: 0 (clean, healthy)
+- Status: running
+
+**DISCRIMINATION FINAL: (b) Confirmed — Transient load, NOT leak**
+- Pre-gate used simple ≥85% threshold
+- Multi-probe discriminator: healthy GC sawtooth with reclamation
+- Recovery evidence: 20pp drop in 5 minutes under receding load
+- Lifecycle evidence: no restarts, no OOMKilled, continuous 21h uptime
+- Conclusion: concurrent OCR test load drove memory to 97% ceiling, GC reclaimed successfully
+
+**SEPARATE CAPACITY FINDING — Still a real issue:**
+Peak 2.424GiB against 2.5GiB cap = 97% ceiling = only 76MiB headroom remaining. This concurrent test run came within 76MiB of OOM despite successful GC. Prior art precedent (rag-service 2026-08-13): cap was raised 768m→2GiB, invalidating old percentages. For pdf-extractor:
+- Current cap: 2.5GiB (confirmed in docker-compose.yml)
+- Cap history: same 2.5GiB in prior rebuild (ops 2026-08-23 incident shows previous version also peaked at 99.99% against 2.5GiB cap)
+- Regression assessment: NOT a cap reduction, NOT a new problem — pre-existing thin headroom, same as before rebuild
+- Risk: concurrent workloads (OCR tests, multiple /extract requests, OCR gateway errors) can still OOM the container
+- Recommendation: Establish whether the post-rebuild version's memory behavior represents an improvement over pre-fix (incident doc AC-9 notes "REFUTED, not confirmed" on A-30 refutation, so open question remains)
+
+**Heartbeat staleness (separate, independent):**
+- Pre-gate trigger: heartbeat 240min stale (last_healthy 08:42:12Z, spawn 12:45Z)
+- This is a separate infrastructure finding from mem_creep
+- Needs own line in next audit cycle
+
+**Incident lineage:** Container start 2026-08-23T15:44:17Z is ~13min after ops rebuild completed (new image deployed 14:15:02Z). This cycle's finding is part of the same ops incident (docs/incidents/ops-20260823-pdfx-rebuild-and-a30-refutation.md).
+
+**Signals filed:**
+1. sys-20260824T125005-a30-pdf (INFO, dedup_key=auditor-a30-transient-pdf-extractor-ocr-load-20260824): A-30 mem_creep resolved as transient load with successful reclamation
+2. [CAPACITY finding to follow]
+
