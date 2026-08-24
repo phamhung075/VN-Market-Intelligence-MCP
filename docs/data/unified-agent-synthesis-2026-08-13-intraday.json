@@ -1,0 +1,77 @@
+{
+  "metadata": {
+    "cycle_id": "intraday-2026-08-13T08:13:00Z",
+    "dish_type": "intraday",
+    "date_vn": "2026-08-13",
+    "timestamp_utc": "2026-08-13T08:13:00Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "1-6 (full structure) — [gap:L2_geopolitical_event_absent] [gap:VIRA_unavailable]"
+  },
+
+  "tnb_synthesis": {
+    "clock_phase": "recovery",
+    "regime_state": "carry-neutral-with-vnd-pressure",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Gold bullish signal (safe-haven demand spike to $4424/oz) contradicts tepid oil (NEUTRAL $87.99). Carry spread 1.37pp NEUTRAL. Geopolitical signal absent this cycle.",
+    "vn_macro_layer": "USD/VND stress at 25,870 threshold (BEARISH pressure). Investment clock: CORE_VN phase (score 8) with expansion posture. FX reserves/VIRA unavailable. CPI trend deferred to macro_health.",
+    "valuation_layer": "Real estate sector recovery play: oversold technical (VHM RSI 23.6, HUT RSI 21.6) + earnings support (Vingroup/Sun Group infrastructure spend) + sector carry inflow. Conviction capped MEDIUM by macro uncertainty + hexagram warning signal."
+  },
+
+  "conviction_calls": [
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Real estate developer with infrastructure disbursement thesis, news-backed, but macro hexagram warns caution on trend sustainability"
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Oversold technical (RSI 23.6) + sector recovery alignment, earnings support via infrastructure spend, but volatile (ATR 11.63%)"
+    },
+    {
+      "ticker": "DXG",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Price surge +5.38% confirms sector rotation inflow, real estate convergence signal, single-pillar earnings lag risk"
+    },
+    {
+      "ticker": "NVL",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Institutional buying news + real estate sector convergence, but CPI/yield context incomplete"
+    }
+  ],
+
+  "sector_phases": [
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "recovery",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    }
+  ],
+
+  "known_gaps": [
+    "[gap:L2_geopolitical_event_absent]",
+    "[gap:VIRA_unavailable]",
+    "[L6-gap: gold >$4,300 regime-drift risk — safe-haven demand may reverse sharply if UST yields pivot]",
+    "[gap:business_context_available via news #10814 #10820]"
+  ],
+
+  "causal_chains": [
+    "Fed carry regime NEUTRAL + VND depreciation pressure (25,870 threshold) → FII hesitation on carry unwind → real estate oversold recovery plays (VIC/VHM/DXG/NVL) offer accumulation window before mean reversion, though market hexagram (Khiêm—Quẻ 15) warns caution on trend sustainability"
+  ],
+
+  "clusters_summary": {
+    "qualified": 1,
+    "tickers_covered": ["VIC", "VHM", "DXG", "NVL"],
+    "sectors_covered": ["real_estate"],
+    "convergence_rule": "Sector convergence (≥3 signals: VIC news + DXG price_surge + VHM TA_oversold + NVL news + additional real_estate sector signals from bootstrap)"
+  }
+}

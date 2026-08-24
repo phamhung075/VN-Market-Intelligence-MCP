@@ -38,3 +38,8 @@ Action: Hold / Watch sector sentiment
 
 (Pending Q1 2026 synthesis)
 2026-05-14 16:00 | Close: 22,100 VND | RSI: N/A(16c) | Vol: 724.6K (N/A% avg) | YoY: N/A
+
+## EOD 2026-08-13
+
+**[Market Watcher] 16:00 UTC**
+Close: 17.500 VND (-3.85%) | RSI: 36.4 | Vol: 996.3K (200% avg) | YoY: -42.1% | Sentiment: Bearish — oversold, heavy sector selling | Brief action: Reduce on bounce | Regime: NEUTRAL | Anomaly: YES — price_drop -3.85%, volume spike 2.0x, oversold RSI 36.4, banking sector coordinated decline -1.88%

@@ -1,0 +1,99 @@
+{
+  "metadata": {
+    "cycle_id": "chef-intraday-20260824T0813Z",
+    "dish_type": "intraday",
+    "date_vn": "2026-08-24",
+    "slot_id": "chef-intraday",
+    "scheduled_utc": "2026-08-24T08:13:00.000Z",
+    "published_at": "2026-08-24T08:21:42.000Z",
+    "quality_verdict": "medium",
+    "convergence_detected": true,
+    "clusters_qualified": 1
+  },
+  "summary": {
+    "headline": "FTSE Inclusion Drives Real Estate Sector Rotation",
+    "thesis": "Nâng hạng FTSE Index hốp dòng FII $4B vào thị trường bất động sản Việt Nam, cùng khối lượng TA breakout trên VHM/VIC/KDH.",
+    "convergence_rule_triggered": "Sector convergence (real estate ≥5 signals) + Extreme individual signal (VHM RSI 24.5 oversold + multiple WARNING alerts)"
+  },
+  "layers_walked": {
+    "layer_1_data_discipline": {
+      "status": "complete",
+      "findings": "State transitions confirmed: FTSE structural event, China crisis macro shift, multiple TA breakouts"
+    },
+    "layer_2_us_stack": {
+      "status": "complete",
+      "findings": "Fed unchanged, oil 93 USD, geopolitical context: China real estate crisis"
+    },
+    "layer_3_vn_stack": {
+      "status": "complete",
+      "findings": "FII inflow window activated, USD/VND neutral (25950), carry regime neutral, CPI stable"
+    },
+    "layer_4_valuation": {
+      "status": "complete",
+      "conviction_score": "medium-high",
+      "pillars_aligned": 3,
+      "tickers": {
+        "VHM": {"pillars": 3, "signals": ["news_mention", "rsi_oversold"], "direction": "BUY"},
+        "VIC": {"pillars": 3, "signals": ["news_mention", "price_strength"], "direction": "ACCUMULATE"},
+        "KDH": {"pillars": 3, "signals": ["ta_bb_breakout", "news_inflow"], "direction": "ACCUMULATE"},
+        "PDR": {"pillars": 2, "signals": ["ta_bb_breakout"], "direction": "HOLD"},
+        "DXG": {"pillars": 2, "signals": ["ta_bb_breakout"], "direction": "HOLD"}
+      }
+    },
+    "layer_5_kinh_dich": {
+      "status": "partial",
+      "findings": "Market in transition phase, real estate technical bounce from oversold",
+      "gap_token": "[gap:kinhdich_partial_cycle_source_limit]"
+    },
+    "layer_6_gap_catalogue": {
+      "status": "complete",
+      "gaps": [
+        "[L6-gap: macro freshness limited — vnIndex plausibility gate fired 2x during cycle]",
+        "[gap:geopolitical_event_absent — no trade_war/conflict markers present]"
+      ]
+    }
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VHM",
+      "signal_count": 2,
+      "conviction": "medium_high",
+      "direction": "buy",
+      "rationale": "News_mention (fund inflow) + RSI 24.5 (oversold recovery), sector FII rotation",
+      "valuation_gate": "not_gated",
+      "risk_flags": ["macro_freshness_margin"]
+    },
+    {
+      "ticker": "VIC",
+      "signal_count": 2,
+      "conviction": "medium_high",
+      "direction": "accumulate",
+      "rationale": "News_mention + price strength +4.63%, FII sector rotation driver",
+      "valuation_gate": "not_gated",
+      "risk_flags": ["macro_freshness_margin"]
+    },
+    {
+      "ticker": "KDH",
+      "signal_count": 2,
+      "conviction": "medium",
+      "direction": "accumulate",
+      "rationale": "TA breakout + news inflow signal, real estate convergence cluster",
+      "valuation_gate": "not_gated",
+      "risk_flags": ["macro_freshness_margin"]
+    }
+  ],
+  "signals_consumed": {
+    "alert_engine": ["#11256 KDH ta_bb", "#11257 VCB news", "#11258 VHM news", "#11259 VIC news"],
+    "news_scout": ["#11262 oil+EU EV", "#11263 China crisis", "#11264 FTSE inclusion", "#11265 banking H1"]
+  },
+  "known_gaps": [
+    "[gap:vnIndex_plausibility_gated_2x — macro freshness margin limited]",
+    "[gap:geopolitical_event_absent — no trade_war signals this cycle]",
+    "[gap:L5_kinhdich_partial — technical bounce theme only, full hexagram unavailable]"
+  ],
+  "phase_cycle": {
+    "declared_phase": "transition",
+    "pyramid_tier": "equity_growth",
+    "rationale": "M2 neutral->easing (FII), COC neutral, EPS potential from volume, VAL beaten-down; mixed pillars suggest transition rather than full expansion"
+  }
+}

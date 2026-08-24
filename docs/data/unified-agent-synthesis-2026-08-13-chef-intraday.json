@@ -1,0 +1,143 @@
+{
+  "metadata": {
+    "date_vn": "2026-08-13",
+    "slot_id": "chef-intraday",
+    "cycle_utc": "2026-08-13T03:21:00Z",
+    "cycle_vn_hour": 10,
+    "dish_type": "convergence_scan",
+    "guaranteed": false
+  },
+  "convergence_detection": {
+    "status": "FIRED",
+    "clusters_qualified": 3,
+    "clusters": [
+      {
+        "type": "ticker_convergence",
+        "ticker": "HUT",
+        "signals": [
+          {
+            "type": "ta_oversold",
+            "value": "RSI 21.6",
+            "severity": "warning"
+          },
+          {
+            "type": "news_mention",
+            "detail": "Smart-money accumulation, self-doanh mua rong"
+          }
+        ]
+      },
+      {
+        "type": "ticker_convergence",
+        "ticker": "VHM",
+        "signals": [
+          {
+            "type": "ta_oversold",
+            "value": "RSI 23.6",
+            "severity": "warning"
+          },
+          {
+            "type": "news_mention",
+            "detail": "Vingroup, Sun Group capital expenditure announcement"
+          }
+        ]
+      },
+      {
+        "type": "sector_convergence",
+        "sector": "real_estate",
+        "ticker_count": 6,
+        "tickers": ["VIC", "VHM", "NVL", "KDH", "KBC", "VRE"],
+        "signal_count": 8
+      }
+    ]
+  },
+  "tnb_layers": {
+    "layer_1_data_discipline": {
+      "state_transitions": [
+        {
+          "indicator": "USDVND",
+          "value": 25870,
+          "threshold": 25500,
+          "status": "CROSSING_RESISTANCE",
+          "direction": "depreciation_pressure"
+        }
+      ]
+    },
+    "layer_2_us_stack": {
+      "manufacturing": "CoreWeave AI positive spillover (news-scout signal)",
+      "sentiment": "bullish",
+      "fed_posture": "neutral (EFFR 3.63%)"
+    },
+    "layer_3_vn_stack": {
+      "carry_spread": 1.37,
+      "vn_deposit_rate": 5.0,
+      "fed_funds_rate": 3.63,
+      "regime": "neutral",
+      "fii_flow": "accumulation on VN30 (smart-money domestic growth thesis)",
+      "foreign_room": "healthy (5.9% market saturation, slight outflow)",
+      "cpi_trend": "[gap:macro_snapshot_unavailable]"
+    },
+    "layer_4_valuation": {
+      "watchlist_tickers": {
+        "VIC": {
+          "composite_rs_score": 91.67,
+          "label": "STRONG",
+          "52w_proximity": "80% from_52w_low (recovery setup)",
+          "momentum": "decile_10 (bullish spike)",
+          "conviction": "MEDIUM (recovery opportunity post-liquidation)"
+        },
+        "VHM": {
+          "composite_rs_score": 21.3,
+          "label": "WEAK",
+          "52w_proximity": "AT_LOW (55% below_52w_high)",
+          "momentum": "decile_10 (intraday surge ROC +51.4%)",
+          "conviction": "LOW (divergence: weak RS vs strong intraday momentum = whipsaw risk)",
+          "risk_flag": "momentum surge likely tactical/liquidity-driven, not structural revaluation"
+        },
+        "HUT": {
+          "52w_proximity": "NEAR_LOW",
+          "momentum": "decile_8 (neutral)",
+          "news_catalyst": "smart_money_accumulation",
+          "conviction": "MEDIUM (accumulation signal during oversold)"
+        }
+      },
+      "cycle_phase": "expansion",
+      "tier": "equity",
+      "rationale": "M2 easing signal (FII inflow), COC neutral (5% deposit premium stable), EPS growth narrative (VN GDP momentum), policy neutral (no tightening surprise)"
+    },
+    "layer_5_kinh_dich": {
+      "market_hexagram": "[gap:market_hexagram_unavailable]",
+      "note": "get_market_hexagram returned 501 (tool not found) — per flow contract, treat as unavailable, not a blocker"
+    },
+    "layer_6_gap_catalogue": [
+      "[gap:market_hexagram_unavailable] — Kinh Dich overlay absent",
+      "[gap:insider_sentiment_no_data] — zero transactions in 90d, cannot assess insider accumulation/distribution",
+      "[gap:sentiment_z_insufficient_history] — only 14 days of sentiment data (need 21 for z-score), sentiment_ema_5d=2.18 (neutral-to-bullish but unscaled)",
+      "[risk:vhm_momentum_divergence] — RS percentile 0% (bottom of watchlist) vs decile 10 momentum (top) = intraday whipsaw, not conviction"
+    ]
+  },
+  "macro_health": {
+    "status": "ok",
+    "vn_index": 1791.02,
+    "vn_index_direction": "down (-2.16)",
+    "oil": "neutral (88.02 USD, within 60-100 band)",
+    "gold": "bullish (4469.4 USD, exceeds 2200 threshold = safe-haven demand)",
+    "carry_verdict": "NEUTRAL",
+    "yield_verdict": "FAIRLY_VALUED (earnings_yield 6.70% vs deposit 5.00% = 1.70pp premium)"
+  },
+  "market_indicators": {
+    "volatility_regime": "NORMAL (20d_pct 17.86%, percentile 68%)",
+    "breadth": "negative (ADL -133, no thrust, floor_pct 0.55%)",
+    "sentiment": "insufficient (14 days data, ema_5d 2.18)",
+    "foreign_room_saturation": "5.9% (low, room available)"
+  },
+  "published_marker": {
+    "key": "published:chef-intraday:2026-08-13:10",
+    "ttl_seconds": 3600,
+    "claimed_at": "2026-08-13T03:21:27Z"
+  },
+  "consumed_signals": {
+    "count": 6,
+    "ids": [10799, 10800, 10803, 10804, 10805, 10806],
+    "types": ["chain_catalyst (2)", "ta_overbought (1)", "ta_oversold (2)", "price_surge (1)"]
+  }
+}

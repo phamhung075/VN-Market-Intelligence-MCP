@@ -1,0 +1,84 @@
+{
+  "metadata": {
+    "cycle_id": "evening-2026-08-13T19:45:00Z",
+    "dish_type": "evening",
+    "date_vn": "2026-08-13",
+    "timestamp_utc": "2026-08-13T19:54:29Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L3_VN_macro_incomplete] [gap:business_context_absent] [gap:L5_kinhdich_sourced_per_ticker_only] [gap:zero_signal_clusters_convergence]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "risk-off carry unwind",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Carry spread NEUTRAL at 1.37pp (SBV 5.00% vs Fed 3.63%). Risk-off signal from gold bullish >$4.300 threshold (4.404,60 USD/oz). Equity yield fairly valued at 6.70% earning vs 5.00% deposit rate (+1.70pp premium).",
+    "vn_macro_layer": "USD/VND bearish at 25,870 — above 25,000 threshold creating import cost pressure. Carry regime neutral but FII net-selling pressure evident on real_estate (-2.18%) and banking (-1.18%) sectors. [gap:CPI_unavailable] [gap:FX_reserves_VIRA_unavailable]",
+    "valuation_layer": "All watchlist tickers MODERATE conviction (0.42-0.59, capped at MEDIUM). Market hexagram Khiêm (15) — balanced state with signal NEGATIVE (52% confidence). Valuation phase transition: earnings yield adequate but carry unwind + gold risk-off + USD strength creating mixed accumulation/distribution pressure across sectors."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Real estate sector stress (-2.18%) conflicts with hexagram Khôn (positive) — mixed signals, thận trọng"
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Real estate headwind (-2.18%) despite hexagram Sư (positive) — carry unwind + FII outflow dominates"
+    },
+    {
+      "ticker": "BID",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Banking sector -1.18% on FII carry unwind; hexagram Sư positive but macro bearish USD/VND pressure wins"
+    },
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Banking sector stress (-1.18%) conflicts with hexagram Tập Khảm (negative) — bearish divergence, avoid accum"
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "transition",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "điện & năng lượng",
+      "investment_phase": "transition",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "negative"
+    }
+  ],
+  "known_gaps": [
+    "[L6-gap: gold >$4.300 active — regime-drift risk: gold bullish signal may lag actual risk-off reversal; flag regime-drift until gold retraces]",
+    "[gap:business_context_absent — zero bctc_signal_* / fundamental_* data this cycle; 14/16 tickers serve-layer-blocked (BCTC-EXTRACT-QUALITY sprint)]",
+    "[gap:CPI_unavailable — macro_snapshot does not provide CPI trend, required for L3 VN macro layer]",
+    "[gap:FX_reserves_VIRA_unavailable — VIRA/FX reserves data missing (known upstream scraper outage)]",
+    "[gap:zero_signal_clusters_convergence — get_agent_signals returned empty; no price_anomaly/news_impact/bctc_signal convergence this cycle]"
+  ],
+  "causal_chains": [
+    "Risk-off global (gold bullish >$4.300) → VND carry unwind (USD/VND 25,870 bearish) → FII net-sell pressure on real_estate + banking → VN-Index -1.54% | Quẻ Khiêm (balanced state, negative signal 52%) confirms transition phase."
+  ],
+  "clusters_summary": {
+    "qualified": 0,
+    "tickers_covered": [],
+    "sectors_covered": [],
+    "note": "Zero signal convergence this cycle — evening dish published as guaranteed-window regime-state update per degraded-dish floor contract"
+  }
+}

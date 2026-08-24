@@ -1,0 +1,1 @@
+2026-08-24T17:59:41Z agent=pm cycle=review-drain-FIX-COWORK-DELIVERY-PROOF-GATE level=info msg=resolved plan_only row mis-parked in review[]: no impl trace anywhere, closed parent to done[] with children[FIX-COWORK-DELPROOF-1-STEP53-TWOARM-GATE,FIX-COWORK-DELPROOF-2-SCHEDULE-SCHEMA], both minted BACKLOG, head untouched (belongs to peer CLEAN-SALVAGE row)

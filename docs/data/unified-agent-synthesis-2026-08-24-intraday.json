@@ -1,0 +1,56 @@
+{
+  "metadata": {
+    "cycle_id": "chef-intraday-20260824T0613Z",
+    "dish_type": "intraday",
+    "date_vn": "2026-08-24",
+    "timestamp_utc": "2026-08-24T06:20:00.000Z",
+    "quality_verdict": "full",
+    "layers_walked_summary": "Layer 1–6"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "expansion",
+    "regime_state": "NEUTRAL",
+    "regime_confidence": "medium",
+    "us_macro_layer": "US manufacturing PMI remains above 50 (expansion mode). Fed funds rate steady at 4.75-5.00%, EFFR near IORB, indicating balanced monetary posture. Global risk sentiment neutral on geopolitical front; FTSE Russell index upgrade to Emerging Market tier signals positive carry environment. No imminent tightening signals.",
+    "vn_macro_layer": "USD/VND holding near 25,950, neutral carry posture. CPI trend stable with no acute inflation pressures. FX reserves via VIRA data stable. Foreign-room utilization normal. Market sentiment mixed: bull ratio 33% vs bear 15%, reflecting cautious optimism ahead of FTSE index flows.",
+    "valuation_layer": "[phase: expansion] [tier: equity] — M2 neutral, cost-of-capital steady, EPS growth visible in select sectors (steel production, financial services), valuation multiples reasonable. HPG sector (steel) responding to construction cycle uptrend and potential Chinese property spillovers."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "HPG",
+      "conviction_level": "medium",
+      "direction": "HOLD",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Steel sector benefiting from construction cycle and potential FII inflows post-FTSE upgrade, but valuation-gate discipline applied due to operational data gaps in quarterly reporting.",
+      "business_context_cited": {
+        "field": "ops",
+        "text": "Q1-2026 net revenue 52,901 tỷ VND, gross margin 15.8%; operating_profit field returns 0 (source-data corruption, 32nd+ consecutive cycle unresolved) while net_profit (9,056 tỷ, 17.1% margin) and profit_before_tax (10,762 tỷ) remain populated — internally inconsistent line item, not a genuine zero-margin event",
+        "source": "bctc_signal_HPG_20260824_routine"
+      },
+      "valuation_gate": {
+        "verdict": "FAIR",
+        "note": null,
+        "override_engaged": false,
+        "override_rationale": null
+      }
+    }
+  ],
+  "sector_phases": {
+    "steel": {
+      "phase": "expansion",
+      "rationale": "Construction cycle uptrend, potential China spillover recovery, FTSE inflow tailwind"
+    }
+  },
+  "known_gaps": [
+    "[gap:geopolitical_event_coverage_limited — geopolitical-conflict LANE B signals not yet active in news-scout dispatch]"
+  ],
+  "causal_chains": [
+    "FTSE Russell index upgrade (macro) → FII passive inflows to Vietnam → construction/materials beneficiaries (HPG, PLX, DGC) gain liquidity premium"
+  ],
+  "clusters_summary": {
+    "converged": 1,
+    "converged_tickers": ["HPG"],
+    "convergence_type": "ticker_multi_source",
+    "detail": "HPG ticker convergence: alert-engine news_mention (2026-08-24 05:14, news: Luật Kiến trúc mới với phân cấp mạnh) + bctc-analyst fundamental signal (Q1-2026 analysis)"
+  }
+}

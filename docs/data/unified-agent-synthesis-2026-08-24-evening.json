@@ -1,0 +1,105 @@
+{
+  "metadata": {
+    "cycle_id": "evening-2026-08-24T19:45Z",
+    "dish_type": "evening",
+    "date_vn": "2026-08-24",
+    "timestamp_utc": "2026-08-24T19:49:27Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L2_carry_regime_only] [gap:L3_CPI_VIRA_gaps] [gap:L5_kinhdich_unavailable]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "carry-unwind",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Carry regime under pressure from USD/VND tightening; FII flow sensitivity elevated. [gap:PMI_data_unavailable] [gap:Fed_rate_detail_unavailable].",
+    "vn_macro_layer": "USD/VND near resistance at carry-unwind threshold. Banking sector shows net-sell pressure from foreign-room utilization. [gap:CPI_unavailable] [gap:VIRA_unavailable].",
+    "valuation_layer": "Real estate sector in expansion phase, equity tier — strong FII inflow to VIC (4.63% price, foreign_inflow sentiment). Banking in slowdown phase, fixed-income tier — rate pressure vs valuation neutrality at FAIR median. Mixed pillar alignment: VIC 3/4, VHM 2/4 (technical vs momentum divergence), VCB 2/4 (rate vs ROE spread 16.7% vs 17.6% sector)."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "VIC",
+      "conviction_level": "MEDIUM",
+      "direction": "BUY",
+      "pillars_aligned_count": 3,
+      "rationale_one_liner": "Foreign-inflow accumulation at real estate sector inflection; carry unwind may reverse if FII pivot deepens",
+      "business_context_cited": null,
+      "valuation_gate": null
+    },
+    {
+      "ticker": "VHM",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Oversold RSI 26.8 despite +2.37% price suggests technical reversal setup, but lack of conviction in fundamental pillars precludes accumulation call",
+      "business_context_cited": null,
+      "valuation_gate": null
+    },
+    {
+      "ticker": "VCB",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "ROE 16.7% vs sector 17.6% peer group at FAIR valuation, but FII net-sell pressure and carry-unwind regime cap conviction",
+      "business_context_cited": {
+        "field": "mgmt",
+        "text": "ROE 16.7% sector-annualized, below 17.6% sector median; largest SOE bank by market cap, stable profitability",
+        "source": "bctc_signal_VCB_20260824_routine.json"
+      },
+      "valuation_gate": {
+        "verdict": "FAIR",
+        "note": "PE 14.1 vs sector median 9; valuation spread justified by SOE stability premium",
+        "override_engaged": false,
+        "override_rationale": null
+      }
+    },
+    {
+      "ticker": "DXG",
+      "conviction_level": "MEDIUM",
+      "direction": "HOLD",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Valuation gate AVOID applies: PE 66.5x vs 16.6x sector median rules out bullish positioning regardless of sector strength",
+      "business_context_cited": null,
+      "valuation_gate": {
+        "verdict": "AVOID",
+        "note": "valuation_verdict=AVOID — do NOT post bullish signal; PE premium 312% above sector, ROE 1.9% well below sector 7.3%",
+        "override_engaged": false,
+        "override_rationale": null
+      }
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "bất động sản",
+      "investment_phase": "expansion",
+      "pyramid_tier": "equity",
+      "direction_this_cycle": "positive"
+    },
+    {
+      "sector_vn": "ngân hàng",
+      "investment_phase": "slowdown",
+      "pyramid_tier": "fixed_income",
+      "direction_this_cycle": "mixed"
+    }
+  ],
+  "known_gaps": [
+    "[gap:L2_carry_regime_only — PMI/EFFR-IORB detail unavailable, carry spread inference only]",
+    "[gap:L3_CPI_VIRA_gaps — CPI trend and FX reserves unavailable, USD/VND level only]",
+    "[gap:L5_kinhdich_unavailable — portfolio_conviction service not called this cycle]"
+  ],
+  "causal_chains": [
+    "USD/VND carry pressure → FII sector rotation banking→real_estate → VIC accumulation on foreign inflow (4.63% price) vs VHM technical oversold (RSI 26.8) paradox signals mixed conviction in real_estate cluster"
+  ],
+  "clusters_summary": {
+    "qualified": 2,
+    "tickers_covered": [
+      "VIC",
+      "VHM",
+      "VCB",
+      "DXG"
+    ],
+    "sectors_covered": [
+      "real_estate",
+      "banking"
+    ]
+  }
+}

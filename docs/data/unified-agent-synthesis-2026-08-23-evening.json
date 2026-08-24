@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "cycle_id": "chef-evening-2026-08-23T1945Z",
+    "dish_type": "evening",
+    "date_vn": "2026-08-23",
+    "timestamp_utc": "2026-08-23T19:50:45Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L2_US_macro_absent_no_gap_token] [gap:L3_VN_macro_incomplete] [gap:L4_partial_pillar_coverage] [gap:business_context_absent] [gap:L5_kinhdich_unavailable]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "risk-off",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "US macro data unavailable this cycle; macro_snapshot returned insufficient data.",
+    "vn_macro_layer": "VN FX showing depreciation pressure: USD/VND at 25,930, above 25,500 threshold, signaling import cost pressure. CPI and VIRA data unavailable this cycle.",
+    "valuation_layer": "No qualifying clusters this cycle; zero conviction calls warranted. Macro defensiveness regime (risk-off gold signal, FX pressure) suggests cautious posture. Banking sector (VCB FAIR, HPG FAIR, FPT FAIR) valuations stable but FII flow patterns under monitoring."
+  },
+  "conviction_calls": [],
+  "sector_phases": [],
+  "known_gaps": [
+    "[gap:L2_US_macro_absent_no_gap_token]",
+    "[gap:L3_VN_macro_incomplete]",
+    "[gap:L4_partial_pillar_coverage]",
+    "[gap:business_context_absent]",
+    "[gap:L5_kinhdich_unavailable]"
+  ],
+  "causal_chains": [],
+  "clusters_summary": {
+    "qualified": 0,
+    "tickers_covered": [],
+    "sectors_covered": []
+  }
+}

@@ -62,3 +62,8 @@ Brief action: Hold — Tech sector positive despite Q2 revenue headwinds; AI nar
 
 **[Market Watcher] 16:00 UTC**
 Close: 65.100 VND | Daily: +3.33% | RSI: N/A | Volume: 6.11M (184% avg) | YoY: N/A | Sentiment: Bullish | Brief action: Hold | Regime: NEUTRAL
+
+## EOD 2026-08-13
+
+**[Market Watcher] 16:00 UTC**
+Close: 69.200 VND (-2.26%) | RSI: 49.5 | Volume: 745.8K (202% avg) | YoY: -18.5% | Sentiment: Bearish — tech sector weakness, proprietary selling pressure | Brief action: Reduce | Regime: NEUTRAL | Anomaly: YES — volume spike 2.0x average, tech selloff amid foreign flow pressure

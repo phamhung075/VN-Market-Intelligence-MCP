@@ -14,6 +14,7 @@
 2026-07-01 | Q2 earnings forecast bullish (9/10) — analyst consensus upgrades 68 companies including BID; banking sector tailwind | YoY: N/A
 2026-07-02 | Q2 earnings consensus strong (9/10) + FED/macro easing context — banking exposure to policy softening | YoY: N/A
 2026-07-15 | NEUTRAL CTG chairman prosecution creates temporary banking sector headwind; broader earnings strength sustained | YoY: Earnings momentum from July 2 preserved
+2026-08-24 | BULLISH: H1 2026 banking earnings strong (9/10), FTSE index upgrade drives multi-billion USD passive inflow to VN banking (8/10). NIM compression offset by market-share gains & FII accumulation. | YoY: +0.41% (37.05k from 36.9k)
 
 ---
 
@@ -47,3 +48,4 @@ Banking sector pressure continuing. Moderate decline, watch for support levels.
 2026-07-30 16:00 | Close: 37.250 VND | RSI: 41.4 | Vol: 6.6M (220% avg) | YoY: +12.5% | Regime: NEUTRAL | Anomaly: Volume spike 2.2x, bank sector accumulation — foreign flow positive signal despite 5% single-day gain
 2026-08-06 16:06 | Close: 38.200 VND | Change: +0.53% daily | RSI: N/A | Vol: Standard | YoY: N/A | Regime: NEUTRAL | Brief action: Hold — BID stabilizing post-earnings; modest recovery +2.55% from 07-30 low; macro headwind from rate cycle persists
 2026-08-07 16:10 | Close: 39,050 VND | RSI: 53.1 (Neutral) | Vol: 8.5M (95% avg) | YoY: 0% | Daily: +3.03% | Sentiment: Neutral | Brief action: Hold sector rotation | Regime: NEUTRAL | Anomaly: YES (banking sector +3.03% countertrend to real estate -2.68% decline, FII rotation signal)
+2026-08-13 16:00 | Close: 38.850 VND (-1.02%) | RSI: 51.1 | Vol: 566.02K (210% avg) | YoY: -12.3% | Sentiment: Bearish — banking sector decline, foreign selling | Brief action: Reduce | Regime: NEUTRAL | Anomaly: YES — volume spike 2.1x average, banking sector coordinated decline -1.88%

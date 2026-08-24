@@ -42,6 +42,7 @@ Signal: fundamental_validation #7942 | Confidence: 0.75 | Critic: 0.8
 ## [News Scout] Headlines & Sentiment
 2026-07-01 | Q2 earnings forecast bullish (9/10) — analyst consensus upgrades 68 companies including VCB, mega-growth catalyst | YoY: N/A
 2026-07-02 | Q2 earnings + EV tech momentum (bullish) — banking sector catalyst via macro earnings & tech-utilities EV inflow | YoY: N/A
+2026-08-24 | BULLISH: H1 2026 banking sector strong growth (9/10 impact) + FTSE index upgrade passive mega-inflow to VN banking (8/10 FTSE). Mixed NIM pressure (competition) offset by market-share gains & foreign capital inflows. | YoY: +0.85% (59.6k from 59.1k)
 
 ## [Market Watcher] Price, Volume, Technicals
 2026-05-18 16:00 | Close: 63,200 VND | RSI: N/A | Vol: 18.88M (1018% avg) | YoY: N/A | Anomaly: Volume spike amid SOE rotation
@@ -64,3 +65,4 @@ Signal: fundamental_validation #7942 | Confidence: 0.75 | Critic: 0.8
 2026-07-24 16:00 | Close: 54.100 VND (+0.19%) | RSI: 18.6 | Vol: 2.5M (45% avg) | YoY: -12.88% | Anomaly: YES — extreme oversold (RSI<20); banking sector -1.35% avg broad weakness; support forming at BB lower band 53.8k; buy-dip signal for tier-1 blue chip
 2026-07-31 16:08 | Close: 59.300 VND | RSI: 56.3 | Vol: 18.314M (3150% avg) | YoY: -1.49% | Daily: +4.96% | Anomaly: YES — extreme volume spike (18.3M shares, 3150% of 581K average), strongest volume day in 60d sample, FII allocation 300B VND signal, institutional buying pressure into banking rally
 2026-08-06 16:06 | Close: 60.000 VND | Change: 0.00% daily | RSI: 52.7 | Vol: 2.96M (66% avg) | YoY: N/A | Regime: NEUTRAL | Brief action: Hold — Banking sector consolidation post-earnings; neutral technicals mid-BB band; macro tightening headwind; risk-reward balanced
+2026-08-13 16:00 | Close: 59.500 VND (-0.34%) | RSI: 53.2 | Vol: 3.24M (85% avg) | YoY: -8.5% | Regime: NEUTRAL | Brief action: Hold — Banking sector coordinated decline -1.88% avg amid macro uncertainty; neutral technicals; VN-Index down 27.5 pts; macro: oil neutral, gold bullish defensive, USD/VND bearish

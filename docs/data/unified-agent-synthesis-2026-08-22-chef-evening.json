@@ -1,0 +1,57 @@
+{
+  "metadata": {
+    "date_vn": "2026-08-22",
+    "date_utc": "2026-08-22",
+    "slot_id": "chef-evening",
+    "dish_type": "evening_preview",
+    "cycle_id": "chef-evening-20260822T1948Z",
+    "marker_key": "published:chef-evening:2026-08-22",
+    "marker_claimed": true,
+    "quality_verdict": "degraded",
+    "clusters_qualifying": 0,
+    "conviction_calls_count": 0,
+    "generated_at": "2026-08-22T19:48:17Z",
+    "session_id": "7c29ea6f-d7af-4179-8abf-0a9b7cd34ebd"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "evening_guarantee_publish_override",
+    "regime_state": "macro_bearish_with_caution",
+    "regime_confidence": "medium",
+    "us_macro_layer": "Dầu Brent $94.39 ở vùng trung lập, không có chi tiết PMI/EFFR-IORB trong chu kỳ. [gap:L2_US_macro_limited_detail]",
+    "vn_macro_layer": "USD/VND 25.930 vượt ngưỡng 25.000 gây áp lực chi phí nhập khẩu (bearish). Vàng tăng mạnh (4680.6 USD/oz) phản ánh nhu cầu trốn rủi ro. CPI trend và VIRA/FX reserves không có trong dữ liệu. [gap:L3_CPI_VIRA_unavailable]",
+    "valuation_layer": "4 bctc signals collected (VCB:FAIR, FPT:FAIR, HPG:FAIR, DXG:AVOID) nhưng không có cluster convergence để justify conviction calls. Yield spread attractive (8.2% EY vs 5% deposit, 3.2pp spread). [gap:L4_no_cluster_conviction]"
+  },
+  "conviction_calls": [],
+  "sector_phases": [],
+  "known_gaps": [
+    "[gap:L2_US_macro_limited_detail]",
+    "[gap:L3_CPI_VIRA_unavailable]",
+    "[gap:L4_no_cluster_conviction]",
+    "[gap:clusters_zero_convergence]"
+  ],
+  "causal_chains": [
+    "USD/VND at 25.930 (bearish) + Gold $4680.6 (bullish safe-haven) → macro risk-off regime",
+    "Hexagram 15 Khiem: positive trend (THUAN_LOI) but cautious signal (TIEU_CUC, 64% confidence) → balanced outlook required"
+  ],
+  "clusters_summary": {
+    "total_clusters": 0,
+    "reason": "No convergence detected: 4 bctc_signal collected but (1) same signal type only, (2) no sector with 3+ signals, (3) no macro-micro contradiction, (4) no CRITICAL severity, (5) no geopolitical/war signals",
+    "guarantee_publish_override": true,
+    "override_reason": "evening_preview is guaranteed-publish window per init.md L125 and chef.md Step 1 gate rule"
+  },
+  "signals_consumed": [
+    "docs/signals/processed/bctc_signal_VCB_20260822_routine.json",
+    "docs/signals/processed/bctc_signal_FPT_20260822_routine.json",
+    "docs/signals/processed/bctc_signal_HPG_20260822_routine.json",
+    "docs/signals/processed/bctc_signal_DXG_20260822_routine.json"
+  ],
+  "execution_notes": {
+    "step_0_gather": "4 bctc_signal files from processed/, 0 price_anomaly/news_impact in 24h window",
+    "step_1_cluster": "Convergence rule check: 0 clusters qualify",
+    "step_2_to_6": "Degraded mode: partial layer analysis due to 0 clusters and limited macro data",
+    "step_7_publish": "Block A (MARKET) and Block B (WORK) sent successfully via send_telegram",
+    "step_7_5_quality": "degraded (L2/L3/L4 partial coverage, L5/L6 present)",
+    "step_7_6_persist": "This JSON file",
+    "partial_cycle_recovery": false
+  }
+}

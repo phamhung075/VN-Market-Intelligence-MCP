@@ -1,0 +1,142 @@
+{
+  "metadata": {
+    "agent": "unified-agent",
+    "cycle_id": "chef-eod-2026-08-14T08:45Z",
+    "slot_id": "chef-eod",
+    "date_utc": "2026-08-14",
+    "date_vn": "2026-08-14",
+    "dish_type": "eod_dish",
+    "dish_window": "08:45 UTC (15:45 VN)",
+    "execution_timestamp": "2026-08-14T09:00:34.225Z",
+    "published_marker": "published:chef-eod:2026-08-14"
+  },
+  "clustering": {
+    "total_clusters": 18,
+    "ticker_convergences": 17,
+    "sector_convergences": 5,
+    "convergence_rule_fired": true,
+    "gateway_passed": "morning/eod/evening guaranteed-publish window"
+  },
+  "signals": {
+    "foreign_flow_accumulation": {
+      "count": 8,
+      "total_shares": 4840000,
+      "tickers": ["SSI", "VIX", "DIG", "DXG", "GEX", "VNM", "VCI", "BID"],
+      "confidence": "HIGH (75%)"
+    },
+    "foreign_flow_exit": {
+      "count": 8,
+      "total_shares": 3853000,
+      "tickers": ["SHB", "VHM", "HPG", "KDH", "VCB", "EIB", "FPT", "VRE"],
+      "confidence": "HIGH (75%)"
+    },
+    "sector_price_signals": {
+      "real_estate": {
+        "direction": "down",
+        "count": 6,
+        "mean_pct": -2.53,
+        "stocks": ["VHM", "VIC", "VRE", "KBC", "NVL", "HDG"]
+      },
+      "steel": {
+        "direction": "down",
+        "count": 4,
+        "mean_pct": -2.90,
+        "stocks": ["POM", "NKG", "HPG", "HSG"]
+      },
+      "agriculture": {
+        "direction": "down",
+        "count": 6,
+        "mean_pct": -1.71,
+        "stocks": ["ANV", "MSN", "DBC", "DPM", "SAB", "ASM"]
+      },
+      "securities": {
+        "direction": "down",
+        "count": 5,
+        "mean_pct": -2.43,
+        "stocks": ["VIX", "SHS", "SSI", "HCM", "VND"]
+      }
+    }
+  },
+  "tnb_layers": {
+    "layer_1_data_discipline": {
+      "state_transitions": "USD/VND breach 25.500 threshold (bearish import cost); FII flow reversal (8 accumulation + 8 exit simultaneous)",
+      "cause_effect": "Market rotation driven by macro tightening signals + profit outlook uncertainty in cyclicals",
+      "monthly_vs_quarterly": "Using daily FII + daily price signals (high-frequency)",
+      "verdict": "PASS - state transitions documented, cause-effect articulated"
+    },
+    "layer_2_us_stack": {
+      "fed_rate": 3.63,
+      "oil_impact": "NEUTRAL (88.13 $/bbl)",
+      "gold": {
+        "price_usd": 4400.50,
+        "direction": "BULLISH",
+        "interpretation": "safe-haven demand, risk-off signal"
+      },
+      "sentiment": "Mixed (gold bullish but carry neutral)",
+      "verdict": "PASS - macro backdrop not strongly bullish"
+    },
+    "layer_3_vn_stack": {
+      "usdvnd_level": 25930,
+      "usdvnd_threshold": 25500,
+      "usdvnd_state": "BEARISH (above threshold, VND depreciation pressure)",
+      "carry_spread_pp": 1.37,
+      "carry_regime": "NEUTRAL",
+      "breadth": {
+        "advances": 64,
+        "declines": 254,
+        "nochange": 49,
+        "breadth_direction": "down"
+      },
+      "sentiment_index": {
+        "today_score": -0.37,
+        "ema_5d": 0.61,
+        "history_days": 15,
+        "note": "insufficient for z-score (need 21+)"
+      },
+      "fii_motive": "Rotation: value/yield accumulation vs exit from cyclicals",
+      "verdict": "PASS - FII rotation thesis + USD/VND pressure documented"
+    },
+    "layer_4_four_pillars": {
+      "pillar_1_money_supply": "carry 1.37pp, deposit rate 5%, neutral regime",
+      "pillar_2_cost_of_money": "earnings yield 6.70% > deposit 5% = fairly valued (1.70pp premium)",
+      "pillar_3_profit_outlook": "sector headwinds visible (real estate -2.53%, steel -2.90%, agriculture -1.71%); earnings downside risk",
+      "pillar_4_valuation_risk": "volatility elevated (vol_regime=ELEVATED, gk_vol_20d=23.82%, rv_20d=23.82%); breadth weak (254d vs 64a)",
+      "pillars_aligned": 2,
+      "pillars_headwind": 2,
+      "conviction_level": "MEDIUM (2 pillars aligned, 2 headwinds)"
+    },
+    "layer_5_kinh_dich": {
+      "market_hexagram": "Du (16) - THUAN LOI (favorable)",
+      "dominant_stock_hexagrams": ["Khôn (2) - cautious", "Sư (7) - pause/holding", "Tập Khảm (29) - selloff/exit"],
+      "conviction_score_distribution": {
+        "above_0_60": 3,
+        "0_50_to_0_60": 15,
+        "below_0_50": 23
+      },
+      "interpretation": "Market favorable but individual holdings uncertain; majority in cautious hexagrams suggests rotation/transition phase",
+      "verdict": "PASS - Kinh Dịch overlay confirms neutral-to-cautious stance"
+    },
+    "layer_6_gap_catalogue": {
+      "bctc_availability": "PARTIAL (fundamental signals available for major watchlist)",
+      "geopolitical_signals": "ABSENT (no active war/trade-war signals this cycle)",
+      "sentiment_baseline": "INSUFFICIENT DATA (15 days, need 21+ for z-score)",
+      "insider_sentiment": "UNAVAILABLE (honest-NULL per FIX-VPS-SSC-INSIDER-502)",
+      "gaps_flagged": ["sentiment_insufficient", "insider_unavailable"],
+      "verdict": "PARTIAL - 3/5 required data sources available"
+    }
+  },
+  "thesis_summary": {
+    "primary_regime": "Transition phase: FII smart-money rotation from cyclicals to value/yield, driven by USD/VND appreciation pressure + earnings headwinds",
+    "conviction_call": "MEDIUM - 2-pillar alignment (carry + yield fairly valued) vs 2 headwinds (profit outlook + valuation risk from breadth weakness)",
+    "risk_factors": ["import cost pressure if USD/VND sustains >25500", "sector profit revision downside", "FII rotation could reverse quickly"],
+    "quality_verdict": "FULL (all 5 layers walked; L6 gaps documented cleanly)"
+  },
+  "execution_details": {
+    "steps_executed": ["Step 1.5 (MACRO-HEALTH READ)", "Step 2 (LAYER 1 data discipline)", "Step 3 (LAYER 2+3 stacks)", "Step 4 (LAYER 4 pillars)", "Step 5 (LAYER 5 Kinh Dịch)", "Step 6 (LAYER 6 gaps)", "Step 7 (MARKET + WORK messages)"],
+    "quality_gate_result": "PASS (gaps documented, conviction medium, thesis sound)",
+    "market_dish_sent": true,
+    "work_detail_sent": true,
+    "notebook_append": "pending Step 8",
+    "synthesis_persist": "2026-08-14 EOD, step 7.6 complete"
+  }
+}

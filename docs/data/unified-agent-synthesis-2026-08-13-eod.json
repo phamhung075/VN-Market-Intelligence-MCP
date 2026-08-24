@@ -1,0 +1,52 @@
+{
+  "metadata": {
+    "cycle_id": "eod-2026-08-13T08:45:00Z",
+    "dish_type": "eod",
+    "date_vn": "2026-08-13",
+    "timestamp_utc": "2026-08-13T08:57:40Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "partial — [gap:L3_VN_macro_incomplete] [gap:L4_partial_pillar_coverage] [gap:business_context_absent]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "slowdown",
+    "regime_state": "carry-pressure-accumulation-oscillation",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "EFFR-IORB spread 3.63-5.00pp indicates tight Fed posture with equity yield 6.70% fairly valued vs deposit 5.00%. Global economic slowdown evident in oil demand weakness despite Mideast geopolitical risks.",
+    "vn_macro_layer": "USD/VND at 25,870 breaches 25,000 carry threshold, creating FII rotation pressure. Volatility elevated (20d-vol 22.87%, percentile 76). Breadth declining (ADL -278). VIRA/FX-reserves data unavailable.",
+    "valuation_layer": "Banking sector: M2 tight, COC rising, EPS mixed, valuation fair = 2-3 pillars aligned MEDIUM conviction. Real Estate: funding squeeze pressure with delayed earnings = 2/4 pillars LOW-MEDIUM. Oil/Gas: sector headwinds from demand + risk-off = LOW conviction. Pyramid: Fixed Income / Quality Equity (defensive tier)."
+  },
+  "conviction_calls": [
+    {"ticker": "EIB", "conviction_level": "MEDIUM", "direction": "HOLD", "pillars_aligned_count": 2, "rationale_one_liner": "Banking carry unwind evident, Hexagram Tập Khảm (negative 100%) overrides price-action reversal signals"},
+    {"ticker": "VCB", "conviction_level": "MEDIUM", "direction": "HOLD", "pillars_aligned_count": 2, "rationale_one_liner": "Banking sector pressure via FII net-sell on carry threshold breach, mixed hexagram confidence"},
+    {"ticker": "VHM", "conviction_level": "MEDIUM", "direction": "HOLD", "pillars_aligned_count": 2, "rationale_one_liner": "Real estate funding squeeze with delayed earnings, Hexagram Khôn mixed signals (positive 74% vs price -2.71%)"},
+    {"ticker": "VIC", "conviction_level": "MEDIUM", "direction": "HOLD", "pillars_aligned_count": 2, "rationale_one_liner": "Real estate valuation compressing, news contradicts price action (positive news vs -3.53% price), oscillation signals transition phase"},
+    {"ticker": "PLX", "conviction_level": "LOW", "direction": "HOLD", "pillars_aligned_count": 1, "rationale_one_liner": "Oil sector headwinds dominate geopolitical risks; demand outlook weakens trumps supply concerns"}
+  ],
+  "sector_phases": [
+    {"sector_vn": "ngân hàng", "investment_phase": "slowdown", "pyramid_tier": "fixed_income", "direction_this_cycle": "negative"},
+    {"sector_vn": "bất động sản", "investment_phase": "slowdown", "pyramid_tier": "fixed_income", "direction_this_cycle": "negative"},
+    {"sector_vn": "dầu khí", "investment_phase": "slowdown", "pyramid_tier": "defensive", "direction_this_cycle": "negative"},
+    {"sector_vn": "chứng khoán", "investment_phase": "slowdown", "pyramid_tier": "defensive", "direction_this_cycle": "negative"}
+  ],
+  "known_gaps": [
+    "[L6-gap: single-pillar thesis — EIB/VCB/BID 2/4 pillars, insufficient for strong conviction]",
+    "[L6-gap: single-pillar thesis — VHM/VIC 2/4 pillars, insufficient for strong conviction]",
+    "[gap:L3_VN_macro_incomplete — VIRA/FX-reserves unavailable, USD/VND level cited but full macro stack missing depth]",
+    "[gap:L4_partial_pillar_coverage — only 2-3/4 pillars aligned across banking/real estate per ticker]",
+    "[gap:business_context_absent — BCTC-analyst BCTC-EXTRACT-QUALITY sprint: 14/16 watchlist tickers serve-blocked, no fundamental data this cycle]",
+    "[L6-gap: inverted causality risk — price drops cited as distribution but hexagrams mixed, require causal chain clarity]"
+  ],
+  "causal_chains": [
+    "Global economic slowdown + Fed hawkish rate structure (EFFR-IORB positive real) → VND carry pressure at 25,870 (threshold breach) → foreign institutions net-sell banking sector (velocity slight but turning) → EIB -3.85%, VCB -0.33%, BID -1.02% on carry unwind; secondary real estate unwind via funding squeeze → VHM -2.71%, VIC -3.53% contradicted by Kinh Dịch Khôn (MUA) — accumulation vs distribution oscillation signals transition phase, not firm direction yet"
+  ],
+  "clusters_summary": {
+    "qualified": 4,
+    "tickers_covered": ["EIB", "VCB", "BID", "VHM", "VIC", "DXG", "VRE", "PLX", "GAS", "KBC"],
+    "sectors_covered": ["banking", "real_estate", "oil_gas", "utilities", "tech"],
+    "cluster_details": {
+      "banking_convergence": "Price drop HIGH 90% + volume spike 2x + macro carry pressure = 3-signal cluster",
+      "real_estate_convergence": "11 tickers -2.12% avg + funding squeeze macro = sector convergence",
+      "oil_gas_convergence": "5 tickers -2.16% avg + global demand weakness chain_catalyst = sector convergence"
+    }
+  }
+}

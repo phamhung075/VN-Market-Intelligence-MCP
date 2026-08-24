@@ -1,0 +1,163 @@
+{
+  "report_id": "1f53ef33-8f50-489b-8505-689740692ab0",
+  "units": [
+    {
+      "unit_id": "unit-0000",
+      "page_numbers": [
+        1
+      ],
+      "markdown": "",
+      "flags": [
+        "page_type_mismatch:cover_page_not_table"
+      ],
+      "confidence": 0,
+      "window_status": "FAILED",
+      "refined_at": "2026-08-24 09:03:38"
+    },
+    {
+      "unit_id": "unit-0001",
+      "page_numbers": [
+        2
+      ],
+      "markdown": "",
+      "flags": [
+        "page_type_mismatch:toc_not_financial_table"
+      ],
+      "confidence": 0,
+      "window_status": "FAILED",
+      "refined_at": "2026-08-24 09:03:39"
+    },
+    {
+      "unit_id": "unit-0002",
+      "page_numbers": [
+        3,
+        4
+      ],
+      "markdown": "**Tập đoàn Vingroup — Công ty CP**\n\n## THÔNG TIN CHUNG\n\nCông ty Tập đoàn Vingroup — Công ty CP (\"Công ty\") là một công ty cổ phần được thành lập theo Luật Doanh nghiệp của Việt Nam theo Giấy Chứng nhận Đăng ký Kinh doanh số 0103001016 do Sở Kế hoạch và Đầu tư Thành phố Hà Nội cấp vào ngày 3 tháng 5 năm 2002 và được cấp lại Giấy Chứng nhận Đăng ký Kinh doanh số 0101245486 vào ngày 12 tháng 5 năm 2010. Công ty sau đó nhận được các Giấy Chứng nhận Đăng ký Doanh nghiệp sửa đổi với lần gần nhất là lần thứ 76 được cấp ngày 23 tháng 12 năm 2025.\n\nCổ phiếu của Công ty đã được chính thức giao dịch tại Sở Giao dịch Chứng khoán thành phố Hồ Chí Minh kể từ ngày 19 tháng 9 năm 2007.\n\n### Hội đồng Quản trị\n- Ông Phạm Nhật Vượng — Chủ tịch\n- Bà Phạm Thúy Hằng — Phó chủ tịch\n- Bà Phạm Thu Hương — Phó chủ tịch\n- Bà Nguyễn Diệu Linh — Phó chủ tịch\n- Ông Nguyễn Việt Quang — Phó chủ tịch\n- Ông Adil Ahmad — Thành viên độc lập\n- Ông Chin Michael Jaewuk — Thành viên độc lập\n- Ông Ronaldo Dy-Liacco Ibasco — Thành viên độc lập\n\n### Ban Kiểm soát\n- Ông Nguyễn Thế Anh — Trưởng Ban kiểm soát\n- Bà Bế Thị Hương Vân — Thành viên\n- Bà Nguyễn Hồng Mai — Thành viên\n\n### Ban Giám đốc\n- Ông Nguyễn Việt Quang — Tổng Giám đốc\n- Bà Mai Hương Nội — Phó Tổng Giám đốc\n- Bà Dương Thị Hoàn — Phó Tổng Giám đốc\n\n**Người đại diện theo pháp luật:** Ông Nguyễn Việt Quang",
+      "flags": [],
+      "confidence": 0.85,
+      "window_status": "DONE",
+      "refined_at": "2026-08-24 09:03:49"
+    },
+    {
+      "unit_id": "unit-0003",
+      "page_numbers": [
+        5
+      ],
+      "markdown": "**Tập đoàn Vingroup — Công ty CP**\n\n## BÁO CÁO CỦA BAN GIÁM ĐỐC\n\nBan Giám đốc Tập đoàn Vingroup — Công ty CP trình bày báo cáo này và báo cáo tài chính hợp nhất của Công ty và các công ty con cho Quý I năm 2026.\n\n### Trách nhiệm của Ban Giám đốc\n\nBan Giám đốc chịu trách nhiệm đảm bảo báo cáo tài chính hợp nhất cho từng kỳ kế toán phản ánh trung thực và hợp lý tình hình tài chính hợp nhất.\n\n### Công bố của Ban Giám đốc\n\nTheo ý kiến của Ban Giám đốc, báo cáo tài chính hợp nhất kèm theo phản ánh trung thực và hợp lý tình hình tài chính hợp nhất của Tập đoàn tại ngày 31 tháng 3 năm 2026, phù hợp với các Chuẩn mực kế toán Việt Nam, Chế độ kế toán doanh nghiệp Việt Nam và các quy định pháp lý có liên quan.\n\n**Phê duyệt, ngày 28 tháng 4 năm 2026**\n- Nguyễn Việt Quang — Tổng Giám đốc",
+      "flags": [],
+      "confidence": 0.9,
+      "window_status": "DONE",
+      "refined_at": "2026-08-24 09:03:54"
+    },
+    {
+      "unit_id": "unit-0004",
+      "page_numbers": [
+        6,
+        7,
+        8
+      ],
+      "markdown": "**Tập đoàn Vingroup — Công ty CP**\n\n## BÁO CÁO TÌNH HÌNH TÀI CHÍNH HỢP NHẤT (Tiếp theo)\n\n### TÀI SẢN NGẮN HẠN\n\n| Mã số | Chỉ tiêu | Số cuối kỳ | Số đầu kỳ |\n|---|---|---|---|\n| | **Tiền và tương đương tiền** | | |\n| 1 | Tiền | 54.750.360 | 72.226.561 |\n| 2 | Các khoản tương đương tiền | 47.992.028 | 35.442.719 |\n| | **Đầu tư tài chính ngắn hạn** | | |\n| | Chứng khoán kinh doanh | 6.758.334 | 36.783.842 |\n| | Đầu tư nắm giữ đến ngày đáo hạn ngắn hạn | 19.157.245 | 19.358.228 |\n| | Dự phòng đầu tư nắm giữ | (1.583.814) | (96.192) |\n| | **Các khoản phải thu ngắn hạn** | 19.283.437 | 17.870.806 |\n| | Phải thu ngắn hạn của khách hàng | | |\n| | Trả trước cho người bán ngắn hạn | | |\n| | Phải thu ngắn hạn khác | | |\n| | Dự phòng phải thu ngắn hạn khó đòi | (96.192) | (96.192) |\n| | **Hàng tồn kho** | | |\n| | Hàng tồn kho | 251.349.280 | 257.690.180 |\n| | Dự phòng giảm giá hàng tồn kho | (36.575.948) | (35.747.342) |\n| | **Tài sản ngắn hạn khác** | | |\n| | Chỉ phí chờ phân bổ ngắn hạn | 84.629.574 | 84.195.016 |\n| | Thuế GTGT được khẩu trừ | 430.822.438 | 138.447.724 |\n| | Thuế và các khoản khác phải thu Nhà nước | (678.680) | (899.902) |\n| | Tài sản ngắn hạn khác | 217.163.958 | 201.580.276 |\n\n**Đơn vị tính: Triệu VND**",
+      "flags": [
+        "continuation_marker_missing:page7",
+        "image_unavailable:pages6-8"
+      ],
+      "confidence": 0.75,
+      "window_status": "DONE",
+      "refined_at": "2026-08-24 09:04:04"
+    },
+    {
+      "unit_id": "unit-0005",
+      "page_numbers": [
+        9
+      ],
+      "markdown": "| Mã số | Chỉ tiêu | Số cuối kỳ | Số đầu kỳ |\n|---|---|---|---|\n| | **TÀI SẢN DÀI HẠN** | | |\n| | **Các khoản phải thu dài hạn** | 24.003.506 | 14.147.704 |\n| 1 | Phải thu dài hạn của khách hàng | 720.987 | 808.169 |\n| 2 | Phải thu dài hạn khác | 23.282.518 | 13.339.535 |\n| | **Tài sản cố định** | | |\n| 1 | Tài sản cố định hữu hình | | |\n| | Nguyên giá | 234.619.850 | 198.303.973 |\n| | Giá trị hao mòn lũy kế | (73.936.379) | (160.683.471) |\n| 2 | Tài sản cố định thuê tài chính | 141.936 | 69.353.838 |\n| | Nguyên giá | 34.478.506 | (33.020.984) |\n| | Giá trị hao mòn lũy kế | (35.946.240) | |\n| 3 | Tài sản cố định vô hình | | |\n| | Nguyên giá | 19.194.189 | 19.353.620 |\n| | Giá trị hao mòn lũy kế | (3.556.570) | (3.327.813) |\n| | **Bất động sản đầu tư** | | |\n| 1 | Nguyên giá | 22.750.759 | 22.681.433 |\n| 2 | Giá trị hao mòn lũy kế | (3.556.570) | (3.327.813) |\n| | **Tài sản dở dang dài hạn** | | |\n| 1 | Chỉ phí xây dựng cơ bản dở dang | 131.774.981 | 139.091.454 |\n| | **Đầu tư tài chính dài hạn** | | |\n| 1 | Đầu tư vào công ty liên doanh, liên kết | 68.610.394 | 44.929.014 |\n| 2 | Đầu tư góp vốn vào đơn vị khác | 10.809.066 | 10.437.972 |\n| 3 | Dự phòng tổn thất đầu tư | 44.670.551 | 35.916.035 |\n| 4 | Đầu tư nắm giữ đến ngày đáo hạn dài hạn | (3.436.252) | 16.567.029 |\n| | **Tài sản dài hạn khác** | 63.405.220 | 54.250.698 |\n| | **TỔNG CỘNG TÀI SẢN** | 1.178.694.748 | 1.118.622.625 |\n\n**Đơn vị tính: Triệu VND. Trang: B01a-DN/HN**",
+      "flags": [
+        "image_unavailable",
+        "garbled_ocr_layout"
+      ],
+      "confidence": 0.65,
+      "window_status": "DONE",
+      "refined_at": "2026-08-24 09:04:14"
+    },
+    {
+      "unit_id": "unit-0006",
+      "page_numbers": [
+        10
+      ],
+      "markdown": "| Mã số | Chỉ tiêu | Số cuối kỳ | Số đầu kỳ |\n|---|---|---|---|\n| 300 | **C. NỢ PHẢI TRẢ** | | |\n| | **I. Nợ ngắn hạn** | 1.024.990.928 | 967.133.690 |\n| 1 | Phải trả người bán ngắn hạn | 626.455.564 | 587.454.584 |\n| 2 | Người mua trả tiền trước ngắn hạn | 61.547.528 | 57.785.917 |\n| 3 | Phải trả cổ tức, lợi nhuận | 149.449.495 | 139.519.412 |\n| 4 | Thuế và các khoản phải nộp Nhà nước ngắn hạn | 8.218 | 8.718 |\n| 5 | Phải trả người lao động | 31.082.939 | 35.125.248 |\n| 6 | Chỉ phí phải trả ngắn hạn | 1.326.941 | 2.499.134 |\n| 7 | Doanh thu chờ phân bổ ngắn hạn | 102.446.387 | 98.844.756 |\n| 8 | Phải trả ngắn hạn khác | 5.696.581 | 7.054.915 |\n| 9 | Vay và nợ thuê tài chính ngắn hạn | 126.408.748 | 122.319.424 |\n| 10 | Dự phòng phải trả ngắn hạn | 137.577.392 | 114.000.484 |\n| | | 10.911.335 | 10.297.056 |\n| | **II. Nợ dài hạn** | 398.535.364 | 379.679.126 |\n| 1 | Người mua trả tiền trước dài hạn | 13.956.669 | 949.876 |\n| 2 | Chỉ phí phải trả dài hạn | 3.530.133 | 2.873.387 |\n| 3 | Doanh thu chờ phân bổ dài hạn | 6.023.443 | 5.622.282 |\n| 4 | Phải trả dài hạn khác | 129.902.027 | 123.085.730 |\n| 5 | Vay và nợ thuê tài chính dài hạn | 220.244.483 | 221.419.341 |\n| 6 | Trái phiếu hoán đổi | 579.683 | 3.081.207 |\n| 7 | Thuế thu nhập hoãn lại phải trả | 2.325.203 | 2.370.025 |\n| 8 | Dự phòng phải trả dài hạn | 21.974.723 | 20.377.278 |\n\n**Đơn vị tính: Triệu VND. Trang: B01a-DN/HN**",
+      "flags": [
+        "image_unavailable",
+        "ocr_row_alignment_uncertain"
+      ],
+      "confidence": 0.7,
+      "window_status": "DONE",
+      "refined_at": "2026-08-24 09:04:24"
+    },
+    {
+      "unit_id": "unit-0007",
+      "page_numbers": [
+        11
+      ],
+      "markdown": "",
+      "flags": [
+        "ocr_garbled:page_appears_corrupted_upside_down_or_encoding_error"
+      ],
+      "confidence": 0,
+      "window_status": "FAILED",
+      "refined_at": "2026-08-24 09:04:25"
+    },
+    {
+      "unit_id": "unit-0008",
+      "page_numbers": [
+        12
+      ],
+      "markdown": "**Tập đoàn Vingroup — Công ty CP**\n\n## BÁO CÁO LƯU CHUYỂN TIỀN TỆ HỢP NHẤT\nQuý I năm 2026\n\n**I. LƯU CHUYỂN TIỀN TỪ HOẠT ĐỘNG KINH DOANH**\n\n**Lợi nhuận trước thuế**\n\n**Điều chỉnh cho các khoản:**\n- Khấu hao và hao mòn\n- Thay đổi các khoản dự phòng\n- (Lãi)/Lỗ chênh lệch tỷ giá\n- (Lãi)/Lỗ từ hoạt động đầu tư, tài chính\n- Chỉ phí đi vay\n\n**Lợi nhuận từ hoạt động kinh doanh trước thay đổi vốn lưu động**\n\n**Thay đổi vốn lưu động:**\n- (Tăng)/giảm các khoản phải thu\n- (Tăng)/giảm hàng tồn kho\n- Tăng/(giảm) các lhoản phải trả (không kế lãi vay phải trả, thuế thu nhập doanh nghiệp phải nộp)\n- (Tăng)/giảm chỉ phí chờ phân bổ\n- (Tăng)/giảm chứng khoán kinh doanh\n\n**Chi phí và thuế liên quan:**\n- Chỉ phí đi vay đã trả\n- Thuế thu nhập doanh nghiệp đã nộp\n\n**Lưu chuyển tiền thuần từ hoạt động kinh doanh**\n\n**II. LƯU CHUYỂN TIỀN TỪ HOẠT ĐỘNG ĐẦU TƯ**\n\n- Tiền chỉ để mua sắm, xây dựng tài sản cố định và các tài sản dài hạn khác\n- Tiền thu được từ thanh lý, nhượng bán tài sản cố định và các tài sản dài hạn khác\n- Tiền chỉ cho vay, mua các công cụ nợ của đơn vị khác\n- Tiền thu hồi cho vay, bán lại công cụ nợ của đơn vị khác\n- Tiền chỉ đầu tư góp vốn vào đơn vị khác (trừ đi tiền thu về)\n- Tiền thu hồi đầu tư góp vốn vào đơn vị khác\n- Tiền thu lãi cho vay, cổ tức và lợi nhuận được chia\n\n**Lưu chuyển tiền thuần từ hoạt động đầu tư**\n\n**Đơn vị tính: Triệu VND. Trang: B03a-DN/HN**",
+      "flags": [
+        "page_type_mismatch:prose_not_table",
+        "text_only_no_numerical_data"
+      ],
+      "confidence": 0.85,
+      "window_status": "DONE",
+      "refined_at": "2026-08-24 09:04:36"
+    },
+    {
+      "unit_id": "unit-0009",
+      "page_numbers": [
+        13
+      ],
+      "markdown": "| CHỈ TIÊU | Cho kỳ kế toán 3 tháng kết thúc 31/3/2026 | Cho kỳ kế toán 3 tháng kết thúc 31/3/2025 |\n|---|---|---|\n| **II. LƯU CHUYÊN TIỀN TỪ HOẠT ĐỘNG TÀI CHÍNH** | | |\n| Tiền thu từ phát hành cổ phiếu, nhận vốn góp của chủ sở hữu | 340.000 | |\n| Tiền chỉ trả vốn góp cho các chủ sở hữu, mua lại cổ phiếu đã phát hành | (3.000) | |\n| Tiền thư từ đi vay | 57.727.404 | |\n| Tiền chí trả nợ gốc vay | (33.555.181) | |\n| Cổ tức, lợi nhuận đã trả cho cổ đông không kiểm soát | (36.000) | |\n| **Lưu chuyển tiền thuần từ hoạt động tài chính** | 24.473.223 | |\n| **Lưu chuyễn tiền thuần trong kỳ** | (17.476.201) | |\n| **Tiền và tương đương tiền đầu kỳ** | 72.226.581 | |\n| **Ảnh hưởng của thay đổi tỷ giá hối đoái quy đổi ngoại tệ** | | |\n| **Tiền và tương đương tiền cuối kỳ** | 64.750.360 | |\n\n**Ký duyệt:**\n- Văn Thị Hải Hà — Người lập\n- Nguyễn Thị Thu Hiền — Kế toán trưởng\n- Tổng Giám đốc\n\n**Đơn vị tính: Triệu VND. Trang: B03a-DN/HN**",
+      "flags": [],
+      "confidence": 0.8,
+      "window_status": "DONE",
+      "refined_at": "2026-08-24 09:04:44"
+    },
+    {
+      "unit_id": "unit-0010",
+      "page_numbers": [
+        14,
+        15,
+        16
+      ],
+      "markdown": "**Tập đoàn Vingroup — Công ty CP**\n\n## THUYẾT MINH BÁO CÁO TÀI CHÍNH HỢP NHẤT\nQuý I năm 2026\n\n### 1. ĐẶC ĐIỂM HOẠT ĐỘNG CỦA DOANH NGHIỆP\n\nTập đoàn Vingroup — Công ty CP (\"Công ty\") là một công ty cổ phần được thành lập theo Luật Doanh nghiệp của Việt Nam. Cổ phiếu của Công ty đã được chính thức giao dịch tại Sở Giao dịch Chứng khoán thành phó Hồ Chí Minh kể từ ngày 19 tháng 9 năm 2007.\n\nHoạt động chính trong năm hiện tại của Công ty là đầu tư, xây dựng và kinh doanh bất động sản; tiến hành các hoạt động huy động vốn, đầu tư góp vốn; và cung cấp các dịch vụ hành chính văn phòng tổng hợp.\n\nChu kỳ sản xuất kinh doanh bình quân của hoạt động chuyển nhượng bất động sản bắt đầu từ thời điểm được chấp thuận là nhà đầu tư và thực hiện giải phóng mặt bằng, xây dựng cho đến thời điểm hoàn thiện và bàn giao cho khách hàng. Do vậy, chu kỳ sản xuất kinh doanh của hoạt động chuyển nhượng bất động sản có thể kéo dài trên 12 tháng.\n\nTại ngày 31 tháng 3 năm 2026, Công ty và các công ty con sở hữu 116 công ty con.\n\n### 2. CƠ SỞ TRÌNH BÀY\n\n#### 2.1 Chuẩn mực và Chế độ kế toán áp dụng\n\nBáo cáo tài chính hợp nhất của Tập đoàn được lập phù hợp với Chế độ kế toán doanh nghiệp Việt Nam và các Chuẩn mực kế toán Việt Nam do Bộ Tài chính ban hành.\n\nBáo cáo tài chính hợp nhất được trình bày bằng đồng Việt Nam (VND) và được làm tròn đến hàng triệu (triệu VND).\n\n#### 2.2 Hình thức sổ kế toán áp dụng\n\nHình thức sổ kế toán được áp dụng của Công ty là Nhật ký chung.\n\n#### 2.3 Niên độ kế toán\n\nNiên độ kế toán của Tập đoàn bắt đầu từ ngày 1 tháng 1 và kết thúc ngày 31 tháng 12.\n\n### 3. TÓM TẮT CÁC CHÍNH SÁCH KÉ TOÁN CHỦ YÊU\n\n#### 3.1 Tiền và các khoản tương đương tiền\n\nTiền và các khoản tương đương tiền bao gồm tiền mặt tại quỹ, tiền đang chuyển, tiền gửi không kỳ hạn, các khoản đầu tư ngắn hạn có thời hạn gốc không quá ba tháng.\n\n#### 3.2 Hàng tồn kho\n\n**Hàng tồn kho bất động sản:** Được ghi nhận theo giá thấp hơn giữa giá thành để đưa mỗi sản phẩm đến vị trí và điều kiện hiện tại và giá trị thuần có thể thực hiện được.\n\n**Giá thành của hàng bất động sản bao gồm:**\n- Chỉ phí tiền sử dụng đất và tiền thuê đất\n- Chỉ phí xây dựng trả cho nhà thầu\n- Chỉ phí lãi vay, chỉ phí tư vấn, thiết kế, và các chỉ phí liên quan khác\n\n#### 3.3 Các khoản phải thu\n\nDự phòng nợ phải thu khó đòi thể hiện phần giá trị của các khoản phải thu mà Tập đoàn dự kiến không có khả năng thu hồi.\n\n#### 3.4 Tài sản cố định hữu hình\n\nTài sản cố định hữu hình được thể hiện theo nguyên giá trừ đi giá trị hao mòn lũy kế.\n\n#### 3.5 Thuê tài sản\n\nViệc xác định một thỏa thuận có phải là thỏa thuận thuê tài sản hay không dựa trên bản chất của thỏa thuận đó tại thời điểm khởi đầu.\n\n#### 3.6 Tài sản cố định vô hình\n\nTài sản cố định vô hình được ghi nhận theo nguyên giá trừ đi giá trị hao mòn lũy kế.\n\n#### 3.7 Quyền sử dụng đất\n\nQuyền sử dụng đất có thời hạn hoặc lâu dài được ghi nhận là tài sản có định vô hình căn cứ trên giấy chứng nhận quyền sử dụng đất được cấp bởi các cơ quan có thẩm quyền.\n\n#### 3.8 Khấu hao và hao mòn\n\nKhấu hao được trích theo phương pháp đường thẳng trong suốt thời gian sử dụng hữu dụng ước tính của các tài sản:\n- Nhà cửa, vật kiến trúc: 5-50 năm\n- Máy móc và thiết bị: 3-25 năm\n- Phương tiện vận tải: 3-12 năm\n- Thiết bị văn phòng: 2-15 năm\n- Phần mềm máy tính: 3-8 năm\n- Quyền sử dụng đất có thời hạn: 30-48 năm\n\n#### 3.9 Bất động sản đầu tư\n\nBất động sản đầu tư được thể hiện theo nguyên giá bao gồm cả các chỉ phí giao dịch liên quan trừ đi giá trị hao mòn lũy kế.",
+      "flags": [],
+      "confidence": 0.85,
+      "window_status": "DONE",
+      "refined_at": "2026-08-24 09:05:06"
+    },
+    {
+      "unit_id": "unit-0011",
+      "page_numbers": [
+        17,
+        18,
+        19
+      ],
+      "markdown": "**Tập đoàn Vingroup — Công ty CP**\n\n## THUYẾT MINH BÁO CÁO TÀI CHÍNH HỢP NHẤT (Tiếp theo)\nQuý I năm 2026\n\n### 3. TÓM TẮT CÁC CHÍNH SÁCH KÉ TOÁN CHỦ YÊU (Tiếp theo)\n\n#### 3.1 Các thay đổi trong các chính sách kế toán\n\nCác chính sách kế toán của Tập đoàn sử dụng để lập báo cáo tài chính hợp nhất được áp dụng nhất quán với các chính sách đã được sử dụng để lập báo cáo tài chính hợp nhất cho năm tài chính kết thúc ngày 31 tháng 12 năm 2025, ngoại trừ các thay đổi về chính sách kế toán phát sinh từ việc áp dụng lần đầu Thông tư số 99/2025/TT-BTC.\n\nTập đoàn áp dụng các thay đổi về chính sách kế toán theo quy định tại Thông tư 99 trên cơ sở phi hỏi tô (do Thông tư 98 không yêu cầu áp dụng hỏi tô đối với các thay đổi này). Tập đoàn cũng đã báo cáo lại dữ liệu tương ứng của kỳ trước đối với một số chỉ tiêu cho phù hợp với cách trình bày theo Thông tư 99.\n\n#### 3.2 Tiền và các khoản tương đương tiền\n\nTiền và các khoản tương đương tiền bao gồm tiền mặt tại quỹ, tiền đang chuyển, tiền gửi không kỳ hạn, các khoản đầu tư ngắn hạn có thời hạn gốc không quá ba tháng và các khoản đầu tư có thời hạn thu hồi không quá 3 tháng kế từ ngày đầu tư.\n\n#### 3.3 Hàng tồn kho\n\n**Hàng tồn kho bất động sản:** Được ghi nhận là hàng tồn kho theo giá thấp hơn giữa giá thành để đưa mỗi sản phẩm đến vị trí và điều kiện hiện tại và giá trị thuần có thể thực hiện được.\n\n**Hàng tồn kho sản xuất:** Được tính theo giá gốc. Giá gốc hàng tồn kho bao gồm chỉ phí mua, chi phí chế biến.\n\n**Dự phòng giảm giá hàng tồn kho:** Được trích lập cho phần giá trị dự kiến bị tổn thất do các khoản suy giảm trong giá trị.\n\n#### 3.4 Các khoản phải thu\n\nCác khoản phải thu được trình bày trên báo cáo tình hình tài chính hợp nhất theo giá trị ghi sổ các khoản phải thu từ khách hàng và phải thu khác sau khi cân trừ các khoản dự phòng được lập cho các khoản phải thu khó đòi.\n\n**Dự phòng nợ phải thu khó đòi:** Thể hiện phần giá trị của các khoản phải thu mà Tập đoàn dự kiến không có khả năng thu hồi được tại ngày kết thúc kỳ kế toán.\n\n**Tham gia góp vốn vào hợp đồng:** Tập đoàn tham gia góp vốn vào các hợp đồng hợp tác đầu tư trung tâm thương mại, trong đó khoản đầu tư góp vốn của Tập đoàn vào hợp đồng hợp tác đầu tư sẽ được hạch toán vào chỉ tiêu các khoản phải thu khác.\n\n#### 3.5 Tài sản cố định hữu hình\n\nTài sản cố định hữu hình được thể hiện theo nguyên giá trừ đi giá trị hao mòn lũy kế.\n\n**Nguyên giá** bao gồm giá mua và những chỉ phí có liên quan trực tiếp đến việc đưa tài sản vào sẵn sàng hoạt động.\n\n**Khấu hao và bảo trì:** Chỉ phí mua sắm, nâng cấp và đổi mới tài sản cố định hữu hình được ghi tăng nguyên giá của tài sản và chỉ phí bảo trì, sửa chữa được hạch toán vào báo cáo kết quả hoạt động kinh doanh hợp nhất khi phát sinh.\n\n#### 3.6 Thuê tài sản\n\nViệc xác định một thỏa thuận có phải là thỏa thuận thuê tài sản hay không dựa trên bản chất của thỏa thuận đó tại thời điểm khởi đầu.\n\n**Thuê tài chính:** Tài sản theo hợp đồng thuê tài chính được vốn hóa trên báo cáo tình hình tài chính hợp nhất tại thời điểm khởi đầu thuê tài sản.\n\n**Thuê hoạt động:** Các khoản tiền thuê theo hợp đồng thuê hoạt động được hạch toán vào báo cáo kết quả hoạt động kinh doanh hợp nhất theo phương pháp đường thẳng.\n\n#### 3.7 Tài sản cố định vô hình\n\nTài sản cố định vô hình được ghi nhận theo nguyên giá trừ đi giá trị hao mòn lũy kế.\n\n**Chỉ phí nghiên cứu và triển khai:** Toàn bộ chỉ phí phát sinh trong giai đoạn nghiên cứu được ghi nhận vào chỉ phí phát sinh trong năm.\n\n#### 3.8 Khấu hao và hao mòn\n\nKhấu hao được trích theo phương pháp đường thẳng trong suốt thời gian sử dụng hữu dụng ước tính:\n- Nhà cửa, vật kiến trúc: 5-50 năm\n- Máy móc và thiết bị: 3-25 năm\n- Phương tiện vận tải: 3-12 năm\n- Thiết bị văn phòng: 2-15 năm\n- Phần mềm máy tính: 3-8 năm\n- Quyền sử dụng đất có thời hạn: 30-48 năm\n\n#### 3.9 Bất động sản đầu tư\n\nBất động sản đầu tư được thể hiện theo nguyên giá bao gồm cả các chỉ phí giao dịch liên quan trừ đi giá trị hao mòn lũy kế.\n\n**Khấu hao bất động sản đầu tư:**\n- Quyền sử dụng đất và nhà cửa, vật kiến trúc: 5-50 năm\n- Máy móc, thiết bị: 3-20 năm",
+      "flags": [],
+      "confidence": 0.85,
+      "window_status": "DONE",
+      "refined_at": "2026-08-24 09:05:30"
+    }
+  ],
+  "total_units": 12
+}

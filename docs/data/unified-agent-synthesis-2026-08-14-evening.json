@@ -1,0 +1,71 @@
+{
+  "metadata": {
+    "cycle_id": "chef-evening-20260814T1945Z",
+    "dish_type": "evening",
+    "date_vn": "2026-08-14",
+    "timestamp_utc": "2026-08-14T20:03:26Z",
+    "quality_verdict": "degraded",
+    "layers_walked_summary": "1-4 (partial) — [gap:L5_kinhdich_unavailable] [gap:business_context_limited]"
+  },
+  "tnb_synthesis": {
+    "clock_phase": "transition",
+    "regime_state": "macro-uncertainty",
+    "regime_confidence": "MEDIUM",
+    "us_macro_layer": "Risk-off sentiment: gold bullish >$4300 signals safe-haven demand amid macro uncertainty. Oil neutral $88.49. Fed carry regime unchanged (3.63%).",
+    "vn_macro_layer": "USD/VND depreciation (25950) creates import cost pressure. VND carry spread neutral (1.37pp SBV vs Fed). Equity earnings yield fairly valued 6.70% > deposit 5%.",
+    "valuation_layer": "Real estate sector under pressure (VHM, VIC selling) but DXG shows tactical recovery signal (+5.99% spike). Investment clock CORE_VN (score 8) supports selective value positioning."
+  },
+  "conviction_calls": [
+    {
+      "ticker": "DXG",
+      "conviction_level": "MEDIUM",
+      "direction": "ACCUMULATE",
+      "pillars_aligned_count": 2,
+      "rationale_one_liner": "Volume spike 2.3x average amid sector weakness signals contrarian accumulation; price recovery contradicts real estate headwinds (cost/profit pillars headwind)",
+      "business_context_cited": null
+    },
+    {
+      "ticker": "MACRO_BRENT",
+      "conviction_level": "HIGH",
+      "direction": "RISK_OFF",
+      "pillars_aligned_count": 1,
+      "rationale_one_liner": "Brent crude alert [HIGH severity] + gold >$4300 convergence signals macro risk-off regime (single pillar: macro signal)",
+      "business_context_cited": null
+    }
+  ],
+  "sector_phases": [
+    {
+      "sector_vn": "real_estate",
+      "investment_phase": "contraction",
+      "pyramid_tier": "cash",
+      "direction_this_cycle": "negative"
+    },
+    {
+      "sector_vn": "macro",
+      "investment_phase": "transition",
+      "pyramid_tier": "defensive",
+      "direction_this_cycle": "risk_off"
+    }
+  ],
+  "known_gaps": [
+    "[gap:L5_kinhdich_unavailable — portfolio conviction call not completed this cycle]",
+    "[gap:business_context_limited — zero bctc_signal files processed this evening cycle]",
+    "[L6-gap: gold >$4300 active — regime-drift risk: safe-haven pricing may lag macro reversal]",
+    "[L6-gap: single-pillar thesis — MACRO_BRENT 1/4 pillars (macro signal only); DXG 2/4 pillars aligned]"
+  ],
+  "causal_chains": [
+    "Macro risk-off (gold >$4300, USD/VND bearish) + real estate sector FII selling (VHM -5.01%, VIC -3.61%) → DXG contrarian spike (+5.99%) signals tactical rotation into value accumulation on sector divergence.",
+    "Fed carry stable (3.63%, no immediate tightening) + VN equities fairly valued (6.70% yield premium) → floor support for selective accumulation despite macro headwinds."
+  ],
+  "clusters_summary": {
+    "qualified": 2,
+    "tickers_covered": [
+      "DXG",
+      "BRENT"
+    ],
+    "sectors_covered": [
+      "real_estate",
+      "macro"
+    ]
+  }
+}
