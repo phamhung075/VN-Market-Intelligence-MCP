@@ -2038,3 +2038,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: DOC-AUDIT-4 · Tier-3 Step-4 size-cap jq query aborts on live orch-state (exit 5, no value)
+**Severity:** WARN | **Date:** 2026-08-24 | **Status:** OPEN
+**Location:** docs/agents/system-auditor/flow/main.md:821 + .claude/skills/doc-heal-system/reference.md:45
+**Details:** 2 of 19 active_sprints entries (SPRINT-CCATO-TRUTHGATE-MCP-NATIVE, SYSREMAKE-P2-STRUCTURAL-REMAKE-ROUTE) carry subtasks[] and no tasks[]; unguarded .tasks[] iteration hits null; null-safe count = 77 of cap 80
+**Impact:** The task_board size-cap check has emitted no value for 38 days — a silent detector wedge; live write-path consumers are null-safe so there is no data-loss risk
+**Root cause:** pm's 2026-07-17 decomposition wrote SPRINT-S rows with subtasks[] (id strings) into a lane whose readers assume a tasks[] object array; the two doc call sites never null-guard
+**Zone owner:** developer
+**Last reported:** 2026-08-24T03:08:04Z (signal sys-20260824T030752-699e, system-auditor -> po, dedup_key=doc_hygiene:orch-state-active-sprints:size-cap-query-aborts, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
