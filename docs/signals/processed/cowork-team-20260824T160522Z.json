@@ -6,8 +6,16 @@
   "createdAt": "2026-08-24T16:05:22Z",
   "payload": {
     "fire_time": "2026-08-24T16:05:22Z",
-    "matched_slots": ["news-scout-offhours", "market-watcher-eod", "alert-commander-critical"],
-    "won_slots": ["news-scout-offhours", "market-watcher-eod", "alert-commander-critical"],
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
     "held_by_other": [],
     "all_held": false,
     "spawned": [
@@ -35,7 +43,11 @@
       "alert-commander-critical": null
     },
     "last_fired_timestamp": "2026-08-24T16:04:52Z",
-    "last_fired_slots": ["news-scout-offhours", "market-watcher-eod", "alert-commander-critical"],
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-eod",
+      "alert-commander-critical"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -45,5 +57,11 @@
     "devq": 5,
     "signal_backlog": 31,
     "note": "3-slot batch, single batch (MAX_PARALLEL=4, not degraded: headroom 4712MB >= 1500 floor, load ~2 vs 24). market-watcher-offhours resolved out by declared supersedes (market-watcher-eod) in cowork-match-slots.js before Step 4b. market-watcher-eod last_fired was 2026-08-14T16:10:51Z (10d) — genuine frozen-slot cohort member, first fire since. Step 5.3 DEFERRED for all three; prior last_fired for de-stamp: news-scout-offhours=2026-08-24T12:04:50Z, market-watcher-eod=2026-08-14T16:10:51Z, alert-commander-critical=2026-08-24T12:04:50Z. cycle-snapshot-latest.json still 2026-08-23T00:07:50Z (40h stale), cycle_snapshot_promoted=false. regime_status/volatility_level absent from snapshot at every path -> emitted 'unknown' honestly."
+  },
+  "_processed": {
+    "fingerprint": "094e22d020f66fbb648f50c4feccf54d3c20bc13a690dc46782219cfd65c0218",
+    "processedAt": "2026-08-24T16:15:37Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
