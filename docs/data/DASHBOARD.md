@@ -2062,3 +2062,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: A-29 · monthlySignalQualityAudit cron MISSED
+**Severity:** CRITICAL | **Date:** 2026-08-24 | **Status:** OPEN
+**Location:** cron/layer-a
+**Details:** monthlySignalQualityAudit last fired 2026-06-01, 2038.6 hours overdue (1080h threshold)
+**Impact:** Monthly signal quality audit not running for 85+ days — data quality feedback mechanism offline
+**Root cause:** Job may be disabled or failing silently; needs investigation
+**Zone owner:** ops
+**Last reported:** 2026-08-24T22:35:47Z (signal sys-20260824T223523-72ea, system-auditor -> po, dedup_key=auditor-a29-fire-gap:monthlySignalQualityAudit, CRITICAL Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
