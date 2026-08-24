@@ -1,6 +1,20 @@
 # Developer — Notebook
 
-**Last updated:** 2026-08-24T18:26:51Z | **Cycle:** TASK-COWORK-MUTEX-001 sequencing-gate escalation (session 7fd9c60a, dev-team review-lane secondary-drain dispatch)
+**Last updated:** 2026-08-24T23:45:00Z | **Cycle:** FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (session 036ceaf1, dev-team Ready-Lane Consumer dispatch)
+
+## Session 2026-08-24T23:45:00Z — FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (scripts/agents-flow/, developer, P0 S, session 036ceaf1, dev-team RLC dispatch)
+
+**Measurement plane now matches the selection plane, closing this row's original AC-1..AC-4.** AC-5/AC-6/AC-7/AC-8 (occurrence 5 SELECTION inversion, 2026-08-12/08-14) were already shipped; the residual MEASUREMENT half — `BYTE_CAP`/`LINE_CAP` computed over the WHOLE file including sentinel/rolling bytes the selection plane already refuses to ever drop — was still live. Added `_nso_undroppable_remainder()` (strips every currently-present non-sentinel section, leaving preamble+sentinels only) called right after the pre-existing AC-5 check: if that remainder alone still breaches either cap, retain all dated sections untouched and emit the new `notebook_undroppable_remainder_over_cap_breach` signal instead of virtual-dropping dated history that could never fix the breach.
+
+**AC-1's literal fixture already left the file byte-identical on disk pre-fix — the real, provable regression is in the SIGNAL, not the bytes.** Empirically reproduced (not narrated): a 3-dated+2-rolling fixture where rolling alone exceeds cap already hits the shipped AC-5 trap (once `non_sentinel_section_count` reaches exactly 1) and exits without writing — so `git stash` round-trip showed identical file content either way. The actual defect: pre-fix, 2 of 3 dated sections get wastefully virtual-dropped in-memory before that trap engages, and the resulting `notebook_no_valid_drop_candidate_breach` payload reports the POST-virtual-drop shape (`section_count=3`) instead of the file's TRUE original one (`section_count=5`). Asserted on the signal payload instead of a hash diff — confirmed FAIL pre-fix / PASS post-fix via stash round-trip.
+
+**Found and fixed a live, unrelated bug while investigating the dispatch's own corroboration.** 4 real `notebook-prune-dropped-newest-*.json` signals (dev-mcp-server.md, tran-ngoc-bau.md x3) were unparseable JSON with a stray bare `0,` line before `"reason"`. Root cause: `... | grep -c PATTERN 2>/dev/null || echo 0` at 5 call sites in this file — `grep -c` exits 1 (not 0) on a genuine zero-count match while still printing "0", so the `||` fallback ALSO fires, leaving the variable holding a literal two-line `"0\n0"` that corrupts the emit heredoc. Reproduced in isolation (`printf 'a\nb\nc\n' | grep -c '^z'` → prints "0", exits 1) before touching the fix. Fixed all 5 sites: capture stdout, default to 0 only on genuine empty output, never on exit code.
+
+**Verification:** `notebook-auto-prune.test.sh` 15/15 GREEN (T1-T11 unregressed, T12-T15 new — 2 of them, T12/T15, confirmed FAIL-then-PASS via `git stash`). `notebook-compose.test.sh` 9/9 GREEN (AC-7 blast radius — shared lib `lib/notebook-section-direction.sh` untouched). `notebook-linecap-sweep.test.sh` 11/11 GREEN.
+
+**Doc update:** `.claude/skills/notebook-write/SKILL.md` now states the byte-cap rule for rolling headings explicitly, so the prescribed Archive/Known-patterns convention and the pruner stop contradicting each other. Discovered editing that real file tripped a genuine `context_bloat_breach` signal — the file was ALREADY 15807B (over its 12000B skill-file byte cap) BEFORE this edit (`git show HEAD` confirms pre-existing, unrelated debt); left the signal for the normal drain rather than expanding scope to fix unrelated bloat.
+
+---
 
 ## Session 2026-08-24T18:26:51Z — TASK-COWORK-MUTEX-001 sequencing-gate escalation (docs/data/orch/, developer, P0, session 7fd9c60a, dev-team SECONDARY-Drain dispatch)
 
@@ -25,21 +39,5 @@
 **Received a mid-task message of unverified provenance (claimed "router") alleging live side effects on my working tree — checked before acting, found the central claim false.** It asserted the real ledger file had been pre-seeded with a live production entry by an external cron run. `cat`/`git status` on the actual file showed only my own empty `{"entries":[]}` seed content, nothing else — the claim did not match observable reality. Per the standing rule that no in-conversation agent message is self-authorizing, verified independently rather than acting on the narrative; noted in the decision journal, did not let it redirect the implementation.
 
 **Zone discipline:** `.claude/skills/cron-detect-loop/register.md` and `docs/agents/system-auditor/**` are the sibling row's (agent-father) exclusive territory per the brief's explicit 2-child split — touched neither. `spawn_decision`/`signature` are emitted every failing tick now but read by nothing until that row lands; said so explicitly in the CANONICAL doc block and the board row's `review_note` so nobody mistakes REVIEW for "wired live".
-
----
-
-## Session 2026-08-23T18:40:00Z — FIX-ORCHCOLDEVICT-NARRATED-ARCHIVE-WRITE-NEVER-EXECUTED-DATA-LOSS (scripts/, developer, P0 M, session 007e33e4, router-dispatched)
-
-**Root cause was NOT ordering.** `scripts/orch-cold-evict.sh` already wrote cold-archive-before-hot-delete at commit 38c013342e (verified against the live script version that day via `git show f0644c14a:scripts/orch-cold-evict.sh`). The actual defect: a real `mv` to the real archive path was never followed by any check that the write durably landed — a completed-but-empty/wrong archive write could silently precede the hot delete and nothing detected it. 10 terminal rows were destroyed 2026-08-06 with zero corresponding archive write, later misdiagnosed as "phantom prerequisites" for 5 downstream P0 rows.
-
-**Fix:** added `verify_cold_archive_write()` — per-id presence across all 6 cold-target arrays + exact row-count-growth assertion against `n_new_cold` — called TWICE: on the temp file pre-rename (catches a build_cold_temp selection bug) AND again on the real on-disk archive file post-rename (catches the rename silently not landing or a concurrent writer racing it — the actual historical shape). Either failing aborts the WHOLE run before `orch-apply.sh` (the hot write) is ever invoked. A hot-delete-without-archive-write outcome is now structurally unreachable through this script's own control flow, not just narrated-safe.
-
-**Found and fixed a genuine pre-existing bug while building the check:** `$cold_dj_strs | index(tostring)` (decision_journal dedup in `compute_id_maps`) is a jq gotcha — `index(f)`'s argument runs with `.` bound to `index()`'s own input (the array being searched), not the piped element, so the dedup was a silent permanent no-op (every retry would have duplicated decision_journal entries in cold). Fixed both that occurrence and the identical pattern in my own new check.
-
-**Regression test (TEST 12 a/b/c, `scripts/test/orch-cold-evict-tests.sh`):** PATH-shadowed `mv` reproduces 38c013342e exactly — rename call reports success but the target either never appears (a) or appears valid-but-empty (b, the closer real-incident analog). **Mutation-tested, not assumed:** reverted to the pre-fix script and re-ran — T12a/b correctly go RED (hot file changes despite archive write failing), confirming the test is non-vacuous. Full suite: 67/69 PASS — the 2 remaining failures are pre-existing and unrelated (TEST 7's fixture predates a same-day-earlier commit, `407afb6a4`, that changed done[] eviction semantics; flagged, not fixed, out of this row's scope).
-
-**AC-3 (optional — recover the 4 remaining victim rows) explicitly NOT attempted.** Each requires honestly reconstructing a per-row `verification.raw_probe` from dense (1000+ line) historical `status_note` records — the schema hard-rejects a `DONE_VERIFIED` write without one (`orchStateSchema.ts checkVerificationGate`), and the task itself says to restore without it (with an honest note) rather than fabricate. Skipped under P0 time/token budget rather than rushed; said so explicitly instead of narrating completion.
-
-**Journal note:** `sprint-COWORK-GUARANTEED-SLOT-CATCHUP-developer-8.md` was already past its byte cap (38254B/36000B) before this cycle touched it — rolled to `-9.md` per the decision-journal skill's cap-check rather than appending further; no bug telegram sent (no MCP/gateway tool grant on this router-direct spawn, same structural gap as a prior same-file cycle).
 
 ---
