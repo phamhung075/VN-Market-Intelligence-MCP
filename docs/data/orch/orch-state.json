@@ -17436,6 +17436,18 @@
         "title": "Add explicit delivery_proof declaration (typed conjunction array, or opt_out+reason) to all 23 live slots in cowork-schedule.json per architect brief section 3 -- real per-slot contract analysis, not one shape copied onto all 23; extend cowork-schedule-consistency.test.js to fail loud on any enabled:true slot missing delivery_proof",
         "note": "Full AC set + hard constraints in docs/handoffs/FIX-COWORK-DELPROOF-2-SCHEDULE-SCHEMA.md. Ownership per cowork-schedule.json's own _maintained_by stamp ('agent-father via architect brief only'). Sibling: FIX-COWORK-DELPROOF-1-STEP53-TWOARM-GATE (developer, spawn-fanout.md Step 5.3 consumer) -- independently landable, coordinate merge order.",
         "handoff_ref": "docs/handoffs/FIX-COWORK-DELPROOF-2-SCHEDULE-SCHEMA.md"
+      },
+      {
+        "id": "FIX-SIGNAL-TYPE-ROUTING-GAP-bug",
+        "type": "routing-gap",
+        "status": "BACKLOG",
+        "owner": "po",
+        "zone": "docs/agents/po/flow/",
+        "title": "Unrouted signal type 'bug' (Pipeline A) — no table row in docs/agents/po/flow/triage-signals.md",
+        "dedup_key": "signal-type-registry-gap:bug",
+        "created_at": "2026-08-24T18:23:54Z",
+        "status_note": "AC: bash scripts/audits/guard-signal-type-coverage.sh --check reports type=bug routed on Pipeline A (a matching table row exists in triage-signals.md's own Pipeline-A section, or the longtail sibling for Pipeline B). Auto-filed by scripts/audits/guard-signal-type-coverage.sh — see docs/architecture-briefs/2026-08-23-signal-type-registry-open-namespace-vs-closed-allowlist.md.",
+        "updated_at": "2026-08-24T18:23:55Z"
       }
     ],
     "closed_sprints": [
@@ -23665,15 +23677,23 @@
         "id": "TASK-COWORK-MUTEX-001",
         "type": "TASK",
         "title": "Implement Cowork-Slot Collision Probe Core (dispatch-claim/SKILL.md + CLAUDE.md)",
-        "status": "REVIEW",
+        "status": "BLOCKED",
         "priority": "P0",
         "size": "M",
         "zone": "cross-service/",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#TASK-COWORK-MUTEX-001",
-        "updated_at": "2026-08-24T18:18:12Z",
+        "updated_at": "2026-08-24T18:25:22Z",
         "secondary_claimed_at": "2026-08-24T18:18:12Z",
         "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
-        "secondary_dispatch_target": "developer"
+        "secondary_dispatch_target": "developer",
+        "blocked_by": [
+          "FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE"
+        ],
+        "depends_on": [
+          "FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE"
+        ],
+        "updated_by": "developer",
+        "developer_note_20260824": "PO sequencing gate (po_sequencing_gate_20260814T1952Z) still in force: prerequisite verified live this tick as status=READY/commit=null (NOT shipped) -- do not land CARD.md Step-2.4 wiring standalone. Declined to implement the prerequisite fix in this cycle: developer specialist tools_package (docs/agents/tools/package/developer.md) grants no vn-market MCP tool access (task_claim/task_list_held both unavailable -- confirmed by 2 direct tool-call failures this cycle), and INV-GATEWAY-1 plus this flow own Step 2b state that task_claim is the DISPATCHER session sole responsibility, not this specialist -- claiming FIX-COWORK-PUBLISHED-MARKER-TTL-28H-EXCEEDS-24H-DAILY-CADENCE properly was structurally not possible from this session. Escalating instead: blocked_by/depends_on now machine-visible so automated pickers stop re-claiming this row every tick until the prerequisite ships. No code changed, no commit made this cycle."
       },
       {
         "id": "FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED",
