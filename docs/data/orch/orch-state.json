@@ -21176,7 +21176,10 @@
         "zone": "apps/mcp-server/",
         "po_goahead_20260815T055435": "po 2026-08-15T05:54:35Z - ratified the PLAN, not code. At source not on relay: PLAN-ONLY honored, spec covers both live prefixes, and I re-derived the load-bearing refutation myself (tasksMdJanitorJob.ts:632 iterates survivingLocks, blame e109f49f81) - it holds. Authorized conditional on AC-5/6/7. Trail: spec_doc section 8.",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
-        "updated_at": "2026-08-23T00:21:38Z"
+        "updated_at": "2026-08-24T01:58:13Z",
+        "secondary_claimed_at": "2026-08-24T01:58:13Z",
+        "secondary_claimed_by": "dev-team (review-lane secondary-drain)",
+        "secondary_dispatch_target": "dev-mcp-server"
       },
       {
         "id": "FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS",
@@ -21930,7 +21933,7 @@
         "last_served_tick": "2026-08-24T01:23:08Z"
       },
       "sls": {
-        "last_served_tick": "2026-08-23T21:57:27Z"
+        "last_served_tick": "2026-08-24T01:55:22Z"
       },
       "rlc": {
         "last_served_tick": "2026-08-23T22:28:52Z"
@@ -21945,7 +21948,7 @@
         "last_served_tick": "2026-08-24T00:56:09Z"
       }
     },
-    "_updated_at": "2026-08-24T01:54:21Z",
+    "_updated_at": "2026-08-24T01:55:22Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
