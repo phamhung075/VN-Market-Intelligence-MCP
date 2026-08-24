@@ -61,14 +61,14 @@ Inputs (set by the calling flow) — identical for both paths:
 |---|---|---|---|
 | `post_body` | string | yes | Composed narrative text — the exact text about to be written/sent |
 | `agent_id` | string | yes | Calling agent's kebab-case id — stamped on the emitted signal for attribution |
-| `cache` | object or null | no | This cycle's working-memory tool-call results: `{ "<TICKER>": { "<dimension_id>": <non-null value> } }`. Perf short-circuit only — a cache miss or absent cache still triggers a LIVE re-probe; cache never substitutes for verification |
+| `cache` | object (Zod `.optional()`, NOT `.nullable()` — literal `null` 400s, verified live 2026-08-24, digest-predict) | no | This cycle's working-memory tool-call results: `{ "<TICKER>": { "<dimension_id>": <non-null value> } }`. Perf short-circuit only — a cache miss or absent cache still triggers a LIVE re-probe; cache never substitutes for verification |
 
 ### Path A — MCP-native tool call
 ```
 call_tool(server="vn-market", tool="narrative_truth_gate", arguments={
   post_body: "<composed narrative text>",
   agent_id:  "<this-agent-id>",
-  cache:     <this cycle's working-memory tool-call cache, or null>
+  cache:     <this cycle's working-memory tool-call cache, or {} — NEVER literal null (Zod .optional() rejects null with invalid_type; omit the key entirely or pass {} instead)>
 })
 ```
 Response `content[0].text` is plain text; first line is the machine-parseable
@@ -160,7 +160,7 @@ in the calling flow.
 Run: skill `.claude/skills/claim-truth-gate/SKILL.md` — Path A (MCP-native, this agent's default)
   post_body = <composed narrative text>
   agent_id  = "<this-agent-id>"
-  cache     = <this cycle's working-memory tool-call cache, or null>
+  cache     = <this cycle's working-memory tool-call cache, or {} — never literal null>
 On FAIL → apply Self-correct protocol above.
 [real-time agents only] second FAIL → apply Time-sensitivity override above.
 [non-real-time agents] second FAIL → write per-field honest gap, do not publish the false claim.

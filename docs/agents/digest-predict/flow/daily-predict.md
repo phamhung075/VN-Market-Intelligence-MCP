@@ -87,7 +87,7 @@ Invoke (Path A — MCP-native, this agent's default per SKILL.md; per each candi
 GATE_VERDICT = call_tool(server="vn-market", tool="narrative_truth_gate", arguments={
   post_body: <claim_text for this ticker>,
   agent_id:  "digest-predict",
-  cache:     <this cycle's tool-call results, or null>
+  cache:     <this cycle's tool-call results, or {} — Zod .optional() rejects literal null (invalid_type), verified live 2026-08-24>
 })
 ```
 
