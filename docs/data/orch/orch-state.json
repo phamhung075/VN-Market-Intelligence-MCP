@@ -1501,11 +1501,14 @@
         "type": "auditor_cycle_missing",
         "summary": "auditor tier-2 cycle possibly missing — no completion evidence in 9h (cadence 4h)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
-        "dedup_key": "auditor-cycle-missing:tier2:2026-08-24T00:00Z"
+        "dedup_key": "auditor-cycle-missing:tier2:2026-08-24T00:00Z",
+        "triaged_at": "2026-08-24T01:04:14Z",
+        "triaged_by": "po",
+        "disposition": "REFUTED + MINTED FIX-AUDITOR-DCYCLE2-COMPLETION-EVIDENCE-PREDICATE-CANNOT-SEE-COMPLETED-CYCLES. Premise verified at source before dispositioning, per the flow doc's verify-the-premise rule: the cycles this signal says are missing all ran. Tier-1 c116 completed 2026-08-24T00:30Z (notebook line 3/5, commit 3dc3ee791) 11min before the signal; tier-2 completed 00:49Z (commit 4145766ac) 8min after it. The gap is an artefact of D-CYCLE-2's completion-evidence predicate — order-dependent notebook parse on tier-1, heartbeat-only with no fallback on tier-2/3 — not of missing coverage. NOT closed as noise: the false-positive mechanism is itself the tracked defect."
       },
       {
         "id": "sys-20260824T004114-17b3",
@@ -1515,11 +1518,14 @@
         "type": "auditor_cycle_missing",
         "summary": "auditor tier-1 cycle possibly missing — no completion evidence in 3h (cadence 0.5h)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
-        "dedup_key": "auditor-cycle-missing:tier1:2026-08-24T00:30Z"
+        "dedup_key": "auditor-cycle-missing:tier1:2026-08-24T00:30Z",
+        "triaged_at": "2026-08-24T01:04:14Z",
+        "triaged_by": "po",
+        "disposition": "REFUTED + MINTED FIX-AUDITOR-DCYCLE2-COMPLETION-EVIDENCE-PREDICATE-CANNOT-SEE-COMPLETED-CYCLES. Premise verified at source before dispositioning, per the flow doc's verify-the-premise rule: the cycles this signal says are missing all ran. Tier-1 c116 completed 2026-08-24T00:30Z (notebook line 3/5, commit 3dc3ee791) 11min before the signal; tier-2 completed 00:49Z (commit 4145766ac) 8min after it. The gap is an artefact of D-CYCLE-2's completion-evidence predicate — order-dependent notebook parse on tier-1, heartbeat-only with no fallback on tier-2/3 — not of missing coverage. NOT closed as noise: the false-positive mechanism is itself the tracked defect."
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -4224,7 +4230,9 @@
         "created_at": "2026-08-23T08:12:24Z",
         "created_by": "po",
         "source": "po-triage-20260823T0811Z review-secondary-drain + step1 inbox drain (19 envelopes)",
-        "updated_at": "2026-08-23T08:12:25Z"
+        "updated_at": "2026-08-24T01:08:47Z",
+        "po_correction_20260824T0104Z": "PO CORRECTION 2026-08-24T01:0xZ — this row's note (a) is wrong on two counts, both re-measured at source, and its recommended repoint target would have acked the wrong cause. (1) 'FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD -> ABSENT from every lane' is NOT a dangling pointer. That row resolves to status=DONE_VERIFIED in docs/data/orch/archive/2026-08.json; it is absent from orch-state.json (0 hits) because cold-evict moved it to the monthly archive file. The resolver at scripts/agents-flow/auditor-tier1-probe.sh:259-266 unions the task_board lanes INSIDE orch-state.json including a lane literally named 'archive' — that is a task_board lane, NOT the monthly archive FILE, which the resolver never opens. So 'ABSENT' here means cold-evicted. The verdict was accidentally right (:573 treats ABSENT and DONE_VERIFIED identically, so suppression correctly stopped either way) but the stated reason was wrong, and the diagnostic label misreads as a data-integrity bug when it is the staleness rule working. NO probe behaviour defect — the residual defect is the misleading LABEL plus the resolver's blindness to the monthly archive, which is what makes a cold-evicted DONE_VERIFIED indistinguishable from a genuine dangling id. (2) The named repoint target FIX-FLEET-PUSH-LOG-NO-ROTATION-UNPROVEN-ROOTCAUSE is the wrong row. The EXCONFIG cause is genuinely repaired — docs/agent-memory/sessions/fleet-push.log shows the agent creating a worktree, symlinking node_modules, passing a bounded tsc check and reaching the push. fleet-push exits 1 today for a DIFFERENT reason: '[size-lint] FAIL — apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts baseline-tolerance-exceeded (baseline=228L actual=252L upper=250L)' then '[pre-push] BLOCKED'. ACTUATED THIS TICK: the acked[] entry was repointed to FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH (backlog, P0, open), which is the live owner of the CURRENT cause, with the caveat recorded in the entry's signature field. This row stays open for its part (b) — the docker-events lane-resolution false positive — which is untouched and still unexplained.",
+        "updated_by": "po/triage-20260824T0104Z"
       },
       {
         "id": "CLEAN-DJA-SPRINT-PREFIXED-DATE-JOURNALS-257-UNRESOLVABLE-IDS",
@@ -11890,7 +11898,8 @@
           "docs/agent-memory/notebooks/ba.md",
           "docs/agent-memory/notebooks/code-janitor.md",
           "docs/agent-memory/notebooks/dev-rag-service.md",
-          "docs/agent-memory/notebooks/digest-predict.md"
+          "docs/agent-memory/notebooks/digest-predict.md",
+          "docs/agent-memory/notebooks/system-auditor.md"
         ],
         "related": [
           "CLEAN-CTXBLOAT-NOTEBOOK-WRITE-SKILL-215L-OVER-200L-CAP"
@@ -11900,16 +11909,17 @@
         "owner": "po",
         "created_at": "2026-08-12T08:38:17Z",
         "created_by": "po",
-        "updated_at": "2026-08-23T23:41:25Z",
-        "updated_by": "po",
-        "occurrence_count": 3,
+        "updated_at": "2026-08-24T01:08:47Z",
+        "updated_by": "po/triage-20260824T0104Z",
+        "occurrence_count": 5,
         "po_triage_20260814T0831_fold": "[po/triage 2026-08-14T08:31Z] FOLD +2 fires, both on docs/agent-memory/notebooks/dev-rag-service.md: envelope 7b76e01c (context_bloat_breach, 07:04:54Z, reason=byte-cap, action_required=prune_or_split) and 4c94d5cf (notebook_single_section_overage_breach, 07:04:52Z, action_required=manual_split_to_archive). Fired 2s apart -- ONE incident, two hooks, not two incidents. section_count=1, so the drop-oldest-section pruner still has no candidate and self-reports 'cannot prune further without data loss'. RAW-RE-VERIFIED LIVE with `wc -lc`, NOT read off the signal payload: 103L / 17328B. Line cap 200 is NOT the binding constraint; the 12000B byte cap is breached by 5328B. RUNAWAY GROWTH WHILE THIS ROW SAT IN BACKLOG: 83L / 14124B on 2026-08-12 -> 103L / 17328B today = +20L / +3204B in 2 days, byte overage 2124B -> 5328B (2.5x). Same runaway-under-active-hook shape the sibling row already documents for code-janitor.md. dev-rag-service.md is the third file this row's title COUNTS but never NAMES -- naming it here so the row is actionable without cross-reading the sibling. DISPATCH NOTE (why this has not moved): next_agent=claude-manager-helper is OFF the DRS ratified allowlist [architect,ba,pm,po,agents-architect] AND this row is in backlog[], which is exactly the DRS-STRANDED-OFF-ALLOWLIST 'no lane' hole the sibling CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT documents and deliberately dodged by minting into ready[] instead. Board-hygiene flag from that sibling still stands: the two rows overlap and should be merged or one closed.",
         "po_dedup_ruling_20260815T0728": "SUPERSEDED — do NOT work this row. It duplicates ready[] row CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT: same three files (code-janitor.md, dev-rag-service.md, digest-predict.md — that row title names only two but its files[] carries all three), same root cause (section_count=1, auto-prune self-reports cannot prune further without data loss), same next_agent claude-manager-helper. The ready[] twin is the survivor: it is further along the lane AND carries the stricter acceptance set (AC-4 no size-justification paper-over, AC-5 post-split section_count>=2). Before closing, port THIS row's one non-duplicated insight into the survivor: digest-predict.md at ~573 bytes/line is a PRODUCER defect, not an overage — find and fix what writes mega-line prose FIRST, or the split relocates bytes and re-breaches within days. Ruled by po 2026-08-15T07:28Z during dev-team Step 1 triage, after 10 of 16 durable-inbox envelopes resolved to this same duplicated pair.",
         "note": "\n\n[PO RE-MEASURE 2026-08-23T08:16Z — this row's own prediction is now CONFIRMED, do not just split] 4 fresh notebook_single_section_overage_breach envelopes (2 files x 2 duplicate fires) drained from pending_triage_inbox. Live counts vs the counts recorded in this row when it was written: docs/agent-memory/notebooks/dev-rag-service.md 15888B -> 23244B (+7356B, now 1.94x the 12000B cap, 127L); docs/agent-memory/notebooks/digest-predict.md 23477B -> 35214B (+11737B, now 2.93x cap, 45L = ~782 bytes/line, up from ~573). BOTH GREW ~1.5x since this row was authored while still section_count=1, which is exactly what this row predicted (\"splitting would relocate the bytes without stopping the producer, and it would be back over cap within days\"). This is now evidence, not a hypothesis: the producer defect is primary and the split is secondary. Recommend working AC order accordingly. NOTE digest-predict.md is ALSO covered by the sibling row CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (ready) — those two rows overlap on that one file and whoever picks either up should merge them rather than split the file twice.",
         "po_fold_20260823T1159Z": "FOLD x4, no new row minted. Four notebook_single_section_overage_breach envelopes this tick, all action_required=manual_split_to_archive, on 2 distinct files BOTH already named in this row's files[]: docs/agent-memory/notebooks/dev-rag-service.md (127L/23244B vs 200L/12000B caps — line count is FINE, bytes are ~1.94x cap) and docs/agent-memory/notebooks/digest-predict.md (45L/35214B — ~2.93x the byte cap on only 45 lines, i.e. ~782 bytes/line, WORSE than the ~573 B/line this row's own title records, so the anomaly is still growing). Each file fired exactly twice, ~40s apart, which is the hook re-firing within one write cycle rather than two independent breaches. The third file in this row's files[] (code-janitor.md) did not fire this tick. NOTE for whoever picks this up: digest-predict.md is ALSO separately tracked by CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT (ready[], claude-manager-helper) which is itself 12585B and over the prose ceiling — that row could not be folded onto at all this tick for exactly that reason. Deconflict the two rows before splitting, do not split the same file twice.",
         "status_note": " || FOLD - 20 notebook/ctxbloat envelopes, po triage 2026-08-23T17:37Z (ONE artifact per subject per the flow doc's own dedup discipline; zero re-mints). This tick's pending_triage_inbox carried 14 notebook_* + 6 context_bloat_breach envelopes, all landing on files this row's root cause (rolling sections byte-counted but structurally undroppable) already explains. Live per-file counts: notebook_single_section_overage_breach x8 (digest-predict.md x3, dev-rag-service.md x2, system-auditor.md x2, qa.md x1); notebook_no_valid_drop_candidate_breach x4 (ba.md x3, digest-predict.md x1); notebook_prune_dropped_newest_dated_section x1 (ba.md); notebook_tiebreak_direction_defaulted x1 (ba.md, informational per flow doc, covered by FIX-NOTEBOOK-AUTOPRUNE-DIRECTION-UNRESOLVABLE-ZERO-TS-NOTEBOOKS); context_bloat_breach x6 (notebooks ba.md/digest-predict.md/qa.md + 3 sprint-COWORK-GUARANTEED-SLOT-CATCHUP decision journals, the latter already owned by CHORE-PRUNE-SPRINT-COWORK-GUARANTEED-SLOT-CATCHUP-DECISION-JOURNAL, ready). ba.md and digest-predict.md are the two hottest subjects (5 and 4 fires respectively in a single inbox window) - use them as the regression fixtures.",
         "dedup_key": "notebook_no_valid_drop_candidate_breach:multi-file",
-        "fold_note": "po Step 0-SIG 2026-08-24: 6 notebook_no_valid_drop_candidate_breach envelopes (ba.md x2, dev-rag-service.md x2, digest-predict.md x2) + 2 notebook_prune_dropped_newest_dated_section envelopes (ba.md) folded here rather than re-minted, per the routing rows' dedup-on-payload.file rule. dev-rag-service.md and digest-predict.md were already in .files[]; ba.md was NOT covered by this row nor by CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT, so it is added here — same failure shape (non_sentinel_section_count=1 against sentinel sections, 58L/12439B vs 200L/12000B caps). The underlying design defect stays tracked on FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (ready[])."
+        "fold_note": "po Step 0-SIG 2026-08-24: 6 notebook_no_valid_drop_candidate_breach envelopes (ba.md x2, dev-rag-service.md x2, digest-predict.md x2) + 2 notebook_prune_dropped_newest_dated_section envelopes (ba.md) folded here rather than re-minted, per the routing rows' dedup-on-payload.file rule. dev-rag-service.md and digest-predict.md were already in .files[]; ba.md was NOT covered by this row nor by CLEAN-NB-SINGLE-SECTION-UNPRUNABLE-CODEJANITOR-DIGESTPREDICT, so it is added here — same failure shape (non_sentinel_section_count=1 against sentinel sections, 58L/12439B vs 200L/12000B caps). The underlying design defect stays tracked on FIX-NOTEBOOK-AUTOPRUNE-ROLLING-SECTIONS-BYTE-COUNTED-BUT-UNDROPPABLE (ready[]).",
+        "po_occ_20260824T0104Z": "FOLD x2, po triage 2026-08-24T01:04Z — context_bloat_breach (310L vs 200L cap, 15614B vs 12000B cap) + notebook_single_section_overage_breach (218L, 11610B, section_count=1), both on docs/agent-memory/notebooks/system-auditor.md, envelopes 3f76925f/f052e4df. system-auditor.md added to files[] (this row's own prior note already counted it as 'system-auditor.md x2' in the per-file tally but never listed it). DISCRIMINATOR THE IMPLEMENTER SHOULD NOT MISS: the two envelopes fired 2 SECONDS apart (00:46:26Z and 00:46:28Z) and disagree — 218L/11610B/1-section vs 310L/15614B. The live file right now is 310L/15614B with THREE '## c' sections (c116 00:41Z, c115 22:31Z, c114 21:03Z). So the single_section_overage reading captured a TRANSIENT mid-prune state, not the durable file. Consequence: this file is NOT structurally unprunable the way ba.md/digest-predict.md are — it has 3 droppable sections. Do not apply the manual-split-to-archive remedy to it on the strength of that envelope alone; re-measure first."
       },
       {
         "id": "BA-TICK-PREFLIGHT-USAGE-INSTRUMENTATION",
@@ -14898,9 +14908,10 @@
           "AC-4 DO NOT close this as covered by FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE. That row is a DIFFERENT defect (the gate scans the working tree instead of `git diff @{u}..HEAD`, so a live peer's uncommitted mid-edit can block everyone). Its fix would NOT unblock tonight's push: tonight's offender is already COMMITTED and therefore already inside the @{u}..HEAD range. Both rows are real; neither subsumes the other."
         ],
         "status_note": "PREMISE RE-MEASURED BY PO THIS TICK (2026-08-23T21:08:06Z), not taken from the envelope: the two auto-push-abort envelopes carried ahead=24 and ahead=43 snapshots, both stale; live is ahead=46 behind=0. FALSIFIED SIBLINGS — do not dispatch either as a fix for this: (1) FIX-FLEET-PUSH-LOG-NO-ROTATION-UNPROVEN-ROOTCAUSE (backlog, ops) blames launchd log rotation; (2) an EXCONFIG/plist-ExitConfig theory that is no longer carried by any live lane row. Neither would move this push. CONVERGING EVIDENCE, all this tick: auto-push-abort x2 (fleet-worktree-push, reason=push-fail, dedup_key auto-push-abort:push-fail); bug-escalation from alert-commander 20:10:16Z naming this exact file and the exact 228/252/250 numbers; tran-ngoc-bau c133 audit findings table, severity HIGH, BUG telegram 5477. CI on origin/main also stays RED until a push advances origin/main, so this row gates the CI-green verification of every other CI row currently open. || PREMISE RE-MEASURED AGAIN BY PO 2026-08-24 (Step 0-SIG, 5 more auto-push-abort envelopes, all reason=push-fail, dedup_key auto-push-abort:push-fail — folded here, zero re-mints): `git fetch origin main` then `git rev-list --count origin/main..HEAD` = 95 ahead, `git rev-list --count HEAD..origin/main` = 0 behind. The envelopes' own ahead snapshots (49/58/73/82/92) were all stale as the routing row warns. docs/agent-memory/sessions/fleet-push.log confirms the SAME gate on all 4 most recent attempts: tsc passes, then `[size-lint] FAIL — apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts — baseline-tolerance-exceeded (baseline=228L actual=252L upper=250L)` -> `[pre-push] BLOCKED`. Backlog has grown 46 -> 95 unpushed commits since this row was minted; still P0, still one 2-line trim or baseline bump, and it now also gates every CI-green verification on the board. || PREMISE RE-MEASURED A THIRD TIME BY PO 2026-08-24T00:12:36Z (Step 0-SIG; 1 more auto-push-abort envelope c733a9e1, reason=push-fail, dedup_key auto-push-abort:push-fail — folded here, zero re-mints): `git fetch origin main` then `git rev-list --count origin/main..HEAD` = 101 ahead, `git rev-list --count HEAD..origin/main` = 0 behind. The envelope's own snapshot said ahead=97 — stale on arrival, as this row's routing rule predicts. `wc -l apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts` = 252, unchanged; baseline 228, ceiling 250. Trajectory of unpushed commits since mint: 46 -> 95 -> 97 -> 101. Still P0, still a 2-line trim or a baseline bump, and it still gates every CI-green verification on this board. PO did NOT push (router constraint) and did NOT repoint the gateway URL. || PO triage 2026-08-24 — FOLD of 2 inbox envelopes (bug-escalation from alert-commander 84f7a97d, auto-push-abort push-fail d43ad035); dedup_key auto-push-abort:push-fail. Premise RE-MEASURED live (envelope ahead=103 was stale): git rev-list --count origin/main..HEAD = 105, behind = 0 — still diverging, condition holds. CORRECTION to the alert-commander payload: it claims commit 5d5d33a86 was a lane-move to review[] marked DONE_VERIFIED — resolved at source, that commit touches docs/agent-memory/notebooks/qa.md ONLY (1 file, 6+/12-), contains NO orch-state.json write and NO code fix. There was never a false board close; it is the prose-actuation/narrated-not-landed class. Its cited sprint UNBLOCK-FLEETPUSH-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER-BLOCKS-ALL-PUSHES resolves in NEITHER active_sprints[] NOR closed_sprints[] — dangling sprint id, same class as the held sprint_registry_dangling_ids envelope 9fbfb401. Row correctly OPEN at P0/next_agent=dev-mcp-server. NOT DISPATCHED this tick: repairing the pre-push size-lint gate would let the launchd fleet-push job flush 105 unpushed commits to origin/main unattended while PUSH-AUTONOMY-1 is unsatisfied — pending USER decision, deliberately left blocked.",
-        "updated_at": "2026-08-24T00:36:33Z",
-        "occurrence_count": 3,
-        "updated_by": "po"
+        "updated_at": "2026-08-24T01:08:47Z",
+        "occurrence_count": 4,
+        "updated_by": "po/triage-20260824T0104Z",
+        "po_occ_20260824T0104Z": "FOLD, po triage 2026-08-24T01:04Z — auto-push-abort envelope 6458d70e (reason=push-fail, detail='git push origin HEAD:main returned non-zero', threshold=20). PREMISE RE-MEASURED AT SOURCE rather than read off the envelope, per triage-signals.md's auto-push-abort rule: ahead is 111, not the 109 the envelope snapshot claims, and behind is 0 after an explicit `git fetch origin main`. Divergence is real and still growing (this row was minted at ahead=46). DELIBERATELY NOT PROMOTED TO ready[] AND NOT DISPATCHED: repairing the pre-push size-lint gate would flush all 111 commits to origin/main unattended, PUSH-AUTONOMY-1 is unsatisfied, and that is the user's call — already surfaced, not a PO decision. Occurrence bump only; the row's own scope (apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts baseline=228L actual=252L upper=250L) is unchanged."
       },
       {
         "id": "FIX-CHEF-EVENING-ZEROCLUSTER-BRANCH-SKIPS-KINHDICH-AND-CAUSALCHAINS",
@@ -15175,6 +15186,32 @@
           "AC-3 Do not touch triage-signals.md — it is already correct and is the SSOT."
         ],
         "po_disposition_of_the_finding_itself": "The [notebook-immutability-guard] occurrence itself is NOT minted here. Per triage-signals.md's own 4th-class rule it is volume-tracked, and it FOLDS into the already-open FIX-AUDITOR-NOTEBOOK-SECOND-COMMIT-RETRO-REWRITES-PUBLISHED-OUTPUT-CONTRACT (backlog, developer, P1), which owns exactly this mechanism on exactly this agent — that row's own title records cycle c71; this tick's fire is cycle c114. PO bumped its occurrence there rather than re-minting."
+      },
+      {
+        "id": "FIX-AUDITOR-DCYCLE2-COMPLETION-EVIDENCE-PREDICATE-CANNOT-SEE-COMPLETED-CYCLES",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "zone": "cross-service/",
+        "owner": "po",
+        "next_agent": "developer",
+        "created_at": "2026-08-24T01:04:14Z",
+        "created_by": "po/triage-20260824T0104Z",
+        "dedup_key": "auditor:d-cycle-2|defect:completion-evidence-predicate-blind",
+        "origin_signal_id": "sys-20260824T004114-17b3",
+        "files": [
+          "scripts/auditor-durability-sweep.sh"
+        ],
+        "title": "D-CYCLE-2 emits auditor_cycle_missing for tiers that ARE running: the tier-1 notebook arm returns the BOTTOM-most section (= oldest, on a newest-first notebook) instead of the newest, and the tier-2/3 arms have no notebook fallback at all so they go blind for the whole duration of any genuine degradation",
+        "root_cause": "TWO defects in scripts/auditor-durability-sweep.sh _run_sweep_0b2(), one shared consequence. (1) TIER-1, _t1_latest_notebook_ts() at :217-238: the loop flushes the PREVIOUS section's timestamp into last_ts on each '## c' heading and keeps whichever tier-1 section came LAST IN FILE ORDER. It never takes a max. The notebook-compose actuator writes newest-first (commit 1e34634d9 stamps its own summary line 'direction=newest_first'), so 'last in file order' is the OLDEST retained tier-1 section, and the reported staleness GROWS as more history is retained. (2) TIER-2/TIER-3, the `for n in 2 3` loop at :304-325: the gap is computed from the heartbeat file ALONE, with no notebook fallback of any kind. _write_heartbeat is gated on an EMPTY failures list (auditor-tier1-probe.sh), so the heartbeat is frozen by design for the entire duration of any genuine degradation window. NET EFFECT, and the reason this is P1 rather than cosmetic: the detector is ANTI-CORRELATED with the condition it exists to catch — it goes blind precisely during sustained degradation, which is when a genuinely missed audit cycle would matter most, and it emits false WARNs in the same window, training triage to discount the type.",
+        "evidence": "MEASURED 2026-08-24T00:5x-01:0xZ, both tiers, four independent planes. TIER-1 (signal sys-20260824T004114-17b3, 'no completion evidence in 3h (cadence 0.5h)'): docs/agent-memory/notebooks/system-auditor.md line 3 is '## c116 · 2026-08-24T00:41Z' and line 5 is '### Audit Run Tier-1 (2026-08-24 00:30Z — Runtime Ping)' — a completed tier-1 cycle 11 minutes BEFORE the signal fired. Replaying _t1_latest_notebook_ts() verbatim against that live file returns '2026-08-23T21:03Z' (the c114 section at line 242, the bottom-most of three). Heartbeat docs/data/auditor-tier1-last-healthy.json is frozen at 2026-08-23T20:03:15Z because the probe verdict is genuinely FAILURE (docs/data/auditor-tier1-last-trigger.json, fire_tick 2026-08-24T00:30Z: mem_creep FAIL pdf-extractor 85.02%, launchd_agents FAIL fleet-push exit-status:1). max(21:03Z, 20:03:15Z) = 21:03Z, gap 3h38m > the 10800s bar -> fires. Had the parser returned c116/00:41Z the gap would be ~0. TIER-2 (signal sys-20260824T004111-4a12, 'no completion evidence in 9h (cadence 4h)'): docs/data/auditor-tier2-last-healthy.json frozen at 2026-08-23T14:42:59Z, while commit 4145766ac 'audit(system-auditor): tier-2 cycle 2026-08-24T00:49Z' landed 8 minutes AFTER the signal fired. CONTINUOUS TIER-1 COVERAGE over the whole alleged 3h gap, from git log on the notebook: 7bb97380d (21:30Z), b491c4ec4 (22:30Z), d612606ae (23:16Z), 7da7c87a5 (23:30Z), 3dc3ee791 (c116, 00:30Z). There is no missing cycle on either tier.",
+        "acceptance": "AC-1 _t1_latest_notebook_ts() returns the NEWEST tier-1 section by timestamp, not by file position — take a max over all tier-1 sections, and prove it with a fixture in scripts/auditor-durability-sweep.test.sh containing the SAME sections in BOTH orders (newest-first and oldest-first) asserting an identical return. Order-independence is the invariant; a fix that merely reverses the iteration re-breaks the moment the compose direction flips again, and it has flipped before (see FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED, which records newest-at-BOTTOM). AC-2 the tier-2 and tier-3 arms gain a notebook-evidence fallback equivalent to tier-1's, keyed on their own '### Audit Run Tier-2'/'Tier-DATA'/'Tier-3' sub-headings, so a completed-but-degraded cycle counts as completion evidence. AC-3 NEGATIVE CONTROL, the criterion that separates a real fix from a threshold move: with the fallback in place, DELETE/blank the notebook evidence for one tier on a fixture and assert the signal still fires. Widening the bar, raising the cadence multiplier, or suppressing WARN severity are all explicitly REJECTED remedies — the detector must stay able to report a genuinely missing cycle. AC-4 replay against the live repo state captured in this row's evidence field (notebook at c116/00:41Z, tier-1 heartbeat 2026-08-23T20:03:15Z, tier-2 heartbeat 2026-08-23T14:42:59Z, NOW=2026-08-24T00:41Z) and assert ZERO auditor_cycle_missing emissions for tier-1 and tier-2.",
+        "non_goals": "Not a change to _write_heartbeat's all-PASS gate — that gate is correct and is the SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER contract; the fix is to stop treating the heartbeat as the only admissible completion evidence. Not D-CYCLE-1 (marker-filename contract), which is FIX-AUDITOR-DCYCLE1-MALFORMED-KEY-SENTINEL-COLLAPSES-DISTINCT-LOSSES. Not the underlying pdf-extractor memory / fleet-push launchd failures that are freezing the heartbeats — those are separately tracked and are genuine.",
+        "dedup_checked": "backlog+ready+in_progress+review+qa scanned 2026-08-24T01:00Z for /durability-sweep|D-CYCLE-2|DCYCLE2|_t1_latest_notebook_ts|newest_first/i across id+title+dedup_key+root_cause. Single hit: FIX-AUDITOR-DCYCLE1-MALFORMED-KEY-SENTINEL-COLLAPSES-DISTINCT-LOSSES (D-CYCLE-1, marker-filename parser, disjoint check and disjoint defect). No open row carries an auditor-cycle-missing:* dedup_key. done[]+done_verified[] also scanned for DURABILITY-SWEEP|D-CYCLE — zero hits. Not a re-mint.",
+        "status_note": "AC: signal type auditor_cycle_missing stops firing for a tier whose cycles are demonstrably completing. Priority P1. Contradicts the dispatching router's stated premise that the tier-1 signal is 'a real coverage hole, not noise' — PO measured the opposite and the refutation is in the evidence field; the coverage hole is in the DETECTOR, not in auditor coverage.",
+        "masking_warning": "DO NOT READ 'IT STOPPED FIRING' AS 'IT IS FIXED'. In the same tick this row was minted, PO repointed the fleet-push entry in docs/data/auditor-launchd-ack.json to FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH. launchd_agents was the last red dimension on the Tier-1 probe (mem_creep returned to PASS at 84.84% against an 85.00% gate — a 0.16pp margin, oscillating, NOT a resolution). With that dimension acknowledged the probe can return ALL_GREEN again, which re-enables _write_heartbeat and unfreezes docs/data/auditor-tier1-last-healthy.json. A fresh heartbeat alone will push the tier-1 gap back under the 10800s bar and silence this signal WITHOUT touching either defect: the order-dependent parse at _t1_latest_notebook_ts() and the missing tier-2/3 fallback both survive untouched, latent, and will re-fire on the next sustained degradation window. Verify AC-1/AC-2 against fixtures, never against 'the signal is quiet now'.",
+        "updated_at": "2026-08-24T01:08:47Z"
       }
     ],
     "closed_sprints": [
@@ -15772,141 +15809,6 @@
         "secondary_dispatch_target": "po"
       },
       {
-        "id": "UC-CCA-P2-ALERT-COMMANDER",
-        "type": "TASK",
-        "title": "alert-commander: add Step 0-GW + dispatch table row",
-        "status": "DONE",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cowork/alert-commander",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "owner": "alert-commander",
-        "parent_id": "UC-CCA-P2",
-        "depends": [],
-        "files": [
-          "docs/agents/alert-commander/flow/cycle.md"
-        ],
-        "note": "FR-4 + Architect structural refinement (Option a ruling): Thin-dispatcher table is the execution-order SSOT, not prose alone. Add new zero-th Dispatch-table row before existing 'Bootstrap + Regime' row (~line 37 currently). Insert inline `## Step 0-GW` section immediately after the `## Dispatch` table (~line 40), mirroring bctc-analyst/cycle.md convention. Both table row AND inline section required (not just prose).",
-        "created_at": "2026-08-14T12:23:00Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-14T12:50:51Z",
-        "agent_father_implementation_note": "Applied both required edits to docs/agents/alert-commander/flow/cycle.md per architect ruling: (1) new zero-th Dispatch-table row \"| **Step 0-GW** — Gateway availability gate | 0-GW | Inline (FIRST — see below) |\" inserted before the existing Bootstrap+Regime row; (2) inline \"## Step 0-GW — Gateway Availability Gate (FIRST STEP — runs before bootstrap)\" section inserted immediately after the Dispatch table, pointing at gateway-availability-gate/SKILL.md (agent-id=alert-commander, APPEND-class notebook). Mirrors bctc-analyst/cycle.md convention live-verified before editing (no anchor drift found — line numbers matched architect brief exactly). qa to grep-verify AC-4 (pointer strictly before first task_claim/marker mutation).",
-        "status_note": "QA APPROVED (2026-08-14): cycle.md live-verified — new zero-th Dispatch-table row (\"Step 0-GW\") before the Bootstrap+Regime row PLUS matching inline `## Step 0-GW` section immediately after the table (:45-48), both required per architect ruling (table-only/prose-only insufficient). Single insertion, no duplicates, no gap. File 48L (well under 120L flow-file cap). Commit 33795b745 confirmed on main ancestry.",
-        "commit_sha": "33795b745",
-        "completed_at": "2026-08-14T12:50:50Z",
-        "completed_by": "qa",
-        "updated_by": "qa"
-      },
-      {
-        "id": "UC-CCA-P2-FB-MARKET-POSTER",
-        "type": "TASK",
-        "title": "fb-market-poster: insert Step 0-GW in 3 pipeline files",
-        "status": "DONE",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cowork/fb-market-poster",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "owner": "fb-market-poster",
-        "parent_id": "UC-CCA-P2",
-        "depends": [],
-        "files": [
-          "docs/agents/fb-market-poster/flow/daily.md",
-          "docs/agents/fb-market-poster/flow/weekly-recap.md",
-          "docs/agents/fb-market-poster/flow/weekly-prediction.md"
-        ],
-        "note": "FR-5 + Architect scope correction (Q-file-count-correction ruling): Insert Step 0-GW pointer in all THREE separately cron-entered pipeline files (not just main.md). main.md is now a thin mode router post TE-T26 split (2026-08-06), makes no gateway calls itself. daily.md before STEP 0a (~line 40); weekly-recap.md + weekly-prediction.md before their own DEDUP_CLAIM blocks (~lines 41-46). Rationale: each file = independent cron-spawned session; dead gateway must not burn any path's task_claim marker. Defeats rationale if only daily.md covered, weekend paths left uncovered.",
-        "created_at": "2026-08-14T12:27:00Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-14T12:50:51Z",
-        "agent_father_completion_note": "FR-5 + architect Q-file-count-correction ruling: inserted one Step 0-GW gateway-availability-gate pointer in each of the 3 independently cron-spawned pipeline files (daily.md before STEP 0a :40; weekly-recap.md + weekly-prediction.md immediately after their own ## STEP 0 — Bootstrap heading, before their own STEP 0a/DEDUP_CLAIM block). main.md deliberately left untouched (thin MODE ROUTER post-TE-T26 split, zero gateway calls, gate there would be dead code). Post-edit grep confirms exactly 1 pointer per target file, 0 in main.md, all 3 strictly before that file own task_claim — satisfies BA AC-4. Gatewayless commit per INV-GATEWAY-1 (agent-father has no mcp__gateway__call_tool binding). next_agent=qa: AC-4 pointer-placement is grep-verifiable without a live cron-window spawn.",
-        "commit": "bc18a4cc4",
-        "status_note": "QA APPROVED (2026-08-14): all 3 independently cron-spawned pipeline files (daily.md, weekly-recap.md, weekly-prediction.md) each carry exactly ONE Step 0-GW pointer strictly before their own STEP 0a DEDUP_CLAIM task_claim — no gap on either weekend path. main.md independently re-grepped for call_tool/gateway — ZERO hits, confirming the \"thin MODE ROUTER, no gateway calls, deliberately untouched\" claim is factually true, not just asserted. Commit bc18a4cc4 confirmed on main ancestry.",
-        "commit_sha": "bc18a4cc4",
-        "completed_at": "2026-08-14T12:50:50Z",
-        "completed_by": "qa",
-        "updated_by": "qa"
-      },
-      {
-        "id": "UC-CCA-P2-UNIFIED-AGENT",
-        "type": "TASK",
-        "title": "unified-agent: insert Step 0-GW in chef.md",
-        "status": "DONE",
-        "priority": "P1",
-        "size": "XS",
-        "zone": "cowork/unified-agent",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "owner": "unified-agent",
-        "parent_id": "UC-CCA-P2",
-        "depends": [],
-        "files": [
-          "docs/agents/unified-agent/flow/chef.md"
-        ],
-        "note": "FR-4: Insert Step 0-GW pointer between Bootstrap (line 33) and Step 0.5 (line 43), before task_claim. ASYMMETRIC PLACEMENT RATIFIED: lands AFTER chef.md's own first gateway call (Bootstrap), unlike other FR-4/FR-5 targets. Intentional—protects Step 0.5 task_claim mutation window specifically; cycle-bootstrap own Step-0 gate covers general confirmed-down case. Do NOT change to 'before Bootstrap' despite symmetry appearance. Session-scoped: single gate in chef.md sufficient, chef-dish.md shares same session. | COMPLETED (agent-father, 2026-08-14): inserted Step 0-GW gateway-availability-gate pointer in docs/agents/unified-agent/flow/chef.md between Bootstrap (line 40) and Step 0.5 task_claim (line 65). Asymmetric placement preserved exactly as ratified -- lands AFTER Bootstrap, protects only the task_claim mutation window, NOT changed to before-Bootstrap. Single gate in chef.md only; chef-dish.md untouched (session-scoped, per architect ruling in docs/handoffs/UC-CCA-P2-BA-spec.md). Commit afb2d4773a50153202bc69e946bd8b7f9a4e8484, pushed to main.",
-        "created_at": "2026-08-14T12:24:00Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-14T12:50:51Z",
-        "claimed_by": "agent-father",
-        "claimed_at": "2026-08-14T12:36:31Z",
-        "commit_sha": "afb2d4773a50153202bc69e946bd8b7f9a4e8484",
-        "status_note": "QA APPROVED (2026-08-14): chef.md live-verified — single Step 0-GW pointer at :59, between Bootstrap (:40) and Step 0.5's task_claim (:65), asymmetric placement vs. the other 4 FR-4/FR-5 targets exactly as architect-ratified (protects the task_claim mutation window; Bootstrap's own gate already covers the general confirmed-down case). Inline HTML comment (:50-58) present and coherent, explicitly warning future readers not to \"fix\" the asymmetry. chef-dish.md re-grepped — zero duplicate gate (session-scoped, correct). Commit afb2d4773a50153202bc69e946bd8b7f9a4e8484 confirmed on main ancestry.",
-        "completed_at": "2026-08-14T12:50:50Z",
-        "completed_by": "qa",
-        "updated_by": "qa"
-      },
-      {
-        "id": "UC-CCA-P2-BCTC-ANALYST",
-        "type": "TASK",
-        "title": "bctc-analyst: add Step 0-GW + dispatch table row",
-        "status": "DONE",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cowork/bctc-analyst",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "owner": "bctc-analyst",
-        "parent_id": "UC-CCA-P2",
-        "depends": [],
-        "files": [
-          "docs/agents/bctc-analyst/flow/cycle.md"
-        ],
-        "note": "FR-4 + Architect structural refinement: Add new Dispatch-table row between 'E2 Market-hours guard' and 'Bootstrap + Regime' rows. Insert inline `## Step 0-GW` section after E2 block ends (~lines 48-50), before Step 0c (~line 52). E2 itself stays FIRST (pure wall-clock check, needs no gateway). Thin-dispatcher SSOT = table, requires both row and inline section.",
-        "created_at": "2026-08-14T12:26:00Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-14T12:50:51Z",
-        "agent_father_implementation_note": "Applied both required edits to docs/agents/bctc-analyst/flow/cycle.md per architect ruling: (1) new Dispatch-table row \"| **Step 0-GW** — Gateway availability gate | 0-GW | Inline (SECOND, after E2 — see below) |\" inserted between the E2 Market-hours-guard row and the Bootstrap+Regime row; (2) inline \"## Step 0-GW — Gateway Availability Gate (SECOND STEP — runs after E2, before bootstrap)\" section inserted after the E2 block (lines 48-50), before Step 0c (line 52), pointing at gateway-availability-gate/SKILL.md (agent-id=bctc-analyst, APPEND-class notebook). E2 explicitly documented inline as staying FIRST/ungated per architect ruling. Live-verified before editing — zero anchor drift (architect line numbers matched exactly). Committed+pushed 6261c722f (pathspec-scoped, INV-GATEWAY-1 gatewayless). qa to grep-verify AC-4 (pointer strictly before first task_claim/marker mutation).",
-        "status_note": "QA APPROVED (2026-08-14): cycle.md live-verified — new Dispatch-table row between the E2 market-hours-guard row and Bootstrap+Regime row, plus matching inline `## Step 0-GW` section after the E2 block, before Step 0c. E2 confirmed to stay FIRST/ungated (pure wall-clock check, never gated behind Step 0-GW) — documented inline exactly as architect required. File 119L (within 120L flow-file cap). Commit 6261c722f confirmed on main ancestry.",
-        "commit_sha": "6261c722f",
-        "completed_at": "2026-08-14T12:50:50Z",
-        "completed_by": "qa",
-        "updated_by": "qa"
-      },
-      {
-        "id": "UC-CCA-P2-DIGEST-PREDICT",
-        "type": "TASK",
-        "title": "digest-predict: insert Step 0-GW in main.md",
-        "status": "DONE",
-        "priority": "P1",
-        "size": "XS",
-        "zone": "cowork/digest-predict",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "owner": "digest-predict",
-        "parent_id": "UC-CCA-P2",
-        "depends": [],
-        "files": [
-          "docs/agents/digest-predict/flow/main.md"
-        ],
-        "note": "FR-4: Insert pointer before Step pre-D (line 15). Single top-of-file placement covers BOTH non-Sunday DAILY_CLAIM path (inside Step pre-D) and Sunday published-marker path later in file—both execute unconditionally after this point. No new if-guard needed.",
-        "created_at": "2026-08-14T12:25:00Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-14T12:50:51Z",
-        "updated_by": "qa",
-        "commit": "c7cd36af4",
-        "agent_father_completion_note": "FR-4 applied per architect-ratified UC-CCA-P2-BA-spec.md. Inserted a single top-of-file \"## Step 0-GW — Gateway availability gate\" pointer section (skill: .claude/skills/gateway-availability-gate/SKILL.md, agent-id=digest-predict) immediately before \"## Step pre-D: DAILY-PREDICT DEDUP GATE\" in docs/agents/digest-predict/flow/main.md. Single placement covers both the non-Sunday DAILY_CLAIM path (inside Step pre-D) and the Sunday Published Marker Gate further down the file, since both execute unconditionally after this point — no new if-guard needed, per architect confirmation. AC-4 self-verified: post-edit grep confirms exactly one Step 0-GW pointer (line 17), strictly before both task_claim calls (line 54 non-Sunday DAILY_CLAIM, line 106 Sunday PUBLISH_CLAIM). Committed c7cd36af4 (main.md only, explicit pathspec, INV-GATEWAY-1 gatewayless direct commit, RULE 3 self-verified single file). Routed to qa: AC-4 pointer-placement is grep-verifiable without a live cron-window spawn; qa can independently confirm the same grep result.",
-        "status_note": "QA APPROVED (2026-08-14): main.md live re-grepped independently — single Step 0-GW pointer at :15/17, strictly before both task_claim calls (:54 non-Sunday DAILY_CLAIM, :106 Sunday PUBLISH_CLAIM), matching the router's own pre-verification exactly. NON-BLOCKING OBSERVATION for PO/janitor follow-up: file is 154L, over the docs/data/file-size-caps.json 120L flow-file cap, no size-justification header — this is PRE-EXISTING debt (already 148L before this task's +6L edit, ~28L over cap pre-existing), not introduced or worsened materially by this task; out of scope to fix here (would require restructuring the file). Commit c7cd36af4 confirmed on main ancestry.",
-        "commit_sha": "c7cd36af4",
-        "completed_at": "2026-08-14T12:50:50Z",
-        "completed_by": "qa"
-      },
-      {
         "id": "UNBLOCK-RAG-OPS-DEPLOY-AND-DURABILITY-MEASUREMENT-WINDOW",
         "type": "OPS",
         "title": "P0 CRITICAL PATH: four P0 rag-service rows are all parked waiting on ONE undispatched action — rebuild+deploy current HEAD then run the RAG-MEM-DURABILITY-BAR v2 D1-D5 window. No board row owns it.",
@@ -15945,34 +15847,6 @@
         "updated_by": "po/triage-20260815T1002 (measurement delivered + adjudicated; AC-5 routed)",
         "closed_at": "2026-08-15T10:02:53Z",
         "po_RULING_20260815T1002Z": "[po RULING 2026-08-15T10:02Z — ROW CLOSED. All five ACs resolved. Full adjudication of the measurement lives on FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED § po_RULING_20260815T1002Z, with the six D5 evidence fields attached there.]\n\nAC-1 PASS (image sha256:26e681b0ca != pre-fix sha256:4a955869f002). AC-2 PASS (malloc_trim present in the running image). Neither disputed.\nAC-3 FAIL — UPHELD, but re-reasoned: the failure is D3's CAP clause (338/799 samples above 85% of cap; 14 of 15 cycles peaking 83-98%; max 97.87% = ~1002 MiB of a 1073 MiB limit), NOT a persisting leak. Ops's \"memory leak persists\" root-cause line is REFUTED by ops's own dataset — peak-ceiling drift +0.048 pp/cycle over 14 cycles, trough floor flat at 32-48% for 10.5h, 47-55pp released per cycle, and the container's own logs name the mechanism (embedder idle-unload at threshold=900s). Details on the LANCECORE row.\nAC-4 ANSWERED — NOT INCONCLUSIVE. This row's own AC-4 was reported as \"not accessible from this host\". po read it directly this tick: `docker run --rm --privileged --pid=host justincormack/nsenter1 /bin/sh -c \"dmesg -T | grep -iE 'oom|killed process'\"` returns ZERO oom_memcg events for container 66656926d503 across the full 13.6h window.\nAC-5 fail-path ROUTED BY PO, overriding the row's own default: NOT to the LANCECORE re-diagnosis row (leak hunt, premise dead) but to FU-RAG-DEPLOY-MEMORY as a capacity-sizing task. Rationale on the LANCECORE row.\n\nTHE DELIVERY WAS SOUND — this is not a rejection of ops's work. The deploy, the 13.2h window, the sample extraction and the summary statistics are all real and correctly filtered; I reproduced them to within rounding (ops 781 samples/mean 63.02/max 97.87 at 09:35Z; po 799 samples/mean 63.52/max 97.87 at 09:54Z). What failed was the INFERENCE from those numbers and one wrong statistic. Two defects worth carrying forward, neither of them \"ops was careless\":\n\n(1) WRONG STATISTIC FOR D3. D3 says \"fit the growth rate over the final 12h\" — a regression. Ops computed adjacent-sample absolute deltas and reported \"volatility 2.368 pp/min avg, 93.120 pp/min max, 118x threshold\". On a sawtooth that measures tooth amplitude, not trend, and is large for a perfectly healthy process. This is partly MY defect as the bar's author: D3 says \"fit\" but never says \"and do not use adjacent-sample deltas\", and never says what a bounded-oscillating workload should look like. When RAG-MEM-DURABILITY-BAR reaches v3 it must (a) name linear regression explicitly, (b) add the peak-ceiling and trough-floor drift tests as the actual leak discriminators, and (c) state that a flat-ceilinged sawtooth over the cap is a CAPACITY finding, not a leak finding. I am not amending the bar mid-incident; filed as the follow-up above.\n\n(2) AC-4 TOOLING GAP IS REAL AND FIXABLE. The in-VM dmesg method is documented on the LANCECORE row and has been executed successfully at least three times in this incident, yet ops concluded the host cannot reach it. That is a runbook-reachability problem: the method exists in row prose but not anywhere ops routinely reads. It belongs in the rag-service ops runbook, not buried in a task row.\n\nEVIDENCE DURABILITY — HANDLED. Ops's raw series lived only at /tmp/rag-durability-measurement/memory-samples.csv and would not have survived. The cleaned 799-sample series is now committed at docs/incidents/data/rag-durability-2026-08-14T2015Z-66656926d503-samples.csv with container/image/StartedAt provenance in its header.\nRAW-FILE DEFECT FOUND WHILE DOING THAT (flagged, deliberately NOT fixed by po — killing a sampler mid-window is an ops call): THREE sampler processes are concurrently appending to that one CSV with TWO different schemas (/tmp/rag-durability-monitor.sh x2 and /tmp/rag-durability-monitor-v2.sh). Of 2391 raw lines only 799 are well-formed; 796 sample writes were split into `<ts>,` + `0,,1073741824,running` line pairs, and the v2 writer is emitting a zero percentage. Ops's filter correctly dropped the malformed rows so the statistics are unaffected — but the evidence file was being actively corrupted while it was being cited as the evidence chain, and the rogue samplers are still running. Whoever owns the next window: run ONE sampler, and write it under scripts/ per the Script Persistence rule rather than /tmp.\n"
-      },
-      {
-        "id": "UC-CCA-P2-MARKET-WATCHER",
-        "type": "TASK",
-        "title": "market-watcher: de-dup double probe (main.md + cycle.md)",
-        "status": "DONE",
-        "priority": "P1",
-        "size": "S",
-        "zone": "cowork/market-watcher",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "owner": "market-watcher",
-        "parent_id": "UC-CCA-P2",
-        "depends": [],
-        "files": [
-          "docs/agents/market-watcher/flow/main.md",
-          "docs/agents/market-watcher/flow/cycle.md"
-        ],
-        "note": "FR-3: main.md—replace inline Step 3 corroboration block (current ~lines 61-99) with one-line pointer to gateway-availability-gate SKILL. cycle.md—delete Step 0-GW block (~lines 26-27), reword Execution-contract paragraph (~line 20) from 'Step 0-GW through Step 5b' to 'Step 0 through Step 5b', update terminal clause to reference 'explicit main.md Step 0-GW gateway-down EXIT'. Net: exactly ONE probe per invocation at dispatcher level. eod.md remains zero-gate, transitively covered only via main.md (no new gap).",
-        "created_at": "2026-08-14T12:22:00Z",
-        "created_by": "pm",
-        "updated_at": "2026-08-22T19:02:43Z",
-        "updated_by": "po",
-        "commit": "3cfabaa28",
-        "agent_father_completed_at": "2026-08-14T12:35:16Z",
-        "agent_father_completion_note": "FR-3 applied per architect-ratified UC-CCA-P2-BA-spec.md. main.md: replaced inline Step 3 dual-probe/backoff/SIBLING_RECENT block (lines 61-99) with a one-line pointer to gateway-availability-gate/SKILL.md (agent-id=market-watcher; covers cycle.md AND eod.md). cycle.md: deleted its own Step 0-GW block (lines 26-27); Execution-contract paragraph reworded \"Step 0-GW through Step 5b\" -> \"Step 0 through Step 5b\"; terminal clause now reads \"an explicit main.md Step 0-GW gateway-down EXIT (per gateway-availability-gate skill)\". Post-edit grep confirms exactly ONE Step 0-GW probe pointer across both files (main.md:61) — double-probe defect eliminated. eod.md untouched (out of scope, remains zero-gate by design, unchanged transitively-only coverage via main.md). Committed 3cfabaa28 (explicit pathspec, INV-GATEWAY-1 gatewayless direct commit, not pushed — push-backstop/PO owns push per PUSH_THRESHOLD convention). Routed to po: AC-3 (dedup) needs live-cycle confirmation (next market-watcher WORK ping / notebook shows exactly one [GATEWAY] probe log line) — not self-testable this session, prose/flow-doc-only change.",
-        "po_note": "PO AC-3 SIGN-OFF 2026-08-22T19:00:18Z — DONE. Supersedes the 2026-08-14T12:47:50Z NOT-SIGNED-OFF note. The root blocker that note named (cowork master dispatcher silent since tick 06:45Z) RESOLVED on its own at 2026-08-14T16:11Z; 4 live cycles have run since.\n\nAC-3 AS WRITTEN IS UNFALSIFIABLE — that, not the dispatcher outage, is the real reason this row stalled 8 days. docs/handoffs/UC-CCA-P2-BA-spec.md:418-419 defines AC-3 as \"next live market-watcher cycle's WORK ping / notebook shows exactly one [GATEWAY] probe log line, not two\". NEITHER named plane can ever carry that line on a healthy cycle: .claude/skills/gateway-availability-gate/SKILL.md:30 emits `[GATEWAY] probe OK — proceed` as a TRANSCRIPT log line only, and writes the notebook solely on its DEFER/BLOCKED failure branches (SKILL.md:54); docs/agents/market-watcher/flow/cycle.md:328 fixes the Step 5b WORK ping to the ULTRA template `[mw] HH:MM — N stocks | anom:X vol:Y chain:Z | next:TIME` (<=80 chars, no gateway field). Zero [GATEWAY] lines on a gateway-UP cycle is the CORRECT output, not a miss. No amount of further waiting could ever have settled it.\n\nSUBSTITUTED CRITERION (equivalent, falsifiable) + EVIDENCE, re-verified live at HEAD 2026-08-22T19:00Z:\n(1) Exactly ONE probe INVOCATION site across all 3 market-watcher flow files — main.md:61, the one-line pointer to gateway-availability-gate/SKILL.md (agent-id=market-watcher, covers cycle.md AND eod.md). cycle.md's two surviving \"Step 0-GW\" hits are prose only (:20 execution-contract terminal clause, :22 narrate-not-execute guard text); eod.md zero. This is DISPOSITIVE for \"exactly one probe per invocation\": there is no second site left to invoke.\n(2) 4 post-commit live cycles all completed through that single site — 2026-08-14T16:11Z (23eed1755), 2026-08-15T00:14Z (5be446b8b), 2026-08-15T04:19Z (248ce4e42), 2026-08-15T08:11Z (55d939b98). Every one: items_fetched=34, exit_status=complete, zero [GATEWAY] DEFER/BLOCKED notebook entries, zero gateway bug escalation.\n(3) No regression vs the pre-change 2026-08-14T04:09Z baseline (34 tickers, 0 anomalies, complete): the 08-15T08:11Z cycle is exact parity (34/0/complete); 08-14T16:11Z is 34 tickers / 1 anomaly (DXG +5.99%) / 1 suppressed / complete — normal market variation, not regression.\ncommit 3cfabaa28 re-confirmed ancestor of HEAD.\n\nSPEC-QUALITY DEFECT SPUN OUT (do not re-litigate here): FIX-BA-AC-NAMES-PLANE-IMPLEMENTATION-NEVER-WRITES, backlog[], next_agent=ba. Full reasoning: docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-po.md.",
-        "ac3_status": "CONFIRMED_VIA_SUBSTITUTED_FALSIFIABLE_CRITERION",
-        "ac3_last_checked_at": "2026-08-22T19:00:18Z"
       },
       {
         "id": "TASK-PO-TRIAGE-SIGNALS-DOC-CORRECTION",
@@ -18391,6 +18265,235 @@
           }
         },
         "status_note": "\n[QA] Review Record (direct-commit verify): Direct-commit verify: commit 18e20a438 (main ancestor) touches runNarrativeTruthGate.ts/Types.ts/Findings.ts/test+claimToolMapTypes.ts/claimToolMapValidator.ts+4 docs. CCATO-MCP-T5-USECASE.test.ts 15 pass/0 fail/37 expect (matches testing.md doc). tsc --noEmit 0 errors. DDD scan clean (domain zero infra imports; app->infra is correct per DDD Layer Rules). Security scan clean. mock-guard PASS. Full suite 15427 pass/51 fail/1 error/1282 files -- failing file-set = baseline-15 + 1 unrelated VPS-fetcher timeout flake, zero overlap with T5 files. Deps T1-T4 all DONE_VERIFIED. Not OOM-class."
+      },
+      {
+        "id": "UC-CCA-P2-ALERT-COMMANDER",
+        "type": "TASK",
+        "title": "alert-commander: add Step 0-GW + dispatch table row",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cowork/alert-commander",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "owner": "alert-commander",
+        "parent_id": "UC-CCA-P2",
+        "depends": [],
+        "files": [
+          "docs/agents/alert-commander/flow/cycle.md"
+        ],
+        "note": "FR-4 + Architect structural refinement (Option a ruling): Thin-dispatcher table is the execution-order SSOT, not prose alone. Add new zero-th Dispatch-table row before existing 'Bootstrap + Regime' row (~line 37 currently). Insert inline `## Step 0-GW` section immediately after the `## Dispatch` table (~line 40), mirroring bctc-analyst/cycle.md convention. Both table row AND inline section required (not just prose).",
+        "created_at": "2026-08-14T12:23:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-24T01:12:01Z",
+        "agent_father_implementation_note": "Applied both required edits to docs/agents/alert-commander/flow/cycle.md per architect ruling: (1) new zero-th Dispatch-table row \"| **Step 0-GW** — Gateway availability gate | 0-GW | Inline (FIRST — see below) |\" inserted before the existing Bootstrap+Regime row; (2) inline \"## Step 0-GW — Gateway Availability Gate (FIRST STEP — runs before bootstrap)\" section inserted immediately after the Dispatch table, pointing at gateway-availability-gate/SKILL.md (agent-id=alert-commander, APPEND-class notebook). Mirrors bctc-analyst/cycle.md convention live-verified before editing (no anchor drift found — line numbers matched architect brief exactly). qa to grep-verify AC-4 (pointer strictly before first task_claim/marker mutation).",
+        "status_note": "QA APPROVED (2026-08-14): cycle.md live-verified — new zero-th Dispatch-table row (\"Step 0-GW\") before the Bootstrap+Regime row PLUS matching inline `## Step 0-GW` section immediately after the table (:45-48), both required per architect ruling (table-only/prose-only insufficient). Single insertion, no duplicates, no gap. File 48L (well under 120L flow-file cap). Commit 33795b745 confirmed on main ancestry.",
+        "commit_sha": "33795b745",
+        "completed_at": "2026-08-14T12:50:50Z",
+        "completed_by": "qa",
+        "updated_by": "po/signoff-20260824T0111Z",
+        "reviewed_at": "2026-08-24T01:11:00Z",
+        "reviewed_by": "po",
+        "verification": {
+          "raw_probe": {
+            "tool": "Bash/grep (live file re-read)",
+            "args": "grep -n 'Step 0-GW' docs/agents/alert-commander/flow/cycle.md; grep -n 'task_claim' docs/agents/alert-commander/flow/cycle.md",
+            "live_value_observed": "Step 0-GW at lines 37,45,47 (37=Dispatch-table row, 45+47=inline '## Step 0-GW' section). task_claim: zero matches in this file, so the gate-before-claim ordering criterion is N/A.",
+            "observed_at": "2026-08-24T01:11:34Z"
+          }
+        },
+        "po_signoff_20260824T0111Z": "PO SIGN-OFF 2026-08-24T01:11Z, verified at source this tick — not rubber-stamped off the cohort-level AC-4 result and not inherited from the QA status_note. Deliverable re-read in the live files: docs/agents/alert-commander/flow/cycle.md:37 carries the Dispatch-table row '**Step 0-GW** — Gateway availability gate | 0-GW | Inline (FIRST — see below)' AND :45-48 carries the matching inline '## Step 0-GW' section resolving to .claude/skills/gateway-availability-gate/SKILL.md with agent-id=alert-commander. Both halves present, which is what the architect ruling this row cites required (table-only or prose-only was ruled insufficient). No task_claim call in this file, so the before-the-claim ordering criterion is N/A here. COHORT CONTEXT: 6 siblings had sat in done[] with status=DONE, next_agent=null and reviewed_at=null since 2026-08-14 (MARKET-WATCHER since 2026-08-22), reachable only by the SECONDARY-drain at one row per tick. Each row was task_claim-locked individually by po/session 007e33e4 before this write. HONEST LIMIT ON THIS SIGN-OFF: every row in this cohort has acceptance=null, so there was no formal AC list to test against; verification was against the deliverable each row's own title and QA note describe (a Step 0-GW gateway-availability gate present, and where the file makes a task_claim call, positioned before it). Runtime behaviour of the gate was NOT exercised — this certifies the flow-doc insertion, not a live gateway-down drill."
+      },
+      {
+        "id": "UC-CCA-P2-FB-MARKET-POSTER",
+        "type": "TASK",
+        "title": "fb-market-poster: insert Step 0-GW in 3 pipeline files",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cowork/fb-market-poster",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "owner": "fb-market-poster",
+        "parent_id": "UC-CCA-P2",
+        "depends": [],
+        "files": [
+          "docs/agents/fb-market-poster/flow/daily.md",
+          "docs/agents/fb-market-poster/flow/weekly-recap.md",
+          "docs/agents/fb-market-poster/flow/weekly-prediction.md"
+        ],
+        "note": "FR-5 + Architect scope correction (Q-file-count-correction ruling): Insert Step 0-GW pointer in all THREE separately cron-entered pipeline files (not just main.md). main.md is now a thin mode router post TE-T26 split (2026-08-06), makes no gateway calls itself. daily.md before STEP 0a (~line 40); weekly-recap.md + weekly-prediction.md before their own DEDUP_CLAIM blocks (~lines 41-46). Rationale: each file = independent cron-spawned session; dead gateway must not burn any path's task_claim marker. Defeats rationale if only daily.md covered, weekend paths left uncovered.",
+        "created_at": "2026-08-14T12:27:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-24T01:12:01Z",
+        "agent_father_completion_note": "FR-5 + architect Q-file-count-correction ruling: inserted one Step 0-GW gateway-availability-gate pointer in each of the 3 independently cron-spawned pipeline files (daily.md before STEP 0a :40; weekly-recap.md + weekly-prediction.md immediately after their own ## STEP 0 — Bootstrap heading, before their own STEP 0a/DEDUP_CLAIM block). main.md deliberately left untouched (thin MODE ROUTER post-TE-T26 split, zero gateway calls, gate there would be dead code). Post-edit grep confirms exactly 1 pointer per target file, 0 in main.md, all 3 strictly before that file own task_claim — satisfies BA AC-4. Gatewayless commit per INV-GATEWAY-1 (agent-father has no mcp__gateway__call_tool binding). next_agent=qa: AC-4 pointer-placement is grep-verifiable without a live cron-window spawn.",
+        "commit": "bc18a4cc4",
+        "status_note": "QA APPROVED (2026-08-14): all 3 independently cron-spawned pipeline files (daily.md, weekly-recap.md, weekly-prediction.md) each carry exactly ONE Step 0-GW pointer strictly before their own STEP 0a DEDUP_CLAIM task_claim — no gap on either weekend path. main.md independently re-grepped for call_tool/gateway — ZERO hits, confirming the \"thin MODE ROUTER, no gateway calls, deliberately untouched\" claim is factually true, not just asserted. Commit bc18a4cc4 confirmed on main ancestry.",
+        "commit_sha": "bc18a4cc4",
+        "completed_at": "2026-08-14T12:50:50Z",
+        "completed_by": "qa",
+        "updated_by": "po/signoff-20260824T0111Z",
+        "reviewed_at": "2026-08-24T01:11:00Z",
+        "reviewed_by": "po",
+        "verification": {
+          "raw_probe": {
+            "tool": "Bash/grep (live file re-read)",
+            "args": "grep -n 'Step 0-GW' and grep -n 'task_claim' over docs/agents/fb-market-poster/flow/{daily,weekly-recap,weekly-prediction}.md",
+            "live_value_observed": "daily.md Step 0-GW@40, first task_claim@46 (40<46). weekly-recap.md Step 0-GW@27, first task_claim@33 (27<33). weekly-prediction.md Step 0-GW@30, first task_claim@36 (30<36). All three cron-spawned pipeline files gated strictly before their own claim.",
+            "observed_at": "2026-08-24T01:11:34Z"
+          }
+        },
+        "po_signoff_20260824T0111Z": "PO SIGN-OFF 2026-08-24T01:11Z, verified at source this tick — not rubber-stamped off the cohort-level AC-4 result and not inherited from the QA status_note. Deliverable re-read in the live files: All THREE independently cron-spawned pipeline files carry exactly one Step 0-GW pointer, each strictly BEFORE that file's own first task_claim call: daily.md gate@L40 < claim@L46; weekly-recap.md gate@L27 < claim@L33; weekly-prediction.md gate@L30 < claim@L36. Both weekend paths covered, no gap. COHORT CONTEXT: 6 siblings had sat in done[] with status=DONE, next_agent=null and reviewed_at=null since 2026-08-14 (MARKET-WATCHER since 2026-08-22), reachable only by the SECONDARY-drain at one row per tick. Each row was task_claim-locked individually by po/session 007e33e4 before this write. HONEST LIMIT ON THIS SIGN-OFF: every row in this cohort has acceptance=null, so there was no formal AC list to test against; verification was against the deliverable each row's own title and QA note describe (a Step 0-GW gateway-availability gate present, and where the file makes a task_claim call, positioned before it). Runtime behaviour of the gate was NOT exercised — this certifies the flow-doc insertion, not a live gateway-down drill."
+      },
+      {
+        "id": "UC-CCA-P2-UNIFIED-AGENT",
+        "type": "TASK",
+        "title": "unified-agent: insert Step 0-GW in chef.md",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "XS",
+        "zone": "cowork/unified-agent",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "owner": "unified-agent",
+        "parent_id": "UC-CCA-P2",
+        "depends": [],
+        "files": [
+          "docs/agents/unified-agent/flow/chef.md"
+        ],
+        "note": "FR-4: Insert Step 0-GW pointer between Bootstrap (line 33) and Step 0.5 (line 43), before task_claim. ASYMMETRIC PLACEMENT RATIFIED: lands AFTER chef.md's own first gateway call (Bootstrap), unlike other FR-4/FR-5 targets. Intentional—protects Step 0.5 task_claim mutation window specifically; cycle-bootstrap own Step-0 gate covers general confirmed-down case. Do NOT change to 'before Bootstrap' despite symmetry appearance. Session-scoped: single gate in chef.md sufficient, chef-dish.md shares same session. | COMPLETED (agent-father, 2026-08-14): inserted Step 0-GW gateway-availability-gate pointer in docs/agents/unified-agent/flow/chef.md between Bootstrap (line 40) and Step 0.5 task_claim (line 65). Asymmetric placement preserved exactly as ratified -- lands AFTER Bootstrap, protects only the task_claim mutation window, NOT changed to before-Bootstrap. Single gate in chef.md only; chef-dish.md untouched (session-scoped, per architect ruling in docs/handoffs/UC-CCA-P2-BA-spec.md). Commit afb2d4773a50153202bc69e946bd8b7f9a4e8484, pushed to main.",
+        "created_at": "2026-08-14T12:24:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-24T01:12:01Z",
+        "claimed_by": "agent-father",
+        "claimed_at": "2026-08-14T12:36:31Z",
+        "commit_sha": "afb2d4773a50153202bc69e946bd8b7f9a4e8484",
+        "status_note": "QA APPROVED (2026-08-14): chef.md live-verified — single Step 0-GW pointer at :59, between Bootstrap (:40) and Step 0.5's task_claim (:65), asymmetric placement vs. the other 4 FR-4/FR-5 targets exactly as architect-ratified (protects the task_claim mutation window; Bootstrap's own gate already covers the general confirmed-down case). Inline HTML comment (:50-58) present and coherent, explicitly warning future readers not to \"fix\" the asymmetry. chef-dish.md re-grepped — zero duplicate gate (session-scoped, correct). Commit afb2d4773a50153202bc69e946bd8b7f9a4e8484 confirmed on main ancestry.",
+        "completed_at": "2026-08-14T12:50:50Z",
+        "completed_by": "qa",
+        "updated_by": "po/signoff-20260824T0111Z",
+        "reviewed_at": "2026-08-24T01:11:00Z",
+        "reviewed_by": "po",
+        "verification": {
+          "raw_probe": {
+            "tool": "Bash/grep (live file re-read)",
+            "args": "grep -n 'Step 0-GW' docs/agents/unified-agent/flow/chef.md; grep -n 'task_claim' docs/agents/unified-agent/flow/chef.md",
+            "live_value_observed": "Step 0-GW at lines 14,87,88; first task_claim@15. Gate@14 < claim@15 — the tight asymmetric placement guarding the claim mutation window.",
+            "observed_at": "2026-08-24T01:11:34Z"
+          }
+        },
+        "po_signoff_20260824T0111Z": "PO SIGN-OFF 2026-08-24T01:11Z, verified at source this tick — not rubber-stamped off the cohort-level AC-4 result and not inherited from the QA status_note. Deliverable re-read in the live files: docs/agents/unified-agent/flow/chef.md gate@L14 < first task_claim@L15 — the asymmetric tight placement this row's QA note describes as architect-ratified (gate immediately guards the claim mutation window). 3 Step 0-GW occurrences, consistent with the pointer plus its inline HTML-comment rationale. COHORT CONTEXT: 6 siblings had sat in done[] with status=DONE, next_agent=null and reviewed_at=null since 2026-08-14 (MARKET-WATCHER since 2026-08-22), reachable only by the SECONDARY-drain at one row per tick. Each row was task_claim-locked individually by po/session 007e33e4 before this write. HONEST LIMIT ON THIS SIGN-OFF: every row in this cohort has acceptance=null, so there was no formal AC list to test against; verification was against the deliverable each row's own title and QA note describe (a Step 0-GW gateway-availability gate present, and where the file makes a task_claim call, positioned before it). Runtime behaviour of the gate was NOT exercised — this certifies the flow-doc insertion, not a live gateway-down drill."
+      },
+      {
+        "id": "UC-CCA-P2-BCTC-ANALYST",
+        "type": "TASK",
+        "title": "bctc-analyst: add Step 0-GW + dispatch table row",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cowork/bctc-analyst",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "owner": "bctc-analyst",
+        "parent_id": "UC-CCA-P2",
+        "depends": [],
+        "files": [
+          "docs/agents/bctc-analyst/flow/cycle.md"
+        ],
+        "note": "FR-4 + Architect structural refinement: Add new Dispatch-table row between 'E2 Market-hours guard' and 'Bootstrap + Regime' rows. Insert inline `## Step 0-GW` section after E2 block ends (~lines 48-50), before Step 0c (~line 52). E2 itself stays FIRST (pure wall-clock check, needs no gateway). Thin-dispatcher SSOT = table, requires both row and inline section.",
+        "created_at": "2026-08-14T12:26:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-24T01:12:01Z",
+        "agent_father_implementation_note": "Applied both required edits to docs/agents/bctc-analyst/flow/cycle.md per architect ruling: (1) new Dispatch-table row \"| **Step 0-GW** — Gateway availability gate | 0-GW | Inline (SECOND, after E2 — see below) |\" inserted between the E2 Market-hours-guard row and the Bootstrap+Regime row; (2) inline \"## Step 0-GW — Gateway Availability Gate (SECOND STEP — runs after E2, before bootstrap)\" section inserted after the E2 block (lines 48-50), before Step 0c (line 52), pointing at gateway-availability-gate/SKILL.md (agent-id=bctc-analyst, APPEND-class notebook). E2 explicitly documented inline as staying FIRST/ungated per architect ruling. Live-verified before editing — zero anchor drift (architect line numbers matched exactly). Committed+pushed 6261c722f (pathspec-scoped, INV-GATEWAY-1 gatewayless). qa to grep-verify AC-4 (pointer strictly before first task_claim/marker mutation).",
+        "status_note": "QA APPROVED (2026-08-14): cycle.md live-verified — new Dispatch-table row between the E2 market-hours-guard row and Bootstrap+Regime row, plus matching inline `## Step 0-GW` section after the E2 block, before Step 0c. E2 confirmed to stay FIRST/ungated (pure wall-clock check, never gated behind Step 0-GW) — documented inline exactly as architect required. File 119L (within 120L flow-file cap). Commit 6261c722f confirmed on main ancestry.",
+        "commit_sha": "6261c722f",
+        "completed_at": "2026-08-14T12:50:50Z",
+        "completed_by": "qa",
+        "updated_by": "po/signoff-20260824T0111Z",
+        "reviewed_at": "2026-08-24T01:11:00Z",
+        "reviewed_by": "po",
+        "verification": {
+          "raw_probe": {
+            "tool": "Bash/grep (live file re-read)",
+            "args": "grep -n 'Step 0-GW' docs/agents/bctc-analyst/flow/cycle.md; grep -n 'task_claim' docs/agents/bctc-analyst/flow/cycle.md",
+            "live_value_observed": "Step 0-GW at lines 24,53,55 (24=Dispatch-table row, 53+55=inline section). task_claim: zero matches in this file, so the gate-before-claim ordering criterion is N/A.",
+            "observed_at": "2026-08-24T01:11:34Z"
+          }
+        },
+        "po_signoff_20260824T0111Z": "PO SIGN-OFF 2026-08-24T01:11Z, verified at source this tick — not rubber-stamped off the cohort-level AC-4 result and not inherited from the QA status_note. Deliverable re-read in the live files: docs/agents/bctc-analyst/flow/cycle.md carries the Step 0-GW insertion (3 occurrences: dispatch-table row, inline section, cross-reference). No task_claim call in this file, so the before-the-claim ordering criterion is N/A; the E2 market-hours guard staying first and ungated is documented inline as the architect required. COHORT CONTEXT: 6 siblings had sat in done[] with status=DONE, next_agent=null and reviewed_at=null since 2026-08-14 (MARKET-WATCHER since 2026-08-22), reachable only by the SECONDARY-drain at one row per tick. Each row was task_claim-locked individually by po/session 007e33e4 before this write. HONEST LIMIT ON THIS SIGN-OFF: every row in this cohort has acceptance=null, so there was no formal AC list to test against; verification was against the deliverable each row's own title and QA note describe (a Step 0-GW gateway-availability gate present, and where the file makes a task_claim call, positioned before it). Runtime behaviour of the gate was NOT exercised — this certifies the flow-doc insertion, not a live gateway-down drill."
+      },
+      {
+        "id": "UC-CCA-P2-DIGEST-PREDICT",
+        "type": "TASK",
+        "title": "digest-predict: insert Step 0-GW in main.md",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "XS",
+        "zone": "cowork/digest-predict",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "owner": "digest-predict",
+        "parent_id": "UC-CCA-P2",
+        "depends": [],
+        "files": [
+          "docs/agents/digest-predict/flow/main.md"
+        ],
+        "note": "FR-4: Insert pointer before Step pre-D (line 15). Single top-of-file placement covers BOTH non-Sunday DAILY_CLAIM path (inside Step pre-D) and Sunday published-marker path later in file—both execute unconditionally after this point. No new if-guard needed.",
+        "created_at": "2026-08-14T12:25:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-24T01:12:01Z",
+        "updated_by": "po/signoff-20260824T0111Z",
+        "commit": "c7cd36af4",
+        "agent_father_completion_note": "FR-4 applied per architect-ratified UC-CCA-P2-BA-spec.md. Inserted a single top-of-file \"## Step 0-GW — Gateway availability gate\" pointer section (skill: .claude/skills/gateway-availability-gate/SKILL.md, agent-id=digest-predict) immediately before \"## Step pre-D: DAILY-PREDICT DEDUP GATE\" in docs/agents/digest-predict/flow/main.md. Single placement covers both the non-Sunday DAILY_CLAIM path (inside Step pre-D) and the Sunday Published Marker Gate further down the file, since both execute unconditionally after this point — no new if-guard needed, per architect confirmation. AC-4 self-verified: post-edit grep confirms exactly one Step 0-GW pointer (line 17), strictly before both task_claim calls (line 54 non-Sunday DAILY_CLAIM, line 106 Sunday PUBLISH_CLAIM). Committed c7cd36af4 (main.md only, explicit pathspec, INV-GATEWAY-1 gatewayless direct commit, RULE 3 self-verified single file). Routed to qa: AC-4 pointer-placement is grep-verifiable without a live cron-window spawn; qa can independently confirm the same grep result.",
+        "status_note": "QA APPROVED (2026-08-14): main.md live re-grepped independently — single Step 0-GW pointer at :15/17, strictly before both task_claim calls (:54 non-Sunday DAILY_CLAIM, :106 Sunday PUBLISH_CLAIM), matching the router's own pre-verification exactly. NON-BLOCKING OBSERVATION for PO/janitor follow-up: file is 154L, over the docs/data/file-size-caps.json 120L flow-file cap, no size-justification header — this is PRE-EXISTING debt (already 148L before this task's +6L edit, ~28L over cap pre-existing), not introduced or worsened materially by this task; out of scope to fix here (would require restructuring the file). Commit c7cd36af4 confirmed on main ancestry.",
+        "commit_sha": "c7cd36af4",
+        "completed_at": "2026-08-14T12:50:50Z",
+        "completed_by": "qa",
+        "reviewed_at": "2026-08-24T01:11:00Z",
+        "reviewed_by": "po",
+        "verification": {
+          "raw_probe": {
+            "tool": "Bash/grep (live file re-read)",
+            "args": "grep -n 'Step 0-GW' docs/agents/digest-predict/flow/main.md; grep -n 'task_claim' docs/agents/digest-predict/flow/main.md",
+            "live_value_observed": "Step 0-GW at lines 15,17; first task_claim@43 (15<43), also ahead of the Sunday PUBLISH_CLAIM path. Non-blocking carry-over: file exceeds the 120L flow-file cap with no size-justification header.",
+            "observed_at": "2026-08-24T01:11:34Z"
+          }
+        },
+        "po_signoff_20260824T0111Z": "PO SIGN-OFF 2026-08-24T01:11Z, verified at source this tick — not rubber-stamped off the cohort-level AC-4 result and not inherited from the QA status_note. Deliverable re-read in the live files: docs/agents/digest-predict/flow/main.md gate@L15 < first task_claim@L43, and ahead of the Sunday PUBLISH_CLAIM path too. NON-BLOCKING CARRY-OVER, restated so it is not lost by this sign-off: this file is over the 120L flow-file cap with no size-justification header — that is a separate hygiene item, not a defect in this row's deliverable, and it does not gate this sign-off. COHORT CONTEXT: 6 siblings had sat in done[] with status=DONE, next_agent=null and reviewed_at=null since 2026-08-14 (MARKET-WATCHER since 2026-08-22), reachable only by the SECONDARY-drain at one row per tick. Each row was task_claim-locked individually by po/session 007e33e4 before this write. HONEST LIMIT ON THIS SIGN-OFF: every row in this cohort has acceptance=null, so there was no formal AC list to test against; verification was against the deliverable each row's own title and QA note describe (a Step 0-GW gateway-availability gate present, and where the file makes a task_claim call, positioned before it). Runtime behaviour of the gate was NOT exercised — this certifies the flow-doc insertion, not a live gateway-down drill."
+      },
+      {
+        "id": "UC-CCA-P2-MARKET-WATCHER",
+        "type": "TASK",
+        "title": "market-watcher: de-dup double probe (main.md + cycle.md)",
+        "status": "DONE_VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "cowork/market-watcher",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "owner": "market-watcher",
+        "parent_id": "UC-CCA-P2",
+        "depends": [],
+        "files": [
+          "docs/agents/market-watcher/flow/main.md",
+          "docs/agents/market-watcher/flow/cycle.md"
+        ],
+        "note": "FR-3: main.md—replace inline Step 3 corroboration block (current ~lines 61-99) with one-line pointer to gateway-availability-gate SKILL. cycle.md—delete Step 0-GW block (~lines 26-27), reword Execution-contract paragraph (~line 20) from 'Step 0-GW through Step 5b' to 'Step 0 through Step 5b', update terminal clause to reference 'explicit main.md Step 0-GW gateway-down EXIT'. Net: exactly ONE probe per invocation at dispatcher level. eod.md remains zero-gate, transitively covered only via main.md (no new gap).",
+        "created_at": "2026-08-14T12:22:00Z",
+        "created_by": "pm",
+        "updated_at": "2026-08-24T01:12:01Z",
+        "updated_by": "po/signoff-20260824T0111Z",
+        "commit": "3cfabaa28",
+        "agent_father_completed_at": "2026-08-14T12:35:16Z",
+        "agent_father_completion_note": "FR-3 applied per architect-ratified UC-CCA-P2-BA-spec.md. main.md: replaced inline Step 3 dual-probe/backoff/SIBLING_RECENT block (lines 61-99) with a one-line pointer to gateway-availability-gate/SKILL.md (agent-id=market-watcher; covers cycle.md AND eod.md). cycle.md: deleted its own Step 0-GW block (lines 26-27); Execution-contract paragraph reworded \"Step 0-GW through Step 5b\" -> \"Step 0 through Step 5b\"; terminal clause now reads \"an explicit main.md Step 0-GW gateway-down EXIT (per gateway-availability-gate skill)\". Post-edit grep confirms exactly ONE Step 0-GW probe pointer across both files (main.md:61) — double-probe defect eliminated. eod.md untouched (out of scope, remains zero-gate by design, unchanged transitively-only coverage via main.md). Committed 3cfabaa28 (explicit pathspec, INV-GATEWAY-1 gatewayless direct commit, not pushed — push-backstop/PO owns push per PUSH_THRESHOLD convention). Routed to po: AC-3 (dedup) needs live-cycle confirmation (next market-watcher WORK ping / notebook shows exactly one [GATEWAY] probe log line) — not self-testable this session, prose/flow-doc-only change.",
+        "po_note": "PO AC-3 SIGN-OFF 2026-08-22T19:00:18Z — DONE. Supersedes the 2026-08-14T12:47:50Z NOT-SIGNED-OFF note. The root blocker that note named (cowork master dispatcher silent since tick 06:45Z) RESOLVED on its own at 2026-08-14T16:11Z; 4 live cycles have run since.\n\nAC-3 AS WRITTEN IS UNFALSIFIABLE — that, not the dispatcher outage, is the real reason this row stalled 8 days. docs/handoffs/UC-CCA-P2-BA-spec.md:418-419 defines AC-3 as \"next live market-watcher cycle's WORK ping / notebook shows exactly one [GATEWAY] probe log line, not two\". NEITHER named plane can ever carry that line on a healthy cycle: .claude/skills/gateway-availability-gate/SKILL.md:30 emits `[GATEWAY] probe OK — proceed` as a TRANSCRIPT log line only, and writes the notebook solely on its DEFER/BLOCKED failure branches (SKILL.md:54); docs/agents/market-watcher/flow/cycle.md:328 fixes the Step 5b WORK ping to the ULTRA template `[mw] HH:MM — N stocks | anom:X vol:Y chain:Z | next:TIME` (<=80 chars, no gateway field). Zero [GATEWAY] lines on a gateway-UP cycle is the CORRECT output, not a miss. No amount of further waiting could ever have settled it.\n\nSUBSTITUTED CRITERION (equivalent, falsifiable) + EVIDENCE, re-verified live at HEAD 2026-08-22T19:00Z:\n(1) Exactly ONE probe INVOCATION site across all 3 market-watcher flow files — main.md:61, the one-line pointer to gateway-availability-gate/SKILL.md (agent-id=market-watcher, covers cycle.md AND eod.md). cycle.md's two surviving \"Step 0-GW\" hits are prose only (:20 execution-contract terminal clause, :22 narrate-not-execute guard text); eod.md zero. This is DISPOSITIVE for \"exactly one probe per invocation\": there is no second site left to invoke.\n(2) 4 post-commit live cycles all completed through that single site — 2026-08-14T16:11Z (23eed1755), 2026-08-15T00:14Z (5be446b8b), 2026-08-15T04:19Z (248ce4e42), 2026-08-15T08:11Z (55d939b98). Every one: items_fetched=34, exit_status=complete, zero [GATEWAY] DEFER/BLOCKED notebook entries, zero gateway bug escalation.\n(3) No regression vs the pre-change 2026-08-14T04:09Z baseline (34 tickers, 0 anomalies, complete): the 08-15T08:11Z cycle is exact parity (34/0/complete); 08-14T16:11Z is 34 tickers / 1 anomaly (DXG +5.99%) / 1 suppressed / complete — normal market variation, not regression.\ncommit 3cfabaa28 re-confirmed ancestor of HEAD.\n\nSPEC-QUALITY DEFECT SPUN OUT (do not re-litigate here): FIX-BA-AC-NAMES-PLANE-IMPLEMENTATION-NEVER-WRITES, backlog[], next_agent=ba. Full reasoning: docs/agent-memory/decisions/sprint-ULTRACODE-AUDIT-FIXALL-po.md.",
+        "ac3_status": "CONFIRMED_VIA_SUBSTITUTED_FALSIFIABLE_CRITERION",
+        "ac3_last_checked_at": "2026-08-22T19:00:18Z",
+        "reviewed_at": "2026-08-24T01:11:00Z",
+        "reviewed_by": "po",
+        "verification": {
+          "raw_probe": {
+            "tool": "Bash/grep (live file re-read)",
+            "args": "grep -n 'Step 0-GW' docs/agents/market-watcher/flow/{main,cycle}.md; grep -n 'task_claim' docs/agents/market-watcher/flow/cycle.md",
+            "live_value_observed": "main.md Step 0-GW at lines 32,36,61 — line 61 is the real gate, dispatch item 3, 'covers cycle.md AND eod.md'. cycle.md lines 20,22 are references to that gate, not a second gate; cycle.md real task_claim calls at 251 and 288, both after it. The 'task_claim' string also occurs at cycle.md:1 inside the size-justification HTML comment — prose, not a call site.",
+            "observed_at": "2026-08-24T01:11:34Z"
+          }
+        },
+        "po_signoff_20260824T0111Z": "PO SIGN-OFF 2026-08-24T01:11Z, verified at source this tick — not rubber-stamped off the cohort-level AC-4 result and not inherited from the QA status_note. Deliverable re-read in the live files: This row carried NO QA status_note, unlike its 5 siblings, so it was verified from scratch rather than off a prior approval. docs/agents/market-watcher/flow/main.md:61 holds the REAL gate as dispatch item 3 — 'Step 0-GW — Gateway availability gate -> skill: .claude/skills/gateway-availability-gate/SKILL.md (agent-id=market-watcher; covers cycle.md AND eod.md)' — i.e. one gate at the entry point covering both sub-flows. cycle.md's 2 occurrences are references to that gate in its execution-contract prose, not a second gate; its real task_claim calls at :251 and :288 both sit after it. A naive line-order check first flagged this file because the string 'task_claim' also appears at :1 inside the size-justification HTML comment — that was a false positive of the check, not a finding. COHORT CONTEXT: 6 siblings had sat in done[] with status=DONE, next_agent=null and reviewed_at=null since 2026-08-14 (MARKET-WATCHER since 2026-08-22), reachable only by the SECONDARY-drain at one row per tick. Each row was task_claim-locked individually by po/session 007e33e4 before this write. HONEST LIMIT ON THIS SIGN-OFF: every row in this cohort has acceptance=null, so there was no formal AC list to test against; verification was against the deliverable each row's own title and QA note describe (a Step 0-GW gateway-availability gate present, and where the file makes a task_claim call, positioned before it). Runtime behaviour of the gate was NOT exercised — this certifies the flow-doc insertion, not a live gateway-down drill."
       }
     ],
     "head": {
@@ -20108,13 +20211,13 @@
         "root_cause": "Some commit call-site reachable from the router session still issues a BARE `git commit -m ...` with no `-- <paths>`. 20 warns vs a threshold of 3 means the per-session escalation counter converged to hard-block without the offending call-site ever being identified or fixed - the hook's escalation is working, the remediation loop is not.",
         "acceptance": "AC-1 identify the concrete call-site(s) (flow doc, skill, or script) that emit a bare commit line reachable from a router/dispatcher session - name file:line. AC-2 convert each to pathspec-scoped form. AC-3 the sweep-guard log shows zero new BARE fires from a router session over a subsequent 24h window. AC-4 the escalation payload should name the offending call-site, not only the actor session id - currently an operator cannot act on it without a repo-wide hunt.",
         "non_goals": "Not a change to the discriminator itself (verify-commit-sweep-discriminator.sh VERDICT: PASS - the detector is sound).",
-        "updated_at": "2026-08-23T23:41:25Z",
-        "occurrence_count": 28,
+        "updated_at": "2026-08-24T01:08:47Z",
+        "occurrence_count": 29,
         "status_note": "[po/triage 2026-08-14T16:54Z] ESCALATING — 3 further escalated=true fires since this row was minted at prior_warns=20 (2026-08-14T13:37:19Z), all same actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 (the live router/dev-team coordinating session), all mode=warn threshold=3 outcome=blocked. (1) 16:12:17Z prior_warns=21, 1 staged file docs/agent-memory/notebooks/market-watcher.md. (2) 16:12:51Z prior_warns=22, 1 staged file docs/agent-memory/notebooks/news-scout.md. (3) 16:22:06Z, 7 staged files including docs/data/orch/orch-state.json + 3 docs/signals/processed/commit-sweep-guard-*.json — i.e. the blocked bare commit was about to absorb the live orchestration hot-file plus this very signal family's own processed artifacts. Payloads parsed by their own leading tag per triage-signals.md (never off `git show --stat`); `[sweep-guard] BARE commit about to absorb` is TRUE POSITIVE BY CONSTRUCTION — pre-commit exit 0s on mode=SCOPED before the signal write is ever reached, so the signal existing at all IS the mechanism proof. TREND: 20 -> 22 warns in ~2h45m with the hook already blocking, so the block is NOT converging this actor; the session keeps re-attempting bare commits. This is the REPEAT-OFFENDER-AFTER-BLOCK shape this row already owns — folded, not re-minted (dedup-checked against the FIX-COMMIT-SWEEP-GUARD-*/FIX-COMMIT-SWEEP-* family: only sibling is FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT (backlog), which owns the VICTIM side, not the offender side — disjoint). occurrence_count stamped 3.\n[po/triage 2026-08-14T20:02:29Z] ESCALATING FURTHER — 2 more escalated=true fires since the 16:54Z note (occurrence_count 3 -> 5), same actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7, both mode=warn threshold=3 outcome=blocked. (4) 2026-08-14T17:37:35Z prior_warns=24, 2 staged files: docs/agent-memory/decisions/sprint-TOKEN-ECONOMY-AUDIT-qa-2.md + docs/data/orch/orch-state.json. (5) 2026-08-14T18:37:43Z prior_warns=25, 1 staged file: docs/data/orch/orch-state.json. Payloads parsed by their own leading tag per triage-signals.md ([sweep-guard] BARE commit about to absorb = TRUE POSITIVE BY CONSTRUCTION; never dispositioned off git show --stat). TREND now 20 -> 25 warns in ~5h with the hook hard-blocking throughout: the block is definitively NOT converging this actor. AC-4 of this row (payload must name the offending call-site, not only the actor session id) is now the binding blocker — 5 occurrences and an operator still cannot locate the bare-commit call-site without a repo-wide hunt. Recommend promoting AC-4 ahead of AC-1/2 in implementation order.\n\n[po/triage 2026-08-15T10:31:00Z — FOLD x2 — occurrence 9-10, prior_warns 20 -> 32, ROW IS STRANDED] Two more BARE-commit blocks this tick, same coordinating router session, escalated=true both times (outcome=blocked, threshold=3): (a) prior_warns=31, 1 staged file (orch-state.json); (b) prior_warns=32, 2 staged files (dev-mcp-server.md notebook + orch-state.json). EXPLICITLY REJECTING the upstream framing that a blocked outcome is 'self-resolved / informational'. docs/agents/po/flow/triage-signals.md is unambiguous: escalated=true means the hook ALREADY blocked this actor and the actor IS STILL TRYING — that is the REPEAT-OFFENDER-AFTER-BLOCK signal this row exists for, and 'the hook blocked it' is an OUTCOME, not a disposition. The mechanism proof is the signal existing at all (pre-commit exits 0 silently on mode=SCOPED before write_signal is reached), so a blocked outcome can never downgrade the finding. TREND IS THE FINDING: this row was minted at prior_warns=20 and the counter has since climbed to 32 (+60%) across 10 tracked occurrences while the row sat in BACKLOG owner=po, i.e. tracked-but-never-dispatched. The hook's own escalation is NOT converging this offender — that is the stated premise of the no-mint-per-occurrence rule and it is now falsified for this actor. PRIORITY RAISED: this needs actual dispatch, not another occurrence bump.\n\n[po/triage 2026-08-22T22:58:36Z - FOLD x10, occurrence_count 10 -> 20, PROMOTED backlog[] -> ready[]] TEN more `[sweep-guard] BARE commit` envelopes with escalated=true reached the PO durable inbox this tick, all parsed by their own leading payload tag per triage-signals.md (NEVER dispositioned off `git show --stat` - a clean --stat is OUTCOME evidence, not MECHANISM evidence). Fires, in order, all mode=warn threshold=3 outcome=blocked: 19:18:11Z prior_warns=5 (6 files, incl. orch-state.json + 4 docs/signals/processed/*.json); 19:49:17Z pw=6 (3 files); 20:19:54Z pw=7 (3 files, incl. po.md + orch-state.json); 20:40:49Z pw=8 (2 files, apps/mcp-server test + confidenceFinancialReasonBuilder.ts - i.e. LIVE PRODUCTION SOURCE in the blast radius, not just memory artifacts); 21:54:11Z pw=9 (FORTY-SIX staged files); 22:01:46Z pw=10 (FORTY-FIVE staged files); 22:15:27Z pw=11 (2 files); 22:18:47Z pw=12 (7 files); 22:32:41Z pw=13 (1 file); 22:41:21Z pw=14 (1 file).\n\nNEW EVIDENCE THAT CHANGES THIS ROW'S DIAGNOSIS, not just its counter: every one of the ten fires carries actor=02594cce-7946-4d62-8d2f-586b9b883695 - a DIFFERENT session id from the actor on all ten prior occurrences (632721c2-41e4-4aff-8d06-a47cf80dc0d7). That session's counter started fresh at ~5 and climbed to 14 in ~3h23m under a hook that was hard-blocking throughout. This is the first direct proof that the defect is CALL-SITE-BOUND, not session-bound: a brand-new coordinating session, with no inherited warn history, reproduces the identical trajectory. It also falsifies any remaining reading of the prior occurrences as one anomalous session's bad habit, and it is exactly what this row's own AC-4 predicted would keep happening while the escalation payload names only the actor session id and never the offending call-site.\n\nBLAST-RADIUS ESCALATION: two of this tick's fires (pw=9, pw=10) were about to absorb 46 and 45 staged files respectively - an order of magnitude beyond the 5-file blast radius this row was minted on, and beyond the 16-file worst case recorded in the 2026-08-15T03:59Z note.\n\nWHY PROMOTED TO ready[] THIS TICK RATHER THAN BUMPED AGAIN: this row's own last note (2026-08-15T03:59Z) ends `PROMOTED INTO THIS TICK'S PO BATCH` - and the row is still sitting in backlog[] seven days later, having absorbed ten further occurrences in the interim. backlog[] is not a dispatchable lane; ready[] is. Same corrective precedent as FIX-CI-SIZELINT-GETBCTCPENDINGREFINETOOL-BASELINE-TOLERANCE-EXCEEDED (promoted backlog->ready on 2026-08-22T19:00Z for the identical stranded-P0 reason). Implementation order per the row's existing recommendation: AC-4 (make the payload name the call-site) FIRST, since an operator still cannot locate the bare-commit call-site without a repo-wide hunt, and that is now the binding blocker across 20 occurrences and two distinct actor sessions.",
-        "updated_by": "po/triage-20260823T0816Z",
+        "updated_by": "po/triage-20260824T0104Z",
         "po_occurrence_20260815T0040": "OCCURRENCE BUMP + P1->P0. New bug-escalation envelope in the PO durable inbox, createdAt 2026-08-14T22:55:53Z, payload parsed at source per triage-signals.md (never off git show --stat): 'mode=warn escalated=true prior_warns=27 threshold=3 outcome=blocked', 4 staged files (docs/agent-memory/notebooks/pm.md + docs/handoffs/TASK_2008{a,b,c}.md), actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7. escalated=true => REPEAT-OFFENDER-AFTER-BLOCK branch, which this row already owns — folded, not re-minted. TWO facts escalate it: (1) prior_warns climbed 20 -> 27 in ~9h15m since this row was minted at 13:37Z, i.e. the actor is NOT converging; (2) outcome=blocked means the hook is now HARD-BLOCKING commits, and the actor session is the LIVE dev-team dispatcher session — so the defect is no longer a hygiene warning, it is an active impediment to the fleet's own commit path. Mechanism is a true positive by construction (pre-commit exits 0 on mode=SCOPED before the signal write is reached, so the signal existing at all IS the proof); no re-verification against a clean --stat is admissible.",
         "po_occurrence_20260815T0359": "OCCURRENCE BUMP 5 -> 8. THREE more escalated=true BARE fires reached the PO durable inbox this tick, all parsed at source per triage-signals.md (never off git show --stat): envelope 7397df9d 2026-08-15T01:55:23Z prior_warns=28 (3 staged files: qa decision journal + qa.md + orch-state.json); envelope 09b00616 02:23:09Z prior_warns=29 (SIXTEEN staged files spanning .gitignore, 7 auditor cycle-marker .tmp scratch files, system-auditor flow doc, the dedup ledger, orch-state.json, 4 scripts/ files and a .jq — i.e. an entire feature landing swept through one bare commit); envelope 72c0d991 03:01:35Z prior_warns=30. All three: mode=warn escalated=true threshold=3 outcome=blocked, actor=632721c2-41e4-4aff-8d06-a47cf80dc0d7 — the SAME session id as every prior occurrence and the same session running this triage. TRAJECTORY, which is the reason this stays P0: 20 warns at mint (08-14T13:37Z) -> 27 (08-14T22:55Z) -> 30 (08-15T03:01Z). Ten warns in ~13.5h, zero remediation, and the blast radius grew from 5 files to 16. The hook's escalation converged to hard-block a day ago and the offending call-site is still unidentified — which is precisely what this row's AC-4 predicted would happen while the payload names only the actor session and never the call-site. PROMOTED INTO THIS TICK'S PO BATCH.",
-        "po_occ_20260823T0907Z": "occ 21->24: 3 escalated=true BARE fires this session (actor 007e33e4, prior_warns 3/4/5, all blocked). See po notebook 2026-08-23."
+        "po_occ_20260824T0104Z": "occ 21->29: BARE fires actor 007e33e4, pw 3/4/5 then 11 (00:46Z 08-24), all escalated=true/blocked. Call-site unidentified (AC-4)."
       },
       {
         "id": "FIX-ORCH-PROSE-CEILING-BLOCKS-NUMERIC-OCCURRENCE-BUMP-ON-OVER-CEILING-ROWS",
@@ -21352,7 +21455,10 @@
           "FIX-AUDITOR-DATA-TIER-NOTEBOOK-WRITE-PATH-UNWIRED"
         ],
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-NOTEBOOK-COMPOSE-REWRITES-RETAINED-PRIOR-SECTIONS",
-        "updated_at": "2026-08-23T00:21:38Z"
+        "updated_at": "2026-08-24T01:08:47Z",
+        "occurrence_count": 6,
+        "po_occ_20260824T0104Z": "PO triage 2026-08-24T01:04Z — FIRST measured multi-fire evidence on a SINGLE agent+section pair, which is the discriminator triage-signals.md asks for on this payload class (its documented base rate of interleaved-cycle false positives is high, so one fire proves nothing). docs/agent-memory/notebooks/system-auditor.md retained section '## c114 · 2026-08-23T21:03Z' tripped the AC-2a immutability guard on SIX separate commit cycles: 2026-08-23T21:39:05Z, 22:44:57Z, 22:49:52Z, 23:16:23Z, 23:46:32Z and 2026-08-24T00:46:56Z (signal files docs/signals/processed/commit-sweep-guard-2026-08-23T{213905Z-80820,224457Z-43885,224952Z-55391,231623Z-62797,234632Z-82920}.json and -2026-08-24T004656Z-33857.json). All mode=warn, so none blocked and none is visible in git. NOT dispositioned off a clean `git status` — per the flow doc the index state at fire time is unreconstructable after the fact, so worktree cleanliness is INCONCLUSIVE, never benign. CAUSAL LINK worth carrying into the fix: the same tick delivered context_bloat_breach (310L/15614B vs 200L/12000B caps) and notebook_single_section_overage_breach on the SAME file, i.e. the rewrites are happening under cap pressure — which is exactly the failure mode this row's title names (rewriting a retained section to pay for an over-cap current section instead of trimming its own). Those two cap envelopes are folded onto CLEAN-NOTEBOOK-BYTECAP-3-FILES-UNPRUNABLE-SINGLE-SECTION; this row owns the rewrite mechanism.",
+        "updated_by": "po/triage-20260824T0104Z"
       },
       {
         "id": "FIX-CHEF-USDVND-THRESHOLD-NUMERIC-DRIFT-GATE",
@@ -21914,8 +22020,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-23T23:43:26Z",
-    "last_triaged_by": "po (dedup self-correction)",
+    "last_triaged_at": "2026-08-24T01:04:14Z",
+    "last_triaged_by": "po/triage-20260824T0104Z",
     "in_progress": [
       {
         "id": "UC-CDC-P1",
@@ -22080,8 +22186,8 @@
     "ssot": true
   },
   "last_tick": "20260622T2215Z",
-  "_updated_at": "2026-08-24T00:12:36Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-08-24T01:11:00Z",
+  "_updated_by": "po/signoff-20260824T0111Z",
   "dev_team_idle_chain": {
     "rotation": {
       "bounded1": {
@@ -22100,11 +22206,11 @@
         "last_served_tick": "2026-08-24T00:27:26Z"
       },
       "step1_triage": {
-        "last_served_tick": "2026-08-23T20:56:57Z"
+        "last_served_tick": "2026-08-24T00:56:09Z"
       }
     },
-    "_updated_at": "2026-08-24T00:53:21Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-08-24T01:04:14Z",
+    "_updated_by": "po",
     "pending_triage_inbox": [
       {
         "envelope_id": "9fbfb401a5cc9bf6b6f101f29d6b3e107aaf709f396985e161a457defac1553a",
@@ -22193,93 +22299,6 @@
         "payload": "Auditor blind-spot: cannot detect launchd failures tier-1 probe checks for",
         "createdAt": "2026-08-23T22:49:24Z",
         "drained_at": "2026-08-23T22:58:03Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "876b81d404368f8218ff5485c60f8671919069f24d2ff75c12ce565895434430",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=007e33e4-b453-4bb3-8ab1-ef31495906a3 mode=warn escalated=true prior_warns=11 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
-        "createdAt": "2026-08-24T00:46:38Z",
-        "drained_at": "2026-08-24T00:53:21Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "d048b78c9d101dbec9060b202c80173f50a017e9f30b7589a248c0b759c38c60",
-        "source": "file",
-        "from": "commit-sweep-guard",
-        "to": "po",
-        "type": "bug-escalation",
-        "priority": "high",
-        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c114 · 2026-08-23T21:03Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
-        "createdAt": "2026-08-24T00:46:56Z",
-        "drained_at": "2026-08-24T00:53:21Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "3f76925fc7797668d92f1b5fe67466d5caa05ed87443cd04c1776397d8ded8bd",
-        "source": "file",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/system-auditor.md",
-          "line_count": 310,
-          "cap": 200,
-          "byte_count": 15614,
-          "byte_cap": 12000,
-          "class": "agent-notebook",
-          "reason": "line-cap,byte-cap",
-          "overage": 110,
-          "byte_overage": 3614,
-          "action_required": "prune_or_split"
-        },
-        "createdAt": "2026-08-24T00:46:28Z",
-        "drained_at": "2026-08-24T00:53:21Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "6458d70ef26e75fb7febd5d2dc551be5bc70d8f68df90973b0876379bcce0bc8",
-        "source": "file",
-        "from": "fleet-worktree-push",
-        "to": "po",
-        "type": "auto-push-abort",
-        "priority": "high",
-        "payload": {
-          "reason": "push-fail",
-          "detail": "git push origin HEAD:main returned non-zero",
-          "ahead": "109",
-          "behind": "0",
-          "threshold": "20",
-          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
-        },
-        "createdAt": "2026-08-24T00:52:37Z",
-        "drained_at": "2026-08-24T00:53:21Z",
-        "routed_to": "PO Step 0-SIG"
-      },
-      {
-        "envelope_id": "f052e4df39d586d56efc9d3acaceed7452ce2f3fcc4d74d9b0452bc358f27a2f",
-        "source": "file",
-        "from": "notebook-auto-prune-hook",
-        "to": "claude-manager-helper",
-        "type": "notebook_single_section_overage_breach",
-        "priority": "high",
-        "payload": {
-          "file": "docs/agent-memory/notebooks/system-auditor.md",
-          "line_count": 218,
-          "cap": 200,
-          "byte_count": 11610,
-          "byte_cap": 12000,
-          "section_count": 1,
-          "reason": "only preamble+1 section remain; cannot prune further without data loss",
-          "action_required": "manual_split_to_archive"
-        },
-        "createdAt": "2026-08-24T00:46:26Z",
-        "drained_at": "2026-08-24T00:53:21Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

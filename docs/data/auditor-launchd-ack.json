@@ -8,8 +8,9 @@
     },
     {
       "label": "com.vn-market.fleet-push",
-      "tracked_by": "FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD",
-      "acked_at": "2026-07-23T18:51:09Z"
+      "tracked_by": "FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH",
+      "acked_at": "2026-08-24T01:09:11Z",
+      "signature": "RETARGETED by po 2026-08-24T01:09:11Z. Prior tracked_by=FIX-FLEET-PUSH-LAUNCHD-EXCONFIG-SILENT-DEAD, which reached DONE_VERIFIED and was cold-evicted to docs/data/orch/archive/2026-08.json (the probe resolver only unions task_board lanes inside orch-state.json, including a LANE named archive — never the monthly archive FILE — so it reported status=ABSENT; that label reads as a dangling pointer but means cold-evicted). Per this ledger STALENESS RULE that closed entry had to go. Bare removal was wrong: fleet-push genuinely still exits 1, for a DIFFERENT cause. The EXCONFIG fix is real — docs/agent-memory/sessions/fleet-push.log shows the agent creating a worktree, symlinking node_modules, passing a bounded tsc check and reaching the push. It is then blocked by: [size-lint] FAIL apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts baseline-tolerance-exceeded (baseline=228L actual=252L upper=250L) -> [pre-push] BLOCKED. Repointed to the live owner of THAT cause. CAVEAT, RECORDED DELIBERATELY: FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH is open and P0 but is being held UNDISPATCHED on purpose — repairing the gate would flush 111 unpushed commits to origin/main unattended and PUSH-AUTONOMY-1 is unsatisfied, so the call is the user*s. This ack will therefore hold longer than a normal fix cycle. It is NOT a threshold change and NOT a widening: the label set is unchanged, the staleness rule still applies, and this entry expires the moment that row reaches DONE_VERIFIED."
     },
     {
       "label": "com.vn-market.cowork-guaranteed-slot-firer",
