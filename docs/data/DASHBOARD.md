@@ -2002,3 +2002,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: C-16 · bctc_vps_queue check C-16 failed
+**Severity:** WARN | **Date:** 2026-08-24 | **Status:** OPEN
+**Location:** market.db/bctc_vps_queue
+**Details:** 1 row status=pending since 2026-04-28 (118d), attempts=0, id=255870 BID 2025 Q4 — never picked up by any worker; expected=0
+**Impact:** A queue row that no worker ever claims is invisible to retry/backoff telemetry and permanently occupies the pending state the C-16 detector is built on
+**Root cause:** FIX-BCTC-VPS-QUEUE-STALE-TRIAGE's explicit-status triage (deferred_infra/blocked_pdf_extractor) has no path for zero-attempt rows; source_url is a BaoCaoQuanTri governance PDF, likely mis-enqueued at ingest
+**Zone owner:** dev-mcp-server
+**Last reported:** 2026-08-24T03:05:08Z (signal sys-20260824T030458-5510, system-auditor -> po, dedup_key=db_integrity_breach:bctc_vps_queue:C-16, WARN Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
