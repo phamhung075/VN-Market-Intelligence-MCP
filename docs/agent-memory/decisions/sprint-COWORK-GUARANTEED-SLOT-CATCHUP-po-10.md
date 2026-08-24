@@ -115,3 +115,14 @@
 - Mint a distinct P1 row with a durable AC alongside the quick fix
 **why-decision:** Not the SIGABRT row's defect: that one is intermittent with **zero** output; this reproduced on two consecutive runs with a full 4-site report, so folding it would bury a deterministic blocker under an intermittent one. Refused `--update` because the lint output forbids it by name for LINE-MOVED entries and it would re-arm the exact trap — the baseline grandfathers by file+**line**, so any edit above a grandfathered block silently un-grandfathers it and reds the gate fleet-wide. Filed rather than only reported because the abort signal (`type:auto-push-abort`, `to:po`) routes to PO's own inbox by design, so triaging it is inside this flow, not outside it — and `feedback_red_prepush_strands_fleet` says a red pre-push with 42 commits behind is a P1, not an FYI.
 **why-change:** Widened past the BCTC scope I was handed. Justified because PUSH-BACKSTOP is a mandatory tick-exit step of `po/flow/main.md`, not a detour, and it surfaced the blocker itself. Did NOT let it gate the BCTC chain: rebuild + dual-origin verify are wholly local, so the two tracks are parallel.
+
+### STEP po-S189 · po · 2026-08-24T22:22:18Z
+**task-id:** FIX-AUDITOR-NOTEBOOK-COMPOSE-ACTUATOR-BUILT-TESTED-NEVER-WIRED
+**what-done:** Review-lane SECONDARY-drain pick triaged to shape (c) REASSIGN — `next_agent=architect`, stays in `review[]`, full evidence `status_note` written, stale `blocked_by` cleared.
+**what-considered:**
+- (a) sign off → `done_verified[]`: the row's literal claim ("ZERO callers") is now false — actuator is called at `main.md:1115` and 4 commits carry its `COMPOSE_MARKER` proof
+- (b)/(c) rework: adoption is 4/42 notebook commits since the wire, all tier-2/3/DATA; Tier-1 has never invoked it and the headline defect recurred twice on 08-24 (`f4b9740b2` duplicate c1007 off-template; `2f3112a99` +134/-0 no-prune append → 245L vs 200L cap)
+- (d) BLOCKED: rejected — blocker `FIX-AUDITOR-DATA-TIER-NOTEBOOK-WRITE-PATH-UNWIRED` is DONE_VERIFIED and there is no real blocker to name
+- mint a fresh row for the adoption gap: rejected as a dedup risk — this IS the wire row, and neither `FIX-AUDITOR-SELF-COMMIT-STEP-NEVER-FIRES` nor `FIX-AUDITOR-NOTEBOOK-APPEND-GATE-BYPASSED-ALL-GREEN-WRITE` covers "wrote via the wrong path"
+**why-decision:** A P0 whose headline symptom reproduced twice in the 24h before review cannot be DONE_VERIFIED — that is the false-green class. architect over agent-father because the durable fix is cross-zone (flow doc = agent-father, `scripts/git-hooks/pre-commit` = developer) and two prior prose-only attempts in that same 1400L flow doc already failed.
+**why-change:** Drain briefing offered (a)-(d); (c) chosen over (b) because the drain re-selects REVIEW rows with non-qa `next_agent` every tick, so leaving it in `review[]` reaches architect faster than appending a P0 to a 111-row `ready[]` where DRS ranks by array index.
