@@ -2851,11 +2851,14 @@
         "type": "auditor_cycle_missing",
         "summary": "auditor tier-2 cycle possibly missing — no completion evidence in 11h (cadence 4h)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "triaged",
         "payload_ref": null,
         "provenance": "detector",
         "audit_cycle_tag": null,
-        "dedup_key": "auditor-cycle-missing:tier2:2026-08-24T12:00Z"
+        "dedup_key": "auditor-cycle-missing:tier2:2026-08-24T12:00Z",
+        "triaged_at": "2026-08-24T14:05:00Z",
+        "triaged_by": "po",
+        "triage_note": "Tier-2 cycle-missing detector row. Triaged 2026-08-24T14:05Z: the cycle's two claimed anomalies did not survive source verification (A-29 cluster = market-hours stand-down, A-29b = known name-join gap, both already owned). This row is ALSO the concrete instance of the V1 null-tag defect - it carries audit_cycle_tag:null, which is why V1's independent re-read returned 0 for a row that is present and committed. Filed as FIX-AUDIT-OUTPUT-CONTRACT-V1-NULL-AUDITCYCLETAG-JOIN-ALWAYS-ZERO."
       }
     ],
     "last_triaged_at": "2026-08-24T10:56:41Z",
@@ -3067,8 +3070,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-08-24T01:36:29Z",
-    "_updated_by": "po (triage 2026-08-24 — signoff note self-correction)",
+    "_updated_at": "2026-08-24T14:05:00Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -5542,7 +5545,9 @@
         "created_at": "2026-08-23T08:12:24Z",
         "created_by": "po",
         "source": "po-triage-20260823T0811Z review-secondary-drain + step1 inbox drain (19 envelopes)",
-        "updated_at": "2026-08-23T08:14:22Z"
+        "updated_at": "2026-08-24T14:09:35Z",
+        "po_ruling_20260824T1405": "PO 2026-08-24T14:05Z - CORROBORATING EVIDENCE THAT WIDENS THIS ROW'S SPEC.\n\nThe escalation into this row proposed that the 2026-08-24 five-cron ~5h cluster (vpsProxyWatchdog, priceUpdateWatchdog, vnIndexRefresh, alertScanParallel, taAlertNotifier) was a single outage/suspension window - reasoning that five independent crons cannot fail simultaneously to within 0.1h, and that this host has a confirmed multi-day-suspension history.\n\nI TESTED THAT HYPOTHESIS AGAINST cron_job_runs AND REJECTED IT. The four resolvable jobs each completed their FULL normal daily run count on 2026-08-24 (vnIndexRefreshJob 84, vpsProxyWatchdogJob 42, alertScanParallelJob 28, taAlertNotifierJob 28 - identical to 2026-08-12/13/14) and stopped at their designed session-close times 08:45/08:50/08:55 UTC. Nothing was missed. There was no outage on 2026-08-24.\n\nCONSEQUENCE FOR THIS ROW - THIS IS THE POINT: a TWO-class discriminator (outage-window vs genuinely-dead-cron) is NOT sufficient. It would still misclassify this cluster, because the cluster is a THIRD class: a market-hours-scoped schedule whose long quiet window is by design. Any discriminator built under this row must separate at least three classes:\n  (1) total-outage window - fleet-wide, ALL jobs, zero rows (the 2026-08-19/20/21 shape: no cron rows at all, 08-17/08-18 truncated to 42 and 154 runs vs ~3150 normal);\n  (2) genuinely dead cron - one job silent while its peers stay healthy (the ragFtsRebuildCron shape);\n  (3) schedule-envelope quiet period - full daily complement completed, then a designed stand-down (the 2026-08-24 shape).\n\nWHY CLASSES 1 AND 3 ARE THE HARD PAIR: both produce a SYNCHRONISED multi-cron gap, which is exactly the signature that makes '5 crons at once' look alarming. Age-since-last-fire cannot separate them - it is identical in both. The separator that actually worked here was 'did each job complete its NORMAL DAILY RUN COUNT before going quiet' - a completed-complement test, not an age test. Recommend that as the discriminator primitive: compare today's per-job run count against that job's own recent full-day baseline; complement met => class 3 (benign), complement truncated fleet-wide => class 1, complement truncated for one job while peers are complete => class 2.\n\nClass 3 is owned by FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL (task_board.backlog[328], P1) - coordinate, do not duplicate. The full measurement backing this ruling is in that row's COLD detail entry: docs/data/orch/archive/backlog-detail.json#FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL, field po_ruling_20260824T1405 (it is in cold, not inline, because that row is over the row-prose ceiling).\n\nFIFTH NAME IS NOT A CRON AT ALL: priceUpdateWatchdog has ZERO rows under any %priceUpdate% match in cron_job_runs - the A-29b unresolved-join class owned by FIX-CRONSTATUS-STATICMAP-MISSING-9-PAIRS (task_board.backlog[436]).",
+        "updated_by": "po"
       },
       {
         "id": "FIX-LAUNCHD-ACK-LEDGER-DEAD-TRACKEDBY-AND-LANE-RESOLUTION-FP",
@@ -11875,7 +11880,7 @@
         "baseline_pass": true,
         "created_at": "2026-08-08T09:38:16Z",
         "created_by": "po",
-        "updated_at": "2026-08-08T09:43:58Z",
+        "updated_at": "2026-08-24T14:08:34Z",
         "updated_by": "po",
         "source": "router escalation 2026-08-08T09:35Z (3rd occurrence), preceded by signal_queue rows router-20260808T060936-a30dedup (06:09Z) and router-20260808T074021Z-a30dedupconfab (07:40Z), both status=READ with no fix row minted. PO re-derived the mechanism from source rather than accepting the escalation's own framing — see po_retarget field.",
         "origin_signal_id": "sys-20260808T093529-7c80",
@@ -11897,7 +11902,8 @@
         ],
         "po_retarget_20260808T0938Z": "PO DELIBERATELY RE-TARGETED THIS ROW AWAY FROM THE ESCALATION'S OWN PROPOSAL. The router asked for (a) a convergence-search step added to docs/agents/system-auditor/flow/main.md and (b) standardising the A-30 key format. Both are REJECTED AS WRITTEN, for reasons that are load-bearing on how this gets implemented.\n\nON (b) — THERE IS NOTHING TO STANDARDISE. The format is already standardised, in writing, with zero free-text slots: tier1-probe.md:300 spells out microservice_degraded:<service_id>:<A-xx> literally, and the resulting canonical key microservice_degraded:rag-service:A-30 is ALREADY IN THE LEDGER. pdf-extractor follows it correctly. The gap is not a missing decision, it is a missing ENFORCEMENT POINT. Minting a 'decide the format' task would produce a second document saying what the first document already says.\n\nON (a) — A 4TH PROSE INSTRUCTION IS THE KNOWN-FAILED FIX. The 09:35Z cycle was directly, explicitly briefed by the router's spawn prompt to search for and converge onto an existing key before minting, and it minted variant #9 regardless. That is the decisive experiment and it has already been run: prose aimed at this LLM caller does not hold this invariant. Adding a convergence step to a flow doc would be the third detection-layer patch for a defect whose actuator is one shell script that every single emit already passes through. Per feedback_recurring_detection_vs_recurring_failed_fix and the project's fix-the-root-cause rule, the fix belongs at the choke point.\n\nON THE DASHBOARD HALF OF (a) — IT WOULD CONTRADICT A DOCUMENTED CONTRACT, DO NOT IMPLEMENT IT. The router proposed making the pre-mint search grep docs/data/DASHBOARD.md OPEN rows by service+dimension substring and fold into an existing row. But main.md:1161 and :1181 both state explicitly that a DASHBOARD row is appended on EVERY non-ABORT marker INCLUDING SKIP-dedup — 'a known/repeated finding still gets a fresh DASHBOARD row; only the BUG Telegram is dedup-gated'. One row per observation is the DESIGNED behaviour of that artifact; it is the append-only observation log, not a deduplicated issue tracker. The ~10 A-30 rag-service rows on DASHBOARD.md are therefore CORRECT output, not a symptom. Folding them would delete the time series. If DASHBOARD.md's append-always contract is itself wrong, that is a separate architect-owned design question about that artifact's purpose — it is explicitly OUT OF SCOPE here and must not be smuggled in.\n\nWHAT SURVIVES FROM THE ESCALATION: the observation itself, which was accurate and jq-verified, and the judgement that two soft signals sitting unactioned warranted a real row rather than a third passive note. That judgement was correct.",
         "po_not_a_duplicate_of_20260808T0938Z": "Grep-confirmed against every lane before minting; three near neighbours, all genuinely different bugs, none deduped into: (1) FIX-AUDIT-OUTPUT-CONTRACT-V4-V5-DEDUPSKIP-DENOMINATOR-FALSE-VIOLATION (backlog, P1) — compares a NEW-only tally against an ALL-emissions counter; that is about COUNTING emissions, this is about the KEY that decides whether an emission happens. Note the interaction though: while keys keep drifting, every cycle looks like a fresh finding, so that row's dedup-skip denominator is never even exercised on this family. (2) FIX-DEDUPCHECK-MATCHEDTASKID-UNANCHORED-SUBSTRING-MISLABEL (backlog, P2) — scripts/db-integrity-dedup-check.sh emitting a wrong matched_task_id LABEL; different script, different artifact, label-only. (3) FIX-AUDITOR-DEDUP-TASKBOARD-PRECHECK-NOT-ENFORCED — cold-evicted, and it governed the DATA-tier's task-board precheck, never the ledger key grammar.",
-        "verification_gate": "(a) Paste the AC-7 26-key replay table. (b) Show scripts/emit-audit-signal.test.sh green in full, with the three AC-6 cases named in the output. (c) Show the AC-5 migration's before/after `jq 'keys|length'` on the ledger and prove exactly one rag-service A-30 key and one mcp-server A-30 key remain. (d) READ-ONLY ON EFFECTS during verification: no BUG Telegram may be sent by any test run — use the existing test sink. (e) A system-auditor cycle may be running concurrently: do NOT edit docs/agent-memory/notebooks/system-auditor.md, and take the ledger write only via the migration script with a mtime CAS re-read."
+        "verification_gate": "(a) Paste the AC-7 26-key replay table. (b) Show scripts/emit-audit-signal.test.sh green in full, with the three AC-6 cases named in the output. (c) Show the AC-5 migration's before/after `jq 'keys|length'` on the ledger and prove exactly one rag-service A-30 key and one mcp-server A-30 key remain. (d) READ-ONLY ON EFFECTS during verification: no BUG Telegram may be sent by any test run — use the existing test sink. (e) A system-auditor cycle may be running concurrently: do NOT edit docs/agent-memory/notebooks/system-auditor.md, and take the ledger write only via the migration script with a mtime CAS re-read.",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-EMITSIGNAL-DEDUPKEY-GRAMMAR-UNVALIDATED-CALLER-FREETEXT-DEFEATS-7D-WINDOW"
       },
       {
         "id": "FIX-DEVTEAM-READYLANE-DISPATCH-GUARD-NO-REGRESSION-TEST",
@@ -12167,7 +12173,7 @@
         "next_agent": "dev-mcp-server",
         "created_by": "po",
         "created_at": "2026-08-09T02:48:45Z",
-        "updated_at": "2026-08-14T18:43:16Z",
+        "updated_at": "2026-08-24T14:08:34Z",
         "supervised": false,
         "depends_on": null,
         "blocks": null,
@@ -12179,11 +12185,12 @@
         "not_blocking": "P2 not P1 — pure observability/detector defect, zero production data loss: every job it maligns is in fact firing on schedule. Severity is the false-alarm cost and the masking of real gaps.",
         "origin": "PO escalation triage 2026-08-09 (router session 165f4245), from system-auditor Tier-2 A-29 CRITICAL + ops investigation commit 02b456b4d",
         "status_note": "\n[po/triage-20260811T1431Z] LIKELY FALSE-POSITIVE PRODUCER FOR A LIVE CRITICAL ALERT - EVIDENCE ATTACHED, DELIBERATELY NOT MINTED AS A SEPARATE INCIDENT. BUG channel carries an unresolved CRITICAL from ops-diagnostics (report id 4561, created 2026-08-09T02:38:51Z): \"CRITICAL cron scheduler partial failure: 23/90 jobs stopped at 2026-08-07 08:50 UTC, still MISSED post-rebuild (2026-08-08 16:59:58Z). Not the double-registration bug. Container likely crashed at exact cut-off time.\" Three independent points match THIS row's known defect rather than a real outage: (a) the count is 23, exactly the \"23 healthy crons\" this row says Layer-A misreports; (b) the label is MISSED/STALE, exactly this row's misclassification; (c) the observation window is a weekend - 2026-08-08 was a Saturday and the report was filed 2026-08-09, a Sunday - and this row's defect is specified as firing \"every weekend\". PO is NOT declaring the alert false on that correlation alone (see feedback_stale_log_text_read_as_live_failure): the correct disposition is that ops-diagnostics spent a CRITICAL escalation, and is still holding an open investigation, on output from a detector already known to be schedule-blind. That makes this row's blast radius larger than \"a cosmetic API misreport\": it is manufacturing CRITICAL incidents and consuming diagnostic effort. DISCRIMINATOR for whoever takes this row, decisive and cheap: re-read GET /api/cron-status on a WEEKDAY (today, 2026-08-11, is a Tuesday). If the same ~23 jobs now report healthy with no intervening fix, the 08-07/08-08 CRITICAL was this false positive and ops-diagnostics' investigation can be closed; if they are still MISSED on a weekday, there is a real stopped-cron outage underneath and it must be split into its own P0 row. Do not close either way without running that check.\n\nCORRECTION APPENDED BY THE SAME AUTHOR, SAME TICK — THE DISCRIMINATOR ABOVE WAS ALREADY RUN TODAY AND I DID NOT KNOW IT WHEN I WROTE IT. docs/agent-memory/notebooks/po.md, section 2026-08-11T13:12Z (tick 12:37Z), line 44: \"Declined to re-escalate telegram 4561 (23/90 crons stopped, 08-07): self-recovered to 8 stale/1 missed/72 on-time.\" So the weekday re-read I prescribed above has already happened, and its answer is that the 23 are NOT still MISSED — which is the outcome the weekend-false-positive hypothesis predicts. Treat the hypothesis as SUPPORTED, not merely proposed, and treat report 4561 as closable. The genuinely open residual from that same peer observation is different and smaller: 72 on-time + 8 stale + 1 missed = 81, not 90, i.e. 9 crons are unaccounted for in the status output entirely, which the 12:37Z tick already routed as evidence for FIX-AUDITOR-A29-UNEXECUTABLE-SPEC-SILENT-JOIN-DROP. Nothing further is owed by THIS row for the 9-cron gap. What this row still owns unchanged is the schedule-blind weekday/weekend classification itself, and the new point stands: it cost ops-diagnostics a CRITICAL escalation and an open investigation.\n | 2026-08-11 PO: P1 (was P2). Storm #2 refuted 8/8 live. Reminder from this row's own consumer_impact: do NOT patch system-auditor A-29 to compensate — A-29 correctly consumes GET /api/cron-status .status/.reason verbatim per docs/agents/system-auditor/flow/main.md Cron Fire Check; the endpoint is the defect.\n[po/triage-20260812T0000Z] OCCURRENCE 3 — CLEANEST PROOF YET, no new mint. Live /api/cron-status 2026-08-11T23:5xZ: vpsProxyWatchdog cron_expr='*/10 2-8 * * 1-5', expected_last_fire=2026-08-11T08:50:00Z, last_fire=2026-08-11 08:50:00 — the job fired EXACTLY at its own computed expected_last_fire and is STILL labelled STALE with reason 'quá hạn 15.1h (ngưỡng 1.5x = 0.3h)'. That is this row's defect isolated to a single record: the ladder uses raw age vs cadence and discards the expected_last_fire sitting in the same object. Folded here this tick: vpsProxyWatchdog, bctcReparseJob, taAlertNotifier, priceUpdateWatchdog, vnIndexRefresh, brokerSanctionsSweep, ragFtsRebuildCron (7 window-closed FPs). NOT folded: taAlertScan + bbAlertScan — their last_fire is 109 days BEFORE expected_last_fire, which this ladder bug cannot manufacture; split out to FIX-CRON-ALERTSCAN-CONFIG-KEYS-ORPHANED-BY-PARALLEL-WRAPPER.",
-        "updated_by": "po/triage-20260811T1431Z",
+        "updated_by": "po",
         "occurrence_count": 3,
         "occurrence_2_20260811": "SECOND STORM IN 2 DAYS. system-auditor emitted 8 more A-29 findings at 2026-08-11T18:22Z (reports 4686-4693: 6 CRITICAL + 2 WARN) to the BUG channel. PO refuted ALL 8 live against cron_job_runs inside vn-market-intelligence-mcp-mcp-server-1 (docker exec bun bun:sqlite, readonly). 8/8 map exactly onto sub-defects THIS ROW ALREADY NAMES, and 7 of the 8 job names are named verbatim in its own 2026-08-09 evidence field: (a) AC-1 schedule-blind age ladder — vpsProxyWatchdogJob last 2026-08-11 08:50:00, price-update-watchdog 08:50:00, vnIndexRefreshJob 08:55:00, taAlertNotifierJob 08:45:01; all four are market-hours cron ('*/N 2-8 * * 1-5') and their 2026-08-11 day-profile is BYTE-IDENTICAL to 2026-08-07 and 2026-08-10 (n=42/42/84/28 respectively, first fire 02:00:0x, last fire at the window edge). A 9.4-9.6h 'staleness' at 18:22Z is the overnight gap, i.e. correct behaviour, graded against a flat 0.1-0.4h 24/7 threshold. (b) AC-4 config-key enumeration — taAlertScanJob and bbAlertScanJob each have exactly 27 runs spanning 2026-04-23..2026-04-24 and NOTHING since, because they were merged into alertScanParallelJob (first run 2026-04-27 02:00:00, 1644 runs, last 2026-08-11 08:45:00, still healthy). They survive only as CRONS config keys at cronConfig.ts:89-92 with no registration of their own; the '2625.6h MISSED' figure is arithmetically exact and semantically meaningless. (c) AC-4 env-gate — ragFtsRebuildCronJob 2 runs (2026-07-19, 2026-07-20) then off by design (CRON_RAG_FTS_REBUILD_ENABLED default-false per ALPHA-S2-RAG-FTS-CRON-SAFETY-GATE); must report DISARMED, not WARN. (d) AC-3 dom/dow OR-vs-AND — brokerSanctionsSweep 4 runs, last 2026-07-31 08:00:01, real next fire 2026-08-28, so 274.4h-vs-36h is the OR-semantics artefact this row already documents. ZERO genuine cron gaps in this batch (the one real gap from the 08-09 snapshot, monthlySignalQualityAudit, is not in it).",
         "reprice_rationale_20260811": "P2->P1 on RECURRENCE COST, not on blast radius — the not_blocking note stays true (every maligned job is firing on schedule, zero production data loss). What changed: this detector defect has now consumed two full PO triage cycles 2 days apart and put 6 CRITICAL rows on the BUG channel that a human reading that channel cannot distinguish from a real scheduler death. It also actively masks: the one genuinely stalled item in today's set, ragFtsRebuildCron, is real-but-deliberate, and any FUTURE real gap in these 8 names is now pre-classified as noise by two consecutive PO refutations. Priority reflects the alarm-channel poisoning, which compounds per storm.",
-        "po_fold_20260814T1841Z": "BLAST RADIUS IS WIDER THAN THIS ROW'S TITLE — corrected by PO live check, not relayed. Title scopes the defect to '23 healthy crons ... every weekend'. It also fires EVERY WEEKDAY on market-window-bounded crons. 2026-08-14 (Friday) 18:39Z, GET /api/cron-status returned STALE for all five of vpsProxyWatchdog (`*/10 2-8 * * 1-5`), priceUpdateWatchdog (`*/10 2-8 * * 1-5`), alertScanParallel (`*/15 2-8 * * 1-5`), taAlertNotifier (`*/15 2-8 * * 1-5`), vnIndexRefresh (`*/5 2-8 * * 1-5`) — and in every one of the five, last_fire == expected_last_fire EXACTLY (08:50/08:50/08:45/08:45/08:55, last_status=success), i.e. each fired precisely at the final slot of its own daily window and is not due again until Monday 02:00Z. classifyCronLiveness() is measuring elapsed-since-last-fire against the intra-window interval instead of against the next scheduled slot, so every window-bounded cron self-labels STALE from ~09:00Z to ~02:00Z next weekday: ~17h of false CRITICAL per weekday, per job. CONSUMER COST, why this is now worth more than P1-in-a-queue: system-auditor A-29 consumes this field verbatim, so these 5 false STALEs were emitted as 5 CRITICAL signal_queue rows to=po on the 16:00Z Tier-2 cycle (sys-20260814T160000..160004-a29-*), and the same 5 were named in a bug-channel telegram (message_id 5302) as evidence of a live incident. This row is upstream of a recurring false-CRITICAL pager path, not just a dashboard cosmetic. ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD is the adjacent weekday-only-job row; check whether one schedule-aware fix subsumes both."
+        "po_fold_20260814T1841Z": "BLAST RADIUS IS WIDER THAN THIS ROW'S TITLE — corrected by PO live check, not relayed. Title scopes the defect to '23 healthy crons ... every weekend'. It also fires EVERY WEEKDAY on market-window-bounded crons. 2026-08-14 (Friday) 18:39Z, GET /api/cron-status returned STALE for all five of vpsProxyWatchdog (`*/10 2-8 * * 1-5`), priceUpdateWatchdog (`*/10 2-8 * * 1-5`), alertScanParallel (`*/15 2-8 * * 1-5`), taAlertNotifier (`*/15 2-8 * * 1-5`), vnIndexRefresh (`*/5 2-8 * * 1-5`) — and in every one of the five, last_fire == expected_last_fire EXACTLY (08:50/08:50/08:45/08:45/08:55, last_status=success), i.e. each fired precisely at the final slot of its own daily window and is not due again until Monday 02:00Z. classifyCronLiveness() is measuring elapsed-since-last-fire against the intra-window interval instead of against the next scheduled slot, so every window-bounded cron self-labels STALE from ~09:00Z to ~02:00Z next weekday: ~17h of false CRITICAL per weekday, per job. CONSUMER COST, why this is now worth more than P1-in-a-queue: system-auditor A-29 consumes this field verbatim, so these 5 false STALEs were emitted as 5 CRITICAL signal_queue rows to=po on the 16:00Z Tier-2 cycle (sys-20260814T160000..160004-a29-*), and the same 5 were named in a bug-channel telegram (message_id 5302) as evidence of a live incident. This row is upstream of a recurring false-CRITICAL pager path, not just a dashboard cosmetic. ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD is the adjacent weekday-only-job row; check whether one schedule-aware fix subsumes both.",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL"
       },
       {
         "id": "FIX-DRS-SWEEP-001-EFFECTIVE-FILES",
@@ -17189,6 +17196,98 @@
         "title": "PO DECISION on the code-janitor escalation asked twice: the team-tool-recheck writer has been dead since 2026-06-23 — RETIRE it, do not replace it",
         "acceptance": "AC-1 PO RULES RETIRE. A writer dead for ~2 months with no consumer complaint in that window has demonstrated it is not load-bearing; replacing it would re-introduce a maintenance surface to produce data nobody has missed for 62 days. AC-2 before deleting, confirm the no-consumer premise by grep — if any live flow actually reads its output, STOP and return to PO, because that would falsify the reasoning above rather than merely complicate the cleanup. AC-3 remove the dead writer and any orphaned artifacts/state files it left, using an explicit pathspec. AC-4 record what was removed so the decision is auditable. AC-5 the ask was 'replace-vs-retire decision needed' and it was escalated TWICE (cj-20260823T163141 and cj-20260823T223004, ~7h apart) with no answer, because it was addressed into the READ-without-delivery hole — that transport defect is tracked separately at FIX-SIGNALQUEUE-DRAIN-MARKS-PO-ROWS-READ-WITHOUT-DELIVERING-THEM-TO-PO.",
         "evidence": "Two identical LOW system-issue signals from code-janitor, 2026-08-23T16:31:41Z and 2026-08-23T22:30:04Z, both to=po, both marked READ without ever being delivered."
+      },
+      {
+        "id": "FIX-AUDIT-OUTPUT-CONTRACT-V1-NULL-AUDITCYCLETAG-JOIN-ALWAYS-ZERO",
+        "type": "FIX",
+        "title": "audit-output-contract V1 scopes its independent signal_queue re-read to an EXACT audit_cycle_tag match (L549-550), but 8 of 31 system-auditor rows carry audit_cycle_tag:null - so the join returns 0 for a row that IS present and committed, and V1's 'signal_queue_rows_written mismatch' wording misdirects toward a lost write",
+        "zone": "cross-service/",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "size": "S",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": "scripts/audit-output-contract.test.sh must stay green; add cases for (a) a null audit_cycle_tag row inside the cycle window and (b) repeat _record_violation_durable calls within one cycle_tag.",
+        "owner": "po",
+        "source": "po triage 2026-08-24T14:05Z - router escalation after a tier-2 system-auditor cycle self-reported 2 anomalies that did not survive source verification. V1 is the only output-contract check with no board row; V3 (FIX-AUDIT-OUTPUT-CONTRACT-V3-DASHBOARDROWS-NO-INDEPENDENT-CROSSCHECK, task_board.backlog[307]) and V4/V5 (FIX-AUDIT-OUTPUT-CONTRACT-V4-V5-DEDUPSKIP-DENOMINATOR-FALSE-VIOLATION, task_board.backlog[300]) both do.",
+        "created_at": "2026-08-24T14:05:00Z",
+        "created_by": "po",
+        "files": [
+          "scripts/audit-output-contract.sh",
+          "scripts/audit-output-contract.test.sh",
+          "docs/data/auditor-output-contract-violations.json"
+        ],
+        "observable_defect": "SCOPED TO THE OBSERVABLE ONLY - the emit-site that leaves audit_cycle_tag null is NOT identified here and must NOT be assumed. What is established: (1) when --cycle-tag is supplied, scripts/audit-output-contract.sh:549-550 computes independent_sqr as [.signal_queue.rows[] | select(.audit_cycle_tag == $tag)] | length; (2) row task_board-adjacent .signal_queue.rows[] id=sys-20260824T135127-56bd (ts 2026-08-24T13:51:27Z, from=system-auditor, to=po, type=auditor_cycle_missing, provenance=detector, dedup_key=auditor-cycle-missing:tier2:2026-08-24T12:00Z) carries audit_cycle_tag:null; (3) the cycle passed --cycle-tag cron:auditor-t2:2026-08-24T12:00Z. null == '<tag>' is false, so independent_sqr is necessarily 0. The row is present AND committed - this is a null-field defect, NOT a lost write.",
+        "evidence": "V1 has fired 12x since 2026-08-08 in THREE mutually contradictory directions, all verified in docs/data/auditor-output-contract-violations.json (68 entries total): narrated=1/independent=0 (2026-08-08T06:36:34Z, 2026-08-14T02:35:52Z, 2026-08-24T13:52:45Z, 2026-08-24T13:53:28Z); narrated=1/independent=2 (2026-08-22T23:11:30Z); narrated=4/independent=2 (2026-08-23T07:56:24Z + 07:57:08Z); narrated=0/independent=2 (2026-08-23T21:37:51Z, 21:38:32Z, 21:38:39Z, 21:38:46Z, 21:39:11Z - FIVE entries in an 80-second span under ONE cycle tag cron:auditor-t1:2026-08-23T21:30Z). Tag-null population: 31 signal_queue rows from=system-auditor, 8 null / 23 tagged. HYPOTHESIS TESTED AND REJECTED: provenance does NOT predict nullness - provenance=detector is 28 rows of which only 5 are null (23 tagged), and the 3 rows with no provenance field are all null. Do not build on a provenance-based theory.",
+        "secondary_defect": "docs/data/auditor-output-contract-violations.json entries have NO dedup key. _record_violation_durable (scripts/audit-output-contract.sh:333-342) appends {ts, cycle_tag, from, detail} unconditionally and truncates with .[-200:], so a re-invoked checker duplicates rows verbatim. Confirmed live: the 5-in-80-seconds V1 cluster on 2026-08-23T21:3xZ, and V3 firing twice per cycle on both 2026-08-24T04:12:18Z/04:12:33Z and 2026-08-24T13:52:46Z/13:53:28Z. This inflates every violation-frequency count read off that file.",
+        "ac": [
+          "AC-1: V1 must distinguish 'no row matched the tag' from 'rows exist in the cycle window but carry a null/absent audit_cycle_tag'. The second case must NOT be reported with the current 'signal_queue_rows_written mismatch' wording.",
+          "AC-2: when --cycle-tag is supplied and the exact-match join yields 0 while the from+ts-window fallback yields >0, V1 must name the null-tag rows by id rather than assert a count mismatch.",
+          "AC-3: _record_violation_durable must carry a dedup key (at minimum cycle_tag + check-id + detail-hash) so one condition in one cycle produces one entry.",
+          "AC-4: re-running the checker twice on the same markers file must not grow docs/data/auditor-output-contract-violations.json.",
+          "AC-5: the specialist identifies the actual emit site(s) leaving audit_cycle_tag null and states the finding explicitly - it is deliberately NOT asserted in this row."
+        ],
+        "updated_at": "2026-08-24T14:08:34Z"
+      },
+      {
+        "id": "CLEAN-GITIGNORE-MISSING-TICKVERDICT-REFINEPROBE-EPHEMERAL-PATTERNS",
+        "type": "CLEAN",
+        "title": "docs/data/.tick-verdict-*.json, .tick-verdict-*.err and .refine-probe-*.json are absent from .gitignore's purpose-built 'ephemeral runtime/generated files in docs/data/' section - 38 cowork-tick scratch files are accumulating untracked-but-not-ignored and noising every git status probe",
+        "zone": "cross-service/",
+        "priority": "P3",
+        "status": "BACKLOG",
+        "size": "S",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": true,
+        "owner": "po",
+        "source": "po triage 2026-08-24T14:05Z",
+        "created_at": "2026-08-24T14:05:00Z",
+        "created_by": "po",
+        "files": [
+          ".gitignore"
+        ],
+        "evidence": "Live count at 2026-08-24T14:00Z: 19x docs/data/.tick-verdict-*.json + 18x docs/data/.tick-verdict-*.err + 1x docs/data/.refine-probe-*.json = 38 files, all reported by `git status --porcelain docs/data/`. Content is cowork tick residue, e.g. {\"verdict\":\"WORK\",\"tick\":\"2026-08-24T09:15Z\",\"drift_min\":0,\"slots\":[...]}; the .err siblings are empty. The .gitignore section that should own them already exists and already lists six sibling docs/data/ ephemerals (alert-verdicts.json, daily-dashboard.json, md-dependency-graph.html, pressure-state.json, vn-market-tasks.json, BATCH_S_1849_SUMMARY.md) plus commit-mutex.json and db-integrity-history.json.",
+        "ac": [
+          "AC-1: add docs/data/.tick-verdict-*.json, docs/data/.tick-verdict-*.err and docs/data/.refine-probe-*.json to the EXISTING 'ephemeral runtime/generated files in docs/data/' section - do not open a new section.",
+          "AC-2: `git status --porcelain docs/data/ | grep -cE '.tick-verdict-|.refine-probe-'` returns 0 afterwards.",
+          "AC-3: verify none of the 38 files is currently git-TRACKED before ignoring (a tracked file needs `git rm --cached`, not just a pattern) - this is the half-ship failure recorded on FIX-SIGNALS-PROCESSED-UNTRACK-GITIGNORE (task_board.backlog[340])."
+        ],
+        "updated_at": "2026-08-24T14:08:34Z"
+      },
+      {
+        "id": "FIX-BROAD-GITADD-LEAVES-STAGED-RESIDUE-DESPITE-CORRECT-COMMIT-PATHSPEC",
+        "type": "FIX",
+        "title": "A correct explicit commit pathspec protects only ITS OWN commit - it does not unstage what a preceding broad `git add` put in the index. Live 2026-08-24: an agent staged 118 files / 1.6 MB, committed correctly with an explicit pathspec, and left the whole index loaded for the next committer in the session",
+        "zone": "cross-service/",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "size": "S",
+        "next_agent": "developer",
+        "supervised": false,
+        "plan_only": false,
+        "baseline_pass": "scripts/git-hooks/pre-commit.test.sh must stay green.",
+        "owner": "po",
+        "source": "po triage 2026-08-24T14:05Z - real incident today, defused by the router with `git reset --mixed` (verified: index 0 files, HEAD unchanged at 5d0381004, working tree intact).",
+        "created_at": "2026-08-24T14:05:00Z",
+        "created_by": "po",
+        "files": [
+          "docs/policies/commit-convention.md",
+          "docs/policies/dev-standards.md",
+          "scripts/git-hooks/pre-commit"
+        ],
+        "evidence": "The existing controls all address a DIFFERENT shape and none of them catches this one. FIX-COMMIT-PATH-PEER-INDEX-SWEEP-GUARD-HOOK (task_board.done_verified[37]) and the sweep-guard in scripts/git-hooks/pre-commit fire only on a BARE commit - a pathspec-scoped commit never trips them, so the residue is left silently. FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC (task_board.archive[13]) is CANCELLED and is the inverse case (peer edits swept INTO the commit). FIX-COMMIT-SWEEP-VICTIM-SELF-DETECT (task_board.backlog[196]) is victim-side detection after the fact. FIX-SWEEPGUARD-BARE-COMMIT-REPEAT-AFTER-BLOCK-ROUTER-SESSION-20-WARNS (task_board.ready[63], P0) is guard-side escalation handling. The uncovered gap is the STAGING act itself.",
+        "correction_to_intake": "The escalation that produced this row stated the sweep-guard was at 2 warns against threshold 3. MEASURED at source instead: .git/sweep-guard.log has SIX warns for this coordination session (actor=7fd9c60a-9854-4589-9e98-e4c5e7e9168d, all on 2026-08-24) since the baseline 2026-07-31T04:04:07Z in .git/sweep-guard.escalation-baseline, against escalate_threshold default 3 (scripts/git-hooks/pre-commit:808). The session is therefore ALREADY past escalation: the next bare commit from it gets ESCALATED REJECT (pre-commit:887), not a warning. Note the actor id is $CLAUDE_CODE_SESSION_ID and the budget is POOLED across every agent spawned in the session.",
+        "ac": [
+          "AC-1: docs/policies/commit-convention.md states the rule explicitly - stage ONLY what is being committed in that same command; prefer `git commit -m <msg> -- <paths>` with no prior `git add`, and never a bare/broad `git add` followed by a scoped commit.",
+          "AC-2: docs/policies/dev-standards.md carries the same rule or an authoritative pointer to AC-1, so agents reading either doc land on it.",
+          "AC-3: an agent that must stage first is instructed to leave the index empty afterwards (`git reset --mixed` or `git restore --staged`), and to verify with `git diff --cached --name-only | wc -l` == 0.",
+          "AC-4: DECIDE AND RECORD whether the pre-commit hook should also warn when a PATHSPEC-scoped commit leaves a non-empty index behind. It is the only mechanical catch for this shape; today it is structurally silent because the sweep-guard branch is gated on bare-commit detection.",
+          "AC-5: no change to the bare-commit sweep-guard's existing behaviour or threshold."
+        ],
+        "updated_at": "2026-08-24T14:08:34Z"
       }
     ],
     "closed_sprints": [
@@ -24055,7 +24154,7 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-24T13:16:43Z",
+    "last_triaged_at": "2026-08-24T14:05:00Z",
     "last_triaged_by": "po",
     "in_progress": []
   },

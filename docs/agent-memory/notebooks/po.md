@@ -1,5 +1,33 @@
 # PO Notebook
 
+## 2026-08-24T14:05Z — auditor cycle residue: 1 CRITICAL refuted at source, 3 mints, 3 rows fed
+
+Router escalation after a tier-2 system-auditor cycle claimed **2 new anomalies + `dedup_skipped=0`**. Neither anomaly survived verification. **9 cited row ids resolved by jq path with a `task_board.` prefix — all 9 real and all 9 genuinely about their subject.**
+
+### Ruling — the "CRITICAL cron fire-gaps" cluster is neither a cron death nor an outage
+Five crons ~5h overdue to within 0.1h. The escalation read this as ONE host-suspension window. **Measured instead, and both readings are wrong.** In `cron_job_runs` (live `market.db` via `docker exec`, not the host `data/` copy) all four resolvable jobs completed their **full normal daily complement** on 08-24 — vnIndexRefreshJob 84, vpsProxyWatchdogJob 42, alertScanParallelJob 28, taAlertNotifierJob 28, **identical to 08-12/13/14**. Envelope is `first=02:00 last=08:45–08:55 UTC` = the VN session (09:00–15:55 ICT). These are **market-hours-scoped** jobs: between close and next open they are *always* 5–17h "overdue" on a raw age ladder. It is the **designed daily state**, so it is a permanent daily false-CRITICAL — a weekday widening of `FIX-CRON-STATUS-LAYERA-SCHEDULE-BLIND-FALSE-CRITICAL`, not the outage row.
+- 5th name `priceUpdateWatchdog` has **zero** rows under any `%priceUpdate%` — A-29b join gap, already backlog[436].
+- The **real** outage is 08-19/20/21 (no rows) + 08-17/18 truncated (42/154 vs ~3150). It **ended**: 08-22 1215, 08-23 2589, 08-24 2098.
+
+### Found that the brief did not ask for
+- **Outage-vs-stand-down cannot be separated by age** — identical in both. The separator that worked is a **completed-complement test** (did the job finish its normal daily run *count*). Written onto the discriminator row as the recommended primitive, with a 3rd class added.
+- **Sweep-guard is at 6 warns, not 2**, against threshold 3 (`.git/sweep-guard.log`, this session, baseline 07-31). Already **past escalation** — next bare commit is ESCALATED REJECT, not a warning.
+- **Violations file has no dedup key** — `_record_violation_durable` appends unconditionally. V1 fired 5x in 80s under one tag; V3 twice per cycle. Every frequency count read off that file is inflated.
+- **`dedup_skipped=0` explained**: ledger holds **11 keys for 1 condition in 3 grammars**; `morningBriefing` exists under two at once, so it cannot dedup against itself. Recorded on the owning row, no new row minted.
+
+### Minted (3) — all `cross-service/`
+`FIX-AUDIT-OUTPUT-CONTRACT-V1-NULL-AUDITCYCLETAG-JOIN-ALWAYS-ZERO` (P1) · `FIX-BROAD-GITADD-LEAVES-STAGED-RESIDUE-DESPITE-CORRECT-COMMIT-PATHSPEC` (P1) · `CLEAN-GITIGNORE-MISSING-TICKVERDICT-REFINEPROBE-EPHEMERAL-PATTERNS` (P3)
+
+V1 is a **null-field** defect, not a lost write: row `sys-20260824T135127-56bd` carries `audit_cycle_tag:null` and the check joins on exact equality (`audit-output-contract.sh:549-550`), so the join returns 0 by construction. **Refused to assert a root cause** — tested and rejected the provenance hypothesis (`detector` = 23 tagged vs 5 null).
+
+### Mechanical note — prose ceiling blocked the first write
+`orch-apply.sh` aborted the atomic 7-mutation write: 2 co-mutated rows already exceed `ORCH_ROW_PROSE_CEILING_BYTES=12000`. Re-routed their evidence to the **cold** store and touched hot with `detail_ref`/`updated_at`/`updated_by` only (all in `STRUCTURAL_FIELDS`) → zero prose growth, write landed. Under-ceiling rows kept their evidence inline.
+
+### Carry-over
+- **Do not re-mint the A-29 cluster.** Any future ~5h five-cron gap after 08:55Z is the session stand-down. Check the daily run *count* first.
+- V1 row's AC-5 asks the specialist to name the null-tag emit sites — deliberately unresolved, do not let it be answered by assumption.
+- NOT pushed (232+ ahead, deliberate). Board committed by me this tick.
+
 ## 2026-08-24T13:21:23Z — board corrections: tier-1 half-stale P0, orphan-signal class, ack ledger, 86-row READ backlog
 
 Router dispatch: 5 findings + 2 mid-task escalations. **3 of 7 router readings corrected at source.**
