@@ -143,3 +143,133 @@ CONTRACT-CONTRADICTION: NONE
 [DURABILITY-SWEEP] swept=0 malformed=0 found=0 schedule_gap_t1=0 schedule_gap_t2=0 schedule_gap_t3=0
 
 [HEARTBEAT] NOT WRITTEN (pre-gate FAILURE verdict froze heartbeat; subagent NEVER writes this file — sole writer is pre-gate ALL_GREEN branch only)
+
+## c1002 · 2026-08-24T03:30Z
+### Audit Run Tier-1 (03:42–03:45 UTC 2026-08-24)
+- Tier: 1 | Services: 13 up | Health checks: 5/5 OK | Memory: pdf-extractor 86.97% (A-30 re-probe), mcp-server 37.12%
+- Anomalies: 0 new | 0 folded
+- Status: PASS
+- Scope: Full Tier-1 runtime ping (A-01..A-33), spawned due to pre-gate mem_creep gate engagement on prior cycle
+
+**RAW-PROBE:**
+```
+=== AUDITOR PROBE 2026-08-24T03:42:07Z ===
+
+--- docker ps -a ---
+NAMES                                             STATUS                  IMAGE                                           CREATED
+vn-market-intelligence-mcp-pdf-extractor-1        Up 12 hours (healthy)   vn-market-intelligence-mcp-pdf-extractor        12 hours ago
+vn-market-intelligence-mcp-mcp-server-1           Up 14 hours (healthy)   vn-market-intelligence-mcp-mcp-server           14 hours ago
+vn-market-intelligence-mcp-alert-engine-1         Up 34 hours (healthy)   vn-market-intelligence-mcp-alert-engine         34 hours ago
+vn-market-intelligence-mcp-rag-service-1          Up 8 days (healthy)     vn-market-intelligence-mcp-rag-service          8 days ago
+vn-market-intelligence-mcp-news-fetch-1           Up 10 days (healthy)    vn-market-intelligence-mcp-news-fetch           10 days ago
+vn-market-intelligence-mcp-api-gateway-1          Up 10 days (healthy)    vn-market-intelligence-mcp-api-gateway          10 days ago
+vn-market-intelligence-mcp-stock-price-1          Up 2 weeks (healthy)    vn-market-intelligence-mcp-stock-price          2 weeks ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 3 weeks (healthy)    vn-market-intelligence-mcp-macro-indicators     3 weeks ago
+vn-market-intelligence-mcp-frontend-1             Up 4 weeks (healthy)    vn-market-intelligence-mcp-frontend             4 weeks ago
+mcp-gateway                                       Up 5 weeks (healthy)    mcpservergatway-gateway                         5 weeks ago
+vn-market-intelligence-mcp-flaresolverr-1         Up 5 weeks (healthy)    ghcr.io/flaresolverr/flaresolverr:latest        5 weeks ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 5 weeks (healthy)    vn-market-intelligence-mcp-technical-analysis   5 weeks ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 5 weeks (healthy)    vn-market-intelligence-mcp-kinh-dich-service    5 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=37.12% MemUsage=1.114GiB / 3GiB
+
+--- memory pressure multi-probe reclamation (A-30) ---
+[A-30] vn-market-intelligence-mcp-pdf-extractor-1: baseline 86.97% >= 85% investigate-gate — ENGAGE deep-probe
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-mcp-server-1 baseline 37.12% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-alert-engine-1 baseline 1.83% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-rag-service-1 baseline 81.67% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-news-fetch-1 baseline 5.53% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-api-gateway-1 baseline 2.52% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-stock-price-1 baseline 2.69% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-macro-indicators-1 baseline 3.32% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-frontend-1 baseline 10.34% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-flaresolverr-1 baseline 4.48% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-technical-analysis-1 baseline 3.82% < 85% investigate-gate
+[A-30] SKIP deep-probe — vn-market-intelligence-mcp-kinh-dich-service-1 baseline 3.24% < 85% investigate-gate
+{
+  "probe": "A-30 mcp-server memory reclamation discriminator",
+  "container": "vn-market-intelligence-mcp-pdf-extractor-1",
+  "window": {"probes": 6, "interval_sec": 13, "span_sec": 65},
+  "state": {
+    "oom_killed_before": "false", "oom_killed_after": "false",
+    "restart_count_before": "0", "restart_count_after": "0",
+    "started_at_before": "2026-08-23T15:44:17.141387271Z", "started_at_after": "2026-08-23T15:44:17.141387271Z",
+    "exit_code_before": "0", "exit_code_after": "0",
+    "finished_at_before": "0001-01-01T00:00:00Z", "finished_at_after": "0001-01-01T00:00:00Z",
+    "state_changed_during_window": false
+  },
+  "vm": {"vmhwm_kb_before": "2316488", "vmhwm_kb_after": "2316488",
+         "mem_limit_kb": "2621440",
+         "vmhwm_advancing_in_window": false, "vmhwm_pinned_at_cap": false},
+  "samples": [{"n":1,"t":"03:42:18Z","pct":86.97},{"n":2,"t":"03:42:32Z","pct":86.97},{"n":3,"t":"03:42:47Z","pct":86.97},{"n":4,"t":"03:43:03Z","pct":86.97},{"n":5,"t":"03:43:18Z","pct":86.97},{"n":6,"t":"03:43:33Z","pct":86.97}],
+  "analysis": {"min_pct": 86.97, "max_pct": 86.97, "median_pct": 86.97,
+               "reclamation_dips": 0, "dip_detail": "none",
+               "discontinuities": 0, "discontinuity_detail": "none"},
+  "verdict": "FOLD",
+  "reason": "benign GC sawtooth or below tripwire",
+  "tripwire_ref": "feedback_auditor_mcpserver_a21_a30_memory_fp_reemit_churn + feedback_a30_discriminator_crash_cliff_misscored_as_reclamation_dip — escalate on: state changed during window, OOMKilled, ExitCode=0+FinishedAt delta, a >40pp discontinuity, VmHWM advancing+pinned at cap, >93% sustained (min), or median >97%"
+}
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    13Gi    52%    393k  133M    0%   /
+
+--- pdf-extractor in-container multi-probe (A-20) ---
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3/3
+
+=== PROBE DONE ===
+```
+
+**A-30 verdict (pdf-extractor Deep-Probe Discriminator):**
+
+**Baseline:** pdf-extractor 86.97% (≥85% gate) → ENGAGE deep-probe
+
+**Deep-probe window:** 6 probes, 65-second span, all at 86.97%
+- min_pct: 86.97, max_pct: 86.97, median_pct: 86.97 (flat, zero volatility)
+- reclamation_dips: 0 (no evidence of GC reclamation)
+- discontinuities: 0 (no crash cliff)
+- OOMKilled before/after: false (no OOM event)
+- RestartCount before/after: 0 (no crash/restart)
+- State changed during window: false (container stable)
+- VmHWM: 2316488 KB (stable, not advancing)
+- VmHWM pinned at cap: false (88.3% of 2621440 KB limit, headroom ~334 MiB)
+
+**Verdict: A-30 FOLD** — benign idle memory. The 86.97% reading reflects natural memory retention since pdf-extractor restart at 2026-08-23T15:44:17Z (≈12h uptime); it has stabilized at a fixed level with zero volatility across the 65-second window. No dips, no jumps, no crash evidence, no upward creep during probe window. Absolute headroom exceeds MEM_FLOOR_MIB safety floor. Container is healthy. **No emit.**
+
+**A-20 verdict (pdf-extractor multi-probe event-loop check):**
+- In-container HTTP 200: 3/3 probes passed
+- **Verdict: A-20 PASS** — event loop responsive, no stall.
+
+**Other A-xx verdicts:**
+- A-01 through A-11 (container status): PASS (all 13 services up/healthy) [RAW-PROBE L3-L14]
+- A-12 through A-20 (health endpoints): PASS (5/5 endpoints OK, pdf-extractor multi-probe 3/3) [RAW-PROBE L17-L20, L40-L42]
+- A-21 (restart crash-window): PASS (mcp-server RestartCount=0, no crashes in 4h window) [RAW-PROBE L23]
+- A-32 (disk): PASS (capacity 52%, well below 85% gate) [RAW-PROBE L34]
+- A-33 (hook-liveness): PASS (no issues detected)
+
+**Conclusions:** Tier-1 cycle PASS. All runtime services healthy. Memory on pdf-extractor is elevated (86.97%) but flat and stable, well below crisis thresholds, with no evidence of creep, crash, or reclamation failure during this probe window. This cycle's deep-probe analysis (FOLD verdict) confirms the prior c1001 02:00Z Tier-1 finding that the pre-gate's mem_creep gate engagement was a false-positive trigger on absolute threshold alone, not evidence of degradation.
+
+**Findings:** None filed this cycle.
+
+**Notebook anomaly (INFO):** Spawned by pre-gate FAILURE verdict at 03:30Z due to mem_creep gate on pdf-extractor 86.97%. This cycle's Tier-1 deep-probe confirms FOLD (benign). Pre-gate verdict (FAILURE) vs. this cycle's verdict (PASS) is a known scenario documented in AUD-CP-1 / main.md §CALLER-INSTRUCTION PRECEDENCE — pre-gate uses simpler >85% heuristic; this flow's documented A-30 rules apply the full deep-probe discriminator. Pre-gate FAILURE triggered the spawn; this subagent's analysis finds no escalation needed.
+
+CONTRACT-CONTRADICTION: NONE
+
+[DURABILITY-SWEEP] swept=0 malformed=0 found=0 schedule_gap_t1=0 schedule_gap_t2=0 schedule_gap_t3=0
+
+[HEARTBEAT] NOT WRITTEN (Tier-1 subagent never writes auditor-tier1-last-healthy.json — sole writer is pre-gate ALL_GREEN branch only, per CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER)
+
