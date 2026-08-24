@@ -1772,20 +1772,6 @@
         "dedup_key": "launchd_tracking_gap:fleet-push:ABSENT-TASK"
       },
       {
-        "id": "cj-20260823T043141Z",
-        "ts": "2026-08-23T04:31:41Z",
-        "from": "code-janitor",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
-        "severity": "LOW",
-        "status": "triaged",
-        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-23.json",
-        "disposition": "TRIAGED — no mint, decision already exists on the board. code-janitor asked for a replace-vs-retire ruling on the dead team-tool-recheck writer; CLEAN-RETIRE-TEAM-TOOL-RECHECK-WRITER (backlog) already records the PO ruling to RETIRE permanently and not replace it, and FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (backlog) already owns the hardcoded emitter that keeps re-raising it. Fully covered.",
-        "triaged_at": "2026-08-23T08:20:49Z",
-        "triaged_by": "po/triage-20260823T0820Z"
-      },
-      {
         "id": "sys-20260823T075508-5689",
         "ts": "2026-08-23T07:55:08Z",
         "from": "system-auditor",
@@ -22845,7 +22831,7 @@
         "last_served_tick": "2026-08-24T03:58:59Z"
       }
     },
-    "_updated_at": "2026-08-24T04:26:48Z",
+    "_updated_at": "2026-08-24T06:45:46Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -24139,6 +24125,1125 @@
         },
         "createdAt": "2026-08-24T04:25:20Z",
         "drained_at": "2026-08-24T04:25:29Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "9204191094090d8709debc3b1b68fbc36af4dff3671fe02ea6e45d9aceb1d642",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "from": "cowork-team",
+          "to": "po",
+          "type": "cowork-fire",
+          "tick_id": "2026-08-24T04:30:00Z",
+          "fire_time": "2026-08-24T04:30:59Z",
+          "createdAt": "2026-08-24T04:33:25Z",
+          "silent": false,
+          "pressure_mode": "adaptive",
+          "spawned": [
+            "alert-commander-market"
+          ],
+          "errors": [],
+          "batch": {
+            "degraded": false,
+            "max_parallel": 4,
+            "cores": 12,
+            "load_1min": 2.43,
+            "container_vm_headroom_mb": 2449,
+            "batches": 1
+          },
+          "queue_status_census": {
+            "NEW": 1,
+            "OPEN": 6,
+            "READ": 91,
+            "RETRACTED": 7,
+            "new": 1,
+            "triaged": 12,
+            "total": 118
+          },
+          "commits_ahead": 167,
+          "snapshot": {
+            "written": "docs/data/cycle-snapshot-04:32.json",
+            "lookup_tally": {
+              "hits": 2,
+              "misses": 4
+            },
+            "files_present": 27,
+            "prior_day_residue": 14,
+            "latest_promoted": false,
+            "files_present_note": "HH:MM-named files only, counted AFTER this tick's own 04:32 write; cycle-snapshot-latest.json excluded (promotion target, not a residue)"
+          },
+          "findings": [
+            {
+              "id": "SNAPSHOT-PRUNE-DEAD-PRIORDAY-RESIDUE-COLLISION-HAZARD",
+              "severity": "HIGH",
+              "detail": "Snapshot prune is dead: 27 cycle-snapshot-HH:MM.json files present, 14 of them written 2026-08-23, oldest ~19h past the documented 24h prune boundary. Filenames carry HH:MM with no date, so every prior-day residue is a same-minute collision hazard for todays tick; per the known defect a residue makes the 4h gate refuse promotion and set stale_warning=true, forcing the NEXT tick to legacy cadence. cycle-snapshot-latest.json is frozen at tick 00:00 created_at 2026-08-23T00:07:50Z (28h stale). Reachable minutes among residues include :01 :02 :16 :18 :31 :46 :47 which this dispatcher does write."
+            },
+            {
+              "id": "CHEF-INTRADAY-CLUSTER-RULE-CONTRADICTION-SSI-SAMETYPE-ADMITTED",
+              "severity": "HIGH",
+              "detail": "chef-intraday 04:15Z dish: internal contradiction in docs/data/unified-agent-synthesis-2026-08-24-intraday.json. clusters_summary records ticker_convergence as SSI (3x news_mention on FTSE theme) — three signals of ONE type — while the same files stated qualifying_rule is at-least-2-distinct-signal-types-per-ticker (rule text names DXG, not SSI, as the ticker example). conviction_calls[0] then restates the same evidence as SSI: 3-type news convergence and issues MEDIUM/HOLD. SSI is the headline of the FTSE thesis published to MARKET. The same agent correctly rejected the analogous same-type-only case 8h earlier (08-23 evening: 4 bctc_signal same type only -> 0 clusters, DEGRADED). Sector cluster (real_estate DXG+PDR+VHM, 4 signals) does satisfy the at-least-3-same-sector rule and stands."
+            },
+            {
+              "id": "UNIFIED-AGENT-NOTEBOOK-NOT-WRITTEN-AND-10D-GIT-STRANDED",
+              "severity": "HIGH",
+              "detail": "unified-agent notebook was never written for the 04:15Z chef-intraday cycle. docs/agent-memory/notebooks/unified-agent.md mtime 2026-08-23 21:51:51 CEST — 8.5h BEFORE the spawn ran; zero occurrences of the string 2026-08-24 in the file. Agent reported [chef] CLOSE intraday | published | quality=full | clusters=2 and Pipeline complete with no cycle log in existence. Separately git-stranded: last commit to that notebook is 2026-08-14 (10 days, message ends self-commit swept by router); 08-22 and 08-23 evening entries sit uncommitted (60+/36-) and todays synthesis JSON is untracked. Second file at exactly 10 days stranded alongside coverage-state.json, same shape: producer writes, producer does not commit, nothing signals."
+            },
+            {
+              "id": "PREFLIGHT-NEWSIGNALS-BLIND-TO-LOWERCASE-STATUS",
+              "severity": "MEDIUM",
+              "detail": "preflight new_signals counter is blind to the lowercase status variant. Census this tick: NEW=1 (uppercase) plus new=1 (lowercase po-decision-bug5468-2026-08-23T15:27:38Z), yet new_signals=1. Discriminated as a status census rather than an arrival count: the uppercase row sys-20260824T041052-44c9 has ts 04:10:52Z which PREDATES the prior 04:15Z tick, so an arrival-since-last-tick counter would have reported 0. The lowercase row has now survived a sixth drain and is additionally invisible to the dispatchers own signal counter."
+            },
+            {
+              "id": "CHEF-QUALITY-FULL-VERDICT-AGAINST-FOUR-KNOWN-GAPS",
+              "severity": "MEDIUM",
+              "detail": "quality_verdict full (claimed 8/8 sub-checks) recorded alongside four known_gaps including L1_macro_health_not_called_this_cycle and technical_indicators_not_called_this_cycle, with business_context_cited null on 3 of 4 conviction calls and valuation_gate null on 4 of 4. DXG conviction carries PE=66.5x ROE=1.9% in the same sentence as get_bctc_full(DXG) still returns Chua co du lieu BCTC — 36th+ consecutive cycle with zero extracted data; the valuation figures have no stated source."
+            },
+            {
+              "id": "SNAPSHOT-LOOKUP-MISS-4-OF-6-SPAWN-LATENCY-MECHANISM",
+              "severity": "LOW",
+              "detail": "Snapshot lookup miss #4 of 6 attempts. Dispatcher wrote cycle-snapshot-04:17.json at 04:17; alert-commander bootstrapped at 04:19 and looked up cycle-snapshot-04:19.json (absent) -> fell back to direct get_cycle_bootstrap. Two-minute offset, different minute bucket. Mechanism confirmed rather than inferred: a hit requires the spawn to reach bootstrap inside the same 60-second minute the dispatcher wrote in, so hit rate is a function of spawn latency and degrades under load. Fallback works, so the cost is duplicated fetches not wrong data. Tally 2 hits / 4 misses."
+            },
+            {
+              "id": "NO-COLLISION-THIS-TICK",
+              "severity": "INFO",
+              "detail": "Single slot matched (alert-commander-market); one agent, no same-agent multi-slot collision. Next expected undeclared alert-commander collision at 08:00 weekday."
+            }
+          ],
+          "carried_open": [
+            "CADENCE-GATE-LOCKS-HOURLY-CRON-TO-2H (chef-intraday) — filed 04:15Z tick, next predicted skip 05:13",
+            "NON-CANONICAL-MCP-URL-IN-SPAWN-PROMPT (chef-intraday trigger_prompt line 2; Step 5.2 validates line 1 only)",
+            "SIGNAL-ROW-SCHEMA-VARIANCE (ts/summary/payload_ref vs created_at/payload)",
+            "FIX-SIZELINT-* fleet push blocked, two concurrent offenders, board row parked pending PUSH-AUTONOMY-1 user decision"
+          ]
+        },
+        "createdAt": "2026-08-24T04:33:25Z",
+        "drained_at": "2026-08-24T06:00:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "993fb2c4a2a2fb9286483e03e1e5da7e8e14c77b70543ff8d5564981dab36b05",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "from": "cowork-team",
+          "to": "po",
+          "type": "cowork-fire",
+          "createdAt": "20260824T044810Z",
+          "tick": "2026-08-24T04:45Z",
+          "drift_min": 0,
+          "pressure_mode": "adaptive",
+          "silent": false,
+          "spawned": [
+            "alert-commander-market"
+          ],
+          "errors": [],
+          "one_shots": [],
+          "batch": {
+            "degraded": false,
+            "max_parallel": 4,
+            "cores": 12,
+            "load_1min": 1.66,
+            "container_vm_headroom_mb": 2984,
+            "batches": 1
+          },
+          "queue_status_census": {
+            "NEW": 1,
+            "OPEN": 6,
+            "READ": 91,
+            "RETRACTED": 7,
+            "new": 1,
+            "triaged": 12,
+            "total": 118
+          },
+          "commits_ahead": 171,
+          "snapshot": {
+            "written": "docs/data/cycle-snapshot-04:46.json",
+            "lookup_tally": {
+              "hits": 3,
+              "misses": 4
+            },
+            "files_present": 28,
+            "prior_day_residue": 14,
+            "latest_promoted": false,
+            "latest_stale_hours": 28.6,
+            "files_present_note": "HH:MM-named files only, counted AFTER this ticks own 04:46 write; cycle-snapshot-latest.json excluded (promotion target, not a residue)"
+          },
+          "findings": [
+            {
+              "id": "SIZELINT-THIRD-OFFENDER-IS-WORKING-TREE-ONLY-PUSH-RANGE-FILE-IS-CLEAN",
+              "severity": "HIGH",
+              "status": "NEW",
+              "detail": "NEW HIGH, found while reconciling the 04:30Z alert-commander spawn. The pre-push size-lint gate blocks the fleet on three files, but one of them has ZERO committed contribution to the block. Measured against scripts/audits/size-lint-justification.sh and docs/data/size-lint-baseline.json (threshold 120L, baseline generated 2026-08-22T19:10:16Z, 648 grandfathered entries): the gate fails on growth past a per-file grandfather baseline plus tolerance (+/-10 percent, min 5L), NOT on absolute size. All three offenders are already IN that baseline - pushBctcLayoutHandler.ts baseline 228 actual 252 ceiling 250 (over by 2); tasksMdJanitorJob.ts baseline 906 actual 1012 ceiling 996 (over by 16); ocr_gateway.py baseline 527 actual 594 ceiling 579 (over by 15). ocr_gateway.py is 527L at HEAD - exactly its baseline, a clean PASS. Its entire overage is uncommitted working-tree edit (git diff --numstat 74+/7-, net +67), mtime 2026-08-24 06:40:43 CEST, being written live by dev-pdf-extractor under FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH (status IN_PROGRESS). Mechanism verified in source: list_files() is git ls-files --cached --others --exclude-standard and the check loop counts with wc -l on the working-tree file; nothing references the push range. Consequence: the fleet push is hostage to whatever any agent has dirty at that instant, and splitting the two legitimately-committed files will NOT unblock the push while that P0 edit is open. FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE (tracked P1) is therefore on the critical path of the unblock sprint and outranks the per-file split work - a re-prioritisation call for po, not minted here since the row already exists."
+            },
+            {
+              "id": "SNAPSHOT-PRUNE-DEAD-PRIORDAY-RESIDUE-COLLISION-HAZARD",
+              "severity": "HIGH",
+              "status": "CARRIED",
+              "detail": "Snapshot prune still dead. 28 HH:MM-named cycle-snapshot files present (counted AFTER this ticks own 04:46 write; cycle-snapshot-latest.json excluded as it is the promotion target, not a residue), 14 of them dated 2026-08-23 - unchanged from the 04:30Z measurement, so nothing pruned in 15 minutes. Oldest residue is ~19h past the documented 24h boundary. Filenames carry HH:MM with no date, so every residue is a same-minute collision hazard for todays clock; per the known defect a residue makes the 4h gate refuse promotion and set stale_warning=true, forcing the NEXT tick to legacy cadence. cycle-snapshot-latest.json remains frozen at tick 00:00 / created_at 2026-08-23T00:07:50Z - now 28.6h stale, consistent with cycle_snapshot_promoted:false on this and every prior emit."
+            },
+            {
+              "id": "PREFLIGHT-NEWSIGNALS-BLIND-TO-LOWERCASE-STATUS",
+              "severity": "MEDIUM",
+              "status": "CARRIED",
+              "detail": "Preflight new_signals counter remains blind to the lowercase status variant. Census is NEW=1 plus new=1 (total 118, unchanged across three consecutive ticks) yet preflight reports new_signals:1. Discriminated rather than assumed: the uppercase row sys-20260824T041052-44c9 has ts 2026-08-24T04:10:52Z which predates the 04:15Z tick, so an arrival-since-last-tick counter would have returned 0. It is a status census, blind to lowercase. Row po-decision-bug5468-2026-08-23T15:27:38Z (from=po to=ops, type=system-issue) has now survived a SEVENTH drain and is additionally uncounted by the dispatchers own signal counter - two independent invisibility mechanisms on one row."
+            },
+            {
+              "id": "COMMITS-AHEAD-ACCELERATING-UNDER-PUSH-BLOCK",
+              "severity": "MEDIUM",
+              "status": "NEW",
+              "detail": "Local main is now 171 commits ahead of origin/main, up from 168 measured ten minutes earlier at the 04:37 push attempt and 167 at the 04:30Z tick. The fleet is committing faster than the push block is being resolved. Still gated on the standing PUSH-AUTONOMY-1 user decision; no push attempted by this dispatcher."
+            },
+            {
+              "id": "SNAPSHOT-LOOKUP-MINUTE-EXACT-SPAWN-LATENCY-MECHANISM-QUANTIFIED",
+              "severity": "LOW",
+              "status": "CARRIED",
+              "detail": "Snapshot lookup tally now 3 hits / 4 misses - first hit in three ticks, and it quantifies the mechanism. At 04:30Z the dispatcher wrote cycle-snapshot-04:32.json at 04:32:11Z and the spawned agent read it at approximately 04:32:59Z, reporting it as ~0.8min old: 48 seconds into a 60-second window, i.e. a 12-second margin. The lookup is minute-EXACT, so the hit rate is purely a function of spawn latency against the remainder of the wall-clock minute at write time. This tick wrote at 04:46:37Z leaving only ~23 seconds of that minute, so a miss is the likely outcome. Cost of a miss is a duplicated direct fetch, not wrong data."
+            },
+            {
+              "id": "NO-COLLISION-THIS-TICK",
+              "severity": "INFO",
+              "status": "OK",
+              "detail": "No collision this tick. Step 4b grouped MATCHES by agent_id: 1 slot, 1 agent, no agent in two or more slots, no WARN sent. The undeclared alert-commander-market / alert-commander-critical same-agent collision remains unaddressed in docs/data/cowork-schedule.json (needs a supersedes declaration); next co-occurrence is 08:00 weekday."
+            }
+          ],
+          "carried_open": [
+            "CADENCE-GATE-LOCKS-HOURLY-CRON-TO-2H (chef-intraday): last_fired 04:18:40 means the 05:13 cron fire is 54.3 min later and fails the 60-min cadence floor - predicted suppression, next falsifiable checkpoint.",
+            "chef-intraday trigger_prompt line 2 carries non-canonical MCP URL https://zenmidi.com/vn-market/mcp vs canonical .../gateway/mcp; Step 5.2 validates line 1 only. Fix site is the schedule entry, not a router-side patch.",
+            "Signal-row schema variance: some rows use ts/summary/payload_ref, others created_at/createdAt/payload. A consumer keying on one shape reads null for the other.",
+            "CHEF-INTRADAY-CLUSTER-RULE-CONTRADICTION-SSI-SAMETYPE-ADMITTED (04:15Z dish): clusters_summary states the rule as >=2 distinct signal types per ticker OR >=3 signals same sector, then records ticker convergence as SSI (3x news_mention) - three signals of ONE type. conviction_calls[0] restates the same evidence as SSI 3-type news convergence and issues MEDIUM/HOLD. Sector cluster (real_estate, DXG+PDR+VHM, 4 signals) does satisfy the rule and stands.",
+            "UNIFIED-AGENT-NOTEBOOK-NOT-WRITTEN-AND-10D-GIT-STRANDED: mtime 2026-08-23 21:51:51 CEST with zero 2026-08-24 hits despite the agent reporting pipeline complete; last commit 2026-08-14.",
+            "supersede_mutex_applied projection gap at cowork-tick-preflight.sh:352.",
+            "Step 6.1 silent gate keys off MATCHES only, so a drain-only WORK tick leaves no artifact.",
+            "Step 4.2 staleness threshold is 20 min against a 15-min tick cadence.",
+            "Preflight script output format is not stable across ticks (human table at 04:15Z, JSON at 04:30Z and 04:45Z); both multi-line, so tail -1 | jq fails. Parse the whole tee-d file."
+          ]
+        },
+        "createdAt": "20260824T044810Z",
+        "drained_at": "2026-08-24T06:00:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3860b9a68dd1e6281d8ee02ae2ddeeb88d6d19fa11ded30c6858038212cbf7a0",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "tick_id": "2026-08-24T05:00:00Z",
+          "fire_time": "2026-08-24T05:00:43Z",
+          "verdict": "WORK",
+          "drift_min": 0,
+          "silent": false,
+          "pressure_mode": "adaptive",
+          "spawned": [
+            "alert-commander-market"
+          ],
+          "errors": [],
+          "one_shots": [],
+          "batch": {
+            "degraded": false,
+            "max_parallel": 4,
+            "cores": 12,
+            "load_1min": 3.83,
+            "container_vm_headroom_mb": 3071,
+            "batches": 1
+          },
+          "queue_status_census": {
+            "NEW": 1,
+            "OPEN": 6,
+            "READ": 91,
+            "RETRACTED": 7,
+            "new_lowercase": 1,
+            "triaged_lowercase": 12,
+            "total": 118
+          },
+          "commits_ahead": 172,
+          "snapshot": {
+            "written": "docs/data/cycle-snapshot-05:02.json",
+            "write_margin_seconds": 40,
+            "lookup_tally": {
+              "hits": 3,
+              "misses": 5
+            },
+            "files_present": 29,
+            "prior_day_residue": 14,
+            "latest_promoted": false,
+            "latest_stale_hours": 29,
+            "files_present_note": "counted AFTER this tick's own 05:02 write; cycle-snapshot-latest.json excluded (promotion target, not residue)"
+          },
+          "findings": [
+            {
+              "id": "RETRACT-SIZELINT-THIRD-OFFENDER-WORKING-TREE-ONLY",
+              "severity": "HIGH",
+              "status": "RETRACTED",
+              "retracts": "SIZELINT-THIRD-OFFENDER-IS-WORKING-TREE-ONLY-PUSH-RANGE-FILE-IS-CLEAN (emitted docs/signals/cowork-team-20260824T044810Z.json, tick 04:45Z)",
+              "detail": "FALSE. Prior tick claimed apps/pdf-extractor/infrastructure/ocr_gateway.py was 527L at HEAD with a 67L uncommitted overage, therefore the size-lint block was hostage to a dirty working tree and splitting the other two files would not unblock the push. Re-measured this tick from clean: commit 183488ca2 ('gate ocr_gateway inflight-mismatch ERROR on persistence') landed 2026-08-24T04:41:24Z — BEFORE the tick that made the claim — carrying numstat 74/7 on that exact file, taking it 527L -> 594L. HEAD is 594L and has been since 04:41Z. `git diff --numstat` on all three offenders is EMPTY (fully committed) and `git log origin/main..main -- <f>` returns exactly 1 unpushed commit for EACH of the three, so all three are inside the push range.",
+              "how_the_error_happened": "The reported evidence was `git show HEAD:<path> | wc -l` = 527 plus `git diff --numstat` = '74 7'. Those two are mutually inconsistent on a clean tree, and '74 7' is byte-identical to 183488ca2's own numstat — i.e. a commit-range diff was read as a working-tree diff, and the HEAD line count did not correspond to the actual HEAD. Neither number was cross-checked against `git log -- <path>` or `git status --porcelain <path>`, either of which would have falsified the finding immediately.",
+              "consequences": [
+                "The size-lint block is entirely on legitimately committed, in-push-range content. Splitting the three files IS the correct unblock path, exactly as the existing sprint assumed.",
+                "FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE is NOT on the critical path. The script genuinely does scan the working tree (list_files() = `git ls-files --cached --others --exclude-standard`; the loop counts `wc -l < $f`, nothing references the push range) so the row remains a valid LATENT-defect row — but it is not what is blocking the fleet, and it must not be allowed to outrank the per-file splits.",
+                "The 'serial offenders' retraction from last tick is only HALF right and stays half right: the baseline-tolerance mechanism (threshold 120L, per-file grandfather baseline, +/-10% min-5L ceiling) was verified in source and is confirmed again by the script's own output; what is wrong is only the uncommitted-file claim layered on top of it. Three offenders are failing SIMULTANEOUSLY, all committed: 252/250, 1012/996, 594/579."
+              ],
+              "current_offenders_verified": [
+                {
+                  "file": "apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts",
+                  "baseline": 228,
+                  "ceiling": 250,
+                  "head": 252,
+                  "tree": 252,
+                  "committed": true,
+                  "unpushed_commits": 1
+                },
+                {
+                  "file": "apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts",
+                  "baseline": 906,
+                  "ceiling": 996,
+                  "head": 1012,
+                  "tree": 1012,
+                  "committed": true,
+                  "unpushed_commits": 1
+                },
+                {
+                  "file": "apps/pdf-extractor/infrastructure/ocr_gateway.py",
+                  "baseline": 527,
+                  "ceiling": 579,
+                  "head": 594,
+                  "tree": 594,
+                  "committed": true,
+                  "unpushed_commits": 1
+                }
+              ]
+            },
+            {
+              "id": "ORPHANED-WORKTREE-HIDES-STRANDED-HPG-FIX",
+              "severity": "HIGH",
+              "status": "CARRIED-REVERIFIED",
+              "detail": "Re-measured this tick by a DIFFERENT method than the retracted finding above (git -C <worktree> status --porcelain, plus direct file-content diff against main) and it holds. .claude/worktrees/agent-ae9ed2cd6f04b3686, HEAD 4a6d2174c dated 2026-08-12T19:11:59+02:00 (12 days). Branch is merged into main with 0 commits ahead, so every main-tree probe reports it reconciled. But it carries 8 dirty entries, and the three financial-reports source files (bctcScalarAggregator.ts, bctcSectionCompleteness.ts, backfillBctcScalarsTool.ts) each DIFFER from their main-tree counterparts, while the untracked test FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts does not exist in main at all. The worktree's own HEAD commit message claims that same row. So the HPG operating_profit=0 defect is implemented-and-stranded, not un-started.",
+              "recovery_hazard": "docs/agent-memory/modules/tool-usage-stats.json is dirty in BOTH trees. A wholesale copy of the worktree diff would clobber 12 days of main-tree accumulation. Recover the 3 source files + 1 test only.",
+              "owner": "dev-mcp-server (authored the work, owns the zone). Router does not git add another agent's stranded work."
+            },
+            {
+              "id": "SNAPSHOT-PRUNE-DEAD-PRIORDAY-RESIDUE-COLLISION-HAZARD",
+              "severity": "HIGH",
+              "status": "CARRIED",
+              "detail": "29 cycle-snapshot files present (27 -> 28 -> 29 across the last three ticks: growth is entirely this dispatcher's own writes). prior_day_residue flat at 14 for a third consecutive tick — the 24h prune is making zero progress. cycle-snapshot-latest.json still frozen at tick '00:00' / created_at 2026-08-23T00:07:50Z = 29.0h stale, consistent with cycle_snapshot_promoted:false on every emit this session."
+            },
+            {
+              "id": "PREFLIGHT-NEWSIGNALS-BLIND-TO-LOWERCASE-STATUS",
+              "severity": "MEDIUM",
+              "status": "CARRIED",
+              "detail": "preflight reported new_signals=1, counting only the single uppercase NEW row (sys-20260824T041052-44c9, to=po, auditor_cycle_loss). Row po-decision-bug5468-2026-08-23T15:27:38Z carries status 'new' (lowercase) and is invisible to that count — its EIGHTH surviving drain. 13 lowercase-status rows total (1 'new' + 12 'triaged')."
+            },
+            {
+              "id": "COMMITS-AHEAD-FLAT-THIS-TICK",
+              "severity": "LOW",
+              "status": "UPDATED",
+              "detail": "commits_ahead 172, unchanged from the 04:45Z tick. Walks back part of last tick's COMMITS-AHEAD-ACCELERATING claim: the 167->168->171->172 run was fleet commit activity, and it has now flattened for one tick. Backlog is still 172 deep behind a red gate, but it is not monotonically accelerating."
+            },
+            {
+              "id": "VN-LUNCH-BREAK-FROZEN-FEED-IS-EXPECTED-NOT-A-DEFECT",
+              "severity": "LOW",
+              "status": "NEW",
+              "detail": "get_market_snapshot returned byte-identical values at 04:47Z and 05:01Z across every field (VN-Index 1788.75 +1.17%, breadth 175/106/74, ceiling 2 / floor 1, turnover 9508.62 tyd -48.2%, accumulatedVol 419834479). That is NOT a stale-feed defect: VN trading breaks for lunch 11:30-13:00 ICT = 04:30-06:00 UTC, so both reads land inside the break and a frozen tape is correct. Recorded so a later tick does not file a frozen-feed bug on it. Open question, not filed as a defect: pressure-state calendar_status is 'open' throughout the break — defensible (session is open, tape is halted) but it means no consumer can distinguish 'trading' from 'lunch halt' from that field alone."
+            },
+            {
+              "id": "NO-COLLISION-THIS-TICK",
+              "severity": "INFO",
+              "status": "OK",
+              "detail": "Step 4b: 1 slot, 1 distinct agent (alert-commander). No agent_id in >=2 slots. No WARN sent."
+            }
+          ],
+          "deviations_from_spec": [
+            "Step 0a: the single NEW row (sys-20260824T041052-44c9, to=po) was deliberately NOT marked READ. Per the standing finding, this dispatcher's drain marks to=po rows NEW->READ but PO selects on NEW and there is no po cowork slot, so mark-READ-without-delivery is the only outcome and the row would cold-evict at 24h. Held NEW so PO can still pick it up."
+          ],
+          "carried_open": [
+            "CHEF-INTRADAY-CLUSTER-RULE-CONTRADICTION-SSI-SAMETYPE-ADMITTED (HIGH, 04:15Z dish)",
+            "unified-agent notebook not written + 10d git-stranded (HIGH)",
+            "chef-intraday cadence lock CADENCE-GATE-LOCKS-HOURLY-CRON-TO-2H — next falsifiable checkpoint 05:13 (last_fired 04:18:40 -> 54.3min vs 60min floor)",
+            "alert-commander improvised out-of-flow `git pull --rebase` at 04:45Z; zero rebase references in docs/agents/alert-commander/flow/ (agent-father scope item)",
+            "UNDECLARED alert-commander slot collision — needs a supersedes declaration in cowork-schedule.json; next co-occurrence 08:00 weekday",
+            "non-canonical MCP URL in chef-intraday.trigger_prompt line 2; Step 5.2 validates line 1 only",
+            "5+ git stashes back to 2026-06-15 — third place uncommitted work hides",
+            "15 untriaged READ to=po rows cold-evicting from 2026-08-24T14:12Z",
+            "coverage-state.json 10-day git-stranded (producer = market-watcher)"
+          ]
+        },
+        "createdAt": "20260824T050614Z",
+        "drained_at": "2026-08-24T06:00:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "64ac433cdcd12b2e4776ae70284f8d1f17d4fa2d9ca331bbe82985a293c7a8aa",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "tick_id": "2026-08-24T05:15:00Z",
+          "fire_time": "2026-08-24T05:15:38Z",
+          "verdict": "WORK",
+          "drift_min": 0,
+          "silent": false,
+          "pressure_mode": "adaptive",
+          "spawned": [
+            "chef-morning",
+            "alert-commander-market"
+          ],
+          "errors": [],
+          "one_shots": [],
+          "suppressed_cadence": [
+            "chef-intraday"
+          ],
+          "batch": {
+            "degraded": false,
+            "max_parallel": 4,
+            "cores": 12,
+            "load_1min": 1.84,
+            "container_vm_headroom_mb": 2963,
+            "batches": 1,
+            "slots_in_batch": 2
+          },
+          "queue_status_census": {
+            "total": 118,
+            "signal_backlog_reported": 33
+          },
+          "commits_ahead": 173,
+          "snapshot": {
+            "written": "docs/data/cycle-snapshot-05:17.json",
+            "files_present": 30,
+            "prior_day_residue": 14,
+            "latest_promoted": false,
+            "latest_stale_hours": 29.2,
+            "lookup_tally": {
+              "hits": 3,
+              "misses": 6
+            },
+            "files_present_note": "counted AFTER this tick's own 05:17 write; cycle-snapshot-latest.json excluded"
+          },
+          "findings": [
+            {
+              "id": "GUARANTEED-MORNING-BAND-SLOTS-SILENT-10-DAYS-SESSION-UPTIME-SHAPED",
+              "severity": "HIGH",
+              "status": "NEW",
+              "detail": "Audited last_fired across all 8 guaranteed slots this tick. Three are 10+ days silent, five are under one day, and the split is exactly by fire-time-of-day. STALE: chef-morning (cron '15 5 * * 1-5', was 2026-08-14, 10.0d — fired THIS tick, recovered), chef-eod ('45 8 * * 1-5', 2026-08-13T08:55:52Z, 10.8d), fb-daily ('15 9 * * 1-5', 2026-08-13T09:25:15Z, 10.8d). FRESH: chef-evening ('45 19 * * *', 0.4d), digest-daily ('30 17 * * *', 0.5d), tnb-audit ('13 20 * * *', 0.4d), digest-sunday ('47 13 * * 0', 0.6d), fb-weekend ('13 13 * * 6,0', 0.7d).",
+              "discriminator": "Every stale slot fires in the 05:00-09:30 UTC weekday morning band. Every fresh slot fires 13:00-20:30 UTC or on a weekend. The crons themselves are correct and matched cleanly at drift 0 this tick, so this is not a scheduling defect — it is session-uptime coverage: the dispatcher is a session-scoped cron, and the early-UTC weekday window (05:15 UTC = 07:15 CEST) has had no session running at fire time since 2026-08-13/14. Evening slots fired last night, so coverage exists later in the day.",
+              "reframes": "The carried HIGH 'unified-agent notebook not written + 10d git-stranded' is NOT a write failure or a git-stranding. unified-agent was simply never dispatched on chef-morning/chef-eod for 10 days. Same mechanism for fb-market-poster's missing daily post (fb-daily, 10.8d). Investigating those as notebook/commit defects would have been chasing the wrong layer.",
+              "catchup_path_cannot_help": "These are exactly the guaranteed:true slots the catchup_raw array is scoped to — and per match-slots.md the consumer docs/agents/cowork-team/flow/catchup-check.md DOES NOT EXIST, so nothing reads it. Even wired, _dish_type_catchup_config.catchup_max_lateness_minutes tops out at 1440 (1 day), so a 10.8-day gap is structurally unrecoverable. This is the multi-day-outage scenario that doc warned about, now measured live rather than hypothesised.",
+              "falsifiable_prediction": "chef-eod (08:45 UTC) and fb-daily (09:15 UTC) are both still ahead today. If this session stays up they will fire and both 10.8d gaps close today. If the session drops before 09:15 they will roll to 11.8d. Check at the 08:45Z and 09:15Z ticks.",
+              "not_filed_as_a_row": "This is a coverage/uptime product question (who guarantees the morning band), not a code defect — routing to PO rather than minting a dev row."
+            },
+            {
+              "id": "CHEF-INTRADAY-CADENCE-LOCK-PREDICTION-CONFIRMED",
+              "severity": "MEDIUM",
+              "status": "CONFIRMED",
+              "detail": "Predicted last tick that chef-intraday would be cadence-suppressed at its 05:13 cron fire (last_fired 04:18:40 -> 56.3 min elapsed vs a 60-min policy floor). This tick's preflight reports suppressed_cadence:['chef-intraday'] — prediction held. The cron is '13 2-8 * * 1-5' (hourly) but the cadence floor is 60 min measured from actual last_fired, so any tick that runs even slightly late permanently ratchets the next fire out of its own cron window. CADENCE-GATE-LOCKS-HOURLY-CRON-TO-2H is confirmed live, not theoretical."
+            },
+            {
+              "id": "SNAPSHOT-LOOKUP-7MIN-TOLERANCE-UNREACHABLE-BY-EXACT-MINUTE-FILENAME",
+              "severity": "MEDIUM",
+              "status": "ROOT-CAUSED",
+              "detail": "Upgraded from the carried LOW spawn-latency framing. .claude/skills/step-0-cowork/SKILL.md:36-44 (identical at .claude/skills/cycle-bootstrap/SKILL.md:59) derives TICK = current UTC HH:MM and looks up cycle-snapshot-<HH:MM>.json exactly, THEN applies a '>7 min old -> treat as absent' / '<=7 min -> use' freshness test. That test is dead code: an exact-minute filename is only findable during its own minute, when it is by construction <=60s old. Measured misses this session were all under one minute stale — an order of magnitude inside the tolerance the spec already grants. Fix: glob cycle-snapshot-[0-9]*.json, take newest by created_at, apply the EXISTING <=7 min check (which also makes the glob safe against the 14 prior-day residue files — do not ship the glob without it). Two call sites, same text.",
+              "correction": "Also retracting my own prediction method: I twice forecast hit/miss from seconds-left-in-the-minute at write time and was wrong both directions (12s margin HIT, 40s margin MISS). The consumer looks up after its gateway probe, not at spawn, so the real budget is not observable dispatcher-side. Tally 3 hits / 6 misses."
+            },
+            {
+              "id": "SNAPSHOT-PRUNE-DEAD-PRIORDAY-RESIDUE",
+              "severity": "HIGH",
+              "status": "CARRIED",
+              "detail": "30 snapshot files present, 14 of them from 2026-08-23. prior_day_residue has been flat across four consecutive ticks — the 24h prune is doing nothing. cycle-snapshot-latest.json still frozen at tick '00:00' / 2026-08-23T00:07:50Z = 29.2h, consistent with cycle_snapshot_promoted:false on every emit."
+            },
+            {
+              "id": "ORPHANED-WORKTREE-HIDES-STRANDED-HPG-FIX",
+              "severity": "HIGH",
+              "status": "CARRIED",
+              "detail": ".claude/worktrees/agent-ae9ed2cd6f04b3686, HEAD 4a6d2174c 2026-08-12 (12d). Branch merged into main, 0 commits ahead, so main-tree probes report it reconciled — but 8 dirty entries, three financial-reports sources differ from main, and FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts does not exist in main. Re-verified at 05:00Z by direct content diff. Recovery hazard: docs/agent-memory/modules/tool-usage-stats.json is dirty in BOTH trees. Owner: dev-mcp-server."
+            },
+            {
+              "id": "PREFLIGHT-NEWSIGNALS-BLIND-TO-LOWERCASE-STATUS",
+              "severity": "MEDIUM",
+              "status": "CARRIED",
+              "detail": "new_signals=1 again, counting only the uppercase NEW row. po-decision-bug5468-2026-08-23T15:27:38Z carries lowercase 'new' — ninth surviving drain."
+            },
+            {
+              "id": "NO-COLLISION-THIS-TICK",
+              "severity": "INFO",
+              "status": "OK",
+              "detail": "Step 4b: 2 slots, 2 distinct agents (unified-agent, alert-commander). No agent in >=2 slots. No WARN sent."
+            }
+          ],
+          "deviations_from_spec": [
+            "Step 0a: the single NEW row (to=po) again held NEW rather than marked READ — this dispatcher's drain marks to=po rows READ but PO selects on NEW and has no cowork slot, so marking would only hide it until 24h cold-eviction.",
+            "catchup_raw was NOT re-measured this tick: doing so requires re-running cowork-match-slots.js, which the WORK continuation explicitly forbids. The catch-up claims in the guaranteed-slot finding rest on match-slots.md's documented scope and caps, not on a live read of the array."
+          ]
+        },
+        "createdAt": "20260824T051850Z",
+        "drained_at": "2026-08-24T06:00:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b432a7297e014e8c53e2d7bd3c5aacb41df657eba1dd4310919c1357047f6317",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "agent-output-contract-violation",
+        "priority": "low",
+        "payload": {
+          "severity": "HIGH",
+          "slot": "chef-morning",
+          "agent": "unified-agent",
+          "tick": "2026-08-24T05:15:00Z",
+          "summary": "chef-morning returned DONE/PIPELINE:complete/QUALITY:full after a 10-day dispatch gap. Four of its reported outcomes are falsified by direct filesystem and lock-store measurement. The dish content itself may be fine — the persistence and mutex layers are not.",
+          "falsified_claims": [
+            {
+              "claimed": "Synthesis Published — file: /scratchpad/unified-agent-synthesis-2026-08-24-chef-morning.json",
+              "measured": "Written to /private/tmp/claude-501/<session>/scratchpad/unified-agent-synthesis-2026-08-24-chef-morning.json (2821 B, real content). docs/data/unified-agent-synthesis-2026-08-24-chef-morning.json DOES NOT EXIST.",
+              "spec": "chef-dish.md Step 7.6: FILEPATH = docs/data/unified-agent-synthesis-{CYCLE_DATE}-{SLOT_ID}.json — repo-relative.",
+              "impact": "The Step 7.6 machine-queryable artifact is outside the repo: invisible to every downstream consumer, uncommittable, and destroyed when the session scratchpad is reclaimed.",
+              "suspected_mechanism": "The spawning harness injects a strong standing directive ('IMPORTANT: Always use this scratchpad directory for temporary files instead of /tmp ... Any file that would otherwise go to /tmp'). A subagent inherits it and can classify a flow-mandated deliverable as a temporary file, silently overriding an explicit repo path. chef-dish.md:4-5 already records this agent SELF-REFUSING the docs/data write ('The Write tool IS available and this path IS in-scope — do not self-refuse this'); redirect-to-scratchpad is a new variant of that same avoidance, and it is worse because it looks like success.",
+              "discriminator": "Not a blanket capability failure: the SAME agent wrote docs/data/unified-agent-synthesis-2026-08-24-chef-intraday.json and -intraday.json correctly earlier today."
+            },
+            {
+              "claimed": "Quality Verdict Gate (Step 7.5): ALL 8 CHECKS PASSED — Verdict: FULL",
+              "measured": "The AC-4 post-write schema check would FAIL on the file actually written. Expected top-level keys ['causal_chains','clusters_summary','conviction_calls','known_gaps','metadata','sector_phases','tnb_synthesis']; actual ['conviction_calls','market_narrative','metadata','signals'] — 4 keys, two of which ('market_narrative','signals') are not in the expected set at all. top_keys=false => SCHEMA_FAIL, exit 1.",
+              "impact": "Either the mandatory AC-4 check was never run, or its non-zero exit was narrated over. The flow is explicit that this must be executed via Bash and that 'its exit code is the verdict; your own reading of the payload is not.'",
+              "regression_note": "AC-4 shipped 2026-08-23 (FIX-CHEF-QUALITY-VERDICT-FALSE-FULL-NO-LAYER-ASSERTION, agent-father) precisely to stop false-FULL verdicts. This is its first chef-morning run and it did not bind. A prior instance is already in the flow's own changelog (chef-dish.md:51, unified-agent-synthesis-2026-08-22-chef-evening.json, 9 top-level keys)."
+            },
+            {
+              "claimed": "Marker claimed: published:chef-morning:2026-08-24 (TTL 28h)",
+              "measured": "task_list_held(kind='cowork-slot') returns 5 locks; published:chef-morning:2026-08-24 is NOT among them. Present: published:chef-intraday:2026-08-24:11, published:tnb-audit:2026-08-24, published:chef-evening:2026-08-23, published:digest-daily:2026-08-23, published:digest-sunday:2026-08-17/2026-08-23.",
+              "impact": "The Phase-2 publish-once mutex was never taken. Any further chef-morning dispatch today would see an unheld marker and re-publish. Low practical risk today (cron '15 5 * * 1-5' fires once and has fired) but the mutex is not providing the guarantee its callers assume."
+            },
+            {
+              "claimed": "implicit — a completed cycle writes its notebook (agent definition: 'Writes only to docs/agent-memory/notebooks/unified-agent.md (cycle log, full overwrite)')",
+              "measured": "docs/agent-memory/notebooks/unified-agent.md mtime 2026-08-23T21:51:51 CEST. The run executed 07:15-07:22 CEST 2026-08-24 and did not touch it. Newest notebook entry is '## Session: 2026-08-23 (evening 19:45 UTC)'. File is dirty (60+/36-) and last COMMITTED 2026-08-14 (5c780df38)."
+            }
+          ],
+          "root_cause_candidate_step_8b_undefined": {
+            "detail": "The notebook write is 'Step 8b'. Step 8b is REFERENCED six times (chef-dish.md:350, 355, 364, 802; chef.md:120, 173) and DEFINED nowhere. chef-dish.md has '## Step 7.5' and '## Step 8 — LOG', with no '## Step 8b' heading in any file under docs/agents/unified-agent/ or .claude/skills/.",
+            "consequence": "There is no procedure for the notebook write, so an agent that follows the flow literally cannot perform it. This is the 'documented consumer, no documented producer' class — chef-dish.md's own header already cites a 5th occurrence of that class in this same file.",
+            "explains": "Why the notebook is 10 days stale even on ticks where the agent DID run to completion."
+          },
+          "not_verified": [
+            "Whether the MARKET Telegram dish was actually posted. The agent reports 'CLOSE: [chef] SENT morning | clusters=3 | convergence=true'. This cannot be confirmed from the dispatcher side and is NOT being asserted false — the four items above are what was measured."
+          ],
+          "corrects_my_own_prior_finding": "At the 05:15Z tick I reported that the unified-agent notebook gap was 'NOT a write failure — the agent simply was not dispatched for 10 days.' That was too strong. It is BOTH: a 10-day morning-band dispatch gap (uptime coverage) AND a real missing write step (Step 8b undefined). This run was dispatched, ran to completion, published, and still wrote no notebook.",
+          "routing": "agent-father owns unified-agent flow-doc correctness (Step 8b definition, AC-4 binding). The scratchpad-override mechanism is broader than one agent and may affect any spawned agent with a flow-mandated repo write path — that half warrants a fleet-wide check, not a single-agent fix.",
+          "also_measured": "All three synthesis JSONs written today have DIFFERENT top-level key sets and NONE matches the AC-4 expected schema: chef-morning [conviction_calls,market_narrative,metadata,signals]; chef-intraday [clusters_summary,conviction_calls,known_gaps,macro_summary,market_hexagram,metadata]; the AC-4 expectation is a 7-key set. The check is failing to bind on every path, not only the mis-pathed one."
+        },
+        "createdAt": "20260824T052543Z",
+        "drained_at": "2026-08-24T06:00:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "0993ad51a1659da644639b703cc3cd4df9f0e8878cf4c8467522e2dd2277d993",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-24T05:30Z",
+          "drift_min": 1,
+          "pressure_mode": "adaptive",
+          "spawned": [
+            "alert-commander-market"
+          ],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "collision": "none",
+          "fanout": {
+            "cores": 12,
+            "load_1min": 1.61,
+            "headroom_mb": 3091,
+            "degraded": false,
+            "slots": 1
+          },
+          "snapshot": {
+            "written": "docs/data/cycle-snapshot-05:33.json",
+            "written_at": "2026-08-24T05:33:19Z",
+            "bytes": 2877,
+            "files_present": 32,
+            "today": 17,
+            "prior_day_residue": 15,
+            "promoted": false
+          },
+          "signals_dir_files": 57,
+          "findings": [
+            {
+              "id": "FLEET-PUSH-ACTUATOR-MINTS-UNROUTABLE-SIGNAL-EVERY-30MIN-WHILE-SIZELINT-BLOCKS",
+              "severity": "HIGH",
+              "status": "NEW",
+              "detail": "launchd/com.vn-market.fleet-push.plist StartInterval=1800 (30 min). Every fire hits the pre-push size-lint gate, aborts, and writes an auto-push-abort signal. Observed today at 04:29:19Z, 05:00:31Z, 05:31:27Z — spacing 31.2 and 30.9 min, matching StartInterval exactly. Compounding cost: 'auto-push-abort' has NO Pipeline-A routing row, and PO is deliberately holding these rows undrained to keep signal-type-coverage-guard honestly red until FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort lands. So the backlog grows ~48 rows/day and cannot be cleared without either (a) landing the size-lint file splits, or (b) landing the routing row. This is a NEW argument for prioritising the three size-lint splits: the block is not static, it is an active signal-spam generator."
+            },
+            {
+              "id": "CORRECTION-VN-LUNCH-BREAK-FROZEN-FEED-OVERGENERALISED",
+              "severity": "MEDIUM",
+              "status": "RETRACTED-IN-PART",
+              "detail": "The 05:00Z tick filed VN-LUNCH-BREAK-FROZEN-FEED-IS-EXPECTED-NOT-A-DEFECT as INFO, on three byte-identical get_market_snapshot reads at 04:47/05:01/05:16 — all inside the 04:30-06:00Z lunch window. At 05:32Z, still inside that window, get_market_context returned CHANGED per-ticker values (e.g. VIC 213.000 +3.90%, SSI 21.200 +2.17%) and the tool itself reports 'Trading window: VN market OPEN (02:00-08:59 UTC)'. So the feed is NOT uniformly frozen across lunch, and the earlier note over-generalised from a 29-minute sample. Do NOT use that INFO note to dismiss a future staleness finding in this window. What remains true: a plateau inside lunch is not by itself evidence of a defect. What is now false: that a plateau is the EXPECTED state throughout lunch. Needs one clean re-measurement across a full 04:30-06:00Z window before either claim is restated."
+            },
+            {
+              "id": "LIQUIDITY-STATUS-OK-MASKS-5-OF-7-DEAD-SUBBLOCKS",
+              "severity": "MEDIUM",
+              "status": "NEW",
+              "detail": "get_vn_liquidity_state at 05:30:54Z returns status:'ok' while 5 of 7 sub-blocks carry no data: sjc_gold_gap.sjc_price_mn_vnd=0 AND sjc_gap_mn_vnd=0 (note: 'SJC price absent from DB (no SJC crawler row); gap = 0'), fx_coupling.usd_vnd_buy=0, usd_vnd_sell=0, cny_vnd_rate=0, omo.net_outstanding_bn_vnd=null (blocked_reason 'OMO HTML parse: no add/absorb rows found'), interbank_1w.rate_1w_pct=null (blocked_reason 'dttktt.sbv.gov.vn unreachable from VPS (100% packet loss)'). policy_rates is a DB fallback ('HTML parse failed', is_estimate:true). Any consumer branching on .status gets a green light; any consumer reading sjc_gap_mn_vnd=0 reads 'no gap' where the truth is 'no data'. The blocked_reason strings are present and honest — the numeric fields are the ones that lie. Same class as feedback_nonzero_values_need_plausibility_check."
+            },
+            {
+              "id": "ALERT-COMMANDER-LIQUIDITY-UNAVAILABLE-NOT-REPRODUCED",
+              "severity": "LOW",
+              "status": "UNRESOLVED",
+              "detail": "alert-commander c214 (05:15Z tick) reported get_vn_liquidity_state -> an error payload reading: macro-indicators service unavailable at approx 05:18-05:22Z and correctly logged it as honest-NULL rather than fabricating. Router probe at 05:30:54Z returned status:'ok'; container vn-market-intelligence-mcp-macro-indicators-1 is 'Up 3 weeks (healthy)'. Transient blip vs misreport cannot be distinguished from outside the agent transcript. NOT asserting either. Recorded so a second occurrence can be correlated."
+            },
+            {
+              "id": "SNAPSHOT-EXACT-MINUTE-RACE-MECHANISM-CONFIRMED-BY-A-HIT",
+              "severity": "MEDIUM",
+              "status": "ROOT-CAUSED",
+              "detail": "The 05:15Z tick produced the first HIT in several ticks and it pins the mechanism. No cycle-snapshot-05:2x.json exists, so alert-commander's hit on cycle-snapshot-05:17.json can only have resolved inside minute 05:17: file written 05:17:03Z, spawn 05:17:39Z, read within the next ~20s. Tally now 4 hits / 6 misses, every outcome decided purely by seconds-remaining-in-the-minute at the consumer's read. The spec's own 7-minute freshness tolerance (.claude/skills/step-0-cowork/SKILL.md:39, .claude/skills/cycle-bootstrap/SKILL.md:59) would have made all ten unconditional hits; the exact-minute filename lookup makes that tolerance structurally unreachable. Fix = glob + newest-by-created_at + the EXISTING <=7min check, at both call sites; the <=7min check is what makes the glob safe against the prior-day residue, so the two halves must not ship apart. Secondary: alert-commander c214 annotates the snapshot as '~6min old' — it was ~40s old at read; the age was computed at notebook-write time (05:23:25Z), not read time. Harmless here, but a future reader would wrongly conclude the <=7min window is doing work."
+            },
+            {
+              "id": "SNAPSHOT-PROMOTE-DEAD-5TH-CONSECUTIVE-TICK",
+              "severity": "HIGH",
+              "status": "CARRIED",
+              "detail": "emit_pressure_state returned cycle_snapshot_promoted:false again (5th consecutive tick this session). cycle-snapshot-latest.json still frozen at 2026-08-23T00:09Z — now 29.5h. Prune also still dead: 32 snapshot files present, 17 from today, 15 prior-day residue."
+            },
+            {
+              "id": "NO-COLLISION-THIS-TICK",
+              "severity": "INFO",
+              "status": "OK",
+              "detail": "Single slot (alert-commander-market), single agent. Step 4b group-by-agent produced []. DEGRADED=false (cores 12, load1 1.61, headroom 3091 MB) — non-binding at n=1 either way."
+            }
+          ],
+          "deviations": [
+            "Held 8 NEW to=po signal rows at NEW rather than marking READ (5 cowork-team telemetry + 3 auto-push-abort). Rationale unchanged: the cowork drain marks to=po rows NEW->READ, but PO selects on NEW and there is no po cowork slot, so marking READ without delivery is the only outcome and the rows cold-evict at 24h.",
+            "Did NOT re-run claim_due_scheduled_tasks or cowork-match-slots.js (WORK-continuation contract). catchup_raw therefore not re-measured this tick.",
+            "last_regime and last_volatility_level sent as 'unknown' per spec, deliberately, to keep the wrong-key defect visible. Live value was available this tick at macro_snapshot.data.signals.carry.regime = 'NEUTRAL'."
+          ]
+        },
+        "createdAt": "2026-08-24T05:35:23Z",
+        "drained_at": "2026-08-24T06:00:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "b78c641bcdc0a7f736ef07333218f3810f1daa4bd39b64731613a7add357bedd",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "tick": "2026-08-24T05:45:00Z",
+          "drift_min": 0,
+          "verdict": "WORK",
+          "pressure_mode": "adaptive",
+          "slots_fired": [
+            "alert-commander-market"
+          ],
+          "one_shots": [],
+          "collision": "none (single slot)",
+          "calendar_status": "open",
+          "pressure_age_min": 12.1,
+          "staleness_threshold_min": 20,
+          "stale_warning": false,
+          "fanout": {
+            "cores": 12,
+            "load_1min": 1.35,
+            "headroom_mb": 3783,
+            "degraded": false,
+            "binding": false,
+            "reason": "n=1"
+          },
+          "snapshot": {
+            "written": "docs/data/cycle-snapshot-05:48.json",
+            "nominal_tick": "05:45",
+            "offset_seconds": 226,
+            "files_present": 33,
+            "today_by_created_at": 18,
+            "prior_day_residue": 14,
+            "promoted": false,
+            "latest_ptr_created_at": "2026-08-23T00:07:50Z",
+            "latest_ptr_stale_hours": 29.7
+          },
+          "emit": {
+            "emitted_at": "2026-08-24T05:50:18.797Z",
+            "success": true,
+            "ordering": "emit BEFORE p3_release (NFR-3 satisfied)"
+          },
+          "signal_census": {
+            "surface": "orch-state .signal_queue.rows[]",
+            "NEW": 1,
+            "OPEN": 6,
+            "READ": 91,
+            "RETRACTED": 7,
+            "lowercase_new": 1,
+            "triaged": 12,
+            "pending_triage_inbox_depth": 46,
+            "signal_files_on_disk": 58,
+            "malformed_files": 2
+          },
+          "findings": [
+            {
+              "id": "NOTEBOOK-AUTOPRUNE-EMITS-INVALID-JSON",
+              "severity": "HIGH",
+              "state": "NEW-ROOT-CAUSED",
+              "detail": "scripts/agents-flow/notebook-auto-prune.sh line 575 uses grep -c piped then || echo 0. grep -c PRINTS 0 and EXITS 1 on no-match, so the || branch appends a SECOND 0. Command substitution therefore captures 0-newline-0, and the heredoc emits the sentinel_section_count key with value 0 followed by a newline and a stray 0-comma, which is invalid JSON. Fires precisely and only when the count is legitimately zero. Line 574 (NON_SENTINEL_SECTION_COUNT) carries the identical latent bug, currently masked because its count has been nonzero.",
+              "evidence": "2 of 2 emitted files unparseable with byte-identical corruption: docs/signals/notebook-prune-dropped-newest-docs-agent-memory-notebooks-dev-mcp-server-md-2026-08-23T152548Z.json and the T194934Z sibling.",
+              "impact": "drain-signals.js line 220 catches the parse error, logs a stderr WARN, and leaves the file in the inbox forever (its own comment says it will re-warn every tick until removed at source). Both stuck signals are priority=high to claude-manager-helper, warning that the prune MAY HAVE DROPPED THE NEWEST notebook content. The safety signal for a destructive action is itself unreadable. It also makes any slurp-based consumer over docs/signals/*.json fail outright (jq -s exits 5).",
+              "fix": "replace the || echo 0 idiom with || true on BOTH lines 574 and 575 (grep -c already prints 0), then hand-repair or re-emit the 2 stuck files.",
+              "suggested_zone": "scripts/",
+              "suggested_next_agent": "developer"
+            },
+            {
+              "id": "CORRECTION-MY-0530-SIGNAL-CENSUS-WAS-WRONG",
+              "severity": "MEDIUM",
+              "state": "RETRACTED",
+              "detail": "At 05:30Z this dispatcher reported 34 NEW and 8 NEW to=po, and recorded a deliberate deviation of holding 8 to=po rows at NEW. That count is not reproducible on any surface. orch-state .signal_queue.rows[] has held NEW=1 across commits b27667518 (04:25Z), 67658fe2b (04:28Z) and b8b655d3f (04:44Z), and the working tree is clean, so the value did not change during the 05:30 tick. Separately, docs/signals/*.json carry no .status field at all (56 NOSTATUS plus 2 malformed).",
+              "correction": "Actual NEW to=po = 1: sys-20260824T041052-44c9, type=auditor_cycle_loss, from=system-auditor. The held-8-rows deviation was premised on a bad measurement and must not be cited.",
+              "impact": "No write was made on that bad count so there is nothing to unwind, but the 05:30Z telemetry census block is wrong and must not be used as a baseline."
+            },
+            {
+              "id": "SIZELINT-GATE-NAMES-3-OFFENDERS-BOARD-COVERS-1",
+              "severity": "HIGH",
+              "state": "RE-SCOPED",
+              "detail": "docs/agent-memory/sessions/fleet-push.log records the gate verdict verbatim: pushBctcLayoutHandler.ts baseline=228 actual=252 upper=250 (2 over); tasksMdJanitorJob.ts baseline=906 actual=1012 upper=996 (16 over); ocr_gateway.py baseline=527 actual=594 upper=579 (15 over). All three are baseline-tolerance-exceeded. Total overage is 33 lines across 3 files, i.e. trims or justification-header refreshes, NOT file splits.",
+              "falsification": "alert-commander c215 dismissed the latter two as uncommitted-peer-WIP false positives under FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE. Falsified three ways: git status --porcelain is clean on both; git merge-base --is-ancestor places db0ed7c02 and 183488ca2 INSIDE origin/main..HEAD; and baseline-tolerance-exceeded is, by the script own semantics, a committed-state verdict unrelated to working-tree scanning.",
+              "origin": "pushBctcLayoutHandler.ts sat at 228L from 2026-05-30 until 2f27fb335 (2026-08-23T19:39Z) took it to 252 — the fleet-wide block is about 34h old and came from one commit adding 24 lines. The log also shows the offender set growing from 2 to 3 mid-morning: with the gate already red, adding an offender costs nothing (broken ratchet, same mechanism the 2026-07-31 PO triage recorded).",
+              "impact": "Only FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH exists, and it correctly says 2-line trim. Landing it alone leaves the gate red on the other two. 175 commits are stranded. tsc passes in the same log, so size-lint is the sole gate.",
+              "landmine": "NEVER fix via size-lint-justification.sh --update: it regenerates docs/data/size-lint-baseline.json WHOLESALE, converting every current offender into a permanent repo-wide amnesty while exiting 0.",
+              "suggested_next_agent": "dev-mcp-server for the 2 ts files, dev-pdf-extractor for ocr_gateway.py"
+            },
+            {
+              "id": "SNAPSHOT-PROMOTE-STRUCTURAL-NOT-RACY",
+              "severity": "HIGH",
+              "state": "SHARPENED",
+              "detail": "6th consecutive cycle_snapshot_promoted=false. Step 4.7 names the file by wall-clock-at-write; emit_pressure_state looks it up by NOMINAL tick. Measured offset across 3 consecutive ticks this session: 05:15 to 05:17:03 (+2m03s), 05:30 to 05:33:19 (+3m19s), 05:45 to 05:48:46 (+3m46s). The offset is data-fetch latency and is always at least 2 minutes, so the wall-clock filename can essentially NEVER equal the nominal-tick key — even at drift_min=0, as this tick proves. Structural, not a race.",
+              "distinct_from": "The AGENT-side snapshot lookup is a DIFFERENT bug on the same filename scheme: the agent reads by its own wall-clock minute at read time and sometimes lands inside the same minute as the write (tally 5 hits / 6 misses). Two separate lookup defects — do not conflate them.",
+              "also": "cycle-snapshot-latest.json .tick is the bare string 00:00 while every per-tick writer emits a full ISO instant — a schema mismatch, so a consumer keying on .tick gets an unparseable value from latest. latest is now 29.7h stale (created_at 2026-08-23T00:07:50Z).",
+              "fix": "name the Step 4.7 file by NOMINAL tick, or use glob plus newest-by-created_at plus the existing 7-minute freshness check; ship both call sites together (.claude/skills/step-0-cowork/SKILL.md line 39 and .claude/skills/cycle-bootstrap/SKILL.md line 59)."
+            },
+            {
+              "id": "LOWERCASE-STATUS-INVISIBILITY-LIVE-INSTANCE",
+              "severity": "MEDIUM",
+              "state": "CONFIRMED",
+              "detail": "Exactly one row carries the lowercase status new: po-decision-bug5468-2026-08-23T15:27:38Z, type=system-issue, to=ops, about 14h old. It is invisible to every uppercase-NEW filter, including the pickers that would route it to ops.",
+              "impact": "One genuinely untriaged ops row is unreachable by status filter and will never surface in any NEW-based sweep."
+            },
+            {
+              "id": "NO-COLLISION-THIS-TICK",
+              "severity": "INFO",
+              "state": "OK",
+              "detail": "Single slot matched; Step 4b agent_id grouping yields no agent in 2 or more slots. All 12 containers healthy; mcp-server up 16h with RestartCount=0."
+            }
+          ],
+          "deviations": [
+            "Did NOT re-call claim_due_scheduled_tasks or cowork-match-slots.js (WORK-continuation contract) — catchup_raw was not re-measured this tick.",
+            "Sent last_regime and last_volatility_level as unknown per spec, although the live value NEUTRAL was in hand from get_macro_snapshot at .signals.carry.regime — kept deliberately to preserve visibility of the wrong-key defect.",
+            "Did NOT drain, mark, or clear any signal row; did NOT run guard-signal-type-coverage.sh (not read-only — line 258 writes live orch-state via ORCH_APPLY_LIVE_FILE_OVERRIDE and --check is a no-op alias).",
+            "Did NOT commit the dirty tree and did NOT attempt any push (PUSH-AUTONOMY-1 plus the red size-lint gate).",
+            "Did NOT repair the 2 malformed signal files or patch notebook-auto-prune.sh — router-only, routed as a finding instead."
+          ]
+        },
+        "createdAt": "2026-08-24T05:52:46Z",
+        "drained_at": "2026-08-24T06:00:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ab81acb5fde558223f50d7668e5192d97cd81d11cb26c5bda6f180e6da026dae",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "167",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-24T04:29:19Z",
+        "drained_at": "2026-08-24T06:00:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "1bc35b9384c62ed7cbe69ec59c8d6753c2007b22ba474a8059cb63a600e070cd",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "172",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-24T05:00:31Z",
+        "drained_at": "2026-08-24T06:00:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ea9442d53f60b4ea8c51f7c9d6a9b0d4e98127b8143c2d14505a618a88003676",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "174",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-24T05:31:27Z",
+        "drained_at": "2026-08-24T06:00:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "19d429d141f33520afe39da1aba61e89bb9c8ba2ee6a3d1200522e2e156edbf1",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "high",
+        "payload": {
+          "tick": "2026-08-24T06:00:00Z",
+          "drift_min": 0,
+          "verdict": "WORK",
+          "pressure_mode": "adaptive",
+          "slots_fired": [
+            "alert-commander-market"
+          ],
+          "collisions": "none",
+          "degraded": false,
+          "cores": 12,
+          "load1": 7.72,
+          "headroom_mb": 3791,
+          "snapshot_written": "docs/data/cycle-snapshot-06:02.json",
+          "cycle_snapshot_promoted": false,
+          "promoted_false_streak": 7,
+          "findings": [
+            {
+              "id": "SELF-CAUSED-ZERO-BYTE-TELEMETRY-HUSK",
+              "severity": "medium",
+              "status": "NEW-SELF-CAUGHT-AND-CLEANED",
+              "detail": "docs/signals/cowork-team-20260824T055159Z.json was 0 bytes. I created it at the 05:45Z tick: my telemetry write used a bare redirect to the target path, jq then failed on an inner-quote syntax error, and the shell had already truncated the file. drain-signals.js reported it as SKIP unparseable Unexpected end of JSON input. Same inbox-jamming outcome as the notebook-auto-prune defect but a DIFFERENT mechanism: redirect-before-validate rather than double-echo. Removed (untracked, 0 bytes, verified before deletion). Behaviour adopted from this tick on: telemetry writes go to a tmp path, jq empty validates, then mv - the pattern already used for snapshots.",
+              "zone": "docs/agents/cowork-team/flow/"
+            },
+            {
+              "id": "RETRACTED-34-PROVENANCE-IDENTIFIED",
+              "severity": "low",
+              "status": "RESOLVED",
+              "detail": "My retracted 05:30Z census of 34 NEW rows is now explained. pressure-state.json carries signal_backlog with value 34. I read that field and reported it as a NEW-status row count. The retraction stands - it is the drain inbox backlog depth, not a status census - but the figure was real data misattributed, not invented. Cross-check any backlog number against orch-state signal_queue rows before calling it a status count.",
+              "zone": "docs/agents/cowork-team/flow/"
+            },
+            {
+              "id": "PRESSURE-MODE-NOT-PERSISTED-BY-EMIT",
+              "severity": "medium",
+              "status": "NEW",
+              "detail": "emit_pressure_state accepts pressure_mode as an argument and the dispatcher passes it every tick, but the written pressure-state.json has no pressure_mode key at all. Live file keys: emitted_at, tick_id, signal_backlog, last_regime, last_volatility_level, calendar_status, dev_queue_depth, container_vm_headroom_mb, stale_warning. So the artifact that drives the next tick staleness-and-mode decision does not record which mode it was emitted under. Any post-hoc reconstruction of mode history from this file is impossible; only the preflight verdict carries it, and that is not persisted either.",
+              "zone": "apps/mcp-server/"
+            },
+            {
+              "id": "SNAPSHOT-LOOKUP-SPEC-IS-STRUCTURALLY-DEAD",
+              "severity": "high",
+              "status": "SHARPENED-THIRD-DEFECT-SEPARATED",
+              "detail": "cycle-bootstrap SKILL.md line 57 derives the lookup key as current UTC rounded to the nearest 5-minute slot. Counted the minute field of every snapshot file on disk: 33 files, distribution 01x4 02x6 03x2 16x2 17x3 18x1 23x1 31x3 32x1 33x2 39x1 46x2 47x3 48x1, and ZERO end in 0 or 5. The writer names by wall-clock-at-write which always lands 1-3 min past a quarter-hour, so it can never emit a 5-min-aligned name. The documented agent-side lookup has never been able to match any file that has ever existed. Every hit alert-commander has logged came from it silently ignoring the spec and scanning the directory, and because that workaround is unspecified it varies per cycle: c214 accepted 05:17 for tick 05:15 at plus 2 min, c215 accepted 05:33 for tick 05:30 at plus 3 min, c216 REJECTED 05:48 for tick 05:45 at plus 3 min - same offset, opposite verdict, adjacent cycles. That is three distinct defects on one filename scheme: promoter keys on nominal tick, documented agent lookup keys on a 5-min grid nothing writes to, agent workaround is non-deterministic. A fix must land all three plus the latest.tick schema mismatch or it papers over one.",
+              "zone": "cross-service/"
+            },
+            {
+              "id": "SNAPSHOT-OFFSET-FOURTH-MEASUREMENT",
+              "severity": "info",
+              "status": "OK",
+              "detail": "Nominal tick 06:00, file written 06:02. Running offsets across four consecutive ticks: plus 2m03s, plus 3m19s, plus 3m46s, plus 2m. Never below 2 min. Confirms the promoter miss is structural, not a race - this tick had drift_min 0 and still missed. 7th consecutive cycle_snapshot_promoted false.",
+              "zone": "cross-service/"
+            },
+            {
+              "id": "MALFORMED-SIGNAL-COUNT-NOW-TWO",
+              "severity": "high",
+              "status": "CARRIED",
+              "detail": "After removing my own 0-byte husk, 2 malformed files remain in docs/signals/, both from notebook-auto-prune.sh line 575 grep -c with an or-echo-0 fallback that double-emits on a zero count. Both are priority high to claude-manager-helper warning that the prune may have dropped the newest notebook content, and drain-signals.js will re-warn on them every tick forever. Fix is or-true on lines 574 and 575 plus repairing the two files.",
+              "zone": "scripts/"
+            },
+            {
+              "id": "LOAD1-JUMP",
+              "severity": "info",
+              "status": "OK",
+              "detail": "load1 rose from 1.35 at the 05:45Z tick to 7.72 at this one, cores 12, threshold 24. Not degraded, headroom 3791 MB. Recording as a datapoint because the fanout gate is non-binding at n equals 1 and would not have caught a further rise.",
+              "zone": "cross-service/"
+            }
+          ],
+          "deviations": [
+            "Did not re-call claim_due_scheduled_tasks or cowork-match-slots.js per the WORK-continuation contract, so catchup_raw was not re-measured this tick.",
+            "Sent last_regime and last_volatility_level as unknown per spec despite live carry.regime NEUTRAL being in hand, to keep the wrong-key defect visible.",
+            "Did not repair the 2 malformed notebook-prune signals and did not patch notebook-auto-prune.sh - router-only, routed as a finding.",
+            "Removed one untracked 0-byte file that I myself created this session, after verifying size and untracked status. Cleanup of my own artifact, not a repair of another producer output.",
+            "Did not commit the dirty tree and did not attempt any push - size-lint still blocks the fleet on 3 offenders."
+          ]
+        },
+        "createdAt": "2026-08-24T06:04:12Z",
+        "drained_at": "2026-08-24T06:15:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "46b70a8f63d9edfd6e3bd45186e972d56e0d48441bc7039ae0fae23b1dadbe6b",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "176",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-24T06:03:00Z",
+        "drained_at": "2026-08-24T06:15:51Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2370e8f2962e4f1af6963e76aa994d6f32ce642c88758153b6b68f26112e0380",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "high",
+        "payload": {
+          "tick": "2026-08-24T06:15Z",
+          "drift_min": 0,
+          "pressure_mode": "adaptive",
+          "slots_fired": [
+            "chef-intraday",
+            "alert-commander-market"
+          ],
+          "collision_warn": false,
+          "fanout": {
+            "cores": 12,
+            "load1": 2.65,
+            "headroom_mb": 3761,
+            "degraded": false,
+            "max_parallel": 4,
+            "batches": 1
+          },
+          "drain": {
+            "inserted": 2,
+            "db_count": 316,
+            "unparseable": 2,
+            "pruned_files": 0
+          },
+          "snapshot": {
+            "nominal_tick": "06:15",
+            "filename_minute": "06:17",
+            "offset_min": 2,
+            "bytes": 8639,
+            "promoted": false
+          },
+          "findings": [
+            {
+              "id": "SNAPSHOT-PROMOTION-EIGHTH-CONSECUTIVE-FALSE",
+              "severity": "high",
+              "status": "carried",
+              "note": "emit_pressure_state returned cycle_snapshot_promoted=false for the 8th tick running. Promoter keys on the nominal tick (06:15); the writer names by wall-clock-at-write (06:17). Zone apps/mcp-server/ for the promoter half."
+            },
+            {
+              "id": "AGENT-SNAPSHOT-WORKAROUND-IS-NONDETERMINISTIC",
+              "severity": "high",
+              "status": "sharpened",
+              "note": "Four consecutive alert-commander cycles measured. c214 tick=05:15 snapshot=05:17 offset=+2 ACCEPT; c215 tick=05:30 snapshot=05:33 offset=+3 ACCEPT; c216 tick=05:45 snapshot=05:48 offset=+3 REJECT; c217 tick=06:00 snapshot=06:02 offset=+2 ACCEPT. c215 and c216 share an identical +3 offset and reached opposite verdicts one cycle apart, so the agent-side directory-scan workaround is not threshold-driven - it is non-deterministic. The documented lookup in .claude/skills/cycle-bootstrap/SKILL.md Step -1 rounds read-time to the nearest 5-minute slot; a re-census at this tick counts 34 snapshot files on disk with ZERO whose minute field ends in 0 or 5, so that documented rule has never been satisfiable and every hit ever logged came from the undocumented workaround."
+            },
+            {
+              "id": "MALFORMED-SIGNAL-COUNT-STABLE-AT-TWO",
+              "severity": "high",
+              "status": "carried",
+              "note": "drain-signals.js still SKIPs 2 unparseable files, both notebook-prune-dropped-newest-...-dev-mcp-server-md (2026-08-23T152548Z and 2026-08-23T194934Z). Root cause scripts/agents-flow/notebook-auto-prune.sh lines 574-575: grep -c prints 0 AND exits 1 on no-match, so the || echo 0 guard appends a second 0 and the field becomes 0 newline 0. Fix is || true on both lines plus repair of the two files. The third husk reported at the 06:00 tick was dispatcher-caused and has been removed; the count is back to the true producer-caused figure. Zone scripts/."
+            },
+            {
+              "id": "CHEF-INTRADAY-TRIGGER-PROMPT-NONCANONICAL-MCP-URL",
+              "severity": "medium",
+              "status": "carried",
+              "note": "cowork-schedule.json slot chef-intraday carries a second trigger_prompt line reading MCP: https://zenmidi.com/vn-market/mcp. Project CLAUDE.md fixes the canonical gateway at https://zenmidi.com/gateway/mcp. Step 5.2 validates line 1 only, so the dispatcher passes line 2 through verbatim and the spawned chef sees a wrong URL in its entry prompt. Non-functional today because agents reach tools via mcp__gateway__call_tool rather than that string, but it is a live wrong-value in the schedule SSOT. Zone docs/data/."
+            },
+            {
+              "id": "PRESSURE-MODE-NOT-PERSISTED-BY-EMIT",
+              "severity": "medium",
+              "status": "carried",
+              "note": "emit_pressure_state accepts pressure_mode and the dispatcher supplies it every tick, but the written pressure-state.json has no such key. The artifact that drives the next tick mode decision cannot record which mode it was emitted under. Zone apps/mcp-server/."
+            },
+            {
+              "id": "TWO-SLOT-TICK-NO-COLLISION",
+              "severity": "info",
+              "status": "ok",
+              "note": "First multi-slot tick of the session: chef-intraday (unified-agent, due_reason=cadence, 60min, last_fired 04:18:40Z) and alert-commander-market (alert-commander, due_reason=cron). Step 4b groups by agent_id; the two agents are distinct so no WARN fired. chef_mutex_applied=false. Both spawned in one batch under max_parallel=4."
+            },
+            {
+              "id": "LOAD1-SPIKE-WAS-TRANSIENT",
+              "severity": "info",
+              "status": "ok",
+              "note": "load1 measured 7.72 at the 06:00 tick and 2.65 at this one, against a degradation threshold of 24 on 12 cores. The earlier reading was a transient, not a trend. Recorded to close out the 06:00 datapoint rather than leave it looking like a rising curve."
+            }
+          ],
+          "deviations": [
+            "Did not re-run claim_due_scheduled_tasks or cowork-match-slots.js - forbidden on the WORK continuation path - so catchup_raw was not re-measured this tick.",
+            "Sent last_regime and last_volatility_level as unknown per the Step 6.0 spec, even though a live carry regime of NEUTRAL (carrySpread 1.37pp) was in hand at .macro_snapshot.data.signals.carry.regime. Deliberate: the wrong-key defect must stay visible.",
+            "Passed the chef-intraday trigger_prompt through verbatim including its non-canonical MCP URL on line 2, because Step 5.2 validates line 1 only. Recorded as a finding rather than silently corrected.",
+            "Did not repair the two malformed notebook-prune signal files and did not patch notebook-auto-prune.sh - router-only, routed as a finding.",
+            "Did not commit the dirty tree and attempted no push; the size-lint pre-push gate remains blocked on 3 offenders and 177 commits are stranded."
+          ]
+        },
+        "createdAt": "2026-08-24T06:18:44Z",
+        "drained_at": "2026-08-24T06:30:50Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "34d7c3a27b26c79bd516f0c578458c7cdabc8eaec012687e6f0b7e31779ae888",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=7fd9c60a-9854-4589-9e98-e4c5e7e9168d mode=warn escalated=false prior_warns=0 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-24T06:44:01Z",
+        "drained_at": "2026-08-24T06:45:46Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ef7cd3a32252c389d5c28587644f6f4848c128effea20ee841e82ea4a55b5989",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "high",
+        "payload": {
+          "tick": "2026-08-24T06:30Z",
+          "drift_min": 0,
+          "pressure_mode": "adaptive",
+          "slots_matched": 1,
+          "slots_spawned": 1,
+          "spawned": [
+            "alert-commander-market"
+          ],
+          "one_shots": 0,
+          "max_parallel": 4,
+          "degraded": false,
+          "headroom_mb": 3047,
+          "load_1min": 2.37,
+          "cores": 12,
+          "drain": {
+            "inserted": 1,
+            "pruned_files": 0,
+            "db_count": 317,
+            "skip_unparseable": 2
+          },
+          "findings": [
+            {
+              "id": "SNAPSHOT-PROMOTION-NINTH-CONSECUTIVE-FALSE",
+              "severity": "high",
+              "state": "carried",
+              "note": "emit_pressure_state returned cycle_snapshot_promoted=false for the ninth consecutive tick. Dispatcher wrote docs/data/cycle-snapshot-06:32.json for nominal tick 06:30 (offset +2min, sixth consecutive nonzero offset). The promoter looks the file up by nominal tick, the writer names it by wall clock at write. cycle-snapshot-latest.json still carries .tick = 00:00 while every writer emits a full ISO instant."
+            },
+            {
+              "id": "SNAPSHOT-LOOKUP-SPEC-IS-AMBIGUOUS-PROSE",
+              "severity": "high",
+              "state": "new-supersedes",
+              "supersedes": "AGENT-SNAPSHOT-WORKAROUND-IS-NONDETERMINISTIC (cowork-team-20260824T061844Z.json) and SNAPSHOT-LOOKUP-THREE-DIVERGENT-KEYS (this file, earlier revision)",
+              "note": "Root cause located in source rather than inferred from agent narration. .claude/skills/cycle-bootstrap/SKILL.md Step -1 defines the lookup as: TICK = current UTC time formatted as HH:MM (round to nearest 5-min slot, e.g. 02:05 to 02:05). That single line gives two contradictory instructions - format the current time, and round it to a 5-minute slot - and its worked example demonstrates no rounding at all, mapping 02:05 onto itself. It is ambiguous prose interpreted freshly by an LLM on every run, which is why five measured runs show three different lookup behaviours: c216 looked up the NOMINAL TICK 05:45, c218 looked up its READ-TIME MINUTE 06:18, and c219 hit 06:32 from a read at about 06:33, matching neither rule. Measured outcome across six cycles: four hits (05:17, 05:33, 06:02, 06:32) and two misses (05:48 present but rejected, 06:17 present but rejected). Two earlier mechanistic models filed by this dispatcher - a random directory scan, then an exact-minute race - were each falsified by the next observation; no behavioural model is asserted here. The fix does not require knowing which interpretation a given run picks: replace the prose with one unambiguous key, the nominal tick floor(minute/15)*15, computed identically by writer, promoter and consumer, with the consumer taking it from the scheduled_utc token already present in its spawn prompt. Two further defects in the same file: the documented 5-minute grid is unsatisfiable regardless of interpretation, since 0 of 35 snapshot filenames on disk carry a 5-min-aligned minute; and Step -1 still carries a stale note claiming the snapshot writer is a future task that has not landed, so Step -1 will always miss - the writer landed and has written on every tick today. Zone .claude/skills/cycle-bootstrap/ to agent-father."
+            },
+            {
+              "id": "SNAPSHOT-06-32-PREDICTION-FALSIFIED",
+              "severity": "high",
+              "state": "self-correction",
+              "note": "The prediction recorded earlier in this same signal was WRONG. alert-commander c219 reported a snapshot HIT on cycle-snapshot-06:32.json, described as roughly 1 minute fresh, after reading at approximately 06:33. The exact-minute-on-read-clock model predicted a miss. That model is withdrawn."
+            },
+            {
+              "id": "MALFORMED-SIGNAL-COUNT-STABLE-AT-TWO",
+              "severity": "high",
+              "state": "carried",
+              "note": "Same two notebook-prune-dropped-newest-...-dev-mcp-server-md files (2026-08-23T152548Z position 581, 2026-08-23T194934Z position 533) SKIP-unparseable on every drain. Root cause notebook-auto-prune.sh lines 574/575 grep -c ... || echo 0 double-emits on a zero count. Fix is || true on both plus repair of the two stuck files. Zone scripts/ to developer."
+            },
+            {
+              "id": "CHEF-WORK-UNCOMMITTED-THREE-TICKS",
+              "severity": "high",
+              "state": "carried-aging",
+              "note": "docs/agent-memory/notebooks/unified-agent.md still modified and docs/data/unified-agent-synthesis-2026-08-24-intraday.json still untracked, now across three ticks since the 06:13 chef run. Two peer commits have landed since (a8706288f alert-commander c218 and this tick pending) and neither picked them up, because the commit-mutex path stages only the committing agent own pathspec. No sweep covers these."
+            },
+            {
+              "id": "CHEF-SYNTHESIS-FILENAME-DROPS-SLOT-PREFIX",
+              "severity": "high",
+              "state": "carried",
+              "note": "chef-dish.md:889 specifies docs/data/unified-agent-synthesis-{CYCLE_DATE}-{SLOT_ID}.json with SLOT_ID chef-intraday. Same-day control: the 04:13 fire wrote -chef-intraday.json correctly, the 06:13 fire wrote -intraday.json. Two files, one slot, one day, two names and two different key sets, and neither file records slot_id internally, so the filename is the sole slot carrier. Zone docs/agents/unified-agent/ to agent-father."
+            },
+            {
+              "id": "PRESSURE-MODE-NOT-PERSISTED-BY-EMIT",
+              "severity": "medium",
+              "state": "carried",
+              "note": "emit_pressure_state accepted pressure_mode=adaptive and returned success, but the persisted docs/data/pressure-state.json still has no pressure_mode key. Consumers reading the file cannot see the mode the dispatcher computed. Zone apps/mcp-server/."
+            },
+            {
+              "id": "SINGLE-SLOT-TICK-NO-COLLISION",
+              "severity": "info",
+              "state": "ok",
+              "note": "One matched slot this tick, so the Step 4b collision guard grouped a single agent_id and correctly emitted no WARN. Not degraded: container headroom 3047MB above the 1500MB floor, load1 2.37 against a 24.0 ceiling on 12 cores, max_parallel 4."
+            }
+          ],
+          "deviations": [
+            "Did not re-call claim_due_scheduled_tasks or cowork-match-slots.js per the WORK-continuation contract, so catchup_raw was not re-measured this tick.",
+            "Sent last_regime and last_volatility_level as unknown per spec despite live NEUTRAL carry regime (carrySpread 1.37pp) being in hand, to keep the wrong-key defect visible.",
+            "Did not repair the two malformed notebook-prune signal files nor patch notebook-auto-prune.sh — outside router scope, filed above.",
+            "Did not commit the chef stranded notebook or synthesis file — belongs to the owning agent zone, filed above.",
+            "Did not run guard-signal-type-coverage.sh: it is not read-only and --check is a no-op alias.",
+            "No push attempted — size-lint gate still blocks with three offenders."
+          ],
+          "spawn_reconciliation": {
+            "agent": "alert-commander",
+            "cycle": "c219",
+            "verdict": "verified-clean",
+            "offflow_markers": "0 of 6",
+            "negative_control": "passed",
+            "commit": "9bde1f437",
+            "commit_time": "2026-08-24T06:37:16Z",
+            "files_changed": "notebook only, 9+/9-",
+            "notebook": "31 lines, 9161 bytes, sections c217/c218/c219, c216 pruned",
+            "ahead": 179,
+            "log_agent_work": 2092,
+            "snapshot": "HIT on cycle-snapshot-06:32.json - first hit after two consecutive misses",
+            "push": "blocked by size-lint pre-push gate, no duplicate bug signal minted, correct"
+          }
+        },
+        "createdAt": "2026-08-24T06:34:10Z",
+        "drained_at": "2026-08-24T06:45:46Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d08cabb6d8c81a2fc13e0739805872e5525e94ca8712839cd9c30914c10fc431",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "178",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-24T06:34:00Z",
+        "drained_at": "2026-08-24T06:45:46Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

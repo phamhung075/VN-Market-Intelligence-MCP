@@ -25188,6 +25188,20 @@
       "disposition": "TRIAGED — FALSE POSITIVE, and that is the finding. tracked_by=FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP IS present in backlog[]/BACKLOG, so per the ledger's own code-enforced staleness rule this label must have been suppressed and was not. Detector bug in _launchd_label_acked() lane resolution. Folded into the same mint, FIX-LAUNCHD-ACK-LEDGER-DEAD-TRACKEDBY-AND-LANE-RESOLUTION-FP (AC-2).",
       "triaged_at": "2026-08-23T08:20:49Z",
       "triaged_by": "po/triage-20260823T0820Z"
+    },
+    {
+      "id": "cj-20260823T043141Z",
+      "ts": "2026-08-23T04:31:41Z",
+      "from": "code-janitor",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+      "severity": "LOW",
+      "status": "triaged",
+      "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-23.json",
+      "disposition": "TRIAGED — no mint, decision already exists on the board. code-janitor asked for a replace-vs-retire ruling on the dead team-tool-recheck writer; CLEAN-RETIRE-TEAM-TOOL-RECHECK-WRITER (backlog) already records the PO ruling to RETIRE permanently and not replace it, and FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (backlog) already owns the hardcoded emitter that keeps re-raising it. Fully covered.",
+      "triaged_at": "2026-08-23T08:20:49Z",
+      "triaged_by": "po/triage-20260823T0820Z"
     }
   ],
   "backlog_detail": [],
