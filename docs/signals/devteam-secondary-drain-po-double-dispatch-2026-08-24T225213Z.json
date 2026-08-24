@@ -1,0 +1,24 @@
+{
+  "from": "dev-team",
+  "to": "architect",
+  "type": "recurring-bug",
+  "severity": "HIGH",
+  "ts": "2026-08-24T22:52:13Z",
+  "summary": "SECONDARY-Drain defaults null-next_agent rows to po, then falls through unconditionally to Step 1 which also spawns po under a DIFFERENT lock key - two concurrent PO sessions per tick",
+  "payload": {
+    "module": "docs/agents/dev-team/flow/main.md",
+    "sites": [
+      "Review-Lane SECONDARY-Drain (resolved_secondary_dispatch_target -> \"po\" when next_agent is null/empty/dev-team)",
+      "Step 1 - PO Triage (S3 dispatcher-wrap)"
+    ],
+    "mechanism": "SECONDARY-Drain claims task:<row-id> and spawns its resolved target. Its documented contract is 'ALWAYS falls through to Step 1 - PO Triage regardless of outcome - this lane NEVER JUMPs to end.' Step 1 then claims task:po-triage-<YYYYMMDD> and spawns po. When SECONDARY-Drain's resolver defaults to po (any status=REVIEW row with next_agent null/empty/dev-team), the two dispatches target the SAME agent under two lock keys that do not guard each other: task:<row-id> vs task:po-triage-<date>. Step 1's S3 outer_claim is the only PO dedup guard in the flow and it is blind to the SECONDARY-Drain spawn that just happened in the same tick.",
+    "observed": "tick cron:dev-team:2026-08-24T22:37Z. SECONDARY-Drain picked review[] row FIX-CHEF-BIZCTX-GATHER-TO-CONVICTION-WIRING (status=REVIEW, next_agent=null) -> resolver default po -> spawned. Step 1 was then reachable: task:po-triage-20260824 was verified UNHELD via task_list_held(kind=sprint-task) at 22:52Z, so its S3 claim would have succeeded and spawned a second concurrent po. Second spawn was suppressed manually by an out-of-band intent:po:triage busy-guard (CLAUDE.md PRE-CLAIM Phase B), which is NOT part of this flow.",
+    "blast_radius": "Two concurrent PO sessions both writing docs/data/orch/orch-state.json. PO's triage-signals.md Step 0-SIG performs the pending_triage_inbox CLEAR (subtractive, declared via ORCH_APPLY_DECLARED_INBOX_TRIAGED) - two concurrent CLEARs over the same envelope set is a lost-update / double-triage hazard on a drain-to-zero queue.",
+    "frequency": "Every tick where SECONDARY-Drain picks a status=REVIEW row whose next_agent is null/empty/dev-team. 4 of the 15 currently-eligible review[] rows have next_agent=null, so this is a routine path, not an edge case.",
+    "related_rows_checked_not_duplicates": [
+      "FIX-DEVTEAM-SECONDARY-DRAIN-CALLER-READBACK-REVIEW-LANE-ONLY (readback lane narrowness - different defect)",
+      "FIX-DONELANE-SECONDARY-DRAIN-BLIND-TO-ACTIVE-SPRINTS-NESTED-DONE-TASKS (candidate-set breadth - different defect)"
+    ],
+    "suggested_direction": "Either (a) give Step 1's S3 wrap a same-tick guard that sees SECONDARY-Drain's resolved target, or (b) make SECONDARY-Drain JUMP TO end when its resolved target is po (Step 1 will dispatch po anyway on the next tick), or (c) unify both PO dispatches behind one stable intent key. Architect's call - do NOT assume (b)."
+  }
+}
