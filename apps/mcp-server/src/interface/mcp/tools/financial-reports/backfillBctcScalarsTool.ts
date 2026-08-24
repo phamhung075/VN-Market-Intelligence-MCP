@@ -87,8 +87,12 @@ const InputSchema = z.object({
     .optional()
     .describe(
       "If true, also re-derive scalar columns for reports with refine_status='DONE' " +
-      "(not just PENDING). Use after any aggregator mapping change (e.g. BEQ-3 new columns) " +
-      "to reflow stale DONE reports whose scalars were derived before the new mappings shipped. " +
+      "or 'PARTIAL' (not just PENDING). Use after any aggregator mapping change (e.g. " +
+      "BEQ-3 new columns, or a section-completeness fix) to reflow stale DONE/PARTIAL " +
+      "reports whose scalars were derived before the new mappings shipped — PARTIAL " +
+      "reports were previously permanently excluded from every reflow attempt " +
+      "(FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG) even after a mapping " +
+      "fix that would let them pass the section-completeness gate on retry. " +
       "CONFIRMED reports are always excluded regardless of this flag.",
     ),
 });
@@ -135,9 +139,16 @@ export function buildBackfillBctcScalarsHandler(
       // ── 1. Find eligible reports ────────────────────────────────────────────
       // Default: PENDING + not CONFIRMED + at least 1 bctc_table_row
       // force_reflow=true: also include refine_status='DONE' (re-derive stale scalars
-      //   whose aggregator mappings have changed since finalize last ran, e.g. BEQ-3).
+      //   whose aggregator mappings have changed since finalize last ran, e.g. BEQ-3)
+      //   AND refine_status='PARTIAL' (FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-
+      //   ZERO-HPG: PARTIAL reports were blocked by the section-completeness gate below
+      //   and, before this fix, PERMANENTLY excluded from every reflow attempt — even a
+      //   mapping/gate fix that would now let them pass could never reach them, because
+      //   this WHERE clause filtered them out before the gate ever re-ran. Re-running the
+      //   completeness gate on PARTIAL rows is safe/idempotent: it either still fails
+      //   (stays PARTIAL, no-op) or now passes and proceeds to aggregation (DONE).
       const statusClause = force_reflow
-        ? `refine_status IN ('PENDING', 'DONE')`
+        ? `refine_status IN ('PENDING', 'DONE', 'PARTIAL')`
         : `refine_status = 'PENDING'`;
 
       let targetReports: PendingReportRow[];

@@ -221,6 +221,52 @@ describe("LF-SERVE-REFLOW — backfill_bctc_scalars force_reflow=true", () => {
     expect(row?.operating_profit).toBe(0);
   });
 
+  it("FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG: force_reflow=true now also includes refine_status='PARTIAL' reports", async () => {
+    /**
+     * RED (eligibility gap, discovered while fixing the HPG operating_profit=0 defect):
+     * refine_status='PARTIAL' reports (set by the BEQ-6 section-completeness gate) were
+     * excluded from BOTH the default (PENDING-only) AND force_reflow (PENDING+DONE)
+     * branches — a PARTIAL report could never be reflowed again, even after a mapping
+     * or completeness-gate fix that would let it pass the gate on retry.
+     *
+     * GREEN: force_reflow=true now extends the WHERE clause to
+     * refine_status IN ('PENDING','DONE','PARTIAL').
+     */
+    const db = openTestDb();
+    const partialId = "partial-id-0001";
+    db.run(`
+      INSERT INTO financial_reports
+        (id, action_code, company_name, exchange, domain,
+         period_year, period_quarter, period_type, period_start, period_end, sort_key,
+         net_profit, operating_profit, refine_status, audit_status, extraction_confidence, parsed_at,
+         balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json)
+      VALUES (?, 'HPG', 'Hoa Phat Group', 'HOSE', 'other',
+              2026, 1, 'Q1', '2026-01-01', '2026-03-31', '2026-Q1',
+              9055918, 0, 'PARTIAL', 'unaudited', 0.8, datetime('now'), '{}', '{}', '{}', '{}')
+    `, [partialId]);
+    insertFptTableRows(db, partialId);
+
+    const handler = buildBackfillBctcScalarsHandler(db);
+
+    // Without force_reflow: PARTIAL stays excluded (unchanged default behavior).
+    const before = await handler({ dry_run: false, report_id: partialId });
+    const beforeBody = JSON.parse(before.content[0].text);
+    expect(beforeBody.summary.done).toBe(0);
+    expect(beforeBody.summary.skipped).toBe(0); // excluded by WHERE clause, never reached
+
+    // With force_reflow=true: PARTIAL is now eligible and gets reflowed.
+    const after = await handler({ dry_run: false, report_id: partialId, force_reflow: true });
+    const afterBody = JSON.parse(after.content[0].text);
+    expect(afterBody.ok).toBe(true);
+    expect(afterBody.summary.done).toBe(1);
+
+    const postRow = db.query<{ refine_status: string; operating_profit: number }, [string]>(
+      "SELECT refine_status, operating_profit FROM financial_reports WHERE id = ?",
+    ).get(partialId);
+    expect(postRow?.refine_status).toBe("DONE");
+    expect(postRow?.operating_profit).toBeGreaterThan(0);
+  });
+
   it("force_reflow=true bulk sweep: processes both PENDING and DONE in one pass", async () => {
     /**
      * Verifies the corpus sweep path: when force_reflow=true is used without a report_id,

@@ -116,6 +116,34 @@ describe("BEQ-5 — checkSectionCompleteness domain function", () => {
     expect(result.hasCashFlow).toBe(false);
     expect(result.isComplete).toBe(false);
   });
+
+  // DV-GUARD-5..6: FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG —
+  // full end-to-end + negative-control coverage lives in the dedicated task test
+  // file; this pair documents the extension alongside its DV-GUARD-1..4 siblings.
+  it("DV-GUARD-5: 'general'-only rows carrying a cash-flow-signal label ('lưu chuyển tiền') → hasCashFlow=true (legacy-window fallback)", () => {
+    const rows: AggregatorRow[] = [
+      { code: "280", label: "TỔNG CỘNG TÀI SẢN", value_current: 88_000_000_000_000, statement_section: "general", is_summary_row: 1, unit: "vnd" },
+      { code: "300", label: "C. NỢ PHẢI TRẢ",      value_current: 47_000_000_000_000, statement_section: "general", is_summary_row: 1, unit: "vnd" },
+      { code: "400", label: "D. VỐN CHỦ SỞ HỮU",   value_current: 41_000_000_000_000, statement_section: "general", is_summary_row: 1, unit: "vnd" },
+      { code: "10",  label: "Doanh thu thuần",     value_current: 20_000_000_000_000, statement_section: "income_statement", is_summary_row: 1, unit: "vnd" },
+      { code: "20",  label: "Lưu chuyển tiền thuần từ hoạt động kinh doanh", value_current: -2_000_000_000_000, statement_section: "general", is_summary_row: 1, unit: "vnd" },
+    ];
+    const result = checkSectionCompleteness(rows);
+    expect(result.hasCashFlow).toBe(true);
+    expect(result.isComplete).toBe(true);
+  });
+
+  it("DV-GUARD-6: negative control — 'general'-only rows with NO cash-flow-signal label anywhere → hasCashFlow stays false (no over-claim)", () => {
+    const rows: AggregatorRow[] = [
+      { code: "280", label: "TỔNG CỘNG TÀI SẢN", value_current: 88_000_000_000_000, statement_section: "general", is_summary_row: 1, unit: "vnd" },
+      { code: "300", label: "C. NỢ PHẢI TRẢ",      value_current: 47_000_000_000_000, statement_section: "general", is_summary_row: 1, unit: "vnd" },
+      { code: "400", label: "D. VỐN CHỦ SỞ HỮU",   value_current: 41_000_000_000_000, statement_section: "general", is_summary_row: 1, unit: "vnd" },
+      { code: "10",  label: "Doanh thu thuần",     value_current: 20_000_000_000_000, statement_section: "income_statement", is_summary_row: 1, unit: "vnd" },
+    ];
+    const result = checkSectionCompleteness(rows);
+    expect(result.hasCashFlow).toBe(false);
+    expect(result.isComplete).toBe(false);
+  });
 });
 
 // ── BEQ-6: backfillBctcScalarsTool section guard ─────────────────────────────

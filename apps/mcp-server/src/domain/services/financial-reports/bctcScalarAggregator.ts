@@ -295,6 +295,40 @@ function findByCode(
   return best.value_current ?? null;
 }
 
+/**
+ * findByCodeExcluding — like findByCode, but requires the label to NOT match
+ * excludePattern (inverse of findByCode's labelHint, which requires a match).
+ *
+ * FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG: used for legacy
+ * "general"-bucket disambiguation when a VAS code is genuinely reused by two
+ * different statements within the SAME statement_section (a markdown-refine
+ * window that never matched a SECTION_HEADERS pattern leaves everything tagged
+ * "general") and the wanted candidate is identified by the ABSENCE of the other
+ * statement's marker phrase — e.g. code "30" in "general" collides between
+ * income-statement operating_profit and cash-flow investing_cf; the cash-flow
+ * candidate is excluded by its "lưu chuyển tiền" label (see P_CASH_FLOW_LABEL).
+ *
+ * Priority: is_summary_row=1 > first match (mirrors findByCode's no-hint path).
+ */
+function findByCodeExcluding(
+  rows: AggregatorRow[],
+  code: string,
+  excludePattern: RegExp,
+  statementSection?: string,
+): number | null {
+  let candidates = rows.filter(
+    (r) => r.code?.trim() === code && !excludePattern.test(r.label),
+  );
+  if (statementSection !== undefined) {
+    candidates = candidates.filter((r) => r.statement_section === statementSection);
+  }
+  if (candidates.length === 0) return null;
+
+  const summaryMatch = candidates.find((r) => r.is_summary_row === 1);
+  const best = summaryMatch ?? candidates[0]!;
+  return best.value_current ?? null;
+}
+
 // ── Label-based lookup helpers ────────────────────────────────────────────────
 
 /**
@@ -631,6 +665,19 @@ const P_CHARTER_CAPITAL = /v[oố]n\s+g[oó]p|v[oố]n\s+c[oổ]\s+ph[aầ]n|v[o
 const P_INVESTMENT_PROPERTY = /b[aấ]t\s+đ[oộ]ng\s+s[aả]n\s+đ[aầ]u\s+t[uư]/i;
 
 /**
+ * P_CASH_FLOW_LABEL — universal VAS cash-flow-statement subtotal-line marker
+ * ("lưu chuyển tiền" = "cash flow", literal in every operating/investing/financing
+ * cash-flow subtotal label, ticker-agnostic).
+ *
+ * FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG: used to disambiguate
+ * the "general"-bucket fallback below (see § General-bucket fallback comment near
+ * operating_profit) — INCLUDE hint when the caller wants the cash-flow candidate,
+ * EXCLUDE pattern (via findByCodeExcluding) when the caller wants the income-
+ * statement candidate for the same reused code.
+ */
+const P_CASH_FLOW_LABEL = /l[uư]u\s*chuy[eể]n\s*ti[eề]n/i;
+
+/**
  * reward_fund (Quỹ khen thưởng, phúc lợi):
  * VAS codes vary: 322 (VNM/DHG/FPT-Q4), 323 (FPT-2026Q1), 320 (HPG).
  * Period-flip risk: code 322 = "Vay dài hạn" on HPG; code 320 = "Phải trả" on FPT.
@@ -859,6 +906,36 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
     // Corporate English label fallback (bilingual PDF — FIX-BCTC-REFINE-HVN)
     operating_profit = scale(findByLabel(rows, "income_statement", P_CORP_OPERATING_PROFIT_EN));
   }
+  // General-bucket fallback (FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG):
+  // some markdown-refine windows never match a SECTION_HEADERS pattern
+  // (refinedMarkdownParser.ts) and leave the WHOLE primary-statement table tagged
+  // statement_section="general" — income-statement AND cash-flow rows land in the
+  // SAME bucket (confirmed live: HPG 2026-Q1, 233/282 rows "general", ZERO rows
+  // tagged "cash_flow"). Code "30" is reused there too; exclude the cash-flow
+  // candidate by its "lưu chuyển tiền" label. Only fires when the properly-sectioned
+  // + English-label lookups above already returned null — never overrides an
+  // already-correctly-tagged report (FPT/VCB unaffected).
+  if (operating_profit === null && !isBankPath) {
+    operating_profit = scale(findByCodeExcluding(rows, "30", P_CASH_FLOW_LABEL, "general"));
+  }
+
+  // AC-4 plausibility guard (FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG,
+  // feedback_nonzero_values_need_plausibility_check — inverse case, a ZERO that should
+  // have been rejected): net_profit > gross_profit while operating_profit resolves to
+  // EXACTLY 0 (after every legitimate lookup above, including the general-bucket
+  // fallback, has already been tried) is the corrupt-zero signature — a non-bank
+  // company cannot legitimately report zero operating profit while net income exceeds
+  // gross profit. Treat as an unresolved extraction (null, honest gap) rather than
+  // serve a corrupt zero as if it were a genuine measured value.
+  if (
+    !isBankPath &&
+    operating_profit === 0 &&
+    net_profit !== null &&
+    gross_profit !== null &&
+    net_profit > gross_profit
+  ) {
+    operating_profit = null;
+  }
 
   // cash: balance sheet code "110" — Tiền và các khoản tương đương tiền.
   // Present in "general" section for FPT; try both "general" and "balance_sheet".
@@ -880,24 +957,57 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
     // "Net cash from operations" / "Net cash generated from operating activities"
     operating_cf = scale(findByLabel(rows, "cash_flow", P_CORP_OPERATING_CF_EN));
   }
+  if (operating_cf === null) {
+    // General-bucket fallback (see operating_profit above for rationale): code "20"
+    // REQUIRING the cash-flow label phrase — excludes the gross_profit "Lợi nhuận gộp"
+    // collision row that shares this code in the same "general" bucket.
+    operating_cf = scale(findByCode(rows, "20", P_CASH_FLOW_LABEL, "general"));
+  }
   let investing_cf = scale(findByCode(rows, "30", undefined, "cash_flow"));
   if (investing_cf === null) {
     // English label fallback: "Net cash from investing" / "Net cash used in investing activities"
     investing_cf = scale(findByLabel(rows, "cash_flow", P_CORP_INVESTING_CF_EN));
+  }
+  if (investing_cf === null) {
+    // General-bucket fallback (see operating_cf above for rationale).
+    investing_cf = scale(findByCode(rows, "30", P_CASH_FLOW_LABEL, "general"));
   }
   let financing_cf = scale(findByCode(rows, "40", undefined, "cash_flow"));
   if (financing_cf === null) {
     // English label fallback: "Net cash from financing" / "Net cash used in financing activities"
     financing_cf = scale(findByLabel(rows, "cash_flow", P_CORP_FINANCING_CF_EN));
   }
+  if (financing_cf === null) {
+    // General-bucket fallback (see operating_cf above for rationale).
+    financing_cf = scale(findByCode(rows, "40", P_CASH_FLOW_LABEL, "general"));
+  }
+  if (financing_cf === null) {
+    // General-bucket last-resort (mirrors the `cash` code-110 3-tier pattern above):
+    // some OCR renderings drop the word "tiền" from this specific subtotal label
+    // (observed live: "Lưu chuyển từhoat động tài chính" — the CASH_FLOW_LABEL hint
+    // above cannot match it). Code "40" has no observed income-statement collision
+    // partner in the general bucket, so a broad unhinted search is safe here.
+    financing_cf = scale(findByCode(rows, "40", undefined, "general"));
+  }
 
   // capex: code "21" in cash_flow section — "Tiền chi mua sắm tài sản cố định..."
   // This is a negative number (cash outflow). Stored as-is (negative million VND).
-  const capex = scale(findByCode(rows, "21", undefined, "cash_flow"));
+  let capex = scale(findByCode(rows, "21", undefined, "cash_flow"));
+  if (capex === null) {
+    // General-bucket fallback: code "21" is not independently reused by the income
+    // statement (unlike 20/30/40), so a broad search is safe — no hint needed.
+    capex = scale(findByCode(rows, "21", undefined, "general"));
+  }
 
   // depreciation_amortization: code "02" in cash_flow — reconciliation item for EBITDA.
   // Only used for EBITDA derivation; not stored as a standalone column.
-  const depreciation_amort = scale(findByCode(rows, "02", undefined, "cash_flow"));
+  let depreciation_amort = scale(findByCode(rows, "02", undefined, "cash_flow"));
+  if (depreciation_amort === null) {
+    // General-bucket fallback: code "02" REQUIRING a depreciation label hint —
+    // excludes the revenue-deduction "Giảm trừ doanh thu" collision row that shares
+    // this code in the same "general" bucket.
+    depreciation_amort = scale(findByCode(rows, "02", /kh[aấ]u\s*hao/i, "general"));
+  }
 
   // ebitda: operating_profit + depreciation_amortization.
   // null when either component is absent (pure domain derivation — no partial EBITDA).
