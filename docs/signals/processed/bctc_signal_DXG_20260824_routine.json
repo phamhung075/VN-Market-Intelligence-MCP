@@ -4,67 +4,27 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Real estate development — residential projects (HCMC + satellite provinces)",
-  "customer": "Homebuyers and investors in mid-tier residential segment",
-  "ops": "get_bctc_full returns 'Chưa có dữ liệu' — 38th+ consecutive cycle with no extracted BCTC data; get_cash_flow returns astronomically large OCF values (known extraction anomaly, c162, still pending dev-team pickup — do NOT cite these cash-flow figures)",
-  "mgmt": "Valuation AVOID: PE 66.5x vs 16.1x sector median (+312% premium); ROE 1.9% well below 7.3% sector median",
-  "valuation": {
-    "pe": 66.5,
-    "pe_sector_median": 16.1,
-    "earning_yield_pct": 1.5,
-    "max_deposit_rate_pct": 5,
-    "ey_spread_pp": -3.5,
-    "valuation_verdict": "AVOID",
-    "roe_pct_sector_annualized": 1.9
+  "product": "Phát triển bất động sản nhà ở, khu đô thị (Đất Xanh Group)",
+  "customer": "Người mua nhà ở trung cấp, nhà đầu tư thứ cấp",
+  "ops": "get_bctc_full trả về 'Chưa có dữ liệu' — 39+ chu kỳ liên tiếp không trích xuất được (PDF Q2-2026 đã lưu trữ từ 08-01, chưa xử lý); PE/ROE dưới đây lấy từ get_sector_comparison, không phải BCTC gốc",
+  "mgmt": "ROE ngành-so-sánh 1.9% dưới xa trung vị ngành BĐS 7.3%; PE 66.5x, premium +312% so với ngành — định giá đắt so với hiệu quả sinh lời thực tế",
+  "ey_spread_pct": -3.5,
+  "valuation_verdict": "AVOID",
+  "esc_flags": {
+    "note": "BCTC gốc không có dữ liệu — ESC gate không đánh giá được cho ticker này chu kỳ này"
   },
-  "kinhdich_reading": {
-    "que": "Quan (20)",
+  "escalation_status": "NONE",
+  "data_quality_flag": "NO_BCTC_DATA_39_CYCLES",
+  "kinhdich": {
+    "que": "Quan(20)",
     "xu_huong": "TRUNG TINH",
-    "tin_hieu": "THAN TRONG",
+    "khuyen_nghi": "THAN TRONG",
     "do_tin_cay_pct": 13
   },
-  "sentiment_trend": "unavailable (no BCTC-linked sentiment entries this cycle)",
-  "esc_gate": {
-    "ESC-1": "unevaluable — no source BCTC data",
-    "ESC-2": "not evaluable — no balance-sheet data",
-    "ESC-3": "not evaluable — get_bctc_full data absent despite get_cash_flow anomalous return",
-    "ESC-4": "not evaluable — no P&L data",
-    "ESC-5": "not evaluable — no report_id path attempted (no filed report on record)"
-  },
-  "trick_summary": null,
-  "trick_confidence": "none",
-  "trick_pass_versions": [],
-  "insider_signals": "no significant insider activity",
-  "legal_risk": "none",
-  "evidence_fragments": [
-    {
-      "id": 1471,
-      "evidence_type": "bctc_valuation_premium",
-      "direction": "bearish",
-      "magnitude": 1,
-      "confidence": 0.6
-    },
-    {
-      "id": 1472,
-      "evidence_type": "bctc_roe_ratio",
-      "direction": "bullish",
-      "magnitude": 0.3,
-      "confidence": 0.6
-    },
-    {
-      "id": 1473,
-      "evidence_type": "bctc_report_overdue",
-      "direction": "bearish",
-      "magnitude": 0.5,
-      "confidence": 0.55
-    }
-  ],
-  "earnings_calendar_status": "QUÁ HẠN (Q2-2026, hạn 30/07/2026)",
-  "data_quality_note": "DXG 'Chưa có dữ liệu' unresolved 37th+ cycle; cash-flow anomaly (bctc-analyst-20260813T001500Z.json, c162) still pending dev-team pickup",
-  "cycle_id": "20260824-1800",
+  "as_of": "2026-08-24T21:00:00Z",
   "_processed": {
-    "fingerprint": "57db23dcc87e9c3f1016a53f6aa58f2c0db0d1b708dec58b7e7d4e54c1fe26b7",
-    "processedAt": "2026-08-24T18:16:08Z",
+    "fingerprint": "b7f8a7b6e34fcae91f99f6c7eab31e5250640bb3eb1d009aaa2976fd788dac94",
+    "processedAt": "2026-08-24T21:12:06Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

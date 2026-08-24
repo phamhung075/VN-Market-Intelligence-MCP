@@ -4,79 +4,29 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "Steel production (long + flat products), construction materials, agriculture (feed/livestock)",
-  "customer": "Construction contractors, infrastructure/property developers, domestic + export steel buyers",
-  "ops": "Gross margin 15.8%; operating_profit reported as 0 tỷ VND — known data-quality anomaly (34th+ consecutive cycle, op_profit=0 corrupt while net profit 9,056 tỷ VND remains positive)",
-  "mgmt": "ROE 6.5% (raw quarter, non-annualized) / 12.7% sector-comparison annualized; steel-cycle sensitive, foreign flow +480K cp net (stronger than sector)",
-  "valuation": {
-    "pe": 14.2,
-    "pe_sector_median": 32.6,
-    "earning_yield_pct": 7.04,
-    "max_deposit_rate_pct": 5,
-    "ey_spread_pp": 2.04,
-    "valuation_verdict": "FAIR",
-    "roe_pct_sector_annualized": 12.7
+  "product": "Thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ",
+  "customer": "Nhà thầu xây dựng, doanh nghiệp cơ khí chế tạo, khách xuất khẩu (nhập quặng sắt từ Úc ~5% doanh thu)",
+  "ops": "Biên gộp 15.8%; operating_profit báo cáo = 0 (dữ liệu lỗi, kéo dài 34+ chu kỳ liên tiếp) — ESC-4 non_operating_share không đánh giá được, DISCARDED do dữ liệu corrupt, không phải tín hiệu thao túng thật",
+  "mgmt": "ROE ngành-so-sánh 12.7% trên trung vị ngành thép 2.9%; dòng vốn ngoại mạnh hơn ngành (+480K cp net/5 phiên)",
+  "ey_spread_pct": 2.04,
+  "valuation_verdict": "FAIR",
+  "esc_flags": {
+    "esc2": false,
+    "esc3": "DATA-COVERAGE-LIMITED",
+    "esc4_result": "DISCARDED_CORRUPT_DATA",
+    "esc5_result": false
   },
-  "kinhdich_reading": {
-    "que": "Tiem (53)",
+  "escalation_status": "COVERAGE-GUARD-HELD",
+  "kinhdich": {
+    "que": "Tiem(53)",
     "xu_huong": "THUAN LOI",
-    "tin_hieu": "GIU",
+    "khuyen_nghi": "GIU",
     "do_tin_cay_pct": 100
   },
-  "sentiment_trend": {
-    "window_days": 30,
-    "direction": "ỔN ĐỊNH",
-    "slope": -0.02,
-    "entries": 25
-  },
-  "esc_gate": {
-    "ESC-1": "unevaluable (E1 SCOPE-REDUCED, no bctc_table_rows tool grant)",
-    "ESC-2": {
-      "result": false,
-      "imbalance_pct": 0
-    },
-    "ESC-3": {
-      "result": "DATA-COVERAGE-LIMITED",
-      "quarters_returned": 3,
-      "quarters_required": 4,
-      "coverage_guard_held": true
-    },
-    "ESC-4": {
-      "result": "DISCARDED",
-      "reason": "operating_profit=0 corrupt — non_operating_share calc undefined"
-    },
-    "ESC-5": {
-      "result": false,
-      "reason": "report_id null (refine_status=PARTIAL, not DONE)"
-    }
-  },
-  "trick_summary": null,
-  "trick_confidence": "none",
-  "trick_pass_versions": [],
-  "insider_signals": "no significant insider activity",
-  "legal_risk": "none",
-  "evidence_fragments": [
-    {
-      "id": 1467,
-      "evidence_type": "bctc_roe_ratio",
-      "direction": "bullish",
-      "magnitude": 0.508,
-      "confidence": 0.6
-    },
-    {
-      "id": 1468,
-      "evidence_type": "bctc_report_overdue",
-      "direction": "bearish",
-      "magnitude": 0.5,
-      "confidence": 0.55
-    }
-  ],
-  "earnings_calendar_status": "QUÁ HẠN (Q2-2026, hạn 30/07/2026; Q2 PDF on file since 2026-08-01, still unextracted)",
-  "fetchedAt": "2026-06-07T11:12:22.298Z",
-  "cycle_id": "20260824-1800",
+  "as_of": "2026-08-24T21:00:00Z",
   "_processed": {
-    "fingerprint": "30cc871b6199d38297b101aee0cff9a30a763d610377085118f7cb7ad16597dc",
-    "processedAt": "2026-08-24T18:16:08Z",
+    "fingerprint": "15c2a73059a8f7c76b313be17b7ab965c7acfcb9e85f49159c93735ae6b586b7",
+    "processedAt": "2026-08-24T21:12:06Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

@@ -4,90 +4,31 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu)",
-  "customer": "Enterprise IT buyers (VN + offshore, esp. Europe/Japan), SME telecom subscribers",
-  "ops": "Gross margin 34.0%, operating margin 22.0% (Q1-2026); software exports remains core driver, telecom continues to drag blended margin",
-  "mgmt": "Q1-2026 NPAT 2,477 tỷ VND, +13.8% YoY on FTEL equity-method restated basis (raw YoY withheld per PUB-7 period-basis guard); consistent quarterly delivery",
-  "valuation": {
-    "pe": 13.8,
-    "pe_sector_median": 17.3,
-    "earning_yield_pct": 7.25,
-    "max_deposit_rate_pct": 5,
-    "ey_spread_pp": 2.25,
-    "valuation_verdict": "FAIR",
-    "roe_pct_sector_annualized": 28.3
+  "product": "Xuất khẩu phần mềm, tích hợp hệ thống CNTT, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+  "customer": "Doanh nghiệp IT trong và ngoài nước (Nhật, Mỹ, EU), thuê bao viễn thông, học viên/sinh viên",
+  "ops": "Biên gộp 34.0%, LN thuần HĐKD 22.0% doanh thu; đổi phương pháp hợp nhất FTEL (hợp nhất toàn bộ → vốn chủ sở hữu) từ Q1-2026 làm doanh thu báo cáo giảm 22.3% YoY dù thực tế tăng 8.7% (đã điều chỉnh phương pháp)",
+  "mgmt": "ROE ngành-so-sánh 28.3% trên trung vị ngành công nghệ 10.6%; dòng vốn ngoại yếu hơn ngành (-50K cp net/5 phiên); ESC-5 refine-confidence: 7/15 units <0.50 (min 0.45) — deep-dive Opus escalation vừa kích hoạt (guard mới claim, TTL trước đã hết hạn)",
+  "ey_spread_pct": 2.25,
+  "valuation_verdict": "FAIR",
+  "esc_flags": {
+    "esc2": false,
+    "esc3": "DATA-COVERAGE-LIMITED",
+    "esc4_non_operating_share_pct": 2,
+    "esc4_result": false,
+    "esc5_result": true
   },
-  "kinhdich_reading": {
-    "que": "Tuy (17)",
+  "escalation_status": "PENDING",
+  "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+  "kinhdich": {
+    "que": "Tuy(17)",
     "xu_huong": "THUAN LOI",
-    "tin_hieu": "GIU",
+    "khuyen_nghi": "GIU",
     "do_tin_cay_pct": 100
   },
-  "sentiment_trend": {
-    "window_days": 30,
-    "direction": "GIẢM",
-    "slope": -0.22,
-    "entries": 27
-  },
-  "esc_gate": {
-    "ESC-1": "unevaluable (E1 SCOPE-REDUCED, no bctc_table_rows tool grant)",
-    "ESC-2": {
-      "result": false,
-      "imbalance_pct": 0
-    },
-    "ESC-3": {
-      "result": "DATA-COVERAGE-LIMITED",
-      "quarters_returned": 3,
-      "quarters_required": 4,
-      "coverage_guard_held": true
-    },
-    "ESC-4": {
-      "result": false,
-      "non_operating_share_pct": 2
-    },
-    "ESC-5": {
-      "result": true,
-      "low_confidence_units": [
-        "unit-0008",
-        "unit-0009",
-        "unit-0010",
-        "unit-0011",
-        "unit-0012",
-        "unit-0013",
-        "unit-0014"
-      ],
-      "min_confidence": 0.45,
-      "escalation_status": "GUARD-HELD",
-      "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5"
-    }
-  },
-  "trick_summary": null,
-  "trick_confidence": "none",
-  "trick_pass_versions": [],
-  "insider_signals": "no significant insider activity",
-  "legal_risk": "none",
-  "evidence_fragments": [
-    {
-      "id": 1465,
-      "evidence_type": "bctc_roe_strong",
-      "direction": "bullish",
-      "magnitude": 1,
-      "confidence": 0.6
-    },
-    {
-      "id": 1466,
-      "evidence_type": "bctc_report_overdue",
-      "direction": "bearish",
-      "magnitude": 0.5,
-      "confidence": 0.55
-    }
-  ],
-  "earnings_calendar_status": "QUÁ HẠN (Q2-2026, hạn 30/07/2026; Q2 PDF on file since 2026-08-01, still unextracted)",
-  "fetchedAt": "2026-08-24T18:03:22.023Z",
-  "cycle_id": "20260824-1800",
+  "as_of": "2026-08-24T21:00:00Z",
   "_processed": {
-    "fingerprint": "e314ba3a536d3790c8cae22eaf68d1a02e9ea1b635200f1fd2e145e57468f091",
-    "processedAt": "2026-08-24T18:16:08Z",
+    "fingerprint": "f568771808cc0934ca9fc6cbfff1a2575ab2bbce5434cf1b63581c54747f5405",
+    "processedAt": "2026-08-24T21:12:06Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

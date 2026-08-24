@@ -24723,8 +24723,8 @@
         "last_served_tick": "2026-08-24T20:24:01Z"
       }
     },
-    "_updated_at": "2026-08-24T20:50:02Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-08-24T21:12:06Z",
+    "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
         "envelope_id": "3cae3469fc046ac1d0f1f73d4f27191e883291df99bb653f03a85abee259c2bb",
@@ -24880,6 +24880,311 @@
         "createdAt": "2026-08-24T20:33:42Z",
         "drained_at": "2026-08-24T20:46:10Z",
         "routed_to": "PO Step 0-TNB"
+      },
+      {
+        "envelope_id": "7639de2fb02193d826e45756ff2b6ca349dc1ab3bbb411412e2ef29e80b72d54",
+        "source": "file",
+        "from": "dev-team",
+        "to": "po",
+        "type": "orphaned-worktree-strand",
+        "priority": "high",
+        "payload": {
+          "worktree": ".claude/worktrees/agent-ae9ed2cd6f04b3686",
+          "branch": "worktree-agent-ae9ed2cd6f04b3686",
+          "head": "4a6d2174cee5a6bc3dd859243e15cbbf21e754e6",
+          "head_committed_at": "2026-08-12T19:11:59+02:00",
+          "stale_days": 12,
+          "branch_merged_into_main": true,
+          "commits_ahead_of_main": 0,
+          "uncommitted_count": 8,
+          "uncommitted": [
+            "D apps/mcp-server/data",
+            "M apps/mcp-server/src/__tests__/BEQ-SECTION-GUARD.test.ts",
+            "M apps/mcp-server/src/__tests__/LF-SERVE-REFLOW.test.ts",
+            "M apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts",
+            "M apps/mcp-server/src/domain/services/financial-reports/bctcSectionCompleteness.ts",
+            "M apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts",
+            "M docs/agent-memory/modules/tool-usage-stats.json",
+            "?? apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts"
+          ],
+          "owning_board_row": {
+            "id": "FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG",
+            "lane": "ready",
+            "status": "READY",
+            "owner": "po"
+          },
+          "also_claimed_in_head_commit": "FIX-CI-BUNTEST-1108",
+          "detected_by": "dev-team tick 2026-08-24T21:07Z — Step 0-PREFLIGHT worktree GC (T5/T6 sweep prunes locks only; it does not detect a filthy orphaned worktree)",
+          "risk": "Branch is merged into main with ahead=0, so every main-tree probe reads clean while 12d of real implementation (5 modified sources + 1 new test) sits uncommitted. Board row still reads READY, so the next dispatch re-implements from scratch and discards the work.",
+          "recommended_action": "PO decides salvage vs discard. Salvage = commit the worktree diff onto main under the owning task id, then re-verify. Discard = record why, then git worktree remove."
+        },
+        "createdAt": "2026-08-24T21:12:00Z",
+        "drained_at": "2026-08-24T21:12:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f259708eec4fa940ae2b68e9795aabe62a714e54cf3293ec546932ef922c06bf",
+        "source": "file",
+        "from": "bctc-analyst",
+        "to": "dev-team",
+        "type": "esc-deep-dive-request",
+        "priority": "HIGH",
+        "payload": {
+          "trigger_id": "ESC-5",
+          "ticker": "FPT",
+          "quarter": "Q1-2026",
+          "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+          "context": {
+            "low_confidence_unit_ids": [
+              "unit-0008",
+              "unit-0009",
+              "unit-0010",
+              "unit-0011",
+              "unit-0012",
+              "unit-0013",
+              "unit-0014"
+            ],
+            "min_confidence": 0.45
+          },
+          "all_esc_fired": [
+            "ESC-5"
+          ]
+        },
+        "createdAt": "2026-08-24T21:23:00Z",
+        "drained_at": "2026-08-24T21:12:06Z",
+        "routed_to": "ESC-DISPATCH"
+      },
+      {
+        "envelope_id": "b7f8a7b6e34fcae91f99f6c7eab31e5250640bb3eb1d009aaa2976fd788dac94",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "DXG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Phát triển bất động sản nhà ở, khu đô thị (Đất Xanh Group)",
+          "customer": "Người mua nhà ở trung cấp, nhà đầu tư thứ cấp",
+          "ops": "get_bctc_full trả về 'Chưa có dữ liệu' — 39+ chu kỳ liên tiếp không trích xuất được (PDF Q2-2026 đã lưu trữ từ 08-01, chưa xử lý); PE/ROE dưới đây lấy từ get_sector_comparison, không phải BCTC gốc",
+          "mgmt": "ROE ngành-so-sánh 1.9% dưới xa trung vị ngành BĐS 7.3%; PE 66.5x, premium +312% so với ngành — định giá đắt so với hiệu quả sinh lời thực tế",
+          "ey_spread_pct": -3.5,
+          "valuation_verdict": "AVOID",
+          "esc_flags": {
+            "note": "BCTC gốc không có dữ liệu — ESC gate không đánh giá được cho ticker này chu kỳ này"
+          },
+          "escalation_status": "NONE",
+          "data_quality_flag": "NO_BCTC_DATA_39_CYCLES",
+          "kinhdich": {
+            "que": "Quan(20)",
+            "xu_huong": "TRUNG TINH",
+            "khuyen_nghi": "THAN TRONG",
+            "do_tin_cay_pct": 13
+          },
+          "as_of": "2026-08-24T21:00:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-24T21:12:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f568771808cc0934ca9fc6cbfff1a2575ab2bbce5434cf1b63581c54747f5405",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "FPT",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Xuất khẩu phần mềm, tích hợp hệ thống CNTT, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+          "customer": "Doanh nghiệp IT trong và ngoài nước (Nhật, Mỹ, EU), thuê bao viễn thông, học viên/sinh viên",
+          "ops": "Biên gộp 34.0%, LN thuần HĐKD 22.0% doanh thu; đổi phương pháp hợp nhất FTEL (hợp nhất toàn bộ → vốn chủ sở hữu) từ Q1-2026 làm doanh thu báo cáo giảm 22.3% YoY dù thực tế tăng 8.7% (đã điều chỉnh phương pháp)",
+          "mgmt": "ROE ngành-so-sánh 28.3% trên trung vị ngành công nghệ 10.6%; dòng vốn ngoại yếu hơn ngành (-50K cp net/5 phiên); ESC-5 refine-confidence: 7/15 units <0.50 (min 0.45) — deep-dive Opus escalation vừa kích hoạt (guard mới claim, TTL trước đã hết hạn)",
+          "ey_spread_pct": 2.25,
+          "valuation_verdict": "FAIR",
+          "esc_flags": {
+            "esc2": false,
+            "esc3": "DATA-COVERAGE-LIMITED",
+            "esc4_non_operating_share_pct": 2,
+            "esc4_result": false,
+            "esc5_result": true
+          },
+          "escalation_status": "PENDING",
+          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-5",
+          "kinhdich": {
+            "que": "Tuy(17)",
+            "xu_huong": "THUAN LOI",
+            "khuyen_nghi": "GIU",
+            "do_tin_cay_pct": 100
+          },
+          "as_of": "2026-08-24T21:00:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-24T21:12:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "15c2a73059a8f7c76b313be17b7ab965c7acfcb9e85f49159c93735ae6b586b7",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "HPG",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Thép xây dựng, thép cuộn cán nóng (HRC), ống thép, tôn mạ",
+          "customer": "Nhà thầu xây dựng, doanh nghiệp cơ khí chế tạo, khách xuất khẩu (nhập quặng sắt từ Úc ~5% doanh thu)",
+          "ops": "Biên gộp 15.8%; operating_profit báo cáo = 0 (dữ liệu lỗi, kéo dài 34+ chu kỳ liên tiếp) — ESC-4 non_operating_share không đánh giá được, DISCARDED do dữ liệu corrupt, không phải tín hiệu thao túng thật",
+          "mgmt": "ROE ngành-so-sánh 12.7% trên trung vị ngành thép 2.9%; dòng vốn ngoại mạnh hơn ngành (+480K cp net/5 phiên)",
+          "ey_spread_pct": 2.04,
+          "valuation_verdict": "FAIR",
+          "esc_flags": {
+            "esc2": false,
+            "esc3": "DATA-COVERAGE-LIMITED",
+            "esc4_result": "DISCARDED_CORRUPT_DATA",
+            "esc5_result": false
+          },
+          "escalation_status": "COVERAGE-GUARD-HELD",
+          "kinhdich": {
+            "que": "Tiem(53)",
+            "xu_huong": "THUAN LOI",
+            "khuyen_nghi": "GIU",
+            "do_tin_cay_pct": 100
+          },
+          "as_of": "2026-08-24T21:00:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-24T21:12:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "8bc2291eeee44097adee8279a25b09bc585478daa04aa508fc2e4989f283f28d",
+        "source": "file",
+        "from": "unknown",
+        "to": "po",
+        "type": "bctc_signal",
+        "priority": "low",
+        "payload": {
+          "ticker": "VCB",
+          "signal_type": "bctc_signal",
+          "quarter": "Q1-2026",
+          "mode": "routine",
+          "beat_miss": null,
+          "product": "Ngân hàng bán lẻ và doanh nghiệp — tín dụng, thanh toán, bancassurance",
+          "customer": "Khách hàng cá nhân đô thị, doanh nghiệp vừa và lớn",
+          "ops": "LN thuần HĐKD 80.9% doanh thu; ROE 16.7% dưới trung vị ngành ngân hàng 17.6%; OCF/NI ratio ~1.37 (divergence 0.368 < 0.40, không có dấu hiệu bất thường dồn tích)",
+          "mgmt": "P/E premium +57% so với ngành phản ánh kỳ vọng chất lượng tài sản cao hơn peers; dòng vốn ngoại yếu hơn ngành (-97K cp net/5 phiên)",
+          "ey_spread_pct": 2.09,
+          "valuation_verdict": "FAIR",
+          "esc_flags": {
+            "esc2_imbalance_pct": 0.37,
+            "esc2_result": false,
+            "esc3_divergence_ratio": 0.368,
+            "esc3_result": false,
+            "esc4_result": "N/A_bank",
+            "esc5_result": false
+          },
+          "escalation_status": "NONE",
+          "kinhdich": {
+            "que": "Tuy(45)",
+            "xu_huong": "THUAN LOI",
+            "khuyen_nghi": "GIU",
+            "do_tin_cay_pct": 63
+          },
+          "as_of": "2026-08-24T21:00:00Z"
+        },
+        "createdAt": "",
+        "drained_at": "2026-08-24T21:12:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "7583ac9741377bca42ed67aac261e721f3a9a2f98379305cc02f14054a1de6ee",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 2 staged file(s) not necessarily this actor's own: docs/data/cowork-schedule.json docs/signals/cowork-team-20260824T210741Z.json. actor=7a47f7c6-8c8b-4939-929d-461d20cd32da mode=warn escalated=false prior_warns=0 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-24T21:08:29Z",
+        "drained_at": "2026-08-24T21:12:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "25ac348c0a21f17364a2af5ac0ccb6cd87389e65ea56a8249af8494c668a3bea",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "medium",
+        "payload": "[CORRECTION to my own signal cowork-team-20260824T203850Z, committed 6ea6b30f9, already drained to processed/] I OVERSTATED THE SCOPE. That signal called the CCATO gate's verdicts 'WRONG BY CONSTRUCTION' and 'structurally wrong'. Measured across the full cohort 12 minutes later, the defect affects EXACTLY 1 OF 110 ROWS. Read this before actioning the earlier signal.\n\nWHAT FALSIFIED IT: a second CCATO row from the same gate, same cycle, 3 minutes after my exhibit -- `ntg-20260824T203614Z-technical_indicators-VNM-82a3ee`, from=po. claim: 'VNM chua co du lieu chi bao ky thuat' (VNM has no technical indicator data). tool: get_technical_indicators. ticker VNM == probe_ticker VNM. returned_value carries real values: NEUTRAL, RSI 64.196, MACD {value 1298.87, signal 1124.21, histogram 174.66}, Bollinger {upper 64434.06, middle 61430, lower 58425.94}. The probe carries exactly the field the claim is about, the subject matches, and the data is genuinely present. THAT VERDICT IS CORRECT -- a true positive. The gate works on this path.\n\nFULL-COHORT PARTITION (110 ntg-* rows in signal_queue, measured 20:47Z):\n  tool=get_technical_indicators : 109  (ticker == probe_ticker in all 109)\n  tool=get_macro_snapshot       :   1  (ticker='macro' vs probe_ticker='VIRA' -- MISMATCHED)\n  ticker == probe_ticker        : 109/110\n  the single mismatch IS my exhibit (ntg-20260824T203331Z, from=tran-ngoc-bau)\n\nCORRECTED FINDING: it is not the gate that is structurally wrong -- it is the `get_macro_snapshot` PROBE PATH specifically. That path is exercised by exactly one row in the entire cohort, is the only ticker/probe_ticker mismatch, and produced a false contradiction against a TRUE claim (CPI and VIRA genuinely absent from the macro snapshot payload). Reads as an undertested branch: the technical_indicators path is exercised 109x and behaves correctly on the instance I could verify; the macro path fired once and was wrong.\n\nWHAT STANDS FROM THE EARLIER SIGNAL, UNCHANGED:\n- The exhibit itself is valid. The macro/VIRA row IS a false positive with the mechanism described (probe response contains no CPI and no VIRA field, so 'non-null' cannot falsify the claim).\n- The acceptance test is still the right fix and is still worth adding: an absence-claim naming field X must be probed with a tool whose response schema CONTAINS X; if none exists, ABSTAIN, never contradict. That test would have caught this and costs nothing on the 109 correct rows.\n- 110/110 rows still carry `dedup_key: null`.\n- Still distinct from ready[]'s `FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID` (P0, provenance/writer-id). Do not merge them.\n\nWHAT I NOW WITHDRAW:\n- 'wrong by construction' / 'structurally wrong' as a characterisation of the gate. Withdrawn. 1/110.\n- Priority: I filed it HIGH. On 1-of-110 it is more honestly MEDIUM, which is why this correction carries medium. PO should re-rank.\n- 'Auditor agents structurally cannot pass this gate.' NOT DEMONSTRATED and I should not have asserted it. In the exhibit, the probe-mismatch bug alone fully explains the wrong verdict; the auditor-quoting effect is a plausible SECOND mechanism that I did not isolate. It would need an instance where the probe DOES cover the claimed field and an auditor is still wrongly attributed for quoting a claim under audit. No such instance is in the cohort. Treat as a hypothesis to watch, not a finding.\n\nWHAT THIS DOES NOT SAY: the other 109 rows are not thereby validated. Whether each claim was actually made by the named agent, and the provenance question, are separate and still open under the P0. This correction is only about my scope claim, not about the cohort's overall soundness.",
+        "createdAt": "20260824T204753Z",
+        "drained_at": "2026-08-24T21:12:06Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6b8c287b92382765e8c933ab0d9b297ac834cfb5823a8fa5a8430cf207b6a5de",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "20260824T210741Z",
+          "matched_slots": [
+            "bctc-analyst-slot-3"
+          ],
+          "won_slots": [
+            "bctc-analyst-slot-3"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/bctc-analyst/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 4,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "bctc-analyst-slot-3": "cron"
+          },
+          "cadence_minutes": {
+            "bctc-analyst-slot-3": null
+          },
+          "last_fired_timestamp": "2026-08-24T21:06:38Z",
+          "last_fired_slots": [
+            "bctc-analyst-slot-3"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "21:00",
+          "leader_lock": "acquired",
+          "dev_head": "active",
+          "devq": 111,
+          "signal_backlog": 31,
+          "note": "First tick of re-armed dispatcher (cron 8183dab5, session 7a47f7c6) after prior session closed ~20:49Z. MEASURED not placeholder: dev_head from orch-state .head.status=in_progress; devq=ready[] lane length (NOT the server-side dev_queue_depth=5 in pressure-state.json, different denominator); signal_backlog=file count of docs/signals/*.json excl cowork-team-* per known permanent-floor caveat. DEVIATION from work-tick.md Step 0a: 3 NEW signal rows all to=po held at NEW, NOT marked READ — po has 0 cowork slots so the route-to-slot branch is unreachable and READ is terminal for 24h cold-evict; 3rd consecutive occurrence, same 3 row ids as the 20:45Z tick. Step 5.3 off-flow detector DEFERRED (BGFAN-1, spawn in-flight); prior last_fired 2026-08-23T21:02:45Z retained for de-stamp. emit_pressure_state returned cycle_snapshot_promoted=false again — snapshot written as wall-clock 21:05 but looked up by nominal tick 21:00."
+        },
+        "createdAt": "20260824T210741Z",
+        "drained_at": "2026-08-24T21:12:06Z",
+        "routed_to": "PO Step 0-SIG"
       }
     ],
     "last_po_triage_at": "2026-08-24T00:12:36Z",

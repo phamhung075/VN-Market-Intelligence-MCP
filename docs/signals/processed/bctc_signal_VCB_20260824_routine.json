@@ -4,79 +4,31 @@
   "quarter": "Q1-2026",
   "mode": "routine",
   "beat_miss": null,
-  "product": "State-owned commercial bank — corporate + retail lending, trade finance, treasury operations",
-  "customer": "Corporate borrowers, retail depositors, government-linked entities",
-  "ops": "Operating profit 80.9% of net revenue (bank cost structure); ROA 0.4%; foreign flow -97K cp net (weaker than sector)",
-  "mgmt": "ROE 16.7% sector-annualized, below 17.6% sector median; largest SOE bank by market cap, stable profitability",
-  "valuation": {
-    "pe": 14.1,
-    "pe_sector_median": 9,
-    "earning_yield_pct": 7.09,
-    "max_deposit_rate_pct": 5,
-    "ey_spread_pp": 2.09,
-    "valuation_verdict": "FAIR",
-    "roe_pct_sector_annualized": 16.7
+  "product": "Ngân hàng bán lẻ và doanh nghiệp — tín dụng, thanh toán, bancassurance",
+  "customer": "Khách hàng cá nhân đô thị, doanh nghiệp vừa và lớn",
+  "ops": "LN thuần HĐKD 80.9% doanh thu; ROE 16.7% dưới trung vị ngành ngân hàng 17.6%; OCF/NI ratio ~1.37 (divergence 0.368 < 0.40, không có dấu hiệu bất thường dồn tích)",
+  "mgmt": "P/E premium +57% so với ngành phản ánh kỳ vọng chất lượng tài sản cao hơn peers; dòng vốn ngoại yếu hơn ngành (-97K cp net/5 phiên)",
+  "ey_spread_pct": 2.09,
+  "valuation_verdict": "FAIR",
+  "esc_flags": {
+    "esc2_imbalance_pct": 0.37,
+    "esc2_result": false,
+    "esc3_divergence_ratio": 0.368,
+    "esc3_result": false,
+    "esc4_result": "N/A_bank",
+    "esc5_result": false
   },
-  "kinhdich_reading": {
-    "que": "Tuy (45)",
+  "escalation_status": "NONE",
+  "kinhdich": {
+    "que": "Tuy(45)",
     "xu_huong": "THUAN LOI",
-    "tin_hieu": "GIU",
+    "khuyen_nghi": "GIU",
     "do_tin_cay_pct": 63
   },
-  "sentiment_trend": {
-    "window_days": 30,
-    "direction": "TĂNG",
-    "slope": 0.1,
-    "entries": 15
-  },
-  "esc_gate": {
-    "ESC-1": "unevaluable (E1 SCOPE-REDUCED, no bctc_table_rows tool grant)",
-    "ESC-2": {
-      "result": false,
-      "imbalance_pct": 0.37
-    },
-    "ESC-3": {
-      "result": false,
-      "quarters_returned": 4,
-      "divergence_ratio": 0.368,
-      "threshold": 0.4
-    },
-    "ESC-4": {
-      "result": "N/A",
-      "reason": "bank — non_operating_share calc not applicable"
-    },
-    "ESC-5": {
-      "result": false,
-      "reason": "report_id null (refine_status=PARTIAL, not DONE)"
-    }
-  },
-  "trick_summary": null,
-  "trick_confidence": "none",
-  "trick_pass_versions": [],
-  "insider_signals": "no significant insider activity",
-  "legal_risk": "none",
-  "evidence_fragments": [
-    {
-      "id": 1469,
-      "evidence_type": "bctc_roe_strong",
-      "direction": "bullish",
-      "magnitude": 0.668,
-      "confidence": 0.6
-    },
-    {
-      "id": 1470,
-      "evidence_type": "bctc_report_overdue",
-      "direction": "bearish",
-      "magnitude": 0.5,
-      "confidence": 0.55
-    }
-  ],
-  "earnings_calendar_status": "QUÁ HẠN (Q2-2026, hạn 14/08/2026; Q2 PDF on file since 2026-08-01, still unextracted)",
-  "fetchedAt": "2026-07-19T12:43:43.098Z",
-  "cycle_id": "20260824-1800",
+  "as_of": "2026-08-24T21:00:00Z",
   "_processed": {
-    "fingerprint": "3b06e0855e4b827e6ddaac4f573ba2417aef97f03067545d09efbad7aec17a71",
-    "processedAt": "2026-08-24T18:16:08Z",
+    "fingerprint": "8bc2291eeee44097adee8279a25b09bc585478daa04aa508fc2e4989f283f28d",
+    "processedAt": "2026-08-24T21:12:06Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

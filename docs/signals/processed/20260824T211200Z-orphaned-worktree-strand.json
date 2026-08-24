@@ -1,0 +1,43 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "orphaned-worktree-strand",
+  "severity": "high",
+  "ts": "2026-08-24T21:12:00Z",
+  "payload": {
+    "worktree": ".claude/worktrees/agent-ae9ed2cd6f04b3686",
+    "branch": "worktree-agent-ae9ed2cd6f04b3686",
+    "head": "4a6d2174cee5a6bc3dd859243e15cbbf21e754e6",
+    "head_committed_at": "2026-08-12T19:11:59+02:00",
+    "stale_days": 12,
+    "branch_merged_into_main": true,
+    "commits_ahead_of_main": 0,
+    "uncommitted_count": 8,
+    "uncommitted": [
+      "D apps/mcp-server/data",
+      "M apps/mcp-server/src/__tests__/BEQ-SECTION-GUARD.test.ts",
+      "M apps/mcp-server/src/__tests__/LF-SERVE-REFLOW.test.ts",
+      "M apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts",
+      "M apps/mcp-server/src/domain/services/financial-reports/bctcSectionCompleteness.ts",
+      "M apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts",
+      "M docs/agent-memory/modules/tool-usage-stats.json",
+      "?? apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts"
+    ],
+    "owning_board_row": {
+      "id": "FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG",
+      "lane": "ready",
+      "status": "READY",
+      "owner": "po"
+    },
+    "also_claimed_in_head_commit": "FIX-CI-BUNTEST-1108",
+    "detected_by": "dev-team tick 2026-08-24T21:07Z — Step 0-PREFLIGHT worktree GC (T5/T6 sweep prunes locks only; it does not detect a filthy orphaned worktree)",
+    "risk": "Branch is merged into main with ahead=0, so every main-tree probe reads clean while 12d of real implementation (5 modified sources + 1 new test) sits uncommitted. Board row still reads READY, so the next dispatch re-implements from scratch and discards the work.",
+    "recommended_action": "PO decides salvage vs discard. Salvage = commit the worktree diff onto main under the owning task id, then re-verify. Discard = record why, then git worktree remove."
+  },
+  "_processed": {
+    "fingerprint": "7639de2fb02193d826e45756ff2b6ca349dc1ab3bbb411412e2ef29e80b72d54",
+    "processedAt": "2026-08-24T21:12:06Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

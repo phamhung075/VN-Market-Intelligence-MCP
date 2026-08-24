@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "20260824T210741Z",
-    "matched_slots": ["bctc-analyst-slot-3"],
-    "won_slots": ["bctc-analyst-slot-3"],
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-3"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/bctc-analyst/flow/main.md"],
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 4,
     "errors": [],
@@ -18,10 +24,16 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "chef_mutex_applied": false,
-    "due_reasons": { "bctc-analyst-slot-3": "cron" },
-    "cadence_minutes": { "bctc-analyst-slot-3": null },
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": null
+    },
     "last_fired_timestamp": "2026-08-24T21:06:38Z",
-    "last_fired_slots": ["bctc-analyst-slot-3"],
+    "last_fired_slots": [
+      "bctc-analyst-slot-3"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +45,11 @@
     "note": "First tick of re-armed dispatcher (cron 8183dab5, session 7a47f7c6) after prior session closed ~20:49Z. MEASURED not placeholder: dev_head from orch-state .head.status=in_progress; devq=ready[] lane length (NOT the server-side dev_queue_depth=5 in pressure-state.json, different denominator); signal_backlog=file count of docs/signals/*.json excl cowork-team-* per known permanent-floor caveat. DEVIATION from work-tick.md Step 0a: 3 NEW signal rows all to=po held at NEW, NOT marked READ — po has 0 cowork slots so the route-to-slot branch is unreachable and READ is terminal for 24h cold-evict; 3rd consecutive occurrence, same 3 row ids as the 20:45Z tick. Step 5.3 off-flow detector DEFERRED (BGFAN-1, spawn in-flight); prior last_fired 2026-08-23T21:02:45Z retained for de-stamp. emit_pressure_state returned cycle_snapshot_promoted=false again — snapshot written as wall-clock 21:05 but looked up by nominal tick 21:00."
   },
   "priority": "low",
-  "createdAt": "20260824T210741Z"
+  "createdAt": "20260824T210741Z",
+  "_processed": {
+    "fingerprint": "6b8c287b92382765e8c933ab0d9b297ac834cfb5823a8fa5a8430cf207b6a5de",
+    "processedAt": "2026-08-24T21:12:06Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
