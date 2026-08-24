@@ -151,3 +151,12 @@
 - (b) alone, per AC-1's own fallback instruction — CHOSEN.
 **why-decision:** (b) is the minimal, root-cause fix: the row never qualified for grandfathering in the first place (never certified, live `status:QA`); no code path needed, just correcting a stale-data entry, with a durable comment so a future re-derivation of the frozen list doesn't blindly re-add it.
 **why-change:** none — implementation follows AC-1(b) verbatim.
+
+### STEP dev-mcp-server-S16 · dev-mcp-server · 2026-08-24T17:42:00Z
+**task-id:** CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS
+**what-done:** Salvaged 6 files (231 insertions from the orphaned worktree diff, minus the 2 excluded items) by `cp`-ing content from `.claude/worktrees/agent-ae9ed2cd6f04b3686` into main (verified worktree-base byte-identical to main-pre-salvage first, so zero-conflict). Excluded `apps/mcp-server/data` deletion (re-confirmed live: still a tracked symlink) and `tool-usage-stats.json` (stale telemetry churn). Full suite failing-file-set = documented 15-file baseline exactly (awk-verified, zero drift). Commit `28f8509fc`. Board row `in_progress[]`→`review[]`, `next_agent:qa`, `.head` idle-reset.
+**what-considered:**
+- also removing the worktree (AC-3 of the row's own status_note) — REJECTED: standing user instruction protects this specific worktree from pruning; task brief explicitly scoped this session to salvage-only, removal deferred pending separate user sign-off.
+- also advancing/re-scoping the sibling board row FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG (ready[], next_agent:ba) since the salvaged commit implements it — REJECTED: outside this task's authorized scope (different board row, not named in the brief); flagged in notebook/RETURN for its owner instead of silently acting on it.
+**why-decision:** task brief + user-instruction both explicitly bound scope to salvage; the row's own status_note AC-1/AC-2/AC-4 (land 6 files, advance-or-flag the HPG row, confirm no other hidden-diff worktree) are satisfied without touching removal or the sibling row.
+**why-change:** none — followed the dispatching brief's SALVAGE ONLY scope verbatim.
