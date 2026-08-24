@@ -1,0 +1,109 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "20260824T051850Z",
+  "payload": {
+    "tick_id": "2026-08-24T05:15:00Z",
+    "fire_time": "2026-08-24T05:15:38Z",
+    "verdict": "WORK",
+    "drift_min": 0,
+    "silent": false,
+    "pressure_mode": "adaptive",
+    "spawned": [
+      "chef-morning",
+      "alert-commander-market"
+    ],
+    "errors": [],
+    "one_shots": [],
+    "suppressed_cadence": [
+      "chef-intraday"
+    ],
+    "batch": {
+      "degraded": false,
+      "max_parallel": 4,
+      "cores": 12,
+      "load_1min": 1.84,
+      "container_vm_headroom_mb": 2963,
+      "batches": 1,
+      "slots_in_batch": 2
+    },
+    "queue_status_census": {
+      "total": 118,
+      "signal_backlog_reported": 33
+    },
+    "commits_ahead": 173,
+    "snapshot": {
+      "written": "docs/data/cycle-snapshot-05:17.json",
+      "files_present": 30,
+      "prior_day_residue": 14,
+      "latest_promoted": false,
+      "latest_stale_hours": 29.2,
+      "lookup_tally": {
+        "hits": 3,
+        "misses": 6
+      },
+      "files_present_note": "counted AFTER this tick's own 05:17 write; cycle-snapshot-latest.json excluded"
+    },
+    "findings": [
+      {
+        "id": "GUARANTEED-MORNING-BAND-SLOTS-SILENT-10-DAYS-SESSION-UPTIME-SHAPED",
+        "severity": "HIGH",
+        "status": "NEW",
+        "detail": "Audited last_fired across all 8 guaranteed slots this tick. Three are 10+ days silent, five are under one day, and the split is exactly by fire-time-of-day. STALE: chef-morning (cron '15 5 * * 1-5', was 2026-08-14, 10.0d — fired THIS tick, recovered), chef-eod ('45 8 * * 1-5', 2026-08-13T08:55:52Z, 10.8d), fb-daily ('15 9 * * 1-5', 2026-08-13T09:25:15Z, 10.8d). FRESH: chef-evening ('45 19 * * *', 0.4d), digest-daily ('30 17 * * *', 0.5d), tnb-audit ('13 20 * * *', 0.4d), digest-sunday ('47 13 * * 0', 0.6d), fb-weekend ('13 13 * * 6,0', 0.7d).",
+        "discriminator": "Every stale slot fires in the 05:00-09:30 UTC weekday morning band. Every fresh slot fires 13:00-20:30 UTC or on a weekend. The crons themselves are correct and matched cleanly at drift 0 this tick, so this is not a scheduling defect — it is session-uptime coverage: the dispatcher is a session-scoped cron, and the early-UTC weekday window (05:15 UTC = 07:15 CEST) has had no session running at fire time since 2026-08-13/14. Evening slots fired last night, so coverage exists later in the day.",
+        "reframes": "The carried HIGH 'unified-agent notebook not written + 10d git-stranded' is NOT a write failure or a git-stranding. unified-agent was simply never dispatched on chef-morning/chef-eod for 10 days. Same mechanism for fb-market-poster's missing daily post (fb-daily, 10.8d). Investigating those as notebook/commit defects would have been chasing the wrong layer.",
+        "catchup_path_cannot_help": "These are exactly the guaranteed:true slots the catchup_raw array is scoped to — and per match-slots.md the consumer docs/agents/cowork-team/flow/catchup-check.md DOES NOT EXIST, so nothing reads it. Even wired, _dish_type_catchup_config.catchup_max_lateness_minutes tops out at 1440 (1 day), so a 10.8-day gap is structurally unrecoverable. This is the multi-day-outage scenario that doc warned about, now measured live rather than hypothesised.",
+        "falsifiable_prediction": "chef-eod (08:45 UTC) and fb-daily (09:15 UTC) are both still ahead today. If this session stays up they will fire and both 10.8d gaps close today. If the session drops before 09:15 they will roll to 11.8d. Check at the 08:45Z and 09:15Z ticks.",
+        "not_filed_as_a_row": "This is a coverage/uptime product question (who guarantees the morning band), not a code defect — routing to PO rather than minting a dev row."
+      },
+      {
+        "id": "CHEF-INTRADAY-CADENCE-LOCK-PREDICTION-CONFIRMED",
+        "severity": "MEDIUM",
+        "status": "CONFIRMED",
+        "detail": "Predicted last tick that chef-intraday would be cadence-suppressed at its 05:13 cron fire (last_fired 04:18:40 -> 56.3 min elapsed vs a 60-min policy floor). This tick's preflight reports suppressed_cadence:['chef-intraday'] — prediction held. The cron is '13 2-8 * * 1-5' (hourly) but the cadence floor is 60 min measured from actual last_fired, so any tick that runs even slightly late permanently ratchets the next fire out of its own cron window. CADENCE-GATE-LOCKS-HOURLY-CRON-TO-2H is confirmed live, not theoretical."
+      },
+      {
+        "id": "SNAPSHOT-LOOKUP-7MIN-TOLERANCE-UNREACHABLE-BY-EXACT-MINUTE-FILENAME",
+        "severity": "MEDIUM",
+        "status": "ROOT-CAUSED",
+        "detail": "Upgraded from the carried LOW spawn-latency framing. .claude/skills/step-0-cowork/SKILL.md:36-44 (identical at .claude/skills/cycle-bootstrap/SKILL.md:59) derives TICK = current UTC HH:MM and looks up cycle-snapshot-<HH:MM>.json exactly, THEN applies a '>7 min old -> treat as absent' / '<=7 min -> use' freshness test. That test is dead code: an exact-minute filename is only findable during its own minute, when it is by construction <=60s old. Measured misses this session were all under one minute stale — an order of magnitude inside the tolerance the spec already grants. Fix: glob cycle-snapshot-[0-9]*.json, take newest by created_at, apply the EXISTING <=7 min check (which also makes the glob safe against the 14 prior-day residue files — do not ship the glob without it). Two call sites, same text.",
+        "correction": "Also retracting my own prediction method: I twice forecast hit/miss from seconds-left-in-the-minute at write time and was wrong both directions (12s margin HIT, 40s margin MISS). The consumer looks up after its gateway probe, not at spawn, so the real budget is not observable dispatcher-side. Tally 3 hits / 6 misses."
+      },
+      {
+        "id": "SNAPSHOT-PRUNE-DEAD-PRIORDAY-RESIDUE",
+        "severity": "HIGH",
+        "status": "CARRIED",
+        "detail": "30 snapshot files present, 14 of them from 2026-08-23. prior_day_residue has been flat across four consecutive ticks — the 24h prune is doing nothing. cycle-snapshot-latest.json still frozen at tick '00:00' / 2026-08-23T00:07:50Z = 29.2h, consistent with cycle_snapshot_promoted:false on every emit."
+      },
+      {
+        "id": "ORPHANED-WORKTREE-HIDES-STRANDED-HPG-FIX",
+        "severity": "HIGH",
+        "status": "CARRIED",
+        "detail": ".claude/worktrees/agent-ae9ed2cd6f04b3686, HEAD 4a6d2174c 2026-08-12 (12d). Branch merged into main, 0 commits ahead, so main-tree probes report it reconciled — but 8 dirty entries, three financial-reports sources differ from main, and FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts does not exist in main. Re-verified at 05:00Z by direct content diff. Recovery hazard: docs/agent-memory/modules/tool-usage-stats.json is dirty in BOTH trees. Owner: dev-mcp-server."
+      },
+      {
+        "id": "PREFLIGHT-NEWSIGNALS-BLIND-TO-LOWERCASE-STATUS",
+        "severity": "MEDIUM",
+        "status": "CARRIED",
+        "detail": "new_signals=1 again, counting only the uppercase NEW row. po-decision-bug5468-2026-08-23T15:27:38Z carries lowercase 'new' — ninth surviving drain."
+      },
+      {
+        "id": "NO-COLLISION-THIS-TICK",
+        "severity": "INFO",
+        "status": "OK",
+        "detail": "Step 4b: 2 slots, 2 distinct agents (unified-agent, alert-commander). No agent in >=2 slots. No WARN sent."
+      }
+    ],
+    "deviations_from_spec": [
+      "Step 0a: the single NEW row (to=po) again held NEW rather than marked READ — this dispatcher's drain marks to=po rows READ but PO selects on NEW and has no cowork slot, so marking would only hide it until 24h cold-eviction.",
+      "catchup_raw was NOT re-measured this tick: doing so requires re-running cowork-match-slots.js, which the WORK continuation explicitly forbids. The catch-up claims in the guaranteed-slot finding rest on match-slots.md's documented scope and caps, not on a live read of the array."
+    ]
+  },
+  "_processed": {
+    "fingerprint": "64ac433cdcd12b2e4776ae70284f8d1f17d4fa2d9ca331bbe82985a293c7a8aa",
+    "processedAt": "2026-08-24T06:00:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

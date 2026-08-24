@@ -1,0 +1,89 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "2026-08-24T05:35:23Z",
+  "payload": {
+    "tick": "2026-08-24T05:30Z",
+    "drift_min": 1,
+    "pressure_mode": "adaptive",
+    "spawned": [
+      "alert-commander-market"
+    ],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "collision": "none",
+    "fanout": {
+      "cores": 12,
+      "load_1min": 1.61,
+      "headroom_mb": 3091,
+      "degraded": false,
+      "slots": 1
+    },
+    "snapshot": {
+      "written": "docs/data/cycle-snapshot-05:33.json",
+      "written_at": "2026-08-24T05:33:19Z",
+      "bytes": 2877,
+      "files_present": 32,
+      "today": 17,
+      "prior_day_residue": 15,
+      "promoted": false
+    },
+    "signals_dir_files": 57,
+    "findings": [
+      {
+        "id": "FLEET-PUSH-ACTUATOR-MINTS-UNROUTABLE-SIGNAL-EVERY-30MIN-WHILE-SIZELINT-BLOCKS",
+        "severity": "HIGH",
+        "status": "NEW",
+        "detail": "launchd/com.vn-market.fleet-push.plist StartInterval=1800 (30 min). Every fire hits the pre-push size-lint gate, aborts, and writes an auto-push-abort signal. Observed today at 04:29:19Z, 05:00:31Z, 05:31:27Z — spacing 31.2 and 30.9 min, matching StartInterval exactly. Compounding cost: 'auto-push-abort' has NO Pipeline-A routing row, and PO is deliberately holding these rows undrained to keep signal-type-coverage-guard honestly red until FIX-SIGNAL-TYPE-ROUTING-GAP-auto-push-abort lands. So the backlog grows ~48 rows/day and cannot be cleared without either (a) landing the size-lint file splits, or (b) landing the routing row. This is a NEW argument for prioritising the three size-lint splits: the block is not static, it is an active signal-spam generator."
+      },
+      {
+        "id": "CORRECTION-VN-LUNCH-BREAK-FROZEN-FEED-OVERGENERALISED",
+        "severity": "MEDIUM",
+        "status": "RETRACTED-IN-PART",
+        "detail": "The 05:00Z tick filed VN-LUNCH-BREAK-FROZEN-FEED-IS-EXPECTED-NOT-A-DEFECT as INFO, on three byte-identical get_market_snapshot reads at 04:47/05:01/05:16 — all inside the 04:30-06:00Z lunch window. At 05:32Z, still inside that window, get_market_context returned CHANGED per-ticker values (e.g. VIC 213.000 +3.90%, SSI 21.200 +2.17%) and the tool itself reports 'Trading window: VN market OPEN (02:00-08:59 UTC)'. So the feed is NOT uniformly frozen across lunch, and the earlier note over-generalised from a 29-minute sample. Do NOT use that INFO note to dismiss a future staleness finding in this window. What remains true: a plateau inside lunch is not by itself evidence of a defect. What is now false: that a plateau is the EXPECTED state throughout lunch. Needs one clean re-measurement across a full 04:30-06:00Z window before either claim is restated."
+      },
+      {
+        "id": "LIQUIDITY-STATUS-OK-MASKS-5-OF-7-DEAD-SUBBLOCKS",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "detail": "get_vn_liquidity_state at 05:30:54Z returns status:'ok' while 5 of 7 sub-blocks carry no data: sjc_gold_gap.sjc_price_mn_vnd=0 AND sjc_gap_mn_vnd=0 (note: 'SJC price absent from DB (no SJC crawler row); gap = 0'), fx_coupling.usd_vnd_buy=0, usd_vnd_sell=0, cny_vnd_rate=0, omo.net_outstanding_bn_vnd=null (blocked_reason 'OMO HTML parse: no add/absorb rows found'), interbank_1w.rate_1w_pct=null (blocked_reason 'dttktt.sbv.gov.vn unreachable from VPS (100% packet loss)'). policy_rates is a DB fallback ('HTML parse failed', is_estimate:true). Any consumer branching on .status gets a green light; any consumer reading sjc_gap_mn_vnd=0 reads 'no gap' where the truth is 'no data'. The blocked_reason strings are present and honest — the numeric fields are the ones that lie. Same class as feedback_nonzero_values_need_plausibility_check."
+      },
+      {
+        "id": "ALERT-COMMANDER-LIQUIDITY-UNAVAILABLE-NOT-REPRODUCED",
+        "severity": "LOW",
+        "status": "UNRESOLVED",
+        "detail": "alert-commander c214 (05:15Z tick) reported get_vn_liquidity_state -> an error payload reading: macro-indicators service unavailable at approx 05:18-05:22Z and correctly logged it as honest-NULL rather than fabricating. Router probe at 05:30:54Z returned status:'ok'; container vn-market-intelligence-mcp-macro-indicators-1 is 'Up 3 weeks (healthy)'. Transient blip vs misreport cannot be distinguished from outside the agent transcript. NOT asserting either. Recorded so a second occurrence can be correlated."
+      },
+      {
+        "id": "SNAPSHOT-EXACT-MINUTE-RACE-MECHANISM-CONFIRMED-BY-A-HIT",
+        "severity": "MEDIUM",
+        "status": "ROOT-CAUSED",
+        "detail": "The 05:15Z tick produced the first HIT in several ticks and it pins the mechanism. No cycle-snapshot-05:2x.json exists, so alert-commander's hit on cycle-snapshot-05:17.json can only have resolved inside minute 05:17: file written 05:17:03Z, spawn 05:17:39Z, read within the next ~20s. Tally now 4 hits / 6 misses, every outcome decided purely by seconds-remaining-in-the-minute at the consumer's read. The spec's own 7-minute freshness tolerance (.claude/skills/step-0-cowork/SKILL.md:39, .claude/skills/cycle-bootstrap/SKILL.md:59) would have made all ten unconditional hits; the exact-minute filename lookup makes that tolerance structurally unreachable. Fix = glob + newest-by-created_at + the EXISTING <=7min check, at both call sites; the <=7min check is what makes the glob safe against the prior-day residue, so the two halves must not ship apart. Secondary: alert-commander c214 annotates the snapshot as '~6min old' — it was ~40s old at read; the age was computed at notebook-write time (05:23:25Z), not read time. Harmless here, but a future reader would wrongly conclude the <=7min window is doing work."
+      },
+      {
+        "id": "SNAPSHOT-PROMOTE-DEAD-5TH-CONSECUTIVE-TICK",
+        "severity": "HIGH",
+        "status": "CARRIED",
+        "detail": "emit_pressure_state returned cycle_snapshot_promoted:false again (5th consecutive tick this session). cycle-snapshot-latest.json still frozen at 2026-08-23T00:09Z — now 29.5h. Prune also still dead: 32 snapshot files present, 17 from today, 15 prior-day residue."
+      },
+      {
+        "id": "NO-COLLISION-THIS-TICK",
+        "severity": "INFO",
+        "status": "OK",
+        "detail": "Single slot (alert-commander-market), single agent. Step 4b group-by-agent produced []. DEGRADED=false (cores 12, load1 1.61, headroom 3091 MB) — non-binding at n=1 either way."
+      }
+    ],
+    "deviations": [
+      "Held 8 NEW to=po signal rows at NEW rather than marking READ (5 cowork-team telemetry + 3 auto-push-abort). Rationale unchanged: the cowork drain marks to=po rows NEW->READ, but PO selects on NEW and there is no po cowork slot, so marking READ without delivery is the only outcome and the rows cold-evict at 24h.",
+      "Did NOT re-run claim_due_scheduled_tasks or cowork-match-slots.js (WORK-continuation contract). catchup_raw therefore not re-measured this tick.",
+      "last_regime and last_volatility_level sent as 'unknown' per spec, deliberately, to keep the wrong-key defect visible. Live value was available this tick at macro_snapshot.data.signals.carry.regime = 'NEUTRAL'."
+    ]
+  },
+  "_processed": {
+    "fingerprint": "0993ad51a1659da644639b703cc3cd4df9f0e8878cf4c8467522e2dd2277d993",
+    "processedAt": "2026-08-24T06:00:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -22831,7 +22831,7 @@
         "last_served_tick": "2026-08-24T03:58:59Z"
       }
     },
-    "_updated_at": "2026-08-24T06:45:46Z",
+    "_updated_at": "2026-08-24T06:51:33Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -25244,6 +25244,91 @@
         },
         "createdAt": "2026-08-24T06:34:00Z",
         "drained_at": "2026-08-24T06:45:46Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "728d9fbc99cf925253340efd2586d27c92d12e7e8a580083714830a0fab0599a",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "high",
+        "payload": {
+          "tick": "2026-08-24T06:45Z",
+          "drift_min": 0,
+          "pressure_mode": "adaptive",
+          "slots_matched": 1,
+          "slots_spawned": 1,
+          "spawned": [
+            "alert-commander-market"
+          ],
+          "one_shots": 0,
+          "max_parallel": 4,
+          "degraded": false,
+          "headroom_mb": 2967,
+          "load_1min": 3.55,
+          "cores": 12,
+          "drain": {
+            "inserted": 3,
+            "pruned_files": 0,
+            "db_count": 320,
+            "skip_unparseable": 2
+          },
+          "findings": [
+            {
+              "id": "SNAPSHOT-PROMOTION-TENTH-CONSECUTIVE-FALSE",
+              "severity": "high",
+              "state": "carried",
+              "note": "emit_pressure_state returned cycle_snapshot_promoted=false for the tenth consecutive tick. Wrote docs/data/cycle-snapshot-06:47.json for nominal tick 06:45 — offset +2min, seventh consecutive nonzero offset. Root cause and the proposed single-key fix are filed in cowork-team-20260824T063410Z.json under SNAPSHOT-LOOKUP-SPEC-IS-AMBIGUOUS-PROSE; nothing new measured this tick."
+            },
+            {
+              "id": "CHEF-WORK-UNCOMMITTED-FOUR-TICKS",
+              "severity": "high",
+              "state": "carried-aging",
+              "note": "docs/agent-memory/notebooks/unified-agent.md still modified and docs/data/unified-agent-synthesis-2026-08-24-intraday.json still untracked, now across four ticks since the 06:13 chef run. New supporting evidence this tick, which strengthens rather than weakens the finding: a live commit-sweep-guard escalation (commit-sweep-guard-2026-08-24T064401Z-53236.json, actor 7fd9c60a) fired against a BARE commit that would have absorbed one staged file belonging to another actor. That guard exists specifically to stop an agent absorbing files it does not own — so no peer commit will ever collect these two chef files, by design. The only correct collector is the owning agent, and it has already exited. This needs an explicit owner, not a sweep."
+            },
+            {
+              "id": "MALFORMED-SIGNAL-COUNT-STABLE-AT-TWO",
+              "severity": "high",
+              "state": "carried",
+              "note": "Same two notebook-prune-dropped-newest dev-mcp-server files SKIP-unparseable on every drain. notebook-auto-prune.sh lines 574/575 grep -c ... || echo 0 double-emits on a zero count; fix is || true on both plus repair of the two stuck files. Zone scripts/ to developer."
+            },
+            {
+              "id": "CHEF-SYNTHESIS-FILENAME-DROPS-SLOT-PREFIX",
+              "severity": "high",
+              "state": "carried",
+              "note": "chef-dish.md:889 specifies {CYCLE_DATE}-{SLOT_ID} with SLOT_ID chef-intraday. The 04:13 fire wrote -chef-intraday.json correctly, the 06:13 fire wrote -intraday.json. Two names and two key sets for one slot on one day, and neither file records slot_id internally. Zone docs/agents/unified-agent/ to agent-father."
+            },
+            {
+              "id": "PRESSURE-MODE-NOT-PERSISTED-BY-EMIT",
+              "severity": "medium",
+              "state": "carried",
+              "note": "emit_pressure_state accepted pressure_mode=adaptive and returned success; the persisted pressure-state.json still has no pressure_mode key. Zone apps/mcp-server/."
+            },
+            {
+              "id": "PEER-SESSION-COMMITTING-CONCURRENTLY",
+              "severity": "info",
+              "state": "observation",
+              "note": "commit-sweep-guard names actor 7fd9c60a-9854-4589-9e98-e4c5e7e9168d committing docs/agent-memory/notebooks/system-auditor.md at 06:44Z, mode=warn, prior_warns=0, threshold=3, outcome=proceeded. A second session is live on this machine and writing to the shared tree. Recorded for context on any concurrent-write surprise this hour; no action."
+            },
+            {
+              "id": "SINGLE-SLOT-TICK-NO-COLLISION",
+              "severity": "info",
+              "state": "ok",
+              "note": "One matched slot, Step 4b guard correctly silent. Not degraded: headroom 2967MB above the 1500MB floor, load1 3.55 against a 24.0 ceiling on 12 cores, max_parallel 4."
+            }
+          ],
+          "deviations": [
+            "Did not re-call claim_due_scheduled_tasks or cowork-match-slots.js per the WORK-continuation contract, so catchup_raw was not re-measured.",
+            "Sent last_regime and last_volatility_level as unknown per spec despite live NEUTRAL carry regime being in hand.",
+            "Did not repair the two malformed notebook-prune files nor patch notebook-auto-prune.sh.",
+            "Did not commit the chef stranded files — filed above as needing an explicit owner.",
+            "Did not run guard-signal-type-coverage.sh: not read-only, --check is a no-op alias.",
+            "No push attempted — size-lint gate still blocks."
+          ]
+        },
+        "createdAt": "2026-08-24T06:48:16Z",
+        "drained_at": "2026-08-24T06:51:33Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

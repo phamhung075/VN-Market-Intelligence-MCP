@@ -1,0 +1,88 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "priority": "high",
+  "createdAt": "2026-08-24T06:04:12Z",
+  "payload": {
+    "tick": "2026-08-24T06:00:00Z",
+    "drift_min": 0,
+    "verdict": "WORK",
+    "pressure_mode": "adaptive",
+    "slots_fired": [
+      "alert-commander-market"
+    ],
+    "collisions": "none",
+    "degraded": false,
+    "cores": 12,
+    "load1": 7.72,
+    "headroom_mb": 3791,
+    "snapshot_written": "docs/data/cycle-snapshot-06:02.json",
+    "cycle_snapshot_promoted": false,
+    "promoted_false_streak": 7,
+    "findings": [
+      {
+        "id": "SELF-CAUSED-ZERO-BYTE-TELEMETRY-HUSK",
+        "severity": "medium",
+        "status": "NEW-SELF-CAUGHT-AND-CLEANED",
+        "detail": "docs/signals/cowork-team-20260824T055159Z.json was 0 bytes. I created it at the 05:45Z tick: my telemetry write used a bare redirect to the target path, jq then failed on an inner-quote syntax error, and the shell had already truncated the file. drain-signals.js reported it as SKIP unparseable Unexpected end of JSON input. Same inbox-jamming outcome as the notebook-auto-prune defect but a DIFFERENT mechanism: redirect-before-validate rather than double-echo. Removed (untracked, 0 bytes, verified before deletion). Behaviour adopted from this tick on: telemetry writes go to a tmp path, jq empty validates, then mv - the pattern already used for snapshots.",
+        "zone": "docs/agents/cowork-team/flow/"
+      },
+      {
+        "id": "RETRACTED-34-PROVENANCE-IDENTIFIED",
+        "severity": "low",
+        "status": "RESOLVED",
+        "detail": "My retracted 05:30Z census of 34 NEW rows is now explained. pressure-state.json carries signal_backlog with value 34. I read that field and reported it as a NEW-status row count. The retraction stands - it is the drain inbox backlog depth, not a status census - but the figure was real data misattributed, not invented. Cross-check any backlog number against orch-state signal_queue rows before calling it a status count.",
+        "zone": "docs/agents/cowork-team/flow/"
+      },
+      {
+        "id": "PRESSURE-MODE-NOT-PERSISTED-BY-EMIT",
+        "severity": "medium",
+        "status": "NEW",
+        "detail": "emit_pressure_state accepts pressure_mode as an argument and the dispatcher passes it every tick, but the written pressure-state.json has no pressure_mode key at all. Live file keys: emitted_at, tick_id, signal_backlog, last_regime, last_volatility_level, calendar_status, dev_queue_depth, container_vm_headroom_mb, stale_warning. So the artifact that drives the next tick staleness-and-mode decision does not record which mode it was emitted under. Any post-hoc reconstruction of mode history from this file is impossible; only the preflight verdict carries it, and that is not persisted either.",
+        "zone": "apps/mcp-server/"
+      },
+      {
+        "id": "SNAPSHOT-LOOKUP-SPEC-IS-STRUCTURALLY-DEAD",
+        "severity": "high",
+        "status": "SHARPENED-THIRD-DEFECT-SEPARATED",
+        "detail": "cycle-bootstrap SKILL.md line 57 derives the lookup key as current UTC rounded to the nearest 5-minute slot. Counted the minute field of every snapshot file on disk: 33 files, distribution 01x4 02x6 03x2 16x2 17x3 18x1 23x1 31x3 32x1 33x2 39x1 46x2 47x3 48x1, and ZERO end in 0 or 5. The writer names by wall-clock-at-write which always lands 1-3 min past a quarter-hour, so it can never emit a 5-min-aligned name. The documented agent-side lookup has never been able to match any file that has ever existed. Every hit alert-commander has logged came from it silently ignoring the spec and scanning the directory, and because that workaround is unspecified it varies per cycle: c214 accepted 05:17 for tick 05:15 at plus 2 min, c215 accepted 05:33 for tick 05:30 at plus 3 min, c216 REJECTED 05:48 for tick 05:45 at plus 3 min - same offset, opposite verdict, adjacent cycles. That is three distinct defects on one filename scheme: promoter keys on nominal tick, documented agent lookup keys on a 5-min grid nothing writes to, agent workaround is non-deterministic. A fix must land all three plus the latest.tick schema mismatch or it papers over one.",
+        "zone": "cross-service/"
+      },
+      {
+        "id": "SNAPSHOT-OFFSET-FOURTH-MEASUREMENT",
+        "severity": "info",
+        "status": "OK",
+        "detail": "Nominal tick 06:00, file written 06:02. Running offsets across four consecutive ticks: plus 2m03s, plus 3m19s, plus 3m46s, plus 2m. Never below 2 min. Confirms the promoter miss is structural, not a race - this tick had drift_min 0 and still missed. 7th consecutive cycle_snapshot_promoted false.",
+        "zone": "cross-service/"
+      },
+      {
+        "id": "MALFORMED-SIGNAL-COUNT-NOW-TWO",
+        "severity": "high",
+        "status": "CARRIED",
+        "detail": "After removing my own 0-byte husk, 2 malformed files remain in docs/signals/, both from notebook-auto-prune.sh line 575 grep -c with an or-echo-0 fallback that double-emits on a zero count. Both are priority high to claude-manager-helper warning that the prune may have dropped the newest notebook content, and drain-signals.js will re-warn on them every tick forever. Fix is or-true on lines 574 and 575 plus repairing the two files.",
+        "zone": "scripts/"
+      },
+      {
+        "id": "LOAD1-JUMP",
+        "severity": "info",
+        "status": "OK",
+        "detail": "load1 rose from 1.35 at the 05:45Z tick to 7.72 at this one, cores 12, threshold 24. Not degraded, headroom 3791 MB. Recording as a datapoint because the fanout gate is non-binding at n equals 1 and would not have caught a further rise.",
+        "zone": "cross-service/"
+      }
+    ],
+    "deviations": [
+      "Did not re-call claim_due_scheduled_tasks or cowork-match-slots.js per the WORK-continuation contract, so catchup_raw was not re-measured this tick.",
+      "Sent last_regime and last_volatility_level as unknown per spec despite live carry.regime NEUTRAL being in hand, to keep the wrong-key defect visible.",
+      "Did not repair the 2 malformed notebook-prune signals and did not patch notebook-auto-prune.sh - router-only, routed as a finding.",
+      "Removed one untracked 0-byte file that I myself created this session, after verifying size and untracked status. Cleanup of my own artifact, not a repair of another producer output.",
+      "Did not commit the dirty tree and did not attempt any push - size-lint still blocks the fleet on 3 offenders."
+    ]
+  },
+  "_processed": {
+    "fingerprint": "19d429d141f33520afe39da1aba61e89bb9c8ba2ee6a3d1200522e2e156edbf1",
+    "processedAt": "2026-08-24T06:15:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

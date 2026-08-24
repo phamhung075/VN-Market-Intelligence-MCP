@@ -1,0 +1,100 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "20260824T044810Z",
+  "tick": "2026-08-24T04:45Z",
+  "drift_min": 0,
+  "pressure_mode": "adaptive",
+  "silent": false,
+  "spawned": [
+    "alert-commander-market"
+  ],
+  "errors": [],
+  "one_shots": [],
+  "batch": {
+    "degraded": false,
+    "max_parallel": 4,
+    "cores": 12,
+    "load_1min": 1.66,
+    "container_vm_headroom_mb": 2984,
+    "batches": 1
+  },
+  "queue_status_census": {
+    "NEW": 1,
+    "OPEN": 6,
+    "READ": 91,
+    "RETRACTED": 7,
+    "new": 1,
+    "triaged": 12,
+    "total": 118
+  },
+  "commits_ahead": 171,
+  "snapshot": {
+    "written": "docs/data/cycle-snapshot-04:46.json",
+    "lookup_tally": {
+      "hits": 3,
+      "misses": 4
+    },
+    "files_present": 28,
+    "prior_day_residue": 14,
+    "latest_promoted": false,
+    "latest_stale_hours": 28.6,
+    "files_present_note": "HH:MM-named files only, counted AFTER this ticks own 04:46 write; cycle-snapshot-latest.json excluded (promotion target, not a residue)"
+  },
+  "findings": [
+    {
+      "id": "SIZELINT-THIRD-OFFENDER-IS-WORKING-TREE-ONLY-PUSH-RANGE-FILE-IS-CLEAN",
+      "severity": "HIGH",
+      "status": "NEW",
+      "detail": "NEW HIGH, found while reconciling the 04:30Z alert-commander spawn. The pre-push size-lint gate blocks the fleet on three files, but one of them has ZERO committed contribution to the block. Measured against scripts/audits/size-lint-justification.sh and docs/data/size-lint-baseline.json (threshold 120L, baseline generated 2026-08-22T19:10:16Z, 648 grandfathered entries): the gate fails on growth past a per-file grandfather baseline plus tolerance (+/-10 percent, min 5L), NOT on absolute size. All three offenders are already IN that baseline - pushBctcLayoutHandler.ts baseline 228 actual 252 ceiling 250 (over by 2); tasksMdJanitorJob.ts baseline 906 actual 1012 ceiling 996 (over by 16); ocr_gateway.py baseline 527 actual 594 ceiling 579 (over by 15). ocr_gateway.py is 527L at HEAD - exactly its baseline, a clean PASS. Its entire overage is uncommitted working-tree edit (git diff --numstat 74+/7-, net +67), mtime 2026-08-24 06:40:43 CEST, being written live by dev-pdf-extractor under FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH (status IN_PROGRESS). Mechanism verified in source: list_files() is git ls-files --cached --others --exclude-standard and the check loop counts with wc -l on the working-tree file; nothing references the push range. Consequence: the fleet push is hostage to whatever any agent has dirty at that instant, and splitting the two legitimately-committed files will NOT unblock the push while that P0 edit is open. FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE (tracked P1) is therefore on the critical path of the unblock sprint and outranks the per-file split work - a re-prioritisation call for po, not minted here since the row already exists."
+    },
+    {
+      "id": "SNAPSHOT-PRUNE-DEAD-PRIORDAY-RESIDUE-COLLISION-HAZARD",
+      "severity": "HIGH",
+      "status": "CARRIED",
+      "detail": "Snapshot prune still dead. 28 HH:MM-named cycle-snapshot files present (counted AFTER this ticks own 04:46 write; cycle-snapshot-latest.json excluded as it is the promotion target, not a residue), 14 of them dated 2026-08-23 - unchanged from the 04:30Z measurement, so nothing pruned in 15 minutes. Oldest residue is ~19h past the documented 24h boundary. Filenames carry HH:MM with no date, so every residue is a same-minute collision hazard for todays clock; per the known defect a residue makes the 4h gate refuse promotion and set stale_warning=true, forcing the NEXT tick to legacy cadence. cycle-snapshot-latest.json remains frozen at tick 00:00 / created_at 2026-08-23T00:07:50Z - now 28.6h stale, consistent with cycle_snapshot_promoted:false on this and every prior emit."
+    },
+    {
+      "id": "PREFLIGHT-NEWSIGNALS-BLIND-TO-LOWERCASE-STATUS",
+      "severity": "MEDIUM",
+      "status": "CARRIED",
+      "detail": "Preflight new_signals counter remains blind to the lowercase status variant. Census is NEW=1 plus new=1 (total 118, unchanged across three consecutive ticks) yet preflight reports new_signals:1. Discriminated rather than assumed: the uppercase row sys-20260824T041052-44c9 has ts 2026-08-24T04:10:52Z which predates the 04:15Z tick, so an arrival-since-last-tick counter would have returned 0. It is a status census, blind to lowercase. Row po-decision-bug5468-2026-08-23T15:27:38Z (from=po to=ops, type=system-issue) has now survived a SEVENTH drain and is additionally uncounted by the dispatchers own signal counter - two independent invisibility mechanisms on one row."
+    },
+    {
+      "id": "COMMITS-AHEAD-ACCELERATING-UNDER-PUSH-BLOCK",
+      "severity": "MEDIUM",
+      "status": "NEW",
+      "detail": "Local main is now 171 commits ahead of origin/main, up from 168 measured ten minutes earlier at the 04:37 push attempt and 167 at the 04:30Z tick. The fleet is committing faster than the push block is being resolved. Still gated on the standing PUSH-AUTONOMY-1 user decision; no push attempted by this dispatcher."
+    },
+    {
+      "id": "SNAPSHOT-LOOKUP-MINUTE-EXACT-SPAWN-LATENCY-MECHANISM-QUANTIFIED",
+      "severity": "LOW",
+      "status": "CARRIED",
+      "detail": "Snapshot lookup tally now 3 hits / 4 misses - first hit in three ticks, and it quantifies the mechanism. At 04:30Z the dispatcher wrote cycle-snapshot-04:32.json at 04:32:11Z and the spawned agent read it at approximately 04:32:59Z, reporting it as ~0.8min old: 48 seconds into a 60-second window, i.e. a 12-second margin. The lookup is minute-EXACT, so the hit rate is purely a function of spawn latency against the remainder of the wall-clock minute at write time. This tick wrote at 04:46:37Z leaving only ~23 seconds of that minute, so a miss is the likely outcome. Cost of a miss is a duplicated direct fetch, not wrong data."
+    },
+    {
+      "id": "NO-COLLISION-THIS-TICK",
+      "severity": "INFO",
+      "status": "OK",
+      "detail": "No collision this tick. Step 4b grouped MATCHES by agent_id: 1 slot, 1 agent, no agent in two or more slots, no WARN sent. The undeclared alert-commander-market / alert-commander-critical same-agent collision remains unaddressed in docs/data/cowork-schedule.json (needs a supersedes declaration); next co-occurrence is 08:00 weekday."
+    }
+  ],
+  "carried_open": [
+    "CADENCE-GATE-LOCKS-HOURLY-CRON-TO-2H (chef-intraday): last_fired 04:18:40 means the 05:13 cron fire is 54.3 min later and fails the 60-min cadence floor - predicted suppression, next falsifiable checkpoint.",
+    "chef-intraday trigger_prompt line 2 carries non-canonical MCP URL https://zenmidi.com/vn-market/mcp vs canonical .../gateway/mcp; Step 5.2 validates line 1 only. Fix site is the schedule entry, not a router-side patch.",
+    "Signal-row schema variance: some rows use ts/summary/payload_ref, others created_at/createdAt/payload. A consumer keying on one shape reads null for the other.",
+    "CHEF-INTRADAY-CLUSTER-RULE-CONTRADICTION-SSI-SAMETYPE-ADMITTED (04:15Z dish): clusters_summary states the rule as >=2 distinct signal types per ticker OR >=3 signals same sector, then records ticker convergence as SSI (3x news_mention) - three signals of ONE type. conviction_calls[0] restates the same evidence as SSI 3-type news convergence and issues MEDIUM/HOLD. Sector cluster (real_estate, DXG+PDR+VHM, 4 signals) does satisfy the rule and stands.",
+    "UNIFIED-AGENT-NOTEBOOK-NOT-WRITTEN-AND-10D-GIT-STRANDED: mtime 2026-08-23 21:51:51 CEST with zero 2026-08-24 hits despite the agent reporting pipeline complete; last commit 2026-08-14.",
+    "supersede_mutex_applied projection gap at cowork-tick-preflight.sh:352.",
+    "Step 6.1 silent gate keys off MATCHES only, so a drain-only WORK tick leaves no artifact.",
+    "Step 4.2 staleness threshold is 20 min against a 15-min tick cadence.",
+    "Preflight script output format is not stable across ticks (human table at 04:15Z, JSON at 04:30Z and 04:45Z); both multi-line, so tail -1 | jq fails. Parse the whole tee-d file."
+  ],
+  "_processed": {
+    "fingerprint": "993fb2c4a2a2fb9286483e03e1e5da7e8e14c77b70543ff8d5564981dab36b05",
+    "processedAt": "2026-08-24T06:00:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

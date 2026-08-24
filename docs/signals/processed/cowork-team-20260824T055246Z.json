@@ -1,0 +1,124 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "2026-08-24T05:52:46Z",
+  "payload": {
+    "tick": "2026-08-24T05:45:00Z",
+    "drift_min": 0,
+    "verdict": "WORK",
+    "pressure_mode": "adaptive",
+    "slots_fired": [
+      "alert-commander-market"
+    ],
+    "one_shots": [],
+    "collision": "none (single slot)",
+    "calendar_status": "open",
+    "pressure_age_min": 12.1,
+    "staleness_threshold_min": 20,
+    "stale_warning": false,
+    "fanout": {
+      "cores": 12,
+      "load_1min": 1.35,
+      "headroom_mb": 3783,
+      "degraded": false,
+      "binding": false,
+      "reason": "n=1"
+    },
+    "snapshot": {
+      "written": "docs/data/cycle-snapshot-05:48.json",
+      "nominal_tick": "05:45",
+      "offset_seconds": 226,
+      "files_present": 33,
+      "today_by_created_at": 18,
+      "prior_day_residue": 14,
+      "promoted": false,
+      "latest_ptr_created_at": "2026-08-23T00:07:50Z",
+      "latest_ptr_stale_hours": 29.7
+    },
+    "emit": {
+      "emitted_at": "2026-08-24T05:50:18.797Z",
+      "success": true,
+      "ordering": "emit BEFORE p3_release (NFR-3 satisfied)"
+    },
+    "signal_census": {
+      "surface": "orch-state .signal_queue.rows[]",
+      "NEW": 1,
+      "OPEN": 6,
+      "READ": 91,
+      "RETRACTED": 7,
+      "lowercase_new": 1,
+      "triaged": 12,
+      "pending_triage_inbox_depth": 46,
+      "signal_files_on_disk": 58,
+      "malformed_files": 2
+    },
+    "findings": [
+      {
+        "id": "NOTEBOOK-AUTOPRUNE-EMITS-INVALID-JSON",
+        "severity": "HIGH",
+        "state": "NEW-ROOT-CAUSED",
+        "detail": "scripts/agents-flow/notebook-auto-prune.sh line 575 uses grep -c piped then || echo 0. grep -c PRINTS 0 and EXITS 1 on no-match, so the || branch appends a SECOND 0. Command substitution therefore captures 0-newline-0, and the heredoc emits the sentinel_section_count key with value 0 followed by a newline and a stray 0-comma, which is invalid JSON. Fires precisely and only when the count is legitimately zero. Line 574 (NON_SENTINEL_SECTION_COUNT) carries the identical latent bug, currently masked because its count has been nonzero.",
+        "evidence": "2 of 2 emitted files unparseable with byte-identical corruption: docs/signals/notebook-prune-dropped-newest-docs-agent-memory-notebooks-dev-mcp-server-md-2026-08-23T152548Z.json and the T194934Z sibling.",
+        "impact": "drain-signals.js line 220 catches the parse error, logs a stderr WARN, and leaves the file in the inbox forever (its own comment says it will re-warn every tick until removed at source). Both stuck signals are priority=high to claude-manager-helper, warning that the prune MAY HAVE DROPPED THE NEWEST notebook content. The safety signal for a destructive action is itself unreadable. It also makes any slurp-based consumer over docs/signals/*.json fail outright (jq -s exits 5).",
+        "fix": "replace the || echo 0 idiom with || true on BOTH lines 574 and 575 (grep -c already prints 0), then hand-repair or re-emit the 2 stuck files.",
+        "suggested_zone": "scripts/",
+        "suggested_next_agent": "developer"
+      },
+      {
+        "id": "CORRECTION-MY-0530-SIGNAL-CENSUS-WAS-WRONG",
+        "severity": "MEDIUM",
+        "state": "RETRACTED",
+        "detail": "At 05:30Z this dispatcher reported 34 NEW and 8 NEW to=po, and recorded a deliberate deviation of holding 8 to=po rows at NEW. That count is not reproducible on any surface. orch-state .signal_queue.rows[] has held NEW=1 across commits b27667518 (04:25Z), 67658fe2b (04:28Z) and b8b655d3f (04:44Z), and the working tree is clean, so the value did not change during the 05:30 tick. Separately, docs/signals/*.json carry no .status field at all (56 NOSTATUS plus 2 malformed).",
+        "correction": "Actual NEW to=po = 1: sys-20260824T041052-44c9, type=auditor_cycle_loss, from=system-auditor. The held-8-rows deviation was premised on a bad measurement and must not be cited.",
+        "impact": "No write was made on that bad count so there is nothing to unwind, but the 05:30Z telemetry census block is wrong and must not be used as a baseline."
+      },
+      {
+        "id": "SIZELINT-GATE-NAMES-3-OFFENDERS-BOARD-COVERS-1",
+        "severity": "HIGH",
+        "state": "RE-SCOPED",
+        "detail": "docs/agent-memory/sessions/fleet-push.log records the gate verdict verbatim: pushBctcLayoutHandler.ts baseline=228 actual=252 upper=250 (2 over); tasksMdJanitorJob.ts baseline=906 actual=1012 upper=996 (16 over); ocr_gateway.py baseline=527 actual=594 upper=579 (15 over). All three are baseline-tolerance-exceeded. Total overage is 33 lines across 3 files, i.e. trims or justification-header refreshes, NOT file splits.",
+        "falsification": "alert-commander c215 dismissed the latter two as uncommitted-peer-WIP false positives under FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE. Falsified three ways: git status --porcelain is clean on both; git merge-base --is-ancestor places db0ed7c02 and 183488ca2 INSIDE origin/main..HEAD; and baseline-tolerance-exceeded is, by the script own semantics, a committed-state verdict unrelated to working-tree scanning.",
+        "origin": "pushBctcLayoutHandler.ts sat at 228L from 2026-05-30 until 2f27fb335 (2026-08-23T19:39Z) took it to 252 — the fleet-wide block is about 34h old and came from one commit adding 24 lines. The log also shows the offender set growing from 2 to 3 mid-morning: with the gate already red, adding an offender costs nothing (broken ratchet, same mechanism the 2026-07-31 PO triage recorded).",
+        "impact": "Only FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH exists, and it correctly says 2-line trim. Landing it alone leaves the gate red on the other two. 175 commits are stranded. tsc passes in the same log, so size-lint is the sole gate.",
+        "landmine": "NEVER fix via size-lint-justification.sh --update: it regenerates docs/data/size-lint-baseline.json WHOLESALE, converting every current offender into a permanent repo-wide amnesty while exiting 0.",
+        "suggested_next_agent": "dev-mcp-server for the 2 ts files, dev-pdf-extractor for ocr_gateway.py"
+      },
+      {
+        "id": "SNAPSHOT-PROMOTE-STRUCTURAL-NOT-RACY",
+        "severity": "HIGH",
+        "state": "SHARPENED",
+        "detail": "6th consecutive cycle_snapshot_promoted=false. Step 4.7 names the file by wall-clock-at-write; emit_pressure_state looks it up by NOMINAL tick. Measured offset across 3 consecutive ticks this session: 05:15 to 05:17:03 (+2m03s), 05:30 to 05:33:19 (+3m19s), 05:45 to 05:48:46 (+3m46s). The offset is data-fetch latency and is always at least 2 minutes, so the wall-clock filename can essentially NEVER equal the nominal-tick key — even at drift_min=0, as this tick proves. Structural, not a race.",
+        "distinct_from": "The AGENT-side snapshot lookup is a DIFFERENT bug on the same filename scheme: the agent reads by its own wall-clock minute at read time and sometimes lands inside the same minute as the write (tally 5 hits / 6 misses). Two separate lookup defects — do not conflate them.",
+        "also": "cycle-snapshot-latest.json .tick is the bare string 00:00 while every per-tick writer emits a full ISO instant — a schema mismatch, so a consumer keying on .tick gets an unparseable value from latest. latest is now 29.7h stale (created_at 2026-08-23T00:07:50Z).",
+        "fix": "name the Step 4.7 file by NOMINAL tick, or use glob plus newest-by-created_at plus the existing 7-minute freshness check; ship both call sites together (.claude/skills/step-0-cowork/SKILL.md line 39 and .claude/skills/cycle-bootstrap/SKILL.md line 59)."
+      },
+      {
+        "id": "LOWERCASE-STATUS-INVISIBILITY-LIVE-INSTANCE",
+        "severity": "MEDIUM",
+        "state": "CONFIRMED",
+        "detail": "Exactly one row carries the lowercase status new: po-decision-bug5468-2026-08-23T15:27:38Z, type=system-issue, to=ops, about 14h old. It is invisible to every uppercase-NEW filter, including the pickers that would route it to ops.",
+        "impact": "One genuinely untriaged ops row is unreachable by status filter and will never surface in any NEW-based sweep."
+      },
+      {
+        "id": "NO-COLLISION-THIS-TICK",
+        "severity": "INFO",
+        "state": "OK",
+        "detail": "Single slot matched; Step 4b agent_id grouping yields no agent in 2 or more slots. All 12 containers healthy; mcp-server up 16h with RestartCount=0."
+      }
+    ],
+    "deviations": [
+      "Did NOT re-call claim_due_scheduled_tasks or cowork-match-slots.js (WORK-continuation contract) — catchup_raw was not re-measured this tick.",
+      "Sent last_regime and last_volatility_level as unknown per spec, although the live value NEUTRAL was in hand from get_macro_snapshot at .signals.carry.regime — kept deliberately to preserve visibility of the wrong-key defect.",
+      "Did NOT drain, mark, or clear any signal row; did NOT run guard-signal-type-coverage.sh (not read-only — line 258 writes live orch-state via ORCH_APPLY_LIVE_FILE_OVERRIDE and --check is a no-op alias).",
+      "Did NOT commit the dirty tree and did NOT attempt any push (PUSH-AUTONOMY-1 plus the red size-lint gate).",
+      "Did NOT repair the 2 malformed signal files or patch notebook-auto-prune.sh — router-only, routed as a finding instead."
+    ]
+  },
+  "_processed": {
+    "fingerprint": "b78c641bcdc0a7f736ef07333218f3810f1daa4bd39b64731613a7add357bedd",
+    "processedAt": "2026-08-24T06:00:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "priority": "high",
+  "createdAt": "2026-08-24T06:18:44Z",
+  "payload": {
+    "tick": "2026-08-24T06:15Z",
+    "drift_min": 0,
+    "pressure_mode": "adaptive",
+    "slots_fired": [
+      "chef-intraday",
+      "alert-commander-market"
+    ],
+    "collision_warn": false,
+    "fanout": {
+      "cores": 12,
+      "load1": 2.65,
+      "headroom_mb": 3761,
+      "degraded": false,
+      "max_parallel": 4,
+      "batches": 1
+    },
+    "drain": {
+      "inserted": 2,
+      "db_count": 316,
+      "unparseable": 2,
+      "pruned_files": 0
+    },
+    "snapshot": {
+      "nominal_tick": "06:15",
+      "filename_minute": "06:17",
+      "offset_min": 2,
+      "bytes": 8639,
+      "promoted": false
+    },
+    "findings": [
+      {
+        "id": "SNAPSHOT-PROMOTION-EIGHTH-CONSECUTIVE-FALSE",
+        "severity": "high",
+        "status": "carried",
+        "note": "emit_pressure_state returned cycle_snapshot_promoted=false for the 8th tick running. Promoter keys on the nominal tick (06:15); the writer names by wall-clock-at-write (06:17). Zone apps/mcp-server/ for the promoter half."
+      },
+      {
+        "id": "AGENT-SNAPSHOT-WORKAROUND-IS-NONDETERMINISTIC",
+        "severity": "high",
+        "status": "sharpened",
+        "note": "Four consecutive alert-commander cycles measured. c214 tick=05:15 snapshot=05:17 offset=+2 ACCEPT; c215 tick=05:30 snapshot=05:33 offset=+3 ACCEPT; c216 tick=05:45 snapshot=05:48 offset=+3 REJECT; c217 tick=06:00 snapshot=06:02 offset=+2 ACCEPT. c215 and c216 share an identical +3 offset and reached opposite verdicts one cycle apart, so the agent-side directory-scan workaround is not threshold-driven - it is non-deterministic. The documented lookup in .claude/skills/cycle-bootstrap/SKILL.md Step -1 rounds read-time to the nearest 5-minute slot; a re-census at this tick counts 34 snapshot files on disk with ZERO whose minute field ends in 0 or 5, so that documented rule has never been satisfiable and every hit ever logged came from the undocumented workaround."
+      },
+      {
+        "id": "MALFORMED-SIGNAL-COUNT-STABLE-AT-TWO",
+        "severity": "high",
+        "status": "carried",
+        "note": "drain-signals.js still SKIPs 2 unparseable files, both notebook-prune-dropped-newest-...-dev-mcp-server-md (2026-08-23T152548Z and 2026-08-23T194934Z). Root cause scripts/agents-flow/notebook-auto-prune.sh lines 574-575: grep -c prints 0 AND exits 1 on no-match, so the || echo 0 guard appends a second 0 and the field becomes 0 newline 0. Fix is || true on both lines plus repair of the two files. The third husk reported at the 06:00 tick was dispatcher-caused and has been removed; the count is back to the true producer-caused figure. Zone scripts/."
+      },
+      {
+        "id": "CHEF-INTRADAY-TRIGGER-PROMPT-NONCANONICAL-MCP-URL",
+        "severity": "medium",
+        "status": "carried",
+        "note": "cowork-schedule.json slot chef-intraday carries a second trigger_prompt line reading MCP: https://zenmidi.com/vn-market/mcp. Project CLAUDE.md fixes the canonical gateway at https://zenmidi.com/gateway/mcp. Step 5.2 validates line 1 only, so the dispatcher passes line 2 through verbatim and the spawned chef sees a wrong URL in its entry prompt. Non-functional today because agents reach tools via mcp__gateway__call_tool rather than that string, but it is a live wrong-value in the schedule SSOT. Zone docs/data/."
+      },
+      {
+        "id": "PRESSURE-MODE-NOT-PERSISTED-BY-EMIT",
+        "severity": "medium",
+        "status": "carried",
+        "note": "emit_pressure_state accepts pressure_mode and the dispatcher supplies it every tick, but the written pressure-state.json has no such key. The artifact that drives the next tick mode decision cannot record which mode it was emitted under. Zone apps/mcp-server/."
+      },
+      {
+        "id": "TWO-SLOT-TICK-NO-COLLISION",
+        "severity": "info",
+        "status": "ok",
+        "note": "First multi-slot tick of the session: chef-intraday (unified-agent, due_reason=cadence, 60min, last_fired 04:18:40Z) and alert-commander-market (alert-commander, due_reason=cron). Step 4b groups by agent_id; the two agents are distinct so no WARN fired. chef_mutex_applied=false. Both spawned in one batch under max_parallel=4."
+      },
+      {
+        "id": "LOAD1-SPIKE-WAS-TRANSIENT",
+        "severity": "info",
+        "status": "ok",
+        "note": "load1 measured 7.72 at the 06:00 tick and 2.65 at this one, against a degradation threshold of 24 on 12 cores. The earlier reading was a transient, not a trend. Recorded to close out the 06:00 datapoint rather than leave it looking like a rising curve."
+      }
+    ],
+    "deviations": [
+      "Did not re-run claim_due_scheduled_tasks or cowork-match-slots.js - forbidden on the WORK continuation path - so catchup_raw was not re-measured this tick.",
+      "Sent last_regime and last_volatility_level as unknown per the Step 6.0 spec, even though a live carry regime of NEUTRAL (carrySpread 1.37pp) was in hand at .macro_snapshot.data.signals.carry.regime. Deliberate: the wrong-key defect must stay visible.",
+      "Passed the chef-intraday trigger_prompt through verbatim including its non-canonical MCP URL on line 2, because Step 5.2 validates line 1 only. Recorded as a finding rather than silently corrected.",
+      "Did not repair the two malformed notebook-prune signal files and did not patch notebook-auto-prune.sh - router-only, routed as a finding.",
+      "Did not commit the dirty tree and attempted no push; the size-lint pre-push gate remains blocked on 3 offenders and 177 commits are stranded."
+    ]
+  },
+  "_processed": {
+    "fingerprint": "2370e8f2962e4f1af6963e76aa994d6f32ce642c88758153b6b68f26112e0380",
+    "processedAt": "2026-08-24T06:30:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

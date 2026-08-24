@@ -1,0 +1,109 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "priority": "high",
+  "createdAt": "2026-08-24T06:34:10Z",
+  "payload": {
+    "tick": "2026-08-24T06:30Z",
+    "drift_min": 0,
+    "pressure_mode": "adaptive",
+    "slots_matched": 1,
+    "slots_spawned": 1,
+    "spawned": [
+      "alert-commander-market"
+    ],
+    "one_shots": 0,
+    "max_parallel": 4,
+    "degraded": false,
+    "headroom_mb": 3047,
+    "load_1min": 2.37,
+    "cores": 12,
+    "drain": {
+      "inserted": 1,
+      "pruned_files": 0,
+      "db_count": 317,
+      "skip_unparseable": 2
+    },
+    "findings": [
+      {
+        "id": "SNAPSHOT-PROMOTION-NINTH-CONSECUTIVE-FALSE",
+        "severity": "high",
+        "state": "carried",
+        "note": "emit_pressure_state returned cycle_snapshot_promoted=false for the ninth consecutive tick. Dispatcher wrote docs/data/cycle-snapshot-06:32.json for nominal tick 06:30 (offset +2min, sixth consecutive nonzero offset). The promoter looks the file up by nominal tick, the writer names it by wall clock at write. cycle-snapshot-latest.json still carries .tick = 00:00 while every writer emits a full ISO instant."
+      },
+      {
+        "id": "SNAPSHOT-LOOKUP-SPEC-IS-AMBIGUOUS-PROSE",
+        "severity": "high",
+        "state": "new-supersedes",
+        "supersedes": "AGENT-SNAPSHOT-WORKAROUND-IS-NONDETERMINISTIC (cowork-team-20260824T061844Z.json) and SNAPSHOT-LOOKUP-THREE-DIVERGENT-KEYS (this file, earlier revision)",
+        "note": "Root cause located in source rather than inferred from agent narration. .claude/skills/cycle-bootstrap/SKILL.md Step -1 defines the lookup as: TICK = current UTC time formatted as HH:MM (round to nearest 5-min slot, e.g. 02:05 to 02:05). That single line gives two contradictory instructions - format the current time, and round it to a 5-minute slot - and its worked example demonstrates no rounding at all, mapping 02:05 onto itself. It is ambiguous prose interpreted freshly by an LLM on every run, which is why five measured runs show three different lookup behaviours: c216 looked up the NOMINAL TICK 05:45, c218 looked up its READ-TIME MINUTE 06:18, and c219 hit 06:32 from a read at about 06:33, matching neither rule. Measured outcome across six cycles: four hits (05:17, 05:33, 06:02, 06:32) and two misses (05:48 present but rejected, 06:17 present but rejected). Two earlier mechanistic models filed by this dispatcher - a random directory scan, then an exact-minute race - were each falsified by the next observation; no behavioural model is asserted here. The fix does not require knowing which interpretation a given run picks: replace the prose with one unambiguous key, the nominal tick floor(minute/15)*15, computed identically by writer, promoter and consumer, with the consumer taking it from the scheduled_utc token already present in its spawn prompt. Two further defects in the same file: the documented 5-minute grid is unsatisfiable regardless of interpretation, since 0 of 35 snapshot filenames on disk carry a 5-min-aligned minute; and Step -1 still carries a stale note claiming the snapshot writer is a future task that has not landed, so Step -1 will always miss - the writer landed and has written on every tick today. Zone .claude/skills/cycle-bootstrap/ to agent-father."
+      },
+      {
+        "id": "SNAPSHOT-06-32-PREDICTION-FALSIFIED",
+        "severity": "high",
+        "state": "self-correction",
+        "note": "The prediction recorded earlier in this same signal was WRONG. alert-commander c219 reported a snapshot HIT on cycle-snapshot-06:32.json, described as roughly 1 minute fresh, after reading at approximately 06:33. The exact-minute-on-read-clock model predicted a miss. That model is withdrawn."
+      },
+      {
+        "id": "MALFORMED-SIGNAL-COUNT-STABLE-AT-TWO",
+        "severity": "high",
+        "state": "carried",
+        "note": "Same two notebook-prune-dropped-newest-...-dev-mcp-server-md files (2026-08-23T152548Z position 581, 2026-08-23T194934Z position 533) SKIP-unparseable on every drain. Root cause notebook-auto-prune.sh lines 574/575 grep -c ... || echo 0 double-emits on a zero count. Fix is || true on both plus repair of the two stuck files. Zone scripts/ to developer."
+      },
+      {
+        "id": "CHEF-WORK-UNCOMMITTED-THREE-TICKS",
+        "severity": "high",
+        "state": "carried-aging",
+        "note": "docs/agent-memory/notebooks/unified-agent.md still modified and docs/data/unified-agent-synthesis-2026-08-24-intraday.json still untracked, now across three ticks since the 06:13 chef run. Two peer commits have landed since (a8706288f alert-commander c218 and this tick pending) and neither picked them up, because the commit-mutex path stages only the committing agent own pathspec. No sweep covers these."
+      },
+      {
+        "id": "CHEF-SYNTHESIS-FILENAME-DROPS-SLOT-PREFIX",
+        "severity": "high",
+        "state": "carried",
+        "note": "chef-dish.md:889 specifies docs/data/unified-agent-synthesis-{CYCLE_DATE}-{SLOT_ID}.json with SLOT_ID chef-intraday. Same-day control: the 04:13 fire wrote -chef-intraday.json correctly, the 06:13 fire wrote -intraday.json. Two files, one slot, one day, two names and two different key sets, and neither file records slot_id internally, so the filename is the sole slot carrier. Zone docs/agents/unified-agent/ to agent-father."
+      },
+      {
+        "id": "PRESSURE-MODE-NOT-PERSISTED-BY-EMIT",
+        "severity": "medium",
+        "state": "carried",
+        "note": "emit_pressure_state accepted pressure_mode=adaptive and returned success, but the persisted docs/data/pressure-state.json still has no pressure_mode key. Consumers reading the file cannot see the mode the dispatcher computed. Zone apps/mcp-server/."
+      },
+      {
+        "id": "SINGLE-SLOT-TICK-NO-COLLISION",
+        "severity": "info",
+        "state": "ok",
+        "note": "One matched slot this tick, so the Step 4b collision guard grouped a single agent_id and correctly emitted no WARN. Not degraded: container headroom 3047MB above the 1500MB floor, load1 2.37 against a 24.0 ceiling on 12 cores, max_parallel 4."
+      }
+    ],
+    "deviations": [
+      "Did not re-call claim_due_scheduled_tasks or cowork-match-slots.js per the WORK-continuation contract, so catchup_raw was not re-measured this tick.",
+      "Sent last_regime and last_volatility_level as unknown per spec despite live NEUTRAL carry regime (carrySpread 1.37pp) being in hand, to keep the wrong-key defect visible.",
+      "Did not repair the two malformed notebook-prune signal files nor patch notebook-auto-prune.sh — outside router scope, filed above.",
+      "Did not commit the chef stranded notebook or synthesis file — belongs to the owning agent zone, filed above.",
+      "Did not run guard-signal-type-coverage.sh: it is not read-only and --check is a no-op alias.",
+      "No push attempted — size-lint gate still blocks with three offenders."
+    ],
+    "spawn_reconciliation": {
+      "agent": "alert-commander",
+      "cycle": "c219",
+      "verdict": "verified-clean",
+      "offflow_markers": "0 of 6",
+      "negative_control": "passed",
+      "commit": "9bde1f437",
+      "commit_time": "2026-08-24T06:37:16Z",
+      "files_changed": "notebook only, 9+/9-",
+      "notebook": "31 lines, 9161 bytes, sections c217/c218/c219, c216 pruned",
+      "ahead": 179,
+      "log_agent_work": 2092,
+      "snapshot": "HIT on cycle-snapshot-06:32.json - first hit after two consecutive misses",
+      "push": "blocked by size-lint pre-push gate, no duplicate bug signal minted, correct"
+    }
+  },
+  "_processed": {
+    "fingerprint": "ef7cd3a32252c389d5c28587644f6f4848c128effea20ee841e82ea4a55b5989",
+    "processedAt": "2026-08-24T06:45:46Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,152 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "20260824T050614Z",
+  "payload": {
+    "tick_id": "2026-08-24T05:00:00Z",
+    "fire_time": "2026-08-24T05:00:43Z",
+    "verdict": "WORK",
+    "drift_min": 0,
+    "silent": false,
+    "pressure_mode": "adaptive",
+    "spawned": [
+      "alert-commander-market"
+    ],
+    "errors": [],
+    "one_shots": [],
+    "batch": {
+      "degraded": false,
+      "max_parallel": 4,
+      "cores": 12,
+      "load_1min": 3.83,
+      "container_vm_headroom_mb": 3071,
+      "batches": 1
+    },
+    "queue_status_census": {
+      "NEW": 1,
+      "OPEN": 6,
+      "READ": 91,
+      "RETRACTED": 7,
+      "new_lowercase": 1,
+      "triaged_lowercase": 12,
+      "total": 118
+    },
+    "commits_ahead": 172,
+    "snapshot": {
+      "written": "docs/data/cycle-snapshot-05:02.json",
+      "write_margin_seconds": 40,
+      "lookup_tally": {
+        "hits": 3,
+        "misses": 5
+      },
+      "files_present": 29,
+      "prior_day_residue": 14,
+      "latest_promoted": false,
+      "latest_stale_hours": 29,
+      "files_present_note": "counted AFTER this tick's own 05:02 write; cycle-snapshot-latest.json excluded (promotion target, not residue)"
+    },
+    "findings": [
+      {
+        "id": "RETRACT-SIZELINT-THIRD-OFFENDER-WORKING-TREE-ONLY",
+        "severity": "HIGH",
+        "status": "RETRACTED",
+        "retracts": "SIZELINT-THIRD-OFFENDER-IS-WORKING-TREE-ONLY-PUSH-RANGE-FILE-IS-CLEAN (emitted docs/signals/cowork-team-20260824T044810Z.json, tick 04:45Z)",
+        "detail": "FALSE. Prior tick claimed apps/pdf-extractor/infrastructure/ocr_gateway.py was 527L at HEAD with a 67L uncommitted overage, therefore the size-lint block was hostage to a dirty working tree and splitting the other two files would not unblock the push. Re-measured this tick from clean: commit 183488ca2 ('gate ocr_gateway inflight-mismatch ERROR on persistence') landed 2026-08-24T04:41:24Z — BEFORE the tick that made the claim — carrying numstat 74/7 on that exact file, taking it 527L -> 594L. HEAD is 594L and has been since 04:41Z. `git diff --numstat` on all three offenders is EMPTY (fully committed) and `git log origin/main..main -- <f>` returns exactly 1 unpushed commit for EACH of the three, so all three are inside the push range.",
+        "how_the_error_happened": "The reported evidence was `git show HEAD:<path> | wc -l` = 527 plus `git diff --numstat` = '74 7'. Those two are mutually inconsistent on a clean tree, and '74 7' is byte-identical to 183488ca2's own numstat — i.e. a commit-range diff was read as a working-tree diff, and the HEAD line count did not correspond to the actual HEAD. Neither number was cross-checked against `git log -- <path>` or `git status --porcelain <path>`, either of which would have falsified the finding immediately.",
+        "consequences": [
+          "The size-lint block is entirely on legitimately committed, in-push-range content. Splitting the three files IS the correct unblock path, exactly as the existing sprint assumed.",
+          "FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE is NOT on the critical path. The script genuinely does scan the working tree (list_files() = `git ls-files --cached --others --exclude-standard`; the loop counts `wc -l < $f`, nothing references the push range) so the row remains a valid LATENT-defect row — but it is not what is blocking the fleet, and it must not be allowed to outrank the per-file splits.",
+          "The 'serial offenders' retraction from last tick is only HALF right and stays half right: the baseline-tolerance mechanism (threshold 120L, per-file grandfather baseline, +/-10% min-5L ceiling) was verified in source and is confirmed again by the script's own output; what is wrong is only the uncommitted-file claim layered on top of it. Three offenders are failing SIMULTANEOUSLY, all committed: 252/250, 1012/996, 594/579."
+        ],
+        "current_offenders_verified": [
+          {
+            "file": "apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts",
+            "baseline": 228,
+            "ceiling": 250,
+            "head": 252,
+            "tree": 252,
+            "committed": true,
+            "unpushed_commits": 1
+          },
+          {
+            "file": "apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts",
+            "baseline": 906,
+            "ceiling": 996,
+            "head": 1012,
+            "tree": 1012,
+            "committed": true,
+            "unpushed_commits": 1
+          },
+          {
+            "file": "apps/pdf-extractor/infrastructure/ocr_gateway.py",
+            "baseline": 527,
+            "ceiling": 579,
+            "head": 594,
+            "tree": 594,
+            "committed": true,
+            "unpushed_commits": 1
+          }
+        ]
+      },
+      {
+        "id": "ORPHANED-WORKTREE-HIDES-STRANDED-HPG-FIX",
+        "severity": "HIGH",
+        "status": "CARRIED-REVERIFIED",
+        "detail": "Re-measured this tick by a DIFFERENT method than the retracted finding above (git -C <worktree> status --porcelain, plus direct file-content diff against main) and it holds. .claude/worktrees/agent-ae9ed2cd6f04b3686, HEAD 4a6d2174c dated 2026-08-12T19:11:59+02:00 (12 days). Branch is merged into main with 0 commits ahead, so every main-tree probe reports it reconciled. But it carries 8 dirty entries, and the three financial-reports source files (bctcScalarAggregator.ts, bctcSectionCompleteness.ts, backfillBctcScalarsTool.ts) each DIFFER from their main-tree counterparts, while the untracked test FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts does not exist in main at all. The worktree's own HEAD commit message claims that same row. So the HPG operating_profit=0 defect is implemented-and-stranded, not un-started.",
+        "recovery_hazard": "docs/agent-memory/modules/tool-usage-stats.json is dirty in BOTH trees. A wholesale copy of the worktree diff would clobber 12 days of main-tree accumulation. Recover the 3 source files + 1 test only.",
+        "owner": "dev-mcp-server (authored the work, owns the zone). Router does not git add another agent's stranded work."
+      },
+      {
+        "id": "SNAPSHOT-PRUNE-DEAD-PRIORDAY-RESIDUE-COLLISION-HAZARD",
+        "severity": "HIGH",
+        "status": "CARRIED",
+        "detail": "29 cycle-snapshot files present (27 -> 28 -> 29 across the last three ticks: growth is entirely this dispatcher's own writes). prior_day_residue flat at 14 for a third consecutive tick — the 24h prune is making zero progress. cycle-snapshot-latest.json still frozen at tick '00:00' / created_at 2026-08-23T00:07:50Z = 29.0h stale, consistent with cycle_snapshot_promoted:false on every emit this session."
+      },
+      {
+        "id": "PREFLIGHT-NEWSIGNALS-BLIND-TO-LOWERCASE-STATUS",
+        "severity": "MEDIUM",
+        "status": "CARRIED",
+        "detail": "preflight reported new_signals=1, counting only the single uppercase NEW row (sys-20260824T041052-44c9, to=po, auditor_cycle_loss). Row po-decision-bug5468-2026-08-23T15:27:38Z carries status 'new' (lowercase) and is invisible to that count — its EIGHTH surviving drain. 13 lowercase-status rows total (1 'new' + 12 'triaged')."
+      },
+      {
+        "id": "COMMITS-AHEAD-FLAT-THIS-TICK",
+        "severity": "LOW",
+        "status": "UPDATED",
+        "detail": "commits_ahead 172, unchanged from the 04:45Z tick. Walks back part of last tick's COMMITS-AHEAD-ACCELERATING claim: the 167->168->171->172 run was fleet commit activity, and it has now flattened for one tick. Backlog is still 172 deep behind a red gate, but it is not monotonically accelerating."
+      },
+      {
+        "id": "VN-LUNCH-BREAK-FROZEN-FEED-IS-EXPECTED-NOT-A-DEFECT",
+        "severity": "LOW",
+        "status": "NEW",
+        "detail": "get_market_snapshot returned byte-identical values at 04:47Z and 05:01Z across every field (VN-Index 1788.75 +1.17%, breadth 175/106/74, ceiling 2 / floor 1, turnover 9508.62 tyd -48.2%, accumulatedVol 419834479). That is NOT a stale-feed defect: VN trading breaks for lunch 11:30-13:00 ICT = 04:30-06:00 UTC, so both reads land inside the break and a frozen tape is correct. Recorded so a later tick does not file a frozen-feed bug on it. Open question, not filed as a defect: pressure-state calendar_status is 'open' throughout the break — defensible (session is open, tape is halted) but it means no consumer can distinguish 'trading' from 'lunch halt' from that field alone."
+      },
+      {
+        "id": "NO-COLLISION-THIS-TICK",
+        "severity": "INFO",
+        "status": "OK",
+        "detail": "Step 4b: 1 slot, 1 distinct agent (alert-commander). No agent_id in >=2 slots. No WARN sent."
+      }
+    ],
+    "deviations_from_spec": [
+      "Step 0a: the single NEW row (sys-20260824T041052-44c9, to=po) was deliberately NOT marked READ. Per the standing finding, this dispatcher's drain marks to=po rows NEW->READ but PO selects on NEW and there is no po cowork slot, so mark-READ-without-delivery is the only outcome and the row would cold-evict at 24h. Held NEW so PO can still pick it up."
+    ],
+    "carried_open": [
+      "CHEF-INTRADAY-CLUSTER-RULE-CONTRADICTION-SSI-SAMETYPE-ADMITTED (HIGH, 04:15Z dish)",
+      "unified-agent notebook not written + 10d git-stranded (HIGH)",
+      "chef-intraday cadence lock CADENCE-GATE-LOCKS-HOURLY-CRON-TO-2H — next falsifiable checkpoint 05:13 (last_fired 04:18:40 -> 54.3min vs 60min floor)",
+      "alert-commander improvised out-of-flow `git pull --rebase` at 04:45Z; zero rebase references in docs/agents/alert-commander/flow/ (agent-father scope item)",
+      "UNDECLARED alert-commander slot collision — needs a supersedes declaration in cowork-schedule.json; next co-occurrence 08:00 weekday",
+      "non-canonical MCP URL in chef-intraday.trigger_prompt line 2; Step 5.2 validates line 1 only",
+      "5+ git stashes back to 2026-06-15 — third place uncommitted work hides",
+      "15 untriaged READ to=po rows cold-evicting from 2026-08-24T14:12Z",
+      "coverage-state.json 10-day git-stranded (producer = market-watcher)"
+    ]
+  },
+  "_processed": {
+    "fingerprint": "3860b9a68dd1e6281d8ee02ae2ddeeb88d6d19fa11ded30c6858038212cbf7a0",
+    "processedAt": "2026-08-24T06:00:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
