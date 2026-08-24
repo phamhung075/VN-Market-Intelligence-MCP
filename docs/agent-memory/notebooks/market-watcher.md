@@ -1,23 +1,23 @@
 # Market Watcher — Notebook
-**Last updated:** 2026-08-24 00:05 UTC | **Sprint:** 1968c
+**Last updated:** 2026-08-24 04:05 UTC | **Sprint:** 1968c
 
 ## Carry-over
 None
 
-## Cycle (00:05 UTC — offhours)
-- Market: CLOSED (offhours mode) | Sweep: 3 tickers (EIB, SHB, VCB) | Anomalies: 0
-- Regime: NEUTRAL | DXY: USD STRENGTHENING | US10Y: RISK-OFF | gold $4672.7
-- Vol: N/A (market closed) | Breadth: N/A | New lows: N/A
-- AutoCure guard: sweep tickers identified, no prices available (offhours)
+## Cycle (04:00–04:05 UTC — offhours mode)
+- Market: OPEN (02:00-08:59 UTC) | Sweep: 3 tickers (DGC, HUT, DAG) | Anomalies: 0
+- Regime: NEUTRAL (inferred) | Volatility: 17.71% (20d RV, NORMAL) | ADL: -507
+- Top movers: VIC +3.41% (1.0σ), SSI +2.17%, BSR +2.23% — all below 2.5σ offhours floor
+- Breadth: slightly negative (RANA -10.74); no thrust triggered
 
 ## Market Summary
-Market closed off-hours; all 34 watchlist tickers show N/A prices (expected). Macro: gold $4672.7 signals risk-off; oil $93.45 neutral; USD/VND bearish at 25930. Coverage rotation triggered for 3 rarely-covered banking tickers (EIB, SHB, VCB — >48h stale in market-watcher coverage). No price analysis possible; no anomalies to signal.
+VN market open at 04:03 UTC with 34 active watchlist tickers. Price analysis in offhours mode applied 2.5σ floor per schedule. No stocks breached threshold for anomaly signal; largest move was VIC +3.41% (~1σ relative to 3.27% ATR). Sweep rotation triggered for DGC, HUT, DAG (>48h stale in coverage). Volatility normal; breadth neutral with slight selling pressure (ADL -507). No technical alerts from market-watcher this cycle (technical signals from alert-engine are separate).
 
-## Metrics (cycle 2026-08-24 00:05 UTC)
+## Metrics (cycle 2026-08-24 04:05 UTC)
 | Field | Value |
 |---|---|
 | cycles_run | 1 |
-| items_fetched | 0 |
+| items_fetched | 4 |
 | signals_emitted | 0 |
 | signals_suppressed | 0 |
 | sweep_tickers_forced | 3 |
