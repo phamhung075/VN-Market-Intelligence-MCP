@@ -53,3 +53,8 @@
 - SHB/VIX cũng absent RS/momentum/52w coverage (data gap, giống FRT/BSR)
 - Chu kỳ đầu mở `## ` section riêng (thay pattern 1-section cũ); heading "Known patterns" giữ nguyên, không sửa
 - Regime NEUTRAL fallback; vol NORMAL (pctile 0,418); daily-predict Chủ Nhật 17:30 chạy độc lập weekly 13:47 (đã publish)
+
+## 2026-08-23T17:42Z Daily Predictions (phien nay - race)
+- Phase-2 claim thua race: task_claim published:digest-daily:2026-08-23 -> claimed:false, current_holder session 7be6b4cd (da tao id=50/51/52 nhu tren) luc 17:40:28Z - truoc phien nay ~1 phut do phien nay phan tich ky hon (34 ma + 6 indicator + BCTC + gate script x3 that). KHONG tao claim nao, dung luat P-5a (khong publish trung).
+- Ket qua phan tich doc lap TRUNG het voi peer: SHB/VHM bearish p=0,75, VIX bullish p=0,07 (LR=0,10 n=14 TRUSTED literal) - xac nhan pipeline P-3->P-5 deterministic dung thiet ke tren cung du lieu song.
+- Tien le cross-session race giong 07-18/07-19 (khac session, cung claimed=false dung thiet ke) - khong phai bug, khong can escalate.
