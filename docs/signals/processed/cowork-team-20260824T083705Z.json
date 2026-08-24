@@ -1,0 +1,81 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "payload": {
+    "tick": "2026-08-24T08:30Z",
+    "drift_min": 5,
+    "slots_fired": [
+      "alert-commander-market"
+    ],
+    "collision_warn": false,
+    "max_parallel": 4,
+    "degraded": false,
+    "headroom_mb": 3119,
+    "load_1min": 1.93,
+    "cores": 12,
+    "pressure_mode": "adaptive",
+    "pressure_age_min": 14.2,
+    "drain": {
+      "files_routed": 2,
+      "inserted": 2,
+      "db_count": 334
+    },
+    "snapshot_file": "docs/data/cycle-snapshot-08:36.json",
+    "snapshot_nominal_tick": "08:30",
+    "findings": [
+      {
+        "id": "SNAPSHOT-PROMOTION-SEVENTEENTH-CONSECUTIVE-FALSE",
+        "severity": "high",
+        "detail": "emit_pressure_state returned cycle_snapshot_promoted:false again. Producer wrote docs/data/cycle-snapshot-08:36.json for nominal tick 08:30 (+6 wall-clock offset, largest observed today; 08:15 was +5). Consumer emitPressureStateTool.ts:398 looks up by nominal tick derived from tick_id, so the file is unreachable by construction. docs/data/cycle-snapshot-latest.json remains tick=00:00 created_at=2026-08-23T00:07:50Z - now 32.5h stale. Seventeenth consecutive false in this session's observation window."
+      },
+      {
+        "id": "PRESSURE-MODE-STILL-NOT-PERSISTED-EIGHTEENTH",
+        "severity": "medium",
+        "detail": "emit_pressure_state accepted pressure_mode:'adaptive' and returned success:true. Post-write pressure-state.json has no pressure_mode key (jq has(\"pressure_mode\") == false). Eighteenth confirmation. The argument is accepted and silently dropped - callers cannot distinguish 'persisted' from 'ignored' by the return value."
+      },
+      {
+        "id": "PREFLIGHT-NEWSIGNALS-ZERO-WHILE-DRAINABLE-FILES-PRESENT-SECOND-CONSECUTIVE",
+        "severity": "low",
+        "detail": "preflight reported new_signals:0; the Step 0a drain immediately after routed 2 files (commit-sweep-guard-2026-08-24T082430Z-28983.json, cowork-team-20260824T082133Z.json) and inserted 2 rows, db_count 332->334. Identical shape to the 08:15Z tick. Two consecutive reproductions moves this from 'possible definition mismatch' to a reproducible divergence worth pinning: either new_signals counts DB rows since last tick rather than undrained files on disk, or it is measuring the wrong surface. Confirm the field's contract before any consumer gates on it."
+      },
+      {
+        "id": "SINGLE-SLOT-TICK-NO-COLLISION-GUARD-FIRE",
+        "severity": "info",
+        "detail": "One slot matched (alert-commander-market, due_reason=cron, scheduled_utc_time 2026-08-24T08:30:00.000Z). Step 4b collision guard evaluated: single agent_id, no WARN. Not degraded (headroom 3119MB >= 1500 floor, load 1.93 <= 2*12 cores) so MAX_PARALLEL=4 and the batch is a single spawn. Per-work-item token cowork-slot:alert-commander-market claimed (ttl 180s) and released {ok:true,released:1}."
+      },
+      {
+        "id": "ALERTCOMMANDER-C228-ALL-SELF-REPORTED-WRITES-VERIFIED-EXACT",
+        "severity": "info",
+        "detail": "Reconciled alert-commander-market (08:30Z slot). Claims exact: notebook 31L/8350B (claimed 31L/8350B), '## c225' pruned, 3-section retention held (c226/c227/c228), commit d22c1d974 notebook-ONLY (1 file, 9+/9-), worktree clean for notebook and docs/agents/alert-commander/. No out-of-contract write. Negative control + OFFFLOW clean. Second consecutive in-contract run after the 08:00Z flow-doc write."
+      },
+      {
+        "id": "CORRECTION-TICK-LABEL-IS-INCONSISTENT-NOT-DETERMINISTIC-INHERITANCE",
+        "severity": "medium",
+        "detail": "Corrects finding SNAPSHOT-WALLCLOCK-NAMING-NOW-POISONS-A-PERMANENT-AGENT-RECORD filed on the 08:15Z tick, which framed the wall-clock tick label as deterministic inheritance from the snapshot filename. Measured across two consecutive cycles of the SAME agent with identical input shape: c227 read cycle-snapshot-08:20.json for nominal 08:15 and recorded 'tick=08:20' (wall-clock, WRONG); c228 read cycle-snapshot-08:36.json for nominal 08:30 and recorded 'tick=08:30' (nominal, CORRECT). Both spawns carried scheduled_utc in the prompt. So the label source is NONDETERMINISTIC between cycles, not a fixed inheritance path. That is worse for a reader than consistent inheritance would be: a notebook tick label cannot be trusted either way without cross-checking scheduled_utc, and the error appears only sometimes. Root cause remains the wall-clock snapshot filename giving the agent a second, conflicting candidate for 'the tick'."
+      },
+      {
+        "id": "RETRACT-ALERTCOMMANDER-SNAPSHOT-AGE-ANNOTATION-AS-A-DEFECT",
+        "severity": "info",
+        "detail": "Retracting the 'write-time-computed / fourth datapoint' framing of alert-commander's snapshot freshness annotation. Both cycles report '1min fresh'. c227: snapshot created 08:20:18Z, agent spawned ~08:20:5x. c228: snapshot created 08:36:10Z, agent spawned ~08:36:40Z. In both cases the agent reads the snapshot roughly one minute after the fence writes it, so '1min fresh' is ACCURATE at read time. The 4.5min and 3.8min gaps previously measured were against the notebook SECTION HEADER, which is stamped at cycle end - a different instant by design. The annotation is correct; the earlier finding compared it to the wrong reference point. Undocumented convention worth pinning, not a defect."
+      },
+      {
+        "id": "AHEAD-COUNT-UNDERSTATEMENT-SELF-CORRECTED-BY-NEXT-CYCLE",
+        "severity": "info",
+        "detail": "c227 stated 'one commit ahead of origin/main' against a measured 203. c228, one cycle later, states 'Fleet is 205 commits ahead of origin/main' - accurate at its read time (measured 206 at 08:44Z). So the c227 understatement was a single-cycle slip, not a systematic misreading of the branch state by this agent. Downgrading STRANDED-COMMIT-COUNT-UNDERSTATED-BY-RETURN-203-NOT-1 from a standing behaviour to a one-off; the underlying 206-commit strand is unchanged and still the real issue."
+      },
+      {
+        "id": "ALERTCOMMANDER-SIZELINT-DEDUP-SUPPRESSION-REPEATED-WITH-FAULTY-TEST-STATED",
+        "severity": "medium",
+        "detail": "Second consecutive tick where alert-commander declined to escalate the size-lint push block as already-tracked. This time the criterion is explicit: 'all already-tracked (30+ prior mentions each in docs/data/orch/orch-state.json; matching open BACKLOG row FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-...)'. Counting MENTIONS is the wrong test and is demonstrably wrong here: the bulk of those mentions are finding TEXT inside dev_team_idle_chain.pending_triage_inbox[] - prior telemetry describing the gap - not task rows that own a fix. Measured against task_board only, ocr_gateway.py and tasksMdJanitorJob.ts still have ZERO rows covering their size violations, while the cited row covers pushBctcLayoutHandler.ts alone. A mention count near 30 is in fact evidence the finding has been REPORTED many times and ACTIONED for one of three files. Recurrence with a stated criterion makes this mechanical and fixable: the dedup test must resolve to a task_board row whose subject IS the offender, per offender."
+      }
+    ]
+  },
+  "createdAt": "2026-08-24T08:37:05Z",
+  "_processed": {
+    "fingerprint": "b2c68b7ed65e5e10b0f2ea6024b9012662898529596565f7d446e55f41db5c1c",
+    "processedAt": "2026-08-24T08:50:31Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

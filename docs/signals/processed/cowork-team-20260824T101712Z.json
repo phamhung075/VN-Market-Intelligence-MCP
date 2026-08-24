@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "2026-08-24T10:17:12Z",
+  "payload": {
+    "tick": "2026-08-24T10:15Z",
+    "verdict": "WORK",
+    "drift_min": 0,
+    "slots_matched": 0,
+    "slots_spawned": 0,
+    "new_signals": 7,
+    "work_driver": "signals_only",
+    "silent": false,
+    "findings": [
+      {
+        "id": "CORRECTION-A-THIRD-TERMINAL-STATE-DOES-EXIST-PO-USES-TRIAGED-AND-THE-DRAIN-WRITES-TO-A-DEAD-END-STATE-INSTEAD",
+        "severity": "high",
+        "detail": "RETRACTING my own 09:45Z claim that 'there is no third state for undeliverable-but-visible'. Measured the live status distribution this tick: NEW 8, READ 86, RETRACTED 12, TRIAGED 8. A 'triaged' status exists and is in active use, and every one of the 8 triaged rows is to=po -- including bctc-imgdeg-69fcd047-20260823T090510Z, which is YESTERDAY's instance of the exact signal type sitting NEW today. So PO does consume this queue, does process this signal type, and marks completion as 'triaged', not 'READ'. The defect is therefore both real and much more precise than I stated: the cowork drain's mandated NEW->READ writes rows into a state the consumer never revisits, while the consumer's own terminal state is 'triaged'. READ is a dead-end, not a delivery step -- 86 rows deep, spanning 2026-08-23T14:12:28Z to 2026-08-24T03:07:52Z, with the oldest roughly four hours from its 24h cold-evict. The fix is not 'invent a third state', it is 'stop writing READ', and the correct value already exists."
+      },
+      {
+        "id": "CORRECTION-THE-PIN-IS-NOT-INDEFINITE-PO-TRIAGED-THIS-QUEUE-AT-0737Z-TODAY",
+        "severity": "medium",
+        "detail": "Softening my 10:00Z framing that the SILENT-gate pin runs 'indefinitely until the rows move'. signal_queue.last_triaged_at = 2026-08-24T07:37:00Z, last_triaged_by = po -- under three hours before this tick. PO is live and works this queue on its own cadence, so the 7 held rows have a demonstrated consumer and the pin lasts until PO's next pass, not forever. This also retroactively vindicates the hold over the alternative: marking them READ would have moved them into the 86-row dead-end the same PO demonstrably never returns to. Cost so far stands at 4 needless dispatch bodies (09:30, 09:45, 10:00, 10:15), all in the post-close window; that is the accurate figure to weigh, not an unbounded one. Note the 6 CCATO rows carry forged midnight-Z timestamps so their true arrival time relative to the 07:37Z pass is unknowable -- only the bctc row (ts 09:04:14Z) is provably post-triage."
+      },
+      {
+        "id": "SIGNAL-QUEUE-HAS-NO-RETENTION-POLICY-AND-ITS-ARCHIVE-ARRAY-IS-EMPTY",
+        "severity": "medium",
+        "detail": "signal_queue exposes keys _updated_at, _updated_by, archive, last_triaged_at, last_triaged_by, rows -- and NO prune/ttl/retention/max key of any kind. archive[] is length 0 while rows[] is 114, so the archive path either does not run or has never run. Combined with the 24h READ cold-evict, this means the only mechanism that removes anything from this queue is eviction-by-age of already-dead-ended rows; nothing is preserved. A row that is dropped is dropped without trace. Worth a decision on whether archive[] is meant to be wired, because as it stands the queue's own retention surface is inert."
+      },
+      {
+        "id": "PRESENCE-ROW-EXPIRY-PREDICTION-PENDING-VERIFY-AT-NEXT-TICK",
+        "severity": "info",
+        "detail": "The manual presence row expires 2026-08-24T10:17:41Z, ~2 minutes after this tick's preflight ran at 10:15:39Z, so it was still live during this tick and the roster is not yet a clean test. The 09:45Z/10:00Z prediction stands unchanged and becomes checkable at 10:30Z: if task_list_held(kind='session-presence') returns count:0 there, the Zod object-payload root cause is confirmed end-to-end and no fallback path exists anywhere that recreates the row. Fix unchanged: stringify payload at cowork-tick-preflight.sh:214-216."
+      },
+      {
+        "id": "SNAPSHOT-OFFSET-PLUS-1-AT-DRIFT-ZERO-NINTH-SAMPLE",
+        "severity": "info",
+        "detail": "docs/data/cycle-snapshot-10:16.json (17618 B) for nominal tick 10:15 -- offset +1 at drift_min 0. Series +5,+6,+7,+1,+2,+2,+3,+1,+1 against drift 5,5,4,0,0,0,0,0,0. Two consecutive +1 on lean ticks reinforces offset = drift + elapsed. cycle_snapshot_promoted false again (naming mismatch unchanged: producer names by wall-clock minute, emitPressureStateTool.ts:398 looks up by nominal tick)."
+      }
+    ]
+  },
+  "_processed": {
+    "fingerprint": "8f92f91b9d4cd817371656508392059f5ed53750ec82c2de06197dd3a9b02434",
+    "processedAt": "2026-08-24T14:21:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

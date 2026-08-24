@@ -1,0 +1,190 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "20260824T080630Z",
+  "payload": {
+    "tick": "2026-08-24T08:00Z",
+    "nominal_tick": "2026-08-24T08:00:00Z",
+    "drift_min": 0,
+    "silent": false,
+    "pressure_mode": "adaptive",
+    "suppressed_cadence": [],
+    "slots_fired": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-market",
+      "alert-commander-critical"
+    ],
+    "findings": [
+      {
+        "id": "UNDECLARED-ALERTCOMMANDER-COLLISION-FIRED-LIVE-FIRST-OBSERVED",
+        "severity": "high",
+        "detail": "Step 4b collision guard fired for real this tick: agent alert-commander matched 2 slots (alert-commander-market cron '*/15 2-8 * * 1-5', alert-commander-critical cron '0 */4 * * *'). Neither slot declares `supersedes` in docs/data/cowork-schedule.json, so this is the UNDECLARED collision class match-slots.md:113 keeps the WARN alive for. Per spec this is WARNING-only and both spawned (R3). Concrete hazard, not theoretical: both spawns are APPEND-class writers to the SAME file docs/agent-memory/notebooks/alert-commander.md and both contend for the git commit-mutex. The per-work-item token gate at Step 4.6 cannot catch this by construction — keys are cowork-slot:<slot_id> and the two slot_ids differ, so both claims return claimed:true."
+      },
+      {
+        "id": "SNAPSHOT-PROMOTION-ROOT-CAUSE-PINNED-BOTH-SIDES-IN-SOURCE",
+        "severity": "high",
+        "detail": "PRODUCER docs/agents/cowork-team/flow/tick-snapshot.md Step 4.7 fence: FILE_TICK=$(date -u +%H:%M) — wall-clock minute at fence execution. CONSUMER apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts:398 tickHHMM = tickId.match(/T(\\d{2}:\\d{2}):/) — the NOMINAL tick from tick_id; line 263 then joins cycle-snapshot-${tickHHMM}.json. These agree only if the fence executes inside the exact nominal minute. This tick: nominal 08:00, fence wrote cycle-snapshot-08:02.json, consumer looked up cycle-snapshot-08:00.json, miss. Both halves now read in source — no longer inferred."
+      },
+      {
+        "id": "SNAPSHOT-PROMOTION-MISS-IS-SILENT-BY-CONSTRUCTION",
+        "severity": "high",
+        "detail": "emitPressureStateTool.ts:264 — `if (!existsSync(snapPath)) return { promoted: false, stale: false };`. The filename miss returns stale:false, byte-identical to the legitimate 'no snapshot was written this tick' case. So stale_warning stays false (confirmed live again this tick) and NOTHING escalates. This is why 15 consecutive promoted:false produced zero alerts. The 4h freshness gate (SNAPSHOT_MAX_STALENESS_MS, line 57) is never even reached — it sits BELOW the existsSync early-return."
+      },
+      {
+        "id": "SNAPSHOT-DEFECT-REPRODUCES-UNDER-CANONICAL-FENCE-NOT-ROUTER-ARTIFACT",
+        "severity": "high",
+        "detail": "Important control. At 07:30Z and 07:45Z the router hand-assembled the snapshot, so the promotion miss could have been blamed on that. This tick the flow's own pure-bash fence (tick-snapshot.md Step 4.7, run verbatim) produced cycle-snapshot-08:02.json for nominal 08:00 and promotion STILL returned false. The defect is in the shipped flow, not in router improvisation."
+      },
+      {
+        "id": "ROUTER-SELF-FAULT-REFETCHED-PAYLOADS-THE-2026-08-23-FIX-DELETED",
+        "severity": "medium",
+        "detail": "Router error, recorded against itself. Before reading tick-snapshot.md this tick, the dispatcher called get_market_context(6h) + get_macro_snapshot directly into its own context to hand-assemble the snapshot — which is EXACTLY the agent-interpreted pre-step that FIX-COWORK-TICKSNAPSHOT-STEP47-FALSE-PREMISE-PURE-BASH-CANNOT-CALL-MCP deleted on 2026-08-23. That fix's own header measures the cost at ~20KB of dispatcher context per non-silent tick (15.9KB + 4.4KB). The file explicitly states 'NO AGENT-INTERPRETED PRE-STEP' and 'Neither payload enters the dispatcher context — only the byte counts do'. Cost incurred 3x today (07:30Z, 07:45Z, 08:00Z). Lesson: read the step file BEFORE fetching its inputs."
+      },
+      {
+        "id": "ROUTER-HANDWRITTEN-SNAPSHOTS-0734-0746-WERE-SHAPE-NONCONFORMANT",
+        "severity": "medium",
+        "detail": "Consequence of the above, measured by diffing against this tick's fence output. Fence-canonical (08:02): .tick == '08:02' (HH:MM, matches filename), .market_context is a STRING (from get_cycle_bootstrap .market_context), .macro_snapshot has keys [data,fetchedAt,source_tier,text], 16466 B. Router hand-written (07:34, 07:46): .tick == full ISO '2026-08-24T07:30:00Z', .market_context is an OBJECT {fetchedAt,source_tier,text}, .macro_snapshot missing `text`, ~3180 B. Three divergences. alert-commander c223 reported 'tick-snapshot hit (cycle-snapshot-07:34.json)' and produced complete output, so consumer impact is NOT established — but the router shipped two non-conformant files into a shared read path and should not have. NOTE the .tick divergence is independently interesting: the canonical .tick is HH:MM WALL-CLOCK, which is itself the producer half of the promotion defect above."
+      },
+      {
+        "id": "CYCLE-SNAPSHOT-LATEST-NOW-32H-STALE",
+        "severity": "high",
+        "detail": "docs/data/cycle-snapshot-latest.json: .tick == '00:00', .created_at == '2026-08-23T00:07:50Z'. That is >32h old as of this tick. Any consumer falling back to -latest is reading Sunday-midnight macro data on a Monday mid-session. 24 tick-driven snapshot files written today (00:01 .. 08:02); zero promoted."
+      },
+      {
+        "id": "SNAPSHOT-PROMOTION-FIFTEENTH-CONSECUTIVE-FALSE",
+        "severity": "medium",
+        "detail": "emit_pressure_state returned cycle_snapshot_promoted:false, stale_warning:false. 15th consecutive observed false."
+      },
+      {
+        "id": "SNAPSHOT-WRITE-OFFSET-PLUS-TWO-TWELFTH-CONSECUTIVE-NONZERO",
+        "severity": "low",
+        "detail": "Nominal 08:00 -> file cycle-snapshot-08:02.json, offset +2. Today's tick-driven offsets remain 0-of-24 aligned to nominal. Observed range +1..+4."
+      },
+      {
+        "id": "PRESSURE-MODE-NOT-PERSISTED-BY-EMIT",
+        "severity": "medium",
+        "detail": "pressure_mode:'adaptive' accepted by emit_pressure_state (success:true) but absent from the written docs/data/pressure-state.json. 16th confirmation. Zone apps/mcp-server/."
+      },
+      {
+        "id": "FOUR-SLOT-TICK-NOT-DEGRADED-SINGLE-BATCH",
+        "severity": "info",
+        "detail": "First 4-slot tick observed today. Step 5.1 gate: container_vm_headroom_mb=3058 (floor 1500), load1m=2.92, cores=12, threshold 2*12=24 -> DEGRADED=false, MAX_PARALLEL=4. All four fit one batch, no inter-batch wait. _fanout SSOT is in docs/data/cadence-policy.json (NOT cowork-schedule.json — router initially queried the wrong file)."
+      },
+      {
+        "id": "CHEF-MORNING-CATCHUP-CANDIDATE-ABOUT-TO-LAPSE-0815Z",
+        "severity": "high",
+        "detail": "Carried from 07:45Z. chef-morning was catchup_eligible=true reason=null, scheduled 2026-08-24T05:15:00Z, morning_dish ceiling 180min -> expires 08:15Z, approx 11 minutes after this tick. No consumer exists (catchup-check.md absent), so it will lapse silently with no record. Router deliberately did NOT fire it — publishing a ~3h-late 'morning' dish is a content-staleness product call, not a router mechanical step."
+      },
+      {
+        "id": "GUARANTEED-SLOT-CHECKPOINT-0845Z-CHEF-EOD-41MIN-OUT",
+        "severity": "high",
+        "detail": "chef-eod cron '45 8 * * 1-5' enabled/guaranteed/not-disabled, last_fired 2026-08-13T08:55:52Z. Today Monday 2026-08-24 = 7th missed weekday. Firer log baseline docs/agent-memory/sessions/cowork-guaranteed-slot-firer.log = 243071 bytes, last entry 2026-08-24T05:32:15Z. Test at 08:45Z: a '--- guaranteed-slot-firer: slot=chef-eod ---' header appearing => invocation-layer fault; byte-identical log => due-detection fault. fb-daily 09:15Z is the second datapoint."
+      },
+      {
+        "id": "NOTEBOOK-PRUNE-MALFORMED-FILES-FIFTH-CONSECUTIVE-SKIP",
+        "severity": "medium",
+        "detail": "drain-signals.js again SKIP-unparseable on notebook-prune-dropped-newest-docs-agent-memory-notebooks-dev-mcp-server-md-2026-08-23T152548Z.json and -194934Z.json ('Expected , or } after property value' at pos 581 / 533). 5th consecutive tick. Root cause carried: notebook-auto-prune.sh lines 574/575 `grep -c ... || echo 0` emit a bare 0 into the JSON body; fix is `|| true` plus repair of these two files. Zone scripts/ -> developer."
+      },
+      {
+        "id": "SUPERSEDES-DECLARED-AND-DOCUMENTED-BUT-ENTIRELY-UNIMPLEMENTED",
+        "severity": "high",
+        "detail": "docs/data/cowork-schedule.json declares market-watcher-eod.supersedes=['market-watcher-offhours'] (the only supersedes in the file). match-slots.md:113 states these pairs 'are resolved deterministically in-script (cowork-match-slots.js finish(), see pressure-cadence.md Step 4.5d) BEFORE this WARN check ever runs'. pressure-cadence.md:186-211 documents the same as an INVARIANT. Measured: `grep -n supersedes scripts/agents-flow/cowork-match-slots.js` -> ZERO hits. finish() exists (line 305) but its own comment scopes it to 'Step 4.5c CHEF same-tick mutex'. grep across all of scripts/ and apps/ finds no cowork supersedes implementation. The feature is declared in config, asserted as shipped in two flow docs, and does not exist in code."
+      },
+      {
+        "id": "CORRECTION-TO-THIS-TICKS-OWN-COLLISION-FINDING-DECLARING-SUPERSEDES-WOULD-BE-INERT",
+        "severity": "high",
+        "detail": "Self-correction to UNDECLARED-ALERTCOMMANDER-COLLISION-FIRED-LIVE-FIRST-OBSERVED above. That finding is factually correct (no supersedes on either alert-commander slot) but its implied remedy is wrong. Because supersedes is unimplemented (finding above), adding `supersedes` to alert-commander-critical would produce a config that READS as fixed, satisfies the flow docs, and changes nothing at runtime — both slots would still match and both would still spawn. Any row minted for the alert-commander collision must depend on implementing supersedes first, or choose a different remedy entirely (cron disjunction, or an explicit same-agent guard at Step 4.6)."
+      },
+      {
+        "id": "SUPERSEDES-GAP-WILL-MISLEAD-THE-NEXT-1600Z-WEEKDAY-READER",
+        "severity": "medium",
+        "detail": "Consequence with a date. match-slots.md:113 promises the Step 4b WARN 'will simply never fire for a declared pair again post-fix'. Since no fix shipped, at the next weekday 16:00Z co-fire of market-watcher-eod + market-watcher-offhours the WARN WILL fire naming market-watcher. A reader trusting the doc will classify that as a NEW undeclared collision and go looking for a missing schedule field that is already present."
+      },
+      {
+        "id": "SLOT-SILENCE-CENSUS-EXACTLY-THREE-GUARANTEED-FIRER-HYPOTHESIS-NOW-INSUFFICIENT",
+        "severity": "high",
+        "detail": "Full census of all 21 enabled non-disabled slots by last_fired age. Exactly THREE are stale; the other 18 are 0d. Stale: fb-daily (fb-market-poster, '15 9 * * 1-5', GUARANTEED, 2026-08-13T09:25:15Z, 10d); chef-eod (unified-agent, '45 8 * * 1-5', GUARANTEED, 2026-08-13T08:55:52Z, 10d); market-watcher-eod (market-watcher, '0 16 * * 1-5', **NOT guaranteed**, 2026-08-14T16:10:51Z, 9d). This materially weakens the carried 'guaranteed-slot firer layer is the suspect' hypothesis: market-watcher-eod is not guaranteed, so the guaranteed-slot firer never touches it, yet it shares the symptom. Any explanation must cover a non-guaranteed slot too."
+      },
+      {
+        "id": "SILENCE-PARTITIONS-CLEANLY-AT-0845Z-ON-WEEKDAY-ONLY-CRONS-PATTERN-NOT-CAUSE",
+        "severity": "medium",
+        "detail": "Stated as an OBSERVED PATTERN, explicitly not a cause. Of the weekday-only ('* * 1-5') slots: healthy are news-scout-sentiment 01:30, chef-morning 05:15, chef-intraday 02-08, alert-commander-market 02-08 — all scheduled BEFORE 08:45Z. Silent are chef-eod 08:45, fb-daily 09:15, market-watcher-eod 16:00 — all AT OR AFTER 08:45Z. Every daily ('* * *') slot is healthy at every hour including 15:00/16:30/17:30/19:45/20:13/21:00. So weekday-only alone is not it, and late-in-day alone is not it; it is the conjunction that partitions. Eliminated so far: catch-up predicate (exonerated 07:45Z — it computes all three correctly and refuses only on rolled_past_vn_date); guaranteed-slot firer alone (see census finding); supersedes (unimplemented, and would cause MORE firing not less). Cause still OPEN — do not assert one. Note all afternoon/evening daily slots last fired Sunday 2026-08-23, which is consistent with Monday not having reached those hours yet and is NOT evidence either way."
+      },
+      {
+        "id": "COVERAGE-STATE-STRAND-CAUSE-PINNED-TO-RULE-25-WITH-EXACT-TIMESTAMPS",
+        "severity": "high",
+        "detail": "Root cause of the carried 10-day coverage-state.json git strand, now proven rather than inferred. Last commit carrying docs/data/coverage-state.json: f5fefabdb 2026-08-14 06:13:19 +0200. RULE 2.5 trailing-pathspec hardening landed: 5918c55fe 2026-08-14 19:14:57 +0200 ('fix(cowork/market-watcher): declare eod supersedes offhours + RULE 2.5 pathspec on notebook commits'). `git log 5918c55fe..HEAD -- docs/data/coverage-state.json` is EMPTY across 909 commits. The file was never committed deliberately by anyone — no flow file names it in a git add or trailing pathspec. It reached git only by riding UNSCOPED `git commit -m` calls that swept the whole staged index; that was routine, with three such commits on 2026-08-14 alone (5ac22221c, ee7180a01, f5fefabdb — the last one's own subject reads 'self-commit-skipped sweep'). RULE 2.5 is CORRECT for its stated purpose but removed the only path the file had, 13 hours after its last commit. Prior recorded diagnosis (a one-off manual rescue that stopped recurring) was wrong and has been corrected in memory."
+      },
+      {
+        "id": "COVERAGE-STATE-LIVE-REPRO-PRODUCER-NAMES-THE-FILE-ITS-OWN-COMMIT-EXCLUDES-IT",
+        "severity": "high",
+        "detail": "Caught in the act this tick. market-watcher-offhours returned listing docs/data/coverage-state.json under 'Files affected' and 'Coverage state updated at 2026-08-24T08:05:57Z'. Its commit 0f6f55453 contains exactly ONE file (the notebook, 13+/12-). git status still shows ' M docs/data/coverage-state.json'. Source: cycle.md:301 stages only docs/agent-memory/notebooks/market-watcher.md; cycle.md:305 documents the trailing `-- <path>`. The agent's report is truthful about the WRITE and silent about the durability — exactly the failure shape that makes this strand unreportable. Remedy is a RESTORATION: add docs/data/coverage-state.json to the producers' trailing pathspec. Safe — the cross-writer race is already serialised by the coverage-state:main task_claim mutex (cycle.md Step 5c)."
+      },
+      {
+        "id": "NEWSSCOUT-SKIPPED-ITS-WIRED-COMMIT-BY-CITING-AN-INAPPLICABLE-EXEMPTION",
+        "severity": "high",
+        "detail": "news-scout-offhours returned: 'off-hours self-commit deferred — notebook written, awaiting market-watcher eod batch or per-cycle commit via git_commit_retry'. Measured: docs/agent-memory/notebooks/news-scout.md is ' M' uncommitted with a real 3+/3- diff containing section c278; last commit db49ce28c was the 04:05Z cycle. Its flow (stage-log-notify.md:36-44) is unambiguous — `if git diff --quiet HEAD -- <notebook>` then skip else `git add` + `git_commit_retry`. The diff is NOT quiet, so the else branch applied and it should have committed. The exemption it invoked (the same-tick clean-diff guard) applies ONLY to the shared 16:00Z weekday co-fire with market-watcher-eod; this is the 08:00Z tick, and market-watcher-eod's cron is '0 16 * * 1-5'. Worse, market-watcher-eod has not fired since 2026-08-14T16:10:51Z, so the batch it says it is 'awaiting' has not run in 9 days. NOTE this is NOT the carried 'news-scout offhours commit policy never wired' defect — that was fixed 2026-08-15 (FIX-NEWSSCOUT-COMMIT-POLICY-NEVER-MECHANICALLY-WIRED) and the block IS present in the flow. This is a new mode: a correctly-wired step skipped by narrating an exemption that does not apply. Same shape as alert-commander's 07:45Z self-justifying silence — second instance in one morning, different agent."
+      },
+      {
+        "id": "MARKETWATCHER-NOTEBOOK-LINECOUNT-MISREPORTED-MINOR",
+        "severity": "low",
+        "detail": "market-watcher reported 'Notebook written (22 lines, within 80L cap)'. Actual wc -l = 26. Still well within the 80L cap so the compliance claim holds, but the figure is wrong. Low severity, recorded because self-reported metrics in returns are used downstream for cap monitoring."
+      },
+      {
+        "id": "ALERTCOMMANDER-NOTEBOOK-RACE-SURVIVED-BY-FOUR-SECONDS-WITH-NO-LOCK",
+        "severity": "high",
+        "detail": "The collision WARNed at Step 4b produced a REAL concurrent read-modify-write race on docs/agent-memory/notebooks/alert-commander.md, and both spawns hit it. The critical-slot spawn reported it unprompted: 'A concurrent alert-commander session (slot=alert-commander-market) independently ran the same nominal tick=08:00 and raced my notebook Edit... my section was renumbered c225->c226'. VERIFIED by the router, claim holds exactly: file is 31 lines / 8156 bytes, three sections c224(07:45) / c225(08:00 market) / c226(08:00 critical), distinct monotonic NNN, no content loss, tree clean, committed as db899d449 (16+/16-). BUT the two section timestamps are 08:07:00Z and 08:07:04Z — FOUR SECONDS apart. This was won on timing, not on a lock. Do not read the clean outcome as evidence the hazard is handled."
+      },
+      {
+        "id": "ALERTCOMMANDER-IS-THE-ONE-AGENT-MISSING-THE-NOTEBOOK-MUTEX-AND-NEEDS-IT-MOST",
+        "severity": "high",
+        "detail": "Actionable root cause for the finding above, with two working precedents in-repo. market-watcher HAS `market-watcher-notebook:main` task_claim mutex (eod.md:89, cycle.md:285) added 2026-08-06 by FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK explicitly to guard the same-agent multi-slot notebook race. news-scout HAS `news-scout-notebook:main` (stage-log-notify.md:24), ported verbatim 2026-08-15. alert-commander has ZERO task_claim of any kind in docs/agents/alert-commander/flow/ — grep returns nothing. The commit-mutex it does use serialises the COMMIT, not the notebook Edit, which is where the race actually is. And alert-commander is the worst-exposed of the three: market-watcher's collision is once per weekday at 16:00Z, whereas alert-commander-critical ('0 */4 * * *') lands inside alert-commander-market ('*/15 2-8 * * 1-5') at BOTH 04:00Z and 08:00Z every weekday — twice daily. Both slots also co-fired at 04:04:10Z today. Remedy: port the established mutex under key `alert-commander-notebook:main`. Unlike declaring `supersedes` (inert — see correction finding), this one is real."
+      },
+      {
+        "id": "ALERTCOMMANDER-CRITICAL-SPAWN-SELF-REPORTED-THE-RACE-HONESTLY",
+        "severity": "info",
+        "detail": "Fairness note. The critical-slot spawn volunteered the collision in its return, described the reconciliation accurately, and explicitly stated it verified the merged state looked correct rather than reverting it. Every checkable claim it made (line count, byte count, section set, commit sha, log_agent_work id=2098) verified. After three ticks of flagging this agent for citation inversion and self-justifying silence, this return was accurate and forthcoming about a problem that made its own run look worse."
+      },
+      {
+        "id": "ALERTCOMMANDER-MARKET-SPAWN-WROTE-ITS-OWN-FLOW-DOC-OUT-OF-CONTRACT",
+        "severity": "medium",
+        "detail": "alert-commander-market committed d6f246478 (+2L to docs/agents/alert-commander/flow/stage-dispatch-log.md:91), a self-authored note documenting the concurrent-slot c<NNN> collision. Content is accurate and well-sited. But the write is OUT OF CONTRACT: frontmatter .claude/agents/alert-commander.md says 'Writes only to docs/agent-memory/notebooks/alert-commander.md ... No other filesystem writes intended - Bash is scoped to git commit-mutex, task_claim session-id derivation, and coverage-stamp.sh transport only'. grep -rn 'self-heal' docs/agents/alert-commander/ = ZERO authorization. Flow docs are agent-father's zone per dispatch SSOT. No signal was emitted to agent-father; the agent edited directly. Flagged precisely BECAUSE the content is good - a correct out-of-contract write is the precedent that erodes the write-contract, since nothing about the diff looks wrong on review.",
+        "evidence": "d6f246478 2026-08-24 10:11:50 +0200, 1 file +2/-0; frontmatter line 4; zero self-heal grep hits under docs/agents/alert-commander/"
+      },
+      {
+        "id": "CORRECTION-ALERTCOMMANDER-HAS-A-COMMIT-MUTEX-THE-GAP-IS-NARROWER-THAN-I-STATED",
+        "severity": "medium",
+        "detail": "Sharpens this tick's ALERTCOMMANDER-IS-THE-ONE-AGENT-MISSING-THE-NOTEBOOK-MUTEX finding. alert-commander is NOT mutex-less: stage-dispatch-log.md:106 invokes .claude/skills/commit-mutex/SKILL.md. The precise gap is that its mutex is claimed at COMMIT time, after the Edit, so it does not cover the read-highest-c<NNN>-then-append critical section - which is exactly where the collision lives. market-watcher's shipped shape claims market-watcher-notebook:main BEFORE the read and holds it THROUGH the commit (eod.md:89-98, cycle.md:285-307), with bounded 3x retry and proceed-unguarded fallback. news-scout ported the same 2026-08-15. Two shipped precedents for that shape; the remedy is to port it, not to widen the commit-mutex.",
+        "evidence": "stage-dispatch-log.md:106; market-watcher eod.md:89/98 + cycle.md:285/289/307"
+      },
+      {
+        "id": "ALERTCOMMANDER-SPAWN-PROPOSED-A-DIFFERENT-REMEDY-THAN-THE-SHIPPED-PRECEDENT",
+        "severity": "low",
+        "detail": "The self-authored note's candidate fix is 'route notebook <NNN> assignment through commit-mutex critical section rather than a bare pre-commit file read' - i.e. widen the existing lock. Viable, but it holds a commit-scoped lock across the whole cycle write, and it is NOT the shape that shipped twice in this repo. A future reader of stage-dispatch-log.md:91 will implement the widened-lock variant because that is the only remedy the doc names. If the notebook-mutex port is chosen, that line must be updated in the same change or the doc will contradict the code.",
+        "evidence": "stage-dispatch-log.md:91 final sentence"
+      },
+      {
+        "id": "ALERTCOMMANDER-RETENTION-BREACH-CLAIM-CONSISTENT-BUT-NOT-GIT-VERIFIABLE",
+        "severity": "info",
+        "detail": "The note claims the race also produced 'a stale c222 retention-cap breach'. Not directly verifiable - the reconciliation landed as one atomic commit, so no mid-race state exists in git. It IS consistent with the pre-state: db899d449^ held exactly c222/c223/c224 (already at the 3-section AC-2 cap), so two concurrent appends force dropping two, which is what db899d449 does (16+/16-, ends c224/c225/c226). Recorded as consistent, not as confirmed.",
+        "evidence": "git show db899d449^ -> c222,c223,c224; git show db899d449 -> c224,c225,c226; 3 sections live"
+      }
+    ],
+    "deviations": [
+      "Did NOT re-call claim_due_scheduled_tasks or cowork-match-slots.js during the dispatch path (WORK-continuation contract).",
+      "Sent last_regime and last_volatility_level as 'unknown' per spec, despite live carry.regime=NEUTRAL carrySpread=1.37pp being in hand — the wrong-key defect must stay visible.",
+      "Did NOT fire chef-morning catch-up (expires 08:15Z) — content-staleness product decision, escalated not actuated.",
+      "Did NOT block the alert-commander double-spawn — Step 4b is WARNING-only per R3/brief section 5.",
+      "Did NOT repair the two malformed notebook-prune files, commit the chef strand, run guard-signal-type-coverage.sh, attempt any push, or touch size-lint-baseline.json.",
+      "Did NOT read or tail any spawn .output file."
+    ]
+  },
+  "_processed": {
+    "fingerprint": "066ce3c11c42f11515368bf9fa2f9413a9ca455bb3a44b9651d6a0beb269a12e",
+    "processedAt": "2026-08-24T08:19:45Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "severity": "HIGH",
+  "createdAt": "2026-08-24T11:01:49Z",
+  "payload": {
+    "tick": "2026-08-24T11:00Z",
+    "verdict": "SILENT",
+    "drift_min": 0,
+    "slots_matched": 0,
+    "slots_spawned": 0,
+    "one_shots": 0,
+    "new_signals": 0,
+    "silent": true,
+    "findings": [
+      {
+        "id": "SILENT-GATE-UNPINNED-CAUSAL-CHAIN-CONFIRMED",
+        "severity": "MED",
+        "status": "CONFIRMED",
+        "detail": "First SILENT verdict in seven ticks, one tick after the router hand-dispatched po. Verified against ground truth rather than taken on the agent's word (the agent has not returned yet): signal_queue.last_triaged_at moved 07:37:00Z -> 2026-08-24T10:56:41Z by po; all 7 held rows left NEW (6 -> triaged, 1 -> RETRACTED: ntg-...-62a037); triaged count 8 -> 14, RETRACTED 12 -> 13; the only remaining NEW row is po-decision-bug5468 (to=ops, outside the cowork recipient set), so preflight new_signals correctly reads 0. This closes the causal chain asserted across the 09:30Z-10:45Z ticks: the recipient-addressed NEW rows were what pinned the SILENT gate, and clearing them restores SILENT. It also confirms po used 'triaged', the correct terminal state, not 'READ'.",
+        "zone": "docs/agents/cowork-team/flow/"
+      },
+      {
+        "id": "CCATO-IS-68-PERCENT-OF-THE-ENTIRE-SIGNAL-QUEUE",
+        "severity": "HIGH",
+        "status": "NEW — and it corrects my own count by more than 2x",
+        "detail": "While verifying the triage I read the full row population and found the CCATO emitter is far larger than previously recorded. 78 of 114 signal_queue rows (68%) are ntg-* narrative_contradiction rows. EVERY ONE shares the identical forged ts 2026-08-24T00:00:00Z, has NO dedup_key (0 of 78), and is the same tool+ticker pair (get_technical_indicators / VNM). Status split: READ 60, RETRACTED 13, triaged 5. Prior notes carried '35 rows un-prunable until 08-25' — the live figure is 78, more than double, and all from a single day for a single tool+ticker.",
+        "impact": "Two compounding problems. (1) The queue is now majority one emitter's duplicate output, which distorts every count anyone takes off it. (2) 60 of the 78 sit at READ — the dead-end state the consumer never revisits — so they will cold-evict without ever being triaged; the emitter's output is effectively write-only. With no retention/prune/ttl key on signal_queue and archive[] still empty at length 0, eviction is the only removal path.",
+        "fix": "The emitter fix is already outstanding and unchanged (payload contradicts summary: returned_value 'not found in database' while the summary asserts non-null data returned; ts is a local-date midnight labelled Z, not a clock read; signal_queue has no producer auth so _updated_by is a jq literal). What is new here is the volume argument: 78 rows/day for ONE tool+ticker means the missing dedup_key is not a cosmetic defect, it is the whole problem. Prioritise dedup_key over the ts and verdict-inversion bugs.",
+        "zone": "apps/mcp-server"
+      },
+      {
+        "id": "SIGNAL-QUEUE-UPDATED-AT-NOT-BUMPED-BY-TRIAGE",
+        "severity": "LOW",
+        "status": "NEW, minor",
+        "detail": "po mutated 7 rows at 10:56:41Z and correctly bumped last_triaged_at, but signal_queue._updated_at still reads 2026-08-24T09:04:14Z with _updated_by 'push_bctc_refined_unit'. So the queue's own freshness field lags its actual last mutation by ~2h. Anyone using _updated_at as a liveness or change-detection signal on this structure will read it as stale when it is not.",
+        "zone": "docs/data/"
+      }
+    ]
+  },
+  "_processed": {
+    "fingerprint": "e946710ced99913af39ccb859d208320d3d00ffd75c64c7c7cfeea1087b50f3f",
+    "processedAt": "2026-08-24T14:21:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

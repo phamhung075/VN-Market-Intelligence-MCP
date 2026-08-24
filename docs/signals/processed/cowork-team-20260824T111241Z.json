@@ -1,0 +1,47 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "2026-08-24T11:12:41Z",
+  "payload": {
+    "context": "Router reconciliation of the hand-dispatched po agent return (intent:po:signal-queue-triage-2026-08-24T1050Z). Every claim below was checked against ground truth, not accepted on the agent's word. Row ids resolved by jq PATH under task_board., per the 4x-wrong-citation lesson.",
+    "findings": [
+      {
+        "id": "PO-RETURN-RECONCILES-CLEAN-ALL-CLAIMS-VERIFIED",
+        "severity": "INFO",
+        "detail": "First fully-clean agent reconciliation in this session. Verified: (1) commits eabdc8034 + 02ff3602a are ancestors of HEAD and carry orch-state.json; (2) all 5 minted rows resolve by jq PATH to task_board.backlog.509-513 with the exact ids claimed, correct priorities and non-null next_agent (509 P1/dev-mcp-server, 510 P0/dev-mcp-server, 511 P1/developer, 512 P1/architect, 513 P0/dev-pdf-extractor) - no unspawnable next_agent:null rows, unlike the 3-of-3 auto-filer instances on 08-23; (3) inbox is 27 with exactly the type histogram claimed; (4) signal_queue 114 rows, NEW 1 / READ 86 / RETRACTED 13 / triaged 14, last_triaged_at 10:56:41Z - matches the router's own independent 11:00Z measurement row-for-row; (5) all 7 transform scripts persisted under scripts/, none in /tmp; (6) the 10397B decision doc exists."
+      },
+      {
+        "id": "SIZELINT-P0-MISATTRIBUTED-THREE-DAYS-CONFIRMED-BY-MEASUREMENT",
+        "severity": "HIGH",
+        "detail": "CONFIRMED. Live wc -l: tasksMdJanitorJob.ts 1012L, ocr_gateway.py 594L, pushBctcLayoutHandler.ts 85L. Commit 079471317 'split pushBctcLayoutHandler.ts under size-lint cap (252L->85L)' landed 2026-08-24 11:01:15 +0200. The P0 named after it - FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH - still sits at task_board.in_progress.0 status=IN_PROGRESS na=dev-mcp-server, i.e. the fix landed and the row did not close. Four artifacts inherited that P0 as THE blocker without re-measuring. This is the serial-offender shape from feedback_serial_sizelint_offender_read_as_false_done_verified_closure, but with a new twist: the previous instances were 'sprint closed correctly, next file trips the gate' - here the fix landed and the row stayed open, so the stale row itself became the misattribution vector. The live pair is cross-zone (dev-mcp-server + dev-pdf-extractor) so ONE dispatch cannot clear the gate; both 510 and 513 must land. ahead=214 behind=0."
+      },
+      {
+        "id": "ORCH-PROSE-CEILING-WEDGES-PO-MANUAL-DISPATCH-SWEEP-SECOND-FAMILY",
+        "severity": "HIGH",
+        "detail": "CONFIRMED in source. scripts/orch-row-prose-ceiling-check.mjs STRUCTURAL_FIELDS (line 128) contains secondary_claimed_at/secondary_claimed_by (lines 154-155, added 08-15 for exactly this reason) and ZERO occurrences of po_manual_dispatch (grep count 0). So the four po_manual_dispatch_* stamp fields count as prose against the 12000B ceiling, and the sweep's rank-1 candidate is prose-frozen at 34589B -> orch-apply hard-aborts. Because flag_reentrant() only excludes freshly-stamped rows, that row holds rank 1 permanently and the other 105 candidates never get a turn. Second family to hit the identical gap; the fix is a field-list addition, not a per-row prose trim."
+      },
+      {
+        "id": "BCTC-IMGDEG-STRICT-EQUALITY-MECHANISM-PINNED-IN-SOURCE",
+        "severity": "HIGH",
+        "detail": "CONFIRMED at bctcImageFetchDegradedSignalWriter.ts:67 - `return occurrenceCountIncludingThisPush === threshold;` (strict ===, threshold default 2). So the signal fires on exactly the 2nd occurrence and nothing amends the row when a 3rd arrives; unit-0006 was refined 10s after the signal's own ts and never made it in. Line 89 templates the '<=0.6 confidence' string unconditionally without ever reading a confidence. Live values are 0.75/0.65/0.70 - none at or below 0.6. The consequence po identified is the load-bearing one: the 0.6 cap is asserted in three places and enforced nowhere, so any consumer filtering confidence <= 0.6 returns ZERO rows for a report with three degraded units. Minted as backlog.509 P1 - the consumer-blindness argument arguably makes it P0."
+      },
+      {
+        "id": "CCATO-EMITTER-STILL-LIVE-13TH-BATCH-AFTER-P0-MINTED",
+        "severity": "HIGH",
+        "detail": "CONFIRMED by git archaeology across three trees: 22429c27e (2026-08-24T08:53:31Z UTC) carried 72 ntg-* rows, c637f9e69 (08:59:31Z UTC) carried 78, HEAD (11:09Z) still 78. So a 13th batch of 6 landed in a 6-minute window, 8h45m AFTER the P0 was minted. The emitter is not merely un-deduped, it is actively producing. Combined with the router's 11:00Z census (78 of 114 rows = 68% of the entire queue, one forged ts, zero dedup_keys, 60 stuck at READ), dedup_key is confirmed as the load-bearing fix ahead of the ts and verdict-inversion defects."
+      },
+      {
+        "id": "UNROUTED-SIGNAL-TYPES-GREW-2-TO-9-IN-17-HOURS",
+        "severity": "MEDIUM",
+        "detail": "po held back 27 of 82 inbox envelopes - every type with no Pipeline-A routing row - and did NOT run guard-signal-type-coverage.sh (correct: that script writes live orch-state.json via ORCH_APPLY_LIVE_FILE_OVERRIDE and --check is a no-op alias; there is no safe invocation). It hand-replayed the two extractors instead. The unrouted set grew 2 -> 9 in 17 hours, and five of the seven new types have perfectly good Pipeline-B rows - they read unrouted only because of the deliberate per-pipeline scoping. That is a scoping artefact inflating a real gap, and it means the guard's headline count cannot be read as 'types with no routing anywhere'. Holding the envelopes back is the correct play per the inverse-mode lesson: clearing them would have turned the gap green without a single routing row being added."
+      }
+    ]
+  },
+  "_processed": {
+    "fingerprint": "b9e61443de156b44a4551c7977d48256a60661cef7206563509eb73007dff41d",
+    "processedAt": "2026-08-24T14:21:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

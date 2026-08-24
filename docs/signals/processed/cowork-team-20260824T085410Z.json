@@ -1,0 +1,88 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "2026-08-24T08:54:10Z",
+  "payload": {
+    "tick": "2026-08-24T08:45Z",
+    "drift_min": 4,
+    "slots_matched": [
+      "chef-eod",
+      "alert-commander-market"
+    ],
+    "slots_fired": [
+      "alert-commander-market"
+    ],
+    "slots_suppressed": [
+      "chef-eod"
+    ],
+    "collision_warn": false,
+    "max_parallel": 4,
+    "degraded": false,
+    "headroom_mb": 2879,
+    "load_1min": 3.75,
+    "cores": 12,
+    "pressure_mode": "adaptive",
+    "pressure_age_min": 14.4,
+    "drain": {
+      "files_routed": 2,
+      "inserted": 2,
+      "db_count": 336
+    },
+    "snapshot_file": "docs/data/cycle-snapshot-08:52.json",
+    "snapshot_nominal_tick": "08:45",
+    "findings": [
+      {
+        "id": "CHEF-EOD-DOUBLE-DISPATCH-AVERTED-TWO-INDEPENDENT-MECHANISMS",
+        "severity": "high",
+        "detail": "guaranteed-slot-firer invoked chef-eod at 2026-08-24T08:47:24Z (bounded 1800s, still in flight at 08:52Z, no exit line) while cowork-match-slots.js ALSO matched chef-eod into this tick's slots[] with the identical trigger_prompt. Two independent dispatch mechanisms selected the same guaranteed slot in the same window. Dispatcher SUPPRESSED its own chef-eod spawn. Rationale: the published-marker gate is agent-side and its Phase-2 claim sits immediately before send_telegram, so a chef 3min into its pipeline holds nothing (live probe: no published:chef-eod:2026-08-24 among held cowork-slot locks) — a second spawn passes Phase 1, runs a full duplicate pipeline, and races. Phase 2 would prevent double-PUBLISH but does NOT cover docs/agent-memory/notebooks/unified-agent.md or docs/data/unified-agent-synthesis-<DATE>-<SLOT>.json, which are unguarded concurrent writes. This is the c132/c132-peer double-section shape that already landed 2026-08-22."
+      },
+      {
+        "id": "LAST-FIRED-IS-BLIND-TO-THE-GUARANTEED-SLOT-FIRER-11DAY-SILENCE-PREMISE-FALSE",
+        "severity": "high",
+        "detail": "The standing 'chef-eod silent 11 days' premise rested on cowork-schedule.json .last_fired=2026-08-13T08:55:52Z. FALSIFIED by the firer log: chef-eod was invoked 2026-08-14T08:59:14Z (exit_code=0), 2026-08-18T08:51:18Z (exit_code=1), and 2026-08-24T08:47:24Z. last_fired is written ONLY by cowork-team Step 5b (last-fired.md); the guaranteed-slot firer never stamps it. So last_fired measures one of two live dispatch paths and understates delivery. Every prior inference that used last_fired as a delivery oracle for a guaranteed slot needs re-checking against the firer log. Note the same field is ALSO an attempt stamp not a delivery record (separate known defect) — it is now wrong in two independent directions."
+      },
+      {
+        "id": "GUARANTEED-SLOT-FIRER-INVOKED-PATHLESS-PROMPT-THROUGH-0818",
+        "severity": "medium",
+        "detail": "Firer invocations on 2026-08-13, 08-14 and 08-18 used the bare prompt 'slot=chef-eod' with NO flow path. Today's uses 'run docs/agents/unified-agent/flow/chef.md  slot=chef-eod'. Outcomes on the pathless variant: 08-13 exit_code=143 (SIGTERM at the 1800s bound — consistent with a claude process given no instruction), 08-18 exit_code=1, 08-14 exit_code=0. The 08-14 exit-0 on a prompt that names no flow is a phantom-success candidate: exit 0 does not establish that a chef cycle ran. Prompt variant was corrected somewhere between 08-18 and 08-24; the fix is not attributable from the log alone."
+      },
+      {
+        "id": "FIRER-LOG-EVERY-LINE-DUPLICATED-THROUGH-0823T1318-NOW-SINGLE",
+        "severity": "info",
+        "detail": "Every guaranteed-slot-firer log line is duplicated from 2026-08-13 through 2026-08-23T13:18:32Z; single-line from 2026-08-23T17:32:36Z onward. Live check: exactly ONE launchd job registered (launchd/com.vn-market.cowork-guaranteed-slot-firer.plist) and exactly one loaded (pid 73052). Both copies share start AND exit timestamps to the second, which favours duplicated log writes over two independent claude processes — but two processes killed by the same 1800s bound would also share an exit second, so the discriminator is not decisive for the 08-13 exit-143 pair. Historical and self-resolved; recorded because incident notes reading that window will double-count every fire."
+      },
+      {
+        "id": "SNAPSHOT-WALLCLOCK-OFFSET-WIDENING-THREE-CONSECUTIVE-TICKS",
+        "severity": "high",
+        "detail": "Producer tick-snapshot.md names by wall clock at write time; consumer emitPressureStateTool.ts:398 looks up by nominal tick. Offsets this session: 08:15 nominal -> 08:20 file (+5), 08:30 -> 08:36 (+6), 08:45 -> 08:52 (+7). Monotone widening across three consecutive ticks, not a fixed skew. The wider the offset, the more often a snapshot lands in the NEXT nominal bucket, which is the path that lets a prior-day same-HH:MM residue satisfy the 4h gate and set stale_warning=true. cycle-snapshot-latest.json unpromoted for the 18th consecutive tick."
+      },
+      {
+        "id": "PRESSURE-MODE-STILL-NOT-PERSISTED-NINETEENTH",
+        "severity": "medium",
+        "detail": "emit_pressure_state accepts pressure_mode and docs/data/pressure-state.json still has no pressure_mode key (jq has(\"pressure_mode\") == false). 19th consecutive confirmation."
+      },
+      {
+        "id": "PREFLIGHT-NEWSIGNALS-ZERO-WHILE-DRAINABLE-FILES-PRESENT-THIRD-CONSECUTIVE",
+        "severity": "low",
+        "detail": "preflight reported new_signals=0; the immediately-following Step 0a drain routed 2 files and inserted 2 rows (db_count 334 -> 336). Third consecutive reproduction (08:15, 08:30, 08:45). Stable divergence, not noise. 'DB rows since last tick' remains a legitimate reading of the field name, so this is a contract to pin before any consumer gates on it, not yet a defect."
+      },
+      {
+        "id": "NOTEBOOK-PRUNE-SIGNALS-UNPARSEABLE-SIXTH-CONSECUTIVE-SKIP",
+        "severity": "medium",
+        "detail": "drain-signals.js again SKIPped notebook-prune-dropped-newest-docs-agent-memory-notebooks-dev-mcp-server-md-2026-08-23T152548Z.json (parse error at position 581, line 14) and -2026-08-23T194934Z.json (position 533, line 14). Sixth consecutive skip. Root cause on file: notebook-auto-prune.sh lines 574/575 use 'grep -c ... || echo 0', emitting a bare 0 that breaks the JSON object. Fix is '|| true' plus repair of the two stuck files. Zone scripts/ -> developer."
+      },
+      {
+        "id": "TWO-SLOT-TICK-DISTINCT-AGENTS-NO-COLLISION-WARN",
+        "severity": "info",
+        "detail": "Step 4b grouped MATCHES by agent_id: unified-agent (chef-eod) and alert-commander (alert-commander-market) are distinct, so no agent appeared in >=2 slots and no WARN fired. Correct by construction. Worth recording that Step 4b would NOT have caught this tick's real collision — its scope is same-agent-across-slots within one MATCHES array, and the chef-eod collision is cross-MECHANISM (firer vs dispatcher), which no guard in this flow observes."
+      }
+    ]
+  },
+  "_processed": {
+    "fingerprint": "9a2a29b5785845f95dae8221fea7b72c5aa180fb9f920997c2b93f3b9f04c53a",
+    "processedAt": "2026-08-24T09:00:48Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

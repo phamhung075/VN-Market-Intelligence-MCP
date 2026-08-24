@@ -1,0 +1,78 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "payload": {
+    "tick": "2026-08-24T09:15Z",
+    "drift_min": 0,
+    "slots_matched": 1,
+    "spawned": 0,
+    "suppressed": [
+      "fb-daily"
+    ],
+    "pressure_mode": "adaptive",
+    "max_parallel": 4,
+    "headroom_mb": 2971,
+    "load_1min": 1.49,
+    "cores": 12,
+    "findings": [
+      {
+        "id": "FIRER-BEATS-DISPATCHER-ON-GUARANTEED-SLOTS-TWO-FOR-TWO-TODAY",
+        "severity": "high",
+        "detail": "Second consecutive guaranteed-slot tick where the launchd firer invoked the slot before the cowork dispatcher reached Step 5. chef-eod 08:47:24Z (tick 08:45), fb-daily 09:15:07Z (tick 09:15). Caught both times ONLY by the ad-hoc `ps -eo pid,etime,command | grep slot=<id>` probe; PID 54369 was 58s in-flight at probe time. Step 4b cannot see this — it groups by agent_id WITHIN one MATCHES array, and this is cross-MECHANISM. Two-for-two is not a coincidence window: both mechanisms compute the same cron, so they collide on EVERY guaranteed slot whose cron the dispatcher also matches. Needs a real guard, not a router habit."
+      },
+      {
+        "id": "FB-DAILY-11DAY-SILENCE-PREMISE-FALSE-AND-LAST-FIRED-DATE-HAS-NO-FIRER-FIRE",
+        "severity": "high",
+        "detail": "last_fired=2026-08-13T09:25:15Z read as 11d silent. Firer log shows fb-daily invoked 08-05 exit0, 08-10 exit1, 08-11 exit1, 08-12 exit0, 08-14 exit0, 08-24 running. Sharper than the chef-eod case: there is NO fb-daily fire on 08-13 in the firer log at all, so the 08-13 stamp came from the cowork path, while the firer's 08-12 and 08-14 fires went unstamped. Direct structural confirmation that last_fired tracks exactly one of two live dispatch paths."
+      },
+      {
+        "id": "FB-POST-0813-AND-0814-SHARE-IDENTICAL-MTIME-BULK-RESTORE-0814-EXIT0-IS-PHANTOM",
+        "severity": "high",
+        "detail": "docs/social/fb-post-2026-08-13.md and fb-post-2026-08-14.md both mtime 2026-08-15T08:35:59Z — identical to the second. Controls are organic: fb-post-2026-08-12.md 08-12T09:24:28Z (run exited 09:25:18Z), 08-15T13:21:36Z, 08-22T13:34:08Z. So the 08-14 firer run (09:18:34 -> 09:31:30Z, exit 0) left NO deliverable at its own runtime; the file arrived ~23h later in a bulk write. The prior claim that both exit-0 runs left deliverables on disk is half wrong — the file exists, but not from that run. 08-14 fb-daily is a phantom-success candidate, same class as the pathless-prompt chef-eod 08-14 exit 0. Two populations by identical-to-the-second mtime — the chef-strand discriminator reproduces in a second agent's deliverable stream."
+      },
+      {
+        "id": "REFINE-BCTC-UNIT0009-CASHFLOW-FAILS-ITS-OWN-TIEOUT-UNFLAGGED-AT-CONF-08",
+        "severity": "high",
+        "detail": "report 1f53ef33-8f50-489b-8505-689740692ab0 (VIC Q1-2026) unit-0009 pushed confidence 0.8, flags[] EMPTY. Its own arithmetic: open 72.226.581 + net (17.476.201) = 54.750.380 vs stated close 64.750.360, delta 9.999.980 — a leading-digit OCR flip (5->6), 10 trillion VND. Sibling unit-0004 balance sheet ties EXACTLY (72.226.561 + (17.476.201) = 54.750.360, delta 0), so the correct figures are known and recoverable. FR-13 mandates flagging disagreements; the flagging path works elsewhere in the same chunk (0005 conf 0.65 garbled_ocr_layout, 0007 conf 0 FAILED). Missing check is a deterministic opening+net=closing tie-out on cash-flow windows."
+      },
+      {
+        "id": "REFINE-BCTC-RETURN-MISCOUNTS-ITS-OWN-PER-UNIT-LIST",
+        "severity": "low",
+        "detail": "Return summary says '10 DONE, 2 FAILED'; its own per-unit list and get_bctc_refined both give 9 DONE / 3 FAILED (units 0000, 0001, 0007). Both readings sum to 12, so it reads clean at a glance. Writes otherwise verified exact against DB; NO_FILESYSTEM_OUTPUT honored (docs/refine-output/ absent)."
+      },
+      {
+        "id": "REFINE-BCTC-QUARTER-OF-CHUNK-HAD-NO-PAGE-IMAGE",
+        "severity": "medium",
+        "detail": "3 of 12 windows flagged image_unavailable (0004 pages6-8, 0005, 0006). FR-13's 'structure<-image' half was unsatisfiable for a quarter of the chunk. Honestly flagged, but the pipeline is running half-blind on those pages and confidences of 0.65-0.75 were still emitted."
+      },
+      {
+        "id": "CHEF-EOD-MARKER-OWNED-BY-DISTINCT-SESSION-CONFIRMS-FIRER-SPAWNS-ITS-OWN",
+        "severity": "info",
+        "detail": "published:chef-eod:2026-08-24 owner_client_session=4bd8af59-3cee-4e2a-b986-bfcc0d04a4a6, not this dispatcher's 7be6b4cd. Every other live published:* marker carries 7be6b4cd. Independent confirmation the firer spawns into its own session and is invisible to session-scoped coordination."
+      },
+      {
+        "id": "SNAPSHOT-OFFSET-PLUS-2-AT-DRIFT-ZERO-RETRACTION-HOLDS",
+        "severity": "info",
+        "detail": "cycle-snapshot-09:17.json for nominal 09:15 = +2 at drift_min 0. Series now +5,+6,+7,+1,+2 against drift 5,5,4,0,0 — offset tracks drift plus elapsed dispatcher time, not a clock trend. The 08:45Z 'monotone widening' finding stays retracted; the producer/consumer naming mismatch stands on its own."
+      },
+      {
+        "id": "PRESSURE-MODE-STILL-NOT-PERSISTED-TWENTYFIRST",
+        "severity": "medium",
+        "detail": "pressure-state.json carries tick_id 2026-08-24T09:00:00Z with pressure_mode:null and updated_at:null. Accepted by emit, never written. 21st consecutive confirmation."
+      },
+      {
+        "id": "NOTEBOOK-PRUNE-SIGNAL-UNPARSEABLE-EIGHTH-CONSECUTIVE",
+        "severity": "medium",
+        "detail": "notebook-prune-dropped-newest-docs-agent-memory-notebooks-dev-mcp-server-md-2026-08-23T194934Z.json SKIP unparseable at position 533. 8th consecutive tick. Root: notebook-auto-prune.sh lines 574/575 `grep -c ... || echo 0` emitting invalid JSON; needs `|| true` plus repair of the two stuck dev-mcp-server files."
+      }
+    ]
+  },
+  "createdAt": "2026-08-24T09:18:01Z",
+  "_processed": {
+    "fingerprint": "7c1e9952e3cbeb700288f42b3a69155fe5a43a5b04c6c5104724ace193cf9678",
+    "processedAt": "2026-08-24T14:21:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

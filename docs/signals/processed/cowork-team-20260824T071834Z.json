@@ -1,0 +1,134 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "priority": "medium",
+  "createdAt": "2026-08-24T07:18:34Z",
+  "payload": {
+    "tick": "2026-08-24T07:15Z",
+    "verdict": "WORK",
+    "drift_min": 0,
+    "slots_fired": [
+      "alert-commander-market"
+    ],
+    "one_shots": [],
+    "suppressed_cadence": [
+      "chef-intraday"
+    ],
+    "pressure_mode": "adaptive",
+    "drain": {
+      "inserted": 2,
+      "db_count": 325,
+      "skipped_unparseable": 2,
+      "grandfathered_ceiling_warns": 21,
+      "net_new_violations": 0
+    },
+    "fanout": {
+      "container_headroom_mb": 3059,
+      "load1": 1.89,
+      "cores": 12,
+      "degraded": false,
+      "max_parallel": 4
+    },
+    "findings": [
+      {
+        "id": "SNAPSHOT-GRID-ALIGNMENT-ZERO-OF-TWENTYTWO-TODAY",
+        "severity": "high",
+        "detail": "Full census of today's cycle-snapshot files: 22 written between 02:01 and 07:17. Offsets from their nominal 15-min tick are +1 to +3 minutes, never 0. ZERO of 22 land on a nominal tick minute, and ZERO land on any 5-minute grid point. The documented contract in .claude/skills/cycle-bootstrap/SKILL.md Step -1 ('round to nearest 5-min slot') is therefore unsatisfiable by construction against what the writer actually produces — this is now measured over a full trading morning, not inferred.",
+        "recommend": "One unambiguous key: nominal tick floor(minute/15)*15, taken by the consumer from the scheduled_utc token already present in its spawn prompt. Zone .claude/skills/cycle-bootstrap/ -> agent-father."
+      },
+      {
+        "id": "SNAPSHOT-WRITE-OFFSET-PLUS-TWO-NINTH-CONSECUTIVE",
+        "severity": "info",
+        "detail": "cycle-snapshot-07:17.json (7340B) written at 07:17:00Z for nominal tick 07:15 — +2 offset, ninth consecutive. Write landed at the very start of the minute, so the spawn (07:17:1x) has near-full-minute read margin."
+      },
+      {
+        "id": "SNAPSHOT-PROMOTION-TWELFTH-CONSECUTIVE-FALSE",
+        "severity": "medium",
+        "detail": "emit_pressure_state returned cycle_snapshot_promoted:false. Twelfth consecutive. cycle-snapshot-latest.json still carries .tick '00:00'."
+      },
+      {
+        "id": "SNAPSHOT-PRUNE-HEALTHY",
+        "severity": "info",
+        "detail": "39 snapshot files total, 24 written today, 15 residual from yesterday, ZERO older than 24h apart from cycle-snapshot-latest.json (intentional). The 24h prune is functioning; the ~4min late-prune hazard recorded earlier has not produced same-HH:MM residue today."
+      },
+      {
+        "id": "PRESSURE-MODE-NOT-PERSISTED-BY-EMIT",
+        "severity": "medium",
+        "detail": "emit_pressure_state accepted pressure_mode='adaptive' and returned success, but the written pressure-state.json has no pressure_mode key. Unchanged defect, zone apps/mcp-server/."
+      },
+      {
+        "id": "SIZELINT-COVERAGE-STILL-OPEN-AFTER-FALSE-SUPPRESSION",
+        "severity": "high",
+        "detail": "Carried forward with new urgency after the 07:00Z reconciliation: alert-commander c221 suppressed its re-file by citing SIZELINT-GATE-NAMES-3-OFFENDERS-BOARD-COVERS-1, which is NOT a task row but a finding inside dev_team_idle_chain.pending_triage_inbox[52].payload — a cowork-fire envelope this dispatcher emitted. tasksMdJanitorJob.ts (1012L/996 upper) and ocr_gateway.py (594L/579 upper) have zero task_board size-lint row. pushBctcLayoutHandler.ts (252L/250) is tracked at task_board.backlog[491].",
+        "recommend": "Mint a row for tasksMdJanitorJob.ts -> dev-mcp-server. ocr_gateway.py = re-baseline at FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH closeout (currently task_board.qa), not a separate mint. Never use size-lint-justification.sh --update."
+      },
+      {
+        "id": "CHEF-WORK-UNCOMMITTED-SIX-TICKS",
+        "severity": "high",
+        "detail": "docs/agent-memory/notebooks/unified-agent.md (modified) and docs/data/unified-agent-synthesis-2026-08-24-intraday.json (untracked) still uncommitted, now six ticks. A peer drain+prune sweep at 06:51:50Z absorbed 18 files and declined both. chef-intraday was cadence-suppressed this tick, so no new chef fire will collect them either. Needs an explicit owner.",
+        "recommend": "Route to po for owner assignment; not recoverable as a side effect of any existing sweep."
+      },
+      {
+        "id": "SINGLE-SLOT-TICK-NO-COLLISION",
+        "severity": "info",
+        "detail": "Step 4b collision guard: one slot in MATCHES, no agent_id appears in >=2 slots, no WARN telegram sent."
+      },
+      {
+        "id": "GUARANTEED-SLOT-SILENCE-NARROWED-TO-TWO-SLOTS-ONE-COMMON-CAUSE",
+        "severity": "high",
+        "detail": "Censused all 8 guaranteed slots. Six are current (fired within 24h). Exactly two are dead: chef-eod (cron 45 8 * * 1-5, last_fired 2026-08-13T08:55:52Z) and fb-daily (cron 15 9 * * 1-5, last_fired 2026-08-13T09:25:15Z) — 7 missed weekdays. They last fired on the SAME day 30 minutes apart, both weekday-only, both in the 08:45-09:15Z band. That points to one common cause on 2026-08-13, not two independent failures.",
+        "recommend": "Do not open two investigations. Cheap discriminator available TODAY: the firer logs a slot-header line whenever a slot is due. Watch docs/agent-memory/sessions/cowork-guaranteed-slot-firer.log at 08:45Z and 09:15Z — no line means the failure is in DUE-DETECTION, a line means it is in invocation."
+      },
+      {
+        "id": "GUARANTEED-SLOT-FIRER-IS-HEALTHY-NOT-DEAD",
+        "severity": "info",
+        "detail": "launchctl list shows com.vn-market.cowork-guaranteed-slot-firer loaded, last exit 0, StartInterval=900. Its log had not been appended for ~2h, which is EXPECTED: the plist states no-op ticks exit 0 with no claude invocation and no log write. Log-mtime is not a liveness signal for this job. Its alert-state file is a 2-line cooldown (epoch + fingerprint), not a status board.",
+        "note": "Today the firer logged exactly one event: chef-morning invoked 05:28:50Z, died on API Error 529 Overloaded, exit 1 at 05:32:15Z, correctly escalated to the bug channel. The escalation path works."
+      },
+      {
+        "id": "LAST-FIRED-IS-AN-ATTEMPT-STAMP-NOT-A-DELIVERY-RECORD",
+        "severity": "high",
+        "detail": "chef-morning reads last_fired=2026-08-24T05:17:39Z (stamped via the cowork dispatcher path) while the guaranteed backstop invocation at 05:28:50Z FAILED with a 529. Two different actors, and the schedule records only the earlier attempt. No chef-morning deliverable exists today — the 2026-08-24 synthesis files are chef-intraday (02:22Z) and intraday (06:21Z) only.",
+        "consequence": "A guaranteed slot can read green in cowork-schedule.json, have its backstop error minutes later, and produce nothing, with the only trace in a log the plist keeps deliberately quiet.",
+        "recommend": "Never certify a guaranteed slot from last_fired alone — check for the deliverable."
+      },
+      {
+        "id": "CHEF-FILENAME-PREFIX-DEFECT-BOTH-FILES-NOW-VISIBLE",
+        "severity": "medium",
+        "detail": "Both variants now sit side by side for today: unified-agent-synthesis-2026-08-24-chef-intraday.json (6348B, 02:22Z, CORRECT per chef-dish.md:889 CYCLE_DATE-SLOT_ID) and unified-agent-synthesis-2026-08-24-intraday.json (3163B, 06:21Z, prefix dropped). Confirms the earlier same-day control: the 04:13 fire wrote correctly, the 06:13 fire did not. The malformed one is also half the size. Zone docs/agents/unified-agent/ to agent-father."
+      }
+    ],
+    "deviations": [
+      "Did NOT re-call claim_due_scheduled_tasks or cowork-match-slots.js per the WORK-continuation contract; catchup_raw not re-measured this tick.",
+      "Sent last_regime and last_volatility_level as 'unknown' per spec despite live NEUTRAL carry (1.37pp) in hand — the wrong-key defect must stay visible.",
+      "Did not repair the two malformed notebook-prune signal files nor patch notebook-auto-prune.sh (lines 574/575 grep -c || echo 0).",
+      "Did not commit the chef's stranded work.",
+      "Did not run guard-signal-type-coverage.sh (not read-only; writes live orch-state.json via ORCH_APPLY_LIVE_FILE_OVERRIDE).",
+      "Did not attempt any push; size-lint gate remains red, 184 commits stranded."
+    ],
+    "reconciliation_0715": {
+      "spawn": "alert-commander 07:15Z tick",
+      "negative_control": "PASS — no IDENTITY_PREAMBLE echo, ~3KB return",
+      "offflow_markers": "0 of 6 distinct",
+      "claims_verified": [
+        "commit 8fe8f5b8a 07:22:31Z, notebook only, 9+/9-",
+        "notebook 31L/8832B, sections c220-c222, c219 pruned",
+        "log_agent_work id=2095 started 07:20:50 finished 07:21:02 completed",
+        "snapshot 07:17 hit, read ~9s after write",
+        "peer files NOT damaged by the reported git-add restore — chef strand and all dirty paths intact"
+      ],
+      "notes": [
+        "Agent reported restoring 7 foreign paths a plain git add had swept in; verified the commit carries only its own notebook and no peer work was reverted.",
+        "Agent attempted git pull --rebase (failed, shared dirty tree) — SECOND out-of-flow pull improvisation by this agent today after 04:45Z. agent-father scope.",
+        "ahead 187: +1 mine, +2 peer (24d35f81e auditor tier1 unblock, 13d662b52 po mint)."
+      ]
+    }
+  },
+  "_processed": {
+    "fingerprint": "727979bfe05d431a924c18cbd609a7e9b88b3f0606fdd92f465ad8577d5ca7e3",
+    "processedAt": "2026-08-24T07:33:28Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

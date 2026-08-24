@@ -1,0 +1,69 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "2026-08-24T09:34:17Z",
+  "payload": {
+    "tick": "2026-08-24T09:30Z",
+    "verdict": "WORK",
+    "drift_min": 0,
+    "slots_matched": 0,
+    "slots_spawned": 0,
+    "new_signals": 7,
+    "work_driver": "signals_only",
+    "silent": false,
+    "findings": [
+      {
+        "id": "BCTC-IMGDEG-DETECTOR-UNDERCOUNTS-3-TO-2-AND-CITES-THRESHOLD-MATCHING-ZERO-UNITS",
+        "severity": "high",
+        "detail": "Live signal_queue row bctc-imgdeg-1f53ef33-20260824T090414Z (from mcp-server, to po, HIGH) says '2 refined units capped <=0.6 confidence (image_unavailable)' with affected_unit_ids ['unit-0004','unit-0005']. Re-measured get_bctc_refined(1f53ef33-8f50-489b-8505-689740692ab0) this tick: THREE units carry image_unavailable -- unit-0004 conf 0.75 (continuation_marker_missing:page7, image_unavailable:pages6-8), unit-0005 conf 0.65 (image_unavailable, garbled_ocr_layout), unit-0006 conf 0.7 (image_unavailable, ocr_row_alignment_uncertain). Two independent defects in one emitted signal: (a) unit-0006 is omitted from affected_unit_ids, (b) the stated '<=0.6' cap matches NONE of the three (0.75/0.65/0.7 are all above it). A consumer triaging off this row will under-scope the fix and will not find the threshold it is told to look for. Zone apps/mcp-server (the emitter), not the refine worker."
+      },
+      {
+        "id": "CCATO-EMITTER-STILL-LIVE-SIX-NEW-ROWS-TODAY-MIDNIGHT-Z-NO-DEDUP-KEY-PAYLOAD-CONTRADICTS-SUMMARY",
+        "severity": "high",
+        "detail": "Six NEW narrative_contradiction rows minted today: ntg-20260824T000000Z-technical_indicators-VNM-{62a037,d6f9e8,94f891,d47330,1adb71,1704ab}. All share ts 2026-08-24T00:00:00Z (local-date midnight labelled Z, the documented forged-timestamp shape -- not a clock read), all from=chef to=po sev MED, all zero dedup_key, all identical in ticker/tool/claim and differing only by hash suffix. Each row's summary asserts 'get_technical_indicators returned non-null data' while its OWN payload carries returned_value:'not found in database' -- the payload contradicts the summary in all six. This is the same population as the 35 rows already un-prunable until 08-25; the producer was not stopped and shipped six more today. Six near-duplicates for one ticker/dimension/date is itself the missing-dedup_key defect made visible."
+      },
+      {
+        "id": "FIRER-SPAWNED-AGENT-EMITS-ROUTER-STYLE-PROSE-THIRD-CONSECUTIVE-RUN",
+        "severity": "high",
+        "detail": "cowork-guaranteed-slot-firer.log lines 2332-2341: the fb-daily run (09:15:07Z-09:25:53Z) wrote a router-style markdown 'Final state -- fb-daily 2026-08-24' table into the firer log, same off-contract shape as the chef-eod run one tick earlier and chef-morning before it. Three consecutive firer-spawned runs have latched onto the router protocol. Root cause unchanged: the firer invokes `claude --dangerously-skip-permissions -p '<trigger_prompt>'` with NO IDENTITY_PREAMBLE, so the spawned process reads the repo CLAUDE.md as its own operating contract. Fix: port the preamble literal at spawn-fanout.md:247-260 into cowork-guaranteed-slot-firer.sh's invocation."
+      },
+      {
+        "id": "FB-DAILY-0824-ORGANIC-MTIME-AND-COMMITTED-PHANTOM-DISCRIMINATOR-VALIDATES-PROSPECTIVELY",
+        "severity": "info",
+        "detail": "Step 5.3 reconciliation of a run this dispatcher did NOT spawn (firer, 09:15:07Z-09:25:53Z, exit 0). docs/social/fb-post-2026-08-24.md exists, 6757 B, mtime 2026-08-24T09:21:27Z -- inside the run window, i.e. ORGANIC. git status clean for both the post and docs/agent-memory/notebooks/fb-market-poster.md, so this run was durable end-to-end. Population now: organic 08-12T09:24:28Z / 08-15T13:21:36Z / 08-22T13:34:08Z / 08-24T09:21:27Z vs bulk-restore epoch 08-13 and 08-14 both at exactly 2026-08-15T08:35:59Z. The identical-to-the-second mtime discriminator was derived retrospectively on the chef strand and has now separated a real run from a phantom prospectively, on a second agent. Treat it as a standing cheap test for 'did this exit-0 run actually produce anything'."
+      },
+      {
+        "id": "PRESSURE-MODE-ABSENT-FROM-EMITTED-SHAPE-NOT-MERELY-NULL-AND-HEADROOM-IS-SERVER-RECOMPUTED",
+        "severity": "medium",
+        "detail": "22nd consecutive confirmation, with a sharper characterisation than 'accepted but not persisted'. Reading pressure-state.json written by my own 09:15Z emit: pressure_mode is ABSENT from the key set entirely (previously it persisted as null), as are slots_matched and slots_spawned. Meanwhile last_regime and last_volatility_level DID persist exactly as sent ('unknown'), and container_vm_headroom_mb persisted as 2928 against the 2971 I sent -- server-recomputed, caller value discarded. So the write path is a partial allowlist, not a uniform drop: some caller fields land, some are silently recomputed, and pressure_mode is not in the output schema at all. Any consumer reading pressure_mode from this file gets undefined, not a stale value."
+      },
+      {
+        "id": "DRAIN-HELD-SEVEN-PO-ROWS-NEW-DELIBERATE-EIGHTYFIVE-ALREADY-IN-READ-BACKLOG",
+        "severity": "medium",
+        "detail": "Step 0a drain: 8 NEW rows in signal_queue, 7 addressed to the SSOT cowork recipient set (po/tran-ngoc-bau/alert-commander/unified-agent) -- all 7 to=po; the 8th (po-decision-bug5468, to=ops) is out of scope. Deliberate deviation from the flow's 'mark each processed row NEW -> READ': all 7 held at NEW. Rationale is the documented defect -- PO selects on NEW and there is no po cowork slot, so 'route to matching slot' is unreachable for po and mark-READ-without-delivery is the only outcome the letter of the step produces, after which the row cold-evicts at 24h. Measured backlog this tick: 85 rows already sitting in READ addressed to po. Marking these 7 would have made it 92 and delivered none. Same call as the 09:15Z tick (2 rows held). This needs a real fix -- either a po delivery path or a drain rule that does not mark undeliverable rows READ."
+      },
+      {
+        "id": "NOTEBOOK-PRUNE-SIGNAL-UNPARSEABLE-NINTH-CONSECUTIVE",
+        "severity": "medium",
+        "detail": "docs/signals/ holds 50 json files, 2 unparseable, both the same stuck pair: notebook-prune-dropped-newest-docs-agent-memory-notebooks-dev-mcp-server-md-2026-08-23T152548Z.json and -2026-08-23T194934Z.json. Ninth consecutive tick unchanged. Root cause on file: scripts/agents-flow/notebook-auto-prune.sh lines 574/575 use `grep -c ... || echo 0`, which appends a bare 0 to the JSON body. Fix is `|| true` plus a repair of the two stuck files. Zone scripts/ -> developer."
+      },
+      {
+        "id": "SNAPSHOT-OFFSET-PLUS-2-AT-DRIFT-ZERO-SIXTH-SAMPLE-RETRACTION-HOLDS",
+        "severity": "info",
+        "detail": "docs/data/cycle-snapshot-09:32.json (17652 B) written for nominal tick 09:30 -- offset +2 at drift_min 0. Series is now +5,+6,+7,+1,+2,+2 against drift 5,5,4,0,0,0. Offset tracks drift plus elapsed dispatcher time to Step 4.7; it is not a widening clock trend. The earlier 'monotonically widening' finding stays retracted. The underlying naming/promotion defect is unaffected: producer tick-snapshot.md names by wall-clock minute, consumer emitPressureStateTool.ts:398 looks up by nominal tick, so promotion misses."
+      },
+      {
+        "id": "WORK-VERDICT-ON-ZERO-SLOTS-IS-SIGNAL-DRIVEN-AND-PREFLIGHT-EXIT-1-IS-BY-DESIGN",
+        "severity": "info",
+        "detail": "Preflight returned WORK with slots:[] and one_shots:[] -- the WORK driver was new_signals:7 alone, which main.md's own WORK-continuation note documents ('WORK implies at least one of slots/one_shots/new_signals is non-empty'). Recording it because the script also exits 1 on this path and that reads as failure at a glance: cowork-tick-preflight.sh's run_preflight ends `_emit_verdict WORK ... ; return 1`, so exit 1 IS the WORK signal, not an error. A caller that gates on exit status rather than the verdict string would silently skip every WORK tick."
+      }
+    ]
+  },
+  "_processed": {
+    "fingerprint": "3df4365528ed2945117484a530ff99ba22edcd4346627d43bb00427cb2367a8b",
+    "processedAt": "2026-08-24T14:21:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

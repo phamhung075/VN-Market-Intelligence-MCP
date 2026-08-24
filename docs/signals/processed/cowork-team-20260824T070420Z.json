@@ -1,0 +1,131 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "priority": "medium",
+  "createdAt": "2026-08-24T07:03:00Z",
+  "payload": {
+    "tick": "2026-08-24T07:00Z",
+    "verdict": "WORK",
+    "drift_min": 0,
+    "slots_fired": [
+      "alert-commander-market"
+    ],
+    "pressure_mode": "adaptive",
+    "fanout": {
+      "max_parallel": 4,
+      "degraded": false,
+      "headroom_mb": 3104,
+      "load1": 2.92,
+      "cores": 12
+    },
+    "drain": {
+      "inserted": 2,
+      "db_count": 323,
+      "skipped_unparseable": 2
+    },
+    "snapshot_written": "docs/data/cycle-snapshot-07:02.json",
+    "snapshot_promoted": false,
+    "findings": [
+      {
+        "id": "SNAPSHOT-PROMOTION-ELEVENTH-CONSECUTIVE-FALSE",
+        "detail": "emit_pressure_state returned cycle_snapshot_promoted=false for the 11th consecutive tick. Structural, not intermittent: the promoter keys on the nominal tick (07:00) while Step 4.7 names the file by wall clock (07:02). No wall-clock-named file can ever match a nominal-tick key while the +2 write offset persists."
+      },
+      {
+        "id": "SNAPSHOT-WRITE-OFFSET-PLUS-TWO-EIGHTH-CONSECUTIVE",
+        "detail": "Nominal 07:00 -> file named 07:02. Eighth consecutive nonzero offset, all +2. The offset is the elapsed time from tick start through drain, staleness, fanout sizing, token claim and the two data fetches; it is a property of the flow, not jitter."
+      },
+      {
+        "id": "SNAPSHOT-LOOKUP-ROOT-CAUSE-LOCATED-IN-SOURCE",
+        "detail": "Root cause is ambiguous spec prose, NOT a race or a scan-order effect. .claude/skills/cycle-bootstrap/SKILL.md Step -1 says: TICK = current UTC time formatted as HH:MM (round to nearest 5-min slot, e.g. 02:05 -> 02:05). That is two contradictory instructions in one line, with a worked example demonstrating no rounding, so the lookup key is whatever reading the consumer lands on that run. Two further defects in the same block: (a) the documented 5-min grid is unsatisfiable, 0 of 35 filenames on disk are 5-min aligned because the writer names by wall clock; (b) a stale note still asserts the snapshot writer is a future task and Step -1 will always miss, which is false, the writer landed and writes every tick. Proposed fix that works under every reading: one unambiguous key, the nominal tick floor(minute/15)*15, computed identically by writer, promoter and consumer, with the consumer taking it from the scheduled_utc token already present in its spawn prompt. Zone .claude/skills/cycle-bootstrap/ -> agent-father."
+      },
+      {
+        "id": "SNAPSHOT-CONSUMER-HITS-ARE-ALIGNMENT-LUCK",
+        "detail": "2026-08-24 market-hours cycles, consumer=alert-commander: c218 nominal 06:15 written 06:17 looked up 06:18 MISS by one minute; c219 nominal 06:30 written 06:32 looked up 06:32 HIT; c220 nominal 06:45 written 06:47 looked up 06:47 HIT. All three fit exact-read-minute lookup. The hits are decided by whether the consumer read crosses a minute boundary after the +2 write, i.e. a coin flip, not design. Correction to a prior signal: the earlier withdrawal of the exact-minute model was itself wrong. The falsified prediction failed on a spawn-to-read latency estimate (assumed about 2 min, actual 30-60s), not on the model. The ambiguity finding still stands independently because c216 looked up the nominal tick, a genuinely different reading."
+      },
+      {
+        "id": "CHEF-WORK-UNCOMMITTED-FIVE-TICKS-PEER-SWEEP-RAN-AND-DECLINED",
+        "detail": "M docs/agent-memory/notebooks/unified-agent.md and untracked docs/data/unified-agent-synthesis-2026-08-24-intraday.json remain uncommitted across five cowork ticks. New evidence this tick: a peer session ran chore(signals): drain + prune at 06:51:50Z absorbing 18 files, and did not take either chef file. So this is not a sweep gap that a broader sweep would close, it is correct behaviour by a guard whose purpose is to stop cross-actor absorption. These files need an explicit owner; the agent that wrote them has exited."
+      },
+      {
+        "id": "SWEEP-GUARD-ESCALATES-AND-BLOCKS-CONFIRMED-LIVE",
+        "detail": "Correction to a prior characterisation of commit-sweep-guard as warn-only. It escalates and blocks at threshold. Live instance today: actor 007e33e4-b453-4bb3-8ab1-ef31495906a3 at 2026-08-24T00:46:38Z with prior_warns=11 threshold=3 escalated=true outcome=blocked. prior_warns is per-actor, not global. Actor 7fd9c60a-9854-4589-9e98-e4c5e7e9168d is currently at prior_warns=1 (two warns today, 06:44:01Z and 06:51:50Z), one short of escalating."
+      },
+      {
+        "id": "THREE-CONCURRENT-SESSIONS-COMMITTING-TO-SHARED-TREE",
+        "detail": "Distinct actor session ids observed committing to this working tree today: 007e33e4-b453-4bb3-8ab1-ef31495906a3, 7fd9c60a-9854-4589-9e98-e4c5e7e9168d, and this dispatcher session 7be6b4cd-057e-419b-a967-4810daf2b646. Local main advanced 179 -> 183 between the 06:30Z and 06:45Z ticks, only one of those four commits was this session's spawn. Informational, but it is the reason bare-commit absorption keeps tripping the guard."
+      },
+      {
+        "id": "SIZELINT-TWO-NEW-OFFENDERS-ZERO-TRACKED-ROWS",
+        "detail": "alert-commander c220 grep-verified that two of the three size-lint offenders have no tracked board row: apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts (baseline 906L, actual 1012L, upper 996L) and apps/pdf-extractor/infrastructure/ocr_gateway.py (baseline 527L, actual 594L, upper 579L). The third, apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts (252L vs upper 250L), is still BACKLOG under FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH. Refinement: ocr_gateway.py sits directly under the currently active sprint FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH (task_board.qa, head.active_task_id) and most likely grew past baseline during that sprint's own edits, so it is a re-baseline at that sprint's closeout, not a separate mint. Never fix any of these with size-lint-justification.sh --update, which regenerates the whole baseline."
+      },
+      {
+        "id": "MALFORMED-SIGNAL-COUNT-STABLE-AT-TWO",
+        "detail": "The same two notebook-auto-prune emissions remain unparseable and are skipped on every drain: notebook-prune-dropped-newest-docs-agent-memory-notebooks-dev-mcp-server-md-2026-08-23T152548Z.json and -2026-08-23T194934Z.json. Root cause is notebook-auto-prune.sh lines 574/575, grep -c ... || echo 0, which double-emits on a zero count. Fix is || true on both lines plus repair of the two stuck files. Zone scripts/ -> developer."
+      },
+      {
+        "id": "PRESSURE-MODE-NOT-PERSISTED-BY-EMIT",
+        "detail": "emit_pressure_state accepts pressure_mode=adaptive and returns success, but the written docs/data/pressure-state.json carries no pressure_mode key. Consumers reading the file cannot recover the mode the dispatcher ran in. Zone apps/mcp-server/."
+      },
+      {
+        "id": "SINGLE-SLOT-TICK-NO-COLLISION",
+        "detail": "Step 4b collision guard evaluated against one slot, no agent_id in two or more slots, no WARN emitted. Expected."
+      },
+      {
+        "id": "SPAWN-CITED-OWN-TELEMETRY-FINDING-AS-PROOF-OF-TASK-COVERAGE",
+        "severity": "high",
+        "detail": "alert-commander c221 declined to re-file the size-lint escalation, justifying it as \"already-tracked, live BACKLOG issue in orch-state.json\" and citing two ids. Resolved both: FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH is real (task_board.backlog[491]) but covers ONLY pushBctcLayoutHandler.ts. SIZELINT-GATE-NAMES-3-OFFENDERS-BOARD-COVERS-1 is NOT a task row — it is finding[2] inside dev_team_idle_chain.pending_triage_inbox[52].payload.findings, a drained cowork-fire envelope emitted by THIS dispatcher on an earlier tick. Its literal text asserts the board covers 1 of 3. The agent read a report-of-missing-coverage as evidence-of-coverage.",
+        "root_cause": "Telemetry finding ids and task_board row ids share the same SCREAMING-KEBAB shape and both live inside orch-state.json, so a grep/jq scan cannot distinguish them. Any consumer checking coverage by id-presence will treat an undrained triage payload as a tracked row.",
+        "evidence": "jq path resolution: task_board.backlog.491.id vs dev_team_idle_chain.pending_triage_inbox.52.payload.findings.2.id",
+        "consequence": "c220 escalation (which named all 3 offenders with exact counts) was drained to docs/signals/processed/ at 07:00Z; c221 then declined to re-file. tasksMdJanitorJob.ts (1012/996) and ocr_gateway.py (594/579) now have zero task_board row AND zero live signal outside this file.",
+        "recommend": "Coverage checks must resolve the jq PATH of a cited id, not its presence. Zone: consumer-side discipline; candidate for a helper that answers is-this-a-live-task-row."
+      },
+      {
+        "id": "OFFENDER-ROW-RECHECK-CONFIRMS-PRIOR-MEASUREMENT",
+        "severity": "info",
+        "detail": "Re-verified precisely: the task_board hits for tasksMdJanitorJob (1 backlog) and ocr_gateway (3 backlog) are incidental file mentions inside rows about other subjects — FIX-TASKKIND-ENUM-NO-GUARD-MARKER-CATEGORY and FIX-PDFX-GENERIC-MD-TABLE-OCR-UNROUTED-GATEWAY respectively. Neither is a size-lint row. Prior tick measurement of zero tracked size-lint rows stands, no correction needed. ocr_gateway.py additionally appears 6x under task_board.qa row FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH (active sprint) — confirms the re-baseline-at-closeout reading."
+      },
+      {
+        "id": "SNAPSHOT-HIT-EIGHTH-DATAPOINT-MARGIN-IS-SUBMINUTE",
+        "severity": "medium",
+        "detail": "c221 HIT cycle-snapshot-07:02.json. Sequence now 06:18 MISS, 06:32 HIT, 06:47 HIT, 07:02 HIT. All four fit exact-read-minute lookup. The miss mode is narrower than coin-flip: it occurs only when the snapshot WRITE and the consumer bootstrap READ straddle a wall-clock minute boundary. Current margin is ~45s (write lands HH:MM:0x-1x, spawn ~HH:MM:3x, read immediately after).",
+        "note": "c221 annotated the snapshot as \"created 07:02:15Z, ~1min old\" — a ~07:03:15 read, which under exact-read-minute would have MISSED. The annotation contradicts its own outcome, strengthening the existing finding that these age annotations are computed at notebook-write time, not read time."
+      },
+      {
+        "id": "FLEET-PUSH-ABORT-SIXTH-TODAY",
+        "severity": "info",
+        "detail": "docs/signals/fleet-push-abort-push-fail-20260824T070451Z.json minted at 07:04:51Z — sixth today (04:29, 05:00, 05:31, 06:03, 06:34, 07:04), consistent with StartInterval=1800. Commit c424f4f2e is the 184th stranded."
+      }
+    ],
+    "deviations": [
+      "Did not re-call claim_due_scheduled_tasks or cowork-match-slots.js per the WORK continuation contract, so catchup_raw was not re-measured this tick.",
+      "Sent last_regime and last_volatility_level as unknown per the Step 6.0 spec, despite live carry.regime=NEUTRAL (carrySpread 1.37pp) being in hand from the Step 4.7 fetch. Deliberate: the wrong-key defect must stay visible.",
+      "Did not repair the two malformed notebook-prune signal files nor patch notebook-auto-prune.sh (developer zone).",
+      "Did not commit the chef's stranded work (needs an explicit owner, not a router bare commit).",
+      "Did not run guard-signal-type-coverage.sh (not read-only, line 258 writes live orch-state.json).",
+      "Did not attempt any push (size-lint gate red, 183 commits stranded, PUSH-AUTONOMY-1 awaiting user decision)."
+    ],
+    "reconciliation": {
+      "spawn": "alert-commander 07:00Z tick",
+      "negative_control": "PASS — no IDENTITY_PREAMBLE echo, return length ~2.5KB",
+      "offflow_markers": "0 of 6 distinct",
+      "claims_verified": [
+        "commit c424f4f2e 07:06:55Z, 1 file, 9+/9-",
+        "notebook 31L/8551B, 3 sections c219-c221, c218 pruned",
+        "log_agent_work id=2094 started 07:05:39 finished 07:05:48 completed",
+        "snapshot 07:02 hit, file present 8724B",
+        "ahead 184 (+1, exactly this commit)",
+        "push blocked by size-lint, no duplicate signal filed"
+      ],
+      "claims_falsified": [
+        "\"already-tracked, live BACKLOG issue ... SIZELINT-GATE-NAMES-3-OFFENDERS-BOARD-COVERS-1\" — that id is a telemetry finding in a drained triage payload, not a task row"
+      ]
+    }
+  },
+  "_processed": {
+    "fingerprint": "dbb67b7c4cd814e42a8cbff67440734e183372ecc3cef33d3f741fda4f0a15f9",
+    "processedAt": "2026-08-24T07:15:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

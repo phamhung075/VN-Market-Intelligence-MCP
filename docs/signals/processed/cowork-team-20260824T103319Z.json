@@ -1,0 +1,66 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "severity": "MED",
+  "createdAt": "2026-08-24T10:33:19Z",
+  "payload": {
+    "tick": "2026-08-24T10:30Z",
+    "verdict": "WORK",
+    "drift_min": 0,
+    "slots_matched": 0,
+    "slots_spawned": 0,
+    "one_shots": 0,
+    "new_signals": 7,
+    "silent": false,
+    "findings": [
+      {
+        "id": "PRESENCE-ROSTER-ZOD-ROOT-CAUSE-CONFIRMED",
+        "severity": "HIGH",
+        "status": "CONFIRMED — falsifiable prediction met",
+        "detail": "Prediction recorded in the 09:45Z/10:00Z/10:15Z telemetry: if task_list_held(kind='session-presence') returns count:0 at the 10:30Z tick, the Zod object-payload root cause is confirmed end-to-end with no fallback path recreating the row. MEASURED AT 10:30Z: {\"locks\":[],\"count\":0}. My manual probe row (session-presence:7be6b4cd-..., ttl 1800) expired at 2026-08-24T10:17:41Z as scheduled, and cowork-tick-preflight.sh ran its Step 2 presence registration at 10:30:38Z — 6 seconds before the list call. The roster is empty anyway. Chain now closed: (1) preflight lines 214-216 build payload as a JSON OBJECT; (2) task_claim rejects an object payload with MCP -32602 Zod invalid_type 'Expected string, received object' path [\"payload\"] (reproduced directly); (3) line 228's fallthrough swallows the transport error so presence never gates; (4) the heartbeat renewal is nested inside the failing claim's success branch, so it never runs either (verified 10:00Z: heartbeat_at unchanged after a later preflight); (5) no other code path anywhere recreates the row. The roster is structurally always empty, for every session, permanently.",
+        "impact": "cron-cowork-team SKILL Step 1b.1 uses session-presence as its PRIMARY staleness oracle and reads 'no presence row' as DEAD. Against a permanently-empty roster it classifies every live peer as dead, then calls task_force_release_orphan on that peer's cron-registration:cowork-team marker and double-arms the */15 dispatcher. The only thing that has prevented this so far is the 7200s orphan_threshold_seconds on the force-release, which is a timing accident, not a guard.",
+        "fix": "Stringify the payload at cowork-tick-preflight.sh:214-216 (payload: ($obj|tostring), matching every other task_claim call site in the repo). Then audit sibling call sites in scripts/agents-flow/ for the same object-payload shape. Zone scripts/ -> developer.",
+        "zone": "scripts/"
+      },
+      {
+        "id": "PREFLIGHT-VERDICT-NOT-PERSISTED-ANYWHERE",
+        "severity": "MED",
+        "status": "NEW this tick",
+        "detail": "The preflight's verdict JSON goes to stdout ONLY. Nothing on disk holds it. docs/data/telemetry/cowork-tick-preflight.jsonl records exactly six fields (ts, script, verdict, tick, verdict_bytes, elapsed_ms, exit_code) and deliberately drops slots[], one_shots[], new_signals and detail. This tick I truncated the stdout capture and could not recover the envelope from any artifact. RECOVERY PATH THAT WORKED, worth recording: verdict_bytes is byte-identical at 400 across the 10:00Z, 10:15Z and 10:30Z ticks, and the two earlier envelopes were captured in full with slots:[] / one_shots:[] / new_signals:7 — so byte-identity establishes the third envelope's shape without re-running the script. Re-running was the wrong move and I did not: a second run would re-invoke claim_due_scheduled_tasks, and any one-shot claimed by the first run would be silently absent from the second run's one_shots[], losing it.",
+        "impact": "A tick whose stdout is lost is unreconstructable except by the byte-identity trick, which only works when a neighbouring tick happens to be identical. Any incident review of a past tick has no slots/new_signals record at all.",
+        "fix": "Either widen the telemetry row to carry slots_len/one_shots_len/new_signals, or have the preflight tee its verdict to docs/data/.tick-verdict-<tick>.json. The second is cheaper and matches what the router has been doing by hand for five ticks.",
+        "zone": "scripts/"
+      },
+      {
+        "id": "SIGNAL-QUEUE-DRAIN-HELD-FIFTH-CONSECUTIVE-TICK",
+        "severity": "HIGH",
+        "status": "unchanged, 5th consecutive tick",
+        "detail": "signal_queue status distribution identical to 10:15Z: NEW 8, READ 86, RETRACTED 12, triaged 8. Same 8 NEW rows, same ids. last_triaged_at still 2026-08-24T07:37:00Z by po — now ~2h53m stale. The 7 po-addressed NEW rows continue to pin the SILENT gate (cowork-tick-preflight.sh:358-365 counts NEW rows addressed to the cowork recipient set), forcing WORK on a fifth consecutive tick with slots:[] and one_shots:[]. Four of those five ticks are after VN market close, where every tick should be SILENT.",
+        "impact": "5 needless dispatch bodies. Bounded by PO's next triage pass, not unbounded — PO demonstrably works this queue.",
+        "fix": "Unchanged: the drain's mandated NEW->READ writes into a state the consumer never revisits; PO's own terminal state is 'triaged' (8 rows prove it, including yesterday's instance of the same bctc_image_fetch_degraded type). Either give the drain a po delivery path or make it write the correct terminal value.",
+        "zone": "docs/agents/cowork-team/flow/"
+      },
+      {
+        "id": "SNAPSHOT-OFFSET-TENTH-SAMPLE",
+        "severity": "LOW",
+        "status": "informational",
+        "detail": "Step 4.7 produced docs/data/cycle-snapshot-10:32.json (17618 B) for nominal tick 10:30 — offset +2. Series now +5,+6,+7,+1,+2,+2,+3,+1,+1,+2 against drift 5,5,4,0,0,0,0,0,0,0. Confirms offset = drift_min + elapsed dispatcher time to Step 4.7, not a clock trend. The naming defect is unchanged and I ran the fence verbatim rather than correcting it: producer tick-snapshot.md uses FILE_TICK=$(date -u +%H:%M) (wall clock), consumer emitPressureStateTool.ts:398 looks up by nominal tick from tick_id. cycle_snapshot_promoted has been false on every tick.",
+        "zone": "apps/mcp-server"
+      },
+      {
+        "id": "FBDAILY-AGENT-INDEPENDENTLY-CONFIRMS-LASTFIRED-DEFECT",
+        "severity": "MED",
+        "status": "corroboration from a second observer",
+        "detail": "Step 5.3 reconciliation: no new firer activity since the 09:15:07Z fb-daily fire, nothing to reconcile this tick. But that run's own return, now in the firer log, independently reports two things the router had measured separately: (a) last_fired frozen at 2026-08-13 in cowork-schedule.json despite its own success today, with the agent noting the field 'cannot distinguish never ran from ran fine, field not written' — the same conclusion the router reached from the mtime evidence; (b) the stranded-commit count behind the two size-lint offenders is now 212, up from the 211 recorded earlier today. Two independent observers reaching the same last_fired diagnosis raises confidence that the write path, not any dispatch path, is the fault.",
+        "zone": "docs/agents/cowork-team/flow/"
+      }
+    ]
+  },
+  "_processed": {
+    "fingerprint": "3ae6bba8fe3792ab74226452a8da7668132901ec0915f31cf0071a32b71b3bdf",
+    "processedAt": "2026-08-24T14:21:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

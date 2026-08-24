@@ -1,0 +1,109 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "20260824T074751Z",
+  "payload": {
+    "tick": "2026-08-24T07:45Z",
+    "nominal_tick": "2026-08-24T07:45:00Z",
+    "drift_min": 0,
+    "pressure_mode": "adaptive",
+    "slots_fired": [
+      "alert-commander-market"
+    ],
+    "suppressed_cadence": [],
+    "silent": false,
+    "findings": [
+      {
+        "id": "SNAPSHOT-WRITE-OFFSET-PLUS-ONE-ELEVENTH-CONSECUTIVE-NONZERO",
+        "severity": "high",
+        "detail": "cycle-snapshot-07:46.json written for nominal tick 07:45 — +1 offset with drift_min=0, back to the low end after last tick's +4. Eleventh consecutive non-zero offset. Confirms the offset is fetch latency plus drift, not a fixed constant: it ranges +1..+4 today and is never 0."
+      },
+      {
+        "id": "SNAPSHOT-PROMOTION-FOURTEENTH-CONSECUTIVE-FALSE",
+        "severity": "high",
+        "detail": "emit_pressure_state returned cycle_snapshot_promoted:false again; cycle-snapshot-latest.json still .tick == \"00:00\". Fourteen consecutive. stale_warning remains false, so the 4h-gate residue path is NOT being taken — the lookup simply never finds a file at the nominal key, consistent with the wallclock-vs-nominal naming defect."
+      },
+      {
+        "id": "PRESSURE-MODE-NOT-PERSISTED-BY-EMIT",
+        "severity": "medium",
+        "detail": "Fifteenth confirmation: pressure_mode:\"adaptive\" accepted, success:true returned, key absent from the written pressure-state.json. Zone apps/mcp-server/."
+      },
+      {
+        "id": "FLEET-PUSH-ABORT-SIGNAL-VOLUME-IS-SIXTEEN-TODAY-NOT-SIX",
+        "severity": "high",
+        "detail": "CORRECTION to earlier ticks, which carried six fleet-push-abort signals today. docs/signals/processed/ holds 15 dated 2026-08-24, plus one more drained this tick (fleet-push-abort-push-fail-20260824T073553Z.json) = 16. That matches the actuator's StartInterval=1800 running unattended since 00:00Z. Every one is an abort on the same three size-lint offenders. The actuator is generating roughly two signals per hour that no one can action, because the underlying gate has 1-of-3 board coverage."
+      },
+      {
+        "id": "GUARANTEED-SLOT-CHECKPOINT-ARMED-FOR-TODAY",
+        "severity": "high",
+        "detail": "chef-eod (cron '45 8 * * 1-5') and fb-daily (cron '15 9 * * 1-5') both read enabled:true, guaranteed:true, no _disabled_by, last_fired 2026-08-13T08:55:52Z and 2026-08-13T09:25:15Z. Today is a weekday by cron reckoning (alert-commander-market's '*/15 2-8 * * 1-5' is matching). So both are genuinely due today. Firer log baseline captured at 07:47Z: 243071 bytes, 5 lines dated today, last entry 05:32:15Z. Falsifiable test at 08:45Z and 09:15Z — if a '--- guaranteed-slot-firer: slot=<id> ---' header appears, the fault is in invocation; if the log stays byte-identical, the fault is in due-detection. This splits the search before anyone reads code."
+      },
+      {
+        "id": "SINGLE-SLOT-TICK-NO-COLLISION-DRIFT-ZERO",
+        "severity": "info",
+        "detail": "One MATCH, no agent_id in two or more slots, no WARN. drift_min=0. No cadence suppression."
+      },
+      {
+        "id": "CATCHUP-PREDICATE-HAS-A-LIVE-ELIGIBLE-CANDIDATE-EXPIRING-AT-0815Z",
+        "severity": "high",
+        "detail": "Read-only run of cowork-match-slots.js (post-dispatch, lock already released) returned 8 catchup_raw records. Seven are ineligible for sound reasons. ONE is live: chef-morning, catchup_eligible=true, reason=null, scheduled_utc_time=2026-08-24T05:15:00Z. Corroborating chain: chef-morning cron '15 5 * * 1-5'; last_fired reads GREEN at 05:17:39Z (attempt stamp); the guaranteed backstop actually invoked at 05:28:50Z and died on an API 529 at 05:32:15Z; and NO chef-morning deliverable exists today (docs/data/ has only -chef-intraday and -intraday for 2026-08-24). So the system correctly detected a real miss AND correctly computed it as still recoverable. There is no consumer: docs/agents/cowork-team/flow/catchup-check.md does not exist (ls-confirmed), and the only readers of catchup_raw are the matcher, its own test, two doc files and a one-off po triage script. morning_dish catchup_max_lateness_minutes=180, so this candidate ages out at 08:15Z and is discarded silently. First time this path has been caught INSIDE its window rather than after the fact."
+      },
+      {
+        "id": "CATCHUP-CEILING-FOR-MORNING-DISH-MAY-BE-WHY-NOBODY-WIRED-IT",
+        "severity": "medium",
+        "detail": "Design observation, not a defect claim. morning_dish permits catch-up up to 180 minutes late. Firing chef-morning at minute 179 publishes a MORNING market synthesis at 08:14Z — after nearly the whole VN session has traded. Live ceilings: _default 60, morning_dish 180, eod_dish 180, evening_preview 360, daily_predict 360, daily_audit 360, weekly_digest 1440, fb_daily_post 120. Wiring the consumer naively would publish stale market content under a slot label that implies freshness. That is a product decision about acceptable staleness per dish type, and it plausibly explains why Step 4.55 was specced and never built. Anyone picking up the unwired-consumer work must resolve the ceilings first, not just add the call."
+      },
+      {
+        "id": "TODAY-IS-MONDAY-CHEF-EOD-AND-FB-DAILY-ARE-GENUINELY-DUE",
+        "severity": "info",
+        "detail": "Weekday established from the predicate's own output rather than assumed: digest-sunday's most recent fire computes to 2026-08-23 and chef-eod's to Friday 2026-08-21, so 2026-08-24 is a Monday and both weekday-only slots are due today. Missed weekday fires since their 2026-08-13 freeze: 08-14, 08-17, 08-18, 08-19, 08-20, 08-21 — six, with today pending as the seventh. The catch-up predicate itself is healthy: it sees both slots, computes their schedules correctly, and refuses them only on rolled_past_vn_date, which is correct for a 3-day-old miss. So due-detection at the PREDICATE layer is not the fault. The 08:45Z/09:15Z log checkpoint tests the FIRER layer, which is now the remaining suspect."
+      },
+      {
+        "id": "SPAWN-CITATION-QUALITY-IMPROVED-TWO-REAL-ROWS-THIS-TICK",
+        "severity": "info",
+        "detail": "Fairness note against the two prior ticks. The 07:45 spawn cited FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH -> task_board.backlog.491.id and FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE -> task_board.backlog.481.id. BOTH path-resolve to genuine task_board rows. Only the ocr_gateway 're-baseline at closeout, not a separate mint' phrasing traces back to this dispatcher's telemetry, and it was presented as a note rather than as a row. Materially better than c221/c223, which each cited a finding id as a board row."
+      },
+      {
+        "id": "PREPUSH-WORKING-TREE-SCOPE-ROW-IS-REAL-BUT-DOES-NOT-EXPLAIN-THIS-STRAND",
+        "severity": "high",
+        "detail": "HYPOTHESIS FORMED AND KILLED BY MEASUREMENT. task_board.backlog[481] FIX-SIZELINT-PREPUSH-SCANS-WORKING-TREE-NOT-PUSH-RANGE (P1, BACKLOG, next_agent developer, zone cross-service/, zero deps, created 2026-08-23T15:20Z) states the gate scans the working tree via 'git ls-files --cached --others', so a peer's uncommitted mid-edit blocks everyone. That suggested a single fix unblocking the fleet without touching the three files. It does not. Measured: all three offenders are CLEAN/committed in git status, and all three appear in 'git diff --name-only origin/main..main' — a 208-file, 192-commit push range. A correctly push-range-scoped gate would still scan and still reject all three. Row 481 is a real bug worth fixing on its own merits; it is NOT the cause of the current strand, and closing it would not release a single commit."
+      },
+      {
+        "id": "SIZELINT-COVERAGE-GAP-CONFIRMED-AS-THE-LOAD-BEARING-BLOCKER",
+        "severity": "high",
+        "detail": "Consequence of the above: the three files are genuinely part of what is being pushed, so the strand clears only when their line counts come down (or their baselines are legitimately re-set as part of owning work). Board coverage is still 1 of 3 — backlog[491] covers pushBctcLayoutHandler.ts; ocr_gateway.py is implicitly attached to review[25] which is BLOCKED on po; tasksMdJanitorJob.ts (1012L vs 996 upper) has ZERO rows anywhere on the board. One mint is genuinely outstanding and 192 commits sit behind it."
+      },
+      {
+        "id": "SPAWN-NOW-CITES-ITS-OWN-FALSE-POSITIVE-HISTORY-AS-GROUNDS-FOR-SILENCE",
+        "severity": "medium",
+        "detail": "New reasoning shape worth watching. The spawn wrote: 'Per this agent's documented history of false escalations on this exact class of issue, no duplicate bug signal filed — infrastructure diagnosis is not this agent's job.' It is right about two of the three offenders (rows 491 and 481 exist) and wrong about the third (tasksMdJanitorJob has no row). An agent using its own prior over-reporting as a general licence to stay silent will be correct most of the time and will systematically miss the residue — the failure mode is quiet and self-justifying. Pair with the c221/c223 citation inversion and this slot now has two independent mechanisms producing the same silence."
+      }
+    ],
+    "deviations": [
+      "Did NOT re-call claim_due_scheduled_tasks or cowork-match-slots.js during the dispatch path (WORK-continuation contract).",
+      "Sent last_regime and last_volatility_level as \"unknown\" per Step 6.0 spec despite live carry.regime=NEUTRAL in hand.",
+      "Did not repair the two malformed notebook-prune signal files (fourth consecutive tick skipped unparseable).",
+      "Did not commit the chef strand (11 untracked files, two distinct populations — needs an owner decision, not a router git add).",
+      "Did not run guard-signal-type-coverage.sh (not read-only).",
+      "Did not attempt any push, and did not touch size-lint-baseline.json.",
+      "Ran cowork-match-slots.js once AFTER the dispatch path completed and the election lock was released, purely to read catchup_raw. It is a pure reader per match-slots.md; no claim, no spawn, no state write. Recorded here because the WORK-continuation contract forbids re-running it during the tick.",
+      "Did NOT fire chef-morning to recover the missing deliverable despite it being inside its 180-minute window. Publishing a 2.5-hour-late morning market synthesis is a product decision about content staleness, not a router mechanical step, and market content should not be published on a router's unilateral judgement."
+    ],
+    "reconciliation_0745_spawn": {
+      "negative_control": "PASS",
+      "offflow_markers": "0 of 6",
+      "commit": "5fc60e47a — notebook only, 9+/9-, 1 file",
+      "notebook": "31L/8651B, sections c222/c223/c224, c221 pruned",
+      "log_agent_work": "id 2097, completed",
+      "ahead": 192,
+      "push": "blocked at pre-push size-lint, 3 offenders, all genuinely in the push range"
+    }
+  },
+  "_processed": {
+    "fingerprint": "2cf23c5804f46464c07e61b9f4bdf4cadcf514f64e27071696739cea5be75c7b",
+    "processedAt": "2026-08-24T08:00:50Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

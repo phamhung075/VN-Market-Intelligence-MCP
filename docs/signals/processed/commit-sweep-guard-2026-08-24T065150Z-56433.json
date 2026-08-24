@@ -1,0 +1,14 @@
+{
+  "from": "commit-sweep-guard",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-08-24T06:51:50Z",
+  "payload": "[sweep-guard] BARE commit about to absorb 18 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json docs/signals/processed/commit-sweep-guard-2026-08-24T064401Z-53236.json docs/signals/processed/cowork-team-20260824T043325Z.json docs/signals/processed/cowork-team-20260824T044810Z.json docs/signals/processed/cowork-team-20260824T050614Z.json docs/signals/processed/cowork-team-20260824T051850Z.json docs/signals/processed/cowork-team-20260824T052543Z-chefmorning-phantom-success.json docs/signals/processed/cowork-team-20260824T053523Z.json docs/signals/processed/cowork-team-20260824T055246Z.json docs/signals/processed/cowork-team-20260824T060412Z.json docs/signals/processed/cowork-team-20260824T061844Z.json docs/signals/processed/cowork-team-20260824T063410Z.json docs/signals/processed/cowork-team-20260824T064815Z.json docs/signals/processed/fleet-push-abort-push-fail-20260824T042919Z.json docs/signals/processed/fleet-push-abort-push-fail-20260824T050031Z.json docs/signals/processed/fleet-push-abort-push-fail-20260824T053127Z.json docs/signals/processed/fleet-push-abort-push-fail-20260824T060300Z.json docs/signals/processed/fleet-push-abort-push-fail-20260824T063400Z.json. actor=7fd9c60a-9854-4589-9e98-e4c5e7e9168d mode=warn escalated=false prior_warns=1 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+  "_processed": {
+    "fingerprint": "ff096941b4bee856e64e7ee91228501c5b4eba26dfe225083a823f90dd309f46",
+    "processedAt": "2026-08-24T07:00:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

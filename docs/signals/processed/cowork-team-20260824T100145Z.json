@@ -1,0 +1,39 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "2026-08-24T10:01:45Z",
+  "payload": {
+    "tick": "2026-08-24T10:00Z",
+    "verdict": "WORK",
+    "drift_min": 0,
+    "slots_matched": 0,
+    "slots_spawned": 0,
+    "new_signals": 7,
+    "work_driver": "signals_only",
+    "silent": false,
+    "findings": [
+      {
+        "id": "PREFLIGHT-PRESENCE-FAILURE-IS-TOTAL-NOT-PARTIAL-NO-HEARTBEAT-EITHER-MANUAL-BACKFILL-WOULD-NOT-DURABLY-FIX-IT",
+        "severity": "high",
+        "detail": "Second-order confirmation of the 09:45Z root cause, and it rules out the obvious cheap workaround. The presence row I created by hand at 09:47:41Z still reads heartbeat_at 1787564861 (09:47:41Z) AFTER cowork-tick-preflight.sh ran again at 10:00:41Z -- unchanged, not renewed. Mechanism: Step 2's renewal path is nested inside the success branch of the claim (if presence_rc==0 && claimed!=true && holder==self -> task_heartbeat). Because the claim itself dies on the Zod object-payload rejection, presence_rc!=0 and the entire branch including the heartbeat is skipped. So the failure is TOTAL -- neither claim nor heartbeat ever executes -- and a one-time manual backfill of the row does NOT durably fix the roster, because nothing renews it. Falsifiable prediction: my manual row expires 2026-08-24T10:17:41Z and the roster returns to count:0 at the 10:30Z tick unless the payload is stringified. Fix remains scripts/agents-flow/cowork-tick-preflight.sh:214-216, payload must be a JSON string. Zone scripts/ -> developer."
+      },
+      {
+        "id": "SILENT-GATE-PIN-NOW-THREE-CONSECUTIVE-TICKS-AND-IT-IS-THE-OFF-HOURS-WINDOW",
+        "severity": "high",
+        "detail": "Third consecutive WORK-on-zero-slots: 09:30Z, 09:45Z, 10:00Z, all slots:[] one_shots:[] new_signals:7, all driven purely by the 7 undeliverable to=po rows held at NEW (unchanged again this tick: 8 NEW total, 7 to=po). 10:00Z is past VN market close (session 02:00-08:59 UTC), so these are exactly the ticks that should be SILENT -- the pin is now consuming full dispatch bodies in the window where the SILENT gate exists to avoid them. Not re-arguing the hold each tick; the structural point stands from 09:45Z (mark-READ is load-bearing for the SILENT gate, hold-NEW keeps rows visible to a PO with no slot, and there is no third state). Recording the count so the cost is attributable: 3 needless dispatch bodies so far, 4/hour ongoing until the rows move."
+      },
+      {
+        "id": "SNAPSHOT-OFFSET-PLUS-1-AT-DRIFT-ZERO-EIGHTH-SAMPLE",
+        "severity": "info",
+        "detail": "docs/data/cycle-snapshot-10:01.json (17545 B) for nominal tick 10:00 -- offset +1 at drift_min 0, the smallest yet, on a lean tick with no investigation. Series now +5,+6,+7,+1,+2,+2,+3,+1 against drift 5,5,4,0,0,0,0,0. This is the cleanest demonstration that offset tracks elapsed dispatcher work rather than any clock property: same drift, same producer, offset moved only because this tick did less. Naming/promotion defect unchanged, cycle_snapshot_promoted false again."
+      }
+    ]
+  },
+  "_processed": {
+    "fingerprint": "4dfb9725548bbe0d1329b8c0377e163f918c9ef2ff2929531ed0c22f8f19b6a8",
+    "processedAt": "2026-08-24T14:21:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

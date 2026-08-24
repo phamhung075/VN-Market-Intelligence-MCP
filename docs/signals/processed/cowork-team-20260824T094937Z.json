@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "2026-08-24T09:49:37Z",
+  "payload": {
+    "tick": "2026-08-24T09:45Z",
+    "verdict": "WORK",
+    "drift_min": 0,
+    "slots_matched": 0,
+    "slots_spawned": 0,
+    "new_signals": 7,
+    "work_driver": "signals_only",
+    "silent": false,
+    "findings": [
+      {
+        "id": "PREFLIGHT-PRESENCE-CLAIM-SILENTLY-FAILS-EVERY-TICK-OBJECT-PAYLOAD-ZOD-REJECT-ROSTER-PERMANENTLY-EMPTY",
+        "severity": "high",
+        "detail": "ROOT CAUSE PROVEN this tick, three-step reproduction. (1) task_list_held(kind='session-presence') returned count:0 thirty seconds after cowork-tick-preflight.sh Step 2 had supposedly registered presence with ttl_seconds:1800. (2) The tool is not at fault: a manual task_claim of session-presence:7be6b4cd-... returned claimed:true (a FRESH claim, so no row existed) and the very next task_list_held returned it, count:1. (3) The script's shape is the fault: cowork-tick-preflight.sh:214-216 builds payload as a jq OBJECT -- payload:{agent_id:'cowork-dispatcher', host:$host}. Reproduced the rejection directly: task_claim with an object payload returns MCP -32602 Zod invalid_type, 'Expected string, received object', path ['payload']. The script's own comment at line 228 then swallows it -- 'Transport error on the claim itself falls through here too - presence never gates.' So the claim has been failing on EVERY tick and the never-gate fallback hides it completely. Consequences: (a) Phase A.5 presence roster is permanently empty and advisory-useless; (b) SERIOUS -- .claude/skills/cron-cowork-team/SKILL.md Step 1b.1 uses session-presence as its PRIMARY staleness oracle, and 'no presence row' is its DEAD branch, which then calls task_force_release_orphan on a peer's cron-registration:cowork-team marker and re-registers. An always-empty roster classifies every LIVE peer as dead, so any re-arm can steal a live peer's registration and double-arm the dispatcher. This is the mechanism behind the previously-recorded 'empty roster / false-dead' incidents; the fix is one character class -- stringify the payload (payload MUST be a JSON string, same constraint already documented for every other task_claim call site). Zone scripts/ -> developer. Audit sibling call sites in scripts/agents-flow/ for the same object-payload shape."
+      },
+      {
+        "id": "HOLDING-PO-ROWS-AT-NEW-PINS-THE-DISPATCHER-INTO-WORK-FOREVER-MARK-READ-IS-LOAD-BEARING-FOR-THE-SILENT-GATE",
+        "severity": "high",
+        "detail": "Consequence of the 09:30Z hold, now measured. cowork-tick-preflight.sh:360-365 computes the SILENT gate as slots_empty && one_shots_empty && signal_count==0, where signal_count counts NEW rows addressed to the SSOT cowork recipient set. The 7 undeliverable to=po rows I held at NEW therefore force verdict=WORK on every subsequent tick: 09:30Z and 09:45Z both came back WORK with slots:[] and one_shots:[], driven by new_signals:7 alone. Two full dispatch bodies run for zero dispatchable work, and this repeats every 15 minutes indefinitely. This reframes the underlying defect: the drain's mark-NEW->READ is not merely lossy bookkeeping, it is LOAD-BEARING for the SILENT gate, and there is no third state for 'undeliverable but still visible'. So the two available behaviours are (a) mark READ -> row cold-evicts unseen at 24h, PO never selects it, SILENT gate works; (b) hold NEW -> row stays visible but PO still has no cowork slot to be routed to, and the dispatcher can never go silent. Neither delivers. A real fix needs either a po delivery path or a distinct terminal status. Rows unchanged this tick: same 8 NEW (7 to=po, 1 to=ops out of scope), 85 already in READ addressed to po."
+      },
+      {
+        "id": "FB-DAILY-PUBLISHED-MARKER-CONFIRMS-PIPELINE-END-CLAIM-AND-A-THIRD-DISTINCT-FIRER-SESSION",
+        "severity": "info",
+        "detail": "published:fb-daily:2026-08-24 is now held, owner_client_session 1349db37-8a3a-4546-b396-20b67c6ea6ab, claimed_at 2026-08-24T09:22:04Z, ttl 100800s, correctly NOT released on success. Two things it pins down. (1) Timing: the deliverable's mtime is 09:21:27Z and the marker lands 09:22:04Z -- 37 seconds later, i.e. write-then-claim, confirming the published-marker Phase-2 claim sits at pipeline END and that probing for it mid-run is uninformative by construction (exactly why the 09:15Z probe found nothing while the run was healthy). (2) Sessions: this is a THIRD distinct owner_client_session among today's markers -- mine 7be6b4cd (tnb-audit, chef-evening, digest-daily, digest-sunday), chef-eod 4bd8af59, fb-daily 1349db37. Each firer-spawned run gets its own fresh session id, so firer work is structurally invisible to any session-scoped coordination, and the count of such sessions grows one per firer fire."
+      },
+      {
+        "id": "SNAPSHOT-OFFSET-PLUS-3-AT-DRIFT-ZERO-SEVENTH-SAMPLE",
+        "severity": "info",
+        "detail": "docs/data/cycle-snapshot-09:48.json (17635 B) written for nominal tick 09:45 -- offset +3 at drift_min 0, the extra minute spent on the presence-claim reproduction above. Series now +5,+6,+7,+1,+2,+2,+3 against drift 5,5,4,0,0,0,0. Consistent with offset = drift + elapsed dispatcher time to Step 4.7; the retracted 'monotonically widening clock' reading stays retracted. Underlying naming/promotion defect unchanged: producer names by wall-clock minute, consumer emitPressureStateTool.ts:398 looks up by nominal tick, cycle_snapshot_promoted false again this tick."
+      },
+      {
+        "id": "ROUTER-CREATED-THE-MISSING-PRESENCE-ROW-BY-HAND-THIS-TICK",
+        "severity": "info",
+        "detail": "Disclosure so a later reader does not mistake it for the script self-healing: while reproducing the presence defect I claimed session-presence:7be6b4cd-057e-419b-a967-4810daf2b646 manually with a correctly-stringified payload (ttl 1800, expires 2026-08-24T10:17:41Z, payload site 'router-presence-probe'). It is left in place because it is exactly the row the script intended to create and it makes this session correctly visible to peers, but it was NOT created by the sanctioned path and it will lapse at 10:17:41Z unless the script starts working. A roster that looks healthy for the next 30 minutes is this manual row, not a fix."
+      },
+      {
+        "id": "NO-SPAWN-AUTHORISED-THIS-TICK-STEP-0A-PO-BRANCH-IS-LOG-NOT-DISPATCH",
+        "severity": "info",
+        "detail": "Recording a decision reversed mid-tick. Given two escalation-worthy findings and CLAUDE.md's 'never ask user - spawn po for decisions', I ran the mandatory PRE-CLAIM sequence (Phase A orphan-signal probe: 0 locks, clean; Phase A.5 roster: empty, per the defect above; Phase B: intent:po:cowork-signalqueue-po-jam-and-preflight-presence-claim-break-20260824 claimed true) and then did NOT spawn, releasing the intent lock cleanly (released:1). Reason: work-tick.md Step 0a's own branch for po-addressed rows is 'route to matching agent slot at Step 5 OR log for PO', and there is no po cowork slot, so the authorised branch is log. This tick matched ZERO slots, so no Step 5 fan-out spawn is authorised either. Escalation therefore goes out as this telemetry envelope (to: po) rather than a dispatch. Noting it because a PRE-CLAIM sequence that ends in no spawn otherwise looks like an aborted or collided dispatch in the lock history."
+      }
+    ]
+  },
+  "_processed": {
+    "fingerprint": "3f11e4b5198a97b15f79d8c117179a11d57448b8a41161b75429a5b86436d854",
+    "processedAt": "2026-08-24T14:21:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

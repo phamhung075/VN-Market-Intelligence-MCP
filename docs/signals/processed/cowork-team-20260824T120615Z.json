@@ -1,0 +1,67 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-08-24T12:06:15Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/alert-commander/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "alert-commander-critical": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 30,
+      "market-watcher-offhours": 30,
+      "alert-commander-critical": null
+    },
+    "last_fired_timestamp": "2026-08-24T12:04:50Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "alert-commander-critical"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "12:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 5,
+    "signal_backlog": 36,
+    "note": "First WORK tick after 4 consecutive SILENT (11:00-11:45Z). LIVE RECONFIRMATIONS this tick: (1) backlog.512 wallclock-vs-nominal-tick key mismatch reproduced end-to-end — Step 4.7 wrote docs/data/cycle-snapshot-12:03.json (wall clock), emit_pressure_state looked up nominal 12:00 and returned cycle_snapshot_promoted:false; docs/data/cycle-snapshot-latest.json is therefore still pinned at created_at 2026-08-23T00:07:50Z tick 00:00, now ~36h stale. (2) telemetry.md Step 6.0 instructs sourcing last_regime/last_volatility_level from cycle-snapshot-latest.json keys regime_status/volatility_level — BOTH keys are absent from the snapshot schema entirely, in the stale latest AND in the freshly-written 12:03 file; the real regime lives at .macro_snapshot.data.signals.carry.regime (=NEUTRAL this tick). Emitted unknown/unknown per the flow doc rather than hand-substituting. (3) Router self-correction: an earlier note in this session claimed pressure-state.json returns mode/cycle_snapshot_promoted/_updated_at as null on the SILENT path — FALSE, those three keys do not exist in that file schema at all (9 keys: emitted_at, tick_id, signal_backlog, last_regime, last_volatility_level, calendar_status, dev_queue_depth, container_vm_headroom_mb, stale_warning); the nulls were absent-key artifacts of the router jq, not a defect. Withdraw that finding. (4) calendar_status=open at 12:05Z, ~3h after VN market close (02:00-08:59Z) — conservative direction (no suppression) so non-blocking, but the server-side computation fixed 08-23 may not model post-close. AC-P1-7-4 de-stamp reference: all three slots held last_fired=2026-08-24T08:04:16Z immediately before this tick stamped 12:04:50Z. Spawn-prompt defect caught and corrected in-flight: alert-commander-critical received a mistyped owner_client_session (479b for 419b); correction sent via SendMessage before its first tool round."
+  },
+  "priority": "low",
+  "createdAt": "2026-08-24T12:06:15Z",
+  "_processed": {
+    "fingerprint": "85daf479b9cf4724a6b5f03febcd632a8a435a700b7fece00ac6e31e648385b2",
+    "processedAt": "2026-08-24T14:21:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

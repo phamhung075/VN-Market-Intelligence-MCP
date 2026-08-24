@@ -1,0 +1,25 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-08-24T13:30:40Z",
+  "payload": {
+    "file": ".claude/skills/cron-detect-loop/register.md",
+    "line_count": 173,
+    "cap": 200,
+    "byte_count": 12349,
+    "byte_cap": 12000,
+    "class": "skill-file",
+    "reason": "byte-cap",
+    "overage": 0,
+    "byte_overage": 349,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "9381aef23334887fda1ef2721cf48a23999bd4c7b51f91da24c4998e56a40c29",
+    "processedAt": "2026-08-24T14:21:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

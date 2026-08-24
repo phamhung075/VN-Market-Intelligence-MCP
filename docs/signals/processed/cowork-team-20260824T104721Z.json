@@ -1,0 +1,63 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "severity": "HIGH",
+  "createdAt": "2026-08-24T10:47:21Z",
+  "payload": {
+    "tick": "2026-08-24T10:45Z",
+    "verdict": "WORK",
+    "drift_min": 0,
+    "slots_matched": 0,
+    "slots_spawned": 0,
+    "one_shots": 0,
+    "new_signals": 7,
+    "silent": false,
+    "findings": [
+      {
+        "id": "PO-HAS-NO-CRON-ARMED-DISPATCH-PATH-AT-ALL",
+        "severity": "HIGH",
+        "status": "NEW this tick — and it invalidates my own framing from the last three ticks",
+        "detail": "For three ticks I described the held po rows as 'bounded by PO's next triage pass', citing last_triaged_at 2026-08-24T07:37:00Z as proof of a live consumer. Measured the consumer's actual dispatch path this tick and the framing does not survive it. Across ALL THREE session-armed cron families: cowork-team 0 references to the po agent, cron-detect-loop 0 (its register.md dispatches only docs/agents/dev-team/ and docs/agents/system-auditor/), cron-standalone-team 0 — its single grep hit is the substring inside the word 'repo'. cowork-schedule.json has 0 slots whose agent or slot_id matches po. So PO is reachable ONLY by router hand-dispatch, by an agent chaining next_agent:po, or from inside the dev-team flow. The 07:37Z triage was one of those unscheduled events, not a cadence.",
+        "impact": "'Bounded by PO's next pass' is bounded by an event nothing schedules. The 7 held rows (1 HIGH bctc_image_fetch_degraded now ~1h45m old, 6 MED CCATO) have no arrival time. This is the same shape as the qa-responder finding — an agent that looks alive because it recently ran, while its only live path is demand-driven or manual — except qa-responder's path was INTACT in source and PO's is genuinely absent from every armed schedule.",
+        "fix": "Router is hand-dispatching po after this tick body completes, as a distinct action outside the dispatcher (match-slots.md:115's spawn-guard forbids the cowork dispatcher itself from spawning dev-team agents). The durable fix is a product decision: give po a cron cadence, or accept manual-only and make the drain's escalation path explicit rather than 'log for PO'.",
+        "zone": "cross-service/"
+      },
+      {
+        "id": "SIGNAL-QUEUE-DRAIN-HELD-SIXTH-CONSECUTIVE-TICK",
+        "severity": "HIGH",
+        "status": "unchanged, 6th consecutive tick",
+        "detail": "Distribution byte-identical for the third tick running: NEW 8, READ 86, RETRACTED 12, triaged 8; same 8 NEW ids. last_triaged_at still 2026-08-24T07:37:00Z, now ~3h08m stale. The 7 recipient-addressed NEW rows continue to pin the SILENT gate, forcing WORK with slots:[] and one_shots:[] on a sixth consecutive tick — five of the six after VN market close. Oldest READ row ts 2026-08-23T14:12:28Z, ~3h25m from its 24h cold-eviction.",
+        "impact": "6 needless dispatch bodies, and per the finding above the bound on this is not a cadence.",
+        "zone": "docs/agents/cowork-team/flow/"
+      },
+      {
+        "id": "ROUTER-PROCESS-DEFECT-CORRECTED-THIS-TICK",
+        "severity": "LOW",
+        "status": "self-correction, actioned",
+        "detail": "Last tick I truncated the preflight's stdout and could not recover slots/one_shots/new_signals from any artifact, because the verdict is persisted nowhere and the telemetry jsonl drops those fields. Recovered then by verdict_bytes byte-identity, which only works when a neighbouring tick is identical. This tick the preflight was invoked as `> docs/data/.tick-verdict-1045.json 2>...err` and the full envelope is on disk. The underlying gap is unchanged and still worth fixing in the script rather than in router habit — either widen the telemetry row or have the preflight tee its own verdict.",
+        "zone": "scripts/"
+      },
+      {
+        "id": "SNAPSHOT-OFFSET-ELEVENTH-SAMPLE",
+        "severity": "LOW",
+        "status": "informational",
+        "detail": "docs/data/cycle-snapshot-10:46.json (17614 B) for nominal tick 10:45 — offset +1. Series +5,+6,+7,+1,+2,+2,+3,+1,+1,+2,+1 against drift 5,5,4,0,0,0,0,0,0,0,0. cycle_snapshot_promoted false on every tick to date; naming defect unchanged and the fence was run verbatim.",
+        "zone": "apps/mcp-server"
+      },
+      {
+        "id": "NO-FIRER-ACTIVITY-SINCE-0915Z",
+        "severity": "LOW",
+        "status": "informational",
+        "detail": "Step 5.3 reconciliation: last guaranteed-slot-firer entry remains the 09:15:07Z fb-daily fire. Nothing to reconcile at 10:30Z or 10:45Z.",
+        "zone": "docs/agents/cowork-team/flow/"
+      }
+    ]
+  },
+  "_processed": {
+    "fingerprint": "0a4660450428b693fe6ba4e25a49aa0439512ed1f7edce9cac17629a3ab498ed",
+    "processedAt": "2026-08-24T14:21:11Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

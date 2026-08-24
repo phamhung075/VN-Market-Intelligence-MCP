@@ -1,0 +1,14 @@
+{
+  "from": "alert-commander",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[alert-commander] commit-mutex: git push origin main BLOCKED AGAIN by pre-push size-lint gate (3rd escalation of this recurring class today, after 2026-08-23T20:10:16Z and 2026-08-24T00:08:43Z). Local commit 06ab6542b (chore(memory/alert-commander): notebook 2026-08-24 c220 silent-exit) landed cleanly local-only — not a non-fast-forward conflict. size-lint reports 3 offenders this time (scanned 1417 files): (1) apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts baseline=228L actual=252L upper=250L — SAME offender as both prior escalations, already tracked as FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH (grep-verified still BACKLOG status, still 252L — unresolved despite 2 prior escalations and an earlier false DONE_VERIFIED claim under UNBLOCK-FLEETPUSH-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER-BLOCKS-ALL-PUSHES). (2) apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts baseline=906L actual=1012L upper=996L — NEW offender, grep-checked orch-state.json + backlog-detail.json for tasksMdJanitorJob/TASKSMDJANITOR, zero hits, no tracked row exists. (3) apps/pdf-extractor/infrastructure/ocr_gateway.py baseline=527L actual=594L upper=579L — NEW offender, zero tracked row found; note this file sits directly under the CURRENTLY ACTIVE sprint FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH (task_board.qa, head.active_task_id) — likely grew past baseline during that sprint's own edits; flag to whoever closes that sprint rather than minting a separate row if in-flight. Fleet-wide: ALL pushes to main remain blocked until all 3 offenders are fixed/re-baselined. Mint/dispatch as needed — not alert-commander's job to fix (infra/size-lint diagnosis is dev-team's).",
+  "priority": "high",
+  "createdAt": "2026-08-24T06:53:34Z",
+  "_processed": {
+    "fingerprint": "5cfb686da319dbb256da5f9f92bd7a4be79c16ff941055e59300cc8132235cba",
+    "processedAt": "2026-08-24T07:00:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

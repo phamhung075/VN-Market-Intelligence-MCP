@@ -1,0 +1,128 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "createdAt": "20260824T073631Z",
+  "payload": {
+    "tick": "2026-08-24T07:30Z",
+    "nominal_tick": "2026-08-24T07:30:00Z",
+    "drift_min": 3,
+    "pressure_mode": "adaptive",
+    "slots_fired": [
+      "alert-commander-market"
+    ],
+    "suppressed_cadence": [],
+    "silent": false,
+    "findings": [
+      {
+        "id": "SNAPSHOT-WRITE-OFFSET-PLUS-FOUR-NEW-DAILY-MAXIMUM",
+        "severity": "high",
+        "detail": "Step 4.7 wrote docs/data/cycle-snapshot-07:34.json for nominal tick 07:30 — a +4 minute offset, the largest observed today (prior range +1..+3 across 22 files) and the tenth consecutive non-zero offset. Offset is drift_min (3) plus in-tick fetch latency, so it grows with load; it is not bounded by the spec."
+      },
+      {
+        "id": "SNAPSHOT-GRID-ALIGNMENT-ZERO-OF-TWENTYTHREE-TODAY",
+        "severity": "high",
+        "detail": "Re-measured with the new file: 23 tick-driven snapshots today (02:01 through 07:34). Zero land on a nominal tick minute; zero land on any 5-minute grid point. The cycle-bootstrap SKILL.md Step -1 contract (TICK = round to nearest 5-min slot) is unsatisfiable by construction, now on a 23/23 sample."
+      },
+      {
+        "id": "SNAPSHOT-PROMOTION-THIRTEENTH-CONSECUTIVE-FALSE",
+        "severity": "high",
+        "detail": "emit_pressure_state returned cycle_snapshot_promoted:false again. cycle-snapshot-latest.json still carries .tick == \"00:00\". Thirteen consecutive ticks. Prune confirmed healthy last tick, so late-prune residue remains ruled out."
+      },
+      {
+        "id": "PRESSURE-MODE-NOT-PERSISTED-BY-EMIT",
+        "severity": "medium",
+        "detail": "emit_pressure_state accepted pressure_mode:\"adaptive\" and returned success:true, but the written pressure-state.json has no pressure_mode key. Recurring; zone apps/mcp-server/."
+      },
+      {
+        "id": "CHEF-UNCOMMITTED-STRAND-IS-ELEVEN-FILES-BACK-TO-08-13",
+        "severity": "high",
+        "detail": "CORRECTION to prior ticks, which carried this as two files stale six ticks. git status shows ELEVEN untracked unified-agent-synthesis-*.json deliverables plus the modified notebook: 2026-08-13 (morning, intraday, chef-intraday, evening, eod), 08-14 (evening, eod), 08-22 (chef-evening), 08-23 (evening), 08-24 (chef-intraday, intraday). These are produced deliverables that git has never seen. The oldest share the 2026-08-13 date with the chef-eod/fb-daily last_fired freeze — correlation worth testing, not yet a causal claim."
+      },
+      {
+        "id": "OCRGATEWAY-SPRINT-REACHED-DEPLOY-GATE-REBASELINE-WINDOW-OPEN",
+        "severity": "medium",
+        "detail": "Peer commit f27126faa: FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH is code-verified, holding for ops deploy. ocr_gateway.py was to be re-baselined at that sprint's closeout; if the sprint closes without touching the baseline, the offender stays uncovered. SELF-CORRECTION: an earlier draft of this finding claimed the live baseline (527) contradicted the previously-carried 579 figure. It does not — 527 is the recorded baseline and 579 is the tolerance ceiling derived from it. The carried figures were correct."
+      },
+      {
+        "id": "DRIFT-THREE-MINUTES-WITHIN-SAFE-ENVELOPE",
+        "severity": "info",
+        "detail": "drift_min=3, inside the 0-10 safe band (WARN at 11, collision risk at 15). No drift telegram sent. Highest drift observed this session."
+      },
+      {
+        "id": "SINGLE-SLOT-TICK-NO-COLLISION",
+        "severity": "info",
+        "detail": "Step 4b collision guard ran against one MATCH (alert-commander-market). No agent_id in two or more slots; no WARN telegram. No cadence suppression this tick."
+      },
+      {
+        "id": "AHEAD-COUNT-189-FOUR-PEER-COMMITS-SINCE-LAST-TICK",
+        "severity": "info",
+        "detail": "origin/main..main = 189, up from 187 at 07:15Z with only one commit of mine in between. Peers landed 24d35f81e (auditor tier1 unblock), 13d662b52 (po mint), f27126faa (qa ocr-gateway verify), 59bbea76c (qa notebook). At least three concurrent sessions are committing to this shared tree. Push remains blocked by size-lint."
+      },
+      {
+        "id": "SIZELINT-THREE-OFFENDERS-CONFIRMED-LIVE-EXACT-FIGURES",
+        "severity": "high",
+        "detail": "Ran scripts/audits/size-lint-justification.sh --check (write-free). FAIL, 3 offenders of 1417 scanned, all three previously-carried figures confirmed exactly: pushBctcLayoutHandler.ts baseline=228 actual=252 upper=250; tasksMdJanitorJob.ts baseline=906 actual=1012 upper=996; ocr_gateway.py baseline=527 actual=594 upper=579. Board coverage remains 1 of 3 — pushBctcLayoutHandler has task_board.backlog[491]; tasksMdJanitorJob has zero tracked rows; ocr_gateway is covered only implicitly by the sprint now at the deploy gate. This is the gate blocking all 189 stranded commits."
+      },
+      {
+        "id": "CHEF-STRAND-SPLITS-INTO-TWO-POPULATIONS-BY-MTIME",
+        "severity": "high",
+        "detail": "The eleven untracked synthesis files are not one backlog. Seven of them (08-13 morning/intraday/chef-intraday/evening/eod, 08-14 evening/eod) share the IDENTICAL mtime epoch 1786782959 — one write instant on 2026-08-15 10:35:59 CEST. That is a bulk restore or regeneration, not organic per-cycle chef output, and it has sat uncommitted for 9 days. The other four (08-22-chef-evening 21:50, 08-23-evening 21:51, 08-24-chef-intraday 04:22, 08-24-intraday 08:21, all CEST) have distinct plausible per-cycle mtimes and ARE organic chef writes that each individually failed to get committed. Two different defects needing two different fixes: one orphaned recovery batch to adopt-or-discard, and a live recurring commit miss. Corroborating: the 08-14 files with organic mtimes (intraday 04:24, morning 07:23) DID get committed — only the burst-written ones did not."
+      },
+      {
+        "id": "CHEF-FILENAME-PREFIX-DEFECT-SAME-DAY-CONTROL",
+        "severity": "high",
+        "detail": "Both 08-24 variants are present with organic mtimes 4h apart: -chef-intraday (6348B, 02:22Z) correct per chef-dish.md:889 {CYCLE_DATE}-{SLOT_ID}, and -intraday (3163B, 06:21Z) with the chef- prefix dropped and roughly half the content. Same day, same agent, same slot family — a clean control. Zone docs/agents/unified-agent/ -> agent-father."
+      },
+      {
+        "id": "CITATION-INVERSION-FOURTH-INSTANCE-NOW-DETERMINISTIC-FOR-ALERTCOMMANDER",
+        "severity": "high",
+        "detail": "The 07:30 spawn declined to escalate the size-lint offenders, citing two ids as proof the work is already tracked. Path-resolved both against orch-state.json: FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH -> task_board.backlog.491.id (REAL row). SIZELINT-TWO-NEW-OFFENDERS-ZERO-TRACKED-ROWS -> dev_team_idle_chain.pending_triage_inbox.65.payload.findings.7.id — NOT a task row, but a telemetry finding inside the cowork-fire envelope THIS DISPATCHER emitted at 07:00Z, whose literal text states that two offenders have no tracked board row. A report of missing coverage was cited as evidence of coverage. This is the SECOND consecutive occurrence by the same agent (c221 at 07:00Z did the same thing with a different finding id from the same envelope family) and the FOURTH overall. Two-for-two across consecutive ticks makes it deterministic, not intermittent: alert-commander's suppression gate cannot distinguish a task_board row id from a telemetry finding id, because both are SCREAMING-KEBAB and both live in orch-state.json."
+      },
+      {
+        "id": "SUPPRESSION-CONSEQUENCE-IS-REAL-NOT-COSMETIC",
+        "severity": "high",
+        "detail": "Because the citation read as already-tracked, the spawn sent no BUG escalation. Re-verified by full-board path resolution (not the backlog-only scan used at 07:15Z, which was too narrow): every task_board path mentioning tasksMdJanitorJob or ocr_gateway belongs to an unrelated row — backlog.411 FIX-TASKKIND-ENUM-NO-GUARD-MARKER-CATEGORY, review.7 FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX, backlog.233 FIX-PDFX-GENERIC-MD-TABLE-OCR-UNROUTED-GATEWAY, review.25 FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH. None tracks FILE SIZE. Coverage is 1 of 3 and the two uncovered offenders still have no task row and no live signal outside this dispatcher's own telemetry — which is precisely the artefact being mis-cited to justify the silence. Telemetry alone has now failed twice to convert this into a row; it needs a mint, not another finding."
+      },
+      {
+        "id": "OCRGATEWAY-BOARD-STATUS-CONTRADICTS-ITS-OWN-COMMIT-MESSAGE",
+        "severity": "medium",
+        "detail": "CORRECTION to this tick's earlier finding. Commit f27126faa reads 'code-verified, hold pending ops deploy', from which I inferred an imminent closeout and re-baseline window. The board disagrees: task_board.review[25] FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH is status BLOCKED, next_agent po — not queued for deploy. The board is the dispatch SSOT; the commit message is narration. No re-baseline window is actually open."
+      },
+      {
+        "id": "SNAPSHOT-AGE-ANNOTATION-WRONG-THIRD-DATAPOINT",
+        "severity": "medium",
+        "detail": "Snapshot cycle-snapshot-07:34.json written 07:34:23Z; agent work-log start 07:37:18Z — true age ~3min. The return text says '~1min old' and the work-log findings say '~2min old', two different wrong values for one read. Consistent with the carried defect that these annotations are computed at write time rather than read time. Third datapoint; agent-father scope."
+      }
+    ],
+    "deviations": [
+      "Did NOT re-call claim_due_scheduled_tasks or cowork-match-slots.js (WORK-continuation contract) — catchup_raw not re-measured this tick.",
+      "Sent last_regime and last_volatility_level as \"unknown\" per Step 6.0 spec, despite live carry.regime=NEUTRAL (carrySpread 1.37pp) being in hand from the snapshot fetch — the wrong-key defect must stay visible.",
+      "Did not repair the two malformed notebook-prune signal files (skipped unparseable again, third consecutive tick).",
+      "Did not commit the chef strand — no owner assigned, and it is now larger than previously recorded.",
+      "Did not run guard-signal-type-coverage.sh (not read-only; no safe invocation).",
+      "Did not attempt any push."
+    ],
+    "reconciliation_0730": {
+      "note": "Findings added post-write, before drain. size-lint --check is write-free; no orch-state or baseline mutation performed.",
+      "amended_at": "2026-08-24T07:40Z"
+    },
+    "reconciliation_0730_spawn": {
+      "negative_control": "PASS — no IDENTITY_PREAMBLE echo, RETURN_TEXT well under 20000 chars",
+      "offflow_markers": "0 of 6",
+      "commit": "74cbc11d8 — notebook only, 9+/9-, 1 file",
+      "notebook": "31L/8942B, sections c221/c222/c223, c220 pruned",
+      "log_agent_work": "id 2096, completed",
+      "snapshot": "cycle-snapshot-07:34.json hit",
+      "peer_damage": "none — 11-file chef strand and all 55 dirty paths intact",
+      "ahead": 190,
+      "push": "blocked at pre-push size-lint, 3 offenders — expected"
+    }
+  },
+  "_processed": {
+    "fingerprint": "d986612eabf3610575a267e25121fee31bb6d0649e5c062ae4be3dff9973f649",
+    "processedAt": "2026-08-24T07:45:44Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
