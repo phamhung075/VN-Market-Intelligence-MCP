@@ -15,16 +15,34 @@
     "signal_backlog": 32,
     "devq": 5,
     "container_vm_headroom_mb": 4562,
-    "matched_slots": ["refine-bctc-slot-4"],
-    "won_slots": ["refine-bctc-slot-4"],
-    "spawned": ["refine-bctc-slot-4"],
-    "last_fired_slots": ["refine-bctc-slot-4"],
+    "matched_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-4"
+    ],
+    "spawned": [
+      "refine-bctc-slot-4"
+    ],
+    "last_fired_slots": [
+      "refine-bctc-slot-4"
+    ],
     "last_fired_timestamp": "2026-08-24T16:32:38Z",
     "downgraded": [],
     "suppressed_cadence": [],
     "chef_mutex_applied": false,
-    "fanout_gate": {"degraded": false, "max_parallel": 4, "batches": 1},
+    "fanout_gate": {
+      "degraded": false,
+      "max_parallel": 4,
+      "batches": 1
+    },
     "step_5_3": "DEFERRED — BGFAN-1 background spawn; detector re-runs against real return text on notification",
     "note": "prior last_fired for de-stamp: refine-bctc-slot-4=2026-08-23T16:39:25Z. Step 4.7 snapshot written as cycle-snapshot-16:31.json (wall-clock name vs nominal 16:30 — 4th confirmation of the naming defect). cycle_snapshot_promoted=false; cycle-snapshot-latest.json still created_at 2026-08-23T00:07:50Z (~40h stale). regime_status/volatility_level absent at every snapshot path — 'unknown' passed honestly."
+  },
+  "_processed": {
+    "fingerprint": "7e94b218027592f34af22924c27b6dcd0eb84fd63935c2f881403585e42188cd",
+    "processedAt": "2026-08-24T17:16:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

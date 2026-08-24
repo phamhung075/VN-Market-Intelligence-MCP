@@ -48,5 +48,11 @@
       "agent_framing_was_incomplete": "the RETURN attributes everything to upstream partitioning or OCR quality, which points at pdf-extractor. That is at most half of it: the durability defect (D1) is in this agent's own flow doc, and D2 is the opposite of what was reported — the problem is the chunk that succeeded, not the chunk that failed."
     },
     "context": "Dispatch itself was healthy: slot matched, claimed, spawned, returned normally, Step 5.3 detector 0/6 markers, last_fired stamp stands at 2026-08-24T16:32:38Z. This is a payload-quality and durability finding, not a scheduling one."
+  },
+  "_processed": {
+    "fingerprint": "fb709def64fee12a580b8dfc11ccc9f45a190c6e2d9a5e1681b7ba952a62602c",
+    "processedAt": "2026-08-24T17:16:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
