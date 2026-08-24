@@ -16014,24 +16014,32 @@
         "priority": "P0",
         "size": "S",
         "zone": "multi",
-        "owner": "architect",
-        "next_agent": "architect",
-        "depends": [],
+        "owner": "po",
+        "next_agent": "qa",
+        "depends": [
+          "FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT",
+          "FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-2-FLOWDOC-CRON-PROMPT"
+        ],
         "files": [
           "scripts/agents-flow/auditor-tier1-probe.sh",
           "docs/agents/system-auditor/flow/tier1-probe.md"
         ],
         "created_at": "2026-08-24T04:01:33Z",
-        "updated_at": "2026-08-24T07:20:56Z",
+        "updated_at": "2026-08-24T07:42:35Z",
         "created_by": "po/ruling-20260824T0400Z-pdfx-tier1-nonconvergent-loop",
-        "updated_by": "po (ruling-20260824T0722Z)",
+        "updated_by": "architect/split-20260824T0741Z",
         "dedup_key": "auditor-tier1-fold-no-debounce-respawn-loop",
         "title": "Tier-1 has NO spawn debounce, so a correctly-folded condition re-spawns system-auditor every 30 minutes forever: probe returns FAILURE -> cron spawns system-auditor -> A-30 deep probe returns FOLD -> tier1-probe.md:241 maps FOLD to PASS/no-emit -> the fold leaves NO artifact the probe can read -> the identical FAILURE fires again on the next tick. docs/data/auditor-tier1-last-trigger.json is WRITE-ONLY (TRIGGER_FILE assigned at :208, written at :749 and :757, read nowhere in the script). A second, independent trigger compounds it: a FAILURE tick never writes auditor-tier1-last-healthy.json, so the heartbeat-older-than-60min trigger arms too and stays armed.",
         "acceptance": "AC-1 a FOLD must leave a DURABLE, machine-readable record keyed on the breach SIGNATURE (the probe own detail string, or a normalized form of it). AC-2 the probe must read that record together with its own last-trigger and decline to re-spawn for the SAME signature inside a bounded window. AC-3 THE VERDICT ITSELF MUST STAY RED -- this is a SPAWN debounce, never a verdict change: do NOT convert FOLD into ALL_GREEN, and do NOT write auditor-tier1-last-healthy.json on a FAILURE tick (its sole authorized writer is _write_heartbeat on the ALL_GREEN branch, CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER). AC-4 a NEW or CHANGED signature must always spawn immediately -- debounce is per-signature, never global. AC-5 the window must EXPIRE so a persisting condition is re-adjudicated rather than muted forever. AC-6 zone is `multi`: architect splits the scripts/ half (developer) from the docs/agents/system-auditor/ half (agent-father), per the owner precedent already recorded on FIX-A21-PREDBOUND-2-TIER1-PROBE-DEDUPE-VIA-SHARED-ACTUATOR. AC-7 READ-ONLY on runtime.",
         "evidence": "MEASURED: cycle c1002, 2026-08-24T03:30Z fire -- ~80k tokens / 22 tool calls / 4.3 min spent to return FOLD on an unchanged condition. Tier-1 was ALL_GREEN at 01:17:09Z; pdf-extractor first breached at the 02:00Z tick (85.11%), then 02:30Z 85.11%, 03:00Z 87.06%, 03:30Z 86.97%. SERIAL-OFFENDER SHAPE: the immediately preceding FAILUREs (2026-08-23 21:00Z, 21:30Z, 23:00Z) were a DIFFERENT cause -- launchd fleet-push STALE-ACK -- which po hand-retargeted at 2026-08-24T01:09:11Z. Each cause gets hand-resolved one at a time while the no-debounce structure simply re-arms on the next one. That is the recurring root cause; the individual breaches are the symptoms.",
         "non_goals": "Do NOT resolve this by adding acked[] / acked_memory[] entries to docs/data/auditor-launchd-ack.json. PO refused exactly that for pdf-extractor on 2026-08-24: a suppression ledger hides the SIGNAL, whereas a debounce hides only the DUPLICATE SPAWN. Do NOT raise or lower MEM_FLOOR_MIB or WARN_PCT. Do NOT touch pdf-extractor memory-management code -- that is FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM.",
         "po_ruling_20260824T0716Z": "RE-RULED AND EXPEDITED P1->P0. Router re-opened options (a) ack pdf-extractor in .acked_memory / (b) raise its 2.5GiB cap / (c) other. (a) and (b) REFUSED AGAIN, on evidence the router brief did not carry. (a): the brief's premise -- 'headroom far above MEM_FLOOR_MIB=40' -- is a WRONG-PLANE artifact. docker stats MemPerc subtracts inactive_file, and _mem_headroom_mib() computes cap*(100-MemPerc)/100, so it reads ~335MiB free where this cgroup's own memory.current sat at 99.85% of memory.max (true free 1.5-3.7MiB, memory.peak == memory.max EXACTLY; 6 read-only samples, PO 04:0xZ). The MEM_FLOOR_MIB=40 guard therefore CANNOT EVER FIRE for this container -- an ack here would be unbounded in precisely the way FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY was minted to prevent. A per-entry floor_mib is also unimplementable: _check_mem_creep builds its ack list as a TWO-FIELD tsv (container, tracked_by), so the field would be read by nothing. And the probe's own _mem_container_acked header PRE-REFUSES this exact ack in writing. (b): cap is already 2684354560B = 2.5GiB, second-largest on the host; live per-container caps sum to 13.5GiB against 7.75GiB of host RAM (mcp-gateway's uncapped MemPerc denominator) = 1.74x overcommit, with a documented host-memory-panic history. Raising it would also move FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM's AC-4 goalpost (a percent-OF-CAP bar) -- turning a FAILED acceptance criterion into a passing one by changing the denominator, i.e. metric-masking. WHY THIS ROW DID NOT SHIP IN THE 3h SINCE IT WAS MINTED: not priority, not eligibility. It is DRS-ELIGIBLE (verified live: bounded1-supervised-lane-report.sh DRS-ELIGIBLE, 102 rows, next_agent=architect is on the ratified allowlist). It never got a turn because `.head` froze non-idle at 2026-08-24T04:27:01Z -- 26 minutes after this row was minted -- and BOUNDED-1/SLS/RLC/DRS/QA-Drain/Step-1 ALL run only on the head-idle fall-through. Head is unpinned to idle in this same write. DRS ranks by priority_rank then backlog[] index; at P1/index 502 this row sat behind 55 P1s, hence P0.",
-        "po_addendum_20260824T0722Z": "AC-3 IS NOW LOAD-BEARING, NOT DEFENSIVE — DO NOT SOFTEN IT. This row was written on the assumption that the mem_creep FAILURE it debounces is a correctly-folded benign condition whose only cost is the duplicate spawn. That assumption is now REFUTED IN THE SAFE DIRECTION: the FAILURE is a TRUE POSITIVE. Kernel dmesg (read 2026-08-24T07:18:59Z via the read-only nsenter recipe) shows two real CONSTRAINT_MEMCG OOM kills of pdf-extractor python3 workers on 2026-08-23 at 14:27:11Z and 14:58:52Z, ~2.37 and ~2.35 GiB anon-rss against the 2.5 GiB cap — full transcript on FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM's po_burst_measurement_20260824T0722Z. The A-30 discriminator cannot see them: it reads OOMKilled/RestartCount/VmHWM/MemPerc, and a killed CHILD process leaves every one of those clean. SO: implement AC-1/AC-2/AC-4/AC-5 exactly as written, and treat AC-3 ('THE VERDICT ITSELF MUST STAY RED') as the row's most important clause rather than boilerplate — this is a SPAWN debounce over a condition that is genuinely dangerous, not a way to stop hearing about a benign one. Any implementation that converts FOLD to ALL_GREEN, or that writes auditor-tier1-last-healthy.json on a FAILURE tick, would now silence a live crash source. The non_goals ban on resolving this via acked_memory[] is likewise reinforced, not merely restated: PO has refused that ack three times (04:00Z, 07:16Z, 07:22Z) and the dmesg evidence is why."
+        "po_addendum_20260824T0722Z": "AC-3 IS NOW LOAD-BEARING, NOT DEFENSIVE — DO NOT SOFTEN IT. This row was written on the assumption that the mem_creep FAILURE it debounces is a correctly-folded benign condition whose only cost is the duplicate spawn. That assumption is now REFUTED IN THE SAFE DIRECTION: the FAILURE is a TRUE POSITIVE. Kernel dmesg (read 2026-08-24T07:18:59Z via the read-only nsenter recipe) shows two real CONSTRAINT_MEMCG OOM kills of pdf-extractor python3 workers on 2026-08-23 at 14:27:11Z and 14:58:52Z, ~2.37 and ~2.35 GiB anon-rss against the 2.5 GiB cap — full transcript on FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM's po_burst_measurement_20260824T0722Z. The A-30 discriminator cannot see them: it reads OOMKilled/RestartCount/VmHWM/MemPerc, and a killed CHILD process leaves every one of those clean. SO: implement AC-1/AC-2/AC-4/AC-5 exactly as written, and treat AC-3 ('THE VERDICT ITSELF MUST STAY RED') as the row's most important clause rather than boilerplate — this is a SPAWN debounce over a condition that is genuinely dangerous, not a way to stop hearing about a benign one. Any implementation that converts FOLD to ALL_GREEN, or that writes auditor-tier1-last-healthy.json on a FAILURE tick, would now silence a live crash source. The non_goals ban on resolving this via acked_memory[] is likewise reinforced, not merely restated: PO has refused that ack three times (04:00Z, 07:16Z, 07:22Z) and the dmesg evidence is why.",
+        "children": [
+          "FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT",
+          "FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-2-FLOWDOC-CRON-PROMPT"
+        ],
+        "architect_review_note": "2026-08-24T07:41Z architect. Brief: docs/architecture-briefs/2026-08-24-fix-auditor-tier1-spawn-debounce.md. Design: per-signature spawn debounce in scripts/agents-flow/auditor-tier1-probe.sh's run_probe() FAILURE branch -- new docs/data/auditor-tier1-spawn-debounce.json ledger keyed on a normalized signature (checkname:unacked-entity-list, excludes percentages/status codes/the acked-transparency clause -- proven against the live 2026-08-24T07:36:32Z coordinator datapoint, which also confirmed a naive full-string hash would debounce nothing since percentages drift every tick), 60min window (SPAWN_DEBOUNCE_WINDOW_MIN, reuses the existing _fresh_threshold_minutes_for_tier 2x-own-cadence convention rather than inventing a new constant -- 4h/2h considered and rejected in the decision journal, AC-3/po_addendum is paramount so the shorter precedented value wins). VERDICT STAYS FAILURE unconditionally on every failing tick (AC-3) -- heartbeat file untouched, unchanged sole-writer contract. Cron-prompt fix REPLACES (not appends to) the old unconditional verdict=FAILURE->spawn OR-arm in .claude/skills/cron-detect-loop/register.md Job 2 with a mandatory read of the probe's own new spawn_decision field -- both guard arms defeated together by construction (mutually exclusive branch on verdict), per the dispatch note's explicit requirement. Design proven to hold for the rag-service ack-expiry hazard (expiry_hazard_20260824T0716Z) without new code: an ack going STALE moves that container from the acked clause into the primary breach list, which by construction changes the signature and forces an immediate spawn under AC-4. RECOMMENDED SPLIT (zone=multi, AC-6): developer owns scripts/agents-flow/ (script+test+CANONICAL doc block); agent-father owns docs/agents/system-auditor/flow/tier1-probe.md + .claude/skills/cron-detect-loop/register.md (established owner of agent-flow/cron-registration prose, FIX-A21-PREDBOUND-2 precedent). DIVERGES from the A21 precedent on ONE point, stated explicitly: A21's 2 children were independent (depends:[] each, two unrelated standalone artifacts); here the halves form ONE integrated runtime contract (script emits fields, prompt reads them) so agent-father's child depends on developer's landing first -- fail-open default (missing field => spawn, never silently suppress) makes either order SAFE, sequencing removes the coupling risk rather than merely bounding it. Self-minted the split directly (not routed to PO for a separate dispatch decision, unlike A21) because AC-6 explicitly instructs \"architect splits\" in the imperative, this row carries no supervised:true gate, and the router dispatch was P0/live-burn urgent with PO's own ruling already authorizing the debounce design -- did NOT add a new supervised:true gate PO did not request (see brief S7 -- a one-field flip if PO wants one later). This row is now the UMBRELLA -- owner=po, next_agent=qa, depends=[the 2 children]. DO NOT IMPLEMENT AGAINST THIS ROW; all code/flow-doc work lives in the 2 children. QA close condition once both children reach review: the field-contract table in brief S3.3/S3.5 matches literally between the shipped script output and the shipped prompt text -- the one cross-check neither child can perform in isolation."
       },
       {
         "id": "FIX-ORCHSTATE-STALE-HEAD-NO-LIVENESS-DETECTOR-HALTS-EVERY-DISPATCH-PICKER",
@@ -16058,6 +16066,59 @@
         "acceptance": "AC-1 add a head-liveness predicate to scripts/lib/devteam-eligibility.jq: `.head.status != \"idle\"` AND `.head.active_task_id` is NOT resident in `in_progress[]` AND no live lock is held on it => STALE. AC-2 dev-team Step 0b treats STALE exactly like idle -- reset `.head` to the canonical idle shape {status:\"idle\",active_task_id:null,next_agent:null,updated_at,updated_by} in the SAME orch-apply write that falls through, mirroring the existing WF-1 BLOCKED branch (main.md:331). AC-3 the reset MUST NOT lane-move the pointed-at row: unlike WF-1's BLOCKED branch the row is legitimately resident in its new lane (qa[]/review[]/done[]) and its own owner moved it -- reset the pointer only. AC-4 an AGE FLOOR so a live dispatch mid-write is never reaped: require `.head.updated_at` older than a named, overridable constant (suggest 900s, ~2 dev-team ticks at 7,37) -- never reset a head younger than that regardless of predicate. AC-5 emit ONE signal_queue row per distinct stale head (dedup_key includes the stale active_task_id) so the outage is visible in history, not silently healed. AC-6 negative controls in scripts/audits/devteam-dispatch-gate-satisfiability.sh: (i) head non-idle + row IS in in_progress[] => NOT stale; (ii) head non-idle + row lane-moved but updated_at younger than the floor => NOT stale; (iii) head non-idle + row lane-moved + older than floor => stale, resets, emits exactly one signal. AC-7 zone is `multi`: architect splits the scripts/ half (developer) from the docs/agents/ half (agent-father), same precedent as FIX-AUDITOR-TIER1-FOLD-VERDICT-NOT-DURABLE-RESPAWNS-AUDITOR-EVERY-TICK AC-6. AC-8 READ-ONLY on runtime; no docker, no cron changes.",
         "evidence": "MEASURED, 2026-08-24. `.head` was written at 04:27:01Z by `dev-team (bounded-1 auto-pickup)` pointing at FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH with next_agent=dev-pdf-extractor. That row moved to qa[] at 04:43:36Z (status=QA, next_agent=qa, lock=null) and the head was never advanced. PO found it still frozen at 07:1xZ -- 2h45m during which all six pickers were unreachable. COST, CONCRETE: FIX-AUDITOR-TIER1-FOLD-VERDICT-NOT-DURABLE-RESPAWNS-AUDITOR-EVERY-TICK was minted 04:01:33Z, is DRS-ELIGIBLE (verified against bounded1-supervised-lane-report.sh), and could not be picked for the entire window -- so a P1 fix for a ~48-spawns/day auditor loop sat undispatched because of an unrelated pointer, and the loop kept burning. This is the 4th distinct agent type observed leaving a stale head (pm mid-sprint, architect handoff, qa/ops close-out, now dev-team bounded-1 pickup), which is why the fix belongs in the READER (a liveness predicate every tick evaluates) and not in another per-writer discipline rule.",
         "non_goals": "Do NOT fix this by adding a head-write obligation to the bounded-1 pickup path or to any other individual writer -- that approach has been tried per-agent at least four times and the 5th writer will reintroduce it. Do NOT touch `.task_board.head` (the deprecated nested stub) -- its re-inflation is a separate defect owned by FIX-ORCHSTATE-TASKBOARD-HEAD-REINFLATION-GUARD. Do NOT widen this into a general lock/heartbeat reaper. Do NOT make the reset unconditional (no age floor) -- that would race a legitimate in-flight dispatch."
+      },
+      {
+        "id": "FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "S",
+        "zone": "scripts/agents-flow/",
+        "owner": "developer",
+        "next_agent": "developer",
+        "depends": [],
+        "parent": "FIX-AUDITOR-TIER1-FOLD-VERDICT-NOT-DURABLE-RESPAWNS-AUDITOR-EVERY-TICK",
+        "files": [
+          "scripts/agents-flow/auditor-tier1-probe.sh",
+          "scripts/agents-flow/auditor-tier1-probe.test.sh",
+          "docs/policies/dev-standards.md"
+        ],
+        "created_at": "2026-08-24T07:41:35Z",
+        "updated_at": "2026-08-24T07:42:35Z",
+        "created_by": "architect/FIX-AUDITOR-TIER1-FOLD-VERDICT-NOT-DURABLE-RESPAWNS-AUDITOR-EVERY-TICK",
+        "source": "architect brief docs/architecture-briefs/2026-08-24-fix-auditor-tier1-spawn-debounce.md S3",
+        "design_ref": "docs/architecture-briefs/2026-08-24-fix-auditor-tier1-spawn-debounce.md",
+        "dedup_key": "auditor-tier1-fold-no-debounce-respawn-loop-script-half",
+        "title": "Half 1 of 2 (scripts/): add a per-signature spawn debounce to auditor-tier1-probe.sh's run_probe() FAILURE branch. New docs/data/auditor-tier1-spawn-debounce.json ledger (atomic tmp+mv, test-seam SPAWN_DEBOUNCE_FILE_PATH), normalized signature builder (checkname:unacked-entity-list, per brief S3.3's per-check table + worked example -- MUST reproduce 'mem_creep:vn-market-intelligence-mcp-pdf-extractor-1' against the live fixture verbatim, recommended implementation = clean entity-name side-channel out of the 3 entity-bearing check functions per brief S3.3(b), NOT generic paren-regex over the prose message per S3.3's documented fragility), SPAWN_DEBOUNCE_WINDOW_MIN=60 default, spawn_decision+signature added to the FAILURE branch JSON only (ALL_GREEN branch byte-identical, zero new keys).",
+        "acceptance": "AC-1 verdict stays \"FAILURE\" unconditionally on every failing tick, exit code stays 1, heartbeat file untouched on FAILURE -- byte-identical to HEAD, extend (never replace) the existing 40+ auditor-tier1-probe.test.sh assertions to prove non-regression explicitly. AC-2 new/changed signature (first occurrence, OR entity list changed, OR failing-check-set changed) -> spawn_decision=SPAWN, ledger entry inserted/reset with a fresh window_expires_at. AC-3 same signature repeated inside the window -> spawn_decision=DEBOUNCED, only last_seen_at updated (window_expires_at/spawn_count/last_spawn_at untouched -- a sliding window would never expire, violates AC-5 of the parent row). AC-4 same signature after window_expires_at -> spawn_decision=SPAWN again, spawn_count increments, window_expires_at recomputed from now. AC-5 debounce logic gated behind the exact same suppress_heartbeat flag already used for _write_trigger_file/_write_heartbeat -- zero diff to run_tiered_probe() (Tier-2/3) or orch-sentinel-lite-probe.sh (both already call run_probe \"suppress_heartbeat\", confirmed by reading orch-sentinel-lite-probe.sh live); add a regression test asserting the debounce file is NEVER written on a suppressed call, mirroring the existing T16/T17 trigger-file pattern. AC-6 debounce file read/write failure fails OPEN to spawn_decision=SPAWN, never silently DEBOUNCED. AC-7 add the CANONICAL doc block to docs/policies/dev-standards.md (style/location matching the existing 'Auditor heartbeat sole-writer' entry, ~line 225) documenting the new file's shape/sole-writer/purpose + a short cross-reference note inside that existing block -- prose-only sole-writer contract, no new pre-commit shape-guard in this pass (brief S6, mirrors the trigger file's own precedent). AC-8 the brief's worked example (S3.3, the live 2026-08-24T07:36:32Z detail string with an acked rag-service clause) is a MANDATORY test fixture and must reproduce the exact signature string 'mem_creep:vn-market-intelligence-mcp-pdf-extractor-1'. AC-9 do not touch run_tiered_probe(), MEM_FLOOR_MIB, WARN_PCT, or any acked_memory[]/acked[] entry -- non-goals unchanged from the parent row.",
+        "verification_gate": "auditor-tier1-probe.test.sh full suite green (existing + new cases), read-only live-fixture replay of the S1 worked example reproduces the exact signature string, zero diff to run_tiered_probe()/Tier-2/3 test cases, zero diff to orch-sentinel-lite-probe.test.sh."
+      },
+      {
+        "id": "FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-2-FLOWDOC-CRON-PROMPT",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P0",
+        "size": "S",
+        "zone": "docs/agents/system-auditor/",
+        "owner": "agent-father",
+        "next_agent": "agent-father",
+        "depends": [
+          "FIX-AUDITOR-TIER1-SPAWN-DEBOUNCE-1-PROBE-SCRIPT"
+        ],
+        "parent": "FIX-AUDITOR-TIER1-FOLD-VERDICT-NOT-DURABLE-RESPAWNS-AUDITOR-EVERY-TICK",
+        "files": [
+          "docs/agents/system-auditor/flow/tier1-probe.md",
+          ".claude/skills/cron-detect-loop/register.md"
+        ],
+        "created_at": "2026-08-24T07:41:35Z",
+        "updated_at": "2026-08-24T07:42:35Z",
+        "created_by": "architect/FIX-AUDITOR-TIER1-FOLD-VERDICT-NOT-DURABLE-RESPAWNS-AUDITOR-EVERY-TICK",
+        "source": "architect brief docs/architecture-briefs/2026-08-24-fix-auditor-tier1-spawn-debounce.md S4/S5",
+        "design_ref": "docs/architecture-briefs/2026-08-24-fix-auditor-tier1-spawn-debounce.md",
+        "dedup_key": "auditor-tier1-fold-no-debounce-respawn-loop-flowdoc-half",
+        "title": "Half 2 of 2 (docs/agents/ + cron-registration skill): wire the new spawn_decision field into the actually-armed cron prompt. Depends on half 1 landing first (sequenced, not parallel -- the two halves form one integrated runtime contract, diverges from the FIX-A21-PREDBOUND-2 precedent's fully-independent children on this one point, see brief S7).",
+        "acceptance": "AC-1 .claude/skills/cron-detect-loop/register.md Job 2's CronCreate prompt text is REPLACED (not appended to) per brief S5's literal structure: ALL_GREEN branch's existing freshness-check wording stays byte-preserved; the FAILURE branch's old unconditional 'verdict=FAILURE -> spawn' OR-clause is removed and replaced with a mandatory read of THIS tick's own spawn_decision field, branching SPAWN vs DEBOUNCED. AC-2 fail-open stated as an explicit branch in the prompt text, not implied: spawn_decision missing/unparseable -> spawn, same as an unreadable probe today. AC-3 docs/agents/system-auditor/flow/tier1-probe.md gets the top-of-file pointer note from brief S4 (mirrors the existing 'NEVER write ... last-healthy.json' restatement style, L20-28) -- debounce affects cadence only, this file's checks run at full fidelity whenever the subagent DOES launch. AC-4 confirm (RAW-verified, not asserted) docs/agents/system-auditor/flow/main.md's Tier Dispatch needs NO edit -- the pre-gate JSON is read only by the cron prompt, never by main.md or tier1-probe.md; state this explicitly in the row status_note rather than leaving it ambiguous. AC-5 .claude/commands/crons/cron-system-auditor.md needs no change (confirmed by reading it -- intentionally carries no pre-gate logic, manual/ad-hoc reference only, own header says so). AC-6 verify (live read, not narrated) after half 1 lands: the JSON field names/shapes this prompt text reads (spawn_decision, signature) match literally what auditor-tier1-probe.sh actually emits -- the joint cross-check the parent umbrella row's QA gate also re-checks independently.",
+        "verification_gate": "Live CronList re-registration cycle (or a dry-run prompt-text review) confirms the new prompt text parses/branches correctly against a real ALL_GREEN JSON, a real FAILURE+SPAWN JSON, and a real FAILURE+DEBOUNCED JSON sample; grep-diff against register.md's own divergence-discipline note (cron-system-auditor.md stays byte-identical for Tier-2/3, untouched for Tier-1 by design)."
       }
     ],
     "closed_sprints": [
@@ -22919,7 +22980,7 @@
         "last_served_tick": "2026-08-24T03:58:59Z"
       }
     },
-    "_updated_at": "2026-08-24T07:15:49Z",
+    "_updated_at": "2026-08-24T07:33:28Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -25589,6 +25650,138 @@
         },
         "createdAt": "2026-08-24T07:04:51Z",
         "drained_at": "2026-08-24T07:15:49Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "727979bfe05d431a924c18cbd609a7e9b88b3f0606fdd92f465ad8577d5ca7e3",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "medium",
+        "payload": {
+          "tick": "2026-08-24T07:15Z",
+          "verdict": "WORK",
+          "drift_min": 0,
+          "slots_fired": [
+            "alert-commander-market"
+          ],
+          "one_shots": [],
+          "suppressed_cadence": [
+            "chef-intraday"
+          ],
+          "pressure_mode": "adaptive",
+          "drain": {
+            "inserted": 2,
+            "db_count": 325,
+            "skipped_unparseable": 2,
+            "grandfathered_ceiling_warns": 21,
+            "net_new_violations": 0
+          },
+          "fanout": {
+            "container_headroom_mb": 3059,
+            "load1": 1.89,
+            "cores": 12,
+            "degraded": false,
+            "max_parallel": 4
+          },
+          "findings": [
+            {
+              "id": "SNAPSHOT-GRID-ALIGNMENT-ZERO-OF-TWENTYTWO-TODAY",
+              "severity": "high",
+              "detail": "Full census of today's cycle-snapshot files: 22 written between 02:01 and 07:17. Offsets from their nominal 15-min tick are +1 to +3 minutes, never 0. ZERO of 22 land on a nominal tick minute, and ZERO land on any 5-minute grid point. The documented contract in .claude/skills/cycle-bootstrap/SKILL.md Step -1 ('round to nearest 5-min slot') is therefore unsatisfiable by construction against what the writer actually produces — this is now measured over a full trading morning, not inferred.",
+              "recommend": "One unambiguous key: nominal tick floor(minute/15)*15, taken by the consumer from the scheduled_utc token already present in its spawn prompt. Zone .claude/skills/cycle-bootstrap/ -> agent-father."
+            },
+            {
+              "id": "SNAPSHOT-WRITE-OFFSET-PLUS-TWO-NINTH-CONSECUTIVE",
+              "severity": "info",
+              "detail": "cycle-snapshot-07:17.json (7340B) written at 07:17:00Z for nominal tick 07:15 — +2 offset, ninth consecutive. Write landed at the very start of the minute, so the spawn (07:17:1x) has near-full-minute read margin."
+            },
+            {
+              "id": "SNAPSHOT-PROMOTION-TWELFTH-CONSECUTIVE-FALSE",
+              "severity": "medium",
+              "detail": "emit_pressure_state returned cycle_snapshot_promoted:false. Twelfth consecutive. cycle-snapshot-latest.json still carries .tick '00:00'."
+            },
+            {
+              "id": "SNAPSHOT-PRUNE-HEALTHY",
+              "severity": "info",
+              "detail": "39 snapshot files total, 24 written today, 15 residual from yesterday, ZERO older than 24h apart from cycle-snapshot-latest.json (intentional). The 24h prune is functioning; the ~4min late-prune hazard recorded earlier has not produced same-HH:MM residue today."
+            },
+            {
+              "id": "PRESSURE-MODE-NOT-PERSISTED-BY-EMIT",
+              "severity": "medium",
+              "detail": "emit_pressure_state accepted pressure_mode='adaptive' and returned success, but the written pressure-state.json has no pressure_mode key. Unchanged defect, zone apps/mcp-server/."
+            },
+            {
+              "id": "SIZELINT-COVERAGE-STILL-OPEN-AFTER-FALSE-SUPPRESSION",
+              "severity": "high",
+              "detail": "Carried forward with new urgency after the 07:00Z reconciliation: alert-commander c221 suppressed its re-file by citing SIZELINT-GATE-NAMES-3-OFFENDERS-BOARD-COVERS-1, which is NOT a task row but a finding inside dev_team_idle_chain.pending_triage_inbox[52].payload — a cowork-fire envelope this dispatcher emitted. tasksMdJanitorJob.ts (1012L/996 upper) and ocr_gateway.py (594L/579 upper) have zero task_board size-lint row. pushBctcLayoutHandler.ts (252L/250) is tracked at task_board.backlog[491].",
+              "recommend": "Mint a row for tasksMdJanitorJob.ts -> dev-mcp-server. ocr_gateway.py = re-baseline at FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH closeout (currently task_board.qa), not a separate mint. Never use size-lint-justification.sh --update."
+            },
+            {
+              "id": "CHEF-WORK-UNCOMMITTED-SIX-TICKS",
+              "severity": "high",
+              "detail": "docs/agent-memory/notebooks/unified-agent.md (modified) and docs/data/unified-agent-synthesis-2026-08-24-intraday.json (untracked) still uncommitted, now six ticks. A peer drain+prune sweep at 06:51:50Z absorbed 18 files and declined both. chef-intraday was cadence-suppressed this tick, so no new chef fire will collect them either. Needs an explicit owner.",
+              "recommend": "Route to po for owner assignment; not recoverable as a side effect of any existing sweep."
+            },
+            {
+              "id": "SINGLE-SLOT-TICK-NO-COLLISION",
+              "severity": "info",
+              "detail": "Step 4b collision guard: one slot in MATCHES, no agent_id appears in >=2 slots, no WARN telegram sent."
+            },
+            {
+              "id": "GUARANTEED-SLOT-SILENCE-NARROWED-TO-TWO-SLOTS-ONE-COMMON-CAUSE",
+              "severity": "high",
+              "detail": "Censused all 8 guaranteed slots. Six are current (fired within 24h). Exactly two are dead: chef-eod (cron 45 8 * * 1-5, last_fired 2026-08-13T08:55:52Z) and fb-daily (cron 15 9 * * 1-5, last_fired 2026-08-13T09:25:15Z) — 7 missed weekdays. They last fired on the SAME day 30 minutes apart, both weekday-only, both in the 08:45-09:15Z band. That points to one common cause on 2026-08-13, not two independent failures.",
+              "recommend": "Do not open two investigations. Cheap discriminator available TODAY: the firer logs a slot-header line whenever a slot is due. Watch docs/agent-memory/sessions/cowork-guaranteed-slot-firer.log at 08:45Z and 09:15Z — no line means the failure is in DUE-DETECTION, a line means it is in invocation."
+            },
+            {
+              "id": "GUARANTEED-SLOT-FIRER-IS-HEALTHY-NOT-DEAD",
+              "severity": "info",
+              "detail": "launchctl list shows com.vn-market.cowork-guaranteed-slot-firer loaded, last exit 0, StartInterval=900. Its log had not been appended for ~2h, which is EXPECTED: the plist states no-op ticks exit 0 with no claude invocation and no log write. Log-mtime is not a liveness signal for this job. Its alert-state file is a 2-line cooldown (epoch + fingerprint), not a status board.",
+              "note": "Today the firer logged exactly one event: chef-morning invoked 05:28:50Z, died on API Error 529 Overloaded, exit 1 at 05:32:15Z, correctly escalated to the bug channel. The escalation path works."
+            },
+            {
+              "id": "LAST-FIRED-IS-AN-ATTEMPT-STAMP-NOT-A-DELIVERY-RECORD",
+              "severity": "high",
+              "detail": "chef-morning reads last_fired=2026-08-24T05:17:39Z (stamped via the cowork dispatcher path) while the guaranteed backstop invocation at 05:28:50Z FAILED with a 529. Two different actors, and the schedule records only the earlier attempt. No chef-morning deliverable exists today — the 2026-08-24 synthesis files are chef-intraday (02:22Z) and intraday (06:21Z) only.",
+              "consequence": "A guaranteed slot can read green in cowork-schedule.json, have its backstop error minutes later, and produce nothing, with the only trace in a log the plist keeps deliberately quiet.",
+              "recommend": "Never certify a guaranteed slot from last_fired alone — check for the deliverable."
+            },
+            {
+              "id": "CHEF-FILENAME-PREFIX-DEFECT-BOTH-FILES-NOW-VISIBLE",
+              "severity": "medium",
+              "detail": "Both variants now sit side by side for today: unified-agent-synthesis-2026-08-24-chef-intraday.json (6348B, 02:22Z, CORRECT per chef-dish.md:889 CYCLE_DATE-SLOT_ID) and unified-agent-synthesis-2026-08-24-intraday.json (3163B, 06:21Z, prefix dropped). Confirms the earlier same-day control: the 04:13 fire wrote correctly, the 06:13 fire did not. The malformed one is also half the size. Zone docs/agents/unified-agent/ to agent-father."
+            }
+          ],
+          "deviations": [
+            "Did NOT re-call claim_due_scheduled_tasks or cowork-match-slots.js per the WORK-continuation contract; catchup_raw not re-measured this tick.",
+            "Sent last_regime and last_volatility_level as 'unknown' per spec despite live NEUTRAL carry (1.37pp) in hand — the wrong-key defect must stay visible.",
+            "Did not repair the two malformed notebook-prune signal files nor patch notebook-auto-prune.sh (lines 574/575 grep -c || echo 0).",
+            "Did not commit the chef's stranded work.",
+            "Did not run guard-signal-type-coverage.sh (not read-only; writes live orch-state.json via ORCH_APPLY_LIVE_FILE_OVERRIDE).",
+            "Did not attempt any push; size-lint gate remains red, 184 commits stranded."
+          ],
+          "reconciliation_0715": {
+            "spawn": "alert-commander 07:15Z tick",
+            "negative_control": "PASS — no IDENTITY_PREAMBLE echo, ~3KB return",
+            "offflow_markers": "0 of 6 distinct",
+            "claims_verified": [
+              "commit 8fe8f5b8a 07:22:31Z, notebook only, 9+/9-",
+              "notebook 31L/8832B, sections c220-c222, c219 pruned",
+              "log_agent_work id=2095 started 07:20:50 finished 07:21:02 completed",
+              "snapshot 07:17 hit, read ~9s after write",
+              "peer files NOT damaged by the reported git-add restore — chef strand and all dirty paths intact"
+            ],
+            "notes": [
+              "Agent reported restoring 7 foreign paths a plain git add had swept in; verified the commit carries only its own notebook and no peer work was reverted.",
+              "Agent attempted git pull --rebase (failed, shared dirty tree) — SECOND out-of-flow pull improvisation by this agent today after 04:45Z. agent-father scope.",
+              "ahead 187: +1 mine, +2 peer (24d35f81e auditor tier1 unblock, 13d662b52 po mint)."
+            ]
+          }
+        },
+        "createdAt": "2026-08-24T07:18:34Z",
+        "drained_at": "2026-08-24T07:33:28Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
