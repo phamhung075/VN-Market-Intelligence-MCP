@@ -87,11 +87,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-08-24T02:57:29Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "active_task_id": "UC-SDF-P2",
+    "next_agent": "ba",
+    "next_action": "Design-Router Sweep claim of UC-SDF-P2 — spawn ba DIRECTLY (no zone-detect indirection; lane already resolved at promote time). supervised/plan_only (if either was set) preserved — do not clear.",
+    "updated_at": "2026-08-24T03:03:08Z",
+    "updated_by": "dev-team (design-router sweep)"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -6307,28 +6308,6 @@
         "epic_drain_disposition_20260808T0104Z": "EPIC-AUDITOR-DETECTOR-CORRECTNESS-DRAIN triage 2026-08-08: next_agent ASSIGNED dev-mcp-server (ZONE CORRECTED from docs/agents/system-auditor/ — the row's own fix_spec flagged this ambiguity explicitly: 'BA/architect confirm zone first (auditor flow vs dev-mcp-server health-check tool)'). Traced live: the auditor's flow doc only calls the get_vps_service_health TOOL (main.md:392); the actual HTTP-vs-systemd probe/classification logic lives in apps/mcp-server/src/interface/mcp/tools/system/vpsHealthTools.ts (confirmed via grep) — an implementation defect, not a prose-spec defect, so PO's architect/developer/dev-mcp-server framing routes it to dev-mcp-server, the zone owner of apps/mcp-server/. Sibling FIX-AUDITOR-TASKBOARD-OVERFLOW-PREDICATE-WIP-ONLY stays architect (pure inline-jq predicate in main.md, no code file) — the two rows only look alike from the title; the technical content differs.",
         "po_corroboration_20260812T1505Z": "FOLD — CONFIRMED FALSE POSITIVE, no mint. Absorbs the B-07 microservice_degraded signal 'vn-bctc-fetch service unhealthy (VPS fetch service)' (telegram 4767 @14:21:18Z; dashboard signal from system-auditor; echoed by 2 cowork_tick_telemetry rows @14:30Z/14:45Z under dedup_key=microservice_degraded:vn-bctc-fetch:B-07). This row's own title already names the mechanism verbatim: the system-auditor health-check probes an HTTP endpoint against vn-bctc-fetch, which is a pure-bash systemd timer with no HTTP listener, so 'unhealthy' is structurally guaranteed and carries no information about the service. Routing note for future ticks: B-07 vn-bctc-fetch degraded signals are a KNOWN-FP class and must fold here rather than mint a *-AVAIL-*/*-HEALTH-* row.",
         "status_note": "\n\n[po/triage 2026-08-12T15:36:32Z] +1 occurrence: telegram 4767 (2026-08-12T14:21:18Z) '[system-auditor] WARN: vn-bctc-fetch service unhealthy (VPS fetch service) (check B-07)'. Known false positive of exactly the class this row describes — B-07 probes an HTTP endpoint against a pure-bash service that has none. Corroborating evidence from the same window: get_system_status at 2026-08-12T15:36:32Z reports 0 open circuits and 0 half-open, and the data-freshness table reads BCTC '41 phut truoc / 0.7h / Tot' — the BCTC fetch path was demonstrably WORKING while B-07 called it unhealthy. Resolved as no-action against this row."
-      },
-      {
-        "id": "FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY",
-        "type": "SPRINT-M",
-        "priority": "P1",
-        "size": "M",
-        "status": "BACKLOG",
-        "title": "cowork last_fired is bumped on spawn DISPATCH-success, not delivery proof -> a spawn that dies before writing its notebook still satisfies the cadence gate -> genuine slot misses are MASKED (matcher never re-offers)",
-        "zone": "multi",
-        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY",
-        "note": "Maps to FR-7: reconciler reads task_list_held claimed_at, not post-spawn stamp. Path-agnostic by construction.",
-        "source_findings": [
-          "tnb-c115-F-COWORK-SCHEDULE-CHEFEVENING-LASTFIRED-STALE"
-        ],
-        "updated_at": "2026-07-28T13:24:57Z",
-        "owner": "developer",
-        "next_agent": "pm",
-        "architect_ruling": "Implemented via FR-7 ruling: Option (b) reconciler reads task_list_held claimed_at and backfills last_fired — NOT per-flow self-write (would reintroduce lost-update race + break path-agnostic requirement already on this row's own note).",
-        "architect_ruling_ref": "docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md",
-        "subsumed_by": "BA-COWORK-GUARANTEED-SLOT-CATCHUP",
-        "po_consolidation_ruling_20260728": "PO RULING 2026-07-28T13Z: CONSOLIDATION HAPPENS AFTER ROUTING, NOT BEFORE — and it is a CLOSEOUT act, not a prerequisite. Three reasons. (1) It is already bound as acceptance, not as a gate: docs/handoffs/TASK-COWORK-CATCHUP-10.md AC-9 is 'All 6 consolidated rows closed together (5 fixed rows + umbrella task)', i.e. the consolidation is the epic's exit criterion. Doing it first would be closing rows whose fix has not shipped. (2) It buys zero throughput: all 5 of these rows are ALREADY inert — verified by executing scripts/lib/devteam-eligibility.jq against live data, is_bounded1_eligible=false on all 5 (4 carry a non-dev effective next_agent pm/architect; SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING is supervised without plan_only, so SLS's doubly-gated select misses it too). Consolidating them changes nothing that can move; routing the epic changes the only thing that can. (3) BA section 0.8 already assigns the owner-reconciliation to architect/PM at close time, and notes the 5 owner fields are stale relative to where the fix actually lands. WHAT THIS FIELD IS FOR: they are currently inert BY ACCIDENT (the NO-LANE hole), not by design. This stamp makes the subsumption explicit so a later triage pass that 'helpfully' routes one of them does not spawn duplicate work against files TASK-COWORK-CATCHUP-1..9 are already rewriting. Do NOT route these until the epic closes; then close all 6 together per AC-9.",
-        "updated_by": "po/triage-20260728T13"
       },
       {
         "id": "FIX-MARKET-MESSAGES-TIMESTAMP-FORMAT",
@@ -21455,39 +21434,6 @@
         "status_note": "Brief row 1 of 3 (§6, R1 in §4.1). FIRST of a strictly ordered R1 -> R2 -> R3 chain; ordering is load-bearing (§4.2).\nCHANGE: `scripts/agents-flow/context-bloat-backstop.sh` accepts an optional byte term in the size-justification header:  <!-- size-justification: 1279L/192014B — reason -->  and honors a BYTE-cap breach only when the header declares an explicit byte figure AND the live byte count is within the same ±10 %/min-5 tolerance already applied to lines.\nBACKWARD COMPATIBLE, ASSERT IT: a header with NO /NNNNB term must behave exactly as today, byte-for-byte (AC-3).\nWHY THIS IS NOT A LOOSENING (pre-empting the TE-T24 objection, §4.1): TE-T24's point is that a LINE declaration cannot speak to bytes and a mega-line file would evade the byte dimension for free. An explicit, reviewable, staleness-checked byte number is the opposite of a free pass — po/flow/scripts-registry.md would have to publish 74L/88023B in its own header, which is precisely the visibility BC-1 wants.\nDO NOT instead retune cap:120 (§4.1 R4) — measured p50 is 102 L, the LINE cap is correctly calibrated; the BC-1 ×60 byte budget is the miscalibrated knob and R1+R2 address it per-file rather than loosening the global multiplier for everyone.\nAC-3. Extend the EXISTING harness scripts/agents-flow/context-bloat-backstop.test.sh — do not replace it."
       },
       {
-        "id": "UC-SDF-P2",
-        "type": "SPIKE",
-        "title": "Diagnose+FIX: cycle-snapshot promotion dead since 07-07 (tickHHMM-vs-FILE_TICK filename divergence) + WIDEN to restore regime_status/volatility_level writer (no writer since 06-05) + market-hours staleness tripwire",
-        "status": "READY",
-        "priority": "P1",
-        "size": "L",
-        "zone": "multi",
-        "sprint": "ULTRACODE-AUDIT-FIXALL",
-        "source": "ultracode-audit-2026-07-12",
-        "verdict": "RESCOPE",
-        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P2",
-        "note": "SCOPE=verifier Rescope note — PLAN-ONLY (anomaly->BACKLOG invariant). INVESTIGATE (mcp-server): why emit_pressure_state returns success + stale_warning:false while latest.json is 6d old (fresh HH:MM snapshots exist). HARDEN telemetry.md Step6.0 (~10L): compare mtimes, gate on calendar_status!=closed, write cowork-error-boundary signal when latest.json did not advance. EXCLUDE the already-answered 'Step 4.7 stopped 07-07' leg (gateway-blind zero-slot ticks; queued under FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK). [CORROBORATION 2026-07-15 (signal cow-20260715T195340 deduped->RESOLVED here): promotion now 8d stale (since 07-07); last_regime/volatility pinned \"unknown\" -> adaptive cadence running dark. Same defect, added evidence — no new row minted.]",
-        "created_at": "2026-07-13T19:31:11Z",
-        "created_by": "po",
-        "plan_only": true,
-        "mode": "spike",
-        "timebox": 120,
-        "next_agent": "ba",
-        "related": [
-          "FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK"
-        ],
-        "po_fold_widen_2026-07-16": "FOLDED signal cow-20260716T005400 (self-annotated DUPLICATE, no new task minted) — 3 RAW-confirmed advances added to scope: (a) DIAGNOSIS CLOSED — the 07-15 UNVERIFIED hypothesis is CONFIRMED AT SOURCE: emitPressureStateTool.ts joins cycle-snapshot-${tickHHMM}.json using tickHHMM derived from tick_id, while tick-snapshot.md:40,43 names the file by FILE_TICK=actual fire time (date -u +%H:%M) -> the two diverge under jitter/drift, so the join misses. (b) the snapshot key has NO date component -> a 43-day-old (06-03 00:00) file can be read and aged past 4h -> stale:true, which is why the miss is SILENT not merely absent; 102 stale files accrued. (c) SCOPE-BREAKER: regime_status/volatility_level have had NO WRITER since the 2026-06-05 EMIT-DARK-RECURRING refactor (last emitted 06-03; only 12 June files + 1 test fixture carry them; live snapshot has no carry block) -> BOTH promotion-dark handoffs' claim that 'promotion-dark pins last_regime=unknown' is FALSE, and fixing promotion ALONE leaves the adaptive loop dark FOREVER. UC-SDF-P2 as previously scoped is INSUFFICIENT -> WIDENED: scope now MUST include restoring a writer for regime_status/volatility_level (in addition to the promotion filename-key fix + the market-hours staleness tripwire). size M->L. Still plan_only (anomaly->BACKLOG invariant); ba/architect own HOW.",
-        "folded_signal": "cow-20260716T005400",
-        "updated_at": "2026-08-23T16:55:27Z",
-        "updated_by": "po/signal-triage-20260725T0948",
-        "po_corroboration_20260725T0948": "THIRD independent detection — folded, no new row minted (signal cwk-20260725T092802-7c2e, cowork-team). Priority P2 -> P1: the DIAGNOSE half of this row is now COMPLETE, it is a pure FIX with a fully source-verified root cause, and the dead-adaptive-layer blast radius is confirmed downstream. Detection history: (1) 2026-07-15 signal cow-20260715T195340 deduped here; (2) 2026-07-21 memory feedback_cycle_snapshot_promote_conservative_default_refuses_every_input; (3) 2026-07-25 this signal. VERIFIED AT SOURCE by PO this tick, not relayed: emitPressureStateTool.ts L359-362 derives tickHHMM from the NOMINAL tick_id (always :00/:15/:30/:45); L232 looks up docs/data/cycle-snapshot-<that HH:MM>.json; but docs/agents/cowork-team/flow/tick-snapshot.md Step 4.7 names the file by FIRE time (FILE_TICK=$(date -u +%H:%M)). All six on-disk snapshots sit at nominal+8..11min (00:10, 08:10, 09:08, 20:09, 20:26, 21:09) — none on a nominal boundary, so existsSync fails every tick and L233 returns {promoted:false, stale:false}. Because stale is ALSO false, stale_warning never fires: the failure is completely silent, which is why it survived 18 days (cycle-snapshot-latest.json content tick '19:45', created_at 2026-07-07T19:47:26Z). This is a producer/consumer filename-contract mismatch that NEVER worked — not a race and not a regression of FU-TICK-SNAPSHOT-EMIT-DARK's bash-fence defect. SECOND independent failure mode still applies and must be fixed too (from the 07-21 memory): even on a name match, the on-grid file is the dispatcher's OWN Step 4.7 tick-snapshot, which carries none of fetchedAt/created_at/macro_snapshot.fetchedAt, so the freshness gate treats it as Infinity-stale and refuses. Fixing only the filename leaves the promoter still refusing. DOWNSTREAM CONFIRMED DEAD: docs/data/pressure-state.json currently has regime_status:null, volatility_level:null, cycle_snapshot_promoted:null. FIX DIRECTION IS AN OPEN DESIGN CALL, deliberately NOT decided by PO (rename in Step 4.7 vs glob/most-recent lookup) — route to architect with the sequencing guard below. ABSORBED FROM SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED (now CANCELLED/superseded, its question answered by the above): SEQUENCING GUARD — DO NOT land cycle-snapshot key-unification / residue-file prune ALONE. Pruning the ~110 gitignored cycle-snapshot-<HH:MM>.json residue files flips every cowork tick to stale_warning=false -> adaptive fleet-wide, which activates the 240-min dangling-policy gate and degrades the alert-commander-market path 16x (15min -> 240min). Per handoff docs/handoffs/2026-07-16-cycle-snapshot-promotion-dark-9-days-adaptive-cadence-never-runs.md the coupling is 3-way + a 4th unit, and must land as ONE change set: (1) unify the snapshot key + put a date in it; (2) author the missing cadence-policy rows (alert-commander-market 15min + alert-commander-critical 240min + gatherer open/half_day tiers); (3) WIRE calendar_status to the vnTradingCalendar oracle (isVnTradingDay) — see UC-CDC-P1, which now carries live weekend-suppression impact evidence; (4) restore a writer for regime_status/volatility_level (dropped in the 2026-06-05 refactor) + a test that fails when the reader's source field has no writer. Couples with UC-CDC-P1 and FIX-COWORK-CADENCE-DANGLING-POLICY-ID.",
-        "po_corroboration_20260725": "THIRD CORROBORATION + MECHANISM NOW PROVEN AT SOURCE (PO triage 2026-07-25T12:07Z tick; folded from signal cowork-snapshot-promote-hhmm-mismatch-20260725T121421Z, cowork-team, priority=high). NO NEW ROW MINTED -- this row title already names the tickHHMM-vs-FILE_TICK filename divergence. What is NEW is that the divergence is no longer a hypothesis: (1) WRITER SIDE -- apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts:~347 floors the current minute to a 15-min boundary (Math.floor(getUTCMinutes()/15)*15) when args.tick_id is absent, then :~358 extracts tickHHMM by regex /T(\\d{2}:\\d{2}):/ off that NOMINAL tick_id, and passes it to promoteCycleSnapshotFn as the filename key. So the lookup key is ALWAYS one of :00 :15 :30 :45. (2) FILE SIDE -- tick-snapshot.md:40 names the file from the ACTUAL fire minute via date -u +%H:%M. (3) DECISIVE EVIDENCE -- ls of docs/data/ this tick returns cycle-snapshot-12:10.json, 09:08, 08:10, 00:10, 21:09, 20:26, 20:09. NOT ONE of the seven sits on a 15-min boundary. The lookup can therefore never hit, and the freshness gate downstream never even receives a candidate to refuse. (4) cycle-snapshot-latest.json mtime is 2026-07-07 21:47 -- now 18 days frozen, up from the 8d recorded in the 07-15 corroboration; the defect is monotone. IMPORTANT ORDERING CORRECTION for whoever scopes this: the filename miss is FIRST-ORDER and strictly UPSTREAM of the freshness-gate refusal described in feedback_cycle_snapshot_promote_conservative_default_refuses_every_input. Do not fix the gate first and call it done -- with no candidate file found, the gate is not the binding constraint. Likewise UC-CDC-P1 REQUIRED clause (decouple stale_warning from cycle-snapshot promotion refusal) treats a SYMPTOM of this row cause; UC-CDC-P1 and this row must be sequenced with THIS one first or UC-CDC-P1 will decouple a signal that was never being produced. Downstream blast radius restated with the current numbers: last_regime and last_volatility_level stay pinned unknown -> volatility_tier pinned low -> every high-volatility row of cadence-policy.json is unreachable dead code. This is the concrete mechanism behind the known 2-of-3-adaptive-inputs-dead finding (UC-CDC-P1 FAILED FIX). Carry-over from po notebook 2026-07-25T12:26Z still stands and is NOT superseded: this row has a SECOND failure mode beyond the filename (the on-grid file lacks fetchedAt/created_at) -- fixing only the name leaves it dark.",
-        "promoted_at": "2026-08-23T16:55:26Z",
-        "promoted_by": "dev-team (design-router sweep)",
-        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
-        "dispatch_lane": "ba"
-      },
-      {
         "id": "UC-MDH-P2",
         "type": "SPRINT-S",
         "title": "Remove the dead append-session-record skill AND its MCP tool, with full consumer sweep + TE-T05 de-confliction",
@@ -21658,6 +21604,32 @@
         "drain_source_lane": "review",
         "blocked_reason": "DEPLOY-BLOCKED, NOT VERIFY-BLOCKED — the live mcp-server image predates the code.",
         "status_note": "PO Step 0-SIG 2026-08-24T00:12:36Z: RETARGETED OUT OF qa[]. qa already refused this row on the merits (commit 6163fecee, 2026-08-23T22:08:36Z) and it was re-picked by the review-lane QA-drain 81 minutes later (claimed_at 2026-08-23T23:29:49Z) — so re-dispatching qa reproduces the same refusal indefinitely. PO RE-VERIFIED THE REFUSAL AT SOURCE, not from the handoff prose: `docker image inspect vn-market-intelligence-mcp-mcp-server --format {{.Created}}` = 2026-08-23T13:52:50Z (container created 2026-08-23 15:53:58 +0200 = 13:53:58Z), while the dev commit ce1f52127 landed at 2026-08-23 17:11:08 +0200 = 15:11:08Z. The running image PREDATES the code by 1h18m, so AC-7 (docs/handoffs/TASK_001-WATCHLIST-WRITE-THROUGH-INFRA.md:65,126,148 — bind-mount round-trip via a real add_to_watchlist call from OUTSIDE the container) is not merely unverified, it is structurally unrunnable. NEXT ACTION IS A DEPLOY, NOT A VERIFY: single-service rebuild of mcp-server only. NEVER `docker compose down` (feedback_rebuild_recreate_destroys_peers — it kills every peer container) and verify the new image ID actually changed before claiming the deploy landed (feedback_docker_rebuild_race_pgrep_deadlock). After the rebuild, hand back to qa for AC-5/AC-7. WHY THE LANE MOVED AND NOT JUST THIS NOTE: the QA-drain picker selects on lane + next_agent and is blind to prose it cannot read (feedback_pickers_blind_to_prose_status_note_autoclaim_contraindicated_row) — leaving the row in qa[] with a note would have changed nothing. next_agent=ops is off the DRS-ratified auto-dispatch allowlist, so this row is reachable by manual/PO dispatch; that is deliberate and is the same class as the 10 other live next_agent=ops rows."
+      },
+      {
+        "id": "FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY",
+        "type": "SPRINT-M",
+        "priority": "P1",
+        "size": "M",
+        "status": "READY",
+        "title": "cowork last_fired is bumped on spawn DISPATCH-success, not delivery proof -> a spawn that dies before writing its notebook still satisfies the cadence gate -> genuine slot misses are MASKED (matcher never re-offers)",
+        "zone": "multi",
+        "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-COWORK-LASTFIRED-DECOUPLE-FROM-DELIVERY",
+        "note": "Maps to FR-7: reconciler reads task_list_held claimed_at, not post-spawn stamp. Path-agnostic by construction.",
+        "source_findings": [
+          "tnb-c115-F-COWORK-SCHEDULE-CHEFEVENING-LASTFIRED-STALE"
+        ],
+        "updated_at": "2026-08-24T03:02:19Z",
+        "owner": "developer",
+        "next_agent": "pm",
+        "architect_ruling": "Implemented via FR-7 ruling: Option (b) reconciler reads task_list_held claimed_at and backfills last_fired — NOT per-flow self-write (would reintroduce lost-update race + break path-agnostic requirement already on this row's own note).",
+        "architect_ruling_ref": "docs/architecture-briefs/2026-07-22-cowork-guaranteed-slot-catchup-design.md",
+        "subsumed_by": "BA-COWORK-GUARANTEED-SLOT-CATCHUP",
+        "po_consolidation_ruling_20260728": "PO RULING 2026-07-28T13Z: CONSOLIDATION HAPPENS AFTER ROUTING, NOT BEFORE — and it is a CLOSEOUT act, not a prerequisite. Three reasons. (1) It is already bound as acceptance, not as a gate: docs/handoffs/TASK-COWORK-CATCHUP-10.md AC-9 is 'All 6 consolidated rows closed together (5 fixed rows + umbrella task)', i.e. the consolidation is the epic's exit criterion. Doing it first would be closing rows whose fix has not shipped. (2) It buys zero throughput: all 5 of these rows are ALREADY inert — verified by executing scripts/lib/devteam-eligibility.jq against live data, is_bounded1_eligible=false on all 5 (4 carry a non-dev effective next_agent pm/architect; SPIKE-COWORK-GUARANTEED-SLOT-SUPERSEDE-WIRING is supervised without plan_only, so SLS's doubly-gated select misses it too). Consolidating them changes nothing that can move; routing the epic changes the only thing that can. (3) BA section 0.8 already assigns the owner-reconciliation to architect/PM at close time, and notes the 5 owner fields are stale relative to where the fix actually lands. WHAT THIS FIELD IS FOR: they are currently inert BY ACCIDENT (the NO-LANE hole), not by design. This stamp makes the subsumption explicit so a later triage pass that 'helpfully' routes one of them does not spawn duplicate work against files TASK-COWORK-CATCHUP-1..9 are already rewriting. Do NOT route these until the epic closes; then close all 6 together per AC-9.",
+        "updated_by": "po/triage-20260728T13",
+        "promoted_at": "2026-08-24T03:02:19Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='architect' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "architect"
       }
     ],
     "review": [
@@ -22382,8 +22354,8 @@
         }
       ]
     },
-    "last_triaged_at": "2026-08-24T01:23:36Z",
-    "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
+    "last_triaged_at": "2026-08-24T03:02:19Z",
+    "last_triaged_by": "dev-team (design-router sweep)",
     "in_progress": [
       {
         "id": "UC-CDC-P1",
@@ -22538,6 +22510,41 @@
         "claimed_at": "2026-08-23T15:57:35Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "blocked_reason": "SLS claim reverted, 2026-08-23T15:37Z tick: the claim was not gate-satisfied. SLS PRIMARY selects purely on promoted_by == \"dev-team (supervised-lane sweep)\" and re-validates no gate. This row was stamped 2026-08-08T04:51:52Z and carries plan_only=false, so effective_plan_only is FALSE and the row is outside SLS's supervised-AND-plan_only quarantine class. Per main.md Lane x Gate matrix, ready[] with sup=T po=F resolves to READY-XOR-SUP-OR-PLANONLY, i.e. PO's human-gated manual-dispatch sweep, NOT auto-dispatch. Not spawned. The lane-move back to ready[] was attempted and HARD-REJECTED by the row-prose-ceiling guard (live=0B, candidate=26552B): that is defect D3 in scripts/architect-20260823-orch-prose-ceiling-row-handoff.jq, 2nd live instance after UC-CCA-P3. Marked BLOCKED rather than IN_PROGRESS so wip_in_progress excludes it and the four WIP pickers stay unblocked. Unblock path: PO manual-dispatch sweep, or land the D3 fix then lane-move to ready[]."
+      },
+      {
+        "id": "UC-SDF-P2",
+        "type": "SPIKE",
+        "title": "Diagnose+FIX: cycle-snapshot promotion dead since 07-07 (tickHHMM-vs-FILE_TICK filename divergence) + WIDEN to restore regime_status/volatility_level writer (no writer since 06-05) + market-hours staleness tripwire",
+        "status": "IN_PROGRESS",
+        "priority": "P1",
+        "size": "L",
+        "zone": "multi",
+        "sprint": "ULTRACODE-AUDIT-FIXALL",
+        "source": "ultracode-audit-2026-07-12",
+        "verdict": "RESCOPE",
+        "detail_ref": "docs/architecture-briefs/2026-07-12-ultracode-workflow-improvement-audit.md#state-data-files-P2",
+        "note": "SCOPE=verifier Rescope note — PLAN-ONLY (anomaly->BACKLOG invariant). INVESTIGATE (mcp-server): why emit_pressure_state returns success + stale_warning:false while latest.json is 6d old (fresh HH:MM snapshots exist). HARDEN telemetry.md Step6.0 (~10L): compare mtimes, gate on calendar_status!=closed, write cowork-error-boundary signal when latest.json did not advance. EXCLUDE the already-answered 'Step 4.7 stopped 07-07' leg (gateway-blind zero-slot ticks; queued under FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK). [CORROBORATION 2026-07-15 (signal cow-20260715T195340 deduped->RESOLVED here): promotion now 8d stale (since 07-07); last_regime/volatility pinned \"unknown\" -> adaptive cadence running dark. Same defect, added evidence — no new row minted.]",
+        "created_at": "2026-07-13T19:31:11Z",
+        "created_by": "po",
+        "plan_only": true,
+        "mode": "spike",
+        "timebox": 120,
+        "next_agent": "ba",
+        "related": [
+          "FIX-COWORK-FLOWS-GATEWAY-BLIND-BRIDGE-FALLBACK"
+        ],
+        "po_fold_widen_2026-07-16": "FOLDED signal cow-20260716T005400 (self-annotated DUPLICATE, no new task minted) — 3 RAW-confirmed advances added to scope: (a) DIAGNOSIS CLOSED — the 07-15 UNVERIFIED hypothesis is CONFIRMED AT SOURCE: emitPressureStateTool.ts joins cycle-snapshot-${tickHHMM}.json using tickHHMM derived from tick_id, while tick-snapshot.md:40,43 names the file by FILE_TICK=actual fire time (date -u +%H:%M) -> the two diverge under jitter/drift, so the join misses. (b) the snapshot key has NO date component -> a 43-day-old (06-03 00:00) file can be read and aged past 4h -> stale:true, which is why the miss is SILENT not merely absent; 102 stale files accrued. (c) SCOPE-BREAKER: regime_status/volatility_level have had NO WRITER since the 2026-06-05 EMIT-DARK-RECURRING refactor (last emitted 06-03; only 12 June files + 1 test fixture carry them; live snapshot has no carry block) -> BOTH promotion-dark handoffs' claim that 'promotion-dark pins last_regime=unknown' is FALSE, and fixing promotion ALONE leaves the adaptive loop dark FOREVER. UC-SDF-P2 as previously scoped is INSUFFICIENT -> WIDENED: scope now MUST include restoring a writer for regime_status/volatility_level (in addition to the promotion filename-key fix + the market-hours staleness tripwire). size M->L. Still plan_only (anomaly->BACKLOG invariant); ba/architect own HOW.",
+        "folded_signal": "cow-20260716T005400",
+        "updated_at": "2026-08-24T03:03:08Z",
+        "updated_by": "po/signal-triage-20260725T0948",
+        "po_corroboration_20260725T0948": "THIRD independent detection — folded, no new row minted (signal cwk-20260725T092802-7c2e, cowork-team). Priority P2 -> P1: the DIAGNOSE half of this row is now COMPLETE, it is a pure FIX with a fully source-verified root cause, and the dead-adaptive-layer blast radius is confirmed downstream. Detection history: (1) 2026-07-15 signal cow-20260715T195340 deduped here; (2) 2026-07-21 memory feedback_cycle_snapshot_promote_conservative_default_refuses_every_input; (3) 2026-07-25 this signal. VERIFIED AT SOURCE by PO this tick, not relayed: emitPressureStateTool.ts L359-362 derives tickHHMM from the NOMINAL tick_id (always :00/:15/:30/:45); L232 looks up docs/data/cycle-snapshot-<that HH:MM>.json; but docs/agents/cowork-team/flow/tick-snapshot.md Step 4.7 names the file by FIRE time (FILE_TICK=$(date -u +%H:%M)). All six on-disk snapshots sit at nominal+8..11min (00:10, 08:10, 09:08, 20:09, 20:26, 21:09) — none on a nominal boundary, so existsSync fails every tick and L233 returns {promoted:false, stale:false}. Because stale is ALSO false, stale_warning never fires: the failure is completely silent, which is why it survived 18 days (cycle-snapshot-latest.json content tick '19:45', created_at 2026-07-07T19:47:26Z). This is a producer/consumer filename-contract mismatch that NEVER worked — not a race and not a regression of FU-TICK-SNAPSHOT-EMIT-DARK's bash-fence defect. SECOND independent failure mode still applies and must be fixed too (from the 07-21 memory): even on a name match, the on-grid file is the dispatcher's OWN Step 4.7 tick-snapshot, which carries none of fetchedAt/created_at/macro_snapshot.fetchedAt, so the freshness gate treats it as Infinity-stale and refuses. Fixing only the filename leaves the promoter still refusing. DOWNSTREAM CONFIRMED DEAD: docs/data/pressure-state.json currently has regime_status:null, volatility_level:null, cycle_snapshot_promoted:null. FIX DIRECTION IS AN OPEN DESIGN CALL, deliberately NOT decided by PO (rename in Step 4.7 vs glob/most-recent lookup) — route to architect with the sequencing guard below. ABSORBED FROM SPIKE-TICK-SNAPSHOT-DEADCODE-OR-REGRESSED (now CANCELLED/superseded, its question answered by the above): SEQUENCING GUARD — DO NOT land cycle-snapshot key-unification / residue-file prune ALONE. Pruning the ~110 gitignored cycle-snapshot-<HH:MM>.json residue files flips every cowork tick to stale_warning=false -> adaptive fleet-wide, which activates the 240-min dangling-policy gate and degrades the alert-commander-market path 16x (15min -> 240min). Per handoff docs/handoffs/2026-07-16-cycle-snapshot-promotion-dark-9-days-adaptive-cadence-never-runs.md the coupling is 3-way + a 4th unit, and must land as ONE change set: (1) unify the snapshot key + put a date in it; (2) author the missing cadence-policy rows (alert-commander-market 15min + alert-commander-critical 240min + gatherer open/half_day tiers); (3) WIRE calendar_status to the vnTradingCalendar oracle (isVnTradingDay) — see UC-CDC-P1, which now carries live weekend-suppression impact evidence; (4) restore a writer for regime_status/volatility_level (dropped in the 2026-06-05 refactor) + a test that fails when the reader's source field has no writer. Couples with UC-CDC-P1 and FIX-COWORK-CADENCE-DANGLING-POLICY-ID.",
+        "po_corroboration_20260725": "THIRD CORROBORATION + MECHANISM NOW PROVEN AT SOURCE (PO triage 2026-07-25T12:07Z tick; folded from signal cowork-snapshot-promote-hhmm-mismatch-20260725T121421Z, cowork-team, priority=high). NO NEW ROW MINTED -- this row title already names the tickHHMM-vs-FILE_TICK filename divergence. What is NEW is that the divergence is no longer a hypothesis: (1) WRITER SIDE -- apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts:~347 floors the current minute to a 15-min boundary (Math.floor(getUTCMinutes()/15)*15) when args.tick_id is absent, then :~358 extracts tickHHMM by regex /T(\\d{2}:\\d{2}):/ off that NOMINAL tick_id, and passes it to promoteCycleSnapshotFn as the filename key. So the lookup key is ALWAYS one of :00 :15 :30 :45. (2) FILE SIDE -- tick-snapshot.md:40 names the file from the ACTUAL fire minute via date -u +%H:%M. (3) DECISIVE EVIDENCE -- ls of docs/data/ this tick returns cycle-snapshot-12:10.json, 09:08, 08:10, 00:10, 21:09, 20:26, 20:09. NOT ONE of the seven sits on a 15-min boundary. The lookup can therefore never hit, and the freshness gate downstream never even receives a candidate to refuse. (4) cycle-snapshot-latest.json mtime is 2026-07-07 21:47 -- now 18 days frozen, up from the 8d recorded in the 07-15 corroboration; the defect is monotone. IMPORTANT ORDERING CORRECTION for whoever scopes this: the filename miss is FIRST-ORDER and strictly UPSTREAM of the freshness-gate refusal described in feedback_cycle_snapshot_promote_conservative_default_refuses_every_input. Do not fix the gate first and call it done -- with no candidate file found, the gate is not the binding constraint. Likewise UC-CDC-P1 REQUIRED clause (decouple stale_warning from cycle-snapshot promotion refusal) treats a SYMPTOM of this row cause; UC-CDC-P1 and this row must be sequenced with THIS one first or UC-CDC-P1 will decouple a signal that was never being produced. Downstream blast radius restated with the current numbers: last_regime and last_volatility_level stay pinned unknown -> volatility_tier pinned low -> every high-volatility row of cadence-policy.json is unreachable dead code. This is the concrete mechanism behind the known 2-of-3-adaptive-inputs-dead finding (UC-CDC-P1 FAILED FIX). Carry-over from po notebook 2026-07-25T12:26Z still stands and is NOT superseded: this row has a SECOND failure mode beyond the filename (the on-grid file lacks fetchedAt/created_at) -- fixing only the name leaves it dark.",
+        "promoted_at": "2026-08-23T16:55:26Z",
+        "promoted_by": "dev-team (design-router sweep)",
+        "promotion_note": "Design-Router Sweep — assigned dispatch_lane='ba' (priority_rank=1); ratified agent-identity allowlist, non-dev next_agent class distinct from SLS's supervised+plan_only quarantine — see FIX-BOUNDED1-NONDEV-NEXTAGENT-RESIDUAL-NO-DISPATCH-LANE",
+        "dispatch_lane": "ba",
+        "claimed_at": "2026-08-24T03:03:08Z",
+        "claimed_by": "dev-team (design-router sweep)"
       }
     ]
   },
@@ -22562,7 +22569,7 @@
         "last_served_tick": "2026-08-24T02:25:24Z"
       },
       "drs": {
-        "last_served_tick": "2026-08-23T23:03:48Z"
+        "last_served_tick": "2026-08-24T03:01:50Z"
       },
       "qa_drain": {
         "last_served_tick": "2026-08-24T00:27:26Z"
@@ -22571,7 +22578,7 @@
         "last_served_tick": "2026-08-24T00:56:09Z"
       }
     },
-    "_updated_at": "2026-08-24T02:59:57Z",
+    "_updated_at": "2026-08-24T03:01:50Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
