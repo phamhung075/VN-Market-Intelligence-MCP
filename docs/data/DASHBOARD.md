@@ -2050,3 +2050,15 @@
 **Mitigation:** No immediate action beyond signal routing.
 
 ---
+
+## Anomaly: D-CYCLE-1 · Orphaned cycle marker swept (prior-cycle loss detection)
+**Severity:** INFO | **Date:** 2026-08-24 | **Status:** OPEN
+**Location:** auditor-cycle-markers
+**Details:** Durability sweep recovered 1 orphaned marker file from 2026-08-24T00:00Z (probable Tier-3 c1000 checkpoint loss)
+**Impact:** Cycle checkpoint recovery in progress; no impact to current Tier-1 execution
+**Root cause:** Prior Tier-3 cycle c1000 (02:53Z) spawned subagents c1001/c1002 without completing final checkpoint
+**Zone owner:** system-auditor
+**Last reported:** 2026-08-24T04:12:30Z (signal sys-20260824T041052-44c9, system-auditor -> po, INFO Telegram sent)
+**Mitigation:** No immediate action beyond signal routing.
+
+---
