@@ -22103,8 +22103,8 @@
         "last_served_tick": "2026-08-23T20:56:57Z"
       }
     },
-    "_updated_at": "2026-08-24T00:36:51Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-08-24T00:53:21Z",
+    "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
         "envelope_id": "9fbfb401a5cc9bf6b6f101f29d6b3e107aaf709f396985e161a457defac1553a",
@@ -22193,6 +22193,93 @@
         "payload": "Auditor blind-spot: cannot detect launchd failures tier-1 probe checks for",
         "createdAt": "2026-08-23T22:49:24Z",
         "drained_at": "2026-08-23T22:58:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "876b81d404368f8218ff5485c60f8671919069f24d2ff75c12ce565895434430",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 1 staged file(s) not necessarily this actor's own: docs/agent-memory/notebooks/system-auditor.md. actor=007e33e4-b453-4bb3-8ab1-ef31495906a3 mode=warn escalated=true prior_warns=11 threshold=3 outcome=blocked. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-24T00:46:38Z",
+        "drained_at": "2026-08-24T00:53:21Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "d048b78c9d101dbec9060b202c80173f50a017e9f30b7589a248c0b759c38c60",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[notebook-immutability-guard] WARN: docs/agent-memory/notebooks/system-auditor.md — retained section '## c114 · 2026-08-23T21:03Z' has different content staged than at HEAD. Per .claude/skills/notebook-write/SKILL.md AC-2a, a retained '## ' section must be byte-identical across a cycle (cycle boundary = the git-commit boundary, i.e. this exact HEAD-vs-staged comparison — see AC-2a); the only authorized mutations are dropping a whole oldest section, the AC-2b sub-block intra-prune, or trimming the CURRENT cycle's own new section. If cap pressure forced a shrink, DROP the whole section (archive verbatim if it must be kept) and add a NEW marker section instead — see docs/agent-memory/notebooks/architect.md for the reference-correct pattern. If instead you are continuing the SAME work tick across a second commit, do NOT rewrite this section to 'continue' it — it is already a retained prior cycle; open a NEW dated '## ' section for the second commit. mode=warn (default warn — never blocks; set GIT_NOTEBOOK_IMMUTABILITY_MODE=reject to hard-enforce once re-validated, see scripts/audits/verify-notebook-immutability-gate.sh).\n",
+        "createdAt": "2026-08-24T00:46:56Z",
+        "drained_at": "2026-08-24T00:53:21Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "3f76925fc7797668d92f1b5fe67466d5caa05ed87443cd04c1776397d8ded8bd",
+        "source": "file",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/system-auditor.md",
+          "line_count": 310,
+          "cap": 200,
+          "byte_count": 15614,
+          "byte_cap": 12000,
+          "class": "agent-notebook",
+          "reason": "line-cap,byte-cap",
+          "overage": 110,
+          "byte_overage": 3614,
+          "action_required": "prune_or_split"
+        },
+        "createdAt": "2026-08-24T00:46:28Z",
+        "drained_at": "2026-08-24T00:53:21Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "6458d70ef26e75fb7febd5d2dc551be5bc70d8f68df90973b0876379bcce0bc8",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "109",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-24T00:52:37Z",
+        "drained_at": "2026-08-24T00:53:21Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "f052e4df39d586d56efc9d3acaceed7452ce2f3fcc4d74d9b0452bc358f27a2f",
+        "source": "file",
+        "from": "notebook-auto-prune-hook",
+        "to": "claude-manager-helper",
+        "type": "notebook_single_section_overage_breach",
+        "priority": "high",
+        "payload": {
+          "file": "docs/agent-memory/notebooks/system-auditor.md",
+          "line_count": 218,
+          "cap": 200,
+          "byte_count": 11610,
+          "byte_cap": 12000,
+          "section_count": 1,
+          "reason": "only preamble+1 section remain; cannot prune further without data loss",
+          "action_required": "manual_split_to_archive"
+        },
+        "createdAt": "2026-08-24T00:46:26Z",
+        "drained_at": "2026-08-24T00:53:21Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
