@@ -21945,7 +21945,7 @@
         "last_served_tick": "2026-08-24T00:56:09Z"
       }
     },
-    "_updated_at": "2026-08-24T01:23:08Z",
+    "_updated_at": "2026-08-24T01:54:21Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -22035,6 +22035,97 @@
         "payload": "Auditor blind-spot: cannot detect launchd failures tier-1 probe checks for",
         "createdAt": "2026-08-23T22:49:24Z",
         "drained_at": "2026-08-23T22:58:03Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "15023f5b7184c18f6f3aa9bdeb14ff747e4797b07b7a465c8b98d658257e3af7",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "dev-team",
+        "type": "cowork-fire",
+        "priority": "low",
+        "payload": {
+          "fire_time": "20260824T013434Z",
+          "matched_slots": [
+            "news-scout-sentiment"
+          ],
+          "won_slots": [
+            "news-scout-sentiment"
+          ],
+          "held_by_other": [],
+          "all_held": false,
+          "spawned": [
+            "docs/agents/news-scout/flow/main.md"
+          ],
+          "silent": false,
+          "drift_min": 0,
+          "errors": [],
+          "pressure_mode": "adaptive",
+          "calendar_status": "open",
+          "suppressed_calendar": [],
+          "suppressed_cadence": [],
+          "downgraded": [],
+          "chef_mutex_applied": false,
+          "due_reasons": {
+            "news-scout-sentiment": "cadence"
+          },
+          "cadence_minutes": {
+            "news-scout-sentiment": 30
+          },
+          "last_fired_timestamp": "2026-08-24T01:33:50Z",
+          "last_fired_slots": [
+            "news-scout-sentiment"
+          ],
+          "last_fired_write_errors": null,
+          "classification": "FIRE",
+          "reason": "spawned",
+          "nominal_tick": "01:30",
+          "leader_lock": "acquired",
+          "dev_head": "unknown",
+          "devq": 5,
+          "signal_backlog": 32,
+          "note": "First fan-out tick of this session. Slot last_fired was 2026-08-14T01:36:40Z — 10 days stale on a '30 1 * * 1-5' weekday cron, consistent with the known multi-day cron-silence class, not a same-tick fault. Step 4.7 wrote cycle-snapshot-01:33.json (wall clock) while Step 6.0 promotion looks up the nominal 01:30 — cycle_snapshot_promoted=false observed in-tick, direct causal confirmation of the wallclock-vs-nominal-tick defect. Step 5.1 load parse read '1,67' comma-decimal (no LC_ALL=C pin); verdict unaffected here but the parse truncates the fraction."
+        },
+        "createdAt": "20260824T013434Z",
+        "drained_at": "2026-08-24T01:54:21Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "2c337fd99b20d693f665ad799a2c975cd7e6a6342116f896b26944a0e96bb13f",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "113",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-24T01:23:28Z",
+        "drained_at": "2026-08-24T01:54:21Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "669bf40081734fb9efa5ce10d63a8c8867584a1397d24cbd5d9bda364362d6d2",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "117",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-24T01:54:15Z",
+        "drained_at": "2026-08-24T01:54:21Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],

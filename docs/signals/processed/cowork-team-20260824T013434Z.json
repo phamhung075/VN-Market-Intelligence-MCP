@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260824T013434Z",
+    "matched_slots": [
+      "news-scout-sentiment"
+    ],
+    "won_slots": [
+      "news-scout-sentiment"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "chef_mutex_applied": false,
+    "due_reasons": {
+      "news-scout-sentiment": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-sentiment": 30
+    },
+    "last_fired_timestamp": "2026-08-24T01:33:50Z",
+    "last_fired_slots": [
+      "news-scout-sentiment"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "01:30",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 5,
+    "signal_backlog": 32,
+    "note": "First fan-out tick of this session. Slot last_fired was 2026-08-14T01:36:40Z — 10 days stale on a '30 1 * * 1-5' weekday cron, consistent with the known multi-day cron-silence class, not a same-tick fault. Step 4.7 wrote cycle-snapshot-01:33.json (wall clock) while Step 6.0 promotion looks up the nominal 01:30 — cycle_snapshot_promoted=false observed in-tick, direct causal confirmation of the wallclock-vs-nominal-tick defect. Step 5.1 load parse read '1,67' comma-decimal (no LC_ALL=C pin); verdict unaffected here but the parse truncates the fraction."
+  },
+  "priority": "low",
+  "createdAt": "20260824T013434Z",
+  "_processed": {
+    "fingerprint": "15023f5b7184c18f6f3aa9bdeb14ff747e4797b07b7a465c8b98d658257e3af7",
+    "processedAt": "2026-08-24T01:54:21Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
