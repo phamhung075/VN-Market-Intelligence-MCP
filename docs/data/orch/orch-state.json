@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS",
-    "next_agent": "developer",
-    "next_action": "BOUNDED-1 auto-pickup claim of CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-24T17:18:58Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-08-24T17:42:38Z",
+    "updated_by": "dev-mcp-server",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -128,10 +127,262 @@
     "does_not_consume_wip": true
   },
   "signal_queue": {
-    "_updated_at": "2026-08-24T14:30:07Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-08-24T00:00:00Z",
+    "_updated_by": "narrative-truth-gate",
     "archive": [],
     "rows": [
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-bec1e9",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "not found in database",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-b8dd62",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-2cdc86",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-225a9d",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-f9a1d0",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-fd4daf",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "60",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-6ab698",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "not found in database",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-aaf254",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-3d1e84",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "62.1",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-0f45eb",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-b36393",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "61",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
+      {
+        "id": "ntg-20260824T000000Z-technical_indicators-VNM-688aba",
+        "ts": "2026-08-24T00:00:00Z",
+        "from": "chef",
+        "to": "po",
+        "type": "narrative_contradiction",
+        "summary": "CCATO: chef claimed absence of technical_indicators data for VNM but get_technical_indicators returned non-null data",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "chef",
+          "claim": "VNM không có dữ liệu kỹ thuật phiên này.",
+          "tool": "get_technical_indicators",
+          "ticker": "VNM",
+          "probe_ticker": "VNM",
+          "returned_value": "60",
+          "cycle": "2026-08-24",
+          "gate_version": "1"
+        }
+      },
       {
         "id": "bctc-imgdeg-1f53ef33-20260824T090414Z",
         "ts": "2026-08-24T09:04:14Z",
@@ -23644,6 +23895,40 @@
         "dispatch_lane": "architect",
         "ba_spec_ref": "docs/handoffs/UC-SDF-P2-BA-step60-hardening-spec.md",
         "ba_spec_note_20260824": "PLAN-ONLY DELIVERABLE COMPLETE (ba, 2026-08-24, commit c10c08593) -> docs/handoffs/UC-SDF-P2-BA-step60-hardening-spec.md. SCOPE=verifier leg only; filename-contract fix + 4-unit SEQUENCING GUARD remain OPEN and are architects call. ROOT CAUSE CONFIRMED AT SOURCE: promoteCycleSnapshots file-not-found branch emitPressureStateTool.ts:264 returns {promoted:false,stale:false}, so success:true + cycle_snapshot_promoted:false + stale_warning:false IS the silent-failure signature; the freshness gate (:291-293, only setter of stale:true) sits DOWNSTREAM of that existsSync so it never sees a candidate. 21/21 mcp-server log lines in 24h show promoted=false. THREE ROW CLAIMS CORRECTED, verify before implementing: (a) po_corroboration_20260725T0948s SECOND FAILURE MODE (on-grid file lacks fetchedAt/created_at) is FALSE - tick-snapshot.md:53 has passed --arg created_at since before the gate landed and :274-279 reads it second, so fixing the filename ALONE would promote; do not budget a second fix. (b) this rows own requested gate calendar_status != closed is a NO-OP since TASK_2008a - vnTradingCalendar.ts:30 SESSION_STATUSES has no closed member and :426-434 discards out-of-domain overrides; spec implements the intent as calendar_status IN {open,half_day}. (c) widen item (4) is half-right: regime_status is a wrong-key bug (real path .macro_snapshot.data.signals.carry.regime) but volatility_level matches ZERO paths and has NO producer anywhere - repointing the regime key alone leaves volatility_tier pinned low at cadence-policy.js:101-102. NEW LATENT 4th failure mode found: cowork-tick-preflight.sh:203 emits the nominal tick WITHOUT seconds, and :399s regex /T(dd:dd):/ needs a trailing colon - a dispatcher forwarding .tick verbatim yields tickHHMM=null and the identical silent signature. DISPATCH SPLIT for the Step 6.0b hardening (safe to land ALONE - no promote/cadence behaviour change, and it gives the 4-unit set a regression detector): agent-father owns the ~10L telemetry.md Step 6.0b block (docs/agents/** exclusive zone); developer owns new scripts/agents-flow/cowork-snapshot-advance-check.sh + its test + 1 .gitignore line + dev-standards.md pointer. 8 ACs in the spec."
+      },
+      {
+        "id": "CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS",
+        "type": "CLEAN",
+        "title": "Orphaned agent worktree .claude/worktrees/agent-ae9ed2cd6f04b3686 hides 11 days of uncommitted production code for a board row that is still READY — salvage the diff, then remove the worktree",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "po",
+        "next_agent": "qa",
+        "supervised": false,
+        "baseline_pass": true,
+        "created_at": "2026-08-23T15:06:54Z",
+        "created_by": "po/triage-20260823T1500Z",
+        "dedup_key": "worktree-salvage:agent-ae9ed2cd6f04b3686",
+        "files": [
+          "apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts",
+          "apps/mcp-server/src/domain/services/financial-reports/bctcSectionCompleteness.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts",
+          "apps/mcp-server/src/__tests__/BEQ-SECTION-GUARD.test.ts",
+          "apps/mcp-server/src/__tests__/LF-SERVE-REFLOW.test.ts",
+          "apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts"
+        ],
+        "status_note": "SALVAGE, DO NOT DISCARD — decision made on inspection, per hard constraint. Worktree branch worktree-agent-ae9ed2cd6f04b3686 @ 4a6d2174c, last commit 2026-08-12T19:11:59+0200, `git log main..HEAD` EMPTY (0 unmerged commits, already merged) — so every main-tree probe reports it clean/stale and safe to prune. It is not: `git status --porcelain` in the worktree shows 6 modified tracked files + 1 untracked, `git diff --stat HEAD` = 231 insertions / 28 deletions. WHY IT MUST NOT BE DISCARDED: the untracked file is apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts and 4a6d2174c's own message is 'claim FIX-CI-BUNTEST-1108 + FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG — backlog to in_progress'. FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is LIVE ON THE BOARD RIGHT NOW in ready[] (status READY, owner po, next_agent ba, updated 2026-08-23T12:05:15Z) — i.e. it is queued to be re-planned from scratch by ba while +114 lines of bctcScalarAggregator.ts, +29 of bctcSectionCompleteness.ts, +19 of backfillBctcScalarsTool.ts and 2 test files implementing it sit invisible. The other claimed id, FIX-CI-BUNTEST-1108-AGENT-WORK-LOG-STORE, is no longer present in ANY task_board lane. EXCLUDE FROM SALVAGE: (a) the ` D apps/mcp-server/data` deletion — that path is a tracked SYMLINK (mode 120000, blob e67b4559) which the agent replaced with a real local directory; it is a local runtime artifact, never commit the deletion (see feedback_live_db_is_named_volume_not_host_data); (b) docs/agent-memory/modules/tool-usage-stats.json (-22 lines) — a shared rolling telemetry file, 11 days stale, would clobber peer writes. AC-1: the 6 code/test files are rebased onto current main and land with tests run. AC-2: FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is advanced to review/qa rather than re-planned by ba, or explicitly re-scoped if the salvaged diff is judged incomplete. AC-3: only after AC-1 lands, `git worktree remove` + branch delete. AC-4: report whether any OTHER worktree carries the same hidden-diff shape (`git worktree list` currently shows exactly one).\n[dev-mcp-server] Implementation Record (salvage-only, worktree NOT removed per standing user instruction): copied file CONTENTS (never checked out the worktree branch in the main tree) for the 5 modified + 1 new file the status_note flagged for salvage. Verified before copying: worktree base commit 4a6d2174c is an ancestor of current main HEAD, and main's pre-salvage content for all 5 modified files was byte-identical to that base — so the copy is exactly equivalent to a conflict-free rebase, no manual merge needed. Excluded per status_note, confirmed live: (a) ` D apps/mcp-server/data` — re-probed in main tree, still a tracked symlink (mode 120000, blob e67b455909149dffe457ead0f8cb08bfb2504376) -> ../../data; never propagated the deletion. (b) docs/agent-memory/modules/tool-usage-stats.json — diff confirmed it zeroes toolCounts (15 entries -> {}) at 2026-08-12T17:47:15Z, stale rolling-telemetry churn; left untouched. AC-4 (any other worktree carrying the same hidden-diff shape): `git worktree list` shows exactly one worktree besides main (agent-ae9ed2cd6f04b3686) — no other instances found.\nTests: targeted run on the 3 salvaged/new test files (BEQ-SECTION-GUARD.test.ts, LF-SERVE-REFLOW.test.ts, FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts) = 32 pass/0 fail/138 expect() calls. Full suite (cd apps/mcp-server && bun test, captured to file not tail-piped, so exit code is real): 15456 pass/40 skip/50 fail/48943 expect() calls across 1284 files [506.02s]. Failing-file-set extracted programmatically (awk state-machine over file-header + (fail) lines) = {1113-vps-proxy-health, 1146-get-insider-transactions, 1193-push-prices-persist, 1405b-bctc-vps-fixes, 1518-get-foreign-flow-ohlcv-source, 1844-backtest-retrieval, 1858c-logvpspush-fix, 1875c-record-signal-outcome-routing, 1892a-pushNewsHandler, 235-telegram-send-merge, 251-mcp-tools, FIX-ORPHAN-FR2-FR6-FR7-INTERFACE-COORDINATION-TOOLS, RAPID-B2-get-market-cap-tool, TSU-DEV-U5-foreign-flow-null-holding-ratio, VPT-1-vps-proxy-health-endpoint} — byte-identical (15/15, zero extra, zero missing) to the documented baseline (reference_mcpserver_fullsuite_preexisting_failure_baseline, most-recently reconfirmed 2026-08-24T03:46Z QA verify on the board). Zero new regressions. bun tsc --noEmit: clean, 0 errors. Server boot (PORT=3099, isolated from any live container on :3000): /health returned toolCount=184, zero import errors, clean SIGTERM shutdown (WAL checkpoint flushed). Tool count 184 / cron job count 88 unchanged from pre-task baseline — no new tool registered (backfillBctcScalarsTool.ts is an existing registered tool, only its handler body changed), so this is expected not a regression.\nCommit 28f8509fc351d73694319ae505909b4c43941cf5 (pathspec: apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts, apps/mcp-server/src/domain/services/financial-reports/bctcSectionCompleteness.ts, apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts, apps/mcp-server/src/__tests__/BEQ-SECTION-GUARD.test.ts, apps/mcp-server/src/__tests__/LF-SERVE-REFLOW.test.ts, apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts) — 6 files changed, 578 insertions(+), 8 deletions(-). Not pushed (local main stays ahead of origin per session policy).\nNOT DONE (explicitly out of this task's stated scope, \"SALVAGE ONLY\"): worktree removal (AC-3 of the original status_note) — deliberately deferred, standing user instruction protects .claude/worktrees/agent-ae9ed2cd6f04b3686 from pruning, and removal is destructive/irreversible pending separate user sign-off. Also did not act on AC-2 (advancing the separate FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG row currently in ready[]/next_agent=ba to review/qa or re-scoping it) — that is a distinct board row this task's brief did not authorize touching; flagging it for whoever owns that row next: the salvaged commit above already implements it end-to-end with passing tests, so a fresh ba re-plan-from-scratch would be duplicate work.\nNEXT: qa — verify commit 28f8509fc via direct-commit review (RAW-verify against live git, not this status_note's prose).\n",
+        "updated_at": "2026-08-24T17:42:38Z",
+        "updated_by": "dev-mcp-server",
+        "po_expedite_20260824T0716Z": "P1->P0. Now gates TWO other rows: CLEAN-STALE-WORKTREE-AGENT-AE9ED2CD-FULLY-MERGED-3D-IDLE (would delete the salvage target) and FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG (ready[], would re-implement work that already exists but is invisible from the main tree). 2nd occurrence of this pattern in 12 days. Re-verified live 2026-08-24T07:1xZ: worktree present, branch worktree-agent-ae9ed2cd6f04b3686 at 4a6d2174c, 231 insertions uncommitted.",
+        "promoted_at": "2026-08-24T17:18:09Z",
+        "promoted_by": "dev-team (bounded-1 auto-pickup)",
+        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
+        "claimed_at": "2026-08-24T17:18:57Z",
+        "claimed_by": "dev-team (bounded-1 auto-pickup)",
+        "commit": "28f8509fc351d73694319ae505909b4c43941cf5"
       }
     ],
     "qa": [
@@ -23827,41 +24112,7 @@
     },
     "last_triaged_at": "2026-08-24T17:18:09Z",
     "last_triaged_by": "dev-team (bounded-1 auto-pickup)",
-    "in_progress": [
-      {
-        "id": "CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS",
-        "type": "CLEAN",
-        "title": "Orphaned agent worktree .claude/worktrees/agent-ae9ed2cd6f04b3686 hides 11 days of uncommitted production code for a board row that is still READY — salvage the diff, then remove the worktree",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "owner": "po",
-        "next_agent": "developer",
-        "supervised": false,
-        "baseline_pass": true,
-        "created_at": "2026-08-23T15:06:54Z",
-        "created_by": "po/triage-20260823T1500Z",
-        "dedup_key": "worktree-salvage:agent-ae9ed2cd6f04b3686",
-        "files": [
-          "apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts",
-          "apps/mcp-server/src/domain/services/financial-reports/bctcSectionCompleteness.ts",
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts",
-          "apps/mcp-server/src/__tests__/BEQ-SECTION-GUARD.test.ts",
-          "apps/mcp-server/src/__tests__/LF-SERVE-REFLOW.test.ts",
-          "apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts"
-        ],
-        "status_note": "SALVAGE, DO NOT DISCARD — decision made on inspection, per hard constraint. Worktree branch worktree-agent-ae9ed2cd6f04b3686 @ 4a6d2174c, last commit 2026-08-12T19:11:59+0200, `git log main..HEAD` EMPTY (0 unmerged commits, already merged) — so every main-tree probe reports it clean/stale and safe to prune. It is not: `git status --porcelain` in the worktree shows 6 modified tracked files + 1 untracked, `git diff --stat HEAD` = 231 insertions / 28 deletions. WHY IT MUST NOT BE DISCARDED: the untracked file is apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts and 4a6d2174c's own message is 'claim FIX-CI-BUNTEST-1108 + FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG — backlog to in_progress'. FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is LIVE ON THE BOARD RIGHT NOW in ready[] (status READY, owner po, next_agent ba, updated 2026-08-23T12:05:15Z) — i.e. it is queued to be re-planned from scratch by ba while +114 lines of bctcScalarAggregator.ts, +29 of bctcSectionCompleteness.ts, +19 of backfillBctcScalarsTool.ts and 2 test files implementing it sit invisible. The other claimed id, FIX-CI-BUNTEST-1108-AGENT-WORK-LOG-STORE, is no longer present in ANY task_board lane. EXCLUDE FROM SALVAGE: (a) the ` D apps/mcp-server/data` deletion — that path is a tracked SYMLINK (mode 120000, blob e67b4559) which the agent replaced with a real local directory; it is a local runtime artifact, never commit the deletion (see feedback_live_db_is_named_volume_not_host_data); (b) docs/agent-memory/modules/tool-usage-stats.json (-22 lines) — a shared rolling telemetry file, 11 days stale, would clobber peer writes. AC-1: the 6 code/test files are rebased onto current main and land with tests run. AC-2: FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is advanced to review/qa rather than re-planned by ba, or explicitly re-scoped if the salvaged diff is judged incomplete. AC-3: only after AC-1 lands, `git worktree remove` + branch delete. AC-4: report whether any OTHER worktree carries the same hidden-diff shape (`git worktree list` currently shows exactly one).",
-        "updated_at": "2026-08-24T17:18:58Z",
-        "updated_by": "po (ruling-20260824T0716Z)",
-        "po_expedite_20260824T0716Z": "P1->P0. Now gates TWO other rows: CLEAN-STALE-WORKTREE-AGENT-AE9ED2CD-FULLY-MERGED-3D-IDLE (would delete the salvage target) and FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG (ready[], would re-implement work that already exists but is invisible from the main tree). 2nd occurrence of this pattern in 12 days. Re-verified live 2026-08-24T07:1xZ: worktree present, branch worktree-agent-ae9ed2cd6f04b3686 at 4a6d2174c, 231 insertions uncommitted.",
-        "promoted_at": "2026-08-24T17:18:09Z",
-        "promoted_by": "dev-team (bounded-1 auto-pickup)",
-        "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
-        "claimed_at": "2026-08-24T17:18:57Z",
-        "claimed_by": "dev-team (bounded-1 auto-pickup)"
-      }
-    ]
+    "in_progress": []
   },
   "_meta": {
     "updated_at": "2026-06-27T11:57:50Z",
