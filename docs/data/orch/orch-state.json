@@ -1846,42 +1846,6 @@
         }
       },
       {
-        "id": "bctc-imgdeg-69fcd047-20260823T090510Z",
-        "ts": "2026-08-23T09:05:10Z",
-        "from": "mcp-server",
-        "to": "po",
-        "type": "bctc_image_fetch_degraded",
-        "summary": "BCTC report 69fcd047: 2 refined units capped <=0.6 confidence (image_unavailable) — investigate get_bctc_page_image/p...",
-        "severity": "HIGH",
-        "status": "triaged",
-        "payload_ref": null,
-        "payload": {
-          "report_id": "69fcd047-a358-4067-a34c-af727617c473",
-          "affected_unit_ids": [
-            "unit-0024",
-            "unit-0025"
-          ]
-        },
-        "dedup_key": "bctc_image_fetch_degraded:69fcd047-a358-4067-a34c-af727617c473",
-        "triaged_at": "2026-08-23T09:07:20Z",
-        "triaged_by": "po (triage-20260823T0907Z)",
-        "triage_disposition": "ROUTE-BY-to FALLBACK — minted backlog row FIX-BCTC-PAGE-IMAGE-FETCH-DEGRADED-CONFIDENCE-CAP (dedup checked, no prior row). Type-level routing gap tracked separately by FIX-SIGNAL-TYPE-ROUTING-GAP-bctc-image-fetch-degraded (P0, BATCHed this tick)."
-      },
-      {
-        "id": "cj-20260823T103003Z",
-        "ts": "2026-08-23T10:30:03Z",
-        "from": "code-janitor",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
-        "severity": "LOW",
-        "status": "triaged",
-        "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-23.json",
-        "disposition": "TRIAGED — no mint, no PO ruling owed. The decision_needed this payload asks for was settled 2026-08-06 (DECISION=REPLACE) and the replacement is LIVE: docs/agents/agent-father/flow/team-tool-recheck.md on agent-father's existing 23 14 * * * cron, 12 reports in docs/agent-memory/health/, newest team-tool-recheck-2026-08-22-1242.md. The signal itself is a known false emission — memory-prune-sweep.sh hardcodes the string 'silent since 2026-06-23' with no liveness predicate, and its idempotency guard (line 109, find SIGNALS_DIR -maxdepth 1) cannot see docs/signals/processed/ where the drain puts prior emissions, so it re-emits every cycle. 11th distinct emission date. Owner: FIX-JANITOR-PRUNE-SWEEP-HARDCODED-DEAD-WRITER-PREMISE (backlog, P1, occurrence_count 11) + sibling FIX-JANITOR-HEALTHRECHECK-IDEMPOTENCY-GUARD-MISSES-PROCESSED-DIR (ready). CORRECTION SHIPPED THIS TICK: CLEAN-RETIRE-TEAM-TOOL-RECHECK-WRITER, cited by the 08:20Z triage of the sibling signal as authority to retire, is RETRACTED and set BLOCKED — implementing it would have killed a live job.",
-        "triaged_at": "2026-08-23T12:47:31Z",
-        "triaged_by": "po/triage-20260823T1232Z"
-      },
-      {
         "id": "sys-20260823T141228-5fd3",
         "ts": "2026-08-23T14:12:28Z",
         "from": "system-auditor",
@@ -19396,36 +19360,6 @@
             "observed_at": "2026-08-23T22:08:35Z"
           }
         }
-      },
-      {
-        "id": "TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX",
-        "type": "SUBTASK",
-        "size": "XS",
-        "priority": "P1",
-        "status": "DONE_VERIFIED",
-        "zone": "docs/",
-        "owner": "qa",
-        "parent_task_id": "FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58",
-        "plan_only": false,
-        "supervised": false,
-        "sprint": "COWORK-RELIABILITY",
-        "created_at": "2026-08-22T17:45:00Z",
-        "created_by": "pm",
-        "title": "One-line doc fix: domain-model.md watchlist count",
-        "handoff": "docs/handoffs/TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX.md",
-        "updated_at": "2026-08-23T22:09:29Z",
-        "updated_by": "developer",
-        "review_note": "[developer 2026-08-23T15:10:30Z] Fixed docs/architecture/microservice/frontend/domain-model.md:72 stale watchlist count 33->34 (30 active+3 inactive -> 33 active+1 inactive=VEA). Verified raw (not from handoff's stated numbers): system-map.json project.watchlist = 34 total/33 active/1 inactive=VEA; apps/frontend/app/domain/market.ts WATCHLIST_STOCKS = 34 { ticker: ... } entries, VEA sole active:false. Exactly 1 line changed in 1 file (AC-4). Commit 59dd37152. Found but NOT fixed (scope fence, needs its own row): line 74 \"Active tickers (30): ...\" is ALSO stale (32 tickers listed, PLX missing, mislabeled count) — flagging for po/architect, same parent FIX-SYSTEM-MAP-WATCHLIST-STALE-34-OF-58 territory.",
-        "qa_verified_at": "2026-08-23T22:09:28Z",
-        "verification": {
-          "raw_probe": {
-            "tool": "git merge-base --is-ancestor + git show --stat + jq (system-map.json) + grep/awk (market.ts) + sed (domain-model.md live read)",
-            "args": "commit=59dd37152; files=[docs/architecture/microservice/frontend/domain-model.md]; cross-checked docs/data/system-map.json .project.watchlist and apps/frontend/app/domain/market.ts WATCHLIST_STOCKS",
-            "live_value_observed": "ancestor=yes; stat touches 1/1 claimed file (+1/-1 lines); domain-model.md:72 = '34 entries (33 active + 1 inactive -- VEA)'; system-map.json watchlist total=34 active=33 inactive=1(VEA); market.ts WATCHLIST_STOCKS=34 entries (33 active:true, 1 active:false=VEA)",
-            "observed_at": "2026-08-23T22:09:28Z"
-          }
-        },
-        "status_note": "\n[QA] Review Record (direct-commit verify, 2026-08-24): row was found in review[]/status=REVIEW, NOT qa[]/QA as the dispatch claimed (no orch-apply commit ever promoted it -- confirmed via git log -S on orch-state.json, only 06a392dc9 READY->REVIEW exists). Verified on merits per docs/handoffs/TASK_003-DOMAIN-MODEL-WATCHLIST-COUNT-FIX.md. Commit 59dd37152 real, on main, touches exactly domain-model.md (1 file/1 line). Re-read file live: line 72 = '34 entries (33 active + 1 inactive -- VEA)'. Re-ran jq against system-map.json live: total=34, active=33, inactive=1(VEA) -- all match AC-2. Counted market.ts WATCHLIST_STOCKS live: 34 entries, 33 active:true, 1 active:false(VEA) -- matches AC-3. Docs-only change, zero production/test files touched -- bun test/tsc/mock-guard/DDD/security out of scope. Verdict: DONE_VERIFIED."
       },
       {
         "id": "TASK-USDVND-TS-STATIC-RETIRE",
