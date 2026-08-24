@@ -108,6 +108,16 @@ export interface OrchStateTaskBoardTask {
   priority?: string;       // high / medium / low
   files?: string[];        // file paths touched by this task
   commit?: string;         // git commit hash(es) delivering the task
+  /**
+   * Decomposition record — array of CHILD TASK ID STRINGS this row minted
+   * (BOUNDED-1 epic-wrapper convention, FIX-DEVTEAM-BOUNDED1-EPIC-WRAPPER-GATE
+   * 2026-07-10 / pm decompose-closeout `.children` write, docs/architecture-briefs/
+   * 2026-08-14-pm-decompose-closeout-reachability-and-nextagent-mint.md §5).
+   * NEVER an array of embedded task objects — children live independently
+   * elsewhere on the board (any lane: ready/backlog/done_verified/etc, not
+   * necessarily done) and must be looked up by id, never assumed co-located.
+   */
+  children?: string[];
 }
 
 export interface OrchStateTaskBoardSprint {

@@ -75,6 +75,8 @@ export interface OrchTaskDto {
   note?: string;
   files?: string[];
   commit?: string;
+  /** Decomposition record — child task IDs this row minted (BOUNDED-1 convention). */
+  children?: string[];
 }
 
 /** Safe signal row — HC-2: payload_ref ONLY, never raw payload */
@@ -190,6 +192,9 @@ function projectTask(task: OrchStateTaskBoardTask): OrchTaskDto {
   if (task.note)       dto.note        = str(task.note);
   if (Array.isArray(task.files)) dto.files = task.files;
   if (task.commit)     dto.commit      = str(task.commit);
+  if (Array.isArray(task.children) && task.children.length > 0) {
+    dto.children = task.children.map((c) => str(c));
+  }
   return dto;
 }
 
@@ -276,15 +281,30 @@ export function buildOrchestrationDto(
     (sprint.tasks ?? []).map(projectTask)
   );
 
-  // Project done[] from task_board.done (post-F1B canonical source)
-  const doneTasks: OrchTaskDto[] = (taskBoard.done ?? []).flatMap((task) => {
-    // Flatten any nested container rows (defense-in-depth)
-    const nested = (task as unknown as Record<string, unknown>)["children"];
-    if (Array.isArray(nested)) {
-      return (nested as OrchStateTaskBoardTask[]).map(projectTask);
-    }
-    return [projectTask(task)];
-  });
+  // Project done[] from task_board.done (post-F1B canonical source).
+  //
+  // FIX-ORCHESTRATION-DONE-CHILDREN-STRING-ID-FLATTEN-BUG (2026-08-24): the
+  // prior flatMap here assumed `.children` (when present) held embedded task
+  // OBJECTS ("nested container rows") and substituted them for the parent.
+  // That assumption was never true and no such shape exists anywhere in this
+  // repo (no schema field, no producer) — the ONLY real `.children` convention
+  // is the BOUNDED-1 epic-wrapper one (dev-standards.md § BOUNDED-1
+  // epic-wrapper gate; pm decompose-closeout, architecture-briefs/2026-08-14-
+  // pm-decompose-closeout-...md §5): a plain array of CHILD TASK ID STRINGS
+  // minted when this row decomposed. projectTask() on a bare string returns
+  // an all-empty DTO, so every done[] row carrying `.children` rendered as a
+  // blank dashboard row AND the real completed parent was dropped entirely.
+  //
+  // Fix: project the parent row itself — it IS the completed task_board.done[]
+  // entry per this DTO's own contract ("sourced from task_board.done[]").
+  // Deliberately NOT resolving child ids into additional done[] rows here:
+  // live-verified (2026-08-24) those ids resolve to rows in OTHER lanes
+  // (ready[]/backlog[]/done_verified[]), not necessarily done — listing them
+  // in the done table would fabricate a false "done" status for still-open
+  // work, which is worse than the original bug. Child ids are preserved
+  // losslessly instead as `OrchTaskDto.children` (projectTask() passthrough)
+  // so the dashboard can still show/link them without misclassifying status.
+  const doneTasks: OrchTaskDto[] = (taskBoard.done ?? []).map(projectTask);
 
   // Signal rows — safe projection
   const signalRows: OrchSignalRowDto[] = (state.signal_queue?.rows ?? []).map(projectSignalRow);
