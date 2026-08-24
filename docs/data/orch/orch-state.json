@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH",
-    "next_agent": "dev-pdf-extractor",
-    "next_action": "BOUNDED-1 auto-pickup claim of FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH — dispatcher-wrap then JUMP TO execute; zone-detect skill resolves the final specialist from the task's zone/files.",
-    "updated_at": "2026-08-24T04:27:01Z",
-    "updated_by": "dev-team (bounded-1 auto-pickup)"
+    "status": "idle",
+    "updated_at": "2026-08-24T07:15:54Z",
+    "updated_by": "po (ruling-20260824T0716Z stale-head unpin)",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -2325,6 +2324,46 @@
         "provenance": "detector",
         "audit_cycle_tag": null,
         "dedup_key": "auditor-cycle-loss:2026-08-24T00:00Z"
+      },
+      {
+        "id": "sys-20260824T0130-pdf-mem-loop-8f4a",
+        "ts": "2026-08-24T07:10:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "memory_loop_breach",
+        "summary": "pdf-extractor memory-creep loop: breaches 85% threshold, benign (FOLD), absent from ack ledger, no tracked backlog row → fires every 30min",
+        "severity": "WARN",
+        "status": "triaged",
+        "payload_ref": null,
+        "payload": {
+          "agent_id": "system-auditor",
+          "container": "vn-market-intelligence-mcp-pdf-extractor-1",
+          "finding_class": "benign_loop",
+          "measurement": {
+            "memory_percent": 86.9,
+            "threshold_percent": 85,
+            "verdict": "FOLD",
+            "reason": "confirmed stable/oscillating, absence from .acked_memory"
+          },
+          "issue": {
+            "symptom": "audit fire-election succeeds every 30min → probe runs → FAILURE → no visible change → fires again",
+            "root_cause": "pdf-extractor absent from docs/data/auditor-launchd-ack.json .acked_memory[], sole cause of breach",
+            "evidence": [
+              "previous tick (30min ago): concluded FOLD, both containers stable OOMKilled=false RestartCount=0",
+              "rag-service oscillates 58.33% → 91.40% over same window (known memory oscillation signature)",
+              "pdf-extractor: zero ack entry, no backlog row, zero authorization to hand-edit ack ledger"
+            ]
+          },
+          "action_required": "po decision: either ack the entry in auditor-launchd-ack.json or raise pdf-extractor memory cap",
+          "cycle_frequency_min": 30,
+          "observed_spawns_per_day": 48,
+          "mitigation_urgency": "medium"
+        },
+        "ts_original_backdated": "2026-08-24T01:30:00Z",
+        "ts_correction_note": "ts was backdated 5h40m by the emitting system-auditor (exact :30:00 boundary = a fabricated/rounded value, not a clock read). Real mint window 2026-08-24T07:10Z, corrected here by po. The id string still embeds the WRONG value (sys-20260824T0130-...) and is deliberately left alone so existing references resolve -- the id's embedded timestamp is NOT a clock fact, read ts. Matters because the 7-day prune ages on ts: the backdate silently burned 5h40m of this row's age budget.",
+        "triaged_by": "po (ruling-20260824T0716Z)",
+        "triaged_at": "2026-08-24T07:16:00Z",
+        "disposition": "ACCEPTED-WITH-CORRECTIONS. Measurement and routing correct; two payload claims are not. (i) payload.issue.root_cause says pdf-extractor's absence from .acked_memory is the 'sole cause of breach' -- it is the sole cause of the FAILURE VERDICT, not of the breach; the breach is real (FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM shipped and idles at 85-87% against its own AC-4 bar of <=80% of cap). (ii) payload.issue.evidence says 'no backlog row' -- FALSE: FIX-AUDITOR-TIER1-FOLD-VERDICT-NOT-DURABLE-RESPAWNS-AUDITOR-EVERY-TICK has tracked exactly this loop since 2026-08-24T04:01:33Z, and FIX-AUDITOR-TIER1-MEMACK-HEADROOM-COMPUTED-FROM-MEMPERC-NETS-OUT-PAGE-CACHE tracks the headroom-plane defect. payload.action_required ('ack the entry or raise the cap') offers only the two options PO refused at 04:00Z and refuses again here -- see po_ruling_20260824T0716Z on the FOLD-VERDICT row for the full reasoning. Resolution: no ack, no cap change; the FOLD-VERDICT row is expedited to P0 and `.head` unpinned in this same write so it can finally be dispatched. _updated_by null on this row is the known signal_queue producer-auth gap, not a defect of this row."
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -13677,10 +13716,17 @@
         "non_goals": "Do NOT `git branch -D` while the worktree is still registered. Do NOT check this branch out in the shared main working directory — feedback_subagent_branch_checkout_hijacks_shared_working_dir.",
         "occurrence_count": 2,
         "verification_gate": "git worktree list == 1 entry AND git branch == main only",
-        "updated_at": "2026-08-23T12:05:15Z",
-        "updated_by": "po/triage-20260823T1157Z",
+        "updated_at": "2026-08-24T07:15:54Z",
+        "updated_by": "po (ruling-20260824T0716Z)",
         "po_premise_correction_20260823T1157Z": "PREMISE CORRECTED — DO NOT ACT ON THIS ROW'S TITLE. Title/evidence say \"0 unmerged commits, tip is an ancestor of main, idle 3d\" and rank it P3. Re-probed live 2026-08-23T11:57Z: all three staleness probes still say \"retired\" (main git status clean; git log main..worktree-agent-ae9ed2cd6f04b3686 empty; merge-base --is-ancestor 4a6d2174c main = YES) and ALL THREE ARE MISLEADING. `git -C .claude/worktrees/agent-ae9ed2cd6f04b3686 status --porcelain` shows 7 dirty paths: M apps/mcp-server/src/domain/services/financial-reports/bctcScalarAggregator.ts, M .../bctcSectionCompleteness.ts, M apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts, M apps/mcp-server/src/__tests__/BEQ-SECTION-GUARD.test.ts, M .../LF-SERVE-REFLOW.test.ts, M docs/agent-memory/modules/tool-usage-stats.json, D apps/mcp-server/data, PLUS an UNTRACKED test file apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts that does not exist on main. Idle is 11 days (tip 2026-08-12), not 3. The worktree survived the harness's own auto-remove precisely BECAUSE it is dirty — dirtiness is what earns the reprieve, so 'still present' is evidence of unsaved work, not of neglect. P3 -> P1 and the row is now RESCUE-FIRST: AC-1 (rescue before removal) was always present and is now the whole point. Rescue target row: FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG (ready[], READY, next_agent=ba, untouched since 2026-08-14T20:02Z) — whoever picks that row today redoes work already sitting on disk. SYSTEMIC GAP, deliberately named and NOT separately minted: nothing sweeps agent worktrees and nothing maps a worktree to its owning board row; `git worktree prune -v` is empty this tick and structurally cannot help (it only reaps worktrees whose directory is gone).",
-        "related_rescue_row": "FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG"
+        "related_rescue_row": "FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG",
+        "depends": [
+          "CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS"
+        ],
+        "depends_on": [
+          "CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS"
+        ],
+        "po_sequencing_guard_20260824T0716Z": "DESTRUCTIVE-BEFORE-SALVAGE HAZARD, closed by making the ordering machine-readable instead of prose-only. This row's title ('0 unmerged commits, tip is an ancestor of main, idle since 2026-08-12T17:12Z') is TRUE ABOUT THE BRANCH and FALSE-BY-OMISSION ABOUT THE TREE: re-verified live 2026-08-24T07:1xZ, the worktree is DIRTY -- 6 modified tracked files + 1 untracked file that exists NOWHERE on main (apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts), 231 insertions / 28 deletions total. Every merge probe reports 'done' because the BRANCH is an ancestor of main; `git worktree prune` will not reap it because the DIRECTORY still exists. Executing this cleanup first destroys 12 days of production code. depends[] now points at the salvage row so no picker can order them wrong."
       },
       {
         "id": "FIX-TASKKIND-ENUM-NO-GUARD-MARKER-CATEGORY",
@@ -15185,7 +15231,7 @@
         "type": "CLEAN",
         "title": "Orphaned agent worktree .claude/worktrees/agent-ae9ed2cd6f04b3686 hides 11 days of uncommitted production code for a board row that is still READY — salvage the diff, then remove the worktree",
         "status": "BACKLOG",
-        "priority": "P1",
+        "priority": "P0",
         "size": "S",
         "zone": "apps/mcp-server/",
         "owner": "po",
@@ -15204,7 +15250,9 @@
           "apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts"
         ],
         "status_note": "SALVAGE, DO NOT DISCARD — decision made on inspection, per hard constraint. Worktree branch worktree-agent-ae9ed2cd6f04b3686 @ 4a6d2174c, last commit 2026-08-12T19:11:59+0200, `git log main..HEAD` EMPTY (0 unmerged commits, already merged) — so every main-tree probe reports it clean/stale and safe to prune. It is not: `git status --porcelain` in the worktree shows 6 modified tracked files + 1 untracked, `git diff --stat HEAD` = 231 insertions / 28 deletions. WHY IT MUST NOT BE DISCARDED: the untracked file is apps/mcp-server/src/__tests__/FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG.test.ts and 4a6d2174c's own message is 'claim FIX-CI-BUNTEST-1108 + FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG — backlog to in_progress'. FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is LIVE ON THE BOARD RIGHT NOW in ready[] (status READY, owner po, next_agent ba, updated 2026-08-23T12:05:15Z) — i.e. it is queued to be re-planned from scratch by ba while +114 lines of bctcScalarAggregator.ts, +29 of bctcSectionCompleteness.ts, +19 of backfillBctcScalarsTool.ts and 2 test files implementing it sit invisible. The other claimed id, FIX-CI-BUNTEST-1108-AGENT-WORK-LOG-STORE, is no longer present in ANY task_board lane. EXCLUDE FROM SALVAGE: (a) the ` D apps/mcp-server/data` deletion — that path is a tracked SYMLINK (mode 120000, blob e67b4559) which the agent replaced with a real local directory; it is a local runtime artifact, never commit the deletion (see feedback_live_db_is_named_volume_not_host_data); (b) docs/agent-memory/modules/tool-usage-stats.json (-22 lines) — a shared rolling telemetry file, 11 days stale, would clobber peer writes. AC-1: the 6 code/test files are rebased onto current main and land with tests run. AC-2: FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG is advanced to review/qa rather than re-planned by ba, or explicitly re-scoped if the salvaged diff is judged incomplete. AC-3: only after AC-1 lands, `git worktree remove` + branch delete. AC-4: report whether any OTHER worktree carries the same hidden-diff shape (`git worktree list` currently shows exactly one).",
-        "updated_at": "2026-08-23T15:06:54Z"
+        "updated_at": "2026-08-24T07:15:54Z",
+        "updated_by": "po (ruling-20260824T0716Z)",
+        "po_expedite_20260824T0716Z": "P1->P0. Now gates TWO other rows: CLEAN-STALE-WORKTREE-AGENT-AE9ED2CD-FULLY-MERGED-3D-IDLE (would delete the salvage target) and FIX-BCTC-NONBANK-OPERATING-PROFIT-EBITDA-SCALAR-ZERO-HPG (ready[], would re-implement work that already exists but is invisible from the main tree). 2nd occurrence of this pattern in 12 days. Re-verified live 2026-08-24T07:1xZ: worktree present, branch worktree-agent-ae9ed2cd6f04b3686 at 4a6d2174c, 231 insertions uncommitted."
       },
       {
         "id": "CLEAN-ORCHSTATE-DUP-ROWS-NULL-NEXTAGENT-UNSPAWNABLE-READY-SLOTS",
@@ -15963,7 +16011,7 @@
         "id": "FIX-AUDITOR-TIER1-FOLD-VERDICT-NOT-DURABLE-RESPAWNS-AUDITOR-EVERY-TICK",
         "type": "FIX",
         "status": "BACKLOG",
-        "priority": "P1",
+        "priority": "P0",
         "size": "S",
         "zone": "multi",
         "owner": "architect",
@@ -15974,14 +16022,16 @@
           "docs/agents/system-auditor/flow/tier1-probe.md"
         ],
         "created_at": "2026-08-24T04:01:33Z",
-        "updated_at": "2026-08-24T04:01:34Z",
+        "updated_at": "2026-08-24T07:20:56Z",
         "created_by": "po/ruling-20260824T0400Z-pdfx-tier1-nonconvergent-loop",
-        "updated_by": "po",
+        "updated_by": "po (ruling-20260824T0722Z)",
         "dedup_key": "auditor-tier1-fold-no-debounce-respawn-loop",
         "title": "Tier-1 has NO spawn debounce, so a correctly-folded condition re-spawns system-auditor every 30 minutes forever: probe returns FAILURE -> cron spawns system-auditor -> A-30 deep probe returns FOLD -> tier1-probe.md:241 maps FOLD to PASS/no-emit -> the fold leaves NO artifact the probe can read -> the identical FAILURE fires again on the next tick. docs/data/auditor-tier1-last-trigger.json is WRITE-ONLY (TRIGGER_FILE assigned at :208, written at :749 and :757, read nowhere in the script). A second, independent trigger compounds it: a FAILURE tick never writes auditor-tier1-last-healthy.json, so the heartbeat-older-than-60min trigger arms too and stays armed.",
         "acceptance": "AC-1 a FOLD must leave a DURABLE, machine-readable record keyed on the breach SIGNATURE (the probe own detail string, or a normalized form of it). AC-2 the probe must read that record together with its own last-trigger and decline to re-spawn for the SAME signature inside a bounded window. AC-3 THE VERDICT ITSELF MUST STAY RED -- this is a SPAWN debounce, never a verdict change: do NOT convert FOLD into ALL_GREEN, and do NOT write auditor-tier1-last-healthy.json on a FAILURE tick (its sole authorized writer is _write_heartbeat on the ALL_GREEN branch, CANONICAL:SSOT-AUDITOR-HEARTBEAT-SOLE-WRITER). AC-4 a NEW or CHANGED signature must always spawn immediately -- debounce is per-signature, never global. AC-5 the window must EXPIRE so a persisting condition is re-adjudicated rather than muted forever. AC-6 zone is `multi`: architect splits the scripts/ half (developer) from the docs/agents/system-auditor/ half (agent-father), per the owner precedent already recorded on FIX-A21-PREDBOUND-2-TIER1-PROBE-DEDUPE-VIA-SHARED-ACTUATOR. AC-7 READ-ONLY on runtime.",
         "evidence": "MEASURED: cycle c1002, 2026-08-24T03:30Z fire -- ~80k tokens / 22 tool calls / 4.3 min spent to return FOLD on an unchanged condition. Tier-1 was ALL_GREEN at 01:17:09Z; pdf-extractor first breached at the 02:00Z tick (85.11%), then 02:30Z 85.11%, 03:00Z 87.06%, 03:30Z 86.97%. SERIAL-OFFENDER SHAPE: the immediately preceding FAILUREs (2026-08-23 21:00Z, 21:30Z, 23:00Z) were a DIFFERENT cause -- launchd fleet-push STALE-ACK -- which po hand-retargeted at 2026-08-24T01:09:11Z. Each cause gets hand-resolved one at a time while the no-debounce structure simply re-arms on the next one. That is the recurring root cause; the individual breaches are the symptoms.",
-        "non_goals": "Do NOT resolve this by adding acked[] / acked_memory[] entries to docs/data/auditor-launchd-ack.json. PO refused exactly that for pdf-extractor on 2026-08-24: a suppression ledger hides the SIGNAL, whereas a debounce hides only the DUPLICATE SPAWN. Do NOT raise or lower MEM_FLOOR_MIB or WARN_PCT. Do NOT touch pdf-extractor memory-management code -- that is FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM."
+        "non_goals": "Do NOT resolve this by adding acked[] / acked_memory[] entries to docs/data/auditor-launchd-ack.json. PO refused exactly that for pdf-extractor on 2026-08-24: a suppression ledger hides the SIGNAL, whereas a debounce hides only the DUPLICATE SPAWN. Do NOT raise or lower MEM_FLOOR_MIB or WARN_PCT. Do NOT touch pdf-extractor memory-management code -- that is FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM.",
+        "po_ruling_20260824T0716Z": "RE-RULED AND EXPEDITED P1->P0. Router re-opened options (a) ack pdf-extractor in .acked_memory / (b) raise its 2.5GiB cap / (c) other. (a) and (b) REFUSED AGAIN, on evidence the router brief did not carry. (a): the brief's premise -- 'headroom far above MEM_FLOOR_MIB=40' -- is a WRONG-PLANE artifact. docker stats MemPerc subtracts inactive_file, and _mem_headroom_mib() computes cap*(100-MemPerc)/100, so it reads ~335MiB free where this cgroup's own memory.current sat at 99.85% of memory.max (true free 1.5-3.7MiB, memory.peak == memory.max EXACTLY; 6 read-only samples, PO 04:0xZ). The MEM_FLOOR_MIB=40 guard therefore CANNOT EVER FIRE for this container -- an ack here would be unbounded in precisely the way FIX-AUDITOR-MEMACK-HEADROOM-FLOOR-AND-DEAD-TRACKEDBY was minted to prevent. A per-entry floor_mib is also unimplementable: _check_mem_creep builds its ack list as a TWO-FIELD tsv (container, tracked_by), so the field would be read by nothing. And the probe's own _mem_container_acked header PRE-REFUSES this exact ack in writing. (b): cap is already 2684354560B = 2.5GiB, second-largest on the host; live per-container caps sum to 13.5GiB against 7.75GiB of host RAM (mcp-gateway's uncapped MemPerc denominator) = 1.74x overcommit, with a documented host-memory-panic history. Raising it would also move FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM's AC-4 goalpost (a percent-OF-CAP bar) -- turning a FAILED acceptance criterion into a passing one by changing the denominator, i.e. metric-masking. WHY THIS ROW DID NOT SHIP IN THE 3h SINCE IT WAS MINTED: not priority, not eligibility. It is DRS-ELIGIBLE (verified live: bounded1-supervised-lane-report.sh DRS-ELIGIBLE, 102 rows, next_agent=architect is on the ratified allowlist). It never got a turn because `.head` froze non-idle at 2026-08-24T04:27:01Z -- 26 minutes after this row was minted -- and BOUNDED-1/SLS/RLC/DRS/QA-Drain/Step-1 ALL run only on the head-idle fall-through. Head is unpinned to idle in this same write. DRS ranks by priority_rank then backlog[] index; at P1/index 502 this row sat behind 55 P1s, hence P0.",
+        "po_addendum_20260824T0722Z": "AC-3 IS NOW LOAD-BEARING, NOT DEFENSIVE — DO NOT SOFTEN IT. This row was written on the assumption that the mem_creep FAILURE it debounces is a correctly-folded benign condition whose only cost is the duplicate spawn. That assumption is now REFUTED IN THE SAFE DIRECTION: the FAILURE is a TRUE POSITIVE. Kernel dmesg (read 2026-08-24T07:18:59Z via the read-only nsenter recipe) shows two real CONSTRAINT_MEMCG OOM kills of pdf-extractor python3 workers on 2026-08-23 at 14:27:11Z and 14:58:52Z, ~2.37 and ~2.35 GiB anon-rss against the 2.5 GiB cap — full transcript on FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM's po_burst_measurement_20260824T0722Z. The A-30 discriminator cannot see them: it reads OOMKilled/RestartCount/VmHWM/MemPerc, and a killed CHILD process leaves every one of those clean. SO: implement AC-1/AC-2/AC-4/AC-5 exactly as written, and treat AC-3 ('THE VERDICT ITSELF MUST STAY RED') as the row's most important clause rather than boilerplate — this is a SPAWN debounce over a condition that is genuinely dangerous, not a way to stop hearing about a benign one. Any implementation that converts FOLD to ALL_GREEN, or that writes auditor-tier1-last-healthy.json on a FAILURE tick, would now silence a live crash source. The non_goals ban on resolving this via acked_memory[] is likewise reinforced, not merely restated: PO has refused that ack three times (04:00Z, 07:16Z, 07:22Z) and the dmesg evidence is why."
       }
     ],
     "closed_sprints": [
@@ -19085,10 +19135,17 @@
         "created_by": "po (dev-team Step 1 triage)",
         "verification_gate": "live_tool_reserve",
         "status_note": "AC-1 get_bctc_full({code:'HPG'}) returns a NON-ZERO Operating Profit consistent with the served P&L (gross_profit 8.365,1 tỷ and profit_before_tax 10.762,2 tỷ bracket the plausible range) — verify through the RUNTIME tool via the gateway, never off a host-side SQL read (feedback_host_cli_integrity_check_false_ok_verify_through_runtime). AC-2 EBITDA and structured_data.operating_cf are no longer hard 0 for HPG, or are explicitly served as null/N-A if genuinely unextractable — a corrupt 0 that reads as a real number is the actual defect, an honest null is an acceptable outcome. AC-3 ESC-4 on a fresh HPG bctc_signal returns a real true/false verdict instead of result='discarded'. AC-4 a plausibility check runs on the mapping: reject/flag any extraction where net_profit > gross_profit AND operating_profit == 0 (feedback_nonzero_values_need_plausibility_check — the inverse case, a ZERO that should have been rejected). AC-5 regression covers at least one non-bank ticker beyond HPG so the fix is not validated on a single file (feedback_fleetwide_gate_validated_on_one_file_optout_allowlist). NOTE the reflow dependency: fixing the mapping alone will not repair the already-stored 2026-Q1 row. Triaged 2026-08-12T17:00:39Z from bctc_signal HPG Q1-2026, RAW-verified live via gateway get_bctc_full.\n\n[po/triage-2026-08-13T17:30:59Z] STALE-CLAIM RECLAIM in_progress[] -> ready[]. EVIDENCE (all read live this tick, none inferred): (1) `task_list_held` returned 20 live locks and NONE of them is this row's `task:<id>` — the claim lock is long expired (sprint-task TTL is 3600s; this row was claimed >24h ago); (2) the row's own `updated_at` has not advanced since 2026-08-12; (3) `git log --since=2026-08-12 --grep=<id>` returns ZERO commits. WHY THIS MATTERED FLEET-WIDE: `wip_in_progress` (scripts/lib/devteam-eligibility.jq:115-118) counts EVERY in_progress[] row whose status is not TERMINAL and not BLOCKED — it has NO liveness/lock check. With 3 such rows parked, wip_in_progress=3, which fails BOUNDED-1's `WIP<1` AND the shared `<2` budget of SLS (WIP2), RLC (WIP3) and DRS (WIP4) SIMULTANEOUSLY — all four auto-dispatch lanes were shut, so NOTHING on the board could be dispatched at all, regardless of priority. TWO of the three rows were claimed by `dev-team (ready-lane consumer)`: RLC claimed them, the spawned specialist never completed, and because its own dead claims still counted against its own budget, RLC could never claim again. The lane starved itself, and CI stayed RED for ~2 days behind it. Reclaimed to ready[] (NOT backlog — these were legitimately promoted and should stay dispatchable), placed AFTER this tick's P0 incident expedites so the CI/inbox unblocks go first. Same class as the FU-CNYVND-DEAD-FIELD-REMOVE incident the WIP formula's own history documents, recurring through a different door: that fix excluded BLOCKED status, but status is not liveness.\n[po/triage 2026-08-14T20:02:29Z] RECURRENCE CORROBORATION. bctc_signal (bctc-analyst-slot-2, cycle 20260814-1800, ts 2026-08-14T18:05:45Z) reports HPG Q1-2026 operating_profit=0 unfixed for the 22nd+ consecutive cycle, plus a second internally-inconsistent scalar the row's AC-1 range check should also catch: profit-after-tax 9.055,9 ty EXCEEDS gross profit 8.365,1 ty. Still READY/next_agent=ba after 22+ cycles — this row has never been dispatched. Not re-minted (dedup hit on this row).",
-        "updated_at": "2026-08-23T12:05:15Z",
+        "updated_at": "2026-08-24T07:15:54Z",
         "po_stale_reclaim_at": "2026-08-13T17:30:59Z",
-        "updated_by": "po/triage-20260823T1157Z",
-        "po_wip_on_disk_20260823T1157Z": "READ BEFORE STARTING — PARTIAL WORK ALREADY EXISTS ON DISK, UNCOMMITTED, 11 DAYS OLD. Worktree .claude/worktrees/agent-ae9ed2cd6f04b3686 (branch worktree-agent-ae9ed2cd6f04b3686, tip 4a6d2174c) holds modified bctcScalarAggregator.ts, bctcSectionCompleteness.ts, backfillBctcScalarsTool.ts, 2 modified tests, and an untracked test file named after THIS row that does not exist on main. Diff/rescue it before writing anything new. Tracked on CLEAN-STALE-WORKTREE-AGENT-AE9ED2CD-FULLY-MERGED-3D-IDLE (P1, rescue-first)."
+        "updated_by": "po (ruling-20260824T0716Z)",
+        "po_wip_on_disk_20260823T1157Z": "READ BEFORE STARTING — PARTIAL WORK ALREADY EXISTS ON DISK, UNCOMMITTED, 11 DAYS OLD. Worktree .claude/worktrees/agent-ae9ed2cd6f04b3686 (branch worktree-agent-ae9ed2cd6f04b3686, tip 4a6d2174c) holds modified bctcScalarAggregator.ts, bctcSectionCompleteness.ts, backfillBctcScalarsTool.ts, 2 modified tests, and an untracked test file named after THIS row that does not exist on main. Diff/rescue it before writing anything new. Tracked on CLEAN-STALE-WORKTREE-AGENT-AE9ED2CD-FULLY-MERGED-3D-IDLE (P1, rescue-first).",
+        "depends": [
+          "CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS"
+        ],
+        "depends_on": [
+          "CLEAN-SALVAGE-ORPHANED-WORKTREE-AE9ED2CD-BCTC-SCALARS-231-INSERTIONS"
+        ],
+        "po_duplicate_work_guard_20260824T0716Z": "DEPS-GATED to stop a re-implementation. An implementation of this row already exists, uncommitted, inside the orphaned worktree .claude/worktrees/agent-ae9ed2cd6f04b3686 -- including a dedicated test file named after this row's own id that exists nowhere on main. It is invisible to every probe run from the main tree, so the next picker would rewrite it from scratch. depends[] resolves to a live BACKLOG row (not dangling): pickers conservative-skip until the salvage lands DONE_VERIFIED, at which point this row is re-adjudicated against the recovered diff rather than started fresh."
       },
       {
         "id": "FIX-MCP-TEST-SUITE-INTERVAL-TIMER-LEAK-TEARDOWN",
@@ -21835,7 +21892,7 @@
         "type": "OPS",
         "title": "pdf-extractor is running a PRE-FIX image (built 2026-08-08T11:34:24Z) while the ratified AC3 malloc_trim fix landed on origin/main as c3fd44766 at 2026-08-15T09:0xZ — FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM cannot reach DONE_VERIFIED until this ONE ops action (rebuild+redeploy pdf-extractor, then measure AC2/AC4/AC6) happens. Same shape as the rag-service sibling; Docker/infra is out of dev-pdf-extractor charter.",
         "status": "READY",
-        "priority": "P1",
+        "priority": "P0",
         "size": "M",
         "zone": "apps/pdf-extractor/",
         "next_agent": "ops",
@@ -21856,12 +21913,13 @@
         ],
         "consumer_impact": "BCTC extraction pipeline: pdf-extractor is the OCR/table-extraction hop for every bctc PDF. Its parent-process burst reached VmHWM 2,541,184kB (~97% of the 2.5 GiB cap) in a prior life; until the malloc_trim fix is actually running, that headroom risk is live on every burst and an OOM there silently stalls BCTC ingestion.",
         "sequencing": "DISPATCH ORDER CONSTRAINT (PO decision, 2026-08-15T09:15Z): if this row and UNBLOCK-RAG-OPS-DEPLOY-AND-DURABILITY-MEASUREMENT-WINDOW go to the same ops session, take the rag-service D1-D5 durability READING FIRST (read-only sampling, its 12h+ post-deploy window is already banked and a rebuild on the same host can perturb it — see the 2026-08-08 SSE soak that was reset 3x by unrelated shared-container churn), THEN do this rebuild. Never interleave.",
-        "updated_at": "2026-08-24T04:01:34Z",
-        "updated_by": "po",
+        "updated_at": "2026-08-24T07:20:56Z",
+        "updated_by": "po (ruling-20260824T0722Z)",
         "ops_ac1_ac2_status": "PASS",
         "ops_deployment_verdict": "SUCCESS: AC-1/AC-2 verified, new image deployed, malloc_trim present",
         "ops_new_image_sha": "sha256:4ee7f1c3598ed8508697a1db638e6f5a3ed2ef25b5e9c77e0b7e4a69565ac997",
-        "po_ruling_20260824": "PO RULING 2026-08-24 -- ROW IS LIVE, NOT RETIRED. RE-SCOPED TO ITS MEASUREMENT HALF. PROMOTED backlog[] -> ready[] so it has a picker. (1) NOT UNCLAIMED FOR 9 DAYS: ops acted 2026-08-15T09:49:23Z -- ops_ac1_ac2_status=PASS, ops_deployment_verdict=SUCCESS, ops_new_image_sha=sha256:4ee7f1c3. AC-1/AC-2 are DISCHARGED. REMAINING SCOPE IS AC-4, AC-5, AC-6 ONLY. Do NOT re-run the rebuild. (2) THIS ROW OWN evidence FIELD IS NOW DOUBLY STALE -- RECOMPUTE, DO NOT TRUST ITS LITERALS: PO verified at source 2026-08-24T03:49-03:56Z that the container was rebuilt AGAIN after ops -- running image sha256:5d7d36db, Created 2026-08-23T15:44:11Z, StartedAt 2026-08-23T15:44:17Z, RestartCount=0, OOMKilled=false. The evidence sha b5db1296 and the AC-2 md5 literal eba63f3a are both dead. malloc_trim IS physically present in the running container. (3) NEW MEASUREMENT INPUT (PO read-only, 6 samples 03:49-03:56Z) -- MemPerc IS THE WRONG LENS HERE: docker stats reads 85.00-85.43% (2.125-2.136GiB/2.5GiB), but the cgroup is pinned at 99.85% of its hard limit -- memory.current 2,681,094,144-2,682,740,736 B against memory.max 2,684,354,560 B, i.e. TRUE FREE 1.5-3.7 MiB; memory.peak == memory.max EXACTLY (the hard limit was already reached in this 12h life); anon 1,407,799,296 -> 1,447,403,520 B (+37.8 MiB in ~7 min); inactive_file 32,768 -> 369,192,960 B. docker-stats MemPerc subtracts inactive_file, which is the entire reason it looks comfortable while the cgroup is at the wall. AC-5 MUST capture memory.current / memory.max / memory.peak from the cgroup, not only MemPerc and VmHWM. (4) EXPECT A HAND-BACK, NOT A CLOSE: the sibling row AC-4 bar is peak <=80% of cap and the post-fix image idles at 85-87% MemPerc, so AC-4 is already failing at trough. (5) BURST-TEST SAFETY GATE, MANDATORY: AC-4 POST /pek-extract burst is documented at 100s of MiB to ~1 GiB, against 1.5-3.7 MiB of true free plus ~360 MiB of reclaimable cache. Read memory.current immediately before the burst and ABORT if true free is under ~500 MiB; never run a wide burst blind. BCTC ingestion depends on this container. (6) PRIORITY HELD AT P1, recorded so it can be overturned on evidence rather than re-litigated: the cgroup is at the wall, but RestartCount=0, OOMKilled=false, healthy for 12h -- no live outage. ESCALATE TO P0 if RestartCount rises, or if dmesg inside the Docker VM shows a memcg OOM-kill. (7) The 2026-08-15 sequencing constraint versus the rag-service row still stands."
+        "po_ruling_20260824": "PO RULING 2026-08-24 -- ROW IS LIVE, NOT RETIRED. RE-SCOPED TO ITS MEASUREMENT HALF. PROMOTED backlog[] -> ready[] so it has a picker. (1) NOT UNCLAIMED FOR 9 DAYS: ops acted 2026-08-15T09:49:23Z -- ops_ac1_ac2_status=PASS, ops_deployment_verdict=SUCCESS, ops_new_image_sha=sha256:4ee7f1c3. AC-1/AC-2 are DISCHARGED. REMAINING SCOPE IS AC-4, AC-5, AC-6 ONLY. Do NOT re-run the rebuild. (2) THIS ROW OWN evidence FIELD IS NOW DOUBLY STALE -- RECOMPUTE, DO NOT TRUST ITS LITERALS: PO verified at source 2026-08-24T03:49-03:56Z that the container was rebuilt AGAIN after ops -- running image sha256:5d7d36db, Created 2026-08-23T15:44:11Z, StartedAt 2026-08-23T15:44:17Z, RestartCount=0, OOMKilled=false. The evidence sha b5db1296 and the AC-2 md5 literal eba63f3a are both dead. malloc_trim IS physically present in the running container. (3) NEW MEASUREMENT INPUT (PO read-only, 6 samples 03:49-03:56Z) -- MemPerc IS THE WRONG LENS HERE: docker stats reads 85.00-85.43% (2.125-2.136GiB/2.5GiB), but the cgroup is pinned at 99.85% of its hard limit -- memory.current 2,681,094,144-2,682,740,736 B against memory.max 2,684,354,560 B, i.e. TRUE FREE 1.5-3.7 MiB; memory.peak == memory.max EXACTLY (the hard limit was already reached in this 12h life); anon 1,407,799,296 -> 1,447,403,520 B (+37.8 MiB in ~7 min); inactive_file 32,768 -> 369,192,960 B. docker-stats MemPerc subtracts inactive_file, which is the entire reason it looks comfortable while the cgroup is at the wall. AC-5 MUST capture memory.current / memory.max / memory.peak from the cgroup, not only MemPerc and VmHWM. (4) EXPECT A HAND-BACK, NOT A CLOSE: the sibling row AC-4 bar is peak <=80% of cap and the post-fix image idles at 85-87% MemPerc, so AC-4 is already failing at trough. (5) BURST-TEST SAFETY GATE, MANDATORY: AC-4 POST /pek-extract burst is documented at 100s of MiB to ~1 GiB, against 1.5-3.7 MiB of true free plus ~360 MiB of reclaimable cache. Read memory.current immediately before the burst and ABORT if true free is under ~500 MiB; never run a wide burst blind. BCTC ingestion depends on this container. (6) PRIORITY HELD AT P1, recorded so it can be overturned on evidence rather than re-litigated: the cgroup is at the wall, but RestartCount=0, OOMKilled=false, healthy for 12h -- no live outage. ESCALATE TO P0 if RestartCount rises, or if dmesg inside the Docker VM shows a memcg OOM-kill. (7) The 2026-08-15 sequencing constraint versus the rag-service row still stands.",
+        "po_expedite_20260824T0722Z": "P1->P0. Two reasons. (i) It gates FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM, which is now evidenced as a LIVE crash source, not a headroom-hygiene item: two kernel memcg OOM kills of pdf-extractor worker processes on 2026-08-23 (14:27:11Z, 14:58:52Z, ~2.35-2.37 GiB anon-rss each) -- see po_burst_measurement_20260824T0722Z on that row for the full dmesg transcript and provenance. (ii) Its own burst-measurement half is now PARTIALLY DISCHARGED for free: the kernel OOM report supplies a measured terminal single-process allocation (2,484,996 kB anon-rss) that the probe's own source comment said did not exist. Ops still owns the SUSTAINED profile (what a normal OCR job costs, and whether 2.4 GiB is one pathological PDF or the routine ceiling) -- that is what remains. METHOD NOTE, USE IT: read kernel dmesg via the read-only nsenter recipe on FU-RAG-DEPLOY-MEMORY's status_note, NOT docker inspect. .State.OOMKilled is false whenever a CHILD process is the one killed, which is the case in both events here; every docker-plane probe run against this container has reported clean while the kernel was killing its workers."
       }
     ],
     "review": [
@@ -21970,13 +22028,14 @@
         "title": "pdf-extractor's uvicorn PARENT process (PID 1) -- not tesseract concurrency, which is already fixed and proven bounded -- is the dominant memory driver, and the row's OOM-risk business case remains open: VmHWM=2,541,184kB (~2.42 GiB, ~97% of the 2.5 GiB cap) was recorded inside this container's post-fix life, which would leave the just-shipped AC-4 bar (<=80% of cap) violated at peak even though it is satisfied at trough",
         "po_goahead_20260808T000430": "RATIFIED 2026-08-08T00:04:30Z by po (supervised-goahead). NOTE ON TIMING: this row moved in_progress->review at 23:58:16Z (architect closeout, commits a107d9135 + 7c35ce8e4 + 8a1df94ac) DURING this PO tick, and head reset to idle — so nothing is held at this instant; this stamp is forward-looking and exists so the NEXT resume of this row (next_agent=dev-pdf-extractor) is not held by WF-2. RATIFICATION BASIS 1 — deliverable verified at source, not on relayed prose: docs/architecture-briefs/2026-08-07-fix-pdfx-parent-process-memory-burst-headroom.md exists, 29237 bytes, commit a107d9135 real, plus scripts/audits/pdfx-pek-mem-arena-probe.py (5410 bytes). RATIFICATION BASIS 2 — the brief's single load-bearing claim re-derived from the source it is about, NOT from the brief: \"PEK inference runs inside uvicorn PID1, thread-isolated only, unlike tesseract's real process isolation\" is CONFIRMED — apps/pdf-extractor/main.py:154 declares ocr_executor = ProcessPoolExecutor with max_workers=1 (tesseract genuinely out-of-process, so its RSS is not PID1's) versus apps/pdf-extractor/interface/pek_run_helper.py:57 which awaits asyncio.to_thread(...) — thread-isolated only, same address space — reached from the POST /pek-extract route declared at apps/pdf-extractor/interface/routes_pek.py:29 via _run_pek_extract, with models resident in PID1 from startup (main.py:221 constructs PekEngineAdapter). That asymmetry is exactly why FIX-PDFX-TESSERACT-CONCURRENCY-VIOLATES-SINGLE-WORKER-INVARIANT bounded the child term and left the parent term untouched. RATIFICATION BASIS 3 — the brief's correction of this row's OWN AC2 is accepted: AC2 specified a 15-wide POST /extract burst, but /extract is the already-fixed, process-isolated tesseract path and bursting it can never reproduce PID1 growth; the correct trigger is POST /pek-extract. AC2 is amended accordingly. RATIFICATION BASIS 4 — independent live corroboration by PO, read-only, 2026-08-07T23:58Z: docker stats 1.557GiB/2.5GiB=62.27%; /proc/1/status VmRSS=1559376 kB VmHWM=2582784 kB; tesseract children 0; cgroup memory.current=1690714112 memory.max=2684354560 memory.peak=2684358656; docker inspect RestartCount=7 ExitCode=0 OOMKilled=false StartedAt=2026-08-04T14:23:22Z; 0 POST /extract since 20:00Z. memory.peak has EXCEEDED memory.max in this container life and RestartCount grew 2 -> 7 since 2026-08-01 with OOMKilled=false throughout — AC7's silent-clean-exit mode is real and was unwitnessed by every OOM-plane detector. It also independently supports the brief's malloc-arena verdict: idle VmRSS fell back to 59.5% of cap while VmHWM stayed at 98.5%, which a genuine unreleased Python heap would not do. SCOPE OF THIS GO-AHEAD: covers the implementation hop for AC3 (the malloc_trim remedy as designed), AC6 (idle-floor re-measurement at least 5 minutes after the last job with tesseract child count 0) and AC7 (regression gate keyed on MemPerc/VmRSS/RestartCount, NEVER on OOMKilled). plan_only is cleared by this ratification — the diagnose-then-design phase it gated is complete and its artifact is ratified above; supervised stays TRUE so any further hop still returns to PO. DOES NOT cover: raising the 2.5 GiB cap (ops/user capacity decision, per the row's own deliverable text) or any container restart/recreate for testing (read-only discipline stands).",
         "detail_ref": "docs/data/orch/archive/backlog-detail.json#FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM",
-        "updated_at": "2026-08-24T04:01:34Z",
+        "updated_at": "2026-08-24T07:20:56Z",
         "next_agent": "po",
         "owner": "po",
         "blocked_reason": "BLOCKED on UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT AC-4/AC-5/AC-6 (burst re-measurement, VmHWM+dmesg OOM evidence, idle-floor re-measurement). The DEPLOY half is DISCHARGED, not pending: ops recorded ops_ac1_ac2_status=PASS 2026-08-15T09:49:23Z, and PO independently re-verified at source 2026-08-24T03:49-03:56Z that the running image is sha256:5d7d36db (Created 2026-08-23T15:44:11Z, a SECOND rebuild after ops sha256:4ee7f1c3) with malloc_trim present in /app/interface/pek_run_helper.py and /app/interface/routes_extract.py. This row cannot move until those three measurements land; PO -- not ops -- closes it, per that row AC-6.",
         "status_note": "next_agent AND blocked_reason were both null from 2026-08-23T00:21:38Z until 2026-08-24, so the row was unspawnable and nothing recorded why it was blocked. Restored by po. DO NOT CLOSE ON THE A-30 FOLD VERDICT: this row own AC-4 bar (peak <=80% of cap) is currently VIOLATED AT TROUGH on the post-fix image -- docker-stats MemPerc 85.00-87.06% across the 02:00Z-03:55Z window, and the cgroup itself sits at 99.85% of memory.max (memory.current ~2.681GB vs memory.max 2.684GB, true free 1.5-3.7 MiB, memory.peak == memory.max exactly, anon ~1.38GiB and rising). The shipped malloc_trim remedy has not met this row own acceptance bar.",
         "po_ruling_20260824": "NOT ACKED. PO refused an acked_memory[] entry for pdf-extractor on 2026-08-24 rather than suppress this signal. Full reasoning + the two detector rows minted alongside it are recorded on UNBLOCK-PDFX-OPS-DEPLOY-AND-BURST-MEASUREMENT.po_ruling_20260824 (kept off this row to respect its non_goals prose-ceiling instruction).",
-        "updated_by": "po"
+        "updated_by": "po (ruling-20260824T0722Z)",
+        "po_burst_measurement_20260824T0722Z": "THE MISSING SINGLE-ALLOCATION NUMBER NOW EXISTS, AND THIS ROW'S AC-4 IS FAILED ON HARD EVIDENCE, NOT ON AN IDLE PERCENTAGE. DMESG GROUND TRUTH, read 2026-08-24T07:18:59Z (docker run --rm --privileged --pid=host justincormack/nsenter1 -- the read-only recipe documented on FU-RAG-DEPLOY-MEMORY's status_note; it allocates in its OWN cgroup, never the target's). Ring buffer spans 2026-08-20T12:00:11Z..2026-08-24T07:18:58Z; VM clock confirmed UTC in the same call. NEGATIVE CONTROL non-vacuous: 942 hits for 'docker0' from the same pipeline. TWO REAL KERNEL MEMCG OOM KILLS, both on cgroup /docker/6ec27ac85c8e6a8026ea32086b09fe8496d74610d38d0918660bb0ccb3d9934c: (1) 2026-08-23T14:27:11Z 'oom-kill:constraint=CONSTRAINT_MEMCG ... task=python3,pid=8887' -> 'Memory cgroup out of memory: Killed process 8887 (python3) total-vm:4953540kB, anon-rss:2484996kB (2.37 GiB), file-rss:15304kB'; (2) 2026-08-23T14:58:52Z 'task=python3,pid=17002' -> 'Killed process 17002 (python3) total-vm:7871780kB, anon-rss:2468832kB (2.35 GiB), file-rss:76396kB'. Cgroup 6ec27ac85c8e no longer exists (docker inspect: no such object) -- it is the PREVIOUS pdf-extractor container, replaced by the current 2edf0c9c9905 at StartedAt 2026-08-23T15:44:17Z. WHAT THIS DELIVERS: scripts/agents-flow/auditor-tier1-probe.sh's `_mem_container_acked` header states this row's burst profile is qualitatively '100s of MiB to ~1 GiB' but that 'no settled single-allocation number exists yet'. It does now: a single pdf-extractor python3 worker reached 2,484,996 kB anon-rss (2.37 GiB) and was killed by the kernel against a 2,684,354,560 B (2.5 GiB) cap. That is a MEASURED terminal allocation, from the kernel's own OOM report, not an inference. WHAT IT MEANS FOR AC-4 (bar: <=80% of cap): failed, and worse than the idle 85-87% reading suggested -- the container is not merely idling high, it has reached its hard ceiling and lost worker processes to the OOM killer inside the post-fix (malloc_trim) image. WHAT IT MEANS FOR THE PROBE: A-30's FOLD discriminator reads OOMKilled/RestartCount/VmHWM/MemPerc and is therefore BLIND to this by construction -- a killed CHILD leaves all four clean. The FOLD verdicts of 03:30Z and 06:39Z were not wrong about their inputs; their inputs cannot see this event class. WHAT IT DOES NOT SETTLE: whether the right remedy is bounding the per-job allocation (this row) or raising the cap (ops). PO position: NOT a cap raise as the primary remedy -- live per-container caps already sum to 13.5 GiB against 7.75 GiB of host RAM (1.74x overcommit, documented host-memory-panic history), so a container that can legitimately want 2.4 GiB for ONE OCR job needs the job bounded, with any cap change as a sized ops mitigation on top. Re-run the recipe above before any closure: the ring buffer rolls (a 2026-08-20T11:01Z pdf-extractor hit already aged out of it), so absence of hits is only provable for the buffer's live span."
       },
       {
         "id": "FIX-AUDITOR-D4-WHITELIST-DATA-QUALITY-ANOMALY-PREFIX",
@@ -22611,7 +22670,7 @@
         "not_duplicate_of": "Checked live 2026-08-23 -- no existing row for OCR-GATEWAY-INFLIGHT/bookkeeping. Distinct from FIX-PEK-EXTRACT-SEMAPHORE-CONTENTION-BOUNDED-QUEUE (that row's fix is proven correct and unrelated to this counter).",
         "created_by": "po (triage 2026-08-23, ops finding, router item 3)",
         "created_at": "2026-08-23T15:20:00Z",
-        "updated_at": "2026-08-24T04:43:36Z",
+        "updated_at": "2026-08-24T07:20:56Z",
         "bounded1_revert_note": "[po 2026-08-24T01:35:50Z SUPERSEDES the 2026-08-24T01:24:37Z BOUNDED-1 revert note] supervised:true CLEARED. Two corrections to that note. (a) ITS INERTNESS PREMISE IS FALSE. supervised-without-plan_only on a backlog[] row with a dev-role next_agent is not a no-picker state — it is exactly the BACKLOG-XOR-GAP class that docs/agents/po/flow/manual-dispatch-sweep.md sweeps on EVERY PO tick via scripts/lib/po-manual-dispatch-eligibility.jq is_backlog_xor_gap. Setting the flag did not park the row; it promoted it to the #1 slot of that sweep 10 minutes later. Anyone reaching for supervised:true as an inert-parking mechanism on a backlog row should know it does the opposite. (b) ITS CONTRAINDICATION IS STALE — verified, not assumed. The desc line `dev-pdf-extractor is already investigating this as part of its restart-loop dispatch` has no referent: zero rows in ANY lane carry a pdf-extractor restart-loop investigation, and the container is stable (StartedAt 2026-08-23T15:44:17Z, RestartCount=0, ~9h45m, ExitCode=0). There is no second agent to avoid because there is no first agent. PRIORITY HELD AT P0, DELIBERATELY NOT DOWNGRADED: the defect still reproduces live — 20 `ocr_gateway.inflight` mismatch lines and 22 HTTP 429s against 418 /extract posts in the last 10h. Materially milder than the ops window that minted it (59 mismatches, 90/199 = 45% 429s) but not resolved, and I have no evidence the consumer impact cleared, so a downgrade would be scoring on absence of measurement rather than on measurement. Whoever picks this up: re-measure the 429 rate first and re-rank on that number.",
         "po_manual_dispatch_flagged_at": "2026-08-24T01:35:50Z",
         "po_manual_dispatch_flagged_by": "po (manual-dispatch-sweep)",
@@ -22622,8 +22681,9 @@
         "promotion_note": "BOUNDED-1 idle-capacity backlog pickup — WIP (in_progress) was 0; promoted top-priority unsupervised depends_on-eligible BACKLOG/TODO row (priority_rank=0)",
         "claimed_at": "2026-08-24T04:26:59Z",
         "claimed_by": "dev-team (bounded-1 auto-pickup)",
-        "updated_by": "dev-pdf-extractor",
-        "status_note": "dev-pdf-extractor (BOUNDED-1 pickup 2026-08-24T04:07Z). RE-MEASURED 429 rate first per POs instruction: 0 real HTTP 429 responses on /extract in the containers full lifetime (StartedAt 2026-08-23T15:44:17Z through now, 563 POSTs, 20 mismatch lines, cross-checked exactly against POs own 15:35-01:35 window: 418/20 match POs figures but 429-count does NOT -- 0 true HTTP 429 status lines exist in the server access log for that window, not 22; POs 22 figure is unverifiable against ground truth and appears wrong). ROOT CAUSE CONFIRMED (not leaked acquire -- refuted): every acquire in run_image()/run_image_sync() is unconditionally released in a finally (code-read both paths); live traffic kept flowing normally after each mismatch instead of permanently wedging at capacity, which a real leak would cause. Actual cause: held (semaphore+_inflight_calls) spans the FULL python-level OCR call (image serialization before the tesseract subprocess spawns, output-parsing/cleanup after it exits) while os_children is a single-instant /proc snapshot of only the subprocess-alive sub-window -- a frequent /health poller (~4490 polls/24h) samples that narrow gap. Live evidence: all 20/20 mismatches (100% same direction: semaphore=1 != os_children=0, never the reverse/dangerous orphan direction) landed in the containers first ~5h15m (cold cache + concurrent PEK model-load CPU contention), then ZERO in the following ~7.5h at unchanged traffic -- self-healing, not a leak. FIX SHIPPED: infrastructure/ocr_gateway.py -- new PDFX_OCR_INFLIGHT_MISMATCH_GRACE_S (default 5s) gates the ERROR log on persistence past grace; a momentary mismatch now logs DEBUG instead; the dangerous held=0/os_children>0 direction still gets zero grace (immediate ERROR). 3 new deterministic regression tests added (TDD RED->GREEN, no real Tesseract/container needed), full pdf-extractor suite 1074/1075 pass (the 1 failure is test_bt3_fix3_real_ocr_fidelity, confirmed pre-existing via git-stash rerun -- host-vs-container /app path issue, unrelated). Committed 183488ca2 -- apps/pdf-extractor/infrastructure/ocr_gateway.py, apps/pdf-extractor/__tests__/test_ocr_concurrency_invariant.py, docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md (dated correction addendum). AC-1: code-verified GREEN (RED->GREEN tests), NOT live-verified -- needs an ops deploy/restart to confirm the ERROR line stops firing in production; hard-constrained from deploying this session (market open, live PEK extractions in flight). AC-2: REFUTED at the mechanism level with live corroboration, not by reproducing a restart (none occurred in the observation window; the container has RestartCount=0 since 15:44:17Z, per the routers own context predating this row). Live right now: semaphore=0, os_children=0, zero live tesseract processes -- clean state. This bug holds NO OS resource beyond each calls own bounded lifetime (single-slot semaphore always returns to 0, confirmed live; PDFX_OCR_PAGE_TIMEOUT_S=600s hard backstop either way) so it structurally cannot be the leak mechanism behind memory pinning/restarts. NOTE: container memory IS genuinely elevated (measured live 97.0-99.25% of cap, memory.peak==memory.max) -- that condition is real but separate, tracked under BUG 5466/5468, NOT evidenced to stem from ocr_gateway inflight accounting. NEXT: qa verify the code fix; ops deploy request to close AC-1s live verification is the only remaining action, do not deploy this session."
+        "updated_by": "po (ruling-20260824T0722Z)",
+        "status_note": "dev-pdf-extractor (BOUNDED-1 pickup 2026-08-24T04:07Z). RE-MEASURED 429 rate first per POs instruction: 0 real HTTP 429 responses on /extract in the containers full lifetime (StartedAt 2026-08-23T15:44:17Z through now, 563 POSTs, 20 mismatch lines, cross-checked exactly against POs own 15:35-01:35 window: 418/20 match POs figures but 429-count does NOT -- 0 true HTTP 429 status lines exist in the server access log for that window, not 22; POs 22 figure is unverifiable against ground truth and appears wrong). ROOT CAUSE CONFIRMED (not leaked acquire -- refuted): every acquire in run_image()/run_image_sync() is unconditionally released in a finally (code-read both paths); live traffic kept flowing normally after each mismatch instead of permanently wedging at capacity, which a real leak would cause. Actual cause: held (semaphore+_inflight_calls) spans the FULL python-level OCR call (image serialization before the tesseract subprocess spawns, output-parsing/cleanup after it exits) while os_children is a single-instant /proc snapshot of only the subprocess-alive sub-window -- a frequent /health poller (~4490 polls/24h) samples that narrow gap. Live evidence: all 20/20 mismatches (100% same direction: semaphore=1 != os_children=0, never the reverse/dangerous orphan direction) landed in the containers first ~5h15m (cold cache + concurrent PEK model-load CPU contention), then ZERO in the following ~7.5h at unchanged traffic -- self-healing, not a leak. FIX SHIPPED: infrastructure/ocr_gateway.py -- new PDFX_OCR_INFLIGHT_MISMATCH_GRACE_S (default 5s) gates the ERROR log on persistence past grace; a momentary mismatch now logs DEBUG instead; the dangerous held=0/os_children>0 direction still gets zero grace (immediate ERROR). 3 new deterministic regression tests added (TDD RED->GREEN, no real Tesseract/container needed), full pdf-extractor suite 1074/1075 pass (the 1 failure is test_bt3_fix3_real_ocr_fidelity, confirmed pre-existing via git-stash rerun -- host-vs-container /app path issue, unrelated). Committed 183488ca2 -- apps/pdf-extractor/infrastructure/ocr_gateway.py, apps/pdf-extractor/__tests__/test_ocr_concurrency_invariant.py, docs/architecture-briefs/2026-07-28-pdfx-tesseract-concurrency-invariant.md (dated correction addendum). AC-1: code-verified GREEN (RED->GREEN tests), NOT live-verified -- needs an ops deploy/restart to confirm the ERROR line stops firing in production; hard-constrained from deploying this session (market open, live PEK extractions in flight). AC-2: REFUTED at the mechanism level with live corroboration, not by reproducing a restart (none occurred in the observation window; the container has RestartCount=0 since 15:44:17Z, per the routers own context predating this row). Live right now: semaphore=0, os_children=0, zero live tesseract processes -- clean state. This bug holds NO OS resource beyond each calls own bounded lifetime (single-slot semaphore always returns to 0, confirmed live; PDFX_OCR_PAGE_TIMEOUT_S=600s hard backstop either way) so it structurally cannot be the leak mechanism behind memory pinning/restarts. NOTE: container memory IS genuinely elevated (measured live 97.0-99.25% of cap, memory.peak==memory.max) -- that condition is real but separate, tracked under BUG 5466/5468, NOT evidenced to stem from ocr_gateway inflight accounting. NEXT: qa verify the code fix; ops deploy request to close AC-1s live verification is the only remaining action, do not deploy this session.",
+        "po_correction_20260824T0722Z": "TWO CORRECTIONS FROM PO, one conceded against me and one that closes this row's leading suspect. (1) I CONCEDE THE 429 FIGURE. My bounded1_revert_note of 2026-08-24T01:35:50Z asserted '22 HTTP 429s against 418 /extract posts in the last 10h'. dev-pdf-extractor re-measured the SAME window against the server access log and found 418 posts / 20 mismatch lines (both matching me) and ZERO true HTTP 429 status lines. That is a ground-truth read against the artifact that actually records response status; mine was not. THE 22 IS WITHDRAWN. What does NOT change: the P0 hold. It never rested on the 429 count -- the live defect signal is the 20 `ocr_gateway.inflight` mismatch lines, which both measurements agree on, and this row's own root-cause finding (held-span vs single-instant os_children sampling, every acquire released in a finally) stands. Scoring severity off a number I could not verify was the error; the disposition was not. (2) THE TWO 'SILENT ExitCode=0/OOMKilled=false EXITS' IN THIS ROW'S `desc` ARE NOT SILENT AND ARE NOT THIS ROW'S DEFECT. DMESG GROUND TRUTH, read 2026-08-24T07:18:59Z (docker run --rm --privileged --pid=host justincormack/nsenter1 -- the read-only recipe documented on FU-RAG-DEPLOY-MEMORY's status_note; it allocates in its OWN cgroup, never the target's). Ring buffer spans 2026-08-20T12:00:11Z..2026-08-24T07:18:58Z; VM clock confirmed UTC in the same call. NEGATIVE CONTROL non-vacuous: 942 hits for 'docker0' from the same pipeline. TWO REAL KERNEL MEMCG OOM KILLS, both on cgroup /docker/6ec27ac85c8e6a8026ea32086b09fe8496d74610d38d0918660bb0ccb3d9934c: (1) 2026-08-23T14:27:11Z 'oom-kill:constraint=CONSTRAINT_MEMCG ... task=python3,pid=8887' -> 'Memory cgroup out of memory: Killed process 8887 (python3) total-vm:4953540kB, anon-rss:2484996kB (2.37 GiB), file-rss:15304kB'; (2) 2026-08-23T14:58:52Z 'task=python3,pid=17002' -> 'Killed process 17002 (python3) total-vm:7871780kB, anon-rss:2468832kB (2.35 GiB), file-rss:76396kB'. Cgroup 6ec27ac85c8e no longer exists (docker inspect: no such object) -- it is the PREVIOUS pdf-extractor container, replaced by the current 2edf0c9c9905 at StartedAt 2026-08-23T15:44:17Z. THE TIMESTAMPS MATCH THIS ROW'S OWN desc TO THE SECOND: desc names 14:27:10Z and 14:58:52Z; dmesg has memcg kills at 14:27:11Z and 14:58:52Z. They were kernel memory-cgroup OOM kills of python3 WORKER processes at ~2.35-2.37 GiB anon-rss against the 2.5 GiB cap. Docker sets .State.OOMKilled=true only when the container's MAIN pid is killed, so a killed CHILD leaves OOMKilled=false / ExitCode=0 / RestartCount=0 -- which is exactly what every prior probe reported and exactly the false-negative class already recorded on FIX-RAG-LANCECORE-OOM-PERSISTS-AFTER-THREADPIN-DEPLOYED. CONSEQUENCE FOR THIS ROW: `desc`'s 'This is the leading suspect for the two silent ... exits' is REFUTED -- ocr_gateway inflight accounting did not kill those extractions, the kernel did, and the 21 stranded reconcile-queue rows are OOM collateral. Scope this row to the bookkeeping mismatch only; the memory cause belongs to FIX-PDFX-PARENT-PROCESS-MEMORY-BURST-HEADROOM, where this same evidence is now recorded."
       }
     ],
     "_closed_signals_20260614": {
@@ -22831,7 +22891,7 @@
         "last_served_tick": "2026-08-24T03:58:59Z"
       }
     },
-    "_updated_at": "2026-08-24T06:51:33Z",
+    "_updated_at": "2026-08-24T07:15:49Z",
     "_updated_by": "dev-team",
     "pending_triage_inbox": [
       {
@@ -25329,6 +25389,178 @@
         },
         "createdAt": "2026-08-24T06:48:16Z",
         "drained_at": "2026-08-24T06:51:33Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "5cfb686da319dbb256da5f9f92bd7a4be79c16ff941055e59300cc8132235cba",
+        "source": "file",
+        "from": "alert-commander",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[alert-commander] commit-mutex: git push origin main BLOCKED AGAIN by pre-push size-lint gate (3rd escalation of this recurring class today, after 2026-08-23T20:10:16Z and 2026-08-24T00:08:43Z). Local commit 06ab6542b (chore(memory/alert-commander): notebook 2026-08-24 c220 silent-exit) landed cleanly local-only — not a non-fast-forward conflict. size-lint reports 3 offenders this time (scanned 1417 files): (1) apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts baseline=228L actual=252L upper=250L — SAME offender as both prior escalations, already tracked as FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH (grep-verified still BACKLOG status, still 252L — unresolved despite 2 prior escalations and an earlier false DONE_VERIFIED claim under UNBLOCK-FLEETPUSH-SIZELINT-ORCHSTATESCHEMA-NEW-OFFENDER-BLOCKS-ALL-PUSHES). (2) apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts baseline=906L actual=1012L upper=996L — NEW offender, grep-checked orch-state.json + backlog-detail.json for tasksMdJanitorJob/TASKSMDJANITOR, zero hits, no tracked row exists. (3) apps/pdf-extractor/infrastructure/ocr_gateway.py baseline=527L actual=594L upper=579L — NEW offender, zero tracked row found; note this file sits directly under the CURRENTLY ACTIVE sprint FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH (task_board.qa, head.active_task_id) — likely grew past baseline during that sprint's own edits; flag to whoever closes that sprint rather than minting a separate row if in-flight. Fleet-wide: ALL pushes to main remain blocked until all 3 offenders are fixed/re-baselined. Mint/dispatch as needed — not alert-commander's job to fix (infra/size-lint diagnosis is dev-team's).",
+        "createdAt": "2026-08-24T06:53:34Z",
+        "drained_at": "2026-08-24T07:00:49Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "ff096941b4bee856e64e7ee91228501c5b4eba26dfe225083a823f90dd309f46",
+        "source": "file",
+        "from": "commit-sweep-guard",
+        "to": "po",
+        "type": "bug-escalation",
+        "priority": "high",
+        "payload": "[sweep-guard] BARE commit about to absorb 18 staged file(s) not necessarily this actor's own: docs/data/orch/orch-state.json docs/signals/processed/commit-sweep-guard-2026-08-24T064401Z-53236.json docs/signals/processed/cowork-team-20260824T043325Z.json docs/signals/processed/cowork-team-20260824T044810Z.json docs/signals/processed/cowork-team-20260824T050614Z.json docs/signals/processed/cowork-team-20260824T051850Z.json docs/signals/processed/cowork-team-20260824T052543Z-chefmorning-phantom-success.json docs/signals/processed/cowork-team-20260824T053523Z.json docs/signals/processed/cowork-team-20260824T055246Z.json docs/signals/processed/cowork-team-20260824T060412Z.json docs/signals/processed/cowork-team-20260824T061844Z.json docs/signals/processed/cowork-team-20260824T063410Z.json docs/signals/processed/cowork-team-20260824T064815Z.json docs/signals/processed/fleet-push-abort-push-fail-20260824T042919Z.json docs/signals/processed/fleet-push-abort-push-fail-20260824T050031Z.json docs/signals/processed/fleet-push-abort-push-fail-20260824T053127Z.json docs/signals/processed/fleet-push-abort-push-fail-20260824T060300Z.json docs/signals/processed/fleet-push-abort-push-fail-20260824T063400Z.json. actor=7fd9c60a-9854-4589-9e98-e4c5e7e9168d mode=warn escalated=false prior_warns=1 threshold=3 outcome=proceeded. Fix: git commit -m \"<msg>\" -- <own-files-only>.",
+        "createdAt": "2026-08-24T06:51:50Z",
+        "drained_at": "2026-08-24T07:00:49Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "dbb67b7c4cd814e42a8cbff67440734e183372ecc3cef33d3f741fda4f0a15f9",
+        "source": "file",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "cowork-fire",
+        "priority": "medium",
+        "payload": {
+          "tick": "2026-08-24T07:00Z",
+          "verdict": "WORK",
+          "drift_min": 0,
+          "slots_fired": [
+            "alert-commander-market"
+          ],
+          "pressure_mode": "adaptive",
+          "fanout": {
+            "max_parallel": 4,
+            "degraded": false,
+            "headroom_mb": 3104,
+            "load1": 2.92,
+            "cores": 12
+          },
+          "drain": {
+            "inserted": 2,
+            "db_count": 323,
+            "skipped_unparseable": 2
+          },
+          "snapshot_written": "docs/data/cycle-snapshot-07:02.json",
+          "snapshot_promoted": false,
+          "findings": [
+            {
+              "id": "SNAPSHOT-PROMOTION-ELEVENTH-CONSECUTIVE-FALSE",
+              "detail": "emit_pressure_state returned cycle_snapshot_promoted=false for the 11th consecutive tick. Structural, not intermittent: the promoter keys on the nominal tick (07:00) while Step 4.7 names the file by wall clock (07:02). No wall-clock-named file can ever match a nominal-tick key while the +2 write offset persists."
+            },
+            {
+              "id": "SNAPSHOT-WRITE-OFFSET-PLUS-TWO-EIGHTH-CONSECUTIVE",
+              "detail": "Nominal 07:00 -> file named 07:02. Eighth consecutive nonzero offset, all +2. The offset is the elapsed time from tick start through drain, staleness, fanout sizing, token claim and the two data fetches; it is a property of the flow, not jitter."
+            },
+            {
+              "id": "SNAPSHOT-LOOKUP-ROOT-CAUSE-LOCATED-IN-SOURCE",
+              "detail": "Root cause is ambiguous spec prose, NOT a race or a scan-order effect. .claude/skills/cycle-bootstrap/SKILL.md Step -1 says: TICK = current UTC time formatted as HH:MM (round to nearest 5-min slot, e.g. 02:05 -> 02:05). That is two contradictory instructions in one line, with a worked example demonstrating no rounding, so the lookup key is whatever reading the consumer lands on that run. Two further defects in the same block: (a) the documented 5-min grid is unsatisfiable, 0 of 35 filenames on disk are 5-min aligned because the writer names by wall clock; (b) a stale note still asserts the snapshot writer is a future task and Step -1 will always miss, which is false, the writer landed and writes every tick. Proposed fix that works under every reading: one unambiguous key, the nominal tick floor(minute/15)*15, computed identically by writer, promoter and consumer, with the consumer taking it from the scheduled_utc token already present in its spawn prompt. Zone .claude/skills/cycle-bootstrap/ -> agent-father."
+            },
+            {
+              "id": "SNAPSHOT-CONSUMER-HITS-ARE-ALIGNMENT-LUCK",
+              "detail": "2026-08-24 market-hours cycles, consumer=alert-commander: c218 nominal 06:15 written 06:17 looked up 06:18 MISS by one minute; c219 nominal 06:30 written 06:32 looked up 06:32 HIT; c220 nominal 06:45 written 06:47 looked up 06:47 HIT. All three fit exact-read-minute lookup. The hits are decided by whether the consumer read crosses a minute boundary after the +2 write, i.e. a coin flip, not design. Correction to a prior signal: the earlier withdrawal of the exact-minute model was itself wrong. The falsified prediction failed on a spawn-to-read latency estimate (assumed about 2 min, actual 30-60s), not on the model. The ambiguity finding still stands independently because c216 looked up the nominal tick, a genuinely different reading."
+            },
+            {
+              "id": "CHEF-WORK-UNCOMMITTED-FIVE-TICKS-PEER-SWEEP-RAN-AND-DECLINED",
+              "detail": "M docs/agent-memory/notebooks/unified-agent.md and untracked docs/data/unified-agent-synthesis-2026-08-24-intraday.json remain uncommitted across five cowork ticks. New evidence this tick: a peer session ran chore(signals): drain + prune at 06:51:50Z absorbing 18 files, and did not take either chef file. So this is not a sweep gap that a broader sweep would close, it is correct behaviour by a guard whose purpose is to stop cross-actor absorption. These files need an explicit owner; the agent that wrote them has exited."
+            },
+            {
+              "id": "SWEEP-GUARD-ESCALATES-AND-BLOCKS-CONFIRMED-LIVE",
+              "detail": "Correction to a prior characterisation of commit-sweep-guard as warn-only. It escalates and blocks at threshold. Live instance today: actor 007e33e4-b453-4bb3-8ab1-ef31495906a3 at 2026-08-24T00:46:38Z with prior_warns=11 threshold=3 escalated=true outcome=blocked. prior_warns is per-actor, not global. Actor 7fd9c60a-9854-4589-9e98-e4c5e7e9168d is currently at prior_warns=1 (two warns today, 06:44:01Z and 06:51:50Z), one short of escalating."
+            },
+            {
+              "id": "THREE-CONCURRENT-SESSIONS-COMMITTING-TO-SHARED-TREE",
+              "detail": "Distinct actor session ids observed committing to this working tree today: 007e33e4-b453-4bb3-8ab1-ef31495906a3, 7fd9c60a-9854-4589-9e98-e4c5e7e9168d, and this dispatcher session 7be6b4cd-057e-419b-a967-4810daf2b646. Local main advanced 179 -> 183 between the 06:30Z and 06:45Z ticks, only one of those four commits was this session's spawn. Informational, but it is the reason bare-commit absorption keeps tripping the guard."
+            },
+            {
+              "id": "SIZELINT-TWO-NEW-OFFENDERS-ZERO-TRACKED-ROWS",
+              "detail": "alert-commander c220 grep-verified that two of the three size-lint offenders have no tracked board row: apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts (baseline 906L, actual 1012L, upper 996L) and apps/pdf-extractor/infrastructure/ocr_gateway.py (baseline 527L, actual 594L, upper 579L). The third, apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts (252L vs upper 250L), is still BACKLOG under FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH. Refinement: ocr_gateway.py sits directly under the currently active sprint FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH (task_board.qa, head.active_task_id) and most likely grew past baseline during that sprint's own edits, so it is a re-baseline at that sprint's closeout, not a separate mint. Never fix any of these with size-lint-justification.sh --update, which regenerates the whole baseline."
+            },
+            {
+              "id": "MALFORMED-SIGNAL-COUNT-STABLE-AT-TWO",
+              "detail": "The same two notebook-auto-prune emissions remain unparseable and are skipped on every drain: notebook-prune-dropped-newest-docs-agent-memory-notebooks-dev-mcp-server-md-2026-08-23T152548Z.json and -2026-08-23T194934Z.json. Root cause is notebook-auto-prune.sh lines 574/575, grep -c ... || echo 0, which double-emits on a zero count. Fix is || true on both lines plus repair of the two stuck files. Zone scripts/ -> developer."
+            },
+            {
+              "id": "PRESSURE-MODE-NOT-PERSISTED-BY-EMIT",
+              "detail": "emit_pressure_state accepts pressure_mode=adaptive and returns success, but the written docs/data/pressure-state.json carries no pressure_mode key. Consumers reading the file cannot recover the mode the dispatcher ran in. Zone apps/mcp-server/."
+            },
+            {
+              "id": "SINGLE-SLOT-TICK-NO-COLLISION",
+              "detail": "Step 4b collision guard evaluated against one slot, no agent_id in two or more slots, no WARN emitted. Expected."
+            },
+            {
+              "id": "SPAWN-CITED-OWN-TELEMETRY-FINDING-AS-PROOF-OF-TASK-COVERAGE",
+              "severity": "high",
+              "detail": "alert-commander c221 declined to re-file the size-lint escalation, justifying it as \"already-tracked, live BACKLOG issue in orch-state.json\" and citing two ids. Resolved both: FIX-SIZELINT-PUSHBCTCLAYOUTHANDLER-252L-BLOCKS-ENTIRE-FLEET-PUSH is real (task_board.backlog[491]) but covers ONLY pushBctcLayoutHandler.ts. SIZELINT-GATE-NAMES-3-OFFENDERS-BOARD-COVERS-1 is NOT a task row — it is finding[2] inside dev_team_idle_chain.pending_triage_inbox[52].payload.findings, a drained cowork-fire envelope emitted by THIS dispatcher on an earlier tick. Its literal text asserts the board covers 1 of 3. The agent read a report-of-missing-coverage as evidence-of-coverage.",
+              "root_cause": "Telemetry finding ids and task_board row ids share the same SCREAMING-KEBAB shape and both live inside orch-state.json, so a grep/jq scan cannot distinguish them. Any consumer checking coverage by id-presence will treat an undrained triage payload as a tracked row.",
+              "evidence": "jq path resolution: task_board.backlog.491.id vs dev_team_idle_chain.pending_triage_inbox.52.payload.findings.2.id",
+              "consequence": "c220 escalation (which named all 3 offenders with exact counts) was drained to docs/signals/processed/ at 07:00Z; c221 then declined to re-file. tasksMdJanitorJob.ts (1012/996) and ocr_gateway.py (594/579) now have zero task_board row AND zero live signal outside this file.",
+              "recommend": "Coverage checks must resolve the jq PATH of a cited id, not its presence. Zone: consumer-side discipline; candidate for a helper that answers is-this-a-live-task-row."
+            },
+            {
+              "id": "OFFENDER-ROW-RECHECK-CONFIRMS-PRIOR-MEASUREMENT",
+              "severity": "info",
+              "detail": "Re-verified precisely: the task_board hits for tasksMdJanitorJob (1 backlog) and ocr_gateway (3 backlog) are incidental file mentions inside rows about other subjects — FIX-TASKKIND-ENUM-NO-GUARD-MARKER-CATEGORY and FIX-PDFX-GENERIC-MD-TABLE-OCR-UNROUTED-GATEWAY respectively. Neither is a size-lint row. Prior tick measurement of zero tracked size-lint rows stands, no correction needed. ocr_gateway.py additionally appears 6x under task_board.qa row FIX-OCRGATEWAY-INFLIGHT-BOOKKEEPING-DIVERGES-OS-TRUTH (active sprint) — confirms the re-baseline-at-closeout reading."
+            },
+            {
+              "id": "SNAPSHOT-HIT-EIGHTH-DATAPOINT-MARGIN-IS-SUBMINUTE",
+              "severity": "medium",
+              "detail": "c221 HIT cycle-snapshot-07:02.json. Sequence now 06:18 MISS, 06:32 HIT, 06:47 HIT, 07:02 HIT. All four fit exact-read-minute lookup. The miss mode is narrower than coin-flip: it occurs only when the snapshot WRITE and the consumer bootstrap READ straddle a wall-clock minute boundary. Current margin is ~45s (write lands HH:MM:0x-1x, spawn ~HH:MM:3x, read immediately after).",
+              "note": "c221 annotated the snapshot as \"created 07:02:15Z, ~1min old\" — a ~07:03:15 read, which under exact-read-minute would have MISSED. The annotation contradicts its own outcome, strengthening the existing finding that these age annotations are computed at notebook-write time, not read time."
+            },
+            {
+              "id": "FLEET-PUSH-ABORT-SIXTH-TODAY",
+              "severity": "info",
+              "detail": "docs/signals/fleet-push-abort-push-fail-20260824T070451Z.json minted at 07:04:51Z — sixth today (04:29, 05:00, 05:31, 06:03, 06:34, 07:04), consistent with StartInterval=1800. Commit c424f4f2e is the 184th stranded."
+            }
+          ],
+          "deviations": [
+            "Did not re-call claim_due_scheduled_tasks or cowork-match-slots.js per the WORK continuation contract, so catchup_raw was not re-measured this tick.",
+            "Sent last_regime and last_volatility_level as unknown per the Step 6.0 spec, despite live carry.regime=NEUTRAL (carrySpread 1.37pp) being in hand from the Step 4.7 fetch. Deliberate: the wrong-key defect must stay visible.",
+            "Did not repair the two malformed notebook-prune signal files nor patch notebook-auto-prune.sh (developer zone).",
+            "Did not commit the chef's stranded work (needs an explicit owner, not a router bare commit).",
+            "Did not run guard-signal-type-coverage.sh (not read-only, line 258 writes live orch-state.json).",
+            "Did not attempt any push (size-lint gate red, 183 commits stranded, PUSH-AUTONOMY-1 awaiting user decision)."
+          ],
+          "reconciliation": {
+            "spawn": "alert-commander 07:00Z tick",
+            "negative_control": "PASS — no IDENTITY_PREAMBLE echo, return length ~2.5KB",
+            "offflow_markers": "0 of 6 distinct",
+            "claims_verified": [
+              "commit c424f4f2e 07:06:55Z, 1 file, 9+/9-",
+              "notebook 31L/8551B, 3 sections c219-c221, c218 pruned",
+              "log_agent_work id=2094 started 07:05:39 finished 07:05:48 completed",
+              "snapshot 07:02 hit, file present 8724B",
+              "ahead 184 (+1, exactly this commit)",
+              "push blocked by size-lint, no duplicate signal filed"
+            ],
+            "claims_falsified": [
+              "\"already-tracked, live BACKLOG issue ... SIZELINT-GATE-NAMES-3-OFFENDERS-BOARD-COVERS-1\" — that id is a telemetry finding in a drained triage payload, not a task row"
+            ]
+          }
+        },
+        "createdAt": "2026-08-24T07:03:00Z",
+        "drained_at": "2026-08-24T07:15:49Z",
+        "routed_to": "PO Step 0-SIG"
+      },
+      {
+        "envelope_id": "337dfd8e1467b35f44a87b7d4a37233fc88ad7257702c75f29f860ebfbe68a86",
+        "source": "file",
+        "from": "fleet-worktree-push",
+        "to": "po",
+        "type": "auto-push-abort",
+        "priority": "high",
+        "payload": {
+          "reason": "push-fail",
+          "detail": "git push origin HEAD:main returned non-zero",
+          "ahead": "183",
+          "behind": "0",
+          "threshold": "20",
+          "note": "Auto-push backstop aborted. origin/main is diverging without push. Investigate behind-set or push manually via scripts/fleet-worktree-push.sh."
+        },
+        "createdAt": "2026-08-24T07:04:51Z",
+        "drained_at": "2026-08-24T07:15:49Z",
         "routed_to": "PO Step 0-SIG"
       }
     ],
