@@ -436,6 +436,28 @@ this split and stays in the route unchanged — a pre-existing test
 (`TASK-DASH-CRON-2-cron-recheck-table.test.ts`) imports its exports directly
 from `~/routes/dashboard.orchestration`.
 
+**FIX-DASH-CRON-LAYERB-NEVERFIRED-FALSE-LABEL (2026-08-24):** the shared
+`CronLayerTable` row-render loop's last-fire cell was layer-BLIND — Layer-A
+(`server`) and Layer-B (`cli-session`) rows share one `rows.map(...)`, so
+every one of the 23 Layer-B rows fell into a `row.last_fire == null` branch
+written for Layer-A and rendered "Chưa từng chạy" (asserts "never ran," which
+is false — session-scoped crons DO run, they simply have no fire-telemetry
+writer; `normalizeCronRowB` force-nulls all four fire fields by design,
+unchanged). Fix: `dashboard.orchestration.tsx`'s last-fire cell now checks
+`row.layer === "cli-session"` FIRST and renders two new named exports —
+`CRON_LAYER_B_LAST_FIRE_LABEL` ("Không theo dõi") plus a visible (not
+tooltip-only) `CRON_LAYER_B_LAST_FIRE_HINT` explanatory line, the frontend's
+own Vietnamese copy (not the backend `reason` string, which is English) —
+before ever reaching the Layer-A `"Chưa từng chạy"` branch, which is
+otherwise untouched. Also dropped the per-row `Lớp` column from
+`CronLayerTable`'s table markup (AC-5): `CronRecheckTable` already renders
+Layer-A/Layer-B as two separate, header-labelled sub-tables ("Cron máy chủ" /
+"Cron phiên làm việc", AC-18), so every row within one `CronLayerTable` call
+was already layer-homogeneous and the per-row layer value was redundant;
+`cronLayerLabel`/FR-5.2 stays exported, unchanged, and covered by its own
+test. `docs/architecture-briefs/2026-07-02-DASH-CRON-RECHECK-TABLE.md:127`
+corrected to restore the Layer-A qualifier BA originally specified (AC-6).
+
 The route (`dashboard.orchestration.tsx`) is now types (re-exports) + the
 `loader` (POLL_MS=5000 polling unchanged, confirmed via grep) +
 `StaleBadge`/`Section` (used directly in the page JSX and inside

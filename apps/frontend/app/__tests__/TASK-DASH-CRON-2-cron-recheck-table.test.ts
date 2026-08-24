@@ -30,8 +30,11 @@ import {
   cronStatusBadgeClasses,
   cronLayerLabel,
   CRON_STATUS_LABELS,
+  CRON_LAYER_B_LAST_FIRE_LABEL,
+  CRON_LAYER_B_LAST_FIRE_HINT,
   type CronStatus,
   type CronStatusDto,
+  type CronStatusRow,
 } from "~/routes/dashboard.orchestration";
 
 // ---------------------------------------------------------------------------
@@ -339,19 +342,53 @@ describe("cronLayerLabel — FR-5.2 Vietnamese layer copy", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Never-fired display logic (AC-20) — mirrors the component's ternary
+// Never-fired display logic (AC-1/AC-20) — mirrors CronLayerTable's ternary
+// FIX-DASH-CRON-LAYERB-NEVERFIRED-FALSE-LABEL AC-7: made layer-aware. The
+// previous helper took NO layer argument and mirrored — therefore blessed —
+// the buggy predicate that let Layer-B rows fall into the Layer-A
+// "Chưa từng chạy" branch just because their (force-nulled, by design)
+// last_fire was also null.
 // ---------------------------------------------------------------------------
 
-describe("Never-fired display logic (AC-20) — mirrors CronLayerTable's ternary", () => {
-  function lastFireDisplayIsNeverFiredText(lastFire: string | null): boolean {
+describe("Never-fired display logic (AC-1/AC-20) — mirrors CronLayerTable's ternary, layer-aware", () => {
+  /** Mirrors the component's `row.layer === "cli-session" ? ... : row.last_fire == null ? ...` branch order. */
+  function lastFireDisplayIsNeverFiredText(layer: CronStatusRow["layer"], lastFire: string | null): boolean {
+    if (layer === "cli-session") return false;
     return lastFire == null;
   }
 
-  it("last_fire null → renders the never-fired text branch", () => {
-    expect(lastFireDisplayIsNeverFiredText(null)).toBe(true);
+  it("Layer-A (server), last_fire null → renders the never-fired text branch", () => {
+    expect(lastFireDisplayIsNeverFiredText("server", null)).toBe(true);
   });
 
-  it("last_fire non-null → renders the timestamp branch, not the never-fired text", () => {
-    expect(lastFireDisplayIsNeverFiredText("2026-07-02T08:00:00.000Z")).toBe(false);
+  it("Layer-A (server), last_fire non-null → renders the timestamp branch, not the never-fired text", () => {
+    expect(lastFireDisplayIsNeverFiredText("server", "2026-07-02T08:00:00.000Z")).toBe(false);
+  });
+
+  it("AC-1: Layer-B (cli-session), last_fire null → NEVER renders the never-fired text, despite last_fire also being null", () => {
+    expect(lastFireDisplayIsNeverFiredText("cli-session", null)).toBe(false);
+  });
+
+  it("AC-1 regression guard: a normalized Layer-B row (real normalizeCronRowB output) never trips the never-fired branch", () => {
+    const row = normalizeCronRowB(REAL_ROW_B);
+    expect(row).not.toBeNull();
+    expect(lastFireDisplayIsNeverFiredText(row!.layer, row!.last_fire)).toBe(false);
+  });
+
+  it("Line 286 invariant unchanged: CRON_STATUS_LABELS.NEVER_FIRED stays the Layer-A copy 'Chưa từng chạy'", () => {
+    expect(CRON_STATUS_LABELS.NEVER_FIRED).toBe("Chưa từng chạy");
+  });
+
+  it("AC-2/AC-3: Layer-B not-tracked copy is a distinct named constant, never equal to the Layer-A 'Chưa từng chạy' string", () => {
+    expect(CRON_LAYER_B_LAST_FIRE_LABEL).not.toBe("Chưa từng chạy");
+    expect(CRON_LAYER_B_LAST_FIRE_LABEL).not.toBe(CRON_STATUS_LABELS.NEVER_FIRED);
+    expect(CRON_LAYER_B_LAST_FIRE_LABEL.length).toBeGreaterThan(0);
+  });
+
+  it("AC-3: explanatory hint copy is frontend-owned Vietnamese, not the backend `reason` string verbatim", () => {
+    expect(CRON_LAYER_B_LAST_FIRE_HINT.length).toBeGreaterThan(0);
+    expect(CRON_LAYER_B_LAST_FIRE_HINT).not.toBe(REAL_ROW_B.reason);
+    // Backend reason is English (Session-scoped: ...); frontend hint must not be the same string.
+    expect(CRON_LAYER_B_LAST_FIRE_HINT).not.toMatch(/Session-scoped/);
   });
 });

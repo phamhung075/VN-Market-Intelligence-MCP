@@ -235,6 +235,24 @@ export const CRON_STATUS_LABELS: Record<CronStatus, string> = {
   SESSION_SCOPED: "Phiên làm việc",
 };
 
+/**
+ * FIX-DASH-CRON-LAYERB-NEVERFIRED-FALSE-LABEL AC-1/AC-2/AC-3: Layer-B
+ * (`cli-session`) last-fire cell copy. "Chưa từng chạy" (NEVER_FIRED, Layer-A
+ * only — BA AC-20) asserts a positive fact ("this has never run") the system
+ * has no data to support and which is false — the crons DO run, they simply
+ * have no fire-telemetry writer (no CLI-session -> market.db pipeline exists,
+ * see layerBCronRegistry.ts). These two are NAMED EXPORTED CONSTANTS (AC-2) —
+ * never an inline JSX string literal — specifically so a test can assert
+ * against the exact copy directly, the way the previous inline literal never
+ * allowed. `_HINT` is the frontend's OWN Vietnamese explanatory copy (AC-3) —
+ * deliberately NOT the backend `reason` string (English, would drag
+ * apps/mcp-server/ into a one-zone fix) — rendered visibly in the cell, not
+ * tooltip-only.
+ */
+export const CRON_LAYER_B_LAST_FIRE_LABEL = "Không theo dõi";
+export const CRON_LAYER_B_LAST_FIRE_HINT =
+  "Chỉ chạy khi có phiên CLI đang mở — chưa có cơ chế ghi lại lần chạy";
+
 /** FR-5.3 status badge colors. Layer-B (SESSION_SCOPED) is always blue/neutral (AC-19/NFR-7). */
 export function cronStatusBadgeClasses(status: CronStatus): string {
   switch (status) {
@@ -392,7 +410,12 @@ function CronLayerTable({ title, rows }: { title: string; rows: CronStatusRow[] 
             <thead>
               <tr className="border-b border-slate-700 bg-slate-900">
                 <th className="px-3 py-2 text-left font-medium text-slate-400">Tên cron</th>
-                <th className="px-3 py-2 text-left font-medium text-slate-400">Lớp</th>
+                {/* AC-5: `Lớp` column dropped — AC-18 already renders Layer-A/Layer-B as two
+                    separate, header-labelled sub-tables (see CronRecheckTable below), so every
+                    row within a given CronLayerTable call is already layer-homogeneous; a
+                    per-row layer value here was redundant. cronLayerLabel/FR-5.2 stays exported
+                    and covered by its own test (test:337) — only this redundant render site is
+                    removed, the pinned copy itself is untouched. */}
                 <th className="px-3 py-2 text-left font-medium text-slate-400">Lịch dự kiến</th>
                 <th className="px-3 py-2 text-left font-medium text-slate-400">Lần chạy gần nhất</th>
                 <th className="px-3 py-2 text-left font-medium text-slate-400">Dự kiến lần tới</th>
@@ -409,11 +432,25 @@ function CronLayerTable({ title, rows }: { title: string; rows: CronStatusRow[] 
                   }`}
                 >
                   <td className="px-3 py-2 font-mono text-slate-300">{row.name}</td>
-                  <td className="px-3 py-2 text-slate-400">{cronLayerLabel(row.layer)}</td>
                   <td className="px-3 py-2 text-slate-300">{row.human_schedule}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-slate-300">
-                    {/* AC-20: null last_fire renders "Chưa từng chạy" — never blank/fabricated */}
-                    {row.last_fire == null ? (
+                    {/*
+                      FIX-DASH-CRON-LAYERB-NEVERFIRED-FALSE-LABEL AC-1: layer-aware branch.
+                      Layer-B (`cli-session`) rows check FIRST and unconditionally render the
+                      not-tracked copy — they must NEVER fall into the Layer-A "Chưa từng chạy"
+                      branch below, even though last_fire is also null for them (normalizeCronRowB
+                      force-nulls all four fire fields by design, AC-4 guard — that is correct and
+                      untouched). AC-20 (Layer-A, null last_fire -> "Chưa từng chạy") is preserved
+                      unchanged for `server` rows only.
+                    */}
+                    {row.layer === "cli-session" ? (
+                      <span className="text-slate-500" title={CRON_LAYER_B_LAST_FIRE_HINT}>
+                        {CRON_LAYER_B_LAST_FIRE_LABEL}
+                        <span className="block text-[10px] leading-tight text-slate-600">
+                          {CRON_LAYER_B_LAST_FIRE_HINT}
+                        </span>
+                      </span>
+                    ) : row.last_fire == null ? (
                       <span className="text-slate-500">Chưa từng chạy</span>
                     ) : (
                       <ClientTimestamp iso={row.last_fire} className="text-slate-300" />
