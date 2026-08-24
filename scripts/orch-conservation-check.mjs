@@ -86,6 +86,31 @@
  *   verified-innocent finding for the specific incident that motivated
  *   this task).
  *
+ * LANE-PLACEMENT DIMENSION (FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-AFTER-CALLER-JQ-READ, AC-3,
+ *   2026-08-24): the magnitude-ratio metric above is ALSO blind to a stale full-document
+ *   candidate that silently REVERTS a peer's lane-move while leaving task_total identical
+ *   (a row moving backward out of one lane and appearing in an earlier one nets to zero on the
+ *   magnitude metric — REPRODUCED LIVE: a pm subagent's unrelated done[]->done_verified[] write
+ *   carried a candidate built minutes earlier, wholesale-restoring stale qa[]/review[] arrays;
+ *   `git show <that commit> -- docs/data/orch/orch-state.json` never even MENTIONS the 5
+ *   clobbered ids — the write's own diff never named them, they moved backward purely because
+ *   the candidate was stale). `backwardLaneMoves()` below detects, per FLAT_TASK_LANES id, any
+ *   row whose CANDIDATE lane has a lower pipeline rank than its LIVE lane. A SINGLE undeclared
+ *   backward move is a normal, sanctioned operation (e.g. qa/flow/main.md's CHANGES_REQUESTED
+ *   path moves exactly one row qa[]->review[] by name) and is NOT flagged — every current writer
+ *   in the fleet moves at most one row backward per write (grep-verified 2026-08-24: every
+ *   `.task_board.<lane> = [...]` backward-lane assignment across scripts jq files and every
+ *   dev-agent flow-doc write targets exactly one `.id`; batch multi-row claim scripts — e.g.
+ *   the QA_CAP=10 Review-Lane QA-Drain — always move FORWARD, never backward, so this floor does
+ *   not affect them). TWO OR MORE undeclared backward moves landing in the SAME write is the
+ *   exact reproduced-incident shape (a stale full-doc candidate reverting several rows nobody on
+ *   this write named) and is a HARD REJECT, independent of (and NEVER bypassable by)
+ *   ORCH_APPLY_ALLOW_SHRINK — same orthogonality rationale as the two row-identity dimensions
+ *   above. A caller with a genuine, deliberate reason to revert 2+ rows in one write (no such
+ *   caller exists today) can declare them via ORCH_APPLY_DECLARED_BACKWARD_LANE_MOVES, mirroring
+ *   the existing declared-eviction escape hatches rather than leaving this permanently
+ *   fail-closed for a hypothetical future legitimate case.
+ *
  * INVOCATION:
  *   bun scripts/orch-conservation-check.mjs <liveFilePath> <candidateFilePath>
  *
@@ -139,18 +164,39 @@
  *                              ORCH_APPLY_DECLARED_SIGNAL_EVICTIONS above —
  *                              the two arrays have no archive-lane equivalent
  *                              in common either.
+ *   ORCH_APPLY_DECLARED_BACKWARD_LANE_MOVES  comma-separated list of
+ *                              `task_board.<FLAT_TASK_LANES>[].id` values the
+ *                              CALLER explicitly declares are intentionally
+ *                              moving backward (to an earlier-pipeline-rank
+ *                              lane) THIS write — see "LANE-PLACEMENT
+ *                              DIMENSION" above. No current caller sets this
+ *                              (every known backward mover today moves
+ *                              exactly one undeclared row, which is already
+ *                              permitted without declaration); it exists so a
+ *                              future genuine multi-row revert is not
+ *                              permanently fail-closed.
+ *   CONSERVATION_MAX_UNDECLARED_BACKWARD_MOVES  default 1 — the number of
+ *                              undeclared backward-lane moves tolerated in a
+ *                              single write before the lane-placement guard
+ *                              rejects. 1 covers every known single-row
+ *                              backward workflow (e.g. QA CHANGES_REQUESTED);
+ *                              2+ is the reproduced stale-full-doc-revert
+ *                              incident shape.
  *
  * EXIT CODES:
  *   0 = conservation OK (within floor, below MIN_BASELINE, or bypass honored)
  *       AND zero undeclared row-identity drops (signal_queue.rows[] AND
- *       pending_triage_inbox[]).
+ *       pending_triage_inbox[]) AND undeclared backward-lane-move count is at
+ *       or below CONSERVATION_MAX_UNDECLARED_BACKWARD_MOVES.
  *   1 = conservation violated (task_total or signal_total dropped below the
  *       floor ratio, no bypass set) OR at least one signal_queue.rows[] id
  *       vanished between live and candidate without being declared/archived
  *       OR at least one pending_triage_inbox[] envelope_id vanished without
- *       being declared (both row-identity violations — never bypassable) —
- *       reuses the caller's existing "validation failed, live file untouched"
- *       exit class.
+ *       being declared OR more than CONSERVATION_MAX_UNDECLARED_BACKWARD_MOVES
+ *       task rows moved backward (lower pipeline rank) without being declared
+ *       (all row-identity/placement violations — never bypassable) — reuses
+ *       the caller's existing "validation failed, live file untouched" exit
+ *       class.
  *   3 = usage error (missing args, file not found / unreadable / unparseable)
  *
  * HARD CONSTRAINTS:
@@ -320,6 +366,75 @@ function undeclaredInboxDrops(liveDoc, candidateDoc) {
 }
 
 /**
+ * LANE_RANK — pipeline order for the lane-placement dimension. Reuses the
+ * exact FLAT_TASK_LANES ordering already used for task_total() above (that
+ * array is written in pipeline order: backlog -> ready -> in_progress ->
+ * review -> qa -> done -> done_verified). Does NOT cover active_sprints[]/
+ * closed_sprints[].tasks[] — those have no single flat-lane rank and are out
+ * of scope for this dimension (the reproduced incident was entirely within
+ * the flat lanes: qa[]/review[]).
+ * @type {Record<string, number>}
+ */
+const LANE_RANK = Object.fromEntries(FLAT_TASK_LANES.map((lane, i) => [lane, i]));
+
+/**
+ * Build a Map of task `.id` -> flat lane name, scanning FLAT_TASK_LANES only
+ * (in pipeline order; first occurrence wins if a duplicate id somehow spans
+ * two lanes — that is itself a coherence bug caught elsewhere, not this
+ * dimension's job to adjudicate).
+ * @param {unknown} doc
+ * @returns {Map<string, string>}
+ */
+function taskLaneMap(doc) {
+  const tb = /** @type {Record<string, unknown>} */ (doc && typeof doc === 'object' ? doc.task_board : undefined);
+  const map = new Map();
+  if (!tb || typeof tb !== 'object') return map;
+  for (const lane of FLAT_TASK_LANES) {
+    const arr = tb[lane];
+    if (!Array.isArray(arr)) continue;
+    for (const row of arr) {
+      const id = row && typeof row === 'object' ? row.id : undefined;
+      if (typeof id === 'string' && id.length > 0 && !map.has(id)) {
+        map.set(id, lane);
+      }
+    }
+  }
+  return map;
+}
+
+/**
+ * Lane-placement conservation dimension (FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-
+ * AFTER-CALLER-JQ-READ, AC-3) — see file header "LANE-PLACEMENT DIMENSION" for
+ * full rationale. Returns every id present in both live and candidate whose
+ * candidate lane has a STRICTLY LOWER pipeline rank than its live lane (moved
+ * backward), EXCLUDING ids named in ORCH_APPLY_DECLARED_BACKWARD_LANE_MOVES.
+ * @param {unknown} liveDoc
+ * @param {unknown} candidateDoc
+ * @returns {Array<{id: string, from: string, to: string}>}
+ */
+function undeclaredBackwardLaneMoves(liveDoc, candidateDoc) {
+  const liveMap = taskLaneMap(liveDoc);
+  const candidateMap = taskLaneMap(candidateDoc);
+  const declared = new Set(
+    (process.env.ORCH_APPLY_DECLARED_BACKWARD_LANE_MOVES ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
+  );
+
+  const moves = [];
+  for (const [id, liveLane] of liveMap) {
+    const candidateLane = candidateMap.get(id);
+    if (candidateLane === undefined || candidateLane === liveLane) continue; // absent-elsewhere / same-lane — not this dimension's concern
+    if (declared.has(id)) continue; // accounted for — caller declared this backward move
+    if (LANE_RANK[candidateLane] < LANE_RANK[liveLane]) {
+      moves.push({ id, from: liveLane, to: candidateLane });
+    }
+  }
+  return moves;
+}
+
+/**
  * Load + parse a JSON document, exiting 3 on any failure (usage error class —
  * matches orch-validate.mjs's file-not-found/unreadable exit code).
  * @param {string} path
@@ -376,11 +491,21 @@ const violations = metrics.filter((m) => m.live >= MIN_BASELINE && m.candidate <
 const droppedIds = undeclaredSignalRowDrops(liveDoc, candidateDoc);
 const droppedInboxIds = undeclaredInboxDrops(liveDoc, candidateDoc);
 
-if (violations.length === 0 && droppedIds.length === 0 && droppedInboxIds.length === 0) {
+// Lane-placement dimension (AC-3) — also INDEPENDENT, also NEVER bypassable
+// by ORCH_APPLY_ALLOW_SHRINK. A single undeclared backward move is tolerated
+// (normal sanctioned single-row workflows, e.g. QA CHANGES_REQUESTED); only
+// exceeding the threshold is a violation.
+const MAX_UNDECLARED_BACKWARD_MOVES = Number(process.env.CONSERVATION_MAX_UNDECLARED_BACKWARD_MOVES ?? '1');
+const backwardMoves = undeclaredBackwardLaneMoves(liveDoc, candidateDoc);
+const backwardMovesViolated = backwardMoves.length > MAX_UNDECLARED_BACKWARD_MOVES;
+
+if (violations.length === 0 && droppedIds.length === 0 && droppedInboxIds.length === 0 && !backwardMovesViolated) {
   process.stdout.write(
     `[orch-conservation-check] OK — ` +
       metrics.map((m) => `${m.name} live=${m.live} candidate=${m.candidate}`).join(', ') +
-      `, signal_row_identity=clean, inbox_row_identity=clean\n`
+      `, signal_row_identity=clean, inbox_row_identity=clean, lane_placement=clean` +
+      (backwardMoves.length > 0 ? ` (${backwardMoves.length} tolerated backward move(s): ${backwardMoves.map((m) => m.id).join(', ')})` : '') +
+      `\n`
   );
   process.exit(0);
 }
@@ -425,6 +550,28 @@ if (droppedInboxIds.length > 0) {
       `through verbatim. A full clear-to-zero is fully supported in ONE write this way, no artificial ` +
       `sub-batching required. If this drop is unintentional, the candidate was built from a stale ` +
       `read — re-read the live file and re-apply your filter.\n`
+  );
+  process.exit(1);
+}
+
+if (backwardMovesViolated) {
+  process.stderr.write(
+    `\n[orch-conservation-check] ABORTED — lane-placement violation: ${backwardMoves.length} task row(s) ` +
+      `moved BACKWARD (to an earlier-pipeline-rank lane) in one write, exceeding the tolerated ` +
+      `${MAX_UNDECLARED_BACKWARD_MOVES} undeclared backward move(s) (not in ORCH_APPLY_DECLARED_BACKWARD_LANE_MOVES):\n`
+  );
+  for (const m of backwardMoves) {
+    process.stderr.write(`  ${m.id}: ${m.from} -> ${m.to}\n`);
+  }
+  process.stderr.write(
+    `  fix: this is the reproduced stale-full-doc-revert shape (FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-` +
+      `AFTER-CALLER-JQ-READ) — the candidate was very likely built from a stale read that predates a ` +
+      `peer's lane-move on one or more of the ids above. Re-read the live file and re-apply your ` +
+      `filter (ideally with a caller-supplied CAS baseline captured at that re-read — see ` +
+      `scripts/orch-apply.sh). If this write genuinely intends to revert multiple rows on purpose, ` +
+      `set ORCH_APPLY_DECLARED_BACKWARD_LANE_MOVES=<comma-separated id list> naming exactly the ids ` +
+      `this write knowingly moves backward — do NOT set ORCH_APPLY_ALLOW_SHRINK, it does not bypass ` +
+      `this dimension.\n`
   );
   process.exit(1);
 }

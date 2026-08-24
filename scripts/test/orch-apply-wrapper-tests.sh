@@ -16,6 +16,18 @@
 #   HAPPY — valid candidate           → exit 0, fixture updated
 #   QA-COLLAPSE / QA-APPEND-HAPPY — task_board.qa[] is counted in the
 #     conservation guard's task_total (FIX-ORCHSTATE-CONSERVATION-GUARD-QA-LANE-BLIND)
+#   CALLER-BASELINE-* — AC-1/AC-2 of FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-AFTER-
+#     CALLER-JQ-READ: caller-supplied CAS baseline (hash or mtime) closes the
+#     gap where this script's own self-captured mtime is taken AFTER the
+#     caller's jq already read a stale copy; includes the exact T0..T3
+#     interleave repro + a sequential-write negative control + the
+#     no-baseline-supplied fallback-unchanged control.
+#   LANE-BACKWARD-* / LANE-FORWARD-BATCH-HAPPY — AC-3 of the same task: a new
+#     lane-placement conservation dimension flags 2+ undeclared task rows
+#     reverting to an earlier-pipeline-rank lane in one write (the reproduced
+#     stale-full-doc-revert incident shape), tolerating the single sanctioned
+#     backward move (e.g. QA CHANGES_REQUESTED) and leaving forward batch
+#     moves (e.g. QA-Drain) untouched.
 #
 # SAFETY: all tests use ORCH_APPLY_LIVE_FILE_OVERRIDE pointing at a throwaway
 # fixture under mktemp. The REAL docs/data/orch/orch-state.json is NEVER touched.
@@ -1224,6 +1236,314 @@ else
   fail "INBOX-APPEND-HAPPY — inbox length expected $((N_INBOX + 1)), got $INBOX_POST_APPEND_N"
 fi
 assert_real_live_unchanged "INBOX-APPEND-HAPPY"
+
+# =============================================================================
+# CALLER-BASELINE CAS TESTS (FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-AFTER-CALLER-JQ-READ)
+# =============================================================================
+# AC-1: orch-apply.sh accepts a caller-observed baseline (env var carrying a
+# content hash or mtime, captured by the CALLER immediately before its own jq
+# read) and CAS-compares against THAT, instead of a freshly self-captured
+# start-of-process value that can already postdate the caller's own read by
+# an arbitrary gap — the exact defect this task fixes.
+#
+# CALLER-BASELINE-STALE-REJECTED (AC-2, positive control) — reproduces the
+#   exact T0..T3 interleave from the incident:
+#     T0 — "peer B" reads the live file and captures its baseline (hash) BEFORE
+#          building its candidate.
+#     T1 — a DIFFERENT writer ("peer A") applies a real, unrelated write to the
+#          SAME live file via a real orch-apply.sh run (self-captured fallback
+#          mode — proves this is a genuine peer write, not a stub).
+#     T2 — "peer B" starts orch-apply.sh with its STALE candidate (built from
+#          the T0 read) and its T0 baseline.
+#     T3 — CAS re-check: live file now reflects T1's write, which differs from
+#          the T0 baseline peer B captured -> MUST exit 2. Pre-fix (baseline
+#          self-captured at this script's OWN startup, i.e. AFTER T1 already
+#          landed) this would read MTIME_BEFORE==MTIME_AFTER and silently
+#          apply peer B's stale candidate, clobbering peer A's write — the
+#          exact incident.
+# CALLER-BASELINE-SEQUENTIAL-HAPPY (AC-2, NEGATIVE CONTROL) — the same
+#   caller-baseline mechanism, but a genuinely non-overlapping SEQUENTIAL
+#   write (baseline captured immediately before the caller's own write, zero
+#   concurrent writers) -> MUST still exit 0. Proves the new mechanism does
+#   not spuriously reject a normal write merely because a baseline was
+#   supplied.
+# CALLER-BASELINE-MTIME-MODE — same stale-reject shape using the mtime
+#   baseline variant (ORCH_APPLY_CALLER_BASELINE_MTIME) instead of hash, to
+#   prove both AC-1 modes work, not just the hash path.
+# CALLER-BASELINE-NOBASELINE-UNCHANGED (AC-1 explicit fallback clause) — a
+#   caller supplying NEITHER env var gets EXACTLY today's self-captured
+#   behaviour (already exercised end-to-end by every earlier test in this
+#   file, none of which sets either new var — this assertion names it
+#   explicitly).
+# =============================================================================
+CALLER_BASELINE_LIVE="$FIXTURE_DIR/caller-baseline-live.json"
+printf '%s' "$VALID_FIXTURE" > "$CALLER_BASELINE_LIVE"
+
+# T0 — peer B captures its baseline BEFORE building its candidate.
+T0_BASELINE=$(file_hash "$CALLER_BASELINE_LIVE")
+# Peer B's candidate, as if built from that T0 read (edits a field, unaware of what comes next).
+STALE_CANDIDATE=$(jq --arg now "2026-06-01T00:05:00Z" \
+  '.task_board.backlog[0].title = "peer B stale-read edit" | ._meta.updated_at = $now' \
+  "$CALLER_BASELINE_LIVE")
+
+# T1 — a DIFFERENT writer (peer A) applies a real, unrelated write via a real orch-apply.sh run.
+# (Adds a benign passthrough field rather than changing `.status` — status/lane coherence is a
+# separate, already-covered dimension; this test is isolated to the CAS baseline mechanism.)
+PEER_A_CANDIDATE=$(jq --arg now "2026-06-01T00:01:00Z" \
+  '.task_board.backlog[0].peer_a_note = "peer A landed" | ._meta.updated_at = $now' \
+  "$CALLER_BASELINE_LIVE")
+EXIT_PEER_A=0
+printf '%s' "$PEER_A_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$CALLER_BASELINE_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_PEER_A=$?
+if [ "$EXIT_PEER_A" -ne 0 ]; then
+  fail "CALLER-BASELINE setup — peer A's real write failed (test bug, not product bug), exit $EXIT_PEER_A"
+fi
+
+# T2/T3 — peer B applies its STALE candidate (built from T0) with the T0 baseline supplied.
+EXIT_STALE=0
+printf '%s' "$STALE_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$CALLER_BASELINE_LIVE" ORCH_APPLY_CALLER_BASELINE_HASH="$T0_BASELINE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_STALE=$?
+
+if [ "$EXIT_STALE" -eq 2 ]; then
+  pass "CALLER-BASELINE-STALE-REJECTED (AC-2) — stale caller baseline vs peer's intervening write — exit 2"
+else
+  fail "CALLER-BASELINE-STALE-REJECTED (AC-2) — expected exit 2, got $EXIT_STALE"
+fi
+
+POST_STALE_NOTE=$(jq -r '.task_board.backlog[0].peer_a_note' "$CALLER_BASELINE_LIVE")
+if [ "$POST_STALE_NOTE" = "peer A landed" ]; then
+  pass "CALLER-BASELINE-STALE-REJECTED (AC-2) — peer A's write NOT reverted (peer_a_note still present)"
+else
+  fail "CALLER-BASELINE-STALE-REJECTED (AC-2) — peer A's write was clobbered (peer_a_note=$POST_STALE_NOTE, expected 'peer A landed')"
+fi
+assert_real_live_unchanged "CALLER-BASELINE-STALE-REJECTED"
+
+# ─────────────────────────────────────────────────────────────────────────
+# CALLER-BASELINE-SEQUENTIAL-HAPPY (AC-2 negative control)
+# ─────────────────────────────────────────────────────────────────────────
+T0_HAPPY_BASELINE=$(file_hash "$CALLER_BASELINE_LIVE")
+HAPPY_CANDIDATE=$(jq --arg now "2026-06-01T00:10:00Z" \
+  '.task_board.backlog[0].title = "sequential legit edit" | ._meta.updated_at = $now' \
+  "$CALLER_BASELINE_LIVE")
+
+EXIT_SEQ_HAPPY=0
+printf '%s' "$HAPPY_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$CALLER_BASELINE_LIVE" ORCH_APPLY_CALLER_BASELINE_HASH="$T0_HAPPY_BASELINE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_SEQ_HAPPY=$?
+
+if [ "$EXIT_SEQ_HAPPY" -eq 0 ]; then
+  pass "CALLER-BASELINE-SEQUENTIAL-HAPPY (AC-2 negative control) — non-overlapping sequential write with caller baseline — exit 0"
+else
+  fail "CALLER-BASELINE-SEQUENTIAL-HAPPY (AC-2 negative control) — expected exit 0, got $EXIT_SEQ_HAPPY"
+fi
+
+POST_SEQ_TITLE=$(jq -r '.task_board.backlog[0].title' "$CALLER_BASELINE_LIVE")
+if [ "$POST_SEQ_TITLE" = "sequential legit edit" ]; then
+  pass "CALLER-BASELINE-SEQUENTIAL-HAPPY — candidate applied (rename occurred)"
+else
+  fail "CALLER-BASELINE-SEQUENTIAL-HAPPY — candidate not applied (title=$POST_SEQ_TITLE)"
+fi
+assert_real_live_unchanged "CALLER-BASELINE-SEQUENTIAL-HAPPY"
+
+# ─────────────────────────────────────────────────────────────────────────
+# CALLER-BASELINE-MTIME-MODE — mtime variant of the stale-reject shape.
+# ─────────────────────────────────────────────────────────────────────────
+MTIME_MODE_LIVE="$FIXTURE_DIR/caller-baseline-mtime-live.json"
+printf '%s' "$VALID_FIXTURE" > "$MTIME_MODE_LIVE"
+touch -t 202001010000 "$MTIME_MODE_LIVE"   # deterministic T_old baseline — avoids same-second flake
+T0_MTIME_BASELINE=$(stat -f "%m" "$MTIME_MODE_LIVE" 2>/dev/null || stat -c "%Y" "$MTIME_MODE_LIVE")
+STALE_MTIME_CANDIDATE=$(jq --arg now "2026-06-01T00:05:00Z" \
+  '.task_board.backlog[0].title = "peer B stale-read edit (mtime mode)" | ._meta.updated_at = $now' \
+  "$MTIME_MODE_LIVE")
+
+PEER_A_MTIME_CANDIDATE=$(jq --arg now "2026-06-01T00:01:00Z" \
+  '.task_board.backlog[0].peer_a_note = "peer A landed" | ._meta.updated_at = $now' \
+  "$MTIME_MODE_LIVE")
+EXIT_PEER_A_MTIME=0
+printf '%s' "$PEER_A_MTIME_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$MTIME_MODE_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_PEER_A_MTIME=$?
+if [ "$EXIT_PEER_A_MTIME" -ne 0 ]; then
+  fail "CALLER-BASELINE-MTIME-MODE setup — peer A's real write failed (test bug, not product bug), exit $EXIT_PEER_A_MTIME"
+fi
+
+EXIT_STALE_MTIME=0
+printf '%s' "$STALE_MTIME_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$MTIME_MODE_LIVE" ORCH_APPLY_CALLER_BASELINE_MTIME="$T0_MTIME_BASELINE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_STALE_MTIME=$?
+
+if [ "$EXIT_STALE_MTIME" -eq 2 ]; then
+  pass "CALLER-BASELINE-MTIME-MODE — stale mtime baseline vs peer's intervening write — exit 2"
+else
+  fail "CALLER-BASELINE-MTIME-MODE — expected exit 2, got $EXIT_STALE_MTIME"
+fi
+assert_real_live_unchanged "CALLER-BASELINE-MTIME-MODE"
+
+# ─────────────────────────────────────────────────────────────────────────
+# CALLER-BASELINE-NOBASELINE-UNCHANGED (AC-1 explicit fallback clause)
+# ─────────────────────────────────────────────────────────────────────────
+NOBASELINE_LIVE="$FIXTURE_DIR/caller-baseline-none-live.json"
+printf '%s' "$VALID_FIXTURE" > "$NOBASELINE_LIVE"
+EXIT_NOBASELINE=0
+printf '%s' "$(jq '.task_board.backlog[0].peer_a_note = "no baseline supplied"' "$NOBASELINE_LIVE")" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$NOBASELINE_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_NOBASELINE=$?
+if [ "$EXIT_NOBASELINE" -eq 0 ]; then
+  pass "CALLER-BASELINE-NOBASELINE-UNCHANGED (AC-1 fallback) — no env var supplied — exit 0, unaffected"
+else
+  fail "CALLER-BASELINE-NOBASELINE-UNCHANGED (AC-1 fallback) — expected exit 0, got $EXIT_NOBASELINE"
+fi
+assert_real_live_unchanged "CALLER-BASELINE-NOBASELINE-UNCHANGED"
+
+# =============================================================================
+# LANE-PLACEMENT TESTS (FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-AFTER-CALLER-JQ-READ, AC-3)
+# =============================================================================
+# scripts/orch-conservation-check.mjs's magnitude-ratio floor is ALSO blind to
+# a stale full-doc candidate that reverts a peer's lane-move: task_total nets
+# to zero (the row still exists somewhere, just in an earlier lane), so the
+# existing magnitude metric never fires. New independent dimension:
+# undeclaredBackwardLaneMoves() flags 2+ undeclared rows moving to an
+# earlier-pipeline-rank lane in ONE write (reproduces the incident: 5 rows
+# silently reverted qa[]/review[] -> an earlier lane in a single stale
+# full-doc write).
+#
+# LANE-BACKWARD-SINGLE-TOLERATED — a genuine SANCTIONED single-row backward
+#   move (e.g. QA CHANGES_REQUESTED qa[]->review[]) must NOT be blocked.
+# LANE-BACKWARD-MULTI-REJECTED — 2 rows reverting backward in ONE write (the
+#   reproduced incident shape) -> exit 1, live UNCHANGED.
+# LANE-BACKWARD-DECLARED-ALLOWED — the same 2-row revert, BOTH ids named in
+#   ORCH_APPLY_DECLARED_BACKWARD_LANE_MOVES -> exit 0.
+# LANE-FORWARD-BATCH-HAPPY — regression guard: several rows moving FORWARD in
+#   one write (e.g. a QA_CAP batch claim) must be entirely unaffected.
+# =============================================================================
+LANE_LIVE="$FIXTURE_DIR/lane-placement-live.json"
+
+build_lane_fixture() {
+  jq -n '{
+    "_meta": {"schema":"v4","ssot":true,"updated_at":"2026-06-01T00:00:00Z","updated_by":"fixture"},
+    "head": {"status":"idle","active_task_id":null,"next_agent":null},
+    "task_board": {
+      "backlog": [{"id":"LANE-BACKLOG-1","status":"BACKLOG"}],
+      "review": [{"id":"LANE-REVIEW-1","status":"REVIEW"}, {"id":"LANE-REVIEW-2","status":"REVIEW"}],
+      "qa": [{"id":"LANE-QA-1","status":"QA"}, {"id":"LANE-QA-2","status":"QA"}],
+      "active_sprints": []
+    },
+    "signal_queue": {"_updated_at":"2026-06-01T00:00:00Z","_updated_by":"fixture","rows":[]}
+  }' > "$LANE_LIVE"
+}
+build_lane_fixture
+
+if ! bun "$VALIDATOR" "$LANE_LIVE" >/dev/null 2>&1; then
+  fail "LANE-PLACEMENT setup — populated fixture failed standalone validation (test bug, not product bug)"
+fi
+
+LANE_HASH_BEFORE=$(file_hash "$LANE_LIVE")
+
+# ─────────────────────────────────────────────────────────────────────────
+# LANE-BACKWARD-SINGLE-TOLERATED — LANE-QA-1 moves qa[] -> review[] (backward),
+# the ONLY row this write touches. Must NOT be blocked.
+# ─────────────────────────────────────────────────────────────────────────
+SINGLE_BACKWARD_CANDIDATE=$(jq --arg now "2026-06-01T00:01:00Z" \
+  '.task_board.qa = [.task_board.qa[] | select(.id != "LANE-QA-1")]
+   | .task_board.review += [{"id":"LANE-QA-1","status":"REVIEW"}]
+   | ._meta.updated_at = $now' \
+  "$LANE_LIVE")
+
+EXIT_SINGLE_BACKWARD=0
+printf '%s' "$SINGLE_BACKWARD_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$LANE_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_SINGLE_BACKWARD=$?
+
+if [ "$EXIT_SINGLE_BACKWARD" -eq 0 ]; then
+  pass "LANE-BACKWARD-SINGLE-TOLERATED — one sanctioned backward move (qa->review) accepted — exit 0"
+else
+  fail "LANE-BACKWARD-SINGLE-TOLERATED — expected exit 0, got $EXIT_SINGLE_BACKWARD"
+fi
+assert_real_live_unchanged "LANE-BACKWARD-SINGLE-TOLERATED"
+
+# Reset fixture for the remaining lane-placement sub-tests
+build_lane_fixture
+
+# ─────────────────────────────────────────────────────────────────────────
+# LANE-BACKWARD-MULTI-REJECTED (AC-3) — TWO rows revert backward in the SAME
+# write (LANE-QA-1 qa->review, LANE-REVIEW-1 review->backlog), neither
+# declared -> exit 1, live UNCHANGED.
+# ─────────────────────────────────────────────────────────────────────────
+MULTI_BACKWARD_CANDIDATE=$(jq --arg now "2026-06-01T00:02:00Z" \
+  '.task_board.qa = [.task_board.qa[] | select(.id != "LANE-QA-1")]
+   | .task_board.review = ([.task_board.review[] | select(.id != "LANE-REVIEW-1")] + [{"id":"LANE-QA-1","status":"REVIEW"}])
+   | .task_board.backlog += [{"id":"LANE-REVIEW-1","status":"BACKLOG"}]
+   | ._meta.updated_at = $now' \
+  "$LANE_LIVE")
+
+EXIT_MULTI_BACKWARD=0
+printf '%s' "$MULTI_BACKWARD_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$LANE_LIVE" bash "$APPLY_SH" 2>/tmp/lane-multi-stderr.$$ \
+  || EXIT_MULTI_BACKWARD=$?
+
+if [ "$EXIT_MULTI_BACKWARD" -eq 1 ]; then
+  pass "LANE-BACKWARD-MULTI-REJECTED (AC-3) — 2 undeclared backward moves in one write rejected — exit 1"
+else
+  fail "LANE-BACKWARD-MULTI-REJECTED (AC-3) — expected exit 1, got $EXIT_MULTI_BACKWARD"
+fi
+
+if grep -q "LANE-QA-1" /tmp/lane-multi-stderr.$$ 2>/dev/null && grep -q "LANE-REVIEW-1" /tmp/lane-multi-stderr.$$ 2>/dev/null; then
+  pass "LANE-BACKWARD-MULTI-REJECTED — stderr names both backward-moved ids"
+else
+  fail "LANE-BACKWARD-MULTI-REJECTED — stderr did not name both backward-moved ids"
+fi
+rm -f /tmp/lane-multi-stderr.$$
+
+LANE_HASH_AFTER_MULTI=$(file_hash "$LANE_LIVE")
+if [ "$LANE_HASH_BEFORE" = "$LANE_HASH_AFTER_MULTI" ]; then
+  pass "LANE-BACKWARD-MULTI-REJECTED — fixture UNCHANGED (no rename occurred)"
+else
+  fail "LANE-BACKWARD-MULTI-REJECTED — fixture CHANGED (CRITICAL — 2-row backward revert was applied)"
+fi
+assert_real_live_unchanged "LANE-BACKWARD-MULTI-REJECTED"
+
+# ─────────────────────────────────────────────────────────────────────────
+# LANE-BACKWARD-DECLARED-ALLOWED — same 2-row revert, BOTH ids declared -> exit 0.
+# ─────────────────────────────────────────────────────────────────────────
+EXIT_MULTI_DECLARED=0
+printf '%s' "$MULTI_BACKWARD_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$LANE_LIVE" ORCH_APPLY_DECLARED_BACKWARD_LANE_MOVES="LANE-QA-1,LANE-REVIEW-1" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_MULTI_DECLARED=$?
+
+if [ "$EXIT_MULTI_DECLARED" -eq 0 ]; then
+  pass "LANE-BACKWARD-DECLARED-ALLOWED — both ids declared — exit 0"
+else
+  fail "LANE-BACKWARD-DECLARED-ALLOWED — expected exit 0, got $EXIT_MULTI_DECLARED"
+fi
+assert_real_live_unchanged "LANE-BACKWARD-DECLARED-ALLOWED"
+
+# Reset fixture for the forward-batch regression test
+build_lane_fixture
+
+# ─────────────────────────────────────────────────────────────────────────
+# LANE-FORWARD-BATCH-HAPPY — regression guard: BOTH review[] rows move
+# FORWARD into qa[] in one write (e.g. a QA_CAP batch claim) — must be
+# entirely unaffected by the backward-only guard.
+# ─────────────────────────────────────────────────────────────────────────
+FORWARD_BATCH_CANDIDATE=$(jq --arg now "2026-06-01T00:03:00Z" \
+  '.task_board.qa += [{"id":"LANE-REVIEW-1","status":"QA"}, {"id":"LANE-REVIEW-2","status":"QA"}]
+   | .task_board.review = []
+   | ._meta.updated_at = $now' \
+  "$LANE_LIVE")
+
+EXIT_FORWARD_BATCH=0
+printf '%s' "$FORWARD_BATCH_CANDIDATE" \
+  | ORCH_APPLY_LIVE_FILE_OVERRIDE="$LANE_LIVE" bash "$APPLY_SH" 2>/dev/null \
+  || EXIT_FORWARD_BATCH=$?
+
+if [ "$EXIT_FORWARD_BATCH" -eq 0 ]; then
+  pass "LANE-FORWARD-BATCH-HAPPY — 2-row FORWARD batch move (review->qa) accepted — exit 0"
+else
+  fail "LANE-FORWARD-BATCH-HAPPY — expected exit 0, got $EXIT_FORWARD_BATCH"
+fi
+assert_real_live_unchanged "LANE-FORWARD-BATCH-HAPPY"
 
 # =============================================================================
 # Summary

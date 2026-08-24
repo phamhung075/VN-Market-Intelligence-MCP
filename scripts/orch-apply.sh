@@ -43,8 +43,18 @@
 #        (excluding updated_at itself) differs from the live file. NEVER
 #        duplicated here — single SSOT. NO backfill of existing null rows —
 #        see the script's own header for the full diff-unit rationale.
-#     6. CAS-mtime guard: mtime captured before stdin-read; re-checked before
-#        rename. Mismatch → ABORT with exit 2 so caller can retry.
+#     6. CAS guard: baseline captured before stdin-read; re-checked before
+#        rename. Mismatch → ABORT with exit 2 so caller can retry. TWO modes
+#        (task: FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-AFTER-CALLER-JQ-READ):
+#          - CALLER-SUPPLIED (preferred): ORCH_APPLY_CALLER_BASELINE_HASH or
+#            ORCH_APPLY_CALLER_BASELINE_MTIME, captured by the CALLER
+#            immediately before its own `jq` read — closes the gap where this
+#            script's own start-of-process capture happens AFTER the caller
+#            already read a (possibly minutes-stale) copy of the file.
+#          - SELF-CAPTURED (fallback, unchanged from pre-fix behaviour): when
+#            the caller supplies neither var, mtime is captured here at this
+#            script's own startup, exactly as before — every caller that has
+#            not yet migrated (AC-4) is byte-identical in behaviour.
 #     7. Atomic rename: temp → live file
 #
 # CALL PATTERN (canonical — minimal churn over existing jq idiom):
@@ -101,19 +111,60 @@ get_mtime() {
   stat -c "%Y" "$1"
 }
 
+# ─── Portable sha256 (macOS shasum / Linux sha256sum) ────────────────────────
+get_hash() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  else
+    shasum -a 256 "$1" | awk '{print $1}'
+  fi
+}
+
 # ─── Guard: live file must exist ─────────────────────────────────────────────
 if [[ ! -f "${LIVE_FILE}" ]]; then
   printf '[orch-apply] ERROR: live file not found: %s\n' "${LIVE_FILE}" >&2
   exit 3
 fi
 
-# ─── CAS: capture live file mtime BEFORE reading stdin ───────────────────────
-# The jq caller already read the live file before this script started.
-# Capturing mtime here — at the earliest point in the script, before reading
-# stdin — gives us a snapshot as close to the caller's read as possible.
-# Any concurrent write that lands between the caller's read and our startup
-# will be caught by the final mtime re-check before rename.
-MTIME_BEFORE=$(get_mtime "${LIVE_FILE}")
+# ─── CAS baseline: caller-supplied (preferred) or self-captured (fallback) ───
+# AC-1 (FIX-ORCHAPPLY-CAS-BASELINE-CAPTURED-AFTER-CALLER-JQ-READ):
+# Capturing mtime HERE — at this script's own startup — is provably too late:
+# in the mandated `jq '<filter>' orch-state.json | bash scripts/orch-apply.sh`
+# pipeline, the caller's `jq` has ALREADY read the live file (possibly minutes
+# earlier, under load) by the time this process even starts. A candidate built
+# from that stale read sails through a before/after check measured entirely
+# AFTER the staleness already happened — "before" here was never "before the
+# caller's read", only "before this process's own (much later) start".
+#
+# Fix: let the CALLER pass what it observed, captured immediately before its
+# own `jq` invocation — this is the actual moment that must not have moved:
+#   ORCH_APPLY_CALLER_BASELINE_HASH   sha256 of the live file (preferred —
+#                                      exact regardless of write cadence)
+#   ORCH_APPLY_CALLER_BASELINE_MTIME  mtime (epoch seconds) of the live file
+#                                      (1s resolution — fine for callers that
+#                                      cannot cheaply hash a large file)
+# HASH takes precedence when both are set. Canonical migrated call pattern:
+#   BASELINE=$(sha256sum docs/data/orch/orch-state.json | awk '{print $1}')
+#   jq '<filter>' docs/data/orch/orch-state.json \
+#     | ORCH_APPLY_CALLER_BASELINE_HASH="$BASELINE" bash scripts/orch-apply.sh
+#
+# FALLBACK (AC-1's explicit clause — "falling back to today's behaviour only
+# when the caller supplies nothing"): neither var set → mtime is self-captured
+# HERE at this script's own startup, exactly as before this fix. Every
+# not-yet-migrated caller (AC-4 tracked follow-up) is byte-identical in
+# behaviour to pre-fix — still catches any writer landing DURING this script's
+# own short lifetime; blind only to staleness predating this process, same
+# blind spot as before.
+if [[ -n "${ORCH_APPLY_CALLER_BASELINE_HASH:-}" ]]; then
+  BASELINE_MODE="hash"
+  BASELINE_BEFORE="${ORCH_APPLY_CALLER_BASELINE_HASH}"
+elif [[ -n "${ORCH_APPLY_CALLER_BASELINE_MTIME:-}" ]]; then
+  BASELINE_MODE="mtime"
+  BASELINE_BEFORE="${ORCH_APPLY_CALLER_BASELINE_MTIME}"
+else
+  BASELINE_MODE="mtime"
+  BASELINE_BEFORE=$(get_mtime "${LIVE_FILE}")
+fi
 
 # ─── Write stdin to a temp file in the SAME directory ────────────────────────
 # MUST be in the same directory as LIVE_FILE (same filesystem mountpoint) so
@@ -231,15 +282,23 @@ ceiling_output=$(bun "${REPO_ROOT}/scripts/orch-row-prose-ceiling-check.mjs" "${
 }
 [[ -n "${ceiling_output}" ]] && printf '%s\n' "${ceiling_output}" >&2
 
-# ─── CAS-mtime guard: re-check before rename ─────────────────────────────────
-# If the live file was modified between the caller's read and our rename,
-# our candidate is stale — it may have overwritten interleaved changes.
-# ABORT with a DISTINCT exit code (2) so the caller can retry:
-#   re-read the live file → re-apply the filter → pipe into orch-apply.sh again.
-MTIME_AFTER=$(get_mtime "${LIVE_FILE}")
-if [[ "${MTIME_BEFORE}" != "${MTIME_AFTER}" ]]; then
-  printf '[orch-apply] ABORTED: CAS mtime mismatch (before=%s after=%s) — concurrent write detected; caller should retry\n' \
-    "${MTIME_BEFORE}" "${MTIME_AFTER}" >&2
+# ─── CAS guard: re-check before rename ───────────────────────────────────────
+# If the live file's baseline (hash or mtime, matching BASELINE_MODE above)
+# differs now from what was captured/supplied as BASELINE_BEFORE, our
+# candidate is stale relative to that baseline — it may have overwritten
+# interleaved changes, whether they landed during THIS script's own lifetime
+# (self-captured fallback mode) or any time after the caller's own read
+# (caller-supplied mode — this is the gap AC-1 closes). ABORT with a DISTINCT
+# exit code (2) so the caller can retry: re-read the live file → re-apply the
+# filter → pipe into orch-apply.sh again (with a freshly captured baseline).
+if [[ "${BASELINE_MODE}" == "hash" ]]; then
+  BASELINE_AFTER=$(get_hash "${LIVE_FILE}")
+else
+  BASELINE_AFTER=$(get_mtime "${LIVE_FILE}")
+fi
+if [[ "${BASELINE_BEFORE}" != "${BASELINE_AFTER}" ]]; then
+  printf '[orch-apply] ABORTED: CAS %s mismatch (before=%s after=%s) — concurrent write detected (or caller-supplied baseline was already stale relative to live); caller should retry\n' \
+    "${BASELINE_MODE}" "${BASELINE_BEFORE}" "${BASELINE_AFTER}" >&2
   exit 2
 fi
 
