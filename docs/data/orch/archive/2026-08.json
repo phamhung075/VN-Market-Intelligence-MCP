@@ -26131,6 +26131,21 @@
       "triaged_by": "po",
       "disposition": "REHOUSED-TO-ROW -> task_board.backlog[].id==FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP + FIX-LAUNCHD-ACK-LEDGER-DEAD-TRACKEDBY-AND-LANE-RESOLUTION-FP",
       "po_triage_note": "[po 2026-08-24T14:29Z RE-VERIFIED before cold-evict] Coverage re-resolved as jq PATHS under task_board (bare-grep/.id== false-positives on telemetry findings that share task-row id shape). Owner: .task_board.backlog[223] FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP (repair-or-retire the crash-looping docker-events launchd agent) — resolved and confirmed on-topic. Status flipped READ->triaged: triaged is a PO-terminal disposition in TERMINAL_SIGNAL_STATUSES (scripts/orch-cold-evict.sh:181) exactly like READ, so eviction behaviour is unchanged and nothing is stranded. Transport defect that made READ mean 'delivered to nobody': .task_board.backlog[525] FIX-SIGNALQUEUE-DRAIN-MARKS-PO-ROWS-READ-WITHOUT-DELIVERING-THEM-TO-PO. PRIOR 13:20Z NOTE (folded in from bespoke key po_triage_20260824T1320Z, which nothing reads — per standing rule against invented timestamped field names): A-32 fleet-push STALE-ACK ruled this tick in docs/data/auditor-launchd-ack.json po_ruling_20260824T1310Z + FIX-AUDITOR-TIER1-PROBE-SCORES-DELIBERATELY-DISABLED-LAUNCHD-JOB-AS-DEGRADED. docker-events remains tracked by FIX-LAUNCHD-DOCKER-EVENTS-EXIT1-CRASHLOOP."
+    },
+    {
+      "id": "cj-20260823T223004",
+      "ts": "2026-08-23T22:30:04Z",
+      "from": "code-janitor",
+      "to": "po",
+      "type": "system-issue",
+      "summary": "team-tool-recheck writer dead since 06-23 — replace-vs-retire decision needed",
+      "severity": "LOW",
+      "status": "triaged",
+      "payload_ref": "docs/signals/processed/janitor-health-recheck-writer-retired-2026-08-23.json",
+      "triaged_at": "2026-08-24T14:29:30Z",
+      "triaged_by": "po",
+      "disposition": "REHOUSED-TO-ROW -> task_board.backlog[].id==DECIDE-TEAM-TOOL-RECHECK-WRITER-DEAD-SINCE-06-23-RETIRE-NOT-REPLACE (the PO decision: RETIRE) + FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID (the no-dedup_key root that let this ONE escalation land as TWO rows)",
+      "po_triage_note": "[po 2026-08-24T14:29Z RE-VERIFIED before cold-evict] Coverage re-resolved as jq PATHS under task_board (bare-grep/.id== false-positives on telemetry findings that share task-row id shape). DUPLICATE PAIR: these two rows are the SAME escalation emitted twice (summaries differ only by hyphen vs em-dash, so even content-hash dedup would miss). Both carry NO dedup_key. Root cause is already owned by .task_board.backlog[497] FIX-CCATO-NTG-ROWS-NOT-PRODUCED-BY-EITHER-SANCTIONED-ENGINE-FORGED-WRITER-ID, whose title states signal_queue.rows[] has no writer authentication and no dedup_key; this cj pair is a SECOND, non-chef producer exhibiting it (evidence folded onto that row via detail_ref). PO decision itself is carried by .task_board.backlog[528] DECIDE-TEAM-TOOL-RECHECK-WRITER-DEAD-SINCE-06-23-RETIRE-NOT-REPLACE. Status flipped READ->triaged: triaged is a PO-terminal disposition in TERMINAL_SIGNAL_STATUSES (scripts/orch-cold-evict.sh:181) exactly like READ, so eviction behaviour is unchanged and nothing is stranded. Transport defect that made READ mean 'delivered to nobody': .task_board.backlog[525] FIX-SIGNALQUEUE-DRAIN-MARKS-PO-ROWS-READ-WITHOUT-DELIVERING-THEM-TO-PO. PRIOR 13:20Z NOTE (folded in from bespoke key po_triage_20260824T1320Z, which nothing reads — per standing rule against invented timestamped field names): PO DECIDED: RETIRE, do not replace. Ruling carried on DECIDE-TEAM-TOOL-RECHECK-WRITER-DEAD-SINCE-06-23-RETIRE-NOT-REPLACE. Escalated twice and never delivered."
     }
   ],
   "backlog_detail": [],
