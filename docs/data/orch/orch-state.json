@@ -2101,6 +2101,48 @@
         "provenance": "detector",
         "audit_cycle_tag": "cron:auditor-t2:2026-08-24T00:00Z",
         "dedup_key": "auditor-a29-fire-gap:monthlySignalQualityAudit"
+      },
+      {
+        "id": "sys-20260824T024827-1503",
+        "ts": "2026-08-24T02:48:27Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "summary": "ohlcvStalenessCheck stale (check A-29)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-24T00:00Z",
+        "dedup_key": "auditor-a29-fire-gap:ohlcvStalenessCheck"
+      },
+      {
+        "id": "sys-20260824T024831-3d57",
+        "ts": "2026-08-24T02:48:31Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "summary": "brokerSanctionsSweep stale (check A-29)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-24T00:00Z",
+        "dedup_key": "auditor-a29-fire-gap:brokerSanctionsSweep"
+      },
+      {
+        "id": "sys-20260824T024834-731c",
+        "ts": "2026-08-24T02:48:34Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "cron_fire_gap",
+        "summary": "breadthHistoryPersister stale (check A-29)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "provenance": "detector",
+        "audit_cycle_tag": "cron:auditor-t2:2026-08-24T00:00Z",
+        "dedup_key": "auditor-a29-fire-gap:breadthHistoryPersister"
       }
     ],
     "last_triaged_at": "2026-08-12T15:10:35Z",
@@ -22140,6 +22182,26 @@
         "adopted_at": "2026-08-23T23:01:30Z",
         "tree_hygiene_note": "tree-hygiene: reverted 0 file(s) (apps/mcp-server/ clean at adoption)",
         "status_note": "Orphan-adopted 2026-08-23T23:01:30Z by dev-team tick 2026-08-23T22:37Z from reaped session 007e33e4. Work is COMPLETE and committed (d569db23a fix + f0ee4481f lane-move); no resume-spawn issued — checkpoint carried no git_sha and board state shows the fix already landed. Row parked at REVIEW awaiting its reviewer. redispatch_count=1."
+      },
+      {
+        "id": "CCATO-MCP-T6-TOOL-REGISTRATION",
+        "type": "IMPL-XS",
+        "status": "REVIEW",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "interface/mcp/tools/system/narrativeTruthGateTool.ts + registry.ts + gen-tool-registry.ts",
+        "depends": [
+          "CCATO-MCP-T5-USECASE"
+        ],
+        "next_agent": "qa",
+        "supervised": false,
+        "updated_at": "2026-08-24T02:47:58Z",
+        "updated_by": "dev-mcp-server",
+        "claimed_at": "2026-08-24T02:25:39Z",
+        "claimed_by": "dev-team (ready-lane consumer)",
+        "dispatch_lane": "dev-mcp-server",
+        "status_note": "[dev-mcp-server] Implementation Record: registered narrative_truth_gate (interface/mcp/tools/system/narrativeTruthGateTool.ts + narrativeTruthGateFormat.ts, split for size-lint <=120L) wrapping CCATO-MCP-T5 runNarrativeTruthGate(); wired into registry.ts (#187). Byte-identical [FAIL]/[PASS]/[WARN] lines to scripts/narrative-truth-gate.sh L371-378 (em-dash verified byte-for-byte); isError:true only on CONFIG_ERROR per brief §3.1. Regenerated docs/data/tool-registry.json + docs/data/project-stats.json via canonical generators (toolCount 183->184, cronJobCount unchanged 88). Commit 4a59d67ec (pathspec: registry.ts, narrativeTruthGateTool.ts, narrativeTruthGateFormat.ts, CCATO-MCP-T6-TOOL-REGISTRATION.test.ts, tool-registry.json, project-stats.json). Tests: CCATO-MCP-T6-TOOL-REGISTRATION.test.ts 10/10 pass (registration + registry.ts wiring + CONFIG_ERROR/zero-candidate-PASS through the real handler, I/O-safe only + pure formatGateReport byte-fidelity FAIL/PASS/WARN/mixed) — FAIL verdict deliberately not exercised end-to-end through the registered tool (no deps override -> would write the live orch-state.json; T5s own suite already covers full orchestration+signal-emit). tsc --noEmit clean. Server boot on PORT=3099: /health toolCount=184, zero import errors. tool-registry-parity.test.ts 17/17 pass. Full suite: 15441 pass/51 fail/1 error/1283 files -- failing file-set = documented 15-file baseline (reference_mcpserver_fullsuite_preexisting_failure_baseline) + 1 unrelated new flake (1227-source-health-empty-result.test.ts, globalSourceTracker cross-file ordering, 8/8 pass in isolation, zero narrative_truth_gate/CCATO hits in full log) -- same pattern QAs own T5 verify already hit (their run: baseline-15 + 1 unrelated VPS-fetcher flake). size-lint: 2 pre-existing unrelated offenders (pushBctcLayoutHandler.ts, tasksMdJanitorJob.ts), my new files well under 120L, zero new offenders. NOT DONE: docs/agents/tools/list/INDEX.md + narrative_truth_gate.md stub regen was run then reverted uncommitted -- that path is under docs/agents/** (agent-father exclusive zone per this tasks hard constraint). Follow-up: run `python3 scripts/gen-tool-list-stubs.py && bash scripts/gen-tools-index.sh` (idempotent, zero risk) to sync those 2 files (+1 tool, 183->184)."
       }
     ],
     "qa": [
@@ -22477,25 +22539,6 @@
         "claimed_at": "2026-08-23T15:57:35Z",
         "claimed_by": "dev-team (supervised-lane sweep)",
         "blocked_reason": "SLS claim reverted, 2026-08-23T15:37Z tick: the claim was not gate-satisfied. SLS PRIMARY selects purely on promoted_by == \"dev-team (supervised-lane sweep)\" and re-validates no gate. This row was stamped 2026-08-08T04:51:52Z and carries plan_only=false, so effective_plan_only is FALSE and the row is outside SLS's supervised-AND-plan_only quarantine class. Per main.md Lane x Gate matrix, ready[] with sup=T po=F resolves to READY-XOR-SUP-OR-PLANONLY, i.e. PO's human-gated manual-dispatch sweep, NOT auto-dispatch. Not spawned. The lane-move back to ready[] was attempted and HARD-REJECTED by the row-prose-ceiling guard (live=0B, candidate=26552B): that is defect D3 in scripts/architect-20260823-orch-prose-ceiling-row-handoff.jq, 2nd live instance after UC-CCA-P3. Marked BLOCKED rather than IN_PROGRESS so wip_in_progress excludes it and the four WIP pickers stay unblocked. Unblock path: PO manual-dispatch sweep, or land the D3 fix then lane-move to ready[]."
-      },
-      {
-        "id": "CCATO-MCP-T6-TOOL-REGISTRATION",
-        "type": "IMPL-XS",
-        "status": "IN_PROGRESS",
-        "size": "XS",
-        "zone": "mcp-server",
-        "priority": "P0",
-        "title": "interface/mcp/tools/system/narrativeTruthGateTool.ts + registry.ts + gen-tool-registry.ts",
-        "depends": [
-          "CCATO-MCP-T5-USECASE"
-        ],
-        "next_agent": "dev-mcp-server",
-        "supervised": false,
-        "updated_at": "2026-08-24T02:25:39Z",
-        "updated_by": "pm (decompose SPRINT-CCATO-TRUTHGATE-MCP-NATIVE)",
-        "claimed_at": "2026-08-24T02:25:39Z",
-        "claimed_by": "dev-team (ready-lane consumer)",
-        "dispatch_lane": "dev-mcp-server"
       }
     ]
   },
