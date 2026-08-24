@@ -87,12 +87,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "active_task_id": "CCATO-MCP-T8-DOD-HARNESS",
-    "next_agent": "qa",
-    "next_action": "Review-Lane QA-Drain claim of 2 row(s) (2 from review[], 0 from done[]), highest-ranked CCATO-MCP-T8-DOD-HARNESS — spawn qa in verify-committed mode (branch:null direct-commit row, no task branch/handoff — see docs/agents/qa/flow/main.md § Direct-Commit Verify; do NOT use the normal pipeline JUMP-TO, it requires a branch this row does not have). Batch of 2 row(s) share this claimed_at stamp in .task_board.qa[] — correlate by claimed_at to dispatch the rest.",
-    "updated_at": "2026-08-24T19:48:26Z",
-    "updated_by": "dev-team (review-lane qa-drain)"
+    "status": "idle",
+    "updated_at": "2026-08-24T20:07:52Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": null
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -20904,6 +20903,37 @@
           }
         },
         "status_note": "\n[QA] Review Record (direct-commit verify): APPROVED (direct-commit verify). Commit 4b4bfea7a confirmed main-ancestor, touches all 3 claimed files[] (git show --numstat, not truncated --stat). AC-1..AC-7 independently re-derived from source diff (row.layer==cli-session branch checked first / named exported CRON_LAYER_B_LAST_FIRE_LABEL+_HINT consts / visible not tooltip-only hint / normalizeCronRowB unchanged, force-nulls confirmed / redundant Lop column dropped / architecture brief L127 restores Layer-A qualifier / test predicate layer-aware +5 tests, line-286 assertion unchanged). Targeted vitest 46/46 pass (exact match to claim). Full frontend suite: 2188 pass/2 fail/100 files (exact match to claim) -- both fails (QUE-REFERENCE-PAGE-detail.test.ts, QUE-TOOLTIP-DRY-1a-codegen-pipeline.test.tsx) confirmed zero import overlap with this diff (unrelated Kinh-Dich QUE_DESCRIPTIONS schema). tsc --noEmit 0 errors. DDD grep clean. Security grep's one process.env hit pre-dates this commit (non-secret FRONTEND_ORIGIN). mock-guard.sh PASS. Not OOM-class, Durability Gate N/A. commit field was absent on the row entirely -- stamped here."
+      },
+      {
+        "id": "CCATO-MCP-T8-DOD-HARNESS",
+        "type": "IMPL-XS",
+        "status": "DONE_VERIFIED",
+        "size": "XS",
+        "zone": "mcp-server",
+        "priority": "P0",
+        "title": "Integration test suite replaying §5.2 (a)-(e)",
+        "depends": [
+          "CCATO-MCP-T5-USECASE",
+          "CCATO-MCP-T6-TOOL-REGISTRATION"
+        ],
+        "supervised": false,
+        "updated_at": "2026-08-24T20:07:52Z",
+        "updated_by": "dev-mcp-server",
+        "claimed_at": "2026-08-24T19:48:24Z",
+        "claimed_by": "dev-team (review-lane qa-drain)",
+        "dispatch_lane": "dev-mcp-server",
+        "commit": "14048b9dcace288181666312231db0db8542d276",
+        "drain_source_lane": "review",
+        "qa_verified_at": "2026-08-24T20:07:51Z",
+        "verification": {
+          "raw_probe": {
+            "tool": "git merge-base --is-ancestor + git show --stat + bun test (isolated) + bun test (full suite) + bun tsc --noEmit + grep DDD/security + mock-guard.sh",
+            "args": "commit=14048b9dcace288181666312231db0db8542d276; files=apps/mcp-server/src/__tests__/CCATO-MCP-T8-DOD-HARNESS.test.ts",
+            "live_value_observed": "ancestor=yes; stat touches exactly 1/1 claimed file (366L, test-only); isolated bun test 7 pass/0 fail/31 expect; tsc 0 errors; DDD/security grep clean; mock-guard PASS; full apps/mcp-server suite 15462 pass/40 skip/51 fail/1285 files [556.82s], 16-file failing set extracted via awk, zero CCATO/narrative_truth_gate overlap, matches documented drifting pre-existing baseline",
+            "observed_at": "2026-08-24T20:07:51Z"
+          }
+        },
+        "status_note": "\n[QA] Review Record (direct-commit verify): APPROVED. Independently re-verified (not trusted from implementer prose): commit 14048b9dcace288181666312231db0db8542d276 confirmed ancestor of main, touches exactly the claimed file (366L, test-only, T1-T7 production code untouched). Isolated bun test = 7 pass/0 fail/31 expect, exact match to claim. Mapped all 7 it() blocks to brief section 5.2(a)-(e): (a) VNM TA-absence FAIL [stubbed TA, real classifier], (b) foreign-flow-absence FAIL [100pct real DB-seeded getForeignFlowHistory+analyzeForeignFlow, zero stub], (c) honest-NULL PASS [real probeFinancials, zero-row financial_reports, real tool_null_markers match], (d) determinism [2 independent calls, byte-identical report], (e) exactly-1-signal-row-on-FAIL + dedicated live-orch-state-untouched guard [2 it() blocks], plus a bonus real-fixture E2E against docs/social/fb-post-2026-06-30.md [confirmed present, 5205 bytes] reproducing T1's proven 2-candidate set through probe->signal-emit. All 5 named sub-items (a)-(e) covered; zero DoD criteria uncovered. bun tsc --noEmit 0 errors. DDD/security grep clean (test-only). mock-guard PASS. size-lint N/A (__tests__/*.test.ts is scope-excluded entirely). Full apps/mcp-server suite: 15462 pass/40 skip/51 fail/1285 files [556.82s] -- extracted 16-file failing set (awk state-machine on (fail) markers), zero CCATO/narrative_truth_gate/verdictClassifier identifier anywhere in fail context, matches this sprint's own documented same-day baseline drift (15->17->18->19 files); T8's own file produces zero fails (structurally impossible to regress anything, pure test-file addition). RULING known-issue-1 (foreign_flow 1-row insufficient-branch false-positive, T3): independently reproduced -- message matches none of the 10 tool_null_markers substrings, classifyVerdict misclassifies NON_NULL/FAIL. Deferral to NOT fix from this test-only row is CORRECT (prod-code fix belongs to a dedicated row, mirrors brief R-5 scope discipline). Missing regression-pinning test is a real, non-blocking gap -- the bug currently exists only as prose (T8 file header + dev decision journal), invisible to CI; NOT currently tracked as any board/signal row. FLAGGING for a follow-up row, not minting it myself. RULING known-issue-2 (narrativeTruthGateTool.ts:53 no injectable deps -- confirmed at source, zero deps arg passed): pre-existing T6 limitation (already DONE_VERIFIED before T8 existed), T6's own test header already documents+accepts it. T8's local callTool() harness duplicates only ~10L of thin Zod-schema/response-shaping glue and imports the real runNarrativeTruthGate (T5) + formatGateReport (T6) business logic verbatim/unmodified -- ACCEPTABLE for a DoD harness, not a blocking defect. Residual drift risk (future edits to the real ~10L wrapper silently diverging from T8's clone) is real but narrow, and is closed by the brief's OWN designed mechanism: post-merge PO-minted VERIFY-CCATO-MCP-TRUTHGATE-REALDATA (brief section 5.3, live re-run against the deployed container) -- confirmed this row does not yet exist on the board (expected: its precondition is this row's own CI-green). FLAGGING both as follow-ups for PO/architect attention, not minting either myself. Naming convention (CCATO-MCP-T8-DOD-HARNESS.test.ts vs brief's literal <N>-narrative-truth-gate-tool.test.ts) independently confirmed as the real established sibling convention (ls of 6 T1-T6 siblings, byte-match). Decision journal: docs/agent-memory/decisions/sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-28.md STEP qa-S201."
       }
     ],
     "head": {
@@ -24595,28 +24625,6 @@
           "collector": "scripts/durability-mem-sample.sh (new this cycle, closes the missing-instrumentation root cause)"
         },
         "qa_rcverif_grandfather_escalation_20260823T1441Z": "[QA ESCALATION 2026-08-23T14:41Z — RC-VERIF GRANDFATHER FALSE-GREEN HAZARD ON THIS EXACT ROW. Not a defect in the fix under review; a defect in the gate that is supposed to protect it. Bar section 4 (\"Grandfather-exemption guard\") names this as a known open engineering gap with process-control-only mitigation; this note is the live proof that it is exploitable on the single highest-pressure row in the fleet.]\nFACT, PROVEN BY EXECUTION NOT BY READING: \"FU-RAG-DEPLOY-MEMORY\" is a member of RC_VERIF_GRANDFATHERED_IDS (apps/mcp-server/src/infrastructure/orchStateSchema.ts line 569). checkVerificationGate() guards with a bare `row.status === \"DONE_VERIFIED\" && !RC_VERIF_GRANDFATHERED_IDS.has(id)`, with no awareness of retraction or void markers. Consequence: this row can be flipped to DONE_VERIFIED carrying NO verification.raw_probe at all, and orch-apply.sh will accept the write.\nLIVE REPRO WITH A CONTROL, run against a fixture via ORCH_APPLY_LIVE_FILE_OVERRIDE (hot file never touched, override unset afterwards). Identical transform, two ids: FU-RAG-DEPLOY-MEMORY flipped to DONE_VERIFIED with `del(.verification)` -> \"Stage 0 + Stage 1 PASS\", write APPLIED. The same transform on the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK -> \"ORCH-STATE VALIDATION FAILED (1 issue) ... set to DONE_VERIFIED without verification.raw_probe\" -> \"ABORTED: validator exit 2 -- live file untouched\". So the exemption, not any property of the evidence, is what decides.\nWHY THIS ROW IS THE WORST POSSIBLE MEMBER OF THAT LIST. (1) It is OOM-class, and its own family has produced THREE recorded false certifications on this one incident (bar section 5). (2) It carries contamination/void language already (its po ruling calls the 7-day window CONTAMINATED; its sibling holds an explicit qa_durability_window_status VOID), which under bar section 4's retraction rule means the exemption must not be relied on for it -- but nothing in code enforces that. (3) It is under active unblock pressure: RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE ships BLOCKED on this row reaching DONE_VERIFIED, so there is a standing incentive to flip it. (4) The incentive is not hypothetical -- TWO rows were flipped to DONE_VERIFIED in this very cycle by updated_by=developer with qa_verified_by absent (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION at 14:28:53Z, FIX-CHEF-MARKER-KEY-ANCHOR-1 at 14:33:50Z). Both happened to be substantively correct on QA re-check, but they establish that self-certification without the qa gate is a live behaviour, not a theoretical one. On this row that behaviour would meet no schema resistance whatsoever.\nASK (out of qa's zone -- apps/mcp-server code change, needs a minted row; qa is reporting, not patching): make checkVerificationGate() refuse the exemption for any RC_VERIF_GRANDFATHERED_IDS member whose row text carries a retraction/void/contamination marker, exactly as bar section 4 already specifies in prose. Cheapest correct alternative if that is too broad: remove this single id from the frozen list, since the row has never actually been certified and therefore has nothing to grandfather -- the list exists to spare genuinely-pre-existing certified rows a retroactive probe requirement, and this row is not one.\nINTERIM PROCESS CONTROL, binding until that lands: NO agent may flip FU-RAG-DEPLOY-MEMORY to DONE_VERIFIED without the six canonical D5 fields AND a verification.raw_probe, exemption notwithstanding. The schema will not stop you. This note is the record that you were told.\n\n[QA CORRECTION 2026-08-23T14:51Z to the escalation above.] Point (4) of that escalation cited two rows flipped this cycle \"by updated_by=developer with qa_verified_by absent\" as proof that self-certification without the qa gate is live behaviour. THAT SUPPORTING CLAIM IS WITHDRAWN. Both rows were in fact fully verified by a concurrent peer qa session and journaled — sprint-COWORK-GUARANTEED-SLOT-CATCHUP-qa-26.md STEP qa-S162 (FIX-COWORK-GUARANTEED-SLOT-FIRER-NO-FAILURE-ESCALATION) and STEP qa-S167 (FIX-CHEF-MARKER-KEY-ANCHOR-1, which independently traced the same amended-commit hazard via git reflog). The qa gate ran on both. What those rows actually show is a provenance-stamping gap (updated_by names the wrong actor and qa_verified_by is left unset, so a board reader cannot distinguish a qa verdict from an owner self-flip) — a real but much smaller finding, and NOT evidence of gate bypass.\nTHE ESCALATION ITSELF IS UNAFFECTED AND STANDS. Its load-bearing evidence was never those two rows; it is the live paired repro with a control, run against a fixture: the identical no-raw_probe DONE_VERIFIED transform PASSES validation for FU-RAG-DEPLOY-MEMORY (grandfathered) and ABORTS with \"set to DONE_VERIFIED without verification.raw_probe\" for the non-grandfathered FIX-MARKETWATCHER-EODMD-STALE-NOBASH-CAVEAT-SKIPS-COMMIT-LOSES-NOTEBOOK. Points (1) membership at orchStateSchema.ts line 569, (2) the OOM-class family's three recorded false certifications, and (3) the live unblock pressure from RAG-FTS-AC2-PEAKMEM-WALLCLOCK-MEASURE are all independently verified and unchanged. The ask and the interim process control stand exactly as written.\n"
-      },
-      {
-        "id": "CCATO-MCP-T8-DOD-HARNESS",
-        "type": "IMPL-XS",
-        "status": "QA",
-        "size": "XS",
-        "zone": "mcp-server",
-        "priority": "P0",
-        "title": "Integration test suite replaying §5.2 (a)-(e)",
-        "depends": [
-          "CCATO-MCP-T5-USECASE",
-          "CCATO-MCP-T6-TOOL-REGISTRATION"
-        ],
-        "next_agent": "qa",
-        "supervised": false,
-        "updated_at": "2026-08-24T19:48:26Z",
-        "updated_by": "dev-mcp-server",
-        "claimed_at": "2026-08-24T19:48:24Z",
-        "claimed_by": "dev-team (review-lane qa-drain)",
-        "dispatch_lane": "dev-mcp-server",
-        "commit": "14048b9dcace288181666312231db0db8542d276",
-        "drain_source_lane": "review"
       }
     ],
     "_closed_signals_20260614": {
